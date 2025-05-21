@@ -1,5 +1,5 @@
 services:
-  app:
+  backend:
     build:
       context: .
       args:
@@ -7,6 +7,6 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./app:/app
+      - ./backend:/backend
     command: >
       sh -c "python manage.py runserver 0.0.0.0:8000"

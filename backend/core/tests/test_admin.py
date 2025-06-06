@@ -12,7 +12,7 @@ class AdminInterfaceTests(TestCase):
     """ Tests for custom Django admin interface. """
 
     def setUp(self):
-        """ Creates client, creates and logs in as test admin user, and creates test regular user. """
+        """ Creates client, creates + logs in as test admin user, + creates test regular user. """
 
         self.client = Client()
         self.admin_user = get_user_model().objects.create_superuser(

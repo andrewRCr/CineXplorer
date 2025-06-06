@@ -1,5 +1,4 @@
 from django.shortcuts import render
-from django.http import HttpResponse
 
 
 def calculate():
@@ -15,5 +14,5 @@ def say_hello(request):
     """
     A simple view that renders a template to say hello.
     """
-    x = calculate()
+    # x = calculate()
     return render(request, 'hello.html', {'name': 'Andrew'})

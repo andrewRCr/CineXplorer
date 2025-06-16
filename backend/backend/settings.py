@@ -42,7 +42,9 @@ INSTALLED_APPS = [
     'playground',
     'debug_toolbar',
     'rest_framework',
-    'drf_spectacular'
+    'rest_framework.authtoken',
+    'drf_spectacular',
+    'user',
 ]
 
 MIDDLEWARE = [

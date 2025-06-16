@@ -29,9 +29,13 @@ class CustomUserModelBackend(ModelBackend):
         if username is None or password is None:
             return
         try:
+            # TODO: re-enable email_verified requirement once verification in place!
+            # user: AbstractBaseUser = UserModel._default_manager.get(
+            #     Q(username__exact=username) | (
+            #         Q(email__iexact=username) & Q(email_verified=True))
             user: AbstractBaseUser = UserModel._default_manager.get(
                 Q(username__exact=username) | (
-                    Q(email__iexact=username) & Q(email_verified=True))
+                    Q(email__iexact=username))
             )
         except UserModel.DoesNotExist:
             # prevent security vulnerability: run the default password hasher once to reduce the

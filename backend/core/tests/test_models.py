@@ -10,7 +10,7 @@ from django.contrib.auth import get_user_model
 class ModelTests(TestCase):
     """ Test core models. """
 
-    def test_create_user_with_username_and_email_successful(self):
+    def test_create_user_with_username_and_email_successful(self) -> None:
         """ Tests creating a user with both a username and email; case: success. """
 
         username: str = 'testUser'
@@ -27,10 +27,10 @@ class ModelTests(TestCase):
         self.assertEqual(user.email, email)
         self.assertTrue(user.check_password(password))
 
-    def test_new_user_email_normalized(self):
+    def test_new_user_email_normalized(self) -> None:
         """ Tests newly created user's email is normalized. """
 
-        sample_emails = [
+        sample_emails: list[list[str]] = [
             ['test1@EXAMPLE.com', 'test1@example.com'],
             ['Test2@Example.com', 'Test2@example.com'],
             ['TEST3@EXAMPLE.com', 'TEST3@example.com'],
@@ -39,26 +39,27 @@ class ModelTests(TestCase):
 
         i = 0
         for email, expected in sample_emails:
-            user = get_user_model().objects.create_user(f'testUser{i}', email)
+            user: AbstractUser = get_user_model(
+            ).objects.create_user(f'testUser{i}', email)
             self.assertEqual(user.email, expected)
             i += 1
 
-    def test_new_user_without_username_raises_error(self):
+    def test_new_user_without_username_raises_error(self) -> None:
         """ Tests that creating a user without a username raises a ValueError. """
 
         with self.assertRaises(ValueError):
             get_user_model().objects.create_user('', 'testUser@example.com')
 
-    def test_new_user_without_email_raises_error(self):
+    def test_new_user_without_email_raises_error(self) -> None:
         """ Tests that creating a user without an email raises a ValueError. """
 
         with self.assertRaises(ValueError):
             get_user_model().objects.create_user('testUser', '')
 
-    def test_create_superuser(self):
+    def test_create_superuser(self) -> None:
         """ Tests creating a new superuser. """
 
-        user = get_user_model().objects.create_superuser(
+        user: AbstractUser = get_user_model().objects.create_superuser(
             'testUser',
             'testUser@example.com',
             'testPass123'

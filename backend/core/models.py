@@ -38,7 +38,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     """ Custom app user class. """
 
     username = models.CharField(max_length=255, unique=True)
-    email = models.EmailField(max_length=255, unique=False)
+    email = models.EmailField(max_length=255, unique=True)
     email_verified = models.BooleanField(default=False)
     first_name = models.CharField(max_length=255)
     last_name = models.CharField(max_length=255)

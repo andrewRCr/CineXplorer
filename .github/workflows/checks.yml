@@ -19,6 +19,8 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Show context
+        run: echo "$GITHUB_CONTEXT"
       - name: Test
         run: docker compose run --rm backend sh -c "python manage.py wait_for_db && python manage.py test"
       - name: Lint with flake8

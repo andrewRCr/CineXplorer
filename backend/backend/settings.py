@@ -156,9 +156,7 @@ environ.Env.read_env()
 
 # default environment variables
 DEBUG = env.bool("DEBUG", default=True)  # type: ignore
-# SECRET_KEY = os.environ.get("SECRET_KEY")
-SECRET_KEY = env("SECRET_KEY")
+SECRET_KEY = os.environ.get("SECRET_KEY")
 
 # custom environment variables
-# TMDB_API_KEY = os.environ.get("TMDB_API_KEY")
-TMDB_API_KEY = env("TMDB_API_KEY")
+TMDB_API_KEY = os.environ.get("TMDB_API_KEY")

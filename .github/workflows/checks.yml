@@ -4,6 +4,17 @@ name: Test / Lint
 on: [push]
 
 jobs:
+  create-envfile:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Make envfile
+        uses: SpicyPizza/create-envfile@v1
+        with:
+          envkey_DEBUG: false
+          envkey_SECRET_KEY: ${{ secrets.SECRET_KEY }}
+          envkey_TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
+          file_name: .env
+
   test-lint:
     name: Test and Lint
     runs-on: ubuntu-24.04
@@ -16,9 +27,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Test
-        env:
-          SECRET_KEY: ${{ secrets.SECRET_KEY }}
-          TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
         run: docker compose run --rm backend sh -c "python manage.py wait_for_db && python manage.py test"
       - name: Lint with flake8
         run: docker compose run --rm backend sh -c "flake8 --max-line-length=99"

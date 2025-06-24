@@ -3,6 +3,10 @@ name: Test / Lint
 
 on: [push]
 
+env:
+  SECRET_KEY: ${{ secrets.SECRET_KEY }}
+  TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
+
 jobs:
   test-lint:
     name: Test and Lint
@@ -15,13 +19,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Set environment variables
-        run: echo "SECRET_KEY=${{ secrets.SECRET_KEY }}" >> $GITHUB_ENV
-          echo "TMDB_API_KEY=${{ secrets.TMDB_API_KEY }}" >> $GITHUB_ENV
       - name: Test
         run: docker compose run --rm backend sh -c "python manage.py wait_for_db && python manage.py test"
-        env:
-          SECRET_KEY: ${{ secrets.SECRET_KEY }}
-          TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
       - name: Lint with flake8
         run: docker compose run --rm backend sh -c "flake8 --max-line-length=99"

@@ -13,7 +13,6 @@ import environ
 import socket
 import os
 from pathlib import Path
-from django.core.management.utils import get_random_secret_key
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -156,8 +155,8 @@ env = environ.Env()
 environ.Env.read_env()
 
 # default environment variables
-DEBUG = env.bool("DEBUG", default=True)  # type: ignore
-SECRET_KEY = env("SECRET_KEY", default=get_random_secret_key())
+DEBUG: bool = env.bool("DEBUG", default=False)
+SECRET_KEY: str = env("SECRET_KEY")
 
 # custom environment variables
-TMDB_API_KEY = env("TMDB_API_KEY")
+TMDB_API_KEY: str = env("TMDB_API_KEY")

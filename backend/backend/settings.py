@@ -160,4 +160,4 @@ DEBUG = env.bool("DEBUG", default=True)  # type: ignore
 SECRET_KEY = env("SECRET_KEY", default=get_random_secret_key())
 
 # custom environment variables
-TMDB_API_KEY = os.environ.get("TMDB_API_KEY")
+TMDB_API_KEY = env("TMDB_API_KEY")

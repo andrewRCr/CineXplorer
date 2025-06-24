@@ -9,8 +9,6 @@ from django.contrib.auth import get_user_model
 
 from core import models
 
-from datetime import date
-
 import tmdbsimple as tmdb
 tmdb.API_KEY = settings.TMDB_API_KEY
 

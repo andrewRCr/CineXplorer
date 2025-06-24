@@ -9,6 +9,7 @@ https://docs.djangoproject.com/en/5.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
+import environ
 import socket
 import os
 from pathlib import Path
@@ -16,18 +17,13 @@ from pathlib import Path
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-dy9$xpwhsx0c&j7y_=1*_z4dzxlz_u8@3mezjq1-w!^u=l#(qe'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
 ALLOWED_HOSTS = []
-
 
 # Application definition
 
@@ -39,12 +35,13 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'core',
-    'playground',
     'debug_toolbar',
     'rest_framework',
     'rest_framework.authtoken',
     'drf_spectacular',
     'user',
+    'movie',
+    'user_movie_data',
 ]
 
 MIDDLEWARE = [
@@ -80,6 +77,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'core.context_processors.global_settings',
             ],
         },
     },
@@ -150,3 +148,15 @@ AUTHENTICATION_BACKENDS = ["core.backends.CustomUserModelBackend"]
 REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
+
+# initialize environment variables
+env = environ.Env()
+# read the .env file if it exists
+environ.Env.read_env()
+
+# default environment variables
+DEBUG = env.bool("DEBUG", default=True)  # type: ignore
+SECRET_KEY = env("SECRET_KEY")
+
+# custom environment variables
+TMDB_API_KEY = env("TMDB_API_KEY")

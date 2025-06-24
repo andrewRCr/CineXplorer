@@ -2,8 +2,12 @@
 Core database models.
 """
 
+from django.conf import settings
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
+from django.core.validators import MaxValueValidator, MinValueValidator
+
+import tmdbsimple as tmdb
 
 
 class UserManager(BaseUserManager):
@@ -49,3 +53,24 @@ class User(AbstractBaseUser, PermissionsMixin):
     REQUIRED_FIELDS = ['email']
 
     objects = UserManager()
+
+
+class UserMovieData(models.Model):
+    """ Represents a user's data about a particular movie. """
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+    )
+
+    tmdb_id = models.IntegerField()
+    title = models.CharField(max_length=255)
+    user_watched = models.BooleanField(default=False)
+    user_on_watchlist = models.BooleanField(default=False)
+    user_liked = models.BooleanField(default=False)
+    user_rating = models.IntegerField(
+        default=0, validators=[MinValueValidator(1), MaxValueValidator(10)])
+    user_review = models.TextField(blank=True)
+
+    def __str__(self) -> str:
+        return str(self.title)

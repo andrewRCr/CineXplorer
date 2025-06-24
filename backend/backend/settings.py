@@ -156,7 +156,7 @@ environ.Env.read_env()
 
 # default environment variables
 DEBUG: bool = env.bool("DEBUG", default=False)
-SECRET_KEY: str = env("SECRET_KEY")
+SECRET_KEY: str = env("DJANGO_SECRET_KEY")
 
 # custom environment variables
 TMDB_API_KEY: str = env("TMDB_API_KEY")

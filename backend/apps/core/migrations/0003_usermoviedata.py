@@ -16,15 +16,18 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='UserMovieData',
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('id', models.BigAutoField(auto_created=True,
+                 primary_key=True, serialize=False, verbose_name='ID')),
                 ('tmdb_id', models.IntegerField()),
                 ('title', models.CharField(max_length=255)),
                 ('user_watched', models.BooleanField(default=False)),
                 ('user_on_watchlist', models.BooleanField(default=False)),
                 ('user_liked', models.BooleanField(default=False)),
-                ('user_rating', models.IntegerField(default=0, validators=[django.core.validators.MinValueValidator(1), django.core.validators.MaxValueValidator(10)])),
+                ('user_rating', models.IntegerField(default=0, validators=[
+                 django.core.validators.MinValueValidator(1), django.core.validators.MaxValueValidator(10)])),
                 ('user_review', models.TextField(blank=True)),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
+                ('user', models.ForeignKey(
+                    on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
             ],
         ),
     ]

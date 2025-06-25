@@ -12,10 +12,15 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 import environ
 import socket
 import os
+import sys
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# add apps directory
+APPS_DIR = os.path.join(BASE_DIR, 'apps')
+sys.path.insert(0, APPS_DIR)
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
@@ -65,7 +70,7 @@ INTERNAL_IPS = [
 hostname, _, ips = socket.gethostbyname_ex(socket.gethostname())
 INTERNAL_IPS += [".".join(ip.split(".")[:-1] + ["1"]) for ip in ips]
 
-ROOT_URLCONF = "backend.urls"
+ROOT_URLCONF = "config.urls"
 
 TEMPLATES = [
     {
@@ -83,7 +88,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "backend.wsgi.application"
+WSGI_APPLICATION = "config.wsgi.application"
 
 
 # Database
@@ -155,8 +160,8 @@ env = environ.Env()
 environ.Env.read_env()
 
 # default environment variables
-DEBUG: bool = env.bool("DEBUG", default=False)
-SECRET_KEY: str = env("DJANGO_SECRET_KEY")
+DEBUG = env.bool("DEBUG", default=False)  # type: ignore
+SECRET_KEY = env("DJANGO_SECRET_KEY")
 
 # custom environment variables
-TMDB_API_KEY: str = env("TMDB_API_KEY")
+TMDB_API_KEY = env("TMDB_API_KEY")

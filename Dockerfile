@@ -3,8 +3,8 @@ LABEL maintainer="andrew.creekmore@me.com"
 
 ENV PYTHONUNBUFFERED=1
 
-COPY ./requirements.txt /tmp/requirements.txt
-COPY ./requirements.dev.txt /tmp/requirements.dev.txt
+COPY ./backend/requirements/req.txt /tmp/req.txt
+COPY ./backend/requirements/req.dev.txt /tmp/req.dev.txt
 COPY ./backend /backend
 WORKDIR /backend
 EXPOSE 8000
@@ -19,11 +19,11 @@ RUN python -m venv /py && \
     /py/bin/pip install --upgrade pip && \
     apk add --update --no-cache postgresql-client postgresql-dev shadow && \
     apk add --update --no-cache --virtual .tmp-build-deps \
-        build-base musl-dev python3-dev gcc libc-dev linux-headers && \       
-    /py/bin/pip install -r /tmp/requirements.txt && \
+        build-base musl-dev python3-dev gcc libc-dev linux-headers && \
+    /py/bin/pip install -r /tmp/req.txt && \
     # install dev dependencies
     if [ $DEV = "true" ]; then \
-        /py/bin/pip install -r /tmp/requirements.dev.txt; \
+        /py/bin/pip install -r /tmp/req.dev.txt; \
     fi && \
     # clean up
     rm -rf /tmp && \

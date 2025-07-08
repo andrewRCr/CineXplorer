@@ -1,7 +1,7 @@
 services:
   backend:
     build:
-      context: .
+      context: ./backend
       args:
         DEV: "true"
     ports:
@@ -19,6 +19,18 @@ services:
       - DB_PASS=devPassword
     depends_on:
       - db
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend/src:/frontend/src # bind local source files to container (without node_modules)
+
+    depends_on:
+      - backend
 
   db:
     image: postgres:17.5-alpine

@@ -154,6 +154,10 @@ AUTHENTICATION_BACKENDS = ["core.backends.CustomUserModelBackend"]
 # generate openAPI schema with drf-spectacular
 REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        # 'rest_framework.authentication.TokenAuthentication',
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ],
 }
 
 # initialize environment variables
@@ -167,6 +171,7 @@ SECRET_KEY = env("DJANGO_SECRET_KEY")
 
 # custom environment variables
 TMDB_API_KEY = env("TMDB_API_KEY")
+BACKEND_URL = env("BACKEND_URL")
 
 # CORS constants
 CORS_ALLOW_CREDENTIALS = True

@@ -72,3 +72,46 @@ class UserMovieData(models.Model):
 
     def __str__(self) -> str:
         return str(self.title)
+
+
+class Movie(models.Model):
+    """ Represents a wrapper for a TMDB movie object. """
+
+    # id = models.IntegerField(unique=True)
+    # tmdb_id = models.IntegerField(unique=True)
+    title = models.CharField(max_length=255)
+    release_date = models.DateField(null=True, blank=True)
+    runtime = models.IntegerField(null=True, blank=True)
+    original_language = models.CharField(max_length=10, blank=True)
+    overview = models.TextField(blank=True)
+    poster_path = models.CharField(max_length=255, blank=True)
+    genres = models.JSONField(default=list, blank=True)
+    directors = models.JSONField(default=list, blank=True)
+    writers = models.JSONField(default=list, blank=True)
+    cast = models.JSONField(default=list, blank=True)
+    production_companies = models.JSONField(default=list, blank=True)
+    user_movie_data = models.JSONField(default=dict, blank=True)
+
+    def __str__(self) -> str:
+        return self.title
+
+
+# class CastMember(models.Model):
+#     """ Represents a wrapper for a TMDB cast object. """
+
+#     # id = models.IntegerField(unique=True)
+#     # tmdb_id = models.IntegerField(unique=True)
+#     name = models.CharField(max_length=255)
+#     character = models.CharField(max_length=255, blank=True)
+#     profile_path = models.CharField(max_length=255, blank=True)
+
+#     def __str__(self) -> str:
+#         return self.name
+
+class MovieCredits(models.Model):
+    """ Represents a wrapper for a TMDB movie credits object. """
+
+    # id = models.IntegerField(unique=True)
+    # tmdb_id = models.IntegerField(unique=True)
+    crew = models.JSONField(default=list, blank=True)
+    cast = models.JSONField(default=list, blank=True)

@@ -28,6 +28,19 @@ class HttpService {
 	}
 
 	/**
+	 * Returns an apiClient GET request promise for an array of generic entites.
+	 * @returns { request: Promise<AxiosResponse<any, any>>; cancel: () => void; }
+	 */
+	getArray<T extends Entity>() {
+		const controller = new AbortController();
+		const request = apiClient.get<T[]>(this.endpoint, {
+			signal: controller.signal,
+		});
+
+		return { request, cancel: () => controller.abort() };
+	}
+
+	/**
 	 * Returns an apiClient POST request promise to create a new generic entity.
 	 * @param newEntity - {T}
 	 * @returns Promise<AxiosResponse<any, any>>

@@ -1,13 +1,12 @@
 import axios, { CanceledError } from "axios";
 
 const BASE_URL = import.meta.env.VITE_BASE_API_URL;
-const devTestToken = import.meta.env.VITE_DEV_TEST_TOKEN;
+// const devTestToken = import.meta.env.VITE_DEV_TEST_TOKEN;
 
 export default axios.create({
 	baseURL: BASE_URL,
 	headers: {
 		"Content-Type": "application/json",
-		Authorization: `Token ${devTestToken}`,
 	},
 });
 

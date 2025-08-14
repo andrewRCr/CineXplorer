@@ -43,3 +43,7 @@ class MovieDetailSerializer(serializers.ModelSerializer):
             ['overview', 'genres', 'production_companies']
         read_only_fields = MovieSerializer.Meta.read_only_fields + \
             ['overview', 'genres', 'production_companies']
+
+
+# class MovieResultsSerializer(serializers.ModelSerializer):
+#     """ Serializer for the movie results object. """

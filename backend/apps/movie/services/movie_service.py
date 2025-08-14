@@ -92,3 +92,29 @@ def search_movies(query: str) -> Response:
         logger.error(f"Failed to search movies: {e}")
         return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR, data={
             "error": "An error occurred while searching for movies."})
+
+
+def get_recent_movies() -> Response:
+    """ Retrieves a list of recent movies (ordred by date, descending) from TMDB. """
+
+    try:
+        recent_url = f"{base_url}/movie/now_playing?api_key={settings.TMDB_API_KEY}"
+        recent_response = requests.get(recent_url)
+
+        if recent_response.status_code != 200:
+            logger.error(
+                f"Failed to retrieve recent movies: {recent_response.status_code}")
+            return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR, data={
+                "error": "An error occurred while retrieving recent movies."})
+
+        results = recent_response.json().get('results', [])
+        print(results)
+        return Response(data=results)
+        # return Response(data=results.json())
+        # return Response(data=recent_response.json()[results])
+        # return Response(data=recent_response.json())
+
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Failed to retrieve recent movies: {e}")
+        return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR, data={
+            "error": "An error occurred while retrieving recent movies."})

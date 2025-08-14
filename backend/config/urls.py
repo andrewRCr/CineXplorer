@@ -17,7 +17,11 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from user.views import (
+    JWTCookieTokenObtainPairView,
+    JWTCookieTokenRefreshView,
+    LogOutAPIView,
+    RegisterAPIView)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -27,6 +31,8 @@ urlpatterns = [
     path('api/user/', include('user.urls')),
     path('api/user-movie-data/', include('user_movie_data.urls')),
     path('api/movie/', include('movie.urls')),
-    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('api/token/', JWTCookieTokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/token/refresh/', JWTCookieTokenRefreshView.as_view(), name='token_refresh'),
+    path('api/logout/', LogOutAPIView.as_view(), name='logout'),
+    path('api/register/', RegisterAPIView.as_view(), name='register'),
 ]

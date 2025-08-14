@@ -9,6 +9,7 @@ https://docs.djangoproject.com/en/5.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
+from datetime import timedelta
 import environ
 import socket
 import os
@@ -147,7 +148,7 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Custom authentication
+# custom authentication
 AUTH_USER_MODEL = "core.User"
 AUTHENTICATION_BACKENDS = ["core.backends.CustomUserModelBackend"]
 
@@ -157,6 +158,7 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         # 'rest_framework.authentication.TokenAuthentication',
         "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "user.authenticate.JWTCookieAuthentication",
     ],
 }
 
@@ -174,18 +176,26 @@ TMDB_API_KEY = env("TMDB_API_KEY")
 BACKEND_URL = env("BACKEND_URL")
 
 # CORS constants
+CORS_ALLOW_ALL_ORIGINS = True  # TODO: update for production (temp/development only)
 CORS_ALLOW_CREDENTIALS = True
-# if these are used then `CORS_ALLOWED_ORIGINS` will not have any effect
-# CORS_ALLOW_ALL_ORIGINS = True
-# CORS_ORIGIN_ALLOW_ALL = True
 
-CORS_ALLOWED_ORIGINS = [
-    'http://localhost:5173',
-]  # if this is used, then no need to use `CORS_ALLOW_ALL_ORIGINS = True`
-CORS_ALLOWED_ORIGIN_REGEXES = [
-    'http://localhost:5174',
-]
+# CORS_ALLOWED_ORIGINS = [
+#     'http://localhost:5173',
+# ]  # if this is used, then no need to use `CORS_ALLOW_ALL_ORIGINS = True`
+# CORS_ALLOWED_ORIGIN_REGEXES = [
+#     'http://localhost:5174',
+# ]
 
-CSRF_TRUSTED_ORIGINS = [
-    'http://localhost:5174',  # for localhost (REACT Default)
-]
+# CSRF_TRUSTED_ORIGINS = [
+#     'http://localhost:5174',  # for localhost (REACT Default)
+# ]
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=30),
+    'ACCESS_TOKEN_NAME': 'access_token',
+    'REFRESH_TOKEN_NAME': 'refresh_token',
+    'JWT_COOKIE_SAMESITE': 'Lax',
+}
+
+FORBIDDEN_USERNAMES = ["admin", "administrator", "root", "superuser", "test", "guest"]

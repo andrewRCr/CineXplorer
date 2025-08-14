@@ -73,6 +73,19 @@ class MovieDetailView(APIView):
         return movie_response
 
 
+class RecentMoviesView(APIView):
+    """  """
+
+    authentication_classes = [TokenAuthentication]
+
+    def get(self, request, format=json):
+        """ Retrieves a list of movies by recency, including user-specific data if available. """
+
+        movie_response = movie_service.get_recent_movies()
+        # TODO: skipping user movie data append for now
+        return movie_response
+
+
 # @api_view()
 # def movie_detail_view(request, tmdb_id) -> HttpResponse:
 #     """ Basic movie detail info view, pulled from TMDB by id, + any relevant user movie data. """

@@ -1,29 +1,32 @@
 import { useEffect, useState } from "react";
 import apiClient from "@/services/apiClient";
 import useMovie from "@/hooks/useMovie";
-import { Text } from "@chakra-ui/react";
+import { SimpleGrid, Text } from "@chakra-ui/react";
+import MovieCard from "./MovieCard";
+import MovieCardSkeleton from "./MovieCardSkeleton";
+import MovieCardContainer from "./MovieCardContainer";
 
 const MovieGrid = () => {
-	// const [movies, setMovies] = useState<Movie[]>([]);
-	// const [error, setError] = useState("");
-
-	// useEffect(() => {
-	// 	apiClient
-	// 		.get<FetchMoviesResponse>("/movies")
-	// 		.then((res) => setMovies(res.data.results))
-	// 		.catch((err) => setError(err.message));
-	// }, []);
-
-	const { movies, error, setMovies, setError } = useMovie();
+	const { movies, error, setMovies, setError, isLoading } = useMovie();
+	const skeletons = [1, 2, 3, 4, 5, 6, 7, 8];
 
 	return (
 		<>
 			{error && <Text>{error}</Text>}
-			<ul>
+			<SimpleGrid columns={{ base: 1, sm: 2, md: 3, lg: 4 }} gap="15px" p={1}>
+				{/* <SimpleGrid minChildWidth="xs" gap="5px" p={2}> */}
+				{isLoading &&
+					skeletons.map((skeleton) => (
+						<MovieCardContainer key={skeleton}>
+							<MovieCardSkeleton />
+						</MovieCardContainer>
+					))}
 				{movies.map((movie) => (
-					<li key={movie.id}>{movie.title}</li>
+					<MovieCardContainer>
+						<MovieCard key={movie.id} movie={movie} />
+					</MovieCardContainer>
 				))}
-			</ul>
+			</SimpleGrid>
 		</>
 	);
 };

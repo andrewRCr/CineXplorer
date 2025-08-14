@@ -1,32 +1,38 @@
-import {
-	createBrowserRouter,
-	createRoutesFromElements,
-	Route,
-	RouterProvider,
-} from "react-router-dom";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
 import "./App.css";
 
-// import { AuthServiceProvider } from "./contexts/AuthContext";
 import AuthServiceProvider from "./components/AuthServiceProvider";
+import ProtectedRoute from "./components/ProtectedRoute";
 import Home from "./pages/Home";
 import Browse from "./pages/Browse";
 import Login from "./pages/Login";
-
-const router = createBrowserRouter(
-	createRoutesFromElements(
-		<Route>
-			<Route path="/" element={<Home />} />
-			<Route path="/browse" element={<Browse />} />
-			<Route path="/login" element={<Login />} />
-		</Route>
-	)
-);
+import TestLogin from "./pages/TestLogin";
+import Register from "./pages/Register";
+import Profile from "./pages/Profile";
+import Settings from "./pages/Settings";
 
 const App: React.FC = () => {
 	return (
-		<AuthServiceProvider>
-			<RouterProvider router={router} />
-		</AuthServiceProvider>
+		<BrowserRouter>
+			<AuthServiceProvider>
+				<Routes>
+					<Route path="/" element={<Home />} />
+					<Route path="/browse" element={<Browse />} />
+					<Route path="/profile" element={<Profile />} />
+					<Route path="/settings" element={<Settings />} />
+					<Route path="/login" element={<Login />} />
+					<Route path="/register" element={<Register />} />
+					<Route
+						path="/testlogin"
+						element={
+							<ProtectedRoute>
+								<TestLogin />
+							</ProtectedRoute>
+						}
+					/>
+				</Routes>
+			</AuthServiceProvider>
+		</BrowserRouter>
 	);
 };
 

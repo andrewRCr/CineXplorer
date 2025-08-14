@@ -2,6 +2,7 @@ import {
 	Box,
 	Button,
 	Checkbox,
+	Container,
 	Field,
 	Flex,
 	Input,
@@ -21,24 +22,51 @@ const Login = () => {
 			password: "",
 			rememberMe: false,
 		},
+		validate: (values) => {
+			const errors: Partial<typeof values> = {};
+			if (!values.username) {
+				errors.username = "Required";
+			}
+			if (!values.password) {
+				errors.password = "Required";
+			}
+			return errors;
+		},
 		onSubmit: async (values) => {
-			// Handle login logic here
 			const { username, password } = values;
 			if (login) {
 				const response = await login(username, password);
-				if (response instanceof Error) {
-					console.error("Login failed:", response);
-					return;
+				if (response === 401) {
+					console.log("Login failed: Invalid credentials");
+					formik.setErrors({
+						username: "Invalid username or password",
+						password: "Invalid username or password",
+					});
 				} else {
-					navigate("/browse");
+					navigate("/");
 				}
+				// if (response instanceof Error) {
+				// 	console.error("Login failed:", response);
+				// } else {
+				// 	navigate("/testlogin");
+				// }
 			}
 		},
 	});
 
 	return (
-		<Flex bg="transparent" align="center" justify="center" h="85vh">
-			<Box bg="gray" p={4} rounded="md" w={72}>
+		// <Flex bg="transparent" align="center" justify="center" h="85vh">
+		<Container maxW="xs">
+			{/* <Box bg="gray" p={4} rounded="md" w={72}> */}
+			<Box
+				bg="gray"
+				p={4}
+				marginTop={8}
+				display="flex"
+				flexDirection="column"
+				rounded="md"
+				w={72}
+			>
 				<form onSubmit={formik.handleSubmit}>
 					<VStack padding="2" align="flex-start">
 						<Field.Root
@@ -49,16 +77,20 @@ const Login = () => {
 								Username or Email Address
 							</Field.Label>
 							<Input
+								autoFocus
 								id="username"
 								name="username"
 								type="text"
-								onChange={formik.handleChange}
 								value={formik.values.username}
+								onChange={formik.handleChange}
+								onBlur={formik.handleBlur}
 							/>
+							<Field.ErrorText>{formik.errors.username}</Field.ErrorText>
 						</Field.Root>
 						<Field.Root
 							required
 							invalid={!!formik.errors.password && formik.touched.password}
+							marginTop="2"
 						>
 							<Field.Label htmlFor="password">Password</Field.Label>
 							<Input
@@ -67,9 +99,12 @@ const Login = () => {
 								type="password"
 								value={formik.values.password}
 								onChange={formik.handleChange}
+								onBlur={formik.handleBlur}
 							/>
+							<Field.ErrorText>{formik.errors.password}</Field.ErrorText>
 						</Field.Root>
 						<Checkbox.Root
+							marginTop="2"
 							id="rememberMe"
 							name="rememberMe"
 							checked={formik.values.rememberMe}
@@ -79,13 +114,14 @@ const Login = () => {
 							<Checkbox.Control />
 							<Checkbox.Label>Remember Me</Checkbox.Label>
 						</Checkbox.Root>
-						<Button type="submit" width="full">
+						<Button marginTop={4} type="submit" width="full">
 							Login
 						</Button>
 					</VStack>
 				</form>
 			</Box>
-		</Flex>
+		</Container>
+		// </Flex>
 	);
 };
 

@@ -8,6 +8,7 @@ export interface Movie {
 	runtime: number;
 	overview: string;
 	poster_path: string;
+	vote_average: number;
 }
 
 export interface FetchMoviesResponse {
@@ -16,4 +17,5 @@ export interface FetchMoviesResponse {
 }
 
 // Create an instance of HttpService for the Movie endpoint.
-export default create("/movie/find/78");
+//export default create("/movie/find/78");
+export default create("/movie/recent");

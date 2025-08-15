@@ -25,5 +25,6 @@ urlpatterns = [
     # path('find/<int:tmdb_id>/', views.movie_detail_view),
     path('find/<int:tmdb_id>/', views.MovieDetailView.as_view()),
     path('search/<str:queryStr>/', views.movie_search_view),
-    path('recent/', views.RecentMoviesView.as_view()),
+    path('now-playing/', views.NowPlayingMoviesView.as_view()),
+    path('upcoming/', views.UpcomingMoviesView.as_view()),
 ]

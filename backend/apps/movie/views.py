@@ -73,7 +73,7 @@ class MovieDetailView(APIView):
         return movie_response
 
 
-class RecentMoviesView(APIView):
+class NowPlayingMoviesView(APIView):
     """  """
 
     authentication_classes = [TokenAuthentication]
@@ -81,10 +81,22 @@ class RecentMoviesView(APIView):
     def get(self, request, format=json):
         """ Retrieves a list of movies by recency, including user-specific data if available. """
 
-        movie_response = movie_service.get_recent_movies()
+        movie_response = movie_service.get_nowPlaying_movies()
         # TODO: skipping user movie data append for now
         return movie_response
 
+
+class UpcomingMoviesView(APIView):
+    """  """
+
+    authentication_classes = [TokenAuthentication]
+
+    def get(self, request, format=json):
+        """ Retrieves a list of upcoming movies, including user-specific data if available. """
+
+        movie_response = movie_service.get_upcoming_movies()
+        # TODO: skipping user movie data append for now
+        return movie_response
 
 # @api_view()
 # def movie_detail_view(request, tmdb_id) -> HttpResponse:

@@ -4,6 +4,7 @@ from rest_framework.response import Response
 import requests
 import logging
 from django.conf import settings
+from datetime import datetime, timedelta
 
 from movie.serializers import MovieDetailSerializer
 
@@ -94,20 +95,20 @@ def search_movies(query: str) -> Response:
             "error": "An error occurred while searching for movies."})
 
 
-def get_recent_movies() -> Response:
-    """ Retrieves a list of recent movies (ordred by date, descending) from TMDB. """
+def get_nowPlaying_movies() -> Response:
+    """ Retrieves a list of current movies (Now Playing) from TMDB. """
 
     try:
-        recent_url = f"{base_url}/movie/now_playing?api_key={settings.TMDB_API_KEY}"
-        recent_response = requests.get(recent_url)
+        now_playing_url = f"{base_url}/movie/now_playing?api_key={settings.TMDB_API_KEY}"
+        now_playing_response = requests.get(now_playing_url)
 
-        if recent_response.status_code != 200:
+        if now_playing_response.status_code != 200:
             logger.error(
-                f"Failed to retrieve recent movies: {recent_response.status_code}")
+                f"Failed to retrieve now playing movies: {now_playing_response.status_code}")
             return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR, data={
-                "error": "An error occurred while retrieving recent movies."})
+                "error": "An error occurred while retrieving Now Playing movies."})
 
-        results = recent_response.json().get('results', [])
+        results = now_playing_response.json().get('results', [])
         print(results)
         return Response(data=results)
         # return Response(data=results.json())
@@ -118,3 +119,30 @@ def get_recent_movies() -> Response:
         logger.error(f"Failed to retrieve recent movies: {e}")
         return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR, data={
             "error": "An error occurred while retrieving recent movies."})
+
+
+def get_upcoming_movies() -> Response:
+    """ Retrieves a list of upcoming movies from TMDB. """
+
+    today = datetime.today()
+    min_date = today.strftime("%Y-%m-%d")
+    max_date = (today + timedelta(days=30)).strftime("%Y-%m-%d")
+
+    try:
+        # upcoming_url = f"{base_url}/movie/upcoming?api_key={settings.TMDB_API_KEY}&region=US"
+        upcoming_url = f"{base_url}/discover/movie?include_adult=false&include_video=false&language=en-US&&region=US&page=1&sort_by=popularity.desc&with_release_type=2|3&primary_release_date.gte={min_date}&primary_release_date.lte={max_date}&api_key={settings.TMDB_API_KEY}"
+        upcoming_response = requests.get(upcoming_url)
+
+        if upcoming_response.status_code != 200:
+            logger.error(
+                f"Failed to retrieve upcoming movies: {upcoming_response.status_code}")
+            return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR, data={
+                "error": "An error occurred while retrieving upcoming movies."})
+
+        results = upcoming_response.json().get('results', [])
+        return Response(data=results)
+
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Failed to retrieve upcoming movies: {e}")
+        return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR, data={
+            "error": "An error occurred while retrieving upcoming movies."})

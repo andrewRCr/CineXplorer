@@ -16,6 +16,7 @@ export interface FetchMoviesResponse {
 	results: Movie[];
 }
 
-// Create an instance of HttpService for the Movie endpoint.
-//export default create("/movie/find/78");
-export default create("/movie/recent");
+// reusable API functions
+export const fetchNowPlayingMovies = () => create("/movie/now-playing");
+export const fetchUpcomingMovies = () => create("/movie/upcoming");
+export const fetchMovieDetail = () => create("/movie/find");

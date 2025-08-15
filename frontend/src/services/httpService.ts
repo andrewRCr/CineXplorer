@@ -18,9 +18,9 @@ class HttpService {
 	 * Returns an apiClient GET request promise for a generic entity.
 	 * @returns { request: Promise<AxiosResponse<any, any>>; cancel: () => void; }
 	 */
-	get<T extends Entity>() {
+	get<T extends Entity>(id: string) {
 		const controller = new AbortController();
-		const request = apiClient.get<T>(this.endpoint, {
+		const request = apiClient.get<T>(`${this.endpoint}/${id}`, {
 			signal: controller.signal,
 		});
 

@@ -7,7 +7,6 @@ import {
 	ButtonGroup,
 	IconButton,
 	Center,
-	Button,
 	Link,
 	HStack,
 } from "@chakra-ui/react";
@@ -54,7 +53,7 @@ const MovieCard = ({ movie }: MovieCardProps) => {
 					},
 				}}
 			>
-				<Link href="#">
+				<Link href={`/movie/${movie.id}`}>
 					<Image
 						height="100%"
 						width="100%"
@@ -72,7 +71,7 @@ const MovieCard = ({ movie }: MovieCardProps) => {
 						<Heading p={0} size="md" lineClamp={1}>
 							<Link
 								lineClamp={1}
-								href="#"
+								href={`/movie/${movie.id}`}
 								textDecoration="none"
 								_hover={{
 									colorPalette: "blue",

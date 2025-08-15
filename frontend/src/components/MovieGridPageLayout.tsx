@@ -7,8 +7,15 @@ import {
 } from "@chakra-ui/react";
 import NavBar from "@/components/NavBar";
 import MovieGrid from "@/components/MovieGrid";
+import Sidebar from "@/components/Sidebar";
+import type { Movie } from "@/services/movieService";
 
-const Browse = () => {
+interface MovieGridPageLayoutProps {
+	title: string;
+	fetcher: () => { request: Promise<{ data: Movie[] }>; cancel: () => void };
+}
+
+const MovieGridPageLayout = ({ title, fetcher }: MovieGridPageLayoutProps) => {
 	const showSidebar = useBreakpointValue({
 		base: false,
 		md: true,
@@ -31,17 +38,17 @@ const Browse = () => {
 			</GridItem>
 			<Show when={showSidebar}>
 				<GridItem area="sidebar" bg="gray.900">
-					Sidebar
+					<Sidebar />
 				</GridItem>
 			</Show>
 			<GridItem area="main" bg="transparent">
 				<Text fontSize="2xl" fontStyle="italic" color="white" p={2}>
-					Now Playing
+					{title}
 				</Text>
-				<MovieGrid />
+				<MovieGrid fetcher={fetcher} />
 			</GridItem>
 		</Grid>
 	);
 };
 
-export default Browse;
+export default MovieGridPageLayout;

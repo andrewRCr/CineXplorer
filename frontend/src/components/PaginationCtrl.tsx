@@ -2,19 +2,16 @@ import { ButtonGroup, IconButton, Pagination } from "@chakra-ui/react";
 import { LuChevronLeft, LuChevronRight } from "react-icons/lu";
 
 interface iPaginationCtrlProps {
-	totalCount: number;
-	pageSize: number;
+	totalMovieCount: number;
+	maxPage: number;
 	onGoToPage: (pageNumber: number) => void;
 	currentPage: number;
 }
 
 export const PaginationCtrl = (props: iPaginationCtrlProps) => {
-	const maxPage = Math.ceil(props.totalCount / props.pageSize);
-
 	return (
 		<Pagination.Root
-			count={maxPage}
-			pageSize={props.pageSize}
+			count={props.maxPage}
 			page={props.currentPage}
 			defaultPage={1}
 		>
@@ -49,10 +46,10 @@ export const PaginationCtrl = (props: iPaginationCtrlProps) => {
 				<Pagination.NextTrigger asChild>
 					<IconButton
 						onClick={() =>
-							props.currentPage < maxPage &&
+							props.currentPage < props.maxPage &&
 							props.onGoToPage(props.currentPage + 1)
 						}
-						disabled={props.currentPage === maxPage}
+						disabled={props.currentPage === props.maxPage}
 						aria-label="Next page"
 					>
 						<LuChevronRight />

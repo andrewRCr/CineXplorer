@@ -8,11 +8,14 @@ import {
 import NavBar from "@/components/NavBar";
 import MovieGrid from "@/components/MovieGrid";
 import Sidebar from "@/components/Sidebar";
-import type { Movie } from "@/services/movieService";
+import type { Movie, PaginatedMoviesResponse } from "@/services/movieService";
 
 interface MovieGridPageLayoutProps {
 	title: string;
-	fetcher: () => { request: Promise<{ data: Movie[] }>; cancel: () => void };
+	fetcher: (page: number) => {
+		request: Promise<{ data: PaginatedMoviesResponse }>;
+		cancel: () => void;
+	};
 }
 
 const MovieGridPageLayout = ({ title, fetcher }: MovieGridPageLayoutProps) => {

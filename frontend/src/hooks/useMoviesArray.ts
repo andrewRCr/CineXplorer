@@ -1,20 +1,38 @@
 import { useApiRequest } from "./useApiRequest";
-import { type Movie } from "../services/movieService";
+import { useMemo } from "react";
+import {
+	type Movie,
+	type PaginatedMoviesResponse,
+} from "../services/movieService";
 
 type FetchArrayFn = () => {
-	request: Promise<{ data: Movie[] }>;
+	request: Promise<{ data: PaginatedMoviesResponse }>;
 	cancel: () => void;
 };
 
 const useMoviesArray = (fetchFn: FetchArrayFn) => {
-	const {
-		data: movies,
+	// Memoize fetcher to ensure stable reference for useApiRequest
+	const stableFetcher = useMemo(() => fetchFn, [fetchFn]);
+	const { data, error, setData, setError, isLoading } =
+		useApiRequest<PaginatedMoviesResponse>(stableFetcher);
+	// return { movies: movies || [], error, setMovies, setError, isLoading };
+
+	// Extract pagination info and movies array
+	const movies = data?.results ?? [];
+	const total_pages = data?.total_pages ?? 1;
+	const total_results = data?.total_results ?? movies.length;
+	const page = data?.page ?? 1;
+
+	return {
+		page,
+		total_pages,
+		total_results,
+		movies,
 		error,
-		setData: setMovies,
+		setMovies: setData,
 		setError,
 		isLoading,
-	} = useApiRequest<Movie[]>(() => fetchFn());
-	return { movies: movies || [], error, setMovies, setError, isLoading };
+	};
 };
 
 export default useMoviesArray;

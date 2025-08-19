@@ -27,7 +27,18 @@ export function useApiRequest<T>(
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 
 	useEffect(() => {
-		const { request, cancel } = fetcher();
+		const result = fetcher();
+		if (
+			!result ||
+			typeof result.request !== "object" ||
+			typeof result.cancel !== "function"
+		) {
+			console.warn(
+				"useApiRequest: fetcher did not return valid request/cancel object"
+			);
+			return;
+		}
+		const { request, cancel } = result;
 		setIsLoading(true);
 		request
 			.then((res) => {
@@ -40,8 +51,10 @@ export function useApiRequest<T>(
 				setIsLoading(false);
 			});
 
-		return () => cancel();
-	}, []);
+		return () => {
+			cancel();
+		};
+	}, [fetcher]);
 
 	return { data, error, setData, setError, isLoading };
 }

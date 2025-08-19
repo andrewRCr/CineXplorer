@@ -4,7 +4,7 @@ import MovieGridPageLayout from "@/components/MovieGridPageLayout";
 const Upcoming = () => (
 	<MovieGridPageLayout
 		title="Upcoming"
-		fetcher={() => fetchUpcomingMovies().getArray()}
+		fetcher={(page) => fetchUpcomingMovies().getPaginated({ page })}
 	/>
 );
 

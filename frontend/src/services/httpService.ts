@@ -5,8 +5,11 @@ interface Entity {
 	id: number;
 }
 
-// This class provides a generic HTTP service for CRUD operations on entities.
-// It can be used for any entity type that extends the Entity interface.
+/**
+ * Generic HTTP service for RESTful API resources.
+ * Supports CRUD operations for single entities (by ID) and paginated resource requests.
+ * Use get() for single-entity fetches, and getPaginated() for paginated endpoints returning metadata and arrays.
+ */
 class HttpService {
 	endpoint: string;
 
@@ -15,8 +18,9 @@ class HttpService {
 	}
 
 	/**
-	 * Returns an apiClient GET request promise for a generic entity.
-	 * @returns { request: Promise<AxiosResponse<any, any>>; cancel: () => void; }
+	 * Fetch a single entity by ID from the API endpoint.
+	 * @param id - The entity's unique identifier.
+	 * @returns { request: Promise<AxiosResponse<T>>; cancel: () => void; }
 	 */
 	get<T extends Entity>(id: string) {
 		const controller = new AbortController();
@@ -28,13 +32,16 @@ class HttpService {
 	}
 
 	/**
-	 * Returns an apiClient GET request promise for an array of generic entites.
-	 * @returns { request: Promise<AxiosResponse<any, any>>; cancel: () => void; }
+	 * Fetch a paginated resource from the API endpoint.
+	 * Returns the full paginated response object, including metadata (e.g., page, total_pages, results).
+	 * @param params - Query parameters for pagination, filtering, etc.
+	 * @returns { request: Promise<AxiosResponse<T>>; cancel: () => void; }
 	 */
-	getArray<T extends Entity>() {
+	getPaginated<T>(params?: Record<string, unknown>) {
 		const controller = new AbortController();
-		const request = apiClient.get<T[]>(this.endpoint, {
+		const request = apiClient.get<T>(this.endpoint, {
 			signal: controller.signal,
+			params,
 		});
 
 		return { request, cancel: () => controller.abort() };
@@ -60,8 +67,8 @@ class HttpService {
 }
 
 /**
- * Factory function to create an instance of HttpService with a specific endpoint.
- * @param endpoint - The API endpoint for the service.
+ * Factory function to create an instance of HttpService for a given API endpoint.
+ * @param endpoint - The API endpoint for the resource.
  * @returns An instance of HttpService.
  */
 const create = (endpoint: string) => new HttpService(endpoint);

@@ -1,41 +1,59 @@
-import { useEffect, useState } from "react";
+import { useMemo, useEffect, useState, useCallback } from "react";
 // import useMovie from "@/hooks/useMovie";
-import useMoviesArrResult from "@/hooks/useMoviesArray";
-import { SimpleGrid, Text } from "@chakra-ui/react";
+// import useMoviesArrResult from "@/hooks/useMoviesArray";
+import { SimpleGrid, Text, Button } from "@chakra-ui/react";
 import MovieCard from "./MovieCard";
 import MovieCardSkeleton from "./MovieCardSkeleton";
 import MovieCardContainer from "./MovieCardContainer";
 import { PaginationCtrl } from "./PaginationCtrl";
 import useMoviesArray from "@/hooks/useMoviesArray";
-import { type Movie } from "../services/movieService";
+import { type PaginatedMoviesResponse } from "../services/movieService";
 
 interface MovieGridProps {
-	fetcher: () => { request: Promise<{ data: Movie[] }>; cancel: () => void };
+	fetcher: (page: number) => {
+		request: Promise<{ data: PaginatedMoviesResponse }>;
+		cancel: () => void;
+	};
 }
 
 const MovieGrid = ({ fetcher }: MovieGridProps) => {
-	const { movies, error, setMovies, setError, isLoading } =
-		useMoviesArray(fetcher);
-	const skeletons = [1, 2, 3, 4, 5, 6, 7, 8];
-
 	// pagination state
 	const [currentPage, setCurrentPage] = useState(1);
-	const [pageSize, setPageSize] = useState(20);
+	const pageSize = 20;
+
+	const fetcherCallback = useMemo(() => {
+		return () => {
+			console.log("MovieGrid: fetcherCallback called for page", currentPage);
+			return fetcher(currentPage);
+		};
+	}, [fetcher, currentPage]);
+
+	const { total_pages, total_results, movies, error, setError, isLoading } =
+		useMoviesArray(fetcherCallback);
+	const skeletons = [1, 2, 3, 4, 5, 6, 7, 8];
 
 	return (
 		<>
-			{error && <Text>{error}</Text>}
+			{error && (
+				<Text>
+					{error}
+					<Button size="sm" ml={2} onClick={() => setError("")}>
+						Dismiss
+					</Button>
+				</Text>
+			)}
 			<PaginationCtrl
 				key="topCtrl"
 				currentPage={currentPage}
 				onGoToPage={setCurrentPage}
-				pageSize={pageSize}
-				totalCount={movies.length}
+				maxPage={total_pages}
+				// pageSize={pageSize}
+				totalMovieCount={total_results}
 			/>
 			<Text>
 				{`Showing ${currentPage * pageSize - pageSize + 1}-${
 					currentPage * pageSize
-				} of ${movies.length} results`}
+				} of ${total_results} results`}
 			</Text>
 			<SimpleGrid columns={{ base: 1, sm: 2, md: 3, lg: 4 }} gap="15px" p={1}>
 				{isLoading &&
@@ -46,7 +64,7 @@ const MovieGrid = ({ fetcher }: MovieGridProps) => {
 					))}
 
 				{movies
-					.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+					// .slice((currentPage - 1) * pageSize, currentPage * pageSize)
 					.map((movie) => (
 						<MovieCardContainer>
 							<MovieCard key={movie.id} movie={movie} />
@@ -62,8 +80,9 @@ const MovieGrid = ({ fetcher }: MovieGridProps) => {
 				key="bottomCtrl"
 				currentPage={currentPage}
 				onGoToPage={setCurrentPage}
-				pageSize={pageSize}
-				totalCount={movies.length}
+				maxPage={total_pages}
+				// pageSize={pageSize}
+				totalMovieCount={total_results}
 			/>
 		</>
 	);

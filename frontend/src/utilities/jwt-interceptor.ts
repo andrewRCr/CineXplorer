@@ -1,3 +1,9 @@
+/**
+ * Axios JWT interceptor for authenticated API requests.
+ *
+ * Sets up an Axios instance with JWT and CSRF token handling for secure communication with the backend.
+ * Automatically attaches CSRF tokens to unsafe requests and handles token refresh and authentication errors.
+ */
 import axios, { type AxiosInstance } from "axios";
 import { useNavigate } from "react-router-dom";
 import { useAuthService } from "@/services/authService";
@@ -8,6 +14,22 @@ const useAxiosWithInterceptor = (): AxiosInstance => {
 	const jwtAxios = axios.create({ baseURL: BASE_URL });
 	const navigate = useNavigate();
 	const { logout } = useAuthService();
+
+	// attach CSRF token for unsafe methods
+	jwtAxios.interceptors.request.use((config) => {
+		const unsafeMethods = ["post", "put", "patch", "delete"];
+		if (config.method && unsafeMethods.includes(config.method.toLowerCase())) {
+			const csrfToken = document.cookie
+				.split("; ")
+				.find((row) => row.startsWith("XSRF-TOKEN="))
+				?.split("=")[1];
+			if (csrfToken) {
+				config.headers = config.headers || {};
+				config.headers["X-CSRFToken"] = csrfToken;
+			}
+		}
+		return config;
+	});
 
 	jwtAxios.interceptors.response.use(
 		(response) => {

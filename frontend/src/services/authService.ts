@@ -2,6 +2,7 @@ import axios from "axios";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { AuthServiceProps } from "@/@types/auth-service";
+import { getCsrfToken, ensureCsrfTokenCookie } from "@/utilities/csrf";
 
 const BASE_URL = import.meta.env.VITE_BASE_API_URL;
 
@@ -18,6 +19,10 @@ export function useAuthService(): AuthServiceProps {
 
 	// store authenticated user's username/email
 	// note: not currently sent via jwt-interceptor, as only used by login()
+	/**
+	 * GET /user/me/
+	 * Fetches authenticated user's details.
+	 */
 	const getUserDetails = async () => {
 		try {
 			const userInfoResponse = await axios.get(`${BASE_URL}/user/me/`, {
@@ -38,8 +43,16 @@ export function useAuthService(): AuthServiceProps {
 		}
 	};
 
+	/**
+	 * POST /token/
+	 * Authenticates user and sets login state.
+	 * Requires CSRF token.
+	 */
 	const login = async (username: string, password: string) => {
 		try {
+			await ensureCsrfTokenCookie(BASE_URL);
+			const csrfToken = getCsrfToken();
+			//  make login request with CSRF header
 			const response = await axios.post(
 				`${BASE_URL}/token/`,
 				{
@@ -49,6 +62,7 @@ export function useAuthService(): AuthServiceProps {
 				{
 					headers: {
 						"Content-Type": "application/json",
+						"X-CSRFToken": csrfToken || "",
 					},
 					withCredentials: true, // important for cookies to be set
 				}
@@ -70,12 +84,53 @@ export function useAuthService(): AuthServiceProps {
 		}
 	};
 
+	/**
+	 * POST /logout/
+	 * Logs out the current user and clears local state.
+	 * Requires CSRF token.
+	 */
+	const logout = async () => {
+		localStorage.removeItem("user_id");
+		localStorage.removeItem("username");
+		localStorage.removeItem("email");
+		localStorage.setItem("isLoggedIn", "false");
+		setIsLoggedIn(false);
+		navigate("/login");
+
+		try {
+			const csrfToken = getCsrfToken();
+			await axios.post(
+				`${BASE_URL}/logout/`,
+				{},
+				{
+					headers: {
+						"Content-Type": "application/json",
+						"X-CSRFToken": csrfToken || "",
+					},
+					withCredentials: true,
+				}
+			);
+		} catch (error) {
+			console.error("Logout failed:", error);
+			return Promise.reject(error);
+		}
+	};
+
+	/**
+	 * POST /register/
+	 * Registers a new user.
+	 * Requires CSRF token.
+	 * Fetches CSRF token cookie if not present.
+	 */
 	const register = async (
 		username: string,
 		email: string,
 		password: string
 	) => {
 		try {
+			await ensureCsrfTokenCookie(BASE_URL);
+			const csrfToken = getCsrfToken();
+			// make registration request with CSRF header
 			const response = await axios.post(
 				`${BASE_URL}/register/`,
 				{
@@ -86,41 +141,16 @@ export function useAuthService(): AuthServiceProps {
 				{
 					headers: {
 						"Content-Type": "application/json",
+						"X-CSRFToken": csrfToken || "",
 					},
-					//withCredentials: true, // important for cookies to be set
 				}
 			);
-			return response.status; // return status code for success
+			return response.status;
 		} catch (error) {
 			if (axios.isAxiosError(error) && error.response) {
 				return error.response.status;
 			}
 			return error;
-		}
-	};
-
-	const logout = async () => {
-		localStorage.removeItem("user_id");
-		localStorage.removeItem("username");
-		localStorage.removeItem("email");
-		localStorage.setItem("isLoggedIn", "false");
-		setIsLoggedIn(false);
-		navigate("/login");
-
-		try {
-			await axios.post(
-				`${BASE_URL}/logout/`,
-				{},
-				{
-					headers: {
-						"Content-Type": "application/json",
-					},
-					withCredentials: true,
-				}
-			);
-		} catch (error) {
-			console.error("Logout failed:", error);
-			return Promise.reject(error);
 		}
 	};
 

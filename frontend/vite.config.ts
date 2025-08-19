@@ -1,8 +1,7 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tsconfigPaths from "vite-tsconfig-paths";
-
-//https://vite.dev/config/
+import fs from "fs";
 
 export default defineConfig({
 	plugins: [react(), tsconfigPaths()],
@@ -10,8 +9,12 @@ export default defineConfig({
 		watch: {
 			usePolling: true,
 		},
-		host: true, // needed for the Docker Container port mapping to work
+		host: "0.0.0.0", // needed for the Docker Container port mapping to work
 		strictPort: true,
 		port: 5173,
+		https: {
+			key: fs.readFileSync("/app/certs/key.pem"),
+			cert: fs.readFileSync("/app/certs/cert.pem"),
+		},
 	},
 });

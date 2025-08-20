@@ -9,9 +9,6 @@ from django.contrib.auth import get_user_model
 
 from core import models
 
-import tmdbsimple as tmdb
-tmdb.API_KEY = settings.TMDB_API_KEY
-
 
 class ModelTests(TestCase):
     """ Test core models. """
@@ -83,20 +80,20 @@ class ModelTests(TestCase):
             'testPass123'
         )
 
-        movie_id: int = 78
-        # pull movie data from TMDB
-        tmdb_movie = tmdb.Movies(movie_id)
-        tmdb_movie.info()
-
+        movie = models.Movie.objects.create(
+            tmdb_id=78,
+            title='Blade Runner',
+            # ...other movie fields...
+        )
         user_movie_data: models.UserMovieData = models.UserMovieData.objects.create(
             user=user,
-            tmdb_id=tmdb_movie.id,
-            title=tmdb_movie.title,  # type: ignore
+            movie=movie,
+            # ...other UserMovieData fields...
         )
 
         self.assertEqual(user_movie_data.user, user)
-        self.assertEqual(user_movie_data.tmdb_id, tmdb_movie.id)
-        self.assertEqual(str(user_movie_data), tmdb_movie.title)  # type: ignore
+        self.assertEqual(user_movie_data.movie.tmdb_id, 78)
+        self.assertEqual(str(user_movie_data), f'{user.username} - {movie.title}')
 
     def test_create_nondefault_user_movie_data(self) -> None:
         """ Tests that creating a non-default UserMovieData object for a user is successful. """
@@ -107,16 +104,15 @@ class ModelTests(TestCase):
             'testPass123'
         )
 
-        movie_id: int = 78
         movie_review_str = 'Blade Runner is one of the greatest films of all time.'
-        # pull movie data from TMDB
-        tmdb_movie = tmdb.Movies(movie_id)
-        tmdb_movie.info()
-
+        movie = models.Movie.objects.create(
+            tmdb_id=78,
+            title='Blade Runner',
+            # ...other movie fields...
+        )
         user_movie_data: models.UserMovieData = models.UserMovieData.objects.create(
             user=user,
-            tmdb_id=tmdb_movie.id,
-            title=tmdb_movie.title,  # type: ignore
+            movie=movie,
             user_watched=True,
             user_on_watchlist=True,
             user_liked=True,

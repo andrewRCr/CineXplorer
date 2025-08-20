@@ -1,0 +1,17 @@
+# This file overrides the base docker-compose.yml for the CI environment.
+# It makes the following changes:
+# 1. Overrides the backend service's command to keep the container running
+#    without starting the development server.
+# 2. Disables the backend service's healthcheck, which is not needed in CI
+#    and would fail since the server is not running.
+# 3. Overrides the dev-db service's env_file to use the CI-specific
+#    environment variables, ensuring consistent credentials.
+
+services:
+  backend:
+    command: tail -f /dev/null
+    healthcheck:
+      disable: true
+  dev-db:
+    env_file:
+      - ./backend/config/.env.ci

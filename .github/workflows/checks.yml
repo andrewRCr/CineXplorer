@@ -15,6 +15,51 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Docker meta for backend
+        id: meta-backend
+        uses: docker/metadata-action@v5
+        with:
+          images: cinexplorer-backend
+          tags: |
+            type=sha,prefix={{branch}}-
+
+      - name: Docker meta for frontend
+        id: meta-frontend
+        uses: docker/metadata-action@v5
+        with:
+          images: cinexplorer-frontend
+          tags: |
+            type=sha,prefix={{branch}}-
+
+      - name: Build and cache backend image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          tags: ${{ steps.meta-backend.outputs.tags }}
+          labels: ${{ steps.meta-backend.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          load: true
+
+      - name: Build and cache frontend image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          tags: ${{ steps.meta-frontend.outputs.tags }}
+          labels: ${{ steps.meta-frontend.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          load: true
+
       - name: Create .env file
         run: |
           echo "POSTGRES_DB=cinexplorer" > backend/config/.env
@@ -28,6 +73,5 @@ jobs:
         env:
           COMPOSE_PROJECT_NAME: cinexplorer-ci
         run: |
-          docker compose -f docker-compose.yml -f docker-compose.ci.yml up -d --build
+          docker compose -f docker-compose.yml -f docker-compose.ci.yml up -d
           docker compose exec backend sh -c "python manage.py wait_for_db && python manage.py test && flake8 --max-line-length=99 --exclude migrations"
-          docker compose down

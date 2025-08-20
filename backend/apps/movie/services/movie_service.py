@@ -97,12 +97,18 @@ def get_movie_by_id(tmdb_id: int):
             return {'error': f'Movie with id {tmdb_id} not found.', 'status': status.HTTP_404_NOT_FOUND}
         elif info_response.status_code != 200:
             logger.error(f"Failed to retrieve movie info for id {tmdb_id}.")
-            return {'error': f'An error occurred while retrieving info for movie w/ id {tmdb_id}.', 'status': status.HTTP_500_INTERNAL_SERVER_ERROR}
+            return {
+                'error': f'An error occurred while retrieving info for movie w/ id {tmdb_id}.',
+                'status': status.HTTP_500_INTERNAL_SERVER_ERROR
+            }
 
         credits_response = requests.get(credits_url)
         if credits_response.status_code != 200:
             logger.error(f"Failed to retrieve credits for movie id {tmdb_id}.")
-            return {'error': f'An error occurred while retrieving credits for movie w/ id {tmdb_id}.', 'status': status.HTTP_500_INTERNAL_SERVER_ERROR}
+            return {
+                'error': f'An error occurred while retrieving credits for movie w/ id {tmdb_id}.',
+                'status': status.HTTP_500_INTERNAL_SERVER_ERROR
+            }
 
         movie_instance = tmdb_dict_to_movie_instance(info_response.json())
         credits = get_simple_credits(credits_response.json())
@@ -113,7 +119,10 @@ def get_movie_by_id(tmdb_id: int):
 
     except requests.exceptions.RequestException as e:
         logger.error(f"Failed to retrieve movie data: {e}")
-        return {'error': f'An error occurred while finding movie with id {tmdb_id}.', 'status': status.HTTP_500_INTERNAL_SERVER_ERROR}
+        return {
+            'error': f'An error occurred while finding movie with id {tmdb_id}.',
+            'status': status.HTTP_500_INTERNAL_SERVER_ERROR
+        }
 
 # =========================
 # Paginated Resource Service Methods

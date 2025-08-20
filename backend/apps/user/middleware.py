@@ -20,7 +20,13 @@ EXEMPT_PATHS = ['/api/register/', '/api/token/', '/api/logout/', '/api/token/ref
 class CsrfHeaderMiddleware(MiddlewareMixin):
     def process_request(self, request):
         print(
-            f"[CSRF Middleware] Path: {request.path}, Method: {request.method}, Authenticated: {getattr(request, 'user', None) and request.user.is_authenticated}")
+            (
+                f"[CSRF Middleware] Path: {request.path}, "
+                f"Method: {request.method}, "
+                f"Authenticated: {getattr(request, 'user', None) and
+                                  request.user.is_authenticated}"
+            )
+        )
         if request.path in EXEMPT_PATHS:
             return None
         # CSRF protection is only needed for authenticated users.

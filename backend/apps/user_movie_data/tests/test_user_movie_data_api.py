@@ -17,6 +17,7 @@ from django.urls import reverse
 from rest_framework.test import APIClient
 from rest_framework import status
 from unittest.mock import patch, Mock
+from unittest.mock import patch, Mock
 
 
 USER_MOVIE_DATA_URL = reverse('user_movie_data:user-movie-data-list')
@@ -220,7 +221,8 @@ class PrivateUserMovieDataAPITests(TestCase):
         self.assertEqual(res.data, serializer.data)
 
     def test_create_user_movie_data(self):
-        # NOTE: In production, creation is via API and tmdb_id; here we use ORM for direct DB linkage.
+        # NOTE: In production, creation is via API and tmdb_id;
+        # here we use ORM for direct DB linkage.
         movie = Movie.objects.create(title='Chinatown_12350', tmdb_id=12350)
         user_movie_data = UserMovieData.objects.create(
             user=self.user,

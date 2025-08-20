@@ -2,7 +2,6 @@
 Tests for core models.
 """
 
-from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.test import TestCase
 from django.contrib.auth import get_user_model

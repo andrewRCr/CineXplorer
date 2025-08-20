@@ -2,6 +2,14 @@
 Views for the user movie data API.
 """
 
+from rest_framework import viewsets
+from rest_framework.authentication import TokenAuthentication
+from rest_framework.permissions import IsAuthenticated
+
+from core.models import UserMovieData
+from user_movie_data import serializers user movie data API.
+"""
+
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from rest_framework import viewsets

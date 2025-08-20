@@ -4,7 +4,6 @@ Views for the movie API.
 """
 
 
-from django.conf import settings
 from core.views.tmdb import PaginatedTMDBView, PaginatedTMDBQueryView, SingleResourceTMDBView
 from core.models import UserMovieData
 from .services import movie_service
@@ -51,7 +50,8 @@ class NowPlayingMoviesView(PaginatedTMDBView):
 
     def get(self, request, *args, **kwargs):
         """
-        Retrieves now playing movies, serializes Movie instances, appends user-specific data, and preserves pagination metadata.
+        Retrieves now playing movies, serializes Movie instances,
+        appends user-specific data, and preserves pagination metadata.
         """
         tmdb_response = self.service_method()
         if not isinstance(tmdb_response, dict) or 'results' not in tmdb_response:
@@ -79,7 +79,8 @@ class UpcomingMoviesView(PaginatedTMDBView):
 
     def get(self, request, *args, **kwargs):
         """
-        Retrieves upcoming movies, serializes Movie instances, appends user-specific data, and preserves pagination metadata.
+        Retrieves upcoming movies, serializes Movie instances,
+        appends user-specific data, and preserves pagination metadata.
         """
         tmdb_response = self.service_method()
         if not isinstance(tmdb_response, dict) or 'results' not in tmdb_response:
@@ -107,7 +108,8 @@ class SearchMoviesView(PaginatedTMDBQueryView):
 
     def get(self, request, *args, **kwargs):
         """
-        Searches for movies by query string, serializes Movie instances, appends user-specific data, and preserves pagination metadata.
+        Searches for movies by query string, serializes Movie instances,
+        appends user-specific data, and preserves pagination metadata.
         """
         query = request.query_params.get('query', '')
         tmdb_response = self.service_method(query)

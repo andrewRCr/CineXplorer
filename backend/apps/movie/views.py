@@ -4,11 +4,17 @@ Views for the movie API.
 """
 
 
-from core.views.tmdb import PaginatedTMDBView, PaginatedTMDBQueryView, SingleResourceTMDBView
-from core.models import UserMovieData
-from .services import movie_service
 from rest_framework.response import Response
-from movie.serializers import MovieSerializer, MovieDetailSerializer
+
+from core.models import UserMovieData
+from core.views.tmdb import (
+    PaginatedTMDBQueryView,
+    PaginatedTMDBView,
+    SingleResourceTMDBView,
+)
+from movie.serializers import MovieDetailSerializer, MovieSerializer
+
+from .services import movie_service
 
 
 # =========================

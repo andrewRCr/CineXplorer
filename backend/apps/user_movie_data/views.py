@@ -7,21 +7,6 @@ from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 
 from core.models import UserMovieData
-from user_movie_data import serializers user movie data API.
-"""
-
-from django.http import HttpResponse
-from django.shortcuts import get_object_or_404
-from rest_framework import viewsets
-from rest_framework.authentication import TokenAuthentication
-from rest_framework.permissions import IsAuthenticated
-
-from rest_framework.decorators import api_view
-from rest_framework.response import Response
-from rest_framework.views import APIView
-from rest_framework.generics import RetrieveAPIView
-
-from core.models import UserMovieData
 from user_movie_data import serializers
 
 
@@ -53,20 +38,23 @@ class UserMovieDataViewSet(viewsets.ModelViewSet):
 
 
 class UserMovieDataFindByMovie(viewsets.ReadOnlyModelViewSet):
-    """  """
+    """
+    View for finding user movie data by TMDB ID.
+    """
 
     serializer_class = serializers.UserMovieDataDetailSerializer
     queryset = UserMovieData.objects.all()
-    lookup_field = 'tmdb_id'
+    lookup_field = 'movie__tmdb_id'
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):  # type: ignore
-        print(f"user: {self.request.user.username}")
-        self.queryset = self.queryset.filter(user=self.request.user)
-        print(f"forUser: {self.queryset}")
-        tmdb_id = self.request.query_params.get('tmdb_id')  # type: ignore
+        """
+        Retrieve user movie data for the authenticated user,
+        optionally filtered by a movie's TMDB ID.
+        """
+        queryset = self.queryset.filter(user=self.request.user)
+        tmdb_id = self.request.query_params.get('tmdb_id')
         if tmdb_id is not None:
-            queryset = self.queryset.filter(tmdb_id=tmdb_id)
-        print(f"Final: {self.queryset}")
-        return self.queryset
+            queryset = queryset.filter(movie__tmdb_id=tmdb_id)
+        return queryset

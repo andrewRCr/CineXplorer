@@ -1,10 +1,11 @@
-from core.models import UserMovieData
+import logging
+
+import requests
+from django.conf import settings
 from rest_framework import status
 from rest_framework.response import Response
-import requests
-import logging
-from django.conf import settings
 
+from core.models import UserMovieData
 from user_movie_data.serializers import UserMovieDataSerializer
 
 logger: logging.Logger = logging.getLogger(__name__)

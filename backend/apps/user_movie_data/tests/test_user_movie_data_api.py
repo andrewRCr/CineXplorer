@@ -1,5 +1,3 @@
-
-
 """
 Tests for the user movie data API.
 
@@ -7,6 +5,8 @@ This module contains tests for the UserMovieData API endpoints, including authen
 CRUD operations, and user-specific data filtering. All tests use static movie data for reliability.
 """
 
+
+import random
 
 from user_movie_data.serializers import UserMovieDataSerializer, UserMovieDataDetailSerializer
 from core.models import UserMovieData
@@ -16,11 +16,21 @@ from django.test import TestCase
 from django.urls import reverse
 from rest_framework.test import APIClient
 from rest_framework import status
-from unittest.mock import patch, Mock
-from unittest.mock import patch, Mock
+
+
+# ======================================================================
+# Constants & Helper Functions
+# ======================================================================
 
 
 USER_MOVIE_DATA_URL = reverse('user_movie_data:user-movie-data-list')
+
+
+def find_by_movie_url(tmdb_id):
+    """
+    Returns the URL for finding UserMovieData by movie tmdb_id.
+    """
+    return reverse('user_movie_data:user-movie-data-find-by-movie-detail', args=[tmdb_id])
 
 
 def detail_url(user_movie_data_id):
@@ -45,9 +55,7 @@ def create_user_movie_data(user, **params):
         UserMovieData: The created object.
     """
     # Create a Movie object for association
-    from core.models import Movie
     # Ensure tmdb_id is unique for each test instance
-    import random
     movie_defaults = {
         'title': params.get('title', 'Blade Runner'),
         'tmdb_id': params.get('tmdb_id', random.randint(10000, 99999)),
@@ -82,6 +90,11 @@ def create_user(**params):
         first_name=params.get('first_name', ''),
         last_name=params.get('last_name', ''),
     )
+
+
+# ======================================================================
+# Test Classes
+# ======================================================================
 
 
 class PublicUserMovieDataAPITests(TestCase):
@@ -329,3 +342,39 @@ class PrivateUserMovieDataAPITests(TestCase):
         res = self.client.delete(url)
         self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse(UserMovieData.objects.filter(id=user_movie_data.id).exists())
+
+    def test_find_by_movie_tmdb_id(self):
+        """
+        Test retrieving UserMovieData by the movie's tmdb_id.
+        """
+        # Create a movie and associated user movie data
+        movie1_tmdb_id = 9876
+        movie1 = Movie.objects.create(title='Correct Movie', tmdb_id=movie1_tmdb_id)
+        user_movie_data1 = UserMovieData.objects.create(
+            user=self.user,
+            movie=movie1,
+            user_rating=9
+        )
+
+        # Create another movie and data that should NOT be found
+        movie2_tmdb_id = 5432
+        movie2 = Movie.objects.create(title='Wrong Movie', tmdb_id=movie2_tmdb_id)
+        UserMovieData.objects.create(
+            user=self.user,
+            movie=movie2,
+            user_rating=5
+        )
+
+        # Test finding the correct data
+        url = find_by_movie_url(movie1_tmdb_id)
+        res = self.client.get(url)
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        serializer = UserMovieDataDetailSerializer(user_movie_data1)
+        self.assertEqual(res.data, serializer.data)
+
+        # Test that a non-existent tmdb_id returns 404
+        non_existent_tmdb_id = 1111
+        url = find_by_movie_url(non_existent_tmdb_id)
+        res = self.client.get(url)
+        self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)

@@ -3,6 +3,11 @@ from rest_framework.authentication import TokenAuthentication
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
+from user_movie_data.services.user_movie_data_service import (
+    get_user_movie_data,
+    get_user_movie_data_bulk,
+)
+
 """
 Base views for single resource (non-paginated) TMDB endpoints.
 """
@@ -32,7 +37,6 @@ class SingleResourceTMDBView(APIView):
         if request.auth and 'id' in data:
             # Only attach if this is a movie resource
             if 'title' in data:
-                from user_movie_data.services.user_movie_data_service import get_user_movie_data
                 user_movie_data_response = get_user_movie_data(
                     data['id'], request.auth.key)
                 if user_movie_data_response.status_code == status.HTTP_200_OK:
@@ -67,7 +71,6 @@ class PaginatedTMDBView(APIView):
             if not isinstance(results, list):
                 results = []
             movie_ids = [movie['id'] for movie in results]
-            from user_movie_data.services.user_movie_data_service import get_user_movie_data_bulk
             user_movie_data_map = get_user_movie_data_bulk(movie_ids, request.user)
             for movie in results:
                 movie_id = movie['id']
@@ -98,7 +101,6 @@ class PaginatedTMDBQueryView(APIView):
             if not isinstance(results, list):
                 results = []
             movie_ids = [movie['id'] for movie in results]
-            from user_movie_data.services.user_movie_data_service import get_user_movie_data_bulk
             user_movie_data_map = get_user_movie_data_bulk(movie_ids, request.user)
             for movie in results:
                 movie_id = movie['id']

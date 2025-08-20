@@ -94,7 +94,10 @@ def get_movie_by_id(tmdb_id: int):
 
         info_response = requests.get(info_url)
         if info_response.status_code == 404:
-            return {'error': f'Movie with id {tmdb_id} not found.', 'status': status.HTTP_404_NOT_FOUND}
+            return {
+                'error': f'Movie with id {tmdb_id} not found.',
+                'status': status.HTTP_404_NOT_FOUND
+            }
         elif info_response.status_code != 200:
             logger.error(f"Failed to retrieve movie info for id {tmdb_id}.")
             return {

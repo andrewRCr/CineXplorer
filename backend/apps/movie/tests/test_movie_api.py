@@ -1,7 +1,9 @@
-
-
 """
-Tests for the movie API endpoints, covering detail, paginated lists, and search.
+Integration tests for the movie API endpoints.
+
+These tests verify the behavior of the movie API, which relies on external
+calls to the The Movie Database (TMDB) API. The external calls are mocked
+to ensure tests are fast, reliable, and independent of the external service.
 """
 from django.test import TestCase
 from django.urls import reverse

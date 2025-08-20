@@ -16,6 +16,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Test
-        run: docker compose run --env DJANGO_SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }} --env TMDB_API_KEY=${{ secrets.TMDB_API_KEY }} --env BACKEND_URL=${{ secrets.BACKEND_URL }} --rm backend sh -c "python manage.py wait_for_db && python manage.py test"
+        run: |
+          touch backend/config/.env
+          docker compose run --env DJANGO_SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }} --env TMDB_API_KEY=${{ secrets.TMDB_API_KEY }} --env BACKEND_URL=${{ secrets.BACKEND_URL }} --rm backend sh -c "python manage.py wait_for_db && python manage.py test"
       - name: Lint with flake8
         run: docker compose run --rm backend sh -c "flake8 --max-line-length=99 --exclude migrations"

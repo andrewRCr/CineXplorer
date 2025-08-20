@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_extensions',
     'core',
     'debug_toolbar',
     'corsheaders',
@@ -58,6 +59,7 @@ MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
+    'user.middleware.CsrfHeaderMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -179,23 +181,27 @@ BACKEND_URL = env("BACKEND_URL")
 CORS_ALLOW_ALL_ORIGINS = True  # TODO: update for production (temp/development only)
 CORS_ALLOW_CREDENTIALS = True
 
-# CORS_ALLOWED_ORIGINS = [
-#     'http://localhost:5173',
-# ]  # if this is used, then no need to use `CORS_ALLOW_ALL_ORIGINS = True`
-# CORS_ALLOWED_ORIGIN_REGEXES = [
-#     'http://localhost:5174',
-# ]
 
-# CSRF_TRUSTED_ORIGINS = [
-#     'http://localhost:5174',  # for localhost (REACT Default)
-# ]
+# Allow HTTPS frontend for CORS and CSRF
+CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOWED_ORIGINS = [
+    'https://localhost:5173',
+    'https://localhost:5174',
+]
+CORS_ALLOW_CREDENTIALS = True
+CSRF_TRUSTED_ORIGINS = [
+    'https://localhost:5173',
+    'https://localhost:5174',
+]
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=30),
     'ACCESS_TOKEN_NAME': 'access_token',
     'REFRESH_TOKEN_NAME': 'refresh_token',
-    'JWT_COOKIE_SAMESITE': 'Lax',
+    # For cross-site cookies with HTTPS, use 'None'.
+    # If you only use same-site cookies, 'Lax' is more secure but will block cross-site requests.
+    'JWT_COOKIE_SAMESITE': 'None',
 }
 
 FORBIDDEN_USERNAMES = ["admin", "administrator", "root", "superuser", "test", "guest"]

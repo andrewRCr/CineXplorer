@@ -8,10 +8,12 @@ services:
       - "8000:8000"
     volumes:
       - ./backend:/backend
+      - ./certs/key.pem:/app/key.pem
+      - ./certs/cert.pem:/app/cert.pem
     command: >
       sh -c "python manage.py wait_for_db &&
              python manage.py migrate &&
-             python manage.py runserver 0.0.0.0:8000"
+             python manage.py runserver_plus 0.0.0.0:8000 --cert-file /app/cert.pem --key-file /app/key.pem"
     environment:
       - DB_HOST=db
       - DB_NAME=devDB
@@ -28,6 +30,8 @@ services:
       - "5173:5173"
     volumes:
       - ./frontend/src:/frontend/src # bind local source files to container (without node_modules)
+      - ./certs/key.pem:/app/certs/key.pem
+      - ./certs/cert.pem:/app/certs/cert.pem
 
     depends_on:
       - backend
@@ -40,6 +44,18 @@ services:
       - POSTGRES_DB=devDB
       - POSTGRES_USER=devUser
       - POSTGRES_PASSWORD=devPassword
+
+  caddy:
+    image: caddy:latest
+    ports:
+      - "8443:8443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - ./certs/cert.pem:/etc/caddy/cert.pem
+      - ./certs/key.pem:/etc/caddy/key.pem
+    depends_on:
+      - backend
+      - frontend
 
 volumes:
   dev-db-data:

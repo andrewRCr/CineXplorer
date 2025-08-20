@@ -21,7 +21,9 @@ from user.views import (
     JWTCookieTokenObtainPairView,
     JWTCookieTokenRefreshView,
     LogOutAPIView,
-    RegisterAPIView)
+    RegisterAPIView,
+    CsrfTokenView
+)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -35,4 +37,5 @@ urlpatterns = [
     path('api/token/refresh/', JWTCookieTokenRefreshView.as_view(), name='token_refresh'),
     path('api/logout/', LogOutAPIView.as_view(), name='logout'),
     path('api/register/', RegisterAPIView.as_view(), name='register'),
+    path('api/csrf-token/', CsrfTokenView.as_view(), name='csrf-token'),
 ]

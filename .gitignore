@@ -202,3 +202,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+
+# SSL certificates and cert generation
+certs/
+generate-cert.ps1

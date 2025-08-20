@@ -28,6 +28,6 @@ jobs:
         env:
           COMPOSE_PROJECT_NAME: cinexplorer-ci
         run: |
-          docker compose up -d
+          docker compose -f docker-compose.yml -f docker-compose.ci.yml up -d --build
           docker compose exec backend sh -c "python manage.py wait_for_db && python manage.py test && flake8 --max-line-length=99 --exclude migrations"
           docker compose down

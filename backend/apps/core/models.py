@@ -48,6 +48,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_staff = models.BooleanField(default=False)
 
     USERNAME_FIELD = 'username'
+    EMAIL_FIELD = 'email'
     REQUIRED_FIELDS = ['email']
 
     objects = UserManager()
@@ -60,25 +61,32 @@ class UserMovieData(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
     )
-
-    tmdb_id = models.IntegerField()
-    title = models.CharField(max_length=255)
+    movie = models.ForeignKey(
+        'Movie',
+        on_delete=models.CASCADE,
+        related_name='user_movie_data'
+    )
     user_watched = models.BooleanField(default=False)
     user_on_watchlist = models.BooleanField(default=False)
     user_liked = models.BooleanField(default=False)
     user_rating = models.IntegerField(
-        default=0, validators=[MinValueValidator(1), MaxValueValidator(10)])
-    user_review = models.TextField(blank=True)
+        null=True, blank=True, default=None,
+        validators=[MinValueValidator(1), MaxValueValidator(10)]
+    )
+    user_review = models.TextField(blank=True, null=True)
+
+    class Meta:
+        unique_together = ('user', 'movie')
 
     def __str__(self) -> str:
-        return str(self.title)
+        return f"{self.user.username} - {self.movie.title}"
 
 
 class Movie(models.Model):
     """ Represents a wrapper for a TMDB movie object. """
 
     # id = models.IntegerField(unique=True)
-    # tmdb_id = models.IntegerField(unique=True)
+    tmdb_id = models.IntegerField(unique=True)
     title = models.CharField(max_length=255)
     release_date = models.DateField(null=True, blank=True)
     runtime = models.IntegerField(null=True, blank=True)
@@ -90,7 +98,6 @@ class Movie(models.Model):
     writers = models.JSONField(default=list, blank=True)
     cast = models.JSONField(default=list, blank=True)
     production_companies = models.JSONField(default=list, blank=True)
-    user_movie_data = models.JSONField(default=dict, blank=True)
 
     def __str__(self) -> str:
         return self.title

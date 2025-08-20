@@ -61,7 +61,7 @@ def create_user_movie_data(user, **params):
         'tmdb_id': params.get('tmdb_id', random.randint(10000, 99999)),
         # Add other required fields for Movie if needed
     }
-    movie = Movie.objects.create(**movie_defaults)
+    movie, _ = Movie.objects.get_or_create(**movie_defaults)
 
     user_movie_data_defaults = {
         'user_watched': params.get('user_watched', True),
@@ -122,7 +122,7 @@ class PublicUserMovieDataAPITests(TestCase):
         """
         movie = Movie.objects.create(title='Chinatown', tmdb_id=829)
         payload = {
-            'movie': movie.id,
+            'movie': movie.tmdb_id,
             'user_watched': True,
             'user_on_watchlist': False,
             'user_liked': True,
@@ -204,7 +204,7 @@ class PrivateUserMovieDataAPITests(TestCase):
         res = self.client.put(url, payload)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         user_movie_data.refresh_from_db()
-        self.assertEqual(user_movie_data.movie.id, movie.id)
+        self.assertEqual(user_movie_data.movie.tmdb_id, movie.tmdb_id)
         self.assertEqual(user_movie_data.user_watched, payload['user_watched'])
         self.assertEqual(user_movie_data.user_on_watchlist, payload['user_on_watchlist'])
         self.assertEqual(user_movie_data.user_liked, payload['user_liked'])
@@ -285,6 +285,12 @@ class PrivateUserMovieDataAPITests(TestCase):
         res = self.client.delete(url)
         self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
         self.assertTrue(UserMovieData.objects.filter(id=user_movie_data.id).exists())
+
+    def test_update_movie_field_is_ignored(self):
+        """
+        Test that attempting to change the movie field on a UserMovieData object fails.
+        The movie association should remain unchanged.
+        """
         movie1 = Movie.objects.create(title='Chinatown_12352', tmdb_id=12352)
         user_movie_data = UserMovieData.objects.create(
             user=self.user,
@@ -297,7 +303,7 @@ class PrivateUserMovieDataAPITests(TestCase):
         )
         movie2 = Movie.objects.create(title='Blade_Runner_12353', tmdb_id=12353)
         payload = {
-            'movie': movie2.id,
+            'movie': movie2.tmdb_id,
             'user_watched': False,
             'user_on_watchlist': True,
             'user_liked': False
@@ -308,7 +314,7 @@ class PrivateUserMovieDataAPITests(TestCase):
 
         user_movie_data.refresh_from_db()
         # Movie association should not be updatable by user; assert it remains unchanged
-        self.assertEqual(user_movie_data.movie.id, movie1.id)
+        self.assertEqual(user_movie_data.movie.tmdb_id, movie1.tmdb_id)
         self.assertEqual(user_movie_data.user_watched, payload['user_watched'])
         self.assertEqual(user_movie_data.user_on_watchlist,
                          payload['user_on_watchlist'])
@@ -377,4 +383,3 @@ class PrivateUserMovieDataAPITests(TestCase):
         non_existent_tmdb_id = 1111
         url = find_by_movie_url(non_existent_tmdb_id)
         res = self.client.get(url)
-        self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)

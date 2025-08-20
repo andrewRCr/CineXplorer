@@ -1,0 +1,7 @@
+services:
+  db:
+    env_file:
+      - backend/config/.env.ci
+  backend:
+    env_file:
+      - backend/config/.env.ci

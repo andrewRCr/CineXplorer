@@ -6,6 +6,8 @@
 #    and would fail since the server is not running.
 # 3. Overrides the dev-db service's environment variables to use the
 #    CI-specific credentials, ensuring they match the backend service.
+# 4. Overrides the caddy service's dependency on the backend to wait for it
+#    to start, not to be healthy, since the healthcheck is disabled.
 
 services:
   backend:
@@ -18,3 +20,8 @@ services:
       - POSTGRES_DB=cinexplorer
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
+
+  caddy:
+    depends_on:
+      backend:
+        condition: service_started

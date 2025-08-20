@@ -9,6 +9,7 @@ from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
+from unittest.mock import patch, Mock
 
 from core.models import User, Movie, UserMovieData
 
@@ -30,6 +31,7 @@ def create_user(**params):
 def create_movie(**params):
     """Create a new movie for testing."""
     defaults = {
+        'tmdb_id': params.get('tmdb_id', 78),  # Always provide tmdb_id
         'title': params.get('title', 'Blade Runner'),
         'release_date': params.get('release_date', None),
         'runtime': params.get('runtime', None),
@@ -69,7 +71,9 @@ class MovieApiTests(TestCase):
             email='testuser@example.com',
             password='testpass123'
         )
-        self.movie = create_movie(id=78, title='Blade Runner')
+        # Movie objects are only created in tests, never in production.
+        # Always provide a unique tmdb_id for test isolation and to satisfy DB constraints.
+        self.movie = create_movie(tmdb_id=78, title='Blade Runner')
         self.user_movie_data = create_user_movie_data(
             user=self.user,
             movie=self.movie,
@@ -80,10 +84,35 @@ class MovieApiTests(TestCase):
             user_review='Great movie!'
         )
 
-    def test_get_movie_detail_authenticated(self):
+    @patch('requests.get')
+    def test_get_movie_detail_authenticated(self, mock_get):
         """
         Test retrieving movie details by TMDB ID with user_movie_data for authenticated user.
         """
+        # Mock TMDB info response
+        mock_info_response = Mock()
+        mock_info_response.status_code = 200
+        mock_info_response.json.return_value = {
+            'id': self.movie.id,
+            'title': self.movie.title,
+            'release_date': self.movie.release_date,
+            'runtime': self.movie.runtime,
+            'original_language': self.movie.original_language,
+            'overview': self.movie.overview,
+            'poster_path': self.movie.poster_path,
+            'genres': [],
+            'production_companies': []
+        }
+        # Mock TMDB credits response
+        mock_credits_response = Mock()
+        mock_credits_response.status_code = 200
+        mock_credits_response.json.return_value = {
+            'crew': [],
+            'cast': []
+        }
+        # Set side effects for requests.get
+        mock_get.side_effect = [mock_info_response, mock_credits_response]
+
         self.client.force_authenticate(self.user)
         url = movie_detail_url(self.movie.id)
         res = self.client.get(url)

@@ -32,6 +32,11 @@ class MovieDetailView(SingleResourceTMDBView):
         # If service returns an error Response, return it directly
         if isinstance(movie_data, Response):
             return movie_data
+        # If service returns an error dict, return it as a response
+        if isinstance(movie_data, dict) and 'error' in movie_data:
+            # Use 404 for not found, 400 for other errors
+            status_code = 404 if 'not found' in movie_data['error'].lower() else 400
+            return Response(movie_data, status=status_code)
         serializer = MovieDetailSerializer(movie_data, context={'request': request})
         return Response(serializer.data)
 

@@ -21,7 +21,7 @@ def tmdb_dict_to_movie_instance(tmdb_dict):
         overview=tmdb_dict.get('overview', ''),
         poster_path=tmdb_dict.get('poster_path', ''),
         genres=tmdb_dict.get('genres', []),
-        directors=[],  # You may need to extract these from credits if available
+        directors=[],  # TODO: I need to extract these from credits where available
         writers=[],
         cast=[],
         production_companies=tmdb_dict.get('production_companies', [])

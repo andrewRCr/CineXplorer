@@ -16,6 +16,7 @@ from django.test import TestCase
 from django.urls import reverse
 from rest_framework.test import APIClient
 from rest_framework import status
+from unittest.mock import patch, Mock
 
 
 USER_MOVIE_DATA_URL = reverse('user_movie_data:user-movie-data-list')

@@ -1,15 +1,15 @@
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
 """
 Views for the user API.
 """
 
+import secrets
 from django.contrib.auth.models import AbstractUser, AnonymousUser
 from django.conf import settings
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
-# from django.http import HttpResponse
 from rest_framework.views import APIView
-# from rest_framework.authtoken.views import ObtainAuthToken
-# from rest_framework.settings import api_settings
 
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
@@ -21,7 +21,9 @@ from user.serializers import (
 )
 
 
+@method_decorator(csrf_exempt, name='dispatch')
 class RegisterAPIView(APIView):
+    permission_classes = [permissions.AllowAny]
     """ Defines a POST request view that registers a new user in the system. """
 
     def post(self, request, *args, **kwargs):
@@ -105,8 +107,10 @@ class JwtSetCookieMixin:
         return super().finalize_response(request, response, *args, **kwargs)  # type: ignore
 
 
+@method_decorator(csrf_exempt, name='dispatch')
 class JWTCookieTokenObtainPairView(JwtSetCookieMixin, TokenObtainPairView):
     """ Extends TokenObtainPairView to save response to http-only cookie. """
+    permission_classes = [permissions.AllowAny]
     serializer_class = CustomTokenObtainPairSerializer
 
 
@@ -124,4 +128,23 @@ class LogOutAPIView(APIView):
         response.set_cookie(settings.SIMPLE_JWT['REFRESH_TOKEN_NAME'], '', expires=0)
         response.set_cookie(settings.SIMPLE_JWT['ACCESS_TOKEN_NAME'], '', expires=0)
 
+        return response
+
+
+class CsrfTokenView(APIView):
+    authentication_classes = []  # No auth required
+
+    def get(self, request):
+        token = secrets.token_urlsafe(32)
+        response = Response({"csrfToken": token})
+        response.set_cookie(
+            "XSRF-TOKEN",
+            token,
+            httponly=False,  # Must be readable by JS
+            secure=True,     # Only over HTTPS
+            samesite="Lax",  # Less strict for localhost dev
+            domain=None,     # Important for localhost
+            path="/",       # Ensure cookie is available everywhere
+            # Partitioned=True,  # For future Chrome support (not yet in Django)
+        )
         return response

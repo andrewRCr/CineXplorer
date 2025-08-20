@@ -125,10 +125,35 @@ class MovieApiTests(TestCase):
         self.assertEqual(user_data['user_rating'], 9)
         self.assertEqual(user_data['user_review'], 'Great movie!')
 
-    def test_get_movie_detail_unauthenticated(self):
+    @patch('requests.get')
+    def test_get_movie_detail_unauthenticated(self, mock_get):
         """
         Test retrieving movie details by TMDB ID without user_movie_data for unauthenticated user.
         """
+        # Mock TMDB info response
+        mock_info_response = Mock()
+        mock_info_response.status_code = 200
+        mock_info_response.json.return_value = {
+            'id': self.movie.id,
+            'title': self.movie.title,
+            'release_date': self.movie.release_date,
+            'runtime': self.movie.runtime,
+            'original_language': self.movie.original_language,
+            'overview': self.movie.overview,
+            'poster_path': self.movie.poster_path,
+            'genres': [],
+            'production_companies': []
+        }
+        # Mock TMDB credits response
+        mock_credits_response = Mock()
+        mock_credits_response.status_code = 200
+        mock_credits_response.json.return_value = {
+            'crew': [],
+            'cast': []
+        }
+        # Set side effects for requests.get
+        mock_get.side_effect = [mock_info_response, mock_credits_response]
+
         url = movie_detail_url(self.movie.id)
         res = self.client.get(url)
         self.assertEqual(res.status_code, status.HTTP_200_OK)

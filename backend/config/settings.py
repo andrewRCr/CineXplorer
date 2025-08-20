@@ -16,6 +16,11 @@ import os
 import sys
 from pathlib import Path
 
+# initialize environment variables
+env = environ.Env()
+# read the .env file if it exists
+environ.Env.read_env(os.path.join(os.path.dirname(__file__), '.env'))
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -103,9 +108,9 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'HOST': os.environ.get('DB_HOST'),
-        'NAME': os.environ.get('DB_NAME'),
-        'USER': os.environ.get('DB_USER'),
-        'PASSWORD': os.environ.get('DB_PASS'),
+        'NAME': env('POSTGRES_DB'),
+        'USER': env('POSTGRES_USER'),
+        'PASSWORD': env('POSTGRES_PASSWORD'),
     }
 }
 
@@ -163,11 +168,6 @@ REST_FRAMEWORK = {
         "user.authenticate.JWTCookieAuthentication",
     ],
 }
-
-# initialize environment variables
-env = environ.Env()
-# read the .env file if it exists
-environ.Env.read_env()
 
 # default environment variables
 DEBUG = env.bool("DEBUG", default=False)  # type: ignore

@@ -10,17 +10,30 @@ services:
       - ./backend:/backend
       - ./certs/key.pem:/app/key.pem
       - ./certs/cert.pem:/app/cert.pem
+    env_file:
+      - ./backend/config/.env
     command: >
       sh -c "python manage.py wait_for_db &&
              python manage.py migrate &&
              python manage.py runserver_plus 0.0.0.0:8000 --cert-file /app/cert.pem --key-file /app/key.pem"
     environment:
-      - DB_HOST=db
-      - DB_NAME=devDB
-      - DB_USER=devUser
-      - DB_PASS=devPassword
+      - DB_HOST=dev-db
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "curl",
+          "-k",
+          "--fail",
+          "https://localhost:8000/api/health-check/",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     depends_on:
-      - db
+      dev-db:
+        condition: service_healthy
 
   frontend:
     build:
@@ -36,14 +49,23 @@ services:
     depends_on:
       - backend
 
-  db:
+  dev-db:
     image: postgres:17.5-alpine
+    ports:
+      - "5432:5432"
     volumes:
       - dev-db-data:/var/lib/postgresql/data
     environment:
+      # These credentials are for local development only. The backend service connects to its
+      # database using credentials from its own .env file, not these.
       - POSTGRES_DB=devDB
       - POSTGRES_USER=devUser
       - POSTGRES_PASSWORD=devPassword
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U devUser -d devDB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   caddy:
     image: caddy:latest
@@ -54,8 +76,10 @@ services:
       - ./certs/cert.pem:/etc/caddy/cert.pem
       - ./certs/key.pem:/etc/caddy/key.pem
     depends_on:
-      - backend
-      - frontend
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_started
 
 volumes:
   dev-db-data:

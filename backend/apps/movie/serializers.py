@@ -11,30 +11,27 @@ class MovieSerializer(serializers.ModelSerializer):
     """ Serializer for the movie object, with efficient bulk user_movie_data support. """
 
     user_movie_data = serializers.SerializerMethodField()
+    # Pass-through fields from TMDB API service
+    vote_average = serializers.FloatField(read_only=True)
+    cast = serializers.JSONField(read_only=True)
+    crew = serializers.JSONField(read_only=True)
 
     class Meta:
         model = Movie
         fields = [
-            'id',
+            'tmdb_id',
             'title',
-            'release_date',
-            'original_language',
-            'runtime',
             'poster_path',
-            'directors',
-            'writers',
+            'release_date',
+            'vote_average',
             'cast',
+            'crew',
             'user_movie_data'
         ]
-        read_only_fields = ['id',
+        read_only_fields = ['tmdb_id',
                             'title',
-                            'release_date',
-                            'original_language',
-                            'runtime',
                             'poster_path',
-                            'directors',
-                            'writers',
-                            'cast']
+                            'release_date']
 
     def get_user_movie_data(self, obj):
         request = self.context.get('request', None)
@@ -43,7 +40,8 @@ class MovieSerializer(serializers.ModelSerializer):
         if not user or not user.is_authenticated:
             return None
         if user_movie_data_map is not None:
-            user_data = user_movie_data_map.get(obj.id)
+            # For list views, use the pre-fetched map for efficiency
+            user_data = user_movie_data_map.get(obj.tmdb_id)
             if user_data:
                 from user_movie_data.serializers import UserMovieDataSerializer
                 return UserMovieDataSerializer(user_data).data
@@ -58,14 +56,16 @@ class MovieSerializer(serializers.ModelSerializer):
 
 class MovieDetailSerializer(MovieSerializer):
     """ Detailed serializer for the movie object, inherits bulk user_movie_data logic. """
+    # Additional pass-through fields for detail view
+    overview = serializers.CharField(read_only=True)
+    genres = serializers.JSONField(read_only=True)
+    production_companies = serializers.JSONField(read_only=True)
 
     class Meta(MovieSerializer.Meta):
         fields = MovieSerializer.Meta.fields + [
             'overview', 'genres', 'production_companies'
         ]
-        read_only_fields = MovieSerializer.Meta.read_only_fields + [
-            'overview', 'genres', 'production_companies'
-        ]
+        # read_only_fields are inherited and extended implicitly
 
 
 # class MovieResultsSerializer(serializers.ModelSerializer):

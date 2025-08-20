@@ -19,7 +19,7 @@ ARG USER_GID=$USER_UID
 RUN python -m venv /py && \
     # install dependencies
     /py/bin/pip install --upgrade pip && \
-    apk add --update --no-cache postgresql-client postgresql-dev shadow && \
+    apk add --update --no-cache postgresql-client postgresql-dev shadow curl && \
     apk add --update --no-cache --virtual .tmp-build-deps \
         build-base musl-dev python3-dev gcc libc-dev linux-headers && \
     /py/bin/pip install -r /tmp/req.txt && \

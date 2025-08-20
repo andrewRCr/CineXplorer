@@ -1,10 +1,8 @@
 
 
 """
-Tests for the movie API endpoints (detail, now playing, upcoming, search).
+Tests for the movie API endpoints, covering detail, paginated lists, and search.
 """
-
-
 from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
@@ -14,8 +12,11 @@ from unittest.mock import patch, Mock
 from core.models import User, Movie, UserMovieData
 
 # =========================
-# Helper Methods for Test Setup
+# URLs
 # =========================
+NOW_PLAYING_URL = reverse('movie:now-playing')
+UPCOMING_URL = reverse('movie:upcoming')
+SEARCH_URL = reverse('movie:search')
 
 
 def movie_detail_url(tmdb_id):
@@ -23,46 +24,52 @@ def movie_detail_url(tmdb_id):
     return reverse('movie:movie-detail', args=[tmdb_id])
 
 
+# =========================
+# Test Setup Helper Methods
+# =========================
+
+
 def create_user(**params):
-    """Create a new user for testing."""
+    """Create and return a new user for testing."""
     return User.objects.create_user(**params)
 
 
-def create_movie(**params):
-    """Create a new movie for testing."""
+def create_movie_stub(**params):
+    """
+    Create and return a new Movie stub object.
+    This mimics the behavior of the service layer, which creates a local stub
+    for a movie fetched from the TMDB API.
+    """
+    tmdb_id = params.pop('tmdb_id')  # tmdb_id is required
     defaults = {
-        'tmdb_id': params.get('tmdb_id', 78),  # Always provide tmdb_id
-        'title': params.get('title', 'Blade Runner'),
-        'release_date': params.get('release_date', None),
-        'runtime': params.get('runtime', None),
-        'original_language': params.get('original_language', 'en'),
-        'overview': params.get('overview', ''),
-        'poster_path': params.get('poster_path', ''),
+        'title': 'Default Movie Title',
+        'poster_path': '/default.jpg',
+        'release_date': '2025-01-01',
     }
     defaults.update(params)
-    return Movie.objects.create(**defaults)
+    return Movie.objects.create(tmdb_id=tmdb_id, **defaults)
 
 
-def create_user_movie_data(user, movie, **params):
-    """Create a UserMovieData object for testing."""
-    defaults = {
-        'user_watched': params.get('user_watched', True),
-        'user_on_watchlist': params.get('user_on_watchlist', True),
-        'user_liked': params.get('user_liked', True),
-        'user_rating': params.get('user_rating', 10),
-        'user_review': params.get('user_review', 'Sample review.'),
-    }
-    defaults.update(params)
-    return UserMovieData.objects.create(user=user, movie=movie, **defaults)
+def attach_pass_through_data(movie_instance, **extra_data):
+    """
+    Attaches extra, non-model data to a movie instance to simulate
+    the data that comes from the TMDB API service.
+    """
+    # Common pass-through fields for list views
+    setattr(movie_instance, 'vote_average', extra_data.get('vote_average', 8.0))
+    setattr(movie_instance, 'overview', extra_data.get('overview', 'An overview.'))
 
+    # Detail-view specific pass-through fields
+    if 'genres' in extra_data:
+        setattr(movie_instance, 'genres', extra_data.get('genres'))
+    if 'credits' in extra_data:
+        setattr(movie_instance, 'credits', extra_data.get('credits'))
 
-NOW_PLAYING_URL = reverse('movie:now-playing')
-UPCOMING_URL = reverse('movie:upcoming')
-SEARCH_URL = reverse('movie:search')
+    return movie_instance
 
 
 class MovieApiTests(TestCase):
-    """Tests for the movie API endpoints, including user_movie_data coverage."""
+    """Tests for the movie API endpoints."""
 
     def setUp(self):
         self.client = APIClient()
@@ -71,53 +78,93 @@ class MovieApiTests(TestCase):
             email='testuser@example.com',
             password='testpass123'
         )
-        # Movie objects are only created in tests, never in production.
-        # Always provide a unique tmdb_id for test isolation and to satisfy DB constraints.
-        self.movie = create_movie(tmdb_id=78, title='Blade Runner')
-        self.user_movie_data = create_user_movie_data(
+
+    def _test_paginated_endpoint_contract(self, mock_requests_get, url, params=None):
+        """
+        Generic helper to test the contract of any paginated movie endpoint.
+        It mocks the external `requests.get` call and verifies the response structure.
+        """
+        # Arrange: Define a standard mock TMDB API response
+        tmdb_payload = {
+            'results': [{'id': 101, 'title': 'Test Movie'}],
+            'page': 1,
+            'total_pages': 5,
+            'total_results': 1
+        }
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = tmdb_payload
+        mock_requests_get.return_value = mock_response
+
+        # Act: Call the internal API endpoint
+        if params is None:
+            params = {}
+        res = self.client.get(url, params)
+
+        # Assert: Check the response status and overall structure
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertIn('results', res.data)
+        self.assertIn('page', res.data)
+        self.assertIn('total_pages', res.data)
+        self.assertEqual(res.data['page'], 1)
+        self.assertEqual(res.data['total_pages'], 5)
+        self.assertEqual(len(res.data['results']), 1)
+
+    @patch('requests.get')
+    def test_now_playing_api_contract(self, mock_requests_get):
+        """Verify the /now-playing/ endpoint returns the correct paginated structure."""
+        self._test_paginated_endpoint_contract(mock_requests_get, NOW_PLAYING_URL)
+
+    @patch('requests.get')
+    def test_upcoming_api_contract(self, mock_requests_get):
+        """Verify the /upcoming/ endpoint returns the correct paginated structure."""
+        self._test_paginated_endpoint_contract(mock_requests_get, UPCOMING_URL)
+
+    @patch('requests.get')
+    def test_search_api_contract(self, mock_requests_get):
+        """Verify the /search/ endpoint returns the correct paginated structure."""
+        self._test_paginated_endpoint_contract(
+            mock_requests_get, SEARCH_URL, {'query': 'test'}
+        )
+
+    @patch('requests.get')
+    def test_get_movie_detail_authenticated(self, mock_requests_get):
+        """
+        Test retrieving movie details with user_movie_data for an authenticated user.
+        """
+        # Arrange: Create the local movie stub and user data
+        movie_stub = create_movie_stub(tmdb_id=78, title='Blade Runner')
+        UserMovieData.objects.create(
             user=self.user,
-            movie=self.movie,
-            user_watched=True,
-            user_on_watchlist=True,
-            user_liked=True,
+            movie=movie_stub,
             user_rating=9,
             user_review='Great movie!'
         )
 
-    @patch('requests.get')
-    def test_get_movie_detail_authenticated(self, mock_get):
-        """
-        Test retrieving movie details by TMDB ID with user_movie_data for authenticated user.
-        """
-        # Mock TMDB info response
+        # Arrange: Mock the external API responses for movie info and credits
         mock_info_response = Mock()
         mock_info_response.status_code = 200
         mock_info_response.json.return_value = {
-            'id': self.movie.id,
-            'title': self.movie.title,
-            'release_date': self.movie.release_date,
-            'runtime': self.movie.runtime,
-            'original_language': self.movie.original_language,
-            'overview': self.movie.overview,
-            'poster_path': self.movie.poster_path,
-            'genres': [],
-            'production_companies': []
+            'id': 78, 'title': 'Blade Runner', 'overview': 'A classic.',
+            'poster_path': '/br.jpg', 'release_date': '1982-06-25',
+            'vote_average': 8.1, 'genres': [], 'production_companies': []
         }
-        # Mock TMDB credits response
+
         mock_credits_response = Mock()
         mock_credits_response.status_code = 200
-        mock_credits_response.json.return_value = {
-            'crew': [],
-            'cast': []
-        }
-        # Set side effects for requests.get
-        mock_get.side_effect = [mock_info_response, mock_credits_response]
+        mock_credits_response.json.return_value = {'crew': [], 'cast': []}
 
+        # Set the side_effect to return different responses for each call
+        mock_requests_get.side_effect = [mock_info_response, mock_credits_response]
+
+        # Act
         self.client.force_authenticate(self.user)
-        url = movie_detail_url(self.movie.id)
+        url = movie_detail_url(movie_stub.tmdb_id)
         res = self.client.get(url)
+
+        # Assert
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertEqual(res.data['id'], self.movie.id)
+        self.assertEqual(res.data['tmdb_id'], movie_stub.tmdb_id)
         self.assertIn('title', res.data)
         self.assertIn('user_movie_data', res.data)
         user_data = res.data['user_movie_data']
@@ -126,129 +173,32 @@ class MovieApiTests(TestCase):
         self.assertEqual(user_data['user_review'], 'Great movie!')
 
     @patch('requests.get')
-    def test_get_movie_detail_unauthenticated(self, mock_get):
+    def test_get_movie_detail_unauthenticated(self, mock_requests_get):
         """
-        Test retrieving movie details by TMDB ID without user_movie_data for unauthenticated user.
+        Test retrieving movie details without user_movie_data for an unauthenticated user.
         """
-        # Mock TMDB info response
+        # Arrange
+        tmdb_id = 78
+        create_movie_stub(tmdb_id=tmdb_id, title='Blade Runner')
+
         mock_info_response = Mock()
         mock_info_response.status_code = 200
         mock_info_response.json.return_value = {
-            'id': self.movie.id,
-            'title': self.movie.title,
-            'release_date': self.movie.release_date,
-            'runtime': self.movie.runtime,
-            'original_language': self.movie.original_language,
-            'overview': self.movie.overview,
-            'poster_path': self.movie.poster_path,
-            'genres': [],
-            'production_companies': []
+            'id': tmdb_id, 'title': 'Blade Runner', 'overview': 'A classic.',
+            'poster_path': '/br.jpg', 'release_date': '1982-06-25',
+            'vote_average': 8.1, 'genres': [], 'production_companies': []
         }
-        # Mock TMDB credits response
         mock_credits_response = Mock()
         mock_credits_response.status_code = 200
-        mock_credits_response.json.return_value = {
-            'crew': [],
-            'cast': []
-        }
-        # Set side effects for requests.get
-        mock_get.side_effect = [mock_info_response, mock_credits_response]
+        mock_credits_response.json.return_value = {'crew': [], 'cast': []}
+        mock_requests_get.side_effect = [mock_info_response, mock_credits_response]
 
-        url = movie_detail_url(self.movie.id)
+        # Act
+        url = movie_detail_url(tmdb_id)
         res = self.client.get(url)
+
+        # Assert
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertEqual(res.data['id'], self.movie.id)
-        self.assertIn('title', res.data)
+        self.assertEqual(res.data['tmdb_id'], tmdb_id)
         self.assertIn('user_movie_data', res.data)
         self.assertIsNone(res.data['user_movie_data'])
-
-    def test_get_now_playing_movies_authenticated(self):
-        """
-        Test retrieving now playing movies (paginated) with user_movie_data for authenticated user.
-        """
-        self.client.force_authenticate(self.user)
-        res = self.client.get(NOW_PLAYING_URL)
-        self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertIn('results', res.data)
-        self.assertIsInstance(res.data['results'], list)
-        for movie in res.data['results']:
-            self.assertIn('user_movie_data', movie)
-            if movie['id'] == self.movie.id:
-                self.assertIsNotNone(movie['user_movie_data'])
-                self.assertEqual(movie['user_movie_data']['user_rating'], 9)
-            else:
-                pass
-
-    def test_get_now_playing_movies_unauthenticated(self):
-        """
-        Test retrieving now playing movies (paginated) without user_movie_data for
-        unauthenticated user.
-        """
-        res = self.client.get(NOW_PLAYING_URL)
-        self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertIn('results', res.data)
-        self.assertIsInstance(res.data['results'], list)
-        for movie in res.data['results']:
-            self.assertIn('user_movie_data', movie)
-            self.assertIsNone(movie['user_movie_data'])
-
-    def test_get_upcoming_movies_authenticated(self):
-        """
-        Test retrieving upcoming movies (paginated) with user_movie_data for authenticated user.
-        """
-        self.client.force_authenticate(self.user)
-        res = self.client.get(UPCOMING_URL)
-        self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertIn('results', res.data)
-        self.assertIsInstance(res.data['results'], list)
-        for movie in res.data['results']:
-            self.assertIn('user_movie_data', movie)
-            if movie['id'] == self.movie.id:
-                self.assertIsNotNone(movie['user_movie_data'])
-            else:
-                pass
-
-    def test_get_upcoming_movies_unauthenticated(self):
-        """
-        Test retrieving upcoming movies (paginated) without user_movie_data for
-        unauthenticated user.
-        """
-        res = self.client.get(UPCOMING_URL)
-        self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertIn('results', res.data)
-        self.assertIsInstance(res.data['results'], list)
-        for movie in res.data['results']:
-            self.assertIn('user_movie_data', movie)
-            self.assertIsNone(movie['user_movie_data'])
-
-    def test_search_movies_authenticated(self):
-        """
-        Test searching for movies by query string (paginated) with user_movie_data for
-        authenticated user.
-        """
-        self.client.force_authenticate(self.user)
-        params = {'query': 'Blade Runner'}
-        res = self.client.get(SEARCH_URL, params)
-        self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertIn('results', res.data)
-        self.assertIsInstance(res.data['results'], list)
-        for movie in res.data['results']:
-            self.assertIn('user_movie_data', movie)
-            if movie['id'] == self.movie.id:
-                self.assertIsNotNone(movie['user_movie_data'])
-            else:
-                pass
-
-    def test_search_movies_unauthenticated(self):
-        """
-        Test searching for movies by query string (paginated) without user_movie_data for
-        unauthenticated user.
-        """
-        params = {'query': 'Blade Runner'}
-        res = self.client.get(SEARCH_URL, params)
-        self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertIn('results', res.data)
-        self.assertIsInstance(res.data['results'], list)
-        for movie in res.data['results']:
-            self.assertIn('user_movie_data', movie)
-            self.assertIsNone(movie['user_movie_data'])

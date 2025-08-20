@@ -24,6 +24,7 @@ from user.views import (
     RegisterAPIView,
     CsrfTokenView
 )
+from core.views.health_check import HealthCheckView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -38,4 +39,5 @@ urlpatterns = [
     path('api/logout/', LogOutAPIView.as_view(), name='logout'),
     path('api/register/', RegisterAPIView.as_view(), name='register'),
     path('api/csrf-token/', CsrfTokenView.as_view(), name='csrf-token'),
+    path('api/health-check/', HealthCheckView.as_view(), name='health-check'),
 ]

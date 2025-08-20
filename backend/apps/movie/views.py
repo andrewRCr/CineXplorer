@@ -59,7 +59,8 @@ class NowPlayingMoviesView(PaginatedTMDBView):
         Retrieves now playing movies, serializes Movie instances,
         appends user-specific data, and preserves pagination metadata.
         """
-        tmdb_response = self.service_method()
+        page = request.query_params.get('page', 1)
+        tmdb_response = self.service_method(page=page)
         if not isinstance(tmdb_response, dict) or 'results' not in tmdb_response:
             return Response(tmdb_response, status=500)
         movies_data = tmdb_response['results']
@@ -88,7 +89,8 @@ class UpcomingMoviesView(PaginatedTMDBView):
         Retrieves upcoming movies, serializes Movie instances,
         appends user-specific data, and preserves pagination metadata.
         """
-        tmdb_response = self.service_method()
+        page = request.query_params.get('page', 1)
+        tmdb_response = self.service_method(page=page)
         if not isinstance(tmdb_response, dict) or 'results' not in tmdb_response:
             return Response(tmdb_response, status=500)
         movies_data = tmdb_response['results']
@@ -118,7 +120,8 @@ class SearchMoviesView(PaginatedTMDBQueryView):
         appends user-specific data, and preserves pagination metadata.
         """
         query = request.query_params.get('query', '')
-        tmdb_response = self.service_method(query)
+        page = request.query_params.get('page', 1)
+        tmdb_response = self.service_method(query=query, page=page)
         if not isinstance(tmdb_response, dict) or 'results' not in tmdb_response:
             return Response(tmdb_response, status=500)
         movies_data = tmdb_response['results']

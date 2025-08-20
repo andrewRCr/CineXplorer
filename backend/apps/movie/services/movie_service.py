@@ -11,21 +11,29 @@ from core.models import Movie
 
 
 def tmdb_dict_to_movie_instance(tmdb_dict):
-    """Convert a TMDB API dict to a Movie model instance (not saved to DB)."""
-    return Movie(
-        id=tmdb_dict.get('id'),
+    """
+    Convert a TMDB API dict to a Movie model instance (not saved to DB).
+    This function creates a 'stub' Movie instance and attaches additional
+    TMDB data to it as attributes for the serializer to use.
+    """
+    # Create the Movie instance with only the fields that exist on the model.
+    # Note the mapping from TMDB's 'id' to our model's 'tmdb_id'.
+    movie_instance = Movie(
+        tmdb_id=tmdb_dict.get('id'),
         title=tmdb_dict.get('title'),
-        release_date=tmdb_dict.get('release_date'),
-        runtime=tmdb_dict.get('runtime'),
-        original_language=tmdb_dict.get('original_language'),
-        overview=tmdb_dict.get('overview', ''),
         poster_path=tmdb_dict.get('poster_path', ''),
-        genres=tmdb_dict.get('genres', []),
-        directors=[],  # TODO: I need to extract these from credits where available
-        writers=[],
-        cast=[],
-        production_companies=tmdb_dict.get('production_companies', [])
+        # Handle cases where release_date might be an empty string
+        release_date=tmdb_dict.get('release_date') or None,
     )
+
+    # Attach other fields from the TMDB dictionary directly to the instance.
+    # The serializer will pick these up as read-only fields.
+    # This avoids trying to save them to the database.
+    for key, value in tmdb_dict.items():
+        if not hasattr(movie_instance, key):
+            setattr(movie_instance, key, value)
+
+    return movie_instance
 
 
 logger: logging.Logger = logging.getLogger(__name__)

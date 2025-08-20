@@ -83,21 +83,14 @@ class UserMovieData(models.Model):
 
 
 class Movie(models.Model):
-    """ Represents a wrapper for a TMDB movie object. """
-
-    # id = models.IntegerField(unique=True)
-    tmdb_id = models.IntegerField(unique=True)
+    """
+    Represents a minimal local stub for a TMDB movie.
+    Used as an anchor for user-specific data.
+    """
+    tmdb_id = models.IntegerField(primary_key=True)
     title = models.CharField(max_length=255)
+    poster_path = models.CharField(max_length=255, blank=True, null=True)
     release_date = models.DateField(null=True, blank=True)
-    runtime = models.IntegerField(null=True, blank=True)
-    original_language = models.CharField(max_length=10, blank=True)
-    overview = models.TextField(blank=True)
-    poster_path = models.CharField(max_length=255, blank=True)
-    genres = models.JSONField(default=list, blank=True)
-    directors = models.JSONField(default=list, blank=True)
-    writers = models.JSONField(default=list, blank=True)
-    cast = models.JSONField(default=list, blank=True)
-    production_companies = models.JSONField(default=list, blank=True)
 
     def __str__(self) -> str:
         return self.title

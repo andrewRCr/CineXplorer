@@ -2,40 +2,44 @@ FROM python:3.13-alpine3.21
 LABEL maintainer="andrew.creekmore@me.com"
 
 ENV PYTHONUNBUFFERED=1
-
-COPY ./requirements/req.txt /tmp/req.txt
-COPY ./requirements/req.dev.txt /tmp/req.dev.txt
-# copy the current directory contents into the container
-COPY . .
-
-WORKDIR /backend
-EXPOSE 8000
+ENV PATH="/py/bin:$PATH"
 
 ARG DEV=false
 ARG USERNAME=django-user
 ARG USER_UID=1000
 ARG USER_GID=$USER_UID
 
+# Create a virtual environment, install system-level dependencies, and add a non-root user.
 RUN python -m venv /py && \
-    # install dependencies
-    /py/bin/pip install --upgrade pip && \
-    apk add --update --no-cache postgresql-client postgresql-dev shadow curl && \
-    apk add --update --no-cache --virtual .tmp-build-deps \
+    apk add --update --no-cache git postgresql-client postgresql-dev shadow curl su-exec && \
+    groupadd --gid $USER_GID $USERNAME && \
+    useradd --uid $USER_UID --gid $USER_GID -m $USERNAME
+
+WORKDIR /backend
+
+# Copy requirements files before other source files to leverage caching.
+COPY ./requirements ./requirements
+
+# Install Python dependencies into the virtual environment.
+# This layer is cached and only re-run if the requirements files change.
+RUN apk add --update --no-cache --virtual .tmp-build-deps \
         build-base musl-dev python3-dev gcc libc-dev linux-headers && \
-    /py/bin/pip install -r /tmp/req.txt && \
-    # install dev dependencies
+    /py/bin/pip install --upgrade pip && \
+    /py/bin/pip install -r ./requirements/req.txt && \
     if [ $DEV = "true" ]; then \
-        /py/bin/pip install -r /tmp/req.dev.txt; \
+        /py/bin/pip install -r ./requirements/req.dev.txt; \
     fi && \
-    # clean up
-    rm -rf /tmp && \
     apk del .tmp-build-deps && \
-    # add non-root user
-    groupadd --gid $USER_GID $USERNAME \
-    && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME \
-    && chown -R $USER_UID:$USER_GID /home/$USERNAME
+    rm -rf ./requirements
 
-ENV PATH="/py/bin:$PATH"
+# Copy the rest of the application code.
+# This is one of the last steps, so changes to code don't invalidate the dependency cache.
+COPY . .
 
-# make non-root user default
+# Ensure the non-root user owns the application files.
+RUN chown -R $USERNAME:$USERNAME /backend
+
+# Switch to the non-root user for security.
 USER $USERNAME
+
+EXPOSE 8000

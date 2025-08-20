@@ -4,14 +4,17 @@
 #    without starting the development server.
 # 2. Disables the backend service's healthcheck, which is not needed in CI
 #    and would fail since the server is not running.
-# 3. Overrides the dev-db service's env_file to use the CI-specific
-#    environment variables, ensuring consistent credentials.
+# 3. Overrides the dev-db service's environment variables to use the
+#    CI-specific credentials, ensuring they match the backend service.
 
 services:
   backend:
     command: tail -f /dev/null
     healthcheck:
       disable: true
+
   dev-db:
-    env_file:
-      - ./backend/config/.env.ci
+    environment:
+      - POSTGRES_DB=cinexplorer
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres

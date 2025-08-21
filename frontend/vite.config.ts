@@ -13,8 +13,13 @@ export default defineConfig({
 		strictPort: true,
 		port: 5173,
 		https: {
-			key: fs.readFileSync("/app/certs/key.pem"),
-			cert: fs.readFileSync("/app/certs/cert.pem"),
+			key: fs.readFileSync("/workspaces/infrastructure/dev-certs/key.pem"),
+			cert: fs.readFileSync("/workspaces/infrastructure/dev-certs/cert.pem"),
+		},
+		hmr: {
+			protocol: "wss",
+			host: "localhost",
+			port: 5173,
 		},
 	},
 });

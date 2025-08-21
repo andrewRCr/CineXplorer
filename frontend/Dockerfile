@@ -6,8 +6,8 @@ WORKDIR /frontend
 EXPOSE 5173
 
 # install dependencies
-COPY package.json .
-RUN npm install
+COPY package*.json .
+RUN npm ci
 
 # copy frontend source code
 COPY . .

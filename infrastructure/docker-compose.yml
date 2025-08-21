@@ -1,21 +1,17 @@
 services:
   backend:
     build:
-      context: ./backend
+      context: ../backend
       args:
         DEV: "true"
     ports:
       - "8000:8000"
     volumes:
-      - ./backend:/backend
-      - ./certs/key.pem:/app/key.pem
-      - ./certs/cert.pem:/app/cert.pem
+      - ..:/workspaces:cached
+      - ./dev-certs/key.pem:/app/key.pem
+      - ./dev-certs/cert.pem:/app/cert.pem
     env_file:
-      - ./backend/config/.env
-    command: >
-      sh -c "python manage.py wait_for_db &&
-             python manage.py migrate &&
-             python manage.py runserver_plus 0.0.0.0:8000 --cert-file /app/cert.pem --key-file /app/key.pem"
+      - ../backend/config/.env
     environment:
       - DB_HOST=dev-db
     healthcheck:
@@ -37,14 +33,15 @@ services:
 
   frontend:
     build:
-      context: ./frontend
+      context: ../frontend
       dockerfile: Dockerfile
     ports:
       - "5173:5173"
     volumes:
-      - ./frontend/src:/frontend/src # bind local source files to container (without node_modules)
-      - ./certs/key.pem:/app/certs/key.pem
-      - ./certs/cert.pem:/app/certs/cert.pem
+      - ..:/workspaces:cached
+      - frontend-node-modules:/frontend/node_modules
+      - ./dev-certs/key.pem:/app/certs/key.pem
+      - ./dev-certs/cert.pem:/app/certs/cert.pem
 
     depends_on:
       - backend
@@ -70,11 +67,11 @@ services:
   caddy:
     image: caddy:latest
     ports:
-      - "8443:8443"
+      - "8444:8443"
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile
-      - ./certs/cert.pem:/etc/caddy/cert.pem
-      - ./certs/key.pem:/etc/caddy/key.pem
+      - ./dev-certs/cert.pem:/etc/caddy/cert.pem
+      - ./dev-certs/key.pem:/etc/caddy/key.pem
     depends_on:
       backend:
         condition: service_healthy
@@ -83,3 +80,4 @@ services:
 
 volumes:
   dev-db-data:
+  frontend-node-modules:

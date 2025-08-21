@@ -205,5 +205,5 @@ dist-ssr
 
 
 # SSL certificates and cert generation
-certs/
+infrastructure/dev-certs/
 generate-cert.ps1

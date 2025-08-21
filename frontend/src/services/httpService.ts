@@ -1,14 +1,17 @@
+/**
+ * @file httpService.ts
+ * @description This file defines a generic, reusable HTTP service class for interacting with a RESTful API.
+ * It uses the configured 'apiClient' (Axios instance) to perform the actual HTTP requests,
+ * abstracting away the low-level implementation details. Its purpose is to provide a clean,
+ * consistent, and extensible interface for all CRUD and data-fetching operations.
+ */
+
 import apiClient from "./apiClient";
 
-// This interface represents a generic entity with an 'id' field.
-interface Entity {
-	id: number;
-}
-
 /**
- * Generic HTTP service for RESTful API resources.
- * Supports CRUD operations for single entities (by ID) and paginated resource requests.
- * Use get() for single-entity fetches, and getPaginated() for paginated endpoints returning metadata and arrays.
+ * A generic HTTP service for RESTful API resources.
+ * Supports all common CRUD operations and paginated requests.
+ * This service is decoupled from the shape of the data (entities) it handles.
  */
 class HttpService {
 	endpoint: string;
@@ -18,24 +21,20 @@ class HttpService {
 	}
 
 	/**
-	 * Fetch a single entity by ID from the API endpoint.
+	 * Fetch a single entity by ID.
 	 * @param id - The entity's unique identifier.
-	 * @returns { request: Promise<AxiosResponse<T>>; cancel: () => void; }
 	 */
-	get<T extends Entity>(id: string) {
+	get<T>(id: string | number) {
 		const controller = new AbortController();
 		const request = apiClient.get<T>(`${this.endpoint}/${id}`, {
 			signal: controller.signal,
 		});
-
 		return { request, cancel: () => controller.abort() };
 	}
 
 	/**
-	 * Fetch a paginated resource from the API endpoint.
-	 * Returns the full paginated response object, including metadata (e.g., page, total_pages, results).
-	 * @param params - Query parameters for pagination, filtering, etc.
-	 * @returns { request: Promise<AxiosResponse<T>>; cancel: () => void; }
+	 * Fetch a paginated resource.
+	 * @param params - Optional query parameters for pagination, filtering, etc.
 	 */
 	getPaginated<T>(params?: Record<string, unknown>) {
 		const controller = new AbortController();
@@ -43,34 +42,35 @@ class HttpService {
 			signal: controller.signal,
 			params,
 		});
-
 		return { request, cancel: () => controller.abort() };
 	}
 
 	/**
-	 * Returns an apiClient POST request promise to create a new generic entity.
-	 * @param newEntity - {T}
-	 * @returns Promise<AxiosResponse<any, any>>
+	 * Create a new entity.
+	 * @param entity - The data for the new entity.
 	 */
-	create<T extends Entity>(newEntity: T) {
-		return apiClient.post(this.endpoint, newEntity);
+	create<T>(entity: T) {
+		return apiClient.post(this.endpoint, entity);
 	}
 
 	/**
-	 * Returns an apiClient PATCH request promise to update a generic entity.
-	 * @param user - {T}
-	 * @returns Promise<AxiosResponse<any, any>>
+	 * Update an existing entity.
+	 * @param id - The unique identifier of the entity to update.
+	 * @param entity - The updated data for the entity.
 	 */
-	update<T extends Entity>(entity: T) {
-		return apiClient.patch(this.endpoint + "/" + entity.id, entity);
+	update<T>(id: string | number, entity: T) {
+		return apiClient.patch(`${this.endpoint}/${id}`, entity);
+	}
+
+	/**
+	 * Remove an entity by its ID.
+	 * @param id - The unique identifier of the entity to remove.
+	 */
+	remove(id: string | number) {
+		return apiClient.delete(`${this.endpoint}/${id}`);
 	}
 }
 
-/**
- * Factory function to create an instance of HttpService for a given API endpoint.
- * @param endpoint - The API endpoint for the resource.
- * @returns An instance of HttpService.
- */
 const create = (endpoint: string) => new HttpService(endpoint);
 
 export default create;

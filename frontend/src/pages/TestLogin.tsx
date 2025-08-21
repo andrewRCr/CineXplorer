@@ -1,20 +1,18 @@
 import { Button } from "@chakra-ui/react";
-import axios from "axios";
 import { useState } from "react";
 import useAuthServiceContext from "@/hooks/useAuthServiceContext";
-import useAxiosWithInterceptor from "@/utilities/jwt-interceptor";
+import apiClient from "@/services/apiClient";
 
 const BASE_URL = import.meta.env.VITE_BASE_API_URL;
 
 const TestLogin = () => {
 	const authServiceContext = useAuthServiceContext();
 	const [username, setUsername] = useState("");
-	const jwtAxios = useAxiosWithInterceptor();
 
 	// store authenticated user's username/email
 	const getUserDetails = async () => {
 		try {
-			const userInfoResponse = await jwtAxios.get(`${BASE_URL}/user/me/`, {
+			const userInfoResponse = await apiClient.get(`${BASE_URL}/user/me/`, {
 				withCredentials: true, // ensure cookies are sent
 				headers: {
 					"Content-Type": "application/json",

@@ -156,3 +156,12 @@ export function useAuthService(): AuthServiceProps {
 
 	return { login, isLoggedIn, logout, register };
 }
+
+/**
+ * Removes authentication tokens from localStorage.
+ * This is a standalone utility function and not a React hook.
+ */
+export const clearAuthTokens = () => {
+	localStorage.removeItem("authToken");
+	localStorage.removeItem("refreshToken");
+};

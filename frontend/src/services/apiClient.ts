@@ -1,32 +1,83 @@
 import axios, { CanceledError } from "axios";
+import { clearAuthTokens } from "./authService";
 
 const BASE_URL = import.meta.env.VITE_BASE_API_URL;
 
-export default axios.create({
+const apiClient = axios.create({
 	baseURL: BASE_URL,
 	headers: {
 		"Content-Type": "application/json",
 	},
 });
 
-// // define common API methods
-// const _get = (url: string, config = {}) => {
-// 	return apiClient.get(url, config);
-// };
+// Attach CSRF token for unsafe methods
+apiClient.interceptors.request.use((config) => {
+	// Attach JWT token from local storage
+	const token = localStorage.getItem("authToken");
+	if (token) {
+		config.headers.Authorization = `Bearer ${token}`;
+	}
 
-// const _delete = (url: string, config = {}) => {
-// 	return apiClient.delete(url, config);
-// };
+	// Attach CSRF token from cookie for unsafe methods
+	const unsafeMethods = ["post", "put", "patch", "delete"];
+	if (config.method && unsafeMethods.includes(config.method.toLowerCase())) {
+		const csrfToken = document.cookie
+			.split("; ")
+			.find((row) => row.startsWith("XSRF-TOKEN="))
+			?.split("=")[1];
+		if (csrfToken) {
+			config.headers["X-CSRFToken"] = csrfToken;
+		}
+	}
+	return config;
+});
 
-// const _put = (url: string, data = {}, config = {}) => {
-// 	return apiClient.put(url, data, config);
-// };
+// Handle token refresh and authentication errors
+apiClient.interceptors.response.use(
+	(response) => response,
+	async (error) => {
+		// If the error is a cancellation, we don't need to do anything.
+		if (axios.isCancel(error)) {
+			return Promise.reject(error);
+		}
 
-// const _post = (url: string, data = {}, config = {}) => {
-// 	return apiClient.post(url, data, config);
-// };
+		const originalRequest = error.config;
 
-// // export API methods
-// export { _get, _delete, _put, _post };
+		// Check for token expiration error (401/403) and if it's not a retry request
+		if (
+			error.response &&
+			(error.response.status === 401 || error.response.status === 403) &&
+			!originalRequest._retry
+		) {
+			originalRequest._retry = true; // Mark request as a retry
+			axios.defaults.withCredentials = true;
 
+			try {
+				// Attempt to refresh the token
+				const refreshToken = localStorage.getItem("refreshToken");
+				const response = await axios.post(`${BASE_URL}/token/refresh/`, {
+					refresh: refreshToken,
+				});
+
+				// If refresh is successful, update tokens and retry original request
+				if (response.status === 200) {
+					localStorage.setItem("authToken", response.data.access);
+					apiClient.defaults.headers.common[
+						"Authorization"
+					] = `Bearer ${response.data.access}`;
+					return apiClient(originalRequest);
+				}
+			} catch (refreshError) {
+				// If refresh fails, clear tokens and redirect to login
+				clearAuthTokens();
+				window.location.href = "/login"; // Force a full page reload to clear all state
+				return Promise.reject(refreshError);
+			}
+		}
+		// For all other errors, just pass them along
+		return Promise.reject(error);
+	}
+);
+
+export default apiClient;
 export { CanceledError };

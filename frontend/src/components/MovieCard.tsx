@@ -53,7 +53,7 @@ const MovieCard = ({ movie }: MovieCardProps) => {
 					},
 				}}
 			>
-				<Link href={`/movie/${movie.id}`}>
+				<Link href={`/movie/${movie.tmdb_id}`}>
 					<Image
 						height="100%"
 						width="100%"
@@ -71,7 +71,7 @@ const MovieCard = ({ movie }: MovieCardProps) => {
 						<Heading p={0} size="md" lineClamp={1}>
 							<Link
 								lineClamp={1}
-								href={`/movie/${movie.id}`}
+								href={`/movie/${movie.tmdb_id}`}
 								textDecoration="none"
 								_hover={{
 									colorPalette: "blue",

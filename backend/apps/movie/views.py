@@ -42,7 +42,17 @@ class MovieDetailView(SingleResourceTMDBView):
             # Use 404 for not found, 400 for other errors
             status_code = 404 if 'not found' in movie_data['error'].lower() else 400
             return Response(movie_data, status=status_code)
-        serializer = MovieDetailSerializer(movie_data, context={'request': request})
+
+        user_movie_data = None
+        if request.user.is_authenticated:
+            user_movie_data = UserMovieData.objects.filter(
+                user=request.user, movie_id=tmdb_id
+            ).first()
+
+        serializer = MovieDetailSerializer(
+            movie_data,
+            context={'request': request, 'user_movie_data': user_movie_data}
+        )
         return Response(serializer.data)
 
 # =========================

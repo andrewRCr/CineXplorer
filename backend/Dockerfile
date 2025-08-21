@@ -10,8 +10,9 @@ ARG USER_UID=1000
 ARG USER_GID=$USER_UID
 
 # Create a virtual environment, install system-level dependencies, and add a non-root user.
+# This layer is cached and only re-run if the base image or this RUN command changes.
 RUN python -m venv /py && \
-    apk add --update --no-cache git postgresql-client postgresql-dev shadow curl su-exec && \
+    apk add --update --no-cache postgresql-client postgresql-dev shadow curl su-exec nodejs npm git bash && \
     groupadd --gid $USER_GID $USERNAME && \
     useradd --uid $USER_UID --gid $USER_GID -m $USERNAME
 

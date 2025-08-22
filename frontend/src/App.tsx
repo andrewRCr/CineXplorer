@@ -1,17 +1,17 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import "./App.css";
 
-import AuthServiceProvider from "./components/AuthServiceProvider";
-import ProtectedRoute from "./components/ProtectedRoute";
+import AuthServiceProvider from "./components/auth/AuthServiceProvider";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
 import Home from "./pages/Home";
-import NowPlaying from "./pages/NowPlaying";
-import Login from "./pages/Login";
-import TestLogin from "./pages/TestLogin";
-import Register from "./pages/Register";
-import Profile from "./pages/Profile";
-import Settings from "./pages/Settings";
-import MovieDetail from "./pages/MovieDetail";
-import Upcoming from "./pages/Upcoming";
+import NowPlaying from "./pages/movie/NowPlaying";
+import Login from "./pages/user/Login";
+import TestLogin from "./pages/user/TestLogin";
+import Register from "./pages/user/Register";
+import Profile from "./pages/user/Profile";
+import Settings from "./pages/user/Settings";
+import MovieDetail from "./pages/movie/MovieDetail";
+import Upcoming from "./pages/movie/Upcoming";
 
 const App: React.FC = () => {
 	return (

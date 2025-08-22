@@ -79,7 +79,7 @@ const MovieDetail = () => {
 					Your Actions
 				</Heading>
 				<Flex gap={4} align="center">
-					{/* Placeholder for UserScore component */}
+					{/* Placeholder for MovieUserScore component */}
 					<Box bg="gray.100" p={2} borderRadius="md">
 						User Score
 					</Box>

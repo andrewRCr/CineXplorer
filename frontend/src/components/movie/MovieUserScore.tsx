@@ -1,11 +1,11 @@
 import { Badge } from "@chakra-ui/react";
 import React from "react";
 
-interface UserScoreProps {
+interface MovieUserScoreProps {
 	score: number;
 }
 
-const UserScore: React.FC<UserScoreProps> = ({ score }) => {
+const MovieUserScore: React.FC<MovieUserScoreProps> = ({ score }) => {
 	const fScore = Math.round(score * 10);
 	// const color = fScore >= 75 ? "green" : fScore >= 50 ? "yellow" : "";
 	const color = fScore >= 75 ? "green" : fScore < 50 ? "yellow" : "";
@@ -22,4 +22,4 @@ const UserScore: React.FC<UserScoreProps> = ({ score }) => {
 	);
 };
 
-export default UserScore;
+export default MovieUserScore;

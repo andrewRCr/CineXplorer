@@ -1,9 +1,5 @@
-import React from "react";
-import { Button, HStack, Icon, Image, Text } from "@chakra-ui/react";
-import logo from "../assets/icons8-movie-64.webp";
-import { ColorModeButton } from "./ui/color-mode";
-import { LuPlus } from "react-icons/lu";
-import { HiPlusCircle } from "react-icons/hi";
+import { Button, HStack, Image, Text } from "@chakra-ui/react";
+import logo from "../../assets/icons8-movie-64.webp";
 import { BsFillPlusCircleFill } from "react-icons/bs";
 
 const NavBar = () => {

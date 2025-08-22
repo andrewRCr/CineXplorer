@@ -10,11 +10,11 @@ import {
 	Link,
 	HStack,
 } from "@chakra-ui/react";
-import { type Movie } from "../services/movieService";
-import { Tooltip } from "./ui/tooltip";
-import { LuCirclePlus, LuEye, LuHeart } from "react-icons/lu";
+import { type Movie } from "../../services/movieService";
+import { Tooltip } from "../chakra/tooltip";
+import { LuEye, LuHeart } from "react-icons/lu";
 import { RiPlayListAddLine } from "react-icons/ri";
-import UserScore from "./UserScore";
+import MovieUserScore from "./MovieUserScore";
 
 interface MovieCardProps {
 	movie: Movie;
@@ -85,7 +85,7 @@ const MovieCard = ({ movie }: MovieCardProps) => {
 								{getFDate(movie.release_date)}
 								<Tooltip content="User Score">
 									<span>
-										<UserScore score={movie.vote_average} />
+										<MovieUserScore score={movie.vote_average} />
 									</span>
 								</Tooltip>
 							</HStack>

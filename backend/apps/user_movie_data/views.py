@@ -5,6 +5,8 @@ Views for the user movie data API.
 from rest_framework import viewsets
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.decorators import action
+from rest_framework.response import Response
 
 from core.models import UserMovieData
 from user_movie_data import serializers
@@ -36,25 +38,34 @@ class UserMovieDataViewSet(viewsets.ModelViewSet):
 
         serializer.save(user=self.request.user)
 
-
-class UserMovieDataFindByMovie(viewsets.ReadOnlyModelViewSet):
-    """
-    View for finding user movie data by TMDB ID.
-    """
-
-    serializer_class = serializers.UserMovieDataDetailSerializer
-    queryset = UserMovieData.objects.all()
-    lookup_field = 'movie__tmdb_id'
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):  # type: ignore
-        """
-        Retrieve user movie data for the authenticated user,
-        optionally filtered by a movie's TMDB ID.
-        """
-        queryset = self.queryset.filter(user=self.request.user)
-        tmdb_id = self.request.query_params.get('tmdb_id')
+    @action(detail=False, methods=['get'], url_path='by-tmdb-id')
+    def by_tmdb_id(self, request):
+        tmdb_id = request.query_params.get('tmdb_id')
+        queryset = self.get_queryset()
         if tmdb_id is not None:
             queryset = queryset.filter(movie__tmdb_id=tmdb_id)
-        return queryset
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+
+# class UserMovieDataFindByMovie(viewsets.ReadOnlyModelViewSet):
+#     """
+#     View for finding user movie data by TMDB ID.
+#     """
+
+#     serializer_class = serializers.UserMovieDataDetailSerializer
+#     queryset = UserMovieData.objects.all()
+#     lookup_field = 'movie__tmdb_id'
+#     authentication_classes = [TokenAuthentication]
+#     permission_classes = [IsAuthenticated]
+
+#     def get_queryset(self):  # type: ignore
+#         """
+#         Retrieve user movie data for the authenticated user,
+#         optionally filtered by a movie's TMDB ID.
+#         """
+#         queryset = self.queryset.filter(user=self.request.user)
+#         tmdb_id = self.request.query_params.get('tmdb_id')
+#         if tmdb_id is not None:
+#             queryset = queryset.filter(movie__tmdb_id=tmdb_id)
+#         return queryset

@@ -8,7 +8,7 @@ from core.models import Movie
 
 
 class MovieSerializer(serializers.ModelSerializer):
-    """ Serializer for the movie object, with efficient bulk user_movie_data support. """
+    """ Serializer for the minimal movie object, including user-specific data (if present). """
 
     user_movie_data = serializers.SerializerMethodField()
     # Pass-through fields from TMDB API service
@@ -23,15 +23,9 @@ class MovieSerializer(serializers.ModelSerializer):
             'title',
             'poster_path',
             'release_date',
-            'vote_average',
-            'cast',
-            'crew',
             'user_movie_data'
         ]
-        read_only_fields = ['tmdb_id',
-                            'title',
-                            'poster_path',
-                            'release_date']
+        read_only_fields = fields
 
     def get_user_movie_data(self, obj):
         request = self.context.get('request', None)
@@ -55,18 +49,20 @@ class MovieSerializer(serializers.ModelSerializer):
 
 
 class MovieDetailSerializer(MovieSerializer):
-    """ Detailed serializer for the movie object, inherits bulk user_movie_data logic. """
+    """ Detailed serializer for the movie object, including TMDB pass-through fields. """
+
     # Additional pass-through fields for detail view
     overview = serializers.CharField(read_only=True)
     genres = serializers.JSONField(read_only=True)
     production_companies = serializers.JSONField(read_only=True)
+    vote_average = serializers.FloatField(read_only=True)
+    runtime = serializers.IntegerField(read_only=True)
+    cast = serializers.JSONField(read_only=True)
+    crew = serializers.JSONField(read_only=True)
 
     class Meta(MovieSerializer.Meta):
         fields = MovieSerializer.Meta.fields + [
-            'overview', 'genres', 'production_companies'
+            'overview', 'genres', 'production_companies', 'vote_average',
+            'runtime', 'cast', 'crew',
         ]
         # read_only_fields are inherited and extended implicitly
-
-
-# class MovieResultsSerializer(serializers.ModelSerializer):
-#     """ Serializer for the movie results object. """

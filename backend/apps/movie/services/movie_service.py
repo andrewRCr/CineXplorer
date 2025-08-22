@@ -5,6 +5,10 @@ import logging
 from django.conf import settings
 from datetime import datetime, timedelta
 from core.models import Movie
+
+logger: logging.Logger = logging.getLogger(__name__)
+base_url = "https://api.themoviedb.org/3"
+
 # =========================
 # Helper Functions
 # =========================
@@ -36,14 +40,6 @@ def tmdb_dict_to_movie_instance(tmdb_dict):
     return movie_instance
 
 
-logger: logging.Logger = logging.getLogger(__name__)
-base_url = "https://api.themoviedb.org/3"
-
-# =========================
-# Helper Functions
-# =========================
-
-
 def tmdb_get(endpoint: str, params: Optional[dict] = None) -> dict:
     """Generic TMDB GET request with error handling."""
     if params is None:
@@ -70,15 +66,10 @@ def tmdb_get(endpoint: str, params: Optional[dict] = None) -> dict:
 def get_simple_credits(credits_response):
     """ Extracts simplified, relevant credits from the TMDB credits response. """
     return {
-        'directors': [
-            {'name': person['name'], 'id': person['id']}
+        'crew': [
+            {'id': person['id'], 'name': person['name'],
+                'job': person['job'], 'profile_path': person['profile_path']}
             for person in credits_response.get('crew', [])
-            if person['job'] == 'Director'
-        ],
-        'writers': [
-            {'name': person['name'], 'id': person['id']}
-            for person in credits_response.get('crew', [])
-            if person['job'] == 'Screenplay'
         ],
         'cast': [
             {'id': person['id'], 'name': person['name'],
@@ -123,8 +114,7 @@ def get_movie_by_id(tmdb_id: int):
 
         movie_instance = tmdb_dict_to_movie_instance(info_response.json())
         credits = get_simple_credits(credits_response.json())
-        movie_instance.directors = credits.get('directors', [])
-        movie_instance.writers = credits.get('writers', [])
+        movie_instance.crew = credits.get('crew', [])
         movie_instance.cast = credits.get('cast', [])
         return movie_instance
 

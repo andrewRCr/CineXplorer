@@ -1,13 +1,5 @@
-import {
-	Box,
-	Button,
-	Checkbox,
-	Container,
-	Field,
-	Flex,
-	Input,
-	VStack,
-} from "@chakra-ui/react";
+import { ROUTES } from "@/constants/routes";
+import { Box, Button, Container, Field, Input, VStack } from "@chakra-ui/react";
 import { useFormik } from "formik";
 import { useNavigate } from "react-router-dom";
 import useAuthServiceContext from "@/hooks/useAuthServiceContext";
@@ -53,25 +45,14 @@ const Register = () => {
 					});
 				} else {
 					console.log("Registration successful");
-					navigate("/login");
+					navigate(ROUTES.LOGIN);
 				}
-				// if (response === 201) {
-				// 	console.log("Registration successful");
-				// 	navigate("/login");
-				// }
-				// if (response instanceof Error) {
-				// 	console.error("Login failed:", response);
-				// } else {
-				// 	navigate("/testlogin");
-				// }
 			}
 		},
 	});
 
 	return (
-		// <Flex bg="transparent" align="center" justify="center" h="85vh">
 		<Container maxW="xs">
-			{/* <Box bg="gray" p={4} rounded="md" w={72}> */}
 			<Box
 				bg="gray"
 				p={4}
@@ -138,7 +119,6 @@ const Register = () => {
 				</form>
 			</Box>
 		</Container>
-		// </Flex>
 	);
 };
 

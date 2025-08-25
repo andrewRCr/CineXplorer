@@ -1,42 +1,50 @@
+import { ROUTES } from "@/constants/routes";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { lazy, Suspense } from "react";
 import "./App.css";
 
 import AuthServiceProvider from "./components/auth/AuthServiceProvider";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
-import Home from "./pages/Home";
-import NowPlaying from "./pages/movie/NowPlaying";
-import Login from "./pages/user/Login";
-import TestLogin from "./pages/user/TestLogin";
-import Register from "./pages/user/Register";
-import Profile from "./pages/user/Profile";
-import Settings from "./pages/user/Settings";
-import MovieDetail from "./pages/movie/MovieDetail";
-import Upcoming from "./pages/movie/Upcoming";
+import AppLayout from "./components/layout/AppLayout";
+
+// Lazy load page components
+const Home = lazy(() => import("./pages/Home"));
+const NowPlaying = lazy(() => import("./pages/movie/NowPlaying"));
+const Login = lazy(() => import("./pages/user/Login"));
+const TestLogin = lazy(() => import("./pages/user/TestLogin"));
+const Register = lazy(() => import("./pages/user/Register"));
+const Profile = lazy(() => import("./pages/user/Profile"));
+const Settings = lazy(() => import("./pages/user/Settings"));
+const MovieDetail = lazy(() => import("./pages/movie/MovieDetail"));
+const Upcoming = lazy(() => import("./pages/movie/Upcoming"));
 
 const App: React.FC = () => {
 	return (
 		<BrowserRouter>
 			<AuthServiceProvider>
-				<Routes>
-					{/* general / account routes */}
-					<Route path="/" element={<Home />} />
-					<Route path="/profile" element={<Profile />} />
-					<Route path="/settings" element={<Settings />} />
-					<Route path="/login" element={<Login />} />
-					<Route path="/register" element={<Register />} />
-					<Route
-						path="/testlogin"
-						element={
-							<ProtectedRoute>
-								<TestLogin />
-							</ProtectedRoute>
-						}
-					/>
-					{/* content routes */}
-					<Route path="/now-playing" element={<NowPlaying />} />
-					<Route path="/upcoming" element={<Upcoming />} />
-					<Route path="/movie/:id" element={<MovieDetail />} />
-				</Routes>
+				<Suspense fallback={null}>
+					<Routes>
+						<Route element={<AppLayout />}>
+							<Route path={ROUTES.HOME} element={<Home />} />
+							<Route path={ROUTES.PROFILE} element={<Profile />} />
+							<Route path={ROUTES.SETTINGS} element={<Settings />} />
+							<Route path={ROUTES.NOW_PLAYING} element={<NowPlaying />} />
+							<Route path={ROUTES.UPCOMING} element={<Upcoming />} />
+							<Route path={ROUTES.MOVIE_DETAIL} element={<MovieDetail />} />
+							{/* ...other content routes... */}
+						</Route>
+						<Route path={ROUTES.LOGIN} element={<Login />} />
+						<Route path={ROUTES.REGISTER} element={<Register />} />
+						<Route
+							path={ROUTES.TEST_LOGIN}
+							element={
+								<ProtectedRoute>
+									<TestLogin />
+								</ProtectedRoute>
+							}
+						/>
+					</Routes>
+				</Suspense>
 			</AuthServiceProvider>
 		</BrowserRouter>
 	);

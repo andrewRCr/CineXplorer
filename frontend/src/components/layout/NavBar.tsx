@@ -1,26 +1,36 @@
-import { Button, HStack, Image, Text } from "@chakra-ui/react";
+import { Box, Button, HStack, Image, Text, Container } from "@chakra-ui/react";
 import logo from "../../assets/icons8-movie-64.webp";
 import { BsFillPlusCircleFill } from "react-icons/bs";
+import { COLORS } from "@/constants/theme";
 
-const NavBar = () => {
-	return (
-		<HStack justifyContent="space-between" padding="10px">
-			<Image src={logo} boxSize="60px" />
-			<Text fontSize="3xl" fontWeight="bold" color="white">
-				CineXplorer
-			</Text>
-
-			<HStack justifyContent="right">
-				<Button size="sm" p={2} variant="solid" colorPalette="green">
-					<BsFillPlusCircleFill size="md" />
-					<Text fontWeight={"bold"} mb="0.25" ml="-0.5">
-						LOG
-					</Text>
-				</Button>
-				{/* <ColorModeButton aria-label="Toggle color mode" /> */}
+const NavBar = () => (
+	<Box
+		w="100%"
+		bg={COLORS.background.navBar}
+		position="sticky"
+		top={0}
+		zIndex={10}
+		boxShadow="base"
+		borderBottom="1px solid"
+		borderColor={COLORS.border.main}
+	>
+		<Container maxW="container.xl" px={{ base: 2, md: 6, lg: 8 }} w="100%">
+			<HStack justifyContent="space-between" py={2}>
+				<Image src={logo} boxSize="60px" />
+				<Text fontSize="3xl" fontWeight="bold" color={COLORS.text.main}>
+					CineXplorer
+				</Text>
+				<HStack>
+					<Button size="sm" p={2} variant="solid" colorScheme="green">
+						<BsFillPlusCircleFill size="md" />
+						<Text fontWeight="bold" mb="0.25" ml="-0.5">
+							LOG
+						</Text>
+					</Button>
+				</HStack>
 			</HStack>
-		</HStack>
-	);
-};
+		</Container>
+	</Box>
+);
 
 export default NavBar;

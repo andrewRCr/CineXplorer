@@ -1,3 +1,4 @@
+import { COLORS } from "@/constants/theme";
 import { ButtonGroup, IconButton, Pagination } from "@chakra-ui/react";
 import { LuChevronLeft, LuChevronRight } from "react-icons/lu";
 
@@ -23,6 +24,8 @@ export const PaginationCtrl = (props: iPaginationCtrlProps) => {
 						}
 						disabled={props.currentPage === 1}
 						aria-label="Previous page"
+						color={COLORS.text.main}
+						borderColor={COLORS.border.main}
 					>
 						<LuChevronLeft />
 					</IconButton>
@@ -37,6 +40,8 @@ export const PaginationCtrl = (props: iPaginationCtrlProps) => {
 							aria-current={
 								page.value === props.currentPage ? "page" : undefined
 							}
+							color={COLORS.text.main}
+							borderColor={COLORS.border.main}
 						>
 							{page.value}
 						</IconButton>
@@ -51,6 +56,8 @@ export const PaginationCtrl = (props: iPaginationCtrlProps) => {
 						}
 						disabled={props.currentPage === props.maxPage}
 						aria-label="Next page"
+						color={COLORS.text.main}
+						borderColor={COLORS.border.main}
 					>
 						<LuChevronRight />
 					</IconButton>

@@ -18,6 +18,7 @@ export function useUserMovieData(tmdbId: string) {
 	const [error, setError] = useState<string | null>(null);
 
 	useEffect(() => {
+		if (!tmdbId) return; // don't fetch if tmdbId is empty
 		setLoading(true);
 		getUserMovieData(tmdbId)
 			.then((res) => {

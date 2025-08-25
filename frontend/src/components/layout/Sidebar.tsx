@@ -1,9 +1,12 @@
+import { ROUTES, ROUTE_NAMES } from "@/constants/routes";
+import { COLORS } from "@/constants/theme";
 import React from "react";
-import { Box, VStack, Link, List, Separator } from "@chakra-ui/react";
+import { Box, VStack, List, Separator } from "@chakra-ui/react";
+import { Link } from "react-router-dom";
 
 const pageLinks = [
-	{ name: "Now Playing", path: "/now-playing" },
-	{ name: "Upcoming", path: "/upcoming" },
+	{ name: ROUTE_NAMES.NOW_PLAYING, path: ROUTES.NOW_PLAYING },
+	{ name: ROUTE_NAMES.UPCOMING, path: ROUTES.UPCOMING },
 ];
 
 const genres = [
@@ -21,22 +24,29 @@ const Sidebar: React.FC = () => (
 	<Box
 		as="aside"
 		width="240px"
-		bg="gray.900"
-		color="white"
+		bg={COLORS.background.sidebar}
+		color={COLORS.text.main}
+		borderRight={`1px solid ${COLORS.border.sidebar}`}
 		display="flex"
 		flexDirection="column"
 		height="100vh"
 		py={6}
+		px={0}
 	>
-		<VStack align="stretch" px={6}>
+		<VStack align="stretch" px={0}>
 			<Box>
 				<List.Root listStyleType="none">
 					{pageLinks.map((link) => (
 						<List.Item key={link.path} textAlign="left">
 							<Link
-								href={link.path}
-								color="white"
-								_hover={{ textDecoration: "none", color: "blue.300" }}
+								to={link.path}
+								style={{ color: COLORS.text.main, textDecoration: "none" }}
+								onMouseOver={(e) =>
+									(e.currentTarget.style.color = COLORS.accent.highlight)
+								}
+								onMouseOut={(e) =>
+									(e.currentTarget.style.color = COLORS.text.main)
+								}
 							>
 								{link.name}
 							</Link>
@@ -44,13 +54,18 @@ const Sidebar: React.FC = () => (
 					))}
 				</List.Root>
 			</Box>
-			<Separator borderColor="gray.700" mt="2" mb="1" />
+			<Separator
+				width="75%"
+				borderColor={COLORS.border.separator}
+				mt="2"
+				mb="1"
+			/>
 			<Box>
 				<List.Root listStyleType="none">
 					<List.Item
 						// fontStyle="italic"
 						fontWeight="semibold"
-						color="gray.400"
+						color={COLORS.text.secondary}
 						textAlign="left"
 						mb={2}
 					>
@@ -59,9 +74,10 @@ const Sidebar: React.FC = () => (
 					{genres.map((genre) => (
 						<List.Item key={genre} textAlign="left">
 							<Link
-								href={`/genre/${genre.toLowerCase()}`}
-								color="white"
-								_hover={{ textDecoration: "none", color: "blue.300" }}
+								to={`/genre/${genre.toLowerCase()}`}
+								style={{ color: "white", textDecoration: "none" }}
+								onMouseOver={(e) => (e.currentTarget.style.color = "#63b3ed")}
+								onMouseOut={(e) => (e.currentTarget.style.color = "white")}
 							>
 								{genre}
 							</Link>

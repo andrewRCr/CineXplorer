@@ -1,5 +1,5 @@
 import useMovieDetail from "@/hooks/useMovieDetail";
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams, Link } from "react-router-dom";
 import { useMemo } from "react";
 import { fetchMovieDetail, type Movie } from "@/services/movieService";
 import {
@@ -15,6 +15,8 @@ import {
 } from "@chakra-ui/react";
 import { Tag } from "@chakra-ui/tag";
 import MovieUserScore from "@/components/movie/MovieUserScore";
+import { useUserMovieData } from "@/hooks/useUserMovieData";
+import { useAuthService } from "@/services/authService";
 
 /* ============================================================
    MovieDetail Component
@@ -26,13 +28,29 @@ const MovieDetail = () => {
 	}, [id]);
 	const { movie, error, isLoading } = useMovieDetail(fetcher);
 
+	const { user, isAuthenticated } = useAuthService();
+	const shouldFetchUserMovieData = isAuthenticated && !!movie?.tmdb_id;
+
+	const {
+		data: userMovieData,
+		loading: userMovieDataLoading,
+		error: userMovieDataError,
+		update,
+	} = useUserMovieData(shouldFetchUserMovieData ? String(movie.tmdb_id) : "");
+
+	const [searchParams] = useSearchParams();
+	const page = searchParams.get("page") || "1";
+	const from = searchParams.get("from") || "now-playing";
+
 	/* ============================================================
        Helper Methods & Derived Data
        ============================================================ */
 
 	// extract key crew members (creative leads)
-	const director = movie.crew?.find((member: any) => member.job === "Director");
-	const writers = movie.crew?.filter((member: any) =>
+	const director = movie?.crew?.find(
+		(member: any) => member.job === "Director"
+	);
+	const writers = movie?.crew?.filter((member: any) =>
 		["Writer", "Screenplay"].includes(member.job)
 	);
 
@@ -41,7 +59,7 @@ const MovieDetail = () => {
 		Screenplay: "Screenplay by",
 	};
 
-	const formattedReleaseDate = movie.release_date
+	const formattedReleaseDate = movie?.release_date
 		? (() => {
 				const date = new Date(movie.release_date);
 				const month = date.getMonth() + 1;
@@ -75,10 +93,27 @@ const MovieDetail = () => {
 	}
 
 	/* ============================================================
-       Main Render
-       ============================================================ */
+	   Main Render
+	   ============================================================ */
 	return (
 		<Box maxW="6xl" mx="auto" p={4}>
+			{/* Back to Results Button */}
+			<Box mb={4}>
+				<Link to={`/${from}?page=${page}`}>
+					<Button colorScheme="blue" variant="outline">
+						<span
+							style={{
+								display: "inline-block",
+								transform: "translateY(2px)",
+								marginRight: "8px",
+							}}
+						>
+							&larr;
+						</span>
+						Back to Results
+					</Button>
+				</Link>
+			</Box>
 			{/* Header Section */}
 			<Flex gap={8} align="flex-start" mb={6}>
 				{/* Header: Movie Poster */}
@@ -144,9 +179,23 @@ const MovieDetail = () => {
 					Your Actions
 				</Heading>
 				<Flex gap={4} justify="center">
-					<Button colorScheme="teal">Add to Watchlist</Button>
-					<Button colorScheme="teal">Mark as Watched</Button>
-					<Button colorScheme="teal">Rate Movie</Button>
+					{/* <Button colorScheme="teal">Add to Watchlist</Button> */}
+					<Button
+						colorScheme={userMovieData?.inWatchlist ? "gray" : "teal"}
+						loading={userMovieDataLoading && isAuthenticated}
+						onClick={() => update({ inWatchlist: !userMovieData?.inWatchlist })}
+						disabled={!isAuthenticated}
+					>
+						{userMovieData?.inWatchlist
+							? "Remove from Watchlist"
+							: "Add to Watchlist"}
+					</Button>
+					<Button colorScheme="teal" disabled={!isAuthenticated}>
+						Mark as Watched
+					</Button>
+					<Button colorScheme="teal" disabled={!isAuthenticated}>
+						Rate Movie
+					</Button>
 				</Flex>
 			</Box>
 			<Separator mb={6} />

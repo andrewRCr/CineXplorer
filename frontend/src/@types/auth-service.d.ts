@@ -1,10 +1,10 @@
 export interface AuthServiceProps {
-	login: (username: string, password: string) => unknown;
-	isLoggedIn: boolean;
-	logout: () => void;
+	login: (username: string, password: string) => Promise<void | number | Error>;
+	isAuthenticated: boolean;
+	logout: () => Promise<void>;
 	register: (
 		username: string,
 		email: string,
 		password: string
-	) => Promise<unknown>;
+	) => Promise<number | Error>;
 }

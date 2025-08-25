@@ -1,10 +1,10 @@
+import { ROUTES } from "@/constants/routes";
 import {
 	Box,
 	Button,
 	Checkbox,
 	Container,
 	Field,
-	Flex,
 	Input,
 	VStack,
 } from "@chakra-ui/react";
@@ -43,21 +43,14 @@ const Login = () => {
 						password: "Invalid username or password",
 					});
 				} else {
-					navigate("/");
+					navigate(ROUTES.HOME);
 				}
-				// if (response instanceof Error) {
-				// 	console.error("Login failed:", response);
-				// } else {
-				// 	navigate("/testlogin");
-				// }
 			}
 		},
 	});
 
 	return (
-		// <Flex bg="transparent" align="center" justify="center" h="85vh">
 		<Container maxW="xs">
-			{/* <Box bg="gray" p={4} rounded="md" w={72}> */}
 			<Box
 				bg="gray"
 				p={4}
@@ -121,7 +114,6 @@ const Login = () => {
 				</form>
 			</Box>
 		</Container>
-		// </Flex>
 	);
 };
 

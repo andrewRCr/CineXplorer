@@ -1,24 +1,54 @@
+import { ROUTES } from "@/constants/routes";
 import axios from "axios";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import type { AuthServiceProps } from "@/@types/auth-service";
+import type { User } from "@/@types/user";
 import { getCsrfToken, ensureCsrfTokenCookie } from "@/utilities/csrf";
 
 const BASE_URL = import.meta.env.VITE_BASE_API_URL;
 
-export function useAuthService(): AuthServiceProps {
-	// set initial state of isLoggedIn to current local storage value
-	const getInitialLoggedInValue = () => {
-		const loggedIn = localStorage.getItem("isLoggedIn");
-		return loggedIn !== null && loggedIn === "true";
-	};
-	const [isLoggedIn, setIsLoggedIn] = useState<boolean>(
-		getInitialLoggedInValue
+/**
+ * Utility: Get initial authentication state from localStorage.
+ */
+function getInitialAuthenticatedValue(): boolean {
+	const authenticated = localStorage.getItem("isAuthenticated");
+	return authenticated !== null && authenticated === "true";
+}
+
+/**
+ * Removes authentication tokens from localStorage.
+ * This is a standalone utility function and not a React hook.
+ */
+export const clearAuthTokens = () => {
+	localStorage.removeItem("authToken");
+	localStorage.removeItem("refreshToken");
+};
+
+/**
+ * React hook: Authentication service for login, logout, registration, and user state.
+ */
+export function useAuthService(): AuthServiceProps & { user: User | null } {
+	// -------------------- State --------------------
+	const [isAuthenticated, setIsAuthenticated] = useState<boolean>(
+		getInitialAuthenticatedValue
 	);
+	const [user, setUser] = useState<User | null>(null);
 	const navigate = useNavigate();
 
-	// store authenticated user's username/email
-	// note: not currently sent via jwt-interceptor, as only used by login()
+	// -------------------- Effects --------------------
+	useEffect(() => {
+		/**
+		 * On mount or when isAuthenticated changes, validate the session with the backend.
+		 * This ensures that persistent authentication state in localStorage matches the actual backend session.
+		 * If the session is expired or invalid, user state and isAuthenticated will be cleared.
+		 */
+		if (isAuthenticated) {
+			getUserDetails();
+		}
+	}, [isAuthenticated]);
+
+	// -------------------- Helpers --------------------
 	/**
 	 * GET /user/me/
 	 * Fetches authenticated user's details.
@@ -26,76 +56,69 @@ export function useAuthService(): AuthServiceProps {
 	const getUserDetails = async () => {
 		try {
 			const userInfoResponse = await axios.get(`${BASE_URL}/user/me/`, {
-				headers: {
-					"Content-Type": "application/json",
-				},
+				headers: { "Content-Type": "application/json" },
 				withCredentials: true,
 			});
 			const userDetails = userInfoResponse.data;
-			localStorage.setItem("username", userDetails.username);
-			localStorage.setItem("email", userDetails.email);
+			setUser(userDetails);
 		} catch (error) {
-			// console.error("Failed to fetch user details:", error);
-			localStorage.removeItem("user_id");
-			localStorage.setItem("isLoggedIn", "false");
-			setIsLoggedIn(false);
+			setUser(null);
+			setIsAuthenticated(false);
+			localStorage.setItem("isAuthenticated", "false");
 			return error;
 		}
 	};
 
+	// -------------------- Actions --------------------
 	/**
 	 * POST /token/
 	 * Authenticates user and sets login state.
 	 * Requires CSRF token.
 	 */
-	const login = async (username: string, password: string) => {
+	const login = async (
+		username: string,
+		password: string
+	): Promise<void | number | Error> => {
 		try {
 			await ensureCsrfTokenCookie(BASE_URL);
 			const csrfToken = getCsrfToken();
-			//  make login request with CSRF header
 			const response = await axios.post(
 				`${BASE_URL}/token/`,
-				{
-					username,
-					password,
-				},
+				{ username, password },
 				{
 					headers: {
 						"Content-Type": "application/json",
 						"X-CSRFToken": csrfToken || "",
 					},
-					withCredentials: true, // important for cookies to be set
+					withCredentials: true,
 				}
 			);
-			// store frontend isAuthenticated flag (isloggedIn) for setting on context
-			localStorage.setItem("isLoggedIn", "true");
-			setIsLoggedIn(true);
-			// store user_id from response data and username/email from getUserDetails
+
 			const user_id = response.data.user_id;
 			if (user_id) {
-				localStorage.setItem("user_id", user_id);
+				setIsAuthenticated(true);
+				localStorage.setItem("isAuthenticated", "true");
 			}
-			getUserDetails();
+			await getUserDetails();
+			return;
 		} catch (error) {
 			if (axios.isAxiosError(error) && error.response) {
 				return error.response.status;
 			}
-			return error;
+			return error as Error;
 		}
 	};
 
 	/**
 	 * POST /logout/
-	 * Logs out the current user and clears local state.
+	 * Logs out the current user and clears state.
 	 * Requires CSRF token.
 	 */
 	const logout = async () => {
-		localStorage.removeItem("user_id");
-		localStorage.removeItem("username");
-		localStorage.removeItem("email");
-		localStorage.setItem("isLoggedIn", "false");
-		setIsLoggedIn(false);
-		navigate("/login");
+		setIsAuthenticated(false);
+		localStorage.setItem("isAuthenticated", "false");
+		setUser(null);
+		navigate(ROUTES.LOGIN);
 
 		try {
 			const csrfToken = getCsrfToken();
@@ -120,24 +143,18 @@ export function useAuthService(): AuthServiceProps {
 	 * POST /register/
 	 * Registers a new user.
 	 * Requires CSRF token.
-	 * Fetches CSRF token cookie if not present.
 	 */
 	const register = async (
 		username: string,
 		email: string,
 		password: string
-	) => {
+	): Promise<number | Error> => {
 		try {
 			await ensureCsrfTokenCookie(BASE_URL);
 			const csrfToken = getCsrfToken();
-			// make registration request with CSRF header
 			const response = await axios.post(
 				`${BASE_URL}/register/`,
-				{
-					username,
-					email,
-					password,
-				},
+				{ username, email, password },
 				{
 					headers: {
 						"Content-Type": "application/json",
@@ -150,18 +167,9 @@ export function useAuthService(): AuthServiceProps {
 			if (axios.isAxiosError(error) && error.response) {
 				return error.response.status;
 			}
-			return error;
+			return error as Error;
 		}
 	};
 
-	return { login, isLoggedIn, logout, register };
+	return { login, isAuthenticated, logout, register, user };
 }
-
-/**
- * Removes authentication tokens from localStorage.
- * This is a standalone utility function and not a React hook.
- */
-export const clearAuthTokens = () => {
-	localStorage.removeItem("authToken");
-	localStorage.removeItem("refreshToken");
-};

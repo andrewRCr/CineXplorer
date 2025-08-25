@@ -27,7 +27,9 @@ const TestLogin = () => {
 
 	return (
 		<>
-			<div>{authServiceContext?.isLoggedIn?.toString() ?? "Not logged in"}</div>
+			<div>
+				{authServiceContext?.isAuthenticated?.toString() ?? "Not logged in"}
+			</div>
 			<div>
 				<Button onClick={authServiceContext?.logout}>Logout</Button>
 				<Button onClick={getUserDetails}>Get User Details</Button>

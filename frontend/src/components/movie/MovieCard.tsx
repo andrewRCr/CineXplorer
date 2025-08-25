@@ -7,9 +7,10 @@ import {
 	ButtonGroup,
 	IconButton,
 	Center,
-	Link,
 	HStack,
 } from "@chakra-ui/react";
+import { Link } from "react-router-dom";
+import { COLORS } from "@/constants/theme";
 import { type Movie } from "../../services/movieService";
 import { Tooltip } from "../chakra/tooltip";
 import { LuEye, LuHeart } from "react-icons/lu";
@@ -18,9 +19,11 @@ import MovieUserScore from "./MovieUserScore";
 
 interface MovieCardProps {
 	movie: Movie;
+	currentPage?: number;
+	source?: string;
 }
 
-const MovieCard = ({ movie }: MovieCardProps) => {
+const MovieCard = ({ movie, currentPage, source }: MovieCardProps) => {
 	const cardWidth = useBreakpointValue({
 		base: "100%",
 	});
@@ -34,6 +37,12 @@ const MovieCard = ({ movie }: MovieCardProps) => {
 		});
 	};
 
+	// Build query string for navigation
+	const queryParams: string[] = [];
+	if (typeof currentPage === "number") queryParams.push(`page=${currentPage}`);
+	if (source) queryParams.push(`from=${source}`);
+	const queryString = queryParams.length > 0 ? `?${queryParams.join("&")}` : "";
+
 	return (
 		<Box width={cardWidth} p={0.5}>
 			<Card.Root
@@ -44,7 +53,7 @@ const MovieCard = ({ movie }: MovieCardProps) => {
 					bottom: "0",
 					left: "0",
 					height: "2px",
-					backgroundColor: "blue.500",
+					backgroundColor: COLORS.accent.primary,
 					transition: "width 0.3s ease-in-out",
 				}}
 				_hover={{
@@ -53,7 +62,10 @@ const MovieCard = ({ movie }: MovieCardProps) => {
 					},
 				}}
 			>
-				<Link href={`/movie/${movie.tmdb_id}`}>
+				<Link
+					to={`/movie/${movie.tmdb_id}${queryString}`}
+					style={{ display: "block" }}
+				>
 					<Image
 						height="100%"
 						width="100%"
@@ -70,12 +82,8 @@ const MovieCard = ({ movie }: MovieCardProps) => {
 					<Card.Body>
 						<Heading p={0} size="md" lineClamp={1}>
 							<Link
-								lineClamp={1}
-								href={`/movie/${movie.tmdb_id}`}
-								textDecoration="none"
-								_hover={{
-									colorPalette: "blue",
-								}}
+								to={`/movie/${movie.tmdb_id}${queryString}`}
+								style={{ textDecoration: "none", color: "inherit" }}
 							>
 								{movie.title}
 							</Link>
@@ -95,7 +103,11 @@ const MovieCard = ({ movie }: MovieCardProps) => {
 						<Center width="100%">
 							<ButtonGroup size="sm" mb={0} mt={-3} spaceX={-3}>
 								<Tooltip content="Watched" openDelay={500}>
-									<IconButton variant="ghost" colorScheme="blue" p={0}>
+									<IconButton
+										variant="ghost"
+										colorScheme={COLORS.accent.primary}
+										p={0}
+									>
 										<LuEye />
 									</IconButton>
 								</Tooltip>

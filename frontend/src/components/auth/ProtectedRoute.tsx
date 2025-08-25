@@ -9,7 +9,7 @@ type ProtectedRouteProps = {
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
 	const authServiceContext = useAuthServiceContext();
 
-	if (!authServiceContext || !authServiceContext.isLoggedIn) {
+	if (!authServiceContext || !authServiceContext.isAuthenticated) {
 		return <Navigate to="/login" replace={true} />;
 	}
 

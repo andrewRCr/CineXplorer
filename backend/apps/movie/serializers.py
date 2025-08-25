@@ -11,10 +11,8 @@ class MovieSerializer(serializers.ModelSerializer):
     """ Serializer for the minimal movie object, including user-specific data (if present). """
 
     user_movie_data = serializers.SerializerMethodField()
-    # Pass-through fields from TMDB API service
+    # Pass-through fields from TMDB API service needed in paginated views
     vote_average = serializers.FloatField(read_only=True)
-    cast = serializers.JSONField(read_only=True)
-    crew = serializers.JSONField(read_only=True)
 
     class Meta:
         model = Movie
@@ -23,6 +21,7 @@ class MovieSerializer(serializers.ModelSerializer):
             'title',
             'poster_path',
             'release_date',
+            'vote_average',
             'user_movie_data'
         ]
         read_only_fields = fields

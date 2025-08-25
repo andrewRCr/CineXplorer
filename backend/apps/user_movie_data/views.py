@@ -40,32 +40,17 @@ class UserMovieDataViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'], url_path='by-tmdb-id')
     def by_tmdb_id(self, request):
+        """
+        Retrieve a single UserMovieData object for the authenticated user by TMDB movie ID.
+        Returns a 404 response if no matching object is found.
+        """
+
         tmdb_id = request.query_params.get('tmdb_id')
         queryset = self.get_queryset()
         if tmdb_id is not None:
             queryset = queryset.filter(movie__tmdb_id=tmdb_id)
-        serializer = self.get_serializer(queryset, many=True)
+        instance = queryset.first()
+        if instance is None:
+            return Response({}, status=404)
+        serializer = self.get_serializer(instance)
         return Response(serializer.data)
-
-
-# class UserMovieDataFindByMovie(viewsets.ReadOnlyModelViewSet):
-#     """
-#     View for finding user movie data by TMDB ID.
-#     """
-
-#     serializer_class = serializers.UserMovieDataDetailSerializer
-#     queryset = UserMovieData.objects.all()
-#     lookup_field = 'movie__tmdb_id'
-#     authentication_classes = [TokenAuthentication]
-#     permission_classes = [IsAuthenticated]
-
-#     def get_queryset(self):  # type: ignore
-#         """
-#         Retrieve user movie data for the authenticated user,
-#         optionally filtered by a movie's TMDB ID.
-#         """
-#         queryset = self.queryset.filter(user=self.request.user)
-#         tmdb_id = self.request.query_params.get('tmdb_id')
-#         if tmdb_id is not None:
-#             queryset = queryset.filter(movie__tmdb_id=tmdb_id)
-#         return queryset

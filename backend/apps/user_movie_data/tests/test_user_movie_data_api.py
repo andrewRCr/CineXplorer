@@ -18,10 +18,9 @@ from rest_framework.test import APIClient
 from rest_framework import status
 
 
-# ======================================================================
-# Constants & Helper Functions
-# ======================================================================
-
+# =========================
+# URLs
+# =========================
 
 USER_MOVIE_DATA_URL = reverse('user_movie_data:user-movie-data-list')
 
@@ -30,7 +29,7 @@ def find_by_movie_url(tmdb_id):
     """
     Returns the URL for finding UserMovieData by movie tmdb_id.
     """
-    return reverse('user_movie_data:user-movie-data-find-by-movie-detail', args=[tmdb_id])
+    return reverse('user_movie_data:user-movie-data-by-tmdb-id') + f'?tmdb_id={tmdb_id}'
 
 
 def detail_url(user_movie_data_id):
@@ -43,6 +42,10 @@ def detail_url(user_movie_data_id):
     """
     return reverse('user_movie_data:user-movie-data-detail', args=[user_movie_data_id])
 
+
+# =========================
+# Test Setup Helper Methods
+# =========================
 
 def create_user_movie_data(user, **params):
     """
@@ -92,9 +95,9 @@ def create_user(**params):
     )
 
 
-# ======================================================================
+# =========================
 # Test Classes
-# ======================================================================
+# =========================
 
 
 class PublicUserMovieDataAPITests(TestCase):
@@ -383,3 +386,4 @@ class PrivateUserMovieDataAPITests(TestCase):
         non_existent_tmdb_id = 1111
         url = find_by_movie_url(non_existent_tmdb_id)
         res = self.client.get(url)
+        self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)

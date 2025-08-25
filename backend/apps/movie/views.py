@@ -16,6 +16,34 @@ from movie.serializers import MovieDetailSerializer, MovieSerializer
 
 from .services import movie_service
 
+# =========================
+# Helper methods
+# =========================
+
+
+def serialize_paginated_movies(request, tmdb_response):
+    """
+    Shared helper for paginated movie endpoints.
+    Serializes Movie instances, appends user-specific data, and preserves pagination metadata.
+    """
+
+    if not isinstance(tmdb_response, dict) or 'results' not in tmdb_response:
+        return Response(tmdb_response, status=500)
+    movies_data = tmdb_response['results']
+    user = getattr(request, 'user', None)
+    user_movie_data_map = {}
+    if user and user.is_authenticated:
+        movie_ids = [movie.id for movie in movies_data]
+        user_movie_qs = UserMovieData.objects.filter(
+            user=user, movie_id__in=movie_ids)
+        user_movie_data_map = {umd.movie.id: umd for umd in user_movie_qs}
+    serializer = MovieSerializer(
+        movies_data,
+        many=True,
+        context={'request': request, 'user_movie_data_map': user_movie_data_map}
+    )
+    tmdb_response['results'] = serializer.data
+    return Response(tmdb_response)
 
 # =========================
 # Single Resource Detail Endpoints
@@ -24,6 +52,7 @@ from .services import movie_service
 
 class MovieDetailView(SingleResourceTMDBView):
     """Retrieves movie details by TMDB ID, including user-specific data if available."""
+
     service_method = staticmethod(movie_service.get_movie_by_id)
 
     def get(self, request, tmdb_id, *args, **kwargs):
@@ -61,91 +90,28 @@ class MovieDetailView(SingleResourceTMDBView):
 
 
 class NowPlayingMoviesView(PaginatedTMDBView):
-    """ Retrieves a list of movies by recency, including user-specific data if available. """
     service_method = staticmethod(movie_service.get_nowPlaying_movies)
 
     def get(self, request, *args, **kwargs):
-        """
-        Retrieves now playing movies, serializes Movie instances,
-        appends user-specific data, and preserves pagination metadata.
-        """
         page = request.query_params.get('page', 1)
         tmdb_response = self.service_method(page=page)
-        if not isinstance(tmdb_response, dict) or 'results' not in tmdb_response:
-            return Response(tmdb_response, status=500)
-        movies_data = tmdb_response['results']
-        user = getattr(request, 'user', None)
-        user_movie_data_map = {}
-        if user and user.is_authenticated:
-            movie_ids = [movie.id for movie in movies_data]
-            user_movie_qs = UserMovieData.objects.filter(
-                user=user, movie_id__in=movie_ids)
-            user_movie_data_map = {umd.movie.id: umd for umd in user_movie_qs}
-        serializer = MovieSerializer(
-            movies_data,
-            many=True,
-            context={'request': request, 'user_movie_data_map': user_movie_data_map}
-        )
-        tmdb_response['results'] = serializer.data
-        return Response(tmdb_response)
+        return serialize_paginated_movies(request, tmdb_response)
 
 
 class UpcomingMoviesView(PaginatedTMDBView):
-    """ Retrieves a list of upcoming movies, including user-specific data if available. """
     service_method = staticmethod(movie_service.get_upcoming_movies)
 
     def get(self, request, *args, **kwargs):
-        """
-        Retrieves upcoming movies, serializes Movie instances,
-        appends user-specific data, and preserves pagination metadata.
-        """
         page = request.query_params.get('page', 1)
         tmdb_response = self.service_method(page=page)
-        if not isinstance(tmdb_response, dict) or 'results' not in tmdb_response:
-            return Response(tmdb_response, status=500)
-        movies_data = tmdb_response['results']
-        user = getattr(request, 'user', None)
-        user_movie_data_map = {}
-        if user and user.is_authenticated:
-            movie_ids = [movie.id for movie in movies_data]
-            user_movie_qs = UserMovieData.objects.filter(
-                user=user, movie_id__in=movie_ids)
-            user_movie_data_map = {umd.movie.id: umd for umd in user_movie_qs}
-        serializer = MovieSerializer(
-            movies_data,
-            many=True,
-            context={'request': request, 'user_movie_data_map': user_movie_data_map}
-        )
-        tmdb_response['results'] = serializer.data
-        return Response(tmdb_response)
+        return serialize_paginated_movies(request, tmdb_response)
 
 
 class SearchMoviesView(PaginatedTMDBQueryView):
-    """Searches for movies by query string, including user-specific data if available."""
     service_method = staticmethod(movie_service.search_movies)
 
     def get(self, request, *args, **kwargs):
-        """
-        Searches for movies by query string, serializes Movie instances,
-        appends user-specific data, and preserves pagination metadata.
-        """
         query = request.query_params.get('query', '')
         page = request.query_params.get('page', 1)
         tmdb_response = self.service_method(query=query, page=page)
-        if not isinstance(tmdb_response, dict) or 'results' not in tmdb_response:
-            return Response(tmdb_response, status=500)
-        movies_data = tmdb_response['results']
-        user = getattr(request, 'user', None)
-        user_movie_data_map = {}
-        if user and user.is_authenticated:
-            movie_ids = [movie.id for movie in movies_data]
-            user_movie_qs = UserMovieData.objects.filter(
-                user=user, movie_id__in=movie_ids)
-            user_movie_data_map = {umd.movie.id: umd for umd in user_movie_qs}
-        serializer = MovieSerializer(
-            movies_data,
-            many=True,
-            context={'request': request, 'user_movie_data_map': user_movie_data_map}
-        )
-        tmdb_response['results'] = serializer.data
-        return Response(tmdb_response)
+        return serialize_paginated_movies(request, tmdb_response)

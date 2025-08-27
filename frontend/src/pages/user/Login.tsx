@@ -10,10 +10,10 @@ import {
 } from "@chakra-ui/react";
 import { useFormik } from "formik";
 import { useNavigate } from "react-router-dom";
-import useAuthServiceContext from "@/hooks/useAuthServiceContext";
+import useAuthContext from "@/hooks/useAuthContext";
 
 const Login = () => {
-	const authContext = useAuthServiceContext();
+	const authContext = useAuthContext();
 	const login = authContext?.login;
 	const navigate = useNavigate();
 	const formik = useFormik({

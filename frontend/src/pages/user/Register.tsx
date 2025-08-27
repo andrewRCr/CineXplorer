@@ -2,10 +2,10 @@ import { ROUTES } from "@/constants/routes";
 import { Box, Button, Container, Field, Input, VStack } from "@chakra-ui/react";
 import { useFormik } from "formik";
 import { useNavigate } from "react-router-dom";
-import useAuthServiceContext from "@/hooks/useAuthServiceContext";
+import useAuthContext from "@/hooks/useAuthContext";
 
 const Register = () => {
-	const authContext = useAuthServiceContext();
+	const authContext = useAuthContext();
 	const register = authContext?.register;
 	const navigate = useNavigate();
 	const formik = useFormik({

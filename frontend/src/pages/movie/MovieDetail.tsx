@@ -16,7 +16,7 @@ import {
 import { Tag } from "@chakra-ui/tag";
 import MovieUserScore from "@/components/movie/MovieUserScore";
 import { useUserMovieData } from "@/hooks/useUserMovieData";
-import { useAuthService } from "@/services/authService";
+import { useAuth } from "@/hooks/useAuth";
 
 /* ============================================================
    MovieDetail Component
@@ -28,7 +28,7 @@ const MovieDetail = () => {
 	}, [id]);
 	const { movie, error, isLoading } = useMovieDetail(fetcher);
 
-	const { user, isAuthenticated } = useAuthService();
+	const { user, isAuthenticated } = useAuth();
 	const shouldFetchUserMovieData = isAuthenticated && !!movie?.tmdb_id;
 
 	const {

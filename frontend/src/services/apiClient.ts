@@ -1,5 +1,5 @@
 import axios, { CanceledError } from "axios";
-import { clearAuthTokens } from "./authService";
+import { clearAuthTokens } from "@/utilities/token";
 
 const BASE_URL = import.meta.env.VITE_BASE_API_URL;
 

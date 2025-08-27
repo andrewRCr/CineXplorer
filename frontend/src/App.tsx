@@ -3,7 +3,7 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import "./App.css";
 
-import AuthServiceProvider from "./components/auth/AuthServiceProvider";
+import AuthContextProvider from "./components/auth/AuthContextProvider";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import AppLayout from "./components/layout/AppLayout";
 
@@ -21,7 +21,7 @@ const Upcoming = lazy(() => import("./pages/movie/Upcoming"));
 const App: React.FC = () => {
 	return (
 		<BrowserRouter>
-			<AuthServiceProvider>
+			<AuthContextProvider>
 				<Suspense fallback={null}>
 					<Routes>
 						<Route element={<AppLayout />}>
@@ -45,7 +45,7 @@ const App: React.FC = () => {
 						/>
 					</Routes>
 				</Suspense>
-			</AuthServiceProvider>
+			</AuthContextProvider>
 		</BrowserRouter>
 	);
 };

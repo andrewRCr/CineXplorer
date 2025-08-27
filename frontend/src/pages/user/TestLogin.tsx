@@ -1,12 +1,12 @@
 import { Button } from "@chakra-ui/react";
 import { useState } from "react";
-import useAuthServiceContext from "@/hooks/useAuthServiceContext";
+import useAuthContext from "@/hooks/useAuthContext";
 import apiClient from "@/services/apiClient";
 
 const BASE_URL = import.meta.env.VITE_BASE_API_URL;
 
 const TestLogin = () => {
-	const authServiceContext = useAuthServiceContext();
+	const authContext = useAuthContext();
 	const [username, setUsername] = useState("");
 
 	// store authenticated user's username/email
@@ -27,11 +27,9 @@ const TestLogin = () => {
 
 	return (
 		<>
+			<div>{authContext?.isAuthenticated?.toString() ?? "Not logged in"}</div>
 			<div>
-				{authServiceContext?.isAuthenticated?.toString() ?? "Not logged in"}
-			</div>
-			<div>
-				<Button onClick={authServiceContext?.logout}>Logout</Button>
+				<Button onClick={authContext?.logout}>Logout</Button>
 				<Button onClick={getUserDetails}>Get User Details</Button>
 				<div>Username: {username}</div>
 			</div>

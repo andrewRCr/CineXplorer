@@ -1,58 +1,38 @@
+/**
+ * useAuth
+ *
+ * This custom React hook manages authentication state and actions (login, logout, register, user info).
+ * It is used by AuthContextProvider to provide state to the context.
+ *
+ * Relationship:
+ * - Called by AuthContextProvider to get auth state and actions.
+ * - State is shared via AuthContext.
+ * - Components access state using useAuthContext.
+ */
 import { ROUTES } from "@/constants/routes";
 import axios from "axios";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import type { AuthServiceProps } from "@/@types/auth-service";
+import type { AuthStateProps } from "@/@types/auth-state";
 import type { User } from "@/@types/user";
 import { getCsrfToken, ensureCsrfTokenCookie } from "@/utilities/csrf";
+import { getInitialAuthenticatedValue } from "@/utilities/token";
 
 const BASE_URL = import.meta.env.VITE_BASE_API_URL;
 
-/**
- * Utility: Get initial authentication state from localStorage.
- */
-function getInitialAuthenticatedValue(): boolean {
-	const authenticated = localStorage.getItem("isAuthenticated");
-	return authenticated !== null && authenticated === "true";
-}
-
-/**
- * Removes authentication tokens from localStorage.
- * This is a standalone utility function and not a React hook.
- */
-export const clearAuthTokens = () => {
-	localStorage.removeItem("authToken");
-	localStorage.removeItem("refreshToken");
-};
-
-/**
- * React hook: Authentication service for login, logout, registration, and user state.
- */
-export function useAuthService(): AuthServiceProps & { user: User | null } {
-	// -------------------- State --------------------
+export function useAuth(): AuthStateProps & { user: User | null } {
 	const [isAuthenticated, setIsAuthenticated] = useState<boolean>(
 		getInitialAuthenticatedValue
 	);
 	const [user, setUser] = useState<User | null>(null);
 	const navigate = useNavigate();
 
-	// -------------------- Effects --------------------
 	useEffect(() => {
-		/**
-		 * On mount or when isAuthenticated changes, validate the session with the backend.
-		 * This ensures that persistent authentication state in localStorage matches the actual backend session.
-		 * If the session is expired or invalid, user state and isAuthenticated will be cleared.
-		 */
 		if (isAuthenticated) {
 			getUserDetails();
 		}
 	}, [isAuthenticated]);
 
-	// -------------------- Helpers --------------------
-	/**
-	 * GET /user/me/
-	 * Fetches authenticated user's details.
-	 */
 	const getUserDetails = async () => {
 		try {
 			const userInfoResponse = await axios.get(`${BASE_URL}/user/me/`, {
@@ -69,12 +49,6 @@ export function useAuthService(): AuthServiceProps & { user: User | null } {
 		}
 	};
 
-	// -------------------- Actions --------------------
-	/**
-	 * POST /token/
-	 * Authenticates user and sets login state.
-	 * Requires CSRF token.
-	 */
 	const login = async (
 		username: string,
 		password: string
@@ -109,11 +83,6 @@ export function useAuthService(): AuthServiceProps & { user: User | null } {
 		}
 	};
 
-	/**
-	 * POST /logout/
-	 * Logs out the current user and clears state.
-	 * Requires CSRF token.
-	 */
 	const logout = async () => {
 		setIsAuthenticated(false);
 		localStorage.setItem("isAuthenticated", "false");
@@ -139,11 +108,6 @@ export function useAuthService(): AuthServiceProps & { user: User | null } {
 		}
 	};
 
-	/**
-	 * POST /register/
-	 * Registers a new user.
-	 * Requires CSRF token.
-	 */
 	const register = async (
 		username: string,
 		email: string,

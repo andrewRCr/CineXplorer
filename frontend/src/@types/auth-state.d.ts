@@ -1,4 +1,4 @@
-export interface AuthServiceProps {
+export interface AuthStateProps {
 	login: (username: string, password: string) => Promise<void | number | Error>;
 	isAuthenticated: boolean;
 	logout: () => Promise<void>;

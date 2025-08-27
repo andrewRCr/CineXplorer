@@ -54,34 +54,6 @@ class User(AbstractBaseUser, PermissionsMixin):
     objects = UserManager()
 
 
-class UserMovieData(models.Model):
-    """ Represents a user's data about a particular movie. """
-
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-    )
-    movie = models.ForeignKey(
-        'Movie',
-        on_delete=models.CASCADE,
-        related_name='user_movie_data'
-    )
-    user_watched = models.BooleanField(default=False)
-    user_on_watchlist = models.BooleanField(default=False)
-    user_liked = models.BooleanField(default=False)
-    user_rating = models.IntegerField(
-        null=True, blank=True, default=None,
-        validators=[MinValueValidator(1), MaxValueValidator(10)]
-    )
-    user_review = models.TextField(blank=True, null=True)
-
-    class Meta:
-        unique_together = ('user', 'movie')
-
-    def __str__(self) -> str:
-        return f"{self.user.username} - {self.movie.title}"
-
-
 class Movie(models.Model):
     """
     Represents a minimal local stub for a TMDB movie.
@@ -94,3 +66,31 @@ class Movie(models.Model):
 
     def __str__(self) -> str:
         return self.title
+
+
+class UserMovieData(models.Model):
+    """ Represents a user's data about a particular movie. """
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+    )
+    movie = models.ForeignKey(
+        'Movie',
+        on_delete=models.CASCADE,
+        related_name='user_movie_data'
+    )
+    user_watched = models.BooleanField(default=False, db_index=True)
+    user_on_watchlist = models.BooleanField(default=False, db_index=True)
+    user_liked = models.BooleanField(default=False, db_index=True)
+    user_rating = models.IntegerField(
+        null=True, blank=True, default=None,
+        validators=[MinValueValidator(1), MaxValueValidator(10)]
+    )
+    user_review = models.TextField(blank=True, null=True)
+
+    class Meta:
+        unique_together = ('user', 'movie')
+
+    def __str__(self) -> str:
+        return f"{self.user.username} - {self.movie.title}"

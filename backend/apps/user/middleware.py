@@ -19,14 +19,6 @@ EXEMPT_PATHS = ['/api/register/', '/api/token/', '/api/logout/', '/api/token/ref
 
 class CsrfHeaderMiddleware(MiddlewareMixin):
     def process_request(self, request):
-        print(
-            (
-                f"[CSRF Middleware] Path: {request.path}, "
-                f"Method: {request.method}, "
-                f"Authenticated: {getattr(request, 'user', None) and
-                                  request.user.is_authenticated}"
-            )
-        )
         if request.path in EXEMPT_PATHS:
             return None
         # CSRF protection is only needed for authenticated users.
@@ -38,4 +30,9 @@ class CsrfHeaderMiddleware(MiddlewareMixin):
             cookie_token = request.COOKIES.get("XSRF-TOKEN")
             header_token = request.headers.get("X-CSRFToken")
             if not cookie_token or not header_token or cookie_token != header_token:
-                return JsonResponse({"detail": "CSRF token missing or invalid."}, status=403)
+                print(
+                    f"[CSRF Middleware] CSRF failure: Path={request.path}, "
+                    f"Method={request.method}, "
+                    f"Authenticated={request.user.is_authenticated}"
+                )
+            return JsonResponse({"detail": "CSRF token missing or invalid."}, status=403)

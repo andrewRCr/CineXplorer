@@ -7,7 +7,7 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ..:/workspaces:cached
+      - ../backend:/backend:cached
       - ./dev-certs/key.pem:/app/key.pem
       - ./dev-certs/cert.pem:/app/cert.pem
     env_file:
@@ -39,7 +39,7 @@ services:
     ports:
       - "5173:5173"
     volumes:
-      - ..:/workspaces:cached
+      - ../frontend:/frontend:cached
       - frontend-node-modules:/frontend/node_modules
       - ./dev-certs/key.pem:/app/certs/key.pem
       - ./dev-certs/cert.pem:/app/certs/cert.pem

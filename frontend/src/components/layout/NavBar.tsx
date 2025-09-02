@@ -2,6 +2,7 @@ import { Box, Button, HStack, Image, Text, Container } from "@chakra-ui/react";
 import logo from "../../assets/icons8-movie-64.webp";
 import { BsFillPlusCircleFill } from "react-icons/bs";
 import { COLORS } from "@/constants/theme";
+import NavBarUserMenu from "./NavBarUserMenu";
 
 const NavBar = () => (
 	<Box
@@ -21,6 +22,7 @@ const NavBar = () => (
 					CineXplorer
 				</Text>
 				<HStack>
+					<NavBarUserMenu />
 					<Button size="sm" p={2} variant="solid" colorScheme="green">
 						<BsFillPlusCircleFill size="md" />
 						<Text fontWeight="bold" mb="0.25" ml="-0.5">

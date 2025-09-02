@@ -1,7 +1,6 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tsconfigPaths from "vite-tsconfig-paths";
-import fs from "fs";
 
 export default defineConfig({
 	plugins: [react(), tsconfigPaths()],
@@ -13,8 +12,8 @@ export default defineConfig({
 		strictPort: true,
 		port: 5173,
 		https: {
-			key: fs.readFileSync("/workspaces/infrastructure/dev-certs/key.pem"),
-			cert: fs.readFileSync("/workspaces/infrastructure/dev-certs/cert.pem"),
+			key: "/app/certs/key.pem",
+			cert: "/app/certs/cert.pem",
 		},
 		hmr: {
 			protocol: "wss",

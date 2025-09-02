@@ -89,14 +89,16 @@ const MovieCard = ({ movie, currentPage, source }: MovieCardProps) => {
 							</Link>
 						</Heading>
 						<Card.Description>
-							<HStack justifyContent={"space-between"}>
-								{getFDate(movie.release_date)}
-								<Tooltip content="User Score">
+							<span style={{ display: "inline-block", width: "100%" }}>
+								<span>{getFDate(movie.release_date)}</span>
+								<span style={{ float: "right" }}>
+									{/* <Tooltip content="User Score"> */}
 									<span>
 										<MovieUserScore score={movie.vote_average} />
 									</span>
-								</Tooltip>
-							</HStack>
+									{/* </Tooltip> */}
+								</span>
+							</span>
 						</Card.Description>
 					</Card.Body>
 					<Card.Footer p={0} mt="-2" mb="2">

@@ -10,10 +10,10 @@ import {
 } from "@chakra-ui/react";
 import { Link, useNavigate } from "react-router-dom";
 import { ROUTES } from "@/constants/routes";
-import { useAuth } from "@/hooks/useAuth";
+import useAuthContext from "@/hooks/useAuthContext";
 
 const NavBarUserMenu = () => {
-	const { isAuthenticated, logout, user } = useAuth();
+	const { isAuthenticated, logout, user } = useAuthContext() ?? {};
 	const navigate = useNavigate();
 
 	if (!isAuthenticated) {
@@ -50,7 +50,9 @@ const NavBarUserMenu = () => {
 				<MenuItem
 					value="logout"
 					onClick={() => {
-						logout();
+						if (logout) {
+							logout();
+						}
 						navigate(ROUTES.HOME);
 					}}
 				>

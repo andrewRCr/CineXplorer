@@ -1,5 +1,10 @@
 import axios, { CanceledError } from "axios";
-import { clearAuthTokens } from "@/utilities/token";
+import {
+	clearAuthTokens,
+	getAuthTokens,
+	setAuthTokens,
+	getCurrentStorageType,
+} from "@/utilities/token";
 
 const BASE_URL = import.meta.env.VITE_BASE_API_URL;
 
@@ -12,10 +17,10 @@ const apiClient = axios.create({
 
 // Attach CSRF token for unsafe methods
 apiClient.interceptors.request.use((config) => {
-	// Attach JWT token from local storage
-	const token = localStorage.getItem("authToken");
-	if (token) {
-		config.headers.Authorization = `Bearer ${token}`;
+	// Attach JWT token from storage (checks both localStorage and sessionStorage)
+	const { authToken } = getAuthTokens();
+	if (authToken) {
+		config.headers.Authorization = `Bearer ${authToken}`;
 	}
 
 	// Attach CSRF token from cookie for unsafe methods
@@ -53,15 +58,19 @@ apiClient.interceptors.response.use(
 			axios.defaults.withCredentials = true;
 
 			try {
-				// Attempt to refresh the token
-				const refreshToken = localStorage.getItem("refreshToken");
+				// Attempt to refresh the token using the current storage type
+				const { refreshToken, storage } = getAuthTokens();
 				const response = await axios.post(`${BASE_URL}/token/refresh/`, {
 					refresh: refreshToken,
 				});
 
-				// If refresh is successful, update tokens and retry original request
+				// If refresh is successful, update tokens in the same storage
 				if (response.status === 200) {
-					localStorage.setItem("authToken", response.data.access);
+					setAuthTokens(
+						response.data.access,
+						response.data.refresh || refreshToken,
+						storage
+					);
 					apiClient.defaults.headers.common[
 						"Authorization"
 					] = `Bearer ${response.data.access}`;

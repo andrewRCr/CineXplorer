@@ -16,14 +16,25 @@ import { useNavigate } from "react-router-dom";
 import type { AuthStateProps } from "@/@types/auth-state";
 import type { User } from "@/@types/user";
 import { getCsrfToken, ensureCsrfTokenCookie } from "@/utilities/csrf";
-import { getInitialAuthenticatedValue } from "@/utilities/token";
+import {
+	getInitialAuthenticatedValue,
+	getAuthTokens,
+	setAuthTokens,
+	clearAuthTokens,
+	areTokensExpired,
+	getCurrentStorageType,
+	type TokenStorage,
+} from "@/utilities/token";
 
 const BASE_URL = import.meta.env.VITE_BASE_API_URL;
 
 export function useAuth(): AuthStateProps & { user: User | null } {
-	const [isAuthenticated, setIsAuthenticated] = useState<boolean>(
-		getInitialAuthenticatedValue
-	);
+	const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+		// Check if tokens exist and are not expired
+		const { authToken } = getAuthTokens();
+		const isExpired = areTokensExpired();
+		return authToken !== null && !isExpired && getInitialAuthenticatedValue();
+	});
 	const [user, setUser] = useState<User | null>(null);
 	const navigate = useNavigate();
 
@@ -33,8 +44,28 @@ export function useAuth(): AuthStateProps & { user: User | null } {
 		}
 	}, [isAuthenticated]);
 
+	// Check for token expiration every minute
+	useEffect(() => {
+		const checkTokenExpiration = () => {
+			if (isAuthenticated && areTokensExpired()) {
+				console.log("Tokens expired during session, logging out...");
+				logout();
+			}
+		};
+
+		const interval = setInterval(checkTokenExpiration, 60000); // Check every minute
+		return () => clearInterval(interval);
+	}, [isAuthenticated]);
+
 	const getUserDetails = async () => {
 		try {
+			// Check if tokens are expired before making the request
+			if (areTokensExpired()) {
+				console.log("Tokens expired, logging out...");
+				await logout();
+				return;
+			}
+
 			const userInfoResponse = await axios.get(`${BASE_URL}/user/me/`, {
 				headers: { "Content-Type": "application/json" },
 				withCredentials: true,
@@ -44,14 +75,15 @@ export function useAuth(): AuthStateProps & { user: User | null } {
 		} catch (error) {
 			setUser(null);
 			setIsAuthenticated(false);
-			localStorage.setItem("isAuthenticated", "false");
+			clearAuthTokens();
 			return error;
 		}
 	};
 
 	const login = async (
 		username: string,
-		password: string
+		password: string,
+		rememberMe: boolean = false
 	): Promise<void | number | Error> => {
 		try {
 			await ensureCsrfTokenCookie(BASE_URL);
@@ -69,9 +101,19 @@ export function useAuth(): AuthStateProps & { user: User | null } {
 			);
 
 			const user_id = response.data.user_id;
-			if (user_id) {
+			const accessToken = response.data.access;
+			const refreshToken = response.data.refresh;
+
+			if (user_id && accessToken && refreshToken) {
+				// Choose storage based on remember me setting
+				const storage: TokenStorage = rememberMe
+					? "localStorage"
+					: "sessionStorage";
+
+				// Store tokens in the appropriate storage
+				setAuthTokens(accessToken, refreshToken, storage);
+
 				setIsAuthenticated(true);
-				localStorage.setItem("isAuthenticated", "true");
 			}
 			await getUserDetails();
 			return;
@@ -85,8 +127,8 @@ export function useAuth(): AuthStateProps & { user: User | null } {
 
 	const logout = async () => {
 		setIsAuthenticated(false);
-		localStorage.setItem("isAuthenticated", "false");
 		setUser(null);
+		clearAuthTokens();
 		navigate(ROUTES.LOGIN);
 
 		try {

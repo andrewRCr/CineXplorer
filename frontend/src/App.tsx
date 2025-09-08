@@ -32,9 +32,11 @@ const App: React.FC = () => {
 							<Route path={ROUTES.UPCOMING} element={<Upcoming />} />
 							<Route path={ROUTES.MOVIE_DETAIL} element={<MovieDetail />} />
 							{/* ...other content routes... */}
+							<Route path={ROUTES.LOGIN} element={<Login />} />
+							<Route path={ROUTES.REGISTER} element={<Register />} />
+							{/* ...other auth routes... */}
 						</Route>
-						<Route path={ROUTES.LOGIN} element={<Login />} />
-						<Route path={ROUTES.REGISTER} element={<Register />} />
+						{/* temp/dev routes... */}
 						<Route
 							path={ROUTES.TEST_LOGIN}
 							element={

@@ -24,7 +24,7 @@ const NavBar = () => (
 				<HStack>
 					<NavBarUserMenu />
 					<Button size="sm" p={2} variant="solid" colorScheme="green">
-						<BsFillPlusCircleFill size="md" />
+						<BsFillPlusCircleFill size={16} />
 						<Text fontWeight="bold" mb="0.25" ml="-0.5">
 							LOG
 						</Text>

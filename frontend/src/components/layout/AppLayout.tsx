@@ -11,14 +11,19 @@ import {
 	Text,
 	VStack,
 } from "@chakra-ui/react";
-import { Outlet } from "react-router-dom";
-import { colorSwatchRecipe } from "@chakra-ui/react/theme";
+import { Outlet, useLocation } from "react-router-dom";
+import { ROUTES } from "@/constants/routes";
 
 const AppLayout = () => {
+	const location = useLocation();
+	const isAuthPage = [ROUTES.LOGIN, ROUTES.REGISTER].includes(
+		location.pathname
+	);
+
 	const showSidebar = useBreakpointValue({
 		base: false,
-		md: true,
-		lg: true,
+		md: !isAuthPage,
+		lg: !isAuthPage,
 	});
 
 	return (
@@ -30,38 +35,49 @@ const AppLayout = () => {
 		>
 			{/* NavBar */}
 			<NavBar />
-			<Box flex="1">
-				<Container maxW="container.xl" px={{ base: 2, md: 6, lg: 8 }} w="100%">
+
+			{/* Main Content Area */}
+			<Box flex="1" display="flex" flexDirection="column">
+				<Container
+					maxW="container.xl"
+					px={{ base: 2, md: 6, lg: 8 }}
+					w="100%"
+					flex="1"
+					display="flex"
+				>
 					<Grid
+						w="100%"
 						templateAreas={{
 							base: `"main"`,
-							lg: `"sidebar main"`,
+							lg: showSidebar ? `"sidebar main"` : `"main"`,
 						}}
 						templateColumns={{
 							base: "1fr",
-							lg: "240px 1fr",
+							lg: showSidebar ? "240px 1fr" : "1fr",
 						}}
-						alignItems="stretch"
 						gap={6}
-						minH="calc(100vh - 64px)" // adjust for navbar height
 					>
 						{/* Sidebar */}
-						<GridItem
-							area="sidebar"
-							position="sticky"
-							top="72px" // 64px navbar + 8px margin
-							zIndex={1}
-							alignSelf="start"
-							boxShadow="2px 0 8px 0 rgba(0,0,0,0.08)"
-						>
-							<Sidebar />
-						</GridItem>
-						<GridItem area="main" h="100%">
+						{showSidebar && (
+							<GridItem
+								area="sidebar"
+								position="sticky"
+								top="72px"
+								zIndex={1}
+								alignSelf="start"
+								boxShadow="2px 0 8px 0 rgba(0,0,0,0.08)"
+							>
+								<Sidebar />
+							</GridItem>
+						)}
+						{/* The Outlet needs to be inside a flex container to fill height */}
+						<GridItem area="main" display="flex" flexDirection="column">
 							<Outlet />
 						</GridItem>
 					</Grid>
 				</Container>
 			</Box>
+
 			{/* Footer */}
 			<Box
 				as="footer"
@@ -80,7 +96,6 @@ const AppLayout = () => {
 							© 2025 CineXplorer. All rights reserved.
 						</Text>
 					</Box>
-					{/* TMDB Attribution */}
 					<Box display="inline-flex" alignItems="center" gap={2}>
 						<a
 							href="https://www.themoviedb.org/documentation/api"

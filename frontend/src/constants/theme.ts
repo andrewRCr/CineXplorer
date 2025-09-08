@@ -21,6 +21,7 @@ export const COLORS = {
 		main: "gray.700",
 		separator: "gray.700",
 		sidebar: "gray.700",
+		input: "white",
 	},
 	text: {
 		main: "white",

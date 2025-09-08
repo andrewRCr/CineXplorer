@@ -1,5 +1,9 @@
 export interface AuthStateProps {
-	login: (username: string, password: string) => Promise<void | number | Error>;
+	login: (
+		username: string,
+		password: string,
+		rememberMe?: boolean
+	) => Promise<void | number | Error>;
 	isAuthenticated: boolean;
 	user: User | null;
 	logout: () => Promise<void>;

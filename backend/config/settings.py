@@ -181,6 +181,13 @@ SECRET_KEY = env("DJANGO_SECRET_KEY")
 TMDB_API_KEY = env("TMDB_API_KEY")
 BACKEND_URL = env("BACKEND_URL")
 
+# Email verification settings
+ZEPTOMAIL_API_KEY = env("ZEPTOMAIL_API_KEY", default="")
+ZEPTOMAIL_SENDER_EMAIL = env("ZEPTOMAIL_SENDER_EMAIL",
+                             default="CineXplorer@andrewcreekmore.com")
+EMAIL_VERIFICATION_TOKEN_EXPIRY = timedelta(hours=24)
+FRONTEND_URL = env("FRONTEND_URL", default="http://localhost:5173")
+
 # CORS constants
 CORS_ALLOW_ALL_ORIGINS = True  # TODO: update for production (temp/development only)
 CORS_ALLOW_CREDENTIALS = True
@@ -191,11 +198,13 @@ CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOWED_ORIGINS = [
     'https://localhost:5173',
     'https://localhost:5174',
+    'https://localhost:8444',
 ]
 CORS_ALLOW_CREDENTIALS = True
 CSRF_TRUSTED_ORIGINS = [
     'https://localhost:5173',
     'https://localhost:5174',
+    'https://localhost:8444',
 ]
 
 SIMPLE_JWT = {

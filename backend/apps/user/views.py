@@ -19,6 +19,8 @@ from user.serializers import (
     RegisterSerializer,
     UserSerializer
 )
+from core.services.email_service import email_service
+from core.models import EmailVerificationToken, User
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -39,8 +41,27 @@ class RegisterAPIView(APIView):
                     'error': f'Username "{username}" is not allowed.'
                 }, status=status.HTTP_409_CONFLICT)
 
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            # Create the user
+            user = serializer.save()
+
+            # Send verification email
+            email_sent = email_service.send_verification_email(user)
+
+            if email_sent:
+                return Response({
+                    'message': 'Registration successful. Please check your email to verify your account.',
+                    'user_id': user.id,
+                    'email': user.email,
+                    'email_sent': True
+                }, status=status.HTTP_201_CREATED)
+            else:
+                # Email failed to send - delete the user and return error
+                user.delete()
+                return Response({
+                    'error': 'Registration failed. Unable to send verification email. '
+                             'Please try again later or contact support.',
+                    'email_sent': False
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         errors = serializer.errors
         if 'username' in errors and "non_field_errors" not in errors:
@@ -148,3 +169,91 @@ class CsrfTokenView(APIView):
             # Partitioned=True,  # For future Chrome support (not yet in Django)
         )
         return response
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class EmailVerificationView(APIView):
+    """Handles email verification when users click the verification link."""
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request, token, *args, **kwargs):
+        """Verify user's email address using the token."""
+        try:
+            # Find the verification token
+            verification_token = EmailVerificationToken.objects.get(token=token)
+
+            # Check if token is expired
+            if verification_token.is_expired:
+                return Response({
+                    'error': 'Verification link has expired. Please request a new one.'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            # Mark user as verified
+            user = verification_token.user
+            user.email_verified = True
+            user.save()
+
+            # Delete the used token
+            verification_token.delete()
+
+            # Send welcome email
+            email_service.send_welcome_email(user)
+
+            return Response({
+                'message': 'Email verified successfully! You can now log in to your account.',
+                'email_verified': True
+            }, status=status.HTTP_200_OK)
+
+        except EmailVerificationToken.DoesNotExist:
+            return Response({
+                'error': 'Invalid verification link.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        except Exception:
+            return Response({
+                'error': 'An error occurred during verification.'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class ResendVerificationView(APIView):
+    """Allows users to resend verification emails."""
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        """Resend verification email to the provided email address."""
+        email = request.data.get('email')
+
+        if not email:
+            return Response({
+                'error': 'Email address is required.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user = User.objects.get(email=email)
+
+            if user.email_verified:
+                return Response({
+                    'error': 'This email address is already verified.'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            # Send new verification email
+            email_sent = email_service.send_verification_email(user)
+
+            if email_sent:
+                return Response({
+                    'message': 'Verification email sent successfully.'
+                }, status=status.HTTP_200_OK)
+            else:
+                return Response({
+                    'error': 'Failed to send verification email. Please try again later.'
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        except User.DoesNotExist:
+            # Don't reveal if email exists or not for security
+            return Response({
+                'message': 'If the email address exists, a verification email has been sent.'
+            }, status=status.HTTP_200_OK)
+        except Exception:
+            return Response({
+                'error': 'An error occurred. Please try again later.'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

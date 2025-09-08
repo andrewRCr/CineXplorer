@@ -110,8 +110,16 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         """ Validate the user credentials and return the token data w/ user_id added. """
         data = super().validate(attrs)
 
+        # Check if user's email is verified
+        if not self.user.email_verified:
+            raise ValidationError(
+                'Please verify your email address before logging in. '
+                'Check your email for the verification link.'
+            )
+
         # add custom user data to the response
         data["user_id"] = self.user.id
+        data["email_verified"] = self.user.email_verified
         return data
 
 

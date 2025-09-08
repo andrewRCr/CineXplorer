@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<title>Welcome to CineXplorer!</title>
+		<style>
+			body {
+				font-family: Arial, sans-serif;
+				line-height: 1.6;
+				color: #333;
+				max-width: 600px;
+				margin: 0 auto;
+				padding: 20px;
+			}
+			.header {
+				background-color: #38a169;
+				color: white;
+				padding: 20px;
+				text-align: center;
+				border-radius: 8px 8px 0 0;
+			}
+			.content {
+				background-color: #f0fff4;
+				padding: 30px;
+				border-radius: 0 0 8px 8px;
+			}
+			.button {
+				display: inline-block;
+				background-color: #3182ce;
+				color: white;
+				padding: 12px 24px;
+				text-decoration: none;
+				border-radius: 6px;
+				font-weight: bold;
+				margin: 20px 0;
+			}
+			.button:hover {
+				background-color: #2c5282;
+			}
+			.features {
+				background-color: white;
+				padding: 20px;
+				border-radius: 6px;
+				margin: 20px 0;
+				border-left: 4px solid #38a169;
+			}
+			.footer {
+				margin-top: 30px;
+				font-size: 12px;
+				color: #666;
+				text-align: center;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="header">
+			<h1>🎬 Welcome to CineXplorer!</h1>
+		</div>
+
+		<div class="content">
+			<h3>Hello {{ user.username }}!</h3>
+
+			<p>
+				🎉 Your email has been successfully verified! Welcome to CineXplorer -
+				your ultimate movie discovery and tracking companion.
+			</p>
+
+			<div class="features">
+				<h4>✨ What you can do now:</h4>
+				<ul>
+					<li>🔍 Discover thousands of movies with detailed information</li>
+					<li>❤️ Create and manage your personal watchlist</li>
+					<li>⭐ Rate and review movies you've seen</li>
+					<li>📊 Track your movie watching progress</li>
+					<li>🎯 Get personalized movie recommendations</li>
+				</ul>
+			</div>
+
+			<div style="text-align: center">
+				<a href="{{ frontend_url }}" class="button">Start Exploring Movies</a>
+			</div>
+
+			<p>
+				Ready to dive into the world of cinema? Your movie journey starts now!
+			</p>
+
+			<p>
+				Happy exploring!<br />
+				The CineXplorer Team
+			</p>
+		</div>
+
+		<div class="footer">
+			<p>
+				This email was sent to {{ user.email }}<br />
+				© 2025 CineXplorer. All rights reserved.
+			</p>
+		</div>
+	</body>
+</html>

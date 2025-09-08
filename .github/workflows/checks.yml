@@ -68,6 +68,9 @@ jobs:
           echo "DJANGO_SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }}" >> backend/config/.env
           echo "TMDB_API_KEY=${{ secrets.TMDB_API_KEY }}" >> backend/config/.env
           echo "BACKEND_URL=${{ secrets.BACKEND_URL }}" >> backend/config/.env
+          echo "ZEPTOMAIL_API_KEY=${{ secrets.ZEPTOMAIL_API_KEY }}" >> backend/config/.env
+          # FRONTEND_URL will be added when production domain is available
+          # echo "FRONTEND_URL=${{ secrets.FRONTEND_URL }}" >> backend/config/.env
 
       - name: Run Tests and Lint
         env:

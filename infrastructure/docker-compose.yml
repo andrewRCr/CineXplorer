@@ -43,6 +43,8 @@ services:
       - frontend-node-modules:/frontend/node_modules
       - ./dev-certs/key.pem:/app/certs/key.pem
       - ./dev-certs/cert.pem:/app/certs/cert.pem
+    environment:
+      - HOST=0.0.0.0
 
     depends_on:
       - backend
@@ -68,7 +70,7 @@ services:
   caddy:
     image: caddy:latest
     ports:
-      - "8444:8443"
+      - "8444:8444"
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile
       - ./dev-certs/cert.pem:/etc/caddy/cert.pem

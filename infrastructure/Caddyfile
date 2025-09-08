@@ -1,18 +1,42 @@
-https://localhost:8443 {
+https://localhost:8444 {
     tls /etc/caddy/cert.pem /etc/caddy/key.pem
 
-    @options {
+    # Handle CORS preflight requests for the API
+    @api_preflight {
         method OPTIONS
         path /api/*
     }
-    respond @options 204
+    handle @api_preflight {
+        header {
+            Access-Control-Allow-Origin "https://localhost:5173"
+            Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+            Access-Control-Allow-Headers "Content-Type, Authorization, X-CSRFToken"
+            Access-Control-Allow-Credentials "true"
+        }
+        respond 204
+    }
 
-    reverse_proxy /api/* backend:8000 {
-        transport http {
-            tls
-            tls_insecure_skip_verify
+    # Proxy API requests to the backend, adding CORS headers
+    handle /api/* {
+        header {
+            Access-Control-Allow-Origin "https://localhost:5173"
+            Access-Control-Allow-Credentials "true"
+        }
+        reverse_proxy backend:8000 {
+            transport http {
+                tls
+                tls_insecure_skip_verify
+            }
         }
     }
 
-    reverse_proxy frontend:5173
+    # Proxy all other requests to the frontend (includes WebSocket upgrade)
+    handle {
+        reverse_proxy frontend:5173 {
+            # Explicitly pass WebSocket upgrade headers to the upstream
+            header_up Host {http.request.host}
+            header_up Connection {http.request.header.Connection}
+            header_up Upgrade {http.request.header.Upgrade}
+        }
+    }
 }

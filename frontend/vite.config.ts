@@ -11,14 +11,11 @@ export default defineConfig({
 		host: "0.0.0.0", // needed for the Docker Container port mapping to work
 		strictPort: true,
 		port: 5173,
-		https: {
-			key: "/app/certs/key.pem",
-			cert: "/app/certs/cert.pem",
-		},
-		hmr: {
-			protocol: "wss",
-			host: "localhost",
-			port: 5173,
-		},
+		// https: {
+		// 	key: "/app/certs/key.pem",
+		// 	cert: "/app/certs/cert.pem",
+		// },
+		allowedHosts: true, // Allow requests from all hosts
+		cors: { origin: true }, // Enable CORS with origin true
 	},
 });

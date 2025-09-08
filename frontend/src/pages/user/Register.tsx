@@ -12,6 +12,7 @@ import {
 } from "@chakra-ui/react";
 import { useFormik } from "formik";
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 import useAuthContext from "@/hooks/useAuthContext";
 import { COLORS } from "@/constants/theme";
 
@@ -19,6 +20,7 @@ const Register = () => {
 	const authContext = useAuthContext();
 	const register = authContext?.register;
 	const navigate = useNavigate();
+	const [errorMessage, setErrorMessage] = useState<string>("");
 	const formik = useFormik({
 		initialValues: {
 			username: "",
@@ -41,9 +43,15 @@ const Register = () => {
 		onSubmit: async (values) => {
 			const { username, email, password } = values;
 			if (register) {
+				setErrorMessage("");
 				const response = await register(username, email, password);
 				console.log("Register response:", response);
-				if (response === 409) {
+				if (response instanceof Error) {
+					console.log("Registration failed: Network error");
+					setErrorMessage(
+						"Network error. Please check your connection and try again."
+					);
+				} else if (response === 409) {
 					console.log("Registration failed: Username or email already exists");
 					formik.setErrors({
 						username: "Username invalid or already taken.",
@@ -54,9 +62,12 @@ const Register = () => {
 					formik.setErrors({
 						password: "Password invalid.",
 					});
-				} else {
+				} else if (response === 201) {
 					console.log("Registration successful");
 					navigate(ROUTES.LOGIN);
+				} else {
+					console.log("Registration failed with status:", response);
+					setErrorMessage("Registration failed. Please try again.");
 				}
 			}
 		},
@@ -211,11 +222,13 @@ const Register = () => {
 								</Field.Root>
 							</Box>
 
-							<Button
-								type="submit"
-								width="full"
-								fontSize="16px"
-							>
+							{errorMessage && (
+								<Text color="red.500" fontSize="14px" textAlign="center">
+									{errorMessage}
+								</Text>
+							)}
+
+							<Button type="submit" width="full" fontSize="16px">
 								Register
 							</Button>
 							<Text mt="16px" textAlign="center" w="100%" fontSize="16px">

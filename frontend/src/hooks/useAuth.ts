@@ -166,6 +166,7 @@ export function useAuth(): AuthStateProps & { user: User | null } {
 						"Content-Type": "application/json",
 						"X-CSRFToken": csrfToken || "",
 					},
+					withCredentials: true,
 				}
 			);
 			return response.status;

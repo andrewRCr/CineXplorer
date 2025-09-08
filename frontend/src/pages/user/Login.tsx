@@ -201,7 +201,7 @@ const Login = () => {
 							<Text mt="4px" textAlign="center" w="100%" fontSize="16px">
 								Don't have an account?{" "}
 								<Link href={ROUTES.REGISTER} color="blue.400">
-									Sign Up
+									Register
 								</Link>
 							</Text>
 						</VStack>

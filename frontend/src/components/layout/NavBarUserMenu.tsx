@@ -1,20 +1,53 @@
 import {
 	Button,
 	Text,
-	Menu,
-	MenuItem,
 	Avatar,
 	HStack,
-	MenuTrigger,
-	MenuContent,
+	Box,
+	VStack,
+	Portal,
 } from "@chakra-ui/react";
 import { Link, useNavigate } from "react-router-dom";
+import { useState, useRef, useEffect } from "react";
 import { ROUTES } from "@/constants/routes";
+import { COLORS } from "@/constants/theme";
 import useAuthContext from "@/hooks/useAuthContext";
 
 const NavBarUserMenu = () => {
 	const { isAuthenticated, logout, user } = useAuthContext() ?? {};
 	const navigate = useNavigate();
+	const [isOpen, setIsOpen] = useState(false);
+	const buttonRef = useRef<HTMLButtonElement>(null);
+	const dropdownRef = useRef<HTMLDivElement>(null);
+
+	// Handle click outside to close dropdown
+	useEffect(() => {
+		const handleClickOutside = (event: MouseEvent) => {
+			if (
+				isOpen &&
+				buttonRef.current &&
+				dropdownRef.current &&
+				!buttonRef.current.contains(event.target as Node) &&
+				!dropdownRef.current.contains(event.target as Node)
+			) {
+				setIsOpen(false);
+			}
+		};
+
+		if (isOpen) {
+			document.addEventListener("mousedown", handleClickOutside);
+		}
+
+		return () => {
+			document.removeEventListener("mousedown", handleClickOutside);
+		};
+	}, [isOpen]);
+
+	// Close dropdown when clicking menu items
+	const handleMenuItemClick = (callback?: () => void) => {
+		setIsOpen(false);
+		if (callback) callback();
+	};
 
 	if (!isAuthenticated) {
 		return (
@@ -25,9 +58,15 @@ const NavBarUserMenu = () => {
 			</Link>
 		);
 	}
+
 	return (
-		<Menu.Root>
-			<MenuTrigger as={Button}>
+		<Box position="relative">
+			<Button
+				ref={buttonRef}
+				onClick={() => setIsOpen(!isOpen)}
+				size="sm"
+				variant="ghost"
+			>
 				<HStack gap={2}>
 					<Text fontWeight="bold">{user?.username}</Text>
 					<Avatar.Root size="xs">
@@ -35,31 +74,155 @@ const NavBarUserMenu = () => {
 						<Avatar.Fallback>{user?.username?.charAt(0)}</Avatar.Fallback>
 					</Avatar.Root>
 				</HStack>
-			</MenuTrigger>
-			<MenuContent>
-				<MenuItem value="profile">
-					<Link to={ROUTES.PROFILE} style={{ textDecoration: "none" }}>
-						Profile
-					</Link>
-				</MenuItem>
-				<MenuItem value="settings">
-					<Link to={ROUTES.SETTINGS} style={{ textDecoration: "none" }}>
-						Settings
-					</Link>
-				</MenuItem>
-				<MenuItem
-					value="logout"
-					onClick={() => {
-						if (logout) {
-							logout();
-						}
-						navigate(ROUTES.HOME);
-					}}
-				>
-					Logout
-				</MenuItem>
-			</MenuContent>
-		</Menu.Root>
+			</Button>
+
+			{isOpen && (
+				<Portal>
+					<Box
+						ref={dropdownRef}
+						position="fixed"
+						top={`${buttonRef.current?.getBoundingClientRect().bottom ?? 0}px`}
+						left={`${buttonRef.current?.getBoundingClientRect().right ?? 0}px`}
+						transform="translateX(-100%)"
+						minW="200px"
+						shadow="lg"
+						border="1px solid"
+						borderColor={COLORS.border.main}
+						borderRadius="md"
+						background={COLORS.background.main}
+						zIndex={9999}
+					>
+						<VStack gap={0} align="stretch">
+							<Link
+								to={ROUTES.PROFILE}
+								style={{ textDecoration: "none", width: "100%" }}
+								onClick={(e) => {
+									e.stopPropagation();
+									handleMenuItemClick();
+								}}
+							>
+								<Box
+									position="relative"
+									px={4}
+									py={3}
+									_hover={{
+										background: `${COLORS.background.subItem}80`,
+										"& > div": { opacity: 1 },
+									}}
+									cursor="pointer"
+									borderRadius="md"
+									borderBottomRadius={0}
+									transition="all 0.2s ease-in-out"
+								>
+									<Box
+										position="absolute"
+										left={0}
+										top={0}
+										bottom={0}
+										w="3px"
+										background={COLORS.accent.link}
+										opacity={0}
+										transition="opacity 0.2s ease-in-out"
+										borderRadius="md"
+										borderBottomRadius={0}
+									/>
+									<Text
+										color={COLORS.text.main}
+										_hover={{ color: COLORS.accent.link }}
+										transition="color 0.2s ease-in-out"
+										ml={2}
+									>
+										Profile
+									</Text>
+								</Box>
+							</Link>
+							<Link
+								to={ROUTES.SETTINGS}
+								style={{ textDecoration: "none", width: "100%" }}
+								onClick={(e) => {
+									e.stopPropagation();
+									handleMenuItemClick();
+								}}
+							>
+								<Box
+									position="relative"
+									px={4}
+									py={3}
+									_hover={{
+										background: `${COLORS.background.subItem}80`,
+										"& > div": { opacity: 1 },
+									}}
+									cursor="pointer"
+									transition="all 0.2s ease-in-out"
+								>
+									<Box
+										position="absolute"
+										left={0}
+										top={0}
+										bottom={0}
+										w="3px"
+										background={COLORS.accent.link}
+										opacity={0}
+										transition="opacity 0.2s ease-in-out"
+									/>
+									<Text
+										color={COLORS.text.main}
+										_hover={{ color: COLORS.accent.link }}
+										transition="color 0.2s ease-in-out"
+										ml={2}
+									>
+										Settings
+									</Text>
+								</Box>
+							</Link>
+							<Box
+								position="relative"
+								px={4}
+								py={3}
+								_hover={{
+									background: `${COLORS.background.subItem}80`,
+									"& > div": { opacity: 1 },
+								}}
+								cursor="pointer"
+								borderRadius="md"
+								borderTopRadius={0}
+								transition="all 0.2s ease-in-out"
+								onClick={(e) => {
+									e.stopPropagation();
+									handleMenuItemClick(() => {
+										if (logout) {
+											logout();
+										}
+										navigate(ROUTES.HOME);
+									});
+								}}
+							>
+								<Box
+									position="absolute"
+									left={0}
+									top={0}
+									bottom={0}
+									w="3px"
+									background={COLORS.accent.primary}
+									opacity={0}
+									transition="opacity 0.2s ease-in-out"
+									borderRadius="md"
+									borderTopRadius={0}
+								/>
+								<Text
+									color={COLORS.text.main}
+									_hover={{ color: COLORS.accent.primary }}
+									transition="color 0.2s ease-in-out"
+									ml={2}
+								>
+									Logout
+								</Text>
+							</Box>
+						</VStack>
+					</Box>
+				</Portal>
+			)}
+		</Box>
 	);
 };
 

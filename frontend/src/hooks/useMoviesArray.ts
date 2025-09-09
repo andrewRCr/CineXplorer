@@ -1,9 +1,6 @@
 import { useApiRequest } from "./useApiRequest";
 import { useMemo } from "react";
-import {
-	type Movie,
-	type PaginatedMoviesResponse,
-} from "../services/movieService";
+import { type PaginatedMoviesResponse } from "../services/movieService";
 
 type FetchArrayFn = () => {
 	request: Promise<{ data: PaginatedMoviesResponse }>;

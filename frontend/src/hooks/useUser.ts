@@ -7,7 +7,7 @@ const useUser = () => {
 	const [error, setError] = useState<string | null>(null);
 
 	useEffect(() => {
-		const { request, cancel } = userService.get<User>();
+		const { request, cancel } = userService.getPaginated<User>();
 		request
 			.then((res) => {
 				setUser(res.data);

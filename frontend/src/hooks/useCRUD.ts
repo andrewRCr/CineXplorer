@@ -1,8 +1,6 @@
 import { useState } from "react";
 import { AxiosError } from "axios";
-import useAxiosWithInterceptor from "@/utilities/jwt-interceptor";
-
-const BASE_URL = import.meta.env.VITE_BASE_API_URL;
+import apiClient from "@/services/apiClient";
 
 interface IuseCRUD<T> {
 	dataCRUD: T[];
@@ -12,7 +10,7 @@ interface IuseCRUD<T> {
 }
 
 const useCRUD = <T>(initialData: T[], endpointURL: string): IuseCRUD<T> => {
-	const jwtAxiosInstance = useAxiosWithInterceptor();
+	const axiosInstance = apiClient;
 	const [dataCRUD, setDataCRUD] = useState<T[]>(initialData);
 	const [error, setError] = useState<Error | null>(null);
 	const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -20,10 +18,7 @@ const useCRUD = <T>(initialData: T[], endpointURL: string): IuseCRUD<T> => {
 	const fetchData = async () => {
 		setIsLoading(true);
 		try {
-			const response = await jwtAxiosInstance.get(
-				`${BASE_URL}${endpointURL}`,
-				{}
-			);
+			const response = await axiosInstance.get(endpointURL, {});
 			setDataCRUD(response.data);
 			setError(null); // reset error state on successful fetch
 			setIsLoading(false);

@@ -22,7 +22,6 @@ import {
 	setAuthTokens,
 	clearAuthTokens,
 	areTokensExpired,
-	getCurrentStorageType,
 	type TokenStorage,
 } from "@/utilities/token";
 
@@ -72,7 +71,10 @@ export function useAuth(): AuthStateProps & { user: User | null } {
 			});
 			const userDetails = userInfoResponse.data;
 			setUser(userDetails);
+			// Ensure isAuthenticated is true when user details are successfully fetched
+			setIsAuthenticated(true);
 		} catch (error) {
+			console.error("Error fetching user details:", error);
 			setUser(null);
 			setIsAuthenticated(false);
 			clearAuthTokens();
@@ -84,7 +86,9 @@ export function useAuth(): AuthStateProps & { user: User | null } {
 		username: string,
 		password: string,
 		rememberMe: boolean = false
-	): Promise<void | number | Error> => {
+	): Promise<
+		void | number | Error | { status: number; data: any; message: string }
+	> => {
 		try {
 			await ensureCsrfTokenCookie(BASE_URL);
 			const csrfToken = getCsrfToken();
@@ -114,12 +118,22 @@ export function useAuth(): AuthStateProps & { user: User | null } {
 				setAuthTokens(accessToken, refreshToken, storage);
 
 				setIsAuthenticated(true);
+				await getUserDetails();
+				return;
 			}
 			await getUserDetails();
 			return;
 		} catch (error) {
 			if (axios.isAxiosError(error) && error.response) {
-				return error.response.status;
+				// Return an object with status and error details for better error handling
+				return {
+					status: error.response.status,
+					data: error.response.data,
+					message:
+						error.response.data?.detail ||
+						error.response.data?.error ||
+						error.message,
+				};
 			}
 			return error as Error;
 		}

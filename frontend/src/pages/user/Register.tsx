@@ -1,17 +1,7 @@
 import { ROUTES } from "@/constants/routes";
-import {
-	Box,
-	Button,
-	Checkbox,
-	Container,
-	Field,
-	Input,
-	VStack,
-	Text,
-	Link,
-} from "@chakra-ui/react";
+import { Box, Button, Field, Input, VStack, Text } from "@chakra-ui/react";
 import { useFormik } from "formik";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useState } from "react";
 import useAuthContext from "@/hooks/useAuthContext";
 import { COLORS } from "@/constants/theme";
@@ -45,28 +35,28 @@ const Register = () => {
 			if (register) {
 				setErrorMessage("");
 				const response = await register(username, email, password);
-				console.log("Register response:", response);
 				if (response instanceof Error) {
-					console.log("Registration failed: Network error");
 					setErrorMessage(
 						"Network error. Please check your connection and try again."
 					);
 				} else if (response === 409) {
-					console.log("Registration failed: Username or email already exists");
 					formik.setErrors({
 						username: "Username invalid or already taken.",
 						email: "Email invalid or already taken.",
 					});
 				} else if (response === 400) {
-					console.log("Registration failed");
 					formik.setErrors({
 						password: "Password invalid.",
 					});
 				} else if (response === 201) {
-					console.log("Registration successful");
-					navigate(ROUTES.LOGIN);
+					navigate(ROUTES.LOGIN, {
+						state: {
+							registrationSuccess: true,
+							message:
+								"Registration successful! Please check your email to verify your account before logging in.",
+						},
+					});
 				} else {
-					console.log("Registration failed with status:", response);
 					setErrorMessage("Registration failed. Please try again.");
 				}
 			}
@@ -75,25 +65,21 @@ const Register = () => {
 
 	return (
 		<Box
-			position="absolute"
-			top="20px"
-			bottom="180px"
-			left="0"
-			right="0"
+			position="relative"
+			minH="100%"
 			display="flex"
 			alignItems="center"
 			justifyContent="center"
 			paddingY="32px"
 		>
-			<Container maxW="md">
+			{/* Register Box - Centered */}
+			<Box position="relative" zIndex={1} w="480px">
 				<Box
 					bg={COLORS.background.main}
 					p={10}
 					rounded="lg"
 					boxShadow="xl"
 					w="100%"
-					maxW="520px"
-					mx="auto"
 				>
 					<form onSubmit={formik.handleSubmit}>
 						<VStack gap="24px" align="flex-start">
@@ -228,19 +214,25 @@ const Register = () => {
 								</Text>
 							)}
 
-							<Button type="submit" width="full" fontSize="16px">
+							<Button
+								type="submit"
+								width="full"
+								fontSize="16px"
+								loading={formik.isSubmitting}
+								loadingText="Registering..."
+							>
 								Register
 							</Button>
 							<Text mt="16px" textAlign="center" w="100%" fontSize="16px">
 								Already have an account?{" "}
-								<Link href={ROUTES.LOGIN} color="blue.400">
+								<Link to={ROUTES.LOGIN} style={{ color: COLORS.accent.link }}>
 									Sign In
 								</Link>
 							</Text>
 						</VStack>
 					</form>
 				</Box>
-			</Container>
+			</Box>
 		</Box>
 	);
 };

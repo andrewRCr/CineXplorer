@@ -9,6 +9,7 @@ export const ROUTES = {
 	MOVIE_DETAIL: "/movie/:id",
 	LOGIN: "/login",
 	REGISTER: "/register",
+	VERIFY_EMAIL: "/verify-email/:token",
 	TEST_LOGIN: "/testlogin",
 	// more to be added as needed
 };
@@ -22,6 +23,7 @@ export const ROUTE_NAMES = {
 	MOVIE_DETAIL: "Movie Detail",
 	LOGIN: "Login",
 	REGISTER: "Register",
+	VERIFY_EMAIL: "Verify Email",
 	TEST_LOGIN: "Test Login",
 	// more to be added as needed
 };

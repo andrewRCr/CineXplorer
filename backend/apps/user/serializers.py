@@ -6,10 +6,27 @@ from django.conf import settings
 from django.contrib.auth import get_user_model, authenticate
 from django.contrib.auth.models import AbstractUser
 from django.utils.translation import gettext as _
-from core.models import User
+from core.models import EmailVerificationToken, User
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
 from rest_framework.exceptions import ValidationError
+
+
+def get_error_codes():
+    """Lazy import of ERROR_CODES to avoid module-level import issues."""
+    try:
+        from shared.error_codes import ERROR_CODES
+        return ERROR_CODES
+    except ImportError:
+        # Fallback if shared module is not available
+        class FallbackErrorCodes:
+            EMAIL_NOT_VERIFIED = 'email_not_verified'
+            INVALID_CREDENTIALS = 'invalid_credentials'
+            ACCOUNT_DISABLED = 'account_disabled'
+            ACCOUNT_LOCKED = 'account_locked'
+            INVALID_AUTHORIZATION = 'invalid_authorization'
+            INVALID_REFRESH_TOKEN = 'invalid_refresh_token'
+        return FallbackErrorCodes()
 
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -97,7 +114,9 @@ class AuthTokenSerializer(serializers.Serializer):
 
         if not user:
             msg: str = _('Unable to authenticate with provided credentials.')
-            raise serializers.ValidationError(msg, code='authorization')
+            ERROR_CODES = get_error_codes()
+            raise serializers.ValidationError(
+                msg, code=ERROR_CODES.INVALID_AUTHORIZATION)
 
         attrs['user'] = user
         return attrs
@@ -112,9 +131,11 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
         # Check if user's email is verified
         if not self.user.email_verified:
+            ERROR_CODES = get_error_codes()
             raise ValidationError(
                 'Please verify your email address before logging in. '
-                'Check your email for the verification link.'
+                'Check your email for the verification link.',
+                code=ERROR_CODES.EMAIL_NOT_VERIFIED
             )
 
         # add custom user data to the response
@@ -136,4 +157,8 @@ class CustomTokenRefreshSerializer(TokenRefreshSerializer):
         if attrs["refresh"]:
             return super().validate(attrs)
         else:
-            raise ValidationError("No valid refresh token found in cookies.")
+            ERROR_CODES = get_error_codes()
+            raise ValidationError(
+                "No valid refresh token found in cookies.",
+                code=ERROR_CODES.INVALID_REFRESH_TOKEN
+            )

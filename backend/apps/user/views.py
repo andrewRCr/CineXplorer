@@ -191,14 +191,16 @@ class EmailVerificationView(APIView):
 
             # Mark user as verified
             user = verification_token.user
+            was_already_verified = user.email_verified
             user.email_verified = True
             user.save()
 
             # Delete the used token
             verification_token.delete()
 
-            # Send welcome email
-            email_service.send_welcome_email(user)
+            # Send welcome email only if user wasn't already verified
+            if not was_already_verified:
+                email_service.send_welcome_email(user)
 
             return Response({
                 'message': 'Email verified successfully! You can now log in to your account.',

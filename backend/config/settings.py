@@ -28,6 +28,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 APPS_DIR = os.path.join(BASE_DIR, 'apps')
 sys.path.insert(0, APPS_DIR)
 
+# add shared directory (mounted in container)
+SHARED_DIR = '/shared'
+sys.path.insert(0, SHARED_DIR)
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
@@ -182,11 +186,19 @@ TMDB_API_KEY = env("TMDB_API_KEY")
 BACKEND_URL = env("BACKEND_URL")
 
 # Email verification settings
-ZEPTOMAIL_API_KEY = env("ZEPTOMAIL_API_KEY", default="")
-ZEPTOMAIL_SENDER_EMAIL = env("ZEPTOMAIL_SENDER_EMAIL",
-                             default="CineXplorer@andrewcreekmore.com")
+ZEPTOMAIL_API_KEY = os.environ.get("ZEPTOMAIL_API_KEY", "")
+ZEPTOMAIL_SENDER_EMAIL = os.environ.get("ZEPTOMAIL_SENDER_EMAIL",
+                                        "CineXplorer@andrewcreekmore.com")
 EMAIL_VERIFICATION_TOKEN_EXPIRY = timedelta(hours=24)
-FRONTEND_URL = env("FRONTEND_URL", default="http://localhost:5173")
+FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:5173")
+
+# Forbidden usernames
+FORBIDDEN_USERNAMES = [
+    'admin', 'administrator', 'root', 'superuser', 'sysadmin',
+    'moderator', 'support', 'help', 'info', 'contact',
+    'api', 'system', 'bot', 'test', 'guest', 'user',
+    'null', 'undefined', 'none', 'anonymous', 'public'
+]
 
 # CORS constants
 CORS_ALLOW_ALL_ORIGINS = True  # TODO: update for production (temp/development only)

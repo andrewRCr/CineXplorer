@@ -8,6 +8,7 @@ services:
       - "8000:8000"
     volumes:
       - ../backend:/backend:cached
+      - ../shared:/shared:cached
       - ./dev-certs/key.pem:/app/key.pem
       - ./dev-certs/cert.pem:/app/cert.pem
     env_file:
@@ -40,6 +41,7 @@ services:
       - "5173:5173"
     volumes:
       - ../frontend:/frontend:cached
+      - ../shared:/shared:cached
       - frontend-node-modules:/frontend/node_modules
       - ./dev-certs/key.pem:/app/certs/key.pem
       - ./dev-certs/cert.pem:/app/certs/cert.pem

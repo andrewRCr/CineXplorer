@@ -7,7 +7,7 @@ interface MovieUserScoreProps {
 }
 
 const SCORE_COLORS = {
-	high: "green.700", // >= 75
+	high: COLORS.text.successDark, // >= 75
 	medium: "blue.700", // 50–74
 	low: "yellow.700", // < 50
 };

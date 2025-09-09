@@ -16,12 +16,15 @@ export const COLORS = {
 		navBar: palette.gradientGray,
 		footer: palette.gradientGray,
 		sidebar: palette.discordDark,
+		subItem: palette.chakraGray900,
 	},
 	border: {
 		main: "gray.700",
 		separator: "gray.700",
 		sidebar: "gray.700",
 		input: "white",
+		error: "#fed7d7", // Chakra red.200 equivalent
+		success: "#c6f6d5", // Chakra green.200 equivalent
 	},
 	text: {
 		main: "white",
@@ -29,11 +32,14 @@ export const COLORS = {
 		error: "red.500",
 		info: "gray.500",
 		secondary: "gray.400",
+		success: "#48bb78", // Chakra green.600 equivalent
+		successDark: "#2f855a", // Chakra green.700 equivalent
 	},
 	accent: {
 		primary: "blue.500",
 		secondary: "green",
 		highlight: "#63b3ed", // Sidebar link hover
+		link: "#4299e1", // Chakra blue.400 equivalent for consistent theming
 		tagTeal: "teal",
 		tagPurple: "purple",
 	},

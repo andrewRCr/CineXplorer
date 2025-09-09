@@ -49,7 +49,8 @@ class RegisterAPIView(APIView):
 
             if email_sent:
                 return Response({
-                    'message': 'Registration successful. Please check your email to verify your account.',
+                    'message': 'Registration successful. Please check your email '
+                               'to verify your account.',
                     'user_id': user.id,
                     'email': user.email,
                     'email_sent': True

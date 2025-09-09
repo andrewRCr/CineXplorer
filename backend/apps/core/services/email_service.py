@@ -41,7 +41,8 @@ class ZeptomailService:
         if self.dev_mode:
             print(f"DEV MODE: Would send verification email to {user.email}")
             print(
-                f"DEV MODE: Verification URL would be: {settings.FRONTEND_URL}/verify-email/[token]")
+                f"DEV MODE: Verification URL would be: "
+                f"{settings.FRONTEND_URL}/verify-email/[token]")
             return True
 
         try:

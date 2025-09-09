@@ -6,12 +6,11 @@ Tests for the user API.
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractUser
 from django.http import HttpResponse
-from django.test import TestCase, Client, override_settings
+from django.test import TestCase, Client
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
 import json
-from unittest.mock import patch, MagicMock
 
 
 CREATE_USER_URL: str = reverse('register')

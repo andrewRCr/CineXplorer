@@ -16,8 +16,8 @@ class ZeptomailService:
     def __init__(self):
         self.api_key = settings.ZEPTOMAIL_API_KEY
         self.base_url = "https://api.zeptomail.com/v1.1"
-        # Development mode flag
-        self.dev_mode = not self.api_key or self.api_key == ""
+        # Development mode flag - also enable for testing
+        self.dev_mode = not self.api_key or self.api_key == "" or settings.TESTING
 
     def _get_headers(self):
         """Get headers for Zeptomail API requests."""

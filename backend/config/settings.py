@@ -217,4 +217,5 @@ SIMPLE_JWT = {
     'JWT_COOKIE_SAMESITE': 'None',
 }
 
-FORBIDDEN_USERNAMES = ["admin", "administrator", "root", "superuser", "test", "guest"]
+# Testing flag
+TESTING = 'test' in sys.argv

@@ -1,7 +1,4 @@
 
-# =========================
-# Unit tests (DRF APIClient)
-# =========================
 """
 Tests for the user API.
 """
@@ -9,11 +6,12 @@ Tests for the user API.
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractUser
 from django.http import HttpResponse
-from django.test import TestCase, Client
+from django.test import TestCase, Client, override_settings
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
 import json
+from unittest.mock import patch, MagicMock
 
 
 CREATE_USER_URL: str = reverse('register')
@@ -24,6 +22,8 @@ ME_URL: str = reverse('user:me')
 def create_user(**params) -> AbstractUser:
     """ Creates and returns a new user for testing purposes. """
 
+    # Set email_verified=True for test users to avoid authentication issues
+    params.setdefault('email_verified', True)
     return get_user_model().objects.create_user(**params)
 
 
@@ -313,6 +313,12 @@ class AuthCookieIntegrationTests(TestCase):
             'password': 'testpass123'
         }
         self.client.post(CREATE_USER_URL, self.user_data)
+
+        # Set email_verified=True for the test user to allow login
+        from core.models import User
+        user = User.objects.get(email=self.user_data['email'])
+        user.email_verified = True
+        user.save()
 
     def test_token_obtain_sets_jwt_cookies(self):
         """Login sets JWT cookies (access and refresh)."""

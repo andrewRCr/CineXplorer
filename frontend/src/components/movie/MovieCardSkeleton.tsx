@@ -2,7 +2,6 @@ import {
 	Card,
 	Skeleton,
 	SkeletonText,
-	Text,
 	useBreakpointValue,
 } from "@chakra-ui/react";
 

@@ -28,13 +28,12 @@ const MovieDetail = () => {
 	}, [id]);
 	const { movie, error, isLoading } = useMovieDetail(fetcher);
 
-	const { user, isAuthenticated } = useAuth();
+	const { isAuthenticated } = useAuth();
 	const shouldFetchUserMovieData = isAuthenticated && !!movie?.tmdb_id;
 
 	const {
 		data: userMovieData,
 		loading: userMovieDataLoading,
-		error: userMovieDataError,
 		update,
 	} = useUserMovieData(shouldFetchUserMovieData ? String(movie.tmdb_id) : "");
 

@@ -7,7 +7,6 @@ import {
 	ButtonGroup,
 	IconButton,
 	Center,
-	HStack,
 } from "@chakra-ui/react";
 import { Link } from "react-router-dom";
 import { COLORS } from "@/constants/theme";

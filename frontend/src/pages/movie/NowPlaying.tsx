@@ -9,7 +9,6 @@ import { ROUTE_NAMES, PAGINATED_SOURCES } from "@/constants/routes";
 const NowPlaying = () => {
 	// useCallback IS needed here to stabilize fetcher reference
 	const fetcher = useCallback((page: number) => {
-		console.log("Fetcher called with page:", page);
 		return fetchNowPlayingMoviesService.getPaginated<PaginatedMoviesResponse>({
 			page,
 		});

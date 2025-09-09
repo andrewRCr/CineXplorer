@@ -3,6 +3,7 @@ Test settings for Django tests.
 Mocks the email service to prevent real API calls during testing.
 """
 
+import os
 import sys
 from datetime import timedelta
 from unittest.mock import MagicMock
@@ -38,17 +39,43 @@ FRONTEND_URL = "http://testserver"
 # Add missing settings for tests
 FORBIDDEN_USERNAMES = ['admin', 'root', 'superuser', 'administrator']
 
-# Test database configuration - use PostgreSQL test database
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'devDB',  # Use dev database for local testing
-        'USER': 'devUser',
-        'PASSWORD': 'devPassword',
-        'HOST': 'dev-db',
-        'PORT': '5432',
+# Environment-aware database configuration
+# Check if we're in CI (GitHub Actions) or local development
+IS_CI = os.getenv('CI') == 'true' or os.getenv('GITHUB_ACTIONS') == 'true'
+
+# Also check database credentials as a fallback
+DB_USER = os.getenv('POSTGRES_USER', 'devUser')
+DB_PASSWORD = os.getenv('POSTGRES_PASSWORD', 'devPassword')
+DB_NAME = os.getenv('POSTGRES_DB', 'devDB')
+
+# If we're using postgres credentials, assume we're in CI
+if DB_USER == 'postgres' and DB_PASSWORD == 'postgres':
+    IS_CI = True
+
+if IS_CI:
+    # CI environment uses postgres credentials
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': DB_NAME,
+            'USER': DB_USER,
+            'PASSWORD': DB_PASSWORD,
+            'HOST': 'dev-db',
+            'PORT': '5432',
+        }
     }
-}
+else:
+    # Local development uses dev credentials
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': DB_NAME,
+            'USER': DB_USER,
+            'PASSWORD': DB_PASSWORD,
+            'HOST': 'dev-db',
+            'PORT': '5432',
+        }
+    }
 
 # Add TESTING flag for environment detection
 TESTING = True

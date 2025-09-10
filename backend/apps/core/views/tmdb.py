@@ -54,17 +54,31 @@ class PaginatedTMDBView(APIView):
     service_method = None  # override in subclass
 
     def get(self, request, *args, **kwargs):
+        # Extract common parameters
         page = request.query_params.get('page', 1)
+
+        # Allow subclasses to extract additional parameters
+        try:
+            additional_params = self.get_additional_params(request)
+        except ValueError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Call service method with all parameters
         if self.service_method is None:
             return Response(
                 {"error": "No service method defined."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-        tmdb_response = self.service_method(page=page)
+
+        # Merge page with additional parameters
+        params = {'page': page, **additional_params}
+        tmdb_response = self.service_method(**params)
+
         if isinstance(tmdb_response, Response):
             data = tmdb_response.data
         else:
             data = tmdb_response
+
         # Attach user_movie_data if authenticated
         if request.auth:
             results = data.get('results', [])
@@ -77,32 +91,9 @@ class PaginatedTMDBView(APIView):
                 movie['user_movie_data'] = user_movie_data_map.get(movie_id)
         return Response(data)
 
-
-class PaginatedTMDBQueryView(APIView):
-    authentication_classes = [TokenAuthentication]
-    service_method = None  # override in subclass
-
-    def get(self, request, *args, **kwargs):
-        page = request.query_params.get('page', 1)
-        query = request.query_params.get('query', '')
-        if self.service_method is None:
-            return Response(
-                {"error": "No service method defined."},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-        tmdb_response = self.service_method(page=page, query=query)
-        if isinstance(tmdb_response, Response):
-            data = tmdb_response.data
-        else:
-            data = tmdb_response
-        # Attach user_movie_data if authenticated
-        if request.auth:
-            results = data.get('results', [])
-            if not isinstance(results, list):
-                results = []
-            movie_ids = [movie['id'] for movie in results]
-            user_movie_data_map = get_user_movie_data_bulk(movie_ids, request.user)
-            for movie in results:
-                movie_id = movie['id']
-                movie['user_movie_data'] = user_movie_data_map.get(movie_id)
-        return Response(data)
+    def get_additional_params(self, request):
+        """
+        Override in subclasses to extract additional parameters.
+        Should return a dict of parameters to pass to the service method.
+        """
+        return {}

@@ -4,7 +4,6 @@ import requests
 import logging
 from django.conf import settings
 from datetime import datetime, timedelta
-from core.models import Movie
 
 logger: logging.Logger = logging.getLogger(__name__)
 base_url = "https://api.themoviedb.org/3"
@@ -14,30 +13,18 @@ base_url = "https://api.themoviedb.org/3"
 # =========================
 
 
-def tmdb_dict_to_movie_instance(tmdb_dict):
+def tmdb_dict_to_movie_dict(tmdb_dict):
     """
-    Convert a TMDB API dict to a Movie model instance (not saved to DB).
-    This function creates a 'stub' Movie instance and attaches additional
-    TMDB data to it as attributes for the serializer to use.
+    Convert a TMDB API dict to a movie dictionary for serialization.
+    This function creates a dictionary with only the fields needed by the serializer.
     """
-    # Create the Movie instance with only the fields that exist on the model.
-    # Note the mapping from TMDB's 'id' to our model's 'tmdb_id'.
-    movie_instance = Movie(
-        tmdb_id=tmdb_dict.get('id'),
-        title=tmdb_dict.get('title'),
-        poster_path=tmdb_dict.get('poster_path', ''),
-        # Handle cases where release_date might be an empty string
-        release_date=tmdb_dict.get('release_date') or None,
-    )
-
-    # Attach other fields from the TMDB dictionary directly to the instance.
-    # The serializer will pick these up as read-only fields.
-    # This avoids trying to save them to the database.
-    for key, value in tmdb_dict.items():
-        if not hasattr(movie_instance, key):
-            setattr(movie_instance, key, value)
-
-    return movie_instance
+    return {
+        'tmdb_id': tmdb_dict.get('id'),
+        'title': tmdb_dict.get('title'),
+        'poster_path': tmdb_dict.get('poster_path', ''),
+        'release_date': tmdb_dict.get('release_date') or None,
+        'vote_average': tmdb_dict.get('vote_average'),
+    }
 
 
 def tmdb_get(endpoint: str, params: Optional[dict] = None) -> dict:
@@ -112,11 +99,17 @@ def get_movie_by_id(tmdb_id: int):
                 'status': status.HTTP_500_INTERNAL_SERVER_ERROR
             }
 
-        movie_instance = tmdb_dict_to_movie_instance(info_response.json())
+        movie_dict = tmdb_dict_to_movie_dict(info_response.json())
         credits = get_simple_credits(credits_response.json())
-        movie_instance.crew = credits.get('crew', [])
-        movie_instance.cast = credits.get('cast', [])
-        return movie_instance
+        movie_dict.update({
+            'crew': credits.get('crew', []),
+            'cast': credits.get('cast', []),
+            'overview': info_response.json().get('overview', ''),
+            'genres': info_response.json().get('genres', []),
+            'production_companies': info_response.json().get('production_companies', []),
+            'runtime': info_response.json().get('runtime', 0),
+        })
+        return movie_dict
 
     except requests.exceptions.RequestException as e:
         logger.error(f"Failed to retrieve movie data: {e}")
@@ -136,7 +129,7 @@ def get_nowPlaying_movies(page=1):
     if "error" in result:
         return result
     movies = result.get('results', [])
-    result['results'] = [tmdb_dict_to_movie_instance(m) for m in movies]
+    result['results'] = [tmdb_dict_to_movie_dict(m) for m in movies]
     return result
 
 
@@ -161,7 +154,7 @@ def get_upcoming_movies(page=1):
     if "error" in result:
         return result
     movies = result.get('results', [])
-    result['results'] = [tmdb_dict_to_movie_instance(m) for m in movies]
+    result['results'] = [tmdb_dict_to_movie_dict(m) for m in movies]
     return result
 
 
@@ -172,5 +165,114 @@ def search_movies(query: str, page: int = 1):
     if "error" in result:
         return result
     movies = result.get('results', [])
-    result['results'] = [tmdb_dict_to_movie_instance(m) for m in movies]
+    result['results'] = [tmdb_dict_to_movie_dict(m) for m in movies]
     return result
+
+
+def discover_movies(page: int = 1, **filters):
+    """
+    Flexible movie discovery with full TMDB filtering capabilities.
+
+    Supported filters:
+    - sort_by: Sort order (popularity.desc, release_date.desc, etc.)
+    - genres: Comma-separated genre IDs
+    - year: Release year
+    - vote_average_gte/lte: Rating range
+    - keywords: Comma-separated keyword IDs
+    - people: Comma-separated person IDs
+    - release_date_gte/lte: Release date range
+    - runtime_gte/lte: Runtime range in minutes
+    - certification: Certification rating
+    - region: Country code for regional release dates
+    """
+    params = {
+        "include_adult": "false",
+        "include_video": "false",
+        "language": "en-US",
+        "region": filters.get('region', 'US'),
+        "page": page,
+    }
+
+    # Map filter names to TMDB parameter names
+    filter_mapping = {
+        'sort_by': 'sort_by',
+        'genres': 'with_genres',
+        'year': 'year',
+        'vote_average_gte': 'vote_average.gte',
+        'vote_average_lte': 'vote_average.lte',
+        'keywords': 'with_keywords',
+        'people': 'with_people',
+        'release_date_gte': 'primary_release_date.gte',
+        'release_date_lte': 'primary_release_date.lte',
+        'runtime_gte': 'with_runtime.gte',
+        'runtime_lte': 'with_runtime.lte',
+        'certification': 'certification',
+    }
+
+    # Apply filters if provided
+    for filter_name, tmdb_param in filter_mapping.items():
+        if filter_name in filters and filters[filter_name] is not None:
+            params[tmdb_param] = str(filters[filter_name])
+
+    # Set default sort if not specified
+    if 'sort_by' not in params:
+        params['sort_by'] = 'popularity.desc'
+
+    result = tmdb_get("discover/movie", params)
+    if "error" in result:
+        return result
+
+    movies = result.get('results', [])
+    result['results'] = [tmdb_dict_to_movie_dict(m) for m in movies]
+    return result
+
+
+# =========================
+# Supporting Data Service Methods
+# =========================
+
+
+def get_movie_genres():
+    """Retrieves the list of movie genres from TMDB."""
+    result = tmdb_get("genre/movie/list")
+    if "error" in result:
+        return result
+    return result.get('genres', [])
+
+
+def get_popular_keywords(page: int = 1):
+    """Retrieves popular keywords from TMDB."""
+    result = tmdb_get("keyword/popular", {"page": page})
+    if "error" in result:
+        return result
+    return result
+
+
+def search_keywords(query: str):
+    """Searches for keywords by query string."""
+    if not query or len(query.strip()) < 2:
+        return {"results": []}
+
+    result = tmdb_get("search/keyword", {"query": query})
+    if "error" in result:
+        return result
+    return result.get('results', [])
+
+
+def get_popular_people(page: int = 1):
+    """Retrieves popular people (actors, directors, etc.) from TMDB."""
+    result = tmdb_get("person/popular", {"page": page})
+    if "error" in result:
+        return result
+    return result
+
+
+def search_people(query: str):
+    """Searches for people by name."""
+    if not query or len(query.strip()) < 2:
+        return {"results": []}
+
+    result = tmdb_get("search/person", {"query": query})
+    if "error" in result:
+        return result
+    return result.get('results', [])

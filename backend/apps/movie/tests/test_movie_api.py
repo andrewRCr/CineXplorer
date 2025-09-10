@@ -19,6 +19,7 @@ from core.models import User, Movie, UserMovieData
 NOW_PLAYING_URL = reverse('movie:now-playing')
 UPCOMING_URL = reverse('movie:upcoming')
 SEARCH_URL = reverse('movie:search')
+DISCOVER_URL = reverse('movie:discover')
 
 
 def movie_detail_url(tmdb_id):
@@ -88,7 +89,12 @@ class MovieApiTests(TestCase):
         """
         # Arrange: Define a standard mock TMDB API response
         tmdb_payload = {
-            'results': [{'id': 101, 'title': 'Test Movie'}],
+            'results': [{
+                'id': 101,
+                'title': 'Test Movie',
+                'poster_path': '/test.jpg',
+                'release_date': '2023-01-01'
+            }],
             'page': 1,
             'total_pages': 5,
             'total_results': 1
@@ -128,6 +134,93 @@ class MovieApiTests(TestCase):
         self._test_paginated_endpoint_contract(
             mock_requests_get, SEARCH_URL, {'query': 'test'}
         )
+
+    @patch('requests.get')
+    def test_discover_api_contract(self, mock_requests_get):
+        """Verify the /discover/ endpoint returns the correct paginated structure."""
+        self._test_paginated_endpoint_contract(mock_requests_get, DISCOVER_URL)
+
+    @patch('requests.get')
+    def test_discover_with_filters(self, mock_requests_get):
+        """Test the discover endpoint with various filter parameters."""
+        # Arrange: Define a standard mock TMDB API response
+        tmdb_payload = {
+            'results': [{
+                'id': 101,
+                'title': 'Test Movie',
+                'poster_path': '/test.jpg',
+                'release_date': '2023-01-01'
+            }],
+            'page': 1,
+            'total_pages': 5,
+            'total_results': 1
+        }
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = tmdb_payload
+        mock_requests_get.return_value = mock_response
+
+        # Act: Call the discover endpoint with filters
+        filters = {
+            'sort_by': 'release_date.desc',
+            'genres': '28,12',  # Action, Adventure
+            'year': '2023',
+            'vote_average_gte': '7.0',
+            'vote_average_lte': '10.0',
+            'release_date_gte': '2023-01-01',
+            'release_date_lte': '2023-12-31',
+            'runtime_gte': '90',
+            'runtime_lte': '180',
+            'certification': 'PG-13',
+            'region': 'US'
+        }
+        res = self.client.get(DISCOVER_URL, filters)
+
+        # Assert: Check the response status and structure
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertIn('results', res.data)
+        self.assertIn('page', res.data)
+        self.assertIn('total_pages', res.data)
+
+        # Verify that the mock was called with the correct parameters
+        mock_requests_get.assert_called_once()
+        call_args = mock_requests_get.call_args
+        url = call_args[0][0]  # First positional argument is the URL
+        params = call_args[1]['params']  # params is passed as keyword argument
+
+        # Check that the URL contains the discover endpoint
+        self.assertIn('/discover/movie', url)
+
+        # Check that filters were properly passed to TMDB
+        self.assertEqual(params['sort_by'], 'release_date.desc')
+        self.assertEqual(params['with_genres'], '28,12')
+        self.assertEqual(params['year'], '2023')
+        self.assertEqual(params['vote_average.gte'], '7.0')
+        self.assertEqual(params['vote_average.lte'], '10.0')
+        self.assertEqual(params['primary_release_date.gte'], '2023-01-01')
+        self.assertEqual(params['primary_release_date.lte'], '2023-12-31')
+        self.assertEqual(params['with_runtime.gte'], '90')
+        self.assertEqual(params['with_runtime.lte'], '180')
+        self.assertEqual(params['certification'], 'PG-13')
+        self.assertEqual(params['region'], 'US')
+
+    @patch('requests.get')
+    def test_discover_invalid_parameters(self, mock_requests_get):
+        """Test the discover endpoint with invalid parameter values."""
+        # Test invalid year
+        res = self.client.get(DISCOVER_URL, {'year': 'invalid'})
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('error', res.data)
+
+        # Test invalid vote_average_gte
+        res = self.client.get(DISCOVER_URL, {'vote_average_gte': 'invalid'})
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('error', res.data)
+
+        # Test invalid runtime_gte
+        res = self.client.get(DISCOVER_URL, {'runtime_gte': 'invalid'})
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('error', res.data)
 
     @patch('requests.get')
     def test_get_movie_detail_authenticated(self, mock_requests_get):

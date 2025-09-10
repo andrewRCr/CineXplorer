@@ -4,27 +4,19 @@ Serializers for the movie API View.
 
 from rest_framework import serializers
 
-from core.models import Movie
+from core.models import UserMovieData
 
 
-class MovieSerializer(serializers.ModelSerializer):
+class MovieSerializer(serializers.Serializer):
     """ Serializer for the minimal movie object, including user-specific data (if present). """
 
+    tmdb_id = serializers.IntegerField()
+    title = serializers.CharField()
+    poster_path = serializers.CharField(allow_null=True)
+    release_date = serializers.DateField(allow_null=True)
     user_movie_data = serializers.SerializerMethodField()
     # Pass-through fields from TMDB API service needed in paginated views
     vote_average = serializers.FloatField(read_only=True)
-
-    class Meta:
-        model = Movie
-        fields = [
-            'tmdb_id',
-            'title',
-            'poster_path',
-            'release_date',
-            'vote_average',
-            'user_movie_data'
-        ]
-        read_only_fields = fields
 
     def get_user_movie_data(self, obj):
         request = self.context.get('request', None)
@@ -34,13 +26,15 @@ class MovieSerializer(serializers.ModelSerializer):
             return None
         if user_movie_data_map is not None:
             # For list views, use the pre-fetched map for efficiency
-            user_data = user_movie_data_map.get(obj.tmdb_id)
+            movie_id = obj.get('tmdb_id') if isinstance(obj, dict) else obj.tmdb_id
+            user_data = user_movie_data_map.get(movie_id)
             if user_data:
                 from user_movie_data.serializers import UserMovieDataSerializer
                 return UserMovieDataSerializer(user_data).data
             return None
         # Fallback for single resource views (detail): use detail serializer for full fields
-        user_data = obj.user_movie_data.filter(user=user).first()
+        movie_id = obj.get('tmdb_id') if isinstance(obj, dict) else obj.tmdb_id
+        user_data = UserMovieData.objects.filter(user=user, movie_id=movie_id).first()
         if user_data:
             from user_movie_data.serializers import UserMovieDataDetailSerializer
             return UserMovieDataDetailSerializer(user_data).data
@@ -58,10 +52,3 @@ class MovieDetailSerializer(MovieSerializer):
     runtime = serializers.IntegerField(read_only=True)
     cast = serializers.JSONField(read_only=True)
     crew = serializers.JSONField(read_only=True)
-
-    class Meta(MovieSerializer.Meta):
-        fields = MovieSerializer.Meta.fields + [
-            'overview', 'genres', 'production_companies', 'vote_average',
-            'runtime', 'cast', 'crew',
-        ]
-        # read_only_fields are inherited and extended implicitly

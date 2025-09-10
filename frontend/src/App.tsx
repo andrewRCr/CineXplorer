@@ -20,6 +20,8 @@ const Profile = lazy(() => import("./pages/user/Profile"));
 const Settings = lazy(() => import("./pages/user/Settings"));
 const MovieDetail = lazy(() => import("./pages/movie/MovieDetail"));
 const Upcoming = lazy(() => import("./pages/movie/Upcoming"));
+const Popular = lazy(() => import("./pages/movie/Popular"));
+const TopRated = lazy(() => import("./pages/movie/TopRated"));
 
 const App: React.FC = () => {
 	return (
@@ -60,6 +62,8 @@ const App: React.FC = () => {
 							<Route path={ROUTES.SETTINGS} element={<Settings />} />
 							<Route path={ROUTES.NOW_PLAYING} element={<NowPlaying />} />
 							<Route path={ROUTES.UPCOMING} element={<Upcoming />} />
+							<Route path={ROUTES.POPULAR} element={<Popular />} />
+							<Route path={ROUTES.TOP_RATED} element={<TopRated />} />
 							<Route path={ROUTES.MOVIE_DETAIL} element={<MovieDetail />} />
 							{/* ...other content routes... */}
 						</Route>

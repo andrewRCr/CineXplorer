@@ -128,15 +128,42 @@ class DiscoverMoviesView(PaginatedTMDBView):
         if 'genres' in request.query_params:
             filters['genres'] = request.query_params['genres']
 
-        # Year filtering
+        # Year filtering - handle both single year and ranges
         if 'year' in request.query_params:
-            try:
-                filters['year'] = int(request.query_params['year'])
-            except ValueError:
-                # Return error response - this will be handled by the base class
-                raise ValueError('Invalid year parameter')
+            year_value = request.query_params['year']
+            if year_value.isdigit():
+                # Single year
+                try:
+                    filters['year'] = int(year_value)
+                except ValueError:
+                    raise ValueError('Invalid year parameter')
+            elif year_value.endswith('s') and len(year_value) == 5:
+                # Decade range like "2020s"
+                try:
+                    decade_start = int(year_value[:-1])
+                    filters['release_date_gte'] = f"{decade_start}-01-01"
+                    filters['release_date_lte'] = f"{decade_start + 9}-12-31"
+                except ValueError:
+                    raise ValueError('Invalid decade parameter')
+            else:
+                raise ValueError('Invalid year format')
 
-        # Rating range
+        # Handle min_year/max_year parameters for backward compatibility
+        if 'min_year' in request.query_params:
+            try:
+                min_year = int(request.query_params['min_year'])
+                filters['release_date_gte'] = f"{min_year}-01-01"
+            except ValueError:
+                raise ValueError('Invalid min_year parameter')
+
+        if 'max_year' in request.query_params:
+            try:
+                max_year = int(request.query_params['max_year'])
+                filters['release_date_lte'] = f"{max_year}-12-31"
+            except ValueError:
+                raise ValueError('Invalid max_year parameter')
+
+        # Rating range - handle both formats
         if 'vote_average_gte' in request.query_params:
             try:
                 filters['vote_average_gte'] = float(
@@ -150,6 +177,14 @@ class DiscoverMoviesView(PaginatedTMDBView):
                     request.query_params['vote_average_lte'])
             except ValueError:
                 raise ValueError('Invalid vote_average_lte parameter')
+
+        # Handle min_rating parameter from frontend
+        if 'min_rating' in request.query_params:
+            try:
+                filters['vote_average_gte'] = float(
+                    request.query_params['min_rating'])
+            except ValueError:
+                raise ValueError('Invalid min_rating parameter')
 
         # Keywords (comma-separated list of IDs)
         if 'keywords' in request.query_params:
@@ -166,7 +201,7 @@ class DiscoverMoviesView(PaginatedTMDBView):
         if 'release_date_lte' in request.query_params:
             filters['release_date_lte'] = request.query_params['release_date_lte']
 
-        # Runtime range
+        # Runtime range - handle both formats
         if 'runtime_gte' in request.query_params:
             try:
                 filters['runtime_gte'] = int(request.query_params['runtime_gte'])
@@ -178,6 +213,19 @@ class DiscoverMoviesView(PaginatedTMDBView):
                 filters['runtime_lte'] = int(request.query_params['runtime_lte'])
             except ValueError:
                 raise ValueError('Invalid runtime_lte parameter')
+
+        # Handle min_runtime/max_runtime parameters from frontend
+        if 'min_runtime' in request.query_params:
+            try:
+                filters['runtime_gte'] = int(request.query_params['min_runtime'])
+            except ValueError:
+                raise ValueError('Invalid min_runtime parameter')
+
+        if 'max_runtime' in request.query_params:
+            try:
+                filters['runtime_lte'] = int(request.query_params['max_runtime'])
+            except ValueError:
+                raise ValueError('Invalid max_runtime parameter')
 
         # Certification
         if 'certification' in request.query_params:

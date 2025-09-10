@@ -4,25 +4,31 @@ import { LuChevronLeft, LuChevronRight } from "react-icons/lu";
 
 interface iPaginationCtrlProps {
 	totalMovieCount: number;
-	maxPage: number;
 	onGoToPage: (pageNumber: number) => void;
 	currentPage: number;
+	maxPagesToShow?: number; // Optional: limit number of page buttons
 }
 
 export const PaginationCtrl = (props: iPaginationCtrlProps) => {
+	const totalPages = Math.ceil(props.totalMovieCount / 20);
+	const maxPages = props.maxPagesToShow || totalPages;
+	const effectiveTotalPages = Math.min(totalPages, maxPages);
+	const effectiveCount = Math.min(
+		props.totalMovieCount,
+		effectiveTotalPages * 20
+	);
+
 	return (
 		<Pagination.Root
-			count={props.maxPage}
+			count={effectiveCount}
+			pageSize={20}
 			page={props.currentPage}
 			defaultPage={1}
+			onPageChange={(page) => props.onGoToPage(page.page)}
 		>
 			<ButtonGroup variant="ghost" size="sm">
 				<Pagination.PrevTrigger asChild>
 					<IconButton
-						onClick={() =>
-							props.currentPage > 1 && props.onGoToPage(props.currentPage - 1)
-						}
-						disabled={props.currentPage === 1}
 						aria-label="Previous page"
 						color={COLORS.text.main}
 						borderColor={COLORS.border.main}
@@ -35,7 +41,6 @@ export const PaginationCtrl = (props: iPaginationCtrlProps) => {
 					render={(page) => (
 						<IconButton
 							key={page.value}
-							onClick={() => props.onGoToPage(page.value)}
 							variant={page.value === props.currentPage ? "outline" : "ghost"}
 							aria-current={
 								page.value === props.currentPage ? "page" : undefined
@@ -50,11 +55,6 @@ export const PaginationCtrl = (props: iPaginationCtrlProps) => {
 
 				<Pagination.NextTrigger asChild>
 					<IconButton
-						onClick={() =>
-							props.currentPage < props.maxPage &&
-							props.onGoToPage(props.currentPage + 1)
-						}
-						disabled={props.currentPage === props.maxPage}
 						aria-label="Next page"
 						color={COLORS.text.main}
 						borderColor={COLORS.border.main}

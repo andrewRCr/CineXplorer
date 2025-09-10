@@ -20,6 +20,23 @@ const useMoviesArray = (fetchFn: FetchArrayFn) => {
 	const total_results = data?.total_results ?? movies.length;
 	const page = data?.page ?? 1;
 
+	// Debug logging
+	console.log("useMoviesArray Debug:", {
+		hasData: !!data,
+		total_pages,
+		total_results,
+		page,
+		moviesCount: movies.length,
+		rawData: data
+			? {
+					total_pages: data.total_pages,
+					total_results: data.total_results,
+					page: data.page,
+					resultsLength: data.results?.length,
+			  }
+			: null,
+	});
+
 	return {
 		page,
 		total_pages,

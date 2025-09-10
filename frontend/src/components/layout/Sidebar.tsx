@@ -5,6 +5,8 @@ import { Box, VStack, List, Separator } from "@chakra-ui/react";
 import { Link } from "react-router-dom";
 
 const pageLinks = [
+	{ name: ROUTE_NAMES.POPULAR, path: ROUTES.POPULAR },
+	{ name: ROUTE_NAMES.TOP_RATED, path: ROUTES.TOP_RATED },
 	{ name: ROUTE_NAMES.NOW_PLAYING, path: ROUTES.NOW_PLAYING },
 	{ name: ROUTE_NAMES.UPCOMING, path: ROUTES.UPCOMING },
 ];

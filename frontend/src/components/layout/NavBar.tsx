@@ -5,6 +5,7 @@ import { BsFillPlusCircleFill } from "react-icons/bs";
 import { COLORS } from "@/constants/theme";
 import { ROUTES } from "@/constants/routes";
 import NavBarUserMenu from "./NavBarUserMenu";
+import NavBarSearch from "./NavBarSearch";
 
 const NavBar = () => {
 	return (
@@ -72,7 +73,8 @@ const NavBar = () => {
 							CineXplorer
 						</Box>
 					</Link>
-					<HStack>
+					<HStack gap={4} alignItems="center">
+						<NavBarSearch />
 						<NavBarUserMenu />
 						<Button size="sm" p={2} variant="solid" colorScheme="green">
 							<BsFillPlusCircleFill size={16} />

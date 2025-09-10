@@ -26,9 +26,11 @@ class HttpService {
 	 */
 	get<T>(id: string | number) {
 		const controller = new AbortController();
-		const request = apiClient.get<T>(`${this.endpoint}/${id}`, {
-			signal: controller.signal,
-		});
+		const request = apiClient
+			.get<T>(`${this.endpoint}/${id}`, {
+				signal: controller.signal,
+			})
+			.then((response) => ({ data: response.data }));
 		return { request, cancel: () => controller.abort() };
 	}
 
@@ -38,10 +40,12 @@ class HttpService {
 	 */
 	getPaginated<T>(params?: Record<string, unknown>) {
 		const controller = new AbortController();
-		const request = apiClient.get<T>(this.endpoint, {
-			signal: controller.signal,
-			params,
-		});
+		const request = apiClient
+			.get<T>(this.endpoint, {
+				signal: controller.signal,
+				params,
+			})
+			.then((response) => ({ data: response.data }));
 		return { request, cancel: () => controller.abort() };
 	}
 

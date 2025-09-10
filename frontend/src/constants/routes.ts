@@ -6,6 +6,8 @@ export const ROUTES = {
 	SETTINGS: "/settings",
 	NOW_PLAYING: "/now-playing",
 	UPCOMING: "/upcoming",
+	POPULAR: "/popular",
+	TOP_RATED: "/top-rated",
 	MOVIE_DETAIL: "/movie/:id",
 	LOGIN: "/login",
 	REGISTER: "/register",
@@ -20,6 +22,8 @@ export const ROUTE_NAMES = {
 	SETTINGS: "Settings",
 	NOW_PLAYING: "Now Playing",
 	UPCOMING: "Upcoming",
+	POPULAR: "Popular",
+	TOP_RATED: "Top Rated",
 	MOVIE_DETAIL: "Movie Detail",
 	LOGIN: "Login",
 	REGISTER: "Register",
@@ -32,5 +36,7 @@ export const ROUTE_NAMES = {
 export const PAGINATED_SOURCES = {
 	NOW_PLAYING: "now-playing",
 	UPCOMING: "upcoming",
+	POPULAR: "popular",
+	TOP_RATED: "top-rated",
 	// more to be added as needed (search, etc)
 };

@@ -3,10 +3,11 @@ import globals from "globals";
 import reactHooks from "eslint-plugin-react-hooks";
 import reactRefresh from "eslint-plugin-react-refresh";
 import tseslint from "typescript-eslint";
-import { globalIgnores } from "eslint/config";
 
 export default tseslint.config([
-	globalIgnores(["dist"]),
+	{
+		ignores: ["dist", "src/components/chakra/**"],
+	},
 	{
 		files: ["**/*.{ts,tsx}"],
 		extends: [
@@ -23,6 +24,5 @@ export default tseslint.config([
 			"no-unused-vars": "off",
 			"@typescript-eslint/no-unused-vars": ["warn"],
 		},
-		ignorePatterns: ["src/components/chakra/**"],
 	},
 ]);

@@ -185,6 +185,7 @@ def discover_movies(page: int = 1, **filters):
     - certification: Certification rating
     - region: Country code for regional release dates
     """
+    print(f"DEBUG: discover_movies called with filters: {filters}")
     params = {
         "include_adult": "false",
         "include_video": "false",
@@ -223,6 +224,11 @@ def discover_movies(page: int = 1, **filters):
         return result
 
     movies = result.get('results', [])
+    print(f"DEBUG: TMDB returned {len(movies)} movies, "
+          f"total_results: {result.get('total_results', 'N/A')}")
+    if movies:
+        print(f"DEBUG: First movie release date: "
+              f"{movies[0].get('release_date', 'N/A')}")
     result['results'] = [tmdb_dict_to_movie_dict(m) for m in movies]
     return result
 

@@ -5,7 +5,7 @@ import logging
 from django.conf import settings
 from datetime import datetime, timedelta
 
-logger: logging.Logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 base_url = "https://api.themoviedb.org/3"
 
 # =========================
@@ -33,17 +33,24 @@ def tmdb_get(endpoint: str, params: Optional[dict] = None) -> dict:
         params = {}
     params["api_key"] = settings.TMDB_API_KEY
     url = f"{base_url}/{endpoint}"
+    print(f"TMDB REQUEST: {url}")
+    print(f"TMDB PARAMS: {params}")
     try:
         response = requests.get(url, params=params)
+        print(f"TMDB RESPONSE STATUS: {response.status_code}")
         if response.status_code != 200:
             logger.error(f"TMDB request failed: {url} {response.status_code}")
+            logger.error(f"TMDB Response: {response.text}")
             return {
                 "error": (
                     f"TMDB request failed: {response.status_code}"
                 ),
                 "status": response.status_code
             }
-        return response.json()
+        result = response.json()
+        print(f"TMDB RESPONSE PAGE: {result.get('page', 'N/A')}")
+        print(f"TMDB RESPONSE TOTAL_PAGES: {result.get('total_pages', 'N/A')}")
+        return result
 
     except requests.exceptions.RequestException as e:
         logger.error(f"TMDB request exception: {e}")
@@ -160,12 +167,49 @@ def get_upcoming_movies(page=1):
 
 def search_movies(query: str, page: int = 1):
     """ Searches for movies by query string using TMDB, with pagination. """
-    params = {"query": query, "page": page}
+    params = {
+        "query": query,
+        "page": page,
+        "include_adult": "false",  # Exclude adult content
+        "language": "en-US",
+        "region": "US"
+    }
     result = tmdb_get("search/movie", params)
     if "error" in result:
         return result
+
     movies = result.get('results', [])
-    result['results'] = [tmdb_dict_to_movie_dict(m) for m in movies]
+    print(f"DEBUG: search_movies called with query='{query}', page={page}")
+    print(f"DEBUG: TMDB returned {len(movies)} raw results")
+
+    # Filter out non-visual content (conservative approach)
+    filtered_movies = []
+    for movie in movies:
+        title = movie.get('title', '')
+        title_lower = title.lower()
+
+        # Skip if it's not a movie (though search/movie should only return movies)
+        if movie.get('media_type') and movie.get('media_type') != 'movie':
+            print(f"DEBUG: Skipping {title} - media_type: {movie.get('media_type')}")
+            continue
+
+        # Skip obvious non-visual content (very conservative)
+        skip_terms = [
+            'soundtrack', 'score', 'music from', 'original motion picture soundtrack',
+            'original score', 'music score', 'film score', 'motion picture score'
+        ]
+        if any(skip_term in title_lower for skip_term in skip_terms):
+            print(f"DEBUG: Skipping {title} - contains non-visual content")
+            continue
+
+        filtered_movies.append(movie)
+
+    print(f"DEBUG: After filtering: {len(filtered_movies)} movies kept")
+    result['results'] = [tmdb_dict_to_movie_dict(m) for m in filtered_movies]
+    # Update total_results to reflect filtered count
+    result['total_results'] = len(filtered_movies) + \
+        (result.get('total_results', 0) - len(movies))
+
     return result
 
 
@@ -185,7 +229,7 @@ def discover_movies(page: int = 1, **filters):
     - certification: Certification rating
     - region: Country code for regional release dates
     """
-    print(f"DEBUG: discover_movies called with filters: {filters}")
+    print(f"DEBUG: discover_movies called with page={page}, filters: {filters}")
     params = {
         "include_adult": "false",
         "include_video": "false",

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
-import { Text, Box } from "@chakra-ui/react";
+import { useLocation } from "react-router-dom";
+import { Box } from "@chakra-ui/react";
 import MovieGrid, { type MovieGridRef } from "@/components/movie/MovieGrid";
 import MovieFilters, {
 	type MovieFilters as MovieFiltersType,
@@ -28,6 +29,7 @@ interface MovieGridPageLayoutProps {
 	showFilters?: boolean;
 	defaultFilters?: Partial<MovieFiltersType>;
 	filterStyle?: "expanded" | "minimal";
+	currentPage?: number;
 }
 
 const MovieGridPageLayout = ({
@@ -37,7 +39,14 @@ const MovieGridPageLayout = ({
 	showFilters = false,
 	defaultFilters,
 	filterStyle = "expanded",
+	currentPage,
 }: MovieGridPageLayoutProps) => {
+	console.log(
+		"🎬 MovieGridPageLayout: COMPONENT STARTED with currentPage:",
+		currentPage
+	);
+
+	const location = useLocation();
 	const [filters, setFilters] = useState<MovieFiltersType>({
 		query: "",
 		genres: [],
@@ -64,23 +73,73 @@ const MovieGridPageLayout = ({
 	const [showAdvanced, setShowAdvanced] = useState(false);
 	const movieGridRef = useRef<MovieGridRef>(null);
 
+	// Parse current page from URL
+	const getCurrentPageFromUrl = (): number | undefined => {
+		if (typeof window === "undefined") return undefined;
+		const params = new URLSearchParams(window.location.search);
+		const pageParam = params.get("page");
+		const page = pageParam ? parseInt(pageParam, 10) : undefined;
+		return page && !isNaN(page) && page > 0 ? page : undefined;
+	};
+
+	const [currentPageFromUrl, setCurrentPageFromUrl] = useState<
+		number | undefined
+	>(getCurrentPageFromUrl());
+
+	// Update currentPageFromUrl when URL changes
+	useEffect(() => {
+		const newPage = getCurrentPageFromUrl();
+		console.log("MovieGridPageLayout: URL changed, new page:", newPage);
+		setCurrentPageFromUrl(newPage);
+	}, [location.search]); // React to URL search parameter changes
+
 	// Initialize filters from URL parameters
 	useEffect(() => {
 		const { filters: urlFilters, minimalFilters: urlMinimalFilters } =
 			initializeFiltersFromUrl(filterStyle);
+		console.log("MovieGridPageLayout: Initializing filters from URL", {
+			urlFilters,
+			urlMinimalFilters,
+		});
 		setFilters(urlFilters);
 		setMinimalFilters(urlMinimalFilters);
 	}, [filterStyle]);
 
 	// Update URL when filters change
 	useEffect(() => {
-		updateUrlFromFilters(filters, minimalFilters, filterStyle);
-	}, [filters, minimalFilters, filterStyle]);
+		console.log("MovieGridPageLayout: Filters changed, updating URL", {
+			filters,
+			minimalFilters,
+		});
+		updateUrlFromFilters(
+			filters,
+			minimalFilters,
+			filterStyle,
+			source === "search"
+		);
+	}, [filters, minimalFilters, filterStyle, source]);
 
-	// Reset pagination state when filters change
+	// Reset pagination state when route/source changes
 	useEffect(() => {
-		console.log("Filters changed - pagination state automatically reset");
-		// Reset page to 1 when filters change
+		console.log(
+			"MovieGridPageLayout: Route/source changed - resetting pagination",
+			{ source }
+		);
+
+		// Check if there's already a page parameter in the URL
+		const hasPageParam =
+			typeof window !== "undefined" &&
+			new URLSearchParams(window.location.search).has("page");
+
+		if (hasPageParam) {
+			console.log(
+				"MovieGridPageLayout: Page parameter exists in URL, preserving it"
+			);
+			// Don't reset if there's already a page parameter (user navigated directly to a page)
+			return;
+		}
+
+		// Reset page to 1 when route changes (but not when navigating to a specific page)
 		if (typeof window !== "undefined") {
 			const url = new URL(window.location.href);
 			url.searchParams.delete("page");
@@ -88,7 +147,7 @@ const MovieGridPageLayout = ({
 		}
 		// Also reset the MovieGrid component's internal state
 		movieGridRef.current?.resetToPageOne();
-	}, [filters, minimalFilters, filterStyle]);
+	}, [source]); // Only depend on source, not currentPage
 
 	// Use the enhanced fetcher hook
 	const enhancedFetcher = useEnhancedFetcher({
@@ -98,25 +157,40 @@ const MovieGridPageLayout = ({
 		filterStyle,
 	});
 
+	console.log("MovieGridPageLayout: defaultFilters", defaultFilters);
+	console.log("MovieGridPageLayout: currentPage", currentPage);
+	console.log("MovieGridPageLayout: currentPageFromUrl", currentPageFromUrl);
+	console.log("MovieGridPageLayout: Passing to MovieGrid", {
+		source,
+		query: defaultFilters?.query,
+		initialCurrentPage: currentPage || currentPageFromUrl,
+	});
+
 	return (
-		<Box maxW="1400px" mx="auto" px={4}>
+		<Box maxW="1400px" mx="auto" px={4} pt={3} pb={4}>
 			{/* Page Header */}
 			<Box mb={6}>
-				<Text
+				<Box
 					fontSize="3xl"
-					fontWeight="bold"
+					fontWeight="normal"
+					fontStyle="italic"
 					color={COLORS.text.main}
 					textAlign="left"
 					mb={1}
+					position="relative"
+					display="inline-block"
 				>
 					{title}
-				</Text>
-				<Box
-					height="2px"
-					width="60px"
-					backgroundColor={COLORS.accent.primary}
-					borderRadius="1px"
-				/>
+					<Box
+						position="absolute"
+						bottom="-2px"
+						left="0"
+						right="0"
+						height="2px"
+						backgroundColor={COLORS.accent.primary}
+						borderRadius="1px"
+					/>
+				</Box>
 			</Box>
 
 			{showFilters && filterStyle === "minimal" && (
@@ -126,6 +200,7 @@ const MovieGridPageLayout = ({
 						onFiltersChange={setMinimalFilters}
 						showAdvanced={showAdvanced}
 						onToggleAdvanced={() => setShowAdvanced(!showAdvanced)}
+						pageSource={source}
 					/>
 				</Box>
 			)}
@@ -153,7 +228,15 @@ const MovieGridPageLayout = ({
 			)}
 
 			{/* Movie Grid Section */}
-			<MovieGrid ref={movieGridRef} fetcher={enhancedFetcher} source={source} />
+			<MovieGrid
+				ref={movieGridRef}
+				fetcher={enhancedFetcher}
+				source={source}
+				query={defaultFilters?.query}
+				{...((currentPage || currentPageFromUrl) && {
+					initialCurrentPage: currentPage || currentPageFromUrl,
+				})}
+			/>
 		</Box>
 	);
 };

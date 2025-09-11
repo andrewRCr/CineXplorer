@@ -8,7 +8,8 @@ import type { SortOption } from "@/components/movie/filters/SortSelector";
 export function updateUrlFromFilters(
 	filters: MovieFiltersType,
 	minimalFilters: MinimalMovieFilters,
-	filterStyle: "expanded" | "minimal"
+	filterStyle: "expanded" | "minimal",
+	preserveQuery?: boolean
 ): void {
 	if (typeof window === "undefined") return;
 
@@ -27,6 +28,11 @@ export function updateUrlFromFilters(
 	url.searchParams.delete("maxRating");
 	url.searchParams.delete("minRuntime");
 	url.searchParams.delete("maxRuntime");
+
+	// Preserve existing query parameter if requested (for search results)
+	const existingQuery = preserveQuery
+		? new URL(window.location.href).searchParams.get("query")
+		: null;
 
 	if (filterStyle === "minimal") {
 		if (minimalFilters.year) url.searchParams.set("year", minimalFilters.year);
@@ -58,6 +64,11 @@ export function updateUrlFromFilters(
 		if (filters.genres.length > 0) {
 			url.searchParams.set("genres", filters.genres.join(","));
 		}
+	}
+
+	// Restore preserved query if no new query was set and preserveQuery is true
+	if (preserveQuery && existingQuery && !url.searchParams.has("query")) {
+		url.searchParams.set("query", existingQuery);
 	}
 
 	window.history.replaceState({}, "", url.toString());

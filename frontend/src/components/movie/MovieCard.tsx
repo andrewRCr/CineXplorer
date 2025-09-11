@@ -21,9 +21,10 @@ interface MovieCardProps {
 	movie: Movie;
 	currentPage?: number;
 	source?: string;
+	query?: string;
 }
 
-const MovieCard = ({ movie, currentPage, source }: MovieCardProps) => {
+const MovieCard = ({ movie, currentPage, source, query }: MovieCardProps) => {
 	const [isTitleTooltipOpen, setIsTitleTooltipOpen] = useState(false);
 	const [isTitleTruncated, setIsTitleTruncated] = useState(false);
 	const [isCardHovered, setIsCardHovered] = useState(false);
@@ -84,6 +85,7 @@ const MovieCard = ({ movie, currentPage, source }: MovieCardProps) => {
 	const queryParams: string[] = [];
 	if (typeof currentPage === "number") queryParams.push(`page=${currentPage}`);
 	if (source) queryParams.push(`from=${source}`);
+	if (query) queryParams.push(`query=${encodeURIComponent(query)}`);
 	const queryString = queryParams.length > 0 ? `?${queryParams.join("&")}` : "";
 
 	return (

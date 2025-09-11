@@ -27,6 +27,7 @@ export function useApiRequest<T>(
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 
 	useEffect(() => {
+		console.log("useApiRequest: fetcher changed, making new request");
 		const result = fetcher();
 		if (
 			!result ||
@@ -40,18 +41,25 @@ export function useApiRequest<T>(
 		}
 		const { request, cancel } = result;
 		setIsLoading(true);
+		// Clear previous data when starting a new request to prevent stale data issues
+		setData(undefined);
+		setError("");
+		console.log("useApiRequest: Starting request");
 		request
 			.then((res) => {
+				console.log("useApiRequest: Request successful", res.data);
 				setData(res.data);
 				setIsLoading(false);
 			})
 			.catch((err: { message: SetStateAction<string> }) => {
 				if (err instanceof CanceledError) return;
+				console.log("useApiRequest: Request failed", err.message);
 				setError(err.message);
 				setIsLoading(false);
 			});
 
 		return () => {
+			console.log("useApiRequest: Cleaning up previous request");
 			cancel();
 		};
 	}, [fetcher]);

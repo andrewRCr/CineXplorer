@@ -32,6 +32,7 @@ export function useEnhancedFetcher({
 }: UseEnhancedFetcherOptions) {
 	const enhancedFetcher = useCallback(
 		(page: number) => {
+			console.log("useEnhancedFetcher: Called with page", page);
 			const { filterParams, yearFilterCriteria } = mapFiltersToApiParams(
 				filters,
 				minimalFilters,
@@ -122,12 +123,73 @@ export function useEnhancedFetcher({
 						Boolean(hasYearFilter)
 					);
 
+				// For unfiltered results, respect TMDB's actual total_pages limit
+				// TMDB has pagination limits (typically 500 or 1000 pages)
+				let actualTotalPages = hasYearFilter
+					? totalPages // Use our calculation for filtered results
+					: Math.min(totalPages, response.data.total_pages || totalPages); // Respect TMDB's limit for unfiltered
+
+				// Apply capping for unfiltered results when TMDB reports unreasonably high total_pages
+				if (!hasYearFilter && response.data.total_pages > 2000) {
+					// TMDB is reporting very high total_pages, which suggests they have pagination limits
+					// Use a reasonable cap based on the current page we're successfully accessing
+					let reasonableCap;
+					if (page <= 500) {
+						// If we're successfully on page 500 or less, TMDB likely supports up to ~1000 pages
+						reasonableCap = 1000;
+					} else {
+						// If we're on a higher page, use a cap that's higher than current page
+						reasonableCap = Math.max(page + 200, 1000);
+					}
+					actualTotalPages = Math.min(actualTotalPages, reasonableCap);
+					console.log(
+						`TMDB reported high total_pages (${response.data.total_pages}) - capping at ${actualTotalPages} based on current page ${page}`
+					);
+				}
+
+				// If TMDB returned a different page than requested, it means we requested a page beyond their limit
+				// In this case, use TMDB's actual total_pages and the page they returned
+				if (response.data.page !== page) {
+					console.log(
+						`TMDB returned page ${response.data.page} instead of requested page ${page} - using TMDB's limits`
+					);
+					console.log(`TMDB response details:`, {
+						returnedPage: response.data.page,
+						totalPages: response.data.total_pages,
+						totalResults: response.data.total_results,
+						requestedPage: page,
+					});
+
+					// If TMDB returned page 1 but we requested a high page number, they're likely enforcing pagination limits
+					// TMDB typically limits to around 500-1000 pages
+					let tmdbLimit = response.data.total_pages;
+					if (response.data.page === 1 && page > 100) {
+						// TMDB returned page 1 for a high page request - use a reasonable limit
+						tmdbLimit = Math.min(response.data.total_pages || 500, 500);
+						console.log(
+							`Detected TMDB pagination limit - using ${tmdbLimit} pages instead of ${response.data.total_pages}`
+						);
+					} else if (page > 100) {
+						// TMDB returned a different page for a high page request - still use a reasonable limit
+						tmdbLimit = Math.min(response.data.total_pages || 500, 500);
+						console.log(
+							`High page request (${page}) returned different page - using ${tmdbLimit} pages instead of ${response.data.total_pages}`
+						);
+					}
+
+					actualTotalPages = tmdbLimit;
+				} else {
+					console.log(
+						`✅ TMDB returned requested page: requested ${page}, got ${response.data.page}`
+					);
+				}
+
 				response.data = {
 					...response.data,
 					results: finalResults,
 					total_results: estimatedFilteredTotal, // Show full estimated total in results text
-					total_pages: totalPages,
-					page: page,
+					total_pages: actualTotalPages,
+					page: response.data.page, // Use TMDB's actual returned page
 				};
 
 				return response;

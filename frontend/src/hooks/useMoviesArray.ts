@@ -9,7 +9,10 @@ type FetchArrayFn = () => {
 
 const useMoviesArray = (fetchFn: FetchArrayFn) => {
 	// Memoize fetcher to ensure stable reference for useApiRequest
-	const stableFetcher = useMemo(() => fetchFn, [fetchFn]);
+	const stableFetcher = useMemo(() => {
+		console.log("useMoviesArray: Creating stable fetcher");
+		return fetchFn;
+	}, [fetchFn]);
 	const { data, error, setData, setError, isLoading } =
 		useApiRequest<PaginatedMoviesResponse>(stableFetcher);
 	// return { movies: movies || [], error, setMovies, setError, isLoading };
@@ -18,7 +21,7 @@ const useMoviesArray = (fetchFn: FetchArrayFn) => {
 	const movies = data?.results ?? [];
 	const total_pages = data?.total_pages ?? 1;
 	const total_results = data?.total_results ?? movies.length;
-	const page = data?.page ?? 1;
+	const page = data?.page; // Don't provide default when data is undefined
 
 	// Debug logging
 	console.log("useMoviesArray Debug:", {

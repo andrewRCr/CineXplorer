@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Box, Text, HStack, Button, Input } from "@chakra-ui/react";
-import { FiFilter, FiSearch } from "react-icons/fi";
+import { FiFilter, FiSearch, FiX } from "react-icons/fi";
 import { COLORS } from "@/constants/theme";
 
 export interface MinimalMovieFilters {
@@ -17,6 +17,7 @@ interface LetterboxdStyleFiltersProps {
 	onFiltersChange: (filters: MinimalMovieFilters) => void;
 	showAdvanced?: boolean;
 	onToggleAdvanced?: () => void;
+	pageSource?: string; // Add page context for smart disabling
 }
 
 const LetterboxdStyleFilters = ({
@@ -24,8 +25,11 @@ const LetterboxdStyleFilters = ({
 	onFiltersChange,
 	showAdvanced = false,
 	onToggleAdvanced,
+	pageSource,
 }: LetterboxdStyleFiltersProps) => {
 	const [localQuery, setLocalQuery] = useState(filters.query);
+	const [isSearchExpanded, setIsSearchExpanded] = useState(false);
+	const searchInputRef = useRef<HTMLInputElement>(null);
 
 	useEffect(() => {
 		setLocalQuery(filters.query);
@@ -37,32 +41,16 @@ const LetterboxdStyleFilters = ({
 	) => {
 		if (key === "sortBy") {
 			const sortValue = value as string;
-			if (sortValue === "runtime_90") {
-				onFiltersChange({
-					...filters,
-					runtime: "90",
-					sortBy: "popularity.desc",
-				});
-				return;
-			} else if (sortValue === "runtime_120") {
-				onFiltersChange({
-					...filters,
-					runtime: "120",
-					sortBy: "popularity.desc",
-				});
-				return;
-			} else if (sortValue === "rating_desc") {
+			if (sortValue === "rating_desc") {
 				onFiltersChange({
 					...filters,
 					sortBy: "vote_average.desc",
-					runtime: "",
 				});
 				return;
 			} else if (sortValue === "rating_asc") {
 				onFiltersChange({
 					...filters,
 					sortBy: "vote_average.asc",
-					runtime: "",
 				});
 				return;
 			}
@@ -75,6 +63,7 @@ const LetterboxdStyleFilters = ({
 
 	const clearFilters = () => {
 		setLocalQuery("");
+		setIsSearchExpanded(false);
 		onFiltersChange({
 			genres: [],
 			year: "",
@@ -83,6 +72,29 @@ const LetterboxdStyleFilters = ({
 			query: "",
 			sortBy: "popularity.desc",
 		});
+	};
+
+	const handleSearchSubmit = () => {
+		updateFilter("query", localQuery);
+		setIsSearchExpanded(false);
+	};
+
+	const toggleSearch = () => {
+		setIsSearchExpanded(!isSearchExpanded);
+		// Focus the input when expanding
+		if (!isSearchExpanded) {
+			setTimeout(() => {
+				searchInputRef.current?.focus();
+			}, 100);
+		}
+	};
+
+	const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+		if (e.key === "Enter") {
+			handleSearchSubmit();
+		} else if (e.key === "Escape") {
+			setIsSearchExpanded(false);
+		}
 	};
 
 	const hasActiveFilters =
@@ -94,8 +106,6 @@ const LetterboxdStyleFilters = ({
 		filters.sortBy !== "popularity.desc";
 
 	const getCurrentSortValue = () => {
-		if (filters.runtime === "90") return "runtime_90";
-		if (filters.runtime === "120") return "runtime_120";
 		if (filters.sortBy === "vote_average.desc") return "rating_desc";
 		if (filters.sortBy === "vote_average.asc") return "rating_asc";
 		return filters.sortBy;
@@ -131,15 +141,20 @@ const LetterboxdStyleFilters = ({
 		{ value: "1930s", label: "1930s" },
 	];
 
+	const runtimeOptions = [
+		{ value: "", label: "Any Runtime" },
+		{ value: "90", label: "Under 90 min" },
+		{ value: "120", label: "Under 2 hrs" },
+		{ value: "121", label: "Over 2 hrs" },
+	];
+
 	const sortOptions = [
 		{ value: "popularity.desc", label: "Popular" },
 		{ value: "release_date.desc", label: "Newest" },
 		{ value: "release_date.asc", label: "Oldest" },
 		{ value: "title.asc", label: "A-Z" },
-		{ value: "runtime_90", label: "Under 90 min" },
-		{ value: "runtime_120", label: "Under 2 hrs" },
-		{ value: "rating_desc", label: "Highest Rated First" },
-		{ value: "rating_asc", label: "Lowest Rated First" },
+		{ value: "vote_average.desc", label: "Highest Rated First" },
+		{ value: "vote_average.asc", label: "Lowest Rated First" },
 	];
 
 	return (
@@ -220,15 +235,15 @@ const LetterboxdStyleFilters = ({
 						</select>
 					</Box>
 
-					{/* Sort dropdown */}
+					{/* Runtime dropdown */}
 					<Box position="relative">
 						<select
-							value={getCurrentSortValue()}
+							value={filters.runtime}
 							onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-								updateFilter("sortBy", e.target.value)
+								updateFilter("runtime", e.target.value)
 							}
 							style={{
-								width: "140px",
+								width: "120px",
 								padding: "6px 12px",
 								border: `1px solid ${COLORS.border.input}`,
 								borderRadius: "0",
@@ -239,7 +254,7 @@ const LetterboxdStyleFilters = ({
 								cursor: "pointer",
 							}}
 						>
-							{sortOptions.map((option) => (
+							{runtimeOptions.map((option) => (
 								<option key={option.value} value={option.value}>
 									{option.label}
 								</option>
@@ -274,61 +289,165 @@ const LetterboxdStyleFilters = ({
 						</Button>
 					)}
 
-					{/* Spacer */}
+					{/* Spacer to separate filters from sort */}
 					<Box width="20px" flexShrink={0} />
 
-					{/* Search input */}
-					<Box position="relative" flex="1" maxW="250px">
-						<Input
-							placeholder="Search movies..."
-							value={localQuery}
-							onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-								setLocalQuery(e.target.value)
+					{/* Sort by label */}
+					<Text
+						fontSize="sm"
+						fontWeight="medium"
+						color={COLORS.text.secondary}
+						alignSelf="center"
+						flexShrink={0}
+						mr={2}
+					>
+						Sort by
+					</Text>
+
+					{/* Sort dropdown */}
+					<Box position="relative">
+						<select
+							value={getCurrentSortValue()}
+							onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+								updateFilter("sortBy", e.target.value)
 							}
-							onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
-								if (e.key === "Enter") {
-									updateFilter("query", localQuery);
-								}
+							style={{
+								width: "140px",
+								padding: "6px 12px",
+								border: `1px solid ${COLORS.border.input}`,
+								borderRadius: "4px",
+								backgroundColor: COLORS.background.main,
+								color: COLORS.text.main,
+								fontSize: "14px",
+								outline: "none",
+								cursor: "pointer",
 							}}
-							size="sm"
-							borderRadius="4px 0 0 4px"
-							borderColor={COLORS.border.input}
-							borderRight="none"
-							backgroundColor={COLORS.background.main}
-							color={COLORS.text.main}
-							_focus={{
-								borderColor: COLORS.accent.primary,
-								boxShadow: `0 0 0 1px ${COLORS.accent.primary}`,
-								zIndex: 1,
-							}}
-							_hover={{
-								borderColor: COLORS.accent.secondary,
-							}}
-							fontSize="14px"
-							height="32px"
-						/>
+						>
+							{sortOptions.map((option) => {
+								// Smart disabling based on page context
+								const isDisabled =
+									(pageSource === "popular" &&
+										option.value === "popularity.desc") ||
+									(pageSource === "top-rated" &&
+										option.value === "vote_average.desc");
+
+								return (
+									<option
+										key={option.value}
+										value={option.value}
+										disabled={isDisabled}
+										style={{
+											color: isDisabled
+												? COLORS.text.secondary
+												: COLORS.text.main,
+											fontStyle: isDisabled ? "italic" : "normal",
+										}}
+									>
+										{option.label}
+										{isDisabled ? " (current)" : ""}
+									</option>
+								);
+							})}
+						</select>
 					</Box>
 
-					{/* Search button */}
-					<Button
-						aria-label="Search"
-						onClick={() => updateFilter("query", localQuery)}
-						size="sm"
-						borderRadius="0 4px 4px 0"
-						borderColor={COLORS.border.input}
-						borderLeft="none"
-						backgroundColor={COLORS.background.main}
-						color={COLORS.text.main}
-						_hover={{
-							backgroundColor: COLORS.background.subItem,
-							borderColor: COLORS.accent.secondary,
-						}}
-						height="32px"
-						minW="32px"
-						px={2}
-					>
-						<FiSearch />
-					</Button>
+					{/* Spacer before search */}
+					<Box width="20px" flexShrink={0} />
+
+					{/* Collapsible Search Section */}
+					<Box position="relative">
+						{!isSearchExpanded ? (
+							// Collapsed state - just the search icon button
+							<Button
+								aria-label="Search movies"
+								onClick={toggleSearch}
+								size="sm"
+								variant="outline"
+								borderRadius="4px"
+								borderColor={COLORS.border.input}
+								backgroundColor={COLORS.background.main}
+								color={COLORS.text.main}
+								_hover={{
+									backgroundColor: COLORS.background.subItem,
+									borderColor: COLORS.accent.secondary,
+								}}
+								height="32px"
+								minW="32px"
+								px={2}
+							>
+								<FiSearch size={14} />
+							</Button>
+						) : (
+							// Expanded state - full search input and button
+							<HStack gap={0} align="stretch">
+								<Input
+									ref={searchInputRef}
+									placeholder="Search movies..."
+									value={localQuery}
+									onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+										setLocalQuery(e.target.value)
+									}
+									onKeyDown={handleSearchKeyDown}
+									size="sm"
+									borderRadius="4px 0 0 4px"
+									borderColor={COLORS.border.input}
+									borderRight="none"
+									backgroundColor={COLORS.background.main}
+									color={COLORS.text.main}
+									_focus={{
+										borderColor: COLORS.accent.primary,
+										boxShadow: `0 0 0 1px ${COLORS.accent.primary}`,
+										zIndex: 1,
+									}}
+									_hover={{
+										borderColor: COLORS.accent.secondary,
+									}}
+									fontSize="14px"
+									height="32px"
+									width="180px"
+									flexShrink={0}
+								/>
+								<Button
+									aria-label="Submit search"
+									onClick={handleSearchSubmit}
+									size="sm"
+									borderRadius="0 4px 4px 0"
+									borderColor={COLORS.border.input}
+									borderLeft="none"
+									backgroundColor={COLORS.background.main}
+									color={COLORS.text.main}
+									_hover={{
+										backgroundColor: COLORS.background.subItem,
+										borderColor: COLORS.accent.secondary,
+									}}
+									height="32px"
+									minW="32px"
+									px={2}
+								>
+									<FiSearch size={14} />
+								</Button>
+								<Button
+									aria-label="Close search"
+									onClick={() => setIsSearchExpanded(false)}
+									size="sm"
+									variant="ghost"
+									borderRadius="4px"
+									backgroundColor="transparent"
+									color={COLORS.text.secondary}
+									_hover={{
+										backgroundColor: COLORS.background.subItem,
+										color: COLORS.text.main,
+									}}
+									height="32px"
+									minW="32px"
+									px={2}
+									ml={1}
+								>
+									<FiX size={14} />
+								</Button>
+							</HStack>
+						)}
+					</Box>
 				</HStack>
 			</HStack>
 

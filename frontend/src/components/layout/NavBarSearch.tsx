@@ -3,6 +3,7 @@ import { Box, Input, Button } from "@chakra-ui/react";
 import { FiSearch } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import { COLORS } from "@/constants/theme";
+import { ROUTES } from "@/constants/routes";
 
 const NavBarSearch = () => {
 	const [query, setQuery] = useState("");
@@ -10,10 +11,10 @@ const NavBarSearch = () => {
 
 	const handleSearch = () => {
 		if (query.trim()) {
-			// Navigate to a search results page with the query
-			// For now, we'll navigate to the home page with a search param
-			// TODO: Create a dedicated search results page
-			navigate(`/?search=${encodeURIComponent(query.trim())}`);
+			// Navigate to search results page with the query parameter
+			navigate(
+				`${ROUTES.SEARCH_RESULTS}?query=${encodeURIComponent(query.trim())}`
+			);
 		}
 	};
 

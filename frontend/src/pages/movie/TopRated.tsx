@@ -15,7 +15,7 @@ const TopRated = () => {
 
 	return (
 		<MovieGridPageLayout
-			title="Top Rated Movies"
+			title="Top Rated"
 			fetcher={fetcher}
 			source="top-rated"
 			showFilters={true}

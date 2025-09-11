@@ -8,6 +8,7 @@ export const ROUTES = {
 	UPCOMING: "/upcoming",
 	POPULAR: "/popular",
 	TOP_RATED: "/top-rated",
+	SEARCH_RESULTS: "/search",
 	MOVIE_DETAIL: "/movie/:id",
 	LOGIN: "/login",
 	REGISTER: "/register",
@@ -24,6 +25,7 @@ export const ROUTE_NAMES = {
 	UPCOMING: "Upcoming",
 	POPULAR: "Popular",
 	TOP_RATED: "Top Rated",
+	SEARCH_RESULTS: "Search Results",
 	MOVIE_DETAIL: "Movie Detail",
 	LOGIN: "Login",
 	REGISTER: "Register",
@@ -38,5 +40,6 @@ export const PAGINATED_SOURCES = {
 	UPCOMING: "upcoming",
 	POPULAR: "popular",
 	TOP_RATED: "top-rated",
+	SEARCH: "search",
 	// more to be added as needed (search, etc)
 };

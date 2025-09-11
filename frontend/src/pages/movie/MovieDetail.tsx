@@ -40,6 +40,9 @@ const MovieDetail = () => {
 	const [searchParams] = useSearchParams();
 	const page = searchParams.get("page") || "1";
 	const from = searchParams.get("from") || "now-playing";
+	const query = searchParams.get("query") || "";
+
+	console.log("MovieDetail: Navigation params", { page, from, query });
 
 	/* ============================================================
        Helper Methods & Derived Data
@@ -98,20 +101,29 @@ const MovieDetail = () => {
 		<Box maxW="6xl" mx="auto" p={4}>
 			{/* Back to Results Button */}
 			<Box mb={4}>
-				<Link to={`/${from}?page=${page}`}>
-					<Button colorScheme="blue" variant="outline">
-						<span
-							style={{
-								display: "inline-block",
-								transform: "translateY(2px)",
-								marginRight: "8px",
-							}}
-						>
-							&larr;
-						</span>
-						Back to Results
-					</Button>
-				</Link>
+				{(() => {
+					const backUrl =
+						from === "search"
+							? `/search?query=${encodeURIComponent(query)}&page=${page}`
+							: `/${from}?page=${page}`;
+					console.log("MovieDetail: Back to Results URL", backUrl);
+					return (
+						<Link to={backUrl}>
+							<Button colorScheme="blue" variant="outline">
+								<span
+									style={{
+										display: "inline-block",
+										transform: "translateY(2px)",
+										marginRight: "8px",
+									}}
+								>
+									&larr;
+								</span>
+								Back to Results
+							</Button>
+						</Link>
+					);
+				})()}
 			</Box>
 			{/* Header Section */}
 			<Flex gap={8} align="flex-start" mb={6}>

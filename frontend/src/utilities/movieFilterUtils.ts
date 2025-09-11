@@ -194,11 +194,11 @@ export function calculatePaginationMetadata(
 		currentPageResultCount
 	);
 
-	// For pagination UI, limit to reasonable number of pages ahead
-	const paginationSafeCount = Math.min(
-		estimatedFilteredTotal,
-		(page + 5) * targetPageSize
-	);
+	// For pagination UI, only limit for filtered results
+	// For unfiltered results, trust TMDB's actual pagination limits
+	const paginationSafeCount = hasYearFilter
+		? Math.min(estimatedFilteredTotal, (page + 5) * targetPageSize)
+		: estimatedFilteredTotal;
 
 	const totalPages = Math.max(
 		1,

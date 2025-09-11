@@ -15,7 +15,7 @@ const Popular = () => {
 
 	return (
 		<MovieGridPageLayout
-			title="Popular Movies"
+			title="Popular"
 			fetcher={fetcher}
 			source="popular"
 			showFilters={true}

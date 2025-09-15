@@ -1,20 +1,10 @@
-import { useState, useEffect, useRef } from "react";
-import { useLocation } from "react-router-dom";
-import { Box } from "@chakra-ui/react";
-import MovieGrid, { type MovieGridRef } from "@/components/movie/MovieGrid";
-import MovieFilters, {
-	type MovieFilters as MovieFiltersType,
-} from "@/components/movie/filters/AdvancedMovieFilters";
-import LetterboxdStyleFilters, {
-	type MinimalMovieFilters,
-} from "@/components/movie/filters/LetterboxdStyleFilters";
+import React, { useState, useEffect, useCallback } from "react";
+import { Box, SimpleGrid, Text } from "@chakra-ui/react";
 import { COLORS } from "@/constants/theme";
+import MovieCard from "./MovieCard";
+import MovieCardSkeleton from "./MovieCardSkeleton";
+import { PaginationCtrl } from "../layout/PaginationCtrl";
 import type { PaginatedMoviesResponse } from "@/services/movieService";
-import { useEnhancedFetcher } from "@/hooks/useEnhancedFetcher";
-import {
-	updateUrlFromFilters,
-	initializeFiltersFromUrl,
-} from "@/utilities/urlSync";
 
 interface MovieGridPageLayoutProps {
 	title: string;
@@ -25,146 +15,49 @@ interface MovieGridPageLayoutProps {
 		request: Promise<{ data: PaginatedMoviesResponse }>;
 		cancel: () => void;
 	};
-	source?: string;
+	source: string;
 	showFilters?: boolean;
-	defaultFilters?: Partial<MovieFiltersType>;
-	filterStyle?: "expanded" | "minimal";
-	currentPage?: number;
+	filterStyle?: "minimal" | "full";
+	defaultFilters?: Record<string, string | number | number[] | undefined>;
 }
 
-const MovieGridPageLayout = ({
+const MovieGridPageLayout: React.FC<MovieGridPageLayoutProps> = ({
 	title,
 	fetcher,
-	source,
-	showFilters = false,
-	defaultFilters,
-	filterStyle = "expanded",
-	currentPage,
-}: MovieGridPageLayoutProps) => {
-	console.log(
-		"🎬 MovieGridPageLayout: COMPONENT STARTED with currentPage:",
-		currentPage
+}) => {
+	const [movies, setMovies] = useState<PaginatedMoviesResponse["results"]>([]);
+	const [loading, setLoading] = useState(true);
+	const [error, setError] = useState<string | null>(null);
+	const [currentPage, setCurrentPage] = useState(1);
+	const [totalPages, setTotalPages] = useState(1);
+	const [totalResults, setTotalResults] = useState(0);
+
+	const loadMovies = useCallback(
+		async (page: number) => {
+			try {
+				setLoading(true);
+				setError(null);
+				const result = await fetcher(page).request;
+				setMovies(result.data.results || []);
+				setTotalPages(result.data.total_pages || 1);
+				setTotalResults(result.data.total_results || 0);
+			} catch (err) {
+				setError("Failed to load movies");
+				console.error("Error loading movies:", err);
+			} finally {
+				setLoading(false);
+			}
+		},
+		[fetcher]
 	);
 
-	const location = useLocation();
-	const [filters, setFilters] = useState<MovieFiltersType>({
-		query: "",
-		genres: [],
-		minYear: "",
-		maxYear: "",
-		minRating: "",
-		maxRating: "",
-		minRuntime: "",
-		maxRuntime: "",
-		sortBy: "popularity.desc",
-		...defaultFilters,
-	});
+	useEffect(() => {
+		loadMovies(currentPage);
+	}, [currentPage, loadMovies]);
 
-	const [minimalFilters, setMinimalFilters] = useState<MinimalMovieFilters>({
-		genres: [],
-		year: "",
-		rating: "",
-		runtime: "",
-		query: "",
-		sortBy: "popularity.desc",
-	});
-
-	const [isFiltersCollapsed, setIsFiltersCollapsed] = useState(false);
-	const [showAdvanced, setShowAdvanced] = useState(false);
-	const movieGridRef = useRef<MovieGridRef>(null);
-
-	// Parse current page from URL
-	const getCurrentPageFromUrl = (): number | undefined => {
-		if (typeof window === "undefined") return undefined;
-		const params = new URLSearchParams(window.location.search);
-		const pageParam = params.get("page");
-		const page = pageParam ? parseInt(pageParam, 10) : undefined;
-		return page && !isNaN(page) && page > 0 ? page : undefined;
+	const handlePageChange = (page: number) => {
+		setCurrentPage(page);
 	};
-
-	const [currentPageFromUrl, setCurrentPageFromUrl] = useState<
-		number | undefined
-	>(getCurrentPageFromUrl());
-
-	// Update currentPageFromUrl when URL changes
-	useEffect(() => {
-		const newPage = getCurrentPageFromUrl();
-		console.log("MovieGridPageLayout: URL changed, new page:", newPage);
-		setCurrentPageFromUrl(newPage);
-	}, [location.search]); // React to URL search parameter changes
-
-	// Initialize filters from URL parameters
-	useEffect(() => {
-		const { filters: urlFilters, minimalFilters: urlMinimalFilters } =
-			initializeFiltersFromUrl(filterStyle);
-		console.log("MovieGridPageLayout: Initializing filters from URL", {
-			urlFilters,
-			urlMinimalFilters,
-		});
-		setFilters(urlFilters);
-		setMinimalFilters(urlMinimalFilters);
-	}, [filterStyle]);
-
-	// Update URL when filters change
-	useEffect(() => {
-		console.log("MovieGridPageLayout: Filters changed, updating URL", {
-			filters,
-			minimalFilters,
-		});
-		updateUrlFromFilters(
-			filters,
-			minimalFilters,
-			filterStyle,
-			source === "search"
-		);
-	}, [filters, minimalFilters, filterStyle, source]);
-
-	// Reset pagination state when route/source changes
-	useEffect(() => {
-		console.log(
-			"MovieGridPageLayout: Route/source changed - resetting pagination",
-			{ source }
-		);
-
-		// Check if there's already a page parameter in the URL
-		const hasPageParam =
-			typeof window !== "undefined" &&
-			new URLSearchParams(window.location.search).has("page");
-
-		if (hasPageParam) {
-			console.log(
-				"MovieGridPageLayout: Page parameter exists in URL, preserving it"
-			);
-			// Don't reset if there's already a page parameter (user navigated directly to a page)
-			return;
-		}
-
-		// Reset page to 1 when route changes (but not when navigating to a specific page)
-		if (typeof window !== "undefined") {
-			const url = new URL(window.location.href);
-			url.searchParams.delete("page");
-			window.history.replaceState({}, "", url.toString());
-		}
-		// Also reset the MovieGrid component's internal state
-		movieGridRef.current?.resetToPageOne();
-	}, [source]); // Only depend on source, not currentPage
-
-	// Use the enhanced fetcher hook
-	const enhancedFetcher = useEnhancedFetcher({
-		fetcher,
-		filters,
-		minimalFilters,
-		filterStyle,
-	});
-
-	console.log("MovieGridPageLayout: defaultFilters", defaultFilters);
-	console.log("MovieGridPageLayout: currentPage", currentPage);
-	console.log("MovieGridPageLayout: currentPageFromUrl", currentPageFromUrl);
-	console.log("MovieGridPageLayout: Passing to MovieGrid", {
-		source,
-		query: defaultFilters?.query,
-		initialCurrentPage: currentPage || currentPageFromUrl,
-	});
 
 	return (
 		<Box maxW="1400px" mx="auto" px={4} pt={3} pb={4}>
@@ -193,52 +86,32 @@ const MovieGridPageLayout = ({
 				</Box>
 			</Box>
 
-			{showFilters && filterStyle === "minimal" && (
-				<Box mb={6}>
-					<LetterboxdStyleFilters
-						filters={minimalFilters}
-						onFiltersChange={setMinimalFilters}
-						showAdvanced={showAdvanced}
-						onToggleAdvanced={() => setShowAdvanced(!showAdvanced)}
-						pageSource={source}
-					/>
+			{/* Error State */}
+			{error && (
+				<Box textAlign="center" py={8}>
+					<Text color="red.500">{error}</Text>
 				</Box>
 			)}
 
-			{showFilters && filterStyle === "expanded" && (
-				<Box mb={6}>
-					<MovieFilters
-						filters={filters}
-						onFiltersChange={setFilters}
-						isCollapsed={isFiltersCollapsed}
-						onToggleCollapse={() => setIsFiltersCollapsed(!isFiltersCollapsed)}
-					/>
-				</Box>
-			)}
+			{/* Movie Grid */}
+			<SimpleGrid columns={{ base: 2, md: 3, lg: 4, xl: 5 }} gap={6} mb={8}>
+				{loading
+					? Array.from({ length: 20 }, (_, i) => <MovieCardSkeleton key={i} />)
+					: movies.map((movie) => (
+							<MovieCard key={movie.tmdb_id} movie={movie} />
+					  ))}
+			</SimpleGrid>
 
-			{showFilters && showAdvanced && filterStyle === "minimal" && (
-				<Box mb={6}>
-					<MovieFilters
-						filters={filters}
-						onFiltersChange={setFilters}
-						isCollapsed={false}
-						onToggleCollapse={() => setShowAdvanced(false)}
-					/>
-				</Box>
+			{/* Pagination */}
+			{!loading && movies.length > 0 && (
+				<PaginationCtrl
+					currentPage={currentPage}
+					totalMovieCount={totalResults}
+					totalPages={totalPages}
+					onGoToPage={handlePageChange}
+				/>
 			)}
-
-			{/* Movie Grid Section */}
-			<MovieGrid
-				ref={movieGridRef}
-				fetcher={enhancedFetcher}
-				source={source}
-				query={defaultFilters?.query}
-				{...((currentPage || currentPageFromUrl) && {
-					initialCurrentPage: currentPage || currentPageFromUrl,
-				})}
-			/>
 		</Box>
 	);
 };
-
 export default MovieGridPageLayout;

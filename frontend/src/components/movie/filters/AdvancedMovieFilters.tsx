@@ -5,8 +5,8 @@ import { COLORS } from "@/constants/theme";
 import GenreSelector from "./GenreSelector";
 import YearSelector from "./YearSelector";
 import RatingSelector from "./RatingSelector";
-import RuntimeSelector from "./RuntimeSelector";
 import SortSelector, { type SortOption } from "./SortSelector";
+import type { MinimalMovieFilters } from "./LetterboxdStyleFilters";
 
 export interface MovieFilters {
 	query: string;
@@ -22,25 +22,31 @@ export interface MovieFilters {
 
 interface MovieFiltersProps {
 	filters: MovieFilters;
-	onFiltersChange: (filters: MovieFilters) => void;
+	minimalFilters?: MinimalMovieFilters;
+	onFiltersChange: (
+		filtersOrUpdater:
+			| Partial<MovieFilters>
+			| ((prevFilters: MovieFilters) => MovieFilters)
+	) => void;
 	isCollapsed?: boolean;
 	onToggleCollapse?: () => void;
 }
 
 const AdvancedMovieFilters = ({
 	filters,
+	minimalFilters,
 	onFiltersChange,
 	isCollapsed = false,
 	onToggleCollapse,
 }: MovieFiltersProps) => {
 	const updateFilter = useCallback(
 		<K extends keyof MovieFilters>(key: K, value: MovieFilters[K]) => {
-			onFiltersChange({
-				...filters,
+			onFiltersChange((prevFilters) => ({
+				...prevFilters,
 				[key]: value,
-			});
+			}));
 		},
-		[filters, onFiltersChange]
+		[onFiltersChange]
 	);
 
 	const clearFilters = useCallback(() => {
@@ -57,7 +63,7 @@ const AdvancedMovieFilters = ({
 		});
 	}, [onFiltersChange]);
 
-	const hasActiveFilters =
+	const hasAdvancedActiveFilters =
 		filters.query ||
 		filters.genres.length > 0 ||
 		filters.minYear ||
@@ -67,6 +73,14 @@ const AdvancedMovieFilters = ({
 		filters.minRuntime ||
 		filters.maxRuntime ||
 		filters.sortBy !== "popularity.desc";
+
+	const hasMinimalActiveFilters = minimalFilters
+		? minimalFilters.genres.length > 0 ||
+		  minimalFilters.year !== "" ||
+		  minimalFilters.runtime !== ""
+		: false;
+
+	const hasActiveFilters = hasAdvancedActiveFilters || hasMinimalActiveFilters;
 
 	if (isCollapsed) {
 		return (
@@ -97,10 +111,10 @@ const AdvancedMovieFilters = ({
 			backgroundColor={COLORS.background.subItem}
 		>
 			<HStack justify="space-between" mb={4}>
-				<Text fontSize="lg" fontWeight="medium" color={COLORS.text.main}>
-					Filters
-				</Text>
-				<HStack gap={2}>
+				<HStack gap={4} align="center">
+					<Text fontSize="lg" fontWeight="medium" color={COLORS.text.main}>
+						Advanced Filters
+					</Text>
 					{hasActiveFilters && (
 						<Button
 							onClick={clearFilters}
@@ -109,16 +123,17 @@ const AdvancedMovieFilters = ({
 							colorScheme="red"
 						>
 							<FiX style={{ marginRight: "6px" }} />
-							Clear All
-						</Button>
-					)}
-					{onToggleCollapse && (
-						<Button onClick={onToggleCollapse} size="sm" variant="ghost">
-							<FiFilter style={{ marginRight: "6px" }} />
-							Collapse
+							Clear Filters
 						</Button>
 					)}
 				</HStack>
+
+				{onToggleCollapse && (
+					<Button onClick={onToggleCollapse} size="sm" variant="ghost">
+						<FiFilter style={{ marginRight: "6px" }} />
+						Collapse
+					</Button>
+				)}
 			</HStack>
 
 			<VStack gap={4} align="stretch">
@@ -141,12 +156,7 @@ const AdvancedMovieFilters = ({
 					onMaxRatingChange={(rating) => updateFilter("maxRating", rating)}
 				/>
 
-				<RuntimeSelector
-					minRuntime={filters.minRuntime}
-					maxRuntime={filters.maxRuntime}
-					onMinRuntimeChange={(runtime) => updateFilter("minRuntime", runtime)}
-					onMaxRuntimeChange={(runtime) => updateFilter("maxRuntime", runtime)}
-				/>
+				{/* RuntimeSelector removed as per user request */}
 
 				<SortSelector
 					value={filters.sortBy}

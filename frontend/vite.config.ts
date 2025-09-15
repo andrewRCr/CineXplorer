@@ -4,6 +4,7 @@ import tsconfigPaths from "vite-tsconfig-paths";
 import { resolve } from "path";
 
 export default defineConfig({
+	base: "/", // Ensure all paths are root-relative
 	plugins: [react(), tsconfigPaths()],
 	resolve: {
 		alias: {

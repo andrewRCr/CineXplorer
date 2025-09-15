@@ -2,7 +2,7 @@ import { ROUTES, ROUTE_NAMES } from "@/constants/routes";
 import { COLORS } from "@/constants/theme";
 import React from "react";
 import { Box, VStack, List, Separator } from "@chakra-ui/react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 
 const pageLinks = [
 	{ name: ROUTE_NAMES.POPULAR, path: ROUTES.POPULAR },
@@ -24,13 +24,19 @@ const genres = [
 
 const Sidebar: React.FC = () => {
 	const navigate = useNavigate();
+	const location = useLocation();
 
 	const handleNavigation = (path: string) => {
-		// Navigate to the base route without any query parameters to reset to page 1
-		// Add a timestamp to force React Router to detect this as a new navigation
-		const resetUrl = `${path}?reset=${Date.now()}`;
-		console.log(`Sidebar: Navigating to ${resetUrl} (forced reset)`);
-		navigate(resetUrl, { replace: true });
+		// If the user is already on the page, force a reset by adding a timestamp.
+		// Otherwise, just navigate to the clean path.
+		if (location.pathname === path) {
+			const resetUrl = `${path}?reset=${Date.now()}`;
+			console.log(`Sidebar: Already on page, forcing reset to ${resetUrl}`);
+			navigate(resetUrl, { replace: true });
+		} else {
+			console.log(`Sidebar: Navigating to clean path ${path}`);
+			navigate(path); // Use default push navigation
+		}
 	};
 
 	return (

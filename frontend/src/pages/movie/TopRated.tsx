@@ -1,27 +1,7 @@
-import { useCallback } from "react";
-import {
-	fetchTopRatedMoviesService,
-	type PaginatedMoviesResponse,
-} from "@/services/movieService";
-import MovieGridPageLayout from "@/components/movie/MovieGridPageLayout";
+import MovieCollectionGrid from "@/components/movie/MovieCollectionGrid";
 
 const TopRated = () => {
-	const fetcher = useCallback((page: number, filters?: Record<string, any>) => {
-		return fetchTopRatedMoviesService.getPaginated<PaginatedMoviesResponse>({
-			page,
-			...filters,
-		});
-	}, []);
-
-	return (
-		<MovieGridPageLayout
-			title="Top Rated"
-			fetcher={fetcher}
-			source="top-rated"
-			showFilters={true}
-			filterStyle="minimal"
-		/>
-	);
+	return <MovieCollectionGrid />;
 };
 
 export default TopRated;

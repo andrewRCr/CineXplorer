@@ -34,21 +34,37 @@ interface iPaginationCtrlProps {
 
 export const PaginationCtrl = (props: iPaginationCtrlProps) => {
 	const totalPages = props.totalPages || Math.ceil(props.totalMovieCount / 20);
+	const calculatedFromCount = Math.ceil(props.totalMovieCount / 20);
+
+	// If the API-provided total_pages differs significantly from the calculated value,
+	// prefer the calculated value (TMDB API sometimes returns incorrect pagination data with filters)
+	const preferredTotalPages =
+		Math.abs(totalPages - calculatedFromCount) > 5 &&
+		calculatedFromCount > totalPages
+			? calculatedFromCount
+			: totalPages;
 
 	// TMDB API has a hard limit of 500 pages - cap the UI to match
-	const effectiveTotalPages = Math.min(totalPages, 500);
+	const effectiveTotalPages = Math.min(preferredTotalPages, 500);
 
 	console.log("PaginationCtrl: Props received", {
 		totalMovieCount: props.totalMovieCount,
 		currentPage: props.currentPage,
 		totalPages: props.totalPages,
 		calculatedTotalPages: totalPages,
+		calculatedFromCount,
+		preferredTotalPages,
 		effectiveTotalPages, // This is what we'll use for UI
+		isUsingProvidedTotalPages: !!props.totalPages,
+		isUsingCalculatedTotalPages: preferredTotalPages !== totalPages,
 	});
 
 	// If we have very few pages, show them all
-	if (effectiveTotalPages <= 7) {
-		console.log("PaginationCtrl: Using few pages layout");
+	if (effectiveTotalPages <= 15) {
+		console.log("PaginationCtrl: Using few pages layout - showing all pages", {
+			effectiveTotalPages,
+			reason: effectiveTotalPages <= 15 ? "total pages <= 15" : "unknown",
+		});
 		return (
 			<ButtonGroup variant="ghost" size="sm">
 				<IconButton
@@ -165,7 +181,9 @@ export const PaginationCtrl = (props: iPaginationCtrlProps) => {
 	}
 
 	// For many pages, show a smart selection with ellipses
-	console.log("PaginationCtrl: Using many pages layout");
+	console.log(
+		"PaginationCtrl: Using many pages layout - showing condensed format with ellipsis"
+	);
 	const pagesToShow: (number | "ellipsis")[] = [];
 
 	// Smart pagination logic: always show first page, pages around current, and last page
@@ -185,6 +203,13 @@ export const PaginationCtrl = (props: iPaginationCtrlProps) => {
 		props.currentPage === 1
 			? 3 // End at page 3 for page 1
 			: Math.min(effectiveTotalPages - 1, props.currentPage + 1);
+
+	console.log("PaginationCtrl: Range calculation", {
+		currentPage: props.currentPage,
+		rangeStart,
+		rangeEnd,
+		effectiveTotalPages,
+	});
 
 	// Add ellipsis if there's a gap after first page
 	if (rangeStart > 2) {
@@ -206,20 +231,39 @@ export const PaginationCtrl = (props: iPaginationCtrlProps) => {
 		pagesToShow.push(effectiveTotalPages);
 	}
 
+	console.log("PaginationCtrl: After initial construction", {
+		pagesToShow,
+		rangeStart,
+		rangeEnd,
+		effectiveTotalPages,
+	});
+
 	// Special case: if current page is very near the beginning and there's no gap between first page and range, don't show ellipsis after first page
 	if (props.currentPage <= 2) {
 		// Only remove the ellipsis if it appears immediately after the first page (index 1)
-		// This handles cases where range starts immediately after page 1
-		if (pagesToShow.length > 1 && pagesToShow[1] === "ellipsis") {
+		// AND there's no gap between page 1 and the range (i.e., range starts at page 2)
+		if (
+			pagesToShow.length > 1 &&
+			pagesToShow[1] === "ellipsis" &&
+			rangeStart === 2
+		) {
+			console.log("PaginationCtrl: Removing ellipsis after page 1 (no gap)");
 			pagesToShow.splice(1, 1); // Remove ellipsis at index 1 (right after page 1)
 		}
 	}
 
 	// Special case: if current page is near the end, don't show ellipsis before last page
 	if (props.currentPage >= effectiveTotalPages - 2) {
-		// Remove the last ellipsis if it exists
+		// Remove the last ellipsis if it exists AND there's no gap between the range and last page
 		const lastEllipsisIndex = pagesToShow.lastIndexOf("ellipsis");
-		if (lastEllipsisIndex > 0 && lastEllipsisIndex < pagesToShow.length - 1) {
+		if (
+			lastEllipsisIndex > 0 &&
+			lastEllipsisIndex < pagesToShow.length - 1 &&
+			rangeEnd === effectiveTotalPages - 1
+		) {
+			console.log(
+				"PaginationCtrl: Removing ellipsis before last page (no gap)"
+			);
 			pagesToShow.splice(lastEllipsisIndex, 1);
 		}
 	}
@@ -229,6 +273,7 @@ export const PaginationCtrl = (props: iPaginationCtrlProps) => {
 		totalPages: props.totalPages,
 		effectiveTotalPages,
 		totalMovieCount: props.totalMovieCount,
+		pagesToShow, // Add this to see what pages are being shown
 	});
 
 	return (

@@ -3,11 +3,12 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import "./App.css";
 
-import AuthContextProvider from "./components/auth/AuthContextProvider";
-import ProtectedRoute from "./components/auth/ProtectedRoute";
+import MovieCollectionLayout from "./components/movie/MovieCollectionLayout";
 import AppLayout from "./components/layout/AppLayout";
 import AuthLayout from "./components/layout/AuthLayout";
 import LoadingLayout from "./components/layout/LoadingLayout";
+import AuthContextProvider from "./components/auth/AuthContextProvider";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
 
 // Lazy load page components
 const Home = lazy(() => import("./pages/Home"));
@@ -61,10 +62,23 @@ const App: React.FC = () => {
 							<Route path={ROUTES.HOME} element={<Home />} />
 							<Route path={ROUTES.PROFILE} element={<Profile />} />
 							<Route path={ROUTES.SETTINGS} element={<Settings />} />
-							<Route path={ROUTES.NOW_PLAYING} element={<NowPlaying />} />
-							<Route path={ROUTES.UPCOMING} element={<Upcoming />} />
-							<Route path={ROUTES.POPULAR} element={<Popular />} />
-							<Route path={ROUTES.TOP_RATED} element={<TopRated />} />
+
+							{/* Movie collection routes with shared layout */}
+							<Route
+								path={ROUTES.MOVIES}
+								element={
+									<MovieCollectionLayout
+										showFilters={true}
+										filterStyle="minimal"
+									/>
+								}
+							>
+								<Route path="now-playing" element={<NowPlaying />} />
+								<Route path="upcoming" element={<Upcoming />} />
+								<Route path="popular" element={<Popular />} />
+								<Route path="top-rated" element={<TopRated />} />
+							</Route>
+
 							<Route path={ROUTES.SEARCH_RESULTS} element={<SearchResults />} />
 							<Route path={ROUTES.MOVIE_DETAIL} element={<MovieDetail />} />
 							{/* ...other content routes... */}

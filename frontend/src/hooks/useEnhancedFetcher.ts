@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useRef } from "react";
 import type { PaginatedMoviesResponse, Movie } from "@/services/movieService";
 import type { MovieFilters as MovieFiltersType } from "@/components/movie/filters/AdvancedMovieFilters";
 import type { MinimalMovieFilters } from "@/components/movie/filters/LetterboxdStyleFilters";
@@ -7,6 +7,7 @@ import {
 	filterMoviesByYear,
 	calculatePaginationMetadata,
 } from "@/utilities/movieFilterUtils";
+import { fetchSearchMoviesService } from "@/services/movieService";
 
 interface UseEnhancedFetcherOptions {
 	fetcher: (
@@ -30,14 +31,80 @@ export function useEnhancedFetcher({
 	minimalFilters,
 	filterStyle,
 }: UseEnhancedFetcherOptions) {
+	// Use refs to store the latest filter values without causing re-renders
+	const filtersRef = useRef(filters);
+	const minimalFiltersRef = useRef(minimalFilters);
+	const filterStyleRef = useRef(filterStyle);
+	const baseFetcherRef = useRef(fetcher);
+
+	// Update refs when values change
+	filtersRef.current = filters;
+	minimalFiltersRef.current = minimalFilters;
+	filterStyleRef.current = filterStyle;
+	baseFetcherRef.current = fetcher;
+
 	const enhancedFetcher = useCallback(
 		(page: number) => {
-			console.log("useEnhancedFetcher: Called with page", page);
-			const { filterParams, yearFilterCriteria } = mapFiltersToApiParams(
-				filters,
-				minimalFilters,
-				filterStyle
-			);
+			// Get current values from refs
+			const currentFilters = filtersRef.current;
+			const currentMinimalFilters = minimalFiltersRef.current;
+			const currentFilterStyle = filterStyleRef.current;
+			const currentBaseFetcher = baseFetcherRef.current;
+
+			// Check if there's a search query - if so, use search endpoint instead of base fetcher
+			const hasSearchQuery =
+				(currentFilterStyle === "minimal" &&
+					currentMinimalFilters.query?.trim()) ||
+				(currentFilterStyle === "expanded" && currentFilters.query?.trim());
+
+			let searchFetcher;
+			let searchFilters;
+
+			if (hasSearchQuery) {
+				// Use search service for text queries
+				const query =
+					currentFilterStyle === "minimal"
+						? currentMinimalFilters.query
+						: currentFilters.query;
+				searchFetcher = (
+					page: number,
+					additionalFilters?: Record<string, string | number | number[]>
+				) => {
+					const searchParams = {
+						page,
+						query,
+						...additionalFilters,
+					};
+					return fetchSearchMoviesService.getPaginated<PaginatedMoviesResponse>(
+						searchParams
+					);
+				};
+
+				// For search, we still want to apply other filters like genre/year after the search
+				const { filterParams, yearFilterCriteria } = mapFiltersToApiParams(
+					currentFilters,
+					currentMinimalFilters,
+					currentFilterStyle
+				);
+
+				// Remove the query from filterParams since it's already handled by search endpoint
+				const otherFilters = Object.fromEntries(
+					Object.entries(filterParams).filter(([key]) => key !== "query")
+				);
+				searchFilters = { filterParams: otherFilters, yearFilterCriteria };
+			} else {
+				// Use the original fetcher for non-search requests
+				const { filterParams, yearFilterCriteria } = mapFiltersToApiParams(
+					currentFilters,
+					currentMinimalFilters,
+					currentFilterStyle
+				);
+
+				searchFetcher = currentBaseFetcher;
+				searchFilters = { filterParams, yearFilterCriteria };
+			}
+
+			const { filterParams, yearFilterCriteria } = searchFilters;
 
 			// Create enhanced filter params with larger page size for buffer
 			const enhancedFilterParams = {
@@ -46,7 +113,7 @@ export function useEnhancedFetcher({
 				// TMDB default is 20, we'll request 30 for a 10-movie buffer
 			};
 
-			const originalFetcher = fetcher(page, enhancedFilterParams);
+			const originalFetcher = searchFetcher(page, enhancedFilterParams);
 
 			// Wrap the fetcher to add client-side year filtering and dynamic filling
 			const wrappedRequest = originalFetcher.request.then(async (response) => {
@@ -200,7 +267,8 @@ export function useEnhancedFetcher({
 				cancel: originalFetcher.cancel,
 			};
 		},
-		[fetcher, filters, minimalFilters, filterStyle]
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[filters, minimalFilters, filterStyle] // Recreate fetcher when filters change
 	);
 
 	return enhancedFetcher;

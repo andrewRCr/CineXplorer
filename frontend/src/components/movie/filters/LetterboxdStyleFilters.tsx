@@ -1,7 +1,13 @@
 import { useEffect, useState, useRef } from "react";
-import { Box, Text, HStack, Button, Input } from "@chakra-ui/react";
+import { Box, Text, HStack, Button, Input, VStack } from "@chakra-ui/react";
 import { FiFilter, FiSearch, FiX } from "react-icons/fi";
 import { COLORS } from "@/constants/theme";
+import {
+	coreGenreOptions,
+	yearOptions,
+	runtimeOptions,
+	sortOptions,
+} from "@/constants/movieFilterOptions";
 
 export interface MinimalMovieFilters {
 	genres: number[];
@@ -34,6 +40,11 @@ const LetterboxdStyleFilters = ({
 	useEffect(() => {
 		setLocalQuery(filters.query);
 	}, [filters.query]);
+
+	// Close search bar when page source changes (e.g., via sidebar navigation)
+	useEffect(() => {
+		setIsSearchExpanded(false);
+	}, [pageSource]);
 
 	const updateFilter = <K extends keyof MinimalMovieFilters>(
 		key: K,
@@ -76,7 +87,8 @@ const LetterboxdStyleFilters = ({
 
 	const handleSearchSubmit = () => {
 		updateFilter("query", localQuery);
-		setIsSearchExpanded(false);
+		// Don't close the search bar after submitting - let user close manually
+		// setIsSearchExpanded(false);
 	};
 
 	const toggleSearch = () => {
@@ -89,6 +101,12 @@ const LetterboxdStyleFilters = ({
 		}
 	};
 
+	const closeSearch = () => {
+		setIsSearchExpanded(false);
+		// Don't clear the query on close, only on clearFilters
+		// setLocalQuery("");
+	};
+
 	const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
 		if (e.key === "Enter") {
 			handleSearchSubmit();
@@ -97,375 +115,355 @@ const LetterboxdStyleFilters = ({
 		}
 	};
 
-	const hasActiveFilters =
-		filters.genres.length > 0 ||
-		filters.year ||
-		filters.rating ||
-		filters.runtime ||
-		filters.query ||
-		filters.sortBy !== "popularity.desc";
-
 	const getCurrentSortValue = () => {
-		if (filters.sortBy === "vote_average.desc") return "rating_desc";
-		if (filters.sortBy === "vote_average.asc") return "rating_asc";
+		if (filters.sortBy.startsWith("vote_average")) {
+			return filters.sortBy.endsWith(".desc") ? "rating_desc" : "rating_asc";
+		}
 		return filters.sortBy;
 	};
 
-	// Simplified genre options for the compact view
-	const genreOptions = [
-		{ value: "", label: "All Genres" },
-		{ value: "28", label: "Action" },
-		{ value: "12", label: "Adventure" },
-		{ value: "16", label: "Animation" },
-		{ value: "35", label: "Comedy" },
-		{ value: "18", label: "Drama" },
-		{ value: "27", label: "Horror" },
-		{ value: "878", label: "Sci-Fi" },
-		{ value: "53", label: "Thriller" },
-	];
-
-	const yearOptions = [
-		{ value: "", label: "Any Year" },
-		{ value: "2025", label: "2025" },
-		{ value: "2024", label: "2024" },
-		{ value: "2023", label: "2023" },
-		{ value: "2020s", label: "2020s" },
-		{ value: "2010s", label: "2010s" },
-		{ value: "2000s", label: "2000s" },
-		{ value: "1990s", label: "1990s" },
-		{ value: "1980s", label: "1980s" },
-		{ value: "1970s", label: "1970s" },
-		{ value: "1960s", label: "1960s" },
-		{ value: "1950s", label: "1950s" },
-		{ value: "1940s", label: "1940s" },
-		{ value: "1930s", label: "1930s" },
-	];
-
-	const runtimeOptions = [
-		{ value: "", label: "Any Runtime" },
-		{ value: "90", label: "Under 90 min" },
-		{ value: "120", label: "Under 2 hrs" },
-		{ value: "121", label: "Over 2 hrs" },
-	];
-
-	const sortOptions = [
-		{ value: "popularity.desc", label: "Popular" },
-		{ value: "release_date.desc", label: "Newest" },
-		{ value: "release_date.asc", label: "Oldest" },
-		{ value: "title.asc", label: "A-Z" },
-		{ value: "vote_average.desc", label: "Highest Rated First" },
-		{ value: "vote_average.asc", label: "Lowest Rated First" },
-	];
+	const hasActiveFilters =
+		filters.genres.length > 0 || filters.year !== "" || filters.runtime !== "";
 
 	return (
-		<Box mb={4}>
-			{/* Centered filter controls */}
-			<HStack justify="center" align="stretch" maxW="1200px" mx="auto">
-				{/* Browse by label */}
-				<Text
-					fontSize="sm"
-					fontWeight="medium"
-					color={COLORS.text.secondary}
-					mr={4}
-					alignSelf="center"
-					flexShrink={0}
-				>
-					Browse by
-				</Text>
-
-				{/* Connected dropdowns and search */}
-				<HStack gap={0} align="stretch" flex="1" maxW="1000px">
-					{/* Genre dropdown */}
-					<Box position="relative">
-						<select
-							value={
-								filters.genres.length > 0 ? filters.genres[0].toString() : ""
-							}
-							onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-								updateFilter(
-									"genres",
-									e.target.value ? [parseInt(e.target.value)] : []
-								)
-							}
-							style={{
-								width: "120px",
-								padding: "6px 12px",
-								border: `1px solid ${COLORS.border.input}`,
-								borderRadius: "4px 0 0 4px",
-								borderRight: "none",
-								backgroundColor: COLORS.background.main,
-								color: COLORS.text.main,
-								fontSize: "14px",
-								outline: "none",
-								cursor: "pointer",
-							}}
-						>
-							{genreOptions.map((option) => (
-								<option key={option.value} value={option.value}>
-									{option.label}
-								</option>
-							))}
-						</select>
-					</Box>
-
-					{/* Year dropdown */}
-					<Box position="relative">
-						<select
-							value={filters.year}
-							onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-								updateFilter("year", e.target.value)
-							}
-							style={{
-								width: "100px",
-								padding: "6px 12px",
-								border: `1px solid ${COLORS.border.input}`,
-								borderRadius: "0",
-								backgroundColor: COLORS.background.main,
-								color: COLORS.text.main,
-								fontSize: "14px",
-								outline: "none",
-								cursor: "pointer",
-							}}
-						>
-							{yearOptions.map((option) => (
-								<option key={option.value} value={option.value}>
-									{option.label}
-								</option>
-							))}
-						</select>
-					</Box>
-
-					{/* Runtime dropdown */}
-					<Box position="relative">
-						<select
-							value={filters.runtime}
-							onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-								updateFilter("runtime", e.target.value)
-							}
-							style={{
-								width: "120px",
-								padding: "6px 12px",
-								border: `1px solid ${COLORS.border.input}`,
-								borderRadius: "0",
-								backgroundColor: COLORS.background.main,
-								color: COLORS.text.main,
-								fontSize: "14px",
-								outline: "none",
-								cursor: "pointer",
-							}}
-						>
-							{runtimeOptions.map((option) => (
-								<option key={option.value} value={option.value}>
-									{option.label}
-								</option>
-							))}
-						</select>
-					</Box>
-
-					{/* Advanced filters toggle */}
-					{onToggleAdvanced && (
-						<Button
-							onClick={onToggleAdvanced}
-							size="sm"
-							variant="outline"
-							borderRadius="0 4px 4px 0"
-							borderColor={COLORS.border.input}
-							borderLeft="none"
-							backgroundColor={
-								showAdvanced ? COLORS.accent.primary : COLORS.background.main
-							}
-							color={showAdvanced ? "white" : COLORS.text.main}
-							_hover={{
-								backgroundColor: showAdvanced
-									? COLORS.accent.secondary
-									: COLORS.background.subItem,
-								borderColor: COLORS.accent.primary,
-							}}
-							minW="auto"
-							px={3}
-							height="32px"
-						>
-							<FiFilter size={14} />
-						</Button>
-					)}
-
-					{/* Spacer to separate filters from sort */}
-					<Box width="20px" flexShrink={0} />
-
-					{/* Sort by label */}
+		<VStack
+			w="100%"
+			p={4}
+			bg={COLORS.background.main}
+			gap={4} // Use gap instead of spacing
+			align="stretch"
+			overflow="visible" // Allow content (like the advanced menu) to overflow
+		>
+			<Box
+				maxW="1200px"
+				w="100%"
+				mx="auto"
+				display="flex"
+				flexDirection="column"
+				gap={4}
+			>
+				{/* Main filter controls container */}
+				<HStack justify="center" align="stretch" w="100%">
+					{/* Browse by label */}
 					<Text
 						fontSize="sm"
 						fontWeight="medium"
 						color={COLORS.text.secondary}
+						mr={4}
 						alignSelf="center"
 						flexShrink={0}
-						mr={2}
 					>
-						Sort by
+						Browse by
 					</Text>
 
-					{/* Sort dropdown */}
-					<Box position="relative">
-						<select
-							value={getCurrentSortValue()}
-							onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-								updateFilter("sortBy", e.target.value)
-							}
-							style={{
-								width: "140px",
-								padding: "6px 12px",
-								border: `1px solid ${COLORS.border.input}`,
-								borderRadius: "4px",
-								backgroundColor: COLORS.background.main,
-								color: COLORS.text.main,
-								fontSize: "14px",
-								outline: "none",
-								cursor: "pointer",
-							}}
-						>
-							{sortOptions.map((option) => {
-								// Smart disabling based on page context
-								const isDisabled =
-									(pageSource === "popular" &&
-										option.value === "popularity.desc") ||
-									(pageSource === "top-rated" &&
-										option.value === "vote_average.desc");
-
-								return (
-									<option
-										key={option.value}
-										value={option.value}
-										disabled={isDisabled}
+					{/* Connected dropdowns and search */}
+					<HStack gap={0} align="center" flex="1" maxW="1000px">
+						{/* Wrapper for dropdowns and clear button */}
+						<Box position="relative">
+							{/* Filter dropdowns */}
+							<HStack gap={0} align="stretch">
+								{/* Genre dropdown */}
+								<Box position="relative">
+									<select
+										value={
+											filters.genres.length > 0
+												? filters.genres[0].toString()
+												: ""
+										}
+										onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+											updateFilter(
+												"genres",
+												e.target.value ? [parseInt(e.target.value)] : []
+											)
+										}
 										style={{
-											color: isDisabled
-												? COLORS.text.secondary
-												: COLORS.text.main,
-											fontStyle: isDisabled ? "italic" : "normal",
+											width: "120px",
+											padding: "6px 12px",
+											border: `1px solid ${COLORS.border.input}`,
+											borderRadius: "4px 0 0 4px",
+											borderRight: "none",
+											backgroundColor: COLORS.background.main,
+											color: COLORS.text.main,
+											fontSize: "14px",
+											outline: "none",
+											cursor: "pointer",
+											height: "32px",
 										}}
 									>
-										{option.label}
-										{isDisabled ? " (current)" : ""}
-									</option>
-								);
-							})}
-						</select>
-					</Box>
+										{coreGenreOptions.map((option) => (
+											<option key={option.value} value={option.value}>
+												{option.label}
+											</option>
+										))}
+									</select>
+								</Box>
 
-					{/* Spacer before search */}
-					<Box width="20px" flexShrink={0} />
+								{/* Year dropdown */}
+								<Box position="relative">
+									<select
+										value={filters.year}
+										onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+											updateFilter("year", e.target.value)
+										}
+										style={{
+											width: "100px",
+											padding: "6px 12px",
+											border: `1px solid ${COLORS.border.input}`,
+											borderRadius: "0",
+											backgroundColor: COLORS.background.main,
+											color: COLORS.text.main,
+											fontSize: "14px",
+											outline: "none",
+											cursor: "pointer",
+											height: "32px",
+										}}
+									>
+										{yearOptions.map((option) => (
+											<option key={option.value} value={option.value}>
+												{option.label}
+											</option>
+										))}
+									</select>
+								</Box>
 
-					{/* Collapsible Search Section */}
-					<Box position="relative">
-						{!isSearchExpanded ? (
-							// Collapsed state - just the search icon button
-							<Button
-								aria-label="Search movies"
-								onClick={toggleSearch}
+								{/* Runtime dropdown */}
+								<Box position="relative">
+									<select
+										value={filters.runtime}
+										onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+											updateFilter("runtime", e.target.value)
+										}
+										style={{
+											width: "120px",
+											padding: "6px 12px",
+											border: `1px solid ${COLORS.border.input}`,
+											borderRadius: "0",
+											backgroundColor: COLORS.background.main,
+											color: COLORS.text.main,
+											fontSize: "14px",
+											outline: "none",
+											cursor: "pointer",
+											height: "32px",
+										}}
+									>
+										{runtimeOptions.map((option) => (
+											<option key={option.value} value={option.value}>
+												{option.label}
+											</option>
+										))}
+									</select>
+								</Box>
+
+								{/* Advanced filters toggle */}
+								{onToggleAdvanced && (
+									<Button
+										onClick={onToggleAdvanced}
+										size="sm"
+										variant="outline"
+										borderRadius="0 4px 4px 0"
+										borderColor={COLORS.border.input}
+										borderLeft="none"
+										backgroundColor={
+											showAdvanced
+												? COLORS.accent.primary
+												: COLORS.background.main
+										}
+										color={showAdvanced ? "white" : COLORS.text.main}
+										_hover={{
+											backgroundColor: showAdvanced
+												? COLORS.accent.secondary
+												: COLORS.background.subItem,
+											borderColor: COLORS.accent.primary,
+										}}
+										minW="auto"
+										px={3}
+										height="32px"
+									>
+										<FiFilter size={14} />
+									</Button>
+								)}
+							</HStack>
+							{/* Absolutely positioned container for the clear filters button */}
+							<Box
+								position="absolute"
+								bottom="-28px" // Position it below the dropdowns
+								left="0"
+								right="0"
+								height="25px"
+								display="flex"
+								justifyContent="center"
+								alignItems="center"
+							>
+								<Button
+									onClick={clearFilters}
+									size="xs"
+									variant="ghost"
+									colorScheme="red"
+									fontSize="xs"
+									visibility={
+										hasActiveFilters && !showAdvanced ? "visible" : "hidden"
+									}
+									opacity={hasActiveFilters && !showAdvanced ? 1 : 0}
+									transition="visibility 0s, opacity 0.2s ease-in-out"
+									mt={4} // Nudge the button down further
+								>
+									Clear filters
+								</Button>
+							</Box>
+						</Box>
+
+						{/* Spacer to separate filters from sort */}
+						<Box width="20px" flexShrink={0} />
+
+						{/* Sort by label */}
+						<Text
+							fontSize="sm"
+							fontWeight="medium"
+							color={COLORS.text.secondary}
+							alignSelf="center"
+							flexShrink={0}
+							mr={2}
+						>
+							Sort by
+						</Text>
+
+						{/* Sort dropdown */}
+						<Box position="relative" alignSelf="center">
+							<select
+								value={getCurrentSortValue()}
+								onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+									updateFilter("sortBy", e.target.value)
+								}
+								style={{
+									width: "140px",
+									padding: "6px 12px",
+									border: `1px solid ${COLORS.border.input}`,
+									borderRadius: "4px",
+									backgroundColor: COLORS.background.main,
+									color: COLORS.text.main,
+									fontSize: "14px",
+									outline: "none",
+									cursor: "pointer",
+									height: "32px",
+								}}
+							>
+								{sortOptions.map((option) => {
+									// Smart disabling based on page context
+									const isDisabled =
+										(pageSource === "popular" &&
+											option.value === "popularity.desc") ||
+										(pageSource === "top-rated" &&
+											option.value === "vote_average.desc");
+
+									return (
+										<option
+											key={option.value}
+											value={option.value}
+											disabled={isDisabled}
+											style={{
+												color: isDisabled
+													? COLORS.text.secondary
+													: COLORS.text.main,
+												fontStyle: isDisabled ? "italic" : "normal",
+											}}
+										>
+											{option.label}
+											{isDisabled ? " (current)" : ""}
+										</option>
+									);
+								})}
+							</select>
+						</Box>
+
+						{/* Spacer before search */}
+						<Box width="20px" flexShrink={0} />
+
+						{/* --- Unified Collapsible Search Component (Final) --- */}
+						<HStack
+							alignSelf="center"
+							gap={0}
+							align="stretch"
+							border="1px solid"
+							borderColor={COLORS.border.input}
+							borderRadius="4px"
+							width={isSearchExpanded ? "260px" : "32px"}
+							height="32px"
+							transition="width 0.3s ease-in-out"
+							_hover={{
+								borderColor: isSearchExpanded
+									? COLORS.border.input
+									: COLORS.accent.secondary,
+							}}
+							overflow="hidden" // Prevents content from spilling during animation
+						>
+							<Input
+								ref={searchInputRef}
+								placeholder="Search..."
+								value={localQuery}
+								onChange={(e) => setLocalQuery(e.target.value)}
+								onKeyDown={handleSearchKeyDown}
 								size="sm"
-								variant="outline"
-								borderRadius="4px"
-								borderColor={COLORS.border.input}
+								border="none"
+								borderRadius="0"
+								backgroundColor={COLORS.background.main}
+								color={COLORS.text.main}
+								_focus={{ boxShadow: "none" }}
+								fontSize="14px"
+								height="30px"
+								flex="1"
+								p={isSearchExpanded ? 2 : 0} // No padding when collapsed
+								minW="0" // Allows input to shrink to 0
+								opacity={isSearchExpanded ? 1 : 0}
+								visibility={isSearchExpanded ? "visible" : "hidden"}
+								transition="opacity 0.2s 0.1s, visibility 0.2s 0.1s, padding 0.3s"
+								disabled={!isSearchExpanded}
+							/>
+							<Button
+								aria-label={isSearchExpanded ? "Submit search" : "Open search"}
+								onClick={isSearchExpanded ? handleSearchSubmit : toggleSearch}
+								size="sm"
+								variant="ghost"
+								borderRadius={0}
 								backgroundColor={COLORS.background.main}
 								color={COLORS.text.main}
 								_hover={{
 									backgroundColor: COLORS.background.subItem,
-									borderColor: COLORS.accent.secondary,
 								}}
-								height="32px"
-								minW="32px"
-								px={2}
+								height="30px"
+								minW="30px"
+								p={0}
+								flexShrink={0}
 							>
 								<FiSearch size={14} />
 							</Button>
-						) : (
-							// Expanded state - full search input and button
-							<HStack gap={0} align="stretch">
-								<Input
-									ref={searchInputRef}
-									placeholder="Search movies..."
-									value={localQuery}
-									onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-										setLocalQuery(e.target.value)
-									}
-									onKeyDown={handleSearchKeyDown}
-									size="sm"
-									borderRadius="4px 0 0 4px"
-									borderColor={COLORS.border.input}
-									borderRight="none"
-									backgroundColor={COLORS.background.main}
-									color={COLORS.text.main}
-									_focus={{
-										borderColor: COLORS.accent.primary,
-										boxShadow: `0 0 0 1px ${COLORS.accent.primary}`,
-										zIndex: 1,
-									}}
-									_hover={{
-										borderColor: COLORS.accent.secondary,
-									}}
-									fontSize="14px"
-									height="32px"
-									width="180px"
-									flexShrink={0}
-								/>
-								<Button
-									aria-label="Submit search"
-									onClick={handleSearchSubmit}
-									size="sm"
-									borderRadius="0 4px 4px 0"
-									borderColor={COLORS.border.input}
-									borderLeft="none"
-									backgroundColor={COLORS.background.main}
-									color={COLORS.text.main}
-									_hover={{
-										backgroundColor: COLORS.background.subItem,
-										borderColor: COLORS.accent.secondary,
-									}}
-									height="32px"
-									minW="32px"
-									px={2}
-								>
-									<FiSearch size={14} />
-								</Button>
+							{isSearchExpanded && (
 								<Button
 									aria-label="Close search"
-									onClick={() => setIsSearchExpanded(false)}
+									onClick={closeSearch}
 									size="sm"
 									variant="ghost"
-									borderRadius="4px"
+									borderRadius="0 4px 4px 0"
 									backgroundColor="transparent"
 									color={COLORS.text.secondary}
 									_hover={{
 										backgroundColor: COLORS.background.subItem,
 										color: COLORS.text.main,
 									}}
-									height="32px"
-									minW="32px"
-									px={2}
-									ml={1}
+									height="30px"
+									minW="30px"
+									p={0}
+									flexShrink={0}
+									opacity={isSearchExpanded ? 1 : 0}
+									transition="opacity 0.2s ease-in-out 0.1s"
 								>
-									<FiX size={14} />
+									<FiX size={16} />
 								</Button>
-							</HStack>
-						)}
-					</Box>
+							)}
+						</HStack>
+					</HStack>
 				</HStack>
-			</HStack>
-
-			{/* Clear filters button */}
-			{hasActiveFilters && (
-				<Box textAlign="center" mt={3}>
-					<Button
-						onClick={clearFilters}
-						size="xs"
-						variant="ghost"
-						colorScheme="red"
-						fontSize="xs"
-					>
-						Clear filters
-					</Button>
-				</Box>
-			)}
-		</Box>
+			</Box>
+		</VStack>
 	);
 };
 

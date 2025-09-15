@@ -3,81 +3,15 @@ import type { MinimalMovieFilters } from "@/components/movie/filters/LetterboxdS
 import type { SortOption } from "@/components/movie/filters/SortSelector";
 
 /**
- * Updates URL parameters based on current filter state
+ * Initializes filter state from a URL search string.
+ * @param filterStyle - The type of filter UI being used.
+ * @param search - The search string from the URL (e.g., location.search).
+ * @returns An object containing the populated filter states.
  */
-export function updateUrlFromFilters(
-	filters: MovieFiltersType,
-	minimalFilters: MinimalMovieFilters,
+export function initializeFiltersFromUrl(
 	filterStyle: "expanded" | "minimal",
-	preserveQuery?: boolean
-): void {
-	if (typeof window === "undefined") return;
-
-	const url = new URL(window.location.href);
-
-	// Clear existing filter params
-	url.searchParams.delete("year");
-	url.searchParams.delete("rating");
-	url.searchParams.delete("runtime");
-	url.searchParams.delete("query");
-	url.searchParams.delete("sortBy");
-	url.searchParams.delete("genres");
-	url.searchParams.delete("minYear");
-	url.searchParams.delete("maxYear");
-	url.searchParams.delete("minRating");
-	url.searchParams.delete("maxRating");
-	url.searchParams.delete("minRuntime");
-	url.searchParams.delete("maxRuntime");
-
-	// Preserve existing query parameter if requested (for search results)
-	const existingQuery = preserveQuery
-		? new URL(window.location.href).searchParams.get("query")
-		: null;
-
-	if (filterStyle === "minimal") {
-		if (minimalFilters.year) url.searchParams.set("year", minimalFilters.year);
-		if (minimalFilters.rating)
-			url.searchParams.set("rating", minimalFilters.rating);
-		if (minimalFilters.runtime)
-			url.searchParams.set("runtime", minimalFilters.runtime);
-		if (minimalFilters.query)
-			url.searchParams.set("query", minimalFilters.query);
-		if (minimalFilters.sortBy !== "popularity.desc") {
-			url.searchParams.set("sortBy", minimalFilters.sortBy);
-		}
-		if (minimalFilters.genres.length > 0) {
-			url.searchParams.set("genres", minimalFilters.genres.join(","));
-		}
-	} else {
-		if (filters.query) url.searchParams.set("query", filters.query);
-		if (filters.minYear) url.searchParams.set("minYear", filters.minYear);
-		if (filters.maxYear) url.searchParams.set("maxYear", filters.maxYear);
-		if (filters.minRating) url.searchParams.set("minRating", filters.minRating);
-		if (filters.maxRating) url.searchParams.set("maxRating", filters.maxRating);
-		if (filters.minRuntime)
-			url.searchParams.set("minRuntime", filters.minRuntime);
-		if (filters.maxRuntime)
-			url.searchParams.set("maxRuntime", filters.maxRuntime);
-		if (filters.sortBy !== "popularity.desc") {
-			url.searchParams.set("sortBy", filters.sortBy);
-		}
-		if (filters.genres.length > 0) {
-			url.searchParams.set("genres", filters.genres.join(","));
-		}
-	}
-
-	// Restore preserved query if no new query was set and preserveQuery is true
-	if (preserveQuery && existingQuery && !url.searchParams.has("query")) {
-		url.searchParams.set("query", existingQuery);
-	}
-
-	window.history.replaceState({}, "", url.toString());
-}
-
-/**
- * Initializes filter state from URL parameters
- */
-export function initializeFiltersFromUrl(filterStyle: "expanded" | "minimal"): {
+	search: string
+): {
 	filters: MovieFiltersType;
 	minimalFilters: MinimalMovieFilters;
 } {
@@ -109,7 +43,7 @@ export function initializeFiltersFromUrl(filterStyle: "expanded" | "minimal"): {
 		};
 	}
 
-	const params = new URLSearchParams(window.location.search);
+	const params = new URLSearchParams(search);
 
 	if (filterStyle === "minimal") {
 		const year = params.get("year") || "";

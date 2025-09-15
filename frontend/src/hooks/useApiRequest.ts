@@ -24,42 +24,27 @@ export function useApiRequest<T>(
 ): ApiRequestResult<T> {
 	const [data, setData] = useState<T | undefined>();
 	const [error, setError] = useState<string>("");
-	const [isLoading, setIsLoading] = useState<boolean>(false);
+	const [isLoading, setIsLoading] = useState(true);
 
 	useEffect(() => {
-		console.log("useApiRequest: fetcher changed, making new request");
-		const result = fetcher();
-		if (
-			!result ||
-			typeof result.request !== "object" ||
-			typeof result.cancel !== "function"
-		) {
-			console.warn(
-				"useApiRequest: fetcher did not return valid request/cancel object"
-			);
-			return;
-		}
-		const { request, cancel } = result;
 		setIsLoading(true);
-		// Clear previous data when starting a new request to prevent stale data issues
-		setData(undefined);
 		setError("");
-		console.log("useApiRequest: Starting request");
+
+		const { request, cancel } = fetcher();
+
 		request
 			.then((res) => {
-				console.log("useApiRequest: Request successful", res.data);
+				// Atomic update of data and loading state
 				setData(res.data);
 				setIsLoading(false);
 			})
 			.catch((err: { message: SetStateAction<string> }) => {
 				if (err instanceof CanceledError) return;
-				console.log("useApiRequest: Request failed", err.message);
 				setError(err.message);
-				setIsLoading(false);
+				setIsLoading(false); // Also set loading to false on error
 			});
 
 		return () => {
-			console.log("useApiRequest: Cleaning up previous request");
 			cancel();
 		};
 	}, [fetcher]);

@@ -17,6 +17,7 @@ export const COLORS = {
 		footer: palette.gradientGray,
 		sidebar: palette.discordDark,
 		subItem: palette.chakraGray900,
+		skeleton: palette.tailwindZinc900,
 	},
 	border: {
 		main: "gray.700",

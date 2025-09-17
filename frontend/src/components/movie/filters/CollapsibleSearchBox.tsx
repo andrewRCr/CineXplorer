@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { HStack, Button, Input } from "@chakra-ui/react";
 import { FiSearch, FiX } from "react-icons/fi";
 import { COLORS } from "@/constants/theme";
@@ -17,6 +17,9 @@ const CollapsibleSearchBox = ({
 	const [localQuery, setLocalQuery] = useState(query);
 	const [isSearchExpanded, setIsSearchExpanded] = useState(false);
 	const searchInputRef = useRef<HTMLInputElement>(null);
+	
+	// Track focus timeout for cleanup
+	const focusTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
 	useEffect(() => {
 		setLocalQuery(query);
@@ -25,35 +28,69 @@ const CollapsibleSearchBox = ({
 	// Close search bar when page source changes (e.g., via sidebar navigation)
 	useEffect(() => {
 		setIsSearchExpanded(false);
+		// Clear any pending focus timeout when page source changes
+		if (focusTimeoutRef.current) {
+			clearTimeout(focusTimeoutRef.current);
+			focusTimeoutRef.current = null;
+		}
 	}, [pageSource]);
+	
+	// Cleanup timeout on unmount to prevent memory leaks
+	useEffect(() => {
+		return () => {
+			if (focusTimeoutRef.current) {
+				clearTimeout(focusTimeoutRef.current);
+			}
+		};
+	}, []);
 
-	const handleSearchSubmit = () => {
+	// Memoize handlers to prevent unnecessary re-renders
+	const handleSearchSubmit = useCallback(() => {
 		onQueryChange(localQuery);
 		// Don't close the search bar after submitting - let user close manually
-	};
+	}, [localQuery, onQueryChange]);
 
-	const toggleSearch = () => {
-		setIsSearchExpanded(!isSearchExpanded);
+	const toggleSearch = useCallback(() => {
+		const wasExpanded = isSearchExpanded;
+		setIsSearchExpanded(!wasExpanded);
+		
+		// Clear any existing focus timeout
+		if (focusTimeoutRef.current) {
+			clearTimeout(focusTimeoutRef.current);
+			focusTimeoutRef.current = null;
+		}
+		
 		// Focus the input when expanding
-		if (!isSearchExpanded) {
-			setTimeout(() => {
+		if (!wasExpanded) {
+			focusTimeoutRef.current = setTimeout(() => {
 				searchInputRef.current?.focus();
+				focusTimeoutRef.current = null; // Clear reference after execution
 			}, 100);
 		}
-	};
+	}, [isSearchExpanded]);
 
-	const closeSearch = () => {
+	const closeSearch = useCallback(() => {
 		setIsSearchExpanded(false);
+		// Clear any pending focus timeout when closing
+		if (focusTimeoutRef.current) {
+			clearTimeout(focusTimeoutRef.current);
+			focusTimeoutRef.current = null;
+		}
 		// Don't clear the query on close, only when parent calls onQueryChange
-	};
+	}, []);
 
-	const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+	const handleSearchKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
 		if (e.key === "Enter") {
 			handleSearchSubmit();
 		} else if (e.key === "Escape") {
-			setIsSearchExpanded(false);
+			closeSearch();
 		}
-	};
+	}, [handleSearchSubmit, closeSearch]);
+	
+	// Memoize input change handler
+	const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+		setLocalQuery(e.target.value);
+	}, []);
 
 	return (
 		<HStack
@@ -72,7 +109,7 @@ const CollapsibleSearchBox = ({
 				ref={searchInputRef}
 				placeholder="Search results..."
 				value={localQuery}
-				onChange={(e) => setLocalQuery(e.target.value)}
+				onChange={handleInputChange}
 				onKeyDown={handleSearchKeyDown}
 				size="sm"
 				border="none"

@@ -51,29 +51,32 @@ interface iPaginationCtrlProps {
 }
 
 const PaginationCtrl = (props: iPaginationCtrlProps) => {
+	// Destructure props for useCallback dependencies
+	const { currentPage, onGoToPage, totalMovieCount, totalPages } = props;
+	
 	// Memoize complex pagination calculations
 	const paginationData = useMemo(() => {
-		const totalPages = props.totalPages || Math.ceil(props.totalMovieCount / 20);
-		const calculatedFromCount = Math.ceil(props.totalMovieCount / 20);
+		const totalPagesValue = totalPages || Math.ceil(totalMovieCount / 20);
+		const calculatedFromCount = Math.ceil(totalMovieCount / 20);
 
 		// If the API-provided total_pages differs significantly from the calculated value,
 		// prefer the calculated value (TMDB API sometimes returns incorrect pagination data with filters)
 		const preferredTotalPages =
-			Math.abs(totalPages - calculatedFromCount) > 5 &&
-			calculatedFromCount > totalPages
+			Math.abs(totalPagesValue - calculatedFromCount) > 5 &&
+			calculatedFromCount > totalPagesValue
 				? calculatedFromCount
-				: totalPages;
+				: totalPagesValue;
 
 		// TMDB API has a hard limit of 500 pages - cap the UI to match
 		const effectiveTotalPages = Math.min(preferredTotalPages, 500);
 		
 		return {
-			totalPages,
+			totalPages: totalPagesValue,
 			calculatedFromCount,
 			preferredTotalPages,
 			effectiveTotalPages,
 		};
-	}, [props.totalMovieCount, props.totalPages]);
+	}, [totalMovieCount, totalPages]);
 	
 	const { effectiveTotalPages } = paginationData;
 
@@ -81,27 +84,27 @@ const PaginationCtrl = (props: iPaginationCtrlProps) => {
 	const handlePrevious = useCallback((e: React.MouseEvent) => {
 		e.preventDefault();
 		e.stopPropagation();
-		if (props.currentPage > 1) {
-			props.onGoToPage(props.currentPage - 1);
+		if (currentPage > 1) {
+			onGoToPage(currentPage - 1);
 		}
-	}, [props.currentPage, props.onGoToPage]);
+	}, [currentPage, onGoToPage]);
 
 	const handleNext = useCallback((e: React.MouseEvent) => {
 		e.preventDefault();
 		e.stopPropagation();
-		if (props.currentPage < effectiveTotalPages) {
-			props.onGoToPage(props.currentPage + 1);
+		if (currentPage < effectiveTotalPages) {
+			onGoToPage(currentPage + 1);
 		}
-	}, [props.currentPage, effectiveTotalPages, props.onGoToPage]);
+	}, [currentPage, effectiveTotalPages, onGoToPage]);
 
 	// Memoize page click handler factory
 	const createPageClickHandler = useCallback((page: number) => {
 		return (e: React.MouseEvent) => {
 			e.preventDefault();
 			e.stopPropagation();
-			props.onGoToPage(page);
+			onGoToPage(page);
 		};
-	}, [props.onGoToPage]);
+	}, [onGoToPage]);
 
 	// MOVE ALL HOOKS TO TOP - Rules of Hooks compliance
 	// Memoize simple pagination for few pages
@@ -112,12 +115,12 @@ const PaginationCtrl = (props: iPaginationCtrlProps) => {
 		
 		return (
 			<ButtonGroup variant="ghost" size="sm">
-				<IconButton
-					aria-label="Previous page"
-					color={COLORS.text.main}
-					borderColor={COLORS.border.main}
-					disabled={props.currentPage === 1}
-					onClick={handlePrevious}
+					<IconButton
+						aria-label="Previous page"
+						color={COLORS.text.main}
+						borderColor={COLORS.border.main}
+						disabled={currentPage === 1}
+						onClick={handlePrevious}
 				>
 					<LuChevronLeft />
 				</IconButton>
@@ -125,7 +128,7 @@ const PaginationCtrl = (props: iPaginationCtrlProps) => {
 				{/* Generate page buttons for few pages */}
 				{pages.map((page) => {
 					const formattedPage = formatPageNumber(page);
-					const isCurrentPage = page === props.currentPage;
+					const isCurrentPage = page === currentPage;
 					
 					return (
 						<IconButton
@@ -159,18 +162,18 @@ const PaginationCtrl = (props: iPaginationCtrlProps) => {
 					);
 				})}
 
-				<IconButton
-					aria-label="Next page"
-					color={COLORS.text.main}
-					borderColor={COLORS.border.main}
-					disabled={props.currentPage === effectiveTotalPages}
-					onClick={handleNext}
+					<IconButton
+						aria-label="Next page"
+						color={COLORS.text.main}
+						borderColor={COLORS.border.main}
+						disabled={currentPage === effectiveTotalPages}
+						onClick={handleNext}
 				>
 					<LuChevronRight />
 				</IconButton>
 			</ButtonGroup>
 		);
-	}, [effectiveTotalPages, props.currentPage, handlePrevious, handleNext, createPageClickHandler]);
+	}, [effectiveTotalPages, currentPage, handlePrevious, handleNext, createPageClickHandler]);
 
 	// Memoize complex smart pagination logic (for >15 pages)
 	const pagesToShow = useMemo(() => {
@@ -189,13 +192,13 @@ const PaginationCtrl = (props: iPaginationCtrlProps) => {
 		// For page 1, show more pages (2-3) to make it look better with ellipsis
 		// For other pages, show 1 page before and after current
 		const rangeStart =
-			props.currentPage === 1
+			currentPage === 1
 				? 2 // Start from page 2 for page 1
-				: Math.max(2, props.currentPage - 1);
+				: Math.max(2, currentPage - 1);
 		const rangeEnd =
-			props.currentPage === 1
+			currentPage === 1
 				? 3 // End at page 3 for page 1
-				: Math.min(effectiveTotalPages - 1, props.currentPage + 1);
+				: Math.min(effectiveTotalPages - 1, currentPage + 1);
 
 		// Add ellipsis if there's a gap after first page
 		if (rangeStart > 2) {
@@ -218,7 +221,7 @@ const PaginationCtrl = (props: iPaginationCtrlProps) => {
 		}
 
 		// Special case: if current page is very near the beginning and there's no gap between first page and range, don't show ellipsis after first page
-		if (props.currentPage <= 2) {
+		if (currentPage <= 2) {
 			// Only remove the ellipsis if it appears immediately after the first page (index 1)
 			// AND there's no gap between page 1 and the range (i.e., range starts at page 2)
 			if (
@@ -231,7 +234,7 @@ const PaginationCtrl = (props: iPaginationCtrlProps) => {
 		}
 
 		// Special case: if current page is near the end, don't show ellipsis before last page
-		if (props.currentPage >= effectiveTotalPages - 2) {
+		if (currentPage >= effectiveTotalPages - 2) {
 			// Remove the last ellipsis if it exists AND there's no gap between the range and last page
 			const lastEllipsisIndex = pages.lastIndexOf("ellipsis");
 			if (
@@ -244,7 +247,7 @@ const PaginationCtrl = (props: iPaginationCtrlProps) => {
 		}
 
 		return pages;
-	}, [props.currentPage, effectiveTotalPages]);
+	}, [currentPage, effectiveTotalPages]);
 
 	// Memoize pagination buttons to prevent recreation
 	const paginationButtons = useMemo(() => {
@@ -269,7 +272,7 @@ const PaginationCtrl = (props: iPaginationCtrlProps) => {
 			}
 
 			const formattedPage = formatPageNumber(page);
-			const isCurrentPage = page === props.currentPage;
+			const isCurrentPage = page === currentPage;
 			
 			return (
 				<IconButton
@@ -304,7 +307,7 @@ const PaginationCtrl = (props: iPaginationCtrlProps) => {
 				</IconButton>
 			);
 		});
-	}, [effectiveTotalPages, pagesToShow, props.currentPage, createPageClickHandler]);
+	}, [effectiveTotalPages, pagesToShow, currentPage, createPageClickHandler]);
 
 	// Return simple pagination if applicable (NO EARLY RETURN AFTER HOOKS)
 	if (simplePagination) {
@@ -317,7 +320,7 @@ const PaginationCtrl = (props: iPaginationCtrlProps) => {
 				aria-label="Previous page"
 				color={COLORS.text.main}
 				borderColor={COLORS.border.main}
-				disabled={props.currentPage === 1}
+				disabled={currentPage === 1}
 				onClick={handlePrevious}
 			>
 				<LuChevronLeft />
@@ -329,7 +332,7 @@ const PaginationCtrl = (props: iPaginationCtrlProps) => {
 				aria-label="Next page"
 				color={COLORS.text.main}
 				borderColor={COLORS.border.main}
-				disabled={props.currentPage === effectiveTotalPages}
+				disabled={currentPage === effectiveTotalPages}
 				onClick={handleNext}
 			>
 				<LuChevronRight />

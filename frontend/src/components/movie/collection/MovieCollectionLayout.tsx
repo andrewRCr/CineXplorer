@@ -3,7 +3,7 @@ import { useLocation, Outlet } from "react-router-dom";
 import { Box } from "@chakra-ui/react";
 import { type MovieFilters as MovieFiltersType } from "@/components/movie/filters/AdvancedMovieFilters";
 import { useEnhancedFetcher } from "@/hooks/useEnhancedFetcher";
-import { getFetcherAndSource, type RouteConfig } from "@/utils/routeConfigHelper";
+import { getFetcherAndSource, type RouteConfig } from "@/utilities/routeConfigHelper";
 import PageHeader from "@/components/movie/collection/PageHeader";
 import FilterSection from "@/components/movie/collection/FilterSection";
 import { useMovieCollectionUrl } from "@/components/movie/collection/useMovieCollectionUrl";

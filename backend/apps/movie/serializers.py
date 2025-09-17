@@ -17,6 +17,7 @@ class MovieSerializer(serializers.Serializer):
     user_movie_data = serializers.SerializerMethodField()
     # Pass-through fields from TMDB API service needed in paginated views
     vote_average = serializers.FloatField(read_only=True)
+    runtime = serializers.IntegerField(read_only=True, allow_null=True)  # Include runtime for filtering verification
 
     def get_user_movie_data(self, obj):
         request = self.context.get('request', None)

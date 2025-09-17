@@ -12,6 +12,12 @@ export type RatingFilterCriteria = {
 	maxRating?: number;
 };
 
+export type RuntimeFilterCriteria = {
+	type: "min" | "max" | "range";
+	minRuntime?: number;
+	maxRuntime?: number;
+};
+
 /**
  * Converts UI filter state to API parameters for TMDB
  */
@@ -22,10 +28,12 @@ export function mapFiltersToApiParams(
 	filterParams: Record<string, string | number | number | number[]>;
 	yearFilterCriteria: YearFilterCriteria | null;
 	ratingFilterCriteria: RatingFilterCriteria | null;
+	runtimeFilterCriteria: RuntimeFilterCriteria | null;
 } {
 	const filterParams: Record<string, string | number | number[]> = {};
 	let yearFilterCriteria: YearFilterCriteria | null = null;
 	let ratingFilterCriteria: RatingFilterCriteria | null = null;
+	let runtimeFilterCriteria: RuntimeFilterCriteria | null = null;
 
 	if (filterStyle === "minimal") {
 		// Handle minimal filters
@@ -71,13 +79,40 @@ export function mapFiltersToApiParams(
 			};
 		}
 
-		if (filters.minRuntime) {
-			if (filters.minRuntime === "90") {
-				filterParams.max_runtime = "90";
-			} else if (filters.minRuntime === "120") {
-				filterParams.max_runtime = "120";
-			} else if (filters.minRuntime === "121") {
-				filterParams.min_runtime = "121";
+		// Handle runtime filtering for both min and max
+		if (filters.minRuntime || filters.maxRuntime) {
+			if (filters.minRuntime) {
+				filterParams.min_runtime = filters.minRuntime;
+			}
+			if (filters.maxRuntime) {
+				filterParams.max_runtime = filters.maxRuntime;
+			}
+			
+			// Create runtime filter criteria for client-side filtering
+			if (filters.minRuntime && filters.maxRuntime) {
+				// Special case: if maxRuntime is 999, treat as "min only"
+				if (filters.maxRuntime === "999") {
+					runtimeFilterCriteria = {
+						type: "min",
+						minRuntime: parseInt(filters.minRuntime)
+					};
+				} else {
+					runtimeFilterCriteria = {
+						type: "range",
+						minRuntime: parseInt(filters.minRuntime),
+						maxRuntime: parseInt(filters.maxRuntime)
+					};
+				}
+			} else if (filters.minRuntime) {
+				runtimeFilterCriteria = {
+					type: "min",
+					minRuntime: parseInt(filters.minRuntime)
+				};
+			} else if (filters.maxRuntime) {
+				runtimeFilterCriteria = {
+					type: "max",
+					maxRuntime: parseInt(filters.maxRuntime)
+				};
 			}
 		}
 
@@ -149,13 +184,47 @@ export function mapFiltersToApiParams(
 				maxRating: parseFloat(filters.maxRating)
 			};
 		}
-		if (filters.minRuntime) filterParams.min_runtime = filters.minRuntime;
-		if (filters.maxRuntime) filterParams.max_runtime = filters.maxRuntime;
+		// Handle runtime filtering for expanded filters
+		if (filters.minRuntime || filters.maxRuntime) {
+			if (filters.minRuntime) {
+				filterParams.min_runtime = filters.minRuntime;
+			}
+			if (filters.maxRuntime) {
+				filterParams.max_runtime = filters.maxRuntime;
+			}
+			
+			// Create runtime filter criteria for client-side filtering
+			if (filters.minRuntime && filters.maxRuntime) {
+				// Special case: if maxRuntime is 999, treat as "min only"
+				if (filters.maxRuntime === "999") {
+					runtimeFilterCriteria = {
+						type: "min",
+						minRuntime: parseInt(filters.minRuntime)
+					};
+				} else {
+					runtimeFilterCriteria = {
+						type: "range",
+						minRuntime: parseInt(filters.minRuntime),
+						maxRuntime: parseInt(filters.maxRuntime)
+					};
+				}
+			} else if (filters.minRuntime) {
+				runtimeFilterCriteria = {
+					type: "min",
+					minRuntime: parseInt(filters.minRuntime)
+				};
+			} else if (filters.maxRuntime) {
+				runtimeFilterCriteria = {
+					type: "max",
+					maxRuntime: parseInt(filters.maxRuntime)
+				};
+			}
+		}
 		if (filters.sortBy) filterParams.sort_by = filters.sortBy;
 	}
 
 
-	return { filterParams, yearFilterCriteria, ratingFilterCriteria };
+	return { filterParams, yearFilterCriteria, ratingFilterCriteria, runtimeFilterCriteria };
 }
 
 /**
@@ -191,6 +260,39 @@ export function filterMoviesByYear(
 					);
 				return movieYear >= minYear && movieYear <= maxYear;
 			}
+			default:
+				return true;
+		}
+	});
+}
+
+/**
+ * Filters movies by runtime based on the provided criteria
+ */
+export function filterMoviesByRuntime(
+	movies: Movie[],
+	runtimeFilterCriteria: RuntimeFilterCriteria | null
+): Movie[] {
+	if (!runtimeFilterCriteria || movies.length === 0) return movies;
+
+	return movies.filter((movie: Movie) => {
+		// Handle missing runtime data - need to fetch it from the movie details if not available
+		// For now, we'll skip movies without runtime data
+		if (!movie.runtime && movie.runtime !== 0) return false;
+
+		const movieRuntime = movie.runtime;
+
+		switch (runtimeFilterCriteria.type) {
+			case "min":
+				// For "150+ minutes" type filtering
+				return movieRuntime >= (runtimeFilterCriteria.minRuntime || 0);
+			case "max":
+				// For "under X minutes" type filtering
+				return movieRuntime <= (runtimeFilterCriteria.maxRuntime || Infinity);
+			case "range":
+				// For specific range filtering
+				return movieRuntime >= (runtimeFilterCriteria.minRuntime || 0) && 
+					   movieRuntime <= (runtimeFilterCriteria.maxRuntime || Infinity);
 			default:
 				return true;
 		}

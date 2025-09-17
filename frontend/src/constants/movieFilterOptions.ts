@@ -77,7 +77,7 @@ export const runtimeOptions = [
 	{ value: "0-90", label: "Under 90 min" },
 	{ value: "90-120", label: "90-120 min" },
 	{ value: "120-150", label: "120-150 min" },
-	{ value: "150+", label: "Over 150 min" },
+	{ value: "150-400", label: "Over 150 min" },
 ];
 
 export type SortOptionValue =

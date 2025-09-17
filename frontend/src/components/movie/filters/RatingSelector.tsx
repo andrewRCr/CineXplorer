@@ -22,12 +22,12 @@ const RatingSelector = ({
 	
 	// Sync local state when props change (convert from TMDB 0-10 to percentage 0-100)
 	useEffect(() => {
-		const percentage = minRating ? (parseFloat(minRating) * 10).toString() : "";
+		const percentage = minRating ? (Math.round(parseFloat(minRating) * 10 * 100) / 100).toString() : "";
 		setLocalMinRating(percentage);
 	}, [minRating]);
 	
 	useEffect(() => {
-		const percentage = maxRating ? (parseFloat(maxRating) * 10).toString() : "";
+		const percentage = maxRating ? (Math.round(parseFloat(maxRating) * 10 * 100) / 100).toString() : "";
 		setLocalMaxRating(percentage);
 	}, [maxRating]);
 	
@@ -44,6 +44,20 @@ const RatingSelector = ({
 		const min = parseFloat(localMinRating);
 		const max = parseFloat(localMaxRating);
 		return min <= max;
+	};
+
+	// Clamp rating to valid bounds for better UX
+	const clampRating = (rating: string): string => {
+		if (!rating) return rating; // Keep empty values
+		const num = parseFloat(rating);
+		if (isNaN(num)) {
+			// For non-numeric values, clamp to 0
+			return "0";
+		}
+		// Clamp numeric values to valid range
+		if (num < 0) return "0";
+		if (num > 100) return "100";
+		return Math.round(num).toString(); // Round to whole number for cleaner UX
 	};
 	
 	// Debounced update functions with validation and conversion
@@ -92,7 +106,36 @@ const RatingSelector = ({
 			debouncedMaxRatingUpdate(value);
 		}
 	};
-	
+
+	// Handle blur events to clamp invalid values for better UX
+	const handleMinRatingBlur = () => {
+		if (localMinRating && !isValidRating(localMinRating)) {
+			const clampedValue = clampRating(localMinRating);
+			setLocalMinRating(clampedValue);
+			// Cancel any pending debounced update and send the clamped value immediately
+			debouncedMinRatingUpdate.cancel();
+			if (clampedValue && isValidRating(clampedValue)) {
+				// Convert percentage (0-100) to TMDB scale (0-10)
+				const tmdbRating = (parseFloat(clampedValue) / 10).toString();
+				onMinRatingChange(tmdbRating);
+			}
+		}
+	};
+
+	const handleMaxRatingBlur = () => {
+		if (localMaxRating && !isValidRating(localMaxRating)) {
+			const clampedValue = clampRating(localMaxRating);
+			setLocalMaxRating(clampedValue);
+			// Cancel any pending debounced update and send the clamped value immediately
+			debouncedMaxRatingUpdate.cancel();
+			if (clampedValue && isValidRating(clampedValue)) {
+				// Convert percentage (0-100) to TMDB scale (0-10)
+				const tmdbRating = (parseFloat(clampedValue) / 10).toString();
+				onMaxRatingChange(tmdbRating);
+			}
+		}
+	};
+
 	// Cleanup debounced functions on unmount
 	useEffect(() => {
 		return () => {
@@ -110,6 +153,7 @@ const RatingSelector = ({
 					placeholder="0"
 					value={localMinRating}
 					onChange={(e) => handleMinRatingChange(e.target.value)}
+					onBlur={handleMinRatingBlur}
 					type="number"
 					min="0"
 					max="100"
@@ -140,6 +184,7 @@ const RatingSelector = ({
 					placeholder="100"
 					value={localMaxRating}
 					onChange={(e) => handleMaxRatingChange(e.target.value)}
+					onBlur={handleMaxRatingBlur}
 					type="number"
 					min="0"
 					max="100"

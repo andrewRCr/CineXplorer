@@ -30,10 +30,16 @@ export interface Movie {
   title: string;
   release_date: string;
   runtime?: number;
-  overview: string;
+  overview?: string; // Optional to match shared API types
   poster_path: string | null;
+  backdrop_path?: string | null;
   vote_average: number;
   vote_count?: number;
+  popularity?: number;
+  original_language?: string;
+  original_title?: string;
+  adult?: boolean;
+  video?: boolean;
   genres?: { id: number; name: string }[];
   cast?: { id: number; name: string; character: string; profile_path?: string }[];
   crew?: { id: number; name: string; job: string; profile_path?: string }[];

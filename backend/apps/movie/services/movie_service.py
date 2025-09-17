@@ -24,6 +24,7 @@ def tmdb_dict_to_movie_dict(tmdb_dict):
         'poster_path': tmdb_dict.get('poster_path', ''),
         'release_date': tmdb_dict.get('release_date') or None,
         'vote_average': tmdb_dict.get('vote_average'),
+        'runtime': tmdb_dict.get('runtime', 0),  # Include runtime for filtering
     }
 
 
@@ -55,6 +56,29 @@ def tmdb_get(endpoint: str, params: Optional[dict] = None) -> dict:
     except requests.exceptions.RequestException as e:
         logger.error(f"TMDB request exception: {e}")
         return {"error": str(e), "status": 500}
+
+
+def fetch_movie_runtimes(movie_ids: list) -> dict:
+    """Fetch runtime data for multiple movies efficiently."""
+    runtimes = {}
+    
+    for movie_id in movie_ids:
+        try:
+            info_url = f"{base_url}/movie/{movie_id}?api_key={settings.TMDB_API_KEY}"
+            response = requests.get(info_url, timeout=5)
+            
+            if response.status_code == 200:
+                data = response.json()
+                runtimes[movie_id] = data.get('runtime', 0)
+            else:
+                print(f"DEBUG: Failed to fetch runtime for movie {movie_id}: {response.status_code}")
+                runtimes[movie_id] = 0
+                
+        except requests.exceptions.RequestException as e:
+            print(f"DEBUG: Exception fetching runtime for movie {movie_id}: {e}")
+            runtimes[movie_id] = 0
+    
+    return runtimes
 
 
 def get_simple_credits(credits_response):
@@ -226,10 +250,16 @@ def discover_movies(page: int = 1, **filters):
     - people: Comma-separated person IDs
     - release_date_gte/lte: Release date range
     - runtime_gte/lte: Runtime range in minutes
+      * runtime_gte=0 is converted to 1 for TMDB compatibility
+      * runtime_lte=999 is omitted (treated as no upper limit)
     - certification: Certification rating
     - region: Country code for regional release dates
     """
     print(f"DEBUG: discover_movies called with page={page}, filters: {filters}")
+    
+    # Debug runtime filtering specifically
+    if 'runtime_gte' in filters or 'runtime_lte' in filters:
+        print(f"DEBUG: Runtime filtering requested - runtime_gte: {filters.get('runtime_gte')}, runtime_lte: {filters.get('runtime_lte')}")
     params = {
         "include_adult": "false",
         "include_video": "false",
@@ -257,7 +287,11 @@ def discover_movies(page: int = 1, **filters):
     # Apply filters if provided
     for filter_name, tmdb_param in filter_mapping.items():
         if filter_name in filters and filters[filter_name] is not None:
-            params[tmdb_param] = str(filters[filter_name])
+            # Special case: Use 1 instead of 0 for runtime_gte for better TMDB compatibility
+            if filter_name == 'runtime_gte' and str(filters[filter_name]) == '0':
+                params[tmdb_param] = '1'
+            else:
+                params[tmdb_param] = str(filters[filter_name])
 
     # Set default sort if not specified
     if 'sort_by' not in params:
@@ -273,6 +307,12 @@ def discover_movies(page: int = 1, **filters):
     if movies:
         print(f"DEBUG: First movie release date: "
               f"{movies[0].get('release_date', 'N/A')}")
+        # Debug: Log what fields TMDB actually includes in discover response
+        print(f"DEBUG: First movie keys from TMDB: {list(movies[0].keys())}")
+        if 'runtime' in movies[0]:
+            print(f"DEBUG: First movie runtime: {movies[0]['runtime']}")
+        else:
+            print("DEBUG: Runtime NOT included in TMDB discover response")
     result['results'] = [tmdb_dict_to_movie_dict(m) for m in movies]
     return result
 

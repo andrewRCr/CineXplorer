@@ -1,4 +1,4 @@
-import { type Movie } from '@shared';
+import { type Movie } from '@/@types/movie';
 
 // Factory function for creating mock movie data
 export const createMockMovie = (overrides: Partial<Movie> = {}): Movie => ({

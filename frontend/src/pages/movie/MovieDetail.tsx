@@ -213,12 +213,14 @@ const MovieDetail = () => {
 			<Separator mb={6} />
 
 			{/* Overview Section */}
-			<Box mb={6}>
-				<Heading size="md" mb={2}>
-					Overview
-				</Heading>
-				<Text>{movie.overview}</Text>
-			</Box>
+			{movie.overview && (
+				<Box mb={6}>
+					<Heading size="md" mb={2}>
+						Overview
+					</Heading>
+					<Text>{movie.overview}</Text>
+				</Box>
+			)}
 			<Separator mb={6} />
 
 			{/* Cast Section */}

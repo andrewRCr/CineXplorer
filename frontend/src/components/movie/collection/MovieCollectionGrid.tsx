@@ -22,7 +22,7 @@ const placeholderMovie: Movie = {
 	release_date: new Date().toISOString(),
 	poster_path: "",
 	vote_average: 0,
-	overview: "Loading overview...",
+	overview: "Loading overview...", // Placeholder value for loading state
 	genres: [],
 	runtime: 0,
 };

@@ -24,13 +24,14 @@ const YearSelector = ({
 	const [localMaxYear, setLocalMaxYear] = useState(maxYear);
 
 	// Sync local state when props change (e.g., from URL or external updates)
+	// Clamp invalid values for better UX
 	useEffect(() => {
-		setLocalMinYear(minYear);
-	}, [minYear]);
+		setLocalMinYear(clampYear(minYear));
+	}, [minYear, currentYear]);
 
 	useEffect(() => {
-		setLocalMaxYear(maxYear);
-	}, [maxYear]);
+		setLocalMaxYear(clampYear(maxYear));
+	}, [maxYear, currentYear]);
 
 	// Validate year input
 	const isValidYear = (year: string): boolean => {
@@ -39,6 +40,20 @@ const YearSelector = ({
 		return (
 			!isNaN(num) && year.length === 4 && num >= 1900 && num <= currentYear
 		);
+	};
+
+	// Clamp year to valid bounds for better UX
+	const clampYear = (year: string): string => {
+		if (!year) return year; // Keep empty values
+		const num = parseInt(year, 10);
+		if (isNaN(num)) {
+			// For non-numeric values, clamp to closest valid year
+			return "1900"; // Default to earliest valid year
+		}
+		// Clamp numeric values to valid range
+		if (num < 1900) return "1900";
+		if (num > currentYear) return currentYear.toString();
+		return year; // Already valid
 	};
 
 	// Debounced update functions - only call parent when we have valid input
@@ -87,6 +102,31 @@ const YearSelector = ({
 		}
 	};
 
+	// Handle blur events to clamp invalid values for better UX
+	const handleMinYearBlur = () => {
+		if (localMinYear && !isValidYear(localMinYear)) {
+			const clampedValue = clampYear(localMinYear);
+			setLocalMinYear(clampedValue);
+			// Cancel any pending debounced update and send the clamped value immediately
+			debouncedMinYearUpdate.cancel();
+			if (clampedValue && isValidYear(clampedValue)) {
+				onMinYearChange(clampedValue);
+			}
+		}
+	};
+
+	const handleMaxYearBlur = () => {
+		if (localMaxYear && !isValidYear(localMaxYear)) {
+			const clampedValue = clampYear(localMaxYear);
+			setLocalMaxYear(clampedValue);
+			// Cancel any pending debounced update and send the clamped value immediately
+			debouncedMaxYearUpdate.cancel();
+			if (clampedValue && isValidYear(clampedValue)) {
+				onMaxYearChange(clampedValue);
+			}
+		}
+	};
+
 	// Cleanup debounced functions on unmount
 	useEffect(() => {
 		return () => {
@@ -105,6 +145,7 @@ const YearSelector = ({
 					placeholder="1900"
 					value={localMinYear}
 					onChange={(e) => handleMinYearChange(e.target.value)}
+					onBlur={handleMinYearBlur}
 					type="number"
 					min="1900"
 					max={currentYear}
@@ -132,6 +173,7 @@ const YearSelector = ({
 					placeholder={currentYear.toString()}
 					value={localMaxYear}
 					onChange={(e) => handleMaxYearChange(e.target.value)}
+					onBlur={handleMaxYearBlur}
 					type="number"
 					min="1900"
 					max={currentYear}

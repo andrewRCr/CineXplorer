@@ -6,6 +6,7 @@ import {
 	mapFiltersToApiParams,
 	filterMoviesByYear,
 	filterMoviesByRating,
+	filterMoviesByRuntime,
 	calculatePaginationMetadata,
 } from "@/utilities/movieFilterUtils";
 import { fetchSearchMoviesService } from "@/services/movieService";
@@ -76,7 +77,7 @@ export function useEnhancedFetcher({
 				};
 
 				// For search, we still want to apply other filters like genre/year after the search
-				const { filterParams, yearFilterCriteria, ratingFilterCriteria } = mapFiltersToApiParams(
+				const { filterParams, yearFilterCriteria, ratingFilterCriteria, runtimeFilterCriteria } = mapFiltersToApiParams(
 					currentFilters,
 					currentFilterStyle
 				);
@@ -85,19 +86,19 @@ export function useEnhancedFetcher({
 				const otherFilters = Object.fromEntries(
 					Object.entries(filterParams).filter(([key]) => key !== "query")
 				);
-				searchFilters = { filterParams: otherFilters, yearFilterCriteria, ratingFilterCriteria };
+				searchFilters = { filterParams: otherFilters, yearFilterCriteria, ratingFilterCriteria, runtimeFilterCriteria };
 			} else {
 				// Use the original fetcher for non-search requests
-				const { filterParams, yearFilterCriteria, ratingFilterCriteria } = mapFiltersToApiParams(
+				const { filterParams, yearFilterCriteria, ratingFilterCriteria, runtimeFilterCriteria } = mapFiltersToApiParams(
 					currentFilters,
 					currentFilterStyle
 				);
 
 				searchFetcher = currentBaseFetcher;
-				searchFilters = { filterParams, yearFilterCriteria, ratingFilterCriteria };
+				searchFilters = { filterParams, yearFilterCriteria, ratingFilterCriteria, runtimeFilterCriteria };
 			}
 
-			const { filterParams, yearFilterCriteria, ratingFilterCriteria } = searchFilters;
+			const { filterParams, yearFilterCriteria, ratingFilterCriteria, runtimeFilterCriteria } = searchFilters;
 
 			// Create enhanced filter params with larger page size for buffer
 			const enhancedFilterParams = {
@@ -115,7 +116,7 @@ export function useEnhancedFetcher({
 				// Get all results from the API response
 				const allResults = response.data.results || [];
 
-				// Apply client-side filtering (year and rating)
+				// Apply client-side filtering (year, rating, and runtime)
 				let filteredResults = filterMoviesByYear(
 					allResults,
 					yearFilterCriteria
@@ -124,6 +125,11 @@ export function useEnhancedFetcher({
 				filteredResults = filterMoviesByRating(
 					filteredResults,
 					ratingFilterCriteria
+				);
+				
+				filteredResults = filterMoviesByRuntime(
+					filteredResults,
+					runtimeFilterCriteria
 				);
 
 				// Simple filling logic - only use current page buffer, but respect year filtering
@@ -137,7 +143,8 @@ export function useEnhancedFetcher({
 						yearFilterCriteria.value !== "past-present");
 					
 				const hasRatingFilter = Boolean(ratingFilterCriteria);
-				const hasActiveFilters = hasYearFilter || hasRatingFilter;
+				const hasRuntimeFilter = Boolean(runtimeFilterCriteria);
+				const hasActiveFilters = hasYearFilter || hasRatingFilter || hasRuntimeFilter;
 
 				if (filteredResults.length >= targetPageSize) {
 					// We have enough natural results, no filling needed
@@ -162,6 +169,11 @@ export function useEnhancedFetcher({
 					currentPageBuffer = filterMoviesByRating(
 						currentPageBuffer,
 						ratingFilterCriteria
+					);
+					
+					currentPageBuffer = filterMoviesByRuntime(
+						currentPageBuffer,
+						runtimeFilterCriteria
 					);
 
 					// Use buffer movies to fill remaining slots
@@ -199,7 +211,7 @@ export function useEnhancedFetcher({
 						currentPageResultCount,
 						page,
 						Boolean(hasYearFilter),
-						Boolean(hasRatingFilter)
+						Boolean(hasRatingFilter || hasRuntimeFilter)
 					);
 
 				// For unfiltered results, respect TMDB's actual total_pages limit

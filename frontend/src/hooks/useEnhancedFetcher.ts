@@ -4,6 +4,7 @@ import type { MovieFilters as MovieFiltersType } from "@/components/movie/filter
 import {
 	mapFiltersToApiParams,
 	filterMoviesByYear,
+	filterMoviesByRating,
 	calculatePaginationMetadata,
 } from "@/utilities/movieFilterUtils";
 import { fetchSearchMoviesService } from "@/services/movieService";
@@ -71,7 +72,7 @@ export function useEnhancedFetcher({
 				};
 
 				// For search, we still want to apply other filters like genre/year after the search
-				const { filterParams, yearFilterCriteria } = mapFiltersToApiParams(
+				const { filterParams, yearFilterCriteria, ratingFilterCriteria } = mapFiltersToApiParams(
 					currentFilters,
 					currentFilterStyle
 				);
@@ -80,19 +81,19 @@ export function useEnhancedFetcher({
 				const otherFilters = Object.fromEntries(
 					Object.entries(filterParams).filter(([key]) => key !== "query")
 				);
-				searchFilters = { filterParams: otherFilters, yearFilterCriteria };
+				searchFilters = { filterParams: otherFilters, yearFilterCriteria, ratingFilterCriteria };
 			} else {
 				// Use the original fetcher for non-search requests
-				const { filterParams, yearFilterCriteria } = mapFiltersToApiParams(
+				const { filterParams, yearFilterCriteria, ratingFilterCriteria } = mapFiltersToApiParams(
 					currentFilters,
 					currentFilterStyle
 				);
 
 				searchFetcher = currentBaseFetcher;
-				searchFilters = { filterParams, yearFilterCriteria };
+				searchFilters = { filterParams, yearFilterCriteria, ratingFilterCriteria };
 			}
 
-			const { filterParams, yearFilterCriteria } = searchFilters;
+			const { filterParams, yearFilterCriteria, ratingFilterCriteria } = searchFilters;
 
 			// Create enhanced filter params with larger page size for buffer
 			const enhancedFilterParams = {
@@ -110,21 +111,29 @@ export function useEnhancedFetcher({
 				// Get all results from the API response
 				const allResults = response.data.results || [];
 
-				// Apply client-side year filtering
-				const filteredResults = filterMoviesByYear(
+				// Apply client-side filtering (year and rating)
+				let filteredResults = filterMoviesByYear(
 					allResults,
 					yearFilterCriteria
+				);
+				
+				filteredResults = filterMoviesByRating(
+					filteredResults,
+					ratingFilterCriteria
 				);
 
 				// Simple filling logic - only use current page buffer, but respect year filtering
 				const targetPageSize = 20;
 				const minNaturalResults = 10; // Minimum natural results before filling
 
-				// If we have year filtering active, prioritize accuracy over filling
+				// If we have year or rating filtering active, prioritize accuracy over filling
 				const hasYearFilter =
 					yearFilterCriteria &&
 					(yearFilterCriteria.type !== "range" ||
 						yearFilterCriteria.value !== "past-present");
+					
+				const hasRatingFilter = Boolean(ratingFilterCriteria);
+				const hasActiveFilters = hasYearFilter || hasRatingFilter;
 
 				if (filteredResults.length >= targetPageSize) {
 					// We have enough natural results, no filling needed
@@ -135,9 +144,20 @@ export function useEnhancedFetcher({
 					const remainingSlots = targetPageSize - filteredResults.length;
 
 					// Fill only from current page buffer (movies that didn't match other filters)
-					const currentPageBuffer = allResults.filter(
+					let currentPageBuffer = allResults.filter(
 						(movie) =>
 							!filteredResults.some((fr) => fr.tmdb_id === movie.tmdb_id)
+					);
+
+					// Apply the same client-side filtering to buffer movies to prevent leakage
+					currentPageBuffer = filterMoviesByYear(
+						currentPageBuffer,
+						yearFilterCriteria
+					);
+					
+					currentPageBuffer = filterMoviesByRating(
+						currentPageBuffer,
+						ratingFilterCriteria
 					);
 
 					// Use buffer movies to fill remaining slots
@@ -175,17 +195,18 @@ export function useEnhancedFetcher({
 						originalTotalResults,
 						currentPageResultCount,
 						page,
-						Boolean(hasYearFilter)
+						Boolean(hasYearFilter),
+						Boolean(hasRatingFilter)
 					);
 
 				// For unfiltered results, respect TMDB's actual total_pages limit
 				// TMDB has pagination limits (typically 500 or 1000 pages)
-				let actualTotalPages = hasYearFilter
+				let actualTotalPages = hasActiveFilters
 					? totalPages // Use our calculation for filtered results
 					: Math.min(totalPages, response.data.total_pages || totalPages); // Respect TMDB's limit for unfiltered
 
 				// Apply capping for unfiltered results when TMDB reports unreasonably high total_pages
-				if (!hasYearFilter && response.data.total_pages > 2000) {
+				if (!hasActiveFilters && response.data.total_pages > 2000) {
 					// TMDB is reporting very high total_pages, which suggests they have pagination limits
 					// Use a reasonable cap based on the current page we're successfully accessing
 					let reasonableCap;

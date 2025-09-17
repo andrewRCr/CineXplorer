@@ -6,6 +6,12 @@ export type YearFilterCriteria = {
 	value: string;
 };
 
+export type RatingFilterCriteria = {
+	type: "min" | "range";
+	minRating: number;
+	maxRating?: number;
+};
+
 /**
  * Converts UI filter state to API parameters for TMDB
  */
@@ -15,9 +21,11 @@ export function mapFiltersToApiParams(
 ): {
 	filterParams: Record<string, string | number | number | number[]>;
 	yearFilterCriteria: YearFilterCriteria | null;
+	ratingFilterCriteria: RatingFilterCriteria | null;
 } {
 	const filterParams: Record<string, string | number | number[]> = {};
 	let yearFilterCriteria: YearFilterCriteria | null = null;
+	let ratingFilterCriteria: RatingFilterCriteria | null = null;
 
 	if (filterStyle === "minimal") {
 		// Handle minimal filters
@@ -37,7 +45,8 @@ export function mapFiltersToApiParams(
 			} else {
 				// Handle single year or a custom range from URL params
 				const startYear = parseInt(filters.minYear);
-				const endYear = filters.maxYear ? parseInt(filters.maxYear) : startYear;
+				// If no maxYear specified, default to current year for "from X onward" behavior
+				const endYear = filters.maxYear ? parseInt(filters.maxYear) : new Date().getFullYear();
 
 				filterParams.release_date_gte = `${startYear}-01-01`;
 				filterParams.release_date_lte = `${endYear}-12-31`;
@@ -55,6 +64,11 @@ export function mapFiltersToApiParams(
 
 		if (filters.minRating) {
 			filterParams.min_rating = filters.minRating;
+			// Create rating filter criteria for client-side filtering
+			ratingFilterCriteria = {
+				type: "min",
+				minRating: parseFloat(filters.minRating)
+			};
 		}
 
 		if (filters.minRuntime) {
@@ -95,6 +109,11 @@ export function mapFiltersToApiParams(
 
 		if (filters.minYear) {
 			filterParams.release_date_gte = `${filters.minYear}-01-01`;
+			
+			// If no maxYear is specified, implicitly use current year ("from X onward" behavior)
+			const effectiveMaxYear = filters.maxYear || new Date().getFullYear().toString();
+			filterParams.release_date_lte = `${effectiveMaxYear}-12-31`;
+			
 			if (!yearFilterCriteria) {
 				yearFilterCriteria = {
 					type: "range",
@@ -103,18 +122,33 @@ export function mapFiltersToApiParams(
 			}
 		}
 
-		if (filters.maxYear) {
+		if (filters.maxYear && !filters.minYear) {
+			// Handle case where only maxYear is specified ("up to X" behavior)
 			filterParams.release_date_lte = `${filters.maxYear}-12-31`;
 			if (!yearFilterCriteria) {
 				yearFilterCriteria = {
 					type: "range",
-					value: `${filters.minYear || "past"}-${filters.maxYear}`,
+					value: `past-${filters.maxYear}`,
 				};
 			}
 		}
 
-		if (filters.minRating) filterParams.min_rating = filters.minRating;
-		if (filters.maxRating) filterParams.max_rating = filters.maxRating;
+		if (filters.minRating) {
+			filterParams.min_rating = filters.minRating;
+			ratingFilterCriteria = {
+				type: filters.maxRating ? "range" : "min",
+				minRating: parseFloat(filters.minRating),
+				maxRating: filters.maxRating ? parseFloat(filters.maxRating) : undefined
+			};
+		}
+		if (filters.maxRating && !filters.minRating) {
+			filterParams.max_rating = filters.maxRating;
+			ratingFilterCriteria = {
+				type: "range",
+				minRating: 0,
+				maxRating: parseFloat(filters.maxRating)
+			};
+		}
 		if (filters.minRuntime) filterParams.min_runtime = filters.minRuntime;
 		if (filters.maxRuntime) filterParams.max_runtime = filters.maxRuntime;
 		if (filters.sortBy) filterParams.sort_by = filters.sortBy;
@@ -124,9 +158,10 @@ export function mapFiltersToApiParams(
 		"Input Filters": filters,
 		"Output API Params": filterParams,
 		"Output Year Criteria": yearFilterCriteria,
+		"Output Rating Criteria": ratingFilterCriteria,
 	});
 
-	return { filterParams, yearFilterCriteria };
+	return { filterParams, yearFilterCriteria, ratingFilterCriteria };
 }
 
 /**
@@ -169,6 +204,35 @@ export function filterMoviesByYear(
 }
 
 /**
+ * Filters movies by rating based on the provided criteria (to fix TMDB leakage)
+ */
+export function filterMoviesByRating(
+	movies: Movie[],
+	ratingFilterCriteria: RatingFilterCriteria | null
+): Movie[] {
+	if (!ratingFilterCriteria || movies.length === 0) return movies;
+
+	return movies.filter((movie: Movie) => {
+		// Handle missing ratings - TMDB sometimes has 0 or null ratings
+		if (!movie.vote_average && movie.vote_average !== 0) return false;
+
+		const movieRating = movie.vote_average;
+
+		switch (ratingFilterCriteria.type) {
+			case "min":
+				// For "75% and above" type filtering
+				return movieRating >= ratingFilterCriteria.minRating;
+			case "range":
+				// For specific range filtering
+				return movieRating >= ratingFilterCriteria.minRating && 
+					   (!ratingFilterCriteria.maxRating || movieRating <= ratingFilterCriteria.maxRating);
+			default:
+				return true;
+		}
+	});
+}
+
+/**
  * Calculates pagination metadata for filtered results
  */
 export function calculatePaginationMetadata(
@@ -176,6 +240,7 @@ export function calculatePaginationMetadata(
 	currentPageResultCount: number,
 	page: number,
 	hasYearFilter: boolean,
+	hasRatingFilter: boolean = false,
 	targetPageSize: number = 20
 ): {
 	estimatedFilteredTotal: number;
@@ -192,9 +257,13 @@ export function calculatePaginationMetadata(
 	) {
 		// For unfiltered results, trust TMDB's total completely
 		// Only apply conservative estimates for actual filtered results
-		estimatedFilteredTotal = hasYearFilter
-			? Math.floor(originalTotalResults * 0.8) // Slight conservative estimate for year filters
-			: originalTotalResults; // Trust TMDB completely for unfiltered results
+		if (hasYearFilter || hasRatingFilter) {
+			// Apply more conservative estimate for rating filters since TMDB has more leakage
+			const conservativeMultiplier = hasRatingFilter ? 0.7 : 0.8;
+			estimatedFilteredTotal = Math.floor(originalTotalResults * conservativeMultiplier);
+		} else {
+			estimatedFilteredTotal = originalTotalResults; // Trust TMDB completely for unfiltered results
+		}
 	} else {
 		// Fallback estimation when TMDB total is unavailable
 		const pageMultiplier = Math.max(0.5, Math.min(1.5, 2 - page * 0.2));
@@ -211,7 +280,7 @@ export function calculatePaginationMetadata(
 
 	// For pagination UI, only limit for filtered results
 	// For unfiltered results, trust TMDB's actual pagination limits
-	const paginationSafeCount = hasYearFilter
+	const paginationSafeCount = (hasYearFilter || hasRatingFilter)
 		? Math.min(estimatedFilteredTotal, (page + 5) * targetPageSize)
 		: estimatedFilteredTotal;
 

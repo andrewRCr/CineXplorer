@@ -1,6 +1,23 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useRef } from "react";
 import { type MovieFilters as MovieFiltersType } from "@/components/movie/filters/AdvancedMovieFilters";
 import { useMovieCollectionUrl } from "./useMovieCollectionUrl";
+
+// Cached constants to prevent recreation
+const DEFAULT_FILTERS: MovieFiltersType = {
+	query: "",
+	genres: [],
+	minYear: "",
+	maxYear: "",
+	minRating: "",
+	maxRating: "",
+	minRuntime: "",
+	maxRuntime: "",
+	sortBy: "popularity.desc",
+};
+
+// Pre-computed values for performance
+const STANDARD_RUNTIME_RANGES = new Set(["0-90", "90-120", "120-150"]);
+const DEFAULT_SORT = "popularity.desc";
 
 // Better hook composition with multiple related concerns
 interface UseMovieCollectionStateConfig {
@@ -71,25 +88,22 @@ export const useMovieCollectionState = ({
 	const [localShowAdvanced, setLocalShowAdvanced] = useState(false);
 	const [localIsFiltersCollapsed, setLocalIsFiltersCollapsed] = useState(false);
 	
-	// For non-URL-synced mode, maintain local filter state
-	const [localFilters, setLocalFilters] = useState<MovieFiltersType>({
-		query: "",
-		genres: [],
-		minYear: "",
-		maxYear: "",
-		minRating: "",
-		maxRating: "",
-		minRuntime: "",
-		maxRuntime: "",
-		sortBy: "popularity.desc",
+	// Memoize initial local filter state to prevent recreation
+	const initialLocalFilters = useMemo(() => ({
+		...DEFAULT_FILTERS,
 		...defaultFilters,
-	});
+	}), [defaultFilters]);
+	
+	// For non-URL-synced mode, maintain local filter state
+	const [localFilters, setLocalFilters] = useState<MovieFiltersType>(initialLocalFilters);
 	
 	// Local pagination state for non-URL-synced mode
 	const [localCurrentPage, setLocalCurrentPage] = useState<number | undefined>(1);
 	
 	// Choose between URL-synced or local state
 	const filters = enableUrlSync ? urlFilters : localFilters;
+	
+	// Optimize onFiltersChange with stable references
 	const onFiltersChange = useCallback((newFilters: Partial<MovieFiltersType> | ((prev: MovieFiltersType) => MovieFiltersType)) => {
 		if (enableUrlSync) {
 			urlHandleFiltersChange(newFilters);
@@ -129,9 +143,9 @@ export const useMovieCollectionState = ({
 		setIsFiltersCollapsed(!isFiltersCollapsed);
 	}, [isFiltersCollapsed, setIsFiltersCollapsed]);
 	
-	// Derived state with memoization for performance
-	const derivedState = useMemo(() => {
-		const hasActiveFilters = Boolean(
+	// Optimize derived state with granular memoization
+	const hasActiveFilters = useMemo(() => {
+		return Boolean(
 			filters.query ||
 			filters.genres.length > 0 ||
 			filters.minYear ||
@@ -140,68 +154,95 @@ export const useMovieCollectionState = ({
 			filters.maxRating ||
 			filters.minRuntime ||
 			filters.maxRuntime ||
-			(filters.sortBy && filters.sortBy !== "popularity.desc")
+			(filters.sortBy && filters.sortBy !== DEFAULT_SORT)
 		);
-		
-		const hasAdvancedFilters = Boolean(
-			filters.minRating ||
-			filters.maxRating ||
-			(filters.minYear && filters.maxYear && filters.minYear !== filters.maxYear) ||
-			(filters.minRuntime && filters.maxRuntime && 
-			 !["0-90", "90-120", "120-150"].includes(`${filters.minRuntime}-${filters.maxRuntime}`) &&
-			 filters.maxRuntime !== "999")
-		);
-		
-		const filterCount = [
-			filters.query && 1,
-			filters.genres.length,
-			(filters.minYear || filters.maxYear) && 1,
-			(filters.minRating || filters.maxRating) && 1,
-			(filters.minRuntime || filters.maxRuntime) && 1,
-			filters.sortBy !== "popularity.desc" && 1,
-		].filter(Boolean).length;
-		
-		return {
-			hasActiveFilters,
-			hasAdvancedFilters,
-			filterCount,
-		};
-	}, [filters]);
+	}, [
+		filters.query,
+		filters.genres.length,
+		filters.minYear,
+		filters.maxYear,
+		filters.minRating,
+		filters.maxRating,
+		filters.minRuntime,
+		filters.maxRuntime,
+		filters.sortBy,
+	]);
 	
-	// Actions with better error handling and validation
+	const hasAdvancedFilters = useMemo(() => {
+		// Check rating filters
+		if (filters.minRating || filters.maxRating) return true;
+		
+		// Check custom year range (not single year)
+		if (filters.minYear && filters.maxYear && filters.minYear !== filters.maxYear) {
+			return true;
+		}
+		
+		// Check custom runtime (not standard ranges)
+		if (filters.minRuntime && filters.maxRuntime && filters.maxRuntime !== "999") {
+			const runtimeRange = `${filters.minRuntime}-${filters.maxRuntime}`;
+			return !STANDARD_RUNTIME_RANGES.has(runtimeRange);
+		}
+		
+		return false;
+	}, [
+		filters.minRating,
+		filters.maxRating,
+		filters.minYear,
+		filters.maxYear,
+		filters.minRuntime,
+		filters.maxRuntime,
+	]);
+	
+	const filterCount = useMemo(() => {
+		let count = 0;
+		
+		if (filters.query) count++;
+		if (filters.genres.length > 0) count += filters.genres.length;
+		if (filters.minYear || filters.maxYear) count++;
+		if (filters.minRating || filters.maxRating) count++;
+		if (filters.minRuntime || filters.maxRuntime) count++;
+		if (filters.sortBy !== DEFAULT_SORT) count++;
+		
+		return count;
+	}, [
+		filters.query,
+		filters.genres.length,
+		filters.minYear,
+		filters.maxYear,
+		filters.minRating,
+		filters.maxRating,
+		filters.minRuntime,
+		filters.maxRuntime,
+		filters.sortBy,
+	]);
+	
+	// Combined derived state for compatibility
+	const derivedState = useMemo(() => ({
+		hasActiveFilters,
+		hasAdvancedFilters,
+		filterCount,
+	}), [hasActiveFilters, hasAdvancedFilters, filterCount]);
+	
+	// Memoize cleared filters object to prevent recreation
+	const clearedFiltersRef = useRef<MovieFiltersType>(DEFAULT_FILTERS);
+	
+	// Memoize reset filters based on default filters
+	const resetFilters = useMemo(() => ({
+		...DEFAULT_FILTERS,
+		...defaultFilters,
+	}), [defaultFilters]);
+	
+	// Actions with optimized object references
 	const clearFilters = useCallback(() => {
-		const clearedFilters: MovieFiltersType = {
-			query: "",
-			genres: [],
-			minYear: "",
-			maxYear: "",
-			minRating: "",
-			maxRating: "",
-			minRuntime: "",
-			maxRuntime: "",
-			sortBy: "popularity.desc",
-		};
-		onFiltersChange(clearedFilters);
+		onFiltersChange(clearedFiltersRef.current);
 		setShowAdvanced(false);
 	}, [onFiltersChange, setShowAdvanced]);
 	
 	const resetToDefaults = useCallback(() => {
-		const resetFilters: MovieFiltersType = {
-			query: "",
-			genres: [],
-			minYear: "",
-			maxYear: "",
-			minRating: "",
-			maxRating: "",
-			minRuntime: "",
-			maxRuntime: "",
-			sortBy: "popularity.desc",
-			...defaultFilters,
-		};
 		onFiltersChange(resetFilters);
 		setShowAdvanced(false);
 		setIsFiltersCollapsed(false);
-	}, [defaultFilters, onFiltersChange, setShowAdvanced, setIsFiltersCollapsed]);
+	}, [resetFilters, onFiltersChange, setShowAdvanced, setIsFiltersCollapsed]);
 	
 	return {
 		// State

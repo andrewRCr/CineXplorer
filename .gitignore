@@ -207,3 +207,6 @@ dist-ssr
 # SSL certificates and cert generation
 infrastructure/dev-certs/
 generate-cert.ps1
+
+# Frontend documentation (local reference only)
+frontend/docs/

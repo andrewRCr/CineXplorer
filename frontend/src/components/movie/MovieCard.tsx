@@ -8,7 +8,7 @@ import {
 	Center,
 	Text,
 } from "@chakra-ui/react";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, memo, useMemo, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { COLORS } from "@/constants/theme";
 import { type Movie } from "@/types/movie";
@@ -33,60 +33,84 @@ const MovieCard = ({ movie, currentPage, source, query }: MovieCardProps) => {
 		base: "100%",
 	});
 
-	// Check if title is truncated
+	// Optimize title truncation check with debounced callback
+	const checkTruncation = useCallback(() => {
+		if (!titleRef.current) return;
+		
+		const element = titleRef.current;
+		
+		// Use ResizeObserver API if available (more efficient than DOM cloning)
+		if ('ResizeObserver' in window) {
+			// Simple heuristic: if scrollHeight > clientHeight, it's truncated
+			setIsTitleTruncated(element.scrollHeight > element.clientHeight + 5);
+		} else {
+			// Fallback for older browsers
+			const clone = element.cloneNode(true) as HTMLElement;
+			clone.style.cssText = `
+				position: absolute;
+				visibility: hidden;
+				height: auto;
+				width: ${element.clientWidth}px;
+				webkit-line-clamp: none;
+				webkit-box-orient: horizontal;
+				display: block;
+				overflow: visible;
+			`;
+			
+			document.body.appendChild(clone);
+			const naturalHeight = clone.scrollHeight;
+			document.body.removeChild(clone);
+			
+			setIsTitleTruncated(naturalHeight > element.clientHeight + 10);
+		}
+	}, []);
+
+	// Debounced resize handler for better performance
 	useEffect(() => {
-		const checkTruncation = () => {
-			if (titleRef.current) {
-				const element = titleRef.current;
-
-				// Create a hidden clone to measure natural height
-				const clone = element.cloneNode(true) as HTMLElement;
-				clone.style.position = "absolute";
-				clone.style.visibility = "hidden";
-				clone.style.height = "auto";
-				clone.style.width = element.clientWidth + "px";
-				clone.style.webkitLineClamp = "none";
-				clone.style.webkitBoxOrient = "horizontal";
-				clone.style.display = "block";
-				clone.style.overflow = "visible";
-
-				document.body.appendChild(clone);
-				const naturalHeight = clone.scrollHeight;
-				document.body.removeChild(clone);
-
-				const clampedHeight = element.clientHeight;
-
-				// Check if text is actually truncated (natural height significantly larger than clamped)
-				setIsTitleTruncated(naturalHeight > clampedHeight + 10); // 10px buffer for line height variations
-			}
+		let resizeTimer: NodeJS.Timeout;
+		const debouncedCheck = () => {
+			clearTimeout(resizeTimer);
+			resizeTimer = setTimeout(checkTruncation, 150); // 150ms debounce
 		};
 
-		// Small delay to ensure element is fully rendered
-		const timeoutId = setTimeout(checkTruncation, 10);
+		// Initial check with small delay
+		const initialTimer = setTimeout(checkTruncation, 50);
 
-		// Check after component mounts and when window resizes
-		window.addEventListener("resize", checkTruncation);
+		// Add resize listener with debouncing
+		window.addEventListener("resize", debouncedCheck);
+		
 		return () => {
-			clearTimeout(timeoutId);
-			window.removeEventListener("resize", checkTruncation);
+			clearTimeout(initialTimer);
+			clearTimeout(resizeTimer);
+			window.removeEventListener("resize", debouncedCheck);
 		};
-	}, [movie.title]);
+	}, [movie.title, checkTruncation]);
 
-	const getFDate = (dateStr: string): string => {
-		const date = new Date(dateStr);
+	// Memoize expensive date formatting
+	const formattedDate = useMemo(() => {
+		const date = new Date(movie.release_date);
 		return date.toLocaleDateString("en-US", {
 			year: "numeric",
 			month: "long",
 			day: "numeric",
 		});
-	};
+	}, [movie.release_date]);
 
-	// Build query string for navigation
-	const queryParams: string[] = [];
-	if (typeof currentPage === "number") queryParams.push(`page=${currentPage}`);
-	if (source) queryParams.push(`from=${source}`);
-	if (query) queryParams.push(`query=${encodeURIComponent(query)}`);
-	const queryString = queryParams.length > 0 ? `?${queryParams.join("&")}` : "";
+	// Memoize query string building
+	const queryString = useMemo(() => {
+		const queryParams: string[] = [];
+		if (typeof currentPage === "number") queryParams.push(`page=${currentPage}`);
+		if (source) queryParams.push(`from=${source}`);
+		if (query) queryParams.push(`query=${encodeURIComponent(query)}`);
+		return queryParams.length > 0 ? `?${queryParams.join("&")}` : "";
+	}, [currentPage, source, query]);
+
+	// Memoize poster URL to avoid recreation
+	const posterUrl = useMemo(() => {
+		return movie.poster_path
+			? `https://image.tmdb.org/t/p/w342${movie.poster_path}`
+			: "https://placehold.co/500x750?text=No\nImage";
+	}, [movie.poster_path]);
 
 	return (
 		<Box
@@ -116,11 +140,7 @@ const MovieCard = ({ movie, currentPage, source, query }: MovieCardProps) => {
 							width="100%"
 							height="100%"
 							objectFit="cover"
-							src={
-								movie.poster_path
-									? `https://image.tmdb.org/t/p/w342${movie.poster_path}`
-									: "https://placehold.co/500x750?text=No\nImage"
-							}
+							src={posterUrl}
 							alt={movie.title}
 							transform={isCardHovered ? "scale(1.05)" : "scale(1)"}
 							transition="transform 0.3s ease-in-out"
@@ -208,7 +228,7 @@ const MovieCard = ({ movie, currentPage, source, query }: MovieCardProps) => {
 								alignItems="center"
 							>
 								<Text fontSize="sm" color={COLORS.text.secondary}>
-									{getFDate(movie.release_date)}
+									{formattedDate}
 								</Text>
 								<MovieUserScore score={movie.vote_average} />
 							</Box>
@@ -257,4 +277,17 @@ const MovieCard = ({ movie, currentPage, source, query }: MovieCardProps) => {
 	);
 };
 
-export default MovieCard;
+// Memoize the component to prevent unnecessary re-renders
+const MemoizedMovieCard = memo(MovieCard, (prevProps, nextProps) => {
+	// Custom comparison function for better performance
+	return (
+		prevProps.movie.tmdb_id === nextProps.movie.tmdb_id &&
+		prevProps.currentPage === nextProps.currentPage &&
+		prevProps.source === nextProps.source &&
+		prevProps.query === nextProps.query
+	);
+});
+
+MemoizedMovieCard.displayName = "MovieCard";
+
+export default MemoizedMovieCard;

@@ -8,9 +8,15 @@ export default defineConfig({
 	plugins: [react(), tsconfigPaths()],
 	resolve: {
 		alias: {
+			// Order matters: more specific aliases first
+			"@/types": resolve(__dirname, "./src/@types"),
 			"@": resolve(__dirname, "./src"),
 			shared: resolve(__dirname, "../shared"),
 		},
+		// Explicitly handle @types as a local directory, not a scoped package
+		conditions: ['import', 'module', 'browser', 'default'],
+		mainFields: ['browser', 'module', 'main'],
+		extensions: ['.mjs', '.js', '.mts', '.ts', '.jsx', '.tsx', '.json', '.d.ts'],
 	},
 	server: {
 		watch: {

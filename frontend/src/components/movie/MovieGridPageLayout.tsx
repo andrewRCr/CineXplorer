@@ -4,7 +4,7 @@ import { COLORS } from "@/constants/theme";
 import MovieCard from "./MovieCard";
 import MovieCardSkeleton from "./MovieCardSkeleton";
 import { PaginationCtrl } from "../layout/PaginationCtrl";
-import type { PaginatedMoviesResponse } from "@/services/movieService";
+import type { PaginatedMoviesResponse } from "@/types/movie";
 
 interface MovieGridPageLayoutProps {
 	title: string;
@@ -97,7 +97,7 @@ const MovieGridPageLayout: React.FC<MovieGridPageLayoutProps> = ({
 			<SimpleGrid columns={{ base: 2, md: 3, lg: 4, xl: 5 }} gap={6} mb={8}>
 				{loading
 					? Array.from({ length: 20 }, (_, i) => <MovieCardSkeleton key={i} />)
-					: movies.map((movie) => (
+					: movies.map((movie: PaginatedMoviesResponse['results'][number]) => (
 							<MovieCard key={movie.tmdb_id} movie={movie} />
 					  ))}
 			</SimpleGrid>

@@ -153,9 +153,6 @@ const LetterboxdStyleFilters = ({
 	const isMultipleGenres = filters.genres.length > 1;
 	const selectedGenreId =
 		filters.genres.length === 1 ? filters.genres[0] : null;
-	const isCoreGenre =
-		selectedGenreId !== null &&
-		coreGenreOptions.some((g) => String(g.value) === String(selectedGenreId));
 	const isAdvancedGenre =
 		selectedGenreId !== null &&
 		!coreGenreOptions.some((g) => String(g.value) === String(selectedGenreId));

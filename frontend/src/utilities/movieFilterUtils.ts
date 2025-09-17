@@ -1,4 +1,4 @@
-import type { Movie } from "@/services/movieService";
+import type { Movie } from "@/types/movie";
 import type { MovieFilters as MovieFiltersType } from "@/components/movie/filters/AdvancedMovieFilters";
 
 export type YearFilterCriteria = {
@@ -154,12 +154,6 @@ export function mapFiltersToApiParams(
 		if (filters.sortBy) filterParams.sort_by = filters.sortBy;
 	}
 
-	console.log("🕵️‍♂️ [DEBUG] movieFilterUtils: Mapped filters to API params:", {
-		"Input Filters": filters,
-		"Output API Params": filterParams,
-		"Output Year Criteria": yearFilterCriteria,
-		"Output Rating Criteria": ratingFilterCriteria,
-	});
 
 	return { filterParams, yearFilterCriteria, ratingFilterCriteria };
 }

@@ -31,10 +31,8 @@ const Sidebar: React.FC = () => {
 		// Otherwise, just navigate to the clean path.
 		if (location.pathname === path) {
 			const resetUrl = `${path}?reset=${Date.now()}`;
-			console.log(`Sidebar: Already on page, forcing reset to ${resetUrl}`);
 			navigate(resetUrl, { replace: true });
 		} else {
-			console.log(`Sidebar: Navigating to clean path ${path}`);
 			navigate(path); // Use default push navigation
 		}
 	};

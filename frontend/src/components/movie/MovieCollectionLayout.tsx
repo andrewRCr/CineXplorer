@@ -6,7 +6,7 @@ import MovieFilters, {
 } from "@/components/movie/filters/AdvancedMovieFilters";
 import LetterboxdStyleFilters from "@/components/movie/filters/LetterboxdStyleFilters";
 import { COLORS } from "@/constants/theme";
-import type { PaginatedMoviesResponse } from "@/services/movieService";
+import type { PaginatedMoviesResponse } from "@/types/movie";
 import { useEnhancedFetcher } from "@/hooks/useEnhancedFetcher";
 import { initializeFiltersFromUrl } from "@/utilities/urlSync";
 import {
@@ -140,10 +140,6 @@ const MovieCollectionLayout = ({
 	filterStyle = "expanded",
 	currentPage,
 }: MovieCollectionLayoutProps) => {
-	console.log(
-		"🎬 MovieCollectionLayout: COMPONENT STARTED with currentPage:",
-		currentPage
-	);
 
 	const location = useLocation();
 	const navigate = useNavigate();
@@ -193,10 +189,6 @@ const MovieCollectionLayout = ({
 	// This effect is the SINGLE SOURCE OF TRUTH for filters and page number.
 	// It runs whenever the URL's search parameters change.
 	useEffect(() => {
-		console.log(
-			"MovieCollectionLayout: URL changed, re-initializing state from URL.",
-			location.search
-		);
 		const newPage = getCurrentPageFromUrl();
 		setCurrentPageFromUrl(newPage);
 
@@ -215,10 +207,6 @@ const MovieCollectionLayout = ({
 				urlFilters.sortBy) as MovieFiltersType["sortBy"],
 		};
 
-		console.log(
-			"🕵️‍♂️ [DEBUG] MovieCollectionLayout: Initialized filters from URL:",
-			newUnifiedFilters
-		);
 		setUnifiedFilters(newUnifiedFilters);
 	}, [location.search, getCurrentPageFromUrl]);
 
@@ -275,18 +263,11 @@ const MovieCollectionLayout = ({
 
 	// Reset pagination state when route/source changes
 	useEffect(() => {
-		console.log(
-			"MovieCollectionLayout: Route/source changed - resetting pagination",
-			{ source: actualSource }
-		);
 
 		const searchParams = new URLSearchParams(location.search);
 		const hasPageParam = searchParams.has("page");
 
 		if (hasPageParam) {
-			console.log(
-				"MovieCollectionLayout: Page parameter exists, removing it on route change."
-			);
 			searchParams.delete("page");
 			navigate(`${location.pathname}?${searchParams.toString()}`, {
 				replace: true,
@@ -301,13 +282,6 @@ const MovieCollectionLayout = ({
 		filterStyle,
 	});
 
-	console.log("MovieCollectionLayout: defaultFilters", defaultFilters);
-	console.log("MovieCollectionLayout: currentPage", currentPage);
-	console.log("MovieCollectionLayout: currentPageFromUrl", currentPageFromUrl);
-	console.log("MovieCollectionLayout: Passing to MovieCollectionGrid", {
-		source: actualSource,
-		query: defaultFilters?.query,
-	});
 
 	return (
 		<Box

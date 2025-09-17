@@ -47,24 +47,8 @@ export const PaginationCtrl = (props: iPaginationCtrlProps) => {
 	// TMDB API has a hard limit of 500 pages - cap the UI to match
 	const effectiveTotalPages = Math.min(preferredTotalPages, 500);
 
-	console.log("PaginationCtrl: Props received", {
-		totalMovieCount: props.totalMovieCount,
-		currentPage: props.currentPage,
-		totalPages: props.totalPages,
-		calculatedTotalPages: totalPages,
-		calculatedFromCount,
-		preferredTotalPages,
-		effectiveTotalPages, // This is what we'll use for UI
-		isUsingProvidedTotalPages: !!props.totalPages,
-		isUsingCalculatedTotalPages: preferredTotalPages !== totalPages,
-	});
-
 	// If we have very few pages, show them all
 	if (effectiveTotalPages <= 15) {
-		console.log("PaginationCtrl: Using few pages layout - showing all pages", {
-			effectiveTotalPages,
-			reason: effectiveTotalPages <= 15 ? "total pages <= 15" : "unknown",
-		});
 		return (
 			<ButtonGroup variant="ghost" size="sm">
 				<IconButton
@@ -72,22 +56,13 @@ export const PaginationCtrl = (props: iPaginationCtrlProps) => {
 					color={COLORS.text.main}
 					borderColor={COLORS.border.main}
 					disabled={props.currentPage === 1}
-					onClick={(e) => {
-						e.preventDefault();
-						e.stopPropagation();
-						console.log("PaginationCtrl: Previous button clicked");
-						console.log("PaginationCtrl: Event target:", e.target);
-						console.log(
-							"PaginationCtrl: Event currentTarget:",
-							e.currentTarget
-						);
-						if (props.currentPage > 1) {
-							props.onGoToPage(props.currentPage - 1);
-						}
-					}}
-					onMouseDown={() => {
-						console.log("PaginationCtrl: Mouse down on previous button");
-					}}
+				onClick={(e) => {
+					e.preventDefault();
+					e.stopPropagation();
+					if (props.currentPage > 1) {
+						props.onGoToPage(props.currentPage - 1);
+					}
+				}}
 				>
 					<LuChevronLeft />
 				</IconButton>
@@ -96,9 +71,6 @@ export const PaginationCtrl = (props: iPaginationCtrlProps) => {
 				{Array.from({ length: effectiveTotalPages }, (_, i) => i + 1).map(
 					(page) => {
 						const formattedPage = formatPageNumber(page);
-						console.log(
-							`PaginationCtrl: Rendering page button ${page}, currentPage: ${props.currentPage}`
-						);
 						return (
 							<IconButton
 								key={page}
@@ -128,23 +100,11 @@ export const PaginationCtrl = (props: iPaginationCtrlProps) => {
 										  }
 										: undefined
 								}
-								onClick={(e) => {
-									e.preventDefault();
-									e.stopPropagation();
-									console.log(
-										"PaginationCtrl: Page button clicked with page",
-										page
-									);
-									console.log("PaginationCtrl: Event target:", e.target);
-									console.log(
-										"PaginationCtrl: Event currentTarget:",
-										e.currentTarget
-									);
-									props.onGoToPage(page);
-								}}
-								onMouseDown={() => {
-									console.log("PaginationCtrl: Mouse down on page", page);
-								}}
+							onClick={(e) => {
+								e.preventDefault();
+								e.stopPropagation();
+								props.onGoToPage(page);
+							}}
 							>
 								{formattedPage}
 							</IconButton>
@@ -157,22 +117,13 @@ export const PaginationCtrl = (props: iPaginationCtrlProps) => {
 					color={COLORS.text.main}
 					borderColor={COLORS.border.main}
 					disabled={props.currentPage === effectiveTotalPages}
-					onClick={(e) => {
-						e.preventDefault();
-						e.stopPropagation();
-						console.log("PaginationCtrl: Next button clicked");
-						console.log("PaginationCtrl: Event target:", e.target);
-						console.log(
-							"PaginationCtrl: Event currentTarget:",
-							e.currentTarget
-						);
-						if (props.currentPage < effectiveTotalPages) {
-							props.onGoToPage(props.currentPage + 1);
-						}
-					}}
-					onMouseDown={() => {
-						console.log("PaginationCtrl: Mouse down on next button");
-					}}
+				onClick={(e) => {
+					e.preventDefault();
+					e.stopPropagation();
+					if (props.currentPage < effectiveTotalPages) {
+						props.onGoToPage(props.currentPage + 1);
+					}
+				}}
 				>
 					<LuChevronRight />
 				</IconButton>
@@ -181,9 +132,6 @@ export const PaginationCtrl = (props: iPaginationCtrlProps) => {
 	}
 
 	// For many pages, show a smart selection with ellipses
-	console.log(
-		"PaginationCtrl: Using many pages layout - showing condensed format with ellipsis"
-	);
 	const pagesToShow: (number | "ellipsis")[] = [];
 
 	// Smart pagination logic: always show first page, pages around current, and last page
@@ -204,12 +152,6 @@ export const PaginationCtrl = (props: iPaginationCtrlProps) => {
 			? 3 // End at page 3 for page 1
 			: Math.min(effectiveTotalPages - 1, props.currentPage + 1);
 
-	console.log("PaginationCtrl: Range calculation", {
-		currentPage: props.currentPage,
-		rangeStart,
-		rangeEnd,
-		effectiveTotalPages,
-	});
 
 	// Add ellipsis if there's a gap after first page
 	if (rangeStart > 2) {
@@ -231,12 +173,6 @@ export const PaginationCtrl = (props: iPaginationCtrlProps) => {
 		pagesToShow.push(effectiveTotalPages);
 	}
 
-	console.log("PaginationCtrl: After initial construction", {
-		pagesToShow,
-		rangeStart,
-		rangeEnd,
-		effectiveTotalPages,
-	});
 
 	// Special case: if current page is very near the beginning and there's no gap between first page and range, don't show ellipsis after first page
 	if (props.currentPage <= 2) {
@@ -247,7 +183,6 @@ export const PaginationCtrl = (props: iPaginationCtrlProps) => {
 			pagesToShow[1] === "ellipsis" &&
 			rangeStart === 2
 		) {
-			console.log("PaginationCtrl: Removing ellipsis after page 1 (no gap)");
 			pagesToShow.splice(1, 1); // Remove ellipsis at index 1 (right after page 1)
 		}
 	}
@@ -261,20 +196,10 @@ export const PaginationCtrl = (props: iPaginationCtrlProps) => {
 			lastEllipsisIndex < pagesToShow.length - 1 &&
 			rangeEnd === effectiveTotalPages - 1
 		) {
-			console.log(
-				"PaginationCtrl: Removing ellipsis before last page (no gap)"
-			);
 			pagesToShow.splice(lastEllipsisIndex, 1);
 		}
 	}
 
-	console.log("PaginationCtrl: Component rendering with props:", {
-		currentPage: props.currentPage,
-		totalPages: props.totalPages,
-		effectiveTotalPages,
-		totalMovieCount: props.totalMovieCount,
-		pagesToShow, // Add this to see what pages are being shown
-	});
 
 	return (
 		<ButtonGroup variant="ghost" size="sm">
@@ -286,15 +211,9 @@ export const PaginationCtrl = (props: iPaginationCtrlProps) => {
 				onClick={(e) => {
 					e.preventDefault();
 					e.stopPropagation();
-					console.log("PaginationCtrl: Previous button clicked");
-					console.log("PaginationCtrl: Event target:", e.target);
-					console.log("PaginationCtrl: Event currentTarget:", e.currentTarget);
 					if (props.currentPage > 1) {
 						props.onGoToPage(props.currentPage - 1);
 					}
-				}}
-				onMouseDown={() => {
-					console.log("PaginationCtrl: Mouse down on previous button");
 				}}
 			>
 				<LuChevronLeft />
@@ -317,9 +236,6 @@ export const PaginationCtrl = (props: iPaginationCtrlProps) => {
 					);
 				}
 
-				console.log(
-					`PaginationCtrl: Rendering page button ${page}, currentPage: ${props.currentPage}`
-				);
 				return (
 					<IconButton
 						key={page}
@@ -352,19 +268,7 @@ export const PaginationCtrl = (props: iPaginationCtrlProps) => {
 						onClick={(e) => {
 							e.preventDefault();
 							e.stopPropagation();
-							console.log(
-								"PaginationCtrl: Manual button clicked with page",
-								page
-							);
-							console.log("PaginationCtrl: Event target:", e.target);
-							console.log(
-								"PaginationCtrl: Event currentTarget:",
-								e.currentTarget
-							);
 							props.onGoToPage(page);
-						}}
-						onMouseDown={() => {
-							console.log("PaginationCtrl: Mouse down on page", page);
 						}}
 					>
 						{formatPageNumber(page)}
@@ -383,9 +287,6 @@ export const PaginationCtrl = (props: iPaginationCtrlProps) => {
 				onClick={(e) => {
 					e.preventDefault();
 					e.stopPropagation();
-					console.log("PaginationCtrl: Next button clicked");
-					console.log("PaginationCtrl: Event target:", e.target);
-					console.log("PaginationCtrl: Event currentTarget:", e.currentTarget);
 					if (
 						props.currentPage < effectiveTotalPages ||
 						effectiveTotalPages < 500
@@ -393,9 +294,6 @@ export const PaginationCtrl = (props: iPaginationCtrlProps) => {
 						// Allow navigation beyond reported total_pages if under TMDB limit
 						props.onGoToPage(props.currentPage + 1);
 					}
-				}}
-				onMouseDown={() => {
-					console.log("PaginationCtrl: Mouse down on next button");
 				}}
 			>
 				<LuChevronRight />

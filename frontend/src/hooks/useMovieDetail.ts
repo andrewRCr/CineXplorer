@@ -1,6 +1,6 @@
 import { useApiRequest } from "./useApiRequest";
 import { useMemo } from "react";
-import { type Movie } from "../services/movieService";
+import { type Movie } from "@/types/movie";
 
 type FetchDetailFn = () => {
 	request: Promise<{ data: Movie }>;

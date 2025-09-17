@@ -11,7 +11,7 @@ import {
 import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { COLORS } from "@/constants/theme";
-import { type Movie } from "../../services/movieService";
+import { type Movie } from "@/types/movie";
 import { Tooltip } from "../chakra/tooltip";
 import { LuEye, LuHeart } from "react-icons/lu";
 import { RiPlayListAddLine } from "react-icons/ri";

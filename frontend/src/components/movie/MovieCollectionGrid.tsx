@@ -9,7 +9,7 @@ import useMoviesArray from "@/hooks/useMoviesArray";
 import {
 	type Movie,
 	type PaginatedMoviesResponse,
-} from "../../services/movieService";
+} from "@/types/movie";
 
 // Create a placeholder movie object to be used in the skeleton loading state.
 // This ensures the Skeleton wrapper has a correctly-structured child to measure.
@@ -248,7 +248,7 @@ const MovieCollectionGrid = forwardRef<MovieGridRef, MovieCollectionGridProps>(
 										</Skeleton>
 								  ))
 								: // Otherwise, show the movies
-								  movies.map((movie) => (
+				  movies.map((movie: Movie) => (
 										<MovieCardContainer key={movie.tmdb_id}>
 											<MovieCard
 												movie={movie}

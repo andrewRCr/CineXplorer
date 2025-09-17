@@ -1,7 +1,8 @@
 import useMovieDetail from "@/hooks/useMovieDetail";
 import { useParams, useSearchParams, Link } from "react-router-dom";
 import { useMemo } from "react";
-import { fetchMovieDetail, type Movie } from "@/services/movieService";
+import { fetchMovieDetail } from "@/services/movieService";
+import type { Movie } from "@/types/movie";
 import {
 	Box,
 	Flex,

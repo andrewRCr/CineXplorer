@@ -1,4 +1,4 @@
-import type { Movie } from "@/types/movie";
+import type { Movie } from "shared/index";
 import type { MovieFilters as MovieFiltersType } from "@/components/movie/filters/AdvancedMovieFilters";
 
 export type YearFilterCriteria = {

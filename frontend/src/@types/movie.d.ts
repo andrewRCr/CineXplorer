@@ -53,6 +53,11 @@ export interface PaginatedMoviesResponse {
   total_results: number;
 }
 
+// TMDB Genres API response structure
+export interface GenresResponse {
+  genres: { id: number; name: string }[];
+}
+
 // Future: When backend is updated to use shared pagination format, use this instead:
 // export type PaginatedMoviesResponse = import('shared').PaginatedResponse<import('shared').Movie>;
 

@@ -2,7 +2,7 @@ import useMovieDetail from "@/hooks/useMovieDetail";
 import { useParams, useSearchParams, Link } from "react-router-dom";
 import { useMemo } from "react";
 import { fetchMovieDetail } from "@/services/movieService";
-import type { Movie } from "@/types/movie";
+import type { Movie, Genre, CastMember, CrewMember, ProductionCompany } from "shared/index";
 import {
 	Box,
 	Flex,
@@ -51,9 +51,9 @@ const MovieDetail = () => {
 
 	// extract key crew members (creative leads)
 	const director = movie?.crew?.find(
-		(member: any) => member.job === "Director"
+		(member: CrewMember) => member.job === "Director"
 	);
-	const writers = movie?.crew?.filter((member: any) =>
+	const writers = movie?.crew?.filter((member: CrewMember) =>
 		["Writer", "Screenplay"].includes(member.job)
 	);
 
@@ -146,7 +146,7 @@ const MovieDetail = () => {
 					</Text>
 					{/* Header: Genres */}
 					<Flex gap={2} wrap="wrap" justify="center" align="center">
-						{movie.genres?.map((genre: any) => (
+					{movie.genres?.map((genre: Genre) => (
 							<Tag key={genre.id} colorScheme="teal">
 								{genre.name}
 							</Tag>
@@ -171,12 +171,12 @@ const MovieDetail = () => {
 						)}
 						{/* Group writers by job and use custom prefix */}
 						{["Writer", "Screenplay"].map((job) => {
-							const jobWriters = writers?.filter((w: any) => w.job === job);
+						const jobWriters = writers?.filter((w: CrewMember) => w.job === job);
 							return jobWriters && jobWriters.length > 0 ? (
 								<Text key={job}>
 									{jobPrefixMap[job]}{" "}
 									<strong>
-										{jobWriters.map((w: any) => w.name).join(", ")}
+							{jobWriters.map((w: CrewMember) => w.name).join(", ")}
 									</strong>
 								</Text>
 							) : null;
@@ -228,7 +228,7 @@ const MovieDetail = () => {
 				</Heading>
 				<Flex gap={4} wrap="wrap" justify="center">
 					{/* Show top N cast members */}
-					{movie.cast?.slice(0, 5).map((actor: any, idx: number) => (
+				{movie.cast?.slice(0, 5).map((actor: CastMember, idx: number) => (
 						<Box
 							key={actor.id || idx}
 							bg="gray.600"
@@ -252,7 +252,7 @@ const MovieDetail = () => {
 				<Flex gap={4} wrap="wrap" justify="center">
 					{/* Filter for key roles: Director, Writer, etc. */}
 					{movie.crew
-						?.filter((member: any) =>
+				?.filter((member: CrewMember) =>
 							[
 								"Director",
 								"Writer",
@@ -262,7 +262,7 @@ const MovieDetail = () => {
 								"Composer",
 							].includes(member.job)
 						)
-						.map((member: any, idx: number) => (
+				.map((member: CrewMember, idx: number) => (
 							<Box
 								key={member.id || idx}
 								bg="gray.600"
@@ -284,7 +284,7 @@ const MovieDetail = () => {
 					Production Companies
 				</Heading>
 				<Flex gap={2} wrap="wrap" justify="center">
-					{movie.production_companies?.map((company: any, idx: number) => (
+				{movie.production_companies?.map((company: ProductionCompany, idx: number) => (
 						<Tag key={company.id || idx} colorScheme="purple">
 							{company.name}
 						</Tag>

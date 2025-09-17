@@ -5,7 +5,7 @@
  * API contract consistency and prevent type mismatches.
  */
 
-import { ERROR_CODES, ErrorCode, ErrorCategory } from './error-codes';
+import type { ErrorCode, ErrorCategory } from './error-codes';
 
 /**
  * Standard API Error structure
@@ -104,25 +104,25 @@ export interface UserMovieData {
 
 /**
  * Core Movie data structure
- * Should match the Django Movie model exactly
+ * Matches TMDB API responses and backend serializer output
  */
 export interface Movie {
   tmdb_id: number;
   title: string;
   release_date: string;
   runtime?: number;
-  overview: string;
+  overview?: string; // Only present in detail views
   poster_path: string | null;
-  backdrop_path: string | null;
+  backdrop_path?: string | null; // TMDB field, optional
   vote_average: number;
-  vote_count: number;
-  popularity: number;
-  original_language: string;
-  original_title: string;
-  adult: boolean;
-  video: boolean;
+  vote_count?: number; // TMDB field, optional
+  popularity?: number; // TMDB field, optional
+  original_language?: string; // TMDB field, optional
+  original_title?: string; // TMDB field, optional
+  adult?: boolean; // TMDB field, optional
+  video?: boolean; // TMDB field, optional
   
-  // Relational data (may be included via serializer)
+  // Relational data (may be included via serializer in detail views)
   genres?: Genre[];
   cast?: CastMember[];
   crew?: CrewMember[];
@@ -130,10 +130,6 @@ export interface Movie {
   
   // User-specific data (only present when user is authenticated)
   user_movie_data?: UserMovieData | null;
-  
-  // Django model metadata
-  created_at: string;
-  updated_at: string;
 }
 
 /**
@@ -149,14 +145,14 @@ export interface CastMember {
   name: string;
   character: string;
   profile_path?: string;
-  order: number;
+  order?: number; // Optional since not always provided
 }
 
 export interface CrewMember {
   id: number;
   name: string;
   job: string;
-  department: string;
+  department?: string; // Optional since not always provided by TMDB
   profile_path?: string;
 }
 

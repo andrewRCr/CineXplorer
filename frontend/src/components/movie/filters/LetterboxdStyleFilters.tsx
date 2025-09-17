@@ -350,6 +350,9 @@ const LetterboxdStyleFilters = ({
 											fontSize="14px"
 											lineHeight="1.2"
 											borderRadius="4px 0 0 4px"
+											border="1px solid"
+											borderColor={COLORS.border.subtle}
+											backgroundColor="transparent"
 											_hover={{
 												backgroundColor: COLORS.background.subItem,
 											}}
@@ -362,9 +365,6 @@ const LetterboxdStyleFilters = ({
 												display: "flex",
 												alignItems: "center",
 												justifyContent: "space-between",
-												border: "1px solid var(--chakra-colors-gray-200)",
-												borderRight: "none",
-												backgroundColor: "transparent",
 												"& > span": {
 													fontStyle: isGenreDisabled ? "italic" : "normal",
 													color: isGenreDisabled
@@ -439,6 +439,9 @@ const LetterboxdStyleFilters = ({
 											fontSize="14px"
 											lineHeight="1.2"
 											borderRadius="0"
+											border="1px solid"
+											borderColor={COLORS.border.subtle}
+											backgroundColor="transparent"
 											_hover={{
 												backgroundColor: COLORS.background.subItem,
 											}}
@@ -451,10 +454,6 @@ const LetterboxdStyleFilters = ({
 												display: "flex",
 												alignItems: "center",
 												justifyContent: "space-between",
-												border: "1px solid var(--chakra-colors-gray-200)",
-												borderLeft: "none",
-												borderRight: "none",
-												backgroundColor: "transparent",
 												"& > span": {
 													fontStyle: isYearCustom ? "italic" : "normal",
 													color: isYearCustom
@@ -529,6 +528,9 @@ const LetterboxdStyleFilters = ({
 											fontSize="14px"
 											lineHeight="1.2"
 											borderRadius="0"
+											border="1px solid"
+											borderColor={COLORS.border.subtle}
+											backgroundColor="transparent"
 											_hover={{
 												backgroundColor: COLORS.background.subItem,
 											}}
@@ -541,9 +543,6 @@ const LetterboxdStyleFilters = ({
 												display: "flex",
 												alignItems: "center",
 												justifyContent: "space-between",
-												border: "1px solid var(--chakra-colors-gray-200)",
-												borderLeft: "none",
-												backgroundColor: "transparent",
 												"& > span": {
 													fontStyle: isRuntimeComplex ? "italic" : "normal",
 													color: isRuntimeComplex
@@ -586,7 +585,7 @@ const LetterboxdStyleFilters = ({
 										size="sm"
 										variant="outline"
 										borderRadius="0 4px 4px 0"
-										borderColor="gray.200"
+										borderColor={COLORS.border.subtle}
 										minW="auto"
 										px={3}
 										height="32px"
@@ -669,6 +668,9 @@ const LetterboxdStyleFilters = ({
 									fontSize="14px"
 									lineHeight="1.2"
 									borderRadius="4px"
+									border="1px solid"
+									borderColor={COLORS.border.subtle}
+									backgroundColor="transparent"
 									_hover={{
 										backgroundColor: COLORS.background.subItem,
 									}}
@@ -681,8 +683,6 @@ const LetterboxdStyleFilters = ({
 										display: "flex",
 										alignItems: "center",
 										justifyContent: "space-between",
-										border: "1px solid var(--chakra-colors-gray-200)",
-										backgroundColor: "transparent",
 										"& > span": {
 											fontStyle: isSortCustom ? "italic" : "normal",
 											color: isSortCustom
@@ -741,7 +741,7 @@ const LetterboxdStyleFilters = ({
 							gap={0}
 							align="stretch"
 							border="1px solid"
-							borderColor={COLORS.border.input}
+							borderColor={COLORS.border.subtle}
 							borderRadius="4px"
 							width={isSearchExpanded ? "260px" : "32px"}
 							height="32px"

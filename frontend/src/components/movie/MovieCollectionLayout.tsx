@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useLocation, Outlet, useNavigate } from "react-router-dom";
 import { Box } from "@chakra-ui/react";
 import MovieFilters, {
@@ -6,7 +6,6 @@ import MovieFilters, {
 } from "@/components/movie/filters/AdvancedMovieFilters";
 import LetterboxdStyleFilters from "@/components/movie/filters/LetterboxdStyleFilters";
 import { COLORS } from "@/constants/theme";
-import type { PaginatedMoviesResponse } from "@/types/movie";
 import { useEnhancedFetcher } from "@/hooks/useEnhancedFetcher";
 import { initializeFiltersFromUrl } from "@/utilities/urlSync";
 import {
@@ -15,6 +14,7 @@ import {
 	fetchTopRatedMoviesService,
 	fetchSearchMoviesService,
 	fetchDiscoverMoviesService,
+	type PaginatedMoviesResponse,
 } from "@/services/movieService";
 import { PAGINATED_SOURCES } from "@/constants/routes";
 
@@ -261,19 +261,42 @@ const MovieCollectionLayout = ({
 		[unifiedFilters, location.pathname, location.search, navigate]
 	);
 
-	// Reset pagination state when route/source changes
+	// Reset pagination state when route/source changes (but not on browser back/forward)
+	// We use a ref to track the previous route to distinguish between programmatic navigation
+	// and browser back/forward navigation
+	const previousRouteRef = useRef<string | null>(null);
+	
 	useEffect(() => {
-
-		const searchParams = new URLSearchParams(location.search);
-		const hasPageParam = searchParams.has("page");
-
-		if (hasPageParam) {
-			searchParams.delete("page");
-			navigate(`${location.pathname}?${searchParams.toString()}`, {
-				replace: true,
-			});
+		const currentRouteKey = `${location.pathname}:${actualSource}`;
+		
+		// If this is the first visit to this component, just store the route
+		if (previousRouteRef.current === null) {
+			previousRouteRef.current = currentRouteKey;
+			return;
 		}
-	}, [actualSource, location.pathname, navigate]); // Only depend on pathname and source
+		
+		// If the route/source has changed, this might be a forward navigation
+		if (previousRouteRef.current !== currentRouteKey) {
+			// Check if this looks like browser back/forward navigation
+			// Browser navigation typically preserves the full URL including query params
+			const hasPageParam = new URLSearchParams(location.search).has("page");
+			
+			// If we have page param, this is likely browser back/forward navigation
+			// If no page param, this is likely a fresh navigation that should reset to page 1
+			if (!hasPageParam) {
+				// This appears to be a fresh navigation (clicking nav links, etc.)
+				// Reset pagination state
+				const searchParams = new URLSearchParams(location.search);
+				searchParams.delete("page");
+				navigate(`${location.pathname}?${searchParams.toString()}`, {
+					replace: true,
+				});
+			}
+			// If hasPageParam is true, we preserve it (likely browser navigation)
+		}
+		
+		previousRouteRef.current = currentRouteKey;
+	}, [actualSource, location.pathname, location.search, navigate]);
 
 	// Use the enhanced fetcher hook
 	const enhancedFetcher = useEnhancedFetcher({

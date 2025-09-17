@@ -1,5 +1,6 @@
 import { useCallback, useRef } from "react";
-import type { PaginatedMoviesResponse, Movie } from "@/types/movie";
+import type { Movie } from "shared/index";
+import type { PaginatedMoviesResponse } from "@/services/movieService";
 import type { MovieFilters as MovieFiltersType } from "@/components/movie/filters/AdvancedMovieFilters";
 import {
 	mapFiltersToApiParams,
@@ -28,7 +29,10 @@ export function useEnhancedFetcher({
 	fetcher,
 	filters,
 	filterStyle,
-}: UseEnhancedFetcherOptions) {
+}: UseEnhancedFetcherOptions): (page: number) => {
+	request: Promise<{ data: PaginatedMoviesResponse }>;
+	cancel: () => void;
+} {
 	// Use refs to store the latest filter values without causing re-renders
 	const filtersRef = useRef(filters);
 	const filterStyleRef = useRef(filterStyle);

@@ -12,7 +12,12 @@ export interface UserMovieData {
 	liked: boolean;
 }
 
-export function useUserMovieData(tmdbId: string) {
+export function useUserMovieData(tmdbId: string): {
+	data: UserMovieData | null;
+	loading: boolean;
+	error: string | null;
+	update: (changes: Partial<UserMovieData>) => Promise<void>;
+} {
 	const [data, setData] = useState<UserMovieData | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
@@ -39,8 +44,8 @@ export function useUserMovieData(tmdbId: string) {
 			const updated = await updateUserMovieData(data.pk, changes);
 			setData(updated);
 			setError(null);
-		} catch (err: any) {
-			setError(err.message || "Failed to update user movie data");
+		} catch (err: unknown) {
+			setError(err instanceof Error ? err.message : "Failed to update user movie data");
 		} finally {
 			setLoading(false);
 		}

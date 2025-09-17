@@ -1,5 +1,5 @@
 import { useCallback, useRef } from "react";
-import type { Movie } from "shared/index";
+import type { Movie } from "@shared/index";
 import type { PaginatedMoviesResponse } from "@/services/movieService";
 import type { MovieFilters as MovieFiltersType } from "@/components/movie/filters/AdvancedMovieFilters";
 import {

@@ -2,7 +2,7 @@ import useMovieDetail from "@/hooks/useMovieDetail";
 import { useParams, useSearchParams, Link } from "react-router-dom";
 import { useMemo } from "react";
 import { fetchMovieDetail } from "@/services/movieService";
-import type { Movie, Genre, CastMember, CrewMember, ProductionCompany } from "shared/index";
+import type { Movie, Genre, CastMember, CrewMember, ProductionCompany } from "@shared/index";
 import {
 	Box,
 	Flex,

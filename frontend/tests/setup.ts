@@ -66,6 +66,16 @@ console.error = (...args) => {
 	originalError.call(console, ...args);
 };
 
+// Mock next-themes since it's not available in test environment
+vi.mock('next-themes', () => ({
+	useTheme: () => ({
+		theme: 'light',
+		setTheme: vi.fn(),
+		resolvedTheme: 'light',
+	}),
+	ThemeProvider: ({ children }: { children: React.ReactNode }) => children,
+}));
+
 // Clean up after each test
 afterEach(() => {
 	vi.clearAllMocks();

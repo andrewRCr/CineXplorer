@@ -2,7 +2,7 @@ import create from "./httpService";
 import type { 
 	Movie, 
 	Genre
-} from "shared/index";
+} from "@shared/index";
 
 // Define API-specific response types that may differ from shared types
 // TMDB API uses a flat pagination format, not Django's nested format

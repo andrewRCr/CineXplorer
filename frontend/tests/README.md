@@ -138,3 +138,27 @@ import { mockMovieService, resetAllMocks } from '@tests/mocks/apiMocks';
 - **Statements**: 70%+
 
 Focus on testing critical paths and user-facing functionality rather than achieving 100% coverage.
+
+## TypeScript Configuration
+
+The test environment is fully TypeScript compatible:
+
+- **Path Aliases**: `@tests/*`, `@shared`, `@/*` all work correctly
+- **jest-dom Matchers**: `toBeInTheDocument()`, `toHaveAttribute()` fully typed
+- **JSX Support**: Full React component testing with proper type checking
+- **Shared Types**: Access to shared API types from backend
+
+### VSCode Integration
+The project includes VSCode settings for optimal TypeScript experience:
+- Auto-imports from path aliases
+- Proper IntelliSense for test utilities
+- Error highlighting for test files
+
+### Type Checking
+```bash
+# Check all TypeScript (including tests)
+npm run type-check
+
+# Run tests with TypeScript validation
+npm test
+```

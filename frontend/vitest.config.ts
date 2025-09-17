@@ -53,16 +53,12 @@ export default defineConfig({
 		teardownTimeout: 5000,
 		
 		// Reporter configuration
-		reporter: ["verbose"],
+		reporters: ["verbose"],
 		
 		// Mock configuration
 		clearMocks: true,
 		restoreMocks: true,
 		
-		// Watch mode configuration  
-		watch: {
-			exclude: ["node_modules/**", "dist/**"],
-		},
 	},
 	
 	resolve: {

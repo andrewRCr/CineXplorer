@@ -12,7 +12,8 @@
 		"test:run": "vitest run",
 		"test:coverage": "vitest run --coverage",
 		"test:ui": "vitest --ui",
-		"test:watch": "vitest"
+		"test:watch": "vitest",
+		"type-check": "tsc -b"
 	},
 	"dependencies": {
 		"@chakra-ui/react": "^3.22.0",

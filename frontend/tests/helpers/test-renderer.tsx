@@ -1,17 +1,17 @@
 /* eslint-disable react-refresh/only-export-components */
-import { ReactElement } from 'react';
-import { render, RenderOptions } from '@testing-library/react';
+import { type ReactElement } from 'react';
+import { render, type RenderOptions } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { Provider } from '@/components/chakra/provider';
+import { ChakraProvider, defaultSystem } from '@chakra-ui/react';
 
 // Custom render function that includes common providers
 const AllTheProviders = ({ children }: { children: React.ReactNode }) => {
 	return (
-		<Provider>
+		<ChakraProvider value={defaultSystem}>
 			<MemoryRouter>
 				{children}
 			</MemoryRouter>
-		</Provider>
+		</ChakraProvider>
 	);
 };
 

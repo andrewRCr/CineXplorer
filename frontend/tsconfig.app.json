@@ -4,6 +4,7 @@
 		// "target": "ES2022",
 		"useDefineForClassFields": true,
 		"lib": ["ES2022", "DOM", "DOM.Iterable"],
+		"types": ["vitest/globals", "@testing-library/jest-dom", "node"],
 		// "module": "ESNext",
 		// "skipLibCheck": true,
 
@@ -16,7 +17,9 @@
 		"paths": {
 			"@/*": ["./src/*"],
 			"@/types/*": ["./src/@types/*"],
-			"shared/*": ["../shared/*"]
+			"@shared": ["../shared"],
+			"@shared/*": ["../shared/*"],
+			"@tests/*": ["./tests/*"]
 		},
 
 		/* Bundler mode */
@@ -35,5 +38,5 @@
 		"noFallthroughCasesInSwitch": true,
 		"noUncheckedSideEffectImports": true
 	},
-	"include": ["src"]
+	"include": ["src", "tests"]
 }

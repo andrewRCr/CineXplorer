@@ -18,7 +18,7 @@ import { COLORS } from "@/constants/theme";
 import { useState, useEffect } from "react";
 import { FiMail, FiX } from "react-icons/fi";
 import axios from "axios";
-import { ERROR_CODES } from "shared/error-codes";
+import { ERROR_CODES } from "@shared/error-codes";
 
 const Login = () => {
 	const authContext = useAuthContext();

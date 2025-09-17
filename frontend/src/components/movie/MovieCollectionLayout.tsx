@@ -4,9 +4,7 @@ import { Box } from "@chakra-ui/react";
 import MovieFilters, {
 	type MovieFilters as MovieFiltersType,
 } from "@/components/movie/filters/AdvancedMovieFilters";
-import LetterboxdStyleFilters, {
-	type MinimalMovieFilters,
-} from "@/components/movie/filters/LetterboxdStyleFilters";
+import LetterboxdStyleFilters from "@/components/movie/filters/LetterboxdStyleFilters";
 import { COLORS } from "@/constants/theme";
 import type { PaginatedMoviesResponse } from "@/services/movieService";
 import { useEnhancedFetcher } from "@/hooks/useEnhancedFetcher";
@@ -161,7 +159,9 @@ const MovieCollectionLayout = ({
 	const actualFetcher = fetcher || routeFetcher;
 	const actualSource = source || routeSource;
 	const actualTitle = title || routeTitle;
-	const [filters, setFilters] = useState<MovieFiltersType>({
+
+	// This is now the single source of truth for all filters.
+	const [unifiedFilters, setUnifiedFilters] = useState<MovieFiltersType>({
 		query: "",
 		genres: [],
 		minYear: "",
@@ -172,15 +172,6 @@ const MovieCollectionLayout = ({
 		maxRuntime: "",
 		sortBy: "popularity.desc",
 		...defaultFilters,
-	});
-
-	const [minimalFilters, setMinimalFilters] = useState<MinimalMovieFilters>({
-		genres: [],
-		year: "",
-		rating: "",
-		runtime: "",
-		query: "",
-		sortBy: "popularity.desc",
 	});
 
 	const [isFiltersCollapsed, setIsFiltersCollapsed] = useState(false);
@@ -210,10 +201,26 @@ const MovieCollectionLayout = ({
 		setCurrentPageFromUrl(newPage);
 
 		const { filters: urlFilters, minimalFilters: urlMinimalFilters } =
-			initializeFiltersFromUrl(filterStyle, location.search);
-		setFilters(urlFilters);
-		setMinimalFilters(urlMinimalFilters);
-	}, [location.search, filterStyle, getCurrentPageFromUrl]);
+			initializeFiltersFromUrl(location.search);
+
+		// Combine the filters. Note: This is a shallow merge.
+		// You might need a more sophisticated merge strategy if there are overlapping fields
+		// that need to be handled in a specific way (e.g., `year` vs `minYear`/`maxYear`).
+		const newUnifiedFilters = {
+			...unifiedFilters, // Start with existing state to not lose anything
+			...urlFilters,
+			...urlMinimalFilters,
+			// Explicitly handle sortBy to ensure it's correctly typed and prioritized.
+			sortBy: (urlMinimalFilters.sortBy ||
+				urlFilters.sortBy) as MovieFiltersType["sortBy"],
+		};
+
+		console.log(
+			"🕵️‍♂️ [DEBUG] MovieCollectionLayout: Initialized filters from URL:",
+			newUnifiedFilters
+		);
+		setUnifiedFilters(newUnifiedFilters);
+	}, [location.search, getCurrentPageFromUrl]);
 
 	// This callback is passed to the grid to handle page changes
 	const handlePageChange = useCallback(
@@ -229,9 +236,9 @@ const MovieCollectionLayout = ({
 		[location.pathname, location.search, navigate]
 	);
 
-	// This callback is passed to filter components.
+	// This callback is passed to ALL filter components.
 	// It constructs a new URL and uses navigate() to update it.
-	const handleFiltersChange = useCallback(
+	const handleUnifiedFiltersChange = useCallback(
 		(
 			newFiltersOrUpdater:
 				| Partial<MovieFiltersType>
@@ -239,15 +246,12 @@ const MovieCollectionLayout = ({
 		) => {
 			const newFilters =
 				typeof newFiltersOrUpdater === "function"
-					? newFiltersOrUpdater(filters)
-					: { ...filters, ...newFiltersOrUpdater };
+					? newFiltersOrUpdater(unifiedFilters)
+					: { ...unifiedFilters, ...newFiltersOrUpdater };
 
 			const searchParams = new URLSearchParams(location.search);
-
-			// Reset page to 1 when filters change
 			searchParams.delete("page");
 
-			// Update params from new filters
 			Object.entries(newFilters).forEach(([key, value]) => {
 				if (
 					value === "" ||
@@ -266,7 +270,7 @@ const MovieCollectionLayout = ({
 				replace: true,
 			});
 		},
-		[filters, location.pathname, location.search, navigate]
+		[unifiedFilters, location.pathname, location.search, navigate]
 	);
 
 	// Reset pagination state when route/source changes
@@ -293,8 +297,7 @@ const MovieCollectionLayout = ({
 	// Use the enhanced fetcher hook
 	const enhancedFetcher = useEnhancedFetcher({
 		fetcher: actualFetcher,
-		filters,
-		minimalFilters,
+		filters: unifiedFilters,
 		filterStyle,
 	});
 
@@ -355,8 +358,8 @@ const MovieCollectionLayout = ({
 			{showFilters && filterStyle === "minimal" && (
 				<Box flexShrink={0} mb={2} minHeight="40px">
 					<LetterboxdStyleFilters
-						filters={minimalFilters}
-						onFiltersChange={handleFiltersChange}
+						filters={unifiedFilters}
+						onFiltersChange={handleUnifiedFiltersChange}
 						showAdvanced={showAdvanced}
 						onToggleAdvanced={() => setShowAdvanced(!showAdvanced)}
 						pageSource={source}
@@ -367,8 +370,8 @@ const MovieCollectionLayout = ({
 			{showFilters && filterStyle === "expanded" && (
 				<Box flexShrink={0} mb={6} minHeight="200px">
 					<MovieFilters
-						filters={filters}
-						onFiltersChange={handleFiltersChange}
+						filters={unifiedFilters}
+						onFiltersChange={handleUnifiedFiltersChange}
 						isCollapsed={isFiltersCollapsed}
 						onToggleCollapse={() => setIsFiltersCollapsed(!isFiltersCollapsed)}
 					/>
@@ -378,9 +381,8 @@ const MovieCollectionLayout = ({
 			{showFilters && showAdvanced && filterStyle === "minimal" && (
 				<Box flexShrink={0} mb={6}>
 					<MovieFilters
-						filters={filters}
-						minimalFilters={minimalFilters}
-						onFiltersChange={handleFiltersChange}
+						filters={unifiedFilters}
+						onFiltersChange={handleUnifiedFiltersChange}
 						isCollapsed={false}
 						onToggleCollapse={() => setShowAdvanced(false)}
 					/>

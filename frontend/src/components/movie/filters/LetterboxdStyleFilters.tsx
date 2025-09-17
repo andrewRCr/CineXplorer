@@ -1,13 +1,29 @@
 import { useEffect, useState, useRef } from "react";
-import { Box, Text, HStack, Button, Input, VStack } from "@chakra-ui/react";
+import {
+	Box,
+	Text,
+	HStack,
+	Button,
+	Input,
+	VStack,
+	Select,
+	createListCollection,
+} from "@chakra-ui/react";
 import { FiFilter, FiSearch, FiX } from "react-icons/fi";
 import { COLORS } from "@/constants/theme";
 import {
 	coreGenreOptions,
+	genreOptions,
 	yearOptions,
 	runtimeOptions,
-	sortOptions,
+	minimalSortOptions,
 } from "@/constants/movieFilterOptions";
+import type { MovieFilters as UnifiedMovieFilters } from "./AdvancedMovieFilters";
+
+const GENRE_WIDTH = "140px";
+const YEAR_WIDTH = "110px";
+const RUNTIME_WIDTH = "130px";
+const SORT_WIDTH = "170px";
 
 export interface MinimalMovieFilters {
 	genres: number[];
@@ -19,8 +35,12 @@ export interface MinimalMovieFilters {
 }
 
 interface LetterboxdStyleFiltersProps {
-	filters: MinimalMovieFilters;
-	onFiltersChange: (filters: MinimalMovieFilters) => void;
+	filters: UnifiedMovieFilters;
+	onFiltersChange: (
+		filters:
+			| Partial<UnifiedMovieFilters>
+			| ((prev: UnifiedMovieFilters) => UnifiedMovieFilters)
+	) => void;
 	showAdvanced?: boolean;
 	onToggleAdvanced?: () => void;
 	pageSource?: string; // Add page context for smart disabling
@@ -46,29 +66,13 @@ const LetterboxdStyleFilters = ({
 		setIsSearchExpanded(false);
 	}, [pageSource]);
 
-	const updateFilter = <K extends keyof MinimalMovieFilters>(
+	const updateFilter = <K extends keyof UnifiedMovieFilters>(
 		key: K,
-		value: MinimalMovieFilters[K]
+		value: UnifiedMovieFilters[K]
 	) => {
-		if (key === "sortBy") {
-			const sortValue = value as string;
-			if (sortValue === "rating_desc") {
-				onFiltersChange({
-					...filters,
-					sortBy: "vote_average.desc",
-				});
-				return;
-			} else if (sortValue === "rating_asc") {
-				onFiltersChange({
-					...filters,
-					sortBy: "vote_average.asc",
-				});
-				return;
-			}
-		}
-		onFiltersChange({
-			...filters,
-			[key]: value,
+		onFiltersChange((prevFilters) => {
+			const newFilters = { ...prevFilters, [key]: value };
+			return newFilters;
 		});
 	};
 
@@ -77,9 +81,12 @@ const LetterboxdStyleFilters = ({
 		setIsSearchExpanded(false);
 		onFiltersChange({
 			genres: [],
-			year: "",
-			rating: "",
-			runtime: "",
+			minYear: "",
+			maxYear: "",
+			minRating: "",
+			maxRating: "",
+			minRuntime: "",
+			maxRuntime: "",
 			query: "",
 			sortBy: "popularity.desc",
 		});
@@ -116,14 +123,172 @@ const LetterboxdStyleFilters = ({
 	};
 
 	const getCurrentSortValue = () => {
-		if (filters.sortBy.startsWith("vote_average")) {
-			return filters.sortBy.endsWith(".desc") ? "rating_desc" : "rating_asc";
+		// This function maps the API sort value (from filters.sortBy)
+		// back to the value used by the minimal dropdown's sortOptions.
+		const apiValue = filters.sortBy;
+		switch (apiValue) {
+			case "vote_average.desc":
+				return "vote_average.desc";
+			case "vote_average.asc":
+				return "vote_average.asc";
+			case "popularity.desc":
+				return "popularity.desc";
+			case "original_title.asc":
+				return "original_title.asc";
+			case "original_title.desc":
+				return "original_title.desc";
+			default:
+				return apiValue;
 		}
-		return filters.sortBy;
 	};
 
 	const hasActiveFilters =
-		filters.genres.length > 0 || filters.year !== "" || filters.runtime !== "";
+		filters.genres.length > 0 ||
+		filters.minYear !== "" ||
+		filters.maxYear !== "" ||
+		filters.minRuntime !== "" ||
+		filters.maxRuntime !== "";
+
+	// --- Genre Display Logic ---
+	const isMultipleGenres = filters.genres.length > 1;
+	const selectedGenreId =
+		filters.genres.length === 1 ? filters.genres[0] : null;
+	const isCoreGenre =
+		selectedGenreId !== null &&
+		coreGenreOptions.some((g) => String(g.value) === String(selectedGenreId));
+	const isAdvancedGenre =
+		selectedGenreId !== null &&
+		!coreGenreOptions.some((g) => String(g.value) === String(selectedGenreId));
+
+	const getGenreDisplay = () => {
+		if (isMultipleGenres) {
+			return { value: "multiple", label: "Multiple" };
+		}
+		if (isAdvancedGenre) {
+			const genre = genreOptions.find(
+				(g) => String(g.value) === String(selectedGenreId)
+			);
+			return {
+				value: String(selectedGenreId),
+				label: genre ? genre.label : "Custom",
+			};
+		}
+		return null;
+	};
+
+	const genreDisplay = getGenreDisplay();
+	const isGenreDisabled = isMultipleGenres || isAdvancedGenre;
+
+	// --- Year Display Logic ---
+	const isDecadeRange =
+		!!filters.minYear &&
+		!!filters.maxYear &&
+		parseInt(filters.maxYear) - parseInt(filters.minYear) === 9 &&
+		filters.minYear.endsWith("0");
+
+	const isYearCustom =
+		!!filters.minYear &&
+		!!filters.maxYear &&
+		filters.minYear !== filters.maxYear && // It's a range...
+		!isDecadeRange; // ...and it's NOT a pre-defined decade range.
+	const yearDisplayValue = () => {
+		if (isYearCustom) return "custom";
+		if (
+			filters.minYear &&
+			filters.maxYear &&
+			filters.minYear === filters.maxYear
+		)
+			return filters.minYear;
+		if (
+			filters.minYear &&
+			filters.maxYear &&
+			parseInt(filters.maxYear) - parseInt(filters.minYear) === 9
+		)
+			return `${filters.minYear.slice(0, 4)}'s`;
+		return "";
+	};
+
+	// --- Runtime Display Logic ---
+	const isRuntimeComplex =
+		!!filters.minRuntime &&
+		!!filters.maxRuntime &&
+		`${filters.minRuntime}-${filters.maxRuntime}` !== "0-90" &&
+		`${filters.minRuntime}-${filters.maxRuntime}` !== "90-120" &&
+		`${filters.minRuntime}-${filters.maxRuntime}` !== "120-150" &&
+		filters.maxRuntime !== "999";
+	const runtimeDisplayValue = () => {
+		if (isRuntimeComplex) return "custom";
+		if (filters.minRuntime && filters.maxRuntime === "999")
+			return `${filters.minRuntime}+`;
+		if (filters.minRuntime && filters.maxRuntime)
+			return `${filters.minRuntime}-${filters.maxRuntime}`;
+		return "";
+	};
+
+	// --- Sort Display Logic ---
+	const currentSortValue = getCurrentSortValue();
+	const isSortCustom = !minimalSortOptions.some(
+		(opt) => opt.value === currentSortValue
+	);
+
+	const sortDisplayValue = () => {
+		if (isSortCustom) return "custom";
+		return currentSortValue;
+	};
+
+	const genreCollection = createListCollection({
+		items: [
+			...(genreDisplay && genreDisplay.value !== "multiple"
+				? [
+						{
+							label: genreDisplay.label,
+							value: genreDisplay.value,
+						},
+				  ]
+				: []),
+			...(isMultipleGenres ? [{ label: "Multiple", value: "multiple" }] : []),
+			...coreGenreOptions.map((option) => ({
+				label: option.label,
+				value: String(option.value),
+			})),
+		],
+	});
+
+	const yearCollection = createListCollection({
+		items: [
+			...(isYearCustom ? [{ label: "Custom", value: "custom" }] : []),
+			...yearOptions.map((option) => ({
+				label: option.label,
+				value: option.value,
+			})),
+		],
+	});
+
+	const runtimeCollection = createListCollection({
+		items: [
+			...(isRuntimeComplex ? [{ label: "Custom", value: "custom" }] : []),
+			...runtimeOptions.map((option) => ({
+				label: option.label,
+				value: option.value,
+			})),
+		],
+	});
+
+	const sortCollection = createListCollection({
+		items: [
+			...(isSortCustom ? [{ label: "Custom", value: "custom" }] : []),
+			...minimalSortOptions.map((option) => {
+				const isDisabled =
+					(pageSource === "popular" && option.value === "popularity.desc") ||
+					(pageSource === "top-rated" && option.value === "vote_average.desc");
+				return {
+					label: option.label + (isDisabled ? " (current)" : ""),
+					value: option.value,
+					disabled: isDisabled,
+				};
+			}),
+		],
+	});
 
 	return (
 		<VStack
@@ -149,7 +314,7 @@ const LetterboxdStyleFilters = ({
 						fontSize="sm"
 						fontWeight="medium"
 						color={COLORS.text.secondary}
-						mr={4}
+						mr={2}
 						alignSelf="center"
 						flexShrink={0}
 					>
@@ -157,101 +322,264 @@ const LetterboxdStyleFilters = ({
 					</Text>
 
 					{/* Connected dropdowns and search */}
-					<HStack gap={0} align="center" flex="1" maxW="1000px">
+					<HStack gap={1} align="center" flex="1" maxW="1000px">
 						{/* Wrapper for dropdowns and clear button */}
 						<Box position="relative">
 							{/* Filter dropdowns */}
 							<HStack gap={0} align="stretch">
 								{/* Genre dropdown */}
 								<Box position="relative">
-									<select
+									<Select.Root
+										collection={genreCollection}
 										value={
-											filters.genres.length > 0
-												? filters.genres[0].toString()
-												: ""
+											genreDisplay
+												? [genreDisplay.value]
+												: filters.genres.map(String)
 										}
-										onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+										onValueChange={(details) => {
+											const value = details.value[0];
 											updateFilter(
 												"genres",
-												e.target.value ? [parseInt(e.target.value)] : []
-											)
-										}
-										style={{
-											width: "120px",
-											padding: "6px 12px",
-											border: `1px solid ${COLORS.border.input}`,
-											borderRadius: "4px 0 0 4px",
-											borderRight: "none",
-											backgroundColor: COLORS.background.main,
-											color: COLORS.text.main,
-											fontSize: "14px",
-											outline: "none",
-											cursor: "pointer",
-											height: "32px",
+												value ? [parseInt(value, 10)] : []
+											);
 										}}
+										disabled={isGenreDisabled}
+										positioning={{ placement: "bottom-start", gutter: 2 }}
 									>
-										{coreGenreOptions.map((option) => (
-											<option key={option.value} value={option.value}>
-												{option.label}
-											</option>
-										))}
-									</select>
+										<Select.Trigger
+											w={GENRE_WIDTH}
+											minH="32px"
+											h="32px"
+											fontSize="14px"
+											lineHeight="1.2"
+											borderRadius="4px 0 0 4px"
+											_hover={{
+												backgroundColor: COLORS.background.subItem,
+											}}
+											_disabled={{
+												opacity: 1,
+												cursor: "not-allowed",
+											}}
+											css={{
+												padding: "6px 12px",
+												display: "flex",
+												alignItems: "center",
+												justifyContent: "space-between",
+												border: "1px solid var(--chakra-colors-gray-200)",
+												borderRight: "none",
+												backgroundColor: "transparent",
+												"& > span": {
+													fontStyle: isGenreDisabled ? "italic" : "normal",
+													color: isGenreDisabled
+														? COLORS.text.secondary
+														: COLORS.text.main,
+												},
+												"& [data-part='indicator']": {
+													width: "16px",
+													height: "16px",
+												},
+											}}
+										>
+											<Select.ValueText placeholder="Any Genre" />
+											<Select.Indicator />
+										</Select.Trigger>
+										<Select.Positioner>
+											<Select.Content
+												w={GENRE_WIDTH}
+												bg={COLORS.background.subItem}
+												borderColor={COLORS.border.main}
+											>
+												{genreCollection.items.map((item) => (
+													<Select.Item
+														key={item.value}
+														item={item}
+														_hover={{ bg: COLORS.accent.primary }}
+													>
+														{item.label}
+													</Select.Item>
+												))}
+											</Select.Content>
+										</Select.Positioner>
+									</Select.Root>
 								</Box>
 
 								{/* Year dropdown */}
 								<Box position="relative">
-									<select
-										value={filters.year}
-										onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-											updateFilter("year", e.target.value)
-										}
-										style={{
-											width: "100px",
-											padding: "6px 12px",
-											border: `1px solid ${COLORS.border.input}`,
-											borderRadius: "0",
-											backgroundColor: COLORS.background.main,
-											color: COLORS.text.main,
-											fontSize: "14px",
-											outline: "none",
-											cursor: "pointer",
-											height: "32px",
+									<Select.Root
+										collection={yearCollection}
+										value={[yearDisplayValue()]}
+										onValueChange={(details) => {
+											const value = details.value[0];
+											if (value.endsWith("'s")) {
+												const startYear = parseInt(value.slice(0, 4));
+												const endYear = startYear + 9;
+												onFiltersChange((prev) => ({
+													...prev,
+													minYear: startYear.toString(),
+													maxYear: endYear.toString(),
+												}));
+											} else if (value) {
+												onFiltersChange((prev) => ({
+													...prev,
+													minYear: value,
+													maxYear: value,
+												}));
+											} else {
+												onFiltersChange((prev) => ({
+													...prev,
+													minYear: "",
+													maxYear: "",
+												}));
+											}
 										}}
+										disabled={isYearCustom}
+										positioning={{ placement: "bottom-start", gutter: 2 }}
 									>
-										{yearOptions.map((option) => (
-											<option key={option.value} value={option.value}>
-												{option.label}
-											</option>
-										))}
-									</select>
+										<Select.Trigger
+											w={YEAR_WIDTH}
+											minH="32px"
+											h="32px"
+											fontSize="14px"
+											lineHeight="1.2"
+											borderRadius="0"
+											_hover={{
+												backgroundColor: COLORS.background.subItem,
+											}}
+											_disabled={{
+												opacity: 1,
+												cursor: "not-allowed",
+											}}
+											css={{
+												padding: "6px 12px",
+												display: "flex",
+												alignItems: "center",
+												justifyContent: "space-between",
+												border: "1px solid var(--chakra-colors-gray-200)",
+												borderLeft: "none",
+												borderRight: "none",
+												backgroundColor: "transparent",
+												"& > span": {
+													fontStyle: isYearCustom ? "italic" : "normal",
+													color: isYearCustom
+														? COLORS.text.secondary
+														: COLORS.text.main,
+												},
+												"& [data-part='indicator']": {
+													width: "16px",
+													height: "16px",
+												},
+											}}
+										>
+											<Select.ValueText placeholder="Year" />
+											<Select.Indicator />
+										</Select.Trigger>
+										<Select.Positioner>
+											<Select.Content
+												w={YEAR_WIDTH}
+												bg={COLORS.background.subItem}
+												borderColor={COLORS.border.main}
+											>
+												{yearCollection.items.map((item) => (
+													<Select.Item
+														key={item.value}
+														item={item}
+														_hover={{ bg: COLORS.accent.primary }}
+													>
+														{item.label}
+													</Select.Item>
+												))}
+											</Select.Content>
+										</Select.Positioner>
+									</Select.Root>
 								</Box>
 
 								{/* Runtime dropdown */}
 								<Box position="relative">
-									<select
-										value={filters.runtime}
-										onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-											updateFilter("runtime", e.target.value)
-										}
-										style={{
-											width: "120px",
-											padding: "6px 12px",
-											border: `1px solid ${COLORS.border.input}`,
-											borderRadius: "0",
-											backgroundColor: COLORS.background.main,
-											color: COLORS.text.main,
-											fontSize: "14px",
-											outline: "none",
-											cursor: "pointer",
-											height: "32px",
+									<Select.Root
+										collection={runtimeCollection}
+										value={[runtimeDisplayValue()]}
+										onValueChange={(details) => {
+											const value = details.value[0];
+											if (value.includes("+")) {
+												const min = value.replace("+", "");
+												onFiltersChange((prev) => ({
+													...prev,
+													minRuntime: min,
+													maxRuntime: "999",
+												}));
+											} else if (value) {
+												const [min, max] = value.split("-");
+												onFiltersChange((prev) => ({
+													...prev,
+													minRuntime: min,
+													maxRuntime: max,
+												}));
+											} else {
+												onFiltersChange((prev) => ({
+													...prev,
+													minRuntime: "",
+													maxRuntime: "",
+												}));
+											}
 										}}
+										disabled={isRuntimeComplex}
+										positioning={{ placement: "bottom-start", gutter: 2 }}
 									>
-										{runtimeOptions.map((option) => (
-											<option key={option.value} value={option.value}>
-												{option.label}
-											</option>
-										))}
-									</select>
+										<Select.Trigger
+											w={RUNTIME_WIDTH}
+											minH="32px"
+											h="32px"
+											fontSize="14px"
+											lineHeight="1.2"
+											borderRadius="0"
+											_hover={{
+												backgroundColor: COLORS.background.subItem,
+											}}
+											_disabled={{
+												opacity: 1,
+												cursor: "not-allowed",
+											}}
+											css={{
+												padding: "6px 12px",
+												display: "flex",
+												alignItems: "center",
+												justifyContent: "space-between",
+												border: "1px solid var(--chakra-colors-gray-200)",
+												borderLeft: "none",
+												backgroundColor: "transparent",
+												"& > span": {
+													fontStyle: isRuntimeComplex ? "italic" : "normal",
+													color: isRuntimeComplex
+														? COLORS.text.secondary
+														: COLORS.text.main,
+												},
+												"& [data-part='indicator']": {
+													width: "16px",
+													height: "16px",
+												},
+											}}
+										>
+											<Select.ValueText placeholder="Runtime" />
+											<Select.Indicator />
+										</Select.Trigger>
+										<Select.Positioner>
+											<Select.Content
+												w={RUNTIME_WIDTH}
+												bg={COLORS.background.subItem}
+												borderColor={COLORS.border.main}
+											>
+												{runtimeCollection.items.map((item) => (
+													<Select.Item
+														key={item.value}
+														item={item}
+														_hover={{ bg: COLORS.accent.primary }}
+													>
+														{item.label}
+													</Select.Item>
+												))}
+											</Select.Content>
+										</Select.Positioner>
+									</Select.Root>
 								</Box>
 
 								{/* Advanced filters toggle */}
@@ -261,20 +589,7 @@ const LetterboxdStyleFilters = ({
 										size="sm"
 										variant="outline"
 										borderRadius="0 4px 4px 0"
-										borderColor={COLORS.border.input}
-										borderLeft="none"
-										backgroundColor={
-											showAdvanced
-												? COLORS.accent.primary
-												: COLORS.background.main
-										}
-										color={showAdvanced ? "white" : COLORS.text.main}
-										_hover={{
-											backgroundColor: showAdvanced
-												? COLORS.accent.secondary
-												: COLORS.background.subItem,
-											borderColor: COLORS.accent.primary,
-										}}
+										borderColor="gray.200"
 										minW="auto"
 										px={3}
 										height="32px"
@@ -328,51 +643,96 @@ const LetterboxdStyleFilters = ({
 						</Text>
 
 						{/* Sort dropdown */}
-						<Box position="relative" alignSelf="center">
-							<select
-								value={getCurrentSortValue()}
-								onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-									updateFilter("sortBy", e.target.value)
-								}
-								style={{
-									width: "140px",
-									padding: "6px 12px",
-									border: `1px solid ${COLORS.border.input}`,
-									borderRadius: "4px",
-									backgroundColor: COLORS.background.main,
-									color: COLORS.text.main,
-									fontSize: "14px",
-									outline: "none",
-									cursor: "pointer",
-									height: "32px",
-								}}
-							>
-								{sortOptions.map((option) => {
-									// Smart disabling based on page context
-									const isDisabled =
-										(pageSource === "popular" &&
-											option.value === "popularity.desc") ||
-										(pageSource === "top-rated" &&
-											option.value === "vote_average.desc");
-
-									return (
-										<option
-											key={option.value}
-											value={option.value}
-											disabled={isDisabled}
-											style={{
-												color: isDisabled
-													? COLORS.text.secondary
-													: COLORS.text.main,
-												fontStyle: isDisabled ? "italic" : "normal",
-											}}
-										>
-											{option.label}
-											{isDisabled ? " (current)" : ""}
-										</option>
+						<Box position="relative">
+							<Select.Root
+								collection={sortCollection}
+								value={[sortDisplayValue()]}
+								onValueChange={(details) => {
+									const selectedItem = sortCollection.items.find(
+										(item) => item.value === details.value[0]
 									);
-								})}
-							</select>
+									if (
+										selectedItem &&
+										"disabled" in selectedItem &&
+										!selectedItem.disabled
+									) {
+										updateFilter(
+											"sortBy",
+											details.value[0] as UnifiedMovieFilters["sortBy"]
+										);
+									}
+								}}
+								disabled={isSortCustom}
+								positioning={{ placement: "bottom-start", gutter: 2 }}
+							>
+								<Select.Trigger
+									w={SORT_WIDTH}
+									minH="32px"
+									h="32px"
+									fontSize="14px"
+									lineHeight="1.2"
+									borderRadius="4px"
+									_hover={{
+										backgroundColor: COLORS.background.subItem,
+									}}
+									_disabled={{
+										opacity: 1,
+										cursor: "not-allowed",
+									}}
+									css={{
+										padding: "6px 12px",
+										display: "flex",
+										alignItems: "center",
+										justifyContent: "space-between",
+										border: "1px solid var(--chakra-colors-gray-200)",
+										backgroundColor: "transparent",
+										"& > span": {
+											fontStyle: isSortCustom ? "italic" : "normal",
+											color: isSortCustom
+												? COLORS.text.secondary
+												: COLORS.text.main,
+										},
+										"& [data-part='indicator']": {
+											width: "16px",
+											height: "16px",
+										},
+									}}
+								>
+									<Select.ValueText placeholder="Sort by" />
+									<Select.Indicator />
+								</Select.Trigger>
+								<Select.Positioner>
+									<Select.Content
+										w={SORT_WIDTH}
+										bg={COLORS.background.subItem}
+										borderColor={COLORS.border.main}
+									>
+										{sortCollection.items.map((item) => (
+											<Select.Item
+												key={item.value}
+												item={item}
+												style={{
+													color:
+														"disabled" in item && item.disabled
+															? COLORS.text.secondary
+															: COLORS.text.main,
+													fontStyle:
+														"disabled" in item && item.disabled
+															? "italic"
+															: "normal",
+												}}
+												_hover={
+													"disabled" in item && item.disabled
+														? {}
+														: { bg: COLORS.accent.primary }
+												}
+											>
+												{item.label}
+											</Select.Item>
+										))}
+									</Select.Content>
+								</Select.Positioner>
+							</Select.Root>
 						</Box>
 
 						{/* Spacer before search */}
@@ -389,16 +749,11 @@ const LetterboxdStyleFilters = ({
 							width={isSearchExpanded ? "260px" : "32px"}
 							height="32px"
 							transition="width 0.3s ease-in-out"
-							_hover={{
-								borderColor: isSearchExpanded
-									? COLORS.border.input
-									: COLORS.accent.secondary,
-							}}
 							overflow="hidden" // Prevents content from spilling during animation
 						>
 							<Input
 								ref={searchInputRef}
-								placeholder="Search..."
+								placeholder="Search results..."
 								value={localQuery}
 								onChange={(e) => setLocalQuery(e.target.value)}
 								onKeyDown={handleSearchKeyDown}

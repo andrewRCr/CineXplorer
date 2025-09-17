@@ -21,6 +21,7 @@ export const COLORS = {
 	},
 	border: {
 		main: "gray.700",
+		subtle: "gray.200",
 		separator: "gray.700",
 		sidebar: "gray.700",
 		input: "white",

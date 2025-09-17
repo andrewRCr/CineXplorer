@@ -1,7 +1,6 @@
 import { useCallback, useRef } from "react";
 import type { PaginatedMoviesResponse, Movie } from "@/services/movieService";
 import type { MovieFilters as MovieFiltersType } from "@/components/movie/filters/AdvancedMovieFilters";
-import type { MinimalMovieFilters } from "@/components/movie/filters/LetterboxdStyleFilters";
 import {
 	mapFiltersToApiParams,
 	filterMoviesByYear,
@@ -18,7 +17,6 @@ interface UseEnhancedFetcherOptions {
 		cancel: () => void;
 	};
 	filters: MovieFiltersType;
-	minimalFilters: MinimalMovieFilters;
 	filterStyle: "expanded" | "minimal";
 }
 
@@ -28,18 +26,15 @@ interface UseEnhancedFetcherOptions {
 export function useEnhancedFetcher({
 	fetcher,
 	filters,
-	minimalFilters,
 	filterStyle,
 }: UseEnhancedFetcherOptions) {
 	// Use refs to store the latest filter values without causing re-renders
 	const filtersRef = useRef(filters);
-	const minimalFiltersRef = useRef(minimalFilters);
 	const filterStyleRef = useRef(filterStyle);
 	const baseFetcherRef = useRef(fetcher);
 
 	// Update refs when values change
 	filtersRef.current = filters;
-	minimalFiltersRef.current = minimalFilters;
 	filterStyleRef.current = filterStyle;
 	baseFetcherRef.current = fetcher;
 
@@ -47,14 +42,12 @@ export function useEnhancedFetcher({
 		(page: number) => {
 			// Get current values from refs
 			const currentFilters = filtersRef.current;
-			const currentMinimalFilters = minimalFiltersRef.current;
 			const currentFilterStyle = filterStyleRef.current;
 			const currentBaseFetcher = baseFetcherRef.current;
 
 			// Check if there's a search query - if so, use search endpoint instead of base fetcher
 			const hasSearchQuery =
-				(currentFilterStyle === "minimal" &&
-					currentMinimalFilters.query?.trim()) ||
+				(currentFilterStyle === "minimal" && currentFilters.query?.trim()) ||
 				(currentFilterStyle === "expanded" && currentFilters.query?.trim());
 
 			let searchFetcher;
@@ -62,10 +55,7 @@ export function useEnhancedFetcher({
 
 			if (hasSearchQuery) {
 				// Use search service for text queries
-				const query =
-					currentFilterStyle === "minimal"
-						? currentMinimalFilters.query
-						: currentFilters.query;
+				const query = currentFilters.query;
 				searchFetcher = (
 					page: number,
 					additionalFilters?: Record<string, string | number | number[]>
@@ -83,7 +73,6 @@ export function useEnhancedFetcher({
 				// For search, we still want to apply other filters like genre/year after the search
 				const { filterParams, yearFilterCriteria } = mapFiltersToApiParams(
 					currentFilters,
-					currentMinimalFilters,
 					currentFilterStyle
 				);
 
@@ -96,7 +85,6 @@ export function useEnhancedFetcher({
 				// Use the original fetcher for non-search requests
 				const { filterParams, yearFilterCriteria } = mapFiltersToApiParams(
 					currentFilters,
-					currentMinimalFilters,
 					currentFilterStyle
 				);
 
@@ -268,7 +256,7 @@ export function useEnhancedFetcher({
 			};
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[filters, minimalFilters, filterStyle] // Recreate fetcher when filters change
+		[filters, filterStyle] // Recreate fetcher when filters change
 	);
 
 	return enhancedFetcher;

@@ -1,57 +1,84 @@
-import { Box, Text } from "@chakra-ui/react";
+import { Box, Text, Select, createListCollection } from "@chakra-ui/react";
 import { COLORS } from "@/constants/theme";
-
-export type SortOption =
-	| "popularity.desc"
-	| "popularity.asc"
-	| "vote_average.desc"
-	| "vote_average.asc"
-	| "release_date.desc"
-	| "release_date.asc"
-	| "title.asc"
-	| "title.desc";
+import {
+	advancedSortOptions,
+	type SortOptionValue,
+} from "@/constants/movieFilterOptions";
 
 interface SortSelectorProps {
-	value: SortOption;
-	onChange: (sort: SortOption) => void;
+	value: SortOptionValue;
+	onChange: (sort: SortOptionValue) => void;
 }
 
-const sortOptions: { value: SortOption; label: string }[] = [
-	{ value: "popularity.desc", label: "Popularity (High to Low)" },
-	{ value: "popularity.asc", label: "Popularity (Low to High)" },
-	{ value: "vote_average.desc", label: "Rating (High to Low)" },
-	{ value: "vote_average.asc", label: "Rating (Low to High)" },
-	{ value: "release_date.desc", label: "Release Date (Newest)" },
-	{ value: "release_date.asc", label: "Release Date (Oldest)" },
-	{ value: "title.asc", label: "Title (A-Z)" },
-	{ value: "title.desc", label: "Title (Z-A)" },
-];
+const SORT_WIDTH = "220px";
 
 const SortSelector = ({ value, onChange }: SortSelectorProps) => {
+	const sortCollection = createListCollection({
+		items: advancedSortOptions.map((option) => ({
+			label: option.label,
+			value: option.value,
+		})),
+	});
+
 	return (
 		<Box>
 			<Text fontSize="sm" fontWeight="medium" mb={2} color={COLORS.text.main}>
 				Sort By
 			</Text>
-			<select
-				value={value}
-				onChange={(e) => onChange(e.target.value as SortOption)}
-				style={{
-					width: "100%",
-					padding: "6px 12px",
-					border: `1px solid ${COLORS.border.main}`,
-					borderRadius: "4px",
-					backgroundColor: COLORS.background.main,
-					color: COLORS.text.main,
-					fontSize: "14px",
+			<Select.Root
+				collection={sortCollection}
+				value={[value]}
+				onValueChange={(details) => {
+					if (details.value.length > 0) {
+						onChange(details.value[0] as SortOptionValue);
+					}
 				}}
+				positioning={{ placement: "bottom-start", gutter: 2 }}
 			>
-				{sortOptions.map((option) => (
-					<option key={option.value} value={option.value}>
-						{option.label}
-					</option>
-				))}
-			</select>
+				<Select.Trigger
+					w={SORT_WIDTH}
+					minH="32px"
+					h="32px"
+					fontSize="14px"
+					lineHeight="1.3"
+					borderRadius="4px"
+					_hover={{
+						backgroundColor: COLORS.background.main,
+					}}
+					css={{
+						padding: "6px 12px",
+						display: "flex",
+						alignItems: "center",
+						justifyContent: "space-between",
+						border: "1px solid var(--chakra-colors-gray-200)",
+						backgroundColor: "transparent",
+						"& [data-part='indicator']": {
+							width: "16px",
+							height: "16px",
+						},
+					}}
+				>
+					<Select.ValueText />
+					<Select.Indicator />
+				</Select.Trigger>
+				<Select.Positioner>
+					<Select.Content
+						w={SORT_WIDTH}
+						bg={COLORS.background.subItem}
+						borderColor={COLORS.border.main}
+					>
+						{sortCollection.items.map((item) => (
+							<Select.Item
+								key={item.value}
+								item={item}
+								_hover={{ bg: COLORS.accent.primary }}
+							>
+								{item.label}
+							</Select.Item>
+						))}
+					</Select.Content>
+				</Select.Positioner>
+			</Select.Root>
 		</Box>
 	);
 };

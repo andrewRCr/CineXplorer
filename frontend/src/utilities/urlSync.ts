@@ -8,98 +8,53 @@ import type { SortOption } from "@/components/movie/filters/SortSelector";
  * @param search - The search string from the URL (e.g., location.search).
  * @returns An object containing the populated filter states.
  */
-export function initializeFiltersFromUrl(
-	filterStyle: "expanded" | "minimal",
-	search: string
-): {
+export function initializeFiltersFromUrl(search: string): {
 	filters: MovieFiltersType;
 	minimalFilters: MinimalMovieFilters;
 } {
-	const defaultFilters: MovieFiltersType = {
-		query: "",
-		genres: [],
-		minYear: "",
-		maxYear: "",
-		minRating: "",
-		maxRating: "",
-		minRuntime: "",
-		maxRuntime: "",
-		sortBy: "popularity.desc",
-	};
-
-	const defaultMinimalFilters: MinimalMovieFilters = {
-		genres: [],
-		year: "",
-		rating: "",
-		runtime: "",
-		query: "",
-		sortBy: "popularity.desc",
-	};
-
-	if (typeof window === "undefined") {
-		return {
-			filters: defaultFilters,
-			minimalFilters: defaultMinimalFilters,
-		};
-	}
-
 	const params = new URLSearchParams(search);
 
-	if (filterStyle === "minimal") {
-		const year = params.get("year") || "";
-		const rating = params.get("rating") || "";
-		const runtime = params.get("runtime") || "";
-		const query = params.get("query") || "";
-		const sortBy = params.get("sortBy") || "popularity.desc";
-		const genres =
-			params
-				.get("genres")
-				?.split(",")
-				.filter(Boolean)
-				.map((g) => parseInt(g))
-				.filter((g) => !isNaN(g)) || [];
+	// Always parse all possible filter values from the URL.
+	const query = params.get("query") || "";
+	const genres =
+		params
+			.get("genres")
+			?.split(",")
+			.filter(Boolean)
+			.map((g) => parseInt(g))
+			.filter((g) => !isNaN(g)) || [];
+	const sortBy = (params.get("sortBy") as SortOption) || "popularity.desc";
+	const year = params.get("year") || "";
+	const rating = params.get("rating") || "";
+	const runtime = params.get("runtime") || "";
+	const minYear = params.get("minYear") || "";
+	const maxYear = params.get("maxYear") || "";
+	const minRating = params.get("minRating") || "";
+	const maxRating = params.get("maxRating") || "";
+	const minRuntime = params.get("minRuntime") || "";
+	const maxRuntime = params.get("maxRuntime") || "";
 
-		return {
-			filters: defaultFilters,
-			minimalFilters: {
-				genres,
-				year,
-				rating,
-				runtime,
-				query,
-				sortBy: sortBy as SortOption,
-			},
-		};
-	} else {
-		const query = params.get("query") || "";
-		const minYear = params.get("minYear") || "";
-		const maxYear = params.get("maxYear") || "";
-		const minRating = params.get("minRating") || "";
-		const maxRating = params.get("maxRating") || "";
-		const minRuntime = params.get("minRuntime") || "";
-		const maxRuntime = params.get("maxRuntime") || "";
-		const sortBy = params.get("sortBy") || "popularity.desc";
-		const genres =
-			params
-				.get("genres")
-				?.split(",")
-				.filter(Boolean)
-				.map((g) => parseInt(g))
-				.filter((g) => !isNaN(g)) || [];
+	// Populate both filter objects from the parsed URL params.
+	const filters: MovieFiltersType = {
+		query,
+		genres,
+		minYear,
+		maxYear,
+		minRating,
+		maxRating,
+		minRuntime,
+		maxRuntime,
+		sortBy,
+	};
 
-		return {
-			filters: {
-				query,
-				genres,
-				minYear,
-				maxYear,
-				minRating,
-				maxRating,
-				minRuntime,
-				maxRuntime,
-				sortBy: sortBy as SortOption,
-			},
-			minimalFilters: defaultMinimalFilters,
-		};
-	}
+	const minimalFilters: MinimalMovieFilters = {
+		genres,
+		year,
+		rating,
+		runtime,
+		query,
+		sortBy,
+	};
+
+	return { filters, minimalFilters };
 }

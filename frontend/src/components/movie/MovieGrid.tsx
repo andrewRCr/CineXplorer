@@ -8,10 +8,10 @@ import {
 	useImperativeHandle,
 	useRef,
 } from "react";
-import { SimpleGrid, Text, Button, Box } from "@, Skeletonchakra-ui/react";
+import { SimpleGrid, Text, Button, Box, Skeleton } from "@chakra-ui/react";
 import { useNavigate, useLocation } from "react-router-dom";
 import MovieCard from "./MovieCard";
-import MoviCardContainer from "./MovieCardContainer";
+import MovieCardContainer from "./MovieCardContainer";
 import { PaginationCtrl } from "../layout/PaginationCtrl";
 import useMoviesArray from "@/hooks/useMoviesArray";
 import { type PaginatedMoviesResponse } from "../../services/movieService";
@@ -647,7 +647,7 @@ const MovieGrid = forwardRef<MovieGridRef, MovieGridProps>(
 						{isLoading
 							? skeletons.map((skeleton) => (
 									<MovieCardContainer key={skeleton}>
-										<MovieCardSkeleton />
+										<Skeleton />
 									</MovieCardContainer>
 							  ))
 							: movies.map((movie) => (
@@ -673,7 +673,8 @@ const MovieGrid = forwardRef<MovieGridRef, MovieGridProps>(
 						mt={1}
 						borderTop={`1px solid ${COLORS.border.main}`}
 					>
-						<Pagina							currentPage={currentPage}
+						<PaginationCtrl
+							currentPage={currentPage}
 							onGoToPage={handlePageChange}
 							totalMovieCount={total_results}
 							totalPages={total_pages}

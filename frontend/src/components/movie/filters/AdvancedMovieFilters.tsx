@@ -1,11 +1,12 @@
 import { useCallback } from "react";
-import { Box, VStack, Button, HStack, Text } from "@chakra-ui/react";
+import { Box, VStack, Button, HStack, Text, Separator } from "@chakra-ui/react";
 import { FiFilter, FiX } from "react-icons/fi";
 import { COLORS } from "@/constants/theme";
 import GenreSelector from "./GenreSelector";
 import YearSelector from "./YearSelector";
 import RatingSelector from "./RatingSelector";
-import SortSelector, { type SortOption } from "./SortSelector";
+import SortSelector from "./SortSelector";
+import type { SortOptionValue } from "@/constants/movieFilterOptions";
 import type { MinimalMovieFilters } from "./LetterboxdStyleFilters";
 
 export interface MovieFilters {
@@ -17,7 +18,7 @@ export interface MovieFilters {
 	maxRating: string;
 	minRuntime: string;
 	maxRuntime: string;
-	sortBy: SortOption;
+	sortBy: SortOptionValue;
 }
 
 interface MovieFiltersProps {
@@ -104,17 +105,18 @@ const AdvancedMovieFilters = ({
 
 	return (
 		<Box
-			mb={6}
-			p={4}
-			border={`1px solid ${COLORS.border.main}`}
+			mb={0}
+			ml={4}
+			p={6}
+			border={`1px solid ${COLORS.border.input}`}
 			borderRadius="md"
 			backgroundColor={COLORS.background.subItem}
 		>
 			<HStack justify="space-between" mb={4}>
-				<HStack gap={4} align="center">
-					<Text fontSize="lg" fontWeight="medium" color={COLORS.text.main}>
-						Advanced Filters
-					</Text>
+				<Text fontSize="lg" fontWeight="medium" color={COLORS.text.main}>
+					Advanced Filters
+				</Text>
+				<HStack>
 					{hasActiveFilters && (
 						<Button
 							onClick={clearFilters}
@@ -126,14 +128,13 @@ const AdvancedMovieFilters = ({
 							Clear Filters
 						</Button>
 					)}
+					{onToggleCollapse && (
+						<Button onClick={onToggleCollapse} size="sm" variant="ghost">
+							<FiFilter style={{ marginRight: "6px" }} />
+							Collapse
+						</Button>
+					)}
 				</HStack>
-
-				{onToggleCollapse && (
-					<Button onClick={onToggleCollapse} size="sm" variant="ghost">
-						<FiFilter style={{ marginRight: "6px" }} />
-						Collapse
-					</Button>
-				)}
 			</HStack>
 
 			<VStack gap={4} align="stretch">
@@ -142,26 +143,32 @@ const AdvancedMovieFilters = ({
 					onChange={(genres) => updateFilter("genres", genres)}
 				/>
 
-				<YearSelector
-					minYear={filters.minYear}
-					maxYear={filters.maxYear}
-					onMinYearChange={(year) => updateFilter("minYear", year)}
-					onMaxYearChange={(year) => updateFilter("maxYear", year)}
-				/>
+				<Separator />
 
-				<RatingSelector
-					minRating={filters.minRating}
-					maxRating={filters.maxRating}
-					onMinRatingChange={(rating) => updateFilter("minRating", rating)}
-					onMaxRatingChange={(rating) => updateFilter("maxRating", rating)}
-				/>
-
-				{/* RuntimeSelector removed as per user request */}
-
-				<SortSelector
-					value={filters.sortBy}
-					onChange={(sort) => updateFilter("sortBy", sort)}
-				/>
+				<HStack gap={8} align="end">
+					<Box>
+						<YearSelector
+							minYear={filters.minYear}
+							maxYear={filters.maxYear}
+							onMinYearChange={(year) => updateFilter("minYear", year)}
+							onMaxYearChange={(year) => updateFilter("maxYear", year)}
+						/>
+					</Box>
+					<Box>
+						<RatingSelector
+							minRating={filters.minRating}
+							maxRating={filters.maxRating}
+							onMinRatingChange={(rating) => updateFilter("minRating", rating)}
+							onMaxRatingChange={(rating) => updateFilter("maxRating", rating)}
+						/>
+					</Box>
+					<Box>
+						<SortSelector
+							value={filters.sortBy}
+							onChange={(sort) => updateFilter("sortBy", sort)}
+						/>
+					</Box>
+				</HStack>
 			</VStack>
 		</Box>
 	);

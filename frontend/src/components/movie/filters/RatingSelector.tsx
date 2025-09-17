@@ -19,7 +19,7 @@ const RatingSelector = ({
 			<Text fontSize="sm" fontWeight="medium" mb={2} color={COLORS.text.main}>
 				Rating
 			</Text>
-			<HStack gap={2}>
+			<HStack gap={2} align="center">
 				<Input
 					placeholder="Min"
 					value={minRating}
@@ -28,14 +28,15 @@ const RatingSelector = ({
 					min="0"
 					max="10"
 					step="0.1"
-					size="sm"
-					borderColor={COLORS.border.main}
-					_focus={{
-						borderColor: COLORS.accent.primary,
-						boxShadow: `0 0 0 1px ${COLORS.accent.primary}`,
-					}}
+					w="80px"
+					h="32px"
+					minH="32px"
+					fontSize="14px"
+					borderRadius="4px"
+					borderColor="gray.200"
+					bg="transparent"
 					_hover={{
-						borderColor: COLORS.accent.secondary,
+						backgroundColor: COLORS.background.main,
 					}}
 				/>
 				<Text fontSize="sm" color={COLORS.text.secondary}>
@@ -49,14 +50,15 @@ const RatingSelector = ({
 					min="0"
 					max="10"
 					step="0.1"
-					size="sm"
-					borderColor={COLORS.border.main}
-					_focus={{
-						borderColor: COLORS.accent.primary,
-						boxShadow: `0 0 0 1px ${COLORS.accent.primary}`,
-					}}
+					w="80px"
+					h="32px"
+					minH="32px"
+					fontSize="14px"
+					borderRadius="4px"
+					borderColor="gray.200"
+					bg="transparent"
 					_hover={{
-						borderColor: COLORS.accent.secondary,
+						backgroundColor: COLORS.background.main,
 					}}
 				/>
 			</HStack>

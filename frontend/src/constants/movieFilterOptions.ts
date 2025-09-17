@@ -23,7 +23,9 @@ const GENRE_MAP = {
 
 export const genreOptions = [
 	{ value: "", label: "Any Genre" },
-	...Object.entries(GENRE_MAP).map(([value, label]) => ({ value, label })),
+	...Object.entries(GENRE_MAP)
+		.map(([value, label]) => ({ value, label }))
+		.sort((a, b) => a.label.localeCompare(b.label)),
 ];
 
 const CORE_GENRE_IDS = [
@@ -78,9 +80,58 @@ export const runtimeOptions = [
 	{ value: "150+", label: "Over 150 min" },
 ];
 
-export const sortOptions = [
-	{ value: "popularity.desc", label: "Popularity" },
-	{ value: "release_date.desc", label: "Release Date" },
-	{ value: "original_title.asc", label: "A-Z" },
-	{ value: "rating_desc", label: "Rating (High-Low)" },
+export type SortOptionValue =
+	| "popularity.desc"
+	| "popularity.asc"
+	| "vote_average.desc"
+	| "vote_average.asc"
+	| "release_date.desc"
+	| "release_date.asc"
+	| "original_title.asc"
+	| "original_title.desc";
+
+export interface SortOption {
+	value: SortOptionValue;
+	label: string;
+}
+
+const ALL_SORT_OPTIONS: Record<string, SortOption> = {
+	POPULARITY_DESC: { value: "popularity.desc", label: "Popularity" },
+	POPULARITY_ASC: {
+		value: "popularity.asc",
+		label: "Popularity (Low to High)",
+	},
+	VOTE_AVERAGE_DESC: {
+		value: "vote_average.desc",
+		label: "Rating (High to Low)",
+	},
+	VOTE_AVERAGE_ASC: {
+		value: "vote_average.asc",
+		label: "Rating (Low to High)",
+	},
+	RELEASE_DATE_DESC: { value: "release_date.desc", label: "Release Date" },
+	RELEASE_DATE_ASC: {
+		value: "release_date.asc",
+		label: "Release Date (Oldest)",
+	},
+	TITLE_ASC: { value: "original_title.asc", label: "A-Z" },
+	TITLE_DESC: { value: "original_title.desc", label: "Title (Z-A)" },
+};
+
+export const minimalSortOptions: SortOption[] = [
+	ALL_SORT_OPTIONS.POPULARITY_DESC,
+	ALL_SORT_OPTIONS.RELEASE_DATE_DESC,
+	ALL_SORT_OPTIONS.TITLE_ASC,
+	{ ...ALL_SORT_OPTIONS.VOTE_AVERAGE_DESC, label: "Rating" },
+];
+
+export const advancedSortOptions: SortOption[] = [
+	{ ...ALL_SORT_OPTIONS.POPULARITY_DESC, label: "Popularity (High to Low)" },
+	ALL_SORT_OPTIONS.POPULARITY_ASC,
+	ALL_SORT_OPTIONS.VOTE_AVERAGE_DESC,
+	ALL_SORT_OPTIONS.VOTE_AVERAGE_ASC,
+	{ ...ALL_SORT_OPTIONS.RELEASE_DATE_DESC, label: "Release Date (Newest)" },
+	ALL_SORT_OPTIONS.RELEASE_DATE_ASC,
+	{ ...ALL_SORT_OPTIONS.TITLE_ASC, label: "Title (A-Z)" },
+	ALL_SORT_OPTIONS.TITLE_DESC,
 ];

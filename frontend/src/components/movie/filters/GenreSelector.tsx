@@ -1,4 +1,4 @@
-import { Box, Text, Flex, Checkbox } from "@chakra-ui/react";
+import { Box, Text, SimpleGrid, Checkbox } from "@chakra-ui/react";
 import { COLORS } from "@/constants/theme";
 import { genreOptions } from "@/constants/movieFilterOptions";
 
@@ -14,7 +14,7 @@ const GenreSelector = ({ selectedGenres, onChange }: GenreSelectorProps) => {
 			<Text fontSize="sm" fontWeight="medium" mb={2} color={COLORS.text.main}>
 				Genres
 			</Text>
-			<Flex wrap="wrap" gap={2}>
+			<SimpleGrid columns={5} gap={2}>
 				{genreOptions
 					.filter((g) => g.value !== "")
 					.map((g) => {
@@ -33,7 +33,13 @@ const GenreSelector = ({ selectedGenres, onChange }: GenreSelectorProps) => {
 								}}
 							>
 								<Checkbox.HiddenInput />
-								<Checkbox.Control borderColor={COLORS.border.main}>
+								<Checkbox.Control
+									borderColor="gray.200"
+									borderRadius="4px"
+									_hover={{
+										backgroundColor: COLORS.background.main,
+									}}
+								>
 									{checked && <Checkbox.Indicator />}
 								</Checkbox.Control>
 								<Checkbox.Label>
@@ -44,7 +50,7 @@ const GenreSelector = ({ selectedGenres, onChange }: GenreSelectorProps) => {
 							</Checkbox.Root>
 						);
 					})}
-			</Flex>
+			</SimpleGrid>
 		</Box>
 	);
 };

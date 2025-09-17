@@ -1,6 +1,5 @@
 import type { Movie } from "@/services/movieService";
 import type { MovieFilters as MovieFiltersType } from "@/components/movie/filters/AdvancedMovieFilters";
-import type { MinimalMovieFilters } from "@/components/movie/filters/LetterboxdStyleFilters";
 
 export type YearFilterCriteria = {
 	type: "single" | "range" | "decade";
@@ -12,10 +11,9 @@ export type YearFilterCriteria = {
  */
 export function mapFiltersToApiParams(
 	filters: MovieFiltersType,
-	minimalFilters: MinimalMovieFilters,
 	filterStyle: "expanded" | "minimal"
 ): {
-	filterParams: Record<string, string | number | number[]>;
+	filterParams: Record<string, string | number | number | number[]>;
 	yearFilterCriteria: YearFilterCriteria | null;
 } {
 	const filterParams: Record<string, string | number | number[]> = {};
@@ -23,59 +21,70 @@ export function mapFiltersToApiParams(
 
 	if (filterStyle === "minimal") {
 		// Handle minimal filters
-		if (minimalFilters.genres.length > 0) {
-			filterParams.genres = minimalFilters.genres.join(",");
+		if (filters.genres.length > 0) {
+			filterParams.genres = filters.genres.join(",");
 		}
 
-		if (minimalFilters.year) {
-			if (minimalFilters.year.includes("s")) {
+		if (filters.minYear) {
+			if (filters.minYear.includes("s")) {
 				// Handle decade ranges like "2020s"
-				const decade = minimalFilters.year.replace("s", "");
+				const decade = filters.minYear.replace("s", "");
 				const startYear = parseInt(decade);
 				const endYear = startYear + 9;
 				filterParams.release_date_gte = `${startYear}-01-01`;
 				filterParams.release_date_lte = `${endYear}-12-31`;
-				yearFilterCriteria = { type: "decade", value: minimalFilters.year };
+				yearFilterCriteria = { type: "decade", value: filters.minYear };
 			} else {
-				// Use date range for better TMDB filtering
-				const year = parseInt(minimalFilters.year);
-				filterParams.release_date_gte = `${year}-01-01`;
-				filterParams.release_date_lte = `${year}-12-31`;
-				yearFilterCriteria = { type: "single", value: minimalFilters.year };
+				// Handle single year or a custom range from URL params
+				const startYear = parseInt(filters.minYear);
+				const endYear = filters.maxYear ? parseInt(filters.maxYear) : startYear;
+
+				filterParams.release_date_gte = `${startYear}-01-01`;
+				filterParams.release_date_lte = `${endYear}-12-31`;
+
+				if (startYear === endYear) {
+					yearFilterCriteria = { type: "single", value: filters.minYear };
+				} else {
+					yearFilterCriteria = {
+						type: "range",
+						value: `${startYear}-${endYear}`,
+					};
+				}
 			}
 		}
 
-		if (minimalFilters.rating) {
-			filterParams.min_rating = minimalFilters.rating;
+		if (filters.minRating) {
+			filterParams.min_rating = filters.minRating;
 		}
 
-		if (minimalFilters.runtime) {
-			if (minimalFilters.runtime === "90") {
+		if (filters.minRuntime) {
+			if (filters.minRuntime === "90") {
 				filterParams.max_runtime = "90";
-			} else if (minimalFilters.runtime === "120") {
+			} else if (filters.minRuntime === "120") {
 				filterParams.max_runtime = "120";
-			} else if (minimalFilters.runtime === "121") {
+			} else if (filters.minRuntime === "121") {
 				filterParams.min_runtime = "121";
 			}
 		}
 
-		if (minimalFilters.query) {
-			filterParams.query = minimalFilters.query;
+		if (filters.query) {
+			filterParams.query = filters.query;
 		}
 
-		if (minimalFilters.sortBy) {
-			if (minimalFilters.sortBy === "runtime_90") {
+		if (filters.sortBy) {
+			const sortBy = filters.sortBy as string;
+			if (sortBy === "runtime_90") {
 				filterParams.max_runtime = "90";
 				filterParams.sort_by = "popularity.desc";
-			} else if (minimalFilters.sortBy === "runtime_120") {
+			} else if (sortBy === "runtime_120") {
 				filterParams.max_runtime = "120";
 				filterParams.sort_by = "popularity.desc";
-			} else if (minimalFilters.sortBy === "rating_desc") {
+			} else if (sortBy === "rating_desc") {
 				filterParams.sort_by = "vote_average.desc";
-			} else if (minimalFilters.sortBy === "rating_asc") {
+			} else if (sortBy === "rating_asc") {
 				filterParams.sort_by = "vote_average.asc";
 			} else {
-				filterParams.sort_by = minimalFilters.sortBy;
+				filterParams.sort_by = sortBy;
 			}
 		}
 	} else {
@@ -110,6 +119,12 @@ export function mapFiltersToApiParams(
 		if (filters.maxRuntime) filterParams.max_runtime = filters.maxRuntime;
 		if (filters.sortBy) filterParams.sort_by = filters.sortBy;
 	}
+
+	console.log("🕵️‍♂️ [DEBUG] movieFilterUtils: Mapped filters to API params:", {
+		"Input Filters": filters,
+		"Output API Params": filterParams,
+		"Output Year Criteria": yearFilterCriteria,
+	});
 
 	return { filterParams, yearFilterCriteria };
 }

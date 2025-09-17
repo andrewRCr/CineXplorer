@@ -5,9 +5,9 @@ import {
 	useImperativeHandle,
 } from "react";
 import { SimpleGrid, Text, Button, Box, Skeleton } from "@chakra-ui/react";
-import MovieCard from "./MovieCard";
-import MovieCardContainer from "./MovieCardContainer";
-import { PaginationCtrl } from "../layout/PaginationCtrl";
+import MovieCard from "../MovieCard";
+import MovieCardContainer from "../MovieCardContainer";
+import { PaginationCtrl } from "../../layout/PaginationCtrl";
 import useMoviesArray from "@/hooks/useMoviesArray";
 import { useMovieGridPagination } from "@/hooks/useMovieGridPagination";
 import { usePaginationDisplay } from "@/hooks/usePaginationDisplay";

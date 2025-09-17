@@ -3,7 +3,7 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import "./App.css";
 
-import MovieCollectionLayout from "./components/movie/MovieCollectionLayout";
+import MovieCollectionLayout from "./components/movie/collection/MovieCollectionLayout";
 import AppLayout from "./components/layout/AppLayout";
 import AuthLayout from "./components/layout/AuthLayout";
 import LoadingLayout from "./components/layout/LoadingLayout";

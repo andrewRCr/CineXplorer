@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import MovieCollectionGrid from "@/components/movie/MovieCollectionGrid";
+import MovieCollectionGrid from "@/components/movie/collection/MovieCollectionGrid";
 
 const SearchResults = () => {
 	console.log("🔍 SearchResults: COMPONENT STARTED");

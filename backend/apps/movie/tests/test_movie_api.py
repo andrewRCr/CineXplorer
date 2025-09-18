@@ -199,8 +199,9 @@ class MovieApiTests(TestCase):
         self.assertEqual(params['vote_average.lte'], '10.0')
         self.assertEqual(params['primary_release_date.gte'], '2023-01-01')
         self.assertEqual(params['primary_release_date.lte'], '2023-12-31')
-        self.assertEqual(params['with_runtime.gte'], '90')
-        self.assertEqual(params['with_runtime.lte'], '180')
+        # Runtime filtering is disabled due to TMDB API data quality issues
+        # self.assertEqual(params['with_runtime.gte'], '90')
+        # self.assertEqual(params['with_runtime.lte'], '180')
         self.assertEqual(params['certification'], 'PG-13')
         self.assertEqual(params['region'], 'US')
 

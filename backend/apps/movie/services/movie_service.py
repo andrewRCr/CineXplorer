@@ -61,23 +61,23 @@ def tmdb_get(endpoint: str, params: Optional[dict] = None) -> dict:
 def fetch_movie_runtimes(movie_ids: list) -> dict:
     """Fetch runtime data for multiple movies efficiently."""
     runtimes = {}
-    
+
     for movie_id in movie_ids:
         try:
             info_url = f"{base_url}/movie/{movie_id}?api_key={settings.TMDB_API_KEY}"
             response = requests.get(info_url, timeout=5)
-            
+
             if response.status_code == 200:
                 data = response.json()
                 runtimes[movie_id] = data.get('runtime', 0)
             else:
-                print(f"DEBUG: Failed to fetch runtime for movie {movie_id}: {response.status_code}")
+                msg = f"Failed to fetch runtime for movie {movie_id}"
+                print(f"DEBUG: {msg}: {response.status_code}")
                 runtimes[movie_id] = 0
-                
         except requests.exceptions.RequestException as e:
             print(f"DEBUG: Exception fetching runtime for movie {movie_id}: {e}")
             runtimes[movie_id] = 0
-    
+
     return runtimes
 
 
@@ -256,11 +256,13 @@ def discover_movies(page: int = 1, **filters):
     - region: Country code for regional release dates
     """
     print(f"DEBUG: discover_movies called with page={page}, filters: {filters}")
-    
+
     # Debug runtime filtering specifically - DISABLED due to TMDB API limitations
     # TMDB's runtime filtering is fundamentally broken and returns incorrect results
     # if 'runtime_gte' in filters or 'runtime_lte' in filters:
-    #     print(f"DEBUG: Runtime filtering requested - runtime_gte: {filters.get('runtime_gte')}, runtime_lte: {filters.get('runtime_lte')}")
+    #     print(f"DEBUG: Runtime filtering requested - "
+    #           f"runtime_gte: {filters.get('runtime_gte')}, "
+    #           f"runtime_lte: {filters.get('runtime_lte')}")
     params = {
         "include_adult": "false",
         "include_video": "false",
@@ -289,7 +291,8 @@ def discover_movies(page: int = 1, **filters):
     # Apply filters if provided
     for filter_name, tmdb_param in filter_mapping.items():
         if filter_name in filters and filters[filter_name] is not None:
-            # DISABLED: Runtime special case handling - no longer needed since runtime filtering is disabled
+            # DISABLED: Runtime special case handling - no longer needed
+            # since runtime filtering is disabled
             # if filter_name == 'runtime_gte' and str(filters[filter_name]) == '0':
             #     params[tmdb_param] = '1'
             # else:

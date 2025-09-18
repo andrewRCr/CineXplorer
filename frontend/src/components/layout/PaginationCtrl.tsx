@@ -13,14 +13,9 @@ const formatPageNumber = (page: number): string => {
 		return formatPageNumberCache.get(page)!;
 	}
 	
-	let result: string;
-	if (page >= 1000000) {
-		result = `${(page / 1000000).toFixed(1)}M`;
-	} else if (page >= 1000) {
-		result = `${(page / 1000).toFixed(1)}K`;
-	} else {
-		result = page.toLocaleString(); // Adds commas for numbers >= 1000
-	}
+	// TMDB API has a 500 page limit, so we'll only handle numbers ≤ 500
+	// Simple string conversion is sufficient for our needs
+	const result = page.toString();
 	
 	formatPageNumberCache.set(page, result);
 	return result;
@@ -35,9 +30,8 @@ const getDynamicPadding = (formattedText: string): string => {
 	const length = formattedText.length;
 	let padding: string;
 	if (length <= 1) padding = "0.5rem"; // "1" - minimal padding
-	else if (length <= 3) padding = "0.75rem"; // "999" - medium padding
-	else if (length <= 4) padding = "1rem"; // "1.2K" - more padding
-	else padding = "1.25rem"; // "52.4K", "1.2M" - maximum padding
+	else if (length <= 2) padding = "0.65rem"; // "10" - slightly more padding
+	else padding = "0.75rem"; // "100", "500" - medium padding
 	
 	paddingCache.set(formattedText, padding);
 	return padding;

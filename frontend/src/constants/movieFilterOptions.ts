@@ -47,9 +47,10 @@ export const coreGenreOptions = [
 	})),
 ];
 
-// Dynamically generate last 3 years, then static decade ranges
+// Dynamically generate last 2 years, then decade ranges capped at 1970s
+// This creates exactly 9 menu items (including "Any Year") to match genre dropdown height
 const CURRENT_YEAR = new Date().getFullYear();
-const last3Years = Array.from({ length: 3 }, (_, i) => {
+const last2Years = Array.from({ length: 2 }, (_, i) => {
 	const year = (CURRENT_YEAR - i).toString();
 	return { value: year, label: year };
 });
@@ -60,15 +61,11 @@ const decadeRanges = [
 	"1990's",
 	"1980's",
 	"1970's",
-	"1960's",
-	"1950's",
-	"1940's",
-	"1930's",
 ].map((decade) => ({ value: decade, label: decade }));
 
 export const yearOptions = [
 	{ value: "", label: "Any Year" },
-	...last3Years,
+	...last2Years,
 	...decadeRanges,
 ];
 

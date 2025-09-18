@@ -17,7 +17,7 @@ export interface RouteConfig {
 		cancel: () => void;
 	};
 	source: string;
-	title: string;
+	title: string | { main: string; secondary?: string };
 }
 
 // Helper function to get fetcher and source based on route
@@ -99,7 +99,10 @@ export const getFetcherAndSource = (pathname: string): RouteConfig => {
 					...filters,
 				}),
 			source: PAGINATED_SOURCES.SEARCH,
-			title: `Search Results${query ? ` for "${query}"` : ""}`,
+			title: {
+				main: "Search Results",
+				secondary: query ? ` for "${query}"` : undefined
+			},
 		};
 	}
 	// Default fallback

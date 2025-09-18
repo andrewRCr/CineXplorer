@@ -1,8 +1,12 @@
 // constants/routes.ts
 
 export const ROUTES = {
-	HOME: "/",
+	HOME: "/", // Redirects to Popular movies
 	PROFILE: "/profile",
+	WATCHLIST: "/watchlist",
+	LIBRARY: "/library",
+	JOURNAL: "/journal",
+	LOG: "/log",
 	SETTINGS: "/settings",
 	MOVIES: "/movies",
 	NOW_PLAYING: "/movies/now-playing",
@@ -19,8 +23,12 @@ export const ROUTES = {
 };
 
 export const ROUTE_NAMES = {
-	HOME: "Home",
+	HOME: "Home", // Now serves Popular content
 	PROFILE: "Profile",
+	WATCHLIST: "Watchlist",
+	LIBRARY: "Library",
+	JOURNAL: "Journal",
+	LOG: "Log",
 	SETTINGS: "Settings",
 	NOW_PLAYING: "Now Playing",
 	UPCOMING: "Upcoming",

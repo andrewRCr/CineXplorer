@@ -346,8 +346,8 @@ describe('ClearFiltersButton Component', () => {
 			const edgeCaseFilters = createMockFilters({
 				genres: [], // Empty array - falsy
 				minYear: '', // Empty string - falsy
-				maxYear: undefined as any, // undefined !== '' is true - will show button
-				minRuntime: null as any, // null !== '' is true - will show button
+				maxYear: undefined as string | undefined, // undefined !== '' is true - will show button
+				minRuntime: null as string | null, // null !== '' is true - will show button
 				maxRuntime: ''
 			});
 			

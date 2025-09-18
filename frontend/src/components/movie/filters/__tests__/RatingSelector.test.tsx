@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@tests/helpers/test-renderer';
+import { render, screen, fireEvent, act } from '@tests/helpers/test-renderer';
 import userEvent from '@testing-library/user-event';
 import RatingSelector from '../RatingSelector';
 
@@ -23,7 +23,7 @@ vi.mock('lodash', async () => {
 		...actual,
 		debounce: vi.fn((fn) => {
 			// For testing, we'll use immediate execution but track that debounce was called
-			const debouncedFn = (...args: any[]) => fn(...args);
+			const debouncedFn = (...args: Parameters<typeof fn>) => fn(...args);
 			debouncedFn.cancel = vi.fn();
 			return debouncedFn;
 		})
@@ -127,7 +127,9 @@ describe('RatingSelector Component', () => {
 			render(<RatingSelector {...defaultProps} />);
 			
 			const minInput = screen.getByPlaceholderText('0');
-			await user.type(minInput, '75');
+			await act(async () => {
+				await user.type(minInput, '75');
+			});
 			
 			// Should convert 75% to 7.5 on TMDB scale
 			expect(mockOnMinRatingChange).toHaveBeenCalled();
@@ -261,7 +263,9 @@ describe('RatingSelector Component', () => {
 			
 			const minInput = screen.getByPlaceholderText('0') as HTMLInputElement;
 			
-			await user.type(minInput, '75');
+			await act(async () => {
+				await user.type(minInput, '75');
+			});
 			
 			expect(minInput.value).toBe('75');
 		});
@@ -272,7 +276,9 @@ describe('RatingSelector Component', () => {
 			
 			const minInput = screen.getByPlaceholderText('0');
 			
-			await user.type(minInput, '75');
+			await act(async () => {
+				await user.type(minInput, '75');
+			});
 			
 			// Should call onChange (with our mocked debounce, this is immediate)
 			expect(mockOnMinRatingChange).toHaveBeenCalled();
@@ -284,7 +290,9 @@ describe('RatingSelector Component', () => {
 			
 			const minInput = screen.getByPlaceholderText('0');
 			
-			await user.clear(minInput);
+			await act(async () => {
+				await user.clear(minInput);
+			});
 			
 			// Should call onChange immediately for empty value (no debouncing)
 			expect(mockOnMinRatingChange).toHaveBeenCalledWith('');
@@ -297,8 +305,10 @@ describe('RatingSelector Component', () => {
 			const minInput = screen.getByPlaceholderText('0');
 			const maxInput = screen.getByPlaceholderText('100');
 			
-			await user.type(minInput, '60');
-			await user.type(maxInput, '80');
+			await act(async () => {
+				await user.type(minInput, '60');
+				await user.type(maxInput, '80');
+			});
 			
 			expect(mockOnMinRatingChange).toHaveBeenCalled();
 			expect(mockOnMaxRatingChange).toHaveBeenCalled();
@@ -312,7 +322,9 @@ describe('RatingSelector Component', () => {
 			render(<RatingSelector {...defaultProps} />);
 			
 			const minInput = screen.getByPlaceholderText('0');
-			await user.type(minInput, '75');
+			await act(async () => {
+				await user.type(minInput, '75');
+			});
 			
 			// Verify debounce was called (mocked to execute immediately)
 			expect(debounce).toHaveBeenCalled();
@@ -323,7 +335,9 @@ describe('RatingSelector Component', () => {
 			render(<RatingSelector {...defaultProps} minRating="7.0" />);
 			
 			const minInput = screen.getByPlaceholderText('0');
-			await user.clear(minInput);
+			await act(async () => {
+				await user.clear(minInput);
+			});
 			
 			// Should call onChange immediately without debouncing
 			expect(mockOnMinRatingChange).toHaveBeenCalledWith('');
@@ -335,11 +349,13 @@ describe('RatingSelector Component', () => {
 			
 			const minInput = screen.getByPlaceholderText('0');
 			
-			// Type something first
-			await user.type(minInput, '75');
-			
-			// Then clear it
-			await user.clear(minInput);
+			await act(async () => {
+				// Type something first
+				await user.type(minInput, '75');
+				
+				// Then clear it
+				await user.clear(minInput);
+			});
 			
 			expect(mockOnMinRatingChange).toHaveBeenCalledWith('');
 		});
@@ -486,8 +502,8 @@ describe('RatingSelector Component', () => {
 				<RatingSelector 
 					minRating="" 
 					maxRating="" 
-					onMinRatingChange={undefined as any}
-					onMaxRatingChange={undefined as any}
+				onMinRatingChange={undefined as unknown as (rating: string) => void}
+					onMaxRatingChange={undefined as unknown as (rating: string) => void}
 				/>
 			);
 			
@@ -500,10 +516,15 @@ describe('RatingSelector Component', () => {
 			
 			const minInput = screen.getByPlaceholderText('0');
 			
-			// User types while props are changing
-			await user.type(minInput, '75');
-			rerender(<RatingSelector {...defaultProps} minRating="8.0" />);
-			rerender(<RatingSelector {...defaultProps} minRating="6.5" />);
+			await act(async () => {
+				// User types while props are changing
+				await user.type(minInput, '75');
+			});
+			
+			act(() => {
+				rerender(<RatingSelector {...defaultProps} minRating="8.0" />);
+				rerender(<RatingSelector {...defaultProps} minRating="6.5" />);
+			});
 			
 			const updatedInput = screen.getByPlaceholderText('0') as HTMLInputElement;
 			expect(updatedInput.value).toBe('65'); // 6.5 * 10 = 65%
@@ -516,8 +537,10 @@ describe('RatingSelector Component', () => {
 			const minInput = screen.getByPlaceholderText('0');
 			const maxInput = screen.getByPlaceholderText('100');
 			
-			await user.type(minInput, '0');
-			await user.type(maxInput, '100');
+			await act(async () => {
+				await user.type(minInput, '0');
+				await user.type(maxInput, '100');
+			});
 			
 			expect(mockOnMinRatingChange).toHaveBeenCalled();
 			expect(mockOnMaxRatingChange).toHaveBeenCalled();
@@ -573,7 +596,9 @@ describe('RatingSelector Component', () => {
 			
 			const minInput = screen.getByPlaceholderText('0');
 			
-			await user.type(minInput, '85');
+			await act(async () => {
+				await user.type(minInput, '85');
+			});
 			
 			// Should convert 85% to 8.5 on TMDB scale
 			expect(mockOnMinRatingChange).toHaveBeenCalled();
@@ -635,16 +660,20 @@ describe('RatingSelector Component', () => {
 			const maxInput = screen.getByPlaceholderText('100') as HTMLInputElement;
 			
 			// Simulate having invalid values using fireEvent
-			fireEvent.change(minInput, { target: { value: '-10' } });
-			fireEvent.change(maxInput, { target: { value: '150' } });
+			act(() => {
+				fireEvent.change(minInput, { target: { value: '-10' } });
+				fireEvent.change(maxInput, { target: { value: '150' } });
+			});
 			
 			// Values should show as set initially
 			expect(minInput.value).toBe('-10');
 			expect(maxInput.value).toBe('150');
 			
 			// Blur should clamp the values
-			fireEvent.blur(minInput);
-			fireEvent.blur(maxInput);
+			act(() => {
+				fireEvent.blur(minInput);
+				fireEvent.blur(maxInput);
+			});
 			
 			// Values should be clamped to valid range
 			expect(minInput.value).toBe('0');

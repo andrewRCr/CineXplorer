@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@tests/helpers/test-renderer';
+import { render, screen, waitFor, act } from '@tests/helpers/test-renderer';
 import userEvent from '@testing-library/user-event';
 import SortSelector from '../SortSelector';
 
@@ -72,7 +72,9 @@ describe('SortSelector Component', () => {
 			render(<SortSelector {...defaultProps} />);
 			
 			const trigger = screen.getByRole('combobox');
-			await user.click(trigger);
+			await act(async () => {
+				await user.click(trigger);
+			});
 			
 			// Check that all options are present - use role selector to avoid duplicates
 			await waitFor(() => {
@@ -97,7 +99,9 @@ describe('SortSelector Component', () => {
 			render(<SortSelector {...defaultProps} value="vote_average.desc" />);
 			
 			const trigger = screen.getByRole('combobox');
-			await user.click(trigger);
+			await act(async () => {
+				await user.click(trigger);
+			});
 			
 			await waitFor(() => {
 				// Find the option element with the correct aria-selected state
@@ -114,7 +118,9 @@ describe('SortSelector Component', () => {
 			render(<SortSelector {...defaultProps} />);
 			
 			const trigger = screen.getByRole('combobox');
-			await user.click(trigger);
+			await act(async () => {
+				await user.click(trigger);
+			});
 			
 			// Select a different option - use role selector to get the clickable option
 			await waitFor(() => {
@@ -123,7 +129,9 @@ describe('SortSelector Component', () => {
 			});
 			
 			const ratingOption = screen.getByRole('option', { name: 'Rating (High to Low)' });
-			await user.click(ratingOption);
+			await act(async () => {
+				await user.click(ratingOption);
+			});
 			
 			expect(mockOnChange).toHaveBeenCalledTimes(1);
 			expect(mockOnChange).toHaveBeenCalledWith('vote_average.desc');
@@ -134,7 +142,9 @@ describe('SortSelector Component', () => {
 			const { rerender } = render(<SortSelector {...defaultProps} />);
 			
 			const trigger = screen.getByRole('combobox');
-			await user.click(trigger);
+			await act(async () => {
+				await user.click(trigger);
+			});
 			
 			// Select Rating option
 			await waitFor(() => {
@@ -143,10 +153,14 @@ describe('SortSelector Component', () => {
 			});
 			
 			const ratingOption = screen.getByRole('option', { name: 'Rating (High to Low)' });
-			await user.click(ratingOption);
+			await act(async () => {
+				await user.click(ratingOption);
+			});
 			
 			// Simulate parent state update
-			rerender(<SortSelector {...defaultProps} value="vote_average.desc" />);
+			act(() => {
+				rerender(<SortSelector {...defaultProps} value="vote_average.desc" />);
+			});
 			
 			// Display should update - check the trigger text content
 			const updatedTrigger = screen.getByRole('combobox');
@@ -160,11 +174,15 @@ describe('SortSelector Component', () => {
 			const trigger = screen.getByRole('combobox');
 			
 			// Focus the trigger
-			await user.click(trigger);
+			await act(async () => {
+				await user.click(trigger);
+			});
 			expect(trigger).toHaveFocus();
 			
 			// Should be able to navigate with keyboard
-			await user.keyboard('{ArrowDown}');
+			await act(async () => {
+				await user.keyboard('{ArrowDown}');
+			});
 			
 			// Options should be visible
 			await waitFor(() => {
@@ -238,11 +256,15 @@ describe('SortSelector Component', () => {
 			const trigger = screen.getByRole('combobox');
 			
 			// Should be focusable
-			trigger.focus();
+			act(() => {
+				trigger.focus();
+			});
 			expect(trigger).toHaveFocus();
 			
 			// Should open on Enter
-			await user.keyboard('{Enter}');
+			await act(async () => {
+				await user.keyboard('{Enter}');
+			});
 			
 			await waitFor(() => {
 				expect(screen.getByText('Popularity (Low to High)')).toBeVisible();
@@ -264,7 +286,9 @@ describe('SortSelector Component', () => {
 			render(<SortSelector {...defaultProps} />);
 			
 			const trigger = screen.getByRole('combobox');
-			await user.click(trigger);
+			await act(async () => {
+				await user.click(trigger);
+			});
 			
 			// After opening, focus should be maintained
 			await waitFor(() => {
@@ -272,7 +296,9 @@ describe('SortSelector Component', () => {
 			});
 			
 			// Should be able to close with Escape
-			await user.keyboard('{Escape}');
+			await act(async () => {
+				await user.keyboard('{Escape}');
+			});
 			
 			// Dropdown should close
 			await waitFor(() => {
@@ -292,7 +318,9 @@ describe('SortSelector Component', () => {
 			expect(trigger).toBeInTheDocument();
 			
 			// Open dropdown to check content width consistency
-			await user.click(trigger);
+			await act(async () => {
+				await user.click(trigger);
+			});
 			
 			await waitFor(() => {
 				expect(screen.getByText('Popularity (Low to High)')).toBeVisible();
@@ -317,13 +345,15 @@ describe('SortSelector Component', () => {
 			const user = userEvent.setup();
 			
 			const { container } = render(
-				<SortSelector value="popularity.desc" onChange={undefined as any} />
+				<SortSelector value="popularity.desc" onChange={undefined as unknown as (sort: string) => void} />
 			);
 			
 			expect(container).toBeInTheDocument();
 			
 			const trigger = screen.getByRole('combobox');
-			await user.click(trigger);
+			await act(async () => {
+				await user.click(trigger);
+			});
 			
 			// Should open without error
 			await waitFor(() => {
@@ -338,8 +368,10 @@ describe('SortSelector Component', () => {
 			const trigger = screen.getByRole('combobox');
 			
 			// Rapid clicks should be handled gracefully
-			await user.click(trigger);
-			await user.click(trigger);
+			await act(async () => {
+				await user.click(trigger);
+				await user.click(trigger);
+			});
 			
 			await waitFor(() => {
 				// Should either be open or closed consistently
@@ -353,10 +385,14 @@ describe('SortSelector Component', () => {
 			const { rerender } = render(<SortSelector {...defaultProps} />);
 			
 			const trigger = screen.getByRole('combobox');
-			await user.click(trigger);
+			await act(async () => {
+				await user.click(trigger);
+			});
 			
 			// Rerender while dropdown is open
-			rerender(<SortSelector {...defaultProps} value="vote_average.desc" />);
+			act(() => {
+				rerender(<SortSelector {...defaultProps} value="vote_average.desc" />);
+			});
 			
 			// Should show updated value
 			const updatedTrigger = screen.getByRole('combobox');
@@ -378,7 +414,9 @@ describe('SortSelector Component', () => {
 			render(<SortSelector {...defaultProps} />);
 			
 			const trigger = screen.getByRole('combobox');
-			await user.click(trigger);
+			await act(async () => {
+				await user.click(trigger);
+			});
 			
 			await waitFor(() => {
 				const option = screen.getByRole('option', { name: 'Rating (High to Low)' });
@@ -386,7 +424,9 @@ describe('SortSelector Component', () => {
 			});
 			
 			const option = screen.getByRole('option', { name: 'Rating (High to Low)' });
-			await user.click(option);
+			await act(async () => {
+				await user.click(option);
+			});
 			
 			// onChange should be called exactly once per selection
 			expect(mockOnChange).toHaveBeenCalledTimes(1);

@@ -25,14 +25,32 @@ global.IntersectionObserver = vi.fn().mockImplementation(() => ({
 }));
 
 // Mock ResizeObserver since it's not available in jsdom
-global.ResizeObserver = vi.fn().mockImplementation(() => ({
-	observe: vi.fn(),
-	disconnect: vi.fn(),
-	unobserve: vi.fn(),
-}));
+// This is needed for @floating-ui/dom which is used by Chakra UI Select
+class ResizeObserverMock {
+	private callback: ResizeObserverCallback;
+	
+	constructor(callback: ResizeObserverCallback) {
+		this.callback = callback;
+	}
+	
+	observe = vi.fn();
+	unobserve = vi.fn();
+	disconnect = vi.fn();
+}
+
+global.ResizeObserver = ResizeObserverMock as any;
+
+// Also ensure window.ResizeObserver is available
+if (typeof window !== 'undefined') {
+	window.ResizeObserver = ResizeObserverMock as any;
+}
 
 // Mock scrollIntoView since it's not implemented in jsdom
 Element.prototype.scrollIntoView = vi.fn();
+
+// Mock scrollTo since it's not implemented in jsdom (needed for Chakra UI Select)
+Element.prototype.scrollTo = vi.fn();
+HTMLElement.prototype.scrollTo = vi.fn();
 
 // Mock window.location methods
 Object.defineProperty(window, "location", {

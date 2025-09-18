@@ -28,7 +28,7 @@ describe('PageHeader Component', () => {
 			['lg', '3xl'],
 			['xl', '4xl'],
 		])('renders size "%s" with fontSize "%s"', (size, expectedFontSize) => {
-			render(<PageHeader title="Test" size={size as any} />);
+			render(<PageHeader title="Test" size={size as 'sm' | 'md' | 'lg' | 'xl'} />);
 			
 			const titleElement = screen.getByText('Test');
 			expect(titleElement).toHaveStyle({ fontSize: expectedFontSize });

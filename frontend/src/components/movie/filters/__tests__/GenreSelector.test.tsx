@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { render, screen, fireEvent } from "@tests/helpers/test-renderer";
+import { render, screen, fireEvent, act } from "@tests/helpers/test-renderer";
 import userEvent from "@testing-library/user-event";
 import GenreSelector from "../GenreSelector";
 
@@ -100,7 +100,9 @@ describe("GenreSelector Component", () => {
 			render(<GenreSelector {...defaultProps} />);
 
 			const actionCheckbox = screen.getByLabelText("Action");
-			await user.click(actionCheckbox);
+			await act(async () => {
+				await user.click(actionCheckbox);
+			});
 
 			expect(mockOnChange).toHaveBeenCalledTimes(1);
 			expect(mockOnChange).toHaveBeenCalledWith([28]);
@@ -111,7 +113,9 @@ describe("GenreSelector Component", () => {
 			render(<GenreSelector {...defaultProps} selectedGenres={[28, 35]} />);
 
 			const actionCheckbox = screen.getByLabelText("Action");
-			await user.click(actionCheckbox);
+			await act(async () => {
+				await user.click(actionCheckbox);
+			});
 
 			expect(mockOnChange).toHaveBeenCalledTimes(1);
 			expect(mockOnChange).toHaveBeenCalledWith([35]); // Only Comedy remains
@@ -123,15 +127,21 @@ describe("GenreSelector Component", () => {
 
 			// Select Action
 			const actionCheckbox = screen.getByLabelText("Action");
-			await user.click(actionCheckbox);
+			await act(async () => {
+				await user.click(actionCheckbox);
+			});
 			expect(mockOnChange).toHaveBeenCalledWith([28]);
 
 			// Simulate parent state update
-			rerender(<GenreSelector {...defaultProps} selectedGenres={[28]} />);
+			act(() => {
+				rerender(<GenreSelector {...defaultProps} selectedGenres={[28]} />);
+			});
 
 			// Select Comedy
 			const comedyCheckbox = screen.getByLabelText("Comedy");
-			await user.click(comedyCheckbox);
+			await act(async () => {
+				await user.click(comedyCheckbox);
+			});
 			expect(mockOnChange).toHaveBeenCalledWith([28, 35]);
 		});
 
@@ -141,7 +151,9 @@ describe("GenreSelector Component", () => {
 
 			// Deselect Comedy (middle item)
 			const comedyCheckbox = screen.getByLabelText("Comedy");
-			await user.click(comedyCheckbox);
+			await act(async () => {
+				await user.click(comedyCheckbox);
+			});
 
 			expect(mockOnChange).toHaveBeenCalledWith([28, 18]); // Action and Drama remain
 		});
@@ -165,15 +177,19 @@ describe("GenreSelector Component", () => {
 			for (let index = 0; index < genreLabels.length; index++) {
 				const label = genreLabels[index];
 				const checkbox = screen.getByLabelText(label);
-				await user.click(checkbox);
+				await act(async () => {
+					await user.click(checkbox);
+				});
 
 				selectedIds = [...selectedIds, genreIds[index]];
 				expect(mockOnChange).toHaveBeenCalledWith(selectedIds);
 
 				// Update the component with new selection
-				rerender(
-					<GenreSelector {...defaultProps} selectedGenres={selectedIds} />
-				);
+				act(() => {
+					rerender(
+						<GenreSelector {...defaultProps} selectedGenres={selectedIds} />
+					);
+				});
 			}
 
 			// All checkboxes should be checked
@@ -250,7 +266,9 @@ describe("GenreSelector Component", () => {
 
 			// Add Action (28) to existing Comedy (35)
 			const actionCheckbox = screen.getByLabelText("Action");
-			await user.click(actionCheckbox);
+			await act(async () => {
+				await user.click(actionCheckbox);
+			});
 
 			// Should add to end of array
 			expect(mockOnChange).toHaveBeenCalledWith([35, 28]);
@@ -264,7 +282,9 @@ describe("GenreSelector Component", () => {
 
 			// Remove Comedy (35) from middle
 			const comedyCheckbox = screen.getByLabelText("Comedy");
-			await user.click(comedyCheckbox);
+			await act(async () => {
+				await user.click(comedyCheckbox);
+			});
 
 			// Should maintain order of remaining items
 			expect(mockOnChange).toHaveBeenCalledWith([28, 18, 27]);
@@ -355,7 +375,9 @@ describe("GenreSelector Component", () => {
 			expect(actionCheckbox).toHaveFocus();
 
 			// Should be toggleable with space key
-			fireEvent.keyDown(actionCheckbox, { key: " " });
+			act(() => {
+				fireEvent.keyDown(actionCheckbox, { key: " " });
+			});
 			// Note: Chakra UI checkboxes might not respond to keyDown directly
 			// but should still be keyboard accessible through normal browser behavior
 		});
@@ -383,7 +405,9 @@ describe("GenreSelector Component", () => {
 			expect(actionCheckbox.checked).toBe(true);
 
 			// Component should still function normally
-			await user.click(actionCheckbox);
+			await act(async () => {
+				await user.click(actionCheckbox);
+			});
 			expect(mockOnChange).toHaveBeenCalledWith([999]); // Should preserve unknown ID
 		});
 
@@ -402,14 +426,20 @@ describe("GenreSelector Component", () => {
 			const comedyCheckbox = screen.getByLabelText("Comedy");
 
 			// First click: Select Action
-			await user.click(actionCheckbox);
+			await act(async () => {
+				await user.click(actionCheckbox);
+			});
 			expect(mockOnChange).toHaveBeenCalledWith([28]);
 
 			// Update component state
-			rerender(<GenreSelector {...defaultProps} selectedGenres={[28]} />);
+			act(() => {
+				rerender(<GenreSelector {...defaultProps} selectedGenres={[28]} />);
+			});
 
 			// Second click: Select Comedy (should add to existing selection)
-			await user.click(comedyCheckbox);
+			await act(async () => {
+				await user.click(comedyCheckbox);
+			});
 			expect(mockOnChange).toHaveBeenCalledWith([28, 35]);
 
 			// Verify total calls
@@ -432,7 +462,9 @@ describe("GenreSelector Component", () => {
 			);
 
 			const actionCheckbox = screen.getByLabelText("Action");
-			await user.click(actionCheckbox);
+			await act(async () => {
+				await user.click(actionCheckbox);
+			});
 
 			// Verify the callback was called with correct arguments
 			expect(mockOnChangeWithLogging).toHaveBeenCalledTimes(1);

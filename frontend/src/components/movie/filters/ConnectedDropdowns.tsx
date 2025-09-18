@@ -325,94 +325,107 @@ const ConnectedDropdowns = ({
 				</Select.Root>
 			</Box>
 
-			{/* Runtime dropdown */}
-			<Box position="relative">
-				<Select.Root
-					collection={runtimeCollection}
-					value={[runtimeDisplayData.runtimeDisplayValue]}
-					onValueChange={(details) => {
-						const value = details.value[0];
-						if (value.includes("+")) {
-							const min = value.replace("+", "");
-							onFiltersChange((prev) => ({
-								...prev,
-								minRuntime: min,
-								maxRuntime: "999",
-							}));
-						} else if (value) {
-							const [min, max] = value.split("-");
-							onFiltersChange((prev) => ({
-								...prev,
-								minRuntime: min,
-								maxRuntime: max,
-							}));
-						} else {
-							onFiltersChange((prev) => ({
-								...prev,
-								minRuntime: "",
-								maxRuntime: "",
-							}));
-						}
-					}}
-					disabled={runtimeDisplayData.isRuntimeComplex}
-					positioning={{ placement: "bottom-start", gutter: 2 }}
-				>
-					<Select.Trigger
-						w={RUNTIME_WIDTH}
-						minH="32px"
-						h="32px"
-						fontSize="14px"
-						lineHeight="1.2"
-				borderRadius="0"
-						border="1px solid"
-						borderColor="gray.200"
-						backgroundColor="transparent"
-						_hover={{
-							backgroundColor: COLORS.background.subItem,
+			{/* Runtime dropdown - DISABLED due to TMDB API limitations */}
+			{/* 
+				TMDB's runtime filtering is fundamentally broken due to data contamination
+				from user-submitted translations. TMDB has acknowledged this issue but won't fix it.
+				
+				To re-enable runtime filtering, you would need to:
+				1. Implement client-side runtime filtering with individual movie detail API calls
+				2. Add caching layer to avoid performance issues
+				3. Accept 2-5 second page load delays for runtime-filtered results
+				
+				Preserved code below for future implementation:
+			*/}
+			{false && (
+				<Box position="relative">
+					<Select.Root
+						collection={runtimeCollection}
+						value={[runtimeDisplayData.runtimeDisplayValue]}
+						onValueChange={(details) => {
+							const value = details.value[0];
+							if (value.includes("+")) {
+								const min = value.replace("+", "");
+								onFiltersChange((prev) => ({
+									...prev,
+									minRuntime: min,
+									maxRuntime: "400", // Fixed from 999
+								}));
+							} else if (value) {
+								const [min, max] = value.split("-");
+								onFiltersChange((prev) => ({
+									...prev,
+									minRuntime: min,
+									maxRuntime: max,
+								}));
+							} else {
+								onFiltersChange((prev) => ({
+									...prev,
+									minRuntime: "",
+									maxRuntime: "",
+								}));
+							}
 						}}
-						_disabled={{
-							opacity: 1,
-							cursor: "not-allowed",
-						}}
-						css={{
-							padding: "6px 12px",
-							display: "flex",
-							alignItems: "center",
-							justifyContent: "space-between",
-							"& > span": {
-								fontStyle: runtimeDisplayData.isRuntimeComplex ? "italic" : "normal",
-								color: runtimeDisplayData.isRuntimeComplex
-									? COLORS.text.secondary
-									: COLORS.text.main,
-							},
-							"& [data-part='indicator']": {
-								width: "16px",
-								height: "16px",
-							},
-						}}
+						disabled={runtimeDisplayData.isRuntimeComplex}
+						positioning={{ placement: "bottom-start", gutter: 2 }}
 					>
-						<Select.ValueText placeholder="Runtime" />
-						<Select.Indicator />
-					</Select.Trigger>
-					<Select.Positioner>
-						<Select.Content
+						<Select.Trigger
 							w={RUNTIME_WIDTH}
-							bg={COLORS.background.subItem}
-							borderColor={COLORS.border.main}
+							minH="32px"
+							h="32px"
+							fontSize="14px"
+							lineHeight="1.2"
+					borderRadius="0"
+							border="1px solid"
+							borderColor="gray.200"
+							backgroundColor="transparent"
+							_hover={{
+								backgroundColor: COLORS.background.subItem,
+							}}
+							_disabled={{
+								opacity: 1,
+								cursor: "not-allowed",
+							}}
+							css={{
+								padding: "6px 12px",
+								display: "flex",
+								alignItems: "center",
+								justifyContent: "space-between",
+								"& > span": {
+									fontStyle: runtimeDisplayData.isRuntimeComplex ? "italic" : "normal",
+									color: runtimeDisplayData.isRuntimeComplex
+										? COLORS.text.secondary
+										: COLORS.text.main,
+								},
+								"& [data-part='indicator']": {
+									width: "16px",
+									height: "16px",
+								},
+							}}
 						>
-							{runtimeCollection.items.map((item) => (
-								<Select.Item
-									key={item.value}
-									item={item}
-									_hover={{ bg: COLORS.accent.primary }}
-								>
-									{item.label}
-								</Select.Item>
-							))}
-						</Select.Content>
-					</Select.Positioner>
+							<Select.ValueText placeholder="Runtime" />
+							<Select.Indicator />
+						</Select.Trigger>
+						<Select.Positioner>
+							<Select.Content
+								w={RUNTIME_WIDTH}
+								bg={COLORS.background.subItem}
+								borderColor={COLORS.border.main}
+							>
+								{runtimeCollection.items.map((item) => (
+									<Select.Item
+										key={item.value}
+										item={item}
+										_hover={{ bg: COLORS.accent.primary }}
+									>
+										{item.label}
+									</Select.Item>
+								))}
+							</Select.Content>
+						</Select.Positioner>
 				</Select.Root>
-			</Box>
+				</Box>
+			)}
 
 			{/* Advanced filters toggle */}
 			{onToggleAdvanced && (

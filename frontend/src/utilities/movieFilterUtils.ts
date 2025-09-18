@@ -79,42 +79,43 @@ export function mapFiltersToApiParams(
 			};
 		}
 
+		// DISABLED: Runtime filtering - TMDB API returns incorrect results
 		// Handle runtime filtering for both min and max
-		if (filters.minRuntime || filters.maxRuntime) {
-			if (filters.minRuntime) {
-				filterParams.min_runtime = filters.minRuntime;
-			}
-			if (filters.maxRuntime) {
-				filterParams.max_runtime = filters.maxRuntime;
-			}
-			
-			// Create runtime filter criteria for client-side filtering
-			if (filters.minRuntime && filters.maxRuntime) {
-				// Special case: if maxRuntime is 999, treat as "min only"
-				if (filters.maxRuntime === "999") {
-					runtimeFilterCriteria = {
-						type: "min",
-						minRuntime: parseInt(filters.minRuntime)
-					};
-				} else {
-					runtimeFilterCriteria = {
-						type: "range",
-						minRuntime: parseInt(filters.minRuntime),
-						maxRuntime: parseInt(filters.maxRuntime)
-					};
-				}
-			} else if (filters.minRuntime) {
-				runtimeFilterCriteria = {
-					type: "min",
-					minRuntime: parseInt(filters.minRuntime)
-				};
-			} else if (filters.maxRuntime) {
-				runtimeFilterCriteria = {
-					type: "max",
-					maxRuntime: parseInt(filters.maxRuntime)
-				};
-			}
-		}
+		// if (filters.minRuntime || filters.maxRuntime) {
+		//	if (filters.minRuntime) {
+		//		filterParams.min_runtime = filters.minRuntime;
+		//	}
+		//	if (filters.maxRuntime) {
+		//		filterParams.max_runtime = filters.maxRuntime;
+		//	}
+		//	
+		//	// Create runtime filter criteria for client-side filtering
+		//	if (filters.minRuntime && filters.maxRuntime) {
+		//		// Special case: if maxRuntime is 999, treat as "min only"
+		//		if (filters.maxRuntime === "999") {
+		//			runtimeFilterCriteria = {
+		//				type: "min",
+		//				minRuntime: parseInt(filters.minRuntime)
+		//			};
+		//		} else {
+		//			runtimeFilterCriteria = {
+		//				type: "range",
+		//				minRuntime: parseInt(filters.minRuntime),
+		//				maxRuntime: parseInt(filters.maxRuntime)
+		//			};
+		//		}
+		//	} else if (filters.minRuntime) {
+		//		runtimeFilterCriteria = {
+		//			type: "min",
+		//			minRuntime: parseInt(filters.minRuntime)
+		//		};
+		//	} else if (filters.maxRuntime) {
+		//		runtimeFilterCriteria = {
+		//			type: "max",
+		//			maxRuntime: parseInt(filters.maxRuntime)
+		//		};
+		//	}
+		// }
 
 		if (filters.query) {
 			filterParams.query = filters.query;
@@ -184,42 +185,42 @@ export function mapFiltersToApiParams(
 				maxRating: parseFloat(filters.maxRating)
 			};
 		}
-		// Handle runtime filtering for expanded filters
-		if (filters.minRuntime || filters.maxRuntime) {
-			if (filters.minRuntime) {
-				filterParams.min_runtime = filters.minRuntime;
-			}
-			if (filters.maxRuntime) {
-				filterParams.max_runtime = filters.maxRuntime;
-			}
-			
-			// Create runtime filter criteria for client-side filtering
-			if (filters.minRuntime && filters.maxRuntime) {
-				// Special case: if maxRuntime is 999, treat as "min only"
-				if (filters.maxRuntime === "999") {
-					runtimeFilterCriteria = {
-						type: "min",
-						minRuntime: parseInt(filters.minRuntime)
-					};
-				} else {
-					runtimeFilterCriteria = {
-						type: "range",
-						minRuntime: parseInt(filters.minRuntime),
-						maxRuntime: parseInt(filters.maxRuntime)
-					};
-				}
-			} else if (filters.minRuntime) {
-				runtimeFilterCriteria = {
-					type: "min",
-					minRuntime: parseInt(filters.minRuntime)
-				};
-			} else if (filters.maxRuntime) {
-				runtimeFilterCriteria = {
-					type: "max",
-					maxRuntime: parseInt(filters.maxRuntime)
-				};
-			}
-		}
+		// DISABLED: Runtime filtering for expanded filters - TMDB API returns incorrect results
+		// if (filters.minRuntime || filters.maxRuntime) {
+		//	if (filters.minRuntime) {
+		//		filterParams.min_runtime = filters.minRuntime;
+		//	}
+		//	if (filters.maxRuntime) {
+		//		filterParams.max_runtime = filters.maxRuntime;
+		//	}
+		//	
+		//	// Create runtime filter criteria for client-side filtering
+		//	if (filters.minRuntime && filters.maxRuntime) {
+		//		// Special case: if maxRuntime is 999, treat as "min only"
+		//		if (filters.maxRuntime === "999") {
+		//			runtimeFilterCriteria = {
+		//				type: "min",
+		//				minRuntime: parseInt(filters.minRuntime)
+		//			};
+		//		} else {
+		//			runtimeFilterCriteria = {
+		//				type: "range",
+		//				minRuntime: parseInt(filters.minRuntime),
+		//				maxRuntime: parseInt(filters.maxRuntime)
+		//			};
+		//		}
+		//	} else if (filters.minRuntime) {
+		//		runtimeFilterCriteria = {
+		//			type: "min",
+		//			minRuntime: parseInt(filters.minRuntime)
+		//		};
+		//	} else if (filters.maxRuntime) {
+		//		runtimeFilterCriteria = {
+		//			type: "max",
+		//			maxRuntime: parseInt(filters.maxRuntime)
+		//		};
+		//	}
+		// }
 		if (filters.sortBy) filterParams.sort_by = filters.sortBy;
 	}
 

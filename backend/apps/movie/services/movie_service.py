@@ -257,9 +257,10 @@ def discover_movies(page: int = 1, **filters):
     """
     print(f"DEBUG: discover_movies called with page={page}, filters: {filters}")
     
-    # Debug runtime filtering specifically
-    if 'runtime_gte' in filters or 'runtime_lte' in filters:
-        print(f"DEBUG: Runtime filtering requested - runtime_gte: {filters.get('runtime_gte')}, runtime_lte: {filters.get('runtime_lte')}")
+    # Debug runtime filtering specifically - DISABLED due to TMDB API limitations
+    # TMDB's runtime filtering is fundamentally broken and returns incorrect results
+    # if 'runtime_gte' in filters or 'runtime_lte' in filters:
+    #     print(f"DEBUG: Runtime filtering requested - runtime_gte: {filters.get('runtime_gte')}, runtime_lte: {filters.get('runtime_lte')}")
     params = {
         "include_adult": "false",
         "include_video": "false",
@@ -279,19 +280,20 @@ def discover_movies(page: int = 1, **filters):
         'people': 'with_people',
         'release_date_gte': 'primary_release_date.gte',
         'release_date_lte': 'primary_release_date.lte',
-        'runtime_gte': 'with_runtime.gte',
-        'runtime_lte': 'with_runtime.lte',
+        # DISABLED: Runtime filtering - TMDB API returns incorrect results
+        # 'runtime_gte': 'with_runtime.gte',
+        # 'runtime_lte': 'with_runtime.lte',
         'certification': 'certification',
     }
 
     # Apply filters if provided
     for filter_name, tmdb_param in filter_mapping.items():
         if filter_name in filters and filters[filter_name] is not None:
-            # Special case: Use 1 instead of 0 for runtime_gte for better TMDB compatibility
-            if filter_name == 'runtime_gte' and str(filters[filter_name]) == '0':
-                params[tmdb_param] = '1'
-            else:
-                params[tmdb_param] = str(filters[filter_name])
+            # DISABLED: Runtime special case handling - no longer needed since runtime filtering is disabled
+            # if filter_name == 'runtime_gte' and str(filters[filter_name]) == '0':
+            #     params[tmdb_param] = '1'
+            # else:
+            params[tmdb_param] = str(filters[filter_name])
 
     # Set default sort if not specified
     if 'sort_by' not in params:

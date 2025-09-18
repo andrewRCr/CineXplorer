@@ -10,7 +10,8 @@ export interface MinimalMovieFilters {
 	genres: number[];
 	year: string;
 	rating: string;
-	runtime: string;
+	// DISABLED: Runtime filtering - TMDB API returns incorrect results
+	// runtime: string;
 	query: string;
 	sortBy: string;
 }
@@ -51,8 +52,9 @@ const LetterboxdStyleFilters = ({
 			maxYear: "",
 			minRating: "",
 			maxRating: "",
-			minRuntime: "",
-			maxRuntime: "",
+			// DISABLED: Runtime filtering - TMDB API returns incorrect results
+			// minRuntime: "",
+			// maxRuntime: "",
 			query: "",
 			sortBy: "popularity.desc",
 		});

@@ -1,118 +1,45 @@
-import { ROUTES, ROUTE_NAMES } from "@/constants/routes";
 import { COLORS } from "@/constants/theme";
 import React from "react";
-import { Box, VStack, List, Separator } from "@chakra-ui/react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import SidebarContent from "./SidebarContent";
+import { Box } from "@chakra-ui/react";
 
-const pageLinks = [
-	{ name: ROUTE_NAMES.POPULAR, path: ROUTES.POPULAR },
-	{ name: ROUTE_NAMES.TOP_RATED, path: ROUTES.TOP_RATED },
-	{ name: ROUTE_NAMES.NOW_PLAYING, path: ROUTES.NOW_PLAYING },
-	{ name: ROUTE_NAMES.UPCOMING, path: ROUTES.UPCOMING },
-];
+/**
+ * Sticky positioning offset for sidebar to eliminate visual "jump" when scrolling starts.
+ *
+ * This value is empirically determined to position the sidebar such that when it becomes
+ * sticky, the visible content appears in the exact same position as when naturally positioned.
+ *
+ * DEPENDENCIES:
+ * - NavBar height (~76px): Logo (60px) + padding (py={2} = 16px) + borders
+ * - SidebarContent padding (pt={9} = 36px): Top padding that would cause visual jump
+ * - Browser rendering: Additional ~2px for borders/margins
+ *
+ * IF YOU CHANGE:
+ * - NavBar height or styling
+ * - SidebarContent padding (py prop)
+ * - Container or layout structure
+ *
+ * THEN UPDATE: This value may need adjustment. Test by scrolling and checking for
+ * any visual "jump" of the sidebar content when sticky positioning activates.
+ */
+const SIDEBAR_STICKY_TOP_OFFSET = "82px";
 
-const genres = [
-	"Action",
-	"Comedy",
-	"Drama",
-	"Horror",
-	"Romance",
-	"Sci-Fi",
-	"Thriller",
-	// TODO: make match actual backend genres
-];
-
+// Static sidebar component for desktop use
 const Sidebar: React.FC = () => {
-	const navigate = useNavigate();
-	const location = useLocation();
-
-	const handleNavigation = (path: string) => {
-		// If the user is already on the page, force a reset by adding a timestamp.
-		// Otherwise, just navigate to the clean path.
-		if (location.pathname === path) {
-			const resetUrl = `${path}?reset=${Date.now()}`;
-			navigate(resetUrl, { replace: true });
-		} else {
-			navigate(path); // Use default push navigation
-		}
-	};
-
 	return (
 		<Box
 			as="aside"
-			width="240px"
+			w="280px"
 			bg={COLORS.background.sidebar}
-			color={COLORS.text.main}
-			borderRight={`1px solid ${COLORS.border.sidebar}`}
-			display="flex"
-			flexDirection="column"
-			height="100vh"
-			py={6}
-			px={0}
+			boxShadow="2px 0 8px 0 rgba(0,0,0,0.08)"
+			position="sticky"
+			top={SIDEBAR_STICKY_TOP_OFFSET}
+			alignSelf="flex-start"
+			maxH="100vh"
+			overflowY="auto"
+			zIndex={1}
 		>
-			<VStack align="stretch" px={0}>
-				<Box>
-					<List.Root listStyleType="none">
-						{pageLinks.map((link) => (
-							<List.Item key={link.path} textAlign="left">
-								<Box
-									as="button"
-									onClick={() => handleNavigation(link.path)}
-									style={{
-										color: COLORS.text.main,
-										textDecoration: "none",
-										background: "none",
-										border: "none",
-										cursor: "pointer",
-										width: "100%",
-										textAlign: "left",
-										padding: 0,
-									}}
-									onMouseOver={(e) =>
-										(e.currentTarget.style.color = COLORS.accent.highlight)
-									}
-									onMouseOut={(e) =>
-										(e.currentTarget.style.color = COLORS.text.main)
-									}
-								>
-									{link.name}
-								</Box>
-							</List.Item>
-						))}
-					</List.Root>
-				</Box>
-				<Separator
-					width="75%"
-					borderColor={COLORS.border.separator}
-					mt="2"
-					mb="1"
-				/>
-				<Box>
-					<List.Root listStyleType="none">
-						<List.Item
-							// fontStyle="italic"
-							fontWeight="semibold"
-							color={COLORS.text.secondary}
-							textAlign="left"
-							mb={2}
-						>
-							Genres
-						</List.Item>
-						{genres.map((genre) => (
-							<List.Item key={genre} textAlign="left">
-								<Link
-									to={`/genre/${genre.toLowerCase()}`}
-									style={{ color: "white", textDecoration: "none" }}
-									onMouseOver={(e) => (e.currentTarget.style.color = "#63b3ed")}
-									onMouseOut={(e) => (e.currentTarget.style.color = "white")}
-								>
-									{genre}
-								</Link>
-							</List.Item>
-						))}
-					</List.Root>
-				</Box>
-			</VStack>
+			<SidebarContent />
 		</Box>
 	);
 };

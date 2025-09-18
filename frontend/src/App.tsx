@@ -1,5 +1,5 @@
 import { ROUTES } from "@/constants/routes";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import "./App.css";
 
@@ -11,7 +11,6 @@ import AuthContextProvider from "./components/auth/AuthContextProvider";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 
 // Lazy load page components
-const Home = lazy(() => import("./pages/Home"));
 const NowPlaying = lazy(() => import("./pages/movie/NowPlaying"));
 const Login = lazy(() => import("./pages/user/Login"));
 const TestLogin = lazy(() => import("./pages/user/TestLogin"));
@@ -59,7 +58,8 @@ const App: React.FC = () => {
 
 						{/* Content routes - full app layout */}
 						<Route element={<AppLayout />}>
-							<Route path={ROUTES.HOME} element={<Home />} />
+							{/* Redirect home to Popular movies */}
+							<Route path={ROUTES.HOME} element={<Navigate to={ROUTES.POPULAR} replace />} />
 							<Route path={ROUTES.PROFILE} element={<Profile />} />
 							<Route path={ROUTES.SETTINGS} element={<Settings />} />
 
@@ -79,7 +79,17 @@ const App: React.FC = () => {
 								<Route path="top-rated" element={<TopRated />} />
 							</Route>
 
-							<Route path={ROUTES.SEARCH_RESULTS} element={<SearchResults />} />
+							{/* Search results with shared layout */}
+							<Route
+								path={ROUTES.SEARCH_RESULTS}
+								element={
+									<MovieCollectionLayout
+										showFilters={false}
+									/>
+								}
+							>
+								<Route index element={<SearchResults />} />
+							</Route>
 							<Route path={ROUTES.MOVIE_DETAIL} element={<MovieDetail />} />
 							{/* ...other content routes... */}
 						</Route>

@@ -33,7 +33,7 @@ export function mapFiltersToApiParams(
 	const filterParams: Record<string, string | number | number[]> = {};
 	let yearFilterCriteria: YearFilterCriteria | null = null;
 	let ratingFilterCriteria: RatingFilterCriteria | null = null;
-	let runtimeFilterCriteria: RuntimeFilterCriteria | null = null;
+	const runtimeFilterCriteria: RuntimeFilterCriteria | null = null;
 
 	if (filterStyle === "minimal") {
 		// Handle minimal filters

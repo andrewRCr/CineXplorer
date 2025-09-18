@@ -3,35 +3,38 @@ import { useLocation, Outlet } from "react-router-dom";
 import { Box } from "@chakra-ui/react";
 import { type MovieFilters as MovieFiltersType } from "@/components/movie/filters/AdvancedMovieFilters";
 import { useEnhancedFetcher } from "@/hooks/useEnhancedFetcher";
-import { getFetcherAndSource, type RouteConfig } from "@/utilities/routeConfigHelper";
+import {
+	getFetcherAndSource,
+	type RouteConfig,
+} from "@/utilities/routeConfigHelper";
 import PageHeader from "@/components/movie/collection/PageHeader";
 import FilterSection from "@/components/movie/collection/FilterSection";
 import { useMovieCollectionUrl } from "@/components/movie/collection/useMovieCollectionUrl";
 
 // Better prop patterns with discriminated unions and required/optional groups
-type FilterConfig = 
+type FilterConfig =
 	| { showFilters?: false; filterStyle?: never; defaultFilters?: never }
-	| { 
-		showFilters: true; 
-		filterStyle?: "expanded" | "minimal"; 
-		defaultFilters?: Partial<MovieFiltersType>;
+	| {
+			showFilters: true;
+			filterStyle?: "expanded" | "minimal";
+			defaultFilters?: Partial<MovieFiltersType>;
 	  };
 
 type MovieCollectionLayoutProps = {
 	// Core props - can be provided or auto-detected from route
 	title?: string;
-	fetcher?: RouteConfig['fetcher'];
+	fetcher?: RouteConfig["fetcher"];
 	source?: string;
 	currentPage?: number;
 	// Layout customization
-	size?: 'sm' | 'md' | 'lg' | 'xl';
+	size?: "sm" | "md" | "lg" | "xl";
 	// Header customization
 	headerProps?: {
-		size?: 'sm' | 'md' | 'lg' | 'xl';
+		size?: "sm" | "md" | "lg" | "xl";
 		showAccent?: boolean;
 		children?: ReactNode;
 	};
-	// Container customization 
+	// Container customization
 	containerProps?: {
 		maxW?: string;
 		px?: number | string;
@@ -48,7 +51,7 @@ const MovieCollectionLayout = ({
 	defaultFilters,
 	filterStyle = "expanded",
 	currentPage,
-	size = 'xl',
+	size = "xl",
 	headerProps,
 	containerProps,
 }: MovieCollectionLayoutProps) => {
@@ -88,23 +91,34 @@ const MovieCollectionLayout = ({
 	// Memoized container configuration for better performance
 	const containerConfig = useMemo(() => {
 		const sizeMap = {
-			sm: { maxW: '600px', px: 3, pt: 2, pb: 3 },
-			md: { maxW: '800px', px: 3, pt: 2, pb: 3 },
-			lg: { maxW: '1200px', px: 4, pt: 3, pb: 4 },
-			xl: { maxW: '1400px', px: 4, pt: 3, pb: 4 }
+			sm: { maxW: "600px", px: 3, pt: 2, pb: 3 },
+			md: { maxW: "800px", px: 3, pt: 2, pb: 3 },
+			lg: { maxW: "1200px", px: 4, pt: 3, pb: 4 },
+			xl: { maxW: "1400px", px: 4, pt: 3, pb: 4 },
 		};
 		return { ...sizeMap[size], ...containerProps };
 	}, [size, containerProps]);
 
 	// Memoized outlet context to prevent unnecessary re-renders
-	const outletContext = useMemo(() => ({
-		fetcher: actualFetcher,
-		source: actualSource,
-		query: defaultFilters?.query,
-		initialCurrentPage: currentPage || currentPageFromUrl,
-		onPageChange: handlePageChange,
-		enhancedFetcher,
-	}), [actualFetcher, actualSource, defaultFilters?.query, currentPage, currentPageFromUrl, handlePageChange, enhancedFetcher]);
+	const outletContext = useMemo(
+		() => ({
+			fetcher: actualFetcher,
+			source: actualSource,
+			query: defaultFilters?.query,
+			initialCurrentPage: currentPage || currentPageFromUrl,
+			onPageChange: handlePageChange,
+			enhancedFetcher,
+		}),
+		[
+			actualFetcher,
+			actualSource,
+			defaultFilters?.query,
+			currentPage,
+			currentPageFromUrl,
+			handlePageChange,
+			enhancedFetcher,
+		]
+	);
 
 	return (
 		<Box
@@ -117,9 +131,9 @@ const MovieCollectionLayout = ({
 			{...containerConfig}
 		>
 			{/* Enhanced Page Header with better composition */}
-			<PageHeader 
-				title={actualTitle} 
-				size={headerProps?.size || 'lg'}
+			<PageHeader
+				title={actualTitle}
+				size={headerProps?.size || "lg"}
 				showAccent={headerProps?.showAccent ?? true}
 			>
 				{headerProps?.children}

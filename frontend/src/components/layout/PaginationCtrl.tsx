@@ -103,7 +103,7 @@ const PaginationCtrl = (props: iPaginationCtrlProps) => {
 	// MOVE ALL HOOKS TO TOP - Rules of Hooks compliance
 	// Memoize simple pagination for few pages
 	const simplePagination = useMemo(() => {
-		if (effectiveTotalPages > 15) return null;
+		if (effectiveTotalPages > 5) return null;
 		
 		const pages = Array.from({ length: effectiveTotalPages }, (_, i) => i + 1);
 		
@@ -169,10 +169,10 @@ const PaginationCtrl = (props: iPaginationCtrlProps) => {
 		);
 	}, [effectiveTotalPages, currentPage, handlePrevious, handleNext, createPageClickHandler]);
 
-	// Memoize complex smart pagination logic (for >15 pages)
+	// Memoize complex smart pagination logic (for >5 pages)
 	const pagesToShow = useMemo(() => {
 		// Only calculate if we need smart pagination
-		if (effectiveTotalPages <= 15) return [];
+		if (effectiveTotalPages <= 5) return [];
 		
 		const pages: (number | "ellipsis")[] = [];
 
@@ -246,7 +246,7 @@ const PaginationCtrl = (props: iPaginationCtrlProps) => {
 	// Memoize pagination buttons to prevent recreation
 	const paginationButtons = useMemo(() => {
 		// Only create buttons for smart pagination
-		if (effectiveTotalPages <= 15 || pagesToShow.length === 0) return [];
+		if (effectiveTotalPages <= 5 || pagesToShow.length === 0) return [];
 		
 		return pagesToShow.map((page, index) => {
 			if (page === "ellipsis") {

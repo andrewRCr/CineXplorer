@@ -13,7 +13,7 @@ const SearchResults = () => {
 		searchParams: searchParams.toString(),
 	});
 
-	// Handle empty search query
+	// Handle empty search query - redirect to home
 	useEffect(() => {
 		console.log("SearchResults: Checking for empty query", {
 			initialQuery,
@@ -30,8 +30,13 @@ const SearchResults = () => {
 		return null;
 	}
 
-	console.log("SearchResults: About to render MovieCollectionGrid");
+	console.log("SearchResults: About to render MovieCollectionGrid - fetcher will be provided by MovieCollectionLayout");
 
+	// MovieCollectionLayout will provide:
+	// - Page header with title from routeConfigHelper.ts
+	// - Search fetcher from routeConfigHelper.ts  
+	// - Pagination management
+	// - Consistent styling and layout
 	return <MovieCollectionGrid />;
 };
 

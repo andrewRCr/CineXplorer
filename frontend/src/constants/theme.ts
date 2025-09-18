@@ -4,7 +4,10 @@ const palette = {
 	discordDark: "#23272f",
 	chakraGray900: "#1a202c",
 	tailwindZinc900: "#18181b",
-	gradientGray:
+	gradientGrayLeft:
+		"linear-gradient(90deg, #18181b 0%, #222227ff 25%, #18181b 50%)",
+
+	gradientGrayCentered:
 		"linear-gradient(90deg, #18181b 25%, #222227ff 50%, #18181b 75%)",
 	gradientNavy:
 		"linear-gradient(90deg, #071629ff 25%, #0c1e34ff 50%, #071629ff 75%)",
@@ -13,8 +16,8 @@ const palette = {
 export const COLORS = {
 	background: {
 		main: palette.discordDark,
-		navBar: palette.gradientGray,
-		footer: palette.gradientGray,
+		navBar: palette.gradientGrayCentered,
+		footer: palette.gradientGrayCentered,
 		sidebar: palette.discordDark,
 		subItem: palette.chakraGray900,
 		skeleton: palette.tailwindZinc900,
@@ -39,7 +42,8 @@ export const COLORS = {
 	},
 	accent: {
 		primary: "blue.500",
-		secondary: "green",
+		secondary: "blue.700",
+		tertiary: "white",
 		highlight: "#63b3ed", // Sidebar link hover
 		link: "#4299e1", // Chakra blue.400 equivalent for consistent theming
 		tagTeal: "teal",

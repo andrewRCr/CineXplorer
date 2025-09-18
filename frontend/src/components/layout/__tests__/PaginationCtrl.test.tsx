@@ -38,11 +38,11 @@ describe('PaginationCtrl Component', () => {
 		});
 
 		it('calculates total pages correctly from movie count', () => {
-			render(<PaginationCtrl totalMovieCount={200} currentPage={1} onGoToPage={mockOnGoToPage} />);
+			render(<PaginationCtrl totalMovieCount={100} currentPage={1} onGoToPage={mockOnGoToPage} />);
 			
-			// 200 movies / 20 per page = 10 pages
-			// Should show page numbers for simple pagination (≤15 pages)
-			expect(screen.getByText('10')).toBeInTheDocument();
+			// 100 movies / 20 per page = 5 pages
+			// Should show page numbers for simple pagination (≤5 pages)
+			expect(screen.getByText('5')).toBeInTheDocument();
 		});
 
 		it('respects explicit totalPages prop when provided', () => {
@@ -62,12 +62,12 @@ describe('PaginationCtrl Component', () => {
 		});
 	});
 
-	describe('Simple Pagination Mode (≤15 pages)', () => {
-		it('shows all page numbers when total pages ≤ 15', () => {
-			render(<PaginationCtrl totalMovieCount={300} currentPage={5} onGoToPage={mockOnGoToPage} />);
+	describe('Simple Pagination Mode (≤5 pages)', () => {
+		it('shows all page numbers when total pages ≤ 5', () => {
+			render(<PaginationCtrl totalMovieCount={100} currentPage={3} onGoToPage={mockOnGoToPage} />);
 			
-			// 300 movies = 15 pages, should show all page buttons
-			for (let i = 1; i <= 15; i++) {
+			// 100 movies = 5 pages, should show all page buttons
+			for (let i = 1; i <= 5; i++) {
 				expect(screen.getByText(i.toString())).toBeInTheDocument();
 			}
 		});
@@ -94,7 +94,7 @@ describe('PaginationCtrl Component', () => {
 		});
 	});
 
-	describe('Smart Pagination Mode (>15 pages)', () => {
+	describe('Smart Pagination Mode (>5 pages)', () => {
 		it('uses smart pagination for large page counts', () => {
 			render(<PaginationCtrl totalMovieCount={1000} currentPage={25} onGoToPage={mockOnGoToPage} />);
 			
@@ -189,17 +189,18 @@ describe('PaginationCtrl Component', () => {
 	});
 
 	describe('User Interactions and Navigation', () => {
-		it('calls onGoToPage when clicking page number', async () => {
-			const user = userEvent.setup();
-			render(<PaginationCtrl totalMovieCount={200} currentPage={1} onGoToPage={mockOnGoToPage} />);
-			
-			const pageButton = screen.getByText('5');
-			await act(async () => {
-				await user.click(pageButton);
-			});
-			
-			expect(mockOnGoToPage).toHaveBeenCalledWith(5);
+	it('calls onGoToPage when clicking page number', async () => {
+		const user = userEvent.setup();
+		render(<PaginationCtrl totalMovieCount={200} currentPage={1} onGoToPage={mockOnGoToPage} />);
+		
+		// With 200 movies (10 pages) and currentPage=1, smart pagination shows: 1, 2, 3, ..., 10
+		const pageButton = screen.getByText('3'); // Page 3 is visible in smart pagination
+		await act(async () => {
+			await user.click(pageButton);
 		});
+		
+		expect(mockOnGoToPage).toHaveBeenCalledWith(3);
+	});
 
 		it('navigates to previous page when clicking prev button', async () => {
 			const user = userEvent.setup();
@@ -457,16 +458,16 @@ describe('PaginationCtrl Component', () => {
 				<PaginationCtrl totalMovieCount={200} currentPage={currentPage} onGoToPage={handlePageChange} />
 			);
 			
-			// Click page 5
+			// Click page 3 (visible in smart pagination for currentPage=1)
 			await act(async () => {
-				await user.click(screen.getByText('5'));
+				await user.click(screen.getByText('3'));
 			});
 			
 			// Update component with new state
-			rerender(<PaginationCtrl totalMovieCount={200} currentPage={5} onGoToPage={handlePageChange} />);
+			rerender(<PaginationCtrl totalMovieCount={200} currentPage={3} onGoToPage={handlePageChange} />);
 			
-			// Should show page 5 as current
-			const currentPageButton = screen.getByRole('button', { name: /5/ });
+			// Should show page 3 as current
+			const currentPageButton = screen.getByRole('button', { name: /3/ });
 			expect(currentPageButton).toHaveAttribute('aria-current', 'page');
 		});
 

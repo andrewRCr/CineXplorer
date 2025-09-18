@@ -117,6 +117,9 @@ const CollapsibleSearchBox = ({
 				backgroundColor={COLORS.background.main}
 				color={COLORS.text.main}
 				_focus={{ boxShadow: "none" }}
+				_hover={{
+					backgroundColor: COLORS.background.subItem,
+				}}
 				fontSize="14px"
 				height="30px"
 				flex="1"
@@ -124,7 +127,7 @@ const CollapsibleSearchBox = ({
 				minW="0" // Allows input to shrink to 0
 				opacity={isSearchExpanded ? 1 : 0}
 				visibility={isSearchExpanded ? "visible" : "hidden"}
-				transition="opacity 0.2s 0.1s, visibility 0.2s 0.1s, padding 0.3s"
+				transition="opacity 0.2s 0.1s, visibility 0.2s 0.1s, padding 0.3s, background-color 0.2s ease"
 				disabled={!isSearchExpanded}
 			/>
 			<Button

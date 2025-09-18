@@ -134,12 +134,14 @@ describe('PageHeader Component', () => {
 	});
 
 	describe('Style and Layout', () => {
-		it('applies italic font style to title', () => {
-			render(<PageHeader title="Italic Title" />);
-			
-			const title = screen.getByText('Italic Title');
-			expect(title).toHaveStyle({ fontStyle: 'italic' });
-		});
+	it('applies italic font style to title', () => {
+		render(<PageHeader title="Italic Title" />);
+		
+		const title = screen.getByText('Italic Title');
+		// The title text is rendered inside a span, but the italic style is applied to the parent Box
+		const styledParent = title.closest('[style*="italic"], [class*="italic"]') || title.parentElement;
+		expect(styledParent).toHaveStyle({ fontStyle: 'italic' });
+	});
 
 	it('applies consistent text styling', () => {
 		render(<PageHeader title="Styled Title" />);

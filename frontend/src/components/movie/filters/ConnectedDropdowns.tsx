@@ -325,8 +325,7 @@ const ConnectedDropdowns = ({
 				</Select.Root>
 			</Box>
 
-			{/* Runtime dropdown - DISABLED due to TMDB API limitations */}
-			{/* 
+			{/* Runtime dropdown - DISABLED due to TMDB API limitations
 				TMDB's runtime filtering is fundamentally broken due to data contamination
 				from user-submitted translations. TMDB has acknowledged this issue but won't fix it.
 				
@@ -336,8 +335,8 @@ const ConnectedDropdowns = ({
 				3. Accept 2-5 second page load delays for runtime-filtered results
 				
 				Preserved code below for future implementation:
-			*/}
-			{false && (
+			
+			{/*
 				<Box position="relative">
 					<Select.Root
 						collection={runtimeCollection}
@@ -425,7 +424,7 @@ const ConnectedDropdowns = ({
 						</Select.Positioner>
 				</Select.Root>
 				</Box>
-			)}
+			*/}
 
 			{/* Advanced filters toggle */}
 			{onToggleAdvanced && (

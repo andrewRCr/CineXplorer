@@ -1,6 +1,6 @@
 import { COLORS } from "@/constants/theme";
 import { forwardRef } from "react";
-import { SimpleGrid, Text, Button, Box, Skeleton } from "@chakra-ui/react";
+import { Text, Button, Box, Skeleton } from "@chakra-ui/react";
 import MovieCard from "../MovieCard";
 import MovieCardContainer from "../MovieCardContainer";
 import { PaginationCtrl } from "../../layout/PaginationCtrl";
@@ -9,10 +9,7 @@ import { useMovieCollectionContext } from "@/hooks/useMovieCollectionContext";
 import { usePageChangeHandler } from "@/hooks/usePageChangeHandler";
 import { useMoviesFetcher } from "@/hooks/useMoviesFetcher";
 import { usePaginationDisplay } from "@/hooks/usePaginationDisplay";
-import {
-	type Movie,
-	type PaginatedMoviesResponse,
-} from "@/types/movie";
+import { type Movie, type PaginatedMoviesResponse } from "@/types/movie";
 
 // Create a placeholder movie object to be used in the skeleton loading state.
 // This ensures the Skeleton wrapper has a correctly-structured child to measure.
@@ -50,7 +47,7 @@ interface MovieCollectionGridProps {
 const MovieCollectionGrid = forwardRef<MovieGridRef, MovieCollectionGridProps>(
 	(props) => {
 		// Use custom hooks to extract complex logic
-		const { source, query, currentPage, onPageChange, finalFetcher } = 
+		const { source, query, currentPage, onPageChange, finalFetcher } =
 			useMovieCollectionContext(props);
 
 		const pageSize = 20;
@@ -65,9 +62,15 @@ const MovieCollectionGrid = forwardRef<MovieGridRef, MovieCollectionGridProps>(
 		const { handlePageChange } = usePageChangeHandler(onPageChange);
 
 		// Use display hook for pagination UI logic
-		const { shouldShowEmptyState, shouldShowPagination, resultText } = 
-			usePaginationDisplay(currentPage, total_pages, total_results, movies.length, isLoading, pageSize);
-
+		const { shouldShowEmptyState, shouldShowPagination, resultText } =
+			usePaginationDisplay(
+				currentPage,
+				total_pages,
+				total_results,
+				movies.length,
+				isLoading,
+				pageSize
+			);
 
 		return (
 			<>
@@ -135,10 +138,12 @@ const MovieCollectionGrid = forwardRef<MovieGridRef, MovieCollectionGridProps>(
 						opacity={isLoading ? 0.7 : 1}
 						transition="opacity 0.3s ease-in-out"
 					>
-						<SimpleGrid
-							columns={{ base: 1, sm: 2, md: 3, lg: 4, xl: 5 }}
-							gap="20px"
+						<Box
+							display="grid"
+							gridTemplateColumns="repeat(auto-fit, 194px)"
+							gap="16px"
 							mb={6}
+							justifyContent="start"
 						>
 							{isLoading
 								? // Show skeletons whenever loading (initial, pagination, filtering)
@@ -155,7 +160,7 @@ const MovieCollectionGrid = forwardRef<MovieGridRef, MovieCollectionGridProps>(
 										</Skeleton>
 								  ))
 								: // Otherwise, show the movies
-				  movies.map((movie: Movie) => (
+								  movies.map((movie: Movie) => (
 										<MovieCardContainer key={movie.tmdb_id}>
 											<MovieCard
 												movie={movie}
@@ -165,7 +170,7 @@ const MovieCollectionGrid = forwardRef<MovieGridRef, MovieCollectionGridProps>(
 											/>
 										</MovieCardContainer>
 								  ))}
-						</SimpleGrid>
+						</Box>
 					</Box>
 				)}
 

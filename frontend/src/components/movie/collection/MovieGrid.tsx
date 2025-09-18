@@ -1,10 +1,6 @@
 import { COLORS } from "@/constants/theme";
-import {
-	useMemo,
-	forwardRef,
-	useImperativeHandle,
-} from "react";
-import { SimpleGrid, Text, Button, Box, Skeleton } from "@chakra-ui/react";
+import { useMemo, forwardRef, useImperativeHandle } from "react";
+import { Text, Button, Box, Skeleton } from "@chakra-ui/react";
 import MovieCard from "../MovieCard";
 import MovieCardContainer from "../MovieCardContainer";
 import { PaginationCtrl } from "../../layout/PaginationCtrl";
@@ -32,9 +28,8 @@ const MovieGrid = forwardRef<MovieGridRef, MovieGridProps>(
 		const pageSize = 20;
 
 		// Use pagination hook for complex URL and state management first
-		const { currentPage, handlePageChange, resetToPageOne } = useMovieGridPagination(
-			initialCurrentPage
-		);
+		const { currentPage, handlePageChange, resetToPageOne } =
+			useMovieGridPagination(initialCurrentPage);
 
 		// Create fetcher callback that uses the current page from pagination hook
 		const fetcherCallback = useMemo(() => {
@@ -42,19 +37,20 @@ const MovieGrid = forwardRef<MovieGridRef, MovieGridProps>(
 				return fetcher(currentPage);
 			};
 		}, [fetcher, currentPage]);
-		
-		const {
-			total_pages,
-			total_results,
-			movies,
-			error,
-			setError,
-			isLoading,
-		} = useMoviesArray(fetcherCallback);
+
+		const { total_pages, total_results, movies, error, setError, isLoading } =
+			useMoviesArray(fetcherCallback);
 
 		// Use display hook for pagination UI logic
 		const { shouldShowEmptyState, shouldShowPagination, resultText } =
-			usePaginationDisplay(currentPage, total_pages, total_results, movies.length, isLoading, pageSize);
+			usePaginationDisplay(
+				currentPage,
+				total_pages,
+				total_results,
+				movies.length,
+				isLoading,
+				pageSize
+			);
 
 		// Expose resetToPageOne method via ref
 		useImperativeHandle(
@@ -65,10 +61,8 @@ const MovieGrid = forwardRef<MovieGridRef, MovieGridProps>(
 			[resetToPageOne]
 		);
 
-
-
 		const skeletons = [1, 2, 3, 4, 5, 6, 7, 8];
-		
+
 		return (
 			<>
 				{error && (
@@ -119,10 +113,12 @@ const MovieGrid = forwardRef<MovieGridRef, MovieGridProps>(
 						</Text>
 					</Box>
 				) : (
-					<SimpleGrid
-						columns={{ base: 1, sm: 2, md: 3, lg: 4, xl: 5 }}
-						gap="20px"
+					<Box
+						display="grid"
+						gridTemplateColumns="repeat(auto-fit, 194px)"
+						gap="16px"
 						mb={6}
+						justifyContent="start"
 					>
 						{isLoading
 							? skeletons.map((skeleton) => (
@@ -140,7 +136,7 @@ const MovieGrid = forwardRef<MovieGridRef, MovieGridProps>(
 										/>
 									</MovieCardContainer>
 							  ))}
-					</SimpleGrid>
+					</Box>
 				)}
 
 				{/* Bottom Pagination */}

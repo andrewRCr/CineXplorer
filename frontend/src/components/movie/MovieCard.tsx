@@ -10,7 +10,6 @@ import {
 } from "@chakra-ui/react";
 import { useState, useRef, useEffect, memo, useMemo, useCallback } from "react";
 import { Link } from "react-router-dom";
-import { COLORS } from "@/constants/theme";
 import { type Movie } from "@/types/movie";
 import { Tooltip } from "../chakra/tooltip";
 import { LuEye, LuHeart } from "react-icons/lu";
@@ -116,7 +115,6 @@ const MovieCard = ({ movie, currentPage, source, query }: MovieCardProps) => {
 	return (
 		<Box
 			width={cardWidth}
-			p={0.5}
 			height="100%"
 			position="relative"
 			onMouseEnter={() => setIsCardHovered(true)}
@@ -128,6 +126,8 @@ const MovieCard = ({ movie, currentPage, source, query }: MovieCardProps) => {
 				flexDirection="column"
 				position="relative"
 				overflow="hidden"
+				borderRadius={10}
+				border={"0px"}
 			>
 				<Link
 					to={`/movie/${movie.tmdb_id}${queryString}`}
@@ -189,8 +189,8 @@ const MovieCard = ({ movie, currentPage, source, query }: MovieCardProps) => {
 									pointerEvents="none"
 								>
 									<Box
-										bg={COLORS.background.main}
-										borderColor="border.main"
+										bg="background.main"
+										borderColor="border.subtle"
 										borderWidth="1px"
 										borderRadius="md"
 										shadow="lg"
@@ -209,13 +209,15 @@ const MovieCard = ({ movie, currentPage, source, query }: MovieCardProps) => {
 											height="0"
 											borderLeft="6px solid transparent"
 											borderRight="6px solid transparent"
-											borderTop={`6px solid ${COLORS.background.main}`}
+											borderTopColor="background.main"
+											borderTopWidth="6px"
+											borderTopStyle="solid"
 										/>
 										<Text
 											fontSize="sm"
 											fontWeight="medium"
 											fontFamily="sourcesans"
-											color={COLORS.text.main}
+											color="text.main"
 											lineHeight="1.2"
 										>
 											{movie.title}
@@ -233,7 +235,7 @@ const MovieCard = ({ movie, currentPage, source, query }: MovieCardProps) => {
 								<Text
 									fontSize="sm"
 									fontFamily="sourcesans"
-									color={COLORS.text.secondary}
+									color="text.secondary"
 								>
 									{formattedDate}
 								</Text>
@@ -247,7 +249,7 @@ const MovieCard = ({ movie, currentPage, source, query }: MovieCardProps) => {
 								<Tooltip content="Watched" openDelay={500}>
 									<IconButton
 										variant="ghost"
-										colorScheme={COLORS.accent.primary}
+										colorPalette="blue"
 										size="sm"
 									>
 										<LuEye />
@@ -275,7 +277,7 @@ const MovieCard = ({ movie, currentPage, source, query }: MovieCardProps) => {
 					left="0"
 					width={isCardHovered ? "100%" : "0%"}
 					height="3px"
-					backgroundColor={COLORS.accent.primary}
+					backgroundColor="accent.primary"
 					transition="width 0.3s ease-in-out"
 					zIndex="1"
 				/>

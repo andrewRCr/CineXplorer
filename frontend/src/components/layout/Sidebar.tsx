@@ -1,4 +1,3 @@
-import { COLORS } from "@/constants/theme";
 import React from "react";
 import SidebarContent from "./SidebarContent";
 import { Box } from "@chakra-ui/react";
@@ -30,7 +29,7 @@ const Sidebar: React.FC = () => {
 		<Box
 			as="aside"
 			w="280px"
-			bg={COLORS.background.sidebar}
+			bg="background.sidebar"
 			boxShadow="2px 0 8px 0 rgba(0,0,0,0.08)"
 			position="sticky"
 			top={SIDEBAR_STICKY_TOP_OFFSET}

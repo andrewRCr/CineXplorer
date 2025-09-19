@@ -8,7 +8,6 @@ import {
 	createListCollection,
 	useBreakpointValue,
 } from "@chakra-ui/react";
-import { COLORS } from "@/constants/theme";
 import { NAVIGATION_SECTIONS } from "@/constants/navigation";
 import { BsFillPlusCircleFill } from "react-icons/bs";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -91,7 +90,7 @@ export const SidebarContent: React.FC<SidebarContentProps> = ({
 						<Text
 							fontSize="sm"
 							fontWeight="medium"
-							color={COLORS.text.secondary}
+							color="text.secondary"
 							mb={3}
 						>
 							{section.title}
@@ -144,11 +143,11 @@ export const SidebarContent: React.FC<SidebarContentProps> = ({
 												py={2}
 												fontSize="sm"
 												fontWeight="normal"
-												color={COLORS.text.main}
-												_hover={{ bg: COLORS.background.subItem }}
+												color="text.main"
+												_hover={{ bg: "background.subItem" }}
 												_selected={{
-													bg: COLORS.background.subItem,
-													color: COLORS.text.main,
+													bg: "background.subItem",
+													color: "text.main",
 													fontWeight: "medium",
 												}}
 												cursor="pointer"
@@ -184,11 +183,11 @@ export const SidebarContent: React.FC<SidebarContentProps> = ({
 										py={2}
 										fontSize="sm"
 										fontWeight="normal"
-										color={COLORS.text.main}
-										_hover={{ bg: COLORS.background.subItem }}
+										color="text.main"
+										_hover={{ bg: "background.subItem" }}
 										_selected={{
-											bg: COLORS.background.subItem,
-											color: COLORS.text.main,
+											bg: "background.subItem",
+											color: "text.main",
 											fontWeight: "medium",
 										}}
 										cursor="pointer"
@@ -205,7 +204,7 @@ export const SidebarContent: React.FC<SidebarContentProps> = ({
 					{sectionIndex < NAVIGATION_SECTIONS.length - 1 && (
 						<Box pt={8} pb={5}>
 							<Separator
-								borderColor={COLORS.border.separator}
+								borderColor="border.separator"
 								alignSelf="center"
 							/>
 						</Box>

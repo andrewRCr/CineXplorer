@@ -1,4 +1,3 @@
-import { COLORS } from "@/constants/theme";
 import { Badge, HStack } from "@chakra-ui/react";
 import React from "react";
 
@@ -12,7 +11,7 @@ interface MovieUserScoreProps {
 }
 
 const SCORE_COLORS = {
-	high: COLORS.text.successDark, // >= 75
+	high: "text.successDark", // >= 75
 	medium: "blue.700", // 50–74
 	low: "yellow.700", // < 50
 };

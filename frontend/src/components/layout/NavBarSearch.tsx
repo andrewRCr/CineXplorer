@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Box, Input, IconButton } from "@chakra-ui/react";
 import { FiSearch } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
-import { COLORS } from "@/constants/theme";
 import { ROUTES } from "@/constants/routes";
 
 interface NavBarSearchProps {
@@ -42,11 +41,12 @@ const NavBarSearch = ({ onSearch }: NavBarSearchProps = {}) => {
 			borderRadius="md"
 			border="1px solid"
 			borderColor="border.separator"
-			backgroundColor={isHovered ? COLORS.background.subItem : "transparent"}
+			backgroundColor={isHovered ? "background.subItem" : "transparent"}
 			transition="all 0.2s ease"
 			_focusWithin={{
-				borderColor: COLORS.background.subItem,
-				boxShadow: `0 0 0 1px ${COLORS.background.subItem}`,
+				borderColor: "background.subItem",
+				boxShadow: "0 0 0 1px",
+				boxShadowColor: "background.subItem",
 				backgroundColor: "transparent",
 			}}
 		>
@@ -82,7 +82,7 @@ const NavBarSearch = ({ onSearch }: NavBarSearchProps = {}) => {
 					backgroundColor: "transparent",
 				}}
 				disabled={!query.trim()}
-				color={!query.trim() ? COLORS.text.secondary : COLORS.text.main}
+				color={!query.trim() ? "text.secondary" : "text.main"}
 			>
 				<FiSearch />
 			</IconButton>

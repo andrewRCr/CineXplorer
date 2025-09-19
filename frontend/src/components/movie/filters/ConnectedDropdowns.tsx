@@ -378,7 +378,7 @@ const ConnectedDropdowns = ({
 							borderColor="gray.200"
 							backgroundColor="transparent"
 							_hover={{
-								backgroundColor: COLORS.background.subItem,
+								backgroundColor: "background.subItem",
 							}}
 							_disabled={{
 								opacity: 1,
@@ -392,8 +392,8 @@ const ConnectedDropdowns = ({
 								"& > span": {
 									fontStyle: runtimeDisplayData.isRuntimeComplex ? "italic" : "normal",
 									color: runtimeDisplayData.isRuntimeComplex
-										? COLORS.text.secondary
-										: COLORS.text.main,
+										? "text.secondary"
+										: "text.main",
 								},
 								"& [data-part='indicator']": {
 									width: "16px",
@@ -407,14 +407,14 @@ const ConnectedDropdowns = ({
 						<Select.Positioner>
 							<Select.Content
 								w={RUNTIME_WIDTH}
-								bg={COLORS.background.subItem}
-								borderColor={COLORS.border.main}
+								bg="background.subItem"
+								borderColor="border.separator"
 							>
 								{runtimeCollection.items.map((item) => (
 									<Select.Item
 										key={item.value}
 										item={item}
-										_hover={{ bg: COLORS.accent.primary }}
+										_hover={{ bg: "accent.primary" }}
 									>
 										{item.label}
 									</Select.Item>

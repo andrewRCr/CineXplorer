@@ -1,6 +1,5 @@
 import { Input, Box } from "@chakra-ui/react";
 import { FiSearch } from "react-icons/fi";
-import { COLORS } from "@/constants/theme";
 import { useState } from "react";
 
 interface SearchBarProps {
@@ -22,27 +21,29 @@ const SearchBar = ({
 			onMouseEnter={() => setIsHovered(true)}
 			onMouseLeave={() => setIsHovered(false)}
 		>
-			<FiSearch
-				style={{
-					position: "absolute",
-					left: "12px",
-					top: "50%",
-					transform: "translateY(-50%)",
-					color: COLORS.text.secondary,
-					zIndex: 1,
-				}}
-			/>
+			<Box
+				position="absolute"
+				left="12px"
+				top="50%"
+				transform="translateY(-50%)"
+				color="text.secondary"
+				zIndex={1}
+				pointerEvents="none"
+			>
+				<FiSearch />
+			</Box>
 			<Input
 				value={value}
 				onChange={(e) => onChange(e.target.value)}
 				placeholder={placeholder}
-				borderColor={COLORS.border.main}
-				backgroundColor={isHovered ? COLORS.background.subItem : "transparent"}
+				borderColor="border.subtle"
+				backgroundColor={isHovered ? "background.subItem" : "transparent"}
 				pl="40px"
 				transition="all 0.2s ease"
 				_focus={{
-					borderColor: COLORS.accent.primary,
-					boxShadow: `0 0 0 1px ${COLORS.accent.primary}`,
+					borderColor: "accent.primary",
+					boxShadow: "0 0 0 1px",
+					boxShadowColor: "accent.primary",
 					backgroundColor: "transparent",
 				}}
 				_hover={{}}

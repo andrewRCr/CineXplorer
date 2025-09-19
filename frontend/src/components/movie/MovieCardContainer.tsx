@@ -1,4 +1,3 @@
-import { COLORS } from "@/constants/theme";
 import { Box } from "@chakra-ui/react";
 import React from "react";
 
@@ -10,8 +9,9 @@ const MovieCardContainer = ({ children }: MovieCardContainerProps) => {
 	return (
 		<Box
 			borderRadius={10}
-			boxShadow={`0 2px 8px ${COLORS.border.main}`}
-			border={`1px solid ${COLORS.border.main}`}
+			boxShadow="0 2px 8px rgba(0, 0, 0, 0.1)"
+			border="1px solid"
+			borderColor="border.separator"
 			overflow="hidden"
 		>
 			{children}

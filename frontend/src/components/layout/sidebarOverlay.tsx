@@ -1,6 +1,5 @@
 "use client";
 
-import { COLORS } from "@/constants/theme";
 import {
 	HStack,
 	IconButton,
@@ -32,24 +31,24 @@ export const sidebarDrawer = createOverlay<SidebarDrawerProps>((props) => {
 				<Drawer.Backdrop />
 				<Drawer.Positioner>
 					<Drawer.Content
-						bg={COLORS.background.sidebar}
+						bg="background.sidebar"
 						borderRight="1px solid"
-						borderColor={COLORS.border.sidebar}
+						borderColor="border.sidebar"
 						width="280px"
 					>
 						<Drawer.Header
 							borderBottom="1px solid"
-							borderColor={COLORS.border.separator}
+							borderColor="border.separator"
 							pb={4}
 						>
 							<HStack justify="space-between" align="center">
-								<Text fontSize="lg" fontWeight="bold" color={COLORS.text.main}>
+								<Text fontSize="lg" fontWeight="bold" color="text.main">
 									CineXplorer
 								</Text>
 								<IconButton
 									variant="ghost"
 									size="sm"
-									color={COLORS.text.main}
+									color="text.main"
 									onClick={() => sidebarDrawer.close("sidebar")}
 									aria-label="Close menu"
 								>

@@ -70,7 +70,8 @@ const SortDropdownMinimal = ({
 			<Text
 				fontSize="sm"
 				fontWeight="medium"
-			color="text.secondary"
+				fontFamily="system"
+				color="text.secondary"
 				alignSelf="center"
 				flexShrink={0}
 				mr={2}

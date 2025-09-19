@@ -54,6 +54,7 @@ const config = defineConfig({
 			fonts: {
 				heading: { value: `'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif` },
 				body: { value: `'Work Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif` },
+				system: { value: `-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif` },
 			},
 		},
 		semanticTokens: {

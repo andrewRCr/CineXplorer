@@ -1,5 +1,4 @@
 import { Box, Text, HStack, VStack } from "@chakra-ui/react";
-import { COLORS } from "@/constants/theme";
 import type { MovieFilters as UnifiedMovieFilters } from "./AdvancedMovieFilters";
 import ConnectedDropdowns from "./ConnectedDropdowns";
 import CollapsibleSearchBox from "./CollapsibleSearchBox";
@@ -72,7 +71,7 @@ const LetterboxdStyleFilters = ({
 		<VStack
 			w="100%"
 			p={4}
-			bg={COLORS.background.main}
+			bg="background.main"
 			gap={4}
 			align="stretch"
 			overflow="visible"
@@ -91,7 +90,8 @@ const LetterboxdStyleFilters = ({
 					<Text
 						fontSize="sm"
 						fontWeight="medium"
-						color={COLORS.text.secondary}
+						fontFamily="system"
+						color="text.secondary"
 						mr={2}
 						alignSelf="center"
 						flexShrink={0}

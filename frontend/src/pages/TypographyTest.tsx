@@ -186,6 +186,61 @@ const TypographyTest = () => {
           </VStack>
         </Box>
 
+        {/* System vs Custom Fonts */}
+        <Box>
+          <Heading as="h3" size="2xl" mb={4}>
+            System vs Custom Font Comparison
+          </Heading>
+          
+          <VStack gap={4} align="start">
+            <Box>
+              <Text mb={2} fontWeight="bold" fontSize="sm" color="text.muted">Functional Text (Labels, Controls):</Text>
+              
+              <VStack gap={3} align="start" pl={4}>
+                <Box>
+                  <Text fontSize="xs" color="text.muted" mb={1}>fontFamily="system" - System fonts for utility text</Text>
+                  <Text fontSize="sm" fontFamily="system" fontWeight="medium" color="text.secondary">
+                    Browse by
+                  </Text>
+                  <Text fontSize="sm" fontFamily="system" fontWeight="medium" color="text.secondary" ml={4}>
+                    Sort by
+                  </Text>
+                </Box>
+                
+                <Box>
+                  <Text fontSize="xs" color="text.muted" mb={1}>fontFamily="body" (Work Sans) - Current approach</Text>
+                  <Text fontSize="sm" fontFamily="body" fontWeight="medium" color="text.secondary">
+                    Browse by
+                  </Text>
+                  <Text fontSize="sm" fontFamily="body" fontWeight="medium" color="text.secondary" ml={4}>
+                    Sort by
+                  </Text>
+                </Box>
+              </VStack>
+            </Box>
+            
+            <Box>
+              <Text mb={2} fontWeight="bold" fontSize="sm" color="text.muted">Content Text:</Text>
+              
+              <VStack gap={3} align="start" pl={4}>
+                <Box>
+                  <Text fontSize="xs" color="text.muted" mb={1}>fontFamily="body" (Work Sans) - Keep for content</Text>
+                  <Text fontSize="md" fontFamily="body">
+                    Movie titles, descriptions, and user-facing content should use Work Sans.
+                  </Text>
+                </Box>
+                
+                <Box>
+                  <Text fontSize="xs" color="text.muted" mb={1}>fontFamily="heading" (Space Grotesk) - Keep for headings</Text>
+                  <Text fontSize="lg" fontFamily="heading" fontWeight="semibold">
+                    Section headings and branding should use Space Grotesk.
+                  </Text>
+                </Box>
+              </VStack>
+            </Box>
+          </VStack>
+        </Box>
+
         {/* Theme Colors Test */}
         <Box>
           <Heading as="h3" size="2xl" mb={4}>

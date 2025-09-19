@@ -501,35 +501,31 @@ describe('PaginationCtrl Component', () => {
 			expect(maxPageButton).toHaveTextContent('500'); // Should be "500", not formatted
 		});
 
-		it('recovers from invalid callback invocations', async () => {
-			// Suppress console.error for this test since we expect an error
-			const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+	it('handles callback function changes without errors', async () => {
+			const user = userEvent.setup();
+			const firstCallback = vi.fn();
+			const secondCallback = vi.fn();
 			
-			const faultyCallback = vi.fn().mockImplementationOnce(() => {
-				throw new Error('Callback error');
+			// Render with first callback
+			const { rerender } = render(
+				<PaginationCtrl totalMovieCount={200} currentPage={1} onGoToPage={firstCallback} />
+			);
+			
+			// Change to second callback
+			rerender(<PaginationCtrl totalMovieCount={200} currentPage={1} onGoToPage={secondCallback} />);
+			
+			// Click a page button
+			const pageButton = screen.getByText('2');
+			await act(async () => {
+				await user.click(pageButton);
 			});
 			
-			const user = userEvent.setup();
-			render(<PaginationCtrl totalMovieCount={200} currentPage={1} onGoToPage={faultyCallback} />);
+			// Second callback should be called, not first
+			expect(firstCallback).not.toHaveBeenCalled();
+			expect(secondCallback).toHaveBeenCalledWith(2);
 			
-			// Should handle callback errors gracefully
-			const pageButton = screen.getByText('2');
-			
-			// This might throw, but component should remain functional
-			try {
-				await act(async () => {
-					await user.click(pageButton);
-				});
-			} catch (error) {
-				// Expected - callback threw error
-				expect(error).toBeInstanceOf(Error);
-			}
-			
-			// Component should still be rendered
+			// Component should still be functional
 			expect(screen.getByLabelText('Previous page')).toBeInTheDocument();
-			
-			// Restore console.error
-			consoleSpy.mockRestore();
 		});
 	});
 });

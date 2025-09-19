@@ -28,6 +28,8 @@ const config = defineConfig({
 				teal: { value: "#38B2AC" },
 				// Purple color palette
 				purple: { value: "#805AD5" },
+				// Custom colors
+				nearBlack: { value: "#0d0e0e" },
 				discordDark: { value: "#23272f" },
 				chakraGray900: { value: "#1a202c" },
 				tailwindZinc900: { value: "#18181b" },
@@ -52,49 +54,60 @@ const config = defineConfig({
 				customGrayBorder: { value: "#718096" },
 			},
 			fonts: {
-				heading: { value: `'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif` },
-				body: { value: `'Work Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif` },
-				system: { value: `-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif` },
-				inter: { value: `'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif` },
-				sourcesans: { value: `'Source Sans 3', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif` },
+				heading: {
+					value: `'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif`,
+				},
+				body: {
+					value: `'Work Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif`,
+				},
+				system: {
+					value: `-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif`,
+				},
+				inter: {
+					value: `'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif`,
+				},
+				sourcesans: {
+					value: `'Source Sans 3', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif`,
+				},
 			},
 		},
 		semanticTokens: {
 			colors: {
 				background: {
 					main: { value: "{colors.discordDark}" },
-					navBar: { value: "{colors.gradientGrayCentered}" },
+					navBar: { value: "{colors.tailwindZinc900}" },
 					footer: { value: "{colors.gradientGrayCentered}" },
 					sidebar: { value: "{colors.discordDark}" },
+					sidebarInterior: { value: "{colors.tailwindZinc900}" },
 					subItem: { value: "{colors.chakraGray900}" },
 					skeleton: { value: "{colors.tailwindZinc900}" },
 				},
-			border: {
-				subtle: { value: "{colors.gray.500}" },
-				separator: { value: "{colors.gray.700}" },
-				sidebar: { value: "{colors.gray.700}" },
+				border: {
+					subtle: { value: "{colors.gray.500}" },
+					separator: { value: "{colors.gray.700}" },
+					sidebar: { value: "{colors.gray.700}" },
 					input: { value: "{colors.white}" },
 					error: { value: "{colors.fed7d7}" },
 					success: { value: "{colors.c6f6d5}" },
 				},
-			text: {
-				main: { value: "{colors.white}" },
-				muted: { value: "{colors.gray.300}" },
-				error: { value: "{colors.red.500}" },
-				info: { value: "{colors.gray.500}" },
-				secondary: { value: "{colors.gray.400}" },
+				text: {
+					main: { value: "{colors.white}" },
+					muted: { value: "{colors.gray.300}" },
+					error: { value: "{colors.red.500}" },
+					info: { value: "{colors.gray.500}" },
+					secondary: { value: "{colors.gray.400}" },
 					success: { value: "{colors.48bb78}" },
 					successDark: { value: "{colors.2f855a}" },
 				},
-			accent: {
-				primary: { value: "{colors.blue.500}" },
-				secondary: { value: "{colors.blue.700}" },
+				accent: {
+					primary: { value: "{colors.blue.500}" },
+					secondary: { value: "{colors.blue.700}" },
 					tertiary: { value: "{colors.white}" },
 					highlight: { value: "{colors.63b3ed}" },
 					link: { value: "{colors.4299e1}" },
-				tagTeal: { value: "{colors.teal}" },
-				tagPurple: { value: "{colors.purple}" },
-			},
+					tagTeal: { value: "{colors.teal}" },
+					tagPurple: { value: "{colors.purple}" },
+				},
 			},
 		},
 	},

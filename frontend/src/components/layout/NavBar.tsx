@@ -4,12 +4,16 @@ import {
 	Image,
 	Container,
 	Heading,
+	Button,
+	IconButton,
 	useBreakpointValue,
 } from "@chakra-ui/react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import { BsFillPlusCircleFill } from "react-icons/bs";
 import logo from "../../assets/icons8-movie-64.webp";
 
 import { ROUTES } from "@/constants/routes";
+import { USER_NAVIGATION_ITEMS } from "@/constants/navigation";
 import NavBarUserMenu from "./NavBarUserMenu";
 import NavBarSearch from "./NavBarSearch";
 import MobileMenuButton from "./MobileMenuButton";
@@ -20,7 +24,7 @@ const LogoAndTitle = () => (
 		<HStack gap={3} alignItems="center">
 			<Image
 				src={logo}
-				boxSize="60px"
+				boxSize="48px"
 				cursor="pointer"
 				transition="all 0.2s"
 				alt="CineXplorer Logo"
@@ -74,6 +78,16 @@ const NavBar = () => {
 	// Show hamburger menu on mobile, logo on left for desktop
 	const isMobile =
 		useBreakpointValue({ base: true, lg: false }, { ssr: false }) ?? true;
+	const location = useLocation();
+
+	// Handle LOG button click
+	const handleLogClick = () => {
+		// TODO: Implement actual log action
+		console.log("Log action triggered");
+	};
+
+	// Check if a tab is active
+	const isTabActive = (path: string) => location.pathname === path;
 
 	return (
 		<Box
@@ -87,7 +101,12 @@ const NavBar = () => {
 			borderColor="border.separator"
 		>
 			<Container maxW="container.xl" px={{ base: 2, md: 6, lg: 8 }} w="100%">
-				<HStack justifyContent="space-between" py={2} position="relative">
+				<HStack
+					justifyContent="space-between"
+					pt={2}
+					pb={isMobile ? 2 : 0}
+					position="relative"
+				>
 					{isMobile ? (
 						/* Mobile Layout: Hamburger - Logo/Title - User Controls */
 						<>
@@ -105,65 +124,10 @@ const NavBar = () => {
 							</HStack>
 						</>
 					) : (
-						/* Desktop Layout: Logo on left, CineXplorer text centered, search and user controls on right */
+						/* Desktop Layout: Logo and title left-aligned, search and user controls on right */
 						<>
-							{/* Left - Logo only */}
-							<Link to={ROUTES.HOME} style={{ textDecoration: "none" }}>
-								<Image
-									src={logo}
-									boxSize="60px"
-									cursor="pointer"
-									transition="all 0.2s"
-									alt="CineXplorer Logo"
-									_hover={{
-										transform: "scale(1.05)",
-										filter:
-											"brightness(1.1) drop-shadow(0 0 8px rgba(99, 179, 237, 0.3))",
-									}}
-									_active={{
-										transform: "scale(0.95)",
-									}}
-								/>
-							</Link>
-
-							{/* Center - CineXplorer text only */}
-							<Box position="absolute" left="50%" transform="translateX(-50%)">
-								<Link to={ROUTES.HOME} style={{ textDecoration: "none" }}>
-									<Heading
-										as="h1"
-										size="4xl"
-										color="text.main"
-										cursor="pointer"
-										transition="all 0.2s"
-										position="relative"
-										_hover={{
-											color: "accent.primary",
-											transform: "scale(1.02)",
-											textShadow: "0 0 8px rgba(99, 179, 237, 0.3)",
-											_after: {
-												width: "100%",
-											},
-										}}
-										_active={{
-											transform: "scale(0.98)",
-										}}
-										_after={{
-											content: '""',
-											position: "absolute",
-											bottom: "-2px",
-											left: "50%",
-											transform: "translateX(-50%)",
-											width: "0%",
-											height: "2px",
-											backgroundColor: "accent.primary",
-											transition: "width 0.3s ease",
-											borderRadius: "1px",
-										}}
-									>
-										CineXplorer
-									</Heading>
-								</Link>
-							</Box>
+							{/* Left - Logo and Title together */}
+							<LogoAndTitle />
 
 							{/* Right side - Search and User controls */}
 							<HStack gap={4} alignItems="center">
@@ -174,6 +138,61 @@ const NavBar = () => {
 					)}
 				</HStack>
 			</Container>
+
+			{/* Desktop User Navigation Tabs - Secondary Row */}
+			{!isMobile && (
+				<Box bg="background.navBar">
+					<Container
+						maxW="container.xl"
+						px={{ base: 2, md: 6, lg: 8 }}
+						w="100%"
+					>
+						<HStack gap={1} pt={0} pb={0}>
+							{/* LOG Button */}
+							<IconButton
+								p={2}
+								size="sm"
+								variant="ghost"
+								aria-label="Log activity"
+								onClick={handleLogClick}
+								_hover={{ bg: "background.subItem" }}
+							>
+								<BsFillPlusCircleFill size={14} />
+								LOG
+							</IconButton>
+
+							{/* User Navigation Tabs */}
+							{USER_NAVIGATION_ITEMS.filter((item) => !item.isAction).map(
+								(item) => (
+									<Link
+										key={item.value}
+										to={item.path}
+										style={{ textDecoration: "none" }}
+									>
+										<Button
+											size="sm"
+											variant={isTabActive(item.path) ? "solid" : "ghost"}
+											colorScheme={
+												isTabActive(item.path) ? "accent" : undefined
+											}
+											_hover={{
+												bg: isTabActive(item.path)
+													? "accent.600"
+													: "background.subItem",
+											}}
+											borderRadius="md"
+											px={3}
+											fontWeight={isTabActive(item.path) ? "medium" : "normal"}
+										>
+											{item.label}
+										</Button>
+									</Link>
+								)
+							)}
+						</HStack>
+					</Container>
+				</Box>
+			)}
 		</Box>
 	);
 };

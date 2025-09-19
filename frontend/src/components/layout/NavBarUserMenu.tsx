@@ -6,10 +6,13 @@ import {
 	Box,
 	VStack,
 	Portal,
+	useBreakpointValue,
 } from "@chakra-ui/react";
 import { Link, useNavigate } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
+import { BsFillPlusCircleFill } from "react-icons/bs";
 import { ROUTES } from "@/constants/routes";
+import { USER_NAVIGATION_ITEMS } from "@/constants/navigation";
 import useAuthContext from "@/hooks/useAuthContext";
 
 const NavBarUserMenu = () => {
@@ -18,6 +21,14 @@ const NavBarUserMenu = () => {
 	const [isOpen, setIsOpen] = useState(false);
 	const buttonRef = useRef<HTMLButtonElement>(null);
 	const dropdownRef = useRef<HTMLDivElement>(null);
+	const isMobile = useBreakpointValue({ base: true, lg: false }, { ssr: false }) ?? true;
+
+	// Handle LOG button click
+	const handleLogClick = () => {
+		// TODO: Implement actual log action
+		console.log("Log action triggered");
+		setIsOpen(false);
+	};
 
 	// Handle click outside to close dropdown
 	useEffect(() => {
@@ -92,6 +103,103 @@ const NavBarUserMenu = () => {
 						zIndex={9999}
 					>
 						<VStack gap={0} align="stretch">
+							{/* Mobile: Add LOG button and user navigation items */}
+							{isMobile && (
+								<>
+									{/* LOG Button */}
+									<Box
+										position="relative"
+										px={4}
+										py={3}
+										_hover={{
+											background: "background.subItem",
+											opacity: 0.8,
+											"& > div": { opacity: 1 },
+										}}
+										cursor="pointer"
+										borderRadius="md"
+										borderBottomRadius={0}
+										transition="all 0.2s ease-in-out"
+										onClick={handleLogClick}
+									>
+										<Box
+											position="absolute"
+											left={0}
+											top={0}
+											bottom={0}
+											w="3px"
+											background="accent.link"
+											opacity={0}
+											transition="opacity 0.2s ease-in-out"
+											borderRadius="md"
+											borderBottomRadius={0}
+										/>
+										<HStack gap={2} ml={2}>
+											<BsFillPlusCircleFill size={14} />
+											<Text
+												color="text.main"
+												_hover={{ color: "accent.link" }}
+												transition="color 0.2s ease-in-out"
+											>
+												LOG
+											</Text>
+										</HStack>
+									</Box>
+									
+									{/* User Navigation Items */}
+									{USER_NAVIGATION_ITEMS
+										.filter((item) => !item.isAction)
+										.map((item) => (
+											<Link
+												key={item.value}
+												to={item.path}
+												style={{ textDecoration: "none", width: "100%" }}
+												onClick={(e) => {
+													e.stopPropagation();
+													handleMenuItemClick();
+												}}
+											>
+												<Box
+													position="relative"
+													px={4}
+													py={3}
+													_hover={{
+														background: "background.subItem",
+														opacity: 0.8,
+														"& > div": { opacity: 1 },
+													}}
+													cursor="pointer"
+													borderRadius="md"
+													borderBottomRadius={0}
+													transition="all 0.2s ease-in-out"
+												>
+													<Box
+														position="absolute"
+														left={0}
+														top={0}
+														bottom={0}
+														w="3px"
+														background="accent.link"
+														opacity={0}
+														transition="opacity 0.2s ease-in-out"
+														borderRadius="md"
+														borderBottomRadius={0}
+													/>
+													<Text
+														color="text.main"
+														_hover={{ color: "accent.link" }}
+														transition="color 0.2s ease-in-out"
+														ml={2}
+													>
+														{item.label}
+													</Text>
+												</Box>
+											</Link>
+										))}
+								</>
+							)}
+							
+							{/* Existing Profile, Settings, Logout */}
 							<Link
 								to={ROUTES.PROFILE}
 								style={{ textDecoration: "none", width: "100%" }}

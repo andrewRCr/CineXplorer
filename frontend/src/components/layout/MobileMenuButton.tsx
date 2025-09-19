@@ -4,7 +4,6 @@ import { sidebarDrawer } from "./sidebarOverlay";
 
 interface MobileMenuButtonProps {
 	size?: "sm" | "md" | "lg";
-	variant?: "ghost" | "solid" | "outline";
 }
 
 /**
@@ -12,8 +11,7 @@ interface MobileMenuButtonProps {
  * Uses Chakra v3's overlay manager pattern for drawer control.
  */
 const MobileMenuButton: React.FC<MobileMenuButtonProps> = ({ 
-	size = "md", 
-	variant = "ghost" 
+	size = "md"
 }) => {
 	const handleOpen = () => {
 		sidebarDrawer.open("sidebar", {
@@ -26,12 +24,16 @@ const MobileMenuButton: React.FC<MobileMenuButtonProps> = ({
 				aria-label="Open navigation menu"
 				onClick={handleOpen}
 				size={size}
-				variant={variant}
+				variant="outline"
 				color="text.main"
+				border="1px solid"
+				borderColor="border.separator"
+				borderRadius="md"
 				_hover={{
 					bg: "background.subItem",
 					opacity: 0.8,
-					color: "accent.primary"
+					color: "accent.primary",
+					borderColor: "accent.primary"
 				}}
 			>
 				<LuMenu />

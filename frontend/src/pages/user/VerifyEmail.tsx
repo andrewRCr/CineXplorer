@@ -68,19 +68,22 @@ const VerifyEmail = () => {
 					setStatus("error");
 					setMessage("Email verification failed. Please try again.");
 				}
-			} catch (error: any) {
+			} catch (error: unknown) {
 				console.error("Email verification error:", error);
 				setStatus("error");
 
-				if (error.response?.status === 400) {
-					setMessage(
-						error.response.data.error || "Invalid or expired verification link."
-					);
-				} else {
-					setMessage(
-						"An error occurred during verification. Please try again."
-					);
+				if (error && typeof error === 'object' && 'response' in error) {
+					const axiosError = error as { response?: { status?: number; data?: { error?: string } } };
+					if (axiosError.response?.status === 400) {
+						setMessage(
+							axiosError.response.data?.error || "Invalid or expired verification link."
+						);
+						return;
+					}
 				}
+				setMessage(
+					"An error occurred during verification. Please try again."
+				);
 			}
 		};
 

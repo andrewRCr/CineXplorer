@@ -216,9 +216,11 @@ const Login = () => {
 				}
 			);
 			setResendMessage("Verification email sent! Please check your inbox.");
-		} catch (error: any) {
+		} catch (error: unknown) {
 			console.error("Resend error:", error);
-			console.error("Error response:", error.response);
+			if (error && typeof error === 'object' && 'response' in error) {
+				console.error("Error response:", (error as { response: unknown }).response);
+			}
 			setResendMessage("Failed to send email. Please try again.");
 		} finally {
 			setIsResendingEmail(false);

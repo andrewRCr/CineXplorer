@@ -4,7 +4,7 @@ export interface AuthStateProps {
 		password: string,
 		rememberMe?: boolean
 	) => Promise<
-		void | number | Error | { status: number; data: any; message: string }
+	void | number | Error | { status: number; data: unknown; message: string }
 	>;
 	isAuthenticated: boolean;
 	user: User | null;

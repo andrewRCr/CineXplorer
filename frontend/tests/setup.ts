@@ -38,11 +38,11 @@ class ResizeObserverMock {
 	disconnect = vi.fn();
 }
 
-global.ResizeObserver = ResizeObserverMock as any;
+global.ResizeObserver = ResizeObserverMock as typeof ResizeObserver;
 
 // Also ensure window.ResizeObserver is available
 if (typeof window !== 'undefined') {
-	window.ResizeObserver = ResizeObserverMock as any;
+	window.ResizeObserver = ResizeObserverMock as typeof ResizeObserver;
 }
 
 // Mock scrollIntoView since it's not implemented in jsdom

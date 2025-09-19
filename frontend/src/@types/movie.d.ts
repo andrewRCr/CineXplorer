@@ -89,4 +89,4 @@ export interface MovieFilters {
 }
 
 // Helper type for converting UI filters to API params
-export type MovieFiltersToApiParams = (filters: MovieFilters) => Record<string, any>;
+export type MovieFiltersToApiParams = (filters: MovieFilters) => Record<string, unknown>;

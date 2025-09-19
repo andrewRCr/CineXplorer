@@ -87,7 +87,7 @@ export function useAuth(): AuthStateProps & { user: User | null } {
 		password: string,
 		rememberMe: boolean = false
 	): Promise<
-		void | number | Error | { status: number; data: any; message: string }
+	void | number | Error | { status: number; data: unknown; message: string }
 	> => {
 		try {
 			await ensureCsrfTokenCookie(BASE_URL);

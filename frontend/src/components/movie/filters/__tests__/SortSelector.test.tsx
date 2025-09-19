@@ -173,11 +173,16 @@ describe('SortSelector Component', () => {
 			
 			const trigger = screen.getByRole('combobox');
 			
-			// Focus the trigger
+			// Click to open dropdown
 			await act(async () => {
 				await user.click(trigger);
 			});
-			expect(trigger).toHaveFocus();
+			
+			// When dropdown opens, focus moves to the dropdown content (Chakra UI behavior)
+			await waitFor(() => {
+				const listbox = screen.getByRole('listbox');
+				expect(listbox).toHaveFocus();
+			});
 			
 			// Should be able to navigate with keyboard
 			await act(async () => {

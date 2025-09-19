@@ -1,6 +1,5 @@
 import { IconButton } from "@chakra-ui/react";
 import { LuMenu } from "react-icons/lu";
-import { COLORS } from "@/constants/theme";
 import { sidebarDrawer } from "./sidebarOverlay";
 
 interface MobileMenuButtonProps {
@@ -28,10 +27,11 @@ const MobileMenuButton: React.FC<MobileMenuButtonProps> = ({
 				onClick={handleOpen}
 				size={size}
 				variant={variant}
-				color={COLORS.text.main}
+				color="text.main"
 				_hover={{
-					bg: `${COLORS.background.subItem}80`,
-					color: COLORS.accent.primary
+					bg: "background.subItem",
+					opacity: 0.8,
+					color: "accent.primary"
 				}}
 			>
 				<LuMenu />

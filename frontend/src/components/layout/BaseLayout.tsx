@@ -1,4 +1,3 @@
-import { COLORS } from "@/constants/theme";
 import NavBar from "./NavBar";
 import Footer from "./Footer";
 import { Box } from "@chakra-ui/react";
@@ -14,7 +13,7 @@ const BaseLayout = ({ children }: BaseLayoutProps) => {
 			minH="100vh"
 			display="flex"
 			flexDirection="column"
-			bg={COLORS.background.main}
+			bg="background.main"
 		>
 			{/* NavBar */}
 			<NavBar />

@@ -10,7 +10,6 @@ import {
 import { Link, useNavigate } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
 import { ROUTES } from "@/constants/routes";
-import { COLORS } from "@/constants/theme";
 import useAuthContext from "@/hooks/useAuthContext";
 
 const NavBarUserMenu = () => {
@@ -87,9 +86,9 @@ const NavBarUserMenu = () => {
 						minW="200px"
 						shadow="lg"
 						border="1px solid"
-						borderColor={COLORS.border.main}
+						borderColor="border.subtle"
 						borderRadius="md"
-						background={COLORS.background.main}
+						background="background.main"
 						zIndex={9999}
 					>
 						<VStack gap={0} align="stretch">
@@ -106,7 +105,8 @@ const NavBarUserMenu = () => {
 									px={4}
 									py={3}
 									_hover={{
-										background: `${COLORS.background.subItem}80`,
+										background: "background.subItem",
+										opacity: 0.8,
 										"& > div": { opacity: 1 },
 									}}
 									cursor="pointer"
@@ -120,15 +120,15 @@ const NavBarUserMenu = () => {
 										top={0}
 										bottom={0}
 										w="3px"
-										background={COLORS.accent.link}
+										background="accent.link"
 										opacity={0}
 										transition="opacity 0.2s ease-in-out"
 										borderRadius="md"
 										borderBottomRadius={0}
 									/>
 									<Text
-										color={COLORS.text.main}
-										_hover={{ color: COLORS.accent.link }}
+										color="text.main"
+										_hover={{ color: "accent.link" }}
 										transition="color 0.2s ease-in-out"
 										ml={2}
 									>
@@ -149,7 +149,8 @@ const NavBarUserMenu = () => {
 									px={4}
 									py={3}
 									_hover={{
-										background: `${COLORS.background.subItem}80`,
+										background: "background.subItem",
+										opacity: 0.8,
 										"& > div": { opacity: 1 },
 									}}
 									cursor="pointer"
@@ -161,13 +162,13 @@ const NavBarUserMenu = () => {
 										top={0}
 										bottom={0}
 										w="3px"
-										background={COLORS.accent.link}
+										background="accent.link"
 										opacity={0}
 										transition="opacity 0.2s ease-in-out"
 									/>
 									<Text
-										color={COLORS.text.main}
-										_hover={{ color: COLORS.accent.link }}
+										color="text.main"
+										_hover={{ color: "accent.link" }}
 										transition="color 0.2s ease-in-out"
 										ml={2}
 									>
@@ -180,7 +181,8 @@ const NavBarUserMenu = () => {
 								px={4}
 								py={3}
 								_hover={{
-									background: `${COLORS.background.subItem}80`,
+									background: "background.subItem",
+									opacity: 0.8,
 									"& > div": { opacity: 1 },
 								}}
 								cursor="pointer"
@@ -203,15 +205,15 @@ const NavBarUserMenu = () => {
 									top={0}
 									bottom={0}
 									w="3px"
-									background={COLORS.accent.primary}
+									background="accent.primary"
 									opacity={0}
 									transition="opacity 0.2s ease-in-out"
 									borderRadius="md"
 									borderTopRadius={0}
 								/>
 								<Text
-									color={COLORS.text.main}
-									_hover={{ color: COLORS.accent.primary }}
+									color="text.main"
+									_hover={{ color: "accent.primary" }}
 									transition="color 0.2s ease-in-out"
 									ml={2}
 								>

@@ -4,7 +4,6 @@ import { useFormik } from "formik";
 import { useNavigate, Link } from "react-router-dom";
 import { useState } from "react";
 import useAuthContext from "@/hooks/useAuthContext";
-import { COLORS } from "@/constants/theme";
 
 const Register = () => {
 	const authContext = useAuthContext();
@@ -75,7 +74,7 @@ const Register = () => {
 			{/* Register Box - Centered */}
 			<Box position="relative" zIndex={1} w="480px">
 				<Box
-					bg={COLORS.background.main}
+					bg="background.main"
 					p={10}
 					rounded="lg"
 					boxShadow="xl"
@@ -106,11 +105,9 @@ const Register = () => {
 										value={formik.values.email}
 										onChange={formik.handleChange}
 										onBlur={formik.handleBlur}
-										border="1px solid"
-										borderColor={COLORS.border.main}
-										_focus={{
-											borderColor: COLORS.accent.primary,
-											boxShadow: `0 0 0 1px ${COLORS.accent.primary}`,
+										borderColor="border.separator"
+										_hover={{
+											bg: "background.subItem",
 										}}
 									/>
 									<Field.ErrorText
@@ -147,11 +144,9 @@ const Register = () => {
 										value={formik.values.username}
 										onChange={formik.handleChange}
 										onBlur={formik.handleBlur}
-										border="1px solid"
-										borderColor={COLORS.border.main}
-										_focus={{
-											borderColor: COLORS.accent.primary,
-											boxShadow: `0 0 0 1px ${COLORS.accent.primary}`,
+										borderColor="border.separator"
+										_hover={{
+											bg: "background.subItem",
 										}}
 									/>
 									<Field.ErrorText
@@ -188,11 +183,9 @@ const Register = () => {
 										value={formik.values.password}
 										onChange={formik.handleChange}
 										onBlur={formik.handleBlur}
-										border="1px solid"
-										borderColor={COLORS.border.main}
-										_focus={{
-											borderColor: COLORS.accent.primary,
-											boxShadow: `0 0 0 1px ${COLORS.accent.primary}`,
+										borderColor="border.separator"
+										_hover={{
+											bg: "background.subItem",
 										}}
 									/>
 									<Field.ErrorText
@@ -220,12 +213,20 @@ const Register = () => {
 								fontSize="16px"
 								loading={formik.isSubmitting}
 								loadingText="Registering..."
+								variant="outline"
+								bg="transparent"
+								borderColor="border.separator"
+								_hover={{
+									bg: "background.subItem",
+									borderColor: "white",
+									color: "white",
+								}}
 							>
 								Register
 							</Button>
 							<Text mt="16px" textAlign="center" w="100%" fontSize="16px">
 								Already have an account?{" "}
-								<Link to={ROUTES.LOGIN} style={{ color: COLORS.accent.link }}>
+								<Link to={ROUTES.LOGIN} style={{ color: "#4299e1" }}>
 									Sign In
 								</Link>
 							</Text>

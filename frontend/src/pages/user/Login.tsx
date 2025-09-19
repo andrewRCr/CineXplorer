@@ -14,7 +14,6 @@ import {
 import { useFormik } from "formik";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import useAuthContext from "@/hooks/useAuthContext";
-import { COLORS } from "@/constants/theme";
 import { useState, useEffect } from "react";
 import { FiMail, FiX } from "react-icons/fi";
 import axios from "axios";
@@ -252,7 +251,7 @@ const Login = () => {
 			{/* Login Box - Centered */}
 			<Box position="relative" zIndex={1} w="480px">
 				<Box
-					bg={COLORS.background.main}
+					bg="background.main"
 					p={10}
 					rounded="lg"
 					boxShadow="xl"
@@ -287,11 +286,9 @@ const Login = () => {
 											setRegistrationSuccess(null); // Clear registration success when user types
 										}}
 										onBlur={formik.handleBlur}
-										border="1px solid"
-										borderColor={COLORS.border.main}
-										_focus={{
-											borderColor: COLORS.accent.primary,
-											boxShadow: `0 0 0 1px ${COLORS.accent.primary}`,
+										borderColor="border.separator"
+										_hover={{
+											bg: "background.subItem",
 										}}
 									/>
 									<Field.ErrorText
@@ -332,11 +329,9 @@ const Login = () => {
 											setRegistrationSuccess(null); // Clear registration success when user types
 										}}
 										onBlur={formik.handleBlur}
-										border="1px solid"
-										borderColor={COLORS.border.main}
-										_focus={{
-											borderColor: COLORS.accent.primary,
-											boxShadow: `0 0 0 1px ${COLORS.accent.primary}`,
+										borderColor="border.separator"
+										_hover={{
+											bg: "background.subItem",
 										}}
 									/>
 									<Field.ErrorText
@@ -366,7 +361,12 @@ const Login = () => {
 								}}
 							>
 								<Checkbox.HiddenInput />
-								<Checkbox.Control borderColor={COLORS.border.main} />
+								<Checkbox.Control 
+									borderColor="border.separator"
+									_hover={{
+										bg: "background.subItem",
+									}}
+								/>
 								<Checkbox.Label fontSize="16px">Remember Me</Checkbox.Label>
 							</Checkbox.Root>
 							<Button
@@ -374,6 +374,10 @@ const Login = () => {
 								type="submit"
 								width="full"
 								fontSize="16px"
+								variant="outline"
+								_hover={{
+									bg: "background.subItem",
+								}}
 								loading={formik.isSubmitting}
 								loadingText="Logging in..."
 							>
@@ -383,7 +387,7 @@ const Login = () => {
 								Don't have an account?{" "}
 								<Link
 									to={ROUTES.REGISTER}
-									style={{ color: COLORS.accent.link }}
+									style={{ color: "#4299e1" }}
 								>
 									Register
 								</Link>
@@ -405,7 +409,7 @@ const Login = () => {
 								status="success"
 								borderRadius="lg"
 								border="1px solid"
-								borderColor={COLORS.border.success}
+								borderColor="border.success"
 								boxShadow="sm"
 								position="relative"
 							>
@@ -433,7 +437,7 @@ const Login = () => {
 								status="success"
 								borderRadius="lg"
 								border="1px solid"
-								borderColor={COLORS.border.success}
+								borderColor="border.success"
 								boxShadow="sm"
 								position="relative"
 							>
@@ -461,7 +465,7 @@ const Login = () => {
 								status="error"
 								borderRadius="lg"
 								border="1px solid"
-								borderColor={COLORS.border.error}
+								borderColor="border.error"
 								boxShadow="sm"
 							>
 								<Alert.Indicator />
@@ -475,7 +479,7 @@ const Login = () => {
 								status="warning"
 								borderRadius="lg"
 								border="1px solid"
-								borderColor={COLORS.border.main}
+								borderColor="border.subtle"
 								boxShadow="sm"
 								position="relative"
 							>
@@ -519,7 +523,7 @@ const Login = () => {
 										</Box>
 										{resendMessage && (
 											<Box textAlign="center" mt={2}>
-												<Text fontSize="sm" color={COLORS.text.success}>
+												<Text fontSize="sm" color="text.success">
 													{resendMessage}
 												</Text>
 											</Box>

@@ -72,14 +72,6 @@ export const SidebarContent: React.FC<SidebarContentProps> = ({
 			{/* Mobile Search - Only show on mobile */}
 			{isMobile && (
 				<Box mb={5} px={0}>
-					{/* <Text
-            fontSize="sm"
-            fontWeight="medium"
-            color={COLORS.text.secondary}
-            mb={3}
-          >
-            Search
-          </Text> */}
 					<NavBarSearch onSearch={onNavigate} />
 				</Box>
 			)}

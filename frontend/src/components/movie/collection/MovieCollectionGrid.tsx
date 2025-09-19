@@ -1,4 +1,3 @@
-import { COLORS } from "@/constants/theme";
 import { forwardRef } from "react";
 import { Text, Button, Box, Skeleton } from "@chakra-ui/react";
 import MovieCard from "../MovieCard";
@@ -77,7 +76,7 @@ const MovieCollectionGrid = forwardRef<MovieGridRef, MovieCollectionGridProps>(
 				{/* Existing content */}
 				{error && (
 					<Box textAlign="center" mb={4}>
-						<Text color={COLORS.text.error} mb={2}>
+						<Text color="text.error" mb={2}>
 							{error}
 						</Text>
 						<Button size="sm" onClick={() => setError("")}>
@@ -103,7 +102,7 @@ const MovieCollectionGrid = forwardRef<MovieGridRef, MovieCollectionGridProps>(
 						<Text
 							fontSize="sm"
 							fontFamily={"inter"}
-							color={COLORS.text.secondary}
+							color="text.secondary"
 							fontWeight="medium"
 							opacity={isLoading ? 0.6 : 1}
 							transition="opacity 0.2s ease"
@@ -126,10 +125,10 @@ const MovieCollectionGrid = forwardRef<MovieGridRef, MovieCollectionGridProps>(
 				{/* Movie Grid */}
 				{shouldShowEmptyState ? (
 					<Box textAlign="center" py={12}>
-						<Text fontSize="lg" color={COLORS.text.secondary} mb={0}>
+						<Text fontSize="lg" color="text.secondary" mb={0}>
 							No movies found matching your filters.
 						</Text>
-						<Text fontSize="sm" color={COLORS.text.secondary}>
+						<Text fontSize="sm" color="text.secondary">
 							Try adjusting your search criteria or filters.
 						</Text>
 					</Box>
@@ -153,7 +152,7 @@ const MovieCollectionGrid = forwardRef<MovieGridRef, MovieCollectionGridProps>(
 											key={i}
 											borderRadius="md"
 											overflow="hidden"
-											bg={COLORS.background.skeleton}
+											bg="background.skeleton"
 										>
 											<MovieCardContainer>
 												<MovieCard movie={placeholderMovie} />
@@ -181,7 +180,8 @@ const MovieCollectionGrid = forwardRef<MovieGridRef, MovieCollectionGridProps>(
 					justifyContent="flex-end"
 					mb={1}
 					mt={1}
-					borderTop={`1px solid ${COLORS.border.main}`}
+					borderTop="1px solid"
+					borderTopColor="red.300"
 					minHeight="50px" // Prevent layout shift
 					paddingTop={2}
 					opacity={shouldShowPagination ? 1 : 0}

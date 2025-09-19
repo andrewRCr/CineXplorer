@@ -1,4 +1,3 @@
-import { COLORS } from "@/constants/theme";
 import { useMemo, forwardRef, useImperativeHandle } from "react";
 import { Text, Button, Box, Skeleton } from "@chakra-ui/react";
 import MovieCard from "../MovieCard";
@@ -67,7 +66,7 @@ const MovieGrid = forwardRef<MovieGridRef, MovieGridProps>(
 			<>
 				{error && (
 					<Box textAlign="center" mb={4}>
-						<Text color={COLORS.text.error} mb={2}>
+						<Text color="text.error" mb={2}>
 							{error}
 						</Text>
 						<Button size="sm" onClick={() => setError("")}>
@@ -88,7 +87,7 @@ const MovieGrid = forwardRef<MovieGridRef, MovieGridProps>(
 					>
 						<Text
 							fontSize="sm"
-							color={COLORS.text.secondary}
+							color="text.secondary"
 							fontWeight="medium"
 						>
 							{resultText}
@@ -105,10 +104,10 @@ const MovieGrid = forwardRef<MovieGridRef, MovieGridProps>(
 				{/* Movie Grid */}
 				{shouldShowEmptyState ? (
 					<Box textAlign="center" py={12}>
-						<Text fontSize="lg" color={COLORS.text.secondary} mb={0}>
+						<Text fontSize="lg" color="text.secondary" mb={0}>
 							No movies found matching your filters.
 						</Text>
-						<Text fontSize="sm" color={COLORS.text.secondary}>
+						<Text fontSize="sm" color="text.secondary">
 							Try adjusting your search criteria or filters.
 						</Text>
 					</Box>
@@ -146,7 +145,8 @@ const MovieGrid = forwardRef<MovieGridRef, MovieGridProps>(
 						justifyContent="flex-end"
 						mb={1}
 						mt={1}
-						borderTop={`1px solid ${COLORS.border.main}`}
+						borderTop="1px solid"
+						borderTopColor="red.300"
 					>
 						<PaginationCtrl
 							currentPage={currentPage}

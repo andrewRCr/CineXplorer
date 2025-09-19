@@ -2,7 +2,6 @@ import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Box, Text, Spinner, Alert, VStack, Button } from "@chakra-ui/react";
 import { ROUTES } from "@/constants/routes";
-import { COLORS } from "@/constants/theme";
 import axios from "axios";
 
 const VerifyEmail = () => {
@@ -105,7 +104,7 @@ const VerifyEmail = () => {
 			<Box maxW="500px" w="100%" textAlign="center">
 				{status === "loading" && (
 					<VStack gap={4}>
-						<Spinner size="xl" color={COLORS.accent.primary} />
+						<Spinner size="xl" color="accent.primary" />
 						<Text fontSize="lg">Verifying your email...</Text>
 					</VStack>
 				)}
@@ -116,7 +115,7 @@ const VerifyEmail = () => {
 							status="success"
 							borderRadius="lg"
 							border="1px solid"
-							borderColor={COLORS.border.success}
+							borderColor="border.success"
 							boxShadow="sm"
 						>
 							<Alert.Indicator />
@@ -129,7 +128,7 @@ const VerifyEmail = () => {
 								</Alert.Description>
 								<Text
 									fontSize="sm"
-									color={COLORS.text.successDark}
+									color="text.successDark"
 									fontWeight="medium"
 								>
 									Redirecting to login in {countdown} second
@@ -158,7 +157,7 @@ const VerifyEmail = () => {
 							status="error"
 							borderRadius="lg"
 							border="1px solid"
-							borderColor={COLORS.border.error}
+							borderColor="border.error"
 							boxShadow="sm"
 						>
 							<Alert.Indicator />

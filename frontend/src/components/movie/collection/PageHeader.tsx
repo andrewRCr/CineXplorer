@@ -7,7 +7,6 @@ import {
 } from "react";
 import { flushSync } from "react-dom";
 import { Box, type BoxProps } from "@chakra-ui/react";
-import { COLORS } from "@/constants/theme";
 
 type PageHeaderOwnProps<T extends ElementType = ElementType> = {
 	as?: T;
@@ -99,7 +98,7 @@ const PageHeader = forwardRef(
 					fontWeight="normal"
 					fontStyle="italic"
 					fontFamily="heading"
-					color={COLORS.text.main}
+					color="text.main"
 					textAlign="left"
 					mb={1}
 					position="relative"
@@ -116,7 +115,7 @@ const PageHeader = forwardRef(
 								left="0"
 								width={animationPhase === "animating" ? "100%" : "0%"}
 								height="2px"
-								backgroundColor={COLORS.accent.secondary}
+								backgroundColor="accent.secondary"
 								borderRadius="1px"
 								transition={
 									animationPhase === "reset" ? "none" : "width 0.3s ease-out"

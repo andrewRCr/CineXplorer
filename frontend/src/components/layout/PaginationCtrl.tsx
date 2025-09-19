@@ -1,4 +1,3 @@
-import { COLORS } from "@/constants/theme";
 import { ButtonGroup, IconButton } from "@chakra-ui/react";
 import { memo, useMemo, useCallback } from "react";
 import { LuChevronLeft, LuChevronRight } from "react-icons/lu";
@@ -111,8 +110,8 @@ const PaginationCtrl = (props: iPaginationCtrlProps) => {
 			<ButtonGroup variant="ghost" size="sm">
 					<IconButton
 						aria-label="Previous page"
-						color={COLORS.text.main}
-						borderColor={COLORS.border.main}
+						color="text.main"
+						borderColor="border.separator"
 						disabled={currentPage === 1}
 						onClick={handlePrevious}
 				>
@@ -130,8 +129,8 @@ const PaginationCtrl = (props: iPaginationCtrlProps) => {
 							variant={isCurrentPage ? "solid" : "ghost"}
 							colorScheme={isCurrentPage ? "blue" : undefined}
 							aria-current={isCurrentPage ? "page" : undefined}
-							color={isCurrentPage ? undefined : COLORS.text.main}
-							borderColor={isCurrentPage ? undefined : COLORS.border.main}
+						color={isCurrentPage ? undefined : "text.main"}
+						borderColor={isCurrentPage ? undefined : "border.separator"}
 							position="relative"
 							px={getDynamicPadding(formattedPage)}
 							_after={
@@ -144,7 +143,7 @@ const PaginationCtrl = (props: iPaginationCtrlProps) => {
 											transform: "translateX(-50%)",
 											width: PAGINATION_CURRENT_PAGE_INDICATOR_WIDTH,
 											height: "2px",
-											backgroundColor: COLORS.accent.primary,
+											backgroundColor: "accent.primary",
 											borderRadius: "1px",
 									  }
 									: undefined
@@ -158,8 +157,8 @@ const PaginationCtrl = (props: iPaginationCtrlProps) => {
 
 					<IconButton
 						aria-label="Next page"
-						color={COLORS.text.main}
-						borderColor={COLORS.border.main}
+						color="text.main"
+						borderColor="border.separator"
 						disabled={currentPage === effectiveTotalPages}
 						onClick={handleNext}
 				>
@@ -254,8 +253,8 @@ const PaginationCtrl = (props: iPaginationCtrlProps) => {
 					<IconButton
 						key={`ellipsis-${index}`}
 						disabled
-						color={COLORS.text.secondary}
-						borderColor={COLORS.border.main}
+						color="text.secondary"
+						borderColor="border.separator"
 						_hover={{ bg: "transparent" }}
 						cursor="default"
 						px="0.75rem"
@@ -274,8 +273,8 @@ const PaginationCtrl = (props: iPaginationCtrlProps) => {
 					variant={isCurrentPage ? "solid" : "ghost"}
 					colorScheme={isCurrentPage ? "blue" : undefined}
 					aria-current={isCurrentPage ? "page" : undefined}
-					color={isCurrentPage ? undefined : COLORS.text.main}
-					borderColor={isCurrentPage ? undefined : COLORS.border.main}
+					color={isCurrentPage ? undefined : "text.main"}
+					borderColor={isCurrentPage ? undefined : "border.separator"}
 					position="relative"
 					px={getDynamicPadding(formattedPage)}
 					disabled={false} // Explicitly set disabled to false
@@ -290,7 +289,7 @@ const PaginationCtrl = (props: iPaginationCtrlProps) => {
 									transform: "translateX(-50%)",
 									width: PAGINATION_CURRENT_PAGE_INDICATOR_WIDTH,
 									height: "2px",
-									backgroundColor: COLORS.accent.primary,
+									backgroundColor: "accent.primary",
 									borderRadius: "1px",
 							  }
 							: undefined
@@ -312,8 +311,8 @@ const PaginationCtrl = (props: iPaginationCtrlProps) => {
 		<ButtonGroup variant="ghost" size="sm">
 			<IconButton
 				aria-label="Previous page"
-				color={COLORS.text.main}
-				borderColor={COLORS.border.main}
+				color="text.main"
+				borderColor="border.separator"
 				disabled={currentPage === 1}
 				onClick={handlePrevious}
 			>
@@ -324,8 +323,8 @@ const PaginationCtrl = (props: iPaginationCtrlProps) => {
 
 			<IconButton
 				aria-label="Next page"
-				color={COLORS.text.main}
-				borderColor={COLORS.border.main}
+				color="text.main"
+				borderColor="border.separator"
 				disabled={currentPage === effectiveTotalPages}
 				onClick={handleNext}
 			>

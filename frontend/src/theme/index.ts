@@ -80,6 +80,8 @@ const config = defineConfig({
 					sidebar: { value: "{colors.discordDark}" },
 					sidebarInterior: { value: "{colors.tailwindZinc900}" },
 					subItem: { value: "{colors.chakraGray900}" },
+					hover: { value: "{colors.chakraGray900}" },
+					selected: { value: "{colors.chakraGray900}" },
 					skeleton: { value: "{colors.tailwindZinc900}" },
 				},
 				border: {

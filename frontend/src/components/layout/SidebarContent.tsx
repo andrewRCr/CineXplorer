@@ -142,9 +142,9 @@ export const SidebarContent: React.FC<SidebarContentProps> = ({
 									fontSize="sm"
 									fontWeight="normal"
 									color="text.main"
-									_hover={{ bg: "background.subItem" }}
+									_hover={{ bg: "background.hover" }}
 									_selected={{
-										bg: "background.subItem",
+										bg: "background.selected",
 										color: "text.main",
 										fontWeight: "medium",
 									}}
@@ -183,9 +183,9 @@ export const SidebarContent: React.FC<SidebarContentProps> = ({
 								fontSize="sm"
 								fontWeight="normal"
 								color="text.main"
-								_hover={{ bg: "background.subItem" }}
+								_hover={{ bg: "background.hover" }}
 								_selected={{
-									bg: "background.subItem",
+									bg: "background.selected",
 									color: "text.main",
 									fontWeight: "medium",
 								}}

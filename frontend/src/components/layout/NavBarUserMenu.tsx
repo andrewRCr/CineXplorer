@@ -21,7 +21,8 @@ const NavBarUserMenu = () => {
 	const [isOpen, setIsOpen] = useState(false);
 	const buttonRef = useRef<HTMLButtonElement>(null);
 	const dropdownRef = useRef<HTMLDivElement>(null);
-	const isMobile = useBreakpointValue({ base: true, lg: false }, { ssr: false }) ?? true;
+	const isMobile =
+		useBreakpointValue({ base: true, lg: false }, { ssr: false }) ?? true;
 
 	// Handle LOG button click
 	const handleLogClick = () => {
@@ -62,7 +63,17 @@ const NavBarUserMenu = () => {
 	if (!isAuthenticated) {
 		return (
 			<Link to={ROUTES.LOGIN} style={{ textDecoration: "none" }}>
-				<Button size="sm" variant="outline">
+				<Button
+					size="sm"
+					variant="outline"
+					_hover={{
+						bg: "background.hover",
+						// opacity: 0.8,
+						color: "colors.white",
+						borderColor: "colors.white",
+						border: "1px solid",
+					}}
+				>
 					Login
 				</Button>
 			</Link>
@@ -145,11 +156,10 @@ const NavBarUserMenu = () => {
 											</Text>
 										</HStack>
 									</Box>
-									
+
 									{/* User Navigation Items */}
-									{USER_NAVIGATION_ITEMS
-										.filter((item) => !item.isAction)
-										.map((item) => (
+									{USER_NAVIGATION_ITEMS.filter((item) => !item.isAction).map(
+										(item) => (
 											<Link
 												key={item.value}
 												to={item.path}
@@ -195,10 +205,11 @@ const NavBarUserMenu = () => {
 													</Text>
 												</Box>
 											</Link>
-										))}
+										)
+									)}
 								</>
 							)}
-							
+
 							{/* Existing Profile, Settings, Logout */}
 							<Link
 								to={ROUTES.PROFILE}

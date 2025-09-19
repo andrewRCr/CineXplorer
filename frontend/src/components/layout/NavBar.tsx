@@ -21,40 +21,35 @@ import MobileMenuButton from "./MobileMenuButton";
 // Reusable Logo and Title Component
 const LogoAndTitle = () => (
 	<Link to={ROUTES.HOME} style={{ textDecoration: "none" }}>
-		<HStack gap={3} alignItems="center">
+		<HStack 
+			gap={3} 
+			alignItems="center"
+			cursor="pointer"
+			transition="all 0.2s"
+			_hover={{
+				"& > *": {
+					filter: "brightness(1.1) drop-shadow(0 0 8px rgba(99, 179, 237, 0.3))",
+				},
+				"& h1": {
+					textShadow: "0 0 8px rgba(99, 179, 237, 0.3)",
+					_after: {
+						width: "100%",
+					},
+				},
+			}}
+		>
 			<Image
 				src={logo}
 				boxSize="48px"
-				cursor="pointer"
 				transition="all 0.2s"
 				alt="CineXplorer Logo"
-				_hover={{
-					transform: "scale(1.05)",
-					filter:
-						"brightness(1.1) drop-shadow(0 0 8px rgba(99, 179, 237, 0.3))",
-				}}
-				_active={{
-					transform: "scale(0.95)",
-				}}
 			/>
 			<Heading
 				as="h1"
 				size="4xl"
 				color="text.main"
-				cursor="pointer"
 				transition="all 0.2s"
 				position="relative"
-				_hover={{
-					color: "accent.primary",
-					transform: "scale(1.02)",
-					textShadow: "0 0 8px rgba(99, 179, 237, 0.3)",
-					_after: {
-						width: "100%",
-					},
-				}}
-				_active={{
-					transform: "scale(0.98)",
-				}}
 				_after={{
 					content: '""',
 					position: "absolute",
@@ -63,7 +58,7 @@ const LogoAndTitle = () => (
 					transform: "translateX(-50%)",
 					width: "0%",
 					height: "2px",
-					backgroundColor: "accent.primary",
+					backgroundColor: "accent.secondary",
 					transition: "width 0.3s ease",
 					borderRadius: "1px",
 				}}
@@ -155,7 +150,7 @@ const NavBar = () => {
 								variant="ghost"
 								aria-label="Log activity"
 								onClick={handleLogClick}
-								_hover={{ bg: "background.subItem" }}
+								_hover={{ bg: "background.hover" }}
 							>
 								<BsFillPlusCircleFill size={14} />
 								LOG
@@ -178,7 +173,7 @@ const NavBar = () => {
 											_hover={{
 												bg: isTabActive(item.path)
 													? "accent.600"
-													: "background.subItem",
+													: "background.hover",
 											}}
 											borderRadius="md"
 											px={3}

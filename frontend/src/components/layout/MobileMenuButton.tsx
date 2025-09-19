@@ -10,35 +10,34 @@ interface MobileMenuButtonProps {
  * Mobile hamburger menu button that opens the sidebar drawer.
  * Uses Chakra v3's overlay manager pattern for drawer control.
  */
-const MobileMenuButton: React.FC<MobileMenuButtonProps> = ({ 
-	size = "md"
-}) => {
+const MobileMenuButton: React.FC<MobileMenuButtonProps> = ({ size = "md" }) => {
 	const handleOpen = () => {
 		sidebarDrawer.open("sidebar", {
-			placement: "start"
+			placement: "start",
 		});
 	};
 
-		return (
-			<IconButton
-				aria-label="Open navigation menu"
-				onClick={handleOpen}
-				size={size}
-				variant="outline"
-				color="text.main"
-				border="1px solid"
-				borderColor="border.separator"
-				borderRadius="md"
-				_hover={{
-					bg: "background.subItem",
-					opacity: 0.8,
-					color: "accent.primary",
-					borderColor: "accent.primary"
-				}}
-			>
-				<LuMenu />
-			</IconButton>
-		);
+	return (
+		<IconButton
+			aria-label="Open navigation menu"
+			onClick={handleOpen}
+			size={size}
+			variant="outline"
+			color="text.main"
+			border="1px solid"
+			borderColor="border.separator"
+			borderRadius="md"
+			_hover={{
+				bg: "background.hover",
+				opacity: 0.8,
+				color: "colors.white",
+				borderColor: "colors.white",
+				border: "1px solid",
+			}}
+		>
+			<LuMenu />
+		</IconButton>
+	);
 };
 
 export default MobileMenuButton;

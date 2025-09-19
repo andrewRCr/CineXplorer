@@ -1,7 +1,14 @@
-import { Box, HStack, Image, Container, useBreakpointValue } from "@chakra-ui/react";
+import {
+	Box,
+	HStack,
+	Image,
+	Container,
+	Heading,
+	useBreakpointValue,
+} from "@chakra-ui/react";
 import { Link } from "react-router-dom";
 import logo from "../../assets/icons8-movie-64.webp";
-import { COLORS } from "@/constants/theme";
+
 import { ROUTES } from "@/constants/routes";
 import NavBarUserMenu from "./NavBarUserMenu";
 import NavBarSearch from "./NavBarSearch";
@@ -26,16 +33,15 @@ const LogoAndTitle = () => (
 					transform: "scale(0.95)",
 				}}
 			/>
-			<Box
-				as="span"
-				fontSize="3xl"
-				fontWeight="bold"
-				color={COLORS.text.main}
+			<Heading
+				as="h1"
+				size="4xl"
+				color="text.main"
 				cursor="pointer"
 				transition="all 0.2s"
 				position="relative"
 				_hover={{
-					color: COLORS.accent.primary,
+					color: "accent.primary",
 					transform: "scale(1.02)",
 					textShadow: "0 0 8px rgba(99, 179, 237, 0.3)",
 					_after: {
@@ -53,31 +59,32 @@ const LogoAndTitle = () => (
 					transform: "translateX(-50%)",
 					width: "0%",
 					height: "2px",
-					backgroundColor: COLORS.accent.primary,
+					backgroundColor: "accent.primary",
 					transition: "width 0.3s ease",
 					borderRadius: "1px",
 				}}
 			>
 				CineXplorer
-			</Box>
+			</Heading>
 		</HStack>
 	</Link>
 );
 
 const NavBar = () => {
 	// Show hamburger menu on mobile, logo on left for desktop
-	const isMobile = useBreakpointValue({ base: true, lg: false }, { ssr: false }) ?? true;
+	const isMobile =
+		useBreakpointValue({ base: true, lg: false }, { ssr: false }) ?? true;
 
 	return (
 		<Box
 			w="100%"
-			bg={COLORS.background.navBar}
+			bg="background.navBar"
 			position="sticky"
 			top={0}
 			zIndex={10}
 			boxShadow="base"
 			borderBottom="1px solid"
-			borderColor={COLORS.border.main}
+			borderColor="border.separator"
 		>
 			<Container maxW="container.xl" px={{ base: 2, md: 6, lg: 8 }} w="100%">
 				<HStack justifyContent="space-between" py={2} position="relative">
@@ -91,7 +98,7 @@ const NavBar = () => {
 
 							{/* Center - Logo and Title */}
 							<LogoAndTitle />
-							
+
 							{/* Right side - User controls */}
 							<HStack gap={4} alignItems="center">
 								<NavBarUserMenu />
@@ -118,20 +125,19 @@ const NavBar = () => {
 									}}
 								/>
 							</Link>
-							
+
 							{/* Center - CineXplorer text only */}
 							<Box position="absolute" left="50%" transform="translateX(-50%)">
 								<Link to={ROUTES.HOME} style={{ textDecoration: "none" }}>
-									<Box
-										as="span"
-										fontSize="3xl"
-										fontWeight="bold"
-										color={COLORS.text.main}
+									<Heading
+										as="h1"
+										size="4xl"
+										color="text.main"
 										cursor="pointer"
 										transition="all 0.2s"
 										position="relative"
 										_hover={{
-											color: COLORS.accent.primary,
+											color: "accent.primary",
 											transform: "scale(1.02)",
 											textShadow: "0 0 8px rgba(99, 179, 237, 0.3)",
 											_after: {
@@ -149,16 +155,16 @@ const NavBar = () => {
 											transform: "translateX(-50%)",
 											width: "0%",
 											height: "2px",
-											backgroundColor: COLORS.accent.primary,
+											backgroundColor: "accent.primary",
 											transition: "width 0.3s ease",
 											borderRadius: "1px",
 										}}
 									>
 										CineXplorer
-									</Box>
+									</Heading>
 								</Link>
 							</Box>
-							
+
 							{/* Right side - Search and User controls */}
 							<HStack gap={4} alignItems="center">
 								<NavBarSearch />

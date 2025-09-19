@@ -1,4 +1,3 @@
-import { COLORS } from "@/constants/theme";
 import tmdbLogo from "../../assets/tmdb_logo_alt_short.svg";
 import { Box, Text, VStack } from "@chakra-ui/react";
 
@@ -7,18 +6,18 @@ const Footer = () => {
 		<Box
 			as="footer"
 			w="100%"
-			bg={COLORS.background.footer}
+			bg="background.footer"
 			py={2}
 			textAlign="center"
 			borderTop="1px solid"
-			borderColor={COLORS.border.main}
+			borderColor="border.separator"
 			aria-label="Application footer with TMDB attribution"
 			position="relative"
 			zIndex={6} // Above sidebar (zIndex 5) and shadow (zIndex 4)
 		>
-			<VStack gap={2} alignItems="center">
+			<VStack gap={1} alignItems="center">
 				<Box display="inline-flex" alignItems="center" gap={2}>
-					<Text fontSize="sm" color={COLORS.text.muted}>
+					<Text fontSize="sm" color="text.muted" fontWeight="light">
 						© 2025 CineXplorer. All rights reserved.
 					</Text>
 				</Box>
@@ -35,7 +34,7 @@ const Footer = () => {
 							style={{ height: "18px", opacity: 0.7 }}
 						/>
 					</a>
-					<Text fontSize="sm" color={COLORS.text.muted}>
+					<Text fontSize="sm" color="text.muted" fontWeight="light">
 						This product uses the TMDB API but is not endorsed or certified by
 						TMDB.
 					</Text>

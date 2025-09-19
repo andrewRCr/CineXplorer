@@ -23,6 +23,7 @@ const Upcoming = lazy(() => import("./pages/movie/Upcoming"));
 const Popular = lazy(() => import("./pages/movie/Popular"));
 const TopRated = lazy(() => import("./pages/movie/TopRated"));
 const SearchResults = lazy(() => import("./pages/movie/SearchResults"));
+const TypographyTest = lazy(() => import("./pages/TypographyTest"));
 
 const App: React.FC = () => {
 	return (
@@ -91,6 +92,7 @@ const App: React.FC = () => {
 								<Route index element={<SearchResults />} />
 							</Route>
 							<Route path={ROUTES.MOVIE_DETAIL} element={<MovieDetail />} />
+							<Route path={ROUTES.TYPOGRAPHY_TEST} element={<TypographyTest />} />
 							{/* ...other content routes... */}
 						</Route>
 

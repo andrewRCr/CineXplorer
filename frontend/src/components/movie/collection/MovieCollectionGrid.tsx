@@ -1,4 +1,4 @@
-import { forwardRef } from "react";
+import { forwardRef, useImperativeHandle } from "react";
 import { Text, Button, Box, Skeleton } from "@chakra-ui/react";
 import MovieCard from "../MovieCard";
 import MovieCardContainer from "../MovieCardContainer";
@@ -44,7 +44,7 @@ interface MovieCollectionGridProps {
 }
 
 const MovieCollectionGrid = forwardRef<MovieGridRef, MovieCollectionGridProps>(
-	(props) => {
+	(props, ref) => {
 		// Use custom hooks to extract complex logic
 		const { source, query, currentPage, onPageChange, finalFetcher } =
 			useMovieCollectionContext(props);
@@ -59,6 +59,13 @@ const MovieCollectionGrid = forwardRef<MovieGridRef, MovieCollectionGridProps>(
 
 		// Handle page changes using custom hook
 		const { handlePageChange } = usePageChangeHandler(onPageChange);
+
+		// Expose methods through ref
+		useImperativeHandle(ref, () => ({
+			resetToPageOne: () => {
+				handlePageChange(1);
+			}
+		}), [handlePageChange]);
 
 		// Use display hook for pagination UI logic
 		const { shouldShowEmptyState, shouldShowPagination, resultText } =

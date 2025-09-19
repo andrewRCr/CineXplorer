@@ -347,7 +347,7 @@ describe('ClearFiltersButton Component', () => {
 				genres: [], // Empty array - falsy
 				minYear: '', // Empty string - falsy
 				maxYear: undefined as string | undefined, // undefined !== '' is true - will show button
-				minRuntime: null as string | null, // null !== '' is true - will show button
+			minRuntime: null as unknown as string | undefined, // null !== '' is true - will show button
 				maxRuntime: ''
 			});
 			

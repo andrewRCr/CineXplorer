@@ -58,8 +58,9 @@ export const useMovieCollectionUrl = (
 				urlFilters.sortBy) as MovieFiltersType["sortBy"],
 		};
 
-		setUnifiedFilters(newUnifiedFilters);
-	}, [location.search, getCurrentPageFromUrl]);
+	setUnifiedFilters(newUnifiedFilters);
+	// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [location.search, getCurrentPageFromUrl]); // unifiedFilters intentionally omitted to prevent infinite loop
 
 	// This callback is passed to the grid to handle page changes
 	const handlePageChange = useCallback(

@@ -27,10 +27,9 @@ global.IntersectionObserver = vi.fn().mockImplementation(() => ({
 // Mock ResizeObserver since it's not available in jsdom
 // This is needed for @floating-ui/dom which is used by Chakra UI Select
 class ResizeObserverMock {
-	private callback: ResizeObserverCallback;
-	
-	constructor(callback: ResizeObserverCallback) {
-		this.callback = callback;
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	constructor(_callback: ResizeObserverCallback) {
+		// Callback parameter kept for interface compatibility but not used in mock
 	}
 	
 	observe = vi.fn();

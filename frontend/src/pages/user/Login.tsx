@@ -85,7 +85,13 @@ const Login = () => {
 				) {
 					if (response.status === 400) {
 						// Check if this is an email verification error
-						const errorData = response.data || {};
+						// Type the error data properly to avoid TypeScript errors
+						interface ErrorResponse {
+							non_field_errors?: string[];
+							code?: string;
+							[key: string]: unknown;
+						}
+						const errorData: ErrorResponse = (response.data as ErrorResponse) || {};
 
 						// Check for non_field_errors array (Django REST Framework standard)
 						let isEmailVerificationError = false;
@@ -102,7 +108,7 @@ const Login = () => {
 						}
 
 						// Also check for specific error codes in the response (fallback)
-						if (!isEmailVerificationError && typeof errorData === "object") {
+						if (!isEmailVerificationError) {
 							// Check for Django REST Framework error codes
 							if (errorData.code === ERROR_CODES.EMAIL_NOT_VERIFIED) {
 								isEmailVerificationError = true;
@@ -114,6 +120,8 @@ const Login = () => {
 									isEmailVerificationError = value.some(
 										(item) =>
 											typeof item === "object" &&
+											item !== null &&
+											'code' in item &&
 											item.code === ERROR_CODES.EMAIL_NOT_VERIFIED
 									);
 									if (isEmailVerificationError) break;

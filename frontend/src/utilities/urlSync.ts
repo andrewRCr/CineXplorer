@@ -26,7 +26,6 @@ export function initializeFiltersFromUrl(search: string): {
 	const sortBy = (params.get("sortBy") as SortOptionValue) || "popularity.desc";
 	const year = params.get("year") || "";
 	const rating = params.get("rating") || "";
-	const runtime = params.get("runtime") || "";
 	const minYear = params.get("minYear") || "";
 	const maxYear = params.get("maxYear") || "";
 	const minRating = params.get("minRating") || "";
@@ -51,7 +50,7 @@ export function initializeFiltersFromUrl(search: string): {
 		genres,
 		year,
 		rating,
-		runtime,
+		// runtime removed - TMDB API returns incorrect results
 		query,
 		sortBy,
 	};

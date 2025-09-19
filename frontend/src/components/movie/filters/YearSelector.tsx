@@ -22,27 +22,8 @@ const YearSelector = ({
 	const [localMinYear, setLocalMinYear] = useState(minYear);
 	const [localMaxYear, setLocalMaxYear] = useState(maxYear);
 
-	// Sync local state when props change (e.g., from URL or external updates)
-	// Clamp invalid values for better UX
-	useEffect(() => {
-		setLocalMinYear(clampYear(minYear));
-	}, [minYear, currentYear]);
-
-	useEffect(() => {
-		setLocalMaxYear(clampYear(maxYear));
-	}, [maxYear, currentYear]);
-
-	// Validate year input
-	const isValidYear = (year: string): boolean => {
-		if (!year) return true; // Empty is valid (clears filter)
-		const num = parseInt(year, 10);
-		return (
-			!isNaN(num) && year.length === 4 && num >= 1900 && num <= currentYear
-		);
-	};
-
 	// Clamp year to valid bounds for better UX
-	const clampYear = (year: string): string => {
+	const clampYear = useCallback((year: string): string => {
 		if (!year) return year; // Keep empty values
 		const num = parseInt(year, 10);
 		if (isNaN(num)) {
@@ -53,25 +34,47 @@ const YearSelector = ({
 		if (num < 1900) return "1900";
 		if (num > currentYear) return currentYear.toString();
 		return year; // Already valid
+	}, [currentYear]);
+
+	// Sync local state when props change (e.g., from URL or external updates)
+	// Clamp invalid values for better UX
+	useEffect(() => {
+		setLocalMinYear(clampYear(minYear));
+	}, [minYear, currentYear, clampYear]);
+
+	useEffect(() => {
+		setLocalMaxYear(clampYear(maxYear));
+	}, [maxYear, currentYear, clampYear]);
+
+	// Validate year input
+	const isValidYear = (year: string): boolean => {
+		if (!year) return true; // Empty is valid (clears filter)
+		const num = parseInt(year, 10);
+		return (
+			!isNaN(num) && year.length === 4 && num >= 1900 && num <= currentYear
+		);
 	};
 
+
 	// Debounced update functions - only call parent when we have valid input
+	// eslint-disable-next-line react-hooks/exhaustive-deps
 	const debouncedMinYearUpdate = useCallback(
 		debounce((year: string) => {
 			if (isValidYear(year)) {
 				onMinYearChange(year);
 			}
 		}, 500),
-		[onMinYearChange, currentYear]
+		[onMinYearChange, currentYear] // debounce function dependencies cannot be analyzed by ESLint
 	);
 
+	// eslint-disable-next-line react-hooks/exhaustive-deps
 	const debouncedMaxYearUpdate = useCallback(
 		debounce((year: string) => {
 			if (isValidYear(year)) {
 				onMaxYearChange(year);
 			}
 		}, 500),
-		[onMaxYearChange, currentYear]
+		[onMaxYearChange, currentYear] // debounce function dependencies cannot be analyzed by ESLint
 	);
 
 	// Handle input changes

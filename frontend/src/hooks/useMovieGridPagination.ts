@@ -128,7 +128,7 @@ export function useMovieGridPagination(
       const validPage = Math.max(1, page);
       setCurrentPageState(validPage);
     },
-    [currentPage, isProcessingReset]
+    [] // Remove unused dependencies
   );
 
   // Reset to page one functionality
@@ -193,7 +193,6 @@ export function useMovieGridPagination(
     constructUrl,
     location.pathname,
     location.search,
-    initialCurrentPage,
     isProcessingReset,
   ]);
 
@@ -227,7 +226,7 @@ export function useMovieGridPagination(
         // Clean up the URL using React Router's navigate with replace
         try {
           navigate(cleanUrl, { replace: true });
-        } catch (error) {
+        } catch {
           // Fallback to history API
           window.history.replaceState({}, '', cleanUrl);
         }
@@ -245,7 +244,7 @@ export function useMovieGridPagination(
               }`;
               navigate(finalCleanUrl, { replace: true });
             }
-          } catch (error) {
+          } catch {
             // Error in cleanup - silently handle
           }
         }, 50);
@@ -277,7 +276,6 @@ export function useMovieGridPagination(
     location.pathname,
     location.search,
     constructUrl,
-    currentPage,
     navigate,
   ]);
 

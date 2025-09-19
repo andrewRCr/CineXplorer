@@ -11,7 +11,7 @@
  */
 import { ROUTES } from "@/constants/routes";
 import axios from "axios";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import type { AuthStateProps } from "@/@types/auth-state";
 import type { User } from "@/@types/user";
@@ -41,7 +41,8 @@ export function useAuth(): AuthStateProps & { user: User | null } {
 		if (isAuthenticated) {
 			getUserDetails();
 		}
-	}, [isAuthenticated]);
+	// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [isAuthenticated]); // getUserDetails is stable but creates circular dependency
 
 	// Check for token expiration every minute
 	useEffect(() => {
@@ -54,9 +55,35 @@ export function useAuth(): AuthStateProps & { user: User | null } {
 
 		const interval = setInterval(checkTokenExpiration, 60000); // Check every minute
 		return () => clearInterval(interval);
-	}, [isAuthenticated]);
+	// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [isAuthenticated]); // logout is stable but creates circular dependency
 
-	const getUserDetails = async () => {
+	const logout = useCallback(async () => {
+		setIsAuthenticated(false);
+		setUser(null);
+		clearAuthTokens();
+		navigate(ROUTES.LOGIN);
+
+		try {
+			const csrfToken = getCsrfToken();
+			await axios.post(
+				`${BASE_URL}/logout/`,
+				{},
+				{
+					headers: {
+						"Content-Type": "application/json",
+						"X-CSRFToken": csrfToken || "",
+					},
+					withCredentials: true,
+				}
+			);
+		} catch (error) {
+			console.error("Logout failed:", error);
+			return Promise.reject(error);
+		}
+	}, [navigate]);
+
+	const getUserDetails = useCallback(async () => {
 		try {
 			// Check if tokens are expired before making the request
 			if (areTokensExpired()) {
@@ -80,7 +107,7 @@ export function useAuth(): AuthStateProps & { user: User | null } {
 			clearAuthTokens();
 			return error;
 		}
-	};
+	}, [logout]);
 
 	const login = async (
 		username: string,
@@ -139,30 +166,6 @@ export function useAuth(): AuthStateProps & { user: User | null } {
 		}
 	};
 
-	const logout = async () => {
-		setIsAuthenticated(false);
-		setUser(null);
-		clearAuthTokens();
-		navigate(ROUTES.LOGIN);
-
-		try {
-			const csrfToken = getCsrfToken();
-			await axios.post(
-				`${BASE_URL}/logout/`,
-				{},
-				{
-					headers: {
-						"Content-Type": "application/json",
-						"X-CSRFToken": csrfToken || "",
-					},
-					withCredentials: true,
-				}
-			);
-		} catch (error) {
-			console.error("Logout failed:", error);
-			return Promise.reject(error);
-		}
-	};
 
 	const register = async (
 		username: string,

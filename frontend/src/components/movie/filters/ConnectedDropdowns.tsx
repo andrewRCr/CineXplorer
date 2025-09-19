@@ -5,13 +5,13 @@ import {
 	coreGenreOptions,
 	genreOptions,
 	yearOptions,
-	runtimeOptions,
+	// runtimeOptions, // TODO: Remove if runtime selector not implemented
 } from "@/constants/movieFilterOptions";
 import type { MovieFilters as UnifiedMovieFilters } from "./AdvancedMovieFilters";
 
 const GENRE_WIDTH = "140px";
 const YEAR_WIDTH = "110px";
-const RUNTIME_WIDTH = "130px";
+// const RUNTIME_WIDTH = "130px"; // TODO: Remove if not needed
 
 interface ConnectedDropdownsProps {
 	filters: UnifiedMovieFilters;
@@ -97,29 +97,30 @@ const ConnectedDropdowns = ({
 		};
 	}, [filters.minYear, filters.maxYear]);
 
+	// TODO: Remove if runtime selector not implemented 
 	// Memoize runtime display calculations
-	const runtimeDisplayData = useMemo(() => {
-		const isRuntimeComplex = !!filters.minRuntime &&
-			!!filters.maxRuntime &&
-			`${filters.minRuntime}-${filters.maxRuntime}` !== "0-90" &&
-			`${filters.minRuntime}-${filters.maxRuntime}` !== "90-120" &&
-			`${filters.minRuntime}-${filters.maxRuntime}` !== "120-150" &&
-			filters.maxRuntime !== "999";
+	// const runtimeDisplayData = useMemo(() => {
+	//	const isRuntimeComplex = !!filters.minRuntime &&
+	//		!!filters.maxRuntime &&
+	//		`${filters.minRuntime}-${filters.maxRuntime}` !== "0-90" &&
+	//		`${filters.minRuntime}-${filters.maxRuntime}` !== "90-120" &&
+	//		`${filters.minRuntime}-${filters.maxRuntime}` !== "120-150" &&
+	//		filters.maxRuntime !== "999";
 
-		let runtimeDisplayValue = "";
-		if (isRuntimeComplex) {
-			runtimeDisplayValue = "custom";
-		} else if (filters.minRuntime && filters.maxRuntime === "999") {
-			runtimeDisplayValue = `${filters.minRuntime}+`;
-		} else if (filters.minRuntime && filters.maxRuntime) {
-			runtimeDisplayValue = `${filters.minRuntime}-${filters.maxRuntime}`;
-		}
+	//	let runtimeDisplayValue = "";
+	//	if (isRuntimeComplex) {
+	//		runtimeDisplayValue = "custom";
+	//	} else if (filters.minRuntime && filters.maxRuntime === "999") {
+	//		runtimeDisplayValue = `${filters.minRuntime}+`;
+	//	} else if (filters.minRuntime && filters.maxRuntime) {
+	//		runtimeDisplayValue = `${filters.minRuntime}-${filters.maxRuntime}`;
+	//	}
 
-		return {
-			isRuntimeComplex,
-			runtimeDisplayValue,
-		};
-	}, [filters.minRuntime, filters.maxRuntime]);
+	//	return {
+	//		isRuntimeComplex,
+	//		runtimeDisplayValue,
+	//	};
+	// }, [filters.minRuntime, filters.maxRuntime]);
 
 	// Memoize collections to prevent array recreation on every render
 	const genreCollection = useMemo(() => createListCollection({
@@ -148,15 +149,16 @@ const ConnectedDropdowns = ({
 		],
 	}), [yearDisplayData.isYearCustom]);
 
-	const runtimeCollection = useMemo(() => createListCollection({
-		items: [
-			...(runtimeDisplayData.isRuntimeComplex ? [{ label: "Custom", value: "custom" }] : []),
-			...runtimeOptions.map((option) => ({
-				label: option.label,
-				value: option.value,
-			})),
-		],
-	}), [runtimeDisplayData.isRuntimeComplex]);
+	// TODO: Remove if runtime selector not implemented
+	// const runtimeCollection = useMemo(() => createListCollection({
+	//	items: [
+	//			...(runtimeDisplayData.isRuntimeComplex ? [{ label: "Custom", value: "custom" }] : []),
+	//			...runtimeOptions.map((option) => ({
+	//				label: option.label,
+	//				value: option.value,
+	//			})),
+	//		],
+	//	}), [runtimeDisplayData.isRuntimeComplex]);
 
 	return (
 		<HStack gap={0} align="stretch">

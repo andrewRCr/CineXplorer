@@ -60,6 +60,7 @@ const RatingSelector = ({
 	};
 	
 	// Debounced update functions with validation and conversion
+	// eslint-disable-next-line react-hooks/exhaustive-deps
 	const debouncedMinRatingUpdate = useCallback(
 		debounce((rating: string) => {
 			if (isValidRating(rating)) {
@@ -68,9 +69,10 @@ const RatingSelector = ({
 				onMinRatingChange(tmdbRating);
 			}
 		}, 300), // Shorter debounce for ratings since they're typically single digits
-		[onMinRatingChange]
+		[onMinRatingChange] // debounce function dependencies cannot be analyzed by ESLint
 	);
 	
+	// eslint-disable-next-line react-hooks/exhaustive-deps
 	const debouncedMaxRatingUpdate = useCallback(
 		debounce((rating: string) => {
 			if (isValidRating(rating)) {
@@ -79,7 +81,7 @@ const RatingSelector = ({
 				onMaxRatingChange(tmdbRating);
 			}
 		}, 300),
-		[onMaxRatingChange]
+		[onMaxRatingChange] // debounce function dependencies cannot be analyzed by ESLint
 	);
 	
 	// Handle input changes

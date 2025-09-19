@@ -1,3 +1,19 @@
+/**
+ * @deprecated MIGRATION IN PROGRESS - DO NOT REMOVE YET
+ * 
+ * This file is being gradually replaced by the Chakra UI theme system in 
+ * `frontend/src/theme/index.ts`. 
+ * 
+ * MIGRATION STATUS:
+ * ✅ COMPLETED: All filter components, pagination, navbar, footer, theme provider
+ * ❌ TODO: ~30 components including NavBarUserMenu, Sidebar, MovieCard, Login/Register, etc.
+ * 
+ * This file will be removed once all components are migrated to use semantic tokens
+ * like `bg="background.main"` instead of `bg={COLORS.background.main}`.
+ * 
+ * See WARP.md for full list of remaining components to migrate.
+ */
+
 // app-global theme/color constants
 
 const palette = {
@@ -23,7 +39,7 @@ export const COLORS = {
 		skeleton: palette.tailwindZinc900,
 	},
 	border: {
-		main: "gray.700",
+		main: "red.300",
 		subtle: "gray.200",
 		separator: "gray.700",
 		sidebar: "gray.700",

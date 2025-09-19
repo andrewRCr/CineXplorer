@@ -19,6 +19,7 @@ export const ROUTES = {
 	REGISTER: "/register",
 	VERIFY_EMAIL: "/verify-email/:token",
 	TEST_LOGIN: "/testlogin",
+	TYPOGRAPHY_TEST: "/typography-test",
 	// more to be added as needed
 };
 
@@ -40,6 +41,7 @@ export const ROUTE_NAMES = {
 	REGISTER: "Register",
 	VERIFY_EMAIL: "Verify Email",
 	TEST_LOGIN: "Test Login",
+	TYPOGRAPHY_TEST: "Typography Test",
 	// more to be added as needed
 };
 

@@ -54,6 +54,14 @@ docker-compose -f infrastructure/docker-compose.yml exec frontend npm run dev
 # Run frontend linting (ESLint)
 docker-compose -f infrastructure/docker-compose.yml exec frontend npm run lint
 
+# Run frontend type checking
+docker-compose -f infrastructure/docker-compose.yml exec frontend npm run type-check
+
+# Run frontend tests (Vitest)
+docker-compose -f infrastructure/docker-compose.yml exec frontend npm test
+docker-compose -f infrastructure/docker-compose.yml exec frontend npm run test:watch
+docker-compose -f infrastructure/docker-compose.yml exec frontend npm run test:coverage
+
 # Build frontend for production
 docker-compose -f infrastructure/docker-compose.yml exec frontend npm run build
 ```
@@ -94,6 +102,16 @@ Key backend patterns:
 - **utilities/**: Helper functions
 - **constants/**: Application constants
 
+Frontend Tech Stack:
+- **React 19** with TypeScript for UI components
+- **Vite** for build tooling and development server
+- **Chakra UI v3** for component library and theming
+- **React Router v7** for client-side routing
+- **Axios** for HTTP client with interceptors
+- **Formik** for form handling
+- **Vitest + React Testing Library** for unit and component testing
+- **ESLint** with TypeScript rules for code quality
+
 ### Key Integration Patterns
 
 **Error Handling**: Synchronized error codes between backend (`shared/error_codes.py`) and frontend (`shared/error-codes.ts`) prevent drift and ensure consistent error handling.
@@ -125,8 +143,9 @@ PostgreSQL with Django ORM. Key models:
 
 ### Required Before Commits
 - Backend: Run `flake8 --max-line-length=99 --exclude migrations`
-- Frontend: Run `npm run lint`
+- Frontend: Run `npm run lint` and `npm run type-check`
 - Backend: Ensure all tests pass with `python manage.py test`
+- Frontend: Ensure all tests pass with `npm test`
 - Follow DRY principles to avoid code duplication
 
 ## Environment Setup
@@ -150,8 +169,24 @@ The application requires several environment variables in `backend/config/.env`:
 
 ## Testing
 
-- Backend tests: Django's built-in test framework with custom test settings
-- CI/CD: GitHub Actions runs tests and linting on all pushes
+### Backend Testing
+- Django's built-in test framework with custom test settings (`settings_test.py`)
+- Run tests: `python manage.py test --settings=config.settings_test`
+- Custom `wait_for_db` command ensures database readiness
+
+### Frontend Testing
+- **Vitest** as the test runner with React Testing Library
+- **@testing-library/user-event** for user interaction testing
+- **MSW (Mock Service Worker)** for API mocking
+- **JSDOM** environment for DOM testing
+- Tests support TypeScript out of the box
+
+### CI/CD Pipeline
+- **GitHub Actions** runs on every push
+- Builds Docker images for both frontend and backend
+- Runs backend tests with `python manage.py test --settings=config.settings_test`
+- Runs backend linting with `flake8 --max-line-length=99 --exclude migrations`
+- Uses Docker layer caching for faster CI builds
 - Tests run in containerized environment matching production
 
 <citations>

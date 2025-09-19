@@ -19,6 +19,34 @@
   font-style: normal;
 }
 
+@font-face {
+  font-family: 'Inter';
+  src: url('./assets/fonts/Inter/Inter-VariableFont_opsz,wght.ttf') format('truetype');
+  font-weight: 100 900;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Inter';
+  src: url('./assets/fonts/Inter/Inter-Italic-VariableFont_opsz,wght.ttf') format('truetype');
+  font-weight: 100 900;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'Source Sans 3';
+  src: url('./assets/fonts/Source_Sans_3/SourceSans3-VariableFont_wght.ttf') format('truetype');
+  font-weight: 200 900;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Source Sans 3';
+  src: url('./assets/fonts/Source_Sans_3/SourceSans3-Italic-VariableFont_wght.ttf') format('truetype');
+  font-weight: 200 900;
+  font-style: italic;
+}
+
 #root {
 	min-height: 100vh;
 	width: 100vw;

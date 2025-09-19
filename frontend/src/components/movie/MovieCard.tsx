@@ -36,11 +36,11 @@ const MovieCard = ({ movie, currentPage, source, query }: MovieCardProps) => {
 	// Optimize title truncation check with debounced callback
 	const checkTruncation = useCallback(() => {
 		if (!titleRef.current) return;
-		
+
 		const element = titleRef.current;
-		
+
 		// Use ResizeObserver API if available (more efficient than DOM cloning)
-		if ('ResizeObserver' in window) {
+		if ("ResizeObserver" in window) {
 			// Simple heuristic: if scrollHeight > clientHeight, it's truncated
 			setIsTitleTruncated(element.scrollHeight > element.clientHeight + 5);
 		} else {
@@ -56,11 +56,11 @@ const MovieCard = ({ movie, currentPage, source, query }: MovieCardProps) => {
 				display: block;
 				overflow: visible;
 			`;
-			
+
 			document.body.appendChild(clone);
 			const naturalHeight = clone.scrollHeight;
 			document.body.removeChild(clone);
-			
+
 			setIsTitleTruncated(naturalHeight > element.clientHeight + 10);
 		}
 	}, []);
@@ -78,7 +78,7 @@ const MovieCard = ({ movie, currentPage, source, query }: MovieCardProps) => {
 
 		// Add resize listener with debouncing
 		window.addEventListener("resize", debouncedCheck);
-		
+
 		return () => {
 			clearTimeout(initialTimer);
 			clearTimeout(resizeTimer);
@@ -99,7 +99,8 @@ const MovieCard = ({ movie, currentPage, source, query }: MovieCardProps) => {
 	// Memoize query string building
 	const queryString = useMemo(() => {
 		const queryParams: string[] = [];
-		if (typeof currentPage === "number") queryParams.push(`page=${currentPage}`);
+		if (typeof currentPage === "number")
+			queryParams.push(`page=${currentPage}`);
 		if (source) queryParams.push(`from=${source}`);
 		if (query) queryParams.push(`query=${encodeURIComponent(query)}`);
 		return queryParams.length > 0 ? `?${queryParams.join("&")}` : "";
@@ -155,6 +156,7 @@ const MovieCard = ({ movie, currentPage, source, query }: MovieCardProps) => {
 								ref={titleRef}
 								fontSize="lg"
 								fontWeight="semibold"
+								fontFamily="inter"
 								lineHeight="1.2"
 								cursor="pointer"
 								overflow="hidden"
@@ -188,7 +190,7 @@ const MovieCard = ({ movie, currentPage, source, query }: MovieCardProps) => {
 								>
 									<Box
 										bg={COLORS.background.main}
-										borderColor={COLORS.border.main}
+										borderColor="border.main"
 										borderWidth="1px"
 										borderRadius="md"
 										shadow="lg"
@@ -212,6 +214,7 @@ const MovieCard = ({ movie, currentPage, source, query }: MovieCardProps) => {
 										<Text
 											fontSize="sm"
 											fontWeight="medium"
+											fontFamily="sourcesans"
 											color={COLORS.text.main}
 											lineHeight="1.2"
 										>
@@ -227,7 +230,11 @@ const MovieCard = ({ movie, currentPage, source, query }: MovieCardProps) => {
 								justifyContent="space-between"
 								alignItems="center"
 							>
-								<Text fontSize="sm" color={COLORS.text.secondary}>
+								<Text
+									fontSize="sm"
+									fontFamily="sourcesans"
+									color={COLORS.text.secondary}
+								>
 									{formattedDate}
 								</Text>
 								<MovieUserScore score={movie.vote_average} />

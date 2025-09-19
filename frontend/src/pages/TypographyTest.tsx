@@ -55,45 +55,6 @@ const TypographyTest = () => {
           </Text>
         </Box>
 
-        {/* NavBar vs Heading Comparison */}
-        <Box>
-          <Heading as="h3" size="2xl" mb={4}>
-            NavBar vs Heading Comparison
-          </Heading>
-          
-          <VStack gap={4} align="start">
-            <Box>
-              <Text mb={2} fontWeight="bold">Typography Test H1 (Heading component, size="4xl"):</Text>
-              <Heading as="h1" size="4xl">
-                CineXplorer
-              </Heading>
-            </Box>
-            
-            <Box>
-              <Text mb={2} fontWeight="bold">NavBar Style (Box component, fontFamily="heading", fontSize="3xl"):</Text>
-              <Box
-                as="span"
-                fontFamily="heading"
-                fontSize="3xl"
-                color="text.main"
-              >
-                CineXplorer
-              </Box>
-            </Box>
-            
-            <Box>
-              <Text mb={2} fontWeight="bold">NavBar Style with Same Size (Box component, fontFamily="heading", fontSize="4xl"):</Text>
-              <Box
-                as="span"
-                fontFamily="heading"
-                fontSize="4xl"
-                color="text.main"
-              >
-                CineXplorer
-              </Box>
-            </Box>
-          </VStack>
-        </Box>
 
         {/* Font Weight Variants */}
         <Box>
@@ -186,54 +147,168 @@ const TypographyTest = () => {
           </VStack>
         </Box>
 
-        {/* System vs Custom Fonts */}
+        {/* New Font Family Demonstrations */}
         <Box>
           <Heading as="h3" size="2xl" mb={4}>
-            System vs Custom Font Comparison
+            Inter Font Demonstration
           </Heading>
           
           <VStack gap={4} align="start">
             <Box>
-              <Text mb={2} fontWeight="bold" fontSize="sm" color="text.muted">Functional Text (Labels, Controls):</Text>
-              
+              <Text mb={2} fontWeight="bold" fontSize="sm" color="text.muted">Inter - Modern and Clean:</Text>
               <VStack gap={3} align="start" pl={4}>
                 <Box>
-                  <Text fontSize="xs" color="text.muted" mb={1}>fontFamily="system" - System fonts for utility text</Text>
-                  <Text fontSize="sm" fontFamily="system" fontWeight="medium" color="text.secondary">
-                    Browse by
-                  </Text>
-                  <Text fontSize="sm" fontFamily="system" fontWeight="medium" color="text.secondary" ml={4}>
-                    Sort by
+                  <Text fontSize="xs" color="text.muted" mb={1}>Heading style (fontFamily="inter", fontSize="2xl", fontWeight="semibold")</Text>
+                  <Text fontFamily="inter" fontSize="2xl" fontWeight="semibold">
+                    Modern Interface Heading
                   </Text>
                 </Box>
                 
                 <Box>
-                  <Text fontSize="xs" color="text.muted" mb={1}>fontFamily="body" (Work Sans) - Current approach</Text>
-                  <Text fontSize="sm" fontFamily="body" fontWeight="medium" color="text.secondary">
-                    Browse by
+                  <Text fontSize="xs" color="text.muted" mb={1}>Body text (fontFamily="inter", fontSize="md")</Text>
+                  <Text fontFamily="inter" fontSize="md">
+                    This is regular body text in Inter. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
                   </Text>
-                  <Text fontSize="sm" fontFamily="body" fontWeight="medium" color="text.secondary" ml={4}>
-                    Sort by
+                </Box>
+                
+                <Box>
+                  <Text fontSize="xs" color="text.muted" mb={1}>Small utility text (fontFamily="inter", fontSize="sm", color="text.secondary")</Text>
+                  <Text fontFamily="inter" fontSize="sm" color="text.secondary">
+                    Browse by • Sort by • Filter options
+                  </Text>
+                </Box>
+                
+                <Box>
+                  <Text fontSize="xs" color="text.muted" mb={1}>Weight variants</Text>
+                  <VStack align="start" gap={2} pl={2}>
+                    <Text fontFamily="inter" fontSize="md" fontWeight="light">Inter Light (300)</Text>
+                    <Text fontFamily="inter" fontSize="md" fontWeight="normal">Inter Regular (400)</Text>
+                    <Text fontFamily="inter" fontSize="md" fontWeight="medium">Inter Medium (500)</Text>
+                    <Text fontFamily="inter" fontSize="md" fontWeight="semibold">Inter Semibold (600)</Text>
+                    <Text fontFamily="inter" fontSize="md" fontWeight="bold">Inter Bold (700)</Text>
+                  </VStack>
+                </Box>
+              </VStack>
+            </Box>
+          </VStack>
+        </Box>
+
+        <Box>
+          <Heading as="h3" size="2xl" mb={4}>
+            Source Sans 3 Font Demonstration
+          </Heading>
+          
+          <VStack gap={4} align="start">
+            <Box>
+              <Text mb={2} fontWeight="bold" fontSize="sm" color="text.muted">Source Sans 3 - Professional and Readable:</Text>
+              <VStack gap={3} align="start" pl={4}>
+                <Box>
+                  <Text fontSize="xs" color="text.muted" mb={1}>Heading style (fontFamily="sourcesans", fontSize="2xl", fontWeight="semibold")</Text>
+                  <Text fontFamily="sourcesans" fontSize="2xl" fontWeight="semibold">
+                    Professional Interface Heading
+                  </Text>
+                </Box>
+                
+                <Box>
+                  <Text fontSize="xs" color="text.muted" mb={1}>Body text (fontFamily="sourcesans", fontSize="md")</Text>
+                  <Text fontFamily="sourcesans" fontSize="md">
+                    This is regular body text in Source Sans 3. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+                  </Text>
+                </Box>
+                
+                <Box>
+                  <Text fontSize="xs" color="text.muted" mb={1}>Small utility text (fontFamily="sourcesans", fontSize="sm", color="text.secondary")</Text>
+                  <Text fontFamily="sourcesans" fontSize="sm" color="text.secondary">
+                    Advanced filters • Search options • Results
+                  </Text>
+                </Box>
+                
+                <Box>
+                  <Text fontSize="xs" color="text.muted" mb={1}>Weight variants</Text>
+                  <VStack align="start" gap={2} pl={2}>
+                    <Text fontFamily="sourcesans" fontSize="md" fontWeight="extraLight">Source Sans 3 ExtraLight (200)</Text>
+                    <Text fontFamily="sourcesans" fontSize="md" fontWeight="light">Source Sans 3 Light (300)</Text>
+                    <Text fontFamily="sourcesans" fontSize="md" fontWeight="normal">Source Sans 3 Regular (400)</Text>
+                    <Text fontFamily="sourcesans" fontSize="md" fontWeight="medium">Source Sans 3 Medium (500)</Text>
+                    <Text fontFamily="sourcesans" fontSize="md" fontWeight="semibold">Source Sans 3 Semibold (600)</Text>
+                    <Text fontFamily="sourcesans" fontSize="md" fontWeight="bold">Source Sans 3 Bold (700)</Text>
+                  </VStack>
+                </Box>
+              </VStack>
+            </Box>
+          </VStack>
+        </Box>
+
+        {/* System vs Custom Fonts */}
+        <Box>
+          <Heading as="h3" size="2xl" mb={4}>
+            All Font Family Comparison
+          </Heading>
+          
+          <VStack gap={4} align="start">
+            <Box>
+              <Text mb={2} fontWeight="bold" fontSize="sm" color="text.muted">All Available Font Families - Same Text for Direct Comparison:</Text>
+              
+              <VStack gap={3} align="start" pl={4}>
+                <Box>
+                  <Text fontSize="xs" color="text.muted" mb={1}>fontFamily="heading" (Space Grotesk) - Current heading font</Text>
+                  <Text fontSize="lg" fontFamily="heading" fontWeight="semibold">
+                    The quick brown fox jumps over the lazy dog.
+                  </Text>
+                </Box>
+                
+                <Box>
+                  <Text fontSize="xs" color="text.muted" mb={1}>fontFamily="body" (Work Sans) - Current body font</Text>
+                  <Text fontSize="lg" fontFamily="body" fontWeight="medium">
+                    The quick brown fox jumps over the lazy dog.
+                  </Text>
+                </Box>
+                
+                <Box>
+                  <Text fontSize="xs" color="text.muted" mb={1}>fontFamily="inter" (Inter) - New option</Text>
+                  <Text fontSize="lg" fontFamily="inter" fontWeight="medium">
+                    The quick brown fox jumps over the lazy dog.
+                  </Text>
+                </Box>
+                
+                <Box>
+                  <Text fontSize="xs" color="text.muted" mb={1}>fontFamily="sourcesans" (Source Sans 3) - New option</Text>
+                  <Text fontSize="lg" fontFamily="sourcesans" fontWeight="medium">
+                    The quick brown fox jumps over the lazy dog.
+                  </Text>
+                </Box>
+                
+                <Box>
+                  <Text fontSize="xs" color="text.muted" mb={1}>fontFamily="system" (System fonts) - For utility text</Text>
+                  <Text fontSize="lg" fontFamily="system" fontWeight="medium">
+                    The quick brown fox jumps over the lazy dog.
                   </Text>
                 </Box>
               </VStack>
             </Box>
             
             <Box>
-              <Text mb={2} fontWeight="bold" fontSize="sm" color="text.muted">Content Text:</Text>
+              <Text mb={2} fontWeight="bold" fontSize="sm" color="text.muted">Current Usage Strategy:</Text>
               
               <VStack gap={3} align="start" pl={4}>
                 <Box>
-                  <Text fontSize="xs" color="text.muted" mb={1}>fontFamily="body" (Work Sans) - Keep for content</Text>
-                  <Text fontSize="md" fontFamily="body">
-                    Movie titles, descriptions, and user-facing content should use Work Sans.
+                  <Text fontSize="xs" color="text.muted" mb={1}>Headings & Branding → Space Grotesk</Text>
+                  <Text fontSize="md" fontFamily="heading" fontWeight="semibold">
+                    CineXplorer • Movie Discovery • Section Headers
                   </Text>
                 </Box>
                 
                 <Box>
-                  <Text fontSize="xs" color="text.muted" mb={1}>fontFamily="heading" (Space Grotesk) - Keep for headings</Text>
-                  <Text fontSize="lg" fontFamily="heading" fontWeight="semibold">
-                    Section headings and branding should use Space Grotesk.
+                  <Text fontSize="xs" color="text.muted" mb={1}>Body Content → Work Sans</Text>
+                  <Text fontSize="md" fontFamily="body">
+                    Movie descriptions, user content, and main text blocks.
+                  </Text>
+                </Box>
+                
+                <Box>
+                  <Text fontSize="xs" color="text.muted" mb={1}>Utility Labels → System Fonts</Text>
+                  <Text fontSize="sm" fontFamily="system" color="text.secondary">
+                    Browse by • Sort by • Filter options
                   </Text>
                 </Box>
               </VStack>

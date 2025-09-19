@@ -98,6 +98,7 @@ const PageHeader = forwardRef(
 					fontSize={styles.fontSize}
 					fontWeight="normal"
 					fontStyle="italic"
+					fontFamily="heading"
 					color={COLORS.text.main}
 					textAlign="left"
 					mb={1}

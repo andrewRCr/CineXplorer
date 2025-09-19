@@ -89,8 +89,8 @@ const LetterboxdStyleFilters = ({
 					{/* Browse by label */}
 					<Text
 						fontSize="sm"
-						fontWeight="medium"
-						fontFamily="system"
+						fontWeight="400"
+						fontFamily="inter"
 						color="text.secondary"
 						mr={2}
 						alignSelf="center"

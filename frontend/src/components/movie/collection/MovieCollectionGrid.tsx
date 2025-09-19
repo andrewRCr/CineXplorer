@@ -102,6 +102,7 @@ const MovieCollectionGrid = forwardRef<MovieGridRef, MovieCollectionGridProps>(
 					<Box minWidth="150px" display="flex" alignItems="center">
 						<Text
 							fontSize="sm"
+							fontFamily={"inter"}
 							color={COLORS.text.secondary}
 							fontWeight="medium"
 							opacity={isLoading ? 0.6 : 1}

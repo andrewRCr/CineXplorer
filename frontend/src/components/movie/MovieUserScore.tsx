@@ -23,10 +23,10 @@ const USER_RATING_COLORS = {
 	low: "red.600", // < 5
 };
 
-const MovieUserScore: React.FC<MovieUserScoreProps> = ({ 
-	score, 
-	userRating, 
-	userRatingOnly = false 
+const MovieUserScore: React.FC<MovieUserScoreProps> = ({
+	score,
+	userRating,
+	userRatingOnly = false,
 }) => {
 	// Helper to get TMDB color (percentage-based)
 	const getTmdbColor = (tmdbScore: number) => {
@@ -35,14 +35,14 @@ const MovieUserScore: React.FC<MovieUserScoreProps> = ({
 		if (percentage < 50) return SCORE_COLORS.low;
 		return SCORE_COLORS.medium;
 	};
-	
+
 	// Helper to get user rating color (1-10 scale)
 	const getUserRatingColor = (rating: number) => {
 		if (rating >= 8) return USER_RATING_COLORS.high;
 		if (rating < 5) return USER_RATING_COLORS.low;
 		return USER_RATING_COLORS.medium;
 	};
-	
+
 	// Show only user rating
 	if (userRatingOnly && userRating) {
 		return (
@@ -58,7 +58,7 @@ const MovieUserScore: React.FC<MovieUserScoreProps> = ({
 			</Badge>
 		);
 	}
-	
+
 	// Show both TMDB and user rating
 	if (userRating) {
 		return (
@@ -86,7 +86,7 @@ const MovieUserScore: React.FC<MovieUserScoreProps> = ({
 			</HStack>
 		);
 	}
-	
+
 	// Show only TMDB rating (current behavior)
 	const tmdbPercentage = Math.round(score * 10);
 	return (
@@ -94,6 +94,7 @@ const MovieUserScore: React.FC<MovieUserScoreProps> = ({
 			variant="surface"
 			backgroundColor={getTmdbColor(score)}
 			fontSize="12px"
+			fontFamily="sourcesans"
 			paddingX={1}
 			borderRadius={4}
 			title="TMDB Rating"

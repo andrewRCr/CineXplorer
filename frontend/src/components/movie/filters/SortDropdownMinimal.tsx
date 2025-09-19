@@ -69,8 +69,8 @@ const SortDropdownMinimal = ({
 			{/* Sort by label */}
 			<Text
 				fontSize="sm"
-				fontWeight="medium"
-				fontFamily="system"
+				fontWeight="400"
+				fontFamily="inter"
 				color="text.secondary"
 				alignSelf="center"
 				flexShrink={0}
@@ -107,11 +107,11 @@ const SortDropdownMinimal = ({
 						lineHeight="1.2"
 						borderRadius="4px"
 						border="1px solid"
-					borderColor="border.separator"
-					backgroundColor="transparent"
-					_hover={{
-						backgroundColor: "background.subItem",
-					}}
+						borderColor="border.separator"
+						backgroundColor="transparent"
+						_hover={{
+							backgroundColor: "background.subItem",
+						}}
 						_disabled={{
 							opacity: 1,
 							cursor: "not-allowed",
@@ -123,9 +123,7 @@ const SortDropdownMinimal = ({
 							justifyContent: "space-between",
 							"& > span": {
 								fontStyle: isSortCustom ? "italic" : "normal",
-							color: isSortCustom
-								? "text.secondary"
-								: "text.main",
+								color: isSortCustom ? "text.secondary" : "text.main",
 							},
 							"& [data-part='indicator']": {
 								width: "16px",
@@ -137,30 +135,28 @@ const SortDropdownMinimal = ({
 						<Select.Indicator />
 					</Select.Trigger>
 					<Select.Positioner>
-					<Select.Content
-						w={SORT_WIDTH}
-						bg="background.subItem"
-						borderColor="border.separator"
-					>
+						<Select.Content
+							w={SORT_WIDTH}
+							bg="background.subItem"
+							borderColor="border.separator"
+						>
 							{sortCollection.items.map((item) => (
 								<Select.Item
 									key={item.value}
 									item={item}
-								style={{
-									color:
-										"disabled" in item && item.disabled
-											? "text.secondary"
-											: "text.main",
-										fontStyle:
+									style={{
+										color:
 											"disabled" in item && item.disabled
-												? "italic"
-												: "normal",
+												? "text.secondary"
+												: "text.main",
+										fontStyle:
+											"disabled" in item && item.disabled ? "italic" : "normal",
 									}}
-							_hover={
-								"disabled" in item && item.disabled
-									? {}
-									: { bg: "accent.primary" }
-							}
+									_hover={
+										"disabled" in item && item.disabled
+											? {}
+											: { bg: "accent.primary" }
+									}
 								>
 									{item.label}
 								</Select.Item>

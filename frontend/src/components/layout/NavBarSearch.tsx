@@ -32,16 +32,16 @@ const NavBarSearch = ({ onSearch }: NavBarSearchProps = {}) => {
 	};
 
 	return (
-		<Box 
-			display="flex" 
-			alignItems="center" 
-			maxW="300px" 
+		<Box
+			display="flex"
+			alignItems="center"
+			maxW="300px"
 			w="100%"
 			onMouseEnter={() => setIsHovered(true)}
 			onMouseLeave={() => setIsHovered(false)}
 			borderRadius="md"
 			border="1px solid"
-			borderColor={COLORS.border.main}
+			borderColor="border.separator"
 			backgroundColor={isHovered ? COLORS.background.subItem : "transparent"}
 			transition="all 0.2s ease"
 			_focusWithin={{

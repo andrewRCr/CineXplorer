@@ -1,5 +1,4 @@
 import { Box, Text, Select, createListCollection } from "@chakra-ui/react";
-import { COLORS } from "@/constants/theme";
 import { minimalSortOptions } from "@/constants/movieFilterOptions";
 import type { MovieFilters as UnifiedMovieFilters } from "./AdvancedMovieFilters";
 
@@ -71,7 +70,7 @@ const SortDropdownMinimal = ({
 			<Text
 				fontSize="sm"
 				fontWeight="medium"
-				color={COLORS.text.secondary}
+			color="text.secondary"
 				alignSelf="center"
 				flexShrink={0}
 				mr={2}
@@ -107,11 +106,11 @@ const SortDropdownMinimal = ({
 						lineHeight="1.2"
 						borderRadius="4px"
 						border="1px solid"
-						borderColor="gray.200"
-						backgroundColor="transparent"
-						_hover={{
-							backgroundColor: COLORS.background.subItem,
-						}}
+					borderColor="border.separator"
+					backgroundColor="transparent"
+					_hover={{
+						backgroundColor: "background.subItem",
+					}}
 						_disabled={{
 							opacity: 1,
 							cursor: "not-allowed",
@@ -123,9 +122,9 @@ const SortDropdownMinimal = ({
 							justifyContent: "space-between",
 							"& > span": {
 								fontStyle: isSortCustom ? "italic" : "normal",
-								color: isSortCustom
-									? COLORS.text.secondary
-									: COLORS.text.main,
+							color: isSortCustom
+								? "text.secondary"
+								: "text.main",
 							},
 							"& [data-part='indicator']": {
 								width: "16px",
@@ -137,30 +136,30 @@ const SortDropdownMinimal = ({
 						<Select.Indicator />
 					</Select.Trigger>
 					<Select.Positioner>
-						<Select.Content
-							w={SORT_WIDTH}
-							bg={COLORS.background.subItem}
-							borderColor={COLORS.border.main}
-						>
+					<Select.Content
+						w={SORT_WIDTH}
+						bg="background.subItem"
+						borderColor="border.separator"
+					>
 							{sortCollection.items.map((item) => (
 								<Select.Item
 									key={item.value}
 									item={item}
-									style={{
-										color:
-											"disabled" in item && item.disabled
-												? COLORS.text.secondary
-												: COLORS.text.main,
+								style={{
+									color:
+										"disabled" in item && item.disabled
+											? "text.secondary"
+											: "text.main",
 										fontStyle:
 											"disabled" in item && item.disabled
 												? "italic"
 												: "normal",
 									}}
-									_hover={
-										"disabled" in item && item.disabled
-											? {}
-											: { bg: COLORS.accent.primary }
-									}
+							_hover={
+								"disabled" in item && item.disabled
+									? {}
+									: { bg: "accent.primary" }
+							}
 								>
 									{item.label}
 								</Select.Item>

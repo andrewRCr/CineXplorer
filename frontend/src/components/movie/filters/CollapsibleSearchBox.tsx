@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { HStack, Button, Input } from "@chakra-ui/react";
 import { FiSearch, FiX } from "react-icons/fi";
-import { COLORS } from "@/constants/theme";
 
 interface CollapsibleSearchBoxProps {
 	query: string;
@@ -98,7 +97,7 @@ const CollapsibleSearchBox = ({
 			gap={0}
 			align="stretch"
 			border="1px solid"
-			borderColor="gray.200"
+			borderColor="border.separator"
 			borderRadius="4px"
 			width={isSearchExpanded ? "260px" : "32px"}
 			height="32px"
@@ -114,12 +113,12 @@ const CollapsibleSearchBox = ({
 				size="sm"
 				border="none"
 				borderRadius="0"
-				backgroundColor={COLORS.background.main}
-				color={COLORS.text.main}
-				_focus={{ boxShadow: "none" }}
-				_hover={{
-					backgroundColor: COLORS.background.subItem,
-				}}
+			backgroundColor="background.main"
+			color="text.main"
+			_focus={{ boxShadow: "none" }}
+			_hover={{
+				backgroundColor: "background.subItem",
+			}}
 				fontSize="14px"
 				height="30px"
 				flex="1"
@@ -136,11 +135,11 @@ const CollapsibleSearchBox = ({
 				size="sm"
 				variant="ghost"
 				borderRadius={0}
-				backgroundColor={COLORS.background.main}
-				color={COLORS.text.main}
-				_hover={{
-					backgroundColor: COLORS.background.subItem,
-				}}
+			backgroundColor="background.main"
+			color="text.main"
+			_hover={{
+				backgroundColor: "background.subItem",
+			}}
 				height="30px"
 				minW="30px"
 				p={0}
@@ -156,11 +155,11 @@ const CollapsibleSearchBox = ({
 					variant="ghost"
 					borderRadius="0 4px 4px 0"
 					backgroundColor="transparent"
-					color={COLORS.text.secondary}
-					_hover={{
-						backgroundColor: COLORS.background.subItem,
-						color: COLORS.text.main,
-					}}
+				color="text.secondary"
+				_hover={{
+					backgroundColor: "background.subItem",
+					color: "text.main",
+				}}
 					height="30px"
 					minW="30px"
 					p={0}

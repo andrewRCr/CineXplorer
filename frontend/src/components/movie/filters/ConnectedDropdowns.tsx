@@ -1,7 +1,6 @@
 import { Box, HStack, Select, createListCollection, Button } from "@chakra-ui/react";
 import { memo, useMemo, useCallback } from "react";
 import { FiFilter } from "react-icons/fi";
-import { COLORS } from "@/constants/theme";
 import {
 	coreGenreOptions,
 	genreOptions,
@@ -187,10 +186,10 @@ const ConnectedDropdowns = ({
 						lineHeight="1.2"
 				borderRadius="4px 0 0 4px"
 						border="1px solid"
-						borderColor="gray.200"
+						borderColor="border.separator"
 						backgroundColor="transparent"
 						_hover={{
-							backgroundColor: COLORS.background.subItem,
+							backgroundColor: "background.subItem",
 						}}
 						_disabled={{
 							opacity: 1,
@@ -204,8 +203,8 @@ const ConnectedDropdowns = ({
 							"& > span": {
 								fontStyle: genreDisplayData.isGenreDisabled ? "italic" : "normal",
 								color: genreDisplayData.isGenreDisabled
-									? COLORS.text.secondary
-									: COLORS.text.main,
+									? "text.secondary"
+									: "text.main",
 							},
 							"& [data-part='indicator']": {
 								width: "16px",
@@ -219,14 +218,14 @@ const ConnectedDropdowns = ({
 					<Select.Positioner>
 						<Select.Content
 							w={GENRE_WIDTH}
-							bg={COLORS.background.subItem}
-							borderColor={COLORS.border.main}
+							bg="background.subItem"
+							borderColor="border.separator"
 						>
 							{genreCollection.items.map((item) => (
 								<Select.Item
 									key={item.value}
 									item={item}
-									_hover={{ bg: COLORS.accent.primary }}
+									_hover={{ bg: "accent.primary" }}
 								>
 									{item.label}
 								</Select.Item>
@@ -274,12 +273,12 @@ const ConnectedDropdowns = ({
 						h="32px"
 						fontSize="14px"
 						lineHeight="1.2"
-				borderRadius="0"
+			borderRadius="0"
 						border="1px solid"
-						borderColor="gray.200"
+						borderColor="border.separator"
 						backgroundColor="transparent"
 						_hover={{
-							backgroundColor: COLORS.background.subItem,
+							backgroundColor: "background.subItem",
 						}}
 						_disabled={{
 							opacity: 1,
@@ -293,8 +292,8 @@ const ConnectedDropdowns = ({
 							"& > span": {
 								fontStyle: yearDisplayData.isYearCustom ? "italic" : "normal",
 								color: yearDisplayData.isYearCustom
-									? COLORS.text.secondary
-									: COLORS.text.main,
+									? "text.secondary"
+									: "text.main",
 							},
 							"& [data-part='indicator']": {
 								width: "16px",
@@ -308,14 +307,14 @@ const ConnectedDropdowns = ({
 					<Select.Positioner>
 						<Select.Content
 							w={YEAR_WIDTH}
-							bg={COLORS.background.subItem}
-							borderColor={COLORS.border.main}
+							bg="background.subItem"
+							borderColor="border.separator"
 						>
 							{yearCollection.items.map((item) => (
 								<Select.Item
 									key={item.value}
 									item={item}
-									_hover={{ bg: COLORS.accent.primary }}
+									_hover={{ bg: "accent.primary" }}
 								>
 									{item.label}
 								</Select.Item>
@@ -432,8 +431,8 @@ const ConnectedDropdowns = ({
 					onClick={onToggleAdvanced}
 					size="sm"
 					variant="outline"
-					borderRadius="0 4px 4px 0"
-					borderColor="gray.200"
+				borderRadius="0 4px 4px 0"
+				borderColor="border.separator"
 					minW="auto"
 					px={3}
 					height="32px"

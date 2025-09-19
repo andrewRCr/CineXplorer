@@ -1,5 +1,4 @@
 import { Box, Text, Select, createListCollection } from "@chakra-ui/react";
-import { COLORS } from "@/constants/theme";
 import {
 	advancedSortOptions,
 	type SortOptionValue,
@@ -22,7 +21,7 @@ const SortSelector = ({ value, onChange }: SortSelectorProps) => {
 
 	return (
 		<Box>
-			<Text fontSize="sm" fontWeight="medium" mb={2} color={COLORS.text.main}>
+			<Text fontSize="sm" fontWeight="medium" mb={2} color="text.main">
 				Sort By
 			</Text>
 			<Select.Root
@@ -43,14 +42,15 @@ const SortSelector = ({ value, onChange }: SortSelectorProps) => {
 					lineHeight="1.3"
 					borderRadius="4px"
 					_hover={{
-						backgroundColor: COLORS.background.main,
+						backgroundColor: "background.main",
 					}}
 					css={{
 						padding: "6px 12px",
 						display: "flex",
 						alignItems: "center",
 						justifyContent: "space-between",
-						border: "1px solid var(--chakra-colors-gray-200)",
+						border: "1px solid",
+						borderColor: "border.separator",
 						backgroundColor: "transparent",
 						"& [data-part='indicator']": {
 							width: "16px",
@@ -64,14 +64,14 @@ const SortSelector = ({ value, onChange }: SortSelectorProps) => {
 				<Select.Positioner>
 					<Select.Content
 						w={SORT_WIDTH}
-						bg={COLORS.background.subItem}
-						borderColor={COLORS.border.main}
+						bg="background.subItem"
+						borderColor="border.separator"
 					>
 						{sortCollection.items.map((item) => (
 							<Select.Item
 								key={item.value}
 								item={item}
-								_hover={{ bg: COLORS.accent.primary }}
+								_hover={{ bg: "accent.primary" }}
 							>
 								{item.label}
 							</Select.Item>

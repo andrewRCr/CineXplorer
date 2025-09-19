@@ -1,7 +1,6 @@
 import { useCallback } from "react";
 import { Box, VStack, Button, HStack, Text, Separator } from "@chakra-ui/react";
 import { FiFilter, FiX } from "react-icons/fi";
-import { COLORS } from "@/constants/theme";
 import GenreSelector from "./GenreSelector";
 import YearSelector from "./YearSelector";
 import RatingSelector from "./RatingSelector";
@@ -76,9 +75,7 @@ const AdvancedMovieFilters = ({
 		filters.sortBy !== "popularity.desc";
 
 	const hasMinimalActiveFilters = minimalFilters
-		? minimalFilters.genres.length > 0 ||
-		  minimalFilters.year !== "" ||
-		  minimalFilters.runtime !== ""
+		? minimalFilters.genres.length > 0 || minimalFilters.year !== ""
 		: false;
 
 	const hasActiveFilters = hasAdvancedActiveFilters || hasMinimalActiveFilters;
@@ -90,11 +87,11 @@ const AdvancedMovieFilters = ({
 					onClick={onToggleCollapse}
 					variant="outline"
 					size="sm"
-					borderColor={COLORS.border.main}
-					_hover={{
-						borderColor: COLORS.accent.primary,
-						backgroundColor: COLORS.background.subItem,
-					}}
+				borderColor="border.separator"
+				_hover={{
+					borderColor: "accent.primary",
+					backgroundColor: "background.subItem",
+				}}
 				>
 					<FiFilter style={{ marginRight: "6px" }} />
 					{hasActiveFilters ? "Filters (Active)" : "Filters"}
@@ -108,12 +105,13 @@ const AdvancedMovieFilters = ({
 			mb={0}
 			ml={4}
 			p={6}
-			border={`1px solid ${COLORS.border.input}`}
-			borderRadius="md"
-			backgroundColor={COLORS.background.subItem}
+		border="1px solid"
+		borderColor="border.input"
+		borderRadius="md"
+		backgroundColor="background.subItem"
 		>
 			<HStack justify="space-between" mb={4}>
-				<Text fontSize="lg" fontWeight="medium" color={COLORS.text.main}>
+			<Text fontSize="lg" fontWeight="medium" color="text.main">
 					Advanced Filters
 				</Text>
 				<HStack>

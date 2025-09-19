@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
 import { Box, Text, HStack, Input } from "@chakra-ui/react";
-import { COLORS } from "@/constants/theme";
 import { debounce } from "lodash";
 
 interface YearSelectorProps {
@@ -137,7 +136,7 @@ const YearSelector = ({
 
 	return (
 		<Box>
-			<Text fontSize="sm" fontWeight="medium" mb={2} color={COLORS.text.main}>
+			<Text fontSize="sm" fontWeight="medium" mb={2} color="text.main">
 				Release Year
 			</Text>
 			<HStack gap={2} align="center">
@@ -154,21 +153,21 @@ const YearSelector = ({
 					minH="32px"
 					fontSize="14px"
 					borderRadius="4px"
-					borderColor={
-						localMinYear && !isValidYear(localMinYear) ? "red.300" : "gray.200"
-					}
-					bg="transparent"
-					_hover={{
-						backgroundColor: COLORS.background.main,
-					}}
+				borderColor={
+					localMinYear && !isValidYear(localMinYear) ? "red.300" : "border.separator"
+				}
+				bg="transparent"
+				_hover={{
+					backgroundColor: "background.main",
+				}}
 					_invalid={{
 						borderColor: "red.300",
 						boxShadow: "0 0 0 1px red.300",
 					}}
 				/>
-				<Text fontSize="sm" color={COLORS.text.secondary}>
-					to
-				</Text>
+			<Text fontSize="sm" color="text.secondary">
+				to
+			</Text>
 				<Input
 					placeholder={currentYear.toString()}
 					value={localMaxYear}
@@ -182,13 +181,13 @@ const YearSelector = ({
 					minH="32px"
 					fontSize="14px"
 					borderRadius="4px"
-					borderColor={
-						localMaxYear && !isValidYear(localMaxYear) ? "red.300" : "gray.200"
-					}
-					bg="transparent"
-					_hover={{
-						backgroundColor: COLORS.background.main,
-					}}
+				borderColor={
+					localMaxYear && !isValidYear(localMaxYear) ? "red.300" : "border.separator"
+				}
+				bg="transparent"
+				_hover={{
+					backgroundColor: "background.main",
+				}}
 					_invalid={{
 						borderColor: "red.300",
 						boxShadow: "0 0 0 1px red.300",

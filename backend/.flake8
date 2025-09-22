@@ -4,4 +4,11 @@ exclude =
     migrations,
     __pycache__,
     manage.py,
-    settings.py
+    settings.py,
+    .git,
+    .venv,
+    env,
+    venv,
+    .pytest_cache,
+    .tox
+max-complexity = 10

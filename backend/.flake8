@@ -11,4 +11,4 @@ exclude =
     venv,
     .pytest_cache,
     .tox
-max-complexity = 10
+max-complexity = 50

@@ -24,15 +24,17 @@ Guidelines for managing task lists in markdown files to track progress on comple
     - Uses conventional commit format (`feat:`, `fix:`, `refactor:`, etc.)
     - Summarizes what was accomplished in the parent task
     - Lists key changes and additions
-    - References the task number and PRD context
+    - **Accurately references the specific task number being completed** (e.g., "Complete task 1.0" not "all tasks")
+    - References the PRD context
     - **Formats the message as a single-line command using `-m` flags**, e.g.:
 
       ```
       git commit -m "feat: add payment validation logic" -m "- Validates card type and expiry" -m "- Adds unit tests for edge cases" -m "Related to T123 in PRD"
       ```
 
-  3. Once all the subtasks are marked completed and changes have been committed, mark the **parent task** as completed.
-  4. When a major milestone is reached (e.g., backend complete, frontend complete), update PROJECT-STATUS to reflect progress.
+  3. Once all the subtasks are marked completed and changes have been committed, mark the **parent task** as completed **in the same commit or immediately after**.
+  4. **Verify commit messages match task documentation** - commits should reference specific completed tasks, not broad generalizations.
+  5. When a major milestone is reached (e.g., backend complete, frontend complete), update PROJECT-STATUS to reflect progress.
 
 - Stop after each sub‑task and wait for the user's go‑ahead.
 
@@ -55,8 +57,10 @@ When working with task lists, the AI must:
 2. Follow the completion protocol:
    - Mark each finished **sub‑task** `[x]`.
    - Mark the **parent task** `[x]` once **all** its subtasks are `[x]`.
+   - **Verify parent task completion happens in documentation commits**.
 3. Add newly discovered tasks.
 4. Keep "Relevant Files" accurate and up to date.
 5. Before starting work, check which sub‑task is next.
 6. After implementing a sub‑task, update the file and then pause for user approval.
-7. Do not stage changes / commit without pausing for user review / approval.
+7. **Before committing, verify task documentation matches commit message claims**.
+8. Do not stage changes / commit without pausing for user review / approval.

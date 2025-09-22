@@ -90,9 +90,12 @@ def validate_log_level(level):
     return "INFO"
 
 
-def get_logging_config():
+def get_logging_config(log_dir=None):
     """
     Return Django logging configuration dictionary.
+
+    Args:
+        log_dir (str, optional): Directory for log files. If None, uses default.
 
     Environment Variables:
     - DJANGO_LOG_LEVEL: Override default log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
@@ -110,7 +113,8 @@ def get_logging_config():
     log_level = validate_log_level(raw_log_level)
 
     # Base directory for log files
-    log_dir = "/backend/logs"
+    if log_dir is None:
+        log_dir = "/backend/logs"
 
     return {
         "version": 1,

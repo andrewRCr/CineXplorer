@@ -14,6 +14,7 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+
 from django.contrib import admin
 from django.urls import path, include
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
@@ -22,22 +23,22 @@ from user.views import (
     JWTCookieTokenRefreshView,
     LogOutAPIView,
     RegisterAPIView,
-    CsrfTokenView
+    CsrfTokenView,
 )
 from core.views.health_check import HealthCheckView
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('__debug__/', include('debug_toolbar.urls')),
-    path('api/schema/', SpectacularAPIView.as_view(), name='api-schema'),
-    path('api/docs/', SpectacularSwaggerView.as_view(url_name='api-schema'), name='api-docs'),
-    path('api/user/', include('user.urls')),
-    path('api/user-movie-data/', include('user_movie_data.urls')),
-    path('api/movie/', include('movie.urls')),
-    path('api/token/', JWTCookieTokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('api/token/refresh/', JWTCookieTokenRefreshView.as_view(), name='token_refresh'),
-    path('api/logout/', LogOutAPIView.as_view(), name='logout'),
-    path('api/register/', RegisterAPIView.as_view(), name='register'),
-    path('api/csrf-token/', CsrfTokenView.as_view(), name='csrf-token'),
-    path('api/health-check/', HealthCheckView.as_view(), name='health-check'),
+    path("admin/", admin.site.urls),
+    path("__debug__/", include("debug_toolbar.urls")),
+    path("api/schema/", SpectacularAPIView.as_view(), name="api-schema"),
+    path("api/docs/", SpectacularSwaggerView.as_view(url_name="api-schema"), name="api-docs"),
+    path("api/user/", include("user.urls")),
+    path("api/user-movie-data/", include("user_movie_data.urls")),
+    path("api/movie/", include("movie.urls")),
+    path("api/token/", JWTCookieTokenObtainPairView.as_view(), name="token_obtain_pair"),
+    path("api/token/refresh/", JWTCookieTokenRefreshView.as_view(), name="token_refresh"),
+    path("api/logout/", LogOutAPIView.as_view(), name="logout"),
+    path("api/register/", RegisterAPIView.as_view(), name="register"),
+    path("api/csrf-token/", CsrfTokenView.as_view(), name="csrf-token"),
+    path("api/health-check/", HealthCheckView.as_view(), name="health-check"),
 ]

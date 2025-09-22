@@ -3,8 +3,14 @@
 ## Relevant Files
 
 - `backend/config/logging.py` - Django logging configuration settings with environment-based log levels
+- `backend/config/tests/test_logging_config.py` - Test script to verify logging configuration and environment variables
+- `backend/apps/core/management/commands/test_logging.py` - Django management command to test logging system integration
+- `backend/config/tests/test_settings_test_logging.py` - Comprehensive test suite for test environment logging configuration
 - `backend/middleware/logging.py` - Custom middleware for request correlation and performance tracking
-- `backend/logs/` - Directory for backend log files (created by logging system)
+- `backend/logs/` - Directory for backend log files with separate files for app, Django, requests, database queries, and errors
+- `backend/logs/README.md` - Comprehensive documentation for log directory usage and commands
+- `backend/logs/.gitignore` - Excludes log files from version control while preserving directory structure
+- `backend/logs/test_permissions.py` - Permission testing script for log directory access verification
 - `frontend/src/services/logger.ts` - Frontend logger service with configurable levels
 - `frontend/src/components/ErrorBoundary.tsx` - React error boundary component for unhandled error capture
 - `frontend/logs/` - Directory for frontend log files (created by logging system)
@@ -20,14 +26,14 @@
 ## Tasks
 
 - [ ] 1.0 Configure Django Backend Logging System
-  - [ ] 1.1 Create `backend/config/logging.py` with Django logging configuration
-  - [ ] 1.2 Set up environment variable support for log levels (DJANGO_LOG_LEVEL)
-  - [ ] 1.3 Configure separate formatters for development (human-readable) and production (JSON)
-  - [ ] 1.4 Set up file handlers with rotation (10MB files, 5 backups)
-  - [ ] 1.5 Configure database query logging for development environment
-  - [ ] 1.6 Import and integrate logging configuration in `backend/config/settings.py`
-  - [ ] 1.7 Create `backend/logs/` directory and ensure proper permissions
-  - [ ] 1.8 Configure logging for test environment in `settings_test.py` (ERROR level, console-only, no files)
+  - [x] 1.1 Create `backend/config/logging.py` with Django logging configuration
+  - [x] 1.2 Set up environment variable support for log levels (DJANGO_LOG_LEVEL)
+  - [x] 1.3 Configure separate formatters for development (human-readable) and production (JSON)
+  - [x] 1.4 Set up file handlers with rotation (10MB files, 5 backups)
+  - [x] 1.5 Configure database query logging for development environment
+  - [x] 1.6 Import and integrate logging configuration in `backend/config/settings.py`
+  - [x] 1.7 Create `backend/logs/` directory and ensure proper permissions
+  - [x] 1.8 Configure logging for test environment in `settings_test.py` (ERROR level, console-only, no files)
 
 - [ ] 2.0 Implement Request Correlation and Middleware
   - [ ] 2.1 Create `backend/middleware/logging.py` with RequestLoggingMiddleware class

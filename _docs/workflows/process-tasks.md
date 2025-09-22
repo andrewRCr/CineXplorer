@@ -5,13 +5,15 @@ Guidelines for managing task lists in markdown files to track progress on comple
 ## Task Implementation
 
 - **One sub-task at a time:** Do **NOT** start the next sub‑task until you ask the user for permission and they say "yes" or "y"
+- **Test-first approach:** For new models, APIs, and complex logic, write tests before implementation
 - **Completion protocol:**
 
   1. When you finish a **sub‑task**, immediately mark it as completed by changing `[ ]` to `[x]`.
   2. If **all** subtasks underneath a parent task are now `[x]`, follow this sequence:
 
-  - **First**: Run the full test suite (`python manage.py test --settings=config.settings_test`, `npm test`, etc.)
-  - **Second**: Run all linting checks (`flake8`, `npm run lint`, `npm run type-check`)
+  - **First**: Ensure new code has appropriate test coverage (models, APIs, complex logic)
+  - **Second**: Run the full test suite (`python manage.py test --settings=config.settings_test`, `npm test`, etc.)
+  - **Third**: Run all linting checks (`flake8`, `npm run lint`, `npm run type-check`)
 
   3. Pause and report status to the user, asking if you should commit + move to the next task, or commit only. For commits:
 
@@ -30,6 +32,7 @@ Guidelines for managing task lists in markdown files to track progress on comple
       ```
 
   3. Once all the subtasks are marked completed and changes have been committed, mark the **parent task** as completed.
+  4. When a major milestone is reached (e.g., backend complete, frontend complete), update PROJECT-STATUS to reflect progress.
 
 - Stop after each sub‑task and wait for the user's go‑ahead.
 

@@ -59,3 +59,34 @@ The entire application is designed to be run and deployed using containers.
 - **Containerization**: Docker and Docker Compose are used to define and run the multi-container application (`backend`, `frontend`, `postgres`, `caddy`). Separate `docker-compose.*.yml` files exist for different environments (dev, CI, prod).
 - **Web Server / Reverse Proxy**: **Caddy** is used as the reverse proxy. It handles routing requests to the appropriate service (e.g., `/api/*` to the backend, all other requests to the frontend) and provides automatic HTTPS for secure connections.
 - **CI/CD**: Continuous integration is set up using **GitHub Actions**. The workflow, defined in `.github/workflows/checks.yml`, runs linters and tests on every push and pull request to ensure code quality.
+
+## 6. Testing Methodology
+
+The project follows a **Modified Test-Driven Development (TDD)** approach that balances development speed with code quality:
+
+### Testing Strategy
+- **Test-First Priority**: New models, API endpoints, and complex business logic
+- **Test-After Acceptable**: Simple CRUD operations, UI components, configuration code
+- **Always Required**: All new features must have appropriate test coverage
+- **Integration Focus**: Test feature workflows, not just individual components
+- **Regression Protection**: Existing tests must pass before any commits
+
+### Backend Testing
+- **Framework**: Django's built-in test framework with custom test settings
+- **Database**: Uses `--keepdb` flag for performance during development
+- **Coverage**: Focus on models, API endpoints, and service layer logic
+- **Command**: `docker-compose exec backend python manage.py test --keepdb`
+
+### Frontend Testing
+- **Framework**: Vitest with React Testing Library for component testing
+- **Environment**: JSDOM with comprehensive browser API mocking
+- **Structure**: Co-located tests in `__tests__/` directories near components
+- **Coverage Goals**: 70%+ for critical paths and user-facing functionality
+- **Command**: `docker-compose exec frontend npm test`
+
+### Quality Gates
+Before any commit, the following checks must pass:
+1. **Test Coverage**: New code has appropriate tests
+2. **All Tests Pass**: Both backend and frontend test suites
+3. **Linting**: `flake8` (backend) and `eslint` (frontend)
+4. **Type Checking**: TypeScript compilation without errors

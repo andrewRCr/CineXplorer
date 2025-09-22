@@ -40,6 +40,16 @@ CineXplorer is a movie discovery web application in active development. The core
 ## Upcoming Priorities
 
 ### High Priority
+- **Logging System** (In Planning):
+  - Django backend logging with configurable levels and request correlation
+  - React frontend error boundaries and logging service
+  - TMDB API call tracking and performance monitoring
+  - Docker volume integration for log file access
+- **User Movie Lists System** (In Planning):
+  - Backend models and API for custom movie collections
+  - System collections (AFI Top 100, IMDb Top 250, Oscar Winners, Palme d'Or)
+  - Individual list display pages with composite cover generation
+  - Sidebar integration with collections section
 - **User-Specific Pages Implementation**:
   - Library Page (`/library`) - display watched movies with favorites section
   - Watchlist Page (`/watchlist`) - drag-and-drop reordering with "Next Up" queue
@@ -71,5 +81,6 @@ The project follows a structured approach using:
 - Sub-PRDs for individual feature specifications  
 - Generated task lists for implementation tracking
 - Systematic testing and code quality checks
+- Regular PROJECT-STATUS updates as features progress through planning → development → completion
 
 *Last updated: 2025-09-22*

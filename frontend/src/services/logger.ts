@@ -232,8 +232,8 @@ class Logger {
 			message,
 			timestamp: new Date(),
 			data,
-			userAgent: navigator.userAgent,
-			url: window.location.href,
+			userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'test-environment',
+			url: typeof window !== 'undefined' ? window.location.href : 'test-environment',
 			userId: this.getCurrentUserId(),
 			sessionId: this.sessionId,
 		};
@@ -385,8 +385,8 @@ class Logger {
 			});
 		}
 		
-		// For critical errors, also store in localStorage as last resort
-		if (entry.level === LogLevel.CRITICAL) {
+		// For critical errors, also store in localStorage as last resort (browser only)
+		if (entry.level === LogLevel.CRITICAL && typeof localStorage !== 'undefined') {
 			try {
 				const criticalLogs = JSON.parse(localStorage.getItem('cinexplorer_critical_logs') || '[]');
 				criticalLogs.push({
@@ -480,8 +480,8 @@ class Logger {
 				message: context ? `[${context}] ${message}` : message,
 				timestamp: new Date(),
 				data: enhancedErrorData,
-				userAgent: navigator.userAgent,
-				url: window.location.href,
+				userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'test-environment',
+				url: typeof window !== 'undefined' ? window.location.href : 'test-environment',
 				userId: this.getCurrentUserId(),
 				sessionId: this.sessionId,
 			};
@@ -560,6 +560,9 @@ class Logger {
 	 * Get critical logs stored in localStorage (fallback storage)
 	 */
 	getCriticalLogsFromStorage(): unknown[] {
+		if (typeof localStorage === 'undefined') {
+			return [];
+		}
 		try {
 			return JSON.parse(localStorage.getItem('cinexplorer_critical_logs') || '[]');
 		} catch {
@@ -571,6 +574,10 @@ class Logger {
 	 * Clear critical logs from localStorage
 	 */
 	clearCriticalLogsFromStorage(): void {
+		if (typeof localStorage === 'undefined') {
+			this.warn('localStorage not available (test environment)');
+			return;
+		}
 		try {
 			localStorage.removeItem('cinexplorer_critical_logs');
 			this.info('Cleared critical logs from localStorage');
@@ -649,7 +656,7 @@ class Logger {
 		const navigationListener = () => {
 			this.trackInteraction('navigation', {
 				url: window.location.href,
-				previous: document.referrer || 'direct',
+				previous: typeof document !== 'undefined' ? (document.referrer || 'direct') : 'test-environment',
 			});
 		};
 
@@ -702,7 +709,7 @@ class Logger {
 		const interaction: UserInteraction = {
 			type,
 			timestamp: new Date(),
-			url: window.location.href,
+			url: typeof window !== 'undefined' ? window.location.href : 'test-environment',
 			sessionId: this.sessionId,
 			...data,
 		};
@@ -913,14 +920,14 @@ class Logger {
 		timezone: string;
 	} {
 		return {
-			userAgent: navigator.userAgent,
-			language: navigator.language,
-			platform: navigator.platform,
+			userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'test-environment',
+			language: typeof navigator !== 'undefined' ? navigator.language : 'en-US',
+			platform: typeof navigator !== 'undefined' ? navigator.platform : 'test-environment',
 			viewport: {
-				width: window.innerWidth,
-				height: window.innerHeight
+				width: typeof window !== 'undefined' ? window.innerWidth : 1920,
+				height: typeof window !== 'undefined' ? window.innerHeight : 1080
 			},
-			timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+			timezone: 'UTC'
 		};
 	}
 	

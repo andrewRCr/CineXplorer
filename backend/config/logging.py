@@ -172,8 +172,8 @@ def _get_handlers_config(
         handlers["null"] = {
             "class": "logging.NullHandler",
         }
-    # Only add file handlers if not in CI environment
-    if not is_ci:
+    # Only add file handlers if not in CI or testing environment
+    if not is_ci and not is_testing:
         handlers.update({
             "file_app": {
                 "class": "logging.handlers.RotatingFileHandler",
@@ -238,20 +238,22 @@ def _get_loggers_config(
         },
         # CineXplorer application logger
         "cinexplorer": {
-            "handlers": ["console"] + (["file_app", "file_errors"] if not is_ci else []),
+            "handlers": (
+                ["console"] + (["file_app", "file_errors"] if not is_ci and not is_testing else [])
+            ),
             "level": log_level,
             "propagate": False,
         },
         # Django framework loggers
         "django": {
-            "handlers": ["console"] + (["file_django"] if not is_ci else []),
+            "handlers": (["console"] + (["file_django"] if not is_ci and not is_testing else [])),
             "level": "WARNING",
             "propagate": False,
         },
         "django.db.backends": {
             "handlers": (
                 ["null"] if is_testing else (
-                    (["console"] + (["file_database"] if not is_ci else []))
+                    (["console"] + (["file_database"] if not is_ci and not is_testing else []))
                     if debug_mode else []
                 )
             ),
@@ -261,7 +263,7 @@ def _get_loggers_config(
         "django.db.backends.schema": {
             "handlers": (
                 ["null"] if is_testing else (
-                    (["console"] + (["file_database"] if not is_ci else []))
+                    (["console"] + (["file_database"] if not is_ci and not is_testing else []))
                     if debug_mode else []
                 )
             ),
@@ -269,7 +271,9 @@ def _get_loggers_config(
             "propagate": False,
         },
         "django.db.migrations": {
-            "handlers": ["console"] + (["file_database"] if not is_ci else []),
+            "handlers": (
+                ["console"] + (["file_database"] if not is_ci and not is_testing else [])
+            ),
             "level": "INFO",
             "propagate": False,
         },
@@ -277,28 +281,29 @@ def _get_loggers_config(
         "cinexplorer.requests": {
             "handlers": (
                 ["null"] if is_testing else
-                (["console"] + (["file_requests"] if not is_ci else []))
+                (["console"] + (["file_requests"] if not is_ci and not is_testing else []))
             ),
             "level": "INFO",
             "propagate": False,
         },
         # TMDB API logging
         "cinexplorer.tmdb": {
-            "handlers": ["console"] + (["file_app"] if not is_ci else []),
+            "handlers": (["console"] + (["file_app"] if not is_ci and not is_testing else [])),
             "level": "INFO",
             "propagate": False,
         },
         # Werkzeug server logs
         "werkzeug": {
-            "handlers": ["console"] + (["file_app"] if not is_ci else []),
+            "handlers": (["console"] + (["file_app"] if not is_ci and not is_testing else [])),
             "level": "INFO",
             "propagate": False,
             "filters": ["health_check_filter"] if debug_mode else [],
         },
     }
 
-    # Add suppressed loggers only if not in CI (to avoid referencing non-existent file handlers)
-    if not is_ci:
+    # Add suppressed loggers only if not in CI or testing
+    # (to avoid referencing non-existent file handlers)
+    if not is_ci and not is_testing:
         loggers.update({
             "watchdog": {
                 "handlers": ["file_app"],

@@ -9,6 +9,7 @@ import AuthLayout from "./components/layout/AuthLayout";
 import LoadingLayout from "./components/layout/LoadingLayout";
 import AuthContextProvider from "./components/auth/AuthContextProvider";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
+import ErrorBoundary from "./components/ErrorBoundary";
 
 // Lazy load page components
 const NowPlaying = lazy(() => import("./pages/movie/NowPlaying"));
@@ -27,7 +28,8 @@ const TypographyTest = lazy(() => import("./pages/TypographyTest"));
 
 const App: React.FC = () => {
 	return (
-		<BrowserRouter>
+		<ErrorBoundary showErrorDetails={import.meta.env.MODE === 'development'}>
+			<BrowserRouter>
 			<AuthContextProvider>
 				<Suspense fallback={<LoadingLayout />}>
 					<Routes>
@@ -108,7 +110,8 @@ const App: React.FC = () => {
 					</Routes>
 				</Suspense>
 			</AuthContextProvider>
-		</BrowserRouter>
+			</BrowserRouter>
+		</ErrorBoundary>
 	);
 };
 

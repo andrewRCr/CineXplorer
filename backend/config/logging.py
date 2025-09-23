@@ -42,6 +42,7 @@ Usage Examples:
 """
 
 import os
+import sys
 import logging.handlers
 
 
@@ -152,8 +153,10 @@ def validate_log_level(level):
     return "INFO"
 
 
-def _get_handlers_config(log_level, console_log_level, debug_mode, is_ci, log_dir):
-    """Get handlers configuration, excluding file handlers in CI environment."""
+def _get_handlers_config(
+    log_level, console_log_level, debug_mode, is_ci, is_testing, log_dir
+):
+    """Get handlers configuration, excluding file handlers in CI or minimal in testing."""
     handlers = {
         "console": {
             "class": "logging.StreamHandler",
@@ -163,7 +166,12 @@ def _get_handlers_config(log_level, console_log_level, debug_mode, is_ci, log_di
             "filters": ["health_check_filter"],
         },
     }
-    
+
+    # Add null handler for testing environment (complete suppression)
+    if is_testing:
+        handlers["null"] = {
+            "class": "logging.NullHandler",
+        }
     # Only add file handlers if not in CI environment
     if not is_ci:
         handlers.update({
@@ -213,15 +221,14 @@ def _get_handlers_config(log_level, console_log_level, debug_mode, is_ci, log_di
                 "encoding": LOG_ROTATION_CONFIG["encoding"],
             },
         })
-    
+
     return handlers
 
 
-def _get_loggers_config(log_level, console_log_level, debug_mode, is_ci):
-    """Get loggers configuration, with console-only handlers in CI environment."""
-    # In CI, only use console handler; otherwise use both console and file handlers
-    file_handlers = [] if is_ci else ["file_app", "file_django", "file_requests", "file_errors", "file_database"]
-    
+def _get_loggers_config(
+    log_level, console_log_level, debug_mode, is_ci, is_testing
+):
+    """Get loggers configuration, with console-only/minimal handlers based on environment."""
     loggers = {
         # Root logger - catches everything not specifically configured
         "": {
@@ -242,12 +249,22 @@ def _get_loggers_config(log_level, console_log_level, debug_mode, is_ci):
             "propagate": False,
         },
         "django.db.backends": {
-            "handlers": (["console"] + (["file_database"] if not is_ci else [])) if debug_mode else [],
+            "handlers": (
+                ["null"] if is_testing else (
+                    (["console"] + (["file_database"] if not is_ci else []))
+                    if debug_mode else []
+                )
+            ),
             "level": "DEBUG" if debug_mode else "WARNING",
             "propagate": False,
         },
         "django.db.backends.schema": {
-            "handlers": (["console"] + (["file_database"] if not is_ci else [])) if debug_mode else [],
+            "handlers": (
+                ["null"] if is_testing else (
+                    (["console"] + (["file_database"] if not is_ci else []))
+                    if debug_mode else []
+                )
+            ),
             "level": "INFO" if debug_mode else "WARNING",
             "propagate": False,
         },
@@ -258,7 +275,10 @@ def _get_loggers_config(log_level, console_log_level, debug_mode, is_ci):
         },
         # Request/response logging
         "cinexplorer.requests": {
-            "handlers": ["console"] + (["file_requests"] if not is_ci else []),
+            "handlers": (
+                ["null"] if is_testing else
+                (["console"] + (["file_requests"] if not is_ci else []))
+            ),
             "level": "INFO",
             "propagate": False,
         },
@@ -276,7 +296,7 @@ def _get_loggers_config(log_level, console_log_level, debug_mode, is_ci):
             "filters": ["health_check_filter"] if debug_mode else [],
         },
     }
-    
+
     # Add suppressed loggers only if not in CI (to avoid referencing non-existent file handlers)
     if not is_ci:
         loggers.update({
@@ -306,7 +326,7 @@ def _get_loggers_config(log_level, console_log_level, debug_mode, is_ci):
                 "propagate": False,
             },
         })
-    
+
     return loggers
 
 
@@ -328,23 +348,33 @@ def get_logging_config(log_dir=None):
     - DJANGO_LOG_LEVEL always takes precedence if set
     - CI=True: Only console logging, no file handlers
     """
-    # Get environment variables with multiple CI detection methods
+    # Get environment variables with multiple environment detection methods
     debug_mode = os.getenv("DEBUG", "False").lower() == "true"
-    
+
+    # Check if we're in testing environment (takes precedence over CI)
+    is_testing = (
+        "test" in sys.argv or
+        os.getenv("TESTING", "False").lower() == "true" or
+        "pytest" in sys.modules or
+        "unittest" in sys.modules
+    )
+
     # Multiple ways to detect CI environment
     is_ci = (
         os.getenv("CI", "False").lower() == "true" or
-        os.getenv("GITHUB_ACTIONS", "False").lower() == "true" or 
+        os.getenv("GITHUB_ACTIONS", "False").lower() == "true" or
         os.getenv("CONTINUOUS_INTEGRATION", "False").lower() == "true" or
         bool(os.getenv("BUILD_NUMBER"))  # Jenkins
-    )
-    
-    # Debug output for CI detection (only in CI to avoid noise in dev)
-    if is_ci:
-        print(f"CI environment detected. Environment variables:")
+    ) and not is_testing  # CI detection only applies if not testing
+
+    # Debug output for CI/testing detection (only when relevant to avoid noise in dev)
+    if is_testing:
+        print("Testing environment detected. Using minimal logging for clean test output.")
+    elif is_ci:
+        print("CI environment detected. Environment variables:")
         print(f"  CI={os.getenv('CI')}")
         print(f"  GITHUB_ACTIONS={os.getenv('GITHUB_ACTIONS')}")
-        print(f"  Disabling file logging handlers.")
+        print("  Disabling file logging handlers.")
     default_level = "DEBUG" if debug_mode else "INFO"
     raw_log_level = os.getenv("DJANGO_LOG_LEVEL", default_level)
     log_level = validate_log_level(raw_log_level)
@@ -414,10 +444,10 @@ def get_logging_config(log_dir=None):
             },
         },
         "handlers": _get_handlers_config(
-            log_level, console_log_level, debug_mode, is_ci, log_dir
+            log_level, console_log_level, debug_mode, is_ci, is_testing, log_dir
         ),
         "loggers": _get_loggers_config(
-            log_level, console_log_level, debug_mode, is_ci
+            log_level, console_log_level, debug_mode, is_ci, is_testing
         ),
     }
 

@@ -1,0 +1,499 @@
+"""
+TMDB API Client for movie database interactions.
+
+This module provides a specialized HTTP client for The Movie Database (TMDB) API
+with TMDB-specific authentication, rate limiting, error handling, and response
+processing built on top of the BaseApiClient infrastructure.
+"""
+
+from typing import Any
+from django.conf import settings
+
+from .base_api_client import BaseApiClient
+from .api_response import ApiResponse
+
+
+class TMDBApiClient(BaseApiClient):
+    """
+    Specialized API client for TMDB (The Movie Database) interactions.
+
+    Extends BaseApiClient with TMDB-specific functionality:
+    - Automatic API key injection
+    - TMDB rate limit header processing
+    - TMDB-specific error code interpretation
+    - Enhanced logging for movie-related operations
+    """
+
+    def __init__(self, timeout: int = 30, max_retries: int = 0):
+        """
+        Initialize the TMDB API client.
+
+        Args:
+            timeout: Request timeout in seconds
+            max_retries: Maximum number of retries for failed requests
+        """
+        super().__init__(
+            base_url="https://api.themoviedb.org/3",
+            logger_name='cinexplorer.tmdb',
+            timeout=timeout,
+            max_retries=max_retries
+        )
+
+    def prepare_headers(self, headers: dict[str, str] | None = None) -> dict[str, str]:
+        """
+        Prepare headers for TMDB API requests.
+
+        Args:
+            headers: Additional headers to include
+
+        Returns:
+            Complete headers dictionary with standard TMDB headers
+        """
+        prepared_headers = {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'User-Agent': 'CineXplorer/1.0'
+        }
+
+        if headers:
+            prepared_headers.update(headers)
+
+        return prepared_headers
+
+    def get_sanitized_params(self, params: dict[str, Any] | None = None) -> dict[str, Any]:
+        """
+        Get sanitized parameters for logging (removes API key for security).
+
+        Args:
+            params: Original parameters dictionary
+
+        Returns:
+            Sanitized parameters safe for logging
+        """
+        if not params:
+            return {}
+
+        # Remove API key from logging for security
+        return {k: v for k, v in params.items() if k != 'api_key'}
+
+    def get_error_details(self, status_code: int) -> str:
+        """
+        Get TMDB-specific error details for status codes.
+
+        Args:
+            status_code: HTTP status code
+
+        Returns:
+            TMDB-specific error description
+        """
+        tmdb_error_details = {
+            400: "Bad Request - The request was invalid or malformed",
+            401: "Unauthorized - Invalid or missing TMDB API key",
+            403: "Forbidden - Access denied to the requested TMDB resource",
+            404: "Not Found - The requested movie/resource does not exist in TMDB",
+            422: "Unprocessable Entity - TMDB request data validation failed",
+            429: "Rate Limited - Too many TMDB requests, please retry later",
+            500: "Internal Server Error - TMDB API server error",
+            502: "Bad Gateway - TMDB API gateway error",
+            503: "Service Unavailable - TMDB API temporarily unavailable",
+            504: "Gateway Timeout - TMDB API request timed out"
+        }
+
+        return tmdb_error_details.get(
+            status_code,
+            f"HTTP {status_code} - Unexpected response from TMDB API"
+        )
+
+    def process_successful_response(
+        self,
+        response: Any,
+        correlation_id: str,
+        endpoint: str,
+        duration_ms: int
+    ) -> ApiResponse:
+        """
+        Process successful TMDB API response with enhanced metadata extraction.
+
+        Args:
+            response: Requests response object
+            correlation_id: Correlation ID for this request
+            endpoint: TMDB API endpoint that was called
+            duration_ms: Request duration in milliseconds
+
+        Returns:
+            ApiResponse with TMDB-specific metadata extraction
+        """
+        try:
+            data = response.json()
+        except ValueError as json_error:
+            # Handle invalid JSON responses
+            error_message = f"TMDB returned invalid JSON: {json_error}"
+
+            self.logger.error("TMDB API returned invalid JSON", extra={
+                'correlation_id': correlation_id,
+                'endpoint': endpoint,
+                'status_code': response.status_code,
+                'duration_ms': duration_ms,
+                'error_type': 'json_parsing_error',
+                'json_error': str(json_error),
+                'response_preview': str(response.text)[:200],
+                'response_size_bytes': (
+                    len(response.content) if hasattr(response.content, '__len__') else 0
+                )
+            })
+
+            # Handle headers safely for both real responses and mocked responses
+            try:
+                headers = dict(response.headers) if hasattr(response.headers, 'items') else {}
+            except (TypeError, AttributeError):
+                # Handle Mock objects or other non-dict-like headers
+                headers = {}
+
+            return ApiResponse(
+                status_code=500,
+                error_message=error_message,
+                error_details="TMDB API returned an invalid JSON response",
+                error_category="json_parsing_error",
+                correlation_id=correlation_id,
+                endpoint=endpoint,
+                duration_ms=duration_ms,
+                headers=headers,
+                raw_response=response
+            )
+
+        # Extract TMDB-specific response metadata
+        response_metadata = self._extract_tmdb_response_metadata(data)
+
+        # Enhanced logging for TMDB responses
+        log_data = {
+            'correlation_id': correlation_id,
+            'endpoint': endpoint,
+            'status_code': response.status_code,
+            'duration_ms': duration_ms,
+            'response_size_bytes': (
+                len(response.content) if hasattr(response.content, '__len__') else 0
+            ),
+        }
+
+        # Add TMDB metadata to logs if available
+        if response_metadata:
+            log_data['response_metadata'] = response_metadata
+
+        # Add rate limit info if available
+        rate_limit_info = self._extract_rate_limit_headers(response.headers)
+        if rate_limit_info:
+            log_data['rate_limit'] = rate_limit_info
+
+        # Add performance warning for slow requests (>1000ms)
+        if duration_ms > 1000:
+            performance_log_data = dict(log_data)  # Copy the log data
+            performance_log_data.update({
+                'performance_warning': True,
+                'threshold_exceeded': '1000ms',
+                'performance_ratio': round(duration_ms / 1000.0, 2),
+                'slow_request_impact': (
+                    'User experience degradation possible'
+                )
+            })
+            self.logger.warning(
+                "TMDB API request slow performance",
+                extra=performance_log_data
+            )
+
+        self.logger.info("TMDB API request successful", extra=log_data)
+
+        # Handle headers safely for both real responses and mocked responses
+        try:
+            headers = dict(response.headers) if hasattr(response.headers, 'items') else {}
+        except (TypeError, AttributeError):
+            # Handle Mock objects or other non-dict-like headers
+            headers = {}
+
+        return ApiResponse(
+            status_code=response.status_code,
+            data=data,
+            headers=headers,
+            correlation_id=correlation_id,
+            endpoint=endpoint,
+            method="GET",
+            duration_ms=duration_ms,
+            raw_response=response
+        )
+
+    def process_error_response(
+        self,
+        response: Any,
+        correlation_id: str,
+        endpoint: str,
+        duration_ms: int
+    ) -> ApiResponse:
+        """
+        Process TMDB API error response with enhanced error information.
+
+        Args:
+            response: Requests response object with error status
+            correlation_id: Correlation ID for this request
+            endpoint: TMDB API endpoint that was called
+            duration_ms: Request duration in milliseconds
+
+        Returns:
+            ApiResponse with TMDB-specific error information
+        """
+        error_category = self.classify_error(response.status_code)
+        error_details = self.get_error_details(response.status_code)
+        error_message = f"TMDB request failed: {response.status_code}"
+
+        # Enhanced logging for TMDB errors
+        log_data = {
+            'correlation_id': correlation_id,
+            'endpoint': endpoint,
+            'status_code': response.status_code,
+            'duration_ms': duration_ms,
+            'error_category': error_category,
+            'response_size_bytes': (
+                len(response.content) if hasattr(response.content, '__len__') else 0
+            ),
+            'error_response': (
+                str(response.text)[:500] if hasattr(response.text, '__getitem__')
+                else str(response.text)
+            )
+        }
+
+        # Add TMDB rate limit info for debugging
+        rate_limit_info = self._extract_rate_limit_headers(response.headers)
+        if rate_limit_info:
+            log_data['rate_limit'] = rate_limit_info
+
+        # Add performance warning for slow error responses (>1000ms)
+        if duration_ms > 1000:
+            performance_log_data = dict(log_data)  # Copy the log data
+            performance_log_data.update({
+                'performance_warning': True,
+                'threshold_exceeded': '1000ms',
+                'performance_ratio': round(duration_ms / 1000.0, 2),
+                'slow_error_impact': (
+                    'Error response time exceeds performance threshold'
+                )
+            })
+            self.logger.warning(
+                "TMDB API error response slow performance",
+                extra=performance_log_data
+            )
+
+        # Log with appropriate level based on status code
+        if response.status_code >= 500:
+            self.logger.error("TMDB API server error", extra=log_data)
+        elif response.status_code == 429:
+            self.logger.warning("TMDB API rate limit exceeded", extra=log_data)
+        elif response.status_code >= 400:
+            self.logger.warning("TMDB API client error", extra=log_data)
+        else:
+            self.logger.warning("TMDB API request failed", extra=log_data)
+
+        # Handle headers safely for both real responses and mocked responses
+        try:
+            headers = dict(response.headers) if hasattr(response.headers, 'items') else {}
+        except (TypeError, AttributeError):
+            # Handle Mock objects or other non-dict-like headers
+            headers = {}
+
+        return ApiResponse(
+            status_code=response.status_code,
+            error_message=error_message,
+            error_details=error_details,
+            error_category=error_category,
+            correlation_id=correlation_id,
+            endpoint=endpoint,
+            method="GET",
+            duration_ms=duration_ms,
+            headers=headers,
+            raw_response=response
+        )
+
+    def _extract_tmdb_response_metadata(self, data: dict[str, Any]) -> dict[str, Any] | None:
+        """
+        Extract TMDB-specific metadata from response data.
+
+        Args:
+            data: Parsed JSON response data
+
+        Returns:
+            Dictionary with TMDB metadata or None if not applicable
+        """
+        metadata = {}
+
+        # Common TMDB pagination fields
+        if 'page' in data:
+            metadata['page'] = data['page']
+        if 'total_pages' in data:
+            metadata['total_pages'] = data['total_pages']
+        if 'total_results' in data:
+            metadata['total_results'] = data['total_results']
+        if 'results' in data:
+            metadata['results_count'] = len(data['results'])
+
+        # Movie-specific fields
+        if 'id' in data and isinstance(data['id'], int):
+            metadata['movie_id'] = data['id']
+        if 'title' in data:
+            metadata['movie_title'] = data['title']
+
+        # Remove None values for cleaner logs
+        metadata = {k: v for k, v in metadata.items() if v is not None}
+
+        return metadata if metadata else None
+
+    def _extract_rate_limit_headers(self, headers: Any) -> dict[str, Any] | None:
+        """
+        Extract TMDB rate limiting headers from response.
+
+        Args:
+            headers: Response headers object
+
+        Returns:
+            Dictionary with rate limit info or None if not available
+        """
+        # Handle test mocks and empty headers safely
+        if not headers or not hasattr(headers, '__contains__'):
+            return None
+
+        rate_limit_info = {}
+
+        # Standard rate limiting headers used by TMDB
+        rate_limit_headers = {
+            'x-ratelimit-limit': 'limit',
+            'x-ratelimit-remaining': 'remaining',
+            'x-ratelimit-reset': 'reset',
+            'retry-after': 'retry_after'
+        }
+
+        for header_name, key in rate_limit_headers.items():
+            if header_name in headers:
+                value = headers[header_name]
+                # Convert numeric values to integers
+                if key in ['limit', 'remaining', 'retry_after']:
+                    try:
+                        rate_limit_info[key] = int(value)
+                    except ValueError:
+                        rate_limit_info[key] = value
+                else:
+                    rate_limit_info[key] = value
+
+        return rate_limit_info if rate_limit_info else None
+
+    def get(
+        self,
+        endpoint: str,
+        params: dict[str, Any] | None = None,
+        headers: dict[str, str] | None = None,
+        **kwargs: Any
+    ) -> ApiResponse:
+        """
+        Make a GET request to TMDB API with automatic API key injection.
+
+        Args:
+            endpoint: TMDB API endpoint (relative to base URL)
+            params: Query parameters
+            headers: Additional headers
+            **kwargs: Additional arguments passed to requests.get
+
+        Returns:
+            ApiResponse object with TMDB response data or error information
+        """
+        # Ensure params dict exists and inject API key
+        if params is None:
+            params = {}
+
+        # Inject TMDB API key
+        params["api_key"] = settings.TMDB_API_KEY
+
+        # Call parent get method with prepared parameters
+        return super().get(endpoint, params, headers, **kwargs)
+
+    # Convenience methods for common TMDB operations
+    def search_movies(
+        self,
+        query: str,
+        page: int = 1,
+        **kwargs: Any
+    ) -> ApiResponse:
+        """
+        Search for movies by title.
+
+        Args:
+            query: Movie title to search for
+            page: Page number for pagination
+            **kwargs: Additional search parameters
+
+        Returns:
+            ApiResponse with search results
+        """
+        params = {"query": query, "page": page, **kwargs}
+        return self.get("search/movie", params)
+
+    def get_movie_details(self, movie_id: int, **kwargs: Any) -> ApiResponse:
+        """
+        Get detailed information for a specific movie.
+
+        Args:
+            movie_id: TMDB movie ID
+            **kwargs: Additional parameters
+
+        Returns:
+            ApiResponse with movie details
+        """
+        return self.get(f"movie/{movie_id}", kwargs)
+
+    def discover_movies(self, **kwargs: Any) -> ApiResponse:
+        """
+        Discover movies using TMDB's discover endpoint.
+
+        Args:
+            **kwargs: Discovery parameters (genre, year, etc.)
+
+        Returns:
+            ApiResponse with discovered movies
+        """
+        return self.get("discover/movie", kwargs)
+
+    def get_popular_movies(self, page: int = 1, **kwargs: Any) -> ApiResponse:
+        """
+        Get popular movies from TMDB.
+
+        Args:
+            page: Page number for pagination
+            **kwargs: Additional parameters
+
+        Returns:
+            ApiResponse with popular movies
+        """
+        params = {"page": page, **kwargs}
+        return self.get("movie/popular", params)
+
+    def get_top_rated_movies(self, page: int = 1, **kwargs: Any) -> ApiResponse:
+        """
+        Get top rated movies from TMDB.
+
+        Args:
+            page: Page number for pagination
+            **kwargs: Additional parameters
+
+        Returns:
+            ApiResponse with top rated movies
+        """
+        params = {"page": page, **kwargs}
+        return self.get("movie/top_rated", params)
+
+    def get_now_playing_movies(self, page: int = 1, **kwargs: Any) -> ApiResponse:
+        """
+        Get now playing movies from TMDB.
+
+        Args:
+            page: Page number for pagination
+            **kwargs: Additional parameters
+
+        Returns:
+            ApiResponse with now playing movies
+        """
+        params = {"page": page, **kwargs}
+        return self.get("movie/now_playing", params)

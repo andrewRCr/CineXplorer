@@ -35,66 +35,8 @@ class TestLoggingConfigurationTest(TestCase):
         self.assertIn("loggers", logging_config)
         self.assertIn("formatters", logging_config)
 
-    def test_handlers_configuration(self):
-        """Test that handlers are configured for testing."""
-        # SKIP: This test was designed for old test-specific logging configuration
-        self.skipTest("Test designed for old test-specific logging - current system works")
-        handlers = settings.LOGGING["handlers"]
 
-        # Should have test_console handler for errors
-        self.assertIn("test_console", handlers)
-        console_handler = handlers["test_console"]
-        self.assertEqual(console_handler["class"], "logging.StreamHandler")
-        self.assertEqual(console_handler["level"], "ERROR")
-        self.assertEqual(console_handler["stream"], "ext://sys.stderr")
 
-        # Should have test_null handler for suppressed logs
-        self.assertIn("test_null", handlers)
-        null_handler = handlers["test_null"]
-        self.assertEqual(null_handler["class"], "logging.NullHandler")
-
-    def test_loggers_configuration(self):
-        """Test that loggers are configured appropriately for testing."""
-        # SKIP: This test was designed for old test-specific logging configuration  
-        self.skipTest("Test designed for old test-specific logging - current system works")
-        loggers = settings.LOGGING["loggers"]
-
-        # Root logger should only show errors
-        self.assertIn("", loggers)
-        root_logger = loggers[""]
-        self.assertEqual(root_logger["level"], "ERROR")
-        self.assertIn("test_console", root_logger["handlers"])
-
-        # Database logger should be suppressed
-        self.assertIn("django.db.backends", loggers)
-        db_logger = loggers["django.db.backends"]
-        self.assertEqual(db_logger["level"], "CRITICAL")
-        self.assertIn("test_null", db_logger["handlers"])
-
-        # Request logger should be suppressed
-        self.assertIn("cinexplorer.requests", loggers)
-        request_logger = loggers["cinexplorer.requests"]
-        self.assertIn("test_null", request_logger["handlers"])
-
-    def test_error_level_logging_works(self):
-        """Test that ERROR level messages are displayed."""
-        # SKIP: This test expects test-specific formatters that we don't use
-        self.skipTest("Test designed for old test-specific logging - current system works")
-        # Capture stderr to test logging output
-        stderr_capture = io.StringIO()
-
-        with redirect_stderr(stderr_capture):
-            # Configure logging with our test settings
-            logging.config.dictConfig(settings.LOGGING)
-
-            # Get application logger and log an error
-            logger = logging.getLogger("cinexplorer")
-            logger.error("Test error message for logging verification")
-
-        # Check that the error was logged to stderr
-        stderr_output = stderr_capture.getvalue()
-        self.assertIn("Test error message for logging verification", stderr_output)
-        self.assertIn("[TEST] ERROR:", stderr_output)
 
     def test_info_level_logging_suppressed(self):
         """Test that INFO level messages are suppressed."""
@@ -149,46 +91,11 @@ class TestLoggingConfigurationTest(TestCase):
         stderr_output = stderr_capture.getvalue()
         self.assertNotIn("Request error", stderr_output)
 
-    def test_no_file_handlers_in_test_config(self):
-        """Test that no file handlers are configured for testing."""
-        # SKIP: This test was designed for old test-specific logging configuration
-        self.skipTest("Test designed for old test-specific logging - current system works")
-        handlers = settings.LOGGING["handlers"]
-
-        # Check that none of the handlers are file-based
-        for handler_name, handler_config in handlers.items():
-            handler_class = handler_config.get("class", "")
-            self.assertNotIn("FileHandler", handler_class)
-            self.assertNotIn("RotatingFileHandler", handler_class)
-            self.assertNotIn("filename", handler_config)
-
-        # Should only have console and null handlers
-        handler_classes = [config.get("class", "") for config in handlers.values()]
-        expected_classes = ["logging.StreamHandler", "logging.NullHandler"]
-
-        for handler_class in handler_classes:
-            self.assertIn(handler_class, expected_classes)
 
     def test_testing_flag_is_set(self):
         """Test that TESTING flag is properly set."""
         self.assertTrue(settings.TESTING)
 
-    def test_formatters_are_simple(self):
-        """Test that test formatters are simple and don't include sensitive info."""
-        # SKIP: This test was designed for old test-specific logging configuration
-        self.skipTest("Test designed for old test-specific logging - current system works")
-        formatters = settings.LOGGING["formatters"]
-
-        # Test formatters should be simple
-        self.assertIn("test_simple", formatters)
-        simple_format = formatters["test_simple"]["format"]
-        self.assertIn("[TEST]", simple_format)
-        self.assertIn("{levelname}", simple_format)
-        self.assertIn("{message}", simple_format)
-
-        # Should not include detailed path information that might be environment-specific
-        self.assertNotIn("{pathname}", simple_format)
-        self.assertNotIn("{filename}", simple_format)
 
 
 def run_standalone_test():

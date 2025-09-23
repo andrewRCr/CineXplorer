@@ -23,7 +23,6 @@ steps:
   1. mkdir -p _docs/archive/sub-prds
   2. mkdir -p _docs/archive/tasks  
   3. mkdir -p _docs/archive/completion-metadata
-  4. mkdir -p _docs/archive/planning-artifacts
   
   Archive mirrors active directory structure with completion metadata separate.
 
@@ -102,13 +101,10 @@ _docs/archive/
 │   ├── tasks-prd-logging-system.md              # Archived task files
 │   ├── tasks-prd-user-authentication.md
 │   └── [other-completed-features].md
-├── completion-metadata/
-│   ├── completion-logging-system.md             # Comprehensive completion documentation
-│   ├── completion-user-authentication.md
-│   └── [other-completion-files].md
-└── planning-artifacts/                          # Historical planning documents
-    ├── testing-implementation-plan.md
-    └── [other-legacy-docs].md
+└── completion-metadata/
+    ├── completion-logging-system.md             # Comprehensive completion documentation
+    ├── completion-user-authentication.md
+    └── [other-completion-files].md
 ```
 
 Benefits of Systematic Archival:

@@ -7,9 +7,8 @@ This archive contains documentation for completed features, preserving the devel
 The archive maintains the same structure as active documentation directories:
 
 - **`sub-prds/`** - Product Requirements Documents for completed features
-- **`tasks/`** - Task documentation for completed features
+- **`tasks/`** - Task documentation for completed features  
 - **`completion-metadata/`** - Completion details and development summaries
-- **`planning-artifacts/`** - Historical planning documents and legacy materials
 
 ## Completed Features
 

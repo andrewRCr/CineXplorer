@@ -209,6 +209,7 @@ infrastructure/dev-certs/
 generate-cert.ps1
 
 # Personal reference documentation
+_docs/planning-artifacts/
 _docs/reports/
 
 # Note: _docs/ai-instructions/, _docs/workflows/, and other high-level docs are included

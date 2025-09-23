@@ -120,122 +120,105 @@ class DiscoverMoviesView(PaginatedTMDBView):
         """Extract all filter parameters for the discover endpoint."""
         filters = {}
 
-        # Sorting
-        if 'sort_by' in request.query_params:
-            filters['sort_by'] = request.query_params['sort_by']
+        # Process simple string parameters
+        self._process_string_params(request, filters)
 
-        # Genres (comma-separated list of IDs)
-        if 'genres' in request.query_params:
-            filters['genres'] = request.query_params['genres']
+        # Process year parameters (most complex logic)
+        self._process_year_params(request, filters)
 
-        # Year filtering - handle both single year and ranges
-        if 'year' in request.query_params:
-            year_value = request.query_params['year']
-            if year_value.isdigit():
-                # Single year
-                try:
-                    filters['year'] = int(year_value)
-                except ValueError:
-                    raise ValueError('Invalid year parameter')
-            elif year_value.endswith('s') and len(year_value) == 5:
-                # Decade range like "2020s"
-                try:
-                    decade_start = int(year_value[:-1])
-                    filters['release_date_gte'] = f"{decade_start}-01-01"
-                    filters['release_date_lte'] = f"{decade_start + 9}-12-31"
-                except ValueError:
-                    raise ValueError('Invalid decade parameter')
-            else:
-                raise ValueError('Invalid year format')
+        # Process rating parameters
+        self._process_rating_params(request, filters)
 
-        # Handle min_year/max_year parameters for backward compatibility
-        if 'min_year' in request.query_params:
-            try:
-                min_year = int(request.query_params['min_year'])
-                filters['release_date_gte'] = f"{min_year}-01-01"
-            except ValueError:
-                raise ValueError('Invalid min_year parameter')
-
-        if 'max_year' in request.query_params:
-            try:
-                max_year = int(request.query_params['max_year'])
-                filters['release_date_lte'] = f"{max_year}-12-31"
-            except ValueError:
-                raise ValueError('Invalid max_year parameter')
-
-        # Rating range - handle both formats
-        if 'vote_average_gte' in request.query_params:
-            try:
-                filters['vote_average_gte'] = float(
-                    request.query_params['vote_average_gte'])
-            except ValueError:
-                raise ValueError('Invalid vote_average_gte parameter')
-
-        if 'vote_average_lte' in request.query_params:
-            try:
-                filters['vote_average_lte'] = float(
-                    request.query_params['vote_average_lte'])
-            except ValueError:
-                raise ValueError('Invalid vote_average_lte parameter')
-
-        # Handle min_rating parameter from frontend
-        if 'min_rating' in request.query_params:
-            try:
-                filters['vote_average_gte'] = float(
-                    request.query_params['min_rating'])
-            except ValueError:
-                raise ValueError('Invalid min_rating parameter')
-
-        # Keywords (comma-separated list of IDs)
-        if 'keywords' in request.query_params:
-            filters['keywords'] = request.query_params['keywords']
-
-        # People (comma-separated list of IDs)
-        if 'people' in request.query_params:
-            filters['people'] = request.query_params['people']
-
-        # Release date range
-        if 'release_date_gte' in request.query_params:
-            filters['release_date_gte'] = request.query_params['release_date_gte']
-
-        if 'release_date_lte' in request.query_params:
-            filters['release_date_lte'] = request.query_params['release_date_lte']
-
-        # Runtime range - handle both formats
-        if 'runtime_gte' in request.query_params:
-            try:
-                filters['runtime_gte'] = int(request.query_params['runtime_gte'])
-            except ValueError:
-                raise ValueError('Invalid runtime_gte parameter')
-
-        if 'runtime_lte' in request.query_params:
-            try:
-                filters['runtime_lte'] = int(request.query_params['runtime_lte'])
-            except ValueError:
-                raise ValueError('Invalid runtime_lte parameter')
-
-        # Handle min_runtime/max_runtime parameters from frontend
-        if 'min_runtime' in request.query_params:
-            try:
-                filters['runtime_gte'] = int(request.query_params['min_runtime'])
-            except ValueError:
-                raise ValueError('Invalid min_runtime parameter')
-
-        if 'max_runtime' in request.query_params:
-            try:
-                filters['runtime_lte'] = int(request.query_params['max_runtime'])
-            except ValueError:
-                raise ValueError('Invalid max_runtime parameter')
-
-        # Certification
-        if 'certification' in request.query_params:
-            filters['certification'] = request.query_params['certification']
-
-        # Region
-        if 'region' in request.query_params:
-            filters['region'] = request.query_params['region']
+        # Process runtime parameters
+        self._process_runtime_params(request, filters)
 
         return filters
+
+    def _process_string_params(self, request, filters):
+        """Process simple string parameters that don't need validation."""
+        string_params = [
+            'sort_by', 'genres', 'keywords', 'people',
+            'release_date_gte', 'release_date_lte', 'certification', 'region'
+        ]
+
+        for param in string_params:
+            if param in request.query_params:
+                filters[param] = request.query_params[param]
+
+    def _process_year_params(self, request, filters):
+        """Process year-related parameters with validation."""
+        if 'year' in request.query_params:
+            self._handle_year_parameter(request.query_params['year'], filters)
+
+        if 'min_year' in request.query_params:
+            self._handle_min_year(request.query_params['min_year'], filters)
+
+        if 'max_year' in request.query_params:
+            self._handle_max_year(request.query_params['max_year'], filters)
+
+    def _handle_year_parameter(self, year_value, filters):
+        """Handle the year parameter which can be a single year or decade."""
+        if year_value.isdigit():
+            try:
+                filters['year'] = int(year_value)
+            except ValueError:
+                raise ValueError('Invalid year parameter')
+        elif year_value.endswith('s') and len(year_value) == 5:
+            try:
+                decade_start = int(year_value[:-1])
+                filters['release_date_gte'] = f"{decade_start}-01-01"
+                filters['release_date_lte'] = f"{decade_start + 9}-12-31"
+            except ValueError:
+                raise ValueError('Invalid decade parameter')
+        else:
+            raise ValueError('Invalid year format')
+
+    def _handle_min_year(self, min_year_value, filters):
+        """Handle min_year parameter."""
+        try:
+            min_year = int(min_year_value)
+            filters['release_date_gte'] = f"{min_year}-01-01"
+        except ValueError:
+            raise ValueError('Invalid min_year parameter')
+
+    def _handle_max_year(self, max_year_value, filters):
+        """Handle max_year parameter."""
+        try:
+            max_year = int(max_year_value)
+            filters['release_date_lte'] = f"{max_year}-12-31"
+        except ValueError:
+            raise ValueError('Invalid max_year parameter')
+
+    def _process_rating_params(self, request, filters):
+        """Process rating-related parameters with validation."""
+        rating_params = {
+            'vote_average_gte': 'vote_average_gte',
+            'vote_average_lte': 'vote_average_lte',
+            'min_rating': 'vote_average_gte'
+        }
+
+        for param, filter_key in rating_params.items():
+            if param in request.query_params:
+                try:
+                    filters[filter_key] = float(request.query_params[param])
+                except ValueError:
+                    raise ValueError(f'Invalid {param} parameter')
+
+    def _process_runtime_params(self, request, filters):
+        """Process runtime-related parameters with validation."""
+        runtime_params = {
+            'runtime_gte': 'runtime_gte',
+            'runtime_lte': 'runtime_lte',
+            'min_runtime': 'runtime_gte',
+            'max_runtime': 'runtime_lte'
+        }
+
+        for param, filter_key in runtime_params.items():
+            if param in request.query_params:
+                try:
+                    filters[filter_key] = int(request.query_params[param])
+                except ValueError:
+                    raise ValueError(f'Invalid {param} parameter')
 
 
 # =========================

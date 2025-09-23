@@ -40,7 +40,7 @@ steps:
   For each logical group:
 
   1. git add [specific files for this group]
-  2. git commit -m "[type](scope): Brief description
+  2. git commit -m "[type](feature-scope): Brief description
 
      - Detailed change 1
      - Detailed change 2
@@ -57,12 +57,34 @@ steps:
   - config: configuration changes
   - chore: maintenance tasks
 
+  Scope Guidelines (Feature Context):
+
+  - Use feature/system name for multi-task features (e.g., "logging-system", "user-auth", "movie-api")
+  - Use specific component for single changes (e.g., "middleware", "database", "frontend")
+  - Examples: feat(logging-system), config(user-auth), docs(movie-api)
+  - Provides context for related commits across multiple tasks
+
   Task Documentation Guidelines:
 
-  - Reference specific task numbers (e.g., "Complete task 1.0")
+  - Reference specific task numbers with feature context (e.g., "Complete logging-system task 2.0")
+  - Include parent feature name when completing sub-tasks
   - When all subtasks are done, mark parent task complete in same commit
   - Commit messages should match actual task progress
   - Always check \_docs/tasks/ files before committing docs changes
+
+  Example Commit Messages with Feature Context:
+
+  ```
+  # Multi-task feature development
+  feat(logging-system): Implement request correlation middleware (Task 2.1)
+  config(logging-system): Register middleware in Django settings (Task 2.6)  
+  docs(logging-system): Complete Task 2.0 - Request Correlation
+  
+  # Single feature changes
+  fix(movie-api): Resolve TMDB rate limiting in discover endpoint
+  style(backend): Fix flake8 violations in middleware files
+  test(user-auth): Add comprehensive JWT token validation tests
+  ```
 
 - name: Verify Commits
   command: git log --oneline -10

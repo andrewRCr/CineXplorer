@@ -269,9 +269,11 @@ export function useEnhancedFetcher({
 				cancel: originalFetcher.cancel,
 			};
 		},
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[filters, filterStyle] // Recreate fetcher when filters change
+	// eslint-disable-next-line react-hooks/exhaustive-deps
+	[filters, filterStyle] // Recreate fetcher when filters change
 	);
+
+	console.log('useEnhancedFetcher: Callback recreated due to dependency change');
 
 	return enhancedFetcher;
 }

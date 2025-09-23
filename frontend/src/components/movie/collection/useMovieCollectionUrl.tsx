@@ -3,6 +3,32 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { type MovieFilters as MovieFiltersType } from "@/components/movie/filters/AdvancedMovieFilters";
 import { initializeFiltersFromUrl } from "@/utilities/urlSync";
 
+// Deep comparison function for filters to prevent unnecessary re-renders
+// Added fix to prevent continuous API requests - updated with navigation loop fix
+function deepEqual(obj1: MovieFiltersType, obj2: MovieFiltersType): boolean {
+	const keys1 = Object.keys(obj1) as (keyof MovieFiltersType)[];
+	const keys2 = Object.keys(obj2) as (keyof MovieFiltersType)[];
+	
+	if (keys1.length !== keys2.length) {
+		return false;
+	}
+	
+	for (const key of keys1) {
+		const val1 = obj1[key];
+		const val2 = obj2[key];
+		
+		if (Array.isArray(val1) && Array.isArray(val2)) {
+			if (val1.length !== val2.length || !val1.every((item, index) => item === val2[index])) {
+				return false;
+			}
+		} else if (val1 !== val2) {
+			return false;
+		}
+	}
+	
+	return true;
+}
+
 export const useMovieCollectionUrl = (
 	defaultFilters?: Partial<MovieFiltersType>,
 	actualSource?: string
@@ -24,7 +50,7 @@ export const useMovieCollectionUrl = (
 		...defaultFilters,
 	});
 
-	// Parse current page from URL
+	// Parse current page from URL - using useMemo instead of useCallback to reduce recreations
 	const getCurrentPageFromUrl = useCallback((): number | undefined => {
 		if (typeof window === "undefined") return undefined;
 		const params = new URLSearchParams(location.search);
@@ -58,22 +84,28 @@ export const useMovieCollectionUrl = (
 				urlFilters.sortBy) as MovieFiltersType["sortBy"],
 		};
 
-	setUnifiedFilters(newUnifiedFilters);
+		// Only update state if the filters have actually changed to prevent unnecessary re-renders
+		if (!deepEqual(unifiedFilters, newUnifiedFilters)) {
+			setUnifiedFilters(newUnifiedFilters);
+		}
 	// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [location.search, getCurrentPageFromUrl]); // unifiedFilters intentionally omitted to prevent infinite loop
 
 	// This callback is passed to the grid to handle page changes
+	// Use a ref to avoid recreating the callback when location.search changes
 	const handlePageChange = useCallback(
 		(page: number) => {
-			const searchParams = new URLSearchParams(location.search);
+			const currentSearch = location.search;
+			const searchParams = new URLSearchParams(currentSearch);
 			if (page === 1) {
 				searchParams.delete("page");
 			} else {
 				searchParams.set("page", page.toString());
 			}
-			navigate(`${location.pathname}?${searchParams.toString()}`, {});
+			const newUrl = `${location.pathname}?${searchParams.toString()}`;
+			navigate(newUrl, {});
 		},
-		[location.pathname, location.search, navigate]
+		[location.pathname, navigate] // Remove location.search from dependencies
 	);
 
 	// This callback is passed to ALL filter components.
@@ -110,7 +142,7 @@ export const useMovieCollectionUrl = (
 				replace: true,
 			});
 		},
-		[unifiedFilters, location.pathname, location.search, navigate]
+		[unifiedFilters, location.pathname, navigate] // Remove location.search from dependencies
 	);
 
 	// Reset pagination state when route/source changes (but not on browser back/forward)
@@ -140,9 +172,16 @@ export const useMovieCollectionUrl = (
 				// Reset pagination state
 				const searchParams = new URLSearchParams(location.search);
 				searchParams.delete("page");
-				navigate(`${location.pathname}?${searchParams.toString()}`, {
-					replace: true,
-				});
+				
+				// Only navigate if the URL would actually change
+				const newSearch = searchParams.toString();
+				const currentSearch = location.search.startsWith('?') ? location.search.slice(1) : location.search;
+				
+				if (currentSearch !== newSearch) {
+					navigate(`${location.pathname}?${newSearch}`, {
+						replace: true,
+					});
+				}
 			}
 			// If hasPageParam is true, we preserve it (likely browser navigation)
 		}

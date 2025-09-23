@@ -101,14 +101,16 @@ const MovieCollectionLayout = ({
 
 	// Memoized outlet context to prevent unnecessary re-renders
 	const outletContext = useMemo(
-		() => ({
-			fetcher: actualFetcher,
-			source: actualSource,
-			query: defaultFilters?.query,
-			initialCurrentPage: currentPage || currentPageFromUrl,
-			onPageChange: handlePageChange,
-			enhancedFetcher,
-		}),
+		() => {
+			return {
+				fetcher: actualFetcher,
+				source: actualSource,
+				query: defaultFilters?.query,
+				initialCurrentPage: currentPage || currentPageFromUrl,
+				onPageChange: handlePageChange,
+				enhancedFetcher,
+			};
+		},
 		[
 			actualFetcher,
 			actualSource,

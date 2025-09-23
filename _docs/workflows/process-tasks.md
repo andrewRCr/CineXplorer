@@ -6,9 +6,15 @@ Guidelines for managing task lists in markdown files to track progress on comple
 
 - **One sub-task at a time:** Do **NOT** start the next sub‑task until you ask the user for permission and they say "yes" or "y"
 - **Test-first approach:** For new models, APIs, and complex logic, write tests before implementation
+- **Immediate documentation:** Update the task list file immediately after completing each subtask
 - **Completion protocol:**
 
-  1. When you finish a **sub‑task**, immediately mark it as completed by changing `[ ]` to `[x]`.
+  1. When you finish a **single sub‑task**:
+     - **First**: Immediately mark it as completed by changing `[ ]` to `[x]` in the task list file
+     - **Second**: Update the "Relevant Files" section if new files were created or modified
+     - **Third**: Pause and ask for user review/approval of the subtask completion
+     - **Fourth**: Only proceed to next subtask with explicit user permission
+
   2. If **all** subtasks underneath a parent task are now `[x]`, follow this sequence:
 
   - **First**: Ensure new code has appropriate test coverage (models, APIs, complex logic)
@@ -36,7 +42,9 @@ Guidelines for managing task lists in markdown files to track progress on comple
   4. **Verify commit messages match task documentation** - commits should reference specific completed tasks, not broad generalizations.
   5. When a major milestone is reached (e.g., backend complete, frontend complete), update PROJECT-STATUS to reflect progress.
 
-- Stop after each sub‑task and wait for the user's go‑ahead.
+- **Stop after each individual sub‑task and wait for the user's go‑ahead**
+- **Never complete multiple subtasks in one implementation cycle** - each subtask represents a discrete deliverable that requires individual review
+- **Each subtask should be documented and approved before moving forward**
 
 ## Task List Maintenance
 
@@ -60,7 +68,13 @@ When working with task lists, the AI must:
    - **Verify parent task completion happens in documentation commits**.
 3. Add newly discovered tasks.
 4. Keep "Relevant Files" accurate and up to date.
-5. Before starting work, check which sub‑task is next.
-6. After implementing a sub‑task, update the file and then pause for user approval.
-7. **Before committing, verify task documentation matches commit message claims**.
-8. Do not stage changes / commit without pausing for user review / approval.
+5. Before starting work, check which **single sub‑task** is next.
+6. **Complete only ONE subtask at a time** - never bundle multiple subtasks together.
+7. After implementing a **single sub‑task**:
+   - Update the task list file immediately (mark subtask as [x])
+   - Update "Relevant Files" section if applicable
+   - Pause and request user review/approval of the specific subtask completion
+   - Wait for explicit permission before starting the next subtask
+8. **Before committing, verify task documentation matches commit message claims**.
+9. Do not stage changes / commit without pausing for user review / approval.
+10. **Never assume subtasks can be grouped** - each represents an individual deliverable requiring separate approval.

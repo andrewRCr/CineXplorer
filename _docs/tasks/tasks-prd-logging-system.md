@@ -11,9 +11,14 @@
 - `backend/logs/README.md` - Comprehensive documentation for log directory usage and commands
 - `backend/logs/.gitignore` - Excludes log files from version control while preserving directory structure
 - `backend/logs/test_permissions.py` - Permission testing script for log directory access verification
-- `frontend/src/services/logger.ts` - Frontend logger service with configurable levels
-- `frontend/src/components/ErrorBoundary.tsx` - React error boundary component for unhandled error capture
+- `frontend/src/services/logger.ts` - Frontend logger service with configurable levels (DEBUG, INFO, WARN, ERROR, CRITICAL) and user interaction tracking for development debugging
+- `frontend/src/components/ErrorBoundary.tsx` - React error boundary component with logger integration and user-friendly error UI
 - `frontend/logs/` - Directory for frontend log files (created by logging system)
+- `backend/apps/core/views/logging.py` - Django API views for receiving and processing frontend log entries with validation and correlation
+- `backend/apps/core/urls.py` - URL configuration for core app logging endpoints
+- `backend/apps/core/tests/test_logging_api.py` - Comprehensive test suite for frontend logging API endpoints
+- `frontend/src/App.tsx` - Main application component wrapped with ErrorBoundary for application-wide error catching
+- `frontend/src/components/__tests__/ErrorBoundaryIntegration.test.tsx` - Integration tests verifying ErrorBoundary works at the application level
 - `infrastructure/docker-compose.yml` - Updated to include log volume mounts for persistent storage
 
 ### Notes
@@ -44,15 +49,15 @@
   - [x] 2.6 Add middleware to MIDDLEWARE list in Django settings
   - [x] 2.7 Create utility function to get correlation ID from request object
 
-- [ ] 3.0 Create Frontend Logging Infrastructure
-  - [ ] 3.1 Create `frontend/src/services/logger.ts` with Logger class and log levels
-  - [ ] 3.2 Implement environment-based logging (development vs production)
-  - [ ] 3.3 Add method to send critical errors to backend logging endpoint
-  - [ ] 3.4 Create `frontend/src/components/ErrorBoundary.tsx` React component
-  - [ ] 3.5 Implement error catching and logging in ErrorBoundary
-  - [ ] 3.6 Add user interaction tracking for development environment
-  - [ ] 3.7 Create backend API endpoint (`/api/logs/`) to receive frontend logs
-  - [ ] 3.8 Integrate ErrorBoundary with main App.tsx component
+- [x] 3.0 Create Frontend Logging Infrastructure
+  - [x] 3.1 Create `frontend/src/services/logger.ts` with Logger class and log levels
+  - [x] 3.2 Implement environment-based logging (development vs production)
+  - [x] 3.3 Add method to send critical errors to backend logging endpoint
+  - [x] 3.4 Create `frontend/src/components/ErrorBoundary.tsx` React component
+  - [x] 3.5 Implement error catching and logging in ErrorBoundary
+  - [x] 3.6 Add user interaction tracking for development environment
+  - [x] 3.7 Create backend API endpoint (`/api/logs/`) to receive frontend logs
+  - [x] 3.8 Integrate ErrorBoundary with main App.tsx component
 
 - [ ] 4.0 Set Up Docker Volume Configuration for Log Access
   - [ ] 4.1 Update `infrastructure/docker-compose.yml` to add backend log volume mount

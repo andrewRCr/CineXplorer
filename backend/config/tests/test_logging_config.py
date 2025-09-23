@@ -40,6 +40,8 @@ except ImportError:
     spec = importlib.util.spec_from_file_location(
         "config_logging", os.path.join(config_dir, "logging.py")
     )
+    if spec is None or spec.loader is None:
+        raise ImportError("Could not load spec or loader for logging.py")
     custom_logging = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(custom_logging)
 
@@ -97,6 +99,7 @@ def test_environment_variables():
     print(f"Console handler level: {config['handlers']['console']['level']}")
 
     # Test that configuration is valid
+    temp_dir = None
     try:
         # Create temporary log directory for testing
         temp_dir = tempfile.mkdtemp()
@@ -123,12 +126,13 @@ def test_environment_variables():
         print(f"❌ Configuration test failed: {e}")
     finally:
         # Clean up temp directory (best effort on Windows)
-        if "temp_dir" in locals() and temp_dir and os.path.exists(temp_dir):
+        if temp_dir and os.path.exists(temp_dir):
             try:
                 shutil.rmtree(temp_dir)
             except (PermissionError, OSError):
                 # Windows file locking can prevent cleanup - not critical
-                print(f"  Note: Temp directory cleanup skipped (Windows file locking): {temp_dir}")
+                print(
+                    f"  Note: Temp directory cleanup skipped (Windows file locking): {temp_dir}")
 
 
 def test_rotation_configuration():
@@ -171,7 +175,8 @@ def test_rotation_configuration():
         assert "backupCount" in handler_config, f"{handler_name} missing backupCount"
 
         # Verify encoding is set
-        assert handler_config.get("encoding") == "utf8", f"{handler_name} encoding not utf8"
+        assert handler_config.get(
+            "encoding") == "utf8", f"{handler_name} encoding not utf8"
 
         size_mb = handler_config['maxBytes']/1024/1024
         backup_count = handler_config['backupCount']
@@ -217,7 +222,8 @@ def test_database_logging_configuration():
     ), "Database handler should capture DEBUG level in development"
 
     # Check database loggers are configured
-    db_loggers = ["django.db.backends", "django.db.backends.schema", "django.db.migrations"]
+    db_loggers = ["django.db.backends",
+                  "django.db.backends.schema", "django.db.migrations"]
     for logger_name in db_loggers:
         assert logger_name in config["loggers"], f"Database logger {logger_name} not found"
         logger_config = config["loggers"][logger_name]
@@ -255,6 +261,8 @@ def test_test_environment_logging():
             "settings_test",
             os.path.join(os.path.dirname(os.path.dirname(__file__)), "settings_test.py"),
         )
+        if spec is None or spec.loader is None:
+            raise ImportError("Could not load spec or loader for settings_test.py")
         settings_test = importlib.util.module_from_spec(spec)
 
         # Set up environment for settings_test

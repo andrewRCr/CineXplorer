@@ -7,6 +7,7 @@ as expected for CI/CD environments.
 
 import os
 import logging
+import logging.config
 import io
 from contextlib import redirect_stderr
 from django.test import TestCase
@@ -34,9 +35,6 @@ class TestLoggingConfigurationTest(TestCase):
         self.assertIn("handlers", logging_config)
         self.assertIn("loggers", logging_config)
         self.assertIn("formatters", logging_config)
-
-
-
 
     def test_info_level_logging_suppressed(self):
         """Test that INFO level messages are suppressed."""
@@ -91,11 +89,9 @@ class TestLoggingConfigurationTest(TestCase):
         stderr_output = stderr_capture.getvalue()
         self.assertNotIn("Request error", stderr_output)
 
-
     def test_testing_flag_is_set(self):
         """Test that TESTING flag is properly set."""
         self.assertTrue(settings.TESTING)
-
 
 
 def run_standalone_test():

@@ -165,12 +165,6 @@ describe('ErrorBoundary with Logger Integration', () => {
   });
 
   it('logs errors to the logger service when errors occur', () => {
-    // Mock the logger to verify it's called
-    const mockLogger = {
-      logError: vi.fn(),
-      reportCriticalError: vi.fn()
-    };
-
     // This test verifies the integration exists - the actual logger functionality
     // is tested in the ErrorBoundary component tests
     render(<TestApp hasError={true} />);

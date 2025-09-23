@@ -1,22 +1,50 @@
-from typing import Optional
-from rest_framework import status
-import requests
 import logging
-from django.conf import settings
+import uuid
 from datetime import datetime, timedelta
 
-logger = logging.getLogger(__name__)
-base_url = "https://api.themoviedb.org/3"
+from apps.core.services.tmdb_api_client import TMDBApiClient
+
+# Use TMDB-specific logger for better log organization
+logger = logging.getLogger('cinexplorer.tmdb')
+
+# Initialize the TMDB API client
+tmdb_client = TMDBApiClient()
 
 # =========================
 # Helper Functions
 # =========================
 
 
+def propagate_error_context(
+        error_dict: dict, operation: str, **additional_context
+) -> dict:
+    """
+    Propagate error context through service layer calls.
+    Ensures correlation IDs and error details are preserved through call stack.
+    """
+    if not isinstance(error_dict, dict) or 'error' not in error_dict:
+        return error_dict
+
+    # Preserve existing correlation ID or generate new one
+    correlation_id = error_dict.get(
+        'correlation_id', str(uuid.uuid4())[:8]
+    )
+
+    enhanced_error = {
+        **error_dict,
+        'correlation_id': correlation_id,
+        'operation': operation,
+        **additional_context
+    }
+
+    return enhanced_error
+
+
 def tmdb_dict_to_movie_dict(tmdb_dict):
     """
     Convert a TMDB API dict to a movie dictionary for serialization.
-    This function creates a dictionary with only the fields needed by the serializer.
+    This function creates a dictionary with only the fields needed by
+    the serializer.
     """
     return {
         'tmdb_id': tmdb_dict.get('id'),
@@ -24,74 +52,68 @@ def tmdb_dict_to_movie_dict(tmdb_dict):
         'poster_path': tmdb_dict.get('poster_path', ''),
         'release_date': tmdb_dict.get('release_date') or None,
         'vote_average': tmdb_dict.get('vote_average'),
-        'runtime': tmdb_dict.get('runtime', 0),  # Include runtime for filtering
+        'runtime': tmdb_dict.get('runtime', 0),  # runtime for filtering
     }
 
 
-def tmdb_get(endpoint: str, params: Optional[dict] = None) -> dict:
-    """Generic TMDB GET request with error handling."""
-    if params is None:
-        params = {}
-    params["api_key"] = settings.TMDB_API_KEY
-    url = f"{base_url}/{endpoint}"
-    print(f"TMDB REQUEST: {url}")
-    print(f"TMDB PARAMS: {params}")
-    try:
-        response = requests.get(url, params=params)
-        print(f"TMDB RESPONSE STATUS: {response.status_code}")
-        if response.status_code != 200:
-            logger.error(f"TMDB request failed: {url} {response.status_code}")
-            logger.error(f"TMDB Response: {response.text}")
-            return {
-                "error": (
-                    f"TMDB request failed: {response.status_code}"
-                ),
-                "status": response.status_code
-            }
-        result = response.json()
-        print(f"TMDB RESPONSE PAGE: {result.get('page', 'N/A')}")
-        print(f"TMDB RESPONSE TOTAL_PAGES: {result.get('total_pages', 'N/A')}")
-        return result
+def tmdb_get(endpoint: str, params: dict | None = None) -> dict:
+    """
+    Generic TMDB GET request using the new API client architecture.
 
-    except requests.exceptions.RequestException as e:
-        logger.error(f"TMDB request exception: {e}")
-        return {"error": str(e), "status": 500}
+    This function provides backward compatibility with the existing codebase
+    while leveraging the new centralized HTTP client infrastructure.
+    """
+    response = tmdb_client.get(endpoint, params)
+    return response.to_legacy_dict()
 
 
 def fetch_movie_runtimes(movie_ids: list) -> dict:
-    """Fetch runtime data for multiple movies efficiently."""
+    """Fetch runtime data using centralized logging."""
     runtimes = {}
 
-    for movie_id in movie_ids:
-        try:
-            info_url = f"{base_url}/movie/{movie_id}?api_key={settings.TMDB_API_KEY}"
-            response = requests.get(info_url, timeout=5)
+    logger.info(
+        f"Fetching runtimes for {len(movie_ids)} movies", extra={
+            'operation': 'fetch_runtimes',
+            'movie_count': len(movie_ids)
+        }
+    )
 
-            if response.status_code == 200:
-                data = response.json()
-                runtimes[movie_id] = data.get('runtime', 0)
-            else:
-                msg = f"Failed to fetch runtime for movie {movie_id}"
-                print(f"DEBUG: {msg}: {response.status_code}")
-                runtimes[movie_id] = 0
-        except requests.exceptions.RequestException as e:
-            print(f"DEBUG: Exception fetching runtime for movie {movie_id}: {e}")
+    for movie_id in movie_ids:
+        result = tmdb_get(f"movie/{movie_id}")
+        if "error" in result:
+            logger.warning(
+                f"Failed to fetch runtime for movie {movie_id}", extra={
+                    'operation': 'fetch_runtime',
+                    'movie_id': movie_id,
+                    'error': result.get('error')
+                }
+            )
             runtimes[movie_id] = 0
+        else:
+            runtimes[movie_id] = result.get('runtime', 0)
 
     return runtimes
 
 
 def get_simple_credits(credits_response):
-    """ Extracts simplified, relevant credits from the TMDB credits response. """
+    """Extracts simplified, relevant credits from TMDB credits response."""
     return {
         'crew': [
-            {'id': person['id'], 'name': person['name'],
-                'job': person['job'], 'profile_path': person['profile_path']}
+            {
+                'id': person['id'],
+                'name': person['name'],
+                'job': person['job'],
+                'profile_path': person['profile_path']
+            }
             for person in credits_response.get('crew', [])
         ],
         'cast': [
-            {'id': person['id'], 'name': person['name'],
-                'character': person['character'], 'profile_path': person['profile_path']}
+            {
+                'id': person['id'],
+                'name': person['name'],
+                'character': person['character'],
+                'profile_path': person['profile_path']
+            }
             for person in credits_response.get('cast', [])
         ]
     }
@@ -103,50 +125,90 @@ def get_simple_credits(credits_response):
 
 
 def get_movie_by_id(tmdb_id: int):
-    """ Retrieves movie details and credits from TMDB by movie ID. """
+    """
+    Retrieves movie details and credits from TMDB by movie ID using
+    centralized logging.
+    """
 
+    # Use TMDB client for movie details
+    info_response = tmdb_client.get_movie_details(tmdb_id)
+    if not info_response.is_success():
+        error_dict = info_response.to_legacy_dict()
+        return propagate_error_context(
+            error_dict,
+            operation='get_movie_details',
+            movie_id=tmdb_id,
+            error_stage='fetching_movie_info'
+        )
+
+    # Use TMDB client for credits
+    credits_response = tmdb_client.get(f"movie/{tmdb_id}/credits")
+    if not credits_response.is_success():
+        error_dict = credits_response.to_legacy_dict()
+        return propagate_error_context(
+            error_dict,
+            operation='get_movie_credits',
+            movie_id=tmdb_id,
+            error_stage='fetching_credits'
+        )
+
+    info_result = info_response.get_json_data()
+    credits_result = credits_response.get_json_data()
+
+    # Type guard: ensure we have valid dictionaries
+    if not info_result or not credits_result:
+        return {
+            'error': 'Failed to get valid response data from TMDB',
+            'status': 500,
+            'correlation_id': info_response.correlation_id,
+            'operation': 'get_movie_by_id',
+            'movie_id': tmdb_id
+        }
+
+    # Combine movie info with credits
     try:
-        info_url = f"{base_url}/movie/{tmdb_id}?api_key={settings.TMDB_API_KEY}"
-        credits_url = f"{base_url}/movie/{tmdb_id}/credits?api_key={settings.TMDB_API_KEY}"
+        movie_dict = tmdb_dict_to_movie_dict(info_result)
+        credits = get_simple_credits(credits_result)
 
-        info_response = requests.get(info_url)
-        if info_response.status_code == 404:
-            return {
-                'error': f'Movie with id {tmdb_id} not found.',
-                'status': status.HTTP_404_NOT_FOUND
-            }
-        elif info_response.status_code != 200:
-            logger.error(f"Failed to retrieve movie info for id {tmdb_id}.")
-            return {
-                'error': f'An error occurred while retrieving info for movie w/ id {tmdb_id}.',
-                'status': status.HTTP_500_INTERNAL_SERVER_ERROR
-            }
-
-        credits_response = requests.get(credits_url)
-        if credits_response.status_code != 200:
-            logger.error(f"Failed to retrieve credits for movie id {tmdb_id}.")
-            return {
-                'error': f'An error occurred while retrieving credits for movie w/ id {tmdb_id}.',
-                'status': status.HTTP_500_INTERNAL_SERVER_ERROR
-            }
-
-        movie_dict = tmdb_dict_to_movie_dict(info_response.json())
-        credits = get_simple_credits(credits_response.json())
         movie_dict.update({
             'crew': credits.get('crew', []),
             'cast': credits.get('cast', []),
-            'overview': info_response.json().get('overview', ''),
-            'genres': info_response.json().get('genres', []),
-            'production_companies': info_response.json().get('production_companies', []),
-            'runtime': info_response.json().get('runtime', 0),
+            'overview': info_result.get('overview', ''),
+            'genres': info_result.get('genres', []),
+            'production_companies': (
+                info_result.get('production_companies', [])
+            ),
+            'runtime': info_result.get('runtime', 0),
         })
+
         return movie_dict
 
-    except requests.exceptions.RequestException as e:
-        logger.error(f"Failed to retrieve movie data: {e}")
+    except Exception as processing_error:
+        # Log processing errors with full context
+        correlation_id = info_result.get(
+            'correlation_id', str(uuid.uuid4())[:8]
+        )
+        logger.error(
+            f"Error processing movie data for ID {tmdb_id}", extra={
+                'correlation_id': correlation_id,
+                'operation': 'process_movie_data',
+                'movie_id': tmdb_id,
+                'error_type': type(processing_error).__name__,
+                'error_category': 'data_processing_error',
+                'processing_error': str(processing_error),
+                'is_critical': True
+            }
+        )
+
         return {
-            'error': f'An error occurred while finding movie with id {tmdb_id}.',
-            'status': status.HTTP_500_INTERNAL_SERVER_ERROR
+            'error': f'Failed to process movie data: {processing_error}',
+            'status': 500,
+            'correlation_id': correlation_id,
+            'operation': 'get_movie_by_id',
+            'movie_id': tmdb_id,
+            'error_details': (
+                'An error occurred while processing movie data from TMDB'
+            )
         }
 
 # =========================
@@ -155,17 +217,63 @@ def get_movie_by_id(tmdb_id: int):
 
 
 def get_nowPlaying_movies(page=1):
-    """ Retrieves a list of now playing movies from TMDB. """
-    result = tmdb_get("movie/now_playing", {"page": page})
-    if "error" in result:
+    """
+    Retrieves a list of now playing movies from TMDB with error context
+    propagation.
+    """
+    # Use the client's direct now playing method
+    response = tmdb_client.get_now_playing_movies(page=page)
+
+    if not response.is_success():
+        error_dict = response.to_legacy_dict()
+        return propagate_error_context(
+            error_dict,
+            operation='get_nowPlaying_movies',
+            page=page,
+            error_stage='fetching_now_playing'
+        )
+
+    result = response.get_json_data()
+
+    # Type guard: ensure we have a valid dictionary
+    if not result:
+        return {
+            'error': 'Failed to get valid response data from TMDB',
+            'status': 500,
+            'correlation_id': response.correlation_id,
+            'operation': 'get_nowPlaying_movies'
+        }
+
+    try:
+        movies = result.get('results', [])
+        result['results'] = [tmdb_dict_to_movie_dict(m) for m in movies]
         return result
-    movies = result.get('results', [])
-    result['results'] = [tmdb_dict_to_movie_dict(m) for m in movies]
-    return result
+    except Exception as processing_error:
+        correlation_id = result.get(
+            'correlation_id', str(uuid.uuid4())[:8]
+        )
+        logger.error("Error processing now playing movies", extra={
+            'correlation_id': correlation_id,
+            'operation': 'process_nowplaying_movies',
+            'page': page,
+            'error_type': type(processing_error).__name__,
+            'processing_error': str(processing_error)
+        })
+
+        return {
+            'error': (
+                f'Failed to process now playing movies: {processing_error}'
+            ),
+            'status': 500,
+            'correlation_id': correlation_id,
+            'operation': 'get_nowPlaying_movies'
+        }
 
 
 def get_upcoming_movies(page=1):
-    """ Retrieves a list of upcoming movies from TMDB, paginated by page param. """
+    """
+    Retrieves a list of upcoming movies from TMDB, paginated by page param.
+    """
     today = datetime.today()
     min_date = today.strftime("%Y-%m-%d")
     max_date = (today + timedelta(days=30)).strftime("%Y-%m-%d")
@@ -190,21 +298,45 @@ def get_upcoming_movies(page=1):
 
 
 def search_movies(query: str, page: int = 1):
-    """ Searches for movies by query string using TMDB, with pagination. """
-    params = {
-        "query": query,
-        "page": page,
-        "include_adult": "false",  # Exclude adult content
-        "language": "en-US",
-        "region": "US"
-    }
-    result = tmdb_get("search/movie", params)
-    if "error" in result:
-        return result
+    """Searches for movies by query string using TMDB, with pagination."""
+    # Use the client's direct search method instead of generic get
+    response = tmdb_client.search_movies(
+        query=query,
+        page=page,
+        include_adult="false",
+        language="en-US",
+        region="US"
+    )
+
+    if not response.is_success():
+        error_dict = response.to_legacy_dict()
+        return propagate_error_context(
+            error_dict,
+            operation='search_movies',
+            query=query,
+            page=page,
+            error_stage='tmdb_search_request'
+        )
+
+    result = response.get_json_data()
+
+    # Type guard: ensure we have a valid dictionary
+    if not result:
+        return {
+            'error': 'Failed to get valid response data from TMDB',
+            'status': 500,
+            'correlation_id': response.correlation_id,
+            'operation': 'search_movies'
+        }
 
     movies = result.get('results', [])
-    print(f"DEBUG: search_movies called with query='{query}', page={page}")
-    print(f"DEBUG: TMDB returned {len(movies)} raw results")
+    movies = result.get('results', [])
+    logger.debug("Search movies processing", extra={
+        'operation': 'search_movies',
+        'query': query,
+        'page': page,
+        'raw_results_count': len(movies)
+    })
 
     # Filter out non-visual content (conservative approach)
     filtered_movies = []
@@ -212,27 +344,46 @@ def search_movies(query: str, page: int = 1):
         title = movie.get('title', '')
         title_lower = title.lower()
 
-        # Skip if it's not a movie (though search/movie should only return movies)
+        # Skip if not a movie (search/movie should only return movies)
         if movie.get('media_type') and movie.get('media_type') != 'movie':
-            print(f"DEBUG: Skipping {title} - media_type: {movie.get('media_type')}")
+            logger.debug("Filtering out non-movie content", extra={
+                'operation': 'search_filter',
+                'title': title,
+                'media_type': movie.get('media_type'),
+                'reason': 'wrong_media_type'
+            })
             continue
 
         # Skip obvious non-visual content (very conservative)
         skip_terms = [
-            'soundtrack', 'score', 'music from', 'original motion picture soundtrack',
-            'original score', 'music score', 'film score', 'motion picture score'
+            'soundtrack', 'score', 'music from',
+            'original motion picture soundtrack',
+            'original score', 'music score', 'film score',
+            'motion picture score'
         ]
         if any(skip_term in title_lower for skip_term in skip_terms):
-            print(f"DEBUG: Skipping {title} - contains non-visual content")
+            logger.debug("Filtering out non-visual content", extra={
+                'operation': 'search_filter',
+                'title': title,
+                'reason': 'non_visual_content'
+            })
             continue
 
         filtered_movies.append(movie)
 
-    print(f"DEBUG: After filtering: {len(filtered_movies)} movies kept")
+    logger.debug("Search filtering completed", extra={
+        'operation': 'search_filter_complete',
+        'query': query,
+        'raw_count': len(movies),
+        'filtered_count': len(filtered_movies),
+        'filtered_out': len(movies) - len(filtered_movies)
+    })
     result['results'] = [tmdb_dict_to_movie_dict(m) for m in filtered_movies]
     # Update total_results to reflect filtered count
-    result['total_results'] = len(filtered_movies) + \
+    result['total_results'] = (
+        len(filtered_movies) +
         (result.get('total_results', 0) - len(movies))
+    )
 
     return result
 
@@ -255,14 +406,15 @@ def discover_movies(page: int = 1, **filters):
     - certification: Certification rating
     - region: Country code for regional release dates
     """
-    print(f"DEBUG: discover_movies called with page={page}, filters: {filters}")
+    logger.debug("Discover movies request", extra={
+        'operation': 'discover_movies',
+        'page': page,
+        'filters': filters,
+        'filter_count': len(filters)
+    })
 
-    # Debug runtime filtering specifically - DISABLED due to TMDB API limitations
-    # TMDB's runtime filtering is fundamentally broken and returns incorrect results
-    # if 'runtime_gte' in filters or 'runtime_lte' in filters:
-    #     print(f"DEBUG: Runtime filtering requested - "
-    #           f"runtime_gte: {filters.get('runtime_gte')}, "
-    #           f"runtime_lte: {filters.get('runtime_lte')}")
+    # Debug runtime filtering - DISABLED due to TMDB API limitations
+    # TMDB's runtime filtering returns incorrect results
     params = {
         "include_adult": "false",
         "include_video": "false",
@@ -291,11 +443,8 @@ def discover_movies(page: int = 1, **filters):
     # Apply filters if provided
     for filter_name, tmdb_param in filter_mapping.items():
         if filter_name in filters and filters[filter_name] is not None:
-            # DISABLED: Runtime special case handling - no longer needed
+            # DISABLED: Runtime special case - no longer needed
             # since runtime filtering is disabled
-            # if filter_name == 'runtime_gte' and str(filters[filter_name]) == '0':
-            #     params[tmdb_param] = '1'
-            # else:
             params[tmdb_param] = str(filters[filter_name])
 
     # Set default sort if not specified
@@ -307,17 +456,28 @@ def discover_movies(page: int = 1, **filters):
         return result
 
     movies = result.get('results', [])
-    print(f"DEBUG: TMDB returned {len(movies)} movies, "
-          f"total_results: {result.get('total_results', 'N/A')}")
+
+    # Log detailed discover response for debugging
+    discover_metadata = {
+        'operation': 'discover_response',
+        'page': page,
+        'movies_count': len(movies),
+        'total_results': result.get('total_results'),
+        'total_pages': result.get('total_pages')
+    }
+
     if movies:
-        print(f"DEBUG: First movie release date: "
-              f"{movies[0].get('release_date', 'N/A')}")
-        # Debug: Log what fields TMDB actually includes in discover response
-        print(f"DEBUG: First movie keys from TMDB: {list(movies[0].keys())}")
-        if 'runtime' in movies[0]:
-            print(f"DEBUG: First movie runtime: {movies[0]['runtime']}")
-        else:
-            print("DEBUG: Runtime NOT included in TMDB discover response")
+        first_movie = movies[0]
+        discover_metadata.update({
+            'first_movie_release_date': first_movie.get('release_date'),
+            'first_movie_fields': list(first_movie.keys()),
+            'runtime_included': 'runtime' in first_movie
+        })
+        if 'runtime' in first_movie:
+            discover_metadata['first_movie_runtime'] = first_movie['runtime']
+
+    logger.debug("Discover movies response processed", extra=discover_metadata)
+
     result['results'] = [tmdb_dict_to_movie_dict(m) for m in movies]
     return result
 

@@ -97,14 +97,13 @@ class FrontendLogAPIView(APIView):
                     {"error": "Invalid JSON payload", "success": False},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-            
+
             # Log the error but don't expose internal details
             # Try to get request data safely
             try:
                 request_data = str(request.data)[:1000] if hasattr(request, 'data') else 'N/A'
-            except:
+            except Exception:
                 request_data = 'Unable to access request data'
-                
             app_logger.error(f"Frontend log API error: {str(e)}", extra={
                 'correlation_id': get_correlation_id(request),
                 'request_data': request_data

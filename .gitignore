@@ -209,8 +209,7 @@ infrastructure/dev-certs/
 generate-cert.ps1
 
 # Personal reference documentation
-_docs/archive/
 _docs/reports/
 
-# Note: _docs/ai-instructions/, _docs/workflows/, and high-level docs are included
+# Note: _docs/ai-instructions/, _docs/workflows/, and other high-level docs are included
 # to showcase systematic AI-assisted development methodology

@@ -17,7 +17,7 @@ Environment Variables:
     DJANGO_LOG_LEVEL: Set file logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
                      Controls verbosity of log files
                      Example: DJANGO_LOG_LEVEL=DEBUG
-                     
+
     DJANGO_CONSOLE_LOG_LEVEL: Set console logging level (separate from file level)
                              Controls verbosity of console output during development
                              Defaults to INFO in debug mode, WARNING in production
@@ -30,10 +30,10 @@ Environment Variables:
 Usage Examples:
     # Clean console with detailed files
     DEBUG=True docker-compose up  # INFO console, DEBUG files
-    
+
     # Very quiet console, normal file logging
     DEBUG=True DJANGO_CONSOLE_LOG_LEVEL=WARNING docker-compose up
-    
+
     # Debug everything (noisy console)
     DEBUG=True DJANGO_CONSOLE_LOG_LEVEL=DEBUG docker-compose up
 
@@ -48,30 +48,55 @@ import logging.handlers
 class HealthCheckFilter(logging.Filter):
     """
     Custom filter to suppress health check requests from console output.
-    
+
     This filter detects health check requests and prevents them from
     cluttering the console during development while preserving them
     in log files for debugging purposes.
+
+    However, unhealthy health checks (4xx/5xx status codes) are allowed
+    through as they indicate real problems that should be visible.
     """
-    
+
     def filter(self, record):
         # Check if this is a health check related message
         message = getattr(record, 'getMessage', lambda: str(record.msg))()
-        
-        # Common health check patterns to filter out
+
+        # Common health check patterns to detect
         health_check_patterns = [
             '/api/health-check/',
             'health-check',
             'GET /api/health-check',
             '"GET /api/health-check/',  # Werkzeug format
+            'api/health-check',  # Our new format patterns
         ]
-        
-        # If any health check pattern is found, suppress from console
-        for pattern in health_check_patterns:
-            if pattern in message:
-                return False
-                
-        return True
+
+        # Check if this message is about a health check
+        is_health_check = any(pattern in message for pattern in health_check_patterns)
+
+        if not is_health_check:
+            return True  # Not a health check, allow it through
+
+        # This is a health check - only allow it if it indicates an error
+        # Look for error status codes (4xx, 5xx) or error indicators
+        error_indicators = [
+            '❌',  # Our error emoji
+            '⚠️',  # Our warning emoji
+            ' 4',  # Status codes 4xx
+            ' 5',  # Status codes 5xx
+            'ERROR',
+            'EXCEPTION',
+            'CRITICAL',
+            'WARNING',
+        ]
+
+        # Allow through if this health check message indicates an error
+        has_error = any(indicator in message for indicator in error_indicators)
+
+        if has_error:
+            return True  # This is an unhealthy health check, allow it through
+
+        # This is a healthy health check, suppress it from console
+        return False
 
 
 # Valid log levels for environment variable validation
@@ -148,7 +173,7 @@ def get_logging_config(log_dir=None):
     default_level = "DEBUG" if debug_mode else "INFO"
     raw_log_level = os.getenv("DJANGO_LOG_LEVEL", default_level)
     log_level = validate_log_level(raw_log_level)
-    
+
     # Console log level - more conservative for development usability
     # Can be overridden with DJANGO_CONSOLE_LOG_LEVEL for specific console control
     console_default = "INFO" if debug_mode else "WARNING"
@@ -205,7 +230,7 @@ def get_logging_config(log_dir=None):
             "database": {
                 "format": "[{asctime}] DB-{levelname:5s} | {message}",
                 "style": "{",
-                "datefmt": "%H:%M:%S.%f",  # Include microseconds for precise timing
+                "datefmt": "%H:%M:%S",  # Simple time format for database logs
             },
         },
         "filters": {
@@ -297,7 +322,7 @@ def get_logging_config(log_dir=None):
             },
             "requests": {
                 "handlers": ["file_app"],
-                "level": "WARNING", 
+                "level": "WARNING",
                 "propagate": False,
             },
             # Werkzeug server logs (captures runserver_plus output)

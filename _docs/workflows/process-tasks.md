@@ -12,8 +12,9 @@ Guidelines for managing task lists in markdown files to track progress on comple
   1. When you finish a **single sub‑task**:
      - **First**: Immediately mark it as completed by changing `[ ]` to `[x]` in the task list file
      - **Second**: Update the "Relevant Files" section if new files were created or modified
-     - **Third**: Pause and ask for user review/approval of the subtask completion
-     - **Fourth**: Only proceed to next subtask with explicit user permission
+     - **Third**: **MANDATORY STOP** - Pause and ask for user review/approval of the subtask completion
+     - **Fourth**: Only proceed to next subtask with explicit user permission ("proceed to 4.x" or "y")
+     - **NEVER** continue to multiple subtasks without explicit user approval for each one
 
   2. If **all** subtasks underneath a parent task are now `[x]`, follow this sequence:
 

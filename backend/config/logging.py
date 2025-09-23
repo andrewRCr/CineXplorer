@@ -328,9 +328,23 @@ def get_logging_config(log_dir=None):
     - DJANGO_LOG_LEVEL always takes precedence if set
     - CI=True: Only console logging, no file handlers
     """
-    # Get environment variables
+    # Get environment variables with multiple CI detection methods
     debug_mode = os.getenv("DEBUG", "False").lower() == "true"
-    is_ci = os.getenv("CI", "False").lower() == "true"
+    
+    # Multiple ways to detect CI environment
+    is_ci = (
+        os.getenv("CI", "False").lower() == "true" or
+        os.getenv("GITHUB_ACTIONS", "False").lower() == "true" or 
+        os.getenv("CONTINUOUS_INTEGRATION", "False").lower() == "true" or
+        bool(os.getenv("BUILD_NUMBER"))  # Jenkins
+    )
+    
+    # Debug output for CI detection (only in CI to avoid noise in dev)
+    if is_ci:
+        print(f"CI environment detected. Environment variables:")
+        print(f"  CI={os.getenv('CI')}")
+        print(f"  GITHUB_ACTIONS={os.getenv('GITHUB_ACTIONS')}")
+        print(f"  Disabling file logging handlers.")
     default_level = "DEBUG" if debug_mode else "INFO"
     raw_log_level = os.getenv("DJANGO_LOG_LEVEL", default_level)
     log_level = validate_log_level(raw_log_level)

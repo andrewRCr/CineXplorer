@@ -255,27 +255,32 @@ TESTING = "test" in sys.argv
 
 # Ensure log directory exists
 def ensure_log_directory():
-    """Ensure the log directory exists for file handlers."""
-    # Check if we're in a CI environment
-    is_ci = os.environ.get('CI') == 'true'
+    """Ensure the log directory exists for file handlers (only when not in CI)."""
+    # Multiple ways to detect CI environment (consistent with logging.py)
+    is_ci = (
+        os.environ.get('CI', 'False').lower() == 'true' or
+        os.environ.get('GITHUB_ACTIONS', 'False').lower() == 'true' or 
+        os.environ.get('CONTINUOUS_INTEGRATION', 'False').lower() == 'true' or
+        bool(os.environ.get('BUILD_NUMBER'))  # Jenkins
+    )
     
     if is_ci:
-        # In CI, use a temporary directory that we can write to
-        import tempfile
-        log_dir = tempfile.mkdtemp(prefix='cinexplorer-logs-')
+        # In CI, logging config will disable file handlers entirely
+        # Return a dummy path that won't be used
+        return '/tmp/ci-logs-unused'
     else:
         # In development/production, use the standard logs directory
         log_dir = os.path.join(BASE_DIR, "logs")
-    
-    try:
-        os.makedirs(log_dir, exist_ok=True)
-        return log_dir
-    except PermissionError:
-        # Fallback to temp directory if we can't create the intended directory
-        import tempfile
-        fallback_dir = tempfile.mkdtemp(prefix='cinexplorer-logs-fallback-')
-        print(f"Warning: Could not create log directory {log_dir}, using fallback: {fallback_dir}", file=sys.stderr)
-        return fallback_dir
+        
+        try:
+            os.makedirs(log_dir, exist_ok=True)
+            return log_dir
+        except PermissionError:
+            # Fallback to temp directory if we can't create the intended directory
+            import tempfile
+            fallback_dir = tempfile.mkdtemp(prefix='cinexplorer-logs-fallback-')
+            print(f"Warning: Could not create log directory {log_dir}, using fallback: {fallback_dir}", file=sys.stderr)
+            return fallback_dir
 
 
 # Create log directory during settings initialization
@@ -290,7 +295,31 @@ LOG_DIRECTORY = ensure_log_directory()
 # - File rotation with appropriate backup counts
 # - Database query performance monitoring
 # - Separate log files for different components
-LOGGING = get_logging_config(log_dir=LOG_DIRECTORY)
+try:
+    LOGGING = get_logging_config(log_dir=LOG_DIRECTORY)
+except Exception as e:
+    print(f"Error configuring logging: {e}", file=sys.stderr)
+    # Fallback to basic console-only logging
+    LOGGING = {
+        'version': 1,
+        'disable_existing_loggers': False,
+        'formatters': {
+            'simple': {
+                'format': '{levelname} {name} {message}',
+                'style': '{',
+            },
+        },
+        'handlers': {
+            'console': {
+                'class': 'logging.StreamHandler',
+                'formatter': 'simple',
+            },
+        },
+        'root': {
+            'handlers': ['console'],
+            'level': 'INFO',
+        },
+    }
 
 
 # Logging-related settings for development

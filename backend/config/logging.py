@@ -14,27 +14,64 @@ This module provides logging configuration that supports:
 - Console + file dual logging for development workflow
 
 Environment Variables:
-    DJANGO_LOG_LEVEL: Set logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
-                     Takes precedence over DEBUG setting
+    DJANGO_LOG_LEVEL: Set file logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+                     Controls verbosity of log files
                      Example: DJANGO_LOG_LEVEL=DEBUG
+                     
+    DJANGO_CONSOLE_LOG_LEVEL: Set console logging level (separate from file level)
+                             Controls verbosity of console output during development
+                             Defaults to INFO in debug mode, WARNING in production
+                             Example: DJANGO_CONSOLE_LOG_LEVEL=WARNING
 
     DEBUG: Django debug mode (True/False)
-          When True: defaults to DEBUG level with detailed formatting
-          When False: defaults to INFO level with production JSON formatting
+          When True: defaults to DEBUG file level, INFO console level
+          When False: defaults to INFO file level, WARNING console level
 
 Usage Examples:
-    # Set specific log level
-    DJANGO_LOG_LEVEL=WARNING docker-compose up
+    # Clean console with detailed files
+    DEBUG=True docker-compose up  # INFO console, DEBUG files
+    
+    # Very quiet console, normal file logging
+    DEBUG=True DJANGO_CONSOLE_LOG_LEVEL=WARNING docker-compose up
+    
+    # Debug everything (noisy console)
+    DEBUG=True DJANGO_CONSOLE_LOG_LEVEL=DEBUG docker-compose up
 
-    # Use debug mode defaults
-    DEBUG=True docker-compose up
-
-    # Production-like logging in development
+    # Production-like logging
     DEBUG=False DJANGO_LOG_LEVEL=INFO docker-compose up
 """
 
 import os
 import logging.handlers
+
+
+class HealthCheckFilter(logging.Filter):
+    """
+    Custom filter to suppress health check requests from console output.
+    
+    This filter detects health check requests and prevents them from
+    cluttering the console during development while preserving them
+    in log files for debugging purposes.
+    """
+    
+    def filter(self, record):
+        # Check if this is a health check related message
+        message = getattr(record, 'getMessage', lambda: str(record.msg))()
+        
+        # Common health check patterns to filter out
+        health_check_patterns = [
+            '/api/health-check/',
+            'health-check',
+            'GET /api/health-check',
+            '"GET /api/health-check/',  # Werkzeug format
+        ]
+        
+        # If any health check pattern is found, suppress from console
+        for pattern in health_check_patterns:
+            if pattern in message:
+                return False
+                
+        return True
 
 
 # Valid log levels for environment variable validation
@@ -111,6 +148,12 @@ def get_logging_config(log_dir=None):
     default_level = "DEBUG" if debug_mode else "INFO"
     raw_log_level = os.getenv("DJANGO_LOG_LEVEL", default_level)
     log_level = validate_log_level(raw_log_level)
+    
+    # Console log level - more conservative for development usability
+    # Can be overridden with DJANGO_CONSOLE_LOG_LEVEL for specific console control
+    console_default = "INFO" if debug_mode else "WARNING"
+    raw_console_level = os.getenv("DJANGO_CONSOLE_LOG_LEVEL", console_default)
+    console_log_level = validate_log_level(raw_console_level)
 
     # Base directory for log files
     if log_dir is None:
@@ -165,12 +208,18 @@ def get_logging_config(log_dir=None):
                 "datefmt": "%H:%M:%S.%f",  # Include microseconds for precise timing
             },
         },
+        "filters": {
+            "health_check_filter": {
+                "()": "config.logging.HealthCheckFilter",
+            },
+        },
         "handlers": {
             "console": {
                 "class": "logging.StreamHandler",
-                "level": log_level,
+                "level": console_log_level,  # Use console-specific level
                 "formatter": "console" if debug_mode else "production",
                 "stream": "ext://sys.stdout",
+                "filters": ["health_check_filter"],  # Apply health check filter
             },
             "file_app": {
                 "class": "logging.handlers.RotatingFileHandler",
@@ -222,8 +271,41 @@ def get_logging_config(log_dir=None):
             # Root logger - catches everything not specifically configured
             "": {
                 "handlers": ["console"],
-                "level": log_level,
+                "level": console_log_level,  # Use console level for root logger
                 "propagate": False,
+            },
+            # Suppress noisy third-party libraries from console
+            "watchdog": {
+                "handlers": ["file_app"],  # Only log to file, not console
+                "level": "WARNING",
+                "propagate": False,
+            },
+            "watchdog.observers": {
+                "handlers": [],  # Completely suppress - very noisy
+                "level": "CRITICAL",
+                "propagate": False,
+            },
+            "debug_toolbar": {
+                "handlers": ["file_django"],  # Only log to Django file
+                "level": "WARNING",
+                "propagate": False,
+            },
+            "urllib3": {
+                "handlers": ["file_app"],
+                "level": "WARNING",
+                "propagate": False,
+            },
+            "requests": {
+                "handlers": ["file_app"],
+                "level": "WARNING", 
+                "propagate": False,
+            },
+            # Werkzeug server logs (captures runserver_plus output)
+            "werkzeug": {
+                "handlers": ["console", "file_app"],
+                "level": "INFO",
+                "propagate": False,
+                "filters": ["health_check_filter"] if debug_mode else [],
             },
             # CineXplorer application logger
             "cinexplorer": {

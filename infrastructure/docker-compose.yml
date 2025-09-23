@@ -9,6 +9,7 @@ services:
     volumes:
       - ../backend:/backend:cached
       - ../shared:/shared:cached
+      - ../backend/logs:/backend/logs:cached
       - ./dev-certs/key.pem:/app/key.pem
       - ./dev-certs/cert.pem:/app/cert.pem
     env_file:
@@ -42,6 +43,7 @@ services:
     volumes:
       - ../frontend:/frontend:cached
       - ../shared:/shared:cached
+      - ../frontend/logs:/frontend/logs:cached
       - frontend-node-modules:/frontend/node_modules
       - ./dev-certs/key.pem:/app/certs/key.pem
       - ./dev-certs/cert.pem:/app/certs/cert.pem

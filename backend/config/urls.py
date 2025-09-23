@@ -35,6 +35,7 @@ urlpatterns = [
     path("api/user/", include("user.urls")),
     path("api/user-movie-data/", include("user_movie_data.urls")),
     path("api/movie/", include("movie.urls")),
+    path("api/core/", include("core.urls")),  # Core app for logging and utilities
     path("api/token/", JWTCookieTokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("api/token/refresh/", JWTCookieTokenRefreshView.as_view(), name="token_refresh"),
     path("api/logout/", LogOutAPIView.as_view(), name="logout"),

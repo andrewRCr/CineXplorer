@@ -1,4 +1,4 @@
-# Task List Management
+-# Task List Management
 
 Guidelines for managing task lists in markdown files to track progress on completing a PRD
 

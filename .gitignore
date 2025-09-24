@@ -212,5 +212,9 @@ generate-cert.ps1
 _docs/archive/reports/
 _docs/reports/
 
+# AI tool settings (personal development environment preferences)
+.claude/
+.warp/
+
 # Note: _docs/ai-instructions/, _docs/workflows/, and other high-level docs are included
 # to showcase systematic AI-assisted development methodology

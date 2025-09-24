@@ -6,16 +6,32 @@ A modern, full-stack movie discovery application built with Django REST Framewor
 
 **[Live Demo](https://your-live-demo-url-here.com)** _(Link to be added)_
 
-## 📚 Comprehensive Documentation
+## 📚 Documentation & Development System
 
-Detailed project documentation is available in **[`_docs/`](_docs/)**:
+This project showcases a **systematic approach to full-stack development** with comprehensive documentation and structured AI-assisted workflows. **AI is not the default solution** - it's used deliberately and selectively to augment (not replace) core development skills. Detailed documentation is available in **[`_docs/`](_docs/)**.
 
-- **Product Requirements** - Vision, features, and user flows
-- **Technical Architecture** - System design and implementation details
-- **Project Status** - Current progress and roadmap
-- **Development Workflows** - Selective AI-assisted development processes with quality gates
+### **🚀 Quick Start Paths**
 
-The `_docs/` directory showcases a structured approach to full-stack development with professional documentation standards and modern AI-assisted workflows.
+**👤 New Developer?** Start here:
+1. **[`_docs/README.md`](_docs/README.md)** - Documentation overview and navigation
+2. **[`_docs/META-PRD.md`](_docs/META-PRD.md)** - What we're building and why
+3. **[`_docs/TECHNICAL-ARCHITECTURE.md`](_docs/TECHNICAL-ARCHITECTURE.md)** - How it's built
+
+**🤖 AI Assistant?** Essential reading:
+1. **[`_docs/DEVELOPMENT-RULES.md`](_docs/DEVELOPMENT-RULES.md)** - Non-negotiable development standards
+2. **[`_docs/ai-instructions/`](_docs/ai-instructions/)** - AI-specific guidance and context
+
+**🔧 Development Reference?**
+- **[`_docs/reference/QUICK-REFERENCE.md`](_docs/reference/QUICK-REFERENCE.md)** - Commands, shortcuts, emergency protocols
+
+### **⚡ Systematic Development Workflows**
+
+The project features a structured 3-step AI-assisted development process:
+1. **Feature Planning** → Generate comprehensive Sub-PRDs with systematic requirements gathering
+2. **Task Generation** → Break down features into actionable, granular task lists
+3. **Task Execution** → Implement with built-in quality gates and approval processes
+
+This approach demonstrates modern AI integration while maintaining professional development standards and human oversight.
 
 ## ✨ Key Features
 
@@ -27,12 +43,22 @@ The `_docs/` directory showcases a structured approach to full-stack development
 
 ## 🎯 Project Purpose
 
-This is a **solo portfolio project** showcasing modern full-stack development with professional standards:
+This is a **solo portfolio project** demonstrating professional full-stack development capabilities:
 
-- Comprehensive backend and frontend architecture
-- Containerized infrastructure and CI/CD
-- Systematic development workflows with AI assistance
-- Clean, maintainable, and well-documented code
+### **Technical Excellence**
+- **Full-stack architecture**: Django REST + React TypeScript with comprehensive type safety
+- **Production-ready infrastructure**: Docker containerization, reverse proxy, CI/CD pipeline
+- **Quality assurance**: Comprehensive testing, linting, type checking with zero-tolerance gates
+
+### **Modern Development Practices**
+- **Systematic AI integration**: Structured workflows that augment (not replace) core development skills
+- **Documentation-driven development**: Comprehensive specs, task tracking, and progress monitoring
+- **Professional workflows**: Atomic commits, code reviews, systematic feature development
+
+### **Portfolio Highlights**
+- **Industry-standard patterns**: Authentication, API design, state management, testing methodologies
+- **Scalable architecture**: Clean separation of concerns, maintainable codebase, extensible design
+- **Process innovation**: Demonstrates thoughtful AI integration in professional development workflows
 
 ## Tech Stack
 
@@ -62,4 +88,15 @@ docker-compose -f infrastructure/docker-compose.yml up --build
 
 **Access**: `https://localhost:8444` (accept self-signed cert warning)
 
-> 💡 **Detailed setup instructions** and development commands are in [`_docs/TECHNICAL-ARCHITECTURE.md`](_docs/TECHNICAL-ARCHITECTURE.md)
+> 💡 **Detailed setup instructions** and development commands are in [`_docs/reference/QUICK-REFERENCE.md`](_docs/reference/QUICK-REFERENCE.md)
+
+## 📖 Understanding This Project
+
+### **For Employers/Reviewers**
+This project demonstrates comprehensive full-stack development skills with modern practices. The **[`_docs/`](_docs/)** directory contains detailed documentation showcasing systematic development processes, architectural decisions, and professional-grade project management.
+
+### **For Developers**
+The codebase follows industry best practices with comprehensive documentation. Start with **[`_docs/README.md`](_docs/README.md)** for navigation, then explore the systematic development workflows that showcase modern AI-assisted development while maintaining human oversight and code quality.
+
+### **For AI Researchers/Practitioners**
+This project features innovative **AI-assisted development workflows** that maintain professional standards. See **[`_docs/workflows/`](_docs/workflows/)** for the 3-step systematic process and **[`_docs/ai-instructions/`](_docs/ai-instructions/)** for implementation details.

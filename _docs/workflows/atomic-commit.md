@@ -1,13 +1,14 @@
-name: Atomic Commit Workflow
-description: Break changes into logical, atomic commits with clear messages
-author: CineXplorer Development
-tags: [git, commit, workflow]
+# Atomic Commit Workflow
+
+**Note**: This workflow is for AI execution when explicitly instructed by the user. AI should NEVER initiate this workflow without user approval. See DEVELOPMENT-RULES.md for complete protocols.
+
+Break changes into logical, atomic commits with clear messages.
 
 steps:
 
 - name: Check Status
   command: git status
-  description: Review all pending changes
+  description: Review all pending changes and verify current branch
 
 - name: Review Changes
   command: git --no-pager diff --stat
@@ -75,12 +76,13 @@ steps:
   Example Commit Messages with Feature Context:
 
   ```
-  # Multi-task feature development
-  feat(logging-system): Implement request correlation middleware (Task 2.1)
-  config(logging-system): Register middleware in Django settings (Task 2.6)  
-  docs(logging-system): Complete Task 2.0 - Request Correlation
-  
-  # Single feature changes
+  # Feature branch commits (while on feature/user-profile-editing branch)
+  feat(user-profile): Implement profile editing form component (Task 2.1)
+  config(user-profile): Add validation schema for profile updates (Task 2.3)
+  test(user-profile): Add comprehensive profile editing tests (Task 2.5)
+  docs(user-profile): Complete Task 2.0 - Profile Editing UI
+
+  # Single feature changes (could be on main or feature branch)
   fix(movie-api): Resolve TMDB rate limiting in discover endpoint
   style(backend): Fix flake8 violations in middleware files
   test(user-auth): Add comprehensive JWT token validation tests
@@ -92,7 +94,7 @@ steps:
 
 - name: Final Check
   command: git status
-  description: Ensure all changes are committed
+  description: Ensure all changes are committed and verify branch state
 
 notes: |
 Good atomic commit practices:
@@ -103,6 +105,14 @@ Good atomic commit practices:
 - Group related changes together
 - Separate formatting from functional changes
 - Keep commits focused and purposeful
+
+Feature Branch Practices:
+
+- Always verify you're on the correct feature branch before committing
+- All feature work commits should happen on the feature branch
+- Use feature context in commit scopes (e.g., feat(user-profile))
+- Preserve commit history when merging (no squash merge)
+- Clean up feature branches after successful merge
 
 Task Documentation Consistency:
 

@@ -57,39 +57,63 @@ This Sub-PRD defines a comprehensive backend modernization effort for CineXplore
 
 7. **The system must implement consistent service layer patterns** applying the TMDB API client architecture to all external service integrations.
 
-8. **The system must standardize error handling patterns** across all services with consistent logging and user-facing error messages.
+8. **The system must identify and refactor all function-based services to class-based architecture** systematically converting services throughout the codebase (e.g., `movie_service.py`, `email_service.py`, and other utility services) from global functions to proper service classes with dependency injection.
 
-9. **The system must identify and refactor monolithic functions** following the TMDB API client example, breaking large functions into focused, single-responsibility components.
+9. **The system must standardize error handling patterns** across all services with consistent logging and user-facing error messages.
 
-10. **The system must eliminate code duplication** by extracting common patterns into reusable base classes, mixins, or utility functions.
+10. **The system must identify and refactor monolithic functions** following the TMDB API client example, breaking large functions into focused, single-responsibility components.
 
-11. **The system must apply dependency inversion** where appropriate, ensuring high-level modules don't depend on low-level implementation details.
+11. **The system must eliminate code duplication** by extracting common patterns into reusable base classes, mixins, or utility functions.
+
+12. **The system must apply dependency inversion** where appropriate, ensuring high-level modules don't depend on low-level implementation details.
 
 ### Security & Configuration
 
-12. **The system must eliminate all hardcoded configuration values** including DEBUG flags, secret keys, and environment-specific settings.
+13. **The system must eliminate all hardcoded configuration values** including DEBUG flags, secret keys, and environment-specific settings.
 
-13. **The system must implement environment-based configuration management** with proper secrets handling and validation.
+14. **The system must implement environment-based configuration management** with proper secrets handling and validation.
 
-14. **The system must include security headers and middleware configuration** appropriate for production deployment.
+15. **The system must include security headers and middleware configuration** appropriate for production deployment.
 
-15. **The system must audit and secure all database configurations** including connection security and query optimization.
+16. **The system must audit and secure all database configurations** including connection security and query optimization.
+
+17. **The system must configure environment-specific settings** with separate configurations for development, staging, and production environments.
 
 ### Performance & Monitoring
 
-16. **The system must establish performance baselines** for database queries, API response times, and resource usage.
+18. **The system must establish performance baselines** for database queries, API response times, and resource usage.
 
-17. **The system must implement database query optimization** addressing N+1 queries and adding appropriate indexes.
+19. **The system must implement database query optimization** addressing N+1 queries and adding appropriate indexes.
 
-18. **The system must include monitoring and health check endpoints** for production observability.
+20. **The system must include monitoring and health check endpoints** for production observability.
+
+21. **The system must integrate performance profiling tools** such as django-silk for database query analysis and performance monitoring.
+
+22. **The system must implement memory and CPU profiling capabilities** for view performance analysis and resource optimization.
+
+23. **The system must prepare APM (Application Performance Monitoring) integration** for production deployment monitoring.
 
 ### Development Workflow
 
-19. **The system must include automated quality checks** through pre-commit hooks, CI integration, and development tooling.
+24. **The system must include automated quality checks** through pre-commit hooks, CI integration, and development tooling.
 
-20. **The system must maintain 100% test coverage** for all modified code with type-safe test patterns.
+25. **The system must maintain 100% test coverage** for all modified code with type-safe test patterns.
 
-21. **The system must include comprehensive documentation** for all established patterns, conventions, and architectural decisions.
+26. **The system must include comprehensive documentation** for all established patterns, conventions, and architectural decisions.
+
+27. **The system must configure GitHub Actions integration** for automated type checking, linting, and quality gate validation.
+
+28. **The system must implement automated shared type validation** ensuring API contract consistency between frontend and backend.
+
+### Full-Stack Integration
+
+29. **The system must validate API contract consistency** ensuring all backend changes maintain frontend compatibility through the shared type system.
+
+30. **The system must synchronize error handling patterns** between frontend and backend using the established error code system.
+
+31. **The system must coordinate TODO/FIXME resolution** addressing both backend technical debt and related frontend implementation gaps.
+
+32. **The system must ensure end-to-end type safety** validating type consistency through API boundaries from backend to frontend.
 
 ## Non-Goals (Out of Scope)
 

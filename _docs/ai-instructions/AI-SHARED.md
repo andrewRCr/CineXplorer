@@ -51,6 +51,7 @@ CineXplorer is a Django REST Framework + React TypeScript movie discovery applic
 
 - **Code Quality**: flake8 (backend), ESLint + TypeScript (frontend)
 - **Testing**: Required before commits, run with `--keepdb` for backend
+- **Feature Branches**: All feature work happens on dedicated branches (`feature/[name]`)
 - **Commits**: Conventional commit format, never without explicit user approval
 - **Documentation**: High priority for maintainability and employer showcase
 
@@ -67,8 +68,9 @@ When working on new features:
 
 1. **Start with context**: Review META-PRD for product alignment
 2. **Use systematic approach**: Follow the 3-step workflow (create Sub-PRD → generate tasks → process tasks)
-3. **Maintain quality**: Full testing and linting before any commits
-4. **Seek approval**: Never commit without explicit user review and permission
+3. **Work on feature branches**: All feature development happens on dedicated branches
+4. **Maintain quality**: Full testing and linting before any commits
+5. **Seek approval**: Never commit without explicit user review and permission
 
 ## Project Goals
 

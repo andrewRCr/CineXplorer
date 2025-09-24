@@ -19,25 +19,30 @@ While this documentation showcases systematic AI integration, the underlying cod
 
 ## Documentation Structure
 
-### 📋 High-Level Documentation
+### 📋 **Start Here** - Core Foundation
+- **`META-PRD.md`** - What we're building and why
+- **`PROJECT-STATUS.md`** - Current progress and priorities
+- **`TECHNICAL-ARCHITECTURE.md`** - How it's built
+- **`DEVELOPMENT-RULES.md`** - Non-negotiable development standards
 
-- **`META-PRD.md`** - Product vision, core features, and success metrics
-- **`PROJECT-STATUS.md`** - Current progress and upcoming priorities
-- **`TECHNICAL-ARCHITECTURE.md`** - Technical architecture and implementation details
-
-### 🔄 Development Workflow
-
+### 🔄 **Development Workflows** - Systematic Process
 The **`workflows/`** directory contains a structured 3-step process for feature development:
 
-1. **`create-prd.md`** - Generate feature-level Sub-PRDs with systematic requirements gathering
-2. **`generate-tasks.md`** - Create detailed implementation task lists from Sub-PRDs
-3. **`process-tasks.md`** - Task execution protocol with quality gates and approval processes
+1. **`create-prd.md`** - Feature planning with requirements gathering
+2. **`generate-tasks.md`** - Task breakdown from specifications
+3. **`process-tasks.md`** - Task execution with quality gates
+4. **`atomic-commit.md`** - Git commit organization
 
-### 📄 Generated Deliverables
-
-- **`sub-prds/`** - Feature specifications generated using the workflow
+### 📄 **Generated Deliverables** - Living Documents
+- **`sub-prds/`** - Feature specifications (human + AI readable)
 - **`tasks/`** - Implementation task lists with progress tracking
+
+### 🤖 **AI Configuration** - Tool-Specific Guidance
 - **`ai-instructions/`** - AI tool configurations and shared context
+
+### 📚 **Reference Materials** - Quick Access
+- **`reference/QUICK-REFERENCE.md`** - Commands, shortcuts, emergency protocols
+- **`reference/DOCUMENTATION-MAP.md`** - How all documentation relates
 
 ## Methodology Benefits
 

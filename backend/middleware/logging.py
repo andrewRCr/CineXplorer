@@ -14,11 +14,16 @@ Usage:
 import uuid
 import time
 import logging
-from django.http import HttpResponse
+from typing import Protocol, cast
+from django.http import HttpRequest, HttpResponse
 from django.utils.deprecation import MiddlewareMixin
 from django.contrib.auth.models import AnonymousUser
 
-from django_types import HttpRequest
+
+class RequestWithLogging(Protocol):
+    """HttpRequest with logging middleware attributes."""
+    correlation_id: str
+    start_time: float
 
 
 # Get logger for request tracking
@@ -81,10 +86,10 @@ class RequestLoggingMiddleware(MiddlewareMixin):
         """
         # Generate unique correlation ID for this request
         correlation_id = str(uuid.uuid4())
-        request.correlation_id = correlation_id
+        request.correlation_id = correlation_id  # type: ignore[attr-defined]
 
         # Record request start time for duration calculation
-        request.start_time = time.time()
+        request.start_time = time.time()  # type: ignore[attr-defined]
 
         # Build query string for full URL
         query_string = request.META.get('QUERY_STRING', '')
@@ -133,9 +138,9 @@ class RequestLoggingMiddleware(MiddlewareMixin):
         """
 
         # Calculate request duration
-        duration = None
+        duration: float | None = None
         if hasattr(request, 'start_time'):
-            duration = time.time() - request.start_time
+            duration = time.time() - request.start_time  # type: ignore[attr-defined]
 
         # Get correlation ID (should exist from process_request)
         correlation_id = getattr(request, 'correlation_id', 'unknown')
@@ -148,7 +153,10 @@ class RequestLoggingMiddleware(MiddlewareMixin):
         full_url = f"{request.path}{'?' + query_string if query_string else ''}"
 
         # Create concise, informative completion message
-        duration_str = f"{round(duration * 1000)}ms" if duration else "?ms"
+        if duration is not None:
+            duration_str = f"{round(cast(float, duration) * 1000)}ms"
+        else:
+            duration_str = "?ms"
         if response.status_code < 400:
             status_emoji = "✅"
         elif response.status_code < 500:
@@ -165,6 +173,10 @@ class RequestLoggingMiddleware(MiddlewareMixin):
             size_kb = round(response_size / 1024, 1)
             log_message += f" [{size_kb}KB]"
 
+        # Calculate duration in milliseconds for logging
+        duration_ms = None
+        if duration is not None:
+            duration_ms = round(cast(float, duration) * 1000, 2)
         # Log request completion with structured data
         logger.log(
             log_level,
@@ -175,7 +187,7 @@ class RequestLoggingMiddleware(MiddlewareMixin):
                 'path': request.path,
                 'full_url': full_url,
                 'status_code': response.status_code,
-                'duration_ms': round(duration * 1000, 2) if duration else None,
+                'duration_ms': duration_ms,
                 'response_size_bytes': response_size,
                 'event_type': 'request_complete',
                 'is_health_check': self._is_health_check(request)
@@ -195,9 +207,9 @@ class RequestLoggingMiddleware(MiddlewareMixin):
         # Always log exceptions, even for health checks (they indicate real problems)
 
         # Calculate duration if possible
-        duration = None
+        duration: float | None = None
         if hasattr(request, 'start_time'):
-            duration = time.time() - request.start_time
+            duration = time.time() - request.start_time  # type: ignore[attr-defined]
 
         correlation_id = getattr(request, 'correlation_id', 'unknown')
 
@@ -206,12 +218,19 @@ class RequestLoggingMiddleware(MiddlewareMixin):
         full_url = f"{request.path}{'?' + query_string if query_string else ''}"
 
         # Create informative exception message
-        duration_str = f"{round(duration * 1000)}ms" if duration else "?ms"
+        if duration is not None:
+            duration_str = f"{round(cast(float, duration) * 1000)}ms"
+        else:
+            duration_str = "?ms"
         exception_msg = str(exception)[:200]
         log_message = (f"💥 EXCEPTION {request.method} {full_url} "
                        f"({duration_str}) - {exception.__class__.__name__}: "
                        f"{exception_msg}")
 
+        # Calculate duration in milliseconds for logging
+        duration_ms = None
+        if duration is not None:
+            duration_ms = round(cast(float, duration) * 1000, 2)
         # Log exception with full context
         logger.error(
             log_message,
@@ -222,7 +241,7 @@ class RequestLoggingMiddleware(MiddlewareMixin):
                 'full_url': full_url,
                 'exception_type': exception.__class__.__name__,
                 'exception_message': str(exception),
-                'duration_ms': round(duration * 1000, 2) if duration else None,
+                'duration_ms': duration_ms,
                 'event_type': 'request_exception',
                 'is_health_check': self._is_health_check(request)
             },
@@ -315,4 +334,4 @@ def get_correlation_id(request: HttpRequest) -> str | None:
             correlation_id = get_correlation_id(request)
             logger.info("Processing view", extra={'correlation_id': correlation_id})
     """
-    return getattr(request, 'correlation_id', None)
+    return getattr(request, 'correlation_id', None)  # type: ignore[attr-defined]

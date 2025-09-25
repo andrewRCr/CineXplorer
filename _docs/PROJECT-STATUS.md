@@ -56,55 +56,59 @@ CineXplorer is a movie discovery web application in active development. The core
 
 ### High Priority
 
-- **Backend Modernization & Type Safety** (In Progress):
-  - Comprehensive type annotations with hybrid type checking (Pyright + MyPy)
-  - SOLID/DRY principles refactoring following TMDB API client example
-  - Security hardening (remove hardcoded DEBUG, environment-based config)
-  - Code quality improvements (eliminate TODO items, unused imports)
-  - Performance optimization and monitoring foundation
-  - Professional development workflow integration
+- **API Layer Modernization with Django Ninja** (In Planning - Branch: `feature/api-layer-modernization`):
+  - Replace DRF with Django Ninja to achieve strict type-safety in the API layer.
+  - Establish a modern, type-driven API design pattern for the project.
+  - Create a workflow for auto-generating TypeScript types from backend schemas.
+
+- **Backend Modernization & Type Safety** (On Hold):
+  - This feature is paused pending the completion of the API Layer Modernization.
+  - Remaining tasks (SOLID refactoring, security hardening) will be re-evaluated and resumed after the API migration.
+
 - **User Movie Lists System** (In Planning):
-  - Backend models and API for custom movie collections
-  - System collections (AFI Top 100, IMDb Top 250, Oscar Winners, Palme d'Or)
-  - Individual list display pages with composite cover generation
-  - Sidebar integration with collections section
+  - Backend models and API for custom movie collections.
+  - System collections (AFI Top 100, IMDb Top 250, Oscar Winners, Palme d'Or).
+  - Individual list display pages with composite cover generation.
+  - Sidebar integration with collections section.
+
 - **User-Specific Pages Implementation**:
-  - Library Page (`/library`) - display watched movies with favorites section
-  - Watchlist Page (`/watchlist`) - drag-and-drop reordering with "Next Up" queue
-- **Full Integration of User Actions**: Connect frontend controls to existing backend endpoints
-- **User Profile Page**: Complete UI for `/profile` page
+  - Library Page (`/library`) - display watched movies with favorites section.
+  - Watchlist Page (`/watchlist`) - drag-and-drop reordering with "Next Up" queue.
+
+- **Full Integration of User Actions**: Connect frontend controls to existing backend endpoints.
+- **User Profile Page**: Complete UI for `/profile` page.
 
 ### Medium Priority
 
-- **Personnel Pages**: Complete backend endpoints and frontend pages for actors/directors
-- **Personalized Recommendations**: Implement metadata-based recommendation engine
-- **UI/UX Polish**: Enhanced movie detail pages and general UX improvements
+- **Personnel Pages**: Complete backend endpoints and frontend pages for actors/directors.
+- **Personalized Recommendations**: Implement metadata-based recommendation engine.
+- **UI/UX Polish**: Enhanced movie detail pages and general UX improvements.
 
 ### Lower Priority
 
-- **General Layout Features**: Responsive improvements, sticky headers, collections
-- **Expanded Test Coverage**: Integration and end-to-end tests
-- **Deployment**: Production environment preparation
+- **General Layout Features**: Responsive improvements, sticky headers, collections.
+- **Expanded Test Coverage**: Integration and end-to-end tests.
+- **Deployment**: Production environment preparation.
 
 ## Stretch Goals
 
-- **Streaming Availability**: Third-party service integration for streaming platforms
+- **Streaming Availability**: Third-party service integration for streaming platforms.
 
 ## Key Deliverables (Target)
 
-- Fully functional and integrated backend API and frontend application
-- Docker-compose setup for all environments
-- Expanded test suite with significant integration and e2e coverage
-- Clear deployment plan
+- Fully functional and integrated backend API and frontend application.
+- Docker-compose setup for all environments.
+- Expanded test suite with significant integration and e2e coverage.
+- Clear deployment plan.
 
 ## Development Workflow
 
 The project follows a structured approach using:
 
-- META-PRD for high-level product requirements
-- Sub-PRDs for individual feature specifications
-- Generated task lists for implementation tracking
-- Systematic testing and code quality checks
-- Regular PROJECT-STATUS updates as features progress through planning → development → completion
+- META-PRD for high-level product requirements.
+- Sub-PRDs for individual feature specifications.
+- Generated task lists for implementation tracking.
+- Systematic testing and code quality checks.
+- Regular PROJECT-STATUS updates as features progress through planning → development → completion.
 
-_Last updated: 2025-09-23_
+_Last updated: 2025-09-25_

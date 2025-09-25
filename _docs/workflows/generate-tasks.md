@@ -24,6 +24,8 @@ To guide an AI assistant in creating a detailed, step-by-step task list in Markd
 10. **Save Task List:** Save the generated document in the `/_docs/tasks/` directory with the filename `tasks-[prd-file-name].md`, where `[prd-file-name]` matches the base name of the input Sub-PRD file (e.g., if the input was `prd-user-profile-editing.md`, the output is `tasks-prd-user-profile-editing.md`).
 11. **Create Feature Branch:** Create a new feature branch with the naming convention `feature/[feature-name]` (e.g., `feature/user-profile-editing`). Use the command: `git checkout -b feature/[feature-name]`
 12. **Update PROJECT-STATUS:** Add the new feature to the "Upcoming Priorities" section with status "(In Planning - Branch: feature/[feature-name])" and brief description of key deliverables.
+13. **Stage Initial Documentation:** Stage the new Sub-PRD, the new task list, and the updated `PROJECT-STATUS.md` file using `git add`.
+14. **Propose Initial Commit:** Present the staged files to the user and propose a commit message for the initial documentation. Await explicit user approval before executing the commit, in accordance with `DEVELOPMENT-RULES.md`.
 
 ## Output Format
 

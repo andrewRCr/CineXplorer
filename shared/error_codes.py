@@ -15,7 +15,8 @@ This ensures consistency and prevents drift between error definitions.
 This file should be kept in sync with frontend/shared/error-codes.ts
 """
 
-from typing import Dict, Literal
+from __future__ import annotations
+from typing import Literal
 
 
 # Error Codes - Keep in sync with frontend/shared/error-codes.ts
@@ -71,7 +72,7 @@ ErrorCategory = Literal['authentication', 'user_management', 'movie_data', 'api_
 
 
 # Maps error codes to their categories
-ERROR_CODE_TO_CATEGORY: Dict[str, ErrorCategory] = {
+ERROR_CODE_TO_CATEGORY: dict[str, ErrorCategory] = {
     # Authentication errors
     'email_not_verified': ERROR_CATEGORIES.AUTHENTICATION,
     'invalid_credentials': ERROR_CATEGORIES.AUTHENTICATION,

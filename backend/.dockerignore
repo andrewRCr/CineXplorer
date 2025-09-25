@@ -1,0 +1,21 @@
+# Node.js modules (shouldn't be in backend but excluding from build context)
+node_modules/
+
+# Python cache and temp files
+__pycache__/
+*.py[cod]
+*$py.class
+.mypy_cache/
+.pytest_cache/
+
+# Logs
+logs/
+*.log
+
+# Environment files
+.env
+.env.*
+
+# Git
+.git
+.gitignore

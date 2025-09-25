@@ -57,7 +57,7 @@ docker-compose exec backend python manage.py test --keepdb --settings=config.set
 
 # Linting and type checking
 docker-compose exec backend flake8
-docker-compose exec backend python type_check.py
+docker-compose exec backend python scripts/type_check.py
 
 # Django management
 docker-compose exec backend python manage.py [command]

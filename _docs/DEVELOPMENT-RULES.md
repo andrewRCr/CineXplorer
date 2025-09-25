@@ -60,7 +60,7 @@ Before any commit consideration, ALL of the following must pass with **zero exce
 
 6. **Python Type Safety**: Hybrid type checking approach with minimal Any usage
    - **Development**: `docker-compose exec backend pyright apps/` (fast, modern checking)
-   - **CI/CD**: `docker-compose exec backend python type_check.py` (comprehensive validation)
+   - **CI/CD**: `docker-compose exec backend python scripts/type_check.py` (comprehensive validation)
    - **Manual**: `docker-compose exec backend mypy apps/ --config-file mypy.ini` (Django-compatible)
    - **PROHIBITED**: Using `typing.Any` except for Django internals where absolutely necessary
    - **REQUIRED**: Use `object` for truly unknown data, specific TypedDict types for known structures
@@ -122,7 +122,7 @@ After completing all sub-tasks under a parent task:
 - **Linting**: flake8 with max-line-length=99, max-complexity=10
 - **Type Checking**: Hybrid approach - Pyright (development) + MyPy (CI/CD) with django-stubs/django-types
 - **Exclusions**: See `backend/.flake8` for excluded directories
-- **Type Check Script**: Use `python type_check.py` for comprehensive validation
+- **Type Check Script**: Use `python scripts/type_check.py` for comprehensive validation
 
 ### Frontend Standards
 - **Linting**: ESLint with TypeScript support

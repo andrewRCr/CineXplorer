@@ -13,6 +13,7 @@ This task list covers **Phase 1 (Proof of Concept)** of the API Layer Modernizat
 
 ### Files to be Modified
 - `backend/requirements/req.txt` - To add the `django-ninja` dependency.
+- `backend/.dockerignore` - Added to exclude node_modules from Docker build context.
 - `backend/config/urls.py` - To wire in the main Ninja API router.
 - `backend/apps/movie/tests/*` - API tests will be adapted for the new Ninja endpoints.
 - `frontend/package.json` - To add a `pydantic-to-typescript` style development dependency.
@@ -28,8 +29,8 @@ This task list covers **Phase 1 (Proof of Concept)** of the API Layer Modernizat
 ## Tasks
 
 - [ ] 1.0 **Project Setup & Initial Configuration**
-  - [ ] 1.1 Add `django-ninja` to `backend/requirements/req.txt`.
-  - [ ] 1.2 Run `docker-compose build backend` to install the new dependency.
+- [x] 1.1 Add `django-ninja` to `backend/requirements/req.txt`.
+  - [x] 1.2 Run `docker-compose build backend` to install the new dependency.
   - [ ] 1.3 Create `backend/config/api.py` and instantiate the main `NinjaAPI`.
   - [ ] 1.4 Update `backend/config/urls.py` to include the new Ninja API under a single `/api/` path.
   - [ ] 1.5 Create a temporary health-check endpoint (e.g., `@api.get("/health")`) to verify the basic setup is working.

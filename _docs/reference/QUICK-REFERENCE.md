@@ -23,7 +23,7 @@ docker-compose exec backend python manage.py test --keepdb --settings=config.set
 docker-compose exec backend flake8
 
 # Type checking (hybrid approach)
-docker-compose exec backend python type_check.py
+docker-compose exec backend python scripts/type_check.py
 # OR for development:
 docker-compose exec backend pyright apps/
 ```
@@ -45,7 +45,7 @@ docker-compose exec frontend npm run type-check
 # Backend quality gates
 docker-compose exec backend python manage.py test --keepdb --settings=config.settings_test && \
 docker-compose exec backend flake8 && \
-docker-compose exec backend python type_check.py
+docker-compose exec backend python scripts/type_check.py
 
 # Frontend quality gates
 docker-compose exec frontend npm test && \

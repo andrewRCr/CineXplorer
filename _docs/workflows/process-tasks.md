@@ -21,7 +21,7 @@ Guidelines for managing task lists in markdown files to track progress on comple
 
   - **First**: Ensure new code has appropriate test coverage (models, APIs, complex logic)
   - **Second**: Run the full test suite (`python manage.py test --settings=config.settings_test`, `npm test`, etc.)
-  - **Third**: Run all linting checks (`flake8`, `python type_check.py`, `npm run lint`, `npm run type-check`)
+  - **Third**: Run all linting checks (`flake8`, `python scripts/type_check.py`, `npm run lint`, `npm run type-check`)
   - **Fourth**: Check if PROJECT-STATUS needs updates (feature progress, completed functionality, updated priorities)
 
   3. Generate standardized readiness report (see DEVELOPMENT-RULES.md for format) and await user instructions on how to proceed. User may choose to commit changes (AI can execute) or review first. When committing, follow atomic-commit workflow guidelines:

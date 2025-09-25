@@ -10,8 +10,8 @@
 - `backend/config/settings.py` - Django settings with hardcoded values to be moved to environment
 - `backend/mypy.ini` - ✅ Hybrid configuration: strict for services/utilities, relaxed for Django framework
 - `backend/pyrightconfig.json` - ✅ Pyright configuration for development type checking
-- `backend/type_check.py` - ✅ Comprehensive hybrid type checking script (mypy + Pyright)
-- `backend/test_typing.py` - ✅ Isolated typing validation for core utilities
+- `backend/scripts/type_check.py` - ✅ Comprehensive hybrid type checking script (mypy + Pyright)
+- `backend/scripts/test_typing.py` - ✅ Isolated typing validation for core utilities
 - `backend/.flake8` - flake8 configuration (already established)
 - `backend/requirements/req.dev.txt` - Development dependencies (mypy, django-stubs, pyright, django-types)
 - `shared/api_types.py` - ✅ Python TypedDict equivalents of TypeScript API types for contract consistency
@@ -28,7 +28,7 @@
 - `backend/apps/user_movie_data/services/user_movie_data_service.py` - ✅ User movie data service with typed bulk operations
 - `backend/apps/core/views/logging.py` - ✅ Django views with type narrowing and object validation patterns
 - `backend/middleware/logging.py` - ✅ Django middleware with HttpRequest extensions and type-safe META access
-- `backend/django_types.py` - ✅ Django type extensions for custom HttpRequest attributes
+- `backend/config/django_types.py` - ✅ Django type extensions for custom HttpRequest attributes
 
 ### Views & Serializers
 - `backend/apps/core/views/*.py` - ✅ Core views with professional type annotations using django-stubs and shared types
@@ -49,7 +49,7 @@
 - `backend/apps/core/backends.py` - ✅ Custom user authentication backend with django-stubs integration
 
 ### Notes
-- Type checking: `python type_check.py` (comprehensive hybrid mypy + Pyright validation)
+- Type checking: `python scripts/type_check.py` (comprehensive hybrid mypy + Pyright validation)
 - Development type checking: `npx pyright apps/` (fast, strict checking with shared types)
 - CI/CD type checking: `mypy apps/ --strict` (Django-compatible validation)
 - Linting: `flake8 apps/` (already configured)
@@ -68,8 +68,8 @@
   - [x] 1.7 Add type annotations to authentication backends and middleware
   - [x] 1.8 Add type annotations to email service and other utility services
   - [x] 1.9 Fix Django-specific type patterns using django-stubs
-  - [x] 1.10 Run hybrid type checking (python type_check.py) and resolve Pyright errors in movie views
-  - [ ] 1.11 Run hybrid type checking (python type_check.py) and resolve ANY remaining Pyright errors across backend, while also ensuring zero usage of `Any` and minimal `type: ignore` comments with explanations as to their necessity
+  - [x] 1.10 Run hybrid type checking (python scripts/type_check.py) and resolve Pyright errors in movie views
+  - [ ] 1.11 Run hybrid type checking (python scripts/type_check.py) and resolve ANY remaining Pyright errors across backend, while also ensuring zero usage of `Any` and minimal `type: ignore` comments with explanations as to their necessity
   - [ ] 1.12 Validate all tests pass with type-safe code
 
 - [ ] 2.0 **Architecture Review & SOLID/DRY Refactoring**

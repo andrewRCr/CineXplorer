@@ -30,6 +30,9 @@ RUN apk add --update --no-cache --virtual .tmp-build-deps \
     if [ $DEV = "true" ]; then \
         /py/bin/pip install -r ./requirements/req.dev.txt; \
     fi && \
+    if [ $DEV = "true" ]; then \
+        npm install -g pyright@latest; \
+    fi && \
     apk del .tmp-build-deps && \
     rm -rf ./requirements
 

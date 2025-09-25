@@ -13,14 +13,14 @@ class Command(BaseCommand):
     Django command to wait for the database to be available before starting the core app.
     """
 
-    def handle(self, *args, **options):
+    def handle(self, *args: str, **options: object) -> None:
         """Entry-point for command."""
 
         self.stdout.write("Waiting for database...\n")
         db_up = False
         while not db_up:
             try:
-                self.check(databases=["default"])  # type: ignore
+                self.check(databases=["default"])
                 db_up = True  # no exception raised
             except (PsycopgError, OperationalError):
                 self.stdout.write("Database unavailable; waiting 1 second...\n")

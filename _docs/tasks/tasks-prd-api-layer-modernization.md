@@ -5,7 +5,7 @@ This task list covers **Phase 1 (Proof of Concept)** of the API Layer Modernizat
 ## Relevant Files
 
 ### Files to be Created
-- `backend/config/api.py` - To hold the central `NinjaAPI` instance and register app routers.
+- `backend/config/api.py` - ✅ Central `NinjaAPI` instance and app router registration.
 - `backend/apps/movie/api.py` - To define the Ninja router and path operations for the `movie` app.
 - `backend/apps/movie/schemas.py` - To define the Pydantic schemas that replace DRF serializers for the `movie` app.
 - `backend/apps/user/auth_ninja.py` - To hold the adapted JWT cookie authentication logic for Ninja.
@@ -28,12 +28,12 @@ This task list covers **Phase 1 (Proof of Concept)** of the API Layer Modernizat
 
 ## Tasks
 
-- [ ] 1.0 **Project Setup & Initial Configuration**
+- [x] 1.0 **Project Setup & Initial Configuration**
 - [x] 1.1 Add `django-ninja` to `backend/requirements/req.txt`.
   - [x] 1.2 Run `docker-compose build backend` to install the new dependency.
-  - [ ] 1.3 Create `backend/config/api.py` and instantiate the main `NinjaAPI`.
-  - [ ] 1.4 Update `backend/config/urls.py` to include the new Ninja API under a single `/api/` path.
-  - [ ] 1.5 Create a temporary health-check endpoint (e.g., `@api.get("/health")`) to verify the basic setup is working.
+  - [x] 1.3 Create `backend/config/api.py` and instantiate the main `NinjaAPI`.
+  - [x] 1.4 Update `backend/config/urls.py` to include the new Ninja API under a single `/api/` path.
+  - [x] 1.5 Create a temporary health-check endpoint (e.g., `@api.get("/health")`) to verify the basic setup is working.
 
 - [ ] 2.0 **Authentication Layer Migration**
   - [ ] 2.1 Create `backend/apps/user/auth_ninja.py`.

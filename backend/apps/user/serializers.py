@@ -1,18 +1,19 @@
 """
 Serializers for the user API View.
 """
+from __future__ import annotations
 
 from django.conf import settings
 from django.contrib.auth import get_user_model, authenticate
 from django.contrib.auth.models import AbstractUser
 from django.utils.translation import gettext as _
-from core.models import User
+from apps.core.models import User
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
 from rest_framework.exceptions import ValidationError
 
 
-def get_error_codes():
+def get_error_codes() -> object:
     """Lazy import of ERROR_CODES to avoid module-level import issues."""
     try:
         from shared.error_codes import ERROR_CODES
@@ -37,13 +38,13 @@ class RegisterSerializer(serializers.ModelSerializer):
         fields = ['username', 'email', 'password']
         extra_kwargs = {'password': {'write_only': True, 'min_length': 5}}
 
-    def create(self, validated_data):
+    def create(self, validated_data: dict[str, object]) -> User:
         """ Creates and returns a user with encrypted password. """
 
         user = get_user_model().objects.create_user(**validated_data)
         return user
 
-    def is_valid(self, raise_exception=False):
+    def is_valid(self, raise_exception: bool = False) -> bool:
         """ Validates the serializer data. """
 
         valid = super().is_valid(raise_exception=raise_exception)
@@ -79,7 +80,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     #     return get_user_model().objects.create_user(**validated_data)
 
-    def update(self, instance, validated_data):
+    def update(self, instance: User, validated_data: dict[str, object]) -> User:
         """ Updates and returns a user object instance. """
 
         password = validated_data.pop('password', None)
@@ -101,7 +102,7 @@ class AuthTokenSerializer(serializers.Serializer):
         trim_whitespace=False,
     )
 
-    def validate(self, attrs):
+    def validate(self, attrs: dict[str, object]) -> dict[str, object]:
         """ Validates and authenticates the user. """
 
         usernameOrEmail = attrs.get('usernameOrEmail')
@@ -125,7 +126,7 @@ class AuthTokenSerializer(serializers.Serializer):
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     """ Extended to include select user data (id) in the token response. """
 
-    def validate(self, attrs):
+    def validate(self, attrs: dict[str, object]) -> dict[str, object]:
         """ Validate the user credentials and return the token data w/ user_id added. """
         data = super().validate(attrs)
 
@@ -149,7 +150,7 @@ class CustomTokenRefreshSerializer(TokenRefreshSerializer):
 
     refresh = None
 
-    def validate(self, attrs):
+    def validate(self, attrs: dict[str, object]) -> dict[str, object]:
         """ Validate the refresh token after obtaining from set cookie. """
 
         attrs["refresh"] = self.context["request"].COOKIES.get(

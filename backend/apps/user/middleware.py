@@ -10,15 +10,16 @@ EXEMPT_PATHS contains endpoints that are exempt from CSRF checks because:
         or logout in a JWT-based API.
     - All other unsafe endpoints (using cookies for auth) remain protected by CSRF.
 """
+from __future__ import annotations
 
 from django.utils.deprecation import MiddlewareMixin
-from django.http import JsonResponse
+from django.http import HttpRequest, JsonResponse
 
 EXEMPT_PATHS = ['/api/register/', '/api/token/', '/api/logout/', '/api/token/refresh/']
 
 
 class CsrfHeaderMiddleware(MiddlewareMixin):
-    def process_request(self, request):
+    def process_request(self, request: HttpRequest) -> JsonResponse | None:
         if request.path in EXEMPT_PATHS:
             return None
         # CSRF protection is only needed for authenticated users.

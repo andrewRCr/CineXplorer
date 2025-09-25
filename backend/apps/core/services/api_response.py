@@ -6,8 +6,9 @@ all HTTP clients in the application, ensuring consistent access to
 response data, status codes, headers, timing, and error information.
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass
-from typing import Any, Union
 import json
 import logging
 
@@ -25,7 +26,7 @@ class ApiResponse:
 
     # Core response data
     status_code: int
-    data: Union[dict[str, Any], list[Any], str] | None = None
+    data: dict[str, object] | list[object] | str | None = None
     headers: dict[str, str] | None = None
 
     # Request metadata
@@ -40,7 +41,7 @@ class ApiResponse:
     error_category: str | None = None
 
     # Raw response (for debugging)
-    raw_response: Any | None = None
+    raw_response: object | None = None
 
     def is_success(self) -> bool:
         """Check if the response indicates success (2xx status codes)."""
@@ -62,7 +63,7 @@ class ApiResponse:
         """Check if the response contains data."""
         return self.data is not None
 
-    def get_json_data(self) -> dict[str, Any] | None:
+    def get_json_data(self) -> dict[str, object] | None:
         """
         Get response data as JSON dictionary.
         Returns None if data is not a dictionary.
@@ -88,7 +89,7 @@ class ApiResponse:
 
         return default
 
-    def get_rate_limit_info(self) -> dict[str, Any] | None:
+    def get_rate_limit_info(self) -> dict[str, object] | None:
         """
         Extract rate limiting information from headers.
         Returns None if no rate limit headers are found.
@@ -96,7 +97,7 @@ class ApiResponse:
         if not self.headers:
             return None
 
-        rate_limit_info: dict[str, Any] = {}
+        rate_limit_info: dict[str, object] = {}
 
         # Standard rate limiting headers
         rate_limit_mappings = {
@@ -120,18 +121,19 @@ class ApiResponse:
 
         return rate_limit_info if rate_limit_info else None
 
-    def get_content_info(self) -> dict[str, Any]:
+    def get_content_info(self) -> dict[str, object]:
         """Get information about the response content."""
-        content_info: dict[str, Any] = {}
+        content_info: dict[str, object] = {}
 
         if self.headers:
             content_info['content_type'] = self.get_header('content-type')
             content_info['content_length'] = self.get_header('content-length')
 
             # Convert content length to integer if possible
-            if content_info['content_length']:
+            content_length = content_info['content_length']
+            if content_length and isinstance(content_length, str):
                 try:
-                    content_info['content_length'] = int(content_info['content_length'])
+                    content_info['content_length'] = int(content_length)
                 except ValueError:
                     pass
 
@@ -147,7 +149,7 @@ class ApiResponse:
 
         return content_info
 
-    def get_error_summary(self) -> dict[str, Any] | None:
+    def get_error_summary(self) -> dict[str, object] | None:
         """
         Get a comprehensive error summary if the response indicates an error.
         Returns None for successful responses.
@@ -155,7 +157,7 @@ class ApiResponse:
         if self.is_success():
             return None
 
-        error_summary: dict[str, Any] = {
+        error_summary: dict[str, object] = {
             'status_code': self.status_code,
             'error_message': self.error_message,
             'error_details': self.error_details,
@@ -175,7 +177,7 @@ class ApiResponse:
         # Remove None values for cleaner output
         return {k: v for k, v in error_summary.items() if v is not None}
 
-    def to_legacy_dict(self) -> dict[str, Any]:
+    def to_legacy_dict(self) -> dict[str, object]:
         """
         Convert to legacy dictionary format for backward compatibility.
         This matches the current error format used in movie_service.py.

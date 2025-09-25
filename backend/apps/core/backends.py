@@ -1,11 +1,13 @@
 """
 Custom core backends.
 """
+from __future__ import annotations
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.backends import ModelBackend
 from django.contrib.auth.models import AbstractBaseUser
 from django.db.models import Q
+from django.http import HttpRequest
 
 # TODO: add check on registration to ensure new user can't register with an existing and verified
 # email address. django constraints, perhaps?
@@ -15,10 +17,10 @@ class CustomUserModelBackend(ModelBackend):
     """ Custom authentication backend. Will allow auth using email OR username. """
 
     def authenticate(self,
-                     request,
-                     username=None,
-                     password=None,
-                     **kwargs) -> None | AbstractBaseUser:
+                     request: HttpRequest | None,
+                     username: str | None = None,
+                     password: str | None = None,
+                     **kwargs: object) -> AbstractBaseUser | None:
         """ Authentication override, substituting email for username if needed. """
 
         UserModel: type[AbstractBaseUser] = get_user_model()

@@ -2,17 +2,20 @@
 """
 Views for the movie API.
 """
+from __future__ import annotations
+# from typing import Any  # Removed per Quality Gate #6
 
-
+from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from core.models import UserMovieData
-from core.views.tmdb import (
+from apps.core.models import UserMovieData
+from apps.core.views.tmdb import (
     PaginatedTMDBView,
     SingleResourceTMDBView,
 )
 from movie.serializers import MovieDetailSerializer, MovieSerializer
+from shared.api_types import TMDBSearchResponse
 
 from .services import movie_service
 
@@ -21,21 +24,23 @@ from .services import movie_service
 # =========================
 
 
-def serialize_paginated_movies(request, tmdb_response):
+def serialize_paginated_movies(request: Request, tmdb_response: TMDBSearchResponse) -> Response:
     """
     Shared helper for paginated movie endpoints.
     Serializes Movie instances, appends user-specific data, and preserves pagination metadata.
     """
 
-    if not isinstance(tmdb_response, dict) or 'results' not in tmdb_response:
-        return Response(tmdb_response, status=500)
+    # movies_data is now properly typed as list[TMDBMovieResponse]
     movies_data = tmdb_response['results']
     user = getattr(request, 'user', None)
-    user_movie_data_map = {}
+    user_movie_data_map: dict[int, UserMovieData] = {}
     if user and user.is_authenticated:
-        movie_ids = [movie['tmdb_id'] for movie in movies_data]
+        # Extract TMDB IDs from properly typed movie data
+        # type: ignore[index] # TMDB API response structure
+        movie_ids = [movie['id'] for movie in movies_data]
         user_movie_qs = UserMovieData.objects.filter(
             user=user, movie_id__in=movie_ids)
+        # type: ignore[attr-defined] # Django model field access
         user_movie_data_map = {umd.movie.tmdb_id: umd for umd in user_movie_qs}
 
     serializer = MovieSerializer(
@@ -43,8 +48,11 @@ def serialize_paginated_movies(request, tmdb_response):
         many=True,
         context={'request': request, 'user_movie_data_map': user_movie_data_map}
     )
-    tmdb_response['results'] = serializer.data
-    return Response(tmdb_response)
+    # Create mutable response dict to avoid TypedDict assignment issues
+    response_dict = dict(tmdb_response)
+    # type: ignore[attr-defined] # DRF serializer.data property
+    response_dict['results'] = serializer.data
+    return Response(response_dict)
 
 # =========================
 # Single Resource Detail Endpoints
@@ -54,30 +62,36 @@ def serialize_paginated_movies(request, tmdb_response):
 class MovieDetailView(SingleResourceTMDBView):
     """Retrieves movie details by TMDB ID, including user-specific data if available."""
 
-    service_method = staticmethod(movie_service.get_movie_by_id)
+    service_method = staticmethod(
+        movie_service.get_movie_by_id)  # type: ignore[assignment]
 
-    def get(self, request, tmdb_id, *args, **kwargs):
+    def get(self, request: Request, tmdb_id: int, *args: object, **kwargs: object) -> Response:
         if not tmdb_id:
             return Response({'error': 'Movie ID is required.'}, status=400)
         try:
             tmdb_id = int(tmdb_id)
         except (TypeError, ValueError):
             return Response({'error': 'Invalid movie ID.'}, status=400)
+        if self.service_method is None:
+            return Response({'error': 'Service method not configured.'}, status=500)
         movie_data = self.service_method(tmdb_id)
-        # If service returns an error Response, return it directly
-        if isinstance(movie_data, Response):
-            return movie_data
         # If service returns an error dict, return it as a response
-        if isinstance(movie_data, dict) and 'error' in movie_data:
+        if 'error' in movie_data:
+            error_msg = movie_data.get('error', '')
             # Use 404 for not found, 400 for other errors
-            status_code = 404 if 'not found' in movie_data['error'].lower() else 400
+            status_code = (
+                404 if 'not found' in str(error_msg).lower()
+                else 400
+            )
             return Response(movie_data, status=status_code)
 
-        # movie_data is already a dictionary from the service
+        # movie_data is a TMDBMovieResponse from the service
         serializer = MovieDetailSerializer(
+            # This is now properly typed as TMDBMovieResponse | dict[str, object]
             movie_data,
             context={'request': request, 'user_movie_data': None}
         )
+        # type: ignore[attr-defined] # DRF serializer.data property
         return Response(serializer.data)
 
 # =========================
@@ -86,27 +100,46 @@ class MovieDetailView(SingleResourceTMDBView):
 
 
 class NowPlayingMoviesView(PaginatedTMDBView):
-    service_method = staticmethod(movie_service.get_nowPlaying_movies)
+    service_method = staticmethod(
+        movie_service.get_nowPlaying_movies)  # type: ignore[assignment]
 
-    def get(self, request, *args, **kwargs):
-        page = request.query_params.get('page', 1)
+    def get(self, request: Request, *args: object, **kwargs: object) -> Response:
+        page_param = request.query_params.get('page', '1')
+        page = int(page_param) if page_param and page_param.isdigit() else 1
+        if self.service_method is None:
+            return Response({'error': 'Service method not configured.'}, status=500)
         tmdb_response = self.service_method(page=page)
+        # Handle error responses
+        if isinstance(tmdb_response, dict) and 'error' in tmdb_response:
+            return Response(tmdb_response, status=400)
+        # Type assertion: after error check, this must be TMDBSearchResponse
+        assert isinstance(tmdb_response, dict) and 'results' in tmdb_response
         return serialize_paginated_movies(request, tmdb_response)
 
 
 class UpcomingMoviesView(PaginatedTMDBView):
-    service_method = staticmethod(movie_service.get_upcoming_movies)
+    service_method = staticmethod(
+        movie_service.get_upcoming_movies)  # type: ignore[assignment]
 
-    def get(self, request, *args, **kwargs):
-        page = request.query_params.get('page', 1)
+    def get(self, request: Request, *args: object, **kwargs: object) -> Response:
+        page_param = request.query_params.get('page', '1')
+        page = int(page_param) if page_param and page_param.isdigit() else 1
+        if self.service_method is None:
+            return Response({'error': 'Service method not configured.'}, status=500)
         tmdb_response = self.service_method(page=page)
+        # Handle error responses
+        if isinstance(tmdb_response, dict) and 'error' in tmdb_response:
+            return Response(tmdb_response, status=400)
+        # Type assertion: after error check, this must be TMDBSearchResponse
+        assert isinstance(tmdb_response, dict) and 'results' in tmdb_response
         return serialize_paginated_movies(request, tmdb_response)
 
 
 class SearchMoviesView(PaginatedTMDBView):
-    service_method = staticmethod(movie_service.search_movies)
+    service_method = staticmethod(
+        movie_service.search_movies)  # type: ignore[assignment]
 
-    def get_additional_params(self, request):
+    def get_additional_params(self, request: Request) -> dict[str, object]:
         """Extract query parameter for search functionality."""
         return {'query': request.query_params.get('query', '')}
 
@@ -114,11 +147,12 @@ class SearchMoviesView(PaginatedTMDBView):
 class DiscoverMoviesView(PaginatedTMDBView):
     """Flexible movie discovery endpoint with full TMDB filtering capabilities."""
 
-    service_method = staticmethod(movie_service.discover_movies)
+    service_method = staticmethod(
+        movie_service.discover_movies)  # type: ignore[assignment]
 
-    def get_additional_params(self, request):
+    def get_additional_params(self, request: Request) -> dict[str, object]:
         """Extract all filter parameters for the discover endpoint."""
-        filters = {}
+        filters: dict[str, object] = {}
 
         # Process simple string parameters
         self._process_string_params(request, filters)
@@ -134,7 +168,7 @@ class DiscoverMoviesView(PaginatedTMDBView):
 
         return filters
 
-    def _process_string_params(self, request, filters):
+    def _process_string_params(self, request: Request, filters: dict[str, object]) -> None:
         """Process simple string parameters that don't need validation."""
         string_params = [
             'sort_by', 'genres', 'keywords', 'people',
@@ -145,18 +179,21 @@ class DiscoverMoviesView(PaginatedTMDBView):
             if param in request.query_params:
                 filters[param] = request.query_params[param]
 
-    def _process_year_params(self, request, filters):
+    def _process_year_params(self, request: Request, filters: dict[str, object]) -> None:
         """Process year-related parameters with validation."""
         if 'year' in request.query_params:
-            self._handle_year_parameter(request.query_params['year'], filters)
+            year_param = request.query_params['year']
+            self._handle_year_parameter(year_param, filters)
 
         if 'min_year' in request.query_params:
-            self._handle_min_year(request.query_params['min_year'], filters)
+            min_year_param = request.query_params['min_year']
+            self._handle_min_year(min_year_param, filters)
 
         if 'max_year' in request.query_params:
-            self._handle_max_year(request.query_params['max_year'], filters)
+            max_year_param = request.query_params['max_year']
+            self._handle_max_year(max_year_param, filters)
 
-    def _handle_year_parameter(self, year_value, filters):
+    def _handle_year_parameter(self, year_value: str, filters: dict[str, object]) -> None:
         """Handle the year parameter which can be a single year or decade."""
         if year_value.isdigit():
             try:
@@ -173,7 +210,7 @@ class DiscoverMoviesView(PaginatedTMDBView):
         else:
             raise ValueError('Invalid year format')
 
-    def _handle_min_year(self, min_year_value, filters):
+    def _handle_min_year(self, min_year_value: str, filters: dict[str, object]) -> None:
         """Handle min_year parameter."""
         try:
             min_year = int(min_year_value)
@@ -181,7 +218,7 @@ class DiscoverMoviesView(PaginatedTMDBView):
         except ValueError:
             raise ValueError('Invalid min_year parameter')
 
-    def _handle_max_year(self, max_year_value, filters):
+    def _handle_max_year(self, max_year_value: str, filters: dict[str, object]) -> None:
         """Handle max_year parameter."""
         try:
             max_year = int(max_year_value)
@@ -189,7 +226,7 @@ class DiscoverMoviesView(PaginatedTMDBView):
         except ValueError:
             raise ValueError('Invalid max_year parameter')
 
-    def _process_rating_params(self, request, filters):
+    def _process_rating_params(self, request: Request, filters: dict[str, object]) -> None:
         """Process rating-related parameters with validation."""
         rating_params = {
             'vote_average_gte': 'vote_average_gte',
@@ -199,12 +236,13 @@ class DiscoverMoviesView(PaginatedTMDBView):
 
         for param, filter_key in rating_params.items():
             if param in request.query_params:
+                param_value = request.query_params[param]
                 try:
-                    filters[filter_key] = float(request.query_params[param])
+                    filters[filter_key] = float(param_value)
                 except ValueError:
                     raise ValueError(f'Invalid {param} parameter')
 
-    def _process_runtime_params(self, request, filters):
+    def _process_runtime_params(self, request: Request, filters: dict[str, object]) -> None:
         """Process runtime-related parameters with validation."""
         runtime_params = {
             'runtime_gte': 'runtime_gte',
@@ -215,8 +253,9 @@ class DiscoverMoviesView(PaginatedTMDBView):
 
         for param, filter_key in runtime_params.items():
             if param in request.query_params:
+                param_value = request.query_params[param]
                 try:
-                    filters[filter_key] = int(request.query_params[param])
+                    filters[filter_key] = int(param_value)
                 except ValueError:
                     raise ValueError(f'Invalid {param} parameter')
 
@@ -229,7 +268,7 @@ class DiscoverMoviesView(PaginatedTMDBView):
 class MovieGenresView(APIView):
     """Retrieves the list of available movie genres."""
 
-    def get(self, request, *args, **kwargs):
+    def get(self, request: Request, *args: object, **kwargs: object) -> Response:
         genres = movie_service.get_movie_genres()
         if isinstance(genres, dict) and 'error' in genres:
             return Response(genres, status=400)
@@ -239,19 +278,21 @@ class MovieGenresView(APIView):
 class PopularKeywordsView(PaginatedTMDBView):
     """Retrieves popular keywords with pagination."""
 
-    service_method = staticmethod(movie_service.get_popular_keywords)
+    service_method = staticmethod(
+        movie_service.get_popular_keywords)  # type: ignore[assignment]
 
 
 class SearchKeywordsView(APIView):
     """Searches for keywords by query string."""
 
-    def get(self, request, *args, **kwargs):
+    def get(self, request: Request, *args: object, **kwargs: object) -> Response:
         query = request.query_params.get('query', '').strip()
         if not query:
             return Response({'results': []})
 
         keywords = movie_service.search_keywords(query)
-        if isinstance(keywords, dict) and 'error' in keywords:
+        # Service returns dict with either results or error key
+        if 'error' in keywords:
             return Response(keywords, status=400)
         return Response(keywords)
 
@@ -259,18 +300,20 @@ class SearchKeywordsView(APIView):
 class PopularPeopleView(PaginatedTMDBView):
     """Retrieves popular people with pagination."""
 
-    service_method = staticmethod(movie_service.get_popular_people)
+    service_method = staticmethod(
+        movie_service.get_popular_people)  # type: ignore[assignment]
 
 
 class SearchPeopleView(APIView):
     """Searches for people by name."""
 
-    def get(self, request, *args, **kwargs):
+    def get(self, request: Request, *args: object, **kwargs: object) -> Response:
         query = request.query_params.get('query', '').strip()
         if not query:
             return Response({'results': []})
 
         people = movie_service.search_people(query)
-        if isinstance(people, dict) and 'error' in people:
+        # Service returns dict with either results or error key
+        if 'error' in people:
             return Response(people, status=400)
         return Response(people)

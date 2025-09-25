@@ -1,25 +1,26 @@
 """
 Email service for sending transactional emails via Zeptomail.
 """
+from __future__ import annotations
 
 import requests
 import secrets
 from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils import timezone
-from core.models import User, EmailVerificationToken
+from apps.core.models import User, EmailVerificationToken
 
 
 class ZeptomailService:
     """Service for sending emails via Zeptomail API."""
 
-    def __init__(self):
-        self.api_key = settings.ZEPTOMAIL_API_KEY
-        self.base_url = "https://api.zeptomail.com/v1.1"
+    def __init__(self) -> None:
+        self.api_key: str = settings.ZEPTOMAIL_API_KEY
+        self.base_url: str = "https://api.zeptomail.com/v1.1"
         # Development mode flag - also enable for testing
-        self.dev_mode = not self.api_key or self.api_key == "" or settings.TESTING
+        self.dev_mode: bool = not self.api_key or self.api_key == "" or settings.TESTING
 
-    def _get_headers(self):
+    def _get_headers(self) -> dict[str, str]:
         """Get headers for Zeptomail API requests."""
         return {
             'Accept': 'application/json',

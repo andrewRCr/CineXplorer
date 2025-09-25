@@ -1,11 +1,16 @@
+from __future__ import annotations
+
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework.request import Request
+from rest_framework_simplejwt.tokens import Token
 from django.conf import settings
+from django.contrib.auth.models import AbstractUser
 
 
 class JWTCookieAuthentication(JWTAuthentication):
     """ Custom JWT Authentication class to handle cookies. """
 
-    def authenticate(self, request):
+    def authenticate(self, request: Request) -> tuple[AbstractUser, Token] | None:
         """ Override to check for JWT in cookies. """
 
         raw_access_token = request.COOKIES.get(

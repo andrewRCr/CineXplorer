@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 
 import requests
@@ -5,7 +7,7 @@ from django.conf import settings
 from rest_framework import status
 from rest_framework.response import Response
 
-from core.models import UserMovieData
+from apps.core.models import User, UserMovieData
 from user_movie_data.serializers import UserMovieDataSerializer
 
 logger: logging.Logger = logging.getLogger(__name__)
@@ -31,7 +33,8 @@ def get_user_movie_data(tmdb_id: int, token: str) -> Response:
             "error": "An error occurred while retrieving user movie data."})
 
 
-def get_user_movie_data_bulk(tmdb_ids, user):
+def get_user_movie_data_bulk(tmdb_ids: list[int],
+                             user: User) -> dict[int, dict[str, object] | None]:
     """
     Bulk fetch user_movie_data for a list of tmdb_ids and a user instance.
     Returns dict {tmdb_id: serialized user_movie_data or None}.

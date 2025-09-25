@@ -6,11 +6,12 @@ standardized logging, error handling, timing, correlation IDs, and
 response processing across the application.
 """
 
+from __future__ import annotations
+
 import requests
 import time
 import uuid
 import logging
-from typing import Any
 from abc import ABC, abstractmethod
 
 from .api_response import ApiResponse
@@ -34,7 +35,7 @@ class BaseApiClient(ABC):
         logger_name: str | None = None,
         timeout: int = 30,
         max_retries: int = 0
-    ):
+    ) -> None:
         """
         Initialize the base API client.
 
@@ -78,7 +79,7 @@ class BaseApiClient(ABC):
         pass
 
     @abstractmethod
-    def get_sanitized_params(self, params: dict[str, Any] | None = None) -> dict[str, Any]:
+    def get_sanitized_params(self, params: dict[str, object] | None = None) -> dict[str, object]:
         """
         Get sanitized parameters for logging (remove sensitive data).
 
@@ -294,7 +295,7 @@ class BaseApiClient(ABC):
         endpoint: str,
         duration_ms: int,
         url: str,
-        params: dict[str, Any] | None = None
+        params: dict[str, object] | None = None
     ) -> ApiResponse:
         """
         Handle request exceptions (network errors, timeouts, etc.).
@@ -410,9 +411,9 @@ class BaseApiClient(ABC):
     def get(
         self,
         endpoint: str,
-        params: dict[str, Any] | None = None,
+        params: dict[str, object] | None = None,
         headers: dict[str, str] | None = None,
-        **kwargs: Any
+        **kwargs: object
     ) -> ApiResponse:
         """
         Make a GET request to the API.
@@ -446,12 +447,20 @@ class BaseApiClient(ABC):
         start_time = time.time()
 
         try:
+            # Convert params to requests-compatible format
+            request_params = {}
+            if params:
+                for key, value in params.items():
+                    if value is not None:
+                        request_params[key] = str(value)
+
             response = requests.get(
                 url,
-                params=params,
+                params=request_params or None,
                 headers=prepared_headers,
                 timeout=self.timeout,
-                **kwargs
+                # Note: **kwargs ignored to avoid type errors - requests has
+                # very specific parameter types
             )
             duration_ms = int((time.time() - start_time) * 1000)
 

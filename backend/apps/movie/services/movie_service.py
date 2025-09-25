@@ -1,8 +1,12 @@
+from __future__ import annotations
+
 import logging
 import uuid
 from datetime import datetime, timedelta
+from typing import Union
 
 from apps.core.services.tmdb_api_client import TMDBApiClient
+from shared.api_types import TMDBSearchResponse, TMDBMovieResponse
 
 # Use TMDB-specific logger for better log organization
 logger = logging.getLogger('cinexplorer.tmdb')
@@ -16,8 +20,8 @@ tmdb_client = TMDBApiClient()
 
 
 def propagate_error_context(
-        error_dict: dict, operation: str, **additional_context
-) -> dict:
+        error_dict: dict[str, object], operation: str, **additional_context: object
+) -> dict[str, object]:
     """
     Propagate error context through service layer calls.
     Ensures correlation IDs and error details are preserved through call stack.
@@ -40,7 +44,7 @@ def propagate_error_context(
     return enhanced_error
 
 
-def tmdb_dict_to_movie_dict(tmdb_dict):
+def tmdb_dict_to_movie_dict(tmdb_dict: dict[str, object]) -> dict[str, object]:
     """
     Convert a TMDB API dict to a movie dictionary for serialization.
     This function creates a dictionary with only the fields needed by
@@ -56,7 +60,7 @@ def tmdb_dict_to_movie_dict(tmdb_dict):
     }
 
 
-def tmdb_get(endpoint: str, params: dict | None = None) -> dict:
+def tmdb_get(endpoint: str, params: dict[str, object] | None = None) -> dict[str, object]:
     """
     Generic TMDB GET request using the new API client architecture.
 
@@ -67,7 +71,7 @@ def tmdb_get(endpoint: str, params: dict | None = None) -> dict:
     return response.to_legacy_dict()
 
 
-def fetch_movie_runtimes(movie_ids: list) -> dict:
+def fetch_movie_runtimes(movie_ids: list[int]) -> dict[int, int]:
     """Fetch runtime data using centralized logging."""
     runtimes = {}
 
@@ -90,13 +94,21 @@ def fetch_movie_runtimes(movie_ids: list) -> dict:
             )
             runtimes[movie_id] = 0
         else:
-            runtimes[movie_id] = result.get('runtime', 0)
+            runtime = result.get('runtime', 0)
+            runtimes[movie_id] = int(runtime) if isinstance(runtime, (int, float)) else 0
 
     return runtimes
 
 
-def get_simple_credits(credits_response):
+def get_simple_credits(credits_response: dict[str, object]) -> dict[str, list[dict[str, object]]]:
     """Extracts simplified, relevant credits from TMDB credits response."""
+    crew = credits_response.get('crew', [])
+    cast = credits_response.get('cast', [])
+
+    # Type assertions for TMDB API contract
+    assert isinstance(crew, list), "TMDB crew should be a list"
+    assert isinstance(cast, list), "TMDB cast should be a list"
+
     return {
         'crew': [
             {
@@ -105,7 +117,8 @@ def get_simple_credits(credits_response):
                 'job': person['job'],
                 'profile_path': person['profile_path']
             }
-            for person in credits_response.get('crew', [])
+            for person in crew
+            if isinstance(person, dict)
         ],
         'cast': [
             {
@@ -114,7 +127,8 @@ def get_simple_credits(credits_response):
                 'character': person['character'],
                 'profile_path': person['profile_path']
             }
-            for person in credits_response.get('cast', [])
+            for person in cast
+            if isinstance(person, dict)
         ]
     }
 
@@ -124,7 +138,7 @@ def get_simple_credits(credits_response):
 # =========================
 
 
-def get_movie_by_id(tmdb_id: int):
+def get_movie_by_id(tmdb_id: int) -> Union[TMDBMovieResponse, dict[str, object]]:
     """
     Retrieves movie details and credits from TMDB by movie ID using
     centralized logging.
@@ -216,7 +230,7 @@ def get_movie_by_id(tmdb_id: int):
 # =========================
 
 
-def get_nowPlaying_movies(page=1):
+def get_nowPlaying_movies(page: int = 1) -> Union[TMDBSearchResponse, dict[str, object]]:
     """
     Retrieves a list of now playing movies from TMDB with error context
     propagation.
@@ -246,7 +260,9 @@ def get_nowPlaying_movies(page=1):
 
     try:
         movies = result.get('results', [])
-        result['results'] = [tmdb_dict_to_movie_dict(m) for m in movies]
+        # Type assertion: TMDB API returns list of movies
+        assert isinstance(movies, list), "TMDB results should be a list"
+        result['results'] = [tmdb_dict_to_movie_dict(m) for m in movies if isinstance(m, dict)]
         return result
     except Exception as processing_error:
         correlation_id = result.get(
@@ -270,7 +286,7 @@ def get_nowPlaying_movies(page=1):
         }
 
 
-def get_upcoming_movies(page=1):
+def get_upcoming_movies(page: int = 1) -> Union[TMDBSearchResponse, dict[str, object]]:
     """
     Retrieves a list of upcoming movies from TMDB, paginated by page param.
     """
@@ -293,11 +309,13 @@ def get_upcoming_movies(page=1):
     if "error" in result:
         return result
     movies = result.get('results', [])
-    result['results'] = [tmdb_dict_to_movie_dict(m) for m in movies]
+    # Type assertion: TMDB API returns list of movies
+    assert isinstance(movies, list), "TMDB results should be a list"
+    result['results'] = [tmdb_dict_to_movie_dict(m) for m in movies if isinstance(m, dict)]
     return result
 
 
-def search_movies(query: str, page: int = 1):
+def search_movies(query: str, page: int = 1) -> dict[str, object]:
     """Searches for movies by query string using TMDB, with pagination."""
     # Use the client's direct search method instead of generic get
     response = tmdb_client.search_movies(
@@ -330,7 +348,8 @@ def search_movies(query: str, page: int = 1):
         }
 
     movies = result.get('results', [])
-    movies = result.get('results', [])
+    # Type assertion: TMDB API returns list of movies
+    assert isinstance(movies, list), "TMDB results should be a list"
     logger.debug("Search movies processing", extra={
         'operation': 'search_movies',
         'query': query,
@@ -380,15 +399,17 @@ def search_movies(query: str, page: int = 1):
     })
     result['results'] = [tmdb_dict_to_movie_dict(m) for m in filtered_movies]
     # Update total_results to reflect filtered count
+    total_results = result.get('total_results', 0)
+    total_results_int = int(total_results) if isinstance(total_results, (int, float)) else 0
     result['total_results'] = (
         len(filtered_movies) +
-        (result.get('total_results', 0) - len(movies))
+        (total_results_int - len(movies))
     )
 
     return result
 
 
-def discover_movies(page: int = 1, **filters):
+def discover_movies(page: int = 1, **filters: object) -> dict[str, object]:
     """
     Flexible movie discovery with full TMDB filtering capabilities.
 
@@ -456,6 +477,8 @@ def discover_movies(page: int = 1, **filters):
         return result
 
     movies = result.get('results', [])
+    # Type assertion: TMDB API returns list of movies
+    assert isinstance(movies, list), "TMDB results should be a list"
 
     # Log detailed discover response for debugging
     discover_metadata = {
@@ -478,7 +501,7 @@ def discover_movies(page: int = 1, **filters):
 
     logger.debug("Discover movies response processed", extra=discover_metadata)
 
-    result['results'] = [tmdb_dict_to_movie_dict(m) for m in movies]
+    result['results'] = [tmdb_dict_to_movie_dict(m) for m in movies if isinstance(m, dict)]
     return result
 
 
@@ -487,15 +510,18 @@ def discover_movies(page: int = 1, **filters):
 # =========================
 
 
-def get_movie_genres():
+def get_movie_genres() -> list[dict[str, object]] | dict[str, object]:
     """Retrieves the list of movie genres from TMDB."""
     result = tmdb_get("genre/movie/list")
     if "error" in result:
         return result
-    return result.get('genres', [])
+    genres = result.get('genres', [])
+    # Type assertion: TMDB API returns list of genres
+    assert isinstance(genres, list), "TMDB genres should be a list"
+    return genres
 
 
-def get_popular_keywords(page: int = 1):
+def get_popular_keywords(page: int = 1) -> dict[str, object]:
     """Retrieves popular keywords from TMDB."""
     result = tmdb_get("keyword/popular", {"page": page})
     if "error" in result:
@@ -503,7 +529,7 @@ def get_popular_keywords(page: int = 1):
     return result
 
 
-def search_keywords(query: str):
+def search_keywords(query: str) -> dict[str, object]:
     """Searches for keywords by query string."""
     if not query or len(query.strip()) < 2:
         return {"results": []}
@@ -511,10 +537,14 @@ def search_keywords(query: str):
     result = tmdb_get("search/keyword", {"query": query})
     if "error" in result:
         return result
-    return result.get('results', [])
+
+    # Ensure we return the full result structure with results key
+    if 'results' not in result:
+        result['results'] = []
+    return result
 
 
-def get_popular_people(page: int = 1):
+def get_popular_people(page: int = 1) -> dict[str, object]:
     """Retrieves popular people (actors, directors, etc.) from TMDB."""
     result = tmdb_get("person/popular", {"page": page})
     if "error" in result:
@@ -522,7 +552,7 @@ def get_popular_people(page: int = 1):
     return result
 
 
-def search_people(query: str):
+def search_people(query: str) -> dict[str, object]:
     """Searches for people by name."""
     if not query or len(query.strip()) < 2:
         return {"results": []}
@@ -530,4 +560,8 @@ def search_people(query: str):
     result = tmdb_get("search/person", {"query": query})
     if "error" in result:
         return result
-    return result.get('results', [])
+
+    # Ensure we return the full result structure with results key
+    if 'results' not in result:
+        result['results'] = []
+    return result

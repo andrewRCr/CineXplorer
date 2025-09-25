@@ -6,7 +6,8 @@ with TMDB-specific authentication, rate limiting, error handling, and response
 processing built on top of the BaseApiClient infrastructure.
 """
 
-from typing import Any
+# from typing import Any  # Removed per Quality Gate #6
+import requests
 from django.conf import settings
 
 from .base_api_client import BaseApiClient
@@ -60,7 +61,7 @@ class TMDBApiClient(BaseApiClient):
 
         return prepared_headers
 
-    def get_sanitized_params(self, params: dict[str, Any] | None = None) -> dict[str, Any]:
+    def get_sanitized_params(self, params: dict[str, object] | None = None) -> dict[str, object]:
         """
         Get sanitized parameters for logging (removes API key for security).
 
@@ -106,7 +107,7 @@ class TMDBApiClient(BaseApiClient):
 
     def process_successful_response(
         self,
-        response: Any,
+        response: requests.Response,
         correlation_id: str,
         endpoint: str,
         duration_ms: int
@@ -222,7 +223,7 @@ class TMDBApiClient(BaseApiClient):
 
     def process_error_response(
         self,
-        response: Any,
+        response: requests.Response,
         correlation_id: str,
         endpoint: str,
         duration_ms: int
@@ -310,7 +311,7 @@ class TMDBApiClient(BaseApiClient):
             raw_response=response
         )
 
-    def _extract_tmdb_response_metadata(self, data: dict[str, Any]) -> dict[str, Any] | None:
+    def _extract_tmdb_response_metadata(self, data: dict[str, object]) -> dict[str, object] | None:
         """
         Extract TMDB-specific metadata from response data.
 
@@ -330,7 +331,8 @@ class TMDBApiClient(BaseApiClient):
         if 'total_results' in data:
             metadata['total_results'] = data['total_results']
         if 'results' in data:
-            metadata['results_count'] = len(data['results'])
+            results = data['results']
+            metadata['results_count'] = len(results) if hasattr(results, '__len__') else 0
 
         # Movie-specific fields
         if 'id' in data and isinstance(data['id'], int):
@@ -343,7 +345,7 @@ class TMDBApiClient(BaseApiClient):
 
         return metadata if metadata else None
 
-    def _extract_rate_limit_headers(self, headers: Any) -> dict[str, Any] | None:
+    def _extract_rate_limit_headers(self, headers: object) -> dict[str, object] | None:
         """
         Extract TMDB rate limiting headers from response.
 
@@ -357,7 +359,7 @@ class TMDBApiClient(BaseApiClient):
         if not headers or not hasattr(headers, '__contains__'):
             return None
 
-        rate_limit_info = {}
+        rate_limit_info: dict[str, object] = {}
 
         # Standard rate limiting headers used by TMDB
         rate_limit_headers = {
@@ -368,25 +370,26 @@ class TMDBApiClient(BaseApiClient):
         }
 
         for header_name, key in rate_limit_headers.items():
-            if header_name in headers:
-                value = headers[header_name]
-                # Convert numeric values to integers
-                if key in ['limit', 'remaining', 'retry_after']:
-                    try:
-                        rate_limit_info[key] = int(value)
-                    except ValueError:
+            if hasattr(headers, '__contains__') and hasattr(headers, '__getitem__'):
+                if header_name in headers:
+                    value = headers[header_name]
+                    # Convert numeric values to integers
+                    if key in ['limit', 'remaining', 'retry_after']:
+                        try:
+                            rate_limit_info[key] = int(value)
+                        except ValueError:
+                            rate_limit_info[key] = value
+                    else:
                         rate_limit_info[key] = value
-                else:
-                    rate_limit_info[key] = value
 
         return rate_limit_info if rate_limit_info else None
 
     def get(
         self,
         endpoint: str,
-        params: dict[str, Any] | None = None,
+        params: dict[str, object] | None = None,
         headers: dict[str, str] | None = None,
-        **kwargs: Any
+        **kwargs: object
     ) -> ApiResponse:
         """
         Make a GET request to TMDB API with automatic API key injection.
@@ -415,7 +418,7 @@ class TMDBApiClient(BaseApiClient):
         self,
         query: str,
         page: int = 1,
-        **kwargs: Any
+        **kwargs: object
     ) -> ApiResponse:
         """
         Search for movies by title.
@@ -431,7 +434,7 @@ class TMDBApiClient(BaseApiClient):
         params = {"query": query, "page": page, **kwargs}
         return self.get("search/movie", params)
 
-    def get_movie_details(self, movie_id: int, **kwargs: Any) -> ApiResponse:
+    def get_movie_details(self, movie_id: int, **kwargs: object) -> ApiResponse:
         """
         Get detailed information for a specific movie.
 
@@ -444,7 +447,7 @@ class TMDBApiClient(BaseApiClient):
         """
         return self.get(f"movie/{movie_id}", kwargs)
 
-    def discover_movies(self, **kwargs: Any) -> ApiResponse:
+    def discover_movies(self, **kwargs: object) -> ApiResponse:
         """
         Discover movies using TMDB's discover endpoint.
 
@@ -456,7 +459,7 @@ class TMDBApiClient(BaseApiClient):
         """
         return self.get("discover/movie", kwargs)
 
-    def get_popular_movies(self, page: int = 1, **kwargs: Any) -> ApiResponse:
+    def get_popular_movies(self, page: int = 1, **kwargs: object) -> ApiResponse:
         """
         Get popular movies from TMDB.
 
@@ -470,7 +473,7 @@ class TMDBApiClient(BaseApiClient):
         params = {"page": page, **kwargs}
         return self.get("movie/popular", params)
 
-    def get_top_rated_movies(self, page: int = 1, **kwargs: Any) -> ApiResponse:
+    def get_top_rated_movies(self, page: int = 1, **kwargs: object) -> ApiResponse:
         """
         Get top rated movies from TMDB.
 
@@ -484,7 +487,7 @@ class TMDBApiClient(BaseApiClient):
         params = {"page": page, **kwargs}
         return self.get("movie/top_rated", params)
 
-    def get_now_playing_movies(self, page: int = 1, **kwargs: Any) -> ApiResponse:
+    def get_now_playing_movies(self, page: int = 1, **kwargs: object) -> ApiResponse:
         """
         Get now playing movies from TMDB.
 

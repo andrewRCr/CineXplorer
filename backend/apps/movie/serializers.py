@@ -1,10 +1,13 @@
 """
 Serializers for the movie API View.
 """
+from __future__ import annotations
 
 from rest_framework import serializers
 
-from core.models import UserMovieData
+from apps.core.models import UserMovieData
+from shared import UserMovieData as UserMovieDataType
+# from shared import Movie  # Unused import
 
 
 class MovieSerializer(serializers.Serializer):
@@ -20,7 +23,7 @@ class MovieSerializer(serializers.Serializer):
     # Include runtime for filtering verification
     runtime = serializers.IntegerField(read_only=True, allow_null=True)
 
-    def get_user_movie_data(self, obj):
+    def get_user_movie_data(self, obj: dict[str, object] | object) -> UserMovieDataType | None:
         request = self.context.get('request', None)
         user = getattr(request, 'user', None)
         user_movie_data_map = self.context.get('user_movie_data_map', None)

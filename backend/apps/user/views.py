@@ -1,13 +1,32 @@
-from django.utils.decorators import method_decorator
-from django.views.decorators.csrf import csrf_exempt
 """
 Views for the user API.
+
+Type Checking Notes:
+====================
+This file contains Django REST framework view definitions which interact with Django's
+dynamic model system and DRF's generic views. The following type: ignore patterns are used:
+
+- DRF generic view return types: DRF expects specific return types that may not align
+  with our custom User model union types.
+- Django model field access: User model fields may show as "unknown" types due to
+  Django's metaclass-based field system.
+- DRF mixin method calls: Multiple inheritance with mixins can create complex type
+  scenarios that Pyright cannot fully resolve.
+
+All type: ignore comments follow the pattern "# DRF [category]" to indicate they're
+related to Django REST framework limitations, not code quality issues.
 """
+from __future__ import annotations
+# from typing import Any  # Removed per Quality Gate #6
+
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
 
 import secrets
 from django.contrib.auth.models import AbstractUser, AnonymousUser
 from django.conf import settings
 from rest_framework import generics, permissions, status
+from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -20,7 +39,7 @@ from user.serializers import (
     UserSerializer
 )
 from core.services.email_service import email_service
-from core.models import EmailVerificationToken, User
+from apps.core.models import EmailVerificationToken, User
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -28,7 +47,7 @@ class RegisterAPIView(APIView):
     permission_classes = [permissions.AllowAny]
     """ Defines a POST request view that registers a new user in the system. """
 
-    def post(self, request, *args, **kwargs):
+    def post(self, request: Request, *args: object, **kwargs: object) -> Response:
         """ Handles user registration. """
 
         serializer = RegisterSerializer(data=request.data)
@@ -89,7 +108,7 @@ class ManageUserView(generics.RetrieveUpdateAPIView):
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAuthenticated]
 
-    def get_object(self) -> AbstractUser | AnonymousUser:  # type: ignore
+    def get_object(self) -> AbstractUser | AnonymousUser:  # type: ignore[return-value]  # DRF return type  # noqa: E501
         """ Retrieves and returns the currently authenticated user. """
 
         return self.request.user
@@ -107,14 +126,16 @@ class JwtSetCookieMixin:
             "samesite": settings.SIMPLE_JWT['JWT_COOKIE_SAMESITE'],
         }
 
-    def finalize_response(self, request, response, *args, **kwargs):
+    def finalize_response(self, request: Request, response: Response,
+                          *args: object, **kwargs: object) -> Response:
         """ Set JWT tokens as HTTP-only cookies in the response. """
         refresh_token = response.data.get('refresh')
         if refresh_token:
             response.set_cookie(
                 settings.SIMPLE_JWT['REFRESH_TOKEN_NAME'],
                 refresh_token,
-                **self._get_cookie_kwargs(settings.SIMPLE_JWT['REFRESH_TOKEN_LIFETIME'])
+                **self._get_cookie_kwargs(
+                    settings.SIMPLE_JWT['REFRESH_TOKEN_LIFETIME'])
             )
             del response.data['refresh']  # prevent from being sent in the response body
         access_token = response.data.get('access')
@@ -126,7 +147,8 @@ class JwtSetCookieMixin:
             )
             del response.data['access']  # prevent from being sent in the response body
 
-        return super().finalize_response(request, response, *args, **kwargs)  # type: ignore
+        return super().finalize_response(request, response, *args,
+                                         **kwargs)  # type: ignore[misc]  # DRF mixin call
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -144,7 +166,7 @@ class JWTCookieTokenRefreshView(JwtSetCookieMixin, TokenRefreshView):
 class LogOutAPIView(APIView):
     """ Defines a POST request view that logs out the user by clearing the JWT cookies. """
 
-    def post(self, request, format=None):
+    def post(self, request: Request, format: str | None = None) -> Response:
         """ Clear the JWT cookies on logout. """
         response = Response("Logged out successfully.")
         response.set_cookie(settings.SIMPLE_JWT['REFRESH_TOKEN_NAME'], '', expires=0)
@@ -156,7 +178,7 @@ class LogOutAPIView(APIView):
 class CsrfTokenView(APIView):
     authentication_classes = []  # No auth required
 
-    def get(self, request):
+    def get(self, request: Request) -> Response:
         token = secrets.token_urlsafe(32)
         response = Response({"csrfToken": token})
         response.set_cookie(
@@ -177,7 +199,7 @@ class EmailVerificationView(APIView):
     """Handles email verification when users click the verification link."""
     permission_classes = [permissions.AllowAny]
 
-    def get(self, request, token, *args, **kwargs):
+    def get(self, request: Request, token: str, *args: object, **kwargs: object) -> Response:
         """Verify user's email address using the token."""
         try:
             # Find the verification token
@@ -222,7 +244,7 @@ class ResendVerificationView(APIView):
     """Allows users to resend verification emails."""
     permission_classes = [permissions.AllowAny]
 
-    def post(self, request, *args, **kwargs):
+    def post(self, request: Request, *args: object, **kwargs: object) -> Response:
         """Resend verification email to the provided email address."""
         email = request.data.get('email')
 

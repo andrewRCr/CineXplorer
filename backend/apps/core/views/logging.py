@@ -7,18 +7,20 @@ to the backend for centralized logging and monitoring.
 
 import json
 import logging
-from typing import Dict, Any
 from datetime import datetime
 
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from rest_framework import status
+from rest_framework.request import Request
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 
 # Import our correlation utility
 from middleware.logging import get_correlation_id
+# Import shared types
+# from shared import ApiResponse  # Unused import
 
 # Get the logger instance
 frontend_logger = logging.getLogger('frontend')
@@ -53,7 +55,7 @@ class FrontendLogAPIView(APIView):
 
     permission_classes = [AllowAny]  # Allow both authenticated and anonymous users
 
-    def post(self, request):
+    def post(self, request: Request) -> Response:
         try:
             # Parse the request data
             data = self._parse_request_data(request)
@@ -114,7 +116,7 @@ class FrontendLogAPIView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-    def _parse_request_data(self, request) -> Dict[str, Any]:
+    def _parse_request_data(self, request: Request) -> dict[str, object]:
         """Parse and return the request data."""
         if hasattr(request, 'data') and request.data:
             return request.data
@@ -123,7 +125,7 @@ class FrontendLogAPIView(APIView):
         else:
             return {}
 
-    def _validate_log_entry(self, data: Dict[str, Any]) -> str | None:
+    def _validate_log_entry(self, data: dict[str, object]) -> str | None:
         """
         Validate the log entry data.
 
@@ -138,19 +140,24 @@ class FrontendLogAPIView(APIView):
 
         # Validate log level
         valid_levels = ['DEBUG', 'INFO', 'WARNING', 'WARN', 'ERROR', 'CRITICAL']
-        if data['level'].upper() not in valid_levels:
+        level = data.get('level')
+        if not isinstance(level, str) or level.upper() not in valid_levels:
             levels_str = ', '.join(valid_levels)
-            return f"Invalid log level: {data['level']}. Must be one of: {levels_str}"
+            return f"Invalid log level: {level}. Must be one of: {levels_str}"
 
         # Validate timestamp format
         try:
-            datetime.fromisoformat(data['timestamp'].replace('Z', '+00:00'))
+            timestamp = data.get('timestamp')
+            if isinstance(timestamp, str):
+                datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
+            else:
+                raise ValueError('Timestamp must be a string')
         except (ValueError, AttributeError):
             return "Invalid timestamp format. Expected ISO format."
 
         return None
 
-    def _process_log_entry(self, data: Dict[str, Any], request) -> bool:
+    def _process_log_entry(self, data: dict[str, object], request: Request) -> bool:
         """
         Process the frontend log entry.
 
@@ -168,7 +175,11 @@ class FrontendLogAPIView(APIView):
                 'CRITICAL': logging.CRITICAL
             }
 
-            log_level = level_mapping.get(data['level'].upper(), logging.INFO)
+            level_str = data.get('level', 'INFO')
+            if isinstance(level_str, str):
+                log_level = level_mapping.get(level_str.upper(), logging.INFO)
+            else:
+                log_level = logging.INFO
 
             # Prepare the log message
             message = f"[FRONTEND] {data['message']}"
@@ -229,7 +240,7 @@ class LogHealthCheckView(APIView):
 
     permission_classes = [AllowAny]
 
-    def get(self, request):
+    def get(self, request: Request) -> Response:
         """Return logging system health status."""
         try:
             # Test that we can write to the logs

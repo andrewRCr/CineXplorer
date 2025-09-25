@@ -1,5 +1,9 @@
+from __future__ import annotations
+from typing import Callable
+
 from rest_framework import status
 from rest_framework.authentication import TokenAuthentication
+from rest_framework.request import Request
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
@@ -7,6 +11,7 @@ from user_movie_data.services.user_movie_data_service import (
     get_user_movie_data,
     get_user_movie_data_bulk,
 )
+from shared import TMDBMovieResponse, TMDBSearchResponse
 
 """
 Base views for single resource (non-paginated) TMDB endpoints.
@@ -15,9 +20,9 @@ Base views for single resource (non-paginated) TMDB endpoints.
 
 class SingleResourceTMDBView(APIView):
     authentication_classes = [TokenAuthentication]
-    service_method = None  # override in subclass
+    service_method: Callable[[int], TMDBMovieResponse | Response] | None = None  # override
 
-    def get(self, request, tmdb_id, *args, **kwargs):
+    def get(self, request: Request, tmdb_id: int) -> Response:
         if self.service_method is None:
             return Response(
                 {"error": "No service method defined."},
@@ -51,9 +56,9 @@ Base views for paginated TMDB endpoints.
 
 class PaginatedTMDBView(APIView):
     authentication_classes = [TokenAuthentication]
-    service_method = None  # override in subclass
+    service_method: Callable[..., TMDBSearchResponse | Response] | None = None  # override
 
-    def get(self, request, *args, **kwargs):
+    def get(self, request: Request) -> Response:
         # Extract common parameters
         page = request.query_params.get('page', 1)
 
@@ -91,7 +96,7 @@ class PaginatedTMDBView(APIView):
                 movie['user_movie_data'] = user_movie_data_map.get(movie_id)
         return Response(data)
 
-    def get_additional_params(self, request):
+    def get_additional_params(self, request: Request) -> dict[str, object]:
         """
         Override in subclasses to extract additional parameters.
         Should return a dict of parameters to pass to the service method.

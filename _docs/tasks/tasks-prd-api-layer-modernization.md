@@ -54,8 +54,8 @@ This task list covers **Phase 1 (Proof of Concept)** of the API Layer Modernizat
   - [x] 2.5.5 Create a temporary authenticated test endpoint to verify the new auth scheme correctly protects routes and identifies the user.
 
 - [ ] 3.0 **Proof-of-Concept: Migrate `movie` App Endpoints**
-  - [ ] 3.1 Create `backend/apps/movie/api.py` and `backend/apps/movie/schemas.py`.
-  - [ ] 3.2 In `schemas.py`, create Pydantic `ModelSchema` classes for the `Movie` model and any other data structures needed for the movie API.
+  - [x] 3.1 Create `backend/apps/movie/api.py` and `backend/apps/movie/schemas.py`.
+  - [x] 3.2 In `schemas.py`, create Pydantic `ModelSchema` classes for the `Movie` model and any other data structures needed for the movie API.
   - [ ] 3.3 In `api.py`, create a `Router` instance.
   - [ ] 3.4 Systematically migrate each endpoint from the old `movie/views.py` to a path operation function in `api.py`, using the new Pydantic schemas for request bodies and responses.
   - [ ] 3.5 Add the new `movie` router to the main `NinjaAPI` instance.

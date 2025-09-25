@@ -10,8 +10,8 @@ services:
       - ../backend:/backend:cached
       - ../shared:/shared:cached
       - ../backend/logs:/backend/logs:cached
-      - ./dev-certs/key.pem:/backend/certs/key.pem
-      - ./dev-certs/cert.pem:/backend/certs/cert.pem
+      - ./dev-certs/key.pem:/certs/backend/key.pem:ro
+      - ./dev-certs/cert.pem:/certs/backend/cert.pem:ro
     env_file:
       - ../backend/config/.env
     environment:
@@ -32,7 +32,7 @@ services:
     depends_on:
       dev-db:
         condition: service_healthy
-    command: python manage.py runserver_plus 0.0.0.0:8000 --cert-file /backend/certs/cert.pem --key-file /backend/certs/key.pem
+    command: python manage.py runserver_plus 0.0.0.0:8000 --cert-file /certs/backend/cert.pem --key-file /certs/backend/key.pem
 
   frontend:
     build:
@@ -45,8 +45,8 @@ services:
       - ../shared:/shared:cached
       - ../frontend/logs:/frontend/logs:cached
       - frontend-node-modules:/frontend/node_modules
-      - ./dev-certs/key.pem:/frontend/certs/key.pem
-      - ./dev-certs/cert.pem:/frontend/certs/cert.pem
+      - ./dev-certs/key.pem:/certs/frontend/key.pem:ro
+      - ./dev-certs/cert.pem:/certs/frontend/cert.pem:ro
     environment:
       - HOST=0.0.0.0
 

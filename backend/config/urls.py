@@ -26,6 +26,7 @@ from user.views import (
     CsrfTokenView,
 )
 from apps.core.views.health_check import HealthCheckView
+from .api import api
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -36,6 +37,8 @@ urlpatterns = [
     path("api/user-movie-data/", include("user_movie_data.urls")),
     path("api/movie/", include("movie.urls")),
     path("api/core/", include("core.urls")),  # Core app for logging and utilities
+    # Django Ninja API (modern, type-safe endpoints)
+    path("api/", api.urls),
     path("api/token/", JWTCookieTokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("api/token/refresh/", JWTCookieTokenRefreshView.as_view(), name="token_refresh"),
     path("api/logout/", LogOutAPIView.as_view(), name="logout"),

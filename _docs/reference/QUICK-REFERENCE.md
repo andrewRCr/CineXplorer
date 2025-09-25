@@ -22,8 +22,10 @@ docker-compose exec backend python manage.py test --keepdb --settings=config.set
 # Linting
 docker-compose exec backend flake8
 
-# Type checking
-docker-compose exec backend mypy .
+# Type checking (hybrid approach)
+docker-compose exec backend python type_check.py
+# OR for development:
+docker-compose exec backend pyright apps/
 ```
 
 #### Frontend
@@ -43,7 +45,7 @@ docker-compose exec frontend npm run type-check
 # Backend quality gates
 docker-compose exec backend python manage.py test --keepdb --settings=config.settings_test && \
 docker-compose exec backend flake8 && \
-docker-compose exec backend mypy .
+docker-compose exec backend python type_check.py
 
 # Frontend quality gates
 docker-compose exec frontend npm test && \
@@ -204,7 +206,7 @@ shared/
 
 ## Quality Standards
 
-- **Zero tolerance**: All tests, linting, type checking must pass
+- **Zero tolerance**: All tests, linting, hybrid type checking must pass
 - **Test coverage required**: Especially for models, APIs, complex logic
 - **Shared types**: Update when making API changes
 - **Atomic commits**: Follow conventional commit format with task references

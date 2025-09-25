@@ -58,6 +58,16 @@ Before any commit consideration, ALL of the following must pass with **zero exce
    - Command: `docker-compose exec frontend npm run type-check`
    - Every type error must be resolved
 
+6. **Python Type Safety**: Hybrid type checking approach with minimal Any usage
+   - **Development**: `docker-compose exec backend pyright apps/` (fast, modern checking)
+   - **CI/CD**: `docker-compose exec backend python type_check.py` (comprehensive validation)
+   - **Manual**: `docker-compose exec backend mypy apps/ --config-file mypy.ini` (Django-compatible)
+   - **PROHIBITED**: Using `typing.Any` except for Django internals where absolutely necessary
+   - **REQUIRED**: Use `object` for truly unknown data, specific TypedDict types for known structures
+   - **REQUIRED**: Use `dict[str, object]` for generic dictionary data
+   - **PATTERN**: Leverage django-stubs generics (e.g., `QuerySet[ModelClass]`)
+   - **JUSTIFICATION**: Any `Any` usage must be documented with inline comment explaining necessity
+
 ### Quality Gate Failure Protocol
 If quality gates fail after sub-task completion:
 1. **Report the failure** with specific details
@@ -110,8 +120,9 @@ After completing all sub-tasks under a parent task:
 
 ### Backend Standards
 - **Linting**: flake8 with max-line-length=99, max-complexity=10
-- **Type Checking**: mypy with django-stubs
+- **Type Checking**: Hybrid approach - Pyright (development) + MyPy (CI/CD) with django-stubs/django-types
 - **Exclusions**: See `backend/.flake8` for excluded directories
+- **Type Check Script**: Use `python type_check.py` for comprehensive validation
 
 ### Frontend Standards
 - **Linting**: ESLint with TypeScript support

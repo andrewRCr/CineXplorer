@@ -12,7 +12,7 @@ This Sub-PRD defines a comprehensive backend modernization effort for CineXplore
 ## Goals
 
 1. **Demonstrate professional Python practices** that showcase advanced development skills to prospective employers
-2. **Implement comprehensive type safety** using modern Python typing patterns and mypy strict compliance
+2. **Implement comprehensive type safety** using modern Python typing patterns and hybrid type checking (Pyright + MyPy)
 3. **Eliminate technical debt** through systematic cleanup of deprecated patterns, unused code, and inconsistencies
 4. **Establish security best practices** by removing hardcoded values and implementing proper configuration management
 5. **Create maintainable architecture** with consistent patterns across all backend services
@@ -21,13 +21,13 @@ This Sub-PRD defines a comprehensive backend modernization effort for CineXplore
 
 ## User Stories
 
-1. **As a prospective employer reviewing the codebase**, I want to see modern Python type annotations and strict mypy compliance so that I can assess the developer's knowledge of professional type safety practices.
+1. **As a prospective employer reviewing the codebase**, I want to see modern Python type annotations and comprehensive type checking so that I can assess the developer's knowledge of professional type safety practices.
 
 2. **As a prospective employer**, I want to see consistent architectural patterns and clean code organization so that I can evaluate the developer's ability to create maintainable software systems.
 
 3. **As a prospective employer**, I want to see proper security practices (no hardcoded secrets, environment-based configuration) so that I can assess production-readiness skills.
 
-4. **As the developer maintaining this project**, I want comprehensive type checking so that I can catch errors at development time rather than runtime.
+4. **As the developer maintaining this project**, I want fast, comprehensive type checking so that I can catch errors at development time rather than runtime.
 
 5. **As the developer**, I want consistent service patterns so that adding new features follows established, well-documented practices.
 
@@ -41,7 +41,7 @@ This Sub-PRD defines a comprehensive backend modernization effort for CineXplore
 
 ### Type Safety & Modern Python
 
-1. **The system must achieve 100% mypy compliance** using strict configuration with no type errors or warnings.
+1. **The system must achieve comprehensive type safety** using hybrid type checking approach with no critical type errors or warnings.
 
 2. **The system must use modern Python 3.10+ typing syntax** replacing all deprecated patterns (`Dict` → `dict`, `Optional[T]` → `T | None`, `List[T]` → `list[T]`).
 
@@ -101,7 +101,7 @@ This Sub-PRD defines a comprehensive backend modernization effort for CineXplore
 
 26. **The system must include comprehensive documentation** for all established patterns, conventions, and architectural decisions.
 
-27. **The system must configure GitHub Actions integration** for automated type checking, linting, and quality gate validation.
+27. **The system must configure GitHub Actions integration** for automated hybrid type checking, linting, and quality gate validation.
 
 28. **The system must implement automated shared type validation** ensuring API contract consistency between frontend and backend.
 
@@ -134,8 +134,8 @@ This Sub-PRD defines a comprehensive backend modernization effort for CineXplore
 
 ## Technical Considerations
 
-- **Mypy Configuration**: Use strict mypy settings that represent professional development standards
-- **Django Integration**: Leverage django-stubs and established Django typing patterns
+- **Hybrid Type Checking**: Use Pyright for development speed and MyPy for CI/CD Django compatibility
+- **Django Integration**: Leverage django-stubs/django-types for proper Django typing patterns
 - **Performance Impact**: Ensure type checking and quality improvements don't degrade runtime performance
 - **Development Workflow**: Integrate quality checks into existing Docker Compose development environment
 - **Tool Integration**: Work with existing flake8, pytest, and development tooling
@@ -143,7 +143,7 @@ This Sub-PRD defines a comprehensive backend modernization effort for CineXplore
 ## Success Metrics
 
 1. **Professional Portfolio Value**: Code review by external developers confirms professional-grade quality standards
-2. **Type Safety**: Zero mypy errors with strict configuration and comprehensive type coverage
+2. **Type Safety**: Zero critical type errors with hybrid checking and comprehensive type coverage
 3. **Code Quality**: Zero linting violations and complete resolution of technical debt markers
 4. **Architectural Excellence**: SOLID principles consistently applied, code duplication eliminated, clear separation of concerns
 5. **Security Posture**: No hardcoded secrets, proper environment configuration, security headers implemented
@@ -154,7 +154,7 @@ This Sub-PRD defines a comprehensive backend modernization effort for CineXplore
 
 1. **Implementation Phases**: Should the modernization be completed in a single intensive effort, or broken into smaller phases with feature work interspersed?
 
-2. **Type Checking Strictness**: What level of mypy strictness represents the right balance between quality and development velocity for a portfolio project?
+2. **Type Checking Approach**: How can we balance comprehensive type safety with Django framework compatibility and development velocity?
 
 3. **Performance Optimization Scope**: How extensive should database and API optimizations be - baseline establishment only, or active performance improvements?
 

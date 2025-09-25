@@ -6,7 +6,7 @@ Guidelines for managing task lists in markdown files to track progress on comple
 
 - **One sub-task at a time:** Do **NOT** start the next sub‑task until you ask the user for permission and they say "yes" or "y"
 - **Test-first approach:** For new models, APIs, and complex logic, write tests before implementation
-- **Incremental quality checks:** Run linting/type checking on modified files after each sub-task
+- **Incremental quality checks:** Run linting/hybrid type checking on modified files after each sub-task
 - **Immediate documentation:** Update the task list file immediately after completing each subtask
 - **Completion protocol:**
 
@@ -21,7 +21,7 @@ Guidelines for managing task lists in markdown files to track progress on comple
 
   - **First**: Ensure new code has appropriate test coverage (models, APIs, complex logic)
   - **Second**: Run the full test suite (`python manage.py test --settings=config.settings_test`, `npm test`, etc.)
-  - **Third**: Run all linting checks (`flake8`, `npm run lint`, `npm run type-check`)
+  - **Third**: Run all linting checks (`flake8`, `python type_check.py`, `npm run lint`, `npm run type-check`)
   - **Fourth**: Check if PROJECT-STATUS needs updates (feature progress, completed functionality, updated priorities)
 
   3. Generate standardized readiness report (see DEVELOPMENT-RULES.md for format) and await user instructions on how to proceed. User may choose to commit changes (AI can execute) or review first. When committing, follow atomic-commit workflow guidelines:
@@ -49,7 +49,9 @@ After each sub-task, run relevant quality checks on modified files only:
 # Lint specific files
 docker-compose exec backend flake8 path/to/modified/file.py
 
-# Type check specific files
+# Type check specific files (development)
+docker-compose exec backend pyright path/to/modified/file.py
+# OR for Django-compatible checking:
 docker-compose exec backend mypy path/to/modified/file.py
 ```
 
@@ -129,7 +131,7 @@ When working with task lists, the AI must:
 5. Before starting work, check which **single sub‑task** is next.
 6. **Complete only ONE subtask at a time** - never bundle multiple subtasks together.
 7. After implementing a **single sub‑task**:
-   - **Run incremental quality checks** on modified files (linting, type checking)
+   - **Run incremental quality checks** on modified files (linting, hybrid type checking)
    - **Fix any issues immediately** before marking complete
    - Update the task list file immediately (mark subtask as [x])
    - Update "Relevant Files" section if applicable

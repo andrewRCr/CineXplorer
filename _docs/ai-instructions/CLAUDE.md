@@ -57,7 +57,7 @@ docker-compose exec backend python manage.py test --keepdb --settings=config.set
 
 # Linting and type checking
 docker-compose exec backend flake8
-docker-compose exec backend mypy .
+docker-compose exec backend python type_check.py
 
 # Django management
 docker-compose exec backend python manage.py [command]
@@ -162,7 +162,7 @@ The `shared/` directory ensures type safety between frontend and backend:
 ## CI/CD Pipeline
 
 GitHub Actions (`.github/workflows/checks.yml`) on every push/PR:
-- Backend: tests + flake8 linting + mypy type checking
+- Backend: tests + flake8 linting + hybrid type checking (Pyright + MyPy)
 - Frontend: tests + ESLint + TypeScript checking + build verification
 
 **All checks must pass before merging.**

@@ -56,8 +56,8 @@ CineXplorer is a movie discovery web application in active development. The core
 
 ### High Priority
 
-- **Backend Modernization & Type Safety** (In Planning):
-  - Comprehensive type annotations and mypy strict compliance
+- **Backend Modernization & Type Safety** (In Progress):
+  - Comprehensive type annotations with hybrid type checking (Pyright + MyPy)
   - SOLID/DRY principles refactoring following TMDB API client example
   - Security hardening (remove hardcoded DEBUG, environment-based config)
   - Code quality improvements (eliminate TODO items, unused imports)

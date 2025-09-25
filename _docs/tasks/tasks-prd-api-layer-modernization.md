@@ -5,16 +5,20 @@ This task list covers **Phase 1 (Proof of Concept)** of the API Layer Modernizat
 ## Relevant Files
 
 ### Files to be Created
-- `backend/config/api.py` - ✅ Central `NinjaAPI` instance and app router registration.
+- `backend/config/api.py` - ✅ Central `NinjaAPI` instance with native JWT authentication, OpenAPI documentation, and enhanced endpoints.
 - `backend/apps/movie/api.py` - To define the Ninja router and path operations for the `movie` app.
 - `backend/apps/movie/schemas.py` - To define the Pydantic schemas that replace DRF serializers for the `movie` app.
-- `backend/apps/user/auth_ninja.py` - To hold the adapted JWT cookie authentication logic for Ninja.
+- `backend/apps/user/auth_ninja.py` - ✅ Enhanced Django Ninja JWT cookie authentication with native integration, OpenAPI schema, and comprehensive error handling.
+- `backend/shared/__init__.py` - ✅ Temporary shared module stub (to be replaced by Pydantic schemas).
+- `backend/shared/api_types.py` - ✅ TMDB API type definitions stub (temporary).
+- `backend/shared/error_codes.py` - ✅ Error codes constants stub (temporary).
 - `_docs/tasks/tasks-prd-api-layer-modernization.md` - This task list file.
 
 ### Files to be Modified
 - `backend/requirements/req.txt` - To add the `django-ninja` dependency.
 - `backend/.dockerignore` - Added to exclude node_modules from Docker build context.
 - `backend/config/urls.py` - To wire in the main Ninja API router.
+- `backend/middleware/logging.py` - ✅ Fixed type checking issues for dynamic HttpRequest attributes.
 - `backend/apps/movie/tests/*` - API tests will be adapted for the new Ninja endpoints.
 - `frontend/package.json` - To add a `pydantic-to-typescript` style development dependency.
 - `frontend/src/services/movieService.ts` - To update API endpoint URLs.
@@ -35,12 +39,19 @@ This task list covers **Phase 1 (Proof of Concept)** of the API Layer Modernizat
   - [x] 1.4 Update `backend/config/urls.py` to include the new Ninja API under a single `/api/` path.
   - [x] 1.5 Create a temporary health-check endpoint (e.g., `@api.get("/health")`) to verify the basic setup is working.
 
-- [ ] 2.0 **Authentication Layer Migration**
-  - [ ] 2.1 Create `backend/apps/user/auth_ninja.py`.
-  - [ ] 2.2 In the new file, define a class `JWTCookieAuth` that implements a Ninja security scheme (e.g., `APIKeyCookie`).
-  - [ ] 2.3 Adapt the core validation logic from the existing `JWTCookieAuthentication` class into the `authenticate` method of the new class.
-  - [ ] 2.4 Configure the main `NinjaAPI` instance in `backend/config/api.py` to use this as a global authentication scheme.
-  - [ ] 2.5 Create a temporary authenticated test endpoint to verify the new auth scheme correctly protects routes and identifies the user.
+- [x] 2.0 **Foundational Issues Resolution**
+  - [x] 2.1 Resolve import path inconsistencies (`from apps.core.models` vs `from core.models`) across the codebase.
+  - [x] 2.1.5 Fix broader import resolution issues preventing module discovery (`user.views`, `core.views.health_check`, etc.).
+  - [x] 2.2 Address missing `shared` module dependency that contains TMDB API type definitions.
+  - [x] 2.3 Ensure `python manage.py check` passes cleanly to validate Django Ninja setup.
+  - [x] 2.4 Verify type checking and linting pass on the foundational authentication components.
+
+- [x] 2.5 **Authentication Layer Migration (Continued)**
+  - [x] 2.5.1 Create `backend/apps/user/auth_ninja.py`.
+  - [x] 2.5.2 In the new file, define a class `JWTCookieAuth` that implements a Ninja security scheme (e.g., `APIKeyCookie`).
+  - [x] 2.5.3 Implement Django Ninja native integration mitigation: Add OpenAPI security schema, proper error handling, and dependency injection wrapper to get full native Ninja benefits.
+  - [x] 2.5.4 Configure the main `NinjaAPI` instance in `backend/config/api.py` to use this as a global authentication scheme.
+  - [x] 2.5.5 Create a temporary authenticated test endpoint to verify the new auth scheme correctly protects routes and identifies the user.
 
 - [ ] 3.0 **Proof-of-Concept: Migrate `movie` App Endpoints**
   - [ ] 3.1 Create `backend/apps/movie/api.py` and `backend/apps/movie/schemas.py`.

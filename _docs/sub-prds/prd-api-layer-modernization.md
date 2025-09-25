@@ -65,7 +65,18 @@ This migration will begin with a proof-of-concept (PoC) focused on the `movie` a
 3.  **End-to-End Type Safety:** A clear, repeatable process for generating TypeScript types from the backend Pydantic schemas is successfully demonstrated.
 4.  **Functionality Parity:** The new API endpoints are verified to work correctly with the existing frontend application.
 
-## 9. Open Questions
+## 9. Implementation Notes
+
+**Foundational Issues Discovered (September 2025):**
+During initial Django Ninja setup, several foundational issues were identified that require resolution before full authentication migration:
+- Import path inconsistencies between `apps.core.models` vs `core.models` across the codebase
+- Missing `shared` module dependency containing TMDB API type definitions (available in Docker but not local development)
+- These issues prevent `python manage.py check` from passing, blocking validation of Django Ninja setup
+
+These foundational issues are being addressed in Task 2.0 before continuing with the authentication layer migration.
+
+## 10. Open Questions
 
 *   What is the most idiomatic and secure way to implement the custom cookie-based authentication in Django Ninja?
 *   What is the optimal strategy for rolling out this change to the `user` and `user_movie_data` apps after the PoC is successful?
+*   Should the `shared` module be integrated into the Django project structure or maintained as a separate Docker-mounted dependency?

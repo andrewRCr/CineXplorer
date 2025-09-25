@@ -4,7 +4,7 @@ Serializers for the user movie data API View.
 from __future__ import annotations
 
 from rest_framework import serializers
-from apps.core.models import UserMovieData
+from core.models import UserMovieData
 
 
 class UserMovieDataSerializer(serializers.ModelSerializer):

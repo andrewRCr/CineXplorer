@@ -9,8 +9,8 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.core.models import UserMovieData
-from apps.core.views.tmdb import (
+from core.models import UserMovieData
+from core.views.tmdb import (
     PaginatedTMDBView,
     SingleResourceTMDBView,
 )

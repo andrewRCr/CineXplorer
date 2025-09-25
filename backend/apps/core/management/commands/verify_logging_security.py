@@ -10,7 +10,7 @@ import json
 import time
 from django.core.management.base import BaseCommand
 from django.conf import settings
-from apps.movie.services.movie_service import tmdb_get
+from movie.services.movie_service import tmdb_get
 import logging
 
 

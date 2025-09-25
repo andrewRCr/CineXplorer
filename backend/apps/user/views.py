@@ -39,7 +39,7 @@ from user.serializers import (
     UserSerializer
 )
 from core.services.email_service import email_service
-from apps.core.models import EmailVerificationToken, User
+from core.models import EmailVerificationToken, User
 
 
 @method_decorator(csrf_exempt, name='dispatch')

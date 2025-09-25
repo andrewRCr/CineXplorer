@@ -7,7 +7,7 @@ from django.conf import settings
 from rest_framework import status
 from rest_framework.response import Response
 
-from apps.core.models import User, UserMovieData
+from core.models import User, UserMovieData
 from user_movie_data.serializers import UserMovieDataSerializer
 
 logger: logging.Logger = logging.getLogger(__name__)

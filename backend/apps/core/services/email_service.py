@@ -8,7 +8,7 @@ import secrets
 from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils import timezone
-from apps.core.models import User, EmailVerificationToken
+from core.models import User, EmailVerificationToken
 
 
 class ZeptomailService:

@@ -7,7 +7,7 @@ is working correctly and producing expected output.
 
 import time
 from django.core.management.base import BaseCommand
-from apps.movie.services.movie_service import (
+from movie.services.movie_service import (
     tmdb_get, get_movie_by_id
 )
 

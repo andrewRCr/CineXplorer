@@ -5,7 +5,7 @@ import uuid
 from datetime import datetime, timedelta
 from typing import Union
 
-from apps.core.services.tmdb_api_client import TMDBApiClient
+from core.services.tmdb_api_client import TMDBApiClient
 from shared.api_types import TMDBSearchResponse, TMDBMovieResponse
 
 # Use TMDB-specific logger for better log organization

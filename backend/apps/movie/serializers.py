@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from rest_framework import serializers
 
-from apps.core.models import UserMovieData
+from core.models import UserMovieData
 from shared import UserMovieData as UserMovieDataType
 # from shared import Movie  # Unused import
 

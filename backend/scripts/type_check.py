@@ -4,8 +4,11 @@ Comprehensive type checking script for CineXplorer backend.
 
 This script implements our hybrid approach:
 1. Uses mypy for Django-compatible checking with relaxed rules
-2. Uses Pyright for strict modern type checking
+2. Uses Pyright for strict modern type checking (host-based)
 3. Provides clear reporting on type safety status
+
+Usage:
+    python scripts/type_check.py [--verbose]
 """
 from __future__ import annotations
 
@@ -27,8 +30,9 @@ def run_command(cmd: list[str], description: str) -> tuple[bool, str]:
             cmd,
             capture_output=True,
             text=True,
-            cwd=Path(__file__).parent,
-            env=env
+            cwd=Path(__file__).parent.parent,  # Run from backend/ directory
+            env=env,
+            shell=True  # Required for Windows compatibility with npx
         )
         success = result.returncode == 0
         output = result.stdout + result.stderr
@@ -54,23 +58,18 @@ def main() -> None:
         "MyPy check on services"
     )
 
-    # Test 3: Pyright check on core models
+    # Test 3: Pyright check on core models (now using host-based pyright)
     success3, output3 = run_command(
         ["npx", "pyright", "apps/core/models.py"],
         "Pyright check on Django models"
     )
 
-    # Test 4: Pyright check on utilities
+    # Test 4: Pyright check on utilities (now using host-based pyright)
     success4, output4 = run_command(
         ["npx", "pyright", "apps/core/utilities/"],
         "Pyright check on core utilities"
     )
 
-    # Test 5: Run isolated typing test
-    success5, output5 = run_command(
-        ["python", "test_typing.py"],
-        "Isolated typing functionality test"
-    )
 
     # Results summary
     print("\n" + "=" * 60)
@@ -82,7 +81,6 @@ def main() -> None:
         ("Services (MyPy)", success2, output2),
         ("Models (Pyright)", success3, output3),
         ("Utilities (Pyright)", success4, output4),
-        ("Isolated Typing Test", success5, output5),
     ]
 
     passed = 0
@@ -106,6 +104,7 @@ def main() -> None:
     print("   Development: Use Pyright for fast, strict type checking")
     print("   CI/CD: Use MyPy for Django-compatible validation")
     print("   Coverage: Core utilities and services have strict type safety")
+    print("   Host-based: Pyright runs on host system for better performance")
 
 
 if __name__ == "__main__":

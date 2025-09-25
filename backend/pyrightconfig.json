@@ -9,9 +9,9 @@
     // Usage: `pyright apps/` or via IDE integration
     // For comprehensive checking: `python type_check.py`
 
-    "include": ["apps"],
+    "include": ["apps", "config"],
     "exclude": ["**/__pycache__", "**/*.pyc"],
-    "extraPaths": [".."],
+    "extraPaths": ["apps"],
     "venvPath": "C:/Users/andre/AppData/Local/Programs/Python",
     "venv": "Python313",
     "reportMissingImports": "error",

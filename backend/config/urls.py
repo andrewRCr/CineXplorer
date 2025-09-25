@@ -25,7 +25,7 @@ from user.views import (
     RegisterAPIView,
     CsrfTokenView,
 )
-from apps.core.views.health_check import HealthCheckView
+from core.views.health_check import HealthCheckView
 from .api import api
 
 urlpatterns = [

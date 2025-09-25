@@ -181,7 +181,7 @@ REST_FRAMEWORK = {
 }
 
 # default environment variables
-DEBUG = env.bool("DEBUG", default=False)  # type: ignore
+DEBUG = env.bool("DEBUG", default=False)
 SECRET_KEY = env("DJANGO_SECRET_KEY")
 
 # custom environment variables

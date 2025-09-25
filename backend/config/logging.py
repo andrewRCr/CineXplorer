@@ -104,7 +104,7 @@ class HealthCheckFilter(logging.Filter):
 VALID_LOG_LEVELS = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 
 # Log rotation configuration
-LOG_ROTATION_CONFIG = {
+LOG_ROTATION_CONFIG: dict[str, int | str] = {
     "max_bytes": 10 * 1024 * 1024,  # 10MB per file
     "backup_count_default": 5,  # Keep 5 backup files for most logs
     "backup_count_errors": 10,  # Keep 10 backup files for errors (more important)
@@ -552,7 +552,7 @@ def get_log_file_info(log_dir="/backend/logs"):
 
     for pattern in log_patterns:
         all_files.extend(glob.glob(os.path.join(log_dir, pattern)))
-    total_size = 0
+    total_size: float = 0.0
     for file_path in sorted(all_files):
         try:
             size_bytes = os.path.getsize(file_path)
@@ -589,7 +589,7 @@ def print_log_status(log_dir="/backend/logs"):
     print(f"Total Files: {info['file_count']}")
     print(f"Total Size: {info['total_size_mb']:.2f} MB")
     # Group files by type
-    file_groups = {}
+    file_groups: dict[str, list[dict[str, object]]] = {}
     for file_info in info["files"]:
         base_name = file_info["name"].split(".")[0] + ".log"
         if base_name not in file_groups:
@@ -599,13 +599,18 @@ def print_log_status(log_dir="/backend/logs"):
     for base_name, files in file_groups.items():
         current_files = [f for f in files if f["is_current"]]
         rotated_files = [f for f in files if not f["is_current"]]
-        total_size = sum(f["size_mb"] for f in files)
+        total_size = sum(
+            float(f["size_mb"]) if isinstance(f["size_mb"], (int, float)) else 0.0
+            for f in files
+        )
         print(f"  {base_name}:")
         print(f"    Total size: {total_size:.2f} MB")
         print(f"    Current: {len(current_files)} file(s)")
         print(f"    Rotated: {len(rotated_files)} backup(s)")
     print("\nRotation Configuration:")
-    print(f"  Max file size: {LOG_ROTATION_CONFIG['max_bytes'] / (1024*1024):.0f} MB")
+    max_bytes = LOG_ROTATION_CONFIG['max_bytes']
+    assert isinstance(max_bytes, int), "max_bytes should be an integer"
+    print(f"  Max file size: {max_bytes / (1024*1024):.0f} MB")
     print(f"  Default backups: {LOG_ROTATION_CONFIG['backup_count_default']}")
     print(f"  Error log backups: {LOG_ROTATION_CONFIG['backup_count_errors']}")
     print("\nEstimated maximum storage:")

@@ -25,7 +25,7 @@ from user.views import (
     RegisterAPIView,
     CsrfTokenView,
 )
-from core.views.health_check import HealthCheckView
+from apps.core.views.health_check import HealthCheckView
 
 urlpatterns = [
     path("admin/", admin.site.urls),

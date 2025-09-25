@@ -44,7 +44,8 @@ class AdminInterfaceTests(TestCase):
     def test_edit_user_page(self):
         """ Tests that the user edit page works as expected. """
 
-        url = reverse('admin:core_user_change', args=[self.user.id])  # type: ignore
+        url = reverse('admin:core_user_change',
+                      args=[self.user.id])  # type: ignore[attr-defined]
         res = self.client.get(url)
 
         self.assertEqual(res.status_code, 200)

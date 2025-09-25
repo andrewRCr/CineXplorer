@@ -11,7 +11,7 @@ from rest_framework import status
 from rest_framework.test import APIClient
 from unittest.mock import patch, Mock
 
-from core.models import User, Movie, UserMovieData
+from apps.core.models import User, Movie, UserMovieData
 
 # =========================
 # URLs

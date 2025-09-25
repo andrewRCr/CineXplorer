@@ -14,10 +14,11 @@ Usage:
 import uuid
 import time
 import logging
-from typing import Optional
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpResponse
 from django.utils.deprecation import MiddlewareMixin
 from django.contrib.auth.models import AnonymousUser
+
+from django_types import HttpRequest
 
 
 # Get logger for request tracking
@@ -228,7 +229,7 @@ class RequestLoggingMiddleware(MiddlewareMixin):
             exc_info=True  # Include full traceback
         )
 
-    def _get_user_context(self, request: HttpRequest) -> dict:
+    def _get_user_context(self, request: HttpRequest) -> dict[str, object]:
         """
         Get user context for logging (safely handles anonymous users).
 
@@ -236,7 +237,7 @@ class RequestLoggingMiddleware(MiddlewareMixin):
             request: The HTTP request
 
         Returns:
-            dict: User context information
+            dict[str, object]: User context information
         """
         user = getattr(request, 'user', None)
 
@@ -268,13 +269,13 @@ class RequestLoggingMiddleware(MiddlewareMixin):
         # Check for forwarded headers first (common in Docker/proxy setups)
         x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
         if x_forwarded_for:
-            return x_forwarded_for.split(',')[0].strip()
+            return str(x_forwarded_for).split(',')[0].strip()
 
         x_real_ip = request.META.get('HTTP_X_REAL_IP')
         if x_real_ip:
-            return x_real_ip
+            return str(x_real_ip)
 
-        return request.META.get('REMOTE_ADDR', 'unknown')
+        return str(request.META.get('REMOTE_ADDR', 'unknown'))
 
     def _get_log_level_for_status(self, status_code: int) -> int:
         """
@@ -294,7 +295,7 @@ class RequestLoggingMiddleware(MiddlewareMixin):
             return logging.INFO
 
 
-def get_correlation_id(request: HttpRequest) -> Optional[str]:
+def get_correlation_id(request: HttpRequest) -> str | None:
     """
     Utility function to get correlation ID from request object.
 

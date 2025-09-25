@@ -1,0 +1,31 @@
+{
+    // CineXplorer Backend - Pyright Configuration for Development
+    //
+    // This configuration provides fast, modern type checking during development.
+    // Part of our hybrid approach:
+    // - Pyright: Development type checking (this file)
+    // - MyPy: CI/CD validation (mypy.ini)
+    //
+    // Usage: `pyright apps/` or via IDE integration
+    // For comprehensive checking: `python type_check.py`
+
+    "include": ["apps"],
+    "exclude": ["**/__pycache__", "**/*.pyc"],
+    "extraPaths": [".."],
+    "venvPath": "C:/Users/andre/AppData/Local/Programs/Python",
+    "venv": "Python313",
+    "reportMissingImports": "error",
+    "reportMissingTypeStubs": "information",
+    "pythonVersion": "3.13",
+    "pythonPlatform": "Windows",
+    "strict": ["apps"],
+    "typeCheckingMode": "strict",
+    "reportGeneralTypeIssues": "error",
+    "reportUnusedImport": "warning",
+    "reportUnusedClass": "warning",
+    "reportUnusedFunction": "warning",
+    "reportUnusedVariable": "warning",
+    "reportImportCycles": "error",
+    "reportPrivateUsage": "error",
+    "reportAny": "warning"
+}

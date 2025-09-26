@@ -50,7 +50,7 @@ After each sub-task, run relevant quality checks on modified files only:
 docker-compose exec backend flake8 path/to/modified/file.py
 
 # Type check specific files (development)
-docker-compose exec backend pyright path/to/modified/file.py
+npx pyright backend/path/to/modified/file.py
 # OR for Django-compatible checking:
 docker-compose exec backend mypy path/to/modified/file.py
 ```

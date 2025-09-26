@@ -24,8 +24,8 @@ docker-compose exec backend flake8
 
 # Type checking (hybrid approach)
 docker-compose exec backend python scripts/type_check.py
-# OR for development:
-docker-compose exec backend pyright apps/
+# OR for development (host-based):
+npx pyright backend/apps/
 ```
 
 #### Frontend

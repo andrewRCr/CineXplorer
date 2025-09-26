@@ -10,7 +10,7 @@
 
 ## Build, Test, and Development Commands
 - Start the stack with `docker-compose -f infrastructure/docker-compose.yml up --build` and browse `https://localhost:8444`.
-- Backend gates: `docker-compose exec backend python manage.py test --keepdb --settings=config.settings_test`, `docker-compose exec backend flake8`, and `docker-compose exec backend python scripts/type_check.py` (use `pyright apps/` for quick loops).
+- Backend gates: `docker-compose exec backend python manage.py test --keepdb --settings=config.settings_test`, `docker-compose exec backend flake8`, and `docker-compose exec backend python scripts/type_check.py` (use `npx pyright backend/apps/` on host for quick loops).
 - Frontend gates: `docker-compose exec frontend npm test`, `npm run lint`, `npm run type-check`; run `npm run dev` when iterating.
 
 ## Coding Style & Naming Conventions

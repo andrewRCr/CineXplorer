@@ -59,7 +59,7 @@ Before any commit consideration, ALL of the following must pass with **zero exce
    - Every type error must be resolved
 
 6. **Python Type Safety**: Hybrid type checking approach with minimal Any usage
-   - **Development**: `docker-compose exec backend pyright apps/` (fast, modern checking)
+   - **Development**: `npx pyright backend/apps/` (fast, modern checking on host system)
    - **CI/CD**: `docker-compose exec backend python scripts/type_check.py` (comprehensive validation)
    - **Manual**: `docker-compose exec backend mypy apps/ --config-file mypy.ini` (Django-compatible)
    - **PROHIBITED**: Using `typing.Any` except for Django internals where absolutely necessary

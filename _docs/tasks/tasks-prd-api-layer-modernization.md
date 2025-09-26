@@ -73,10 +73,26 @@ This task list covers **Phase 1 (Proof of Concept)** of the API Layer Modernizat
   - [x] 3.6 Once all `movie` endpoints are migrated and confirmed working, delete the old `backend/apps/movie/views.py` and `backend/apps/movie/serializers.py` files.
 
 - [ ] 4.0 **Testing and Validation**
-  - [ ] 4.1 Adapt the existing API tests in the `movie` app to target the new Ninja endpoints using Django's test client.
-  - [ ] 4.2 Ensure all adapted tests for the `movie` app pass successfully.
+  - [x] 4.1 Adapt the existing API tests in the `movie` app to target the new Ninja endpoints using Django's test client.
+  - [x] 4.1.5 Conduct test coverage analysis for the movie app to identify gaps and ensure Django Ninja migration maintains existing coverage.
+  - [x] 4.2 Ensure all adapted tests for the `movie` app pass successfully.
+  - [x] 4.2.5 Create dedicated service layer tests for movie_service.py to test parameter mapping, error handling, and business logic separately from API integration tests.
   - [ ] 4.3 Use the interactive API docs at `/api/docs` to manually test the new `movie` endpoints and confirm functionality.
+  - [ ] 4.3.5 Verify that test patterns established in movie app migration are suitable as blueprints for
+  other app migrations (user, user_movie_data).
   - [ ] 4.4 Run `npx pyright backend/apps/movie/` and `mypy --strict` on the movie directory and resolve all type errors.
+  - [ ] 4.4.5 Document testing standards and patterns discovered during movie app migration for use in future app migrations.
+
+## Architectural Notes for Future Refactoring
+
+**Issue Identified**: Complex parameter processing logic is currently in the API layer (`movie/api.py`) rather than the service layer (`movie/services/movie_service.py`). This includes:
+- Decade parsing ("1990s" → date ranges)
+- Parameter aliases (`genres` → `with_genres`)
+- Business rules (upcoming movie date calculations)
+
+**Recommendation**: Move this logic to the service layer in a future refactor to follow proper layered architecture patterns. The API layer should focus on request/response handling while the service layer handles business logic.
+
+**Impact**: This architectural improvement would make service layer tests more meaningful and improve separation of concerns, but is deferred to avoid scope creep during the Django Ninja migration proof-of-concept.
 
 - [ ] 5.0 **Frontend Integration and Type Generation Workflow**
   - [ ] 5.1 Research and select a `pydantic-to-typescript` tool and add it as a dev dependency to `frontend/package.json`.

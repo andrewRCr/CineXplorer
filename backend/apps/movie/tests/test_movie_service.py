@@ -8,6 +8,7 @@ that wasn't covered by integration tests.
 from unittest.mock import Mock, patch
 from django.test import TestCase
 from ninja.errors import HttpError
+from typing import cast
 
 from core.services.api_response import ApiResponse
 from movie.services import movie_service
@@ -216,7 +217,7 @@ class MovieServiceDataTransformationTests(TestCase):
         }
 
         # Act
-        result = movie_service.create_movie_detail_from_tmdb(movie_data, credits_data)
+        result = movie_service.create_movie_detail_from_tmdb(cast(dict, movie_data), cast(dict, credits_data))
 
         # Assert
         self.assertIsInstance(result, MovieDetailSchema)
@@ -232,7 +233,7 @@ class MovieServiceDataTransformationTests(TestCase):
         tmdb_response = {'genres': []}
 
         # Act
-        result = movie_service.create_genre_list_from_tmdb(tmdb_response)
+        result = movie_service.create_genre_list_from_tmdb(cast(dict, tmdb_response))
 
         # Assert
         self.assertIsInstance(result, list)
@@ -249,7 +250,7 @@ class MovieServiceDataTransformationTests(TestCase):
         }
 
         # Act
-        result = movie_service.create_genre_list_from_tmdb(tmdb_response)
+        result = movie_service.create_genre_list_from_tmdb(cast(dict, tmdb_response))
 
         # Assert
         self.assertIsInstance(result, list)

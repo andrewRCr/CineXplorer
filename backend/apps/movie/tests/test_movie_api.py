@@ -5,6 +5,7 @@ These tests verify the behavior of the movie API, which relies on external
 calls to the The Movie Database (TMDB) API. The external calls are mocked
 to ensure tests are fast, reliable, and independent of the external service.
 """
+from typing import Any, Dict, List
 from django.test import TestCase
 from django.test import Client
 from django.urls import reverse
@@ -23,7 +24,7 @@ SEARCH_URL = '/api/movie/movies/search'
 DISCOVER_URL = '/api/movie/movies/discover'
 
 
-def movie_detail_url(tmdb_id):
+def movie_detail_url(tmdb_id: int) -> str:
     """Return the detail URL for a movie by TMDB ID."""
     return f'/api/movie/movies/{tmdb_id}'
 
@@ -33,12 +34,12 @@ def movie_detail_url(tmdb_id):
 # =========================
 
 
-def create_user(**params):
+def create_user(**params: Any) -> User:
     """Create and return a new user for testing."""
     return User.objects.create_user(**params)
 
 
-def create_movie_stub(**params):
+def create_movie_stub(**params: Any) -> Movie:
     """
     Create and return a new Movie stub object.
     This mimics the behavior of the service layer, which creates a local stub
@@ -54,7 +55,7 @@ def create_movie_stub(**params):
     return Movie.objects.create(tmdb_id=tmdb_id, **defaults)
 
 
-def attach_pass_through_data(movie_instance, **extra_data):
+def attach_pass_through_data(movie_instance: Movie, **extra_data: Any) -> Movie:
     """
     Attaches extra, non-model data to a movie instance to simulate
     the data that comes from the TMDB API service.
@@ -75,7 +76,7 @@ def attach_pass_through_data(movie_instance, **extra_data):
 class MovieApiTests(TestCase):
     """Tests for the Django Ninja movie API endpoints."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         self.client = Client()
         self.user = create_user(
             username='testuser',
@@ -83,13 +84,13 @@ class MovieApiTests(TestCase):
             password='testpass123'
         )
 
-    def _test_paginated_endpoint_contract(self, mock_tmdb_method, url, params=None):
+    def _test_paginated_endpoint_contract(self, mock_tmdb_method: Mock, url: str, params: Dict[str, Any] | None = None) -> None:
         """
         Generic helper to test the contract of any paginated movie endpoint.
         It mocks the TMDB client method and verifies the response structure.
         """
         # Arrange: Define a standard mock TMDB API response
-        tmdb_payload = {
+        tmdb_payload: Dict[str, Any] = {
             'results': [{
                 'id': 101,
                 'title': 'Test Movie',
@@ -123,32 +124,32 @@ class MovieApiTests(TestCase):
         self.assertEqual(len(data['results']), 1)
 
     @patch('movie.services.movie_service.tmdb_client.get_now_playing_movies')
-    def test_now_playing_api_contract(self, mock_tmdb_method):
+    def test_now_playing_api_contract(self, mock_tmdb_method: Mock) -> None:
         """Verify the /now-playing/ endpoint returns the correct paginated structure."""
         self._test_paginated_endpoint_contract(mock_tmdb_method, NOW_PLAYING_URL, {'page': 1})
 
     @patch('movie.services.movie_service.tmdb_client.get')
-    def test_upcoming_api_contract(self, mock_tmdb_get):
+    def test_upcoming_api_contract(self, mock_tmdb_get: Mock) -> None:
         """Verify the /upcoming/ endpoint returns the correct paginated structure."""
         self._test_paginated_endpoint_contract(mock_tmdb_get, UPCOMING_URL, {'page': 1})
 
     @patch('movie.services.movie_service.tmdb_client.search_movies')
-    def test_search_api_contract(self, mock_tmdb_search):
+    def test_search_api_contract(self, mock_tmdb_search: Mock) -> None:
         """Verify the /search/ endpoint returns the correct paginated structure."""
         self._test_paginated_endpoint_contract(
             mock_tmdb_search, SEARCH_URL, {'query': 'test'}
         )
 
     @patch('movie.services.movie_service.tmdb_client.get')
-    def test_discover_api_contract(self, mock_tmdb_get):
+    def test_discover_api_contract(self, mock_tmdb_get: Mock) -> None:
         """Verify the /discover/ endpoint returns the correct paginated structure."""
         self._test_paginated_endpoint_contract(mock_tmdb_get, DISCOVER_URL, {'page': 1})
 
     @patch('movie.services.movie_service.tmdb_client.get')
-    def test_discover_with_filters(self, mock_tmdb_get):
+    def test_discover_with_filters(self, mock_tmdb_get: Mock) -> None:
         """Test the discover endpoint with various filter parameters."""
         # Arrange: Define a standard mock TMDB API response
-        tmdb_payload = {
+        tmdb_payload: Dict[str, Any] = {
             'results': [{
                 'id': 101,
                 'title': 'Test Movie',
@@ -215,7 +216,7 @@ class MovieApiTests(TestCase):
         self.assertEqual(params['region'], 'US')
 
     @patch('movie.services.movie_service.tmdb_client.get')
-    def test_discover_invalid_parameters(self, mock_tmdb_get):
+    def test_discover_invalid_parameters(self, mock_tmdb_get: Mock) -> None:
         """Test the discover endpoint with invalid parameter values."""
         # Test invalid year
         res = self.client.get(DISCOVER_URL, {'year': 'invalid'})
@@ -237,7 +238,7 @@ class MovieApiTests(TestCase):
 
     @patch('movie.services.movie_service.tmdb_client.get')
     @patch('movie.services.movie_service.tmdb_client.get_movie_details')
-    def test_get_movie_detail_authenticated(self, mock_get_movie_details, mock_tmdb_get):
+    def test_get_movie_detail_authenticated(self, mock_get_movie_details: Mock, mock_tmdb_get: Mock) -> None:
         """
         Test retrieving movie details with user_movie_data for an authenticated user.
         """
@@ -287,7 +288,7 @@ class MovieApiTests(TestCase):
 
     @patch('movie.services.movie_service.tmdb_client.get')
     @patch('movie.services.movie_service.tmdb_client.get_movie_details')
-    def test_get_movie_detail_unauthenticated(self, mock_get_movie_details, mock_tmdb_get):
+    def test_get_movie_detail_unauthenticated(self, mock_get_movie_details: Mock, mock_tmdb_get: Mock) -> None:
         """
         Test retrieving movie details without user_movie_data for an unauthenticated user.
         """

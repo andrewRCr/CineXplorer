@@ -33,31 +33,31 @@ router = Router(tags=["movies"])
 
 
 @router.get("/genres", response=list[GenreSchema], auth=None)
-def get_movie_genres():
+def get_movie_genres(request):
     """Retrieve the list of available movie genres from TMDB."""
     return movie_service.get_movie_genres()
 
 
 @router.get("/keywords", response=PaginatedKeywordResponseSchema, auth=None)
-def get_popular_keywords(page: int = 1):
+def get_popular_keywords(request, page: int = 1):
     """Retrieve popular keywords with pagination."""
     return movie_service.get_popular_keywords(page=page)
 
 
 @router.get("/keywords/search", response=PaginatedKeywordResponseSchema, auth=None)
-def search_keywords(query: str):
+def search_keywords(request, query: str):
     """Search for keywords by query string."""
     return movie_service.search_keywords(query)
 
 
 @router.get("/people", response=PaginatedPersonResponseSchema, auth=None)
-def get_popular_people(page: int = 1):
+def get_popular_people(request, page: int = 1):
     """Retrieve popular people (actors, directors, etc.) with pagination."""
     return movie_service.get_popular_people(page=page)
 
 
 @router.get("/people/search", response=PaginatedPersonResponseSchema, auth=None)
-def search_people(query: str):
+def search_people(request, query: str):
     """Search for people by name."""
     return movie_service.search_people(query)
 
@@ -95,28 +95,28 @@ def discover_movies(
     request,
     page: int = 1,
     # Sorting and basic filters
-    sort_by: str = None,
-    genres: str = None,
-    keywords: str = None,
-    people: str = None,
-    certification: str = None,
-    region: str = None,
+    sort_by: str | None = None,
+    genres: str | None = None,
+    keywords: str | None = None,
+    people: str | None = None,
+    certification: str | None = None,
+    region: str | None = None,
     # Year filtering (supports single year, decade with 's' suffix, or min/max year)
-    year: str = None,
-    min_year: int = None,
-    max_year: int = None,
+    year: str | None = None,
+    min_year: int | None = None,
+    max_year: int | None = None,
     # Date range filtering
-    release_date_gte: str = None,
-    release_date_lte: str = None,
+    release_date_gte: str | None = None,
+    release_date_lte: str | None = None,
     # Rating filtering
-    vote_average_gte: float = None,
-    vote_average_lte: float = None,
-    min_rating: float = None,
+    vote_average_gte: float | None = None,
+    vote_average_lte: float | None = None,
+    min_rating: float | None = None,
     # Runtime filtering
-    runtime_gte: int = None,
-    runtime_lte: int = None,
-    min_runtime: int = None,
-    max_runtime: int = None,
+    runtime_gte: int | None = None,
+    runtime_lte: int | None = None,
+    min_runtime: int | None = None,
+    max_runtime: int | None = None,
 ):
     """
     Discover movies with comprehensive filtering capabilities.
@@ -214,7 +214,7 @@ def get_movie_detail(request: HttpRequest, tmdb_id: int):
                 movie__tmdb_id=tmdb_id
             )
             user_movie_data = UserMovieDataSchema(
-                id=user_data.id,
+                id=user_data.id,  # type: ignore
                 tmdb_id=user_data.movie.tmdb_id,
                 title=user_data.movie.title,
                 user_watched=user_data.user_watched,

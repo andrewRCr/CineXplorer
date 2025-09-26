@@ -31,8 +31,9 @@ from .api import api
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("__debug__/", include("debug_toolbar.urls")),
-    path("api/schema/", SpectacularAPIView.as_view(), name="api-schema"),
-    path("api/docs/", SpectacularSwaggerView.as_view(url_name="api-schema"), name="api-docs"),
+    # Legacy DRF API documentation (for remaining DRF endpoints)
+    path("api/drf-schema/", SpectacularAPIView.as_view(), name="drf-schema"),
+    path("api/drf-docs/", SpectacularSwaggerView.as_view(url_name="drf-schema"), name="drf-docs"),
     path("api/user/", include("user.urls")),
     path("api/user-movie-data/", include("user_movie_data.urls")),
     path("api/core/", include("core.urls")),  # Core app for logging and utilities

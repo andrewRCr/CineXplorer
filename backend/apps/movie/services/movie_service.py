@@ -4,6 +4,7 @@ import logging
 import uuid
 from datetime import datetime, timedelta
 
+from core.services.api_response import ApiResponse
 from core.services.tmdb_api_client import TMDBApiClient
 from ninja.errors import HttpError
 from ..schemas import (
@@ -383,7 +384,7 @@ def create_genre_list_from_tmdb(tmdb_response: dict[str, object]) -> list[GenreS
         raise HttpError(500, "Failed to process genre data")
 
 
-def handle_tmdb_api_error(api_response: object, operation: str, **context: object) -> None:
+def handle_tmdb_api_error(api_response: ApiResponse, operation: str, **context: object) -> None:
     """
     Handle TMDB API errors by raising appropriate HttpError exceptions.
 
@@ -688,13 +689,16 @@ def search_movies(query: str, page: int = 1) -> PaginatedMovieResponseSchema:
     })
 
     # Create filtered response data
+    total_results = result.get('total_results', 0)
+    total_results_int = int(total_results) if isinstance(total_results, (int, float, str)) and str(total_results).isdigit() else 0
+
     filtered_result = {
         'page': result.get('page', page),
         'total_pages': result.get('total_pages', 0),
         'results': filtered_movies,
         'total_results': (
             len(filtered_movies) +
-            (int(result.get('total_results', 0)) - len(movies))
+            (total_results_int - len(movies))
         )
     }
 

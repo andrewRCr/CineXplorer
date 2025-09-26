@@ -7,6 +7,13 @@ This script implements our hybrid approach:
 2. Uses Pyright for strict modern type checking (host-based)
 3. Provides clear reporting on type safety status
 
+⚠️  NOTE: As of September 2025 mypy runs against Django 5.2 currently
+surface an upstream django-stubs internal error
+(https://github.com/typeddjango/django-stubs/issues/2461).
+This script detects that condition and marks the mypy steps as
+"SKIP" so Pyright can continue to serve as the primary guardrail
+without failing the overall check.
+
 Usage:
     python scripts/type_check.py [--verbose]
 """
@@ -16,9 +23,8 @@ import subprocess
 import sys
 from pathlib import Path
 
-
-def run_command(cmd: list[str], description: str) -> tuple[bool, str]:
-    """Run a command and return success status and output."""
+def run_command(cmd: list[str], description: str) -> tuple[int, str]:
+    """Run a command and return (returncode, combined stdout/stderr)."""
     print(f"\n> {description}...")
     try:
         # Set up Django environment for MyPy commands
@@ -34,12 +40,15 @@ def run_command(cmd: list[str], description: str) -> tuple[bool, str]:
             env=env,
             shell=True  # Required for Windows compatibility with npx
         )
-        success = result.returncode == 0
         output = result.stdout + result.stderr
-        return success, output
+        return result.returncode, output
     except Exception as e:
-        return False, str(e)
+        return 1, str(e)
 
+def is_django_stubs_internal_error(output: str) -> bool:
+    """Detect the known django-stubs internal error signature."""
+    lowered = output.lower()
+    return "django-stubs" in lowered and "internal error" in lowered
 
 def main() -> None:
     """Run comprehensive type checking."""
@@ -47,29 +56,28 @@ def main() -> None:
     print("=" * 60)
 
     # Test 1: Core utilities with strict mypy
-    success1, output1 = run_command(
+    code1, output1 = run_command(
         ["python", "-m", "mypy", "apps/core/utilities/", "--show-error-codes", "--explicit-package-bases"],
         "MyPy strict check on core utilities"
     )
 
     # Test 2: Services with mypy (should be strict per config)
-    success2, output2 = run_command(
+    code2, output2 = run_command(
         ["python", "-m", "mypy", "apps/core/services/email_service.py", "--show-error-codes", "--explicit-package-bases"],
         "MyPy check on services"
     )
 
     # Test 3: Pyright check on core models (now using host-based pyright)
-    success3, output3 = run_command(
+    code3, output3 = run_command(
         ["npx", "pyright", "apps/core/models.py"],
         "Pyright check on Django models"
     )
 
     # Test 4: Pyright check on utilities (now using host-based pyright)
-    success4, output4 = run_command(
+    code4, output4 = run_command(
         ["npx", "pyright", "apps/core/utilities/"],
         "Pyright check on core utilities"
     )
-
 
     # Results summary
     print("\n" + "=" * 60)
@@ -77,28 +85,45 @@ def main() -> None:
     print("=" * 60)
 
     tests = [
-        ("Core Utilities (MyPy Strict)", success1, output1),
-        ("Services (MyPy)", success2, output2),
-        ("Models (Pyright)", success3, output3),
-        ("Utilities (Pyright)", success4, output4),
+        ("Core Utilities (MyPy Strict)", code1, output1, True),
+        ("Services (MyPy)", code2, output2, True),
+        ("Models (Pyright)", code3, output3, False),
+        ("Utilities (Pyright)", code4, output4, False),
     ]
 
     passed = 0
-    for name, success, output in tests:
-        status = "PASS" if success else "FAIL"
+    skipped = 0
+    upstream_issue = "https://github.com/typeddjango/django-stubs/issues/2461"
+
+    for name, returncode, output, is_mypy in tests:
+        status = "PASS" if returncode == 0 else "FAIL"
+        if returncode != 0 and is_mypy and is_django_stubs_internal_error(output):
+            status = "SKIP"
+            skipped += 1
+            if "--verbose" in sys.argv:
+                print(f"  Upstream django-stubs issue detected. See {upstream_issue}.")
+
         print(f"[{status}] {name}")
-        if not success and "--verbose" in sys.argv:
+        if status == "PASS":
+            passed += 1
+        elif status == "FAIL" and "--verbose" in sys.argv:
             print(f"  Error: {output[:200]}...")
-        passed += success
 
-    print(f"\nResults: {passed}/{len(tests)} tests passed")
+    effective_total = len(tests) - skipped
+    print(f"\nResults: {passed}/{effective_total} tests passed")
 
-    if passed == len(tests):
+    if effective_total == 0 or passed == effective_total:
         print("\nAll type safety checks passed!")
         print("Code is ready for production with excellent type safety")
     else:
-        print(f"\n{len(tests) - passed} checks need attention")
+        print(f"\n{effective_total - passed} checks need attention")
         print("Run with --verbose to see detailed error messages")
+
+    if skipped:
+        print(
+            "\nNOTE: One or more mypy checks were skipped due to the known django-stubs "
+            f"internal error ({upstream_issue})."
+        )
 
     print("\nHybrid Approach Status:")
     print("   Development: Use Pyright for fast, strict type checking")

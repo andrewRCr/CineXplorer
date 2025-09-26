@@ -22,6 +22,7 @@ The backend is a REST API built with Django and Django REST Framework (DRF).
 - **Authentication**: Authentication is handled by `rest_framework_simplejwt` using JSON Web Tokens. A custom `JWTCookieAuthentication` backend is implemented to manage tokens securely in HTTP-only cookies.
 - **API Documentation**: `drf-spectacular` is used to automatically generate an OpenAPI 3 schema and Swagger UI, available at `/api/docs/`.
 - **Code Style**: Linting is enforced using `.flake8`.
+- **Type Checking**: Pyright provides primary static analysis for Python 3.13 features. `mypy` (with `django-stubs`) is configured but currently affected by upstream issue [typeddjango/django-stubs#2461](https://github.com/typeddjango/django-stubs/issues/2461); Pyright remains the guardrail until that fix ships.
 - **Key Libraries**:
     - `django-cors-headers` for managing Cross-Origin Resource Sharing (CORS).
     - `django-debug-toolbar` for debugging during development.

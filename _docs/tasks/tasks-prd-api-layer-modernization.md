@@ -77,10 +77,11 @@ This task list covers **Phase 1 (Proof of Concept)** of the API Layer Modernizat
   - [x] 4.1.5 Conduct test coverage analysis for the movie app to identify gaps and ensure Django Ninja migration maintains existing coverage.
   - [x] 4.2 Ensure all adapted tests for the `movie` app pass successfully.
   - [x] 4.2.5 Create dedicated service layer tests for movie_service.py to test parameter mapping, error handling, and business logic separately from API integration tests.
-  - [ ] 4.3 Use the interactive API docs at `/api/docs` to manually test the new `movie` endpoints and confirm functionality.
-  - [ ] 4.3.5 Verify that test patterns established in movie app migration are suitable as blueprints for
+  - [x] 4.3 Use the interactive API docs at `/api/docs` to manually test the new `movie` endpoints and confirm functionality.
+  - [x] 4.3.5 Verify that test patterns established in movie app migration are suitable as blueprints for
   other app migrations (user, user_movie_data).
   - [ ] 4.4 Run `npx pyright backend/apps/movie/` and `mypy --strict` on the movie directory and resolve all type errors.
+    - **Note:** `mypy --strict` currently fails with an upstream `django-stubs` internal error (https://github.com/typeddjango/django-stubs/issues/2461). Use Pyright as the primary guardrail and track the upstream fix before re-enabling full mypy coverage.
   - [ ] 4.4.5 Document testing standards and patterns discovered during movie app migration for use in future app migrations.
 
 ## Architectural Notes for Future Refactoring

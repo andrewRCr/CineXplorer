@@ -3,10 +3,22 @@ from __future__ import annotations
 import logging
 import uuid
 from datetime import datetime, timedelta
-from typing import Union
 
 from core.services.tmdb_api_client import TMDBApiClient
-from shared.api_types import TMDBSearchResponse, TMDBMovieResponse
+from ninja.errors import HttpError
+from ..schemas import (
+    MovieBaseSchema,
+    MovieDetailSchema,
+    PaginatedMovieResponseSchema,
+    GenreSchema,
+    ProductionCompanySchema,
+    CastMemberSchema,
+    CrewMemberSchema,
+    KeywordSchema,
+    PaginatedKeywordResponseSchema,
+    PersonSchema,
+    PaginatedPersonResponseSchema,
+)
 
 # Use TMDB-specific logger for better log organization
 logger = logging.getLogger('cinexplorer.tmdb')
@@ -19,60 +31,19 @@ tmdb_client = TMDBApiClient()
 # =========================
 
 
-def propagate_error_context(
-        error_dict: dict[str, object], operation: str, **additional_context: object
-) -> dict[str, object]:
-    """
-    Propagate error context through service layer calls.
-    Ensures correlation IDs and error details are preserved through call stack.
-    """
-    if not isinstance(error_dict, dict) or 'error' not in error_dict:
-        return error_dict
-
-    # Preserve existing correlation ID or generate new one
-    correlation_id = error_dict.get(
-        'correlation_id', str(uuid.uuid4())[:8]
-    )
-
-    enhanced_error = {
-        **error_dict,
-        'correlation_id': correlation_id,
-        'operation': operation,
-        **additional_context
-    }
-
-    return enhanced_error
-
-
-def tmdb_dict_to_movie_dict(tmdb_dict: dict[str, object]) -> dict[str, object]:
-    """
-    Convert a TMDB API dict to a movie dictionary for serialization.
-    This function creates a dictionary with only the fields needed by
-    the serializer.
-    """
-    return {
-        'tmdb_id': tmdb_dict.get('id'),
-        'title': tmdb_dict.get('title'),
-        'poster_path': tmdb_dict.get('poster_path', ''),
-        'release_date': tmdb_dict.get('release_date') or None,
-        'vote_average': tmdb_dict.get('vote_average'),
-        'runtime': tmdb_dict.get('runtime', 0),  # runtime for filtering
-    }
-
-
-def tmdb_get(endpoint: str, params: dict[str, object] | None = None) -> dict[str, object]:
-    """
-    Generic TMDB GET request using the new API client architecture.
-
-    This function provides backward compatibility with the existing codebase
-    while leveraging the new centralized HTTP client infrastructure.
-    """
-    response = tmdb_client.get(endpoint, params)
-    return response.to_legacy_dict()
+# Legacy helper functions removed - replaced by Pydantic model factories and HttpError exceptions
 
 
 def fetch_movie_runtimes(movie_ids: list[int]) -> dict[int, int]:
-    """Fetch runtime data using centralized logging."""
+    """
+    Fetch runtime data for multiple movies using typed API responses.
+
+    Args:
+        movie_ids: List of TMDB movie IDs
+
+    Returns:
+        Dictionary mapping movie IDs to runtime in minutes
+    """
     runtimes = {}
 
     logger.info(
@@ -83,54 +54,370 @@ def fetch_movie_runtimes(movie_ids: list[int]) -> dict[int, int]:
     )
 
     for movie_id in movie_ids:
-        result = tmdb_get(f"movie/{movie_id}")
-        if "error" in result:
+        try:
+            # Use the typed get_movie_by_id function
+            movie_detail = get_movie_by_id(movie_id)
+            runtimes[movie_id] = movie_detail.runtime or 0
+
+        except HttpError as e:
             logger.warning(
                 f"Failed to fetch runtime for movie {movie_id}", extra={
                     'operation': 'fetch_runtime',
                     'movie_id': movie_id,
-                    'error': result.get('error')
+                    'error_status': e.status_code,
+                    'error_message': e.message
                 }
             )
             runtimes[movie_id] = 0
-        else:
-            runtime = result.get('runtime', 0)
-            runtimes[movie_id] = int(runtime) if isinstance(runtime, (int, float)) else 0
+        except Exception as e:
+            logger.error(
+                f"Unexpected error fetching runtime for movie {movie_id}", extra={
+                    'operation': 'fetch_runtime',
+                    'movie_id': movie_id,
+                    'error_type': type(e).__name__,
+                    'error': str(e)
+                }
+            )
+            runtimes[movie_id] = 0
 
     return runtimes
 
 
-def get_simple_credits(credits_response: dict[str, object]) -> dict[str, list[dict[str, object]]]:
-    """Extracts simplified, relevant credits from TMDB credits response."""
-    crew = credits_response.get('crew', [])
-    cast = credits_response.get('cast', [])
+# get_simple_credits function removed - credits processing now handled in create_movie_detail_from_tmdb factory
 
-    # Type assertions for TMDB API contract
-    assert isinstance(crew, list), "TMDB crew should be a list"
-    assert isinstance(cast, list), "TMDB cast should be a list"
 
-    return {
-        'crew': [
-            {
-                'id': person['id'],
-                'name': person['name'],
-                'job': person['job'],
-                'profile_path': person['profile_path']
+# =========================
+# Pydantic Model Factory Utilities
+# =========================
+
+
+def create_movie_base_from_tmdb(tmdb_data: dict[str, object]) -> MovieBaseSchema:
+    """
+    Create a MovieBaseSchema instance from TMDB API response data.
+
+    Uses Pydantic's flexible validation to handle dynamic TMDB fields
+    while ensuring type safety for our schema.
+
+    Args:
+        tmdb_data: Raw TMDB movie data dictionary
+
+    Returns:
+        MovieBaseSchema instance with validated data
+
+    Raises:
+        HttpError: If data validation fails or required fields are missing
+    """
+    try:
+        # Extract and validate core fields with fallbacks
+        validated_data = {
+            'tmdb_id': tmdb_data.get('id'),
+            'title': tmdb_data.get('title', ''),
+            'poster_path': tmdb_data.get('poster_path'),
+            'release_date': tmdb_data.get('release_date'),
+            'vote_average': tmdb_data.get('vote_average'),
+            'runtime': tmdb_data.get('runtime', 0),
+        }
+
+        # Use Pydantic validation with extra fields ignored
+        return MovieBaseSchema.model_validate(validated_data, strict=False)
+
+    except Exception as e:
+        logger.error(
+            "Failed to create MovieBaseSchema from TMDB data",
+            extra={
+                'error': str(e),
+                'tmdb_id': tmdb_data.get('id'),
+                'operation': 'create_movie_base_from_tmdb',
+                'error_type': type(e).__name__
             }
-            for person in crew
-            if isinstance(person, dict)
-        ],
-        'cast': [
-            {
-                'id': person['id'],
-                'name': person['name'],
-                'character': person['character'],
-                'profile_path': person['profile_path']
+        )
+        raise HttpError(500, "Failed to process movie data")
+
+
+def create_movie_detail_from_tmdb(
+    movie_data: dict[str, object],
+    credits_data: dict[str, object] | None = None
+) -> MovieDetailSchema:
+    """
+    Create a MovieDetailSchema instance from TMDB movie and credits data.
+
+    Args:
+        movie_data: TMDB movie details response
+        credits_data: Optional TMDB credits response
+
+    Returns:
+        MovieDetailSchema instance with validated data
+
+    Raises:
+        HttpError: If data validation fails
+    """
+    try:
+        # Start with base movie data
+        detail_data = {
+            'tmdb_id': movie_data.get('id'),
+            'title': movie_data.get('title', ''),
+            'poster_path': movie_data.get('poster_path'),
+            'release_date': movie_data.get('release_date'),
+            'vote_average': movie_data.get('vote_average'),
+            'runtime': movie_data.get('runtime', 0),
+            'overview': movie_data.get('overview', ''),
+        }
+
+        # Process genres
+        genres_data = movie_data.get('genres', [])
+        if isinstance(genres_data, list):
+            detail_data['genres'] = [
+                GenreSchema.model_validate(genre, strict=False)
+                for genre in genres_data
+                if isinstance(genre, dict) and 'id' in genre and 'name' in genre
+            ]
+
+        # Process production companies
+        companies_data = movie_data.get('production_companies', [])
+        if isinstance(companies_data, list):
+            detail_data['production_companies'] = [
+                ProductionCompanySchema.model_validate(company, strict=False)
+                for company in companies_data
+                if isinstance(company, dict) and 'id' in company and 'name' in company
+            ]
+
+        # Process credits if provided
+        if credits_data:
+            # Process cast
+            cast_data = credits_data.get('cast', [])
+            if isinstance(cast_data, list):
+                detail_data['cast'] = [
+                    CastMemberSchema.model_validate(person, strict=False)
+                    for person in cast_data
+                    if isinstance(person, dict) and 'id' in person and 'name' in person
+                ]
+
+            # Process crew
+            crew_data = credits_data.get('crew', [])
+            if isinstance(crew_data, list):
+                detail_data['crew'] = [
+                    CrewMemberSchema.model_validate(person, strict=False)
+                    for person in crew_data
+                    if isinstance(person, dict) and 'id' in person and 'name' in person
+                ]
+
+        return MovieDetailSchema.model_validate(detail_data, strict=False)
+
+    except Exception as e:
+        logger.error(
+            "Failed to create MovieDetailSchema from TMDB data",
+            extra={
+                'error': str(e),
+                'tmdb_id': movie_data.get('id'),
+                'operation': 'create_movie_detail_from_tmdb',
+                'error_type': type(e).__name__
             }
-            for person in cast
-            if isinstance(person, dict)
+        )
+        raise HttpError(500, "Failed to process movie details")
+
+
+def create_paginated_movie_response_from_tmdb(tmdb_response: dict[str, object]) -> PaginatedMovieResponseSchema:
+    """
+    Create a PaginatedMovieResponseSchema from TMDB paginated response.
+
+    Args:
+        tmdb_response: TMDB search/discover response with pagination
+
+    Returns:
+        PaginatedMovieResponseSchema instance
+
+    Raises:
+        HttpError: If data validation fails
+    """
+    try:
+        # Extract pagination metadata
+        pagination_data = {
+            'page': tmdb_response.get('page', 1),
+            'total_pages': tmdb_response.get('total_pages', 0),
+            'total_results': tmdb_response.get('total_results', 0),
+            'results': []
+        }
+
+        # Process movie results
+        results = tmdb_response.get('results', [])
+        if isinstance(results, list):
+            pagination_data['results'] = [
+                create_movie_base_from_tmdb(movie)
+                for movie in results
+                if isinstance(movie, dict)
+            ]
+
+        return PaginatedMovieResponseSchema.model_validate(pagination_data, strict=False)
+
+    except Exception as e:
+        logger.error(
+            "Failed to create PaginatedMovieResponseSchema from TMDB data",
+            extra={
+                'error': str(e),
+                'operation': 'create_paginated_movie_response_from_tmdb',
+                'error_type': type(e).__name__
+            }
+        )
+        raise HttpError(500, "Failed to process movie search results")
+
+
+def create_paginated_keyword_response_from_tmdb(tmdb_response: dict[str, object]) -> PaginatedKeywordResponseSchema:
+    """
+    Create a PaginatedKeywordResponseSchema from TMDB keyword response.
+
+    Args:
+        tmdb_response: TMDB keyword search/list response
+
+    Returns:
+        PaginatedKeywordResponseSchema instance
+
+    Raises:
+        HttpError: If data validation fails
+    """
+    try:
+        pagination_data = {
+            'page': tmdb_response.get('page', 1),
+            'total_pages': tmdb_response.get('total_pages', 0),
+            'total_results': tmdb_response.get('total_results', 0),
+            'results': []
+        }
+
+        results = tmdb_response.get('results', [])
+        if isinstance(results, list):
+            pagination_data['results'] = [
+                KeywordSchema.model_validate(keyword, strict=False)
+                for keyword in results
+                if isinstance(keyword, dict) and 'id' in keyword and 'name' in keyword
+            ]
+
+        return PaginatedKeywordResponseSchema.model_validate(pagination_data, strict=False)
+
+    except Exception as e:
+        logger.error(
+            "Failed to create PaginatedKeywordResponseSchema from TMDB data",
+            extra={
+                'error': str(e),
+                'operation': 'create_paginated_keyword_response_from_tmdb',
+                'error_type': type(e).__name__
+            }
+        )
+        raise HttpError(500, "Failed to process keyword results")
+
+
+def create_paginated_person_response_from_tmdb(tmdb_response: dict[str, object]) -> PaginatedPersonResponseSchema:
+    """
+    Create a PaginatedPersonResponseSchema from TMDB person response.
+
+    Args:
+        tmdb_response: TMDB person search/popular response
+
+    Returns:
+        PaginatedPersonResponseSchema instance
+
+    Raises:
+        HttpError: If data validation fails
+    """
+    try:
+        pagination_data = {
+            'page': tmdb_response.get('page', 1),
+            'total_pages': tmdb_response.get('total_pages', 0),
+            'total_results': tmdb_response.get('total_results', 0),
+            'results': []
+        }
+
+        results = tmdb_response.get('results', [])
+        if isinstance(results, list):
+            pagination_data['results'] = [
+                PersonSchema.model_validate(person, strict=False)
+                for person in results
+                if isinstance(person, dict) and 'id' in person and 'name' in person
+            ]
+
+        return PaginatedPersonResponseSchema.model_validate(pagination_data, strict=False)
+
+    except Exception as e:
+        logger.error(
+            "Failed to create PaginatedPersonResponseSchema from TMDB data",
+            extra={
+                'error': str(e),
+                'operation': 'create_paginated_person_response_from_tmdb',
+                'error_type': type(e).__name__
+            }
+        )
+        raise HttpError(500, "Failed to process person results")
+
+
+def create_genre_list_from_tmdb(tmdb_response: dict[str, object]) -> list[GenreSchema]:
+    """
+    Create a list of GenreSchema instances from TMDB genre list response.
+
+    Args:
+        tmdb_response: TMDB genre/movie/list response
+
+    Returns:
+        List of GenreSchema instances
+
+    Raises:
+        HttpError: If data validation fails
+    """
+    try:
+        genres = tmdb_response.get('genres', [])
+        if not isinstance(genres, list):
+            return []
+
+        return [
+            GenreSchema.model_validate(genre, strict=False)
+            for genre in genres
+            if isinstance(genre, dict) and 'id' in genre and 'name' in genre
         ]
-    }
+
+    except Exception as e:
+        logger.error(
+            "Failed to create genre list from TMDB data",
+            extra={
+                'error': str(e),
+                'operation': 'create_genre_list_from_tmdb',
+                'error_type': type(e).__name__
+            }
+        )
+        raise HttpError(500, "Failed to process genre data")
+
+
+def handle_tmdb_api_error(api_response: object, operation: str, **context: object) -> None:
+    """
+    Handle TMDB API errors by raising appropriate HttpError exceptions.
+
+    Args:
+        api_response: ApiResponse object from TMDB client
+        operation: Name of the operation that failed
+        **context: Additional context for logging
+
+    Raises:
+        HttpError: With appropriate status code and message
+    """
+    correlation_id = getattr(api_response, 'correlation_id', str(uuid.uuid4())[:8])
+
+    logger.error(
+        f"TMDB API error in {operation}",
+        extra={
+            'correlation_id': correlation_id,
+            'operation': operation,
+            'status_code': api_response.status_code,
+            'error_message': api_response.error_message,
+            'error_category': api_response.error_category,
+            **context
+        }
+    )
+
+    # Map TMDB status codes to appropriate HTTP errors
+    if api_response.status_code == 404:
+        raise HttpError(404, "Resource not found")
+    elif api_response.status_code == 429:
+        raise HttpError(429, "Rate limit exceeded, please try again later")
+    elif 400 <= api_response.status_code < 500:
+        raise HttpError(400, "Invalid request")
+    else:
+        raise HttpError(500, "External API error")
 
 
 # =========================
@@ -138,18 +425,24 @@ def get_simple_credits(credits_response: dict[str, object]) -> dict[str, list[di
 # =========================
 
 
-def get_movie_by_id(tmdb_id: int) -> Union[TMDBMovieResponse, dict[str, object]]:
+def get_movie_by_id(tmdb_id: int) -> MovieDetailSchema:
     """
-    Retrieves movie details and credits from TMDB by movie ID using
-    centralized logging.
-    """
+    Retrieves movie details and credits from TMDB by movie ID.
 
+    Args:
+        tmdb_id: TMDB movie ID
+
+    Returns:
+        MovieDetailSchema instance with validated movie data
+
+    Raises:
+        HttpError: If movie not found, API error, or data processing fails
+    """
     # Use TMDB client for movie details
     info_response = tmdb_client.get_movie_details(tmdb_id)
     if not info_response.is_success():
-        error_dict = info_response.to_legacy_dict()
-        return propagate_error_context(
-            error_dict,
+        handle_tmdb_api_error(
+            info_response,
             operation='get_movie_details',
             movie_id=tmdb_id,
             error_stage='fetching_movie_info'
@@ -158,9 +451,8 @@ def get_movie_by_id(tmdb_id: int) -> Union[TMDBMovieResponse, dict[str, object]]
     # Use TMDB client for credits
     credits_response = tmdb_client.get(f"movie/{tmdb_id}/credits")
     if not credits_response.is_success():
-        error_dict = credits_response.to_legacy_dict()
-        return propagate_error_context(
-            error_dict,
+        handle_tmdb_api_error(
+            credits_response,
             operation='get_movie_credits',
             movie_id=tmdb_id,
             error_stage='fetching_credits'
@@ -171,77 +463,45 @@ def get_movie_by_id(tmdb_id: int) -> Union[TMDBMovieResponse, dict[str, object]]
 
     # Type guard: ensure we have valid dictionaries
     if not info_result or not credits_result:
-        return {
-            'error': 'Failed to get valid response data from TMDB',
-            'status': 500,
-            'correlation_id': info_response.correlation_id,
-            'operation': 'get_movie_by_id',
-            'movie_id': tmdb_id
-        }
-
-    # Combine movie info with credits
-    try:
-        movie_dict = tmdb_dict_to_movie_dict(info_result)
-        credits = get_simple_credits(credits_result)
-
-        movie_dict.update({
-            'crew': credits.get('crew', []),
-            'cast': credits.get('cast', []),
-            'overview': info_result.get('overview', ''),
-            'genres': info_result.get('genres', []),
-            'production_companies': (
-                info_result.get('production_companies', [])
-            ),
-            'runtime': info_result.get('runtime', 0),
-        })
-
-        return movie_dict
-
-    except Exception as processing_error:
-        # Log processing errors with full context
-        correlation_id = info_result.get(
-            'correlation_id', str(uuid.uuid4())[:8]
-        )
         logger.error(
-            f"Error processing movie data for ID {tmdb_id}", extra={
-                'correlation_id': correlation_id,
-                'operation': 'process_movie_data',
+            "Failed to get valid response data from TMDB",
+            extra={
+                'correlation_id': info_response.correlation_id,
+                'operation': 'get_movie_by_id',
                 'movie_id': tmdb_id,
-                'error_type': type(processing_error).__name__,
-                'error_category': 'data_processing_error',
-                'processing_error': str(processing_error),
-                'is_critical': True
+                'info_data_valid': bool(info_result),
+                'credits_data_valid': bool(credits_result)
             }
         )
+        raise HttpError(500, "Failed to get valid response data from TMDB")
 
-        return {
-            'error': f'Failed to process movie data: {processing_error}',
-            'status': 500,
-            'correlation_id': correlation_id,
-            'operation': 'get_movie_by_id',
-            'movie_id': tmdb_id,
-            'error_details': (
-                'An error occurred while processing movie data from TMDB'
-            )
-        }
+    # Use factory function to create properly typed MovieDetailSchema
+    return create_movie_detail_from_tmdb(info_result, credits_result)
 
 # =========================
 # Paginated Resource Service Methods
 # =========================
 
 
-def get_nowPlaying_movies(page: int = 1) -> Union[TMDBSearchResponse, dict[str, object]]:
+def get_nowPlaying_movies(page: int = 1) -> PaginatedMovieResponseSchema:
     """
-    Retrieves a list of now playing movies from TMDB with error context
-    propagation.
+    Retrieves a list of now playing movies from TMDB.
+
+    Args:
+        page: Page number for pagination
+
+    Returns:
+        PaginatedMovieResponseSchema with now playing movies
+
+    Raises:
+        HttpError: If API error or data processing fails
     """
     # Use the client's direct now playing method
     response = tmdb_client.get_now_playing_movies(page=page)
 
     if not response.is_success():
-        error_dict = response.to_legacy_dict()
-        return propagate_error_context(
-            error_dict,
+        handle_tmdb_api_error(
+            response,
             operation='get_nowPlaying_movies',
             page=page,
             error_stage='fetching_now_playing'
@@ -251,44 +511,32 @@ def get_nowPlaying_movies(page: int = 1) -> Union[TMDBSearchResponse, dict[str, 
 
     # Type guard: ensure we have a valid dictionary
     if not result:
-        return {
-            'error': 'Failed to get valid response data from TMDB',
-            'status': 500,
-            'correlation_id': response.correlation_id,
-            'operation': 'get_nowPlaying_movies'
-        }
-
-    try:
-        movies = result.get('results', [])
-        # Type assertion: TMDB API returns list of movies
-        assert isinstance(movies, list), "TMDB results should be a list"
-        result['results'] = [tmdb_dict_to_movie_dict(m) for m in movies if isinstance(m, dict)]
-        return result
-    except Exception as processing_error:
-        correlation_id = result.get(
-            'correlation_id', str(uuid.uuid4())[:8]
+        logger.error(
+            "Failed to get valid response data from TMDB",
+            extra={
+                'correlation_id': response.correlation_id,
+                'operation': 'get_nowPlaying_movies',
+                'page': page
+            }
         )
-        logger.error("Error processing now playing movies", extra={
-            'correlation_id': correlation_id,
-            'operation': 'process_nowplaying_movies',
-            'page': page,
-            'error_type': type(processing_error).__name__,
-            'processing_error': str(processing_error)
-        })
+        raise HttpError(500, "Failed to get valid response data from TMDB")
 
-        return {
-            'error': (
-                f'Failed to process now playing movies: {processing_error}'
-            ),
-            'status': 500,
-            'correlation_id': correlation_id,
-            'operation': 'get_nowPlaying_movies'
-        }
+    # Use factory function to create properly typed response
+    return create_paginated_movie_response_from_tmdb(result)
 
 
-def get_upcoming_movies(page: int = 1) -> Union[TMDBSearchResponse, dict[str, object]]:
+def get_upcoming_movies(page: int = 1) -> PaginatedMovieResponseSchema:
     """
-    Retrieves a list of upcoming movies from TMDB, paginated by page param.
+    Retrieves a list of upcoming movies from TMDB.
+
+    Args:
+        page: Page number for pagination
+
+    Returns:
+        PaginatedMovieResponseSchema with upcoming movies
+
+    Raises:
+        HttpError: If API error or data processing fails
     """
     today = datetime.today()
     min_date = today.strftime("%Y-%m-%d")
@@ -305,19 +553,45 @@ def get_upcoming_movies(page: int = 1) -> Union[TMDBSearchResponse, dict[str, ob
         "primary_release_date.gte": min_date,
         "primary_release_date.lte": max_date,
     }
-    result = tmdb_get("discover/movie", params)
-    if "error" in result:
-        return result
-    movies = result.get('results', [])
-    # Type assertion: TMDB API returns list of movies
-    assert isinstance(movies, list), "TMDB results should be a list"
-    result['results'] = [tmdb_dict_to_movie_dict(m) for m in movies if isinstance(m, dict)]
-    return result
+
+    response = tmdb_client.get("discover/movie", params)
+    if not response.is_success():
+        handle_tmdb_api_error(
+            response,
+            operation='get_upcoming_movies',
+            page=page
+        )
+
+    result = response.get_json_data()
+    if not result:
+        logger.error(
+            "Failed to get valid response data from TMDB",
+            extra={
+                'correlation_id': response.correlation_id,
+                'operation': 'get_upcoming_movies',
+                'page': page
+            }
+        )
+        raise HttpError(500, "Failed to get valid response data from TMDB")
+
+    return create_paginated_movie_response_from_tmdb(result)
 
 
-def search_movies(query: str, page: int = 1) -> dict[str, object]:
-    """Searches for movies by query string using TMDB, with pagination."""
-    # Use the client's direct search method instead of generic get
+def search_movies(query: str, page: int = 1) -> PaginatedMovieResponseSchema:
+    """
+    Searches for movies by query string using TMDB.
+
+    Args:
+        query: Search query string
+        page: Page number for pagination
+
+    Returns:
+        PaginatedMovieResponseSchema with filtered search results
+
+    Raises:
+        HttpError: If API error or data processing fails
+    """
+    # Use the client's direct search method
     response = tmdb_client.search_movies(
         query=query,
         page=page,
@@ -327,9 +601,8 @@ def search_movies(query: str, page: int = 1) -> dict[str, object]:
     )
 
     if not response.is_success():
-        error_dict = response.to_legacy_dict()
-        return propagate_error_context(
-            error_dict,
+        handle_tmdb_api_error(
+            response,
             operation='search_movies',
             query=query,
             page=page,
@@ -340,16 +613,32 @@ def search_movies(query: str, page: int = 1) -> dict[str, object]:
 
     # Type guard: ensure we have a valid dictionary
     if not result:
-        return {
-            'error': 'Failed to get valid response data from TMDB',
-            'status': 500,
-            'correlation_id': response.correlation_id,
-            'operation': 'search_movies'
-        }
+        logger.error(
+            "Failed to get valid response data from TMDB",
+            extra={
+                'correlation_id': response.correlation_id,
+                'operation': 'search_movies',
+                'query': query,
+                'page': page
+            }
+        )
+        raise HttpError(500, "Failed to get valid response data from TMDB")
 
     movies = result.get('results', [])
-    # Type assertion: TMDB API returns list of movies
-    assert isinstance(movies, list), "TMDB results should be a list"
+    # Type validation: TMDB API should return list of movies
+    if not isinstance(movies, list):
+        logger.error(
+            "TMDB API returned invalid results format",
+            extra={
+                'correlation_id': response.correlation_id,
+                'operation': 'search_movies',
+                'query': query,
+                'page': page,
+                'results_type': type(movies).__name__
+            }
+        )
+        raise HttpError(500, "Invalid response format from external API")
+
     logger.debug("Search movies processing", extra={
         'operation': 'search_movies',
         'query': query,
@@ -397,35 +686,46 @@ def search_movies(query: str, page: int = 1) -> dict[str, object]:
         'filtered_count': len(filtered_movies),
         'filtered_out': len(movies) - len(filtered_movies)
     })
-    result['results'] = [tmdb_dict_to_movie_dict(m) for m in filtered_movies]
-    # Update total_results to reflect filtered count
-    total_results = result.get('total_results', 0)
-    total_results_int = int(total_results) if isinstance(total_results, (int, float)) else 0
-    result['total_results'] = (
-        len(filtered_movies) +
-        (total_results_int - len(movies))
-    )
 
-    return result
+    # Create filtered response data
+    filtered_result = {
+        'page': result.get('page', page),
+        'total_pages': result.get('total_pages', 0),
+        'results': filtered_movies,
+        'total_results': (
+            len(filtered_movies) +
+            (int(result.get('total_results', 0)) - len(movies))
+        )
+    }
+
+    return create_paginated_movie_response_from_tmdb(filtered_result)
 
 
-def discover_movies(page: int = 1, **filters: object) -> dict[str, object]:
+def discover_movies(page: int = 1, **filters: object) -> PaginatedMovieResponseSchema:
     """
     Flexible movie discovery with full TMDB filtering capabilities.
 
-    Supported filters:
-    - sort_by: Sort order (popularity.desc, release_date.desc, etc.)
-    - genres: Comma-separated genre IDs
-    - year: Release year
-    - vote_average_gte/lte: Rating range
-    - keywords: Comma-separated keyword IDs
-    - people: Comma-separated person IDs
-    - release_date_gte/lte: Release date range
-    - runtime_gte/lte: Runtime range in minutes
-      * runtime_gte=0 is converted to 1 for TMDB compatibility
-      * runtime_lte=999 is omitted (treated as no upper limit)
-    - certification: Certification rating
-    - region: Country code for regional release dates
+    Args:
+        page: Page number for pagination
+        **filters: Discovery filters including:
+            - sort_by: Sort order (popularity.desc, release_date.desc, etc.)
+            - genres: Comma-separated genre IDs
+            - year: Release year
+            - vote_average_gte/lte: Rating range
+            - keywords: Comma-separated keyword IDs
+            - people: Comma-separated person IDs
+            - release_date_gte/lte: Release date range
+            - certification: Certification rating
+            - region: Country code for regional release dates
+
+    Returns:
+        PaginatedMovieResponseSchema with discovered movies
+
+    Raises:
+        HttpError: If API error or data processing fails
+
+    Note:
+        Runtime filtering is disabled due to TMDB API limitations
     """
     logger.debug("Discover movies request", extra={
         'operation': 'discover_movies',
@@ -434,8 +734,7 @@ def discover_movies(page: int = 1, **filters: object) -> dict[str, object]:
         'filter_count': len(filters)
     })
 
-    # Debug runtime filtering - DISABLED due to TMDB API limitations
-    # TMDB's runtime filtering returns incorrect results
+    # Build TMDB API parameters
     params = {
         "include_adult": "false",
         "include_video": "false",
@@ -455,30 +754,52 @@ def discover_movies(page: int = 1, **filters: object) -> dict[str, object]:
         'people': 'with_people',
         'release_date_gte': 'primary_release_date.gte',
         'release_date_lte': 'primary_release_date.lte',
-        # DISABLED: Runtime filtering - TMDB API returns incorrect results
-        # 'runtime_gte': 'with_runtime.gte',
-        # 'runtime_lte': 'with_runtime.lte',
         'certification': 'certification',
     }
 
     # Apply filters if provided
     for filter_name, tmdb_param in filter_mapping.items():
         if filter_name in filters and filters[filter_name] is not None:
-            # DISABLED: Runtime special case - no longer needed
-            # since runtime filtering is disabled
             params[tmdb_param] = str(filters[filter_name])
 
     # Set default sort if not specified
     if 'sort_by' not in params:
         params['sort_by'] = 'popularity.desc'
 
-    result = tmdb_get("discover/movie", params)
-    if "error" in result:
-        return result
+    response = tmdb_client.get("discover/movie", params)
+    if not response.is_success():
+        handle_tmdb_api_error(
+            response,
+            operation='discover_movies',
+            page=page,
+            filters=filters
+        )
+
+    result = response.get_json_data()
+    if not result:
+        logger.error(
+            "Failed to get valid response data from TMDB",
+            extra={
+                'correlation_id': response.correlation_id,
+                'operation': 'discover_movies',
+                'page': page
+            }
+        )
+        raise HttpError(500, "Failed to get valid response data from TMDB")
 
     movies = result.get('results', [])
-    # Type assertion: TMDB API returns list of movies
-    assert isinstance(movies, list), "TMDB results should be a list"
+    # Type validation: TMDB API should return list of movies
+    if not isinstance(movies, list):
+        logger.error(
+            "TMDB API returned invalid results format",
+            extra={
+                'correlation_id': response.correlation_id,
+                'operation': 'discover_movies',
+                'page': page,
+                'results_type': type(movies).__name__
+            }
+        )
+        raise HttpError(500, "Invalid response format from external API")
 
     # Log detailed discover response for debugging
     discover_metadata = {
@@ -501,8 +822,7 @@ def discover_movies(page: int = 1, **filters: object) -> dict[str, object]:
 
     logger.debug("Discover movies response processed", extra=discover_metadata)
 
-    result['results'] = [tmdb_dict_to_movie_dict(m) for m in movies if isinstance(m, dict)]
-    return result
+    return create_paginated_movie_response_from_tmdb(result)
 
 
 # =========================
@@ -510,58 +830,202 @@ def discover_movies(page: int = 1, **filters: object) -> dict[str, object]:
 # =========================
 
 
-def get_movie_genres() -> list[dict[str, object]] | dict[str, object]:
-    """Retrieves the list of movie genres from TMDB."""
-    result = tmdb_get("genre/movie/list")
-    if "error" in result:
-        return result
-    genres = result.get('genres', [])
-    # Type assertion: TMDB API returns list of genres
-    assert isinstance(genres, list), "TMDB genres should be a list"
-    return genres
+def get_movie_genres() -> list[GenreSchema]:
+    """
+    Retrieves the list of movie genres from TMDB.
+
+    Returns:
+        List of GenreSchema instances
+
+    Raises:
+        HttpError: If API error or data processing fails
+    """
+    response = tmdb_client.get("genre/movie/list")
+    if not response.is_success():
+        handle_tmdb_api_error(
+            response,
+            operation='get_movie_genres'
+        )
+
+    result = response.get_json_data()
+    if not result:
+        logger.error(
+            "Failed to get valid response data from TMDB",
+            extra={
+                'correlation_id': response.correlation_id,
+                'operation': 'get_movie_genres'
+            }
+        )
+        raise HttpError(500, "Failed to get valid response data from TMDB")
+
+    return create_genre_list_from_tmdb(result)
 
 
-def get_popular_keywords(page: int = 1) -> dict[str, object]:
-    """Retrieves popular keywords from TMDB."""
-    result = tmdb_get("keyword/popular", {"page": page})
-    if "error" in result:
-        return result
-    return result
+def get_popular_keywords(page: int = 1) -> PaginatedKeywordResponseSchema:
+    """
+    Retrieves popular keywords from TMDB.
+
+    Args:
+        page: Page number for pagination
+
+    Returns:
+        PaginatedKeywordResponseSchema with popular keywords
+
+    Raises:
+        HttpError: If API error or data processing fails
+    """
+    response = tmdb_client.get("keyword/popular", {"page": page})
+    if not response.is_success():
+        handle_tmdb_api_error(
+            response,
+            operation='get_popular_keywords',
+            page=page
+        )
+
+    result = response.get_json_data()
+    if not result:
+        logger.error(
+            "Failed to get valid response data from TMDB",
+            extra={
+                'correlation_id': response.correlation_id,
+                'operation': 'get_popular_keywords',
+                'page': page
+            }
+        )
+        raise HttpError(500, "Failed to get valid response data from TMDB")
+
+    return create_paginated_keyword_response_from_tmdb(result)
 
 
-def search_keywords(query: str) -> dict[str, object]:
-    """Searches for keywords by query string."""
+def search_keywords(query: str) -> PaginatedKeywordResponseSchema:
+    """
+    Searches for keywords by query string.
+
+    Args:
+        query: Search query string
+
+    Returns:
+        PaginatedKeywordResponseSchema with keyword search results
+
+    Raises:
+        HttpError: If API error or data processing fails
+    """
     if not query or len(query.strip()) < 2:
-        return {"results": []}
+        # Return empty response for invalid queries
+        return PaginatedKeywordResponseSchema(
+            page=1,
+            total_pages=0,
+            total_results=0,
+            results=[]
+        )
 
-    result = tmdb_get("search/keyword", {"query": query})
-    if "error" in result:
-        return result
+    response = tmdb_client.get("search/keyword", {"query": query})
+    if not response.is_success():
+        handle_tmdb_api_error(
+            response,
+            operation='search_keywords',
+            query=query
+        )
 
-    # Ensure we return the full result structure with results key
+    result = response.get_json_data()
+    if not result:
+        logger.error(
+            "Failed to get valid response data from TMDB",
+            extra={
+                'correlation_id': response.correlation_id,
+                'operation': 'search_keywords',
+                'query': query
+            }
+        )
+        raise HttpError(500, "Failed to get valid response data from TMDB")
+
+    # Ensure we have results key for proper processing
     if 'results' not in result:
         result['results'] = []
-    return result
+
+    return create_paginated_keyword_response_from_tmdb(result)
 
 
-def get_popular_people(page: int = 1) -> dict[str, object]:
-    """Retrieves popular people (actors, directors, etc.) from TMDB."""
-    result = tmdb_get("person/popular", {"page": page})
-    if "error" in result:
-        return result
-    return result
+def get_popular_people(page: int = 1) -> PaginatedPersonResponseSchema:
+    """
+    Retrieves popular people (actors, directors, etc.) from TMDB.
+
+    Args:
+        page: Page number for pagination
+
+    Returns:
+        PaginatedPersonResponseSchema with popular people
+
+    Raises:
+        HttpError: If API error or data processing fails
+    """
+    response = tmdb_client.get("person/popular", {"page": page})
+    if not response.is_success():
+        handle_tmdb_api_error(
+            response,
+            operation='get_popular_people',
+            page=page
+        )
+
+    result = response.get_json_data()
+    if not result:
+        logger.error(
+            "Failed to get valid response data from TMDB",
+            extra={
+                'correlation_id': response.correlation_id,
+                'operation': 'get_popular_people',
+                'page': page
+            }
+        )
+        raise HttpError(500, "Failed to get valid response data from TMDB")
+
+    return create_paginated_person_response_from_tmdb(result)
 
 
-def search_people(query: str) -> dict[str, object]:
-    """Searches for people by name."""
+def search_people(query: str) -> PaginatedPersonResponseSchema:
+    """
+    Searches for people by name.
+
+    Args:
+        query: Search query string
+
+    Returns:
+        PaginatedPersonResponseSchema with person search results
+
+    Raises:
+        HttpError: If API error or data processing fails
+    """
     if not query or len(query.strip()) < 2:
-        return {"results": []}
+        # Return empty response for invalid queries
+        return PaginatedPersonResponseSchema(
+            page=1,
+            total_pages=0,
+            total_results=0,
+            results=[]
+        )
 
-    result = tmdb_get("search/person", {"query": query})
-    if "error" in result:
-        return result
+    response = tmdb_client.get("search/person", {"query": query})
+    if not response.is_success():
+        handle_tmdb_api_error(
+            response,
+            operation='search_people',
+            query=query
+        )
 
-    # Ensure we return the full result structure with results key
+    result = response.get_json_data()
+    if not result:
+        logger.error(
+            "Failed to get valid response data from TMDB",
+            extra={
+                'correlation_id': response.correlation_id,
+                'operation': 'search_people',
+                'query': query
+            }
+        )
+        raise HttpError(500, "Failed to get valid response data from TMDB")
+
+    # Ensure we have results key for proper processing
     if 'results' not in result:
         result['results'] = []
-    return result
+
+    return create_paginated_person_response_from_tmdb(result)

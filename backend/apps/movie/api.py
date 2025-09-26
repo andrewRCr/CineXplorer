@@ -8,16 +8,225 @@ from __future__ import annotations
 
 from ninja import Router
 from ninja.errors import HttpError
+from django.http import HttpRequest
 
+from core.models import UserMovieData
 from .schemas import (
     MovieDetailSchema,
     PaginatedMovieResponseSchema,
     GenreSchema,
     PaginatedKeywordResponseSchema,
     PaginatedPersonResponseSchema,
+    UserMovieDataSchema,
 )
+
+# Import service functions
+from .services import movie_service
 
 # Create the router instance for movie endpoints
 router = Router(tags=["movies"])
 
-# Path operations will be added in Task 3.4
+
+# =========================
+# Supporting Data Endpoints
+# =========================
+
+
+@router.get("/genres", response=list[GenreSchema])
+def get_movie_genres():
+    """Retrieve the list of available movie genres from TMDB."""
+    return movie_service.get_movie_genres()
+
+
+@router.get("/keywords", response=PaginatedKeywordResponseSchema)
+def get_popular_keywords(page: int = 1):
+    """Retrieve popular keywords with pagination."""
+    return movie_service.get_popular_keywords(page=page)
+
+
+@router.get("/keywords/search", response=PaginatedKeywordResponseSchema)
+def search_keywords(query: str):
+    """Search for keywords by query string."""
+    return movie_service.search_keywords(query)
+
+
+@router.get("/people", response=PaginatedPersonResponseSchema)
+def get_popular_people(page: int = 1):
+    """Retrieve popular people (actors, directors, etc.) with pagination."""
+    return movie_service.get_popular_people(page=page)
+
+
+@router.get("/people/search", response=PaginatedPersonResponseSchema)
+def search_people(query: str):
+    """Search for people by name."""
+    return movie_service.search_people(query)
+
+
+# =========================
+# Single Resource Endpoints
+# =========================
+
+
+@router.get("/movies/{tmdb_id}", response=MovieDetailSchema)
+def get_movie_detail(request: HttpRequest, tmdb_id: int):
+    """
+    Retrieve detailed movie information by TMDB ID.
+
+    Includes user-specific data (watched status, rating, etc.) if user is authenticated.
+    """
+    # Get movie details from service
+    movie_detail = movie_service.get_movie_by_id(tmdb_id)
+
+    # Get user-specific data if user is authenticated
+    user_movie_data = None
+    if hasattr(request, 'user') and request.user.is_authenticated:
+        try:
+            user_data = UserMovieData.objects.get(
+                user=request.user,
+                movie__tmdb_id=tmdb_id
+            )
+            user_movie_data = UserMovieDataSchema(
+                id=user_data.id,
+                tmdb_id=user_data.movie.tmdb_id,
+                title=user_data.movie.title,
+                user_watched=user_data.user_watched,
+                user_on_watchlist=user_data.user_on_watchlist,
+                user_liked=user_data.user_liked,
+                user_rating=user_data.user_rating,
+                user_review=user_data.user_review,
+            )
+        except UserMovieData.DoesNotExist:
+            # No user data exists for this movie, which is fine
+            pass
+
+    # Add user data to the movie detail response
+    movie_detail.user_movie_data = user_movie_data
+
+    return movie_detail
+
+
+# =========================
+# Paginated Movie Endpoints
+# =========================
+
+
+@router.get("/movies/now-playing", response=PaginatedMovieResponseSchema)
+def get_now_playing_movies(page: int = 1):
+    """Retrieve now playing movies with pagination."""
+    return movie_service.get_nowPlaying_movies(page=page)
+
+
+@router.get("/movies/upcoming", response=PaginatedMovieResponseSchema)
+def get_upcoming_movies(page: int = 1):
+    """Retrieve upcoming movies with pagination."""
+    return movie_service.get_upcoming_movies(page=page)
+
+
+@router.get("/movies/search", response=PaginatedMovieResponseSchema)
+def search_movies(query: str, page: int = 1):
+    """Search for movies by title with pagination."""
+    return movie_service.search_movies(query=query, page=page)
+
+
+# =========================
+# Movie Discovery Endpoint
+# =========================
+
+
+@router.get("/movies/discover", response=PaginatedMovieResponseSchema)
+def discover_movies(
+    page: int = 1,
+    # Sorting and basic filters
+    sort_by: str = None,
+    genres: str = None,
+    keywords: str = None,
+    people: str = None,
+    certification: str = None,
+    region: str = None,
+    # Year filtering (supports single year, decade with 's' suffix, or min/max year)
+    year: str = None,
+    min_year: int = None,
+    max_year: int = None,
+    # Date range filtering
+    release_date_gte: str = None,
+    release_date_lte: str = None,
+    # Rating filtering
+    vote_average_gte: float = None,
+    vote_average_lte: float = None,
+    min_rating: float = None,
+    # Runtime filtering
+    runtime_gte: int = None,
+    runtime_lte: int = None,
+    min_runtime: int = None,
+    max_runtime: int = None,
+):
+    """
+    Discover movies with comprehensive filtering capabilities.
+
+    Supports all TMDB discover endpoint parameters including:
+    - Sorting (sort_by)
+    - Genre, keyword, and people filtering
+    - Year filtering (single year, decade like "1990s", or min/max year range)
+    - Date range filtering
+    - Rating filtering (vote_average_gte/lte or min_rating)
+    - Runtime filtering (runtime_gte/lte or min/max_runtime)
+    - Certification and region filtering
+    """
+    filters = {}
+
+    # Process simple string parameters
+    simple_params = {
+        'sort_by': sort_by,
+        'genres': genres,
+        'keywords': keywords,
+        'people': people,
+        'certification': certification,
+        'region': region,
+        'release_date_gte': release_date_gte,
+        'release_date_lte': release_date_lte,
+    }
+
+    for param, value in simple_params.items():
+        if value is not None:
+            filters[param] = value
+
+    # Process year parameters (complex logic for year, decade, min/max year)
+    if year is not None:
+        if year.isdigit():
+            # Single year
+            filters['year'] = int(year)
+        elif year.endswith('s') and len(year) == 5 and year[:-1].isdigit():
+            # Decade (e.g., "1990s")
+            decade_start = int(year[:-1])
+            filters['release_date_gte'] = f"{decade_start}-01-01"
+            filters['release_date_lte'] = f"{decade_start + 9}-12-31"
+        else:
+            raise HttpError(400, f"Invalid year format: {year}")
+
+    if min_year is not None:
+        filters['release_date_gte'] = f"{min_year}-01-01"
+
+    if max_year is not None:
+        filters['release_date_lte'] = f"{max_year}-12-31"
+
+    # Process rating parameters (handle aliases)
+    if vote_average_gte is not None:
+        filters['vote_average_gte'] = vote_average_gte
+    elif min_rating is not None:
+        filters['vote_average_gte'] = min_rating
+
+    if vote_average_lte is not None:
+        filters['vote_average_lte'] = vote_average_lte
+
+    # Process runtime parameters (handle aliases)
+    if runtime_gte is not None:
+        filters['runtime_gte'] = runtime_gte
+    elif min_runtime is not None:
+        filters['runtime_gte'] = min_runtime
+
+    if runtime_lte is not None:
+        filters['runtime_lte'] = runtime_lte
+    elif max_runtime is not None:
+        filters['runtime_lte'] = max_runtime
+
+    return movie_service.discover_movies(page=page, **filters)

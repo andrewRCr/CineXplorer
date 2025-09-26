@@ -35,7 +35,6 @@ urlpatterns = [
     path("api/docs/", SpectacularSwaggerView.as_view(url_name="api-schema"), name="api-docs"),
     path("api/user/", include("user.urls")),
     path("api/user-movie-data/", include("user_movie_data.urls")),
-    path("api/movie/", include("movie.urls")),
     path("api/core/", include("core.urls")),  # Core app for logging and utilities
     # Django Ninja API (modern, type-safe endpoints)
     path("api/", api.urls),

@@ -45,9 +45,9 @@ def _empty_person_list() -> list["PersonSchema"]:
 class MovieModelSchema(ModelSchema):
     """Mirror of the local `Movie` model for endpoints that touch persisted data."""
 
-    class Settings:
+    class Meta:
         model = Movie
-        model_fields = ["tmdb_id", "title", "poster_path", "release_date"]
+        fields = ["tmdb_id", "title", "poster_path", "release_date"]
 
 
 class UserMovieDataSchema(Schema):

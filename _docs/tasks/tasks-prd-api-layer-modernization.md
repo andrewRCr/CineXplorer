@@ -6,8 +6,8 @@ This task list covers **Phase 1 (Proof of Concept)** of the API Layer Modernizat
 
 ### Files to be Created
 - `backend/config/api.py` - ✅ Central `NinjaAPI` instance with native JWT authentication, OpenAPI documentation, and enhanced endpoints.
-- `backend/apps/movie/api.py` - To define the Ninja router and path operations for the `movie` app.
-- `backend/apps/movie/schemas.py` - To define the Pydantic schemas that replace DRF serializers for the `movie` app.
+- `backend/apps/movie/api.py` - ✅ Created with Django Ninja router and all 10 movie endpoints migrated from DRF.
+- `backend/apps/movie/schemas.py` - ✅ Created with comprehensive Pydantic schemas replacing DRF serializers.
 - `backend/apps/user/auth_ninja.py` - ✅ Enhanced Django Ninja JWT cookie authentication with native integration, OpenAPI schema, and comprehensive error handling.
 - `backend/shared/__init__.py` - ✅ Temporary shared module stub (to be replaced by Pydantic schemas).
 - `backend/shared/api_types.py` - ✅ TMDB API type definitions stub (temporary).
@@ -17,7 +17,7 @@ This task list covers **Phase 1 (Proof of Concept)** of the API Layer Modernizat
 ### Files to be Modified
 - `backend/requirements/req.txt` - To add the `django-ninja` dependency.
 - `backend/.dockerignore` - Added to exclude node_modules from Docker build context.
-- `backend/config/urls.py` - To wire in the main Ninja API router.
+- `backend/config/urls.py` - ✅ Updated to wire in the main Ninja API router and remove old DRF movie URLs.
 - `backend/middleware/logging.py` - ✅ Fixed type checking issues for dynamic HttpRequest attributes.
 - `backend/apps/movie/tests/*` - API tests will be adapted for the new Ninja endpoints.
 - `frontend/package.json` - To add a `pydantic-to-typescript` style development dependency.
@@ -26,9 +26,9 @@ This task list covers **Phase 1 (Proof of Concept)** of the API Layer Modernizat
 - `_docs/PROJECT-STATUS.md` - To add this new feature to the project status.
 
 ### Files to be Removed/Deprecated
-- `backend/apps/movie/views.py` - The old DRF views will be removed after migration.
-- `backend/apps/movie/serializers.py` - The old DRF serializers will be removed.
-- The DRF-specific URL configuration for the `movie` app.
+- `backend/apps/movie/views.py` - ✅ Removed old DRF views after successful migration.
+- `backend/apps/movie/serializers.py` - ✅ Removed old DRF serializers after successful migration.
+- `backend/apps/movie/urls.py` - ✅ Removed DRF-specific URL configuration for the `movie` app.
 
 ## Tasks
 
@@ -53,7 +53,7 @@ This task list covers **Phase 1 (Proof of Concept)** of the API Layer Modernizat
   - [x] 2.5.4 Configure the main `NinjaAPI` instance in `backend/config/api.py` to use this as a global authentication scheme.
   - [x] 2.5.5 Create a temporary authenticated test endpoint to verify the new auth scheme correctly protects routes and identifies the user.
 
-- [ ] 3.0 **Proof-of-Concept: Migrate `movie` App Endpoints**
+- [x] 3.0 **Proof-of-Concept: Migrate `movie` App Endpoints**
   - [x] 3.1 Create `backend/apps/movie/api.py` and `backend/apps/movie/schemas.py`.
   - [x] 3.2 In `schemas.py`, create Pydantic `ModelSchema` classes for the `Movie` model and any other data structures needed for the movie API.
   - [x] 3.25 Update `movie` service helpers to emit typed payloads aligned with the new Pydantic schemas (replace dict[str, object] return values).
@@ -69,14 +69,14 @@ This task list covers **Phase 1 (Proof of Concept)** of the API Layer Modernizat
     - [x] 3.4.2 Migrate single resource endpoint (movie detail by ID) with user data integration
     - [x] 3.4.3 Migrate basic paginated endpoints (now playing, upcoming, search movies) - 3 endpoints
     - [x] 3.4.4 Migrate complex discovery endpoint with parameter processing and validation
-  - [ ] 3.5 Add the new `movie` router to the main `NinjaAPI` instance.
-  - [ ] 3.6 Once all `movie` endpoints are migrated and confirmed working, delete the old `backend/apps/movie/views.py` and `backend/apps/movie/serializers.py` files.
+  - [x] 3.5 Add the new `movie` router to the main `NinjaAPI` instance.
+  - [x] 3.6 Once all `movie` endpoints are migrated and confirmed working, delete the old `backend/apps/movie/views.py` and `backend/apps/movie/serializers.py` files.
 
 - [ ] 4.0 **Testing and Validation**
   - [ ] 4.1 Adapt the existing API tests in the `movie` app to target the new Ninja endpoints using Django's test client.
   - [ ] 4.2 Ensure all adapted tests for the `movie` app pass successfully.
   - [ ] 4.3 Use the interactive API docs at `/api/docs` to manually test the new `movie` endpoints and confirm functionality.
-  - [ ] 4.4 Run `mypy --strict` and `pyright` on the `backend/apps/movie/` directory and resolve all type errors.
+  - [ ] 4.4 Run `npx pyright backend/apps/movie/` and `mypy --strict` on the movie directory and resolve all type errors.
 
 - [ ] 5.0 **Frontend Integration and Type Generation Workflow**
   - [ ] 5.1 Research and select a `pydantic-to-typescript` tool and add it as a dev dependency to `frontend/package.json`.

@@ -56,8 +56,19 @@ This task list covers **Phase 1 (Proof of Concept)** of the API Layer Modernizat
 - [ ] 3.0 **Proof-of-Concept: Migrate `movie` App Endpoints**
   - [x] 3.1 Create `backend/apps/movie/api.py` and `backend/apps/movie/schemas.py`.
   - [x] 3.2 In `schemas.py`, create Pydantic `ModelSchema` classes for the `Movie` model and any other data structures needed for the movie API.
-  - [ ] 3.3 In `api.py`, create a `Router` instance.
+  - [x] 3.25 Update `movie` service helpers to emit typed payloads aligned with the new Pydantic schemas (replace dict[str, object] return values).
+    - [x] 3.25.1 Create Pydantic model factory utilities for converting TMDB API responses to schema instances
+    - [x] 3.25.2 Update single resource methods (get_movie_by_id) to return MovieDetailSchema instead of dict[str, object]
+    - [x] 3.25.3 Update paginated resource methods (get_nowPlaying_movies, search_movies, etc.) to return PaginatedMovieResponseSchema
+    - [x] 3.25.4 Update supporting data methods (get_movie_genres, search_keywords, etc.) to return appropriate Pydantic schemas
+    - [x] 3.25.5 Replace error dictionaries with HttpError exceptions throughout service layer for proper Django Ninja integration
+    - [x] 3.25.6 Update any remaining helper functions and validate all service methods return proper Pydantic types
+  - [x] 3.3 In `api.py`, create a `Router` instance.
   - [ ] 3.4 Systematically migrate each endpoint from the old `movie/views.py` to a path operation function in `api.py`, using the new Pydantic schemas for request bodies and responses.
+    - [ ] 3.4.1 Migrate supporting data endpoints (genres, keywords, people) - 5 simple endpoints
+    - [ ] 3.4.2 Migrate single resource endpoint (movie detail by ID) with user data integration
+    - [ ] 3.4.3 Migrate basic paginated endpoints (now playing, upcoming, search movies) - 3 endpoints
+    - [ ] 3.4.4 Migrate complex discovery endpoint with parameter processing and validation
   - [ ] 3.5 Add the new `movie` router to the main `NinjaAPI` instance.
   - [ ] 3.6 Once all `movie` endpoints are migrated and confirmed working, delete the old `backend/apps/movie/views.py` and `backend/apps/movie/serializers.py` files.
 

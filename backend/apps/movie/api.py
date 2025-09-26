@@ -32,77 +32,34 @@ router = Router(tags=["movies"])
 # =========================
 
 
-@router.get("/genres", response=list[GenreSchema])
+@router.get("/genres", response=list[GenreSchema], auth=None)
 def get_movie_genres():
     """Retrieve the list of available movie genres from TMDB."""
     return movie_service.get_movie_genres()
 
 
-@router.get("/keywords", response=PaginatedKeywordResponseSchema)
+@router.get("/keywords", response=PaginatedKeywordResponseSchema, auth=None)
 def get_popular_keywords(page: int = 1):
     """Retrieve popular keywords with pagination."""
     return movie_service.get_popular_keywords(page=page)
 
 
-@router.get("/keywords/search", response=PaginatedKeywordResponseSchema)
+@router.get("/keywords/search", response=PaginatedKeywordResponseSchema, auth=None)
 def search_keywords(query: str):
     """Search for keywords by query string."""
     return movie_service.search_keywords(query)
 
 
-@router.get("/people", response=PaginatedPersonResponseSchema)
+@router.get("/people", response=PaginatedPersonResponseSchema, auth=None)
 def get_popular_people(page: int = 1):
     """Retrieve popular people (actors, directors, etc.) with pagination."""
     return movie_service.get_popular_people(page=page)
 
 
-@router.get("/people/search", response=PaginatedPersonResponseSchema)
+@router.get("/people/search", response=PaginatedPersonResponseSchema, auth=None)
 def search_people(query: str):
     """Search for people by name."""
     return movie_service.search_people(query)
-
-
-# =========================
-# Single Resource Endpoints
-# =========================
-
-
-@router.get("/movies/{tmdb_id}", response=MovieDetailSchema)
-def get_movie_detail(request: HttpRequest, tmdb_id: int):
-    """
-    Retrieve detailed movie information by TMDB ID.
-
-    Includes user-specific data (watched status, rating, etc.) if user is authenticated.
-    """
-    # Get movie details from service
-    movie_detail = movie_service.get_movie_by_id(tmdb_id)
-
-    # Get user-specific data if user is authenticated
-    user_movie_data = None
-    if hasattr(request, 'user') and request.user.is_authenticated:
-        try:
-            user_data = UserMovieData.objects.get(
-                user=request.user,
-                movie__tmdb_id=tmdb_id
-            )
-            user_movie_data = UserMovieDataSchema(
-                id=user_data.id,
-                tmdb_id=user_data.movie.tmdb_id,
-                title=user_data.movie.title,
-                user_watched=user_data.user_watched,
-                user_on_watchlist=user_data.user_on_watchlist,
-                user_liked=user_data.user_liked,
-                user_rating=user_data.user_rating,
-                user_review=user_data.user_review,
-            )
-        except UserMovieData.DoesNotExist:
-            # No user data exists for this movie, which is fine
-            pass
-
-    # Add user data to the movie detail response
-    movie_detail.user_movie_data = user_movie_data
-
-    return movie_detail
 
 
 # =========================
@@ -110,20 +67,20 @@ def get_movie_detail(request: HttpRequest, tmdb_id: int):
 # =========================
 
 
-@router.get("/movies/now-playing", response=PaginatedMovieResponseSchema)
-def get_now_playing_movies(page: int = 1):
+@router.get("/movies/now-playing", response=PaginatedMovieResponseSchema, auth=None)
+def get_now_playing_movies(request, page: int = 1):
     """Retrieve now playing movies with pagination."""
     return movie_service.get_nowPlaying_movies(page=page)
 
 
-@router.get("/movies/upcoming", response=PaginatedMovieResponseSchema)
-def get_upcoming_movies(page: int = 1):
+@router.get("/movies/upcoming", response=PaginatedMovieResponseSchema, auth=None)
+def get_upcoming_movies(request, page: int = 1):
     """Retrieve upcoming movies with pagination."""
     return movie_service.get_upcoming_movies(page=page)
 
 
-@router.get("/movies/search", response=PaginatedMovieResponseSchema)
-def search_movies(query: str, page: int = 1):
+@router.get("/movies/search", response=PaginatedMovieResponseSchema, auth=None)
+def search_movies(request, query: str, page: int = 1):
     """Search for movies by title with pagination."""
     return movie_service.search_movies(query=query, page=page)
 
@@ -133,8 +90,9 @@ def search_movies(query: str, page: int = 1):
 # =========================
 
 
-@router.get("/movies/discover", response=PaginatedMovieResponseSchema)
+@router.get("/movies/discover", response=PaginatedMovieResponseSchema, auth=None)
 def discover_movies(
+    request,
     page: int = 1,
     # Sorting and basic filters
     sort_by: str = None,
@@ -230,3 +188,46 @@ def discover_movies(
         filters['runtime_lte'] = max_runtime
 
     return movie_service.discover_movies(page=page, **filters)
+
+
+# =========================
+# Single Resource Endpoints
+# =========================
+
+
+@router.get("/movies/{tmdb_id}", response=MovieDetailSchema, auth=None)
+def get_movie_detail(request: HttpRequest, tmdb_id: int):
+    """
+    Retrieve detailed movie information by TMDB ID.
+
+    Includes user-specific data (watched status, rating, etc.) if user is authenticated.
+    """
+    # Get movie details from service
+    movie_detail = movie_service.get_movie_by_id(tmdb_id)
+
+    # Get user-specific data if user is authenticated
+    user_movie_data = None
+    if hasattr(request, 'user') and request.user.is_authenticated:
+        try:
+            user_data = UserMovieData.objects.get(
+                user=request.user,
+                movie__tmdb_id=tmdb_id
+            )
+            user_movie_data = UserMovieDataSchema(
+                id=user_data.id,
+                tmdb_id=user_data.movie.tmdb_id,
+                title=user_data.movie.title,
+                user_watched=user_data.user_watched,
+                user_on_watchlist=user_data.user_on_watchlist,
+                user_liked=user_data.user_liked,
+                user_rating=user_data.user_rating,
+                user_review=user_data.user_review,
+            )
+        except UserMovieData.DoesNotExist:
+            # No user data exists for this movie, which is fine
+            pass
+
+    # Add user data to the movie detail response
+    movie_detail.user_movie_data = user_movie_data
+
+    return movie_detail

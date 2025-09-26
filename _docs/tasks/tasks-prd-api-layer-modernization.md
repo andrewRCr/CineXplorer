@@ -64,11 +64,11 @@ This task list covers **Phase 1 (Proof of Concept)** of the API Layer Modernizat
     - [x] 3.25.5 Replace error dictionaries with HttpError exceptions throughout service layer for proper Django Ninja integration
     - [x] 3.25.6 Update any remaining helper functions and validate all service methods return proper Pydantic types
   - [x] 3.3 In `api.py`, create a `Router` instance.
-  - [ ] 3.4 Systematically migrate each endpoint from the old `movie/views.py` to a path operation function in `api.py`, using the new Pydantic schemas for request bodies and responses.
-    - [ ] 3.4.1 Migrate supporting data endpoints (genres, keywords, people) - 5 simple endpoints
-    - [ ] 3.4.2 Migrate single resource endpoint (movie detail by ID) with user data integration
-    - [ ] 3.4.3 Migrate basic paginated endpoints (now playing, upcoming, search movies) - 3 endpoints
-    - [ ] 3.4.4 Migrate complex discovery endpoint with parameter processing and validation
+  - [x] 3.4 Systematically migrate each endpoint from the old `movie/views.py` to a path operation function in `api.py`, using the new Pydantic schemas for request bodies and responses.
+    - [x] 3.4.1 Migrate supporting data endpoints (genres, keywords, people) - 5 simple endpoints
+    - [x] 3.4.2 Migrate single resource endpoint (movie detail by ID) with user data integration
+    - [x] 3.4.3 Migrate basic paginated endpoints (now playing, upcoming, search movies) - 3 endpoints
+    - [x] 3.4.4 Migrate complex discovery endpoint with parameter processing and validation
   - [ ] 3.5 Add the new `movie` router to the main `NinjaAPI` instance.
   - [ ] 3.6 Once all `movie` endpoints are migrated and confirmed working, delete the old `backend/apps/movie/views.py` and `backend/apps/movie/serializers.py` files.
 

@@ -24,12 +24,7 @@ limitations, not code quality issues.
 This is the recommended approach per Django + Pyright community best practices.
 """
 
-from django.conf import settings
 from django.db import models
-from django.core.validators import (
-    MaxValueValidator,
-    MinValueValidator,
-)
 
 
 class Movie(models.Model):
@@ -52,5 +47,3 @@ class Movie(models.Model):
 
     def __str__(self) -> str:
         return self.title  # type: ignore[attr-defined]  # Django field access
-
-

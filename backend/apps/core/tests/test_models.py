@@ -7,6 +7,7 @@ from django.test import TestCase
 from django.contrib.auth import get_user_model
 
 from core import models
+from user_movie_data.models import UserMovieData
 
 
 class ModelTests(TestCase):
@@ -84,7 +85,7 @@ class ModelTests(TestCase):
             title='Blade Runner',
             # ...other movie fields...
         )
-        user_movie_data: models.UserMovieData = models.UserMovieData.objects.create(
+        user_movie_data: UserMovieData = UserMovieData.objects.create(
             user=user,
             movie=movie,
             # ...other UserMovieData fields...
@@ -109,7 +110,7 @@ class ModelTests(TestCase):
             title='Blade Runner',
             # ...other movie fields...
         )
-        user_movie_data: models.UserMovieData = models.UserMovieData.objects.create(
+        user_movie_data: UserMovieData = UserMovieData.objects.create(
             user=user,
             movie=movie,
             user_watched=True,

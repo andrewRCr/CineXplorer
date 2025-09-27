@@ -15,7 +15,7 @@ import json
 
 CREATE_USER_URL: str = reverse('register')
 TOKEN_URL: str = reverse('token_obtain_pair')
-ME_URL: str = reverse('user:me')
+ME_URL: str = reverse('authentication:me')
 
 
 def create_user(**params) -> AbstractUser:

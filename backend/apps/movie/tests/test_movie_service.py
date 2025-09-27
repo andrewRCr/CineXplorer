@@ -5,7 +5,7 @@ These tests focus on the service layer independently from API endpoints,
 testing parameter mapping, error handling, and data transformation logic
 that wasn't covered by integration tests.
 """
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 from django.test import TestCase
 from ninja.errors import HttpError
 from typing import cast
@@ -91,11 +91,13 @@ class MovieServiceErrorHandlingTests(TestCase):
     def test_get_movie_by_id_api_error(self, mock_get_details):
         """Test error handling when TMDB API returns error for movie details."""
         # Arrange: Mock API error response
-        mock_api_response = ApiResponse(status_code=404, data={'status_message': 'Movie not found'})
+        mock_api_response = ApiResponse(
+            status_code=404, data={'status_message': 'Movie not found'}
+        )
         mock_get_details.return_value = mock_api_response
 
         # Act & Assert: Should raise HttpError
-        with self.assertRaises(HttpError) as context:
+        with self.assertRaises(HttpError):
             movie_service.get_movie_by_id(999999)
 
         # Verify error handling was called
@@ -112,7 +114,9 @@ class MovieServiceErrorHandlingTests(TestCase):
             'vote_average': 8.0, 'genres': [], 'production_companies': []
         }
         mock_get_details.return_value = ApiResponse(status_code=200, data=movie_data)
-        mock_get_credits.return_value = ApiResponse(status_code=500, data={'error': 'Server error'})
+        mock_get_credits.return_value = ApiResponse(
+            status_code=500, data={'error': 'Server error'}
+        )
 
         # Act & Assert: Should raise HttpError for credits failure
         with self.assertRaises(HttpError):
@@ -125,7 +129,9 @@ class MovieServiceErrorHandlingTests(TestCase):
     def test_get_nowPlaying_movies_api_error(self, mock_get_now_playing):
         """Test error handling for now playing movies API failure."""
         # Arrange: Mock API error
-        mock_api_response = ApiResponse(status_code=500, data={'error': 'Internal server error'})
+        mock_api_response = ApiResponse(
+            status_code=500, data={'error': 'Internal server error'}
+        )
         mock_get_now_playing.return_value = mock_api_response
 
         # Act & Assert
@@ -217,7 +223,9 @@ class MovieServiceDataTransformationTests(TestCase):
         }
 
         # Act
-        result = movie_service.create_movie_detail_from_tmdb(cast(dict, movie_data), cast(dict, credits_data))
+        result = movie_service.create_movie_detail_from_tmdb(
+            cast(dict, movie_data), cast(dict, credits_data)
+        )
 
         # Assert
         self.assertIsInstance(result, MovieDetailSchema)

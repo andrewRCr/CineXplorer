@@ -84,7 +84,8 @@ def fetch_movie_runtimes(movie_ids: list[int]) -> dict[int, int]:
     return runtimes
 
 
-# get_simple_credits function removed - credits processing now handled in create_movie_detail_from_tmdb factory
+# get_simple_credits function removed - credits processing now handled in
+# create_movie_detail_from_tmdb factory
 
 
 # =========================
@@ -217,7 +218,9 @@ def create_movie_detail_from_tmdb(
         raise HttpError(500, "Failed to process movie details")
 
 
-def create_paginated_movie_response_from_tmdb(tmdb_response: dict[str, object]) -> PaginatedMovieResponseSchema:
+def create_paginated_movie_response_from_tmdb(
+    tmdb_response: dict[str, object]
+) -> PaginatedMovieResponseSchema:
     """
     Create a PaginatedMovieResponseSchema from TMDB paginated response.
 
@@ -262,7 +265,9 @@ def create_paginated_movie_response_from_tmdb(tmdb_response: dict[str, object]) 
         raise HttpError(500, "Failed to process movie search results")
 
 
-def create_paginated_keyword_response_from_tmdb(tmdb_response: dict[str, object]) -> PaginatedKeywordResponseSchema:
+def create_paginated_keyword_response_from_tmdb(
+    tmdb_response: dict[str, object]
+) -> PaginatedKeywordResponseSchema:
     """
     Create a PaginatedKeywordResponseSchema from TMDB keyword response.
 
@@ -305,7 +310,9 @@ def create_paginated_keyword_response_from_tmdb(tmdb_response: dict[str, object]
         raise HttpError(500, "Failed to process keyword results")
 
 
-def create_paginated_person_response_from_tmdb(tmdb_response: dict[str, object]) -> PaginatedPersonResponseSchema:
+def create_paginated_person_response_from_tmdb(
+    tmdb_response: dict[str, object]
+) -> PaginatedPersonResponseSchema:
     """
     Create a PaginatedPersonResponseSchema from TMDB person response.
 
@@ -690,7 +697,10 @@ def search_movies(query: str, page: int = 1) -> PaginatedMovieResponseSchema:
 
     # Create filtered response data
     total_results = result.get('total_results', 0)
-    total_results_int = int(total_results) if isinstance(total_results, (int, float, str)) and str(total_results).isdigit() else 0
+    total_results_int = (
+        int(total_results) if isinstance(total_results, (int, float, str)) and
+        str(total_results).isdigit() else 0
+    )
 
     filtered_result = {
         'page': result.get('page', page),

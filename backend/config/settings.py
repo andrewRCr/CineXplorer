@@ -222,7 +222,8 @@ FORBIDDEN_USERNAMES = [
 ]
 
 # CORS constants
-CORS_ALLOW_ALL_ORIGINS = True  # TODO: update for production (temp/development only)
+# TODO: update for production (temp/development only)
+CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 
 
@@ -253,17 +254,21 @@ SIMPLE_JWT = {
 # Testing flag
 TESTING = "test" in sys.argv
 
+
 # Ensure log directory exists
 def ensure_log_directory():
-    """Ensure the log directory exists for file handlers (only when not in CI)."""
+    """
+    Ensure the log directory exists for file handlers (only when not in CI).
+    """
     # Multiple ways to detect CI environment (consistent with logging.py)
     is_ci = (
         os.environ.get('CI', 'False').lower() == 'true' or
-        os.environ.get('GITHUB_ACTIONS', 'False').lower() == 'true' or 
-        os.environ.get('CONTINUOUS_INTEGRATION', 'False').lower() == 'true' or
+        os.environ.get('GITHUB_ACTIONS', 'False').lower() == 'true' or
+        os.environ.get('CONTINUOUS_INTEGRATION',
+                      'False').lower() == 'true' or
         bool(os.environ.get('BUILD_NUMBER'))  # Jenkins
     )
-    
+
     if is_ci:
         # In CI, logging config will disable file handlers entirely
         # Return a dummy path that won't be used
@@ -271,15 +276,22 @@ def ensure_log_directory():
     else:
         # In development/production, use the standard logs directory
         log_dir = os.path.join(BASE_DIR, "logs")
-        
+
         try:
             os.makedirs(log_dir, exist_ok=True)
             return log_dir
         except PermissionError:
-            # Fallback to temp directory if we can't create the intended directory
+            # Fallback to temp directory if we can't create the intended
+            # directory
             import tempfile
-            fallback_dir = tempfile.mkdtemp(prefix='cinexplorer-logs-fallback-')
-            print(f"Warning: Could not create log directory {log_dir}, using fallback: {fallback_dir}", file=sys.stderr)
+            fallback_dir = tempfile.mkdtemp(
+                prefix='cinexplorer-logs-fallback-'
+            )
+            print(
+                f"Warning: Could not create log directory {log_dir}, "
+                f"using fallback: {fallback_dir}",
+                file=sys.stderr
+            )
             return fallback_dir
 
 
@@ -288,7 +300,8 @@ LOG_DIRECTORY = ensure_log_directory()
 
 # Logging Configuration
 # Configure Django's logging using our custom logging configuration
-# This imports and applies the comprehensive logging setup from config/logging.py
+# This imports and applies the comprehensive logging setup from
+# config/logging.py
 # Features:
 # - Environment-based log levels (DJANGO_LOG_LEVEL)
 # - Separate formatters for development and production

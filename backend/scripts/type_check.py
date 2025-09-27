@@ -23,6 +23,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+
 def run_command(cmd: list[str], description: str) -> tuple[int, str]:
     """Run a command and return (returncode, combined stdout/stderr)."""
     print(f"\n> {description}...")
@@ -45,10 +46,12 @@ def run_command(cmd: list[str], description: str) -> tuple[int, str]:
     except Exception as e:
         return 1, str(e)
 
+
 def is_django_stubs_internal_error(output: str) -> bool:
     """Detect the known django-stubs internal error signature."""
     lowered = output.lower()
     return "django-stubs" in lowered and "internal error" in lowered
+
 
 def main() -> None:
     """Run comprehensive type checking."""
@@ -57,13 +60,19 @@ def main() -> None:
 
     # Test 1: Core utilities with strict mypy
     code1, output1 = run_command(
-        ["python", "-m", "mypy", "apps/core/utilities/", "--show-error-codes", "--explicit-package-bases"],
+        [
+            "python", "-m", "mypy", "apps/core/utilities/",
+            "--show-error-codes", "--explicit-package-bases"
+        ],
         "MyPy strict check on core utilities"
     )
 
     # Test 2: Services with mypy (should be strict per config)
     code2, output2 = run_command(
-        ["python", "-m", "mypy", "apps/core/services/email_service.py", "--show-error-codes", "--explicit-package-bases"],
+        [
+            "python", "-m", "mypy", "apps/core/services/email_service.py",
+            "--show-error-codes", "--explicit-package-bases"
+        ],
         "MyPy check on services"
     )
 
@@ -97,11 +106,14 @@ def main() -> None:
 
     for name, returncode, output, is_mypy in tests:
         status = "PASS" if returncode == 0 else "FAIL"
-        if returncode != 0 and is_mypy and is_django_stubs_internal_error(output):
+        if (returncode != 0 and is_mypy and
+                is_django_stubs_internal_error(output)):
             status = "SKIP"
             skipped += 1
             if "--verbose" in sys.argv:
-                print(f"  Upstream django-stubs issue detected. See {upstream_issue}.")
+                print(
+                    f"Upstream django-stubs issue detected. See {upstream_issue}."
+                )
 
         print(f"[{status}] {name}")
         if status == "PASS":
@@ -121,7 +133,8 @@ def main() -> None:
 
     if skipped:
         print(
-            "\nNOTE: One or more mypy checks were skipped due to the known django-stubs "
+            "\nNOTE: One or more mypy checks were skipped due to the "
+            "known django-stubs "
             f"internal error ({upstream_issue})."
         )
 

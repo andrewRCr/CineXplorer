@@ -8,8 +8,10 @@ is working correctly and producing expected output.
 import time
 from django.core.management.base import BaseCommand
 from movie.services.movie_service import (
-    tmdb_get, get_movie_by_id
+    get_movie_by_id, discover_movies, search_movies,
+    get_nowPlaying_movies, get_upcoming_movies
 )
+from ninja.errors import HttpError
 
 
 class Command(BaseCommand):
@@ -78,55 +80,67 @@ class Command(BaseCommand):
     def test_discover_movies(self):
         """Test discover movies API call."""
         self.stdout.write("  📊 Discover popular movies...")
-        result = tmdb_get('discover/movie', {'sort_by': 'popularity.desc', 'page': 1})
-        if 'error' not in result:
-            self.stdout.write(f"  🎭 Found {len(result.get('results', []))} movies")
-        else:
-            self.stdout.write(f"  ❌ Error: {result.get('error')}")
+        try:
+            result = discover_movies(page=1, sort_by='popularity.desc')
+            self.stdout.write(f"  🎭 Found {len(result.results)} movies")
+        except HttpError as e:
+            self.stdout.write(f"  ❌ Error: {e.detail}")
+        except Exception as e:
+            self.stdout.write(f"  ❌ Error: {str(e)}")
 
     def test_search_movies(self):
         """Test search movies API call."""
         self.stdout.write("  🔍 Searching for 'Inception'...")
-        result = tmdb_get('search/movie', {'query': 'Inception', 'page': 1})
-        if 'error' not in result:
-            self.stdout.write(f"  🎬 Found {len(result.get('results', []))} results")
-        else:
-            self.stdout.write(f"  ❌ Error: {result.get('error')}")
+        try:
+            result = search_movies(query='Inception', page=1)
+            self.stdout.write(f"  🎬 Found {len(result.results)} results")
+        except HttpError as e:
+            self.stdout.write(f"  ❌ Error: {e.detail}")
+        except Exception as e:
+            self.stdout.write(f"  ❌ Error: {str(e)}")
 
     def test_movie_details(self):
         """Test movie details API call."""
         self.stdout.write("  📄 Getting details for movie ID 27205 (Inception)...")
-        result = get_movie_by_id(27205)
-        if 'error' not in result:
-            title = result.get('title', 'Unknown')
-            year = result.get('release_date', '')[:4] if result.get('release_date') else 'Unknown'
+        try:
+            result = get_movie_by_id(27205)
+            title = result.title
+            year = result.release_date[:4] if result.release_date else 'Unknown'
             self.stdout.write(f"  🎯 Retrieved: {title} ({year})")
-        else:
-            self.stdout.write(f"  ❌ Error: {result.get('error')}")
+        except HttpError as e:
+            self.stdout.write(f"  ❌ Error: {e.detail}")
+        except Exception as e:
+            self.stdout.write(f"  ❌ Error: {str(e)}")
 
     def test_popular_movies(self):
         """Test popular movies API call."""
         self.stdout.write("  🌟 Getting popular movies...")
-        result = tmdb_get('movie/popular', {'page': 1})
-        if 'error' not in result:
-            self.stdout.write(f"  🏆 Found {len(result.get('results', []))} popular movies")
-        else:
-            self.stdout.write(f"  ❌ Error: {result.get('error')}")
+        try:
+            result = discover_movies(page=1, sort_by='popularity.desc')
+            self.stdout.write(f"  🏆 Found {len(result.results)} popular movies")
+        except HttpError as e:
+            self.stdout.write(f"  ❌ Error: {e.detail}")
+        except Exception as e:
+            self.stdout.write(f"  ❌ Error: {str(e)}")
 
     def test_now_playing(self):
         """Test now playing movies API call."""
         self.stdout.write("  🎪 Getting now playing movies...")
-        result = tmdb_get('movie/now_playing', {'page': 1})
-        if 'error' not in result:
-            self.stdout.write(f"  🎭 Found {len(result.get('results', []))} now playing movies")
-        else:
-            self.stdout.write(f"  ❌ Error: {result.get('error')}")
+        try:
+            result = get_nowPlaying_movies(page=1)
+            self.stdout.write(f"  🎭 Found {len(result.results)} now playing movies")
+        except HttpError as e:
+            self.stdout.write(f"  ❌ Error: {e.detail}")
+        except Exception as e:
+            self.stdout.write(f"  ❌ Error: {str(e)}")
 
     def test_upcoming_movies(self):
         """Test upcoming movies API call."""
         self.stdout.write("  🔮 Getting upcoming movies...")
-        result = tmdb_get('movie/upcoming', {'page': 1})
-        if 'error' not in result:
-            self.stdout.write(f"  📅 Found {len(result.get('results', []))} upcoming movies")
-        else:
-            self.stdout.write(f"  ❌ Error: {result.get('error')}")
+        try:
+            result = get_upcoming_movies(page=1)
+            self.stdout.write(f"  📅 Found {len(result.results)} upcoming movies")
+        except HttpError as e:
+            self.stdout.write(f"  ❌ Error: {e.detail}")
+        except Exception as e:
+            self.stdout.write(f"  ❌ Error: {str(e)}")

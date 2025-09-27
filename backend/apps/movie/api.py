@@ -91,6 +91,68 @@ def search_movies(request, query: str, page: int = 1):
 
 
 @router.get("/movies/discover", response=PaginatedMovieResponseSchema, auth=None)
+def _build_simple_filters(sort_by, genres, keywords, people, certification,
+                          region, release_date_gte, release_date_lte):
+    """Build simple string parameter filters."""
+    filters = {}
+    simple_params = {
+        'sort_by': sort_by,
+        'genres': genres,
+        'keywords': keywords,
+        'people': people,
+        'certification': certification,
+        'region': region,
+        'release_date_gte': release_date_gte,
+        'release_date_lte': release_date_lte,
+    }
+    for param, value in simple_params.items():
+        if value is not None:
+            filters[param] = value
+    return filters
+
+
+def _process_year_filters(filters, year, min_year, max_year):
+    """Process year filtering parameters."""
+    if year is not None:
+        if year.isdigit():
+            filters['year'] = int(year)
+        elif year.endswith('s') and len(year) == 5 and year[:-1].isdigit():
+            decade_start = int(year[:-1])
+            filters['release_date_gte'] = f"{decade_start}-01-01"
+            filters['release_date_lte'] = f"{decade_start + 9}-12-31"
+        else:
+            raise HttpError(400, f"Invalid year format: {year}")
+
+    if min_year is not None:
+        filters['release_date_gte'] = f"{min_year}-01-01"
+    if max_year is not None:
+        filters['release_date_lte'] = f"{max_year}-12-31"
+
+
+def _process_rating_filters(filters, vote_average_gte, vote_average_lte, min_rating):
+    """Process rating filtering parameters."""
+    if vote_average_gte is not None:
+        filters['vote_average_gte'] = vote_average_gte
+    elif min_rating is not None:
+        filters['vote_average_gte'] = min_rating
+
+    if vote_average_lte is not None:
+        filters['vote_average_lte'] = vote_average_lte
+
+
+def _process_runtime_filters(filters, runtime_gte, runtime_lte, min_runtime, max_runtime):
+    """Process runtime filtering parameters."""
+    if runtime_gte is not None:
+        filters['runtime_gte'] = runtime_gte
+    elif min_runtime is not None:
+        filters['runtime_gte'] = min_runtime
+
+    if runtime_lte is not None:
+        filters['runtime_lte'] = runtime_lte
+    elif max_runtime is not None:
+        filters['runtime_lte'] = max_runtime
+
+
 def discover_movies(
     request,
     page: int = 1,
@@ -130,62 +192,16 @@ def discover_movies(
     - Runtime filtering (runtime_gte/lte or min/max_runtime)
     - Certification and region filtering
     """
-    filters = {}
+    filters = _build_simple_filters(
+        sort_by, genres, keywords, people, certification, region,
+        release_date_gte, release_date_lte
+    )
 
-    # Process simple string parameters
-    simple_params = {
-        'sort_by': sort_by,
-        'genres': genres,
-        'keywords': keywords,
-        'people': people,
-        'certification': certification,
-        'region': region,
-        'release_date_gte': release_date_gte,
-        'release_date_lte': release_date_lte,
-    }
-
-    for param, value in simple_params.items():
-        if value is not None:
-            filters[param] = value
-
-    # Process year parameters (complex logic for year, decade, min/max year)
-    if year is not None:
-        if year.isdigit():
-            # Single year
-            filters['year'] = int(year)
-        elif year.endswith('s') and len(year) == 5 and year[:-1].isdigit():
-            # Decade (e.g., "1990s")
-            decade_start = int(year[:-1])
-            filters['release_date_gte'] = f"{decade_start}-01-01"
-            filters['release_date_lte'] = f"{decade_start + 9}-12-31"
-        else:
-            raise HttpError(400, f"Invalid year format: {year}")
-
-    if min_year is not None:
-        filters['release_date_gte'] = f"{min_year}-01-01"
-
-    if max_year is not None:
-        filters['release_date_lte'] = f"{max_year}-12-31"
-
-    # Process rating parameters (handle aliases)
-    if vote_average_gte is not None:
-        filters['vote_average_gte'] = vote_average_gte
-    elif min_rating is not None:
-        filters['vote_average_gte'] = min_rating
-
-    if vote_average_lte is not None:
-        filters['vote_average_lte'] = vote_average_lte
-
-    # Process runtime parameters (handle aliases)
-    if runtime_gte is not None:
-        filters['runtime_gte'] = runtime_gte
-    elif min_runtime is not None:
-        filters['runtime_gte'] = min_runtime
-
-    if runtime_lte is not None:
-        filters['runtime_lte'] = runtime_lte
-    elif max_runtime is not None:
-        filters['runtime_lte'] = max_runtime
+    _process_year_filters(filters, year, min_year, max_year)
+    _process_rating_filters(filters, vote_average_gte, vote_average_lte, min_rating)
+    _process_runtime_filters(
+        filters, runtime_gte, runtime_lte, min_runtime, max_runtime
+    )
 
     return movie_service.discover_movies(page=page, **filters)
 
@@ -214,7 +230,7 @@ def get_movie_detail(request: HttpRequest, tmdb_id: int):
                 movie__tmdb_id=tmdb_id
             )
             user_movie_data = UserMovieDataSchema(
-                id=user_data.id,  # type: ignore
+                id=user_data.id,  # Django model ID is always int for saved instances
                 tmdb_id=user_data.movie.tmdb_id,
                 title=user_data.movie.title,
                 user_watched=user_data.user_watched,

@@ -11,7 +11,7 @@ reliable, and consistent with other integration tests in the application.
 """
 from django.test import TestCase, Client
 from rest_framework import status
-from unittest.mock import patch, Mock
+from unittest.mock import patch
 
 # Django Ninja API URLs for the paginated movie endpoints
 NOW_PLAYING_URL = '/api/movie/movies/now-playing'

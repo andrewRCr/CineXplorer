@@ -9,19 +9,25 @@ from django.contrib.auth.models import AbstractBaseUser
 from django.db.models import Q
 from django.http import HttpRequest
 
-# TODO: add check on registration to ensure new user can't register with an existing and verified
-# email address. django constraints, perhaps?
+# TODO: add check on registration to ensure new user can't register with
+# an existing and verified email address. django constraints, perhaps?
 
 
 class CustomUserModelBackend(ModelBackend):
-    """ Custom authentication backend. Will allow auth using email OR username. """
+    """
+    Custom authentication backend.
+    Will allow auth using email OR username.
+    """
 
     def authenticate(self,
                      request: HttpRequest | None,
                      username: str | None = None,
                      password: str | None = None,
                      **kwargs: object) -> AbstractBaseUser | None:
-        """ Authentication override, substituting email for username if needed. """
+        """
+        Authentication override,
+        substituting email for username if needed.
+        """
 
         UserModel: type[AbstractBaseUser] = get_user_model()
 
@@ -31,7 +37,8 @@ class CustomUserModelBackend(ModelBackend):
         if username is None or password is None:
             return
         try:
-            # TODO: re-enable email_verified requirement once verification in place!
+            # TODO: re-enable email_verified requirement once verification
+            # in place!
             # user: AbstractBaseUser = UserModel._default_manager.get(
             #     Q(username__exact=username) | (
             #         Q(email__iexact=username) & Q(email_verified=True))
@@ -40,10 +47,11 @@ class CustomUserModelBackend(ModelBackend):
                     Q(email__iexact=username))
             )
         except UserModel.DoesNotExist:
-            # prevent security vulnerability: run the default password hasher once to reduce the
-            # timing difference between an existing and a nonexistent user
-            # (see: Django Project ticket #20760).
+            # prevent security vulnerability: run the default password hasher
+            # once to reduce the timing difference between an existing and
+            # a nonexistent user (see: Django Project ticket #20760).
             UserModel().set_password(password)
         else:
-            if user.check_password(password) and self.user_can_authenticate(user):
+            if (user.check_password(password) and
+                    self.user_can_authenticate(user)):
                 return user

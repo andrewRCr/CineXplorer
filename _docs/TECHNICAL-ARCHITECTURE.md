@@ -27,7 +27,12 @@ The backend is a REST API built with Django and Django REST Framework (DRF).
     - `django-cors-headers` for managing Cross-Origin Resource Sharing (CORS).
     - `django-debug-toolbar` for debugging during development.
     - `environ` for managing environment variables.
-- **Directory Structure**: The backend code is organized into discrete Django `apps` within the `backend/apps/` directory (`core`, `user`, `movie`, etc.). The `core` app contains the primary models (`User`, `Movie`, `UserMovieData`).
+- **Directory Structure**: The backend code is organized into discrete Django `apps` within the `backend/apps/` directory with clear domain boundaries:
+  - `accounts`: User authentication models (`User`, `EmailVerificationToken`)
+  - `authentication`: Authentication processes (JWT, serializers, views, middleware)
+  - `core`: Core business models (`Movie` and shared utilities)
+  - `movie`: Movie-related functionality and API endpoints
+  - `user_movie_data`: User-movie interaction models and API (`UserMovieData`, watchlist, ratings)
 
 ## 3. Frontend
 

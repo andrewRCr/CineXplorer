@@ -182,10 +182,11 @@ git log main..feature/[feature-name] --oneline
 ### Django Apps Structure
 ```
 backend/apps/
-├── core/          # Primary models (User, Movie, UserMovieData)
-├── user/          # User management and authentication
-├── movie/         # Movie-related functionality
-└── user_movie_data/  # User-movie interactions
+├── accounts/         # User authentication models (User, EmailVerificationToken)
+├── authentication/   # Authentication processes (JWT, serializers, views, middleware)
+├── core/            # Core business models (Movie) and shared utilities
+├── movie/           # Movie-related functionality and API endpoints
+└── user_movie_data/ # User-movie interaction models and API (UserMovieData, watchlist, ratings)
 ```
 
 ### Frontend Structure

@@ -8,7 +8,7 @@ This task list covers **Phase 1 (Proof of Concept)** of the API Layer Modernizat
 - `backend/config/api.py` - ✅ Central `NinjaAPI` instance with native JWT authentication, OpenAPI documentation, and enhanced endpoints.
 - `backend/apps/movie/api.py` - ✅ Created with Django Ninja router and all 10 movie endpoints migrated from DRF.
 - `backend/apps/movie/schemas.py` - ✅ Created with comprehensive Pydantic schemas replacing DRF serializers.
-- `backend/apps/user/auth_ninja.py` - ✅ Enhanced Django Ninja JWT cookie authentication with native integration, OpenAPI schema, and comprehensive error handling.
+- `backend/apps/authentication/auth_ninja.py` - ✅ Enhanced Django Ninja JWT cookie authentication with native integration, OpenAPI schema, and comprehensive error handling.
 - `backend/shared/__init__.py` - ✅ Temporary shared module stub (to be replaced by Pydantic schemas).
 - `backend/shared/api_types.py` - ✅ TMDB API type definitions stub (temporary).
 - `backend/shared/error_codes.py` - ✅ Error codes constants stub (temporary).
@@ -47,7 +47,7 @@ This task list covers **Phase 1 (Proof of Concept)** of the API Layer Modernizat
   - [x] 2.4 Verify type checking and linting pass on the foundational authentication components.
 
 - [x] 2.5 **Authentication Layer Migration (Continued)**
-  - [x] 2.5.1 Create `backend/apps/user/auth_ninja.py`.
+  - [x] 2.5.1 Create `backend/apps/authentication/auth_ninja.py`.
   - [x] 2.5.2 In the new file, define a class `JWTCookieAuth` that implements a Ninja security scheme (e.g., `APIKeyCookie`).
   - [x] 2.5.3 Implement Django Ninja native integration mitigation: Add OpenAPI security schema, proper error handling, and dependency injection wrapper to get full native Ninja benefits.
   - [x] 2.5.4 Configure the main `NinjaAPI` instance in `backend/config/api.py` to use this as a global authentication scheme.
@@ -79,7 +79,7 @@ This task list covers **Phase 1 (Proof of Concept)** of the API Layer Modernizat
   - [x] 4.2.5 Create dedicated service layer tests for movie_service.py to test parameter mapping, error handling, and business logic separately from API integration tests.
   - [x] 4.3 Use the interactive API docs at `/api/docs` to manually test the new `movie` endpoints and confirm functionality.
   - [x] 4.3.5 Verify that test patterns established in movie app migration are suitable as blueprints for
-  other app migrations (user, user_movie_data).
+  other app migrations (authentication, user_movie_data).
   - [x] 4.4 Run `npx pyright backend/apps/movie/` and `mypy --strict` on the movie directory and resolve all type errors.
     - **Note:** `mypy --strict` currently fails with an upstream `django-stubs` internal error (https://github.com/typeddjango/django-stubs/issues/2461). Use Pyright as the primary guardrail and track the upstream fix before re-enabling full mypy coverage.
   - [x] 4.4.5 Document testing standards and patterns discovered during movie app migration for use in future app migrations.
@@ -164,19 +164,19 @@ This task list covers **Phase 1 (Proof of Concept)** of the API Layer Modernizat
 
 ### Patterns Suitable for Future App Migrations
 
-**1. User App Migration:**
+**1. Authentication App Migration:**
 - Apply the same three-layer testing approach
-- Focus on authentication flow testing and user profile management
-- Test JWT token handling and session management
+- Focus on authentication flow testing and JWT token management
+- Test authentication endpoints and user session management
 
 **2. User_Movie_Data App Migration:**
 - Emphasize testing the relationship between user data and movie data
 - Test complex query patterns and user-specific data filtering
 - Validate data consistency across user interactions
 
-**3. Core App Migration:**
-- Focus on utility function testing and shared service layer components
-- Test cross-app integration points and shared authentication logic
+**3. Accounts App Migration:**
+- Focus on User model and profile management endpoints
+- Test user data integrity and account management flows
 
 ### Recommended Testing Workflow for Future Migrations
 

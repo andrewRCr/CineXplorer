@@ -19,7 +19,7 @@ This modernization will be executed in two distinct phases to de-risk the projec
     The initial effort will focus on migrating a single, representative slice of the API: the `movie` application. This will allow us to establish a clear blueprint and identify all necessary patterns for the full migration in a controlled environment.
 
 *   **Phase 2: Full Migration (Future Scope)**
-    Following the successful completion of the PoC, a new task list will be created to apply the established patterns to the remaining applications (`user`, `user_movie_data`, etc.), completing the full API layer modernization.
+    Following the successful completion of the PoC, a new task list will be created to apply the established patterns to the remaining applications (`authentication`, `user_movie_data`, etc.), completing the full API layer modernization.
 
 ## 3. Goals
 
@@ -48,7 +48,7 @@ This migration will begin with a proof-of-concept (PoC) focused on the `movie` a
 ## 6. Non-Goals (Out of Scope)
 
 *   This migration will not alter the database schema or the core business logic contained within service layers.
-*   Changes to other applications (`user`, `user_movie_data`, etc.) are out of scope for this initial PoC.
+*   Changes to other applications (`authentication`, `user_movie_data`, etc.) are out of scope for this initial PoC.
 *   Minor adjustments to adjacent components (e.g., URL structures) are permissible if they result in a more idiomatic and maintainable integration with Django Ninja, in line with the project's goal of demonstrating best practices.
 
 ## 7. Technical Considerations
@@ -78,5 +78,5 @@ These foundational issues are being addressed in Task 2.0 before continuing with
 ## 10. Open Questions
 
 *   What is the most idiomatic and secure way to implement the custom cookie-based authentication in Django Ninja?
-*   What is the optimal strategy for rolling out this change to the `user` and `user_movie_data` apps after the PoC is successful?
+*   What is the optimal strategy for rolling out this change to the `authentication` and `user_movie_data` apps after the PoC is successful?
 *   Should the `shared` module be integrated into the Django project structure or maintained as a separate Docker-mounted dependency?

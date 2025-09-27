@@ -10,7 +10,7 @@ from ninja import Router
 from ninja.errors import HttpError
 from django.http import HttpRequest
 
-from core.models import UserMovieData
+from user_movie_data.models import UserMovieData
 from .schemas import (
     MovieDetailSchema,
     PaginatedMovieResponseSchema,

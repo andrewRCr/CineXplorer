@@ -11,7 +11,9 @@ from django.test import Client
 from rest_framework import status
 from unittest.mock import patch, Mock
 
-from core.models import User, Movie, UserMovieData
+from accounts.models import User
+from core.models import Movie
+from user_movie_data.models import UserMovieData
 from core.services.api_response import ApiResponse
 
 # =========================

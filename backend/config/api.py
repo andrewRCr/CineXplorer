@@ -14,7 +14,7 @@ from django.http import HttpRequest
 from ninja import NinjaAPI
 
 # Import our native JWT authentication scheme
-from user.auth_ninja import jwt_cookie_auth
+from authentication.auth_ninja import jwt_cookie_auth
 from movie.api import router as movie_router
 
 # Create the main NinjaAPI instance with native authentication
@@ -94,7 +94,7 @@ def health_check_user(request: HttpRequest) -> dict[str, str | int | list[str]]:
         HttpError: 500 if internal authentication error occurs
     """
     # Import here to avoid circular import
-    from user.auth_ninja import get_current_user
+    from authentication.auth_ninja import get_current_user
 
     # Use enhanced dependency injection with proper error handling
     user = get_current_user(request)
@@ -193,7 +193,7 @@ def test_auth_status(request: HttpRequest) -> dict[str, str | bool | dict[str, s
         Authentication status information and guidance.
     """
     # Import here to avoid circular import
-    from user.auth_ninja import get_current_user_optional
+    from authentication.auth_ninja import get_current_user_optional
 
     # Check if user is authenticated (without raising errors)
     user = get_current_user_optional(request)

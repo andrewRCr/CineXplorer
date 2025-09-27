@@ -7,7 +7,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model, authenticate
 from django.contrib.auth.models import AbstractUser
 from django.utils.translation import gettext as _
-from core.models import User
+from accounts.models import User
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
 from rest_framework.exceptions import ValidationError

@@ -5,10 +5,10 @@ URL mappings for the user API.
 from django.urls import path
 from django.urls.resolvers import URLPattern
 
-from user import views
+from authentication import views
 
 
-app_name = 'user'
+app_name = 'authentication'
 
 urlpatterns: list[URLPattern] = [
     path('me/', views.ManageUserView.as_view(), name='me'),

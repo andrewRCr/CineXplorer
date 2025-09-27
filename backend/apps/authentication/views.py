@@ -32,14 +32,14 @@ from rest_framework.views import APIView
 
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
-from user.serializers import (
+from authentication.serializers import (
     CustomTokenObtainPairSerializer,
     CustomTokenRefreshSerializer,
     RegisterSerializer,
     UserSerializer
 )
 from core.services.email_service import email_service
-from core.models import EmailVerificationToken, User
+from accounts.models import EmailVerificationToken, User
 
 
 @method_decorator(csrf_exempt, name='dispatch')

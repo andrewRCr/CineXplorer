@@ -56,13 +56,14 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django_extensions",
+    "accounts",
     "core",
     "debug_toolbar",
     "corsheaders",
     "rest_framework",
     "rest_framework.authtoken",
     "drf_spectacular",
-    "user",
+    "authentication",
     "movie",
     "user_movie_data",
 ]
@@ -75,7 +76,7 @@ MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
-    "user.middleware.CsrfHeaderMiddleware",
+    "authentication.middleware.CsrfHeaderMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
@@ -167,7 +168,7 @@ STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # custom authentication
-AUTH_USER_MODEL = "core.User"
+AUTH_USER_MODEL = "accounts.User"
 AUTHENTICATION_BACKENDS = ["core.backends.CustomUserModelBackend"]
 
 # generate openAPI schema with drf-spectacular
@@ -176,7 +177,7 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
         # 'rest_framework.authentication.TokenAuthentication',
         "rest_framework_simplejwt.authentication.JWTAuthentication",
-        "user.authenticate.JWTCookieAuthentication",
+        "authentication.authenticate.JWTCookieAuthentication",
     ],
 }
 

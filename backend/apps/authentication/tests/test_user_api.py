@@ -314,7 +314,7 @@ class AuthCookieIntegrationTests(TestCase):
         self.client.post(CREATE_USER_URL, self.user_data)
 
         # Set email_verified=True for the test user to allow login
-        from core.models import User
+        from accounts.models import User
         user = User.objects.get(email=self.user_data['email'])
         user.email_verified = True
         user.save()

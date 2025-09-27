@@ -18,7 +18,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
-from user.views import (
+from authentication.views import (
     JWTCookieTokenObtainPairView,
     JWTCookieTokenRefreshView,
     LogOutAPIView,
@@ -34,7 +34,7 @@ urlpatterns = [
     # Legacy DRF API documentation (for remaining DRF endpoints)
     path("api/drf-schema/", SpectacularAPIView.as_view(), name="drf-schema"),
     path("api/drf-docs/", SpectacularSwaggerView.as_view(url_name="drf-schema"), name="drf-docs"),
-    path("api/user/", include("user.urls")),
+    path("api/user/", include("authentication.urls")),
     path("api/user-movie-data/", include("user_movie_data.urls")),
     path("api/core/", include("core.urls")),  # Core app for logging and utilities
     # Django Ninja API (modern, type-safe endpoints)

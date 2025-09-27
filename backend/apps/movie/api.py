@@ -90,7 +90,6 @@ def search_movies(request, query: str, page: int = 1):
 # =========================
 
 
-@router.get("/movies/discover", response=PaginatedMovieResponseSchema, auth=None)
 def _build_simple_filters(sort_by, genres, keywords, people, certification,
                           region, release_date_gte, release_date_lte):
     """Build simple string parameter filters."""
@@ -153,6 +152,7 @@ def _process_runtime_filters(filters, runtime_gte, runtime_lte, min_runtime, max
         filters['runtime_lte'] = max_runtime
 
 
+@router.get("/movies/discover", response=PaginatedMovieResponseSchema, auth=None)
 def discover_movies(
     request,
     page: int = 1,

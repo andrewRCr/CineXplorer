@@ -85,12 +85,16 @@ This task list covers **Phase 1 (Proof of Concept)** of the API Layer Modernizat
   - [x] 4.4.5 Document testing standards and patterns discovered during movie app migration for use in future app migrations.
 
 - [ ] 5.0 **Frontend Integration and Type Generation Workflow**
-  - [ ] 5.1 Research and select a `pydantic-to-typescript` tool and add it as a dev dependency to `frontend/package.json`.
-  - [ ] 5.2 Create a script in `package.json` to run the type generator.
-  - [ ] 5.3 Run the script to generate a new `movie.d.ts` file from the Pydantic schemas.
-  - [ ] 5.4 Refactor the frontend code to import and use these new auto-generated types, removing the old manual types.
-  - [ ] 5.5 Update API URLs in `frontend/src/services/movieService.ts` if necessary.
-  - [ ] 5.6 Thoroughly test all movie-related features in the running application to confirm the frontend is working correctly with the new API.
+  - [x] 5.1 Research and select a `pydantic-to-typescript` tool approach for automatic type generation.
+    - **Decision**: Selected OpenAPI-based approach using `openapi-typescript` package
+    - **Rationale**: Leverages Django Ninja's native OpenAPI generation at `/api/openapi.json` for complete API contract typing
+    - **Benefits**: Frontend-only toolchain, full request/response types, industry standard workflow
+  - [ ] 5.2 Install `openapi-typescript` as dev dependency and configure type generation script in `frontend/package.json`.
+  - [ ] 5.3 Generate initial TypeScript definitions from Django Ninja OpenAPI endpoint and validate output structure.
+  - [ ] 5.4 Create new type module at `frontend/src/types/api.ts` and integrate with existing movie type definitions.
+  - [ ] 5.5 Update `frontend/src/services/movieService.ts` to use auto-generated types, ensuring API client compatibility.
+  - [ ] 5.6 Refactor frontend components to import and use the new auto-generated types, removing manual type definitions.
+  - [ ] 5.7 Thoroughly test all movie-related features in the running application to confirm the frontend integration works correctly.
 
 ## Notes: Architectural Notes for Future Refactoring
 
@@ -222,3 +226,42 @@ This testing foundation provides a solid blueprint for migrating the remaining a
 - Prefer explicit type annotations over type suppression
 
 This type safety foundation ensures the movie app serves as an exemplary blueprint for maintaining strict type safety standards across all future app migrations.
+
+### Frontend Type Generation Research and Implementation Plan
+
+**Research Summary (Task 5.1):**
+Evaluated three approaches for automatic TypeScript type generation from Pydantic schemas:
+
+**Option 1 - Direct Pydantic Tools:**
+- `pydantic-to-typescript` (v2.0.0) and `pydantic-to-typescript2` packages
+- Pros: Direct schema conversion, single source of truth
+- Cons: Python toolchain dependency, limited to models only, no API context
+
+**Option 2 - OpenAPI-based (SELECTED):**
+- `openapi-typescript` package (v7.9.1, 229+ npm projects using it)
+- Leverages Django Ninja's native OpenAPI generation at `/api/openapi.json`
+- Pros: Complete API contract typing, frontend-only toolchain, industry standard, includes request/response context
+- Implementation: `npx openapi-typescript http://localhost:8000/api/openapi.json -o src/types/api.ts`
+
+**Option 3 - JSON Schema:**
+- `json-schema-to-typescript` for manual schema export
+- Use case: Custom schema handling and manual exports
+
+**Selected Implementation Strategy:**
+1. **Package**: `openapi-typescript` as dev dependency
+2. **Source**: Django Ninja OpenAPI endpoint (`/api/openapi.json`)
+3. **Output**: `frontend/src/types/api.ts` with complete API contract types
+4. **Integration**: Replace manual types in `movie.d.ts` and update service layer
+5. **Workflow**: Build script integration for automated type updates
+
+**Benefits for CineXplorer:**
+- Single source of truth from API contract
+- Automatic propagation of schema changes
+- Full type safety including endpoints, parameters, responses
+- Future-proof standard OpenAPI toolchain
+- Blueprint for user and user_movie_data app migrations
+
+**Technical Considerations:**
+- Requires backend API running during frontend build
+- Generated types may need occasional frontend-specific adjustments
+- Non-breaking implementation alongside existing manual types

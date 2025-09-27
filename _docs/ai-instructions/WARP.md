@@ -85,11 +85,22 @@ docker-compose -f infrastructure/docker-compose.yml exec frontend npm run build
 - Direct frontend: https://localhost:5173
 
 ## Quality Gates (MANDATORY)
-**Always mention these before suggesting commits:**
+**Always run these before suggesting commits:**
 - Backend: `docker-compose -f infrastructure/docker-compose.yml exec backend flake8 --max-line-length=99 --exclude migrations`
 - Frontend: `docker-compose -f infrastructure/docker-compose.yml exec frontend npm run lint && npm run type-check`
 - Backend Tests: `docker-compose -f infrastructure/docker-compose.yml exec backend python manage.py test --keepdb`
 - Frontend Tests: `docker-compose -f infrastructure/docker-compose.yml exec frontend npm test`
+
+## Atomic Commit Workflow (MANDATORY)
+**Before any commit, perform comprehensive task context analysis:**
+1. **Identify ALL changes**: `git status` and `git --no-pager diff --name-only`
+2. **Find relevant task documentation**: Check `_docs/tasks/` for related work
+3. **Analyze task progress**: Compare completed work against task documentation
+4. **Validate milestone context**: Distinguish partial progress from phase completion
+5. **Update task documentation**: Mark completed subtasks, update parent tasks only when ALL subtasks complete
+6. **Write accurate commit messages**: Reflect WHERE project stands after commit, not just what changed
+
+**Key Principle**: Commit messages must accurately reflect project milestone status and remaining work.
 
 > **Note**: Architecture details, coding standards, and comprehensive context are in `AI-SHARED.md` and `_docs/TECHNICAL-ARCHITECTURE.md`
 

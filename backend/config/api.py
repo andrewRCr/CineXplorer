@@ -15,7 +15,7 @@ from ninja import NinjaAPI
 
 # Import our native JWT authentication scheme
 from authentication.auth_ninja import jwt_cookie_auth
-from movie.api import router as movie_router
+from movie.api import movies_router, genres_router, keywords_router, people_router
 
 # Create the main NinjaAPI instance with native authentication
 api = NinjaAPI(
@@ -231,4 +231,8 @@ def test_auth_status(request: HttpRequest) -> dict[str, str | bool | dict[str, s
 
 
 # Add app routers
-api.add_router("/movie", movie_router)
+# Register movie-related routers with clean URL structure
+api.add_router("/movies", movies_router)
+api.add_router("/genres", genres_router)
+api.add_router("/keywords", keywords_router)
+api.add_router("/people", people_router)

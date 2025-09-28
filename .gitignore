@@ -216,5 +216,8 @@ _docs/reports/
 .claude/
 .warp/
 
+# Generated OpenAPI schema (downloaded for TypeScript type generation)
+frontend/openapi.json
+
 # Note: _docs/ai-instructions/, _docs/workflows/, and other high-level docs are included
 # to showcase systematic AI-assisted development methodology

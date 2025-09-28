@@ -24,7 +24,7 @@ Guidelines for managing task lists in markdown files to track progress on comple
   - **Third**: Run all linting checks (`flake8`, `python scripts/type_check.py`, `npm run lint`, `npm run type-check`)
   - **Fourth**: Check if PROJECT-STATUS needs updates (feature progress, completed functionality, updated priorities)
 
-  3. Generate standardized readiness report (see DEVELOPMENT-RULES.md for format) and await user instructions on how to proceed. User may choose to commit changes (AI can execute) or review first. When committing, follow atomic-commit workflow guidelines:
+  3. Generate standardized readiness report (see DEVELOPMENT-RULES.md for format) and await user instructions on how to proceed. User may choose to commit changes (AI can execute only if explicitly approved to do so) or review first. When committing, follow atomic-commit workflow (see _docs/workflows/atomic-commit.md) guidelines:
 
     - Uses conventional commit format (`feat:`, `fix:`, `refactor:`, etc.)
     - Summarizes what was accomplished in the parent task

@@ -12,17 +12,26 @@ This task list covers **Phase 1 (Proof of Concept)** of the API Layer Modernizat
 - `backend/shared/__init__.py` - ✅ Temporary shared module stub (to be replaced by Pydantic schemas).
 - `backend/shared/api_types.py` - ✅ TMDB API type definitions stub (temporary).
 - `backend/shared/error_codes.py` - ✅ Error codes constants stub (temporary).
+- `frontend/src/types/api.ts` - ✅ Auto-generated TypeScript types from Django Ninja OpenAPI schema.
+- `backend/apps/core/tmdb_models/tmdb_responses.py` - ✅ Pydantic models for TMDB API response structures providing complete type safety.
+- `backend/apps/core/tmdb_models/__init__.py` - ✅ Package initialization for TMDB response models.
+- `backend/apps/core/types/api_types.py` - ✅ Type aliases for API layer type safety (TMDBParams, TMDBResponseData).
+- `backend/apps/core/types/__init__.py` - ✅ Package initialization for core type definitions.
+- `backend/apps/core/services/validators.py` - ✅ Response validators for type-safe ApiResponse → Pydantic model conversion.
 - `_docs/tasks/tasks-prd-api-layer-modernization.md` - This task list file.
 
 ### Files to be Modified
 - `backend/requirements/req.txt` - To add the `django-ninja` dependency.
 - `backend/.dockerignore` - Added to exclude node_modules from Docker build context.
 - `backend/config/urls.py` - ✅ Updated to wire in the main Ninja API router and remove old DRF movie URLs.
+- `backend/config/api.py` - ✅ Updated to register separate routers for clean URL structure.
 - `backend/middleware/logging.py` - ✅ Fixed type checking issues for dynamic HttpRequest attributes.
 - `backend/apps/movie/tests/*` - API tests will be adapted for the new Ninja endpoints.
-- `frontend/package.json` - To add a `pydantic-to-typescript` style development dependency.
-- `frontend/src/services/movieService.ts` - To update API endpoint URLs.
-- `frontend/src/@types/movie.d.ts` - Will be replaced by auto-generated types.
+- `frontend/package.json` - ✅ Added `openapi-typescript` dev dependency and `generate-types` script.
+- `frontend/src/services/movieService.ts` - ✅ Updated to use clean API endpoint URLs and auto-generated types.
+- `frontend/src/@types/movie.d.ts` - ✅ Updated to use auto-generated types with frontend extensions.
+- `frontend/src/utilities/routeConfigHelper.ts` - ✅ Updated to work with new endpoint structure.
+- `.gitignore` - ✅ Updated to exclude generated `frontend/openapi.json` file.
 - `_docs/PROJECT-STATUS.md` - To add this new feature to the project status.
 
 ### Files to be Removed/Deprecated
@@ -89,11 +98,26 @@ This task list covers **Phase 1 (Proof of Concept)** of the API Layer Modernizat
     - **Decision**: Selected OpenAPI-based approach using `openapi-typescript` package
     - **Rationale**: Leverages Django Ninja's native OpenAPI generation at `/api/openapi.json` for complete API contract typing
     - **Benefits**: Frontend-only toolchain, full request/response types, industry standard workflow
-  - [ ] 5.2 Install `openapi-typescript` as dev dependency and configure type generation script in `frontend/package.json`.
-  - [ ] 5.3 Generate initial TypeScript definitions from Django Ninja OpenAPI endpoint and validate output structure.
-  - [ ] 5.4 Create new type module at `frontend/src/types/api.ts` and integrate with existing movie type definitions.
-  - [ ] 5.5 Update `frontend/src/services/movieService.ts` to use auto-generated types, ensuring API client compatibility.
-  - [ ] 5.6 Refactor frontend components to import and use the new auto-generated types, removing manual type definitions.
+  - [x] 5.2 Install `openapi-typescript` as dev dependency and configure type generation script in `frontend/package.json`.
+  - [x] 5.3 Generate initial TypeScript definitions from Django Ninja OpenAPI endpoint and validate output structure.
+  - [x] 5.3.5 Implement combined type generation approach (development + CI/CD) with automated schema export and CI validation workflow.
+  - [x] 5.4 Create new type module at `frontend/src/types/api.ts` and integrate with existing movie type definitions.
+  - [x] 5.5 Update `frontend/src/services/movieService.ts` to use auto-generated types, ensuring API client compatibility.
+  - [x] 5.5.5 Restructure Django Ninja API endpoints for clean URL design using multiple routers (movies, genres, keywords, people).
+  - [x] 5.6 Refactor frontend components to import and use the new auto-generated types, removing manual type definitions.
+  - [x] 5.6.5 Verify and update type checking scripts, perform comprehensive type safety validation across frontend and backend.
+  - [x] 5.6.6 Fix test infrastructure to use new clean URL structure instead of legacy `/api/movie/movies/` paths.
+  - [x] 5.6.7 Fix remaining test failures (parameter validation, authentication flow, Django Ninja migration issues).
+  - [x] 5.6.8 Implement proper TMDB response Pydantic models to replace TypedDict stubs and achieve complete type safety.
+  - [x] 5.6.9 Remove legacy router compatibility code and finalize clean architecture implementation.
+  - [ ] 5.6.10 **Establish Robust Type Safety Foundation** - Address 117 type errors in movie API layer to complete foundational type safety requirements.
+    - [x] 5.6.10.1 Create type system infrastructure with TMDBParams type alias and response validation types.
+    - [x] 5.6.10.2 Implement typed response validators (`validate_tmdb_response`, `validate_tmdb_list_response`) for bridging ApiResponse → Pydantic gap.
+    - [x] 5.6.10.3 Update movie service layer methods with proper type aliases and explicit type conversions.
+    - [x] 5.6.10.4 Fix API layer type annotations (discover_movies helper function, parameter handling).
+    - [ ] 5.6.10.5 Update test infrastructure with proper type annotations for mocks and test helpers.
+    - [ ] 5.6.10.6 Validate complete type safety: Zero type errors in movie app production code, minimal justified type ignores in tests.
+  - [ ] 5.6.11 Validate all quality gates pass (tests, type checking, linting) to ensure rock-solid Phase 1 foundation.
   - [ ] 5.7 Thoroughly test all movie-related features in the running application to confirm the frontend integration works correctly.
 
 ## Notes: Architectural Notes for Future Refactoring
@@ -199,6 +223,75 @@ This task list covers **Phase 1 (Proof of Concept)** of the API Layer Modernizat
 - Consider adding integration tests that run against a test TMDB API key for validation
 
 This testing foundation provides a solid blueprint for migrating the remaining apps while maintaining high code quality and comprehensive test coverage.
+
+## Notes: Frontend Modernization Requirements for Future Backend Cleanup
+
+**Context**: During the Django Ninja migration, some backward compatibility extensions were added to frontend types to maintain existing functionality. When the remaining apps are migrated and the backend API is fully modernized, the frontend will need updates to remove these compatibility layers.
+
+### Type System Modernization Required
+
+**Current Compatibility Extensions** (Task 5.4):
+- `Movie` interface extends `MovieDetailSchema` with additional TMDB fields
+- `MovieBase` interface extends `MovieBaseSchema` with frontend-specific fields
+- Additional fields added: `backdrop_path`, `vote_count`, `popularity`, `original_language`, `original_title`, `adult`, `video`
+
+**Future Cleanup Tasks**:
+1. **Remove Extended Movie Types**: Use pure `MovieDetailSchema` and `MovieBaseSchema` from backend
+2. **Backend Schema Enhancement**: Add missing TMDB fields to backend schemas if needed for frontend functionality
+3. **Null Safety Enforcement**: Update frontend components to handle proper null/undefined types
+4. **Remove Type Compatibility Layers**: Eliminate frontend-specific extensions in favor of backend contracts
+
+### Frontend Component Updates Required
+
+**Identified Type Safety Issues** (from Task 5.4):
+- `MovieCard.tsx:90` - `release_date` now `string | null | undefined`, needs null check before `new Date()`
+- `MovieCard.tsx:242` - `vote_average` now `number | null | undefined`, needs default handling
+- `tests/mocks/movieData.ts` - Mock data needs to match new optional field contracts
+
+**Systematic Frontend Modernization Checklist**:
+1. **Component Null Safety**: Add null checks for all optional fields across movie components
+2. **Mock Data Updates**: Update all test mocks to match strict OpenAPI contracts
+3. **Service Layer**: Remove any frontend-side data transformation that duplicates backend logic
+4. **Type Import Cleanup**: Remove manual type definitions in favor of auto-generated types
+5. **Validation Logic**: Ensure frontend validation aligns with backend Pydantic schemas
+
+### Backend API Modernization Dependencies
+
+**For Full Compatibility Removal**:
+1. **Complete API Migration**: All apps (authentication, user_movie_data, accounts) migrated to Django Ninja
+2. **Unified Schema Standards**: Consistent field naming and optional field handling across all endpoints
+3. **TMDB Integration Review**: Determine which TMDB fields should be part of backend contracts vs frontend-only
+4. **Error Handling Standardization**: Uniform error response formats across all Django Ninja endpoints
+
+### Migration Strategy Recommendations
+
+**Phase 1** (Current): Maintain backward compatibility extensions while proving Django Ninja integration
+**Phase 2** (Future): After remaining app migrations are complete:
+1. Audit all frontend type extensions against actual usage
+2. Propose backend schema additions for legitimately needed TMDB fields
+3. Remove unnecessary type extensions and update components accordingly
+4. Validate that frontend fully leverages auto-generated types without manual overrides
+
+**Benefits of Future Cleanup**:
+- True single source of truth for API contracts
+- Elimination of frontend-backend type drift
+- Simplified type maintenance (auto-generated only)
+- Better error detection when API contracts change
+
+### Technical Debt Tracking
+
+**Current Acceptable Technical Debt** (temporary for PoC):
+- Extended movie types with frontend-specific fields
+- Type compatibility layers in `@types/movie.d.ts`
+- Manual null handling in components not yet modernized
+
+**Future Elimination Targets**:
+- All `extends MovieDetailSchema` type extensions
+- Manual type definitions that duplicate backend schemas
+- Component code that assumes non-nullable fields
+- Test mocks that don't match strict backend contracts
+
+This documentation ensures that the temporary compatibility measures taken during the Django Ninja proof-of-concept can be systematically removed during the full API modernization phase.
 
 ### Type Safety Standards Established
 

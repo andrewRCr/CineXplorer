@@ -245,8 +245,8 @@ class MovieApiTests(TestCase):
         self.assertEqual(params['sort_by'], 'release_date.desc')
         self.assertEqual(params['with_genres'], '28,12')
         self.assertEqual(params['year'], 2023)
-        self.assertEqual(params['vote_average.gte'], '7.0')
-        self.assertEqual(params['vote_average.lte'], '10.0')
+        self.assertEqual(params['vote_average.gte'], 7.0)
+        self.assertEqual(params['vote_average.lte'], 10.0)
         self.assertEqual(params['primary_release_date.gte'], '2023-01-01')
         self.assertEqual(params['primary_release_date.lte'], '2023-12-31')
         # Runtime filtering is disabled due to TMDB API data quality issues

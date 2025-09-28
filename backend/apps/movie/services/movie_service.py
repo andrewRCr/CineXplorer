@@ -3,9 +3,24 @@ from __future__ import annotations
 import logging
 import uuid
 from datetime import datetime, timedelta
+from typing import cast
 
 from core.services.api_response import ApiResponse
 from core.services.tmdb_api_client import TMDBApiClient
+from core.services.validators import (
+    validate_tmdb_response,
+    validate_tmdb_paginated_response,
+)
+from core.types.api_types import TMDBParams
+from core.tmdb_models.tmdb_responses import (
+    TMDBMovieBase,
+    TMDBMovieDetail,
+    TMDBCreditsResponse,
+    TMDBMovieSearchResponse,
+    TMDBKeywordSearchResponse,
+    TMDBPersonSearchResponse,
+    TMDBGenreListResponse,
+)
 from ninja.errors import HttpError
 from ..schemas import (
     MovieBaseSchema,
@@ -45,7 +60,7 @@ def fetch_movie_runtimes(movie_ids: list[int]) -> dict[int, int]:
     Returns:
         Dictionary mapping movie IDs to runtime in minutes
     """
-    runtimes = {}
+    runtimes: dict[int, int] = {}
 
     logger.info(
         f"Fetching runtimes for {len(movie_ids)} movies", extra={
@@ -97,8 +112,8 @@ def create_movie_base_from_tmdb(tmdb_data: dict[str, object]) -> MovieBaseSchema
     """
     Create a MovieBaseSchema instance from TMDB API response data.
 
-    Uses Pydantic's flexible validation to handle dynamic TMDB fields
-    while ensuring type safety for our schema.
+    Uses typed TMDB response models for validation before converting to
+    application schema, ensuring complete type safety.
 
     Args:
         tmdb_data: Raw TMDB movie data dictionary
@@ -110,17 +125,19 @@ def create_movie_base_from_tmdb(tmdb_data: dict[str, object]) -> MovieBaseSchema
         HttpError: If data validation fails or required fields are missing
     """
     try:
-        # Extract and validate core fields with fallbacks
+        # First, validate against TMDB response structure for type safety
+        tmdb_movie = TMDBMovieBase.model_validate(tmdb_data, strict=False)
+
+        # Then convert to application schema
         validated_data = {
-            'tmdb_id': tmdb_data.get('id'),
-            'title': tmdb_data.get('title', ''),
-            'poster_path': tmdb_data.get('poster_path'),
-            'release_date': tmdb_data.get('release_date'),
-            'vote_average': tmdb_data.get('vote_average'),
-            'runtime': tmdb_data.get('runtime', 0),
+            'tmdb_id': tmdb_movie.id,
+            'title': tmdb_movie.title,
+            'poster_path': tmdb_movie.poster_path,
+            'release_date': tmdb_movie.release_date,
+            'vote_average': tmdb_movie.vote_average,
+            'runtime': 0,  # Runtime not available in base movie responses
         }
 
-        # Use Pydantic validation with extra fields ignored
         return MovieBaseSchema.model_validate(validated_data, strict=False)
 
     except Exception as e:
@@ -143,6 +160,9 @@ def create_movie_detail_from_tmdb(
     """
     Create a MovieDetailSchema instance from TMDB movie and credits data.
 
+    Uses typed TMDB response models for validation before converting to
+    application schema, ensuring complete type safety.
+
     Args:
         movie_data: TMDB movie details response
         credits_data: Optional TMDB credits response
@@ -154,54 +174,72 @@ def create_movie_detail_from_tmdb(
         HttpError: If data validation fails
     """
     try:
-        # Start with base movie data
-        detail_data = {
-            'tmdb_id': movie_data.get('id'),
-            'title': movie_data.get('title', ''),
-            'poster_path': movie_data.get('poster_path'),
-            'release_date': movie_data.get('release_date'),
-            'vote_average': movie_data.get('vote_average'),
-            'runtime': movie_data.get('runtime', 0),
-            'overview': movie_data.get('overview', ''),
+        # First, validate against TMDB response structures for type safety
+        tmdb_movie = TMDBMovieDetail.model_validate(movie_data, strict=False)
+        tmdb_credits = None
+        if credits_data:
+            tmdb_credits = TMDBCreditsResponse.model_validate(credits_data, strict=False)
+
+        # Convert TMDB movie to application schema
+        detail_data: dict[str, object] = {
+            'tmdb_id': tmdb_movie.id,
+            'title': tmdb_movie.title,
+            'poster_path': tmdb_movie.poster_path,
+            'release_date': tmdb_movie.release_date,
+            'vote_average': tmdb_movie.vote_average,
+            'runtime': tmdb_movie.runtime or 0,
+            'overview': tmdb_movie.overview or '',
+            'user_movie_data': None,  # Will be set when user integration is implemented
         }
 
-        # Process genres
-        genres_data = movie_data.get('genres', [])
-        if isinstance(genres_data, list):
-            detail_data['genres'] = [
-                GenreSchema.model_validate(genre, strict=False)
-                for genre in genres_data
-                if isinstance(genre, dict) and 'id' in genre and 'name' in genre
-            ]
+        # Process genres from typed TMDB response
+        detail_data['genres'] = [
+            GenreSchema.model_validate({
+                'id': genre.id,
+                'name': genre.name
+            }, strict=False)
+            for genre in tmdb_movie.genres
+        ]
 
-        # Process production companies
-        companies_data = movie_data.get('production_companies', [])
-        if isinstance(companies_data, list):
-            detail_data['production_companies'] = [
-                ProductionCompanySchema.model_validate(company, strict=False)
-                for company in companies_data
-                if isinstance(company, dict) and 'id' in company and 'name' in company
-            ]
+        # Process production companies from typed TMDB response
+        detail_data['production_companies'] = [
+            ProductionCompanySchema.model_validate({
+                'id': company.id,
+                'name': company.name,
+                'logo_path': company.logo_path,
+                'origin_country': company.origin_country
+            }, strict=False)
+            for company in tmdb_movie.production_companies
+        ]
 
         # Process credits if provided
-        if credits_data:
-            # Process cast
-            cast_data = credits_data.get('cast', [])
-            if isinstance(cast_data, list):
-                detail_data['cast'] = [
-                    CastMemberSchema.model_validate(person, strict=False)
-                    for person in cast_data
-                    if isinstance(person, dict) and 'id' in person and 'name' in person
-                ]
+        if tmdb_credits:
+            # Process cast from typed TMDB response
+            detail_data['cast'] = [
+                CastMemberSchema.model_validate({
+                    'id': person.id,
+                    'name': person.name,
+                    'character': person.character,
+                    'profile_path': person.profile_path,
+                    'cast_id': person.cast_id,
+                    'credit_id': person.credit_id,
+                    'order': person.order
+                }, strict=False)
+                for person in tmdb_credits.cast
+            ]
 
-            # Process crew
-            crew_data = credits_data.get('crew', [])
-            if isinstance(crew_data, list):
-                detail_data['crew'] = [
-                    CrewMemberSchema.model_validate(person, strict=False)
-                    for person in crew_data
-                    if isinstance(person, dict) and 'id' in person and 'name' in person
-                ]
+            # Process crew from typed TMDB response
+            detail_data['crew'] = [
+                CrewMemberSchema.model_validate({
+                    'id': person.id,
+                    'name': person.name,
+                    'job': person.job,
+                    'department': person.department,
+                    'profile_path': person.profile_path,
+                    'credit_id': person.credit_id
+                }, strict=False)
+                for person in tmdb_credits.crew
+            ]
 
         return MovieDetailSchema.model_validate(detail_data, strict=False)
 
@@ -224,6 +262,9 @@ def create_paginated_movie_response_from_tmdb(
     """
     Create a PaginatedMovieResponseSchema from TMDB paginated response.
 
+    Uses typed TMDB response models for validation before converting to
+    application schema, ensuring complete type safety.
+
     Args:
         tmdb_response: TMDB search/discover response with pagination
 
@@ -234,22 +275,22 @@ def create_paginated_movie_response_from_tmdb(
         HttpError: If data validation fails
     """
     try:
-        # Extract pagination metadata
-        pagination_data = {
-            'page': tmdb_response.get('page', 1),
-            'total_pages': tmdb_response.get('total_pages', 0),
-            'total_results': tmdb_response.get('total_results', 0),
+        # First, validate against TMDB response structure for type safety
+        tmdb_search = TMDBMovieSearchResponse.model_validate(tmdb_response, strict=False)
+
+        # Convert to application schema
+        pagination_data: dict[str, object] = {
+            'page': tmdb_search.page,
+            'total_pages': tmdb_search.total_pages,
+            'total_results': tmdb_search.total_results,
             'results': []
         }
 
-        # Process movie results
-        results = tmdb_response.get('results', [])
-        if isinstance(results, list):
-            pagination_data['results'] = [
-                create_movie_base_from_tmdb(movie)
-                for movie in results
-                if isinstance(movie, dict)
-            ]
+        # Process movie results using typed models
+        pagination_data['results'] = [
+            create_movie_base_from_tmdb(movie.model_dump())
+            for movie in tmdb_search.results
+        ]
 
         return PaginatedMovieResponseSchema.model_validate(pagination_data, strict=False)
 
@@ -271,6 +312,9 @@ def create_paginated_keyword_response_from_tmdb(
     """
     Create a PaginatedKeywordResponseSchema from TMDB keyword response.
 
+    Uses typed TMDB response models for validation before converting to
+    application schema, ensuring complete type safety.
+
     Args:
         tmdb_response: TMDB keyword search/list response
 
@@ -281,20 +325,25 @@ def create_paginated_keyword_response_from_tmdb(
         HttpError: If data validation fails
     """
     try:
-        pagination_data = {
-            'page': tmdb_response.get('page', 1),
-            'total_pages': tmdb_response.get('total_pages', 0),
-            'total_results': tmdb_response.get('total_results', 0),
+        # First, validate against TMDB response structure for type safety
+        tmdb_keywords = TMDBKeywordSearchResponse.model_validate(tmdb_response, strict=False)
+
+        # Convert to application schema
+        pagination_data: dict[str, object] = {
+            'page': tmdb_keywords.page,
+            'total_pages': tmdb_keywords.total_pages,
+            'total_results': tmdb_keywords.total_results,
             'results': []
         }
 
-        results = tmdb_response.get('results', [])
-        if isinstance(results, list):
-            pagination_data['results'] = [
-                KeywordSchema.model_validate(keyword, strict=False)
-                for keyword in results
-                if isinstance(keyword, dict) and 'id' in keyword and 'name' in keyword
-            ]
+        # Process keyword results using typed models
+        pagination_data['results'] = [
+            KeywordSchema.model_validate({
+                'id': keyword.id,
+                'name': keyword.name
+            }, strict=False)
+            for keyword in tmdb_keywords.results
+        ]
 
         return PaginatedKeywordResponseSchema.model_validate(pagination_data, strict=False)
 
@@ -316,6 +365,9 @@ def create_paginated_person_response_from_tmdb(
     """
     Create a PaginatedPersonResponseSchema from TMDB person response.
 
+    Uses typed TMDB response models for validation before converting to
+    application schema, ensuring complete type safety.
+
     Args:
         tmdb_response: TMDB person search/popular response
 
@@ -326,20 +378,27 @@ def create_paginated_person_response_from_tmdb(
         HttpError: If data validation fails
     """
     try:
-        pagination_data = {
-            'page': tmdb_response.get('page', 1),
-            'total_pages': tmdb_response.get('total_pages', 0),
-            'total_results': tmdb_response.get('total_results', 0),
+        # First, validate against TMDB response structure for type safety
+        tmdb_people = TMDBPersonSearchResponse.model_validate(tmdb_response, strict=False)
+
+        # Convert to application schema
+        pagination_data: dict[str, object] = {
+            'page': tmdb_people.page,
+            'total_pages': tmdb_people.total_pages,
+            'total_results': tmdb_people.total_results,
             'results': []
         }
 
-        results = tmdb_response.get('results', [])
-        if isinstance(results, list):
-            pagination_data['results'] = [
-                PersonSchema.model_validate(person, strict=False)
-                for person in results
-                if isinstance(person, dict) and 'id' in person and 'name' in person
-            ]
+        # Process person results using typed models
+        pagination_data['results'] = [
+            PersonSchema.model_validate({
+                'id': person.id,
+                'name': person.name,
+                'profile_path': person.profile_path,
+                'known_for_department': person.known_for_department
+            }, strict=False)
+            for person in tmdb_people.results
+        ]
 
         return PaginatedPersonResponseSchema.model_validate(pagination_data, strict=False)
 
@@ -359,6 +418,9 @@ def create_genre_list_from_tmdb(tmdb_response: dict[str, object]) -> list[GenreS
     """
     Create a list of GenreSchema instances from TMDB genre list response.
 
+    Uses typed TMDB response models for validation before converting to
+    application schema, ensuring complete type safety.
+
     Args:
         tmdb_response: TMDB genre/movie/list response
 
@@ -369,14 +431,16 @@ def create_genre_list_from_tmdb(tmdb_response: dict[str, object]) -> list[GenreS
         HttpError: If data validation fails
     """
     try:
-        genres = tmdb_response.get('genres', [])
-        if not isinstance(genres, list):
-            return []
+        # First, validate against TMDB response structure for type safety
+        tmdb_genres = TMDBGenreListResponse.model_validate(tmdb_response, strict=False)
 
+        # Convert to application schema
         return [
-            GenreSchema.model_validate(genre, strict=False)
-            for genre in genres
-            if isinstance(genre, dict) and 'id' in genre and 'name' in genre
+            GenreSchema.model_validate({
+                'id': genre.id,
+                'name': genre.name
+            }, strict=False)
+            for genre in tmdb_genres.genres
         ]
 
     except Exception as e:
@@ -550,9 +614,9 @@ def get_upcoming_movies(page: int = 1) -> PaginatedMovieResponseSchema:
     min_date = today.strftime("%Y-%m-%d")
     max_date = (today + timedelta(days=30)).strftime("%Y-%m-%d")
 
-    params = {
-        "include_adult": "false",
-        "include_video": "false",
+    params: TMDBParams = {
+        "include_adult": False,
+        "include_video": False,
         "language": "en-US",
         "region": "US",
         "page": page,
@@ -562,15 +626,11 @@ def get_upcoming_movies(page: int = 1) -> PaginatedMovieResponseSchema:
         "primary_release_date.lte": max_date,
     }
 
-    response = tmdb_client.get("discover/movie", params)
-    if not response.is_success():
-        handle_tmdb_api_error(
-            response,
-            operation='get_upcoming_movies',
-            page=page
-        )
+    response = tmdb_client.get("discover/movie", cast(dict[str, object], params))
 
-    result = response.get_json_data()
+    # Use type-safe validator instead of manual error handling
+    tmdb_response = validate_tmdb_paginated_response(response, TMDBMovieSearchResponse)
+    result = tmdb_response.model_dump()
     if not result:
         logger.error(
             "Failed to get valid response data from TMDB",
@@ -715,7 +775,10 @@ def search_movies(query: str, page: int = 1) -> PaginatedMovieResponseSchema:
     return create_paginated_movie_response_from_tmdb(filtered_result)
 
 
-def discover_movies(page: int = 1, **filters: object) -> PaginatedMovieResponseSchema:
+def discover_movies(
+    page: int = 1,
+    **filters: str | int | float | bool | None
+) -> PaginatedMovieResponseSchema:
     """
     Flexible movie discovery with full TMDB filtering capabilities.
 
@@ -749,47 +812,55 @@ def discover_movies(page: int = 1, **filters: object) -> PaginatedMovieResponseS
     })
 
     # Build TMDB API parameters
-    params = {
-        "include_adult": "false",
-        "include_video": "false",
+    params: TMDBParams = {
+        "include_adult": False,
+        "include_video": False,
         "language": "en-US",
         "region": filters.get('region', 'US'),
         "page": page,
     }
 
     # Map filter names to TMDB parameter names
+    # Support both underscore (direct service calls) and dot (API layer) parameter names
     filter_mapping = {
         'sort_by': 'sort_by',
         'genres': 'with_genres',
         'year': 'year',
-        'vote_average_gte': 'vote_average.gte',
-        'vote_average_lte': 'vote_average.lte',
+        'vote_average_gte': 'vote_average.gte',  # Direct service calls with underscore
+        'vote_average.gte': 'vote_average.gte',  # API sends with dot
+        'vote_average_lte': 'vote_average.lte',  # Direct service calls with underscore
+        'vote_average.lte': 'vote_average.lte',  # API sends with dot
         'keywords': 'with_keywords',
         'people': 'with_people',
-        'release_date_gte': 'primary_release_date.gte',
-        'release_date_lte': 'primary_release_date.lte',
+        'release_date_gte': 'primary_release_date.gte',  # Direct service calls with underscore
+        'release_date.gte': 'primary_release_date.gte',  # API sends with dot
+        'release_date_lte': 'primary_release_date.lte',  # Direct service calls with underscore
+        'release_date.lte': 'primary_release_date.lte',  # API sends with dot
         'certification': 'certification',
     }
 
     # Apply filters if provided
     for filter_name, tmdb_param in filter_mapping.items():
         if filter_name in filters and filters[filter_name] is not None:
-            params[tmdb_param] = str(filters[filter_name])
+            # Preserve data types for numeric parameters (support both naming conventions)
+            numeric_params = [
+                'year', 'vote_average_gte', 'vote_average.gte',
+                'vote_average_lte', 'vote_average.lte'
+            ]
+            if filter_name in numeric_params:
+                params[tmdb_param] = filters[filter_name]
+            else:
+                params[tmdb_param] = str(filters[filter_name])
 
     # Set default sort if not specified
     if 'sort_by' not in params:
         params['sort_by'] = 'popularity.desc'
 
-    response = tmdb_client.get("discover/movie", params)
-    if not response.is_success():
-        handle_tmdb_api_error(
-            response,
-            operation='discover_movies',
-            page=page,
-            filters=filters
-        )
+    response = tmdb_client.get("discover/movie", cast(dict[str, object], params))
 
-    result = response.get_json_data()
+    # Use type-safe validator instead of manual error handling
+    tmdb_response = validate_tmdb_paginated_response(response, TMDBMovieSearchResponse)
+    result = tmdb_response.model_dump()
     if not result:
         logger.error(
             "Failed to get valid response data from TMDB",
@@ -855,22 +926,10 @@ def get_movie_genres() -> list[GenreSchema]:
         HttpError: If API error or data processing fails
     """
     response = tmdb_client.get("genre/movie/list")
-    if not response.is_success():
-        handle_tmdb_api_error(
-            response,
-            operation='get_movie_genres'
-        )
 
-    result = response.get_json_data()
-    if not result:
-        logger.error(
-            "Failed to get valid response data from TMDB",
-            extra={
-                'correlation_id': response.correlation_id,
-                'operation': 'get_movie_genres'
-            }
-        )
-        raise HttpError(500, "Failed to get valid response data from TMDB")
+    # Use type-safe validator
+    tmdb_response = validate_tmdb_response(response, TMDBGenreListResponse)
+    result = tmdb_response.model_dump()
 
     return create_genre_list_from_tmdb(result)
 
@@ -888,7 +947,8 @@ def get_popular_keywords(page: int = 1) -> PaginatedKeywordResponseSchema:
     Raises:
         HttpError: If API error or data processing fails
     """
-    response = tmdb_client.get("keyword/popular", {"page": page})
+    params: TMDBParams = {"page": page}
+    response = tmdb_client.get("keyword/popular", cast(dict[str, object], params))
     if not response.is_success():
         handle_tmdb_api_error(
             response,

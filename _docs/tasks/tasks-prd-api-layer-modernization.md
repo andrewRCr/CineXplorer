@@ -1,4 +1,4 @@
-This task list covers **Phase 1 (Proof of Concept)** of the API Layer Modernization, focusing exclusively on the `movie` app. The migration of other apps will be handled in a subsequent phase after this PoC is successfully completed.
+This task list currently covers **Phase 1 (Proof of Concept)** of the API Layer Modernization, focusing primarily on the `movie` app and any foundational/shared logic in the `core` app. The migration of other apps will be handled in a subsequent phase after this PoC is successfully completed.
 
 ---
 
@@ -38,6 +38,8 @@ This task list covers **Phase 1 (Proof of Concept)** of the API Layer Modernizat
 - `backend/apps/movie/views.py` - ✅ Removed old DRF views after successful migration.
 - `backend/apps/movie/serializers.py` - ✅ Removed old DRF serializers after successful migration.
 - `backend/apps/movie/urls.py` - ✅ Removed DRF-specific URL configuration for the `movie` app.
+
+
 
 ## Tasks
 
@@ -110,15 +112,28 @@ This task list covers **Phase 1 (Proof of Concept)** of the API Layer Modernizat
   - [x] 5.6.7 Fix remaining test failures (parameter validation, authentication flow, Django Ninja migration issues).
   - [x] 5.6.8 Implement proper TMDB response Pydantic models to replace TypedDict stubs and achieve complete type safety.
   - [x] 5.6.9 Remove legacy router compatibility code and finalize clean architecture implementation.
-  - [ ] 5.6.10 **Establish Robust Type Safety Foundation** - Address 117 type errors in movie API layer to complete foundational type safety requirements.
+  - [x] 5.6.10 **Establish Robust Type Safety Foundation** - Address 117 type errors in movie API layer to complete foundational type safety requirements.
     - [x] 5.6.10.1 Create type system infrastructure with TMDBParams type alias and response validation types.
     - [x] 5.6.10.2 Implement typed response validators (`validate_tmdb_response`, `validate_tmdb_list_response`) for bridging ApiResponse → Pydantic gap.
     - [x] 5.6.10.3 Update movie service layer methods with proper type aliases and explicit type conversions.
     - [x] 5.6.10.4 Fix API layer type annotations (discover_movies helper function, parameter handling).
-    - [ ] 5.6.10.5 Update test infrastructure with proper type annotations for mocks and test helpers.
-    - [ ] 5.6.10.6 Validate complete type safety: Zero type errors in movie app production code, minimal justified type ignores in tests.
-  - [ ] 5.6.11 Validate all quality gates pass (tests, type checking, linting) to ensure rock-solid Phase 1 foundation.
-  - [ ] 5.7 Thoroughly test all movie-related features in the running application to confirm the frontend integration works correctly.
+    - [x] 5.6.10.5 Update test infrastructure with proper type annotations for mocks and test helpers.
+    - [x] 5.6.10.6 Validate complete type safety: Zero type errors in movie app production code, minimal justified type ignores in tests.
+
+- [ ] 6.0 **Complete Phase 1 with Zero Technical Debt**
+  - [x] 6.1 Fix remaining test infrastructure type annotations (52 errors in test files identified by pyright).
+  - [ ] 6.2 Run comprehensive linting on entire backend and resolve any issues.
+  - [ ] 6.3 Validate all quality gates pass (tests, type checking, linting) completely, with the only allowable exceptions being in non-core (shared) and non-Movie code (i.e., User/Accounts/UserMovieData) to ensure rock-solid Phase 1 foundation.
+  - [ ] 6.4 Thoroughly test all core and movie-related features in the running application to confirm frontend integration works correctly.
+
+- [ ] 7.0 **Phase 1 Completion and Authentication Modernization Preparation**
+  - [ ] 7.1 Update PROJECT-STATUS.md with Phase 1 completion status and achievements.
+  - [ ] 7.2 Update prd-api-layer-modernization.md with Phase 2 scope (full api-layer migration, i.e., UserMovieData and Accounts/User to Django-Ninja) and next steps, using insights gained from Phase 1's Core / Movie migration.
+  - [ ] 7.3 Generate detailed task breakdown for Phase 2 of api-layer-modernization from prd-api-layer-modernization.md, using insights and overall blueprint gained from Phase 1's Core / Movie migration (though ideally streamlined based on lessons learned). Do this IN THIS FILE, extending the current task list, as it's still part of the same overall feature. Place clear headers to delineate Phase 1 vs Phase 2 tasks.
+  - [ ] 7.4 Create comprehensive atomic commit for Phase 1 completion with proper task references.
+  - [ ] 7.5 Merge feature/api-layer-modernization branch to main after all quality gates pass.
+  - [ ] 7.6 Generate detailed task breakdown for Authentication Modernization from prd-authentication-modernization.md.
+  - [ ] 7.7 Create feature/authentication-modernization branch from updated main for feature work on that prd/task list.
 
 ## Notes: Architectural Notes for Future Refactoring
 

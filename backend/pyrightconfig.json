@@ -27,5 +27,9 @@
     "reportUnusedVariable": "warning",
     "reportImportCycles": "error",
     "reportPrivateUsage": "error",
-    "reportAny": "warning"
+    "reportAny": "warning",
+    "reportUnknownMemberType": "information",
+    "reportUnknownParameterType": "warning",
+    "reportUnknownArgumentType": "information",
+    "reportUnknownVariableType": "information"
 }

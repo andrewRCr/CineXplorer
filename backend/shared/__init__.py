@@ -1,28 +1,38 @@
 """
-Shared module stub for CineXplorer development.
+🚨 DEPRECATED: Shared module stub for CineXplorer development.
 
-This is a temporary local implementation to provide types and constants
-that are normally available in the Docker-mounted /shared directory.
+✅ COMPLETED (Task 5.6.8): TypedDict stubs → Pydantic models migration
 
-🚨 TECHNICAL DEBT: This entire module will be eliminated during Django Ninja migration
-   when Pydantic schemas replace these manual type definitions and auto-generate
-   TypeScript types for the frontend.
+STATUS: TMDB type definitions have been migrated to proper Pydantic models
+providing complete type safety, validation, and auto-generated TypeScript types.
 
-Status: Temporary stub - to be replaced by Pydantic schemas in Django Ninja migration.
+USE INSTEAD:
+    from core.tmdb_models.tmdb_responses import (
+        TMDBMovieBase, TMDBMovieDetail, TMDBCreditsResponse, etc.
+    )
+
+This module maintains minimal compatibility for error codes only.
 """
 from __future__ import annotations
 
-# Re-export all the commonly used types and constants
-from .api_types import TMDBMovieResponse, TMDBSearchResponse
+import warnings
+
+# Only maintain error codes for backward compatibility
 from .error_codes import ERROR_CODES
+
+# Issue deprecation warning when imported
+warnings.warn(
+    "shared module is deprecated. TMDB types have been migrated to "
+    "core.tmdb_models.tmdb_responses with Pydantic models for complete type safety.",
+    DeprecationWarning,
+    stacklevel=2
+)
 
 # Type alias for UserMovieData (used in serializers)
 # This is a temporary placeholder - will be replaced by proper Pydantic schemas
 UserMovieData = dict[str, object]  # Simplified type for now
 
 __all__ = [
-    'TMDBMovieResponse',
-    'TMDBSearchResponse',
     'ERROR_CODES',
     'UserMovieData',
 ]

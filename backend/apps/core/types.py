@@ -1,34 +1,37 @@
 """
-Type definitions for TMDB API responses.
+🚨 DEPRECATED: TypedDict stubs for TMDB API responses.
 
-This is a stub module to provide type definitions when the shared module
-is not available (e.g., in local development environments).
+This module has been replaced by proper Pydantic models for complete type safety.
+
+USE INSTEAD:
+    from core.tmdb_models.tmdb_responses import (
+        TMDBMovieBase,
+        TMDBMovieDetail,
+        TMDBCreditsResponse,
+        TMDBMovieSearchResponse,
+        etc.
+    )
+
+STATUS:
+    ✅ Replaced by Pydantic models (Task 5.6.8 - API Layer Modernization)
+    ❌ TypedDict stubs deprecated - provided complete type safety with validation
+    🔄 This file can be removed once all references are updated
+
+BENEFITS OF NEW PYDANTIC MODELS:
+    - Complete type safety with validation
+    - Better error messages for invalid TMDB responses
+    - Auto-generated TypeScript types for frontend
+    - Single source of truth for TMDB API contracts
+    - Integration with Django Ninja's response validation
 """
 from __future__ import annotations
 
-from typing import Any, Dict, List, TypedDict
+# Deprecated - use core.tmdb_models.tmdb_responses instead
+import warnings
 
-
-class TMDBMovieResponse(TypedDict, total=False):
-    """Type definition for TMDB movie response."""
-    id: int
-    title: str
-    overview: str
-    poster_path: str | None
-    release_date: str | None
-    vote_average: float
-    runtime: int
-    genres: List[Dict[str, Any]]
-    crew: List[Dict[str, Any]]
-    cast: List[Dict[str, Any]]
-    production_companies: List[Dict[str, Any]]
-    # Allow any other fields that might be present
-    # TMDBMovieResponse can contain additional fields
-
-
-class TMDBSearchResponse(TypedDict, total=False):
-    """Type definition for TMDB search response."""
-    page: int
-    results: List[Dict[str, Any]]
-    total_pages: int
-    total_results: int
+warnings.warn(
+    "core.types module is deprecated. Use core.tmdb_models.tmdb_responses for "
+    "complete type safety with Pydantic models.",
+    DeprecationWarning,
+    stacklevel=2
+)

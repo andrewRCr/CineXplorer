@@ -88,6 +88,18 @@ def main() -> None:
         "Pyright check on core utilities"
     )
 
+    # Test 5: Pyright check on movie app (Django Ninja migration)
+    code5, output5 = run_command(
+        ["npx", "pyright", "apps/movie/"],
+        "Pyright check on movie app (Django Ninja)"
+    )
+
+    # Test 6: Pyright check on authentication app (Django Ninja)
+    code6, output6 = run_command(
+        ["npx", "pyright", "apps/authentication/auth_ninja.py"],
+        "Pyright check on Ninja authentication"
+    )
+
     # Results summary
     print("\n" + "=" * 60)
     print("TYPE SAFETY SUMMARY")
@@ -98,6 +110,8 @@ def main() -> None:
         ("Services (MyPy)", code2, output2, True),
         ("Models (Pyright)", code3, output3, False),
         ("Utilities (Pyright)", code4, output4, False),
+        ("Movie App (Pyright)", code5, output5, False),
+        ("Authentication (Pyright)", code6, output6, False),
     ]
 
     passed = 0

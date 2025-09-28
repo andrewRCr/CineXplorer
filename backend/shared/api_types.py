@@ -1,46 +1,43 @@
 """
-TMDB API type definitions stub.
+🚨 DEPRECATED: TMDB API TypedDict stubs.
 
-🚨 TECHNICAL DEBT: These type definitions will be replaced by Pydantic schemas
-   during the Django Ninja migration. The Pydantic schemas will provide:
-   - Better type safety
-   - Automatic validation
-   - Auto-generated TypeScript types for frontend
-   - Single source of truth for API contracts
+This module has been replaced by proper Pydantic models for complete type safety.
 
-Status: Temporary stub - to be replaced by Pydantic ModelSchemas.
+✅ COMPLETED (Task 5.6.8): TypedDict stubs → Pydantic models migration
+
+STATUS: All TypedDict stubs have been successfully replaced by Pydantic schemas
+providing complete type safety, validation, and auto-generated TypeScript types.
+
+USE INSTEAD:
+    from core.tmdb_models.tmdb_responses import (
+        TMDBMovieBase,
+        TMDBMovieDetail,
+        TMDBCreditsResponse,
+        TMDBMovieSearchResponse,
+        TMDBKeywordSearchResponse,
+        TMDBPersonSearchResponse,
+        TMDBGenreListResponse,
+    )
+
+BENEFITS ACHIEVED:
+✅ Better type safety - Pydantic validates TMDB response structure
+✅ Automatic validation - Invalid TMDB responses caught early
+✅ Auto-generated TypeScript types for frontend
+✅ Single source of truth for API contracts
+✅ Django Ninja integration for OpenAPI documentation
+✅ Comprehensive error handling with detailed validation messages
+
+🔄 This file can be removed once all external references are verified updated.
 """
 from __future__ import annotations
 
-from typing import Any, Dict, List, TypedDict
+# Deprecated - use core.tmdb_models.tmdb_responses instead
+import warnings
 
-
-class TMDBMovieResponse(TypedDict, total=False):
-    """Type definition for TMDB movie detail response."""
-    # Core movie fields
-    id: int
-    title: str
-    overview: str
-    poster_path: str | None
-    release_date: str | None
-    vote_average: float
-    runtime: int
-
-    # Extended fields for detail responses
-    genres: List[Dict[str, Any]]
-    crew: List[Dict[str, Any]]
-    cast: List[Dict[str, Any]]
-    production_companies: List[Dict[str, Any]]
-
-    # Allow any additional fields from TMDB
-    # (TypedDict with total=False allows optional additional fields)
-
-
-class TMDBSearchResponse(TypedDict, total=False):
-    """Type definition for TMDB paginated search response."""
-    page: int
-    results: List[TMDBMovieResponse]
-    total_pages: int
-    total_results: int
-
-    # Allow any additional pagination fields from TMDB
+warnings.warn(
+    "shared.api_types module is deprecated. All TMDB type definitions have been "
+    "migrated to core.tmdb_models.tmdb_responses with Pydantic models for complete "
+    "type safety and validation.",
+    DeprecationWarning,
+    stacklevel=2
+)

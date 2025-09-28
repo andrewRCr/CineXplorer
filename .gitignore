@@ -221,3 +221,6 @@ frontend/openapi.json
 
 # Note: _docs/ai-instructions/, _docs/workflows/, and other high-level docs are included
 # to showcase systematic AI-assisted development methodology
+
+# Type checking output files
+*type_errors.json

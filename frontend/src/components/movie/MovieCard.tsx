@@ -87,6 +87,7 @@ const MovieCard = ({ movie, currentPage, source, query }: MovieCardProps) => {
 
 	// Memoize expensive date formatting
 	const formattedDate = useMemo(() => {
+		if (!movie.release_date) return "Release date unknown";
 		const date = new Date(movie.release_date);
 		return date.toLocaleDateString("en-US", {
 			year: "numeric",
@@ -239,7 +240,7 @@ const MovieCard = ({ movie, currentPage, source, query }: MovieCardProps) => {
 								>
 									{formattedDate}
 								</Text>
-								<MovieUserScore score={movie.vote_average} />
+								<MovieUserScore score={movie.vote_average ?? 0} />
 							</Box>
 						</Box>
 					</Card.Body>

@@ -1,5 +1,5 @@
 import { useCallback, useRef } from "react";
-import type { Movie } from "@shared/index";
+import type { MovieBase } from "../@types/movie";
 import type { PaginatedMoviesResponse } from "@/services/movieService";
 import type { MovieFilters as MovieFiltersType } from "@/components/movie/filters/AdvancedMovieFilters";
 import {
@@ -111,7 +111,7 @@ export function useEnhancedFetcher({
 
 			// Wrap the fetcher to add client-side year filtering and dynamic filling
 			const wrappedRequest = originalFetcher.request.then(async (response) => {
-				let finalResults: Movie[] = [];
+				let finalResults: MovieBase[] = [];
 
 				// Get all results from the API response
 				const allResults = response.data.results || [];
@@ -156,7 +156,7 @@ export function useEnhancedFetcher({
 
 					// Fill only from current page buffer (movies that didn't match other filters)
 					let currentPageBuffer = allResults.filter(
-						(movie: Movie) =>
+						(movie: MovieBase) =>
 							!filteredResults.some((fr) => fr.tmdb_id === movie.tmdb_id)
 					);
 

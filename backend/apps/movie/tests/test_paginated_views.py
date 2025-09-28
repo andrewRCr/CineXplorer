@@ -14,8 +14,8 @@ from rest_framework import status
 from unittest.mock import patch
 
 # Django Ninja API URLs for the paginated movie endpoints
-NOW_PLAYING_URL = '/api/movie/movies/now-playing'
-UPCOMING_URL = '/api/movie/movies/upcoming'
+NOW_PLAYING_URL = '/api/movies/now-playing'
+UPCOMING_URL = '/api/movies/upcoming'
 
 
 class PaginatedMovieApiTests(TestCase):

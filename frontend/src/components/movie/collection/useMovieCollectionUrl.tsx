@@ -105,7 +105,7 @@ export const useMovieCollectionUrl = (
 			const newUrl = `${location.pathname}?${searchParams.toString()}`;
 			navigate(newUrl, {});
 		},
-		[location.pathname, navigate] // Remove location.search from dependencies
+		[location.pathname, location.search, navigate]
 	);
 
 	// This callback is passed to ALL filter components.
@@ -142,7 +142,7 @@ export const useMovieCollectionUrl = (
 				replace: true,
 			});
 		},
-		[unifiedFilters, location.pathname, navigate] // Remove location.search from dependencies
+		[unifiedFilters, location.pathname, location.search, navigate]
 	);
 
 	// Reset pagination state when route/source changes (but not on browser back/forward)

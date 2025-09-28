@@ -1,4 +1,4 @@
-import type { Movie } from "@shared/index";
+import type { MovieBase } from "../@types/movie";
 import type { MovieFilters as MovieFiltersType } from "@/components/movie/filters/AdvancedMovieFilters";
 
 export type YearFilterCriteria = {
@@ -232,12 +232,12 @@ export function mapFiltersToApiParams(
  * Filters movies by year based on the provided criteria
  */
 export function filterMoviesByYear(
-	movies: Movie[],
+	movies: MovieBase[],
 	yearFilterCriteria: YearFilterCriteria | null
-): Movie[] {
+): MovieBase[] {
 	if (!yearFilterCriteria || movies.length === 0) return movies;
 
-	return movies.filter((movie: Movie) => {
+	return movies.filter((movie: MovieBase) => {
 		if (!movie.release_date) return false;
 
 		const movieYear = new Date(movie.release_date).getFullYear();
@@ -271,12 +271,12 @@ export function filterMoviesByYear(
  * Filters movies by runtime based on the provided criteria
  */
 export function filterMoviesByRuntime(
-	movies: Movie[],
+	movies: MovieBase[],
 	runtimeFilterCriteria: RuntimeFilterCriteria | null
-): Movie[] {
+): MovieBase[] {
 	if (!runtimeFilterCriteria || movies.length === 0) return movies;
 
-	return movies.filter((movie: Movie) => {
+	return movies.filter((movie: MovieBase) => {
 		// Handle missing runtime data - need to fetch it from the movie details if not available
 		// For now, we'll skip movies without runtime data
 		if (!movie.runtime && movie.runtime !== 0) return false;
@@ -304,12 +304,12 @@ export function filterMoviesByRuntime(
  * Filters movies by rating based on the provided criteria (to fix TMDB leakage)
  */
 export function filterMoviesByRating(
-	movies: Movie[],
+	movies: MovieBase[],
 	ratingFilterCriteria: RatingFilterCriteria | null
-): Movie[] {
+): MovieBase[] {
 	if (!ratingFilterCriteria || movies.length === 0) return movies;
 
-	return movies.filter((movie: Movie) => {
+	return movies.filter((movie: MovieBase) => {
 		// Handle missing ratings - TMDB sometimes has 0 or null ratings
 		if (!movie.vote_average && movie.vote_average !== 0) return false;
 

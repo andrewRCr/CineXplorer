@@ -5,12 +5,12 @@ These tests focus on the service layer independently from API endpoints,
 testing parameter mapping, error handling, and data transformation logic
 that wasn't covered by integration tests.
 """
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 from django.test import TestCase
 from ninja.errors import HttpError
-from typing import cast
 
 from core.services.api_response import ApiResponse
+from core.types.api_types import TMDBResponseData
 from movie.services import movie_service
 from movie.schemas import (
     MovieBaseSchema,
@@ -24,10 +24,10 @@ class MovieServiceParameterMappingTests(TestCase):
     """Test parameter mapping and transformation logic."""
 
     @patch('movie.services.movie_service.tmdb_client.get')
-    def test_discover_movies_basic_parameter_passing(self, mock_tmdb_get):
+    def test_discover_movies_basic_parameter_passing(self, mock_tmdb_get: MagicMock) -> None:
         """Test that discover_movies correctly passes parameters to TMDB client."""
         # Arrange: Mock successful TMDB response
-        tmdb_response = {
+        tmdb_response: TMDBResponseData = {
             'results': [{'id': 1, 'title': 'Test', 'poster_path': '/test.jpg',
                         'release_date': '2023-01-01', 'vote_average': 8.0}],
             'page': 1, 'total_pages': 1, 'total_results': 1
@@ -64,10 +64,12 @@ class MovieServiceParameterMappingTests(TestCase):
         self.assertEqual(result.page, 1)
 
     @patch('movie.services.movie_service.tmdb_client.get')
-    def test_discover_movies_default_parameters(self, mock_tmdb_get):
+    def test_discover_movies_default_parameters(self, mock_tmdb_get: MagicMock) -> None:
         """Test that discover_movies sets default parameters correctly."""
         # Arrange
-        tmdb_response = {'results': [], 'page': 1, 'total_pages': 1, 'total_results': 0}
+        tmdb_response: TMDBResponseData = {
+            'results': [], 'page': 1, 'total_pages': 1, 'total_results': 0
+        }
         mock_api_response = ApiResponse(status_code=200, data=tmdb_response)
         mock_tmdb_get.return_value = mock_api_response
 
@@ -76,9 +78,10 @@ class MovieServiceParameterMappingTests(TestCase):
 
         # Assert: Verify default parameters are set
         call_args = mock_tmdb_get.call_args
+        assert call_args is not None
         params = call_args[0][1]
-        self.assertEqual(params['include_adult'], 'false')
-        self.assertEqual(params['include_video'], 'false')
+        self.assertEqual(params['include_adult'], False)
+        self.assertEqual(params['include_video'], False)
         self.assertEqual(params['language'], 'en-US')
         self.assertEqual(params['region'], 'US')
         self.assertEqual(params['sort_by'], 'popularity.desc')  # Default sort
@@ -88,7 +91,7 @@ class MovieServiceErrorHandlingTests(TestCase):
     """Test error handling and edge cases in movie service."""
 
     @patch('movie.services.movie_service.tmdb_client.get_movie_details')
-    def test_get_movie_by_id_api_error(self, mock_get_details):
+    def test_get_movie_by_id_api_error(self, mock_get_details: MagicMock) -> None:
         """Test error handling when TMDB API returns error for movie details."""
         # Arrange: Mock API error response
         mock_api_response = ApiResponse(
@@ -105,10 +108,10 @@ class MovieServiceErrorHandlingTests(TestCase):
 
     @patch('movie.services.movie_service.tmdb_client.get')
     @patch('movie.services.movie_service.tmdb_client.get_movie_details')
-    def test_get_movie_by_id_credits_error(self, mock_get_details, mock_get_credits):
+    def test_get_movie_by_id_credits_error(self, mock_get_details: MagicMock, mock_get_credits: MagicMock) -> None:
         """Test error handling when credits API call fails."""
         # Arrange: Movie details succeed, credits fail
-        movie_data = {
+        movie_data: TMDBResponseData = {
             'id': 123, 'title': 'Test Movie', 'overview': 'Test overview',
             'poster_path': '/test.jpg', 'release_date': '2023-01-01',
             'vote_average': 8.0, 'genres': [], 'production_companies': []
@@ -126,7 +129,7 @@ class MovieServiceErrorHandlingTests(TestCase):
         mock_get_credits.assert_called_once_with("movie/123/credits")
 
     @patch('movie.services.movie_service.tmdb_client.get_now_playing_movies')
-    def test_get_nowPlaying_movies_api_error(self, mock_get_now_playing):
+    def test_get_nowPlaying_movies_api_error(self, mock_get_now_playing: MagicMock) -> None:
         """Test error handling for now playing movies API failure."""
         # Arrange: Mock API error
         mock_api_response = ApiResponse(
@@ -139,10 +142,10 @@ class MovieServiceErrorHandlingTests(TestCase):
             movie_service.get_nowPlaying_movies(page=1)
 
     @patch('movie.services.movie_service.tmdb_client.search_movies')
-    def test_search_movies_with_valid_query(self, mock_search):
+    def test_search_movies_with_valid_query(self, mock_search: MagicMock) -> None:
         """Test that search_movies correctly passes parameters to TMDB client."""
         # Arrange: Mock successful search response
-        tmdb_response = {
+        tmdb_response: TMDBResponseData = {
             'results': [{'id': 1, 'title': 'Test Movie', 'poster_path': '/test.jpg',
                         'release_date': '2023-01-01', 'vote_average': 8.0}],
             'page': 1, 'total_pages': 1, 'total_results': 1
@@ -161,6 +164,7 @@ class MovieServiceErrorHandlingTests(TestCase):
             language="en-US",
             region="US"
         )
+        assert mock_search.assert_called_once_with is not None
         self.assertIsInstance(result, PaginatedMovieResponseSchema)
 
 
@@ -170,7 +174,7 @@ class MovieServiceDataTransformationTests(TestCase):
     def test_create_movie_base_from_tmdb_minimal_data(self):
         """Test movie base creation with minimal required TMDB data."""
         # Arrange: Minimal TMDB data
-        tmdb_data = {
+        tmdb_data: TMDBResponseData = {
             'id': 123,
             'title': 'Test Movie',
             'poster_path': '/test.jpg',
@@ -192,7 +196,7 @@ class MovieServiceDataTransformationTests(TestCase):
     def test_create_movie_base_from_tmdb_missing_optional_fields(self):
         """Test movie base creation handles missing optional fields gracefully."""
         # Arrange: Data with missing optional fields
-        tmdb_data = {
+        tmdb_data: TMDBResponseData = {
             'id': 123,
             'title': 'Test Movie',
             'poster_path': None,  # Missing poster
@@ -211,20 +215,20 @@ class MovieServiceDataTransformationTests(TestCase):
     def test_create_movie_detail_from_tmdb_with_credits(self):
         """Test movie detail creation with full credits data."""
         # Arrange: Full movie data with credits
-        movie_data = {
+        movie_data: TMDBResponseData = {
             'id': 123, 'title': 'Test Movie', 'overview': 'Test overview',
             'poster_path': '/test.jpg', 'release_date': '2023-01-01',
             'vote_average': 8.0, 'genres': [{'id': 28, 'name': 'Action'}],
             'production_companies': [{'id': 1, 'name': 'Test Studios'}]
         }
-        credits_data = {
+        credits_data: TMDBResponseData = {
             'cast': [{'id': 1, 'name': 'Actor One', 'character': 'Hero'}],
             'crew': [{'id': 2, 'name': 'Director One', 'job': 'Director'}]
         }
 
         # Act
         result = movie_service.create_movie_detail_from_tmdb(
-            cast(dict, movie_data), cast(dict, credits_data)
+            movie_data, credits_data
         )
 
         # Assert
@@ -238,10 +242,10 @@ class MovieServiceDataTransformationTests(TestCase):
     def test_create_genre_list_from_tmdb_empty_response(self):
         """Test genre list creation with empty TMDB response."""
         # Arrange: Empty genres response
-        tmdb_response = {'genres': []}
+        tmdb_response: TMDBResponseData = {'genres': []}
 
         # Act
-        result = movie_service.create_genre_list_from_tmdb(cast(dict, tmdb_response))
+        result = movie_service.create_genre_list_from_tmdb(tmdb_response)
 
         # Assert
         self.assertIsInstance(result, list)
@@ -250,7 +254,7 @@ class MovieServiceDataTransformationTests(TestCase):
     def test_create_genre_list_from_tmdb_valid_data(self):
         """Test genre list creation with valid TMDB data."""
         # Arrange: Valid genres response
-        tmdb_response = {
+        tmdb_response: TMDBResponseData = {
             'genres': [
                 {'id': 28, 'name': 'Action'},
                 {'id': 35, 'name': 'Comedy'}
@@ -258,7 +262,7 @@ class MovieServiceDataTransformationTests(TestCase):
         }
 
         # Act
-        result = movie_service.create_genre_list_from_tmdb(cast(dict, tmdb_response))
+        result = movie_service.create_genre_list_from_tmdb(tmdb_response)
 
         # Assert
         self.assertIsInstance(result, list)
@@ -272,10 +276,12 @@ class MovieServiceBusinessLogicTests(TestCase):
     """Test business logic and complex operations."""
 
     @patch('movie.services.movie_service.tmdb_client.get')
-    def test_get_upcoming_movies_date_range_logic(self, mock_tmdb_get):
+    def test_get_upcoming_movies_date_range_logic(self, mock_tmdb_get: MagicMock) -> None:
         """Test that upcoming movies uses correct date range calculation."""
         # Arrange
-        tmdb_response = {'results': [], 'page': 1, 'total_pages': 1, 'total_results': 0}
+        tmdb_response: TMDBResponseData = {
+            'results': [], 'page': 1, 'total_pages': 1, 'total_results': 0
+        }
         mock_api_response = ApiResponse(status_code=200, data=tmdb_response)
         mock_tmdb_get.return_value = mock_api_response
 
@@ -284,6 +290,7 @@ class MovieServiceBusinessLogicTests(TestCase):
 
         # Assert: Verify date range logic
         call_args = mock_tmdb_get.call_args
+        assert call_args is not None
         params = call_args[0][1]
 
         # Should have date range parameters
@@ -305,10 +312,12 @@ class MovieServiceBusinessLogicTests(TestCase):
         self.assertEqual(len(result), 0)
 
     @patch('movie.services.movie_service.tmdb_client.get')
-    def test_search_keywords_query_processing(self, mock_tmdb_get):
+    def test_search_keywords_query_processing(self, mock_tmdb_get: MagicMock) -> None:
         """Test keyword search query processing and parameter mapping."""
         # Arrange
-        tmdb_response = {'results': [], 'page': 1, 'total_pages': 1, 'total_results': 0}
+        tmdb_response: TMDBResponseData = {
+            'results': [], 'page': 1, 'total_pages': 1, 'total_results': 0
+        }
         mock_api_response = ApiResponse(status_code=200, data=tmdb_response)
         mock_tmdb_get.return_value = mock_api_response
 
@@ -317,5 +326,6 @@ class MovieServiceBusinessLogicTests(TestCase):
 
         # Assert: Verify query passed correctly
         call_args = mock_tmdb_get.call_args
+        assert call_args is not None
         params = call_args[0][1]
         self.assertEqual(params['query'], "action movies")

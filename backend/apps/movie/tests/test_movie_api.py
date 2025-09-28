@@ -5,7 +5,9 @@ These tests verify the behavior of the movie API, which relies on external
 calls to the The Movie Database (TMDB) API. The external calls are mocked
 to ensure tests are fast, reliable, and independent of the external service.
 """
-from typing import Dict, TypedDict
+from typing import TypedDict, Unpack
+
+from core.types.api_types import TMDBResponseData
 from django.test import TestCase
 from django.test import Client
 from rest_framework import status
@@ -44,7 +46,7 @@ class UserParams(TypedDict, total=False):
     last_name: str
 
 
-def create_user(**params: UserParams) -> User:
+def create_user(**params: Unpack[UserParams]) -> User:
     """Create and return a new user for testing."""
     return User.objects.create_user(**params)
 
@@ -56,14 +58,14 @@ class MovieParams(TypedDict, total=False):
     release_date: str | None
 
 
-def create_movie_stub(tmdb_id: int, **params: MovieParams) -> Movie:
+def create_movie_stub(tmdb_id: int, **params: Unpack[MovieParams]) -> Movie:
     """
     Create and return a new Movie stub object.
     This mimics the behavior of the service layer, which creates a local stub
     for a movie fetched from the TMDB API.
     """
     # tmdb_id is required parameter
-    defaults = {
+    defaults: dict[str, object] = {
         'title': 'Default Movie Title',
         'poster_path': '/default.jpg',
         'release_date': '2025-01-01',
@@ -103,14 +105,14 @@ class MovieApiTests(TestCase):
 
     def _test_paginated_endpoint_contract(
         self, mock_tmdb_method: Mock, url: str,
-        params: Dict[str, object] | None = None
+        params: dict[str, str | int] | None = None
     ) -> None:
         """
         Generic helper to test the contract of any paginated movie endpoint.
         It mocks the TMDB client method and verifies the response structure.
         """
         # Arrange: Define a standard mock TMDB API response
-        tmdb_payload: Dict[str, object] = {
+        tmdb_payload: TMDBResponseData = {
             'results': [{
                 'id': 101,
                 'title': 'Test Movie',
@@ -183,7 +185,7 @@ class MovieApiTests(TestCase):
     def test_discover_with_filters(self, mock_tmdb_get: Mock) -> None:
         """Test the discover endpoint with various filter parameters."""
         # Arrange: Define a standard mock TMDB API response
-        tmdb_payload: Dict[str, object] = {
+        tmdb_payload: TMDBResponseData = {
             'results': [{
                 'id': 101,
                 'title': 'Test Movie',
@@ -202,12 +204,12 @@ class MovieApiTests(TestCase):
         mock_tmdb_get.return_value = mock_api_response
 
         # Act: Call the discover endpoint with filters
-        filters = {
+        filters: dict[str, str | int] = {
             'sort_by': 'release_date.desc',
             'genres': '28,12',  # Action, Adventure
             'year': 2023,  # int not string
-            'vote_average_gte': 7.0,  # float not string
-            'vote_average_lte': 10.0,  # float not string
+            'vote_average_gte': '7.0',  # Convert to string for HTTP params
+            'vote_average_lte': '10.0',  # Convert to string for HTTP params
             'release_date_gte': '2023-01-01',
             'release_date_lte': '2023-12-31',
             'runtime_gte': 90,  # int not string
@@ -243,8 +245,8 @@ class MovieApiTests(TestCase):
         self.assertEqual(params['sort_by'], 'release_date.desc')
         self.assertEqual(params['with_genres'], '28,12')
         self.assertEqual(params['year'], 2023)
-        self.assertEqual(params['vote_average.gte'], 7.0)
-        self.assertEqual(params['vote_average.lte'], 10.0)
+        self.assertEqual(params['vote_average.gte'], '7.0')
+        self.assertEqual(params['vote_average.lte'], '10.0')
         self.assertEqual(params['primary_release_date.gte'], '2023-01-01')
         self.assertEqual(params['primary_release_date.lte'], '2023-12-31')
         # Runtime filtering is disabled due to TMDB API data quality issues
@@ -312,13 +314,14 @@ class MovieApiTests(TestCase):
 
         # Act
         self.client.force_login(self.user)
-        url = movie_detail_url(movie_stub.tmdb_id)
+        stub_tmdb_id = getattr(movie_stub, 'tmdb_id')
+        url = movie_detail_url(int(stub_tmdb_id))
         res = self.client.get(url)
 
         # Assert
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         data = res.json()
-        self.assertEqual(data['tmdb_id'], movie_stub.tmdb_id)
+        self.assertEqual(data['tmdb_id'], int(stub_tmdb_id))
         self.assertIn('title', data)
         self.assertIn('user_movie_data', data)
         user_data = data['user_movie_data']

@@ -11,7 +11,9 @@ reliable, and consistent with other integration tests in the application.
 """
 from django.test import TestCase, Client
 from rest_framework import status
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
+
+from core.types.api_types import TMDBResponseData
 
 # Django Ninja API URLs for the paginated movie endpoints
 NOW_PLAYING_URL = '/api/movies/now-playing'
@@ -25,11 +27,11 @@ class PaginatedMovieApiTests(TestCase):
         """Set up the Django test client."""
         self.client = Client()
 
-    def _create_mock_tmdb_response(self, total_pages):
+    def _create_mock_tmdb_response(self, total_pages: int) -> TMDBResponseData:
         """
         Creates a mock TMDB API JSON response for paginated endpoints.
         """
-        fake_tmdb_results = []
+        fake_tmdb_results: list[dict[str, object]] = []
         for i in range(3):
             fake_tmdb_results.append({
                 'id': 100 + i,
@@ -48,16 +50,19 @@ class PaginatedMovieApiTests(TestCase):
         }
 
     @patch('movie.services.movie_service.tmdb_client.get_now_playing_movies')
-    def test_now_playing_endpoint_returns_correct_structure(self, mock_get_now_playing):
+    def test_now_playing_endpoint_returns_correct_structure(
+        self, mock_get_now_playing: MagicMock
+    ) -> None:
         """
         Verify the /now-playing/ endpoint returns the expected paginated structure
         and movie data, including pass-through fields.
         """
         # Arrange: Mock the TMDB client call to return a predictable TMDB response
         from core.services.api_response import ApiResponse
+        mock_data: TMDBResponseData = self._create_mock_tmdb_response(total_pages=5)
         mock_response = ApiResponse(
             status_code=200,
-            data=self._create_mock_tmdb_response(total_pages=5)
+            data=mock_data
         )
         mock_get_now_playing.return_value = mock_response
 
@@ -87,16 +92,19 @@ class PaginatedMovieApiTests(TestCase):
         self.assertEqual(first_movie['vote_average'], 8.0)
 
     @patch('movie.services.movie_service.tmdb_client.get')
-    def test_upcoming_endpoint_returns_correct_structure(self, mock_tmdb_get):
+    def test_upcoming_endpoint_returns_correct_structure(
+        self, mock_tmdb_get: MagicMock
+    ) -> None:
         """
         Verify the /upcoming/ endpoint returns the expected paginated structure
         and movie data.
         """
         # Arrange
         from core.services.api_response import ApiResponse
+        mock_data: TMDBResponseData = self._create_mock_tmdb_response(total_pages=3)
         mock_response = ApiResponse(
             status_code=200,
-            data=self._create_mock_tmdb_response(total_pages=3)
+            data=mock_data
         )
         mock_tmdb_get.return_value = mock_response
 

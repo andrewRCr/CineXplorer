@@ -668,44 +668,11 @@ def search_movies(query: str, page: int = 1) -> PaginatedMovieResponseSchema:
         region="US"
     )
 
-    if not response.is_success():
-        handle_tmdb_api_error(
-            response,
-            operation='search_movies',
-            query=query,
-            page=page,
-            error_stage='tmdb_search_request'
-        )
+    # Use type-safe validator to get properly validated response
+    tmdb_response = validate_tmdb_paginated_response(response, TMDBMovieSearchResponse)
 
-    result = response.get_json_data()
-
-    # Type guard: ensure we have a valid dictionary
-    if not result:
-        logger.error(
-            "Failed to get valid response data from TMDB",
-            extra={
-                'correlation_id': response.correlation_id,
-                'operation': 'search_movies',
-                'query': query,
-                'page': page
-            }
-        )
-        raise HttpError(500, "Failed to get valid response data from TMDB")
-
-    movies = result.get('results', [])
-    # Type validation: TMDB API should return list of movies
-    if not isinstance(movies, list):
-        logger.error(
-            "TMDB API returned invalid results format",
-            extra={
-                'correlation_id': response.correlation_id,
-                'operation': 'search_movies',
-                'query': query,
-                'page': page,
-                'results_type': type(movies).__name__
-            }
-        )
-        raise HttpError(500, "Invalid response format from external API")
+    # Get the validated movies list
+    movies = tmdb_response.results
 
     logger.debug("Search movies processing", extra={
         'operation': 'search_movies',
@@ -715,20 +682,16 @@ def search_movies(query: str, page: int = 1) -> PaginatedMovieResponseSchema:
     })
 
     # Filter out non-visual content (conservative approach)
-    filtered_movies = []
+    filtered_movies: list[TMDBMovieBase] = []
     for movie in movies:
-        title = movie.get('title', '')
+        title = movie.title or ''
         title_lower = title.lower()
 
         # Skip if not a movie (search/movie should only return movies)
-        if movie.get('media_type') and movie.get('media_type') != 'movie':
-            logger.debug("Filtering out non-movie content", extra={
-                'operation': 'search_filter',
-                'title': title,
-                'media_type': movie.get('media_type'),
-                'reason': 'wrong_media_type'
-            })
-            continue
+        # Note: TMDBMovieBase doesn't have media_type field, but search/movie endpoint
+        # only returns movies anyway, so this check is redundant
+        # if hasattr(movie, 'media_type') and movie.media_type and movie.media_type != 'movie':
+        #     continue
 
         # Skip obvious non-visual content (very conservative)
         skip_terms = [
@@ -755,24 +718,21 @@ def search_movies(query: str, page: int = 1) -> PaginatedMovieResponseSchema:
         'filtered_out': len(movies) - len(filtered_movies)
     })
 
-    # Create filtered response data
-    total_results = result.get('total_results', 0)
-    total_results_int = (
-        int(total_results) if isinstance(total_results, (int, float, str)) and
-        str(total_results).isdigit() else 0
+    # Create filtered response using validated data
+    filtered_total_results = (
+        len(filtered_movies) +
+        (tmdb_response.total_results - len(movies))
     )
 
-    filtered_result = {
-        'page': result.get('page', page),
-        'total_pages': result.get('total_pages', 0),
-        'results': filtered_movies,
-        'total_results': (
-            len(filtered_movies) +
-            (total_results_int - len(movies))
-        )
-    }
+    # Create a new TMDBMovieSearchResponse with filtered results
+    filtered_response = TMDBMovieSearchResponse(
+        page=tmdb_response.page,
+        total_pages=tmdb_response.total_pages,
+        total_results=filtered_total_results,
+        results=filtered_movies
+    )
 
-    return create_paginated_movie_response_from_tmdb(filtered_result)
+    return create_paginated_movie_response_from_tmdb(filtered_response.model_dump())
 
 
 def discover_movies(
@@ -858,56 +818,34 @@ def discover_movies(
 
     response = tmdb_client.get("discover/movie", cast(dict[str, object], params))
 
-    # Use type-safe validator instead of manual error handling
+    # Use type-safe validator to get properly validated response
     tmdb_response = validate_tmdb_paginated_response(response, TMDBMovieSearchResponse)
-    result = tmdb_response.model_dump()
-    if not result:
-        logger.error(
-            "Failed to get valid response data from TMDB",
-            extra={
-                'correlation_id': response.correlation_id,
-                'operation': 'discover_movies',
-                'page': page
-            }
-        )
-        raise HttpError(500, "Failed to get valid response data from TMDB")
 
-    movies = result.get('results', [])
-    # Type validation: TMDB API should return list of movies
-    if not isinstance(movies, list):
-        logger.error(
-            "TMDB API returned invalid results format",
-            extra={
-                'correlation_id': response.correlation_id,
-                'operation': 'discover_movies',
-                'page': page,
-                'results_type': type(movies).__name__
-            }
-        )
-        raise HttpError(500, "Invalid response format from external API")
+    # Get the validated movies list
+    movies = tmdb_response.results
 
     # Log detailed discover response for debugging
     discover_metadata = {
         'operation': 'discover_response',
         'page': page,
         'movies_count': len(movies),
-        'total_results': result.get('total_results'),
-        'total_pages': result.get('total_pages')
+        'total_results': tmdb_response.total_results,
+        'total_pages': tmdb_response.total_pages
     }
 
     if movies:
         first_movie = movies[0]
-        discover_metadata.update({
-            'first_movie_release_date': first_movie.get('release_date'),
-            'first_movie_fields': list(first_movie.keys()),
-            'runtime_included': 'runtime' in first_movie
-        })
-        if 'runtime' in first_movie:
-            discover_metadata['first_movie_runtime'] = first_movie['runtime']
+        discover_metadata['first_movie_release_date'] = str(first_movie.release_date) if first_movie.release_date else 'None'
+        discover_metadata['first_movie_title'] = str(first_movie.title)
+        discover_metadata['first_movie_id'] = int(first_movie.id)
+        # Note: TMDBMovieBase doesn't include runtime field
+        # Runtime is only available in TMDBMovieDetail for individual movie requests
+        # if hasattr(first_movie, 'runtime') and first_movie.runtime:
+        #     discover_metadata['first_movie_runtime'] = first_movie.runtime
 
     logger.debug("Discover movies response processed", extra=discover_metadata)
 
-    return create_paginated_movie_response_from_tmdb(result)
+    return create_paginated_movie_response_from_tmdb(tmdb_response.model_dump())
 
 
 # =========================

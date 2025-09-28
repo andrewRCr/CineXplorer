@@ -72,12 +72,12 @@ jobs:
           COMPOSE_PROJECT_NAME: cinexplorer-typegen
         run: |
           # Export schema from running backend
-          docker compose exec backend python -c "
-from config.api import api
-import json
-schema = api.get_openapi_schema()
-print(json.dumps(schema, indent=2))
-" > frontend/openapi.json
+          docker compose exec backend python -c '
+          from config.api import api
+          import json
+          schema = api.get_openapi_schema()
+          print(json.dumps(schema, indent=2))
+          ' > frontend/openapi.json
           echo "OpenAPI schema exported successfully"
           echo "Schema size: $(wc -l frontend/openapi.json | awk '{print $1}') lines"
 

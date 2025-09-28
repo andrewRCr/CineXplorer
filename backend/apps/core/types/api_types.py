@@ -8,7 +8,7 @@ and specific Pydantic model validation.
 
 from __future__ import annotations
 
-from typing import TypeAlias, Any
+from typing import TypeAlias
 
 # Type aliases for TMDB API parameter handling
 TMDBParams: TypeAlias = dict[str, str | int | float | bool | None]
@@ -19,12 +19,12 @@ compatible with dict[str, object] interface.
 """
 
 # Pre-validation response type from ApiResponse.data
-TMDBResponseData: TypeAlias = dict[str, Any]
+TMDBResponseData: TypeAlias = dict[str, object]
 """
 Type alias for TMDB response data before Pydantic validation.
-Uses Any since we need to validate the structure with Pydantic models.
-This is one of the justified uses of Any - for external API data that
-will be immediately validated.
+Uses object for external API data structures that will be validated
+by Pydantic models. This maintains type safety while allowing for
+unknown external data structures.
 """
 
 __all__ = [

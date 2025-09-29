@@ -61,13 +61,14 @@ jobs:
         env:
           COMPOSE_PROJECT_NAME: cinexplorer-typegen
         run: |
-          # Start database first
-          docker compose -f infrastructure/docker-compose.yml up -d dev-db
+          # Start services with CI-specific configuration
+          echo "Starting services with type generation configuration..."
+          docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.typegen.yml up -d dev-db
 
           # Wait for database to be ready with proper retry logic
           echo "Waiting for database to be ready..."
           for i in {1..30}; do
-            if docker compose -f infrastructure/docker-compose.yml exec -T dev-db pg_isready -U postgres -d cinexplorer; then
+            if docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.typegen.yml exec -T dev-db pg_isready -U postgres -d cinexplorer; then
               echo "Database is ready!"
               break
             fi
@@ -77,32 +78,65 @@ jobs:
 
           # Start backend service
           echo "Starting backend service..."
-          docker compose -f infrastructure/docker-compose.yml up -d backend
+          docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.typegen.yml up -d backend
 
-          # Wait for backend service to be ready and run migrations
+          # Wait for backend service to start
           echo "Waiting for backend service to start..."
-          sleep 10
+          sleep 5
 
-          # Check if backend is running
-          docker compose -f infrastructure/docker-compose.yml ps backend
+          # Check backend status and logs if it's not running
+          echo "Checking backend container status..."
+          docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.typegen.yml ps backend
 
-          # Wait for database and run migrations
+          # Check if backend container is running, if not show logs
+          if ! docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.typegen.yml ps backend | grep -q "running"; then
+            echo "Backend container is not running! Checking logs:"
+            docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.typegen.yml logs backend
+            echo "Attempting to restart backend..."
+            docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.typegen.yml restart backend
+            sleep 10
+            docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.typegen.yml ps backend
+          fi
+
+          # Wait for database and run migrations with retry
           echo "Running database migrations..."
-          docker compose -f infrastructure/docker-compose.yml exec -T backend python manage.py wait_for_db
-          docker compose -f infrastructure/docker-compose.yml exec -T backend python manage.py migrate
+          for i in {1..5}; do
+            if docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.typegen.yml exec -T backend python manage.py wait_for_db; then
+              echo "Database connection successful, running migrations..."
+              docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.typegen.yml exec -T backend python manage.py migrate
+              break
+            else
+              echo "Failed to connect to database, attempt $i/5"
+              sleep 5
+            fi
+          done
 
           # Wait for Django server to fully start and be ready for API calls
           echo "Waiting for Django server to be ready..."
-          for i in {1..20}; do
-            if docker compose -f infrastructure/docker-compose.yml exec -T backend python manage.py check; then
+          for i in {1..15}; do
+            if docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.typegen.yml exec -T backend python manage.py check; then
               echo "Django server is ready!"
               break
+            elif [ $i -eq 15 ]; then
+              echo "Django server failed to start after 15 attempts. Showing logs:"
+              docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.typegen.yml logs backend
+              exit 1
+            else
+              echo "Django not ready yet, waiting... ($i/15)"
+              sleep 3
             fi
-            echo "Django not ready yet, waiting... ($i/20)"
-            sleep 3
           done
 
-          echo "Backend service should now be ready for API calls"
+          # Final verification that backend is running
+          echo "Final backend status check:"
+          docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.typegen.yml ps backend
+          if ! docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.typegen.yml ps backend | grep -q "running"; then
+            echo "ERROR: Backend is still not running after all setup steps!"
+            docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.typegen.yml logs backend
+            exit 1
+          fi
+
+          echo "Backend service is now ready for API calls"
 
       - name: Export OpenAPI schema
         env:
@@ -110,11 +144,11 @@ jobs:
         run: |
           # Verify backend is running
           echo "Checking backend status..."
-          docker compose -f infrastructure/docker-compose.yml ps backend
+          docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.typegen.yml ps backend
 
           # Export schema from running backend
           echo "Exporting OpenAPI schema..."
-          docker compose -f infrastructure/docker-compose.yml exec -T backend python -c '
+          docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.typegen.yml exec -T backend python -c '
           from config.api import api
           import json
           schema = api.get_openapi_schema()
@@ -125,7 +159,7 @@ jobs:
           if [ ! -f frontend/openapi.json ] || [ ! -s frontend/openapi.json ]; then
             echo "Error: OpenAPI schema export failed or file is empty"
             echo "Backend logs:"
-            docker compose -f infrastructure/docker-compose.yml logs backend --tail=20
+            docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.typegen.yml logs backend --tail=20
             exit 1
           fi
 
@@ -199,7 +233,7 @@ jobs:
           COMPOSE_PROJECT_NAME: cinexplorer-typegen
         run: |
           echo "Cleaning up Docker resources..."
-          docker compose -f infrastructure/docker-compose.yml down -v
+          docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.typegen.yml down -v
           # Also clean up any remaining containers with the project name
           docker container ls -aq --filter "name=cinexplorer-typegen" | xargs -r docker rm -f
           docker volume ls -q --filter "name=cinexplorer-typegen" | xargs -r docker volume rm

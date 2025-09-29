@@ -20,7 +20,7 @@ from __future__ import annotations
 # from typing import Any  # Removed per Quality Gate #6
 
 from django.utils.decorators import method_decorator
-from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 
 import secrets
 from django.contrib.auth.models import AbstractUser, AnonymousUser
@@ -151,9 +151,15 @@ class JwtSetCookieMixin:
                                          **kwargs)  # type: ignore[misc]  # DRF mixin call
 
 
-@method_decorator(csrf_exempt, name='dispatch')
+@method_decorator(ensure_csrf_cookie, name='dispatch')
 class JWTCookieTokenObtainPairView(JwtSetCookieMixin, TokenObtainPairView):
-    """ Extends TokenObtainPairView to save response to http-only cookie. """
+    """
+    Extends TokenObtainPairView to save response to http-only cookie.
+
+    CSRF protection is enforced for cookie-based authentication to prevent
+    CSRF attacks. The frontend must send the X-CSRFToken header with login requests.
+    The ensure_csrf_cookie decorator guarantees a CSRF cookie is set for the frontend.
+    """
     permission_classes = [permissions.AllowAny]
     serializer_class = CustomTokenObtainPairSerializer
 
@@ -167,10 +173,25 @@ class LogOutAPIView(APIView):
     """ Defines a POST request view that logs out the user by clearing the JWT cookies. """
 
     def post(self, request: Request, format: str | None = None) -> Response:
-        """ Clear the JWT cookies on logout. """
+        """ Clear the JWT cookies on logout using delete_cookie with matching attributes. """
         response = Response("Logged out successfully.")
-        response.set_cookie(settings.SIMPLE_JWT['REFRESH_TOKEN_NAME'], '', expires=0)
-        response.set_cookie(settings.SIMPLE_JWT['ACCESS_TOKEN_NAME'], '', expires=0)
+
+        # Delete cookies with the same attributes used when setting them
+        # This ensures reliable cookie removal across different browsers
+        cookie_kwargs = {
+            'path': '/',  # Default path
+            'domain': None,  # Use default domain
+            'samesite': settings.SIMPLE_JWT.get('JWT_COOKIE_SAMESITE', 'Lax'),
+        }
+
+        response.delete_cookie(
+            settings.SIMPLE_JWT['REFRESH_TOKEN_NAME'],
+            **cookie_kwargs
+        )
+        response.delete_cookie(
+            settings.SIMPLE_JWT['ACCESS_TOKEN_NAME'],
+            **cookie_kwargs
+        )
 
         return response
 

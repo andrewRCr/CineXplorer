@@ -6,8 +6,7 @@ omit =
     */site-packages/*
     */migrations/*
     */tests/*
-    */test_*.py
-    manage.py
+    */manage.py
     */settings/*
     */config/wsgi.py
     */config/asgi.py
@@ -32,6 +31,10 @@ exclude_lines =
 show_missing = True
 skip_covered = False
 precision = 2
+fail_under = 80
 
 [html]
 directory = htmlcov
+
+[xml]
+output = coverage.xml

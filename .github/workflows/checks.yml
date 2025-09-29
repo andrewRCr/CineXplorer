@@ -68,8 +68,10 @@ jobs:
       - name: Run backend tests
         env:
           COMPOSE_PROJECT_NAME: cinexplorer-ci
+          COVERAGE_RCFILE: backend/.coveragerc
         run: |
-          docker compose exec backend python manage.py test --keepdb --settings=config.settings_test
+          echo "Coverage config: $COVERAGE_RCFILE"
+          docker compose exec -e COVERAGE_RCFILE=backend/.coveragerc backend python manage.py test --keepdb --settings=config.settings_test
 
       - name: Run backend lint
         env:

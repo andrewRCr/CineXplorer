@@ -44,6 +44,7 @@ Usage Examples:
 import os
 import sys
 import logging.handlers
+from typing import TypedDict
 
 
 class HealthCheckFilter(logging.Filter):
@@ -103,8 +104,19 @@ class HealthCheckFilter(logging.Filter):
 # Valid log levels for environment variable validation
 VALID_LOG_LEVELS = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 
-# Log rotation configuration
-LOG_ROTATION_CONFIG: dict[str, int | str] = {
+
+# Type-safe log rotation configuration
+class LogRotationConfig(TypedDict):
+    """Type definition for log rotation configuration."""
+
+    max_bytes: int
+    backup_count_default: int
+    backup_count_errors: int
+    encoding: str
+
+
+# Log rotation configuration with precise types
+LOG_ROTATION_CONFIG: LogRotationConfig = {
     "max_bytes": 10 * 1024 * 1024,  # 10MB per file
     "backup_count_default": 5,  # Keep 5 backup files for most logs
     "backup_count_errors": 10,  # Keep 10 backup files for errors (more important)
@@ -390,9 +402,13 @@ def get_logging_config(log_dir=None):
     raw_console_level = os.getenv("DJANGO_CONSOLE_LOG_LEVEL", console_default)
     console_log_level = validate_log_level(raw_console_level)
 
-    # Base directory for log files (not used in CI)
+    # Base directory for log files (not used in CI or testing)
     if log_dir is None:
         log_dir = "/backend/logs"
+
+    # Ensure log directory exists before creating handlers (unless in CI/testing)
+    if not is_ci and not is_testing:
+        os.makedirs(log_dir, mode=0o755, exist_ok=True)
 
     return {
         "version": 1,

@@ -35,7 +35,7 @@ class CustomUserModelBackend(ModelBackend):
             username = kwargs.get(UserModel.USERNAME_FIELD,
                                   kwargs.get(UserModel.EMAIL_FIELD))
         if username is None or password is None:
-            return
+            return None
         try:
             # TODO: re-enable email_verified requirement once verification
             # in place!

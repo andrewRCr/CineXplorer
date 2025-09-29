@@ -20,6 +20,8 @@ class ErrorCodes:
     These constants provide shared error codes between Django backend and
     TypeScript frontend for consistent user experience.
     """
+    __slots__ = ()  # Prevent instance dict to lock down mutability
+
     # Authentication & Authorization
     EMAIL_NOT_VERIFIED = 'email_not_verified'
     INVALID_CREDENTIALS = 'invalid_credentials'
@@ -43,6 +45,15 @@ class ErrorCodes:
     SERVICE_UNAVAILABLE = 'service_unavailable'
     RATE_LIMITED = 'rate_limited'
 
+    def __setattr__(self, name: str, value: object) -> None:
+        """Guard against accidental writes to the instance."""
+        raise AttributeError(
+            "ErrorCodes is read-only; modify at the source or migrate to Enum."
+        )
+
 
 # Global instance for backward compatibility with existing code
 ERROR_CODES = ErrorCodes()
+
+# Explicit public surface
+__all__ = ("ErrorCodes", "ERROR_CODES")

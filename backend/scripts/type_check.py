@@ -19,28 +19,50 @@ Usage:
 """
 from __future__ import annotations
 
+import os
 import subprocess
 import sys
 from pathlib import Path
 
 
-def run_command(cmd: list[str], description: str) -> tuple[int, str]:
+def run_command(cmd: list[str] | str, description: str) -> tuple[int, str]:
     """Run a command and return (returncode, combined stdout/stderr)."""
     print(f"\n> {description}...")
     try:
         # Set up Django environment for MyPy commands
-        import os
         env = os.environ.copy()
         env["DJANGO_SETTINGS_MODULE"] = "config.settings"
 
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            cwd=Path(__file__).parent.parent,  # Run from backend/ directory
-            env=env,
-            shell=True  # Required for Windows compatibility with npx
-        )
+        # Determine if we need shell mode (for npx on Windows)
+        use_shell = False
+        if isinstance(cmd, list) and len(cmd) > 0 and cmd[0] in ('npx', 'npm'):
+            use_shell = sys.platform == 'win32'
+        elif isinstance(cmd, str):
+            use_shell = True
+
+        # Convert list to string for shell=True, or keep as list for shell=False
+        if use_shell and isinstance(cmd, list):
+            # Join list into a properly quoted command string
+            cmd_str = ' '.join(cmd)
+            result = subprocess.run(
+                cmd_str,
+                capture_output=True,
+                text=True,
+                cwd=Path(__file__).parent.parent,
+                env=env,
+                shell=True
+            )
+        else:
+            # Use list directly without shell
+            result = subprocess.run(
+                cmd if isinstance(cmd, list) else [cmd],
+                capture_output=True,
+                text=True,
+                cwd=Path(__file__).parent.parent,
+                env=env,
+                shell=False
+            )
+
         output = result.stdout + result.stderr
         return result.returncode, output
     except Exception as e:

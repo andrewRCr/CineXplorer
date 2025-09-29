@@ -26,7 +26,7 @@ steps:
   **Step 2: Find Relevant Task Documentation**
   - Check `_docs/tasks/` for active task lists related to current work
   - Look for task files that reference modified files or related functionality
-  - Use `find _docs/tasks -name "*.md" -exec grep -l "[current-feature]" {} \;` to find related tasks
+  - Use `find _docs/tasks -name "*.md" -exec grep -l "user-auth" {} \;` to find related tasks (replace "user-auth" with your actual feature name, e.g., "payment-integration", "movie-api", etc.)
 
   **Step 3: Analyze Task Progress Context**
   - Compare actual work completed against task documentation

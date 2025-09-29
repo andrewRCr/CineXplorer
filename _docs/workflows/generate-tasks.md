@@ -27,6 +27,11 @@ To guide an AI assistant in creating a detailed, step-by-step task list in Markd
 13. **Stage Initial Documentation:** Stage the new Sub-PRD, the new task list, and the updated `PROJECT-STATUS.md` file using `git add`.
 14. **Propose Initial Commit:** Present the staged files to the user and propose a commit message for the initial documentation. Await explicit user approval before executing the commit, in accordance with `DEVELOPMENT-RULES.md`.
 
+    **Safety Note:** Before committing, you can:
+    - Preview staged changes: `git diff --staged`
+    - Unstage files if needed: `git restore --staged <files>` (or `git reset HEAD <files>`)
+    - Review what will be committed: `git status`
+
 ## Interaction Model
 
 The process explicitly requires a pause after generating parent tasks to get user confirmation ("Go") before proceeding to generate the detailed sub-tasks. This ensures the high-level plan aligns with user expectations before diving into details.

@@ -80,9 +80,10 @@ def fetch_movie_runtimes(movie_ids: list[int]) -> dict[int, int]:
                 f"Failed to fetch runtime for movie {movie_id}", extra={
                     'operation': 'fetch_runtime',
                     'movie_id': movie_id,
-                    'error_status': e.status_code,
-                    'error_message': e.message
-                }
+                    'error_status': getattr(e, 'status_code', None),
+                    'error_message': getattr(e, 'message', str(e))
+                },
+                exc_info=True
             )
             runtimes[movie_id] = 0
         except Exception as e:

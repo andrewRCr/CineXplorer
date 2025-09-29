@@ -15,10 +15,12 @@ class ZeptomailService:
     """Service for sending emails via Zeptomail API."""
 
     def __init__(self) -> None:
-        self.api_key: str = settings.ZEPTOMAIL_API_KEY
-        self.base_url: str = "https://api.zeptomail.com/v1.1"
-        # Development mode flag - also enable for testing
-        self.dev_mode: bool = not self.api_key or self.api_key == "" or settings.TESTING
+        # Safely read settings with defaults to avoid AttributeError
+        self.api_key: str = getattr(settings, "ZEPTOMAIL_API_KEY", "")
+        self.base_url: str = getattr(settings, "ZEPTOMAIL_BASE_URL", "https://api.zeptomail.com/v1.1")
+        testing: bool = getattr(settings, "TESTING", False)
+        # Development mode flag - enable when no API key or in testing
+        self.dev_mode: bool = not self.api_key or testing
 
     def _get_headers(self) -> dict[str, str]:
         """Get headers for Zeptomail API requests."""

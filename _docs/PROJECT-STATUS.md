@@ -34,6 +34,15 @@ CineXplorer is a movie discovery web application in active development. The core
 - Containerized Docker setup for all services
 - Caddy reverse proxy for development environment
 
+### ✅ API Layer Modernization (Phase 1)
+
+- Movie domain fully migrated from DRF to Django Ninja with complete type safety
+- Pydantic schemas replacing DRF serializers for all movie endpoints
+- Auto-generated TypeScript types from Django Ninja OpenAPI schema
+- Comprehensive quality gates: zero linting violations, full test coverage, strict type checking
+- Hybrid Django Ninja + DRF architecture validated and production-ready
+- Zero technical debt in movie app and core infrastructure
+
 ### ✅ Logging System
 
 - Django backend logging with configurable levels and request correlation
@@ -56,14 +65,17 @@ CineXplorer is a movie discovery web application in active development. The core
 
 ### High Priority
 
-- **API Layer Modernization with Django Ninja** (In Planning - Branch: `feature/api-layer-modernization`):
-  - Replace DRF with Django Ninja to achieve strict type-safety in the API layer.
-  - Establish a modern, type-driven API design pattern for the project.
-  - Create a workflow for auto-generating TypeScript types from backend schemas.
+- **Authentication Modernization** (Next Phase - Deferred):
+  - Migrate from custom User model to django-allauth to resolve django-stubs mypy --strict bug
+  - Enable comprehensive type checking across entire backend codebase
+  - Implement Google/GitHub OAuth for reduced demo friction and portfolio enhancement
+  - Preserve existing email verification workflow with ZeptoMail integration
+  - **Blocks**: API Layer Modernization Phase 2 (requires auth migration first)
 
-- **Backend Modernization & Type Safety** (On Hold):
-  - This feature is paused pending the completion of the API Layer Modernization.
-  - Remaining tasks (SOLID refactoring, security hardening) will be re-evaluated and resumed after the API migration.
+- **API Layer Modernization Phase 2** (Deferred - After Auth Modernization):
+  - Migrate UserMovieData and User/Accounts domains from DRF to Django Ninja
+  - Apply Phase 1 patterns and lessons learned to remaining API endpoints
+  - Complete the full API layer modernization with unified Django Ninja architecture
 
 - **User Movie Lists System** (In Planning):
   - Backend models and API for custom movie collections.
@@ -111,4 +123,4 @@ The project follows a structured approach using:
 - Systematic testing and code quality checks.
 - Regular PROJECT-STATUS updates as features progress through planning → development → completion.
 
-_Last updated: 2025-09-25_
+_Last updated: 2025-09-29_

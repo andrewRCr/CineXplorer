@@ -125,8 +125,8 @@ This task list currently covers **Phase 1 (Proof of Concept)** of the API Layer 
   - [x] 6.4 Thoroughly test all core and movie-related features in the running application to confirm frontend integration works correctly.
 
 - [ ] 7.0 **Phase 1 Completion and Authentication Modernization Preparation**
-  - [ ] 7.1 Update PROJECT-STATUS.md with Phase 1 completion status and achievements.
-  - [ ] 7.2 Update prd-api-layer-modernization-p1.md with Phase 2 scope (full api-layer migration, i.e., UserMovieData and Accounts/User to Django-Ninja) and next steps, using insights gained from Phase 1's Core / Movie migration (see notes/notes-api-layer-modernization-p1.md). Note that Phase 2 is deferred until after Authentication Modernization is complete.
+  - [x] 7.1 Update PROJECT-STATUS.md with Phase 1 completion status and achievements.
+  - [x] 7.2 Create prd-api-layer-modernization-p2.md for Phase 2 scope (UserMovieData and Accounts/User migration to Django-Ninja), using insights gained from Phase 1's Core/Movie migration. Phase 2 is deferred until after Authentication Modernization is complete.
   - [ ] 7.3 Create comprehensive atomic commit for Phase 1 completion with proper task references.
   - [ ] 7.4 Merge feature/api-layer-modernization branch to main after all quality gates pass.
   - [ ] 7.5 Follow completion/archive workflow for Phase 1 documentation.

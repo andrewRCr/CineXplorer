@@ -154,7 +154,7 @@ class PublicUserApiTests(TestCase):
     def test_create_token_blank_email(self) -> None:
         """Tests that an error is returned if email is blank and no username provided."""
 
-        authPayload: dict[str, str] = {'username': '', 'password': 'testPassword'}
+        authPayload: dict[str, str] = {'email': '', 'password': 'testPassword'}
         res = self.client.post(TOKEN_URL, authPayload)
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
 
@@ -209,34 +209,22 @@ class PrivateUserApiTests(TestCase):
 
     def test_update_profile_no_csrf_authenticated(self):
         """
-        Authenticated PATCH to profile without CSRF token.
-        Expect 403 Forbidden due to CSRF enforcement.
-        Uses Django's Client for accurate CSRF simulation.
+        Authenticated PATCH via Django Client against a JWT-cookie API will result in 401 Unauthorized (missing JWT).
+        Django's session authentication doesn't provide the JWT cookie needed by the API.
         """
 
         client = Client()
-        print("[DEBUG] All users:", list(get_user_model().objects.all()))
-        user_exists = get_user_model().objects.filter(username=self.user.username).exists()
-        print(f"[DEBUG] Test user exists: {user_exists}")
-        print("[DEBUG] Test user is_active:", self.user.is_active)
-        print("[DEBUG] Test user backend:", getattr(self.user, 'backend', None))
-        # Try login with username
-        logged_in_username = client.login(
-            username=self.user.username, password='testpass123')
-        print("[DEBUG] Login with username result:", logged_in_username)
-        # Try login with email
-        logged_in_email = client.login(email=self.user.email, password='testpass123')
-        print("[DEBUG] Login with email result:", logged_in_email)
-        print("[DEBUG] Client session:", client.session.items())
-        assert logged_in_username or logged_in_email, "Login failed in test setup"
+        # Login via Django's session auth (not JWT)
+        logged_in = client.login(username=self.user.username, password='testpass123')
+        assert logged_in, "Login failed in test setup"
+
         payload = {
             'first_name': 'Updated',
             'last_name': 'Name',
             'password': 'newPrivatePass123'
         }
+        # This will fail with 401 because Django session auth doesn't provide JWT cookie
         res = client.patch(ME_URL, payload)
-        print("[DEBUG] PATCH response status:", res.status_code)
-        print("[DEBUG] PATCH response content:", res.content)
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_update_profile_with_csrf_authenticated(self):
@@ -364,10 +352,12 @@ class AuthCookieIntegrationTests(TestCase):
         old_refresh_cookie = self.client.cookies.get('refresh_token')
         old_refresh = old_refresh_cookie.value if old_refresh_cookie else None
         REFRESH_URL = '/api/token/refresh/'
-        response = self.client.post(REFRESH_URL, {'refresh': old_refresh})
+        # Rely on HttpOnly refresh cookie only - no body needed
+        response = self.client.post(REFRESH_URL)
         self.assertEqual(response.status_code, 200)
         new_refresh_cookie = response.cookies.get('refresh_token')
         new_refresh = new_refresh_cookie.value if new_refresh_cookie else None
+        # Assert the refresh token cookie value changed
         self.assertNotEqual(old_refresh, new_refresh)
 
     def test_csrf_token_endpoint_sets_cookie(self):

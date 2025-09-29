@@ -85,15 +85,21 @@ class PaginatedTMDBView(APIView):
             data = tmdb_response
 
         # Attach user_movie_data if authenticated
-        if request.auth:
-            results = data.get('results', [])
-            if not isinstance(results, list):
-                results = []
-            movie_ids = [movie['id'] for movie in results]
-            user_movie_data_map = get_user_movie_data_bulk(movie_ids, request.user)
-            for movie in results:
-                movie_id = movie['id']
-                movie['user_movie_data'] = user_movie_data_map.get(movie_id)
+        results = data.get('results', [])
+        if not isinstance(results, list):
+            results = []
+
+        if request.auth and results:
+            # Safely extract movie IDs, filtering out None values
+            movie_ids = [movie.get('id') for movie in results if movie.get('id') is not None]
+
+            if movie_ids:
+                user_movie_data_map = get_user_movie_data_bulk(movie_ids, request.user)
+                for movie in results:
+                    movie_id = movie.get('id')
+                    if movie_id is not None:
+                        movie['user_movie_data'] = user_movie_data_map.get(movie_id)
+
         return Response(data)
 
     def get_additional_params(self, request: Request) -> dict[str, object]:

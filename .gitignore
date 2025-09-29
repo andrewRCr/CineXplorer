@@ -218,10 +218,6 @@ _docs/notes/
 
 # Note: frontend/openapi.json is now vendored (not ignored) to prevent type drift
 
-# AI tool settings (personal development environment preferences)
-.claude/
-.warp/
-
 # Note: _docs/ai-instructions/, _docs/workflows/, and other high-level docs are included
 # to showcase systematic AI-assisted development methodology
 

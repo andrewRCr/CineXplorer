@@ -1,13 +1,5 @@
 """
-Shared Erro    # Authentication errors
-    EMAIL_NOT_VERIFIED = 'email_not_verified'
-    INVALID_CREDENTIALS = 'invalid_credentials'
-    ACCOUNT_DISABLED = 'account_disabled'
-    ACCOUNT_LOCKED = 'account_locked'
-    INVALID_AUTHORIZATION = 'invalid_authorization'
-    INVALID_REFRESH_TOKEN = 'invalid_refresh_token'
-    INVALID_AUTHORIZATION = 'invalid_authorization'
-    INVALID_REFRESH_TOKEN = 'invalid_refresh_token'stants
+Shared Error Code Constants
 
 Centralized error codes used across CineXplorer frontend and backend.
 This ensures consistency and prevents drift between error definitions.
@@ -16,12 +8,15 @@ This file should be kept in sync with frontend/shared/error-codes.ts
 """
 
 from __future__ import annotations
-from typing import Literal
+
+from enum import StrEnum
+from types import MappingProxyType
+from typing import Final, Literal, Mapping
 
 
-# Error Codes - Keep in sync with frontend/shared/error-codes.ts
-class ERROR_CODES:
-    """Error codes used throughout the CineXplorer API"""
+# Error code enums using StrEnum for type safety and better IDE support
+class ErrorCode(StrEnum):
+    """Error codes used throughout the CineXplorer API."""
 
     # Authentication errors
     EMAIL_NOT_VERIFIED = 'email_not_verified'
@@ -49,9 +44,8 @@ class ERROR_CODES:
     RATE_LIMITED = 'rate_limited'
 
 
-# Error Categories
-class ERROR_CATEGORIES:
-    """Error categories for better organization"""
+class ErrorCategory(StrEnum):
+    """Error categories for better organization."""
 
     AUTHENTICATION = 'authentication'
     USER_MANAGEMENT = 'user_management'
@@ -59,52 +53,104 @@ class ERROR_CATEGORIES:
     API_GENERAL = 'api_general'
 
 
-# Type hints for better IDE support
-ErrorCode = Literal[
-    'email_not_verified', 'invalid_credentials', 'account_disabled', 'account_locked',
-    'invalid_authorization', 'invalid_refresh_token',
-    'username_exists', 'email_exists', 'invalid_username', 'weak_password',
-    'movie_not_found', 'invalid_rating', 'duplicate_rating',
-    'validation_error', 'permission_denied', 'resource_not_found', 'rate_limited'
-]
+# Legacy aliases for backward compatibility (deprecated - use ErrorCode enum directly)
+class ERROR_CODES:
+    """
+    Deprecated: Use ErrorCode enum instead.
 
-ErrorCategory = Literal['authentication', 'user_management', 'movie_data', 'api_general']
+    Legacy namespace class maintained for backward compatibility.
+    Will be removed in auth-modernization phase.
+    """
+
+    EMAIL_NOT_VERIFIED = ErrorCode.EMAIL_NOT_VERIFIED
+    INVALID_CREDENTIALS = ErrorCode.INVALID_CREDENTIALS
+    ACCOUNT_DISABLED = ErrorCode.ACCOUNT_DISABLED
+    ACCOUNT_LOCKED = ErrorCode.ACCOUNT_LOCKED
+    INVALID_AUTHORIZATION = ErrorCode.INVALID_AUTHORIZATION
+    INVALID_REFRESH_TOKEN = ErrorCode.INVALID_REFRESH_TOKEN
+    USERNAME_EXISTS = ErrorCode.USERNAME_EXISTS
+    EMAIL_EXISTS = ErrorCode.EMAIL_EXISTS
+    INVALID_USERNAME = ErrorCode.INVALID_USERNAME
+    WEAK_PASSWORD = ErrorCode.WEAK_PASSWORD
+    MOVIE_NOT_FOUND = ErrorCode.MOVIE_NOT_FOUND
+    INVALID_RATING = ErrorCode.INVALID_RATING
+    DUPLICATE_RATING = ErrorCode.DUPLICATE_RATING
+    VALIDATION_ERROR = ErrorCode.VALIDATION_ERROR
+    PERMISSION_DENIED = ErrorCode.PERMISSION_DENIED
+    RESOURCE_NOT_FOUND = ErrorCode.RESOURCE_NOT_FOUND
+    RATE_LIMITED = ErrorCode.RATE_LIMITED
 
 
-# Maps error codes to their categories
-ERROR_CODE_TO_CATEGORY: dict[str, ErrorCategory] = {
+class ERROR_CATEGORIES:
+    """
+    Deprecated: Use ErrorCategory enum instead.
+
+    Legacy namespace class maintained for backward compatibility.
+    Will be removed in auth-modernization phase.
+    """
+
+    AUTHENTICATION = ErrorCategory.AUTHENTICATION
+    USER_MANAGEMENT = ErrorCategory.USER_MANAGEMENT
+    MOVIE_DATA = ErrorCategory.MOVIE_DATA
+    API_GENERAL = ErrorCategory.API_GENERAL
+
+
+# Immutable mapping from error codes to categories
+_ERROR_CODE_TO_CATEGORY_DICT: dict[str, ErrorCategory] = {
     # Authentication errors
-    'email_not_verified': ERROR_CATEGORIES.AUTHENTICATION,
-    'invalid_credentials': ERROR_CATEGORIES.AUTHENTICATION,
-    'account_disabled': ERROR_CATEGORIES.AUTHENTICATION,
-    'account_locked': ERROR_CATEGORIES.AUTHENTICATION,
-    'invalid_authorization': ERROR_CATEGORIES.AUTHENTICATION,
-    'invalid_refresh_token': ERROR_CATEGORIES.AUTHENTICATION,
-
+    ErrorCode.EMAIL_NOT_VERIFIED: ErrorCategory.AUTHENTICATION,
+    ErrorCode.INVALID_CREDENTIALS: ErrorCategory.AUTHENTICATION,
+    ErrorCode.ACCOUNT_DISABLED: ErrorCategory.AUTHENTICATION,
+    ErrorCode.ACCOUNT_LOCKED: ErrorCategory.AUTHENTICATION,
+    ErrorCode.INVALID_AUTHORIZATION: ErrorCategory.AUTHENTICATION,
+    ErrorCode.INVALID_REFRESH_TOKEN: ErrorCategory.AUTHENTICATION,
     # User management errors
-    'username_exists': ERROR_CATEGORIES.USER_MANAGEMENT,
-    'email_exists': ERROR_CATEGORIES.USER_MANAGEMENT,
-    'invalid_username': ERROR_CATEGORIES.USER_MANAGEMENT,
-    'weak_password': ERROR_CATEGORIES.USER_MANAGEMENT,
-
+    ErrorCode.USERNAME_EXISTS: ErrorCategory.USER_MANAGEMENT,
+    ErrorCode.EMAIL_EXISTS: ErrorCategory.USER_MANAGEMENT,
+    ErrorCode.INVALID_USERNAME: ErrorCategory.USER_MANAGEMENT,
+    ErrorCode.WEAK_PASSWORD: ErrorCategory.USER_MANAGEMENT,
     # Movie data errors
-    'movie_not_found': ERROR_CATEGORIES.MOVIE_DATA,
-    'invalid_rating': ERROR_CATEGORIES.MOVIE_DATA,
-    'duplicate_rating': ERROR_CATEGORIES.MOVIE_DATA,
-
+    ErrorCode.MOVIE_NOT_FOUND: ErrorCategory.MOVIE_DATA,
+    ErrorCode.INVALID_RATING: ErrorCategory.MOVIE_DATA,
+    ErrorCode.DUPLICATE_RATING: ErrorCategory.MOVIE_DATA,
     # General API errors
-    'validation_error': ERROR_CATEGORIES.API_GENERAL,
-    'permission_denied': ERROR_CATEGORIES.API_GENERAL,
-    'resource_not_found': ERROR_CATEGORIES.API_GENERAL,
-    'rate_limited': ERROR_CATEGORIES.API_GENERAL,
+    ErrorCode.VALIDATION_ERROR: ErrorCategory.API_GENERAL,
+    ErrorCode.PERMISSION_DENIED: ErrorCategory.API_GENERAL,
+    ErrorCode.RESOURCE_NOT_FOUND: ErrorCategory.API_GENERAL,
+    ErrorCode.RATE_LIMITED: ErrorCategory.API_GENERAL,
 }
 
+ERROR_CODE_TO_CATEGORY: Final[Mapping[str, ErrorCategory]] = MappingProxyType(
+    _ERROR_CODE_TO_CATEGORY_DICT
+)
 
-def is_error_in_category(error_code: str, category: ErrorCategory) -> bool:
-    """Check if an error code belongs to a category"""
-    return ERROR_CODE_TO_CATEGORY.get(error_code) == category
+
+def is_error_in_category(error_code: ErrorCode | str, category: ErrorCategory) -> bool:
+    """
+    Check if an error code belongs to a category.
+
+    Args:
+        error_code: Known ErrorCode enum member or string (for forward compatibility)
+        category: ErrorCategory to check against
+
+    Returns:
+        True if the error code belongs to the specified category
+
+    Note: Accepts str for forward compatibility with unknown/future error codes.
+    """
+    return ERROR_CODE_TO_CATEGORY.get(str(error_code)) == category
 
 
-def get_error_category(error_code: str) -> ErrorCategory:
-    """Get category for an error code"""
-    return ERROR_CODE_TO_CATEGORY.get(error_code, ERROR_CATEGORIES.API_GENERAL)
+def get_error_category(error_code: ErrorCode | str) -> ErrorCategory:
+    """
+    Get category for an error code.
+
+    Args:
+        error_code: Known ErrorCode enum member or string (for forward compatibility)
+
+    Returns:
+        ErrorCategory for the code, defaults to API_GENERAL for unknown codes
+
+    Note: Accepts str for forward compatibility with unknown/future error codes.
+    """
+    return ERROR_CODE_TO_CATEGORY.get(str(error_code), ErrorCategory.API_GENERAL)

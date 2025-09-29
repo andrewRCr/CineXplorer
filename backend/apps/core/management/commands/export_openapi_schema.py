@@ -44,8 +44,18 @@ class Command(BaseCommand):
                 indent = options["indent"]
                 output = json.dumps(schema, indent=indent)
 
-            # Output to stdout for capture by shell redirection
-            self.stdout.write(output)
+            # Validate JSON before outputting
+            try:
+                json.loads(output)
+            except json.JSONDecodeError as json_error:
+                self.stderr.write(
+                    self.style.ERROR(f"Generated invalid JSON: {json_error}")
+                )
+                raise
+
+            # Output ONLY the JSON to stdout (no extra formatting/styling)
+            # Use print to avoid any Django styling that might corrupt the output
+            print(output)
 
         except Exception as e:
             self.stderr.write(

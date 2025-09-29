@@ -61,41 +61,14 @@ jobs:
         env:
           COMPOSE_PROJECT_NAME: cinexplorer-typegen
         run: |
-          # Start services with CI-specific configuration
-          echo "Starting services with type generation configuration..."
-          docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.typegen.yml up -d dev-db
+          # Use the same CI configuration as checks.yml for consistency
+          echo "Starting services with standard CI configuration..."
+          docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.ci.yml up -d dev-db backend
 
-          # Wait for database to be ready with proper retry logic
-          echo "Waiting for database to be ready..."
-          for i in {1..30}; do
-            if docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.typegen.yml exec -T dev-db pg_isready -U postgres -d cinexplorer; then
-              echo "Database is ready!"
-              break
-            fi
-            echo "Database not ready yet, waiting... ($i/30)"
-            sleep 2
-          done
-
-          # Start backend service
-          echo "Starting backend service..."
-          docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.typegen.yml up -d backend
-
-          # Wait for backend service to start
-          echo "Waiting for backend service to start..."
-          sleep 5
-
-          # Check backend status and logs if it's not running
-          echo "Checking backend container status..."
-          docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.typegen.yml ps backend
-
-          # Simple approach: just wait for database and run migrations
-          echo "Running database migrations..."
-          docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.typegen.yml exec -T backend python manage.py wait_for_db
-          docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.typegen.yml exec -T backend python manage.py migrate
-
-          # Give Django a moment to fully start after migrations
-          echo "Allowing Django server to fully initialize..."
-          sleep 10
+          # Wait for database and run migrations (same as checks.yml pattern)
+          echo "Waiting for database and running migrations..."
+          docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.ci.yml exec -T backend python manage.py wait_for_db
+          docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.ci.yml exec -T backend python manage.py migrate
 
           echo "Backend service is now ready for API calls"
 
@@ -103,20 +76,36 @@ jobs:
         env:
           COMPOSE_PROJECT_NAME: cinexplorer-typegen
         run: |
-          # Export schema from running backend using proper Django management command
+          # Export schema using Django management command (no server needed!)
           echo "Exporting OpenAPI schema..."
-          docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.typegen.yml exec -T backend python manage.py export_openapi_schema > frontend/openapi.json
+          docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.ci.yml exec -T backend python manage.py export_openapi_schema > frontend/openapi.json
 
           # Validate export was successful
           if [ ! -f frontend/openapi.json ] || [ ! -s frontend/openapi.json ]; then
             echo "Error: OpenAPI schema export failed or file is empty"
             echo "Backend logs:"
-            docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.typegen.yml logs backend --tail=20
+            docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.ci.yml logs backend --tail=20
             exit 1
           fi
 
           echo "OpenAPI schema exported successfully"
           echo "Schema size: $(wc -l frontend/openapi.json | awk '{print $1}') lines"
+
+          # Debug: Show first and last few lines to check for corruption
+          echo "First 10 lines of exported schema:"
+          head -10 frontend/openapi.json
+          echo "Last 10 lines of exported schema:"
+          tail -10 frontend/openapi.json
+
+          # Validate JSON syntax
+          echo "Validating JSON syntax..."
+          if ! python3 -m json.tool frontend/openapi.json > /dev/null 2>&1; then
+            echo "ERROR: Invalid JSON in exported schema!"
+            echo "Showing problematic area around line 1704:"
+            sed -n '1700,1710p' frontend/openapi.json || echo "Could not show lines around 1704"
+            exit 1
+          fi
+          echo "JSON validation passed!"
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -185,7 +174,7 @@ jobs:
           COMPOSE_PROJECT_NAME: cinexplorer-typegen
         run: |
           echo "Cleaning up Docker resources..."
-          docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.typegen.yml down -v
+          docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.ci.yml down -v
           # Also clean up any remaining containers with the project name
           docker container ls -aq --filter "name=cinexplorer-typegen" | xargs -r docker rm -f
           docker volume ls -q --filter "name=cinexplorer-typegen" | xargs -r docker volume rm

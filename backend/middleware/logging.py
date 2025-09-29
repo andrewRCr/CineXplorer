@@ -77,6 +77,50 @@ class RequestLoggingMiddleware(MiddlewareMixin):
         """
         return request.path in self.HEALTH_CHECK_PATHS
 
+    def _sanitize_headers(self, request: HttpRequest) -> dict[str, str]:
+        """
+        Sanitize request headers by redacting sensitive values.
+
+        Args:
+            request: The HTTP request
+
+        Returns:
+            dict[str, str]: Sanitized headers safe for logging
+        """
+        sanitized = {}
+        for key, value in request.headers.items():
+            # Case-insensitive check for sensitive headers
+            if key.lower() in self.SENSITIVE_HEADERS:
+                sanitized[key] = '[REDACTED]'
+            else:
+                sanitized[key] = str(value)[:200]  # Truncate long headers
+        return sanitized
+
+    def _sanitize_query_string(self, query_string: str) -> str:
+        """
+        Sanitize query string by redacting sensitive parameter values.
+
+        Args:
+            query_string: Raw query string from request
+
+        Returns:
+            str: Sanitized query string safe for logging
+        """
+        if not query_string:
+            return query_string
+
+        # Parse query string and redact sensitive params
+        from urllib.parse import parse_qsl, urlencode
+        params = parse_qsl(query_string, keep_blank_values=True)
+        sanitized_params = []
+        for key, value in params:
+            # Case-insensitive check for sensitive params
+            if key.lower() in self.SENSITIVE_PARAMS:
+                sanitized_params.append((key, '[REDACTED]'))
+            else:
+                sanitized_params.append((key, value))
+        return urlencode(sanitized_params)
+
     def process_request(self, request: HttpRequest) -> None:
         """
         Process incoming request - generate correlation ID and log request start.
@@ -91,9 +135,10 @@ class RequestLoggingMiddleware(MiddlewareMixin):
         # Record request start time for duration calculation
         request.start_time = time.time()  # type: ignore[attr-defined]
 
-        # Build query string for full URL
+        # Build query string for full URL (sanitize for logging)
         query_string = request.META.get('QUERY_STRING', '')
-        full_url = f"{request.path}{'?' + query_string if query_string else ''}"
+        sanitized_query_string = self._sanitize_query_string(query_string)
+        full_url = f"{request.path}{'?' + sanitized_query_string if sanitized_query_string else ''}"
 
         # Get user context (safely handle anonymous users)
         user_info = self._get_user_context(request)
@@ -114,7 +159,7 @@ class RequestLoggingMiddleware(MiddlewareMixin):
                 'method': request.method,
                 'path': request.path,
                 'full_url': full_url,
-                'query_string': query_string,
+                'query_string': sanitized_query_string,
                 'user': user_info,
                 'client_ip': client_ip,
                 'user_agent': user_agent,
@@ -148,9 +193,10 @@ class RequestLoggingMiddleware(MiddlewareMixin):
         # Determine log level based on status code
         log_level = self._get_log_level_for_status(response.status_code)
 
-        # Build query string for full URL
+        # Build query string for full URL (sanitize for logging)
         query_string = request.META.get('QUERY_STRING', '')
-        full_url = f"{request.path}{'?' + query_string if query_string else ''}"
+        sanitized_query_string = self._sanitize_query_string(query_string)
+        full_url = f"{request.path}{'?' + sanitized_query_string if sanitized_query_string else ''}"
 
         # Create concise, informative completion message
         if duration is not None:
@@ -165,7 +211,7 @@ class RequestLoggingMiddleware(MiddlewareMixin):
             status_emoji = "❌"
 
         base_msg = f"{status_emoji} {response.status_code} {request.method}"
-        log_message = f"{base_msg} {full_url} ({duration_str})"
+        log_message = f"{base_msg} {full_url} ({duration_str}) cid={correlation_id}"
 
         # Add response size if significant
         response_size = len(response.content) if hasattr(response, 'content') else 0
@@ -177,6 +223,10 @@ class RequestLoggingMiddleware(MiddlewareMixin):
         duration_ms = None
         if duration is not None:
             duration_ms = round(cast(float, duration) * 1000, 2)
+
+        # Expose correlation ID to clients via response header
+        response['X-Request-ID'] = correlation_id
+
         # Log request completion with structured data
         logger.log(
             log_level,
@@ -213,19 +263,20 @@ class RequestLoggingMiddleware(MiddlewareMixin):
 
         correlation_id = getattr(request, 'correlation_id', 'unknown')
 
-        # Build query string for full URL
+        # Build query string for full URL (sanitize for logging)
         query_string = request.META.get('QUERY_STRING', '')
-        full_url = f"{request.path}{'?' + query_string if query_string else ''}"
+        sanitized_query_string = self._sanitize_query_string(query_string)
+        full_url = f"{request.path}{'?' + sanitized_query_string if sanitized_query_string else ''}"
 
-        # Create informative exception message
+        # Create informative exception message with correlation ID
         if duration is not None:
             duration_str = f"{round(cast(float, duration) * 1000)}ms"
         else:
             duration_str = "?ms"
         exception_msg = str(exception)[:200]
         log_message = (f"💥 EXCEPTION {request.method} {full_url} "
-                       f"({duration_str}) - {exception.__class__.__name__}: "
-                       f"{exception_msg}")
+                       f"({duration_str}) cid={correlation_id} - "
+                       f"{exception.__class__.__name__}: {exception_msg}")
 
         # Calculate duration in milliseconds for logging
         duration_ms = None

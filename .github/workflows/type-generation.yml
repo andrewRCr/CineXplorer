@@ -88,53 +88,14 @@ jobs:
           echo "Checking backend container status..."
           docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.typegen.yml ps backend
 
-          # Check if backend container is running, if not show logs
-          if ! docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.typegen.yml ps backend | grep -q "running"; then
-            echo "Backend container is not running! Checking logs:"
-            docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.typegen.yml logs backend
-            echo "Attempting to restart backend..."
-            docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.typegen.yml restart backend
-            sleep 10
-            docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.typegen.yml ps backend
-          fi
-
-          # Wait for database and run migrations with retry
+          # Simple approach: just wait for database and run migrations
           echo "Running database migrations..."
-          for i in {1..5}; do
-            if docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.typegen.yml exec -T backend python manage.py wait_for_db; then
-              echo "Database connection successful, running migrations..."
-              docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.typegen.yml exec -T backend python manage.py migrate
-              break
-            else
-              echo "Failed to connect to database, attempt $i/5"
-              sleep 5
-            fi
-          done
+          docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.typegen.yml exec -T backend python manage.py wait_for_db
+          docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.typegen.yml exec -T backend python manage.py migrate
 
-          # Wait for Django server to fully start and be ready for API calls
-          echo "Waiting for Django server to be ready..."
-          for i in {1..15}; do
-            if docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.typegen.yml exec -T backend python manage.py check; then
-              echo "Django server is ready!"
-              break
-            elif [ $i -eq 15 ]; then
-              echo "Django server failed to start after 15 attempts. Showing logs:"
-              docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.typegen.yml logs backend
-              exit 1
-            else
-              echo "Django not ready yet, waiting... ($i/15)"
-              sleep 3
-            fi
-          done
-
-          # Final verification that backend is running
-          echo "Final backend status check:"
-          docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.typegen.yml ps backend
-          if ! docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.typegen.yml ps backend | grep -q "running"; then
-            echo "ERROR: Backend is still not running after all setup steps!"
-            docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.typegen.yml logs backend
-            exit 1
-          fi
+          # Give Django a moment to fully start after migrations
+          echo "Allowing Django server to fully initialize..."
+          sleep 10
 
           echo "Backend service is now ready for API calls"
 
@@ -142,10 +103,6 @@ jobs:
         env:
           COMPOSE_PROJECT_NAME: cinexplorer-typegen
         run: |
-          # Verify backend is running
-          echo "Checking backend status..."
-          docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.typegen.yml ps backend
-
           # Export schema from running backend
           echo "Exporting OpenAPI schema..."
           docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.typegen.yml exec -T backend python -c '

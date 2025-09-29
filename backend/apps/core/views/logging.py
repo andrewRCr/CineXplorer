@@ -7,15 +7,18 @@ to the backend for centralized logging and monitoring.
 
 import json
 import logging
-from datetime import datetime
 
+from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
+from django.utils import timezone
 from rest_framework import status
+from rest_framework.exceptions import ParseError
 from rest_framework.request import Request
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
+from rest_framework.throttling import ScopedRateThrottle
 
 # Import our correlation utility
 from middleware.logging import get_correlation_id
@@ -34,6 +37,11 @@ class FrontendLogAPIView(APIView):
 
     This endpoint allows the frontend to send log entries to the backend
     for centralized logging, monitoring, and debugging.
+
+    Security:
+    - Rate limited via ScopedRateThrottle (scope: 'frontend_logs')
+    - Payload size limited to prevent abuse
+    - Available to anonymous users but throttled aggressively
 
     Expected payload:
     {
@@ -54,8 +62,24 @@ class FrontendLogAPIView(APIView):
     """
 
     permission_classes = [AllowAny]  # Allow both authenticated and anonymous users
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'frontend_logs'
 
     def post(self, request: Request) -> Response:
+        # Check payload size to prevent abuse
+        MAX_PAYLOAD_SIZE = getattr(settings, 'FRONTEND_LOG_MAX_PAYLOAD_SIZE', 50 * 1024)  # 50KB
+        payload_size = len(request.body) if request.body else 0
+        if payload_size > MAX_PAYLOAD_SIZE:
+            app_logger.warning("Frontend log payload too large", extra={
+                'correlation_id': get_correlation_id(request),
+                'payload_size': payload_size,
+                'max_allowed': MAX_PAYLOAD_SIZE
+            })
+            return Response(
+                {"error": "Payload too large", "success": False, "max_size_bytes": MAX_PAYLOAD_SIZE},
+                status=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE
+            )
+
         try:
             # Parse the request data
             data = self._parse_request_data(request)
@@ -82,24 +106,27 @@ class FrontendLogAPIView(APIView):
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
 
-        except (json.JSONDecodeError, ValueError) as e:
+        except ParseError as e:
+            # Handle DRF ParseError for invalid JSON/data
+            app_logger.warning("Frontend log API received invalid JSON", extra={
+                'correlation_id': get_correlation_id(request),
+                'error': str(e)
+            })
+            return Response(
+                {"error": "Invalid JSON payload", "success": False},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except json.JSONDecodeError as e:
             # Handle JSON parsing errors
-            if "JSON" in str(e) or "Expecting value" in str(e):
-                return Response(
-                    {"error": "Invalid JSON payload", "success": False},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            else:
-                # Re-raise if it's not a JSON error
-                raise
+            app_logger.warning("Frontend log API received malformed JSON", extra={
+                'correlation_id': get_correlation_id(request),
+                'error': str(e)
+            })
+            return Response(
+                {"error": "Invalid JSON payload", "success": False},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         except Exception as e:
-            # Handle DRF ParseError and other parsing/validation exceptions
-            if "JSON parse error" in str(e) or "ParseError" in str(type(e).__name__):
-                return Response(
-                    {"error": "Invalid JSON payload", "success": False},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-
             # Log the error but don't expose internal details
             # Try to get request data safely
             try:
@@ -108,7 +135,8 @@ class FrontendLogAPIView(APIView):
                 request_data = 'Unable to access request data'
             app_logger.error(f"Frontend log API error: {str(e)}", extra={
                 'correlation_id': get_correlation_id(request),
-                'request_data': request_data
+                'request_data': request_data,
+                'exception_type': type(e).__name__
             })
 
             return Response(
@@ -181,8 +209,14 @@ class FrontendLogAPIView(APIView):
             else:
                 log_level = logging.INFO
 
-            # Prepare the log message
-            message = f"[FRONTEND] {data['message']}"
+            # Prepare the log message with truncation to prevent flooding
+            MAX_MESSAGE_LENGTH = getattr(settings, 'FRONTEND_LOG_MAX_MESSAGE_LENGTH', 1000)
+            raw_message = str(data['message']) if data['message'] is not None else ''
+            if len(raw_message) > MAX_MESSAGE_LENGTH:
+                truncated_message = raw_message[:MAX_MESSAGE_LENGTH] + "…[truncated]"
+            else:
+                truncated_message = raw_message
+            message = f"[FRONTEND] {truncated_message}"
 
             # Prepare extra data for structured logging
             correlation_id = (data.get('correlationId') or
@@ -255,7 +289,7 @@ class LogHealthCheckView(APIView):
                 "status": "healthy",
                 "service": "logging",
                 "correlation_id": test_correlation_id,
-                "timestamp": datetime.now().isoformat()
+                "timestamp": timezone.now().isoformat()
             }, status=status.HTTP_200_OK)
 
         except Exception as e:

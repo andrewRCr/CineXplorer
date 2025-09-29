@@ -137,8 +137,19 @@ def _build_discover_params(**kwargs: object) -> dict[str, str | int | float | bo
             params[tmdb_param] = cast(str | int | float | bool | None, value)
 
     # Frontend convenience aliases
-    if kwargs.get('decade') is not None:
-        params['decade'] = cast(str | int | float | bool | None, kwargs['decade'])
+    if (decade := kwargs.get('decade')) is not None:
+        # Accept formats like "1990s" or "1990" and convert to date range
+        # Note: This logic will be moved to service layer in future backend-modernization
+        try:
+            decade_str = str(decade)
+            year = int(decade_str[:4])
+            start_year = year if decade_str.endswith('s') else (year // 10) * 10
+            end_year = start_year + 9
+            params['primary_release_date.gte'] = f"{start_year}-01-01"
+            params['primary_release_date.lte'] = f"{end_year}-12-31"
+        except (ValueError, TypeError):
+            # Ignore invalid decade input
+            pass
     if kwargs.get('genres') is not None:
         params['genres'] = cast(str | int | float | bool | None, kwargs['genres'])
 

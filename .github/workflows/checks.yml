@@ -8,12 +8,6 @@ jobs:
     name: Backend Tests & Lint
     runs-on: ubuntu-24.04
     steps:
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USER }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-      
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -33,7 +27,7 @@ jobs:
             type=ref,event=pr
             type=sha
 
-      - name: Build and cache backend image
+      - name: Build and cache backend image (local only)
         uses: docker/build-push-action@v6
         with:
           context: ./backend
@@ -62,8 +56,8 @@ jobs:
           CI: true
         run: |
           docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.ci.yml up -d dev-db backend
-          # Wait for database to be ready
-          docker compose exec backend python manage.py wait_for_db
+          # Wait for database to be ready (with timeout for fast failure)
+          docker compose exec -T backend python manage.py wait_for_db --timeout 60
 
       - name: Run backend tests
         env:
@@ -71,13 +65,13 @@ jobs:
           COVERAGE_RCFILE: backend/.coveragerc
         run: |
           echo "Coverage config: $COVERAGE_RCFILE"
-          docker compose exec -e COVERAGE_RCFILE=backend/.coveragerc backend python manage.py test --keepdb --settings=config.settings_test
+          docker compose exec -T -e COVERAGE_RCFILE=backend/.coveragerc backend python manage.py test --keepdb --settings=config.settings_test
 
       - name: Run backend lint
         env:
           COMPOSE_PROJECT_NAME: cinexplorer-ci
         run: |
-          docker compose exec backend flake8
+          docker compose exec -T backend flake8
 
   frontend:
     name: Frontend Tests & Lint
@@ -97,21 +91,10 @@ jobs:
         working-directory: frontend
         run: npm ci
 
-      - name: Check for OpenAPI schema
-        working-directory: frontend
-        run: |
-          if [ -f openapi.json ]; then
-            echo "OpenAPI schema found, will validate types"
-            echo "VALIDATE_TYPES=true" >> $GITHUB_ENV
-          else
-            echo "No OpenAPI schema found, skipping type generation"
-            echo "VALIDATE_TYPES=false" >> $GITHUB_ENV
-          fi
-
       - name: Generate types from schema (if available)
-        if: env.VALIDATE_TYPES == 'true'
+        if: ${{ hashFiles('frontend/openapi.json') != '' }}
         working-directory: frontend
-        run: npm run ci:generate-types
+        run: npm run ci:generate-types --if-present
 
       - name: TypeScript type checking
         working-directory: frontend

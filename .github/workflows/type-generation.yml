@@ -142,6 +142,24 @@ jobs:
         working-directory: frontend
         run: npm run type-check
 
+      - name: Check for type drift
+        working-directory: frontend
+        run: |
+          # Detect if generated types differ from committed version
+          if ! git diff --exit-code src/types/api.ts; then
+            echo "❌ ERROR: Generated types have drifted from committed version"
+            echo ""
+            echo "The generated src/types/api.ts differs from the version in git."
+            echo "This indicates the OpenAPI schema has changed without updating committed types."
+            echo ""
+            echo "To fix:"
+            echo "  1. Run: npm run generate-types"
+            echo "  2. Review the changes in src/types/api.ts"
+            echo "  3. Commit both openapi.json and src/types/api.ts"
+            exit 1
+          fi
+          echo "✅ Generated types match committed version (no drift detected)"
+
       - name: Upload schema artifact
         uses: actions/upload-artifact@v4
         with:

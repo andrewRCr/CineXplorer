@@ -34,9 +34,29 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# Environment files
+# Environment and secrets
+*.env
+*.env.*
 .env
 .env.*
+
+# SSL/TLS certificates and private keys
+*.key
+*.pem
+*.crt
+*.p12
+*.jks
+
+# SSH keys
+id_rsa
+id_dsa
+.ssh/
+
+# Generic secrets and credentials
+private_key*
+credentials*
+secret*
+*.k8s.yaml
 
 # Git
 .git

@@ -23,10 +23,10 @@ docker-compose exec backend python manage.py test --keepdb --settings=config.set
 docker-compose exec backend flake8
 
 # Type checking (hybrid approach)
-docker-compose exec backend python scripts/type_check.py
+docker-compose exec backend python /backend/scripts/type_check.py
 # OR for development (host-based):
 npx pyright backend/apps/
-# **Note:** `mypy --strict` currently fails with an upstream `django-stubs` internal error (https://github.com/typeddjango/django-stubs/issues/2461). Use Pyright as the primary guardrail and track the upstream fix before re-enabling full mypy coverage.
+# **Note:** django-stubs issue #2461 remains open as of 2025-09-29. mypy --strict can still fail on Django 4/5 with django-stubs due to internal circular dependency errors. Use Pyright as the primary type checking guardrail while tracking the upstream fix. The upcoming auth-modernization feature should bypass this issue entirely.
 ```
 
 #### Frontend

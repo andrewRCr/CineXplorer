@@ -5,6 +5,8 @@ This command provides a reliable way to export the OpenAPI schema in CI environm
 where direct Python imports might have Django settings configuration issues.
 """
 import json
+import logging
+import sys
 from typing import Any
 
 from django.core.management.base import BaseCommand
@@ -33,6 +35,15 @@ class Command(BaseCommand):
 
     def handle(self, *args: Any, **options: Any) -> None:
         """Export the OpenAPI schema."""
+        # Temporarily disable all logging to prevent output corruption
+        original_level = logging.root.level
+        logging.root.setLevel(logging.CRITICAL + 1)
+
+        # Also disable any custom loggers that might interfere
+        django_logger = logging.getLogger('django')
+        original_django_level = django_logger.level
+        django_logger.setLevel(logging.CRITICAL + 1)
+
         try:
             # Get the OpenAPI schema from the Django Ninja API instance
             schema = api.get_openapi_schema()
@@ -48,17 +59,28 @@ class Command(BaseCommand):
             try:
                 json.loads(output)
             except json.JSONDecodeError as json_error:
+                # Re-enable logging for error output
+                logging.root.setLevel(original_level)
+                django_logger.setLevel(original_django_level)
                 self.stderr.write(
                     self.style.ERROR(f"Generated invalid JSON: {json_error}")
                 )
                 raise
 
-            # Output ONLY the JSON to stdout (no extra formatting/styling)
-            # Use print to avoid any Django styling that might corrupt the output
-            print(output)
+            # Output ONLY the JSON directly to stdout
+            # Use sys.stdout.write to bypass any Django management command formatting
+            sys.stdout.write(output)
+            sys.stdout.flush()
 
         except Exception as e:
+            # Re-enable logging for error output
+            logging.root.setLevel(original_level)
+            django_logger.setLevel(original_django_level)
             self.stderr.write(
                 self.style.ERROR(f"Failed to export OpenAPI schema: {e}")
             )
             raise
+        finally:
+            # Always restore original logging levels
+            logging.root.setLevel(original_level)
+            django_logger.setLevel(original_django_level)

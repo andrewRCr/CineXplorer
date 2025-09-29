@@ -76,9 +76,9 @@ jobs:
         env:
           COMPOSE_PROJECT_NAME: cinexplorer-typegen
         run: |
-          # Export schema using Django management command (no server needed!)
+          # Export schema using Django management command with suppressed logging
           echo "Exporting OpenAPI schema..."
-          docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.ci.yml exec -T backend python manage.py export_openapi_schema > frontend/openapi.json
+          docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.ci.yml exec -T backend python manage.py export_openapi_schema --verbosity=0 2>/dev/null > frontend/openapi.json
 
           # Validate export was successful
           if [ ! -f frontend/openapi.json ] || [ ! -s frontend/openapi.json ]; then

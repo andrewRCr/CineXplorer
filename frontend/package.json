@@ -14,11 +14,11 @@
 		"test:ui": "vitest --ui",
 		"test:watch": "vitest",
 		"type-check": "tsc -b",
-		"generate-types": "cross-env NODE_TLS_REJECT_UNAUTHORIZED=0 openapi-typescript https://localhost:8444/api/openapi.json -o src/types/api.ts",
-		"export-schema": "curl -k https://localhost:8444/api/openapi.json -o openapi.json",
-		"generate-types:ci": "openapi-typescript openapi.json -o src/types/api.ts",
-		"update-types": "npm run export-schema && npm run generate-types:ci",
-		"ci:generate-types": "test -f openapi.json && npm run generate-types:ci || echo 'Warning: openapi.json not found'",
+		"fetch-schema": "node scripts/fetch-openapi.js",
+		"generate-types:local": "openapi-typescript openapi.json -o src/types/api.ts",
+		"generate-types": "npm run fetch-schema && npm run generate-types:local",
+		"generate-types:ci": "test -f openapi.json || (echo '❌ ERROR: openapi.json not found. Run generate-types first.' && exit 1); npm run generate-types:local",
+		"update-types": "npm run generate-types",
 		"validate-types": "tsc --noEmit src/types/api.ts"
 	},
 	"dependencies": {

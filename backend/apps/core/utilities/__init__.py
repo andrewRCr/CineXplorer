@@ -9,5 +9,5 @@ T = TypeVar('T')
 
 
 def coalesce(*args: T | None) -> T | None:
-    """ Returns the first argument that is not None. """
+    """Return the first non-None argument, or None if none are provided or all are None."""
     return next((a for a in args if a is not None), None)

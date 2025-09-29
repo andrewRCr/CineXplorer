@@ -61,23 +61,54 @@ jobs:
         env:
           COMPOSE_PROJECT_NAME: cinexplorer-typegen
         run: |
-          docker compose -f infrastructure/docker-compose.yml up -d dev-db backend
-          # Wait for services to be ready
-          sleep 10
-          docker compose exec backend python manage.py wait_for_db
-          docker compose exec backend python manage.py migrate
+          # Start database first
+          docker compose -f infrastructure/docker-compose.yml up -d dev-db
+          # Wait for database to be ready
+          docker compose -f infrastructure/docker-compose.yml exec dev-db pg_isready -U postgres -d cinexplorer
+
+          # Start backend service
+          docker compose -f infrastructure/docker-compose.yml up -d backend
+
+          # Wait for backend service to be ready and run migrations
+          echo "Waiting for backend service to start..."
+          sleep 15
+
+          # Check if backend is running
+          docker compose -f infrastructure/docker-compose.yml ps backend
+
+          # Wait for database and run migrations
+          docker compose -f infrastructure/docker-compose.yml exec backend python manage.py wait_for_db
+          docker compose -f infrastructure/docker-compose.yml exec backend python manage.py migrate
+
+          # Wait a bit more for Django server to fully start
+          sleep 5
+          echo "Backend service should now be ready for API calls"
 
       - name: Export OpenAPI schema
         env:
           COMPOSE_PROJECT_NAME: cinexplorer-typegen
         run: |
+          # Verify backend is running
+          echo "Checking backend status..."
+          docker compose -f infrastructure/docker-compose.yml ps backend
+
           # Export schema from running backend
-          docker compose exec backend python -c '
+          echo "Exporting OpenAPI schema..."
+          docker compose -f infrastructure/docker-compose.yml exec backend python -c '
           from config.api import api
           import json
           schema = api.get_openapi_schema()
           print(json.dumps(schema, indent=2))
           ' > frontend/openapi.json
+
+          # Validate export was successful
+          if [ ! -f frontend/openapi.json ] || [ ! -s frontend/openapi.json ]; then
+            echo "Error: OpenAPI schema export failed or file is empty"
+            echo "Backend logs:"
+            docker compose -f infrastructure/docker-compose.yml logs backend --tail=20
+            exit 1
+          fi
+
           echo "OpenAPI schema exported successfully"
           echo "Schema size: $(wc -l frontend/openapi.json | awk '{print $1}') lines"
 
@@ -147,4 +178,8 @@ jobs:
         env:
           COMPOSE_PROJECT_NAME: cinexplorer-typegen
         run: |
+          echo "Cleaning up Docker resources..."
           docker compose -f infrastructure/docker-compose.yml down -v
+          # Also clean up any remaining containers with the project name
+          docker container ls -aq --filter "name=cinexplorer-typegen" | xargs -r docker rm -f
+          docker volume ls -q --filter "name=cinexplorer-typegen" | xargs -r docker volume rm

@@ -76,9 +76,17 @@ jobs:
         env:
           COMPOSE_PROJECT_NAME: cinexplorer-typegen
         run: |
-          # Export schema using Django management command with suppressed logging
+          # Export schema using Django management command with output cleanup
           echo "Exporting OpenAPI schema..."
-          docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.ci.yml exec -T backend python manage.py export_openapi_schema --verbosity=0 2>/dev/null > frontend/openapi.json
+          docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.ci.yml exec -T backend python manage.py export_openapi_schema --verbosity=0 2>/dev/null > frontend/openapi_raw.json
+
+          # Clean up the output by removing Django CI logging lines and keeping only JSON
+          echo "Cleaning up schema output..."
+          # Find the line where JSON starts (first line with '{') and extract from there
+          grep -n '^{' frontend/openapi_raw.json | head -1 | cut -d: -f1 | xargs -I {} tail -n +{} frontend/openapi_raw.json > frontend/openapi.json
+
+          # Remove the temporary file
+          rm frontend/openapi_raw.json
 
           # Validate export was successful
           if [ ! -f frontend/openapi.json ] || [ ! -s frontend/openapi.json ]; then

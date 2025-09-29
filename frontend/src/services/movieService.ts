@@ -48,7 +48,7 @@ export const fetchSingleMovie = (
 	service: ReturnType<typeof create>,
 	tmdb_id: string | number
 ) => {
-	return service.get<Movie>(`${tmdb_id}`);
+	return service.get<Movie>(`/${tmdb_id}`);
 };
 
 /**
@@ -57,7 +57,7 @@ export const fetchSingleMovie = (
 export const fetchGenres = (
 	service: ReturnType<typeof create>
 ) => {
-	return service.getPaginated<GenresResponse>();
+	return service.get<GenresResponse>("");
 };
 
 /**

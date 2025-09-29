@@ -148,7 +148,7 @@ def _build_discover_params(**kwargs: object) -> dict[str, str | int | float | bo
 @movies_router.get("/now-playing", response=PaginatedMovieResponseSchema, auth=None)
 def get_now_playing_movies(request: HttpRequest, page: int = 1):
     """Retrieve currently playing movies with pagination."""
-    return movie_service.get_nowPlaying_movies(page=page)
+    return movie_service.get_now_playing_movies(page=page)
 
 
 @movies_router.get("/upcoming", response=PaginatedMovieResponseSchema, auth=None)

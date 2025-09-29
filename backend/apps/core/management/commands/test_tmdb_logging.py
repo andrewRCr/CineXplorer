@@ -9,7 +9,7 @@ import time
 from django.core.management.base import BaseCommand
 from movie.services.movie_service import (
     get_movie_by_id, discover_movies, search_movies,
-    get_nowPlaying_movies, get_upcoming_movies
+    get_now_playing_movies, get_upcoming_movies
 )
 from ninja.errors import HttpError
 
@@ -127,7 +127,7 @@ class Command(BaseCommand):
         """Test now playing movies API call."""
         self.stdout.write("  🎪 Getting now playing movies...")
         try:
-            result = get_nowPlaying_movies(page=1)
+            result = get_now_playing_movies(page=1)
             self.stdout.write(f"  🎭 Found {len(result.results)} now playing movies")
         except HttpError as e:
             self.stdout.write(f"  ❌ Error: {e.detail}")

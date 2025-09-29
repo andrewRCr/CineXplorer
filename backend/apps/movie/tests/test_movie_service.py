@@ -131,7 +131,7 @@ class MovieServiceErrorHandlingTests(TestCase):
         mock_get_credits.assert_called_once_with("movie/123/credits")
 
     @patch('movie.services.movie_service.tmdb_client.get_now_playing_movies')
-    def test_get_nowPlaying_movies_api_error(self, mock_get_now_playing: MagicMock) -> None:
+    def test_get_now_playing_movies_api_error(self, mock_get_now_playing: MagicMock) -> None:
         """Test error handling for now playing movies API failure."""
         # Arrange: Mock API error
         mock_api_response = ApiResponse(
@@ -141,7 +141,7 @@ class MovieServiceErrorHandlingTests(TestCase):
 
         # Act & Assert
         with self.assertRaises(HttpError):
-            movie_service.get_nowPlaying_movies(page=1)
+            movie_service.get_now_playing_movies(page=1)
 
     @patch('movie.services.movie_service.tmdb_client.search_movies')
     def test_search_movies_with_valid_query(self, mock_search: MagicMock) -> None:
@@ -166,7 +166,6 @@ class MovieServiceErrorHandlingTests(TestCase):
             language="en-US",
             region="US"
         )
-        assert mock_search.assert_called_once_with is not None
         self.assertIsInstance(result, PaginatedMovieResponseSchema)
 
 

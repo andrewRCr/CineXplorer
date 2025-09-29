@@ -555,7 +555,7 @@ def get_movie_by_id(tmdb_id: int) -> MovieDetailSchema:
 # =========================
 
 
-def get_nowPlaying_movies(page: int = 1) -> PaginatedMovieResponseSchema:
+def get_now_playing_movies(page: int = 1) -> PaginatedMovieResponseSchema:
     """
     Retrieves a list of now playing movies from TMDB.
 

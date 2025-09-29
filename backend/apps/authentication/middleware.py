@@ -12,28 +12,41 @@ EXEMPT_PATHS contains endpoints that are exempt from CSRF checks because:
 """
 from __future__ import annotations
 
+import logging
 from django.utils.deprecation import MiddlewareMixin
 from django.http import HttpRequest, JsonResponse
 
-EXEMPT_PATHS = ['/api/register/', '/api/token/', '/api/logout/', '/api/token/refresh/']
+logger = logging.getLogger(__name__)
+
+# Prefix-based exemptions for token-related endpoints
+EXEMPT_PATH_PREFIXES = ['/api/register/', '/api/token/', '/api/logout/']
 
 
 class CsrfHeaderMiddleware(MiddlewareMixin):
     def process_request(self, request: HttpRequest) -> JsonResponse | None:
-        if request.path in EXEMPT_PATHS:
+        # Check if path starts with any exempt prefix
+        if any(request.path.startswith(prefix) for prefix in EXEMPT_PATH_PREFIXES):
             return None
+
         # CSRF protection is only needed for authenticated users.
         # Unauthenticated requests have no session/cookies, so there's no CSRF risk.
         # Let authentication fail first (401), then enforce CSRF for authenticated users (403).
         if not getattr(request, "user", None) or not request.user.is_authenticated:
             return None
+
         if request.method in ("POST", "PUT", "PATCH", "DELETE"):
             cookie_token = request.COOKIES.get("XSRF-TOKEN")
-            header_token = request.headers.get("X-CSRFToken")
+            # Accept either X-CSRFToken or X-XSRF-TOKEN header
+            header_token = request.headers.get("X-CSRFToken") or request.headers.get("X-XSRF-TOKEN")
+
             if not cookie_token or not header_token or cookie_token != header_token:
-                print(
-                    f"[CSRF Middleware] CSRF failure: Path={request.path}, "
+                logger.warning(
+                    f"CSRF validation failed: Path={request.path}, "
                     f"Method={request.method}, "
-                    f"Authenticated={request.user.is_authenticated}"
+                    f"Authenticated={request.user.is_authenticated}, "
+                    f"CookiePresent={bool(cookie_token)}, "
+                    f"HeaderPresent={bool(header_token)}"
                 )
-            return JsonResponse({"detail": "CSRF token missing or invalid."}, status=403)
+                return JsonResponse({"detail": "CSRF token missing or invalid."}, status=403)
+
+        return None

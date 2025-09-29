@@ -8,9 +8,31 @@ __pycache__/
 .mypy_cache/
 .pytest_cache/
 
+# Python build and packaging artifacts
+build/
+dist/
+*.egg-info/
+pip-wheel-metadata/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Test and CI artifacts
+.tox/
+.eggs/
+
+# Python version management
+.python-version
+
 # Logs
 logs/
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
 
 # Environment files
 .env

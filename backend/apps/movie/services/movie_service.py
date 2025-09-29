@@ -835,7 +835,8 @@ def discover_movies(
 
     if movies:
         first_movie = movies[0]
-        discover_metadata['first_movie_release_date'] = str(first_movie.release_date) if first_movie.release_date else 'None'
+        discover_metadata['first_movie_release_date'] = str(
+            first_movie.release_date) if first_movie.release_date else 'None'
         discover_metadata['first_movie_title'] = str(first_movie.title)
         discover_metadata['first_movie_id'] = int(first_movie.id)
         # Note: TMDBMovieBase doesn't include runtime field

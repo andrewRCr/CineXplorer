@@ -108,7 +108,9 @@ class MovieServiceErrorHandlingTests(TestCase):
 
     @patch('movie.services.movie_service.tmdb_client.get')
     @patch('movie.services.movie_service.tmdb_client.get_movie_details')
-    def test_get_movie_by_id_credits_error(self, mock_get_details: MagicMock, mock_get_credits: MagicMock) -> None:
+    def test_get_movie_by_id_credits_error(
+        self, mock_get_details: MagicMock, mock_get_credits: MagicMock
+    ) -> None:
         """Test error handling when credits API call fails."""
         # Arrange: Movie details succeed, credits fail
         movie_data: TMDBResponseData = {

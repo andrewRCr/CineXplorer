@@ -447,12 +447,12 @@ class BaseApiClient(ABC):
         start_time = time.time()
 
         try:
-            # Convert params to requests-compatible format
+            # Filter out None values; requests library handles native types correctly
             request_params = {}
             if params:
                 for key, value in params.items():
                     if value is not None:
-                        request_params[key] = str(value)
+                        request_params[key] = value
 
             response = requests.get(
                 url,

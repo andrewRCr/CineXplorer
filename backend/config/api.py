@@ -100,11 +100,14 @@ def health_check_user(request: HttpRequest) -> dict[str, str | int | list[str]]:
     user = get_current_user(request)
 
     # Type narrowing: get_current_user guarantees non-None user or raises HttpError
-    assert isinstance(user, AbstractUser)
+    # Trust the guarantee instead of runtime assertions (disabled with -O flag)
+    if not (hasattr(user, 'id') and hasattr(user, 'username')):
+        raise HttpError(500, "Invalid user object returned from authentication")
+
     return {
         "status": "ok",
         "message": f"Hello, {user.username}!",  # type: ignore[attr-defined]
-        "user_id": user.id,  # type: ignore[attr-defined]  # Django user models have id field
+        "user_id": user.id,  # type: ignore[attr-defined]
         "auth_method": "Enhanced Dependency Injection",
         "features": [
             "Structured error responses",

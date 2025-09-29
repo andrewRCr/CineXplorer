@@ -1,1 +1,1 @@
-openapi.json
+# Note: openapi.json is now vendored (not ignored) to prevent type drift

@@ -216,8 +216,7 @@ _docs/notes/
 .claude/
 .warp/
 
-# Generated OpenAPI schema (downloaded for TypeScript type generation)
-frontend/openapi.json
+# Note: frontend/openapi.json is now vendored (not ignored) to prevent type drift
 
 # AI tool settings (personal development environment preferences)
 .claude/

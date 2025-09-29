@@ -20,7 +20,7 @@
 ### Models & Core Services
 - `backend/apps/core/models.py` - ✅ Django models with forward references, ClassVar managers, and type-safe patterns
 - `backend/apps/core/services/email_service.py` - ✅ ZeptoMail service with professional type annotations for all methods
-- `backend/apps/core/services/email_service.py` - ✅ ZeptoMail service with professional type annotations for all methods- `backend/apps/core/services/tmdb_api_client.py` - New exemplar client architecture (reference standard)
+- `backend/apps/core/services/tmdb_api_client.py` - New exemplar client architecture (reference standard)
 - `backend/apps/core/services/api_response.py` - ✅ API response wrapper with professional typing, no Any usage
 - `backend/apps/core/services/base_api_client.py` - ✅ Base HTTP client with professional type annotations
 - `backend/apps/user_movie_data/services/user_movie_data_service.py` - ✅ User movie data service with typed bulk operations
@@ -48,9 +48,9 @@
 
 ### Notes
 - Type checking: `python scripts/type_check.py` (comprehensive hybrid mypy + Pyright validation)
-- Development type checking: `npx pyright apps/` (fast, strict checking with shared types)
-- CI/CD type checking: `mypy apps/ --strict` (Django-compatible validation)
-- Linting: `flake8 apps/` (already configured)
+- Development type checking: `npx pyright backend/apps/` (fast, strict checking with shared types)
+- CI/CD type checking: `mypy backend/apps/ --strict` (Django-compatible validation)
+- Linting: `flake8 backend/apps/` (already configured)
 - Testing: `python manage.py test --keepdb` (maintain existing test patterns)
 - The movie_service.py and tmdb_api_client.py serve as architectural reference standards for other services
 

@@ -29,7 +29,9 @@ jobs:
         with:
           images: cinexplorer-backend
           tags: |
-            type=sha,prefix={{branch}}-
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha
 
       - name: Build and cache backend image
         uses: docker/build-push-action@v6

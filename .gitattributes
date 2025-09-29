@@ -30,6 +30,8 @@ Dockerfile.* eol=lf
 *.dockerfile eol=lf
 docker-compose*.yml eol=lf
 docker-compose*.yaml eol=lf
+compose.yml eol=lf
+compose.yaml eol=lf
 
 # Configuration files that should be consistent across platforms
 .gitignore eol=lf
@@ -68,3 +70,12 @@ package*.json eol=lf
 *.woff2 binary
 *.ttf binary
 *.eot binary
+*.webp binary
+*.avif binary
+*.mp4 binary
+*.webm binary
+*.ogg binary
+*.wav binary
+*.wasm binary
+*.7z binary
+*.tar.bz2 binary

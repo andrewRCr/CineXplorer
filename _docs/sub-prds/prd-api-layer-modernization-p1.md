@@ -40,12 +40,19 @@ This migration will begin with a proof-of-concept (PoC) focused on the `movie` a
 
 1.  **Replace DRF Views:** All DRF-based views within the `backend/apps/movie/` directory must be refactored into Django Ninja path operation functions using decorated routers.
 2.  **Replace DRF Serializers:** All DRF serializers in `backend/apps/movie/serializers.py` must be replaced with equivalent Pydantic schemas in a new `backend/apps/movie/schemas.py` file.
-3.  **Adapt Authentication:** The existing JWT cookie authentication logic must be adapted to work with Django Ninja's security dependency injection system. This new auth handler must be applied to the new `movie` endpoints.
+3. **Adapt Authentication (Cookie-JWT with CSRF):**
+    - Use `APIKeyCookie` (or custom) for access token; enforce CSRF on unsafe methods (POST/PUT/PATCH/DELETE).
+    - Cookies: `HttpOnly`, `Secure`, `SameSite=Lax` (or `None` for cross-site with HTTPS only).
+    - Implement refresh token rotation + reuse detection; short-lived access tokens.
+    - Standardize 401 (unauthenticated) vs 403 (unauthorized) responses and error body.
+    - This should have already been implemented prior to this phase, but ensure it is fully functional and integrated with Django-Ninja.
 4.  **Preserve Functionality:** The new `movie` API endpoints must provide the exact same functionality and adhere to the same business logic as the old endpoints.
+    4a. **Preserve pagination strategy** (page size, param names, response shape).
+    4b. **Preserve filtering and ordering** query params and semantics.
+    4c. **Preserve error envelope and status codes** (map DRF `{"detail": ...}` to Ninja consistently).
+    4d. **Preserve content types and headers** (JSON only vs negotiation).
 5.  **Update Tests:** All existing backend tests for the `movie` API must be updated to use the new Ninja endpoint structure, and all tests must pass.
-6.  **Establish Type Generation Workflow:** A process must be established to demonstrate the automatic generation of TypeScript interfaces from the new Pydantic schemas, replacing the manually maintained types for the `movie` API.
-
-## 6. Non-Goals (Out of Scope)
+6.  **Establish Type Generation Workflow:** A process must be established to demonstrate the automatic generation of TypeScript interfaces from the new Pydantic schemas, replacing the manually maintained types for the `movie` API.## 6. Non-Goals (Out of Scope)
 
 *   This migration will not alter the database schema or the core business logic contained within service layers.
 *   Changes to other applications (`authentication`, `user_movie_data`, etc.) are out of scope for this initial PoC.

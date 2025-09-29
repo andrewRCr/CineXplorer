@@ -209,8 +209,8 @@ infrastructure/dev-certs/
 generate-cert.ps1
 
 # Personal reference documentation
-_docs/archive/reports/
-_docs/reports/
+_docs/archive/notes/
+_docs/notes/
 
 # AI tool settings (personal development environment preferences)
 .claude/

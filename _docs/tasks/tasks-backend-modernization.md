@@ -2,8 +2,7 @@
 
 **Based on:** `prd-backend-modernization.md`
 **Created:** 2025-09-23
-**Status:** Complete - Ready for implementation
-
+**Status:** In Progress - Planning & Scoping
 ## Relevant Files
 
 ### Core Infrastructure
@@ -20,9 +19,8 @@
 
 ### Models & Core Services
 - `backend/apps/core/models.py` - ✅ Django models with forward references, ClassVar managers, and type-safe patterns
-- `backend/apps/core/services/email_service.py` - ✅ Zeptomail service with professional type annotations for all methods
-- `backend/apps/movie/services/movie_service.py` - ✅ Movie service utilities with comprehensive type annotations (15+ functions)
-- `backend/apps/core/services/tmdb_api_client.py` - New exemplar client architecture (reference standard)
+- `backend/apps/core/services/email_service.py` - ✅ ZeptoMail service with professional type annotations for all methods
+- `backend/apps/core/services/email_service.py` - ✅ ZeptoMail service with professional type annotations for all methods- `backend/apps/core/services/tmdb_api_client.py` - New exemplar client architecture (reference standard)
 - `backend/apps/core/services/api_response.py` - ✅ API response wrapper with professional typing, no Any usage
 - `backend/apps/core/services/base_api_client.py` - ✅ Base HTTP client with professional type annotations
 - `backend/apps/user_movie_data/services/user_movie_data_service.py` - ✅ User movie data service with typed bulk operations

@@ -32,7 +32,7 @@ api = NinjaAPI(
 
 
 @api.get("/health", auth=None)  # Public endpoint - no auth required
-def health_check() -> dict[str, str]:
+def health_check(request: HttpRequest) -> dict[str, str]:
     """
     Health check endpoint to verify Django Ninja setup.
 

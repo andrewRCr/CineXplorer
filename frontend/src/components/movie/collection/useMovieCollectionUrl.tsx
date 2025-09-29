@@ -50,7 +50,7 @@ export const useMovieCollectionUrl = (
 		...defaultFilters,
 	});
 
-	// Parse current page from URL - using useMemo instead of useCallback to reduce recreations
+	// Parse current page from URL - using useCallback to memoize the function and reduce recreations
 	const getCurrentPageFromUrl = useCallback((): number | undefined => {
 		if (typeof window === "undefined") return undefined;
 		const params = new URLSearchParams(location.search);
@@ -92,7 +92,8 @@ export const useMovieCollectionUrl = (
 	}, [location.search, getCurrentPageFromUrl]); // unifiedFilters intentionally omitted to prevent infinite loop
 
 	// This callback is passed to the grid to handle page changes
-	// Use a ref to avoid recreating the callback when location.search changes
+	// The callback includes location.pathname and location.search in deps to avoid stale closures,
+	// so it will be recreated when those change
 	const handlePageChange = useCallback(
 		(page: number) => {
 			const currentSearch = location.search;

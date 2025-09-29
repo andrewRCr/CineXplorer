@@ -128,6 +128,15 @@ This task list currently covers **Phase 1 (Proof of Concept)** of the API Layer 
   - [x] 7.1 Update PROJECT-STATUS.md with Phase 1 completion status and achievements.
   - [x] 7.2 Create prd-api-layer-modernization-p2.md for Phase 2 scope (UserMovieData and Accounts/User migration to Django-Ninja), using insights gained from Phase 1's Core/Movie migration. Phase 2 is deferred until after Authentication Modernization is complete.
   - [x] 7.3 Create comprehensive atomic commit for Phase 1 completion with proper task references.
+  - [x] 7.3.5 Resolve CI workflow failures and establish reliable type generation pipeline.
+    - **Issue**: Type generation workflow failing due to Docker tag format errors and Django logging output contaminating OpenAPI schema export
+    - **Solutions Applied**:
+      - Fixed invalid Docker tag generation in GitHub Actions (removed problematic branch-prefix pattern)
+      - Consolidated CI configurations by reusing `docker-compose.ci.yml` for consistency
+      - Created dedicated Django management command `export_openapi_schema` for reliable schema export
+      - Implemented post-processing cleanup to remove Django logging contamination from JSON output
+      - Added comprehensive error handling and validation throughout the workflow
+    - **Result**: Robust CI pipeline with working type generation, passing all quality gates
   - [ ] 7.4 Merge feature/api-layer-modernization branch to main after all quality gates pass.
   - [ ] 7.5 Follow completion/archive workflow for Phase 1 documentation.
 

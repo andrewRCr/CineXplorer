@@ -374,10 +374,10 @@ class TMDBApiClient(BaseApiClient):
                 if header_name in headers:
                     value = headers[header_name]
                     # Convert numeric values to integers
-                    if key in ['limit', 'remaining', 'retry_after']:
+                    if key in ['limit', 'remaining', 'retry_after', 'reset']:
                         try:
                             rate_limit_info[key] = int(value)
-                        except ValueError:
+                        except (ValueError, TypeError):
                             rate_limit_info[key] = value
                     else:
                         rate_limit_info[key] = value

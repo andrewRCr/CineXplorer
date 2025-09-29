@@ -16,6 +16,8 @@ services:
       - ../backend/config/.env
     environment:
       - DB_HOST=dev-db
+      - BACKEND_CERT_PATH=/certs/backend/cert.pem
+      - BACKEND_KEY_PATH=/certs/backend/key.pem
     healthcheck:
       test:
         [
@@ -32,7 +34,7 @@ services:
     depends_on:
       dev-db:
         condition: service_healthy
-    command: python manage.py runserver_plus 0.0.0.0:8000 --cert-file /certs/backend/cert.pem --key-file /certs/backend/key.pem
+    command: sh -c "python manage.py runserver_plus 0.0.0.0:8000 --cert-file $${BACKEND_CERT_PATH} --key-file $${BACKEND_KEY_PATH}"
 
   frontend:
     build:
@@ -77,8 +79,8 @@ services:
       - "8444:8444"
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile
-      - ./dev-certs/cert.pem:/etc/caddy/cert.pem
-      - ./dev-certs/key.pem:/etc/caddy/key.pem
+      - ./dev-certs/cert.pem:/etc/caddy/cert.pem:ro
+      - ./dev-certs/key.pem:/etc/caddy/key.pem:ro
     depends_on:
       backend:
         condition: service_healthy

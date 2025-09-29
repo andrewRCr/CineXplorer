@@ -25,9 +25,12 @@ export default defineConfig({
 		host: "0.0.0.0", // needed for the Docker Container port mapping to work
 		strictPort: true,
 		port: 5173,
+		// HTTPS is intentionally disabled - TLS termination happens at Caddy (edge proxy)
+		// This is standard practice: single TLS layer at the edge, HTTP between internal services
+		// Frontend certs are mounted but not used (available if architecture changes)
 		// https: {
-		// 	key: "/app/certs/key.pem",
-		// 	cert: "/app/certs/cert.pem",
+		// 	key: "/certs/frontend/key.pem",
+		// 	cert: "/certs/frontend/cert.pem",
 		// },
 		allowedHosts: true, // Allow requests from all hosts
 		cors: { origin: true }, // Enable CORS with origin true

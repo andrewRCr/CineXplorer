@@ -10,7 +10,15 @@
     // For comprehensive checking: `python type_check.py`
 
     "include": ["apps", "config"],
-    "exclude": ["**/__pycache__", "**/*.pyc"],
+    "exclude": [
+        "**/__pycache__",
+        "**/*.pyc",
+        "**/migrations/**",
+        "**/node_modules/**",
+        "**/.venv/**",
+        "**/venv/**",
+        "**/env/**"
+    ],
     "extraPaths": ["apps"],
     "reportMissingImports": "error",
     "reportMissingTypeStubs": "information",

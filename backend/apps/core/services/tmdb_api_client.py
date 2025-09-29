@@ -9,6 +9,7 @@ processing built on top of the BaseApiClient infrastructure.
 # from typing import Any  # Removed per Quality Gate #6
 import requests
 from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
 
 from .base_api_client import BaseApiClient
 from .api_response import ApiResponse
@@ -151,9 +152,9 @@ class TMDBApiClient(BaseApiClient):
                 headers = {}
 
             return ApiResponse(
-                status_code=500,
-                error_message=error_message,
-                error_details="TMDB API returned an invalid JSON response",
+                status_code=502,
+                error_message="TMDB returned invalid JSON (Bad Gateway)",
+                error_details=f"TMDB API returned an invalid JSON response: {json_error}",
                 error_category="json_parsing_error",
                 correlation_id=correlation_id,
                 endpoint=endpoint,
@@ -407,8 +408,16 @@ class TMDBApiClient(BaseApiClient):
         if params is None:
             params = {}
 
+        # Guard against missing TMDB API key
+        api_key = getattr(settings, 'TMDB_API_KEY', None)
+        if not api_key:
+            raise ImproperlyConfigured(
+                "TMDB_API_KEY is not configured in Django settings. "
+                "Please set TMDB_API_KEY in your environment or settings file."
+            )
+
         # Inject TMDB API key
-        params["api_key"] = settings.TMDB_API_KEY
+        params["api_key"] = api_key
 
         # Call parent get method with prepared parameters
         return super().get(endpoint, params, headers, **kwargs)
@@ -445,7 +454,7 @@ class TMDBApiClient(BaseApiClient):
         Returns:
             ApiResponse with movie details
         """
-        return self.get(f"movie/{movie_id}", kwargs)
+        return self.get(f"movie/{movie_id}", params=kwargs)
 
     def discover_movies(self, **kwargs: object) -> ApiResponse:
         """
@@ -457,7 +466,7 @@ class TMDBApiClient(BaseApiClient):
         Returns:
             ApiResponse with discovered movies
         """
-        return self.get("discover/movie", kwargs)
+        return self.get("discover/movie", params=kwargs)
 
     def get_popular_movies(self, page: int = 1, **kwargs: object) -> ApiResponse:
         """

@@ -16,11 +16,13 @@ This module maintains minimal compatibility for error codes only.
 from __future__ import annotations
 
 import warnings
+from typing import TypeAlias
 
 # Only maintain error codes for backward compatibility
 from .error_codes import ERROR_CODES
 
-# Issue deprecation warning when imported
+# Issue deprecation warning when imported (only once per session to avoid CI noise)
+warnings.simplefilter('once', DeprecationWarning)
 warnings.warn(
     "shared module is deprecated. TMDB types have been migrated to "
     "core.tmdb_models.tmdb_responses with Pydantic models for complete type safety.",
@@ -30,7 +32,7 @@ warnings.warn(
 
 # Type alias for UserMovieData (used in serializers)
 # This is a temporary placeholder - will be replaced by proper Pydantic schemas
-UserMovieData = dict[str, object]  # Simplified type for now
+UserMovieData: TypeAlias = dict[str, object]  # Simplified type for now
 
 __all__ = [
     'ERROR_CODES',

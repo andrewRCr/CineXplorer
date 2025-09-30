@@ -9,13 +9,83 @@ This module creates the central NinjaAPI instance with:
 """
 from __future__ import annotations
 
+from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.http import HttpRequest
-from ninja import NinjaAPI
+from ninja import NinjaAPI, Schema
 
 # Import our native JWT authentication scheme
-from authentication.auth_ninja import jwt_cookie_auth
+from authentication.auth_ninja import jwt_cookie_auth, get_auth_error_responses
 from movie.api import movies_router, genres_router, keywords_router, people_router
+
+# Get configured cookie name for JWT tokens
+ACCESS_TOKEN_NAME = settings.SIMPLE_JWT.get('ACCESS_TOKEN_NAME', 'access_token')
+
+
+# Response schemas for type-safe endpoints
+class HealthResponse(Schema):
+    """Health check response schema."""
+    status: str
+    message: str
+
+
+class AuthHealthResponse(Schema):
+    """Authenticated health check response schema."""
+    status: str
+    message: str
+    auth_method: str
+
+
+class UserHealthResponse(Schema):
+    """User health check response with authentication details."""
+    status: str
+    message: str
+    user_id: int
+    auth_method: str
+    features: list[str]
+
+
+class AuthVerification(Schema):
+    """Authentication verification details."""
+    scheme_active: bool
+    token_valid: bool
+    user_authenticated: bool
+    session_info: str
+
+
+class AuthTestResponse(Schema):
+    """Comprehensive authentication test response."""
+    status: str
+    message: str
+    auth_scheme: str
+    user_id: int
+    username: str
+    email: str
+    is_staff: bool
+    is_superuser: bool
+    is_active: bool
+    date_joined: str
+    last_login: str | None
+    groups_count: int
+    permissions_count: int
+    auth_verification: AuthVerification
+
+
+class AuthGuidance(Schema):
+    """Authentication guidance information."""
+    next_step: str
+    note: str | None = None
+    protected_endpoint: str | None = None
+    public_endpoints: str | None = None
+
+
+class AuthStatusResponse(Schema):
+    """Authentication status response schema."""
+    auth_status: str
+    message: str
+    user_id: int | None
+    has_valid_token: bool
+    guidance: AuthGuidance
 
 # Create the main NinjaAPI instance with native authentication
 api = NinjaAPI(
@@ -31,8 +101,8 @@ api = NinjaAPI(
 )
 
 
-@api.get("/health", auth=None)  # Public endpoint - no auth required
-def health_check(request: HttpRequest) -> dict[str, str]:
+@api.get("/health", auth=None, response=HealthResponse)
+def health_check(request: HttpRequest) -> HealthResponse:
     """
     Health check endpoint to verify Django Ninja setup.
 
@@ -42,11 +112,11 @@ def health_check(request: HttpRequest) -> dict[str, str]:
     Returns:
         Simple status response indicating the API is working.
     """
-    return {"status": "ok", "message": "Django Ninja API is working!"}
+    return HealthResponse(status="ok", message="Django Ninja API is working!")
 
 
-@api.get("/health/auth")
-def health_check_auth(request: HttpRequest) -> dict[str, str]:
+@api.get("/health/auth", response=AuthHealthResponse, responses=get_auth_error_responses())
+def health_check_auth(request: HttpRequest) -> AuthHealthResponse:
     """
     Authenticated health check endpoint to verify JWT cookie authentication.
 
@@ -66,15 +136,15 @@ def health_check_auth(request: HttpRequest) -> dict[str, str]:
     """
     # Django Ninja automatically handles authentication via the global auth scheme
     # No manual authentication needed - the user is guaranteed to be authenticated
-    return {
-        "status": "ok",
-        "message": "Authenticated endpoint working!",
-        "auth_method": "JWT Cookie (Native)"
-    }
+    return AuthHealthResponse(
+        status="ok",
+        message="Authenticated endpoint working!",
+        auth_method="JWT Cookie (Native)"
+    )
 
 
-@api.get("/health/user", auth=None)
-def health_check_user(request: HttpRequest) -> dict[str, str | int | list[str]]:
+@api.get("/health/user", auth=None, response=UserHealthResponse, responses=get_auth_error_responses())
+def health_check_user(request: HttpRequest) -> UserHealthResponse:
     """
     Health check using enhanced dependency injection patterns.
 
@@ -95,6 +165,7 @@ def health_check_user(request: HttpRequest) -> dict[str, str | int | list[str]]:
     """
     # Import here to avoid circular import
     from authentication.auth_ninja import get_current_user
+    from ninja.errors import HttpError
 
     # Use enhanced dependency injection with proper error handling
     user = get_current_user(request)
@@ -104,23 +175,23 @@ def health_check_user(request: HttpRequest) -> dict[str, str | int | list[str]]:
     if not (hasattr(user, 'id') and hasattr(user, 'username')):
         raise HttpError(500, "Invalid user object returned from authentication")
 
-    return {
-        "status": "ok",
-        "message": f"Hello, {user.username}!",  # type: ignore[attr-defined]
-        "user_id": user.id,  # type: ignore[attr-defined]
-        "auth_method": "Enhanced Dependency Injection",
-        "features": [
+    return UserHealthResponse(
+        status="ok",
+        message=f"Hello, {user.username}!",  # type: ignore[attr-defined]
+        user_id=user.id,  # type: ignore[attr-defined]
+        auth_method="Enhanced Dependency Injection",
+        features=[
             "Structured error responses",
             "Comprehensive logging",
             "Type-safe user access"
         ]
-    }
+    )
 
 
-@api.get("/test/auth")
+@api.get("/test/auth", response=AuthTestResponse, responses=get_auth_error_responses())
 def test_authentication(
     request: HttpRequest
-) -> dict[str, str | int | bool | dict[str, str | bool] | None]:
+) -> AuthTestResponse:
     """
     Comprehensive authentication test endpoint.
 
@@ -145,39 +216,39 @@ def test_authentication(
     user = request.user
 
     # Comprehensive user information for testing
-    return {
-        "status": "authenticated",
-        "message": "Authentication test successful!",
-        "auth_scheme": "JWT Cookie (Global)",
-        "user_id": user.id,  # type: ignore[attr-defined]
-        "username": user.username,  # type: ignore[attr-defined]
-        "email": getattr(user, 'email', ''),
-        "is_staff": getattr(user, 'is_staff', False),
-        "is_superuser": getattr(user, 'is_superuser', False),
-        "is_active": getattr(user, 'is_active', True),
-        "date_joined": str(getattr(user, 'date_joined', ''))[:19],
-        "last_login": (
+    return AuthTestResponse(
+        status="authenticated",
+        message="Authentication test successful!",
+        auth_scheme="JWT Cookie (Global)",
+        user_id=user.id,  # type: ignore[attr-defined]
+        username=user.username,  # type: ignore[attr-defined]
+        email=getattr(user, 'email', ''),
+        is_staff=getattr(user, 'is_staff', False),
+        is_superuser=getattr(user, 'is_superuser', False),
+        is_active=getattr(user, 'is_active', True),
+        date_joined=str(getattr(user, 'date_joined', ''))[:19],
+        last_login=(
             str(getattr(user, 'last_login', ''))[:19]
             if getattr(user, 'last_login', None) else None
         ),
-        "groups_count": (
+        groups_count=(
             user.groups.count() if hasattr(user, 'groups') else 0  # type: ignore[attr-defined]
         ),
-        "permissions_count": (
+        permissions_count=(
             user.user_permissions.count()  # type: ignore[attr-defined]
             if hasattr(user, 'user_permissions') else 0
         ),
-        "auth_verification": {
-            "scheme_active": True,
-            "token_valid": True,
-            "user_authenticated": user.is_authenticated,  # type: ignore[attr-defined]
-            "session_info": "JWT Cookie based authentication"
-        }
-    }
+        auth_verification=AuthVerification(
+            scheme_active=True,
+            token_valid=True,
+            user_authenticated=user.is_authenticated,  # type: ignore[attr-defined]
+            session_info="JWT Cookie based authentication"
+        )
+    )
 
 
-@api.get("/test/auth-status", auth=None)
-def test_auth_status(request: HttpRequest) -> dict[str, str | bool | dict[str, str] | None]:
+@api.get("/test/auth-status", auth=None, response=AuthStatusResponse)
+def test_auth_status(request: HttpRequest) -> AuthStatusResponse:
     """
     Authentication status test endpoint (no authentication required).
 
@@ -201,36 +272,34 @@ def test_auth_status(request: HttpRequest) -> dict[str, str | bool | dict[str, s
     # Check if user is authenticated (without raising errors)
     user = get_current_user_optional(request)
     if user:
-        return {
-            "auth_status": "authenticated",
-            "message": (
+        return AuthStatusResponse(
+            auth_status="authenticated",
+            message=(
                 f"User '{user.username}' is authenticated via JWT cookie"  # type: ignore[attr-defined]  # noqa: E501
             ),
-            "user_id": user.id,  # type: ignore[attr-defined]
-            "has_valid_token": True,
-            "guidance": {
-                "next_step": "Try the /api/test/auth endpoint for comprehensive user info",
-                "note": "This endpoint bypasses global auth to show status"
-            }
-        }
+            user_id=user.id,  # type: ignore[attr-defined]
+            has_valid_token=True,
+            guidance=AuthGuidance(
+                next_step="Try the /api/test/auth endpoint for comprehensive user info",
+                note="This endpoint bypasses global auth to show status"
+            )
+        )
     else:
-        return {
-            "auth_status": "unauthenticated",
-            "message": (
+        return AuthStatusResponse(
+            auth_status="unauthenticated",
+            message=(
                 "No valid JWT token found - authentication required for protected endpoints"
             ),
-            "user_id": None,
-            "has_valid_token": False,
-            "guidance": {
-                "next_step": (
-                    "Obtain a valid JWT token and set it in the access_token cookie"
-                ),
-                "protected_endpoint": "/api/test/auth will require authentication",
-                "public_endpoints": (
+            user_id=None,
+            has_valid_token=False,
+            guidance=AuthGuidance(
+                next_step=f"Obtain a valid JWT token and set it in the {ACCESS_TOKEN_NAME} cookie",
+                protected_endpoint="/api/test/auth will require authentication",
+                public_endpoints=(
                     "This endpoint (/api/test/auth-status) and /api/health are public"
                 )
-            }
-        }
+            )
+        )
 
 
 # Add app routers

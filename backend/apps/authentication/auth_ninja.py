@@ -24,6 +24,23 @@ from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 logger = logging.getLogger('cinexplorer.auth')
 
 
+def get_jwt_cookie_name() -> str:
+    """
+    Get the JWT access token cookie name from Django settings.
+
+    Centralizes the settings lookup to avoid duplication across the module.
+
+    Returns:
+        The configured cookie name, defaulting to 'access_token'.
+    """
+    return getattr(
+        settings,
+        'SIMPLE_JWT',
+        {}
+    ).get('ACCESS_TOKEN_NAME', 'access_token')
+
+
+
 class JWTCookieAuth(APIKeyCookie):
     """
     Django Ninja native security scheme for JWT tokens from HTTP-only cookies.
@@ -38,11 +55,7 @@ class JWTCookieAuth(APIKeyCookie):
     def __init__(self):
         """Initialize the JWT cookie authentication scheme."""
         # Get cookie name from Django settings
-        cookie_name = getattr(
-            settings,
-            'SIMPLE_JWT',
-            {}
-        ).get('ACCESS_TOKEN_NAME', 'access_token')
+        cookie_name = get_jwt_cookie_name()
 
         # APIKeyCookie expects the cookie name as the first parameter
         super().__init__(cookie_name)
@@ -115,11 +128,7 @@ def get_current_user(request: HttpRequest) -> AbstractUser:
     """
     try:
         # Get JWT token from cookie
-        cookie_name = getattr(
-            settings,
-            'SIMPLE_JWT',
-            {}
-        ).get('ACCESS_TOKEN_NAME', 'access_token')
+        cookie_name = get_jwt_cookie_name()
 
         token = request.COOKIES.get(cookie_name)
         user = jwt_cookie_auth.authenticate(request, token)
@@ -161,11 +170,7 @@ def get_current_user_optional(request: HttpRequest) -> AbstractUser | None:
     """
     try:
         # Get JWT token from cookie
-        cookie_name = getattr(
-            settings,
-            'SIMPLE_JWT',
-            {}
-        ).get('ACCESS_TOKEN_NAME', 'access_token')
+        cookie_name = get_jwt_cookie_name()
 
         token = request.COOKIES.get(cookie_name)
         user = jwt_cookie_auth.authenticate(request, token)

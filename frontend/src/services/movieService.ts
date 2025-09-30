@@ -9,6 +9,38 @@ import type {
 	PaginatedPersonResponse
 } from "../@types/movie";
 
+// Query parameter types for type-safe API calls
+export interface MovieQueryParams {
+	page?: number;
+	query?: string;
+	sort_by?: string;
+	per_page?: number;
+	with_genres?: string;
+	without_genres?: string;
+	with_keywords?: string;
+	without_keywords?: string;
+	with_cast?: string;
+	with_crew?: string;
+	year?: number;
+	primary_release_year?: number;
+	vote_average_gte?: number;
+	vote_average_lte?: number;
+	vote_count_gte?: number;
+	with_runtime_gte?: number;
+	with_runtime_lte?: number;
+	with_original_language?: string;
+}
+
+export interface KeywordQueryParams {
+	page?: number;
+	query?: string;
+}
+
+export interface PersonQueryParams {
+	page?: number;
+	query?: string;
+}
+
 // Re-export commonly used types for external consumers
 export type { PaginatedMoviesResponse, Movie, Keyword, Person };
 
@@ -36,7 +68,7 @@ export const fetchSearchPeopleService = create("/api/people/search");
  */
 export const fetchPaginatedMovies = (
 	service: ReturnType<typeof create>,
-	params?: Record<string, unknown>
+	params?: MovieQueryParams
 ) => {
 	return service.getPaginated<PaginatedMoviesResponse>(params);
 };
@@ -65,7 +97,7 @@ export const fetchGenres = (
  */
 export const fetchPaginatedKeywords = (
 	service: ReturnType<typeof create>,
-	params?: Record<string, unknown>
+	params?: KeywordQueryParams
 ) => {
 	return service.getPaginated<PaginatedKeywordResponse>(params);
 };
@@ -75,7 +107,7 @@ export const fetchPaginatedKeywords = (
  */
 export const fetchPaginatedPeople = (
 	service: ReturnType<typeof create>,
-	params?: Record<string, unknown>
+	params?: PersonQueryParams
 ) => {
 	return service.getPaginated<PaginatedPersonResponse>(params);
 };
@@ -85,14 +117,14 @@ export const fetchPaginatedPeople = (
 /**
  * Fetch now playing movies with optional pagination and filtering
  */
-export const getNowPlayingMovies = (params?: Record<string, unknown>) => {
+export const getNowPlayingMovies = (params?: MovieQueryParams) => {
 	return fetchPaginatedMovies(fetchNowPlayingMoviesService, params);
 };
 
 /**
  * Fetch upcoming movies with optional pagination and filtering
  */
-export const getUpcomingMovies = (params?: Record<string, unknown>) => {
+export const getUpcomingMovies = (params?: MovieQueryParams) => {
 	return fetchPaginatedMovies(fetchUpcomingMovies(), params);
 };
 
@@ -106,14 +138,14 @@ export const getMovieDetail = (tmdb_id: string | number) => {
 /**
  * Discover movies with advanced filtering
  */
-export const discoverMovies = (params?: Record<string, unknown>) => {
+export const discoverMovies = (params?: MovieQueryParams) => {
 	return fetchPaginatedMovies(fetchDiscoverMoviesService, params);
 };
 
 /**
  * Search movies by query
  */
-export const searchMovies = (params?: Record<string, unknown>) => {
+export const searchMovies = (params?: MovieQueryParams) => {
 	return fetchPaginatedMovies(fetchSearchMoviesService, params);
 };
 
@@ -127,14 +159,14 @@ export const getMovieGenres = () => {
 /**
  * Search keywords with pagination
  */
-export const searchKeywords = (params?: Record<string, unknown>) => {
+export const searchKeywords = (params?: KeywordQueryParams) => {
 	return fetchPaginatedKeywords(fetchSearchKeywordsService, params);
 };
 
 /**
  * Search people with pagination
  */
-export const searchPeople = (params?: Record<string, unknown>) => {
+export const searchPeople = (params?: PersonQueryParams) => {
 	return fetchPaginatedPeople(fetchSearchPeopleService, params);
 };
 

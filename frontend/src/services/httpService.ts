@@ -38,7 +38,7 @@ class HttpService {
 	 * Fetch a paginated resource.
 	 * @param params - Optional query parameters for pagination, filtering, etc.
 	 */
-	getPaginated<T>(params?: Record<string, unknown>) {
+	getPaginated<T>(params?: Record<string, unknown> | object) {
 		const controller = new AbortController();
 		const request = apiClient
 			.get<T>(this.endpoint, {

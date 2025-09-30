@@ -4,6 +4,16 @@
 
 CineXplorer is a movie discovery web application in active development. The core foundation is complete, with several key features implemented and others in various stages of development.
 
+> **TODO: NOTE on Planning Stages**: For completed work, this document aims to reflect objective metrics and concrete deliverables. For upcoming/planned features, specifics are often still being defined. As features move from planning → implementation, we should add explicit acceptance criteria including:
+> - API endpoints and data contracts
+> - UI states and user flows
+> - Test coverage requirements (unit, integration, E2E)
+> - Performance budgets (load times, response times)
+> - Documentation updates required
+> - Links to PRDs, task lists, and related issues/PRs
+>
+> This ensures planned work becomes actionable and measurable as it approaches execution.
+
 ## Completed Work
 
 ### ✅ User Authentication

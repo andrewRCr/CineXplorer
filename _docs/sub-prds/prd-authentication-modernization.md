@@ -1,329 +1,303 @@
 # Authentication Modernization - Sub-PRD
 
-**Document Version:** 1.0  
-**Created:** 2025-09-27  
-**Feature Priority:** High (Critical Blocker Resolution)  
+**Document Version:** 2.0
+**Created:** 2025-09-27
+**Updated:** 2025-09-30
+**Feature Priority:** High (Critical Blocker Resolution)
 **Implementation Phase:** Between API-Layer-Modernization Phase 1 & Phase 2
 
 ## Introduction/Overview
 
 This Sub-PRD defines the migration from custom User model authentication to django-allauth, eliminating the django-stubs mypy --strict bug while significantly enhancing the portfolio value through professional social authentication. This modernization unblocks comprehensive type checking, reduces demo friction for potential employers, and establishes industry-standard authentication patterns.
 
-**Critical Context:** This addresses the django-stubs internal error (`AssertionError: Must not defer during final iteration`) that prevents mypy --strict mode, which is blocking the Backend Modernization Sub-PRD type safety objectives.
+**Critical Context:** This addresses the django-stubs internal error (`AssertionError: Must not defer during final iteration`) that prevents mypy --strict mode, which is blocking Backend Modernization type safety objectives and API Layer Modernization Phase 2.
 
 ## Goals
 
-1. **Eliminate django-stubs typing bug** by removing custom AUTH_USER_MODEL setting that triggers circular dependency in django-stubs plugin initialization
-2. **Enable comprehensive type safety** by allowing mypy --strict mode without internal errors
-3. **Enhance portfolio demonstration value** through professional social login reducing demo friction for recruiters/employers
-4. **Preserve existing functionality** maintaining all current authentication features and user experience
-5. **Maintain email verification system** integrating existing ZeptoMail service with allauth email management
-6. **Establish foundation for scalability** providing industry-standard authentication platform for future features
+1. **Eliminate django-stubs typing bug** by removing custom AUTH_USER_MODEL setting
+2. **Enable comprehensive type safety** by allowing mypy --strict mode across entire backend
+3. **Enhance portfolio demonstration** through professional social login (Google/GitHub)
+4. **Preserve existing functionality** maintaining all current authentication features
+5. **Maintain email verification** integrating ZeptoMail service with allauth
+6. **Formalize django-allauth + ZeptoMail integration** via custom account adapters or signal hooks so transactional email continues to flow through `core.services.email_service`.
+7. **Ensure Django Ninja compatibility** for seamless Phase 2 API migration
 
 ## User Stories
 
-1. **As a prospective employer reviewing the demo**, I want to sign in quickly with my Google/GitHub account so that I can evaluate the application without signup friction.
+1. **As a prospective employer**, I want to sign in quickly with Google/GitHub so I can evaluate the application without signup friction.
 
-2. **As the developer**, I want to run mypy --strict on the entire codebase so that I can achieve comprehensive type safety and demonstrate professional Python practices.
+2. **As the developer**, I want to run mypy --strict on the entire codebase to achieve comprehensive type safety and demonstrate professional Python practices.
 
-3. **As an existing user**, I want to continue logging in with my username or email so that the authentication experience remains unchanged.
+3. **As an existing user**, I want to continue logging in with username or email so the authentication experience remains unchanged.
 
-4. **As the developer**, I want to preserve the existing email verification workflow so that the branded ZeptoMail templates and tracking continue working.
-
-5. **As a prospective employer**, I want to see industry-standard authentication implementation so that I can assess the developer's knowledge of professional Django patterns.
+4. **As the developer**, I want the authentication system to work seamlessly with Django Ninja so API Layer Modernization Phase 2 can proceed without additional refactoring.
 
 ## Functional Requirements
 
 ### Core Authentication Migration
 
-1. **The system must migrate from custom User model to default Django User model** eliminating the AUTH_USER_MODEL setting that triggers the django-stubs bug.
+1. **Migrate from custom User model to default Django User model** eliminating AUTH_USER_MODEL setting.
 
-   **Migration Strategy: Fresh Database (Recommended for Demo)**
+   **Migration Strategy: Fresh Database**
 
-   Given this is a portfolio/demo project with development-only data, the migration will use a fresh database approach:
+   Prerequisites:
+   - Database backup: `pg_dump cinexplorer > backup_pre_auth_migration_$(date +%Y%m%d).sql`
+   - Document admin credentials
 
-   **Prerequisites:**
-   - Full database export/backup: `pg_dump cinexplorer > backup_pre_auth_migration_$(date +%Y%m%d).sql`
-   - Schema snapshot: `python manage.py sqlmigrate <app> <migration_num> > schema_snapshot.sql`
-   - Document current admin account credentials
-   - Verify no production data exists
-
-   **Migration Steps:**
+   Steps:
    1. Create feature branch: `feature/authentication-modernization`
    2. Install django-allauth: `pip install django-allauth`
    3. Remove AUTH_USER_MODEL setting from settings.py
-   4. Update INSTALLED_APPS to include allauth apps
-   5. Drop existing database: `docker compose exec dev-db psql -U postgres -c "DROP DATABASE cinexplorer;"`
-   6. Create fresh database: `docker compose exec dev-db psql -U postgres -c "CREATE DATABASE cinexplorer;"`
-   7. Run migrations: `python manage.py migrate`
-   8. Create new superuser: `python manage.py createsuperuser`
-   9. Configure allauth settings and providers
+   4. Introduce a compatibility helper/service that exposes `email_verified` semantics via django-allauth's `EmailAddress` records so downstream code can be updated before model removal.
+   5. Remove custom User and EmailVerificationToken models from `backend/apps/accounts/models.py`
+   6. Update INSTALLED_APPS to include allauth apps
+   7. Drop existing database and create fresh: `docker compose exec dev-db psql -U postgres -c "DROP DATABASE cinexplorer; CREATE DATABASE cinexplorer;"`
+   8. Run migrations: `python manage.py migrate`
+   9. Create new superuser and configure Sites framework
+   10. Create SocialApp entries for Google and GitHub OAuth
 
-   **Verification Checks (Post-Migration):**
-   - ✅ Login with username succeeds
-   - ✅ Login with email succeeds
-   - ✅ Social auth (Google) returns OAuth redirect
-   - ✅ Social auth (GitHub) returns OAuth redirect
-   - ✅ Email verification flow sends verification email
-   - ✅ Email uniqueness enforced at database level
+   Verification Checks:
+   - ✅ Login with username/email succeeds
+   - ✅ Social auth (Google/GitHub) returns OAuth redirect
+   - ✅ Email verification flow works
    - ✅ JWT tokens generated and validated correctly
    - ✅ mypy --strict runs without django-stubs errors
+   - ✅ Custom User and EmailVerificationToken models removed
 
-   **Rollback Procedure:**
-   If migration fails or issues discovered:
-   1. Switch to main branch: `git checkout main`
-   2. Stop containers: `docker compose down`
-   3. Restore database: `docker compose exec -T dev-db psql -U postgres cinexplorer < backup_pre_auth_migration_*.sql`
-   4. Restart containers: `docker compose up -d`
-   5. Verify rollback: `python manage.py check` and test login
-   6. Expected outcome: System returns to pre-migration state with custom User model
+   Rollback Procedure:
+   - Immediate: `git checkout main && docker compose down -v && docker compose up -d`
+   - Post-commit: Create rollback branch from pre-migration commit, recreate fresh database
+   - Rollback if: django-stubs bug not resolved, OAuth broken, >2 E2E tests failing, Django Ninja integration broken
 
-   **Alternative: In-Place Data Migration (NOT RECOMMENDED)**
+2. **Implement django-allauth** providing username/email login functionality identical to current backend.
 
-   If production data existed (which it doesn't), an in-place migration would require:
-   - Create reversible data migration to copy custom User → Django User
-   - Map custom fields to default User model equivalents
-   - Handle social account data separately
-   - Test migration on staging DB copy
-   - Maintain downtime window (estimated 5-10 minutes)
-   - Risk: Complex migration with potential data loss
+3. **Support social authentication** for Google and GitHub OAuth.
 
-   Decision: Use fresh database approach for this demo/portfolio project.
+4. **Maintain email verification functionality** integrating ZeptoMail through custom allauth adapters.
 
-2. **The system must implement django-allauth** providing username/email login functionality identical to the current custom backend.
+### Type Safety & Django Ninja Integration
 
-3. **The system must support social authentication** for Google and GitHub OAuth to reduce demo friction.
+5. **Validate django-allauth migration resolves django-stubs bug**:
+   - Before: Document exact mypy error (`AssertionError: Must not defer during final iteration`)
+   - After: `docker compose exec backend mypy apps/ --strict` with 0 errors
+   - Scope: All apps (authentication, accounts, user_movie_data, movie, core)
+   - CI Integration: Add mypy --strict to GitHub Actions workflow
+   - Update `backend/scripts/type_check.py`:
+     - Enable mypy execution (uncomment/restore mypy invocation)
+     - Add `--strict` flag to mypy command
+     - Remove any mypy skip/workaround branches
+     - Preserve configured excludes and pytest stub handling (via `mypy.ini` or command-line flags)
+     - Run both mypy and pyright sequentially, failing on either error
+     - Ensure CI workflow (`.github/workflows/checks.yml`) calls the updated script
 
-4. **The system must preserve all existing user data** through data migration ensuring no user accounts are lost. *(Note: For demo environment, recreating test accounts with fresh database is acceptable and preferred.)*
+6. **Maintain Pyright compatibility**:
+   - `npx pyright backend/apps/authentication backend/apps/accounts` with 0 errors
+   - Document django-allauth type stubs limitations
+   - Update type checking documentation with allauth patterns
 
-5. **The system must maintain email verification functionality** integrating the existing ZeptoMail service through custom allauth adapters.
+7. **Ensure django-allauth compatibility with Django Ninja**:
+   - Validate `JWTCookieAuth` class works with allauth default User model
+   - Test JWT token generation with django.contrib.auth.models.User
+   - Verify authentication decorators remain unchanged for Phase 2
+   - Verify OpenAPI authentication schemas remain accurate
 
-### Email System Integration
+8. **Maintain existing API contracts** ensuring no breaking changes to authentication endpoints.
 
-6. **The system must leverage allauth's authentication UX improvements** for both social and traditional login flows.
+### Email & Social Authentication
 
-7. **The system must maintain ZeptoMail service integration** preserving email delivery, tracking, and development mode capabilities.
+9. **Migrate from custom EmailVerificationToken to allauth EmailAddress/EmailConfirmation**:
+   - Review allauth's token cleanup strategy
+   - Remove custom EmailVerificationToken model
+   - Ensure email uniqueness enforced through allauth
+   - Provide migration/seed script that creates initial `EmailAddress` entries using ZeptoMail-friendly metadata
 
-8. **The system must implement email template refresh** using allauth templates as starting point with CineXplorer branding opportunities.
+10. **Configure Google OAuth** for development (`localhost:8444`):
+    - Create Google Cloud OAuth 2.0 credentials
+    - Authorized redirect URI: `https://localhost:8444/accounts/google/login/callback/`
+    - Configure in Django admin: Sites + SocialApp model
+    - Document test account for demo
 
-9. **The system must configure custom allauth adapter** integrating with existing email_service.py infrastructure where beneficial.
+11. **Configure GitHub OAuth** for development:
+    - Create GitHub OAuth App
+    - Authorized callback URL: `https://localhost:8444/accounts/github/login/callback/`
+    - Configure in Django admin: Sites + SocialApp model
+    - Document test account for demo
 
-### Type Safety & Development
+12. **Maintain ZeptoMail integration** preserving email delivery, tracking, and development mode.
+    - Create a custom account adapter (subclass `allauth.account.adapter.DefaultAccountAdapter`) and override the following methods to call `core.services.email_service.get_email_service()` so all outbound auth emails use ZeptoMail:
+      - `send_mail()` for generic email sending
+      - `send_confirmation_mail()` for email verification flows
+      - Password reset method (e.g., `send_password_reset_mail()` or equivalent, exact method name to be verified during implementation)
+    - Configure the custom adapter via Django's `ACCOUNT_ADAPTER` setting
+    - Ensure dev-mode logging continues to function without allauth swallowing simulated payloads.
 
-9. **The system must enable mypy --strict mode** on all backend code without django-stubs internal errors.
+13. **Implement email template refresh** using allauth templates with CineXplorer branding.
+    - Align template variables with ZeptoMail payloads and Django Ninja error format to keep copy consistent.
 
-10. **The system must maintain existing API contracts** ensuring no breaking changes to authentication endpoints.
+### Security & API Quality
 
-11. **The system must update authentication serializers** to work with default User model while preserving JWT functionality.
+14. **Maintain JWT cookie authentication** with CSRF protection:
+   - Required cookie flags: `HttpOnly=True`, `Secure=True`, `SameSite=Lax`
+   - CSRF validation: `X-CSRFToken` header for POST/PUT/DELETE
+   - Exempted endpoints: login, register, OAuth callbacks (use rate limiting)
 
-### Social Authentication Setup
+15. **Implement rate limiting for public authentication endpoints**:
+    - Registration: IP-based (10/hour), email-based (3/hour)
+    - Email verification resend: 5/hour per user
+    - Login: 10 failed attempts/hour per IP
+    - OAuth callbacks: 20/hour per IP (prevent replay attacks and callback abuse)
+    - Implementation: django-ratelimit or django-defender
+    - Log violations with alerting
 
-12. **The system must configure Google OAuth** for development environment (`localhost:8444`) with portfolio demonstration capabilities.
+16. **Implement consistent error response format** (coordinate with API Layer Modernization Phase 2):
+    - Structure: `{"detail": string, "error_code": string, "type": string}`
+    - Define error code taxonomy (AUTH_REQUIRED, INVALID_CREDENTIALS, etc.)
+    - Update OpenAPI documentation to match
+    - Consider global Django Ninja error handler
 
-13. **The system must configure GitHub OAuth** for development environment appealing to developer/recruiter audiences.
-
-14. **The system must implement social account linking** if standard Django practice and reasonable implementation effort.
-
-15. **The system must document production OAuth setup** for future deployment configuration.
-
-### Security & Compatibility
-
-15. **The system must maintain JWT cookie authentication** preserving the existing secure token handling.
-
-   **CSRF Protection Strategy for JWT Cookies:**
-
-   The system uses JWT tokens stored in HTTP-only cookies, which requires explicit CSRF protection:
-
-   **Enforcement Mechanism:**
-   - Django's built-in CSRF middleware with CsrfViewMiddleware
-   - DRF's SessionAuthentication-style CSRF checking for cookie-based auth
-   - CSRF token passed via `X-CSRFToken` header (from `csrftoken` cookie)
-   - Double-submit cookie pattern: CSRF token in cookie + header validation
-
-   **Required Cookie Flags:**
-   - `HttpOnly=True` - Prevents JavaScript access to JWT tokens
-   - `Secure=True` - HTTPS-only transmission (enforced in production)
-   - `SameSite=Lax` - Protects against CSRF while allowing normal navigation
-     (Note: `SameSite=Strict` would break OAuth redirects)
-
-   **CSRF Validation Flow:**
-   1. GET `/api/auth/csrf/` returns CSRF token in `csrftoken` cookie
-   2. Frontend reads CSRF token from cookie
-   3. Frontend includes token in `X-CSRFToken` header for POST/PUT/DELETE
-   4. Django CsrfViewMiddleware validates token matches cookie
-   5. Requests without valid CSRF token return 403 Forbidden
-
-   **Exempted Endpoints:**
-   - `/api/auth/login/` - Public login endpoint (uses rate limiting instead)
-   - `/api/auth/register/` - Public registration endpoint (uses rate limiting)
-   - Social OAuth callbacks - Django-allauth handles CSRF for OAuth flows
-
-16. **The system must preserve user profile functionality** maintaining first_name, last_name, and other user fields.
-
-17. **The system must handle email_verified status** migrating or recreating this functionality using allauth's email address verification.
+17. **Preserve user profile functionality** (first_name, last_name, etc.).
 
 ## Non-Goals (Out of Scope)
 
-- **Additional social providers** beyond Google and GitHub (can be added later)
-- **Password reset functionality** (allauth provides this automatically, but UI customization is deferred)
-- **Account management UI** beyond basic allauth templates (customization is future work)
-- **Two-factor authentication** (not required for current project scope)
-- **Enterprise SSO** (not applicable to portfolio project)
-
-## Design Considerations
-
-- **Backward Compatibility**: All existing authentication functionality must continue working identically
-- **Data Integrity**: User accounts, emails, and relationships must be preserved during migration
-- **Email Branding**: Existing ZeptoMail templates and tracking must continue working
-- **Type Safety**: The migration must enable mypy --strict mode throughout the backend
-- **Portfolio Value**: Social login must provide seamless demo experience for recruiters
+- Additional social providers beyond Google/GitHub
+- Password reset UI customization (allauth provides default)
+- Account management UI beyond basic allauth templates
+- Two-factor authentication
+- Magic link/passwordless authentication
 
 ## Technical Considerations
 
 ### Implementation Strategy
-- **Migration Approach**: Direct migration with thorough testing (existing user data is development/testing only)
-- **Deployment Architecture**: Development OAuth setup for `localhost:8444` (Docker Compose + Caddy)
-- **Production OAuth**: Deferred until deployment architecture is finalized
-- **Admin Account**: Preserve core admin account data during migration
+- Fresh database approach (development data only)
+- Development OAuth for `localhost:8444` (Docker Compose + Caddy)
+- Recreate admin account with documented credentials
 
 ### Integration Details
-- **Django-stubs Compatibility**: Using default User model eliminates the circular dependency bug
-- **Email System Strategy**: Leverage allauth's low-friction UX while preserving ZeptoMail integration
-- **Template Approach**: Start with standard allauth templates, opportunity for branding refresh
-- **Social Account Linking**: Include if standard practice and not excessive effort
-- **Testing Strategy**: Comprehensive flow testing for all authentication paths
+- Using default User model eliminates django-stubs circular dependency
+- Hybrid Pyright (development) + mypy --strict (CI) approach
+- Minimal changes expected to `JWTCookieAuth` class
+- Standard allauth templates with branding opportunity
 
 ## Success Metrics
 
 ### Primary Success Criteria
-1. **Bug Resolution (Priority #1)**: mypy --strict runs without django-stubs internal errors
-2. **Feature Parity**: All existing authentication features (username/email login, email verification) work identically
-3. **Type Safety**: Comprehensive type checking enabled across backend
 
-### Secondary Success Criteria
-4. **Registration Friction Reduction**: Social login significantly reduces demo signup barriers
-5. **Social Login**: Google and GitHub OAuth fully functional for development demonstration
-6. **Email Integration**: ZeptoMail service continues working with enhanced UX
-7. **Portfolio Enhancement**: Industry-standard authentication showcases professional Django patterns
+1. **Bug Resolution**: `docker compose exec backend mypy apps/ --strict` exits with code 0
+2. **Feature Parity**: All authentication features work identically to pre-migration
+3. **Type Safety**: 0 errors from mypy --strict and Pyright; zero increase in `type: ignore` comments
+4. **CI Integration**: Both type checkers passing in GitHub Actions
+
+### Quantifiable Metrics
+
+5. **Test Coverage**: Authentication module >= 85%, all 8 E2E tests passing, <60s total
+6. **Migration Completeness**: Custom User/EmailVerificationToken removed, AUTH_USER_MODEL setting removed, 0 references to custom models
+7. **Django Ninja Compatibility**: JWT auth works with Django Ninja, OpenAPI docs accurate
 
 ### E2E Test Plan (Required for Merge)
 
-All E2E tests must pass in CI before merge approval. Tests use Django's test client and REST framework test utilities.
+**Test Environment:** Test database, mock OAuth providers, in-memory email backend, 3 test fixtures
 
-**Test Environment Setup:**
-- Test database with isolated schema
-- Mock OAuth providers (Google, GitHub) using test credentials
-- Email backend: django.core.mail.backends.locmem.EmailBackend (capture emails in memory)
-- Test fixtures: 3 users (admin, verified user, unverified user)
-- Social app configs: Test Google/GitHub OAuth apps
+**Test Fixtures:**
 
-**Required E2E Tests:**
+1. **Verified user with username/password only**
+   - Username: `testuser`, Email: `testuser@example.com`, Password: `SecurePass123!`
+   - Email verification status: Verified (EmailAddress record with `verified=True`)
+   - Social accounts: None
+   - Used by tests: 1 (Password Authentication), 4 (CSRF Protection), 5 (Token Refresh), 6 (Logout)
 
-1. **E2E Login - Password Authentication**
-   - **Test**: POST /api/auth/login/ with valid username + password
-   - **Acceptance Criteria**:
-     - Login succeeds within 200ms (p95)
-     - Response includes JWT access token in HTTP-only cookie
-     - Response includes CSRF token in csrftoken cookie
-     - Response body contains user data (id, username, email)
-     - HTTP 200 status code
+2. **User with linked Google social account**
+   - Username: `googleuser`, Email: `googleuser@example.com`
+   - Email verification status: Verified via social auth
+   - Social accounts: Google provider with mocked provider ID
+   - Used by tests: 2 (Social OAuth - Google)
 
-2. **E2E Login - Social OAuth (Google)**
-   - **Test**: GET /accounts/google/login/ → OAuth redirect → callback
-   - **Acceptance Criteria**:
-     - Redirect to Google OAuth consent page (HTTP 302)
-     - OAuth callback creates new user if email not exists
-     - OAuth callback logs in existing user if email matches
-     - JWT token set after successful OAuth flow
-     - Social account linked to user account
+3. **User with linked GitHub social account**
+   - Username: `githubuser`, Email: `githubuser@example.com`
+   - Email verification status: Verified via social auth
+   - Social accounts: GitHub provider with mocked provider ID
+   - Used by tests: 3 (Social OAuth - GitHub)
 
-3. **E2E Login - Social OAuth (GitHub)**
-   - **Test**: GET /accounts/github/login/ → OAuth redirect → callback
-   - **Acceptance Criteria**: Same as Google OAuth test
+**Mock OAuth Providers:**
+- Use django-allauth testing utilities or mock provider responses
+- Stub OAuth token exchange endpoints (no real external API calls)
+- Mock provider user info responses with test account data
+- Configure test-specific OAuth app credentials in test settings
 
-4. **E2E CSRF Protection on Mutations**
-   - **Test**: POST /api/user-movie-data/ without CSRF token
-   - **Acceptance Criteria**:
-     - Request returns 403 Forbidden
-     - Error message indicates missing CSRF token
-     - Request succeeds when X-CSRFToken header included
-     - DELETE requests also protected by CSRF
+**Test Standards:**
+- Real CSRF flows (no `force_authenticate()`)
+- Use `django.urls.reverse()` (no hardcoded URLs)
+- Assert cookies in `response.cookies` AND client state
+- Test with `APIClient(enforce_csrf_checks=True)`
+- Validate cookie flags (HttpOnly, Secure, SameSite)
 
-5. **E2E Token Refresh and Expiry**
-   - **Test**: POST /api/auth/refresh/ with valid refresh token
-   - **Acceptance Criteria**:
-     - New access token returned in HTTP-only cookie
-     - Access token expiry resets to configured lifetime (15 minutes)
-     - Refresh token rotated (new refresh token issued)
-     - Expired access token rejected with 401 Unauthorized
+**Required Tests:**
 
-6. **E2E Logout**
-   - **Test**: POST /api/auth/logout/ with valid session
-   - **Acceptance Criteria**:
-     - Access token cookie deleted (Max-Age=0)
-     - Refresh token cookie deleted
-     - Subsequent requests with old token return 401
-     - CSRF token remains valid (doesn't break CSRF)
+1. **Password Authentication**: POST /api/auth/login/ with username+password
+   - Login succeeds <200ms, JWT in HttpOnly cookie, CSRF token set, HTTP 200
 
-7. **E2E Email Verification Flow**
-   - **Test**: Register new user → verify email link → login
-   - **Acceptance Criteria**:
-     - Registration sends verification email
-     - Email contains valid verification link
-     - Clicking link activates account
-     - Login succeeds after verification
-     - Login fails before verification (if ACCOUNT_EMAIL_VERIFICATION='mandatory')
-     - Email captured in test email backend
+2. **Social OAuth (Google)**: GET /accounts/google/login/ → OAuth redirect → callback
+   - Redirects to Google (302), creates/logs in user, JWT set, social account linked
 
-8. **E2E Email Uniqueness**
-   - **Test**: Register two users with same email
-   - **Acceptance Criteria**:
-     - Second registration returns 400 Bad Request
-     - Error message indicates duplicate email
-     - Database constraint prevents duplicate emails
+3. **Social OAuth (GitHub)**: Same as Google OAuth test
 
-**CI Integration Requirements:**
-- Tests run in `.github/workflows/checks.yml` backend job
-- All 8 test scenarios must pass (0 failures)
-- Test coverage for authentication module >= 85%
-- Tests must complete within 60 seconds total
-- Failure of any test blocks PR merge
+4. **CSRF Protection**: POST /api/user-movie-data/ without CSRF token
+   - Returns 403, succeeds with X-CSRFToken header
 
-**Test Execution Commands:**
+5. **Token Refresh**: POST /api/auth/refresh/ with valid refresh token
+   - New access token, expiry reset, refresh token rotated, expired token rejected (401)
+
+6. **Logout**: POST /api/auth/logout/
+   - Access/refresh cookies deleted, subsequent requests return 401, CSRF remains valid
+
+7. **Email Verification**: Register → verify email → login
+   - Email sent, link activates account, login succeeds after verification
+
+8. **Email Uniqueness**: Register two users with same email
+   - Second registration returns 400, database constraint prevents duplicates
+
+**CI Requirements:** All 8 tests pass, >=85% coverage, <60s execution, runs in `.github/workflows/checks.yml`
+
 ```bash
-# Run E2E auth tests
+# Run tests
 docker compose exec backend python manage.py test authentication.tests.test_e2e --settings=config.settings_test
 
-# Run with coverage
+# With coverage
 docker compose exec backend coverage run --source='authentication' manage.py test authentication.tests.test_e2e
 docker compose exec backend coverage report --fail-under=85
 ```
 
 ## Open Questions
 
-1. **Social Account Linking Complexity**: Research required to determine if social account linking is standard Django practice and implementation effort involved.
-
-2. **Email System Integration Details**: Technical analysis needed to determine optimal integration between allauth email system and existing ZeptoMail service.
-
-3. **Admin Account Migration**: Define specific approach for preserving core admin account during User model migration.
-
-4. **Production OAuth Timeline**: Coordinate OAuth production setup with deployment architecture decisions.
+1. **Social account linking**: Standard Django practice and implementation effort?
+2. **Email system integration**: Optimal integration between allauth and ZeptoMail?
+3. **Error response format**: Global Django Ninja error handler now, or incrementally in Phase 2?
+4. **Rate limiting library**: django-ratelimit vs django-defender?
 
 ---
 
-**Next Steps:**
-1. Review and approve this Sub-PRD
-2. Complete API-Layer-Modernization Task 5.0 (frontend integration)
-3. Merge API-Layer-Modernization Phase 1 to main branch
-4. Generate detailed task breakdown for Authentication Modernization
-5. Create feature branch: `feature/authentication-modernization` from main
-6. Begin implementation starting with foundation setup
+## Implementation Notes
 
 **Dependencies:**
-- API-Layer-Modernization Phase 1 completion (Task 5.0)
-- Access to Google/GitHub OAuth application setup
-- Backend development environment with existing user data
+- API-Layer-Modernization Phase 1 (Completed)
+- Google/GitHub OAuth application setup
+- Backend development environment
+- Updated ZeptoMail integration contract shared with Backend Modernization and API Layer Phase 2 teams
 
 **Blockers Resolved:**
-- Django-stubs mypy --strict bug (validated as eliminated by this approach)
-- Type safety implementation for Backend Modernization Sub-PRD
+- Django-stubs mypy --strict bug
+- Type safety for Backend Modernization
+- Authentication foundation for API-Layer-Modernization Phase 2
+
+**Next Steps:**
+1. Generate task breakdown
+2. Create feature branch
+3. Install/configure django-allauth
+4. Fresh database migration
+5. Implement E2E test suite
+6. Validate type safety (mypy --strict, Pyright)
+7. Document OAuth setup
+
+**Related Documentation:**
+- `_docs/notes/notes-authentication-modernization.md`
+- `_docs/sub-prds/prd-api-layer-modernization-p2.md`
+- `_docs/sub-prds/prd-backend-modernization.md`

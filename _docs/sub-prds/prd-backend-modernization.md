@@ -51,7 +51,11 @@ This Sub-PRD defines a comprehensive backend modernization effort for CineXplore
 
 ### Type Safety & Modern Python
 
-1. **The system must achieve comprehensive type safety** using hybrid type checking approach with no critical type errors or warnings.
+1. **The system must achieve comprehensive type safety** using hybrid type checking approach with zero errors:
+   - **Pyright:** `npx pyright backend/` across entire backend repository (0 errors)
+   - **MyPy:** `docker compose exec backend mypy apps/ --strict --config-file mypy.ini` on all application code (0 errors)
+   - **CI Enforcement:** Both type checkers must pass in GitHub Actions workflow; treat warnings as errors
+   - **Justification Required:** Any `type: ignore` comments must include inline explanation of necessity
 
 2. **The system must use modern Python 3.10+ typing syntax** replacing all deprecated patterns (`Dict` → `dict`, `Optional[T]` → `T | None`, `List[T]` → `list[T]`).
 
@@ -169,7 +173,12 @@ This Sub-PRD defines a comprehensive backend modernization effort for CineXplore
 
 ## Technical Considerations
 
-- **Hybrid Type Checking**: Use Pyright for development speed and MyPy for CI/CD Django compatibility
+- **Hybrid Type Checking Strategy**:
+  - **Pyright (Development):** Fast incremental checks during development on full `backend/` directory
+  - **MyPy (CI/CD):** Comprehensive Django-aware validation with `--strict` flag on `apps/` directory
+  - **CI Integration:** Both checkers must pass before PR merge; configure GitHub Actions to fail on any type errors
+  - **Strictness Targets:** Zero errors from both checkers; warnings treated as errors in CI
+  - **Scope:** All backend code including apps, config, middleware, management commands, and utilities
 - **Django Integration**: Leverage django-stubs/django-types for proper Django typing patterns
 - **Performance Impact**: Ensure type checking and quality improvements don't degrade runtime performance
 - **Development Workflow**: Integrate quality checks into existing Docker Compose development environment
@@ -180,13 +189,29 @@ This Sub-PRD defines a comprehensive backend modernization effort for CineXplore
 ## Success Metrics
 
 1. **Professional Portfolio Value**: Code review by external developers confirms professional-grade quality standards
-2. **Type Safety**: Zero critical type errors with hybrid checking and comprehensive type coverage
-3. **Code Quality**: Zero linting violations and complete resolution of technical debt markers
+
+2. **Type Safety (CI-Enforced)**:
+   - **Pyright:** `npx pyright backend/` exits with code 0 (zero errors)
+   - **MyPy:** `docker compose exec backend mypy apps/ --strict --config-file mypy.ini` exits with code 0 (zero errors)
+   - **CI Check:** Both type checkers integrated into GitHub Actions workflow; failure blocks PR merge
+   - **Coverage:** 100% of functions, methods, and class attributes have explicit type annotations
+   - **Quality:** No use of `Any` type without documented justification
+
+3. **Code Quality (CI-Enforced)**:
+   - **Linting:** `docker compose exec backend flake8` exits with code 0 (zero violations)
+   - **Dead Code:** No unused imports, variables, or unreachable code (verified by flake8 + manual audit)
+   - **Technical Debt:** All TODO/FIXME/HACK comments resolved or documented as accepted debt
+
 4. **Architectural Excellence**: SOLID principles consistently applied, code duplication eliminated, clear separation of concerns
+
 5. **Security Posture**: No hardcoded secrets, proper environment configuration, security headers implemented
+
 6. **Performance Baseline**: Documented performance metrics with identified optimization opportunities
+
 7. **Maintainability**: Comprehensive documentation enabling rapid onboarding of new developers
+
 8. **Asynchronous Processing**: Successfully implemented background tasks with Redis/Celery, demonstrating scalable architecture patterns
+
 9. **End-to-End Coverage**: Comprehensive Playwright test suite validating critical user flows across browsers
 
 ## Open Questions

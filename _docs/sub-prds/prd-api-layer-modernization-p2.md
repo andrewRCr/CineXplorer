@@ -126,20 +126,41 @@ This document outlines Phase 2 of the API Layer Modernization initiative, which 
 ### Risk Mitigation
 - **Phased Implementation:** Consider sub-phases within Phase 2 if domains prove complex
 - **Testing First:** Ensure all existing functionality is well-tested before migration
-- **Rollback Capability:** Maintain ability to revert to DRF endpoints if critical issues arise
+- **Rollback Capability:** Git history provides rollback mechanism if critical issues arise during migration
 
 ## 8. Success Metrics
 
 ### Primary Success Criteria
-1. **Zero Type Errors:** MyPy --strict passes with zero errors across all migrated code
+
+1. **Zero Type Errors (CI-Enforced):**
+   - **Pyright:** `npx pyright backend/apps/user_movie_data backend/apps/authentication backend/apps/accounts` (0 errors)
+   - **MyPy:** `docker compose exec backend mypy apps/user_movie_data apps/authentication apps/accounts --strict --config-file mypy.ini` (0 errors)
+   - **CI Check:** Both commands must pass in GitHub Actions workflow before merge approval
+   - **Justification Required:** Any `type: ignore` comments must have inline explanation
+
 2. **Complete Test Coverage:** 100% of existing API functionality is covered by updated tests
+   - **Backend Tests:** `docker compose exec backend python manage.py test apps.user_movie_data apps.authentication apps.accounts --settings=config.settings_test` (100% pass rate)
+   - **CI Check:** Test suite must pass with 0 failures in GitHub Actions workflow
+
 3. **Full Frontend Integration:** All frontend features work identically with new API endpoints
+   - **Type Generation:** `npm run generate-types` produces valid TypeScript types from OpenAPI schema
+   - **Frontend Tests:** `docker compose exec frontend npm test` (100% pass rate)
+   - **Manual Verification:** All user-facing features tested in development environment
+
 4. **Unified Documentation:** All endpoints are documented in the Django Ninja API docs
+   - **OpenAPI Schema:** `/api/openapi.json` includes all migrated endpoints
+   - **Swagger UI:** All endpoints accessible and testable at `/api/docs`
 
 ### Secondary Success Criteria
+
 5. **Performance Parity:** Response times are equivalent or better than DRF endpoints
+   - **Measurement:** Compare average response times for equivalent operations before/after migration
+
 6. **Code Reduction:** Overall reduction in boilerplate code compared to DRF implementation
+   - **Measurement:** Line count comparison between old DRF serializers/views and new Pydantic schemas/routers
+
 7. **Developer Experience:** Improved development workflow with better type checking and validation
+   - **Measurement:** Qualitative assessment of development friction reduction
 
 ## 9. Open Questions
 

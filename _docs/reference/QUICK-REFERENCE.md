@@ -22,8 +22,11 @@ docker-compose exec backend python manage.py test --keepdb --settings=config.set
 # Linting
 docker-compose exec backend flake8
 
-# Type checking
-docker-compose exec backend mypy .
+# Type checking (hybrid approach)
+docker-compose exec backend python /backend/scripts/type_check.py
+# OR for development (host-based):
+npx pyright backend/apps/
+# **Note:** django-stubs issue #2461 remains open as of 2025-09-29. mypy --strict can still fail on Django 4/5 with django-stubs due to internal circular dependency errors. Use Pyright as the primary type checking guardrail while tracking the upstream fix. The upcoming auth-modernization feature should bypass this issue entirely.
 ```
 
 #### Frontend
@@ -43,7 +46,7 @@ docker-compose exec frontend npm run type-check
 # Backend quality gates
 docker-compose exec backend python manage.py test --keepdb --settings=config.settings_test && \
 docker-compose exec backend flake8 && \
-docker-compose exec backend mypy .
+docker-compose exec backend python scripts/type_check.py
 
 # Frontend quality gates
 docker-compose exec frontend npm test && \
@@ -179,10 +182,11 @@ git log main..feature/[feature-name] --oneline
 ### Django Apps Structure
 ```
 backend/apps/
-├── core/          # Primary models (User, Movie, UserMovieData)
-├── user/          # User management and authentication
-├── movie/         # Movie-related functionality
-└── user_movie_data/  # User-movie interactions
+├── accounts/         # User authentication models (User, EmailVerificationToken)
+├── authentication/   # Authentication processes (JWT, serializers, views, middleware)
+├── core/            # Core business models (Movie) and shared utilities
+├── movie/           # Movie-related functionality and API endpoints
+└── user_movie_data/ # User-movie interaction models and API (UserMovieData, watchlist, ratings)
 ```
 
 ### Frontend Structure
@@ -204,7 +208,7 @@ shared/
 
 ## Quality Standards
 
-- **Zero tolerance**: All tests, linting, type checking must pass
+- **Zero tolerance**: All tests, linting, hybrid type checking must pass
 - **Test coverage required**: Especially for models, APIs, complex logic
 - **Shared types**: Update when making API changes
 - **Atomic commits**: Follow conventional commit format with task references

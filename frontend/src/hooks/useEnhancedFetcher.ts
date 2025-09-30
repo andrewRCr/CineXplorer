@@ -1,5 +1,5 @@
 import { useCallback, useRef } from "react";
-import type { Movie } from "@shared/index";
+import type { MovieBase } from "../@types/movie";
 import type { PaginatedMoviesResponse } from "@/services/movieService";
 import type { MovieFilters as MovieFiltersType } from "@/components/movie/filters/AdvancedMovieFilters";
 import {
@@ -11,14 +11,20 @@ import {
 } from "@/utilities/movieFilterUtils";
 import { fetchSearchMoviesService } from "@/services/movieService";
 
+// Type for fetcher function signature
+type FetcherFn = (
+	page: number,
+	filters?: Record<string, string | number | number[]>
+) => {
+	request: Promise<{ data: PaginatedMoviesResponse }>;
+	cancel: () => void;
+};
+
+// Type for mapped filters
+type MappedFilters = ReturnType<typeof mapFiltersToApiParams>;
+
 interface UseEnhancedFetcherOptions {
-	fetcher: (
-		page: number,
-		filters?: Record<string, string | number | number[]>
-	) => {
-		request: Promise<{ data: PaginatedMoviesResponse }>;
-		cancel: () => void;
-	};
+	fetcher: FetcherFn;
 	filters: MovieFiltersType;
 	filterStyle: "expanded" | "minimal";
 }
@@ -52,12 +58,12 @@ export function useEnhancedFetcher({
 			const currentBaseFetcher = baseFetcherRef.current;
 
 			// Check if there's a search query - if so, use search endpoint instead of base fetcher
-			const hasSearchQuery =
-				(currentFilterStyle === "minimal" && currentFilters.query?.trim()) ||
-				(currentFilterStyle === "expanded" && currentFilters.query?.trim());
+			const hasSearchQuery = !!currentFilters.query?.trim();
 
-			let searchFetcher;
-			let searchFilters;
+			let searchFetcher: FetcherFn;
+			let searchFilters: Omit<MappedFilters, 'filterParams'> & {
+				filterParams: Record<string, string | number | number[]>;
+			};
 
 			if (hasSearchQuery) {
 				// Use search service for text queries
@@ -100,18 +106,19 @@ export function useEnhancedFetcher({
 
 			const { filterParams, yearFilterCriteria, ratingFilterCriteria, runtimeFilterCriteria } = searchFilters;
 
-			// Create enhanced filter params with larger page size for buffer
+			// Create enhanced filter params for client-side buffering
+			// Note: TMDB always returns up to 20 items per page (fixed server limit).
+			// Client-side buffering accumulates extra items by requesting additional
+			// pages when needed to maintain a buffer of filtered results.
 			const enhancedFilterParams = {
 				...filterParams,
-				// Request more results than needed to create a filling buffer
-				// TMDB default is 20, we'll request 30 for a 10-movie buffer
 			};
 
 			const originalFetcher = searchFetcher(page, enhancedFilterParams);
 
 			// Wrap the fetcher to add client-side year filtering and dynamic filling
 			const wrappedRequest = originalFetcher.request.then(async (response) => {
-				let finalResults: Movie[] = [];
+				let finalResults: MovieBase[] = [];
 
 				// Get all results from the API response
 				const allResults = response.data.results || [];
@@ -156,7 +163,7 @@ export function useEnhancedFetcher({
 
 					// Fill only from current page buffer (movies that didn't match other filters)
 					let currentPageBuffer = allResults.filter(
-						(movie: Movie) =>
+						(movie: MovieBase) =>
 							!filteredResults.some((fr) => fr.tmdb_id === movie.tmdb_id)
 					);
 
@@ -273,7 +280,10 @@ export function useEnhancedFetcher({
 	[filters, filterStyle] // Recreate fetcher when filters change
 	);
 
-	console.log('useEnhancedFetcher: Callback recreated due to dependency change');
+	// Development-only debug logging
+	if (import.meta.env.DEV) {
+		console.log('useEnhancedFetcher: Callback recreated due to dependency change');
+	}
 
 	return enhancedFetcher;
 }

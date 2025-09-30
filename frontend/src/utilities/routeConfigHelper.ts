@@ -80,6 +80,7 @@ export const getFetcherAndSource = (pathname: string): RouteConfig => {
 			) =>
 				fetchTopRatedMoviesService.getPaginated<PaginatedMoviesResponse>({
 					page,
+					sort_by: "vote_average.desc",
 					...filters,
 				}),
 			source: PAGINATED_SOURCES.TOP_RATED,

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 
 import requests
@@ -5,7 +7,8 @@ from django.conf import settings
 from rest_framework import status
 from rest_framework.response import Response
 
-from core.models import UserMovieData
+from accounts.models import User
+from user_movie_data.models import UserMovieData
 from user_movie_data.serializers import UserMovieDataSerializer
 
 logger: logging.Logger = logging.getLogger(__name__)
@@ -31,19 +34,30 @@ def get_user_movie_data(tmdb_id: int, token: str) -> Response:
             "error": "An error occurred while retrieving user movie data."})
 
 
-def get_user_movie_data_bulk(tmdb_ids, user):
+def get_user_movie_data_bulk(tmdb_ids: list[int],
+                             user: User) -> dict[int, dict[str, object] | None]:
     """
     Bulk fetch user_movie_data for a list of tmdb_ids and a user instance.
     Returns dict {tmdb_id: serialized user_movie_data or None}.
     """
+    # Early return for empty input
+    if not tmdb_ids:
+        return {}
+
+    # De-duplicate IDs to avoid redundant DB work
+    unique_ids = set(tmdb_ids)
+
+    # Initialize result map with None for all unique IDs
+    result: dict[int, dict[str, object] | None] = {tmdb_id: None for tmdb_id in unique_ids}
+
     # Query all UserMovieData for this user and these tmdb_ids
-    user_movie_data_qs = UserMovieData.objects.filter(user=user, tmdb_id__in=tmdb_ids)
+    user_movie_data_qs = UserMovieData.objects.filter(user=user, tmdb_id__in=unique_ids)
+
     # Serialize results
     serializer = UserMovieDataSerializer(user_movie_data_qs, many=True)
-    # Build dict {tmdb_id: user_movie_data}
-    result = {item['tmdb_id']: item for item in serializer.data}
-    # Fill in None for tmdb_ids with no data
-    for tmdb_id in tmdb_ids:
-        if tmdb_id not in result:
-            result[tmdb_id] = None
+
+    # Overlay serialized items onto result map (single pass, no "not in" checks)
+    for item in serializer.data:
+        result[item['tmdb_id']] = item
+
     return result

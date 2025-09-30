@@ -9,8 +9,8 @@ CRUD operations, and user-specific data filtering. All tests use static movie da
 import random
 
 from user_movie_data.serializers import UserMovieDataSerializer, UserMovieDataDetailSerializer
-from core.models import UserMovieData
-from core.models import User
+from user_movie_data.models import UserMovieData
+from accounts.models import User
 from core.models import Movie
 from django.test import TestCase
 from django.urls import reverse

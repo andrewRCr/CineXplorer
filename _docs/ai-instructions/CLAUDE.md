@@ -38,7 +38,7 @@ This project uses a structured **3-step AI-assisted development process**:
 
 ## Project Overview
 
-CineXplorer is a full-stack movie discovery application built with Django REST Framework (backend) and React/TypeScript (frontend), containerized with Docker. The architecture follows a clear separation with a Django REST API backend and React SPA frontend, connected through a shared type system.
+CineXplorer is a full-stack movie discovery application built with Django + Django Ninja (backend) and React/TypeScript (frontend), containerized with Docker. The architecture follows a clear separation with a Django API backend and React SPA frontend, connected through a shared type system. The backend is currently migrating from Django REST Framework to Django Ninja for modern, type-safe API development.
 
 ## Development Commands
 
@@ -55,9 +55,9 @@ docker-compose -f infrastructure/docker-compose.yml up --build
 # Tests (with performance optimization)
 docker-compose exec backend python manage.py test --keepdb --settings=config.settings_test
 
-# Linting and type checking
+# Linting and type checking (matches CI pipeline)
 docker-compose exec backend flake8
-docker-compose exec backend mypy .
+docker-compose exec backend python scripts/type_check.py  # Runs Pyright + MyPy hybrid
 
 # Django management
 docker-compose exec backend python manage.py [command]
@@ -81,11 +81,11 @@ docker-compose exec frontend npm run build
 ## Architecture Overview
 
 ### Backend Structure (`backend/`)
-- **Framework**: Django 5.2 + Django REST Framework
+- **Framework**: Django 5.2 + Django Ninja (migrating from Django REST Framework)
 - **Apps**: `backend/apps/` (core, user, movie, user_movie_data)
-- **Authentication**: JWT in HTTP-only cookies via custom `JWTCookieAuthentication`
-- **API Docs**: `/api/docs/` (drf-spectacular)
-- **Key Libraries**: django-cors-headers, django-debug-toolbar, tmdbsimple
+- **Authentication**: JWT in HTTP-only cookies via custom Django Ninja authentication
+- **API Docs**: `/api/docs/` (Django Ninja OpenAPI) + `/api/schema/` (drf-spectacular)
+- **Key Libraries**: django-ninja, django-cors-headers, django-debug-toolbar, tmdbsimple
 
 ### Frontend Structure (`frontend/`)
 - **Framework**: React 19 + TypeScript 5.x + Vite
@@ -162,10 +162,53 @@ The `shared/` directory ensures type safety between frontend and backend:
 ## CI/CD Pipeline
 
 GitHub Actions (`.github/workflows/checks.yml`) on every push/PR:
-- Backend: tests + flake8 linting + mypy type checking
+- Backend: tests + flake8 linting + `scripts/type_check.py` (hybrid Pyright + MyPy)
 - Frontend: tests + ESLint + TypeScript checking + build verification
 
 **All checks must pass before merging.**
+
+**Local type checking matches CI:** Run `scripts/type_check.py` to replicate CI behavior.
+
+## Advanced Analysis Tools
+
+### Large Codebase Analysis (Gemini CLI)
+
+For analysis tasks that exceed Claude's context window or require comprehensive project-wide verification:
+
+**When to use:**
+- Files totaling >100KB in single analysis
+- Project-wide pattern verification across all Django apps
+- Cross-system consistency checks (backend ↔ frontend ↔ shared types)
+- Architecture reviews spanning multiple directories
+
+**Command pattern:** `gemini -p "@[directories] [specific question]"`
+
+**CineXplorer-specific examples:**
+
+```bash
+# Authentication consistency across all apps
+gemini -p "@backend/apps/ @backend/config/ Is JWT authentication consistently implemented across all Django apps? Show auth patterns in each app."
+
+# Type safety verification (full stack)
+gemini -p "@backend/apps/ @frontend/src/ @shared/ Are Pydantic schemas and TypeScript types properly synchronized? List any mismatches."
+
+# API endpoint consistency
+gemini -p "@backend/apps/*/api.py @backend/apps/*/views.py Are all API endpoints using consistent error handling patterns? Show examples."
+
+# Test coverage analysis
+gemini -p "@backend/apps/*/tests/ @frontend/src/**/*.test.* What is the actual test coverage across the codebase? List untested components."
+
+# Security pattern verification
+gemini -p "@backend/ @frontend/src/services/ Are proper authentication headers and CSRF protection consistently implemented?"
+
+# Django Ninja migration verification
+gemini -p "@backend/apps/ Has the migration from DRF to Django Ninja been completed consistently? Show any remaining DRF patterns."
+```
+
+**Important notes:**
+- Run from project root directory (paths are relative to working directory)
+- Use for **verification and analysis only** - return to Claude for implementation
+- Best for **periodic architecture reviews** rather than daily development
 
 ---
 
@@ -179,3 +222,4 @@ This is a **showcase project** demonstrating systematic AI-assisted development 
 - **Incremental development** with atomic commits and clear progress tracking
 
 **Remember**: The AI workflow augments, never replaces, core development skills. Each step requires developer review and understanding.
+

@@ -9,29 +9,29 @@ which is crucial for the frontend to function correctly.
 These tests mock the external `requests.get` call to ensure they are fast,
 reliable, and consistent with other integration tests in the application.
 """
-from django.test import TestCase
-from django.urls import reverse
+from django.test import TestCase, Client
 from rest_framework import status
-from rest_framework.test import APIClient
-from unittest.mock import patch, Mock
+from unittest.mock import patch, MagicMock
 
-# URLs for the paginated movie API endpoints
-NOW_PLAYING_URL = reverse('movie:now-playing')
-UPCOMING_URL = reverse('movie:upcoming')
+from core.types.api_types import TMDBResponseData
+
+# Django Ninja API URLs for the paginated movie endpoints
+NOW_PLAYING_URL = '/api/movies/now-playing'
+UPCOMING_URL = '/api/movies/upcoming'
 
 
 class PaginatedMovieApiTests(TestCase):
     """Test the paginated movie API endpoints."""
 
     def setUp(self):
-        """Set up the test client."""
-        self.client = APIClient()
+        """Set up the Django test client."""
+        self.client = Client()
 
-    def _create_mock_tmdb_response(self, total_pages):
+    def _create_mock_tmdb_response(self, total_pages: int) -> TMDBResponseData:
         """
         Creates a mock TMDB API JSON response for paginated endpoints.
         """
-        fake_tmdb_results = []
+        fake_tmdb_results: list[dict[str, object]] = []
         for i in range(3):
             fake_tmdb_results.append({
                 'id': 100 + i,
@@ -49,31 +49,37 @@ class PaginatedMovieApiTests(TestCase):
             'total_results': len(fake_tmdb_results)
         }
 
-    @patch('requests.get')
-    def test_now_playing_endpoint_returns_correct_structure(self, mock_requests_get):
+    @patch('movie.services.movie_service.tmdb_client.get_now_playing_movies')
+    def test_now_playing_endpoint_returns_correct_structure(
+        self, mock_get_now_playing: MagicMock
+    ) -> None:
         """
         Verify the /now-playing/ endpoint returns the expected paginated structure
         and movie data, including pass-through fields.
         """
-        # Arrange: Mock the requests.get call to return a predictable TMDB response
-        mock_response = Mock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = self._create_mock_tmdb_response(total_pages=5)
-        mock_requests_get.return_value = mock_response
+        # Arrange: Mock the TMDB client call to return a predictable TMDB response
+        from core.services.api_response import ApiResponse
+        mock_data: TMDBResponseData = self._create_mock_tmdb_response(total_pages=5)
+        mock_response = ApiResponse(
+            status_code=200,
+            data=mock_data
+        )
+        mock_get_now_playing.return_value = mock_response
 
         # Act: Call the API endpoint
         res = self.client.get(NOW_PLAYING_URL, {'page': 1})
 
         # Assert: Check the response status and structure
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertIn('results', res.data)
-        self.assertIn('page', res.data)
-        self.assertIn('total_pages', res.data)
-        self.assertEqual(res.data['page'], 1)
-        self.assertEqual(res.data['total_pages'], 5)
+        data = res.json()
+        self.assertIn('results', data)
+        self.assertIn('page', data)
+        self.assertIn('total_pages', data)
+        self.assertEqual(data['page'], 1)
+        self.assertEqual(data['total_pages'], 5)
 
         # Assert: Check the structure of the movie data within the results
-        results = res.data['results']
+        results = data['results']
         self.assertEqual(len(results), 3)
         first_movie = results[0]
         self.assertEqual(first_movie['tmdb_id'], 100)
@@ -85,26 +91,32 @@ class PaginatedMovieApiTests(TestCase):
         self.assertIn('vote_average', first_movie)
         self.assertEqual(first_movie['vote_average'], 8.0)
 
-    @patch('requests.get')
-    def test_upcoming_endpoint_returns_correct_structure(self, mock_requests_get):
+    @patch('movie.services.movie_service.tmdb_client.get')
+    def test_upcoming_endpoint_returns_correct_structure(
+        self, mock_tmdb_get: MagicMock
+    ) -> None:
         """
         Verify the /upcoming/ endpoint returns the expected paginated structure
         and movie data.
         """
         # Arrange
-        mock_response = Mock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = self._create_mock_tmdb_response(total_pages=3)
-        mock_requests_get.return_value = mock_response
+        from core.services.api_response import ApiResponse
+        mock_data: TMDBResponseData = self._create_mock_tmdb_response(total_pages=3)
+        mock_response = ApiResponse(
+            status_code=200,
+            data=mock_data
+        )
+        mock_tmdb_get.return_value = mock_response
 
         # Act
         res = self.client.get(UPCOMING_URL, {'page': 1})
 
         # Assert
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertIn('results', res.data)
-        self.assertIn('page', res.data)
-        self.assertEqual(res.data['page'], 1)
-        self.assertEqual(res.data['total_pages'], 3)
-        self.assertEqual(len(res.data['results']), 3)
-        self.assertIn('vote_average', res.data['results'][0])
+        data = res.json()
+        self.assertIn('results', data)
+        self.assertIn('page', data)
+        self.assertEqual(data['page'], 1)
+        self.assertEqual(data['total_pages'], 3)
+        self.assertEqual(len(data['results']), 3)
+        self.assertIn('vote_average', data['results'][0])

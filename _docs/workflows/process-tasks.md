@@ -6,7 +6,7 @@ Guidelines for managing task lists in markdown files to track progress on comple
 
 - **One sub-task at a time:** Do **NOT** start the next sub‑task until you ask the user for permission and they say "yes" or "y"
 - **Test-first approach:** For new models, APIs, and complex logic, write tests before implementation
-- **Incremental quality checks:** Run linting/type checking on modified files after each sub-task
+- **Incremental quality checks:** Run linting and type checking on modified files after each sub-task (Pyright for fast checks on changed files, mypy for optional full-project CI/periodic validation)
 - **Immediate documentation:** Update the task list file immediately after completing each subtask
 - **Completion protocol:**
 
@@ -21,20 +21,25 @@ Guidelines for managing task lists in markdown files to track progress on comple
 
   - **First**: Ensure new code has appropriate test coverage (models, APIs, complex logic)
   - **Second**: Run the full test suite (`python manage.py test --settings=config.settings_test`, `npm test`, etc.)
-  - **Third**: Run all linting checks (`flake8`, `npm run lint`, `npm run type-check`)
+  - **Third**: Run all linting checks (`flake8`, `python scripts/type_check.py` [runs hybrid Pyright+mypy; requires `npm install` for pyright], `npm run lint`, `npm run type-check`)
   - **Fourth**: Check if PROJECT-STATUS needs updates (feature progress, completed functionality, updated priorities)
 
-  3. Generate standardized readiness report (see DEVELOPMENT-RULES.md for format) and await user instructions on how to proceed. User may choose to commit changes (AI can execute) or review first. When committing, follow atomic-commit workflow guidelines:
+  3. Generate standardized readiness report (see DEVELOPMENT-RULES.md for format) and await user instructions on how to proceed. User may choose to commit changes (AI can execute only if explicitly approved to do so) or review first. When committing, follow atomic-commit workflow (see _docs/workflows/atomic-commit.md) guidelines:
 
     - Uses conventional commit format (`feat:`, `fix:`, `refactor:`, etc.)
     - Summarizes what was accomplished in the parent task
     - Lists key changes and additions
-    - **Accurately references the specific task number being completed** (e.g., "Complete task 1.0" not "all tasks")
-    - References the PRD context
-    - **Formats the message as a single-line command using `-m` flags**, e.g.:
+    - **Accurately references the specific task number being completed** (e.g., "Complete task {TASK_ID}" where {TASK_ID} is the actual subtask like "4.2.3")
+    - References the PRD context and current branch {BRANCH}
+    - **Formats the message as a single-line command using `-m` flags**, replacing placeholders with real values:
 
       ```
-      git commit -m "feat: add payment validation logic" -m "- Validates card type and expiry" -m "- Adds unit tests for edge cases" -m "Related to T123 in PRD"
+      git commit -m "feat({BRANCH}): add payment validation logic" -m "- Validates card type and expiry" -m "- Adds unit tests for edge cases" -m "Complete task {TASK_ID}" -m "Related to Payment PRD"
+      ```
+
+      Example with real values:
+      ```
+      git commit -m "feat(feature/payment-flow): add payment validation logic" -m "- Validates card type and expiry" -m "- Adds unit tests for edge cases" -m "Complete task 4.2.3" -m "Related to Payment PRD"
       ```
 
   4. Once the user commits changes, mark the **parent task** as completed in task documentation.
@@ -47,10 +52,17 @@ After each sub-task, run relevant quality checks on modified files only:
 **Backend Files** (Python):
 ```bash
 # Lint specific files
-docker-compose exec backend flake8 path/to/modified/file.py
+docker compose exec backend flake8 path/to/modified/file.py
 
 # Type check specific files
-docker-compose exec backend mypy path/to/modified/file.py
+# Option 1: Host-based Pyright (requires npm install globally)
+npx pyright backend/path/to/modified/file.py
+# Option 2: Container-based Pyright
+docker compose exec backend npx pyright path/to/modified/file.py
+# Option 3: Django-compatible mypy
+docker compose exec backend mypy path/to/modified/file.py
+
+# Note: Pyright is faster for incremental checks; mypy for full Django validation
 ```
 
 **Frontend Files** (TypeScript/JavaScript):
@@ -129,7 +141,8 @@ When working with task lists, the AI must:
 5. Before starting work, check which **single sub‑task** is next.
 6. **Complete only ONE subtask at a time** - never bundle multiple subtasks together.
 7. After implementing a **single sub‑task**:
-   - **Run incremental quality checks** on modified files (linting, type checking)
+   - **Run incremental quality checks** on modified files (linting, hybrid type checking)
+   - **Do not mark the subtask [x] until all checks pass (0 errors)**
    - **Fix any issues immediately** before marking complete
    - Update the task list file immediately (mark subtask as [x])
    - Update "Relevant Files" section if applicable

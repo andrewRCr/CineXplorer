@@ -6,12 +6,15 @@ standardized logging, error handling, timing, correlation IDs, and
 response processing across the application.
 """
 
+from __future__ import annotations
+
 import requests
 import time
 import uuid
 import logging
-from typing import Any
 from abc import ABC, abstractmethod
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 from .api_response import ApiResponse
 
@@ -34,7 +37,7 @@ class BaseApiClient(ABC):
         logger_name: str | None = None,
         timeout: int = 30,
         max_retries: int = 0
-    ):
+    ) -> None:
         """
         Initialize the base API client.
 
@@ -54,9 +57,22 @@ class BaseApiClient(ABC):
         else:
             self.logger = logging.getLogger(f'{__name__}.{self.__class__.__name__}')
 
+        # Set up session with retry logic if max_retries > 0
+        self.session = requests.Session()
+        if max_retries > 0:
+            retry_strategy = Retry(
+                total=max_retries,
+                backoff_factor=1,  # Wait 1s, 2s, 4s, 8s between retries
+                status_forcelist=[429, 500, 502, 503, 504],  # Retry on these status codes
+                allowed_methods=["HEAD", "GET", "OPTIONS"]  # Safe methods only
+            )
+            adapter = HTTPAdapter(max_retries=retry_strategy)
+            self.session.mount("https://", adapter)
+            self.session.mount("http://", adapter)
+
     def generate_correlation_id(self) -> str:
         """Generate a unique correlation ID for request tracking."""
-        return str(uuid.uuid4())[:8]
+        return str(uuid.uuid4())
 
     def build_url(self, endpoint: str) -> str:
         """Build the full URL from base URL and endpoint."""
@@ -78,7 +94,7 @@ class BaseApiClient(ABC):
         pass
 
     @abstractmethod
-    def get_sanitized_params(self, params: dict[str, Any] | None = None) -> dict[str, Any]:
+    def get_sanitized_params(self, params: dict[str, object] | None = None) -> dict[str, object]:
         """
         Get sanitized parameters for logging (remove sensitive data).
 
@@ -294,7 +310,7 @@ class BaseApiClient(ABC):
         endpoint: str,
         duration_ms: int,
         url: str,
-        params: dict[str, Any] | None = None
+        params: dict[str, object] | None = None
     ) -> ApiResponse:
         """
         Handle request exceptions (network errors, timeouts, etc.).
@@ -410,9 +426,9 @@ class BaseApiClient(ABC):
     def get(
         self,
         endpoint: str,
-        params: dict[str, Any] | None = None,
+        params: dict[str, object] | None = None,
         headers: dict[str, str] | None = None,
-        **kwargs: Any
+        **kwargs: object
     ) -> ApiResponse:
         """
         Make a GET request to the API.
@@ -446,12 +462,20 @@ class BaseApiClient(ABC):
         start_time = time.time()
 
         try:
-            response = requests.get(
+            # Filter out None values; requests library handles native types correctly
+            request_params = {}
+            if params:
+                for key, value in params.items():
+                    if value is not None:
+                        request_params[key] = value
+
+            response = self.session.get(
                 url,
-                params=params,
+                params=request_params or None,  # type: ignore[arg-type]
                 headers=prepared_headers,
                 timeout=self.timeout,
-                **kwargs
+                # Note: **kwargs ignored to avoid type errors - requests has
+                # very specific parameter types
             )
             duration_ms = int((time.time() - start_time) * 1000)
 

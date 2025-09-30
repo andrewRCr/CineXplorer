@@ -2,42 +2,45 @@
 Tests for the custom Django management commands module.
 """
 
-from unittest.mock import patch
-from psycopg import OperationalError as PsycopgError
+from unittest.mock import patch, MagicMock
+# from psycopg import OperationalError as PsycopgError  # Unused
 from django.db.utils import OperationalError
 from django.core.management import call_command
-from django.test import SimpleTestCase
+from django.test import TestCase
 
 
-@patch("core.management.commands.wait_for_db.Command.check")
-class CommandTests(SimpleTestCase):
+@patch("core.management.commands.wait_for_db.connections")
+class CommandTests(TestCase):
     """ Tests commands. """
 
-    def test_wait_for_db_ready(self, patched_check):
+    def test_wait_for_db_ready(self, patched_connections):
         """ Tests waiting for the database.
             Case: database is ready. """
 
-        patched_check.return_value = True
+        # Mock the default connection's ensure_connection to succeed immediately
+        patched_connections.__getitem__.return_value.ensure_connection = MagicMock()
+
         call_command("wait_for_db")
 
-        patched_check.assert_called_once_with(databases=["default"])
+        # Verify ensure_connection was called
+        patched_connections.__getitem__.assert_called_with("default")
+        patched_connections.__getitem__.return_value.ensure_connection.assert_called_once()
 
     @patch("time.sleep")
-    def test_wait_for_db_delay(self, patched_sleep, patched_check):
+    def test_wait_for_db_delay(self, patched_sleep, patched_connections):
         """ Tests waiting for the database.
-            Case: receiving an OperationalError (both types). """
+            Case: receiving an OperationalError. """
 
-        # simulates the first five attempts to connect to the database.
-        # first two attempts: database likely not yet initialized; raise PsycopgError
-        # next three attempts: db can accept connections, but test db not yet setup;
-        # raise Django OperationalError
-        # finally, sixth attempt succeeds.
-        patched_check.side_effect = (
-            [PsycopgError] * 2 +
-            [OperationalError] * 3 +
-            [True]
+        # Mock to raise OperationalError 5 times, then succeed
+        patched_connections.__getitem__.return_value.ensure_connection.side_effect = (
+            [OperationalError] * 5 +
+            [None]  # Success on 6th attempt
         )
+
         call_command("wait_for_db")
 
-        self.assertEqual(patched_check.call_count, 6)
-        patched_check.assert_called_with(databases=["default"])
+        # Verify ensure_connection was called 6 times
+        self.assertEqual(
+            patched_connections.__getitem__.return_value.ensure_connection.call_count,
+            6
+        )

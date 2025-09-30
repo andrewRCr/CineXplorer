@@ -1,9 +1,10 @@
 """
 Serializers for the user movie data API View.
 """
+from __future__ import annotations
 
 from rest_framework import serializers
-from core.models import UserMovieData
+from user_movie_data.models import UserMovieData
 
 
 class UserMovieDataSerializer(serializers.ModelSerializer):
@@ -12,11 +13,11 @@ class UserMovieDataSerializer(serializers.ModelSerializer):
     tmdb_id = serializers.SerializerMethodField()
     title = serializers.SerializerMethodField()
 
-    def get_tmdb_id(self, obj):
+    def get_tmdb_id(self, obj: UserMovieData) -> int | None:
         # Return the TMDB id from the related Movie instance
         return obj.movie.tmdb_id if obj.movie else None
 
-    def get_title(self, obj):
+    def get_title(self, obj: UserMovieData) -> str | None:
         # Return the title from the related Movie instance
         return obj.movie.title if obj.movie else None
 

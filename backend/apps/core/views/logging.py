@@ -7,18 +7,24 @@ to the backend for centralized logging and monitoring.
 
 import json
 import logging
-from typing import Dict, Any
 from datetime import datetime
 
+from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
+from django.utils import timezone
 from rest_framework import status
+from rest_framework.exceptions import ParseError
+from rest_framework.request import Request
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
+from rest_framework.throttling import ScopedRateThrottle
 
 # Import our correlation utility
 from middleware.logging import get_correlation_id
+# Import shared types
+# from shared import ApiResponse  # Unused import
 
 # Get the logger instance
 frontend_logger = logging.getLogger('frontend')
@@ -32,6 +38,11 @@ class FrontendLogAPIView(APIView):
 
     This endpoint allows the frontend to send log entries to the backend
     for centralized logging, monitoring, and debugging.
+
+    Security:
+    - Rate limited via ScopedRateThrottle (scope: 'frontend_logs')
+    - Payload size limited to prevent abuse
+    - Available to anonymous users but throttled aggressively
 
     Expected payload:
     {
@@ -52,8 +63,24 @@ class FrontendLogAPIView(APIView):
     """
 
     permission_classes = [AllowAny]  # Allow both authenticated and anonymous users
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'frontend_logs'
 
-    def post(self, request):
+    def post(self, request: Request) -> Response:
+        # Check payload size to prevent abuse
+        MAX_PAYLOAD_SIZE = getattr(settings, 'FRONTEND_LOG_MAX_PAYLOAD_SIZE', 50 * 1024)  # 50KB
+        payload_size = len(request.body) if request.body else 0
+        if payload_size > MAX_PAYLOAD_SIZE:
+            app_logger.warning("Frontend log payload too large", extra={
+                'correlation_id': get_correlation_id(request),
+                'payload_size': payload_size,
+                'max_allowed': MAX_PAYLOAD_SIZE
+            })
+            return Response(
+                {"error": "Payload too large", "success": False, "max_size_bytes": MAX_PAYLOAD_SIZE},  # noqa: E501
+                status=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE
+            )
+
         try:
             # Parse the request data
             data = self._parse_request_data(request)
@@ -80,24 +107,27 @@ class FrontendLogAPIView(APIView):
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
 
-        except (json.JSONDecodeError, ValueError) as e:
+        except ParseError as e:
+            # Handle DRF ParseError for invalid JSON/data
+            app_logger.warning("Frontend log API received invalid JSON", extra={
+                'correlation_id': get_correlation_id(request),
+                'error': str(e)
+            })
+            return Response(
+                {"error": "Invalid JSON payload", "success": False},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except json.JSONDecodeError as e:
             # Handle JSON parsing errors
-            if "JSON" in str(e) or "Expecting value" in str(e):
-                return Response(
-                    {"error": "Invalid JSON payload", "success": False},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            else:
-                # Re-raise if it's not a JSON error
-                raise
+            app_logger.warning("Frontend log API received malformed JSON", extra={
+                'correlation_id': get_correlation_id(request),
+                'error': str(e)
+            })
+            return Response(
+                {"error": "Invalid JSON payload", "success": False},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         except Exception as e:
-            # Handle DRF ParseError and other parsing/validation exceptions
-            if "JSON parse error" in str(e) or "ParseError" in str(type(e).__name__):
-                return Response(
-                    {"error": "Invalid JSON payload", "success": False},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-
             # Log the error but don't expose internal details
             # Try to get request data safely
             try:
@@ -106,7 +136,8 @@ class FrontendLogAPIView(APIView):
                 request_data = 'Unable to access request data'
             app_logger.error(f"Frontend log API error: {str(e)}", extra={
                 'correlation_id': get_correlation_id(request),
-                'request_data': request_data
+                'request_data': request_data,
+                'exception_type': type(e).__name__
             })
 
             return Response(
@@ -114,7 +145,7 @@ class FrontendLogAPIView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-    def _parse_request_data(self, request) -> Dict[str, Any]:
+    def _parse_request_data(self, request: Request) -> dict[str, object]:
         """Parse and return the request data."""
         if hasattr(request, 'data') and request.data:
             return request.data
@@ -123,7 +154,7 @@ class FrontendLogAPIView(APIView):
         else:
             return {}
 
-    def _validate_log_entry(self, data: Dict[str, Any]) -> str | None:
+    def _validate_log_entry(self, data: dict[str, object]) -> str | None:
         """
         Validate the log entry data.
 
@@ -138,19 +169,24 @@ class FrontendLogAPIView(APIView):
 
         # Validate log level
         valid_levels = ['DEBUG', 'INFO', 'WARNING', 'WARN', 'ERROR', 'CRITICAL']
-        if data['level'].upper() not in valid_levels:
+        level = data.get('level')
+        if not isinstance(level, str) or level.upper() not in valid_levels:
             levels_str = ', '.join(valid_levels)
-            return f"Invalid log level: {data['level']}. Must be one of: {levels_str}"
+            return f"Invalid log level: {level}. Must be one of: {levels_str}"
 
         # Validate timestamp format
         try:
-            datetime.fromisoformat(data['timestamp'].replace('Z', '+00:00'))
+            timestamp = data.get('timestamp')
+            if isinstance(timestamp, str):
+                datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
+            else:
+                raise ValueError('Timestamp must be a string')
         except (ValueError, AttributeError):
             return "Invalid timestamp format. Expected ISO format."
 
         return None
 
-    def _process_log_entry(self, data: Dict[str, Any], request) -> bool:
+    def _process_log_entry(self, data: dict[str, object], request: Request) -> bool:
         """
         Process the frontend log entry.
 
@@ -168,10 +204,20 @@ class FrontendLogAPIView(APIView):
                 'CRITICAL': logging.CRITICAL
             }
 
-            log_level = level_mapping.get(data['level'].upper(), logging.INFO)
+            level_str = data.get('level', 'INFO')
+            if isinstance(level_str, str):
+                log_level = level_mapping.get(level_str.upper(), logging.INFO)
+            else:
+                log_level = logging.INFO
 
-            # Prepare the log message
-            message = f"[FRONTEND] {data['message']}"
+            # Prepare the log message with truncation to prevent flooding
+            MAX_MESSAGE_LENGTH = getattr(settings, 'FRONTEND_LOG_MAX_MESSAGE_LENGTH', 1000)
+            raw_message = str(data['message']) if data['message'] is not None else ''
+            if len(raw_message) > MAX_MESSAGE_LENGTH:
+                truncated_message = raw_message[:MAX_MESSAGE_LENGTH] + "…[truncated]"
+            else:
+                truncated_message = raw_message
+            message = f"[FRONTEND] {truncated_message}"
 
             # Prepare extra data for structured logging
             correlation_id = (data.get('correlationId') or
@@ -229,7 +275,7 @@ class LogHealthCheckView(APIView):
 
     permission_classes = [AllowAny]
 
-    def get(self, request):
+    def get(self, request: Request) -> Response:
         """Return logging system health status."""
         try:
             # Test that we can write to the logs
@@ -244,7 +290,7 @@ class LogHealthCheckView(APIView):
                 "status": "healthy",
                 "service": "logging",
                 "correlation_id": test_correlation_id,
-                "timestamp": datetime.now().isoformat()
+                "timestamp": timezone.now().isoformat()
             }, status=status.HTTP_200_OK)
 
         except Exception as e:

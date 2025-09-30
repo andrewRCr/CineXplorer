@@ -14,15 +14,42 @@ steps:
   command: git --no-pager diff --stat
   description: Get overview of changed files and line counts
 
-- name: Check Task Documentation
-  command: find \_docs/tasks -name "\*.md" -exec grep -l "\[x\]" {} \;
+- name: Comprehensive Task Context Analysis
   description: |
-  Before committing, IF changes are part of an established task list, verify task documentation is accurate:
+  **MANDATORY**: Before committing, perform comprehensive analysis of ALL uncommitted changes in the context of current task documentation:
 
-  1. Check if all subtasks for a parent are [x] - if so, parent should also be [x]
-  2. Review task progress matches what you're committing
-  3. Ensure commit messages reference correct task numbers
-  4. Update any task status that should change with this commit
+  **Step 1: Identify All Changes**
+  - Run `git status` and `git --no-pager diff --name-only` to see all modified files
+  - Examine changes that might not be immediately obvious (config files, documentation, etc.)
+  - Look for task documentation files that may have been updated
+
+  **Step 2: Find Relevant Task Documentation**
+  - Check `_docs/tasks/` for active task lists related to current work
+  - Look for task files that reference modified files or related functionality
+  - Use `find _docs/tasks -name "*.md" -exec grep -l "user-auth" {} \;` to find related tasks (replace "user-auth" with your actual feature name, e.g., "payment-integration", "movie-api", etc.)
+
+  **Step 3: Analyze Task Progress Context**
+  - Compare actual work completed against task documentation
+  - Identify which specific subtasks were completed by your changes
+  - Check if completing subtasks makes any parent tasks complete
+  - Verify that task status in documentation matches actual implementation
+
+  **Step 4: Validate Milestone Context**
+  - Determine if changes complete major milestones (e.g., "Backend PoC Complete")
+  - Check if this is partial progress toward a larger goal vs. completion of a phase
+  - Identify remaining work required for full phase/milestone completion
+
+  **Step 5: Update Task Documentation**
+  - Mark completed subtasks as [x] in task files
+  - Mark parent tasks as [x] ONLY if ALL subtasks are complete
+  - Update any progress notes or status indicators
+  - Add any new tasks that were discovered during implementation
+
+  **Common Scenarios to Check:**
+  - Code quality improvements (linting, formatting) often accompany feature completion
+  - Documentation updates may signal completion of analysis or design phases
+  - Test file changes may indicate testing milestones reached
+  - Configuration changes may be part of larger feature enablement
 
 - name: Plan Commits
   description: |
@@ -67,25 +94,49 @@ steps:
 
   Task Documentation Guidelines:
 
+  - **Always examine task context BEFORE writing commit messages**
   - Reference specific task numbers with feature context (e.g., "Complete logging-system task 2.0")
   - Include parent feature name when completing sub-tasks
   - When all subtasks are done, mark parent task complete in same commit
-  - Commit messages should match actual task progress
+  - **Distinguish between partial progress and milestone completion**
+    - "Complete backend portion of Feature X" (when frontend remains)
+    - "Complete Feature X Phase 1" (only when entire phase is done)
+  - **Identify remaining work clearly** in commit messages
+  - Commit messages should match actual task progress, not aspirational goals
   - Always check \_docs/tasks/ files before committing docs changes
+  - **Review multiple task files** - work often spans multiple task lists
 
-  Example Commit Messages with Feature Context:
+  Example Commit Messages with Proper Task Context:
 
   ```
-  # Feature branch commits (while on feature/user-profile-editing branch)
+  # Milestone completion with proper context
+  feat(backend): Complete backend portion of API Layer Modernization Phase 1
+
+  ✅ **BACKEND MILESTONE: Backend PoC Complete - Ready for Frontend Integration**
+
+  **Completed Tasks:**
+  - ✅ 4.0 Testing and Validation - All movie app tests passing with Django Ninja
+  - ✅ 4.4 Type Safety Compliance - Zero type errors with strict type checking
+  - ✅ 4.4.5 Documentation - Testing standards documented for future migrations
+
+  **Remaining for Phase 1 Completion:** Frontend Integration (Tasks 5.0-5.6)
+
+  Related to: API Layer Modernization PRD - Backend portion of Phase 1 PoC
+
+  # Feature branch commits with task context
   feat(user-profile): Implement profile editing form component (Task 2.1)
   config(user-profile): Add validation schema for profile updates (Task 2.3)
   test(user-profile): Add comprehensive profile editing tests (Task 2.5)
   docs(user-profile): Complete Task 2.0 - Profile Editing UI
 
-  # Single feature changes (could be on main or feature branch)
-  fix(movie-api): Resolve TMDB rate limiting in discover endpoint
-  style(backend): Fix flake8 violations in middleware files
-  test(user-auth): Add comprehensive JWT token validation tests
+  # Quality improvements that accompany feature work
+  style(backend): Fix flake8 violations for code compliance
+
+  - Resolve line length and complexity violations across movie app
+  - Support completion of API modernization quality gates
+  - Enable successful completion of Task 4.4 (Type Safety Compliance)
+
+  Related to: API Layer Modernization PRD - Quality standards requirement
   ```
 
 - name: Verify Commits
@@ -116,8 +167,14 @@ Feature Branch Practices:
 
 Task Documentation Consistency:
 
-- Always verify task status matches commit content
-- Mark parent tasks [x] when all subtasks are [x]
-- Reference correct task numbers in commit messages
+- **MANDATORY**: Perform comprehensive task context analysis before every commit
+- Always verify task status matches commit content across ALL relevant task files
+- Mark parent tasks [x] when all subtasks are [x], but ONLY then
+- Reference correct task numbers in commit messages with full context
+- **Distinguish clearly** between partial progress and complete milestones
 - Include task status updates in documentation commits
+- **Check multiple task files** - work often affects multiple task lists
+- **Analyze the full scope** of uncommitted changes, not just obvious files
 - Follow \_docs/workflows/process-tasks.md completion protocol
+
+**Key Principle**: Commit messages should accurately reflect WHERE the project stands after the commit, not just what was changed. This includes identifying remaining work and providing proper milestone context.

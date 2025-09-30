@@ -44,6 +44,7 @@ Usage Examples:
 import os
 import sys
 import logging.handlers
+from typing import TypedDict
 
 
 class HealthCheckFilter(logging.Filter):
@@ -103,8 +104,19 @@ class HealthCheckFilter(logging.Filter):
 # Valid log levels for environment variable validation
 VALID_LOG_LEVELS = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 
-# Log rotation configuration
-LOG_ROTATION_CONFIG = {
+
+# Type-safe log rotation configuration
+class LogRotationConfig(TypedDict):
+    """Type definition for log rotation configuration."""
+
+    max_bytes: int
+    backup_count_default: int
+    backup_count_errors: int
+    encoding: str
+
+
+# Log rotation configuration with precise types
+LOG_ROTATION_CONFIG: LogRotationConfig = {
     "max_bytes": 10 * 1024 * 1024,  # 10MB per file
     "backup_count_default": 5,  # Keep 5 backup files for most logs
     "backup_count_errors": 10,  # Keep 10 backup files for errors (more important)
@@ -373,13 +385,17 @@ def get_logging_config(log_dir=None):
     ) and not is_testing  # CI detection only applies if not testing
 
     # Debug output for CI/testing detection (only when relevant to avoid noise in dev)
+    # Use stderr to avoid corrupting stdout-based outputs (e.g., OpenAPI schema export)
     if is_testing:
-        print("Testing environment detected. Using minimal logging for clean test output.")
+        print(
+            "Testing environment detected. Using minimal logging for clean test output.",
+            file=sys.stderr
+        )
     elif is_ci:
-        print("CI environment detected. Environment variables:")
-        print(f"  CI={os.getenv('CI')}")
-        print(f"  GITHUB_ACTIONS={os.getenv('GITHUB_ACTIONS')}")
-        print("  Disabling file logging handlers.")
+        print("CI environment detected. Environment variables:", file=sys.stderr)
+        print(f"  CI={os.getenv('CI')}", file=sys.stderr)
+        print(f"  GITHUB_ACTIONS={os.getenv('GITHUB_ACTIONS')}", file=sys.stderr)
+        print("  Disabling file logging handlers.", file=sys.stderr)
     default_level = "DEBUG" if debug_mode else "INFO"
     raw_log_level = os.getenv("DJANGO_LOG_LEVEL", default_level)
     log_level = validate_log_level(raw_log_level)
@@ -390,9 +406,13 @@ def get_logging_config(log_dir=None):
     raw_console_level = os.getenv("DJANGO_CONSOLE_LOG_LEVEL", console_default)
     console_log_level = validate_log_level(raw_console_level)
 
-    # Base directory for log files (not used in CI)
+    # Base directory for log files (not used in CI or testing)
     if log_dir is None:
         log_dir = "/backend/logs"
+
+    # Ensure log directory exists before creating handlers (unless in CI/testing)
+    if not is_ci and not is_testing:
+        os.makedirs(log_dir, mode=0o755, exist_ok=True)
 
     return {
         "version": 1,
@@ -552,7 +572,7 @@ def get_log_file_info(log_dir="/backend/logs"):
 
     for pattern in log_patterns:
         all_files.extend(glob.glob(os.path.join(log_dir, pattern)))
-    total_size = 0
+    total_size: float = 0.0
     for file_path in sorted(all_files):
         try:
             size_bytes = os.path.getsize(file_path)
@@ -589,7 +609,7 @@ def print_log_status(log_dir="/backend/logs"):
     print(f"Total Files: {info['file_count']}")
     print(f"Total Size: {info['total_size_mb']:.2f} MB")
     # Group files by type
-    file_groups = {}
+    file_groups: dict[str, list[dict[str, object]]] = {}
     for file_info in info["files"]:
         base_name = file_info["name"].split(".")[0] + ".log"
         if base_name not in file_groups:
@@ -599,13 +619,18 @@ def print_log_status(log_dir="/backend/logs"):
     for base_name, files in file_groups.items():
         current_files = [f for f in files if f["is_current"]]
         rotated_files = [f for f in files if not f["is_current"]]
-        total_size = sum(f["size_mb"] for f in files)
+        total_size = sum(
+            float(f["size_mb"]) if isinstance(f["size_mb"], (int, float)) else 0.0
+            for f in files
+        )
         print(f"  {base_name}:")
         print(f"    Total size: {total_size:.2f} MB")
         print(f"    Current: {len(current_files)} file(s)")
         print(f"    Rotated: {len(rotated_files)} backup(s)")
     print("\nRotation Configuration:")
-    print(f"  Max file size: {LOG_ROTATION_CONFIG['max_bytes'] / (1024*1024):.0f} MB")
+    max_bytes = LOG_ROTATION_CONFIG['max_bytes']
+    assert isinstance(max_bytes, int), "max_bytes should be an integer"
+    print(f"  Max file size: {max_bytes / (1024*1024):.0f} MB")
     print(f"  Default backups: {LOG_ROTATION_CONFIG['backup_count_default']}")
     print(f"  Error log backups: {LOG_ROTATION_CONFIG['backup_count_errors']}")
     print("\nEstimated maximum storage:")

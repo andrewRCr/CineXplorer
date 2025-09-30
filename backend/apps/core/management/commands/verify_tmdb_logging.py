@@ -8,7 +8,7 @@ to verify that all structured logging data is being captured correctly.
 import json
 import time
 from django.core.management.base import BaseCommand
-from apps.movie.services.movie_service import tmdb_get
+from movie.services.movie_service import tmdb_get
 import logging
 
 

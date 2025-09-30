@@ -18,7 +18,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
-from user.views import (
+from authentication.views import (
     JWTCookieTokenObtainPairView,
     JWTCookieTokenRefreshView,
     LogOutAPIView,
@@ -26,16 +26,19 @@ from user.views import (
     CsrfTokenView,
 )
 from core.views.health_check import HealthCheckView
+from .api import api
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("__debug__/", include("debug_toolbar.urls")),
-    path("api/schema/", SpectacularAPIView.as_view(), name="api-schema"),
-    path("api/docs/", SpectacularSwaggerView.as_view(url_name="api-schema"), name="api-docs"),
-    path("api/user/", include("user.urls")),
+    # Legacy DRF API documentation (for remaining DRF endpoints)
+    path("api/drf-schema/", SpectacularAPIView.as_view(), name="drf-schema"),
+    path("api/drf-docs/", SpectacularSwaggerView.as_view(url_name="drf-schema"), name="drf-docs"),
+    path("api/user/", include("authentication.urls")),
     path("api/user-movie-data/", include("user_movie_data.urls")),
-    path("api/movie/", include("movie.urls")),
     path("api/core/", include("core.urls")),  # Core app for logging and utilities
+    # Django Ninja API (modern, type-safe endpoints)
+    path("api/", api.urls),
     path("api/token/", JWTCookieTokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("api/token/refresh/", JWTCookieTokenRefreshView.as_view(), name="token_refresh"),
     path("api/logout/", LogOutAPIView.as_view(), name="logout"),

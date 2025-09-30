@@ -1,12 +1,13 @@
 # Development Rules - CineXplorer
 
-**Version**: 2.1
-**Last Updated**: 2025-01-24
-**Rules Hash**: `b3e8f7d1`
+**Version**: 2.2
+**Last Updated**: 2025-01-27
+**Rules Hash**: `c4f9e8a2`
 
 This document consolidates the core development rules and quality standards for CineXplorer. These rules are **non-negotiable** and must be followed by all contributors, including AI assistants.
 
 ## Version History
+- **2.2**: Added mandatory comprehensive task context analysis protocol for all commits
 - **2.1**: Added feature branch workflow protocols and branch management requirements
 - **2.0**: Clarified commit initiation vs execution, added incremental quality checks
 - **1.0**: Initial comprehensive development rules
@@ -14,8 +15,8 @@ This document consolidates the core development rules and quality standards for 
 ## AI Session Initialization Required
 
 Before starting ANY work, AI assistants must:
-1. **Confirm rules version**: "Acknowledging DEVELOPMENT-RULES v2.1, hash b3e8f7d1"
-2. **State understanding**: Briefly confirm understanding of commit protocols, quality gates, and feature branch workflow
+1. **Confirm rules version**: "Acknowledging DEVELOPMENT-RULES v2.2, hash c4f9e8a2"
+2. **State understanding**: Briefly confirm understanding of commit protocols, comprehensive task context analysis, quality gates, and feature branch workflow
 3. **Verify context access**: Confirm access to required documents (AI-SHARED, META-PRD, etc.)
 4. **Check branch status**: Verify current git branch and ensure alignment with intended work
 
@@ -25,6 +26,7 @@ Before starting ANY work, AI assistants must:
 - **AI NEVER initiates commits** without explicit user approval or instruction
 - **AI CAN execute commits** when user explicitly approves/instructs it to do so
 - **User approval required** to begin any git operations
+- **MANDATORY**: AI must perform comprehensive task context analysis before any commit consideration
 - AI reports completion with standardized readiness report, then awaits commit instructions
 
 ### Feature Branch Workflow
@@ -57,6 +59,26 @@ Before any commit consideration, ALL of the following must pass with **zero exce
 5. **TypeScript Checking**: Zero errors
    - Command: `docker-compose exec frontend npm run type-check`
    - Every type error must be resolved
+
+6. **Python Type Safety**: Hybrid type checking approach with minimal Any usage
+   - **Development**: `python backend/scripts/type_check.py` from repo root (fast, comprehensive checking using version-pinned Pyright)
+   - **CI/CD**: `docker-compose exec backend python scripts/type_check.py` (comprehensive validation in container)
+   - **Manual**: `docker-compose exec backend mypy apps/ --config-file mypy.ini` (Django-compatible checking)
+   - **Working Directory**: All type checking commands must be run from repository root for deterministic relative paths
+   - **Version Control**: Pyright version must be pinned in root package.json devDependencies or frontend/package.json
+     - Never use unpinned `npx pyright` directly - always use through type_check.py script or npm script
+     - Ensures consistent type checking results across team and CI
+   - **PROHIBITED**: Using `typing.Any` except where explicitly allowed below
+   - **REQUIRED**: Use `object` for truly unknown data, specific TypedDict types for known structures
+   - **REQUIRED**: Use `dict[str, object]` for generic dictionary data
+   - **PATTERN**: Leverage django-stubs generics (e.g., `QuerySet[ModelClass]`)
+   - **JUSTIFICATION**: Any `Any` usage must be documented with inline comment explaining necessity
+   - **EXCEPTION - External API Payloads**:
+     - `dict[str, Any]` or specific fields typed as `Any` are permitted for third-party API responses (e.g., TMDB, external services)
+     - **REQUIRED**: Inline comment must justify each usage: `# Any: [Service] [endpoint] - [reason]`
+     - **REQUIRED**: Add TODO comment to replace with TypedDict/Pydantic model when feasible
+     - **Example**: `data: dict[str, Any]  # Any: TMDB /movie/{id} - dynamic fields vary by movie type  # TODO: Create TMDBMovieResponse model`
+     - **Rationale**: External payloads have unpredictable schemas; strict typing should be added incrementally as API usage stabilizes
 
 ### Quality Gate Failure Protocol
 If quality gates fail after sub-task completion:
@@ -110,8 +132,9 @@ After completing all sub-tasks under a parent task:
 
 ### Backend Standards
 - **Linting**: flake8 with max-line-length=99, max-complexity=10
-- **Type Checking**: mypy with django-stubs
+- **Type Checking**: Hybrid approach - Pyright (development) + MyPy (CI/CD) with django-stubs/django-types
 - **Exclusions**: See `backend/.flake8` for excluded directories
+- **Type Check Script**: Use `python scripts/type_check.py` for comprehensive validation
 
 ### Frontend Standards
 - **Linting**: ESLint with TypeScript support
@@ -137,6 +160,7 @@ When sub-tasks are complete and quality gates pass, use this format:
 ✅ Backend Lint: flake8 clean (0 violations)
 ✅ Frontend Lint: ESLint clean (0 violations)
 ✅ TypeScript: No type errors
+✅ Python Type-Safety: Pyright [X passed, 0 failed], MyPy [X passed, 0 failed]
 
 **Task Status:**
 ✅ Sub-task X.Y marked complete
@@ -184,9 +208,12 @@ If quality gates fail, use this format:
 ### Atomic Commit Guidelines
 - Each commit should be a single logical change
 - Commits should be independently buildable/testable
-- Use descriptive messages with context
-- Reference correct task numbers
+- **MANDATORY**: Perform comprehensive task context analysis before writing commit messages
+- Use descriptive messages that reflect project milestone status, not just changes made
+- Reference correct task numbers with full phase/milestone context
+- Distinguish clearly between partial progress and milestone completion
 - Separate formatting from functional changes
+- Identify remaining work required for full milestone completion
 
 ## Error Handling
 
@@ -203,11 +230,24 @@ If quality gates fail, use this format:
 - TypeScript errors are present
 - User has not approved the next step
 
+## Comprehensive Task Context Analysis Protocol
+
+**MANDATORY** before every commit consideration:
+
+1. **Examine ALL uncommitted changes** - not just obvious modifications
+2. **Locate relevant task documentation** in `_docs/tasks/` directory
+3. **Analyze task completion status** - compare actual work against documented tasks
+4. **Validate milestone context** - determine if this completes phases or is partial progress
+5. **Update task documentation** - mark subtasks complete, parent tasks only when ALL subtasks done
+6. **Write accurate commit messages** that reflect project status after commit
+
+**Key Principle**: Commit messages must communicate WHERE the project stands after the commit, including remaining work for milestone completion.
+
 ## Reference Documentation
 
 This document provides core rules. See detailed protocols in:
 - **`_docs/workflows/process-tasks.md`** - Detailed task execution workflow
-- **`_docs/workflows/atomic-commit.md`** - Commit workflow examples
+- **`_docs/workflows/atomic-commit.md`** - Enhanced commit workflow with comprehensive task context analysis
 - **`_docs/ai-instructions/CLAUDE.md`** - Tool-specific guidance
 - **`_docs/TECHNICAL-ARCHITECTURE.md`** - Testing methodology details
 

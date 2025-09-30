@@ -50,8 +50,8 @@ const MovieCard = ({ movie, currentPage, source, query }: MovieCardProps) => {
 				visibility: hidden;
 				height: auto;
 				width: ${element.clientWidth}px;
-				webkit-line-clamp: none;
-				webkit-box-orient: horizontal;
+				-webkit-line-clamp: none;
+				-webkit-box-orient: horizontal;
 				display: block;
 				overflow: visible;
 			`;
@@ -66,28 +66,30 @@ const MovieCard = ({ movie, currentPage, source, query }: MovieCardProps) => {
 
 	// Debounced resize handler for better performance
 	useEffect(() => {
-		let resizeTimer: NodeJS.Timeout;
+		let resizeTimer: ReturnType<typeof setTimeout> | null = null;
 		const debouncedCheck = () => {
-			clearTimeout(resizeTimer);
+			if (resizeTimer) clearTimeout(resizeTimer);
 			resizeTimer = setTimeout(checkTruncation, 150); // 150ms debounce
 		};
 
 		// Initial check with small delay
-		const initialTimer = setTimeout(checkTruncation, 50);
+		const initialTimer: ReturnType<typeof setTimeout> | null = setTimeout(checkTruncation, 50);
 
 		// Add resize listener with debouncing
 		window.addEventListener("resize", debouncedCheck);
 
 		return () => {
-			clearTimeout(initialTimer);
-			clearTimeout(resizeTimer);
+			if (initialTimer) clearTimeout(initialTimer);
+			if (resizeTimer) clearTimeout(resizeTimer);
 			window.removeEventListener("resize", debouncedCheck);
 		};
 	}, [movie.title, checkTruncation]);
 
 	// Memoize expensive date formatting
 	const formattedDate = useMemo(() => {
+		if (!movie.release_date) return "Release date unknown";
 		const date = new Date(movie.release_date);
+		if (Number.isNaN(date.getTime())) return "Release date unknown";
 		return date.toLocaleDateString("en-US", {
 			year: "numeric",
 			month: "long",
@@ -239,7 +241,7 @@ const MovieCard = ({ movie, currentPage, source, query }: MovieCardProps) => {
 								>
 									{formattedDate}
 								</Text>
-								<MovieUserScore score={movie.vote_average} />
+								<MovieUserScore score={movie.vote_average ?? 0} />
 							</Box>
 						</Box>
 					</Card.Body>

@@ -209,12 +209,17 @@ infrastructure/dev-certs/
 generate-cert.ps1
 
 # Personal reference documentation
-_docs/archive/reports/
-_docs/reports/
+_docs/archive/notes/
+_docs/notes/
 
 # AI tool settings (personal development environment preferences)
 .claude/
 .warp/
 
+# Note: frontend/openapi.json is now vendored (not ignored) to prevent type drift
+
 # Note: _docs/ai-instructions/, _docs/workflows/, and other high-level docs are included
 # to showcase systematic AI-assisted development methodology
+
+# Type checking output files
+*type_errors.json

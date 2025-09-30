@@ -5,13 +5,16 @@ This command tests that API keys and other sensitive information are properly
 sanitized from log files and console output for security compliance.
 """
 
-import os
 import json
-import time
-from django.core.management.base import BaseCommand
-from django.conf import settings
-from apps.movie.services.movie_service import tmdb_get
 import logging
+import time
+from collections.abc import Mapping
+from pathlib import Path
+
+from django.conf import settings
+from django.core.management.base import BaseCommand
+
+from movie.services.movie_service import tmdb_get
 
 
 class Command(BaseCommand):
@@ -53,21 +56,26 @@ class Command(BaseCommand):
             def emit(self, record):
                 log_records.append(record)
 
-        # Set up log capture on multiple loggers
+        # Set up log capture on multiple loggers (including upstream libraries)
         loggers_to_test = [
             'cinexplorer.tmdb',
             'cinexplorer',
-            'cinexplorer.requests'
+            'cinexplorer.requests',
+            'django',           # Django framework logging
+            'urllib3',          # HTTP transport layer
+            'requests',         # Requests library
         ]
 
         capture_handlers = []
 
         for logger_name in loggers_to_test:
             logger = logging.getLogger(logger_name)
+            original_level = logger.level  # Save original level
             handler = SecurityLogCapture()
             handler.setLevel(logging.DEBUG)
+            logger.setLevel(logging.DEBUG)  # Ensure DEBUG messages are captured
             logger.addHandler(handler)
-            capture_handlers.append((logger, handler))
+            capture_handlers.append((logger, handler, original_level))
 
         try:
             self.stdout.write("📡 Making TMDB API calls with security monitoring...")
@@ -183,11 +191,23 @@ class Command(BaseCommand):
             ]
 
             for endpoint, result in api_results:
-                if 'error' in result:
-                    self.stdout.write(f"  ❌ {endpoint}: {result.get('error')}")
+                # Safely handle result which might not be a dict
+                if isinstance(result, Mapping):
+                    if 'error' in result:
+                        self.stdout.write(f"  ❌ {endpoint}: {result.get('error')}")
+                    else:
+                        count = len(result.get('results', [result])) if 'results' in result else 1
+                        self.stdout.write(f"  ✅ {endpoint}: {count} item(s) returned")
                 else:
-                    count = len(result.get('results', [result])) if 'results' in result else 1
-                    self.stdout.write(f"  ✅ {endpoint}: {count} item(s) returned")
+                    # Handle non-mapping results
+                    result_type = type(result).__name__
+                    try:
+                        item_count = len(result) if hasattr(result, '__len__') else 1
+                        self.stdout.write(  # noqa: E501
+                            f"  ⚠️ {endpoint}: Non-dict result ({result_type}, {item_count} items)"
+                        )
+                    except (TypeError, AttributeError):
+                        self.stdout.write(f"  ⚠️ {endpoint}: Non-dict result ({result_type})")
 
             # Check log files for API key presence
             self.stdout.write("\n📁 Log File Security Check:")
@@ -197,15 +217,22 @@ class Command(BaseCommand):
             self.stdout.write(f"\n❌ Security test failed: {e}")
 
         finally:
-            # Clean up handlers
-            for logger, handler in capture_handlers:
+            # Clean up handlers and restore original logger levels
+            for logger, handler, original_level in capture_handlers:
                 logger.removeHandler(handler)
+                logger.setLevel(original_level)
 
         self.stdout.write("\n🔐 Sensitive data exclusion verification completed!")
 
     def _check_log_files_security(self, api_key, partial_key):
         """Check actual log files for API key presence."""
-        log_dir = "/backend/logs"
+        # Get log directory from settings, with fallback to BASE_DIR / "logs"
+        log_dir = getattr(settings, 'LOG_DIR', None)
+        if log_dir is None:
+            log_dir = Path(settings.BASE_DIR) / "logs"
+        else:
+            log_dir = Path(log_dir)
+
         log_files = [
             "cinexplorer.log",
             "django.log",
@@ -215,9 +242,9 @@ class Command(BaseCommand):
         ]
 
         for log_file in log_files:
-            file_path = f"{log_dir}/{log_file}"
+            file_path = log_dir / log_file
             try:
-                if os.path.exists(file_path):
+                if file_path.exists():
                     with open(file_path, 'r', encoding='utf-8') as f:
                         # Read last 100 lines to check recent entries
                         lines = f.readlines()[-100:]

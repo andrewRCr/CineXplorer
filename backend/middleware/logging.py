@@ -14,10 +14,16 @@ Usage:
 import uuid
 import time
 import logging
-from typing import Optional
+from typing import Protocol, cast
 from django.http import HttpRequest, HttpResponse
 from django.utils.deprecation import MiddlewareMixin
 from django.contrib.auth.models import AnonymousUser
+
+
+class RequestWithLogging(Protocol):
+    """HttpRequest with logging middleware attributes."""
+    correlation_id: str
+    start_time: float
 
 
 # Get logger for request tracking
@@ -71,6 +77,50 @@ class RequestLoggingMiddleware(MiddlewareMixin):
         """
         return request.path in self.HEALTH_CHECK_PATHS
 
+    def _sanitize_headers(self, request: HttpRequest) -> dict[str, str]:
+        """
+        Sanitize request headers by redacting sensitive values.
+
+        Args:
+            request: The HTTP request
+
+        Returns:
+            dict[str, str]: Sanitized headers safe for logging
+        """
+        sanitized = {}
+        for key, value in request.headers.items():
+            # Case-insensitive check for sensitive headers
+            if key.lower() in self.SENSITIVE_HEADERS:
+                sanitized[key] = '[REDACTED]'
+            else:
+                sanitized[key] = str(value)[:200]  # Truncate long headers
+        return sanitized
+
+    def _sanitize_query_string(self, query_string: str) -> str:
+        """
+        Sanitize query string by redacting sensitive parameter values.
+
+        Args:
+            query_string: Raw query string from request
+
+        Returns:
+            str: Sanitized query string safe for logging
+        """
+        if not query_string:
+            return query_string
+
+        # Parse query string and redact sensitive params
+        from urllib.parse import parse_qsl, urlencode
+        params = parse_qsl(query_string, keep_blank_values=True)
+        sanitized_params = []
+        for key, value in params:
+            # Case-insensitive check for sensitive params
+            if key.lower() in self.SENSITIVE_PARAMS:
+                sanitized_params.append((key, '[REDACTED]'))
+            else:
+                sanitized_params.append((key, value))
+        return urlencode(sanitized_params)
+
     def process_request(self, request: HttpRequest) -> None:
         """
         Process incoming request - generate correlation ID and log request start.
@@ -80,14 +130,16 @@ class RequestLoggingMiddleware(MiddlewareMixin):
         """
         # Generate unique correlation ID for this request
         correlation_id = str(uuid.uuid4())
-        request.correlation_id = correlation_id
+        request.correlation_id = correlation_id  # type: ignore[attr-defined]
 
         # Record request start time for duration calculation
-        request.start_time = time.time()
+        request.start_time = time.time()  # type: ignore[attr-defined]
 
-        # Build query string for full URL
+        # Build query string for full URL (sanitize for logging)
         query_string = request.META.get('QUERY_STRING', '')
-        full_url = f"{request.path}{'?' + query_string if query_string else ''}"
+        sanitized_query_string = self._sanitize_query_string(query_string)
+        query_suffix = f"?{sanitized_query_string}" if sanitized_query_string else ""
+        full_url = f"{request.path}{query_suffix}"
 
         # Get user context (safely handle anonymous users)
         user_info = self._get_user_context(request)
@@ -108,7 +160,7 @@ class RequestLoggingMiddleware(MiddlewareMixin):
                 'method': request.method,
                 'path': request.path,
                 'full_url': full_url,
-                'query_string': query_string,
+                'query_string': sanitized_query_string,
                 'user': user_info,
                 'client_ip': client_ip,
                 'user_agent': user_agent,
@@ -132,9 +184,9 @@ class RequestLoggingMiddleware(MiddlewareMixin):
         """
 
         # Calculate request duration
-        duration = None
+        duration: float | None = None
         if hasattr(request, 'start_time'):
-            duration = time.time() - request.start_time
+            duration = time.time() - request.start_time  # type: ignore[attr-defined]
 
         # Get correlation ID (should exist from process_request)
         correlation_id = getattr(request, 'correlation_id', 'unknown')
@@ -142,12 +194,17 @@ class RequestLoggingMiddleware(MiddlewareMixin):
         # Determine log level based on status code
         log_level = self._get_log_level_for_status(response.status_code)
 
-        # Build query string for full URL
+        # Build query string for full URL (sanitize for logging)
         query_string = request.META.get('QUERY_STRING', '')
-        full_url = f"{request.path}{'?' + query_string if query_string else ''}"
+        sanitized_query_string = self._sanitize_query_string(query_string)
+        query_suffix = f"?{sanitized_query_string}" if sanitized_query_string else ""
+        full_url = f"{request.path}{query_suffix}"
 
         # Create concise, informative completion message
-        duration_str = f"{round(duration * 1000)}ms" if duration else "?ms"
+        if duration is not None:
+            duration_str = f"{round(cast(float, duration) * 1000)}ms"
+        else:
+            duration_str = "?ms"
         if response.status_code < 400:
             status_emoji = "✅"
         elif response.status_code < 500:
@@ -156,13 +213,21 @@ class RequestLoggingMiddleware(MiddlewareMixin):
             status_emoji = "❌"
 
         base_msg = f"{status_emoji} {response.status_code} {request.method}"
-        log_message = f"{base_msg} {full_url} ({duration_str})"
+        log_message = f"{base_msg} {full_url} ({duration_str}) cid={correlation_id}"
 
         # Add response size if significant
         response_size = len(response.content) if hasattr(response, 'content') else 0
         if response_size > 1024:  # Only log size if > 1KB
             size_kb = round(response_size / 1024, 1)
             log_message += f" [{size_kb}KB]"
+
+        # Calculate duration in milliseconds for logging
+        duration_ms = None
+        if duration is not None:
+            duration_ms = round(cast(float, duration) * 1000, 2)
+
+        # Expose correlation ID to clients via response header
+        response['X-Request-ID'] = correlation_id
 
         # Log request completion with structured data
         logger.log(
@@ -174,7 +239,7 @@ class RequestLoggingMiddleware(MiddlewareMixin):
                 'path': request.path,
                 'full_url': full_url,
                 'status_code': response.status_code,
-                'duration_ms': round(duration * 1000, 2) if duration else None,
+                'duration_ms': duration_ms,
                 'response_size_bytes': response_size,
                 'event_type': 'request_complete',
                 'is_health_check': self._is_health_check(request)
@@ -194,23 +259,32 @@ class RequestLoggingMiddleware(MiddlewareMixin):
         # Always log exceptions, even for health checks (they indicate real problems)
 
         # Calculate duration if possible
-        duration = None
+        duration: float | None = None
         if hasattr(request, 'start_time'):
-            duration = time.time() - request.start_time
+            duration = time.time() - request.start_time  # type: ignore[attr-defined]
 
         correlation_id = getattr(request, 'correlation_id', 'unknown')
 
-        # Build query string for full URL
+        # Build query string for full URL (sanitize for logging)
         query_string = request.META.get('QUERY_STRING', '')
-        full_url = f"{request.path}{'?' + query_string if query_string else ''}"
+        sanitized_query_string = self._sanitize_query_string(query_string)
+        query_suffix = f"?{sanitized_query_string}" if sanitized_query_string else ""
+        full_url = f"{request.path}{query_suffix}"
 
-        # Create informative exception message
-        duration_str = f"{round(duration * 1000)}ms" if duration else "?ms"
+        # Create informative exception message with correlation ID
+        if duration is not None:
+            duration_str = f"{round(cast(float, duration) * 1000)}ms"
+        else:
+            duration_str = "?ms"
         exception_msg = str(exception)[:200]
         log_message = (f"💥 EXCEPTION {request.method} {full_url} "
-                       f"({duration_str}) - {exception.__class__.__name__}: "
-                       f"{exception_msg}")
+                       f"({duration_str}) cid={correlation_id} - "
+                       f"{exception.__class__.__name__}: {exception_msg}")
 
+        # Calculate duration in milliseconds for logging
+        duration_ms = None
+        if duration is not None:
+            duration_ms = round(cast(float, duration) * 1000, 2)
         # Log exception with full context
         logger.error(
             log_message,
@@ -221,14 +295,14 @@ class RequestLoggingMiddleware(MiddlewareMixin):
                 'full_url': full_url,
                 'exception_type': exception.__class__.__name__,
                 'exception_message': str(exception),
-                'duration_ms': round(duration * 1000, 2) if duration else None,
+                'duration_ms': duration_ms,
                 'event_type': 'request_exception',
                 'is_health_check': self._is_health_check(request)
             },
             exc_info=True  # Include full traceback
         )
 
-    def _get_user_context(self, request: HttpRequest) -> dict:
+    def _get_user_context(self, request: HttpRequest) -> dict[str, object]:
         """
         Get user context for logging (safely handles anonymous users).
 
@@ -236,7 +310,7 @@ class RequestLoggingMiddleware(MiddlewareMixin):
             request: The HTTP request
 
         Returns:
-            dict: User context information
+            dict[str, object]: User context information
         """
         user = getattr(request, 'user', None)
 
@@ -268,13 +342,13 @@ class RequestLoggingMiddleware(MiddlewareMixin):
         # Check for forwarded headers first (common in Docker/proxy setups)
         x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
         if x_forwarded_for:
-            return x_forwarded_for.split(',')[0].strip()
+            return str(x_forwarded_for).split(',')[0].strip()
 
         x_real_ip = request.META.get('HTTP_X_REAL_IP')
         if x_real_ip:
-            return x_real_ip
+            return str(x_real_ip)
 
-        return request.META.get('REMOTE_ADDR', 'unknown')
+        return str(request.META.get('REMOTE_ADDR', 'unknown'))
 
     def _get_log_level_for_status(self, status_code: int) -> int:
         """
@@ -294,7 +368,7 @@ class RequestLoggingMiddleware(MiddlewareMixin):
             return logging.INFO
 
 
-def get_correlation_id(request: HttpRequest) -> Optional[str]:
+def get_correlation_id(request: HttpRequest) -> str | None:
     """
     Utility function to get correlation ID from request object.
 
@@ -314,4 +388,4 @@ def get_correlation_id(request: HttpRequest) -> Optional[str]:
             correlation_id = get_correlation_id(request)
             logger.info("Processing view", extra={'correlation_id': correlation_id})
     """
-    return getattr(request, 'correlation_id', None)
+    return getattr(request, 'correlation_id', None)  # type: ignore[attr-defined]

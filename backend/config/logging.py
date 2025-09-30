@@ -385,13 +385,14 @@ def get_logging_config(log_dir=None):
     ) and not is_testing  # CI detection only applies if not testing
 
     # Debug output for CI/testing detection (only when relevant to avoid noise in dev)
+    # Use stderr to avoid corrupting stdout-based outputs (e.g., OpenAPI schema export)
     if is_testing:
-        print("Testing environment detected. Using minimal logging for clean test output.")
+        print("Testing environment detected. Using minimal logging for clean test output.", file=sys.stderr)
     elif is_ci:
-        print("CI environment detected. Environment variables:")
-        print(f"  CI={os.getenv('CI')}")
-        print(f"  GITHUB_ACTIONS={os.getenv('GITHUB_ACTIONS')}")
-        print("  Disabling file logging handlers.")
+        print("CI environment detected. Environment variables:", file=sys.stderr)
+        print(f"  CI={os.getenv('CI')}", file=sys.stderr)
+        print(f"  GITHUB_ACTIONS={os.getenv('GITHUB_ACTIONS')}", file=sys.stderr)
+        print("  Disabling file logging handlers.", file=sys.stderr)
     default_level = "DEBUG" if debug_mode else "INFO"
     raw_log_level = os.getenv("DJANGO_LOG_LEVEL", default_level)
     log_level = validate_log_level(raw_log_level)

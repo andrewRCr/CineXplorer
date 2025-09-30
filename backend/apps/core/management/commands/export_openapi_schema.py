@@ -50,22 +50,10 @@ class Command(BaseCommand):
 
             # Format JSON output based on options
             if options["minify"]:
-                output = json.dumps(schema, separators=(",", ":"))
+                output = json.dumps(schema, separators=(",", ":"), ensure_ascii=False)
             else:
                 indent = options["indent"]
-                output = json.dumps(schema, indent=indent)
-
-            # Validate JSON before outputting
-            try:
-                json.loads(output)
-            except json.JSONDecodeError as json_error:
-                # Re-enable logging for error output
-                logging.root.setLevel(original_level)
-                django_logger.setLevel(original_django_level)
-                self.stderr.write(
-                    self.style.ERROR(f"Generated invalid JSON: {json_error}")
-                )
-                raise
+                output = json.dumps(schema, indent=indent, ensure_ascii=False)
 
             # Output ONLY the JSON directly to stdout
             # Use sys.stdout.write to bypass any Django management command formatting
@@ -73,9 +61,6 @@ class Command(BaseCommand):
             sys.stdout.flush()
 
         except Exception as e:
-            # Re-enable logging for error output
-            logging.root.setLevel(original_level)
-            django_logger.setLevel(original_django_level)
             self.stderr.write(
                 self.style.ERROR(f"Failed to export OpenAPI schema: {e}")
             )

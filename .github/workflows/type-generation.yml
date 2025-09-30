@@ -107,7 +107,7 @@ jobs:
 
       - name: Export OpenAPI schema
         env:
-          COMPOSE_PROJECT_NAME: cinexplorer-typegen
+          COMPOSE_PROJECT_NAME: cinexplorer-typegen-${{ github.run_id }}
         run: |
           # Export schema directly to final location (command output is now clean)
           echo "Exporting OpenAPI schema..."

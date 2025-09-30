@@ -387,7 +387,10 @@ def get_logging_config(log_dir=None):
     # Debug output for CI/testing detection (only when relevant to avoid noise in dev)
     # Use stderr to avoid corrupting stdout-based outputs (e.g., OpenAPI schema export)
     if is_testing:
-        print("Testing environment detected. Using minimal logging for clean test output.", file=sys.stderr)
+        print(
+            "Testing environment detected. Using minimal logging for clean test output.",
+            file=sys.stderr
+        )
     elif is_ci:
         print("CI environment detected. Environment variables:", file=sys.stderr)
         print(f"  CI={os.getenv('CI')}", file=sys.stderr)

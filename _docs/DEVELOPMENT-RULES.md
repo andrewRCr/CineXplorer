@@ -61,14 +61,24 @@ Before any commit consideration, ALL of the following must pass with **zero exce
    - Every type error must be resolved
 
 6. **Python Type Safety**: Hybrid type checking approach with minimal Any usage
-   - **Development**: `npx pyright backend/apps/` (fast, modern checking on host system)
-   - **CI/CD**: `docker-compose exec backend python scripts/type_check.py` (comprehensive validation)
-   - **Manual**: `docker-compose exec backend mypy apps/ --config-file mypy.ini` (Django-compatible)
-   - **PROHIBITED**: Using `typing.Any` except for Django internals where absolutely necessary
+   - **Development**: `python backend/scripts/type_check.py` from repo root (fast, comprehensive checking using version-pinned Pyright)
+   - **CI/CD**: `docker-compose exec backend python scripts/type_check.py` (comprehensive validation in container)
+   - **Manual**: `docker-compose exec backend mypy apps/ --config-file mypy.ini` (Django-compatible checking)
+   - **Working Directory**: All type checking commands must be run from repository root for deterministic relative paths
+   - **Version Control**: Pyright version must be pinned in root package.json devDependencies or frontend/package.json
+     - Never use unpinned `npx pyright` directly - always use through type_check.py script or npm script
+     - Ensures consistent type checking results across team and CI
+   - **PROHIBITED**: Using `typing.Any` except where explicitly allowed below
    - **REQUIRED**: Use `object` for truly unknown data, specific TypedDict types for known structures
    - **REQUIRED**: Use `dict[str, object]` for generic dictionary data
    - **PATTERN**: Leverage django-stubs generics (e.g., `QuerySet[ModelClass]`)
    - **JUSTIFICATION**: Any `Any` usage must be documented with inline comment explaining necessity
+   - **EXCEPTION - External API Payloads**:
+     - `dict[str, Any]` or specific fields typed as `Any` are permitted for third-party API responses (e.g., TMDB, external services)
+     - **REQUIRED**: Inline comment must justify each usage: `# Any: [Service] [endpoint] - [reason]`
+     - **REQUIRED**: Add TODO comment to replace with TypedDict/Pydantic model when feasible
+     - **Example**: `data: dict[str, Any]  # Any: TMDB /movie/{id} - dynamic fields vary by movie type  # TODO: Create TMDBMovieResponse model`
+     - **Rationale**: External payloads have unpredictable schemas; strict typing should be added incrementally as API usage stabilizes
 
 ### Quality Gate Failure Protocol
 If quality gates fail after sub-task completion:
@@ -150,6 +160,7 @@ When sub-tasks are complete and quality gates pass, use this format:
 ✅ Backend Lint: flake8 clean (0 violations)
 ✅ Frontend Lint: ESLint clean (0 violations)
 ✅ TypeScript: No type errors
+✅ Python Type-Safety: Pyright [X passed, 0 failed], MyPy [X passed, 0 failed]
 
 **Task Status:**
 ✅ Sub-task X.Y marked complete

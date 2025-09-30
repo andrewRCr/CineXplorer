@@ -18,6 +18,8 @@ This Sub-PRD defines a comprehensive backend modernization effort for CineXplore
 5. **Create maintainable architecture** with consistent patterns across all backend services
 6. **Apply SOLID and DRY principles** through strategic refactoring of monolithic functions and duplicated code patterns
 7. **Provide performance foundation** through database optimization and monitoring capabilities
+8. **Implement asynchronous task processing** with Celery/Redis for improved scalability and user experience
+9. **Establish comprehensive end-to-end testing** using Playwright to ensure full application functionality
 
 ## User Stories
 
@@ -36,6 +38,14 @@ This Sub-PRD defines a comprehensive backend modernization effort for CineXplore
 7. **As a prospective employer reviewing the architecture**, I want to see SOLID principles applied consistently so that I can evaluate the developer's understanding of maintainable software design patterns.
 
 8. **As the developer**, I want DRY principles eliminating code duplication so that future changes only need to be made in one place, reducing maintenance burden.
+
+9. **As a prospective employer reviewing the codebase**, I want to see modern asynchronous task processing patterns so that I can assess the developer's understanding of scalable backend architecture.
+
+10. **As the developer**, I want background tasks for heavy operations (like bulk data processing) so that user-facing requests remain responsive.
+
+11. **As a prospective employer**, I want to see comprehensive end-to-end testing coverage so that I can evaluate the developer's commitment to quality assurance and full-stack testing practices.
+
+12. **As the developer**, I want automated browser-based tests so that critical user flows are validated across the entire application stack.
 
 ## Functional Requirements
 
@@ -115,13 +125,38 @@ This Sub-PRD defines a comprehensive backend modernization effort for CineXplore
 
 32. **The system must ensure end-to-end type safety** validating type consistency through API boundaries from backend to frontend.
 
+### Asynchronous Task Processing
+
+33. **The system must implement Celery with Redis backend** for asynchronous task processing, enabling background operations without blocking user requests.
+
+34. **The system must identify and migrate appropriate operations to background tasks** including data synchronization, email notifications, and heavy computational operations.
+
+35. **The system must implement task monitoring and error handling** with proper retry mechanisms and failure notifications for background operations.
+
+36. **The system must configure task scheduling capabilities** for periodic operations like data cleanup, cache warming, and maintenance tasks.
+
+37. **The system must maintain task result tracking** allowing frontend to monitor background operation progress and completion status.
+
+### End-to-End Testing Framework
+
+38. **The system must implement Playwright for comprehensive e2e testing** covering critical user journeys across the full application stack.
+
+39. **The system must create e2e test suites for core workflows** including user authentication, movie search, watchlist management, and recommendation features.
+
+40. **The system must implement cross-browser testing capabilities** ensuring application functionality across Chrome, Firefox, and Safari browsers.
+
+41. **The system must integrate e2e tests with CI/CD pipeline** providing automated validation of full application functionality before deployments.
+
+42. **The system must implement visual regression testing** capturing and comparing screenshots to detect unintended UI changes during development.
+
 ## Non-Goals (Out of Scope)
 
 - **New feature development** - This is purely a technical debt and quality improvement effort
 - **Frontend modernization** - Focus exclusively on backend improvements
 - **Database schema migrations** - Work within existing database structure
 - **Infrastructure or deployment changes** - Maintain current Docker/development setup
-- **Third-party service additions** - Work with existing integrations only
+- **Third-party service additions** - Work with existing integrations only (except for planned Celery/Redis and Playwright additions)
+- **UI/UX redesign** - E2E tests will validate existing interface functionality without requiring design changes
 
 ## Design Considerations
 
@@ -138,7 +173,9 @@ This Sub-PRD defines a comprehensive backend modernization effort for CineXplore
 - **Django Integration**: Leverage django-stubs/django-types for proper Django typing patterns
 - **Performance Impact**: Ensure type checking and quality improvements don't degrade runtime performance
 - **Development Workflow**: Integrate quality checks into existing Docker Compose development environment
-- **Tool Integration**: Work with existing flake8, pytest, and development tooling
+- **Tool Integration**: Work with existing flake8, pytest, and development tooling, with additions for Celery/Redis and Playwright
+- **Asynchronous Architecture**: Design task processing to complement existing synchronous API patterns without breaking current functionality
+- **E2E Testing Strategy**: Implement Playwright tests that can run independently or as part of CI, with proper test data management
 
 ## Success Metrics
 
@@ -149,6 +186,8 @@ This Sub-PRD defines a comprehensive backend modernization effort for CineXplore
 5. **Security Posture**: No hardcoded secrets, proper environment configuration, security headers implemented
 6. **Performance Baseline**: Documented performance metrics with identified optimization opportunities
 7. **Maintainability**: Comprehensive documentation enabling rapid onboarding of new developers
+8. **Asynchronous Processing**: Successfully implemented background tasks with Redis/Celery, demonstrating scalable architecture patterns
+9. **End-to-End Coverage**: Comprehensive Playwright test suite validating critical user flows across browsers
 
 ## Open Questions
 
@@ -159,6 +198,12 @@ This Sub-PRD defines a comprehensive backend modernization effort for CineXplore
 3. **Performance Optimization Scope**: How extensive should database and API optimizations be - baseline establishment only, or active performance improvements?
 
 4. **Documentation Standards**: What level of code documentation (docstrings, architecture docs, pattern guides) best demonstrates professional practices without over-engineering?
+
+5. **Asynchronous Task Priority**: Should Celery/Redis implementation focus on specific high-impact operations first, or establish comprehensive async infrastructure from the start?
+
+6. **E2E Testing Scope**: Should Playwright tests cover all user flows exhaustively, or focus on critical paths with the option to expand coverage iteratively?
+
+7. **Technology Integration Order**: Should Celery/Redis be implemented before Playwright to provide async capabilities for testing, or can they be developed in parallel?
 
 ---
 

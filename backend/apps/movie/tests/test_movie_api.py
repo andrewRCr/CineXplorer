@@ -148,7 +148,7 @@ class MovieApiTests(TestCase):
     @patch('movie.services.movie_service.tmdb_client.get_now_playing_movies')
     def test_now_playing_api_contract(self, mock_tmdb_method: Mock) -> None:
         """
-        Verify the /now-playing/ endpoint returns the correct paginated structure.
+        Verify the /api/movies/now-playing endpoint returns the correct paginated structure.
         """
         self._test_paginated_endpoint_contract(
             mock_tmdb_method, NOW_PLAYING_URL, {'page': 1}
@@ -314,14 +314,13 @@ class MovieApiTests(TestCase):
 
         # Act
         self.client.force_login(self.user)
-        stub_tmdb_id = getattr(movie_stub, 'tmdb_id')
-        url = movie_detail_url(int(stub_tmdb_id))
+        url = movie_detail_url(movie_stub.tmdb_id)
         res = self.client.get(url)
 
         # Assert
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         data = res.json()
-        self.assertEqual(data['tmdb_id'], int(stub_tmdb_id))
+        self.assertEqual(data['tmdb_id'], movie_stub.tmdb_id)
         self.assertIn('title', data)
         self.assertIn('user_movie_data', data)
         user_data = data['user_movie_data']

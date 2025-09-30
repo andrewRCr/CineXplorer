@@ -40,7 +40,7 @@ class MovieServiceParameterMappingTests(TestCase):
             page=2,
             sort_by='popularity.desc',
             genres='28,12',  # Service layer maps this to with_genres
-            year='2023',
+            year=2023,
             vote_average_gte='7.5',
             release_date_gte='2023-01-01'
         )
@@ -55,7 +55,7 @@ class MovieServiceParameterMappingTests(TestCase):
         self.assertEqual(params['page'], 2)
         self.assertEqual(params['sort_by'], 'popularity.desc')
         self.assertEqual(params['with_genres'], '28,12')
-        self.assertEqual(params['year'], '2023')
+        self.assertEqual(params['year'], 2023)
         self.assertEqual(params['vote_average.gte'], '7.5')
         self.assertEqual(params['primary_release_date.gte'], '2023-01-01')
 

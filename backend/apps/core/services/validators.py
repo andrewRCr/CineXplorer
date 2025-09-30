@@ -8,11 +8,14 @@ the service layer.
 
 from __future__ import annotations
 
+import logging
 from typing import TypeVar
 from pydantic import BaseModel, ValidationError
 from ninja.errors import HttpError
 
 from .api_response import ApiResponse
+
+logger = logging.getLogger(__name__)
 
 T = TypeVar('T', bound=BaseModel)
 
@@ -47,7 +50,7 @@ def validate_tmdb_response(
     # Type narrowing - ensure we have dict data
     if not isinstance(response.data, dict):
         raise HttpError(
-            500,
+            502,
             f"Expected dict response from TMDB API, got {type(response.data)}"
         )
 
@@ -55,9 +58,17 @@ def validate_tmdb_response(
     try:
         return model.model_validate(response.data)
     except ValidationError as e:
+        logger.error(
+            "TMDB response validation failed",
+            extra={
+                "model": model.__name__,
+                "validation_errors": e.errors(),
+                "response_data_keys": list(response.data.keys()) if isinstance(response.data, dict) else None
+            }
+        )
         raise HttpError(
-            422,
-            f"TMDB response validation failed: {e}"
+            502,
+            "TMDB response validation failed"
         ) from e
 
 
@@ -91,7 +102,7 @@ def validate_tmdb_list_response(
     # Type narrowing - ensure we have list data
     if not isinstance(response.data, list):
         raise HttpError(
-            500,
+            502,
             f"Expected list response from TMDB API, got {type(response.data)}"
         )
 
@@ -99,9 +110,17 @@ def validate_tmdb_list_response(
     try:
         return [item_model.model_validate(item) for item in response.data]
     except ValidationError as e:
+        logger.error(
+            "TMDB list response validation failed",
+            extra={
+                "item_model": item_model.__name__,
+                "validation_errors": e.errors(),
+                "list_length": len(response.data) if isinstance(response.data, list) else None
+            }
+        )
         raise HttpError(
-            422,
-            f"TMDB list response validation failed: {e}"
+            502,
+            "TMDB list response validation failed"
         ) from e
 
 
@@ -135,7 +154,7 @@ def validate_tmdb_paginated_response(
     # Type narrowing - ensure we have dict data
     if not isinstance(response.data, dict):
         raise HttpError(
-            500,
+            502,
             f"Expected dict response from TMDB API, got {type(response.data)}"
         )
 
@@ -143,9 +162,17 @@ def validate_tmdb_paginated_response(
     try:
         return model.model_validate(response.data)
     except ValidationError as e:
+        logger.error(
+            "TMDB paginated response validation failed",
+            extra={
+                "model": model.__name__,
+                "validation_errors": e.errors(),
+                "response_data_keys": list(response.data.keys()) if isinstance(response.data, dict) else None
+            }
+        )
         raise HttpError(
-            422,
-            f"TMDB paginated response validation failed: {e}"
+            502,
+            "TMDB paginated response validation failed"
         ) from e
 
 

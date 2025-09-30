@@ -27,7 +27,7 @@ class UserMovieDataViewSet(viewsets.ModelViewSet):
     def get_queryset(self) -> models.QuerySet[UserMovieData]:
         """ Retrieve all user movie data for only the authenticated user. """
 
-        return self.queryset.filter(user=self.request.user).order_by('-id')
+        return self.queryset.filter(user=self.request.user).select_related('movie').order_by('-id')
 
     def get_serializer_class(self) -> type[BaseSerializer]:
         """ Returns the appropriate serializer class for the request. """

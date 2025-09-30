@@ -15,7 +15,7 @@ from django.http import HttpRequest
 from ninja import NinjaAPI, Schema
 
 # Import our native JWT authentication scheme
-from authentication.auth_ninja import jwt_cookie_auth, get_auth_error_responses
+from authentication.auth_ninja import jwt_cookie_auth
 from movie.api import movies_router, genres_router, keywords_router, people_router
 
 # Get configured cookie name for JWT tokens
@@ -115,7 +115,7 @@ def health_check(request: HttpRequest) -> HealthResponse:
     return HealthResponse(status="ok", message="Django Ninja API is working!")
 
 
-@api.get("/health/auth", response=AuthHealthResponse, responses=get_auth_error_responses())
+@api.get("/health/auth", response=AuthHealthResponse)
 def health_check_auth(request: HttpRequest) -> AuthHealthResponse:
     """
     Authenticated health check endpoint to verify JWT cookie authentication.
@@ -143,7 +143,7 @@ def health_check_auth(request: HttpRequest) -> AuthHealthResponse:
     )
 
 
-@api.get("/health/user", auth=None, response=UserHealthResponse, responses=get_auth_error_responses())
+@api.get("/health/user", auth=None, response=UserHealthResponse)
 def health_check_user(request: HttpRequest) -> UserHealthResponse:
     """
     Health check using enhanced dependency injection patterns.
@@ -188,7 +188,7 @@ def health_check_user(request: HttpRequest) -> UserHealthResponse:
     )
 
 
-@api.get("/test/auth", response=AuthTestResponse, responses=get_auth_error_responses())
+@api.get("/test/auth", response=AuthTestResponse)
 def test_authentication(
     request: HttpRequest
 ) -> AuthTestResponse:

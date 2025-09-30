@@ -65,8 +65,11 @@ This document outlines Phase 2 of the API Layer Modernization initiative, which 
 7. **Replace DRF User Serializers:** All DRF serializers related to user management must be replaced with Pydantic schemas that work with the modernized authentication system.
 
 8. **Integrate with django-allauth:** Ensure all migrated endpoints work seamlessly with the django-allauth foundation established during Authentication Modernization.
+   - Reuse the compatibility helper created during Authentication Modernization (exact location TBD, e.g., `accounts.utils.get_email_verified_status()` or similar) to surface `email_verified` state without leaking django-allauth internals.
+   - Ensure API-triggered flows (registration, resend verification) invoke the ZeptoMail integration established during Authentication Modernization—likely through a custom account adapter's `send_mail` method (configured via Django's `ACCOUNT_ADAPTER` setting) for consistency with transactional email logging.
 
 9. **Preserve Authentication Workflows:** All existing authentication and user management functionality must be preserved with identical behavior.
+   - Maintain the public contract for fields like `email_verified`, `full_name`, and JWT cookie handling while delegating persistence to django-allauth.
 
 ### 4.3 Cross-Domain Integration and Type Safety
 
@@ -114,7 +117,10 @@ This document outlines Phase 2 of the API Layer Modernization initiative, which 
 ## 7. Technical Considerations
 
 ### Dependencies
-- **Authentication Modernization:** Must be 100% complete before Phase 2 begins
+- **Authentication Modernization:** Must be 100% complete before Phase 2 begins, including:
+  - Custom account adapter (subclass of `allauth.account.adapter.DefaultAccountAdapter`) with ZeptoMail integration
+  - Compatibility helper for `email_verified` state (exact location TBD, e.g., `accounts.utils.get_email_verified_status()` or similar)
+  - *(Component names/paths will be finalized and this PRD updated once Authentication Modernization completes, as noted in Section 1)*
 - **Phase 1 Foundation:** All Phase 1 patterns and utilities must remain stable
 - **Frontend Type Generation:** OpenAPI workflow must be working reliably
 

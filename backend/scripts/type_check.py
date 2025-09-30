@@ -15,10 +15,16 @@ This script detects that condition and marks the mypy steps as
 without failing the overall check.
 
 Usage:
-    python scripts/type_check.py [--verbose]
+    python scripts/type_check.py [--verbose] [--only CHECK1 CHECK2 ...]
+
+Options:
+    --verbose       Show detailed error messages
+    --only CHECKS   Run only specified checks (space-separated)
+                   Available: utilities services models movie auth
 """
 from __future__ import annotations
 
+import argparse
 import os
 import subprocess
 import sys
@@ -77,76 +83,85 @@ def is_django_stubs_internal_error(output: str) -> bool:
 
 def main() -> None:
     """Run comprehensive type checking."""
+    # Parse command-line arguments
+    parser = argparse.ArgumentParser(
+        description="Run type checking on CineXplorer backend",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="Available checks: utilities, services, models, movie, auth"
+    )
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        help="Show detailed error messages"
+    )
+    parser.add_argument(
+        "--only",
+        nargs="*",
+        metavar="CHECK",
+        help="Run only specified checks (e.g., --only utilities movie)"
+    )
+    args = parser.parse_args()
+
     print("Starting CineXplorer Backend Type Safety Check")
     print("=" * 60)
 
-    # Test 1: Core utilities with strict mypy
-    code1, output1 = run_command(
-        [
+    # Define all available checks with their identifiers
+    all_checks = [
+        ("utilities", "Core Utilities (MyPy Strict)", [
             "python", "-m", "mypy", "apps/core/utilities/",
             "--show-error-codes", "--explicit-package-bases"
-        ],
-        "MyPy strict check on core utilities"
-    )
-
-    # Test 2: Services with mypy (should be strict per config)
-    code2, output2 = run_command(
-        [
+        ], True),
+        ("services", "Services (MyPy)", [
             "python", "-m", "mypy", "apps/core/services/email_service.py",
             "--show-error-codes", "--explicit-package-bases"
-        ],
-        "MyPy check on services"
-    )
+        ], True),
+        ("models", "Models (Pyright)", [
+            "npx", "pyright", "apps/core/models.py"
+        ], False),
+        ("utilities", "Utilities (Pyright)", [
+            "npx", "pyright", "apps/core/utilities/"
+        ], False),
+        ("movie", "Movie App (Pyright)", [
+            "npx", "pyright", "apps/movie/"
+        ], False),
+        ("auth", "Authentication (Pyright)", [
+            "npx", "pyright", "apps/authentication/auth_ninja.py"
+        ], False),
+    ]
 
-    # Test 3: Pyright check on core models (now using host-based pyright)
-    code3, output3 = run_command(
-        ["npx", "pyright", "apps/core/models.py"],
-        "Pyright check on Django models"
-    )
+    # Filter checks if --only specified
+    if args.only:
+        only_set = set(args.only)
+        checks_to_run = [check for check in all_checks if check[0] in only_set]
+        if not checks_to_run:
+            print(f"Warning: No matching checks found for: {', '.join(args.only)}")
+            print(f"Available: utilities, services, models, movie, auth")
+            sys.exit(1)
+    else:
+        checks_to_run = all_checks
 
-    # Test 4: Pyright check on utilities (now using host-based pyright)
-    code4, output4 = run_command(
-        ["npx", "pyright", "apps/core/utilities/"],
-        "Pyright check on core utilities"
-    )
-
-    # Test 5: Pyright check on movie app (Django Ninja migration)
-    code5, output5 = run_command(
-        ["npx", "pyright", "apps/movie/"],
-        "Pyright check on movie app (Django Ninja)"
-    )
-
-    # Test 6: Pyright check on authentication app (Django Ninja)
-    code6, output6 = run_command(
-        ["npx", "pyright", "apps/authentication/auth_ninja.py"],
-        "Pyright check on Ninja authentication"
-    )
+    # Run the selected checks
+    results = []
+    for check_id, name, cmd, is_mypy in checks_to_run:
+        code, output = run_command(cmd, name)
+        results.append((name, code, output, is_mypy))
 
     # Results summary
     print("\n" + "=" * 60)
     print("TYPE SAFETY SUMMARY")
     print("=" * 60)
 
-    tests = [
-        ("Core Utilities (MyPy Strict)", code1, output1, True),
-        ("Services (MyPy)", code2, output2, True),
-        ("Models (Pyright)", code3, output3, False),
-        ("Utilities (Pyright)", code4, output4, False),
-        ("Movie App (Pyright)", code5, output5, False),
-        ("Authentication (Pyright)", code6, output6, False),
-    ]
-
     passed = 0
     skipped = 0
     upstream_issue = "https://github.com/typeddjango/django-stubs/issues/2461"
 
-    for name, returncode, output, is_mypy in tests:
+    for name, returncode, output, is_mypy in results:
         status = "PASS" if returncode == 0 else "FAIL"
         if (returncode != 0 and is_mypy and
                 is_django_stubs_internal_error(output)):
             status = "SKIP"
             skipped += 1
-            if "--verbose" in sys.argv:
+            if args.verbose:
                 print(
                     f"Upstream django-stubs issue detected. See {upstream_issue}."
                 )
@@ -154,10 +169,10 @@ def main() -> None:
         print(f"[{status}] {name}")
         if status == "PASS":
             passed += 1
-        elif status == "FAIL" and "--verbose" in sys.argv:
+        elif status == "FAIL" and args.verbose:
             print(f"  Error: {output[:200]}...")
 
-    effective_total = len(tests) - skipped
+    effective_total = len(results) - skipped
     print(f"\nResults: {passed}/{effective_total} tests passed")
 
     if effective_total == 0 or passed == effective_total:

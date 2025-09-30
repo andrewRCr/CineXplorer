@@ -575,7 +575,7 @@ def get_now_playing_movies(page: int = 1) -> PaginatedMovieResponseSchema:
     if not response.is_success():
         handle_tmdb_api_error(
             response,
-            operation='get_nowPlaying_movies',
+            operation='get_now_playing_movies',
             page=page,
             error_stage='fetching_now_playing'
         )
@@ -588,7 +588,7 @@ def get_now_playing_movies(page: int = 1) -> PaginatedMovieResponseSchema:
             "Failed to get valid response data from TMDB",
             extra={
                 'correlation_id': response.correlation_id,
-                'operation': 'get_nowPlaying_movies',
+                'operation': 'get_now_playing_movies',
                 'page': page
             }
         )
@@ -805,8 +805,13 @@ def discover_movies(
         if filter_name in filters and filters[filter_name] is not None:
             # Preserve data types for numeric parameters (support both naming conventions)
             numeric_params = [
-                'year', 'vote_average_gte', 'vote_average.gte',
-                'vote_average_lte', 'vote_average.lte'
+                'year', 'primary_release_year',
+                'vote_average_gte', 'vote_average.gte',
+                'vote_average_lte', 'vote_average.lte',
+                'vote_count', 'vote_count_gte', 'vote_count.gte',
+                'vote_count_lte', 'vote_count.lte',
+                'runtime', 'runtime_gte', 'runtime.gte',
+                'runtime_lte', 'runtime.lte'
             ]
             if filter_name in numeric_params:
                 params[tmdb_param] = filters[filter_name]

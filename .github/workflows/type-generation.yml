@@ -150,7 +150,7 @@ jobs:
           fi
 
           # Validate TypeScript compilation
-          npm run validate-types
+          npm run validate-generated-types
 
           # Check type file has expected content
           echo "Generated type file stats:"

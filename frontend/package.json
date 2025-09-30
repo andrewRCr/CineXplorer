@@ -19,7 +19,7 @@
 		"generate-types": "npm run fetch-schema && npm run generate-types:local",
 		"generate-types:ci": "test -f openapi.json || (echo '❌ ERROR: openapi.json not found. Run generate-types first.' && exit 1); npm run generate-types:local",
 		"update-types": "npm run generate-types",
-		"validate-types": "tsc --noEmit src/types/api.ts"
+		"validate-generated-types": "tsc --noEmit src/types/api.ts"
 	},
 	"dependencies": {
 		"@chakra-ui/react": "^3.22.0",

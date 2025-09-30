@@ -1,1 +1,2016 @@
-{"openapi": "3.1.0", "info": {"title": "CineXplorer API", "version": "1.0.0", "description": "A modern, type-safe API for the CineXplorer movie discovery application. Authentication is handled via JWT tokens in HTTP-only cookies."}, "paths": {"/api/health": {"get": {"operationId": "config_api_health_check", "summary": "Health Check", "parameters": [], "responses": {"200": {"description": "OK"}}, "description": "Health check endpoint to verify Django Ninja setup.\n\nThis endpoint is publicly accessible and does not require authentication.\nIt's used for monitoring and ensuring the API is operational.\n\nReturns:\n    Simple status response indicating the API is working."}}, "/api/health/auth": {"get": {"operationId": "config_api_health_check_auth", "summary": "Health Check Auth", "parameters": [], "responses": {"200": {"description": "OK"}}, "description": "Authenticated health check endpoint to verify JWT cookie authentication.\n\nThis endpoint demonstrates native Django Ninja security integration with:\n- Automatic OpenAPI security schema documentation\n- Native authentication via the global auth scheme\n- Proper error response documentation\n\nThe endpoint will automatically require JWT authentication via the configured\nHTTP-only cookie and return appropriate error responses if authentication fails.\n\nReturns:\n    Status response with authentication confirmation.\nRaises:\n    HttpError: 401 if authentication fails\n    HttpError: 500 if internal authentication error occurs", "security": [{"JWTCookieAuth": []}]}}, "/api/health/user": {"get": {"operationId": "config_api_health_check_user", "summary": "Health Check User", "parameters": [], "responses": {"200": {"description": "OK"}}, "description": "Health check using enhanced dependency injection patterns.\n\nThis endpoint demonstrates the enhanced dependency injection approach with:\n- Manual authentication control (bypassing global auth)\n- Comprehensive error handling and logging\n- Structured error responses\n- Type-safe user access\n\nArgs:\n    request: HTTP request object\n\nReturns:\n    Status response with authenticated user information.\nRaises:\n    HttpError: 401 if authentication fails with structured error\n    HttpError: 500 if internal authentication error occurs"}}, "/api/test/auth": {"get": {"operationId": "config_api_test_authentication", "summary": "Test Authentication", "parameters": [], "responses": {"200": {"description": "OK"}}, "description": "Comprehensive authentication test endpoint.\n\nThis endpoint verifies that the JWT cookie authentication scheme:\n1. Correctly protects routes (requires valid JWT token)\n2. Properly identifies and provides access to the authenticated user\n3. Integrates seamlessly with Django Ninja's global auth system\n4. Generates proper OpenAPI documentation\n\nThe endpoint will automatically enforce authentication via the global\nauth scheme and return detailed information about the authenticated user.\n\nReturns:\n    Comprehensive authentication test response with user details.\n\nRaises:\n    HttpError: 401 if JWT token is missing, invalid, or expired\n    HttpError: 500 if internal authentication error occurs", "security": [{"JWTCookieAuth": []}]}}, "/api/test/auth-status": {"get": {"operationId": "config_api_test_auth_status", "summary": "Test Auth Status", "parameters": [], "responses": {"200": {"description": "OK"}}, "description": "Authentication status test endpoint (no authentication required).\n\nThis endpoint demonstrates the authentication system's behavior by:\n1. Bypassing global authentication (auth=None)\n2. Manually checking for JWT token presence and validity\n3. Showing the difference between authenticated and unauthenticated requests\n4. Providing debugging information for authentication testing\n\nThis is useful for:\n- Testing the authentication system without requiring valid credentials\n- Debugging authentication issues\n- Understanding the authentication flow\n\nReturns:\n    Authentication status information and guidance."}}, "/api/movies/now-playing": {"get": {"operationId": "movie_api_get_now_playing_movies", "summary": "Get Now Playing Movies", "parameters": [{"in": "query", "name": "page", "schema": {"default": 1, "title": "Page", "type": "integer"}, "required": false}], "responses": {"200": {"description": "OK", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/PaginatedMovieResponseSchema"}}}}}, "description": "Retrieve currently playing movies with pagination.", "tags": ["movies"]}}, "/api/movies/upcoming": {"get": {"operationId": "movie_api_get_upcoming_movies", "summary": "Get Upcoming Movies", "parameters": [{"in": "query", "name": "page", "schema": {"default": 1, "title": "Page", "type": "integer"}, "required": false}], "responses": {"200": {"description": "OK", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/PaginatedMovieResponseSchema"}}}}}, "description": "Retrieve upcoming movies with pagination.", "tags": ["movies"]}}, "/api/movies/search": {"get": {"operationId": "movie_api_search_movies", "summary": "Search Movies", "parameters": [{"in": "query", "name": "query", "schema": {"title": "Query", "type": "string"}, "required": true}, {"in": "query", "name": "page", "schema": {"default": 1, "title": "Page", "type": "integer"}, "required": false}], "responses": {"200": {"description": "OK", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/PaginatedMovieResponseSchema"}}}}}, "description": "Search for movies by query string with pagination.", "tags": ["movies"]}}, "/api/movies/discover": {"get": {"operationId": "movie_api_discover_movies", "summary": "Discover Movies", "parameters": [{"in": "query", "name": "page", "schema": {"default": 1, "title": "Page", "type": "integer"}, "required": false}, {"in": "query", "name": "with_genres", "schema": {"anyOf": [{"type": "string"}, {"type": "null"}], "title": "With Genres"}, "required": false}, {"in": "query", "name": "with_keywords", "schema": {"anyOf": [{"type": "string"}, {"type": "null"}], "title": "With Keywords"}, "required": false}, {"in": "query", "name": "with_cast", "schema": {"anyOf": [{"type": "string"}, {"type": "null"}], "title": "With Cast"}, "required": false}, {"in": "query", "name": "with_crew", "schema": {"anyOf": [{"type": "string"}, {"type": "null"}], "title": "With Crew"}, "required": false}, {"in": "query", "name": "with_people", "schema": {"anyOf": [{"type": "string"}, {"type": "null"}], "title": "With People"}, "required": false}, {"in": "query", "name": "with_companies", "schema": {"anyOf": [{"type": "string"}, {"type": "null"}], "title": "With Companies"}, "required": false}, {"in": "query", "name": "with_networks", "schema": {"anyOf": [{"type": "string"}, {"type": "null"}], "title": "With Networks"}, "required": false}, {"in": "query", "name": "with_watch_providers", "schema": {"anyOf": [{"type": "string"}, {"type": "null"}], "title": "With Watch Providers"}, "required": false}, {"in": "query", "name": "with_watch_monetization_types", "schema": {"anyOf": [{"type": "string"}, {"type": "null"}], "title": "With Watch Monetization Types"}, "required": false}, {"in": "query", "name": "without_genres", "schema": {"anyOf": [{"type": "string"}, {"type": "null"}], "title": "Without Genres"}, "required": false}, {"in": "query", "name": "without_keywords", "schema": {"anyOf": [{"type": "string"}, {"type": "null"}], "title": "Without Keywords"}, "required": false}, {"in": "query", "name": "without_companies", "schema": {"anyOf": [{"type": "string"}, {"type": "null"}], "title": "Without Companies"}, "required": false}, {"in": "query", "name": "without_networks", "schema": {"anyOf": [{"type": "string"}, {"type": "null"}], "title": "Without Networks"}, "required": false}, {"in": "query", "name": "without_watch_providers", "schema": {"anyOf": [{"type": "string"}, {"type": "null"}], "title": "Without Watch Providers"}, "required": false}, {"in": "query", "name": "include_adult", "schema": {"anyOf": [{"type": "boolean"}, {"type": "null"}], "title": "Include Adult"}, "required": false}, {"in": "query", "name": "include_video", "schema": {"anyOf": [{"type": "boolean"}, {"type": "null"}], "title": "Include Video"}, "required": false}, {"in": "query", "name": "language", "schema": {"anyOf": [{"type": "string"}, {"type": "null"}], "title": "Language"}, "required": false}, {"in": "query", "name": "primary_release_year", "schema": {"anyOf": [{"type": "integer"}, {"type": "null"}], "title": "Primary Release Year"}, "required": false}, {"in": "query", "name": "primary_release_date_gte", "schema": {"anyOf": [{"type": "string"}, {"type": "null"}], "title": "Primary Release Date Gte"}, "required": false}, {"in": "query", "name": "primary_release_date_lte", "schema": {"anyOf": [{"type": "string"}, {"type": "null"}], "title": "Primary Release Date Lte"}, "required": false}, {"in": "query", "name": "release_date_gte", "schema": {"anyOf": [{"type": "string"}, {"type": "null"}], "title": "Release Date Gte"}, "required": false}, {"in": "query", "name": "release_date_lte", "schema": {"anyOf": [{"type": "string"}, {"type": "null"}], "title": "Release Date Lte"}, "required": false}, {"in": "query", "name": "with_release_type", "schema": {"anyOf": [{"type": "string"}, {"type": "null"}], "title": "With Release Type"}, "required": false}, {"in": "query", "name": "year", "schema": {"anyOf": [{"type": "integer"}, {"type": "null"}], "title": "Year"}, "required": false}, {"in": "query", "name": "vote_count_gte", "schema": {"anyOf": [{"type": "integer"}, {"type": "null"}], "title": "Vote Count Gte"}, "required": false}, {"in": "query", "name": "vote_count_lte", "schema": {"anyOf": [{"type": "integer"}, {"type": "null"}], "title": "Vote Count Lte"}, "required": false}, {"in": "query", "name": "vote_average_gte", "schema": {"anyOf": [{"type": "number"}, {"type": "null"}], "title": "Vote Average Gte"}, "required": false}, {"in": "query", "name": "vote_average_lte", "schema": {"anyOf": [{"type": "number"}, {"type": "null"}], "title": "Vote Average Lte"}, "required": false}, {"in": "query", "name": "with_runtime_gte", "schema": {"anyOf": [{"type": "integer"}, {"type": "null"}], "title": "With Runtime Gte"}, "required": false}, {"in": "query", "name": "with_runtime_lte", "schema": {"anyOf": [{"type": "integer"}, {"type": "null"}], "title": "With Runtime Lte"}, "required": false}, {"in": "query", "name": "region", "schema": {"anyOf": [{"type": "string"}, {"type": "null"}], "title": "Region"}, "required": false}, {"in": "query", "name": "sort_by", "schema": {"anyOf": [{"type": "string"}, {"type": "null"}], "title": "Sort By"}, "required": false}, {"in": "query", "name": "certification_country", "schema": {"anyOf": [{"type": "string"}, {"type": "null"}], "title": "Certification Country"}, "required": false}, {"in": "query", "name": "certification", "schema": {"anyOf": [{"type": "string"}, {"type": "null"}], "title": "Certification"}, "required": false}, {"in": "query", "name": "certification_lte", "schema": {"anyOf": [{"type": "string"}, {"type": "null"}], "title": "Certification Lte"}, "required": false}, {"in": "query", "name": "certification_gte", "schema": {"anyOf": [{"type": "string"}, {"type": "null"}], "title": "Certification Gte"}, "required": false}, {"in": "query", "name": "with_original_language", "schema": {"anyOf": [{"type": "string"}, {"type": "null"}], "title": "With Original Language"}, "required": false}, {"in": "query", "name": "without_original_language", "schema": {"anyOf": [{"type": "string"}, {"type": "null"}], "title": "Without Original Language"}, "required": false}, {"in": "query", "name": "decade", "schema": {"anyOf": [{"type": "string"}, {"type": "null"}], "title": "Decade"}, "required": false}, {"in": "query", "name": "genres", "schema": {"anyOf": [{"type": "string"}, {"type": "null"}], "title": "Genres"}, "required": false}], "responses": {"200": {"description": "OK", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/PaginatedMovieResponseSchema"}}}}}, "description": "Discover movies with advanced filtering options.\n\nThis endpoint provides comprehensive movie discovery with extensive filtering\ncapabilities including genres, keywords, cast, crew, release dates, ratings,\nand more. It supports both TMDB standard parameters and custom aliases for\nfrontend convenience.\n\nQuery Parameters:\n    page: Page number for pagination (default: 1)\n    with_genres: Comma-separated genre IDs to include\n    genres: Alias for with_genres (frontend convenience)\n    decade: Decade filter (e.g., \"1990s\" \u2192 converts to date range)\n    sort_by: Sort criteria (popularity.desc, vote_average.desc, etc.)\n    vote_average_gte/lte: Rating range filtering\n    with_runtime_gte/lte: Runtime range filtering\n    primary_release_year: Filter by release year\n    [... many other TMDB discover parameters]\n\nReturns:\n    PaginatedMovieResponseSchema: Paginated list of movies matching criteria\n\nRaises:\n    HttpError: 400 for invalid parameters, 500 for TMDB API errors", "tags": ["movies"]}}, "/api/movies/{tmdb_id}": {"get": {"operationId": "movie_api_get_movie_detail", "summary": "Get Movie Detail", "parameters": [{"in": "path", "name": "tmdb_id", "schema": {"title": "Tmdb Id", "type": "integer"}, "required": true}], "responses": {"200": {"description": "OK", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/MovieDetailSchema"}}}}}, "description": "Retrieve detailed information for a specific movie by TMDB ID.\n\nThis endpoint fetches comprehensive movie details including cast, crew,\ngenres, production companies, and user-specific data if authenticated.\n\nArgs:\n    request: HTTP request object for user context\n    tmdb_id: The TMDB ID of the movie to retrieve\n\nReturns:\n    MovieDetailSchema: Complete movie details with user data if authenticated\n\nRaises:\n    HttpError: 404 if movie not found, 500 for TMDB API errors", "tags": ["movies"]}}, "/api/genres": {"get": {"operationId": "movie_api_get_movie_genres", "summary": "Get Movie Genres", "parameters": [], "responses": {"200": {"description": "OK", "content": {"application/json": {"schema": {"items": {"$ref": "#/components/schemas/GenreSchema"}, "title": "Response", "type": "array"}}}}}, "description": "Retrieve the list of available movie genres from TMDB.", "tags": ["genres"]}}, "/api/keywords": {"get": {"operationId": "movie_api_get_popular_keywords", "summary": "Get Popular Keywords", "parameters": [{"in": "query", "name": "page", "schema": {"default": 1, "title": "Page", "type": "integer"}, "required": false}], "responses": {"200": {"description": "OK", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/PaginatedKeywordResponseSchema"}}}}}, "description": "Retrieve popular keywords with pagination.", "tags": ["keywords"]}}, "/api/keywords/search": {"get": {"operationId": "movie_api_search_keywords", "summary": "Search Keywords", "parameters": [{"in": "query", "name": "query", "schema": {"title": "Query", "type": "string"}, "required": true}], "responses": {"200": {"description": "OK", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/PaginatedKeywordResponseSchema"}}}}}, "description": "Search for keywords by query string.", "tags": ["keywords"]}}, "/api/people": {"get": {"operationId": "movie_api_get_popular_people", "summary": "Get Popular People", "parameters": [{"in": "query", "name": "page", "schema": {"default": 1, "title": "Page", "type": "integer"}, "required": false}], "responses": {"200": {"description": "OK", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/PaginatedPersonResponseSchema"}}}}}, "description": "Retrieve popular people (actors, directors, etc.) with pagination.", "tags": ["people"]}}, "/api/people/search": {"get": {"operationId": "movie_api_search_people", "summary": "Search People", "parameters": [{"in": "query", "name": "query", "schema": {"title": "Query", "type": "string"}, "required": true}], "responses": {"200": {"description": "OK", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/PaginatedPersonResponseSchema"}}}}}, "description": "Search for people by query string.", "tags": ["people"]}}}, "components": {"schemas": {"MovieBaseSchema": {"description": "Minimal movie representation used in list endpoints.", "properties": {"tmdb_id": {"title": "Tmdb Id", "type": "integer"}, "title": {"title": "Title", "type": "string"}, "poster_path": {"anyOf": [{"type": "string"}, {"type": "null"}], "title": "Poster Path"}, "release_date": {"anyOf": [{"format": "date", "type": "string"}, {"type": "null"}], "title": "Release Date"}, "vote_average": {"anyOf": [{"type": "number"}, {"type": "null"}], "title": "Vote Average"}, "runtime": {"anyOf": [{"type": "integer"}, {"type": "null"}], "title": "Runtime"}, "user_movie_data": {"anyOf": [{"$ref": "#/components/schemas/UserMovieDataSchema"}, {"type": "null"}]}}, "required": ["tmdb_id", "title"], "title": "MovieBaseSchema", "type": "object"}, "PaginatedMovieResponseSchema": {"description": "Standard TMDB-style pagination envelope for movie collections.", "properties": {"page": {"default": 1, "title": "Page", "type": "integer"}, "total_pages": {"default": 0, "title": "Total Pages", "type": "integer"}, "total_results": {"default": 0, "title": "Total Results", "type": "integer"}, "results": {"items": {"$ref": "#/components/schemas/MovieBaseSchema"}, "title": "Results", "type": "array"}}, "title": "PaginatedMovieResponseSchema", "type": "object"}, "UserMovieDataSchema": {"description": "Shape of the user-specific movie metadata attached to TMDB responses.", "properties": {"id": {"anyOf": [{"type": "integer"}, {"type": "null"}], "title": "Id"}, "tmdb_id": {"anyOf": [{"type": "integer"}, {"type": "null"}], "title": "Tmdb Id"}, "title": {"anyOf": [{"type": "string"}, {"type": "null"}], "title": "Title"}, "user_watched": {"default": false, "title": "User Watched", "type": "boolean"}, "user_on_watchlist": {"default": false, "title": "User On Watchlist", "type": "boolean"}, "user_liked": {"default": false, "title": "User Liked", "type": "boolean"}, "user_rating": {"anyOf": [{"type": "integer"}, {"type": "null"}], "title": "User Rating"}, "user_review": {"anyOf": [{"type": "string"}, {"type": "null"}], "title": "User Review"}}, "title": "UserMovieDataSchema", "type": "object"}, "CastMemberSchema": {"properties": {"id": {"title": "Id", "type": "integer"}, "name": {"title": "Name", "type": "string"}, "character": {"anyOf": [{"type": "string"}, {"type": "null"}], "title": "Character"}, "profile_path": {"anyOf": [{"type": "string"}, {"type": "null"}], "title": "Profile Path"}}, "required": ["id", "name"], "title": "CastMemberSchema", "type": "object"}, "CrewMemberSchema": {"properties": {"id": {"title": "Id", "type": "integer"}, "name": {"title": "Name", "type": "string"}, "job": {"anyOf": [{"type": "string"}, {"type": "null"}], "title": "Job"}, "profile_path": {"anyOf": [{"type": "string"}, {"type": "null"}], "title": "Profile Path"}}, "required": ["id", "name"], "title": "CrewMemberSchema", "type": "object"}, "GenreSchema": {"properties": {"id": {"title": "Id", "type": "integer"}, "name": {"title": "Name", "type": "string"}}, "required": ["id", "name"], "title": "GenreSchema", "type": "object"}, "MovieDetailSchema": {"description": "Extended movie representation for detail endpoints.", "properties": {"tmdb_id": {"title": "Tmdb Id", "type": "integer"}, "title": {"title": "Title", "type": "string"}, "poster_path": {"anyOf": [{"type": "string"}, {"type": "null"}], "title": "Poster Path"}, "release_date": {"anyOf": [{"format": "date", "type": "string"}, {"type": "null"}], "title": "Release Date"}, "vote_average": {"anyOf": [{"type": "number"}, {"type": "null"}], "title": "Vote Average"}, "runtime": {"anyOf": [{"type": "integer"}, {"type": "null"}], "title": "Runtime"}, "user_movie_data": {"anyOf": [{"$ref": "#/components/schemas/UserMovieDataSchema"}, {"type": "null"}]}, "overview": {"anyOf": [{"type": "string"}, {"type": "null"}], "title": "Overview"}, "genres": {"items": {"$ref": "#/components/schemas/GenreSchema"}, "title": "Genres", "type": "array"}, "production_companies": {"items": {"$ref": "#/components/schemas/ProductionCompanySchema"}, "title": "Production Companies", "type": "array"}, "cast": {"items": {"$ref": "#/components/schemas/CastMemberSchema"}, "title": "Cast", "type": "array"}, "crew": {"items": {"$ref": "#/components/schemas/CrewMemberSchema"}, "title": "Crew", "type": "array"}}, "required": ["tmdb_id", "title"], "title": "MovieDetailSchema", "type": "object"}, "ProductionCompanySchema": {"properties": {"id": {"title": "Id", "type": "integer"}, "name": {"title": "Name", "type": "string"}, "logo_path": {"anyOf": [{"type": "string"}, {"type": "null"}], "title": "Logo Path"}, "origin_country": {"anyOf": [{"type": "string"}, {"type": "null"}], "title": "Origin Country"}}, "required": ["id", "name"], "title": "ProductionCompanySchema", "type": "object"}, "KeywordSchema": {"properties": {"id": {"title": "Id", "type": "integer"}, "name": {"title": "Name", "type": "string"}}, "required": ["id", "name"], "title": "KeywordSchema", "type": "object"}, "PaginatedKeywordResponseSchema": {"properties": {"page": {"default": 1, "title": "Page", "type": "integer"}, "total_pages": {"default": 0, "title": "Total Pages", "type": "integer"}, "total_results": {"default": 0, "title": "Total Results", "type": "integer"}, "results": {"items": {"$ref": "#/components/schemas/KeywordSchema"}, "title": "Results", "type": "array"}}, "title": "PaginatedKeywordResponseSchema", "type": "object"}, "MediaReferenceSchema": {"properties": {"id": {"anyOf": [{"type": "integer"}, {"type": "null"}], "title": "Id"}, "media_type": {"anyOf": [{"type": "string"}, {"type": "null"}], "title": "Media Type"}, "title": {"anyOf": [{"type": "string"}, {"type": "null"}], "title": "Title"}, "name": {"anyOf": [{"type": "string"}, {"type": "null"}], "title": "Name"}, "poster_path": {"anyOf": [{"type": "string"}, {"type": "null"}], "title": "Poster Path"}, "profile_path": {"anyOf": [{"type": "string"}, {"type": "null"}], "title": "Profile Path"}}, "title": "MediaReferenceSchema", "type": "object"}, "PaginatedPersonResponseSchema": {"properties": {"page": {"default": 1, "title": "Page", "type": "integer"}, "total_pages": {"default": 0, "title": "Total Pages", "type": "integer"}, "total_results": {"default": 0, "title": "Total Results", "type": "integer"}, "results": {"items": {"$ref": "#/components/schemas/PersonSchema"}, "title": "Results", "type": "array"}}, "title": "PaginatedPersonResponseSchema", "type": "object"}, "PersonSchema": {"properties": {"id": {"title": "Id", "type": "integer"}, "name": {"title": "Name", "type": "string"}, "profile_path": {"anyOf": [{"type": "string"}, {"type": "null"}], "title": "Profile Path"}, "known_for_department": {"anyOf": [{"type": "string"}, {"type": "null"}], "title": "Known For Department"}, "known_for": {"items": {"$ref": "#/components/schemas/MediaReferenceSchema"}, "title": "Known For", "type": "array"}}, "required": ["id", "name"], "title": "PersonSchema", "type": "object"}}, "securitySchemes": {"JWTCookieAuth": {"type": "apiKey", "in": "cookie", "name": "key"}}}, "servers": []}
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "CineXplorer API",
+    "version": "1.0.0",
+    "description": "A modern, type-safe API for the CineXplorer movie discovery application. Authentication is handled via JWT tokens in HTTP-only cookies."
+  },
+  "paths": {
+    "/api/health": {
+      "get": {
+        "operationId": "config_api_health_check",
+        "summary": "Health Check",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        },
+        "description": "Health check endpoint to verify Django Ninja setup.\n\nThis endpoint is publicly accessible and does not require authentication.\nIt's used for monitoring and ensuring the API is operational.\n\nReturns:\n    Simple status response indicating the API is working."
+      }
+    },
+    "/api/health/auth": {
+      "get": {
+        "operationId": "config_api_health_check_auth",
+        "summary": "Health Check Auth",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthHealthResponse"
+                }
+              }
+            }
+          }
+        },
+        "description": "Authenticated health check endpoint to verify JWT cookie authentication.\n\nThis endpoint demonstrates native Django Ninja security integration with:\n- Automatic OpenAPI security schema documentation\n- Native authentication via the global auth scheme\n- Proper error response documentation\n\nThe endpoint will automatically require JWT authentication via the configured\nHTTP-only cookie and return appropriate error responses if authentication fails.\n\nReturns:\n    Status response with authentication confirmation.\nRaises:\n    HttpError: 401 if authentication fails\n    HttpError: 500 if internal authentication error occurs",
+        "security": [
+          {
+            "JWTCookieAuth": []
+          }
+        ]
+      }
+    },
+    "/api/health/user": {
+      "get": {
+        "operationId": "config_api_health_check_user",
+        "summary": "Health Check User",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserHealthResponse"
+                }
+              }
+            }
+          }
+        },
+        "description": "Health check using enhanced dependency injection patterns.\n\nThis endpoint demonstrates the enhanced dependency injection approach with:\n- Manual authentication control (bypassing global auth)\n- Comprehensive error handling and logging\n- Structured error responses\n- Type-safe user access\n\nArgs:\n    request: HTTP request object\n\nReturns:\n    Status response with authenticated user information.\nRaises:\n    HttpError: 401 if authentication fails with structured error\n    HttpError: 500 if internal authentication error occurs"
+      }
+    },
+    "/api/test/auth": {
+      "get": {
+        "operationId": "config_api_test_authentication",
+        "summary": "Test Authentication",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthTestResponse"
+                }
+              }
+            }
+          }
+        },
+        "description": "Comprehensive authentication test endpoint.\n\nThis endpoint verifies that the JWT cookie authentication scheme:\n1. Correctly protects routes (requires valid JWT token)\n2. Properly identifies and provides access to the authenticated user\n3. Integrates seamlessly with Django Ninja's global auth system\n4. Generates proper OpenAPI documentation\n\nThe endpoint will automatically enforce authentication via the global\nauth scheme and return detailed information about the authenticated user.\n\nReturns:\n    Comprehensive authentication test response with user details.\n\nRaises:\n    HttpError: 401 if JWT token is missing, invalid, or expired\n    HttpError: 500 if internal authentication error occurs",
+        "security": [
+          {
+            "JWTCookieAuth": []
+          }
+        ]
+      }
+    },
+    "/api/test/auth-status": {
+      "get": {
+        "operationId": "config_api_test_auth_status",
+        "summary": "Test Auth Status",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthStatusResponse"
+                }
+              }
+            }
+          }
+        },
+        "description": "Authentication status test endpoint (no authentication required).\n\nThis endpoint demonstrates the authentication system's behavior by:\n1. Bypassing global authentication (auth=None)\n2. Manually checking for JWT token presence and validity\n3. Showing the difference between authenticated and unauthenticated requests\n4. Providing debugging information for authentication testing\n\nThis is useful for:\n- Testing the authentication system without requiring valid credentials\n- Debugging authentication issues\n- Understanding the authentication flow\n\nReturns:\n    Authentication status information and guidance."
+      }
+    },
+    "/api/movies/now-playing": {
+      "get": {
+        "operationId": "movie_api_get_now_playing_movies",
+        "summary": "Get Now Playing Movies",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "default": 1,
+              "title": "Page",
+              "type": "integer"
+            },
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedMovieResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "description": "Retrieve currently playing movies with pagination.",
+        "tags": [
+          "movies"
+        ]
+      }
+    },
+    "/api/movies/upcoming": {
+      "get": {
+        "operationId": "movie_api_get_upcoming_movies",
+        "summary": "Get Upcoming Movies",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "default": 1,
+              "title": "Page",
+              "type": "integer"
+            },
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedMovieResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "description": "Retrieve upcoming movies with pagination.",
+        "tags": [
+          "movies"
+        ]
+      }
+    },
+    "/api/movies/search": {
+      "get": {
+        "operationId": "movie_api_search_movies",
+        "summary": "Search Movies",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "query",
+            "schema": {
+              "title": "Query",
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "default": 1,
+              "title": "Page",
+              "type": "integer"
+            },
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedMovieResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "description": "Search for movies by query string with pagination.",
+        "tags": [
+          "movies"
+        ]
+      }
+    },
+    "/api/movies/discover": {
+      "get": {
+        "operationId": "movie_api_discover_movies",
+        "summary": "Discover Movies",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "default": 1,
+              "title": "Page",
+              "type": "integer"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "with_genres",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "With Genres"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "with_keywords",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "With Keywords"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "with_cast",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "With Cast"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "with_crew",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "With Crew"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "with_people",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "With People"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "with_companies",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "With Companies"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "with_networks",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "With Networks"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "with_watch_providers",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "With Watch Providers"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "with_watch_monetization_types",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "With Watch Monetization Types"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "without_genres",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Without Genres"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "without_keywords",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Without Keywords"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "without_companies",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Without Companies"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "without_networks",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Without Networks"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "without_watch_providers",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Without Watch Providers"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "include_adult",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Include Adult"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "include_video",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Include Video"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "language",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Language"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "primary_release_year",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Primary Release Year"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "primary_release_date_gte",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Primary Release Date Gte"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "primary_release_date_lte",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Primary Release Date Lte"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "release_date_gte",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Release Date Gte"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "release_date_lte",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Release Date Lte"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "with_release_type",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "With Release Type"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "year",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Year"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "vote_count_gte",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Vote Count Gte"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "vote_count_lte",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Vote Count Lte"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "vote_average_gte",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Vote Average Gte"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "vote_average_lte",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Vote Average Lte"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "with_runtime_gte",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "With Runtime Gte"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "with_runtime_lte",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "With Runtime Lte"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "region",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Region"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "sort_by",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sort By"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "certification_country",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Certification Country"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "certification",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Certification"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "certification_lte",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Certification Lte"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "certification_gte",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Certification Gte"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "with_original_language",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "With Original Language"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "without_original_language",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Without Original Language"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "decade",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Decade"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "genres",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Genres"
+            },
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedMovieResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "description": "Discover movies with advanced filtering options.\n\nThis endpoint provides comprehensive movie discovery with extensive filtering\ncapabilities including genres, keywords, cast, crew, release dates, ratings,\nand more. It supports both TMDB standard parameters and custom aliases for\nfrontend convenience.\n\nQuery Parameters:\n    page: Page number for pagination (default: 1)\n    with_genres: Comma-separated genre IDs to include\n    genres: Alias for with_genres (frontend convenience)\n    decade: Decade filter (e.g., \"1990s\" → converts to date range)\n    sort_by: Sort criteria (popularity.desc, vote_average.desc, etc.)\n    vote_average_gte/lte: Rating range filtering\n    with_runtime_gte/lte: Runtime range filtering\n    primary_release_year: Filter by release year\n    [... many other TMDB discover parameters]\n\nReturns:\n    PaginatedMovieResponseSchema: Paginated list of movies matching criteria\n\nRaises:\n    HttpError: 400 for invalid parameters, 500 for TMDB API errors",
+        "tags": [
+          "movies"
+        ]
+      }
+    },
+    "/api/movies/{tmdb_id}": {
+      "get": {
+        "operationId": "movie_api_get_movie_detail",
+        "summary": "Get Movie Detail",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tmdb_id",
+            "schema": {
+              "title": "Tmdb Id",
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MovieDetailSchema"
+                }
+              }
+            }
+          }
+        },
+        "description": "Retrieve detailed information for a specific movie by TMDB ID.\n\nThis endpoint fetches comprehensive movie details including cast, crew,\ngenres, production companies, and user-specific data if authenticated.\n\nArgs:\n    request: HTTP request object for user context\n    tmdb_id: The TMDB ID of the movie to retrieve\n\nReturns:\n    MovieDetailSchema: Complete movie details with user data if authenticated\n\nRaises:\n    HttpError: 404 if movie not found, 500 for TMDB API errors",
+        "tags": [
+          "movies"
+        ]
+      }
+    },
+    "/api/genres": {
+      "get": {
+        "operationId": "movie_api_get_movie_genres",
+        "summary": "Get Movie Genres",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/GenreSchema"
+                  },
+                  "title": "Response",
+                  "type": "array"
+                }
+              }
+            }
+          }
+        },
+        "description": "Retrieve the list of available movie genres from TMDB.",
+        "tags": [
+          "genres"
+        ]
+      }
+    },
+    "/api/keywords": {
+      "get": {
+        "operationId": "movie_api_get_popular_keywords",
+        "summary": "Get Popular Keywords",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "default": 1,
+              "title": "Page",
+              "type": "integer"
+            },
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedKeywordResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "description": "Retrieve popular keywords with pagination.",
+        "tags": [
+          "keywords"
+        ]
+      }
+    },
+    "/api/keywords/search": {
+      "get": {
+        "operationId": "movie_api_search_keywords",
+        "summary": "Search Keywords",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "query",
+            "schema": {
+              "title": "Query",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedKeywordResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "description": "Search for keywords by query string.",
+        "tags": [
+          "keywords"
+        ]
+      }
+    },
+    "/api/people": {
+      "get": {
+        "operationId": "movie_api_get_popular_people",
+        "summary": "Get Popular People",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "default": 1,
+              "title": "Page",
+              "type": "integer"
+            },
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedPersonResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "description": "Retrieve popular people (actors, directors, etc.) with pagination.",
+        "tags": [
+          "people"
+        ]
+      }
+    },
+    "/api/people/search": {
+      "get": {
+        "operationId": "movie_api_search_people",
+        "summary": "Search People",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "query",
+            "schema": {
+              "title": "Query",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedPersonResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "description": "Search for people by query string.",
+        "tags": [
+          "people"
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "HealthResponse": {
+        "description": "Health check response schema.",
+        "properties": {
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "message"
+        ],
+        "title": "HealthResponse",
+        "type": "object"
+      },
+      "AuthHealthResponse": {
+        "description": "Authenticated health check response schema.",
+        "properties": {
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "auth_method": {
+            "title": "Auth Method",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "message",
+          "auth_method"
+        ],
+        "title": "AuthHealthResponse",
+        "type": "object"
+      },
+      "UserHealthResponse": {
+        "description": "User health check response with authentication details.",
+        "properties": {
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "user_id": {
+            "title": "User Id",
+            "type": "integer"
+          },
+          "auth_method": {
+            "title": "Auth Method",
+            "type": "string"
+          },
+          "features": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Features",
+            "type": "array"
+          }
+        },
+        "required": [
+          "status",
+          "message",
+          "user_id",
+          "auth_method",
+          "features"
+        ],
+        "title": "UserHealthResponse",
+        "type": "object"
+      },
+      "AuthTestResponse": {
+        "description": "Comprehensive authentication test response.",
+        "properties": {
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "auth_scheme": {
+            "title": "Auth Scheme",
+            "type": "string"
+          },
+          "user_id": {
+            "title": "User Id",
+            "type": "integer"
+          },
+          "username": {
+            "title": "Username",
+            "type": "string"
+          },
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "is_staff": {
+            "title": "Is Staff",
+            "type": "boolean"
+          },
+          "is_superuser": {
+            "title": "Is Superuser",
+            "type": "boolean"
+          },
+          "is_active": {
+            "title": "Is Active",
+            "type": "boolean"
+          },
+          "date_joined": {
+            "title": "Date Joined",
+            "type": "string"
+          },
+          "last_login": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Login"
+          },
+          "groups_count": {
+            "title": "Groups Count",
+            "type": "integer"
+          },
+          "permissions_count": {
+            "title": "Permissions Count",
+            "type": "integer"
+          },
+          "auth_verification": {
+            "$ref": "#/components/schemas/AuthVerification"
+          }
+        },
+        "required": [
+          "status",
+          "message",
+          "auth_scheme",
+          "user_id",
+          "username",
+          "email",
+          "is_staff",
+          "is_superuser",
+          "is_active",
+          "date_joined",
+          "last_login",
+          "groups_count",
+          "permissions_count",
+          "auth_verification"
+        ],
+        "title": "AuthTestResponse",
+        "type": "object"
+      },
+      "AuthVerification": {
+        "description": "Authentication verification details.",
+        "properties": {
+          "scheme_active": {
+            "title": "Scheme Active",
+            "type": "boolean"
+          },
+          "token_valid": {
+            "title": "Token Valid",
+            "type": "boolean"
+          },
+          "user_authenticated": {
+            "title": "User Authenticated",
+            "type": "boolean"
+          },
+          "session_info": {
+            "title": "Session Info",
+            "type": "string"
+          }
+        },
+        "required": [
+          "scheme_active",
+          "token_valid",
+          "user_authenticated",
+          "session_info"
+        ],
+        "title": "AuthVerification",
+        "type": "object"
+      },
+      "AuthGuidance": {
+        "description": "Authentication guidance information.",
+        "properties": {
+          "next_step": {
+            "title": "Next Step",
+            "type": "string"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "protected_endpoint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Protected Endpoint"
+          },
+          "public_endpoints": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Public Endpoints"
+          }
+        },
+        "required": [
+          "next_step"
+        ],
+        "title": "AuthGuidance",
+        "type": "object"
+      },
+      "AuthStatusResponse": {
+        "description": "Authentication status response schema.",
+        "properties": {
+          "auth_status": {
+            "title": "Auth Status",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "user_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Id"
+          },
+          "has_valid_token": {
+            "title": "Has Valid Token",
+            "type": "boolean"
+          },
+          "guidance": {
+            "$ref": "#/components/schemas/AuthGuidance"
+          }
+        },
+        "required": [
+          "auth_status",
+          "message",
+          "user_id",
+          "has_valid_token",
+          "guidance"
+        ],
+        "title": "AuthStatusResponse",
+        "type": "object"
+      },
+      "MovieBaseSchema": {
+        "description": "Minimal movie representation used in list endpoints.",
+        "properties": {
+          "tmdb_id": {
+            "title": "Tmdb Id",
+            "type": "integer"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "poster_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Poster Path"
+          },
+          "release_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Release Date"
+          },
+          "vote_average": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vote Average"
+          },
+          "runtime": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Runtime"
+          },
+          "user_movie_data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserMovieDataSchema"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "tmdb_id",
+          "title"
+        ],
+        "title": "MovieBaseSchema",
+        "type": "object"
+      },
+      "PaginatedMovieResponseSchema": {
+        "description": "Standard TMDB-style pagination envelope for movie collections.",
+        "properties": {
+          "page": {
+            "default": 1,
+            "title": "Page",
+            "type": "integer"
+          },
+          "total_pages": {
+            "default": 0,
+            "title": "Total Pages",
+            "type": "integer"
+          },
+          "total_results": {
+            "default": 0,
+            "title": "Total Results",
+            "type": "integer"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/MovieBaseSchema"
+            },
+            "title": "Results",
+            "type": "array"
+          }
+        },
+        "title": "PaginatedMovieResponseSchema",
+        "type": "object"
+      },
+      "UserMovieDataSchema": {
+        "description": "Shape of the user-specific movie metadata attached to TMDB responses.",
+        "properties": {
+          "id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id"
+          },
+          "tmdb_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tmdb Id"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "user_watched": {
+            "default": false,
+            "title": "User Watched",
+            "type": "boolean"
+          },
+          "user_on_watchlist": {
+            "default": false,
+            "title": "User On Watchlist",
+            "type": "boolean"
+          },
+          "user_liked": {
+            "default": false,
+            "title": "User Liked",
+            "type": "boolean"
+          },
+          "user_rating": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Rating"
+          },
+          "user_review": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Review"
+          }
+        },
+        "title": "UserMovieDataSchema",
+        "type": "object"
+      },
+      "CastMemberSchema": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "character": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Character"
+          },
+          "profile_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Profile Path"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "CastMemberSchema",
+        "type": "object"
+      },
+      "CrewMemberSchema": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "job": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Job"
+          },
+          "profile_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Profile Path"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "CrewMemberSchema",
+        "type": "object"
+      },
+      "GenreSchema": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "GenreSchema",
+        "type": "object"
+      },
+      "MovieDetailSchema": {
+        "description": "Extended movie representation for detail endpoints.",
+        "properties": {
+          "tmdb_id": {
+            "title": "Tmdb Id",
+            "type": "integer"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "poster_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Poster Path"
+          },
+          "release_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Release Date"
+          },
+          "vote_average": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vote Average"
+          },
+          "runtime": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Runtime"
+          },
+          "user_movie_data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserMovieDataSchema"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "overview": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Overview"
+          },
+          "genres": {
+            "items": {
+              "$ref": "#/components/schemas/GenreSchema"
+            },
+            "title": "Genres",
+            "type": "array"
+          },
+          "production_companies": {
+            "items": {
+              "$ref": "#/components/schemas/ProductionCompanySchema"
+            },
+            "title": "Production Companies",
+            "type": "array"
+          },
+          "cast": {
+            "items": {
+              "$ref": "#/components/schemas/CastMemberSchema"
+            },
+            "title": "Cast",
+            "type": "array"
+          },
+          "crew": {
+            "items": {
+              "$ref": "#/components/schemas/CrewMemberSchema"
+            },
+            "title": "Crew",
+            "type": "array"
+          }
+        },
+        "required": [
+          "tmdb_id",
+          "title"
+        ],
+        "title": "MovieDetailSchema",
+        "type": "object"
+      },
+      "ProductionCompanySchema": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "logo_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Logo Path"
+          },
+          "origin_country": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Origin Country"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "ProductionCompanySchema",
+        "type": "object"
+      },
+      "KeywordSchema": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "KeywordSchema",
+        "type": "object"
+      },
+      "PaginatedKeywordResponseSchema": {
+        "properties": {
+          "page": {
+            "default": 1,
+            "title": "Page",
+            "type": "integer"
+          },
+          "total_pages": {
+            "default": 0,
+            "title": "Total Pages",
+            "type": "integer"
+          },
+          "total_results": {
+            "default": 0,
+            "title": "Total Results",
+            "type": "integer"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/KeywordSchema"
+            },
+            "title": "Results",
+            "type": "array"
+          }
+        },
+        "title": "PaginatedKeywordResponseSchema",
+        "type": "object"
+      },
+      "MediaReferenceSchema": {
+        "properties": {
+          "id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id"
+          },
+          "media_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Media Type"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "poster_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Poster Path"
+          },
+          "profile_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Profile Path"
+          }
+        },
+        "title": "MediaReferenceSchema",
+        "type": "object"
+      },
+      "PaginatedPersonResponseSchema": {
+        "properties": {
+          "page": {
+            "default": 1,
+            "title": "Page",
+            "type": "integer"
+          },
+          "total_pages": {
+            "default": 0,
+            "title": "Total Pages",
+            "type": "integer"
+          },
+          "total_results": {
+            "default": 0,
+            "title": "Total Results",
+            "type": "integer"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/PersonSchema"
+            },
+            "title": "Results",
+            "type": "array"
+          }
+        },
+        "title": "PaginatedPersonResponseSchema",
+        "type": "object"
+      },
+      "PersonSchema": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "profile_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Profile Path"
+          },
+          "known_for_department": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Known For Department"
+          },
+          "known_for": {
+            "items": {
+              "$ref": "#/components/schemas/MediaReferenceSchema"
+            },
+            "title": "Known For",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "PersonSchema",
+        "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "JWTCookieAuth": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "key"
+      }
+    }
+  },
+  "servers": []
+}

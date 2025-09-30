@@ -409,6 +409,120 @@ export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
         /**
+         * HealthResponse
+         * @description Health check response schema.
+         */
+        HealthResponse: {
+            /** Status */
+            status: string;
+            /** Message */
+            message: string;
+        };
+        /**
+         * AuthHealthResponse
+         * @description Authenticated health check response schema.
+         */
+        AuthHealthResponse: {
+            /** Status */
+            status: string;
+            /** Message */
+            message: string;
+            /** Auth Method */
+            auth_method: string;
+        };
+        /**
+         * UserHealthResponse
+         * @description User health check response with authentication details.
+         */
+        UserHealthResponse: {
+            /** Status */
+            status: string;
+            /** Message */
+            message: string;
+            /** User Id */
+            user_id: number;
+            /** Auth Method */
+            auth_method: string;
+            /** Features */
+            features: string[];
+        };
+        /**
+         * AuthTestResponse
+         * @description Comprehensive authentication test response.
+         */
+        AuthTestResponse: {
+            /** Status */
+            status: string;
+            /** Message */
+            message: string;
+            /** Auth Scheme */
+            auth_scheme: string;
+            /** User Id */
+            user_id: number;
+            /** Username */
+            username: string;
+            /** Email */
+            email: string;
+            /** Is Staff */
+            is_staff: boolean;
+            /** Is Superuser */
+            is_superuser: boolean;
+            /** Is Active */
+            is_active: boolean;
+            /** Date Joined */
+            date_joined: string;
+            /** Last Login */
+            last_login: string | null;
+            /** Groups Count */
+            groups_count: number;
+            /** Permissions Count */
+            permissions_count: number;
+            auth_verification: components["schemas"]["AuthVerification"];
+        };
+        /**
+         * AuthVerification
+         * @description Authentication verification details.
+         */
+        AuthVerification: {
+            /** Scheme Active */
+            scheme_active: boolean;
+            /** Token Valid */
+            token_valid: boolean;
+            /** User Authenticated */
+            user_authenticated: boolean;
+            /** Session Info */
+            session_info: string;
+        };
+        /**
+         * AuthGuidance
+         * @description Authentication guidance information.
+         */
+        AuthGuidance: {
+            /** Next Step */
+            next_step: string;
+            /** Note */
+            note?: string | null;
+            /** Protected Endpoint */
+            protected_endpoint?: string | null;
+            /** Public Endpoints */
+            public_endpoints?: string | null;
+        };
+        /**
+         * AuthStatusResponse
+         * @description Authentication status response schema.
+         */
+        AuthStatusResponse: {
+            /** Auth Status */
+            auth_status: string;
+            /** Message */
+            message: string;
+            /** User Id */
+            user_id: number | null;
+            /** Has Valid Token */
+            has_valid_token: boolean;
+            guidance: components["schemas"]["AuthGuidance"];
+        };
+        /**
          * MovieBaseSchema
          * @description Minimal movie representation used in list endpoints.
          */
@@ -648,7 +762,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["HealthResponse"];
+                };
             };
         };
     };
@@ -666,7 +782,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["AuthHealthResponse"];
+                };
             };
         };
     };
@@ -684,7 +802,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["UserHealthResponse"];
+                };
             };
         };
     };
@@ -702,7 +822,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["AuthTestResponse"];
+                };
             };
         };
     };
@@ -720,7 +842,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["AuthStatusResponse"];
+                };
             };
         };
     };

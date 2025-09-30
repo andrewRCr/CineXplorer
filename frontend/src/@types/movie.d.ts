@@ -91,8 +91,8 @@ export interface MovieFilters {
   sortBy: string;
 }
 
-// Helper type for converting UI filters to API params
-export type MovieFiltersToApiParams = (filters: MovieFilters) => Record<string, unknown>;
+// Note: For API parameter types, use MovieQueryParams from services/movieService.ts
+// which provides proper typing for all API filter parameters
 
 // ============================================================================
 // Backward Compatibility Notes

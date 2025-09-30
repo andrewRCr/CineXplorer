@@ -664,7 +664,7 @@ def search_movies(query: str, page: int = 1) -> PaginatedMovieResponseSchema:
     response = tmdb_client.search_movies(
         query=query,
         page=page,
-        include_adult="false",
+        include_adult=False,
         language="en-US",
         region="US"
     )

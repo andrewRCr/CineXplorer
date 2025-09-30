@@ -41,7 +41,7 @@ class MovieServiceParameterMappingTests(TestCase):
             sort_by='popularity.desc',
             genres='28,12',  # Service layer maps this to with_genres
             year=2023,
-            vote_average_gte='7.5',
+            vote_average_gte=7.5,
             release_date_gte='2023-01-01'
         )
 
@@ -56,7 +56,7 @@ class MovieServiceParameterMappingTests(TestCase):
         self.assertEqual(params['sort_by'], 'popularity.desc')
         self.assertEqual(params['with_genres'], '28,12')
         self.assertEqual(params['year'], 2023)
-        self.assertEqual(params['vote_average.gte'], '7.5')
+        self.assertEqual(params['vote_average.gte'], 7.5)
         self.assertEqual(params['primary_release_date.gte'], '2023-01-01')
 
         # Assert: Verify result is proper PaginatedMovieResponseSchema
@@ -162,7 +162,7 @@ class MovieServiceErrorHandlingTests(TestCase):
         mock_search.assert_called_once_with(
             query="action",
             page=2,
-            include_adult="false",
+            include_adult=False,
             language="en-US",
             region="US"
         )

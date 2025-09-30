@@ -471,7 +471,7 @@ class BaseApiClient(ABC):
 
             response = self.session.get(
                 url,
-                params=request_params or None,
+                params=request_params or None,  # type: ignore[arg-type]
                 headers=prepared_headers,
                 timeout=self.timeout,
                 # Note: **kwargs ignored to avoid type errors - requests has

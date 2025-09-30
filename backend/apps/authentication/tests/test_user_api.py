@@ -209,8 +209,9 @@ class PrivateUserApiTests(TestCase):
 
     def test_update_profile_no_csrf_authenticated(self):
         """
-        Authenticated PATCH via Django Client against a JWT-cookie API will result in 401 Unauthorized (missing JWT).
-        Django's session authentication doesn't provide the JWT cookie needed by the API.
+        Authenticated PATCH via Django Client against a JWT-cookie API will
+        result in 401 Unauthorized (missing JWT). Django's session
+        authentication doesn't provide the JWT cookie needed by the API.
         """
 
         client = Client()

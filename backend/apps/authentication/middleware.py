@@ -37,7 +37,10 @@ class CsrfHeaderMiddleware(MiddlewareMixin):
         if request.method in ("POST", "PUT", "PATCH", "DELETE"):
             cookie_token = request.COOKIES.get("XSRF-TOKEN")
             # Accept either X-CSRFToken or X-XSRF-TOKEN header
-            header_token = request.headers.get("X-CSRFToken") or request.headers.get("X-XSRF-TOKEN")
+            header_token = (
+                request.headers.get("X-CSRFToken") or
+                request.headers.get("X-XSRF-TOKEN")
+            )
 
             if not cookie_token or not header_token or cookie_token != header_token:
                 logger.warning(

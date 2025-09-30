@@ -126,7 +126,7 @@ class MovieApiTests(TestCase):
         }
         mock_api_response = ApiResponse(
             status_code=200,
-            data=tmdb_payload
+            data=tmdb_payload  # type: ignore[arg-type]
         )
         mock_tmdb_method.return_value = mock_api_response
 
@@ -199,7 +199,7 @@ class MovieApiTests(TestCase):
         }
         mock_api_response = ApiResponse(
             status_code=200,
-            data=tmdb_payload
+            data=tmdb_payload  # type: ignore[arg-type]
         )
         mock_tmdb_get.return_value = mock_api_response
 

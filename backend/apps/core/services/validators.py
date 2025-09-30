@@ -63,7 +63,7 @@ def validate_tmdb_response(
             extra={
                 "model": model.__name__,
                 "validation_errors": e.errors(),
-                "response_data_keys": list(response.data.keys()) if isinstance(response.data, dict) else None
+                "response_data_keys": list(response.data.keys()) if isinstance(response.data, dict) else None  # noqa: E501
             }
         )
         raise HttpError(
@@ -167,7 +167,7 @@ def validate_tmdb_paginated_response(
             extra={
                 "model": model.__name__,
                 "validation_errors": e.errors(),
-                "response_data_keys": list(response.data.keys()) if isinstance(response.data, dict) else None
+                "response_data_keys": list(response.data.keys()) if isinstance(response.data, dict) else None  # noqa: E501
             }
         )
         raise HttpError(

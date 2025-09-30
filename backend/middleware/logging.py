@@ -138,7 +138,8 @@ class RequestLoggingMiddleware(MiddlewareMixin):
         # Build query string for full URL (sanitize for logging)
         query_string = request.META.get('QUERY_STRING', '')
         sanitized_query_string = self._sanitize_query_string(query_string)
-        full_url = f"{request.path}{'?' + sanitized_query_string if sanitized_query_string else ''}"
+        query_suffix = f"?{sanitized_query_string}" if sanitized_query_string else ""
+        full_url = f"{request.path}{query_suffix}"
 
         # Get user context (safely handle anonymous users)
         user_info = self._get_user_context(request)
@@ -196,7 +197,8 @@ class RequestLoggingMiddleware(MiddlewareMixin):
         # Build query string for full URL (sanitize for logging)
         query_string = request.META.get('QUERY_STRING', '')
         sanitized_query_string = self._sanitize_query_string(query_string)
-        full_url = f"{request.path}{'?' + sanitized_query_string if sanitized_query_string else ''}"
+        query_suffix = f"?{sanitized_query_string}" if sanitized_query_string else ""
+        full_url = f"{request.path}{query_suffix}"
 
         # Create concise, informative completion message
         if duration is not None:
@@ -266,7 +268,8 @@ class RequestLoggingMiddleware(MiddlewareMixin):
         # Build query string for full URL (sanitize for logging)
         query_string = request.META.get('QUERY_STRING', '')
         sanitized_query_string = self._sanitize_query_string(query_string)
-        full_url = f"{request.path}{'?' + sanitized_query_string if sanitized_query_string else ''}"
+        query_suffix = f"?{sanitized_query_string}" if sanitized_query_string else ""
+        full_url = f"{request.path}{query_suffix}"
 
         # Create informative exception message with correlation ID
         if duration is not None:

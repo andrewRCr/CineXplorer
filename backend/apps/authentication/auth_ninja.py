@@ -40,7 +40,6 @@ def get_jwt_cookie_name() -> str:
     ).get('ACCESS_TOKEN_NAME', 'access_token')
 
 
-
 class JWTCookieAuth(APIKeyCookie):
     """
     Django Ninja native security scheme for JWT tokens from HTTP-only cookies.

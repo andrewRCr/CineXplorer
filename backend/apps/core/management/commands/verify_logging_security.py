@@ -203,7 +203,9 @@ class Command(BaseCommand):
                     result_type = type(result).__name__
                     try:
                         item_count = len(result) if hasattr(result, '__len__') else 1
-                        self.stdout.write(f"  ⚠️ {endpoint}: Non-dict result ({result_type}, {item_count} items)")
+                        self.stdout.write(  # noqa: E501
+                            f"  ⚠️ {endpoint}: Non-dict result ({result_type}, {item_count} items)"
+                        )
                     except (TypeError, AttributeError):
                         self.stdout.write(f"  ⚠️ {endpoint}: Non-dict result ({result_type})")
 

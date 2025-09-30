@@ -7,6 +7,7 @@ to the backend for centralized logging and monitoring.
 
 import json
 import logging
+from datetime import datetime
 
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
@@ -76,7 +77,7 @@ class FrontendLogAPIView(APIView):
                 'max_allowed': MAX_PAYLOAD_SIZE
             })
             return Response(
-                {"error": "Payload too large", "success": False, "max_size_bytes": MAX_PAYLOAD_SIZE},
+                {"error": "Payload too large", "success": False, "max_size_bytes": MAX_PAYLOAD_SIZE},  # noqa: E501
                 status=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE
             )
 

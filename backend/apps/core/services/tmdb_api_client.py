@@ -129,15 +129,13 @@ class TMDBApiClient(BaseApiClient):
             data = response.json()
         except ValueError as json_error:
             # Handle invalid JSON responses
-            error_message = f"TMDB returned invalid JSON: {json_error}"
-
             self.logger.error("TMDB API returned invalid JSON", extra={
                 'correlation_id': correlation_id,
+                'json_error': str(json_error),
                 'endpoint': endpoint,
                 'status_code': response.status_code,
                 'duration_ms': duration_ms,
                 'error_type': 'json_parsing_error',
-                'json_error': str(json_error),
                 'response_preview': str(response.text)[:200],
                 'response_size_bytes': (
                     len(response.content) if hasattr(response.content, '__len__') else 0

@@ -44,6 +44,7 @@ ALLOWED_HOSTS = [
     "localhost",
     "127.0.0.1",
     "backend",
+    "testserver",  # Django test client
 ]
 
 # Application definition
@@ -179,6 +180,9 @@ REST_FRAMEWORK = {
         "rest_framework_simplejwt.authentication.JWTAuthentication",
         "authentication.authenticate.JWTCookieAuthentication",
     ],
+    "DEFAULT_THROTTLE_RATES": {
+        "frontend_logs": "100/minute",
+    },
 }
 
 # default environment variables

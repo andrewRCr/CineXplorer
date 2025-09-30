@@ -10,7 +10,7 @@ This module creates the central NinjaAPI instance with:
 from __future__ import annotations
 
 from django.conf import settings
-from django.contrib.auth.models import AbstractUser
+# from django.contrib.auth.models import AbstractUser  # Unused
 from django.http import HttpRequest
 from ninja import NinjaAPI, Schema
 
@@ -87,8 +87,11 @@ class AuthStatusResponse(Schema):
     has_valid_token: bool
     guidance: AuthGuidance
 
+
 # Create the main NinjaAPI instance with native authentication
 api = NinjaAPI(
+
+
     title="CineXplorer API",
     version="1.0.0",
     description=(

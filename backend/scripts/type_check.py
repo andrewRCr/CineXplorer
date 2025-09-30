@@ -81,7 +81,7 @@ def is_django_stubs_internal_error(output: str) -> bool:
     return "django-stubs" in lowered and "internal error" in lowered
 
 
-def main() -> None:
+def main() -> None:  # noqa: C901
     """Run comprehensive type checking."""
     # Parse command-line arguments
     parser = argparse.ArgumentParser(
@@ -135,7 +135,7 @@ def main() -> None:
         checks_to_run = [check for check in all_checks if check[0] in only_set]
         if not checks_to_run:
             print(f"Warning: No matching checks found for: {', '.join(args.only)}")
-            print(f"Available: utilities, services, models, movie, auth")
+            print("Available: utilities, services, models, movie, auth")
             sys.exit(1)
     else:
         checks_to_run = all_checks

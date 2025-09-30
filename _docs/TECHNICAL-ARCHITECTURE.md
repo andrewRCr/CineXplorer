@@ -22,12 +22,12 @@ The backend is a REST API built with Django and Django REST Framework (DRF).
 - **Authentication**: Authentication is handled by `rest_framework_simplejwt` using JSON Web Tokens. A custom `JWTCookieAuthentication` backend is implemented to manage tokens securely in HTTP-only cookies.
 - **API Documentation**: `drf-spectacular` is used to automatically generate an OpenAPI 3 schema and Swagger UI, available at `/api/docs/`.
 - **Code Style**: Linting is enforced using `.flake8`.
-- **Type Checking**: Pyright provides primary static analysis for Python 3.13 features. `mypy` (with `django-stubs`) is configured but currently affected by upstream issue [typeddjango/django-stubs#2461](https://github.com/typeddjango/django-stubs/issues/2461); Pyright remains the guardrail until that fix ships.
+- **Type Checking**: [Pyright](../backend/pyrightconfig.json) provides primary static analysis with support for Python 3.13 features. It's installed via dev tooling (see `backend/package.json` for npm-based installation). `mypy` (with `django-stubs`) is configured but currently affected by upstream issue [typeddjango/django-stubs#2461](https://github.com/typeddjango/django-stubs/issues/2461) (as of Sep 2025, affecting django-stubs 5.x on Django 5.x); Pyright remains the guardrail until that fix ships.
 - **Key Libraries**:
     - `django-cors-headers` for managing Cross-Origin Resource Sharing (CORS).
     - `django-debug-toolbar` for debugging during development.
     - `environ` for managing environment variables.
-- **Directory Structure**: The backend code is organized into discrete Django `apps` within the `backend/apps/` directory with clear domain boundaries:
+- **Directory Structure**: The backend code is organized into discrete Django `apps` within the `backend/apps/` directory with clear domain boundaries. Note that `accounts` holds persistent user data/models (User, EmailVerificationToken), while `authentication` contains stateless auth flows (JWT handling, serializers, views, middleware for login/verification):
   - `accounts`: User authentication models (`User`, `EmailVerificationToken`)
   - `authentication`: Authentication processes (JWT, serializers, views, middleware)
   - `core`: Core business models (`Movie` and shared utilities)

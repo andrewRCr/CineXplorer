@@ -32,7 +32,7 @@ class Movie(models.Model):
     Represents a minimal local stub for a TMDB movie.
     Used as an anchor for user-specific data.
     """
-    tmdb_id = models.IntegerField(  # type: ignore[misc]  # Django field type inference
+    tmdb_id = models.PositiveIntegerField(  # type: ignore[misc]  # Django field type inference
         primary_key=True
     )
     title = models.CharField(  # type: ignore[misc]  # Django field type inference
@@ -44,6 +44,9 @@ class Movie(models.Model):
     release_date = models.DateField(  # type: ignore[misc]  # Django field type inference
         null=True, blank=True
     )
+
+    class Meta:
+        ordering = ["-release_date", "tmdb_id"]
 
     def __str__(self) -> str:
         return self.title  # type: ignore[attr-defined]  # Django field access

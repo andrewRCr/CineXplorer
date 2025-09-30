@@ -8,6 +8,7 @@ response data, status codes, headers, timing, and error information.
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 import json
 import logging
@@ -26,7 +27,7 @@ class ApiResponse:
 
     # Core response data
     status_code: int
-    data: dict[str, object] | list[object] | str | None = None
+    data: Mapping[str, object] | Sequence[object] | str | None = None
     headers: dict[str, str] | None = None
 
     # Request metadata

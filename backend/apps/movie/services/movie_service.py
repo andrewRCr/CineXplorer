@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
 import logging
 import uuid
 from datetime import datetime, timedelta
@@ -109,7 +110,7 @@ def fetch_movie_runtimes(movie_ids: list[int]) -> dict[int, int]:
 # =========================
 
 
-def create_movie_base_from_tmdb(tmdb_data: dict[str, object]) -> MovieBaseSchema:
+def create_movie_base_from_tmdb(tmdb_data: Mapping[str, object]) -> MovieBaseSchema:
     """
     Create a MovieBaseSchema instance from TMDB API response data.
 
@@ -155,8 +156,8 @@ def create_movie_base_from_tmdb(tmdb_data: dict[str, object]) -> MovieBaseSchema
 
 
 def create_movie_detail_from_tmdb(
-    movie_data: dict[str, object],
-    credits_data: dict[str, object] | None = None
+    movie_data: Mapping[str, object],
+    credits_data: Mapping[str, object] | None = None
 ) -> MovieDetailSchema:
     """
     Create a MovieDetailSchema instance from TMDB movie and credits data.
@@ -415,7 +416,7 @@ def create_paginated_person_response_from_tmdb(
         raise HttpError(500, "Failed to process person results")
 
 
-def create_genre_list_from_tmdb(tmdb_response: dict[str, object]) -> list[GenreSchema]:
+def create_genre_list_from_tmdb(tmdb_response: Mapping[str, object]) -> list[GenreSchema]:
     """
     Create a list of GenreSchema instances from TMDB genre list response.
 

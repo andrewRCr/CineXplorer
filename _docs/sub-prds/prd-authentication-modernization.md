@@ -38,11 +38,63 @@ This Sub-PRD defines the migration from custom User model authentication to djan
 
 1. **The system must migrate from custom User model to default Django User model** eliminating the AUTH_USER_MODEL setting that triggers the django-stubs bug.
 
+   **Migration Strategy: Fresh Database (Recommended for Demo)**
+
+   Given this is a portfolio/demo project with development-only data, the migration will use a fresh database approach:
+
+   **Prerequisites:**
+   - Full database export/backup: `pg_dump cinexplorer > backup_pre_auth_migration_$(date +%Y%m%d).sql`
+   - Schema snapshot: `python manage.py sqlmigrate <app> <migration_num> > schema_snapshot.sql`
+   - Document current admin account credentials
+   - Verify no production data exists
+
+   **Migration Steps:**
+   1. Create feature branch: `feature/authentication-modernization`
+   2. Install django-allauth: `pip install django-allauth`
+   3. Remove AUTH_USER_MODEL setting from settings.py
+   4. Update INSTALLED_APPS to include allauth apps
+   5. Drop existing database: `docker compose exec dev-db psql -U postgres -c "DROP DATABASE cinexplorer;"`
+   6. Create fresh database: `docker compose exec dev-db psql -U postgres -c "CREATE DATABASE cinexplorer;"`
+   7. Run migrations: `python manage.py migrate`
+   8. Create new superuser: `python manage.py createsuperuser`
+   9. Configure allauth settings and providers
+
+   **Verification Checks (Post-Migration):**
+   - ✅ Login with username succeeds
+   - ✅ Login with email succeeds
+   - ✅ Social auth (Google) returns OAuth redirect
+   - ✅ Social auth (GitHub) returns OAuth redirect
+   - ✅ Email verification flow sends verification email
+   - ✅ Email uniqueness enforced at database level
+   - ✅ JWT tokens generated and validated correctly
+   - ✅ mypy --strict runs without django-stubs errors
+
+   **Rollback Procedure:**
+   If migration fails or issues discovered:
+   1. Switch to main branch: `git checkout main`
+   2. Stop containers: `docker compose down`
+   3. Restore database: `docker compose exec -T dev-db psql -U postgres cinexplorer < backup_pre_auth_migration_*.sql`
+   4. Restart containers: `docker compose up -d`
+   5. Verify rollback: `python manage.py check` and test login
+   6. Expected outcome: System returns to pre-migration state with custom User model
+
+   **Alternative: In-Place Data Migration (NOT RECOMMENDED)**
+
+   If production data existed (which it doesn't), an in-place migration would require:
+   - Create reversible data migration to copy custom User → Django User
+   - Map custom fields to default User model equivalents
+   - Handle social account data separately
+   - Test migration on staging DB copy
+   - Maintain downtime window (estimated 5-10 minutes)
+   - Risk: Complex migration with potential data loss
+
+   Decision: Use fresh database approach for this demo/portfolio project.
+
 2. **The system must implement django-allauth** providing username/email login functionality identical to the current custom backend.
 
 3. **The system must support social authentication** for Google and GitHub OAuth to reduce demo friction.
 
-4. **The system must preserve all existing user data** through data migration ensuring no user accounts are lost.
+4. **The system must preserve all existing user data** through data migration ensuring no user accounts are lost. *(Note: For demo environment, recreating test accounts with fresh database is acceptable and preferred.)*
 
 5. **The system must maintain email verification functionality** integrating the existing ZeptoMail service through custom allauth adapters.
 
@@ -77,6 +129,34 @@ This Sub-PRD defines the migration from custom User model authentication to djan
 ### Security & Compatibility
 
 15. **The system must maintain JWT cookie authentication** preserving the existing secure token handling.
+
+   **CSRF Protection Strategy for JWT Cookies:**
+
+   The system uses JWT tokens stored in HTTP-only cookies, which requires explicit CSRF protection:
+
+   **Enforcement Mechanism:**
+   - Django's built-in CSRF middleware with CsrfViewMiddleware
+   - DRF's SessionAuthentication-style CSRF checking for cookie-based auth
+   - CSRF token passed via `X-CSRFToken` header (from `csrftoken` cookie)
+   - Double-submit cookie pattern: CSRF token in cookie + header validation
+
+   **Required Cookie Flags:**
+   - `HttpOnly=True` - Prevents JavaScript access to JWT tokens
+   - `Secure=True` - HTTPS-only transmission (enforced in production)
+   - `SameSite=Lax` - Protects against CSRF while allowing normal navigation
+     (Note: `SameSite=Strict` would break OAuth redirects)
+
+   **CSRF Validation Flow:**
+   1. GET `/api/auth/csrf/` returns CSRF token in `csrftoken` cookie
+   2. Frontend reads CSRF token from cookie
+   3. Frontend includes token in `X-CSRFToken` header for POST/PUT/DELETE
+   4. Django CsrfViewMiddleware validates token matches cookie
+   5. Requests without valid CSRF token return 403 Forbidden
+
+   **Exempted Endpoints:**
+   - `/api/auth/login/` - Public login endpoint (uses rate limiting instead)
+   - `/api/auth/register/` - Public registration endpoint (uses rate limiting)
+   - Social OAuth callbacks - Django-allauth handles CSRF for OAuth flows
 
 16. **The system must preserve user profile functionality** maintaining first_name, last_name, and other user fields.
 
@@ -125,6 +205,99 @@ This Sub-PRD defines the migration from custom User model authentication to djan
 5. **Social Login**: Google and GitHub OAuth fully functional for development demonstration
 6. **Email Integration**: ZeptoMail service continues working with enhanced UX
 7. **Portfolio Enhancement**: Industry-standard authentication showcases professional Django patterns
+
+### E2E Test Plan (Required for Merge)
+
+All E2E tests must pass in CI before merge approval. Tests use Django's test client and REST framework test utilities.
+
+**Test Environment Setup:**
+- Test database with isolated schema
+- Mock OAuth providers (Google, GitHub) using test credentials
+- Email backend: django.core.mail.backends.locmem.EmailBackend (capture emails in memory)
+- Test fixtures: 3 users (admin, verified user, unverified user)
+- Social app configs: Test Google/GitHub OAuth apps
+
+**Required E2E Tests:**
+
+1. **E2E Login - Password Authentication**
+   - **Test**: POST /api/auth/login/ with valid username + password
+   - **Acceptance Criteria**:
+     - Login succeeds within 200ms (p95)
+     - Response includes JWT access token in HTTP-only cookie
+     - Response includes CSRF token in csrftoken cookie
+     - Response body contains user data (id, username, email)
+     - HTTP 200 status code
+
+2. **E2E Login - Social OAuth (Google)**
+   - **Test**: GET /accounts/google/login/ → OAuth redirect → callback
+   - **Acceptance Criteria**:
+     - Redirect to Google OAuth consent page (HTTP 302)
+     - OAuth callback creates new user if email not exists
+     - OAuth callback logs in existing user if email matches
+     - JWT token set after successful OAuth flow
+     - Social account linked to user account
+
+3. **E2E Login - Social OAuth (GitHub)**
+   - **Test**: GET /accounts/github/login/ → OAuth redirect → callback
+   - **Acceptance Criteria**: Same as Google OAuth test
+
+4. **E2E CSRF Protection on Mutations**
+   - **Test**: POST /api/user-movie-data/ without CSRF token
+   - **Acceptance Criteria**:
+     - Request returns 403 Forbidden
+     - Error message indicates missing CSRF token
+     - Request succeeds when X-CSRFToken header included
+     - DELETE requests also protected by CSRF
+
+5. **E2E Token Refresh and Expiry**
+   - **Test**: POST /api/auth/refresh/ with valid refresh token
+   - **Acceptance Criteria**:
+     - New access token returned in HTTP-only cookie
+     - Access token expiry resets to configured lifetime (15 minutes)
+     - Refresh token rotated (new refresh token issued)
+     - Expired access token rejected with 401 Unauthorized
+
+6. **E2E Logout**
+   - **Test**: POST /api/auth/logout/ with valid session
+   - **Acceptance Criteria**:
+     - Access token cookie deleted (Max-Age=0)
+     - Refresh token cookie deleted
+     - Subsequent requests with old token return 401
+     - CSRF token remains valid (doesn't break CSRF)
+
+7. **E2E Email Verification Flow**
+   - **Test**: Register new user → verify email link → login
+   - **Acceptance Criteria**:
+     - Registration sends verification email
+     - Email contains valid verification link
+     - Clicking link activates account
+     - Login succeeds after verification
+     - Login fails before verification (if ACCOUNT_EMAIL_VERIFICATION='mandatory')
+     - Email captured in test email backend
+
+8. **E2E Email Uniqueness**
+   - **Test**: Register two users with same email
+   - **Acceptance Criteria**:
+     - Second registration returns 400 Bad Request
+     - Error message indicates duplicate email
+     - Database constraint prevents duplicate emails
+
+**CI Integration Requirements:**
+- Tests run in `.github/workflows/checks.yml` backend job
+- All 8 test scenarios must pass (0 failures)
+- Test coverage for authentication module >= 85%
+- Tests must complete within 60 seconds total
+- Failure of any test blocks PR merge
+
+**Test Execution Commands:**
+```bash
+# Run E2E auth tests
+docker compose exec backend python manage.py test authentication.tests.test_e2e --settings=config.settings_test
+
+# Run with coverage
+docker compose exec backend coverage run --source='authentication' manage.py test authentication.tests.test_e2e
+docker compose exec backend coverage report --fail-under=85
+```
 
 ## Open Questions
 

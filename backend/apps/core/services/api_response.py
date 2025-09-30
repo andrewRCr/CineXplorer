@@ -111,7 +111,7 @@ class ApiResponse:
             value = self.get_header(header_name)
             if value is not None:
                 # Try to convert numeric values to integers
-                if key in ['limit', 'remaining', 'retry_after']:
+                if key in ['limit', 'remaining', 'reset', 'retry_after']:
                     try:
                         rate_limit_info[key] = int(value)
                     except ValueError:
@@ -137,13 +137,13 @@ class ApiResponse:
                 except ValueError:
                     pass
 
-        # Add data size information
+        # Add data size information (in bytes)
         if self.data is not None:
             if isinstance(self.data, str):
-                content_info['data_size'] = len(self.data)
+                content_info['data_size'] = len(self.data.encode('utf-8'))
             elif isinstance(self.data, (dict, list)):
                 try:
-                    content_info['data_size'] = len(json.dumps(self.data))
+                    content_info['data_size'] = len(json.dumps(self.data).encode('utf-8'))
                 except (TypeError, ValueError):
                     content_info['data_size'] = None
 
@@ -168,8 +168,9 @@ class ApiResponse:
             'duration_ms': self.duration_ms
         }
 
-        # Add rate limit info if this is a rate limit error
-        if self.is_rate_limited():
+        # Add rate limit info for rate limit errors or any response with Retry-After
+        # Some backends use 503/529 with Retry-After for throttling instead of 429
+        if self.is_rate_limited() or self.get_header('retry-after') is not None:
             rate_limit_info = self.get_rate_limit_info()
             if rate_limit_info:
                 error_summary['rate_limit_info'] = rate_limit_info

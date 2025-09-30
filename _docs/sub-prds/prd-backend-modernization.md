@@ -72,6 +72,7 @@ This Sub-PRD defines a comprehensive backend modernization effort for CineXplore
 7. **The system must implement consistent service layer patterns** applying the TMDB API client architecture to all external service integrations.
 
 8. **The system must identify and refactor all function-based services to class-based architecture** systematically converting services throughout the codebase (e.g., `movie_service.py`, `email_service.py`, and other utility services) from global functions to proper service classes with dependency injection.
+   - Ensure the ZeptoMail service reflects the django-allauth adapter contract introduced in Authentication Modernization, removing legacy token management code and consolidating email sending through the shared adapter.
 
 9. **The system must standardize error handling patterns** across all services with consistent logging and user-facing error messages.
 
@@ -183,6 +184,7 @@ This Sub-PRD defines a comprehensive backend modernization effort for CineXplore
 - **Performance Impact**: Ensure type checking and quality improvements don't degrade runtime performance
 - **Development Workflow**: Integrate quality checks into existing Docker Compose development environment
 - **Tool Integration**: Work with existing flake8, pytest, and development tooling, with additions for Celery/Redis and Playwright
+- **Authentication Alignment**: Coordinate with the Authentication Modernization deliverables so backend services, including ZeptoMail and profile utilities, rely on the new django-allauth models and adapters rather than the removed custom user constructs.
 - **Asynchronous Architecture**: Design task processing to complement existing synchronous API patterns without breaking current functionality
 - **E2E Testing Strategy**: Implement Playwright tests that can run independently or as part of CI, with proper test data management
 

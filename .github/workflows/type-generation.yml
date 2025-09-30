@@ -124,6 +124,19 @@ jobs:
           echo "OpenAPI schema exported successfully"
           echo "Schema size: $(wc -l frontend/openapi.json | awk '{print $1}') lines"
 
+          # Validate JSON structure
+          if ! python3 -m json.tool frontend/openapi.json > /dev/null 2>&1; then
+            echo "Error: Generated openapi.json is not valid JSON"
+            echo "First 50 lines of openapi.json:"
+            head -50 frontend/openapi.json
+            echo ""
+            echo "Last 50 lines of openapi.json:"
+            tail -50 frontend/openapi.json
+            exit 1
+          fi
+
+          echo "JSON validation passed"
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:

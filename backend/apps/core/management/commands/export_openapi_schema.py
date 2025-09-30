@@ -44,6 +44,10 @@ class Command(BaseCommand):
         original_django_level = django_logger.level
         django_logger.setLevel(logging.CRITICAL + 1)
 
+        # Disable Django warnings that might corrupt JSON output
+        import warnings
+        warnings.filterwarnings('ignore')
+
         try:
             # Get the OpenAPI schema from the Django Ninja API instance
             schema = api.get_openapi_schema()

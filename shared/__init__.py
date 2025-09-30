@@ -4,6 +4,17 @@ Shared types and constants for CineXplorer
 This package contains TypedDict definitions and error codes that are shared
 between frontend TypeScript and backend Python to ensure API contract consistency.
 """
+import warnings
+
+# Emit deprecation warning on import
+warnings.warn(
+    "The 'shared' module is deprecated. "
+    "API types should use Django Ninja Pydantic schemas with auto-generated TypeScript types. "
+    "ERROR_CODES may be migrated to backend/shared/ in Backend Modernization. "
+    "See _docs/notes-backend-modernization.md for migration plan.",
+    category=DeprecationWarning,
+    stacklevel=2
+)
 
 from .api_types import (
     # API Response Types

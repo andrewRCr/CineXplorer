@@ -71,10 +71,38 @@ jobs:
           echo "Starting services with standard CI configuration..."
           docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.ci.yml up -d dev-db backend
 
-          # Wait for database and run migrations (same as checks.yml pattern)
+          # Wait for database and run migrations with retry logic for transient failures
           echo "Waiting for database and running migrations..."
-          docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.ci.yml exec -T backend python manage.py wait_for_db
-          docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.ci.yml exec -T backend python manage.py migrate
+
+          # Retry wait_for_db command (up to 5 attempts with backoff)
+          for i in {1..5}; do
+            if docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.ci.yml exec -T backend python manage.py wait_for_db; then
+              echo "Database ready on attempt $i"
+              break
+            else
+              if [ $i -eq 5 ]; then
+                echo "Failed to connect to database after 5 attempts"
+                exit 1
+              fi
+              echo "Database not ready, retrying in $((i * 2)) seconds... (attempt $i/5)"
+              sleep $((i * 2))
+            fi
+          done
+
+          # Retry migrate command (up to 5 attempts with backoff)
+          for i in {1..5}; do
+            if docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.ci.yml exec -T backend python manage.py migrate; then
+              echo "Migrations completed on attempt $i"
+              break
+            else
+              if [ $i -eq 5 ]; then
+                echo "Failed to run migrations after 5 attempts"
+                exit 1
+              fi
+              echo "Migration failed, retrying in $((i * 2)) seconds... (attempt $i/5)"
+              sleep $((i * 2))
+            fi
+          done
 
           echo "Backend service is now ready for API calls"
 
@@ -82,17 +110,9 @@ jobs:
         env:
           COMPOSE_PROJECT_NAME: cinexplorer-typegen
         run: |
-          # Export schema using Django management command with output cleanup
+          # Export schema directly to final location (command output is now clean)
           echo "Exporting OpenAPI schema..."
-          docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.ci.yml exec -T backend python manage.py export_openapi_schema --verbosity=0 2>/dev/null > frontend/openapi_raw.json
-
-          # Clean up the output by removing Django CI logging lines and keeping only JSON
-          echo "Cleaning up schema output..."
-          # Find the line where JSON starts (first line with '{') and extract from there
-          grep -n '^{' frontend/openapi_raw.json | head -1 | cut -d: -f1 | xargs -I {} tail -n +{} frontend/openapi_raw.json > frontend/openapi.json
-
-          # Remove the temporary file
-          rm frontend/openapi_raw.json
+          docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.ci.yml exec -T backend python manage.py export_openapi_schema > frontend/openapi.json
 
           # Validate export was successful
           if [ ! -f frontend/openapi.json ] || [ ! -s frontend/openapi.json ]; then

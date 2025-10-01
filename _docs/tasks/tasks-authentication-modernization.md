@@ -3,7 +3,8 @@
 ## Relevant Files
 
 ### Backend Core
-- `backend/apps/accounts/models.py` - Custom User and EmailVerificationToken models to be removed
+- `backend/apps/accounts/models.py` - Custom User and EmailVerificationToken models removed (migration complete)
+- `backend/apps/accounts/admin.py` - Custom admin configurations removed (using Django defaults)
 - `backend/apps/authentication/` - Authentication app that will be migrated to use django-allauth
 - `backend/config/settings.py` - Remove AUTH_USER_MODEL, add allauth apps
 - `backend/config/urls.py` - Add allauth URL patterns
@@ -12,6 +13,7 @@
 - `backend/config/.env.example` - Template for environment variables
 
 ### Django-allauth Integration
+- `backend/apps/authentication/email_verification.py` - Compatibility service for email_verified semantics via allauth EmailAddress
 - `backend/apps/authentication/adapters.py` - Custom allauth adapter for ZeptoMail integration
 - `backend/apps/authentication/auth_ninja.py` - Update JWT auth to work with default User model
 - `backend/templates/account/` - Allauth email templates with CineXplorer branding
@@ -50,13 +52,15 @@
   - [x] 1.5 Add OAuth environment variables to `.env.example` (GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET)
 
 - [ ] 2.0 Database Migration and User Model Cleanup
-  - [ ] 2.1 Remove AUTH_USER_MODEL setting from `backend/config/settings.py`
-  - [ ] 2.2 Create compatibility helper service to expose `email_verified` semantics via allauth's EmailAddress records
-  - [ ] 2.3 Update all references to custom User model to use `django.contrib.auth.models.User`
-  - [ ] 2.4 Remove custom User and EmailVerificationToken models from `backend/apps/accounts/models.py`
-  - [ ] 2.5 Drop and recreate database: `docker compose exec dev-db psql -U postgres -c "DROP DATABASE cinexplorer; CREATE DATABASE cinexplorer;"`
-  - [ ] 2.6 Run migrations: `docker compose exec backend python manage.py migrate`
-  - [ ] 2.7 Create new superuser account with documented credentials
+  - [x] 2.1 Remove AUTH_USER_MODEL setting from `backend/config/settings.py`
+  - [x] 2.2 Create compatibility helper service to expose `email_verified` semantics via allauth's EmailAddress records
+  - [x] 2.3 Update all references to custom User model to use `django.contrib.auth.models.User`
+  - [x] 2.4 Remove custom User and EmailVerificationToken models from `backend/apps/accounts/models.py`
+  - [ ] 2.5 Update database naming in `.env` and `docker-compose.yml` to use `cinexplorer_dev` / `cinexplorer_user` / `cinexplorer_dev_pass`
+  - [ ] 2.6 Drop and recreate database: `docker compose -f infrastructure/docker-compose.yml exec dev-db psql -U devUser -c "DROP DATABASE devDB;"`
+  - [ ] 2.7 Create new database with updated name: `docker compose -f infrastructure/docker-compose.yml exec dev-db psql -U devUser -c "CREATE DATABASE cinexplorer_dev;"`
+  - [ ] 2.8 Run migrations: `docker compose -f infrastructure/docker-compose.yml exec backend python manage.py migrate`
+  - [ ] 2.9 Create new superuser account: `admin` / `admin@localhost` (documented credentials)
 
 - [ ] 3.0 Django-allauth Integration
   - [ ] 3.1 Add allauth apps to INSTALLED_APPS in settings.py (django.contrib.sites, allauth, allauth.account, allauth.socialaccount, allauth.socialaccount.providers.google, allauth.socialaccount.providers.github)
@@ -95,26 +99,40 @@
   - [ ] 6.7 Update `.github/workflows/checks.yml` to call updated type_check.py script
   - [ ] 6.8 Verify no increase in `type: ignore` comments
 
-- [ ] 7.0 Testing and Quality Assurance
+- [ ] 7.0 Comprehensive Testing, Type Safety, and Quality Assurance
   - [ ] 7.1 Create test fixtures in `backend/apps/authentication/tests/fixtures.py`
   - [ ] 7.2 Implement mock OAuth providers in `backend/apps/authentication/tests/test_oauth_mocks.py`
-  - [ ] 7.3 Write E2E test for password authentication
-  - [ ] 7.4 Write E2E test for Google OAuth flow
-  - [ ] 7.5 Write E2E test for GitHub OAuth flow
-  - [ ] 7.6 Write E2E test for CSRF protection
-  - [ ] 7.7 Write E2E test for token refresh
-  - [ ] 7.8 Write E2E test for logout
-  - [ ] 7.9 Write E2E test for email verification
-  - [ ] 7.10 Write E2E test for email uniqueness constraint
-  - [ ] 7.11 Run all tests with coverage and verify >= 85% coverage
-  - [ ] 7.12 Verify all tests complete in < 60 seconds
+  - [ ] 7.3 Write E2E test for password authentication (username and email login)
+  - [ ] 7.4 Write E2E test for Google OAuth flow (complete redirect and callback)
+  - [ ] 7.5 Write E2E test for GitHub OAuth flow (complete redirect and callback)
+  - [ ] 7.6 Write E2E test for CSRF protection (authenticated endpoints)
+  - [ ] 7.7 Write E2E test for JWT token refresh (rotation and expiry)
+  - [ ] 7.8 Write E2E test for logout (cookie clearing and invalidation)
+  - [ ] 7.9 Write E2E test for email verification (allauth EmailAddress flow)
+  - [ ] 7.10 Write E2E test for email uniqueness constraint (allauth enforcement)
+  - [ ] 7.11 Write E2E test for password reset flow (allauth implementation)
+  - [ ] 7.12 Review and update existing authentication tests for allauth compatibility
+  - [ ] 7.13 Verify all authentication endpoints have test coverage (registration, login, logout, refresh, verify-email)
+  - [ ] 7.14 Test user profile endpoints with default User model (GET/PATCH user data)
+  - [ ] 7.15 Run full authentication test suite and verify 100% pass rate
+  - [ ] 7.16 Run authentication tests with coverage: verify >= 90% for authentication app
+  - [ ] 7.17 Verify all authentication tests complete in < 60 seconds
+  - [ ] 7.18 Run full backend test suite (all apps) and verify 100% pass rate
+  - [ ] 7.19 Verify zero type errors in authentication module (Pyright + mypy --strict)
+  - [ ] 7.20 Document any unavoidable type: ignore comments with rationale
+  - [ ] 7.21 Test authentication with frontend integration (manual smoke test)
 
-- [ ] 8.0 Documentation and Deployment Preparation
-  - [ ] 8.1 Update README.md with OAuth setup instructions
-  - [ ] 8.2 Document OAuth app configuration in `_docs/notes/notes-authentication-modernization.md`
-  - [ ] 8.3 Update `_docs/PROJECT-STATUS.md` to reflect completed authentication modernization
-  - [ ] 8.4 Add social login buttons to `frontend/src/pages/user/Login.tsx`
-  - [ ] 8.5 Update frontend authentication service if endpoint changes are needed
-  - [ ] 8.6 Test complete authentication flow end-to-end in development environment
-  - [ ] 8.7 Verify all quality gates pass (tests, linting, type checking)
-  - [ ] 8.8 Prepare deployment notes for production OAuth configuration
+- [ ] 8.0 Code Cleanup and Final Documentation
+  - [ ] 8.1 Remove temporary email verification bridge (`backend/apps/authentication/email_verification.py`)
+  - [ ] 8.2 Replace all `email_verification_service` calls with direct allauth EmailAddress API
+  - [ ] 8.3 Remove all EmailVerificationToken references from views, admin, email_service
+  - [ ] 8.4 Verify no references to custom User model or EmailVerificationToken remain
+  - [ ] 8.5 Remove CustomUserModelBackend if replaced by allauth authentication backend
+  - [ ] 8.6 Verify no dead code or unused imports remain
+  - [ ] 8.7 Update README.md with OAuth setup instructions
+  - [ ] 8.8 Update `_docs/PROJECT-STATUS.md` to reflect completed authentication modernization
+  - [ ] 8.9 Add social login buttons to `frontend/src/pages/user/Login.tsx`
+  - [ ] 8.10 Update frontend authentication service if endpoint changes are needed
+  - [ ] 8.11 Test complete authentication flow end-to-end in development environment
+  - [ ] 8.12 Verify all quality gates pass (tests, linting, type checking)
+  - [ ] 8.13 Prepare deployment notes for production OAuth configuration

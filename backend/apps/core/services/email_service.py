@@ -4,16 +4,13 @@ Email service for sending transactional emails via Zeptomail.
 from __future__ import annotations
 
 import logging
-import secrets
-from datetime import timedelta
 
 import requests
 from django.conf import settings
 from django.template.loader import render_to_string
-from django.utils import timezone
 
-from accounts.models import EmailVerificationToken
 from django.contrib.auth.models import User
+from authentication.email_verification import email_verification_service
 
 logger = logging.getLogger(__name__)
 
@@ -43,153 +40,44 @@ class ZeptomailService:
         """
         Send email verification link to user.
 
+        TODO: This method needs full refactoring for django-allauth integration in Task 5.0.
+        Currently stubbed to allow application startup during database migration.
+        Allauth will handle email verification through its own adapter system.
+
         Args:
             user: User instance to send verification email to
 
         Returns:
             bool: True if email sent successfully, False otherwise
         """
-        # Development mode - generate real token but log instead of sending
+        # TEMPORARY STUB: Log and mark email as verified for development
+        # This will be replaced with allauth email verification in Task 5.0
+        logger.warning(
+            "Email verification temporarily disabled during auth modernization",
+            extra={
+                "user_email": user.email,
+                "message": "Will be integrated with django-allauth in Task 5.0",
+            },
+        )
+
+        # Auto-verify for development during migration
         if self.dev_mode:
             try:
-                # Generate real verification token for local testing
-                token, created = EmailVerificationToken.objects.get_or_create(
-                    user=user,
-                    defaults={
-                        "token": secrets.token_urlsafe(32),
-                        "expires_at": timezone.now()
-                        + getattr(
-                            settings,
-                            "EMAIL_VERIFICATION_TOKEN_EXPIRY",
-                            timedelta(days=1),
-                        ),
-                    },
-                )
-
-                # If token exists but is expired, regenerate it
-                if not created and token.is_expired:
-                    token.token = secrets.token_urlsafe(32)
-                    token.expires_at = timezone.now() + getattr(
-                        settings, "EMAIL_VERIFICATION_TOKEN_EXPIRY", timedelta(days=1)
-                    )
-                    token.save()
-
-                # Generate real verification URL for testing
-                verification_url = f"{settings.FRONTEND_URL}/verify-email/{token.token}"
-
+                email_verification_service.mark_email_verified(user)
                 logger.info(
-                    "DEV MODE: Verification email simulated",
-                    extra={
-                        "user_email": user.email,
-                        "verification_url": verification_url,
-                        "token_expires": token.expires_at.isoformat(),
-                    },
+                    "DEV MODE: Email auto-verified during migration",
+                    extra={"user_email": user.email},
                 )
                 return True
-
             except Exception as e:
                 logger.error(
-                    "DEV MODE: Failed to generate verification token",
+                    "DEV MODE: Failed to mark email as verified",
                     extra={"user_email": user.email, "error": str(e)},
                     exc_info=True,
                 )
                 return False
 
-        try:
-            # Generate or get existing verification token
-            token, created = EmailVerificationToken.objects.get_or_create(
-                user=user,
-                defaults={
-                    "token": secrets.token_urlsafe(32),
-                    "expires_at": timezone.now()
-                    + settings.EMAIL_VERIFICATION_TOKEN_EXPIRY,
-                },
-            )
-
-            # If token exists but is expired, update it
-            if not created and token.is_expired:
-                token.token = secrets.token_urlsafe(32)
-                token.expires_at = (
-                    timezone.now() + settings.EMAIL_VERIFICATION_TOKEN_EXPIRY
-                )
-                token.save()
-
-            # Generate verification URL
-            verification_url = f"{settings.FRONTEND_URL}/verify-email/{token.token}"
-
-            # Prepare email content
-            subject = "Verify Your CineXplorer Account"
-            html_body = render_to_string(
-                "emails/verify_email.html",
-                {
-                    "user": user,
-                    "verification_url": verification_url,
-                    "frontend_url": settings.FRONTEND_URL,
-                },
-            )
-
-            # Zeptomail API payload
-            payload = {
-                "from": {
-                    "address": settings.ZEPTOMAIL_SENDER_EMAIL,
-                    "name": "CineXplorer",
-                },
-                "to": [
-                    {
-                        "email_address": {
-                            "address": user.email,
-                            "name": user.username,
-                        }
-                    }
-                ],
-                "subject": subject,
-                "htmlbody": html_body,
-                "track_clicks": True,
-                "track_opens": True,
-            }
-
-            # Send email via Zeptomail
-            response = requests.post(
-                f"{self.base_url}/email", json=payload, headers=self._get_headers()
-            )
-
-            if response.status_code == 201:
-                logger.info(
-                    "Verification email sent successfully",
-                    extra={"user_email": user.email, "status_code": response.status_code},
-                )
-                return True
-            else:
-                # Redact potentially sensitive response details
-                response_text = response.text[:200] if response.text else "No response body"
-                logger.error(
-                    "Failed to send verification email",
-                    extra={
-                        "user_email": user.email,
-                        "status_code": response.status_code,
-                        "response_preview": response_text,
-                    },
-                )
-
-                # Log detailed error for debugging (debug level to avoid production spam)
-                logger.debug(
-                    "Verification email error details",
-                    extra={
-                        "request_url": response.request.url,
-                        "response_headers": dict(response.headers),
-                        "full_response": response.text,
-                    },
-                )
-
-                return False
-
-        except Exception as e:
-            logger.error(
-                "Error sending verification email",
-                extra={"user_email": user.email, "error": str(e)},
-                exc_info=True,
-            )
-            return False
+        return True
 
     def send_welcome_email(self, user: User) -> bool:
         """

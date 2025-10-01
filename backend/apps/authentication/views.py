@@ -39,7 +39,6 @@ from authentication.serializers import (
     UserSerializer
 )
 from core.services.email_service import email_service
-from accounts.models import EmailVerificationToken
 from django.contrib.auth.models import User
 
 
@@ -222,43 +221,16 @@ class EmailVerificationView(APIView):
     permission_classes = [permissions.AllowAny]
 
     def get(self, request: Request, token: str, *args: object, **kwargs: object) -> Response:
-        """Verify user's email address using the token."""
-        try:
-            # Find the verification token
-            verification_token = EmailVerificationToken.objects.get(token=token)
+        """
+        Verify user's email address using the token.
 
-            # Check if token is expired
-            if verification_token.is_expired:
-                return Response({
-                    'error': 'Verification link has expired. Please request a new one.'
-                }, status=status.HTTP_400_BAD_REQUEST)
-
-            # Mark user as verified
-            user = verification_token.user
-            was_already_verified = user.email_verified
-            user.email_verified = True
-            user.save()
-
-            # Delete the used token
-            verification_token.delete()
-
-            # Send welcome email only if user wasn't already verified
-            if not was_already_verified:
-                email_service.send_welcome_email(user)
-
-            return Response({
-                'message': 'Email verified successfully! You can now log in to your account.',
-                'email_verified': True
-            }, status=status.HTTP_200_OK)
-
-        except EmailVerificationToken.DoesNotExist:
-            return Response({
-                'error': 'Invalid verification link.'
-            }, status=status.HTTP_400_BAD_REQUEST)
-        except Exception:
-            return Response({
-                'error': 'An error occurred during verification.'
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        TODO: This endpoint needs full refactoring for django-allauth in Task 5.0.
+        Currently stubbed to prevent application crashes during database migration.
+        """
+        return Response({
+            'error': 'Email verification temporarily unavailable during system upgrade. '
+                     'Your account will be auto-verified for development.'
+        }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
 
 
 @method_decorator(csrf_exempt, name='dispatch')

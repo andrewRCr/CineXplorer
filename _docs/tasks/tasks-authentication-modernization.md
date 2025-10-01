@@ -28,13 +28,17 @@
 - `.github/workflows/checks.yml` - Update CI to run mypy --strict
 
 ### OAuth Configuration
-- `backend/config/.env.example` - Add OAuth client ID/secret variables
-- `backend/apps/authentication/admin.py` - Configure Sites and SocialApp models
+- `backend/config/.env` - OAuth credentials for Google and GitHub (GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET)
+- `backend/config/settings.py` - AUTHENTICATION_BACKENDS updated to include allauth backend, LOGIN_REDIRECT_URL and ACCOUNT_LOGOUT_REDIRECT_URL configured
+- `infrastructure/Caddyfile` - Added /accounts/* and /admin/* proxy handlers for django-allauth URLs
+- Django database - SocialApp entries created for Google and GitHub providers (linked to Site ID 1)
 
 ### Testing
 - `backend/apps/authentication/tests/test_e2e.py` - New comprehensive E2E test suite
 - `backend/apps/authentication/tests/fixtures.py` - Test fixtures for authentication scenarios
 - `backend/apps/authentication/tests/test_oauth_mocks.py` - Mock OAuth providers
+- `backend/apps/core/tests/test_admin.py` - Updated to use Django default User model (auth_user_* admin URLs)
+- `backend/apps/core/tests/test_models.py` - Updated email validation test for Django default User behavior
 
 ### Frontend Updates
 - `frontend/src/pages/user/Login.tsx` - Add social login buttons
@@ -74,14 +78,14 @@
   - [x] 3.5 JWTCookieAuth class already uses AbstractUser (no changes needed - compatible with default User model)
   - [x] 3.6 Verify existing authentication endpoints remain compatible (all 20 tests pass)
 
-- [ ] 4.0 OAuth Provider Configuration
-  - [ ] 4.1 Create Google Cloud OAuth 2.0 credentials and configure redirect URI
-  - [ ] 4.2 Create GitHub OAuth App and configure callback URL
-  - [ ] 4.3 Create SocialApp entries in Django admin for Google provider
-  - [ ] 4.4 Create SocialApp entries in Django admin for GitHub provider
-  - [ ] 4.5 Test OAuth flow for Google authentication
-  - [ ] 4.6 Test OAuth flow for GitHub authentication
-  - [ ] 4.7 Document test accounts for demo purposes
+- [x] 4.0 OAuth Provider Configuration
+  - [x] 4.1 Create Google Cloud OAuth 2.0 credentials and configure redirect URI
+  - [x] 4.2 Create GitHub OAuth App and configure callback URL
+  - [x] 4.3 Create SocialApp entries in Django admin for Google provider
+  - [x] 4.4 Create SocialApp entries in Django admin for GitHub provider
+  - [x] 4.5 Test OAuth flow for Google authentication
+  - [x] 4.6 Test OAuth flow for GitHub authentication
+  - [x] 4.7 Document test accounts for demo purposes
 
 - [ ] 5.0 Email System Integration
   - [ ] 5.1 Create custom allauth adapter in `backend/apps/authentication/adapters.py` subclassing DefaultAccountAdapter

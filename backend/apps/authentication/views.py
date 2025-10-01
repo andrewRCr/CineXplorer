@@ -38,6 +38,7 @@ from authentication.serializers import (
     RegisterSerializer,
     UserSerializer
 )
+from authentication.email_verification import email_verification_service
 from core.services.email_service import email_service
 from django.contrib.auth.models import User
 
@@ -250,7 +251,7 @@ class ResendVerificationView(APIView):
         try:
             user = User.objects.get(email=email)
 
-            if user.email_verified:
+            if email_verification_service.is_email_verified(user):
                 return Response({
                     'error': 'This email address is already verified.'
                 }, status=status.HTTP_400_BAD_REQUEST)

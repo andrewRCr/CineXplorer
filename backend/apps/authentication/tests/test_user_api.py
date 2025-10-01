@@ -2,6 +2,7 @@
 """
 Tests for the user API.
 """
+from typing import Any
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractUser, User
@@ -20,7 +21,7 @@ TOKEN_URL: str = reverse('token_obtain_pair')
 ME_URL: str = reverse('authentication:me')
 
 
-def create_user(**params) -> AbstractUser:
+def create_user(**params: Any) -> AbstractUser:
     """ Creates and returns a new user for testing purposes. """
 
     # Create user without email_verified (not a field on Django's default User model)
@@ -44,11 +45,12 @@ class PublicUserApiTests(TestCase):
 
         self.client = APIClient()
 
-    def create_payload(self,
-
-                       username='testUser',
-                       email='test@example.com',
-                       password='testPass123') -> dict[str, str]:
+    def create_payload(
+        self,
+        username: str = 'testUser',
+        email: str = 'test@example.com',
+        password: str = 'testPass123'
+    ) -> dict[str, str]:
         """ Creates and returns a dictionary of values for test user creation. """
 
         return {

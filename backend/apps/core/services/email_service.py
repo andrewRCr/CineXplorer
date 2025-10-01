@@ -180,7 +180,7 @@ def get_email_service() -> ZeptomailService:
 class _EmailServiceProxy:
     """Proxy that delegates attribute access to the lazily-initialized service."""
 
-    def __getattr__(self, name: str):
+    def __getattr__(self, name: str) -> object:
         return getattr(get_email_service(), name)
 
 

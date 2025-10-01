@@ -33,11 +33,12 @@ def get_jwt_cookie_name() -> str:
     Returns:
         The configured cookie name, defaulting to 'access_token'.
     """
-    return getattr(
+    jwt_settings = cast(dict[str, Any], getattr(
         settings,
         'SIMPLE_JWT',
         {}
-    ).get('ACCESS_TOKEN_NAME', 'access_token')
+    ))
+    return cast(str, jwt_settings.get('ACCESS_TOKEN_NAME', 'access_token'))
 
 
 class JWTCookieAuth(APIKeyCookie):
@@ -51,15 +52,16 @@ class JWTCookieAuth(APIKeyCookie):
     - JWT cookie-based authentication
     """
 
-    def __init__(self):
+    # Set the cookie name as a class attribute (Django Ninja pattern)
+    param_name: str = get_jwt_cookie_name()
+
+    def __init__(self) -> None:
         """Initialize the JWT cookie authentication scheme."""
-        # Get cookie name from Django settings
-        cookie_name = get_jwt_cookie_name()
+        # APIKeyCookie.__init__ takes csrf: bool parameter
+        # We enable CSRF protection for cookie-based auth
+        super().__init__(csrf=True)
 
-        # APIKeyCookie expects the cookie name as the first parameter
-        super().__init__(cookie_name)
-
-        logger.debug(f"Initialized JWT cookie auth with cookie name: {cookie_name}")
+        logger.debug(f"Initialized JWT cookie auth with cookie name: {self.param_name}")
 
     def authenticate(self, request: HttpRequest, key: str | None) -> AbstractUser | None:
         """
@@ -85,8 +87,8 @@ class JWTCookieAuth(APIKeyCookie):
             validated_token = jwt_auth.get_validated_token(key.encode('utf-8'))
 
             # Get user from validated token
-            user = jwt_auth.get_user(validated_token)  # type: ignore[misc]
-            if user and hasattr(user, 'id'):  # type: ignore[arg-type]
+            user = jwt_auth.get_user(validated_token)
+            if user and hasattr(user, 'id'):
                 username = getattr(cast(object, user), 'username', 'unknown')
                 logger.debug(f"Successfully authenticated user: {username}")
                 return cast(AbstractUser, user)

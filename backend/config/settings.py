@@ -211,7 +211,13 @@ ZEPTOMAIL_API_KEY = os.environ.get("ZEPTOMAIL_API_KEY", "")
 ZEPTOMAIL_SENDER_EMAIL = os.environ.get(
     "ZEPTOMAIL_SENDER_EMAIL", "CineXplorer@andrewcreekmore.com"
 )
-EMAIL_VERIFICATION_TOKEN_EXPIRY = timedelta(hours=24)
+# Email verification expiry (days) - configurable via environment variable
+# Default: 3 days (72 hours) - reasonable for production use
+EMAIL_VERIFICATION_EXPIRY_DAYS = int(
+    os.environ.get("EMAIL_VERIFICATION_EXPIRY_DAYS", "3")
+)
+# Legacy constant kept for backward compatibility (to be removed in Task 8.0)
+EMAIL_VERIFICATION_TOKEN_EXPIRY = timedelta(days=EMAIL_VERIFICATION_EXPIRY_DAYS)
 FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:5173")
 
 # Validate email configuration in production
@@ -253,8 +259,8 @@ ACCOUNT_LOGOUT_ON_GET = False  # Require POST for logout (CSRF protection)
 # Session configuration
 ACCOUNT_SESSION_REMEMBER = True  # Remember user sessions
 
-# Email confirmation
-ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 1  # Match EMAIL_VERIFICATION_TOKEN_EXPIRY
+# Email confirmation expiry (uses same value as EMAIL_VERIFICATION_EXPIRY_DAYS)
+ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = EMAIL_VERIFICATION_EXPIRY_DAYS
 ACCOUNT_EMAIL_SUBJECT_PREFIX = "[CineXplorer] "
 
 # Adapter configuration - Custom adapter for ZeptoMail integration

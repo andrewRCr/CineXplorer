@@ -33,7 +33,9 @@ sys.modules["core.services.email_service"] = mock_email_module
 
 # Override email settings for tests
 ZEPTOMAIL_API_KEY = "test_key"
-EMAIL_VERIFICATION_TOKEN_EXPIRY = timedelta(hours=24)
+EMAIL_VERIFICATION_EXPIRY_DAYS = 1  # Short expiry for faster tests
+EMAIL_VERIFICATION_TOKEN_EXPIRY = timedelta(days=EMAIL_VERIFICATION_EXPIRY_DAYS)
+ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = EMAIL_VERIFICATION_EXPIRY_DAYS
 FRONTEND_URL = "http://testserver"
 
 # Add missing settings for tests

@@ -44,6 +44,18 @@ CineXplorer is a movie discovery web application in active development. The core
 - Containerized Docker setup for all services
 - Caddy reverse proxy for development environment
 
+### ✅ Logging System
+
+**Status**: Completed September 23, 2025 | [Archive](./_docs/archive/completion-metadata/completion-logging-system.md)
+
+- Django backend logging with configurable levels and request correlation
+- React frontend error boundaries and logging service
+- TMDB API call tracking with performance monitoring (>1000ms warnings)
+- Security-compliant logging (API keys properly excluded)
+- Docker volume integration for log file access
+- Comprehensive structured logging with correlation IDs
+- Production-ready logging configuration with rotation
+
 ### ✅ API Layer Modernization (Phase 1)
 
 **Status**: Completed September 30, 2025 | [Archive](./_docs/archive/completion-metadata/completion-api-layer-modernization-p1.md)
@@ -58,16 +70,6 @@ CineXplorer is a movie discovery web application in active development. The core
 - Zero technical debt in movie app and core infrastructure
 - **Phase 2 Deferred**: UserMovieData and User/Accounts migration awaits Authentication Modernization
 
-### ✅ Logging System
-
-- Django backend logging with configurable levels and request correlation
-- React frontend error boundaries and logging service
-- TMDB API call tracking with performance monitoring (>1000ms warnings)
-- Security-compliant logging (API keys properly excluded)
-- Docker volume integration for log file access
-- Comprehensive structured logging with correlation IDs
-- Production-ready logging configuration with rotation
-
 ## Work in Progress
 
 ### 🚧 Placeholders & Partial Implementation
@@ -80,12 +82,13 @@ CineXplorer is a movie discovery web application in active development. The core
 
 ### High Priority
 
-- **Authentication Modernization** (Next Phase - Deferred):
+- **Authentication Modernization** (In Planning - Branch: `feature/authentication-modernization`):
   - Migrate from custom User model to django-allauth to resolve django-stubs mypy --strict bug
   - Enable comprehensive type checking across entire backend codebase
   - Implement Google/GitHub OAuth for reduced demo friction and portfolio enhancement
   - Preserve existing email verification workflow with ZeptoMail integration
   - **Blocks**: API Layer Modernization Phase 2 (requires auth migration first)
+  - **Deliverables**: django-allauth integration, OAuth providers (Google/GitHub), mypy --strict enabled, 8 E2E tests
 
 - **API Layer Modernization Phase 2** (Deferred - After Auth Modernization):
   - Migrate UserMovieData and User/Accounts domains from DRF to Django Ninja

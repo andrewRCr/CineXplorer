@@ -202,6 +202,17 @@ ZEPTOMAIL_SENDER_EMAIL = os.environ.get(
 EMAIL_VERIFICATION_TOKEN_EXPIRY = timedelta(hours=24)
 FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:5173")
 
+# Validate email configuration in production
+# Allow missing API key in development (dev_mode) and testing
+if not ZEPTOMAIL_API_KEY and not DEBUG and "test" not in sys.argv:
+    import warnings
+    warnings.warn(
+        "ZEPTOMAIL_API_KEY is not set. Email delivery will fail in production. "
+        "Set ZEPTOMAIL_API_KEY environment variable or emails will not be sent.",
+        RuntimeWarning,
+        stacklevel=2
+    )
+
 # Forbidden usernames
 FORBIDDEN_USERNAMES = [
     "admin",

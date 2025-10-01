@@ -56,7 +56,7 @@
   - [x] 2.2 Create compatibility helper service to expose `email_verified` semantics via allauth's EmailAddress records
   - [x] 2.3 Update all references to custom User model to use `django.contrib.auth.models.User`
   - [x] 2.4 Remove custom User and EmailVerificationToken models from `backend/apps/accounts/models.py`
-  - [ ] 2.5 Update database naming in `.env` and `docker-compose.yml` to use `cinexplorer_dev` / `cinexplorer_user` / `cinexplorer_dev_pass`
+  - [x] 2.5 Update database naming in `.env` and `docker-compose.yml` to use `cinexplorer_dev` / `cinexplorer_user` / `cinexplorer_dev_pass`
   - [ ] 2.6 Drop and recreate database: `docker compose -f infrastructure/docker-compose.yml exec dev-db psql -U devUser -c "DROP DATABASE devDB;"`
   - [ ] 2.7 Create new database with updated name: `docker compose -f infrastructure/docker-compose.yml exec dev-db psql -U devUser -c "CREATE DATABASE cinexplorer_dev;"`
   - [ ] 2.8 Run migrations: `docker compose -f infrastructure/docker-compose.yml exec backend python manage.py migrate`

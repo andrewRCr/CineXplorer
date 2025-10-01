@@ -8,6 +8,11 @@
 #    CI-specific credentials, ensuring they match the backend service.
 # 4. Overrides the caddy service's dependency on the backend to wait for it
 #    to start, not to be healthy, since the healthcheck is disabled.
+#
+# Note: CI uses simpler database credentials (postgres/postgres/cinexplorer)
+# compared to development (cinexplorer_user/cinexplorer_dev_pass/cinexplorer_dev).
+# This is intentional - CI creates ephemeral databases per run, so simpler
+# credentials are acceptable and follow common CI/CD practices.
 
 services:
   backend:

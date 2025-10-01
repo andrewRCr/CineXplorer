@@ -66,13 +66,13 @@
   - [x] 2.8 Run migrations: `docker compose -f infrastructure/docker-compose.yml exec backend python manage.py migrate`
   - [x] 2.9 Create new superuser account: `admin` / `admin@localhost` (documented credentials)
 
-- [ ] 3.0 Django-allauth Integration
+- [x] 3.0 Django-allauth Integration
   - [x] 3.1 Add allauth apps to INSTALLED_APPS in settings.py (django.contrib.sites, allauth, allauth.account, allauth.socialaccount, allauth.socialaccount.providers.google, allauth.socialaccount.providers.github)
   - [x] 3.2 Configure allauth settings in settings.py (SITE_ID, ACCOUNT_EMAIL_VERIFICATION, ACCOUNT_LOGIN_METHODS, ACCOUNT_SIGNUP_FIELDS, etc.)
   - [x] 3.3 Add allauth URL patterns to `backend/config/urls.py`
   - [x] 3.4 Configure Sites framework with correct domain (localhost:8444 for dev) and run allauth migrations
-  - [ ] 3.5 Update JWTCookieAuth class in `backend/apps/authentication/auth_ninja.py` to work with default User model
-  - [ ] 3.6 Verify existing authentication endpoints remain compatible
+  - [x] 3.5 JWTCookieAuth class already uses AbstractUser (no changes needed - compatible with default User model)
+  - [x] 3.6 Verify existing authentication endpoints remain compatible (all 20 tests pass)
 
 - [ ] 4.0 OAuth Provider Configuration
   - [ ] 4.1 Create Google Cloud OAuth 2.0 credentials and configure redirect URI

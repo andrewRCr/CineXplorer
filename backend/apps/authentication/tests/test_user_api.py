@@ -4,7 +4,7 @@ Tests for the user API.
 """
 
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser, User
 from django.http import HttpResponse
 from django.test import TestCase, Client
 from django.urls import reverse
@@ -309,7 +309,6 @@ class AuthCookieIntegrationTests(TestCase):
         self.client.post(CREATE_USER_URL, self.user_data)
 
         # Mark email as verified for the test user to allow login
-        from django.contrib.auth.models import User
         user = User.objects.get(email=self.user_data['email'])
         email_verification_service.mark_email_verified(user)
 

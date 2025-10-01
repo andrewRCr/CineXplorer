@@ -11,6 +11,8 @@ from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
 from rest_framework.exceptions import ValidationError
 
+from authentication.email_verification import email_verification_service
+
 
 def get_error_codes() -> object:
     """Lazy import of ERROR_CODES to avoid module-level import issues."""
@@ -129,8 +131,8 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         """ Validate the user credentials and return the token data w/ user_id added. """
         data = super().validate(attrs)
 
-        # Check if user's email is verified
-        if not self.user.email_verified:
+        # Check if user's email is verified using allauth EmailAddress
+        if not email_verification_service.is_email_verified(self.user):
             ERROR_CODES = get_error_codes()
             raise ValidationError(
                 'Please verify your email address before logging in. '
@@ -140,7 +142,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
         # add custom user data to the response
         data["user_id"] = self.user.id
-        data["email_verified"] = self.user.email_verified
+        data["email_verified"] = email_verification_service.is_email_verified(self.user)
         return data
 
 

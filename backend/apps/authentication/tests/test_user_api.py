@@ -12,6 +12,8 @@ from rest_framework import status
 from rest_framework.test import APIClient
 import json
 
+from authentication.email_verification import email_verification_service
+
 
 CREATE_USER_URL: str = reverse('register')
 TOKEN_URL: str = reverse('token_obtain_pair')
@@ -21,9 +23,13 @@ ME_URL: str = reverse('authentication:me')
 def create_user(**params) -> AbstractUser:
     """ Creates and returns a new user for testing purposes. """
 
-    # Set email_verified=True for test users to avoid authentication issues
-    params.setdefault('email_verified', True)
-    return get_user_model().objects.create_user(**params)
+    # Create user without email_verified (not a field on Django's default User model)
+    user = get_user_model().objects.create_user(**params)
+
+    # Mark email as verified using allauth EmailAddress (via compatibility service)
+    email_verification_service.mark_email_verified(user)
+
+    return user
 
 
 class PublicUserApiTests(TestCase):
@@ -302,11 +308,10 @@ class AuthCookieIntegrationTests(TestCase):
         }
         self.client.post(CREATE_USER_URL, self.user_data)
 
-        # Set email_verified=True for the test user to allow login
+        # Mark email as verified for the test user to allow login
         from django.contrib.auth.models import User
         user = User.objects.get(email=self.user_data['email'])
-        user.email_verified = True
-        user.save()
+        email_verification_service.mark_email_verified(user)
 
     def test_token_obtain_sets_jwt_cookies(self):
         """Login sets JWT cookies (access and refresh)."""

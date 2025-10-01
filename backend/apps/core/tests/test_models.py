@@ -53,11 +53,13 @@ class ModelTests(TestCase):
         with self.assertRaises(ValueError):
             get_user_model().objects.create_user('', 'testUser@example.com')
 
-    def test_new_user_without_email_raises_error(self) -> None:
-        """ Tests that creating a user without an email raises a ValueError. """
+    def test_new_user_without_email_is_allowed(self) -> None:
+        """ Tests that creating a user without an email is allowed (Django default behavior). """
 
-        with self.assertRaises(ValueError):
-            get_user_model().objects.create_user('testUser', '')
+        # Django's default User model allows empty email
+        user: AbstractUser = get_user_model().objects.create_user('testUser', '')
+        self.assertEqual(user.username, 'testUser')
+        self.assertEqual(user.email, '')  # Empty email is allowed
 
     def test_create_superuser(self) -> None:
         """ Tests creating a new superuser. """

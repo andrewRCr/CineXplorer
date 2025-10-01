@@ -33,8 +33,8 @@ class AdminInterfaceTests(TestCase):
     def test_users_list(self):
         """ Tests that created test users are listed on the page. """
 
-        # determine which url to use
-        url = reverse('admin:accounts_user_changelist')
+        # Using Django's default User model (auth.User)
+        url = reverse('admin:auth_user_changelist')
         res = self.client.get(url)
 
         self.assertContains(res, self.user.first_name)
@@ -44,7 +44,8 @@ class AdminInterfaceTests(TestCase):
     def test_edit_user_page(self):
         """ Tests that the user edit page works as expected. """
 
-        url = reverse('admin:accounts_user_change',
+        # Using Django's default User model (auth.User)
+        url = reverse('admin:auth_user_change',
                       args=[self.user.id])  # type: ignore[attr-defined]
         res = self.client.get(url)
 
@@ -53,7 +54,8 @@ class AdminInterfaceTests(TestCase):
     def test_create_user_page(self):
         """ Tests that the create user page works as expected. """
 
-        url = reverse('admin:accounts_user_add')
+        # Using Django's default User model (auth.User)
+        url = reverse('admin:auth_user_add')
         res = self.client.get(url)
 
         self.assertEqual(res.status_code, 200)

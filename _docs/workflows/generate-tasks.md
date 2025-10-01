@@ -8,7 +8,7 @@ To guide an AI assistant in creating a detailed, step-by-step task list in Markd
 
 - **Format:** Markdown (`.md`)
 - **Location:** `/_docs/tasks/`
-- **Filename:** `tasks-[prd-file-name].md` (e.g., `tasks-prd-user-profile-editing.md`)
+- **Filename:** `tasks-[feature-name].md` (e.g., `tasks-user-profile-editing.md`)
 
 ## Process
 
@@ -21,7 +21,7 @@ To guide an AI assistant in creating a detailed, step-by-step task list in Markd
 7.  **Phase 2: Generate Sub-Tasks:** Once the user confirms, break down each parent task into smaller, actionable sub-tasks necessary to complete the parent task. Ensure sub-tasks logically follow from the parent task, cover the implementation details implied by the Sub-PRD, and consider existing codebase patterns where relevant without being constrained by them.
 8.  **Identify Relevant Files:** Based on the tasks and Sub-PRD, identify potential files that will need to be created or modified. List these under the `Relevant Files` section, including corresponding test files if applicable.
 9.  **Generate Final Output:** Combine the parent tasks, sub-tasks, relevant files, and notes into the final Markdown structure.
-10. **Save Task List:** Save the generated document in the `/_docs/tasks/` directory with the filename `tasks-[prd-file-name].md`, where `[prd-file-name]` matches the base name of the input Sub-PRD file (e.g., if the input was `prd-user-profile-editing.md`, the output is `tasks-prd-user-profile-editing.md`).
+10. **Save Task List:** Save the generated document in the `/_docs/tasks/` directory with the filename `tasks-[feature-name].md`, where `[feature-name]` matches the base name of the input Sub-PRD file (e.g., if the input was `prd-user-profile-editing.md`, the output is `tasks-user-profile-editing.md`).
 11. **Create Feature Branch:** Create a new feature branch with the naming convention `feature/[feature-name]` (e.g., `feature/user-profile-editing`). Use the command: `git checkout -b feature/[feature-name]`
 12. **Update PROJECT-STATUS:** Add the new feature to the "Upcoming Priorities" section with status "(In Planning - Branch: feature/[feature-name])" and brief description of key deliverables.
 13. **Stage Initial Documentation:** Stage the new Sub-PRD, the new task list, and the updated `PROJECT-STATUS.md` file using `git add`.

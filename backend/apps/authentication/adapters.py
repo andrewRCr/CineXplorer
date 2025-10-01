@@ -26,8 +26,8 @@ class CustomAccountAdapter(DefaultAccountAdapter):
     account-related emails.
     """
 
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(self, request: HttpRequest | None = None) -> None:
+        super().__init__(request)
         # ZeptoMail configuration
         self.api_key: str = getattr(settings, "ZEPTOMAIL_API_KEY", "")
         self.base_url: str = getattr(
@@ -86,6 +86,10 @@ class CustomAccountAdapter(DefaultAccountAdapter):
                 html_body = msg.alternatives[0][0]  # type: ignore[attr-defined]
 
             # ZeptoMail API payload
+            # Extract user info from context (user is a User object, not a dict)
+            user = context.get("user")
+            recipient_name = user.username if user and hasattr(user, 'username') else email
+
             payload = {
                 "from": {
                     "address": self.sender_email,
@@ -95,7 +99,7 @@ class CustomAccountAdapter(DefaultAccountAdapter):
                     {
                         "email_address": {
                             "address": email,
-                            "name": context.get("user", {}).get("username", email),
+                            "name": recipient_name,
                         }
                     }
                 ],

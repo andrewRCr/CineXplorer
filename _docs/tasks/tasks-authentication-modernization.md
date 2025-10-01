@@ -87,15 +87,15 @@
   - [x] 4.6 Test OAuth flow for GitHub authentication
   - [x] 4.7 Document test accounts for demo purposes
 
-- [ ] 5.0 Email System Integration
+- [x] 5.0 Email System Integration
   - [x] 5.1 Create custom allauth adapter in `backend/apps/authentication/adapters.py` subclassing DefaultAccountAdapter
   - [x] 5.2 Override send_mail() method to use ZeptoMail service
   - [x] 5.3 Override send_confirmation_mail() for email verification
   - [x] 5.4 Override password reset email method
   - [x] 5.5 Configure ACCOUNT_ADAPTER setting to use custom adapter
   - [x] 5.6 Create allauth email templates in `backend/templates/account/` with CineXplorer branding
-  - [ ] 5.7 Test email verification flow with ZeptoMail
-  - [ ] 5.8 Verify dev-mode email logging continues to function
+  - [x] 5.7 Test email verification flow with ZeptoMail
+  - [x] 5.8 Verify dev-mode email logging continues to function
 
 - [ ] 6.0 Type Safety Verification
   - [ ] 6.1 Update `backend/scripts/type_check.py` to enable mypy execution

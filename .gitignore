@@ -212,6 +212,9 @@ generate-cert.ps1
 _docs/archive/notes/
 _docs/notes/
 
+# Session handoff file (transient)
+_docs/CURRENT-SESSION.md
+
 # AI tool settings (personal development environment preferences)
 .claude/
 .warp/

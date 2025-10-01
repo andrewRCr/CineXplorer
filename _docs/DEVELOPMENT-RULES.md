@@ -61,24 +61,12 @@ Before any commit consideration, ALL of the following must pass with **zero exce
    - Every type error must be resolved
 
 6. **Python Type Safety**: Hybrid type checking approach with minimal Any usage
-   - **Development**: `python backend/scripts/type_check.py` from repo root (fast, comprehensive checking using version-pinned Pyright)
-   - **CI/CD**: `docker-compose exec backend python scripts/type_check.py` (comprehensive validation in container)
-   - **Manual**: `docker-compose exec backend mypy apps/ --config-file mypy.ini` (Django-compatible checking)
-   - **Working Directory**: All type checking commands must be run from repository root for deterministic relative paths
-   - **Version Control**: Pyright version must be pinned in root package.json devDependencies or frontend/package.json
-     - Never use unpinned `npx pyright` directly - always use through type_check.py script or npm script
-     - Ensures consistent type checking results across team and CI
-   - **PROHIBITED**: Using `typing.Any` except where explicitly allowed below
-   - **REQUIRED**: Use `object` for truly unknown data, specific TypedDict types for known structures
-   - **REQUIRED**: Use `dict[str, object]` for generic dictionary data
-   - **PATTERN**: Leverage django-stubs generics (e.g., `QuerySet[ModelClass]`)
-   - **JUSTIFICATION**: Any `Any` usage must be documented with inline comment explaining necessity
-   - **EXCEPTION - External API Payloads**:
-     - `dict[str, Any]` or specific fields typed as `Any` are permitted for third-party API responses (e.g., TMDB, external services)
-     - **REQUIRED**: Inline comment must justify each usage: `# Any: [Service] [endpoint] - [reason]`
-     - **REQUIRED**: Add TODO comment to replace with TypedDict/Pydantic model when feasible
-     - **Example**: `data: dict[str, Any]  # Any: TMDB /movie/{id} - dynamic fields vary by movie type  # TODO: Create TMDBMovieResponse model`
-     - **Rationale**: External payloads have unpredictable schemas; strict typing should be added incrementally as API usage stabilizes
+   - **Development**: `python backend/scripts/type_check.py` from repo root
+   - **CI/CD**: `docker-compose exec backend python scripts/type_check.py`
+   - **Manual**: `docker-compose exec backend mypy apps/ --config-file mypy.ini`
+   - **PROHIBITED**: Using `typing.Any` except for external API payloads (TMDB, etc.)
+   - **REQUIRED**: Use `object` for unknown data, `dict[str, object]` for generic dictionaries
+   - **JUSTIFICATION**: Any `Any` usage must have inline comment explaining necessity
 
 ### Quality Gate Failure Protocol
 If quality gates fail after sub-task completion:
@@ -94,6 +82,13 @@ If quality gates fail after sub-task completion:
 - **Mandatory stop** after each sub-task completion
 - **Wait for explicit user approval** before starting next sub-task
 
+### Sub-Task Granularity Guidelines
+Break down a sub-task if it requires:
+- More than 3 files to be modified
+- More than 50 lines of core logic changes
+- Multiple interdependent changes
+- Complex debugging/investigation
+
 ### Documentation Updates
 - **Immediate task list updates**: Mark `[x]` in task files after each sub-task
 - **Update "Relevant Files"** section when files are created/modified
@@ -108,11 +103,7 @@ After completing all sub-tasks under a parent task:
 
 ### PROJECT-STATUS Maintenance
 - **After each sub-task**: Update task documentation only
-- **After each parent task**: Check if PROJECT-STATUS needs updates:
-  - Feature progress milestones
-  - Newly completed functionality
-  - Updated timelines/priorities
-  - Dependencies now resolved
+- **After each parent task**: Check if PROJECT-STATUS needs updates
 - **Regular accuracy checks**: Ensure PROJECT-STATUS reflects all recent work
 
 ## Testing Requirements
@@ -128,82 +119,12 @@ After completing all sub-tasks under a parent task:
 - **Frontend**: Use appropriate test modes (watch, coverage, UI) as needed
 - **Before commits**: Full test suite must pass completely
 
-## Code Quality Standards
-
-### Backend Standards
-- **Linting**: flake8 with max-line-length=99, max-complexity=10
-- **Type Checking**: Hybrid approach - Pyright (development) + MyPy (CI/CD) with django-stubs/django-types
-- **Exclusions**: See `backend/.flake8` for excluded directories
-- **Type Check Script**: Use `python scripts/type_check.py` for comprehensive validation
-
-### Frontend Standards
-- **Linting**: ESLint with TypeScript support
-- **Type Checking**: TypeScript strict mode enabled
-- **Testing**: Vitest with React Testing Library
-
-## Standardized Readiness Report
-
-When sub-tasks are complete and quality gates pass, use this format:
-
-```markdown
-## Quality Gate Report - Task X.Y Complete
-
-**Code Changes:**
-- Modified: [list modified files]
-- Added: [list new files]
-- Deleted: [list removed files]
-- Tests: [list test files created/modified]
-
-**Quality Gates:**
-✅ Backend Tests: [X passed, 0 failed]
-✅ Frontend Tests: [X passed, 0 failed]
-✅ Backend Lint: flake8 clean (0 violations)
-✅ Frontend Lint: ESLint clean (0 violations)
-✅ TypeScript: No type errors
-✅ Python Type-Safety: Pyright [X passed, 0 failed], MyPy [X passed, 0 failed]
-
-**Task Status:**
-✅ Sub-task X.Y marked complete
-[Status] Parent task X.0: [completed/total] sub-tasks complete
-
-**Ready for staging/commit**
-```
-
-If quality gates fail, use this format:
-
-```markdown
-## Quality Gate Report - Task X.Y Complete (Issues Found)
-
-**Code Changes:**
-[Same format as above]
-
-**Quality Gates:**
-❌ [Failed check]: [specific failures]
-✅ [Passed checks]: [details]
-
-**Issues Found:**
-- [Specific error/violation 1]
-- [Specific error/violation 2]
-
-**Suspected Causes:**
-- [Analysis of likely causes]
-- [Areas to investigate]
-
-**Recommendations:**
-[Suggested next steps]
-
-**Awaiting guidance on how to proceed.**
-```
-
 ## Commit Standards
 
 ### Conventional Commit Format
 - **Types**: feat, fix, docs, style, refactor, test, config, chore
-- **Scope**: Use feature/system name for context (e.g., "logging-system", "user-auth")
+- **Scope**: Use feature/system name for context
 - **Reference tasks**: Include task numbers with feature context
-- **Examples**:
-  - `feat(logging-system): Implement request correlation middleware (Task 2.1)`
-  - `docs(user-auth): Complete Task 3.0 - Authentication System`
 
 ### Atomic Commit Guidelines
 - Each commit should be a single logical change
@@ -234,23 +155,57 @@ If quality gates fail, use this format:
 
 **MANDATORY** before every commit consideration:
 
-1. **Examine ALL uncommitted changes** - not just obvious modifications
-2. **Locate relevant task documentation** in `_docs/tasks/` directory
-3. **Analyze task completion status** - compare actual work against documented tasks
-4. **Validate milestone context** - determine if this completes phases or is partial progress
-5. **Update task documentation** - mark subtasks complete, parent tasks only when ALL subtasks done
-6. **Write accurate commit messages** that reflect project status after commit
+1. **Examine ALL uncommitted changes**
+2. **Locate relevant task documentation** in `_docs/tasks/`
+3. **Analyze task completion status** vs documented tasks
+4. **Update task documentation** - mark subtasks complete
+5. **Write accurate commit messages** reflecting project status
 
-**Key Principle**: Commit messages must communicate WHERE the project stands after the commit, including remaining work for milestone completion.
+**Key Principle**: Commit messages must communicate WHERE the project stands after the commit.
+
+## Essential Commands
+
+### Application Startup
+```bash
+# Full stack with Docker (recommended)
+docker-compose -f infrastructure/docker-compose.yml up --build
+# Access at https://localhost:8444 (accept self-signed cert warning)
+```
+
+### Container Management
+```bash
+# Rebuild after dependency changes
+docker-compose -f infrastructure/docker-compose.yml up --build
+
+# View logs
+docker-compose -f infrastructure/docker-compose.yml logs [service]
+
+# Shell access
+docker-compose exec [backend|frontend] bash
+```
+
+### Feature Branch Management
+```bash
+# Create and switch to new feature branch
+git checkout -b feature/[feature-name]
+
+# Check current branch
+git status
+git branch --show-current
+
+# Switch back to main and merge (preserves commit history)
+git checkout main
+git merge feature/[feature-name]
+
+# Delete feature branch after merge
+git branch -d feature/[feature-name]
+```
 
 ## Reference Documentation
 
 This document provides core rules. See detailed protocols in:
 - **`_docs/workflows/process-tasks.md`** - Detailed task execution workflow
 - **`_docs/workflows/atomic-commit.md`** - Enhanced commit workflow with comprehensive task context analysis
-- **`_docs/ai-instructions/CLAUDE.md`** - Tool-specific guidance
+- **`_docs/ai-instructions/AI-SHARED.md`** - Complete project context for AI
+- **`_docs/CURRENT-SESSION.md`** - Session handoff template (untracked)
 - **`_docs/TECHNICAL-ARCHITECTURE.md`** - Testing methodology details
-
----
-
-**Remember**: These rules ensure code quality, maintainability, and professional development practices. They are designed to create a systematic, high-quality development process suitable for portfolio demonstration and professional environments.

@@ -72,6 +72,36 @@ When working on new features:
 4. **Maintain quality**: Full testing and linting before any commits
 5. **Seek approval**: Never commit without explicit user review and permission
 
+## Document Dependencies
+
+When core documents change, also update:
+
+### **META-PRD.md** changes → Update:
+- `ai-instructions/AI-SHARED.md` (this file)
+- Potentially `PROJECT-STATUS.md`
+
+### **DEVELOPMENT-RULES.md** changes → Update:
+- Version number in the file
+- All `ai-instructions/*.md` files
+
+### **TECHNICAL-ARCHITECTURE.md** changes → Update:
+- `ai-instructions/AI-SHARED.md` (this file)
+
+## Quick Information Lookup
+
+### "How do I...?"
+- **Start a new feature** → `workflows/create-prd.md`
+- **Break down tasks** → `workflows/generate-tasks.md`
+- **Implement tasks** → `workflows/process-tasks.md`
+- **Run tests/linting** → `DEVELOPMENT-RULES.md` (Essential Commands)
+- **Understand the product** → `META-PRD.md`
+- **See current progress** → `PROJECT-STATUS.md`
+
+### "What are the rules for...?"
+- **Development standards** → `DEVELOPMENT-RULES.md`
+- **Code quality** → `TECHNICAL-ARCHITECTURE.md`
+- **Commit format** → `workflows/atomic-commit.md`
+
 ## Project Goals
 
 This is a **showcase project** emphasizing:

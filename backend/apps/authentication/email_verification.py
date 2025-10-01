@@ -31,6 +31,7 @@ where type stubs are incomplete.
 from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
+from django.conf import settings
 from django.contrib.auth.models import User
 
 if TYPE_CHECKING:
@@ -60,8 +61,8 @@ class EmailVerificationService:
         """
         try:
             # Import here to avoid circular dependency and graceful degradation
-            from allauth.account.models import (  # noqa: F811
-                EmailAddress  # type: ignore[import-untyped]
+            from allauth.account.models import (  # type: ignore[import-untyped]  # noqa: F811
+                EmailAddress
             )
 
             # Check if user has a verified email address
@@ -94,8 +95,8 @@ class EmailVerificationService:
             user: Django User instance
         """
         try:
-            from allauth.account.models import (  # noqa: F811
-                EmailAddress  # type: ignore[import-untyped]
+            from allauth.account.models import (  # type: ignore[import-untyped]  # noqa: F811
+                EmailAddress
             )
 
             # Find existing EmailAddress record (case-insensitive)
@@ -109,23 +110,64 @@ class EmailVerificationService:
                 if not email_address.verified:
                     email_address.verified = True
                     email_address.save(update_fields=['verified'])
+                # Ensure it's set as primary (handles constraint properly)
+                if not email_address.primary:
+                    email_address.set_as_primary()
             else:
-                # Create new EmailAddress record
-                EmailAddress.objects.create(
+                # Create new EmailAddress record using allauth's method
+                # This properly handles the unique primary constraint
+                EmailAddress.objects.add_email(  # type: ignore[attr-defined]
+                    request=None,
                     user=user,
                     email=user.email,
-                    verified=True,
-                    primary=True
+                    confirm=False,  # Skip confirmation since we're marking as verified
+                    signup=False
                 )
+                # Mark as verified and set as primary
+                email_address = EmailAddress.objects.get(user=user, email__iexact=user.email)
+                email_address.verified = True
+                email_address.save(update_fields=['verified'])
+                email_address.set_as_primary()
 
         except ImportError:
             # If allauth not installed yet, silently pass
             pass
         except Exception as e:
             # Log errors but don't break the application
+            from core.services.metrics import record_error, increment
+
+            user_id = getattr(user, "pk", None)
+            user_email = getattr(user, "email", "unknown")
+
+            # Increment failure metric for monitoring
+            is_debug = getattr(settings, "DEBUG", True)
+            environment = "development" if is_debug else "production"
+
+            increment(
+                "email_verification_mark_failed_total",
+                labels={
+                    "service": "authentication",
+                    "environment": environment,
+                    "user_id": str(user_id) if user_id else "none",
+                }
+            )
+
+            # Record error event for alerting
+            record_error(
+                "email_verification_failure",
+                f"Failed to mark email as verified for user {user_id}",
+                context={
+                    "user_id": user_id,
+                    "email": user_email,
+                    "error_type": type(e).__name__,
+                },
+                exception=e
+            )
+
+            # Original logging for backward compatibility
             logger.exception(
                 "Failed marking email verified for user %s: %s",
-                getattr(user, "pk", None),
+                user_id,
                 str(e)
             )
 
@@ -141,8 +183,8 @@ class EmailVerificationService:
             List of EmailAddress objects, or empty list if allauth not available
         """
         try:
-            from allauth.account.models import (  # noqa: F811
-                EmailAddress  # type: ignore[import-untyped]
+            from allauth.account.models import (  # type: ignore[import-untyped]  # noqa: F811
+                EmailAddress
             )
 
             return list(
@@ -170,8 +212,8 @@ class EmailVerificationService:
             Primary EmailAddress object, or None if not found or allauth unavailable
         """
         try:
-            from allauth.account.models import (  # noqa: F811
-                EmailAddress  # type: ignore[import-untyped]
+            from allauth.account.models import (  # type: ignore[import-untyped]  # noqa: F811
+                EmailAddress
             )
 
             return EmailAddress.objects.filter(  # type: ignore[no-any-return]

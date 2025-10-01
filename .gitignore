@@ -204,9 +204,11 @@ dist-ssr
 *.sw?
 
 
-# SSL certificates and cert generation
-infrastructure/dev-certs/
-generate-cert.ps1
+# SSL certificates (generated locally, not committed)
+infrastructure/dev-certs/*.pem
+infrastructure/dev-certs/*.conf
+infrastructure/dev-certs/*.crt
+infrastructure/dev-certs/*.key
 
 # Personal reference documentation
 _docs/archive/notes/

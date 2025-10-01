@@ -10,10 +10,10 @@ from typing import TypedDict, Unpack
 from core.types.api_types import TMDBResponseData
 from django.test import TestCase
 from django.test import Client
+from django.contrib.auth.models import User
 from rest_framework import status
 from unittest.mock import patch, Mock
 
-from accounts.models import User
 from core.models import Movie
 from user_movie_data.models import UserMovieData
 from core.services.api_response import ApiResponse

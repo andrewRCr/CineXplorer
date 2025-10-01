@@ -39,7 +39,8 @@ from authentication.serializers import (
     UserSerializer
 )
 from core.services.email_service import email_service
-from accounts.models import EmailVerificationToken, User
+from accounts.models import EmailVerificationToken
+from django.contrib.auth.models import User
 
 
 @method_decorator(csrf_exempt, name='dispatch')

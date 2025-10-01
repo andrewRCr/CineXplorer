@@ -12,7 +12,8 @@ from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils import timezone
 
-from accounts.models import EmailVerificationToken, User
+from accounts.models import EmailVerificationToken
+from django.contrib.auth.models import User
 
 logger = logging.getLogger(__name__)
 

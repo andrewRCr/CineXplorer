@@ -10,7 +10,7 @@ import random
 
 from user_movie_data.serializers import UserMovieDataSerializer, UserMovieDataDetailSerializer
 from user_movie_data.models import UserMovieData
-from accounts.models import User
+from django.contrib.auth.models import User
 from core.models import Movie
 from django.test import TestCase
 from django.urls import reverse

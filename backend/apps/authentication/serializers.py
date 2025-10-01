@@ -5,9 +5,8 @@ from __future__ import annotations
 
 from django.conf import settings
 from django.contrib.auth import get_user_model, authenticate
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser, User
 from django.utils.translation import gettext as _
-from accounts.models import User
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
 from rest_framework.exceptions import ValidationError

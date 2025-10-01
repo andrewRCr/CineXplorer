@@ -7,7 +7,7 @@ This document provides protocols for AI assistants to handle context management,
 ### **MANDATORY**: Rules Acknowledgment
 Before ANY work, AI must state:
 ```
-"Acknowledging DEVELOPMENT-RULES v2.0, hash a7f3d9e2. I understand:
+"Acknowledging DEVELOPMENT-RULES v{current version}, hash {current hash}. I understand:
 - Manual commit initiation: Never initiate commits without explicit approval
 - Quality gates: Zero tolerance for test failures, linting violations, type errors
 - Task protocol: One sub-task at a time with incremental quality checks
@@ -16,7 +16,7 @@ Before ANY work, AI must state:
 
 ### **REQUIRED**: Context Verification
 Confirm access to essential documents:
-1. **DEVELOPMENT-RULES.md** (v2.0) - Core rules and protocols
+1. **DEVELOPMENT-RULES.md** (v{current version}) - Core rules and protocols
 2. **AI-SHARED.md** - Project context and standards
 3. **META-PRD.md** - Product vision alignment
 4. **PROJECT-STATUS.md** - Current progress state

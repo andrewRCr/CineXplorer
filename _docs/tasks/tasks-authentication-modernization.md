@@ -6,11 +6,15 @@
 - `backend/apps/accounts/models.py` - Custom User and EmailVerificationToken models removed (migration complete)
 - `backend/apps/accounts/admin.py` - Custom admin configurations removed (using Django defaults)
 - `backend/apps/authentication/` - Authentication app that will be migrated to use django-allauth
+- `backend/apps/authentication/views.py` - Email verification endpoint temporarily stubbed (Task 5.0 will integrate with allauth)
+- `backend/apps/core/services/email_service.py` - Email verification method temporarily stubbed (Task 5.0 will integrate with allauth)
 - `backend/config/settings.py` - Remove AUTH_USER_MODEL, add allauth apps
 - `backend/config/urls.py` - Add allauth URL patterns
 - `backend/requirements/req.txt` - Add django-allauth dependency
-- `backend/config/.env` - Add OAuth environment variables
+- `backend/config/.env` - Updated with new database credentials and OAuth variables
 - `backend/config/.env.example` - Template for environment variables
+- `infrastructure/docker-compose.yml` - Updated database credentials to cinexplorer_dev/cinexplorer_user
+- `infrastructure/docker-compose.ci.yml` - Documented intentional CI credential differences
 
 ### Django-allauth Integration
 - `backend/apps/authentication/email_verification.py` - Compatibility service for email_verified semantics via allauth EmailAddress
@@ -51,16 +55,16 @@
   - [x] 1.4 Document current admin credentials for recreation after migration
   - [x] 1.5 Add OAuth environment variables to `.env.example` (GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET)
 
-- [ ] 2.0 Database Migration and User Model Cleanup
+- [x] 2.0 Database Migration and User Model Cleanup
   - [x] 2.1 Remove AUTH_USER_MODEL setting from `backend/config/settings.py`
   - [x] 2.2 Create compatibility helper service to expose `email_verified` semantics via allauth's EmailAddress records
   - [x] 2.3 Update all references to custom User model to use `django.contrib.auth.models.User`
   - [x] 2.4 Remove custom User and EmailVerificationToken models from `backend/apps/accounts/models.py`
   - [x] 2.5 Update database naming in `.env` and `docker-compose.yml` to use `cinexplorer_dev` / `cinexplorer_user` / `cinexplorer_dev_pass`
-  - [ ] 2.6 Drop and recreate database: `docker compose -f infrastructure/docker-compose.yml exec dev-db psql -U devUser -c "DROP DATABASE devDB;"`
-  - [ ] 2.7 Create new database with updated name: `docker compose -f infrastructure/docker-compose.yml exec dev-db psql -U devUser -c "CREATE DATABASE cinexplorer_dev;"`
-  - [ ] 2.8 Run migrations: `docker compose -f infrastructure/docker-compose.yml exec backend python manage.py migrate`
-  - [ ] 2.9 Create new superuser account: `admin` / `admin@localhost` (documented credentials)
+  - [x] 2.6 Drop old database and recreate with new credentials (executed via volume wipe)
+  - [x] 2.7 Database automatically created by Postgres with new credentials from docker-compose.yml
+  - [x] 2.8 Run migrations: `docker compose -f infrastructure/docker-compose.yml exec backend python manage.py migrate`
+  - [x] 2.9 Create new superuser account: `admin` / `admin@localhost` (documented credentials)
 
 - [ ] 3.0 Django-allauth Integration
   - [ ] 3.1 Add allauth apps to INSTALLED_APPS in settings.py (django.contrib.sites, allauth, allauth.account, allauth.socialaccount, allauth.socialaccount.providers.google, allauth.socialaccount.providers.github)

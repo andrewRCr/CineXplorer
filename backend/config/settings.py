@@ -107,7 +107,7 @@ ROOT_URLCONF = "config.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [os.path.join(BASE_DIR, "templates")],  # Project-level templates (allauth, etc.)
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -257,12 +257,14 @@ ACCOUNT_SESSION_REMEMBER = True  # Remember user sessions
 ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 1  # Match EMAIL_VERIFICATION_TOKEN_EXPIRY
 ACCOUNT_EMAIL_SUBJECT_PREFIX = "[CineXplorer] "
 
-# Adapter configuration (will be set in Task 5.0)
-# ACCOUNT_ADAPTER = "authentication.adapters.CustomAccountAdapter"
+# Adapter configuration - Custom adapter for ZeptoMail integration
+ACCOUNT_ADAPTER = "authentication.adapters.CustomAccountAdapter"
 
 # Social account settings
 SOCIALACCOUNT_AUTO_SIGNUP = True  # Auto-create account from social login
 SOCIALACCOUNT_EMAIL_VERIFICATION = "none"  # Social providers verify email
+SOCIALACCOUNT_EMAIL_AUTHENTICATION = True  # Use email for social account matching
+SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True  # Auto-link accounts with same email
 
 # Login/Logout redirect URLs
 LOGIN_REDIRECT_URL = "/"  # Redirect to frontend root after login

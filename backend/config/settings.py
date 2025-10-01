@@ -168,8 +168,9 @@ STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# custom authentication
-AUTH_USER_MODEL = "accounts.User"
+# Authentication configuration
+# Using Django's default User model (django.contrib.auth.models.User)
+# Custom AUTH_USER_MODEL removed to resolve django-stubs mypy --strict bug
 AUTHENTICATION_BACKENDS = ["core.backends.CustomUserModelBackend"]
 
 # generate openAPI schema with drf-spectacular

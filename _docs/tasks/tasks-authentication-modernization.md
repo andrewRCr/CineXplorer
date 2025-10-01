@@ -7,7 +7,9 @@
 - `backend/apps/authentication/` - Authentication app that will be migrated to use django-allauth
 - `backend/config/settings.py` - Remove AUTH_USER_MODEL, add allauth apps
 - `backend/config/urls.py` - Add allauth URL patterns
-- `backend/requirements.txt` - Add django-allauth dependency
+- `backend/requirements/req.txt` - Add django-allauth dependency
+- `backend/config/.env` - Add OAuth environment variables
+- `backend/config/.env.example` - Template for environment variables
 
 ### Django-allauth Integration
 - `backend/apps/authentication/adapters.py` - Custom allauth adapter for ZeptoMail integration
@@ -34,18 +36,18 @@
 - `frontend/src/services/authService.ts` - Update API endpoints if needed
 
 ### Documentation
-- `_docs/notes/notes-authentication-modernization.md` - Implementation notes and decisions
+- `_docs/notes/notes-authentication-modernization.md` - Implementation notes and decisions (transient, not committed)
 - `README.md` - Update OAuth setup instructions
 - `_docs/PROJECT-STATUS.md` - Update feature status
 
 ## Tasks
 
-- [ ] 1.0 Setup and Dependencies
-  - [ ] 1.1 Create feature branch `feature/authentication-modernization`
-  - [ ] 1.2 Add django-allauth to requirements.txt and install (`pip install django-allauth`)
-  - [ ] 1.3 Create database backup: `pg_dump cinexplorer > backup_pre_auth_migration_$(date +%Y%m%d).sql`
-  - [ ] 1.4 Document current admin credentials for recreation after migration
-  - [ ] 1.5 Add OAuth environment variables to `.env.example` (GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET)
+- [x] 1.0 Setup and Dependencies
+  - [x] 1.1 Create feature branch `feature/authentication-modernization`
+  - [x] 1.2 Add django-allauth to requirements.txt and install (`pip install django-allauth`)
+  - [x] 1.3 Create database backup: `pg_dump cinexplorer > backup_pre_auth_migration_$(date +%Y%m%d).sql`
+  - [x] 1.4 Document current admin credentials for recreation after migration
+  - [x] 1.5 Add OAuth environment variables to `.env.example` (GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET)
 
 - [ ] 2.0 Database Migration and User Model Cleanup
   - [ ] 2.1 Remove AUTH_USER_MODEL setting from `backend/config/settings.py`

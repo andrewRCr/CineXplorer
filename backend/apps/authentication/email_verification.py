@@ -90,21 +90,25 @@ class EmailVerificationService:
                 EmailAddress  # type: ignore[import-untyped]
             )
 
-            # Get or create EmailAddress record
-            email_address, created = EmailAddress.objects.get_or_create(
+            # Find existing EmailAddress record (case-insensitive)
+            email_address = EmailAddress.objects.filter(
                 user=user,
-                email__iexact=user.email,
-                defaults={
-                    'email': user.email,
-                    'verified': True,
-                    'primary': True,
-                }
-            )
+                email__iexact=user.email
+            ).first()
 
-            # If it already existed, ensure it's marked as verified
-            if not created and not email_address.verified:
-                email_address.verified = True
-                email_address.save(update_fields=['verified'])
+            if email_address:
+                # Update existing record if not already verified
+                if not email_address.verified:
+                    email_address.verified = True
+                    email_address.save(update_fields=['verified'])
+            else:
+                # Create new EmailAddress record
+                EmailAddress.objects.create(
+                    user=user,
+                    email=user.email,
+                    verified=True,
+                    primary=True
+                )
 
         except ImportError:
             # If allauth not installed yet, silently pass

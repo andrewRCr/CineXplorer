@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.sites",  # Required for django-allauth
     "django_extensions",
     "accounts",
     "core",
@@ -64,6 +65,13 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework.authtoken",
     "drf_spectacular",
+    # django-allauth
+    "allauth",
+    "allauth.account",
+    "allauth.socialaccount",
+    "allauth.socialaccount.providers.google",
+    "allauth.socialaccount.providers.github",
+    # Project apps
     "authentication",
     "movie",
     "user_movie_data",
@@ -81,6 +89,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "allauth.account.middleware.AccountMiddleware",  # Required for django-allauth
 ]
 
 INTERNAL_IPS = [
@@ -212,6 +221,45 @@ if not ZEPTOMAIL_API_KEY and not DEBUG and "test" not in sys.argv:
         RuntimeWarning,
         stacklevel=2
     )
+
+# django-allauth Configuration
+SITE_ID = 1  # Required for django.contrib.sites
+
+# Email verification
+ACCOUNT_EMAIL_VERIFICATION = "mandatory"  # 'mandatory', 'optional', or 'none'
+
+# Login methods (modern allauth API)
+ACCOUNT_LOGIN_METHODS = {"email", "username"}  # Allow login with username or email
+
+# Signup fields (modern allauth API)
+# Field format: 'field_name' (optional) or 'field_name*' (required)
+ACCOUNT_SIGNUP_FIELDS = [
+    "email*",      # Email required
+    "username*",   # Username required
+    "password1*",  # Password required
+    "password2*",  # Password confirmation required (no separate setting)
+]
+
+# Email settings
+ACCOUNT_UNIQUE_EMAIL = True  # Enforce unique emails across users
+
+# Login/Logout behavior
+ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True  # Auto-login after email verification
+ACCOUNT_LOGOUT_ON_GET = False  # Require POST for logout (CSRF protection)
+
+# Session configuration
+ACCOUNT_SESSION_REMEMBER = True  # Remember user sessions
+
+# Email confirmation
+ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 1  # Match EMAIL_VERIFICATION_TOKEN_EXPIRY
+ACCOUNT_EMAIL_SUBJECT_PREFIX = "[CineXplorer] "
+
+# Adapter configuration (will be set in Task 5.0)
+# ACCOUNT_ADAPTER = "authentication.adapters.CustomAccountAdapter"
+
+# Social account settings
+SOCIALACCOUNT_AUTO_SIGNUP = True  # Auto-create account from social login
+SOCIALACCOUNT_EMAIL_VERIFICATION = "none"  # Social providers verify email
 
 # Forbidden usernames
 FORBIDDEN_USERNAMES = [

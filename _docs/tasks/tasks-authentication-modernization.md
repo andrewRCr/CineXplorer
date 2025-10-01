@@ -67,10 +67,10 @@
   - [x] 2.9 Create new superuser account: `admin` / `admin@localhost` (documented credentials)
 
 - [ ] 3.0 Django-allauth Integration
-  - [ ] 3.1 Add allauth apps to INSTALLED_APPS in settings.py (django.contrib.sites, allauth, allauth.account, allauth.socialaccount, allauth.socialaccount.providers.google, allauth.socialaccount.providers.github)
-  - [ ] 3.2 Configure allauth settings in settings.py (SITE_ID, ACCOUNT_EMAIL_VERIFICATION, ACCOUNT_AUTHENTICATION_METHOD, etc.)
-  - [ ] 3.3 Add allauth URL patterns to `backend/config/urls.py`
-  - [ ] 3.4 Configure Sites framework with correct domain (localhost:8444 for dev)
+  - [x] 3.1 Add allauth apps to INSTALLED_APPS in settings.py (django.contrib.sites, allauth, allauth.account, allauth.socialaccount, allauth.socialaccount.providers.google, allauth.socialaccount.providers.github)
+  - [x] 3.2 Configure allauth settings in settings.py (SITE_ID, ACCOUNT_EMAIL_VERIFICATION, ACCOUNT_LOGIN_METHODS, ACCOUNT_SIGNUP_FIELDS, etc.)
+  - [x] 3.3 Add allauth URL patterns to `backend/config/urls.py`
+  - [x] 3.4 Configure Sites framework with correct domain (localhost:8444 for dev) and run allauth migrations
   - [ ] 3.5 Update JWTCookieAuth class in `backend/apps/authentication/auth_ninja.py` to work with default User model
   - [ ] 3.6 Verify existing authentication endpoints remain compatible
 

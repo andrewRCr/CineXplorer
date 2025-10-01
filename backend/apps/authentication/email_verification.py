@@ -29,11 +29,14 @@ where type stubs are incomplete.
 """
 
 from __future__ import annotations
+import logging
 from typing import TYPE_CHECKING
 from django.contrib.auth.models import User
 
 if TYPE_CHECKING:
     from allauth.account.models import EmailAddress  # type: ignore[import-untyped]  # noqa: F401
+
+logger = logging.getLogger(__name__)
 
 
 class EmailVerificationService:
@@ -70,8 +73,13 @@ class EmailVerificationService:
         except ImportError:
             # If allauth not installed yet, return False
             return False
-        except Exception:
+        except Exception as e:
             # Handle any database/model errors gracefully
+            logger.exception(
+                "Failed checking email verification for user %s: %s",
+                getattr(user, "pk", None),
+                str(e)
+            )
             return False
 
     @staticmethod
@@ -113,10 +121,13 @@ class EmailVerificationService:
         except ImportError:
             # If allauth not installed yet, silently pass
             pass
-        except Exception:
+        except Exception as e:
             # Log errors but don't break the application
-            # TODO: Add proper logging once allauth is fully integrated
-            pass
+            logger.exception(
+                "Failed marking email verified for user %s: %s",
+                getattr(user, "pk", None),
+                str(e)
+            )
 
     @staticmethod
     def get_user_email_addresses(user: User) -> list[object]:
@@ -139,7 +150,12 @@ class EmailVerificationService:
             )  # type: ignore[no-any-return]
         except ImportError:
             return []
-        except Exception:
+        except Exception as e:
+            logger.exception(
+                "Failed getting email addresses for user %s: %s",
+                getattr(user, "pk", None),
+                str(e)
+            )
             return []
 
     @staticmethod
@@ -164,7 +180,12 @@ class EmailVerificationService:
             ).first()
         except ImportError:
             return None
-        except Exception:
+        except Exception as e:
+            logger.exception(
+                "Failed getting primary email address for user %s: %s",
+                getattr(user, "pk", None),
+                str(e)
+            )
             return None
 
 

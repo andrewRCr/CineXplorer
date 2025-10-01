@@ -180,7 +180,10 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # Authentication configuration
 # Using Django's default User model (django.contrib.auth.models.User)
 # Custom AUTH_USER_MODEL removed to resolve django-stubs mypy --strict bug
-AUTHENTICATION_BACKENDS = ["core.backends.CustomUserModelBackend"]
+AUTHENTICATION_BACKENDS = [
+    "django.contrib.auth.backends.ModelBackend",  # Django default (for admin, etc.)
+    "allauth.account.auth_backends.AuthenticationBackend",  # allauth (OAuth + email)
+]
 
 # generate openAPI schema with drf-spectacular
 REST_FRAMEWORK = {
@@ -260,6 +263,10 @@ ACCOUNT_EMAIL_SUBJECT_PREFIX = "[CineXplorer] "
 # Social account settings
 SOCIALACCOUNT_AUTO_SIGNUP = True  # Auto-create account from social login
 SOCIALACCOUNT_EMAIL_VERIFICATION = "none"  # Social providers verify email
+
+# Login/Logout redirect URLs
+LOGIN_REDIRECT_URL = "/"  # Redirect to frontend root after login
+ACCOUNT_LOGOUT_REDIRECT_URL = "/"  # Redirect to frontend root after logout
 
 # Forbidden usernames
 FORBIDDEN_USERNAMES = [

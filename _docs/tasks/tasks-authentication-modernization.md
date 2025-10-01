@@ -17,10 +17,11 @@
 - `infrastructure/docker-compose.ci.yml` - Documented intentional CI credential differences
 
 ### Django-allauth Integration
-- `backend/apps/authentication/email_verification.py` - Compatibility service for email_verified semantics via allauth EmailAddress
+- `backend/apps/authentication/email_verification.py` - Compatibility service for email_verified semantics via allauth EmailAddress (includes metrics/monitoring)
 - `backend/apps/authentication/adapters.py` - Custom allauth adapter for ZeptoMail integration
 - `backend/apps/authentication/auth_ninja.py` - Update JWT auth to work with default User model
 - `backend/templates/account/` - Allauth email templates with CineXplorer branding
+- `backend/apps/core/services/metrics.py` - Lightweight metrics and error tracking service (future: Prometheus/Sentry integration)
 
 ### Type Checking & CI/CD
 - `backend/scripts/type_check.py` - Enable mypy --strict execution

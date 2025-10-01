@@ -8,11 +8,10 @@ from __future__ import annotations
 import logging
 from typing import Any
 
+import requests
 from allauth.account.adapter import DefaultAccountAdapter
 from django.conf import settings
 from django.http import HttpRequest
-
-import requests
 
 logger = logging.getLogger(__name__)
 
@@ -79,11 +78,15 @@ class CustomAccountAdapter(DefaultAccountAdapter):
             # Render email subject and body from allauth templates
             msg = self.render_mail(template_prefix, email, context)
             subject = msg.subject
-            # Get HTML body (allauth uses EmailMultiAlternatives with 'alternatives' attribute)
-            html_body = msg.body if hasattr(msg, 'body') else ""
-            if hasattr(msg, 'alternatives') and msg.alternatives:  # type: ignore[attr-defined]
-                # Use HTML alternative if available (django-stubs doesn't type EmailMultiAlternatives.alternatives)
-                html_body = msg.alternatives[0][0]  # type: ignore[attr-defined]
+
+            # Get HTML body (EmailMessage always has body)
+            html_body = msg.body
+
+            # Check for HTML alternative (allauth may use EmailMultiAlternatives)
+            alternatives = getattr(msg, 'alternatives', None)
+            if alternatives:
+                # Use HTML alternative if available
+                html_body = alternatives[0][0]
 
             # ZeptoMail API payload
             # Extract user info from context (user is a User object, not a dict)
@@ -109,14 +112,45 @@ class CustomAccountAdapter(DefaultAccountAdapter):
                 "track_opens": True,
             }
 
-            response = requests.post(
-                f"{self.base_url}/email",
-                json=payload,
-                headers=self._get_headers(),
-                timeout=10,
-            )
+            try:
+                response = requests.post(
+                    f"{self.base_url}/email",
+                    json=payload,
+                    headers=self._get_headers(),
+                    timeout=10,
+                )
+            except requests.exceptions.Timeout:
+                logger.error(
+                    "Timeout sending email via ZeptoMail",
+                    extra={
+                        "recipient": email,
+                        "template": template_prefix,
+                    },
+                    exc_info=True,
+                )
+                raise
+            except requests.exceptions.ConnectionError:
+                logger.error(
+                    "Connection error sending email via ZeptoMail",
+                    extra={
+                        "recipient": email,
+                        "template": template_prefix,
+                    },
+                    exc_info=True,
+                )
+                raise
+            except requests.exceptions.RequestException:
+                logger.error(
+                    "Network error sending email via ZeptoMail",
+                    extra={
+                        "recipient": email,
+                        "template": template_prefix,
+                    },
+                    exc_info=True,
+                )
+                raise
 
-            if response.status_code == 201:
+            if 200 <= response.status_code < 300:
                 logger.info(
                     "Email sent successfully via ZeptoMail",
                     extra={

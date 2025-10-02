@@ -146,6 +146,8 @@ This document outlines Phase 2 of the API Layer Modernization initiative, which 
 
 2. **Complete Test Coverage:** 100% of existing API functionality is covered by updated tests
    - **Backend Tests:** `docker compose exec backend python manage.py test apps.user_movie_data apps.authentication apps.accounts --settings=config.settings_test` (100% pass rate)
+   - **Authentication Tests:** Include comprehensive integration tests deferred from Authentication Modernization (password auth, CSRF, JWT refresh, logout, email verification, password reset)
+   - **OAuth Tests:** Utilize fixtures and mocks created in Authentication Modernization for Google/GitHub OAuth flow testing
    - **CI Check:** Test suite must pass with 0 failures in GitHub Actions workflow
 
 3. **Full Frontend Integration:** All frontend features work identically with new API endpoints

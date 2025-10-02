@@ -146,7 +146,7 @@ This Sub-PRD defines a comprehensive backend modernization effort for CineXplore
 
 38. **The system must implement Playwright for comprehensive e2e testing** covering critical user journeys across the full application stack.
 
-39. **The system must create e2e test suites for core workflows** including user authentication, movie search, watchlist management, and recommendation features.
+39. **The system must create e2e test suites for core workflows** including user authentication (password, Google OAuth, GitHub OAuth), movie search, watchlist management, and recommendation features.
 
 40. **The system must implement cross-browser testing capabilities** ensuring application functionality across Chrome, Firefox, and Safari browsers.
 

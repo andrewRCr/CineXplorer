@@ -5,7 +5,7 @@ Tests for the user API.
 from typing import Any
 
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import AbstractUser, User
+from django.contrib.auth.models import AbstractUser
 from django.http import HttpResponse
 from django.test import TestCase, Client
 from django.urls import reverse
@@ -311,7 +311,7 @@ class AuthCookieIntegrationTests(TestCase):
         self.client.post(CREATE_USER_URL, self.user_data)
 
         # Mark email as verified for the test user to allow login
-        user = User.objects.get(email=self.user_data['email'])
+        user = get_user_model().objects.get(email=self.user_data['email'])
         email_verification_service.mark_email_verified(user)
 
     def test_token_obtain_sets_jwt_cookies(self):

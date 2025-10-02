@@ -58,6 +58,7 @@ class ModelTests(TestCase):
 
         # Django's default User model allows empty email
         user: AbstractUser = get_user_model().objects.create_user('testUser', '')
+        self.assertIsNotNone(user.pk)  # Verify user was persisted
         self.assertEqual(user.username, 'testUser')
         self.assertEqual(user.email, '')  # Empty email is allowed
 

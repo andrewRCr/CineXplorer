@@ -9,7 +9,13 @@
 
 This document outlines Phase 2 of the API Layer Modernization initiative, which will complete the migration from Django REST Framework (DRF) to Django Ninja across all remaining backend applications. Building on the proven patterns and architecture established in Phase 1 (movie domain), Phase 2 will migrate the `user_movie_data`, `authentication`, and `accounts` domains to achieve a fully unified, type-safe API layer.
 
-**Important Note:** This PRD assumes that Authentication Modernization (django-allauth migration) has been completed. The PRD may be revisited and updated if necessary once Authentication Modernization is fully implemented, but no major changes are anticipated.
+**Important Note:** This PRD integrates all deferred work from Authentication Modernization, including:
+- Email verification bridge removal (Tasks 8.1-8.2)
+- Frontend OAuth UI integration (Tasks 8.9-8.10)
+- Deferred authentication tests (Tasks 7.3-7.11)
+- Complete type safety for authentication module
+
+All Authentication Modernization components (CustomAccountAdapter, email_verification_service, OAuth configuration) are documented and ready for Phase 2 integration.
 
 ## 2. Goals
 
@@ -59,35 +65,52 @@ This document outlines Phase 2 of the API Layer Modernization initiative, which 
 
 6. **Replace DRF Authentication Views:** All remaining DRF-based authentication endpoints in `backend/apps/authentication/` must be migrated to Django Ninja, including:
    - User profile management endpoints
-   - Email verification workflows
+   - Email verification workflows (currently stubbed in views.py - Task 5.0 stubbed endpoints)
+   - Registration and resend verification endpoints
    - Any custom authentication utilities
 
 7. **Replace DRF User Serializers:** All DRF serializers related to user management must be replaced with Pydantic schemas that work with the modernized authentication system.
 
-8. **Integrate with django-allauth:** Ensure all migrated endpoints work seamlessly with the django-allauth foundation established during Authentication Modernization.
-   - Reuse the compatibility helper created during Authentication Modernization (exact location TBD, e.g., `accounts.utils.get_email_verified_status()` or similar) to surface `email_verified` state without leaking django-allauth internals.
-   - Ensure API-triggered flows (registration, resend verification) invoke the ZeptoMail integration established during Authentication Modernization—likely through a custom account adapter's `send_mail` method (configured via Django's `ACCOUNT_ADAPTER` setting) for consistency with transactional email logging.
+8. **Remove Email Verification Bridge:** Delete the temporary email verification bridge (`backend/apps/authentication/email_verification.py`) deferred from Authentication Modernization (Tasks 8.1-8.2).
+   - Replace all `email_verification_service` calls with direct allauth EmailAddress API in Django Ninja endpoints
+   - Remove bridge dependency from email_service.py stubbed methods
+   - Update all remaining references to use allauth native methods
 
-9. **Preserve Authentication Workflows:** All existing authentication and user management functionality must be preserved with identical behavior.
+9. **Integrate with django-allauth:** Ensure all migrated endpoints work seamlessly with the django-allauth foundation established during Authentication Modernization.
+   - Use allauth EmailAddress API directly: `EmailAddress.objects.filter(user=user, verified=True).exists()`
+   - Ensure API-triggered flows (registration, resend verification) invoke the ZeptoMail integration via custom account adapter (`authentication.adapters.CustomAccountAdapter`)
+   - Leverage allauth's native email confirmation workflow instead of custom token generation
+
+10. **Preserve Authentication Workflows:** All existing authentication and user management functionality must be preserved with identical behavior.
    - Maintain the public contract for fields like `email_verified`, `full_name`, and JWT cookie handling while delegating persistence to django-allauth.
+
+11. **Complete Type Safety:** Eliminate all temporary type: ignore comments from authentication module.
+   - Remove type: ignore comments from email_verification.py when bridge is deleted
+   - Resolve DRF-related type errors by replacing DRF serializers/views with Pydantic/Django Ninja
+   - Achieve zero type errors in authentication domain (both Pyright and MyPy --strict)
 
 ### 4.3 Cross-Domain Integration and Type Safety
 
-10. **Unified API Structure:** All endpoints must follow the clean URL structure established in Phase 1 (`/api/domain/action` pattern).
+12. **Unified API Structure:** All endpoints must follow the clean URL structure established in Phase 1 (`/api/domain/action` pattern).
 
-11. **Consistent Error Handling:** Apply the standardized error response patterns established in Phase 1 across all migrated endpoints.
+13. **Consistent Error Handling:** Apply the standardized error response patterns established in Phase 1 across all migrated endpoints.
 
-12. **Complete Type Safety:** Achieve zero mypy --strict errors across all migrated domains, with documented type: ignore statements only for unavoidable Django internals.
+14. **Complete Type Safety:** Achieve zero mypy --strict errors across all migrated domains, with documented type: ignore statements only for unavoidable Django internals.
 
-13. **Comprehensive Testing Migration:** Update all existing tests to use Django Ninja patterns, following the three-layer testing strategy established in Phase 1.
+15. **Comprehensive Testing Migration:** Update all existing tests to use Django Ninja patterns, following the three-layer testing strategy established in Phase 1.
 
 ### 4.4 Frontend Integration
 
-14. **Complete Type Generation:** Extend the OpenAPI-based TypeScript generation to cover all API endpoints, eliminating all manual type definitions.
+16. **Complete Type Generation:** Extend the OpenAPI-based TypeScript generation to cover all API endpoints, eliminating all manual type definitions.
 
-15. **Frontend Service Updates:** Update all frontend API service modules to use the new Django Ninja endpoints and auto-generated types.
+17. **Frontend Service Updates:** Update all frontend API service modules to use the new Django Ninja endpoints and auto-generated types.
 
-16. **Unified Documentation:** Ensure all endpoints appear in the unified Django Ninja API documentation at `/api/docs`.
+18. **OAuth UI Integration:** Add social login buttons to frontend Login.tsx and integrate with allauth OAuth flows (deferred from Authentication Modernization Task 8.9-8.10).
+   - Implement Google and GitHub login buttons
+   - Update authentication context to handle OAuth redirects
+   - Ensure consistent UX between OAuth and password authentication flows
+
+19. **Unified Documentation:** Ensure all endpoints appear in the unified Django Ninja API documentation at `/api/docs`.
 
 ## 5. Non-Goals (Out of Scope)
 
@@ -118,9 +141,11 @@ This document outlines Phase 2 of the API Layer Modernization initiative, which 
 
 ### Dependencies
 - **Authentication Modernization:** Must be 100% complete before Phase 2 begins, including:
-  - Custom account adapter (subclass of `allauth.account.adapter.DefaultAccountAdapter`) with ZeptoMail integration
-  - Compatibility helper for `email_verified` state (exact location TBD, e.g., `accounts.utils.get_email_verified_status()` or similar)
-  - *(Component names/paths will be finalized and this PRD updated once Authentication Modernization completes, as noted in Section 1)*
+  - Custom account adapter: `authentication.adapters.CustomAccountAdapter` (extends `allauth.account.adapter.DefaultAccountAdapter`) with ZeptoMail integration
+  - Email verification bridge: `authentication.email_verification.email_verification_service` (temporary compatibility layer to be removed in Phase 2)
+  - OAuth configuration: Google and GitHub social apps configured in Django admin
+  - django-allauth URLs: `/accounts/*` for OAuth callbacks and email verification
+  - **Note:** All deferred work from Authentication Modernization (Tasks 8.1-8.2, 8.9-8.10) must be completed in Phase 2
 - **Phase 1 Foundation:** All Phase 1 patterns and utilities must remain stable
 - **Frontend Type Generation:** OpenAPI workflow must be working reliably
 
@@ -172,13 +197,46 @@ This document outlines Phase 2 of the API Layer Modernization initiative, which 
 
 ## 9. Open Questions
 
-1. **Authentication Integration Complexity:** Will the django-allauth migration introduce any new patterns that require PRD updates?
+1. ~~**Authentication Integration Complexity:** Will the django-allauth migration introduce any new patterns that require PRD updates?~~
+   - **Resolved:** Authentication Modernization complete. All components documented in Section 7 (Dependencies).
 
 2. **UserMovieData Schema Complexity:** Are there complex nested relationships in user movie data that will require special Pydantic schema design?
 
 3. **Frontend Breaking Changes:** Will the migration require any breaking changes to frontend API consumption patterns?
 
 4. **Testing Data Migration:** Do we need to establish test data patterns for the more complex user-related test scenarios?
+
+## 10. Deferred Work from Authentication Modernization
+
+**Tracked Items to Complete in Phase 2:**
+
+### Backend Cleanup
+- **Task 8.1-8.2:** Remove email verification bridge (`authentication.email_verification.py`)
+  - Delete temporary compatibility layer
+  - Replace all `email_verification_service` calls with allauth EmailAddress API
+  - Update `email_service.py` stubbed methods
+
+### Frontend Integration
+- **Task 8.9-8.10:** OAuth UI integration
+  - Add Google/GitHub login buttons to Login.tsx
+  - Update authentication context for OAuth flow handling
+  - Ensure unified UX between OAuth and password authentication
+
+### Testing
+- **Task 7.3, 7.6-7.11:** Comprehensive authentication tests
+  - Password authentication tests
+  - CSRF protection tests
+  - JWT token refresh tests
+  - Logout tests
+  - Email verification tests
+  - Email uniqueness tests
+  - Password reset tests
+  - Utilize fixtures/mocks from `authentication/tests/fixtures.py` and `test_oauth_mocks.py`
+
+### Type Safety
+- Remove all type: ignore comments from authentication module
+- Achieve zero Pyright + MyPy --strict errors
+- Complete type safety for all authentication-related code
 
 ---
 

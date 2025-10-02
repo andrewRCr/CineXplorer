@@ -97,10 +97,14 @@ CineXplorer is a movie discovery web application in active development. The core
 
 ### High Priority
 
-- **API Layer Modernization Phase 2** (Ready to Begin):
-    - Migrate UserMovieData and User/Accounts domains from DRF to Django Ninja
-    - Apply Phase 1 patterns and lessons learned to remaining API endpoints
-    - Complete the full API layer modernization with unified Django Ninja architecture
+- **API Layer Modernization Phase 2** (In Planning - Branch: `feature/api-layer-modernization-p2`):
+    - Migrate UserMovieData and Authentication domains from DRF to Django Ninja (~15-20 endpoints)
+    - Remove email verification bridge and complete allauth integration
+    - Add OAuth UI integration (Google + GitHub login buttons)
+    - Complete deferred authentication tests from Auth Modernization
+    - Achieve zero type errors across all domains (Pyright + MyPy --strict)
+    - Establish unified Django Ninja architecture across entire backend API
+    - **Key Deliverables**: Complete DRF removal, full type safety, OAuth UI, comprehensive testing
 
 - **User Movie Lists System** (In Planning):
     - Backend models and API for custom movie collections.

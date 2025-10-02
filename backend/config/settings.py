@@ -37,8 +37,7 @@ sys.path.insert(0, SHARED_DIR)
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# SECURITY WARNING: set via environment variable only (see line 202)
 
 ALLOWED_HOSTS = [
     "localhost",
@@ -216,7 +215,7 @@ ZEPTOMAIL_SENDER_EMAIL = os.environ.get(
 EMAIL_VERIFICATION_EXPIRY_DAYS = int(
     os.environ.get("EMAIL_VERIFICATION_EXPIRY_DAYS", "3")
 )
-# Legacy constant kept for backward compatibility (to be removed in Task 8.0)
+# Legacy constant for DRF email verification bridge (deferred to API Layer Phase 2)
 EMAIL_VERIFICATION_TOKEN_EXPIRY = timedelta(days=EMAIL_VERIFICATION_EXPIRY_DAYS)
 FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:5173")
 
@@ -233,6 +232,7 @@ if not ZEPTOMAIL_API_KEY and not DEBUG and "test" not in sys.argv:
 
 # django-allauth Configuration
 SITE_ID = 1  # Required for django.contrib.sites
+ACCOUNT_DEFAULT_HTTP_PROTOCOL = "https" if not DEBUG else "http"
 
 # Email verification
 ACCOUNT_EMAIL_VERIFICATION = "mandatory"  # 'mandatory', 'optional', or 'none'
@@ -301,13 +301,7 @@ FORBIDDEN_USERNAMES = [
     "public",
 ]
 
-# CORS constants
-# TODO: update for production (temp/development only)
-CORS_ALLOW_ALL_ORIGINS = True
-CORS_ALLOW_CREDENTIALS = True
-
-
-# Allow HTTPS frontend for CORS and CSRF
+# CORS configuration - Allow HTTPS frontend for CORS and CSRF
 CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOWED_ORIGINS = [
     "https://localhost:5173",

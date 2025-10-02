@@ -74,12 +74,11 @@ class EmailVerificationService:
         except ImportError:
             # If allauth not installed yet, return False
             return False
-        except Exception as e:
+        except Exception:
             # Handle any database/model errors gracefully
             logger.exception(
-                "Failed checking email verification for user %s: %s",
+                "Failed checking email verification for user %s",
                 getattr(user, "pk", None),
-                str(e)
             )
             return False
 
@@ -165,11 +164,7 @@ class EmailVerificationService:
             )
 
             # Original logging for backward compatibility
-            logger.exception(
-                "Failed marking email verified for user %s: %s",
-                user_id,
-                str(e)
-            )
+            logger.exception("Failed marking email verified for user %s", user_id)
 
     @staticmethod
     def get_user_email_addresses(user: User) -> list[object]:
@@ -192,11 +187,10 @@ class EmailVerificationService:
             )  # type: ignore[no-any-return]
         except ImportError:
             return []
-        except Exception as e:
+        except Exception:
             logger.exception(
-                "Failed getting email addresses for user %s: %s",
+                "Failed getting email addresses for user %s",
                 getattr(user, "pk", None),
-                str(e)
             )
             return []
 
@@ -222,11 +216,10 @@ class EmailVerificationService:
             ).first()
         except ImportError:
             return None
-        except Exception as e:
+        except Exception:
             logger.exception(
-                "Failed getting primary email address for user %s: %s",
+                "Failed getting primary email address for user %s",
                 getattr(user, "pk", None),
-                str(e)
             )
             return None
 

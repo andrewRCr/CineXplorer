@@ -33,6 +33,9 @@ sys.modules["core.services.email_service"] = mock_email_module
 
 # Override email settings for tests
 ZEPTOMAIL_API_KEY = "test_key"
+# Expiry settings (1 day for faster tests)
+# - EMAIL_VERIFICATION_EXPIRY_DAYS: Custom app setting
+# - ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS: Django-allauth setting
 EMAIL_VERIFICATION_EXPIRY_DAYS = 1  # Short expiry for faster tests
 EMAIL_VERIFICATION_TOKEN_EXPIRY = timedelta(days=EMAIL_VERIFICATION_EXPIRY_DAYS)
 ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = EMAIL_VERIFICATION_EXPIRY_DAYS

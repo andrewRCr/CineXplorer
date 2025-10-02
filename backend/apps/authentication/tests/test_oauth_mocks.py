@@ -9,7 +9,6 @@ from contextlib import contextmanager
 from unittest.mock import Mock, patch
 
 from allauth.socialaccount.models import SocialApp
-from django.test import RequestFactory
 
 from authentication.tests.fixtures import create_social_app
 
@@ -31,7 +30,6 @@ class MockOAuthProvider:
             social_app: SocialApp instance (created if not provided)
         """
         self.social_app = social_app or create_social_app(self.provider_name)
-        self.request_factory = RequestFactory()
 
     def create_oauth_response(
         self,

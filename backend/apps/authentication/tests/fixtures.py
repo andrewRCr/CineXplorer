@@ -58,18 +58,16 @@ def create_user(
         Created user instance
     """
     # Set defaults
-    defaults: dict[str, str | int | bool] = {
+    defaults: dict[str, str] = {
         'username': 'testuser',
         'email': 'testuser@example.com',
         'password': 'testpass123',
         'first_name': 'Test',
         'last_name': 'User'
     }
-    # Type: params is UserParams (TypedDict), compatible with dict update
-    defaults.update(params)  # type: ignore[arg-type]
 
     # Create user
-    user = User.objects.create_user(**defaults)
+    user = User.objects.create_user(**{**defaults, **params})
 
     # Mark email as verified if requested
     if email_verified:
@@ -104,12 +102,14 @@ def create_social_app(provider: str = 'google', site_id: int = 1) -> SocialApp:
         defaults={'domain': 'localhost:8444', 'name': 'CineXplorer Test'}
     )[0]
 
-    # Create social app
-    social_app = SocialApp.objects.create(
+    # Ensure single SocialApp per provider/site
+    social_app, _ = SocialApp.objects.get_or_create(
         provider=provider,
         name=f'{provider.capitalize()} OAuth',
-        client_id=f'test_{provider}_client_id',
-        secret=f'test_{provider}_secret'
+        defaults={
+            'client_id': f'test_{provider}_client_id',
+            'secret': f'test_{provider}_secret',
+        },
     )
     social_app.sites.add(site)
 
@@ -151,7 +151,7 @@ def create_social_account(
 
 
 # Payload creation fixtures
-def create_register_payload(
+def create_register_payload(  # noqa: S107 - test default password is intentional
     username: str = 'testuser',
     email: str = 'testuser@example.com',
     password: str = 'testpass123',
@@ -180,7 +180,7 @@ def create_register_payload(
     }
 
 
-def create_login_payload(
+def create_login_payload(  # noqa: S107 - test default password is intentional
     identifier: str = 'testuser',
     password: str = 'testpass123',
     use_email: bool = False

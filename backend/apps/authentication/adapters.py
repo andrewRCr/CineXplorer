@@ -37,6 +37,11 @@ class CustomAccountAdapter(DefaultAccountAdapter):
         # Development mode flag - enable when no API key or in testing
         self.dev_mode: bool = not self.api_key or testing
 
+        # Fail fast if required production config is missing
+        if not self.dev_mode and not self.sender_email:
+            logger.error("ZEPTOMAIL_SENDER_EMAIL is not configured")
+            raise ValueError("ZEPTOMAIL_SENDER_EMAIL must be set in non-dev environments")
+
     def _get_headers(self) -> dict[str, str]:
         """Get headers for ZeptoMail API requests."""
         return {
@@ -185,7 +190,7 @@ class CustomAccountAdapter(DefaultAccountAdapter):
             raise
 
     def get_email_confirmation_url(
-        self, request: HttpRequest | None, emailconfirmation: Any
+        self, _request: HttpRequest | None, emailconfirmation: Any
     ) -> str:
         """
         Construct the email confirmation URL.
@@ -200,7 +205,7 @@ class CustomAccountAdapter(DefaultAccountAdapter):
             str: Full URL for email confirmation
         """
         # Use FRONTEND_URL from settings for the email confirmation link
-        frontend_url = getattr(settings, "FRONTEND_URL", "https://localhost:8444")
+        frontend_url = getattr(settings, "FRONTEND_URL", "https://localhost:8444").rstrip("/")
         key = emailconfirmation.key
         # Frontend will handle the verification and call backend API
         return f"{frontend_url}/verify-email/{key}"

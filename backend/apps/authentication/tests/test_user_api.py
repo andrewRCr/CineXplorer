@@ -45,7 +45,7 @@ class PublicUserApiTests(TestCase):
 
         self.client = APIClient()
 
-    def create_payload(
+    def create_payload(  # noqa: S107 - test default password is intentional
         self,
         username: str = 'testUser',
         email: str = 'test@example.com',

@@ -73,6 +73,10 @@ Before any commit consideration, ALL of the following must pass with **zero exce
    - **REQUIRED**: Use `object` for unknown data, `dict[str, object]` for generic dictionaries
    - **JUSTIFICATION**: Any `Any` usage must have inline comment explaining necessity
 
+7. **Markdown Linting**: Zero violations
+   - Command: `npm run lint:md`
+   - Every violation must be fixed
+
 ### Quality Gate Failure Protocol
 
 If quality gates fail after sub-task completion:

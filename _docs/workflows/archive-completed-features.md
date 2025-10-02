@@ -70,6 +70,11 @@ steps:
   description: |
   Commit the archival changes following atomic commit principles:
 
+  **Before committing:**
+  1. Run markdown linting: `npm run lint:md`
+  2. Fix any violations in completion metadata and archived docs
+  3. Verify all quality gates pass
+
   ```bash
   git add _docs/archive/
   git add _docs/sub-prds/ _docs/tasks/  # (for removed files)
@@ -77,7 +82,7 @@ steps:
   ```
 
   git commit -m "docs(archive): Archive [feature-name] documentation
-  
+
     - Move completed PRD and tasks to structured archive
     - Add completion metadata and summary
     - Update PROJECT-STATUS.md references

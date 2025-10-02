@@ -87,8 +87,8 @@ docker-compose -f infrastructure/docker-compose.yml exec frontend npm run build
 
 - Frontend (via Caddy): <https://localhost:8444>
 - Backend API (via Caddy): <https://localhost:8444/api/>
-- Direct backend: <https://localhost:8000>
-- Direct frontend: <https://localhost:5173>
+- Direct backend: <http://localhost:8000>
+- Direct frontend: <http://localhost:5173>
 
 ## Quality Gates (MANDATORY)
 

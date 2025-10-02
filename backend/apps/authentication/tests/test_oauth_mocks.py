@@ -78,14 +78,17 @@ class MockOAuthProvider:
             access_token: Mock access token
 
         Returns:
-            Mock object for token exchange
+            Mock object mimicking requests.Response for token exchange
         """
         mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.headers = {'Content-Type': 'application/json'}
         mock_response.json.return_value = {
             'access_token': access_token,
             'token_type': 'Bearer',
             'expires_in': 3600
         }
+        mock_response.raise_for_status = Mock()  # No-op for 200 status
         return mock_response
 
     def mock_user_info_request(
@@ -103,14 +106,17 @@ class MockOAuthProvider:
             **extra_data: Additional user data
 
         Returns:
-            Mock object for user info request
+            Mock object mimicking requests.Response for user info request
         """
         mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.headers = {'Content-Type': 'application/json'}
         mock_response.json.return_value = self.create_oauth_response(
             user_email=user_email,
             user_id=user_id,
             **extra_data
         )
+        mock_response.raise_for_status = Mock()  # No-op for 200 status
         return mock_response
 
 
@@ -245,15 +251,18 @@ class MockGitHubOAuth(MockOAuthProvider):
             verified: Whether the email is verified
 
         Returns:
-            Mock object for email request
+            Mock object mimicking requests.Response for email request
         """
         mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.headers = {'Content-Type': 'application/json'}
         mock_response.json.return_value = [{
             'email': user_email,
             'primary': True,
             'verified': verified,
             'visibility': 'private'
         }]
+        mock_response.raise_for_status = Mock()  # No-op for 200 status
         return mock_response
 
     def mock_complete_flow(

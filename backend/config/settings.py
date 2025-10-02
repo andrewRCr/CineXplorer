@@ -273,8 +273,8 @@ SOCIALACCOUNT_EMAIL_AUTHENTICATION = True  # Use email for social account matchi
 SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True  # Auto-link accounts with same email
 
 # Login/Logout redirect URLs
-LOGIN_REDIRECT_URL = "/"  # Redirect to frontend root after login
-ACCOUNT_LOGOUT_REDIRECT_URL = "/"  # Redirect to frontend root after logout
+LOGIN_REDIRECT_URL = FRONTEND_URL  # Redirect to frontend after login
+ACCOUNT_LOGOUT_REDIRECT_URL = FRONTEND_URL  # Redirect to frontend after logout
 
 # Forbidden usernames
 FORBIDDEN_USERNAMES = [
@@ -301,18 +301,20 @@ FORBIDDEN_USERNAMES = [
     "public",
 ]
 
-# CORS configuration - Allow HTTPS frontend for CORS and CSRF
+# CORS configuration - Allow frontend for CORS and CSRF
 CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOWED_ORIGINS = [
-    "https://localhost:5173",
+    "http://localhost:5173",   # Development (direct frontend dev server)
+    "https://localhost:5173",  # Development (if using HTTPS)
     "https://localhost:5174",
-    "https://localhost:8444",
+    "https://localhost:8444",  # Production-like (Caddy proxy)
 ]
 CORS_ALLOW_CREDENTIALS = True
 CSRF_TRUSTED_ORIGINS = [
-    "https://localhost:5173",
+    "http://localhost:5173",   # Development (direct frontend dev server)
+    "https://localhost:5173",  # Development (if using HTTPS)
     "https://localhost:5174",
-    "https://localhost:8444",
+    "https://localhost:8444",  # Production-like (Caddy proxy)
 ]
 
 SIMPLE_JWT = {
@@ -345,22 +347,25 @@ def ensure_log_directory():
 
     if is_ci:
         # In CI, logging config will disable file handlers entirely
-        # Return a dummy path that won't be used
-        return '/tmp/ci-logs-unused'
+        return None  # Signals that file logging is disabled
     else:
         # In development/production, use the standard logs directory
         log_dir = os.path.join(BASE_DIR, "logs")
 
         try:
             os.makedirs(log_dir, exist_ok=True)
+            # Verify write permissions
+            test_file = os.path.join(log_dir, '.write_test')
+            with open(test_file, 'w') as f:
+                f.write('test')
+            os.remove(test_file)
             return log_dir
-        except PermissionError:
-            # Fallback to temp directory if we can't create the intended
-            # directory
+        except (PermissionError, OSError):
+            # Fallback to temp directory if we can't create the intended directory
             import tempfile
-            fallback_dir = tempfile.mkdtemp(
-                prefix='cinexplorer-logs-fallback-'
-            )
+            # Use gettempdir() instead of mkdtemp() to avoid creating orphaned directories
+            fallback_dir = os.path.join(tempfile.gettempdir(), 'cinexplorer-logs')
+            os.makedirs(fallback_dir, exist_ok=True)
             print(
                 f"Warning: Could not create log directory {log_dir}, "
                 f"using fallback: {fallback_dir}",

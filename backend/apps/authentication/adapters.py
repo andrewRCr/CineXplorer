@@ -175,6 +175,8 @@ class CustomAccountAdapter(DefaultAccountAdapter):
                         "response_preview": response_text,
                     },
                 )
+                # Propagate failure to allauth so it can handle delivery errors
+                response.raise_for_status()
 
         except Exception as e:
             logger.error(

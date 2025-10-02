@@ -64,11 +64,14 @@ All Authentication Modernization components (CustomAccountAdapter, email_verific
 
 ### 4.2 Authentication/Accounts Domain Migration
 
-6. **Replace DRF Authentication Views:** All remaining DRF-based authentication endpoints in `backend/apps/authentication/` must be migrated to Django Ninja, including:
-   - User profile management endpoints
-   - Email verification workflows (currently stubbed in views.py - Task 5.0 stubbed endpoints)
-   - Registration and resend verification endpoints
-   - Any custom authentication utilities
+6. **Replace DRF Authentication Views:** All remaining DRF-based authentication endpoints in `backend/apps/authentication/views.py` must be migrated to Django Ninja, including:
+   - User registration endpoints (RegisterAPIView, CreateUserView)
+   - User profile management (ManageUserView)
+   - JWT token management (JWTCookieTokenObtainPairView, JWTCookieTokenRefreshView)
+   - Logout endpoint (LogOutAPIView)
+   - CSRF token endpoint (CsrfTokenView)
+   - Email verification workflow (EmailVerificationView - currently returns 503, deferred from Auth Modernization)
+   - Resend verification endpoint (ResendVerificationView - currently returns 503)
 
 7. **Replace DRF User Serializers:** All DRF serializers related to user management must be replaced with Pydantic schemas that work with the modernized authentication system.
 
@@ -100,7 +103,27 @@ All Authentication Modernization components (CustomAccountAdapter, email_verific
 
 15. **Comprehensive Testing Migration:** Update all existing tests to use Django Ninja patterns, following the three-layer testing strategy established in Phase 1.
 
-### 4.4 Frontend Integration
+### 4.4 DRF Endpoint Inventory
+
+The following DRF views require migration to Django Ninja:
+
+**Authentication Domain (9 endpoints):**
+1. `RegisterAPIView` - User registration via DRF
+2. `CreateUserView` - Alternative user creation endpoint
+3. `ManageUserView` - User profile retrieval and updates
+4. `JWTCookieTokenObtainPairView` - JWT token acquisition with cookie setting
+5. `JWTCookieTokenRefreshView` - JWT token refresh with cookie setting
+6. `LogOutAPIView` - User logout and cookie clearing
+7. `CsrfTokenView` - CSRF token retrieval for AJAX requests
+8. `EmailVerificationView` - Email verification (currently 503)
+9. `ResendVerificationView` - Resend verification email (currently 503)
+
+**UserMovieData Domain:**
+- All DRF views in `backend/apps/user_movie_data/views.py` (specific count TBD during task generation)
+
+**Total Estimated:** ~15-20 DRF endpoints requiring migration
+
+### 4.5 Frontend Integration
 
 16. **Complete Type Generation:** Extend the OpenAPI-based TypeScript generation to cover all API endpoints, eliminating all manual type definitions.
 
@@ -205,7 +228,7 @@ All Authentication Modernization components (CustomAccountAdapter, email_verific
 ## 9. Open Questions
 
 1. ~~**Authentication Integration Complexity:** Will the django-allauth migration introduce any new patterns that require PRD updates?~~
-   - **Resolved:** Authentication Modernization complete. All components documented in Section 7 (Dependencies).
+   - **Resolved (January 2, 2025):** Authentication Modernization complete. All components documented in Section 7 (Dependencies). 9 DRF authentication endpoints identified in Section 4.4.
 
 2. **UserMovieData Schema Complexity:** Are there complex nested relationships in user movie data that will require special Pydantic schema design?
 
@@ -214,6 +237,8 @@ All Authentication Modernization components (CustomAccountAdapter, email_verific
 4. **Testing Data Migration:** Do we need to establish test data patterns for the more complex user-related test scenarios?
 
 ## 10. Deferred Work from Authentication Modernization
+
+**Authentication Modernization Status:** ✅ COMPLETE (Merged January 2, 2025)
 
 **Tracked Items to Complete in Phase 2:**
 
@@ -251,16 +276,16 @@ All Authentication Modernization components (CustomAccountAdapter, email_verific
 
 ---
 
-**Implementation Timeline:** Phase 2 implementation will begin only after:
+**Implementation Timeline:** Phase 2 is ready to begin:
 
-1. Authentication Modernization is 100% complete and merged to main
-2. This PRD is reviewed and updated (if necessary) based on auth modernization outcomes
-3. Backend development capacity is available (not blocked by other high-priority features)
+1. ✅ Authentication Modernization is 100% complete and merged to main (January 2, 2025)
+2. ✅ This PRD has been reviewed and updated based on auth modernization outcomes
+3. ✅ Backend development capacity is available
 
 **Next Steps:**
 
-1. Complete Authentication Modernization
-2. Review and finalize this PRD
-3. Generate detailed task breakdown for Phase 2 implementation
+1. ✅ Complete Authentication Modernization
+2. ✅ Review and finalize this PRD
+3. **CURRENT:** Generate detailed task breakdown for Phase 2 implementation
 4. Create feature branch: `feature/api-layer-modernization-p2` from main
 5. Begin systematic migration starting with UserMovieData domain

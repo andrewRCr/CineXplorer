@@ -31,6 +31,9 @@ from .api import api
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("__debug__/", include("debug_toolbar.urls")),
+    # django-allauth
+    # Provides: email verification, password reset, OAuth callbacks
+    path("accounts/", include("allauth.urls")),
     # Legacy DRF API documentation (for remaining DRF endpoints)
     path("api/drf-schema/", SpectacularAPIView.as_view(), name="drf-schema"),
     path("api/drf-docs/", SpectacularSwaggerView.as_view(url_name="drf-schema"), name="drf-docs"),

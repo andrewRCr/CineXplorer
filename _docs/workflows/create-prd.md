@@ -6,11 +6,11 @@ To guide an AI assistant in creating a detailed Sub-PRD (feature-level Product R
 
 ## Process
 
-1.  **Receive Initial Prompt:** The user provides a brief description or request for a new feature or functionality.
-2.  **Review META-PRD Context:** Before asking questions, review the META-PRD (`/_docs/META-PRD.md`) to understand the high-level product vision, core features, and user flows. Ensure the requested feature aligns with the overall product direction.
-3.  **Ask Clarifying Questions:** Before writing the Sub-PRD, the AI _must_ ask clarifying questions to gather sufficient detail. The goal is to understand the "what" and "why" of the feature, not necessarily the "how" (which the developer will figure out). Make sure to provide options in letter/number lists so I can respond easily with my selections.
-4.  **Generate Sub-PRD:** Based on the META-PRD context, initial prompt, and the user's answers to the clarifying questions, generate a Sub-PRD using the structure outlined below.
-5.  **Save Sub-PRD:** Save the generated document as `prd-[feature-name].md` inside the `/_docs/sub-prds/` directory.
+1. **Receive Initial Prompt:** The user provides a brief description or request for a new feature or functionality.
+2. **Review META-PRD Context:** Before asking questions, review the META-PRD (`/_docs/META-PRD.md`) to understand the high-level product vision, core features, and user flows. Ensure the requested feature aligns with the overall product direction.
+3. **Ask Clarifying Questions:** Before writing the Sub-PRD, the AI _must_ ask clarifying questions to gather sufficient detail. The goal is to understand the "what" and "why" of the feature, not necessarily the "how" (which the developer will figure out). Make sure to provide options in letter/number lists so I can respond easily with my selections.
+4. **Generate Sub-PRD:** Based on the META-PRD context, initial prompt, and the user's answers to the clarifying questions, generate a Sub-PRD using the structure outlined below.
+5. **Save Sub-PRD:** Save the generated document as `prd-[feature-name].md` inside the `/_docs/sub-prds/` directory.
 
 ## Clarifying Questions (Examples)
 
@@ -30,15 +30,15 @@ The AI should adapt its questions based on the prompt, but here are some common 
 
 The generated Sub-PRD should include the following sections:
 
-1.  **Introduction/Overview:** Briefly describe the feature and the problem it solves. State the goal.
-2.  **Goals:** List the specific, measurable objectives for this feature.
-3.  **User Stories:** Detail the user narratives describing feature usage and benefits.
-4.  **Functional Requirements:** List the specific functionalities the feature must have. Use clear, concise language (e.g., "The system must allow users to upload a profile picture."). Number these requirements.
-5.  **Non-Goals (Out of Scope):** Clearly state what this feature will _not_ include to manage scope.
-6.  **Design Considerations (Optional):** Link to mockups, describe UI/UX requirements, or mention relevant components/styles if applicable.
-7.  **Technical Considerations (Optional):** Mention any known technical constraints, dependencies, or suggestions (e.g., "Should integrate with the existing Auth module").
-8.  **Success Metrics:** How will the success of this feature be measured? (e.g., "Increase user engagement by 10%", "Reduce support tickets related to X").
-9.  **Open Questions:** List any remaining questions or areas needing further clarification.
+1. **Introduction/Overview:** Briefly describe the feature and the problem it solves. State the goal.
+2. **Goals:** List the specific, measurable objectives for this feature.
+3. **User Stories:** Detail the user narratives describing feature usage and benefits.
+4. **Functional Requirements:** List the specific functionalities the feature must have. Use clear, concise language (e.g., "The system must allow users to upload a profile picture."). Number these requirements.
+5. **Non-Goals (Out of Scope):** Clearly state what this feature will _not_ include to manage scope.
+6. **Design Considerations (Optional):** Link to mockups, describe UI/UX requirements, or mention relevant components/styles if applicable.
+7. **Technical Considerations (Optional):** Mention any known technical constraints, dependencies, or suggestions (e.g., "Should integrate with the existing Auth module").
+8. **Success Metrics:** How will the success of this feature be measured? (e.g., "Increase user engagement by 10%", "Reduce support tickets related to X").
+9. **Open Questions:** List any remaining questions or areas needing further clarification.
 
 ## Target Audience
 

@@ -64,11 +64,11 @@ services:
     environment:
       # These credentials are for local development only. The backend service connects to its
       # database using credentials from its own .env file, not these.
-      - POSTGRES_DB=devDB
-      - POSTGRES_USER=devUser
-      - POSTGRES_PASSWORD=devPassword
+      - POSTGRES_DB=cinexplorer_dev
+      - POSTGRES_USER=cinexplorer_user
+      - POSTGRES_PASSWORD=cinexplorer_dev_pass
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U devUser -d devDB"]
+      test: ["CMD-SHELL", "pg_isready -U cinexplorer_user -d cinexplorer_dev"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -81,6 +81,11 @@ services:
       - ./Caddyfile:/etc/caddy/Caddyfile
       - ./dev-certs/cert.pem:/etc/caddy/cert.pem:ro
       - ./dev-certs/key.pem:/etc/caddy/key.pem:ro
+      # Mount dev cert as trusted CA for backend TLS verification
+      - ./dev-certs/cert.pem:/usr/local/share/ca-certificates/dev-backend.crt:ro
+    environment:
+      # Trust the dev certificate for backend communication
+      - SSL_CERT_FILE=/usr/local/share/ca-certificates/dev-backend.crt
     depends_on:
       backend:
         condition: service_healthy

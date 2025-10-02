@@ -7,6 +7,7 @@
 This document consolidates the core development rules and quality standards for CineXplorer. These rules are **non-negotiable** and must be followed by all contributors, including AI assistants.
 
 ## Version History
+
 - **2.2**: Added mandatory comprehensive task context analysis protocol for all commits
 - **2.1**: Added feature branch workflow protocols and branch management requirements
 - **2.0**: Clarified commit initiation vs execution, added incremental quality checks
@@ -15,6 +16,7 @@ This document consolidates the core development rules and quality standards for 
 ## AI Session Initialization Required
 
 Before starting ANY work, AI assistants must:
+
 1. **Confirm rules version**: "Acknowledging DEVELOPMENT-RULES v2.2, hash c4f9e8a2"
 2. **State understanding**: Briefly confirm understanding of commit protocols, comprehensive task context analysis, quality gates, and feature branch workflow
 3. **Verify context access**: Confirm access to required documents (AI-SHARED, META-PRD, etc.)
@@ -23,6 +25,7 @@ Before starting ANY work, AI assistants must:
 ## Git & Commit Control
 
 ### Manual Commit Control
+
 - **AI NEVER initiates commits** without explicit user approval or instruction
 - **AI CAN execute commits** when user explicitly approves/instructs it to do so
 - **User approval required** to begin any git operations
@@ -30,6 +33,7 @@ Before starting ANY work, AI assistants must:
 - AI reports completion with standardized readiness report, then awaits commit instructions
 
 ### Feature Branch Workflow
+
 - **All feature work** must happen on dedicated feature branches
 - **Branch naming convention**: `feature/[feature-name]` (e.g., `feature/user-profile-editing`)
 - **Branch creation**: Create new branch during task generation phase
@@ -38,6 +42,7 @@ Before starting ANY work, AI assistants must:
 - **Branch cleanup**: Delete feature branches after successful merge
 
 ### Quality Gates (Zero Tolerance)
+
 Before any commit consideration, ALL of the following must pass with **zero exceptions**:
 
 1. **Backend Tests**: 100% pass rate
@@ -69,7 +74,9 @@ Before any commit consideration, ALL of the following must pass with **zero exce
    - **JUSTIFICATION**: Any `Any` usage must have inline comment explaining necessity
 
 ### Quality Gate Failure Protocol
+
 If quality gates fail after sub-task completion:
+
 1. **Report the failure** with specific details
 2. **Identify suspected causes** and investigation areas
 3. **Ask for guidance** on whether to fix immediately or defer
@@ -78,30 +85,37 @@ If quality gates fail after sub-task completion:
 ## Task Management Protocol
 
 ### One Sub-Task Rule
+
 - **Complete ONE sub-task at a time** - never bundle multiple deliverables
 - **Mandatory stop** after each sub-task completion
 - **Wait for explicit user approval** before starting next sub-task
 
 ### Sub-Task Granularity Guidelines
+
 Break down a sub-task if it requires:
+
 - More than 3 files to be modified
 - More than 50 lines of core logic changes
 - Multiple interdependent changes
 - Complex debugging/investigation
 
 ### Documentation Updates
+
 - **Immediate task list updates**: Mark `[x]` in task files after each sub-task
 - **Update "Relevant Files"** section when files are created/modified
 - **Never batch documentation updates** - do immediately after work
 
 ### Parent Task Completion
+
 After completing all sub-tasks under a parent task:
+
 1. **Run full quality gate checks**
 2. **Check PROJECT-STATUS** for necessary updates
 3. **Report completion** with standardized readiness report
 4. **Wait for user approval** before proceeding
 
 ### PROJECT-STATUS Maintenance
+
 - **After each sub-task**: Update task documentation only
 - **After each parent task**: Check if PROJECT-STATUS needs updates
 - **Regular accuracy checks**: Ensure PROJECT-STATUS reflects all recent work
@@ -109,12 +123,14 @@ After completing all sub-tasks under a parent task:
 ## Testing Requirements
 
 ### Test Coverage Standards
+
 - **Test-first approach**: Required for new models, API endpoints, complex business logic
 - **Test-after acceptable**: For simple CRUD operations, UI components, configuration
 - **Always required**: All features must have appropriate test coverage
 - **Integration focus**: Test workflows, not just individual components
 
 ### Test Execution Standards
+
 - **Backend**: Use `--keepdb` flag for performance during development
 - **Frontend**: Use appropriate test modes (watch, coverage, UI) as needed
 - **Before commits**: Full test suite must pass completely
@@ -122,11 +138,13 @@ After completing all sub-tasks under a parent task:
 ## Commit Standards
 
 ### Conventional Commit Format
+
 - **Types**: feat, fix, docs, style, refactor, test, config, chore
 - **Scope**: Use feature/system name for context
 - **Reference tasks**: Include task numbers with feature context
 
 ### Atomic Commit Guidelines
+
 - Each commit should be a single logical change
 - Commits should be independently buildable/testable
 - **MANDATORY**: Perform comprehensive task context analysis before writing commit messages
@@ -139,12 +157,14 @@ After completing all sub-tasks under a parent task:
 ## Error Handling
 
 ### When Things Go Wrong
+
 - **Report immediately** with full context
 - **Provide diagnostic information** (error messages, stack traces)
 - **Suggest investigation areas** based on the changes made
 - **Wait for guidance** rather than attempting fixes without approval
 
-### Never Proceed If:
+### Never Proceed If
+
 - Quality gates are failing
 - Tests are broken
 - Linting violations exist
@@ -166,6 +186,7 @@ After completing all sub-tasks under a parent task:
 ## Essential Commands
 
 ### Application Startup
+
 ```bash
 # Full stack with Docker (recommended)
 docker-compose -f infrastructure/docker-compose.yml up --build
@@ -173,6 +194,7 @@ docker-compose -f infrastructure/docker-compose.yml up --build
 ```
 
 ### Container Management
+
 ```bash
 # Rebuild after dependency changes
 docker-compose -f infrastructure/docker-compose.yml up --build
@@ -185,6 +207,7 @@ docker-compose exec [backend|frontend] bash
 ```
 
 ### Feature Branch Management
+
 ```bash
 # Create and switch to new feature branch
 git checkout -b feature/[feature-name]
@@ -204,6 +227,7 @@ git branch -d feature/[feature-name]
 ## Reference Documentation
 
 This document provides core rules. See detailed protocols in:
+
 - **`_docs/workflows/process-tasks.md`** - Detailed task execution workflow
 - **`_docs/workflows/atomic-commit.md`** - Enhanced commit workflow with comprehensive task context analysis
 - **`_docs/ai-instructions/AI-SHARED.md`** - Complete project context for AI

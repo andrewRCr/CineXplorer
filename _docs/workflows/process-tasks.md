@@ -19,10 +19,10 @@ Guidelines for managing task lists in markdown files to track progress on comple
 
   2. If **all** subtasks underneath a parent task are now `[x]`, follow this sequence:
 
-  - **First**: Ensure new code has appropriate test coverage (models, APIs, complex logic)
-  - **Second**: Run the full test suite (`python manage.py test --settings=config.settings_test`, `npm test`, etc.)
-  - **Third**: Run all linting checks (`flake8`, `python scripts/type_check.py` [runs hybrid Pyright+mypy; requires `npm install` for pyright], `npm run lint`, `npm run type-check`)
-  - **Fourth**: Check if PROJECT-STATUS needs updates (feature progress, completed functionality, updated priorities)
+    - **First**: Ensure new code has appropriate test coverage (models, APIs, complex logic)
+    - **Second**: Run the full test suite (`python manage.py test --settings=config.settings_test`, `npm test`, etc.)
+    - **Third**: Run all linting checks (`flake8`, `python scripts/type_check.py` [runs hybrid Pyright+mypy; requires `npm install` for pyright], `npm run lint`, `npm run type-check`)
+    - **Fourth**: Check if PROJECT-STATUS needs updates (feature progress, completed functionality, updated priorities)
 
   3. Generate standardized readiness report (see DEVELOPMENT-RULES.md for format) and await user instructions on how to proceed. User may choose to commit changes (AI can execute only if explicitly approved to do so) or review first. When committing, follow atomic-commit workflow (see _docs/workflows/atomic-commit.md) guidelines:
 
@@ -38,6 +38,7 @@ Guidelines for managing task lists in markdown files to track progress on comple
       ```
 
       Example with real values:
+
       ```
       git commit -m "feat(feature/payment-flow): add payment validation logic" -m "- Validates card type and expiry" -m "- Adds unit tests for edge cases" -m "Complete task 4.2.3" -m "Related to Payment PRD"
       ```
@@ -50,6 +51,7 @@ Guidelines for managing task lists in markdown files to track progress on comple
 After each sub-task, run relevant quality checks on modified files only:
 
 **Backend Files** (Python):
+
 ```bash
 # Lint specific files
 docker compose exec backend flake8 path/to/modified/file.py
@@ -66,6 +68,7 @@ docker compose exec backend mypy path/to/modified/file.py
 ```
 
 **Frontend Files** (TypeScript/JavaScript):
+
 ```bash
 # Lint specific files
 docker-compose exec frontend npm run lint -- path/to/modified/file.ts
@@ -79,38 +82,43 @@ docker-compose exec frontend npm run type-check
 ### Feature Branch Management
 
 #### Starting Feature Work
+
 - **Ensure correct branch**: Verify you're on the feature branch (e.g., `feature/user-profile-editing`)
 - **Check branch status**: `git status` should show the feature branch as current
 - **If not on feature branch**: `git checkout feature/[feature-name]`
 
 #### During Task Execution
+
 - **All commits go to feature branch**: Normal atomic commit workflow applies within the branch
 - **Stay on feature branch**: Don't switch branches during active task work
 - **Branch context in handoffs**: Include current branch in any AI context handoffs
 
 #### Feature Completion
+
 When all parent tasks are complete and ready for integration:
 
 1. **Final quality gates**: All tests pass, zero linting violations, zero type errors
 2. **Generate completion report**: Use standardized format from DEVELOPMENT-RULES.md
 3. **Await user approval**: User decides when to merge to main
 4. **Merge process** (user executes):
+
    ```bash
    git checkout main
    git merge feature/[feature-name]  # Preserve commit history
    git branch -d feature/[feature-name]  # Clean up feature branch
    ```
+
 5. **Update PROJECT-STATUS**: Move feature from "In Progress" to "Completed"
 
 ### PROJECT-STATUS Maintenance
 
 - **After each sub-task**: Update task documentation only
 - **After each parent task**: Check if PROJECT-STATUS needs updates:
-  - Feature progress milestones reached
-  - Newly completed functionality to highlight
-  - Updated timelines or priorities
-  - Dependencies that are now resolved
-  - Any other work completed outside the current task list
+    - Feature progress milestones reached
+    - Newly completed functionality to highlight
+    - Updated timelines or priorities
+    - Dependencies that are now resolved
+    - Any other work completed outside the current task list
 
 - **Stop after each individual sub‑task and wait for the user's go‑ahead**
 - **Never complete multiple subtasks in one implementation cycle** - each subtask represents a discrete deliverable that requires individual review

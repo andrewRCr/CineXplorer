@@ -1,55 +1,24 @@
 """
 Django admin interface customization for accounts.
+
+This module previously contained custom User and EmailVerificationToken admin
+configurations. These have been removed as part of the authentication
+modernization migration to django-allauth and Django's default User model.
+
+Migration Context:
+==================
+- Custom UserAdmin removed: Django's default UserAdmin is used
+- EmailVerificationToken admin removed: Now using allauth's EmailAddress admin
+- User model is now managed by django.contrib.auth (automatically registered)
+- Email verification is managed by django-allauth (automatically registered)
+
+To customize user admin interface, extend django.contrib.auth.admin.UserAdmin
+in the authentication app if needed.
+
+Migration Date: 2025-10-01
+Related PRD: _docs/sub-prds/prd-authentication-modernization.md
 """
 
-from django.contrib import admin
-from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from django.utils.translation import gettext_lazy as _
-
-from accounts import models
-
-
-class UserAdmin(BaseUserAdmin):
-    """ Defines custom options for the admin pages for users. """
-
-    ordering = ['id']
-    list_display = ['username', 'email', 'first_name', 'last_name']
-    fieldsets = (
-        (None, {
-            'fields': (
-                'username', 'email', 'password', 'first_name', 'last_name'
-            )
-        }),
-        (
-            _('Permissions'),
-            {
-                'fields': (
-                    'is_active',
-                    'is_staff',
-                    'is_superuser',
-                )
-            }
-        ),
-        (_('Important Dates'), {'fields': ('last_login',)})
-    )
-    readonly_fields = ['last_login']
-    add_fieldsets = (
-        (None, {
-            'classes': ('wide',),
-            'fields': (
-                'username',
-                'email',
-                'password1',
-                'password2',
-                'first_name',
-                'last_name',
-                'is_active',
-                'is_staff',
-                'is_superuser',
-            )
-        }),
-    )
-
-
-admin.site.register(models.User, UserAdmin)
-admin.site.register(models.EmailVerificationToken)
+# This file intentionally left empty after migration to django-allauth.
+# Django's default User admin and allauth's EmailAddress admin are automatically
+# registered when their respective apps are included in INSTALLED_APPS.

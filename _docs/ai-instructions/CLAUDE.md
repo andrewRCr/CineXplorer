@@ -17,18 +17,21 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 This project uses a structured **3-step AI-assisted development process**:
 
 ### Step 1: Feature Planning (`_docs/workflows/create-prd.md`)
+
 - Generate Sub-PRDs from user requirements
 - Ask clarifying questions with letter/number options for easy responses
 - Review META-PRD context for product alignment
 - Save as `_docs/sub-prds/prd-[feature-name].md`
 
 ### Step 2: Task Generation (`_docs/workflows/generate-tasks.md`)
+
 - Convert Sub-PRDs into actionable task lists
 - Two-phase process: high-level tasks → detailed sub-tasks
 - Wait for user "Go" confirmation between phases
 - Save as `_docs/tasks/tasks-prd-[feature-name].md`
 
 ### Step 3: Task Execution (`_docs/workflows/process-tasks.md`)
+
 - **CRITICAL**: Complete ONE sub-task at a time
 - **MANDATORY STOP** after each sub-task for user approval
 - Test-first approach for models, APIs, and complex logic
@@ -43,6 +46,7 @@ CineXplorer is a full-stack movie discovery application built with Django + Djan
 ## Development Commands
 
 ### Starting the Application
+
 ```bash
 # Run full stack with Docker (recommended)
 docker-compose -f infrastructure/docker-compose.yml up --build
@@ -51,6 +55,7 @@ docker-compose -f infrastructure/docker-compose.yml up --build
 ```
 
 ### Backend (Django/Python)
+
 ```bash
 # Tests (with performance optimization)
 docker-compose exec backend python manage.py test --keepdb --settings=config.settings_test
@@ -64,6 +69,7 @@ docker-compose exec backend python manage.py [command]
 ```
 
 ### Frontend (React/TypeScript)
+
 ```bash
 # Testing
 docker-compose exec frontend npm test
@@ -81,6 +87,7 @@ docker-compose exec frontend npm run build
 ## Architecture Overview
 
 ### Backend Structure (`backend/`)
+
 - **Framework**: Django 5.2 + Django Ninja (migrating from Django REST Framework)
 - **Apps**: `backend/apps/` (core, user, movie, user_movie_data)
 - **Authentication**: JWT in HTTP-only cookies via custom Django Ninja authentication
@@ -88,6 +95,7 @@ docker-compose exec frontend npm run build
 - **Key Libraries**: django-ninja, django-cors-headers, django-debug-toolbar, tmdbsimple
 
 ### Frontend Structure (`frontend/`)
+
 - **Framework**: React 19 + TypeScript 5.x + Vite
 - **UI**: Chakra UI v3 with comprehensive theming
 - **Routing**: React Router DOM v7
@@ -96,6 +104,7 @@ docker-compose exec frontend npm run build
 - **Architecture**: Service layer (`src/services/`) with axios
 
 ### Key Directories
+
 ```
 ├── backend/apps/           # Django apps (core, user, movie, user_movie_data)
 ├── frontend/src/
@@ -118,6 +127,7 @@ docker-compose exec frontend npm run build
 **⚠️ See `_docs/DEVELOPMENT-RULES.md` for complete, authoritative rules. Key points:**
 
 ### Quality Gates (Zero Tolerance)
+
 1. **All tests pass**: Backend + frontend test suites - NO EXCEPTIONS
 2. **Zero linting violations**: flake8 (backend), ESLint + TypeScript (frontend) - ALL MUST PASS
 3. **Manual commit initiation**: AI NEVER initiates commits without explicit approval
@@ -125,6 +135,7 @@ docker-compose exec frontend npm run build
 5. **Standardized reporting**: Use readiness report format from DEVELOPMENT-RULES.md
 
 ### Task Management Protocol
+
 - **Feature branch workflow** - all feature work happens on dedicated branches
 - **ONE sub-task at a time** - never bundle multiple deliverables
 - **Branch verification** - always verify correct branch before committing
@@ -133,6 +144,7 @@ docker-compose exec frontend npm run build
 - **PROJECT-STATUS checks** - after each parent task completion
 
 ### Quality Gate Failure Protocol
+
 - **Report failures immediately** with specific details and suspected causes
 - **Ask for guidance** on whether to fix or defer
 - **Never proceed** to next sub-task until resolved or user approves
@@ -140,6 +152,7 @@ docker-compose exec frontend npm run build
 ## Shared Type System
 
 The `shared/` directory ensures type safety between frontend and backend:
+
 - `api-types.ts`: API request/response interfaces
 - `error-codes.ts`: Synchronized error constants
 
@@ -154,6 +167,7 @@ The `shared/` directory ensures type safety between frontend and backend:
 ## Testing Philosophy
 
 **Modified Test-Driven Development (TDD)**:
+
 - **Test-first**: New models, API endpoints, complex business logic
 - **Test-after**: Simple CRUD operations, UI components, configuration
 - **Always required**: All features need appropriate test coverage
@@ -162,6 +176,7 @@ The `shared/` directory ensures type safety between frontend and backend:
 ## CI/CD Pipeline
 
 GitHub Actions (`.github/workflows/checks.yml`) on every push/PR:
+
 - Backend: tests + flake8 linting + `scripts/type_check.py` (hybrid Pyright + MyPy)
 - Frontend: tests + ESLint + TypeScript checking + build verification
 
@@ -176,6 +191,7 @@ GitHub Actions (`.github/workflows/checks.yml`) on every push/PR:
 For analysis tasks that exceed Claude's context window or require comprehensive project-wide verification:
 
 **When to use:**
+
 - Files totaling >100KB in single analysis
 - Project-wide pattern verification across all Django apps
 - Cross-system consistency checks (backend ↔ frontend ↔ shared types)
@@ -206,6 +222,7 @@ gemini -p "@backend/apps/ Has the migration from DRF to Django Ninja been comple
 ```
 
 **Important notes:**
+
 - Run from project root directory (paths are relative to working directory)
 - Use for **verification and analysis only** - return to Claude for implementation
 - Best for **periodic architecture reviews** rather than daily development
@@ -222,4 +239,3 @@ This is a **showcase project** demonstrating systematic AI-assisted development 
 - **Incremental development** with atomic commits and clear progress tracking
 
 **Remember**: The AI workflow augments, never replaces, core development skills. Each step requires developer review and understanding.
-

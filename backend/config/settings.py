@@ -37,8 +37,7 @@ sys.path.insert(0, SHARED_DIR)
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# SECURITY WARNING: set via environment variable only (see line 202)
 
 ALLOWED_HOSTS = [
     "localhost",
@@ -56,6 +55,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.sites",  # Required for django-allauth
     "django_extensions",
     "accounts",
     "core",
@@ -64,6 +64,13 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework.authtoken",
     "drf_spectacular",
+    # django-allauth
+    "allauth",
+    "allauth.account",
+    "allauth.socialaccount",
+    "allauth.socialaccount.providers.google",
+    "allauth.socialaccount.providers.github",
+    # Project apps
     "authentication",
     "movie",
     "user_movie_data",
@@ -81,6 +88,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "allauth.account.middleware.AccountMiddleware",  # Required for django-allauth
 ]
 
 INTERNAL_IPS = [
@@ -98,7 +106,7 @@ ROOT_URLCONF = "config.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [os.path.join(BASE_DIR, "templates")],  # Project-level templates (allauth, etc.)
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -168,9 +176,13 @@ STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# custom authentication
-AUTH_USER_MODEL = "accounts.User"
-AUTHENTICATION_BACKENDS = ["core.backends.CustomUserModelBackend"]
+# Authentication configuration
+# Using Django's default User model (django.contrib.auth.models.User)
+# Custom AUTH_USER_MODEL removed to resolve django-stubs mypy --strict bug
+AUTHENTICATION_BACKENDS = [
+    "django.contrib.auth.backends.ModelBackend",  # Django default (for admin, etc.)
+    "allauth.account.auth_backends.AuthenticationBackend",  # allauth (OAuth + email)
+]
 
 # generate openAPI schema with drf-spectacular
 REST_FRAMEWORK = {
@@ -198,8 +210,71 @@ ZEPTOMAIL_API_KEY = os.environ.get("ZEPTOMAIL_API_KEY", "")
 ZEPTOMAIL_SENDER_EMAIL = os.environ.get(
     "ZEPTOMAIL_SENDER_EMAIL", "CineXplorer@andrewcreekmore.com"
 )
-EMAIL_VERIFICATION_TOKEN_EXPIRY = timedelta(hours=24)
+# Email verification expiry (days) - configurable via environment variable
+# Default: 3 days (72 hours) - reasonable for production use
+EMAIL_VERIFICATION_EXPIRY_DAYS = int(
+    os.environ.get("EMAIL_VERIFICATION_EXPIRY_DAYS", "3")
+)
+# Legacy constant for DRF email verification bridge (deferred to API Layer Phase 2)
+EMAIL_VERIFICATION_TOKEN_EXPIRY = timedelta(days=EMAIL_VERIFICATION_EXPIRY_DAYS)
 FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:5173")
+
+# Validate email configuration in production
+# Allow missing API key in development (dev_mode) and testing
+if not ZEPTOMAIL_API_KEY and not DEBUG and "test" not in sys.argv:
+    import warnings
+    warnings.warn(
+        "ZEPTOMAIL_API_KEY is not set. Email delivery will fail in production. "
+        "Set ZEPTOMAIL_API_KEY environment variable or emails will not be sent.",
+        RuntimeWarning,
+        stacklevel=2
+    )
+
+# django-allauth Configuration
+SITE_ID = 1  # Required for django.contrib.sites
+ACCOUNT_DEFAULT_HTTP_PROTOCOL = "https" if not DEBUG else "http"
+
+# Email verification
+ACCOUNT_EMAIL_VERIFICATION = "mandatory"  # 'mandatory', 'optional', or 'none'
+
+# Login methods (modern allauth API)
+ACCOUNT_LOGIN_METHODS = {"email", "username"}  # Allow login with username or email
+
+# Signup fields (modern allauth API)
+# Field format: 'field_name' (optional) or 'field_name*' (required)
+ACCOUNT_SIGNUP_FIELDS = [
+    "email*",      # Email required
+    "username*",   # Username required
+    "password1*",  # Password required
+    "password2*",  # Password confirmation required (no separate setting)
+]
+
+# Email settings
+ACCOUNT_UNIQUE_EMAIL = True  # Enforce unique emails across users
+
+# Login/Logout behavior
+ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True  # Auto-login after email verification
+ACCOUNT_LOGOUT_ON_GET = False  # Require POST for logout (CSRF protection)
+
+# Session configuration
+ACCOUNT_SESSION_REMEMBER = True  # Remember user sessions
+
+# Email confirmation expiry (uses same value as EMAIL_VERIFICATION_EXPIRY_DAYS)
+ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = EMAIL_VERIFICATION_EXPIRY_DAYS
+ACCOUNT_EMAIL_SUBJECT_PREFIX = "[CineXplorer] "
+
+# Adapter configuration - Custom adapter for ZeptoMail integration
+ACCOUNT_ADAPTER = "authentication.adapters.CustomAccountAdapter"
+
+# Social account settings
+SOCIALACCOUNT_AUTO_SIGNUP = True  # Auto-create account from social login
+SOCIALACCOUNT_EMAIL_VERIFICATION = "none"  # Social providers verify email
+SOCIALACCOUNT_EMAIL_AUTHENTICATION = True  # Use email for social account matching
+SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True  # Auto-link accounts with same email
+
+# Login/Logout redirect URLs
+LOGIN_REDIRECT_URL = FRONTEND_URL  # Redirect to frontend after login
+ACCOUNT_LOGOUT_REDIRECT_URL = FRONTEND_URL  # Redirect to frontend after logout
 
 # Forbidden usernames
 FORBIDDEN_USERNAMES = [
@@ -226,24 +301,20 @@ FORBIDDEN_USERNAMES = [
     "public",
 ]
 
-# CORS constants
-# TODO: update for production (temp/development only)
-CORS_ALLOW_ALL_ORIGINS = True
-CORS_ALLOW_CREDENTIALS = True
-
-
-# Allow HTTPS frontend for CORS and CSRF
+# CORS configuration - Allow frontend for CORS and CSRF
 CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOWED_ORIGINS = [
-    "https://localhost:5173",
+    "http://localhost:5173",   # Development (direct frontend dev server)
+    "https://localhost:5173",  # Development (if using HTTPS)
     "https://localhost:5174",
-    "https://localhost:8444",
+    "https://localhost:8444",  # Production-like (Caddy proxy)
 ]
 CORS_ALLOW_CREDENTIALS = True
 CSRF_TRUSTED_ORIGINS = [
-    "https://localhost:5173",
+    "http://localhost:5173",   # Development (direct frontend dev server)
+    "https://localhost:5173",  # Development (if using HTTPS)
     "https://localhost:5174",
-    "https://localhost:8444",
+    "https://localhost:8444",  # Production-like (Caddy proxy)
 ]
 
 SIMPLE_JWT = {
@@ -276,22 +347,25 @@ def ensure_log_directory():
 
     if is_ci:
         # In CI, logging config will disable file handlers entirely
-        # Return a dummy path that won't be used
-        return '/tmp/ci-logs-unused'
+        return None  # Signals that file logging is disabled
     else:
         # In development/production, use the standard logs directory
         log_dir = os.path.join(BASE_DIR, "logs")
 
         try:
             os.makedirs(log_dir, exist_ok=True)
+            # Verify write permissions
+            test_file = os.path.join(log_dir, '.write_test')
+            with open(test_file, 'w') as f:
+                f.write('test')
+            os.remove(test_file)
             return log_dir
-        except PermissionError:
-            # Fallback to temp directory if we can't create the intended
-            # directory
+        except (PermissionError, OSError):
+            # Fallback to temp directory if we can't create the intended directory
             import tempfile
-            fallback_dir = tempfile.mkdtemp(
-                prefix='cinexplorer-logs-fallback-'
-            )
+            # Use gettempdir() instead of mkdtemp() to avoid creating orphaned directories
+            fallback_dir = os.path.join(tempfile.gettempdir(), 'cinexplorer-logs')
+            os.makedirs(fallback_dir, exist_ok=True)
             print(
                 f"Warning: Could not create log directory {log_dir}, "
                 f"using fallback: {fallback_dir}",

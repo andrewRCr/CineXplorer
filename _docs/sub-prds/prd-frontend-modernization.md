@@ -117,23 +117,27 @@ This Sub-PRD defines a comprehensive frontend modernization effort for CineXplor
 ## Technical Considerations
 
 ### State Management Architecture
+
 - **Server State**: TanStack Query with proper cache invalidation strategies
 - **Client State**: Redux Toolkit with normalized state shape
 - **Form State**: React Hook Form with Zod validation
 - **URL State**: React Router with proper query parameter handling
 
 ### Performance Targets
+
 - **First Contentful Paint**: < 1.5s
 - **Time to Interactive**: < 3.5s
 - **Bundle Size**: < 200KB gzipped for initial load
 - **Code Coverage**: > 80% for new code
 
 ### Testing Strategy
+
 - **Unit Tests**: Component logic and utility functions
 - **Integration Tests**: User flows and API interactions
 - **E2E Tests**: Critical paths coordinated with Playwright setup from backend
 
 ### Browser Support
+
 - Modern browsers (Chrome, Firefox, Safari, Edge - latest 2 versions)
 - No IE11 support required
 
@@ -179,6 +183,7 @@ When implementation begins, the following approach will be taken:
 ---
 
 **Next Steps:**
+
 1. Complete Backend Modernization implementation
 2. Review and refine this PRD based on lessons learned
 3. Generate detailed task breakdown when ready to begin

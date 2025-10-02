@@ -5,6 +5,7 @@ This document provides protocols for AI assistants to handle context management,
 ## Session Initialization Protocol
 
 ### Starting Fresh or Resuming
+
 1. **Acknowledge rules**: "Ready. Using DEVELOPMENT-RULES v{X}"
 2. **Read essential context**: DEVELOPMENT-RULES.md, AI-SHARED.md, current prd and task list docs
 3. **Check session state**: Read _docs/CURRENT-SESSION.md if resuming
@@ -14,6 +15,7 @@ This document provides protocols for AI assistants to handle context management,
 ## Session Handoff Protocol
 
 ### Comprehensive Handoff Format
+
 Update **_docs/CURRENT-SESSION.md** before ending session using the full template structure:
 
 ```markdown
@@ -35,6 +37,7 @@ Update **_docs/CURRENT-SESSION.md** before ending session using the full templat
 ```
 
 ### Starting New Session from Handoff
+
 1. User says: "Resume from CURRENT-SESSION.md"
 2. AI reads the document and confirms understanding
 3. AI verifies git state matches documented state
@@ -44,6 +47,7 @@ Update **_docs/CURRENT-SESSION.md** before ending session using the full templat
 ## Context Recovery
 
 ### If Context Seems Lost
+
 1. **Stop immediately** - don't continue current action
 2. **Acknowledge**: "I may have lost context"
 3. **Re-read**: DEVELOPMENT-RULES.md and current task list
@@ -51,6 +55,7 @@ Update **_docs/CURRENT-SESSION.md** before ending session using the full templat
 5. **Resume only after** explicit user approval
 
 ### Signs You Need Recovery
+
 - Forgetting incremental quality checks
 - Bundling multiple sub-tasks together
 - Initiating commits without approval
@@ -61,11 +66,13 @@ Update **_docs/CURRENT-SESSION.md** before ending session using the full templat
 ### How to Use for Session Handoffs
 
 **Approaching context limits:**
+
 1. Ask AI to update CURRENT-SESSION.md with current state
 2. Review and save the updated file
 3. Start new conversation with: "Resume from CURRENT-SESSION.md"
 
 **Between work sessions:**
+
 1. Clear CURRENT-SESSION.md or let AI fill fresh template
 2. For high-level tracking, check PROJECT-STATUS.md
 3. For objective state, rely on git status and branch
@@ -73,6 +80,7 @@ Update **_docs/CURRENT-SESSION.md** before ending session using the full templat
 **Emergency compact handoff:**
 If tokens are critically low, request: "Create emergency handoff"
 AI will generate minimal state summary using single-line format:
+
 ```
 Branch: [name] | PRD: [prd-file] | Tasks: [task-file] | Work: [structured/incidental] | Last: [task] | Next: [task] | Blockers: [none/description]
 ```

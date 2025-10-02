@@ -25,7 +25,23 @@ https://localhost:8444 {
         reverse_proxy backend:8000 {
             transport http {
                 tls
-                tls_insecure_skip_verify
+            }
+        }
+    }
+
+    # Proxy django-allauth and admin URLs to the backend
+    handle /accounts/* {
+        reverse_proxy backend:8000 {
+            transport http {
+                tls
+            }
+        }
+    }
+
+    handle /admin/* {
+        reverse_proxy backend:8000 {
+            transport http {
+                tls
             }
         }
     }

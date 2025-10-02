@@ -7,6 +7,7 @@ This file provides guidance to WARP (warp.dev) when working with code in this re
 **See `AI-SHARED.md` in this directory for comprehensive project context shared across all AI tools.**
 
 Key reference documents:
+
 - `_docs/META-PRD.md` - Product vision and requirements
 - `_docs/PROJECT-STATUS.md` - Current progress and priorities  
 - `_docs/TECHNICAL-ARCHITECTURE.md` - Technical architecture details
@@ -14,6 +15,7 @@ Key reference documents:
 ## WARP-Specific Guidelines
 
 As a terminal-based AI, focus on:
+
 - **Docker commands** for all development tasks
 - **Quality gates** before suggesting commits
 - **PowerShell syntax** for Windows environment
@@ -21,6 +23,7 @@ As a terminal-based AI, focus on:
 ## Development Commands
 
 ### Starting Services (Recommended)
+
 ```powershell
 # Start all services (backend, frontend, Caddy proxy, database)
 docker-compose -f infrastructure/docker-compose.yml up
@@ -35,6 +38,7 @@ docker-compose -f infrastructure/docker-compose.yml down
 ```
 
 ### Backend Development
+
 ```powershell
 # Run Django tests
 docker-compose -f infrastructure/docker-compose.yml exec backend python manage.py test
@@ -58,6 +62,7 @@ docker-compose -f infrastructure/docker-compose.yml exec backend python manage.p
 ```
 
 ### Frontend Development
+
 ```powershell
 # Install dependencies and run dev server (inside container)
 docker-compose -f infrastructure/docker-compose.yml exec frontend npm install
@@ -79,20 +84,25 @@ docker-compose -f infrastructure/docker-compose.yml exec frontend npm run build
 ```
 
 ### Development URLs
-- Frontend (via Caddy): https://localhost:8444 
-- Backend API (via Caddy): https://localhost:8444/api/
-- Direct backend: https://localhost:8000
-- Direct frontend: https://localhost:5173
+
+- Frontend (via Caddy): <https://localhost:8444>
+- Backend API (via Caddy): <https://localhost:8444/api/>
+- Direct backend: <http://localhost:8000>
+- Direct frontend: <http://localhost:5173>
 
 ## Quality Gates (MANDATORY)
+
 **Always run these before suggesting commits:**
+
 - Backend: `docker-compose -f infrastructure/docker-compose.yml exec backend flake8 --max-line-length=99 --exclude migrations`
 - Frontend: `docker-compose -f infrastructure/docker-compose.yml exec frontend npm run lint && npm run type-check`
 - Backend Tests: `docker-compose -f infrastructure/docker-compose.yml exec backend python manage.py test --keepdb`
 - Frontend Tests: `docker-compose -f infrastructure/docker-compose.yml exec frontend npm test`
 
 ## Atomic Commit Workflow (MANDATORY)
+
 **Before any commit, perform comprehensive task context analysis:**
+
 1. **Identify ALL changes**: `git status` and `git --no-pager diff --name-only`
 2. **Find relevant task documentation**: Check `_docs/tasks/` for related work
 3. **Analyze task progress**: Compare completed work against task documentation

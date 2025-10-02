@@ -137,9 +137,10 @@ This Sub-PRD defines the migration from custom User model authentication to djan
 ### Security & API Quality
 
 14. **Maintain JWT cookie authentication** with CSRF protection:
-   - Required cookie flags: `HttpOnly=True`, `Secure=True`, `SameSite=Lax`
-   - CSRF validation: `X-CSRFToken` header for POST/PUT/DELETE
-   - Exempted endpoints: login, register, OAuth callbacks (use rate limiting)
+
+- Required cookie flags: `HttpOnly=True`, `Secure=True`, `SameSite=Lax`
+- CSRF validation: `X-CSRFToken` header for POST/PUT/DELETE
+- Exempted endpoints: login, register, OAuth callbacks (use rate limiting)
 
 15. **Implement rate limiting for public authentication endpoints**:
     - Registration: IP-based (10/hour), email-based (3/hour)
@@ -168,11 +169,13 @@ This Sub-PRD defines the migration from custom User model authentication to djan
 ## Technical Considerations
 
 ### Implementation Strategy
+
 - Fresh database approach (development data only)
 - Development OAuth for `localhost:8444` (Docker Compose + Caddy)
 - Recreate admin account with documented credentials
 
 ### Integration Details
+
 - Using default User model eliminates django-stubs circular dependency
 - Hybrid Pyright (development) + mypy --strict (CI) approach
 - Minimal changes expected to `JWTCookieAuth` class
@@ -218,12 +221,14 @@ This Sub-PRD defines the migration from custom User model authentication to djan
    - Used by tests: 3 (Social OAuth - GitHub)
 
 **Mock OAuth Providers:**
+
 - Use django-allauth testing utilities or mock provider responses
 - Stub OAuth token exchange endpoints (no real external API calls)
 - Mock provider user info responses with test account data
 - Configure test-specific OAuth app credentials in test settings
 
 **Test Standards:**
+
 - Real CSRF flows (no `force_authenticate()`)
 - Use `django.urls.reverse()` (no hardcoded URLs)
 - Assert cookies in `response.cookies` AND client state
@@ -278,17 +283,20 @@ docker compose exec backend coverage report --fail-under=85
 ## Implementation Notes
 
 **Dependencies:**
+
 - API-Layer-Modernization Phase 1 (Completed)
 - Google/GitHub OAuth application setup
 - Backend development environment
 - Updated ZeptoMail integration contract shared with Backend Modernization and API Layer Phase 2 teams
 
 **Blockers Resolved:**
+
 - Django-stubs mypy --strict bug
 - Type safety for Backend Modernization
 - Authentication foundation for API-Layer-Modernization Phase 2
 
 **Next Steps:**
+
 1. Generate task breakdown
 2. Create feature branch
 3. Install/configure django-allauth
@@ -298,6 +306,7 @@ docker compose exec backend coverage report --fail-under=85
 7. Document OAuth setup
 
 **Related Documentation:**
+
 - `_docs/notes/notes-authentication-modernization.md`
 - `_docs/sub-prds/prd-api-layer-modernization-p2.md`
 - `_docs/sub-prds/prd-backend-modernization.md`

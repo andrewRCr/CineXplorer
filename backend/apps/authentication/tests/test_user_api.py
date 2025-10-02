@@ -2,6 +2,7 @@
 """
 Tests for the user API.
 """
+from typing import Any
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractUser
@@ -12,18 +13,23 @@ from rest_framework import status
 from rest_framework.test import APIClient
 import json
 
+from authentication.email_verification import email_verification_service
 
 CREATE_USER_URL: str = reverse('register')
 TOKEN_URL: str = reverse('token_obtain_pair')
 ME_URL: str = reverse('authentication:me')
 
 
-def create_user(**params) -> AbstractUser:
+def create_user(**params: Any) -> AbstractUser:
     """ Creates and returns a new user for testing purposes. """
 
-    # Set email_verified=True for test users to avoid authentication issues
-    params.setdefault('email_verified', True)
-    return get_user_model().objects.create_user(**params)
+    # Create user without email_verified (not a field on Django's default User model)
+    user = get_user_model().objects.create_user(**params)
+
+    # Mark email as verified using allauth EmailAddress (via compatibility service)
+    email_verification_service.mark_email_verified(user)
+
+    return user
 
 
 class PublicUserApiTests(TestCase):
@@ -38,11 +44,12 @@ class PublicUserApiTests(TestCase):
 
         self.client = APIClient()
 
-    def create_payload(self,
-
-                       username='testUser',
-                       email='test@example.com',
-                       password='testPass123') -> dict[str, str]:
+    def create_payload(
+        self,
+        username: str = 'testUser',
+        email: str = 'test@example.com',
+        password: str = 'testPass123'  # noqa: S107 - test default password is intentional
+    ) -> dict[str, str]:
         """ Creates and returns a dictionary of values for test user creation. """
 
         return {
@@ -302,11 +309,9 @@ class AuthCookieIntegrationTests(TestCase):
         }
         self.client.post(CREATE_USER_URL, self.user_data)
 
-        # Set email_verified=True for the test user to allow login
-        from accounts.models import User
-        user = User.objects.get(email=self.user_data['email'])
-        user.email_verified = True
-        user.save()
+        # Mark email as verified for the test user to allow login
+        user = get_user_model().objects.get(email=self.user_data['email'])
+        email_verification_service.mark_email_verified(user)
 
     def test_token_obtain_sets_jwt_cookies(self):
         """Login sets JWT cookies (access and refresh)."""

@@ -25,6 +25,7 @@ The feature leverages existing TMDB keywords infrastructure for tagging and inte
 ## 4. Functional Requirements
 
 ### 4.1 Data Model & Backend (Phase 1)
+
 1. **UserMovieList model** with fields: id, user (nullable for system lists), title, description, created_at, updated_at, is_system_list
 2. **UserMovieListItem model** with fields: id, list, movie (TMDB ID), position/order, added_at  
 3. **Keywords integration** using existing TMDB keyword endpoints for list tagging
@@ -33,6 +34,7 @@ The feature leverages existing TMDB keywords infrastructure for tagging and inte
 6. **System list flagging** to distinguish curated collections from user-generated content
 
 ### 4.2 Frontend Display (Phase 2)  
+
 7. **Individual list page** with URL pattern `/lists/{id}`
 8. **Composite cover image generation** using 2×6 grid of movie posters from list contents
 9. **Movie grid display** with consistent styling matching existing browse pages
@@ -40,12 +42,14 @@ The feature leverages existing TMDB keywords infrastructure for tagging and inte
 11. **Responsive design** ensuring proper display across device sizes
 
 ### 4.3 System Collections (Phase 3)
+
 12. **Four curated collections**: AFI Top 100, IMDb Top 250, Oscar Best Picture Winners, Palme d'Or Winners
 13. **Sidebar integration** displaying system collections in dedicated "Collections" section
 14. **Data population** with researched movie lists and appropriate TMDB movie IDs
 15. **Professional presentation** with curated descriptions and proper historical context
 
 ### 4.4 TMDB Keywords Integration (Research Phase)
+
 16. **Keyword tagging capability** for lists using existing search/popular keyword endpoints
 17. **TMDB compliance** ensuring no custom tags/categories are created outside TMDB ecosystem
 18. **Future-ready architecture** supporting recommendation system integration via shared keyword metadata
@@ -62,24 +66,28 @@ The feature leverages existing TMDB keywords infrastructure for tagging and inte
 ## 6. Technical Considerations
 
 ### 6.1 Database Design
+
 - **PostgreSQL** with Django ORM relationships
 - **Foreign key** to User model (nullable for system lists)
 - **Many-to-many** relationship with Movie via through model for ordering
 - **Indexing** on user_id and is_system_list for efficient queries
 
 ### 6.2 TMDB Integration  
+
 - **Existing keywords API** already implemented in backend
 - **Movie ID validation** ensuring referenced movies exist in TMDB
 - **Error handling** for deleted or unavailable TMDB movies
 - **Rate limiting compliance** with TMDB API usage guidelines
 
 ### 6.3 Frontend Architecture
+
 - **React components** following existing patterns (PageHeader, MovieGrid, etc.)
 - **Composite image generation** using HTML5 Canvas API for poster collages
 - **Responsive grid** leveraging existing Chakra UI MovieGrid component
 - **URL routing** with React Router for individual list pages
 
 ### 6.4 Performance Considerations
+
 - **Lazy loading** of list contents for large collections
 - **Image optimization** for composite cover generation
 - **Caching strategy** for system collections (rarely change)
@@ -96,24 +104,28 @@ The feature leverages existing TMDB keywords infrastructure for tagging and inte
 ## 8. Implementation Phases
 
 ### Phase 1: Backend Foundation
+
 - Django models for UserMovieList and UserMovieListItem
 - API endpoints for list CRUD operations
 - TMDB keywords integration research and implementation
 - Database migrations and admin interface setup
 
 ### Phase 2: Frontend Display
+
 - Individual list page component development
 - Composite cover image generation functionality  
 - Movie grid integration with existing components
 - Responsive design implementation and testing
 
 ### Phase 3: System Collections
+
 - Research and data compilation for 4 target collections
 - Database population scripts for system lists
 - Sidebar integration and navigation updates
 - Content review and quality assurance
 
 ### Phase 4: User Management UI (Future)
+
 - List creation and editing interfaces
 - Drag-and-drop reordering functionality
 - Keyword tagging UI integration

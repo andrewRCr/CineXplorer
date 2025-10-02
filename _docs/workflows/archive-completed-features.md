@@ -11,7 +11,7 @@ steps:
   Before archiving, ensure the feature is truly complete:
   
   1. All task subtasks are marked [x] in tasks file
-  2. Parent tasks are marked [x] 
+  2. Parent tasks are marked [x]
   3. Feature is moved to "Completed Work" in PROJECT-STATUS.md
   4. All related code is committed and tested
   5. Feature is functioning in development environment
@@ -30,20 +30,20 @@ steps:
   description: |
   Move the feature's PRD to archive:
   
-  1. mv _docs/sub-prds/prd-[feature-name].md _docs/archive/sub-prds/
+  1. mv _docs/sub-prds/prd-[feature-name].md_docs/archive/sub-prds/
   2. Create completion metadata: _docs/archive/completion-metadata/completion-[feature-name].md
   
   Completion metadata should include:
-  - Completion date and final commit hash
-  - Brief completion summary
-  - Links to key implementation commits
-  - Feature overview and capabilities
+    - Completion date and final commit hash
+    - Brief completion summary
+    - Links to key implementation commits
+    - Feature overview and capabilities
 
 - name: Move Task Documentation
   description: |
   Move the feature's task file to archive:
   
-  1. mv _docs/tasks/tasks-prd-[feature-name].md _docs/archive/tasks/
+  1. mv _docs/tasks/tasks-prd-[feature-name].md_docs/archive/tasks/
   
   Task details remain accessible via the archived task file.
   Completion metadata captures high-level summary without duplicating task breakdown.
@@ -62,23 +62,23 @@ steps:
   Maintain visibility of archived content:
   
   Archive directory should contain:
-  - README.md with archive overview and navigation
-  - Index of all archived features with completion dates
-  - Guidelines for accessing archived documentation
+    - README.md with archive overview and navigation
+    - Index of all archived features with completion dates
+    - Guidelines for accessing archived documentation
 
 - name: Commit Archive Changes
   description: |
   Commit the archival changes following atomic commit principles:
   
   git add _docs/archive/
-  git add _docs/sub-prds/ _docs/tasks/  # (for removed files)
-  git add _docs/PROJECT-STATUS.md
+  git add_docs/sub-prds/ _docs/tasks/  # (for removed files)
+  git add_docs/PROJECT-STATUS.md
   git commit -m "docs(archive): Archive [feature-name] documentation
   
-  - Move completed PRD and tasks to structured archive
-  - Add completion metadata and summary
-  - Update PROJECT-STATUS.md references
-  - Maintain clean working directories for active development"
+    - Move completed PRD and tasks to structured archive
+    - Add completion metadata and summary
+    - Update PROJECT-STATUS.md references
+    - Maintain clean working directories for active development"
 
 notes: |
 Archive Organization Principles:

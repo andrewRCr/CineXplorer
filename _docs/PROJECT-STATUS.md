@@ -5,6 +5,7 @@
 CineXplorer is a movie discovery web application in active development. The core foundation is complete, with several key features implemented and others in various stages of development.
 
 > **TODO: NOTE on Planning Stages**: For completed work, this document aims to reflect objective metrics and concrete deliverables. For upcoming/planned features, specifics are often still being defined. As features move from planning → implementation, we should add explicit acceptance criteria including:
+>
 > - API endpoints and data contracts
 > - UI states and user flows
 > - Test coverage requirements (unit, integration, E2E)
@@ -83,33 +84,33 @@ CineXplorer is a movie discovery web application in active development. The core
 ### High Priority
 
 - **Authentication Modernization** (In Progress - Branch: `feature/authentication-modernization`):
-  - Status: 90% complete (9 of 10 parent tasks, 46 commits)
-  - ✅ Django-allauth integration complete (custom User model removed)
-  - ✅ OAuth providers functional (Google/GitHub fully tested)
-  - ✅ Email system migrated (allauth + ZeptoMail integration via custom adapter)
-  - ✅ Database migration complete (Django default User model, all 89 tests passing)
-  - ✅ Type safety verification complete (authentication module: 0 Pyright errors, comprehensive documentation of deferred work)
-  - ✅ Comprehensive testing complete (Task 7.0: E2E tests, OAuth mocks, strategic deferrals documented)
-  - ✅ Code cleanup complete (Task 8.0: dead code removed, README updated, strategic UI deferrals to Phase 2)
-  - ✅ Final validation and quality gates passed (Task 9.0: all tests passing, CodeRabbit review addressed)
-  - 🚧 Remaining: Feature completion and merge preparation (Task 10.0: deployment notes, PRD review, PR creation)
-  - **Blocks**: API Layer Modernization Phase 2 (requires auth migration completion)
-  - **Expected Completion**: Task 10.0 before merge to main
+    - Status: 90% complete (9 of 10 parent tasks, 46 commits)
+    - ✅ Django-allauth integration complete (custom User model removed)
+    - ✅ OAuth providers functional (Google/GitHub fully tested)
+    - ✅ Email system migrated (allauth + ZeptoMail integration via custom adapter)
+    - ✅ Database migration complete (Django default User model, all 89 tests passing)
+    - ✅ Type safety verification complete (authentication module: 0 Pyright errors, comprehensive documentation of deferred work)
+    - ✅ Comprehensive testing complete (Task 7.0: E2E tests, OAuth mocks, strategic deferrals documented)
+    - ✅ Code cleanup complete (Task 8.0: dead code removed, README updated, strategic UI deferrals to Phase 2)
+    - ✅ Final validation and quality gates passed (Task 9.0: all tests passing, CodeRabbit review addressed)
+    - 🚧 Remaining: Feature completion and merge preparation (Task 10.0: deployment notes, PRD review, PR creation)
+    - **Blocks**: API Layer Modernization Phase 2 (requires auth migration completion)
+    - **Expected Completion**: Task 10.0 before merge to main
 
 - **API Layer Modernization Phase 2** (Deferred - After Auth Modernization):
-  - Migrate UserMovieData and User/Accounts domains from DRF to Django Ninja
-  - Apply Phase 1 patterns and lessons learned to remaining API endpoints
-  - Complete the full API layer modernization with unified Django Ninja architecture
+    - Migrate UserMovieData and User/Accounts domains from DRF to Django Ninja
+    - Apply Phase 1 patterns and lessons learned to remaining API endpoints
+    - Complete the full API layer modernization with unified Django Ninja architecture
 
 - **User Movie Lists System** (In Planning):
-  - Backend models and API for custom movie collections.
-  - System collections (AFI Top 100, IMDb Top 250, Oscar Winners, Palme d'Or).
-  - Individual list display pages with composite cover generation.
-  - Sidebar integration with collections section.
+    - Backend models and API for custom movie collections.
+    - System collections (AFI Top 100, IMDb Top 250, Oscar Winners, Palme d'Or).
+    - Individual list display pages with composite cover generation.
+    - Sidebar integration with collections section.
 
 - **User-Specific Pages Implementation**:
-  - Library Page (`/library`) - display watched movies with favorites section.
-  - Watchlist Page (`/watchlist`) - drag-and-drop reordering with "Next Up" queue.
+    - Library Page (`/library`) - display watched movies with favorites section.
+    - Watchlist Page (`/watchlist`) - drag-and-drop reordering with "Next Up" queue.
 
 - **Full Integration of User Actions**: Connect frontend controls to existing backend endpoints.
 - **User Profile Page**: Complete UI for `/profile` page.

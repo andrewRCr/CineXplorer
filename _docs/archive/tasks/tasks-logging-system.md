@@ -39,50 +39,50 @@
 
 - [x] 1.0 Configure Django Backend Logging System
 
-  - [x] 1.1 Create `backend/config/logging.py` with Django logging configuration
-  - [x] 1.2 Set up environment variable support for log levels (DJANGO_LOG_LEVEL)
-  - [x] 1.3 Configure separate formatters for development (human-readable) and production (JSON)
-  - [x] 1.4 Set up file handlers with rotation (10MB files, 5 backups)
-  - [x] 1.5 Configure database query logging for development environment
-  - [x] 1.6 Import and integrate logging configuration in `backend/config/settings.py`
-  - [x] 1.7 Create `backend/logs/` directory and ensure proper permissions
-  - [x] 1.8 Configure logging for test environment in `settings_test.py` (ERROR level, console-only, no files)
+    - [x] 1.1 Create `backend/config/logging.py` with Django logging configuration
+    - [x] 1.2 Set up environment variable support for log levels (DJANGO_LOG_LEVEL)
+    - [x] 1.3 Configure separate formatters for development (human-readable) and production (JSON)
+    - [x] 1.4 Set up file handlers with rotation (10MB files, 5 backups)
+    - [x] 1.5 Configure database query logging for development environment
+    - [x] 1.6 Import and integrate logging configuration in `backend/config/settings.py`
+    - [x] 1.7 Create `backend/logs/` directory and ensure proper permissions
+    - [x] 1.8 Configure logging for test environment in `settings_test.py` (ERROR level, console-only, no files)
 
 - [x] 2.0 Implement Request Correlation and Middleware
 
-  - [x] 2.1 Create `backend/middleware/logging.py` with RequestLoggingMiddleware class
-  - [x] 2.2 Implement UUID-based correlation ID generation for each request
-  - [x] 2.3 Add request start logging with method, path, and user context
-  - [x] 2.4 Add request completion logging with status code and duration
-  - [x] 2.5 Configure middleware to exclude sensitive data from logs
-  - [x] 2.6 Add middleware to MIDDLEWARE list in Django settings
-  - [x] 2.7 Create utility function to get correlation ID from request object
+    - [x] 2.1 Create `backend/middleware/logging.py` with RequestLoggingMiddleware class
+    - [x] 2.2 Implement UUID-based correlation ID generation for each request
+    - [x] 2.3 Add request start logging with method, path, and user context
+    - [x] 2.4 Add request completion logging with status code and duration
+    - [x] 2.5 Configure middleware to exclude sensitive data from logs
+    - [x] 2.6 Add middleware to MIDDLEWARE list in Django settings
+    - [x] 2.7 Create utility function to get correlation ID from request object
 
 - [x] 3.0 Create Frontend Logging Infrastructure
 
-  - [x] 3.1 Create `frontend/src/services/logger.ts` with Logger class and log levels
-  - [x] 3.2 Implement environment-based logging (development vs production)
-  - [x] 3.3 Add method to send critical errors to backend logging endpoint
-  - [x] 3.4 Create `frontend/src/components/ErrorBoundary.tsx` React component
-  - [x] 3.5 Implement error catching and logging in ErrorBoundary
-  - [x] 3.6 Add user interaction tracking for development environment
-  - [x] 3.7 Create backend API endpoint (`/api/logs/`) to receive frontend logs
-  - [x] 3.8 Integrate ErrorBoundary with main App.tsx component
+    - [x] 3.1 Create `frontend/src/services/logger.ts` with Logger class and log levels
+    - [x] 3.2 Implement environment-based logging (development vs production)
+    - [x] 3.3 Add method to send critical errors to backend logging endpoint
+    - [x] 3.4 Create `frontend/src/components/ErrorBoundary.tsx` React component
+    - [x] 3.5 Implement error catching and logging in ErrorBoundary
+    - [x] 3.6 Add user interaction tracking for development environment
+    - [x] 3.7 Create backend API endpoint (`/api/logs/`) to receive frontend logs
+    - [x] 3.8 Integrate ErrorBoundary with main App.tsx component
 
 - [x] 4.0 Set Up Docker Volume Configuration for Log Access
 
-  - [x] 4.1 Update `infrastructure/docker-compose.yml` to add backend log volume mount
-  - [x] 4.2 Update `infrastructure/docker-compose.yml` to add frontend log volume mount
-  - [x] 4.3 Test log file accessibility from host machine
-  - [x] 4.4 Verify log rotation and file permissions work correctly
-  - [x] 4.5 Document log file locations and access methods for development workflow
+    - [x] 4.1 Update `infrastructure/docker-compose.yml` to add backend log volume mount
+    - [x] 4.2 Update `infrastructure/docker-compose.yml` to add frontend log volume mount
+    - [x] 4.3 Test log file accessibility from host machine
+    - [x] 4.4 Verify log rotation and file permissions work correctly
+    - [x] 4.5 Document log file locations and access methods for development workflow
 
 - [x] 5.0 Integrate Logging with Existing TMDB API Calls
 
-  - [x] 5.1 Identify existing TMDB API integration points in the codebase
-  - [x] 5.2 Add logging to TMDB API requests (URL, method, headers)
-  - [x] 5.3 Add logging to TMDB API responses (status code, rate limit headers)
-  - [x] 5.4 Log TMDB API errors with full context and correlation IDs
-  - [x] 5.5 Add performance logging for slow TMDB API calls (>1000ms)
-  - [x] 5.6 Test logging output during typical TMDB API operations
-  - [x] 5.7 Verify sensitive data (API keys) are excluded from log output
+    - [x] 5.1 Identify existing TMDB API integration points in the codebase
+    - [x] 5.2 Add logging to TMDB API requests (URL, method, headers)
+    - [x] 5.3 Add logging to TMDB API responses (status code, rate limit headers)
+    - [x] 5.4 Log TMDB API errors with full context and correlation IDs
+    - [x] 5.5 Add performance logging for slow TMDB API calls (>1000ms)
+    - [x] 5.6 Test logging output during typical TMDB API operations
+    - [x] 5.7 Verify sensitive data (API keys) are excluded from log output

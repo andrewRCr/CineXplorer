@@ -28,11 +28,11 @@ The backend is a REST API built with Django and Django REST Framework (DRF).
     - `django-debug-toolbar` for debugging during development.
     - `environ` for managing environment variables.
 - **Directory Structure**: The backend code is organized into discrete Django `apps` within the `backend/apps/` directory with clear domain boundaries. Note that `accounts` holds persistent user data/models (User, EmailVerificationToken), while `authentication` contains stateless auth flows (JWT handling, serializers, views, middleware for login/verification):
-  - `accounts`: User authentication models (`User`, `EmailVerificationToken`)
-  - `authentication`: Authentication processes (JWT, serializers, views, middleware)
-  - `core`: Core business models (`Movie` and shared utilities)
-  - `movie`: Movie-related functionality and API endpoints
-  - `user_movie_data`: User-movie interaction models and API (`UserMovieData`, watchlist, ratings)
+    - `accounts`: User authentication models (`User`, `EmailVerificationToken`)
+    - `authentication`: Authentication processes (JWT, serializers, views, middleware)
+    - `core`: Core business models (`Movie` and shared utilities)
+    - `movie`: Movie-related functionality and API endpoints
+    - `user_movie_data`: User-movie interaction models and API (`UserMovieData`, watchlist, ratings)
 
 ## 3. Frontend
 
@@ -71,6 +71,7 @@ The entire application is designed to be run and deployed using containers.
 The project follows a **Modified Test-Driven Development (TDD)** approach that balances development speed with code quality:
 
 ### Testing Strategy
+
 - **Test-First Priority**: New models, API endpoints, and complex business logic
 - **Test-After Acceptable**: Simple CRUD operations, UI components, configuration code
 - **Always Required**: All new features must have appropriate test coverage
@@ -78,12 +79,14 @@ The project follows a **Modified Test-Driven Development (TDD)** approach that b
 - **Regression Protection**: Existing tests must pass before any commits
 
 ### Backend Testing
+
 - **Framework**: Django's built-in test framework with custom test settings
 - **Database**: Uses `--keepdb` flag for performance during development
 - **Coverage**: Focus on models, API endpoints, and service layer logic
 - **Command**: `docker-compose exec backend python manage.py test --keepdb`
 
 ### Frontend Testing
+
 - **Framework**: Vitest with React Testing Library for component testing
 - **Environment**: JSDOM with comprehensive browser API mocking
 - **Structure**: Co-located tests in `__tests__/` directories near components
@@ -91,7 +94,9 @@ The project follows a **Modified Test-Driven Development (TDD)** approach that b
 - **Command**: `docker-compose exec frontend npm test`
 
 ### Quality Gates
+
 Before any commit, the following checks must pass:
+
 1. **Test Coverage**: New code has appropriate tests
 2. **All Tests Pass**: Both backend and frontend test suites
 3. **Linting**: `flake8` (backend) and `eslint` (frontend)

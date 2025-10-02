@@ -175,11 +175,11 @@ This Sub-PRD defines a comprehensive backend modernization effort for CineXplore
 ## Technical Considerations
 
 - **Hybrid Type Checking Strategy**:
-  - **Pyright (Development):** Fast incremental checks during development on full `backend/` directory
-  - **MyPy (CI/CD):** Comprehensive Django-aware validation with `--strict` flag on `apps/` directory
-  - **CI Integration:** Both checkers must pass before PR merge; configure GitHub Actions to fail on any type errors
-  - **Strictness Targets:** Zero errors from both checkers; warnings treated as errors in CI
-  - **Scope:** All backend code including apps, config, middleware, management commands, and utilities
+    - **Pyright (Development):** Fast incremental checks during development on full `backend/` directory
+    - **MyPy (CI/CD):** Comprehensive Django-aware validation with `--strict` flag on `apps/` directory
+    - **CI Integration:** Both checkers must pass before PR merge; configure GitHub Actions to fail on any type errors
+    - **Strictness Targets:** Zero errors from both checkers; warnings treated as errors in CI
+    - **Scope:** All backend code including apps, config, middleware, management commands, and utilities
 - **Django Integration**: Leverage django-stubs/django-types for proper Django typing patterns
 - **Performance Impact**: Ensure type checking and quality improvements don't degrade runtime performance
 - **Development Workflow**: Integrate quality checks into existing Docker Compose development environment
@@ -235,6 +235,7 @@ This Sub-PRD defines a comprehensive backend modernization effort for CineXplore
 ---
 
 **Next Steps:**
+
 1. Review and approve this Sub-PRD
 2. Complete logging system implementation  
 3. Generate detailed task breakdown using the generate-tasks workflow

@@ -23,11 +23,11 @@ CineXplorer is a web application for movie enthusiasts to discover, track, and e
 ### Personal Movie Management
 
 - **Watchlist**: Movies the user wants to watch
-  - Drag-and-drop reordering capability
-  - "Next Up" queue featuring top watchlist items
+    - Drag-and-drop reordering capability
+    - "Next Up" queue featuring top watchlist items
 - **Library**: Movies the user has watched
-  - "Favorites" section with reorderable subset
-  - Watch history and personal ratings
+    - "Favorites" section with reorderable subset
+    - Watch history and personal ratings
 - **Reviews**: User-generated movie reviews and ratings
 
 ### Personalized Recommendations

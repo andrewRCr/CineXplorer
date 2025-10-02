@@ -19,37 +19,37 @@ steps:
   **MANDATORY**: Before committing, perform comprehensive analysis of ALL uncommitted changes in the context of current task documentation:
 
   **Step 1: Identify All Changes**
-  - Run `git status` and `git --no-pager diff --name-only` to see all modified files
-  - Examine changes that might not be immediately obvious (config files, documentation, etc.)
-  - Look for task documentation files that may have been updated
+    - Run `git status` and `git --no-pager diff --name-only` to see all modified files
+    - Examine changes that might not be immediately obvious (config files, documentation, etc.)
+    - Look for task documentation files that may have been updated
 
   **Step 2: Find Relevant Task Documentation**
-  - Check `_docs/tasks/` for active task lists related to current work
-  - Look for task files that reference modified files or related functionality
-  - Use `find _docs/tasks -name "*.md" -exec grep -l "user-auth" {} \;` to find related tasks (replace "user-auth" with your actual feature name, e.g., "payment-integration", "movie-api", etc.)
+    - Check `_docs/tasks/` for active task lists related to current work
+    - Look for task files that reference modified files or related functionality
+    - Use `find _docs/tasks -name "*.md" -exec grep -l "user-auth" {} \;` to find related tasks (replace "user-auth" with your actual feature name, e.g., "payment-integration", "movie-api", etc.)
 
   **Step 3: Analyze Task Progress Context**
-  - Compare actual work completed against task documentation
-  - Identify which specific subtasks were completed by your changes
-  - Check if completing subtasks makes any parent tasks complete
-  - Verify that task status in documentation matches actual implementation
+    - Compare actual work completed against task documentation
+    - Identify which specific subtasks were completed by your changes
+    - Check if completing subtasks makes any parent tasks complete
+    - Verify that task status in documentation matches actual implementation
 
   **Step 4: Validate Milestone Context**
-  - Determine if changes complete major milestones (e.g., "Backend PoC Complete")
-  - Check if this is partial progress toward a larger goal vs. completion of a phase
-  - Identify remaining work required for full phase/milestone completion
+    - Determine if changes complete major milestones (e.g., "Backend PoC Complete")
+    - Check if this is partial progress toward a larger goal vs. completion of a phase
+    - Identify remaining work required for full phase/milestone completion
 
   **Step 5: Update Task Documentation**
-  - Mark completed subtasks as [x] in task files
-  - Mark parent tasks as [x] ONLY if ALL subtasks are complete
-  - Update any progress notes or status indicators
-  - Add any new tasks that were discovered during implementation
+    - Mark completed subtasks as [x] in task files
+    - Mark parent tasks as [x] ONLY if ALL subtasks are complete
+    - Update any progress notes or status indicators
+    - Add any new tasks that were discovered during implementation
 
   **Common Scenarios to Check:**
-  - Code quality improvements (linting, formatting) often accompany feature completion
-  - Documentation updates may signal completion of analysis or design phases
-  - Test file changes may indicate testing milestones reached
-  - Configuration changes may be part of larger feature enablement
+    - Code quality improvements (linting, formatting) often accompany feature completion
+    - Documentation updates may signal completion of analysis or design phases
+    - Test file changes may indicate testing milestones reached
+    - Configuration changes may be part of larger feature enablement
 
 - name: Plan Commits
   description: |
@@ -76,35 +76,35 @@ steps:
 
   Commit types:
 
-  - feat: new features
-  - fix: bug fixes
-  - docs: documentation (including task status updates)
-  - style: code formatting
-  - refactor: code restructuring
-  - test: adding/fixing tests
-  - config: configuration changes
-  - chore: maintenance tasks
+    - feat: new features
+    - fix: bug fixes
+    - docs: documentation (including task status updates)
+    - style: code formatting
+    - refactor: code restructuring
+    - test: adding/fixing tests
+    - config: configuration changes
+    - chore: maintenance tasks
 
   Scope Guidelines (Feature Context):
 
-  - Use feature/system name for multi-task features (e.g., "logging-system", "user-auth", "movie-api")
-  - Use specific component for single changes (e.g., "middleware", "database", "frontend")
-  - Examples: feat(logging-system), config(user-auth), docs(movie-api)
-  - Provides context for related commits across multiple tasks
+    - Use feature/system name for multi-task features (e.g., "logging-system", "user-auth", "movie-api")
+    - Use specific component for single changes (e.g., "middleware", "database", "frontend")
+    - Examples: feat(logging-system), config(user-auth), docs(movie-api)
+    - Provides context for related commits across multiple tasks
 
   Task Documentation Guidelines:
 
-  - **Always examine task context BEFORE writing commit messages**
-  - Reference specific task numbers with feature context (e.g., "Complete logging-system task 2.0")
-  - Include parent feature name when completing sub-tasks
-  - When all subtasks are done, mark parent task complete in same commit
-  - **Distinguish between partial progress and milestone completion**
-    - "Complete backend portion of Feature X" (when frontend remains)
-    - "Complete Feature X Phase 1" (only when entire phase is done)
-  - **Identify remaining work clearly** in commit messages
-  - Commit messages should match actual task progress, not aspirational goals
-  - Always check \_docs/tasks/ files before committing docs changes
-  - **Review multiple task files** - work often spans multiple task lists
+    - **Always examine task context BEFORE writing commit messages**
+    - Reference specific task numbers with feature context (e.g., "Complete logging-system task 2.0")
+    - Include parent feature name when completing sub-tasks
+    - When all subtasks are done, mark parent task complete in same commit
+    - **Distinguish between partial progress and milestone completion**
+        - "Complete backend portion of Feature X" (when frontend remains)
+        - "Complete Feature X Phase 1" (only when entire phase is done)
+    - **Identify remaining work clearly** in commit messages
+    - Commit messages should match actual task progress, not aspirational goals
+    - Always check \_docs/tasks/ files before committing docs changes
+    - **Review multiple task files** - work often spans multiple task lists
 
   Example Commit Messages with Proper Task Context:
 

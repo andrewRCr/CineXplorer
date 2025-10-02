@@ -225,8 +225,9 @@ class EmailVerificationView(APIView):
         """
         Verify user's email address using the token.
 
-        TODO: This endpoint needs full refactoring for django-allauth in Task 5.0.
-        Currently stubbed to prevent application crashes during database migration.
+        NOTE: This DRF endpoint is stubbed and will be replaced with a proper
+        django-allauth integration in API Layer Modernization Phase 2.
+        Email verification currently happens through allauth's built-in URLs.
         """
         return Response({
             'error': 'Email verification temporarily unavailable during system upgrade. '

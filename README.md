@@ -39,7 +39,7 @@ This approach demonstrates modern AI integration while maintaining professional 
 - **Personal Collections**: Watchlists and library with drag-and-drop organization
 - **User Engagement**: Rate, review, and like movies to build your profile
 - **Personalized Recommendations**: "For You" page with tailored suggestions
-- **Secure Authentication**: JWT-based auth with email verification
+- **Secure Authentication**: JWT-based auth with OAuth (Google, GitHub) and email verification
 
 ## 🎯 Project Purpose
 
@@ -65,7 +65,7 @@ This is a **solo portfolio project** demonstrating professional full-stack devel
 | Category     | Technology                                                         |
 | ------------ | ------------------------------------------------------------------ |
 | **Frontend** | React, TypeScript, Vite, Chakra UI, React Router, Axios            |
-| **Backend**  | Django, Django REST Framework, Python                              |
+| **Backend**  | Django, Django REST Framework, Django Ninja, django-allauth, Python |
 | **Database** | PostgreSQL                                                         |
 | **Infra**    | Docker, Docker Compose, Caddy (Reverse Proxy), GitHub Actions (CI) |
 
@@ -89,6 +89,63 @@ docker-compose -f infrastructure/docker-compose.yml up --build
 **Access**: `https://localhost:8444` (accept self-signed cert warning)
 
 > 💡 **Detailed setup instructions** and development commands are in [`_docs/reference/QUICK-REFERENCE.md`](_docs/reference/QUICK-REFERENCE.md)
+
+### OAuth Setup (Optional)
+
+CineXplorer supports social authentication with Google and GitHub via django-allauth. To enable OAuth in your local development environment:
+
+#### Google OAuth Setup
+1. Go to [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
+2. Create a new project or select an existing one
+3. Navigate to **APIs & Services > Credentials**
+4. Click **Create Credentials > OAuth 2.0 Client ID**
+5. Configure the OAuth consent screen if prompted
+6. Set **Application type** to "Web application"
+7. Add authorized redirect URIs:
+   - `https://localhost:8444/accounts/google/login/callback/`
+8. Copy the **Client ID** and **Client Secret** to your `.env` file:
+   ```bash
+   GOOGLE_CLIENT_ID='your-google-client-id'
+   GOOGLE_CLIENT_SECRET='your-google-client-secret'
+   ```
+
+#### GitHub OAuth Setup
+1. Go to [GitHub Developer Settings](https://github.com/settings/developers)
+2. Click **New OAuth App**
+3. Fill in the application details:
+   - **Application name**: CineXplorer (Local Dev)
+   - **Homepage URL**: `https://localhost:8444`
+   - **Authorization callback URL**: `https://localhost:8444/accounts/github/login/callback/`
+4. Click **Register application**
+5. Copy the **Client ID** and generate a **Client Secret**
+6. Add credentials to your `.env` file:
+   ```bash
+   GITHUB_CLIENT_ID='your-github-client-id'
+   GITHUB_CLIENT_SECRET='your-github-client-secret'
+   ```
+
+#### Configure Social Apps in Django Admin
+After setting up OAuth credentials and starting the application:
+
+1. Navigate to `https://localhost:8444/admin/`
+2. Log in with your Django superuser account (create one with `docker-compose exec backend python manage.py createsuperuser`)
+3. Under **Social applications**, click **Add social application**
+4. For **Google**:
+   - Provider: Google
+   - Name: Google
+   - Client id: (from your `.env`)
+   - Secret key: (from your `.env`)
+   - Sites: Select `localhost:8444` and move it to "Chosen sites"
+5. Repeat for **GitHub**:
+   - Provider: GitHub
+   - Name: GitHub
+   - Client id: (from your `.env`)
+   - Secret key: (from your `.env`)
+   - Sites: Select `localhost:8444` and move it to "Chosen sites"
+
+OAuth login will now be available at `https://localhost:8444/accounts/google/login/` and `https://localhost:8444/accounts/github/login/`
+
+> **Note**: OAuth is optional for development. Password-based authentication works without any additional setup.
 
 ## 📖 Understanding This Project
 

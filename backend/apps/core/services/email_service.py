@@ -40,9 +40,10 @@ class ZeptomailService:
         """
         Send email verification link to user.
 
-        TODO: This method needs full refactoring for django-allauth integration in Task 5.0.
-        Currently stubbed to allow application startup during database migration.
-        Allauth will handle email verification through its own adapter system.
+        NOTE: This method is a temporary stub that will be replaced in API Layer
+        Modernization Phase 2 when DRF endpoints are migrated to Django Ninja.
+        Actual email verification is handled by allauth through the custom adapter
+        (authentication.adapters.CustomAccountAdapter).
 
         Args:
             user: User instance to send verification email to
@@ -50,8 +51,7 @@ class ZeptomailService:
         Returns:
             bool: True if email sent successfully, False otherwise
         """
-        # TEMPORARY STUB: Log and mark email as verified for development
-        # This will be replaced with allauth email verification in Task 5.0
+        # TEMPORARY STUB: Auto-verify for development (replaced in API Layer Phase 2)
         logger.warning(
             "Email verification temporarily disabled during auth modernization",
             extra={
@@ -176,7 +176,7 @@ def get_email_service() -> ZeptomailService:
 
 # Backward compatibility: Provide email_service at module level
 # This delegates to get_email_service() for lazy initialization
-# TODO: Update all callers to use get_email_service() directly, then remove this
+# NOTE: Proxy pattern will be evaluated in Backend Modernization (service refactoring)
 class _EmailServiceProxy:
     """Proxy that delegates attribute access to the lazily-initialized service."""
 

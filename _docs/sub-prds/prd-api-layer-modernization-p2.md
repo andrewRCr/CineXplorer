@@ -10,6 +10,7 @@
 This document outlines Phase 2 of the API Layer Modernization initiative, which will complete the migration from Django REST Framework (DRF) to Django Ninja across all remaining backend applications. Building on the proven patterns and architecture established in Phase 1 (movie domain), Phase 2 will migrate the `user_movie_data`, `authentication`, and `accounts` domains to achieve a fully unified, type-safe API layer.
 
 **Important Note:** This PRD integrates all deferred work from Authentication Modernization, including:
+
 - Email verification bridge removal (Tasks 8.1-8.2)
 - Frontend OAuth UI integration (Tasks 8.9-8.10)
 - Deferred authentication tests (Tasks 7.3-7.11)
@@ -82,12 +83,12 @@ All Authentication Modernization components (CustomAccountAdapter, email_verific
    - Leverage allauth's native email confirmation workflow instead of custom token generation
 
 10. **Preserve Authentication Workflows:** All existing authentication and user management functionality must be preserved with identical behavior.
-   - Maintain the public contract for fields like `email_verified`, `full_name`, and JWT cookie handling while delegating persistence to django-allauth.
+    - Maintain the public contract for fields like `email_verified`, `full_name`, and JWT cookie handling while delegating persistence to django-allauth.
 
 11. **Complete Type Safety:** Eliminate all temporary type: ignore comments from authentication module.
-   - Remove type: ignore comments from email_verification.py when bridge is deleted
-   - Resolve DRF-related type errors by replacing DRF serializers/views with Pydantic/Django Ninja
-   - Achieve zero type errors in authentication domain (both Pyright and MyPy --strict)
+    - Remove type: ignore comments from email_verification.py when bridge is deleted
+    - Resolve DRF-related type errors by replacing DRF serializers/views with Pydantic/Django Ninja
+    - Achieve zero type errors in authentication domain (both Pyright and MyPy --strict)
 
 ### 4.3 Cross-Domain Integration and Type Safety
 
@@ -106,9 +107,9 @@ All Authentication Modernization components (CustomAccountAdapter, email_verific
 17. **Frontend Service Updates:** Update all frontend API service modules to use the new Django Ninja endpoints and auto-generated types.
 
 18. **OAuth UI Integration:** Add social login buttons to frontend Login.tsx and integrate with allauth OAuth flows (deferred from Authentication Modernization Task 8.9-8.10).
-   - Implement Google and GitHub login buttons
-   - Update authentication context to handle OAuth redirects
-   - Ensure consistent UX between OAuth and password authentication flows
+    - Implement Google and GitHub login buttons
+    - Update authentication context to handle OAuth redirects
+    - Ensure consistent UX between OAuth and password authentication flows
 
 19. **Unified Documentation:** Ensure all endpoints appear in the unified Django Ninja API documentation at `/api/docs`.
 
@@ -123,16 +124,19 @@ All Authentication Modernization components (CustomAccountAdapter, email_verific
 ## 6. Design Considerations
 
 ### API Design Patterns
+
 - Follow the router-based organization established in Phase 1 (`user_movie_data_router`, `auth_router`)
 - Use the same Pydantic schema patterns for request/response validation
 - Apply consistent authentication decorators and error handling
 
 ### Type Safety Strategy
+
 - Leverage the hybrid Pyright (development) + MyPy (CI/CD) approach proven in Phase 1
 - Use the established response validation patterns for external API integration
 - Maintain the same level of type annotation rigor established in the movie domain
 
 ### Testing Strategy
+
 - Apply the three-layer testing architecture: API integration, service layer, and specialized tests
 - Use the established mocking patterns for external dependencies
 - Follow the Django Ninja URL testing patterns (direct URLs vs reverse())
@@ -140,21 +144,24 @@ All Authentication Modernization components (CustomAccountAdapter, email_verific
 ## 7. Technical Considerations
 
 ### Dependencies
+
 - **Authentication Modernization:** Must be 100% complete before Phase 2 begins, including:
-  - Custom account adapter: `authentication.adapters.CustomAccountAdapter` (extends `allauth.account.adapter.DefaultAccountAdapter`) with ZeptoMail integration
-  - Email verification bridge: `authentication.email_verification.email_verification_service` (temporary compatibility layer to be removed in Phase 2)
-  - OAuth configuration: Google and GitHub social apps configured in Django admin
-  - django-allauth URLs: `/accounts/*` for OAuth callbacks and email verification
-  - **Note:** All deferred work from Authentication Modernization (Tasks 8.1-8.2, 8.9-8.10) must be completed in Phase 2
+    - Custom account adapter: `authentication.adapters.CustomAccountAdapter` (extends `allauth.account.adapter.DefaultAccountAdapter`) with ZeptoMail integration
+    - Email verification bridge: `authentication.email_verification.email_verification_service` (temporary compatibility layer to be removed in Phase 2)
+    - OAuth configuration: Google and GitHub social apps configured in Django admin
+    - django-allauth URLs: `/accounts/*` for OAuth callbacks and email verification
+    - **Note:** All deferred work from Authentication Modernization (Tasks 8.1-8.2, 8.9-8.10) must be completed in Phase 2
 - **Phase 1 Foundation:** All Phase 1 patterns and utilities must remain stable
 - **Frontend Type Generation:** OpenAPI workflow must be working reliably
 
 ### Integration Points
+
 - **Movie Domain Integration:** User movie data must integrate with Phase 1 movie endpoints
 - **Authentication Integration:** All endpoints must work with the modernized auth system
 - **Frontend Service Layer:** All existing frontend API calls must be preserved
 
 ### Risk Mitigation
+
 - **Phased Implementation:** Consider sub-phases within Phase 2 if domains prove complex
 - **Testing First:** Ensure all existing functionality is well-tested before migration
 - **Rollback Capability:** Git history provides rollback mechanism if critical issues arise during migration
@@ -211,29 +218,33 @@ All Authentication Modernization components (CustomAccountAdapter, email_verific
 **Tracked Items to Complete in Phase 2:**
 
 ### Backend Cleanup
+
 - **Task 8.1-8.2:** Remove email verification bridge (`authentication.email_verification.py`)
-  - Delete temporary compatibility layer
-  - Replace all `email_verification_service` calls with allauth EmailAddress API
-  - Update `email_service.py` stubbed methods
+    - Delete temporary compatibility layer
+    - Replace all `email_verification_service` calls with allauth EmailAddress API
+    - Update `email_service.py` stubbed methods
 
 ### Frontend Integration
+
 - **Task 8.9-8.10:** OAuth UI integration
-  - Add Google/GitHub login buttons to Login.tsx
-  - Update authentication context for OAuth flow handling
-  - Ensure unified UX between OAuth and password authentication
+    - Add Google/GitHub login buttons to Login.tsx
+    - Update authentication context for OAuth flow handling
+    - Ensure unified UX between OAuth and password authentication
 
 ### Testing
+
 - **Task 7.3, 7.6-7.11:** Comprehensive authentication tests
-  - Password authentication tests
-  - CSRF protection tests
-  - JWT token refresh tests
-  - Logout tests
-  - Email verification tests
-  - Email uniqueness tests
-  - Password reset tests
-  - Utilize fixtures/mocks from `authentication/tests/fixtures.py` and `test_oauth_mocks.py`
+    - Password authentication tests
+    - CSRF protection tests
+    - JWT token refresh tests
+    - Logout tests
+    - Email verification tests
+    - Email uniqueness tests
+    - Password reset tests
+    - Utilize fixtures/mocks from `authentication/tests/fixtures.py` and `test_oauth_mocks.py`
 
 ### Type Safety
+
 - Remove all type: ignore comments from authentication module
 - Achieve zero Pyright + MyPy --strict errors
 - Complete type safety for all authentication-related code
@@ -241,11 +252,13 @@ All Authentication Modernization components (CustomAccountAdapter, email_verific
 ---
 
 **Implementation Timeline:** Phase 2 implementation will begin only after:
+
 1. Authentication Modernization is 100% complete and merged to main
 2. This PRD is reviewed and updated (if necessary) based on auth modernization outcomes
 3. Backend development capacity is available (not blocked by other high-priority features)
 
 **Next Steps:**
+
 1. Complete Authentication Modernization
 2. Review and finalize this PRD
 3. Generate detailed task breakdown for Phase 2 implementation

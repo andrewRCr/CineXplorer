@@ -4,7 +4,8 @@ Mock OAuth provider implementations for testing.
 This module provides mock implementations of OAuth providers (Google, GitHub)
 for testing OAuth flows without requiring real external API calls.
 """
-from typing import Any
+from collections.abc import Iterator
+from contextlib import contextmanager
 from unittest.mock import Mock, patch
 
 from allauth.socialaccount.models import SocialApp
@@ -36,8 +37,8 @@ class MockOAuthProvider:
         self,
         user_email: str = 'oauth@example.com',
         user_id: str = '123456789',
-        **extra_data: Any
-    ) -> dict[str, Any]:
+        **extra_data: object
+    ) -> dict[str, object]:
         """
         Create a mock OAuth provider response.
 
@@ -93,7 +94,7 @@ class MockOAuthProvider:
         self,
         user_email: str = 'oauth@example.com',
         user_id: str = '123456789',
-        **extra_data: Any
+        **extra_data: object
     ) -> Mock:
         """
         Create a mock for the OAuth user info request.
@@ -128,8 +129,8 @@ class MockGoogleOAuth(MockOAuthProvider):
         self,
         user_email: str = 'google@example.com',
         user_id: str = '123456789',
-        **extra_data: Any
-    ) -> dict[str, Any]:
+        **extra_data: object
+    ) -> dict[str, object]:
         """
         Create a mock Google OAuth response.
 
@@ -196,8 +197,8 @@ class MockGitHubOAuth(MockOAuthProvider):
         self,
         user_email: str = 'github@example.com',
         user_id: str = '987654321',
-        **extra_data: Any
-    ) -> dict[str, Any]:
+        **extra_data: object
+    ) -> dict[str, object]:
         """
         Create a mock GitHub OAuth response.
 
@@ -283,43 +284,36 @@ class MockGitHubOAuth(MockOAuthProvider):
 
 
 # Convenience functions for common test scenarios
-def mock_google_oauth_success(
-    user_email: str = 'google@example.com',
-    user_id: str = '123456789'
-) -> MockGoogleOAuth:
+def mock_google_oauth_success() -> MockGoogleOAuth:
     """
     Create a fully configured mock Google OAuth provider for successful flow.
 
-    Args:
-        user_email: User's email address
-        user_id: Google user ID
-
     Returns:
         Configured MockGoogleOAuth instance
+
+    Note:
+        Use the returned provider's methods with custom email/user_id:
+        provider.create_oauth_response(user_email='...', user_id='...')
     """
-    mock_provider = MockGoogleOAuth()
-    return mock_provider
+    return MockGoogleOAuth()
 
 
-def mock_github_oauth_success(
-    user_email: str = 'github@example.com',
-    user_id: str = '987654321'
-) -> MockGitHubOAuth:
+def mock_github_oauth_success() -> MockGitHubOAuth:
     """
     Create a fully configured mock GitHub OAuth provider for successful flow.
 
-    Args:
-        user_email: User's email address
-        user_id: GitHub user ID
-
     Returns:
         Configured MockGitHubOAuth instance
+
+    Note:
+        Use the returned provider's methods with custom email/user_id:
+        provider.create_oauth_response(user_email='...', user_id='...')
     """
-    mock_provider = MockGitHubOAuth()
-    return mock_provider
+    return MockGitHubOAuth()
 
 
-def patch_oauth_requests(provider: str = 'google') -> Any:
+@contextmanager
+def patch_oauth_requests(provider: str = 'google') -> Iterator[tuple[Mock, Mock]]:
     """
     Context manager for patching OAuth HTTP requests.
 
@@ -328,17 +322,16 @@ def patch_oauth_requests(provider: str = 'google') -> Any:
     Args:
         provider: OAuth provider name ('google' or 'github')
 
-    Returns:
-        Context manager for request mocking
+    Yields:
+        Tuple of (mock_post, mock_get) for patched requests
 
     Example:
-        with patch_oauth_requests('google') as mock_requests:
+        with patch_oauth_requests('google') as (mock_post, mock_get):
             # OAuth requests will be mocked
             response = client.get('/accounts/google/login/callback/', {...})
     """
-    if provider == 'google':
-        return patch('requests.post'), patch('requests.get')
-    elif provider == 'github':
-        return patch('requests.post'), patch('requests.get')
-    else:
+    if provider not in ('google', 'github'):
         raise ValueError(f"Unsupported provider: {provider}")
+
+    with patch('requests.post') as mock_post, patch('requests.get') as mock_get:
+        yield mock_post, mock_get

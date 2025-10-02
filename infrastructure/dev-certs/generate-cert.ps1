@@ -1,10 +1,8 @@
 # PowerShell script to generate self-signed cert with SANs for Docker/Caddy
-$certDir = "."
+$certDir = $PSScriptRoot
 $cnfPath = "$certDir/localhost.cnf"
 $keyPath = "$certDir/key.pem"
 $certPath = "$certDir/cert.pem"
-
-if (!(Test-Path $certDir)) { New-Item -ItemType Directory -Path $certDir }
 
 # Verify OpenSSL is available
 $opensslCmd = Get-Command openssl -ErrorAction SilentlyContinue

@@ -13,12 +13,18 @@ if [ ! -f "$CNF_PATH" ]; then
 fi
 
 # Generate certificate with SANs from localhost.cnf
-openssl req -x509 -nodes -newkey rsa:4096 \
+if openssl req -x509 -nodes -newkey rsa:4096 \
   -keyout "$KEY_PATH" \
   -out "$CERT_PATH" \
   -days 365 \
   -config "$CNF_PATH" \
   -extensions req_ext \
-  -subj "/CN=localhost"
-
-echo "Certificate and key generated in $SCRIPT_DIR"
+  -subj "/CN=localhost" 2>&1; then
+    echo "Certificate and key generated successfully in $SCRIPT_DIR"
+else
+    echo "Error: OpenSSL command failed with exit code $?" >&2
+    # Clean up partial files if created
+    [ -f "$KEY_PATH" ] && rm -f "$KEY_PATH"
+    [ -f "$CERT_PATH" ] && rm -f "$CERT_PATH"
+    exit 1
+fi

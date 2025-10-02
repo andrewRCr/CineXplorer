@@ -118,7 +118,7 @@ All Authentication Modernization components (CustomAccountAdapter, email_verific
 - **Database Schema Changes:** No changes to underlying data models or database structure.
 - **New Feature Development:** No new functionality beyond what currently exists in DRF endpoints.
 - **Performance Optimization:** Focus is on migration correctness, not performance improvements.
-- **UI/UX Changes:** No modifications to frontend user interface beyond type integration.
+- **UI/UX Changes:** No modifications to frontend user interface beyond type integration and OAuth login button integration (Item 18 - deferred from Authentication Modernization).
 
 ## 6. Design Considerations
 

@@ -53,14 +53,19 @@ class ModelTests(TestCase):
         with self.assertRaises(ValueError):
             get_user_model().objects.create_user('', 'testUser@example.com')
 
-    def test_new_user_without_email_is_allowed(self) -> None:
-        """ Tests that creating a user without an email is allowed (Django default behavior). """
+    def test_django_user_model_allows_empty_email_at_model_level(self) -> None:
+        """Tests Django's default User model allows empty email at model layer.
 
-        # Django's default User model allows empty email
+        Note: Application policy enforces email requirement via allauth
+        ACCOUNT_SIGNUP_FIELDS configuration. This test verifies model-level
+        behavior only. Serializer/form-level validation is tested separately.
+        """
+
+        # Django's default User model allows empty email at model level
         user: AbstractUser = get_user_model().objects.create_user('testUser', '')
         self.assertIsNotNone(user.pk)  # Verify user was persisted
         self.assertEqual(user.username, 'testUser')
-        self.assertEqual(user.email, '')  # Empty email is allowed
+        self.assertEqual(user.email, '')  # Model layer allows empty email
 
     def test_create_superuser(self) -> None:
         """ Tests creating a new superuser. """

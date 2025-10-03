@@ -52,10 +52,11 @@ class ZeptomailService:
         """
         # TEMPORARY STUB: Auto-verify for development (replaced in API Layer Phase 2)
         logger.warning(
-            "Email verification temporarily disabled during auth modernization",
+            "Email verification temporarily disabled during auth modernization - user_email=%s",
+            user.email,
             extra={
                 "user_email": user.email,
-                "message": "Will be integrated with django-allauth in Task 5.0",
+                "integration_note": "Will be integrated with django-allauth in Task 5.0",
             },
         )
 

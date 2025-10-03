@@ -43,7 +43,7 @@ def _get_jwt_settings() -> dict[str, str | timedelta]:
     return jwt_settings
 
 
-@auth_router.post("/register/", response={201: RegisterResponseSchema, 409: dict[str, object], 500: dict[str, object]})
+@auth_router.post("/register/", auth=None, response={201: RegisterResponseSchema, 409: dict[str, object], 500: dict[str, object]})
 def register_user(request: HttpRequest, payload: RegisterInputSchema) -> tuple[int, dict[str, object]]:
     """Register a new user and send email verification.
 
@@ -114,7 +114,7 @@ def register_user(request: HttpRequest, payload: RegisterInputSchema) -> tuple[i
         }
 
 
-@auth_router.post("/token/", response={200: TokenResponseSchema, 400: dict[str, object], 401: dict[str, object], 403: dict[str, object]})
+@auth_router.post("/token/", auth=None, response={200: TokenResponseSchema, 400: dict[str, object], 401: dict[str, object], 403: dict[str, object]})
 def obtain_token(request: HttpRequest, response: HttpResponse, payload: TokenObtainInputSchema) -> tuple[int, dict[str, object]]:
     """Obtain JWT access and refresh tokens (login).
 
@@ -205,7 +205,7 @@ def obtain_token(request: HttpRequest, response: HttpResponse, payload: TokenObt
     }
 
 
-@auth_router.post("/token/refresh/", response={200: TokenResponseSchema, 400: dict[str, object]})
+@auth_router.post("/token/refresh/", auth=None, response={200: TokenResponseSchema, 400: dict[str, object]})
 def refresh_token(request: HttpRequest, response: HttpResponse) -> tuple[int, dict[str, object]]:
     """Refresh JWT access token using refresh token from cookie.
 

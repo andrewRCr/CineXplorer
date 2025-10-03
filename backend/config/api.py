@@ -17,6 +17,7 @@ from django.http import HttpRequest
 from ninja import NinjaAPI, Schema
 
 # Import our native JWT authentication scheme
+from apps.authentication.api import auth_router
 from apps.authentication.auth_ninja import jwt_cookie_auth
 from apps.movie.api import genres_router, keywords_router, movies_router, people_router
 from apps.user_movie_data.api import user_movie_data_router
@@ -186,7 +187,7 @@ def health_check_user(request: HttpRequest) -> UserHealthResponse:
     return UserHealthResponse(
         status="ok",
         message=f"Hello, {user.username}!",
-        user_id=user.id,
+        user_id=user.id,  # type: ignore[attr-defined]  # AbstractUser has id at runtime
         auth_method="Enhanced Dependency Injection",
         features=[
             "Structured error responses",
@@ -228,7 +229,7 @@ def test_authentication(
         status="authenticated",
         message="Authentication test successful!",
         auth_scheme="JWT Cookie (Global)",
-        user_id=user.id,
+        user_id=user.id,  # type: ignore[attr-defined]  # AbstractUser has id at runtime
         username=user.username,
         email=user.email,
         is_staff=user.is_staff,
@@ -281,7 +282,7 @@ def test_auth_status(request: HttpRequest) -> AuthStatusResponse:
             message=(
                 f"User '{user.username}' is authenticated via JWT cookie"
             ),
-            user_id=user.id,
+            user_id=user.id,  # type: ignore[attr-defined]  # AbstractUser has id at runtime
             has_valid_token=True,
             guidance=AuthGuidance(
                 next_step="Try the /api/test/auth endpoint for comprehensive user info",
@@ -307,6 +308,9 @@ def test_auth_status(request: HttpRequest) -> AuthStatusResponse:
 
 
 # Add app routers
+# Register authentication router (no auth prefix, endpoints are at /api/register/, /api/token/, etc.)
+api.add_router("", auth_router)
+
 # Register movie-related routers with clean URL structure
 api.add_router("/movies", movies_router)
 api.add_router("/genres", genres_router)

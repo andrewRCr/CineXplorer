@@ -9,6 +9,7 @@ import secrets
 from datetime import timedelta
 from typing import Literal, cast
 
+from authentication.auth_ninja import get_current_user
 from authentication.email_verification import email_verification_service
 from authentication.schemas import (
     CsrfTokenResponseSchema,
@@ -17,6 +18,8 @@ from authentication.schemas import (
     RegisterResponseSchema,
     TokenObtainInputSchema,
     TokenResponseSchema,
+    UserProfileSchema,
+    UserProfileUpdateSchema,
 )
 from core.services.email_service import email_service
 from django.conf import settings
@@ -353,6 +356,91 @@ def get_csrf_token(request: HttpRequest, response: HttpResponse) -> tuple[int, d
     )
 
     return 200, {"csrf_token": token}
+
+
+@auth_router.get("/profile/", response={200: UserProfileSchema})
+def get_user_profile(request: HttpRequest) -> UserProfileSchema:
+    """Retrieve authenticated user's profile.
+
+    Returns the current user's profile information including computed fields
+    for email verification status and full name.
+
+    Args:
+        request: HTTP request object with authenticated user
+
+    Returns:
+        UserProfileSchema: User profile with computed fields
+
+    Raises:
+        HttpError: 401 if user is not authenticated
+
+    Computed fields:
+        - email_verified: Checked via allauth EmailAddress model
+        - full_name: Concatenated first_name + last_name
+    """
+    user = get_current_user(request)
+
+    # Create base schema from ORM model
+    profile = UserProfileSchema.from_orm(user)
+
+    # Add computed fields
+    profile.email_verified = email_verification_service.is_email_verified(user)
+    profile.full_name = f"{user.first_name} {user.last_name}".strip() or None
+
+    return profile
+
+
+@auth_router.patch("/profile/", response={200: UserProfileSchema, 400: dict[str, object]})
+def update_user_profile(
+    request: HttpRequest,
+    payload: UserProfileUpdateSchema
+) -> tuple[int, UserProfileSchema | dict[str, object]]:
+    """Update authenticated user's profile.
+
+    Supports partial updates (PATCH) for user profile fields including
+    password changes with proper hashing.
+
+    Args:
+        request: HTTP request object with authenticated user
+        payload: Fields to update (all optional)
+
+    Returns:
+        tuple: (status_code, response_data)
+            - 200: Profile updated successfully
+            - 400: Validation error
+
+    Password handling:
+        - Password is hashed using set_password() before saving
+        - Password is write-only (not returned in response)
+
+    Computed fields in response:
+        - email_verified: Checked via allauth EmailAddress model
+        - full_name: Concatenated first_name + last_name
+    """
+    user = get_current_user(request)
+
+    # Update only provided fields (exclude_unset for partial updates)
+    update_data = payload.dict(exclude_unset=True)
+
+    # Handle password separately for proper hashing
+    password = update_data.pop('password', None)
+
+    # Update model fields
+    for field, value in update_data.items():
+        setattr(user, field, value)
+
+    # Hash and set password if provided
+    if password:
+        user.set_password(password)  # type: ignore[attr-defined]  # AbstractUser has set_password at runtime
+
+    user.save()  # type: ignore[attr-defined]  # AbstractUser has save at runtime
+
+    # Create response schema with computed fields
+    profile = UserProfileSchema.from_orm(user)
+    profile.email_verified = email_verification_service.is_email_verified(user)
+    profile.full_name = f"{user.first_name} {user.last_name}".strip() or None
+
+    return 200, profile
 
 
 __all__ = [

@@ -49,7 +49,7 @@ class PaginatedMovieApiTests(TestCase):
             'total_results': len(fake_tmdb_results)
         }
 
-    @patch('movie.services.movie_service.tmdb_client.get_now_playing_movies')
+    @patch('core.services.tmdb_api_client.TMDBApiClient.get_now_playing_movies')
     def test_now_playing_endpoint_returns_correct_structure(
         self, mock_get_now_playing: MagicMock
     ) -> None:
@@ -91,7 +91,7 @@ class PaginatedMovieApiTests(TestCase):
         self.assertIn('vote_average', first_movie)
         self.assertEqual(first_movie['vote_average'], 8.0)
 
-    @patch('movie.services.movie_service.tmdb_client.get')
+    @patch('core.services.tmdb_api_client.TMDBApiClient.get')
     def test_upcoming_endpoint_returns_correct_structure(
         self, mock_tmdb_get: MagicMock
     ) -> None:

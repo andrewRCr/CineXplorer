@@ -145,7 +145,7 @@ class MovieApiTests(TestCase):
         self.assertEqual(data['total_pages'], 5)
         self.assertEqual(len(data['results']), 1)
 
-    @patch('movie.services.movie_service.tmdb_client.get_now_playing_movies')
+    @patch('core.services.tmdb_api_client.TMDBApiClient.get_now_playing_movies')
     def test_now_playing_api_contract(self, mock_tmdb_method: Mock) -> None:
         """
         Verify the /api/movies/now-playing endpoint returns the correct paginated structure.
@@ -154,7 +154,7 @@ class MovieApiTests(TestCase):
             mock_tmdb_method, NOW_PLAYING_URL, {'page': 1}
         )
 
-    @patch('movie.services.movie_service.tmdb_client.get')
+    @patch('core.services.tmdb_api_client.TMDBApiClient.get')
     def test_upcoming_api_contract(self, mock_tmdb_get: Mock) -> None:
         """
         Verify the /upcoming/ endpoint returns the correct paginated structure.
@@ -163,7 +163,7 @@ class MovieApiTests(TestCase):
             mock_tmdb_get, UPCOMING_URL, {'page': 1}
         )
 
-    @patch('movie.services.movie_service.tmdb_client.search_movies')
+    @patch('core.services.tmdb_api_client.TMDBApiClient.search_movies')
     def test_search_api_contract(self, mock_tmdb_search: Mock) -> None:
         """
         Verify the /search/ endpoint returns the correct paginated structure.
@@ -172,7 +172,7 @@ class MovieApiTests(TestCase):
             mock_tmdb_search, SEARCH_URL, {'query': 'test'}
         )
 
-    @patch('movie.services.movie_service.tmdb_client.get')
+    @patch('core.services.tmdb_api_client.TMDBApiClient.get')
     def test_discover_api_contract(self, mock_tmdb_get: Mock) -> None:
         """
         Verify the /discover/ endpoint returns the correct paginated structure.
@@ -181,7 +181,7 @@ class MovieApiTests(TestCase):
             mock_tmdb_get, DISCOVER_URL, {'page': 1}
         )
 
-    @patch('movie.services.movie_service.tmdb_client.get')
+    @patch('core.services.tmdb_api_client.TMDBApiClient.get')
     def test_discover_with_filters(self, mock_tmdb_get: Mock) -> None:
         """Test the discover endpoint with various filter parameters."""
         # Arrange: Define a standard mock TMDB API response
@@ -255,7 +255,7 @@ class MovieApiTests(TestCase):
         self.assertEqual(params['certification'], 'PG-13')
         self.assertEqual(params['region'], 'US')
 
-    @patch('movie.services.movie_service.tmdb_client.get')
+    @patch('core.services.tmdb_api_client.TMDBApiClient.get')
     def test_discover_invalid_parameters(self, mock_tmdb_get: Mock) -> None:
         """Test the discover endpoint with invalid parameter values."""
         # Test invalid year (Pydantic validation)
@@ -276,8 +276,8 @@ class MovieApiTests(TestCase):
         data = res.json()
         self.assertIn('detail', data)  # Django Ninja uses 'detail' for errors
 
-    @patch('movie.services.movie_service.tmdb_client.get')
-    @patch('movie.services.movie_service.tmdb_client.get_movie_details')
+    @patch('core.services.tmdb_api_client.TMDBApiClient.get')
+    @patch('core.services.tmdb_api_client.TMDBApiClient.get_movie_details')
     def test_get_movie_detail_authenticated(
         self, mock_get_movie_details: Mock, mock_tmdb_get: Mock
     ) -> None:
@@ -332,8 +332,8 @@ class MovieApiTests(TestCase):
         # self.assertEqual(user_data['user_rating'], 9)
         # self.assertEqual(user_data['user_review'], 'Great movie!')
 
-    @patch('movie.services.movie_service.tmdb_client.get')
-    @patch('movie.services.movie_service.tmdb_client.get_movie_details')
+    @patch('core.services.tmdb_api_client.TMDBApiClient.get')
+    @patch('core.services.tmdb_api_client.TMDBApiClient.get_movie_details')
     def test_get_movie_detail_unauthenticated(
         self, mock_get_movie_details: Mock, mock_tmdb_get: Mock
     ) -> None:

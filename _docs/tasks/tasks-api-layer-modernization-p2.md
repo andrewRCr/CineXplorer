@@ -131,18 +131,18 @@ def create_entry(request: HttpRequest, payload: CreateSchema):
     - [x] 2.4.3 Verify logout properly clears authentication state
     - [x] 2.4.4 Run incremental quality checks (ruff, pyright on modified files)
 
-- [ ] 2.5 Migrate user profile endpoint to Django Ninja
-    - [ ] 2.5.1 Migrate `ManageUserView` to `GET /profile/` and `PATCH /profile/` (retrieve/update user profile)
-    - [ ] 2.5.2 Use `ModelSchema` if mapping directly to User model fields, else manual `Schema`
-    - [ ] 2.5.3 Ensure `email_verified` field computed from allauth EmailAddress API
-    - [ ] 2.5.4 Ensure `full_name` field properly mapped (User model or computed)
-    - [ ] 2.5.5 Add authentication requirement (`auth=JWTCookieAuth()`)
-    - [ ] 2.5.6 Run incremental quality checks (ruff, pyright on modified files)
+- [x] 2.5 Migrate user profile endpoint to Django Ninja
+    - [x] 2.5.1 Migrate `ManageUserView` to `GET /profile/` and `PATCH /profile/` (retrieve/update user profile)
+    - [x] 2.5.2 Use `ModelSchema` if mapping directly to User model fields, else manual `Schema`
+    - [x] 2.5.3 Ensure `email_verified` field computed from allauth EmailAddress API
+    - [x] 2.5.4 Ensure `full_name` field properly mapped (User model or computed)
+    - [x] 2.5.5 Add authentication requirement (`auth=JWTCookieAuth()`)
+    - [x] 2.5.6 Run incremental quality checks (ruff, pyright on modified files)
 
 - [ ] 2.6 Register authentication router and verify endpoints
-    - [ ] 2.6.1 Update `backend/config/urls.py` to register `auth_router`
-    - [ ] 2.6.2 Verify `/api/docs` shows all migrated authentication endpoints
-    - [ ] 2.6.3 Verify `/api/openapi.json` includes authentication schemas
+    - [x] 2.6.1 Update `backend/config/api.py` to register `auth_router`
+    - [x] 2.6.2 Verify `/api/docs` shows all migrated authentication endpoints
+    - [x] 2.6.3 Verify `/api/openapi.json` includes authentication schemas
     - [ ] 2.6.4 Test registration flow manually (register → email verification link → verify)
     - [ ] 2.6.5 Test JWT token flow manually (obtain → use → refresh)
     - [ ] 2.6.6 Test logout flow manually

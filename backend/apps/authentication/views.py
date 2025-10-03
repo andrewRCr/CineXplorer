@@ -95,12 +95,6 @@ class RegisterAPIView(APIView):
         return Response(errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class CreateUserView(generics.CreateAPIView):
-    """ Defines a POST request view that creates a new user in the system. """
-
-    serializer_class = UserSerializer
-
-
 class ManageUserView(generics.RetrieveUpdateAPIView):
     """ Defines a GET/PUT/PATCH request view that updates an authenticated user's basic info. """
 

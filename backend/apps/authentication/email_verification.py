@@ -34,7 +34,7 @@ import logging
 from typing import TYPE_CHECKING
 
 from django.conf import settings
-from django.contrib.auth.models import User
+from django.contrib.auth.models import AbstractUser
 
 if TYPE_CHECKING:
     from allauth.account.models import EmailAddress  # type: ignore[import-untyped]  # noqa: F401
@@ -51,7 +51,7 @@ class EmailVerificationService:
     """
 
     @staticmethod
-    def is_email_verified(user: User) -> bool:
+    def is_email_verified(user: AbstractUser) -> bool:
         """
         Check if a user's email is verified via django-allauth EmailAddress.
 
@@ -85,7 +85,7 @@ class EmailVerificationService:
             return False
 
     @staticmethod
-    def mark_email_verified(user: User) -> None:
+    def mark_email_verified(user: AbstractUser) -> None:
         """
         Mark a user's email as verified in django-allauth EmailAddress.
 
@@ -169,7 +169,7 @@ class EmailVerificationService:
             logger.exception("Failed marking email verified for user %s", user_id)
 
     @staticmethod
-    def get_user_email_addresses(user: User) -> list[object]:
+    def get_user_email_addresses(user: AbstractUser) -> list[object]:
         """
         Get all EmailAddress records for a user.
 
@@ -197,7 +197,7 @@ class EmailVerificationService:
             return []
 
     @staticmethod
-    def get_primary_email_address(user: User) -> object | None:
+    def get_primary_email_address(user: AbstractUser) -> object | None:
         """
         Get the primary EmailAddress record for a user.
 

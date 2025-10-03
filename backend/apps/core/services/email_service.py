@@ -8,7 +8,7 @@ import logging
 import requests
 from authentication.email_verification import email_verification_service
 from django.conf import settings
-from django.contrib.auth.models import User
+from django.contrib.auth.models import AbstractUser
 from django.template.loader import render_to_string
 
 logger = logging.getLogger(__name__)
@@ -35,7 +35,7 @@ class ZeptomailService:
             "Authorization": f"Zoho-enczapikey {self.api_key}",
         }
 
-    def send_verification_email(self, user: User) -> bool:
+    def send_verification_email(self, user: AbstractUser) -> bool:
         """
         Send email verification link to user.
 
@@ -78,7 +78,7 @@ class ZeptomailService:
 
         return True
 
-    def send_welcome_email(self, user: User) -> bool:
+    def send_welcome_email(self, user: AbstractUser) -> bool:
         """
         Send welcome email after successful verification.
 

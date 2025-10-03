@@ -1,0 +1,83 @@
+# CineXplorer Backend - Python Project Configuration
+
+[tool.ruff]
+# Target Python 3.13
+target-version = "py313"
+
+# Line length to match existing standard
+line-length = 99
+
+# Exclude patterns (matches .flake8 config)
+exclude = [
+    "migrations",
+    "__pycache__",
+    "manage.py",
+    ".git",
+    ".venv",
+    "env",
+    "venv",
+    ".pytest_cache",
+    ".tox",
+]
+
+[tool.ruff.lint]
+# Enable rule categories
+select = [
+    "E",     # pycodestyle errors
+    "W",     # pycodestyle warnings
+    "F",     # pyflakes
+    "I",     # isort
+    "N",     # pep8-naming
+    "UP",    # pyupgrade
+    "RUF",   # Ruff-specific rules
+    "B",     # flake8-bugbear
+    "C4",    # flake8-comprehensions
+    "DTZ",   # flake8-datetimez
+    "T10",   # flake8-debugger
+    "DJ",    # flake8-django
+    "PIE",   # flake8-pie
+    "PT",    # flake8-pytest-style
+    "SIM",   # flake8-simplify
+]
+
+# Ignore specific rules
+ignore = [
+    "E501",    # Line too long (handled by formatter)
+    "DJ001",   # Django model without __str__ (not always needed)
+    "RUF012",  # Mutable class attributes (Django/DRF/Pydantic Meta classes)
+]
+
+[tool.ruff.lint.mccabe]
+# Maximum complexity (matches .flake8 max-complexity = 10)
+max-complexity = 10
+
+[tool.ruff.lint.isort]
+# Django-aware import sorting
+known-first-party = ["apps", "config"]
+section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
+
+[tool.ruff.lint.per-file-ignores]
+# Allow unused imports in __init__.py files
+"__init__.py" = ["F401"]
+# Allow fixtures and test-specific patterns in tests
+"tests/**/*.py" = ["PT", "B", "PIE"]
+"*/tests/**/*.py" = ["PT", "B", "PIE"]
+
+# To-be-deleted DRF files (ignore violations until Phase 6 cleanup)
+"apps/authentication/serializers.py" = ["N806", "N815"]
+"apps/authentication/views.py" = ["N806", "N815"]
+"apps/user_movie_data/serializers.py" = ["N806", "N815"]
+"apps/user_movie_data/views.py" = ["N806", "N815"]
+"apps/core/views/logging.py" = ["N806"]  # DRF view, will be migrated later
+"apps/core/views/tmdb.py" = ["N806"]     # DRF view, will be migrated later
+"apps/core/management/commands/wait_for_db.py" = ["N806"]  # ALL_CAPS constants OK per PEP 8
+
+[tool.ruff.format]
+# Use double quotes (Python default)
+quote-style = "double"
+
+# Respect magic trailing commas
+skip-magic-trailing-comma = false
+
+# Format docstrings
+docstring-code-format = true

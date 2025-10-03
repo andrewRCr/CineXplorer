@@ -38,6 +38,7 @@
     "reportUnknownArgumentType": "information",
     "reportUnknownVariableType": "information",
     "reportAttributeAccessIssue": "information",
+    "reportMissingTypeArgument": "error",
 
     // Django ORM field access patterns (acceptable with django-stubs)
     // These are information-level as documented in type-safety-status-auth-modernization.md

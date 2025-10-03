@@ -7,9 +7,10 @@ and process them for centralized logging.
 
 import json
 import logging
-from datetime import datetime
-from django.test import TestCase, Client
+from datetime import UTC, datetime
 from unittest.mock import patch
+
+from django.test import Client, TestCase
 
 
 class FrontendLogAPITest(TestCase):
@@ -26,7 +27,7 @@ class FrontendLogAPITest(TestCase):
         log_data = {
             'level': 'ERROR',
             'message': 'Test frontend error',
-            'timestamp': datetime.now().isoformat() + 'Z',
+            'timestamp': datetime.now(tz=UTC).isoformat() + 'Z',
             'url': 'https://example.com/test',
             'userAgent': 'Mozilla/5.0 Test Browser',
             'sessionId': 'test-session-123',
@@ -68,7 +69,7 @@ class FrontendLogAPITest(TestCase):
         log_data = {
             'level': 'INVALID_LEVEL',
             'message': 'Test message',
-            'timestamp': datetime.now().isoformat() + 'Z',
+            'timestamp': datetime.now(tz=UTC).isoformat() + 'Z',
         }
 
         response = self.client.post(
@@ -119,7 +120,7 @@ class FrontendLogAPITest(TestCase):
         log_data = {
             'level': 'INFO',
             'message': 'Test with browser info',
-            'timestamp': datetime.now().isoformat() + 'Z',
+            'timestamp': datetime.now(tz=UTC).isoformat() + 'Z',
             'browserInfo': {
                 'userAgent': 'Mozilla/5.0',
                 'language': 'en-US',
@@ -144,18 +145,18 @@ class FrontendLogAPITest(TestCase):
         log_data = {
             'level': 'ERROR',
             'message': 'Error with user context',
-            'timestamp': datetime.now().isoformat() + 'Z',
+            'timestamp': datetime.now(tz=UTC).isoformat() + 'Z',
             'recentInteractions': [
                 {
                     'type': 'click',
                     'target': '#submit-button',
-                    'timestamp': datetime.now().isoformat() + 'Z',
+                    'timestamp': datetime.now(tz=UTC).isoformat() + 'Z',
                     'url': 'https://example.com/form'
                 },
                 {
                     'type': 'navigation',
                     'target': '/error-page',
-                    'timestamp': datetime.now().isoformat() + 'Z',
+                    'timestamp': datetime.now(tz=UTC).isoformat() + 'Z',
                     'url': 'https://example.com/error'
                 }
             ]
@@ -188,7 +189,7 @@ class FrontendLogAPITest(TestCase):
         log_data = {
             'level': 'CRITICAL',
             'message': 'Critical error test',
-            'timestamp': datetime.now().isoformat() + 'Z',
+            'timestamp': datetime.now(tz=UTC).isoformat() + 'Z',
             'data': {'error_code': 500, 'details': 'Server error'}
         }
 
@@ -220,7 +221,7 @@ class FrontendLogAPITest(TestCase):
         log_data = {
             'level': 'INFO',
             'message': 'CORS test',
-            'timestamp': datetime.now().isoformat() + 'Z',
+            'timestamp': datetime.now(tz=UTC).isoformat() + 'Z',
         }
 
         response = self.client.post(
@@ -249,7 +250,7 @@ class LoggingAPIIntegrationTest(TestCase):
         log_data = {
             'level': 'CRITICAL',
             'message': 'System critical error',
-            'timestamp': datetime.now().isoformat() + 'Z',
+            'timestamp': datetime.now(tz=UTC).isoformat() + 'Z',
         }
 
         response = self.client.post(
@@ -279,7 +280,7 @@ class LoggingAPIIntegrationTest(TestCase):
             log_data = {
                 'level': 'INFO',
                 'message': 'Information message',
-                'timestamp': datetime.now().isoformat() + 'Z',
+                'timestamp': datetime.now(tz=UTC).isoformat() + 'Z',
             }
 
             response = self.client.post(

@@ -2,11 +2,10 @@
 Tests for core models.
 """
 
+from core import models
+from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractUser
 from django.test import TestCase
-from django.contrib.auth import get_user_model
-
-from core import models
 from user_movie_data.models import UserMovieData
 
 
@@ -40,12 +39,10 @@ class ModelTests(TestCase):
             ['test4@example.COM', 'test4@example.com']
         ]
 
-        i = 0
-        for email, expected in sample_emails:
+        for i, (email, expected) in enumerate(sample_emails):
             user: AbstractUser = get_user_model(
             ).objects.create_user(f'testUser{i}', email)
             self.assertEqual(user.email, expected)
-            i += 1
 
     def test_new_user_without_username_raises_error(self) -> None:
         """ Tests that creating a user without a username raises a ValueError. """

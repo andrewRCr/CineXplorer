@@ -17,30 +17,28 @@ All type: ignore comments follow the pattern "# DRF [category]" to indicate they
 related to Django REST framework limitations, not code quality issues.
 """
 from __future__ import annotations
-# from typing import Any  # Removed per Quality Gate #6
-
-from django.utils.decorators import method_decorator
-from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 
 import secrets
-from django.contrib.auth.models import AbstractUser, AnonymousUser
-from django.conf import settings
-from rest_framework import generics, permissions, status
-from rest_framework.request import Request
-from rest_framework.response import Response
-from rest_framework.views import APIView
 
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-
+from authentication.email_verification import email_verification_service
 from authentication.serializers import (
     CustomTokenObtainPairSerializer,
     CustomTokenRefreshSerializer,
     RegisterSerializer,
-    UserSerializer
+    UserSerializer,
 )
-from authentication.email_verification import email_verification_service
 from core.services.email_service import email_service
-from django.contrib.auth.models import User
+from django.conf import settings
+from django.contrib.auth.models import AbstractUser, AnonymousUser, User
+
+# from typing import Any  # Removed per Quality Gate #6
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
+from rest_framework import generics, permissions, status
+from rest_framework.request import Request
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -109,7 +107,7 @@ class ManageUserView(generics.RetrieveUpdateAPIView):
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAuthenticated]
 
-    def get_object(self) -> AbstractUser | AnonymousUser:  # type: ignore[return-value]  # DRF return type  # noqa: E501
+    def get_object(self) -> AbstractUser | AnonymousUser:  # type: ignore[return-value]  # DRF return type
         """ Retrieves and returns the currently authenticated user. """
 
         return self.request.user

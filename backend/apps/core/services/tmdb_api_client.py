@@ -11,8 +11,8 @@ import requests
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 
-from .base_api_client import BaseApiClient
 from .api_response import ApiResponse
+from .base_api_client import BaseApiClient
 
 
 class TMDBApiClient(BaseApiClient):
@@ -369,17 +369,16 @@ class TMDBApiClient(BaseApiClient):
         }
 
         for header_name, key in rate_limit_headers.items():
-            if hasattr(headers, '__contains__') and hasattr(headers, '__getitem__'):
-                if header_name in headers:
-                    value = headers[header_name]
-                    # Convert numeric values to integers
-                    if key in ['limit', 'remaining', 'retry_after', 'reset']:
-                        try:
-                            rate_limit_info[key] = int(value)
-                        except (ValueError, TypeError):
-                            rate_limit_info[key] = value
-                    else:
+            if hasattr(headers, '__contains__') and hasattr(headers, '__getitem__') and header_name in headers:
+                value = headers[header_name]
+                # Convert numeric values to integers
+                if key in ['limit', 'remaining', 'retry_after', 'reset']:
+                    try:
+                        rate_limit_info[key] = int(value)
+                    except (ValueError, TypeError):
                         rate_limit_info[key] = value
+                else:
+                    rate_limit_info[key] = value
 
         return rate_limit_info if rate_limit_info else None
 

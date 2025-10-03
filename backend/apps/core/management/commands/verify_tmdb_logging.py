@@ -6,16 +6,17 @@ to verify that all structured logging data is being captured correctly.
 """
 
 import json
+import logging
 import time
+
 from django.core.management.base import BaseCommand
 from movie.services.movie_service import tmdb_get
-import logging
 
 
 class Command(BaseCommand):
     help = 'Verify TMDB API logging captures all expected metadata'
 
-    def handle(self, *args, **options):  # noqa: C901
+    def handle(self, *args, **options):
         """Handle the logging verification command.
 
         Note: This method has high complexity (C901) due to comprehensive

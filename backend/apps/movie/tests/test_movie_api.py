@@ -6,17 +6,15 @@ calls to the The Movie Database (TMDB) API. The external calls are mocked
 to ensure tests are fast, reliable, and independent of the external service.
 """
 from typing import TypedDict, Unpack
-
-from core.types.api_types import TMDBResponseData
-from django.test import TestCase
-from django.test import Client
-from django.contrib.auth.models import User
-from rest_framework import status
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
 
 from core.models import Movie
-from user_movie_data.models import UserMovieData
 from core.services.api_response import ApiResponse
+from core.types.api_types import TMDBResponseData
+from django.contrib.auth.models import User
+from django.test import Client, TestCase
+from rest_framework import status
+from user_movie_data.models import UserMovieData
 
 # =========================
 # Django Ninja API URLs

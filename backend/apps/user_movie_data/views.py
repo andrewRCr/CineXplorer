@@ -6,14 +6,13 @@ from __future__ import annotations
 from django.db import models
 from rest_framework import viewsets
 from rest_framework.authentication import TokenAuthentication
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.serializers import BaseSerializer
-
-from user_movie_data.models import UserMovieData
 from user_movie_data import serializers
+from user_movie_data.models import UserMovieData
 
 
 class UserMovieDataViewSet(viewsets.ModelViewSet):

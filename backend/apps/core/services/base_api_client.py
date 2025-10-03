@@ -8,11 +8,12 @@ response processing across the application.
 
 from __future__ import annotations
 
-import requests
+import logging
 import time
 import uuid
-import logging
 from abc import ABC, abstractmethod
+
+import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
@@ -91,7 +92,6 @@ class BaseApiClient(ABC):
         Returns:
             Complete headers dictionary for the request
         """
-        pass
 
     @abstractmethod
     def get_sanitized_params(self, params: dict[str, object] | None = None) -> dict[str, object]:
@@ -104,7 +104,6 @@ class BaseApiClient(ABC):
         Returns:
             Sanitized parameters safe for logging
         """
-        pass
 
     def classify_error(self, status_code: int) -> str:
         """

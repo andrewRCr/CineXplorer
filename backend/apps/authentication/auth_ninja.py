@@ -152,7 +152,7 @@ def get_current_user(request: HttpRequest) -> AbstractUser:
         raise HttpError(
             500,
             "Internal authentication error"
-        )
+        ) from e
 
 
 def get_current_user_optional(request: HttpRequest) -> AbstractUser | None:

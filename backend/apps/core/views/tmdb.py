@@ -1,16 +1,17 @@
 from __future__ import annotations
-from typing import Callable
+
+from collections.abc import Callable
 
 from rest_framework import status
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.request import Request
-from rest_framework.views import APIView
 from rest_framework.response import Response
-
+from rest_framework.views import APIView
 from user_movie_data.services.user_movie_data_service import (
     get_user_movie_data,
     get_user_movie_data_bulk,
 )
+
 from shared import TMDBMovieResponse, TMDBSearchResponse
 
 """
@@ -39,13 +40,12 @@ class SingleResourceTMDBView(APIView):
 
         # Attach user_movie_data if authenticated and resource is a movie
         # (for future: allow subclass to customize user data attachment)
-        if request.auth and 'id' in data:
+        if request.auth and 'id' in data and 'title' in data:
             # Only attach if this is a movie resource
-            if 'title' in data:
-                user_movie_data_response = get_user_movie_data(
-                    data['id'], request.auth.key)
-                if user_movie_data_response.status_code == status.HTTP_200_OK:
-                    data["user_movie_data"] = user_movie_data_response.data
+            user_movie_data_response = get_user_movie_data(
+                data['id'], request.auth.key)
+            if user_movie_data_response.status_code == status.HTTP_200_OK:
+                data["user_movie_data"] = user_movie_data_response.data
         return Response(data, status=status_code)
 
 
@@ -79,10 +79,7 @@ class PaginatedTMDBView(APIView):
         params = {'page': page, **additional_params}
         tmdb_response = self.service_method(**params)
 
-        if isinstance(tmdb_response, Response):
-            data = tmdb_response.data
-        else:
-            data = tmdb_response
+        data = tmdb_response.data if isinstance(tmdb_response, Response) else tmdb_response
 
         # Attach user_movie_data if authenticated
         results = data.get('results', [])

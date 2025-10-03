@@ -6,11 +6,10 @@ from __future__ import annotations
 import logging
 
 import requests
-from django.conf import settings
-from django.template.loader import render_to_string
-
-from django.contrib.auth.models import User
 from authentication.email_verification import email_verification_service
+from django.conf import settings
+from django.contrib.auth.models import User
+from django.template.loader import render_to_string
 
 logger = logging.getLogger(__name__)
 

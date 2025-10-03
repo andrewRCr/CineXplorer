@@ -3,42 +3,41 @@ from __future__ import annotations
 
 from datetime import date
 
+from core.models import Movie
 from ninja import Schema
 from ninja.orm import ModelSchema
 from pydantic import Field
 
-from core.models import Movie
 
-
-def _empty_genre_list() -> list["GenreSchema"]:
+def _empty_genre_list() -> list[GenreSchema]:
     return []
 
 
-def _empty_company_list() -> list["ProductionCompanySchema"]:
+def _empty_company_list() -> list[ProductionCompanySchema]:
     return []
 
 
-def _empty_cast_list() -> list["CastMemberSchema"]:
+def _empty_cast_list() -> list[CastMemberSchema]:
     return []
 
 
-def _empty_crew_list() -> list["CrewMemberSchema"]:
+def _empty_crew_list() -> list[CrewMemberSchema]:
     return []
 
 
-def _empty_movie_list() -> list["MovieBaseSchema"]:
+def _empty_movie_list() -> list[MovieBaseSchema]:
     return []
 
 
-def _empty_keyword_list() -> list["KeywordSchema"]:
+def _empty_keyword_list() -> list[KeywordSchema]:
     return []
 
 
-def _empty_media_reference_list() -> list["MediaReferenceSchema"]:
+def _empty_media_reference_list() -> list[MediaReferenceSchema]:
     return []
 
 
-def _empty_person_list() -> list["PersonSchema"]:
+def _empty_person_list() -> list[PersonSchema]:
     return []
 
 
@@ -159,18 +158,18 @@ class PaginatedPersonResponseSchema(Schema):
 
 
 __all__ = [
-    "MovieModelSchema",
-    "UserMovieDataSchema",
+    "CastMemberSchema",
+    "CrewMemberSchema",
+    "GenreSchema",
+    "KeywordSchema",
+    "MediaReferenceSchema",
     "MovieBaseSchema",
     "MovieDetailSchema",
-    "PaginatedMovieResponseSchema",
-    "GenreSchema",
-    "ProductionCompanySchema",
-    "CrewMemberSchema",
-    "CastMemberSchema",
-    "KeywordSchema",
+    "MovieModelSchema",
     "PaginatedKeywordResponseSchema",
-    "MediaReferenceSchema",
-    "PersonSchema",
+    "PaginatedMovieResponseSchema",
     "PaginatedPersonResponseSchema",
+    "PersonSchema",
+    "ProductionCompanySchema",
+    "UserMovieDataSchema",
 ]

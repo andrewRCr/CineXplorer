@@ -8,15 +8,14 @@ CRUD operations, and user-specific data filtering. All tests use static movie da
 
 import random
 
-from user_movie_data.serializers import UserMovieDataSerializer, UserMovieDataDetailSerializer
-from user_movie_data.models import UserMovieData
-from django.contrib.auth.models import User
 from core.models import Movie
+from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
-from rest_framework.test import APIClient
 from rest_framework import status
-
+from rest_framework.test import APIClient
+from user_movie_data.models import UserMovieData
+from user_movie_data.serializers import UserMovieDataDetailSerializer, UserMovieDataSerializer
 
 # =========================
 # URLs

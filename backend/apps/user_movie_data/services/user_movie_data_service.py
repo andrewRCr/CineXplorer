@@ -7,7 +7,6 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from rest_framework import status
 from rest_framework.response import Response
-
 from user_movie_data.models import UserMovieData
 from user_movie_data.serializers import UserMovieDataSerializer
 
@@ -48,7 +47,7 @@ def get_user_movie_data_bulk(tmdb_ids: list[int],
     unique_ids = set(tmdb_ids)
 
     # Initialize result map with None for all unique IDs
-    result: dict[int, dict[str, object] | None] = {tmdb_id: None for tmdb_id in unique_ids}
+    result: dict[int, dict[str, object] | None] = dict.fromkeys(unique_ids)
 
     # Query all UserMovieData for this user and these tmdb_ids
     user_movie_data_qs = UserMovieData.objects.filter(user=user, tmdb_id__in=unique_ids)

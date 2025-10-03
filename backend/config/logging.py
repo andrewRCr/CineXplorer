@@ -41,9 +41,9 @@ Usage Examples:
     DEBUG=False DJANGO_LOG_LEVEL=INFO docker-compose up
 """
 
+import logging.handlers
 import os
 import sys
-import logging.handlers
 from typing import TypedDict
 
 
@@ -92,13 +92,8 @@ class HealthCheckFilter(logging.Filter):
         ]
 
         # Allow through if this health check message indicates an error
-        has_error = any(indicator in message for indicator in error_indicators)
-
-        if has_error:
-            return True  # This is an unhealthy health check, allow it through
-
-        # This is a healthy health check, suppress it from console
-        return False
+        # Return True if error indicators found, False otherwise (suppress healthy checks)
+        return any(indicator in message for indicator in error_indicators)
 
 
 # Valid log levels for environment variable validation
@@ -132,11 +127,11 @@ DB_QUERY_PERFORMANCE = {
 
 # Estimated storage usage per log type (for documentation)
 LOG_STORAGE_ESTIMATES = {
-    "cinexplorer.log": "~55MB (5 backups × 10MB + current)",
-    "django.log": "~55MB (5 backups × 10MB + current)",
-    "requests.log": "~55MB (5 backups × 10MB + current)",
-    "database.log": "~55MB (5 backups × 10MB + current)",
-    "errors.log": "~110MB (10 backups × 10MB + current)",
+    "cinexplorer.log": "~55MB (5 backups x 10MB + current)",
+    "django.log": "~55MB (5 backups x 10MB + current)",
+    "requests.log": "~55MB (5 backups x 10MB + current)",
+    "database.log": "~55MB (5 backups x 10MB + current)",
+    "errors.log": "~110MB (10 backups x 10MB + current)",
     "total_estimated": "~330MB maximum storage for all log files",
 }
 
@@ -553,8 +548,8 @@ def get_log_file_info(log_dir="/backend/logs"):
     Returns:
         dict: Dictionary containing log file information
     """
-    import os
     import glob
+    import os
 
     info = {
         "log_directory": log_dir,
@@ -583,7 +578,7 @@ def get_log_file_info(log_dir="/backend/logs"):
                     "name": os.path.basename(file_path),
                     "size_mb": round(size_mb, 2),
                     "size_bytes": size_bytes,
-                    "is_current": not ("." in os.path.basename(file_path)[4:]),
+                    "is_current": "." not in os.path.basename(file_path)[4:],
                 }
             )
         except OSError:

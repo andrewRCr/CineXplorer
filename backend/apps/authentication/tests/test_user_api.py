@@ -2,18 +2,17 @@
 """
 Tests for the user API.
 """
+import json
 from typing import Any
 
+from authentication.email_verification import email_verification_service
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractUser
 from django.http import HttpResponse
-from django.test import TestCase, Client
+from django.test import Client, TestCase
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
-import json
-
-from authentication.email_verification import email_verification_service
 
 CREATE_USER_URL: str = reverse('register')
 TOKEN_URL: str = reverse('token_obtain_pair')
@@ -48,7 +47,7 @@ class PublicUserApiTests(TestCase):
         self,
         username: str = 'testUser',
         email: str = 'test@example.com',
-        password: str = 'testPass123'  # noqa: S107 - test default password is intentional
+        password: str = 'testPass123'
     ) -> dict[str, str]:
         """ Creates and returns a dictionary of values for test user creation. """
 
@@ -69,36 +68,36 @@ class PublicUserApiTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
         user: AbstractUser = get_user_model().objects.get(username=payload['username'])
         self.assertTrue(user.check_password(payload['password']))
-        contentStr: str = res.content.decode(res.charset or 'utf-8')
-        self.assertNotIn('password', contentStr)
+        content_str: str = res.content.decode(res.charset or 'utf-8')
+        self.assertNotIn('password', content_str)
 
     def test_user_with_username_exists_error(self) -> None:
         """ Tests that an error is returned if user with same username already exists. """
 
-        controlPayload: dict[str, str] = self.create_payload()
-        testPayload: dict[str, str] = self.create_payload(
+        control_payload: dict[str, str] = self.create_payload()
+        test_payload: dict[str, str] = self.create_payload(
             email='differentEmail@example.com')
 
-        create_user(**controlPayload)
-        res: HttpResponse = self.client.post(CREATE_USER_URL, testPayload)
+        create_user(**control_payload)
+        res: HttpResponse = self.client.post(CREATE_USER_URL, test_payload)
 
         self.assertEqual(res.status_code, status.HTTP_409_CONFLICT)
         user_exists: bool = get_user_model().objects.filter(
-            email=testPayload['email']).exists()
+            email=test_payload['email']).exists()
         self.assertFalse(user_exists)
 
     def test_user_with_same_email_exists_error(self) -> None:
         """ Tests that an error is returned if user with same email already exists. """
 
-        controlPayload: dict[str, str] = self.create_payload()
-        testPayload: dict[str, str] = self.create_payload(username='differentUsername')
+        control_payload: dict[str, str] = self.create_payload()
+        test_payload: dict[str, str] = self.create_payload(username='differentUsername')
 
-        create_user(**controlPayload)
-        res: HttpResponse = self.client.post(CREATE_USER_URL, testPayload)
+        create_user(**control_payload)
+        res: HttpResponse = self.client.post(CREATE_USER_URL, test_payload)
 
         self.assertEqual(res.status_code, status.HTTP_409_CONFLICT)
         user_exists: bool = get_user_model().objects.filter(
-            username=testPayload['username']).exists()
+            username=test_payload['username']).exists()
         self.assertFalse(user_exists)
 
     def test_password_too_short_error(self) -> None:
@@ -118,11 +117,11 @@ class PublicUserApiTests(TestCase):
         user_details: dict[str, str] = self.create_payload()
         create_user(**user_details)
 
-        authPayload: dict[str, str] = {
+        auth_payload: dict[str, str] = {
             'username': user_details['username'],
             'password': user_details['password']
         }
-        res = self.client.post(TOKEN_URL, authPayload)
+        res = self.client.post(TOKEN_URL, auth_payload)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
 
     def test_create_token_for_user_via_email(self) -> None:
@@ -131,11 +130,11 @@ class PublicUserApiTests(TestCase):
         user_details: dict[str, str] = self.create_payload()
         create_user(**user_details)
 
-        authPayload: dict[str, str] = {
+        auth_payload: dict[str, str] = {
             'username': user_details['email'],
             'password': user_details['password']
         }
-        res = self.client.post(TOKEN_URL, authPayload)
+        res = self.client.post(TOKEN_URL, auth_payload)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
 
     def test_create_token_bad_password(self) -> None:
@@ -144,32 +143,32 @@ class PublicUserApiTests(TestCase):
         user_details: dict[str, str] = self.create_payload(password='goodPassword')
         create_user(**user_details)
 
-        authPayload: dict[str, str] = {
+        auth_payload: dict[str, str] = {
             'username': user_details['username'],
             'password': 'badPassword'
         }
-        res = self.client.post(TOKEN_URL, authPayload)
+        res = self.client.post(TOKEN_URL, auth_payload)
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_create_token_blank_username(self) -> None:
         """Tests that an error is returned if username is blank and no email provided."""
 
-        authPayload: dict[str, str] = {'username': '', 'password': 'testPassword'}
-        res = self.client.post(TOKEN_URL, authPayload)
+        auth_payload: dict[str, str] = {'username': '', 'password': 'testPassword'}
+        res = self.client.post(TOKEN_URL, auth_payload)
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_create_token_blank_email(self) -> None:
         """Tests that an error is returned if email is blank and no username provided."""
 
-        authPayload: dict[str, str] = {'email': '', 'password': 'testPassword'}
-        res = self.client.post(TOKEN_URL, authPayload)
+        auth_payload: dict[str, str] = {'email': '', 'password': 'testPassword'}
+        res = self.client.post(TOKEN_URL, auth_payload)
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_create_token_blank_password(self) -> None:
         """Tests that posting a blank password returns an error."""
 
-        authPayload: dict[str, str] = {'username': 'testUser', 'password': ''}
-        res = self.client.post(TOKEN_URL, authPayload)
+        auth_payload: dict[str, str] = {'username': 'testUser', 'password': ''}
+        res = self.client.post(TOKEN_URL, auth_payload)
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_retrieve_profile_unauthorized(self) -> None:
@@ -335,8 +334,8 @@ class AuthCookieIntegrationTests(TestCase):
         }
         self.client.post(TOKEN_URL, login_data)
         # Logout
-        LOGOUT_URL = '/api/logout/'
-        response = self.client.post(LOGOUT_URL)
+        logout_url = '/api/logout/'
+        response = self.client.post(logout_url)
         self.assertEqual(response.status_code, 200)
         access_cookie = response.cookies.get('access_token')
         refresh_cookie = response.cookies.get('refresh_token')
@@ -357,9 +356,9 @@ class AuthCookieIntegrationTests(TestCase):
         # Get current refresh token
         old_refresh_cookie = self.client.cookies.get('refresh_token')
         old_refresh = old_refresh_cookie.value if old_refresh_cookie else None
-        REFRESH_URL = '/api/token/refresh/'
+        refresh_url = '/api/token/refresh/'
         # Rely on HttpOnly refresh cookie only - no body needed
-        response = self.client.post(REFRESH_URL)
+        response = self.client.post(refresh_url)
         self.assertEqual(response.status_code, 200)
         new_refresh_cookie = response.cookies.get('refresh_token')
         new_refresh = new_refresh_cookie.value if new_refresh_cookie else None
@@ -369,8 +368,8 @@ class AuthCookieIntegrationTests(TestCase):
     def test_csrf_token_endpoint_sets_cookie(self):
         """CSRF token endpoint sets XSRF-TOKEN cookie and returns token in body."""
 
-        CSRF_URL = '/api/csrf-token/'
-        response = self.client.get(CSRF_URL)
+        csrf_url = '/api/csrf-token/'
+        response = self.client.get(csrf_url)
         self.assertEqual(response.status_code, 200)
         self.assertIn('XSRF-TOKEN', response.cookies)
         token_in_cookie = response.cookies['XSRF-TOKEN'].value

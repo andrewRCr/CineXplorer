@@ -10,12 +10,14 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
-from datetime import timedelta
-import environ
-import socket
 import os
+import socket
 import sys
+from datetime import timedelta
 from pathlib import Path
+
+import environ
+
 from .logging import get_logging_config
 
 # initialize environment variables
@@ -99,7 +101,7 @@ INTERNAL_IPS = [
 ]
 
 hostname, _, ips = socket.gethostbyname_ex(socket.gethostname())
-INTERNAL_IPS += [".".join(ip.split(".")[:-1] + ["1"]) for ip in ips]
+INTERNAL_IPS += [".".join([*ip.split(".")[:-1], "1"]) for ip in ips]
 
 ROOT_URLCONF = "config.urls"
 

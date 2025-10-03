@@ -10,8 +10,9 @@ from __future__ import annotations
 
 import logging
 from typing import TypeVar
-from pydantic import BaseModel, ValidationError
+
 from ninja.errors import HttpError
+from pydantic import BaseModel, ValidationError
 
 from .api_response import ApiResponse
 
@@ -20,7 +21,7 @@ logger = logging.getLogger(__name__)
 T = TypeVar('T', bound=BaseModel)
 
 
-def validate_tmdb_response(
+def validate_tmdb_response[T: BaseModel](
     response: ApiResponse,
     model: type[T]
 ) -> T:
@@ -63,7 +64,7 @@ def validate_tmdb_response(
             extra={
                 "model": model.__name__,
                 "validation_errors": e.errors(),
-                "response_data_keys": list(response.data.keys()) if isinstance(response.data, dict) else None  # noqa: E501
+                "response_data_keys": list(response.data.keys()) if isinstance(response.data, dict) else None
             }
         )
         raise HttpError(
@@ -72,7 +73,7 @@ def validate_tmdb_response(
         ) from e
 
 
-def validate_tmdb_list_response(
+def validate_tmdb_list_response[T: BaseModel](
     response: ApiResponse,
     item_model: type[T]
 ) -> list[T]:
@@ -124,7 +125,7 @@ def validate_tmdb_list_response(
         ) from e
 
 
-def validate_tmdb_paginated_response(
+def validate_tmdb_paginated_response[T: BaseModel](
     response: ApiResponse,
     model: type[T]
 ) -> T:
@@ -167,7 +168,7 @@ def validate_tmdb_paginated_response(
             extra={
                 "model": model.__name__,
                 "validation_errors": e.errors(),
-                "response_data_keys": list(response.data.keys()) if isinstance(response.data, dict) else None  # noqa: E501
+                "response_data_keys": list(response.data.keys()) if isinstance(response.data, dict) else None
             }
         )
         raise HttpError(
@@ -177,7 +178,7 @@ def validate_tmdb_paginated_response(
 
 
 __all__ = [
-    'validate_tmdb_response',
     'validate_tmdb_list_response',
     'validate_tmdb_paginated_response',
+    'validate_tmdb_response',
 ]

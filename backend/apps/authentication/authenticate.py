@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from typing import TypeVar
 
-from rest_framework_simplejwt.authentication import JWTAuthentication
-from rest_framework.request import Request
-from rest_framework_simplejwt.tokens import Token
 from django.conf import settings
 from django.contrib.auth.base_user import AbstractBaseUser
+from rest_framework.request import Request
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework_simplejwt.tokens import Token
 
 # TypeVar for custom user model compatibility
 UserT = TypeVar("UserT", bound=AbstractBaseUser)

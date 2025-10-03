@@ -2,11 +2,9 @@
 URL mappings for the user API.
 """
 
+from authentication import views
 from django.urls import path
 from django.urls.resolvers import URLPattern
-
-from authentication import views
-
 
 app_name = 'authentication'
 

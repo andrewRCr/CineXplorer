@@ -6,6 +6,7 @@ including logging APIs and health checks.
 """
 
 from django.urls import path
+
 from .views.logging import FrontendLogAPIView, LogHealthCheckView
 
 app_name = 'core'

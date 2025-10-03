@@ -7,11 +7,10 @@ testing, following the pattern established in the movie app tests.
 from typing import TypedDict, Unpack
 
 from allauth.socialaccount.models import SocialAccount, SocialApp
+from authentication.email_verification import email_verification_service
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractUser
 from django.contrib.sites.models import Site
-
-from authentication.email_verification import email_verification_service
 
 User = get_user_model()
 
@@ -151,7 +150,7 @@ def create_social_account(
 
 
 # Payload creation fixtures
-def create_register_payload(  # noqa: S107 - test default password is intentional
+def create_register_payload(
     username: str = 'testuser',
     email: str = 'testuser@example.com',
     password: str = 'testpass123',
@@ -180,7 +179,7 @@ def create_register_payload(  # noqa: S107 - test default password is intentiona
     }
 
 
-def create_login_payload(  # noqa: S107 - test default password is intentional
+def create_login_payload(
     identifier: str = 'testuser',
     password: str = 'testpass123',
     use_email: bool = False

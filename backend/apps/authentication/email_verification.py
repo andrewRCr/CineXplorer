@@ -29,8 +29,10 @@ where type stubs are incomplete.
 """
 
 from __future__ import annotations
+
 import logging
 from typing import TYPE_CHECKING
+
 from django.conf import settings
 from django.contrib.auth.models import User
 
@@ -61,8 +63,8 @@ class EmailVerificationService:
         """
         try:
             # Import here to avoid circular dependency and graceful degradation
-            from allauth.account.models import (  # type: ignore[import-untyped]  # noqa: F811
-                EmailAddress
+            from allauth.account.models import (  # type: ignore[import-untyped]
+                EmailAddress,
             )
 
             # Check if user has a verified email address
@@ -94,8 +96,8 @@ class EmailVerificationService:
             user: Django User instance
         """
         try:
-            from allauth.account.models import (  # type: ignore[import-untyped]  # noqa: F811
-                EmailAddress
+            from allauth.account.models import (  # type: ignore[import-untyped]
+                EmailAddress,
             )
 
             # Find existing EmailAddress record (case-insensitive)
@@ -133,7 +135,7 @@ class EmailVerificationService:
             pass
         except Exception as e:
             # Log errors but don't break the application
-            from core.services.metrics import record_error, increment
+            from core.services.metrics import increment, record_error
 
             user_id = getattr(user, "pk", None)
             user_email = getattr(user, "email", "unknown")
@@ -178,8 +180,8 @@ class EmailVerificationService:
             List of EmailAddress objects, or empty list if allauth not available
         """
         try:
-            from allauth.account.models import (  # type: ignore[import-untyped]  # noqa: F811
-                EmailAddress
+            from allauth.account.models import (  # type: ignore[import-untyped]
+                EmailAddress,
             )
 
             return list(
@@ -206,8 +208,8 @@ class EmailVerificationService:
             Primary EmailAddress object, or None if not found or allauth unavailable
         """
         try:
-            from allauth.account.models import (  # type: ignore[import-untyped]  # noqa: F811
-                EmailAddress
+            from allauth.account.models import (  # type: ignore[import-untyped]
+                EmailAddress,
             )
 
             return EmailAddress.objects.filter(  # type: ignore[no-any-return]

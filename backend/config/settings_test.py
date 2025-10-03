@@ -7,7 +7,8 @@ import os
 import sys
 from datetime import timedelta
 from unittest.mock import MagicMock
-from .settings import *  # noqa: F403,F401
+
+from .settings import *  # noqa: F403
 
 
 class MockEmailService:

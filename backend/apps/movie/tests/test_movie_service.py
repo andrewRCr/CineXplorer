@@ -5,19 +5,19 @@ These tests focus on the service layer independently from API endpoints,
 testing parameter mapping, error handling, and data transformation logic
 that wasn't covered by integration tests.
 """
-from unittest.mock import patch, MagicMock
-from django.test import TestCase
-from ninja.errors import HttpError
+from unittest.mock import MagicMock, patch
 
 from core.services.api_response import ApiResponse
 from core.types.api_types import TMDBResponseData
-from movie.services import movie_service
+from django.test import TestCase
 from movie.schemas import (
+    GenreSchema,
     MovieBaseSchema,
     MovieDetailSchema,
     PaginatedMovieResponseSchema,
-    GenreSchema,
 )
+from movie.services import movie_service
+from ninja.errors import HttpError
 
 
 class MovieServiceParameterMappingTests(TestCase):
@@ -300,7 +300,7 @@ class MovieServiceBusinessLogicTests(TestCase):
 
         # Date should be today or later
         import datetime
-        today = datetime.datetime.today().strftime("%Y-%m-%d")
+        today = datetime.datetime.now(tz=datetime.UTC).strftime("%Y-%m-%d")
         self.assertGreaterEqual(params['primary_release_date.gte'], today)
 
     def test_fetch_movie_runtimes_empty_list(self):

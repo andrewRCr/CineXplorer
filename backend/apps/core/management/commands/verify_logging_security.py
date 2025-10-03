@@ -13,7 +13,6 @@ from pathlib import Path
 
 from django.conf import settings
 from django.core.management.base import BaseCommand
-
 from movie.services.movie_service import tmdb_get
 
 
@@ -41,7 +40,7 @@ class Command(BaseCommand):
         else:
             return "***REDACTED***"
 
-    def _run_security_test(self, api_key, partial_key):  # noqa: C901
+    def _run_security_test(self, api_key, partial_key):
         """Run the complete security test suite.
 
         Note: This method has high complexity (C901) due to comprehensive
@@ -203,7 +202,7 @@ class Command(BaseCommand):
                     result_type = type(result).__name__
                     try:
                         item_count = len(result) if hasattr(result, '__len__') else 1
-                        self.stdout.write(  # noqa: E501
+                        self.stdout.write(
                             f"  ⚠️ {endpoint}: Non-dict result ({result_type}, {item_count} items)"
                         )
                     except (TypeError, AttributeError):
@@ -228,10 +227,7 @@ class Command(BaseCommand):
         """Check actual log files for API key presence."""
         # Get log directory from settings, with fallback to BASE_DIR / "logs"
         log_dir = getattr(settings, 'LOG_DIR', None)
-        if log_dir is None:
-            log_dir = Path(settings.BASE_DIR) / "logs"
-        else:
-            log_dir = Path(log_dir)
+        log_dir = Path(settings.BASE_DIR) / "logs" if log_dir is None else Path(log_dir)
 
         log_files = [
             "cinexplorer.log",
@@ -245,7 +241,7 @@ class Command(BaseCommand):
             file_path = log_dir / log_file
             try:
                 if file_path.exists():
-                    with open(file_path, 'r', encoding='utf-8') as f:
+                    with open(file_path, encoding='utf-8') as f:
                         # Read last 100 lines to check recent entries
                         lines = f.readlines()[-100:]
                         content = ''.join(lines)

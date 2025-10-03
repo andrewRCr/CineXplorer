@@ -42,19 +42,14 @@ When modifying this file:
 2. Update the type stub file (models.pyi)
 3. Run type checks: cd backend && npx pyright apps/user_movie_data/models.py
 4. Expect type ignores only on field definitions (this is correct)
-
-Related Documentation:
-----------------------
-- _docs/notes/django-stubs-limitations-and-solutions.md
-- _docs/notes/type-checking-config-audit-p2.md
 """
 
 from django.conf import settings
-from django.db import models
 from django.core.validators import (
     MaxValueValidator,
     MinValueValidator,
 )
+from django.db import models
 
 
 class UserMovieData(models.Model):
@@ -91,4 +86,5 @@ class UserMovieData(models.Model):
 
     def __str__(self) -> str:
         # Accessing ForeignKey fields - type: ignore for django-stubs limitation
-        return f"{self.user.username} - {self.movie.title}"  # type: ignore[attr-defined,union-attr]  # noqa: E501
+        # type: ignore[attr-defined,union-attr]
+        return f"{self.user.username} - {self.movie.title}"

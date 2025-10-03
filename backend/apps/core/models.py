@@ -39,11 +39,6 @@ When modifying this file:
 2. Update the type stub file (models.pyi)
 3. Run type checks: cd backend && npx pyright apps/core/models.py
 4. Expect type ignores only on field definitions (this is correct)
-
-Related Documentation:
-----------------------
-- _docs/notes/django-stubs-limitations-and-solutions.md
-- _docs/notes/type-checking-config-audit-p2.md
 """
 
 from django.db import models

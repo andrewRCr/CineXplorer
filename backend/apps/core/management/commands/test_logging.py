@@ -4,8 +4,9 @@ Django management command to test logging configuration.
 This command tests all aspects of the logging system to ensure proper integration.
 """
 
-from django.core.management.base import BaseCommand
 import logging
+
+from django.core.management.base import BaseCommand
 
 
 class Command(BaseCommand):
@@ -42,7 +43,7 @@ class Command(BaseCommand):
         """Test all application-specific loggers."""
         self.stdout.write("Testing application loggers...")
         # Import from our logging configuration
-        from config.logging import app_logger, request_logger, tmdb_logger, db_logger
+        from config.logging import app_logger, db_logger, request_logger, tmdb_logger
 
         # Test each logger
         loggers_to_test = [
@@ -118,9 +119,9 @@ class Command(BaseCommand):
         self.stdout.write("\nLogging Configuration Summary:")
         try:
             from config.logging import (
-                get_database_performance_summary,
                 LOG_ROTATION_CONFIG,
                 LOG_STORAGE_ESTIMATES,
+                get_database_performance_summary,
             )
 
             # Performance thresholds

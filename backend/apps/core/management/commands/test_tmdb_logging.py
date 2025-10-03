@@ -6,10 +6,14 @@ is working correctly and producing expected output.
 """
 
 import time
+
 from django.core.management.base import BaseCommand
 from movie.services.movie_service import (
-    get_movie_by_id, discover_movies, search_movies,
-    get_now_playing_movies, get_upcoming_movies
+    discover_movies,
+    get_movie_by_id,
+    get_now_playing_movies,
+    get_upcoming_movies,
+    search_movies,
 )
 from ninja.errors import HttpError
 
@@ -86,7 +90,7 @@ class Command(BaseCommand):
         except HttpError as e:
             self.stdout.write(f"  ❌ Error: {e.detail}")
         except Exception as e:
-            self.stdout.write(f"  ❌ Error: {str(e)}")
+            self.stdout.write(f"  ❌ Error: {e!s}")
 
     def test_search_movies(self):
         """Test search movies API call."""
@@ -97,7 +101,7 @@ class Command(BaseCommand):
         except HttpError as e:
             self.stdout.write(f"  ❌ Error: {e.detail}")
         except Exception as e:
-            self.stdout.write(f"  ❌ Error: {str(e)}")
+            self.stdout.write(f"  ❌ Error: {e!s}")
 
     def test_movie_details(self):
         """Test movie details API call."""
@@ -110,7 +114,7 @@ class Command(BaseCommand):
         except HttpError as e:
             self.stdout.write(f"  ❌ Error: {e.detail}")
         except Exception as e:
-            self.stdout.write(f"  ❌ Error: {str(e)}")
+            self.stdout.write(f"  ❌ Error: {e!s}")
 
     def test_popular_movies(self):
         """Test popular movies API call."""
@@ -121,7 +125,7 @@ class Command(BaseCommand):
         except HttpError as e:
             self.stdout.write(f"  ❌ Error: {e.detail}")
         except Exception as e:
-            self.stdout.write(f"  ❌ Error: {str(e)}")
+            self.stdout.write(f"  ❌ Error: {e!s}")
 
     def test_now_playing(self):
         """Test now playing movies API call."""
@@ -132,7 +136,7 @@ class Command(BaseCommand):
         except HttpError as e:
             self.stdout.write(f"  ❌ Error: {e.detail}")
         except Exception as e:
-            self.stdout.write(f"  ❌ Error: {str(e)}")
+            self.stdout.write(f"  ❌ Error: {e!s}")
 
     def test_upcoming_movies(self):
         """Test upcoming movies API call."""
@@ -143,4 +147,4 @@ class Command(BaseCommand):
         except HttpError as e:
             self.stdout.write(f"  ❌ Error: {e.detail}")
         except Exception as e:
-            self.stdout.write(f"  ❌ Error: {str(e)}")
+            self.stdout.write(f"  ❌ Error: {e!s}")

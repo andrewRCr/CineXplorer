@@ -8,10 +8,10 @@ and specific Pydantic model validation.
 
 from __future__ import annotations
 
-from typing import Mapping, TypeAlias
+from collections.abc import Mapping
 
 # Type aliases for TMDB API parameter handling
-TMDBParams: TypeAlias = Mapping[str, str | int | float | bool | None]
+type TMDBParams = Mapping[str, str | int | float | bool | None]
 """
 Type alias for TMDB API parameters that matches the expected signature
 of the TMDB client. Uses Mapping to communicate immutability and broaden
@@ -19,7 +19,7 @@ compatibility with read-only dict-like types.
 """
 
 # Pre-validation response type from ApiResponse.data
-TMDBResponseData: TypeAlias = Mapping[str, object]
+type TMDBResponseData = Mapping[str, object]
 """
 Type alias for TMDB response data before Pydantic validation.
 Uses Mapping to communicate immutability and object for external API

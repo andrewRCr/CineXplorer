@@ -2,12 +2,9 @@
 URL mappings for the User Movie Data app.
 """
 
-from django.urls import path, include
-
+from django.urls import include, path
 from rest_framework.routers import DefaultRouter
-
 from user_movie_data import views
-
 
 router = DefaultRouter()
 router.register('', views.UserMovieDataViewSet, 'user-movie-data')

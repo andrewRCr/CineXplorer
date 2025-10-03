@@ -2,10 +2,12 @@
 Tests for the custom Django management commands module.
 """
 
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
+from django.core.management import call_command
+
 # from psycopg import OperationalError as PsycopgError  # Unused
 from django.db.utils import OperationalError
-from django.core.management import call_command
 from django.test import TestCase
 
 

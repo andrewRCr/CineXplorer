@@ -3,15 +3,14 @@ Serializers for the user API View.
 """
 from __future__ import annotations
 
+from authentication.email_verification import email_verification_service
 from django.conf import settings
-from django.contrib.auth import get_user_model, authenticate
+from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.models import AbstractUser, User
 from django.utils.translation import gettext as _
 from rest_framework import serializers
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
 from rest_framework.exceptions import ValidationError
-
-from authentication.email_verification import email_verification_service
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
 
 
 def get_error_codes() -> object:

@@ -12,14 +12,15 @@ All routers integrate with the typed movie service layer.
 from __future__ import annotations
 
 from typing import cast
-from ninja import Router
+
 from django.http import HttpRequest
+from ninja import Router
 
 from .schemas import (
-    MovieDetailSchema,
-    PaginatedMovieResponseSchema,
     GenreSchema,
+    MovieDetailSchema,
     PaginatedKeywordResponseSchema,
+    PaginatedMovieResponseSchema,
     PaginatedPersonResponseSchema,
 )
 

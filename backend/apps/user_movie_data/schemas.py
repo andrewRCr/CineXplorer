@@ -12,7 +12,6 @@ from __future__ import annotations
 from ninja import Schema
 from ninja.orm import ModelSchema
 from pydantic import Field
-
 from user_movie_data.models import UserMovieData
 
 
@@ -63,7 +62,7 @@ class UserMovieDataDetailSchema(ModelSchema):
         ]
 
     @classmethod
-    def from_orm_with_movie(cls, obj: UserMovieData) -> "UserMovieDataDetailSchema":
+    def from_orm_with_movie(cls, obj: UserMovieData) -> UserMovieDataDetailSchema:
         """Create schema from ORM object with movie fields populated.
 
         This method provides type-safe conversion from Django ORM to Pydantic schema
@@ -159,8 +158,8 @@ class UserMovieDataUpdateSchema(Schema):
 
 
 __all__ = [
-    "UserMovieDataModelSchema",
-    "UserMovieDataDetailSchema",
     "UserMovieDataCreateSchema",
+    "UserMovieDataDetailSchema",
+    "UserMovieDataModelSchema",
     "UserMovieDataUpdateSchema",
 ]

@@ -10,19 +10,20 @@ import logging
 from datetime import datetime
 
 from django.conf import settings
-from django.views.decorators.csrf import csrf_exempt
-from django.utils.decorators import method_decorator
 from django.utils import timezone
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
 from rest_framework import status
 from rest_framework.exceptions import ParseError
-from rest_framework.request import Request
-from rest_framework.views import APIView
-from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
+from rest_framework.request import Request
+from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
+from rest_framework.views import APIView
 
 # Import our correlation utility
 from middleware.logging import get_correlation_id
+
 # Import shared types
 # from shared import ApiResponse  # Unused import
 
@@ -77,7 +78,7 @@ class FrontendLogAPIView(APIView):
                 'max_allowed': MAX_PAYLOAD_SIZE
             })
             return Response(
-                {"error": "Payload too large", "success": False, "max_size_bytes": MAX_PAYLOAD_SIZE},  # noqa: E501
+                {"error": "Payload too large", "success": False, "max_size_bytes": MAX_PAYLOAD_SIZE},
                 status=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE
             )
 
@@ -134,7 +135,7 @@ class FrontendLogAPIView(APIView):
                 request_data = str(request.data)[:1000] if hasattr(request, 'data') else 'N/A'
             except Exception:
                 request_data = 'Unable to access request data'
-            app_logger.error(f"Frontend log API error: {str(e)}", extra={
+            app_logger.error(f"Frontend log API error: {e!s}", extra={
                 'correlation_id': get_correlation_id(request),
                 'request_data': request_data,
                 'exception_type': type(e).__name__
@@ -243,7 +244,7 @@ class FrontendLogAPIView(APIView):
                 extra_data['recent_interactions'] = data['recentInteractions']
 
             # Add any additional data provided
-            if 'data' in data and data['data']:
+            if data.get('data'):
                 extra_data['frontend_data'] = data['data']
 
             # Log to the frontend logger with appropriate level
@@ -257,7 +258,7 @@ class FrontendLogAPIView(APIView):
             return True
 
         except Exception as e:
-            error_msg = f"Failed to process frontend log entry: {str(e)}"
+            error_msg = f"Failed to process frontend log entry: {e!s}"
             app_logger.error(error_msg, extra={
                 'correlation_id': get_correlation_id(request),
                 'original_data': data
@@ -294,7 +295,7 @@ class LogHealthCheckView(APIView):
             }, status=status.HTTP_200_OK)
 
         except Exception as e:
-            app_logger.error(f"Logging health check failed: {str(e)}")
+            app_logger.error(f"Logging health check failed: {e!s}")
             return Response({
                 "status": "unhealthy",
                 "service": "logging",

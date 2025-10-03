@@ -9,11 +9,11 @@ which is crucial for the frontend to function correctly.
 These tests mock the external `requests.get` call to ensure they are fast,
 reliable, and consistent with other integration tests in the application.
 """
-from django.test import TestCase, Client
-from rest_framework import status
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 from core.types.api_types import TMDBResponseData
+from django.test import Client, TestCase
+from rest_framework import status
 
 # Django Ninja API URLs for the paginated movie endpoints
 NOW_PLAYING_URL = '/api/movies/now-playing'

@@ -18,7 +18,7 @@ from ninja import NinjaAPI, Schema
 
 # Import our native JWT authentication scheme
 from apps.authentication.auth_ninja import jwt_cookie_auth
-from apps.movie.api import movies_router, genres_router, keywords_router, people_router
+from apps.movie.api import genres_router, keywords_router, movies_router, people_router
 from apps.user_movie_data.api import user_movie_data_router
 
 # Get configured cookie name for JWT tokens
@@ -170,8 +170,9 @@ def health_check_user(request: HttpRequest) -> UserHealthResponse:
         HttpError: 500 if internal authentication error occurs
     """
     # Import here to avoid circular import
-    from apps.authentication.auth_ninja import get_current_user
     from ninja.errors import HttpError
+
+    from apps.authentication.auth_ninja import get_current_user
 
     # Use enhanced dependency injection with proper error handling
     # get_current_user returns AbstractUser | raises HttpError
@@ -220,7 +221,7 @@ def test_authentication(
     """
     # Django Ninja's global auth system guarantees this user is authenticated
     # Cast to AbstractUser for type safety (django-stubs has limited field inference)
-    user = cast(AbstractUser, request.user)  # type: ignore
+    user = cast(AbstractUser, request.user)
 
     # Comprehensive user information for testing
     return AuthTestResponse(

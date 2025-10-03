@@ -13,8 +13,9 @@ EXEMPT_PATHS contains endpoints that are exempt from CSRF checks because:
 from __future__ import annotations
 
 import logging
-from django.utils.deprecation import MiddlewareMixin
+
 from django.http import HttpRequest, JsonResponse
+from django.utils.deprecation import MiddlewareMixin
 
 logger = logging.getLogger(__name__)
 

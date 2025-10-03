@@ -42,4 +42,4 @@ class UserMovieDataDetailSerializer(UserMovieDataSerializer):
     title = serializers.SerializerMethodField()
 
     class Meta(UserMovieDataSerializer.Meta):
-        fields = UserMovieDataSerializer.Meta.fields + ['user_review']
+        fields = [*UserMovieDataSerializer.Meta.fields, 'user_review']

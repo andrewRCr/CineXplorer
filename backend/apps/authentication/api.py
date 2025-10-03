@@ -5,11 +5,14 @@ using Django Ninja, following the patterns established in Phase 1.
 """
 from __future__ import annotations
 
+import secrets
 from datetime import timedelta
 from typing import Literal, cast
 
 from authentication.email_verification import email_verification_service
 from authentication.schemas import (
+    CsrfTokenResponseSchema,
+    LogoutResponseSchema,
     RegisterInputSchema,
     RegisterResponseSchema,
     TokenObtainInputSchema,
@@ -18,6 +21,7 @@ from authentication.schemas import (
 from core.services.email_service import email_service
 from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model
+from django.contrib.auth.models import AbstractUser
 from django.http import HttpRequest, HttpResponse
 from ninja import Router
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -36,8 +40,8 @@ def _get_jwt_settings() -> dict[str, str | timedelta]:
     return jwt_settings
 
 
-@auth_router.post("/register/", response={201: RegisterResponseSchema, 409: dict, 500: dict})
-def register_user(request: HttpRequest, payload: RegisterInputSchema) -> tuple[int, dict]:
+@auth_router.post("/register/", response={201: RegisterResponseSchema, 409: dict[str, object], 500: dict[str, object]})
+def register_user(request: HttpRequest, payload: RegisterInputSchema) -> tuple[int, dict[str, object]]:
     """Register a new user and send email verification.
 
     Creates a new user account and triggers email verification via
@@ -81,14 +85,14 @@ def register_user(request: HttpRequest, payload: RegisterInputSchema) -> tuple[i
         }
 
     # Create the user
-    user = user_model.objects.create_user(
+    user = user_model.objects.create_user(  # type: ignore[attr-defined]  # UserManager.create_user exists at runtime
         username=payload.username,
         email=payload.email,
         password=payload.password
     )
 
     # Send verification email via allauth integration
-    email_sent = email_service.send_verification_email(user)
+    email_sent = email_service.send_verification_email(user)  # type: ignore[misc]  # email_service type resolution issue
 
     if email_sent:
         return 201, {
@@ -107,8 +111,8 @@ def register_user(request: HttpRequest, payload: RegisterInputSchema) -> tuple[i
         }
 
 
-@auth_router.post("/token/", response={200: TokenResponseSchema, 400: dict, 401: dict, 403: dict})
-def obtain_token(request: HttpRequest, response: HttpResponse, payload: TokenObtainInputSchema) -> tuple[int, dict]:
+@auth_router.post("/token/", response={200: TokenResponseSchema, 400: dict[str, object], 401: dict[str, object], 403: dict[str, object]})
+def obtain_token(request: HttpRequest, response: HttpResponse, payload: TokenObtainInputSchema) -> tuple[int, dict[str, object]]:
     """Obtain JWT access and refresh tokens (login).
 
     Authenticates user with username/email and password, then returns
@@ -138,14 +142,17 @@ def obtain_token(request: HttpRequest, response: HttpResponse, payload: TokenObt
         return 400, {"error": "Username/email and password are required."}
 
     # Authenticate user (supports both username and email)
-    user = authenticate(
+    authenticated_user = authenticate(
         request=request,
         username=username_or_email,
         password=password
     )
 
-    if not user:
+    if not authenticated_user:
         return 401, {"error": "Unable to authenticate with provided credentials."}
+
+    # Cast to AbstractUser for type safety (authenticate returns AbstractBaseUser)
+    user = cast(AbstractUser, authenticated_user)
 
     # Check email verification using allauth EmailAddress
     if not email_verification_service.is_email_verified(user):
@@ -190,13 +197,13 @@ def obtain_token(request: HttpRequest, response: HttpResponse, payload: TokenObt
     return 200, {
         "access": access_token,
         "refresh": refresh_token,
-        "user_id": user.id,
+        "user_id": user.id,  # type: ignore[attr-defined]  # AbstractUser has id at runtime
         "email_verified": True  # Already checked above
     }
 
 
-@auth_router.post("/token/refresh/", response={200: TokenResponseSchema, 400: dict})
-def refresh_token(request: HttpRequest, response: HttpResponse) -> tuple[int, dict]:
+@auth_router.post("/token/refresh/", response={200: TokenResponseSchema, 400: dict[str, object]})
+def refresh_token(request: HttpRequest, response: HttpResponse) -> tuple[int, dict[str, object]]:
     """Refresh JWT access token using refresh token from cookie.
 
     Reads refresh token from httponly cookie and generates new access token.
@@ -231,8 +238,7 @@ def refresh_token(request: HttpRequest, response: HttpResponse) -> tuple[int, di
 
     try:
         # Validate and refresh the token
-        # type: ignore[arg-type]  # SimpleJWT accepts str at runtime
-        refresh = RefreshToken(refresh_token_value)
+        refresh = RefreshToken(refresh_token_value)  # type: ignore[arg-type]  # SimpleJWT accepts str at runtime
         access_token = str(refresh.access_token)
         new_refresh_token = str(refresh)
 
@@ -265,6 +271,88 @@ def refresh_token(request: HttpRequest, response: HttpResponse) -> tuple[int, di
         }
     except Exception as e:
         return 400, {"error": f"Invalid or expired refresh token: {e!s}"}
+
+
+@auth_router.post("/logout/", response={200: LogoutResponseSchema})
+def logout(request: HttpRequest, response: HttpResponse) -> tuple[int, dict[str, object]]:
+    """Logout user by clearing JWT cookies.
+
+    Clears both access and refresh token cookies to end the session.
+    Uses matching cookie attributes to ensure reliable removal across browsers.
+
+    Args:
+        request: HTTP request object
+        response: HTTP response object (for deleting cookies)
+
+    Returns:
+        tuple: (status_code, response_data)
+            - 200: Logout successful, cookies cleared
+
+    Cookie deletion:
+        - Deletes access token cookie
+        - Deletes refresh token cookie
+        - Uses same path, domain, samesite as when cookies were set
+    """
+    # Get typed JWT settings
+    jwt_settings = _get_jwt_settings()
+    access_token_name = cast(str, jwt_settings['ACCESS_TOKEN_NAME'])
+    refresh_token_name = cast(str, jwt_settings['REFRESH_TOKEN_NAME'])
+    samesite = cast(Literal['Lax', 'Strict', 'None'],
+                    jwt_settings.get('JWT_COOKIE_SAMESITE', 'Lax'))
+
+    # Delete cookies with matching attributes for reliable removal
+    cookie_kwargs = {
+        'path': '/',  # Default path
+        'domain': None,  # Use default domain
+        'samesite': samesite,
+    }
+
+    response.delete_cookie(access_token_name, **cookie_kwargs)
+    response.delete_cookie(refresh_token_name, **cookie_kwargs)
+
+    return 200, {"message": "Logged out successfully."}
+
+
+@auth_router.get("/csrf/", response={200: CsrfTokenResponseSchema}, auth=None)
+def get_csrf_token(request: HttpRequest, response: HttpResponse) -> tuple[int, dict[str, object]]:
+    """Get CSRF token for AJAX requests.
+
+    Generates a CSRF token and sets it as a cookie that JavaScript can read.
+    This endpoint requires no authentication and is used by the frontend
+    to obtain a CSRF token for state-changing requests.
+
+    Args:
+        request: HTTP request object
+        response: HTTP response object (for setting cookie)
+
+    Returns:
+        tuple: (status_code, response_data)
+            - 200: CSRF token generated and set as cookie
+
+    Cookie attributes:
+        - httponly: False (must be readable by JavaScript)
+        - secure: True (HTTPS only)
+        - samesite: Lax (less strict for localhost dev)
+        - path: / (available everywhere)
+
+    Note:
+        The token is both set as an XSRF-TOKEN cookie and returned
+        in the response body for client convenience.
+    """
+    token = secrets.token_urlsafe(32)
+
+    # Set CSRF token as a cookie readable by JavaScript
+    response.set_cookie(
+        "XSRF-TOKEN",
+        token,
+        httponly=False,  # Must be readable by JS
+        secure=True,     # Only over HTTPS
+        samesite="Lax",  # Less strict for localhost dev
+        domain=None,     # Important for localhost
+        path="/",        # Ensure cookie is available everywhere
+    )
+
+    return 200, {"csrf_token": token}
 
 
 __all__ = [

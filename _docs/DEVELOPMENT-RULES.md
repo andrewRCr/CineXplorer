@@ -74,7 +74,8 @@ Before any commit consideration, ALL of the following must pass with **zero exce
    - **JUSTIFICATION**: Any `Any` usage must have inline comment explaining necessity
 
 7. **Markdown Linting**: Zero violations
-   - Command: `npm run lint:md`
+   - Command: `npx markdownlint-cli2 "README.md" "_docs/**/*.md" "!_docs/notes/*.md" "!_docs/CURRENT-SESSION.md"`
+   - Auto-fix: `npx markdownlint-cli2 --fix "README.md" "_docs/**/*.md" "!_docs/notes/*.md" "!_docs/CURRENT-SESSION.md"`
    - Every violation must be fixed
 
 ### Quality Gate Failure Protocol
@@ -174,6 +175,58 @@ After completing all sub-tasks under a parent task:
 - Linting violations exist
 - TypeScript errors are present
 - User has not approved the next step
+
+## Type Safety Standards
+
+### Django ORM with ModelSchema Pattern
+
+**For schemas with computed fields from related models**, use the `from_orm_with_<relation>()` class method pattern:
+
+```python
+class MyDetailSchema(ModelSchema):
+    """ModelSchema with computed fields from related model."""
+
+    # Computed fields from ForeignKey relationship
+    related_field: int | None = None
+
+    class Meta:
+        model = MyModel
+        fields = ["id", "name"]
+
+    @classmethod
+    def from_orm_with_relation(cls, obj: MyModel) -> "MyDetailSchema":
+        """Create schema from ORM object with related fields populated.
+
+        Note: Django field access may show as 'unknown' in Pyright due to
+        django-stubs generic field type limitations (documented limitation).
+        MyPy with django-stubs validates these correctly at runtime.
+        """
+        instance = cls.from_orm(obj)
+        if obj.related is not None:
+            instance.related_field = obj.related.field_name
+        return instance
+```
+
+**API endpoint usage:**
+
+```python
+@router.get("/{id}", response=MyDetailSchema)
+def get_detail(request: HttpRequest, id: int) -> MyDetailSchema:
+    obj = MyModel.objects.select_related('related').get(id=id)
+    return MyDetailSchema.from_orm_with_relation(obj)  # Single-line, clean
+```
+
+**Benefits:**
+- Encapsulates type handling in schema layer (not API code)
+- Zero `cast()` calls in API endpoints
+- Single-line return statements
+- Professional separation of concerns
+- Self-documenting code
+
+**Acceptable Type Warnings:**
+- Pyright `reportUnknownMemberType` on Django model fields (information level)
+- Configured in `backend/pyrightconfig.json` as information (not errors)
+- Documented django-stubs limitation with generic field type parameters
 
 ## Comprehensive Task Context Analysis Protocol
 

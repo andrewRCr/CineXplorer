@@ -89,12 +89,9 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install markdownlint
-        run: npm install -g markdownlint-cli2
-
       - name: Lint markdown files
         run: |
-          markdownlint-cli2 \
+          npx markdownlint-cli2 \
             "README.md" \
             "_docs/**/*.md" \
             "!_docs/notes/*.md" \

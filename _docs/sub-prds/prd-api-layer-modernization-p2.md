@@ -48,19 +48,27 @@ All Authentication Modernization components (CustomAccountAdapter, email_verific
 
 1. **Replace DRF Views:** All DRF-based views in `backend/apps/user_movie_data/views.py` must be migrated to Django Ninja path operation functions with proper routing structure.
 
-2. **Replace DRF Serializers:** All DRF serializers in `backend/apps/user_movie_data/serializers.py` must be replaced with equivalent Pydantic schemas in a new `backend/apps/user_movie_data/schemas.py` file.
+2. **Replace DRF Serializers:** All DRF serializers in `backend/apps/user_movie_data/serializers.py` must be replaced with Pydantic schemas in a new `backend/apps/user_movie_data/schemas.py` file using `ModelSchema` pattern (see Section 6).
 
-3. **Preserve User Data Functionality:** All existing user movie data operations must maintain identical functionality:
+3. **Required Endpoints:** Migrate the following standalone CRUD operations:
+   - `GET /user-movie-data/by-tmdb-id/?tmdb_id={id}` - Check if user data exists for a movie (returns 404 if not)
+   - `POST /user-movie-data/` - Create user data on first interaction (requires movie_id)
+   - `PATCH /user-movie-data/{pk}/` - Update existing user data
+   - `DELETE /user-movie-data/{pk}/` - Remove user data (for correcting mistakes)
+   - **Note:** Full list endpoint (`GET /user-movie-data/`) is not required - user data is primarily accessed in context of specific movies
+
+4. **Preserve User Data Functionality:** All existing user movie data operations must maintain identical functionality:
    - Movie rating/unrating operations
    - Watchlist add/remove operations
    - Watch status tracking
    - User review management
    - Favorites management
-   - User movie data retrieval and aggregation
+   - User movie data retrieval by TMDB ID
 
-4. **Maintain Movie Domain Integration:** User movie data endpoints must continue to integrate seamlessly with the migrated movie domain APIs, preserving the `user_movie_data` field population in movie responses.
+5. **Maintain Movie Domain Integration:** User movie data endpoints must continue to integrate seamlessly with the migrated movie domain APIs, preserving the `user_movie_data` field population in movie responses.
+   - **Important:** The embedded `UserMovieDataSchema` in `movie/schemas.py` (Phase 1) serves a different purpose than standalone CRUD schemas and remains unchanged.
 
-5. **Apply Authentication Patterns:** Use the established JWT cookie authentication scheme consistently across all user movie data endpoints.
+6. **Apply Authentication Patterns:** Use the established JWT cookie authentication scheme consistently across all user movie data endpoints.
 
 ### 4.2 Authentication/Accounts Domain Migration
 
@@ -152,11 +160,124 @@ The following DRF views require migration to Django Ninja:
 - Use the same Pydantic schema patterns for request/response validation
 - Apply consistent authentication decorators and error handling
 
+### Schema Design Patterns (Phase 1 Blueprint)
+
+Phase 1 established clear patterns for when to use `ModelSchema` vs manual `Schema`:
+
+**Use `ModelSchema` from `ninja.orm` for Django model CRUD:**
+
+- **Pattern:** Direct Django model representation for API responses
+- **Phase 1 Example:** `MovieModelSchema(ModelSchema)` with `class Meta: model = Movie`
+- **Phase 2 Application:**
+    - `UserMovieDataModelSchema` for UserMovieData CRUD endpoints (create/update/detail responses)
+    - `UserProfileModelSchema` for user profile endpoints (if needed)
+- **Benefits:** Automatic field inference, zero `type: ignore` for model attributes, proper ORM type safety
+- **Requirement:** django-stubs (5.2.x) and django-stubs-ext must be installed for full type inference
+
+**Use manual `Schema` for:**
+
+- **External API responses:** TMDB data, third-party integrations (no Django model backing)
+- **Composite/embedded schemas:** Phase 1 `UserMovieDataSchema` embedded in `MovieBaseSchema` (combines data from multiple models)
+- **Input-only DTOs:** Create/update schemas that don't map 1:1 to model fields
+    - Example: `UserMovieDataCreateSchema` requires `movie_id` field (not on model)
+    - Example: `UserMovieDataUpdateSchema` with all optional fields for PATCH operations
+
+**Schema Organization:**
+
+```python
+# Example: user_movie_data/schemas.py
+
+# 1. ModelSchema for CRUD responses
+class UserMovieDataModelSchema(ModelSchema):
+    """Base model representation."""
+    class Meta:
+        model = UserMovieData
+        fields = ["id", "user_watched", "user_on_watchlist",
+                  "user_liked", "user_rating", "user_review"]
+
+# 2. Extended ModelSchema with computed fields
+class UserMovieDataDetailSchema(ModelSchema):
+    """With movie context for API responses."""
+    tmdb_id: int | None = None  # Computed from obj.movie.tmdb_id
+    title: str | None = None     # Computed from obj.movie.title
+
+    class Meta:
+        model = UserMovieData
+        fields = ["id", "user_watched", "user_on_watchlist",
+                  "user_liked", "user_rating", "user_review"]
+
+# 3. Manual Schema for create input
+class UserMovieDataCreateSchema(Schema):
+    """Create input (needs movie_id, not on model)."""
+    movie_id: int
+    user_watched: bool = False
+    # ... other fields
+
+# 4. Manual Schema for update input
+class UserMovieDataUpdateSchema(Schema):
+    """Update input (all optional for PATCH)."""
+    user_watched: bool | None = None
+    # ... other fields optional
+```
+
+**Critical Note:** The embedded `UserMovieDataSchema` in `movie/schemas.py` (from Phase 1) remains unchanged - it serves a different purpose (embedded in movie responses) and is correctly implemented as a manual `Schema`.
+
+### Type-Safe ORM Conversion Pattern
+
+For ModelSchema with computed fields from related models, use the `from_orm_with_<relation>()` class method pattern:
+
+```python
+class UserMovieDataDetailSchema(ModelSchema):
+    """Extended ModelSchema with computed movie context fields."""
+
+    tmdb_id: int | None = None  # Computed from obj.movie.tmdb_id
+    title: str | None = None     # Computed from obj.movie.title
+
+    class Meta:
+        model = UserMovieData
+        fields = ["id", "user_watched", ...]
+
+    @classmethod
+    def from_orm_with_movie(cls, obj: UserMovieData) -> "UserMovieDataDetailSchema":
+        """Create schema from ORM with movie fields populated.
+
+        Note: Django field access may show as 'unknown' in Pyright due to
+        django-stubs generic field limitations. MyPy validates correctly.
+        """
+        instance = cls.from_orm(obj)
+        if obj.movie is not None:
+            instance.tmdb_id = obj.movie.tmdb_id
+            instance.title = obj.movie.title
+        return instance
+```
+
+**API Usage:**
+
+```python
+@router.get("/by-tmdb-id", response=UserMovieDataDetailSchema)
+def get_user_movie_data_by_tmdb_id(request: HttpRequest, tmdb_id: int):
+    obj = UserMovieData.objects.select_related('movie').get(movie__tmdb_id=tmdb_id)
+    return UserMovieDataDetailSchema.from_orm_with_movie(obj)  # Single-line, clean
+```
+
+**Benefits:**
+- Encapsulates type handling in schema layer (not API endpoints)
+- Zero `cast()` calls in API layer
+- Clean separation of concerns
+- Professional code organization
+- Well-documented django-stubs limitations
+
+**Critical Note:** The embedded `UserMovieDataSchema` in `movie/schemas.py` (from Phase 1) remains unchanged - it serves a different purpose (embedded in movie responses) and is correctly implemented as a manual `Schema`.
+
 ### Type Safety Strategy
 
-- Leverage the hybrid Pyright (development) + MyPy (CI/CD) approach proven in Phase 1
-- Use the established response validation patterns for external API integration
-- Maintain the same level of type annotation rigor established in the movie domain
+- **Primary:** Pyright with strict mode (`pyrightconfig.json`) for development
+- **Secondary:** MyPy with `--strict` for CI/CD validation
+- **Foundation:** django-stubs (5.2.x) + django-stubs-ext for Django ORM type inference
+- **Goal:** Zero `type: ignore` comments for model attribute access when using `ModelSchema`
+- **Exception:** Manual `Schema` may require `cast()` or `type: ignore` for runtime-computed fields
+- Use established response validation patterns for external API integration
+- Maintain Phase 1's type annotation rigor across all migrated code
 
 ### Testing Strategy
 

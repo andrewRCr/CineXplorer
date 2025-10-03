@@ -71,7 +71,7 @@ steps:
   Commit the archival changes following atomic commit principles:
 
   **Before committing:**
-  1. Run markdown linting: `npm run lint:md`
+  1. Run markdown linting: `npx markdownlint-cli2 "README.md" "_docs/**/*.md" "!_docs/notes/*.md"`
   2. Fix any violations in completion metadata and archived docs
   3. Verify all quality gates pass
 

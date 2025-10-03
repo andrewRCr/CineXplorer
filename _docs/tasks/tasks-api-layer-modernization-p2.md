@@ -9,19 +9,27 @@
 
 This task list implements Phase 2 of the API Layer Modernization, completing the migration from Django REST Framework to Django Ninja. It follows the **ModelSchema blueprint** established in Phase 1, ensuring type-safe Django model CRUD operations with zero unnecessary `type: ignore` comments.
 
-**Key Pattern from Phase 1:**
+**Key Patterns from Phase 1:**
 
 ```python
-# For Django model CRUD operations
+# Schema Pattern: ModelSchema for Django model CRUD operations
 class UserMovieDataModelSchema(ModelSchema):
     class Meta:
         model = UserMovieData
         fields = ["id", "user_watched", ...]
 
-# For input DTOs (create/update with extra fields)
+# Schema Pattern: Manual Schema for input DTOs with non-model fields
 class UserMovieDataCreateSchema(Schema):
     movie_id: int  # Not on model, requires lookup
     # ... other fields
+
+# Authentication Pattern: get_current_user for type-safe auth access
+from authentication.auth_ninja import get_current_user
+
+@router.post("/")
+def create_entry(request: HttpRequest, payload: CreateSchema):
+    user = get_current_user(request)  # Zero type: ignore needed
+    # ... endpoint logic
 ```
 
 ## Relevant Files
@@ -71,7 +79,7 @@ class UserMovieDataCreateSchema(Schema):
     - [x] 1.1.4 Implement `UserMovieDataCreateSchema(Schema)` with `movie_id: int` field (manual Schema, not on model)
     - [x] 1.1.5 Implement `UserMovieDataUpdateSchema(Schema)` with all optional fields for PATCH (manual Schema)
     - [x] 1.1.6 Add proper `__all__` export list
-    - [x] 1.1.7 Run incremental quality checks (flake8, pyright on modified file)
+    - [x] 1.1.7 Run incremental quality checks (ruff, pyright on modified file)
 
 - [x] 1.2 Create UserMovieData Django Ninja router
     - [x] 1.2.1 Create `backend/apps/user_movie_data/api.py` with `user_movie_data_router`
@@ -81,12 +89,12 @@ class UserMovieDataCreateSchema(Schema):
     - [x] 1.2.5 Implement `DELETE /{pk}/` endpoint (remove entry, 204 response)
     - [x] 1.2.6 Add authentication (`auth=JWTCookieAuth()`) to all endpoints
     - [x] 1.2.7 Add proper docstrings and type annotations
-    - [x] 1.2.8 Run incremental quality checks (flake8, pyright on modified file)
+    - [x] 1.2.8 Run incremental quality checks (ruff, pyright on modified file)
 
 - [x] 1.3 Register UserMovieData router and verify endpoints
     - [x] 1.3.1 Update `backend/config/urls.py` to register `user_movie_data_router`
     - [x] 1.3.2 Verify router imports successfully in Django context
-    - [x] 1.3.3 Run incremental quality checks (flake8, mypy on modified files)
+    - [x] 1.3.3 Run incremental quality checks (ruff, mypy on modified files)
 
 ### Phase 2: Authentication Domain Migration - Core Endpoints
 
@@ -98,7 +106,7 @@ class UserMovieDataCreateSchema(Schema):
     - [ ] 2.1.5 Implement CSRF token schema (simple response)
     - [ ] 2.1.6 Implement logout response schema (simple response)
     - [ ] 2.1.7 Add proper `__all__` export list
-    - [ ] 2.1.8 Run incremental quality checks (flake8, pyright on modified file)
+    - [ ] 2.1.8 Run incremental quality checks (ruff, pyright on modified file)
 
 - [ ] 2.2 Migrate registration endpoints to Django Ninja
     - [ ] 2.2.1 Create `backend/apps/authentication/api.py` with `auth_router`
@@ -106,20 +114,20 @@ class UserMovieDataCreateSchema(Schema):
     - [ ] 2.2.3 Migrate `CreateUserView` to appropriate endpoint (verify if duplicate or different purpose)
     - [ ] 2.2.4 Ensure allauth `send_email_confirmation()` is invoked for new registrations
     - [ ] 2.2.5 Add proper error handling (duplicate email, validation errors)
-    - [ ] 2.2.6 Run incremental quality checks (flake8, pyright on modified files)
+    - [ ] 2.2.6 Run incremental quality checks (ruff, pyright on modified files)
 
 - [ ] 2.3 Migrate JWT token endpoints to Django Ninja
     - [ ] 2.3.1 Migrate `JWTCookieTokenObtainPairView` to `POST /token/` (obtain JWT, set httponly cookies)
     - [ ] 2.3.2 Migrate `JWTCookieTokenRefreshView` to `POST /token/refresh/` (refresh JWT, set httponly cookies)
     - [ ] 2.3.3 Ensure cookie attributes match existing implementation (httponly, secure, samesite)
     - [ ] 2.3.4 Verify CORS/CSRF compatibility with cookie handling
-    - [ ] 2.3.5 Run incremental quality checks (flake8, pyright on modified files)
+    - [ ] 2.3.5 Run incremental quality checks (ruff, pyright on modified files)
 
 - [ ] 2.4 Migrate logout and CSRF endpoints to Django Ninja
     - [ ] 2.4.1 Migrate `LogOutAPIView` to `POST /logout/` (clear JWT cookies, blacklist token if applicable)
     - [ ] 2.4.2 Migrate `CsrfTokenView` to `GET /csrf/` (return CSRF token for AJAX requests)
     - [ ] 2.4.3 Verify logout properly clears authentication state
-    - [ ] 2.4.4 Run incremental quality checks (flake8, pyright on modified files)
+    - [ ] 2.4.4 Run incremental quality checks (ruff, pyright on modified files)
 
 - [ ] 2.5 Migrate user profile endpoint to Django Ninja
     - [ ] 2.5.1 Migrate `ManageUserView` to `GET /profile/` and `PATCH /profile/` (retrieve/update user profile)
@@ -127,7 +135,7 @@ class UserMovieDataCreateSchema(Schema):
     - [ ] 2.5.3 Ensure `email_verified` field computed from allauth EmailAddress API
     - [ ] 2.5.4 Ensure `full_name` field properly mapped (User model or computed)
     - [ ] 2.5.5 Add authentication requirement (`auth=JWTCookieAuth()`)
-    - [ ] 2.5.6 Run incremental quality checks (flake8, pyright on modified files)
+    - [ ] 2.5.6 Run incremental quality checks (ruff, pyright on modified files)
 
 - [ ] 2.6 Register authentication router and verify endpoints
     - [ ] 2.6.1 Update `backend/config/urls.py` to register `auth_router`
@@ -136,7 +144,7 @@ class UserMovieDataCreateSchema(Schema):
     - [ ] 2.6.4 Test registration flow manually (register → email verification link → verify)
     - [ ] 2.6.5 Test JWT token flow manually (obtain → use → refresh)
     - [ ] 2.6.6 Test logout flow manually
-    - [ ] 2.6.7 Run incremental quality checks (flake8, pyright on modified files)
+    - [ ] 2.6.7 Run incremental quality checks (ruff, pyright on modified files)
 
 ### Phase 3: Authentication Domain Migration - Email Verification Bridge Removal
 
@@ -148,7 +156,7 @@ class UserMovieDataCreateSchema(Schema):
     - [ ] 3.1.5 Remove `email_verification_service` bridge from `email_service.py` stubbed methods
     - [ ] 3.1.6 Delete `backend/apps/authentication/email_verification.py`
     - [ ] 3.1.7 Verify no remaining references to deleted bridge (grep confirmation)
-    - [ ] 3.1.8 Run incremental quality checks (flake8, pyright on modified files)
+    - [ ] 3.1.8 Run incremental quality checks (ruff, pyright on modified files)
 
 - [ ] 3.2 Remove all type: ignore comments from authentication module
     - [ ] 3.2.1 Audit all `type: ignore` comments in `authentication/` directory (grep)
@@ -240,7 +248,7 @@ class UserMovieDataCreateSchema(Schema):
 - [ ] 5.4 Run full quality gate checks
     - [ ] 5.4.1 Run full backend test suite (`docker compose exec backend python manage.py test --settings=config.settings_test`)
     - [ ] 5.4.2 Run full frontend test suite (`docker compose exec frontend npm test`)
-    - [ ] 5.4.3 Run backend linting (`docker compose exec backend flake8`)
+    - [ ] 5.4.3 Run backend linting (`docker compose exec backend ruff check apps/ config/`)
     - [ ] 5.4.4 Run frontend linting (`docker compose exec frontend npm run lint`)
     - [ ] 5.4.5 Run frontend type checking (`docker compose exec frontend npm run type-check`)
     - [ ] 5.4.6 Run backend type checking - Pyright (`npx pyright backend/apps/user_movie_data backend/apps/authentication`)
@@ -290,10 +298,10 @@ class UserMovieDataCreateSchema(Schema):
 
 ## Notes
 
-- **ModelSchema Usage:** UserMovieData CRUD endpoints use `ModelSchema` for automatic type inference with django-stubs
+- **ModelSchema Usage:** UserMovieData CRUD endpoints use `ModelSchema` for automatic schema generation from Django models. Type safety is provided by custom `.pyi` stub files (not django-stubs field inference), which give type checkers explicit field type information.
 - **Manual Schema Usage:** Create/Update schemas use manual `Schema` due to non-model fields (e.g., `movie_id` lookup)
 - **Embedded Schema Unchanged:** `UserMovieDataSchema` in `movie/schemas.py` serves different purpose (embedding in movie responses), remains unchanged
-- **Type Safety Goal:** Zero `type: ignore` comments for model attributes when using `ModelSchema`
+- **Type Safety Implementation:** Custom `.pyi` stub files in `backend/apps/*/models.pyi` provide explicit type annotations for Django model fields, enabling zero `type: ignore` comments for model field access in ModelSchema patterns. See `_docs/reference/type-safety-strategy.md` for complete guidance.
 - **Authentication Foundation:** All work builds on Authentication Modernization foundation (CustomAccountAdapter, allauth integration)
 - **Deferred Work:** Email verification bridge removal and OAuth UI integration are deferred from Authentication Modernization
 - **Testing Strategy:** Three-layer testing (API integration, service layer, specialized tests) per Phase 1 blueprint

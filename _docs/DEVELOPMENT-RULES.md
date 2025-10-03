@@ -54,7 +54,8 @@ Before any commit consideration, ALL of the following must pass with **zero exce
    - Zero failures acceptable
 
 3. **Backend Linting**: Zero violations
-   - Command: `docker-compose exec backend flake8`
+   - Command: `docker-compose exec backend ruff check apps/ config/`
+   - Auto-fix: `docker-compose exec backend ruff check apps/ config/ --fix`
    - Every violation must be fixed
 
 4. **Frontend Linting**: Zero violations

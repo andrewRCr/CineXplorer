@@ -75,7 +75,7 @@ jobs:
         env:
           COMPOSE_PROJECT_NAME: cinexplorer-ci
         run: |
-          docker compose exec -T backend flake8
+          docker compose exec -T backend ruff check apps/ config/
 
   markdown:
     name: Markdown Lint

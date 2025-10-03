@@ -264,17 +264,24 @@ def parse_tmdb_response(payload: Any) -> MovieSchema:  # TMDB API contract not t
 **Example:**
 
 ```python
-from typing import cast
-from django.contrib.auth.models import User
+from authentication.auth_ninja import get_current_user
 
 @router.post("/")
 def create_entry(request: HttpRequest):
-    # Django Ninja injects 'auth' at runtime, not in HttpRequest type
-    user = cast(User, request.auth)  # type: ignore[attr-defined]
+    # Get authenticated user with explicit error handling (zero type: ignore needed)
+    user = get_current_user(request)  # Returns AbstractUser
 
     obj = UserMovieData.objects.create(user=user, ...)
     return UserMovieDataModelSchema.from_orm(obj)  # Full type safety from here
 ```
+
+**Why `get_current_user()` over `cast(User, request.auth)`:**
+
+- ✅ Zero `type: ignore` comments needed
+- ✅ Explicit error handling with structured responses
+- ✅ Built-in logging for observability
+- ✅ Easier to test (mockable function)
+- ✅ Single source of truth for auth logic
 
 ---
 

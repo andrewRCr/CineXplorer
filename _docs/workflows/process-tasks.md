@@ -6,7 +6,7 @@ Guidelines for managing task lists in markdown files to track progress on comple
 
 - **One sub-task at a time:** Do **NOT** start the next sub‑task until you ask the user for permission and they say "yes" or "y"
 - **Test-first approach:** For new models, APIs, and complex logic, write tests before implementation
-- **Incremental quality checks:** Run linting and type checking on modified files after each sub-task (Pyright for fast checks on changed files, mypy for optional full-project CI/periodic validation)
+- **Incremental quality checks:** Run linting and type checking on modified files after each sub-task (Ruff for linting with auto-fix, Pyright for fast type checks, mypy for optional full-project CI/periodic validation)
 - **Immediate documentation:** Update the task list file immediately after completing each subtask
 - **Completion protocol:**
 
@@ -21,7 +21,7 @@ Guidelines for managing task lists in markdown files to track progress on comple
 
     - **First**: Ensure new code has appropriate test coverage (models, APIs, complex logic)
     - **Second**: Run the full test suite (`python manage.py test --settings=config.settings_test`, `npm test`, etc.)
-    - **Third**: Run all linting checks (`flake8`, `python scripts/type_check.py` [runs hybrid Pyright+mypy; requires `npm install` for pyright], `npm run lint`, `npm run type-check`, `npx markdownlint-cli2 "**/*.md"`)
+    - **Third**: Run all linting checks (`ruff check apps/ config/`, `python scripts/type_check.py` [runs hybrid Pyright+mypy; requires `npm install` for pyright], `npm run lint`, `npm run type-check`, `npx markdownlint-cli2 "**/*.md"`)
     - **Fourth**: Check if PROJECT-STATUS needs updates (feature progress, completed functionality, updated priorities)
 
   3. Generate standardized readiness report (see DEVELOPMENT-RULES.md for format) and await user instructions on how to proceed. User may choose to commit changes (AI can execute only if explicitly approved to do so) or review first. When committing, follow atomic-commit workflow (see _docs/workflows/atomic-commit.md) guidelines:
@@ -53,8 +53,8 @@ After each sub-task, run relevant quality checks on modified files only:
 **Backend Files** (Python):
 
 ```bash
-# Lint specific files
-docker compose exec backend flake8 path/to/modified/file.py
+# Lint specific files (with auto-fix)
+docker compose exec backend ruff check path/to/modified/file.py --fix
 
 # Type check specific files
 # Option 1: Host-based Pyright (requires npm install globally)
@@ -64,7 +64,7 @@ docker compose exec backend npx pyright path/to/modified/file.py
 # Option 3: Django-compatible mypy
 docker compose exec backend mypy path/to/modified/file.py
 
-# Note: Pyright is faster for incremental checks; mypy for full Django validation
+# Note: Ruff linting is very fast with auto-fix; Pyright for quick type checks; mypy for full Django validation
 ```
 
 **Frontend Files** (TypeScript/JavaScript):

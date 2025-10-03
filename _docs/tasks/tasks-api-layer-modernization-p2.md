@@ -47,8 +47,10 @@ def create_entry(request: HttpRequest, payload: CreateSchema):
 ### Backend - Authentication Domain
 
 - `backend/apps/authentication/auth_ninja.py` - JWTCookieAuth class (already exists)
-- `backend/apps/authentication/schemas.py` - Pydantic schemas for auth endpoints (TO BE CREATED)
-- `backend/apps/authentication/api.py` - Django Ninja router for auth endpoints (TO BE CREATED)
+- `backend/apps/authentication/schemas.py` - Pydantic schemas for auth endpoints (COMPLETED - 12 schemas with proper patterns)
+- `backend/apps/authentication/api.py` - Django Ninja router with auth endpoints (IN PROGRESS - 3 of 9 endpoints: register, token, token/refresh)
+- `backend/apps/authentication/views.py` - Removed orphaned CreateUserView (not used)
+- `backend/requirements/req.dev.txt` - Added email-validator dependency for Pydantic EmailStr
 - `backend/apps/authentication/views.py` - DRF views (9 endpoints, TO BE REMOVED)
 - `backend/apps/authentication/serializers.py` - DRF serializers (TO BE REMOVED)
 - `backend/apps/authentication/email_verification.py` - Bridge to be removed (deferred from Auth Modernization)
@@ -98,30 +100,30 @@ def create_entry(request: HttpRequest, payload: CreateSchema):
 
 ### Phase 2: Authentication Domain Migration - Core Endpoints
 
-- [ ] 2.1 Create Authentication schemas with appropriate patterns
-    - [ ] 2.1.1 Create `backend/apps/authentication/schemas.py`
-    - [ ] 2.1.2 Implement registration schemas (input/response) using manual `Schema` (no direct model mapping)
-    - [ ] 2.1.3 Implement JWT token schemas (obtain, refresh, response) using manual `Schema`
-    - [ ] 2.1.4 Implement user profile schemas - use `ModelSchema` if direct User model mapping, else manual `Schema`
-    - [ ] 2.1.5 Implement CSRF token schema (simple response)
-    - [ ] 2.1.6 Implement logout response schema (simple response)
-    - [ ] 2.1.7 Add proper `__all__` export list
-    - [ ] 2.1.8 Run incremental quality checks (ruff, pyright on modified file)
+- [x] 2.1 Create Authentication schemas with appropriate patterns
+    - [x] 2.1.1 Create `backend/apps/authentication/schemas.py`
+    - [x] 2.1.2 Implement registration schemas (input/response) using manual `Schema` (no direct model mapping)
+    - [x] 2.1.3 Implement JWT token schemas (obtain, refresh, response) using manual `Schema`
+    - [x] 2.1.4 Implement user profile schemas - use `ModelSchema` if direct User model mapping, else manual `Schema`
+    - [x] 2.1.5 Implement CSRF token schema (simple response)
+    - [x] 2.1.6 Implement logout response schema (simple response)
+    - [x] 2.1.7 Add proper `__all__` export list
+    - [x] 2.1.8 Run incremental quality checks (ruff, pyright on modified file)
 
-- [ ] 2.2 Migrate registration endpoints to Django Ninja
-    - [ ] 2.2.1 Create `backend/apps/authentication/api.py` with `auth_router`
-    - [ ] 2.2.2 Migrate `RegisterAPIView` to `POST /register/` (create user, trigger email verification via CustomAccountAdapter)
-    - [ ] 2.2.3 Migrate `CreateUserView` to appropriate endpoint (verify if duplicate or different purpose)
-    - [ ] 2.2.4 Ensure allauth `send_email_confirmation()` is invoked for new registrations
-    - [ ] 2.2.5 Add proper error handling (duplicate email, validation errors)
-    - [ ] 2.2.6 Run incremental quality checks (ruff, pyright on modified files)
+- [x] 2.2 Migrate registration endpoints to Django Ninja
+    - [x] 2.2.1 Create `backend/apps/authentication/api.py` with `auth_router`
+    - [x] 2.2.2 Migrate `RegisterAPIView` to `POST /register/` (create user, trigger email verification via CustomAccountAdapter)
+    - [x] 2.2.3 Migrate `CreateUserView` to appropriate endpoint (SKIPPED - orphaned code, not used)
+    - [x] 2.2.4 Ensure allauth `send_email_confirmation()` is invoked for new registrations
+    - [x] 2.2.5 Add proper error handling (duplicate email, validation errors)
+    - [x] 2.2.6 Run incremental quality checks (ruff, pyright on modified files)
 
-- [ ] 2.3 Migrate JWT token endpoints to Django Ninja
-    - [ ] 2.3.1 Migrate `JWTCookieTokenObtainPairView` to `POST /token/` (obtain JWT, set httponly cookies)
-    - [ ] 2.3.2 Migrate `JWTCookieTokenRefreshView` to `POST /token/refresh/` (refresh JWT, set httponly cookies)
-    - [ ] 2.3.3 Ensure cookie attributes match existing implementation (httponly, secure, samesite)
-    - [ ] 2.3.4 Verify CORS/CSRF compatibility with cookie handling
-    - [ ] 2.3.5 Run incremental quality checks (ruff, pyright on modified files)
+- [x] 2.3 Migrate JWT token endpoints to Django Ninja
+    - [x] 2.3.1 Migrate `JWTCookieTokenObtainPairView` to `POST /token/` (obtain JWT, set httponly cookies)
+    - [x] 2.3.2 Migrate `JWTCookieTokenRefreshView` to `POST /token/refresh/` (refresh JWT, set httponly cookies)
+    - [x] 2.3.3 Ensure cookie attributes match existing implementation (httponly, secure, samesite)
+    - [x] 2.3.4 Verify CORS/CSRF compatibility with cookie handling
+    - [x] 2.3.5 Run incremental quality checks (ruff, pyright on modified files)
 
 - [ ] 2.4 Migrate logout and CSRF endpoints to Django Ninja
     - [ ] 2.4.1 Migrate `LogOutAPIView` to `POST /logout/` (clear JWT cookies, blacklist token if applicable)

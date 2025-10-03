@@ -125,11 +125,11 @@ def create_entry(request: HttpRequest, payload: CreateSchema):
     - [x] 2.3.4 Verify CORS/CSRF compatibility with cookie handling
     - [x] 2.3.5 Run incremental quality checks (ruff, pyright on modified files)
 
-- [ ] 2.4 Migrate logout and CSRF endpoints to Django Ninja
-    - [ ] 2.4.1 Migrate `LogOutAPIView` to `POST /logout/` (clear JWT cookies, blacklist token if applicable)
-    - [ ] 2.4.2 Migrate `CsrfTokenView` to `GET /csrf/` (return CSRF token for AJAX requests)
-    - [ ] 2.4.3 Verify logout properly clears authentication state
-    - [ ] 2.4.4 Run incremental quality checks (ruff, pyright on modified files)
+- [x] 2.4 Migrate logout and CSRF endpoints to Django Ninja
+    - [x] 2.4.1 Migrate `LogOutAPIView` to `POST /logout/` (clear JWT cookies, blacklist token if applicable)
+    - [x] 2.4.2 Migrate `CsrfTokenView` to `GET /csrf/` (return CSRF token for AJAX requests)
+    - [x] 2.4.3 Verify logout properly clears authentication state
+    - [x] 2.4.4 Run incremental quality checks (ruff, pyright on modified files)
 
 - [ ] 2.5 Migrate user profile endpoint to Django Ninja
     - [ ] 2.5.1 Migrate `ManageUserView` to `GET /profile/` and `PATCH /profile/` (retrieve/update user profile)

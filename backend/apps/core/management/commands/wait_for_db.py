@@ -27,7 +27,7 @@ class Command(BaseCommand):
             help='Maximum time to wait for database in seconds (default: 60)',
         )
 
-    def handle(self, *args: str, **options: Any) -> None:
+    def handle(self, *args: str, **options: Any) -> None:  # Any: Django command options dict
         """Entry-point for command with timeout and exponential backoff."""
         timeout = options['timeout']
         start_time = time.monotonic()

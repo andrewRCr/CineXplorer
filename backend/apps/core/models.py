@@ -29,8 +29,8 @@ This file uses `# type: ignore` comments on Django model field definitions.
 - ✅ Any code importing and using these models (100% type-safe via .pyi)
 - ⚠️ Only the field definitions themselves show as "unknown" (unavoidable)
 
-This is the recommended approach per django-stubs documentation and our
-type safety audit. See: _docs/notes/django-stubs-limitations-and-solutions.md
+This is the recommended approach per our type safety strategy.
+See: _docs/reference/type-safety-strategy.md
 
 Maintenance Checklist:
 ----------------------

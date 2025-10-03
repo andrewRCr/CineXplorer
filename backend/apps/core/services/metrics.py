@@ -30,7 +30,7 @@ class MetricsService:
     @staticmethod
     def increment(
         metric_name: str,
-        labels: dict[str, Any] | None = None,
+        labels: dict[str, Any] | None = None,  # Any: Mixed types from monitoring systems
         value: int = 1
     ) -> None:
         """
@@ -67,7 +67,7 @@ class MetricsService:
     def record_error(
         error_type: str,
         error_message: str,
-        context: dict[str, Any] | None = None,
+        context: dict[str, Any] | None = None,  # Any: Error context accepts mixed diagnostic data
         exception: Exception | None = None
     ) -> None:
         """
@@ -117,7 +117,7 @@ _metrics = MetricsService()
 
 def increment(
     metric_name: str,
-    labels: dict[str, Any] | None = None,
+    labels: dict[str, Any] | None = None,  # Any: Labels accept mixed types from monitoring systems
     value: int = 1
 ) -> None:
     """Convenience function for incrementing metrics."""
@@ -127,7 +127,7 @@ def increment(
 def record_error(
     error_type: str,
     error_message: str,
-    context: dict[str, Any] | None = None,
+    context: dict[str, Any] | None = None,  # Any: Error context accepts mixed diagnostic data
     exception: Exception | None = None
 ) -> None:
     """Convenience function for recording errors."""

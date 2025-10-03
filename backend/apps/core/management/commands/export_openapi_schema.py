@@ -19,7 +19,7 @@ class Command(BaseCommand):
 
     help = "Export the OpenAPI schema as JSON to stdout"
 
-    def add_arguments(self, parser: Any) -> None:
+    def add_arguments(self, parser: Any) -> None:  # Any: Django ArgumentParser not typed
         """Add command arguments."""
         parser.add_argument(
             "--indent",
@@ -33,7 +33,7 @@ class Command(BaseCommand):
             help="Output minified JSON (no indentation)"
         )
 
-    def handle(self, *args: Any, **options: Any) -> None:
+    def handle(self, *args: Any, **options: Any) -> None:  # Any: Django command signature
         """Export the OpenAPI schema."""
         # Temporarily disable all logging to prevent output corruption
         original_level = logging.root.level

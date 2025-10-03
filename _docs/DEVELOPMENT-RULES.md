@@ -72,6 +72,7 @@ Before any commit consideration, ALL of the following must pass with **zero exce
    - **PROHIBITED**: Using `typing.Any` except for external API payloads (TMDB, etc.)
    - **REQUIRED**: Use `object` for unknown data, `dict[str, object]` for generic dictionaries
    - **JUSTIFICATION**: Any `Any` usage must have inline comment explaining necessity
+   - **Full guidelines**: See `_docs/reference/type-safety-strategy.md` for complete strategy
 
 7. **Markdown Linting**: Zero violations
    - Command: `npx markdownlint-cli2 "README.md" "_docs/**/*.md" "!_docs/notes/*.md" "!_docs/CURRENT-SESSION.md"`

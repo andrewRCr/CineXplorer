@@ -64,7 +64,7 @@ The entire application is designed to be run and deployed using containers.
 
 - **Containerization**: Docker and Docker Compose are used to define and run the multi-container application (`backend`, `frontend`, `postgres`, `caddy`). Separate `docker-compose.*.yml` files exist for different environments (dev, CI, prod).
 - **Web Server / Reverse Proxy**: **Caddy** is used as the reverse proxy. It handles routing requests to the appropriate service (e.g., `/api/*` to the backend, all other requests to the frontend) and provides automatic HTTPS for secure connections.
-- **CI/CD**: Continuous integration is set up using **GitHub Actions**. The workflow, defined in `.github/workflows/checks.yml`, runs linters and tests on every push and pull request to ensure code quality.
+- **CI/CD**: Continuous integration is set up using **GitHub Actions**. The workflow, defined in `.github/workflows/ci.yml`, runs linters and tests on every push and pull request to ensure code quality.
 
 ## 6. Testing Methodology
 

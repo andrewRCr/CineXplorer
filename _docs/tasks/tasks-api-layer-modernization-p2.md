@@ -296,6 +296,14 @@ def create_entry(request: HttpRequest, payload: CreateSchema):
     - [ ] 6.5.4 Document any newly completed functionality
     - [ ] 6.5.5 Update priorities if applicable
 
+- [ ] 6.6 Enable blocking type checking in CI
+    - [ ] 6.6.1 Verify zero type errors with `docker compose exec backend mypy apps/ --config-file mypy.ini`
+    - [ ] 6.6.2 Remove `continue-on-error: true` from `.github/workflows/ci.yml` backend type checking step
+    - [ ] 6.6.3 Remove TODO comment about Phase 2 completion
+    - [ ] 6.6.4 Update step description from "non-blocking during api-layer-modernization-p2" to "Run backend type checking"
+    - [ ] 6.6.5 Test CI workflow passes with blocking type checks
+    - [ ] 6.6.6 Commit CI update with message: "config(ci): Enable blocking type checking after Phase 2 completion"
+
 ## Notes
 
 - **ModelSchema Usage:** UserMovieData CRUD endpoints use `ModelSchema` for automatic schema generation from Django models. Type safety is provided by custom `.pyi` stub files (not django-stubs field inference), which give type checkers explicit field type information.

@@ -1,5 +1,5 @@
 ---
-name: Test / Lint
+name: Continuous Integration
 
 on:
   push:
@@ -9,11 +9,21 @@ on:
 
 jobs:
   backend:
-    name: Backend Tests & Lint
+    name: Backend Quality Gates
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Cache Python dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/pip
+            backend/.venv
+          key: ${{ runner.os }}-pip-${{ hashFiles('backend/requirements/*.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -77,8 +87,19 @@ jobs:
         run: |
           docker compose exec -T backend ruff check apps/ config/
 
+      - name: Run backend type checking (non-blocking during api-layer-modernization-p2)
+        continue-on-error: true  # TODO: Remove after Phase 2 complete - make blocking
+        env:
+          COMPOSE_PROJECT_NAME: cinexplorer-ci
+        run: |
+          echo "Running MyPy type checking (non-blocking until api-layer-modernization-p2 complete)..."
+          docker compose exec -T backend mypy apps/ --config-file mypy.ini || echo "⚠️  Type errors exist (expected during Phase 2 migration)"
+          echo ""
+          echo "NOTE: Type checking will become BLOCKING after api-layer-modernization-p2 is complete."
+          echo "See tasks-api-layer-modernization-p2.md Phase 6 for CI update task."
+
   markdown:
-    name: Markdown Lint
+    name: Documentation Lint
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout
@@ -98,7 +119,7 @@ jobs:
             "!_docs/CURRENT-SESSION.md"
 
   frontend:
-    name: Frontend Tests & Lint
+    name: Frontend Quality Gates
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout

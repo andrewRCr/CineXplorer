@@ -175,10 +175,11 @@ The `shared/` directory ensures type safety between frontend and backend:
 
 ## CI/CD Pipeline
 
-GitHub Actions (`.github/workflows/checks.yml`) on every push/PR:
+GitHub Actions (`.github/workflows/ci.yml`) on every push/PR:
 
-- Backend: tests + flake8 linting + `scripts/type_check.py` (hybrid Pyright + MyPy)
+- Backend: tests + Ruff linting + MyPy type checking (non-blocking during api-layer-modernization-p2)
 - Frontend: tests + ESLint + TypeScript checking + build verification
+- Documentation: Markdown linting
 
 **All checks must pass before merging.**
 

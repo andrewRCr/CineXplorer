@@ -36,5 +36,14 @@
     "reportUnknownMemberType": "information",
     "reportUnknownParameterType": "warning",
     "reportUnknownArgumentType": "information",
-    "reportUnknownVariableType": "information"
+    "reportUnknownVariableType": "information",
+    "reportAttributeAccessIssue": "information",
+
+    // Django ORM field access patterns (acceptable with django-stubs)
+    // These are information-level as documented in type-safety-status-auth-modernization.md
+    // lines 32-47: "django-stubs limitation with generic field types"
+
+    // Custom stub files for Django models
+    // Located in backend/stubs/ - supplements django-stubs with explicit type annotations
+    "stubPath": "stubs"
 }

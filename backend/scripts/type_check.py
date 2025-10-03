@@ -87,7 +87,7 @@ def main() -> None:  # noqa: C901
     parser = argparse.ArgumentParser(
         description="Run type checking on CineXplorer backend",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="Available checks: utilities, services, models, movie, auth"
+        epilog="Available checks: utilities, services, models, movie, auth, user_movie_data"
     )
     parser.add_argument(
         "--verbose",
@@ -127,6 +127,18 @@ def main() -> None:  # noqa: C901
         ("auth", "Authentication (Pyright)", [
             "npx", "pyright", "apps/authentication/auth_ninja.py"
         ], False),
+        ("user_movie_data", "UserMovieData (MyPy)", [
+            "python", "-m", "mypy", "apps/user_movie_data/api.py",
+            "apps/user_movie_data/schemas.py",
+            "--config-file", "mypy.ini"
+        ], True),
+        ("user_movie_data_pyright", "UserMovieData (Pyright)", [
+            "npx", "pyright", "apps/user_movie_data/api.py",
+            "apps/user_movie_data/schemas.py"
+        ], False),
+        ("config", "Config API (Pyright)", [
+            "npx", "pyright", "config/api.py"
+        ], False),
     ]
 
     # Filter checks if --only specified
@@ -135,7 +147,7 @@ def main() -> None:  # noqa: C901
         checks_to_run = [check for check in all_checks if check[0] in only_set]
         if not checks_to_run:
             print(f"Warning: No matching checks found for: {', '.join(args.only)}")
-            print("Available: utilities, services, models, movie, auth")
+            print("Available: utilities, services, models, movie, auth, user_movie_data")
             sys.exit(1)
     else:
         checks_to_run = all_checks

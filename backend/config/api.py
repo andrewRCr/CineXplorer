@@ -9,14 +9,17 @@ This module creates the central NinjaAPI instance with:
 """
 from __future__ import annotations
 
+from typing import cast
+
 from django.conf import settings
-# from django.contrib.auth.models import AbstractUser  # Unused
+from django.contrib.auth.models import AbstractUser
 from django.http import HttpRequest
 from ninja import NinjaAPI, Schema
 
 # Import our native JWT authentication scheme
-from authentication.auth_ninja import jwt_cookie_auth
-from movie.api import movies_router, genres_router, keywords_router, people_router
+from apps.authentication.auth_ninja import jwt_cookie_auth
+from apps.movie.api import movies_router, genres_router, keywords_router, people_router
+from apps.user_movie_data.api import user_movie_data_router
 
 # Get configured cookie name for JWT tokens
 ACCESS_TOKEN_NAME = settings.SIMPLE_JWT.get('ACCESS_TOKEN_NAME', 'access_token')
@@ -167,10 +170,11 @@ def health_check_user(request: HttpRequest) -> UserHealthResponse:
         HttpError: 500 if internal authentication error occurs
     """
     # Import here to avoid circular import
-    from authentication.auth_ninja import get_current_user
+    from apps.authentication.auth_ninja import get_current_user
     from ninja.errors import HttpError
 
     # Use enhanced dependency injection with proper error handling
+    # get_current_user returns AbstractUser | raises HttpError
     user = get_current_user(request)
 
     # Type narrowing: get_current_user guarantees non-None user or raises HttpError
@@ -180,8 +184,8 @@ def health_check_user(request: HttpRequest) -> UserHealthResponse:
 
     return UserHealthResponse(
         status="ok",
-        message=f"Hello, {user.username}!",  # type: ignore[attr-defined]
-        user_id=user.id,  # type: ignore[attr-defined]
+        message=f"Hello, {user.username}!",
+        user_id=user.id,
         auth_method="Enhanced Dependency Injection",
         features=[
             "Structured error responses",
@@ -215,36 +219,31 @@ def test_authentication(
         HttpError: 500 if internal authentication error occurs
     """
     # Django Ninja's global auth system guarantees this user is authenticated
-    # The user is available through Django's standard request.user
-    user = request.user
+    # Cast to AbstractUser for type safety (django-stubs has limited field inference)
+    user = cast(AbstractUser, request.user)  # type: ignore
 
     # Comprehensive user information for testing
     return AuthTestResponse(
         status="authenticated",
         message="Authentication test successful!",
         auth_scheme="JWT Cookie (Global)",
-        user_id=user.id,  # type: ignore[attr-defined]
-        username=user.username,  # type: ignore[attr-defined]
-        email=getattr(user, 'email', ''),
-        is_staff=getattr(user, 'is_staff', False),
-        is_superuser=getattr(user, 'is_superuser', False),
-        is_active=getattr(user, 'is_active', True),
-        date_joined=str(getattr(user, 'date_joined', ''))[:19],
+        user_id=user.id,
+        username=user.username,
+        email=user.email,
+        is_staff=user.is_staff,
+        is_superuser=user.is_superuser,
+        is_active=user.is_active,
+        date_joined=str(user.date_joined)[:19],
         last_login=(
-            str(getattr(user, 'last_login', ''))[:19]
-            if getattr(user, 'last_login', None) else None
+            str(user.last_login)[:19]
+            if user.last_login else None
         ),
-        groups_count=(
-            user.groups.count() if hasattr(user, 'groups') else 0  # type: ignore[attr-defined]
-        ),
-        permissions_count=(
-            user.user_permissions.count()  # type: ignore[attr-defined]
-            if hasattr(user, 'user_permissions') else 0
-        ),
+        groups_count=user.groups.count(),
+        permissions_count=user.user_permissions.count(),
         auth_verification=AuthVerification(
             scheme_active=True,
             token_valid=True,
-            user_authenticated=user.is_authenticated,  # type: ignore[attr-defined]
+            user_authenticated=user.is_authenticated,
             session_info="JWT Cookie based authentication"
         )
     )
@@ -270,17 +269,18 @@ def test_auth_status(request: HttpRequest) -> AuthStatusResponse:
         Authentication status information and guidance.
     """
     # Import here to avoid circular import
-    from authentication.auth_ninja import get_current_user_optional
+    from apps.authentication.auth_ninja import get_current_user_optional
 
     # Check if user is authenticated (without raising errors)
+    # get_current_user_optional returns AbstractUser | None
     user = get_current_user_optional(request)
     if user:
         return AuthStatusResponse(
             auth_status="authenticated",
             message=(
-                f"User '{user.username}' is authenticated via JWT cookie"  # type: ignore[attr-defined]  # noqa: E501
+                f"User '{user.username}' is authenticated via JWT cookie"
             ),
-            user_id=user.id,  # type: ignore[attr-defined]
+            user_id=user.id,
             has_valid_token=True,
             guidance=AuthGuidance(
                 next_step="Try the /api/test/auth endpoint for comprehensive user info",
@@ -311,3 +311,4 @@ api.add_router("/movies", movies_router)
 api.add_router("/genres", genres_router)
 api.add_router("/keywords", keywords_router)
 api.add_router("/people", people_router)
+api.add_router("/user-movie-data", user_movie_data_router)

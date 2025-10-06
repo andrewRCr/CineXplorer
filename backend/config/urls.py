@@ -15,17 +15,9 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 
-from authentication.views import (
-    CsrfTokenView,
-    JWTCookieTokenObtainPairView,
-    JWTCookieTokenRefreshView,
-    LogOutAPIView,
-    RegisterAPIView,
-)
 from core.views.health_check import HealthCheckView
 from django.contrib import admin
 from django.urls import include, path
-from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
 from .api import api
 
@@ -35,18 +27,8 @@ urlpatterns = [
     # django-allauth
     # Provides: email verification, password reset, OAuth callbacks
     path("accounts/", include("allauth.urls")),
-    # Legacy DRF API documentation (for remaining DRF endpoints)
-    path("api/drf-schema/", SpectacularAPIView.as_view(), name="drf-schema"),
-    path("api/drf-docs/", SpectacularSwaggerView.as_view(url_name="drf-schema"), name="drf-docs"),
-    path("api/user/", include("authentication.urls")),
-    path("api/user-movie-data/", include("user_movie_data.urls")),
-    path("api/core/", include("core.urls")),  # Core app for logging and utilities
     # Django Ninja API (modern, type-safe endpoints)
+    # All authentication, movie, and user data endpoints provided by Django Ninja
     path("api/", api.urls),
-    path("api/token/", JWTCookieTokenObtainPairView.as_view(), name="token_obtain_pair"),
-    path("api/token/refresh/", JWTCookieTokenRefreshView.as_view(), name="token_refresh"),
-    path("api/logout/", LogOutAPIView.as_view(), name="logout"),
-    path("api/register/", RegisterAPIView.as_view(), name="register"),
-    path("api/csrf-token/", CsrfTokenView.as_view(), name="csrf-token"),
     path("api/health-check/", HealthCheckView.as_view(), name="health-check"),
 ]

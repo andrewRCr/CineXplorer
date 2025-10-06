@@ -186,14 +186,10 @@ AUTHENTICATION_BACKENDS = [
     "allauth.account.auth_backends.AuthenticationBackend",  # allauth (OAuth + email)
 ]
 
-# generate openAPI schema with drf-spectacular
+# generate openAPI schema with drf-spectacular (for remaining legacy DRF endpoints)
+# Note: DRF authentication removed - Django Ninja handles all active authentication
 REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
-    "DEFAULT_AUTHENTICATION_CLASSES": [
-        # 'rest_framework.authentication.TokenAuthentication',
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
-        "authentication.authenticate.JWTCookieAuthentication",
-    ],
     "DEFAULT_THROTTLE_RATES": {
         "frontend_logs": "100/minute",
     },

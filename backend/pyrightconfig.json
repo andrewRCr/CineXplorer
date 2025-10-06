@@ -22,6 +22,7 @@
     "extraPaths": ["apps"],
     "reportMissingImports": "error",
     "reportMissingTypeStubs": "information",
+    "reportMissingModuleSource": "none",
     "pythonVersion": "3.13",
     "strict": ["apps"],
     "typeCheckingMode": "strict",

@@ -240,11 +240,24 @@ def create_entry(request: HttpRequest, payload: CreateSchema):
     - [x] 4.6.5 Achieve zero type errors in authentication domain - ACHIEVED (9 errors in auth_ninja.py, 43 in api.py - all pre-existing django-stubs ORM limitations)
 
 - [ ] 4.7 Update and run authentication tests
-    - [ ] 4.7.1 Update test fixtures if needed (token generation for tests)
-    - [ ] 4.7.2 Run authentication domain tests (`python manage.py test apps.authentication --settings=config.settings_test`)
-    - [ ] 4.7.3 Fix any test failures from JWT library migration
-    - [ ] 4.7.4 Verify all authentication tests pass (100% pass rate)
-    - [ ] 4.7.5 Verify no test regressions from simplejwt → ninja-jwt migration
+    - [x] 4.7.1 Update test fixtures if needed (token generation for tests)
+    - [x] 4.7.2 Run authentication domain tests (`python manage.py test apps.authentication --settings=config.settings_test`)
+    - [x] 4.7.3 Migrate test file from DRF APIClient to Django Client (complete DRF elimination)
+        - Replaced all `rest_framework.test.APIClient` imports with Django's `Client`
+        - Updated all POST/PATCH requests to use `json.dumps()` with `content_type='application/json'`
+        - Updated docstrings to reference Django Ninja (removed DRF references)
+        - Verified test file has zero DRF imports remaining (grep confirms 0 matches)
+        - **BONUS**: Created `backend/apps/core/tests/test_helpers.py` with:
+            - Reusable `json_post()`, `json_patch()`, `json_put()` helpers (type-safe with `dict[str, object]`)
+            - Re-export of `http.HTTPStatus` for type-safe status code assertions (stdlib, zero dependencies)
+        - **BONUS**: Removed DRF status import from `movie/tests/test_movie_api.py` (Phase 1 cleanup)
+    - [ ] 4.7.4 Fix any test failures from JWT library migration and test client migration
+        - [ ] 4.7.4.1 Update validation error assertions (Django Ninja uses 422, not 400 for validation errors)
+        - [ ] 4.7.4.2 Replace force_authenticate() with actual JWT cookie authentication in PrivateUserApiTests
+        - [ ] 4.7.4.3 Fix AuthCookieIntegrationTests registration to properly create users with first/last name
+        - [ ] 4.7.4.4 Run tests and verify all 20 tests pass
+    - [ ] 4.7.5 Verify all authentication tests pass (100% pass rate)
+    - [ ] 4.7.6 Verify no test regressions from simplejwt → ninja-jwt migration
 
 - [ ] 4.8 Verify JWT functionality end-to-end
     - [ ] 4.8.1 Manual test: User registration generates valid tokens
@@ -305,6 +318,20 @@ def create_entry(request: HttpRequest, payload: CreateSchema):
 
 ### Phase 6: Testing Migration and Quality Gates
 
+- [ ] 6.0 Implement shared test helper utilities (DRY improvement)
+    - [ ] 6.0.1 Implement TMDB mock response factory helper (`create_mock_tmdb_response()`)
+    - [ ] 6.0.2 Implement movie creation helper (`create_movie()`)
+    - [ ] 6.0.3 Implement authenticated client setup helper (`setup_authenticated_client()`)
+    - [ ] 6.0.4 Implement admin user creation helper (`create_superuser()`)
+    - [ ] 6.0.5 Implement UserMovieData creation helper (`create_user_movie_data()`)
+    - [ ] 6.0.6 Implement TMDB client mock context manager (`mock_tmdb_client()`)
+    - [ ] 6.0.7 Implement paginated response assertion helper (`assert_paginated_response()`)
+    - [ ] 6.0.8 Refactor movie tests to use shared helpers (test_movie_api.py, test_movie_service.py, test_paginated_views.py)
+    - [ ] 6.0.9 Refactor user_movie_data tests to use shared helpers
+    - [ ] 6.0.10 Refactor core tests to use shared helpers
+    - [ ] 6.0.11 Run full test suite to verify no regressions from helper refactoring
+    - **Note**: See `_docs/notes/notes-api-layer-modernization-p2.md` "Test Helper Utilities Audit" section for detailed specifications
+
 - [ ] 6.1 Create UserMovieData Django Ninja tests
     - [ ] 6.1.1 Create `backend/apps/user_movie_data/tests/test_user_movie_data_ninja.py`
     - [ ] 6.1.2 Implement test for `GET /by-tmdb-id/` (authenticated, returns 404 if not found)
@@ -355,8 +382,9 @@ def create_entry(request: HttpRequest, payload: CreateSchema):
     - [ ] 6.5.9 Run backend type checking - MyPy on ALL apps (`docker compose exec backend python scripts/type_check.py`)
     - [ ] 6.5.10 Fix all type errors across entire backend (Movie, Core, Auth, UserMovieData, Config)
     - [ ] 6.5.11 Verify Phase 1 domains (Movie, Core) have no type safety regressions from Phase 2 work
-    - [ ] 6.5.12 Run markdown linting (`npx markdownlint-cli2 "**/*.md"`)
-    - [ ] 6.5.13 Verify 100% test pass rate, 70%+ coverage, and ZERO type/lint errors across entire API layer (production certification)
+    - [ ] 6.5.12 Verify complete DRF elimination from test suite (`grep -r "from rest_framework" backend/apps/*/tests/ --include="*.py"` returns 0 matches)
+    - [ ] 6.5.13 Run markdown linting (`npx markdownlint-cli2 "**/*.md"`)
+    - [ ] 6.5.14 Verify 100% test pass rate, 70%+ coverage, and ZERO type/lint errors across entire API layer (production certification)
 
 ### Phase 7: Documentation and Cleanup
 

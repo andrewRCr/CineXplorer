@@ -21,7 +21,7 @@ The backend is a REST API built with Django and Django REST Framework (DRF).
 - **Database**: PostgreSQL, configured via environment variables.
 - **Authentication**: Authentication is handled by `rest_framework_simplejwt` using JSON Web Tokens. A custom `JWTCookieAuthentication` backend is implemented to manage tokens securely in HTTP-only cookies.
 - **API Documentation**: `drf-spectacular` is used to automatically generate an OpenAPI 3 schema and Swagger UI, available at `/api/docs/`.
-- **Code Style**: Linting is enforced using `.flake8`.
+- **Code Style**: Linting is enforced using `ruff` (configured via `backend/pyproject.toml`).
 - **Type Checking**: Hybrid approach using Pyright (development) and MyPy (CI/CD)
     - **Pyright**: Primary type checker with Python 3.13 support, configured via `backend/pyrightconfig.json`
     - **MyPy**: Django-aware validation with django-stubs plugin, configured via `backend/mypy.ini`
@@ -92,7 +92,7 @@ The project follows a **Modified Test-Driven Development (TDD)** approach that b
 - **Framework**: Django's built-in test framework with custom test settings
 - **Database**: Uses `--keepdb` flag for performance during development
 - **Coverage**: Focus on models, API endpoints, and service layer logic
-- **Command**: `docker-compose exec backend python manage.py test --keepdb`
+- **Command**: `docker compose -f infrastructure/docker-compose.yml exec backend python manage.py test --keepdb`
 
 ### Frontend Testing
 
@@ -100,7 +100,7 @@ The project follows a **Modified Test-Driven Development (TDD)** approach that b
 - **Environment**: JSDOM with comprehensive browser API mocking
 - **Structure**: Co-located tests in `__tests__/` directories near components
 - **Coverage Goals**: 70%+ for critical paths and user-facing functionality
-- **Command**: `docker-compose exec frontend npm test`
+- **Command**: `docker compose -f infrastructure/docker-compose.yml exec frontend npm test`
 
 ### Quality Gates
 
@@ -108,5 +108,5 @@ Before any commit, the following checks must pass:
 
 1. **Test Coverage**: New code has appropriate tests
 2. **All Tests Pass**: Both backend and frontend test suites
-3. **Linting**: `flake8` (backend) and `eslint` (frontend)
-4. **Type Checking**: TypeScript compilation without errors
+3. **Linting**: `ruff` (backend) and `eslint` (frontend)
+4. **Type Checking**: Pyright/MyPy (backend) and TypeScript compilation (frontend)

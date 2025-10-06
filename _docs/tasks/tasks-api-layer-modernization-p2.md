@@ -48,14 +48,16 @@ def create_entry(request: HttpRequest, payload: CreateSchema):
 
 - `backend/apps/authentication/auth_ninja.py` - JWTCookieAuth class (already exists)
 - `backend/apps/authentication/schemas.py` - Pydantic schemas for auth endpoints (COMPLETED - 12 schemas with proper patterns)
-- `backend/apps/authentication/api.py` - Django Ninja router with auth endpoints (IN PROGRESS - 3 of 9 endpoints: register, token, token/refresh)
+- `backend/apps/authentication/api.py` - Django Ninja router with auth endpoints (IN PROGRESS - 9 of 11 endpoints complete, email verification migration ongoing)
 - `backend/apps/authentication/views.py` - Removed orphaned CreateUserView (not used)
 - `backend/requirements/req.dev.txt` - Added email-validator dependency for Pydantic EmailStr
 - `backend/apps/authentication/views.py` - DRF views (9 endpoints, TO BE REMOVED)
 - `backend/apps/authentication/serializers.py` - DRF serializers (TO BE REMOVED)
-- `backend/apps/authentication/email_verification.py` - Bridge to be removed (deferred from Auth Modernization)
 - `backend/apps/authentication/adapters.py` - CustomAccountAdapter with ZeptoMail (unchanged)
 - `backend/apps/authentication/tests/test_auth_ninja.py` - Django Ninja auth tests (TO BE CREATED)
+- `backend/apps/authentication/tests/fixtures.py` - Test fixtures using allauth EmailAddress API (UPDATED - Task 3.1.7)
+- `backend/apps/core/services/email_service.py` - ZeptoMail service without verification stub (UPDATED - Task 3.1.5)
+- `backend/apps/core/services/email_service.pyi` - Type stub for email service proxy pattern (NEW - Task 3.1.2, UPDATED - Task 3.1.5)
 
 ### Frontend
 
@@ -150,15 +152,15 @@ def create_entry(request: HttpRequest, payload: CreateSchema):
 
 ### Phase 3: Authentication Domain Migration - Email Verification Bridge Removal
 
-- [ ] 3.1 Remove email verification bridge (deferred from Authentication Modernization)
-    - [ ] 3.1.1 Audit all usages of `email_verification_service` in codebase (grep)
-    - [ ] 3.1.2 Migrate `EmailVerificationView` to Django Ninja using allauth `EmailAddress` API directly
-    - [ ] 3.1.3 Replace `email_verification_service.verify_email()` with `EmailAddress.objects.filter(user=user, verified=True).exists()`
-    - [ ] 3.1.4 Migrate `ResendVerificationView` to Django Ninja invoking `send_email_confirmation()` via allauth
-    - [ ] 3.1.5 Remove `email_verification_service` bridge from `email_service.py` stubbed methods
-    - [ ] 3.1.6 Delete `backend/apps/authentication/email_verification.py`
-    - [ ] 3.1.7 Verify no remaining references to deleted bridge (grep confirmation)
-    - [ ] 3.1.8 Run incremental quality checks (ruff, pyright on modified files)
+- [x] 3.1 Remove email verification bridge (deferred from Authentication Modernization)
+    - [x] 3.1.1 Audit all usages of `email_verification_service` in codebase (grep)
+    - [x] 3.1.2 Migrate `EmailVerificationView` to Django Ninja using allauth `EmailAddress` API directly
+    - [x] 3.1.3 Replace `email_verification_service.verify_email()` with `EmailAddress.objects.filter(user=user, verified=True).exists()`
+    - [x] 3.1.4 Migrate `ResendVerificationView` to Django Ninja invoking `send_email_confirmation()` via allauth
+    - [x] 3.1.5 Remove `email_verification_service` bridge from `email_service.py` stubbed methods
+    - [x] 3.1.6 Delete `backend/apps/authentication/email_verification.py`
+    - [x] 3.1.7 Verify no remaining references to deleted bridge (grep confirmation)
+    - [x] 3.1.8 Run incremental quality checks (ruff, pyright on modified files)
 
 - [ ] 3.2 Remove all type: ignore comments from authentication module
     - [ ] 3.2.1 Audit all `type: ignore` comments in `authentication/` directory (grep)

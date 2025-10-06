@@ -180,156 +180,222 @@ def create_entry(request: HttpRequest, payload: CreateSchema):
     - [x] 3.2.7 Fix any type errors revealed by removing `type: ignore` comments
     - [x] 3.2.8 Achieve zero type errors in authentication domain
 
-### Phase 4: Frontend Integration and Type Generation
+### Phase 4: JWT Migration (Remove DRF Dependency)
 
-- [ ] 4.1 Generate TypeScript types from OpenAPI schema
-    - [ ] 4.1.1 Run `npm run generate-types` to update `shared/api-types.ts`
-    - [ ] 4.1.2 Verify UserMovieData types generated correctly
-    - [ ] 4.1.3 Verify authentication types generated correctly
-    - [ ] 4.1.4 Fix any type generation issues (schema corrections if needed)
-    - [ ] 4.1.5 Run frontend type checking (`npm run type-check`)
+**Rationale:** `djangorestframework-simplejwt` is built FOR Django REST Framework and has DRF as a hard dependency. Before comprehensive quality gates (Phase 6), we must replace it with a Django Ninja-compatible solution to finalize our architecture.
 
-- [ ] 4.2 Update UserMovieData frontend service
-    - [ ] 4.2.1 Update `frontend/src/services/userMovieDataService.ts` to use new Django Ninja endpoints
-    - [ ] 4.2.2 Replace DRF endpoint URLs with Django Ninja URLs
-    - [ ] 4.2.3 Update request/response types to use auto-generated types
-    - [ ] 4.2.4 Verify error handling matches Django Ninja error responses
-    - [ ] 4.2.5 Run frontend type checking (`npm run type-check`)
-    - [ ] 4.2.6 Run incremental frontend linting (`npm run lint` on modified files)
+**Solution:** `django-ninja-jwt` - Official fork of simplejwt specifically for Django Ninja, actively maintained (latest: 5.3.5, Nov 2024).
 
-- [ ] 4.3 Update authentication frontend service
-    - [ ] 4.3.1 Update `frontend/src/services/authService.ts` to use new Django Ninja endpoints
-    - [ ] 4.3.2 Replace DRF endpoint URLs with Django Ninja URLs
-    - [ ] 4.3.3 Update request/response types to use auto-generated types
-    - [ ] 4.3.4 Verify JWT cookie handling works correctly (httponly cookies, CORS)
-    - [ ] 4.3.5 Run frontend type checking (`npm run type-check`)
-    - [ ] 4.3.6 Run incremental frontend linting (`npm run lint` on modified files)
+- [ ] 4.1 Research and evaluate django-ninja-jwt
+    - [ ] 4.1.1 Review django-ninja-jwt documentation (https://eadwincode.github.io/django-ninja-jwt/)
+    - [ ] 4.1.2 Compare API with djangorestframework-simplejwt to understand migration path
+    - [ ] 4.1.3 Verify compatibility with our current setup (httponly cookies, CORS, allauth)
+    - [ ] 4.1.4 Check for any breaking changes or configuration differences
+    - [ ] 4.1.5 Verify it supports same token features (access, refresh, blacklisting if used)
 
-- [ ] 4.4 Add OAuth login buttons to frontend (deferred from Authentication Modernization)
-    - [ ] 4.4.1 Update `frontend/src/pages/auth/Login.tsx` to add Google login button
-    - [ ] 4.4.2 Update `frontend/src/pages/auth/Login.tsx` to add GitHub login button
-    - [ ] 4.4.3 Implement OAuth redirect handling (redirect to `/accounts/google/login/` and `/accounts/github/login/`)
-    - [ ] 4.4.4 Verify button styling matches existing design system
-    - [ ] 4.4.5 Run incremental frontend linting and type checking
+- [ ] 4.2 Install django-ninja-jwt and update configuration
+    - [ ] 4.2.1 Add `django-ninja-jwt` to `backend/requirements/req.base.txt`
+    - [ ] 4.2.2 Update Django settings (rename `SIMPLE_JWT` to `NINJA_JWT` or verify config compatibility)
+    - [ ] 4.2.3 Verify token lifetime settings preserved (ACCESS_TOKEN_LIFETIME, REFRESH_TOKEN_LIFETIME)
+    - [ ] 4.2.4 Verify cookie settings preserved (httponly, secure, samesite, cookie names)
+    - [ ] 4.2.5 Install dependencies (`docker compose exec backend pip install django-ninja-jwt`)
 
-- [ ] 4.5 Update AuthContext for OAuth flows (deferred from Authentication Modernization)
-    - [ ] 4.5.1 Update `frontend/src/contexts/AuthContext.tsx` to handle OAuth redirect callbacks
-    - [ ] 4.5.2 Implement OAuth success callback handling (extract tokens, update auth state)
-    - [ ] 4.5.3 Implement OAuth error callback handling (display errors, redirect to login)
-    - [ ] 4.5.4 Ensure consistent UX between OAuth and password authentication flows
-    - [ ] 4.5.5 Run incremental frontend linting and type checking
+- [ ] 4.3 Migrate auth_ninja.py to django-ninja-jwt
+    - [ ] 4.3.1 Update imports (replace `rest_framework_simplejwt` with `ninja_jwt`)
+    - [ ] 4.3.2 Update `JWTCookieAuth` class to use `ninja_jwt.authentication.JWTAuth` as base
+    - [ ] 4.3.3 Verify `authenticate()` method signature matches (HttpRequest, key: str | None)
+    - [ ] 4.3.4 Update token validation to use ninja-jwt's validation methods
+    - [ ] 4.3.5 Ensure return type remains `AbstractUser | None` for compatibility
+    - [ ] 4.3.6 Run incremental quality checks (ruff, pyright on modified file)
 
-- [ ] 4.6 Verify frontend integration end-to-end
-    - [ ] 4.6.1 Manual test: User registration with password → email verification → login
-    - [ ] 4.6.2 Manual test: User login with Google OAuth → redirect → authenticated
-    - [ ] 4.6.3 Manual test: User login with GitHub OAuth → redirect → authenticated
-    - [ ] 4.6.4 Manual test: User movie data CRUD (add to watchlist, rate, review, delete)
-    - [ ] 4.6.5 Manual test: User profile retrieval and updates
-    - [ ] 4.6.6 Manual test: JWT token refresh flow
-    - [ ] 4.6.7 Manual test: Logout flow (cookies cleared, unauthenticated state)
+- [ ] 4.4 Migrate authentication API endpoints
+    - [ ] 4.4.1 Update `api.py` register endpoint (replace simplejwt RefreshToken with ninja-jwt)
+    - [ ] 4.4.2 Update `api.py` login endpoint (replace simplejwt token generation)
+    - [ ] 4.4.3 Update `api.py` refresh endpoint (replace simplejwt refresh logic)
+    - [ ] 4.4.4 Verify cookie setting logic remains identical (httponly, secure, samesite)
+    - [ ] 4.4.5 Verify error handling remains consistent
+    - [ ] 4.4.6 Run incremental quality checks (ruff, pyright on modified files)
 
-### Phase 5: Testing Migration and Quality Gates
+- [ ] 4.5 Remove simplejwt dependencies and stubs
+    - [ ] 4.5.1 Delete `backend/stubs/rest_framework_simplejwt/` directory entirely
+    - [ ] 4.5.2 Remove `djangorestframework-simplejwt` from `backend/requirements/req.base.txt`
+    - [ ] 4.5.3 Verify no remaining imports of `rest_framework_simplejwt` (grep confirmation)
+    - [ ] 4.5.4 Update "Relevant Files" section to remove simplejwt stub references
+    - [ ] 4.5.5 Uninstall old dependency (`docker compose exec backend pip uninstall djangorestframework-simplejwt`)
 
-- [ ] 5.1 Create UserMovieData Django Ninja tests
-    - [ ] 5.1.1 Create `backend/apps/user_movie_data/tests/test_user_movie_data_ninja.py`
-    - [ ] 5.1.2 Implement test for `GET /by-tmdb-id/` (authenticated, returns 404 if not found)
-    - [ ] 5.1.3 Implement test for `POST /` (create entry, requires movie_id)
-    - [ ] 5.1.4 Implement test for `PATCH /{pk}/` (update entry, partial updates)
-    - [ ] 5.1.5 Implement test for `DELETE /{pk}/` (remove entry, 204 response)
-    - [ ] 5.1.6 Implement test for authentication requirement (401 if unauthenticated)
-    - [ ] 5.1.7 Implement test for user isolation (user A cannot access user B's data)
-    - [ ] 5.1.8 Run user_movie_data tests (`python manage.py test apps.user_movie_data --settings=config.settings_test`)
+- [ ] 4.6 Create type stubs for django-ninja-jwt (if needed)
+    - [ ] 4.6.1 Run type checking on authentication domain (`python scripts/type_check.py --only auth`)
+    - [ ] 4.6.2 If type errors exist, check if django-ninja-jwt provides type stubs
+    - [ ] 4.6.3 If not, create minimal `backend/stubs/ninja_jwt/` stubs following same pattern
+    - [ ] 4.6.4 Document maintenance contract if custom stubs created
+    - [ ] 4.6.5 Achieve zero type errors in authentication domain (maintain Phase 3 achievement)
 
-- [ ] 5.2 Create authentication Django Ninja tests (deferred from Authentication Modernization)
-    - [ ] 5.2.1 Create `backend/apps/authentication/tests/test_auth_ninja.py`
-    - [ ] 5.2.2 Implement password authentication tests (register, login, token obtain)
-    - [ ] 5.2.3 Implement CSRF protection tests (CSRF token required for state-changing operations)
-    - [ ] 5.2.4 Implement JWT token refresh tests (refresh token flow, cookie handling)
-    - [ ] 5.2.5 Implement logout tests (cookies cleared, token blacklisted if applicable)
-    - [ ] 5.2.6 Implement email verification tests (send verification, verify email, resend)
-    - [ ] 5.2.7 Implement email uniqueness tests (duplicate email rejected)
-    - [ ] 5.2.8 Implement password reset tests (request reset, verify token, reset password)
-    - [ ] 5.2.9 Run authentication tests (`python manage.py test apps.authentication --settings=config.settings_test`)
+- [ ] 4.7 Update and run authentication tests
+    - [ ] 4.7.1 Update test fixtures if needed (token generation for tests)
+    - [ ] 4.7.2 Run authentication domain tests (`python manage.py test apps.authentication --settings=config.settings_test`)
+    - [ ] 4.7.3 Fix any test failures from JWT library migration
+    - [ ] 4.7.4 Verify all authentication tests pass (100% pass rate)
+    - [ ] 4.7.5 Verify no test regressions from simplejwt → ninja-jwt migration
 
-- [ ] 5.3 Verify OAuth test infrastructure (deferred from Authentication Modernization)
-    - [ ] 5.3.1 Verify `authentication/tests/fixtures.py` provides OAuth fixtures
-    - [ ] 5.3.2 Verify `authentication/tests/test_oauth_mocks.py` provides Google/GitHub mocks
-    - [ ] 5.3.3 Implement OAuth flow tests using existing fixtures (Google login, GitHub login)
-    - [ ] 5.3.4 Verify OAuth error handling tests (invalid token, network error)
-    - [ ] 5.3.5 Run OAuth tests (`python manage.py test apps.authentication.tests.test_oauth_mocks --settings=config.settings_test`)
+- [ ] 4.8 Verify JWT functionality end-to-end
+    - [ ] 4.8.1 Manual test: User registration generates valid tokens
+    - [ ] 4.8.2 Manual test: Login generates httponly cookies with correct attributes
+    - [ ] 4.8.3 Manual test: Authenticated endpoints accept JWT from cookies
+    - [ ] 4.8.4 Manual test: Token refresh endpoint generates new access token
+    - [ ] 4.8.5 Manual test: Logout clears cookies properly
+    - [ ] 4.8.6 Manual test: Expired tokens rejected with proper error messages
+    - [ ] 4.8.7 Verify no functional regressions from JWT library change
 
-- [ ] 5.4 Verify Phase 1 test coverage and regression check (Movie, Core domains)
-    - [ ] 5.4.1 Run Movie domain tests (`docker compose exec backend python manage.py test apps.movie --settings=config.settings_test`)
-    - [ ] 5.4.2 Run Core domain tests (`docker compose exec backend python manage.py test apps.core --settings=config.settings_test`)
-    - [ ] 5.4.3 Review test coverage for Movie domain (`coverage run --source='apps.movie' manage.py test apps.movie --settings=config.settings_test && coverage report -m`)
-    - [ ] 5.4.4 Review test coverage for Core domain (`coverage run --source='apps.core' manage.py test apps.core --settings=config.settings_test && coverage report -m`)
-    - [ ] 5.4.5 Identify any gaps in test coverage from Phase 1 (target: 70%+ for critical paths)
-    - [ ] 5.4.6 Fix any failing tests in Movie/Core domains (regression fixes)
-    - [ ] 5.4.7 Add missing tests for uncovered critical paths in Movie/Core (if gaps identified)
-    - [ ] 5.4.8 Verify Phase 1 domains have no test regressions from Phase 2 work
+### Phase 5: Frontend Integration and Type Generation
 
-- [ ] 5.5 Run full quality gate checks (ENTIRE API LAYER - Phase 1 + Phase 2 certification)
-    - [ ] 5.5.1 Run full backend test suite with coverage - ALL apps (`docker compose exec backend coverage run --source='apps' manage.py test --settings=config.settings_test`)
-    - [ ] 5.5.2 Generate and review coverage report (`docker compose exec backend coverage report -m`)
-    - [ ] 5.5.3 Verify minimum 70% test coverage across entire API layer (per TECHNICAL-ARCHITECTURE.md)
-    - [ ] 5.5.4 Run full frontend test suite (`docker compose exec frontend npm test`)
-    - [ ] 5.5.5 Run backend linting - ALL apps (`docker compose exec backend ruff check apps/ config/`)
-    - [ ] 5.5.6 Run frontend linting (`docker compose exec frontend npm run lint`)
-    - [ ] 5.5.7 Run frontend type checking (`docker compose exec frontend npm run type-check`)
-    - [ ] 5.5.8 Run backend type checking - Pyright on ALL apps (`cd backend && npx pyright apps/`)
-    - [ ] 5.5.9 Run backend type checking - MyPy on ALL apps (`docker compose exec backend python scripts/type_check.py`)
-    - [ ] 5.5.10 Fix all type errors across entire backend (Movie, Core, Auth, UserMovieData, Config)
-    - [ ] 5.5.11 Verify Phase 1 domains (Movie, Core) have no type safety regressions from Phase 2 work
-    - [ ] 5.5.12 Run markdown linting (`npx markdownlint-cli2 "**/*.md"`)
-    - [ ] 5.5.13 Verify 100% test pass rate, 70%+ coverage, and ZERO type/lint errors across entire API layer (production certification)
+- [ ] 5.1 Generate TypeScript types from OpenAPI schema
+    - [ ] 5.1.1 Run `npm run generate-types` to update `shared/api-types.ts`
+    - [ ] 5.1.2 Verify UserMovieData types generated correctly
+    - [ ] 5.1.3 Verify authentication types generated correctly
+    - [ ] 5.1.4 Fix any type generation issues (schema corrections if needed)
+    - [ ] 5.1.5 Run frontend type checking (`npm run type-check`)
 
-### Phase 6: Documentation and Cleanup
+- [ ] 5.2 Update UserMovieData frontend service
+    - [ ] 5.2.1 Update `frontend/src/services/userMovieDataService.ts` to use new Django Ninja endpoints
+    - [ ] 5.2.2 Replace DRF endpoint URLs with Django Ninja URLs
+    - [ ] 5.2.3 Update request/response types to use auto-generated types
+    - [ ] 5.2.4 Verify error handling matches Django Ninja error responses
+    - [ ] 5.2.5 Run frontend type checking (`npm run type-check`)
+    - [ ] 5.2.6 Run incremental frontend linting (`npm run lint` on modified files)
 
-- [ ] 6.1 Remove old DRF files
-    - [ ] 6.1.1 Delete `backend/apps/user_movie_data/views.py`
-    - [ ] 6.1.2 Delete `backend/apps/user_movie_data/serializers.py`
-    - [ ] 6.1.3 Delete `backend/apps/authentication/views.py`
-    - [ ] 6.1.4 Delete `backend/apps/authentication/serializers.py`
-    - [ ] 6.1.5 Delete `backend/apps/user_movie_data/urls.py` (if DRF-specific)
-    - [ ] 6.1.6 Delete `backend/apps/authentication/urls.py` (if DRF-specific, preserve allauth URLs)
-    - [ ] 6.1.7 Verify no remaining imports of deleted modules (grep confirmation)
+- [ ] 5.3 Update authentication frontend service
+    - [ ] 5.3.1 Update `frontend/src/services/authService.ts` to use new Django Ninja endpoints
+    - [ ] 5.3.2 Replace DRF endpoint URLs with Django Ninja URLs
+    - [ ] 5.3.3 Update request/response types to use auto-generated types
+    - [ ] 5.3.4 Verify JWT cookie handling works correctly (httponly cookies, CORS)
+    - [ ] 5.3.5 Run frontend type checking (`npm run type-check`)
+    - [ ] 5.3.6 Run incremental frontend linting (`npm run lint` on modified files)
 
-- [ ] 6.2 Update URL configuration
-    - [ ] 6.2.1 Remove DRF URL patterns from `backend/config/urls.py` (user_movie_data)
-    - [ ] 6.2.2 Remove DRF URL patterns from `backend/config/urls.py` (authentication)
-    - [ ] 6.2.3 Verify allauth URLs preserved at `/accounts/*`
-    - [ ] 6.2.4 Verify all Django Ninja routers registered correctly
-    - [ ] 6.2.5 Test URL resolution (`python manage.py show_urls` or equivalent)
+- [ ] 5.4 Add OAuth login buttons to frontend (deferred from Authentication Modernization)
+    - [ ] 5.4.1 Update `frontend/src/pages/auth/Login.tsx` to add Google login button
+    - [ ] 5.4.2 Update `frontend/src/pages/auth/Login.tsx` to add GitHub login button
+    - [ ] 5.4.3 Implement OAuth redirect handling (redirect to `/accounts/google/login/` and `/accounts/github/login/`)
+    - [ ] 5.4.4 Verify button styling matches existing design system
+    - [ ] 5.4.5 Run incremental frontend linting and type checking
 
-- [ ] 6.3 Verify unified API documentation
-    - [ ] 6.3.1 Start development server (`docker compose up`)
-    - [ ] 6.3.2 Access `/api/docs` (Swagger UI) and verify all endpoints visible
-    - [ ] 6.3.3 Verify UserMovieData endpoints documented with correct schemas
-    - [ ] 6.3.4 Verify authentication endpoints documented with correct schemas
-    - [ ] 6.3.5 Access `/api/openapi.json` and verify complete OpenAPI schema
-    - [ ] 6.3.6 Verify schema includes all request/response models
+- [ ] 5.5 Update AuthContext for OAuth flows (deferred from Authentication Modernization)
+    - [ ] 5.5.1 Update `frontend/src/contexts/AuthContext.tsx` to handle OAuth redirect callbacks
+    - [ ] 5.5.2 Implement OAuth success callback handling (extract tokens, update auth state)
+    - [ ] 5.5.3 Implement OAuth error callback handling (display errors, redirect to login)
+    - [ ] 5.5.4 Ensure consistent UX between OAuth and password authentication flows
+    - [ ] 5.5.5 Run incremental frontend linting and type checking
 
-- [ ] 6.4 Update task list and generate readiness report
-    - [ ] 6.4.1 Mark all sub-tasks complete in this file
-    - [ ] 6.4.2 Update "Relevant Files" section with final file list
-    - [ ] 6.4.3 Generate standardized readiness report per DEVELOPMENT-RULES.md
-    - [ ] 6.4.4 Include summary of work completed, quality gate results, next steps
-    - [ ] 6.4.5 Await user approval for commit/PR creation
+- [ ] 5.6 Verify frontend integration end-to-end
+    - [ ] 5.6.1 Manual test: User registration with password → email verification → login
+    - [ ] 5.6.2 Manual test: User login with Google OAuth → redirect → authenticated
+    - [ ] 5.6.3 Manual test: User login with GitHub OAuth → redirect → authenticated
+    - [ ] 5.6.4 Manual test: User movie data CRUD (add to watchlist, rate, review, delete)
+    - [ ] 5.6.5 Manual test: User profile retrieval and updates
+    - [ ] 5.6.6 Manual test: JWT token refresh flow
+    - [ ] 5.6.7 Manual test: Logout flow (cookies cleared, unauthenticated state)
 
-- [ ] 6.5 Update PROJECT-STATUS
-    - [ ] 6.5.1 Update `_docs/PROJECT-STATUS.md` to reflect Phase 2 completion
-    - [ ] 6.5.2 Move API Layer Modernization Phase 2 from "In Progress" to "Completed"
-    - [ ] 6.5.3 Update feature progress milestones
-    - [ ] 6.5.4 Document any newly completed functionality
-    - [ ] 6.5.5 Update priorities if applicable
+### Phase 6: Testing Migration and Quality Gates
 
-- [ ] 6.6 Enable blocking type checking in CI
-    - [ ] 6.6.1 Verify zero type errors with `docker compose exec backend mypy apps/ --config-file mypy.ini`
-    - [ ] 6.6.2 Remove `continue-on-error: true` from `.github/workflows/ci.yml` backend type checking step
-    - [ ] 6.6.3 Remove TODO comment about Phase 2 completion
-    - [ ] 6.6.4 Update step description from "non-blocking during api-layer-modernization-p2" to "Run backend type checking"
-    - [ ] 6.6.5 Test CI workflow passes with blocking type checks
-    - [ ] 6.6.6 Commit CI update with message: "config(ci): Enable blocking type checking after Phase 2 completion"
+- [ ] 6.1 Create UserMovieData Django Ninja tests
+    - [ ] 6.1.1 Create `backend/apps/user_movie_data/tests/test_user_movie_data_ninja.py`
+    - [ ] 6.1.2 Implement test for `GET /by-tmdb-id/` (authenticated, returns 404 if not found)
+    - [ ] 6.1.3 Implement test for `POST /` (create entry, requires movie_id)
+    - [ ] 6.1.4 Implement test for `PATCH /{pk}/` (update entry, partial updates)
+    - [ ] 6.1.5 Implement test for `DELETE /{pk}/` (remove entry, 204 response)
+    - [ ] 6.1.6 Implement test for authentication requirement (401 if unauthenticated)
+    - [ ] 6.1.7 Implement test for user isolation (user A cannot access user B's data)
+    - [ ] 6.1.8 Run user_movie_data tests (`python manage.py test apps.user_movie_data --settings=config.settings_test`)
+
+- [ ] 6.2 Create authentication Django Ninja tests (deferred from Authentication Modernization)
+    - [ ] 6.2.1 Create `backend/apps/authentication/tests/test_auth_ninja.py`
+    - [ ] 6.2.2 Implement password authentication tests (register, login, token obtain)
+    - [ ] 6.2.3 Implement CSRF protection tests (CSRF token required for state-changing operations)
+    - [ ] 6.2.4 Implement JWT token refresh tests (refresh token flow, cookie handling)
+    - [ ] 6.2.5 Implement logout tests (cookies cleared, token blacklisted if applicable)
+    - [ ] 6.2.6 Implement email verification tests (send verification, verify email, resend)
+    - [ ] 6.2.7 Implement email uniqueness tests (duplicate email rejected)
+    - [ ] 6.2.8 Implement password reset tests (request reset, verify token, reset password)
+    - [ ] 6.2.9 Run authentication tests (`python manage.py test apps.authentication --settings=config.settings_test`)
+
+- [ ] 6.3 Verify OAuth test infrastructure (deferred from Authentication Modernization)
+    - [ ] 6.3.1 Verify `authentication/tests/fixtures.py` provides OAuth fixtures
+    - [ ] 6.3.2 Verify `authentication/tests/test_oauth_mocks.py` provides Google/GitHub mocks
+    - [ ] 6.3.3 Implement OAuth flow tests using existing fixtures (Google login, GitHub login)
+    - [ ] 6.3.4 Verify OAuth error handling tests (invalid token, network error)
+    - [ ] 6.3.5 Run OAuth tests (`python manage.py test apps.authentication.tests.test_oauth_mocks --settings=config.settings_test`)
+
+- [ ] 6.4 Verify Phase 1 test coverage and regression check (Movie, Core domains)
+    - [ ] 6.4.1 Run Movie domain tests (`docker compose exec backend python manage.py test apps.movie --settings=config.settings_test`)
+    - [ ] 6.4.2 Run Core domain tests (`docker compose exec backend python manage.py test apps.core --settings=config.settings_test`)
+    - [ ] 6.4.3 Review test coverage for Movie domain (`coverage run --source='apps.movie' manage.py test apps.movie --settings=config.settings_test && coverage report -m`)
+    - [ ] 6.4.4 Review test coverage for Core domain (`coverage run --source='apps.core' manage.py test apps.core --settings=config.settings_test && coverage report -m`)
+    - [ ] 6.4.5 Identify any gaps in test coverage from Phase 1 (target: 70%+ for critical paths)
+    - [ ] 6.4.6 Fix any failing tests in Movie/Core domains (regression fixes)
+    - [ ] 6.4.7 Add missing tests for uncovered critical paths in Movie/Core (if gaps identified)
+    - [ ] 6.4.8 Verify Phase 1 domains have no test regressions from Phase 2 work
+
+- [ ] 6.5 Run full quality gate checks (ENTIRE API LAYER - Phase 1 + Phase 2 certification)
+    - [ ] 6.5.1 Run full backend test suite with coverage - ALL apps (`docker compose exec backend coverage run --source='apps' manage.py test --settings=config.settings_test`)
+    - [ ] 6.5.2 Generate and review coverage report (`docker compose exec backend coverage report -m`)
+    - [ ] 6.5.3 Verify minimum 70% test coverage across entire API layer (per TECHNICAL-ARCHITECTURE.md)
+    - [ ] 6.5.4 Run full frontend test suite (`docker compose exec frontend npm test`)
+    - [ ] 6.5.5 Run backend linting - ALL apps (`docker compose exec backend ruff check apps/ config/`)
+    - [ ] 6.5.6 Run frontend linting (`docker compose exec frontend npm run lint`)
+    - [ ] 6.5.7 Run frontend type checking (`docker compose exec frontend npm run type-check`)
+    - [ ] 6.5.8 Run backend type checking - Pyright on ALL apps (`cd backend && npx pyright apps/`)
+    - [ ] 6.5.9 Run backend type checking - MyPy on ALL apps (`docker compose exec backend python scripts/type_check.py`)
+    - [ ] 6.5.10 Fix all type errors across entire backend (Movie, Core, Auth, UserMovieData, Config)
+    - [ ] 6.5.11 Verify Phase 1 domains (Movie, Core) have no type safety regressions from Phase 2 work
+    - [ ] 6.5.12 Run markdown linting (`npx markdownlint-cli2 "**/*.md"`)
+    - [ ] 6.5.13 Verify 100% test pass rate, 70%+ coverage, and ZERO type/lint errors across entire API layer (production certification)
+
+### Phase 7: Documentation and Cleanup
+
+- [ ] 7.1 Remove old DRF files
+    - [ ] 7.1.1 Delete `backend/apps/user_movie_data/views.py`
+    - [ ] 7.1.2 Delete `backend/apps/user_movie_data/serializers.py`
+    - [ ] 7.1.3 Delete `backend/apps/authentication/views.py`
+    - [ ] 7.1.4 Delete `backend/apps/authentication/serializers.py`
+    - [ ] 7.1.5 Delete `backend/apps/user_movie_data/urls.py` (if DRF-specific)
+    - [ ] 7.1.6 Delete `backend/apps/authentication/urls.py` (if DRF-specific, preserve allauth URLs)
+    - [ ] 7.1.7 Verify no remaining imports of deleted modules (grep confirmation)
+
+- [ ] 7.2 Update URL configuration
+    - [ ] 7.2.1 Remove DRF URL patterns from `backend/config/urls.py` (user_movie_data)
+    - [ ] 7.2.2 Remove DRF URL patterns from `backend/config/urls.py` (authentication)
+    - [ ] 7.2.3 Verify allauth URLs preserved at `/accounts/*`
+    - [ ] 7.2.4 Verify all Django Ninja routers registered correctly
+    - [ ] 7.2.5 Test URL resolution (`python manage.py show_urls` or equivalent)
+
+- [ ] 7.3 Verify unified API documentation
+    - [ ] 7.3.1 Start development server (`docker compose up`)
+    - [ ] 7.3.2 Access `/api/docs` (Swagger UI) and verify all endpoints visible
+    - [ ] 7.3.3 Verify UserMovieData endpoints documented with correct schemas
+    - [ ] 7.3.4 Verify authentication endpoints documented with correct schemas
+    - [ ] 7.3.5 Access `/api/openapi.json` and verify complete OpenAPI schema
+    - [ ] 7.3.6 Verify schema includes all request/response models
+
+- [ ] 7.4 Update task list and generate readiness report
+    - [ ] 7.4.1 Mark all sub-tasks complete in this file
+    - [ ] 7.4.2 Update "Relevant Files" section with final file list
+    - [ ] 7.4.3 Generate standardized readiness report per DEVELOPMENT-RULES.md
+    - [ ] 7.4.4 Include summary of work completed, quality gate results, next steps
+    - [ ] 7.4.5 Await user approval for commit/PR creation
+
+- [ ] 7.5 Update PROJECT-STATUS
+    - [ ] 7.5.1 Update `_docs/PROJECT-STATUS.md` to reflect Phase 2 completion
+    - [ ] 7.5.2 Move API Layer Modernization Phase 2 from "In Progress" to "Completed"
+    - [ ] 7.5.3 Update feature progress milestones
+    - [ ] 7.5.4 Document any newly completed functionality
+    - [ ] 7.5.5 Update priorities if applicable
+
+- [ ] 7.6 Enable blocking type checking in CI
+    - [ ] 7.6.1 Verify zero type errors with `docker compose exec backend mypy apps/ --config-file mypy.ini`
+    - [ ] 7.6.2 Remove `continue-on-error: true` from `.github/workflows/ci.yml` backend type checking step
+    - [ ] 7.6.3 Remove TODO comment about Phase 2 completion
+    - [ ] 7.6.4 Update step description from "non-blocking during api-layer-modernization-p2" to "Run backend type checking"
+    - [ ] 7.6.5 Test CI workflow passes with blocking type checks
+    - [ ] 7.6.6 Commit CI update with message: "config(ci): Enable blocking type checking after Phase 2 completion"
 
 ## Notes
 

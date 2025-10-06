@@ -42,8 +42,14 @@ def _get_jwt_settings() -> dict[str, object]:
     return settings.SIMPLE_JWT  # type: ignore[return-value]  # Django settings are dynamic
 
 
-@auth_router.post("/register/", auth=None, response={201: RegisterResponseSchema, 409: dict[str, object], 500: dict[str, object]})
-def register_user(request: HttpRequest, payload: RegisterInputSchema) -> tuple[int, dict[str, object]]:
+@auth_router.post(
+    "/register/",
+    auth=None,
+    response={201: RegisterResponseSchema, 409: dict[str, object], 500: dict[str, object]},
+)
+def register_user(
+    request: HttpRequest, payload: RegisterInputSchema
+) -> tuple[int, dict[str, object]]:
     """Register a new user and send email verification.
 
     Creates a new user account and triggers email verification via
@@ -51,7 +57,7 @@ def register_user(request: HttpRequest, payload: RegisterInputSchema) -> tuple[i
 
     Args:
         request: HTTP request object
-        payload: Registration data (username, email, password)
+        payload: Registration data (username, email, password, first_name, last_name)
 
     Returns:
         tuple: (status_code, response_data)
@@ -90,7 +96,9 @@ def register_user(request: HttpRequest, payload: RegisterInputSchema) -> tuple[i
     user = user_model.objects.create_user(
         username=payload.username,
         email=payload.email,
-        password=payload.password
+        password=payload.password,
+        first_name=payload.first_name,
+        last_name=payload.last_name
     )
 
     # Send verification email via allauth API
@@ -113,8 +121,19 @@ def register_user(request: HttpRequest, payload: RegisterInputSchema) -> tuple[i
         }
 
 
-@auth_router.post("/token/", auth=None, response={200: TokenResponseSchema, 400: dict[str, object], 401: dict[str, object], 403: dict[str, object]})
-def obtain_token(request: HttpRequest, response: HttpResponse, payload: TokenObtainInputSchema) -> tuple[int, dict[str, object]]:
+@auth_router.post(
+    "/token/",
+    auth=None,
+    response={
+        200: TokenResponseSchema,
+        400: dict[str, object],
+        401: dict[str, object],
+        403: dict[str, object],
+    },
+)
+def obtain_token(
+    request: HttpRequest, response: HttpResponse, payload: TokenObtainInputSchema
+) -> tuple[int, dict[str, object]]:
     """Obtain JWT access and refresh tokens (login).
 
     Authenticates user with username/email and password, then returns
@@ -200,8 +219,14 @@ def obtain_token(request: HttpRequest, response: HttpResponse, payload: TokenObt
     }
 
 
-@auth_router.post("/token/refresh/", auth=None, response={200: TokenResponseSchema, 400: dict[str, object]})
-def refresh_token(request: HttpRequest, response: HttpResponse) -> tuple[int, dict[str, object]]:
+@auth_router.post(
+    "/token/refresh/",
+    auth=None,
+    response={200: TokenResponseSchema, 400: dict[str, object]},
+)
+def refresh_token(
+    request: HttpRequest, response: HttpResponse
+) -> tuple[int, dict[str, object]]:
     """Refresh JWT access token using refresh token from cookie.
 
     Reads refresh token from httponly cookie and generates new access token.
@@ -436,8 +461,14 @@ def update_user_profile(
     return 200, profile
 
 
-@auth_router.post("/verify-email/", auth=None, response={200: EmailVerificationResponseSchema, 400: dict[str, object]})
-def verify_email(request: HttpRequest, payload: EmailVerificationInputSchema) -> tuple[int, dict[str, str]]:
+@auth_router.post(
+    "/verify-email/",
+    auth=None,
+    response={200: EmailVerificationResponseSchema, 400: dict[str, object]},
+)
+def verify_email(
+    request: HttpRequest, payload: EmailVerificationInputSchema
+) -> tuple[int, dict[str, str]]:
     """Verify user's email address using the confirmation key.
 
     Args:
@@ -465,8 +496,14 @@ def verify_email(request: HttpRequest, payload: EmailVerificationInputSchema) ->
         return 400, {"message": "Invalid or expired verification link."}
 
 
-@auth_router.post("/resend-verification/", auth=None, response={200: ResendVerificationResponseSchema, 400: dict[str, object]})
-def resend_verification(request: HttpRequest, payload: ResendVerificationInputSchema) -> tuple[int, dict[str, str]]:
+@auth_router.post(
+    "/resend-verification/",
+    auth=None,
+    response={200: ResendVerificationResponseSchema, 400: dict[str, object]},
+)
+def resend_verification(
+    request: HttpRequest, payload: ResendVerificationInputSchema
+) -> tuple[int, dict[str, str]]:
     """Resend email verification to the provided email address.
 
     Args:

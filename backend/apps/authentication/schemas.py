@@ -40,6 +40,18 @@ class RegisterInputSchema(Schema):
         min_length=5,
         description="Account password (minimum 5 characters)"
     )
+    first_name: str = Field(
+        ...,
+        min_length=1,
+        max_length=150,
+        description="User's first name"
+    )
+    last_name: str = Field(
+        ...,
+        min_length=1,
+        max_length=150,
+        description="User's last name"
+    )
 
 
 class RegisterResponseSchema(Schema):

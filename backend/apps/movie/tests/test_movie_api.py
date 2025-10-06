@@ -13,8 +13,12 @@ from core.services.api_response import ApiResponse
 from core.types.api_types import TMDBResponseData
 from django.contrib.auth.models import User
 from django.test import Client, TestCase
-from rest_framework import status
 from user_movie_data.models import UserMovieData
+
+# HTTP status codes for Django Ninja endpoints
+HTTP_200_OK = 200
+HTTP_400_BAD_REQUEST = 400
+HTTP_404_NOT_FOUND = 404
 
 # =========================
 # Django Ninja API URLs
@@ -134,7 +138,7 @@ class MovieApiTests(TestCase):
         res = self.client.get(url, params)
 
         # Assert: Check the response status and overall structure
-        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(res.status_code, HTTP_200_OK)
         data = res.json()
         self.assertIn('results', data)
         self.assertIn('page', data)
@@ -218,7 +222,7 @@ class MovieApiTests(TestCase):
         res = self.client.get(DISCOVER_URL, filters)
 
         # Assert: Check the response status and structure
-        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(res.status_code, HTTP_200_OK)
         data = res.json()
         self.assertIn('results', data)
         self.assertIn('page', data)
@@ -316,7 +320,7 @@ class MovieApiTests(TestCase):
         res = self.client.get(url)
 
         # Assert
-        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(res.status_code, HTTP_200_OK)
         data = res.json()
         self.assertEqual(data['tmdb_id'], movie_stub.tmdb_id)
         self.assertIn('title', data)
@@ -362,7 +366,7 @@ class MovieApiTests(TestCase):
         res = self.client.get(url)
 
         # Assert
-        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(res.status_code, HTTP_200_OK)
         data = res.json()
         self.assertEqual(data['tmdb_id'], tmdb_id)
         self.assertIn('user_movie_data', data)

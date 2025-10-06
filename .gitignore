@@ -221,6 +221,9 @@ _docs/CURRENT-SESSION.md
 .claude/
 .warp/
 
+# Markdownlint VS Code config (local dev tooling - project standards in .markdownlint-cli2.jsonc)
+.markdownlint.jsonc
+
 # Note: frontend/openapi.json is now vendored (not ignored) to prevent type drift
 
 # Note: _docs/ai-instructions/, _docs/workflows/, and other high-level docs are included

@@ -1,0 +1,49 @@
+{
+  // markdownlint-cli2 configuration with per-path overrides
+  // MD034 (bare URLs) disabled only for temporal internal docs
+  // Note: gitignored files are intentionally linted for archive-readiness
+
+  "config": {
+    "default": true,
+    "MD007": {
+      "indent": 4
+    },
+    "MD013": false,
+    "MD024": {
+      "siblings_only": true
+    },
+    "MD029": false,
+    "MD032": false,
+    "MD033": false,
+    "MD036": false,
+    "MD040": false,
+    "MD041": false
+  },
+
+  "gitignore": false,
+
+  "globs": [
+    "**/*.md"
+  ],
+
+  "ignores": [
+    "**/node_modules/**"
+  ],
+
+  "customRules": [],
+  "overrides": [
+    {
+      // Temporal internal working documents - allow bare URLs for convenience
+      // These are linted even though some are gitignored (archive-readiness)
+      "files": [
+        "_docs/notes/**/*.md",
+        "_docs/tasks/**/*.md",
+        "_docs/archive/**/*.md",
+        "_docs/CURRENT-SESSION.md"
+      ],
+      "config": {
+        "MD034": false
+      }
+    }
+  ]
+}

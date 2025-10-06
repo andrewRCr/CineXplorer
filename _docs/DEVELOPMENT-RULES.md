@@ -46,38 +46,40 @@ Before starting ANY work, AI assistants must:
 Before any commit consideration, ALL of the following must pass with **zero exceptions**:
 
 1. **Backend Tests**: 100% pass rate
-   - Command: `docker-compose exec backend python manage.py test --keepdb --settings=config.settings_test`
+   - Command: `docker compose -f infrastructure/docker-compose.yml exec backend python manage.py test --keepdb --settings=config.settings_test`
    - Zero failures acceptable
 
 2. **Frontend Tests**: 100% pass rate
-   - Command: `docker-compose exec frontend npm test`
+   - Command: `docker compose -f infrastructure/docker-compose.yml exec frontend npm test`
    - Zero failures acceptable
 
 3. **Backend Linting**: Zero violations
-   - Command: `docker-compose exec backend ruff check apps/ config/`
-   - Auto-fix: `docker-compose exec backend ruff check apps/ config/ --fix`
+   - Command: `docker compose -f infrastructure/docker-compose.yml exec backend ruff check apps/ config/`
+   - Auto-fix: `docker compose -f infrastructure/docker-compose.yml exec backend ruff check apps/ config/ --fix`
    - Every violation must be fixed
 
 4. **Frontend Linting**: Zero violations
-   - Command: `docker-compose exec frontend npm run lint`
+   - Command: `docker compose -f infrastructure/docker-compose.yml exec frontend npm run lint`
    - Every violation must be fixed
 
 5. **TypeScript Checking**: Zero errors
-   - Command: `docker-compose exec frontend npm run type-check`
+   - Command: `docker compose -f infrastructure/docker-compose.yml exec frontend npm run type-check`
    - Every type error must be resolved
 
 6. **Python Type Safety**: Hybrid type checking approach with minimal Any usage
    - **Development**: `python backend/scripts/type_check.py` from repo root
-   - **CI/CD**: `docker-compose exec backend python scripts/type_check.py`
-   - **Manual**: `docker-compose exec backend mypy apps/ --config-file mypy.ini`
+   - **CI/CD**: `docker compose -f infrastructure/docker-compose.yml exec backend python scripts/type_check.py`
+   - **Manual**: `docker compose -f infrastructure/docker-compose.yml exec backend mypy apps/ --config-file mypy.ini`
    - **PROHIBITED**: Using `typing.Any` except for external API payloads (TMDB, etc.)
    - **REQUIRED**: Use `object` for unknown data, `dict[str, object]` for generic dictionaries
    - **JUSTIFICATION**: Any `Any` usage must have inline comment explaining necessity
    - **Full guidelines**: See `_docs/reference/type-safety-strategy.md` for complete strategy
 
 7. **Markdown Linting**: Zero violations
-   - Command: `npx markdownlint-cli2 "README.md" "_docs/**/*.md" "!_docs/notes/*.md" "!_docs/CURRENT-SESSION.md"`
-   - Auto-fix: `npx markdownlint-cli2 --fix "README.md" "_docs/**/*.md" "!_docs/notes/*.md" "!_docs/CURRENT-SESSION.md"`
+   - Command: `npx markdownlint-cli2 "README.md" "_docs/**/*.md"`
+   - Auto-fix: `npx markdownlint-cli2 --fix "README.md" "_docs/**/*.md"`
+   - Config: `.markdownlint-cli2.jsonc` (MD034 bare URLs disabled only for temporal docs: tasks/, notes/, archive/notes/)
+   - Gitignored files automatically excluded (notes/, archive/notes/, CURRENT-SESSION.md)
    - Every violation must be fixed
 
 ### Quality Gate Failure Protocol
@@ -300,7 +302,7 @@ docker-compose -f infrastructure/docker-compose.yml up --build
 docker-compose -f infrastructure/docker-compose.yml logs [service]
 
 # Shell access
-docker-compose exec [backend|frontend] bash
+docker compose -f infrastructure/docker-compose.yml exec [backend|frontend] bash
 ```
 
 ### Feature Branch Management

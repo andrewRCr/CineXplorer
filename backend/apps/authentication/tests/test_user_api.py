@@ -5,7 +5,7 @@ Tests for the user API.
 import json
 from typing import Any
 
-from authentication.email_verification import email_verification_service
+from allauth.account.models import EmailAddress
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractUser
 from django.http import HttpResponse
@@ -25,8 +25,13 @@ def create_user(**params: Any) -> AbstractUser:
     # Create user without email_verified (not a field on Django's default User model)
     user = get_user_model().objects.create_user(**params)
 
-    # Mark email as verified using allauth EmailAddress (via compatibility service)
-    email_verification_service.mark_email_verified(user)
+    # Mark email as verified using allauth EmailAddress
+    EmailAddress.objects.create(
+        user=user,
+        email=user.email,
+        verified=True,
+        primary=True
+    )
 
     return user
 
@@ -310,7 +315,12 @@ class AuthCookieIntegrationTests(TestCase):
 
         # Mark email as verified for the test user to allow login
         user = get_user_model().objects.get(email=self.user_data['email'])
-        email_verification_service.mark_email_verified(user)
+        EmailAddress.objects.create(
+            user=user,
+            email=user.email,
+            verified=True,
+            primary=True
+        )
 
     def test_token_obtain_sets_jwt_cookies(self):
         """Login sets JWT cookies (access and refresh)."""

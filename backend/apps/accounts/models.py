@@ -14,7 +14,6 @@ Migration Context:
 
 For email verification functionality, see:
 - django-allauth's EmailAddress and EmailConfirmation models
-- apps/authentication/email_verification.py (temporary compatibility bridge)
 
 Migration Date: 2025-10-01
 Related PRD: _docs/sub-prds/prd-authentication-modernization.md

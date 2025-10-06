@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import secrets
 
-from authentication.email_verification import email_verification_service
+from allauth.account.models import EmailAddress
 from authentication.serializers import (
     CustomTokenObtainPairSerializer,
     CustomTokenRefreshSerializer,
@@ -244,7 +244,7 @@ class ResendVerificationView(APIView):
         try:
             user = User.objects.get(email=email)
 
-            if email_verification_service.is_email_verified(user):
+            if EmailAddress.objects.filter(user=user, verified=True, primary=True).exists():
                 return Response({
                     'error': 'This email address is already verified.'
                 }, status=status.HTTP_400_BAD_REQUEST)

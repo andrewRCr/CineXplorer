@@ -3,7 +3,7 @@ Serializers for the user API View.
 """
 from __future__ import annotations
 
-from authentication.email_verification import email_verification_service
+from allauth.account.models import EmailAddress
 from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.models import AbstractUser, User
@@ -131,7 +131,8 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         data = super().validate(attrs)
 
         # Check if user's email is verified using allauth EmailAddress
-        if not email_verification_service.is_email_verified(self.user):
+        is_verified = EmailAddress.objects.filter(user=self.user, verified=True, primary=True).exists()
+        if not is_verified:
             ERROR_CODES = get_error_codes()
             raise ValidationError(
                 'Please verify your email address before logging in. '
@@ -141,7 +142,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
         # add custom user data to the response
         data["user_id"] = self.user.id
-        data["email_verified"] = email_verification_service.is_email_verified(self.user)
+        data["email_verified"] = is_verified
         return data
 
 

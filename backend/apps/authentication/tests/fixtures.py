@@ -6,8 +6,8 @@ testing, following the pattern established in the movie app tests.
 """
 from typing import TypedDict, Unpack
 
+from allauth.account.models import EmailAddress  # type: ignore[import-untyped]
 from allauth.socialaccount.models import SocialAccount, SocialApp
-from authentication.email_verification import email_verification_service
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractUser
 from django.contrib.sites.models import Site
@@ -66,11 +66,16 @@ def create_user(
     }
 
     # Create user
-    user = User.objects.create_user(**{**defaults, **params})
+    user = User.objects.create_user(**{**defaults, **params})  # type: ignore[attr-defined]  # UserManager.create_user exists at runtime
 
-    # Mark email as verified if requested
+    # Mark email as verified if requested using allauth EmailAddress API
     if email_verified:
-        email_verification_service.mark_email_verified(user)
+        EmailAddress.objects.create(  # type: ignore[attr-defined]
+            user=user,
+            email=user.email,
+            verified=True,
+            primary=True
+        )
 
     return user
 

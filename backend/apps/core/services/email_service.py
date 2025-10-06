@@ -6,7 +6,6 @@ from __future__ import annotations
 import logging
 
 import requests
-from authentication.email_verification import email_verification_service
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.template.loader import render_to_string
@@ -34,50 +33,6 @@ class ZeptomailService:
             "Content-Type": "application/json",
             "Authorization": f"Zoho-enczapikey {self.api_key}",
         }
-
-    def send_verification_email(self, user: AbstractUser) -> bool:
-        """
-        Send email verification link to user.
-
-        NOTE: This method is a temporary stub that will be replaced in API Layer
-        Modernization Phase 2 when DRF endpoints are migrated to Django Ninja.
-        Actual email verification is handled by allauth through the custom adapter
-        (authentication.adapters.CustomAccountAdapter).
-
-        Args:
-            user: User instance to send verification email to
-
-        Returns:
-            bool: True if email sent successfully, False otherwise
-        """
-        # TEMPORARY STUB: Auto-verify for development (replaced in API Layer Phase 2)
-        logger.warning(
-            "Email verification temporarily disabled during auth modernization - user_email=%s",
-            user.email,
-            extra={
-                "user_email": user.email,
-                "integration_note": "Will be integrated with django-allauth in Task 5.0",
-            },
-        )
-
-        # Auto-verify for development during migration
-        if self.dev_mode:
-            try:
-                email_verification_service.mark_email_verified(user)
-                logger.info(
-                    "DEV MODE: Email auto-verified during migration",
-                    extra={"user_email": user.email},
-                )
-                return True
-            except Exception as e:
-                logger.error(
-                    "DEV MODE: Failed to mark email as verified",
-                    extra={"user_email": user.email, "error": str(e)},
-                    exc_info=True,
-                )
-                return False
-
-        return True
 
     def send_welcome_email(self, user: AbstractUser) -> bool:
         """

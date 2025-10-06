@@ -13,12 +13,14 @@ import logging
 from typing import Any, cast
 
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractUser
 from django.http import HttpRequest
 from ninja.errors import HttpError
 from ninja.security import APIKeyCookie
-from rest_framework_simplejwt.authentication import JWTAuthentication
-from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
+from ninja_jwt.exceptions import InvalidToken, TokenError
+from ninja_jwt.settings import api_settings
+from ninja_jwt.tokens import AccessToken
 
 # Get logger for authentication events
 logger = logging.getLogger('cinexplorer.auth')
@@ -82,12 +84,14 @@ class JWTCookieAuth(APIKeyCookie):
             return None
 
         try:
-            # Use the existing DRF JWT authentication logic
-            jwt_auth = JWTAuthentication()
-            validated_token = jwt_auth.get_validated_token(key.encode('utf-8'))
+            # Validate token using AccessToken class (django-ninja-jwt)
+            token = AccessToken(key)
 
-            # Get user from validated token
-            user = jwt_auth.get_user(validated_token)
+            # Get user from token payload
+            User = get_user_model()
+            user_id = token.payload[api_settings.USER_ID_CLAIM]
+            user = User.objects.get(**{api_settings.USER_ID_FIELD: user_id})
+
             if user and hasattr(user, 'id'):
                 username = getattr(cast(object, user), 'username', 'unknown')
                 logger.debug(f"Successfully authenticated user: {username}")
@@ -100,6 +104,9 @@ class JWTCookieAuth(APIKeyCookie):
             return None
         except TokenError as e:
             logger.warning(f"JWT token error: {e}")
+            return None
+        except User.DoesNotExist:
+            logger.warning("JWT token valid but user not found in database")
             return None
         except Exception as e:
             logger.error(f"Unexpected authentication error: {e}", exc_info=True)

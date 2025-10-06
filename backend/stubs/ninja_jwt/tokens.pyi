@@ -1,15 +1,15 @@
 """
-Type stub file for djangorestframework-simplejwt tokens.
+Type stub file for django-ninja-jwt tokens.
 
-Provides explicit type annotations for SimpleJWT's Token, RefreshToken, and
+Provides explicit type annotations for django-ninja-jwt's Token, RefreshToken, and
 AccessToken classes, enabling type-safe token operations.
 
 ⚠️ MAINTENANCE CONTRACT
 ========================
-Synchronized with: djangorestframework-simplejwt 5.3.x (as of 2025-01-27)
+Synchronized with: django-ninja-jwt 5.3.x (as of 2025-01-27)
 Last verified: 2025-01-27
 
-When upgrading djangorestframework-simplejwt:
+When upgrading django-ninja-jwt:
 1. Check release notes for Token/RefreshToken/AccessToken API changes
 2. Run tests - if runtime errors occur, check this stub file first
 3. Verify constructor signatures and property types match runtime behavior
@@ -17,11 +17,14 @@ When upgrading djangorestframework-simplejwt:
 
 Trade-off: This stub eliminates type: ignore comments and provides proper type
 inference for token.access_token and token.payload, but requires manual
-verification on simplejwt upgrades.
+verification on ninja-jwt upgrades.
 
 Purpose: Eliminates type: ignore comments on RefreshToken usage, adds payload typing
 Pattern: Custom stubs for third-party libraries without complete type information
 Compliance: Zero typing.Any usage per DEVELOPMENT-RULES.md (uses dict[str, object])
+
+Note: django-ninja-jwt is a direct fork of djangorestframework-simplejwt with
+identical token API, so these stubs mirror the simplejwt stubs structure.
 """
 from __future__ import annotations
 
@@ -34,14 +37,14 @@ class _TokenProtocol(Protocol):
     Protocol for JWT token objects that can be converted to strings.
 
     Avoids using typing.Any per DEVELOPMENT-RULES.md type safety standards.
-    All token classes in SimpleJWT implement __str__ for token string serialization.
+    All token classes in ninja-jwt implement __str__ for token string serialization.
     """
     def __str__(self) -> str: ...
 
 
 class Token:
     """
-    Base class for JWT tokens in SimpleJWT.
+    Base class for JWT tokens in django-ninja-jwt.
 
     Tokens can be instantiated from a token string or created fresh for a user.
     """

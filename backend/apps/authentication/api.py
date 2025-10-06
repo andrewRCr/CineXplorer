@@ -28,7 +28,7 @@ from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model
 from django.http import HttpRequest, HttpResponse
 from ninja import Router
-from rest_framework_simplejwt.tokens import RefreshToken
+from ninja_jwt.tokens import RefreshToken
 
 # Create authentication router
 auth_router = Router(tags=["Authentication"])

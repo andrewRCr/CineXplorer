@@ -9,19 +9,22 @@ import secrets
 from datetime import timedelta
 from typing import Literal, cast
 
+from allauth.account.models import EmailAddress, EmailConfirmation  # type: ignore[import-untyped]
 from authentication.auth_ninja import get_current_user
-from authentication.email_verification import email_verification_service
 from authentication.schemas import (
     CsrfTokenResponseSchema,
+    EmailVerificationInputSchema,
+    EmailVerificationResponseSchema,
     LogoutResponseSchema,
     RegisterInputSchema,
     RegisterResponseSchema,
+    ResendVerificationInputSchema,
+    ResendVerificationResponseSchema,
     TokenObtainInputSchema,
     TokenResponseSchema,
     UserProfileSchema,
     UserProfileUpdateSchema,
 )
-from core.services.email_service import email_service
 from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.models import AbstractUser
@@ -62,8 +65,8 @@ def register_user(request: HttpRequest, payload: RegisterInputSchema) -> tuple[i
 
     Email verification flow:
         1. User created with Django's create_user()
-        2. email_service.send_verification_email() triggers allauth confirmation
-        3. User receives email with verification link
+        2. EmailAddress.objects.add_email() creates EmailAddress record and sends confirmation
+        3. User receives email with verification link via CustomAccountAdapter (ZeptoMail)
         4. Email verification handled by allauth EmailAddress model
     """
     user_model = get_user_model()
@@ -94,17 +97,17 @@ def register_user(request: HttpRequest, payload: RegisterInputSchema) -> tuple[i
         password=payload.password
     )
 
-    # Send verification email via allauth integration
-    email_sent = email_service.send_verification_email(user)  # type: ignore[misc]  # email_service type resolution issue
-
-    if email_sent:
+    # Send verification email via allauth API
+    try:
+        # Create EmailAddress record and send confirmation using allauth
+        EmailAddress.objects.add_email(request, user, payload.email, confirm=True)  # type: ignore[attr-defined]
         return 201, {
             "message": "Registration successful. Please check your email to verify your account.",
             "user_id": user.id,
             "email": user.email,
             "email_sent": True
         }
-    else:
+    except Exception:
         # Email failed to send - delete the user and return error
         user.delete()
         return 500, {
@@ -157,8 +160,8 @@ def obtain_token(request: HttpRequest, response: HttpResponse, payload: TokenObt
     # Cast to AbstractUser for type safety (authenticate returns AbstractBaseUser)
     user = cast(AbstractUser, authenticated_user)
 
-    # Check email verification using allauth EmailAddress
-    if not email_verification_service.is_email_verified(user):
+    # Check email verification using allauth EmailAddress API
+    if not EmailAddress.objects.filter(user=user, verified=True).exists():  # type: ignore[attr-defined]
         return 403, {
             "error": "Please verify your email address before logging in. "
             "Check your email for the verification link."
@@ -383,8 +386,8 @@ def get_user_profile(request: HttpRequest) -> UserProfileSchema:
     # Create base schema from ORM model
     profile = UserProfileSchema.from_orm(user)
 
-    # Add computed fields
-    profile.email_verified = email_verification_service.is_email_verified(user)
+    # Add computed fields using allauth EmailAddress API
+    profile.email_verified = EmailAddress.objects.filter(user=user, verified=True).exists()  # type: ignore[attr-defined]
     profile.full_name = f"{user.first_name} {user.last_name}".strip() or None
 
     return profile
@@ -435,12 +438,77 @@ def update_user_profile(
 
     user.save()  # type: ignore[attr-defined]  # AbstractUser has save at runtime
 
-    # Create response schema with computed fields
+    # Create response schema with computed fields using allauth EmailAddress API
     profile = UserProfileSchema.from_orm(user)
-    profile.email_verified = email_verification_service.is_email_verified(user)
+    profile.email_verified = EmailAddress.objects.filter(user=user, verified=True).exists()  # type: ignore[attr-defined]
     profile.full_name = f"{user.first_name} {user.last_name}".strip() or None
 
     return 200, profile
+
+
+@auth_router.post("/verify-email/", auth=None, response={200: EmailVerificationResponseSchema, 400: dict[str, object]})
+def verify_email(request: HttpRequest, payload: EmailVerificationInputSchema) -> tuple[int, dict[str, str]]:
+    """Verify user's email address using the confirmation key.
+
+    Args:
+        request: Django HTTP request
+        payload: Email verification input with confirmation key
+
+    Returns:
+        Success message if verification succeeds, error if key is invalid/expired
+    """
+    try:
+        # Get the EmailConfirmation object by key
+        confirmation = EmailConfirmation.objects.get(key=payload.key)  # type: ignore[attr-defined]
+
+        # Check if already confirmed
+        email_address = confirmation.email_address  # type: ignore[attr-defined]
+        if email_address.verified:  # type: ignore[attr-defined]
+            return 400, {"message": "Email address is already verified."}
+
+        # Confirm the email (this marks it as verified)
+        confirmation.confirm(request)  # type: ignore[attr-defined]
+
+        return 200, {"message": "Email verified successfully."}
+
+    except EmailConfirmation.DoesNotExist:  # type: ignore[attr-defined]
+        return 400, {"message": "Invalid or expired verification link."}
+
+
+@auth_router.post("/resend-verification/", auth=None, response={200: ResendVerificationResponseSchema, 400: dict[str, object]})
+def resend_verification(request: HttpRequest, payload: ResendVerificationInputSchema) -> tuple[int, dict[str, str]]:
+    """Resend email verification to the provided email address.
+
+    Args:
+        request: Django HTTP request
+        payload: Email address to resend verification to
+
+    Returns:
+        Success message (even if email doesn't exist for security)
+    """
+    user_model = get_user_model()
+
+    try:
+        user = user_model.objects.get(email=payload.email)
+
+        # Check if already verified using allauth EmailAddress API
+        if EmailAddress.objects.filter(user=user, verified=True).exists():  # type: ignore[attr-defined]
+            return 400, {"message": "This email address is already verified."}
+
+        # Get or create EmailAddress record and send confirmation via allauth
+        try:
+            email_address = EmailAddress.objects.get(user=user, email__iexact=payload.email)  # type: ignore[attr-defined]
+            # Send new confirmation email using allauth's built-in method
+            email_address.send_confirmation(request)  # type: ignore[attr-defined]
+            return 200, {"message": "Verification email sent successfully."}
+        except EmailAddress.DoesNotExist:  # type: ignore[attr-defined]
+            # Create EmailAddress record if it doesn't exist, then send confirmation
+            EmailAddress.objects.add_email(request, user, payload.email, confirm=True)  # type: ignore[attr-defined]
+            return 200, {"message": "Verification email sent successfully."}
+
+    except user_model.DoesNotExist:
+        # Don't reveal if email exists or not for security
+        return 200, {"message": "If the email address exists, a verification email has been sent."}
 
 
 __all__ = [

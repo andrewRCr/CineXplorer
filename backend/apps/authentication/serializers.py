@@ -131,7 +131,9 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         data = super().validate(attrs)
 
         # Check if user's email is verified using allauth EmailAddress
-        is_verified = EmailAddress.objects.filter(user=self.user, verified=True, primary=True).exists()
+        is_verified = EmailAddress.objects.filter(
+            user=self.user, verified=True, primary=True
+        ).exists()
         if not is_verified:
             ERROR_CODES = get_error_codes()
             raise ValidationError(

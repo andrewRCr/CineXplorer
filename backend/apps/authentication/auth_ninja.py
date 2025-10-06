@@ -88,7 +88,7 @@ class JWTCookieAuth(APIKeyCookie):
             token = AccessToken(key)
 
             # Get user from token payload
-            User = get_user_model()
+            User = get_user_model()  # noqa: N806
             user_id = token.payload[api_settings.USER_ID_CLAIM]
             user = User.objects.get(**{api_settings.USER_ID_FIELD: user_id})
 

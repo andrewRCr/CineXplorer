@@ -6,10 +6,9 @@ using Django Ninja, following the patterns established in Phase 1.
 from __future__ import annotations
 
 import secrets
-from datetime import timedelta
-from typing import Literal, cast
+from typing import Literal
 
-from allauth.account.models import EmailAddress, EmailConfirmation  # type: ignore[import-untyped]
+from allauth.account.models import EmailAddress, EmailConfirmation
 from authentication.auth_ninja import get_current_user
 from authentication.schemas import (
     CsrfTokenResponseSchema,
@@ -27,7 +26,6 @@ from authentication.schemas import (
 )
 from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model
-from django.contrib.auth.models import AbstractUser
 from django.http import HttpRequest, HttpResponse
 from ninja import Router
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -36,14 +34,12 @@ from rest_framework_simplejwt.tokens import RefreshToken
 auth_router = Router(tags=["Authentication"])
 
 
-def _get_jwt_settings() -> dict[str, str | timedelta]:
-    """Get typed JWT settings from Django settings.
+def _get_jwt_settings() -> dict[str, object]:
+    """Get JWT settings from Django settings.
 
-    Type-safe accessor for SIMPLE_JWT settings to avoid MyPy errors
-    with Django's dynamic settings system.
+    Returns SIMPLE_JWT settings dictionary.
     """
-    jwt_settings = cast(dict[str, str | timedelta], settings.SIMPLE_JWT)
-    return jwt_settings
+    return settings.SIMPLE_JWT  # type: ignore[return-value]  # Django settings are dynamic
 
 
 @auth_router.post("/register/", auth=None, response={201: RegisterResponseSchema, 409: dict[str, object], 500: dict[str, object]})
@@ -91,7 +87,7 @@ def register_user(request: HttpRequest, payload: RegisterInputSchema) -> tuple[i
         }
 
     # Create the user
-    user = user_model.objects.create_user(  # type: ignore[attr-defined]  # UserManager.create_user exists at runtime
+    user = user_model.objects.create_user(
         username=payload.username,
         email=payload.email,
         password=payload.password
@@ -100,7 +96,7 @@ def register_user(request: HttpRequest, payload: RegisterInputSchema) -> tuple[i
     # Send verification email via allauth API
     try:
         # Create EmailAddress record and send confirmation using allauth
-        EmailAddress.objects.add_email(request, user, payload.email, confirm=True)  # type: ignore[attr-defined]
+        EmailAddress.objects.add_email(request, user, payload.email, confirm=True)
         return 201, {
             "message": "Registration successful. Please check your email to verify your account.",
             "user_id": user.id,
@@ -157,29 +153,25 @@ def obtain_token(request: HttpRequest, response: HttpResponse, payload: TokenObt
     if not authenticated_user:
         return 401, {"error": "Unable to authenticate with provided credentials."}
 
-    # Cast to AbstractUser for type safety (authenticate returns AbstractBaseUser)
-    user = cast(AbstractUser, authenticated_user)
-
     # Check email verification using allauth EmailAddress API
-    if not EmailAddress.objects.filter(user=user, verified=True).exists():  # type: ignore[attr-defined]
+    if not EmailAddress.objects.filter(user=authenticated_user, verified=True).exists():
         return 403, {
             "error": "Please verify your email address before logging in. "
             "Check your email for the verification link."
         }
 
     # Generate JWT tokens
-    refresh = RefreshToken.for_user(user)
+    refresh = RefreshToken.for_user(authenticated_user)
     access_token = str(refresh.access_token)
     refresh_token = str(refresh)
 
-    # Get typed JWT settings
+    # Get JWT settings
     jwt_settings = _get_jwt_settings()
-    access_token_name = cast(str, jwt_settings['ACCESS_TOKEN_NAME'])
-    refresh_token_name = cast(str, jwt_settings['REFRESH_TOKEN_NAME'])
-    access_lifetime = cast(timedelta, jwt_settings['ACCESS_TOKEN_LIFETIME'])
-    refresh_lifetime = cast(timedelta, jwt_settings['REFRESH_TOKEN_LIFETIME'])
-    samesite = cast(Literal['Lax', 'Strict', 'None'],
-                    jwt_settings.get('JWT_COOKIE_SAMESITE', 'Lax'))
+    access_token_name = str(jwt_settings['ACCESS_TOKEN_NAME'])
+    refresh_token_name = str(jwt_settings['REFRESH_TOKEN_NAME'])
+    access_lifetime = jwt_settings['ACCESS_TOKEN_LIFETIME']  # type: ignore[assignment]  # Django settings dynamic
+    refresh_lifetime = jwt_settings['REFRESH_TOKEN_LIFETIME']  # type: ignore[assignment]  # Django settings dynamic
+    samesite: Literal['Lax', 'Strict', 'None'] = jwt_settings.get('JWT_COOKIE_SAMESITE', 'Lax')  # type: ignore[assignment]  # Django settings dynamic
 
     # Set tokens as httponly cookies
     response.set_cookie(
@@ -203,7 +195,7 @@ def obtain_token(request: HttpRequest, response: HttpResponse, payload: TokenObt
     return 200, {
         "access": access_token,
         "refresh": refresh_token,
-        "user_id": user.id,  # type: ignore[attr-defined]  # AbstractUser has id at runtime
+        "user_id": authenticated_user.id,
         "email_verified": True  # Already checked above
     }
 
@@ -227,14 +219,13 @@ def refresh_token(request: HttpRequest, response: HttpResponse) -> tuple[int, di
         - Reads refresh token from httponly cookie
         - Sets new access and refresh tokens as httponly cookies
     """
-    # Get typed JWT settings
+    # Get JWT settings
     jwt_settings = _get_jwt_settings()
-    refresh_token_name = cast(str, jwt_settings['REFRESH_TOKEN_NAME'])
-    access_token_name = cast(str, jwt_settings['ACCESS_TOKEN_NAME'])
-    access_lifetime = cast(timedelta, jwt_settings['ACCESS_TOKEN_LIFETIME'])
-    refresh_lifetime = cast(timedelta, jwt_settings['REFRESH_TOKEN_LIFETIME'])
-    samesite = cast(Literal['Lax', 'Strict', 'None'],
-                    jwt_settings.get('JWT_COOKIE_SAMESITE', 'Lax'))
+    refresh_token_name = str(jwt_settings['REFRESH_TOKEN_NAME'])
+    access_token_name = str(jwt_settings['ACCESS_TOKEN_NAME'])
+    access_lifetime = jwt_settings['ACCESS_TOKEN_LIFETIME']  # type: ignore[assignment]  # Django settings dynamic
+    refresh_lifetime = jwt_settings['REFRESH_TOKEN_LIFETIME']  # type: ignore[assignment]  # Django settings dynamic
+    samesite: Literal['Lax', 'Strict', 'None'] = jwt_settings.get('JWT_COOKIE_SAMESITE', 'Lax')  # type: ignore[assignment]  # Django settings dynamic
 
     # Get refresh token from cookie
     refresh_token_value = request.COOKIES.get(refresh_token_name)
@@ -244,7 +235,7 @@ def refresh_token(request: HttpRequest, response: HttpResponse) -> tuple[int, di
 
     try:
         # Validate and refresh the token
-        refresh = RefreshToken(refresh_token_value)  # type: ignore[arg-type]  # SimpleJWT accepts str at runtime
+        refresh = RefreshToken(refresh_token_value)
         access_token = str(refresh.access_token)
         new_refresh_token = str(refresh)
 
@@ -299,12 +290,11 @@ def logout(request: HttpRequest, response: HttpResponse) -> tuple[int, dict[str,
         - Deletes refresh token cookie
         - Uses same path, domain, samesite as when cookies were set
     """
-    # Get typed JWT settings
+    # Get JWT settings
     jwt_settings = _get_jwt_settings()
-    access_token_name = cast(str, jwt_settings['ACCESS_TOKEN_NAME'])
-    refresh_token_name = cast(str, jwt_settings['REFRESH_TOKEN_NAME'])
-    samesite = cast(Literal['Lax', 'Strict', 'None'],
-                    jwt_settings.get('JWT_COOKIE_SAMESITE', 'Lax'))
+    access_token_name = str(jwt_settings['ACCESS_TOKEN_NAME'])
+    refresh_token_name = str(jwt_settings['REFRESH_TOKEN_NAME'])
+    samesite: Literal['Lax', 'Strict', 'None'] = jwt_settings.get('JWT_COOKIE_SAMESITE', 'Lax')  # type: ignore[assignment]  # Django settings dynamic
 
     # Delete cookies with matching attributes for reliable removal
     cookie_kwargs = {
@@ -387,7 +377,7 @@ def get_user_profile(request: HttpRequest) -> UserProfileSchema:
     profile = UserProfileSchema.from_orm(user)
 
     # Add computed fields using allauth EmailAddress API
-    profile.email_verified = EmailAddress.objects.filter(user=user, verified=True).exists()  # type: ignore[attr-defined]
+    profile.email_verified = EmailAddress.objects.filter(user=user, verified=True).exists()
     profile.full_name = f"{user.first_name} {user.last_name}".strip() or None
 
     return profile
@@ -434,13 +424,13 @@ def update_user_profile(
 
     # Hash and set password if provided
     if password:
-        user.set_password(password)  # type: ignore[attr-defined]  # AbstractUser has set_password at runtime
+        user.set_password(password)
 
-    user.save()  # type: ignore[attr-defined]  # AbstractUser has save at runtime
+    user.save()
 
     # Create response schema with computed fields using allauth EmailAddress API
     profile = UserProfileSchema.from_orm(user)
-    profile.email_verified = EmailAddress.objects.filter(user=user, verified=True).exists()  # type: ignore[attr-defined]
+    profile.email_verified = EmailAddress.objects.filter(user=user, verified=True).exists()
     profile.full_name = f"{user.first_name} {user.last_name}".strip() or None
 
     return 200, profile
@@ -459,19 +449,19 @@ def verify_email(request: HttpRequest, payload: EmailVerificationInputSchema) ->
     """
     try:
         # Get the EmailConfirmation object by key
-        confirmation = EmailConfirmation.objects.get(key=payload.key)  # type: ignore[attr-defined]
+        confirmation = EmailConfirmation.objects.get(key=payload.key)
 
         # Check if already confirmed
-        email_address = confirmation.email_address  # type: ignore[attr-defined]
-        if email_address.verified:  # type: ignore[attr-defined]
+        email_address = confirmation.email_address
+        if email_address.verified:
             return 400, {"message": "Email address is already verified."}
 
         # Confirm the email (this marks it as verified)
-        confirmation.confirm(request)  # type: ignore[attr-defined]
+        confirmation.confirm(request)
 
         return 200, {"message": "Email verified successfully."}
 
-    except EmailConfirmation.DoesNotExist:  # type: ignore[attr-defined]
+    except EmailConfirmation.DoesNotExist:
         return 400, {"message": "Invalid or expired verification link."}
 
 
@@ -492,18 +482,18 @@ def resend_verification(request: HttpRequest, payload: ResendVerificationInputSc
         user = user_model.objects.get(email=payload.email)
 
         # Check if already verified using allauth EmailAddress API
-        if EmailAddress.objects.filter(user=user, verified=True).exists():  # type: ignore[attr-defined]
+        if EmailAddress.objects.filter(user=user, verified=True).exists():
             return 400, {"message": "This email address is already verified."}
 
         # Get or create EmailAddress record and send confirmation via allauth
         try:
-            email_address = EmailAddress.objects.get(user=user, email__iexact=payload.email)  # type: ignore[attr-defined]
+            email_address = EmailAddress.objects.get(user=user, email__iexact=payload.email)
             # Send new confirmation email using allauth's built-in method
-            email_address.send_confirmation(request)  # type: ignore[attr-defined]
+            email_address.send_confirmation(request)
             return 200, {"message": "Verification email sent successfully."}
-        except EmailAddress.DoesNotExist:  # type: ignore[attr-defined]
+        except EmailAddress.DoesNotExist:
             # Create EmailAddress record if it doesn't exist, then send confirmation
-            EmailAddress.objects.add_email(request, user, payload.email, confirm=True)  # type: ignore[attr-defined]
+            EmailAddress.objects.add_email(request, user, payload.email, confirm=True)
             return 200, {"message": "Verification email sent successfully."}
 
     except user_model.DoesNotExist:

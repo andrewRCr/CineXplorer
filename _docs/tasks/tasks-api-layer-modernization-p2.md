@@ -186,34 +186,34 @@ def create_entry(request: HttpRequest, payload: CreateSchema):
 
 **Solution:** `django-ninja-jwt` - Official fork of simplejwt specifically for Django Ninja, actively maintained (latest: 5.3.5, Nov 2024).
 
-- [ ] 4.1 Research and evaluate django-ninja-jwt
-    - [ ] 4.1.1 Review django-ninja-jwt documentation (https://eadwincode.github.io/django-ninja-jwt/)
-    - [ ] 4.1.2 Compare API with djangorestframework-simplejwt to understand migration path
-    - [ ] 4.1.3 Verify compatibility with our current setup (httponly cookies, CORS, allauth)
-    - [ ] 4.1.4 Check for any breaking changes or configuration differences
-    - [ ] 4.1.5 Verify it supports same token features (access, refresh, blacklisting if used)
+- [x] 4.1 Research and evaluate django-ninja-jwt
+    - [x] 4.1.1 Review django-ninja-jwt documentation (https://eadwincode.github.io/django-ninja-jwt/)
+    - [x] 4.1.2 Compare API with djangorestframework-simplejwt to understand migration path
+    - [x] 4.1.3 Verify compatibility with our current setup (httponly cookies, CORS, allauth)
+    - [x] 4.1.4 Check for any breaking changes or configuration differences
+    - [x] 4.1.5 Verify it supports same token features (access, refresh, blacklisting if used)
 
 - [ ] 4.2 Install django-ninja-jwt and update configuration
     - [ ] 4.2.1 Add `django-ninja-jwt` to `backend/requirements/req.base.txt`
-    - [ ] 4.2.2 Update Django settings (rename `SIMPLE_JWT` to `NINJA_JWT` or verify config compatibility)
-    - [ ] 4.2.3 Verify token lifetime settings preserved (ACCESS_TOKEN_LIFETIME, REFRESH_TOKEN_LIFETIME)
-    - [ ] 4.2.4 Verify cookie settings preserved (httponly, secure, samesite, cookie names)
+    - [ ] 4.2.2 Verify Django settings compatibility (ninja-jwt uses same `SIMPLE_JWT` key - NO CHANGE needed)
+    - [ ] 4.2.3 Verify token lifetime settings preserved (ACCESS_TOKEN_LIFETIME, REFRESH_TOKEN_LIFETIME - NO CHANGE)
+    - [ ] 4.2.4 Verify cookie settings preserved (httponly, secure, samesite, cookie names - custom settings work as-is)
     - [ ] 4.2.5 Install dependencies (`docker compose exec backend pip install django-ninja-jwt`)
 
 - [ ] 4.3 Migrate auth_ninja.py to django-ninja-jwt
-    - [ ] 4.3.1 Update imports (replace `rest_framework_simplejwt` with `ninja_jwt`)
-    - [ ] 4.3.2 Update `JWTCookieAuth` class to use `ninja_jwt.authentication.JWTAuth` as base
-    - [ ] 4.3.3 Verify `authenticate()` method signature matches (HttpRequest, key: str | None)
-    - [ ] 4.3.4 Update token validation to use ninja-jwt's validation methods
-    - [ ] 4.3.5 Ensure return type remains `AbstractUser | None` for compatibility
+    - [ ] 4.3.1 Update imports (replace `rest_framework_simplejwt` with `ninja_jwt` - tokens, exceptions, settings)
+    - [ ] 4.3.2 Keep `JWTCookieAuth` extending `APIKeyCookie` (no change to base class - ninja-jwt has no cookie support)
+    - [ ] 4.3.3 Add `get_user_model()` import for user lookup in authenticate() method
+    - [ ] 4.3.4 Rewrite `authenticate()` method: use `AccessToken(key)` directly, extract user_id from payload, lookup user via ORM
+    - [ ] 4.3.5 Update exception handling: catch `InvalidToken`, `TokenError` from ninja_jwt, add `User.DoesNotExist`
     - [ ] 4.3.6 Run incremental quality checks (ruff, pyright on modified file)
 
 - [ ] 4.4 Migrate authentication API endpoints
-    - [ ] 4.4.1 Update `api.py` register endpoint (replace simplejwt RefreshToken with ninja-jwt)
-    - [ ] 4.4.2 Update `api.py` login endpoint (replace simplejwt token generation)
-    - [ ] 4.4.3 Update `api.py` refresh endpoint (replace simplejwt refresh logic)
-    - [ ] 4.4.4 Verify cookie setting logic remains identical (httponly, secure, samesite)
-    - [ ] 4.4.5 Verify error handling remains consistent
+    - [ ] 4.4.1 Update `api.py` import: change `rest_framework_simplejwt.tokens` to `ninja_jwt.tokens` (RefreshToken API identical)
+    - [ ] 4.4.2 Verify register endpoint token generation unchanged (`RefreshToken.for_user(user)` - same API)
+    - [ ] 4.4.3 Verify login endpoint token generation unchanged (same API)
+    - [ ] 4.4.4 Verify refresh endpoint token generation unchanged (`RefreshToken(token_string)` - same API)
+    - [ ] 4.4.5 Verify cookie setting logic remains identical (httponly, secure, samesite - no changes)
     - [ ] 4.4.6 Run incremental quality checks (ruff, pyright on modified files)
 
 - [ ] 4.5 Remove simplejwt dependencies and stubs
@@ -224,10 +224,10 @@ def create_entry(request: HttpRequest, payload: CreateSchema):
     - [ ] 4.5.5 Uninstall old dependency (`docker compose exec backend pip uninstall djangorestframework-simplejwt`)
 
 - [ ] 4.6 Create type stubs for django-ninja-jwt (if needed)
-    - [ ] 4.6.1 Run type checking on authentication domain (`python scripts/type_check.py --only auth`)
-    - [ ] 4.6.2 If type errors exist, check if django-ninja-jwt provides type stubs
-    - [ ] 4.6.3 If not, create minimal `backend/stubs/ninja_jwt/` stubs following same pattern
-    - [ ] 4.6.4 Document maintenance contract if custom stubs created
+    - [ ] 4.6.1 Run type checking on authentication domain after migration (`python scripts/type_check.py --only auth`)
+    - [ ] 4.6.2 Check if type errors exist (django-ninja-jwt may lack complete type stubs like simplejwt)
+    - [ ] 4.6.3 If errors, create `backend/stubs/ninja_jwt/` stubs (tokens.pyi, exceptions.pyi, settings.pyi, authentication.pyi)
+    - [ ] 4.6.4 Document maintenance contract following type-safety-strategy.md pattern
     - [ ] 4.6.5 Achieve zero type errors in authentication domain (maintain Phase 3 achievement)
 
 - [ ] 4.7 Update and run authentication tests

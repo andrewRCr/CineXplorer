@@ -4,18 +4,38 @@ Type stub file for django.contrib.auth.models.
 This file provides explicit type annotations for Django's built-in User/AbstractUser model,
 enabling perfect type inference in Pyright/Pylance.
 
-⚠️ MAINTENANCE: Update when Django version changes
-This stub is based on Django 5.x AbstractUser/User model.
-When upgrading Django major versions, verify these fields are still accurate.
+⚠️ MAINTENANCE CONTRACT
+========================
+Synchronized with: Django 5.1.x + django-stubs 5.1.x (as of 2025-01-27)
+Last verified: 2025-01-27
 
-Note: This is a supplement to django-stubs. We only define what's needed for our codebase.
+When upgrading Django:
+1. Check Django release notes for auth model changes (rare in minor versions)
+2. Run tests - if runtime errors occur, check this stub file first
+3. Verify field types and method signatures match Django's actual model
+4. Update "Last verified" date above
+
+Trade-off: This supplements django-stubs to fill gaps (UserManager.create_user,
+AbstractBaseUser methods). Eliminates 5+ type: ignore comments for common Django
+operations, but adds ~80 lines of code to maintain.
+
+Why we need this: django-stubs has incomplete coverage for UserManager methods and
+AbstractBaseUser attributes. Rather than scatter type: ignore throughout code, we
+centralize the "trust me, Django has these" declarations here.
+
+Note: This is a supplement to django-stubs. We only define what's missing from our needs.
 """
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Protocol
+from typing import TYPE_CHECKING, Any, Protocol
 
 from django.db.models import Manager
+
+if TYPE_CHECKING:
+    from django.contrib.auth.base_user import AbstractBaseUser as _AbstractBaseUser
+else:
+    _AbstractBaseUser = object
 
 # Simple protocol for related managers (groups, user_permissions)
 # We only care about .count() method for our use case
@@ -25,11 +45,44 @@ class _RelatedManagerProtocol(Protocol):
     def all(self) -> Any: ...
     def filter(self, **kwargs: Any) -> Any: ...
 
+# User Manager
+class UserManager(Manager[AbstractUser]):
+    """Manager for User/AbstractUser with custom methods."""
+
+    def create_user(
+        self,
+        username: str,
+        email: str = "",
+        password: str | None = None,
+        **extra_fields: Any
+    ) -> AbstractUser:
+        """Create and save a regular user with the given username, email, and password."""
+        ...
+
+    def create_superuser(
+        self,
+        username: str,
+        email: str = "",
+        password: str | None = None,
+        **extra_fields: Any
+    ) -> AbstractUser:
+        """Create and save a superuser with the given username, email, and password."""
+        ...
+
 # Dummy base classes for stub file
 class AbstractBaseUser:
     """Base user with authentication support."""
+    id: int  # Primary key
     is_authenticated: bool  # Property that returns True for authenticated users
     is_anonymous: bool  # Property that returns False for authenticated users
+
+    def set_password(self, raw_password: str | None) -> None:
+        """Set the user's password to the given raw string (hashed)."""
+        ...
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        """Save the model instance."""
+        ...
 
 class PermissionsMixin: ...
 
@@ -64,8 +117,8 @@ class AbstractUser(AbstractBaseUser, PermissionsMixin):
     groups: _RelatedManagerProtocol
     user_permissions: _RelatedManagerProtocol
 
-    # Manager
-    objects: Manager[AbstractUser]
+    # Manager (UserManager with create_user method)
+    objects: UserManager  # type: ignore[assignment]
 
     # Methods
     def get_full_name(self) -> str: ...
@@ -78,8 +131,8 @@ class User(AbstractUser):
     Inherits all fields from AbstractUser.
     """
 
-    # Manager (overridden to return User instances)
-    objects: Manager[User]
+    # Manager (UserManager with create_user method)
+    objects: UserManager  # type: ignore[assignment]
 
     class Meta:
         verbose_name: str

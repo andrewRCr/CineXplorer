@@ -58,6 +58,14 @@ def create_entry(request: HttpRequest, payload: CreateSchema):
 - `backend/apps/authentication/tests/fixtures.py` - Test fixtures using allauth EmailAddress API (UPDATED - Task 3.1.7)
 - `backend/apps/core/services/email_service.py` - ZeptoMail service without verification stub (UPDATED - Task 3.1.5)
 - `backend/apps/core/services/email_service.pyi` - Type stub for email service proxy pattern (NEW - Task 3.1.2, UPDATED - Task 3.1.5)
+- `backend/stubs/allauth/account/models.pyi` - Type stubs for allauth EmailAddress/EmailConfirmation (NEW - Task 3.2.2)
+- `backend/stubs/allauth/__init__.pyi` - Package marker for allauth stubs (NEW - Task 3.2.2)
+- `backend/stubs/allauth/account/__init__.pyi` - Subpackage marker for allauth.account (NEW - Task 3.2.2)
+- `backend/stubs/rest_framework_simplejwt/tokens.pyi` - Type stubs for SimpleJWT Token classes (NEW - Task 3.2.2)
+- `backend/stubs/rest_framework_simplejwt/authentication.pyi` - Type stubs for SimpleJWT JWTAuthentication (NEW - Task 3.2.6)
+- `backend/stubs/rest_framework_simplejwt/models.pyi` - Type stubs for SimpleJWT TokenUser class (NEW - Task 3.2.6)
+- `backend/stubs/rest_framework_simplejwt/__init__.pyi` - Package marker for SimpleJWT stubs (NEW - Task 3.2.2)
+- `backend/stubs/django/contrib/auth/models.pyi` - Supplements django-stubs for UserManager (ENHANCED - Task 3.2.2)
 
 ### Frontend
 
@@ -162,14 +170,15 @@ def create_entry(request: HttpRequest, payload: CreateSchema):
     - [x] 3.1.7 Verify no remaining references to deleted bridge (grep confirmation)
     - [x] 3.1.8 Run incremental quality checks (ruff, pyright on modified files)
 
-- [ ] 3.2 Remove all type: ignore comments from authentication module
-    - [ ] 3.2.1 Audit all `type: ignore` comments in `authentication/` directory (grep)
-    - [ ] 3.2.2 Remove `type: ignore` from email_verification.py references (file deleted)
-    - [ ] 3.2.3 Remove DRF-related `type: ignore` comments (DRF replaced with Django Ninja)
-    - [ ] 3.2.4 Verify remaining `type: ignore` comments are justified (Django internals only)
-    - [ ] 3.2.5 Run full type checking on authentication domain (Pyright + MyPy --strict)
-    - [ ] 3.2.6 Fix any type errors revealed by removing `type: ignore` comments
-    - [ ] 3.2.7 Achieve zero type errors in authentication domain
+- [x] 3.2 Remove all type: ignore comments from authentication module
+    - [x] 3.2.1 Audit all `type: ignore` comments in `authentication/` directory (grep)
+    - [x] 3.2.2 Create custom type stubs for third-party libraries (allauth, simplejwt)
+    - [x] 3.2.3 Remove `type: ignore` from email_verification.py references (file deleted in 3.1.6)
+    - [x] 3.2.4 Remove DRF-related `type: ignore` comments (eliminated via Django stubs)
+    - [x] 3.2.5 Verify remaining `type: ignore` comments are justified (Django settings only - documented)
+    - [x] 3.2.6 Run full type checking on authentication domain (Pyright + MyPy --strict)
+    - [x] 3.2.7 Fix any type errors revealed by removing `type: ignore` comments
+    - [x] 3.2.8 Achieve zero type errors in authentication domain
 
 ### Phase 4: Frontend Integration and Type Generation
 
@@ -249,16 +258,30 @@ def create_entry(request: HttpRequest, payload: CreateSchema):
     - [ ] 5.3.4 Verify OAuth error handling tests (invalid token, network error)
     - [ ] 5.3.5 Run OAuth tests (`python manage.py test apps.authentication.tests.test_oauth_mocks --settings=config.settings_test`)
 
-- [ ] 5.4 Run full quality gate checks
-    - [ ] 5.4.1 Run full backend test suite (`docker compose exec backend python manage.py test --settings=config.settings_test`)
-    - [ ] 5.4.2 Run full frontend test suite (`docker compose exec frontend npm test`)
-    - [ ] 5.4.3 Run backend linting (`docker compose exec backend ruff check apps/ config/`)
-    - [ ] 5.4.4 Run frontend linting (`docker compose exec frontend npm run lint`)
-    - [ ] 5.4.5 Run frontend type checking (`docker compose exec frontend npm run type-check`)
-    - [ ] 5.4.6 Run backend type checking - Pyright (`npx pyright backend/apps/user_movie_data backend/apps/authentication`)
-    - [ ] 5.4.7 Run backend type checking - MyPy strict (`docker compose exec backend mypy apps/user_movie_data apps/authentication --strict --config-file mypy.ini`)
-    - [ ] 5.4.8 Run markdown linting (`npx markdownlint-cli2 "**/*.md"`)
-    - [ ] 5.4.9 Verify 100% test pass rate and zero linting/type errors
+- [ ] 5.4 Verify Phase 1 test coverage and regression check (Movie, Core domains)
+    - [ ] 5.4.1 Run Movie domain tests (`docker compose exec backend python manage.py test apps.movie --settings=config.settings_test`)
+    - [ ] 5.4.2 Run Core domain tests (`docker compose exec backend python manage.py test apps.core --settings=config.settings_test`)
+    - [ ] 5.4.3 Review test coverage for Movie domain (`coverage run --source='apps.movie' manage.py test apps.movie --settings=config.settings_test && coverage report -m`)
+    - [ ] 5.4.4 Review test coverage for Core domain (`coverage run --source='apps.core' manage.py test apps.core --settings=config.settings_test && coverage report -m`)
+    - [ ] 5.4.5 Identify any gaps in test coverage from Phase 1 (target: 70%+ for critical paths)
+    - [ ] 5.4.6 Fix any failing tests in Movie/Core domains (regression fixes)
+    - [ ] 5.4.7 Add missing tests for uncovered critical paths in Movie/Core (if gaps identified)
+    - [ ] 5.4.8 Verify Phase 1 domains have no test regressions from Phase 2 work
+
+- [ ] 5.5 Run full quality gate checks (ENTIRE API LAYER - Phase 1 + Phase 2 certification)
+    - [ ] 5.5.1 Run full backend test suite with coverage - ALL apps (`docker compose exec backend coverage run --source='apps' manage.py test --settings=config.settings_test`)
+    - [ ] 5.5.2 Generate and review coverage report (`docker compose exec backend coverage report -m`)
+    - [ ] 5.5.3 Verify minimum 70% test coverage across entire API layer (per TECHNICAL-ARCHITECTURE.md)
+    - [ ] 5.5.4 Run full frontend test suite (`docker compose exec frontend npm test`)
+    - [ ] 5.5.5 Run backend linting - ALL apps (`docker compose exec backend ruff check apps/ config/`)
+    - [ ] 5.5.6 Run frontend linting (`docker compose exec frontend npm run lint`)
+    - [ ] 5.5.7 Run frontend type checking (`docker compose exec frontend npm run type-check`)
+    - [ ] 5.5.8 Run backend type checking - Pyright on ALL apps (`cd backend && npx pyright apps/`)
+    - [ ] 5.5.9 Run backend type checking - MyPy on ALL apps (`docker compose exec backend python scripts/type_check.py`)
+    - [ ] 5.5.10 Fix all type errors across entire backend (Movie, Core, Auth, UserMovieData, Config)
+    - [ ] 5.5.11 Verify Phase 1 domains (Movie, Core) have no type safety regressions from Phase 2 work
+    - [ ] 5.5.12 Run markdown linting (`npx markdownlint-cli2 "**/*.md"`)
+    - [ ] 5.5.13 Verify 100% test pass rate, 70%+ coverage, and ZERO type/lint errors across entire API layer (production certification)
 
 ### Phase 6: Documentation and Cleanup
 

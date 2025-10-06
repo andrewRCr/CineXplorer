@@ -22,7 +22,16 @@ The backend is a REST API built with Django and Django REST Framework (DRF).
 - **Authentication**: Authentication is handled by `rest_framework_simplejwt` using JSON Web Tokens. A custom `JWTCookieAuthentication` backend is implemented to manage tokens securely in HTTP-only cookies.
 - **API Documentation**: `drf-spectacular` is used to automatically generate an OpenAPI 3 schema and Swagger UI, available at `/api/docs/`.
 - **Code Style**: Linting is enforced using `.flake8`.
-- **Type Checking**: [Pyright](../backend/pyrightconfig.json) provides primary static analysis with support for Python 3.13 features. It's installed via dev tooling (see `backend/package.json` for npm-based installation). `mypy` (with `django-stubs`) is configured but currently affected by upstream issue [typeddjango/django-stubs#2461](https://github.com/typeddjango/django-stubs/issues/2461) (as of Sep 2025, affecting django-stubs 5.x on Django 5.x); Pyright remains the guardrail until that fix ships.
+- **Type Checking**: Hybrid approach using Pyright (development) and MyPy (CI/CD)
+    - **Pyright**: Primary type checker with Python 3.13 support, configured via `backend/pyrightconfig.json`
+    - **MyPy**: Django-aware validation with django-stubs plugin, configured via `backend/mypy.ini`
+    - **Custom Type Stubs**: Located in `backend/stubs/` to supplement third-party libraries
+        - `allauth/` - django-allauth models (EmailAddress, EmailConfirmation)
+        - `rest_framework_simplejwt/` - JWT token types
+        - `django/contrib/auth/` - Supplements django-stubs for UserManager and AbstractBaseUser
+    - **Stub Maintenance**: Each stub file documents version synchronization and upgrade procedures
+    - **Type Safety Goal**: Minimize `type: ignore` comments; remaining ones are documented (Django settings, framework internals)
+    - **See**: `_docs/reference/type-safety-strategy.md` for complete type safety approach
 - **Key Libraries**:
     - `django-cors-headers` for managing Cross-Origin Resource Sharing (CORS).
     - `django-debug-toolbar` for debugging during development.

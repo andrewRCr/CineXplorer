@@ -314,17 +314,24 @@ def get_user_movie_data_by_tmdb_id(request: HttpRequest, tmdb_id: int):
 
 ### Primary Success Criteria
 
-1. **Zero Type Errors (CI-Enforced):**
-   - **Pyright:** `npx pyright backend/apps/user_movie_data backend/apps/authentication backend/apps/accounts` (0 errors)
-   - **MyPy:** `docker compose exec backend mypy apps/user_movie_data apps/authentication apps/accounts --strict --config-file mypy.ini` (0 errors)
+1. **Zero Type Errors - ENTIRE API LAYER (CI-Enforced):**
+   - **Scope:** All backend apps (Movie, Core, Auth, UserMovieData, Accounts, Config) - Phase 1 + Phase 2 combined
+   - **Pyright:** `cd backend && npx pyright apps/` (0 errors across entire API layer)
+   - **MyPy:** `docker compose exec backend python scripts/type_check.py` (0 errors across entire API layer)
+   - **Rationale:** Phase 2 is the FINAL API modernization phase - must certify entire API layer is production-ready
+   - **Regression Check:** Verify Phase 1 domains (Movie, Core) have no regressions from Phase 2 work
    - **CI Check:** Both commands must pass in GitHub Actions workflow before merge approval
-   - **Justification Required:** Any `type: ignore` comments must have inline explanation
+   - **Justification Required:** Any `type: ignore` comments must have inline explanation (Django settings, framework internals only)
 
-2. **Complete Test Coverage:** 100% of existing API functionality is covered by updated tests
-   - **Backend Tests:** `docker compose exec backend python manage.py test apps.user_movie_data apps.authentication apps.accounts --settings=config.settings_test` (100% pass rate)
+2. **Complete Test Coverage - ENTIRE API LAYER:** All API functionality has comprehensive test coverage
+   - **Backend Tests:** `docker compose exec backend coverage run --source='apps' manage.py test --settings=config.settings_test` (100% pass rate - ALL apps)
+   - **Coverage Requirement:** Minimum 70% test coverage across entire API layer (per TECHNICAL-ARCHITECTURE.md)
+   - **Coverage Verification:** `coverage report -m` must show 70%+ coverage for critical paths and user-facing functionality
+   - **Scope:** Phase 2 domains (UserMovieData, Authentication) PLUS regression verification for Phase 1 domains (Movie, Core)
+   - **Phase 1 Regression Check:** Verify Movie and Core domain tests still pass with no degradation in coverage
    - **Authentication Tests:** Include comprehensive integration tests deferred from Authentication Modernization (password auth, CSRF, JWT refresh, logout, email verification, password reset)
    - **OAuth Tests:** Utilize fixtures and mocks created in Authentication Modernization for Google/GitHub OAuth flow testing
-   - **CI Check:** Test suite must pass with 0 failures in GitHub Actions workflow
+   - **CI Check:** Full test suite must pass with 0 failures and meet coverage targets in GitHub Actions workflow
 
 3. **Full Frontend Integration:** All frontend features work identically with new API endpoints
    - **Type Generation:** `npm run generate-types` produces valid TypeScript types from OpenAPI schema

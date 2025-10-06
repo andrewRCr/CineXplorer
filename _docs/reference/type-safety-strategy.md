@@ -75,30 +75,39 @@ class Movie(models.Model):
 
 **Why stub files:**
 
-- Perfect for small model counts with infrequent changes
-- 100% accurate type inference for custom models
-- No code refactoring required
-- ~5 minutes maintenance per model change
+- Perfect for small library surface area with stable APIs
+- 100% accurate type inference without modifying source code
+- Centralized type declarations vs scattered `type: ignore` comments
+- Good IDE autocomplete support
 
-**Implementation:**
+**Trade-offs (be honest)**:
 
-Create `.pyi` files alongside models with explicit type annotations:
+- ✅ **Pros**: Clean code, great DX, eliminates repetitive `type: ignore`
+- ⚠️ **Cons**: Manual maintenance, can drift from reality, ~250 LOC to maintain
+- 📊 **Worth it when**: Library is mature/stable (allauth, simplejwt) and changes infrequently
+- ❌ **Not worth it when**: Library APIs change often or maintenance burden grows
 
-```python
-# backend/apps/core/models.pyi
-from datetime import date
-from django.db import models
+**Our stub files** (`backend/stubs/`):
 
-class Movie(models.Model):
-    tmdb_id: int
-    title: str
-    poster_path: str | None
-    release_date: date | None
-```
+1. **Third-party libraries** (allauth, simplejwt):
+   - These libraries lack or have incomplete type stubs
+   - Alternative: 20+ `type: ignore` comments scattered in code
+   - Decision: Centralize in stubs for better maintainability
+
+2. **Django built-ins** (`stubs/django/contrib/auth/`):
+   - Supplements django-stubs gaps (UserManager.create_user, AbstractBaseUser methods)
+   - Alternative: 5+ `type: ignore` for common Django operations
+   - Decision: Worth it to enable clean authentication code
 
 **Configuration:** Set `"stubPath": "stubs"` in `backend/pyrightconfig.json`
 
-**For Django built-ins:** Create enhanced stubs in `backend/stubs/django/` when needed (see `stubs/django/contrib/auth/models.pyi` for example)
+**Maintenance contract**: Each stub file documents:
+- Library version synchronized with
+- Last verification date
+- Upgrade checklist
+- Explicit acknowledgment this is a maintenance trade-off
+
+**If stubs become a burden**: Remove them and use documented `type: ignore` instead. This is a pragmatic choice, not a dogmatic one.
 
 ## Implementation Patterns
 

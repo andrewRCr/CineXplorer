@@ -180,6 +180,44 @@ After completing all sub-tasks under a parent task:
 
 ## Type Safety Standards
 
+### Custom Type Stub Maintenance
+
+**Location**: `backend/stubs/` - Custom `.pyi` files supplementing third-party libraries
+
+**Current Stubs**:
+- `allauth/account/models.pyi` - django-allauth EmailAddress/EmailConfirmation types
+- `rest_framework_simplejwt/tokens.pyi` - JWT Token types with zero `Any` usage
+- `django/contrib/auth/models.pyi` - Supplements django-stubs for UserManager
+
+**Maintenance Protocol**:
+
+1. **Each stub file documents**:
+   - Library version it's synchronized with
+   - Last verification date
+   - Upgrade checklist
+
+2. **When upgrading dependencies**:
+   - Check library release notes for API changes
+   - Run full test suite
+   - If runtime errors occur, check corresponding stub file
+   - Update stub signatures if needed
+   - Update "Last verified" date in stub docstring
+
+3. **Trade-off acknowledgment**:
+   - ✅ **Benefit**: Eliminates 20+ `type: ignore` comments, provides excellent IDE support
+   - ⚠️ **Cost**: ~250 lines of code to maintain, requires verification on upgrades
+   - 📊 **Decision**: Worth it for mature, stable libraries (allauth, simplejwt rarely break APIs)
+
+4. **If maintenance burden grows**: Consider removing stubs and accepting more documented `type: ignore` comments
+
+**Why we use custom stubs**:
+- django-allauth lacks type stubs entirely
+- djangorestframework-simplejwt has incomplete type coverage
+- django-stubs has gaps for UserManager.create_user and AbstractBaseUser methods
+- Alternative would be 20+ `type: ignore` comments scattered throughout authentication code
+
+**See**: `_docs/reference/type-safety-strategy.md` for full type safety approach
+
 ### Django ORM with ModelSchema Pattern
 
 **For schemas with computed fields from related models**, use the `from_orm_with_<relation>()` class method pattern:

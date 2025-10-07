@@ -22,7 +22,7 @@ Guidelines for managing task lists in markdown files to track progress on comple
     - **First**: Ensure new code has appropriate test coverage (models, APIs, complex logic)
     - **Second**: Run the full test suite (`python manage.py test --settings=config.settings_test`, `npm test`, etc.)
     - **Third**: Run all linting checks (`ruff check apps/ config/`, `python scripts/type_check.py` [runs hybrid Pyright+mypy; requires `npm install` for pyright], `npm run lint`, `npm run type-check`, `npx markdownlint-cli2 "**/*.md"`)
-    - **Fourth**: Check if PROJECT-STATUS needs updates (feature progress, completed functionality, updated priorities)
+    - **Fourth**: Check if [PROJECT-STATUS](.arc/reference/constitution/PROJECT-STATUS.md) needs updates (feature progress, completed functionality, updated priorities)
 
   3. Generate standardized readiness report (see [Development Rules](../constitution/DEVELOPMENT-RULES.md) for format) and await user instructions on how to proceed. User may choose to commit changes (AI can execute only if explicitly approved to do so) or review first. When committing, follow [Atomic Commit Workflow](atomic-commit.md) guidelines:
 
@@ -108,12 +108,12 @@ When all parent tasks are complete and ready for integration:
    git branch -d feature/[feature-name]  # Clean up feature branch
    ```
 
-5. **Update PROJECT-STATUS**: Move feature from "In Progress" to "Completed"
+5. **Update [PROJECT-STATUS](.arc/reference/constitution/PROJECT-STATUS.md)**: Move feature from "In Progress" to "Completed"
 
 ### PROJECT-STATUS Maintenance
 
 - **After each sub-task**: Update task documentation only
-- **After each parent task**: Check if PROJECT-STATUS needs updates:
+- **After each parent task**: Check if [PROJECT-STATUS](.arc/reference/constitution/PROJECT-STATUS.md) needs updates:
     - Feature progress milestones reached
     - Newly completed functionality to highlight
     - Updated timelines or priorities

@@ -308,7 +308,8 @@ def test_auth_status(request: HttpRequest) -> AuthStatusResponse:
 
 
 # Add app routers
-# Register authentication router (no auth prefix, endpoints are at /api/register/, /api/token/, etc.)
+# Register authentication router (no auth prefix)
+# Endpoints: /api/register/, /api/token/, etc.
 api.add_router("", auth_router)
 
 # Register movie-related routers with clean URL structure

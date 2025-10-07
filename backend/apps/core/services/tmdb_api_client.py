@@ -369,7 +369,9 @@ class TMDBApiClient(BaseApiClient):
         }
 
         for header_name, key in rate_limit_headers.items():
-            if hasattr(headers, '__contains__') and hasattr(headers, '__getitem__') and header_name in headers:
+            has_contains = hasattr(headers, '__contains__')
+            has_getitem = hasattr(headers, '__getitem__')
+            if has_contains and has_getitem and header_name in headers:
                 value = headers[header_name]
                 # Convert numeric values to integers
                 if key in ['limit', 'remaining', 'retry_after', 'reset']:

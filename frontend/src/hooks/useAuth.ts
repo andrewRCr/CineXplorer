@@ -11,7 +11,7 @@
  */
 import { ROUTES } from "@/constants/routes";
 import { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import type { AuthStateProps } from "@/@types/auth-state";
 import {
 	getInitialAuthenticatedValue,
@@ -36,6 +36,7 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
 	});
 	const [user, setUser] = useState<UserProfile | null>(null);
 	const navigate = useNavigate();
+	const location = useLocation();
 
 	useEffect(() => {
 		if (isAuthenticated) {
@@ -57,6 +58,38 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
 		return () => clearInterval(interval);
 	// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [isAuthenticated]); // logout is stable but creates circular dependency
+
+	// Handle OAuth callback (when redirected back from Google/GitHub)
+	useEffect(() => {
+		const handleOAuthCallback = async () => {
+			// Check if we have tokens in cookies (set by backend after OAuth success)
+			const { authToken, refreshToken } = getAuthTokens();
+
+			// OAuth success: tokens are in cookies, but we might not have set isAuthenticated yet
+			if (authToken && refreshToken && !isAuthenticated) {
+				console.log("OAuth callback detected, setting authenticated state");
+				setIsAuthenticated(true);
+				// getUserDetails will be called by the isAuthenticated useEffect
+				navigate(ROUTES.HOME);
+			}
+
+			// OAuth error: check for error in URL params
+			const params = new URLSearchParams(location.search);
+			const error = params.get('error');
+			if (error) {
+				console.error("OAuth authentication failed:", error);
+				// Navigate to login with error state
+				navigate(ROUTES.LOGIN, {
+					state: {
+						oauthError: true,
+						message: "OAuth authentication failed. Please try again."
+					}
+				});
+			}
+		};
+
+		handleOAuthCallback();
+	}, [location, isAuthenticated, navigate]);
 
 	const logout = useCallback(async () => {
 		setIsAuthenticated(false);

@@ -80,11 +80,10 @@ class TokenObtainInputSchema(Schema):
     """Schema for JWT token obtain (login) input.
 
     Supports authentication with either username or email.
-    Field name uses camelCase to maintain backwards compatibility
-    with existing frontend implementation.
+    Field name follows django-allauth convention (allauth.account.forms.LoginForm).
     """
 
-    usernameOrEmail: str = Field(  # noqa: N815 - API contract backwards compatibility
+    login: str = Field(
         ...,
         description="Username or email for authentication"
     )

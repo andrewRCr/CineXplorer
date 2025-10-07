@@ -10,15 +10,17 @@ from unittest.mock import Mock, patch
 
 from core.models import Movie
 from core.services.api_response import ApiResponse
+from core.tests.test_helpers import HTTPStatus, create_user
 from core.types.api_types import TMDBResponseData
-from django.contrib.auth.models import User
 from django.test import Client, TestCase
 from user_movie_data.models import UserMovieData
 
 # HTTP status codes for Django Ninja endpoints
-HTTP_200_OK = 200
-HTTP_400_BAD_REQUEST = 400
-HTTP_404_NOT_FOUND = 404
+# (kept for backwards compatibility with existing tests)
+HTTP_200_OK = HTTPStatus.OK
+HTTP_400_BAD_REQUEST = HTTPStatus.BAD_REQUEST
+HTTP_404_NOT_FOUND = HTTPStatus.NOT_FOUND
+HTTP_422_UNPROCESSABLE_ENTITY = HTTPStatus.UNPROCESSABLE_ENTITY
 
 # =========================
 # Django Ninja API URLs
@@ -37,20 +39,7 @@ def movie_detail_url(tmdb_id: int) -> str:
 # =========================
 # Test Setup Helper Methods
 # =========================
-
-
-class UserParams(TypedDict, total=False):
-    """Type for user creation parameters."""
-    username: str
-    email: str
-    password: str
-    first_name: str
-    last_name: str
-
-
-def create_user(**params: Unpack[UserParams]) -> User:
-    """Create and return a new user for testing."""
-    return User.objects.create_user(**params)
+# Note: create_user imported from core.tests.test_helpers (shared utility)
 
 
 class MovieParams(TypedDict, total=False):
@@ -262,19 +251,19 @@ class MovieApiTests(TestCase):
         """Test the discover endpoint with invalid parameter values."""
         # Test invalid year (Pydantic validation)
         res = self.client.get(DISCOVER_URL, {'year': 'invalid'})
-        self.assertEqual(res.status_code, status.HTTP_422_UNPROCESSABLE_ENTITY)
+        self.assertEqual(res.status_code, HTTP_422_UNPROCESSABLE_ENTITY)
         data = res.json()
         self.assertIn('detail', data)  # Django Ninja uses 'detail' for errors
 
         # Test invalid vote_average_gte (Pydantic validation)
         res = self.client.get(DISCOVER_URL, {'vote_average_gte': 'invalid'})
-        self.assertEqual(res.status_code, status.HTTP_422_UNPROCESSABLE_ENTITY)
+        self.assertEqual(res.status_code, HTTP_422_UNPROCESSABLE_ENTITY)
         data = res.json()
         self.assertIn('detail', data)  # Django Ninja uses 'detail' for errors
 
         # Test invalid with_runtime_gte (Pydantic validation)
         res = self.client.get(DISCOVER_URL, {'with_runtime_gte': 'invalid'})
-        self.assertEqual(res.status_code, status.HTTP_422_UNPROCESSABLE_ENTITY)
+        self.assertEqual(res.status_code, HTTP_422_UNPROCESSABLE_ENTITY)
         data = res.json()
         self.assertIn('detail', data)  # Django Ninja uses 'detail' for errors
 

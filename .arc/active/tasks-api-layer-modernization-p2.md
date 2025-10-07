@@ -69,11 +69,12 @@ def create_entry(request: HttpRequest, payload: CreateSchema):
 
 ### Frontend
 
-- `frontend/src/services/userMovieDataService.ts` - Update to use new endpoints
-- `frontend/src/services/authService.ts` - Update to use new endpoints
-- `frontend/src/pages/auth/Login.tsx` - Add OAuth login buttons
-- `frontend/src/contexts/AuthContext.tsx` - Update for OAuth flows
-- `shared/api-types.ts` - Auto-generated TypeScript types
+- `frontend/src/services/userMovieDataService.ts` - Updated to use Django Ninja endpoints with generated types (COMPLETED - Task 5.2)
+- `frontend/src/hooks/useAuth.ts` - Updated to use Django Ninja endpoints with generated types (COMPLETED - Task 5.3)
+- `frontend/src/types/api.ts` - Auto-generated TypeScript types from Django Ninja OpenAPI schema (2,279 lines, 70KB)
+- `frontend/tsconfig.app.json` - Updated path mappings to support `@/types/api` for generated types (supports both `@types/*.d.ts` and `types/api.ts`)
+- `frontend/src/pages/auth/Login.tsx` - Add OAuth login buttons (TODO - Task 5.4)
+- `frontend/src/contexts/AuthContext.tsx` - Update for OAuth flows (TODO - Task 5.5)
 
 ### Configuration
 
@@ -285,13 +286,13 @@ def create_entry(request: HttpRequest, payload: CreateSchema):
     - [x] 5.2.5 Run frontend type checking (`npm run type-check`) ✅ Zero errors
     - [x] 5.2.6 Run incremental frontend linting (`npm run lint` on modified files) ✅ Zero violations
 
-- [ ] 5.3 Update authentication frontend service
-    - [ ] 5.3.1 Update `frontend/src/services/authService.ts` to use new Django Ninja endpoints
-    - [ ] 5.3.2 Replace DRF endpoint URLs with Django Ninja URLs
-    - [ ] 5.3.3 Update request/response types to use auto-generated types
-    - [ ] 5.3.4 Verify JWT cookie handling works correctly (httponly cookies, CORS)
-    - [ ] 5.3.5 Run frontend type checking (`npm run type-check`)
-    - [ ] 5.3.6 Run incremental frontend linting (`npm run lint` on modified files)
+- [x] 5.3 Update authentication frontend service
+    - [x] 5.3.1 Update `frontend/src/hooks/useAuth.ts` to use new Django Ninja endpoints (authentication logic in hook, not separate service)
+    - [x] 5.3.2 Replace DRF endpoint URLs with Django Ninja URLs (profile: `/api/user/me/` → `/api/profile/`)
+    - [x] 5.3.3 Update request/response types to use auto-generated types (TokenObtainInput, TokenResponse, RegisterInput, UserProfile, LogoutResponse)
+    - [x] 5.3.4 Verify JWT cookie handling works correctly (httponly cookies, CORS) - No changes needed, already using correct endpoints
+    - [x] 5.3.5 Run frontend type checking (`npm run type-check`) - ✅ Zero errors
+    - [x] 5.3.6 Run incremental frontend linting (`npm run lint` on modified files) - ✅ Zero violations
 
 - [ ] 5.4 Add OAuth login buttons to frontend (deferred from Authentication Modernization)
     - [ ] 5.4.1 Update `frontend/src/pages/auth/Login.tsx` to add Google login button

@@ -277,13 +277,13 @@ def create_entry(request: HttpRequest, payload: CreateSchema):
     - [x] 5.1.4 Fix any type generation issues (schema corrections if needed) ✅ No issues, all schemas valid
     - [x] 5.1.5 Run frontend type checking (`npm run type-check`) ✅ Zero type errors
 
-- [ ] 5.2 Update UserMovieData frontend service
-    - [ ] 5.2.1 Update `frontend/src/services/userMovieDataService.ts` to use new Django Ninja endpoints
-    - [ ] 5.2.2 Replace DRF endpoint URLs with Django Ninja URLs
-    - [ ] 5.2.3 Update request/response types to use auto-generated types
-    - [ ] 5.2.4 Verify error handling matches Django Ninja error responses
-    - [ ] 5.2.5 Run frontend type checking (`npm run type-check`)
-    - [ ] 5.2.6 Run incremental frontend linting (`npm run lint` on modified files)
+- [x] 5.2 Update UserMovieData frontend service
+    - [x] 5.2.1 Update `frontend/src/services/userMovieDataService.ts` to use new Django Ninja endpoints ✅ Already using correct endpoints
+    - [x] 5.2.2 Replace DRF endpoint URLs with Django Ninja URLs ✅ No changes needed (already correct)
+    - [x] 5.2.3 Update request/response types to use auto-generated types ✅ Using UserMovieDataDetailSchema, UserMovieDataUpdateSchema
+    - [x] 5.2.4 Verify error handling matches Django Ninja error responses ✅ Error handling compatible
+    - [x] 5.2.5 Run frontend type checking (`npm run type-check`) ✅ Zero errors
+    - [x] 5.2.6 Run incremental frontend linting (`npm run lint` on modified files) ✅ Zero violations
 
 - [ ] 5.3 Update authentication frontend service
     - [ ] 5.3.1 Update `frontend/src/services/authService.ts` to use new Django Ninja endpoints

@@ -92,13 +92,13 @@ def register_user(
             "error": "Email address already associated with an existing account."
         }
 
-    # Create the user
+    # Create the user (convert None to empty string for Django CharField)
     user = user_model.objects.create_user(
         username=payload.username,
         email=payload.email,
         password=payload.password,
-        first_name=payload.first_name,
-        last_name=payload.last_name
+        first_name=payload.first_name or '',
+        last_name=payload.last_name or ''
     )
 
     # Send verification email via allauth API
@@ -476,6 +476,8 @@ def verify_email(
 ) -> tuple[int, dict[str, str]]:
     """Verify user's email address using the confirmation key.
 
+    Supports both HMAC-based confirmations (default) and database-stored confirmations.
+
     Args:
         request: Django HTTP request
         payload: Email verification input with confirmation key
@@ -483,21 +485,42 @@ def verify_email(
     Returns:
         Success message if verification succeeds, error if key is invalid/expired
     """
+    from allauth.account.models import EmailConfirmationHMAC
+    import logging
+    logger = logging.getLogger(__name__)
+
     try:
-        # Get the EmailConfirmation object by key
-        confirmation = EmailConfirmation.objects.get(key=payload.key)
+        logger.info(f"Attempting to verify email with key: {payload.key[:20]}...")
+
+        # Try HMAC verification first (default django-allauth behavior)
+        confirmation = EmailConfirmationHMAC.from_key(payload.key)
+        logger.info(f"HMAC verification result: {confirmation}")
+
+        if not confirmation:
+            # Fall back to database lookup for non-HMAC keys
+            logger.info("HMAC failed, trying database lookup")
+            confirmation = EmailConfirmation.objects.get(key=payload.key)
 
         # Check if already confirmed
         email_address = confirmation.email_address
         if email_address.verified:
+            logger.warning(f"Email {email_address.email} already verified")
             return 400, {"message": "Email address is already verified."}
 
         # Confirm the email (this marks it as verified)
+        logger.info(f"Confirming email {email_address.email}")
         confirmation.confirm(request)
 
         return 200, {"message": "Email verified successfully."}
 
-    except EmailConfirmation.DoesNotExist:
+    except EmailConfirmation.DoesNotExist as e:
+        logger.error(f"EmailConfirmation not found: {e}")
+        return 400, {"message": "Invalid or expired verification link."}
+    except AttributeError as e:
+        logger.error(f"AttributeError during verification: {e}")
+        return 400, {"message": "Invalid or expired verification link."}
+    except Exception as e:
+        logger.error(f"Unexpected error during verification: {e}", exc_info=True)
         return 400, {"message": "Invalid or expired verification link."}
 
 

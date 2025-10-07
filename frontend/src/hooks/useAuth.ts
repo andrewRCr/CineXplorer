@@ -14,7 +14,6 @@ import axios from "axios";
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import type { AuthStateProps } from "@/@types/auth-state";
-import type { User } from "@/@types/user";
 import { getCsrfToken, ensureCsrfTokenCookie } from "@/utilities/csrf";
 import {
 	getInitialAuthenticatedValue,
@@ -24,17 +23,25 @@ import {
 	areTokensExpired,
 	type TokenStorage,
 } from "@/utilities/token";
+import type { components } from "@/types/api";
 
 const BASE_URL = import.meta.env.VITE_BASE_API_URL;
 
-export function useAuth(): AuthStateProps & { user: User | null } {
+// Type aliases for generated API types
+type TokenObtainInput = components["schemas"]["TokenObtainInputSchema"];
+type TokenResponse = components["schemas"]["TokenResponseSchema"];
+type RegisterInput = components["schemas"]["RegisterInputSchema"];
+type UserProfile = components["schemas"]["UserProfileSchema"];
+type LogoutResponse = components["schemas"]["LogoutResponseSchema"];
+
+export function useAuth(): AuthStateProps & { user: UserProfile | null } {
 	const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
 		// Check if tokens exist and are not expired
 		const { authToken } = getAuthTokens();
 		const isExpired = areTokensExpired();
 		return authToken !== null && !isExpired && getInitialAuthenticatedValue();
 	});
-	const [user, setUser] = useState<User | null>(null);
+	const [user, setUser] = useState<UserProfile | null>(null);
 	const navigate = useNavigate();
 
 	useEffect(() => {
@@ -66,7 +73,7 @@ export function useAuth(): AuthStateProps & { user: User | null } {
 
 		try {
 			const csrfToken = getCsrfToken();
-			await axios.post(
+			await axios.post<LogoutResponse>(
 				`${BASE_URL}/logout/`,
 				{},
 				{
@@ -92,7 +99,7 @@ export function useAuth(): AuthStateProps & { user: User | null } {
 				return;
 			}
 
-			const userInfoResponse = await axios.get(`${BASE_URL}/user/me/`, {
+			const userInfoResponse = await axios.get<UserProfile>(`${BASE_URL}/profile/`, {
 				headers: { "Content-Type": "application/json" },
 				withCredentials: true,
 			});
@@ -119,9 +126,16 @@ export function useAuth(): AuthStateProps & { user: User | null } {
 		try {
 			await ensureCsrfTokenCookie(BASE_URL);
 			const csrfToken = getCsrfToken();
-			const response = await axios.post(
+
+			// Use generated types - TokenObtainInputSchema uses 'login' field
+			const payload: TokenObtainInput = {
+				login: username, // Backend accepts username or email
+				password,
+			};
+
+			const response = await axios.post<TokenResponse>(
 				`${BASE_URL}/token/`,
-				{ username, password },
+				payload,
 				{
 					headers: {
 						"Content-Type": "application/json",
@@ -175,9 +189,20 @@ export function useAuth(): AuthStateProps & { user: User | null } {
 		try {
 			await ensureCsrfTokenCookie(BASE_URL);
 			const csrfToken = getCsrfToken();
-			const response = await axios.post(
+
+			// Use generated types - RegisterInputSchema requires first_name and last_name
+			// TODO: Update Register.tsx UI to collect first_name and last_name (Task 5.4-5.5)
+			const payload: RegisterInput = {
+				username,
+				email,
+				password,
+				first_name: "", // Temporary: UI doesn't collect this yet
+				last_name: "",  // Temporary: UI doesn't collect this yet
+			};
+
+			const response = await axios.post<TokenResponse>(
 				`${BASE_URL}/register/`,
-				{ username, email, password },
+				payload,
 				{
 					headers: {
 						"Content-Type": "application/json",

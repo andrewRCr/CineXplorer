@@ -16,8 +16,8 @@ import { useNavigate, useLocation, Link } from "react-router-dom";
 import useAuthContext from "@/hooks/useAuthContext";
 import { useState, useEffect } from "react";
 import { FiMail, FiX } from "react-icons/fi";
-import axios from "axios";
 import { ERROR_CODES } from "@shared/error-codes";
+import * as authService from "@/services/authService";
 
 const Login = () => {
 	const authContext = useAuthContext();
@@ -204,25 +204,7 @@ const Login = () => {
 		setResendMessage("");
 
 		try {
-			const BASE_URL = import.meta.env.VITE_BASE_API_URL;
-
-			// Get CSRF token from cookie
-			const csrfToken = document.cookie
-				.split("; ")
-				.find((row) => row.startsWith("XSRF-TOKEN="))
-				?.split("=")[1];
-
-			await axios.post(
-				`${BASE_URL}/user/resend-verification/`,
-				{ email: userEmail },
-				{
-					headers: {
-						"Content-Type": "application/json",
-						"X-CSRFToken": csrfToken || "",
-					},
-					withCredentials: true,
-				}
-			);
+			await authService.resendVerificationEmail(userEmail);
 			setResendMessage("Verification email sent! Please check your inbox.");
 		} catch (error: unknown) {
 			console.error("Resend error:", error);

@@ -10,11 +10,9 @@
  * - Components access state using useAuthContext.
  */
 import { ROUTES } from "@/constants/routes";
-import axios from "axios";
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import type { AuthStateProps } from "@/@types/auth-state";
-import { getCsrfToken, ensureCsrfTokenCookie } from "@/utilities/csrf";
 import {
 	getInitialAuthenticatedValue,
 	getAuthTokens,
@@ -24,15 +22,10 @@ import {
 	type TokenStorage,
 } from "@/utilities/token";
 import type { components } from "@/types/api";
+import * as authService from "@/services/authService";
 
-const BASE_URL = import.meta.env.VITE_BASE_API_URL;
-
-// Type aliases for generated API types
-type TokenObtainInput = components["schemas"]["TokenObtainInputSchema"];
-type TokenResponse = components["schemas"]["TokenResponseSchema"];
-type RegisterInput = components["schemas"]["RegisterInputSchema"];
+// Type alias for user profile from generated API types
 type UserProfile = components["schemas"]["UserProfileSchema"];
-type LogoutResponse = components["schemas"]["LogoutResponseSchema"];
 
 export function useAuth(): AuthStateProps & { user: UserProfile | null } {
 	const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
@@ -72,18 +65,7 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
 		navigate(ROUTES.LOGIN);
 
 		try {
-			const csrfToken = getCsrfToken();
-			await axios.post<LogoutResponse>(
-				`${BASE_URL}/logout/`,
-				{},
-				{
-					headers: {
-						"Content-Type": "application/json",
-						"X-CSRFToken": csrfToken || "",
-					},
-					withCredentials: true,
-				}
-			);
+			await authService.logout();
 		} catch (error) {
 			console.error("Logout failed:", error);
 			return Promise.reject(error);
@@ -99,11 +81,7 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
 				return;
 			}
 
-			const userInfoResponse = await axios.get<UserProfile>(`${BASE_URL}/profile/`, {
-				headers: { "Content-Type": "application/json" },
-				withCredentials: true,
-			});
-			const userDetails = userInfoResponse.data;
+			const userDetails = await authService.getUserProfile();
 			setUser(userDetails);
 			// Ensure isAuthenticated is true when user details are successfully fetched
 			setIsAuthenticated(true);
@@ -124,30 +102,11 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
 	void | number | Error | { status: number; data: unknown; message: string }
 	> => {
 		try {
-			await ensureCsrfTokenCookie(BASE_URL);
-			const csrfToken = getCsrfToken();
+			const response = await authService.login(username, password);
 
-			// Use generated types - TokenObtainInputSchema uses 'login' field
-			const payload: TokenObtainInput = {
-				login: username, // Backend accepts username or email
-				password,
-			};
-
-			const response = await axios.post<TokenResponse>(
-				`${BASE_URL}/token/`,
-				payload,
-				{
-					headers: {
-						"Content-Type": "application/json",
-						"X-CSRFToken": csrfToken || "",
-					},
-					withCredentials: true,
-				}
-			);
-
-			const user_id = response.data.user_id;
-			const accessToken = response.data.access;
-			const refreshToken = response.data.refresh;
+			const user_id = response.user_id;
+			const accessToken = response.access;
+			const refreshToken = response.refresh;
 
 			if (user_id && accessToken && refreshToken) {
 				// Choose storage based on remember me setting
@@ -164,17 +123,19 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
 			}
 			await getUserDetails();
 			return;
-		} catch (error) {
-			if (axios.isAxiosError(error) && error.response) {
-				// Return an object with status and error details for better error handling
-				return {
-					status: error.response.status,
-					data: error.response.data,
-					message:
-						error.response.data?.detail ||
-						error.response.data?.error ||
-						error.message,
-				};
+		} catch (error: unknown) {
+			if (error && typeof error === 'object' && 'response' in error) {
+				const axiosError = error as { response?: { status?: number; data?: { detail?: string; error?: string }; message?: string } };
+				if (axiosError.response) {
+					return {
+						status: axiosError.response.status || 500,
+						data: axiosError.response.data || {},
+						message:
+							axiosError.response.data?.detail ||
+							axiosError.response.data?.error ||
+							'Login failed',
+					};
+				}
 			}
 			return error as Error;
 		}
@@ -187,34 +148,15 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
 		password: string
 	): Promise<number | Error> => {
 		try {
-			await ensureCsrfTokenCookie(BASE_URL);
-			const csrfToken = getCsrfToken();
-
-			// Use generated types - RegisterInputSchema requires first_name and last_name
 			// TODO: Update Register.tsx UI to collect first_name and last_name (Task 5.4-5.5)
-			const payload: RegisterInput = {
-				username,
-				email,
-				password,
-				first_name: "", // Temporary: UI doesn't collect this yet
-				last_name: "",  // Temporary: UI doesn't collect this yet
-			};
-
-			const response = await axios.post<TokenResponse>(
-				`${BASE_URL}/register/`,
-				payload,
-				{
-					headers: {
-						"Content-Type": "application/json",
-						"X-CSRFToken": csrfToken || "",
-					},
-					withCredentials: true,
+			await authService.register(username, email, password, "", "");
+			return 201; // Registration successful
+		} catch (error: unknown) {
+			if (error && typeof error === 'object' && 'response' in error) {
+				const axiosError = error as { response?: { status?: number } };
+				if (axiosError.response?.status) {
+					return axiosError.response.status;
 				}
-			);
-			return response.status;
-		} catch (error) {
-			if (axios.isAxiosError(error) && error.response) {
-				return error.response.status;
 			}
 			return error as Error;
 		}

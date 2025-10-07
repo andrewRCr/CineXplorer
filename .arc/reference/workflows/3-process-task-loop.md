@@ -124,6 +124,152 @@ When all parent tasks are complete and ready for integration:
 - **Never complete multiple subtasks in one implementation cycle** - each subtask represents a discrete deliverable that requires individual review
 - **Each subtask should be documented and approved before moving forward**
 
+## Incidental Work Management
+
+### When to Create Incidental Task Lists
+
+While working on tasks in the main feature task list, you may discover quality improvements, refactoring opportunities, or tech debt that should be fixed immediately rather than deferred. Use an incidental task list when:
+
+- **Multiple subtasks needed** (>1 subtask)
+- **Non-trivial effort** (>30 minutes estimated)
+- **Cross-cutting concern** (affects multiple domains/files)
+- **Quality improvement** discovered during feature work
+- **Worth documenting** for future reference and handoffs
+
+**Don't use incidental tasks for**:
+- Simple fixes (<30 min, 1 subtask) - just fix inline
+- Typos, formatting, trivial refactors - fix without ceremony
+- Work already in main task list - add subtasks there
+- Exploratory work - use notes files instead
+
+### Incidental Task Workflow
+
+**1. Creation** (when issue discovered):
+
+```bash
+# Create incidental task file (untracked during active work)
+touch .arc/active/tasks-incidental-{brief-slug}.md
+```
+
+**File structure** (use template below):
+- **Triggered by**: Which main task led to discovery
+- **Rationale**: Why fix now vs defer
+- **Scope**: What will/won't be done
+- **Subtasks**: Breakdown with quality gates
+
+**Update CURRENT-SESSION.md**:
+
+```markdown
+**Last Completed**: Task X.Y (paused for incidental work)
+**Next Action**: Incidental work - {brief description}
+```
+
+**2. Execution**:
+- Follow normal task-loop rules (one subtask at a time, quality gates, approval)
+- Run incremental quality checks after each subtask
+- Commit with conventional format: `refactor(incidental): {description}`
+- Reference incidental task file in commit body
+
+**3. Completion and Archiving**:
+
+```bash
+# Move to archive (becomes tracked)
+git mv .arc/active/tasks-incidental-{slug}.md .arc/reference/archive/tasks/tasks-incidental-{slug}.md
+
+# Add completion notes to file before archiving
+# Include: what was done, files changed, any follow-up needed
+```
+
+**Update CURRENT-SESSION.md**:
+
+```markdown
+**Last Completed**: Incidental work - {brief description}
+**Next Action**: Resume Task X.Y
+```
+
+**Commit the archive**:
+
+```bash
+git add .arc/reference/archive/tasks/tasks-incidental-{slug}.md
+git commit -m "docs: Archive incidental work - {brief description}"
+```
+
+**4. Resume Main Work**:
+- Return to paused task in main feature task list
+- Continue normal workflow
+
+### Incidental Task File Template
+
+```markdown
+# Incidental Work: {Title}
+
+**Created**: {YYYY-MM-DD}
+**Triggered By**: Task {X.Y} in {feature-name}
+**Status**: In Progress / Complete
+**Estimated Effort**: {X minutes / Y hours}
+
+## Context
+
+**Why Now**: {Why fix immediately instead of deferring to future PRD}
+**Discovery**: {How this issue was discovered during main task work}
+**Impact**: {What improves if we fix this - quality, consistency, tech debt reduction}
+
+## Scope
+
+**Will Do**:
+- {Specific changes that will be made}
+- {Expected outcomes}
+
+**Won't Do** (deferred to {future-work-reference}):
+- {Out of scope items}
+- {Future improvements}
+
+## Tasks
+
+- [ ] {Subtask 1 with clear deliverable}
+  - [ ] {Sub-subtask if needed}
+- [ ] {Subtask 2 with quality gate}
+- [ ] {Subtask 3 with verification step}
+
+## Relevant Files
+
+- `{file-path}`: {What changed and why}
+- `{file-path}`: {What changed and why}
+
+## Completion Notes
+
+{Summary of what was accomplished}
+{Any follow-up needed}
+{References to commits}
+```
+
+### Gitignore Configuration
+
+Incidental task files are untracked while in `.arc/active/` (work in progress), and become tracked when moved to `.arc/reference/archive/tasks/` (completed work).
+
+Add to `.gitignore`:
+
+```gitignore
+# Incidental work task lists (untracked during active work)
+.arc/active/tasks-incidental-*.md
+```
+
+### Archive Organization
+
+Completed incidental work is archived with original filename preserved:
+
+```
+.arc/reference/archive/tasks/
+  tasks-incidental-auth-service-extraction.md
+  tasks-incidental-path-alias-standardization.md
+  tasks-incidental-type-safety-cleanup.md
+```
+
+**Benefits of preserving `tasks-` prefix**:
+- All task files share common prefix for easy globbing: `tasks-*.md`
+- Clear grouping when browsing archive directory
+- Consistent naming regardless of location (active vs archive)
+
 ## Task List Maintenance
 
 1. **Update the task list as you work:**

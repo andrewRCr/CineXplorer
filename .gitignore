@@ -219,6 +219,9 @@ infrastructure/dev-certs/*.key
 # Session handoff file (transient)
 .arc/active/CURRENT-SESSION.md
 
+# Incidental work task lists (untracked during active work, tracked when archived)
+.arc/active/tasks-incidental-*.md
+
 # AI tool settings (personal development environment preferences)
 .claude/
 .warp/

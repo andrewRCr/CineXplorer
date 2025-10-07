@@ -169,6 +169,312 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/register/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Register User
+         * @description Register a new user and send email verification.
+         *
+         *     Creates a new user account and triggers email verification via
+         *     django-allauth CustomAccountAdapter.
+         *
+         *     Args:
+         *         request: HTTP request object
+         *         payload: Registration data (username, email, password, first_name, last_name)
+         *
+         *     Returns:
+         *         tuple: (status_code, response_data)
+         *             - 201: User created successfully, verification email sent
+         *             - 409: Username/email already exists or forbidden username
+         *             - 500: Email sending failed (user creation rolled back)
+         *
+         *     Email verification flow:
+         *         1. User created with Django's create_user()
+         *         2. EmailAddress.objects.add_email() creates EmailAddress record and sends confirmation
+         *         3. User receives email with verification link via CustomAccountAdapter (ZeptoMail)
+         *         4. Email verification handled by allauth EmailAddress model
+         */
+        post: operations["apps_authentication_api_register_user"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/token/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Obtain Token
+         * @description Obtain JWT access and refresh tokens (login).
+         *
+         *     Authenticates user with username/email and password, then returns
+         *     JWT tokens set as httponly cookies.
+         *
+         *     Args:
+         *         request: HTTP request object
+         *         response: HTTP response object (for setting cookies)
+         *         payload: Login credentials (login, password)
+         *
+         *     Returns:
+         *         tuple: (status_code, response_data)
+         *             - 200: Authentication successful, tokens set as cookies
+         *             - 400: Missing credentials
+         *             - 401: Invalid credentials
+         *             - 403: Email not verified
+         *
+         *     Cookie attributes:
+         *         - httponly: True (prevents JavaScript access)
+         *         - secure: True (HTTPS only)
+         *         - samesite: Lax (CSRF protection)
+         */
+        post: operations["apps_authentication_api_obtain_token"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/token/refresh/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Refresh Token
+         * @description Refresh JWT access token using refresh token from cookie.
+         *
+         *     Reads refresh token from httponly cookie and generates new access token.
+         *
+         *     Args:
+         *         request: HTTP request object
+         *         response: HTTP response object (for setting new cookies)
+         *
+         *     Returns:
+         *         tuple: (status_code, response_data)
+         *             - 200: Token refreshed successfully, new tokens set as cookies
+         *             - 400: No valid refresh token in cookies
+         *
+         *     Cookie handling:
+         *         - Reads refresh token from httponly cookie
+         *         - Sets new access and refresh tokens as httponly cookies
+         */
+        post: operations["apps_authentication_api_refresh_token"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/logout/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Logout
+         * @description Logout user by clearing JWT cookies.
+         *
+         *     Clears both access and refresh token cookies to end the session.
+         *     Uses matching cookie attributes to ensure reliable removal across browsers.
+         *
+         *     Args:
+         *         request: HTTP request object
+         *         response: HTTP response object (for deleting cookies)
+         *
+         *     Returns:
+         *         tuple: (status_code, response_data)
+         *             - 200: Logout successful, cookies cleared
+         *
+         *     Cookie deletion:
+         *         - Deletes access token cookie
+         *         - Deletes refresh token cookie
+         *         - Uses same path, domain, samesite as when cookies were set
+         */
+        post: operations["apps_authentication_api_logout"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/csrf/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Csrf Token
+         * @description Get CSRF token for AJAX requests.
+         *
+         *     Generates a CSRF token and sets it as a cookie that JavaScript can read.
+         *     This endpoint requires no authentication and is used by the frontend
+         *     to obtain a CSRF token for state-changing requests.
+         *
+         *     Args:
+         *         request: HTTP request object
+         *         response: HTTP response object (for setting cookie)
+         *
+         *     Returns:
+         *         tuple: (status_code, response_data)
+         *             - 200: CSRF token generated and set as cookie
+         *
+         *     Cookie attributes:
+         *         - httponly: False (must be readable by JavaScript)
+         *         - secure: True (HTTPS only)
+         *         - samesite: Lax (less strict for localhost dev)
+         *         - path: / (available everywhere)
+         *
+         *     Note:
+         *         The token is both set as an XSRF-TOKEN cookie and returned
+         *         in the response body for client convenience.
+         */
+        get: operations["apps_authentication_api_get_csrf_token"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/profile/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get User Profile
+         * @description Retrieve authenticated user's profile.
+         *
+         *     Returns the current user's profile information including computed fields
+         *     for email verification status and full name.
+         *
+         *     Args:
+         *         request: HTTP request object with authenticated user
+         *
+         *     Returns:
+         *         UserProfileSchema: User profile with computed fields
+         *
+         *     Raises:
+         *         HttpError: 401 if user is not authenticated
+         *
+         *     Computed fields:
+         *         - email_verified: Checked via allauth EmailAddress model
+         *         - full_name: Concatenated first_name + last_name
+         */
+        get: operations["apps_authentication_api_get_user_profile"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update User Profile
+         * @description Update authenticated user's profile.
+         *
+         *     Supports partial updates (PATCH) for user profile fields including
+         *     password changes with proper hashing.
+         *
+         *     Args:
+         *         request: HTTP request object with authenticated user
+         *         payload: Fields to update (all optional)
+         *
+         *     Returns:
+         *         tuple: (status_code, response_data)
+         *             - 200: Profile updated successfully
+         *             - 400: Validation error
+         *
+         *     Password handling:
+         *         - Password is hashed using set_password() before saving
+         *         - Password is write-only (not returned in response)
+         *
+         *     Computed fields in response:
+         *         - email_verified: Checked via allauth EmailAddress model
+         *         - full_name: Concatenated first_name + last_name
+         */
+        patch: operations["apps_authentication_api_update_user_profile"];
+        trace?: never;
+    };
+    "/api/verify-email/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Verify Email
+         * @description Verify user's email address using the confirmation key.
+         *
+         *     Args:
+         *         request: Django HTTP request
+         *         payload: Email verification input with confirmation key
+         *
+         *     Returns:
+         *         Success message if verification succeeds, error if key is invalid/expired
+         */
+        post: operations["apps_authentication_api_verify_email"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/resend-verification/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Resend Verification
+         * @description Resend email verification to the provided email address.
+         *
+         *     Args:
+         *         request: Django HTTP request
+         *         payload: Email address to resend verification to
+         *
+         *     Returns:
+         *         Success message (even if email doesn't exist for security)
+         */
+        post: operations["apps_authentication_api_resend_verification"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/movies/now-playing": {
         parameters: {
             query?: never;
@@ -180,7 +486,7 @@ export interface paths {
          * Get Now Playing Movies
          * @description Retrieve currently playing movies with pagination.
          */
-        get: operations["movie_api_get_now_playing_movies"];
+        get: operations["apps_movie_api_get_now_playing_movies"];
         put?: never;
         post?: never;
         delete?: never;
@@ -200,7 +506,7 @@ export interface paths {
          * Get Upcoming Movies
          * @description Retrieve upcoming movies with pagination.
          */
-        get: operations["movie_api_get_upcoming_movies"];
+        get: operations["apps_movie_api_get_upcoming_movies"];
         put?: never;
         post?: never;
         delete?: never;
@@ -220,7 +526,7 @@ export interface paths {
          * Search Movies
          * @description Search for movies by query string with pagination.
          */
-        get: operations["movie_api_search_movies"];
+        get: operations["apps_movie_api_search_movies"];
         put?: never;
         post?: never;
         delete?: never;
@@ -262,7 +568,7 @@ export interface paths {
          *     Raises:
          *         HttpError: 400 for invalid parameters, 500 for TMDB API errors
          */
-        get: operations["movie_api_discover_movies"];
+        get: operations["apps_movie_api_discover_movies"];
         put?: never;
         post?: never;
         delete?: never;
@@ -295,7 +601,7 @@ export interface paths {
          *     Raises:
          *         HttpError: 404 if movie not found, 500 for TMDB API errors
          */
-        get: operations["movie_api_get_movie_detail"];
+        get: operations["apps_movie_api_get_movie_detail"];
         put?: never;
         post?: never;
         delete?: never;
@@ -315,7 +621,7 @@ export interface paths {
          * Get Movie Genres
          * @description Retrieve the list of available movie genres from TMDB.
          */
-        get: operations["movie_api_get_movie_genres"];
+        get: operations["apps_movie_api_get_movie_genres"];
         put?: never;
         post?: never;
         delete?: never;
@@ -335,7 +641,7 @@ export interface paths {
          * Get Popular Keywords
          * @description Retrieve popular keywords with pagination.
          */
-        get: operations["movie_api_get_popular_keywords"];
+        get: operations["apps_movie_api_get_popular_keywords"];
         put?: never;
         post?: never;
         delete?: never;
@@ -355,7 +661,7 @@ export interface paths {
          * Search Keywords
          * @description Search for keywords by query string.
          */
-        get: operations["movie_api_search_keywords"];
+        get: operations["apps_movie_api_search_keywords"];
         put?: never;
         post?: never;
         delete?: never;
@@ -375,7 +681,7 @@ export interface paths {
          * Get Popular People
          * @description Retrieve popular people (actors, directors, etc.) with pagination.
          */
-        get: operations["movie_api_get_popular_people"];
+        get: operations["apps_movie_api_get_popular_people"];
         put?: never;
         post?: never;
         delete?: never;
@@ -395,13 +701,130 @@ export interface paths {
          * Search People
          * @description Search for people by query string.
          */
-        get: operations["movie_api_search_people"];
+        get: operations["apps_movie_api_search_people"];
         put?: never;
         post?: never;
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/user-movie-data/by-tmdb-id": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get User Movie Data By Tmdb Id
+         * @description Retrieve user movie data for a specific movie by TMDB ID.
+         *
+         *     This endpoint checks if the authenticated user has existing data
+         *     (watchlist, rating, review, etc.) for a movie identified by its TMDB ID.
+         *
+         *     Args:
+         *         request: HTTP request with authenticated user
+         *         tmdb_id: TMDB ID of the movie
+         *
+         *     Returns:
+         *         UserMovieDataDetailSchema: User's data for the specified movie
+         *
+         *     Raises:
+         *         HttpError: 404 if no data exists for this user/movie combination
+         */
+        get: operations["apps_user_movie_data_api_get_user_movie_data_by_tmdb_id"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/user-movie-data": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create User Movie Data
+         * @description Create new user movie data entry.
+         *
+         *     This endpoint creates a new UserMovieData record when a user first
+         *     interacts with a movie (adds to watchlist, rates, reviews, etc.).
+         *
+         *     Args:
+         *         request: HTTP request with authenticated user
+         *         payload: User movie data to create (includes movie_id for FK lookup)
+         *
+         *     Returns:
+         *         UserMovieDataDetailSchema: Created user movie data
+         *
+         *     Raises:
+         *         HttpError: 400 if movie_id is invalid or entry already exists
+         */
+        post: operations["apps_user_movie_data_api_create_user_movie_data"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/user-movie-data/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete User Movie Data
+         * @description Delete user movie data entry.
+         *
+         *     This endpoint removes a UserMovieData record. This is rare and typically
+         *     used only to correct mistakes in user input.
+         *
+         *     Args:
+         *         request: HTTP request with authenticated user
+         *         id: Primary key of the UserMovieData object
+         *
+         *     Returns:
+         *         204 No Content on successful deletion
+         *
+         *     Raises:
+         *         HttpError: 404 if object not found or doesn't belong to user
+         */
+        delete: operations["apps_user_movie_data_api_delete_user_movie_data"];
+        options?: never;
+        head?: never;
+        /**
+         * Update User Movie Data
+         * @description Update existing user movie data entry.
+         *
+         *     This endpoint supports partial updates (PATCH) to modify any subset
+         *     of user movie data fields (watchlist, rating, review, etc.).
+         *
+         *     Args:
+         *         request: HTTP request with authenticated user
+         *         id: Primary key of the UserMovieData object
+         *         payload: Fields to update (all optional for PATCH)
+         *
+         *     Returns:
+         *         UserMovieDataDetailSchema: Updated user movie data
+         *
+         *     Raises:
+         *         HttpError: 404 if object not found or doesn't belong to user
+         */
+        patch: operations["apps_user_movie_data_api_update_user_movie_data"];
         trace?: never;
     };
 }
@@ -521,6 +944,245 @@ export interface components {
             /** Has Valid Token */
             has_valid_token: boolean;
             guidance: components["schemas"]["AuthGuidance"];
+        };
+        /**
+         * RegisterResponseSchema
+         * @description Schema for successful registration response.
+         */
+        RegisterResponseSchema: {
+            /**
+             * Message
+             * @description Success message with email verification instruction
+             */
+            message: string;
+            /**
+             * User Id
+             * @description ID of the newly created user
+             */
+            user_id: number;
+            /**
+             * Email
+             * @description Email address where verification was sent
+             */
+            email: string;
+            /**
+             * Email Sent
+             * @description Whether verification email was successfully sent
+             */
+            email_sent: boolean;
+        };
+        /**
+         * RegisterInputSchema
+         * @description Schema for user registration input.
+         *
+         *     Manual Schema (not ModelSchema) because registration includes
+         *     password handling and validation logic not directly on User model.
+         */
+        RegisterInputSchema: {
+            /**
+             * Username
+             * @description Unique username for the account
+             */
+            username: string;
+            /**
+             * Email
+             * Format: email
+             * @description User's email address (must be unique)
+             */
+            email: string;
+            /**
+             * Password
+             * @description Account password (minimum 5 characters)
+             */
+            password: string;
+            /**
+             * First Name
+             * @description User's first name
+             */
+            first_name: string;
+            /**
+             * Last Name
+             * @description User's last name
+             */
+            last_name: string;
+        };
+        /**
+         * TokenResponseSchema
+         * @description Schema for JWT token response (obtain and refresh).
+         *
+         *     Tokens are set as httponly cookies, but also returned in
+         *     response body for client convenience.
+         */
+        TokenResponseSchema: {
+            /**
+             * Access
+             * @description JWT access token (also set as httponly cookie)
+             */
+            access: string;
+            /**
+             * Refresh
+             * @description JWT refresh token (also set as httponly cookie)
+             */
+            refresh: string;
+            /**
+             * User Id
+             * @description ID of the authenticated user
+             */
+            user_id: number;
+            /**
+             * Email Verified
+             * @description Whether user's email has been verified via allauth
+             */
+            email_verified: boolean;
+        };
+        /**
+         * TokenObtainInputSchema
+         * @description Schema for JWT token obtain (login) input.
+         *
+         *     Supports authentication with either username or email.
+         *     Field name follows django-allauth convention (allauth.account.forms.LoginForm).
+         */
+        TokenObtainInputSchema: {
+            /**
+             * Login
+             * @description Username or email for authentication
+             */
+            login: string;
+            /**
+             * Password
+             * @description User's password
+             */
+            password: string;
+        };
+        /**
+         * LogoutResponseSchema
+         * @description Schema for logout response.
+         */
+        LogoutResponseSchema: {
+            /**
+             * Message
+             * @description Logout success message
+             */
+            message: string;
+        };
+        /**
+         * CsrfTokenResponseSchema
+         * @description Schema for CSRF token response.
+         *
+         *     Token is set as cookie and returned in response body.
+         */
+        CsrfTokenResponseSchema: {
+            /**
+             * Csrf Token
+             * @description CSRF token for state-changing requests
+             */
+            csrf_token: string;
+        };
+        /**
+         * UserProfileSchema
+         * @description Schema for user profile retrieval and updates.
+         *
+         *     Uses ModelSchema for direct mapping to Django User model.
+         *     Password field excluded from responses (write_only in updates).
+         */
+        UserProfileSchema: {
+            /**
+             * Email Verified
+             * @description Whether user's email is verified (computed from allauth)
+             */
+            email_verified?: boolean | null;
+            /**
+             * Full Name
+             * @description User's full name (first_name + last_name)
+             */
+            full_name?: string | null;
+            /** ID */
+            id?: number | null;
+            /**
+             * Username
+             * @description Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.
+             */
+            username: string;
+            /** Email Address */
+            email?: string | null;
+            /** First Name */
+            first_name?: string | null;
+            /** Last Name */
+            last_name?: string | null;
+        };
+        /**
+         * UserProfileUpdateSchema
+         * @description Schema for user profile updates.
+         *
+         *     Manual Schema with all optional fields for partial updates (PATCH).
+         *     Password updates handled separately for security.
+         */
+        UserProfileUpdateSchema: {
+            /**
+             * Email
+             * @description Updated email address
+             */
+            email?: string | null;
+            /**
+             * First Name
+             * @description Updated first name
+             */
+            first_name?: string | null;
+            /**
+             * Last Name
+             * @description Updated last name
+             */
+            last_name?: string | null;
+            /**
+             * Password
+             * @description Updated password (minimum 5 characters)
+             */
+            password?: string | null;
+        };
+        /**
+         * EmailVerificationResponseSchema
+         * @description Schema for email verification response.
+         */
+        EmailVerificationResponseSchema: {
+            /**
+             * Message
+             * @description Verification success/failure message
+             */
+            message: string;
+        };
+        /**
+         * EmailVerificationInputSchema
+         * @description Schema for email verification input.
+         */
+        EmailVerificationInputSchema: {
+            /**
+             * Key
+             * @description Email verification key from confirmation link
+             */
+            key: string;
+        };
+        /**
+         * ResendVerificationResponseSchema
+         * @description Schema for resend verification response.
+         */
+        ResendVerificationResponseSchema: {
+            /**
+             * Message
+             * @description Resend operation result message
+             */
+            message: string;
+        };
+        /**
+         * ResendVerificationInputSchema
+         * @description Schema for resend verification email input.
+         */
+        ResendVerificationInputSchema: {
+            /**
+             * Email
+             * Format: email
+             * @description Email address to resend verification to
+             */
+            email: string;
         };
         /**
          * MovieBaseSchema
@@ -739,6 +1401,122 @@ export interface components {
             /** Known For */
             known_for?: components["schemas"]["MediaReferenceSchema"][];
         };
+        /**
+         * UserMovieDataDetailSchema
+         * @description Extended ModelSchema with computed movie context fields.
+         *
+         *     Includes tmdb_id and title computed from the related Movie object.
+         *     These fields are populated at runtime in the API layer.
+         */
+        UserMovieDataDetailSchema: {
+            /**
+             * Tmdb Id
+             * @description TMDB ID of the associated movie (computed from obj.movie.tmdb_id)
+             */
+            tmdb_id?: number | null;
+            /**
+             * Title
+             * @description Title of the associated movie (computed from obj.movie.title)
+             */
+            title?: string | null;
+            /** ID */
+            id?: number | null;
+            /**
+             * User Watched
+             * @default false
+             */
+            user_watched: boolean;
+            /**
+             * User On Watchlist
+             * @default false
+             */
+            user_on_watchlist: boolean;
+            /**
+             * User Liked
+             * @default false
+             */
+            user_liked: boolean;
+            /** User Rating */
+            user_rating?: number | null;
+            /** User Review */
+            user_review?: string | null;
+        };
+        /**
+         * UserMovieDataCreateSchema
+         * @description Schema for creating new user movie data entries.
+         *
+         *     Uses manual Schema (not ModelSchema) because it includes movie_id field
+         *     which is not directly on the UserMovieData model (requires FK lookup).
+         */
+        UserMovieDataCreateSchema: {
+            /**
+             * Movie Id
+             * @description ID of the Movie object (database ID, not TMDB ID)
+             */
+            movie_id: number;
+            /**
+             * User Watched
+             * @description Whether the user has marked this movie as watched
+             * @default false
+             */
+            user_watched: boolean;
+            /**
+             * User On Watchlist
+             * @description Whether the movie is on the user's watchlist
+             * @default false
+             */
+            user_on_watchlist: boolean;
+            /**
+             * User Liked
+             * @description Whether the user has liked this movie
+             * @default false
+             */
+            user_liked: boolean;
+            /**
+             * User Rating
+             * @description User's rating of the movie (1-10)
+             */
+            user_rating?: number | null;
+            /**
+             * User Review
+             * @description User's text review of the movie
+             */
+            user_review?: string | null;
+        };
+        /**
+         * UserMovieDataUpdateSchema
+         * @description Schema for updating existing user movie data entries.
+         *
+         *     Uses manual Schema (not ModelSchema) with all optional fields
+         *     to support partial updates (PATCH operations).
+         */
+        UserMovieDataUpdateSchema: {
+            /**
+             * User Watched
+             * @description Whether the user has marked this movie as watched
+             */
+            user_watched?: boolean | null;
+            /**
+             * User On Watchlist
+             * @description Whether the movie is on the user's watchlist
+             */
+            user_on_watchlist?: boolean | null;
+            /**
+             * User Liked
+             * @description Whether the user has liked this movie
+             */
+            user_liked?: boolean | null;
+            /**
+             * User Rating
+             * @description User's rating of the movie (1-10)
+             */
+            user_rating?: number | null;
+            /**
+             * User Review
+             * @description User's text review of the movie
+             */
+            user_review?: string | null;
+        };
     };
     responses: never;
     parameters: never;
@@ -848,7 +1626,306 @@ export interface operations {
             };
         };
     };
-    movie_api_get_now_playing_movies: {
+    apps_authentication_api_register_user: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegisterInputSchema"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RegisterResponseSchema"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    apps_authentication_api_obtain_token: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TokenObtainInputSchema"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TokenResponseSchema"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    apps_authentication_api_refresh_token: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TokenResponseSchema"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    apps_authentication_api_logout: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LogoutResponseSchema"];
+                };
+            };
+        };
+    };
+    apps_authentication_api_get_csrf_token: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CsrfTokenResponseSchema"];
+                };
+            };
+        };
+    };
+    apps_authentication_api_get_user_profile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserProfileSchema"];
+                };
+            };
+        };
+    };
+    apps_authentication_api_update_user_profile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UserProfileUpdateSchema"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserProfileSchema"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    apps_authentication_api_verify_email: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EmailVerificationInputSchema"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmailVerificationResponseSchema"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    apps_authentication_api_resend_verification: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResendVerificationInputSchema"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResendVerificationResponseSchema"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    apps_movie_api_get_now_playing_movies: {
         parameters: {
             query?: {
                 page?: number;
@@ -870,7 +1947,7 @@ export interface operations {
             };
         };
     };
-    movie_api_get_upcoming_movies: {
+    apps_movie_api_get_upcoming_movies: {
         parameters: {
             query?: {
                 page?: number;
@@ -892,7 +1969,7 @@ export interface operations {
             };
         };
     };
-    movie_api_search_movies: {
+    apps_movie_api_search_movies: {
         parameters: {
             query: {
                 query: string;
@@ -915,7 +1992,7 @@ export interface operations {
             };
         };
     };
-    movie_api_discover_movies: {
+    apps_movie_api_discover_movies: {
         parameters: {
             query?: {
                 page?: number;
@@ -977,7 +2054,7 @@ export interface operations {
             };
         };
     };
-    movie_api_get_movie_detail: {
+    apps_movie_api_get_movie_detail: {
         parameters: {
             query?: never;
             header?: never;
@@ -999,7 +2076,7 @@ export interface operations {
             };
         };
     };
-    movie_api_get_movie_genres: {
+    apps_movie_api_get_movie_genres: {
         parameters: {
             query?: never;
             header?: never;
@@ -1019,7 +2096,7 @@ export interface operations {
             };
         };
     };
-    movie_api_get_popular_keywords: {
+    apps_movie_api_get_popular_keywords: {
         parameters: {
             query?: {
                 page?: number;
@@ -1041,7 +2118,7 @@ export interface operations {
             };
         };
     };
-    movie_api_search_keywords: {
+    apps_movie_api_search_keywords: {
         parameters: {
             query: {
                 query: string;
@@ -1063,7 +2140,7 @@ export interface operations {
             };
         };
     };
-    movie_api_get_popular_people: {
+    apps_movie_api_get_popular_people: {
         parameters: {
             query?: {
                 page?: number;
@@ -1085,7 +2162,7 @@ export interface operations {
             };
         };
     };
-    movie_api_search_people: {
+    apps_movie_api_search_people: {
         parameters: {
             query: {
                 query: string;
@@ -1103,6 +2180,98 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PaginatedPersonResponseSchema"];
+                };
+            };
+        };
+    };
+    apps_user_movie_data_api_get_user_movie_data_by_tmdb_id: {
+        parameters: {
+            query: {
+                tmdb_id: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserMovieDataDetailSchema"];
+                };
+            };
+        };
+    };
+    apps_user_movie_data_api_create_user_movie_data: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UserMovieDataCreateSchema"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserMovieDataDetailSchema"];
+                };
+            };
+        };
+    };
+    apps_user_movie_data_api_delete_user_movie_data: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    apps_user_movie_data_api_update_user_movie_data: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UserMovieDataUpdateSchema"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserMovieDataDetailSchema"];
                 };
             };
         };

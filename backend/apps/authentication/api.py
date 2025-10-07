@@ -142,7 +142,7 @@ def obtain_token(
     Args:
         request: HTTP request object
         response: HTTP response object (for setting cookies)
-        payload: Login credentials (usernameOrEmail, password)
+        payload: Login credentials (login, password)
 
     Returns:
         tuple: (status_code, response_data)
@@ -156,16 +156,17 @@ def obtain_token(
         - secure: True (HTTPS only)
         - samesite: Lax (CSRF protection)
     """
-    username_or_email = payload.usernameOrEmail
+    login = payload.login
     password = payload.password
 
-    if not username_or_email or not password:
+    if not login or not password:
         return 400, {"error": "Username/email and password are required."}
 
-    # Authenticate user (supports both username and email)
+    # Authenticate user (supports both username and email via allauth backend)
+    # allauth's AuthenticationBackend handles username/email detection
     authenticated_user = authenticate(
         request=request,
-        username=username_or_email,
+        username=login,  # allauth backend expects 'username' parameter
         password=password
     )
 
@@ -262,6 +263,10 @@ def refresh_token(
         # Validate and refresh the token
         refresh = RefreshToken(refresh_token_value)
         access_token = str(refresh.access_token)
+
+        # Rotate refresh token: set new JTI and expiration time
+        refresh.set_jti()
+        refresh.set_exp()
         new_refresh_token = str(refresh)
 
         # Set new tokens as httponly cookies

@@ -175,12 +175,12 @@ def create_user(
     user = User.objects.create_user(**{**defaults, **params})  # type: ignore[attr-defined]
 
     # Mark email as verified if requested using allauth EmailAddress API
+    # Use get_or_create to support --keepdb flag (reusing test database)
     if email_verified:
-        EmailAddress.objects.create(
+        EmailAddress.objects.get_or_create(
             user=user,
             email=user.email,
-            verified=True,
-            primary=True
+            defaults={'verified': True, 'primary': True}
         )
 
     return user

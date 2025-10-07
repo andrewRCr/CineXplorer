@@ -103,7 +103,7 @@ class PublicUserApiTests(TestCase):
         payload: dict[str, str] = self.create_payload(password='pw')
         res = json_post(self.client, CREATE_USER_URL, payload)
 
-        self.assertEqual(res.status_code, HTTP_400_BAD_REQUEST)
+        self.assertEqual(res.status_code, HTTP_422_UNPROCESSABLE_ENTITY)
         user_exists: bool = get_user_model().objects.filter(
             username=payload['username']).exists()
         self.assertFalse(user_exists)
@@ -112,10 +112,10 @@ class PublicUserApiTests(TestCase):
         """Tests generating a token via username/pw for user authentication."""
 
         user_details: dict[str, str] = self.create_payload()
-        create_user(**user_details)  # type: ignore[arg-type]  # dict[str, str] matches UserParams structure
+        create_user(**user_details)  # type: ignore[arg-type]  # dict[str, str] matches UserParams structure, creates verified email
 
         auth_payload: dict[str, str] = {
-            'username': user_details['username'],
+            'login': user_details['username'],
             'password': user_details['password']
         }
         res = json_post(self.client, TOKEN_URL, auth_payload)
@@ -125,10 +125,10 @@ class PublicUserApiTests(TestCase):
         """Tests generating a token via email/pw for user authentication."""
 
         user_details: dict[str, str] = self.create_payload()
-        create_user(**user_details)  # type: ignore[arg-type]  # dict[str, str] matches UserParams structure
+        create_user(**user_details)  # type: ignore[arg-type]  # dict[str, str] matches UserParams structure, creates verified email
 
         auth_payload: dict[str, str] = {
-            'username': user_details['email'],
+            'login': user_details['email'],
             'password': user_details['password']
         }
         res = json_post(self.client, TOKEN_URL, auth_payload)
@@ -138,10 +138,10 @@ class PublicUserApiTests(TestCase):
         """Tests that an error is returned if user password is invalid."""
 
         user_details: dict[str, str] = self.create_payload(password='goodPassword')
-        create_user(**user_details)  # type: ignore[arg-type]  # dict[str, str] matches UserParams structure
+        create_user(**user_details)  # type: ignore[arg-type]  # dict[str, str] matches UserParams structure, creates verified email
 
         auth_payload: dict[str, str] = {
-            'username': user_details['username'],
+            'login': user_details['username'],
             'password': 'badPassword'
         }
         res = json_post(self.client, TOKEN_URL, auth_payload)
@@ -150,21 +150,21 @@ class PublicUserApiTests(TestCase):
     def test_create_token_blank_username(self) -> None:
         """Tests that an error is returned if username is blank and no email provided."""
 
-        auth_payload: dict[str, str] = {'username': '', 'password': 'testPassword'}
+        auth_payload: dict[str, str] = {'login': '', 'password': 'testPassword'}
         res = json_post(self.client, TOKEN_URL, auth_payload)
         self.assertEqual(res.status_code, HTTP_400_BAD_REQUEST)
 
     def test_create_token_blank_email(self) -> None:
         """Tests that an error is returned if email is blank and no username provided."""
 
-        auth_payload: dict[str, str] = {'email': '', 'password': 'testPassword'}
+        auth_payload: dict[str, str] = {'login': '', 'password': 'testPassword'}
         res = json_post(self.client, TOKEN_URL, auth_payload)
         self.assertEqual(res.status_code, HTTP_400_BAD_REQUEST)
 
     def test_create_token_blank_password(self) -> None:
         """Tests that posting a blank password returns an error."""
 
-        auth_payload: dict[str, str] = {'username': 'testUser', 'password': ''}
+        auth_payload: dict[str, str] = {'login': 'testUser', 'password': ''}
         res = json_post(self.client, TOKEN_URL, auth_payload)
         self.assertEqual(res.status_code, HTTP_400_BAD_REQUEST)
 
@@ -193,10 +193,14 @@ class PrivateUserApiTests(TestCase):
             password='testpass123',  # Match login password in CSRF tests
             first_name='Private',
             last_name='User'
-        )
-        # Django Client doesn't support force_authenticate like APIClient
-        # We'll need to login via the actual token endpoint
-        # For now, removed - will be addressed in test fixes
+        )  # create_user() creates verified email by default
+
+        # Authenticate via JWT token endpoint to set cookies
+        auth_payload = {
+            'login': 'privateUser',
+            'password': 'testpass123'
+        }
+        json_post(self.client, TOKEN_URL, auth_payload)
 
     def test_retrieve_profile_success(self):
         """
@@ -245,7 +249,13 @@ class PrivateUserApiTests(TestCase):
             'password': 'csrfPass123'
         }
         client = Client()
-        client.force_authenticate(user=self.user)  # type: ignore[attr-defined]  # TODO: Replace with JWT cookie setup (Task 4.7.4.2)
+
+        # Authenticate via JWT token endpoint to set cookies
+        auth_payload = {
+            'login': 'privateUser',
+            'password': 'testpass123'
+        }
+        json_post(client, TOKEN_URL, auth_payload)
 
         # Simulate CSRF token and cookie
         csrf_token = 'testcsrftoken'
@@ -311,19 +321,23 @@ class AuthCookieIntegrationTests(TestCase):
         json_post(self.client, CREATE_USER_URL, self.user_data)
 
         # Mark email as verified for the test user to allow login
+        # Use get_or_create + update to support --keepdb flag (reusing test database)
         user = get_user_model().objects.get(email=self.user_data['email'])
-        EmailAddress.objects.create(
+        email_address, created = EmailAddress.objects.get_or_create(
             user=user,
             email=user.email,  # type: ignore[attr-defined]  # _UserModel has email attribute at runtime
-            verified=True,
-            primary=True
+            defaults={'verified': True, 'primary': True}
         )
+        # If EmailAddress already existed (from previous test run), ensure it's verified
+        if not created and not email_address.verified:
+            email_address.verified = True
+            email_address.save()
 
     def test_token_obtain_sets_jwt_cookies(self):
         """Login sets JWT cookies (access and refresh)."""
 
         login_data = {
-            'username': 'testuser',
+            'login': 'testuser',
             'password': 'testpass123'
         }
         response = json_post(self.client, TOKEN_URL, login_data)
@@ -336,7 +350,7 @@ class AuthCookieIntegrationTests(TestCase):
 
         # Login first
         login_data = {
-            'username': 'testuser',
+            'login': 'testuser',
             'password': 'testpass123'
         }
         json_post(self.client, TOKEN_URL, login_data)
@@ -356,7 +370,7 @@ class AuthCookieIntegrationTests(TestCase):
 
         # Login first
         login_data = {
-            'username': 'testuser',
+            'login': 'testuser',
             'password': 'testpass123'
         }
         json_post(self.client, TOKEN_URL, login_data)
@@ -375,12 +389,12 @@ class AuthCookieIntegrationTests(TestCase):
     def test_csrf_token_endpoint_sets_cookie(self):
         """CSRF token endpoint sets XSRF-TOKEN cookie and returns token in body."""
 
-        csrf_url = '/api/csrf-token/'
+        csrf_url = '/api/csrf/'
         response = self.client.get(csrf_url)
         self.assertEqual(response.status_code, 200)
         self.assertIn('XSRF-TOKEN', response.cookies)
         token_in_cookie = response.cookies['XSRF-TOKEN'].value
 
         body = response.content.decode(response.charset or 'utf-8')
-        token_in_body = json.loads(body)['csrfToken']
+        token_in_body = json.loads(body)['csrf_token']
         self.assertEqual(token_in_cookie, token_in_body)

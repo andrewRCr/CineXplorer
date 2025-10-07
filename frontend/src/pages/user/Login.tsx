@@ -16,6 +16,7 @@ import { useNavigate, useLocation, Link } from "react-router-dom";
 import useAuthContext from "@/hooks/useAuthContext";
 import { useState, useEffect } from "react";
 import { FiMail, FiX } from "react-icons/fi";
+import { FaGoogle, FaGithub } from "react-icons/fa";
 import { ERROR_CODES } from "@shared/error-codes";
 import * as authService from "@/services/authService";
 
@@ -190,6 +191,14 @@ const Login = () => {
 			// Clear the state to prevent showing the message again on refresh
 			navigate(location.pathname, { replace: true, state: {} });
 		}
+		if (location.state?.oauthError) {
+			setGeneralError(
+				location.state.message ||
+					"OAuth authentication failed. Please try again."
+			);
+			// Clear the state to prevent showing the message again on refresh
+			navigate(location.pathname, { replace: true, state: {} });
+		}
 	}, [location, navigate]);
 
 	const handleResendVerification = async () => {
@@ -229,6 +238,16 @@ const Login = () => {
 
 	const dismissRegistrationSuccessAlert = () => {
 		setRegistrationSuccess(null);
+	};
+
+	const handleGoogleLogin = () => {
+		const BASE_URL = import.meta.env.VITE_BASE_API_URL;
+		window.location.href = `${BASE_URL}/accounts/google/login/`;
+	};
+
+	const handleGithubLogin = () => {
+		const BASE_URL = import.meta.env.VITE_BASE_API_URL;
+		window.location.href = `${BASE_URL}/accounts/github/login/`;
 	};
 
 	return (
@@ -375,6 +394,59 @@ const Login = () => {
 							>
 								Login
 							</Button>
+
+							{/* Divider */}
+							<Box position="relative" w="100%" mt={4}>
+								<Box
+									position="absolute"
+									top="50%"
+									left="0"
+									right="0"
+									h="1px"
+									bg="border.separator"
+								/>
+								<Text
+									position="relative"
+									textAlign="center"
+									bg="background.main"
+									px={3}
+									mx="auto"
+									w="fit-content"
+									fontSize="14px"
+									color="text.muted"
+								>
+									or continue with
+								</Text>
+							</Box>
+
+							{/* OAuth Buttons */}
+							<HStack gap={3} w="100%" mt={4}>
+								<Button
+									flex="1"
+									variant="outline"
+									fontSize="16px"
+									onClick={handleGoogleLogin}
+									_hover={{
+										bg: "background.subItem",
+									}}
+								>
+									<FaGoogle size={18} style={{ marginRight: "8px" }} />
+									Google
+								</Button>
+								<Button
+									flex="1"
+									variant="outline"
+									fontSize="16px"
+									onClick={handleGithubLogin}
+									_hover={{
+										bg: "background.subItem",
+									}}
+								>
+									<FaGithub size={18} style={{ marginRight: "8px" }} />
+									GitHub
+								</Button>
+							</HStack>
+
 							<Text mt="4px" textAlign="center" w="100%" fontSize="16px">
 								Don't have an account?{" "}
 								<Link

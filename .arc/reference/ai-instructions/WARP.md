@@ -8,9 +8,9 @@ This file provides guidance to WARP (warp.dev) when working with code in this re
 
 Key reference documents:
 
-- `_docs/META-PRD.md` - Product vision and requirements
-- `_docs/PROJECT-STATUS.md` - Current progress and priorities  
-- `_docs/TECHNICAL-ARCHITECTURE.md` - Technical architecture details
+- [META-PRD](../constitution/META-PRD.md) - Product vision and requirements
+- [PROJECT-STATUS](../constitution/PROJECT-STATUS.md) - Current progress and priorities  
+- [TECHNICAL-ARCHITECTURE](../constitution/TECHNICAL-ARCHITECTURE.md) - Technical architecture details
 
 ## WARP-Specific Guidelines
 
@@ -104,7 +104,7 @@ docker-compose -f infrastructure/docker-compose.yml exec frontend npm run build
 **Before any commit, perform comprehensive task context analysis:**
 
 1. **Identify ALL changes**: `git status` and `git --no-pager diff --name-only`
-2. **Find relevant task documentation**: Check `_docs/tasks/` for related work
+2. **Find relevant task documentation**: Check [active tasks](.arc/active/) and [upcoming tasks](.arc/upcoming/tasks/) for related work
 3. **Analyze task progress**: Compare completed work against task documentation
 4. **Validate milestone context**: Distinguish partial progress from phase completion
 5. **Update task documentation**: Mark completed subtasks, update parent tasks only when ALL subtasks complete
@@ -112,7 +112,7 @@ docker-compose -f infrastructure/docker-compose.yml exec frontend npm run build
 
 **Key Principle**: Commit messages must accurately reflect project milestone status and remaining work.
 
-> **Note**: Architecture details, coding standards, and comprehensive context are in `AI-SHARED.md` and `_docs/TECHNICAL-ARCHITECTURE.md`
+> **Note**: Architecture details, coding standards, and comprehensive context are in [AI-SHARED](AI-SHARED.md) and [TECHNICAL-ARCHITECTURE](../constitution/TECHNICAL-ARCHITECTURE.md)
 
 <citations>
 <document>

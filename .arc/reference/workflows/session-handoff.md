@@ -8,7 +8,7 @@ This document provides protocols for AI assistants to handle context management,
 
 1. **Acknowledge rules**: "Ready. Using DEVELOPMENT-RULES v{X}"
 2. **Read essential context**: DEVELOPMENT-RULES.md, AI-SHARED.md, current prd and task list docs
-3. **Check session state**: Read _docs/CURRENT-SESSION.md if resuming
+3. **Check session state**: Read [CURRENT-SESSION](.arc/active/CURRENT-SESSION.md) if resuming
 4. **Verify git state**: Confirm branch and working directory status
 5. **Ask for direction**: "What should I work on?"
 
@@ -16,15 +16,15 @@ This document provides protocols for AI assistants to handle context management,
 
 ### Comprehensive Handoff Format
 
-Update **_docs/CURRENT-SESSION.md** before ending session using the full template structure:
+Update [CURRENT-SESSION](.arc/active/CURRENT-SESSION.md) before ending session using the full template structure:
 
 ```markdown
 ## Session Information
 **Branch**: [current branch name, e.g., feature/user-profile-editing]
 **Feature Documents**:
-  - PRD: [path to Sub-PRD, e.g., _docs/sub-prds/prd-user-profile-editing.md]
-  - Tasks: [path to task list, e.g., _docs/tasks/tasks-user-profile-editing.md]
-  - Notes: [path to notes file if applicable, e.g., _docs/notes/notes-user-profile-editing.md]
+  - PRD: [path to Sub-PRD, e.g., .arc/upcoming/sub-prds/prd-user-profile-editing.md]
+  - Tasks: [path to task list, e.g., .arc/upcoming/tasks/tasks-user-profile-editing.md]
+  - Notes: [path to notes file if applicable, e.g., .arc/upcoming/notes/notes-user-profile-editing.md]
 **Work Type**: [structured | incidental: brief description]
 **Last Completed**: [specific task reference, e.g., "Task 3.2: Add validation logic"]
 **Next Action**: [what should happen next, e.g., "Task 3.3: Write unit tests"]

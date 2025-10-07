@@ -347,7 +347,7 @@ The domain layer pattern (separate dataclasses from ORM) is available if:
 
 ## Related Documentation
 
-- `_docs/DEVELOPMENT-RULES.md` - Development standards
-- `_docs/sub-prds/prd-api-layer-modernization-p2.md` - API patterns
+- [DEVELOPMENT-RULES](../constitution/DEVELOPMENT-RULES.md) - Development standards
+- [API Layer Modernization PRD](.arc/active/prd-api-layer-modernization-p2.md) - API patterns
 - `backend/pyrightconfig.json` - Pyright config
 - `backend/mypy.ini` - MyPy config

@@ -7,10 +7,10 @@ To guide an AI assistant in creating a detailed Sub-PRD (feature-level Product R
 ## Process
 
 1. **Receive Initial Prompt:** The user provides a brief description or request for a new feature or functionality.
-2. **Review META-PRD Context:** Before asking questions, review the META-PRD (`/_docs/META-PRD.md`) to understand the high-level product vision, core features, and user flows. Ensure the requested feature aligns with the overall product direction.
+2. **Review META-PRD Context:** Before asking questions, review the [META-PRD](../constitution/META-PRD.md) to understand the high-level product vision, core features, and user flows. Ensure the requested feature aligns with the overall product direction.
 3. **Ask Clarifying Questions:** Before writing the Sub-PRD, the AI _must_ ask clarifying questions to gather sufficient detail. The goal is to understand the "what" and "why" of the feature, not necessarily the "how" (which the developer will figure out). Make sure to provide options in letter/number lists so I can respond easily with my selections.
 4. **Generate Sub-PRD:** Based on the META-PRD context, initial prompt, and the user's answers to the clarifying questions, generate a Sub-PRD using the structure outlined below.
-5. **Save Sub-PRD:** Save the generated document as `prd-[feature-name].md` inside the `/_docs/sub-prds/` directory.
+5. **Save Sub-PRD:** Save the generated document as `prd-[feature-name].md` inside the [upcoming sub-prds](.arc/upcoming/sub-prds/) directory.
 
 ## Clarifying Questions (Examples)
 
@@ -47,7 +47,7 @@ Assume the primary reader of the Sub-PRD is a **junior developer**. Therefore, r
 ## Output
 
 - **Format:** Markdown (`.md`)
-- **Location:** `/_docs/sub-prds/`
+- **Location:** [upcoming sub-prds](.arc/upcoming/sub-prds/)
 - **Filename:** `prd-[feature-name].md`
 
 ## Final instructions

@@ -54,11 +54,11 @@
 
 ### Documentation
 
-- `_docs/notes/notes-authentication-modernization.md` - Implementation notes and decisions (transient, not committed)
-- `_docs/notes/type-safety-status-auth-modernization.md` - Comprehensive type safety analysis and deferred work documentation
-- `README.md` - OAuth setup instructions for local development (Google, GitHub)
-- `_docs/sub-prds/prd-api-layer-modernization-p2.md` - Updated with all deferred work from Authentication Modernization (Tasks 8.1-8.2, 8.9-8.10, 7.3-7.11, type safety completion)
-- `_docs/PROJECT-STATUS.md` - Update feature status
+- [Authentication Modernization Notes](../notes/notes-authentication-modernization.md) - Implementation notes and decisions (transient, not committed)
+- [Type Safety Status](../notes/type-safety-status-auth-modernization.md) - Comprehensive type safety analysis and deferred work documentation
+- README.md - OAuth setup instructions for local development (Google, GitHub)
+- [API Layer Modernization P2 PRD](.arc/active/prd-api-layer-modernization-p2.md) - Updated with all deferred work from Authentication Modernization (Tasks 8.1-8.2, 8.9-8.10, 7.3-7.11, type safety completion)
+- [PROJECT-STATUS](.arc/reference/constitution/PROJECT-STATUS.md) - Update feature status
 
 ## Tasks
 

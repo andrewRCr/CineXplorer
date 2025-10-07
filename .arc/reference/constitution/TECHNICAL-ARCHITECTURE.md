@@ -31,7 +31,7 @@ The backend is a REST API built with Django and Django REST Framework (DRF).
         - `django/contrib/auth/` - Supplements django-stubs for UserManager and AbstractBaseUser
     - **Stub Maintenance**: Each stub file documents version synchronization and upgrade procedures
     - **Type Safety Goal**: Minimize `type: ignore` comments; remaining ones are documented (Django settings, framework internals)
-    - **See**: `_docs/reference/type-safety-strategy.md` for complete type safety approach
+    - **See**: [Type Safety Strategy](../strategies/strategy-type-safety.md) for complete type safety approach
 - **Key Libraries**:
     - `django-cors-headers` for managing Cross-Origin Resource Sharing (CORS).
     - `django-debug-toolbar` for debugging during development.

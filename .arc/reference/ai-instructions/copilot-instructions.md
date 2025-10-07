@@ -37,4 +37,4 @@ docker-compose exec frontend npm run lint && npm run type-check
 - **Testing**: Suggest test files alongside new components/functions
 - **Accessibility**: Include ARIA labels and semantic HTML in suggestions
 
-> **Note**: Detailed coding standards, architecture, and project context are in `AI-SHARED.md` and `_docs/TECHNICAL-ARCHITECTURE.md`
+> **Note**: Detailed coding standards, architecture, and project context are in [AI-SHARED](AI-SHARED.md) and [TECHNICAL-ARCHITECTURE](../constitution/TECHNICAL-ARCHITECTURE.md)

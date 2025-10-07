@@ -158,12 +158,12 @@ The following items were strategically deferred to API Layer Modernization Phase
 ## Documentation Artifacts
 
 **Primary Documentation:**
-- PRD: `_docs/archive/sub-prds/prd-authentication-modernization.md`
-- Tasks: `_docs/archive/tasks/tasks-authentication-modernization.md`
-- Notes: `_docs/notes/notes-authentication-modernization.md` (type safety analysis, PRD checklist)
+- PRD: [Authentication Modernization PRD](../sub-prds/prd-authentication-modernization.md)
+- Tasks: [Authentication Modernization Tasks](../tasks/tasks-authentication-modernization.md)
+- Notes: [Authentication Modernization Notes](../notes/notes-authentication-modernization.md) (type safety analysis, PRD checklist)
 
 **Workflow Documentation Created:**
-- `_docs/notes/notes-coderabbit-pr-review-workflow.md` - CodeRabbit review handling
+- [CodeRabbit PR Review Workflow](../notes/notes-coderabbit-pr-review-workflow.md) - CodeRabbit review handling
 - OAuth setup instructions in PRD
 - Development certificate generation scripts
 

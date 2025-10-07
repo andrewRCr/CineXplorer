@@ -307,6 +307,6 @@ docker compose exec backend coverage report --fail-under=85
 
 **Related Documentation:**
 
-- `_docs/notes/notes-authentication-modernization.md`
-- `_docs/sub-prds/prd-api-layer-modernization-p2.md`
-- `_docs/sub-prds/prd-backend-modernization.md`
+- [Authentication Modernization Notes](../notes/notes-authentication-modernization.md)
+- [API Layer Modernization P2 PRD](.arc/active/prd-api-layer-modernization-p2.md)
+- [Backend Modernization PRD](.arc/upcoming/sub-prds/prd-backend-modernization.md)

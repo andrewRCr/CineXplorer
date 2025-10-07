@@ -73,11 +73,11 @@ Before any commit consideration, ALL of the following must pass with **zero exce
    - **PROHIBITED**: Using `typing.Any` except for external API payloads (TMDB, etc.)
    - **REQUIRED**: Use `object` for unknown data, `dict[str, object]` for generic dictionaries
    - **JUSTIFICATION**: Any `Any` usage must have inline comment explaining necessity
-   - **Full guidelines**: See `_docs/reference/type-safety-strategy.md` for complete strategy
+   - **Full guidelines**: See [Type Safety Strategy](../strategies/strategy-type-safety.md) for complete strategy
 
 7. **Markdown Linting**: Zero violations
-   - Command: `npx markdownlint-cli2 "README.md" "_docs/**/*.md"`
-   - Auto-fix: `npx markdownlint-cli2 --fix "README.md" "_docs/**/*.md"`
+   - Command: `npx markdownlint-cli2 "README.md" ".arc/**/*.md"`
+   - Auto-fix: `npx markdownlint-cli2 --fix "README.md" ".arc/**/*.md"`
    - Config: `.markdownlint-cli2.jsonc` (MD034 bare URLs disabled only for temporal docs: tasks/, notes/, archive/notes/)
    - Gitignored files automatically excluded (notes/, archive/notes/, CURRENT-SESSION.md)
    - Every violation must be fixed
@@ -218,7 +218,7 @@ After completing all sub-tasks under a parent task:
 - django-stubs has gaps for UserManager.create_user and AbstractBaseUser methods
 - Alternative would be 20+ `type: ignore` comments scattered throughout authentication code
 
-**See**: `_docs/reference/type-safety-strategy.md` for full type safety approach
+**See**: [Type Safety Strategy](../strategies/strategy-type-safety.md) for full type safety approach
 
 ### Django ORM with ModelSchema Pattern
 
@@ -275,7 +275,7 @@ def get_detail(request: HttpRequest, id: int) -> MyDetailSchema:
 **MANDATORY** before every commit consideration:
 
 1. **Examine ALL uncommitted changes**
-2. **Locate relevant task documentation** in `_docs/tasks/`
+2. **Locate relevant task documentation** in [active tasks](.arc/active/) or [upcoming tasks](.arc/upcoming/tasks/)
 3. **Analyze task completion status** vs documented tasks
 4. **Update task documentation** - mark subtasks complete
 5. **Write accurate commit messages** reflecting project status
@@ -327,8 +327,8 @@ git branch -d feature/[feature-name]
 
 This document provides core rules. See detailed protocols in:
 
-- **`_docs/workflows/process-tasks.md`** - Detailed task execution workflow
-- **`_docs/workflows/atomic-commit.md`** - Enhanced commit workflow with comprehensive task context analysis
-- **`_docs/ai-instructions/AI-SHARED.md`** - Complete project context for AI
-- **`_docs/CURRENT-SESSION.md`** - Session handoff template (untracked)
-- **`_docs/TECHNICAL-ARCHITECTURE.md`** - Testing methodology details
+- [Task Processing Workflow](../workflows/process-tasks.md) - Detailed task execution workflow
+- [Atomic Commit Workflow](../workflows/atomic-commit.md) - Enhanced commit workflow with comprehensive task context analysis
+- [AI Shared Context](../ai-instructions/AI-SHARED.md) - Complete project context for AI
+- [Current Session](.arc/active/CURRENT-SESSION.md) - Session handoff template (untracked)
+- [Technical Architecture](TECHNICAL-ARCHITECTURE.md) - Testing methodology details

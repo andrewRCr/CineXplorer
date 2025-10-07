@@ -6,7 +6,7 @@ tags: [documentation, archive, workflow, organization]
 steps:
 
 - name: Verify Feature Completion
-  command: find _docs/tasks -name "*.md" -exec grep -l "\[x\]" {} \;
+  command: find .arc/active .arc/upcoming/tasks -name "*.md" -exec grep -l "\[x\]" {} \;
   description: |
   Before archiving, ensure the feature is truly complete:
   
@@ -20,9 +20,9 @@ steps:
   description: |
   Ensure archive directories exist (should already be set up):
   
-  1. mkdir -p _docs/archive/sub-prds
-  2. mkdir -p _docs/archive/tasks  
-  3. mkdir -p _docs/archive/completion-metadata
+  1. mkdir -p .arc/reference/archive/sub-prds
+  2. mkdir -p .arc/reference/archive/tasks  
+  3. mkdir -p .arc/reference/archive/completion-metadata
   
   Archive mirrors active directory structure with completion metadata separate.
 
@@ -30,8 +30,8 @@ steps:
   description: |
   Move the feature's PRD to archive:
 
-  1. `mv _docs/sub-prds/prd-[feature-name].md _docs/archive/sub-prds/`
-  2. Create completion metadata: `_docs/archive/completion-metadata/completion-[feature-name].md`
+  1. `mv .arc/upcoming/sub-prds/prd-[feature-name].md .arc/reference/archive/sub-prds/`
+  2. Create completion metadata: `.arc/reference/archive/completion-metadata/completion-[feature-name].md`
   
   Completion metadata should include:
     - Completion date and final commit hash
@@ -43,7 +43,7 @@ steps:
   description: |
   Move the feature's task file to archive:
 
-  1. `mv _docs/tasks/tasks-prd-[feature-name].md _docs/archive/tasks/`
+  1. `mv .arc/upcoming/tasks/tasks-[feature-name].md .arc/reference/archive/tasks/`
   
   Task details remain accessible via the archived task file.
   Completion metadata captures high-level summary without duplicating task breakdown.
@@ -57,7 +57,7 @@ steps:
   3. Update any cross-references to archived documentation
 
 - name: Create Archive Index
-  command: find _docs/archive -name "*.md" | sort
+  command: find .arc/reference/archive -name "*.md" | sort
   description: |
   Maintain visibility of archived content:
   
@@ -71,14 +71,14 @@ steps:
   Commit the archival changes following atomic commit principles:
 
   **Before committing:**
-  1. Run markdown linting: `npx markdownlint-cli2 "README.md" "_docs/**/*.md" "!_docs/notes/*.md"`
+  1. Run markdown linting: `npx markdownlint-cli2 "README.md" ".arc/**/*.md"`
   2. Fix any violations in completion metadata and archived docs
   3. Verify all quality gates pass
 
   ```bash
-  git add _docs/archive/
-  git add _docs/sub-prds/ _docs/tasks/  # (for removed files)
-  git add _docs/PROJECT-STATUS.md
+  git add .arc/reference/archive/
+  git add .arc/upcoming/sub-prds/ .arc/upcoming/tasks/  # (for removed files)
+  git add .arc/reference/constitution/PROJECT-STATUS.md
   ```
 
   git commit -m "docs(archive): Archive [feature-name] documentation
@@ -99,15 +99,15 @@ Archive Organization Principles:
 Archive Directory Structure:
 
 ```
-_docs/archive/
+.arc/reference/archive/
 ├── README.md                                    # Archive overview and navigation
 ├── sub-prds/
 │   ├── prd-logging-system.md                    # Archived PRDs
 │   ├── prd-user-authentication.md
 │   └── [other-completed-features].md
 ├── tasks/
-│   ├── tasks-prd-logging-system.md              # Archived task files
-│   ├── tasks-prd-user-authentication.md
+│   ├── tasks-logging-system.md                  # Archived task files
+│   ├── tasks-user-authentication.md
 │   └── [other-completed-features].md
 └── completion-metadata/
     ├── completion-logging-system.md             # Comprehensive completion documentation

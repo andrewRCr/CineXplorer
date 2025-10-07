@@ -19,7 +19,7 @@ This task list currently covers **Phase 1 (Proof of Concept)** of the API Layer 
 - `backend/apps/core/types/api_types.py` - ✅ Type aliases for API layer type safety (TMDBParams, TMDBResponseData).
 - `backend/apps/core/types/__init__.py` - ✅ Package initialization for core type definitions.
 - `backend/apps/core/services/validators.py` - ✅ Response validators for type-safe ApiResponse → Pydantic model conversion.
-- `_docs/tasks/tasks-api-layer-modernization-p1.md` - This task list file.
+- This archived task list file (moved from active development).
 
 ### Files to be Modified
 
@@ -34,7 +34,7 @@ This task list currently covers **Phase 1 (Proof of Concept)** of the API Layer 
 - `frontend/src/@types/movie.d.ts` - ✅ Updated to use auto-generated types with frontend extensions.
 - `frontend/src/utilities/routeConfigHelper.ts` - ✅ Updated to work with new endpoint structure.
 - `.gitignore` - ✅ Updated to exclude generated `frontend/openapi.json` file.
-- `_docs/PROJECT-STATUS.md` - To add this new feature to the project status.
+- [PROJECT-STATUS](.arc/reference/constitution/PROJECT-STATUS.md) - To add this new feature to the project status.
 
 ### Files to be Removed/Deprecated
 

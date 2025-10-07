@@ -6,38 +6,38 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **READ THESE FIRST** before starting any significant work:
 
-- **`_docs/DEVELOPMENT-RULES.md`** - **CORE RULES** - Non-negotiable development standards and protocols
-- **`_docs/ai-instructions/AI-SHARED.md`** - Complete project context, technology stack, architectural patterns, and development standards
-- **`_docs/META-PRD.md`** - Product vision, core features, user flows, and success metrics
-- **`_docs/TECHNICAL-ARCHITECTURE.md`** - Detailed technical architecture, testing methodology, and implementation patterns
-- **`_docs/PROJECT-STATUS.md`** - Current progress, completed features, and upcoming priorities
+- [DEVELOPMENT-RULES](../constitution/DEVELOPMENT-RULES.md) - **CORE RULES** - Non-negotiable development standards and protocols
+- [AI-SHARED](AI-SHARED.md) - Complete project context, technology stack, architectural patterns, and development standards
+- [META-PRD](../constitution/META-PRD.md) - Product vision, core features, user flows, and success metrics
+- [TECHNICAL-ARCHITECTURE](../constitution/TECHNICAL-ARCHITECTURE.md) - Detailed technical architecture, testing methodology, and implementation patterns
+- [PROJECT-STATUS](../constitution/PROJECT-STATUS.md) - Current progress, completed features, and upcoming priorities
 
 ## Systematic AI Development Workflow
 
 This project uses a structured **3-step AI-assisted development process**:
 
-### Step 1: Feature Planning (`_docs/workflows/create-prd.md`)
+### Step 1: Feature Planning ([Create PRD](../workflows/create-prd.md))
 
 - Generate Sub-PRDs from user requirements
 - Ask clarifying questions with letter/number options for easy responses
 - Review META-PRD context for product alignment
-- Save as `_docs/sub-prds/prd-[feature-name].md`
+- Save as [Sub-PRDs](.arc/upcoming/sub-prds/prd-[feature-name].md)
 
-### Step 2: Task Generation (`_docs/workflows/generate-tasks.md`)
+### Step 2: Task Generation ([Generate Tasks](../workflows/generate-tasks.md))
 
 - Convert Sub-PRDs into actionable task lists
 - Two-phase process: high-level tasks → detailed sub-tasks
 - Wait for user "Go" confirmation between phases
-- Save as `_docs/tasks/tasks-prd-[feature-name].md`
+- Save as [Tasks](.arc/upcoming/tasks/tasks-[feature-name].md)
 
-### Step 3: Task Execution (`_docs/workflows/process-tasks.md`)
+### Step 3: Task Execution ([Process Tasks](../workflows/process-tasks.md))
 
 - **CRITICAL**: Complete ONE sub-task at a time
 - **MANDATORY STOP** after each sub-task for user approval
 - Test-first approach for models, APIs, and complex logic
 - Update task list immediately after each completion
 - Full test suite + linting before any commits
-- Follow atomic commit workflow (`_docs/workflows/atomic-commit.md`)
+- Follow [Atomic Commit Workflow](../workflows/atomic-commit.md)
 
 ## Project Overview
 
@@ -115,16 +115,15 @@ docker-compose exec frontend npm run build
 │   └── contexts/          # Global state providers
 ├── shared/                # Shared TypeScript types (api-types.ts, error-codes.ts)
 ├── infrastructure/        # Docker configuration
-├── _docs/                 # Systematic development documentation
-│   ├── ai-instructions/   # AI tool configurations
-│   ├── workflows/         # 3-step development process
-│   ├── sub-prds/          # Generated feature specifications
-│   └── tasks/             # Generated implementation task lists
+├── .arc/                  # ARC systematic development documentation
+│   ├── active/            # Current session work (PRD, tasks, notes, session context)
+│   ├── upcoming/          # Future work pipeline (sub-prds, notes, tasks)
+│   └── reference/         # Stable documentation (constitution, strategies, workflows, ai-instructions, archive)
 ```
 
 ## Critical Development Rules
 
-**⚠️ See `_docs/DEVELOPMENT-RULES.md` for complete, authoritative rules. Key points:**
+**⚠️ See [DEVELOPMENT-RULES](../constitution/DEVELOPMENT-RULES.md) for complete, authoritative rules. Key points:**
 
 ### Quality Gates (Zero Tolerance)
 

@@ -7,13 +7,13 @@ To guide an AI assistant in creating a detailed, step-by-step task list in Markd
 ## Output
 
 - **Format:** Markdown (`.md`)
-- **Location:** `/_docs/tasks/`
+- **Location:** [upcoming tasks](.arc/upcoming/tasks/)
 - **Filename:** `tasks-[feature-name].md` (e.g., `tasks-user-profile-editing.md`)
 
 ## Process
 
 1. **Receive Sub-PRD Reference:** The user points the AI to a specific Sub-PRD file
-2. **Review Context:** Read the META-PRD (`/_docs/META-PRD.md`) and PROJECT-STATUS (`/_docs/PROJECT-STATUS.md`) to understand the overall product vision and current state
+2. **Review Context:** Read the [META-PRD](../constitution/META-PRD.md) and [PROJECT-STATUS](../constitution/PROJECT-STATUS.md) to understand the overall product vision and current state
 3. **Analyze Sub-PRD:** The AI reads and analyzes the functional requirements, user stories, and other sections of the specified Sub-PRD.
 4. **Assess Current State:** Review the existing codebase to understand existing infrastructure, architectural patterns and conventions. Also, identify any existing components or features that already exist and could be relevant to the Sub-PRD requirements. Then, identify existing related files, components, and utilities that can be leveraged or need modification.
 5. **Phase 1: Generate Parent Tasks:** Based on the Sub-PRD analysis and current state assessment, create the file and generate the main, high-level tasks required to implement the feature. Use your judgement on how many high-level tasks to use. It's likely to be about 5. Present these tasks to the user in the specified format (without sub-tasks yet). Inform the user: "I have generated the high-level tasks based on the Sub-PRD. Ready to generate the sub-tasks? Respond with 'Go' to proceed."
@@ -21,7 +21,7 @@ To guide an AI assistant in creating a detailed, step-by-step task list in Markd
 7. **Phase 2: Generate Sub-Tasks:** Once the user confirms, break down each parent task into smaller, actionable sub-tasks necessary to complete the parent task. Ensure sub-tasks logically follow from the parent task, cover the implementation details implied by the Sub-PRD, and consider existing codebase patterns where relevant without being constrained by them.
 8. **Identify Relevant Files:** Based on the tasks and Sub-PRD, identify potential files that will need to be created or modified. List these under the `Relevant Files` section, including corresponding test files if applicable.
 9. **Generate Final Output:** Combine the parent tasks, sub-tasks, relevant files, and notes into the final Markdown structure.
-10. **Save Task List:** Save the generated document in the `/_docs/tasks/` directory with the filename `tasks-[feature-name].md`, where `[feature-name]` matches the base name of the input Sub-PRD file (e.g., if the input was `prd-user-profile-editing.md`, the output is `tasks-user-profile-editing.md`).
+10. **Save Task List:** Save the generated document in the [upcoming tasks](.arc/upcoming/tasks/) directory with the filename `tasks-[feature-name].md`, where `[feature-name]` matches the base name of the input Sub-PRD file (e.g., if the input was `prd-user-profile-editing.md`, the output is `tasks-user-profile-editing.md`).
 11. **Create Feature Branch:** Create a new feature branch with the naming convention `feature/[feature-name]` (e.g., `feature/user-profile-editing`). Use the command: `git checkout -b feature/[feature-name]`
 12. **Update PROJECT-STATUS:** Add the new feature to the "Upcoming Priorities" section with status "(In Planning - Branch: feature/[feature-name])" and brief description of key deliverables.
 13. **Stage Initial Documentation:** Stage the new Sub-PRD, the new task list, and the updated `PROJECT-STATUS.md` file using `git add`.

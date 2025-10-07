@@ -8,21 +8,21 @@ CineXplorer is a Django REST Framework + React TypeScript movie discovery applic
 
 ### 📋 High-Level Documentation
 
-- **`_docs/META-PRD.md`** - Product vision, core features, user flows, and success metrics
-- **`_docs/PROJECT-STATUS.md`** - Current progress, completed work, and upcoming priorities
-- **`_docs/TECHNICAL-ARCHITECTURE.md`** - Technical architecture, patterns, and implementation details
+- [META-PRD](../constitution/META-PRD.md) - Product vision, core features, user flows, and success metrics
+- [PROJECT-STATUS](../constitution/PROJECT-STATUS.md) - Current progress, completed work, and upcoming priorities
+- [TECHNICAL-ARCHITECTURE](../constitution/TECHNICAL-ARCHITECTURE.md) - Technical architecture, patterns, and implementation details
 
 ### 🔄 Development Workflow
 
-- **`_docs/workflows/`** - Systematic approach for feature development:
-  1. `1-create-prd.md` - Generate Sub-PRDs for new features
-  2. `2-generate-tasks.md` - Create implementation task lists
-  3. `3-process-tasks.md` - Task execution and completion protocols
+- [Development Workflows](../workflows/) - Systematic approach for feature development:
+  1. [Create PRD](../workflows/create-prd.md) - Generate Sub-PRDs for new features
+  2. [Generate Tasks](../workflows/generate-tasks.md) - Create implementation task lists
+  3. [Process Tasks](../workflows/process-tasks.md) - Task execution and completion protocols
 
 ### 📄 Generated Deliverables
 
-- **`_docs/sub-prds/`** - Feature-level PRDs generated from workflow
-- **`_docs/tasks/`** - Implementation task lists generated from Sub-PRDs
+- [Sub-PRDs](.arc/upcoming/sub-prds/) - Feature-level PRDs generated from workflow
+- [Tasks](.arc/active/) and [Upcoming Tasks](.arc/upcoming/tasks/) - Implementation task lists generated from Sub-PRDs
 
 ## Core Project Context
 

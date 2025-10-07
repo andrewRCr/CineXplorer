@@ -47,7 +47,7 @@ CineXplorer is a movie discovery web application in active development. The core
 
 ### ✅ Logging System
 
-**Status**: Completed September 23, 2025 | [Archive](./_docs/archive/completion-metadata/completion-logging-system.md)
+**Status**: Completed September 23, 2025 | [Archive](../archive/completion-metadata/completion-logging-system.md)
 
 - Django backend logging with configurable levels and request correlation
 - React frontend error boundaries and logging service
@@ -59,7 +59,7 @@ CineXplorer is a movie discovery web application in active development. The core
 
 ### ✅ API Layer Modernization (Phase 1)
 
-**Status**: Completed September 30, 2025 | [Archive](./_docs/archive/completion-metadata/completion-api-layer-modernization-p1.md)
+**Status**: Completed September 30, 2025 | [Archive](../archive/completion-metadata/completion-api-layer-modernization-p1.md)
 
 - Movie domain fully migrated from DRF to Django Ninja with complete type safety
 - Pydantic schemas replacing DRF serializers for all movie endpoints (10 endpoints)
@@ -73,7 +73,7 @@ CineXplorer is a movie discovery web application in active development. The core
 
 ### ✅ Authentication Modernization
 
-**Status**: Completed January 2, 2025 | [Archive](./_docs/archive/completion-metadata/completion-authentication-modernization.md)
+**Status**: Completed January 2, 2025 | [Archive](../archive/completion-metadata/completion-authentication-modernization.md)
 
 - Migrated from custom JWT to django-allauth (52 commits, 42 files, +1,968/-526 lines)
 - OAuth 2.0 social login fully functional (Google + GitHub with comprehensive test infrastructure)

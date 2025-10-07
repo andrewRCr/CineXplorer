@@ -2,14 +2,14 @@
 
 ## Orientation & Context
 
-- Start each session with `_docs/ai-instructions/AI-SHARED.md` for shared guardrails, then review persona notes in `CLAUDE.md`, `WARP.md`, or `GEMINI.md` to match the requested voice.
-- Keep `_docs/DEVELOPMENT-RULES.md` and relevant `_docs/tasks/` open; they define approval gates and the next sub-task.
+- Start each session with [AI-SHARED](AI-SHARED.md) for shared guardrails, then review persona notes in [CLAUDE](CLAUDE.md), [WARP](WARP.md), or [GEMINI](GEMINI.md) to match the requested voice.
+- Keep [DEVELOPMENT-RULES](../constitution/DEVELOPMENT-RULES.md) and relevant [tasks](.arc/active/) open; they define approval gates and the next sub-task.
 
 ## Project Structure & Module Organization
 
 - `backend/` hosts the Django REST API with domain apps (core, movie, user, user_movie_data) and co-located `tests/`; configurations live in `config/` and utilities in `scripts/`.
 - `frontend/` is a Vite + React TypeScript client with feature code under `src/` and shared fixtures in `frontend/tests/`.
-- `shared/` mirrors API contracts (`api_types.py` ⇄ `api-types.ts`); `_docs/` captures process, and `infrastructure/` holds Docker Compose definitions.
+- `shared/` mirrors API contracts (`api_types.py` ⇄ `api-types.ts`); `.arc/` captures process, and `infrastructure/` holds Docker Compose definitions.
 
 ## Build, Test, and Development Commands
 
@@ -32,7 +32,7 @@
 ## Commit & Pull Request Guidelines
 
 - Use conventional commits with scoped context (`feat(api-modernization): …`, `docs(tasks): …`) and keep changes atomic across code, tests, and docs.
-- Reference task IDs or PRD items in commit bodies per `_docs/workflows/atomic-commit.md`, and avoid mixing unrelated concerns.
+- Reference task IDs or PRD items in commit bodies per [Atomic Commit Workflow](../workflows/atomic-commit.md), and avoid mixing unrelated concerns.
 - Pull requests summarize intent, list impacted areas, and attach quality-gate output plus any UI or API evidence.
 
 ## Environment & Security Tips

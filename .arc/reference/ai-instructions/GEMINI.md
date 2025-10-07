@@ -8,7 +8,7 @@ This file provides guidance for the Gemini AI assistant.
 
 Before starting any work, you must read and understand the following documents in order:
 
-1. `_docs/DEVELOPMENT-RULES.md` - The non-negotiable rules for all development.
-2. `_docs/ai-instructions/AI-SHARED.md` - The single source of truth for project context.
+1. [DEVELOPMENT-RULES](../constitution/DEVELOPMENT-RULES.md) - The non-negotiable rules for all development.
+2. [AI-SHARED](AI-SHARED.md) - The single source of truth for project context.
 
-Adhere strictly to the workflows defined in `_docs/workflows/`.
+Adhere strictly to the [workflows](../workflows/) defined in the reference directory.

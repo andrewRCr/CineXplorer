@@ -1,7 +1,7 @@
 # Tasks: API Layer Modernization Phase 2
 
 **Feature:** Complete Django Ninja Migration (UserMovieData + Authentication Domains)
-**PRD:** `_docs/sub-prds/prd-api-layer-modernization-p2.md`
+**PRD:** [PRD](.arc/active/prd-api-layer-modernization-p2.md)
 **Branch:** `feature/api-layer-modernization-p2`
 **Status:** In Progress
 
@@ -330,7 +330,7 @@ def create_entry(request: HttpRequest, payload: CreateSchema):
     - [ ] 6.0.9 Refactor user_movie_data tests to use shared helpers
     - [ ] 6.0.10 Refactor core tests to use shared helpers
     - [ ] 6.0.11 Run full test suite to verify no regressions from helper refactoring
-    - **Note**: See `_docs/notes/notes-api-layer-modernization-p2.md` "Test Helper Utilities Audit" section for detailed specifications
+    - **Note**: See [Notes](.arc/active/notes-api-layer-modernization-p2.md) "Test Helper Utilities Audit" section for detailed specifications
 
 - [ ] 6.1 Create UserMovieData Django Ninja tests
     - [ ] 6.1.1 Create `backend/apps/user_movie_data/tests/test_user_movie_data_ninja.py`
@@ -420,7 +420,7 @@ def create_entry(request: HttpRequest, payload: CreateSchema):
     - [ ] 7.4.5 Await user approval for commit/PR creation
 
 - [ ] 7.5 Update PROJECT-STATUS
-    - [ ] 7.5.1 Update `_docs/PROJECT-STATUS.md` to reflect Phase 2 completion
+    - [ ] 7.5.1 Update [PROJECT-STATUS](.arc/reference/constitution/PROJECT-STATUS.md) to reflect Phase 2 completion
     - [ ] 7.5.2 Move API Layer Modernization Phase 2 from "In Progress" to "Completed"
     - [ ] 7.5.3 Update feature progress milestones
     - [ ] 7.5.4 Document any newly completed functionality
@@ -439,7 +439,7 @@ def create_entry(request: HttpRequest, payload: CreateSchema):
 - **ModelSchema Usage:** UserMovieData CRUD endpoints use `ModelSchema` for automatic schema generation from Django models. Type safety is provided by custom `.pyi` stub files (not django-stubs field inference), which give type checkers explicit field type information.
 - **Manual Schema Usage:** Create/Update schemas use manual `Schema` due to non-model fields (e.g., `movie_id` lookup)
 - **Embedded Schema Unchanged:** `UserMovieDataSchema` in `movie/schemas.py` serves different purpose (embedding in movie responses), remains unchanged
-- **Type Safety Implementation:** Custom `.pyi` stub files in `backend/apps/*/models.pyi` provide explicit type annotations for Django model fields, enabling zero `type: ignore` comments for model field access in ModelSchema patterns. See `_docs/reference/type-safety-strategy.md` for complete guidance.
+- **Type Safety Implementation:** Custom `.pyi` stub files in `backend/apps/*/models.pyi` provide explicit type annotations for Django model fields, enabling zero `type: ignore` comments for model field access in ModelSchema patterns. See [Type Safety Strategy](.arc/reference/strategies/strategy-type-safety.md) for complete guidance.
 - **Authentication Foundation:** All work builds on Authentication Modernization foundation (CustomAccountAdapter, allauth integration)
 - **Deferred Work:** Email verification bridge removal and OAuth UI integration are deferred from Authentication Modernization
 - **Testing Strategy:** Three-layer testing (API integration, service layer, specialized tests) per Phase 1 blueprint

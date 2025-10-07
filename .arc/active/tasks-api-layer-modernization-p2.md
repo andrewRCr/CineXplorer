@@ -294,19 +294,19 @@ def create_entry(request: HttpRequest, payload: CreateSchema):
     - [x] 5.3.5 Run frontend type checking (`npm run type-check`) - ✅ Zero errors
     - [x] 5.3.6 Run incremental frontend linting (`npm run lint` on modified files) - ✅ Zero violations
 
-- [ ] 5.4 Add OAuth login buttons to frontend (deferred from Authentication Modernization)
-    - [ ] 5.4.1 Update `frontend/src/pages/auth/Login.tsx` to add Google login button
-    - [ ] 5.4.2 Update `frontend/src/pages/auth/Login.tsx` to add GitHub login button
-    - [ ] 5.4.3 Implement OAuth redirect handling (redirect to `/accounts/google/login/` and `/accounts/github/login/`)
-    - [ ] 5.4.4 Verify button styling matches existing design system
-    - [ ] 5.4.5 Run incremental frontend linting and type checking
+- [x] 5.4 Add OAuth login buttons to frontend (deferred from Authentication Modernization)
+    - [x] 5.4.1 Update `frontend/src/pages/auth/Login.tsx` to add Google login button
+    - [x] 5.4.2 Update `frontend/src/pages/auth/Login.tsx` to add GitHub login button
+    - [x] 5.4.3 Implement OAuth redirect handling (redirect to `/accounts/google/login/` and `/accounts/github/login/`)
+    - [x] 5.4.4 Verify button styling matches existing design system
+    - [x] 5.4.5 Run incremental frontend linting and type checking
 
-- [ ] 5.5 Update AuthContext for OAuth flows (deferred from Authentication Modernization)
-    - [ ] 5.5.1 Update `frontend/src/contexts/AuthContext.tsx` to handle OAuth redirect callbacks
-    - [ ] 5.5.2 Implement OAuth success callback handling (extract tokens, update auth state)
-    - [ ] 5.5.3 Implement OAuth error callback handling (display errors, redirect to login)
-    - [ ] 5.5.4 Ensure consistent UX between OAuth and password authentication flows
-    - [ ] 5.5.5 Run incremental frontend linting and type checking
+- [x] 5.5 Update AuthContext for OAuth flows (deferred from Authentication Modernization)
+    - [x] 5.5.1 Update `frontend/src/hooks/useAuth.ts` to handle OAuth redirect callbacks (OAuth callback detection in useEffect)
+    - [x] 5.5.2 Implement OAuth success callback handling (extract tokens from cookies, update auth state, redirect to home)
+    - [x] 5.5.3 Implement OAuth error callback handling (check URL params for errors, display via Login.tsx generalError state)
+    - [x] 5.5.4 Ensure consistent UX between OAuth and password authentication flows (same error display mechanism, same redirect behavior)
+    - [x] 5.5.5 Run incremental frontend linting and type checking (0 errors, 0 violations)
 
 - [ ] 5.6 Verify frontend integration end-to-end
     - [ ] 5.6.1 Manual test: User registration with password → email verification → login

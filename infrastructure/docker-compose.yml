@@ -34,6 +34,8 @@ services:
     depends_on:
       dev-db:
         condition: service_healthy
+    # Note: Auto-reload may not work reliably on Windows/Docker due to file watching limitations
+    # Use: docker compose restart backend after code changes
     command: sh -c "python manage.py runserver_plus 0.0.0.0:8000 --cert-file $${BACKEND_CERT_PATH} --key-file $${BACKEND_KEY_PATH}"
 
   frontend:

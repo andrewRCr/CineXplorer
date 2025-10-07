@@ -20,7 +20,7 @@ export function getCsrfToken(): string | null {
  */
 export async function ensureCsrfTokenCookie(baseUrl: string): Promise<void> {
 	if (!getCsrfToken()) {
-		await fetch(`${baseUrl}/csrf-token/`, { credentials: "include" });
+		await fetch(`${baseUrl}/csrf/`, { credentials: "include" });
 		await new Promise((resolve) => setTimeout(resolve, 100));
 	}
 }

@@ -7,6 +7,9 @@ import {
 
 const BASE_URL = import.meta.env.VITE_BASE_API_URL;
 
+// Debug: Log the base URL being used
+console.log('[apiClient] BASE_URL configured as:', BASE_URL);
+
 const apiClient = axios.create({
 	baseURL: BASE_URL,
 	headers: {

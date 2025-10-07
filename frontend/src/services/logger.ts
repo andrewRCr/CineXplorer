@@ -112,10 +112,11 @@ class Logger {
 			...config, // Allow override of defaults
 		};
 
-		// Enable interaction tracking in development mode
-		if (environment === 'development') {
-			this.enableInteractionTracking();
-		}
+		// Interaction tracking disabled by default (too verbose for console)
+		// Can be manually enabled via logger.enableInteractionTracking() if needed
+		// if (environment === 'development') {
+		// 	this.enableInteractionTracking();
+		// }
 
 		// Initialize logger with environment context
 		this.info('Frontend Logger initialized', {

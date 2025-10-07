@@ -309,7 +309,7 @@ def create_entry(request: HttpRequest, payload: CreateSchema):
     - [x] 5.5.5 Run incremental frontend linting and type checking (0 errors, 0 violations)
 
 - [ ] 5.6 Verify frontend integration end-to-end
-    - [ ] 5.6.1 Manual test: User registration with password → email verification → login
+    - [x] 5.6.1 Manual test: User registration with password → email verification → login ✅ Working (registration, email delivery, HMAC verification, login)
     - [ ] 5.6.2 Manual test: User login with Google OAuth → redirect → authenticated
     - [ ] 5.6.3 Manual test: User login with GitHub OAuth → redirect → authenticated
     - [ ] 5.6.4 Manual test: User movie data CRUD (add to watchlist, rate, review, delete)

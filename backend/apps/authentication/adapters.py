@@ -117,6 +117,17 @@ class CustomAccountAdapter(DefaultAccountAdapter):
                 "track_opens": True,
             }
 
+            # Log outgoing email details for debugging
+            logger.info(
+                f"Sending email via ZeptoMail to {email}",
+                extra={
+                    "recipient": email,
+                    "subject": subject,
+                    "template": template_prefix,
+                    "sender": self.sender_email,
+                },
+            )
+
             try:
                 response = requests.post(
                     f"{self.base_url}/email",
@@ -156,12 +167,15 @@ class CustomAccountAdapter(DefaultAccountAdapter):
                 raise
 
             if 200 <= response.status_code < 300:
+                # Parse response for debugging
+                response_data = response.json() if response.text else {}
                 logger.info(
-                    "Email sent successfully via ZeptoMail",
+                    f"Email sent successfully via ZeptoMail to {email}",
                     extra={
                         "recipient": email,
                         "template": template_prefix,
                         "status_code": response.status_code,
+                        "zeptomail_response": response_data,
                     },
                 )
             else:

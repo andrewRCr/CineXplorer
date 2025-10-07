@@ -327,7 +327,7 @@ git branch -d feature/[feature-name]
 
 This document provides core rules. See detailed protocols in:
 
-- [Task Processing Workflow](../workflows/process-tasks.md) - Detailed task execution workflow
+- [Task Processing Workflow](../workflows/3-process-task-loop.md) - Detailed task execution workflow
 - [Atomic Commit Workflow](../workflows/atomic-commit.md) - Enhanced commit workflow with comprehensive task context analysis
 - [AI Shared Context](../ai-instructions/AI-SHARED.md) - Complete project context for AI
 - [Current Session](.arc/active/CURRENT-SESSION.md) - Session handoff template (untracked)

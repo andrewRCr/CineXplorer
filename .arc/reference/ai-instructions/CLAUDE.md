@@ -16,21 +16,21 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This project uses a structured **3-step AI-assisted development process**:
 
-### Step 1: Feature Planning ([Create PRD](../workflows/create-prd.md))
+### Step 1: Feature Planning ([Create Sub-PRD](../workflows/1-create-sub-prd.md))
 
 - Generate Sub-PRDs from user requirements
 - Ask clarifying questions with letter/number options for easy responses
 - Review META-PRD context for product alignment
 - Save as [Sub-PRDs](.arc/upcoming/sub-prds/prd-[feature-name].md)
 
-### Step 2: Task Generation ([Generate Tasks](../workflows/generate-tasks.md))
+### Step 2: Task Generation ([Generate Tasks](../workflows/2-generate-tasks.md))
 
 - Convert Sub-PRDs into actionable task lists
 - Two-phase process: high-level tasks → detailed sub-tasks
 - Wait for user "Go" confirmation between phases
 - Save as [Tasks](.arc/upcoming/tasks/tasks-[feature-name].md)
 
-### Step 3: Task Execution ([Process Tasks](../workflows/process-tasks.md))
+### Step 3: Task Execution ([Process Task Loop](../workflows/3-process-task-loop.md))
 
 - **CRITICAL**: Complete ONE sub-task at a time
 - **MANDATORY STOP** after each sub-task for user approval

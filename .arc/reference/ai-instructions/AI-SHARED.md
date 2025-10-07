@@ -15,9 +15,9 @@ CineXplorer is a Django REST Framework + React TypeScript movie discovery applic
 ### 🔄 Development Workflow
 
 - [Development Workflows](../workflows/) - Systematic approach for feature development:
-  1. [Create PRD](../workflows/create-prd.md) - Generate Sub-PRDs for new features
-  2. [Generate Tasks](../workflows/generate-tasks.md) - Create implementation task lists
-  3. [Process Tasks](../workflows/process-tasks.md) - Task execution and completion protocols
+  1. [Create Sub-PRD](../workflows/1-create-sub-prd.md) - Generate Sub-PRDs for new features
+  2. [Generate Tasks](../workflows/2-generate-tasks.md) - Create implementation task lists
+  3. [Process Task Loop](../workflows/3-process-task-loop.md) - Task execution and completion protocols
 
 ### 📄 Generated Deliverables
 
@@ -67,7 +67,7 @@ CineXplorer is a Django REST Framework + React TypeScript movie discovery applic
 When working on new features:
 
 1. **Start with context**: Review META-PRD for product alignment
-2. **Use systematic approach**: Follow the 3-step workflow (create Sub-PRD → generate tasks → process tasks)
+2. **Use systematic approach**: Follow the 3-step workflow (create Sub-PRD → generate tasks → process task loop)
 3. **Work on feature branches**: All feature development happens on dedicated branches
 4. **Maintain quality**: Full testing and linting before any commits
 5. **Seek approval**: Never commit without explicit user review and permission
@@ -94,9 +94,9 @@ When core documents change, also update:
 
 ### "How do I...?"
 
-- **Start a new feature** → `workflows/create-prd.md`
-- **Break down tasks** → `workflows/generate-tasks.md`
-- **Implement tasks** → `workflows/process-tasks.md`
+- **Start a new feature** → `workflows/1-create-sub-prd.md`
+- **Break down tasks** → `workflows/2-generate-tasks.md`
+- **Implement tasks** → `workflows/3-process-task-loop.md`
 - **Run tests/linting** → `DEVELOPMENT-RULES.md` (Essential Commands)
 - **Understand the product** → `META-PRD.md`
 - **See current progress** → `PROJECT-STATUS.md`

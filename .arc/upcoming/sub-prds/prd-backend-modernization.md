@@ -238,6 +238,6 @@ This Sub-PRD defines a comprehensive backend modernization effort for CineXplore
 
 1. Review and approve this Sub-PRD
 2. Complete logging system implementation  
-3. Generate detailed task breakdown using the generate-tasks workflow
+3. Generate detailed task breakdown using the 2-generate-tasks workflow
 4. Begin implementation starting with type system modernization
 5. Establish automated quality gates and development workflow integration

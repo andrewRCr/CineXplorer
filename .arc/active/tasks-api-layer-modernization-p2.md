@@ -187,7 +187,7 @@ def create_entry(request: HttpRequest, payload: CreateSchema):
 **Solution:** `django-ninja-jwt` - Official fork of simplejwt specifically for Django Ninja, actively maintained (latest: 5.3.5, Nov 2024).
 
 - [x] 4.1 Research and evaluate django-ninja-jwt
-    - [x] 4.1.1 Review django-ninja-jwt documentation (https://eadwincode.github.io/django-ninja-jwt/)
+    - [x] 4.1.1 Review [django-ninja-jwt documentation](https://eadwincode.github.io/django-ninja-jwt/)
     - [x] 4.1.2 Compare API with djangorestframework-simplejwt to understand migration path
     - [x] 4.1.3 Verify compatibility with our current setup (httponly cookies, CORS, allauth)
     - [x] 4.1.4 Check for any breaking changes or configuration differences

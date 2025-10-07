@@ -239,7 +239,7 @@ def create_entry(request: HttpRequest, payload: CreateSchema):
     - [x] 4.6.4 Document maintenance contract following type-safety-strategy.md pattern - DONE (maintenance contract headers in all stubs)
     - [x] 4.6.5 Achieve zero type errors in authentication domain - ACHIEVED (9 errors in auth_ninja.py, 43 in api.py - all pre-existing django-stubs ORM limitations)
 
-- [ ] 4.7 Update and run authentication tests
+- [x] 4.7 Update and run authentication tests
     - [x] 4.7.1 Update test fixtures if needed (token generation for tests)
     - [x] 4.7.2 Run authentication domain tests (`python manage.py test apps.authentication --settings=config.settings_test`)
     - [x] 4.7.3 Migrate test file from DRF APIClient to Django Client (complete DRF elimination)
@@ -251,13 +251,13 @@ def create_entry(request: HttpRequest, payload: CreateSchema):
             - Reusable `json_post()`, `json_patch()`, `json_put()` helpers (type-safe with `dict[str, object]`)
             - Re-export of `http.HTTPStatus` for type-safe status code assertions (stdlib, zero dependencies)
         - **BONUS**: Removed DRF status import from `movie/tests/test_movie_api.py` (Phase 1 cleanup)
-    - [ ] 4.7.4 Fix any test failures from JWT library migration and test client migration
-        - [ ] 4.7.4.1 Update validation error assertions (Django Ninja uses 422, not 400 for validation errors)
-        - [ ] 4.7.4.2 Replace force_authenticate() with actual JWT cookie authentication in PrivateUserApiTests
-        - [ ] 4.7.4.3 Fix AuthCookieIntegrationTests registration to properly create users with first/last name
-        - [ ] 4.7.4.4 Run tests and verify all 20 tests pass
-    - [ ] 4.7.5 Verify all authentication tests pass (100% pass rate)
-    - [ ] 4.7.6 Verify no test regressions from simplejwt → ninja-jwt migration
+    - [x] 4.7.4 Fix any test failures from JWT library migration and test client migration
+        - [x] 4.7.4.1 Update validation error assertions (Django Ninja uses 422, not 400 for validation errors)
+        - [x] 4.7.4.2 Replace force_authenticate() with actual JWT cookie authentication in PrivateUserApiTests
+        - [x] 4.7.4.3 Fix AuthCookieIntegrationTests registration to properly create users with first/last name
+        - [x] 4.7.4.4 Run tests and verify all 20 tests pass
+    - [x] 4.7.5 Verify all authentication tests pass (100% pass rate) ✅ 20/20 tests passing
+    - [x] 4.7.6 Verify no test regressions from simplejwt → ninja-jwt migration ✅ All tests pass
 
 - [ ] 4.8 Verify JWT functionality end-to-end
     - [ ] 4.8.1 Manual test: User registration generates valid tokens
@@ -341,6 +341,7 @@ def create_entry(request: HttpRequest, payload: CreateSchema):
     - [ ] 6.1.6 Implement test for authentication requirement (401 if unauthenticated)
     - [ ] 6.1.7 Implement test for user isolation (user A cannot access user B's data)
     - [ ] 6.1.8 Run user_movie_data tests (`python manage.py test apps.user_movie_data --settings=config.settings_test`)
+    - [ ] 6.1.9 **Delete legacy DRF tests** - Remove `test_user_movie_data_api.py` entirely (15 skipped tests, no longer relevant after Django Ninja migration complete)
 
 - [ ] 6.2 Create authentication Django Ninja tests (deferred from Authentication Modernization)
     - [ ] 6.2.1 Create `backend/apps/authentication/tests/test_auth_ninja.py`

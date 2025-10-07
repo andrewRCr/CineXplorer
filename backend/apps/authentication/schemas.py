@@ -40,17 +40,15 @@ class RegisterInputSchema(Schema):
         min_length=5,
         description="Account password (minimum 5 characters)"
     )
-    first_name: str = Field(
-        ...,
-        min_length=1,
+    first_name: str | None = Field(
+        default=None,
         max_length=150,
-        description="User's first name"
+        description="User's first name (optional)"
     )
-    last_name: str = Field(
-        ...,
-        min_length=1,
+    last_name: str | None = Field(
+        default=None,
         max_length=150,
-        description="User's last name"
+        description="User's last name (optional)"
     )
 
 

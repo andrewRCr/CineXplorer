@@ -65,8 +65,8 @@ export async function register(
 	username: string,
 	email: string,
 	password: string,
-	firstName: string,
-	lastName: string
+	firstName: string = "",
+	lastName: string = ""
 ): Promise<TokenResponse> {
 	await ensureCsrfTokenCookie(BASE_URL);
 	const csrfToken = getCsrfToken();
@@ -135,10 +135,12 @@ export async function getUserProfile(): Promise<UserProfile> {
  * @returns Verification result with message
  */
 export async function verifyEmail(token: string): Promise<{ message: string }> {
+	await ensureCsrfTokenCookie(BASE_URL);
 	const csrfToken = getCsrfToken();
 
-	const response = await apiClient.get<{ message: string }>(
-		`/verify-email/${token}/`,
+	const response = await apiClient.post<{ message: string }>(
+		`/verify-email/`,
+		{ key: token },
 		{
 			headers: {
 				"X-CSRFToken": csrfToken || "",

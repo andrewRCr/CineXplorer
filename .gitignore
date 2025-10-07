@@ -211,11 +211,12 @@ infrastructure/dev-certs/*.crt
 infrastructure/dev-certs/*.key
 
 # Personal reference documentation
-_docs/archive/notes/
-_docs/notes/
+.arc/reference/archive/notes/
+.arc/active/notes-*
+.arc/upcoming/notes/
 
 # Session handoff file (transient)
-_docs/CURRENT-SESSION.md
+.arc/active/CURRENT-SESSION.md
 
 # AI tool settings (personal development environment preferences)
 .claude/
@@ -225,9 +226,6 @@ _docs/CURRENT-SESSION.md
 .markdownlint.jsonc
 
 # Note: frontend/openapi.json is now vendored (not ignored) to prevent type drift
-
-# Note: _docs/ai-instructions/, _docs/workflows/, and other high-level docs are included
-# to showcase systematic AI-assisted development methodology
 
 # Type checking output files
 *type_errors.json

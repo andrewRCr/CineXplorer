@@ -112,7 +112,7 @@ jobs:
 
       - name: Lint markdown files
         run: |
-          npx markdownlint-cli2 "README.md" "_docs/**/*.md"
+          npx markdownlint-cli2 "README.md" ".arc/**/*.md"
 
   frontend:
     name: Frontend Quality Gates

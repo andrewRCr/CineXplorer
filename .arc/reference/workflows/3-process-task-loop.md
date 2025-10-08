@@ -148,8 +148,17 @@ While working on tasks in the main feature task list, you may discover quality i
 **1. Creation** (when issue discovered):
 
 ```bash
-# Create incidental task file (untracked during active work)
+# Create incidental task file
 touch .arc/active/tasks-incidental-{brief-slug}.md
+
+# Immediately track it for context visibility
+git add .arc/active/tasks-incidental-{brief-slug}.md
+git commit -m "docs({feature}): Create {brief-slug} incidental task list
+
+Triggered by {discovery context}.
+Pausing {current work} to address {critical issue}.
+
+Related to: tasks-{main-feature}.md"
 ```
 
 **File structure** (use template below):
@@ -165,20 +174,38 @@ touch .arc/active/tasks-incidental-{brief-slug}.md
 **Next Action**: Incidental work - {brief description}
 ```
 
+**Rationale for tracking:**
+- ✅ Dependency visibility - Git log shows when/why work was paused
+- ✅ Session handoffs - Full context across machines/sessions
+- ✅ Priority shifts documented - Audit trail of decision-making
+- ✅ Scales to nested incidentals - Can see relationships between multiple incidental tasks
+- ✅ Team collaboration - Others see active work without digging through notes
+
 **2. Execution**:
 - Follow normal task-loop rules (one subtask at a time, quality gates, approval)
 - Run incremental quality checks after each subtask
-- Commit with conventional format: `refactor(incidental): {description}`
+- Commit with conventional format: `refactor({feature}): {description}` or `feat({feature}): {description}`
 - Reference incidental task file in commit body
+- **Update task list file** as work progresses (mark subtasks `[x]`)
+- **Commit task list updates** alongside code changes for context
 
 **3. Completion and Archiving**:
 
 ```bash
-# Move to archive (becomes tracked)
+# Update completion notes in task file first
+# Include: summary, outcomes, files changed, any follow-up needed
+
+# Move to archive (already tracked, so use git mv)
 git mv .arc/active/tasks-incidental-{slug}.md .arc/reference/archive/tasks/tasks-incidental-{slug}.md
 
-# Add completion notes to file before archiving
-# Include: what was done, files changed, any follow-up needed
+# Commit the archive
+git commit -m "docs({feature}): Archive incidental work - {brief description}
+
+Completed all subtasks for {incidental work}.
+Resuming {main work}.
+
+Summary: {1-2 sentence outcome}
+Related to: tasks-{main-feature}.md"
 ```
 
 **Update CURRENT-SESSION.md**:
@@ -186,13 +213,6 @@ git mv .arc/active/tasks-incidental-{slug}.md .arc/reference/archive/tasks/tasks
 ```markdown
 **Last Completed**: Incidental work - {brief description}
 **Next Action**: Resume Task X.Y
-```
-
-**Commit the archive**:
-
-```bash
-git add .arc/reference/archive/tasks/tasks-incidental-{slug}.md
-git commit -m "docs: Archive incidental work - {brief description}"
 ```
 
 **4. Resume Main Work**:
@@ -246,14 +266,27 @@ git commit -m "docs: Archive incidental work - {brief description}"
 
 ### Gitignore Configuration
 
-Incidental task files are untracked while in `.arc/active/` (work in progress), and become tracked when moved to `.arc/reference/archive/tasks/` (completed work).
+**Task lists are TRACKED by default** for context visibility and dependency tracking.
 
-Add to `.gitignore`:
+**Notes files remain UNTRACKED** (scratch paper vs. project context).
+
+In `.gitignore`:
 
 ```gitignore
-# Incidental work task lists (untracked during active work)
-.arc/active/tasks-incidental-*.md
+# Personal reference documentation and notes
+.arc/active/notes-*
+.arc/active/notes-incidental-*.md
+
+# Note: Incidental task lists are now TRACKED by default for context visibility
+# Only notes files remain untracked (scratch paper vs. project context)
 ```
+
+**Why track task lists:**
+- Complex work often spawns nested incidental tasks (OAuth → Security → ...)
+- Git history shows decision-making and priority shifts
+- Session handoffs have full context without relying solely on CURRENT-SESSION.md
+- Team members can see active work and dependencies
+- Context loss from untracked files > "clean git history" benefit
 
 ### Archive Organization
 

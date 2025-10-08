@@ -43,11 +43,10 @@
 - Update DEVELOPMENT-RULES.md and TECHNICAL-ARCHITECTURE.md to reflect Pyright-only approach
 - Document acceptable information-level warnings (Django ORM limitations per django-types)
 
-**Won't Do** (deferred to follow-up task list):
-- Fixing actual type errors discovered in audit (will create separate task list after baseline established)
+**Won't Do** (deferred to follow-up task list created in Task 14):
+- Fixing actual type errors discovered in audit (592 errors - separate task list for immediate fixing after this current task list completed)
 - Adding type stub validation tests (nice-to-have, not blocking)
 - Implementing type coverage dashboard (tooling enhancement, not critical)
-- Quarterly review process setup (ongoing maintenance, document for future)
 
 ## Tasks
 
@@ -103,36 +102,36 @@
         - [x] 4.2.2 Verify django-types stubs are being used - ✅ django-types stubs correctly installed and working
         - [x] 4.2.3 Document any unexpected errors or warnings - ✅ No issues, configuration working perfectly
 
-- [ ] 5. Rewrite type_check.py Script (Pyright-Only, Full App Coverage)
-    - [ ] 5.1 Update script to use Pyright exclusively
-        - [ ] 5.1.1 Remove all MyPy-related checks and imports
-        - [ ] 5.1.2 Remove `is_django_stubs_internal_error()` function (no longer needed)
-        - [ ] 5.1.3 Remove MyPy SKIP logic from results reporting
-        - [ ] 5.1.4 Simplify to single type checker workflow
-    - [ ] 5.2 Update check definitions to cover ENTIRE apps
-        - [ ] 5.2.1 Change authentication: from `apps/authentication/api.py` to `apps/authentication/`
-        - [ ] 5.2.2 Change user_movie_data: from specific files to `apps/user_movie_data/`
-        - [ ] 5.2.3 Change core: from `apps/core/utilities/` and individual files to `apps/core/`
-        - [ ] 5.2.4 Keep movie as-is: `apps/movie/` (already full app)
-        - [ ] 5.2.5 Add config check: `config/` (settings, api.py, etc.)
-    - [ ] 5.3 Add comprehensive app coverage
-        - [ ] 5.3.1 Ensure ALL apps in `backend/apps/` are included
-        - [ ] 5.3.2 Check for any missing apps: `ls backend/apps/` vs script check list
-        - [ ] 5.3.3 Add accounts app if not present: `apps/accounts/`
-        - [ ] 5.3.4 Verify config directory included: `config/`
-    - [ ] 5.4 Update script output and reporting
-        - [ ] 5.4.1 Remove MyPy-specific output messages
-        - [ ] 5.4.2 Update "Hybrid Approach Status" section to "Type Safety Status: Pyright"
-        - [ ] 5.4.3 Add per-app error count reporting (for baseline tracking)
-        - [ ] 5.4.4 Update script docstring to reflect Pyright-only approach
-    - [ ] 5.5 Add verbose mode enhancements
-        - [ ] 5.5.1 In verbose mode, show first 5 errors per app (not just first 200 chars)
-        - [ ] 5.5.2 Add error categorization hints (fixable vs framework limitation)
-        - [ ] 5.5.3 Add suggestion to check type-coverage-status.md for tracking
-    - [ ] 5.6 Run incremental quality check
-        - [ ] 5.6.1 Test script runs: `python backend/scripts/type_check.py`
-        - [ ] 5.6.2 Verify all apps checked: Review output for complete app list
-        - [ ] 5.6.3 Document baseline error counts per app
+- [x] 5. Rewrite type_check.py Script (Pyright-Only, Full App Coverage)
+    - [x] 5.1 Update script to use Pyright exclusively
+        - [x] 5.1.1 Remove all MyPy-related checks and imports - ✅ Removed
+        - [x] 5.1.2 Remove `is_django_stubs_internal_error()` function - ✅ Removed
+        - [x] 5.1.3 Remove MyPy SKIP logic from results reporting - ✅ Removed
+        - [x] 5.1.4 Simplify to single type checker workflow - ✅ Pyright-only now
+    - [x] 5.2 Update check definitions to cover ENTIRE apps
+        - [x] 5.2.1 Change authentication: `apps/authentication/` (was single file) - ✅ Updated
+        - [x] 5.2.2 Change user_movie_data: `apps/user_movie_data/` (was specific files) - ✅ Updated
+        - [x] 5.2.3 Change core: `apps/core/` (was utilities/ only) - ✅ Updated
+        - [x] 5.2.4 Keep movie as-is: `apps/movie/` - ✅ Already full app
+        - [x] 5.2.5 Add config check: `config/` - ✅ Added
+    - [x] 5.3 Add comprehensive app coverage
+        - [x] 5.3.1 Ensure ALL apps in `backend/apps/` are included - ✅ All 5 apps covered
+        - [x] 5.3.2 Check for any missing apps - ✅ Accounts app added
+        - [x] 5.3.3 Add accounts app: `apps/accounts/` - ✅ Added (0 errors!)
+        - [x] 5.3.4 Verify config directory included: `config/` - ✅ Added
+    - [x] 5.4 Update script output and reporting
+        - [x] 5.4.1 Remove MyPy-specific output messages - ✅ Removed
+        - [x] 5.4.2 Update to "Type Safety Status: Pyright" - ✅ Updated with 4 checkmarks
+        - [x] 5.4.3 Add per-app error count reporting - ✅ Shows errors per app
+        - [x] 5.4.4 Update script docstring - ✅ Updated to Pyright-only with django-types
+    - [x] 5.5 Add verbose mode enhancements
+        - [x] 5.5.1 In verbose mode, show first 5 errors per app - ✅ Implemented with get_error_preview()
+        - [x] 5.5.2 Add error categorization hints - ✅ Added in "Next steps" section
+        - [x] 5.5.3 Add suggestion to check strategy doc - ✅ References strategy-type-safety.md
+    - [x] 5.6 Run incremental quality check
+        - [x] 5.6.1 Test script runs: `python scripts/type_check.py` - ✅ Works perfectly
+        - [x] 5.6.2 Verify all apps checked - ✅ 6 checks: core, auth, movie, user_movie_data, accounts, config
+        - [x] 5.6.3 Document baseline error counts - ✅ Captured below
 
 - [ ] 6. Run Comprehensive Type Check Audit (Accurate Baseline)
     - [ ] 6.1 Run type check on ALL backend apps with verbose output
@@ -151,11 +150,10 @@
         - [ ] 6.3.2 Identify Django ORM limitations (information-level acceptable per strategy)
         - [ ] 6.3.3 Identify custom stub gaps (may need stub updates)
         - [ ] 6.3.4 Identify framework integration issues (Django Ninja, allauth, etc.)
-    - [ ] 6.4 Create type-coverage-status.md document
+    - [ ] 6.4 Create notes-type-coverage-status.md document
         - [ ] 6.4.1 Document baseline error count per app
         - [ ] 6.4.2 Document error categories and examples
         - [ ] 6.4.3 Set target: 0 errors for all apps (with documented acceptable information warnings)
-        - [ ] 6.4.4 Document timeline: Aim for zero errors within 2-4 weeks
     - [ ] 6.5 Compare to previous 141 errors in authentication
         - [ ] 6.5.1 Note if error count reduced after django-types switch
         - [ ] 6.5.2 Document which errors were false positives from stub mismatch
@@ -251,10 +249,6 @@
         - [ ] 9.9.1 Remove checker-specific ignore patterns (no longer hybrid)
         - [ ] 9.9.2 Replace with simplified "Pyright Ignore Guidelines"
         - [ ] 9.9.3 Remove "Never silence BOTH checkers" rule (only one checker now)
-    - [ ] 9.10 Add new section: "Quarterly Type Safety Review"
-        - [ ] 9.10.1 Document review checklist (check stubs, review ignores, upstream improvements)
-        - [ ] 9.10.2 Document schedule: Every 3 months (Jan, Apr, Jul, Oct)
-        - [ ] 9.10.3 Link to type-coverage-status.md for tracking
 
 - [ ] 10. Update Constitution and Architecture Documents
     - [ ] 10.1 Update DEVELOPMENT-RULES.md
@@ -305,17 +299,41 @@
         - [ ] 13.1.1 Mark backend type safety modernization complete
         - [ ] 13.1.2 Document what was changed (django-types, Pyright-only, comprehensive app checking)
         - [ ] 13.1.3 Document baseline error counts per app
-        - [ ] 13.1.4 Note follow-up task list needed: "Fix Backend Type Errors"
-        - [ ] 13.1.5 Update "Next Action" appropriately (resume security updates or create type error fix task list)
+        - [ ] 13.1.4 Note follow-up task list creation (Task 14)
+        - [ ] 13.1.5 Update "Next Action" to "Fix Backend Type Errors" task list
     - [ ] 13.2 Create completion summary in this task list
         - [ ] 13.2.1 Document tooling changes (django-stubs → django-types, removed MyPy)
         - [ ] 13.2.2 Document script improvements (comprehensive app coverage)
         - [ ] 13.2.3 Document baseline audit results (error counts per app)
-        - [ ] 13.2.4 Document new documentation created (handbook, coverage status)
+        - [ ] 13.2.4 Document new documentation created (notes-type-coverage-status.md, strategy updates)
     - [ ] 13.3 Archive this incidental task list
         - [ ] 13.3.1 Move to `.arc/reference/archive/tasks/tasks-incidental-backend-type-safety.md`
         - [ ] 13.3.2 Commit archive with appropriate message
         - [ ] 13.3.3 Reference external research report in archive
+
+- [ ] 14. Create Follow-Up Task List for Fixing Type Errors
+    - [ ] 14.1 Create `.arc/active/tasks-incidental-fix-backend-type-errors.md`
+        - [ ] 14.1.1 Copy baseline error counts from Task 6 (592 total errors)
+        - [ ] 14.1.2 Use error categorization from Task 6.3 (real vs framework limitations)
+        - [ ] 14.1.3 Organize by priority: Start with lowest error counts for quick wins
+        - [ ] 14.1.4 Set scope: Fix ALL 592 errors to achieve zero-error baseline
+    - [ ] 14.2 Structure task list by app priority
+        - [ ] 14.2.1 Priority 1: Accounts app (0 errors - already perfect!)
+        - [ ] 14.2.2 Priority 2: Movie app (2 errors - quick win)
+        - [ ] 14.2.3 Priority 3: UserMovieData app (58 errors)
+        - [ ] 14.2.4 Priority 4: Config module (58 errors)
+        - [ ] 14.2.5 Priority 5: Authentication app (194 errors)
+        - [ ] 14.2.6 Priority 6: Core app (280 errors)
+    - [ ] 14.3 Document approach for each category
+        - [ ] 14.3.1 Real type errors: Add annotations, fix incorrect types
+        - [ ] 14.3.2 Custom stub gaps: Update stubs in `backend/stubs/`
+        - [ ] 14.3.3 Framework limitations: Document as acceptable with `# pyright: ignore[code]`
+        - [ ] 14.3.4 Django ORM patterns: Already information-level, document if needed
+    - [ ] 14.4 Add task list metadata
+        - [ ] 14.4.1 Set estimated effort based on error counts (likely 4-8 hours total)
+        - [ ] 14.4.2 Reference this task list as parent work
+        - [ ] 14.4.3 Set status to "Ready to start" once this task list completes
+        - [ ] 14.4.4 Add completion criteria: All apps pass `python scripts/type_check.py` with 0 errors
 
 ## Relevant Files
 
@@ -450,21 +468,22 @@ These are degraded from "error" to "information" per Zulip's approach and resear
 
 ### Follow-Up Task List: Fix Backend Type Errors
 
-**After This Task List Completes:**
+**Created in Task 14** - `.arc/active/tasks-incidental-fix-backend-type-errors.md`
 
-Create `.arc/active/tasks-incidental-backend-type-errors.md` with:
-1. Per-app error fixing (based on baseline from Task 6)
-2. Categorized by error type (real errors vs framework limitations)
-3. Progressive approach: Start with apps with fewest errors
-4. Target: Zero errors across entire backend within 2-4 weeks
+**Scope:**
+- Fix ALL 592 type errors discovered in baseline audit
+- Progressive approach: Movie (2) → UserMovieData (58) → Config (58) → Auth (194) → Core (280)
+- Categorized by error type (real errors vs framework limitations)
+- Target: Zero errors across entire backend immediately after this task list completes
 
-**Estimated Scope** (based on audit results):
-- authentication app: TBD errors (was 141, expected to drop after django-types)
-- core app: TBD errors
-- movie app: Likely 0-5 errors (previously passing)
-- user_movie_data app: Likely 0-5 errors (previously passing)
-- accounts app: TBD errors
-- config directory: TBD errors
+**Actual Baseline** (from Task 5 initial run):
+- Core app: 280 errors
+- Authentication app: 194 errors
+- UserMovieData app: 58 errors
+- Config module: 58 errors
+- Movie app: 2 errors
+- Accounts app: 0 errors ✅ (already perfect!)
+- **Total: 592 errors**
 
 ## Completion Notes
 

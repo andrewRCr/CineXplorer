@@ -24,8 +24,13 @@ from .api import api
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("__debug__/", include("debug_toolbar.urls")),
-    # django-allauth
-    # Provides: email verification, password reset, OAuth callbacks
+    # django-allauth Headless Mode (SPA/API-only)
+    # Provides JSON API endpoints for OAuth, email verification, password reset
+    # Browser API: /_allauth/browser/v1/...
+    path("_allauth/", include("allauth.headless.urls")),
+    # django-allauth Traditional URLs (needed for OAuth callbacks)
+    # OAuth providers redirect to /accounts/<provider>/login/callback/
+    # These are still needed even in headless mode for OAuth flow completion
     path("accounts/", include("allauth.urls")),
     # Django Ninja API (modern, type-safe endpoints)
     # All authentication, movie, and user data endpoints provided by Django Ninja

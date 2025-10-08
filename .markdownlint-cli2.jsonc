@@ -27,7 +27,12 @@
   ],
 
   "ignores": [
-    "**/node_modules/**"
+    "**/node_modules/**",
+    "**/.venv*/**",
+    "**/venv/**",
+    "**/frontend/build/**",
+    "**/frontend/.next/**",
+    "**/backend/staticfiles/**"
   ],
 
   "customRules": [],

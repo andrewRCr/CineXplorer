@@ -54,8 +54,9 @@ Before any commit consideration, ALL of the following must pass with **zero exce
    - Zero failures acceptable
 
 3. **Backend Linting**: Zero violations
-   - Command: `docker compose -f infrastructure/docker-compose.yml exec backend ruff check apps/ config/`
-   - Auto-fix: `docker compose -f infrastructure/docker-compose.yml exec backend ruff check apps/ config/ --fix`
+   - **Docker** (recommended): `docker compose -f infrastructure/docker-compose.yml exec backend ruff check apps/ config/`
+   - **Host WSL2** (faster): `.venv-backend/bin/ruff check backend/apps/ backend/config/`
+   - **Auto-fix**: Add `--fix` flag to either command
    - Every violation must be fixed
 
 4. **Frontend Linting**: Zero violations
@@ -67,9 +68,9 @@ Before any commit consideration, ALL of the following must pass with **zero exce
    - Every type error must be resolved
 
 6. **Python Type Safety**: Hybrid type checking approach with minimal Any usage
-   - **Development**: `python backend/scripts/type_check.py` from repo root
+   - **Development** (fastest): `npx pyright backend/apps/ --project backend` from repo root
    - **CI/CD**: `docker compose -f infrastructure/docker-compose.yml exec backend python scripts/type_check.py`
-   - **Manual**: `docker compose -f infrastructure/docker-compose.yml exec backend mypy apps/ --config-file mypy.ini`
+   - **Django-aware**: `docker compose -f infrastructure/docker-compose.yml exec backend mypy apps/ --config-file mypy.ini`
    - **PROHIBITED**: Using `typing.Any` except for external API payloads (TMDB, etc.)
    - **REQUIRED**: Use `object` for unknown data, `dict[str, object]` for generic dictionaries
    - **JUSTIFICATION**: Any `Any` usage must have inline comment explaining necessity

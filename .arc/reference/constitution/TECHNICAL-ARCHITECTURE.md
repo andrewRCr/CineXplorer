@@ -74,6 +74,7 @@ The entire application is designed to be run and deployed using containers.
 - **Containerization**: Docker and Docker Compose are used to define and run the multi-container application (`backend`, `frontend`, `postgres`, `caddy`). Separate `docker-compose.*.yml` files exist for different environments (dev, CI, prod).
 - **Web Server / Reverse Proxy**: **Caddy** is used as the reverse proxy. It handles routing requests to the appropriate service (e.g., `/api/*` to the backend, all other requests to the frontend) and provides automatic HTTPS for secure connections.
 - **CI/CD**: Continuous integration is set up using **GitHub Actions**. The workflow, defined in `.github/workflows/ci.yml`, runs linters and tests on every push and pull request to ensure code quality.
+- **Development Environment (WSL2)**: The development environment runs on WSL2 with Docker. Container user UID/GID (1001) matches the host user for proper file permissions on mounted volumes. Configuration is managed via `infrastructure/.env` which sets `USER_UID` and `USER_GID` build arguments. A host Python virtual environment (`.venv-backend/`) provides faster linting/type checking alternatives to Docker commands.
 
 ## 6. Testing Methodology
 
@@ -104,9 +105,15 @@ The project follows a **Modified Test-Driven Development (TDD)** approach that b
 
 ### Quality Gates
 
-Before any commit, the following checks must pass:
+Before any commit, the following checks must pass with **zero tolerance**:
 
 1. **Test Coverage**: New code has appropriate tests
-2. **All Tests Pass**: Both backend and frontend test suites
-3. **Linting**: `ruff` (backend) and `eslint` (frontend)
-4. **Type Checking**: Pyright/MyPy (backend) and TypeScript compilation (frontend)
+2. **All Tests Pass**: Both backend and frontend test suites (100% pass rate)
+3. **Linting**: Zero violations
+   - Backend: `ruff` via Docker or WSL2 host (`.venv-backend/bin/ruff check backend/apps/`)
+   - Frontend: `eslint` via Docker
+4. **Type Checking**: Zero errors
+   - Backend: Pyright (fastest) or MyPy (Django-aware)
+   - Frontend: TypeScript compilation
+
+See [DEVELOPMENT-RULES.md](DEVELOPMENT-RULES.md) for complete quality gate commands and requirements.

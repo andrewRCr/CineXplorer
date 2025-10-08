@@ -54,17 +54,18 @@ After each sub-task, run relevant quality checks on modified files only:
 
 ```bash
 # Lint specific files (with auto-fix)
-docker compose exec backend ruff check path/to/modified/file.py --fix
+# Option 1: Docker (consistent across environments)
+docker compose -f infrastructure/docker-compose.yml exec backend ruff check apps/path/to/file.py --fix
+# Option 2: WSL2 host venv (faster)
+.venv-backend/bin/ruff check backend/apps/path/to/file.py --fix
 
 # Type check specific files
-# Option 1: Host-based Pyright (requires npm install globally)
-npx pyright backend/path/to/modified/file.py
-# Option 2: Container-based Pyright
-docker compose exec backend npx pyright path/to/modified/file.py
-# Option 3: Django-compatible mypy
-docker compose exec backend mypy path/to/modified/file.py
+# Option 1: Pyright via npx (fastest, from project root)
+npx pyright backend/apps/path/to/file.py --project backend
+# Option 2: Django-aware mypy via Docker
+docker compose -f infrastructure/docker-compose.yml exec backend mypy apps/path/to/file.py --config-file mypy.ini
 
-# Note: Ruff linting is very fast with auto-fix; Pyright for quick type checks; mypy for full Django validation
+# Note: Ruff is very fast with auto-fix; Pyright for quick type checks; mypy for Django-aware validation
 ```
 
 **Frontend Files** (TypeScript/JavaScript):

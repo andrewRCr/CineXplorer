@@ -124,8 +124,8 @@ def main() -> None:  # noqa: C901
         ("movie", "Movie App (Pyright)", [
             "npx", "pyright", "apps/movie/"
         ], False),
-        ("auth", "Authentication (Pyright)", [
-            "npx", "pyright", "apps/authentication/auth_ninja.py"
+        ("auth", "Authentication App (Pyright)", [
+            "npx", "pyright", "apps/authentication/"
         ], False),
         ("user_movie_data", "UserMovieData (MyPy)", [
             "python", "-m", "mypy", "apps/user_movie_data/api.py",

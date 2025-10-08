@@ -1,13 +1,14 @@
 # Development Rules - CineXplorer
 
-**Version**: 2.2
-**Last Updated**: 2025-01-27
-**Rules Hash**: `c4f9e8a2`
+**Version**: 2.3
+**Last Updated**: 2025-10-08
+**Rules Hash**: `d7a3f1b9`
 
 This document consolidates the core development rules and quality standards for CineXplorer. These rules are **non-negotiable** and must be followed by all contributors, including AI assistants.
 
 ## Version History
 
+- **2.3**: Added "Leave It Cleaner" protocol for handling pre-existing issues in modified files
 - **2.2**: Added mandatory comprehensive task context analysis protocol for all commits
 - **2.1**: Added feature branch workflow protocols and branch management requirements
 - **2.0**: Clarified commit initiation vs execution, added incremental quality checks
@@ -17,8 +18,8 @@ This document consolidates the core development rules and quality standards for 
 
 Before starting ANY work, AI assistants must:
 
-1. **Confirm rules version**: "Acknowledging DEVELOPMENT-RULES v2.2, hash c4f9e8a2"
-2. **State understanding**: Briefly confirm understanding of commit protocols, comprehensive task context analysis, quality gates, and feature branch workflow
+1. **Confirm rules version**: "Acknowledging DEVELOPMENT-RULES v2.3, hash d7a3f1b9"
+2. **State understanding**: Briefly confirm understanding of commit protocols, comprehensive task context analysis, quality gates, "Leave It Cleaner" protocol, and feature branch workflow
 3. **Verify context access**: Confirm access to required documents (AI-SHARED, META-PRD, etc.)
 4. **Check branch status**: Verify current git branch and ensure alignment with intended work
 
@@ -91,6 +92,43 @@ If quality gates fail after sub-task completion:
 2. **Identify suspected causes** and investigation areas
 3. **Ask for guidance** on whether to fix immediately or defer
 4. **Never proceed** to next sub-task until resolved or user approves
+
+### Leave It Cleaner: Pre-existing Issue Protocol
+
+**Principle:** When touching any file, leave it cleaner than you found it. Quality issues discovered during work should be addressed, not ignored.
+
+**When quality checks reveal pre-existing issues in files you're modifying:**
+
+1. **Assess severity and scope:**
+   - **Minor issues** (< 5 minutes): Fix immediately without asking
+   - **Moderate issues** (5-15 minutes): Fix immediately, document in commit
+   - **Major issues** (> 15 minutes): Ask for direction before proceeding
+
+2. **Required actions (choose one):**
+   - ✅ **Fix immediately** - Preferred for all issues < 15 minutes
+   - ✅ **Document and defer** - Create incidental task list with:
+     - Clear description of issue found
+     - Why it's being deferred (time/scope constraints)
+     - Estimated effort to fix
+     - Link to relevant files/line numbers
+   - ❌ **Ignore silently** - NEVER acceptable
+
+3. **Examples:**
+   - Type errors in file you're editing → Fix with proper solution per [Type Safety Strategy](../strategies/strategy-type-safety.md)
+   - Linting violations in modified file → Fix with auto-fix tools
+   - Missing tests for existing function → Ask if should add now or defer
+   - Deprecated API usage → Ask if should modernize now or defer
+
+4. **Documentation requirements:**
+   - Fixed issues: Note in commit message ("Also fixed X pre-existing issues")
+   - Deferred issues: Create task list in `.arc/active/tasks-incidental-*.md`
+   - Never: Leave issues undocumented or unaddressed
+
+**Rationale:**
+- Prevents technical debt accumulation
+- Ensures quality gates actually improve codebase health
+- Makes incremental progress on code quality with every change
+- Documents intentional decisions when issues must be deferred
 
 ## Task Management Protocol
 

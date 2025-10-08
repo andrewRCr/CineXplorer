@@ -9,6 +9,7 @@ CineXplorer is a modern full-stack web application. The architecture is composed
 - A **React/TypeScript frontend** responsible for all UI and user interaction.
 - A **Django/Python backend** that serves a RESTful API.
 - A **PostgreSQL** database for data persistence.
+- A **Redis** cache for rate limiting and future background task processing.
 - **Docker** for containerizing all services for consistent development and deployment.
 - **Caddy** as a reverse proxy to route traffic to the appropriate service.
 
@@ -71,7 +72,10 @@ To ensure type safety and consistency between the frontend and backend, a `share
 
 The entire application is designed to be run and deployed using containers.
 
-- **Containerization**: Docker and Docker Compose are used to define and run the multi-container application (`backend`, `frontend`, `postgres`, `caddy`). Separate `docker-compose.*.yml` files exist for different environments (dev, CI, prod).
+- **Containerization**: Docker and Docker Compose are used to define and run the multi-container application (`backend`, `frontend`, `postgres`, `redis`, `caddy`). Separate `docker-compose.*.yml` files exist for different environments (dev, CI, prod).
+- **Cache & Task Queue**: **Redis 7.4** serves dual purposes using separate databases:
+    - **DB 0**: Django cache backend for rate limiting (Django Ninja throttling - current)
+    - **DB 1**: Future Celery broker for background task processing (Backend Modernization PRD - planned)
 - **Web Server / Reverse Proxy**: **Caddy** is used as the reverse proxy. It handles routing requests to the appropriate service (e.g., `/api/*` to the backend, all other requests to the frontend) and provides automatic HTTPS for secure connections.
 - **CI/CD**: Continuous integration is set up using **GitHub Actions**. The workflow, defined in `.github/workflows/ci.yml`, runs linters and tests on every push and pull request to ensure code quality.
 - **Development Environment (WSL2)**: The development environment runs on WSL2 with Docker. Container user UID/GID (1001) matches the host user for proper file permissions on mounted volumes. Configuration is managed via `infrastructure/.env` which sets `USER_UID` and `USER_GID` build arguments. A host Python virtual environment (`.venv-backend/`) provides faster linting/type checking alternatives to Docker commands.

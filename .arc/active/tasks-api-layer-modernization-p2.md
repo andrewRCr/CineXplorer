@@ -3,7 +3,7 @@
 **Feature:** Complete Django Ninja Migration (UserMovieData + Authentication Domains)
 **PRD:** [PRD](.arc/active/prd-api-layer-modernization-p2.md)
 **Branch:** `feature/api-layer-modernization-p2`
-**Status:** In Progress
+**Status:** PAUSED (backend type safety modernization in progress)
 
 ## Overview
 

@@ -219,7 +219,21 @@ After completing all sub-tasks under a parent task:
 - django-stubs has gaps for UserManager.create_user and AbstractBaseUser methods
 - Alternative would be 20+ `type: ignore` comments scattered throughout authentication code
 
-**See**: [Type Safety Strategy](../strategies/strategy-type-safety.md) for full type safety approach
+**Hybrid Type Checker Ignores**:
+
+When custom stubs aren't sufficient (Django ORM internals, type variance differences), use checker-specific ignores:
+
+```python
+# Pyright can't infer request.user, MyPy can via django-stubs
+assert isinstance(request.user, AbstractBaseUser)  # pyright: ignore[reportUnknownMemberType]
+
+# Pyright stricter on Manager variance than MyPy
+objects: ClassVar[UserManager]  # pyright: ignore[reportIncompatibleVariableOverride]
+```
+
+**Critical rule**: Never silence both checkers for the same error. One checker must always validate.
+
+**See**: [Type Safety Strategy](../strategies/strategy-type-safety.md) for complete type safety approach including decision trees and hybrid ignore guidelines
 
 ### Django ORM with ModelSchema Pattern
 

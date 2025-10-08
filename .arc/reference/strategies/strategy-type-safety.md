@@ -1,7 +1,13 @@
 # Type Safety Strategy and Guidelines
 
-**Version:** 1.0
+**Version:** 1.1
+**Last Updated:** 2025-10-08
 **Status:** Active - Official project standards
+
+## Version History
+
+- **1.1** (2025-10-08): Added comprehensive hybrid type checker ignore guidelines with decision trees, real examples, and anti-patterns
+- **1.0**: Initial type safety strategy
 
 ## Purpose
 
@@ -247,28 +253,105 @@ def parse_tmdb_response(payload: Any) -> MovieSchema:  # TMDB API contract not t
 
 **Rule:** Type ignores are a last resort. Exhaust all other options first.
 
-**Acceptable use cases:**
+**Decision tree (in order of preference):**
 
-1. **Django Ninja auth injection** - Runtime-injected attributes not in type stubs
-2. **External library limitations** - Third-party code without stubs
-3. **Django framework internals** - Framework magic that can't be typed
-4. **Documented edge cases** - Rare scenarios with detailed justification
+1. **Third-party library missing types?** → Create custom `.pyi` stub files (see [Primary Solution: Custom .pyi Stub Files](#primary-solution-custom-pyi-stub-files))
+2. **Django ORM internals?** → Use checker-specific ignores (see [Hybrid Type Checker Ignores](#hybrid-type-checker-ignores))
+3. **Runtime-injected attributes?** → Refactor to avoid (e.g., use `get_current_user()` instead of `request.auth`)
+4. **Truly unavoidable?** → Use specific `type: ignore` with detailed justification
 
-### Best Practices
+**Acceptable use cases (after exhausting above):**
+
+1. **Django framework internals** - Framework magic that can't be typed (use checker-specific ignores)
+2. **Django Ninja auth injection** - Runtime-injected attributes not in type stubs (prefer refactoring first)
+3. **Documented edge cases** - Rare scenarios with detailed justification
+
+**NOT acceptable:**
+
+- ❌ **External library limitations** - Create stub files instead of scattering `type: ignore`
+- ❌ **Laziness** - Don't use ignores to avoid proper typing work
+
+### Hybrid Type Checker Ignores
+
+**Context:** Our hybrid validation strategy (Pyright for speed, MyPy for Django compatibility) sometimes requires suppressing errors in one checker while keeping validation in the other.
+
+**When to use checker-specific ignores:**
+
+✅ **Acceptable:**
+
+1. **Django ORM dynamic fields** - Pyright can't infer `request.user` type, MyPy can with django-stubs
+2. **Type variance differences** - Pyright stricter on Manager overrides in stub files than MyPy
+3. **Framework internals** - One checker understands Django patterns, the other doesn't
+
+❌ **Not acceptable:**
+
+1. **Third-party library gaps** - Create stub files instead
+2. **Application code errors** - Fix the code, don't silence
+3. **Disagreement on real bugs** - Investigate and fix the root cause
+
+**Syntax:**
+
+```python
+# MyPy-specific ignore (Pyright still validates)
+variable: str = get_value()  # type: ignore[return-value]
+
+# Pyright-specific ignore (MyPy still validates)
+assert isinstance(request.user, AbstractBaseUser)  # pyright: ignore[reportUnknownMemberType]
+```
+
+**Real examples from our codebase:**
+
+```python
+# Example 1: Django ORM limitation - HttpRequest.user type
+# MyPy knows user is AbstractBaseUser (via django-stubs plugin)
+# Pyright only sees it as object (generic descriptor typing limitation)
+def create_token(request: HttpRequest) -> str:
+    assert isinstance(request.user, AbstractBaseUser)  # pyright: ignore[reportUnknownMemberType]
+    refresh = RefreshToken.for_user(request.user)
+    return str(refresh.access_token)
+
+# Example 2: Manager override variance in stub files
+# MyPy accepts ClassVar[EmailAddressManager] override
+# Pyright enforces strict variance (Manager[Model] vs EmailAddressManager)
+class EmailAddress(models.Model):
+    objects: ClassVar[EmailAddressManager]  # pyright: ignore[reportIncompatibleVariableOverride]
+```
+
+**Documentation requirements:**
+
+- ✅ Always specify error code: `# pyright: ignore[reportErrorName]` or `# type: ignore[error-code]`
+- ✅ Add inline comment explaining WHY if not obvious from context
+- ✅ Keep scope minimal (line-level only)
+- ✅ Verify the OTHER checker still validates correctly
+
+**Anti-patterns:**
+
+```python
+# ❌ WRONG: Generic ignore in both checkers
+value = get_unknown()  # type: ignore  # pyright: ignore
+
+# ❌ WRONG: Silencing both checkers for same error
+result = unsafe_call()  # type: ignore[return-value]  # pyright: ignore[reportReturnType]
+
+# ✅ CORRECT: One checker validates, other suppressed with reason
+assert isinstance(request.user, User)  # pyright: ignore[reportUnknownMemberType] - django-stubs provides runtime type
+```
+
+### General Type Ignore Best Practices
 
 **Always:**
 
-- ✅ Use specific codes: `# type: ignore[attr-defined]`
-- ✅ Add inline explanation: `# Django Ninja injects at runtime`
+- ✅ Use specific codes: `# type: ignore[attr-defined]` or `# pyright: ignore[reportAttributeAccessIssue]`
+- ✅ Add inline explanation for non-obvious suppressions
 - ✅ Keep scope minimal (line-level, not function-level)
-- ✅ Immediately cast to proper type for downstream safety
+- ✅ Verify error is legitimate before suppressing
 
 **Never:**
 
 - ❌ Blanket ignores without code: `# type: ignore`
 - ❌ Silencing real errors without investigation
-- ❌ Ignoring without explanation
-- ❌ Using ignores to avoid proper typing
+- ❌ Ignoring without understanding why
+- ❌ Using ignores to avoid proper typing work
 
 **Example:**
 

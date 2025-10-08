@@ -240,14 +240,77 @@ const Login = () => {
 		setRegistrationSuccess(null);
 	};
 
-	const handleGoogleLogin = () => {
-		const BASE_URL = import.meta.env.VITE_BASE_API_URL;
-		window.location.href = `${BASE_URL}/accounts/google/login/`;
+	const handleGoogleLogin = async () => {
+		// Use django-allauth headless mode API
+		await initializeOAuthLogin("google");
 	};
 
-	const handleGithubLogin = () => {
-		const BASE_URL = import.meta.env.VITE_BASE_API_URL;
-		window.location.href = `${BASE_URL}/accounts/github/login/`;
+	const handleGithubLogin = async () => {
+		// Use django-allauth headless mode API
+		await initializeOAuthLogin("github");
+	};
+
+	/**
+	 * Initialize OAuth login using django-allauth headless mode.
+	 * Headless mode provides JSON API endpoints designed for SPAs.
+	 * Uses HTML form submission (not fetch) because OAuth redirect must be followed by browser.
+	 */
+	const initializeOAuthLogin = async (provider: string) => {
+		try {
+			// Step 1: Ensure CSRF token is available via session endpoint
+			// Note: 401 is expected for unauthenticated users and still sets CSRF cookie
+			const sessionResponse = await fetch("/_allauth/browser/v1/auth/session", {
+				credentials: "include",
+			});
+
+			// Accept both 200 (authenticated) and 401 (unauthenticated) as valid
+			if (!sessionResponse.ok && sessionResponse.status !== 401) {
+				console.error("Failed to initialize session:", sessionResponse.status);
+				setGeneralError("Authentication setup failed. Please refresh the page.");
+				return;
+			}
+
+			// Step 2: Get CSRF token from cookie
+			const csrfToken = document.cookie
+				.split("; ")
+				.find((row) => row.startsWith("csrftoken="))
+				?.split("=")[1];
+
+			if (!csrfToken) {
+				console.error("CSRF token not found after session initialization");
+				setGeneralError("Authentication setup failed. Please refresh the page.");
+				return;
+			}
+
+			// Step 3: Create and submit form to headless provider redirect endpoint
+			// Must use HTML form submission (not fetch) so browser follows OAuth redirect
+			const form = document.createElement("form");
+			form.method = "POST";
+			form.action = "/_allauth/browser/v1/auth/provider/redirect";
+
+			// Add form fields
+			const fields = {
+				provider: provider,
+				callback_url: `${window.location.origin}/login`,
+				process: "login",
+				csrfmiddlewaretoken: csrfToken,
+			};
+
+			Object.entries(fields).forEach(([key, value]) => {
+				const input = document.createElement("input");
+				input.type = "hidden";
+				input.name = key;
+				input.value = value;
+				form.appendChild(input);
+			});
+
+			// Submit form (browser will follow OAuth redirect)
+			document.body.appendChild(form);
+			form.submit();
+		} catch (error) {
+			console.error("OAuth initialization error:", error);
+			setGeneralError("Failed to initiate OAuth login. Please try again.");
+		}
 	};
 
 	return (

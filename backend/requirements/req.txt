@@ -10,8 +10,5 @@ django-ninja >= 1.4
 django-allauth >= 65.11.2, < 66.0
 redis >= 5.2.1, < 5.3  # Cache backend for Django Ninja throttling + future Celery broker
 
-# Type checking
-mypy >= 1.18.2, < 1.19
-django-stubs >= 5.2.5, < 5.3
-djangorestframework-stubs >= 3.16.0, < 3.17
-types-requests >= 2.31.0, < 3.0
+# Type checking - Pyright-only approach
+django-types == 0.22.0  # Pyright-compatible Django stubs

@@ -72,6 +72,7 @@ INSTALLED_APPS = [
     "allauth.socialaccount",
     "allauth.socialaccount.providers.google",
     "allauth.socialaccount.providers.github",
+    "allauth.headless",  # Headless mode for SPA integration
     # Project apps
     "authentication",
     "movie",
@@ -264,6 +265,21 @@ ACCOUNT_EMAIL_SUBJECT_PREFIX = "[CineXplorer] "
 # Adapter configuration - Custom adapter for ZeptoMail integration
 ACCOUNT_ADAPTER = "authentication.adapters.CustomAccountAdapter"
 
+# Headless Mode Configuration (for SPA/React frontend)
+# Provides JSON API endpoints instead of HTML templates
+# Set to False to allow both headless API and traditional OAuth callbacks to coexist
+HEADLESS_ONLY = False
+HEADLESS_FRONTEND_URLS = {
+    "account_confirm_email": f"{FRONTEND_URL}/auth/verify-email",
+    "account_reset_password_from_key": f"{FRONTEND_URL}/auth/reset-password",
+    "account_signup": f"{FRONTEND_URL}/auth/signup",
+    "socialaccount_login_error": f"{FRONTEND_URL}/login?error=oauth",
+}
+
+# Token Strategy - JWT token generation for headless mode
+# Official django-allauth extension point for custom token generation
+HEADLESS_TOKEN_STRATEGY = "authentication.token_strategy.JWTTokenStrategy"
+
 # Social account settings
 SOCIALACCOUNT_AUTO_SIGNUP = True  # Auto-create account from social login
 SOCIALACCOUNT_EMAIL_VERIFICATION = "none"  # Social providers verify email
@@ -314,6 +330,11 @@ CSRF_TRUSTED_ORIGINS = [
     "https://localhost:5174",
     "https://localhost:8444",  # Production-like (Caddy proxy)
 ]
+
+# CSRF Cookie Configuration (for headless mode)
+# Must be False so JavaScript can read the CSRF token from cookies
+# This is safe - CSRF tokens are defense mechanisms, not secrets
+CSRF_COOKIE_HTTPONLY = False
 
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=5),

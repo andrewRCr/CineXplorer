@@ -485,8 +485,9 @@ def verify_email(
     Returns:
         Success message if verification succeeds, error if key is invalid/expired
     """
-    from allauth.account.models import EmailConfirmationHMAC
     import logging
+
+    from allauth.account.models import EmailConfirmationHMAC
     logger = logging.getLogger(__name__)
 
     try:

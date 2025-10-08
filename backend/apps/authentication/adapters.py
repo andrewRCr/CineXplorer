@@ -2,6 +2,7 @@
 Custom django-allauth adapter for CineXplorer.
 
 Integrates allauth's email sending with ZeptoMail transactional email service.
+JWT token generation is handled by HEADLESS_TOKEN_STRATEGY setting.
 """
 from __future__ import annotations
 
@@ -11,9 +12,11 @@ from typing import Any
 import requests
 from allauth.account.adapter import DefaultAccountAdapter
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.http import HttpRequest
 
 logger = logging.getLogger(__name__)
+User = get_user_model()
 
 
 class CustomAccountAdapter(DefaultAccountAdapter):
@@ -206,7 +209,7 @@ class CustomAccountAdapter(DefaultAccountAdapter):
             raise
 
     def get_email_confirmation_url(
-        self, _request: HttpRequest | None, emailconfirmation: Any
+        self, request: HttpRequest | None, emailconfirmation: Any
     ) -> str:
         """
         Construct the email confirmation URL.
@@ -225,3 +228,6 @@ class CustomAccountAdapter(DefaultAccountAdapter):
         key = emailconfirmation.key
         # Frontend will handle the verification and call backend API
         return f"{frontend_url}/verify-email/{key}"
+
+
+

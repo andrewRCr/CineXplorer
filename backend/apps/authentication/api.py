@@ -28,6 +28,7 @@ from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model
 from django.http import HttpRequest, HttpResponse
 from ninja import Router
+from ninja.throttling import AnonRateThrottle, UserRateThrottle
 from ninja_jwt.tokens import RefreshToken
 
 # Create authentication router
@@ -46,6 +47,7 @@ def _get_jwt_settings() -> dict[str, object]:
     "/register/",
     auth=None,
     response={201: RegisterResponseSchema, 409: dict[str, object], 500: dict[str, object]},
+    throttle=[AnonRateThrottle('3/h')],  # Rate limit: 3 registration attempts per hour
 )
 def register_user(
     request: HttpRequest, payload: RegisterInputSchema
@@ -93,7 +95,8 @@ def register_user(
         }
 
     # Create the user (convert None to empty string for Django CharField)
-    user = user_model.objects.create_user(
+    # Pyright doesn't infer UserManager from get_user_model(), MyPy does via django-stubs
+    user = user_model.objects.create_user(  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType, reportAttributeAccessIssue]
         username=payload.username,
         email=payload.email,
         password=payload.password,
@@ -104,16 +107,16 @@ def register_user(
     # Send verification email via allauth API
     try:
         # Create EmailAddress record and send confirmation using allauth
-        EmailAddress.objects.add_email(request, user, payload.email, confirm=True)
+        EmailAddress.objects.add_email(request, user, payload.email, confirm=True)  # pyright: ignore[reportUnknownArgumentType]
         return 201, {
             "message": "Registration successful. Please check your email to verify your account.",
-            "user_id": user.id,
-            "email": user.email,
+            "user_id": user.id,  # pyright: ignore[reportUnknownMemberType]
+            "email": user.email,  # pyright: ignore[reportUnknownMemberType]
             "email_sent": True
         }
     except Exception:
         # Email failed to send - delete the user and return error
-        user.delete()
+        user.delete()  # pyright: ignore[reportUnknownMemberType]
         return 500, {
             "error": "Registration failed. Unable to send verification email. "
             "Please try again later or contact support.",
@@ -130,6 +133,7 @@ def register_user(
         401: dict[str, object],
         403: dict[str, object],
     },
+    throttle=[AnonRateThrottle('5/m')],  # Rate limit: 5 login attempts per minute
 )
 def obtain_token(
     request: HttpRequest, response: HttpResponse, payload: TokenObtainInputSchema
@@ -181,7 +185,7 @@ def obtain_token(
         }
 
     # Generate JWT tokens
-    refresh = RefreshToken.for_user(authenticated_user)
+    refresh = RefreshToken.for_user(authenticated_user)  # pyright: ignore[reportArgumentType]
     access_token = str(refresh.access_token)
     refresh_token = str(refresh)
 
@@ -197,7 +201,7 @@ def obtain_token(
     response.set_cookie(
         access_token_name,
         access_token,
-        max_age=int(access_lifetime.total_seconds()),
+        max_age=int(access_lifetime.total_seconds()),  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType, reportAttributeAccessIssue]
         httponly=True,
         secure=True,  # HTTPS only in production
         samesite=samesite,
@@ -205,7 +209,7 @@ def obtain_token(
     response.set_cookie(
         refresh_token_name,
         refresh_token,
-        max_age=int(refresh_lifetime.total_seconds()),
+        max_age=int(refresh_lifetime.total_seconds()),  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType, reportAttributeAccessIssue]
         httponly=True,
         secure=True,
         samesite=samesite,
@@ -215,7 +219,7 @@ def obtain_token(
     return 200, {
         "access": access_token,
         "refresh": refresh_token,
-        "user_id": authenticated_user.id,
+        "user_id": authenticated_user.id,  # pyright: ignore[reportUnknownMemberType]
         "email_verified": True  # Already checked above
     }
 
@@ -224,6 +228,7 @@ def obtain_token(
     "/token/refresh/",
     auth=None,
     response={200: TokenResponseSchema, 400: dict[str, object]},
+    throttle=[UserRateThrottle('10/m')],  # Rate limit: 10 refresh/min (authed users)
 )
 def refresh_token(
     request: HttpRequest, response: HttpResponse
@@ -265,15 +270,16 @@ def refresh_token(
         access_token = str(refresh.access_token)
 
         # Rotate refresh token: set new JTI and expiration time
-        refresh.set_jti()
-        refresh.set_exp()
+        # ninja-jwt methods missing from type stubs
+        refresh.set_jti()  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
+        refresh.set_exp()  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
         new_refresh_token = str(refresh)
 
         # Set new tokens as httponly cookies
         response.set_cookie(
             access_token_name,
             access_token,
-            max_age=int(access_lifetime.total_seconds()),
+            max_age=int(access_lifetime.total_seconds()),  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType, reportAttributeAccessIssue]
             httponly=True,
             secure=True,
             samesite=samesite,
@@ -281,14 +287,14 @@ def refresh_token(
         response.set_cookie(
             refresh_token_name,
             new_refresh_token,
-            max_age=int(refresh_lifetime.total_seconds()),
+            max_age=int(refresh_lifetime.total_seconds()),  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType, reportAttributeAccessIssue]
             httponly=True,
             secure=True,
             samesite=samesite,
         )
 
         # Get user_id from token payload
-        user_id = refresh.payload.get('user_id')
+        user_id = refresh.payload.get('user_id')  # pyright: ignore[reportUnknownMemberType]
 
         return 200, {
             "access": access_token,
@@ -333,8 +339,8 @@ def logout(request: HttpRequest, response: HttpResponse) -> tuple[int, dict[str,
         'samesite': samesite,
     }
 
-    response.delete_cookie(access_token_name, **cookie_kwargs)
-    response.delete_cookie(refresh_token_name, **cookie_kwargs)
+    response.delete_cookie(access_token_name, **cookie_kwargs)  # pyright: ignore[reportArgumentType]
+    response.delete_cookie(refresh_token_name, **cookie_kwargs)  # pyright: ignore[reportArgumentType]
 
     return 200, {"message": "Logged out successfully."}
 
@@ -487,30 +493,30 @@ def verify_email(
     """
     import logging
 
-    from allauth.account.models import EmailConfirmationHMAC
+    from allauth.account.models import EmailConfirmationHMAC  # pyright: ignore[reportAttributeAccessIssue, reportUnknownVariableType]
     logger = logging.getLogger(__name__)
 
     try:
         logger.info(f"Attempting to verify email with key: {payload.key[:20]}...")
 
         # Try HMAC verification first (default django-allauth behavior)
-        confirmation = EmailConfirmationHMAC.from_key(payload.key)
+        confirmation = EmailConfirmationHMAC.from_key(payload.key)  # pyright: ignore[reportUnknownVariableType, reportUnknownMemberType]
         logger.info(f"HMAC verification result: {confirmation}")
 
         if not confirmation:
             # Fall back to database lookup for non-HMAC keys
             logger.info("HMAC failed, trying database lookup")
-            confirmation = EmailConfirmation.objects.get(key=payload.key)
+            confirmation = EmailConfirmation.objects.get(key=payload.key)  # pyright: ignore[reportUnknownMemberType]
 
         # Check if already confirmed
-        email_address = confirmation.email_address
-        if email_address.verified:
-            logger.warning(f"Email {email_address.email} already verified")
+        email_address = confirmation.email_address  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
+        if email_address.verified:  # pyright: ignore[reportUnknownMemberType]
+            logger.warning(f"Email {email_address.email} already verified")  # pyright: ignore[reportUnknownMemberType]
             return 400, {"message": "Email address is already verified."}
 
         # Confirm the email (this marks it as verified)
-        logger.info(f"Confirming email {email_address.email}")
-        confirmation.confirm(request)
+        logger.info(f"Confirming email {email_address.email}")  # pyright: ignore[reportUnknownMemberType]
+        confirmation.confirm(request)  # pyright: ignore[reportUnknownMemberType]
 
         return 200, {"message": "Email verified successfully."}
 
@@ -545,7 +551,7 @@ def resend_verification(
     user_model = get_user_model()
 
     try:
-        user = user_model.objects.get(email=payload.email)
+        user = user_model.objects.get(email=payload.email)  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
 
         # Check if already verified using allauth EmailAddress API
         if EmailAddress.objects.filter(user=user, verified=True).exists():
@@ -559,7 +565,7 @@ def resend_verification(
             return 200, {"message": "Verification email sent successfully."}
         except EmailAddress.DoesNotExist:
             # Create EmailAddress record if it doesn't exist, then send confirmation
-            EmailAddress.objects.add_email(request, user, payload.email, confirm=True)
+            EmailAddress.objects.add_email(request, user, payload.email, confirm=True)  # pyright: ignore[reportUnknownArgumentType, reportArgumentType]
             return 200, {"message": "Verification email sent successfully."}
 
     except user_model.DoesNotExist:

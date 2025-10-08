@@ -28,14 +28,10 @@ Note: This is a supplement to django-stubs. We only define what's missing from o
 from __future__ import annotations
 
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, Protocol
+from typing import Any, ClassVar, Protocol
 
+from django.db import models
 from django.db.models import Manager
-
-if TYPE_CHECKING:
-    from django.contrib.auth.base_user import AbstractBaseUser as _AbstractBaseUser
-else:
-    _AbstractBaseUser = object
 
 # Simple protocol for related managers (groups, user_permissions)
 # We only care about .count() method for our use case
@@ -69,8 +65,8 @@ class UserManager(Manager[AbstractUser]):
         """Create and save a superuser with the given username, email, and password."""
         ...
 
-# Dummy base classes for stub file
-class AbstractBaseUser:
+# Dummy base classes for stub file - extend models.Model for proper type variance
+class AbstractBaseUser(models.Model):
     """Base user with authentication support."""
     id: int  # Primary key
     is_authenticated: bool  # Property that returns True for authenticated users
@@ -84,7 +80,7 @@ class AbstractBaseUser:
         """Save the model instance."""
         ...
 
-class PermissionsMixin: ...
+class PermissionsMixin(models.Model): ...
 
 class AbstractUser(AbstractBaseUser, PermissionsMixin):
     """
@@ -118,23 +114,18 @@ class AbstractUser(AbstractBaseUser, PermissionsMixin):
     user_permissions: _RelatedManagerProtocol
 
     # Manager (UserManager with create_user method)
-    objects: UserManager  # type: ignore[assignment]
+    objects: ClassVar[UserManager]  # pyright: ignore[reportIncompatibleVariableOverride]
 
     # Methods
     def get_full_name(self) -> str: ...
     def get_short_name(self) -> str: ...
     def email_user(self, subject: str, message: str, from_email: str | None = None, **kwargs: Any) -> None: ...
 
-class User(AbstractUser):
+class User(AbstractUser):  # type: ignore[django-manager-missing]
     """
     Type stub for Django's concrete User model.
     Inherits all fields from AbstractUser.
     """
 
     # Manager (UserManager with create_user method)
-    objects: UserManager  # type: ignore[assignment]
-
-    class Meta:
-        verbose_name: str
-        verbose_name_plural: str
-        swappable: str
+    objects: ClassVar[UserManager]  # pyright: ignore[reportIncompatibleVariableOverride]

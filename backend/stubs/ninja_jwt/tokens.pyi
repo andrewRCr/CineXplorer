@@ -96,7 +96,7 @@ class RefreshToken(Token):
     """
 
     @classmethod
-    def for_user(cls, user: AbstractBaseUser) -> RefreshToken:  # type: ignore[override]
+    def for_user(cls, user: AbstractBaseUser) -> RefreshToken:
         """
         Create a new refresh token for the given user.
 

@@ -10,7 +10,7 @@ reportMissingTypeStubs errors in custom adapter implementations.
 
 from typing import Any
 
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpRequest
 
 class DefaultAccountAdapter:
     """
@@ -25,9 +25,9 @@ class DefaultAccountAdapter:
         self,
         template_prefix: str,
         email: str,
-        context: dict[str, Any],
+        context: dict[str, Any],  # Allauth's template context - external library contract
         headers: dict[str, str] | None = None,
-    ) -> Any:  # Returns EmailMessage or EmailMultiAlternatives
+    ) -> Any:  # Returns django.core.mail.EmailMessage or EmailMultiAlternatives (external library)
         """Render email from template."""
         ...
 
@@ -35,13 +35,13 @@ class DefaultAccountAdapter:
         self,
         template_prefix: str,
         email: str,
-        context: dict[str, Any],
+        context: dict[str, Any],  # Allauth's template context - external library contract
     ) -> None:
         """Send email using Django's email backend."""
         ...
 
     def get_email_confirmation_url(
-        self, request: HttpRequest | None, emailconfirmation: Any
+        self, request: HttpRequest | None, emailconfirmation: Any  # allauth.account.models.EmailConfirmation (external library)
     ) -> str:
         """Construct the email confirmation (activation) URL."""
         ...

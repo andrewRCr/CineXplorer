@@ -24,7 +24,7 @@ Pattern: Custom stubs for third-party libraries without complete type informatio
 """
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.db import models
@@ -33,7 +33,7 @@ from django.http import HttpRequest
 if TYPE_CHECKING:
     from django.db.models.manager import Manager
 
-class EmailAddress(models.Model):
+class EmailAddress(models.Model):  # type: ignore[django-manager-missing]
     """
     Type stub for allauth's EmailAddress model.
 
@@ -50,12 +50,14 @@ class EmailAddress(models.Model):
     primary: bool
 
     # Manager with custom methods (override acceptable in stub files)
-    objects: EmailAddressManager  # type: ignore[assignment]
+    objects: ClassVar[EmailAddressManager]  # pyright: ignore[reportIncompatibleVariableOverride]
+
+    # Reverse relation from EmailConfirmation.email_address
+    emailconfirmation_set: ClassVar[Manager[EmailConfirmation]]
 
     # Instance methods
     def send_confirmation(self, request: HttpRequest | None = None, signup: bool = False) -> None:
         """Send email confirmation to this email address."""
-        ...
 
 
 class EmailAddressManager(Manager[EmailAddress]):
@@ -82,15 +84,12 @@ class EmailAddressManager(Manager[EmailAddress]):
         Returns:
             EmailAddress instance
         """
-        ...
 
     def get_primary(self, user: AbstractBaseUser) -> EmailAddress | None:
         """Get primary email address for user."""
-        ...
 
     def get_verified(self, user: AbstractBaseUser) -> EmailAddress | None:
         """Get verified email address for user."""
-        ...
 
 
 class EmailConfirmation(models.Model):
@@ -108,7 +107,7 @@ class EmailConfirmation(models.Model):
     sent: object  # datetime field
 
     # Manager (override acceptable in stub files)
-    objects: Manager[EmailConfirmation]  # type: ignore[assignment]
+    objects: ClassVar[Manager[EmailConfirmation]]  # pyright: ignore[reportIncompatibleVariableOverride]
 
     # Instance methods
     def confirm(self, request: HttpRequest | None = None) -> EmailAddress:
@@ -121,8 +120,6 @@ class EmailConfirmation(models.Model):
         Returns:
             The confirmed EmailAddress instance
         """
-        ...
 
     def key_expired(self) -> bool:
         """Check if confirmation key has expired."""
-        ...

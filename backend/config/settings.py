@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 import os
 import socket
 import sys
+from collections.abc import Mapping
 from datetime import timedelta
 from pathlib import Path
 
@@ -94,15 +95,17 @@ MIDDLEWARE = [
     "allauth.account.middleware.AccountMiddleware",  # Required for django-allauth
 ]
 
-INTERNAL_IPS = [
-    # ...
+# Internal IPs for Django Debug Toolbar
+_base_internal_ips = [
     "127.0.0.1",
     "0.0.0.0:8000",
-    # ...
 ]
 
+# Add Docker network IPs dynamically
 hostname, _, ips = socket.gethostbyname_ex(socket.gethostname())
-INTERNAL_IPS += [".".join([*ip.split(".")[:-1], "1"]) for ip in ips]
+_docker_network_ips = [".".join([*ip.split(".")[:-1], "1"]) for ip in ips]
+
+INTERNAL_IPS = _base_internal_ips + _docker_network_ips
 
 ROOT_URLCONF = "config.urls"
 
@@ -135,6 +138,18 @@ DATABASES = {
         "NAME": env("POSTGRES_DB"),
         "USER": env("POSTGRES_USER"),
         "PASSWORD": env("POSTGRES_PASSWORD"),
+    }
+}
+
+# Cache configuration
+# https://docs.djangoproject.com/en/5.2/ref/settings/#caches
+# Redis serves dual purposes (same instance, different databases):
+#   - DB 0: Django cache backend (rate limiting for Django Ninja throttling)
+#   - DB 1: Future Celery broker (Backend Modernization PRD - async task processing)
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": env("REDIS_URL", default="redis://redis:6379/0"),
     }
 }
 
@@ -331,19 +346,42 @@ CSRF_TRUSTED_ORIGINS = [
     "https://localhost:8444",  # Production-like (Caddy proxy)
 ]
 
+# Cookie Security Settings
+# Session cookie security - enforce HTTPS in production, allow HTTP in development
+SESSION_COOKIE_SECURE = not DEBUG  # Requires HTTPS in production (prevents interception)
+SESSION_COOKIE_HTTPONLY = True  # Prevent JavaScript access to session cookie (XSS protection)
+SESSION_COOKIE_SAMESITE = 'Lax'  # CSRF protection - cookies only sent for same-site requests
+CSRF_COOKIE_SECURE = not DEBUG  # Requires HTTPS in production (prevents interception)
+
 # CSRF Cookie Configuration (for headless mode)
 # Must be False so JavaScript can read the CSRF token from cookies
 # This is safe - CSRF tokens are defense mechanisms, not secrets
 CSRF_COOKIE_HTTPONLY = False
 
+# HSTS and SSL/TLS Security Settings (Production Only)
+# HSTS (HTTP Strict Transport Security) - forces browsers to use HTTPS
+if not DEBUG:
+    SECURE_HSTS_SECONDS = 31536000  # 1 year (recommended minimum for production)
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True  # Apply HSTS to all subdomains
+    SECURE_HSTS_PRELOAD = True  # Allow inclusion in browser HSTS preload lists
+    SECURE_SSL_REDIRECT = True  # Redirect all HTTP requests to HTTPS
+    # Caddy proxy compatibility - trust X-Forwarded-Proto header for HTTPS detection
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# Additional Security Headers
+X_FRAME_OPTIONS = 'DENY'  # Prevent clickjacking attacks (no iframe embedding)
+SECURE_CONTENT_TYPE_NOSNIFF = True  # Prevent MIME type sniffing
+SECURE_BROWSER_XSS_FILTER = True  # Enable legacy XSS filter in older browsers
+
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=5),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=30),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=14),  # RFC 8725 recommendation: reduce from 30 days
     "ACCESS_TOKEN_NAME": "access_token",
     "REFRESH_TOKEN_NAME": "refresh_token",
-    # For cross-site cookies with HTTPS, use 'None'.
-    # If you only use same-site cookies, 'Lax' is more secure but will block cross-site requests.
-    "JWT_COOKIE_SAMESITE": "None",
+    # SameSite='Lax' provides CSRF protection for same-origin requests
+    # Frontend and backend served via same Caddy proxy (same-origin), so 'Lax' is appropriate
+    # 'None' would be needed only for true cross-site scenarios (e.g., API on different domain)
+    "JWT_COOKIE_SAMESITE": "Lax",
 }
 
 # Testing flag
@@ -406,31 +444,36 @@ LOG_DIRECTORY = ensure_log_directory()
 # - File rotation with appropriate backup counts
 # - Database query performance monitoring
 # - Separate log files for different components
-try:
-    LOGGING = get_logging_config(log_dir=LOG_DIRECTORY)
-except Exception as e:
-    print(f"Error configuring logging: {e}", file=sys.stderr)
-    # Fallback to basic console-only logging
-    LOGGING = {
-        'version': 1,
-        'disable_existing_loggers': False,
-        'formatters': {
-            'simple': {
-                'format': '{levelname} {name} {message}',
-                'style': '{',
+
+def _get_logging_config() -> Mapping[str, object]:
+    """Get logging configuration with fallback to basic console logging."""
+    try:
+        return get_logging_config(log_dir=LOG_DIRECTORY)
+    except Exception as e:
+        print(f"Error configuring logging: {e}", file=sys.stderr)
+        # Fallback to basic console-only logging
+        return {
+            'version': 1,
+            'disable_existing_loggers': False,
+            'formatters': {
+                'simple': {
+                    'format': '{levelname} {name} {message}',
+                    'style': '{',
+                },
             },
-        },
-        'handlers': {
-            'console': {
-                'class': 'logging.StreamHandler',
-                'formatter': 'simple',
+            'handlers': {
+                'console': {
+                    'class': 'logging.StreamHandler',
+                    'formatter': 'simple',
+                },
             },
-        },
-        'root': {
-            'handlers': ['console'],
-            'level': 'INFO',
-        },
-    }
+            'root': {
+                'handlers': ['console'],
+                'level': 'INFO',
+            },
+        }
+
+LOGGING = _get_logging_config()
 
 
 # Logging-related settings for development

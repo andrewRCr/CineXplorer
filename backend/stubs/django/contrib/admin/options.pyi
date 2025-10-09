@@ -77,7 +77,7 @@ class ModelAdmin:
     def __init__(self, model: type[Model], admin_site: AdminSite) -> None:
         """Initialize ModelAdmin with model and admin site."""
 
-    def get_queryset(self, request: HttpRequest) -> QuerySet[object]:
+    def get_queryset(self, request: HttpRequest) -> QuerySet[Model]:
         """Return QuerySet of all model instances for admin."""
 
     def get_form(

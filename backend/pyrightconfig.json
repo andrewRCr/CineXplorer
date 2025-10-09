@@ -32,7 +32,8 @@
         "apps/movie/tests/test_paginated_views.py",
         "apps/user_movie_data/tests/test_user_movie_data_api.py",
         "apps/core/views/logging.py",
-        "apps/core/views/tmdb.py"
+        "apps/core/views/tmdb.py",
+        "apps/core/urls.py"  // Legacy DRF URL mappings (references excluded views)
     ],
     "extraPaths": ["apps"],
     "venvPath": "..",

@@ -10,16 +10,18 @@ import logging
 import time
 from collections.abc import Mapping
 from pathlib import Path
+from typing import Any
 
+from core.services.api_response import ApiResponse
+from core.services.tmdb_api_client import TMDBApiClient
 from django.conf import settings
 from django.core.management.base import BaseCommand
-from movie.services.movie_service import tmdb_get
 
 
 class Command(BaseCommand):
     help = 'Verify sensitive data (API keys) are excluded from log output'
 
-    def handle(self, *args, **options):
+    def handle(self, *args: Any, **options: Any) -> None:
         self.stdout.write("🔐 Starting sensitive data exclusion verification...")
 
         # Get the actual API key to search for
@@ -33,14 +35,14 @@ class Command(BaseCommand):
 
         self._run_security_test(api_key, partial_key)
 
-    def _get_partial_key(self, api_key):
+    def _get_partial_key(self, api_key: str) -> str:
         """Create partial key pattern for safe display."""
         if len(api_key) >= 8:
             return f"{api_key[:4]}...{api_key[-4:]}"
         else:
             return "***REDACTED***"
 
-    def _run_security_test(self, api_key, partial_key):
+    def _run_security_test(self, api_key: str, partial_key: str) -> None:
         """Run the complete security test suite.
 
         Note: This method has high complexity (C901) due to comprehensive
@@ -49,10 +51,10 @@ class Command(BaseCommand):
         The complexity is acceptable for this security verification utility.
         """
         # Capture log records
-        log_records = []
+        log_records: list[logging.LogRecord] = []
 
         class SecurityLogCapture(logging.Handler):
-            def emit(self, record):
+            def emit(self, record: logging.LogRecord) -> None:
                 log_records.append(record)
 
         # Set up log capture on multiple loggers (including upstream libraries)
@@ -65,7 +67,7 @@ class Command(BaseCommand):
             'requests',         # Requests library
         ]
 
-        capture_handlers = []
+        capture_handlers: list[tuple[logging.Logger, SecurityLogCapture, int]] = []
 
         for logger_name in loggers_to_test:
             logger = logging.getLogger(logger_name)
@@ -79,17 +81,20 @@ class Command(BaseCommand):
         try:
             self.stdout.write("📡 Making TMDB API calls with security monitoring...")
 
-            # Test 1: Standard API call
-            self.stdout.write("  🎬 Testing movie/popular...")
-            result1 = tmdb_get('movie/popular', {'page': 1})
+            # Initialize TMDB client
+            client = TMDBApiClient()
 
-            # Test 2: API call with additional parameters
-            self.stdout.write("  🔍 Testing search/movie...")
-            result2 = tmdb_get('search/movie', {'query': 'Inception', 'page': 1})
+            # Test 1: Get popular movies
+            self.stdout.write("  🎬 Testing get_popular_movies...")
+            result1 = client.get_popular_movies(page=1)
 
-            # Test 3: Movie details call
-            self.stdout.write("  📄 Testing movie/{id}...")
-            result3 = tmdb_get('movie/550')  # Fight Club
+            # Test 2: Search movies
+            self.stdout.write("  🔍 Testing search_movies...")
+            result2 = client.search_movies(query='Inception', page=1)
+
+            # Test 3: Movie details
+            self.stdout.write("  📄 Testing get_movie_details...")
+            result3 = client.get_movie_details(movie_id=550)  # Fight Club
 
             # Give logging time to complete
             time.sleep(0.2)
@@ -98,7 +103,7 @@ class Command(BaseCommand):
             self.stdout.write("=" * 50)
 
             # Analyze all captured log records
-            security_violations = []
+            security_violations: list[dict[str, object]] = []
             total_records_checked = len(log_records)
 
             for i, record in enumerate(log_records):
@@ -183,30 +188,32 @@ class Command(BaseCommand):
 
             # Verify API calls succeeded
             self.stdout.write("\n📊 API Call Results:")
-            api_results = [
-                ("movie/popular", result1),
-                ("search/movie", result2),
-                ("movie/550", result3)
+            api_results: list[tuple[str, ApiResponse]] = [
+                ("get_popular_movies", result1),
+                ("search_movies", result2),
+                ("get_movie_details", result3)
             ]
 
-            for endpoint, result in api_results:
-                # Safely handle result which might not be a dict
-                if isinstance(result, Mapping):
-                    if 'error' in result:
-                        self.stdout.write(f"  ❌ {endpoint}: {result.get('error')}")
+            for endpoint, api_response in api_results:
+                # ApiResponse.data is Mapping[str, object] | Sequence[object] | str | None
+                if not api_response.is_success():
+                    self.stdout.write(f"  ❌ {endpoint}: {api_response.error_message}")
+                elif api_response.data is not None and isinstance(api_response.data, Mapping):
+                    # For list endpoints (popular, search), check 'results' array
+                    if 'results' in api_response.data:
+                        results = api_response.data['results']
+                        # Results is object from Mapping[str, object], check if it's Sized
+                        if hasattr(results, '__len__'):
+                            count = len(results)  # pyright: ignore[reportArgumentType]  # Runtime validation via hasattr
+                            self.stdout.write(f"  ✅ {endpoint}: {count} item(s) returned")
+                        else:
+                            self.stdout.write(f"  ✅ {endpoint}: Results returned (count unknown)")
                     else:
-                        count = len(result.get('results', [result])) if 'results' in result else 1
-                        self.stdout.write(f"  ✅ {endpoint}: {count} item(s) returned")
+                        # For detail endpoints (get_movie_details), single item
+                        self.stdout.write(f"  ✅ {endpoint}: 1 item returned")
                 else:
-                    # Handle non-mapping results
-                    result_type = type(result).__name__
-                    try:
-                        item_count = len(result) if hasattr(result, '__len__') else 1
-                        self.stdout.write(
-                            f"  ⚠️ {endpoint}: Non-dict result ({result_type}, {item_count} items)"
-                        )
-                    except (TypeError, AttributeError):
-                        self.stdout.write(f"  ⚠️ {endpoint}: Non-dict result ({result_type})")
+                    status = api_response.status_code
+                    self.stdout.write(f"  ⚠️ {endpoint}: No data returned (status {status})")
 
             # Check log files for API key presence
             self.stdout.write("\n📁 Log File Security Check:")
@@ -223,7 +230,7 @@ class Command(BaseCommand):
 
         self.stdout.write("\n🔐 Sensitive data exclusion verification completed!")
 
-    def _check_log_files_security(self, api_key, partial_key):
+    def _check_log_files_security(self, api_key: str, partial_key: str) -> None:
         """Check actual log files for API key presence."""
         # Get log directory from settings, with fallback to BASE_DIR / "logs"
         log_dir = getattr(settings, 'LOG_DIR', None)

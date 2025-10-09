@@ -10,7 +10,6 @@ When adding/modifying fields in models.py, update this file accordingly.
 from core.models import Movie
 from django.contrib.auth.models import User
 from django.db import models
-from django.db.models import Manager
 
 class UserMovieData(models.Model):
     """Type stub for UserMovieData model with explicit field types."""
@@ -30,8 +29,5 @@ class UserMovieData(models.Model):
     # Nullable fields
     user_rating: int | None
     user_review: str | None
-
-    # Manager
-    objects: Manager[UserMovieData]
 
     def __str__(self) -> str: ...

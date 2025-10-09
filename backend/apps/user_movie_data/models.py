@@ -85,6 +85,6 @@ class UserMovieData(models.Model):
         unique_together = ('user', 'movie')
 
     def __str__(self) -> str:
-        # Accessing ForeignKey fields - type: ignore for django-stubs limitation
-        # type: ignore[attr-defined,union-attr]
-        return f"{self.user.username} - {self.movie.title}"
+        # ForeignKey attribute access - django-types limitation with related field access
+        # Pyright cannot infer .username and .title through the stub file
+        return f"{self.user.username} - {self.movie.title}"  # type: ignore[reportUnknownMemberType]

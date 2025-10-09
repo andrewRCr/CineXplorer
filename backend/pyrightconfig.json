@@ -22,6 +22,7 @@
         // TODO: Remove exclusions in api-layer-p2 after files deleted
         // Tracked in: prd-api-layer-modernization-p2.md
         "apps/authentication/views.py",
+        "apps/authentication/urls.py",  // Legacy DRF URL mappings (references excluded views.py)
         "apps/authentication/serializers.py",
         "apps/authentication/authenticate.py",  // Legacy DRF JWT auth (unused, uses rest_framework_simplejwt)
         "apps/user_movie_data/views.py",

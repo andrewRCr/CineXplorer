@@ -2,25 +2,27 @@
 Type stub file for django-allauth account models.
 
 Provides explicit type annotations for allauth's EmailAddress and EmailConfirmation
-models, enabling type-safe usage without type: ignore comments.
+models. NO official type stubs exist for django-allauth.
 
 ⚠️ MAINTENANCE CONTRACT
 ========================
-Synchronized with: django-allauth 0.63.x (as of 2025-01-27)
-Last verified: 2025-01-27
+Synchronized with: django-allauth 0.63.x + django-types 0.22.0 (as of 2025-10-09)
+Last verified with django-types: 2025-10-09
 
-When upgrading django-allauth:
-1. Check release notes for EmailAddress/EmailConfirmation API changes
-2. Run tests - if runtime errors occur, check this stub file first
-3. Verify these method signatures match actual runtime behavior
-4. Update "Last verified" date above
+When upgrading django-allauth or django-types:
+1. Check allauth release notes for EmailAddress/EmailConfirmation API changes
+2. Check for official allauth type stubs (none exist as of 0.63.x)
+3. Run tests - if runtime errors occur, check this stub file first
+4. Verify these method signatures match actual runtime behavior
+5. Update "Last verified" date above
 
 Trade-off: This stub provides excellent IDE support and eliminates 17+ type: ignore
-comments, but requires manual verification on allauth upgrades. For a mature, stable
-library like allauth, this is usually a good trade (updates are infrequent).
+comments, but requires manual verification on allauth upgrades (~120 lines to maintain).
+For a mature, stable library like allauth, this is a good trade (API updates are infrequent).
 
 Purpose: Eliminates 17+ type: ignore[attr-defined] comments in authentication code
 Pattern: Custom stubs for third-party libraries without complete type information
+Status: NO official allauth stubs exist - this is REQUIRED (not a supplement)
 """
 from __future__ import annotations
 

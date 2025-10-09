@@ -159,48 +159,48 @@
         - [x] 6.5.2 Document which errors were false positives from stub mismatch - ✅ django-types eliminated stub incompatibility issues; remaining errors are legitimate
         - [x] 6.5.3 Document remaining legitimate errors to fix - ✅ 194 legitimate errors: ~80 rest_framework stubs, ~50 simplejwt stubs, ~30 allauth, ~34 annotations
 
-- [ ] 7. Review and Update Custom Stub Files
-    - [ ] 7.1 Audit existing custom stubs against django-types coverage
-        - [ ] 7.1.1 Review `backend/stubs/django/contrib/auth/models.pyi` - check if django-types provides same coverage
-        - [ ] 7.1.2 Review `backend/stubs/django/contrib/auth/__init__.pyi` - check if django-types provides same coverage
-        - [ ] 7.1.3 Keep `backend/stubs/allauth/` (no official stubs available)
-        - [ ] 7.1.4 Keep `backend/stubs/ninja_jwt/` (incomplete official typing)
-        - [ ] 7.1.5 Keep `backend/stubs/environ/` (if exists, django-environ lacks stubs)
-    - [ ] 7.2 Update stub maintenance contracts
-        - [ ] 7.2.1 Update each stub file header to note django-types context
-        - [ ] 7.2.2 Add "Last verified with django-types 0.22.0" date
-        - [ ] 7.2.3 Update upgrade checklist to include django-types version check
-        - [ ] 7.2.4 Document which stubs supplement vs replace django-types
-    - [ ] 7.3 Remove redundant Django core stubs if django-types sufficient
-        - [ ] 7.3.1 Test Pyright without custom Django stubs: temporarily rename `stubs/django/` to `stubs/django.bak/`
-        - [ ] 7.3.2 Run type check on authentication app: `npx pyright backend/apps/authentication/ --project backend`
-        - [ ] 7.3.3 If no new errors, delete `stubs/django/` (django-types sufficient)
-        - [ ] 7.3.4 If errors increase, restore `stubs/django/` and document why needed
-    - [ ] 7.4 Document stub strategy in architecture
-        - [ ] 7.4.1 Update TECHNICAL-ARCHITECTURE.md custom stubs section
-        - [ ] 7.4.2 Note django-types as primary Django stub source
-        - [ ] 7.4.3 Document remaining custom stubs (allauth, ninja_jwt, environ)
-        - [ ] 7.4.4 Add maintenance contract summary
+- [x] 7. Review and Update Custom Stub Files
+    - [x] 7.1 Audit existing custom stubs against django-types coverage
+        - [x] 7.1.1 Review `backend/stubs/django/contrib/auth/models.pyi` - ✅ django-types has comprehensive coverage BUT missing explicit `id` field → custom stub SUPPLEMENTS django-types (not replaces) - KEEP for explicit `id: int` declaration
+        - [x] 7.1.2 Review `backend/stubs/django/contrib/auth/__init__.pyi` - ✅ django-types has complete coverage for authenticate(), get_user_model() - custom stub provides same, but still valuable as supplement
+        - [x] 7.1.3 Keep `backend/stubs/allauth/` (no official stubs available) - ✅ KEEP
+        - [x] 7.1.4 Keep `backend/stubs/ninja_jwt/` (incomplete official typing) - ✅ KEEP
+        - [x] 7.1.5 Keep `backend/stubs/environ/` (exists, django-environ lacks stubs) - ✅ KEEP
+    - [x] 7.2 Update stub maintenance contracts
+        - [x] 7.2.1 Update each stub file header to note django-types context - ✅ Updated all stub files
+        - [x] 7.2.2 Add "Last verified with django-types 0.22.0" date - ✅ Added to all stub files (2025-10-09)
+        - [x] 7.2.3 Update upgrade checklist to include django-types version check - ✅ All checklists updated
+        - [x] 7.2.4 Document which stubs supplement vs replace django-types - ✅ Documented: django/ supplements, allauth/ninja_jwt/environ are required (no official stubs)
+    - [x] 7.3 Remove redundant Django core stubs if django-types sufficient
+        - [x] 7.3.1 Test Pyright without custom Django stubs: temporarily rename `stubs/django/` to `stubs/django.bak/` - ✅ Completed in Task 7.1
+        - [x] 7.3.2 Run type check on authentication app: `npx pyright backend/apps/authentication/ --project backend` - ✅ Completed in Task 7.1 (found 2 errors)
+        - [x] 7.3.3 If no new errors, delete `stubs/django/` (django-types sufficient) - ❌ N/A (errors found)
+        - [x] 7.3.4 If errors increase, restore `stubs/django/` and document why needed - ✅ Restored stubs, documented that custom stubs provide explicit `id` field (eliminates reportAttributeAccessIssue)
+    - [x] 7.4 Document stub strategy in architecture
+        - [x] 7.4.1 Update TECHNICAL-ARCHITECTURE.md custom stubs section - ✅ Updated Type Checking section and Quality Gates
+        - [x] 7.4.2 Note django-types as primary Django stub source - ✅ Documented as Pyright-compatible Django stubs
+        - [x] 7.4.3 Document remaining custom stubs (allauth, ninja_jwt, environ) - ✅ Listed all with supplement vs required status
+        - [x] 7.4.4 Add maintenance contract summary - ✅ Documented version sync and upgrade procedures
 
-- [ ] 8. Update CI Configuration (Replace MyPy with Pyright)
-    - [ ] 8.1 Update `.github/workflows/ci.yml` backend type checking step
-        - [ ] 8.1.1 Change step name from "Run backend type checking (non-blocking...)" to "Run backend type checking"
-        - [ ] 8.1.2 Replace MyPy command with Pyright: `npx pyright backend/apps/ backend/config/ --project backend`
-        - [ ] 8.1.3 Remove `continue-on-error: true` (make blocking immediately - tooling now correct)
-        - [ ] 8.1.4 Remove MyPy-specific echo messages
-        - [ ] 8.1.5 Update comments to reference Pyright and django-types
-    - [ ] 8.2 Add Node.js setup to backend job (required for npx)
-        - [ ] 8.2.1 Add step before type checking: "Setup Node.js" using `actions/setup-node@v4`
-        - [ ] 8.2.2 Specify `node-version: '20'` (match frontend job)
-        - [ ] 8.2.3 Consider caching npm global packages if needed
-    - [ ] 8.3 Test CI configuration locally
-        - [ ] 8.3.1 Simulate CI environment: Run Pyright without Docker
-        - [ ] 8.3.2 Verify npx pyright works: `npx pyright backend/apps/ --project backend`
-        - [ ] 8.3.3 Document expected behavior (will fail until type errors fixed, but that's intentional)
-    - [ ] 8.4 Update CI documentation
-        - [ ] 8.4.1 Update `.github/workflows/ci.yml` header comments if any
-        - [ ] 8.4.2 Note change from MyPy to Pyright in commit message
-        - [ ] 8.4.3 Reference this task list for context
+- [x] 8. Update CI Configuration (Replace MyPy with Pyright)
+    - [x] 8.1 Update `.github/workflows/ci.yml` backend type checking step
+        - [x] 8.1.1 Change step name from "Run backend type checking (non-blocking...)" to "Run backend type checking" - ✅ Updated
+        - [x] 8.1.2 Replace MyPy command with Pyright: `npx pyright backend/apps/ backend/config/ --project backend` - ✅ Updated
+        - [x] 8.1.3 Remove `continue-on-error: true` (make blocking immediately - tooling now correct) - ✅ Removed
+        - [x] 8.1.4 Remove MyPy-specific echo messages - ✅ Removed all MyPy references
+        - [x] 8.1.5 Update comments to reference Pyright and django-types - ✅ Updated to "Running Pyright type checking with django-types"
+    - [x] 8.2 Add Node.js setup to backend job (required for npx)
+        - [x] 8.2.1 Add step before type checking: "Setup Node.js" using `actions/setup-node@v4` - ✅ Added
+        - [x] 8.2.2 Specify `node-version: '20'` (match frontend job) - ✅ Configured
+        - [x] 8.2.3 Consider caching npm global packages if needed - ✅ Not needed (npx downloads on-the-fly, GitHub Actions has fast network)
+    - [x] 8.3 Test CI configuration locally
+        - [x] 8.3.1 Simulate CI environment: Run Pyright without Docker - ✅ Tested from backend directory
+        - [x] 8.3.2 Verify npx pyright works: `npx pyright backend/apps/ --project backend` - ✅ Works correctly, shows 592 errors as expected
+        - [x] 8.3.3 Document expected behavior (will fail until type errors fixed, but that's intentional) - ✅ CI will fail with 592 errors until Task 14 exclusions applied
+    - [x] 8.4 Update CI documentation
+        - [x] 8.4.1 Update `.github/workflows/ci.yml` header comments if any - ✅ N/A (no header comments exist in file)
+        - [x] 8.4.2 Note change from MyPy to Pyright in commit message - ✅ Will document: "Replace MyPy with Pyright for type checking" + "Uses django-types 0.22.0 for Django ORM support" + "Now blocking (was non-blocking)"
+        - [x] 8.4.3 Reference this task list for context - ✅ Will reference: "Complete Task 8 of tasks-incidental-backend-type-safety.md"
 
 - [ ] 9. Update Type Safety Strategy Document (Comprehensive Revision)
     - [ ] 9.1 Update `.arc/reference/strategies/strategy-type-safety.md` version and header
@@ -470,11 +470,19 @@ These are degraded from "error" to "information" per Zulip's approach and resear
 
 ### Custom Stub Maintenance Strategy
 
+**Task 7.1 Discovery: Custom Django Stubs Provide Unique Value**
+
+Testing revealed custom `django/contrib/auth/` stubs are NOT redundant with django-types:
+- **Without custom stubs**: `user.id` triggers `reportAttributeAccessIssue` → 2 errors in authentication/api.py
+- **With custom stubs**: `user.id` properly typed → 0 errors
+- **Root cause**: django-types doesn't explicitly declare the `id` field on AbstractUser (inherited from models.Model), Pyright can't infer it
+- **Decision**: KEEP custom Django stubs - they **supplement** django-types (not replace it)
+
 **Current Custom Stubs:**
-1. ✅ `allauth/` - KEEP (no official stubs, stable API)
-2. ✅ `ninja_jwt/` - KEEP (incomplete official typing)
-3. ❓ `django/contrib/auth/` - REVIEW (django-types may replace)
-4. ❓ `environ/` - REVIEW (check if django-environ has official stubs now)
+1. ✅ `django/contrib/auth/` - **KEEP** (supplements django-types for explicit `id` field declaration - eliminates `reportAttributeAccessIssue` on `user.id`)
+2. ✅ `allauth/` - **KEEP** (no official stubs, stable API)
+3. ✅ `ninja_jwt/` - **KEEP** (incomplete official typing)
+4. ✅ `environ/` - **KEEP** (django-environ lacks official stubs)
 
 **Maintenance Contract Requirements** (per stub file):
 - Version synchronization note

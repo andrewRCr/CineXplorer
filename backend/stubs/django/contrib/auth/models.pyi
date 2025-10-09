@@ -1,29 +1,34 @@
 """
 Type stub file for django.contrib.auth.models.
 
-This file provides explicit type annotations for Django's built-in User/AbstractUser model,
-enabling perfect type inference in Pyright/Pylance.
+This file SUPPLEMENTS django-types to provide explicit type annotations that django-types
+cannot infer, specifically the `id` field on AbstractBaseUser and AbstractUser.
 
 ⚠️ MAINTENANCE CONTRACT
 ========================
-Synchronized with: Django 5.1.x + django-stubs 5.1.x (as of 2025-01-27)
-Last verified: 2025-01-27
+Synchronized with: Django 5.1.x + django-types 0.22.0 (as of 2025-10-09)
+Last verified with django-types: 2025-10-09
 
-When upgrading Django:
+When upgrading Django or django-types:
 1. Check Django release notes for auth model changes (rare in minor versions)
-2. Run tests - if runtime errors occur, check this stub file first
-3. Verify field types and method signatures match Django's actual model
-4. Update "Last verified" date above
+2. Check django-types release notes for coverage improvements
+3. Run tests - if runtime errors occur, check this stub file first
+4. Verify field types and method signatures match Django's actual model
+5. Update "Last verified" date above
 
-Trade-off: This supplements django-stubs to fill gaps (UserManager.create_user,
-AbstractBaseUser methods). Eliminates 5+ type: ignore comments for common Django
-operations, but adds ~80 lines of code to maintain.
+Trade-off: This supplements django-types to fill a critical gap (explicit `id` field).
+django-types provides comprehensive coverage but doesn't explicitly declare `id` on
+AbstractUser (inherited from models.Model), causing Pyright reportAttributeAccessIssue
+errors. This stub eliminates 2+ errors on `user.id` access, at cost of ~130 lines to maintain.
 
-Why we need this: django-stubs has incomplete coverage for UserManager methods and
-AbstractBaseUser attributes. Rather than scatter type: ignore throughout code, we
-centralize the "trust me, Django has these" declarations here.
+Why we need this (Task 7.1 discovery):
+- django-types: Comprehensive auth model coverage, BUT no explicit `id` declaration
+- Without this stub: `user.id` triggers reportAttributeAccessIssue (2 errors in api.py)
+- With this stub: `user.id` properly typed (0 errors)
+- Root cause: Pyright can't infer inherited `id` field without explicit declaration
 
-Note: This is a supplement to django-stubs. We only define what's missing from our needs.
+Note: This is a SUPPLEMENT to django-types. We define what django-types cannot infer.
+If future django-types versions add explicit `id` field, this stub may become redundant.
 """
 from __future__ import annotations
 

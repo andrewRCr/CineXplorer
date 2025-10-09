@@ -1,22 +1,27 @@
 """
 Type stub file for django.contrib.auth module.
 
-Provides type annotations for Django authentication functions that are
-missing or incomplete in django-stubs.
+This file SUPPLEMENTS django-types for authentication functions. django-types 0.22.0
+provides complete coverage, but this stub provides additional type safety and
+documentation value.
 
 ⚠️ MAINTENANCE CONTRACT
 ========================
-Synchronized with: Django 5.2.x + django-stubs 5.2.x (as of 2025-10-08)
-Last verified: 2025-10-08
+Synchronized with: Django 5.2.x + django-types 0.22.0 (as of 2025-10-09)
+Last verified with django-types: 2025-10-09
 
-When upgrading Django:
+When upgrading Django or django-types:
 1. Check Django release notes for auth API changes
-2. Run tests - if runtime errors occur, check this stub file first
-3. Verify signatures match Django's actual implementation
-4. Update "Last verified" date above
+2. Check django-types release notes for coverage improvements
+3. Run tests - if runtime errors occur, check this stub file first
+4. Verify signatures match Django's actual implementation
+5. Update "Last verified" date above
 
-Trade-off: Supplements django-stubs gaps for authenticate() and get_user_model().
-Eliminates scattered type: ignore comments for common auth operations.
+Trade-off: django-types provides equivalent coverage for authenticate() and get_user_model().
+This stub provides the same signatures as django-types, maintained for consistency with our
+custom models.pyi. Consider removing if maintenance burden increases.
+
+Note: This is a SUPPLEMENT to django-types. If redundancy is confirmed, may be removed.
 """
 from __future__ import annotations
 

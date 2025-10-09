@@ -1,12 +1,27 @@
 """
 Type stubs for django-environ.
 
-Library: django-environ==0.12.0
-Last verified: 2025-10-08
-Upgrade checklist:
-- Check release notes for API changes
-- Run full test suite
-- Update this file if signatures change
+Provides type annotations for django-environ's Env class.
+NO official type stubs exist for django-environ.
+
+⚠️ MAINTENANCE CONTRACT
+========================
+Synchronized with: django-environ 0.12.0 + django-types 0.22.0 (as of 2025-10-09)
+Last verified with django-types: 2025-10-09
+
+When upgrading django-environ or django-types:
+1. Check django-environ release notes for API changes
+2. Check for official environ type stubs (none exist as of 0.12.0)
+3. Run tests - if runtime errors occur, check this stub file first
+4. Verify method signatures match runtime behavior
+5. Update "Last verified" date above
+
+Trade-off: This stub provides IDE support for environment variable access (~60 lines to maintain).
+For a stable library like django-environ, API changes are rare.
+
+Purpose: Eliminates type errors on env() calls throughout config/settings
+Pattern: Custom stubs for third-party libraries without complete type information
+Status: NO official environ stubs exist - this is REQUIRED (not a supplement)
 """
 
 from typing import Any, overload

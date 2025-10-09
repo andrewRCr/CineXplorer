@@ -87,16 +87,15 @@ jobs:
         run: |
           docker compose exec -T backend ruff check apps/ config/
 
-      - name: Run backend type checking (non-blocking during api-layer-modernization-p2)
-        continue-on-error: true  # TODO: Remove after Phase 2 complete - make blocking
-        env:
-          COMPOSE_PROJECT_NAME: cinexplorer-ci
+      - name: Setup Node.js for Pyright
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run backend type checking
         run: |
-          echo "Running MyPy type checking (non-blocking until api-layer-modernization-p2 complete)..."
-          docker compose exec -T backend mypy apps/ --config-file mypy.ini || echo "⚠️  Type errors exist (expected during Phase 2 migration)"
-          echo ""
-          echo "NOTE: Type checking will become BLOCKING after api-layer-modernization-p2 is complete."
-          echo "See tasks-api-layer-modernization-p2.md Phase 6 for CI update task."
+          echo "Running Pyright type checking with django-types..."
+          npx pyright backend/apps/ backend/config/ --project backend
 
   markdown:
     name: Documentation Lint

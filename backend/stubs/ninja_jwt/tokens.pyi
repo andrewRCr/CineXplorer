@@ -2,26 +2,28 @@
 Type stub file for django-ninja-jwt tokens.
 
 Provides explicit type annotations for django-ninja-jwt's Token, RefreshToken, and
-AccessToken classes, enabling type-safe token operations.
+AccessToken classes. Official type stubs exist but are INCOMPLETE.
 
 ⚠️ MAINTENANCE CONTRACT
 ========================
-Synchronized with: django-ninja-jwt 5.3.x (as of 2025-01-27)
-Last verified: 2025-01-27
+Synchronized with: django-ninja-jwt 5.3.x + django-types 0.22.0 (as of 2025-10-09)
+Last verified with django-types: 2025-10-09
 
-When upgrading django-ninja-jwt:
-1. Check release notes for Token/RefreshToken/AccessToken API changes
-2. Run tests - if runtime errors occur, check this stub file first
-3. Verify constructor signatures and property types match runtime behavior
-4. Update "Last verified" date above
+When upgrading django-ninja-jwt or django-types:
+1. Check ninja-jwt release notes for Token/RefreshToken/AccessToken API changes
+2. Check for official stub improvements (incomplete as of 5.3.x)
+3. Run tests - if runtime errors occur, check this stub file first
+4. Verify constructor signatures and property types match runtime behavior
+5. Update "Last verified" date above
 
 Trade-off: This stub eliminates type: ignore comments and provides proper type
 inference for token.access_token and token.payload, but requires manual
-verification on ninja-jwt upgrades.
+verification on ninja-jwt upgrades (~80 lines to maintain).
 
 Purpose: Eliminates type: ignore comments on RefreshToken usage, adds payload typing
-Pattern: Custom stubs for third-party libraries without complete type information
+Pattern: Custom stubs for third-party libraries with incomplete type information
 Compliance: Zero typing.Any usage per DEVELOPMENT-RULES.md (uses dict[str, object])
+Status: Official stubs exist but INCOMPLETE - this is REQUIRED (supplements official stubs)
 
 Note: django-ninja-jwt is a direct fork of djangorestframework-simplejwt with
 identical token API, so these stubs mirror the simplejwt stubs structure.

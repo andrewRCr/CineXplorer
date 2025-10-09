@@ -23,16 +23,17 @@ The backend is a REST API built with Django and Django REST Framework (DRF).
 - **Authentication**: Authentication is handled by `rest_framework_simplejwt` using JSON Web Tokens. A custom `JWTCookieAuthentication` backend is implemented to manage tokens securely in HTTP-only cookies.
 - **API Documentation**: `drf-spectacular` is used to automatically generate an OpenAPI 3 schema and Swagger UI, available at `/api/docs/`.
 - **Code Style**: Linting is enforced using `ruff` (configured via `backend/pyproject.toml`).
-- **Type Checking**: Hybrid approach using Pyright (development) and MyPy (CI/CD)
+- **Type Checking**: Pyright-only approach with django-types for Django ORM support
     - **Pyright**: Primary type checker with Python 3.13 support, configured via `backend/pyrightconfig.json`
-    - **MyPy**: Django-aware validation with django-stubs plugin, configured via `backend/mypy.ini`
-    - **Custom Type Stubs**: Located in `backend/stubs/` to supplement third-party libraries
-        - `allauth/` - django-allauth models (EmailAddress, EmailConfirmation)
-        - `rest_framework_simplejwt/` - JWT token types
-        - `django/contrib/auth/` - Supplements django-stubs for UserManager and AbstractBaseUser
-    - **Stub Maintenance**: Each stub file documents version synchronization and upgrade procedures
-    - **Type Safety Goal**: Minimize `type: ignore` comments; remaining ones are documented (Django settings, framework internals)
-    - **See**: [Type Safety Strategy](../strategies/strategy-type-safety.md) for complete type safety approach
+    - **django-types 0.22.0**: Pyright-compatible Django stubs (forked from django-stubs specifically for Pyright)
+    - **Custom Type Stubs**: Located in `backend/stubs/` - mix of supplements and required stubs
+        - `django/contrib/auth/` - **Supplements** django-types with explicit `id` field (eliminates reportAttributeAccessIssue)
+        - `allauth/` - **Required** (no official stubs) - django-allauth models (EmailAddress, EmailConfirmation)
+        - `ninja_jwt/` - **Required** (incomplete official stubs) - JWT token types with zero Any usage
+        - `environ/` - **Required** (no official stubs) - django-environ Env class
+    - **Stub Maintenance**: Each stub documents version sync with django-types, upgrade procedures, and supplement vs required status
+    - **Type Safety Goal**: Zero errors with documented acceptable information-level warnings (Django ORM limitations)
+    - **See**: [Type Safety Strategy](../strategies/strategy-type-safety.md) for complete Pyright-only approach and patterns
 - **Key Libraries**:
     - `django-cors-headers` for managing Cross-Origin Resource Sharing (CORS).
     - `django-debug-toolbar` for debugging during development.
@@ -117,7 +118,7 @@ Before any commit, the following checks must pass with **zero tolerance**:
    - Backend: `ruff` via Docker or WSL2 host (`.venv-backend/bin/ruff check backend/apps/`)
    - Frontend: `eslint` via Docker
 4. **Type Checking**: Zero errors
-   - Backend: Pyright (fastest) or MyPy (Django-aware)
+   - Backend: Pyright with django-types (Python 3.13, 3-5x faster than MyPy)
    - Frontend: TypeScript compilation
 
 See [DEVELOPMENT-RULES.md](DEVELOPMENT-RULES.md) for complete quality gate commands and requirements.

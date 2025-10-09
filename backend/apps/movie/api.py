@@ -34,10 +34,14 @@ genres_router = Router(tags=["genres"])
 keywords_router = Router(tags=["keywords"])
 people_router = Router(tags=["people"])
 
-# Module-level singleton instances for Query defaults (ruff B008)
-_PAGINATION_PARAMS = Query(PaginationParamsSchema())
-_SEARCH_PARAMS = Query(MovieSearchParamsSchema(query=""))
-_FILTER_PARAMS = Query(MovieDiscoverFilterSchema())
+# Reusable type aliases for query parameters (Django Ninja + FastAPI pattern)
+# Note: We use the bracket syntax Query[Schema] rather than Annotated[Schema, Query()]
+# because Django Ninja's Query is already typed as Annotated, leading to typing conflicts
+# This is a known Django Ninja typing limitation - the bracket syntax works at runtime
+# Reference: https://github.com/vitalik/django-ninja/issues/1335
+PaginationParams = Query[PaginationParamsSchema]  # type: ignore[valid-type]
+SearchParams = Query[MovieSearchParamsSchema]  # type: ignore[valid-type]
+FilterParams = Query[MovieDiscoverFilterSchema]  # type: ignore[valid-type]
 
 
 # =========================
@@ -59,7 +63,7 @@ def get_movie_genres(request: HttpRequest):
 @keywords_router.get("", response=PaginatedKeywordResponseSchema, auth=None)
 def get_popular_keywords(
     request: HttpRequest,
-    params: PaginationParamsSchema = _PAGINATION_PARAMS,
+    params: PaginationParams,
 ):
     """Retrieve popular keywords with pagination."""
     return movie_service.get_popular_keywords(page=params.page or 1)
@@ -79,7 +83,7 @@ def search_keywords(request: HttpRequest, query: str):
 @people_router.get("", response=PaginatedPersonResponseSchema, auth=None)
 def get_popular_people(
     request: HttpRequest,
-    params: PaginationParamsSchema = _PAGINATION_PARAMS,
+    params: PaginationParams,
 ):
     """Retrieve popular people (actors, directors, etc.) with pagination."""
     return movie_service.get_popular_people(page=params.page or 1)
@@ -99,7 +103,7 @@ def search_people(request: HttpRequest, query: str):
 @movies_router.get("/now-playing", response=PaginatedMovieResponseSchema, auth=None)
 def get_now_playing_movies(
     request: HttpRequest,
-    params: PaginationParamsSchema = _PAGINATION_PARAMS,
+    params: PaginationParams,
 ):
     """Retrieve currently playing movies with pagination."""
     return movie_service.get_now_playing_movies(page=params.page or 1)
@@ -108,7 +112,7 @@ def get_now_playing_movies(
 @movies_router.get("/upcoming", response=PaginatedMovieResponseSchema, auth=None)
 def get_upcoming_movies(
     request: HttpRequest,
-    params: PaginationParamsSchema = _PAGINATION_PARAMS,
+    params: PaginationParams,
 ):
     """Retrieve upcoming movies with pagination."""
     return movie_service.get_upcoming_movies(page=params.page or 1)
@@ -117,7 +121,7 @@ def get_upcoming_movies(
 @movies_router.get("/search", response=PaginatedMovieResponseSchema, auth=None)
 def search_movies(
     request: HttpRequest,
-    params: MovieSearchParamsSchema = _SEARCH_PARAMS,
+    params: SearchParams,
 ):
     """
     Search for movies by query string with pagination.
@@ -131,7 +135,7 @@ def search_movies(
 @movies_router.get("/discover", response=PaginatedMovieResponseSchema, auth=None)
 def discover_movies(
     request: HttpRequest,
-    filters: MovieDiscoverFilterSchema = _FILTER_PARAMS,
+    filters: FilterParams,
 ):
     """
     Discover movies with advanced filtering options.

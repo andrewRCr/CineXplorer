@@ -5,7 +5,7 @@ These tests verify the behavior of the movie API, which relies on external
 calls to the The Movie Database (TMDB) API. The external calls are mocked
 to ensure tests are fast, reliable, and independent of the external service.
 """
-from typing import TypedDict, Unpack
+from typing import TypedDict, Unpack, cast
 from unittest.mock import Mock, patch
 
 from core.models import Movie
@@ -193,7 +193,7 @@ class MovieApiTests(TestCase):
         mock_tmdb_get.return_value = mock_api_response
 
         # Act: Call the discover endpoint with filters
-        filters: dict[str, str | int] = {
+        filters: dict[str, str | int | float] = {
             'sort_by': 'release_date.desc',
             'genres': '28,12',  # Action, Adventure
             'year': 2023,
@@ -302,7 +302,8 @@ class MovieApiTests(TestCase):
         mock_tmdb_get.return_value = mock_credits_response
 
         # Act
-        self.client.force_login(self.user)
+        from django.contrib.auth.base_user import AbstractBaseUser
+        self.client.force_login(cast(AbstractBaseUser, self.user))
         url = movie_detail_url(movie_stub.tmdb_id)
         res = self.client.get(url)
 

@@ -41,16 +41,18 @@
 | App/Module | Errors (Start) | Current | Priority | Status |
 |------------|----------------|---------|----------|--------|
 | Core | 215 | 215 | P5 | Pending (Task 8) |
-| Config | 59 | 59 | P3 | Pending (Task 6) |
+| Config | 61 | 0 ✅ | P3 | Complete (Task 6) |
 | Authentication | 53 | 38 | P4 | Pending (Task 7) |
-| UserMovieData | 13 | 13 | P2 | Next (Task 5) |
+| UserMovieData | 13 | 0 ✅ | P2 | Complete (Task 5) |
 | Movie | 11 | 0 ✅ | P1 | Complete (Task 4) |
 | Accounts | 0 | 0 ✅ | ✅ | Perfect! |
-| **TOTAL** | **351** | **325** | | **26 errors resolved** |
+| **TOTAL** | **353** | **253** | | **100 errors resolved** |
 
 **Progress Notes**:
 - Authentication: 53 → 42 after excluding authenticate.py (Task 2), then 42 → 38 after allauth.socialaccount stubs (Task 3)
 - Movie: 11 → 0 after fixing Query typing and test types (Task 4)
+- UserMovieData: 13 → 0 after fixing models.pyi and excluding legacy DRF urls.py (Task 5)
+- Config: 61 → 0 after fixing logging.py, settings_test.py, test_logging_config.py, and urls.py (Task 6)
 
 ## Error Categories (from baseline analysis)
 
@@ -203,26 +205,33 @@
         - [x] 5.6.1 Pyright: 0 errors ✅
         - [x] 5.6.2 Ruff linting: All checks passed ✅
 
-- [ ] 6. Fix Config Module Errors (59 errors)
-    - [ ] 6.1 Review config errors by file
-        - [ ] 6.1.1 Run verbose type check: `npx pyright backend/config/ --project backend`
-        - [ ] 6.1.2 Group errors by file (logging.py, settings.py, etc.)
-    - [ ] 6.2 Fix logging.py errors (~25 errors)
-        - [ ] 6.2.1 Add logging.LogRecord type annotations
-        - [ ] 6.2.2 Add return type annotations for formatters
-        - [ ] 6.2.3 Fix filter function parameter types
-    - [ ] 6.3 Fix settings.py errors (~20 errors)
-        - [ ] 6.3.1 Add type annotations for custom settings
-        - [ ] 6.3.2 Fix environ type inference issues
-        - [ ] 6.3.3 Add explicit types for complex configurations
-    - [ ] 6.4 Fix other config files (~14 errors)
-        - [ ] 6.4.1 Fix settings_test.py types
-        - [ ] 6.4.2 Fix settings_prod.py types
-        - [ ] 6.4.3 Fix WSGI/ASGI types if needed
-    - [ ] 6.5 Verify config module passes
-        - [ ] 6.5.1 Run type check: Should show 0 errors
-        - [ ] 6.5.2 Verify Django check passes
-    - [ ] 6.6 Run incremental quality checks
+- [x] 6. Fix Config Module Errors (61 → 0 errors) ✅
+    - [x] 6.1 Review config errors by file
+        - [x] 6.1.1 Run verbose type check: `npx pyright backend/config/ --project backend` ✅
+        - [x] 6.1.2 Group errors by file: logging.py (28), test_logging_config.py (18), settings_test.py (13), urls.py (2) ✅
+    - [x] 6.2 Fix logging.py errors (28 → 0 errors) ✅
+        - [x] 6.2.1 Add logging.LogRecord type annotation to filter() method ✅
+        - [x] 6.2.2 Add parameter type annotations (validate_log_level, _get_handlers_config,_get_loggers_config) ✅
+        - [x] 6.2.3 Add return type annotations (dict[str, object] for nested config dicts) ✅
+        - [x] 6.2.4 Add type annotations for helper functions (get_logger, get_log_file_info, print_log_status, log_slow_query) ✅
+        - [x] 6.2.5 Use isinstance assertions for object→list narrowing where needed ✅
+        - [x] 6.2.6 Remove unused logging.handlers import ✅
+        - [x] 6.2.7 Run incremental quality checks (linting passed) ✅
+    - [x] 6.3 Fix settings_test.py errors (13 → 0 errors) ✅
+        - [x] 6.3.1 Add type annotations to MockEmailService methods (CustomUser parameter) ✅
+        - [x] 6.3.2 Add TYPE_CHECKING import guard to avoid circular imports ✅
+        - [x] 6.3.3 Add pyright: ignore[reportConstantRedefinition] for settings overrides (standard Django pattern) ✅
+        - [x] 6.3.4 Run incremental quality checks (linting passed) ✅
+    - [x] 6.4 Fix test_logging_config.py and urls.py errors (20 → 0 errors) ✅
+        - [x] 6.4.1 Fix test_logging_config.py: Add pyright: ignore[reportConstantRedefinition] for settings overrides ✅
+        - [x] 6.4.2 Fix urls.py: Add pyright: ignore[reportCallIssue,reportArgumentType] for admin.site.urls (django-types limitation) ✅
+        - [x] 6.4.3 Verified justifications follow type safety strategy (documented known limitation) ✅
+    - [x] 6.5 Verify config module passes ✅
+        - [x] 6.5.1 Run type check: 0 errors (53 informations, 6 warnings - acceptable) ✅
+        - [x] 6.5.2 All files pass with only information-level warnings ✅
+    - [x] 6.6 Run incremental quality checks ✅
+        - [x] 6.6.1 Pyright: 0 errors across entire config module ✅
+        - [x] 6.6.2 Ruff linting: All checks passed ✅
 
 - [ ] 7. Fix Authentication App Errors (38 errors, target architecture only)
     - [ ] 7.1 Review authentication errors
@@ -329,14 +338,21 @@
 - `backend/stubs/allauth/socialaccount/__init__.pyi` - ✅ CREATED: Package marker
 - `backend/stubs/allauth/socialaccount/models.pyi` - ✅ CREATED: SocialApp, SocialAccount models
 
+**Target Architecture Code (fixed):**
+- `backend/apps/movie/api.py` - ✅ FIXED: Django Ninja Query typing
+- `backend/apps/movie/schemas.py` - ✅ Already passing
+- `backend/apps/movie/tests/test_movie_api.py` - ✅ FIXED: Test type issues
+- `backend/apps/user_movie_data/api.py` - ✅ Already passing
+- `backend/apps/user_movie_data/schemas.py` - ✅ Already passing
+- `backend/apps/user_movie_data/admin.py` - ✅ Already passing
+- `backend/apps/user_movie_data/models.py` - ✅ FIXED: ForeignKey access with type ignores
+- `backend/apps/user_movie_data/models.pyi` - ✅ FIXED: Removed duplicate Manager declaration
+- `backend/config/logging.py` - ✅ FIXED: Added comprehensive type annotations
+- `backend/config/settings_test.py` - ✅ FIXED: Added type annotations and constant redefinition ignores
+- `backend/config/tests/test_logging_config.py` - ✅ FIXED: Added constant redefinition ignores
+- `backend/config/urls.py` - ✅ FIXED: Added type ignores for admin.site.urls (django-types limitation)
+
 **Target Architecture Code (to fix):**
-- `backend/apps/movie/api.py` - Django Ninja endpoints
-- `backend/apps/movie/schemas.py` - Pydantic schemas
-- `backend/apps/movie/tests/test_movie_api.py` - Test type issues
-- `backend/apps/user_movie_data/api.py` - Django Ninja endpoints
-- `backend/apps/user_movie_data/schemas.py` - Pydantic schemas
-- `backend/apps/user_movie_data/admin.py` - Admin integration
-- `backend/apps/user_movie_data/models.py` - Model types
 - `backend/apps/authentication/api.py` - Django Ninja endpoints
 - `backend/apps/authentication/schemas.py` - Pydantic schemas
 - `backend/apps/authentication/auth_ninja.py` - Authentication helpers
@@ -345,9 +361,6 @@
 - `backend/apps/core/models.py` - Core models
 - `backend/apps/core/context_processors.py` - Template context
 - `backend/apps/core/utilities/` - Utility functions
-- `backend/config/logging.py` - Logging configuration
-- `backend/config/settings.py` - Django settings
-- `backend/config/settings_test.py` - Test settings
 
 **Documentation:**
 - `.arc/active/notes-type-coverage-status.md` - Type coverage tracking (gitignored)

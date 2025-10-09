@@ -41,7 +41,7 @@ Usage Examples:
     DEBUG=False DJANGO_LOG_LEVEL=INFO docker-compose up
 """
 
-import logging.handlers
+import logging
 import os
 import sys
 from typing import TypedDict
@@ -59,7 +59,7 @@ class HealthCheckFilter(logging.Filter):
     through as they indicate real problems that should be visible.
     """
 
-    def filter(self, record):
+    def filter(self, record: logging.LogRecord) -> bool:
         # Check if this is a health check related message
         message = getattr(record, 'getMessage', lambda: str(record.msg))()
 
@@ -136,7 +136,7 @@ LOG_STORAGE_ESTIMATES = {
 }
 
 
-def validate_log_level(level):
+def validate_log_level(level: str | None) -> str:
     """
     Validate and normalize log level from environment variable.
 
@@ -161,10 +161,15 @@ def validate_log_level(level):
 
 
 def _get_handlers_config(
-    log_level, console_log_level, debug_mode, is_ci, is_testing, log_dir
-):
+    log_level: str,
+    console_log_level: str,
+    debug_mode: bool,
+    is_ci: bool,
+    is_testing: bool,
+    log_dir: str,
+) -> dict[str, dict[str, object]]:
     """Get handlers configuration, excluding file handlers in CI or minimal in testing."""
-    handlers = {
+    handlers: dict[str, dict[str, object]] = {
         "console": {
             "class": "logging.StreamHandler",
             "level": console_log_level,
@@ -233,10 +238,14 @@ def _get_handlers_config(
 
 
 def _get_loggers_config(
-    log_level, console_log_level, debug_mode, is_ci, is_testing
-):
+    log_level: str,
+    console_log_level: str,
+    debug_mode: bool,
+    is_ci: bool,
+    is_testing: bool,
+) -> dict[str, dict[str, object]]:
     """Get loggers configuration, with console-only/minimal handlers based on environment."""
-    loggers = {
+    loggers: dict[str, dict[str, object]] = {
         # Root logger - catches everything not specifically configured
         "": {
             "handlers": ["console"],
@@ -342,7 +351,7 @@ def _get_loggers_config(
     return loggers
 
 
-def get_logging_config(log_dir=None):
+def get_logging_config(log_dir: str | None = None) -> dict[str, object]:
     """
     Return Django logging configuration dictionary.
 
@@ -473,7 +482,7 @@ def get_logging_config(log_dir=None):
 
 
 # Create logger instances for easy import
-def get_logger(name="cinexplorer"):
+def get_logger(name: str = "cinexplorer") -> logging.Logger:
     """
     Get a logger instance for the specified name.
 
@@ -538,7 +547,7 @@ def demo_formatters():
     print("\n=== End Demonstration ===\n")
 
 
-def get_log_file_info(log_dir="/backend/logs"):
+def get_log_file_info(log_dir: str = "/backend/logs") -> dict[str, object]:
     """
     Get information about current log files and their sizes.
 
@@ -551,7 +560,7 @@ def get_log_file_info(log_dir="/backend/logs"):
     import glob
     import os
 
-    info = {
+    info: dict[str, object] = {
         "log_directory": log_dir,
         "files": [],
         "total_size_mb": 0,
@@ -584,11 +593,13 @@ def get_log_file_info(log_dir="/backend/logs"):
         except OSError:
             continue
     info["total_size_mb"] = round(total_size, 2)
-    info["file_count"] = len(info["files"])
+    files_list = info["files"]
+    assert isinstance(files_list, list), "files should be a list"
+    info["file_count"] = len(files_list)
     return info
 
 
-def print_log_status(log_dir="/backend/logs"):
+def print_log_status(log_dir: str = "/backend/logs") -> None:
     """
     Print a formatted summary of log file status.
 
@@ -605,7 +616,9 @@ def print_log_status(log_dir="/backend/logs"):
     print(f"Total Size: {info['total_size_mb']:.2f} MB")
     # Group files by type
     file_groups: dict[str, list[dict[str, object]]] = {}
-    for file_info in info["files"]:
+    files_list = info["files"]
+    assert isinstance(files_list, list), "files should be a list"
+    for file_info in files_list:
         base_name = file_info["name"].split(".")[0] + ".log"
         if base_name not in file_groups:
             file_groups[base_name] = []
@@ -637,7 +650,9 @@ def print_log_status(log_dir="/backend/logs"):
     print("=========================\n")
 
 
-def log_slow_query(query_sql, query_time, params=None):
+def log_slow_query(
+    query_sql: str, query_time: float, params: tuple[object, ...] | None = None
+) -> None:
     """
     Log slow database queries with performance analysis.
 

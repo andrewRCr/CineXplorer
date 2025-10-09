@@ -22,7 +22,7 @@ from django.urls import include, path
 from .api import api
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
+    path("admin/", admin.site.urls),  # pyright: ignore[reportCallIssue,reportArgumentType]  # django-types limitation: admin.site.urls type inference incomplete
     path("__debug__/", include("debug_toolbar.urls")),
     # django-allauth Headless Mode (SPA/API-only)
     # Provides JSON API endpoints for OAuth, email verification, password reset

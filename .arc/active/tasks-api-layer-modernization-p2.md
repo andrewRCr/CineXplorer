@@ -407,7 +407,7 @@ def create_entry(request: HttpRequest, payload: CreateSchema):
         - [ ] 7.1.9.5 Remove files: `apps/movie/tests/test_paginated_views.py`, `apps/user_movie_data/tests/test_user_movie_data_api.py`
         - [ ] 7.1.9.6 Remove transitional files if migrated/deleted: `apps/core/views/logging.py`, `apps/core/views/tmdb.py`
         - [ ] 7.1.9.7 Remove entire "TEMPORARY EXCLUSIONS" comment block
-        - [ ] 7.1.9.8 Reference: Exclusions added in `tasks-incidental-backend-type-safety.md` Task 14.1
+        - [ ] 7.1.9.8 Reference: Exclusions added in `tasks-incidental-backend-type-safety.md` Task 13.1
     - [ ] 7.1.10 **Verify type safety with exclusions removed**
         - [ ] 7.1.10.1 Run `python scripts/type_check.py` to confirm 0 errors remain
         - [ ] 7.1.10.2 If errors appear, they should be in target architecture code only (not deleted files)

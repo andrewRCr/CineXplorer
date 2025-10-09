@@ -33,7 +33,7 @@ If future django-types versions add explicit `id` field, this stub may become re
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, ClassVar, Protocol
+from typing import ClassVar, Protocol
 
 from django.db import models
 from django.db.models import Manager
@@ -43,8 +43,8 @@ from django.db.models import Manager
 class _RelatedManagerProtocol(Protocol):
     """Protocol for Django RelatedManager with count() method."""
     def count(self) -> int: ...
-    def all(self) -> Any: ...
-    def filter(self, **kwargs: Any) -> Any: ...
+    def all(self) -> object: ...
+    def filter(self, **kwargs: object) -> object: ...
 
 # User Manager
 class UserManager(Manager[AbstractUser]):
@@ -55,7 +55,7 @@ class UserManager(Manager[AbstractUser]):
         username: str,
         email: str = "",
         password: str | None = None,
-        **extra_fields: Any
+        **extra_fields: object
     ) -> AbstractUser:
         """Create and save a regular user with the given username, email, and password."""
         ...
@@ -65,7 +65,7 @@ class UserManager(Manager[AbstractUser]):
         username: str,
         email: str = "",
         password: str | None = None,
-        **extra_fields: Any
+        **extra_fields: object
     ) -> AbstractUser:
         """Create and save a superuser with the given username, email, and password."""
         ...
@@ -81,7 +81,7 @@ class AbstractBaseUser(models.Model):
         """Set the user's password to the given raw string (hashed)."""
         ...
 
-    def save(self, *args: Any, **kwargs: Any) -> None:
+    def save(self, *args: object, **kwargs: object) -> None:
         """Save the model instance."""
         ...
 
@@ -124,7 +124,7 @@ class AbstractUser(AbstractBaseUser, PermissionsMixin):
     # Methods
     def get_full_name(self) -> str: ...
     def get_short_name(self) -> str: ...
-    def email_user(self, subject: str, message: str, from_email: str | None = None, **kwargs: Any) -> None: ...
+    def email_user(self, subject: str, message: str, from_email: str | None = None, **kwargs: object) -> None: ...
 
 class User(AbstractUser):  # type: ignore[django-manager-missing]
     """

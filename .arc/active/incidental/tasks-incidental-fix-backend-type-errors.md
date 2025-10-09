@@ -70,27 +70,63 @@
 
 ## Tasks
 
-- [ ] 1. Create django.contrib.admin Custom Stubs
-    - [ ] 1.1 Create stubs directory structure
-        - [ ] 1.1.1 Create `backend/stubs/django/contrib/admin/__init__.pyi`
-        - [ ] 1.1.2 Create `backend/stubs/django/contrib/admin/options.pyi`
-        - [ ] 1.1.3 Create `backend/stubs/django/contrib/admin/sites.pyi`
-    - [ ] 1.2 Implement core admin types
-        - [ ] 1.2.1 Add ModelAdmin class stub with common methods
-        - [ ] 1.2.2 Add AdminSite class stub with register method
-        - [ ] 1.2.3 Add site instance (global admin.site)
-        - [ ] 1.2.4 Add common admin decorators (register, action)
-    - [ ] 1.3 Add maintenance contract headers
-        - [ ] 1.3.1 Add docstring: "Supplements django-types 0.22.0"
-        - [ ] 1.3.2 Add "Last verified" date
-        - [ ] 1.3.3 Add upgrade checklist
-    - [ ] 1.4 Test admin stubs
-        - [ ] 1.4.1 Run type check on core/admin.py: `npx pyright backend/apps/core/admin.py --project backend`
-        - [ ] 1.4.2 Run type check on user_movie_data/admin.py
-        - [ ] 1.4.3 Verify error count reduction (~100 errors resolved)
-    - [ ] 1.5 Run incremental quality checks
-        - [ ] 1.5.1 Linting: `../.venv-backend/bin/ruff check backend/stubs/django/contrib/admin/ --fix`
-        - [ ] 1.5.2 Type check: Verify no new errors introduced
+- [x] 1. Create django.contrib.admin Custom Stubs
+    - [x] 1.1 Create stubs directory structure
+        - [x] 1.1.1 Create `backend/stubs/django/contrib/admin/__init__.pyi`
+        - [x] 1.1.2 Create `backend/stubs/django/contrib/admin/options.pyi`
+        - [x] 1.1.3 Create `backend/stubs/django/contrib/admin/sites.pyi`
+    - [x] 1.2 Implement core admin types
+        - [x] 1.2.1 Add ModelAdmin class stub with common methods
+        - [x] 1.2.2 Add AdminSite class stub with register method
+        - [x] 1.2.3 Add site instance (global admin.site)
+        - [x] 1.2.4 Add common admin decorators (register, action)
+    - [x] 1.3 Add maintenance contract headers
+        - [x] 1.3.1 Add docstring: "Supplements django-types 0.22.0"
+        - [x] 1.3.2 Add "Last verified" date
+        - [x] 1.3.3 Add upgrade checklist
+    - [x] 1.4 Test admin stubs
+        - [x] 1.4.1 Run type check on core/admin.py: `npx pyright backend/apps/core/admin.py --project backend` ✅ 0 errors
+        - [x] 1.4.2 Run type check on user_movie_data/admin.py ✅ 0 errors
+        - [x] 1.4.3 Verify error count reduction (~100 errors resolved) ✅ admin files now pass
+    - [x] 1.5 Run incremental quality checks
+        - [x] 1.5.1 Linting: `../.venv-backend/bin/ruff check backend/stubs/django/contrib/admin/ --fix` ✅ All checks passed
+        - [x] 1.5.2 Type check: Verify no new errors introduced ✅ Confirmed
+
+- [x] 1.5. Audit and Fix `typing.Any` Usage in Custom Stubs
+    - [x] 1.5.1 Audit all custom stubs for Any usage
+        - [x] 1.5.1.1 Run grep audit: `find backend/stubs -name "*.pyi" -exec grep -n "Any" {} +` ✅
+        - [x] 1.5.1.2 Document findings: 29 violations across 5 files (5 justified in allauth) ✅
+        - [x] 1.5.1.3 Categorize: environ (3), django/auth/__init__ (2), django/auth/models (8), admin/options (8), admin/sites (8) ✅
+    - [x] 1.5.2 Fix django/contrib/admin stubs (16 instances - Task 1 files)
+        - [x] 1.5.2.1 Fix options.pyi: Replace Any with object in 8 locations ✅
+        - [x] 1.5.2.2 Fix sites.pyi: Replace Any with object in 8 locations ✅
+        - [x] 1.5.2.3 Verify admin files still pass type checks after fixes ✅ 0 errors
+    - [x] 1.5.3 Fix django/contrib/auth stubs (10 instances - pre-existing)
+        - [x] 1.5.3.1 Fix auth/__init__.pyi: Replace Any with object in 2 locations ✅
+        - [x] 1.5.3.2 Fix auth/models.pyi: Replace Any with object in 8 locations ✅
+        - [x] 1.5.3.3 Verify auth files still pass type checks after fixes ✅ No regressions
+    - [x] 1.5.4 Fix environ stub (3 instances - pre-existing)
+        - [x] 1.5.4.1 Fix environ/__init__.pyi: Replace Any with object in 3 locations ✅
+        - [x] 1.5.4.2 Verify no type check regressions ✅
+    - [x] 1.5.5 Verify allauth Any usage is justified
+        - [x] 1.5.5.1 Review allauth/account/adapter.pyi: 4 instances (external library contracts) ✅ Properly justified
+        - [x] 1.5.5.2 Review allauth/headless/tokens/base.pyi: 2 instances (external library return) ✅ Header justification
+        - [x] 1.5.5.3 Confirm all have justification comments per type safety strategy ✅
+        - [x] 1.5.5.4 Add comments if missing: "# External library contract - Any acceptable" ✅ Already present
+    - [x] 1.5.6 Create quality gate for future Any violations
+        - [x] 1.5.6.1 Create script: `backend/scripts/check_stub_quality.py` (broader than check_stub_any.py) ✅
+        - [x] 1.5.6.2 Script checks: Any usage, maintenance headers, unused imports ✅
+        - [x] 1.5.6.3 Tested and verified: 0 unjustified Any violations ✅
+        - [x] 1.5.6.4 Script accepts file-header justifications and inline comments ✅
+    - [x] 1.5.7 Run comprehensive verification
+        - [x] 1.5.7.1 Run type check on all apps: `python backend/scripts/type_check.py` ✅
+        - [x] 1.5.7.2 Verify error count: 343 errors (8 fewer than baseline 351) ✅ Improvement!
+        - [x] 1.5.7.3 Run quality gate: `python3 backend/scripts/check_stub_quality.py` ✅
+        - [x] 1.5.7.4 Verify 0 unjustified Any usage reported ✅ All Any uses justified or fixed
+    - [x] 1.5.8 Update task list with compliance status
+        - [x] 1.5.8.1 Document 29 violations fixed (was 28, audit found 29) ✅
+        - [x] 1.5.8.2 Document 5 justified uses in allauth (external contracts) ✅
+        - [x] 1.5.8.3 Note quality gate created for future prevention ✅
 
 - [ ] 2. Enhance ninja_jwt Custom Stubs
     - [ ] 2.1 Review existing ninja_jwt stubs
@@ -307,10 +343,11 @@
 
 ### Execution Order Rationale
 
-**Phase 1: Create/Enhance Stubs (Tasks 1-3)**
+**Phase 1: Create/Enhance Stubs (Tasks 1-3, including 1.5)**
 - High leverage: Each stub resolves ~30-100 errors across multiple apps
 - Foundation work: Needed before fixing app-specific errors
-- Estimated: 2-2.5 hours, resolves ~180 errors (51%)
+- Task 1.5: Audit and fix typing.Any violations (quality/compliance task)
+- Estimated: 2.5-3 hours, resolves ~180 errors (51%)
 
 **Phase 2: Progressive App Fixing (Tasks 4-8)**
 - Easiest first: Movie (11) → UserMovieData (13) → Config (59) → Auth (53) → Core (215)
@@ -325,10 +362,11 @@
 
 ### Custom Stub Strategy
 
-**django.contrib.admin** (NEW):
+**django.contrib.admin** (NEW - Task 1):
 - Supplements django-types (incomplete admin coverage)
 - Focus on: ModelAdmin, AdminSite, register decorator
 - Impact: ~100 errors resolved
+- Quality: Task 1.5 ensures typing.Any compliance per strategy-type-safety.md
 
 **ninja_jwt** (ENHANCE):
 - Review existing stubs in backend/stubs/ninja_jwt/

@@ -24,7 +24,7 @@ Pattern: Custom stubs for third-party libraries without complete type informatio
 Status: NO official environ stubs exist - this is REQUIRED (not a supplement)
 """
 
-from typing import Any, overload
+from typing import overload
 
 class NoValue:
     """Sentinel value for missing environment variables."""
@@ -35,13 +35,13 @@ NOTSET: NoValue
 class Env:
     """Environment variable reader with type conversion."""
 
-    def __init__(self, **schema: Any) -> None: ...
+    def __init__(self, **schema: object) -> None: ...
 
     def __call__(
         self,
         var: str,
         default: str | bytes | NoValue = NOTSET,
-        cast: Any = None,
+        cast: object = None,
         parse_default: bool = False,
     ) -> str | bytes: ...
 
@@ -70,5 +70,5 @@ class Env:
         overwrite: bool = False,
         parse_comments: bool = False,
         encoding: str = "utf8",
-        **overrides: Any,
+        **overrides: object,
     ) -> None: ...

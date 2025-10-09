@@ -25,7 +25,7 @@ Note: This is a SUPPLEMENT to django-types. If redundancy is confirmed, may be r
 """
 from __future__ import annotations
 
-from typing import Any, TypeVar
+from typing import TypeVar
 
 from django.contrib.auth.models import AbstractBaseUser
 from django.http import HttpRequest
@@ -35,7 +35,7 @@ _UserModel = TypeVar('_UserModel', bound=AbstractBaseUser)
 
 def authenticate(
     request: HttpRequest | None = None,
-    **credentials: Any
+    **credentials: object
 ) -> AbstractBaseUser | None:
     """
     Authenticate user with the given credentials.

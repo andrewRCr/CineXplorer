@@ -1,8 +1,15 @@
 """
 Type stubs for allauth.account.adapter module.
 
-Last verified: 2025-01-08
-Django-allauth version: 65.12.0
+⚠️ MAINTENANCE CONTRACT
+========================
+Synchronized with: django-allauth 65.12.0
+Last verified: 2025-10-09
+
+When upgrading django-allauth:
+1. Check DefaultAccountAdapter method signatures for changes
+2. Verify render_mail and send_mail context types still match
+3. Update "Last verified" date above
 
 Purpose: Provides type information for DefaultAccountAdapter to eliminate
 reportMissingTypeStubs errors in custom adapter implementations.

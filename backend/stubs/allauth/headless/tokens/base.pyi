@@ -1,12 +1,16 @@
 """
 Type stubs for django-allauth AbstractTokenStrategy.
 
+⚠️ MAINTENANCE CONTRACT
+========================
 Synchronized with: django-allauth v65.12.0
-Last verified: 2025-10-08
-Upgrade checklist:
-  - Check allauth.headless.tokens.base.AbstractTokenStrategy for signature changes
-  - Verify abstract methods still required
-  - Test token_strategy.py still works
+Last verified: 2025-10-09
+
+When upgrading django-allauth:
+1. Check allauth.headless.tokens.base.AbstractTokenStrategy for signature changes
+2. Verify abstract methods still required (create_session_token, lookup_session)
+3. Test token_strategy.py still works with updated stubs
+4. Update "Last verified" date above
 
 NOTE: Uses typing.Any in create_access_token_payload return type to match
 official library interface. This is acceptable per type-safety.md as it's

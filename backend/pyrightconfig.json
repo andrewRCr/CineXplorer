@@ -23,8 +23,10 @@
         // Tracked in: prd-api-layer-modernization-p2.md
         "apps/authentication/views.py",
         "apps/authentication/serializers.py",
+        "apps/authentication/authenticate.py",  // Legacy DRF JWT auth (unused, uses rest_framework_simplejwt)
         "apps/user_movie_data/views.py",
         "apps/user_movie_data/serializers.py",
+        "apps/user_movie_data/urls.py",  // Legacy DRF router (uses rest_framework)
         "apps/user_movie_data/services/user_movie_data_service.py",
         "apps/movie/tests/test_paginated_views.py",
         "apps/user_movie_data/tests/test_user_movie_data_api.py",

@@ -10,7 +10,6 @@ When adding/modifying fields in models.py, update this file accordingly.
 from datetime import date
 
 from django.db import models
-from django.db.models import Manager
 
 class Movie(models.Model):
     """Type stub for Movie model with explicit field types."""
@@ -23,7 +22,6 @@ class Movie(models.Model):
     poster_path: str | None
     release_date: date | None
 
-    # Manager
-    objects: Manager[Movie]
+    # Note: Manager not declared - django-types provides it automatically
 
     def __str__(self) -> str: ...

@@ -133,7 +133,7 @@ class ApiResponse:
 
             # Convert content length to integer if possible
             content_length = content_info['content_length']
-            if content_length and isinstance(content_length, str):
+            if content_length:
                 with contextlib.suppress(ValueError):
                     content_info['content_length'] = int(content_length)
 
@@ -190,7 +190,7 @@ class ApiResponse:
             return {}
 
         # For errors, return the legacy error format
-        error_dict = {
+        error_dict: dict[str, object] = {
             "error": self.error_message or f"Request failed with status {self.status_code}",
             "status": self.status_code,
             "correlation_id": self.correlation_id

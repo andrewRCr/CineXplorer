@@ -64,9 +64,7 @@ def validate_tmdb_response[T: BaseModel](
             extra={
                 "model": model.__name__,
                 "validation_errors": e.errors(),
-                "response_data_keys": (
-                    list(response.data.keys()) if isinstance(response.data, dict) else None
-                )
+                "response_data_keys": list(response.data.keys())
             }
         )
         raise HttpError(
@@ -118,7 +116,7 @@ def validate_tmdb_list_response[T: BaseModel](
             extra={
                 "item_model": item_model.__name__,
                 "validation_errors": e.errors(),
-                "list_length": len(response.data) if isinstance(response.data, list) else None
+                "list_length": len(response.data)
             }
         )
         raise HttpError(
@@ -170,9 +168,7 @@ def validate_tmdb_paginated_response[T: BaseModel](
             extra={
                 "model": model.__name__,
                 "validation_errors": e.errors(),
-                "response_data_keys": (
-                    list(response.data.keys()) if isinstance(response.data, dict) else None
-                )
+                "response_data_keys": list(response.data.keys())
             }
         )
         raise HttpError(

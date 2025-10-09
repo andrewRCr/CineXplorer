@@ -122,9 +122,7 @@ class MovieApiTests(TestCase):
         mock_tmdb_method.return_value = mock_api_response
 
         # Act: Call the internal API endpoint
-        if params is None:
-            params = {}
-        res = self.client.get(url, params)
+        res = self.client.get(url, params or {})
 
         # Assert: Check the response status and overall structure
         self.assertEqual(res.status_code, HTTP_200_OK)
@@ -198,13 +196,13 @@ class MovieApiTests(TestCase):
         filters: dict[str, str | int] = {
             'sort_by': 'release_date.desc',
             'genres': '28,12',  # Action, Adventure
-            'year': 2023,  # int not string
-            'vote_average_gte': '7.0',  # Convert to string for HTTP params
-            'vote_average_lte': '10.0',  # Convert to string for HTTP params
+            'year': 2023,
+            'vote_average_gte': 7.0,
+            'vote_average_lte': 10.0,
             'release_date_gte': '2023-01-01',
             'release_date_lte': '2023-12-31',
-            'runtime_gte': 90,  # int not string
-            'runtime_lte': 180,  # int not string
+            'runtime_gte': 90,
+            'runtime_lte': 180,
             'certification': 'PG-13',
             'region': 'US'
         }

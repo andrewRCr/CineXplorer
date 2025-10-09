@@ -1,13 +1,14 @@
 # Development Rules - CineXplorer
 
-**Version**: 2.3
-**Last Updated**: 2025-10-08
-**Rules Hash**: `d7a3f1b9`
+**Version**: 2.4
+**Last Updated**: 2025-10-09
+**Rules Hash**: `e8c2g3k0`
 
 This document consolidates the core development rules and quality standards for CineXplorer. These rules are **non-negotiable** and must be followed by all contributors, including AI assistants.
 
 ## Version History
 
+- **2.4**: Added CURRENT-SESSION.md update control - AI must not update without user instruction
 - **2.3**: Added "Leave It Cleaner" protocol for handling pre-existing issues in modified files
 - **2.2**: Added mandatory comprehensive task context analysis protocol for all commits
 - **2.1**: Added feature branch workflow protocols and branch management requirements
@@ -18,8 +19,8 @@ This document consolidates the core development rules and quality standards for 
 
 Before starting ANY work, AI assistants must:
 
-1. **Confirm rules version**: "Acknowledging DEVELOPMENT-RULES v2.3, hash d7a3f1b9"
-2. **State understanding**: Briefly confirm understanding of commit protocols, comprehensive task context analysis, quality gates, "Leave It Cleaner" protocol, and feature branch workflow
+1. **Confirm rules version**: "Acknowledging DEVELOPMENT-RULES v2.4, hash e8c2g3k0"
+2. **State understanding**: Briefly confirm understanding of commit protocols, comprehensive task context analysis, quality gates, "Leave It Cleaner" protocol, CURRENT-SESSION update control, and feature branch workflow
 3. **Verify context access**: Confirm access to required documents (AI-SHARED, META-PRD, etc.)
 4. **Check branch status**: Verify current git branch and ensure alignment with intended work
 
@@ -129,6 +130,16 @@ If quality gates fail after sub-task completion:
 - Ensures quality gates actually improve codebase health
 - Makes incremental progress on code quality with every change
 - Documents intentional decisions when issues must be deferred
+
+## Session Documentation Control
+
+### CURRENT-SESSION.md Update Protocol
+
+- **AI NEVER updates CURRENT-SESSION.md** without explicit user instruction
+- CURRENT-SESSION.md is a handoff document controlled by the user
+- AI should report changes and progress but NOT modify this file during active work
+- User decides when and how session documentation is updated
+- Violating this rule breaks session continuity and coordination
 
 ## Task Management Protocol
 

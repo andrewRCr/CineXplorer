@@ -43,10 +43,12 @@ steps:
   description: |
   Move the feature's task file to archive:
 
-  1. `mv .arc/upcoming/tasks/tasks-[feature-name].md .arc/reference/archive/tasks/`
-  
+  1. `git mv .arc/active/feature/tasks-[feature-name].md .arc/reference/archive/tasks/feature/tasks-[feature-name].md`
+
   Task details remain accessible via the archived task file.
   Completion metadata captures high-level summary without duplicating task breakdown.
+
+  **Note**: Incidental task lists are archived separately - see manage-incidental-work.md workflow.
 
 - name: Update PROJECT-STATUS.md
   description: |
@@ -106,9 +108,13 @@ Archive Directory Structure:
 │   ├── prd-user-authentication.md
 │   └── [other-completed-features].md
 ├── tasks/
-│   ├── tasks-logging-system.md                  # Archived task files
-│   ├── tasks-user-authentication.md
-│   └── [other-completed-features].md
+│   ├── feature/
+│   │   ├── tasks-logging-system.md              # Archived feature task files
+│   │   ├── tasks-user-authentication.md
+│   │   └── [other-feature-tasks].md
+│   └── incidental/
+│       ├── tasks-incidental-type-safety.md      # Archived incidental task files
+│       └── [other-incidental-tasks].md
 └── completion-metadata/
     ├── completion-logging-system.md             # Comprehensive completion documentation
     ├── completion-user-authentication.md

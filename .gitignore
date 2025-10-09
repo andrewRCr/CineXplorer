@@ -213,13 +213,14 @@ infrastructure/dev-certs/*.key
 
 # Personal reference documentation and notes
 .arc/reference/archive/notes/
-.arc/active/notes-*
+.arc/active/feature/notes-*
+.arc/active/incidental/notes-*
 .arc/upcoming/notes/
 
 # Session handoff file (transient)
 .arc/active/CURRENT-SESSION.md
 
-# Note: Incidental task lists are now TRACKED by default for context visibility
+# Note: Task lists (feature and incidental) are TRACKED by default for context visibility
 # Only notes files remain untracked (scratch paper vs. project context)
 
 # AI tool settings (personal development environment preferences)

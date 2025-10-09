@@ -127,182 +127,45 @@ When all parent tasks are complete and ready for integration:
 
 ## Incidental Work Management
 
-### When to Create Incidental Task Lists
+### Quick Decision Guide
 
-While working on tasks in the main feature task list, you may discover quality improvements, refactoring opportunities, or tech debt that should be fixed immediately rather than deferred. Use an incidental task list when:
+While working on feature tasks, you may discover quality improvements, refactoring, or tech debt that should be fixed immediately. **Quick decision tree**:
 
-- **Multiple subtasks needed** (>1 subtask)
-- **Non-trivial effort** (>30 minutes estimated)
-- **Cross-cutting concern** (affects multiple domains/files)
-- **Quality improvement** discovered during feature work
-- **Worth documenting** for future reference and handoffs
+**Create incidental task list when:**
+- ✅ Multiple subtasks needed (>1 subtask)
+- ✅ Non-trivial effort (>30 minutes estimated)
+- ✅ Cross-cutting concern (affects multiple domains/files)
+- ✅ Quality improvement discovered during feature work
+- ✅ Worth documenting for handoffs
 
-**Don't use incidental tasks for**:
-- Simple fixes (<30 min, 1 subtask) - just fix inline
-- Typos, formatting, trivial refactors - fix without ceremony
-- Work already in main task list - add subtasks there
-- Exploratory work - use notes files instead
+**Fix inline (no task list) when:**
+- ❌ Simple fixes (<30 min, 1 subtask)
+- ❌ Typos, formatting, trivial refactors
+- ❌ Work already in main task list - add subtasks there
+- ❌ Exploratory work - use notes files instead
 
-### Incidental Task Workflow
+### Complete Workflow
 
-**1. Creation** (when issue discovered):
+**For full incidental work lifecycle** (creation, execution, archival), see:
 
-```bash
-# Create incidental task file
-touch .arc/active/tasks-incidental-{brief-slug}.md
+**→ [manage-incidental-work.md](manage-incidental-work.md)** ← Complete workflow documentation
 
-# Immediately track it for context visibility
-git add .arc/active/tasks-incidental-{brief-slug}.md
-git commit -m "docs({feature}): Create {brief-slug} incidental task list
+This dedicated workflow covers:
+- Decision tree with examples
+- Creation protocol with commit standards
+- Execution following task loop rules
+- **Archival order: docs → commit → CURRENT-SESSION**
+- Directory structure (`feature/` and `incidental/` subdirs)
+- Task list template
+- Best practices and common pitfalls
 
-Triggered by {discovery context}.
-Pausing {current work} to address {critical issue}.
+### Key Reminders for Incidental Work
 
-Related to: tasks-{main-feature}.md"
-```
-
-**File structure** (use template below):
-- **Triggered by**: Which main task led to discovery
-- **Rationale**: Why fix now vs defer
-- **Scope**: What will/won't be done
-- **Subtasks**: Breakdown with quality gates
-
-**Update CURRENT-SESSION.md**:
-
-```markdown
-**Last Completed**: Task X.Y (paused for incidental work)
-**Next Action**: Incidental work - {brief description}
-```
-
-**Rationale for tracking:**
-- ✅ Dependency visibility - Git log shows when/why work was paused
-- ✅ Session handoffs - Full context across machines/sessions
-- ✅ Priority shifts documented - Audit trail of decision-making
-- ✅ Scales to nested incidentals - Can see relationships between multiple incidental tasks
-- ✅ Team collaboration - Others see active work without digging through notes
-
-**2. Execution**:
-- Follow normal task-loop rules (one subtask at a time, quality gates, approval)
-- Run incremental quality checks after each subtask
-- Commit with conventional format: `refactor({feature}): {description}` or `feat({feature}): {description}`
-- Reference incidental task file in commit body
-- **Update task list file** as work progresses (mark subtasks `[x]`)
-- **Commit task list updates** alongside code changes for context
-
-**3. Completion and Archiving**:
-
-```bash
-# Update completion notes in task file first
-# Include: summary, outcomes, files changed, any follow-up needed
-
-# Move to archive (already tracked, so use git mv)
-git mv .arc/active/tasks-incidental-{slug}.md .arc/reference/archive/tasks/tasks-incidental-{slug}.md
-
-# Commit the archive
-git commit -m "docs({feature}): Archive incidental work - {brief description}
-
-Completed all subtasks for {incidental work}.
-Resuming {main work}.
-
-Summary: {1-2 sentence outcome}
-Related to: tasks-{main-feature}.md"
-```
-
-**Update CURRENT-SESSION.md**:
-
-```markdown
-**Last Completed**: Incidental work - {brief description}
-**Next Action**: Resume Task X.Y
-```
-
-**4. Resume Main Work**:
-- Return to paused task in main feature task list
-- Continue normal workflow
-
-### Incidental Task File Template
-
-```markdown
-# Incidental Work: {Title}
-
-**Created**: {YYYY-MM-DD}
-**Triggered By**: Task {X.Y} in {feature-name}
-**Status**: In Progress / Complete
-**Estimated Effort**: {X minutes / Y hours}
-
-## Context
-
-**Why Now**: {Why fix immediately instead of deferring to future PRD}
-**Discovery**: {How this issue was discovered during main task work}
-**Impact**: {What improves if we fix this - quality, consistency, tech debt reduction}
-
-## Scope
-
-**Will Do**:
-- {Specific changes that will be made}
-- {Expected outcomes}
-
-**Won't Do** (deferred to {future-work-reference}):
-- {Out of scope items}
-- {Future improvements}
-
-## Tasks
-
-- [ ] {Subtask 1 with clear deliverable}
-  - [ ] {Sub-subtask if needed}
-- [ ] {Subtask 2 with quality gate}
-- [ ] {Subtask 3 with verification step}
-
-## Relevant Files
-
-- `{file-path}`: {What changed and why}
-- `{file-path}`: {What changed and why}
-
-## Completion Notes
-
-{Summary of what was accomplished}
-{Any follow-up needed}
-{References to commits}
-```
-
-### Gitignore Configuration
-
-**Task lists are TRACKED by default** for context visibility and dependency tracking.
-
-**Notes files remain UNTRACKED** (scratch paper vs. project context).
-
-In `.gitignore`:
-
-```gitignore
-# Personal reference documentation and notes
-.arc/active/notes-*
-.arc/active/notes-incidental-*.md
-
-# Note: Incidental task lists are now TRACKED by default for context visibility
-# Only notes files remain untracked (scratch paper vs. project context)
-```
-
-**Why track task lists:**
-- Complex work often spawns nested incidental tasks (OAuth → Security → ...)
-- Git history shows decision-making and priority shifts
-- Session handoffs have full context without relying solely on CURRENT-SESSION.md
-- Team members can see active work and dependencies
-- Context loss from untracked files > "clean git history" benefit
-
-### Archive Organization
-
-Completed incidental work is archived with original filename preserved:
-
-```
-.arc/reference/archive/tasks/
-  tasks-incidental-auth-service-extraction.md
-  tasks-incidental-path-alias-standardization.md
-  tasks-incidental-type-safety-cleanup.md
-```
-
-**Benefits of preserving `tasks-` prefix**:
-- All task files share common prefix for easy globbing: `tasks-*.md`
-- Clear grouping when browsing archive directory
-- Consistent naming regardless of location (active vs archive)
+- **Follow same task loop rules**: One subtask at a time, quality gates, user approval
+- **Update task list with code**: Commit task list updates alongside implementation
+- **Archive order**: Update docs → commit archive → update CURRENT-SESSION
+- **Track creation**: Commit task list creation immediately for context visibility
+- **No PRDs needed**: Incidental work is reactive, not strategic feature work
 
 ## Task List Maintenance
 

@@ -121,7 +121,7 @@ If quality gates fail after sub-task completion:
 
 4. **Documentation requirements:**
    - Fixed issues: Note in commit message ("Also fixed X pre-existing issues")
-   - Deferred issues: Create task list in `.arc/active/tasks-incidental-*.md`
+   - Deferred issues: Create task list in `.arc/active/incidental/tasks-incidental-*.md`
    - Never: Leave issues undocumented or unaddressed
 
 **Rationale:**
@@ -244,7 +244,7 @@ After completing all sub-tasks under a parent task:
 **MANDATORY** before every commit consideration:
 
 1. **Examine ALL uncommitted changes**
-2. **Locate relevant task documentation** in [active tasks](.arc/active/) or [upcoming tasks](.arc/upcoming/tasks/)
+2. **Locate relevant task documentation** in active tasks (`.arc/active/feature/` or `.arc/active/incidental/`) or upcoming tasks (`.arc/upcoming/tasks/`)
 3. **Analyze task completion status** vs documented tasks
 4. **Update task documentation** - mark subtasks complete
 5. **Write accurate commit messages** reflecting project status

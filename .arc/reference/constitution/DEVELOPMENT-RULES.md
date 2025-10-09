@@ -68,10 +68,10 @@ Before any commit consideration, ALL of the following must pass with **zero exce
    - Command: `docker compose -f infrastructure/docker-compose.yml exec frontend npm run type-check`
    - Every type error must be resolved
 
-6. **Python Type Safety**: Hybrid type checking approach with minimal Any usage
-   - **Development** (fastest): `npx pyright backend/apps/ --project backend` from repo root
-   - **CI/CD**: `docker compose -f infrastructure/docker-compose.yml exec backend python scripts/type_check.py`
-   - **Django-aware**: `docker compose -f infrastructure/docker-compose.yml exec backend mypy apps/ --config-file mypy.ini`
+6. **Python Type Safety**: Pyright with django-types for minimal Any usage
+   - **Development** (fastest): `npx pyright backend/apps/ backend/config/ --project backend` from repo root
+   - **CI/CD**: `npx pyright backend/apps/ backend/config/ --project backend` (blocking)
+   - **Script**: `python backend/scripts/type_check.py` for comprehensive per-app reporting
    - **PROHIBITED**: Using `typing.Any` except for external API payloads (TMDB, etc.)
    - **REQUIRED**: Use `object` for unknown data, `dict[str, object]` for generic dictionaries
    - **JUSTIFICATION**: Any `Any` usage must have inline comment explaining necessity
@@ -221,107 +221,23 @@ After completing all sub-tasks under a parent task:
 
 ## Type Safety Standards
 
-### Custom Type Stub Maintenance
+### Custom Type Stubs
 
 **Location**: `backend/stubs/` - Custom `.pyi` files supplementing third-party libraries
 
 **Current Stubs**:
-- `allauth/account/models.pyi` - django-allauth EmailAddress/EmailConfirmation types
-- `rest_framework_simplejwt/tokens.pyi` - JWT Token types with zero `Any` usage
-- `django/contrib/auth/models.pyi` - Supplements django-stubs for UserManager
+- `django/contrib/auth/` - Supplements django-types (explicit `id` field)
+- `allauth/` - Required (no official stubs)
+- `ninja_jwt/` - Required (incomplete official typing)
+- `environ/` - Required (django-environ lacks stubs)
 
-**Maintenance Protocol**:
+**Maintenance**: When upgrading dependencies, verify stubs match library versions. See [Type Safety Strategy](../strategies/strategy-type-safety.md) for complete maintenance protocols and upgrade procedures.
 
-1. **Each stub file documents**:
-   - Library version it's synchronized with
-   - Last verification date
-   - Upgrade checklist
+### Type Safety Patterns
 
-2. **When upgrading dependencies**:
-   - Check library release notes for API changes
-   - Run full test suite
-   - If runtime errors occur, check corresponding stub file
-   - Update stub signatures if needed
-   - Update "Last verified" date in stub docstring
+**Django Ninja Schemas**: Use `from_orm_with_<relation>()` pattern for computed fields from ForeignKey relationships.
 
-3. **Trade-off acknowledgment**:
-   - ✅ **Benefit**: Eliminates 20+ `type: ignore` comments, provides excellent IDE support
-   - ⚠️ **Cost**: ~250 lines of code to maintain, requires verification on upgrades
-   - 📊 **Decision**: Worth it for mature, stable libraries (allauth, simplejwt rarely break APIs)
-
-4. **If maintenance burden grows**: Consider removing stubs and accepting more documented `type: ignore` comments
-
-**Why we use custom stubs**:
-- django-allauth lacks type stubs entirely
-- djangorestframework-simplejwt has incomplete type coverage
-- django-stubs has gaps for UserManager.create_user and AbstractBaseUser methods
-- Alternative would be 20+ `type: ignore` comments scattered throughout authentication code
-
-**Hybrid Type Checker Ignores**:
-
-When custom stubs aren't sufficient (Django ORM internals, type variance differences), use checker-specific ignores:
-
-```python
-# Pyright can't infer request.user, MyPy can via django-stubs
-assert isinstance(request.user, AbstractBaseUser)  # pyright: ignore[reportUnknownMemberType]
-
-# Pyright stricter on Manager variance than MyPy
-objects: ClassVar[UserManager]  # pyright: ignore[reportIncompatibleVariableOverride]
-```
-
-**Critical rule**: Never silence both checkers for the same error. One checker must always validate.
-
-**See**: [Type Safety Strategy](../strategies/strategy-type-safety.md) for complete type safety approach including decision trees and hybrid ignore guidelines
-
-### Django ORM with ModelSchema Pattern
-
-**For schemas with computed fields from related models**, use the `from_orm_with_<relation>()` class method pattern:
-
-```python
-class MyDetailSchema(ModelSchema):
-    """ModelSchema with computed fields from related model."""
-
-    # Computed fields from ForeignKey relationship
-    related_field: int | None = None
-
-    class Meta:
-        model = MyModel
-        fields = ["id", "name"]
-
-    @classmethod
-    def from_orm_with_relation(cls, obj: MyModel) -> "MyDetailSchema":
-        """Create schema from ORM object with related fields populated.
-
-        Note: Django field access may show as 'unknown' in Pyright due to
-        django-stubs generic field type limitations (documented limitation).
-        MyPy with django-stubs validates these correctly at runtime.
-        """
-        instance = cls.from_orm(obj)
-        if obj.related is not None:
-            instance.related_field = obj.related.field_name
-        return instance
-```
-
-**API endpoint usage:**
-
-```python
-@router.get("/{id}", response=MyDetailSchema)
-def get_detail(request: HttpRequest, id: int) -> MyDetailSchema:
-    obj = MyModel.objects.select_related('related').get(id=id)
-    return MyDetailSchema.from_orm_with_relation(obj)  # Single-line, clean
-```
-
-**Benefits:**
-- Encapsulates type handling in schema layer (not API code)
-- Zero `cast()` calls in API endpoints
-- Single-line return statements
-- Professional separation of concerns
-- Self-documenting code
-
-**Acceptable Type Warnings:**
-- Pyright `reportUnknownMemberType` on Django model fields (information level)
-- Configured in `backend/pyrightconfig.json` as information (not errors)
-- Documented django-stubs limitation with generic field type parameters
+**See**: [Type Safety Strategy](../strategies/strategy-type-safety.md) for complete implementation patterns, examples, and guidelines.
 
 ## Comprehensive Task Context Analysis Protocol
 

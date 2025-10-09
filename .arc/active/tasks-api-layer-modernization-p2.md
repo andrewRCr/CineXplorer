@@ -390,14 +390,28 @@ def create_entry(request: HttpRequest, payload: CreateSchema):
 
 ### Phase 7: Documentation and Cleanup
 
-- [ ] 7.1 Remove old DRF files
+- [ ] 7.1 Remove old DRF files and type exclusions
     - [ ] 7.1.1 Delete `backend/apps/user_movie_data/views.py`
     - [ ] 7.1.2 Delete `backend/apps/user_movie_data/serializers.py`
     - [ ] 7.1.3 Delete `backend/apps/authentication/views.py`
     - [ ] 7.1.4 Delete `backend/apps/authentication/serializers.py`
     - [ ] 7.1.5 Delete `backend/apps/user_movie_data/urls.py` (if DRF-specific)
     - [ ] 7.1.6 Delete `backend/apps/authentication/urls.py` (if DRF-specific, preserve allauth URLs)
-    - [ ] 7.1.7 Verify no remaining imports of deleted modules (grep confirmation)
+    - [ ] 7.1.7 Delete legacy test files: `backend/apps/movie/tests/test_paginated_views.py`, `backend/apps/user_movie_data/tests/test_user_movie_data_api.py`
+    - [ ] 7.1.8 Verify no remaining imports of deleted modules (grep confirmation)
+    - [ ] 7.1.9 **Remove temporary type exclusions from pyrightconfig.json**
+        - [ ] 7.1.9.1 Open `backend/pyrightconfig.json`
+        - [ ] 7.1.9.2 Remove all entries under "TEMPORARY EXCLUSIONS: Legacy DRF Code (API Migration)" comment
+        - [ ] 7.1.9.3 Remove files: `apps/authentication/views.py`, `apps/authentication/serializers.py`
+        - [ ] 7.1.9.4 Remove files: `apps/user_movie_data/views.py`, `apps/user_movie_data/serializers.py`, `apps/user_movie_data/services/user_movie_data_service.py`
+        - [ ] 7.1.9.5 Remove files: `apps/movie/tests/test_paginated_views.py`, `apps/user_movie_data/tests/test_user_movie_data_api.py`
+        - [ ] 7.1.9.6 Remove transitional files if migrated/deleted: `apps/core/views/logging.py`, `apps/core/views/tmdb.py`
+        - [ ] 7.1.9.7 Remove entire "TEMPORARY EXCLUSIONS" comment block
+        - [ ] 7.1.9.8 Reference: Exclusions added in `tasks-incidental-backend-type-safety.md` Task 14.1
+    - [ ] 7.1.10 **Verify type safety with exclusions removed**
+        - [ ] 7.1.10.1 Run `python scripts/type_check.py` to confirm 0 errors remain
+        - [ ] 7.1.10.2 If errors appear, they should be in target architecture code only (not deleted files)
+        - [ ] 7.1.10.3 All target architecture errors should have been fixed in `tasks-incidental-fix-backend-type-errors.md`
 
 - [ ] 7.2 Update URL configuration
     - [ ] 7.2.1 Remove DRF URL patterns from `backend/config/urls.py` (user_movie_data)

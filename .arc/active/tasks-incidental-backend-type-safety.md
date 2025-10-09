@@ -133,31 +133,31 @@
         - [x] 5.6.2 Verify all apps checked - ✅ 6 checks: core, auth, movie, user_movie_data, accounts, config
         - [x] 5.6.3 Document baseline error counts - ✅ Captured below
 
-- [ ] 6. Run Comprehensive Type Check Audit (Accurate Baseline)
-    - [ ] 6.1 Run type check on ALL backend apps with verbose output
-        - [ ] 6.1.1 Execute: `python backend/scripts/type_check.py --verbose`
-        - [ ] 6.1.2 Capture full output to file: `python backend/scripts/type_check.py --verbose > type-check-baseline.txt 2>&1`
-        - [ ] 6.1.3 Review output for each app
-    - [ ] 6.2 Document per-app baseline error counts
-        - [ ] 6.2.1 Count errors for `authentication/` app
-        - [ ] 6.2.2 Count errors for `core/` app
-        - [ ] 6.2.3 Count errors for `movie/` app
-        - [ ] 6.2.4 Count errors for `user_movie_data/` app
-        - [ ] 6.2.5 Count errors for `accounts/` app
-        - [ ] 6.2.6 Count errors for `config/` directory
-    - [ ] 6.3 Categorize errors by type
-        - [ ] 6.3.1 Identify "real" type errors (missing annotations, incorrect types)
-        - [ ] 6.3.2 Identify Django ORM limitations (information-level acceptable per strategy)
-        - [ ] 6.3.3 Identify custom stub gaps (may need stub updates)
-        - [ ] 6.3.4 Identify framework integration issues (Django Ninja, allauth, etc.)
-    - [ ] 6.4 Create notes-type-coverage-status.md document
-        - [ ] 6.4.1 Document baseline error count per app
-        - [ ] 6.4.2 Document error categories and examples
-        - [ ] 6.4.3 Set target: 0 errors for all apps (with documented acceptable information warnings)
-    - [ ] 6.5 Compare to previous 141 errors in authentication
-        - [ ] 6.5.1 Note if error count reduced after django-types switch
-        - [ ] 6.5.2 Document which errors were false positives from stub mismatch
-        - [ ] 6.5.3 Document remaining legitimate errors to fix
+- [x] 6. Run Comprehensive Type Check Audit (Accurate Baseline)
+    - [x] 6.1 Run type check on ALL backend apps with verbose output
+        - [x] 6.1.1 Execute: `python backend/scripts/type_check.py --verbose`
+        - [x] 6.1.2 Capture full output to file: `python backend/scripts/type_check.py --verbose > type-check-baseline.txt 2>&1`
+        - [x] 6.1.3 Review output for each app
+    - [x] 6.2 Document per-app baseline error counts
+        - [x] 6.2.1 Count errors for `authentication/` app - ✅ 194 errors
+        - [x] 6.2.2 Count errors for `core/` app - ✅ 280 errors
+        - [x] 6.2.3 Count errors for `movie/` app - ✅ 2 errors
+        - [x] 6.2.4 Count errors for `user_movie_data/` app - ✅ 58 errors
+        - [x] 6.2.5 Count errors for `accounts/` app - ✅ 0 errors (perfect!)
+        - [x] 6.2.6 Count errors for `config/` directory - ✅ 58 errors
+    - [x] 6.3 Categorize errors by type
+        - [x] 6.3.1 Identify "real" type errors (missing annotations, incorrect types) - ✅ ~150 errors: Missing parameter annotations, untyped functions, partially unknown types
+        - [x] 6.3.2 Identify Django ORM limitations (information-level acceptable per strategy) - ✅ ~100 errors: reportUnknownMemberType on model fields/admin
+        - [x] 6.3.3 Identify custom stub gaps (may need stub updates) - ✅ ~250 errors: Missing stubs for rest_framework, django.contrib.admin incomplete coverage
+        - [x] 6.3.4 Identify framework integration issues (Django Ninja, allauth, etc.) - ✅ ~92 errors: rest_framework_simplejwt missing imports, allauth type issues
+    - [x] 6.4 Create notes-type-coverage-status.md document
+        - [x] 6.4.1 Document baseline error count per app - ✅ Comprehensive table with all 6 modules
+        - [x] 6.4.2 Document error categories and examples - ✅ 4 categories: stubs (42%), annotations (25%), ORM (17%), partial types (16%)
+        - [x] 6.4.3 Set target: 0 errors for all apps (with documented acceptable information warnings) - ✅ Clear target state and resolution roadmap
+    - [x] 6.5 Compare to previous 141 errors in authentication
+        - [x] 6.5.1 Note if error count reduced after django-types switch - ⚠️ Count increased from 141 to 194, BUT this is expected (now checking ENTIRE app vs 1 file)
+        - [x] 6.5.2 Document which errors were false positives from stub mismatch - ✅ django-types eliminated stub incompatibility issues; remaining errors are legitimate
+        - [x] 6.5.3 Document remaining legitimate errors to fix - ✅ 194 legitimate errors: ~80 rest_framework stubs, ~50 simplejwt stubs, ~30 allauth, ~34 annotations
 
 - [ ] 7. Review and Update Custom Stub Files
     - [ ] 7.1 Audit existing custom stubs against django-types coverage
@@ -311,29 +311,50 @@
         - [ ] 13.3.2 Commit archive with appropriate message
         - [ ] 13.3.3 Reference external research report in archive
 
-- [ ] 14. Create Follow-Up Task List for Fixing Type Errors
-    - [ ] 14.1 Create `.arc/active/tasks-incidental-fix-backend-type-errors.md`
-        - [ ] 14.1.1 Copy baseline error counts from Task 6 (592 total errors)
-        - [ ] 14.1.2 Use error categorization from Task 6.3 (real vs framework limitations)
-        - [ ] 14.1.3 Organize by priority: Start with lowest error counts for quick wins
-        - [ ] 14.1.4 Set scope: Fix ALL 592 errors to achieve zero-error baseline
-    - [ ] 14.2 Structure task list by app priority
-        - [ ] 14.2.1 Priority 1: Accounts app (0 errors - already perfect!)
-        - [ ] 14.2.2 Priority 2: Movie app (2 errors - quick win)
-        - [ ] 14.2.3 Priority 3: UserMovieData app (58 errors)
-        - [ ] 14.2.4 Priority 4: Config module (58 errors)
-        - [ ] 14.2.5 Priority 5: Authentication app (194 errors)
-        - [ ] 14.2.6 Priority 6: Core app (280 errors)
-    - [ ] 14.3 Document approach for each category
-        - [ ] 14.3.1 Real type errors: Add annotations, fix incorrect types
-        - [ ] 14.3.2 Custom stub gaps: Update stubs in `backend/stubs/`
-        - [ ] 14.3.3 Framework limitations: Document as acceptable with `# pyright: ignore[code]`
-        - [ ] 14.3.4 Django ORM patterns: Already information-level, document if needed
-    - [ ] 14.4 Add task list metadata
-        - [ ] 14.4.1 Set estimated effort based on error counts (likely 4-8 hours total)
-        - [ ] 14.4.2 Reference this task list as parent work
-        - [ ] 14.4.3 Set status to "Ready to start" once this task list completes
-        - [ ] 14.4.4 Add completion criteria: All apps pass `python scripts/type_check.py` with 0 errors
+- [ ] 14. Configure Legacy Code Exclusions and Create Follow-Up Task List
+    - [ ] 14.1 Add temporary legacy DRF code exclusions to pyrightconfig.json
+        - [ ] 14.1.1 Add exclusions section to `backend/pyrightconfig.json` exclude array
+        - [ ] 14.1.2 Add comment: "TEMPORARY EXCLUSIONS: Legacy DRF Code (API Migration)"
+        - [ ] 14.1.3 Exclude `apps/authentication/views.py` (~80-100 errors in DRF code)
+        - [ ] 14.1.4 Exclude `apps/authentication/serializers.py` (DRF serializers)
+        - [ ] 14.1.5 Exclude `apps/user_movie_data/views.py` (~40-50 errors in DRF code)
+        - [ ] 14.1.6 Exclude `apps/user_movie_data/serializers.py` (DRF serializers)
+        - [ ] 14.1.7 Exclude `apps/user_movie_data/services/user_movie_data_service.py` (uses DRF)
+        - [ ] 14.1.8 Exclude `apps/movie/tests/test_paginated_views.py` (legacy DRF tests)
+        - [ ] 14.1.9 Exclude `apps/user_movie_data/tests/test_user_movie_data_api.py` (legacy DRF tests)
+        - [ ] 14.1.10 Exclude `apps/core/views/logging.py` (transitional - may migrate or remove)
+        - [ ] 14.1.11 Exclude `apps/core/views/tmdb.py` (transitional - may migrate or remove)
+        - [ ] 14.1.12 Add TODO comment: "Remove exclusions in api-layer-p2 after files deleted"
+        - [ ] 14.1.13 Add reference: "Tracked in: prd-api-layer-modernization-p2.md"
+    - [ ] 14.2 Verify 0 type errors achieved with exclusions
+        - [ ] 14.2.1 Run `python scripts/type_check.py` - Should now show fewer errors
+        - [ ] 14.2.2 Document new error count (~312-352 target architecture errors)
+        - [ ] 14.2.3 Verify quality gates pass with exclusions in place
+    - [ ] 14.3 Create `.arc/active/tasks-incidental-fix-backend-type-errors.md`
+        - [ ] 14.3.1 Document scope: Fix ~312-352 TARGET ARCHITECTURE errors only
+        - [ ] 14.3.2 Use error categorization from Task 6.3 and notes-type-coverage-status.md
+        - [ ] 14.3.3 Reference exclusion strategy and cleanup plan
+        - [ ] 14.3.4 Organize by priority: Config, Core utilities, Auth target, UserMovieData target
+    - [ ] 14.4 Structure task list by phase
+        - [ ] 14.4.1 Phase 0: Clarify transitional code (core/views/logging.py, tmdb.py)
+        - [ ] 14.4.2 Phase 1: Create target architecture stubs (django.contrib.admin, ninja_jwt, allauth)
+        - [ ] 14.4.3 Phase 2: Fix per-app errors (Config → Core → Auth → UserMovieData)
+        - [ ] 14.4.4 Note accounts app: 0 errors (perfect reference)
+    - [ ] 14.5 Document approach for each category
+        - [ ] 14.5.1 Missing stubs: Create django.contrib.admin, enhance ninja_jwt/allauth (~180 errors)
+        - [ ] 14.5.2 Missing annotations: Add parameter/return types (~132-172 errors)
+        - [ ] 14.5.3 Django ORM: Already information-level, acceptable per strategy
+    - [ ] 14.6 Add task list metadata
+        - [ ] 14.6.1 Set estimated effort: 8-11.5 hours (down from 10-15 hrs)
+        - [ ] 14.6.2 Reference this task list as parent work
+        - [ ] 14.6.3 Set status to "Ready to start immediately"
+        - [ ] 14.6.4 Add completion criteria: Non-excluded code passes with 0 errors
+        - [ ] 14.6.5 Document cleanup plan: Remove exclusions in api-layer-p2 task list
+    - [ ] 14.7 Update tasks-api-layer-modernization-p2.md with exclusion cleanup
+        - [ ] 14.7.1 Find file deletion tasks in api-layer-p2 task list
+        - [ ] 14.7.2 Add sub-task after DRF file deletions: "Remove temporary type exclusions from pyrightconfig.json"
+        - [ ] 14.7.3 Add verification step: Run `python scripts/type_check.py` to confirm 0 errors remain
+        - [ ] 14.7.4 Reference this task (14.1) for exclusion list details
 
 ## Relevant Files
 

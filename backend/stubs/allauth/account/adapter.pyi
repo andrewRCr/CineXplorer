@@ -15,9 +15,14 @@ Purpose: Provides type information for DefaultAccountAdapter to eliminate
 reportMissingTypeStubs errors in custom adapter implementations.
 """
 
-from typing import Any
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
 
 from django.http import HttpRequest
+
+if TYPE_CHECKING:
+    from allauth.account.models import EmailConfirmation
 
 class DefaultAccountAdapter:
     """
@@ -48,7 +53,7 @@ class DefaultAccountAdapter:
         ...
 
     def get_email_confirmation_url(
-        self, request: HttpRequest | None, emailconfirmation: Any  # allauth.account.models.EmailConfirmation (external library)
+        self, request: HttpRequest | None, emailconfirmation: EmailConfirmation
     ) -> str:
         """Construct the email confirmation (activation) URL."""
         ...

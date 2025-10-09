@@ -6,6 +6,7 @@ using Django Ninja, following the patterns established in Phase 1.
 from __future__ import annotations
 
 import secrets
+from collections.abc import Sequence
 from typing import Literal
 
 from allauth.account.models import EmailAddress, EmailConfirmation
@@ -35,9 +36,16 @@ from ninja_jwt.tokens import RefreshToken
 auth_router = Router(tags=["Authentication"])
 
 # Disable throttling in test environment
-_THROTTLE_REGISTER = [] if getattr(settings, 'TESTING', False) else [AnonRateThrottle('3/h')]
-_THROTTLE_LOGIN = [] if getattr(settings, 'TESTING', False) else [AnonRateThrottle('5/m')]
-_THROTTLE_REFRESH = [] if getattr(settings, 'TESTING', False) else [UserRateThrottle('10/m')]
+# Use Sequence (covariant) for Django Ninja throttle parameter type compatibility
+_THROTTLE_REGISTER: Sequence[AnonRateThrottle] = (
+    [] if getattr(settings, 'TESTING', False) else [AnonRateThrottle('3/h')]
+)
+_THROTTLE_LOGIN: Sequence[AnonRateThrottle] = (
+    [] if getattr(settings, 'TESTING', False) else [AnonRateThrottle('5/m')]
+)
+_THROTTLE_REFRESH: Sequence[UserRateThrottle] = (
+    [] if getattr(settings, 'TESTING', False) else [UserRateThrottle('10/m')]
+)
 
 
 def _get_jwt_settings() -> dict[str, object]:
@@ -52,7 +60,7 @@ def _get_jwt_settings() -> dict[str, object]:
     "/register/",
     auth=None,
     response={201: RegisterResponseSchema, 409: dict[str, object], 500: dict[str, object]},
-    throttle=_THROTTLE_REGISTER,  # Rate limit: 3/h (disabled in tests)
+    throttle=_THROTTLE_REGISTER,  # pyright: ignore[reportArgumentType]  # Django Ninja expects List[BaseThrottle] (invariant), we provide Sequence[subclass] (covariant) - safe at runtime
 )
 def register_user(
     request: HttpRequest, payload: RegisterInputSchema
@@ -138,7 +146,7 @@ def register_user(
         401: dict[str, object],
         403: dict[str, object],
     },
-    throttle=_THROTTLE_LOGIN,  # Rate limit: 5/m (disabled in tests)
+    throttle=_THROTTLE_LOGIN,  # pyright: ignore[reportArgumentType]  # Django Ninja expects List[BaseThrottle] (invariant), we provide Sequence[subclass] (covariant) - safe at runtime
 )
 def obtain_token(
     request: HttpRequest, response: HttpResponse, payload: TokenObtainInputSchema
@@ -233,7 +241,7 @@ def obtain_token(
     "/token/refresh/",
     auth=None,
     response={200: TokenResponseSchema, 400: dict[str, object]},
-    throttle=_THROTTLE_REFRESH,  # Rate limit: 10/m (disabled in tests)
+    throttle=_THROTTLE_REFRESH,  # pyright: ignore[reportArgumentType]  # Django Ninja expects List[BaseThrottle] (invariant), we provide Sequence[subclass] (covariant) - safe at runtime
 )
 def refresh_token(
     request: HttpRequest, response: HttpResponse

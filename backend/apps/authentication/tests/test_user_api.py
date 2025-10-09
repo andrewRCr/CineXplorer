@@ -3,6 +3,7 @@
 Tests for the user API.
 """
 import json
+from typing import cast
 
 from allauth.account.models import EmailAddress
 from core.tests.test_helpers import create_user, json_post
@@ -60,11 +61,11 @@ class PublicUserApiTests(TestCase):
         """ Tests creating a user; case: successful. """
 
         payload: dict[str, str] = self.create_payload()
-        res = json_post(self.client, CREATE_USER_URL, payload)
+        res = json_post(self.client, CREATE_USER_URL, cast(dict[str, object], payload))
 
         self.assertEqual(res.status_code, HTTP_201_CREATED)
         user: AbstractUser = get_user_model().objects.get(username=payload['username'])  # type: ignore[assignment]  # _UserModel is compatible with AbstractUser
-        self.assertTrue(user.check_password(payload['password']))
+        self.assertTrue(user.check_password(payload['password']))  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
         content_str: str = res.content.decode(res.charset or 'utf-8')
         self.assertNotIn('password', content_str)
 
@@ -76,7 +77,7 @@ class PublicUserApiTests(TestCase):
             email='differentEmail@example.com')
 
         create_user(**control_payload)  # type: ignore[arg-type]  # dict[str, str] matches UserParams structure
-        res = json_post(self.client, CREATE_USER_URL, test_payload)
+        res = json_post(self.client, CREATE_USER_URL, cast(dict[str, object], test_payload))
 
         self.assertEqual(res.status_code, HTTP_409_CONFLICT)
         user_exists: bool = get_user_model().objects.filter(
@@ -90,7 +91,7 @@ class PublicUserApiTests(TestCase):
         test_payload: dict[str, str] = self.create_payload(username='differentUsername')
 
         create_user(**control_payload)  # type: ignore[arg-type]  # dict[str, str] matches UserParams structure
-        res = json_post(self.client, CREATE_USER_URL, test_payload)
+        res = json_post(self.client, CREATE_USER_URL, cast(dict[str, object], test_payload))
 
         self.assertEqual(res.status_code, HTTP_409_CONFLICT)
         user_exists: bool = get_user_model().objects.filter(
@@ -101,7 +102,7 @@ class PublicUserApiTests(TestCase):
         """ Tests an error is returned if password < 5 characters. """
 
         payload: dict[str, str] = self.create_payload(password='pw')
-        res = json_post(self.client, CREATE_USER_URL, payload)
+        res = json_post(self.client, CREATE_USER_URL, cast(dict[str, object], payload))
 
         self.assertEqual(res.status_code, HTTP_422_UNPROCESSABLE_ENTITY)
         user_exists: bool = get_user_model().objects.filter(
@@ -118,7 +119,7 @@ class PublicUserApiTests(TestCase):
             'login': user_details['username'],
             'password': user_details['password']
         }
-        res = json_post(self.client, TOKEN_URL, auth_payload)
+        res = json_post(self.client, TOKEN_URL, cast(dict[str, object], auth_payload))
         self.assertEqual(res.status_code, HTTP_200_OK)
 
     def test_create_token_for_user_via_email(self) -> None:
@@ -131,7 +132,7 @@ class PublicUserApiTests(TestCase):
             'login': user_details['email'],
             'password': user_details['password']
         }
-        res = json_post(self.client, TOKEN_URL, auth_payload)
+        res = json_post(self.client, TOKEN_URL, cast(dict[str, object], auth_payload))
         self.assertEqual(res.status_code, HTTP_200_OK)
 
     def test_create_token_bad_password(self) -> None:
@@ -144,28 +145,28 @@ class PublicUserApiTests(TestCase):
             'login': user_details['username'],
             'password': 'badPassword'
         }
-        res = json_post(self.client, TOKEN_URL, auth_payload)
+        res = json_post(self.client, TOKEN_URL, cast(dict[str, object], auth_payload))
         self.assertEqual(res.status_code, HTTP_401_UNAUTHORIZED)
 
     def test_create_token_blank_username(self) -> None:
         """Tests that an error is returned if username is blank and no email provided."""
 
         auth_payload: dict[str, str] = {'login': '', 'password': 'testPassword'}
-        res = json_post(self.client, TOKEN_URL, auth_payload)
+        res = json_post(self.client, TOKEN_URL, cast(dict[str, object], auth_payload))
         self.assertEqual(res.status_code, HTTP_400_BAD_REQUEST)
 
     def test_create_token_blank_email(self) -> None:
         """Tests that an error is returned if email is blank and no username provided."""
 
         auth_payload: dict[str, str] = {'login': '', 'password': 'testPassword'}
-        res = json_post(self.client, TOKEN_URL, auth_payload)
+        res = json_post(self.client, TOKEN_URL, cast(dict[str, object], auth_payload))
         self.assertEqual(res.status_code, HTTP_400_BAD_REQUEST)
 
     def test_create_token_blank_password(self) -> None:
         """Tests that posting a blank password returns an error."""
 
         auth_payload: dict[str, str] = {'login': 'testUser', 'password': ''}
-        res = json_post(self.client, TOKEN_URL, auth_payload)
+        res = json_post(self.client, TOKEN_URL, cast(dict[str, object], auth_payload))
         self.assertEqual(res.status_code, HTTP_400_BAD_REQUEST)
 
     def test_retrieve_profile_unauthorized(self) -> None:
@@ -200,7 +201,7 @@ class PrivateUserApiTests(TestCase):
             'login': 'privateUser',
             'password': 'testpass123'
         }
-        json_post(self.client, TOKEN_URL, auth_payload)
+        json_post(self.client, TOKEN_URL, cast(dict[str, object], auth_payload))
 
     def test_retrieve_profile_success(self):
         """
@@ -255,7 +256,7 @@ class PrivateUserApiTests(TestCase):
             'login': 'privateUser',
             'password': 'testpass123'
         }
-        json_post(client, TOKEN_URL, auth_payload)
+        json_post(client, TOKEN_URL, cast(dict[str, object], auth_payload))
 
         # Simulate CSRF token and cookie
         csrf_token = 'testcsrftoken'
@@ -270,7 +271,7 @@ class PrivateUserApiTests(TestCase):
         self.user.refresh_from_db()
         self.assertEqual(self.user.first_name, payload['first_name'])
         self.assertEqual(self.user.last_name, payload['last_name'])
-        self.assertTrue(self.user.check_password(payload['password']))
+        self.assertTrue(self.user.check_password(payload['password']))  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
 
     def test_unauthenticated_profile_access(self):
         """
@@ -318,7 +319,7 @@ class AuthCookieIntegrationTests(TestCase):
             'first_name': 'Test',
             'last_name': 'User'
         }
-        json_post(self.client, CREATE_USER_URL, self.user_data)
+        json_post(self.client, CREATE_USER_URL, cast(dict[str, object], self.user_data))
 
         # Mark email as verified for the test user to allow login
         # Use get_or_create + update to support --keepdb flag (reusing test database)
@@ -340,7 +341,7 @@ class AuthCookieIntegrationTests(TestCase):
             'login': 'testuser',
             'password': 'testpass123'
         }
-        response = json_post(self.client, TOKEN_URL, login_data)
+        response = json_post(self.client, TOKEN_URL, cast(dict[str, object], login_data))
         self.assertEqual(response.status_code, 200)
         self.assertIn('access_token', self.client.cookies)
         self.assertIn('refresh_token', self.client.cookies)
@@ -353,7 +354,7 @@ class AuthCookieIntegrationTests(TestCase):
             'login': 'testuser',
             'password': 'testpass123'
         }
-        json_post(self.client, TOKEN_URL, login_data)
+        json_post(self.client, TOKEN_URL, cast(dict[str, object], login_data))
         # Logout
         logout_url = '/api/logout/'
         response = self.client.post(logout_url, content_type='application/json')
@@ -373,7 +374,7 @@ class AuthCookieIntegrationTests(TestCase):
             'login': 'testuser',
             'password': 'testpass123'
         }
-        json_post(self.client, TOKEN_URL, login_data)
+        json_post(self.client, TOKEN_URL, cast(dict[str, object], login_data))
         # Get current refresh token
         old_refresh_cookie = self.client.cookies.get('refresh_token')
         old_refresh = old_refresh_cookie.value if old_refresh_cookie else None

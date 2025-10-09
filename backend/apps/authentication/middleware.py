@@ -41,7 +41,8 @@ class CsrfHeaderMiddleware(MiddlewareMixin):
         # CSRF protection is only needed for authenticated users.
         # Unauthenticated requests have no session/cookies, so there's no CSRF risk.
         # Let authentication fail first (401), then enforce CSRF for authenticated users (403).
-        if not getattr(request, "user", None) or not request.user.is_authenticated:
+        # pyright: ignore[reportUnknownMemberType] - request.user type is object (django-types limitation)
+        if not getattr(request, "user", None) or not request.user.is_authenticated:  # pyright: ignore[reportUnknownMemberType]
             return None
 
         if request.method in ("POST", "PUT", "PATCH", "DELETE"):
@@ -55,7 +56,7 @@ class CsrfHeaderMiddleware(MiddlewareMixin):
                 logger.warning(
                     f"CSRF validation failed: Path={request.path}, "
                     f"Method={request.method}, "
-                    f"Authenticated={request.user.is_authenticated}, "
+                    f"Authenticated={request.user.is_authenticated}, "  # pyright: ignore[reportUnknownMemberType]
                     f"CookiePresent={bool(cookie_token)}, "
                     f"HeaderPresent={bool(header_token)}"
                 )

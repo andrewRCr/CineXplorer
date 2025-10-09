@@ -83,12 +83,14 @@ class JWTCookieAuth(APIKeyCookie):
             logger.debug("No JWT token found in cookie")
             return None
 
+        # Get user model outside try block for exception handler scope
+        User = get_user_model()  # noqa: N806
+
         try:
             # Validate token using AccessToken class (django-ninja-jwt)
             token = AccessToken(key)
 
             # Get user from token payload
-            User = get_user_model()  # noqa: N806
             user_id = token.payload[api_settings.USER_ID_CLAIM]
             user = User.objects.get(**{api_settings.USER_ID_FIELD: user_id})
 

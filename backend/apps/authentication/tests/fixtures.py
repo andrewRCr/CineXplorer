@@ -4,13 +4,15 @@ Test fixtures and helpers for authentication tests.
 This module provides reusable test data creation utilities for authentication
 testing, following the pattern established in the movie app tests.
 """
-from typing import TypedDict, Unpack
+from typing import TYPE_CHECKING, TypedDict, Unpack, cast
 
 from allauth.account.models import EmailAddress
 from allauth.socialaccount.models import SocialAccount, SocialApp
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import AbstractUser
 from django.contrib.sites.models import Site
+
+if TYPE_CHECKING:
+    from django.contrib.auth.models import User as UserType
 
 User = get_user_model()
 
@@ -45,7 +47,7 @@ class LoginPayload(TypedDict, total=False):
 def create_user(
     email_verified: bool = True,
     **params: Unpack[UserParams]
-) -> AbstractUser:
+) -> "UserType":
     """
     Create and return a new user for testing.
 
@@ -65,22 +67,23 @@ def create_user(
         'last_name': 'User'
     }
 
-    # Create user
-    user = User.objects.create_user(**{**defaults, **params})
+    # Create user - django-types limitation on create_user typing
+    # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue] - UserManager.create_user type not inferred
+    user = cast("UserType", User.objects.create_user(**{**defaults, **params}))  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
 
     # Mark email as verified if requested using allauth EmailAddress API
     # Use get_or_create to support --keepdb flag (reusing test database)
     if email_verified:
         EmailAddress.objects.get_or_create(
             user=user,
-            email=user.email,
+            email=user.email,  # pyright: ignore[reportUnknownMemberType]
             defaults={'verified': True, 'primary': True}
         )
 
     return user
 
 
-def create_unverified_user(**params: Unpack[UserParams]) -> AbstractUser:
+def create_unverified_user(**params: Unpack[UserParams]) -> "UserType":
     """
     Create a user with unverified email.
 
@@ -121,7 +124,7 @@ def create_social_app(provider: str = 'google', site_id: int = 1) -> SocialApp:
 
 
 def create_social_account(
-    user: AbstractUser,
+    user: "UserType",
     provider: str = 'google',
     uid: str | None = None
 ) -> SocialAccount:

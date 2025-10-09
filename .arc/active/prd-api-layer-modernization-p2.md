@@ -22,7 +22,7 @@ All Authentication Modernization components (CustomAccountAdapter, email_verific
 
 1. **Complete API Layer Unification:** Migrate all remaining DRF endpoints to Django Ninja, establishing a single, consistent API framework across the entire backend.
 
-2. **Achieve Comprehensive Type Safety:** Eliminate all remaining type errors in the API layer using strict mypy validation, leveraging the django-allauth foundation to enable full type checking.
+2. **Achieve Comprehensive Type Safety:** Eliminate all remaining type errors in the API layer using Pyright strict mode validation with django-types, leveraging the django-allauth foundation to enable full type checking.
 
 3. **Apply Phase 1 Lessons Learned:** Implement the proven patterns, testing strategies, and architectural approaches established during the movie domain migration.
 
@@ -99,7 +99,7 @@ All Authentication Modernization components (CustomAccountAdapter, email_verific
 11. **Complete Type Safety:** Eliminate all temporary type: ignore comments from authentication module.
     - Remove type: ignore comments from email_verification.py when bridge is deleted
     - Resolve DRF-related type errors by replacing DRF serializers/views with Pydantic/Django Ninja
-    - Achieve zero type errors in authentication domain (both Pyright and MyPy --strict)
+    - Achieve zero type errors in authentication domain (Pyright strict mode with django-types)
 
 ### 4.3 Cross-Domain Integration and Type Safety
 
@@ -107,7 +107,7 @@ All Authentication Modernization components (CustomAccountAdapter, email_verific
 
 13. **Consistent Error Handling:** Apply the standardized error response patterns established in Phase 1 across all migrated endpoints.
 
-14. **Complete Type Safety:** Achieve zero mypy --strict errors across all migrated domains, with documented type: ignore statements only for unavoidable Django internals.
+14. **Complete Type Safety:** Achieve zero Pyright strict mode errors across all migrated domains, with documented type: ignore statements only for unavoidable Django internals.
 
 15. **Comprehensive Testing Migration:** Update all existing tests to use Django Ninja patterns, following the three-layer testing strategy established in Phase 1.
 
@@ -172,7 +172,7 @@ Phase 1 established clear patterns for when to use `ModelSchema` vs manual `Sche
     - `UserMovieDataModelSchema` for UserMovieData CRUD endpoints (create/update/detail responses)
     - `UserProfileModelSchema` for user profile endpoints (if needed)
 - **Benefits:** Automatic field inference, zero `type: ignore` for model attributes, proper ORM type safety
-- **Requirement:** django-stubs (5.2.x) and django-stubs-ext must be installed for full type inference
+- **Requirement:** django-types (0.22.0) for Pyright-compatible Django stubs with full type inference
 
 **Use manual `Schema` for:**
 
@@ -241,8 +241,8 @@ class UserMovieDataDetailSchema(ModelSchema):
     def from_orm_with_movie(cls, obj: UserMovieData) -> "UserMovieDataDetailSchema":
         """Create schema from ORM with movie fields populated.
 
-        Note: Django field access may show as 'unknown' in Pyright due to
-        django-stubs generic field limitations. MyPy validates correctly.
+        Note: Some Django ORM field accesses may show as 'reportUnknownMemberType'
+        due to django-types limitations. This is acceptable per type-safety strategy.
         """
         instance = cls.from_orm(obj)
         if obj.movie is not None:
@@ -271,11 +271,11 @@ def get_user_movie_data_by_tmdb_id(request: HttpRequest, tmdb_id: int):
 
 ### Type Safety Strategy
 
-- **Primary:** Pyright with strict mode (`pyrightconfig.json`) for development
-- **Secondary:** MyPy with `--strict` for CI/CD validation
-- **Foundation:** django-stubs (5.2.x) + django-stubs-ext for Django ORM type inference
+- **Primary:** Pyright with strict mode (`pyrightconfig.json`) for development and CI/CD
+- **Foundation:** django-types (0.22.0) for Pyright-compatible Django ORM type inference
 - **Goal:** Zero `type: ignore` comments for model attribute access when using `ModelSchema`
 - **Exception:** Manual `Schema` may require `cast()` or `type: ignore` for runtime-computed fields
+- **Acceptable Warnings:** `reportUnknownMemberType` on some Django ORM fields (information-level per type-safety strategy)
 - Use established response validation patterns for external API integration
 - Maintain Phase 1's type annotation rigor across all migrated code
 
@@ -316,12 +316,13 @@ def get_user_movie_data_by_tmdb_id(request: HttpRequest, tmdb_id: int):
 
 1. **Zero Type Errors - ENTIRE API LAYER (CI-Enforced):**
    - **Scope:** All backend apps (Movie, Core, Auth, UserMovieData, Accounts, Config) - Phase 1 + Phase 2 combined
-   - **Pyright:** `cd backend && npx pyright apps/` (0 errors across entire API layer)
-   - **MyPy:** `docker compose exec backend python scripts/type_check.py` (0 errors across entire API layer)
+   - **Pyright:** `npx pyright backend/apps/ backend/config/ --project backend` (0 errors across entire API layer)
+   - **Script:** `python scripts/type_check.py` (0 errors across entire API layer with per-app reporting)
    - **Rationale:** Phase 2 is the FINAL API modernization phase - must certify entire API layer is production-ready
    - **Regression Check:** Verify Phase 1 domains (Movie, Core) have no regressions from Phase 2 work
-   - **CI Check:** Both commands must pass in GitHub Actions workflow before merge approval
+   - **CI Check:** Pyright command must pass in GitHub Actions workflow before merge approval
    - **Justification Required:** Any `type: ignore` comments must have inline explanation (Django settings, framework internals only)
+   - **Note:** MyPy removed in backend type safety modernization (see tasks-incidental-backend-type-safety.md)
 
 2. **Complete Test Coverage - ENTIRE API LAYER:** All API functionality has comprehensive test coverage
    - **Backend Tests:** `docker compose exec backend coverage run --source='apps' manage.py test --settings=config.settings_test` (100% pass rate - ALL apps)
@@ -399,7 +400,7 @@ def get_user_movie_data_by_tmdb_id(request: HttpRequest, tmdb_id: int):
 ### Type Safety
 
 - Remove all type: ignore comments from authentication module
-- Achieve zero Pyright + MyPy --strict errors
+- Achieve zero Pyright strict mode errors
 - Complete type safety for all authentication-related code
 
 ---

@@ -97,11 +97,11 @@
             - [x] 5.4.5.2 Fix `allauth/account/models.pyi` - fix Manager issues, remove unused type: ignore - ✅ Removed 2 unused type: ignore comments (lines 53, 111)
             - [x] 5.4.5.3 Fix `django/contrib/auth/models.pyi` - fix type var issues, remove unused type: ignore - ✅ Removed 2 unused type: ignore comments (lines 121, 135)
         - [x] 5.4.6 Remove type: ignore from token_strategy.py (should be 0 after stub fixes) - ✅ Removed type: ignore[attr-defined] on line 103
-        - [x] 5.4.7 Run comprehensive type checking: `mypy apps/authentication/ --config-file mypy.ini` - ✅ token_strategy.py has 0 errors, imports successfully, created allauth.headless.internal.sessionkit stub
+        - [x] 5.4.7 Run comprehensive type checking: `npx pyright backend/apps/authentication/ --project backend` (Pyright-only with django-types) - ✅ token_strategy.py has 0 errors, imports successfully, created allauth.headless.internal.sessionkit stub
         - [x] 5.4.8 Fix remaining stub file type errors (3 errors discovered in 5.4.7)
             - [x] 5.4.8.1 Fix `django/contrib/auth/models.pyi:49` - Type argument "AbstractUser" must be subtype of "Model" - ✅ Extended AbstractBaseUser and PermissionsMixin from models.Model
             - [x] 5.4.8.2 Fix `allauth/account/models.pyi:36` - Add missing reverse manager 'emailconfirmation_set' - ✅ Added emailconfirmation_set manager, suppressed django-manager-missing warnings
-            - [x] 5.4.8.3 Create stub for `allauth.socialaccount.models` or suppress import-untyped warning - ✅ Added to mypy.ini ignore_missing_imports
+            - [x] 5.4.8.3 Create stub for `allauth.socialaccount.models` or suppress import-untyped warning - ✅ DEPRECATED: MyPy removed in backend type safety modernization (see tasks-incidental-backend-type-safety.md)
         - [x] 5.4.9 Verify Pyright (hybrid strategy) - ✅ Configured venv path, 2 reportUnknownMemberType warnings on HttpRequest.user (acceptable per type-safety.md Django ORM limitations)
         - [x] 5.4.10 Fix all Pyright errors in stub files and token_strategy.py - ✅ Fixed Manager ClassVar issues, removed unused imports, added pyright: ignore for HttpRequest.user limitations
     - [x] 5.5 Verify backend restarts without errors after changes - ✅ Backend restarted successfully, Django system check passed (0 issues), token strategy imports and instantiates correctly

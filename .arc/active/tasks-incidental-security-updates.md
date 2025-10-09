@@ -190,7 +190,7 @@
         - [ ] 8.3.3 Markdown: `npx markdownlint-cli2 "README.md" ".arc/**/*.md"`
         - [ ] 8.3.4 Verify zero violations across all checks
     - [ ] 8.4 Run type checking
-        - [ ] 8.4.1 Backend: `python backend/scripts/type_check.py` (hybrid Pyright + mypy)
+        - [ ] 8.4.1 Backend: `python backend/scripts/type_check.py` (Pyright-only with django-types)
         - [ ] 8.4.2 Frontend: `docker compose exec frontend npm run type-check`
         - [ ] 8.4.3 Verify zero type errors (excluding documented limitations)
     - [ ] 8.5 Manual smoke testing
@@ -254,7 +254,7 @@
 
 **Rationale:**
 - ✅ **Type safety**: Django Ninja has `py.typed` marker, fully type-safe (django-ratelimit has NO type annotations)
-- ✅ **Zero-tolerance compliant**: Passes Pyright/MyPy strict mode without suppressions
+- ✅ **Zero-tolerance compliant**: Passes Pyright strict mode without suppressions
 - ✅ **Native integration**: Built into Django Ninja framework (no additional package)
 - ✅ **Modern & maintained**: Active development, Django 5.2 compatible
 - ❌ django-ratelimit: Stale (July 2023), no type safety, requires `# type: ignore` everywhere

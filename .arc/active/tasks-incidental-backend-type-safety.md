@@ -202,79 +202,78 @@
         - [x] 8.4.2 Note change from MyPy to Pyright in commit message - ✅ Will document: "Replace MyPy with Pyright for type checking" + "Uses django-types 0.22.0 for Django ORM support" + "Now blocking (was non-blocking)"
         - [x] 8.4.3 Reference this task list for context - ✅ Will reference: "Complete Task 8 of tasks-incidental-backend-type-safety.md"
 
-- [ ] 9. Update Type Safety Strategy Document (Comprehensive Revision)
-    - [ ] 9.1 Update `.arc/reference/strategies/strategy-type-safety.md` version and header
-        - [ ] 9.1.1 Increment version to 2.0 (major tooling change)
-        - [ ] 9.1.2 Update "Last Updated" date
-        - [ ] 9.1.3 Add version history entry: "2.0: Migrated from hybrid Pyright+MyPy to Pyright-only with django-types"
-    - [ ] 9.2 Update "Type Checking Configuration" section
-        - [ ] 9.2.1 Replace "Hybrid Approach: Pyright + MyPy" with "Pyright with django-types"
-        - [ ] 9.2.2 Remove all MyPy configuration details
-        - [ ] 9.2.3 Update Pyright configuration details (pyrightconfig.json settings)
-        - [ ] 9.2.4 Document django-types as Django stub library (not django-stubs)
-        - [ ] 9.2.5 Update "Running checks" to show Pyright-only commands
-        - [ ] 9.2.6 Remove references to `scripts/type_check.py` running both checkers
-    - [ ] 9.3 Add comprehensive Django ORM patterns section
-        - [ ] 9.3.1 Add examples: Explicit Manager annotations with django-types
-        - [ ] 9.3.2 Add examples: QuerySet type hints
-        - [ ] 9.3.3 Add examples: Model field access patterns
-        - [ ] 9.3.4 Add examples: ForeignKey and related field typing
-    - [ ] 9.4 Enhance Django Ninja patterns section
-        - [ ] 9.4.1 Document ModelSchema best practices
-        - [ ] 9.4.2 Document `from_orm_with_<relation>()` pattern (already present, enhance if needed)
-        - [ ] 9.4.3 Document manual Schema for input DTOs (already present, enhance if needed)
-        - [ ] 9.4.4 Add type safety tips specific to Django Ninja + django-types
-    - [ ] 9.5 Update "Type Ignore Guidelines" section
-        - [ ] 9.5.1 Remove MyPy-specific ignore examples (`# type: ignore[error-code]`)
-        - [ ] 9.5.2 Keep Pyright-specific ignore examples (`# pyright: ignore[reportCode]`)
-        - [ ] 9.5.3 Update decision tree: Remove "MyPy can validate, Pyright cannot" scenarios
-        - [ ] 9.5.4 Simplify to: stubs first, refactor second, pyright ignore last resort
-        - [ ] 9.5.5 Update examples to show Pyright-only patterns
-    - [ ] 9.6 Add/update acceptable exceptions section
-        - [ ] 9.6.1 Document information-level warnings: `reportUnknownMemberType` on Django ORM fields
-        - [ ] 9.6.2 Document information-level warnings: `reportAttributeAccessIssue` on ForeignKey access
-        - [ ] 9.6.3 Explain why acceptable (django-types limitation, runtime-validated by tests)
-        - [ ] 9.6.4 Reference pyrightconfig.json settings that downgrade these to "information"
-    - [ ] 9.7 Update "Custom Type Stubs" section
-        - [ ] 9.7.1 Update stub library context: django-types as primary Django stub source
-        - [ ] 9.7.2 List current custom stubs: allauth, ninja_jwt, environ (reviewed in Task 7)
-        - [ ] 9.7.3 Update maintenance contract requirements
-        - [ ] 9.7.4 Document quarterly review process
-        - [ ] 9.7.5 Note which stubs supplement vs replace django-types
-    - [ ] 9.8 Update "Primary Solution: Custom .pyi Stub Files" section
-        - [ ] 9.8.1 Update context: django-types provides Django core coverage
-        - [ ] 9.8.2 Update stub file list to reflect current state after Task 7 audit
-        - [ ] 9.8.3 Update trade-off analysis with django-types context
-    - [ ] 9.9 Remove or update "Hybrid Type Checker Ignores" section
-        - [ ] 9.9.1 Remove checker-specific ignore patterns (no longer hybrid)
-        - [ ] 9.9.2 Replace with simplified "Pyright Ignore Guidelines"
-        - [ ] 9.9.3 Remove "Never silence BOTH checkers" rule (only one checker now)
+- [x] 9. Update Type Safety Strategy Document (Comprehensive Revision)
+    - [x] 9.1 Update `.arc/reference/strategies/strategy-type-safety.md` version and header
+        - [x] 9.1.1 Increment version to 2.0 (major tooling change)
+        - [x] 9.1.2 Update "Last Updated" date
+        - [x] 9.1.3 Add version history entry: "2.0: Migrated from hybrid Pyright+MyPy to Pyright-only with django-types"
+    - [x] 9.2 Update "Type Checking Configuration" section
+        - [x] 9.2.1 Replace "Hybrid Approach: Pyright + MyPy" with "Pyright with django-types"
+        - [x] 9.2.2 Remove all MyPy configuration details
+        - [x] 9.2.3 Update Pyright configuration details (pyrightconfig.json settings)
+        - [x] 9.2.4 Document django-types as Django stub library (not django-stubs)
+        - [x] 9.2.5 Update "Running checks" to show Pyright-only commands
+        - [x] 9.2.6 Remove references to `scripts/type_check.py` running both checkers
+    - [x] 9.3 Add comprehensive Django ORM patterns section
+        - [x] 9.3.1 Add examples: Explicit Manager annotations with django-types
+        - [x] 9.3.2 Add examples: QuerySet type hints
+        - [x] 9.3.3 Add examples: Model field access patterns
+        - [x] 9.3.4 Add examples: ForeignKey and related field typing
+    - [x] 9.4 Enhance Django Ninja patterns section
+        - [x] 9.4.1 Document ModelSchema best practices
+        - [x] 9.4.2 Document `from_orm_with_<relation>()` pattern (already present, enhance if needed)
+        - [x] 9.4.3 Document manual Schema for input DTOs (already present, enhance if needed)
+        - [x] 9.4.4 Add type safety tips specific to Django Ninja + django-types
+    - [x] 9.5 Update "Type Ignore Guidelines" section
+        - [x] 9.5.1 Remove MyPy-specific ignore examples (`# type: ignore[error-code]`)
+        - [x] 9.5.2 Keep Pyright-specific ignore examples (`# pyright: ignore[reportCode]`)
+        - [x] 9.5.3 Update decision tree: Remove "MyPy can validate, Pyright cannot" scenarios
+        - [x] 9.5.4 Simplify to: stubs first, refactor second, pyright ignore last resort
+        - [x] 9.5.5 Update examples to show Pyright-only patterns
+    - [x] 9.6 Add/update acceptable exceptions section
+        - [x] 9.6.1 Document information-level warnings: `reportUnknownMemberType` on Django ORM fields
+        - [x] 9.6.2 Document information-level warnings: `reportAttributeAccessIssue` on ForeignKey access
+        - [x] 9.6.3 Explain why acceptable (django-types limitation, runtime-validated by tests)
+        - [x] 9.6.4 Reference pyrightconfig.json settings that downgrade these to "information"
+    - [x] 9.7 Update "Custom Type Stubs" section
+        - [x] 9.7.1 Update stub library context: django-types as primary Django stub source
+        - [x] 9.7.2 List current custom stubs: allauth, ninja_jwt, environ (reviewed in Task 7)
+        - [x] 9.7.3 Update maintenance contract requirements
+        - [x] 9.7.4 Note which stubs supplement vs replace django-types
+    - [x] 9.8 Update "Primary Solution: Custom .pyi Stub Files" section
+        - [x] 9.8.1 Update context: django-types provides Django core coverage
+        - [x] 9.8.2 Update stub file list to reflect current state after Task 7 audit
+        - [x] 9.8.3 Update trade-off analysis with django-types context
+    - [x] 9.9 Remove or update "Hybrid Type Checker Ignores" section
+        - [x] 9.9.1 Remove checker-specific ignore patterns (no longer hybrid)
+        - [x] 9.9.2 Replace with simplified "Pyright Ignore Guidelines"
+        - [x] 9.9.3 Remove "Never silence BOTH checkers" rule (only one checker now)
 
-- [ ] 10. Update Constitution and Architecture Documents
-    - [ ] 10.1 Update DEVELOPMENT-RULES.md
-        - [ ] 10.1.1 Update "Python Type Safety" section (line 71-78)
-        - [ ] 10.1.2 Remove MyPy references, update to Pyright-only
-        - [ ] 10.1.3 Update commands: Remove MyPy, update Pyright command
-        - [ ] 10.1.4 Remove "Hybrid approach" language, simplify to "Pyright with django-types"
-        - [ ] 10.1.5 Update quality gate commands (remove MyPy check)
-        - [ ] 10.1.6 Update "Custom Type Stub Maintenance" section if needed
-    - [ ] 10.2 Update TECHNICAL-ARCHITECTURE.md
-        - [ ] 10.2.1 Update "Type Checking" section (line 26-35)
-        - [ ] 10.2.2 Change from "Hybrid approach using Pyright + MyPy" to "Pyright with django-types"
-        - [ ] 10.2.3 Update stub library description: django-types (not django-stubs)
-        - [ ] 10.2.4 Remove MyPy-specific configuration references
-        - [ ] 10.2.5 Update "Custom Type Stubs" section with django-types context
-        - [ ] 10.2.6 Update quality gates section (line 119-122): Remove MyPy, keep Pyright only
+- [x] 10. Update Constitution and Architecture Documents
+    - [x] 10.1 Update DEVELOPMENT-RULES.md
+        - [x] 10.1.1 Update "Python Type Safety" section (line 71-78)
+        - [x] 10.1.2 Remove MyPy references, update to Pyright-only
+        - [x] 10.1.3 Update commands: Remove MyPy, update Pyright command
+        - [x] 10.1.4 Remove "Hybrid approach" language, simplify to "Pyright with django-types"
+        - [x] 10.1.5 Update quality gate commands (remove MyPy check)
+        - [x] 10.1.6 Update "Custom Type Stub Maintenance" section if needed
+    - [x] 10.2 Update TECHNICAL-ARCHITECTURE.md
+        - [x] 10.2.1 Update "Type Checking" section (line 26-35) - Already updated in Task 7
+        - [x] 10.2.2 Change from "Hybrid approach using Pyright + MyPy" to "Pyright with django-types" - Already updated in Task 7
+        - [x] 10.2.3 Update stub library description: django-types (not django-stubs) - Already updated in Task 7
+        - [x] 10.2.4 Remove MyPy-specific configuration references - Already updated in Task 7
+        - [x] 10.2.5 Update "Custom Type Stubs" section with django-types context - Already updated in Task 7
+        - [x] 10.2.6 Update quality gates section (line 119-122): Remove MyPy, keep Pyright only - Already updated in Task 7
 
-- [ ] 11. Update Task Lists Referencing Type Checking
-    - [ ] 11.1 Update `tasks-api-layer-modernization-p2.md`
-        - [ ] 11.1.1 Find Task 7.6 "Enable blocking type checking in CI"
-        - [ ] 11.1.2 Mark as completed or update to reflect Pyright change
-        - [ ] 11.1.3 Update any MyPy references to Pyright
-    - [ ] 11.2 Search for other task list references
-        - [ ] 11.2.1 Grep for "mypy" in `.arc/active/*.md`: `grep -i "mypy" .arc/active/*.md`
-        - [ ] 11.2.2 Update any references to type checking approach
-        - [ ] 11.2.3 Update quality gate steps to use Pyright
+- [x] 11. Update Task Lists Referencing Type Checking
+    - [x] 11.1 Update `tasks-api-layer-modernization-p2.md`
+        - [x] 11.1.1 Find Task 7.6 "Enable blocking type checking in CI" - ✅ Found and updated
+        - [x] 11.1.2 Mark as completed or update to reflect Pyright change - ✅ Marked complete with cross-references to Task 8
+        - [x] 11.1.3 Update any MyPy references to Pyright - ✅ Updated 4 references (Tasks 1.3.3, 3.2.6, 6.5.9, 7.6)
+    - [x] 11.2 Search for other task list references
+        - [x] 11.2.1 Grep for "mypy" in `.arc/active/*.md`: `grep -i "mypy" .arc/active/*.md` - ✅ Found 5 files with references
+        - [x] 11.2.2 Update any references to type checking approach - ✅ Updated tasks-incidental-security-updates.md (2 refs), tasks-incidental-oauth-headless-migration.md (2 refs), prd-api-layer-modernization-p2.md (7 refs)
+        - [x] 11.2.3 Update quality gate steps to use Pyright - ✅ All quality gate commands updated to Pyright-only
 
 - [ ] 12. Full Quality Gates
     - [ ] 12.1 Run type check script
@@ -294,67 +293,63 @@
         - [ ] 12.5.1 Check backend container: `docker compose -f infrastructure/docker-compose.yml ps backend`
         - [ ] 12.5.2 Verify Django check passes: `docker compose -f infrastructure/docker-compose.yml exec backend python manage.py check`
 
-- [ ] 13. Documentation and Completion
-    - [ ] 13.1 Update CURRENT-SESSION.md
-        - [ ] 13.1.1 Mark backend type safety modernization complete
-        - [ ] 13.1.2 Document what was changed (django-types, Pyright-only, comprehensive app checking)
-        - [ ] 13.1.3 Document baseline error counts per app
-        - [ ] 13.1.4 Note follow-up task list creation (Task 14)
-        - [ ] 13.1.5 Update "Next Action" to "Fix Backend Type Errors" task list
-    - [ ] 13.2 Create completion summary in this task list
-        - [ ] 13.2.1 Document tooling changes (django-stubs → django-types, removed MyPy)
-        - [ ] 13.2.2 Document script improvements (comprehensive app coverage)
-        - [ ] 13.2.3 Document baseline audit results (error counts per app)
-        - [ ] 13.2.4 Document new documentation created (notes-type-coverage-status.md, strategy updates)
-    - [ ] 13.3 Archive this incidental task list
-        - [ ] 13.3.1 Move to `.arc/reference/archive/tasks/tasks-incidental-backend-type-safety.md`
-        - [ ] 13.3.2 Commit archive with appropriate message
-        - [ ] 13.3.3 Reference external research report in archive
+- [ ] 13. Configure Legacy Code Exclusions and Create Follow-Up Task List
+    - [ ] 13.1 Add temporary legacy DRF code exclusions to pyrightconfig.json
+        - [ ] 13.1.1 Add exclusions section to `backend/pyrightconfig.json` exclude array
+        - [ ] 13.1.2 Add comment: "TEMPORARY EXCLUSIONS: Legacy DRF Code (API Migration)"
+        - [ ] 13.1.3 Exclude `apps/authentication/views.py` (~80-100 errors in DRF code)
+        - [ ] 13.1.4 Exclude `apps/authentication/serializers.py` (DRF serializers)
+        - [ ] 13.1.5 Exclude `apps/user_movie_data/views.py` (~40-50 errors in DRF code)
+        - [ ] 13.1.6 Exclude `apps/user_movie_data/serializers.py` (DRF serializers)
+        - [ ] 13.1.7 Exclude `apps/user_movie_data/services/user_movie_data_service.py` (uses DRF)
+        - [ ] 13.1.8 Exclude `apps/movie/tests/test_paginated_views.py` (legacy DRF tests)
+        - [ ] 13.1.9 Exclude `apps/user_movie_data/tests/test_user_movie_data_api.py` (legacy DRF tests)
+        - [ ] 13.1.10 Exclude `apps/core/views/logging.py` (transitional - may migrate or remove)
+        - [ ] 13.1.11 Exclude `apps/core/views/tmdb.py` (transitional - may migrate or remove)
+        - [ ] 13.1.12 Add TODO comment: "Remove exclusions in api-layer-p2 after files deleted"
+        - [ ] 13.1.13 Add reference: "Tracked in: prd-api-layer-modernization-p2.md"
+    - [ ] 13.2 Verify 0 type errors achieved with exclusions
+        - [ ] 13.2.1 Run `python scripts/type_check.py` - Should now show fewer errors
+        - [ ] 13.2.2 Document new error count (~312-352 target architecture errors)
+        - [ ] 13.2.3 Verify quality gates pass with exclusions in place
+    - [ ] 13.3 Create `.arc/active/tasks-incidental-fix-backend-type-errors.md`
+        - [ ] 13.3.1 Document scope: Fix ~312-352 TARGET ARCHITECTURE errors only
+        - [ ] 13.3.2 Use error categorization from Task 6.3 and notes-type-coverage-status.md
+        - [ ] 13.3.3 Reference exclusion strategy and cleanup plan
+        - [ ] 13.3.4 Organize by priority: Config, Core utilities, Auth target, UserMovieData target
+    - [ ] 13.4 Structure task list by phase
+        - [ ] 13.4.1 Phase 0: Clarify transitional code (core/views/logging.py, tmdb.py)
+        - [ ] 13.4.2 Phase 1: Create target architecture stubs (django.contrib.admin, ninja_jwt, allauth)
+        - [ ] 13.4.3 Phase 2: Fix per-app errors (Config → Core → Auth → UserMovieData)
+        - [ ] 13.4.4 Note accounts app: 0 errors (perfect reference)
+    - [ ] 13.5 Document approach for each category
+        - [ ] 13.5.1 Missing stubs: Create django.contrib.admin, enhance ninja_jwt/allauth (~180 errors)
+        - [ ] 13.5.2 Missing annotations: Add parameter/return types (~132-172 errors)
+        - [ ] 13.5.3 Django ORM: Already information-level, acceptable per strategy
+    - [ ] 13.6 Add task list metadata
+        - [ ] 13.6.1 Set estimated effort: 8-11.5 hours (down from 10-15 hrs)
+        - [ ] 13.6.2 Reference this task list as parent work
+        - [ ] 13.6.3 Set status to "Ready to start immediately"
+        - [ ] 13.6.4 Add completion criteria: Non-excluded code passes with 0 errors
+        - [ ] 13.6.5 Document cleanup plan: Remove exclusions in api-layer-p2 task list
+    - [ ] 13.7 Update tasks-api-layer-modernization-p2.md with exclusion cleanup
+        - [ ] 13.7.1 Find file deletion tasks in api-layer-p2 task list
+        - [ ] 13.7.2 Add sub-task after DRF file deletions: "Remove temporary type exclusions from pyrightconfig.json"
+        - [ ] 13.7.3 Add verification step: Run `python scripts/type_check.py` to confirm 0 errors remain
+        - [ ] 13.7.4 Reference this task (13.1) for exclusion list details
 
-- [ ] 14. Configure Legacy Code Exclusions and Create Follow-Up Task List
-    - [ ] 14.1 Add temporary legacy DRF code exclusions to pyrightconfig.json
-        - [ ] 14.1.1 Add exclusions section to `backend/pyrightconfig.json` exclude array
-        - [ ] 14.1.2 Add comment: "TEMPORARY EXCLUSIONS: Legacy DRF Code (API Migration)"
-        - [ ] 14.1.3 Exclude `apps/authentication/views.py` (~80-100 errors in DRF code)
-        - [ ] 14.1.4 Exclude `apps/authentication/serializers.py` (DRF serializers)
-        - [ ] 14.1.5 Exclude `apps/user_movie_data/views.py` (~40-50 errors in DRF code)
-        - [ ] 14.1.6 Exclude `apps/user_movie_data/serializers.py` (DRF serializers)
-        - [ ] 14.1.7 Exclude `apps/user_movie_data/services/user_movie_data_service.py` (uses DRF)
-        - [ ] 14.1.8 Exclude `apps/movie/tests/test_paginated_views.py` (legacy DRF tests)
-        - [ ] 14.1.9 Exclude `apps/user_movie_data/tests/test_user_movie_data_api.py` (legacy DRF tests)
-        - [ ] 14.1.10 Exclude `apps/core/views/logging.py` (transitional - may migrate or remove)
-        - [ ] 14.1.11 Exclude `apps/core/views/tmdb.py` (transitional - may migrate or remove)
-        - [ ] 14.1.12 Add TODO comment: "Remove exclusions in api-layer-p2 after files deleted"
-        - [ ] 14.1.13 Add reference: "Tracked in: prd-api-layer-modernization-p2.md"
-    - [ ] 14.2 Verify 0 type errors achieved with exclusions
-        - [ ] 14.2.1 Run `python scripts/type_check.py` - Should now show fewer errors
-        - [ ] 14.2.2 Document new error count (~312-352 target architecture errors)
-        - [ ] 14.2.3 Verify quality gates pass with exclusions in place
-    - [ ] 14.3 Create `.arc/active/tasks-incidental-fix-backend-type-errors.md`
-        - [ ] 14.3.1 Document scope: Fix ~312-352 TARGET ARCHITECTURE errors only
-        - [ ] 14.3.2 Use error categorization from Task 6.3 and notes-type-coverage-status.md
-        - [ ] 14.3.3 Reference exclusion strategy and cleanup plan
-        - [ ] 14.3.4 Organize by priority: Config, Core utilities, Auth target, UserMovieData target
-    - [ ] 14.4 Structure task list by phase
-        - [ ] 14.4.1 Phase 0: Clarify transitional code (core/views/logging.py, tmdb.py)
-        - [ ] 14.4.2 Phase 1: Create target architecture stubs (django.contrib.admin, ninja_jwt, allauth)
-        - [ ] 14.4.3 Phase 2: Fix per-app errors (Config → Core → Auth → UserMovieData)
-        - [ ] 14.4.4 Note accounts app: 0 errors (perfect reference)
-    - [ ] 14.5 Document approach for each category
-        - [ ] 14.5.1 Missing stubs: Create django.contrib.admin, enhance ninja_jwt/allauth (~180 errors)
-        - [ ] 14.5.2 Missing annotations: Add parameter/return types (~132-172 errors)
-        - [ ] 14.5.3 Django ORM: Already information-level, acceptable per strategy
-    - [ ] 14.6 Add task list metadata
-        - [ ] 14.6.1 Set estimated effort: 8-11.5 hours (down from 10-15 hrs)
-        - [ ] 14.6.2 Reference this task list as parent work
-        - [ ] 14.6.3 Set status to "Ready to start immediately"
-        - [ ] 14.6.4 Add completion criteria: Non-excluded code passes with 0 errors
-        - [ ] 14.6.5 Document cleanup plan: Remove exclusions in api-layer-p2 task list
-    - [ ] 14.7 Update tasks-api-layer-modernization-p2.md with exclusion cleanup
-        - [ ] 14.7.1 Find file deletion tasks in api-layer-p2 task list
-        - [ ] 14.7.2 Add sub-task after DRF file deletions: "Remove temporary type exclusions from pyrightconfig.json"
-        - [ ] 14.7.3 Add verification step: Run `python scripts/type_check.py` to confirm 0 errors remain
-        - [ ] 14.7.4 Reference this task (14.1) for exclusion list details
+- [ ] 14. Documentation and Completion
+    - [ ] 14.1 Update CURRENT-SESSION.md
+        - [ ] 14.1.1 Mark backend type safety modernization complete
+        - [ ] 14.1.2 Document what was changed (django-types, Pyright-only, comprehensive app checking)
+        - [ ] 14.1.3 Document baseline error counts per app
+        - [ ] 14.1.4 Note follow-up task list creation (Task 13)
+        - [ ] 14.1.5 Update "Next Action" to "Fix Backend Type Errors" task list
+    - [ ] 14.2 Create completion summary in this task list
+        - [ ] 14.2.1 Document tooling changes (django-stubs → django-types, removed MyPy)
+        - [ ] 14.2.2 Document script improvements (comprehensive app coverage)
+        - [ ] 14.2.3 Document baseline audit results (error counts per app)
+        - [ ] 14.2.4 Document new documentation created (notes-type-coverage-status.md, strategy updates)
 
 ## Relevant Files
 

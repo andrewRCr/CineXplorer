@@ -328,7 +328,19 @@
         - [x] 8.6.3 Run type check: 0 errors (file excluded) ✅
         - [x] 8.6.4 Verified: Core app errors reduced from 173 → 171 ✅
     - [ ] 8.7 Fix management/commands/ directory (81 errors)
-        - [ ] 8.7.1 Fix verify_logging_security.py (57 errors) - Parameter annotations, logging.LogRecord types
+        - [x] 8.7.1 Fix verify_logging_security.py (57 errors → 0) ✅
+            - **Modernization**: Replaced deleted tmdb_get() with TMDBApiClient
+                - Updated imports: core.services.tmdb_api_client.TMDBApiClient, core.services.api_response.ApiResponse
+                - Replaced tmdb_get('movie/popular') → client.get_popular_movies()
+                - Replaced tmdb_get('search/movie') → client.search_movies()
+                - Replaced tmdb_get('movie/550') → client.get_movie_details(550)
+                - Updated result handling for ApiResponse (is_success(), error_message, data)
+            - **Type Safety**: Added comprehensive type annotations
+                - Method signatures: handle(), _get_partial_key(),_run_security_test(), _check_log_files_security()
+                - logging.LogRecord types for emit() parameter and log_records list
+                - Explicit list types: capture_handlers, security_violations, api_results
+            - **Type ignores**: 1 documented (hasattr runtime validation for len())
+            - **Linting**: All checks passed (import order, line length fixes)
         - [ ] 8.7.2 Fix verify_tmdb_logging.py (22 errors) - LogRecord types, unknown members
         - [ ] 8.7.3 Fix test_tmdb_logging.py (17 errors) - HttpError.detail access, date indexing
         - [ ] 8.7.4 Fix test_logging.py (4 errors) - ArgumentParser parameter types

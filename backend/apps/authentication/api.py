@@ -34,6 +34,11 @@ from ninja_jwt.tokens import RefreshToken
 # Create authentication router
 auth_router = Router(tags=["Authentication"])
 
+# Disable throttling in test environment
+_THROTTLE_REGISTER = [] if getattr(settings, 'TESTING', False) else [AnonRateThrottle('3/h')]
+_THROTTLE_LOGIN = [] if getattr(settings, 'TESTING', False) else [AnonRateThrottle('5/m')]
+_THROTTLE_REFRESH = [] if getattr(settings, 'TESTING', False) else [UserRateThrottle('10/m')]
+
 
 def _get_jwt_settings() -> dict[str, object]:
     """Get JWT settings from Django settings.
@@ -47,7 +52,7 @@ def _get_jwt_settings() -> dict[str, object]:
     "/register/",
     auth=None,
     response={201: RegisterResponseSchema, 409: dict[str, object], 500: dict[str, object]},
-    throttle=[AnonRateThrottle('3/h')],  # Rate limit: 3 registration attempts per hour
+    throttle=_THROTTLE_REGISTER,  # Rate limit: 3/h (disabled in tests)
 )
 def register_user(
     request: HttpRequest, payload: RegisterInputSchema
@@ -133,7 +138,7 @@ def register_user(
         401: dict[str, object],
         403: dict[str, object],
     },
-    throttle=[AnonRateThrottle('5/m')],  # Rate limit: 5 login attempts per minute
+    throttle=_THROTTLE_LOGIN,  # Rate limit: 5/m (disabled in tests)
 )
 def obtain_token(
     request: HttpRequest, response: HttpResponse, payload: TokenObtainInputSchema
@@ -228,7 +233,7 @@ def obtain_token(
     "/token/refresh/",
     auth=None,
     response={200: TokenResponseSchema, 400: dict[str, object]},
-    throttle=[UserRateThrottle('10/m')],  # Rate limit: 10 refresh/min (authed users)
+    throttle=_THROTTLE_REFRESH,  # Rate limit: 10/m (disabled in tests)
 )
 def refresh_token(
     request: HttpRequest, response: HttpResponse
@@ -493,7 +498,9 @@ def verify_email(
     """
     import logging
 
-    from allauth.account.models import EmailConfirmationHMAC  # pyright: ignore[reportAttributeAccessIssue, reportUnknownVariableType]
+    from allauth.account.models import (
+        EmailConfirmationHMAC,  # pyright: ignore[reportAttributeAccessIssue, reportUnknownVariableType]
+    )
     logger = logging.getLogger(__name__)
 
     try:

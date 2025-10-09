@@ -86,6 +86,15 @@ else:
 # Add TESTING flag for environment detection
 TESTING = True
 
+# Disable Django Ninja throttling for tests (prevents rate limit failures)
+REST_FRAMEWORK = {
+    **REST_FRAMEWORK,  # noqa: F405
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": None,  # Disable anonymous throttling
+        "user": None,  # Disable user throttling
+    },
+}
+
 # Note: Logging configuration is now handled by the unified config in config/logging.py
 # The unified config works well for both development and test environments
 # Tests use the same logging setup as development, which provides good debugging capability

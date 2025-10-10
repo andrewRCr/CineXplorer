@@ -7,12 +7,11 @@ from __future__ import annotations
 
 import contextlib
 import logging
-import secrets
 from collections.abc import Sequence
 from typing import Literal
 
 from allauth.account.models import EmailAddress, EmailConfirmation
-from authentication.auth_ninja import get_current_user
+from authentication.auth_ninja import get_current_user, jwt_cookie_auth
 from authentication.schemas import (
     CsrfTokenResponseSchema,
     EmailVerificationInputSchema,
@@ -437,9 +436,10 @@ def logout(request: HttpRequest, response: HttpResponse) -> tuple[int, dict[str,
 def get_csrf_token(request: HttpRequest, response: HttpResponse) -> tuple[int, dict[str, object]]:
     """Get CSRF token for AJAX requests.
 
-    Generates a CSRF token and sets it as a cookie that JavaScript can read.
-    This endpoint requires no authentication and is used by the frontend
-    to obtain a CSRF token for state-changing requests.
+    Generates a CSRF token using Django's built-in get_token() and ensures
+    it's available as a cookie that JavaScript can read. This endpoint requires
+    no authentication and is used by the frontend to obtain a CSRF token for
+    state-changing requests.
 
     Args:
         request: HTTP request object
@@ -449,33 +449,43 @@ def get_csrf_token(request: HttpRequest, response: HttpResponse) -> tuple[int, d
         tuple: (status_code, response_data)
             - 200: CSRF token generated and set as cookie
 
-    Cookie attributes:
-        - httponly: False (must be readable by JavaScript)
-        - secure: True (HTTPS only)
-        - samesite: Lax (less strict for localhost dev)
+    Cookie details:
+        - Name: 'csrftoken' (Django's default, configurable via CSRF_COOKIE_NAME)
+        - httponly: False (must be readable by JavaScript per CSRF_COOKIE_HTTPONLY setting)
+        - secure: True in production (per CSRF_COOKIE_SECURE setting)
+        - samesite: Lax (per SESSION_COOKIE_SAMESITE setting)
         - path: / (available everywhere)
 
     Note:
-        The token is both set as an XSRF-TOKEN cookie and returned
-        in the response body for client convenience.
+        Django's CsrfViewMiddleware will automatically set the csrftoken cookie
+        when get_token() is called. The token is returned in the response body
+        for client convenience. We force the cookie to be set even if middleware
+        doesn't set it automatically.
     """
-    token = secrets.token_urlsafe(32)
+    from django.middleware.csrf import get_token
 
-    # Set CSRF token as a cookie readable by JavaScript
+    # Generate CSRF token using Django's built-in method
+    # This ensures the token is compatible with Django's CsrfViewMiddleware
+    token = get_token(request)
+
+    # Explicitly set the CSRF cookie to ensure it's always sent
+    # This addresses cases where Django Ninja might not trigger middleware cookie setting
     response.set_cookie(
-        "XSRF-TOKEN",
+        settings.CSRF_COOKIE_NAME,
         token,
-        httponly=False,  # Must be readable by JS
-        secure=True,     # Only over HTTPS
-        samesite="Lax",  # Less strict for localhost dev
-        domain=None,     # Important for localhost
-        path="/",        # Ensure cookie is available everywhere
+        max_age=settings.CSRF_COOKIE_AGE,
+        path=settings.CSRF_COOKIE_PATH,
+        domain=settings.CSRF_COOKIE_DOMAIN,
+        secure=settings.CSRF_COOKIE_SECURE,
+        httponly=settings.CSRF_COOKIE_HTTPONLY,
+        samesite=settings.CSRF_COOKIE_SAMESITE,
     )
 
+    # Return the token value for client convenience
     return 200, {"csrf_token": token}
 
 
-@auth_router.get("/profile/", response={200: UserProfileSchema})
+@auth_router.get("/profile/", response={200: UserProfileSchema}, auth=jwt_cookie_auth)
 def get_user_profile(request: HttpRequest) -> UserProfileSchema:
     """Retrieve authenticated user's profile.
 
@@ -507,7 +517,11 @@ def get_user_profile(request: HttpRequest) -> UserProfileSchema:
     return profile
 
 
-@auth_router.patch("/profile/", response={200: UserProfileSchema, 400: dict[str, object]})
+@auth_router.patch(
+    "/profile/",
+    response={200: UserProfileSchema, 400: dict[str, object]},
+    auth=jwt_cookie_auth
+)
 def update_user_profile(
     request: HttpRequest,
     payload: UserProfileUpdateSchema

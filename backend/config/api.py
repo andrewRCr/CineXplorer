@@ -93,9 +93,9 @@ class AuthStatusResponse(Schema):
 
 
 # Create the main NinjaAPI instance with native authentication
+# csrf=False: Disable Django Ninja CSRF entirely to avoid bug #1464
+# CSRF protection provided by custom CsrfHeaderMiddleware with path-based exemptions
 api = NinjaAPI(
-
-
     title="CineXplorer API",
     version="1.0.0",
     description=(
@@ -104,7 +104,8 @@ api = NinjaAPI(
     ),
     docs_url="/docs",
     openapi_url="/openapi.json",
-    auth=jwt_cookie_auth  # Global authentication scheme
+    auth=jwt_cookie_auth,  # Global authentication scheme
+    csrf=False  # Custom middleware handles CSRF (avoid Django Ninja bug #1464)
 )
 
 

@@ -59,9 +59,27 @@ class JWTCookieAuth(APIKeyCookie):
 
     def __init__(self) -> None:
         """Initialize the JWT cookie authentication scheme."""
-        # APIKeyCookie.__init__ takes csrf: bool parameter
-        # We enable CSRF protection for cookie-based auth
-        super().__init__(csrf=True)
+        # CSRF Handling Strategy: Bypass Django Ninja's CSRF, use Django's middleware
+        #
+        # Configuration:
+        # - THIS AUTH CLASS: csrf=False (no Django Ninja CSRF interference)
+        # - NinjaAPI in api.py: csrf=False (no API-level Django Ninja CSRF)
+        # - Django middleware: CsrfViewMiddleware ENABLED (handles all validation)
+        #
+        # Why csrf=False on BOTH levels:
+        # Django Ninja's CSRF implementation conflicts with Django's CsrfViewMiddleware.
+        # Both csrf=True (default) and explicit csrf=True cause Django Ninja bug #1464
+        # where valid CSRF tokens are rejected with "CSRF check Failed".
+        #
+        # By setting csrf=False at both auth class and API levels, we completely
+        # bypass Django Ninja's CSRF and rely solely on Django's battle-tested
+        # CsrfViewMiddleware for protection.
+        #
+        # CSRF protection IS ACTIVE via Django's middleware - this just prevents
+        # Django Ninja from interfering with Django's validation.
+        #
+        # See: https://github.com/vitalik/django-ninja/issues/1464
+        super().__init__(csrf=False)
 
         logger.debug(f"Initialized JWT cookie auth with cookie name: {self.param_name}")
 

@@ -2,11 +2,17 @@
 Tests for core models.
 """
 
+from typing import TYPE_CHECKING, cast
+
 from core import models
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import AbstractUser
 from django.test import TestCase
 from user_movie_data.models import UserMovieData
+
+if TYPE_CHECKING:
+    from django.contrib.auth.models import User as UserType
+
+User = get_user_model()
 
 
 class ModelTests(TestCase):
@@ -19,15 +25,19 @@ class ModelTests(TestCase):
         email: str = 'test@example.com'
         password: str = 'testpass123'
 
-        user: AbstractUser = get_user_model().objects.create_user(
-            username=username,
-            email=email,
-            password=password,
+        # django-types limitation - UserManager.create_user type not inferred
+        user = cast(
+            "UserType",
+            User.objects.create_user(  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
+                username=username,
+                email=email,
+                password=password,
+            )
         )
 
         self.assertEqual(user.username, username)
         self.assertEqual(user.email, email)
-        self.assertTrue(user.check_password(password))
+        self.assertTrue(user.check_password(password))  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
 
     def test_new_user_email_normalized(self) -> None:
         """ Tests newly created user's email is normalized. """
@@ -40,15 +50,19 @@ class ModelTests(TestCase):
         ]
 
         for i, (email, expected) in enumerate(sample_emails):
-            user: AbstractUser = get_user_model(
-            ).objects.create_user(f'testUser{i}', email)
+            # django-types limitation - UserManager.create_user type not inferred
+            user = cast(
+                "UserType",
+                User.objects.create_user(f'testUser{i}', email)  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
+            )
             self.assertEqual(user.email, expected)
 
     def test_new_user_without_username_raises_error(self) -> None:
         """ Tests that creating a user without a username raises a ValueError. """
 
         with self.assertRaises(ValueError):
-            get_user_model().objects.create_user('', 'testUser@example.com')
+            # django-types limitation - UserManager.create_user type not inferred
+            User.objects.create_user('', 'testUser@example.com')  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
 
     def test_django_user_model_allows_empty_email_at_model_level(self) -> None:
         """Tests Django's default User model allows empty email at model layer.
@@ -59,7 +73,11 @@ class ModelTests(TestCase):
         """
 
         # Django's default User model allows empty email at model level
-        user: AbstractUser = get_user_model().objects.create_user('testUser', '')
+        # django-types limitation - UserManager.create_user type not inferred
+        user = cast(
+            "UserType",
+            User.objects.create_user('testUser', '')  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
+        )
         self.assertIsNotNone(user.pk)  # Verify user was persisted
         self.assertEqual(user.username, 'testUser')
         self.assertEqual(user.email, '')  # Model layer allows empty email
@@ -67,10 +85,14 @@ class ModelTests(TestCase):
     def test_create_superuser(self) -> None:
         """ Tests creating a new superuser. """
 
-        user: AbstractUser = get_user_model().objects.create_superuser(
-            'testUser',
-            'testUser@example.com',
-            'testPass123'
+        # django-types limitation - UserManager.create_superuser type not inferred
+        user = cast(
+            "UserType",
+            User.objects.create_superuser(  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
+                'testUser',
+                'testUser@example.com',
+                'testPass123'
+            )
         )
 
         self.assertTrue(user.is_superuser)
@@ -79,10 +101,14 @@ class ModelTests(TestCase):
     def test_create_default_user_movie_data(self) -> None:
         """ Tests that creating a default UserMovieData object for a user is successful. """
 
-        user: AbstractUser = get_user_model().objects.create_user(
-            'testUser',
-            'testUser@example.com',
-            'testPass123'
+        # django-types limitation - UserManager.create_user type not inferred
+        user = cast(
+            "UserType",
+            User.objects.create_user(  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
+                'testUser',
+                'testUser@example.com',
+                'testPass123'
+            )
         )
 
         movie = models.Movie.objects.create(
@@ -103,10 +129,14 @@ class ModelTests(TestCase):
     def test_create_nondefault_user_movie_data(self) -> None:
         """ Tests that creating a non-default UserMovieData object for a user is successful. """
 
-        user: AbstractUser = get_user_model().objects.create_user(
-            'testUser',
-            'testUser@example.com',
-            'testPass123'
+        # django-types limitation - UserManager.create_user type not inferred
+        user = cast(
+            "UserType",
+            User.objects.create_user(  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
+                'testUser',
+                'testUser@example.com',
+                'testPass123'
+            )
         )
 
         movie_review_str = 'Blade Runner is one of the greatest films of all time.'

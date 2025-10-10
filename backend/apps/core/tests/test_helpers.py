@@ -21,13 +21,15 @@ Example:
 """
 import json
 from http import HTTPStatus
-from typing import TypedDict, Unpack
+from typing import TYPE_CHECKING, TypedDict, Unpack, cast
 
 from allauth.account.models import EmailAddress
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import AbstractUser
 from django.http import HttpResponse
 from django.test import Client
+
+if TYPE_CHECKING:
+    from django.contrib.auth.models import User as UserType
 
 # Re-export HTTPStatus for convenience in test files
 __all__ = ["HTTPStatus", "UserParams", "create_user", "json_patch", "json_post", "json_put"]
@@ -142,7 +144,7 @@ def json_put(
 def create_user(
     email_verified: bool = True,
     **params: Unpack[UserParams]
-) -> AbstractUser:
+) -> "UserType":
     """
     Create and return a new user for testing.
 
@@ -171,8 +173,11 @@ def create_user(
         'last_name': 'User'
     }
 
-    # Create user - Django UserManager.create_user is a dynamic method
-    user = User.objects.create_user(**{**defaults, **params})  # type: ignore[attr-defined]
+    # django-types limitation - UserManager.create_user type not inferred
+    user = cast(
+        "UserType",
+        User.objects.create_user(**{**defaults, **params})  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
+    )
 
     # Mark email as verified if requested using allauth EmailAddress API
     # Use get_or_create to support --keepdb flag (reusing test database)

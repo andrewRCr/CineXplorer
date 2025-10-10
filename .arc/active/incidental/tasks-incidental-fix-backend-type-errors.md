@@ -298,7 +298,7 @@
         - [x] 7.12.2 Ruff linting: All checks passed ✅
         - [x] 7.12.3 Tests: 20/20 passed (Docker) ✅
 
-- [ ] 8. Fix Core App Errors (210 errors - admin.py already 0 errors from Task 1!)
+- [x] 8. Fix Core App Errors (210 errors - admin.py already 0 errors from Task 1!)
     - [x] 8.1 Review and categorize core errors ✅
         - [x] 8.1.1 Run verbose type check: 210 errors confirmed ✅
         - [x] 8.1.2 Group by file with error counts ✅
@@ -327,7 +327,7 @@
         - [x] 8.6.2 Solution: Added to pyrightconfig.json exclusions (same pattern as auth/user_movie_data) ✅
         - [x] 8.6.3 Run type check: 0 errors (file excluded) ✅
         - [x] 8.6.4 Verified: Core app errors reduced from 173 → 171 ✅
-    - [ ] 8.7 Fix management/commands/ directory (81 errors)
+    - [x] 8.7 Fix management/commands/ directory (81 errors)
         - [x] 8.7.1 Fix verify_logging_security.py (57 errors → 0) ✅
             - **Modernization**: Replaced deleted tmdb_get() with TMDBApiClient
                 - Updated imports: core.services.tmdb_api_client.TMDBApiClient, core.services.api_response.ApiResponse
@@ -376,18 +376,31 @@
             - **Linting**: All checks passed
         - [x] 8.7.6 Run type check: Verify 0 errors in management/commands/ ✅
         - [x] 8.7.7 Run linting: All checks passed ✅
-    - [ ] 8.8 Fix tests/ directory (70 errors)
-        - [ ] 8.8.1 Fix test_models.py (32 errors) - Apply Task 7.8 fixture patterns
-        - [ ] 8.8.2 Fix test_commands.py (19 errors) - Similar fixture patterns
-        - [ ] 8.8.3 Fix test_admin.py (17 errors) - create_superuser, force_login typing
-        - [ ] 8.8.4 Fix test_helpers.py (2 errors)
-        - [ ] 8.8.5 Run type check: Verify 0 errors in tests/
-        - [ ] 8.8.6 Run linting
-    - [ ] 8.9 Verify core app passes all quality gates
-        - [ ] 8.9.1 Run type check on entire core app: 0 errors (excluding views/logging.py, views/tmdb.py)
-        - [ ] 8.9.2 Run tests: Verify no regressions
-        - [ ] 8.9.3 Run linting: All checks passed
-        - [ ] 8.9.4 Verify error reduction: 210 → 0 errors
+    - [x] 8.8 Fix tests/ directory (70 errors → 0) ✅
+        - [x] 8.8.1 Fix test_models.py (32 errors → 0) ✅
+            - Added TYPE_CHECKING import guard with UserType
+            - Applied cast() pattern from Task 7.8 for create_user/create_superuser
+            - Added pyright: ignore for check_password (django-types limitation)
+            - Pattern: cast("UserType", User.objects.create_user(...))
+        - [x] 8.8.2 Fix test_commands.py (19 errors → 0) ✅
+            - Added MagicMock type annotations for patched parameters
+            - Added return type annotations (-> None) for all test methods
+            - Pattern: def test_method(self, patched: MagicMock) -> None
+        - [x] 8.8.3 Fix test_admin.py (17 errors → 0) ✅
+            - Applied same cast() pattern for create_user/create_superuser
+            - Added AbstractBaseUser cast for force_login with pyright: ignore[reportArgumentType]
+            - Removed unnecessary type: ignore on user.id (works with cast pattern)
+        - [x] 8.8.4 Fix test_helpers.py (2 errors → 0) ✅
+            - Changed return type from AbstractUser → "UserType" (forward reference)
+            - Applied cast() pattern for create_user call
+            - Added TYPE_CHECKING import guard
+        - [x] 8.8.5 Run type check: Verify 0 errors in tests/ ✅
+        - [x] 8.8.6 Run linting: All checks passed ✅
+    - [x] 8.9 Verify core app passes all quality gates ✅
+        - [x] 8.9.1 Run type check on entire core app: 0 errors ✅
+        - [x] 8.9.2 Run tests: 12/12 passed in 3.610s ✅
+        - [x] 8.9.3 Run linting: All checks passed ✅
+        - [x] 8.9.4 Verify error reduction: 210 → 0 errors ✅
 
 - [ ] 9. Full Quality Gates
     - [ ] 9.1 Run comprehensive type check
@@ -472,8 +485,11 @@
 - `backend/apps/core/management/commands/test_logging.py` - ✅ FIXED: Comprehensive types
 - `backend/apps/core/management/commands/wait_for_db.py` - ✅ FIXED: ArgumentParser type, object→int narrowing
 
-**Target Architecture Code (to fix):**
-- `backend/apps/core/tests/` - 70 errors remaining (test_models.py, test_commands.py, test_admin.py, test_helpers.py)
+**Target Architecture Code (fixed - Core app tests/):**
+- `backend/apps/core/tests/test_models.py` - ✅ FIXED: User fixture pattern with cast()
+- `backend/apps/core/tests/test_commands.py` - ✅ FIXED: Mock parameter type annotations
+- `backend/apps/core/tests/test_admin.py` - ✅ FIXED: User fixtures + force_login cast
+- `backend/apps/core/tests/test_helpers.py` - ✅ FIXED: create_user return type + cast
 
 **Documentation:**
 - `.arc/active/notes-type-coverage-status.md` - Type coverage tracking (gitignored)

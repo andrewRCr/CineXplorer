@@ -5,8 +5,6 @@ Tests for the custom Django management commands module.
 from unittest.mock import MagicMock, patch
 
 from django.core.management import call_command
-
-# from psycopg import OperationalError as PsycopgError  # Unused
 from django.db.utils import OperationalError
 from django.test import TestCase
 
@@ -15,7 +13,7 @@ from django.test import TestCase
 class CommandTests(TestCase):
     """ Tests commands. """
 
-    def test_wait_for_db_ready(self, patched_connections):
+    def test_wait_for_db_ready(self, patched_connections: MagicMock) -> None:
         """ Tests waiting for the database.
             Case: database is ready. """
 
@@ -29,7 +27,11 @@ class CommandTests(TestCase):
         patched_connections.__getitem__.return_value.ensure_connection.assert_called_once()
 
     @patch("time.sleep")
-    def test_wait_for_db_delay(self, patched_sleep, patched_connections):
+    def test_wait_for_db_delay(
+        self,
+        patched_sleep: MagicMock,
+        patched_connections: MagicMock
+    ) -> None:
         """ Tests waiting for the database.
             Case: receiving an OperationalError. """
 

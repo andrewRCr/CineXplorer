@@ -219,6 +219,21 @@ REST_FRAMEWORK = {
 DEBUG = env.bool("DEBUG", default=False)
 SECRET_KEY = env("DJANGO_SECRET_KEY")
 
+# Environment configuration (development, staging, production)
+# Controls environment-aware security settings and logging
+ENVIRONMENT = env("ENVIRONMENT", default="development")
+# Validate ENVIRONMENT value
+if ENVIRONMENT not in ["development", "staging", "production"]:
+    import warnings
+    warnings.warn(
+        f"Invalid ENVIRONMENT value: {ENVIRONMENT}. "
+        f"Must be 'development', 'staging', or 'production'. "
+        f"Defaulting to 'development'.",
+        RuntimeWarning,
+        stacklevel=2
+    )
+    ENVIRONMENT = "development"
+
 # custom environment variables
 TMDB_API_KEY = env("TMDB_API_KEY")
 BACKEND_URL = env("BACKEND_URL")
@@ -351,12 +366,14 @@ CSRF_TRUSTED_ORIGINS = [
     "https://localhost:8444",  # Production-like (Caddy proxy)
 ]
 
-# Cookie Security Settings
-# Session cookie security - enforce HTTPS in production, allow HTTP in development
-SESSION_COOKIE_SECURE = not DEBUG  # Requires HTTPS in production (prevents interception)
-SESSION_COOKIE_HTTPONLY = True  # Prevent JavaScript access to session cookie (XSS protection)
-SESSION_COOKIE_SAMESITE = 'Lax'  # CSRF protection - cookies only sent for same-site requests
-CSRF_COOKIE_SECURE = not DEBUG  # Requires HTTPS in production (prevents interception)
+# Cookie Security Settings (Environment-Aware)
+# Session cookie security - enforce HTTPS in production/staging, allow HTTP in development
+# Requires HTTPS (prevents interception)
+SESSION_COOKIE_SECURE = ENVIRONMENT in ["production", "staging"]
+SESSION_COOKIE_HTTPONLY = True  # Prevent JavaScript access (XSS protection)
+SESSION_COOKIE_SAMESITE = 'Lax'  # CSRF protection - same-site requests only
+# Requires HTTPS (prevents interception)
+CSRF_COOKIE_SECURE = ENVIRONMENT in ["production", "staging"]
 
 # CSRF Cookie Configuration (for headless mode / API usage)
 # Must be False so JavaScript can read the CSRF token from cookies
@@ -386,15 +403,25 @@ CSRF_COOKIE_HTTPONLY = False
 # See: https://github.com/vitalik/django-ninja/issues/1464
 CSRF_TRUSTED_ORIGINS_USE_HTTPS = not DEBUG  # Use HTTPS for trusted origins in production
 
-# HSTS and SSL/TLS Security Settings (Production Only)
+# HSTS and SSL/TLS Security Settings (Environment-Aware)
 # HSTS (HTTP Strict Transport Security) - forces browsers to use HTTPS
-if not DEBUG:
+# Production: Full HSTS with 1-year duration and preload
+# Staging: HSTS with shorter duration (1 hour) for testing
+# Development: No HSTS (allow HTTP)
+if ENVIRONMENT == "production":
     SECURE_HSTS_SECONDS = 31536000  # 1 year (recommended minimum for production)
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True  # Apply HSTS to all subdomains
     SECURE_HSTS_PRELOAD = True  # Allow inclusion in browser HSTS preload lists
     SECURE_SSL_REDIRECT = True  # Redirect all HTTP requests to HTTPS
     # Caddy proxy compatibility - trust X-Forwarded-Proto header for HTTPS detection
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+elif ENVIRONMENT == "staging":
+    SECURE_HSTS_SECONDS = 3600  # 1 hour (shorter for staging to allow testing)
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = False  # More flexible for staging subdomains
+    SECURE_HSTS_PRELOAD = False  # Don't preload staging
+    SECURE_SSL_REDIRECT = True  # Still redirect HTTP to HTTPS
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+# Development: No HSTS settings (allow HTTP for local development)
 
 # Additional Security Headers
 X_FRAME_OPTIONS = 'DENY'  # Prevent clickjacking attacks (no iframe embedding)

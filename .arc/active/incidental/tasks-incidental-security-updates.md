@@ -34,7 +34,7 @@
 - Implement rate limiting on authentication endpoints (login, register, refresh) using Django Ninja built-in throttling
 - Add refresh token blacklisting with django-ninja-jwt (DRF-free, already installed)
 - Reduce refresh token lifetime (30 days → 14 days per RFC 8725)
-- Remove custom CSRF middleware (simplify to Django's built-in)
+- Refine custom CSRF middleware (investigation revealed Django Ninja bug requires custom solution)
 - Add comprehensive authentication event logging
 - Update settings for environment-aware configuration (dev vs production)
 - Add comprehensive automated tests for all security features (Task 7.5: ~20 new tests, 90%+ coverage)
@@ -138,85 +138,75 @@
         - [x] 4.6.2 Type checking: `npx pyright backend/apps/authentication/api.py --project backend` - ✅ 0 errors
         - [x] 4.6.3 Verify ninja-jwt type stubs provide blacklist type coverage - ✅ py.typed marker confirmed, contextlib.suppress used
 
-- [x] 5. Custom CSRF Middleware Removal (Simplification)
-    - [x] 5.1 Remove custom middleware from `MIDDLEWARE` in `config/settings.py`
-        - [x] 5.1.1 Remove line: `"authentication.middleware.CsrfHeaderMiddleware"`
-        - [x] 5.1.2 Keep only Django's built-in: `"django.middleware.csrf.CsrfViewMiddleware"`
-        - [x] 5.1.3 Add comment explaining Django's CSRF handles our use case
-    - [x] 5.2 Update `authentication/middleware.py`
-        - [x] 5.2.1 Remove `CsrfHeaderMiddleware` class (lines 23-67)
-        - [x] 5.2.2 Remove `EXEMPT_PATH_PREFIXES` constant (line 20)
-        - [x] 5.2.3 Keep file for any other middleware (currently none needed - file preserved with documentation)
-    - [x] 5.3 Verify CSRF protection still works
-        - [x] 5.3.1 Test `/api/profile/` PATCH without CSRF token (should fail with 403) - ✅ Returns 403 (CSRF protection active)
-        - [x] 5.3.2 Update `/api/csrf/` endpoint to use Django's get_token() - ✅ Now generates Django-compatible csrftoken
-        - [x] 5.3.3 Test `/api/token/` POST without CSRF token (should succeed - auth=None) - ✅ Returns 401 (auth error, not CSRF error)
-        - [x] 5.3.4 Verify Django Ninja automatically handles CSRF for `auth=None` endpoints - ✅ auth=None endpoints accessible without CSRF
-    - [x] 5.4 Run incremental quality checks
-        - [x] 5.4.1 Backend linting: `.venv-backend/bin/ruff check` - ✅ 0 violations
-        - [x] 5.4.2 Django check: `docker compose exec backend python manage.py check` - ✅ 0 issues
-    - [x] 5.5 Investigate and resolve Django Ninja + Django CSRF integration issue
-        - [x] 5.5.1 Research Django Ninja CSRF integration best practices (external-research-analyst agent)
-        - [x] 5.5.2 Analyze findings and determine correct approach (Option 2: Custom middleware)
-        - [x] 5.5.3 Implement solution: Custom CsrfHeaderMiddleware with JWT cookie detection
-        - [x] 5.5.4 Test complete CSRF flow: All 9 tests passing ✅
-        - [x] 5.5.5 Document solution and rationale in notes file
-        - [ ] 5.5.6 Address Edge Cases and Enhancements
-            - [x] 5.5.6.1 DECISION: Refresh endpoint CSRF requirement → ✅ **APPROVED Option A** (require CSRF)
-            - [x] 5.5.6.2 Implement Path-Based CSRF Exemption System (decorator approach abandoned)
-                - [x] 5.5.6.2.1 Restore complete EXEMPT_PATH_PREFIXES list (6 endpoints)
-                - [x] 5.5.6.2.2 Verify refresh endpoint NOT in exempt list (requires CSRF per Option A)
-                - [x] 5.5.6.2.3 Run CSRF test suite to verify all 9 tests still pass - ✅ ALL PASSING
-                - [x] 5.5.6.2.4 Update middleware documentation for path-based pattern
-                - [x] 5.5.6.2.5 Run incremental quality checks (linting, type checking) - ✅ 0 errors
-                - **Decision:** Abandoned hybrid decorator approach due to Django Ninja wrapper complexity
-                - **Rationale:** Path-based sufficient for 6-12 total exempt endpoints across project lifecycle
-            - [x] 5.5.6.3 Create frontend CSRF integration guide in notes file
-            - [x] 5.5.6.4 Add CSRF failure monitoring recommendations to notes
-            - [x] 5.5.6.5 Add edge case tests and documentation (middleware ordering, token lifecycle, refresh CSRF requirement)
+- [x] 5. CSRF Middleware Refinement & Edge Case Resolution
+    **Context**: Originally planned to remove existing custom CSRF middleware in favor of Django's built-in. Investigation revealed Django Ninja bug #1464 requires custom middleware. Pivoted to refining existing implementation with JWT cookie detection, path-based exemptions, and edge case handling. See notes file for full analysis.
+    - [x] 5.1 Investigate Django Ninja + Django CSRF integration compatibility
+        - [x] 5.1.1 Research Django Ninja CSRF best practices (external-research-analyst agent)
+        - [x] 5.1.2 Analyze findings and determine correct approach
+        - [x] 5.1.3 Decision: Refine existing custom middleware (Django Ninja bug #1464 prevents built-in use)
+    - [x] 5.2 Refine CsrfHeaderMiddleware implementation
+        - [x] 5.2.1 Implement JWT cookie detection (auth happens at endpoint level, not middleware)
+        - [x] 5.2.2 Maintain path-based exemption system (EXEMPT_PATH_PREFIXES)
+        - [x] 5.2.3 Update middleware documentation with implementation rationale
+    - [x] 5.3 Test complete CSRF flow
+        - [x] 5.3.1 Run CSRF test suite (9 tests) - ✅ ALL PASSING
+        - [x] 5.3.2 Verify authenticated endpoints require CSRF token
+        - [x] 5.3.3 Verify public endpoints (login, register) exempt from CSRF
+    - [x] 5.4 Address edge cases and enhancements
+        - [x] 5.4.1 DECISION: Refresh endpoint CSRF requirement → ✅ **APPROVED Option A** (require CSRF)
+        - [x] 5.4.2 Verify path-based exemption list complete (6 endpoints)
+        - [x] 5.4.3 Add edge case tests (middleware ordering, token lifecycle, refresh CSRF requirement)
+        - [x] 5.4.4 Create frontend CSRF integration guide in notes file
+        - [x] 5.4.5 Add CSRF failure monitoring recommendations to notes
+    - [x] 5.5 Run incremental quality checks
+        - [x] 5.5.1 Backend linting: `.venv-backend/bin/ruff check` - ✅ 0 violations
+        - [x] 5.5.2 Type checking: `npx pyright` - ✅ 0 errors
+        - [x] 5.5.3 Django check: `docker compose exec backend python manage.py check` - ✅ 0 issues
 
-- [ ] 6. Authentication Event Logging & Error Response Standardization
-    - [ ] 6.1 Standardize error response format across authentication endpoints
-        - [ ] 6.1.1 Audit current error responses (401, 403, 400, 429, 409, 500)
-        - [ ] 6.1.2 Ensure consistent structure: `{"error": "message"}` for user-facing errors
-        - [ ] 6.1.3 Add `{"detail": "technical detail"}` for debugging (optional, development only)
-        - [ ] 6.1.4 Verify CSRF middleware error format matches: `{"detail": "CSRF token missing or invalid."}`
-        - [ ] 6.1.5 Document standard error format in notes file for Task 7.5 test writing
-    - [ ] 6.2 Add logging to `authentication/api.py`
-        - [ ] 6.2.1 Import logger: `import logging; logger = logging.getLogger('cinexplorer.auth')` (already exists, verify)
-        - [ ] 6.2.2 Log failed login attempts with IP, username, user agent
-        - [ ] 6.2.3 Log successful logins with user ID, username
-        - [ ] 6.2.4 Log registration attempts (successful and failed)
-        - [ ] 6.2.5 Log token refresh attempts (successful and rate limited)
-    - [ ] 6.3 Configure logging settings if needed
-        - [ ] 6.3.1 Verify `cinexplorer.auth` logger configured in LOGGING
-        - [ ] 6.3.2 Set appropriate log level (INFO for prod, DEBUG for dev)
-        - [ ] 6.3.3 Add log rotation if not already configured
-    - [ ] 6.4 Test logging output
-        - [ ] 6.4.1 Trigger failed login and check logs
-        - [ ] 6.4.2 Trigger successful login and check logs
-        - [ ] 6.4.3 Verify sensitive data not logged (passwords, tokens)
+- [x] 6. Authentication Event Logging & Error Response Standardization
+    - [x] 6.1 Standardize error response format across authentication endpoints
+        - [x] 6.1.1 Audit current error responses (401, 403, 400, 429, 409, 500)
+        - [x] 6.1.2 Ensure consistent structure: `{"error": "message"}` for user-facing errors
+        - [x] 6.1.3 Add `{"detail": "technical detail"}` for debugging (development-only per user approval)
+        - [x] 6.1.4 Verify CSRF middleware error format matches standard (changed from `{"detail"}` to `{"error"}`)
+        - [x] 6.1.5 Document standard error format in notes file for Task 7.5 test writing
+    - [x] 6.2 Add logging to `authentication/api.py`
+        - [x] 6.2.1 Import logger: `import logging; logger = logging.getLogger('cinexplorer.auth')` (already exists, verified)
+        - [x] 6.2.2 Log failed login attempts with IP, login identifier, user agent
+        - [x] 6.2.3 Log successful logins with user ID, login identifier, IP, user agent
+        - [x] 6.2.4 Log registration attempts (successful and failed) with IP, username, email
+        - [x] 6.2.5 Log token refresh attempts (successful) with user ID, IP
+    - [x] 6.3 Configure logging settings if needed
+        - [x] 6.3.1 Verify `cinexplorer.auth` logger configured in LOGGING (inherits from `cinexplorer` parent logger)
+        - [x] 6.3.2 Set appropriate log level (INFO for prod, DEBUG for dev) - Already configured via DJANGO_LOG_LEVEL env var
+        - [x] 6.3.3 Add log rotation if not already configured - Already configured (10MB files, 5 backups)
+    - [x] 6.4 Test logging output
+        - [x] 6.4.1 Trigger failed login and check logs
+        - [x] 6.4.2 Trigger successful login and check logs
+        - [x] 6.4.3 Verify sensitive data not logged (passwords, tokens)
 
-- [ ] 7. Environment-Aware Configuration
-    - [ ] 7.1 Add `ENVIRONMENT` setting to `config/settings.py`
-        - [ ] 7.1.1 Add `ENVIRONMENT = env('ENVIRONMENT', default='development')`
-        - [ ] 7.1.2 Support values: 'development', 'staging', 'production'
-    - [ ] 7.2 Update security settings to be environment-aware
-        - [ ] 7.2.1 Wrap production-only settings in `if ENVIRONMENT == 'production'` block
-        - [ ] 7.2.2 Keep development-friendly defaults for `ENVIRONMENT == 'development'`
-        - [ ] 7.2.3 Add staging environment configuration (balanced security)
-    - [ ] 7.3 Document environment variables in README or .env.example
-        - [ ] 7.3.1 Add `ENVIRONMENT` to .env.example with description
-        - [ ] 7.3.2 Document which settings change per environment
-        - [ ] 7.3.3 Add deployment checklist for production settings
+- [x] 7. Environment-Aware Configuration
+    - [x] 7.1 Add `ENVIRONMENT` setting to `config/settings.py`
+        - [x] 7.1.1 Add `ENVIRONMENT = env('ENVIRONMENT', default='development')`
+        - [x] 7.1.2 Support values: 'development', 'staging', 'production'
+    - [x] 7.2 Update security settings to be environment-aware
+        - [x] 7.2.1 Wrap production-only settings in `if ENVIRONMENT == 'production'` block
+        - [x] 7.2.2 Keep development-friendly defaults for `ENVIRONMENT == 'development'`
+        - [x] 7.2.3 Add staging environment configuration (balanced security)
+    - [x] 7.3 Document environment variables in README or .env.example
+        - [x] 7.3.1 Add `ENVIRONMENT` to .env.example with description
+        - [x] 7.3.2 Document which settings change per environment
+        - [x] 7.3.3 Add deployment checklist for production settings
 
 - [ ] 7.5 Add Automated Tests for Security Features (Comprehensive Test Coverage)
     - [ ] 7.5.1 Security Headers Tests (Task 1 validation)
         - [ ] 7.5.1.1 Test: Response includes X-Frame-Options: DENY header
         - [ ] 7.5.1.2 Test: Response includes X-Content-Type-Options: nosniff header
         - [ ] 7.5.1.3 Test: Response includes X-XSS-Protection header
-        - [ ] 7.5.1.4 Test: Session cookie has Secure attribute (check cookie object)
-        - [ ] 7.5.1.5 Test: CSRF cookie has Secure attribute (check cookie object)
+        - [ ] 7.5.1.4 Test: Session cookie has Secure attribute (check cookie object, environment-aware)
+        - [ ] 7.5.1.5 Test: CSRF cookie has Secure attribute (check cookie object, environment-aware)
+        - [ ] 7.5.1.6 Test: HSTS headers present in production environment (Strict-Transport-Security)
+        - [ ] 7.5.1.7 Test: HSTS headers absent in development environment
     - [ ] 7.5.2 JWT Cookie SameSite Tests (Task 2 completion)
         - [ ] 7.5.2.1 Test: Login response sets access_token cookie with SameSite=Lax
         - [ ] 7.5.2.2 Test: Login response sets refresh_token cookie with SameSite=Lax
@@ -245,13 +235,34 @@
         - [ ] 7.5.5.6 Test: Successful registration logs INFO
         - [ ] 7.5.5.7 Test: Passwords never appear in any log output (security check)
         - [ ] 7.5.5.8 Test: Token values never appear in any log output (security check)
-    - [ ] 7.5.6 Run full authentication test suite and verify coverage
-        - [ ] 7.5.6.1 Command: `python manage.py test apps.authentication --keepdb`
-        - [ ] 7.5.6.2 Verify all tests pass (20 existing + ~20 new = 40+ tests expected)
-        - [ ] 7.5.6.3 Run coverage: `coverage run --source=apps.authentication manage.py test apps.authentication --keepdb`
-        - [ ] 7.5.6.4 Generate coverage report: `coverage report -m`
-        - [ ] 7.5.6.5 Verify 90%+ coverage for authentication app (critical path requirement per testing strategy)
-        - [ ] 7.5.6.6 Document any uncovered lines and justify why they're acceptable
+    - [ ] 7.5.6 Error Response Format Tests (Task 6 standardization)
+        - [ ] 7.5.6.1 Test: 401 responses use `{"error": "message"}` format (invalid credentials)
+        - [ ] 7.5.6.2 Test: 403 responses use `{"error": "message"}` format (email not verified)
+        - [ ] 7.5.6.3 Test: 409 responses use `{"error": "message"}` format (username exists)
+        - [ ] 7.5.6.4 Test: 429 responses use `{"error": "message"}` format (rate limit exceeded)
+        - [ ] 7.5.6.5 Test: 400 responses use `{"error": "message"}` format (invalid token)
+        - [ ] 7.5.6.6 Test: DEBUG=True includes `{"detail": "..."}` field for technical details
+        - [ ] 7.5.6.7 Test: DEBUG=False excludes `{"detail": "..."}` field (production mode)
+        - [ ] 7.5.6.8 Test: CSRF error responses use `{"error": "message"}` format (middleware consistency)
+    - [ ] 7.5.7 Environment-Aware Configuration Tests (Task 7 validation)
+        - [ ] 7.5.7.1 Test helper: Override settings with `@override_settings(ENVIRONMENT='production')`
+        - [ ] 7.5.7.2 Test: SESSION_COOKIE_SECURE=True in production environment
+        - [ ] 7.5.7.3 Test: SESSION_COOKIE_SECURE=True in staging environment
+        - [ ] 7.5.7.4 Test: SESSION_COOKIE_SECURE=False in development environment
+        - [ ] 7.5.7.5 Test: CSRF_COOKIE_SECURE follows same pattern as SESSION_COOKIE_SECURE
+        - [ ] 7.5.7.6 Test: SECURE_HSTS_SECONDS=31536000 in production (1 year)
+        - [ ] 7.5.7.7 Test: SECURE_HSTS_SECONDS=3600 in staging (1 hour)
+        - [ ] 7.5.7.8 Test: SECURE_HSTS_SECONDS undefined in development (no HSTS)
+        - [ ] 7.5.7.9 Test: SECURE_SSL_REDIRECT=True in production and staging
+        - [ ] 7.5.7.10 Test: SECURE_SSL_REDIRECT undefined in development
+        - [ ] 7.5.7.11 Test: Invalid ENVIRONMENT value logs warning and defaults to 'development'
+    - [ ] 7.5.8 Run full authentication test suite and verify coverage
+        - [ ] 7.5.8.1 Command: `python manage.py test apps.authentication --keepdb`
+        - [ ] 7.5.8.2 Verify all tests pass (20 existing + ~30 new = 50+ tests expected)
+        - [ ] 7.5.8.3 Run coverage: `coverage run --source=apps.authentication manage.py test apps.authentication --keepdb`
+        - [ ] 7.5.8.4 Generate coverage report: `coverage report -m`
+        - [ ] 7.5.8.5 Verify 90%+ coverage for authentication app (critical path requirement per testing strategy)
+        - [ ] 7.5.8.6 Document any uncovered lines and justify why they're acceptable
 
 - [ ] 8. Full Quality Gates
     - [ ] 8.1 Run all backend tests
@@ -287,12 +298,13 @@
 ## Relevant Files
 
 **Backend Settings:**
-- `backend/config/settings.py` - Security settings (cookies, HSTS, headers), JWT config, middleware, INSTALLED_APPS (ninja_jwt.token_blacklist added)
+- `backend/config/settings.py` - Security settings (cookies, HSTS, headers), JWT config, middleware, INSTALLED_APPS (ninja_jwt.token_blacklist added), environment-aware configuration (ENVIRONMENT setting)
+- `backend/config/.env.example` - Environment variable documentation and production deployment checklist
 - `backend/stubs/environ/__init__.pyi` - Type stubs for django-environ library
 
 **Authentication Module:**
-- `backend/apps/authentication/api.py` - Django Ninja throttling, token blacklisting (automatic rotation with BLACKLIST_AFTER_ROTATION), reuse detection logging with IP/user agent
-- `backend/apps/authentication/middleware.py` - CSRF middleware removal
+- `backend/apps/authentication/api.py` - Django Ninja throttling, token blacklisting (automatic rotation with BLACKLIST_AFTER_ROTATION), reuse detection logging with IP/user agent, standardized error responses
+- `backend/apps/authentication/middleware.py` - Custom CSRF middleware with JWT cookie detection and path-based exemptions
 - `backend/apps/authentication/tests/test_user_api.py` - Automated test suite (20 existing tests, Task 7.5 adds ~20 more)
 
 **Operational Testing:**
@@ -315,11 +327,11 @@
 4. Rate limiting
 
 **High Priority**:
-5. Refresh token blacklisting
-6. Authentication logging + error response standardization
+5. CSRF middleware refinement & edge cases
+6. Refresh token blacklisting
+7. Authentication logging + error response standardization
 
 **Medium Priority**:
-7. CSRF middleware removal (simplification)
 8. Environment-aware configuration
 
 ### Rate Limiting Configuration (Django Ninja Throttling + Redis)
@@ -456,20 +468,28 @@ docker compose -f infrastructure/docker-compose.yml exec backend python manage.p
 - After 14 days, tokens expire and become eligible for cleanup
 - Daily flush keeps table size manageable (≈ active users × 2-3 tokens)
 
-### CSRF Simplification Rationale
+### CSRF Custom Middleware Rationale
 
-Django's built-in `CsrfViewMiddleware` provides:
-- ✅ Double-submit cookie pattern (same as custom middleware)
-- ✅ Automatic exemption for safe methods (GET, HEAD, OPTIONS)
-- ✅ Django Ninja integration (auth=None endpoints auto-exempt)
-- ✅ Battle-tested, maintained by Django core team
+**Why Custom Middleware?**
 
-Custom middleware adds:
-- ❌ Redundant logic (Django already handles this)
-- ❌ Maintenance burden
-- ❌ Potential edge case conflicts
+Django Ninja bug #1464 prevents using Django's built-in `CsrfViewMiddleware`:
+- ❌ Setting `csrf=True` on auth classes causes valid tokens to be rejected
+- ❌ Setting `csrf=False` disables ALL CSRF protection (unacceptable)
+- ❌ Bug unresolved as of Django Ninja v1.4.3
 
-**Verdict**: Remove custom, use Django's built-in.
+**Custom Middleware Solution:**
+
+Custom `CsrfHeaderMiddleware` provides:
+- ✅ JWT cookie detection (auth happens at endpoint level, not middleware)
+- ✅ Path-based exemptions for public endpoints (login, register, etc.)
+- ✅ Double-submit cookie pattern (same as Django's built-in)
+- ✅ Refresh endpoint requires CSRF (Option A - limits stolen session lifetime)
+- ✅ All 9 CSRF tests passing
+
+**Implementation Details:**
+- See `backend/apps/authentication/middleware.py` for implementation
+- See notes file (Task 5.5) for comprehensive analysis and decision rationale
+- Monitor Django Ninja issue #1464 for future resolution
 
 ### Comprehensive Test Coverage Strategy (Task 7.5)
 
@@ -497,9 +517,19 @@ Custom middleware adds:
 - Both serve different purposes: operational for deployment verification, automated for development workflow
 
 **Expected Outcome**:
-- 20 existing tests + ~20 new tests = 40+ total authentication tests
+- 20 existing tests + ~30 new tests = 50+ total authentication tests
 - 90%+ coverage for authentication app (exceeds 70% minimum, meets critical path requirement)
 - All security features validated in CI/CD pipeline (no manual testing required for regression)
+
+**Updated Test Coverage** (after audit):
+- 7.5.1: Security Headers (7 tests) - includes HSTS validation
+- 7.5.2: JWT Cookie SameSite (3 tests)
+- 7.5.3: Rate Limiting (7 tests)
+- 7.5.4: Token Blacklisting (6 tests)
+- 7.5.5: Authentication Logging (8 tests)
+- 7.5.6: Error Response Format (8 tests) - **NEW** validates Task 6 standardization
+- 7.5.7: Environment-Aware Config (11 tests) - **NEW** validates Task 7 implementation
+- **Total new tests: ~50 tests** (20 existing + 30 new)
 
 ## Completion Notes
 

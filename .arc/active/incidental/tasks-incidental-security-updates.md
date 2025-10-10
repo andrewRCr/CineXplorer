@@ -138,39 +138,64 @@
         - [x] 4.6.2 Type checking: `npx pyright backend/apps/authentication/api.py --project backend` - ✅ 0 errors
         - [x] 4.6.3 Verify ninja-jwt type stubs provide blacklist type coverage - ✅ py.typed marker confirmed, contextlib.suppress used
 
-- [ ] 5. Custom CSRF Middleware Removal (Simplification)
-    - [ ] 5.1 Remove custom middleware from `MIDDLEWARE` in `config/settings.py`
-        - [ ] 5.1.1 Remove line: `"authentication.middleware.CsrfHeaderMiddleware"`
-        - [ ] 5.1.2 Keep only Django's built-in: `"django.middleware.csrf.CsrfViewMiddleware"`
-        - [ ] 5.1.3 Add comment explaining Django's CSRF handles our use case
-    - [ ] 5.2 Update `authentication/middleware.py`
-        - [ ] 5.2.1 Remove `CsrfHeaderMiddleware` class (lines 17-60)
-        - [ ] 5.2.2 Remove `EXEMPT_PATH_PREFIXES` constant (line 14)
-        - [ ] 5.2.3 Keep file for any other middleware (currently none needed)
-    - [ ] 5.3 Verify CSRF protection still works
-        - [ ] 5.3.1 Test `/api/profile/` PATCH without CSRF token (should fail with 403)
-        - [ ] 5.3.2 Test `/api/profile/` PATCH with CSRF token (should succeed)
-        - [ ] 5.3.3 Test `/api/token/` POST without CSRF token (should succeed - auth=None)
-        - [ ] 5.3.4 Verify Django Ninja automatically handles CSRF for `auth=None` endpoints
-    - [ ] 5.4 Run incremental quality checks
-        - [ ] 5.4.1 Backend linting: `docker compose exec backend ruff check apps/authentication/middleware.py --fix`
-        - [ ] 5.4.2 Django check: `docker compose exec backend python manage.py check`
+- [x] 5. Custom CSRF Middleware Removal (Simplification)
+    - [x] 5.1 Remove custom middleware from `MIDDLEWARE` in `config/settings.py`
+        - [x] 5.1.1 Remove line: `"authentication.middleware.CsrfHeaderMiddleware"`
+        - [x] 5.1.2 Keep only Django's built-in: `"django.middleware.csrf.CsrfViewMiddleware"`
+        - [x] 5.1.3 Add comment explaining Django's CSRF handles our use case
+    - [x] 5.2 Update `authentication/middleware.py`
+        - [x] 5.2.1 Remove `CsrfHeaderMiddleware` class (lines 23-67)
+        - [x] 5.2.2 Remove `EXEMPT_PATH_PREFIXES` constant (line 20)
+        - [x] 5.2.3 Keep file for any other middleware (currently none needed - file preserved with documentation)
+    - [x] 5.3 Verify CSRF protection still works
+        - [x] 5.3.1 Test `/api/profile/` PATCH without CSRF token (should fail with 403) - ✅ Returns 403 (CSRF protection active)
+        - [x] 5.3.2 Update `/api/csrf/` endpoint to use Django's get_token() - ✅ Now generates Django-compatible csrftoken
+        - [x] 5.3.3 Test `/api/token/` POST without CSRF token (should succeed - auth=None) - ✅ Returns 401 (auth error, not CSRF error)
+        - [x] 5.3.4 Verify Django Ninja automatically handles CSRF for `auth=None` endpoints - ✅ auth=None endpoints accessible without CSRF
+    - [x] 5.4 Run incremental quality checks
+        - [x] 5.4.1 Backend linting: `.venv-backend/bin/ruff check` - ✅ 0 violations
+        - [x] 5.4.2 Django check: `docker compose exec backend python manage.py check` - ✅ 0 issues
+    - [x] 5.5 Investigate and resolve Django Ninja + Django CSRF integration issue
+        - [x] 5.5.1 Research Django Ninja CSRF integration best practices (external-research-analyst agent)
+        - [x] 5.5.2 Analyze findings and determine correct approach (Option 2: Custom middleware)
+        - [x] 5.5.3 Implement solution: Custom CsrfHeaderMiddleware with JWT cookie detection
+        - [x] 5.5.4 Test complete CSRF flow: All 9 tests passing ✅
+        - [x] 5.5.5 Document solution and rationale in notes file
+        - [ ] 5.5.6 Address Edge Cases and Enhancements
+            - [x] 5.5.6.1 DECISION: Refresh endpoint CSRF requirement → ✅ **APPROVED Option A** (require CSRF)
+            - [x] 5.5.6.2 Implement Path-Based CSRF Exemption System (decorator approach abandoned)
+                - [x] 5.5.6.2.1 Restore complete EXEMPT_PATH_PREFIXES list (6 endpoints)
+                - [x] 5.5.6.2.2 Verify refresh endpoint NOT in exempt list (requires CSRF per Option A)
+                - [x] 5.5.6.2.3 Run CSRF test suite to verify all 9 tests still pass - ✅ ALL PASSING
+                - [x] 5.5.6.2.4 Update middleware documentation for path-based pattern
+                - [x] 5.5.6.2.5 Run incremental quality checks (linting, type checking) - ✅ 0 errors
+                - **Decision:** Abandoned hybrid decorator approach due to Django Ninja wrapper complexity
+                - **Rationale:** Path-based sufficient for 6-12 total exempt endpoints across project lifecycle
+            - [x] 5.5.6.3 Create frontend CSRF integration guide in notes file
+            - [x] 5.5.6.4 Add CSRF failure monitoring recommendations to notes
+            - [x] 5.5.6.5 Add edge case tests and documentation (middleware ordering, token lifecycle, refresh CSRF requirement)
 
-- [ ] 6. Authentication Event Logging
-    - [ ] 6.1 Add logging to `authentication/api.py`
-        - [ ] 6.1.1 Import logger: `import logging; logger = logging.getLogger('cinexplorer.auth')`
-        - [ ] 6.1.2 Log failed login attempts with IP, username, user agent
-        - [ ] 6.1.3 Log successful logins with user ID, username
-        - [ ] 6.1.4 Log registration attempts (successful and failed)
-        - [ ] 6.1.5 Log token refresh attempts (successful and rate limited)
-    - [ ] 6.2 Configure logging settings if needed
-        - [ ] 6.2.1 Verify `cinexplorer.auth` logger configured in LOGGING
-        - [ ] 6.2.2 Set appropriate log level (INFO for prod, DEBUG for dev)
-        - [ ] 6.2.3 Add log rotation if not already configured
-    - [ ] 6.3 Test logging output
-        - [ ] 6.3.1 Trigger failed login and check logs
-        - [ ] 6.3.2 Trigger successful login and check logs
-        - [ ] 6.3.3 Verify sensitive data not logged (passwords, tokens)
+- [ ] 6. Authentication Event Logging & Error Response Standardization
+    - [ ] 6.1 Standardize error response format across authentication endpoints
+        - [ ] 6.1.1 Audit current error responses (401, 403, 400, 429, 409, 500)
+        - [ ] 6.1.2 Ensure consistent structure: `{"error": "message"}` for user-facing errors
+        - [ ] 6.1.3 Add `{"detail": "technical detail"}` for debugging (optional, development only)
+        - [ ] 6.1.4 Verify CSRF middleware error format matches: `{"detail": "CSRF token missing or invalid."}`
+        - [ ] 6.1.5 Document standard error format in notes file for Task 7.5 test writing
+    - [ ] 6.2 Add logging to `authentication/api.py`
+        - [ ] 6.2.1 Import logger: `import logging; logger = logging.getLogger('cinexplorer.auth')` (already exists, verify)
+        - [ ] 6.2.2 Log failed login attempts with IP, username, user agent
+        - [ ] 6.2.3 Log successful logins with user ID, username
+        - [ ] 6.2.4 Log registration attempts (successful and failed)
+        - [ ] 6.2.5 Log token refresh attempts (successful and rate limited)
+    - [ ] 6.3 Configure logging settings if needed
+        - [ ] 6.3.1 Verify `cinexplorer.auth` logger configured in LOGGING
+        - [ ] 6.3.2 Set appropriate log level (INFO for prod, DEBUG for dev)
+        - [ ] 6.3.3 Add log rotation if not already configured
+    - [ ] 6.4 Test logging output
+        - [ ] 6.4.1 Trigger failed login and check logs
+        - [ ] 6.4.2 Trigger successful login and check logs
+        - [ ] 6.4.3 Verify sensitive data not logged (passwords, tokens)
 
 - [ ] 7. Environment-Aware Configuration
     - [ ] 7.1 Add `ENVIRONMENT` setting to `config/settings.py`
@@ -252,19 +277,12 @@
         - [ ] 8.5.5 Verify rate limiting works as expected
 
 - [ ] 9. Documentation Updates
-    - [ ] 9.1 Update CURRENT-SESSION.md
-        - [ ] 9.1.1 Mark security updates incidental work complete
-        - [ ] 9.1.2 Document what was fixed and why
-        - [ ] 9.1.3 Update "Next Action" to resume OAuth incidental work
-    - [ ] 9.2 Update notes file with security improvements
-        - [ ] 9.2.1 Document security settings added
-        - [ ] 9.2.2 Document rate limiting configuration
-        - [ ] 9.2.3 Document token blacklisting implementation
-        - [ ] 9.2.4 Document CSRF simplification
-    - [ ] 9.3 Archive this incidental task list
-        - [ ] 9.3.1 Move to `.arc/reference/archive/tasks/`
-        - [ ] 9.3.2 Add completion summary and outcomes
-        - [ ] 9.3.3 Commit archive with appropriate message
+    - [ ] 9.1 Update notes file with security improvements
+        - [ ] 9.1.1 Document security settings added
+        - [ ] 9.1.2 Document rate limiting configuration
+        - [ ] 9.1.3 Document token blacklisting implementation
+        - [ ] 9.1.4 Document CSRF improvements
+    - [ ] 9.2 Add completion summary and outcomes to this incidental task list; mark its status as "Completed"
 
 ## Relevant Files
 
@@ -298,7 +316,7 @@
 
 **High Priority**:
 5. Refresh token blacklisting
-6. Authentication logging
+6. Authentication logging + error response standardization
 
 **Medium Priority**:
 7. CSRF middleware removal (simplification)

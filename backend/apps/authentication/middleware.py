@@ -1,11 +1,23 @@
 """
-Custom CSRF middleware for API endpoints.
+Custom CSRF middleware for Django Ninja API endpoints.
 
-Provides double-submit cookie pattern for CSRF protection, with exemptions
-for JWT-authenticated endpoints that don't require CSRF protection.
+This middleware provides CSRF protection for Django Ninja APIs with path-based
+exemptions, working around Django Ninja bug #1464 where csrf=True causes
+valid CSRF tokens to be rejected.
 
-Note: This custom middleware will be removed in favor of Django's built-in
-CsrfViewMiddleware as part of security hardening work.
+CSRF Protection Strategy:
+- Django Ninja: csrf=False (avoid bug #1464 entirely)
+- Django's CsrfViewMiddleware: DISABLED (conflicts with custom middleware)
+- This custom middleware: Path-based CSRF validation
+
+Exemption Strategy:
+- Path-based: All public endpoints listed in EXEMPT_PATH_PREFIXES
+- Simple and reliable for small, stable authentication API
+
+Why Custom Middleware:
+1. Django Ninja bug #1464 makes csrf=True unreliable
+2. Setting csrf=False on NinjaAPI applies @csrf_exempt to ALL endpoints
+3. This middleware provides selective CSRF protection without Django Ninja conflicts
 """
 from __future__ import annotations
 
@@ -14,54 +26,108 @@ import logging
 from django.http import HttpRequest, JsonResponse
 from django.utils.deprecation import MiddlewareMixin
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('cinexplorer.auth')
 
-# Prefix-based exemptions for token-related endpoints
-EXEMPT_PATH_PREFIXES = ["/api/register/", "/api/token/", "/api/logout/"]
+# Path-based exemptions for public authentication endpoints
+# These endpoints should NOT require CSRF tokens:
+# - Public authentication: login, register, logout, email verification
+# - Infrastructure: CSRF token generation endpoint
+#
+# PATH MAINTENANCE GUIDE:
+# Add new path when:
+#   - Creating public auth endpoint (accessible before login)
+#   - Adding infrastructure endpoint (health checks, metrics)
+#   - Implementing OAuth callbacks (state parameter provides CSRF protection)
+#
+# Do NOT add when:
+#   - Endpoint requires authentication (has JWT cookie - needs CSRF)
+#   - Endpoint performs state-changing operations with user data
+#   - Unsure → default to CSRF protection (more secure)
+#
+# Upcoming Work (OAuth Headless Migration):
+# When implementing OAuth social logins (tasks-incidental-oauth-headless-migration.md):
+#   "/_allauth/browser/v1/",  # OAuth: Headless API (state parameter validates)
+#
+# Refactoring Risks:
+# - Prefix matching: "/api/token/" exempts "/api/token/refresh/" too
+# - URL changes must update this list
+# - Run CSRF test suite after URL structure changes
+EXEMPT_PATH_PREFIXES = [
+    "/api/register/",           # Public: User registration
+    "/api/token/",              # Public: Login (obtain tokens)
+    "/api/csrf/",               # Infrastructure: CSRF token generation
+    "/api/logout/",             # Public: Logout (clears cookies)
+    "/api/verify-email/",       # Public: Email verification
+    "/api/resend-verification/", # Public: Resend verification email
+]
 
 
 class CsrfHeaderMiddleware(MiddlewareMixin):
     """
-    Custom CSRF middleware for API endpoints.
+    Custom CSRF middleware for API endpoints with path-based exemptions.
 
-    EXEMPT_PATH_PREFIXES contains endpoints that are exempt from CSRF checks because:
-        - Registration, token obtain, token refresh, and logout endpoints must be accessible
-            to unauthenticated users.
-        - These endpoints use JWT for authentication and do not rely on cookies for auth.
-        - CSRF protection is not needed for login, registration, token obtain, token refresh,
-            or logout in a JWT-based API.
-        - All other unsafe endpoints (using cookies for auth) remain protected by CSRF.
+    Validates CSRF tokens for authenticated state-changing requests while
+    exempting public authentication endpoints.
+
+    How it works:
+    1. Exempt paths in EXEMPT_PATH_PREFIXES (public endpoints)
+    2. Exempt unauthenticated requests (auth should fail first with 401)
+    3. For authenticated POST/PUT/PATCH/DELETE: validate CSRF token
+    4. Token must match: cookie 'csrftoken' == header 'X-CSRFToken'
+
+    CSRF Protection:
+    - Cookie: 'csrftoken' (set by /api/csrf/ endpoint)
+    - Header: 'X-CSRFToken' (must be sent by frontend)
+    - Validation: Double-submit cookie pattern
     """
 
     def process_request(self, request: HttpRequest) -> JsonResponse | None:
-        # Check if path starts with any exempt prefix
-        if any(request.path.startswith(prefix) for prefix in EXEMPT_PATH_PREFIXES):
+        """
+        Process incoming request and validate CSRF if needed.
+
+        Args:
+            request: The incoming HTTP request
+
+        Returns:
+            JsonResponse with 403 if CSRF validation fails, None to continue
+        """
+        # Exempt paths that don't require CSRF (public auth endpoints)
+        # Note: /api/token/ matches both login and refresh, but refresh should NOT be exempt
+        # Check for exact match on refresh endpoint first (requires CSRF per Option A decision)
+        if request.path == "/api/token/refresh/":
+            # Refresh endpoint requires CSRF - do NOT exempt
+            pass  # Continue to CSRF validation below
+        elif any(request.path.startswith(prefix) for prefix in EXEMPT_PATH_PREFIXES):
             return None
 
-        # CSRF protection is only needed for authenticated users.
-        # Unauthenticated requests have no session/cookies, so there's no CSRF risk.
-        # Let authentication fail first (401), then enforce CSRF for authenticated users (403).
-        # pyright: ignore[reportUnknownMemberType] - request.user type is object (django-types limitation)
-        if not getattr(request, "user", None) or not request.user.is_authenticated:  # pyright: ignore[reportUnknownMemberType]
+        # Check if request has JWT authentication cookies
+        # JWT auth happens at Django Ninja endpoint level, not middleware,
+        # so request.user is not yet set. We check for JWT cookies directly.
+        from django.conf import settings
+        access_token_name = settings.SIMPLE_JWT.get('ACCESS_TOKEN_NAME', 'access_token')
+        has_jwt_cookie = access_token_name in request.COOKIES
+
+        # CSRF protection only needed when JWT cookies are present
+        # If no JWT cookie, request will fail authentication (401) before reaching endpoint
+        if not has_jwt_cookie:
             return None
 
+        # Validate CSRF for state-changing methods
         if request.method in ("POST", "PUT", "PATCH", "DELETE"):
-            cookie_token = request.COOKIES.get("XSRF-TOKEN")
-            # Accept either X-CSRFToken or X-XSRF-TOKEN header
-            header_token = request.headers.get("X-CSRFToken") or request.headers.get(
-                "X-XSRF-TOKEN"
-            )
+            cookie_token = request.COOKIES.get("csrftoken")
+            header_token = request.headers.get("X-CSRFToken")
 
             if not cookie_token or not header_token or cookie_token != header_token:
                 logger.warning(
                     f"CSRF validation failed: Path={request.path}, "
                     f"Method={request.method}, "
-                    f"Authenticated={request.user.is_authenticated}, "  # pyright: ignore[reportUnknownMemberType]
+                    f"HasJWTCookie={has_jwt_cookie}, "
                     f"CookiePresent={bool(cookie_token)}, "
                     f"HeaderPresent={bool(header_token)}"
                 )
                 return JsonResponse(
-                    {"detail": "CSRF token missing or invalid."}, status=403
+                    {"detail": "CSRF token missing or invalid."},
+                    status=403
                 )
 
         return None

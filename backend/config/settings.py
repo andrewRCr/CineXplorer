@@ -74,6 +74,8 @@ INSTALLED_APPS = [
     "allauth.socialaccount.providers.google",
     "allauth.socialaccount.providers.github",
     "allauth.headless",  # Headless mode for SPA integration
+    # django-ninja-jwt token blacklist (refresh token rotation security)
+    "ninja_jwt.token_blacklist",
     # Project apps
     "authentication",
     "movie",
@@ -382,6 +384,9 @@ SIMPLE_JWT = {
     # Frontend and backend served via same Caddy proxy (same-origin), so 'Lax' is appropriate
     # 'None' would be needed only for true cross-site scenarios (e.g., API on different domain)
     "JWT_COOKIE_SAMESITE": "Lax",
+    # Token rotation security - prevents stolen refresh token reuse
+    "ROTATE_REFRESH_TOKENS": True,  # Issue new refresh token on each refresh
+    "BLACKLIST_AFTER_ROTATION": True,  # Auto-blacklist old token after rotation
 }
 
 # Testing flag

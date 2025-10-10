@@ -5,6 +5,7 @@ This command tests all aspects of the logging system to ensure proper integratio
 """
 
 import logging
+from argparse import ArgumentParser
 
 from django.core.management.base import BaseCommand
 
@@ -12,7 +13,7 @@ from django.core.management.base import BaseCommand
 class Command(BaseCommand):
     help = "Test the logging system configuration and verify all components work correctly"
 
-    def add_arguments(self, parser):
+    def add_arguments(self, parser: ArgumentParser) -> None:
         parser.add_argument(
             "--include-db",
             action="store_true",
@@ -24,22 +25,31 @@ class Command(BaseCommand):
             help="Test slow query logging (simulates slow database operations)",
         )
 
-    def handle(self, *args, **options):
+    def handle(self, *args: object, **options: object) -> None:
         self.stdout.write(self.style.SUCCESS("Testing CineXplorer logging system..."))
+
+        # Django management command framework guarantees these types
+        include_db_obj = options.get("include_db", False)
+        include_slow_query_obj = options.get("include_slow_query", False)
+        assert isinstance(include_db_obj, bool)
+        assert isinstance(include_slow_query_obj, bool)
+        include_db: bool = include_db_obj
+        include_slow_query: bool = include_slow_query_obj
+
         # Test all loggers
         self.test_application_loggers()
         # Test formatters by checking log output
         self.test_log_levels()
         # Test database logging if requested
-        if options["include_db"]:
-            self.test_database_logging(include_slow=options["include_slow_query"])
+        if include_db:
+            self.test_database_logging(include_slow=include_slow_query)
         # Test error logging
         self.test_error_logging()
         # Display logging configuration summary
         self.display_logging_summary()
         self.stdout.write(self.style.SUCCESS("Logging system test completed!"))
 
-    def test_application_loggers(self):
+    def test_application_loggers(self) -> None:
         """Test all application-specific loggers."""
         self.stdout.write("Testing application loggers...")
         # Import from our logging configuration
@@ -57,7 +67,7 @@ class Command(BaseCommand):
             logger.info(f"Testing {description} - this message should appear in logs")
             self.stdout.write(f"  ✓ {name}: {description}")
 
-    def test_log_levels(self):
+    def test_log_levels(self) -> None:
         """Test different log levels and their output."""
         self.stdout.write("Testing log levels...")
         app_logger = logging.getLogger("cinexplorer")
@@ -69,7 +79,7 @@ class Command(BaseCommand):
         app_logger.critical("CRITICAL level message - critical system error")
         self.stdout.write("  ✓ All log levels tested")
 
-    def test_database_logging(self, include_slow=False):
+    def test_database_logging(self, include_slow: bool = False) -> None:
         """Test database query logging."""
         self.stdout.write("Testing database logging...")
         try:
@@ -102,7 +112,7 @@ class Command(BaseCommand):
         except Exception as e:
             self.stdout.write(self.style.WARNING(f"Database logging test failed: {e}"))
 
-    def test_error_logging(self):
+    def test_error_logging(self) -> None:
         """Test error logging and exception handling."""
         self.stdout.write("Testing error logging...")
         app_logger = logging.getLogger("cinexplorer")
@@ -114,7 +124,7 @@ class Command(BaseCommand):
             app_logger.error(f"Caught test exception: {e}", exc_info=True)
             self.stdout.write("  ✓ Exception logging tested (should appear in errors.log)")
 
-    def display_logging_summary(self):
+    def display_logging_summary(self) -> None:
         """Display summary of logging configuration."""
         self.stdout.write("\nLogging Configuration Summary:")
         try:

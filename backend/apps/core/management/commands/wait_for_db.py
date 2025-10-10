@@ -4,7 +4,7 @@ Command to wait for the database to be available before starting the core app.
 
 import sys
 import time
-from typing import Any
+from argparse import ArgumentParser
 
 from django.core.management.base import BaseCommand
 from django.db import connections
@@ -18,7 +18,7 @@ class Command(BaseCommand):
     Supports configurable timeout and exponential backoff to avoid log spam.
     """
 
-    def add_arguments(self, parser):
+    def add_arguments(self, parser: ArgumentParser) -> None:
         """Add command-line arguments."""
         parser.add_argument(
             '--timeout',
@@ -27,9 +27,13 @@ class Command(BaseCommand):
             help='Maximum time to wait for database in seconds (default: 60)',
         )
 
-    def handle(self, *args: str, **options: Any) -> None:  # Any: Django command options dict
+    def handle(self, *args: object, **options: object) -> None:
         """Entry-point for command with timeout and exponential backoff."""
-        timeout = options['timeout']
+        # Django management command framework guarantees these types
+        timeout_obj = options.get('timeout', 60)
+        assert isinstance(timeout_obj, int)
+        timeout: int = timeout_obj
+
         start_time = time.monotonic()
         delay = 1  # Initial delay in seconds
         MAX_DELAY = 30  # Maximum delay between retries

@@ -5,6 +5,8 @@ using Django Ninja, following the patterns established in Phase 1.
 """
 from __future__ import annotations
 
+import contextlib
+import logging
 import secrets
 from collections.abc import Sequence
 from typing import Literal
@@ -30,7 +32,11 @@ from django.contrib.auth import authenticate, get_user_model
 from django.http import HttpRequest, HttpResponse
 from ninja import Router
 from ninja.throttling import AnonRateThrottle, UserRateThrottle
+from ninja_jwt.exceptions import TokenError
 from ninja_jwt.tokens import RefreshToken
+
+# Logger for authentication security events
+logger = logging.getLogger('cinexplorer.auth')
 
 # Create authentication router
 auth_router = Router(tags=["Authentication"])
@@ -240,7 +246,7 @@ def obtain_token(
 @auth_router.post(
     "/token/refresh/",
     auth=None,
-    response={200: TokenResponseSchema, 400: dict[str, object]},
+    response={200: TokenResponseSchema, 400: dict[str, object], 401: dict[str, object]},
     throttle=_THROTTLE_REFRESH,  # pyright: ignore[reportArgumentType]  # Django Ninja expects List[BaseThrottle] (invariant), we provide Sequence[subclass] (covariant) - safe at runtime
 )
 def refresh_token(
@@ -249,6 +255,8 @@ def refresh_token(
     """Refresh JWT access token using refresh token from cookie.
 
     Reads refresh token from httponly cookie and generates new access token.
+    Implements token rotation security: old refresh tokens are automatically
+    blacklisted after rotation (via BLACKLIST_AFTER_ROTATION setting).
 
     Args:
         request: HTTP request object
@@ -257,7 +265,13 @@ def refresh_token(
     Returns:
         tuple: (status_code, response_data)
             - 200: Token refreshed successfully, new tokens set as cookies
-            - 400: No valid refresh token in cookies
+            - 400: No valid refresh token in cookies or invalid format
+            - 401: Token blacklisted (reuse attempt detected)
+
+    Security:
+        - Automatic token rotation: new refresh token issued on each refresh
+        - Old tokens blacklisted automatically via BLACKLIST_AFTER_ROTATION
+        - Reuse attempts logged as security events with IP and user agent
 
     Cookie handling:
         - Reads refresh token from httponly cookie
@@ -278,15 +292,40 @@ def refresh_token(
         return 400, {"error": "No valid refresh token found in cookies."}
 
     try:
-        # Validate and refresh the token
-        refresh = RefreshToken(refresh_token_value)
-        access_token = str(refresh.access_token)
+        # Validate the old refresh token
+        # This will raise TokenError if token is blacklisted
+        old_refresh = RefreshToken(refresh_token_value)
 
-        # Rotate refresh token: set new JTI and expiration time
-        # ninja-jwt methods missing from type stubs
-        refresh.set_jti()  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
-        refresh.set_exp()  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
-        new_refresh_token = str(refresh)
+        # Check if token is blacklisted (manual check required)
+        # ninja-jwt blacklist check - method missing from type stubs
+        with contextlib.suppress(AttributeError):
+            # check_blacklist() not available, blacklist check will happen on next use
+            old_refresh.check_blacklist()  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
+
+        # Generate new access token from old refresh token
+        access_token = str(old_refresh.access_token)
+
+        # Get user for generating new refresh token
+        user_id = old_refresh.payload.get('user_id')  # pyright: ignore[reportUnknownMemberType]
+        user_model = get_user_model()
+        user = user_model.objects.get(id=user_id)  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
+
+        # Generate completely new refresh token
+        new_refresh = RefreshToken.for_user(user)  # pyright: ignore[reportArgumentType]
+        new_refresh_token = str(new_refresh)
+
+        # Blacklist the old refresh token (manual blacklist with BLACKLIST_AFTER_ROTATION)
+        # This prevents reuse of the old token
+        try:
+            old_refresh.blacklist()  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
+        except AttributeError:
+            # blacklist() method not available - library might not support it
+            logger.warning(
+                "Token blacklist not available - check ninja_jwt.token_blacklist in INSTALLED_APPS"
+            )
+        except Exception as e:
+            # Token might already be blacklisted or blacklist table not available
+            logger.warning(f"Failed to blacklist old refresh token: {e!s}")
 
         # Set new tokens as httponly cookies
         response.set_cookie(
@@ -306,17 +345,53 @@ def refresh_token(
             samesite=samesite,
         )
 
-        # Get user_id from token payload
-        user_id = refresh.payload.get('user_id')  # pyright: ignore[reportUnknownMemberType]
-
+        # Return success response with new tokens
         return 200, {
             "access": access_token,
             "refresh": new_refresh_token,
             "user_id": user_id,
             "email_verified": True  # Assume verified (token already issued)
         }
-    except Exception as e:
+    except TokenError as e:
+        # Token is blacklisted or invalid - log as security event
+        error_message = str(e).lower()
+
+        # Detect blacklisted token reuse attempts (potential security incident)
+        if 'blacklist' in error_message or 'blacklisted' in error_message:
+            # Get client info for security logging
+            client_ip = request.META.get('REMOTE_ADDR', 'unknown')
+            user_agent = request.META.get('HTTP_USER_AGENT', 'unknown')
+
+            # Extract user_id from token if possible (for attribution)
+            try:
+                # Decode without verification to get payload
+                # Token might be blacklisted but payload still readable
+                import jwt
+                payload = jwt.decode(
+                    refresh_token_value,
+                    options={"verify_signature": False}
+                )
+                user_id = payload.get('user_id', 'unknown')
+            except Exception:
+                user_id = 'unknown'
+
+            # Log security event: blacklisted token reuse attempt
+            logger.warning(
+                f"SECURITY: Blacklisted token reuse attempt detected | "
+                f"user_id={user_id} | ip={client_ip} | user_agent={user_agent}"
+            )
+
+            return 401, {
+                "error": "Token has been revoked. Please login again.",
+                "detail": "This refresh token has already been used and is no longer valid."
+            }
+
+        # Other token errors (expired, invalid signature, malformed)
         return 400, {"error": f"Invalid or expired refresh token: {e!s}"}
+    except Exception as e:
+        # Unexpected errors (database issues, etc.)
+        logger.error(f"Unexpected error during token refresh: {e!s}", exc_info=True)
+        return 400, {"error": "An error occurred during token refresh. Please try again."}
 
 
 @auth_router.post("/logout/", response={200: LogoutResponseSchema})

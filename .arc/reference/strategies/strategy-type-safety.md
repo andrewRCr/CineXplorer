@@ -1,11 +1,12 @@
 # Type Safety Strategy and Guidelines
 
-**Version:** 2.0
-**Last Updated:** 2025-10-09
+**Version:** 2.1
+**Last Updated:** 2025-10-10
 **Status:** Active - Official project standards
 
 ## Version History
 
+- **2.1** (2025-10-10): Added Ruff ANN401 enforcement for explicit `typing.Any` detection. Documented validation boundary pattern for external APIs. Clarified Pyright limitation (only catches implicit Any). Added per-file-ignores configuration for justified external API boundaries.
 - **2.0** (2025-10-09): Migrated from hybrid Pyright+MyPy to Pyright-only with django-types. Removed MyPy configuration, enhanced Django ORM patterns, simplified type ignore guidelines, documented custom stub supplement strategy.
 - **1.1** (2025-10-08): Added comprehensive hybrid type checker ignore guidelines with decision trees, real examples, and anti-patterns
 - **1.0**: Initial type safety strategy
@@ -418,6 +419,74 @@ def process_data(data: dict[str, object]) -> dict[str, object]:
 def parse_tmdb_response(payload: Any) -> MovieSchema:  # TMDB API contract not typed
     ...
 ```
+
+### Enforcement: Ruff ANN401 Rule
+
+**Automated Detection**: The Ruff linter enforces explicit `Any` detection via the `ANN401` rule.
+
+**Configuration** (`backend/pyproject.toml`):
+
+```toml
+[tool.ruff.lint]
+select = [
+    # ... other rules
+    "ANN401",  # Explicit typing.Any detection (type safety quality gate)
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Justified external API boundaries
+"apps/authentication/adapters.py" = ["ANN401"]  # Allauth library contracts
+"apps/authentication/auth_ninja.py" = ["ANN401"]  # Django settings & OpenAPI schemas
+"apps/core/services/metrics.py" = ["ANN401"]  # Monitoring system mixed-type labels
+"stubs/**/*.pyi" = ["ANN401"]  # Type stubs may use Any for external library contracts
+```
+
+**Running the Check**:
+
+```bash
+# Check entire backend
+ruff check backend/ --select ANN401
+
+# Check specific files
+ruff check backend/apps/authentication/ --select ANN401
+
+# Run with all other Ruff rules
+ruff check backend/
+```
+
+**Validation Boundary Pattern** (Recommended):
+
+When `typing.Any` is justified for external APIs, use the validation boundary pattern to contain the type unsafety:
+
+```python
+from pydantic import BaseModel
+
+class TMDBMovieResponse(BaseModel):
+    """Type-safe model for TMDB movie data."""
+    id: int
+    title: str
+    release_date: str
+
+def fetch_movie(movie_id: int) -> TMDBMovieResponse:
+    """Fetch movie from TMDB API with validation boundary."""
+    # Layer 1: Untyped external world (Any acceptable here)
+    raw_response: Any = requests.get(f"api.tmdb.org/movie/{movie_id}").json()
+    # Justification: External API boundary - validated immediately below
+
+    # Layer 2: Validation boundary (Any → Validated Type)
+    validated = TMDBMovieResponse.model_validate(raw_response)
+
+    # Layer 3: Type-safe internal code (no Any leakage)
+    return validated
+```
+
+**Key Principles**:
+1. **Contain Any to the boundary** - Don't let it propagate into application code
+2. **Validate immediately** - First thing after receiving external data
+3. **Document the boundary** - Make it clear why Any is justified
+4. **Fail fast** - Validate eagerly with Pydantic
+
+**Pyright Limitation**: Note that Pyright's `reportAny: "error"` configuration only catches *implicit* Any (from missing type annotations), NOT explicit `Any` type annotations. This is why Ruff ANN401 is essential for comprehensive enforcement.
 
 ## Type Ignore Guidelines
 

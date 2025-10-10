@@ -341,7 +341,16 @@
                 - Explicit list types: capture_handlers, security_violations, api_results
             - **Type ignores**: 1 documented (hasattr runtime validation for len())
             - **Linting**: All checks passed (import order, line length fixes)
-        - [ ] 8.7.2 Fix verify_tmdb_logging.py (22 errors) - LogRecord types, unknown members
+        - [x] 8.7.2 Fix verify_tmdb_logging.py (22 errors → 0) ✅
+            - **Modernization**: Replaced deleted tmdb_get() with TMDBApiClient
+                - Updated: tmdb_get('movie/popular') → client.get_popular_movies()
+                - Updated response handling for ApiResponse dataclass
+            - **Type Safety**: Added comprehensive type annotations
+                - Method: handle(*args: object, **options: object) -> None (using object, not Any per rules)
+                - logging.LogRecord types for emit() parameter and log_records list
+                - Explicit type: extra_fields: dict[str, object]
+            - **Type ignores**: 1 documented (hasattr runtime validation for len())
+            - **Linting**: Import order fix auto-applied
         - [ ] 8.7.3 Fix test_tmdb_logging.py (17 errors) - HttpError.detail access, date indexing
         - [ ] 8.7.4 Fix test_logging.py (4 errors) - ArgumentParser parameter types
         - [ ] 8.7.5 Fix wait_for_db.py (3 errors) - Parser parameter type

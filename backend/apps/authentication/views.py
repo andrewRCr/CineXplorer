@@ -30,8 +30,6 @@ from authentication.serializers import (
 from core.services.email_service import email_service
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser, AnonymousUser, User
-
-# from typing import Any  # Removed per Quality Gate #6
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from rest_framework import generics, permissions, status

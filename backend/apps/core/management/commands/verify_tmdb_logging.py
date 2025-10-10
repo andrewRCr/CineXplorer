@@ -9,14 +9,14 @@ import json
 import logging
 import time
 
+from core.services.tmdb_api_client import TMDBApiClient
 from django.core.management.base import BaseCommand
-from movie.services.movie_service import tmdb_get
 
 
 class Command(BaseCommand):
     help = 'Verify TMDB API logging captures all expected metadata'
 
-    def handle(self, *args, **options):
+    def handle(self, *args: object, **options: object) -> None:
         """Handle the logging verification command.
 
         Note: This method has high complexity (C901) due to comprehensive
@@ -30,10 +30,10 @@ class Command(BaseCommand):
         logger = logging.getLogger('cinexplorer.tmdb')
 
         # Create a custom handler to capture log records
-        log_records = []
+        log_records: list[logging.LogRecord] = []
 
         class LogRecordCapture(logging.Handler):
-            def emit(self, record):
+            def emit(self, record: logging.LogRecord) -> None:
                 log_records.append(record)
 
         capture_handler = LogRecordCapture()
@@ -43,7 +43,8 @@ class Command(BaseCommand):
         try:
             # Make a TMDB API call
             self.stdout.write("📡 Making TMDB API call...")
-            result = tmdb_get('movie/popular', {'page': 1})
+            client = TMDBApiClient()
+            api_response = client.get_popular_movies(page=1)
 
             # Give logging a moment to complete
             time.sleep(0.1)
@@ -59,7 +60,7 @@ class Command(BaseCommand):
                 self.stdout.write(f"Function: {record.funcName}")
 
                 # Check for extra fields
-                extra_fields = {}
+                extra_fields: dict[str, object] = {}
                 for attr in dir(record):
                     if not attr.startswith('_') and attr not in [
                         'name', 'msg', 'args', 'levelname', 'levelno', 'pathname',
@@ -84,11 +85,17 @@ class Command(BaseCommand):
                     self.stdout.write("❌ No extra fields found")
 
             # Check API call result
-            if 'error' in result:
-                self.stdout.write(f"\n❌ API Error: {result.get('error')}")
+            if not api_response.is_success():
+                self.stdout.write(f"\n❌ API Error: {api_response.error_message}")
+            elif api_response.data is not None and isinstance(api_response.data, dict):
+                results = api_response.data.get('results', [])
+                if hasattr(results, '__len__'):
+                    movies_count = len(results)  # pyright: ignore[reportArgumentType]  # Runtime validation via hasattr
+                    self.stdout.write(f"\n✅ API Success: Found {movies_count} movies")
+                else:
+                    self.stdout.write("\n✅ API Success: Results returned")
             else:
-                movies_count = len(result.get('results', []))
-                self.stdout.write(f"\n✅ API Success: Found {movies_count} movies")
+                self.stdout.write("\n⚠️ API response has no data")
 
         except Exception as e:
             self.stdout.write(f"\n❌ Test failed: {e}")

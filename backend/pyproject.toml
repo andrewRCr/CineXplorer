@@ -38,6 +38,7 @@ select = [
     "PIE",   # flake8-pie
     "PT",    # flake8-pytest-style
     "SIM",   # flake8-simplify
+    "ANN401", # Explicit typing.Any detection (type safety quality gate)
 ]
 
 # Ignore specific rules
@@ -62,14 +63,22 @@ section-order = ["future", "standard-library", "third-party", "first-party", "lo
 "tests/**/*.py" = ["PT", "B", "PIE"]
 "*/tests/**/*.py" = ["PT", "B", "PIE"]
 
+# Typing.Any exceptions for justified external API boundaries
+# See: .arc/reference/strategies/strategy-type-safety.md for justification policy
+"apps/authentication/adapters.py" = ["ANN401"]  # Allauth library contracts
+"apps/authentication/auth_ninja.py" = ["ANN401"]  # Django settings & OpenAPI schemas
+"apps/core/services/metrics.py" = ["ANN401"]  # Monitoring system mixed-type labels
+"apps/core/management/commands/export_openapi_schema.py" = ["ANN401"]  # OpenAPI schema dict
+"apps/core/management/commands/wait_for_db.py" = ["N806", "ANN401"]  # ALL_CAPS OK, Django command args
+"stubs/**/*.pyi" = ["ANN401"]  # Type stubs may use Any for external library contracts
+
 # To-be-deleted DRF files (ignore violations until Phase 6 cleanup)
-"apps/authentication/serializers.py" = ["N806", "N815"]
-"apps/authentication/views.py" = ["N806", "N815"]
-"apps/user_movie_data/serializers.py" = ["N806", "N815"]
-"apps/user_movie_data/views.py" = ["N806", "N815"]
-"apps/core/views/logging.py" = ["N806"]  # DRF view, will be migrated later
-"apps/core/views/tmdb.py" = ["N806"]     # DRF view, will be migrated later
-"apps/core/management/commands/wait_for_db.py" = ["N806"]  # ALL_CAPS constants OK per PEP 8
+"apps/authentication/serializers.py" = ["N806", "N815", "ANN401"]
+"apps/authentication/views.py" = ["N806", "N815", "ANN401"]
+"apps/user_movie_data/serializers.py" = ["N806", "N815", "ANN401"]
+"apps/user_movie_data/views.py" = ["N806", "N815", "ANN401"]
+"apps/core/views/logging.py" = ["N806", "ANN401"]  # DRF view, will be migrated later
+"apps/core/views/tmdb.py" = ["N806", "ANN401"]     # DRF view, will be migrated later
 
 [tool.ruff.format]
 # Use double quotes (Python default)

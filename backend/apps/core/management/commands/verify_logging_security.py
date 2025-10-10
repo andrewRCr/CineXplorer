@@ -10,7 +10,6 @@ import logging
 import time
 from collections.abc import Mapping
 from pathlib import Path
-from typing import Any
 
 from core.services.api_response import ApiResponse
 from core.services.tmdb_api_client import TMDBApiClient
@@ -21,7 +20,7 @@ from django.core.management.base import BaseCommand
 class Command(BaseCommand):
     help = 'Verify sensitive data (API keys) are excluded from log output'
 
-    def handle(self, *args: Any, **options: Any) -> None:
+    def handle(self, *args: object, **options: object) -> None:
         self.stdout.write("🔐 Starting sensitive data exclusion verification...")
 
         # Get the actual API key to search for

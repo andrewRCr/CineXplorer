@@ -6,7 +6,6 @@ with TMDB-specific authentication, rate limiting, error handling, and response
 processing built on top of the BaseApiClient infrastructure.
 """
 
-# from typing import Any  # Removed per Quality Gate #6
 import requests
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured

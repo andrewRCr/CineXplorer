@@ -51,7 +51,7 @@
     "reportUnusedVariable": "warning",
     "reportImportCycles": "error",
     "reportPrivateUsage": "error",
-    "reportAny": "warning",
+    "reportAny": "error",  // Any usage prohibited per type safety strategy (use object instead)
 
     // Django ORM limitations (acceptable information-level warnings)
     // These patterns are inherent to Django's dynamic ORM and validated at runtime by tests

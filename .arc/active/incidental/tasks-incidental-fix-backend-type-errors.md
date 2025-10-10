@@ -351,11 +351,31 @@
                 - Explicit type: extra_fields: dict[str, object]
             - **Type ignores**: 1 documented (hasattr runtime validation for len())
             - **Linting**: Import order fix auto-applied
-        - [ ] 8.7.3 Fix test_tmdb_logging.py (17 errors) - HttpError.detail access, date indexing
-        - [ ] 8.7.4 Fix test_logging.py (4 errors) - ArgumentParser parameter types
-        - [ ] 8.7.5 Fix wait_for_db.py (3 errors) - Parser parameter type
-        - [ ] 8.7.6 Run type check: Verify 0 errors in management/commands/
-        - [ ] 8.7.7 Run linting
+        - [x] 8.7.3 Fix test_tmdb_logging.py (17 errors → 0) ✅
+            - **Type Safety**: Added comprehensive type annotations
+                - Method signatures: add_arguments(parser: ArgumentParser) -> None, handle(*args: object, **options: object) -> None
+                - All test methods: test_discover_movies() -> None, test_search_movies() -> None, etc.
+                - Type narrowing: isinstance assertions for options dict → str/float
+            - **HttpError Fix**: Changed e.detail → e.message (correct attribute per Django Ninja)
+            - **Date Handling**: Fixed release_date[:4] → release_date.year (date object, not string)
+            - **Type ignores**: 0 needed - clean type narrowing with isinstance assertions
+            - **Linting**: All checks passed
+        - [x] 8.7.4 Fix test_logging.py (4 errors → 0) ✅
+            - **Type Safety**: Added comprehensive type annotations
+                - Method signatures: add_arguments(parser: ArgumentParser) -> None, handle(*args: object, **options: object) -> None
+                - All methods: test_application_loggers() -> None, test_log_levels() -> None, test_database_logging(include_slow: bool) -> None, etc.
+                - Type narrowing: isinstance assertions for options dict → bool
+            - **Type ignores**: 0 needed - clean isinstance assertions
+            - **Linting**: All checks passed
+        - [x] 8.7.5 Fix wait_for_db.py (1 error → 0) ✅
+            - **Type Safety**: Added comprehensive type annotations
+                - Method: add_arguments(parser: ArgumentParser) -> None
+                - Updated handle() to use object instead of Any (per strategy)
+                - Type narrowing: isinstance assertion for timeout → int
+            - **Type ignores**: 0 needed - clean type narrowing
+            - **Linting**: All checks passed
+        - [x] 8.7.6 Run type check: Verify 0 errors in management/commands/ ✅
+        - [x] 8.7.7 Run linting: All checks passed ✅
     - [ ] 8.8 Fix tests/ directory (70 errors)
         - [ ] 8.8.1 Fix test_models.py (32 errors) - Apply Task 7.8 fixture patterns
         - [ ] 8.8.2 Fix test_commands.py (19 errors) - Similar fixture patterns
@@ -429,15 +449,31 @@
 - `backend/config/tests/test_logging_config.py` - ✅ FIXED: Added constant redefinition ignores
 - `backend/config/urls.py` - ✅ FIXED: Added type ignores for admin.site.urls (django-types limitation)
 
+**Target Architecture Code (fixed - Authentication app):**
+- `backend/apps/authentication/api.py` - ✅ FIXED: Throttle variance with type ignores
+- `backend/apps/authentication/schemas.py` - ✅ Already passing
+- `backend/apps/authentication/auth_ninja.py` - ✅ FIXED: User scoping refactor
+- `backend/apps/authentication/adapters.py` - ✅ FIXED: Explicit dict[str, object] type
+- `backend/apps/authentication/middleware.py` - ✅ FIXED: request.user with type ignores
+- `backend/apps/authentication/tests/fixtures.py` - ✅ FIXED: create_user with cast
+- `backend/apps/authentication/tests/test_user_api.py` - ✅ FIXED: dict casting, check_password
+
+**Target Architecture Code (fixed - Core app):**
+- `backend/apps/core/admin.py` - ✅ Already passing (Task 1 stubs)
+- `backend/apps/core/models.pyi` - ✅ FIXED: Removed duplicate Manager
+- `backend/apps/core/context_processors.py` - ✅ FIXED: HttpRequest type
+- `backend/apps/core/services/validators.py` - ✅ FIXED: Removed unnecessary isinstance
+- `backend/apps/core/services/api_response.py` - ✅ FIXED: Dict variance
+- `backend/apps/core/services/tmdb_api_client.py` - ✅ FIXED: Dict variance, metadata typing
+- `backend/apps/core/tmdb_models/tmdb_responses.py` - ✅ FIXED: Pydantic Field types
+- `backend/apps/core/management/commands/verify_logging_security.py` - ✅ FIXED: Comprehensive types + modernization
+- `backend/apps/core/management/commands/verify_tmdb_logging.py` - ✅ FIXED: Comprehensive types + modernization
+- `backend/apps/core/management/commands/test_tmdb_logging.py` - ✅ FIXED: Comprehensive types + HttpError.message
+- `backend/apps/core/management/commands/test_logging.py` - ✅ FIXED: Comprehensive types
+- `backend/apps/core/management/commands/wait_for_db.py` - ✅ FIXED: ArgumentParser type, object→int narrowing
+
 **Target Architecture Code (to fix):**
-- `backend/apps/authentication/api.py` - Django Ninja endpoints
-- `backend/apps/authentication/schemas.py` - Pydantic schemas
-- `backend/apps/authentication/auth_ninja.py` - Authentication helpers
-- `backend/apps/authentication/adapters.py` - Allauth integration
-- `backend/apps/core/admin.py` - Admin configuration
-- `backend/apps/core/models.py` - Core models
-- `backend/apps/core/context_processors.py` - Template context
-- `backend/apps/core/utilities/` - Utility functions
+- `backend/apps/core/tests/` - 70 errors remaining (test_models.py, test_commands.py, test_admin.py, test_helpers.py)
 
 **Documentation:**
 - `.arc/active/notes-type-coverage-status.md` - Type coverage tracking (gitignored)

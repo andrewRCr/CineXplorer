@@ -125,9 +125,15 @@ class CsrfHeaderMiddleware(MiddlewareMixin):
                     f"CookiePresent={bool(cookie_token)}, "
                     f"HeaderPresent={bool(header_token)}"
                 )
-                return JsonResponse(
-                    {"detail": "CSRF token missing or invalid."},
-                    status=403
-                )
+                # Standardized error format: {"error": "message"} for all errors
+                # Optional "detail" field for debugging (development only)
+                from django.conf import settings
+                error_response = {"error": "CSRF token missing or invalid."}
+                if settings.DEBUG:
+                    error_response["detail"] = (
+                        f"CSRF validation failed for {request.method} {request.path}. "
+                        f"Ensure X-CSRFToken header matches csrftoken cookie."
+                    )
+                return JsonResponse(error_response, status=403)
 
         return None

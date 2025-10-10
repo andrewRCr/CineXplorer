@@ -93,21 +93,36 @@ def register_user(
     """
     user_model = get_user_model()
 
+    # Get client info for logging
+    client_ip = request.META.get('REMOTE_ADDR', 'unknown')
+
     # Check for forbidden usernames
     forbidden_usernames = settings.FORBIDDEN_USERNAMES
     if payload.username.lower() in forbidden_usernames:
+        logger.warning(
+            f"Registration failed: Forbidden username | "
+            f"username={payload.username} | ip={client_ip}"
+        )
         return 409, {
             "error": f'Username "{payload.username}" is not allowed.'
         }
 
     # Check for existing username
     if user_model.objects.filter(username=payload.username).exists():
+        logger.warning(
+            f"Registration failed: Username already exists | "
+            f"username={payload.username} | ip={client_ip}"
+        )
         return 409, {
             "error": "Username already associated with an existing account."
         }
 
     # Check for existing email
     if user_model.objects.filter(email=payload.email).exists():
+        logger.warning(
+            f"Registration failed: Email already exists | "
+            f"email={payload.email} | ip={client_ip}"
+        )
         return 409, {
             "error": "Email address already associated with an existing account."
         }
@@ -126,15 +141,30 @@ def register_user(
     try:
         # Create EmailAddress record and send confirmation using allauth
         EmailAddress.objects.add_email(request, user, payload.email, confirm=True)  # pyright: ignore[reportUnknownArgumentType]
+
+        # Log successful registration
+        logger.info(
+            f"Registration successful | "
+            f"user_id={user.id} | username={payload.username} | email={payload.email} | "  # pyright: ignore[reportUnknownMemberType]
+            f"ip={client_ip}"
+        )
+
         return 201, {
             "message": "Registration successful. Please check your email to verify your account.",
             "user_id": user.id,  # pyright: ignore[reportUnknownMemberType]
             "email": user.email,  # pyright: ignore[reportUnknownMemberType]
             "email_sent": True
         }
-    except Exception:
+    except Exception as e:
         # Email failed to send - delete the user and return error
         user.delete()  # pyright: ignore[reportUnknownMemberType]
+
+        logger.error(
+            f"Registration failed: Email sending error | "
+            f"username={payload.username} | email={payload.email} | ip={client_ip} | "
+            f"error={e!s}"
+        )
+
         return 500, {
             "error": "Registration failed. Unable to send verification email. "
             "Please try again later or contact support.",
@@ -181,6 +211,10 @@ def obtain_token(
     login = payload.login
     password = payload.password
 
+    # Get client info for logging
+    client_ip = request.META.get('REMOTE_ADDR', 'unknown')
+    user_agent = request.META.get('HTTP_USER_AGENT', 'unknown')
+
     if not login or not password:
         return 400, {"error": "Username/email and password are required."}
 
@@ -193,10 +227,20 @@ def obtain_token(
     )
 
     if not authenticated_user:
+        # Log failed login attempt with forensic data
+        logger.warning(
+            f"Login failed: Invalid credentials | "
+            f"login={login} | ip={client_ip} | user_agent={user_agent}"
+        )
         return 401, {"error": "Unable to authenticate with provided credentials."}
 
     # Check email verification using allauth EmailAddress API
     if not EmailAddress.objects.filter(user=authenticated_user, verified=True).exists():
+        logger.warning(
+            f"Login failed: Email not verified | "
+            f"user_id={authenticated_user.id} | login={login} | "  # pyright: ignore[reportUnknownMemberType]
+            f"ip={client_ip}"
+        )
         return 403, {
             "error": "Please verify your email address before logging in. "
             "Check your email for the verification link."
@@ -231,6 +275,13 @@ def obtain_token(
         httponly=True,
         secure=True,
         samesite=samesite,
+    )
+
+    # Log successful login
+    logger.info(
+        f"Login successful | "
+        f"user_id={authenticated_user.id} | login={login} | "  # pyright: ignore[reportUnknownMemberType]
+        f"ip={client_ip} | user_agent={user_agent}"
     )
 
     # Return token data (also available in cookies)
@@ -344,6 +395,13 @@ def refresh_token(
             samesite=samesite,
         )
 
+        # Log successful token refresh
+        client_ip = request.META.get('REMOTE_ADDR', 'unknown')
+        logger.info(
+            f"Token refresh successful | "
+            f"user_id={user_id} | ip={client_ip}"
+        )
+
         # Return success response with new tokens
         return 200, {
             "access": access_token,
@@ -380,10 +438,15 @@ def refresh_token(
                 f"user_id={user_id} | ip={client_ip} | user_agent={user_agent}"
             )
 
-            return 401, {
-                "error": "Token has been revoked. Please login again.",
-                "detail": "This refresh token has already been used and is no longer valid."
+            # Standardized error format with development-only detail field
+            error_response: dict[str, object] = {
+                "error": "Token has been revoked. Please login again."
             }
+            if settings.DEBUG:
+                error_response["detail"] = (
+                    "This refresh token has already been used and is no longer valid."
+                )
+            return 401, error_response
 
         # Other token errors (expired, invalid signature, malformed)
         return 400, {"error": f"Invalid or expired refresh token: {e!s}"}
@@ -616,7 +679,7 @@ def verify_email(
         email_address = confirmation.email_address  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
         if email_address.verified:  # pyright: ignore[reportUnknownMemberType]
             logger.warning(f"Email {email_address.email} already verified")  # pyright: ignore[reportUnknownMemberType]
-            return 400, {"message": "Email address is already verified."}
+            return 400, {"error": "Email address is already verified."}
 
         # Confirm the email (this marks it as verified)
         logger.info(f"Confirming email {email_address.email}")  # pyright: ignore[reportUnknownMemberType]
@@ -626,13 +689,13 @@ def verify_email(
 
     except EmailConfirmation.DoesNotExist as e:
         logger.error(f"EmailConfirmation not found: {e}")
-        return 400, {"message": "Invalid or expired verification link."}
+        return 400, {"error": "Invalid or expired verification link."}
     except AttributeError as e:
         logger.error(f"AttributeError during verification: {e}")
-        return 400, {"message": "Invalid or expired verification link."}
+        return 400, {"error": "Invalid or expired verification link."}
     except Exception as e:
         logger.error(f"Unexpected error during verification: {e}", exc_info=True)
-        return 400, {"message": "Invalid or expired verification link."}
+        return 400, {"error": "Invalid or expired verification link."}
 
 
 @auth_router.post(
@@ -659,7 +722,7 @@ def resend_verification(
 
         # Check if already verified using allauth EmailAddress API
         if EmailAddress.objects.filter(user=user, verified=True).exists():
-            return 400, {"message": "This email address is already verified."}
+            return 400, {"error": "This email address is already verified."}
 
         # Get or create EmailAddress record and send confirmation via allauth
         try:

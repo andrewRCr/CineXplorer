@@ -37,6 +37,7 @@
 - Remove custom CSRF middleware (simplify to Django's built-in)
 - Add comprehensive authentication event logging
 - Update settings for environment-aware configuration (dev vs production)
+- Add comprehensive automated tests for all security features (Task 7.5: ~20 new tests, 90%+ coverage)
 - Run full quality gates after all changes
 
 **Won't Do** (deferred to future work):
@@ -101,34 +102,41 @@
         - [x] 3.5.2 Type checking: `npx pyright backend/apps/authentication/api.py --project backend` - Throttling imports type-safe (pre-existing Django ORM errors unrelated to our changes)
         - [x] 3.5.3 Verified Django Ninja throttling has py.typed marker - fully type-safe
 
-- [ ] 4. Refresh Token Blacklisting (Token Rotation Security - django-ninja-jwt)
-    - [ ] 4.1 Enable ninja-jwt token blacklist app (already installed with ninja-jwt)
-        - [ ] 4.1.1 Add `ninja_jwt.token_blacklist` to INSTALLED_APPS
-        - [ ] 4.1.2 Configure settings: `ROTATE_REFRESH_TOKENS = True`, `BLACKLIST_AFTER_ROTATION = True`
-        - [ ] 4.1.3 Run migrations: `docker compose exec backend python manage.py migrate`
-        - [ ] 4.1.4 Verify migrations applied: Check for `token_blacklist_outstandingtoken` and `token_blacklist_blacklistedtoken` tables
-    - [ ] 4.2 Update `refresh_token()` endpoint in `authentication/api.py`
-        - [ ] 4.2.1 Import blacklist: `from ninja_jwt.tokens import RefreshToken` (already imported, verify blacklist method available)
-        - [ ] 4.2.2 Add `old_token.blacklist()` call before generating new token (or rely on BLACKLIST_AFTER_ROTATION auto-blacklist)
-        - [ ] 4.2.3 Add try/except for blacklist errors (token already blacklisted, expired, invalid)
-        - [ ] 4.2.4 Return appropriate error for blacklisted tokens (401 Unauthorized)
-    - [ ] 4.3 Add token reuse detection logging
-        - [ ] 4.3.1 Log when blacklisted token is reused (security event)
-        - [ ] 4.3.2 Include IP address and user agent in log entry
-        - [ ] 4.3.3 Consider adding alert threshold (multiple reuse attempts = attack)
-    - [ ] 4.4 Test token blacklisting behavior
-        - [ ] 4.4.1 Login and obtain refresh token
-        - [ ] 4.4.2 Use refresh token to get new access token (should succeed)
-        - [ ] 4.4.3 Attempt to reuse old refresh token (should fail with 401)
-        - [ ] 4.4.4 Verify blacklist entry created in `token_blacklist_blacklistedtoken` table
-        - [ ] 4.4.5 Verify outstanding token tracked in `token_blacklist_outstandingtoken` table
-    - [ ] 4.5 Set up token cleanup (maintenance)
-        - [ ] 4.5.1 Document `flushexpiredtokens` management command for periodic cleanup
-        - [ ] 4.5.2 Add note to set up daily cron job in production
-    - [ ] 4.6 Run incremental quality checks
-        - [ ] 4.6.1 Backend tests: `docker compose exec backend python manage.py test authentication.tests --keepdb`
-        - [ ] 4.6.2 Type checking: `npx pyright backend/apps/authentication/api.py --project backend`
-        - [ ] 4.6.3 Verify ninja-jwt type stubs provide blacklist type coverage (py.typed marker confirmed)
+- [x] 4. Refresh Token Blacklisting (Token Rotation Security - django-ninja-jwt)
+    - [x] 4.1 Enable ninja-jwt token blacklist app (already installed with ninja-jwt)
+        - [x] 4.1.1 Add `ninja_jwt.token_blacklist` to INSTALLED_APPS
+        - [x] 4.1.2 Configure settings: `ROTATE_REFRESH_TOKENS = True`, `BLACKLIST_AFTER_ROTATION = True`
+        - [x] 4.1.3 Run migrations: `docker compose exec backend python manage.py migrate`
+        - [x] 4.1.4 Verify migrations applied: Check for `token_blacklist_outstandingtoken` and `token_blacklist_blacklistedtoken` tables
+    - [x] 4.2 Update `refresh_token()` endpoint in `authentication/api.py`
+        - [x] 4.2.1 Import blacklist: `from ninja_jwt.tokens import RefreshToken` (already imported, verify blacklist method available)
+        - [x] 4.2.2 Add `old_token.blacklist()` call before generating new token (or rely on BLACKLIST_AFTER_ROTATION auto-blacklist)
+        - [x] 4.2.3 Add try/except for blacklist errors (token already blacklisted, expired, invalid)
+        - [x] 4.2.4 Return appropriate error for blacklisted tokens (401 Unauthorized)
+    - [x] 4.3 Add token reuse detection logging
+        - [x] 4.3.1 Log when blacklisted token is reused (security event)
+        - [x] 4.3.2 Include IP address and user agent in log entry
+        - [x] 4.3.3 Consider adding alert threshold (multiple reuse attempts = attack) - **DEFERRED to observability sprint**
+            - **Decision:** Defer automatic alert thresholds to future observability sprint
+            - **Rationale:** Current WARNING logs provide full audit trail; alert thresholds should be designed holistically with monitoring dashboards and incident response workflows rather than point solution now
+            - **Current solution:** Individual logs per reuse attempt with complete forensic data (user_id, IP, user_agent)
+            - **Future implementation:** Redis-based counter with sliding time window, integrated with monitoring dashboards (observability sprint)
+            - **Documentation:** Added comprehensive entry to `.arc/upcoming/notes/notes-future-modernization.md` with implementation guidance
+    - [x] 4.4 Test token blacklisting behavior
+        - [x] 4.4.1 Login and obtain refresh token - ✅ Successful (user_id=25, token tracked)
+        - [x] 4.4.2 Use refresh token to get new access token (should succeed) - ✅ Token rotation working
+        - [x] 4.4.3 Attempt to reuse old refresh token (should fail with 401) - ✅ Rejected with 401 + revoked error
+        - [x] 4.4.4 Verify blacklist entry created in `token_blacklist_blacklistedtoken` table - ✅ 1 entry created
+        - [x] 4.4.5 Verify outstanding token tracked in `token_blacklist_outstandingtoken` table - ✅ 2 tokens tracked
+        - **Bug Fix**: Original implementation used `set_jti()`/`set_exp()` which doesn't trigger blacklisting. Fixed by using `RefreshToken.for_user()` for new token generation and manual `old_refresh.blacklist()` call.
+        - **Test Script**: `backend/scripts/test_token_blacklist.sh` - comprehensive operational validation covering all 5 subtasks + security logging verification
+    - [x] 4.5 Set up token cleanup (maintenance)
+        - [x] 4.5.1 Document `flushexpiredtokens` management command for periodic cleanup (already documented at lines 63-64)
+        - [x] 4.5.2 Production deployment checklist added to maintenance section with cron job recommendation
+    - [x] 4.6 Run incremental quality checks
+        - [x] 4.6.1 Backend tests: `docker compose exec backend python manage.py test authentication.tests --keepdb` - ✅ 20/20 tests pass
+        - [x] 4.6.2 Type checking: `npx pyright backend/apps/authentication/api.py --project backend` - ✅ 0 errors
+        - [x] 4.6.3 Verify ninja-jwt type stubs provide blacklist type coverage - ✅ py.typed marker confirmed, contextlib.suppress used
 
 - [ ] 5. Custom CSRF Middleware Removal (Simplification)
     - [ ] 5.1 Remove custom middleware from `MIDDLEWARE` in `config/settings.py`
@@ -177,6 +185,49 @@
         - [ ] 7.3.2 Document which settings change per environment
         - [ ] 7.3.3 Add deployment checklist for production settings
 
+- [ ] 7.5 Add Automated Tests for Security Features (Comprehensive Test Coverage)
+    - [ ] 7.5.1 Security Headers Tests (Task 1 validation)
+        - [ ] 7.5.1.1 Test: Response includes X-Frame-Options: DENY header
+        - [ ] 7.5.1.2 Test: Response includes X-Content-Type-Options: nosniff header
+        - [ ] 7.5.1.3 Test: Response includes X-XSS-Protection header
+        - [ ] 7.5.1.4 Test: Session cookie has Secure attribute (check cookie object)
+        - [ ] 7.5.1.5 Test: CSRF cookie has Secure attribute (check cookie object)
+    - [ ] 7.5.2 JWT Cookie SameSite Tests (Task 2 completion)
+        - [ ] 7.5.2.1 Test: Login response sets access_token cookie with SameSite=Lax
+        - [ ] 7.5.2.2 Test: Login response sets refresh_token cookie with SameSite=Lax
+        - [ ] 7.5.2.3 Test: Token refresh response maintains SameSite=Lax for both cookies
+    - [ ] 7.5.3 Rate Limiting Tests (Task 3 validation)
+        - [ ] 7.5.3.1 Create test helper: `clear_rate_limit_cache()` to flush Redis between tests
+        - [ ] 7.5.3.2 Test: 5 rapid login attempts succeed (within 5/minute limit)
+        - [ ] 7.5.3.3 Test: 6th login attempt within minute returns 429 Too Many Requests
+        - [ ] 7.5.3.4 Test: 3 registration attempts in hour succeed (within 3/hour limit)
+        - [ ] 7.5.3.5 Test: 4th registration attempt within hour returns 429
+        - [ ] 7.5.3.6 Test: 10 token refresh attempts succeed (within 10/minute limit)
+        - [ ] 7.5.3.7 Test: 11th refresh attempt within minute returns 429
+    - [ ] 7.5.4 Token Blacklisting Tests (Task 4 validation - critical security path)
+        - [ ] 7.5.4.1 Test: First token refresh succeeds (new tokens issued)
+        - [ ] 7.5.4.2 Test: Reusing old refresh token after rotation returns 401 Unauthorized
+        - [ ] 7.5.4.3 Test: Error response includes "revoked" message for blacklisted token
+        - [ ] 7.5.4.4 Test: New refresh token continues to work after old one blacklisted
+        - [ ] 7.5.4.5 Test: Database blacklist table contains entry for revoked token
+        - [ ] 7.5.4.6 Test: Database outstanding tokens table tracks all issued tokens
+    - [ ] 7.5.5 Authentication Security Logging Tests (Task 6 validation)
+        - [ ] 7.5.5.1 Create test helper: `LogCaptureMixin` or use Django's assertLogs context manager
+        - [ ] 7.5.5.2 Test: Failed login logs WARNING with IP address and username
+        - [ ] 7.5.5.3 Test: Successful login logs INFO with user_id
+        - [ ] 7.5.5.4 Test: Blacklisted token reuse logs WARNING with user_id, IP, and user_agent
+        - [ ] 7.5.5.5 Test: Rate limit violation logs appropriate level (verify throttle logging)
+        - [ ] 7.5.5.6 Test: Successful registration logs INFO
+        - [ ] 7.5.5.7 Test: Passwords never appear in any log output (security check)
+        - [ ] 7.5.5.8 Test: Token values never appear in any log output (security check)
+    - [ ] 7.5.6 Run full authentication test suite and verify coverage
+        - [ ] 7.5.6.1 Command: `python manage.py test apps.authentication --keepdb`
+        - [ ] 7.5.6.2 Verify all tests pass (20 existing + ~20 new = 40+ tests expected)
+        - [ ] 7.5.6.3 Run coverage: `coverage run --source=apps.authentication manage.py test apps.authentication --keepdb`
+        - [ ] 7.5.6.4 Generate coverage report: `coverage report -m`
+        - [ ] 7.5.6.5 Verify 90%+ coverage for authentication app (critical path requirement per testing strategy)
+        - [ ] 7.5.6.6 Document any uncovered lines and justify why they're acceptable
+
 - [ ] 8. Full Quality Gates
     - [ ] 8.1 Run all backend tests
         - [ ] 8.1.1 Command: `docker compose -f infrastructure/docker-compose.yml exec backend python manage.py test --keepdb --settings=config.settings_test`
@@ -218,17 +269,22 @@
 ## Relevant Files
 
 **Backend Settings:**
-- `backend/config/settings.py` - Security settings (cookies, HSTS, headers), JWT config, middleware, INSTALLED_APPS (refactored to fix type errors)
+- `backend/config/settings.py` - Security settings (cookies, HSTS, headers), JWT config, middleware, INSTALLED_APPS (ninja_jwt.token_blacklist added)
 - `backend/stubs/environ/__init__.pyi` - Type stubs for django-environ library
 
 **Authentication Module:**
-- `backend/apps/authentication/api.py` - Django Ninja throttling, token blacklisting, logging
+- `backend/apps/authentication/api.py` - Django Ninja throttling, token blacklisting (automatic rotation with BLACKLIST_AFTER_ROTATION), reuse detection logging with IP/user agent
 - `backend/apps/authentication/middleware.py` - CSRF middleware removal
+- `backend/apps/authentication/tests/test_user_api.py` - Automated test suite (20 existing tests, Task 7.5 adds ~20 more)
+
+**Operational Testing:**
+- `backend/scripts/test_token_blacklist.sh` - Manual validation script for token blacklisting (operational validation, not part of automated suite)
 
 **Documentation:**
 - `.arc/active/CURRENT-SESSION.md` - Session tracking
 - `.arc/active/notes-api-layer-modernization-p2.md` - Implementation notes
 - `.arc/active/tasks-incidental-oauth-headless-migration.md` - Related OAuth work (paused)
+- `.arc/upcoming/notes/notes-future-modernization.md` - Deferred alert threshold implementation (Task 4.3.3)
 
 ## Implementation Notes
 
@@ -340,11 +396,47 @@ old_refresh.blacklist()  # Marks as used in database
 ```
 
 **Database Tables Created:**
-- `token_blacklist_outstandingtoken` - Tracks all issued tokens
-- `token_blacklist_blacklistedtoken` - Tracks revoked tokens
+- `token_blacklist_outstandingtoken` - Tracks all issued tokens (JTI, user, creation time, expiry)
+- `token_blacklist_blacklistedtoken` - Tracks revoked tokens (foreign key to OutstandingToken, blacklisted_at timestamp)
 
-**Maintenance:**
-Run `python manage.py flushexpiredtokens` daily to clean up expired tokens
+**Maintenance & Production Deployment:**
+
+Token blacklist tables will grow over time as refresh tokens are issued and rotated. Expired tokens should be periodically cleaned up to prevent unbounded database growth.
+
+**Management Command:**
+
+```bash
+# Remove expired tokens from both tables
+python manage.py flushexpiredtokens
+
+# Docker container command
+docker compose -f infrastructure/docker-compose.yml exec backend python manage.py flushexpiredtokens
+```
+
+**Production Deployment Checklist:**
+1. **Cron Job Setup** (recommended daily cleanup):
+
+   ```cron
+   # Daily at 2 AM: Flush expired JWT tokens
+   0 2 * * * cd /app && python manage.py flushexpiredtokens
+   ```
+
+2. **Monitoring**:
+   - Track `token_blacklist_outstandingtoken` row count (should stabilize after cleanup schedule established)
+   - Monitor for excessive blacklist reuse attempts (potential security incidents logged as WARNING)
+   - Alert on table growth > 100K rows (may need more frequent cleanup)
+
+3. **Database Indexes** (already created by django-ninja-jwt migrations):
+   - `token_blacklist_outstandingtoken.user_id` - Query by user
+   - `token_blacklist_outstandingtoken.jti` - Token lookup (unique)
+   - `token_blacklist_blacklistedtoken.token_id` - Blacklist check
+
+**Expected Behavior:**
+- Refresh token lifetime: 14 days
+- Outstanding tokens accumulate during active user sessions
+- Blacklisted tokens created on each refresh (old token blacklisted, new token issued)
+- After 14 days, tokens expire and become eligible for cleanup
+- Daily flush keeps table size manageable (≈ active users × 2-3 tokens)
 
 ### CSRF Simplification Rationale
 
@@ -360,6 +452,36 @@ Custom middleware adds:
 - ❌ Potential edge case conflicts
 
 **Verdict**: Remove custom, use Django's built-in.
+
+### Comprehensive Test Coverage Strategy (Task 7.5)
+
+**Rationale**: Per `.arc/reference/strategies/strategy-testing-methodology.md`:
+- **Critical paths require 90%+ coverage** (authentication is critical path)
+- **Integration tests over unit tests** (test real workflows, not mocks)
+- **Focus on behavioral security logic** (not infrastructure settings)
+
+**Coverage Targets**:
+- Security headers: Validate middleware applies headers correctly
+- JWT cookie attributes: Verify SameSite=Lax, Secure, HttpOnly set correctly
+- Rate limiting: Test throttle behavior (success under limit, 429 over limit)
+- Token blacklisting: **Critical** - Test reuse rejection (401), database tracking
+- Security logging: Verify sensitive data never logged, events captured with forensics
+
+**Test Organization**:
+- Add tests to existing `apps/authentication/tests/test_user_api.py` file
+- Use existing test helpers from `core/tests/test_helpers.py` (create_user, json_post)
+- Create minimal new helpers: `clear_rate_limit_cache()`, log capture with `assertLogs()`
+- Follow existing patterns (e.g., `AuthCookieIntegrationTests` class for cookie validation)
+
+**Operational vs. Automated Testing**:
+- `test_token_blacklist.sh` = **Operational validation** (manual, curl-based, full-stack)
+- Task 7.5 tests = **Automated test suite** (CI/CD, Django test harness, regression prevention)
+- Both serve different purposes: operational for deployment verification, automated for development workflow
+
+**Expected Outcome**:
+- 20 existing tests + ~20 new tests = 40+ total authentication tests
+- 90%+ coverage for authentication app (exceeds 70% minimum, meets critical path requirement)
+- All security features validated in CI/CD pipeline (no manual testing required for regression)
 
 ## Completion Notes
 

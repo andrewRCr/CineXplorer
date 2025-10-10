@@ -67,7 +67,6 @@ class APISettings:
         Returns:
             Setting value
         """
-        ...
 
 
 # Global settings instance

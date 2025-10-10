@@ -46,7 +46,6 @@ class AbstractTokenStrategy(abc.ABC):
 
         Default implementation: Returns 'x-session-token' header value.
         """
-        ...
 
     def create_access_token_payload(
         self, request: HttpRequest
@@ -65,7 +64,6 @@ class AbstractTokenStrategy(abc.ABC):
         Returns:
             Dict with access token and optional metadata, or None if no token
         """
-        ...
 
     def create_access_token(self, request: HttpRequest) -> str | None:
         """
@@ -80,7 +78,6 @@ class AbstractTokenStrategy(abc.ABC):
         Returns:
             Access token string, or None for session-only authentication
         """
-        ...
 
     @abc.abstractmethod
     def create_session_token(self, request: HttpRequest) -> str:

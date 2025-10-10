@@ -50,7 +50,6 @@ def authenticate(
     Returns:
         User instance if authenticated, None if authentication fails
     """
-    ...
 
 
 def get_user_model() -> type[AbstractBaseUser]:
@@ -63,4 +62,3 @@ def get_user_model() -> type[AbstractBaseUser]:
     Returns:
         The active User model class
     """
-    ...

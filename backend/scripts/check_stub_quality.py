@@ -19,6 +19,7 @@ import sys
 from pathlib import Path
 from typing import TypedDict
 
+
 class StubIssue(TypedDict):
     """Type for reporting stub quality issues."""
     file: str
@@ -54,7 +55,8 @@ def check_any_usage(file_path: Path) -> list[StubIssue]:
         if 'typing.Any' in line or 'Any' in line:
             # Check if any justification keywords appear in this line or nearby lines
             header_context = '\n'.join(lines[:30]).lower()
-            if any(keyword in header_context for keyword in ['external library', 'third-party', 'allauth']):
+            keywords = ['external library', 'third-party', 'allauth']
+            if any(keyword in header_context for keyword in keywords):
                 file_has_global_justification = True
                 break
         # Also check standard justification patterns
@@ -88,7 +90,11 @@ def check_any_usage(file_path: Path) -> list[StubIssue]:
 
             if re.search(r'\bAny\b', line):
                 code_part = line.split('#')[0] if '#' in line else line
-                if 'Any' in code_part and any(re.search(pattern, line, re.IGNORECASE) for pattern in justified_patterns):
+                has_pattern = any(
+                    re.search(pattern, line, re.IGNORECASE)
+                    for pattern in justified_patterns
+                )
+                if 'Any' in code_part and has_pattern:
                     has_justified_any = True
                     break
 
@@ -140,12 +146,18 @@ def check_any_usage(file_path: Path) -> list[StubIssue]:
 
             # 2. Or inline comment on same line
             if not is_justified:
-                is_justified = any(re.search(pattern, line, re.IGNORECASE) for pattern in justified_patterns)
+                is_justified = any(
+                    re.search(pattern, line, re.IGNORECASE)
+                    for pattern in justified_patterns
+                )
 
             # 3. Or previous line has justification comment
             if not is_justified and i > 1:
                 prev_line = lines[i - 2]
-                is_justified = any(re.search(pattern, prev_line, re.IGNORECASE) for pattern in justified_patterns)
+                is_justified = any(
+                    re.search(pattern, prev_line, re.IGNORECASE)
+                    for pattern in justified_patterns
+                )
 
             if not is_justified:
                 issues.append({
@@ -276,7 +288,7 @@ def main() -> int:
             print(f"      → {issue['context']}")
         print()
 
-    print(f"\n💡 See .arc/reference/strategies/strategy-type-safety.md for guidelines")
+    print("\n💡 See .arc/reference/strategies/strategy-type-safety.md for guidelines")
     return 1
 
 if __name__ == "__main__":

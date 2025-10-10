@@ -23,18 +23,16 @@ class TokenError(Exception):
     """
     Base exception for all token-related errors.
     """
-    ...
 
 
-class InvalidToken(TokenError):
+class InvalidToken(TokenError):  # noqa: N818
     """
     Exception raised when a token is invalid (expired, malformed, etc.).
+    Note: Name matches django-ninja-jwt library (cannot rename to InvalidTokenError).
     """
-    ...
 
 
 class TokenBackendError(TokenError):
     """
     Exception raised when token backend operations fail.
     """
-    ...

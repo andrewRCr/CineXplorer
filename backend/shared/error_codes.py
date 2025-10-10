@@ -56,4 +56,4 @@ class ErrorCodes:
 ERROR_CODES = ErrorCodes()
 
 # Explicit public surface
-__all__ = ("ErrorCodes", "ERROR_CODES")
+__all__ = ("ERROR_CODES", "ErrorCodes")

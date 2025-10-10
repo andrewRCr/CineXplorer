@@ -16,7 +16,6 @@ This module maintains minimal compatibility for error codes only.
 from __future__ import annotations
 
 import warnings
-from typing import TypeAlias
 
 # Only maintain error codes for backward compatibility
 from .error_codes import ERROR_CODES
@@ -32,7 +31,7 @@ warnings.warn(
 
 # Type alias for UserMovieData (used in serializers)
 # This is a temporary placeholder - will be replaced by proper Pydantic schemas
-UserMovieData: TypeAlias = dict[str, object]  # Simplified type for now
+type UserMovieData = dict[str, object]  # Simplified type for now
 
 __all__ = [
     'ERROR_CODES',

@@ -58,7 +58,6 @@ class UserManager(Manager[AbstractUser]):
         **extra_fields: object
     ) -> AbstractUser:
         """Create and save a regular user with the given username, email, and password."""
-        ...
 
     def create_superuser(
         self,
@@ -68,7 +67,6 @@ class UserManager(Manager[AbstractUser]):
         **extra_fields: object
     ) -> AbstractUser:
         """Create and save a superuser with the given username, email, and password."""
-        ...
 
 # Dummy base classes for stub file - extend models.Model for proper type variance
 class AbstractBaseUser(models.Model):
@@ -77,13 +75,11 @@ class AbstractBaseUser(models.Model):
     is_authenticated: bool  # Property that returns True for authenticated users
     is_anonymous: bool  # Property that returns False for authenticated users
 
-    def set_password(self, raw_password: str | None) -> None:
-        """Set the user's password to the given raw string (hashed)."""
-        ...
-
     def save(self, *args: object, **kwargs: object) -> None:
         """Save the model instance."""
-        ...
+
+    def set_password(self, raw_password: str | None) -> None:
+        """Set the user's password to the given raw string (hashed)."""
 
 class PermissionsMixin(models.Model): ...
 
@@ -124,7 +120,13 @@ class AbstractUser(AbstractBaseUser, PermissionsMixin):
     # Methods
     def get_full_name(self) -> str: ...
     def get_short_name(self) -> str: ...
-    def email_user(self, subject: str, message: str, from_email: str | None = None, **kwargs: object) -> None: ...
+    def email_user(
+        self,
+        subject: str,
+        message: str,
+        from_email: str | None = None,
+        **kwargs: object
+    ) -> None: ...
 
 class User(AbstractUser):  # type: ignore[django-manager-missing]
     """

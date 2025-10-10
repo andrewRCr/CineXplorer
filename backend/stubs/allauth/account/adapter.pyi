@@ -41,7 +41,6 @@ class DefaultAccountAdapter:
         headers: dict[str, str] | None = None,
     ) -> Any:  # Returns django.core.mail.EmailMessage or EmailMultiAlternatives (external library)
         """Render email from template."""
-        ...
 
     def send_mail(
         self,
@@ -50,10 +49,8 @@ class DefaultAccountAdapter:
         context: dict[str, Any],  # Allauth's template context - external library contract
     ) -> None:
         """Send email using Django's email backend."""
-        ...
 
     def get_email_confirmation_url(
         self, request: HttpRequest | None, emailconfirmation: EmailConfirmation
     ) -> str:
         """Construct the email confirmation (activation) URL."""
-        ...

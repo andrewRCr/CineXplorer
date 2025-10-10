@@ -119,11 +119,27 @@ def main() -> None:
     # Format: (check_id, description, pyright_command)
     all_checks = [
         ("core", "Core App", ["npx", "pyright", "apps/core/", "--project", "."]),
-        ("authentication", "Authentication App", ["npx", "pyright", "apps/authentication/", "--project", "."]),
+        (
+            "authentication",
+            "Authentication App",
+            ["npx", "pyright", "apps/authentication/", "--project", "."],
+        ),
         ("movie", "Movie App", ["npx", "pyright", "apps/movie/", "--project", "."]),
-        ("user_movie_data", "UserMovieData App", ["npx", "pyright", "apps/user_movie_data/", "--project", "."]),
-        ("accounts", "Accounts App", ["npx", "pyright", "apps/accounts/", "--project", "."]),
-        ("config", "Config Module", ["npx", "pyright", "config/", "--project", "."]),
+        (
+            "user_movie_data",
+            "UserMovieData App",
+            ["npx", "pyright", "apps/user_movie_data/", "--project", "."],
+        ),
+        (
+            "accounts",
+            "Accounts App",
+            ["npx", "pyright", "apps/accounts/", "--project", "."],
+        ),
+        (
+            "config",
+            "Config Module",
+            ["npx", "pyright", "config/", "--project", "."],
+        ),
     ]
 
     # Filter checks if --only specified
@@ -152,7 +168,7 @@ def main() -> None:
     passed = 0
     total_errors = 0
 
-    for check_id, description, returncode, output, error_count in results:
+    for _check_id, description, returncode, output, error_count in results:
         status = "PASS" if returncode == 0 else "FAIL"
         if status == "PASS":
             print(f"✅ [{status}] {description}: 0 errors")
@@ -161,7 +177,7 @@ def main() -> None:
             print(f"❌ [{status}] {description}: {error_count} errors")
             total_errors += error_count
             if args.verbose:
-                print(f"  Preview (first 5 errors):")
+                print("  Preview (first 5 errors):")
                 print(f"  {get_error_preview(output)}\n")
 
     print(f"\nResults: {passed}/{len(results)} apps passed")

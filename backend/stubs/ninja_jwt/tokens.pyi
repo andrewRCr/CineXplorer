@@ -61,11 +61,9 @@ class Token:
         Args:
             token: JWT token string to decode, or None to create empty token
         """
-        ...
 
     def __str__(self) -> str:
         """Return the encoded JWT token string."""
-        ...
 
     @classmethod
     def for_user(cls, user: AbstractBaseUser) -> Token:
@@ -78,7 +76,6 @@ class Token:
         Returns:
             Token instance with user claims
         """
-        ...
 
 
 class AccessToken(Token):
@@ -87,7 +84,6 @@ class AccessToken(Token):
 
     Short-lived token used for authenticating API requests.
     """
-    ...
 
 
 class RefreshToken(Token):
@@ -108,7 +104,6 @@ class RefreshToken(Token):
         Returns:
             RefreshToken instance with user claims
         """
-        ...
 
     @property
     def access_token(self) -> AccessToken:
@@ -118,4 +113,3 @@ class RefreshToken(Token):
         Returns:
             AccessToken instance that can be converted to string via str()
         """
-        ...

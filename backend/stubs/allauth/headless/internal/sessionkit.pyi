@@ -26,4 +26,3 @@ def session_store(session_key: str | None = None) -> SessionBase:
     Returns:
         SessionBase instance from configured SESSION_ENGINE
     """
-    ...

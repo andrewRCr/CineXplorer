@@ -28,7 +28,6 @@ from typing import overload
 
 class NoValue:
     """Sentinel value for missing environment variables."""
-    ...
 
 NOTSET: NoValue
 

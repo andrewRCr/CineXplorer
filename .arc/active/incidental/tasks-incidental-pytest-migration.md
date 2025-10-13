@@ -148,26 +148,41 @@
             - Configured HTML and JSON report outputs
             - Result: Coverage now focuses on business logic (APIs, services, middleware)
 
-- [ ] 4. Write Django Ninja API Tests for UserMovieData (3-4 hours, 24 tests - NEW tests)
+- [x] 4. Write Django Ninja API Tests for UserMovieData (3-4 hours, 23 tests - NEW tests)
     **Note**: This work was originally planned for Task 6.1 in `tasks-api-layer-modernization-p2.md` (Phase 6: Testing Migration). However, since we were already here converting tests to pytest as part of the pytest migration incidental work, we decided to write the Django Ninja API tests now rather than convert legacy DRF tests that would be deleted later. This provides immediate value (zero test coverage → comprehensive coverage) and avoids throwaway work.
-    - [ ] 4.1 Write test_user_movie_data_api.py for Django Ninja endpoints (24 tests)
-        - [x] 4.1.1 Replace legacy DRF tests with Django Ninja API tests
-        - [x] 4.1.2 Write authentication tests (5 tests - parametrized unauthenticated access)
+
+    **CRITICAL BUG FIXED**: Discovered production bug in `user_movie_data/api.py:90` - create endpoint was querying `Movie.id` instead of `Movie.tmdb_id`, causing all POST requests to fail. Fixed by changing lookup to use tmdb_id.
+
+    **DRY REFACTORING**: Consolidated duplicate `get_csrf_token()` helper to `core/tests/test_helpers.py` (was duplicated in 2 files). Also modernized `test_user_api.py` to use HTTPStatus enum instead of raw integers for consistency.
+
+    - [x] 4.1 Write test_user_movie_data_api.py for Django Ninja endpoints (23 tests)
+        - [x] 4.1.1 Replace legacy DRF tests with Django Ninja API tests (wrote comprehensive new tests)
+        - [x] 4.1.2 Write authentication tests (4 tests - removed invalid parametrized test attempting GET on PATCH/DELETE endpoint)
         - [x] 4.1.3 Write GET /by-tmdb-id tests (3 tests - success, not found, user isolation)
-        - [x] 4.1.4 Write POST /create tests (6 tests - success, defaults, duplicate, invalid movie, invalid rating)
-        - [x] 4.1.5 Write PATCH /update tests (6 tests - partial update, single field, not found, wrong user, invalid rating)
+        - [x] 4.1.4 Write POST /create tests (6 tests - success, defaults, duplicate, invalid movie, parametrized invalid ratings)
+        - [x] 4.1.5 Write PATCH /update tests (6 tests - partial update, single field, not found, wrong user, parametrized invalid ratings)
         - [x] 4.1.6 Write DELETE tests (4 tests - success, not found, wrong user)
-        - [ ] 4.1.7 Create authenticated_user fixture with JWT cookie authentication
-        - [ ] 4.1.8 Update all tests to use authenticated_user: tuple[Client, User] pattern
-        - [ ] 4.1.9 Run tests to verify: `pytest apps/user_movie_data/tests/test_user_movie_data_api.py -v`
-    - [ ] 4.2 Fixture analysis and optimization
+        - [x] 4.1.7 Create authenticated_user fixture with JWT cookie authentication (follows test_user_api.py pattern)
+        - [x] 4.1.8 Update all tests to use authenticated_user: tuple[Client, User] pattern (all 23 tests updated)
+        - [x] 4.1.9 Add CSRF token support to all POST/PATCH/DELETE requests via get_csrf_token() helper
+        - [x] 4.1.10 Fix API bug: Changed `Movie.id` to `Movie.tmdb_id` in create endpoint (line 90)
+        - [x] 4.1.11 Adjust test expectations for CSRF middleware behavior (403 for unauthenticated mutations, not 401)
+        - [x] 4.1.12 Run tests to verify: 23/23 passing (100%, 13.86s execution time)
+    - [x] 4.2 Fixture analysis and optimization
         - [x] 4.2.1 Analyzed root user fixture (creates unverified users - incompatible with JWT)
         - [x] 4.2.2 Decision: Use authenticated_user pattern from test_user_api.py (creates verified user + JWT cookies)
-        - [ ] 4.2.3 Verified no app-specific conftest.py needed (inline fixtures sufficient)
-    - [ ] 4.3 Run full user_movie_data test suite
-        - [ ] 4.3.1 Command: `pytest apps/user_movie_data/tests/ -v`
-        - [ ] 4.3.2 Verify all 24 tests pass (100%)
-        - [ ] 4.3.3 Run with coverage: `pytest apps/user_movie_data/tests/ --cov=apps.user_movie_data`
+        - [x] 4.2.3 Verified no app-specific conftest.py needed (inline fixtures sufficient - movie, other_movie, other_user, user_movie_data)
+    - [x] 4.3 DRY refactoring and code quality improvements
+        - [x] 4.3.1 Added get_csrf_token() to core/tests/test_helpers.py (shared helper for CSRF-protected endpoints)
+        - [x] 4.3.2 Removed duplicate from authentication/tests/test_csrf_protection.py (4 inline usages updated)
+        - [x] 4.3.3 Removed duplicate from user_movie_data/tests/test_user_movie_data_api.py (imports from test_helpers)
+        - [x] 4.3.4 Modernized authentication/tests/test_user_api.py HTTP status constants (raw integers → HTTPStatus enum)
+        - [x] 4.3.5 Run affected tests to verify: 57/57 passing (UserMovieData 23 + CSRF 12 + User API 22)
+    - [x] 4.4 Run full user_movie_data test suite
+        - [x] 4.4.1 Command: `pytest apps/user_movie_data/tests/ -v`
+        - [x] 4.4.2 Verify all 23 tests pass (100%, 13.86s execution time)
+        - [x] 4.4.3 Quality checks: 0 Ruff violations, 0 Pyright errors
+        - [x] 4.4.4 Coverage: Not run (will be part of Task 7.4 final coverage analysis)
 
 - [ ] 5. Migrate Core App Tests (2-3 hours, 12 tests)
     - [ ] 5.1 Convert test_models.py (7 tests)
@@ -266,19 +281,21 @@
 - `apps/conftest.py` - Root-level shared fixtures (CREATED - api_client, user, auth_client fixtures + FIXED User import pattern)
 - `apps/authentication/tests/conftest.py` - Auth-specific fixtures (UPDATED - throttling + OAuth + convenience wrappers for factory functions)
 - `apps/authentication/tests/fixtures.py` - Factory functions for test data creation (UPDATED - enhanced docstring explaining hybrid pattern)
-- `apps/movie/tests/conftest.py` - Movie-specific fixtures (TO BE CREATED in Task 3.4)
-- `apps/user_movie_data/tests/conftest.py` - UserMovieData fixtures (TO BE CREATED in Task 4.2)
+- `apps/core/tests/test_helpers.py` - Shared test utilities (UPDATED - added get_csrf_token() helper, HTTPStatus enum export)
+- `apps/movie/tests/conftest.py` - Movie-specific fixtures (SKIPPED - not needed per YAGNI)
+- `apps/user_movie_data/tests/conftest.py` - UserMovieData fixtures (SKIPPED - inline fixtures sufficient)
 
-**Test Files to Convert (14 files, 104 tests):**
-- `apps/authentication/tests/test_user_api.py` - 22 tests (CONVERTED + FIXED User import)
-- `apps/authentication/tests/test_csrf_protection.py` - 12 tests (CONVERTED + FIXED User import)
+**Test Files to Convert (14 files, 90 tests + 23 new tests = 113 total):**
+- `apps/authentication/tests/test_user_api.py` - 22 tests (CONVERTED + modernized HTTPStatus constants)
+- `apps/authentication/tests/test_csrf_protection.py` - 12 tests (CONVERTED + refactored to use shared get_csrf_token)
 - `apps/authentication/tests/test_security.py` - 10 tests (CONVERTED)
 - `apps/authentication/tests/test_oauth_mocks.py` - OAuth mock classes (CONVERTED to fixtures in conftest.py)
 - `apps/authentication/tests/fixtures.py` - Factory functions (CONSOLIDATED - hybrid pattern with conftest.py wrappers)
 - `apps/movie/tests/test_movie_service.py` - 14 tests (CONVERTED to pytest)
 - `apps/movie/tests/test_movie_api.py` - 8 tests (CONVERTED to pytest with parametrization - 10 test cases, enhanced with granular field checks)
 - `apps/movie/tests/test_paginated_views.py` - 2 tests (DELETED - redundant with test_movie_api.py)
-- `apps/user_movie_data/tests/test_user_movie_data_api.py` - 24 tests (REWRITTEN - legacy DRF tests replaced with Django Ninja API tests + JWT auth)
+- `apps/user_movie_data/tests/test_user_movie_data_api.py` - 23 tests (REWRITTEN - legacy DRF tests replaced with comprehensive Django Ninja API tests + JWT auth + CSRF + fixed production bug)
+- `apps/user_movie_data/api.py` - API implementation (FIXED CRITICAL BUG - Movie.id → Movie.tmdb_id on line 90)
 - `apps/core/tests/test_models.py` - 7 tests
 - `apps/core/tests/test_admin.py` - 3 tests
 - `apps/core/tests/test_commands.py` - 2 tests

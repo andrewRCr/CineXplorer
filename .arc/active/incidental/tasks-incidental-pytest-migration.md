@@ -148,20 +148,25 @@
             - Configured HTML and JSON report outputs
             - Result: Coverage now focuses on business logic (APIs, services, middleware)
 
-- [ ] 4. Migrate UserMovieData App Tests (3-4 hours, 15 tests)
-    - [ ] 4.1 Convert test_user_movie_data_api.py (15 tests)
-        - [ ] 4.1.1 Convert UserMovieDataAPITests class to function-based tests
-        - [ ] 4.1.2 Extract user movie data fixtures to conftest.py
-        - [ ] 4.1.3 Use composition: combine user, movie, and auth fixtures
-        - [ ] 4.1.4 Parametrize CRUD operation tests if applicable
-        - [ ] 4.1.5 Run tests to verify: `pytest apps/user_movie_data/tests/test_user_movie_data_api.py`
-    - [ ] 4.2 Create apps/user_movie_data/tests/conftest.py
-        - [ ] 4.2.1 Add user_movie_data fixture (create test data)
-        - [ ] 4.2.2 Compose with user and movie fixtures from parent conftest
-        - [ ] 4.2.3 Add type annotations
+- [ ] 4. Write Django Ninja API Tests for UserMovieData (3-4 hours, 24 tests - NEW tests)
+    **Note**: This work was originally planned for Task 6.1 in `tasks-api-layer-modernization-p2.md` (Phase 6: Testing Migration). However, since we were already here converting tests to pytest as part of the pytest migration incidental work, we decided to write the Django Ninja API tests now rather than convert legacy DRF tests that would be deleted later. This provides immediate value (zero test coverage → comprehensive coverage) and avoids throwaway work.
+    - [ ] 4.1 Write test_user_movie_data_api.py for Django Ninja endpoints (24 tests)
+        - [x] 4.1.1 Replace legacy DRF tests with Django Ninja API tests
+        - [x] 4.1.2 Write authentication tests (5 tests - parametrized unauthenticated access)
+        - [x] 4.1.3 Write GET /by-tmdb-id tests (3 tests - success, not found, user isolation)
+        - [x] 4.1.4 Write POST /create tests (6 tests - success, defaults, duplicate, invalid movie, invalid rating)
+        - [x] 4.1.5 Write PATCH /update tests (6 tests - partial update, single field, not found, wrong user, invalid rating)
+        - [x] 4.1.6 Write DELETE tests (4 tests - success, not found, wrong user)
+        - [ ] 4.1.7 Create authenticated_user fixture with JWT cookie authentication
+        - [ ] 4.1.8 Update all tests to use authenticated_user: tuple[Client, User] pattern
+        - [ ] 4.1.9 Run tests to verify: `pytest apps/user_movie_data/tests/test_user_movie_data_api.py -v`
+    - [ ] 4.2 Fixture analysis and optimization
+        - [x] 4.2.1 Analyzed root user fixture (creates unverified users - incompatible with JWT)
+        - [x] 4.2.2 Decision: Use authenticated_user pattern from test_user_api.py (creates verified user + JWT cookies)
+        - [ ] 4.2.3 Verified no app-specific conftest.py needed (inline fixtures sufficient)
     - [ ] 4.3 Run full user_movie_data test suite
-        - [ ] 4.3.1 Command: `pytest apps/user_movie_data/tests/`
-        - [ ] 4.3.2 Verify all 15 tests pass
+        - [ ] 4.3.1 Command: `pytest apps/user_movie_data/tests/ -v`
+        - [ ] 4.3.2 Verify all 24 tests pass (100%)
         - [ ] 4.3.3 Run with coverage: `pytest apps/user_movie_data/tests/ --cov=apps.user_movie_data`
 
 - [ ] 5. Migrate Core App Tests (2-3 hours, 12 tests)
@@ -273,7 +278,7 @@
 - `apps/movie/tests/test_movie_service.py` - 14 tests (CONVERTED to pytest)
 - `apps/movie/tests/test_movie_api.py` - 8 tests (CONVERTED to pytest with parametrization - 10 test cases, enhanced with granular field checks)
 - `apps/movie/tests/test_paginated_views.py` - 2 tests (DELETED - redundant with test_movie_api.py)
-- `apps/user_movie_data/tests/test_user_movie_data_api.py` - 15 tests
+- `apps/user_movie_data/tests/test_user_movie_data_api.py` - 24 tests (REWRITTEN - legacy DRF tests replaced with Django Ninja API tests + JWT auth)
 - `apps/core/tests/test_models.py` - 7 tests
 - `apps/core/tests/test_admin.py` - 3 tests
 - `apps/core/tests/test_commands.py` - 2 tests

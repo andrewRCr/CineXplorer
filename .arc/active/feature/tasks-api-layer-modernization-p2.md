@@ -334,15 +334,16 @@ def create_entry(request: HttpRequest, payload: CreateSchema):
     - **Note**: See [Notes](.arc/active/notes-api-layer-modernization-p2.md) "Test Helper Utilities Audit" section for detailed specifications
 
 - [ ] 6.1 Create UserMovieData Django Ninja tests
-    - [ ] 6.1.1 Create `backend/apps/user_movie_data/tests/test_user_movie_data_ninja.py`
-    - [ ] 6.1.2 Implement test for `GET /by-tmdb-id/` (authenticated, returns 404 if not found)
-    - [ ] 6.1.3 Implement test for `POST /` (create entry, requires movie_id)
-    - [ ] 6.1.4 Implement test for `PATCH /{pk}/` (update entry, partial updates)
-    - [ ] 6.1.5 Implement test for `DELETE /{pk}/` (remove entry, 204 response)
-    - [ ] 6.1.6 Implement test for authentication requirement (401 if unauthenticated)
-    - [ ] 6.1.7 Implement test for user isolation (user A cannot access user B's data)
-    - [ ] 6.1.8 Run user_movie_data tests (`python manage.py test apps.user_movie_data --settings=config.settings_test`)
-    - [ ] 6.1.9 **Delete legacy DRF tests** - Remove `test_user_movie_data_api.py` entirely (15 skipped tests, no longer relevant after Django Ninja migration complete)
+    **Note**: This work was completed ahead of schedule during the pytest migration incidental work (see `tasks-incidental-pytest-migration.md` Task 4). Rather than convert legacy DRF tests to pytest only to delete them later, we wrote comprehensive Django Ninja API tests (24 tests total) directly in pytest format. This provides immediate test coverage and eliminates throwaway work. When resuming this task list, this section will need a full pass to mark completed and verify alignment.
+    - [ ] 6.1.1 Create `backend/apps/user_movie_data/tests/test_user_movie_data_api.py` (written with 24 tests covering all endpoints)
+    - [ ] 6.1.2 Implement test for `GET /by-tmdb-id/` (3 tests: success, not found, user isolation) ✅
+    - [ ] 6.1.3 Implement test for `POST /` (6 tests: success, defaults, duplicate, invalid movie, invalid rating) ✅
+    - [ ] 6.1.4 Implement test for `PATCH /{pk}/` (6 tests: partial, single field, not found, wrong user, invalid rating) ✅
+    - [ ] 6.1.5 Implement test for `DELETE /{pk}/` (4 tests: success, not found, wrong user) ✅
+    - [ ] 6.1.6 Implement test for authentication requirement (5 tests: parametrized unauthenticated access) ✅
+    - [ ] 6.1.7 Implement test for user isolation (covered in GET, PATCH, DELETE tests above) ✅
+    - [ ] 6.1.8 Run user_movie_data tests (`pytest apps/user_movie_data/tests/ -v`) - IN PROGRESS
+    - [ ] 6.1.9 **Legacy DRF tests already replaced** - `test_user_movie_data_api.py` rewritten with Django Ninja tests
 
 - [ ] 6.2 Create authentication Django Ninja tests (deferred from Authentication Modernization)
     - [ ] 6.2.1 Create `backend/apps/authentication/tests/test_auth_ninja.py`

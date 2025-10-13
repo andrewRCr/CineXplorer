@@ -109,11 +109,11 @@
         - [x] 2.6.3 Run with coverage: api.py 64.68%, middleware.py 100%, overall 22.67% (infrastructure files not yet tested)
 
 - [ ] 3. Migrate Movie App Tests (5-6 hours, 24 tests)
-    - [ ] 3.1 Convert test_movie_service.py (14 tests)
-        - [ ] 3.1.1 Convert MovieServiceTests class to function-based tests
-        - [ ] 3.1.2 Extract TMDB mock fixtures to conftest.py
-        - [ ] 3.1.3 Replace setUp with fixtures
-        - [ ] 3.1.4 Run tests to verify: `pytest apps/movie/tests/test_movie_service.py`
+    - [x] 3.1 Convert test_movie_service.py (14 tests)
+        - [x] 3.1.1 Convert MovieServiceTests class to function-based tests (4 classes → function-based with sections)
+        - [x] 3.1.2 Extract TMDB mock fixtures to conftest.py (no shared fixtures needed - mocks are test-specific)
+        - [x] 3.1.3 Replace setUp with fixtures (no setUp/tearDown methods existed)
+        - [x] 3.1.4 Run tests to verify: 14/14 passing (100%, 0.18s execution time)
     - [ ] 3.2 Convert test_movie_api.py (8 tests)
         - [ ] 3.2.1 Convert MovieAPITests class to function-based tests
         - [ ] 3.2.2 Use shared api_client fixture

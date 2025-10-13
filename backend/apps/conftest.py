@@ -21,9 +21,8 @@ from typing import TYPE_CHECKING
 import pytest
 
 if TYPE_CHECKING:
+    from django.contrib.auth.models import User
     from django.test import Client
-
-    from apps.authentication.models import User
 
 
 @pytest.fixture
@@ -67,7 +66,8 @@ def user(db: None) -> User:
             # user is already created and saved to DB
             assert user.email == "testuser@example.com"
     """
-    from apps.authentication.models import User
+    from django.contrib.auth import get_user_model
+    User = get_user_model()  # noqa: N806 - Django model naming convention
 
     return User.objects.create_user(
         email="testuser@example.com",

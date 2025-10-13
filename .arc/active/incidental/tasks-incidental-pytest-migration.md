@@ -84,11 +84,11 @@
         - [x] 2.1.7 Replace `self.assertEqual` with `assert` statements (all assertions converted)
         - [x] 2.1.8 Run tests to verify: 22/22 passing (100% - fixed pre-existing CSRF cookie test)
         - [x] 2.1.9 Suppress third-party Pydantic warnings (added filterwarnings to pyproject.toml)
-    - [ ] 2.2 Convert test_csrf_protection.py (12 tests)
-        - [ ] 2.2.1 Convert CsrfProtectionTests class to function-based tests
-        - [ ] 2.2.2 Extract CSRF token helper to fixture
-        - [ ] 2.2.3 Replace TestCase assertions with assert statements
-        - [ ] 2.2.4 Run tests to verify: `pytest apps/authentication/tests/test_csrf_protection.py`
+    - [x] 2.2 Convert test_csrf_protection.py (12 tests)
+        - [x] 2.2.1 Convert CsrfProtectionTests class to function-based tests (3 classes → function-based)
+        - [x] 2.2.2 Extract CSRF token helper to fixture (created csrf_client fixture)
+        - [x] 2.2.3 Replace TestCase assertions with assert statements (all assertions converted)
+        - [x] 2.2.4 Run tests to verify: 12/12 passing (100%)
     - [ ] 2.3 Convert test_security.py (10 tests)
         - [ ] 2.3.1 Convert SecurityHeadersTests class to function-based tests
         - [ ] 2.3.2 Convert JWTCookieSecurityTests class to function-based tests
@@ -242,14 +242,14 @@
 - `pyproject.toml` - pytest configuration (UPDATED - added [tool.pytest.ini_options], filterwarnings for third-party Pydantic deprecations)
 
 **Test Infrastructure:**
-- `apps/conftest.py` - Root-level shared fixtures (CREATED - api_client, user, auth_client fixtures)
+- `apps/conftest.py` - Root-level shared fixtures (CREATED - api_client, user, auth_client fixtures + FIXED User import pattern)
 - `apps/authentication/tests/conftest.py` - Auth-specific fixtures (EXISTS - throttling fixtures from Task 3.6)
 - `apps/movie/tests/conftest.py` - Movie-specific fixtures (TO BE CREATED in Task 3.4)
 - `apps/user_movie_data/tests/conftest.py` - UserMovieData fixtures (TO BE CREATED in Task 4.2)
 
 **Test Files to Convert (14 files, 104 tests):**
-- `apps/authentication/tests/test_user_api.py` - 21 tests
-- `apps/authentication/tests/test_csrf_protection.py` - 12 tests
+- `apps/authentication/tests/test_user_api.py` - 22 tests (CONVERTED + FIXED User import)
+- `apps/authentication/tests/test_csrf_protection.py` - 12 tests (CONVERTED + FIXED User import)
 - `apps/authentication/tests/test_security.py` - 10 tests
 - `apps/authentication/tests/test_oauth_mocks.py` - fixtures
 - `apps/authentication/tests/fixtures.py` - fixtures

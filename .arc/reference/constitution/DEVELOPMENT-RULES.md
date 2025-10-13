@@ -1,6 +1,6 @@
 # Development Rules - CineXplorer
 
-**Version:** 2.4 | **Updated:** 2025-10-09 | **Hash:** `e8c2g3k0`
+**Version:** 2.5 | **Updated:** 2025-10-13 | **Hash:** `f9h3k1m2`
 
 Core development rules and quality standards for CineXplorer. These rules are **non-negotiable** and must be followed by all contributors, including AI assistants.
 
@@ -8,7 +8,7 @@ Core development rules and quality standards for CineXplorer. These rules are **
 
 **Before starting ANY work, AI assistants must:**
 
-1. **Confirm rules version:** "Acknowledging DEVELOPMENT-RULES v2.4, hash e8c2g3k0"
+1. **Confirm rules version:** "Acknowledging DEVELOPMENT-RULES v2.5, hash f9h3k1m2"
 2. **State understanding:** Confirm commit protocols, task analysis, quality gates, "Leave It Cleaner" protocol, CURRENT-SESSION control, and feature branch workflow
 3. **Verify context access:** Confirm access to required documents (AI-SHARED, META-PRD, etc.)
 4. **Check branch status:** Verify current git branch and alignment with intended work
@@ -37,7 +37,9 @@ Core development rules and quality standards for CineXplorer. These rules are **
 Before any commit consideration, ALL of the following must pass with **zero exceptions**:
 
 1. **Backend Tests**: 100% pass rate
-   - Command: `docker compose -f infrastructure/docker-compose.yml exec backend python manage.py test --keepdb --settings=config.settings_test`
+   - **MUST run via Docker** (requires database connection): `docker compose -f infrastructure/docker-compose.yml exec backend python manage.py test --keepdb --settings=config.settings_test`
+   - **pytest alternative** (post-migration): `docker compose -f infrastructure/docker-compose.yml exec backend pytest apps/`
+   - **NEVER run from host venv** - tests require PostgreSQL/Redis connections only available in Docker network
    - Zero failures acceptable
 
 2. **Frontend Tests**: 100% pass rate

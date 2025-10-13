@@ -12,10 +12,14 @@ Test Coverage:
 5. CSRF token generation via /api/csrf/ endpoint
 """
 import json
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
+import pytest
 from core.tests.test_helpers import create_user, json_post
-from django.test import Client, TestCase
+from django.test import Client
+
+if TYPE_CHECKING:
+    from django.contrib.auth.models import User
 
 HTTP_200_OK = 200
 HTTP_201_CREATED = 201
@@ -29,374 +33,365 @@ CSRF_URL = '/api/csrf/'
 PROFILE_URL = '/api/profile/'
 
 
-class CSRFProtectionTests(TestCase):
+# ============================================================================
+# FIXTURES
+# ============================================================================
+
+@pytest.fixture
+def csrf_client(api_client: Client, db: None) -> tuple[Client, "User"]:
     """
-    Test Django's CSRF middleware protection with Django Ninja API.
+    Create authenticated client for CSRF tests.
 
-    Verifies csrf=False workaround (for bug #1464) doesn't disable Django's protection.
+    Returns tuple of (Django test client with JWT cookies, user object).
+    User returned for tests that need to verify database changes.
     """
+    user = create_user(
+        username='csrftest',
+        email='csrftest@example.com',
+        password='testpass123'
+    )
 
-    def setUp(self):
-        """Set up test client and authenticated user."""
-        self.client = Client()
-        self.user = create_user(
-            username='csrftest',
-            email='csrftest@example.com',
-            password='testpass123'
-        )
+    # Login to get JWT cookies
+    auth_payload = {
+        'login': 'csrftest',
+        'password': 'testpass123'
+    }
+    json_post(api_client, TOKEN_URL, cast(dict[str, object], auth_payload))
 
-        # Login to get JWT cookies
-        auth_payload = {
-            'login': 'csrftest',
-            'password': 'testpass123'
-        }
-        json_post(self.client, TOKEN_URL, cast(dict[str, object], auth_payload))
+    return api_client, user
 
-    def test_csrf_blocks_patch_without_token(self):
-        """
-        CRITICAL: PATCH request without CSRF token should be blocked (403).
 
-        This verifies Django's CsrfViewMiddleware is active even with csrf=False
-        on Django Ninja API/auth classes.
-        """
-        payload = {'first_name': 'Blocked'}
+@pytest.fixture
+def get_csrf_token(api_client: Client) -> str:
+    """
+    Retrieve a valid CSRF token from /api/csrf/ endpoint.
 
-        # PATCH without CSRF token should fail
-        res = self.client.patch(
-            PROFILE_URL,
-            json.dumps(payload),
-            content_type='application/json'
-        )
+    Returns the CSRF token string for use in X-CSRFToken headers.
+    """
+    csrf_res = api_client.get(CSRF_URL)
+    csrf_token = json.loads(csrf_res.content.decode())['csrf_token']
+    return csrf_token
 
-        # Should be blocked by CSRF middleware
-        self.assertEqual(
-            res.status_code,
-            HTTP_403_FORBIDDEN,
-            f"CSRF should block PATCH without token. Got {res.status_code}: {res.content.decode()}"
-        )
 
-    def test_csrf_accepts_patch_with_valid_token(self):
-        """
-        CRITICAL: PATCH request WITH valid CSRF token should succeed (200).
+# ============================================================================
+# CSRF PROTECTION TESTS
+# ============================================================================
 
-        This verifies Django's CSRF middleware accepts valid tokens.
-        """
-        # Get valid CSRF token from /api/csrf/ endpoint
-        csrf_res = self.client.get(CSRF_URL)
-        csrf_token = json.loads(csrf_res.content.decode())['csrf_token']
+@pytest.mark.django_db
+def test_csrf_blocks_patch_without_token(csrf_client: tuple[Client, "User"]) -> None:
+    """
+    CRITICAL: PATCH request without CSRF token should be blocked (403).
 
-        payload = {'first_name': 'CSRFSuccess'}
+    This verifies Django's CsrfViewMiddleware is active even with csrf=False
+    on Django Ninja API/auth classes.
+    """
+    client, _user = csrf_client
+    payload = {'first_name': 'Blocked'}
 
-        # PATCH with valid CSRF token should succeed
-        res = self.client.patch(
+    # PATCH without CSRF token should fail
+    res = client.patch(
+        PROFILE_URL,
+        json.dumps(payload),
+        content_type='application/json'
+    )
+
+    # Should be blocked by CSRF middleware
+    assert res.status_code == HTTP_403_FORBIDDEN, \
+        f"CSRF should block PATCH without token. Got {res.status_code}: {res.content.decode()}"
+
+
+@pytest.mark.django_db
+def test_csrf_accepts_patch_with_valid_token(csrf_client: tuple[Client, "User"], db: None) -> None:
+    """
+    CRITICAL: PATCH request WITH valid CSRF token should succeed (200).
+
+    This verifies Django's CSRF middleware accepts valid tokens.
+    """
+    client, user = csrf_client
+    # Get valid CSRF token from /api/csrf/ endpoint
+    csrf_res = client.get(CSRF_URL)
+    csrf_token = json.loads(csrf_res.content.decode())['csrf_token']
+
+    payload = {'first_name': 'CSRFSuccess'}
+
+    # PATCH with valid CSRF token should succeed
+    res = client.patch(
+        PROFILE_URL,
+        json.dumps(payload),
+        content_type='application/json',
+        HTTP_X_CSRFTOKEN=csrf_token
+    )
+
+    assert res.status_code == HTTP_200_OK, \
+        f"CSRF should accept valid token. Got {res.status_code}: {res.content.decode()}"
+
+    # Verify update was applied
+    user.refresh_from_db()
+    assert user.first_name == 'CSRFSuccess'
+
+
+@pytest.mark.django_db
+def test_csrf_exempts_get_requests(csrf_client: tuple[Client, "User"]) -> None:
+    """
+    GET requests should NOT require CSRF tokens (safe method).
+
+    This verifies Django's CSRF middleware exempts safe methods.
+    """
+    client, _user = csrf_client
+    # GET without CSRF token should succeed
+    res = client.get(PROFILE_URL)
+
+    assert res.status_code == HTTP_200_OK, \
+        f"GET should not require CSRF. Got {res.status_code}"
+
+
+@pytest.mark.django_db
+def test_csrf_exempts_login_endpoint(api_client: Client, db: None) -> None:
+    """
+    Login endpoint (auth=None) should NOT require CSRF token.
+
+    This verifies Django Ninja properly exempts auth=None endpoints.
+    """
+    # Create new user for login test
+    create_user(
+        username='logintest',
+        email='logintest@example.com',
+        password='testpass123'
+    )
+
+    # Login without CSRF token should succeed
+    auth_payload = {
+        'login': 'logintest',
+        'password': 'testpass123'
+    }
+    res = json_post(api_client, TOKEN_URL, cast(dict[str, object], auth_payload))
+
+    assert res.status_code == HTTP_200_OK, \
+        f"Login should not require CSRF. Got {res.status_code}"
+
+
+@pytest.mark.django_db
+def test_csrf_exempts_register_endpoint(api_client: Client, db: None) -> None:
+    """
+    Register endpoint (auth=None) should NOT require CSRF token.
+
+    This verifies Django Ninja properly exempts auth=None endpoints.
+    """
+    # Registration without CSRF token should succeed
+    payload = {
+        'username': 'newuser',
+        'email': 'newuser@example.com',
+        'password': 'testpass123',
+        'first_name': 'New',
+        'last_name': 'User'
+    }
+    res = json_post(api_client, REGISTER_URL, cast(dict[str, object], payload))
+
+    assert res.status_code == HTTP_201_CREATED, \
+        f"Register should not require CSRF. Got {res.status_code}"
+
+
+@pytest.mark.django_db
+def test_csrf_token_endpoint_generates_valid_token(api_client: Client, db: None) -> None:
+    """
+    /api/csrf/ endpoint should generate a valid Django CSRF token.
+
+    This verifies the CSRF endpoint integration with Django's token generation.
+    """
+    res = api_client.get(CSRF_URL)
+
+    assert res.status_code == HTTP_200_OK
+
+    # Check response contains token
+    body = json.loads(res.content.decode())
+    assert 'csrf_token' in body
+    csrf_token = body['csrf_token']
+    assert csrf_token is not None
+    assert len(csrf_token) > 0
+
+    # Check csrftoken cookie was set
+    assert 'csrftoken' in res.cookies
+    cookie_token = res.cookies['csrftoken'].value
+
+    # Token in body should match token in cookie
+    assert csrf_token == cookie_token, \
+        "Token in response body should match csrftoken cookie"
+
+
+@pytest.mark.django_db
+def test_csrf_token_from_endpoint_works_for_requests(
+    csrf_client: tuple[Client, "User"]
+) -> None:
+    """
+    INTEGRATION: CSRF token from /api/csrf/ should work for subsequent requests.
+
+    This tests the full flow: get token → use token → request succeeds.
+    """
+    client, _user = csrf_client
+    # Get CSRF token from endpoint
+    csrf_res = client.get(CSRF_URL)
+    csrf_token = json.loads(csrf_res.content.decode())['csrf_token']
+
+    # Use token in PATCH request
+    payload = {'first_name': 'IntegrationTest'}
+    res = client.patch(
+        PROFILE_URL,
+        json.dumps(payload),
+        content_type='application/json',
+        HTTP_X_CSRFTOKEN=csrf_token
+    )
+
+    assert res.status_code == HTTP_200_OK, \
+        f"Token from /api/csrf/ should work. Got {res.status_code}: {res.content.decode()}"
+
+
+@pytest.mark.django_db
+def test_csrf_rejects_invalid_token(csrf_client: tuple[Client, "User"]) -> None:
+    """
+    CSRF middleware should reject invalid/fake tokens.
+
+    This verifies token validation is actually performed.
+    """
+    client, _user = csrf_client
+    fake_token = 'this_is_a_fake_csrf_token_12345'
+
+    payload = {'first_name': 'Hacker'}
+    res = client.patch(
+        PROFILE_URL,
+        json.dumps(payload),
+        content_type='application/json',
+        HTTP_X_CSRFTOKEN=fake_token
+    )
+
+    assert res.status_code == HTTP_403_FORBIDDEN, \
+        f"CSRF should reject fake tokens. Got {res.status_code}"
+
+
+# ============================================================================
+# CSRF UNAUTHENTICATED TESTS
+# ============================================================================
+
+@pytest.mark.django_db
+def test_unauthenticated_patch_fails_with_401_not_403(api_client: Client, db: None) -> None:
+    """
+    Unauthenticated PATCH should fail with 401 (not 403 CSRF).
+
+    This verifies authentication is checked before CSRF.
+    """
+    payload = {'first_name': 'Hacker'}
+    res = api_client.patch(
+        PROFILE_URL,
+        json.dumps(payload),
+        content_type='application/json'
+    )
+
+    # Should fail authentication (401) before CSRF check (403)
+    assert res.status_code == HTTP_401_UNAUTHORIZED, \
+        f"Unauthenticated request should fail auth. Got {res.status_code}"
+
+
+# ============================================================================
+# CSRF EDGE CASE TESTS
+# ============================================================================
+
+@pytest.mark.django_db
+def test_csrf_enforced_before_jwt_validation(
+    csrf_client: tuple[Client, "User"]
+) -> None:
+    """
+    CSRF middleware runs before endpoint JWT validation.
+
+    This means expired JWT + no CSRF token returns 403 (not 401).
+    This is a minor UX issue but acceptable middleware ordering trade-off.
+    """
+    client, _user = csrf_client
+    # Get CSRF endpoint to establish session
+    client.get(CSRF_URL)
+
+    # Clear JWT cookies but keep session (to avoid 401)
+    # In reality, expired JWT would cause 401, but CSRF middleware runs first
+    payload = {'first_name': 'ExpiredJWT'}
+
+    # PATCH without CSRF token (even with "expired" JWT state)
+    res = client.patch(
+        PROFILE_URL,
+        json.dumps(payload),
+        content_type='application/json'
+    )
+
+    # CSRF failure should happen before JWT validation
+    assert res.status_code == HTTP_403_FORBIDDEN, \
+        "CSRF middleware runs before endpoint auth, so 403 returned before 401"
+
+
+@pytest.mark.django_db
+def test_csrf_token_valid_for_multiple_requests(
+    csrf_client: tuple[Client, "User"], db: None
+) -> None:
+    """
+    Single CSRF token valid for multiple requests (session lifetime).
+
+    Django CSRF tokens don't expire per-request, only per session.
+    This is expected behavior and improves performance.
+    """
+    client, user = csrf_client
+    # Get CSRF token once
+    csrf_res = client.get(CSRF_URL)
+    csrf_token = json.loads(csrf_res.content.decode())['csrf_token']
+
+    # Use same token for multiple requests
+    test_names = ['First', 'Second', 'Third']
+
+    for name in test_names:
+        payload = {'first_name': name}
+        res = client.patch(
             PROFILE_URL,
             json.dumps(payload),
             content_type='application/json',
             HTTP_X_CSRFTOKEN=csrf_token
         )
 
-        self.assertEqual(
-            res.status_code,
-            HTTP_200_OK,
-            f"CSRF should accept valid token. Got {res.status_code}: {res.content.decode()}"
-        )
+        assert res.status_code == HTTP_200_OK, \
+            f"Same CSRF token should work for multiple requests. Failed on '{name}'"
 
-        # Verify update was applied
-        self.user.refresh_from_db()
-        self.assertEqual(self.user.first_name, 'CSRFSuccess')
-
-    def test_csrf_exempts_get_requests(self):
-        """
-        GET requests should NOT require CSRF tokens (safe method).
-
-        This verifies Django's CSRF middleware exempts safe methods.
-        """
-        # GET without CSRF token should succeed
-        res = self.client.get(PROFILE_URL)
-
-        self.assertEqual(
-            res.status_code,
-            HTTP_200_OK,
-            f"GET should not require CSRF. Got {res.status_code}"
-        )
-
-    def test_csrf_exempts_login_endpoint(self):
-        """
-        Login endpoint (auth=None) should NOT require CSRF token.
-
-        This verifies Django Ninja properly exempts auth=None endpoints.
-        """
-        # Create new user for login test
-        create_user(
-            username='logintest',
-            email='logintest@example.com',
-            password='testpass123'
-        )
-
-        # Login without CSRF token should succeed
-        auth_payload = {
-            'login': 'logintest',
-            'password': 'testpass123'
-        }
-        res = json_post(self.client, TOKEN_URL, cast(dict[str, object], auth_payload))
-
-        self.assertEqual(
-            res.status_code,
-            HTTP_200_OK,
-            f"Login should not require CSRF. Got {res.status_code}"
-        )
-
-    def test_csrf_exempts_register_endpoint(self):
-        """
-        Register endpoint (auth=None) should NOT require CSRF token.
-
-        This verifies Django Ninja properly exempts auth=None endpoints.
-        """
-        # Registration without CSRF token should succeed
-        payload = {
-            'username': 'newuser',
-            'email': 'newuser@example.com',
-            'password': 'testpass123',
-            'first_name': 'New',
-            'last_name': 'User'
-        }
-        res = json_post(self.client, REGISTER_URL, cast(dict[str, object], payload))
-
-        self.assertEqual(
-            res.status_code,
-            HTTP_201_CREATED,
-            f"Register should not require CSRF. Got {res.status_code}"
-        )
-
-    def test_csrf_token_endpoint_generates_valid_token(self):
-        """
-        /api/csrf/ endpoint should generate a valid Django CSRF token.
-
-        This verifies the CSRF endpoint integration with Django's token generation.
-        """
-        res = self.client.get(CSRF_URL)
-
-        self.assertEqual(res.status_code, HTTP_200_OK)
-
-        # Check response contains token
-        body = json.loads(res.content.decode())
-        self.assertIn('csrf_token', body)
-        csrf_token = body['csrf_token']
-        self.assertIsNotNone(csrf_token)
-        self.assertTrue(len(csrf_token) > 0)
-
-        # Check csrftoken cookie was set
-        self.assertIn('csrftoken', res.cookies)
-        cookie_token = res.cookies['csrftoken'].value
-
-        # Token in body should match token in cookie
-        self.assertEqual(
-            csrf_token,
-            cookie_token,
-            "Token in response body should match csrftoken cookie"
-        )
-
-    def test_csrf_token_from_endpoint_works_for_requests(self):
-        """
-        INTEGRATION: CSRF token from /api/csrf/ should work for subsequent requests.
-
-        This tests the full flow: get token → use token → request succeeds.
-        """
-        # Get CSRF token from endpoint
-        csrf_res = self.client.get(CSRF_URL)
-        csrf_token = json.loads(csrf_res.content.decode())['csrf_token']
-
-        # Use token in PATCH request
-        payload = {'first_name': 'IntegrationTest'}
-        res = self.client.patch(
-            PROFILE_URL,
-            json.dumps(payload),
-            content_type='application/json',
-            HTTP_X_CSRFTOKEN=csrf_token
-        )
-
-        self.assertEqual(
-            res.status_code,
-            HTTP_200_OK,
-            f"Token from /api/csrf/ should work. Got {res.status_code}: {res.content.decode()}"
-        )
-
-    def test_csrf_rejects_invalid_token(self):
-        """
-        CSRF middleware should reject invalid/fake tokens.
-
-        This verifies token validation is actually performed.
-        """
-        fake_token = 'this_is_a_fake_csrf_token_12345'
-
-        payload = {'first_name': 'Hacker'}
-        res = self.client.patch(
-            PROFILE_URL,
-            json.dumps(payload),
-            content_type='application/json',
-            HTTP_X_CSRFTOKEN=fake_token
-        )
-
-        self.assertEqual(
-            res.status_code,
-            HTTP_403_FORBIDDEN,
-            f"CSRF should reject fake tokens. Got {res.status_code}"
-        )
+        # Verify update applied
+        user.refresh_from_db()
+        assert user.first_name == name
 
 
-class CSRFUnauthenticatedTests(TestCase):
+@pytest.mark.django_db
+def test_refresh_endpoint_requires_csrf(csrf_client: tuple[Client, "User"]) -> None:
     """
-    Test CSRF behavior for unauthenticated requests.
+    Token refresh endpoint requires CSRF (Option A decision).
 
-    Verifies auth check happens before CSRF check for protected endpoints.
+    Rationale: Limits stolen session lifetime to 5 minutes (access token lifetime).
+    Without CSRF, stolen JWT cookies can be refreshed indefinitely.
+
+    Implementation: Explicit check in middleware for /api/token/refresh/
+    prevents prefix matching exemption from /api/token/ (login endpoint).
     """
+    client, _user = csrf_client
+    refresh_url = '/api/token/refresh/'
 
-    def setUp(self):
-        """Set up test client."""
-        self.client = Client()
+    # POST to refresh without CSRF token should fail
+    res = client.post(
+        refresh_url,
+        content_type='application/json'
+    )
 
-    def test_unauthenticated_patch_fails_with_401_not_403(self):
-        """
-        Unauthenticated PATCH should fail with 401 (not 403 CSRF).
+    # Should be blocked by CSRF middleware
+    assert res.status_code == HTTP_403_FORBIDDEN, \
+        f"Refresh endpoint should require CSRF. Got {res.status_code}: {res.content.decode()}"
 
-        This verifies authentication is checked before CSRF.
-        """
-        payload = {'first_name': 'Hacker'}
-        res = self.client.patch(
-            PROFILE_URL,
-            json.dumps(payload),
-            content_type='application/json'
-        )
+    # Verify with valid CSRF token it works
+    csrf_res = client.get(CSRF_URL)
+    csrf_token = json.loads(csrf_res.content.decode())['csrf_token']
 
-        # Should fail authentication (401) before CSRF check (403)
-        self.assertEqual(
-            res.status_code,
-            HTTP_401_UNAUTHORIZED,
-            f"Unauthenticated request should fail auth. Got {res.status_code}"
-        )
+    res_with_csrf = client.post(
+        refresh_url,
+        content_type='application/json',
+        HTTP_X_CSRFTOKEN=csrf_token
+    )
 
-
-class CSRFEdgeCaseTests(TestCase):
-    """
-    Edge case tests for CSRF protection.
-
-    Tests middleware ordering, token lifecycle, and specific endpoint requirements.
-    """
-
-    def setUp(self):
-        """Set up test client and authenticated user."""
-        self.client = Client()
-        self.user = create_user(
-            username='edgecasetest',
-            email='edgecase@example.com',
-            password='testpass123'
-        )
-
-        # Login to get JWT cookies
-        auth_payload = {
-            'login': 'edgecasetest',
-            'password': 'testpass123'
-        }
-        json_post(self.client, TOKEN_URL, cast(dict[str, object], auth_payload))
-
-    def test_csrf_enforced_before_jwt_validation(self):
-        """
-        CSRF middleware runs before endpoint JWT validation.
-
-        This means expired JWT + no CSRF token returns 403 (not 401).
-        This is a minor UX issue but acceptable middleware ordering trade-off.
-        """
-        # Get CSRF endpoint to establish session
-        self.client.get(CSRF_URL)
-
-        # Clear JWT cookies but keep session (to avoid 401)
-        # In reality, expired JWT would cause 401, but CSRF middleware runs first
-        payload = {'first_name': 'ExpiredJWT'}
-
-        # PATCH without CSRF token (even with "expired" JWT state)
-        res = self.client.patch(
-            PROFILE_URL,
-            json.dumps(payload),
-            content_type='application/json'
-        )
-
-        # CSRF failure should happen before JWT validation
-        self.assertEqual(
-            res.status_code,
-            HTTP_403_FORBIDDEN,
-            "CSRF middleware runs before endpoint auth, so 403 returned before 401"
-        )
-
-    def test_csrf_token_valid_for_multiple_requests(self):
-        """
-        Single CSRF token valid for multiple requests (session lifetime).
-
-        Django CSRF tokens don't expire per-request, only per session.
-        This is expected behavior and improves performance.
-        """
-        # Get CSRF token once
-        csrf_res = self.client.get(CSRF_URL)
-        csrf_token = json.loads(csrf_res.content.decode())['csrf_token']
-
-        # Use same token for multiple requests
-        test_names = ['First', 'Second', 'Third']
-
-        for name in test_names:
-            payload = {'first_name': name}
-            res = self.client.patch(
-                PROFILE_URL,
-                json.dumps(payload),
-                content_type='application/json',
-                HTTP_X_CSRFTOKEN=csrf_token
-            )
-
-            self.assertEqual(
-                res.status_code,
-                HTTP_200_OK,
-                f"Same CSRF token should work for multiple requests. Failed on '{name}'"
-            )
-
-            # Verify update applied
-            self.user.refresh_from_db()
-            self.assertEqual(self.user.first_name, name)
-
-    def test_refresh_endpoint_requires_csrf(self):
-        """
-        Token refresh endpoint requires CSRF (Option A decision).
-
-        Rationale: Limits stolen session lifetime to 5 minutes (access token lifetime).
-        Without CSRF, stolen JWT cookies can be refreshed indefinitely.
-
-        Implementation: Explicit check in middleware for /api/token/refresh/
-        prevents prefix matching exemption from /api/token/ (login endpoint).
-        """
-        refresh_url = '/api/token/refresh/'
-
-        # POST to refresh without CSRF token should fail
-        res = self.client.post(
-            refresh_url,
-            content_type='application/json'
-        )
-
-        # Should be blocked by CSRF middleware
-        self.assertEqual(
-            res.status_code,
-            HTTP_403_FORBIDDEN,
-            f"Refresh endpoint should require CSRF. Got {res.status_code}: {res.content.decode()}"
-        )
-
-        # Verify with valid CSRF token it works
-        csrf_res = self.client.get(CSRF_URL)
-        csrf_token = json.loads(csrf_res.content.decode())['csrf_token']
-
-        res_with_csrf = self.client.post(
-            refresh_url,
-            content_type='application/json',
-            HTTP_X_CSRFTOKEN=csrf_token
-        )
-
-        self.assertEqual(
-            res_with_csrf.status_code,
-            HTTP_200_OK,
-            f"Refresh with CSRF should succeed. Got {res_with_csrf.status_code}"
-        )
+    assert res_with_csrf.status_code == HTTP_200_OK, \
+        f"Refresh with CSRF should succeed. Got {res_with_csrf.status_code}"

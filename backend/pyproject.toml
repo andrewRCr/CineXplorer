@@ -124,3 +124,65 @@ filterwarnings = [
     "ignore::pydantic.warnings.PydanticDeprecatedSince20:ninja.conf",
     "ignore::pydantic.warnings.PydanticDeprecatedSince20:ninja_extra.conf",
 ]
+
+[tool.coverage.run]
+# Source paths to measure (only application code)
+source = ["apps"]
+
+# Omit patterns - files that shouldn't be in coverage reports
+omit = [
+    "*/migrations/*",           # Django migrations (auto-generated)
+    "*/tests/*",                # Test files themselves
+    "*/test_*.py",              # Test files
+    "*_test.py",                # Test files
+    "*/conftest.py",            # pytest configuration
+    "apps/*/apps.py",           # Django app configuration (no logic)
+    "apps/*/admin.py",          # Django admin registration (typically no logic)
+    "apps/*/schemas.py",        # Pydantic schemas (pure data structures)
+    "apps/*/management/commands/*",  # Management commands (tested separately if needed)
+    "apps/*/__init__.py",       # Package initialization files
+    "apps/__init__.py",         # Root package init
+    "config/django_types.py",   # Type stub utilities
+    "scripts/*",                # Utility scripts (not application code)
+    "shared/*",                 # Shared utilities (tested via usage)
+]
+
+# Parallel mode for pytest-xdist compatibility
+parallel = true
+
+[tool.coverage.report]
+# Minimum coverage threshold (will fail if below this)
+fail_under = 80
+
+# Precision for coverage percentages
+precision = 2
+
+# Skip files with no executable code
+skip_empty = true
+
+# Show lines that weren't covered
+show_missing = true
+
+# Sort report by coverage percentage (lowest first)
+sort = "Cover"
+
+# Exclude lines/patterns from coverage
+exclude_lines = [
+    "pragma: no cover",         # Explicit coverage exclusion
+    "def __repr__",             # String representations (not critical)
+    "def __str__",              # String representations (not critical)
+    "raise AssertionError",     # Defensive assertions
+    "raise NotImplementedError", # Abstract methods
+    "if __name__ == .__main__.:", # Script entry points
+    "if TYPE_CHECKING:",        # Type checking imports
+    "class .*\\bProtocol\\):",  # Protocol definitions
+    "@(abc\\.)?abstractmethod", # Abstract methods
+]
+
+[tool.coverage.html]
+# HTML report directory
+directory = "htmlcov"
+
+[tool.coverage.json]
+# JSON report file
+output = "coverage.json"

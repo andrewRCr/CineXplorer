@@ -1,6 +1,6 @@
 # Testing Methodology Strategy
 
-**Version:** 1.1 | **Updated:** 2025-01-07 | **Status:** Active | **Scope:** Full-stack
+**Version:** 1.2 | **Updated:** 2025-10-13 | **Status:** Active | **Scope:** Full-stack
 
 ## Purpose
 
@@ -78,6 +78,7 @@ Testing standards and patterns for CineXplorer's full-stack infrastructure (Djan
 **Framework:** pytest with pytest-django
 
 **Basic Commands:**
+
 ```bash
 # Run all tests
 pytest apps/
@@ -99,6 +100,7 @@ pytest --reuse-db apps/
 ```
 
 **Docker Execution** (required for tests that need database/Redis):
+
 ```bash
 # From repo root
 docker compose -f infrastructure/docker-compose.yml exec backend pytest apps/
@@ -111,6 +113,7 @@ docker compose -f infrastructure/docker-compose.yml exec backend pytest apps/mov
 ```
 
 **Quality Checks:**
+
 ```bash
 # Type checking (fast)
 npx pyright backend/apps/ --project backend
@@ -127,6 +130,7 @@ npx pyright backend/apps/ --project backend  # 0 type errors
 ### pytest Patterns
 
 **Function-based tests with fixtures:**
+
 ```python
 import pytest
 from django.test import Client
@@ -156,6 +160,7 @@ def test_get_user_profile(authenticated_user: tuple[Client, User]) -> None:
 ```
 
 **Parametrized tests for validation:**
+
 ```python
 import pytest
 
@@ -185,6 +190,7 @@ def test_create_rating_validation(
 ```
 
 **Database tests:**
+
 ```python
 @pytest.mark.django_db
 def test_user_email_normalized() -> None:
@@ -206,17 +212,22 @@ def test_user_email_normalized() -> None:
 
 **Contents:**
 - HTTP helpers (`json_post`, `json_patch`, `json_put`)
+- CSRF helper (`get_csrf_token`)
 - Status codes (re-exported `HTTPStatus`)
 - Basic model creation (`create_user`)
 - Generic assertions
 - Cross-test type definitions (`UserParams`)
 
 ```python path=null start=null
-from core.tests.test_helpers import create_user, json_post, HTTPStatus
+from core.tests.test_helpers import create_user, json_post, get_csrf_token, HTTPStatus
 
 user = create_user(username='testuser', email='test@example.com')
 response = json_post(client, '/api/endpoint/', {'data': 'value'})
 assert response.status_code == HTTPStatus.OK
+
+# For CSRF-protected endpoints
+csrf_token = get_csrf_token(client)
+response = client.post('/api/mutations/', data, HTTP_X_CSRFTOKEN=csrf_token)
 ```
 
 **Standards:** Type-safe `TypedDict` signatures, `get_or_create()` for unique constraints, `--keepdb` compatible.
@@ -259,9 +270,13 @@ create_user_movie_data(user, movie, user_watched=True, user_rating=5)
 - Too specific to extract
 
 ```python path=null start=null
-class MovieAPIEdgeCaseTests(TestCase):
-    def create_malformed_tmdb_response(self):
+def test_movie_api_edge_case():
+    """Test movie API with malformed TMDB response."""
+    def create_malformed_tmdb_response():
         return {'id': 550}  # Missing title, poster_path, etc.
+
+    response = create_malformed_tmdb_response()
+    # Test handling of malformed data...
 ```
 
 ### When to Use Each Tier
@@ -334,22 +349,23 @@ __all__ = ["HTTPStatus", "create_user", "json_post", "json_patch", "json_put"]
 
 **Benefits:** Single import point, no DRF dependency, type-safe IntEnum.
 
-### Migration Guide (Phase 6)
+### Current State
 
-**Steps:**
-1. **Audit duplicates:** `grep -rn "def create_user" backend/apps/*/tests/`
-2. **Identify needs:** EmailAddress → core, OAuth → auth fixtures, TMDB → movie fixtures
-3. **Update imports:** Replace inline helpers with core imports
-4. **Verify:** `docker compose exec backend python manage.py test apps.{domain} --keepdb`
+**pytest Migration Complete (2025-10-13):**
+- ✅ 103/103 tests converted to pytest (100% migration)
+- ✅ 0 unittest TestCase classes remaining
+- ✅ Parallel execution: 3.7x speedup (36.25s → 9.75s with 24 workers)
+- ✅ CI/CD updated to pytest with coverage artifacts
+- ✅ Full fixture hierarchy established
 
-### Current State (Phase 4)
+**Test Infrastructure:**
+- ✅ `apps/conftest.py` - Root fixtures (api_client, user, auth_client)
+- ✅ `core/tests/test_helpers.py` - HTTP helpers, CSRF helper, `create_user`, HTTPStatus
+- ✅ `authentication/tests/conftest.py` - OAuth, throttling, verified_user fixtures
+- ✅ `authentication/tests/fixtures.py` - Factory functions for test data
+- ✅ All tests use function-based patterns with typed fixtures
 
-**Completed:**
-- ✅ `core/tests/test_helpers.py` - HTTP helpers, basic `create_user`
-- ✅ `authentication/tests/fixtures.py` - OAuth fixtures
-- ✅ Movie/UserMovieData tests import from core
-
-**Phase 6:** Create domain fixtures, implement shared helpers per modernization notes.
+**Phase 6 (Future):** Additional domain fixtures, test helper consolidation as needed.
 
 ### Anti-Patterns
 

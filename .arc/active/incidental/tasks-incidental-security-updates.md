@@ -2,8 +2,8 @@
 
 **Created**: 2025-10-08
 **Triggered By**: External research audit during OAuth headless migration (tasks-incidental-oauth-headless-migration.md)
-**Status**: Paused (Tasks 1-3 complete, Task 3.6 complete; paused at Task 7.5.3 to complete pytest migration)
-**Estimated Effort**: 6-8 hours
+**Status**: Active (pytest migration complete, resuming at Task 7.5.3 - Rate Limiting Tests)
+**Estimated Effort**: 6-8 hours (Tasks 1-6 complete, ~2-3 hours remaining for testing)
 
 ## Context
 

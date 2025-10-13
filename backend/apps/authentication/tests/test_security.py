@@ -93,10 +93,9 @@ class JWTCookieSameSiteTests(TestCase):
     """
 
     def setUp(self) -> None:
-        from typing import cast
 
         from allauth.account.models import EmailAddress
-        from core.tests.test_helpers import create_user, json_post
+        from core.tests.test_helpers import create_user
         from django.contrib.auth import get_user_model
 
         self.client = Client()

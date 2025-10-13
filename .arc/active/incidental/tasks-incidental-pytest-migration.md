@@ -1,13 +1,13 @@
 # Incidental Work: Migrate Test Suite to pytest
 
 **Created**: 2025-10-13
-**Triggered By**: Task 3.6 throttling refactor revealed pytest provides significant benefits for API testing (parametrization, fixtures, parallel execution). External research confirmed this is optimal timing for migration.
-**Status**: Not Started (will begin after Task 3.6 completes)
+**Triggered By**: Task 3.6 in `tasks-incidental-security-updates.md` (throttling refactor) revealed pytest provides significant benefits for API testing (parametrization, fixtures, parallel execution). External research confirmed this is optimal timing for migration.
+**Status**: In Progress (starting Task 1.1 - Add pytest dependencies)
 **Estimated Effort**: 18-20 hours (2.5-3 days focused work)
 
 ## Context
 
-**Why Now**: During Task 3.6 (throttling refactor), we needed test infrastructure for selective throttling tests. External research revealed pytest provides substantial benefits for Django Ninja API testing beyond just this use case.
+**Why Now**: During Task 3.6 in `tasks-incidental-security-updates.md` (throttling refactor), we needed test infrastructure for selective throttling tests. External research revealed pytest provides substantial benefits for Django Ninja API testing beyond just this use case.
 
 **Current State**:
 - ~104 test methods across 14 files
@@ -23,7 +23,7 @@
 5. **Zero migration cost**: Existing tests run unchanged during incremental conversion
 
 **Impact**:
-- Prevents writing ~30 new rate limiting tests (Task 7.5.3) in old unittest style
+- Prevents writing ~30 new rate limiting tests (Task 7.5.3 in `tasks-incidental-security-updates.md`) in old unittest style
 - Eliminates dual-system maintenance burden
 - Perfect timing: 100 tests is manageable but large enough to benefit immediately
 - Enables faster test iteration (parallel execution)

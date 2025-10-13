@@ -17,11 +17,11 @@ This file gives every AI assistant the minimum shared context that doesn’t cha
 - **Purpose:** Solo full-stack showcase demonstrating disciplined process, testing, and documentation
 - **Data source:** TMDB API (personal watchlists, discovery flows)
 - **Repository layout:**
-  - `backend/` Django apps (`core`, `movie`, `user`, `user_movie_data`) + `config/`
-  - `frontend/` Vite/React code in `src/`
-  - `shared/` synced types (`api_types.py` ⇄ `api-types.ts`)
-  - `.arc/` documentation (constitution, strategies, workflows, active/upcoming tasks)
-  - `infrastructure/` Docker + reverse proxy configuration
+    - `backend/` Django apps (`core`, `movie`, `user`, `user_movie_data`) + `config/`
+    - `frontend/` Vite/React code in `src/`
+    - `shared/` synced types (`api_types.py` ⇄ `api-types.ts`)
+    - `.arc/` documentation (constitution, strategies, workflows, active/upcoming tasks)
+    - `infrastructure/` Docker + reverse proxy configuration
 
 ## How to Work in This Repo
 

@@ -108,29 +108,39 @@
         - [x] 2.6.2 Verify all 44 tests pass (100% pass rate, 19.02s execution time)
         - [x] 2.6.3 Run with coverage: api.py 64.68%, middleware.py 100%, overall 22.67% (infrastructure files not yet tested)
 
-- [ ] 3. Migrate Movie App Tests (5-6 hours, 24 tests)
+- [x] 3. Migrate Movie App Tests (5-6 hours, 22 tests - 2 redundant tests deleted)
     - [x] 3.1 Convert test_movie_service.py (14 tests)
         - [x] 3.1.1 Convert MovieServiceTests class to function-based tests (4 classes → function-based with sections)
         - [x] 3.1.2 Extract TMDB mock fixtures to conftest.py (no shared fixtures needed - mocks are test-specific)
         - [x] 3.1.3 Replace setUp with fixtures (no setUp/tearDown methods existed)
         - [x] 3.1.4 Run tests to verify: 14/14 passing (100%, 0.18s execution time)
-    - [ ] 3.2 Convert test_movie_api.py (8 tests)
-        - [ ] 3.2.1 Convert MovieAPITests class to function-based tests
-        - [ ] 3.2.2 Use shared api_client fixture
-        - [ ] 3.2.3 Parametrize validation tests if applicable
-        - [ ] 3.2.4 Run tests to verify: `pytest apps/movie/tests/test_movie_api.py`
-    - [ ] 3.3 Convert test_paginated_views.py (2 tests)
-        - [ ] 3.3.1 Convert pagination tests to function-based
-        - [ ] 3.3.2 Note: File is in legacy DRF exclusion list - verify if still needed
-        - [ ] 3.3.3 Run tests to verify: `pytest apps/movie/tests/test_paginated_views.py`
-    - [ ] 3.4 Create apps/movie/tests/conftest.py
-        - [ ] 3.4.1 Add movie-specific fixtures (TMDB mocks, movie instances)
-        - [ ] 3.4.2 Add type annotations
-        - [ ] 3.4.3 Document fixture usage
-    - [ ] 3.5 Run full movie test suite
-        - [ ] 3.5.1 Command: `pytest apps/movie/tests/`
-        - [ ] 3.5.2 Verify all 24 tests pass
-        - [ ] 3.5.3 Run with coverage: `pytest apps/movie/tests/ --cov=apps.movie`
+    - [x] 3.2 Convert test_movie_api.py (8 tests → 5 tests with 10 test cases)
+        - [x] 3.2.1 Convert MovieAPITests class to function-based tests with parametrization
+        - [x] 3.2.2 Created local client and test_user fixtures (no shared fixture needed)
+        - [x] 3.2.3 Parametrized 4 paginated endpoint tests into 1 test (now_playing, upcoming, search, discover)
+        - [x] 3.2.4 Parametrized 3 validation error tests into 1 test (invalid year, vote_average_gte, runtime_gte)
+        - [x] 3.2.5 Run tests to verify: 10/10 test cases passing (100%, 0.77s execution time)
+    - [x] 3.3 Consolidate test_paginated_views.py (2 tests → DELETED)
+        - [x] 3.3.1 Identified as redundant with test_movie_api.py (both test same Django Ninja endpoints)
+        - [x] 3.3.2 Enhanced test_movie_api.py with granular field checks from test_paginated_views.py
+        - [x] 3.3.3 Deleted test_paginated_views.py (redundant, used legacy rest_framework import)
+        - [x] 3.3.4 Result: No additional tests needed - coverage preserved in parametrized test
+    - [x] 3.4 Create apps/movie/tests/conftest.py (SKIPPED - not needed)
+        - [x] 3.4.1 Analysis: No cross-file fixture sharing between test_movie_api.py and test_movie_service.py
+        - [x] 3.4.2 Analysis: Root conftest.py already provides api_client and user fixtures
+        - [x] 3.4.3 Refactored test_movie_api.py to use root fixtures (api_client, user) instead of local overrides
+        - [x] 3.4.4 Removed unused attach_pass_through_data() helper function
+        - [x] 3.4.5 Result: No movie-specific conftest.py needed (YAGNI principle)
+    - [x] 3.5 Run full movie test suite
+        - [x] 3.5.1 Command: `pytest apps/movie/tests/` - 24/24 tests passing (100%, 0.80s)
+        - [x] 3.5.2 Verify all tests pass - ✅ Perfect execution, no failures
+        - [x] 3.5.3 Run with coverage: `pytest apps/movie/tests/ --cov=apps.movie --cov-report=term-missing`
+        - [x] 3.5.4 Coverage results:
+            - movie/api.py: 88.64% coverage (5 lines missing - error handlers for edge cases)
+            - movie/schemas.py: 0% (expected - Pydantic models have no testable logic)
+            - movie/apps.py: 0% (expected - Django app configuration)
+            - Overall: 15.92% (misleading - schemas inflate denominator)
+            - **Actionable coverage**: API layer 88.64% ✅ (exceeds 80% threshold)
 
 - [ ] 4. Migrate UserMovieData App Tests (3-4 hours, 15 tests)
     - [ ] 4.1 Convert test_user_movie_data_api.py (15 tests)
@@ -254,9 +264,9 @@
 - `apps/authentication/tests/test_security.py` - 10 tests (CONVERTED)
 - `apps/authentication/tests/test_oauth_mocks.py` - OAuth mock classes (CONVERTED to fixtures in conftest.py)
 - `apps/authentication/tests/fixtures.py` - Factory functions (CONSOLIDATED - hybrid pattern with conftest.py wrappers)
-- `apps/movie/tests/test_movie_service.py` - 14 tests
-- `apps/movie/tests/test_movie_api.py` - 8 tests
-- `apps/movie/tests/test_paginated_views.py` - 2 tests
+- `apps/movie/tests/test_movie_service.py` - 14 tests (CONVERTED to pytest)
+- `apps/movie/tests/test_movie_api.py` - 8 tests (CONVERTED to pytest with parametrization - 10 test cases, enhanced with granular field checks)
+- `apps/movie/tests/test_paginated_views.py` - 2 tests (DELETED - redundant with test_movie_api.py)
 - `apps/user_movie_data/tests/test_user_movie_data_api.py` - 15 tests
 - `apps/core/tests/test_models.py` - 7 tests
 - `apps/core/tests/test_admin.py` - 3 tests

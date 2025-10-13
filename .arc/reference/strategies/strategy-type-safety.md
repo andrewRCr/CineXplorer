@@ -1,19 +1,12 @@
 # Type Safety Strategy and Guidelines
 
-**Version:** 2.1
-**Last Updated:** 2025-10-10
-**Status:** Active - Official project standards
+**Version:** 2.1 | **Updated:** 2025-10-10 | **Status:** Active
 
-## Version History
-
-- **2.1** (2025-10-10): Added Ruff ANN401 enforcement for explicit `typing.Any` detection. Documented validation boundary pattern for external APIs. Clarified Pyright limitation (only catches implicit Any). Added per-file-ignores configuration for justified external API boundaries.
-- **2.0** (2025-10-09): Migrated from hybrid Pyright+MyPy to Pyright-only with django-types. Removed MyPy configuration, enhanced Django ORM patterns, simplified type ignore guidelines, documented custom stub supplement strategy.
-- **1.1** (2025-10-08): Added comprehensive hybrid type checker ignore guidelines with decision trees, real examples, and anti-patterns
-- **1.0**: Initial type safety strategy
+**Version history (latest first):** 2.1 – Ruff ANN401 enforcement + validation boundaries · 2.0 – Pyright-only migration · 1.1 – Ignore guidelines · 1.0 – Initial strategy
 
 ## Purpose
 
-This document provides authoritative guidance for achieving comprehensive type safety in CineXplorer's Django + Pydantic stack. Use this when implementing new models, creating schemas, or resolving type checking issues.
+Authoritative guidance for comprehensive type safety in CineXplorer's Django + Pydantic stack. Use when implementing models, schemas, or resolving type checking issues.
 
 ## Table of Contents
 
@@ -29,19 +22,17 @@ This document provides authoritative guidance for achieving comprehensive type s
 
 ## The Challenge
 
-### Why Django ORM Type Safety Is Hard
+Django generates model fields dynamically at runtime using metaclass magic. Type checkers analyze statically, creating a mismatch:
 
-Django generates model fields dynamically at runtime using metaclass magic. Type checkers analyze code statically before runtime, creating a mismatch:
-
-```python
+```python path=null start=null
 class Movie(models.Model):
     title = models.CharField(max_length=255)
 
-# Runtime: movie.title -> str (Django knows this)
-# Static analysis: movie.title -> ? (Type checker doesn't know this)
+# Runtime: movie.title -> str (Django knows)
+# Static: movie.title -> ? (Type checker doesn't know)
 ```
 
-**django-types** provides type stubs for Django built-ins, enabling Pyright to properly infer field types and ORM patterns.
+**django-types** provides type stubs enabling Pyright to infer field types and ORM patterns.
 
 ---
 
@@ -82,45 +73,25 @@ class Movie(models.Model):
 
 ### Primary Solution: Custom .pyi Stub Files
 
-**Why stub files:**
-
-- Perfect for small library surface area with stable APIs
+**Benefits:**
 - 100% accurate type inference without modifying source code
-- Centralized type declarations vs scattered `pyright: ignore` comments
+- Centralized declarations vs scattered `pyright: ignore` comments
 - Excellent IDE autocomplete support
 
-**Trade-offs (be honest)**:
-
-- ✅ **Pros**: Clean code, great DX, eliminates repetitive `pyright: ignore`
-- ⚠️ **Cons**: Manual maintenance, can drift from reality, ~250 LOC to maintain
-- 📊 **Worth it when**: Library is mature/stable (allauth, simplejwt) and changes infrequently
-- ❌ **Not worth it when**: Library APIs change often or maintenance burden grows
+**Trade-offs:**
+- ✅ **Pros**: Clean code, eliminates repetitive `pyright: ignore`
+- ⚠️ **Cons**: Manual maintenance, can drift, ~250 LOC
+- 📊 **Use when**: Library is stable and changes infrequently
 
 **Our stub files** (`backend/stubs/`):
+1. **django/contrib/auth/** - Supplements django-types (explicit `id` field on AbstractUser)
+2. **allauth/** - Required (no official stubs)
+3. **ninja_jwt/** - Required (incomplete official typing)
+4. **environ/** - Required (django-environ lacks stubs)
 
-1. **django/contrib/auth/** - **Supplements** django-types (provides explicit `id` field declaration on AbstractUser, eliminates `reportAttributeAccessIssue` on `user.id`)
-2. **allauth/** - **Required** (no official stubs, stable API)
-3. **ninja_jwt/** - **Required** (incomplete official typing)
-4. **environ/** - **Required** (django-environ lacks official stubs)
+**Configuration:** `"stubPath": "stubs"` in `backend/pyrightconfig.json`
 
-**Key insight from Task 7 testing:**
-
-Custom Django stubs are NOT redundant with django-types:
-- **Without custom stubs**: `user.id` triggers `reportAttributeAccessIssue` (2 errors in authentication/api.py)
-- **With custom stubs**: `user.id` properly typed (0 errors)
-- **Root cause**: django-types doesn't explicitly declare the `id` field on AbstractUser (inherited from models.Model), Pyright can't infer it
-- **Decision**: Custom Django stubs **supplement** django-types (not replace it)
-
-**Configuration:** Set `"stubPath": "stubs"` in `backend/pyrightconfig.json`
-
-**Maintenance contract**: Each stub file documents:
-- Library version synchronized with
-- Last verified date (with django-types version noted)
-- Upgrade checklist
-- Supplement vs required status
-- Explicit acknowledgment this is a maintenance trade-off
-
-**If stubs become a burden**: Remove them and use documented `pyright: ignore` instead. This is a pragmatic choice, not a dogmatic one.
+**Maintenance:** Each stub documents library version, verification date, and upgrade checklist.
 
 ## Implementation Patterns
 
@@ -128,7 +99,7 @@ Custom Django stubs are NOT redundant with django-types:
 
 **Use when:** Direct CRUD operations mapping Django model to API response.
 
-```python
+```python path=null start=null
 from ninja.orm import ModelSchema
 
 class UserMovieDataModelSchema(ModelSchema):
@@ -137,13 +108,13 @@ class UserMovieDataModelSchema(ModelSchema):
         fields = ["id", "user_watched", "user_rating"]
 ```
 
-**Benefits:** Automatic field inference with django-types, zero `pyright: ignore` needed, minimal boilerplate.
+**Benefits:** Automatic field inference, zero `pyright: ignore`, minimal boilerplate.
 
 ### Pattern 2: from_orm_with_<relation>() for Computed Fields
 
 **Use when:** ModelSchema needs computed fields from ForeignKey relationships.
 
-```python
+```python path=null start=null
 class UserMovieDataDetailSchema(ModelSchema):
     tmdb_id: int | None = None  # From obj.movie.tmdb_id
     title: str | None = None    # From obj.movie.title
@@ -154,12 +125,7 @@ class UserMovieDataDetailSchema(ModelSchema):
 
     @classmethod
     def from_orm_with_movie(cls, obj: UserMovieData) -> "UserMovieDataDetailSchema":
-        """Populate computed fields from related model.
-
-        Note: Django field access may show as 'unknown' in Pyright due to
-        django-types generic field type limitations (documented limitation).
-        This is acceptable per our type safety strategy.
-        """
+        """Populate computed fields from related model."""
         instance = cls.from_orm(obj)
         if obj.movie is not None:
             instance.tmdb_id = obj.movie.tmdb_id
@@ -169,25 +135,20 @@ class UserMovieDataDetailSchema(ModelSchema):
 
 **API Usage:**
 
-```python
+```python path=null start=null
 @router.get("/by-tmdb-id", response=UserMovieDataDetailSchema)
 def get_data(request: HttpRequest, tmdb_id: int) -> UserMovieDataDetailSchema:
     obj = UserMovieData.objects.select_related('movie').get(movie__tmdb_id=tmdb_id)
-    return UserMovieDataDetailSchema.from_orm_with_movie(obj)  # Clean, one line
+    return UserMovieDataDetailSchema.from_orm_with_movie(obj)
 ```
 
-**Why this pattern:**
-
-- Encapsulates type handling in schema (not API code)
-- Zero `cast()` calls polluting endpoints
-- Single-line return statements
-- Reusable and consistent across project
+**Benefits:** Encapsulates type handling in schema, zero `cast()` calls, single-line returns.
 
 ### Pattern 3: Manual Schema for Input DTOs
 
 **Use when:** Input needs fields not on model, or all-optional PATCH operations.
 
-```python
+```python path=null start=null
 from ninja import Schema
 
 class UserMovieDataCreateSchema(Schema):
@@ -204,25 +165,17 @@ class UserMovieDataUpdateSchema(Schema):
 
 ### Pyright with django-types
 
-**Strategy:** Pyright-only for fast development feedback and CI validation, with django-types for Django ORM inference.
+**Why Pyright-only:**
+1. ✅ **Python 3.13 Support** - Full support vs limited MyPy support
+2. ✅ **Performance** - 3-5x faster than MyPy
+3. ✅ **Consistency** - Same checker locally (VSCode/Pylance) and CI
+4. ✅ **Simplicity** - Single type checker, simpler configuration
 
-**Why Pyright-only (not hybrid):**
+**Why django-types:** Forked from django-stubs specifically for Pyright compatibility (django-stubs requires MyPy plugin).
 
-1. ✅ **Python 3.13 Support**: Pyright fully supports Python 3.13, MyPy support limited
-2. ✅ **Performance**: Pyright 3-5x faster than MyPy (shorter CI times, faster local checks)
-3. ✅ **Consistency**: Same checker locally (VSCode/Pylance) and in CI
-4. ✅ **Simplicity**: Single type checker = simpler configuration, less maintenance
-5. ✅ **Community Consensus**: "Unless you have existing mypy workflow, skip mypy and use Pyright" (Python community discussion)
+**Configuration** (`backend/pyrightconfig.json`):
 
-**Why django-types (not django-stubs):**
-
-- `django-stubs`: Requires MyPy plugin for Django ORM type inference (Pyright cannot use plugins)
-- `django-types`: Forked from django-stubs July 2025 specifically for Pyright compatibility
-- Using django-stubs with Pyright results in degraded type checking (incompatibility causes inflated error counts)
-
-**Pyright Configuration** (`backend/pyrightconfig.json`):
-
-```json
+```json path=/home/andrew/dev/CineXplorer/backend/pyrightconfig.json start=null
 {
   "typeCheckingMode": "strict",
   "pythonVersion": "3.13",
@@ -232,479 +185,311 @@ class UserMovieDataUpdateSchema(Schema):
 }
 ```
 
-**Why "information" level:**
+**"information" level:** Django ORM warnings represent django-types limitations, not code problems.
 
-Django ORM field warnings represent current django-types limitations - they don't indicate code problems, just framework typing limitations. These are isolated to ORM field access and runtime-validated by tests. This approach aligns with industry leaders (Zulip uses similar configuration).
+**Commands:**
 
-**Running checks:**
-
-```bash
-# From repository root (fastest)
+```bash path=null start=null
+# Fast check
 npx pyright backend/apps/ backend/config/ --project backend
 
-# Via type check script (comprehensive)
-python backend/scripts/type_check.py           # All modules
-python backend/scripts/type_check.py --verbose # With details
+# Comprehensive
+python backend/scripts/type_check.py
 ```
 
-**CI Configuration:**
-
-Type checking in CI uses Pyright directly (no MyPy):
-
-```yaml
-# .github/workflows/ci.yml
-- name: Run backend type checking
-  run: npx pyright backend/apps/ backend/config/ --project backend
-```
-
-Type checking is **blocking** in CI - all code must pass Pyright strict mode before merge.
+**CI:** Type checking is blocking - all code must pass strict mode before merge.
 
 ## Django ORM Type Patterns
 
 ### Explicit Manager Annotations
 
-**Pattern:** Always annotate custom managers explicitly to help Pyright understand QuerySet types.
+**Pattern:** Annotate custom managers explicitly for QuerySet type inference.
 
-```python
+```python path=null start=null
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from typing import ClassVar
 
 class CustomUserManager(BaseUserManager["CustomUser"]):
-    """Type-safe user manager."""
-
-    def create_user(
-        self,
-        email: str,
-        password: str | None = None,
-        **extra_fields: object
-    ) -> "CustomUser":
-        """Create and return regular user."""
+    def create_user(self, email: str, password: str | None = None) -> "CustomUser":
         ...
 
 class CustomUser(AbstractBaseUser):
     objects: ClassVar[CustomUserManager] = CustomUserManager()
-
-    email: models.EmailField  # django-types infers str type
-    is_active: models.BooleanField  # django-types infers bool type
+    email: models.EmailField  # django-types infers str
+    is_active: models.BooleanField  # django-types infers bool
 ```
 
-**Benefits:**
-
-- Explicit `ClassVar` tells Pyright this is a class-level attribute
-- Generic `BaseUserManager["CustomUser"]` provides QuerySet type inference
-- django-types handles field type inference (no manual typing needed)
+**Benefits:** `ClassVar` indicates class-level attribute, generic manager provides QuerySet inference.
 
 ### QuerySet Type Hints
 
 **Pattern:** Use explicit QuerySet generics for complex queries.
 
-```python
+```python path=null start=null
 from django.db.models import QuerySet
 
 def get_active_users() -> QuerySet[CustomUser]:
-    """Return queryset of active users."""
     return CustomUser.objects.filter(is_active=True)
 
 def process_users(users: QuerySet[CustomUser]) -> list[str]:
-    """Process user queryset and return emails."""
     return [user.email for user in users]
 ```
 
-**Benefits:**
-
-- Explicit return types improve IDE autocomplete
-- Type-safe iteration over queryset results
-- Clear function contracts
+**Benefits:** Improved IDE autocomplete, type-safe iteration, clear contracts.
 
 ### Model Field Access Patterns
 
-**Pattern:** django-types handles basic field inference, custom stubs supplement gaps.
-
-```python
-# Basic field access (django-types handles this)
+```python path=null start=null
+# Basic fields (django-types infers)
 user = CustomUser.objects.get(email="test@example.com")
 email: str = user.email  # ✅ django-types infers str
 is_active: bool = user.is_active  # ✅ django-types infers bool
 
-# Primary key access (custom stubs supplement django-types)
-user_id: int = user.id  # ✅ Custom django/contrib/auth/models.pyi provides explicit id field
+# Primary key (custom stubs supplement)
+user_id: int = user.id  # ✅ Custom stub provides explicit id field
 ```
-
-**Without custom Django stubs**, `user.id` would trigger `reportAttributeAccessIssue` because django-types doesn't explicitly declare the `id` field (it's inherited from models.Model and Pyright can't infer it).
 
 ### ForeignKey and Related Field Typing
 
-**Pattern:** Use `select_related()` and `prefetch_related()` with explicit types.
+**Pattern:** Use `select_related()` with explicit null checks.
 
-```python
-from django.http import HttpRequest
-
+```python path=null start=null
 def get_user_movie_details(request: HttpRequest, tmdb_id: int) -> UserMovieDataDetailSchema:
-    """Get user movie data with related movie information."""
     # select_related ensures movie is loaded (no N+1)
     obj = UserMovieData.objects.select_related('movie').get(
-        user=request.user,
-        movie__tmdb_id=tmdb_id
+        user=request.user, movie__tmdb_id=tmdb_id
     )
 
-    # Django ORM guarantees movie is not None here (select_related)
-    # But Pyright sees movie as Movie | None (conservative)
-    if obj.movie is not None:  # Explicit null check for type safety
+    # Explicit null check (Pyright sees Movie | None)
+    if obj.movie is not None:
         tmdb_id = obj.movie.tmdb_id
         title = obj.movie.title
 
     return UserMovieDataDetailSchema.from_orm_with_movie(obj)
 ```
 
-**Key insight:**
-
-- Django ORM relationship access may show as `reportUnknownMemberType` in Pyright
-- This is a documented django-types limitation (generic field types)
-- Runtime tests validate correctness
-- Acceptable per `pyrightconfig.json` settings (`"reportUnknownMemberType": "information"`)
-
 ### Acceptable Information-Level Warnings
 
-**django-types limitations** (configured as "information" level, not errors):
+**django-types limitations** ("information" level, not errors):
 
-```python
-# Pattern 1: reportUnknownMemberType on model fields
-user.email  # Pyright: Unknown member type
-# Reason: django-types limitation with generic field types
-# Validation: Runtime tests verify correctness
-# Status: Acceptable per type safety strategy
-
-# Pattern 2: reportAttributeAccessIssue on related fields (without custom stubs)
-movie.user_movie_data.user_rating  # Pyright: Unknown attribute
-# Reason: Related manager dynamic attributes
-# Validation: Django ORM handles at runtime
-# Status: Acceptable per type safety strategy, custom stubs can eliminate if needed
+```python path=null start=null
+user.email  # reportUnknownMemberType
+movie.user_movie_data.user_rating  # reportAttributeAccessIssue
 ```
 
-**Why acceptable:**
-
-These warnings represent django-types framework limitations, not code errors. They are:
-
-1. **Isolated to ORM field access** (not business logic)
-2. **Runtime-validated** by comprehensive test suite
-3. **Documented** in pyrightconfig.json with rationale
-4. **Industry-standard approach** (Zulip and other large Django projects use similar configuration)
+**Why acceptable:** Framework limitations, not code errors. Isolated to ORM access, runtime-validated by tests.
 
 ## Type Safety Rules
 
 ### typing.Any Usage
 
-**PROHIBITED** except for external API payloads (TMDB, third-party services).
+**PROHIBITED** except for external API boundaries.
 
 **Use instead:**
-
-- `object` for truly unknown data
+- `object` for unknown data
 - `dict[str, object]` for generic dictionaries
-- Specific union types when possible: `str | int | None`
-
-**If Any is unavoidable:** Must have inline comment explaining necessity.
+- Union types: `str | int | None`
 
 **Example:**
 
-```python
+```python path=null start=null
 # ❌ Prohibited
-def process_data(data: Any) -> Any:
-    ...
+def process_data(data: Any) -> Any: ...
 
 # ✅ Correct
-def process_data(data: dict[str, object]) -> dict[str, object]:
-    ...
+def process_data(data: dict[str, object]) -> dict[str, object]: ...
 
-# ✅ Acceptable with justification
-def parse_tmdb_response(payload: Any) -> MovieSchema:  # TMDB API contract not typed
+# ✅ External API boundary
+def parse_tmdb_response(payload: Any) -> MovieSchema:  # TMDB contract not typed
     ...
 ```
 
 ### Enforcement: Ruff ANN401 Rule
 
-**Automated Detection**: The Ruff linter enforces explicit `Any` detection via the `ANN401` rule.
-
 **Configuration** (`backend/pyproject.toml`):
 
-```toml
+```toml path=/home/andrew/dev/CineXplorer/backend/pyproject.toml start=null
 [tool.ruff.lint]
-select = [
-    # ... other rules
-    "ANN401",  # Explicit typing.Any detection (type safety quality gate)
-]
+select = ["ANN401"]  # Explicit Any detection
 
 [tool.ruff.lint.per-file-ignores]
-# Justified external API boundaries
-"apps/authentication/adapters.py" = ["ANN401"]  # Allauth library contracts
-"apps/authentication/auth_ninja.py" = ["ANN401"]  # Django settings & OpenAPI schemas
-"apps/core/services/metrics.py" = ["ANN401"]  # Monitoring system mixed-type labels
-"stubs/**/*.pyi" = ["ANN401"]  # Type stubs may use Any for external library contracts
+"apps/authentication/adapters.py" = ["ANN401"]  # Allauth contracts
+"apps/authentication/auth_ninja.py" = ["ANN401"]  # Django/OpenAPI schemas
+"apps/core/services/metrics.py" = ["ANN401"]  # Monitoring labels allow mixed types
+"stubs/**/*.pyi" = ["ANN401"]  # External library contracts
 ```
 
-**Running the Check**:
+**Commands:**
 
-```bash
-# Check entire backend
-ruff check backend/ --select ANN401
-
-# Check specific files
-ruff check backend/apps/authentication/ --select ANN401
-
-# Run with all other Ruff rules
-ruff check backend/
+```bash path=null start=null
+ruff check backend/ --select ANN401  # Check Any usage
+ruff check backend/                  # All rules
 ```
 
-**Validation Boundary Pattern** (Recommended):
+**Validation Boundary Pattern:**
 
-When `typing.Any` is justified for external APIs, use the validation boundary pattern to contain the type unsafety:
+Contain `Any` at external API boundaries:
 
-```python
-from pydantic import BaseModel
-
+```python path=null start=null
 class TMDBMovieResponse(BaseModel):
-    """Type-safe model for TMDB movie data."""
     id: int
     title: str
     release_date: str
 
 def fetch_movie(movie_id: int) -> TMDBMovieResponse:
-    """Fetch movie from TMDB API with validation boundary."""
-    # Layer 1: Untyped external world (Any acceptable here)
+    # External boundary - Any acceptable
     raw_response: Any = requests.get(f"api.tmdb.org/movie/{movie_id}").json()
-    # Justification: External API boundary - validated immediately below
 
-    # Layer 2: Validation boundary (Any → Validated Type)
-    validated = TMDBMovieResponse.model_validate(raw_response)
-
-    # Layer 3: Type-safe internal code (no Any leakage)
-    return validated
+    # Immediate validation (Any → Type-safe)
+    return TMDBMovieResponse.model_validate(raw_response)
 ```
 
-**Key Principles**:
-1. **Contain Any to the boundary** - Don't let it propagate into application code
-2. **Validate immediately** - First thing after receiving external data
-3. **Document the boundary** - Make it clear why Any is justified
-4. **Fail fast** - Validate eagerly with Pydantic
+**Principles:** Contain Any to boundary, validate immediately, document justification.
 
-**Pyright Limitation**: Note that Pyright's `reportAny: "error"` configuration only catches *implicit* Any (from missing type annotations), NOT explicit `Any` type annotations. This is why Ruff ANN401 is essential for comprehensive enforcement.
+**Note:** Pyright only catches implicit Any. Ruff ANN401 catches explicit `Any` usage.
 
 ## Type Ignore Guidelines
 
 ### Decision Tree (Preference Order)
 
-**Rule:** Type ignores are a last resort. Exhaust all other options first.
+**Rule:** Type ignores are last resort.
 
-**Decision tree (in order of preference):**
-
-1. **Third-party library missing types?** → Create custom `.pyi` stub files (see [Primary Solution: Custom .pyi Stub Files](#primary-solution-custom-pyi-stub-files))
-2. **Django ORM internals?** → Verify it's an information-level warning (acceptable), or refactor if it's an error
-3. **Runtime-injected attributes?** → Refactor to avoid (e.g., use `get_current_user()` instead of `request.auth`)
-4. **Truly unavoidable?** → Use specific `pyright: ignore` with detailed justification
+1. **Third-party library missing types?** → Create `.pyi` stub files
+2. **Django ORM internals?** → Verify it's information-level (acceptable) or refactor
+3. **Runtime-injected attributes?** → Refactor (use `get_current_user()` vs `request.auth`)
+4. **Truly unavoidable?** → Use specific `pyright: ignore` with justification
 
 ### Acceptable Use Cases
 
-After exhausting above decision tree:
-
-1. **Django framework internals** - Framework magic that can't be typed (verify it's information-level first)
-2. **Django Ninja auth injection** - Runtime-injected attributes not in type stubs (prefer refactoring first)
-3. **Documented edge cases** - Rare scenarios with detailed justification
+1. **Django framework internals** (verify information-level first)
+2. **Django Ninja auth injection** (prefer refactoring)
+3. **Documented edge cases** with justification
 
 **NOT acceptable:**
-
-- ❌ **External library limitations** - Create stub files instead of scattering `pyright: ignore`
-- ❌ **Laziness** - Don't use ignores to avoid proper typing work
-- ❌ **Silencing real errors** - Investigate and fix the code
+- ❌ External library limitations (create stubs instead)
+- ❌ Avoiding proper typing work
+- ❌ Silencing real errors
 
 ### Pyright Ignore Syntax
 
 **Use specific error codes:**
 
-```python
-# ✅ Correct: Specific error code with reason
+```python path=null start=null
+# ✅ Correct
 assert isinstance(request.user, AbstractBaseUser)  # pyright: ignore[reportUnknownMemberType]
 
-# ❌ Wrong: Generic ignore without code
+# ❌ Wrong
 value = get_unknown()  # pyright: ignore
 ```
 
-**Real examples from our codebase:**
+**Real examples:**
 
-```python
-# Example 1: Django ORM limitation - HttpRequest.user type
-# Pyright sees user as object (generic descriptor typing limitation)
-# Runtime: django-types ensures user is AbstractBaseUser
+```python path=null start=null
+# Django ORM limitation
 def create_token(request: HttpRequest) -> str:
     assert isinstance(request.user, AbstractBaseUser)  # pyright: ignore[reportUnknownMemberType]
     refresh = RefreshToken.for_user(request.user)
     return str(refresh.access_token)
 
-# Example 2: Manager override in custom stubs (variance strictness)
-# Pyright enforces strict variance (Manager[Model] vs EmailAddressManager)
+# Manager override variance
 class EmailAddress(models.Model):
     objects: ClassVar[EmailAddressManager]  # pyright: ignore[reportIncompatibleVariableOverride]
 ```
 
-**Documentation requirements:**
-
-- ✅ Always specify error code: `# pyright: ignore[reportErrorName]`
-- ✅ Add inline comment explaining WHY if not obvious from context
-- ✅ Keep scope minimal (line-level only, never function-level)
-- ✅ Verify the error is legitimate before suppressing
+**Requirements:**
+- ✅ Specify error code: `# pyright: ignore[reportErrorName]`
+- ✅ Add explanation if not obvious
+- ✅ Line-level scope only
+- ✅ Verify error is legitimate
 
 ### Best Practices
 
 **Always:**
-
-- ✅ Use specific codes: `# pyright: ignore[reportAttributeAccessIssue]`
-- ✅ Add inline explanation for non-obvious suppressions
-- ✅ Keep scope minimal (line-level, not function-level)
-- ✅ Verify error is legitimate before suppressing
-- ✅ Check if error is already "information" level (acceptable without ignore)
+- ✅ Specific codes: `# pyright: ignore[reportAttributeAccessIssue]`
+- ✅ Inline explanation for non-obvious cases
+- ✅ Line-level scope only
+- ✅ Verify error legitimacy
 
 **Never:**
+- ❌ Generic ignores: `# pyright: ignore`
+- ❌ Silencing without investigation
+- ❌ Avoiding proper typing work
 
-- ❌ Blanket ignores without code: `# pyright: ignore`
-- ❌ Silencing real errors without investigation
-- ❌ Ignoring without understanding why
-- ❌ Using ignores to avoid proper typing work
+**Refactoring Example:**
 
-**Example: Avoiding type ignores with refactoring:**
-
-```python
+```python path=null start=null
 from authentication.auth_ninja import get_current_user
 
 @router.post("/")
 def create_entry(request: HttpRequest) -> UserMovieDataModelSchema:
-    # Get authenticated user with explicit error handling (zero pyright: ignore needed)
-    user = get_current_user(request)  # Returns AbstractBaseUser
-
+    user = get_current_user(request)  # Returns AbstractBaseUser, no ignores needed
     obj = UserMovieData.objects.create(user=user, ...)
-    return UserMovieDataModelSchema.from_orm(obj)  # Full type safety from here
+    return UserMovieDataModelSchema.from_orm(obj)
 ```
 
-**Why `get_current_user()` over `cast(User, request.auth)`:**
-
-- ✅ Zero `pyright: ignore` comments needed
-- ✅ Explicit error handling with structured responses
-- ✅ Built-in logging for observability
-- ✅ Easier to test (mockable function)
-- ✅ Single source of truth for auth logic
+**Benefits:** Zero ignores, explicit error handling, better testability.
 
 ---
 
 ## Maintenance Guidelines
 
-### Custom Stub Maintenance
+### Stub Maintenance
 
-**When Upgrading django-types:**
+**django-types upgrades:**
+1. Check release notes
+2. Run `npx pyright backend/apps/ backend/config/ --project backend`
+3. Update stub headers with new version
+4. Run backend test suite
 
-1. Read django-types release notes for breaking changes
-2. Run type checker: `npx pyright backend/apps/ backend/config/ --project backend`
-3. If new errors appear, investigate if custom stubs need updates
-4. Update stub file headers with new django-types version
-5. Run full test suite to verify runtime correctness
+**Library upgrades:**
+1. Check API changes in release notes
+2. Update stub signatures if needed
+3. Update "Last verified" date
+4. Run backend test suite
 
-**When Upgrading Third-Party Libraries:**
-
-1. Check library release notes for API changes
-2. Run full test suite
-3. If runtime errors occur related to types, check corresponding stub file
-4. Update stub signatures if API changed
-5. Update "Last verified" date in stub docstring
-
-### Model Change Checklist
-
-When modifying Django models (if using custom model stubs):
-
-1. Update model file (`models.py`)
-2. Update stub file (`models.pyi`) if applicable
-3. Update affected schemas (`schemas.py`)
-4. Run type checks: `npx pyright backend/apps/ backend/config/ --project backend`
-5. Verify no new errors (information-level warnings acceptable)
-6. Update tests if contract changed
-
-**Time estimate:** ~5 minutes per change
-
-**Note:** With django-types, most model changes don't require stub updates (django-types handles inference). Only custom stubs in `backend/stubs/` need manual maintenance.
-
-### Model File Headers
-
-Include sync reminder in model files that have corresponding custom stubs:
-
-```python
-"""
-⚠️ TYPE STUB SYNC REQUIRED
-When modifying this file, update: backend/stubs/<path>/models.pyi
-"""
-```
-
-**Current files requiring sync:**
-
-- None (we use django-types for Django models, custom stubs only for third-party libraries)
+**Model change checklist:**
+1. Update model + related schema/stub (if applicable)
+2. Run `npx pyright backend/apps/ backend/config/ --project backend`
+3. Run backend tests to confirm runtime contract
 
 ### Pre-Commit Quality Gate
 
-```bash
+```bash path=null start=null
 python backend/scripts/type_check.py
-# Must show: ✅ Type Safety Status: Pyright
-# All apps should pass with 0 errors (information warnings acceptable)
+# Must show: ✅ Type Safety Status: Pyright (0 errors)
 ```
-
-**If checks fail:** Fix errors, document new justified ignores, re-run until passing.
 
 ### Development Workflow
 
-**Incremental Type Checking (Fast):**
-
-```bash
-# Check specific files during development
+```bash path=null start=null
+# Fast - specific files
 npx pyright backend/apps/authentication/api.py --project backend
 
-# Check specific app
-npx pyright backend/apps/authentication/ --project backend
-```
-
-**Full Type Checking (Pre-Commit):**
-
-```bash
-# Comprehensive check via script
+# Comprehensive - all code
 python backend/scripts/type_check.py
-
-# Or direct Pyright (equivalent)
-npx pyright backend/apps/ backend/config/ --project backend
 ```
 
-**CI Type Checking:**
-
-CI runs Pyright as blocking quality gate (must pass before merge):
-
-```yaml
-- name: Run backend type checking
-  run: npx pyright backend/apps/ backend/config/ --project backend
-```
+**CI:** Type checking is blocking quality gate before merge.
 
 ---
 
-## When to Use Domain Layer Alternative
+## Domain Layer Alternative
 
-The domain layer pattern (separate dataclasses from ORM) is available if:
-
-- Business logic grows beyond simple CRUD
-- Need framework-independent testing
+Use domain layer (separate dataclasses from ORM) when:
+- Business logic exceeds simple CRUD
+- Framework-independent testing needed
 - Complex algorithms require pure Python models
 
-**Trade-off:** More boilerplate (to_domain/from_domain everywhere) vs framework independence.
+**Trade-off:** More boilerplate vs framework independence.
 
-**Current status:** django-types + stub files solve 95% of needs. Add domain layer only if complexity justifies it.
+**Status:** django-types + stubs solve 95% of needs. Add domain layer only if justified.
 
 ---
 
 ## Related Documentation
 
-- [DEVELOPMENT-RULES](../constitution/DEVELOPMENT-RULES.md) - Development standards (Pyright-only quality gates)
-- [TECHNICAL-ARCHITECTURE](../constitution/TECHNICAL-ARCHITECTURE.md) - Architecture overview (type checking section)
-- [API Layer Modernization PRD](.arc/active/prd-api-layer-modernization-p2.md) - API patterns
+- [DEVELOPMENT-RULES](../constitution/DEVELOPMENT-RULES.md) - Development standards
+- [TECHNICAL-ARCHITECTURE](../constitution/TECHNICAL-ARCHITECTURE.md) - Architecture overview
 - `backend/pyrightconfig.json` - Pyright configuration
-- `backend/stubs/` - Custom type stubs directory
-- [django-types Documentation](https://pypi.org/project/django-types/) - Django stub library for Pyright
-- [Pyright Documentation](https://microsoft.github.io/pyright/) - Type checker documentation
+- `backend/stubs/` - Custom type stubs
+- [django-types](https://pypi.org/project/django-types/) - Django stubs for Pyright

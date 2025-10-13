@@ -1,38 +1,27 @@
 # Development Rules - CineXplorer
 
-**Version**: 2.4
-**Last Updated**: 2025-10-09
-**Rules Hash**: `e8c2g3k0`
+**Version:** 2.4 | **Updated:** 2025-10-09 | **Hash:** `e8c2g3k0`
 
-This document consolidates the core development rules and quality standards for CineXplorer. These rules are **non-negotiable** and must be followed by all contributors, including AI assistants.
-
-## Version History
-
-- **2.4**: Added CURRENT-SESSION.md update control - AI must not update without user instruction
-- **2.3**: Added "Leave It Cleaner" protocol for handling pre-existing issues in modified files
-- **2.2**: Added mandatory comprehensive task context analysis protocol for all commits
-- **2.1**: Added feature branch workflow protocols and branch management requirements
-- **2.0**: Clarified commit initiation vs execution, added incremental quality checks
-- **1.0**: Initial comprehensive development rules
+Core development rules and quality standards for CineXplorer. These rules are **non-negotiable** and must be followed by all contributors, including AI assistants.
 
 ## AI Session Initialization Required
 
-Before starting ANY work, AI assistants must:
+**Before starting ANY work, AI assistants must:**
 
-1. **Confirm rules version**: "Acknowledging DEVELOPMENT-RULES v2.4, hash e8c2g3k0"
-2. **State understanding**: Briefly confirm understanding of commit protocols, comprehensive task context analysis, quality gates, "Leave It Cleaner" protocol, CURRENT-SESSION update control, and feature branch workflow
-3. **Verify context access**: Confirm access to required documents (AI-SHARED, META-PRD, etc.)
-4. **Check branch status**: Verify current git branch and ensure alignment with intended work
+1. **Confirm rules version:** "Acknowledging DEVELOPMENT-RULES v2.4, hash e8c2g3k0"
+2. **State understanding:** Confirm commit protocols, task analysis, quality gates, "Leave It Cleaner" protocol, CURRENT-SESSION control, and feature branch workflow
+3. **Verify context access:** Confirm access to required documents (AI-SHARED, META-PRD, etc.)
+4. **Check branch status:** Verify current git branch and alignment with intended work
 
 ## Git & Commit Control
 
 ### Manual Commit Control
 
 - **AI NEVER initiates commits** without explicit user approval or instruction
-- **AI CAN execute commits** when user explicitly approves/instructs it to do so
-- **User approval required** to begin any git operations
-- **MANDATORY**: AI must perform comprehensive task context analysis before any commit consideration
-- AI reports completion with standardized readiness report, then awaits commit instructions
+- **AI CAN execute commits** when user explicitly approves/instructs it
+- **User approval required** for all git operations
+- **MANDATORY:** Comprehensive task context analysis before any commit consideration (see atomic-commit workflow)
+- AI reports completion with readiness report, then awaits commit instructions
 
 ### Feature Branch Workflow
 
@@ -77,6 +66,7 @@ Before any commit consideration, ALL of the following must pass with **zero exce
    - **REQUIRED**: Use `object` for unknown data, `dict[str, object]` for generic dictionaries
    - **JUSTIFICATION**: Any `Any` usage must have inline comment explaining necessity
    - **Full guidelines**: See [Type Safety Strategy](../strategies/strategy-type-safety.md) for complete strategy
+   - **Stub maintenance**: `backend/stubs/` must stay in sync with dependency versions (see strategy doc)
 
 7. **Markdown Linting**: Zero violations
    - Command: `npx markdownlint-cli2 "README.md" ".arc/**/*.md"`
@@ -221,37 +211,12 @@ After completing all sub-tasks under a parent task:
 
 ## Testing Requirements
 
-### Test Coverage Standards
-
-- **Test-first approach**: Required for new models, API endpoints, complex business logic
-- **Test-after acceptable**: For simple CRUD operations, UI components, configuration
-- **Always required**: All features must have appropriate test coverage
-- **Integration focus**: Test workflows, not just individual components
-
-### Test Execution Standards
-
-- **Backend**: Use `--keepdb` flag for performance during development
-- **Frontend**: Use appropriate test modes (watch, coverage, UI) as needed
-- **Before commits**: Full test suite must pass completely
-
-## Commit Standards
-
-### Conventional Commit Format
-
-- **Types**: feat, fix, docs, style, refactor, test, config, chore
-- **Scope**: Use feature/system name for context
-- **Reference tasks**: Include task numbers with feature context
-
-### Atomic Commit Guidelines
-
-- Each commit should be a single logical change
-- Commits should be independently buildable/testable
-- **MANDATORY**: Perform comprehensive task context analysis before writing commit messages
-- Use descriptive messages that reflect project milestone status, not just changes made
-- Reference correct task numbers with full phase/milestone context
-- Distinguish clearly between partial progress and milestone completion
-- Separate formatting from functional changes
-- Identify remaining work required for full milestone completion
+- **Test-first** for new models, API endpoints, and non-trivial business logic
+- **Test-after** acceptable for simple CRUD, presentational UI, configuration tweaks
+- **Integration focus**: Prefer flow-level coverage over isolated units when practical
+- **Backend suite**: Run with `--keepdb` during development for speed
+- **All tests must pass** before any commit discussion (see quality gates above)
+- **Detailed guidance**: See [Testing Methodology Strategy](../strategies/strategy-testing-methodology.md)
 
 ## Error Handling
 
@@ -270,43 +235,11 @@ After completing all sub-tasks under a parent task:
 - TypeScript errors are present
 - User has not approved the next step
 
-## Type Safety Standards
-
-### Custom Type Stubs
-
-**Location**: `backend/stubs/` - Custom `.pyi` files supplementing third-party libraries
-
-**Current Stubs**:
-- `django/contrib/auth/` - Supplements django-types (explicit `id` field)
-- `allauth/` - Required (no official stubs)
-- `ninja_jwt/` - Required (incomplete official typing)
-- `environ/` - Required (django-environ lacks stubs)
-
-**Maintenance**: When upgrading dependencies, verify stubs match library versions. See [Type Safety Strategy](../strategies/strategy-type-safety.md) for complete maintenance protocols and upgrade procedures.
-
-### Type Safety Patterns
-
-**Django Ninja Schemas**: Use `from_orm_with_<relation>()` pattern for computed fields from ForeignKey relationships.
-
-**See**: [Type Safety Strategy](../strategies/strategy-type-safety.md) for complete implementation patterns, examples, and guidelines.
-
-## Comprehensive Task Context Analysis Protocol
-
-**MANDATORY** before every commit consideration:
-
-1. **Examine ALL uncommitted changes**
-2. **Locate relevant task documentation** in active tasks (`.arc/active/feature/` or `.arc/active/incidental/`) or upcoming tasks (`.arc/upcoming/tasks/`)
-3. **Analyze task completion status** vs documented tasks
-4. **Update task documentation** - mark subtasks complete
-5. **Write accurate commit messages** reflecting project status
-
-**Key Principle**: Commit messages must communicate WHERE the project stands after the commit.
-
 ## Essential Commands
 
 ### Application Startup
 
-```bash
+```bash path=null start=null
 # Full stack with Docker (recommended)
 docker-compose -f infrastructure/docker-compose.yml up --build
 # Access at https://localhost:8444 (accept self-signed cert warning)
@@ -314,7 +247,7 @@ docker-compose -f infrastructure/docker-compose.yml up --build
 
 ### Container Management
 
-```bash
+```bash path=null start=null
 # Rebuild after dependency changes
 docker-compose -f infrastructure/docker-compose.yml up --build
 
@@ -323,24 +256,6 @@ docker-compose -f infrastructure/docker-compose.yml logs [service]
 
 # Shell access
 docker compose -f infrastructure/docker-compose.yml exec [backend|frontend] bash
-```
-
-### Feature Branch Management
-
-```bash
-# Create and switch to new feature branch
-git checkout -b feature/[feature-name]
-
-# Check current branch
-git status
-git branch --show-current
-
-# Switch back to main and merge (preserves commit history)
-git checkout main
-git merge feature/[feature-name]
-
-# Delete feature branch after merge
-git branch -d feature/[feature-name]
 ```
 
 ## Reference Documentation

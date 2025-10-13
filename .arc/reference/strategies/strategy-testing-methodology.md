@@ -73,6 +73,131 @@ Testing standards and patterns for CineXplorer's full-stack infrastructure (Djan
 
 ## Backend Testing (Django/Ninja)
 
+### Running Tests
+
+**Framework:** pytest with pytest-django
+
+**Basic Commands:**
+```bash
+# Run all tests
+pytest apps/
+
+# Run specific app
+pytest apps/authentication/tests/
+
+# Run with verbose output
+pytest apps/ -v
+
+# Parallel execution (2-4x faster)
+pytest -n auto apps/
+
+# With coverage
+pytest --cov=apps --cov-report=term-missing apps/
+
+# Keep database between runs (faster iteration)
+pytest --reuse-db apps/
+```
+
+**Docker Execution** (required for tests that need database/Redis):
+```bash
+# From repo root
+docker compose -f infrastructure/docker-compose.yml exec backend pytest apps/
+
+# With parallel execution
+docker compose -f infrastructure/docker-compose.yml exec backend pytest -n auto apps/
+
+# Specific test file
+docker compose -f infrastructure/docker-compose.yml exec backend pytest apps/movie/tests/test_movie_api.py -v
+```
+
+**Quality Checks:**
+```bash
+# Type checking (fast)
+npx pyright backend/apps/ --project backend
+
+# Linting (with auto-fix)
+.venv-backend/bin/ruff check backend/apps/ --fix
+
+# Full quality gates
+pytest apps/  # All tests pass
+npx pyright backend/apps/ --project backend  # 0 type errors
+.venv-backend/bin/ruff check backend/apps/  # 0 violations
+```
+
+### pytest Patterns
+
+**Function-based tests with fixtures:**
+```python
+import pytest
+from django.test import Client
+from http import HTTPStatus
+
+@pytest.fixture
+def authenticated_user(api_client: Client, db: None) -> tuple[Client, User]:
+    """Create verified user and return authenticated client."""
+    user = create_user(username="testuser", email_verified=True)
+    # Authenticate via JWT
+    response = json_post(api_client, "/api/token/", {
+        "username": user.username,
+        "password": "testpass123"
+    })
+    return api_client, user
+
+def test_get_user_profile(authenticated_user: tuple[Client, User]) -> None:
+    """Test authenticated user can retrieve their profile."""
+    client, user = authenticated_user
+
+    response = client.get(f"/api/users/{user.username}/")
+
+    assert response.status_code == HTTPStatus.OK
+    data = response.json()
+    assert data["username"] == user.username
+    assert data["email"] == user.email
+```
+
+**Parametrized tests for validation:**
+```python
+import pytest
+
+@pytest.mark.parametrize("invalid_rating,expected_msg", [
+    (0, "Rating must be between 1 and 10"),
+    (11, "Rating must be between 1 and 10"),
+    (-5, "Rating must be between 1 and 10"),
+])
+def test_create_rating_validation(
+    authenticated_user: tuple[Client, User],
+    invalid_rating: int,
+    expected_msg: str
+) -> None:
+    """Test rating validation rejects invalid values."""
+    client, user = authenticated_user
+    csrf_token = get_csrf_token(client)
+
+    response = client.post(
+        "/api/user-movie-data/create/",
+        json.dumps({"tmdb_id": 550, "user_rating": invalid_rating}),
+        content_type="application/json",
+        HTTP_X_CSRFTOKEN=csrf_token,
+    )
+
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+    assert expected_msg in str(response.content)
+```
+
+**Database tests:**
+```python
+@pytest.mark.django_db
+def test_user_email_normalized() -> None:
+    """Test user email domain is normalized to lowercase."""
+    user = User.objects.create_user(
+        username="testuser",
+        email="Test@EXAMPLE.COM",
+        password="testpass123"
+    )
+
+    assert user.email == "Test@example.com"
+```
+
 ### Test Helper Hierarchy
 
 #### Tier 1: Core Shared Helpers (`backend/apps/core/tests/test_helpers.py`)

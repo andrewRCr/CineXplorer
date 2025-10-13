@@ -76,10 +76,25 @@ jobs:
       - name: Run backend tests
         env:
           COMPOSE_PROJECT_NAME: cinexplorer-ci
-          COVERAGE_RCFILE: backend/.coveragerc
         run: |
-          echo "Coverage config: $COVERAGE_RCFILE"
-          docker compose exec -T -e COVERAGE_RCFILE=backend/.coveragerc backend python manage.py test --keepdb --settings=config.settings_test
+          echo "Running pytest with coverage..."
+          docker compose exec -T backend pytest apps/ --cov=apps --cov-report=term --cov-report=xml
+
+      - name: Upload coverage reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage
+          path: backend/coverage.xml
+          retention-days: 30
+
+      - name: Cache pytest
+        uses: actions/cache@v4
+        with:
+          path: backend/.pytest_cache
+          key: ${{ runner.os }}-pytest-${{ hashFiles('backend/**/*.py') }}
+          restore-keys: |
+            ${{ runner.os }}-pytest-
 
       - name: Run backend lint
         env:

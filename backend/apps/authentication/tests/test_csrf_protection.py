@@ -15,7 +15,7 @@ import json
 from typing import TYPE_CHECKING, cast
 
 import pytest
-from core.tests.test_helpers import create_user, json_post
+from core.tests.test_helpers import create_user, get_csrf_token, json_post
 from django.test import Client
 
 if TYPE_CHECKING:
@@ -61,18 +61,6 @@ def csrf_client(api_client: Client, db: None) -> tuple[Client, "User"]:
     return api_client, user
 
 
-@pytest.fixture
-def get_csrf_token(api_client: Client) -> str:
-    """
-    Retrieve a valid CSRF token from /api/csrf/ endpoint.
-
-    Returns the CSRF token string for use in X-CSRFToken headers.
-    """
-    csrf_res = api_client.get(CSRF_URL)
-    csrf_token = json.loads(csrf_res.content.decode())['csrf_token']
-    return csrf_token
-
-
 # ============================================================================
 # CSRF PROTECTION TESTS
 # ============================================================================
@@ -109,8 +97,7 @@ def test_csrf_accepts_patch_with_valid_token(csrf_client: tuple[Client, "User"],
     """
     client, user = csrf_client
     # Get valid CSRF token from /api/csrf/ endpoint
-    csrf_res = client.get(CSRF_URL)
-    csrf_token = json.loads(csrf_res.content.decode())['csrf_token']
+    csrf_token = get_csrf_token(client)
 
     payload = {'first_name': 'CSRFSuccess'}
 
@@ -229,8 +216,7 @@ def test_csrf_token_from_endpoint_works_for_requests(
     """
     client, _user = csrf_client
     # Get CSRF token from endpoint
-    csrf_res = client.get(CSRF_URL)
-    csrf_token = json.loads(csrf_res.content.decode())['csrf_token']
+    csrf_token = get_csrf_token(client)
 
     # Use token in PATCH request
     payload = {'first_name': 'IntegrationTest'}
@@ -336,8 +322,7 @@ def test_csrf_token_valid_for_multiple_requests(
     """
     client, user = csrf_client
     # Get CSRF token once
-    csrf_res = client.get(CSRF_URL)
-    csrf_token = json.loads(csrf_res.content.decode())['csrf_token']
+    csrf_token = get_csrf_token(client)
 
     # Use same token for multiple requests
     test_names = ['First', 'Second', 'Third']
@@ -384,8 +369,7 @@ def test_refresh_endpoint_requires_csrf(csrf_client: tuple[Client, "User"]) -> N
         f"Refresh endpoint should require CSRF. Got {res.status_code}: {res.content.decode()}"
 
     # Verify with valid CSRF token it works
-    csrf_res = client.get(CSRF_URL)
-    csrf_token = json.loads(csrf_res.content.decode())['csrf_token']
+    csrf_token = get_csrf_token(client)
 
     res_with_csrf = client.post(
         refresh_url,

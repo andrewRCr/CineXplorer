@@ -32,7 +32,15 @@ if TYPE_CHECKING:
     from django.contrib.auth.models import User as UserType
 
 # Re-export HTTPStatus for convenience in test files
-__all__ = ["HTTPStatus", "UserParams", "create_user", "json_patch", "json_post", "json_put"]
+__all__ = [
+    "HTTPStatus",
+    "UserParams",
+    "create_user",
+    "get_csrf_token",
+    "json_patch",
+    "json_post",
+    "json_put",
+]
 
 
 # Type definitions for fixture parameters
@@ -43,6 +51,33 @@ class UserParams(TypedDict, total=False):
     password: str
     first_name: str
     last_name: str
+
+
+def get_csrf_token(client: Client) -> str:
+    """
+    Retrieve a valid CSRF token from /api/csrf/ endpoint.
+
+    This helper is used by tests that need to make authenticated POST/PATCH/DELETE
+    requests to Django Ninja endpoints protected by CSRF middleware.
+
+    Args:
+        client: Django test client instance (authenticated or unauthenticated)
+
+    Returns:
+        CSRF token string for use in HTTP_X_CSRFTOKEN headers
+
+    Example:
+        csrf_token = get_csrf_token(client)
+        response = client.post(
+            '/api/user-movie-data',
+            data={'movie_id': 123},
+            content_type='application/json',
+            HTTP_X_CSRFTOKEN=csrf_token
+        )
+    """
+    csrf_res = client.get('/api/csrf/')
+    csrf_data: dict[str, str] = json.loads(csrf_res.content.decode())
+    return csrf_data['csrf_token']
 
 
 def json_post(

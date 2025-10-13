@@ -221,18 +221,20 @@ SECRET_KEY = env("DJANGO_SECRET_KEY")
 
 # Environment configuration (development, staging, production)
 # Controls environment-aware security settings and logging
-ENVIRONMENT = env("ENVIRONMENT", default="development")
+# Use lowercase mutable variable, then assign to UPPERCASE constant (Pyright type safety)
+_environment = env("ENVIRONMENT", default="development")
 # Validate ENVIRONMENT value
-if ENVIRONMENT not in ["development", "staging", "production"]:
+if _environment not in ["development", "staging", "production"]:
     import warnings
     warnings.warn(
-        f"Invalid ENVIRONMENT value: {ENVIRONMENT}. "
+        f"Invalid ENVIRONMENT value: {_environment}. "
         f"Must be 'development', 'staging', or 'production'. "
         f"Defaulting to 'development'.",
         RuntimeWarning,
         stacklevel=2
     )
-    ENVIRONMENT = "development"
+    _environment = "development"
+ENVIRONMENT = _environment  # Final constant assignment
 
 # custom environment variables
 TMDB_API_KEY = env("TMDB_API_KEY")
@@ -408,20 +410,33 @@ CSRF_TRUSTED_ORIGINS_USE_HTTPS = not DEBUG  # Use HTTPS for trusted origins in p
 # Production: Full HSTS with 1-year duration and preload
 # Staging: HSTS with shorter duration (1 hour) for testing
 # Development: No HSTS (allow HTTP)
+# Use lowercase mutables, then assign to UPPERCASE constants (Pyright type safety)
 if ENVIRONMENT == "production":
-    SECURE_HSTS_SECONDS = 31536000  # 1 year (recommended minimum for production)
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = True  # Apply HSTS to all subdomains
-    SECURE_HSTS_PRELOAD = True  # Allow inclusion in browser HSTS preload lists
-    SECURE_SSL_REDIRECT = True  # Redirect all HTTP requests to HTTPS
+    _hsts_seconds = 31536000  # 1 year (recommended minimum for production)
+    _hsts_include_subdomains = True  # Apply HSTS to all subdomains
+    _hsts_preload = True  # Allow inclusion in browser HSTS preload lists
+    _ssl_redirect = True  # Redirect all HTTP requests to HTTPS
     # Caddy proxy compatibility - trust X-Forwarded-Proto header for HTTPS detection
-    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    _proxy_ssl_header = ('HTTP_X_FORWARDED_PROTO', 'https')
 elif ENVIRONMENT == "staging":
-    SECURE_HSTS_SECONDS = 3600  # 1 hour (shorter for staging to allow testing)
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = False  # More flexible for staging subdomains
-    SECURE_HSTS_PRELOAD = False  # Don't preload staging
-    SECURE_SSL_REDIRECT = True  # Still redirect HTTP to HTTPS
-    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-# Development: No HSTS settings (allow HTTP for local development)
+    _hsts_seconds = 3600  # 1 hour (shorter for staging to allow testing)
+    _hsts_include_subdomains = False  # More flexible for staging subdomains
+    _hsts_preload = False  # Don't preload staging
+    _ssl_redirect = True  # Still redirect HTTP to HTTPS
+    _proxy_ssl_header = ('HTTP_X_FORWARDED_PROTO', 'https')
+else:  # Development: No HSTS settings (allow HTTP for local development)
+    _hsts_seconds = 0
+    _hsts_include_subdomains = False
+    _hsts_preload = False
+    _ssl_redirect = False
+    _proxy_ssl_header = None
+
+# Final constant assignments
+SECURE_HSTS_SECONDS = _hsts_seconds
+SECURE_HSTS_INCLUDE_SUBDOMAINS = _hsts_include_subdomains
+SECURE_HSTS_PRELOAD = _hsts_preload
+SECURE_SSL_REDIRECT = _ssl_redirect
+SECURE_PROXY_SSL_HEADER = _proxy_ssl_header
 
 # Additional Security Headers
 X_FRAME_OPTIONS = 'DENY'  # Prevent clickjacking attacks (no iframe embedding)

@@ -199,18 +199,19 @@
         - [x] 7.3.3 Add deployment checklist for production settings
 
 - [ ] 7.5 Add Automated Tests for Security Features (Comprehensive Test Coverage)
-    - [ ] 7.5.1 Security Headers Tests (Task 1 validation)
-        - [ ] 7.5.1.1 Test: Response includes X-Frame-Options: DENY header
-        - [ ] 7.5.1.2 Test: Response includes X-Content-Type-Options: nosniff header
-        - [ ] 7.5.1.3 Test: Response includes X-XSS-Protection header
-        - [ ] 7.5.1.4 Test: Session cookie has Secure attribute (check cookie object, environment-aware)
-        - [ ] 7.5.1.5 Test: CSRF cookie has Secure attribute (check cookie object, environment-aware)
-        - [ ] 7.5.1.6 Test: HSTS headers present in production environment (Strict-Transport-Security)
-        - [ ] 7.5.1.7 Test: HSTS headers absent in development environment
-    - [ ] 7.5.2 JWT Cookie SameSite Tests (Task 2 completion)
-        - [ ] 7.5.2.1 Test: Login response sets access_token cookie with SameSite=Lax
-        - [ ] 7.5.2.2 Test: Login response sets refresh_token cookie with SameSite=Lax
-        - [ ] 7.5.2.3 Test: Token refresh response maintains SameSite=Lax for both cookies
+    - [x] 7.5.1 Security Headers Tests (Task 1 validation)
+        - [x] 7.5.1.1 Test: Response includes X-Frame-Options: DENY header
+        - [x] 7.5.1.2 Test: Response includes X-Content-Type-Options: nosniff header
+        - [x] 7.5.1.3 Test: Response includes X-XSS-Protection header
+        - [x] 7.5.1.4 Test: Session cookie has Secure attribute (check cookie object, environment-aware)
+        - [x] 7.5.1.5 Test: CSRF cookie has Secure attribute (check cookie object, environment-aware)
+        - [x] 7.5.1.6 Test: HSTS headers present in production environment (Strict-Transport-Security)
+        - [x] 7.5.1.7 Test: HSTS headers absent in development environment
+    - [x] 7.5.2 JWT Cookie SameSite Tests (Task 2 completion)
+        - [x] 7.5.2.1 Test: Login response sets access_token cookie with SameSite=Lax
+        - [x] 7.5.2.2 Test: Login response sets refresh_token cookie with SameSite=Lax
+        - [x] 7.5.2.3 Test: Token refresh response maintains SameSite=Lax for both cookies
+        - **Bug Fix**: All CSRF tests were using incorrect cookie name 'XSRF-TOKEN' instead of Django's default 'csrftoken'. Fixed in test_security.py and test_user_api.py to match custom CSRF middleware expectations (double-submit cookie pattern with 'csrftoken' cookie + 'X-CSRFToken' header).
     - [ ] 7.5.3 Rate Limiting Tests (Task 3 validation)
         - [ ] 7.5.3.1 Create test helper: `clear_rate_limit_cache()` to flush Redis between tests
         - [ ] 7.5.3.2 Test: 5 rapid login attempts succeed (within 5/minute limit)

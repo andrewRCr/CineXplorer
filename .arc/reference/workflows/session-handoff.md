@@ -1,99 +1,75 @@
 # AI Session Handoff
 
-This document provides protocols for AI assistants to handle context management, session handoffs, and workflow state recovery.
-
-## Session Initialization Protocol
-
-### Starting Fresh or Resuming
-
-1. **Acknowledge rules**: "Ready. Using DEVELOPMENT-RULES v{X}"
-2. **Read essential context**: DEVELOPMENT-RULES.md, AI-SHARED.md, current prd and task list docs
-3. **Check session state**: Read [CURRENT-SESSION](.arc/active/CURRENT-SESSION.md) if resuming
-4. **Verify git state**: Confirm branch and working directory status
-5. **Ask for direction**: "What should I work on?"
+Protocols for context management, session handoffs, and workflow state recovery.
 
 ## Session Handoff Protocol
 
-### Pre-Update Verification (IMPORTANT)
+### Pre-Update Verification
 
 **Before updating CURRENT-SESSION.md, verify actual state:**
 
-1. **Check git status**: `git status` to see working tree state (clean vs uncommitted changes)
-2. **Check recent commits**: `git log --oneline -10` to capture what's been committed
-3. **Check task completion**: Read actual task list file to see marked checkboxes
-4. **Verify file references**: Ensure any "uncommitted files" listed are actually uncommitted
-5. **Remove stale references**: Clear out old file lists from previous work sessions
+1. **Git status:** `git status` (clean vs uncommitted changes)
+2. **Recent commits:** `git log --oneline -10` (capture committed work)
+3. **Task completion:** Read task list file for marked checkboxes
+4. **File references:** Verify "uncommitted files" are actually uncommitted
+5. **Stale references:** Clear old file lists from previous sessions
 
 ### Comprehensive Handoff Format
 
-Update [CURRENT-SESSION](.arc/active/CURRENT-SESSION.md) before ending session using the full template structure:
+Update CURRENT-SESSION.md before ending session:
 
-```markdown
+```markdown path=null start=null
 ## Session Information
-**Branch**: [current branch name, e.g., feature/user-profile-editing]
-**Feature Documents**:
-  - PRD: [path to Sub-PRD, e.g., .arc/upcoming/sub-prds/prd-user-profile-editing.md]
-  - Tasks: [path to task list, e.g., .arc/upcoming/tasks/tasks-user-profile-editing.md]
-  - Notes: [path to notes file if applicable, e.g., .arc/upcoming/notes/notes-user-profile-editing.md]
-**Work Type**: [structured | incidental: brief description]
-**Last Completed**: [specific task reference, e.g., "Task 3.2: Add validation logic"]
-                    [OR if work complete: "Backend Type Safety (Tasks 1-14, archived)"]
-**Next Action**: [what should happen next, e.g., "Task 3.3: Write unit tests"]
-                 [OR if transitioning: "Begin tasks-next-work.md Task 1"]
+**Branch:** [current branch name]
+**Feature Documents:**
+  - PRD: [path to Sub-PRD]
+  - Tasks: [path to task list]
+  - Notes: [path to notes file if applicable]
+**Work Type:** [structured | incidental: brief description]
+**Last Completed:** [specific task reference]
+**Next Action:** [what should happen next]
 
 ## Session Context & Status
-**Blockers**: [none | describe any blockers or pending decisions]
-**Key Decisions** *(only if relevant to incomplete work)*: [decisions affecting ongoing tasks]
-**Outstanding Questions**: [anything awaiting user clarification]
-**Notes for Next Session**: [context that would be lost otherwise]
+**Blockers:** [none | describe blockers or pending decisions]
+**Key Decisions:** [decisions affecting ongoing tasks]
+**Outstanding Questions:** [anything awaiting user clarification]
+**Notes for Next Session:** [context that would be lost otherwise]
 ```
 
-### Task List Completion & Transition Format
+### Task List Completion Format
 
-**When work is complete and/or task list has been archived**, use this expanded format:
+**When work is complete and task list archived:**
 
-```markdown
+```markdown path=null start=null
 ## Session Information
-**Last Completed**: [Task list name] (Tasks X-Y, archived)
-**Next Action**: Begin [new-task-list.md] starting with Task 1
+**Last Completed:** [Task list name] (Tasks X-Y, archived)
+**Next Action:** Begin [new-task-list.md] starting with Task 1
 
 ### [Task List Name] - COMPLETE & ARCHIVED ✅
-
-**Status**: All tasks complete, task list archived
-**Completion Date**: [date]
-**Archived To**: [path to archived task list]
-
+**Status:** All tasks complete, archived to [path]
+**Completion Date:** [date]
 **What Was Accomplished:**
-1. [Brief bullet points of major accomplishments]
-2. [...]
+- [Major accomplishments]
 
 **All Changes Committed:**
 - [commit hash] - [commit message]
-- [commit hash] - [commit message]
-[OR if uncommitted work exists: list specific files and why]
 
-**Git Status:** Clean working tree, all changes committed
-               [OR: "X files uncommitted: [list files and reason]"]
+**Git Status:** Clean working tree, all changes committed (replace with list of uncommitted files + reasons if dirty)
 ```
 
-**Key principle**: Document the **actual state** as verified by git, not assumptions.
+**Key principle:** Document actual state as verified by git, not assumptions.
 
 ### Post-Update Cleanup
 
 **After updating CURRENT-SESSION.md:**
 
-1. **Run markdown linting with auto-fix**:
-
-   ```bash
-   npx markdownlint-cli2 --fix ".arc/active/CURRENT-SESSION.md"
-   ```
-
-2. **Verify the file is readable** - CURRENT-SESSION.md is gitignored but should stay clean
+1. **Run markdown linting:** `npx markdownlint-cli2 --fix ".arc/active/CURRENT-SESSION.md"`
+2. **Verify readable** - File is gitignored but should stay clean
 
 ### Starting New Session from Handoff
 
 1. User says: "Resume from CURRENT-SESSION.md"
-2. AI reads the document and confirms understanding
+2. AI reads document and confirms understanding
 3. AI verifies git state matches documented state
 4. AI asks: "Confirmed. Continue with [next action]?"
 5. Only proceed after explicit user approval
@@ -103,34 +79,28 @@ Update [CURRENT-SESSION](.arc/active/CURRENT-SESSION.md) before ending session u
 ### Detecting Stale Session State
 
 **Warning signs CURRENT-SESSION.md is out of date:**
-
 - Documents uncommitted files, but `git status` shows clean working tree
-- References "Next Action: Task X" but that task is already marked `[x]` complete
-- Describes work as "in progress" but commits show it's complete
-- Contains mixed state (some work complete, some pending, unclear which is current)
-- File references from previous work sessions still listed
+- References "Next Action: Task X" but task is marked `[x]` complete
+- Describes work as "in progress" but commits show completion
+- Contains mixed state with unclear current status
 - Git commit hashes don't match recent `git log` output
 
-**When stale state is detected:**
-
-1. **Stop immediately** - don't trust the documented state
-2. **Gather ground truth**:
-   - Run `git status` for working tree state
-   - Run `git log --oneline -10` for recent commits
-   - Read actual task list file for completion checkboxes
+**When stale state detected:**
+1. **Stop immediately** - don't trust documented state
+2. **Gather ground truth:** `git status`, `git log --oneline -10`, read task list
 3. **Reconstruct accurate state** from git history and task files
-4. **Update CURRENT-SESSION.md** to match reality using verification protocol above
-5. **Run mdlint auto-fix**: `npx markdownlint-cli2 --fix ".arc/active/CURRENT-SESSION.md"`
+4. **Update CURRENT-SESSION.md** using verification protocol
+5. **Run mdlint:** `npx markdownlint-cli2 --fix ".arc/active/CURRENT-SESSION.md"`
 
 ### If Context Seems Lost
 
 1. **Stop immediately** - don't continue current action
-2. **Acknowledge**: "I may have lost context"
-3. **Re-read**: DEVELOPMENT-RULES.md and current task list
-4. **Ask user**: Confirm current state and expectations
+2. **Acknowledge:** "I may have lost context"
+3. **Re-read:** DEVELOPMENT-RULES.md and current task list
+4. **Ask user:** Confirm current state and expectations
 5. **Resume only after** explicit user approval
 
-### Signs You Need Recovery
+### Recovery Warning Signs
 
 - Forgetting incremental quality checks
 - Bundling multiple sub-tasks together
@@ -139,28 +109,25 @@ Update [CURRENT-SESSION](.arc/active/CURRENT-SESSION.md) before ending session u
 
 ## User Instructions
 
-### How to Use for Session Handoffs
+### Session Handoffs
 
 **Approaching context limits:**
-
 1. Ask AI to update CURRENT-SESSION.md with current state
 2. Review and save the updated file
 3. Start new conversation with: "Resume from CURRENT-SESSION.md"
 
 **Between work sessions:**
-
 1. Clear CURRENT-SESSION.md or let AI fill fresh template
 2. For high-level tracking, check PROJECT-STATUS.md
 3. For objective state, rely on git status and branch
 
 **Emergency compact handoff:**
-If tokens are critically low, request: "Create emergency handoff"
-AI will generate minimal state summary using single-line format:
+If tokens critically low, request: "Create emergency handoff" (AI will respond with single-line summary):
 
 ```
-Branch: [name] | PRD: [prd-file] | Tasks: [task-file] | Work: [structured/incidental] | Last: [task] | Next: [task] | Blockers: [none/description]
+Branch: [name] | PRD: [prd-file] | Tasks: [task-file] | Work: [type] | Last: [task] | Next: [task] | Blockers: [none/description]
 ```
 
 ---
 
-**Remember**: This system maintains consistency across AI sessions while preserving human control. CURRENT-SESSION.md is a living document that gets cleared per session to avoid parallel tracking systems.
+**Remember:** This system maintains consistency across AI sessions while preserving human control. CURRENT-SESSION.md is a living document cleared per session.

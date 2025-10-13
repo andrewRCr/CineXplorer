@@ -1,120 +1,37 @@
-# CineXplorer - Shared AI Context
+# CineXplorer – Shared AI Context
 
-## Project Overview
+**Version:** 2025-10-09 | **Maintained by:** Andrew | **Source of truth:** `.arc/reference/`
 
-CineXplorer is a Django REST Framework + React TypeScript movie discovery application that helps users find movies and track what they've watched. This is a **solo developer project** focused on showcasing comprehensive full-stack development skills to prospective employers.
+This file gives every AI assistant the minimum shared context that doesn’t change often. All day‑to‑day rules, commands, and workflows live in the canonical documents linked below; always defer to them if there is any conflict.
 
-## Key Reference Documents
+## Canonical References
 
-### 📋 High-Level Documentation
+- **Non‑negotiable rules:** [DEVELOPMENT-RULES](../constitution/DEVELOPMENT-RULES.md)
+- **Core workflows:** [Workflows index](../workflows/) → especially [Process Task Loop](../workflows/3-process-task-loop.md)
+- **Architecture & patterns:** [TECHNICAL-ARCHITECTURE](../constitution/TECHNICAL-ARCHITECTURE.md)
+- **Product vision & status:** [META-PRD](../constitution/META-PRD.md), [PROJECT-STATUS](../constitution/PROJECT-STATUS.md)
 
-- [META-PRD](../constitution/META-PRD.md) - Product vision, core features, user flows, and success metrics
-- [PROJECT-STATUS](../constitution/PROJECT-STATUS.md) - Current progress, completed work, and upcoming priorities
-- [TECHNICAL-ARCHITECTURE](../constitution/TECHNICAL-ARCHITECTURE.md) - Technical architecture, patterns, and implementation details
+## Project Snapshot
 
-### 🔄 Development Workflow
+- **Stack:** Django 5.2 + Django Ninja backend; React 19 + TypeScript frontend; Docker Compose + Caddy; shared API types in `shared/`
+- **Purpose:** Solo full-stack showcase demonstrating disciplined process, testing, and documentation
+- **Data source:** TMDB API (personal watchlists, discovery flows)
+- **Repository layout:**
+  - `backend/` Django apps (`core`, `movie`, `user`, `user_movie_data`) + `config/`
+  - `frontend/` Vite/React code in `src/`
+  - `shared/` synced types (`api_types.py` ⇄ `api-types.ts`)
+  - `.arc/` documentation (constitution, strategies, workflows, active/upcoming tasks)
+  - `infrastructure/` Docker + reverse proxy configuration
 
-- [Development Workflows](../workflows/) - Systematic approach for feature development:
-  1. [Create Sub-PRD](../workflows/1-create-sub-prd.md) - Generate Sub-PRDs for new features
-  2. [Generate Tasks](../workflows/2-generate-tasks.md) - Create implementation task lists
-  3. [Process Task Loop](../workflows/3-process-task-loop.md) - Task execution and completion protocols
+## How to Work in This Repo
 
-### 📄 Generated Deliverables
+1. **Load CURRENT-SESSION.md** (lists branch, active PRD, task list, and notes)
+2. **Follow the task workflow**: one subtask at a time, quality gates per `DEVELOPMENT-RULES`
+3. **Keep docs authoritative**: update task lists, PROJECT-STATUS, and strategies as required by the workflows
+4. **Never self-initiate commits**: use [Atomic Commit Workflow](../workflows/atomic-commit.md) only when the user approves
 
-- [Sub-PRDs](.arc/upcoming/sub-prds/) - Feature-level PRDs generated from workflow
-- [Tasks](.arc/active/) and [Upcoming Tasks](.arc/upcoming/tasks/) - Implementation task lists generated from Sub-PRDs
+## Maintenance Notes
 
-## Core Project Context
-
-### Technology Stack
-
-- **Backend**: Django 5.2 + DRF, PostgreSQL, JWT authentication
-- **Frontend**: React 19 + TypeScript, Chakra UI v3, Vite
-- **Infrastructure**: Docker + Docker Compose, Caddy reverse proxy
-- **Data Source**: The Movie Database (TMDB) API
-
-### Development Environment
-
-- **Containerized**: All services run in Docker containers
-- **SSL-enabled**: HTTPS in development for production parity
-- **Monorepo**: Backend, frontend, infrastructure, and shared code
-- **Testing**: Comprehensive coverage with backend (Django) + frontend (Vitest) tests
-
-### Key Architectural Patterns
-
-- **Authentication**: JWT tokens in HttpOnly cookies with CSRF protection
-- **Error Handling**: Synchronized error codes between backend and frontend
-- **State Management**: React Context API + custom hooks
-- **API Integration**: Service layer with Axios and custom hooks
-
-### Development Standards
-
-- **Code Quality**: flake8 (backend), ESLint + TypeScript (frontend)
-- **Testing**: Required before commits, run with `--keepdb` for backend
-- **Feature Branches**: All feature work happens on dedicated branches (`feature/[name]`)
-- **Commits**: Conventional commit format, never without explicit user approval
-- **Documentation**: High priority for maintainability and employer showcase
-
-### User-Focused Features
-
-- **Movie Discovery**: Browse, search, filter movies from TMDB
-- **Personal Tracking**: Watchlists, library (watched movies), favorites
-- **User Management**: Registration, authentication, profiles
-- **Recommendations**: Personalized "For You" suggestions (planned)
-
-## Development Workflow Integration
-
-When working on new features:
-
-1. **Start with context**: Review META-PRD for product alignment
-2. **Use systematic approach**: Follow the 3-step workflow (create Sub-PRD → generate tasks → process task loop)
-3. **Work on feature branches**: All feature development happens on dedicated branches
-4. **Maintain quality**: Full testing and linting before any commits
-5. **Seek approval**: Never commit without explicit user review and permission
-
-## Document Dependencies
-
-When core documents change, also update:
-
-### **META-PRD.md** changes → Update
-
-- `ai-instructions/AI-SHARED.md` (this file)
-- Potentially `PROJECT-STATUS.md`
-
-### **DEVELOPMENT-RULES.md** changes → Update
-
-- Version number in the file
-- All `ai-instructions/*.md` files
-
-### **TECHNICAL-ARCHITECTURE.md** changes → Update
-
-- `ai-instructions/AI-SHARED.md` (this file)
-
-## Quick Information Lookup
-
-### "How do I...?"
-
-- **Start a new feature** → `workflows/1-create-sub-prd.md`
-- **Break down tasks** → `workflows/2-generate-tasks.md`
-- **Implement tasks** → `workflows/3-process-task-loop.md`
-- **Run tests/linting** → `DEVELOPMENT-RULES.md` (Essential Commands)
-- **Understand the product** → `META-PRD.md`
-- **See current progress** → `PROJECT-STATUS.md`
-
-### "What are the rules for...?"
-
-- **Development standards** → `DEVELOPMENT-RULES.md`
-- **Code quality** → `TECHNICAL-ARCHITECTURE.md`
-- **Commit format** → `workflows/atomic-commit.md`
-
-## Project Goals
-
-This is a **showcase project** emphasizing:
-
-- **Clean Architecture**: Well-structured, maintainable code
-- **Best Practices**: Industry-standard patterns and conventions
-- **Comprehensive Testing**: Robust test coverage
-- **Professional Documentation**: Clear, thorough documentation
-- **Modern Tooling**: Current technologies and development practices
-
-The goal is to demonstrate full-stack development capabilities suitable for professional developer roles.
+- When `DEVELOPMENT-RULES.md` or `TECHNICAL-ARCHITECTURE.md` change, skim this file and update only if the high-level snapshot is now inaccurate
+- Agent-specific instruction files should link back here rather than duplicating content
+- Prefer brief reminders over command tables; authoritative commands live in `DEVELOPMENT-RULES` under “Essential Commands”

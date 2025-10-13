@@ -1,14 +1,10 @@
-# Gemini AI Instructions
+# GEMINI.md
 
-This file provides guidance for the Gemini AI assistant.
+Minimal guidance for Gemini assistants. Shared context lives in [AI-SHARED](AI-SHARED.md); follow [DEVELOPMENT-RULES](../constitution/DEVELOPMENT-RULES.md) and the [Process Task Loop](../workflows/3-process-task-loop.md).
 
-## Primary Context
+## Gemini-Specific Notes
 
-**Primary project context, architecture, and development standards are defined in `AI-SHARED.md` in this same directory.**
-
-Before starting any work, you must read and understand the following documents in order:
-
-1. [DEVELOPMENT-RULES](../constitution/DEVELOPMENT-RULES.md) - The non-negotiable rules for all development.
-2. [AI-SHARED](AI-SHARED.md) - The single source of truth for project context.
-
-Adhere strictly to the [workflows](../workflows/) defined in the reference directory.
+- **Use the Gemini CLI** when analysis requires wide repository coverage (patterns across many files, >100 KB of code, etc.). Confirm directories and question before running.
+- **Surface limitations:** If Gemini cannot execute shell commands in the current environment, state that up front and offer alternatives (e.g., describe search strategies).
+- **Summaries:** Provide compact answers with numbered action plans when asked for implementation steps.
+- **Cross-tool handoff:** When Gemini performs large audits, document the findings in CURRENT-SESSION.md so Claude/Copilot can continue seamlessly.

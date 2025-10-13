@@ -1,8 +1,28 @@
 """
-Test fixtures and helpers for authentication tests.
+Test data factory functions for authentication tests.
 
-This module provides reusable test data creation utilities for authentication
-testing, following the pattern established in the movie app tests.
+This module provides factory functions for creating test data with fine-grained
+control over parameters. Use these when you need multiple instances with custom
+values in a single test (e.g., creating users with different email verification
+states, custom credentials, or OAuth configurations).
+
+For simple single-instance cases, use the pytest fixtures in conftest.py instead,
+which wrap these factory functions for convenience.
+
+Pattern Choice:
+    - Use pytest fixtures (conftest.py): Single instance, standard configuration
+    - Use factory functions (this file): Multiple instances, custom parameters
+
+Example:
+    # Factory pattern (this file) - for complex scenarios
+    def test_email_verification_edge_cases():
+        verified = create_user(email='verified@example.com', email_verified=True)
+        unverified = create_user(email='unverified@example.com', email_verified=False)
+        assert verified != unverified
+
+    # Fixture pattern (conftest.py) - for simple scenarios
+    def test_user_profile(verified_user):
+        assert verified_user.email == 'testuser@example.com'
 """
 from typing import TYPE_CHECKING, TypedDict, Unpack, cast
 

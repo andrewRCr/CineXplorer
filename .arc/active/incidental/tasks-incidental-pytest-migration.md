@@ -73,7 +73,7 @@
         - [x] 1.4.3 Verify `--keepdb` equivalent: `pytest --reuse-db` (configured in pyproject.toml)
         - [x] 1.4.4 Document that unittest and pytest can coexist during migration (verified - unittest tests run unchanged)
 
-- [ ] 2. Migrate Authentication App Tests (6-7 hours, 43 tests)
+- [x] 2. Migrate Authentication App Tests (6-7 hours, 44 tests)
     - [x] 2.1 Convert test_user_api.py (22 tests - includes throttling smoke tests)
         - [x] 2.1.1 Convert PublicUserApiTests class to function-based tests (11 tests)
         - [x] 2.1.2 Convert PrivateUserApiTests class to function-based tests (5 tests)
@@ -98,15 +98,15 @@
         - [x] 2.4.1 Move OAuth mock fixtures to conftest.py
         - [x] 2.4.2 Convert to pytest fixture format
         - [x] 2.4.3 Document OAuth fixture usage
-    - [ ] 2.5 Consolidate authentication fixtures
-        - [ ] 2.5.1 Review apps/authentication/tests/fixtures.py
-        - [ ] 2.5.2 Move reusable fixtures to apps/authentication/tests/conftest.py
-        - [ ] 2.5.3 Add type annotations to all fixtures
-        - [ ] 2.5.4 Remove duplicate fixture definitions
-    - [ ] 2.6 Run full authentication test suite
-        - [ ] 2.6.1 Command: `pytest apps/authentication/tests/`
-        - [ ] 2.6.2 Verify all 43 tests pass
-        - [ ] 2.6.3 Run with coverage: `pytest apps/authentication/tests/ --cov=apps.authentication`
+    - [x] 2.5 Consolidate authentication fixtures
+        - [x] 2.5.1 Review apps/authentication/tests/fixtures.py
+        - [x] 2.5.2 Move reusable fixtures to apps/authentication/tests/conftest.py
+        - [x] 2.5.3 Add type annotations to all fixtures
+        - [x] 2.5.4 Remove duplicate fixture definitions
+    - [x] 2.6 Run full authentication test suite
+        - [x] 2.6.1 Command: `pytest apps/authentication/tests/`
+        - [x] 2.6.2 Verify all 44 tests pass (100% pass rate, 19.02s execution time)
+        - [x] 2.6.3 Run with coverage: api.py 64.68%, middleware.py 100%, overall 22.67% (infrastructure files not yet tested)
 
 - [ ] 3. Migrate Movie App Tests (5-6 hours, 24 tests)
     - [ ] 3.1 Convert test_movie_service.py (14 tests)
@@ -243,16 +243,17 @@
 
 **Test Infrastructure:**
 - `apps/conftest.py` - Root-level shared fixtures (CREATED - api_client, user, auth_client fixtures + FIXED User import pattern)
-- `apps/authentication/tests/conftest.py` - Auth-specific fixtures (EXISTS - throttling fixtures from Task 3.6)
+- `apps/authentication/tests/conftest.py` - Auth-specific fixtures (UPDATED - throttling + OAuth + convenience wrappers for factory functions)
+- `apps/authentication/tests/fixtures.py` - Factory functions for test data creation (UPDATED - enhanced docstring explaining hybrid pattern)
 - `apps/movie/tests/conftest.py` - Movie-specific fixtures (TO BE CREATED in Task 3.4)
 - `apps/user_movie_data/tests/conftest.py` - UserMovieData fixtures (TO BE CREATED in Task 4.2)
 
 **Test Files to Convert (14 files, 104 tests):**
 - `apps/authentication/tests/test_user_api.py` - 22 tests (CONVERTED + FIXED User import)
 - `apps/authentication/tests/test_csrf_protection.py` - 12 tests (CONVERTED + FIXED User import)
-- `apps/authentication/tests/test_security.py` - 10 tests
-- `apps/authentication/tests/test_oauth_mocks.py` - fixtures
-- `apps/authentication/tests/fixtures.py` - fixtures
+- `apps/authentication/tests/test_security.py` - 10 tests (CONVERTED)
+- `apps/authentication/tests/test_oauth_mocks.py` - OAuth mock classes (CONVERTED to fixtures in conftest.py)
+- `apps/authentication/tests/fixtures.py` - Factory functions (CONSOLIDATED - hybrid pattern with conftest.py wrappers)
 - `apps/movie/tests/test_movie_service.py` - 14 tests
 - `apps/movie/tests/test_movie_api.py` - 8 tests
 - `apps/movie/tests/test_paginated_views.py` - 2 tests

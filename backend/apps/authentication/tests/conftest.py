@@ -1,41 +1,60 @@
 """
 Pytest configuration for authentication app tests.
 
-Configures test infrastructure for selective throttling tests using
-pytest markers and fixtures. By default, all tests use DummyCache
-to bypass throttling (fast test execution). Tests can opt-in to real
-throttling behavior using @pytest.mark.enable_throttling decorator.
+Provides pytest fixtures for authentication testing. This module combines
+throttling infrastructure, OAuth mocks, and convenience wrappers around
+factory functions for common test data needs.
 
-Fixtures:
-    - use_dummy_cache: Autouse fixture that configures DummyCache by default
-    - enable_throttling_for_test: Switches to LocMemCache for marked tests
-    - clear_throttle_cache: Clears throttle cache between tests
-    - set_test_throttling_flag: Sets request._test_enable_throttling flag
-    - google_oauth_provider: Mock Google OAuth provider for testing OAuth flows
-    - github_oauth_provider: Mock GitHub OAuth provider for testing OAuth flows
-    - oauth_request_patcher: Context manager for patching OAuth HTTP requests
+Fixture Architecture:
+    This conftest.py provides pytest fixtures (dependency-injected, single instance).
+    For tests needing multiple instances or custom parameters, use the factory
+    functions in fixtures.py instead (e.g., create_user(), create_social_app()).
+
+Available Fixtures:
+
+    Throttling Infrastructure:
+        - use_dummy_cache: Autouse fixture that configures DummyCache by default
+        - enable_throttling_for_test: Switches to LocMemCache for marked tests
+        - clear_throttle_cache: Clears throttle cache between tests
+        - authenticated_client_with_throttling: Authenticated client with throttling
+
+    OAuth Mocking:
+        - google_oauth_provider: Mock Google OAuth provider
+        - github_oauth_provider: Mock GitHub OAuth provider
+        - oauth_request_patcher: Context manager for patching OAuth HTTP requests
+
+    Test Data (convenience wrappers around fixtures.py factory functions):
+        - verified_user: User with verified email (standard credentials)
+        - unverified_user: User with unverified email
+        - register_payload: Registration API payload dict
+        - login_payload: Login API payload dict
 
 Pytest Markers:
     - enable_throttling: Mark tests that need real throttling behavior
 
 Example Usage:
-    # Default: throttling bypassed (fast)
-    def test_login_success(client):
-        response = client.post('/api/token/', data)
-        assert response.status_code == 200
+    # Simple case: use fixtures (this file)
+    def test_user_profile(verified_user):
+        assert verified_user.emailaddress_set.filter(verified=True).exists()
 
-    # Selective throttling: enabled for specific test
+    # Complex case: use factory functions (fixtures.py)
+    def test_email_verification_states():
+        user1 = create_user(email='user1@example.com', email_verified=True)
+        user2 = create_user(email='user2@example.com', email_verified=False)
+        assert user1.emailaddress_set.filter(verified=True).exists()
+        assert not user2.emailaddress_set.filter(verified=True).exists()
+
+    # Throttling test
     @pytest.mark.enable_throttling
     def test_login_rate_limiting(client, clear_throttle_cache):
         for i in range(5):
             response = client.post('/api/token/', data)
             assert response.status_code == 200
-        # 6th attempt should be throttled
-        response = client.post('/api/token/', data)
+        response = client.post('/api/token/', data)  # 6th attempt
         assert response.status_code == 429
 
-    # OAuth testing: using mock providers
-    def test_google_oauth_login(client, google_oauth_provider, oauth_request_patcher):
+    # OAuth testing
+    def test_google_oauth(client, google_oauth_provider, oauth_request_patcher):
         with oauth_request_patcher('google') as (mock_post, mock_get):
             token_mock, user_info_mock = google_oauth_provider.mock_complete_flow()
             mock_post.return_value = token_mock
@@ -64,7 +83,7 @@ from authentication.tests.test_oauth_mocks import (
 )
 
 
-def pytest_configure(config: Any) -> None:  # pytest.Config type not available without pytest-django
+def pytest_configure(config: Any) -> None:  # noqa: ANN401 - pytest.Config not in stubs
     """
     Register custom pytest markers.
 
@@ -101,7 +120,8 @@ def use_dummy_cache(settings: object) -> None:
 
 @pytest.fixture  # type: ignore[misc]  # pytest decorator type
 def enable_throttling_for_test(
-    request: Any, settings: Any  # pytest.FixtureRequest type not available
+    request: Any,  # noqa: ANN401 - pytest.FixtureRequest not in stubs
+    settings: Any,  # noqa: ANN401 - Django settings dynamic
 ) -> Iterator[None]:
     """
     Switch to LocMemCache for tests marked with @pytest.mark.enable_throttling.
@@ -263,7 +283,7 @@ def github_oauth_provider() -> MockGitHubOAuth:
 
 
 @pytest.fixture  # type: ignore[misc]  # pytest decorator type
-def oauth_request_patcher() -> Any:  # Returns callable that returns context manager
+def oauth_request_patcher() -> Any:  # noqa: ANN401 - complex callable type
     """
     Provide a context manager for patching OAuth HTTP requests.
 
@@ -320,3 +340,122 @@ def oauth_request_patcher() -> Any:  # Returns callable that returns context man
             yield mock_post, mock_get
 
     return _patch_oauth_requests
+
+
+# ============================================================================
+# Test Data Convenience Fixtures
+# ============================================================================
+# These fixtures wrap factory functions from fixtures.py for common single-
+# instance test data needs. For tests requiring multiple instances or custom
+# parameters, import and call the factory functions directly.
+# ============================================================================
+
+
+@pytest.fixture  # type: ignore[misc]  # pytest decorator type
+def verified_user(db: None) -> Any:  # noqa: ANN401 - User type from fixtures module
+    """
+    Provide a user with verified email address.
+
+    Wraps fixtures.create_user() with default parameters and email_verified=True.
+    For single-instance tests that need a standard verified user.
+
+    Args:
+        db: pytest-django database fixture (ensures DB access)
+
+    Returns:
+        User instance with verified email
+
+    Example:
+        def test_user_can_login(verified_user, api_client):
+            response = api_client.post('/api/token/', {
+                'username': verified_user.username,
+                'password': 'testpass123'
+            })
+            assert response.status_code == 200
+
+    Note:
+        For multiple users or custom parameters, use create_user() directly:
+        user1 = create_user(email='custom1@example.com')
+        user2 = create_user(email='custom2@example.com', email_verified=False)
+    """
+    from authentication.tests.fixtures import create_user
+    return create_user(email_verified=True)
+
+
+@pytest.fixture  # type: ignore[misc]  # pytest decorator type
+def unverified_user(db: None) -> Any:  # noqa: ANN401 - User type from fixtures module
+    """
+    Provide a user with unverified email address.
+
+    Wraps fixtures.create_unverified_user() for single-instance tests
+    that need a user without email verification.
+
+    Args:
+        db: pytest-django database fixture (ensures DB access)
+
+    Returns:
+        User instance with unverified email
+
+    Example:
+        def test_unverified_user_blocked(unverified_user, api_client):
+            api_client.force_login(unverified_user)
+            response = api_client.get('/api/protected/')
+            assert response.status_code == 403
+    """
+    from authentication.tests.fixtures import create_unverified_user
+    return create_unverified_user()
+
+
+@pytest.fixture  # type: ignore[misc]  # pytest decorator type
+def register_payload() -> Any:  # noqa: ANN401 - RegisterPayload type from fixtures
+    """
+    Provide a registration API payload with default values.
+
+    Wraps fixtures.create_register_payload() for tests that need standard
+    registration data without customization.
+
+    Returns:
+        Registration payload dict with standard test values
+
+    Example:
+        def test_user_registration(api_client, register_payload):
+            response = api_client.post('/api/register/', register_payload)
+            assert response.status_code == 201
+
+    Note:
+        For custom registration data, use create_register_payload() directly:
+        payload = create_register_payload(
+            username='customuser',
+            email='custom@example.com'
+        )
+    """
+    from authentication.tests.fixtures import create_register_payload
+    return create_register_payload()
+
+
+@pytest.fixture  # type: ignore[misc]  # pytest decorator type
+def login_payload() -> Any:  # noqa: ANN401 - LoginPayload type from fixtures
+    """
+    Provide a login API payload with default values (username-based).
+
+    Wraps fixtures.create_login_payload() for tests that need standard
+    login credentials without customization.
+
+    Returns:
+        Login payload dict with username and password
+
+    Example:
+        def test_user_login(api_client, verified_user, login_payload):
+            response = api_client.post('/api/token/', login_payload)
+            assert response.status_code == 200
+
+    Note:
+        For email-based login or custom credentials, use create_login_payload():
+        payload = create_login_payload(
+            identifier='user@example.com',
+            password='custom123',
+            use_email=True
+        )
+    """
+    from authentication.tests.fixtures import create_login_payload
+    return create_login_payload()

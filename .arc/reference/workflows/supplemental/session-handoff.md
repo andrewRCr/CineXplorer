@@ -51,9 +51,9 @@ pwd
 **Dynamic (update when context changes - see CRITICAL warning above)**:
 
 - **"Session Startup Protocol" working directory paths** - update EVERY TIME you switch between:
-  - backend/ work
-  - frontend/ work
-  - repo root work
+    - backend/ work
+    - frontend/ work
+    - repo root work
 - Step 1: Expected pwd output
 - Step 3: Venv path (with or without `../`)
 - Step 4: Path context table (all relative paths)

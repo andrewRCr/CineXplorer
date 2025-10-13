@@ -87,7 +87,7 @@ def create_user_movie_data(
     user = get_current_user(request)
 
     # Verify movie exists
-    movie = get_object_or_404(Movie, id=payload.movie_id)
+    movie = get_object_or_404(Movie, tmdb_id=payload.movie_id)
 
     # Atomically get or create to avoid race condition
     obj, created = UserMovieData.objects.get_or_create(

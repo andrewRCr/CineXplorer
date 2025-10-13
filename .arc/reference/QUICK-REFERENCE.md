@@ -1,0 +1,277 @@
+# Quick Reference - CineXplorer
+
+**Version**: 1.0 | **Updated**: 2025-10-13 | **Location**: `.arc/reference/`
+
+## About This Reference Directory
+
+**Read every session:**
+
+- `DEVELOPMENT-RULES.md` (constitution/) - Rules and quality standards
+- `QUICK-REFERENCE.md` (this file) - Environment and commands
+- `CURRENT-SESSION.md` (active/) - Work status and next actions
+
+**Key documentation:**
+
+- `constitution/` - Project principles (META-PRD, TECHNICAL-ARCHITECTURE, PROJECT-STATUS)
+- `workflows/` - Core process guides (0-define-constitution.md, 1-create-prd.md, 2-generate-tasks.md, 3-process-task-loop.md)
+- `workflows/supplemental/` - Supporting workflows (atomic-commit.md, session-handoff.md, manage-incidental-work.md)
+- `strategies/` - Technical approaches (strategy-testing-methodology.md, strategy-type-safety.md)
+- `ai-instructions/` - AI-specific guidance (AI-SHARED.md, CLAUDE.md, AGENTS.md)
+
+---
+
+## Environment & Path Context
+
+**Repository Root**: `/home/andrew/dev/CineXplorer/`
+**All commands in this document assume you are at repository root unless otherwise specified.**
+
+### Critical Path Reference
+
+| Resource | Location from Repo Root | Why It Matters |
+|----------|-------------------------|----------------|
+| Docker Compose | `infrastructure/docker-compose.yml` | Required for all Docker operations |
+| Backend venv | `.venv-backend/bin/` | Host tools (ruff, pytest) |
+| Backend code | `backend/apps/`, `backend/config/` | Type checking, linting targets |
+| Frontend code | `frontend/src/` | Frontend operations |
+| .arc docs | `.arc/` | Documentation |
+
+**Working Directory Note**: Your actual working directory may vary (backend/, frontend/, or root). CURRENT-SESSION.md contains context-specific paths adjusted for your current location.
+
+---
+
+## Command Patterns
+
+All commands shown from **repository root**. If you're in a subdirectory, adjust paths accordingly (see CURRENT-SESSION.md for your context).
+
+### Type Checking (Python)
+
+```bash
+# Fast: Pyright via npx (works from any directory with correct paths)
+npx pyright backend/apps/ backend/config/ --project backend
+
+# Comprehensive: Type check script with per-app reporting
+.venv-backend/bin/python backend/scripts/type_check.py
+```
+
+### Linting (Python)
+
+```bash
+# Host venv (FAST with auto-fix) - Recommended for development
+.venv-backend/bin/ruff check backend/apps/ backend/config/ --fix
+
+# Docker (consistent across environments)
+docker compose -f infrastructure/docker-compose.yml exec backend ruff check apps/ config/ --fix
+
+# Note: From inside backend/ directory, use apps/ not backend/apps/
+```
+
+### Testing (Backend)
+
+**CRITICAL: Tests MUST run via Docker** (require PostgreSQL + Redis)
+
+```bash
+# Django test runner (current standard)
+docker compose -f infrastructure/docker-compose.yml exec backend python manage.py test --keepdb --settings=config.settings_test
+
+# Pytest (after migration complete)
+docker compose -f infrastructure/docker-compose.yml exec backend pytest apps/
+
+# Pytest with parallel execution
+docker compose -f infrastructure/docker-compose.yml exec backend pytest -n auto apps/
+
+# With coverage
+docker compose -f infrastructure/docker-compose.yml exec backend pytest --cov=apps --cov-report=term-missing apps/
+```
+
+### Linting (Frontend)
+
+```bash
+# Via Docker
+docker compose -f infrastructure/docker-compose.yml exec frontend npm run lint
+
+# With auto-fix
+docker compose -f infrastructure/docker-compose.yml exec frontend npm run lint -- --fix
+```
+
+### Type Checking (Frontend)
+
+```bash
+docker compose -f infrastructure/docker-compose.yml exec frontend npm run type-check
+```
+
+### Markdown Linting
+
+```bash
+# Check
+npx markdownlint-cli2 "README.md" ".arc/**/*.md"
+
+# Auto-fix
+npx markdownlint-cli2 --fix "README.md" ".arc/**/*.md"
+```
+
+---
+
+## Quality Gate Commands
+
+Reference for DEVELOPMENT-RULES quality gates. Run these before any commit.
+
+```bash
+# 1. Backend Tests
+docker compose -f infrastructure/docker-compose.yml exec backend python manage.py test --keepdb --settings=config.settings_test
+
+# 2. Frontend Tests
+docker compose -f infrastructure/docker-compose.yml exec frontend npm test
+
+# 3. Backend Linting (with auto-fix)
+.venv-backend/bin/ruff check backend/apps/ backend/config/ --fix
+
+# 4. Frontend Linting
+docker compose -f infrastructure/docker-compose.yml exec frontend npm run lint
+
+# 5. TypeScript Type Checking
+docker compose -f infrastructure/docker-compose.yml exec frontend npm run type-check
+
+# 6. Python Type Safety
+npx pyright backend/apps/ backend/config/ --project backend
+
+# 7. Markdown Linting (with auto-fix)
+npx markdownlint-cli2 --fix "README.md" ".arc/**/*.md"
+```
+
+---
+
+## Docker Operations
+
+```bash
+# Check container status
+docker ps | grep infrastructure
+
+# View logs
+docker compose -f infrastructure/docker-compose.yml logs backend
+docker compose -f infrastructure/docker-compose.yml logs frontend
+
+# Follow logs (real-time)
+docker compose -f infrastructure/docker-compose.yml logs -f backend
+
+# Shell access
+docker compose -f infrastructure/docker-compose.yml exec backend bash
+docker compose -f infrastructure/docker-compose.yml exec frontend sh
+
+# Rebuild after dependency changes
+docker compose -f infrastructure/docker-compose.yml up --build
+
+# Start services
+docker compose -f infrastructure/docker-compose.yml up -d
+
+# Stop services
+docker compose -f infrastructure/docker-compose.yml down
+```
+
+---
+
+## Tool Decision Tree
+
+```
+Need to run a command?
+│
+├─ Type checking (Python)?
+│  └─ npx pyright backend/apps/ backend/config/ --project backend
+│
+├─ Linting (Python)?
+│  └─ .venv-backend/bin/ruff check backend/apps/ backend/config/ --fix
+│
+├─ Testing (Backend)?
+│  └─ docker compose -f infrastructure/docker-compose.yml exec backend pytest apps/
+│     (MUST use Docker - requires database/Redis)
+│
+├─ Linting/Type-checking (Frontend)?
+│  └─ docker compose -f infrastructure/docker-compose.yml exec frontend npm run [lint|type-check]
+│
+├─ Markdown linting?
+│  └─ npx markdownlint-cli2 --fix "README.md" ".arc/**/*.md"
+│
+└─ Unsure?
+   └─ Use Docker (always consistent)
+```
+
+---
+
+## Common Patterns
+
+### Incremental Quality Checks (After Sub-Task)
+
+```bash
+# Type check specific files
+npx pyright backend/apps/authentication/api.py --project backend
+
+# Lint and fix specific files
+.venv-backend/bin/ruff check backend/apps/authentication/api.py --fix
+
+# Run specific test file
+docker compose -f infrastructure/docker-compose.yml exec backend pytest apps/authentication/tests/test_user_api.py -v
+```
+
+### Full Quality Gates (Before Commit)
+
+Run all 7 quality gate commands listed above in sequence. All must pass with zero errors.
+
+---
+
+## Anti-Patterns
+
+### Path Confusion
+
+❌ Assuming you're at repo root without checking
+❌ Using `cd` commands unnecessarily
+❌ Forgetting `-f infrastructure/docker-compose.yml` for Docker Compose
+
+✅ Check `pwd` first
+✅ Use absolute paths or correct relative paths
+✅ Always use `-f` flag with explicit path for Docker Compose
+
+### Docker Assumptions
+
+❌ "Docker isn't running" without verifying
+❌ Running tests from host (no database connection)
+❌ Assuming containers are up without checking
+
+✅ Verify: `docker ps | grep infrastructure` (expect 4 containers)
+✅ Always use Docker for tests
+✅ Check container status before operations
+
+### Command Construction
+
+❌ Using commands from DEVELOPMENT-RULES without checking paths
+❌ Mixing repo-root and subdirectory paths
+❌ Assuming tools are in PATH vs. venv
+
+✅ Use commands from QUICK-REFERENCE (paths correct for repo root)
+✅ Adjust paths based on your working directory (see CURRENT-SESSION.md)
+✅ Use explicit paths for venv tools: `.venv-backend/bin/[tool]`
+
+---
+
+## Key Reminders
+
+1. **Docker Compose location**: `infrastructure/docker-compose.yml` (from repo root)
+2. **Tests require Docker**: NEVER run backend tests from host (no database access)
+3. **Venv location**: `.venv-backend/bin/` (from repo root)
+4. **Working directory varies**: Check CURRENT-SESSION.md for context-specific paths
+5. **Pyright from anywhere**: `npx pyright backend/apps/ --project backend` works regardless of CWD
+
+---
+
+## Additional Resources
+
+- **DEVELOPMENT-RULES.md** - Quality standards and protocols (what/why)
+- **CURRENT-SESSION.md** - Current work context and adjusted paths for your working directory
+- **TECHNICAL-ARCHITECTURE.md** - System design and testing methodology
+- **3-process-task-loop.md** - Workflow for task execution
+- **supplemental/atomic-commit.md** - Commit creation and review process
+- **supplemental/session-handoff.md** - Session handoff protocol
+- **strategy-type-safety.md** - Type checking approach and patterns
+- **strategy-testing-methodology.md** - Testing philosophy and practices
+
+---
+
+**Version Note**: Commands assume repo root. If working from subdirectory (backend/, frontend/), see CURRENT-SESSION.md "Session Startup Protocol" for adjusted paths.

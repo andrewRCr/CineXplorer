@@ -1,17 +1,20 @@
 # Development Rules - CineXplorer
 
-**Version:** 2.5 | **Updated:** 2025-10-13 | **Hash:** `f9h3k1m2`
+**Version:** 2.6 | **Updated:** 2025-10-13 | **Hash:** `g2k4m7p9`
 
 Core development rules and quality standards for CineXplorer. These rules are **non-negotiable** and must be followed by all contributors, including AI assistants.
+
+**For command patterns and environment context**, see [QUICK-REFERENCE.md](../QUICK-REFERENCE.md).
 
 ## AI Session Initialization Required
 
 **Before starting ANY work, AI assistants must:**
 
-1. **Confirm rules version:** "Acknowledging DEVELOPMENT-RULES v2.5, hash f9h3k1m2"
-2. **State understanding:** Confirm commit protocols, task analysis, quality gates, "Leave It Cleaner" protocol, CURRENT-SESSION control, and feature branch workflow
-3. **Verify context access:** Confirm access to required documents (AI-SHARED, META-PRD, etc.)
-4. **Check branch status:** Verify current git branch and alignment with intended work
+1. **Confirm rules version:** "Acknowledging DEVELOPMENT-RULES v2.6, hash g2k4m7p9"
+2. **Verify environment:** Follow Session Startup Protocol in CURRENT-SESSION.md (check working directory, Docker status, venv availability)
+3. **State understanding:** Confirm commit protocols, task analysis, quality gates, "Leave It Cleaner" protocol, CURRENT-SESSION control, and feature branch workflow
+4. **Verify context access:** Confirm access to required documents (QUICK-REFERENCE, AI-SHARED, META-PRD, etc.)
+5. **Check branch status:** Verify current git branch and alignment with intended work
 
 ## Git & Commit Control
 
@@ -34,36 +37,34 @@ Core development rules and quality standards for CineXplorer. These rules are **
 
 ### Quality Gates (Zero Tolerance)
 
-Before any commit consideration, ALL of the following must pass with **zero exceptions**:
+Before any commit consideration, ALL of the following must pass with **zero exceptions**. For specific commands, see [QUICK-REFERENCE.md](../QUICK-REFERENCE.md).
 
 1. **Backend Tests**: 100% pass rate
-   - **MUST run via Docker** (requires database connection): `docker compose -f infrastructure/docker-compose.yml exec backend python manage.py test --keepdb --settings=config.settings_test`
-   - **pytest alternative** (post-migration): `docker compose -f infrastructure/docker-compose.yml exec backend pytest apps/`
-   - **NEVER run from host venv** - tests require PostgreSQL/Redis connections only available in Docker network
+   - **MUST run via Docker** (requires database connection to PostgreSQL/Redis)
+   - Use Django test runner or pytest (post-migration)
+   - **NEVER run from host venv** - tests require Docker network access
    - Zero failures acceptable
 
 2. **Frontend Tests**: 100% pass rate
-   - Command: `docker compose -f infrastructure/docker-compose.yml exec frontend npm test`
+   - Run via Docker (npm test)
    - Zero failures acceptable
 
 3. **Backend Linting**: Zero violations
-   - **Docker** (recommended): `docker compose -f infrastructure/docker-compose.yml exec backend ruff check apps/ config/`
-   - **Host WSL2** (faster): `.venv-backend/bin/ruff check backend/apps/ backend/config/`
-   - **Auto-fix**: Add `--fix` flag to either command
+   - Use Ruff with auto-fix capability
+   - Options: host venv (fast) or Docker (consistent)
    - Every violation must be fixed
 
 4. **Frontend Linting**: Zero violations
-   - Command: `docker compose -f infrastructure/docker-compose.yml exec frontend npm run lint`
+   - Run via Docker (npm run lint)
    - Every violation must be fixed
 
 5. **TypeScript Checking**: Zero errors
-   - Command: `docker compose -f infrastructure/docker-compose.yml exec frontend npm run type-check`
+   - Run via Docker (npm run type-check)
    - Every type error must be resolved
 
 6. **Python Type Safety**: Pyright with django-types for minimal Any usage
-   - **Development** (fastest): `npx pyright backend/apps/ backend/config/ --project backend` from repo root
-   - **CI/CD**: `npx pyright backend/apps/ backend/config/ --project backend` (blocking)
-   - **Script**: `python backend/scripts/type_check.py` for comprehensive per-app reporting
+   - Use Pyright via npx for fast checks
+   - Optional: type check script for comprehensive per-app reporting
    - **PROHIBITED**: Using `typing.Any` except for external API payloads (TMDB, etc.)
    - **REQUIRED**: Use `object` for unknown data, `dict[str, object]` for generic dictionaries
    - **JUSTIFICATION**: Any `Any` usage must have inline comment explaining necessity
@@ -71,9 +72,8 @@ Before any commit consideration, ALL of the following must pass with **zero exce
    - **Stub maintenance**: `backend/stubs/` must stay in sync with dependency versions (see strategy doc)
 
 7. **Markdown Linting**: Zero violations
-   - Command: `npx markdownlint-cli2 "README.md" ".arc/**/*.md"`
-   - Auto-fix: `npx markdownlint-cli2 --fix "README.md" ".arc/**/*.md"`
-   - Config: `.markdownlint-cli2.jsonc` (MD034 bare URLs disabled only for temporal docs: tasks/, notes/, archive/notes/)
+   - Use markdownlint-cli2 via npx with auto-fix
+   - Config: `.markdownlint-cli2.jsonc` (MD034 bare URLs disabled only for temporal docs)
    - Gitignored files automatically excluded (notes/, archive/notes/, CURRENT-SESSION.md)
    - Every violation must be fixed
 
@@ -216,8 +216,9 @@ After completing all sub-tasks under a parent task:
 - **Test-first** for new models, API endpoints, and non-trivial business logic
 - **Test-after** acceptable for simple CRUD, presentational UI, configuration tweaks
 - **Integration focus**: Prefer flow-level coverage over isolated units when practical
-- **Backend suite**: Run with `--keepdb` during development for speed
+- **Backend suite**: Run with `--keepdb` flag during development for speed
 - **All tests must pass** before any commit discussion (see quality gates above)
+- **Command patterns**: See [QUICK-REFERENCE.md](../QUICK-REFERENCE.md) for execution commands
 - **Detailed guidance**: See [Testing Methodology Strategy](../strategies/strategy-testing-methodology.md)
 
 ## Error Handling
@@ -237,35 +238,15 @@ After completing all sub-tasks under a parent task:
 - TypeScript errors are present
 - User has not approved the next step
 
-## Essential Commands
-
-### Application Startup
-
-```bash path=null start=null
-# Full stack with Docker (recommended)
-docker-compose -f infrastructure/docker-compose.yml up --build
-# Access at https://localhost:8444 (accept self-signed cert warning)
-```
-
-### Container Management
-
-```bash path=null start=null
-# Rebuild after dependency changes
-docker-compose -f infrastructure/docker-compose.yml up --build
-
-# View logs
-docker-compose -f infrastructure/docker-compose.yml logs [service]
-
-# Shell access
-docker compose -f infrastructure/docker-compose.yml exec [backend|frontend] bash
-```
-
 ## Reference Documentation
 
-This document provides core rules. See detailed protocols in:
+This document provides core rules and standards. See related documentation:
 
+- **[QUICK-REFERENCE.md](../QUICK-REFERENCE.md)** - Environment context, command patterns, and tool usage
 - [Task Processing Workflow](../workflows/3-process-task-loop.md) - Detailed task execution workflow
-- [Atomic Commit Workflow](../workflows/atomic-commit.md) - Enhanced commit workflow with comprehensive task context analysis
+- [Atomic Commit Workflow](../workflows/supplemental/atomic-commit.md) - Enhanced commit workflow with comprehensive task context analysis
 - [AI Shared Context](../ai-instructions/AI-SHARED.md) - Complete project context for AI
 - [Current Session](.arc/active/CURRENT-SESSION.md) - Session handoff template (untracked)
 - [Technical Architecture](TECHNICAL-ARCHITECTURE.md) - Testing methodology details
+- [Type Safety Strategy](../strategies/strategy-type-safety.md) - Type checking approach and patterns
+- [Testing Methodology Strategy](../strategies/strategy-testing-methodology.md) - Testing philosophy and practices

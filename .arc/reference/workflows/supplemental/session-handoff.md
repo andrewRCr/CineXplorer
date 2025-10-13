@@ -4,6 +4,32 @@ Protocols for context management, session handoffs, and workflow state recovery.
 
 ## Session Handoff Protocol
 
+### ⚠️ CRITICAL: Working Directory Context Check
+
+**BEFORE updating CURRENT-SESSION.md, always check if working directory context has changed:**
+
+```bash
+# Check current working directory
+pwd
+```
+
+**If you are switching work contexts** (backend/ ↔ frontend/ ↔ root), you **MUST** update the "Session Startup Protocol" section in CURRENT-SESSION.md:
+
+- ✅ **Update step 1** (pwd expected output)
+- ✅ **Update step 3** (venv path: `../` vs. `./`)
+- ✅ **Update step 4** (path context table with correct relative paths)
+- ✅ **Update step 5** (acknowledgment statement with correct paths)
+
+**Examples of when to update:**
+
+- Switching from backend work to frontend work → Update to show `frontend/` context
+- Moving from subdirectory to repo root → Update to remove `../` prefixes
+- Starting new feature in different part of codebase → Update working directory
+
+**This is NOT optional** - stale path information causes immediate command failures and session friction.
+
+---
+
 ### Pre-Update Verification
 
 **Before updating CURRENT-SESSION.md, verify actual state:**
@@ -14,9 +40,35 @@ Protocols for context management, session handoffs, and workflow state recovery.
 4. **File references:** Verify "uncommitted files" are actually uncommitted
 5. **Stale references:** Clear old file lists from previous sessions
 
+### Stable vs. Dynamic Sections in CURRENT-SESSION.md
+
+**Stable (rarely change)**:
+
+- Session Startup Protocol **structure** (the checklist itself)
+- Docker container expectations (4 containers)
+- Reference version checks (DEVELOPMENT-RULES, QUICK-REFERENCE)
+
+**Dynamic (update when context changes - see CRITICAL warning above)**:
+
+- **"Session Startup Protocol" working directory paths** - update EVERY TIME you switch between:
+  - backend/ work
+  - frontend/ work
+  - repo root work
+- Step 1: Expected pwd output
+- Step 3: Venv path (with or without `../`)
+- Step 4: Path context table (all relative paths)
+- Step 5: Acknowledgment statement
+
+**Temporal (update every handoff)**:
+
+- "Session Information" section and below (work status, tasks, commits, etc.)
+
 ### Comprehensive Handoff Format
 
 Update CURRENT-SESSION.md before ending session:
+
+1. **First**: Check if working directory context changed (see CRITICAL warning above) and update Session Startup Protocol paths if needed
+2. **Then**: Update "Session Information" section and below with work progress:
 
 ```markdown path=null start=null
 ## Session Information
@@ -69,10 +121,11 @@ Update CURRENT-SESSION.md before ending session:
 ### Starting New Session from Handoff
 
 1. User says: "Resume from CURRENT-SESSION.md"
-2. AI reads document and confirms understanding
-3. AI verifies git state matches documented state
-4. AI asks: "Confirmed. Continue with [next action]?"
-5. Only proceed after explicit user approval
+2. AI executes "Session Startup Protocol" (environment checks)
+3. AI reads document and confirms understanding
+4. AI verifies git state matches documented state
+5. AI asks: "Confirmed. Continue with [next action]?"
+6. Only proceed after explicit user approval
 
 ## Context Recovery
 

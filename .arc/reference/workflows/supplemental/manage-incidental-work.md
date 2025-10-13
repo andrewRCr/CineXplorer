@@ -2,7 +2,7 @@
 
 **Purpose**: Systematic workflow for creating, executing, and archiving incidental task lists discovered during feature development.
 
-**Related**: [3-process-task-loop.md](3-process-task-loop.md), [DEVELOPMENT-RULES.md](../constitution/DEVELOPMENT-RULES.md)
+**Related**: [3-process-task-loop.md](../3-process-task-loop.md), [DEVELOPMENT-RULES.md](../../constitution/DEVELOPMENT-RULES.md)
 
 ---
 
@@ -149,7 +149,7 @@ Incidental work follows **same rules** as feature work:
 5. **Update task list immediately** - mark `[x]` after completion
 6. **Update "Relevant Files" section** when files created/modified
 
-See [3-process-task-loop.md](3-process-task-loop.md) for detailed workflow.
+See [3-process-task-loop.md](../3-process-task-loop.md) for detailed workflow.
 
 ### Commit Standards for Incidental Work
 
@@ -515,10 +515,10 @@ Return to paused feature work and continue normal workflow.
 
 ## Related Workflows
 
-- [3-process-task-loop.md](3-process-task-loop.md) - Main task execution workflow
+- [3-process-task-loop.md](../3-process-task-loop.md) - Main task execution workflow
 - [atomic-commit.md](atomic-commit.md) - Commit message standards
 - [archive-completed-features.md](archive-completed-features.md) - Feature archival process
-- [DEVELOPMENT-RULES.md](../constitution/DEVELOPMENT-RULES.md) - Core development standards
+- [DEVELOPMENT-RULES.md](../../constitution/DEVELOPMENT-RULES.md) - Core development standards
 
 ---
 

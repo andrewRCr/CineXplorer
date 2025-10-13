@@ -1,6 +1,6 @@
 # GEMINI.md
 
-Minimal guidance for Gemini assistants. Shared context lives in [AI-SHARED](AI-SHARED.md); follow [DEVELOPMENT-RULES](../constitution/DEVELOPMENT-RULES.md) and the [Process Task Loop](../workflows/3-process-task-loop.md).
+Minimal guidance for Gemini assistants. Shared context lives in [AI-SHARED](AI-SHARED.md); follow [DEVELOPMENT-RULES](../constitution/DEVELOPMENT-RULES.md) v2.6, [QUICK-REFERENCE](../QUICK-REFERENCE.md) v1.0, and the [Process Task Loop](../workflows/3-process-task-loop.md).
 
 ## Gemini-Specific Notes
 

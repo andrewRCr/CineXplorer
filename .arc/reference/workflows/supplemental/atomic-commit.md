@@ -175,6 +175,6 @@ Task Documentation Consistency:
 - Include task status updates in documentation commits
 - **Check multiple task files** - work often affects multiple task lists
 - **Analyze the full scope** of uncommitted changes, not just obvious files
-- Follow [Task Processing Workflow](3-process-task-loop.md) completion protocol
+- Follow [Task Processing Workflow](../3-process-task-loop.md) completion protocol
 
 **Key Principle**: Commit messages should accurately reflect WHERE the project stands after the commit, not just what was changed. This includes identifying remaining work and providing proper milestone context.

@@ -73,25 +73,30 @@ Before creating incidental task list:
 
 ```bash
 touch .arc/active/incidental/tasks-incidental-{brief-slug}.md
-```
+ ```
 
 **Use template** (see "Template" section below)
 
 ### Step 3: Track Incidental Task List Creation
 
-**Immediately track for context visibility**:
+**Immediately stage and suggest commit for context visibility**:
 
-```bash
-git add .arc/active/incidental/tasks-incidental-{brief-slug}.md
-git commit -m "docs({current-branch}): Create {brief-slug} incidental task list
+1. `git add .arc/active/incidental/tasks-incidental-{brief-slug}.md`
+2. Show `git status` to confirm only the new file is staged
+3. Propose a commit message (example below) and wait for user approval before running it
+
+_Suggested message (show to user, do not execute until approved):_
+
+```
+docs({current-branch}): create {brief-slug} incidental task list
 
 Triggered by {discovery context}.
 Pausing {current work} to address {critical issue}.
 
-Related to: .arc/active/feature/tasks-{main-feature}.md"
+Related to: .arc/active/feature/tasks-{main-feature}.md
 ```
 
-**Rationale for tracking creation**:
+**Why capture this commit early**:
 - ✅ Git log shows when/why work was paused
 - ✅ Session handoffs have full context
 - ✅ Audit trail of priority shifts
@@ -99,7 +104,7 @@ Related to: .arc/active/feature/tasks-{main-feature}.md"
 
 ### Step 4: Update CURRENT-SESSION.md
 
-**Update session tracking** (after committing task list):
+**Update session tracking** (after the task-list commit):
 
 ```markdown
 **Last Completed**: Task X.Y from tasks-{main-feature}.md (paused for incidental work)
@@ -115,11 +120,11 @@ Related to: .arc/active/feature/tasks-{main-feature}.md"
 2. Resume tasks-{main-feature}.md Task X.Y+1
 ```
 
-**Note**: CURRENT-SESSION.md is gitignored (untracked) - this update is for local context only.
+**Note**: CURRENT-SESSION.md is gitignored (untracked). Update it only if you're actively using the session handoff workflow.
 
 ### Step 5: Create Notes File (Optional)
 
-**For complex incidental work**, create companion notes file:
+**For complex incidental work**, create a companion notes file (pairs well with [maintain-task-notes.md](maintain-task-notes.md)):
 
 **File location**: `.arc/active/incidental/notes-incidental-{same-slug}.md`
 
@@ -148,53 +153,64 @@ See [3-process-task-loop.md](3-process-task-loop.md) for detailed workflow.
 
 ### Commit Standards for Incidental Work
 
-**Commit format**:
+**Commit message structure** (present to user for approval):
 
-```bash
-git commit -m "{type}({branch}): {description}" \
-           -m "{details}" \
-           -m "Complete incidental task {X.Y}" \
-           -m "Related to: .arc/active/incidental/tasks-incidental-{slug}.md"
+```
+{type}({branch}): {description}
+
+{details}
+
+Complete incidental task {X.Y}
+Related to: .arc/active/incidental/tasks-incidental-{slug}.md
 ```
 
-**Types for incidental work**:
-- `refactor({branch})`: Code restructuring, tech debt reduction
-- `fix({branch})`: Bug fixes, security patches
-- `config({branch})`: Tooling, CI/CD, configuration updates
-- `test({branch})`: Test infrastructure improvements
-- `feat({branch})`: New capabilities (rare for incidental work)
+**Pick an appropriate type** (`refactor`, `fix`, `config`, `test`, `feat`) and use the current branch as the scope.
 
 **Examples**:
 
-```bash
-# Type safety tooling fix
-git commit -m "config(api-layer-p2): Replace django-stubs with django-types" \
-           -m "- Install django-types 0.22.0 (Pyright-compatible)" \
-           -m "- Remove django-stubs (requires MyPy plugin)" \
-           -m "- Update pyrightconfig.json for django-types" \
-           -m "Complete incidental task 2.2" \
-           -m "Related to: .arc/active/incidental/tasks-incidental-backend-type-safety.md"
+Example proposals to show the user:
 
-# Security update
-git commit -m "fix(api-layer-p2): Add rate limiting to authentication endpoints" \
-           -m "- Configure throttle classes on login/register" \
-           -m "- Add tests for rate limit enforcement" \
-           -m "Complete incidental task 3.1" \
-           -m "Related to: .arc/active/incidental/tasks-incidental-security-updates.md"
+```
+config(api-layer-p2): replace django-stubs with django-types
+
+- Install django-types 0.22.0 (Pyright-compatible)
+- Remove django-stubs (requires MyPy plugin)
+- Update pyrightconfig.json for django-types
+
+Complete incidental task 2.2
+Related to: .arc/active/incidental/tasks-incidental-backend-type-safety.md
+```
+
+```
+fix(api-layer-p2): add rate limiting to authentication endpoints
+
+- Configure throttle classes on login/register
+- Add tests for rate limit enforcement
+
+Complete incidental task 3.1
+Related to: .arc/active/incidental/tasks-incidental-security-updates.md
 ```
 
 ### Update Task List During Execution
 
 **Commit task list updates** alongside code changes:
 
-```bash
-# After completing subtask and code changes
-git add .arc/active/incidental/tasks-incidental-{slug}.md
-git add {modified-code-files}
-git commit -m "{type}({branch}): {description}" \
-           -m "- Mark task {X.Y} complete" \
-           -m "- Update relevant files section"
-```
+**After completing a subtask**
+
+1. Stage the task list plus associated code changes (`git add …`).
+2. Show `git status` so the user sees exactly what will be committed.
+3. Propose a commit message that calls out the subtask completion, then pause for approval. Example:
+
+   ```
+   {type}({branch}): {description}
+
+   - Mark task {X.Y} complete
+   - Update relevant files section
+
+   Related to: .arc/active/incidental/tasks-incidental-{slug}.md
+   ```
+
+4. Only run `git commit` after the user gives an explicit “yes”.
 
 **Why commit task list with code**:
 - ✅ Git history shows task progress with implementation
@@ -216,7 +232,7 @@ Before archiving, ensure:
 
 ### Step 2: Update Completion Notes in Task List
 
-**Add to bottom of task list** (before archiving):
+**Add to bottom of task list** (before archiving). Keep only sections that apply; delete placeholders that have no content:
 
 ```markdown
 ## Completion Notes
@@ -254,27 +270,12 @@ Before archiving, ensure:
 
 **IMPORTANT**: Update all tracked documentation **BEFORE** suggesting commit.
 
-**Check and update if needed**:
+**Check and update if needed** (skip anything untouched):
 
-1. **PROJECT-STATUS.md** (if significant capability added):
-   - Update "Technical Capabilities" section
-   - Note completed improvements
-   - Update quality metrics if applicable
-
-2. **Related strategy documents** (if patterns changed):
-   - Update `strategy-*.md` files for new patterns
-   - Document new best practices
-   - Add examples
-
-3. **Constitution documents** (if rules changed):
-   - Update `DEVELOPMENT-RULES.md`
-   - Update `TECHNICAL-ARCHITECTURE.md`
-   - Update quality gate standards
-
-4. **Related task lists** (if dependencies resolved):
-   - Update blocked tasks now unblocked
-   - Update references to old patterns/tools
-   - Cross-reference completion
+1. `PROJECT-STATUS.md` – add the improvement, refresh metrics if they moved.
+2. Relevant `strategy-*.md` files – capture any new patterns or best practices.
+3. Constitution docs – update `DEVELOPMENT-RULES.md` / `TECHNICAL-ARCHITECTURE.md` if standards changed.
+4. Related task lists – unblock dependent tasks or refresh references.
 
 ### Step 4: Move to Archive
 
@@ -298,15 +299,10 @@ git mv .arc/active/incidental/tasks-incidental-{slug}.md \
 - Updated constitution documents (if modified)
 - Updated related task lists (if modified)
 
-**Commit format**:
+**Suggested commit format** (for user approval):
 
-```bash
-git add .arc/reference/archive/tasks/incidental/tasks-incidental-{slug}.md
-git add .arc/reference/constitution/PROJECT-STATUS.md  # if modified
-git add .arc/reference/strategies/*.md  # if modified
-git add .arc/active/feature/tasks-*.md  # if modified
-
-git commit -m "docs({branch}): Archive incidental work - {brief description}
+```
+docs({branch}): archive incidental work - {brief description}
 
 Completed all subtasks for {incidental work description}.
 Resuming {main work description}.
@@ -318,14 +314,14 @@ Changes:
 - Update PROJECT-STATUS.md with {improvements}
 - Update {strategy/constitution docs} to reflect {changes}
 
-Related to: .arc/active/feature/tasks-{main-feature}.md"
+Related to: .arc/active/feature/tasks-{main-feature}.md
 ```
 
 **AI workflow**:
-1. Show git status of all changes
-2. Show proposed commit message
-3. **Wait for user approval** before executing commit
-4. Execute commit only after explicit approval
+1. Stage all relevant files (`git add …`), then show `git status`
+2. Present the proposed commit message/template above
+3. **Wait for user approval** before running `git commit`
+4. Execute the commit only after explicit approval
 
 ### Step 6: Update CURRENT-SESSION.md (After Commit)
 

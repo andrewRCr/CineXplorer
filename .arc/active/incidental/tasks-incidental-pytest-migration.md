@@ -184,22 +184,22 @@
         - [x] 4.4.3 Quality checks: 0 Ruff violations, 0 Pyright errors
         - [x] 4.4.4 Coverage: Not run (will be part of Task 7.4 final coverage analysis)
 
-- [ ] 5. Migrate Core App Tests (2-3 hours, 12 tests)
-    - [ ] 5.1 Convert test_models.py (7 tests)
-        - [ ] 5.1.1 Convert ModelTests class to function-based tests
-        - [ ] 5.1.2 Use `@pytest.mark.django_db` for model tests
-        - [ ] 5.1.3 Run tests to verify: `pytest apps/core/tests/test_models.py`
-    - [ ] 5.2 Convert test_admin.py (3 tests)
-        - [ ] 5.2.1 Convert AdminTests class to function-based tests
-        - [ ] 5.2.2 Add admin_client fixture if needed
-        - [ ] 5.2.3 Run tests to verify: `pytest apps/core/tests/test_admin.py`
-    - [ ] 5.3 Convert test_commands.py (2 tests)
-        - [ ] 5.3.1 Convert CommandTests class to function-based tests
-        - [ ] 5.3.2 Use pytest's built-in capsys fixture for stdout capture
-        - [ ] 5.3.3 Run tests to verify: `pytest apps/core/tests/test_commands.py`
-    - [ ] 5.4 Run full core test suite
-        - [ ] 5.4.1 Command: `pytest apps/core/tests/`
-        - [ ] 5.4.2 Verify all 12 tests pass
+- [x] 5. Migrate Core App Tests (2-3 hours, 12 tests)
+    - [x] 5.1 Convert test_models.py (7 tests)
+        - [x] 5.1.1 Convert ModelTests class to function-based tests (7 tests converted)
+        - [x] 5.1.2 Use `@pytest.mark.django_db` for model tests (all tests marked)
+        - [x] 5.1.3 Run tests to verify: 7/7 passing (100%, 1.66s execution time)
+    - [x] 5.2 Convert test_admin.py (3 tests)
+        - [x] 5.2.1 Convert AdminTests class to function-based tests (3 tests converted)
+        - [x] 5.2.2 Add admin_client fixture (created tuple[Client, admin_user, regular_user] fixture)
+        - [x] 5.2.3 Run tests to verify: 3/3 passing (100%, 2.38s execution time)
+    - [x] 5.3 Convert test_commands.py (2 tests)
+        - [x] 5.3.1 Convert CommandTests class to function-based tests (2 tests converted)
+        - [x] 5.3.2 Keep @patch decorators (pytest-compatible, no capsys needed)
+        - [x] 5.3.3 Run tests to verify: 2/2 passing (100%, 0.13s execution time)
+    - [x] 5.4 Run full core test suite
+        - [x] 5.4.1 Command: `pytest apps/core/tests/` - 12/12 tests passing (100%, 4.02s)
+        - [x] 5.4.2 Quality checks: 1 Ruff violation fixed, 0 Pyright errors
 
 - [ ] 6. Migrate Management Command Tests (1-2 hours, 10 tests)
     - [ ] 6.1 Convert test_tmdb_logging.py (6 tests)
@@ -296,9 +296,9 @@
 - `apps/movie/tests/test_paginated_views.py` - 2 tests (DELETED - redundant with test_movie_api.py)
 - `apps/user_movie_data/tests/test_user_movie_data_api.py` - 23 tests (REWRITTEN - legacy DRF tests replaced with comprehensive Django Ninja API tests + JWT auth + CSRF + fixed production bug)
 - `apps/user_movie_data/api.py` - API implementation (FIXED CRITICAL BUG - Movie.id → Movie.tmdb_id on line 90)
-- `apps/core/tests/test_models.py` - 7 tests
-- `apps/core/tests/test_admin.py` - 3 tests
-- `apps/core/tests/test_commands.py` - 2 tests
+- `apps/core/tests/test_models.py` - 7 tests (CONVERTED to pytest - function-based with @pytest.mark.django_db)
+- `apps/core/tests/test_admin.py` - 3 tests (CONVERTED to pytest - created admin_client fixture)
+- `apps/core/tests/test_commands.py` - 2 tests (CONVERTED to pytest - kept @patch decorators)
 - `apps/core/management/commands/test_tmdb_logging.py` - 6 tests
 - `apps/core/management/commands/test_logging.py` - 4 tests
 

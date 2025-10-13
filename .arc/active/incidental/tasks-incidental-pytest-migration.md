@@ -89,15 +89,15 @@
         - [x] 2.2.2 Extract CSRF token helper to fixture (created csrf_client fixture)
         - [x] 2.2.3 Replace TestCase assertions with assert statements (all assertions converted)
         - [x] 2.2.4 Run tests to verify: 12/12 passing (100%)
-    - [ ] 2.3 Convert test_security.py (10 tests)
-        - [ ] 2.3.1 Convert SecurityHeadersTests class to function-based tests
-        - [ ] 2.3.2 Convert JWTCookieSecurityTests class to function-based tests
-        - [ ] 2.3.3 Use `@override_settings` as decorator instead of context manager where appropriate
-        - [ ] 2.3.4 Run tests to verify: `pytest apps/authentication/tests/test_security.py`
-    - [ ] 2.4 Convert test_oauth_mocks.py (OAuth fixtures)
-        - [ ] 2.4.1 Move OAuth mock fixtures to conftest.py
-        - [ ] 2.4.2 Convert to pytest fixture format
-        - [ ] 2.4.3 Document OAuth fixture usage
+    - [x] 2.3 Convert test_security.py (10 tests)
+        - [x] 2.3.1 Convert SecurityHeadersTests class to function-based tests (7 tests converted)
+        - [x] 2.3.2 Convert JWTCookieSecurityTests class to function-based tests (3 tests + samesite_user fixture)
+        - [x] 2.3.3 Use `@override_settings` as decorator (already compatible with pytest)
+        - [x] 2.3.4 Run tests to verify: 10/10 passing (100%)
+    - [x] 2.4 Convert test_oauth_mocks.py (OAuth fixtures)
+        - [x] 2.4.1 Move OAuth mock fixtures to conftest.py
+        - [x] 2.4.2 Convert to pytest fixture format
+        - [x] 2.4.3 Document OAuth fixture usage
     - [ ] 2.5 Consolidate authentication fixtures
         - [ ] 2.5.1 Review apps/authentication/tests/fixtures.py
         - [ ] 2.5.2 Move reusable fixtures to apps/authentication/tests/conftest.py

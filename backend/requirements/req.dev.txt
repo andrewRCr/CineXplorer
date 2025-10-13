@@ -9,3 +9,9 @@ email-validator >= 2.0.0, < 3.0  # Required for Pydantic EmailStr validation
 # Test coverage
 coverage >= 7.4.0, < 8.0
 django-coverage-plugin >= 3.1.0, < 4.0
+
+# pytest testing framework
+pytest >= 8.0.0, < 9.0
+pytest-django >= 4.9.0, < 5.0  # Django integration for pytest
+pytest-xdist >= 3.6.0, < 4.0  # Parallel test execution
+pytest-cov >= 5.0.0, < 6.0  # Coverage integration for pytest

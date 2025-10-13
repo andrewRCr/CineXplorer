@@ -89,3 +89,38 @@ skip-magic-trailing-comma = false
 
 # Format docstrings
 docstring-code-format = true
+
+[tool.pytest.ini_options]
+# Django settings module for tests
+DJANGO_SETTINGS_MODULE = "config.settings_test"
+
+# Test discovery patterns
+testpaths = ["apps"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+
+# Additional options
+addopts = [
+    "--reuse-db",              # Reuse test database (equivalent to --keepdb in manage.py test)
+    "--import-mode=importlib", # Use importlib for module imports (modern approach)
+    "--strict-markers",        # Raise error on unregistered markers
+    "-ra",                     # Show extra test summary info for all except passed tests
+    "--tb=short",              # Shorter traceback format
+]
+
+# Markers for categorizing tests
+markers = [
+    "enable_throttling: Enable throttling for specific tests (default: bypassed for speed)",
+    "slow: Mark tests that take significant time to run",
+]
+
+# Warning filters
+filterwarnings = [
+    # Suppress Pydantic V2 deprecation warnings from third-party libraries
+    # (django-ninja, django-ninja-extra) until they migrate to ConfigDict
+    # Our code warnings will still be shown - these are library-specific
+    "ignore::pydantic.warnings.PydanticDeprecatedSince20:ninja.schema",
+    "ignore::pydantic.warnings.PydanticDeprecatedSince20:ninja.conf",
+    "ignore::pydantic.warnings.PydanticDeprecatedSince20:ninja_extra.conf",
+]

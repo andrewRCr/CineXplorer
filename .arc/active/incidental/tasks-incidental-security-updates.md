@@ -253,30 +253,30 @@
         - [x] 7.5.2.2 Test: Login response sets refresh_token cookie with SameSite=Lax
         - [x] 7.5.2.3 Test: Token refresh response maintains SameSite=Lax for both cookies
         - **Bug Fix**: All CSRF tests were using incorrect cookie name 'XSRF-TOKEN' instead of Django's default 'csrftoken'. Fixed in test_security.py and test_user_api.py to match custom CSRF middleware expectations (double-submit cookie pattern with 'csrftoken' cookie + 'X-CSRFToken' header).
-    - [ ] 7.5.3 Rate Limiting Tests (Task 3 validation)
-        - [ ] 7.5.3.1 Create test helper: `clear_rate_limit_cache()` to flush Redis between tests
-        - [ ] 7.5.3.2 Test: 5 rapid login attempts succeed (within 5/minute limit)
-        - [ ] 7.5.3.3 Test: 6th login attempt within minute returns 429 Too Many Requests
-        - [ ] 7.5.3.4 Test: 3 registration attempts in hour succeed (within 3/hour limit)
-        - [ ] 7.5.3.5 Test: 4th registration attempt within hour returns 429
-        - [ ] 7.5.3.6 Test: 10 token refresh attempts succeed (within 10/minute limit)
-        - [ ] 7.5.3.7 Test: 11th refresh attempt within minute returns 429
-    - [ ] 7.5.4 Token Blacklisting Tests (Task 4 validation - critical security path)
-        - [ ] 7.5.4.1 Test: First token refresh succeeds (new tokens issued)
-        - [ ] 7.5.4.2 Test: Reusing old refresh token after rotation returns 401 Unauthorized
-        - [ ] 7.5.4.3 Test: Error response includes "revoked" message for blacklisted token
-        - [ ] 7.5.4.4 Test: New refresh token continues to work after old one blacklisted
-        - [ ] 7.5.4.5 Test: Database blacklist table contains entry for revoked token
-        - [ ] 7.5.4.6 Test: Database outstanding tokens table tracks all issued tokens
-    - [ ] 7.5.5 Authentication Security Logging Tests (Task 6 validation)
-        - [ ] 7.5.5.1 Create test helper: `LogCaptureMixin` or use Django's assertLogs context manager
-        - [ ] 7.5.5.2 Test: Failed login logs WARNING with IP address and username
-        - [ ] 7.5.5.3 Test: Successful login logs INFO with user_id
-        - [ ] 7.5.5.4 Test: Blacklisted token reuse logs WARNING with user_id, IP, and user_agent
-        - [ ] 7.5.5.5 Test: Rate limit violation logs appropriate level (verify throttle logging)
-        - [ ] 7.5.5.6 Test: Successful registration logs INFO
-        - [ ] 7.5.5.7 Test: Passwords never appear in any log output (security check)
-        - [ ] 7.5.5.8 Test: Token values never appear in any log output (security check)
+    - [x] 7.5.3 Rate Limiting Tests (Task 3 validation)
+        - [x] 7.5.3.1 Create test helper: `clear_rate_limit_cache()` to flush Redis between tests (fixture already exists in conftest.py)
+        - [x] 7.5.3.2 Test: 5 rapid login attempts succeed (within 5/minute limit)
+        - [x] 7.5.3.3 Test: 6th login attempt within minute returns 429 Too Many Requests
+        - [x] 7.5.3.4 Test: 3 registration attempts in hour succeed (within 3/hour limit)
+        - [x] 7.5.3.5 Test: 4th registration attempt within hour returns 429
+        - [x] 7.5.3.6 Test: 10 token refresh attempts succeed (within 10/minute limit)
+        - [x] 7.5.3.7 Test: 11th refresh attempt within minute returns 429
+    - [x] 7.5.4 Token Blacklisting Tests (Task 4 validation - critical security path)
+        - [x] 7.5.4.1 Test: First token refresh succeeds (new tokens issued)
+        - [x] 7.5.4.2 Test: Reusing old refresh token after rotation returns 401 Unauthorized
+        - [x] 7.5.4.3 Test: Error response includes "revoked" message for blacklisted token
+        - [x] 7.5.4.4 Test: New refresh token continues to work after old one blacklisted
+        - [x] 7.5.4.5 Test: Database blacklist table contains entry for revoked token
+        - [x] 7.5.4.6 Test: Database outstanding tokens table tracks all issued tokens
+    - [x] 7.5.5 Authentication Security & Throttling Logging Tests (Task 6 validation + throttling verification)
+        - [x] 7.5.5.1 Create test helper: unittest.assertLogs() used (not LogCaptureMixin) due to Django propagate=False
+        - [x] 7.5.5.2 Test: Failed login logs WARNING with IP address and username
+        - [x] 7.5.5.3 Test: Successful login logs INFO with user_id
+        - [x] 7.5.5.4 Test: Blacklisted token reuse logs WARNING with user_id, IP, and user_agent
+        - [x] 7.5.5.5 Test: Rate limit violation verifies logging infrastructure works during throttled requests
+        - [x] 7.5.5.6 Test: Successful registration logs INFO
+        - [x] 7.5.5.7 Test: Passwords never appear in any log output (security check - CRITICAL)
+        - [x] 7.5.5.8 Test: Token values never appear in any log output (security check - CRITICAL)
     - [ ] 7.5.6 Error Response Format Tests (Task 6 standardization)
         - [ ] 7.5.6.1 Test: 401 responses use `{"error": "message"}` format (invalid credentials)
         - [ ] 7.5.6.2 Test: 403 responses use `{"error": "message"}` format (email not verified)
@@ -349,6 +349,9 @@
 - `backend/apps/authentication/throttles.py` - Test-aware throttle classes with lazy evaluation (Task 3.6)
 - `backend/apps/authentication/middleware.py` - Custom CSRF middleware with JWT cookie detection and path-based exemptions
 - `backend/apps/authentication/tests/test_user_api.py` - Automated test suite (20 existing tests, Task 7.5 adds ~20 more)
+- `backend/apps/authentication/tests/test_rate_limiting.py` - Rate limiting test suite (6 tests for Task 7.5.3)
+- `backend/apps/authentication/tests/test_token_blacklisting.py` - Token blacklisting test suite (6 tests for Task 7.5.4)
+- `backend/apps/authentication/tests/test_logging.py` - Authentication security logging test suite (7 tests for Task 7.5.5, uses unittest.assertLogs() for Django propagate=False compatibility)
 - `backend/apps/authentication/tests/conftest.py` - Pytest configuration for selective throttling tests (Task 3.6)
 
 **Operational Testing:**

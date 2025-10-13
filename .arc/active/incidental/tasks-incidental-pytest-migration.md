@@ -9,11 +9,16 @@
 
 **Why Now**: During Task 3.6 in `tasks-incidental-security-updates.md` (throttling refactor), we needed test infrastructure for selective throttling tests. External research revealed pytest provides substantial benefits for Django Ninja API testing beyond just this use case.
 
-**Current State**:
-- ~104 test methods across 14 files
+**Current State** (Initial):
+- ~104 test methods across 11 test files (initial estimate was inflated by counting management commands)
 - 19 TestCase classes using Django's unittest framework
 - ~3,382 lines of test code
 - Tests run via `python manage.py test --keepdb`
+
+**Actual State** (Post-Migration):
+- 103 tests across 11 test files (all converted to pytest)
+- 0 TestCase classes remaining (all converted to function-based tests)
+- Tests run via `pytest apps/` or `pytest -n auto apps/` (parallel)
 
 **Key Benefits Identified** (from external research 2025-10-13):
 1. **Parametrized API testing**: Test multiple input variations without code duplication (killer feature for validation tests)
@@ -201,14 +206,14 @@
         - [x] 5.4.1 Command: `pytest apps/core/tests/` - 12/12 tests passing (100%, 4.02s)
         - [x] 5.4.2 Quality checks: 1 Ruff violation fixed, 0 Pyright errors
 
-- [ ] 6. Migrate Management Command Tests (1-2 hours, 10 tests)
-    - [ ] 6.1 Convert test_tmdb_logging.py (6 tests)
-        - [ ] 6.1.1 Convert TMDBLoggingTests class to function-based tests
-        - [ ] 6.1.2 Use pytest logging fixtures
-        - [ ] 6.1.3 Run tests to verify: `pytest apps/core/management/commands/test_tmdb_logging.py`
-    - [ ] 6.2 Convert test_logging.py (4 tests)
-        - [ ] 6.2.1 Convert LoggingTests class to function-based tests
-        - [ ] 6.2.2 Run tests to verify: `pytest apps/core/management/commands/test_logging.py`
+- [x] 6. Migrate Management Command Tests (COMPLETED - Task list was outdated)
+    **IMPORTANT DISCOVERY**: `test_tmdb_logging.py` and `test_logging.py` are NOT test files - they are Django management commands for manual logging system testing (similar to fixtures/scripts). These are invoked via `python manage.py test_logging` and `python manage.py test_tmdb_logging` for interactive verification.
+
+    **ACTUAL STATE**: All legitimate unit tests have been migrated. The test suite contains 103 tests, not 113 as initially estimated. The task list incorrectly counted these management commands as "10 tests to migrate".
+
+    - [x] 6.1 Verify test_tmdb_logging.py is a command, not tests (CONFIRMED - Django Command class)
+    - [x] 6.2 Verify test_logging.py is a command, not tests (CONFIRMED - Django Command class)
+    - [x] 6.3 Run full test suite to confirm accurate count: `pytest apps/` - 103/103 tests passing (100%, 36.13s)
 
 - [ ] 7. Cleanup and Optimization (2-3 hours)
     - [ ] 7.1 Remove unused imports
@@ -223,7 +228,7 @@
     - [ ] 7.3 Enable parallel execution by default
         - [ ] 7.3.1 Add `-n auto` to pyproject.toml addopts (or document as optional)
         - [ ] 7.3.2 Test parallel execution: `pytest -n auto apps/`
-        - [ ] 7.3.3 Verify all 104 tests pass in parallel mode
+        - [ ] 7.3.3 Verify all 103 tests pass in parallel mode
         - [ ] 7.3.4 Benchmark speedup vs sequential execution
     - [ ] 7.4 Configure coverage reporting
         - [ ] 7.4.1 Add coverage configuration to pyproject.toml
@@ -238,7 +243,7 @@
 - [ ] 8. Full Quality Gates (1 hour)
     - [ ] 8.1 Run all backend tests
         - [ ] 8.1.1 Command: `pytest apps/`
-        - [ ] 8.1.2 Verify 100% pass rate (104/104 tests)
+        - [ ] 8.1.2 Verify 100% pass rate (103/103 tests)
         - [ ] 8.1.3 Run with parallel: `pytest -n auto apps/`
         - [ ] 8.1.4 Verify parallel execution works correctly
     - [ ] 8.2 Run type checking on test files
@@ -285,22 +290,26 @@
 - `apps/movie/tests/conftest.py` - Movie-specific fixtures (SKIPPED - not needed per YAGNI)
 - `apps/user_movie_data/tests/conftest.py` - UserMovieData fixtures (SKIPPED - inline fixtures sufficient)
 
-**Test Files to Convert (14 files, 90 tests + 23 new tests = 113 total):**
-- `apps/authentication/tests/test_user_api.py` - 22 tests (CONVERTED + modernized HTTPStatus constants)
-- `apps/authentication/tests/test_csrf_protection.py` - 12 tests (CONVERTED + refactored to use shared get_csrf_token)
-- `apps/authentication/tests/test_security.py` - 10 tests (CONVERTED)
-- `apps/authentication/tests/test_oauth_mocks.py` - OAuth mock classes (CONVERTED to fixtures in conftest.py)
-- `apps/authentication/tests/fixtures.py` - Factory functions (CONSOLIDATED - hybrid pattern with conftest.py wrappers)
-- `apps/movie/tests/test_movie_service.py` - 14 tests (CONVERTED to pytest)
-- `apps/movie/tests/test_movie_api.py` - 8 tests (CONVERTED to pytest with parametrization - 10 test cases, enhanced with granular field checks)
-- `apps/movie/tests/test_paginated_views.py` - 2 tests (DELETED - redundant with test_movie_api.py)
-- `apps/user_movie_data/tests/test_user_movie_data_api.py` - 23 tests (REWRITTEN - legacy DRF tests replaced with comprehensive Django Ninja API tests + JWT auth + CSRF + fixed production bug)
-- `apps/user_movie_data/api.py` - API implementation (FIXED CRITICAL BUG - Movie.id → Movie.tmdb_id on line 90)
-- `apps/core/tests/test_models.py` - 7 tests (CONVERTED to pytest - function-based with @pytest.mark.django_db)
-- `apps/core/tests/test_admin.py` - 3 tests (CONVERTED to pytest - created admin_client fixture)
-- `apps/core/tests/test_commands.py` - 2 tests (CONVERTED to pytest - kept @patch decorators)
-- `apps/core/management/commands/test_tmdb_logging.py` - 6 tests
-- `apps/core/management/commands/test_logging.py` - 4 tests
+**Test Files Converted (11 files, 103 total tests):**
+- ✅ `apps/authentication/tests/test_user_api.py` - 22 tests (CONVERTED + modernized HTTPStatus constants)
+- ✅ `apps/authentication/tests/test_csrf_protection.py` - 12 tests (CONVERTED + refactored to use shared get_csrf_token)
+- ✅ `apps/authentication/tests/test_security.py` - 10 tests (CONVERTED)
+- ✅ `apps/authentication/tests/test_oauth_mocks.py` - OAuth mock classes (CONVERTED to fixtures in conftest.py)
+- ✅ `apps/authentication/tests/fixtures.py` - Factory functions (CONSOLIDATED - hybrid pattern with conftest.py wrappers)
+- ✅ `apps/movie/tests/test_movie_service.py` - 14 tests (CONVERTED to pytest)
+- ✅ `apps/movie/tests/test_movie_api.py` - 10 test cases (CONVERTED to pytest with parametrization - enhanced with granular field checks)
+- ❌ `apps/movie/tests/test_paginated_views.py` - 2 tests (DELETED - redundant with test_movie_api.py)
+- ✅ `apps/user_movie_data/tests/test_user_movie_data_api.py` - 23 tests (REWRITTEN - legacy DRF tests replaced with comprehensive Django Ninja API tests + JWT auth + CSRF + fixed production bug)
+- 🔧 `apps/user_movie_data/api.py` - API implementation (FIXED CRITICAL BUG - Movie.id → Movie.tmdb_id on line 90)
+- ✅ `apps/core/tests/test_models.py` - 7 tests (CONVERTED to pytest - function-based with @pytest.mark.django_db)
+- ✅ `apps/core/tests/test_admin.py` - 3 tests (CONVERTED to pytest - created admin_client fixture)
+- ✅ `apps/core/tests/test_commands.py` - 2 tests (CONVERTED to pytest - kept @patch decorators)
+
+**Management Commands** (NOT tests - excluded from migration):
+- ⚙️ `apps/core/management/commands/test_tmdb_logging.py` - Django management command (manual testing tool)
+- ⚙️ `apps/core/management/commands/test_logging.py` - Django management command (manual testing tool)
+
+**Migration Complete**: 103/103 tests (100%)
 
 **Documentation:**
 - `.arc/reference/strategies/strategy-testing-methodology.md` - Testing strategy (UPDATE)

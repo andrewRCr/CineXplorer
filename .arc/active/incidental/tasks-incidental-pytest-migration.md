@@ -135,12 +135,18 @@
         - [x] 3.5.1 Command: `pytest apps/movie/tests/` - 24/24 tests passing (100%, 0.80s)
         - [x] 3.5.2 Verify all tests pass - ✅ Perfect execution, no failures
         - [x] 3.5.3 Run with coverage: `pytest apps/movie/tests/ --cov=apps.movie --cov-report=term-missing`
-        - [x] 3.5.4 Coverage results:
+        - [x] 3.5.4 Coverage results (before config optimization):
             - movie/api.py: 88.64% coverage (5 lines missing - error handlers for edge cases)
             - movie/schemas.py: 0% (expected - Pydantic models have no testable logic)
             - movie/apps.py: 0% (expected - Django app configuration)
             - Overall: 15.92% (misleading - schemas inflate denominator)
             - **Actionable coverage**: API layer 88.64% ✅ (exceeds 80% threshold)
+        - [x] 3.5.5 Added coverage configuration to pyproject.toml:
+            - Configured omit patterns to exclude schemas, apps.py, migrations, admin, etc.
+            - Set fail_under = 80% threshold
+            - Added exclude_lines for defensive code, type checking, protocols
+            - Configured HTML and JSON report outputs
+            - Result: Coverage now focuses on business logic (APIs, services, middleware)
 
 - [ ] 4. Migrate UserMovieData App Tests (3-4 hours, 15 tests)
     - [ ] 4.1 Convert test_user_movie_data_api.py (15 tests)

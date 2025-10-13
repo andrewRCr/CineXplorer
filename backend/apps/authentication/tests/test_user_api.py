@@ -258,9 +258,10 @@ class PrivateUserApiTests(TestCase):
         }
         json_post(client, TOKEN_URL, cast(dict[str, object], auth_payload))
 
-        # Simulate CSRF token and cookie
+        # Simulate CSRF token and cookie (double-submit cookie pattern)
+        # Must use Django's default cookie name 'csrftoken' (not 'XSRF-TOKEN')
         csrf_token = 'testcsrftoken'
-        client.cookies['XSRF-TOKEN'] = csrf_token
+        client.cookies['csrftoken'] = csrf_token  # Django's default CSRF_COOKIE_NAME
         res = client.patch(
             ME_URL,
             json.dumps(payload),
@@ -379,8 +380,17 @@ class AuthCookieIntegrationTests(TestCase):
         old_refresh_cookie = self.client.cookies.get('refresh_token')
         old_refresh = old_refresh_cookie.value if old_refresh_cookie else None
         refresh_url = '/api/token/refresh/'
-        # Rely on HttpOnly refresh cookie only - no body needed
-        response = self.client.post(refresh_url, {}, content_type='application/json')
+
+        # Refresh endpoint requires CSRF token (double-submit cookie pattern)
+        # Must use Django's default cookie name 'csrftoken' (not 'XSRF-TOKEN')
+        csrf_token = 'test_csrf_token'
+        self.client.cookies['csrftoken'] = csrf_token  # Django's default CSRF_COOKIE_NAME
+        response = self.client.post(
+            refresh_url,
+            {},
+            content_type='application/json',
+            HTTP_X_CSRFTOKEN=csrf_token  # Set matching header
+        )
         self.assertEqual(response.status_code, 200)
         new_refresh_cookie = response.cookies.get('refresh_token')
         new_refresh = new_refresh_cookie.value if new_refresh_cookie else None

@@ -2,11 +2,13 @@
 Tests for custom Django admin interface.
 """
 
+from http import HTTPStatus
 from typing import TYPE_CHECKING, cast
 
+import pytest
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractBaseUser
-from django.test import Client, TestCase
+from django.test import Client
 from django.urls import reverse
 
 if TYPE_CHECKING:
@@ -15,62 +17,81 @@ if TYPE_CHECKING:
 User = get_user_model()
 
 
-class AdminInterfaceTests(TestCase):
-    """ Tests for custom Django admin interface. """
+@pytest.fixture
+def admin_client(db: None) -> tuple[Client, "UserType", "UserType"]:
+    """Create admin client with logged-in superuser and a regular test user.
 
-    def setUp(self) -> None:
-        """ Creates client, creates + logs in as test admin user, + creates test regular user. """
+    Returns:
+        tuple: (client, admin_user, regular_user)
+    """
+    client = Client()
 
-        self.client = Client()
-        # django-types limitation - UserManager.create_superuser type not inferred
-        self.admin_user = cast(
-            "UserType",
-            User.objects.create_superuser(  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
-                username='testAdminUser',
-                email='testAdminUser@example.com',
-                password='testpass123',
-            )
-        )
-        # django-types limitation - force_login typing issue with User vs AbstractBaseUser
-        self.client.force_login(cast(AbstractBaseUser, self.admin_user))  # pyright: ignore[reportArgumentType]
+    # django-types limitation - UserManager.create_superuser type not inferred
+    admin_user = cast(
+        "UserType",
+        User.objects.create_superuser(  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
+            username="testAdminUser",
+            email="testAdminUser@example.com",
+            password="testpass123",
+        ),
+    )
+    # django-types limitation - force_login typing issue with User vs AbstractBaseUser
+    client.force_login(cast(AbstractBaseUser, admin_user))  # pyright: ignore[reportArgumentType]
 
-        # django-types limitation - UserManager.create_user type not inferred
-        self.user = cast(
-            "UserType",
-            User.objects.create_user(  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
-                username='testUser@example.com',
-                email='testUser@example.com',
-                password='testpass123',
-                first_name='Test',
-                last_name='User',
-            )
-        )
+    # django-types limitation - UserManager.create_user type not inferred
+    regular_user = cast(
+        "UserType",
+        User.objects.create_user(  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
+            username="testUser@example.com",
+            email="testUser@example.com",
+            password="testpass123",
+            first_name="Test",
+            last_name="User",
+        ),
+    )
 
-    def test_users_list(self) -> None:
-        """ Tests that created test users are listed on the page. """
+    return client, admin_user, regular_user
 
-        # Using Django's default User model (auth.User)
-        url = reverse('admin:auth_user_changelist')
-        res = self.client.get(url)
 
-        self.assertContains(res, self.user.first_name)
-        self.assertContains(res, self.user.last_name)
-        self.assertContains(res, self.user.email)
+# ============================================================================
+# Admin Interface Tests
+# ============================================================================
 
-    def test_edit_user_page(self) -> None:
-        """ Tests that the user edit page works as expected. """
 
-        # Using Django's default User model (auth.User)
-        url = reverse('admin:auth_user_change', args=[self.user.id])
-        res = self.client.get(url)
+def test_users_list(admin_client: tuple[Client, "UserType", "UserType"]) -> None:
+    """Tests that created test users are listed on the page."""
 
-        self.assertEqual(res.status_code, 200)
+    client, _admin_user, user = admin_client
 
-    def test_create_user_page(self) -> None:
-        """ Tests that the create user page works as expected. """
+    # Using Django's default User model (auth.User)
+    url = reverse("admin:auth_user_changelist")
+    res = client.get(url)
 
-        # Using Django's default User model (auth.User)
-        url = reverse('admin:auth_user_add')
-        res = self.client.get(url)
+    assert res.status_code == HTTPStatus.OK
+    assert user.first_name in res.content.decode()
+    assert user.last_name in res.content.decode()
+    assert user.email in res.content.decode()
 
-        self.assertEqual(res.status_code, 200)
+
+def test_edit_user_page(admin_client: tuple[Client, "UserType", "UserType"]) -> None:
+    """Tests that the user edit page works as expected."""
+
+    client, _admin_user, user = admin_client
+
+    # Using Django's default User model (auth.User)
+    url = reverse("admin:auth_user_change", args=[user.id])
+    res = client.get(url)
+
+    assert res.status_code == HTTPStatus.OK
+
+
+def test_create_user_page(admin_client: tuple[Client, "UserType", "UserType"]) -> None:
+    """Tests that the create user page works as expected."""
+
+    client, _admin_user, _user = admin_client
+
+    # Using Django's default User model (auth.User)
+    url = reverse("admin:auth_user_add")
+    res = client.get(url)
+
+    assert res.status_code == HTTPStatus.OK

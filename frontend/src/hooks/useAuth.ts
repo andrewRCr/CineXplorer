@@ -4,6 +4,11 @@
  * This custom React hook manages authentication state and actions (login, logout, register, user info).
  * It is used by AuthContextProvider to provide state to the context.
  *
+ * Supports hybrid authentication:
+ * - Instant auth detection from localStorage (no network call needed)
+ * - OAuth callback handling with access token storage
+ * - Automatic token refresh via axios interceptor
+ *
  * Relationship:
  * - Called by AuthContextProvider to get auth state and actions.
  * - State is shared via AuthContext.
@@ -29,9 +34,15 @@ type UserProfile = components["schemas"]["UserProfileSchema"];
 
 export function useAuth(): AuthStateProps & { user: UserProfile | null } {
 	const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-		// Check if tokens exist and are not expired
+		// Hybrid auth: Instant authentication detection from localStorage/cookie
+		// Priority: cookie → localStorage → sessionStorage (handled by getAuthTokens)
 		const { authToken } = getAuthTokens();
 		const isExpired = areTokensExpired();
+
+		// Three conditions must be met:
+		// 1. Access token exists (in cookie, localStorage, or sessionStorage)
+		// 2. Token is not expired (checked via JWT exp claim or localStorage timestamp)
+		// 3. isAuthenticated flag is set (for backward compatibility)
 		return authToken !== null && !isExpired && getInitialAuthenticatedValue();
 	});
 	const [user, setUser] = useState<UserProfile | null>(null);
@@ -46,6 +57,8 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
 	}, [isAuthenticated]); // getUserDetails is stable but creates circular dependency
 
 	// Check for token expiration every minute
+	// Note: Token refresh is handled automatically by axios interceptor (apiClient.ts)
+	// This is just for proactive logout if token expires while idle
 	useEffect(() => {
 		const checkTokenExpiration = () => {
 			if (isAuthenticated && areTokensExpired()) {
@@ -62,12 +75,20 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
 	// Handle OAuth callback (when redirected back from Google/GitHub)
 	useEffect(() => {
 		const handleOAuthCallback = async () => {
-			// Check if we have tokens in cookies (set by backend after OAuth success)
-			const { authToken, refreshToken } = getAuthTokens();
+			// Hybrid auth: Check for access token in cookie OR localStorage
+			const { authToken, storage } = getAuthTokens();
 
-			// OAuth success: tokens are in cookies, but we might not have set isAuthenticated yet
-			if (authToken && refreshToken && !isAuthenticated) {
-				console.log("OAuth callback detected, setting authenticated state");
+			// OAuth success: backend may have set access token in cookie
+			if (authToken && !isAuthenticated) {
+				console.log(`OAuth callback detected, access token found in ${storage}`);
+
+				// If token came from cookie, store it in localStorage for future use
+				// This enables instant auth checks without network calls
+				if (storage === "cookie") {
+					console.log("Storing access token in localStorage for hybrid auth");
+					setAuthTokens(authToken); // Store in localStorage (refresh token already in HTTP-only cookie)
+				}
+
 				setIsAuthenticated(true);
 				// getUserDetails will be called by the isAuthenticated useEffect
 				navigate(ROUTES.HOME);

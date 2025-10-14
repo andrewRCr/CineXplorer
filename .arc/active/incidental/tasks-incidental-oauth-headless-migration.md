@@ -130,31 +130,31 @@
         - [x] 6.3.1 Accept access token from Authorization header OR cookie
         - [x] 6.3.2 Priority: Authorization header > cookie (for hybrid compatibility)
         - [x] 6.3.3 Verify backward compatibility with existing cookie-only auth
-    - [ ] 6.4 Frontend: Update token utilities for hybrid mode
-        - [ ] 6.4.1 Add `getTokenFromCookie()` helper (read non-HTTP-only access token cookie)
-        - [ ] 6.4.2 Update `getAuthTokens()` to check cookies first, then localStorage
-        - [ ] 6.4.3 Update `setAuthTokens()` to store access token in localStorage
-        - [ ] 6.4.4 Add `getTokenExpiration()` helper (decode JWT or read from stored metadata)
-        - [ ] 6.4.5 Update `areTokensExpired()` to check actual token expiration (not just 30-day localStorage expiry)
-    - [ ] 6.5 Frontend: Update axios interceptor for hybrid auth
-        - [ ] 6.5.1 Send access token in Authorization header (Bearer token)
-        - [ ] 6.5.2 Keep `withCredentials: true` for refresh token cookie
-        - [ ] 6.5.3 Implement token refresh logic on 401 response
-        - [ ] 6.5.4 Add request queue to prevent concurrent refresh calls
-        - [ ] 6.5.5 Update all pending requests with new access token after refresh
-    - [ ] 6.6 Frontend: Update useAuth hook for hybrid detection
-        - [ ] 6.6.1 Check for access token on mount (cookie OR localStorage)
-        - [ ] 6.6.2 Update OAuth callback detection to read access token from response/cookie
-        - [ ] 6.6.3 Store access token in localStorage after OAuth success
-        - [ ] 6.6.4 Remove polling/network call for auth status check (use localStorage)
-    - [ ] 6.7 Frontend: Add token expiration UI (optional but recommended)
-        - [ ] 6.7.1 Add countdown timer hook for token expiration
-        - [ ] 6.7.2 Show "Session expiring soon" warning (e.g., 2 minutes before)
-        - [ ] 6.7.3 Auto-refresh token when user is active and token near expiration
-    - [ ] 6.8 Backend: Update OAuth callback to return access token
-        - [ ] 6.8.1 Verify Token Strategy `create_access_token_payload()` is called on OAuth callback
-        - [ ] 6.8.2 Ensure access token is set as non-HTTP-only cookie OR returned in redirect
-        - [ ] 6.8.3 Test that refresh token remains HTTP-only
+    - [x] 6.4 Frontend: Update token utilities for hybrid mode
+        - [x] 6.4.1 Add `getTokenFromCookie()` helper (read non-HTTP-only access token cookie)
+        - [x] 6.4.2 Update `getAuthTokens()` to check cookies first, then localStorage
+        - [x] 6.4.3 Update `setAuthTokens()` to store access token in localStorage
+        - [x] 6.4.4 Add `getTokenExpiration()` helper (decode JWT or read from stored metadata)
+        - [x] 6.4.5 Update `areTokensExpired()` to check actual token expiration (not just 30-day localStorage expiry)
+    - [x] 6.5 Frontend: Update axios interceptor for hybrid auth
+        - [x] 6.5.1 Send access token in Authorization header (Bearer token)
+        - [x] 6.5.2 Keep `withCredentials: true` for refresh token cookie
+        - [x] 6.5.3 Implement token refresh logic on 401 response
+        - [x] 6.5.4 Add request queue to prevent concurrent refresh calls
+        - [x] 6.5.5 Update all pending requests with new access token after refresh
+    - [x] 6.6 Frontend: Update useAuth hook for hybrid detection
+        - [x] 6.6.1 Check for access token on mount (cookie OR localStorage)
+        - [x] 6.6.2 Update OAuth callback detection to read access token from response/cookie
+        - [x] 6.6.3 Store access token in localStorage after OAuth success
+        - [x] 6.6.4 Remove polling/network call for auth status check (use localStorage)
+    - [x] 6.7 Frontend: Add token expiration UI (optional but recommended)
+        - [x] 6.7.1 Add countdown timer hook for token expiration
+        - [x] 6.7.2 Show "Session expiring soon" warning (e.g., 2 minutes before)
+        - [x] 6.7.3 Auto-refresh token when user is active and token near expiration
+    - [x] 6.8 Backend: Update OAuth callback to return access token
+        - [x] 6.8.1 Verify Token Strategy `create_access_token_payload()` is called on OAuth callback
+        - [x] 6.8.2 Ensure access token is set as non-HTTP-only cookie OR returned in redirect
+        - [x] 6.8.3 Test that refresh token remains HTTP-only
     - [ ] 6.9 Testing: Verify hybrid auth works for all flows
         - [ ] 6.9.1 Test email/password login (stores access token in localStorage)
         - [ ] 6.9.2 Test OAuth login (receives and stores access token)

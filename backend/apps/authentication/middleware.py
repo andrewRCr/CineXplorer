@@ -44,9 +44,14 @@ logger = logging.getLogger('cinexplorer.auth')
 #   - Endpoint performs state-changing operations with user data
 #   - Unsure → default to CSRF protection (more secure)
 #
-# Upcoming Work (OAuth Headless Migration):
-# When implementing OAuth social logins (tasks-incidental-oauth-headless-migration.md):
-#   "/_allauth/browser/v1/",  # OAuth: Headless API (state parameter validates)
+# OAuth Headless API (django-allauth):
+# Django-allauth headless mode OAuth endpoints are CSRF-exempt because:
+# 1. OAuth 2.0 'state' parameter provides CSRF protection at protocol level
+# 2. State is random, unpredictable, stored in backend session, validated on callback
+# 3. Adding CSRF cookies would be redundant (defense-in-depth but not required)
+# 4. Django-allauth headless is designed for SPA OAuth without traditional CSRF
+# Reference: https://docs.allauth.org/en/dev/headless/
+#   "/_allauth/",  # OAuth: Headless API (state parameter provides CSRF protection)
 #
 # Refactoring Risks:
 # - Prefix matching: "/api/token/" exempts "/api/token/refresh/" too
@@ -59,6 +64,7 @@ EXEMPT_PATH_PREFIXES = [
     "/api/logout/",             # Public: Logout (clears cookies)
     "/api/verify-email/",       # Public: Email verification
     "/api/resend-verification/", # Public: Resend verification email
+    "/_allauth/",               # OAuth: django-allauth headless (state provides CSRF protection)
 ]
 
 

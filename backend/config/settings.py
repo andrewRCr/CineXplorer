@@ -303,8 +303,8 @@ ACCOUNT_ADAPTER = "authentication.adapters.CustomAccountAdapter"
 
 # Headless Mode Configuration (for SPA/React frontend)
 # Provides JSON API endpoints instead of HTML templates
-# Set to False to allow both headless API and traditional OAuth callbacks to coexist
-HEADLESS_ONLY = False
+# Must be True to enable Token Strategy API for OAuth JWT generation
+HEADLESS_ONLY = True
 HEADLESS_FRONTEND_URLS = {
     "account_confirm_email": f"{FRONTEND_URL}/auth/verify-email",
     "account_reset_password_from_key": f"{FRONTEND_URL}/auth/reset-password",

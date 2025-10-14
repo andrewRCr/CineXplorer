@@ -2,8 +2,8 @@
 
 **Created**: 2025-01-27
 **Triggered By**: Task 5.6.2 in API Layer Modernization Phase 2
-**Status**: PAUSED (backend type safety modernization in progress)
-**Estimated Effort**: 2-3 hours
+**Status**: In Progress - Task 6 (Hybrid Auth Architecture)
+**Estimated Effort**: 8-10 hours total (Tasks 1-5: Complete, Task 6: 6-8 hours, Tasks 7-8: 2 hours)
 
 ## Context
 
@@ -28,22 +28,25 @@
 - Migrate from traditional `allauth.urls` to `allauth.headless.urls`
 - Configure `HEADLESS_ONLY = True` and frontend URL mappings
 - Implement headless OAuth flow using `/_allauth/browser/v1/auth/provider/redirect`
-- Update frontend to use session-based authentication with headless API
+- **Implement hybrid authentication** (access token in localStorage + refresh token in HTTP-only cookie)
+- Update frontend to detect authentication from localStorage (instant, no network call)
+- Implement token refresh endpoint and axios interceptor logic
 - Ensure CSRF cookie configuration allows JavaScript access (`CSRF_COOKIE_HTTPONLY = False`)
 - Update OAuth callback handling for headless mode
-- Test complete OAuth flow (Google and GitHub)
+- Test complete OAuth flow with hybrid token storage (Google and GitHub)
 
-**Won't Do** (deferred to future UX work):
+**Won't Do** (deferred to future work):
 - Custom django-allauth template styling (stays out of scope)
 - Email verification template customization
 - Django messages framework cleanup (workaround: use incognito for testing)
-- Full authentication flow rewrite (only OAuth-related changes)
+- Session expiration warnings UI (Task 6.7 marked optional)
+- Multi-tab synchronization (can be added later via BroadcastChannel API)
 
 ## Tasks
 
 - [x] 1. Backend Configuration
-    - [x] 1.1 Update Django settings for headless mode (`HEADLESS_ONLY = True`, `HEADLESS_FRONTEND_URLS`) - settings.py:269-275
-    - [x] 1.2 Configure CSRF cookie to allow JavaScript access (`CSRF_COOKIE_HTTPONLY = False`) - settings.py:331
+    - [x] 1.1 Update Django settings for headless mode (`HEADLESS_ONLY = True`, `HEADLESS_FRONTEND_URLS`)
+    - [x] 1.2 Configure CSRF cookie to allow JavaScript access (`CSRF_COOKIE_HTTPONLY = False`) - settings.py:383
     - [x] 1.3 Verify CORS and session cookie settings compatible with headless mode - Existing settings confirmed compatible
     - [x] 1.4 Run backend type checking (verify no type errors introduced) - Django check passed: 0 issues
 
@@ -66,7 +69,7 @@
     - [x] 4.3 Test error handling for OAuth failures - useAuth.ts:76-88 checks URL params for error and navigates to login
     - [x] 4.4 Update callback URL configuration if needed - callback_url set to /login in Login.tsx:292 (matches existing flow)
 
-- [ ] 5. Token Strategy Migration (Idiomatic OAuth JWT Generation)
+- [x] 5. Token Strategy Migration (Idiomatic OAuth JWT Generation)
     - [x] 5.1 Create `authentication/token_strategy.py` with `JWTTokenStrategy` class
         - [x] 5.1.1 Implement `create_access_token(request)` method using RefreshToken.for_user()
         - [x] 5.1.2 Implement `create_refresh_token(request)` method with proper lifetime
@@ -105,43 +108,161 @@
         - [x] 5.4.9 Verify Pyright (hybrid strategy) - ✅ Configured venv path, 2 reportUnknownMemberType warnings on HttpRequest.user (acceptable per type-safety.md Django ORM limitations)
         - [x] 5.4.10 Fix all Pyright errors in stub files and token_strategy.py - ✅ Fixed Manager ClassVar issues, removed unused imports, added pyright: ignore for HttpRequest.user limitations
     - [x] 5.5 Verify backend restarts without errors after changes - ✅ Backend restarted successfully, Django system check passed (0 issues), token strategy imports and instantiates correctly
+    - [x] 5.6 Enable full headless mode
+        - [x] 5.6.1 Set `HEADLESS_ONLY = True` in settings.py (line 307)
+        - [x] 5.6.2 Verify no code depends on traditional OAuth callback URLs
+        - [x] 5.6.3 Test backend restarts successfully
+        - [x] 5.6.4 Document the mixed mode issue in notes
 
-- [ ] 6. Testing and Verification
-    - [ ] 6.1 Clear all cookies and test fresh OAuth flow with Google
-    - [ ] 6.2 Verify CSRF token obtained from session endpoint
-    - [ ] 6.3 Verify form submission redirects to Google correctly
-    - [ ] 6.4 Verify callback creates session and redirects to frontend
-    - [ ] 6.5 Verify JWT tokens are set in cookies after OAuth login
-    - [ ] 6.6 Verify tokens work for authenticated API calls (e.g., /api/profile/)
-    - [ ] 6.7 Test GitHub OAuth flow (same steps as Google)
-    - [ ] 6.8 Test error scenarios (OAuth denial, invalid callback)
+- [ ] 6. Implement Hybrid Authentication Architecture (HTTP-Only Refresh + localStorage Access)
+    - **Why This Task Exists**: During Task 6 testing, discovered that Token Strategy sets JWT tokens as HTTP-only cookies (secure, but JavaScript can't read them). This means OAuth succeeds but frontend can't detect authentication state - users stay on login page despite being authenticated. After researching pure HTTP-only (Option A) vs hybrid (Option C) approaches, chose hybrid for better UX, mobile compatibility, and industry standard alignment. Trade-off: 5-min access token in localStorage (XSS-vulnerable but short-lived) + 14-day refresh token in HTTP-only cookie (XSS-proof). This is the same pattern used by Auth0, Firebase, AWS Amplify, and most modern SPAs.
+    - [ ] 6.1 Backend: Update Token Strategy to support hybrid mode
+        - [ ] 6.1.1 Modify `create_access_token_payload()` to return access token in response body
+        - [ ] 6.1.2 Keep refresh token as HTTP-only cookie (existing behavior)
+        - [ ] 6.1.3 Add token expiration metadata to response (expires_in, issued_at)
+        - [ ] 6.1.4 Update type stubs if needed for new response structure
+    - [ ] 6.2 Backend: Create token refresh endpoint
+        - [ ] 6.2.1 Create `/api/auth/refresh` endpoint in Django Ninja
+        - [ ] 6.2.2 Validate refresh token from HTTP-only cookie
+        - [ ] 6.2.3 Issue new access token, return in response body
+        - [ ] 6.2.4 Add rate limiting for refresh endpoint
+        - [ ] 6.2.5 Add tests for refresh endpoint (success, expired, invalid)
+    - [ ] 6.3 Backend: Update authentication middleware
+        - [ ] 6.3.1 Accept access token from Authorization header OR cookie
+        - [ ] 6.3.2 Priority: Authorization header > cookie (for hybrid compatibility)
+        - [ ] 6.3.3 Verify backward compatibility with existing cookie-only auth
+    - [ ] 6.4 Frontend: Update token utilities for hybrid mode
+        - [ ] 6.4.1 Add `getTokenFromCookie()` helper (read non-HTTP-only access token cookie)
+        - [ ] 6.4.2 Update `getAuthTokens()` to check cookies first, then localStorage
+        - [ ] 6.4.3 Update `setAuthTokens()` to store access token in localStorage
+        - [ ] 6.4.4 Add `getTokenExpiration()` helper (decode JWT or read from stored metadata)
+        - [ ] 6.4.5 Update `areTokensExpired()` to check actual token expiration (not just 30-day localStorage expiry)
+    - [ ] 6.5 Frontend: Update axios interceptor for hybrid auth
+        - [ ] 6.5.1 Send access token in Authorization header (Bearer token)
+        - [ ] 6.5.2 Keep `withCredentials: true` for refresh token cookie
+        - [ ] 6.5.3 Implement token refresh logic on 401 response
+        - [ ] 6.5.4 Add request queue to prevent concurrent refresh calls
+        - [ ] 6.5.5 Update all pending requests with new access token after refresh
+    - [ ] 6.6 Frontend: Update useAuth hook for hybrid detection
+        - [ ] 6.6.1 Check for access token on mount (cookie OR localStorage)
+        - [ ] 6.6.2 Update OAuth callback detection to read access token from response/cookie
+        - [ ] 6.6.3 Store access token in localStorage after OAuth success
+        - [ ] 6.6.4 Remove polling/network call for auth status check (use localStorage)
+    - [ ] 6.7 Frontend: Add token expiration UI (optional but recommended)
+        - [ ] 6.7.1 Add countdown timer hook for token expiration
+        - [ ] 6.7.2 Show "Session expiring soon" warning (e.g., 2 minutes before)
+        - [ ] 6.7.3 Auto-refresh token when user is active and token near expiration
+    - [ ] 6.8 Backend: Update OAuth callback to return access token
+        - [ ] 6.8.1 Verify Token Strategy `create_access_token_payload()` is called on OAuth callback
+        - [ ] 6.8.2 Ensure access token is set as non-HTTP-only cookie OR returned in redirect
+        - [ ] 6.8.3 Test that refresh token remains HTTP-only
+    - [ ] 6.9 Testing: Verify hybrid auth works for all flows
+        - [ ] 6.9.1 Test email/password login (stores access token in localStorage)
+        - [ ] 6.9.2 Test OAuth login (receives and stores access token)
+        - [ ] 6.9.3 Test token refresh (uses HTTP-only refresh cookie, returns new access token)
+        - [ ] 6.9.4 Test authenticated API calls (Authorization header used)
+        - [ ] 6.9.5 Test multi-tab behavior (localStorage sync)
+    - [ ] 6.10 Security: Run type checking and linting
+        - [ ] 6.10.1 Backend type check: `npx pyright backend/apps/authentication/`
+        - [ ] 6.10.2 Backend linting: `.venv-backend/bin/ruff check backend/apps/authentication/ --fix`
+        - [ ] 6.10.3 Frontend type check: `npm run type-check`
+        - [ ] 6.10.4 Frontend linting: `npm run lint`
 
-- [ ] 7. Documentation and Cleanup
-    - [ ] 7.1 Update notes file with Token Strategy implementation details
-    - [ ] 7.2 Document URL structure changes (/_allauth/ vs /accounts/)
-    - [ ] 7.3 Remove debugging console.log statements from Login.tsx
-    - [ ] 7.4 Update CURRENT-SESSION.md with completion status
-    - [ ] 7.5 Mark incidental work complete in notes
+- [ ] 7. Testing and Verification
+    - [ ] 7.1 Clear all cookies and localStorage, test fresh OAuth flow with Google
+    - [ ] 7.2 Verify CSRF token obtained from session endpoint
+    - [ ] 7.3 Verify form submission redirects to Google correctly
+    - [ ] 7.4 Verify callback creates session and redirects to frontend
+    - [ ] 7.5 Verify access token in localStorage, refresh token in HTTP-only cookie
+    - [ ] 7.6 Verify tokens work for authenticated API calls (Authorization header)
+    - [ ] 7.7 Test token refresh flow (wait for expiration or force refresh)
+    - [ ] 7.8 Test GitHub OAuth flow (same steps as Google)
+    - [ ] 7.9 Test error scenarios (OAuth denial, invalid callback, expired tokens)
+
+- [ ] 8. Documentation and Cleanup
+    - [ ] 8.1 Update notes file with hybrid architecture details
+    - [ ] 8.2 Document why hybrid > pure HTTP-only (UX, mobile, offline)
+    - [ ] 8.3 Document security model (short-lived access, HTTP-only refresh)
+    - [ ] 8.4 Remove debugging console.log statements from Login.tsx
+    - [ ] 8.5 Update architecture diagrams if any exist
+    - [ ] 8.6 Mark incidental work complete in task file / add completion summary
 
 ## Relevant Files
 
 **Backend:**
-- `backend/config/settings.py` - Headless mode configuration
+- `backend/config/settings.py` - Headless mode configuration, JWT settings
 - `backend/config/urls.py` - URL routing for headless endpoints
+- `backend/apps/authentication/token_strategy.py` - JWT Token Strategy (hybrid mode updates)
+- `backend/apps/authentication/api.py` - Token refresh endpoint (new)
+- `backend/apps/authentication/auth_ninja.py` - JWT authentication middleware (header support)
 
 **Infrastructure:**
 - `infrastructure/Caddyfile` - Proxy configuration for /_allauth/* routes
 
 **Frontend:**
 - `frontend/src/pages/user/Login.tsx` - OAuth button handlers
-- `frontend/src/hooks/useAuth.ts` - Authentication context and session management
-- `frontend/src/utilities/csrf.ts` - CSRF token utilities (may need updates)
+- `frontend/src/hooks/useAuth.ts` - Authentication context and session management (hybrid detection)
+- `frontend/src/utilities/token.ts` - Token storage utilities (hybrid mode updates)
+- `frontend/src/services/apiClient.ts` - Axios interceptor (token refresh logic)
 
 **Documentation:**
-- `.arc/active/notes-api-layer-modernization-p2.md` - OAuth implementation notes
+- `.arc/active/incidental/notes-incidental-oauth-headless-migration.md` - OAuth implementation notes
 - `.arc/active/CURRENT-SESSION.md` - Session tracking
 
 ## Implementation Notes
+
+### Hybrid Authentication Architecture (Task 6)
+
+**Architecture Decision**: After discovering the HTTP-only cookie limitation (frontend can't detect OAuth success), we're implementing a **hybrid approach** that balances security with UX.
+
+**Why Hybrid > Pure HTTP-Only Cookies:**
+- ✅ **Better UX**: Instant auth checks (no network call needed), "session expiring" warnings
+- ✅ **Mobile/PWA Ready**: Native apps can't handle HTTP-only cookies well
+- ✅ **Offline Detection**: Can check auth status without backend call
+- ✅ **Better Debugging**: Access tokens visible in DevTools
+- ✅ **Industry Standard**: Auth0, Firebase, AWS Amplify all use this pattern
+- ⚠️ **Security Tradeoff**: Access token vulnerable to XSS (mitigated by short expiration: 5 min)
+- ✅ **Refresh Token Protected**: HTTP-only cookie prevents long-term compromise
+
+**Architecture Overview:**
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ Frontend (React)                                             │
+│ - Access Token: localStorage (5-min lifetime)               │
+│ - Can detect auth without network call                      │
+│ - Can show "session expiring" warnings                      │
+│ - Sends: Authorization: Bearer {access_token}               │
+└─────────────────────────────────────────────────────────────┘
+                            │
+                            ▼ (API Request with both)
+┌─────────────────────────────────────────────────────────────┐
+│ Backend (Django)                                             │
+│ - Validates access token from Authorization header          │
+│ - If expired → checks refresh token from HTTP-only cookie   │
+│ - Issues new access token, returns in response body         │
+│ - Refresh Token: HTTP-only cookie (14-day lifetime)         │
+│ - XSS-proof, can't be stolen by malicious JavaScript        │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Security Model:**
+1. **Access Token** (localStorage, 5 min): Used for API requests, vulnerable to XSS but short-lived
+2. **Refresh Token** (HTTP-only cookie, 14 days): Used to issue new access tokens, XSS-proof
+3. **Damage Window**: Even if XSS steals access token, only 5 minutes of access (vs 14 days with refresh)
+4. **Reality Check**: If XSS exists, attacker can make API calls directly regardless of storage method
+
+**Token Refresh Flow:**
+
+```
+1. Frontend makes API request with expired access token
+2. Backend returns 401 Unauthorized
+3. Frontend intercepts 401, calls /api/auth/refresh
+4. Backend validates refresh token from HTTP-only cookie
+5. Backend issues new access token, returns in response
+6. Frontend stores new access token in localStorage
+7. Frontend retries original request with new token
+```
 
 ### Token Strategy API Context
 
@@ -153,55 +274,21 @@ Django-allauth v64+ provides **Token Strategy API** as the official extension po
 - ✅ Works for all auth flows (OAuth, email/password, MFA)
 - ✅ Easier to test and maintain
 
-**Reference Implementation** (Task 5.1):
-
-```python
-# authentication/token_strategy.py
-from allauth.headless.tokens import AbstractTokenStrategy
-from ninja_jwt.tokens import RefreshToken
-from django.conf import settings
-
-class JWTTokenStrategy(AbstractTokenStrategy):
-    """Token strategy for django-allauth headless mode."""
-
-    def create_access_token(self, request):
-        refresh = RefreshToken.for_user(request.user)
-        token = str(refresh.access_token)
-        lifetime = settings.SIMPLE_JWT['ACCESS_TOKEN_LIFETIME']
-        return token, int(lifetime.total_seconds())
-
-    def create_refresh_token(self, request):
-        refresh = RefreshToken.for_user(request.user)
-        token = str(refresh)
-        lifetime = settings.SIMPLE_JWT['REFRESH_TOKEN_LIFETIME']
-        return token, int(lifetime.total_seconds())
-```
+**Hybrid Mode Updates** (Task 6.1):
+- `create_access_token_payload()` returns access token in response body (for localStorage)
+- Refresh token still set as HTTP-only cookie (secure, can't be read by JS)
+- Token expiration metadata included (expires_in, issued_at)
 
 **Documentation**: <https://docs.allauth.org/en/dev/headless/tokens.html>
 
-## Completion Notes
+## Progress Notes
 
-**Status**: PAUSED at Task 5 (Token Strategy Migration) - Security audit initiated
-
-**Reason for Pause**: External research audit identified critical security gaps and non-idiomatic OAuth implementation. Creating new incidental task list (`tasks-incidental-security-updates.md`) to address all security issues before completing OAuth Token Strategy migration.
-
-**Work Completed**:
-- ✅ Backend headless configuration
-- ✅ URL routing updates
-- ✅ Frontend OAuth handlers
-- ✅ JWT token generation (signal/middleware approach)
-- ❌ Testing incomplete - redirect loop on OAuth callback
-
-**Known Issues**:
-- Redirect loop when clicking "Login with Google" (redirects back to login page)
-- Root cause: Unknown (was attempting to debug when audit initiated)
-- Likely related to session/token handling in OAuth callback
-
-**When Resuming**:
-1. Complete Task 5 (Token Strategy Migration) - replaces signal/middleware approach
-2. Address redirect loop issue (likely resolved by Token Strategy)
-3. Complete Tasks 6-7 (Testing and Documentation)
-4. Archive this incidental task list
+**Task 5 Completion Context**:
+- Token Strategy Migration completed during security updates (2025-10-08 to 2025-10-14)
+- Created idiomatic `JWTTokenStrategy` class (replaces signal/middleware approach)
+- Configured `HEADLESS_TOKEN_STRATEGY` in settings
+- Removed signal-based OAuth JWT implementation (middleware, signals.py)
+- Fixed type stubs for allauth.headless Token Strategy API
 
 ## References
 

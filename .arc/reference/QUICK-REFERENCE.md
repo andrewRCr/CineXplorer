@@ -1,6 +1,6 @@
 # Quick Reference - CineXplorer
 
-**Version**: 1.0 | **Updated**: 2025-10-13 | **Location**: `.arc/reference/`
+**Version**: 1.1 | **Updated**: 2025-10-14 | **Location**: `.arc/reference/`
 
 ## About This Reference Directory
 
@@ -79,8 +79,15 @@ docker compose -f infrastructure/docker-compose.yml exec backend pytest apps/
 # Pytest with parallel execution
 docker compose -f infrastructure/docker-compose.yml exec backend pytest -n auto apps/
 
-# With coverage
+# With coverage (full app)
 docker compose -f infrastructure/docker-compose.yml exec backend pytest --cov=apps --cov-report=term-missing apps/
+
+# With coverage (specific modules - use Python module paths, NOT file paths)
+docker compose -f infrastructure/docker-compose.yml exec backend pytest --cov=apps.authentication.api --cov=apps.authentication.middleware --cov-report=term-missing apps/authentication/tests/
+
+# IMPORTANT: Coverage uses Python module notation
+# ✅ Correct:   --cov=apps.authentication.api (module path)
+# ❌ Incorrect: --cov=apps/authentication/api.py (file path - will fail)
 ```
 
 ### Linting (Frontend)
@@ -209,6 +216,9 @@ npx pyright backend/apps/authentication/api.py --project backend
 
 # Run specific test file
 docker compose -f infrastructure/docker-compose.yml exec backend pytest apps/authentication/tests/test_user_api.py -v
+
+# Coverage for specific modules (use module paths, not file paths)
+docker compose -f infrastructure/docker-compose.yml exec backend pytest --cov=apps.authentication.api --cov-report=term-missing apps/authentication/tests/
 ```
 
 ### Full Quality Gates (Before Commit)

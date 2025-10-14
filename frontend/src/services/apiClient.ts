@@ -49,9 +49,9 @@ function onTokenRefreshed(token: string): void {
 // Request interceptor: Attach access token and CSRF token
 apiClient.interceptors.request.use((config) => {
 	// Attach JWT access token from storage (hybrid auth: cookie → localStorage → sessionStorage)
-	const { authToken } = getAuthTokens();
-	if (authToken) {
-		config.headers.Authorization = `Bearer ${authToken}`;
+	const { access_token } = getAuthTokens();
+	if (access_token) {
+		config.headers.Authorization = `Bearer ${access_token}`;
 	}
 
 	// Attach CSRF token from cookie for unsafe methods

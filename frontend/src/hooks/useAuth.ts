@@ -36,14 +36,14 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
 	const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
 		// Hybrid auth: Instant authentication detection from localStorage/cookie
 		// Priority: cookie → localStorage → sessionStorage (handled by getAuthTokens)
-		const { authToken } = getAuthTokens();
+		const { access_token } = getAuthTokens();
 		const isExpired = areTokensExpired();
 
 		// Three conditions must be met:
 		// 1. Access token exists (in cookie, localStorage, or sessionStorage)
 		// 2. Token is not expired (checked via JWT exp claim or localStorage timestamp)
 		// 3. isAuthenticated flag is set (for backward compatibility)
-		return authToken !== null && !isExpired && getInitialAuthenticatedValue();
+		return access_token !== null && !isExpired && getInitialAuthenticatedValue();
 	});
 	const [user, setUser] = useState<UserProfile | null>(null);
 	const navigate = useNavigate();
@@ -76,17 +76,17 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
 	useEffect(() => {
 		const handleOAuthCallback = async () => {
 			// Hybrid auth: Check for access token in cookie OR localStorage
-			const { authToken, storage } = getAuthTokens();
+			const { access_token, storage } = getAuthTokens();
 
 			// OAuth success: backend may have set access token in cookie
-			if (authToken && !isAuthenticated) {
+			if (access_token && !isAuthenticated) {
 				console.log(`OAuth callback detected, access token found in ${storage}`);
 
 				// If token came from cookie, store it in localStorage for future use
 				// This enables instant auth checks without network calls
 				if (storage === "cookie") {
 					console.log("Storing access token in localStorage for hybrid auth");
-					setAuthTokens(authToken); // Store in localStorage (refresh token already in HTTP-only cookie)
+					setAuthTokens(access_token); // Store in localStorage (refresh token already in HTTP-only cookie)
 				}
 
 				setIsAuthenticated(true);

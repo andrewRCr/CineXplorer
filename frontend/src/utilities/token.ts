@@ -105,7 +105,7 @@ export function getCurrentStorageType(): TokenStorage {
  * - isAuthenticated flag for quick boolean checks
  *
  * @param accessToken - JWT access token
- * @param refreshToken - Optional refresh token (legacy compatibility, ignored in hybrid mode)
+ * @param refreshToken - Optional refresh token (stored for backward compatibility only)
  * @param storage - Storage type (default: localStorage for hybrid auth)
  */
 export const setAuthTokens = (
@@ -115,20 +115,19 @@ export const setAuthTokens = (
 ) => {
 	const storageObj = storage === "localStorage" ? localStorage : sessionStorage;
 
-	// Store access token in localStorage for instant auth checks
-	storageObj.setItem("authToken", accessToken);
+	// Store access token with standardized key name (matches backend cookie name)
+	storageObj.setItem("access_token", accessToken);
 	storageObj.setItem("isAuthenticated", "true");
 
-	// DEPRECATED: Refresh token storage (now handled by HTTP-only cookie)
-	// Keep this for backward compatibility with existing code
+	// Store refresh token if provided (hybrid auth stores in HTTP-only cookie)
 	if (refreshToken) {
-		storageObj.setItem("refreshToken", refreshToken);
+		storageObj.setItem("refresh_token", refreshToken);
 	}
 
-	// Store actual JWT expiration time if available
+	// Store actual JWT expiration time for quick checks
 	const expiration = getTokenExpiration(accessToken);
-	if (expiration && storage === "localStorage") {
-		storageObj.setItem("tokenExpiration", expiration.getTime().toString());
+	if (expiration) {
+		storageObj.setItem("token_expiration", expiration.getTime().toString());
 	}
 };
 
@@ -142,38 +141,38 @@ export const setAuthTokens = (
  *
  * Note: Refresh token is always in HTTP-only cookie (not accessible here)
  *
- * @returns Object with authToken, refreshToken (deprecated), and storage source
+ * @returns Object with access_token, refresh_token, and storage source
  */
 export const getAuthTokens = () => {
 	// 1. Check cookies first (hybrid auth - backend may set access_token cookie)
 	const cookieToken = getTokenFromCookie("access_token");
 	if (cookieToken) {
 		return {
-			authToken: cookieToken,
-			refreshToken: null, // Refresh token in HTTP-only cookie (not accessible)
+			access_token: cookieToken,
+			refresh_token: null, // Refresh token in HTTP-only cookie (not accessible)
 			storage: "cookie" as TokenStorage,
 		};
 	}
 
 	// 2. Check localStorage (hybrid auth - frontend stores after refresh)
-	let authToken = localStorage.getItem("authToken");
-	let refreshToken = localStorage.getItem("refreshToken");
+	let accessToken = localStorage.getItem("access_token");
+	let refreshToken = localStorage.getItem("refresh_token");
 
-	if (authToken) {
+	if (accessToken) {
 		return {
-			authToken,
-			refreshToken, // May be null (refresh token in HTTP-only cookie)
+			access_token: accessToken,
+			refresh_token: refreshToken, // May be null (refresh token in HTTP-only cookie)
 			storage: "localStorage" as TokenStorage,
 		};
 	}
 
-	// 3. Check sessionStorage (legacy/fallback)
-	authToken = sessionStorage.getItem("authToken");
-	refreshToken = sessionStorage.getItem("refreshToken");
+	// 3. Check sessionStorage (fallback for remember-me=false)
+	accessToken = sessionStorage.getItem("access_token");
+	refreshToken = sessionStorage.getItem("refresh_token");
 
 	return {
-		authToken,
-		refreshToken,
+		access_token: accessToken,
+		refresh_token: refreshToken,
 		storage: "sessionStorage" as TokenStorage,
 	};
 };
@@ -183,30 +182,30 @@ export const getAuthTokens = () => {
  *
  * For hybrid authentication:
  * - Decodes JWT and checks actual expiration timestamp
- * - Fallback to localStorage timestamp for backward compatibility
+ * - Fallback to localStorage timestamp if JWT parsing fails
  * - Returns true if expired or unparseable (defensive approach)
  *
  * @returns true if tokens are expired or invalid
  */
 export const areTokensExpired = (): boolean => {
-	const { authToken } = getAuthTokens();
+	const { access_token } = getAuthTokens();
 
 	// No token = considered expired
-	if (!authToken) return true;
+	if (!access_token) return true;
 
 	// Try to get actual JWT expiration
-	const jwtExpiration = getTokenExpiration(authToken);
+	const jwtExpiration = getTokenExpiration(access_token);
 	if (jwtExpiration) {
 		return Date.now() > jwtExpiration.getTime();
 	}
 
-	// Fallback to localStorage expiration timestamp (backward compatibility)
-	const expirationTime = localStorage.getItem("tokenExpiration");
+	// Fallback to localStorage expiration timestamp
+	const expirationTime = localStorage.getItem("token_expiration");
 	if (expirationTime) {
 		return Date.now() > parseInt(expirationTime);
 	}
 
-	// Can't determine expiration - treat as expired (defensive)
+	// Can't determine expiration - treat as not expired (allow backend to validate)
 	return false;
 };
 
@@ -215,12 +214,12 @@ export const areTokensExpired = (): boolean => {
  * Note: HTTP-only refresh token cookie must be cleared by backend.
  */
 export const clearAuthTokens = () => {
-	localStorage.removeItem("authToken");
-	localStorage.removeItem("refreshToken");
-	localStorage.removeItem("tokenExpiration");
+	localStorage.removeItem("access_token");
+	localStorage.removeItem("refresh_token");
+	localStorage.removeItem("token_expiration");
 	localStorage.removeItem("isAuthenticated");
 
-	sessionStorage.removeItem("authToken");
-	sessionStorage.removeItem("refreshToken");
+	sessionStorage.removeItem("access_token");
+	sessionStorage.removeItem("refresh_token");
 	sessionStorage.removeItem("isAuthenticated");
 };

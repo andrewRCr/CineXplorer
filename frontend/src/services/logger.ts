@@ -940,10 +940,10 @@ class Logger {
 			// Use module path to avoid require() linting error
 			// eslint-disable-next-line @typescript-eslint/no-require-imports
 			const { getAuthTokens } = require('@/utilities/token');
-			const { authToken } = getAuthTokens();
-			if (authToken) {
+			const { access_token } = getAuthTokens();
+			if (access_token) {
 				// Decode JWT payload to get user ID (basic decode, not verification)
-				const payload = JSON.parse(atob(authToken.split('.')[1]));
+				const payload = JSON.parse(atob(access_token.split('.')[1]));
 				return payload.user_id || payload.sub;
 			}
 		} catch {

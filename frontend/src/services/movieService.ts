@@ -45,21 +45,22 @@ export interface PersonQueryParams {
 export type { PaginatedMoviesResponse, Movie, Keyword, Person };
 
 // Service instances for clean Django Ninja API endpoints
-export const fetchNowPlayingMoviesService = create("/api/movies/now-playing");
-export const fetchUpcomingMovies = () => create("/api/movies/upcoming");
-export const fetchMovieDetail = () => create("/api/movies");
-export const fetchDiscoverMoviesService = create("/api/movies/discover");
-export const fetchMovieGenresService = create("/api/genres");
-export const fetchSearchMoviesService = create("/api/movies/search");
+// Note: baseURL already includes /api, so paths are relative to /api/
+export const fetchNowPlayingMoviesService = create("/movies/now-playing");
+export const fetchUpcomingMovies = () => create("/movies/upcoming");
+export const fetchMovieDetail = () => create("/movies");
+export const fetchDiscoverMoviesService = create("/movies/discover");
+export const fetchMovieGenresService = create("/genres");
+export const fetchSearchMoviesService = create("/movies/search");
 
 // Legacy endpoint mapping - use discover with sort_by for top-rated
-export const fetchTopRatedMoviesService = create("/api/movies/discover");
+export const fetchTopRatedMoviesService = create("/movies/discover");
 
 // Supporting data endpoints from Django Ninja API
-export const fetchKeywordsService = create("/api/keywords");
-export const fetchSearchKeywordsService = create("/api/keywords/search");
-export const fetchPeopleService = create("/api/people");
-export const fetchSearchPeopleService = create("/api/people/search");
+export const fetchKeywordsService = create("/keywords");
+export const fetchSearchKeywordsService = create("/keywords/search");
+export const fetchPeopleService = create("/people");
+export const fetchSearchPeopleService = create("/people/search");
 
 // Type-safe wrapper functions for common operations
 

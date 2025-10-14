@@ -5,7 +5,12 @@ This module provides native Django Ninja authentication integration with:
 - OpenAPI security schema documentation
 - Proper error handling and logging
 - Native dependency injection patterns
-- JWT cookie-based authentication
+- Hybrid JWT authentication (Authorization header OR cookie)
+
+Hybrid Authentication:
+- Priority 1: Authorization header (Bearer token from localStorage)
+- Priority 2: HTTP-only cookie (backward compatibility)
+- Supports both frontend localStorage and cookie-based clients
 """
 from __future__ import annotations
 
@@ -43,15 +48,52 @@ def get_jwt_cookie_name() -> str:
     return cast(str, jwt_settings.get('ACCESS_TOKEN_NAME', 'access_token'))
 
 
+def get_token_from_request(request: HttpRequest) -> tuple[str | None, str]:
+    """
+    Extract JWT token from request (Authorization header or cookie).
+
+    Hybrid Authentication Priority:
+    1. Authorization header (Bearer token from localStorage)
+    2. HTTP-only cookie (backward compatibility)
+
+    Args:
+        request: The HTTP request object
+
+    Returns:
+        Tuple of (token, source) where source is 'header' or 'cookie'
+    """
+    # Priority 1: Check Authorization header for Bearer token
+    auth_header = request.META.get('HTTP_AUTHORIZATION', '')
+    if auth_header.startswith('Bearer '):
+        token = auth_header[7:].strip()  # Remove 'Bearer ' prefix
+        if token:
+            logger.debug("Token found in Authorization header")
+            return token, 'header'
+
+    # Priority 2: Check HTTP-only cookie (backward compatibility)
+    cookie_name = get_jwt_cookie_name()
+    token = request.COOKIES.get(cookie_name)
+    if token:
+        logger.debug("Token found in cookie")
+        return token, 'cookie'
+
+    logger.debug("No token found in header or cookie")
+    return None, 'none'
+
+
 class JWTCookieAuth(APIKeyCookie):
     """
-    Django Ninja native security scheme for JWT tokens from HTTP-only cookies.
+    Django Ninja native security scheme for hybrid JWT authentication.
 
     This extends Django Ninja's APIKeyCookie to provide:
     - OpenAPI security schema documentation
     - Native dependency injection integration
     - Proper error handling and logging
-    - JWT cookie-based authentication
+    - Hybrid JWT authentication (Authorization header OR cookie)
+
+    Authentication Priority:
+    1. Authorization header (Bearer token) - for localStorage-based clients
+    2. HTTP-only cookie - for backward compatibility
     """
 
     # Set the cookie name as a class attribute (Django Ninja pattern)
@@ -85,20 +127,27 @@ class JWTCookieAuth(APIKeyCookie):
 
     def authenticate(self, request: HttpRequest, key: str | None) -> AbstractUser | None:
         """
-        Authenticate user from JWT token in HTTP-only cookie.
+        Authenticate user from JWT token (Authorization header OR cookie).
+
+        Hybrid Authentication Priority:
+        1. Authorization header (Bearer token from localStorage)
+        2. HTTP-only cookie (backward compatibility)
 
         This method is called by Django Ninja's security system and provides
         native integration with the framework.
 
         Args:
             request: The HTTP request object
-            key: The JWT token from the cookie (provided by APIKeyCookie)
+            key: The JWT token from the cookie (provided by APIKeyCookie, may be None)
 
         Returns:
             The authenticated user or None if authentication fails
         """
-        if not key:
-            logger.debug("No JWT token found in cookie")
+        # Use hybrid token extraction (header OR cookie)
+        token, source = get_token_from_request(request)
+
+        if not token:
+            logger.debug("No JWT token found in header or cookie")
             return None
 
         # Get user model outside try block for exception handler scope
@@ -106,30 +155,33 @@ class JWTCookieAuth(APIKeyCookie):
 
         try:
             # Validate token using AccessToken class (django-ninja-jwt)
-            token = AccessToken(key)
+            validated_token = AccessToken(token)
 
             # Get user from token payload
-            user_id = token.payload[api_settings.USER_ID_CLAIM]
+            user_id = validated_token.payload[api_settings.USER_ID_CLAIM]
             user = User.objects.get(**{api_settings.USER_ID_FIELD: user_id})
 
             if user and hasattr(user, 'id'):
                 username = getattr(cast(object, user), 'username', 'unknown')
-                logger.debug(f"Successfully authenticated user: {username}")
+                logger.debug(f"Successfully authenticated user {username} (via {source})")
                 return cast(AbstractUser, user)
 
             logger.warning("JWT token validated but no valid user found")
             return None
         except InvalidToken as e:
-            logger.debug(f"Invalid JWT token: {e}")
+            logger.debug(f"Invalid JWT token from {source}: {e}")
             return None
         except TokenError as e:
-            logger.warning(f"JWT token error: {e}")
+            logger.warning(f"JWT token error from {source}: {e}")
             return None
         except User.DoesNotExist:
-            logger.warning("JWT token valid but user not found in database")
+            logger.warning(f"JWT token from {source} valid but user not found in database")
             return None
         except Exception as e:
-            logger.error(f"Unexpected authentication error: {e}", exc_info=True)
+            logger.error(
+                f"Unexpected authentication error (token from {source}): {e}",
+                exc_info=True
+            )
             return None
 
 
@@ -141,6 +193,8 @@ jwt_cookie_auth = JWTCookieAuth()
 def get_current_user(request: HttpRequest) -> AbstractUser:
     """
     Django Ninja dependency function to get the authenticated user.
+
+    Hybrid Authentication: Checks Authorization header first, then cookie.
 
     This function provides comprehensive error handling, logging, and integrates
     natively with Django Ninja's dependency injection system.
@@ -155,11 +209,9 @@ def get_current_user(request: HttpRequest) -> AbstractUser:
         HttpError: 401 if authentication fails or user is not authenticated
     """
     try:
-        # Get JWT token from cookie
-        cookie_name = get_jwt_cookie_name()
-
-        token = request.COOKIES.get(cookie_name)
-        user = jwt_cookie_auth.authenticate(request, token)
+        # Use hybrid authentication (header OR cookie)
+        # Note: jwt_cookie_auth.authenticate() internally calls get_token_from_request()
+        user = jwt_cookie_auth.authenticate(request, None)
 
         if not user:
             logger.info(f"Authentication failed for request to {request.path}")
@@ -186,6 +238,8 @@ def get_current_user_optional(request: HttpRequest) -> AbstractUser | None:
     """
     Django Ninja dependency function to optionally get the authenticated user.
 
+    Hybrid Authentication: Checks Authorization header first, then cookie.
+
     This function allows endpoints to work with both authenticated and
     unauthenticated users. It provides proper error handling and logging
     without raising exceptions for unauthenticated requests.
@@ -197,11 +251,9 @@ def get_current_user_optional(request: HttpRequest) -> AbstractUser | None:
         The authenticated user or None if not authenticated
     """
     try:
-        # Get JWT token from cookie
-        cookie_name = get_jwt_cookie_name()
-
-        token = request.COOKIES.get(cookie_name)
-        user = jwt_cookie_auth.authenticate(request, token)
+        # Use hybrid authentication (header OR cookie)
+        # Note: jwt_cookie_auth.authenticate() internally calls get_token_from_request()
+        user = jwt_cookie_auth.authenticate(request, None)
 
         if user:
             username = getattr(cast(object, user), 'username', 'unknown')

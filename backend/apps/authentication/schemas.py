@@ -226,10 +226,38 @@ class ResendVerificationResponseSchema(Schema):
     )
 
 
+# Hybrid Authentication Token Schemas
+class HybridTokenRefreshResponseSchema(Schema):
+    """Schema for hybrid authentication token refresh response.
+
+    Hybrid Architecture:
+    - Access token: Returned in response body (frontend stores in localStorage)
+    - Refresh token: NOT in response (remains in HTTP-only cookie)
+    - Metadata: Expiration info for frontend token management
+
+    This differs from TokenResponseSchema which returns both tokens for
+    cookie-based authentication.
+    """
+
+    access_token: str = Field(
+        ...,
+        description="JWT access token for localStorage (5-min lifetime)"
+    )
+    expires_in: int = Field(
+        ...,
+        description="Access token lifetime in seconds (300 for 5 minutes)"
+    )
+    issued_at: str = Field(
+        ...,
+        description="Token issue timestamp (ISO 8601 UTC)"
+    )
+
+
 __all__ = [
     "CsrfTokenResponseSchema",
     "EmailVerificationInputSchema",
     "EmailVerificationResponseSchema",
+    "HybridTokenRefreshResponseSchema",
     "LogoutResponseSchema",
     "RegisterInputSchema",
     "RegisterResponseSchema",

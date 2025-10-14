@@ -116,21 +116,20 @@
 
 - [ ] 6. Implement Hybrid Authentication Architecture (HTTP-Only Refresh + localStorage Access)
     - **Why This Task Exists**: During Task 6 testing, discovered that Token Strategy sets JWT tokens as HTTP-only cookies (secure, but JavaScript can't read them). This means OAuth succeeds but frontend can't detect authentication state - users stay on login page despite being authenticated. After researching pure HTTP-only (Option A) vs hybrid (Option C) approaches, chose hybrid for better UX, mobile compatibility, and industry standard alignment. Trade-off: 5-min access token in localStorage (XSS-vulnerable but short-lived) + 14-day refresh token in HTTP-only cookie (XSS-proof). This is the same pattern used by Auth0, Firebase, AWS Amplify, and most modern SPAs.
-    - [ ] 6.1 Backend: Update Token Strategy to support hybrid mode
-        - [ ] 6.1.1 Modify `create_access_token_payload()` to return access token in response body
-        - [ ] 6.1.2 Keep refresh token as HTTP-only cookie (existing behavior)
-        - [ ] 6.1.3 Add token expiration metadata to response (expires_in, issued_at)
-        - [ ] 6.1.4 Update type stubs if needed for new response structure
-    - [ ] 6.2 Backend: Create token refresh endpoint
-        - [ ] 6.2.1 Create `/api/auth/refresh` endpoint in Django Ninja
-        - [ ] 6.2.2 Validate refresh token from HTTP-only cookie
-        - [ ] 6.2.3 Issue new access token, return in response body
-        - [ ] 6.2.4 Add rate limiting for refresh endpoint
-        - [ ] 6.2.5 Add tests for refresh endpoint (success, expired, invalid)
-    - [ ] 6.3 Backend: Update authentication middleware
-        - [ ] 6.3.1 Accept access token from Authorization header OR cookie
-        - [ ] 6.3.2 Priority: Authorization header > cookie (for hybrid compatibility)
-        - [ ] 6.3.3 Verify backward compatibility with existing cookie-only auth
+    - [x] 6.1 Backend: Update Token Strategy to support hybrid mode
+        - [x] 6.1.1 Modify `create_access_token_payload()` to return access token in response body
+        - [x] 6.1.2 Keep refresh token as HTTP-only cookie (existing behavior)
+        - [x] 6.1.3 Add token expiration metadata to response (expires_in, issued_at)
+        - [x] 6.1.4 Update type stubs if needed for new response structure - No changes needed, stub's `dict[str, Any]` compatible with our `dict[str, str | int]`
+    - [x] 6.2 Backend: Create token refresh endpoint
+        - [x] 6.2.1 Create `/api/auth/refresh` endpoint in Django Ninja
+        - [x] 6.2.2 Validate refresh token from HTTP-only cookie
+        - [x] 6.2.3 Issue new access token, return in response body
+        - [x] 6.2.4 Add rate limiting for refresh endpoint - Already included (TestAwareUserThrottle('10/m'))
+    - [x] 6.3 Backend: Update authentication middleware
+        - [x] 6.3.1 Accept access token from Authorization header OR cookie
+        - [x] 6.3.2 Priority: Authorization header > cookie (for hybrid compatibility)
+        - [x] 6.3.3 Verify backward compatibility with existing cookie-only auth
     - [ ] 6.4 Frontend: Update token utilities for hybrid mode
         - [ ] 6.4.1 Add `getTokenFromCookie()` helper (read non-HTTP-only access token cookie)
         - [ ] 6.4.2 Update `getAuthTokens()` to check cookies first, then localStorage
@@ -159,9 +158,16 @@
     - [ ] 6.9 Testing: Verify hybrid auth works for all flows
         - [ ] 6.9.1 Test email/password login (stores access token in localStorage)
         - [ ] 6.9.2 Test OAuth login (receives and stores access token)
-        - [ ] 6.9.3 Test token refresh (uses HTTP-only refresh cookie, returns new access token)
+        - [ ] 6.9.3 Test hybrid token refresh endpoint (/api/auth/refresh)
+            - [ ] 6.9.3.1 Success case: Valid refresh token returns new access token
+            - [ ] 6.9.3.2 Expired token: Returns 400 with error message
+            - [ ] 6.9.3.3 Invalid token: Returns 400 with error message
+            - [ ] 6.9.3.4 Blacklisted token: Returns 401 with security event logged
+            - [ ] 6.9.3.5 Missing refresh cookie: Returns 400 with error message
+            - [ ] 6.9.3.6 Token rotation: Old refresh token blacklisted after use
         - [ ] 6.9.4 Test authenticated API calls (Authorization header used)
-        - [ ] 6.9.5 Test multi-tab behavior (localStorage sync)
+        - [ ] 6.9.5 Test token refresh flow on 401 (axios interceptor logic)
+        - [ ] 6.9.6 Test multi-tab behavior (localStorage sync)
     - [ ] 6.10 Security: Run type checking and linting
         - [ ] 6.10.1 Backend type check: `npx pyright backend/apps/authentication/`
         - [ ] 6.10.2 Backend linting: `.venv-backend/bin/ruff check backend/apps/authentication/ --fix`

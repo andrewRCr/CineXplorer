@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import contextlib
 import logging
+from datetime import UTC, datetime, timedelta
 from typing import Literal
 
 from allauth.account.models import EmailAddress, EmailConfirmation
@@ -15,6 +16,7 @@ from authentication.schemas import (
     CsrfTokenResponseSchema,
     EmailVerificationInputSchema,
     EmailVerificationResponseSchema,
+    HybridTokenRefreshResponseSchema,
     LogoutResponseSchema,
     RegisterInputSchema,
     RegisterResponseSchema,
@@ -440,6 +442,160 @@ def refresh_token(
     except Exception as e:
         # Unexpected errors (database issues, etc.)
         logger.error(f"Unexpected error during token refresh: {e!s}", exc_info=True)
+        return 400, {"error": "An error occurred during token refresh. Please try again."}
+
+
+@auth_router.post(
+    "/auth/refresh",
+    auth=None,
+    response={
+        200: HybridTokenRefreshResponseSchema,
+        400: dict[str, object],
+        401: dict[str, object]
+    },
+    throttle=[TestAwareUserThrottle('10/m')],
+)
+def hybrid_refresh_token(
+    request: HttpRequest, response: HttpResponse
+) -> tuple[int, dict[str, object]]:
+    """Refresh JWT access token for hybrid authentication.
+
+    Hybrid Authentication Architecture:
+    - Reads refresh token from HTTP-only cookie (secure, XSS-proof)
+    - Returns new access token in response body (frontend stores in localStorage)
+    - Does NOT set access token as cookie (frontend manages it)
+    - Rotates refresh token in HTTP-only cookie (automatic blacklisting)
+
+    This endpoint supports the hybrid auth pattern where:
+    - Short-lived access tokens (5 min) in localStorage for instant auth checks
+    - Long-lived refresh tokens (14 days) in HTTP-only cookies for security
+
+    Args:
+        request: HTTP request object
+        response: HTTP response object (for setting new refresh token cookie)
+
+    Returns:
+        tuple: (status_code, response_data)
+            - 200: New access token in response body, refresh token rotated in cookie
+            - 400: No refresh token found or invalid token format
+            - 401: Token blacklisted (reuse attempt detected)
+
+    Security:
+        - Token rotation: New refresh token issued on each refresh
+        - Automatic blacklisting: Old tokens blacklisted via BLACKLIST_AFTER_ROTATION
+        - Reuse detection: Blacklisted token attempts logged as security events
+    """
+    # Get JWT settings
+    jwt_settings = _get_jwt_settings()
+    refresh_token_name = str(jwt_settings['REFRESH_TOKEN_NAME'])
+    refresh_lifetime = jwt_settings['REFRESH_TOKEN_LIFETIME']  # type: ignore[assignment]  # Django settings dynamic
+    access_lifetime = jwt_settings['ACCESS_TOKEN_LIFETIME']  # type: ignore[assignment]  # Django settings dynamic
+    samesite: Literal['Lax', 'Strict', 'None'] = jwt_settings.get('JWT_COOKIE_SAMESITE', 'Lax')  # type: ignore[assignment]  # Django settings dynamic
+
+    # Get refresh token from HTTP-only cookie
+    refresh_token_value = request.COOKIES.get(refresh_token_name)
+
+    if not refresh_token_value:
+        return 400, {"error": "No valid refresh token found in cookies."}
+
+    try:
+        # Validate the old refresh token
+        old_refresh = RefreshToken(refresh_token_value)
+
+        # Check if token is blacklisted
+        with contextlib.suppress(AttributeError):
+            old_refresh.check_blacklist()  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
+
+        # Generate new access token from old refresh token
+        access_token = str(old_refresh.access_token)
+
+        # Get user for generating new refresh token
+        user_id = old_refresh.payload.get('user_id')  # pyright: ignore[reportUnknownMemberType]
+        user_model = get_user_model()
+        user = user_model.objects.get(id=user_id)  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
+
+        # Generate new refresh token
+        new_refresh = RefreshToken.for_user(user)  # pyright: ignore[reportArgumentType]
+        new_refresh_token = str(new_refresh)
+
+        # Blacklist the old refresh token (prevents reuse)
+        try:
+            old_refresh.blacklist()  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
+        except AttributeError:
+            logger.warning(
+                "Token blacklist not available - check ninja_jwt.token_blacklist in INSTALLED_APPS"
+            )
+        except Exception as e:
+            logger.warning(f"Failed to blacklist old refresh token: {e!s}")
+
+        # Set new refresh token as HTTP-only cookie
+        # Note: Access token is NOT set as cookie (frontend manages in localStorage)
+        response.set_cookie(
+            refresh_token_name,
+            new_refresh_token,
+            max_age=int(refresh_lifetime.total_seconds()),  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType, reportAttributeAccessIssue]
+            httponly=True,
+            secure=True,
+            samesite=samesite,
+        )
+
+        # Calculate issued_at timestamp (UTC, ISO 8601 format)
+        issued_at = datetime.now(UTC)
+
+        # Log successful token refresh
+        client_ip = request.META.get('REMOTE_ADDR', 'unknown')
+        logger.info(
+            f"Hybrid token refresh successful | "
+            f"user_id={user_id} | ip={client_ip}"
+        )
+
+        # Return access token in response body for localStorage
+        # Refresh token is ONLY in HTTP-only cookie (hybrid architecture)
+        assert isinstance(access_lifetime, timedelta)
+        return 200, {
+            "access_token": access_token,
+            "expires_in": int(access_lifetime.total_seconds()),
+            "issued_at": issued_at.isoformat(),
+        }
+    except TokenError as e:
+        # Token is blacklisted or invalid - log as security event
+        error_message = str(e).lower()
+
+        # Detect blacklisted token reuse attempts
+        if 'blacklist' in error_message or 'blacklisted' in error_message:
+            client_ip = request.META.get('REMOTE_ADDR', 'unknown')
+            user_agent = request.META.get('HTTP_USER_AGENT', 'unknown')
+
+            # Extract user_id for attribution
+            try:
+                import jwt
+                payload = jwt.decode(
+                    refresh_token_value,
+                    options={"verify_signature": False}
+                )
+                user_id = payload.get('user_id', 'unknown')
+            except Exception:
+                user_id = 'unknown'
+
+            # Log security event
+            logger.warning(
+                f"SECURITY: Blacklisted token reuse attempt (hybrid auth) | "
+                f"user_id={user_id} | ip={client_ip} | user_agent={user_agent}"
+            )
+
+            error_response: dict[str, object] = {
+                "error": "Token has been revoked. Please login again."
+            }
+            if settings.DEBUG:
+                error_response["detail"] = (
+                    "This refresh token has already been used and is no longer valid."
+                )
+            return 401, error_response
+
+        # Other token errors
+        return 400, {"error": f"Invalid or expired refresh token: {e!s}"}
+    except Exception as e:
+        logger.error(f"Unexpected error during hybrid token refresh: {e!s}", exc_info=True)
         return 400, {"error": "An error occurred during token refresh. Please try again."}
 
 

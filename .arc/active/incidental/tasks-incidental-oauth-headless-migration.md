@@ -147,16 +147,24 @@
         - [x] 6.6.2 Update OAuth callback detection to read access token from response/cookie
         - [x] 6.6.3 Store access token in localStorage after OAuth success
         - [x] 6.6.4 Remove polling/network call for auth status check (use localStorage)
-    - [x] 6.7 Frontend: Add token expiration UI (optional but recommended)
-        - [x] 6.7.1 Add countdown timer hook for token expiration
-        - [x] 6.7.2 Show "Session expiring soon" warning (e.g., 2 minutes before)
-        - [x] 6.7.3 Auto-refresh token when user is active and token near expiration
+    - [x] ~~6.7 Frontend: Add token expiration UI~~ **REMOVED - Inappropriate UX pattern**
+        - **Reason**: Session warnings appropriate for banking apps with hard timeouts, not content apps
+        - **Correct pattern**: Silent token refresh via axios interceptor (already implemented in 6.5)
+        - **User experience**: Seamless, invisible token refresh - users never see warnings
+        - **Removed files**: useTokenExpiration.ts (187 lines), SessionExpirationWarning.tsx (114 lines)
+        - **Commit**: `f667c87` - refactor(oauth-auth): remove inappropriate session expiration warning UI
     - [x] 6.8 Backend: Update OAuth callback to return access token
         - [x] 6.8.1 Verify Token Strategy `create_access_token_payload()` is called on OAuth callback
         - [x] 6.8.2 Ensure access token is set as non-HTTP-only cookie OR returned in redirect
         - [x] 6.8.3 Test that refresh token remains HTTP-only
     - [ ] 6.9 Testing: Verify hybrid auth works for all flows
-        - [ ] 6.9.1 Test email/password login (stores access token in localStorage)
+        - [x] 6.9.1 Test email/password login with "Remember Me" checked (stores in localStorage)
+            - **Bugs found and fixed** (commit `3c7df0e`):
+                1. `/api/token/` was setting both tokens as cookies (violated hybrid pattern)
+                2. Login.tsx had race condition (redirect before token storage)
+                3. `/api/logout/` required auth (failed when tokens expired)
+            - **Token naming standardized** (commit `be2ed3d`): authToken → access_token (breaking change)
+            - **Verified**: localStorage has access_token + refresh_token, cookies have refresh_token only
         - [ ] 6.9.2 Test OAuth login (receives and stores access token)
         - [ ] 6.9.3 Test hybrid token refresh endpoint (/api/auth/refresh)
             - [ ] 6.9.3.1 Success case: Valid refresh token returns new access token

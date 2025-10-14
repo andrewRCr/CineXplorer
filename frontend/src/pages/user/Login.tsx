@@ -252,13 +252,28 @@ const Login = () => {
 
 	/**
 	 * Initialize OAuth login using django-allauth headless mode.
-	 * Headless mode provides JSON API endpoints designed for SPAs.
-	 * Uses HTML form submission (not fetch) because OAuth redirect must be followed by browser.
+	 *
+	 * Security Model:
+	 * - OAuth endpoints (/_allauth/) are CSRF-exempt in backend middleware
+	 * - OAuth 2.0 'state' parameter provides CSRF protection at protocol level
+	 * - State is random, session-bound, validated on callback (more secure than cookies)
+	 * - CSRF token is optional but included for defense-in-depth
+	 *
+	 * Flow:
+	 * 1. Check session endpoint (validates django-allauth is available)
+	 * 2. Get CSRF token from existing cookie (may not exist, that's OK)
+	 * 3. POST to provider redirect endpoint (browser follows OAuth redirect)
+	 * 4. User authorizes on provider site (Google/GitHub)
+	 * 5. Provider redirects to backend callback with OAuth code
+	 * 6. Backend validates state, exchanges code, creates session, sets JWT cookies
+	 * 7. Backend redirects to frontend, useAuth detects tokens, logs in
+	 *
+	 * Note: Uses HTML form submission (not fetch) so browser follows OAuth redirect.
 	 */
 	const initializeOAuthLogin = async (provider: string) => {
 		try {
-			// Step 1: Ensure CSRF token is available via session endpoint
-			// Note: 401 is expected for unauthenticated users and still sets CSRF cookie
+			// Step 1: Validate django-allauth headless API is available
+			// Note: 401 is expected for unauthenticated users (endpoint works but user not logged in)
 			const sessionResponse = await fetch("/_allauth/browser/v1/auth/session", {
 				credentials: "include",
 			});
@@ -270,16 +285,18 @@ const Login = () => {
 				return;
 			}
 
-			// Step 2: Get CSRF token from cookie
+			// Step 2: Get CSRF token from cookie (if available)
+			// Note: CSRF token may not exist yet - that's OK, OAuth endpoints are CSRF-exempt.
+			// OAuth 2.0 'state' parameter provides CSRF protection at protocol level.
+			// We include csrfmiddlewaretoken in form for defense-in-depth, but it's not required.
 			const csrfToken = document.cookie
 				.split("; ")
 				.find((row) => row.startsWith("csrftoken="))
 				?.split("=")[1];
 
+			// If no CSRF token available, use empty string (OAuth state parameter protects anyway)
 			if (!csrfToken) {
-				console.error("CSRF token not found after session initialization");
-				setGeneralError("Authentication setup failed. Please refresh the page.");
-				return;
+				console.log("No CSRF token found - continuing with OAuth (state parameter provides protection)");
 			}
 
 			// Step 3: Create and submit form to headless provider redirect endpoint
@@ -289,11 +306,13 @@ const Login = () => {
 			form.action = "/_allauth/browser/v1/auth/provider/redirect";
 
 			// Add form fields
+			// Note: csrfmiddlewaretoken included for defense-in-depth, but OAuth endpoints
+			// are CSRF-exempt (OAuth 'state' parameter provides protection)
 			const fields = {
 				provider: provider,
 				callback_url: `${window.location.origin}/login`,
 				process: "login",
-				csrfmiddlewaretoken: csrfToken,
+				csrfmiddlewaretoken: csrfToken || "",  // Empty string if no token (OAuth still protected by state)
 			};
 
 			Object.entries(fields).forEach(([key, value]) => {

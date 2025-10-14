@@ -41,7 +41,7 @@ Before any commit consideration, ALL of the following must pass with **zero exce
 
 1. **Backend Tests**: 100% pass rate
    - **MUST run via Docker** (requires database connection to PostgreSQL/Redis)
-   - Use Django test runner or pytest (post-migration)
+   - **Test runner**: pytest (migration complete 2025-10-13, 103/103 tests converted)
    - **NEVER run from host venv** - tests require Docker network access
    - Zero failures acceptable
 

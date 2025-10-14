@@ -37,6 +37,31 @@
 
 **Working Directory Note**: Your actual working directory may vary (backend/, frontend/, or root). CURRENT-SESSION.md contains context-specific paths adjusted for your current location.
 
+### Network Architecture & Ports
+
+**Container Network:**
+
+```
+Browser → Caddy Proxy (8444) → Backend (8000) HTTPS
+                             → Frontend (5173) HTTP
+```
+
+**Direct Access Ports:**
+- **Backend API**: `https://localhost:8000` (direct HTTPS access, self-signed cert)
+- **Frontend Dev Server**: `http://localhost:5173` (Vite dev server)
+- **Caddy Proxy**: `https://localhost:8444` (unified entry point, production-like)
+
+**For Testing/Development:**
+- **API Testing (curl/Postman)**: Use `https://localhost:8000` with `-k` flag (skip cert verification)
+- **Browser Testing**: Use `https://localhost:8444` (Caddy proxy, handles CORS)
+- **Frontend Development**: Use `http://localhost:5173` (hot reload, dev tools)
+
+**Important Notes:**
+- Backend serves HTTPS only (self-signed cert in development)
+- Frontend `.env` has `VITE_BASE_API_URL="https://localhost:8444/api"` (includes `/api` prefix)
+- All API endpoints are relative to `/api/` (e.g., `/movies/discover`, not `/api/movies/discover`)
+- Redis runs internally (no exposed port needed for development)
+
 ---
 
 ## Command Patterns
@@ -69,14 +94,13 @@ docker compose -f infrastructure/docker-compose.yml exec backend ruff check apps
 
 **CRITICAL: Tests MUST run via Docker** (require PostgreSQL + Redis)
 
-```bash
-# Django test runner (current standard)
-docker compose -f infrastructure/docker-compose.yml exec backend python manage.py test --keepdb --settings=config.settings_test
+**Test Runner**: pytest (migration complete 2025-10-13, 100% of tests converted)
 
-# Pytest (after migration complete)
+```bash
+# Run all tests (standard)
 docker compose -f infrastructure/docker-compose.yml exec backend pytest apps/
 
-# Pytest with parallel execution
+# Parallel execution (2-4x faster, recommended for development)
 docker compose -f infrastructure/docker-compose.yml exec backend pytest -n auto apps/
 
 # With coverage (full app)
@@ -123,8 +147,8 @@ npx markdownlint-cli2 --fix "README.md" ".arc/**/*.md"
 Reference for DEVELOPMENT-RULES quality gates. Run these before any commit.
 
 ```bash
-# 1. Backend Tests
-docker compose -f infrastructure/docker-compose.yml exec backend python manage.py test --keepdb --settings=config.settings_test
+# 1. Backend Tests (pytest - migration complete 2025-10-13)
+docker compose -f infrastructure/docker-compose.yml exec backend pytest apps/
 
 # 2. Frontend Tests
 docker compose -f infrastructure/docker-compose.yml exec frontend npm test
@@ -191,6 +215,10 @@ Need to run a command?
 │  └─ docker compose -f infrastructure/docker-compose.yml exec backend pytest apps/
 │     (MUST use Docker - requires database/Redis)
 │
+├─ API Testing (curl/Postman)?
+│  └─ curl -k https://localhost:8000/api/endpoint
+│     (Direct backend access, -k skips cert verification)
+│
 ├─ Linting/Type-checking (Frontend)?
 │  └─ docker compose -f infrastructure/docker-compose.yml exec frontend npm run [lint|type-check]
 │
@@ -244,10 +272,12 @@ Run all 7 quality gate commands listed above in sequence. All must pass with zer
 ❌ "Docker isn't running" without verifying
 ❌ Running tests from host (no database connection)
 ❌ Assuming containers are up without checking
+❌ Using wrong ports (localhost:3000 vs localhost:8000)
 
-✅ Verify: `docker ps | grep infrastructure` (expect 4 containers)
+✅ Verify: `docker ps | grep infrastructure` (expect 5 containers)
 ✅ Always use Docker for tests
 ✅ Check container status before operations
+✅ Use `https://localhost:8000` for direct API testing (see Network Architecture section)
 
 ### Command Construction
 

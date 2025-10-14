@@ -600,7 +600,7 @@ class Logger {
 	/**
 	 * Enable user interaction tracking (development mode only)
 	 */
-	private enableInteractionTracking(): void {
+	public enableInteractionTracking(): void {
 		if (typeof window === 'undefined' || this.interactionTrackingEnabled) {
 			return; // Don't enable in SSR or if already enabled
 		}

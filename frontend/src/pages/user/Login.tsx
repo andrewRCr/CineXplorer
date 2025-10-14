@@ -37,14 +37,19 @@ const Login = () => {
 	const [registrationSuccess, setRegistrationSuccess] = useState<string | null>(
 		null
 	);
+	const [isLoggingIn, setIsLoggingIn] = useState(false);
 
 	// Redirect authenticated users away from login page
+	// Note: Disabled during login to prevent race condition with setAuthTokens()
+	// The login function handles navigation after storing tokens in localStorage
 	useEffect(() => {
-		if (authContext?.isAuthenticated) {
+		// Only redirect if user is already authenticated when page loads
+		// Don't redirect during active login process
+		if (authContext?.isAuthenticated && !isLoggingIn) {
 			console.log("User already authenticated, redirecting to home");
 			navigate(ROUTES.HOME);
 		}
-	}, [authContext?.isAuthenticated, navigate]);
+	}, [authContext?.isAuthenticated, navigate, isLoggingIn]);
 
 	const formik = useFormik({
 		initialValues: {
@@ -69,11 +74,13 @@ const Login = () => {
 		onSubmit: async (values) => {
 			const { username, password } = values;
 			if (login) {
+				setIsLoggingIn(true);
 				const response = await login(
 					username,
 					password,
 					formik.values.rememberMe
 				);
+				setIsLoggingIn(false);
 				if (response === 401) {
 					formik.setErrors({
 						username: "Invalid username or password",

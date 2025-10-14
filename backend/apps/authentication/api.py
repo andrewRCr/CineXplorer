@@ -175,24 +175,34 @@ def register_user(
 def obtain_token(
     request: HttpRequest, response: HttpResponse, payload: TokenObtainInputSchema
 ) -> tuple[int, dict[str, object]]:
-    """Obtain JWT access and refresh tokens (login).
+    """Obtain JWT access and refresh tokens (login) for hybrid authentication.
 
-    Authenticates user with username/email and password, then returns
-    JWT tokens set as httponly cookies.
+    Hybrid Authentication Architecture:
+    - Authenticates user with username/email and password
+    - Returns access token in response body (frontend stores in localStorage)
+    - Sets refresh token as HTTP-only cookie (XSS-proof, secure)
+    - Access token has 5-minute lifetime (short-lived, reduces XSS risk)
+    - Refresh token has 14-day lifetime (long-lived, stored securely)
 
     Args:
         request: HTTP request object
-        response: HTTP response object (for setting cookies)
+        response: HTTP response object (for setting refresh token cookie)
         payload: Login credentials (login, password)
 
     Returns:
         tuple: (status_code, response_data)
-            - 200: Authentication successful, tokens set as cookies
+            - 200: Authentication successful, access token in body, refresh token in cookie
             - 400: Missing credentials
             - 401: Invalid credentials
             - 403: Email not verified
 
-    Cookie attributes:
+    Response body includes:
+        - access: JWT access token for localStorage (frontend manages)
+        - refresh: JWT refresh token value (also in HTTP-only cookie)
+        - user_id: Authenticated user's ID
+        - email_verified: Email verification status
+
+    Cookie attributes (refresh token only):
         - httponly: True (prevents JavaScript access)
         - secure: True (HTTPS only)
         - samesite: Lax (CSRF protection)
@@ -242,21 +252,12 @@ def obtain_token(
 
     # Get JWT settings
     jwt_settings = _get_jwt_settings()
-    access_token_name = str(jwt_settings['ACCESS_TOKEN_NAME'])
     refresh_token_name = str(jwt_settings['REFRESH_TOKEN_NAME'])
-    access_lifetime = jwt_settings['ACCESS_TOKEN_LIFETIME']  # type: ignore[assignment]  # Django settings dynamic
     refresh_lifetime = jwt_settings['REFRESH_TOKEN_LIFETIME']  # type: ignore[assignment]  # Django settings dynamic
     samesite: Literal['Lax', 'Strict', 'None'] = jwt_settings.get('JWT_COOKIE_SAMESITE', 'Lax')  # type: ignore[assignment]  # Django settings dynamic
 
-    # Set tokens as httponly cookies
-    response.set_cookie(
-        access_token_name,
-        access_token,
-        max_age=int(access_lifetime.total_seconds()),  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType, reportAttributeAccessIssue]
-        httponly=True,
-        secure=True,  # HTTPS only in production
-        samesite=samesite,
-    )
+    # Hybrid authentication: Only set refresh token as HTTP-only cookie
+    # Access token returned in response body for localStorage storage (frontend manages it)
     response.set_cookie(
         refresh_token_name,
         refresh_token,
@@ -599,15 +600,21 @@ def hybrid_refresh_token(
         return 400, {"error": "An error occurred during token refresh. Please try again."}
 
 
-@auth_router.post("/logout/", response={200: LogoutResponseSchema})
+@auth_router.post("/logout/", auth=None, response={200: LogoutResponseSchema})
 def logout(request: HttpRequest, response: HttpResponse) -> tuple[int, dict[str, object]]:
-    """Logout user by clearing JWT cookies.
+    """Logout user by clearing JWT cookies (hybrid authentication).
 
-    Clears both access and refresh token cookies to end the session.
-    Uses matching cookie attributes to ensure reliable removal across browsers.
+    Clears refresh token cookie to end the session. No authentication required
+    since logout is idempotent (just deletes browser cookies) and users may
+    call it when tokens are already expired.
+
+    Hybrid Authentication Note:
+    - Only deletes refresh token cookie (access token managed by frontend in localStorage)
+    - Frontend should clear localStorage access token separately
+    - Uses matching cookie attributes to ensure reliable removal across browsers
 
     Args:
-        request: HTTP request object
+        request: HTTP request object (no authentication required)
         response: HTTP response object (for deleting cookies)
 
     Returns:
@@ -615,24 +622,23 @@ def logout(request: HttpRequest, response: HttpResponse) -> tuple[int, dict[str,
             - 200: Logout successful, cookies cleared
 
     Cookie deletion:
-        - Deletes access token cookie
-        - Deletes refresh token cookie
-        - Uses same path, domain, samesite as when cookies were set
+        - Deletes refresh token cookie (HTTP-only, secure)
+        - Uses same path, domain, samesite as when cookie was set
     """
     # Get JWT settings
     jwt_settings = _get_jwt_settings()
-    access_token_name = str(jwt_settings['ACCESS_TOKEN_NAME'])
     refresh_token_name = str(jwt_settings['REFRESH_TOKEN_NAME'])
     samesite: Literal['Lax', 'Strict', 'None'] = jwt_settings.get('JWT_COOKIE_SAMESITE', 'Lax')  # type: ignore[assignment]  # Django settings dynamic
 
-    # Delete cookies with matching attributes for reliable removal
+    # Delete refresh token cookie with matching attributes for reliable removal
+    # Hybrid authentication: Only refresh token is stored as HTTP-only cookie
+    # Access token is managed by frontend in localStorage (frontend clears it)
     cookie_kwargs = {
         'path': '/',  # Default path
         'domain': None,  # Use default domain
         'samesite': samesite,
     }
 
-    response.delete_cookie(access_token_name, **cookie_kwargs)  # pyright: ignore[reportArgumentType]
     response.delete_cookie(refresh_token_name, **cookie_kwargs)  # pyright: ignore[reportArgumentType]
 
     return 200, {"message": "Logged out successfully."}

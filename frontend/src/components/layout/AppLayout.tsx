@@ -1,7 +1,6 @@
 import BaseLayout from "./BaseLayout";
 import Sidebar from "./Sidebar";
 import { SidebarDrawerViewport } from "./SidebarDrawer";
-import { SessionExpirationWarning } from "@/components/auth/SessionExpirationWarning";
 import {
 	Box,
 	Container,
@@ -18,9 +17,6 @@ const AppLayout = () => {
 
 	return (
 		<BaseLayout>
-			{/* Session Expiration Warning - Shows when token is about to expire */}
-			<SessionExpirationWarning />
-
 			{/* Main Content Area */}
 			<Container
 				maxW="container.xl"

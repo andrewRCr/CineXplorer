@@ -104,11 +104,13 @@ See "Task List Coordination" section at bottom for detailed boundary documentati
             - [x] 6.9.7.8 Run incremental quality checks (ruff: 0 errors, pyright: 0 errors with proper type ignores)
     - [ ] 6.10 Quality Gates - Full project validation
         - [ ] 6.10.1 Run all backend tests and fix API field naming regressions (`pytest apps/ -v` via Docker)
-            - [ ] 6.10.1.1 Investigate CSRF protection test failures (8 failures in test_csrf_protection.py)
-            - [ ] 6.10.1.2 Fix authentication domain test failures (9 failures: test_error_responses.py, test_security.py, test_user_api.py)
-            - [ ] 6.10.1.3 Fix UserMovieData domain test failures (21 failures in test_user_movie_data_api.py)
-            - [ ] 6.10.1.4 Verify all 160 tests pass (currently 38 failed, 122 passed - 76% pass rate)
-            - **Context**: API field naming change ('access' → 'access_token') affects test assertions across multiple domains
+            - [x] 6.10.1.1 Investigate CSRF protection test failures (8 failures in test_csrf_protection.py) - ✅ Root cause: hybrid auth pattern change
+            - [x] 6.10.1.2 Fix authentication domain test failures (9 failures: test_error_responses.py, test_security.py, test_user_api.py) - ✅ 101/101 tests passing
+            - [x] 6.10.1.3 Fix UserMovieData domain test failures (21 failures in test_user_movie_data_api.py) - ✅ 23/23 tests passing
+            - [x] 6.10.1.4 Verify all 160 tests pass (all domains: 160/160 ✅)
+            - **Context**: Hybrid auth pattern requires test fixtures to manually set access_token cookie (login only sets refresh_token cookie)
+            - **DRY Improvement**: Created shared `authenticate_client()` helper in `core/tests/test_helpers.py` (single source of truth for auth pattern)
+            - **Fix Applied**: Refactored 3 test fixtures across authentication and user_movie_data apps to use shared helper
         - [ ] 6.10.2 Run all frontend tests (`npm test` via Docker)
         - [ ] 6.10.3 Backend linting (`ruff check backend/apps/ backend/config/ --fix`)
         - [ ] 6.10.4 Frontend linting (`npm run lint` via Docker)
@@ -145,23 +147,25 @@ See "Task List Coordination" section at bottom for detailed boundary documentati
         - [ ] 7.6.1 Brief execution log (critical paths work: Yes/No)
         - [ ] 7.6.2 Any bugs found (must fix before closing)
         - [ ] 7.6.3 Note items deferred to API Layer P2
-    - **Estimated Time**: 30-45 minutes
 
 - [ ] **8. Documentation and Cleanup**
     - [ ] 8.1 Remove debugging console.log statements
         - [ ] 8.1.1 Search for console.log in useAuth.ts, Login.tsx, apiClient.ts
         - [ ] 8.1.2 Remove or convert to proper logging
         - [ ] 8.1.3 Verify no remaining debug statements
-    - [ ] 8.2 Update completion summary (bottom of this file)
+    - [ ] 8.2 Create `.arc/reference/strategies/strategy-authentication.md` for detailed architecture / approach documentation
+        ***Purpose: Reference for future maintenance, onboarding, API Layer P2 work***
         - [ ] 8.2.1 Document two-pattern authentication architecture
         - [ ] 8.2.2 Document security model (httponly cookies, CORS, CSRF)
         - [ ] 8.2.3 List all endpoints supporting both patterns
         - [ ] 8.2.4 Document testing approach (backend + E2E)
-        - [ ] 8.2.5 Note any future improvements identified
-    - [ ] 8.3 Mark incidental work complete
-        - [ ] 8.3.1 Change status to "Complete" at top of this file
-        - [ ] 8.3.2 Add completion date
-        - [ ] 8.3.3 Verify all parent tasks marked [x]
+        - [ ] 8.2.5 Note any potential future improvements identified
+    - [ ] 8.3 Fill out task list completion summary (bottom of this file)
+        - [ ] 8.3.1 Brief summary of work done
+    - [ ] 8.4 Mark incidental work complete
+        - [ ] 8.4.1 Change status to "Complete" at top of this file
+        - [ ] 8.4.2 Add completion date
+        - [ ] 8.4.3 Verify all parent tasks marked [x]
 
 ## Relevant Files
 
@@ -174,6 +178,10 @@ See "Task List Coordination" section at bottom for detailed boundary documentati
 - `backend/apps/authentication/auth_ninja.py` - Session authentication fallback (Priority 3 after JWT checks)
 - `backend/apps/authentication/tests/test_session_auth.py` - **NEW**: Backend test suite for session authentication (8+ tests)
 - `backend/apps/conftest.py` - Test fixtures with type safety fixes
+- `backend/apps/core/tests/test_helpers.py` - **NEW**: Shared `authenticate_client()` helper for hybrid auth pattern (DRY improvement)
+- `backend/apps/authentication/tests/test_csrf_protection.py` - Updated `csrf_client` fixture to use shared helper
+- `backend/apps/authentication/tests/test_user_api.py` - Updated `authenticated_user` fixture to use shared helper
+- `backend/apps/user_movie_data/tests/test_user_movie_data_api.py` - Updated `authenticated_user` fixture to use shared helper
 
 **Frontend**:
 

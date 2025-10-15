@@ -212,8 +212,8 @@ infrastructure/dev-certs/*.crt
 infrastructure/dev-certs/*.key
 
 # Personal reference documentation and notes (work-in-progress only)
-.arc/active/feature/notes-*
-.arc/active/incidental/notes-*
+.arc/active/*/notes-*
+.arc/active/*/research-*
 .arc/upcoming/notes/
 
 # Session handoff file (transient)

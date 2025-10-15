@@ -245,7 +245,7 @@ def test_debug_true_includes_detail_field_for_blacklisted_token(
     # Get the old refresh token that was just blacklisted
     # (The original token is now blacklisted after successful rotation)
     # We need to manually set it back to test blacklist error
-    old_token = login_response.json()["refresh"]
+    old_token = login_response.json()["refresh_token"]
     api_client.cookies["refresh_token"] = old_token
 
     # Second refresh with blacklisted token should return 401 with detail
@@ -297,7 +297,7 @@ def test_debug_false_excludes_detail_field_for_blacklisted_token(
     assert first_refresh.status_code == HTTPStatus.OK
 
     # Get the old refresh token that was just blacklisted
-    old_token = login_response.json()["refresh"]
+    old_token = login_response.json()["refresh_token"]
     api_client.cookies["refresh_token"] = old_token
 
     # Second refresh with blacklisted token should return 401 WITHOUT detail
@@ -328,8 +328,15 @@ def test_csrf_error_uses_error_format_production(
     api_client: Client,
     verified_user: User,
 ) -> None:
-    """Test that CSRF middleware uses {"error": "message"} format (production mode)."""
-    # Login to get JWT cookies
+    """Test that CSRF middleware uses {"error": "message"} format (production mode).
+
+    Hybrid Authentication Pattern:
+    - Login returns access token in response body
+    - Test must manually set access token cookie for authentication
+    """
+    import json as json_module
+
+    # Login to get JWT tokens
     login_data = {
         "login": verified_user.username,
         "password": "testpass123",
@@ -340,6 +347,10 @@ def test_csrf_error_uses_error_format_production(
         content_type="application/json",
     )
     assert login_response.status_code == HTTPStatus.OK
+
+    # Set access token cookie for authentication
+    response_data = json_module.loads(login_response.content.decode())
+    api_client.cookies['access_token'] = response_data['access_token']
 
     # Try to refresh token WITHOUT CSRF token (should be rejected by middleware)
     response = api_client.post(
@@ -366,8 +377,15 @@ def test_csrf_error_includes_detail_in_debug_mode(
     api_client: Client,
     verified_user: User,
 ) -> None:
-    """Test that CSRF middleware includes {"detail": "..."} in DEBUG mode."""
-    # Login to get JWT cookies
+    """Test that CSRF middleware includes {"detail": "..."} in DEBUG mode.
+
+    Hybrid Authentication Pattern:
+    - Login returns access token in response body
+    - Test must manually set access token cookie for authentication
+    """
+    import json as json_module
+
+    # Login to get JWT tokens
     login_data = {
         "login": verified_user.username,
         "password": "testpass123",
@@ -378,6 +396,10 @@ def test_csrf_error_includes_detail_in_debug_mode(
         content_type="application/json",
     )
     assert login_response.status_code == HTTPStatus.OK
+
+    # Set access token cookie for authentication
+    response_data = json_module.loads(login_response.content.decode())
+    api_client.cookies['access_token'] = response_data['access_token']
 
     # Try to refresh token WITHOUT CSRF token (should be rejected by middleware)
     response = api_client.post(

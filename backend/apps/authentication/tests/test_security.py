@@ -118,8 +118,16 @@ def samesite_user(api_client: Client) -> tuple[dict[str, str], Client]:
 def test_login_sets_access_token_samesite_lax(
     samesite_user: tuple[dict[str, str], Client]
 ) -> None:
-    """Login response sets access_token cookie with SameSite=Lax."""
+    """Login returns access_token in body (hybrid auth pattern).
+
+    Hybrid Authentication Pattern:
+    - Login endpoint returns access_token in response body (for localStorage)
+    - Login endpoint only sets refresh_token cookie (HTTP-only)
+    - Access token cookie is NOT set during login (frontend manages in localStorage)
+    - Refresh endpoint sets BOTH tokens as cookies (see test_token_refresh_maintains_samesite_lax)
+    """
     from typing import cast
+    import json as json_module
 
     from core.tests.test_helpers import json_post
 
@@ -131,11 +139,14 @@ def test_login_sets_access_token_samesite_lax(
     response = json_post(client, '/api/token/', cast(dict[str, object], login_payload))
 
     assert response.status_code == 200
-    assert 'access_token' in client.cookies
 
-    access_cookie = client.cookies['access_token']
-    # SameSite attribute is stored as 'samesite' in cookie
-    assert access_cookie.get('samesite') == 'Lax'
+    # Verify access_token is in response body (NOT cookie)
+    response_data = json_module.loads(response.content.decode())
+    assert 'access_token' in response_data
+    assert response_data['access_token'] is not None
+
+    # Verify access_token is NOT set as cookie (hybrid auth pattern)
+    assert 'access_token' not in client.cookies
 
 
 @pytest.mark.django_db

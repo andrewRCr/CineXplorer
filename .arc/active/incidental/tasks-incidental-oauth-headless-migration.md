@@ -120,63 +120,48 @@ See "Task List Coordination" section at bottom for detailed boundary documentati
         - [x] 6.10.8 Verify: 100% test pass rate, 0 type errors, 0 linting violations - ✅ VERIFIED
 
 - [ ] **7. Minimal Watchlist Implementation** - Testing infrastructure (prerequisite for Task 8)
-    - **Goal**: Create minimal watchlist feature to validate authentication patterns with real API calls
-    - **Why Now**: Proves auth works end-to-end, establishes reusable enrichment pattern for future work
-    - **Scope**: Basic implementation only - full feature in API Layer P2
-    - **Note**: While this implements watchlist functionality, it's scoped as TEST INFRASTRUCTURE for OAuth validation (Task 8). Full watchlist feature deferred to API Layer P2. Kept in OAuth task list because it's a direct prerequisite for Task 8, not independent work.
-    - **Architecture Decision**: Reusable enrichment service pattern
-        - **No new schemas needed**: Reuse existing `MovieBaseSchema` with `user_movie_data` field (already present!)
-        - **Class-based service**: Use Task 2.0 patterns (dependency injection) from Backend Modernization
-        - **Universal application**: Same enrichment works for discover pages AND user-specific pages
-        - **DRY principle**: Single service enriches movies with user data across all endpoints
-    - **Forward-Compatibility Note**: Implements class-based service with dependency injection (Backend Modernization Task 2.0 pattern) rather than function-based pattern currently in movie_service.py. Avoids creating technical debt that would need immediate refactoring.
     - [ ] 7.1 Backend Service - MovieEnrichmentService (class-based with dependency injection)
-        - [ ] Create `user_movie_data/services/movie_enrichment_service.py`
-        - [ ] Implement `MovieEnrichmentService` class with `__init__(user_movie_data_repository=None)` for DI
-        - [ ] Method: `enrich_movies_with_user_data(movies: list[MovieBaseSchema], user: User | None) -> list[MovieBaseSchema]`
-        - [ ] If user is None: return movies unchanged (unauthenticated users)
-        - [ ] If user is authenticated: bulk query UserMovieData, map to UserMovieDataSchema, populate movie.user_movie_data
-        - [ ] Use efficient querying: `filter(user=user, movie__tmdb_id__in=tmdb_ids).select_related('movie')`
-        - [ ] Professional type annotations (no Any usage)
-        - [ ] Docstrings following project standards
+        - [ ] 7.1.1 Create `user_movie_data/services/movie_enrichment_service.py`
+        - [ ] 7.1.2 Implement `MovieEnrichmentService` class with `__init__(user_movie_data_repository=None)` for DI
+        - [ ] 7.1.3 Implement `enrich_movies_with_user_data()` method with bulk query optimization
+        - [ ] 7.1.4 Add professional type annotations (no Any usage)
+        - [ ] 7.1.5 Add docstrings following project standards
     - [ ] 7.2 Backend Integration - Update movie discovery endpoints to use enrichment
-        - [ ] Update `movie/api.py` endpoints to optionally accept authenticated user
-        - [ ] Pass `request.user if request.user.is_authenticated else None` to service
-        - [ ] Call enrichment service on response before returning
-        - [ ] Update endpoints: `get_now_playing_movies`, `get_upcoming_movies`, `search_movies`, `discover_movies`, `get_movie_detail`
-        - [ ] NO breaking changes: enrichment is transparent (existing `user_movie_data: None` becomes populated)
+        - [ ] 7.2.1 Update `movie/api.py` endpoints to pass authenticated user to service
+        - [ ] 7.2.2 Call enrichment service on response before returning
+        - [ ] 7.2.3 Update endpoints: `get_now_playing_movies`, `get_upcoming_movies`, `search_movies`, `discover_movies`, `get_movie_detail`
+        - [ ] 7.2.4 Verify no breaking changes (enrichment is transparent)
     - [ ] 7.3 Backend API - Watchlist endpoint using enrichment service
-        - [ ] Add GET `/api/user-movie-data/movies` endpoint (authenticated only)
-        - [ ] Optional query param: `?watchlist=true` for filtering
-        - [ ] Query UserMovieData for user, get tmdb_ids, fetch TMDB data (or from local Movie cache)
-        - [ ] Use enrichment service to populate user_movie_data (same service as discover!)
-        - [ ] Returns `PaginatedMovieResponseSchema` (consistent with all movie endpoints)
+        - [ ] 7.3.1 Add GET `/api/user-movie-data/movies` endpoint (authenticated only)
+        - [ ] 7.3.2 Implement optional query param: `?watchlist=true` for filtering
+        - [ ] 7.3.3 Query UserMovieData for user, get tmdb_ids, fetch TMDB data
+        - [ ] 7.3.4 Use enrichment service to populate user_movie_data
+        - [ ] 7.3.5 Return `PaginatedMovieResponseSchema` (consistent with all movie endpoints)
     - [ ] 7.4 Quality Checks - Backend implementation
-        - [ ] Backend linting: 0 violations (`ruff check` with auto-fix)
-        - [ ] Backend type checking: 0 errors (`npx pyright`)
-        - [ ] Run tests: Verify no regressions in movie/user_movie_data domains
+        - [ ] 7.4.1 Backend linting: 0 violations (`ruff check` with auto-fix)
+        - [ ] 7.4.2 Backend type checking: 0 errors (`npx pyright`)
+        - [ ] 7.4.3 Run tests: Verify no regressions in movie/user_movie_data domains
     - [ ] 7.5 Frontend Service - Watchlist API client
-        - [ ] Regenerate TypeScript types from OpenAPI schema (`npm run generate-types`)
-        - [ ] Add `getUserMovies()` function in appropriate service file
-        - [ ] Type-safe request/response handling (uses generated types)
+        - [ ] 7.5.1 Regenerate TypeScript types from OpenAPI schema (`npm run generate-types`)
+        - [ ] 7.5.2 Add `getUserMovies()` function in appropriate service file
+        - [ ] 7.5.3 Implement type-safe request/response handling (uses generated types)
     - [ ] 7.6 Frontend Component - MovieCard onClick handler
-        - [ ] Add onClick handler to watchlist button (RiPlayListAddLine)
-        - [ ] POST to `/api/user-movie-data` with `{movie_id, user_on_watchlist: true}`
-        - [ ] Show simple success notification (toast or console.log for minimal impl)
-        - [ ] Handle error cases (movie already on watchlist, network errors)
+        - [ ] 7.6.1 Add onClick handler to watchlist button (RiPlayListAddLine)
+        - [ ] 7.6.2 POST to `/api/user-movie-data` with `{movie_id, user_on_watchlist: true}`
+        - [ ] 7.6.3 Show simple success notification (toast or console.log for minimal impl)
+        - [ ] 7.6.4 Handle error cases (movie already on watchlist, network errors)
     - [ ] 7.7 Frontend Page - Minimal Watchlist display
-        - [ ] Create `/watchlist` route in router
-        - [ ] Create simple Watchlist page component
-        - [ ] Fetch watchlist data on mount (`getUserMovies({watchlist: true})`)
-        - [ ] Display movie titles as simple text list (no fancy UI needed)
-        - [ ] Show "No movies on watchlist" if empty
+        - [ ] 7.7.1 Create `/watchlist` route in router
+        - [ ] 7.7.2 Create simple Watchlist page component
+        - [ ] 7.7.3 Fetch watchlist data on mount (`getUserMovies({watchlist: true})`)
+        - [ ] 7.7.4 Display movie titles as simple text list (no fancy UI needed)
+        - [ ] 7.7.5 Show "No movies on watchlist" if empty
     - [ ] 7.8 Quality Checks - Full stack validation
-        - [ ] Frontend linting: 0 violations (`npm run lint`)
-        - [ ] Frontend type checking: 0 errors (`npm run type-check`)
-        - [ ] Manual smoke test: Add movie → See in list → Verify enrichment on discover pages
-        - [ ] Verify: Unauthenticated users see movies without user_movie_data (null)
-        - [ ] Verify: Authenticated users see movies with user_movie_data populated
-    - **Future Enhancement** (API Layer P2): Full MovieCard grid, pagination, filtering, remove from watchlist, bulk operations
+        - [ ] 7.8.1 Frontend linting: 0 violations (`npm run lint`)
+        - [ ] 7.8.2 Frontend type checking: 0 errors (`npm run type-check`)
+        - [ ] 7.8.3 Manual smoke test: Add movie → See in list → Verify enrichment on discover pages
+        - [ ] 7.8.4 Verify: Unauthenticated users see movies without user_movie_data (null)
+        - [ ] 7.8.5 Verify: Authenticated users see movies with user_movie_data populated
 
 - [ ] **8. Manual E2E Validation** - Critical path testing (lean scope)
     - **Goal**: Prove OAuth implementation works in isolation, document expected behavior
@@ -331,6 +316,47 @@ See `.arc/active/feature/tasks-api-layer-modernization-p2.md`.
 - ❌ Multi-tab synchronization (nice-to-have)
 
 See `.arc/upcoming/tasks/tasks-backend-modernization.md` for future work.
+
+---
+
+## Implementation Notes
+
+### Task 7: Minimal Watchlist Implementation
+
+**Goal**: Create minimal watchlist feature to validate authentication patterns with real API calls.
+
+**Why Now**: Proves auth works end-to-end, establishes reusable enrichment pattern for future work.
+
+**Scope**: Basic implementation only - full feature in API Layer P2.
+
+**Scope Boundary Note**: While this implements watchlist functionality, it's scoped as TEST INFRASTRUCTURE for OAuth validation (Task 8). Full watchlist feature deferred to API Layer P2. Kept in OAuth task list because it's a direct prerequisite for Task 8, not independent work.
+
+**Architecture Decision: Reusable Enrichment Service Pattern**
+
+- **No new schemas needed**: Reuse existing `MovieBaseSchema` with `user_movie_data` field (already present!)
+- **Class-based service**: Use Task 2.0 patterns (dependency injection) from Backend Modernization
+- **Universal application**: Same enrichment works for discover pages AND user-specific pages
+- **DRY principle**: Single service enriches movies with user data across all endpoints
+
+**Forward-Compatibility Note**: Implements class-based service with dependency injection (Backend Modernization Task 2.0 pattern) rather than function-based pattern currently in movie_service.py. Avoids creating technical debt that would need immediate refactoring.
+
+**Implementation Details**:
+
+- **MovieEnrichmentService Method**: `enrich_movies_with_user_data(movies: list[MovieBaseSchema], user: User | None) -> list[MovieBaseSchema]`
+- **Unauthenticated users**: Returns movies unchanged (user_movie_data remains None)
+- **Authenticated users**: Bulk query UserMovieData, map to UserMovieDataSchema, populate movie.user_movie_data
+- **Efficient querying**: `filter(user=user, movie__tmdb_id__in=tmdb_ids).select_related('movie')`
+- **Type safety**: Professional type annotations (no Any usage)
+- **Documentation**: Docstrings following project standards
+
+**Integration Points**:
+
+- **Discovery endpoints**: `get_now_playing_movies`, `get_upcoming_movies`, `search_movies`, `discover_movies`, `get_movie_detail`
+- **Watchlist endpoint**: GET `/api/user-movie-data/movies` with optional `?watchlist=true` query param
+- **Response format**: All endpoints return `PaginatedMovieResponseSchema` (consistency!)
+- **Breaking changes**: None - enrichment is transparent (existing `user_movie_data: None` becomes populated)
+
+**Future Enhancement** (API Layer P2): Full MovieCard grid, pagination, filtering, remove from watchlist, bulk operations
 
 ---
 

@@ -86,6 +86,8 @@ def authenticated_user(api_client: Client) -> tuple[Client, User]:
 
     The client has JWT cookies set and is ready for authenticated requests.
     """
+    from core.tests.test_helpers import authenticate_client
+
     user = create_user(
         username="privateUser",
         email="private@example.com",
@@ -94,9 +96,8 @@ def authenticated_user(api_client: Client) -> tuple[Client, User]:
         last_name="User",
     )  # create_user() creates verified email by default
 
-    # Authenticate via JWT token endpoint to set cookies
-    auth_payload = {"login": "privateUser", "password": "testpass123"}
-    json_post(api_client, TOKEN_URL, cast(dict[str, object], auth_payload))
+    # Authenticate client (handles hybrid auth pattern automatically)
+    authenticate_client(api_client, "privateUser", "testpass123")
 
     return api_client, user
 
@@ -279,9 +280,13 @@ def test_retrieve_profile_success(authenticated_user: tuple[Client, User]) -> No
 @pytest.mark.django_db
 def test_update_profile_no_csrf_authenticated(db: None) -> None:
     """
-    Authenticated PATCH via Django Client against a JWT-cookie API will
-    result in 401 Unauthorized (missing JWT). Django's session
-    authentication doesn't provide the JWT cookie needed by the API.
+    Authenticated PATCH via Django session succeeds (hybrid auth fallback).
+
+    Hybrid Authentication Pattern (Priority 3 - Session Fallback):
+    - JWT tokens are Priority 1-2 (header/cookie)
+    - Django session auth is Priority 3 fallback (OAuth users)
+    - Session auth now works for authenticated requests
+    - CSRF protection still applies (but not tested in this specific test)
     """
     from django.test import Client
 
@@ -294,14 +299,19 @@ def test_update_profile_no_csrf_authenticated(db: None) -> None:
     )
 
     client = Client()
-    # Login via Django's session auth (not JWT)
+    # Login via Django's session auth (simulates OAuth user)
     logged_in = client.login(username=user.username, password="testpass123")
     assert logged_in, "Login failed in test setup"
 
     payload = {"first_name": "Updated", "last_name": "Name", "password": "newPrivatePass123"}
-    # This will fail with 401 because Django session auth doesn't provide JWT cookie
+    # Session auth now works (Priority 3 fallback in hybrid auth)
+    # Note: CSRF would normally block this, but this test uses Django's test client
+    # which automatically handles CSRF for session-authenticated requests
     res = client.patch(ME_URL, json.dumps(payload), content_type="application/json")
-    assert res.status_code == HTTP_401_UNAUTHORIZED
+    assert res.status_code == HTTP_200_OK
+    user.refresh_from_db()
+    assert user.first_name == payload["first_name"]
+    assert user.last_name == payload["last_name"]
 
 
 @pytest.mark.django_db
@@ -309,7 +319,12 @@ def test_update_profile_with_csrf_authenticated(db: None) -> None:
     """
     Authenticated PATCH to profile with valid CSRF token.
     Expect 200 OK.
+
+    Hybrid Authentication Pattern:
+    - Login returns access token in response body
+    - Test must manually set access token cookie for authentication
     """
+    import json as json_module
     from django.test import Client
 
     user = create_user(
@@ -323,9 +338,13 @@ def test_update_profile_with_csrf_authenticated(db: None) -> None:
     payload = {"first_name": "CSRFUpdated", "last_name": "CSRFName", "password": "csrfPass123"}
     client = Client()
 
-    # Authenticate via JWT token endpoint to set cookies
+    # Authenticate via JWT token endpoint to get tokens
     auth_payload = {"login": "privateUser", "password": "testpass123"}
-    json_post(client, TOKEN_URL, cast(dict[str, object], auth_payload))
+    response = json_post(client, TOKEN_URL, cast(dict[str, object], auth_payload))
+
+    # Extract access token from response body and set as cookie
+    response_data = json_module.loads(response.content.decode())
+    client.cookies['access_token'] = response_data['access_token']
 
     # Simulate CSRF token and cookie (double-submit cookie pattern)
     # Must use Django's default cookie name 'csrftoken' (not 'XSRF-TOKEN')
@@ -372,14 +391,32 @@ def test_unauthenticated_profile_update(api_client: Client) -> None:
 
 @pytest.mark.django_db
 def test_token_obtain_sets_jwt_cookies(registered_user: tuple[Client, dict[str, str]]) -> None:
-    """Login sets JWT cookies (access and refresh)."""
+    """Login sets refresh_token cookie and returns access_token in body (hybrid auth).
+
+    Hybrid Authentication Pattern:
+    - Login endpoint returns access_token in response body (for localStorage)
+    - Login endpoint only sets refresh_token cookie (HTTP-only)
+    - Access token cookie NOT set during login (frontend manages in localStorage)
+    - Refresh endpoint sets BOTH tokens as cookies (see test_refresh_token_cookie_updated)
+    """
+    import json as json_module
+
     client, _user_data = registered_user
 
     login_data = {"login": "testuser", "password": "testpass123"}
     response = json_post(client, TOKEN_URL, cast(dict[str, object], login_data))
     assert response.status_code == 200
-    assert "access_token" in client.cookies
+
+    # Verify refresh_token is set as cookie
     assert "refresh_token" in client.cookies
+
+    # Verify access_token is in response body (NOT cookie)
+    response_data = json_module.loads(response.content.decode())
+    assert "access_token" in response_data
+    assert response_data['access_token'] is not None
+
+    # Verify access_token is NOT set as cookie (hybrid auth pattern)
+    assert "access_token" not in client.cookies
 
 
 @pytest.mark.django_db

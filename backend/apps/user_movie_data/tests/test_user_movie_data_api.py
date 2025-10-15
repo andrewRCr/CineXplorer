@@ -97,7 +97,7 @@ def authenticated_user(api_client: Client, db: None) -> tuple[Client, User]:
     Creates a verified user (can login) and authenticates via the JWT token
     endpoint which sets the necessary cookies for Django Ninja JWTCookieAuth.
     """
-    from core.tests.test_helpers import create_user, json_post
+    from core.tests.test_helpers import authenticate_client, create_user
 
     # Create verified user (create_user() verifies email by default)
     user = create_user(
@@ -106,10 +106,9 @@ def authenticated_user(api_client: Client, db: None) -> tuple[Client, User]:
         password="testpass123"
     )
 
-    # Authenticate via JWT token endpoint to set cookies
-    token_url = "/api/token/"
-    auth_payload: dict[str, object] = {"login": user.username, "password": "testpass123"}
-    json_post(api_client, token_url, auth_payload)
+    # Authenticate client (handles hybrid auth pattern automatically)
+    authenticate_client(api_client, user.username, "testpass123")
+
     return api_client, user
 
 

@@ -45,18 +45,16 @@ def csrf_client(api_client: Client, db: None) -> tuple[Client, "User"]:
     Returns tuple of (Django test client with JWT cookies, user object).
     User returned for tests that need to verify database changes.
     """
+    from core.tests.test_helpers import authenticate_client
+
     user = create_user(
         username='csrftest',
         email='csrftest@example.com',
         password='testpass123'
     )
 
-    # Login to get JWT cookies
-    auth_payload = {
-        'login': 'csrftest',
-        'password': 'testpass123'
-    }
-    json_post(api_client, TOKEN_URL, cast(dict[str, object], auth_payload))
+    # Authenticate client (handles hybrid auth pattern automatically)
+    authenticate_client(api_client, 'csrftest', 'testpass123')
 
     return api_client, user
 

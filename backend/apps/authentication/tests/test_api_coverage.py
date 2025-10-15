@@ -159,8 +159,8 @@ def test_token_blacklist_attribute_error_handling(
     # Should still return 200 (refresh succeeds, blacklist logged as warning)
     assert response.status_code == HTTPStatus.OK
     data = response.json()
-    assert "access" in data, "Response should contain new access token"
-    assert "refresh" in data, "Response should contain new refresh token"
+    assert "access_token" in data, "Response should contain new access token"
+    assert "refresh_token" in data, "Response should contain new refresh token"
 
 
 @pytest.mark.django_db
@@ -202,8 +202,8 @@ def test_token_blacklist_unexpected_error_logged(
     # Should still return 200 (refresh succeeds, error logged as warning)
     assert response.status_code == HTTPStatus.OK
     data = response.json()
-    assert "access" in data, "Response should contain new access token"
-    assert "refresh" in data, "Response should contain new refresh token"
+    assert "access_token" in data, "Response should contain new access token"
+    assert "refresh_token" in data, "Response should contain new refresh token"
 
 
 # ============================================================================

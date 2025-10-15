@@ -56,8 +56,8 @@ def test_login_allows_5_rapid_attempts(
             f"Attempt {attempt} failed: expected 200, got {response.status_code}"
         )
         data = response.json()
-        assert "access" in data
-        assert "refresh" in data
+        assert "access_token" in data
+        assert "refresh_token" in data
 
 
 @pytest.mark.enable_throttling

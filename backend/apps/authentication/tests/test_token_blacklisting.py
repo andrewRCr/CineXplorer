@@ -54,8 +54,8 @@ def test_first_token_refresh_succeeds(
 
     # Extract initial tokens from response
     initial_tokens = login_response.json()
-    initial_access = initial_tokens["access"]
-    initial_refresh = initial_tokens["refresh"]
+    initial_access = initial_tokens["access_token"]
+    initial_refresh = initial_tokens["refresh_token"]
 
     # Get CSRF token for refresh endpoint
     csrf_token = get_csrf_token(api_client)
@@ -70,8 +70,8 @@ def test_first_token_refresh_succeeds(
 
     # Verify new tokens issued
     new_tokens = refresh_response.json()
-    new_access = new_tokens["access"]
-    new_refresh = new_tokens["refresh"]
+    new_access = new_tokens["access_token"]
+    new_refresh = new_tokens["refresh_token"]
 
     # New tokens should be different from initial tokens
     assert new_access != initial_access, "Access token should be rotated"
@@ -114,7 +114,7 @@ def test_reusing_old_refresh_token_returns_401(
 
     # Attempt to reuse the ORIGINAL refresh token (now blacklisted)
     # We need to manually set the old refresh token cookie
-    initial_refresh = login_response.json()["refresh"]
+    initial_refresh = login_response.json()["refresh_token"]
     api_client.cookies["refresh_token"] = initial_refresh
 
     # Second refresh attempt with old token - should fail
@@ -143,7 +143,7 @@ def test_blacklisted_token_error_includes_revoked_message(
         content_type="application/json",
     )
     assert login_response.status_code == HTTPStatus.OK
-    initial_refresh = login_response.json()["refresh"]
+    initial_refresh = login_response.json()["refresh_token"]
 
     # Get CSRF token
     csrf_token = get_csrf_token(api_client)
@@ -218,8 +218,8 @@ def test_new_refresh_token_works_after_old_blacklisted(
     second_new_tokens = second_refresh_response.json()
 
     # Verify continuous rotation works
-    assert second_new_tokens["access"] != first_new_tokens["access"]
-    assert second_new_tokens["refresh"] != first_new_tokens["refresh"]
+    assert second_new_tokens["access_token"] != first_new_tokens["access_token"]
+    assert second_new_tokens["refresh_token"] != first_new_tokens["refresh_token"]
 
 
 # ============================================================================

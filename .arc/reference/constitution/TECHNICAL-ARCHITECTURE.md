@@ -81,44 +81,26 @@ The entire application is designed to be run and deployed using containers.
 - **CI/CD**: Continuous integration is set up using **GitHub Actions**. The workflow, defined in `.github/workflows/ci.yml`, runs linters and tests on every push and pull request to ensure code quality.
 - **Development Environment (WSL2)**: The development environment runs on WSL2 with Docker. Container user UID/GID (1001) matches the host user for proper file permissions on mounted volumes. Configuration is managed via `infrastructure/.env` which sets `USER_UID` and `USER_GID` build arguments. A host Python virtual environment (`.venv-backend/`) provides faster linting/type checking alternatives to Docker commands.
 
-## 6. Testing Methodology
+## 6. Testing Infrastructure
 
-The project follows a **Modified Test-Driven Development (TDD)** approach that balances development speed with code quality:
-
-### Testing Strategy
-
-- **Test-First Priority**: New models, API endpoints, and complex business logic
-- **Test-After Acceptable**: Simple CRUD operations, UI components, configuration code
-- **Always Required**: All new features must have appropriate test coverage
-- **Integration Focus**: Test feature workflows, not just individual components
-- **Regression Protection**: Existing tests must pass before any commits
+The project uses modern testing frameworks for both backend and frontend:
 
 ### Backend Testing
 
-- **Framework**: Django's built-in test framework with custom test settings
-- **Database**: Uses `--keepdb` flag for performance during development
-- **Coverage**: Focus on models, API endpoints, and service layer logic
-- **Command**: `docker compose -f infrastructure/docker-compose.yml exec backend python manage.py test --keepdb`
+- **Framework**: pytest with pytest-django plugin (migration complete 2025-10-13, 103/103 tests)
+- **Execution**: Must run via Docker (requires PostgreSQL + Redis)
+- **Performance**: Supports `--reuse-db` flag and parallel execution (`-n auto`)
+- **Structure**: Tests located in `backend/apps/{app}/tests/`
+- **Command**: `docker compose -f infrastructure/docker-compose.yml exec backend pytest apps/`
 
 ### Frontend Testing
 
-- **Framework**: Vitest with React Testing Library for component testing
-- **Environment**: JSDOM with comprehensive browser API mocking
-- **Structure**: Co-located tests in `__tests__/` directories near components
-- **Coverage Goals**: 70%+ for critical paths and user-facing functionality
+- **Framework**: Vitest with React Testing Library
+- **Environment**: JSDOM with browser API mocking
+- **Structure**: Co-located tests in `__tests__/` directories
 - **Command**: `docker compose -f infrastructure/docker-compose.yml exec frontend npm test`
 
-### Quality Gates
+**For testing methodology, quality gates, and test-first protocols**, see:
 
-Before any commit, the following checks must pass with **zero tolerance**:
-
-1. **Test Coverage**: New code has appropriate tests
-2. **All Tests Pass**: Both backend and frontend test suites (100% pass rate)
-3. **Linting**: Zero violations
-   - Backend: `ruff` via Docker or WSL2 host (`.venv-backend/bin/ruff check backend/apps/`)
-   - Frontend: `eslint` via Docker
-4. **Type Checking**: Zero errors
-   - Backend: Pyright with django-types (Python 3.13, 3-5x faster than MyPy)
-   - Frontend: TypeScript compilation
-
-See [DEVELOPMENT-RULES.md](DEVELOPMENT-RULES.md) for complete quality gate commands and requirements.
+- [DEVELOPMENT-RULES.md](DEVELOPMENT-RULES.md) - Test-first protocol, quality gates, command patterns
+- [Testing Methodology Strategy](../strategies/strategy-testing-methodology.md) - Complete testing philosophy and patterns

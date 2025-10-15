@@ -249,10 +249,6 @@ docker compose -f infrastructure/docker-compose.yml exec backend pytest apps/aut
 docker compose -f infrastructure/docker-compose.yml exec backend pytest --cov=apps.authentication.api --cov-report=term-missing apps/authentication/tests/
 ```
 
-### Full Quality Gates (Before Commit)
-
-Run all 7 quality gate commands listed above in sequence. All must pass with zero errors.
-
 ---
 
 ## Anti-Patterns

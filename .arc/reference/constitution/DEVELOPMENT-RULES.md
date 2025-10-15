@@ -1,6 +1,6 @@
 # Development Rules - CineXplorer
 
-**Version:** 2.6 | **Updated:** 2025-10-13 | **Hash:** `g2k4m7p9`
+**Version:** 2.7 | **Updated:** 2025-10-15 | **Hash:** `h3n5p8r2`
 
 Core development rules and quality standards for CineXplorer. These rules are **non-negotiable** and must be followed by all contributors, including AI assistants.
 
@@ -10,9 +10,9 @@ Core development rules and quality standards for CineXplorer. These rules are **
 
 **Before starting ANY work, AI assistants must:**
 
-1. **Confirm rules version:** "Acknowledging DEVELOPMENT-RULES v2.6, hash g2k4m7p9"
+1. **Confirm rules version:** "Acknowledging DEVELOPMENT-RULES v2.7, hash h3n5p8r2"
 2. **Verify environment:** Follow Session Startup Protocol in CURRENT-SESSION.md (check working directory, Docker status, venv availability)
-3. **State understanding:** Confirm commit protocols, task analysis, quality gates, "Leave It Cleaner" protocol, CURRENT-SESSION control, and feature branch workflow
+3. **State understanding:** Confirm commit protocols, test-first protocol, task analysis, quality gates, "Leave It Cleaner" protocol, CURRENT-SESSION control, and feature branch workflow
 4. **Verify context access:** Confirm access to required documents (QUICK-REFERENCE, AI-SHARED, META-PRD, etc.)
 5. **Check branch status:** Verify current git branch and alignment with intended work
 
@@ -123,6 +123,94 @@ If quality gates fail after sub-task completion:
 - Makes incremental progress on code quality with every change
 - Documents intentional decisions when issues must be deferred
 
+## Session Documentation Control
+
+### CURRENT-SESSION.md Update Protocol
+
+- **AI NEVER updates CURRENT-SESSION.md** without explicit user instruction
+- CURRENT-SESSION.md is a handoff document controlled by the user
+- AI should report changes and progress but NOT modify this file during active work
+- User decides when and how session documentation is updated
+- Violating this rule breaks session continuity and coordination
+
+## Task Management Protocol
+
+### One Sub-Task Rule
+
+- **Complete ONE sub-task at a time** - never bundle multiple deliverables
+- **Mandatory stop** after each sub-task completion
+- **Wait for explicit user approval** before starting next sub-task
+
+### Sub-Task Granularity Guidelines
+
+Break down a sub-task if it requires:
+
+- More than 3 files to be modified
+- More than 50 lines of core logic changes
+- Multiple interdependent changes
+- Complex debugging/investigation
+
+### Test-First Protocol
+
+**BEFORE implementing any sub-task, assess test-first requirement:**
+
+**Requires test-first** (write tests BEFORE implementation):
+
+- New models (Django models, data schemas)
+- New API endpoints or endpoint modifications
+- New service classes or business logic
+- Complex algorithms or data transformations
+- Non-trivial validation or processing logic
+
+**Test-after acceptable**:
+
+- Simple CRUD operations with no custom logic
+- Presentational UI components
+- Configuration file changes
+- Trivial refactoring (renaming, moving files)
+- Documentation-only changes
+
+**Task breakdown pattern for test-first work:**
+
+```markdown
+- [ ] X.1 Write tests for [feature]
+- [ ] X.2 Implement [feature] (make tests pass)
+- [ ] X.3 Incremental quality checks
+```
+
+**If unsure whether test-first applies, default to test-first.** Writing tests after implementation is harder and less effective.
+
+**During task list creation:** Ensure test sub-tasks appear BEFORE implementation sub-tasks for test-first work. This makes the protocol visible during execution.
+
+## Testing Requirements
+
+- **Test-first protocol**: See Task Management Protocol section above for when to write tests before vs. after implementation
+- **Integration focus**: Prefer flow-level coverage over isolated units when practical
+- **All tests must pass** before any commit discussion (see quality gates above)
+- **Command patterns**: See [QUICK-REFERENCE.md](../QUICK-REFERENCE.md) for execution commands
+- **Detailed guidance**: See [Testing Methodology Strategy](../strategies/strategy-testing-methodology.md)
+
+### Documentation Updates
+
+- **Immediate task list updates**: Mark `[x]` in task files after each sub-task
+- **Update "Relevant Files"** section when files are created/modified
+- **Never batch documentation updates** - do immediately after work
+
+### Parent Task Completion
+
+After completing all sub-tasks under a parent task:
+
+1. **Run full quality gate checks**
+2. **Check PROJECT-STATUS** for necessary updates
+3. **Report completion** with standardized readiness report
+4. **Wait for user approval** before proceeding
+
+### PROJECT-STATUS Maintenance
+
+- **After each sub-task**: Update task documentation only
+- **After each parent task**: Check if PROJECT-STATUS needs updates
+- **Regular accuracy checks**: Ensure PROJECT-STATUS reflects all recent work
+
 ## Code Quality Principles
 
 Apply standard software engineering principles to maintain clean, maintainable code:
@@ -162,64 +250,6 @@ Apply standard software engineering principles to maintain clean, maintainable c
 - **Prefer composition** over inheritance or duplication
 - **Design component APIs** that accept configuration
 - **When principles conflict**: Favor readability and simplicity
-
-## Session Documentation Control
-
-### CURRENT-SESSION.md Update Protocol
-
-- **AI NEVER updates CURRENT-SESSION.md** without explicit user instruction
-- CURRENT-SESSION.md is a handoff document controlled by the user
-- AI should report changes and progress but NOT modify this file during active work
-- User decides when and how session documentation is updated
-- Violating this rule breaks session continuity and coordination
-
-## Task Management Protocol
-
-### One Sub-Task Rule
-
-- **Complete ONE sub-task at a time** - never bundle multiple deliverables
-- **Mandatory stop** after each sub-task completion
-- **Wait for explicit user approval** before starting next sub-task
-
-### Sub-Task Granularity Guidelines
-
-Break down a sub-task if it requires:
-
-- More than 3 files to be modified
-- More than 50 lines of core logic changes
-- Multiple interdependent changes
-- Complex debugging/investigation
-
-### Documentation Updates
-
-- **Immediate task list updates**: Mark `[x]` in task files after each sub-task
-- **Update "Relevant Files"** section when files are created/modified
-- **Never batch documentation updates** - do immediately after work
-
-### Parent Task Completion
-
-After completing all sub-tasks under a parent task:
-
-1. **Run full quality gate checks**
-2. **Check PROJECT-STATUS** for necessary updates
-3. **Report completion** with standardized readiness report
-4. **Wait for user approval** before proceeding
-
-### PROJECT-STATUS Maintenance
-
-- **After each sub-task**: Update task documentation only
-- **After each parent task**: Check if PROJECT-STATUS needs updates
-- **Regular accuracy checks**: Ensure PROJECT-STATUS reflects all recent work
-
-## Testing Requirements
-
-- **Test-first** for new models, API endpoints, and non-trivial business logic
-- **Test-after** acceptable for simple CRUD, presentational UI, configuration tweaks
-- **Integration focus**: Prefer flow-level coverage over isolated units when practical
-- **Backend suite**: Run with `--keepdb` flag during development for speed
-- **All tests must pass** before any commit discussion (see quality gates above)
-- **Command patterns**: See [QUICK-REFERENCE.md](../QUICK-REFERENCE.md) for execution commands
-- **Detailed guidance**: See [Testing Methodology Strategy](../strategies/strategy-testing-methodology.md)
 
 ## Error Handling
 

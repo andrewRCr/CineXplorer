@@ -276,8 +276,8 @@ def obtain_token(
 
     # Return token data (also available in cookies)
     return 200, {
-        "access": access_token,
-        "refresh": refresh_token,
+        "access_token": access_token,
+        "refresh_token": refresh_token,
         "user_id": authenticated_user.id,  # pyright: ignore[reportUnknownMemberType]
         "email_verified": True  # Already checked above
     }
@@ -394,8 +394,8 @@ def refresh_token(
 
         # Return success response with new tokens
         return 200, {
-            "access": access_token,
-            "refresh": new_refresh_token,
+            "access_token": access_token,
+            "refresh_token": new_refresh_token,
             "user_id": user_id,
             "email_verified": True  # Assume verified (token already issued)
         }

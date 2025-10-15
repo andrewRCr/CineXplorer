@@ -98,11 +98,11 @@ class TokenResponseSchema(Schema):
     response body for client convenience.
     """
 
-    access: str = Field(
+    access_token: str = Field(
         ...,
         description="JWT access token (also set as httponly cookie)"
     )
-    refresh: str = Field(
+    refresh_token: str = Field(
         ...,
         description="JWT refresh token (also set as httponly cookie)"
     )

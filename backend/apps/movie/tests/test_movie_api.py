@@ -322,13 +322,11 @@ def test_get_movie_detail_authenticated(
     assert 'title' in data
     assert 'user_movie_data' in data
     user_data = data['user_movie_data']
-    # TODO: User integration not yet implemented - will be completed in backend modernization
-    # For now, user_movie_data should be None even for authenticated users
-    assert user_data is None
-    # When implemented, these assertions should be enabled:
-    # assert user_data is not None
-    # assert user_data['user_rating'] == 9
-    # assert user_data['user_review'] == 'Great movie!'
+    # User integration now implemented (Task 7 - OAuth headless migration)
+    # Movie detail endpoint enriches response with user-specific data
+    assert user_data is not None
+    assert user_data['user_rating'] == 9
+    assert user_data['user_review'] == 'Great movie!'
 
 
 @pytest.mark.django_db

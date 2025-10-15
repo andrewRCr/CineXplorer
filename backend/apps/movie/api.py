@@ -6,13 +6,16 @@ This module defines multiple routers for different types of TMDB data:
 - keywords_router: Movie keywords
 - people_router: Movie people (cast/crew)
 
-All routers integrate with the typed movie service layer.
+All routers integrate with the typed movie service layer and enrichment service
+for user-specific data population.
 """
 
 from __future__ import annotations
 
+from authentication.auth_ninja import get_current_user_optional
 from django.http import HttpRequest
 from ninja import Query, Router
+from user_movie_data.services.movie_enrichment_service import MovieEnrichmentService
 
 from .schemas import (
     GenreSchema,
@@ -27,6 +30,9 @@ from .schemas import (
 
 # Import service functions
 from .services import movie_service
+
+# Initialize enrichment service (class-based with DI support)
+enrichment_service = MovieEnrichmentService()
 
 # Create separate router instances for logical grouping
 movies_router = Router(tags=["movies"])
@@ -105,8 +111,18 @@ def get_now_playing_movies(
     request: HttpRequest,
     params: PaginationParams,
 ):
-    """Retrieve currently playing movies with pagination."""
-    return movie_service.get_now_playing_movies(page=params.page or 1)
+    """Retrieve currently playing movies with pagination and user-specific data."""
+    # Fetch movies from TMDB
+    response = movie_service.get_now_playing_movies(page=params.page or 1)
+
+    # Enrich with user data if authenticated
+    user = get_current_user_optional(request)
+    response.results = enrichment_service.enrich_movies_with_user_data(
+        response.results,
+        user
+    )
+
+    return response
 
 
 @movies_router.get("/upcoming", response=PaginatedMovieResponseSchema, auth=None)
@@ -114,8 +130,18 @@ def get_upcoming_movies(
     request: HttpRequest,
     params: PaginationParams,
 ):
-    """Retrieve upcoming movies with pagination."""
-    return movie_service.get_upcoming_movies(page=params.page or 1)
+    """Retrieve upcoming movies with pagination and user-specific data."""
+    # Fetch movies from TMDB
+    response = movie_service.get_upcoming_movies(page=params.page or 1)
+
+    # Enrich with user data if authenticated
+    user = get_current_user_optional(request)
+    response.results = enrichment_service.enrich_movies_with_user_data(
+        response.results,
+        user
+    )
+
+    return response
 
 
 @movies_router.get("/search", response=PaginatedMovieResponseSchema, auth=None)
@@ -124,12 +150,22 @@ def search_movies(
     params: SearchParams,
 ):
     """
-    Search for movies by query string with pagination.
+    Search for movies by query string with pagination and user-specific data.
 
     Uses MovieSearchParamsSchema to handle Django Ninja 1.4.3 +
     Pydantic 2.12.0 empty string validation issue with optional parameters.
     """
-    return movie_service.search_movies(query=params.query, page=params.page or 1)
+    # Fetch movies from TMDB
+    response = movie_service.search_movies(query=params.query, page=params.page or 1)
+
+    # Enrich with user data if authenticated
+    user = get_current_user_optional(request)
+    response.results = enrichment_service.enrich_movies_with_user_data(
+        response.results,
+        user
+    )
+
+    return response
 
 
 @movies_router.get("/discover", response=PaginatedMovieResponseSchema, auth=None)
@@ -138,7 +174,7 @@ def discover_movies(
     filters: FilterParams,
 ):
     """
-    Discover movies with advanced filtering options.
+    Discover movies with advanced filtering options and user-specific data.
 
     This endpoint provides comprehensive movie discovery with extensive filtering
     capabilities including genres, keywords, cast, crew, release dates, ratings,
@@ -162,7 +198,7 @@ def discover_movies(
             - [... many other TMDB discover parameters]
 
     Returns:
-        PaginatedMovieResponseSchema: Paginated list of movies matching criteria
+        PaginatedMovieResponseSchema: Paginated list of movies with user data if authenticated
 
     Raises:
         HttpError: 400 for invalid parameters, 500 for TMDB API errors
@@ -170,7 +206,17 @@ def discover_movies(
     # Convert filter schema to service layer parameters
     params = filters.to_service_params()
 
-    return movie_service.discover_movies(page=filters.page or 1, **params)
+    # Fetch movies from TMDB
+    response = movie_service.discover_movies(page=filters.page or 1, **params)
+
+    # Enrich with user data if authenticated
+    user = get_current_user_optional(request)
+    response.results = enrichment_service.enrich_movies_with_user_data(
+        response.results,
+        user
+    )
+
+    return response
 
 
 @movies_router.get("/{tmdb_id}", response=MovieDetailSchema, auth=None)
@@ -191,7 +237,20 @@ def get_movie_detail(request: HttpRequest, tmdb_id: int) -> MovieDetailSchema:
     Raises:
         HttpError: 404 if movie not found, 500 for TMDB API errors
     """
-    # Fetch movie details (user authentication will be integrated in future phases)
+    # Fetch movie details from TMDB
     movie_data = movie_service.get_movie_by_id(tmdb_id)
 
-    return movie_data
+    # Enrich with user data if authenticated
+    # Note: enrichment service expects a list, so wrap single movie
+    # Type narrowing: movie_service.get_movie_by_id returns MovieDetailSchema
+    # but enrichment service signature is generic for MovieBaseSchema
+    user = get_current_user_optional(request)
+    enriched_movies = enrichment_service.enrich_movies_with_user_data(
+        [movie_data],
+        user
+    )
+
+    # Safe to cast: input was MovieDetailSchema, enrichment preserves type
+    # MovieDetailSchema extends MovieBaseSchema, so enrichment is transparent
+    from typing import cast
+    return cast(MovieDetailSchema, enriched_movies[0])

@@ -12,6 +12,8 @@ from authentication.auth_ninja import JWTCookieAuth, get_current_user
 from core.models import Movie
 from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
+from movie.schemas import MovieBaseSchema, PaginatedMovieResponseSchema
+from movie.services import movie_service
 from ninja import Router
 from ninja.errors import HttpError
 from user_movie_data.models import UserMovieData
@@ -20,9 +22,91 @@ from user_movie_data.schemas import (
     UserMovieDataDetailSchema,
     UserMovieDataUpdateSchema,
 )
+from user_movie_data.services.movie_enrichment_service import MovieEnrichmentService
 
 # Create router with JWT authentication
 user_movie_data_router = Router(tags=["user-movie-data"], auth=JWTCookieAuth())
+
+# Initialize enrichment service
+enrichment_service = MovieEnrichmentService()
+
+
+@user_movie_data_router.get("/movies", response=PaginatedMovieResponseSchema)
+def get_user_movies(
+    request: HttpRequest,
+    watchlist: bool = False
+) -> PaginatedMovieResponseSchema:
+    """
+    Retrieve movies associated with the authenticated user.
+
+    This endpoint returns a paginated list of movies that the user has interacted
+    with (watched, rated, added to watchlist, etc.). Movies are enriched with
+    complete TMDB data and user-specific metadata.
+
+    Args:
+        request: HTTP request with authenticated user
+        watchlist: Optional filter to show only watchlist movies (default: False)
+
+    Returns:
+        PaginatedMovieResponseSchema: Paginated list of movies with user data
+
+    Raises:
+        HttpError: 401 if authentication fails
+
+    Example:
+        GET /api/user-movie-data/movies - All user movies
+        GET /api/user-movie-data/movies?watchlist=true - Watchlist only
+    """
+    # Get authenticated user
+    user = get_current_user(request)
+
+    # Query UserMovieData for this user
+    user_data_qs = UserMovieData.objects.filter(user=user).select_related('movie')
+
+    # Apply watchlist filter if requested
+    if watchlist:
+        user_data_qs = user_data_qs.filter(user_on_watchlist=True)
+
+    # Extract tmdb_ids from user data
+    tmdb_ids = [umd.movie.tmdb_id for umd in user_data_qs]  # pyright: ignore[reportUnknownMemberType]
+
+    # If no movies, return empty response
+    if not tmdb_ids:
+        return PaginatedMovieResponseSchema(
+            page=1,
+            total_pages=0,
+            total_results=0,
+            results=[]
+        )
+
+    # Fetch full movie data from TMDB for each movie
+    # Note: For now, we fetch individually. Future optimization: batch API if available
+    movies: list[MovieBaseSchema] = []
+    for tmdb_id in tmdb_ids:
+        try:
+            movie_detail = movie_service.get_movie_by_id(tmdb_id)
+            # MovieDetailSchema extends MovieBaseSchema, so we can use it directly
+            # For watchlist, we only need the base fields, but keeping detail data
+            # doesn't hurt and avoids unnecessary data conversion
+            movies.append(movie_detail)
+        except HttpError:
+            # Skip movies that are no longer available in TMDB
+            # This can happen if a movie is removed from TMDB after user added it
+            continue
+
+    # Enrich movies with user-specific data
+    # Note: enrichment_service mutates the input list in place,
+    # so MovieDetailSchema objects stay as MovieDetailSchema
+    enriched_movies = enrichment_service.enrich_movies_with_user_data(movies, user)
+
+    # Return paginated response
+    # Note: Pagination not implemented in this minimal version
+    return PaginatedMovieResponseSchema(
+        page=1,
+        total_pages=1 if enriched_movies else 0,
+        total_results=len(enriched_movies),
+        results=enriched_movies
+    )
 
 
 @user_movie_data_router.get("/by-tmdb-id", response=UserMovieDataDetailSchema)

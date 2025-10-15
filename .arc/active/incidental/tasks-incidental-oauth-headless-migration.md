@@ -123,6 +123,7 @@ See "Task List Coordination" section at bottom for detailed boundary documentati
     - **Goal**: Create minimal watchlist feature to validate authentication patterns with real API calls
     - **Why Now**: Proves auth works end-to-end, establishes reusable enrichment pattern for future work
     - **Scope**: Basic implementation only - full feature in API Layer P2
+    - **Note**: While this implements watchlist functionality, it's scoped as TEST INFRASTRUCTURE for OAuth validation (Task 8). Full watchlist feature deferred to API Layer P2. Kept in OAuth task list because it's a direct prerequisite for Task 8, not independent work.
     - **Architecture Decision**: Reusable enrichment service pattern
         - **No new schemas needed**: Reuse existing `MovieBaseSchema` with `user_movie_data` field (already present!)
         - **Class-based service**: Use Task 2.0 patterns (dependency injection) from Backend Modernization

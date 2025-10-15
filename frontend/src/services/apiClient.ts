@@ -11,19 +11,28 @@ const BASE_URL = import.meta.env.VITE_BASE_API_URL;
 console.log('[apiClient] BASE_URL configured as:', BASE_URL);
 
 /**
- * Axios client configured for hybrid authentication.
+ * Axios client configured for two-pattern authentication.
  *
- * - Access tokens sent in Authorization header (from localStorage/cookie)
+ * Pattern 1 - Email/Password (JWT):
+ * - Access tokens sent in Authorization header (from localStorage/sessionStorage)
  * - Refresh tokens sent as HTTP-only cookie (withCredentials: true)
  * - Automatic token refresh on 401 responses
- * - Request queuing to prevent concurrent refresh calls
+ *
+ * Pattern 2 - OAuth (Session):
+ * - Session cookies sent automatically (withCredentials: true)
+ * - No Authorization header (session-based authentication only)
+ * - No token refresh needed (session managed by backend)
+ *
+ * Request queuing prevents concurrent refresh calls.
  */
 const apiClient = axios.create({
 	baseURL: BASE_URL,
 	headers: {
 		"Content-Type": "application/json",
 	},
-	// CRITICAL: Send cookies with every request (for HTTP-only refresh token)
+	// CRITICAL: Send cookies with every request
+	// - OAuth: Session cookie (HTTP-only, manages authentication)
+	// - Email/Password: Refresh token cookie (HTTP-only, for token refresh)
 	withCredentials: true,
 });
 
@@ -46,15 +55,16 @@ function onTokenRefreshed(token: string): void {
 	refreshSubscribers = [];
 }
 
-// Request interceptor: Attach access token and CSRF token
+// Request interceptor: Attach JWT access token (email/password) and CSRF token
 apiClient.interceptors.request.use((config) => {
-	// Attach JWT access token from storage (hybrid auth: cookie → localStorage → sessionStorage)
+	// Attach JWT access token from storage (email/password authentication only)
+	// OAuth users authenticate via session cookie automatically (no Authorization header needed)
 	const { access_token } = getAuthTokens();
 	if (access_token) {
 		config.headers.Authorization = `Bearer ${access_token}`;
 	}
 
-	// Attach CSRF token from cookie for unsafe methods
+	// Attach CSRF token from cookie for unsafe methods (required for both auth patterns)
 	const unsafeMethods = ["post", "put", "patch", "delete"];
 	if (config.method && unsafeMethods.includes(config.method.toLowerCase())) {
 		const csrfToken = document.cookie
@@ -69,7 +79,7 @@ apiClient.interceptors.request.use((config) => {
 	return config;
 });
 
-// Response interceptor: Handle token refresh and authentication errors
+// Response interceptor: Handle token refresh (JWT only) and authentication errors
 apiClient.interceptors.response.use(
 	(response) => response,
 	async (error) => {
@@ -80,12 +90,22 @@ apiClient.interceptors.response.use(
 
 		const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
-		// Check for token expiration error (401 only - 403 is authorization, not authentication)
+		// Check for authentication error (401 only - 403 is authorization, not authentication)
+		// Note: This refresh flow only applies to email/password (JWT) authentication
+		// OAuth users have session cookies managed by backend (no client-side refresh needed)
 		if (
 			error.response &&
 			error.response.status === 401 &&
 			!originalRequest._retry
 		) {
+			// Check if user has JWT tokens (email/password authentication)
+			const { access_token } = getAuthTokens();
+
+			// OAuth users won't have JWT tokens - let them handle 401 via session endpoint
+			if (!access_token) {
+				return Promise.reject(error);
+			}
+
 			// If token is already being refreshed, queue this request
 			if (isRefreshing) {
 				return new Promise((resolve) => {
@@ -100,8 +120,8 @@ apiClient.interceptors.response.use(
 			isRefreshing = true;
 
 			try {
-				// Call hybrid auth refresh endpoint (validates HTTP-only cookie)
-				// No need to send refresh token in body - it's in HTTP-only cookie
+				// Call JWT token refresh endpoint (email/password authentication only)
+				// Validates HTTP-only refresh token cookie
 				const response = await axios.post(
 					`${BASE_URL}/auth/refresh`,
 					{},
@@ -112,7 +132,7 @@ apiClient.interceptors.response.use(
 				if (response.status === 200 && response.data.access_token) {
 					const newAccessToken = response.data.access_token;
 
-					// Store new access token in localStorage (hybrid auth)
+					// Store new access token in localStorage
 					setAuthTokens(newAccessToken);
 
 					// Update default headers for future requests

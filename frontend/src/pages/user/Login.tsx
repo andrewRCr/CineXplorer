@@ -19,6 +19,9 @@ import { FiMail, FiX } from "react-icons/fi";
 import { FaGoogle, FaGithub } from "react-icons/fa";
 import { ERROR_CODES } from "@shared/error-codes";
 import * as authService from "@/services/authService";
+import GoogleLogo from "@/assets/GoogleLogo";
+import GitHubLogo from "@/assets/GitHubLogo";
+import LoadingContent from "@/components/layout/LoadingContent";
 
 const Login = () => {
 	const authContext = useAuthContext();
@@ -38,6 +41,10 @@ const Login = () => {
 		null
 	);
 	const [isLoggingIn, setIsLoggingIn] = useState(false);
+	const [oauthLoading, setOauthLoading] = useState<{
+		provider: string;
+		loading: boolean;
+	} | null>(null);
 
 	// Redirect authenticated users away from login page
 	// Note: Disabled during login to prevent race condition with setAuthTokens()
@@ -279,48 +286,39 @@ const Login = () => {
 	 */
 	const initializeOAuthLogin = async (provider: string) => {
 		try {
-			// Step 1: Validate django-allauth headless API is available
-			// Note: 401 is expected for unauthenticated users (endpoint works but user not logged in)
-			const sessionResponse = await fetch("/_allauth/browser/v1/auth/session", {
-				credentials: "include",
-			});
+			console.log(`[OAuth] Initializing ${provider} OAuth login`);
 
-			// Accept both 200 (authenticated) and 401 (unauthenticated) as valid
-			if (!sessionResponse.ok && sessionResponse.status !== 401) {
-				console.error("Failed to initialize session:", sessionResponse.status);
-				setGeneralError("Authentication setup failed. Please refresh the page.");
-				return;
-			}
+			// Show loading overlay immediately
+			const startTime = Date.now();
+			setOauthLoading({ provider, loading: true });
 
-			// Step 2: Get CSRF token from cookie (if available)
-			// Note: CSRF token may not exist yet - that's OK, OAuth endpoints are CSRF-exempt.
-			// OAuth 2.0 'state' parameter provides CSRF protection at protocol level.
-			// We include csrfmiddlewaretoken in form for defense-in-depth, but it's not required.
+			// Step 1: Get CSRF token from cookie (if available)
 			const csrfToken = document.cookie
 				.split("; ")
 				.find((row) => row.startsWith("csrftoken="))
 				?.split("=")[1];
 
-			// If no CSRF token available, use empty string (OAuth state parameter protects anyway)
-			if (!csrfToken) {
-				console.log("No CSRF token found - continuing with OAuth (state parameter provides protection)");
-			}
+			console.log(`[OAuth] CSRF token: ${csrfToken ? 'found' : 'not found'}`);
 
-			// Step 3: Create and submit form to headless provider redirect endpoint
-			// Must use HTML form submission (not fetch) so browser follows OAuth redirect
+			// Step 2: Create form and submit through Caddy proxy
+			// Use absolute URL with protocol to force full page navigation (bypass React Router)
 			const form = document.createElement("form");
 			form.method = "POST";
-			form.action = "/_allauth/browser/v1/auth/provider/redirect";
+			form.action = "https://localhost:8444/_allauth/browser/v1/auth/provider/redirect";
+			// CRITICAL: Force full page reload, prevent React Router interception
+			form.target = "_self";
+
+			console.log(`[OAuth] Form action: ${form.action}`);
 
 			// Add form fields
-			// Note: csrfmiddlewaretoken included for defense-in-depth, but OAuth endpoints
-			// are CSRF-exempt (OAuth 'state' parameter provides protection)
 			const fields = {
 				provider: provider,
-				callback_url: `${window.location.origin}/login`,
+				callback_url: "https://localhost:8444/login", // Use full URL with correct port
 				process: "login",
-				csrfmiddlewaretoken: csrfToken || "",  // Empty string if no token (OAuth still protected by state)
+				...(csrfToken ? { csrfmiddlewaretoken: csrfToken } : {}),
 			};
+
+			console.log("[OAuth] Form fields:", { ...fields, csrfmiddlewaretoken: csrfToken ? "[PRESENT]" : "[NOT PRESENT]" });
 
 			Object.entries(fields).forEach(([key, value]) => {
 				const input = document.createElement("input");
@@ -330,14 +328,49 @@ const Login = () => {
 				form.appendChild(input);
 			});
 
-			// Submit form (browser will follow OAuth redirect)
+			// Set flag to indicate OAuth flow is in progress
+			// This prevents auto-login on /login page visits that aren't from OAuth redirect
+			sessionStorage.setItem('oauth_in_progress', 'true');
+
+			// Ensure minimum display time of 1000ms for loading overlay
+			// This prevents the overlay from flashing too quickly and being unreadable
+			const elapsed = Date.now() - startTime;
+			const minDisplayTime = 1000; // 1 second minimum
+			const remainingTime = Math.max(0, minDisplayTime - elapsed);
+
+			await new Promise(resolve => setTimeout(resolve, remainingTime));
+
+			// Submit form (browser will perform full page navigation and follow OAuth redirect to Google)
+			console.log("[OAuth] Submitting form through Caddy proxy...");
 			document.body.appendChild(form);
 			form.submit();
 		} catch (error) {
 			console.error("OAuth initialization error:", error);
 			setGeneralError("Failed to initiate OAuth login. Please try again.");
+			setOauthLoading(null); // Clear loading state on error
 		}
 	};
+
+	// Show loading content when OAuth is in progress
+	if (oauthLoading?.loading) {
+		return (
+			<LoadingContent
+				mode="content"
+				message={`Logging in with ${
+					oauthLoading.provider === "google" ? "Google" : "GitHub"
+				}...`}
+				icon={
+					oauthLoading.provider === "google" ? (
+						<GoogleLogo size={64} />
+					) : (
+						<Box color="black">
+							<GitHubLogo size={64} />
+						</Box>
+					)
+				}
+			/>
+		);
+	}
 
 	return (
 		<Box

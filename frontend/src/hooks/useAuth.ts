@@ -50,18 +50,28 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
 	const location = useLocation();
 
 	useEffect(() => {
+		// Skip getUserDetails for OAuth users (session-only authentication)
+		// OAuth users have no JWT tokens, so getUserDetails would fail
 		if (isAuthenticated) {
-			getUserDetails();
+			const { access_token } = getAuthTokens();
+			// Only call getUserDetails if user has JWT tokens (email/password flow)
+			if (access_token) {
+				getUserDetails();
+			}
 		}
 	// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [isAuthenticated]); // getUserDetails is stable but creates circular dependency
 
-	// Check for token expiration every minute
+	// Check for token expiration every minute (JWT-only)
 	// Note: Token refresh is handled automatically by axios interceptor (apiClient.ts)
 	// This is just for proactive logout if token expires while idle
+	// OAuth users (session-only) are skipped - their sessions managed by backend
 	useEffect(() => {
 		const checkTokenExpiration = () => {
-			if (isAuthenticated && areTokensExpired()) {
+			const { access_token } = getAuthTokens();
+			// Only check expiration for JWT users (email/password flow)
+			// OAuth users have session cookies only, no JWT tokens
+			if (isAuthenticated && access_token && areTokensExpired()) {
 				console.log("Tokens expired during session, logging out...");
 				logout();
 			}
@@ -73,14 +83,94 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
 	}, [isAuthenticated]); // logout is stable but creates circular dependency
 
 	// Handle OAuth callback (when redirected back from Google/GitHub)
+	// Supports two authentication patterns:
+	// 1. OAuth: Session cookies only (HTTP-only, managed by django-allauth)
+	// 2. Email/Password: JWT tokens (checked via localStorage/sessionStorage)
 	useEffect(() => {
-		const handleOAuthCallback = async () => {
-			// Hybrid auth: Check for access token in cookie OR localStorage
-			const { access_token, storage } = getAuthTokens();
+		// Skip if already authenticated to prevent loops
+		if (isAuthenticated) {
+			return;
+		}
 
-			// OAuth success: backend may have set access token in cookie
+		const handleOAuthCallback = async () => {
+			console.log('[useAuth] Callback handler running', {
+				pathname: location.pathname,
+				search: location.search,
+				isAuthenticated
+			});
+
+			const params = new URLSearchParams(location.search);
+			const oauthError = params.get('error');
+
+			// OAuth error handling (check first)
+			if (oauthError) {
+				console.error("OAuth authentication failed:", oauthError);
+				navigate(ROUTES.LOGIN, {
+					state: {
+						oauthError: true,
+						message: "OAuth authentication failed. Please try again."
+					}
+				});
+				return;
+			}
+
+			// Check if we just came from an OAuth redirect
+			// Only check session if we have a referrer or state indicating OAuth flow
+			// This prevents auto-login on every /login page visit
+			const isFromOAuthRedirect =
+				document.referrer.includes('google.com') ||
+				document.referrer.includes('github.com') ||
+				sessionStorage.getItem('oauth_in_progress') === 'true';
+
+			// Check if we're on the OAuth callback path (e.g., /login after OAuth redirect)
+			// OAuth authentication uses session cookies (NO tokens in URL)
+			if (location.pathname === ROUTES.LOGIN && isFromOAuthRedirect) {
+				console.log('[useAuth] OAuth redirect detected, checking session...');
+				// Clear the OAuth in-progress flag
+				sessionStorage.removeItem('oauth_in_progress');
+
+				try {
+					// Check session endpoint to see if OAuth completed successfully
+					console.log('[useAuth] Fetching session endpoint...');
+					const response = await fetch(
+						'https://localhost:8444/_allauth/browser/v1/auth/session',
+						{
+							method: 'GET',
+							credentials: 'include', // CRITICAL: sends HTTP-only session cookie
+						}
+					);
+
+					console.log('[useAuth] Session response status:', response.status);
+
+					if (response.ok) {
+						const data = await response.json();
+						console.log('[useAuth] Session data:', data);
+
+						// Session endpoint returns: {status: 200, data: {user, methods}, meta: {is_authenticated}}
+						if (data?.meta?.is_authenticated && data?.data?.user) {
+							console.log('OAuth callback detected - authenticated via session cookie');
+							console.log('[useAuth] User:', data.data.user);
+
+							// Set user data from session response (no need to call getUserProfile)
+							setUser(data.data.user);
+							// Set authenticated state (session cookie handles auth automatically)
+							setIsAuthenticated(true);
+							navigate(ROUTES.HOME);
+							return;
+						} else {
+							console.log('[useAuth] Session response shows not authenticated');
+						}
+					}
+				} catch (error) {
+					console.error('Error checking session endpoint:', error);
+					// Fall through to JWT token check (email/password flow)
+				}
+			}
+
+			// Fallback: Check for JWT tokens in cookie/localStorage (email/password flow)
+			const { access_token, storage } = getAuthTokens();
 			if (access_token && !isAuthenticated) {
-				console.log(`OAuth callback detected, access token found in ${storage}`);
+				console.log(`Existing JWT session detected, access token found in ${storage}`);
 
 				// If token came from cookie, store it in localStorage for future use
 				// This enables instant auth checks without network calls
@@ -92,25 +182,13 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
 				setIsAuthenticated(true);
 				// getUserDetails will be called by the isAuthenticated useEffect
 				navigate(ROUTES.HOME);
-			}
-
-			// OAuth error: check for error in URL params
-			const params = new URLSearchParams(location.search);
-			const error = params.get('error');
-			if (error) {
-				console.error("OAuth authentication failed:", error);
-				// Navigate to login with error state
-				navigate(ROUTES.LOGIN, {
-					state: {
-						oauthError: true,
-						message: "OAuth authentication failed. Please try again."
-					}
-				});
+				return;
 			}
 		};
 
 		handleOAuthCallback();
-	}, [location, isAuthenticated, navigate]);
+	// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [location.pathname, location.search]); // Only re-run when URL changes, not when isAuthenticated changes
 
 	const logout = useCallback(async () => {
 		setIsAuthenticated(false);
@@ -119,7 +197,24 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
 		navigate(ROUTES.LOGIN);
 
 		try {
-			await authService.logout();
+			// Check if user is using OAuth (no JWT tokens) or email/password (has JWT tokens)
+			const { access_token } = getAuthTokens();
+
+			if (!access_token) {
+				// OAuth user - logout via session endpoint
+				console.log('[useAuth] Logging out OAuth user via session endpoint');
+				await fetch('https://localhost:8444/_allauth/browser/v1/auth/session', {
+					method: 'DELETE',
+					credentials: 'include', // Send session cookie
+					headers: {
+						'Content-Type': 'application/json',
+					},
+				});
+			} else {
+				// JWT user - logout via custom endpoint
+				console.log('[useAuth] Logging out JWT user via /api/logout/');
+				await authService.logout();
+			}
 		} catch (error) {
 			console.error("Logout failed:", error);
 			return Promise.reject(error);
@@ -128,8 +223,10 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
 
 	const getUserDetails = useCallback(async () => {
 		try {
-			// Check if tokens are expired before making the request
-			if (areTokensExpired()) {
+			// Check if tokens are expired before making the request (JWT users only)
+			// OAuth users have session cookies only, skip JWT expiration check
+			const { access_token } = getAuthTokens();
+			if (access_token && areTokensExpired()) {
 				console.log("Tokens expired, logging out...");
 				await logout();
 				return;

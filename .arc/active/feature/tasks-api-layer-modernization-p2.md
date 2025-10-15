@@ -3,11 +3,17 @@
 **Feature:** Complete Django Ninja Migration (UserMovieData + Authentication Domains)
 **PRD:** [PRD](.arc/active/prd-api-layer-modernization-p2.md)
 **Branch:** `feature/api-layer-modernization-p2`
-**Status:** PAUSED (backend type safety modernization in progress)
+**Status:** PAUSED (tasks-incidental-oauth-headless-migration in progress)
 
 ## Overview
 
 This task list implements Phase 2 of the API Layer Modernization, completing the migration from Django REST Framework to Django Ninja. It follows the **ModelSchema blueprint** established in Phase 1, ensuring type-safe Django model CRUD operations with zero unnecessary `type: ignore` comments.
+
+**Task List Coordination Note:**
+- **OAuth Incidental Work** (`.arc/active/incidental/tasks-incidental-oauth-headless-migration.md`) completed BEFORE resuming this task list
+- OAuth incidental provides **lean validation** (basic flows work, 30-45 min E2E testing)
+- **Task 5.6 in this list** provides **comprehensive integration testing** (OAuth + UserMovieData + full workflows)
+- See "Task List Coordination" section in OAuth incidental doc for complete boundary documentation
 
 **Key Patterns from Phase 1:**
 
@@ -308,14 +314,89 @@ def create_entry(request: HttpRequest, payload: CreateSchema):
     - [x] 5.5.4 Ensure consistent UX between OAuth and password authentication flows (same error display mechanism, same redirect behavior)
     - [x] 5.5.5 Run incremental frontend linting and type checking (0 errors, 0 violations)
 
-- [ ] 5.6 Verify frontend integration end-to-end
+- [ ] 5.6 Comprehensive Frontend Integration Testing
+    - **Prerequisites**: OAuth incidental work complete (basic validation done in `.arc/active/incidental/tasks-incidental-oauth-headless-migration.md`)
+    - **Scope**: Full OAuth + UserMovieData workflows - THIS IS THE INTEGRATION TEST PHASE
+    - **Goal**: Verify OAuth + features work together comprehensively
     - [x] 5.6.1 Manual test: User registration with password → email verification → login ✅ Working (registration, email delivery, HMAC verification, login)
-    - [ ] 5.6.2 Manual test: User login with Google OAuth → redirect → authenticated
-    - [ ] 5.6.3 Manual test: User login with GitHub OAuth → redirect → authenticated
-    - [ ] 5.6.4 Manual test: User movie data CRUD (add to watchlist, rate, review, delete)
-    - [ ] 5.6.5 Manual test: User profile retrieval and updates
-    - [ ] 5.6.6 Manual test: JWT token refresh flow
-    - [ ] 5.6.7 Manual test: Logout flow (cookies cleared, unauthenticated state)
+    - [ ] 5.6.2 OAuth regression check - Google (5 min smoke test)
+        - [ ] 5.6.2.1 Quick OAuth flow → Verify still works after Phase 2 changes
+        - [ ] 5.6.2.2 **NOT full validation** (already done in OAuth incidental work)
+    - [ ] 5.6.3 OAuth regression check - GitHub (5 min smoke test)
+        - [ ] 5.6.3.1 Quick OAuth flow → Verify still works after Phase 2 changes
+        - [ ] 5.6.3.2 **NOT full validation** (already done in OAuth incidental work)
+    - [ ] 5.6.4 **COMPREHENSIVE**: UserMovieData workflows (both auth patterns)
+        - [ ] 5.6.4.1 OAuth user → Full watchlist CRUD
+            - Add multiple movies to watchlist
+            - Update watchlist status (on/off toggle)
+            - Remove movies from watchlist
+            - Verify list view shows correct data
+        - [ ] 5.6.4.2 OAuth user → Movie ratings
+            - Rate movies (1-10 scale)
+            - Update existing ratings
+            - Remove ratings (unrate)
+            - Verify ratings persist and display correctly
+        - [ ] 5.6.4.3 OAuth user → Movie reviews
+            - Create text reviews
+            - Update existing reviews
+            - Delete reviews
+            - Verify reviews persist and display correctly
+        - [ ] 5.6.4.4 OAuth user → Additional movie data
+            - Toggle "watched" status
+            - Toggle "favorite" status
+            - Verify all fields update correctly
+        - [ ] 5.6.4.5 JWT user → Same workflows as 5.6.4.1-5.6.4.4
+            - Complete isolation test (JWT user should NOT see OAuth user's data)
+        - [ ] 5.6.4.6 Cross-pattern validation
+            - OAuth user adds watchlist items
+            - Logout → Login as JWT user
+            - Verify completely independent data (no cross-contamination)
+            - Logout → Login as OAuth user again
+            - Verify original data still present
+        - [ ] 5.6.4.7 Multi-user scenarios
+            - Create data for multiple OAuth users (Google, GitHub)
+            - Create data for multiple JWT users
+            - Verify complete user isolation across all patterns
+    - [ ] 5.6.5 Profile management (both auth patterns)
+        - [ ] 5.6.5.1 OAuth user → Update profile (name, email if allowed)
+        - [ ] 5.6.5.2 JWT user → Update profile
+        - [ ] 5.6.5.3 Verify profile updates persist correctly
+    - [ ] 5.6.6 **COMPREHENSIVE**: JWT token refresh scenarios
+        - [ ] 5.6.6.1 Token refresh during active session (automatic via interceptor)
+        - [ ] 5.6.6.2 Token refresh after page reload (token still valid)
+        - [ ] 5.6.6.3 Expired access token handling (refresh token still valid)
+        - [ ] 5.6.6.4 Expired refresh token handling (redirect to login)
+        - [ ] 5.6.6.5 Token refresh under load (multiple rapid API calls)
+        - [ ] 5.6.6.6 Verify refresh rotation (new refresh token issued)
+    - [ ] 5.6.7 Logout flows (both patterns)
+        - [ ] 5.6.7.1 OAuth user → Logout → Verify session cleared, cookies removed
+        - [ ] 5.6.7.2 JWT user → Logout → Verify tokens cleared, cookies removed
+        - [ ] 5.6.7.3 Post-logout → Verify redirect to login page
+        - [ ] 5.6.7.4 Post-logout → Verify unauthenticated API calls rejected
+    - [ ] 5.6.8 **NEW**: Error recovery scenarios
+        - [ ] 5.6.8.1 Network errors during API calls
+            - Simulate network failure during watchlist operation
+            - Verify graceful error handling (no crashes, user-friendly message)
+        - [ ] 5.6.8.2 Invalid session handling
+            - Clear session cookie via DevTools
+            - Attempt API call
+            - Verify redirect to login (not crash)
+        - [ ] 5.6.8.3 Invalid JWT handling
+            - Corrupt JWT token in localStorage
+            - Attempt API call
+            - Verify redirect to login (not crash)
+        - [ ] 5.6.8.4 OAuth denial/cancellation
+            - Start OAuth flow
+            - Click "Cancel" on consent screen
+            - Verify graceful error message, no crash
+        - [ ] 5.6.8.5 Server errors (500, 503)
+            - Verify appropriate error messages
+            - Verify no console errors or crashes
+    - [ ] 5.6.9 **NEW**: Multi-tab coordination (if time permits, not critical)
+        - [ ] 5.6.9.1 OAuth user → Open multiple tabs
+        - [ ] 5.6.9.2 Add watchlist item in Tab 1 → Verify visible in Tab 2 (after refresh)
+        - [ ] 5.6.9.3 Logout in Tab 1 → Verify Tab 2 detects logout
+        - [ ] 5.6.9.4 **NOTE**: This is nice-to-have, not a blocker
 
 ### Phase 6: Testing Migration and Quality Gates
 

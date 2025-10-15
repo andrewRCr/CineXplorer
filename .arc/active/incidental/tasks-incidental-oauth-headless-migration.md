@@ -119,53 +119,111 @@ See "Task List Coordination" section at bottom for detailed boundary documentati
         - [x] 6.10.7 Markdown linting (`npx markdownlint-cli2 --fix "README.md" ".arc/**/*.md"`) - ✅ 0 violations (69 files checked)
         - [x] 6.10.8 Verify: 100% test pass rate, 0 type errors, 0 linting violations - ✅ VERIFIED
 
-- [ ] **7. Manual E2E Validation** - Critical path testing (lean scope)
+- [ ] **7. Minimal Watchlist Implementation** - Testing infrastructure (prerequisite for Task 8)
+    - **Goal**: Create minimal watchlist feature to validate authentication patterns with real API calls
+    - **Why Now**: Proves auth works end-to-end, establishes reusable enrichment pattern for future work
+    - **Scope**: Basic implementation only - full feature in API Layer P2
+    - **Architecture Decision**: Reusable enrichment service pattern
+        - **No new schemas needed**: Reuse existing `MovieBaseSchema` with `user_movie_data` field (already present!)
+        - **Class-based service**: Use Task 2.0 patterns (dependency injection) from Backend Modernization
+        - **Universal application**: Same enrichment works for discover pages AND user-specific pages
+        - **DRY principle**: Single service enriches movies with user data across all endpoints
+    - **Forward-Compatibility Note**: Implements class-based service with dependency injection (Backend Modernization Task 2.0 pattern) rather than function-based pattern currently in movie_service.py. Avoids creating technical debt that would need immediate refactoring.
+    - [ ] 7.1 Backend Service - MovieEnrichmentService (class-based with dependency injection)
+        - [ ] Create `user_movie_data/services/movie_enrichment_service.py`
+        - [ ] Implement `MovieEnrichmentService` class with `__init__(user_movie_data_repository=None)` for DI
+        - [ ] Method: `enrich_movies_with_user_data(movies: list[MovieBaseSchema], user: User | None) -> list[MovieBaseSchema]`
+        - [ ] If user is None: return movies unchanged (unauthenticated users)
+        - [ ] If user is authenticated: bulk query UserMovieData, map to UserMovieDataSchema, populate movie.user_movie_data
+        - [ ] Use efficient querying: `filter(user=user, movie__tmdb_id__in=tmdb_ids).select_related('movie')`
+        - [ ] Professional type annotations (no Any usage)
+        - [ ] Docstrings following project standards
+    - [ ] 7.2 Backend Integration - Update movie discovery endpoints to use enrichment
+        - [ ] Update `movie/api.py` endpoints to optionally accept authenticated user
+        - [ ] Pass `request.user if request.user.is_authenticated else None` to service
+        - [ ] Call enrichment service on response before returning
+        - [ ] Update endpoints: `get_now_playing_movies`, `get_upcoming_movies`, `search_movies`, `discover_movies`, `get_movie_detail`
+        - [ ] NO breaking changes: enrichment is transparent (existing `user_movie_data: None` becomes populated)
+    - [ ] 7.3 Backend API - Watchlist endpoint using enrichment service
+        - [ ] Add GET `/api/user-movie-data/movies` endpoint (authenticated only)
+        - [ ] Optional query param: `?watchlist=true` for filtering
+        - [ ] Query UserMovieData for user, get tmdb_ids, fetch TMDB data (or from local Movie cache)
+        - [ ] Use enrichment service to populate user_movie_data (same service as discover!)
+        - [ ] Returns `PaginatedMovieResponseSchema` (consistent with all movie endpoints)
+    - [ ] 7.4 Quality Checks - Backend implementation
+        - [ ] Backend linting: 0 violations (`ruff check` with auto-fix)
+        - [ ] Backend type checking: 0 errors (`npx pyright`)
+        - [ ] Run tests: Verify no regressions in movie/user_movie_data domains
+    - [ ] 7.5 Frontend Service - Watchlist API client
+        - [ ] Regenerate TypeScript types from OpenAPI schema (`npm run generate-types`)
+        - [ ] Add `getUserMovies()` function in appropriate service file
+        - [ ] Type-safe request/response handling (uses generated types)
+    - [ ] 7.6 Frontend Component - MovieCard onClick handler
+        - [ ] Add onClick handler to watchlist button (RiPlayListAddLine)
+        - [ ] POST to `/api/user-movie-data` with `{movie_id, user_on_watchlist: true}`
+        - [ ] Show simple success notification (toast or console.log for minimal impl)
+        - [ ] Handle error cases (movie already on watchlist, network errors)
+    - [ ] 7.7 Frontend Page - Minimal Watchlist display
+        - [ ] Create `/watchlist` route in router
+        - [ ] Create simple Watchlist page component
+        - [ ] Fetch watchlist data on mount (`getUserMovies({watchlist: true})`)
+        - [ ] Display movie titles as simple text list (no fancy UI needed)
+        - [ ] Show "No movies on watchlist" if empty
+    - [ ] 7.8 Quality Checks - Full stack validation
+        - [ ] Frontend linting: 0 violations (`npm run lint`)
+        - [ ] Frontend type checking: 0 errors (`npm run type-check`)
+        - [ ] Manual smoke test: Add movie → See in list → Verify enrichment on discover pages
+        - [ ] Verify: Unauthenticated users see movies without user_movie_data (null)
+        - [ ] Verify: Authenticated users see movies with user_movie_data populated
+    - **Future Enhancement** (API Layer P2): Full MovieCard grid, pagination, filtering, remove from watchlist, bulk operations
+
+- [ ] **8. Manual E2E Validation** - Critical path testing (lean scope)
     - **Goal**: Prove OAuth implementation works in isolation, document expected behavior
     - **Scope**: Basic flows only - comprehensive testing deferred to API Layer P2 Task 5.6
-    - [ ] 7.1 JWT Pattern - Quick validation (5-10 min)
-        - [ ] 7.1.1 Register → Login → Add movie to watchlist → Verify persists after refresh
-        - [ ] 7.1.2 Check DevTools: JWT tokens present, logout clears cookies
-        - [ ] 7.1.3 **SKIP**: Extensive token refresh testing, multi-tab, all edge cases (deferred)
-    - [ ] 7.2 OAuth Pattern - Google flow (10-15 min)
-        - [ ] 7.2.1 Click "Continue with Google" → Complete OAuth → Verify callback success
-        - [ ] 7.2.2 Check DevTools: NO JWT tokens, session cookie present
-        - [ ] 7.2.3 Add movie to watchlist → Refresh page → Session persists
-        - [ ] 7.2.4 Logout → Session cleared
-        - [ ] 7.2.5 **SKIP**: Extensive multi-tab testing, all error scenarios (deferred)
-    - [ ] 7.3 OAuth Pattern - GitHub flow (5-10 min)
-        - [ ] 7.3.1 Repeat 7.2.1-7.2.4 with GitHub OAuth
-        - [ ] 7.3.2 **SKIP**: Comprehensive cross-provider testing (deferred)
-    - [ ] 7.4 Quick isolation check (5 min)
-        - [ ] 7.4.1 OAuth user → Add watchlist items
-        - [ ] 7.4.2 Logout → Login as JWT user → Verify independent data
-        - [ ] 7.4.3 **SKIP**: Extensive cross-pattern scenarios (deferred to API P2)
-    - [ ] 7.5 Critical error paths only (5 min)
-        - [ ] 7.5.1 OAuth denial (click Cancel) → Verify graceful error, no crash
-        - [ ] 7.5.2 Invalid session → Verify redirect to login
-        - [ ] 7.5.3 **SKIP**: Network errors, expired tokens, all edge cases (deferred)
-    - [ ] 7.6 Document results in notes file (5 min)
-        - [ ] 7.6.1 Brief execution log (critical paths work: Yes/No)
-        - [ ] 7.6.2 Any bugs found (must fix before closing)
-        - [ ] 7.6.3 Note items deferred to API Layer P2
+    - [ ] 8.1 JWT Pattern - Quick validation (5-10 min)
+        - [ ] 8.1.1 Register → Login → Add movie to watchlist → Verify persists after refresh
+        - [ ] 8.1.2 Check DevTools: JWT tokens present, logout clears cookies
+        - [ ] 8.1.3 **SKIP**: Extensive token refresh testing, multi-tab, all edge cases (deferred)
+    - [ ] 8.2 OAuth Pattern - Google flow (10-15 min)
+        - [ ] 8.2.1 Click "Continue with Google" → Complete OAuth → Verify callback success
+        - [ ] 8.2.2 Check DevTools: NO JWT tokens, session cookie present
+        - [ ] 8.2.3 Add movie to watchlist → Refresh page → Session persists
+        - [ ] 8.2.4 Logout → Session cleared
+        - [ ] 8.2.5 **SKIP**: Extensive multi-tab testing, all error scenarios (deferred)
+    - [ ] 8.3 OAuth Pattern - GitHub flow (5-10 min)
+        - [ ] 8.3.1 Repeat 8.2.1-8.2.4 with GitHub OAuth
+        - [ ] 8.3.2 **SKIP**: Comprehensive cross-provider testing (deferred)
+    - [ ] 8.4 Quick isolation check (5 min)
+        - [ ] 8.4.1 OAuth user → Add watchlist items
+        - [ ] 8.4.2 Logout → Login as JWT user → Verify independent data
+        - [ ] 8.4.3 **SKIP**: Extensive cross-pattern scenarios (deferred to API P2)
+    - [ ] 8.5 Critical error paths only (5 min)
+        - [ ] 8.5.1 OAuth denial (click Cancel) → Verify graceful error, no crash
+        - [ ] 8.5.2 Invalid session → Verify redirect to login
+        - [ ] 8.5.3 **SKIP**: Network errors, expired tokens, all edge cases (deferred)
+    - [ ] 8.6 Document results in notes file (5 min)
+        - [ ] 8.6.1 Brief execution log (critical paths work: Yes/No)
+        - [ ] 8.6.2 Any bugs found (must fix before closing)
+        - [ ] 8.6.3 Note items deferred to API Layer P2
 
-- [ ] **8. Documentation and Cleanup**
-    - [ ] 8.1 Remove debugging console.log statements
-        - [ ] 8.1.1 Search for console.log in useAuth.ts, Login.tsx, apiClient.ts
-        - [ ] 8.1.2 Remove or convert to proper logging
-        - [ ] 8.1.3 Verify no remaining debug statements
-    - [ ] 8.2 Create `.arc/reference/strategies/strategy-authentication.md` for detailed architecture / approach documentation
+- [ ] **9. Documentation and Cleanup**
+    - [ ] 9.1 Remove debugging console.log statements
+        - [ ] 9.1.1 Search for console.log in useAuth.ts, Login.tsx, apiClient.ts
+        - [ ] 9.1.2 Remove or convert to proper logging
+        - [ ] 9.1.3 Verify no remaining debug statements
+    - [ ] 9.2 Create `.arc/reference/strategies/strategy-authentication.md` for detailed architecture / approach documentation
         ***Purpose: Reference for future maintenance, onboarding, API Layer P2 work***
-        - [ ] 8.2.1 Document two-pattern authentication architecture
-        - [ ] 8.2.2 Document security model (httponly cookies, CORS, CSRF)
-        - [ ] 8.2.3 List all endpoints supporting both patterns
-        - [ ] 8.2.4 Document testing approach (backend + E2E)
-        - [ ] 8.2.5 Note any potential future improvements identified
-    - [ ] 8.3 Fill out task list completion summary (bottom of this file)
-        - [ ] 8.3.1 Brief summary of work done
-    - [ ] 8.4 Mark incidental work complete
-        - [ ] 8.4.1 Change status to "Complete" at top of this file
-        - [ ] 8.4.2 Add completion date
-        - [ ] 8.4.3 Verify all parent tasks marked [x]
+        - [ ] 9.2.1 Document two-pattern authentication architecture
+        - [ ] 9.2.2 Document security model (httponly cookies, CORS, CSRF)
+        - [ ] 9.2.3 List all endpoints supporting both patterns
+        - [ ] 9.2.4 Document testing approach (backend + E2E)
+        - [ ] 9.2.5 Note any potential future improvements identified
+    - [ ] 9.3 Fill out task list completion summary (bottom of this file)
+        - [ ] 9.3.1 Brief summary of work done
+    - [ ] 9.4 Mark incidental work complete
+        - [ ] 9.4.1 Change status to "Complete" at top of this file
+        - [ ] 9.4.2 Add completion date
+        - [ ] 9.4.3 Verify all parent tasks marked [x]
 
 ## Relevant Files
 
@@ -184,6 +242,10 @@ See "Task List Coordination" section at bottom for detailed boundary documentati
 - `backend/apps/authentication/tests/test_session_auth.py` - Import order fixes (Ruff auto-fix)
 - `backend/apps/authentication/tests/test_security.py` - Import order fixes (Ruff auto-fix)
 - `backend/apps/user_movie_data/tests/test_user_movie_data_api.py` - Updated `authenticated_user` fixture to use shared helper
+- `backend/apps/user_movie_data/services/movie_enrichment_service.py` - **NEW (Task 7)**: Class-based enrichment service with DI (Backend Modernization Task 2.0 pattern)
+- `backend/apps/movie/api.py` - **UPDATED (Task 7)**: Discovery endpoints now use enrichment service for authenticated users
+- `backend/apps/movie/schemas.py` - **EXISTING**: MovieBaseSchema already has `user_movie_data` field (no changes needed)
+- `backend/apps/user_movie_data/api.py` - **UPDATED (Task 7)**: New watchlist endpoint using enrichment service
 
 **Frontend**:
 
@@ -195,6 +257,11 @@ See "Task List Coordination" section at bottom for detailed boundary documentati
 - `frontend/src/components/layout/LoadingLayout.tsx` - Uses LoadingContent
 - `frontend/src/assets/GoogleLogo.tsx` - Official Google brand logo
 - `frontend/src/assets/GitHubLogo.tsx` - Official GitHub Octocat logo
+- `frontend/src/types/api.ts` - **UPDATED (Task 7)**: Regenerated TypeScript types (PaginatedMovieResponseSchema with user_movie_data)
+- `frontend/openapi.json` - **UPDATED (Task 7)**: Regenerated OpenAPI schema from backend
+- `frontend/src/services/userMovieDataService.ts` - **NEW (Task 7)**: API client for getUserMovies() and watchlist operations
+- `frontend/src/pages/user/Watchlist.tsx` - **NEW (Task 7)**: Minimal watchlist page component
+- `frontend/src/components/movie/MovieCard.tsx` - **UPDATED (Task 7)**: Add onClick handler for watchlist button
 
 ## Task List Coordination
 

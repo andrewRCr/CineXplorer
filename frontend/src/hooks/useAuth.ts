@@ -38,23 +38,64 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
 		// Priority: cookie → localStorage → sessionStorage (handled by getAuthTokens)
 		const { access_token } = getAuthTokens();
 		const isExpired = areTokensExpired();
+		const hasAuthFlag = getInitialAuthenticatedValue();
+
+		console.log('[useAuth] Initial state calculation:', {
+			has_access_token: access_token !== null,
+			is_expired: isExpired,
+			has_auth_flag: hasAuthFlag,
+			result: access_token !== null && !isExpired && hasAuthFlag
+		});
 
 		// Three conditions must be met:
 		// 1. Access token exists (in cookie, localStorage, or sessionStorage)
 		// 2. Token is not expired (checked via JWT exp claim or localStorage timestamp)
 		// 3. isAuthenticated flag is set (for backward compatibility)
-		return access_token !== null && !isExpired && getInitialAuthenticatedValue();
+		return access_token !== null && !isExpired && hasAuthFlag;
 	});
 	const [user, setUser] = useState<UserProfile | null>(null);
 	const navigate = useNavigate();
 	const location = useLocation();
 
+	// On initial mount, check for existing authentication (JWT or session)
+	// This runs ONCE on mount to detect existing sessions
 	useEffect(() => {
-		// Skip getUserDetails for OAuth users (session-only authentication)
-		// OAuth users have no JWT tokens, so getUserDetails would fail
+		const checkExistingAuth = async () => {
+			// Skip if already authenticated (initial state calculation succeeded)
+			if (isAuthenticated) {
+				const { access_token } = getAuthTokens();
+				// Only call getUserDetails if user has JWT tokens (email/password flow)
+				if (access_token) {
+					getUserDetails();
+				}
+				return;
+			}
+
+			// Check for JWT tokens in cookie/localStorage (email/password flow)
+			const { access_token, storage } = getAuthTokens();
+			if (access_token && !areTokensExpired()) {
+				console.log(`[useAuth] Initial mount: JWT session detected in ${storage}`);
+
+				// If token came from cookie, store it in localStorage for future use
+				if (storage === "cookie") {
+					setAuthTokens(access_token);
+				}
+
+				setIsAuthenticated(true);
+				// getUserDetails will be called on next render when isAuthenticated changes
+			}
+		};
+
+		checkExistingAuth();
+	// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []); // Run ONCE on mount
+
+	// When authentication state changes, fetch user details (JWT users only)
+	useEffect(() => {
 		if (isAuthenticated) {
 			const { access_token } = getAuthTokens();
 			// Only call getUserDetails if user has JWT tokens (email/password flow)
+			// OAuth users have session cookies only, user data already set from session endpoint
 			if (access_token) {
 				getUserDetails();
 			}
@@ -93,12 +134,6 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
 		}
 
 		const handleOAuthCallback = async () => {
-			console.log('[useAuth] Callback handler running', {
-				pathname: location.pathname,
-				search: location.search,
-				isAuthenticated
-			});
-
 			const params = new URLSearchParams(location.search);
 			const oauthError = params.get('error');
 
@@ -121,6 +156,21 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
 				document.referrer.includes('google.com') ||
 				document.referrer.includes('github.com') ||
 				sessionStorage.getItem('oauth_in_progress') === 'true';
+
+			// ONLY run callback handling for:
+			// 1. OAuth redirects (from Google/GitHub with oauth_in_progress flag)
+			// 2. OAuth error callbacks (handled above)
+			// Do NOT run on every navigation when not authenticated
+			if (!isFromOAuthRedirect && !oauthError) {
+				return; // Skip callback handling for normal navigation
+			}
+
+			console.log('[useAuth] Callback handler running', {
+				pathname: location.pathname,
+				search: location.search,
+				isFromOAuthRedirect,
+				oauthError
+			});
 
 			// Check if we're on the OAuth callback path (e.g., /login after OAuth redirect)
 			// OAuth authentication uses session cookies (NO tokens in URL)
@@ -163,26 +213,8 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
 					}
 				} catch (error) {
 					console.error('Error checking session endpoint:', error);
-					// Fall through to JWT token check (email/password flow)
+					// Fall through - user will remain on login page
 				}
-			}
-
-			// Fallback: Check for JWT tokens in cookie/localStorage (email/password flow)
-			const { access_token, storage } = getAuthTokens();
-			if (access_token && !isAuthenticated) {
-				console.log(`Existing JWT session detected, access token found in ${storage}`);
-
-				// If token came from cookie, store it in localStorage for future use
-				// This enables instant auth checks without network calls
-				if (storage === "cookie") {
-					console.log("Storing access token in localStorage for hybrid auth");
-					setAuthTokens(access_token); // Store in localStorage (refresh token already in HTTP-only cookie)
-				}
-
-				setIsAuthenticated(true);
-				// getUserDetails will be called by the isAuthenticated useEffect
-				navigate(ROUTES.HOME);
-				return;
 			}
 		};
 
@@ -191,16 +223,22 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
 	}, [location.pathname, location.search]); // Only re-run when URL changes, not when isAuthenticated changes
 
 	const logout = useCallback(async () => {
+		// Check authentication pattern BEFORE clearing tokens
+		const { access_token } = getAuthTokens();
+		const isJWTUser = access_token !== null;
+
+		// Clear local state and tokens
 		setIsAuthenticated(false);
 		setUser(null);
 		clearAuthTokens();
 		navigate(ROUTES.LOGIN);
 
 		try {
-			// Check if user is using OAuth (no JWT tokens) or email/password (has JWT tokens)
-			const { access_token } = getAuthTokens();
-
-			if (!access_token) {
+			if (isJWTUser) {
+				// JWT user - logout via custom endpoint
+				console.log('[useAuth] Logging out JWT user via /api/logout/');
+				await authService.logout();
+			} else {
 				// OAuth user - logout via session endpoint
 				console.log('[useAuth] Logging out OAuth user via session endpoint');
 				await fetch('https://localhost:8444/_allauth/browser/v1/auth/session', {
@@ -210,10 +248,6 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
 						'Content-Type': 'application/json',
 					},
 				});
-			} else {
-				// JWT user - logout via custom endpoint
-				console.log('[useAuth] Logging out JWT user via /api/logout/');
-				await authService.logout();
 			}
 		} catch (error) {
 			console.error("Logout failed:", error);
@@ -253,11 +287,17 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
 	void | number | Error | { status: number; data: unknown; message: string }
 	> => {
 		try {
+			console.log('[useAuth] login() called, attempting authentication...');
 			const response = await authService.login(username, password);
+			console.log('[useAuth] login() response received:', {
+				has_user_id: !!response.user_id,
+				has_access_token: !!response.access_token,
+				has_refresh_token: !!response.refresh_token
+			});
 
 			const user_id = response.user_id;
-			const accessToken = response.access;
-			const refreshToken = response.refresh;
+			const accessToken = response.access_token;
+			const refreshToken = response.refresh_token;
 
 			if (user_id && accessToken && refreshToken) {
 				// Choose storage based on remember me setting
@@ -265,16 +305,23 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
 					? "localStorage"
 					: "sessionStorage";
 
+				console.log('[useAuth] Storing tokens in:', storage);
 				// Store tokens in the appropriate storage
 				setAuthTokens(accessToken, refreshToken, storage);
 
+				console.log('[useAuth] Setting isAuthenticated to true');
 				setIsAuthenticated(true);
+
+				console.log('[useAuth] Calling getUserDetails()...');
 				await getUserDetails();
+				console.log('[useAuth] Login complete!');
 				return;
 			}
+			console.log('[useAuth] Missing tokens, calling getUserDetails() anyway...');
 			await getUserDetails();
 			return;
 		} catch (error: unknown) {
+			console.error('[useAuth] login() error:', error);
 			if (error && typeof error === 'object' && 'response' in error) {
 				const axiosError = error as { response?: { status?: number; data?: { detail?: string; error?: string }; message?: string } };
 				if (axiosError.response) {

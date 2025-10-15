@@ -86,24 +86,29 @@ See "Task List Coordination" section at bottom for detailed boundary documentati
 - [ ] **6. Two-Pattern Authentication Implementation** ⚠️ Architecture Revised
     - **Why**: Research revealed browser OAuth uses session cookies, not JWT tokens (see research doc for details)
     - [x] 6.1-6.8 JWT implementation for email/password - ✅ Complete and working
-    - [ ] 6.9 Backend Test Suite - Session Authentication ⚠️ **IN PROGRESS**
+    - [ ] 6.9 Backend Test Suite - Session Authentication
         - [x] 6.9.1 Test email/password with JWT tokens - ✅ Working
         - [x] 6.9.2 OAuth configuration prerequisites - ✅ Complete
         - [x] 6.9.3 Update OAuth callback handler (useAuth.ts) - ✅ Session endpoint check implemented
         - [x] 6.9.4 Update API client (apiClient.ts) - ✅ Two-pattern auth support verified
         - [x] 6.9.5 Test Google OAuth with session cookies - ✅ Working (with loading UX improvements)
         - [x] 6.9.6 Test GitHub OAuth with session cookies - ✅ Working (callback URI configured)
-        - [ ] 6.9.7 Complete backend test suite (`test_session_auth.py`)
-            - [ ] 6.9.7.1 Fix `test_jwt_authentication_still_works` (change 'email' to 'login' in payload)
-            - [ ] 6.9.7.2 Run test suite and verify all 4 existing tests pass
-            - [ ] 6.9.7.3 Add test: `test_jwt_token_refresh_works` - Verify refresh endpoint generates new tokens
-            - [ ] 6.9.7.4 Add test: `test_session_auth_persists_across_requests` - Multiple API calls with same session
-            - [ ] 6.9.7.5 Add test: `test_oauth_logout_clears_session` - Session DELETE endpoint clears session
-            - [ ] 6.9.7.6 Add test: `test_jwt_logout_clears_cookies` - JWT logout clears httponly cookies
-            - [ ] 6.9.7.7 Run full test suite and verify all 8+ tests pass (4 existing + 4 new minimum)
-            - [ ] 6.9.7.8 Run incremental quality checks (ruff, pyright on test file)
+        - [x] 6.9.7 Complete backend test suite (`test_session_auth.py`) - ✅ 8 tests passing
+            - [x] 6.9.7.1 Fix `test_jwt_authentication_still_works` (standardize API naming: 'access_token'/'refresh_token')
+            - [x] 6.9.7.2 Run test suite and verify all 4 existing tests pass
+            - [x] 6.9.7.3 Add test: `test_jwt_token_refresh_works` - Verify refresh endpoint generates new tokens
+            - [x] 6.9.7.4 Add test: `test_session_auth_persists_across_requests` - Multiple API calls with same session
+            - [x] 6.9.7.5 Add test: `test_oauth_logout_clears_session` - Session DELETE endpoint clears session
+            - [x] 6.9.7.6 Add test: `test_jwt_logout_clears_cookies` - JWT logout clears httponly cookies
+            - [x] 6.9.7.7 Run full test suite and verify all 8+ tests pass (8 tests, 0 failures)
+            - [x] 6.9.7.8 Run incremental quality checks (ruff: 0 errors, pyright: 0 errors with proper type ignores)
     - [ ] 6.10 Quality Gates - Full project validation
-        - [ ] 6.10.1 Run all backend tests (`pytest apps/ -v` via Docker)
+        - [ ] 6.10.1 Run all backend tests and fix API field naming regressions (`pytest apps/ -v` via Docker)
+            - [ ] 6.10.1.1 Investigate CSRF protection test failures (8 failures in test_csrf_protection.py)
+            - [ ] 6.10.1.2 Fix authentication domain test failures (9 failures: test_error_responses.py, test_security.py, test_user_api.py)
+            - [ ] 6.10.1.3 Fix UserMovieData domain test failures (21 failures in test_user_movie_data_api.py)
+            - [ ] 6.10.1.4 Verify all 160 tests pass (currently 38 failed, 122 passed - 76% pass rate)
+            - **Context**: API field naming change ('access' → 'access_token') affects test assertions across multiple domains
         - [ ] 6.10.2 Run all frontend tests (`npm test` via Docker)
         - [ ] 6.10.3 Backend linting (`ruff check backend/apps/ backend/config/ --fix`)
         - [ ] 6.10.4 Frontend linting (`npm run lint` via Docker)
@@ -140,7 +145,7 @@ See "Task List Coordination" section at bottom for detailed boundary documentati
         - [ ] 7.6.1 Brief execution log (critical paths work: Yes/No)
         - [ ] 7.6.2 Any bugs found (must fix before closing)
         - [ ] 7.6.3 Note items deferred to API Layer P2
-    - **Estimated Time**: 30-45 minutes (not 2+ hours)
+    - **Estimated Time**: 30-45 minutes
 
 - [ ] **8. Documentation and Cleanup**
     - [ ] 8.1 Remove debugging console.log statements

@@ -126,8 +126,8 @@ def test_login_sets_access_token_samesite_lax(
     - Access token cookie is NOT set during login (frontend manages in localStorage)
     - Refresh endpoint sets BOTH tokens as cookies (see test_token_refresh_maintains_samesite_lax)
     """
-    from typing import cast
     import json as json_module
+    from typing import cast
 
     from core.tests.test_helpers import json_post
 

@@ -70,7 +70,7 @@ def test_session_authentication_supports_write_operations():
     )
 
     # Get Movie model dynamically to avoid import issues
-    Movie = apps.get_model('core', 'Movie')  # noqa: N806
+    Movie = apps.get_model('core', 'Movie')
     movie = Movie.objects.create(  # pyright: ignore[reportUnknownMemberType]
         tmdb_id=550,
         title='Fight Club',
@@ -153,7 +153,7 @@ def test_jwt_authentication_still_works():
     )
 
     # Mark email as verified (required for login)
-    EmailAddress = apps.get_model('account', 'EmailAddress')  # noqa: N806
+    EmailAddress = apps.get_model('account', 'EmailAddress')
     EmailAddress.objects.create(
         user=user,
         email=user.email,  # pyright: ignore[reportUnknownMemberType]
@@ -208,7 +208,7 @@ def test_jwt_token_refresh_works():
         password='testpass123'
     )
 
-    EmailAddress = apps.get_model('account', 'EmailAddress')  # noqa: N806
+    EmailAddress = apps.get_model('account', 'EmailAddress')
     EmailAddress.objects.create(
         user=user,
         email=user.email,  # pyright: ignore[reportUnknownMemberType]
@@ -346,7 +346,7 @@ def test_jwt_logout_clears_cookies():
         password='testpass123'
     )
 
-    EmailAddress = apps.get_model('account', 'EmailAddress')  # noqa: N806
+    EmailAddress = apps.get_model('account', 'EmailAddress')
     EmailAddress.objects.create(
         user=user,
         email=user.email,  # pyright: ignore[reportUnknownMemberType]

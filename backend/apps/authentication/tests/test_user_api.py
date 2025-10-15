@@ -325,6 +325,7 @@ def test_update_profile_with_csrf_authenticated(db: None) -> None:
     - Test must manually set access token cookie for authentication
     """
     import json as json_module
+
     from django.test import Client
 
     user = create_user(

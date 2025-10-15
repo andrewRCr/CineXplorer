@@ -35,6 +35,7 @@ if TYPE_CHECKING:
 __all__ = [
     "HTTPStatus",
     "UserParams",
+    "authenticate_client",
     "create_user",
     "get_csrf_token",
     "json_patch",
@@ -51,6 +52,40 @@ class UserParams(TypedDict, total=False):
     password: str
     first_name: str
     last_name: str
+
+
+def authenticate_client(client: Client, username: str, password: str) -> None:
+    """
+    Authenticate a test client using JWT tokens (hybrid auth pattern).
+
+    This helper encapsulates the hybrid authentication pattern where:
+    - Login endpoint only sets refresh_token as HTTP-only cookie
+    - Access token is returned in response body for localStorage
+    - Tests must manually extract and set access_token cookie
+
+    Args:
+        client: Django test client instance
+        username: Username for authentication
+        password: Password for authentication
+
+    Example:
+        from core.tests.test_helpers import create_user, authenticate_client
+
+        user = create_user(username='testuser', password='testpass123')
+        authenticate_client(api_client, 'testuser', 'testpass123')
+        # Client now has both refresh_token (auto) and access_token (manual) cookies
+
+    Note:
+        This function modifies the client in-place by setting the access_token cookie.
+        If the auth pattern changes in the future, update this ONE function.
+    """
+    token_url = "/api/token/"
+    auth_payload: dict[str, object] = {"login": username, "password": password}
+    response = json_post(client, token_url, auth_payload)
+
+    # Extract access_token from response and set as cookie (hybrid auth pattern)
+    response_data: dict[str, str] = json.loads(response.content.decode())
+    client.cookies['access_token'] = response_data['access_token']
 
 
 def get_csrf_token(client: Client) -> str:

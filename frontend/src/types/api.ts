@@ -219,24 +219,34 @@ export interface paths {
         put?: never;
         /**
          * Obtain Token
-         * @description Obtain JWT access and refresh tokens (login).
+         * @description Obtain JWT access and refresh tokens (login) for hybrid authentication.
          *
-         *     Authenticates user with username/email and password, then returns
-         *     JWT tokens set as httponly cookies.
+         *     Hybrid Authentication Architecture:
+         *     - Authenticates user with username/email and password
+         *     - Returns access token in response body (frontend stores in localStorage)
+         *     - Sets refresh token as HTTP-only cookie (XSS-proof, secure)
+         *     - Access token has 5-minute lifetime (short-lived, reduces XSS risk)
+         *     - Refresh token has 14-day lifetime (long-lived, stored securely)
          *
          *     Args:
          *         request: HTTP request object
-         *         response: HTTP response object (for setting cookies)
+         *         response: HTTP response object (for setting refresh token cookie)
          *         payload: Login credentials (login, password)
          *
          *     Returns:
          *         tuple: (status_code, response_data)
-         *             - 200: Authentication successful, tokens set as cookies
+         *             - 200: Authentication successful, access token in body, refresh token in cookie
          *             - 400: Missing credentials
          *             - 401: Invalid credentials
          *             - 403: Email not verified
          *
-         *     Cookie attributes:
+         *     Response body includes:
+         *         - access: JWT access token for localStorage (frontend manages)
+         *         - refresh: JWT refresh token value (also in HTTP-only cookie)
+         *         - user_id: Authenticated user's ID
+         *         - email_verified: Email verification status
+         *
+         *     Cookie attributes (refresh token only):
          *         - httponly: True (prevents JavaScript access)
          *         - secure: True (HTTPS only)
          *         - samesite: Lax (CSRF protection)
@@ -262,6 +272,8 @@ export interface paths {
          * @description Refresh JWT access token using refresh token from cookie.
          *
          *     Reads refresh token from httponly cookie and generates new access token.
+         *     Implements token rotation security: old refresh tokens are automatically
+         *     blacklisted after rotation (via BLACKLIST_AFTER_ROTATION setting).
          *
          *     Args:
          *         request: HTTP request object
@@ -270,13 +282,64 @@ export interface paths {
          *     Returns:
          *         tuple: (status_code, response_data)
          *             - 200: Token refreshed successfully, new tokens set as cookies
-         *             - 400: No valid refresh token in cookies
+         *             - 400: No valid refresh token in cookies or invalid format
+         *             - 401: Token blacklisted (reuse attempt detected)
+         *
+         *     Security:
+         *         - Automatic token rotation: new refresh token issued on each refresh
+         *         - Old tokens blacklisted automatically via BLACKLIST_AFTER_ROTATION
+         *         - Reuse attempts logged as security events with IP and user agent
          *
          *     Cookie handling:
          *         - Reads refresh token from httponly cookie
          *         - Sets new access and refresh tokens as httponly cookies
          */
         post: operations["apps_authentication_api_refresh_token"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/refresh": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Hybrid Refresh Token
+         * @description Refresh JWT access token for hybrid authentication.
+         *
+         *     Hybrid Authentication Architecture:
+         *     - Reads refresh token from HTTP-only cookie (secure, XSS-proof)
+         *     - Returns new access token in response body (frontend stores in localStorage)
+         *     - Does NOT set access token as cookie (frontend manages it)
+         *     - Rotates refresh token in HTTP-only cookie (automatic blacklisting)
+         *
+         *     This endpoint supports the hybrid auth pattern where:
+         *     - Short-lived access tokens (5 min) in localStorage for instant auth checks
+         *     - Long-lived refresh tokens (14 days) in HTTP-only cookies for security
+         *
+         *     Args:
+         *         request: HTTP request object
+         *         response: HTTP response object (for setting new refresh token cookie)
+         *
+         *     Returns:
+         *         tuple: (status_code, response_data)
+         *             - 200: New access token in response body, refresh token rotated in cookie
+         *             - 400: No refresh token found or invalid token format
+         *             - 401: Token blacklisted (reuse attempt detected)
+         *
+         *     Security:
+         *         - Token rotation: New refresh token issued on each refresh
+         *         - Automatic blacklisting: Old tokens blacklisted via BLACKLIST_AFTER_ROTATION
+         *         - Reuse detection: Blacklisted token attempts logged as security events
+         */
+        post: operations["apps_authentication_api_hybrid_refresh_token"];
         delete?: never;
         options?: never;
         head?: never;
@@ -294,13 +357,19 @@ export interface paths {
         put?: never;
         /**
          * Logout
-         * @description Logout user by clearing JWT cookies.
+         * @description Logout user by clearing JWT cookies (hybrid authentication).
          *
-         *     Clears both access and refresh token cookies to end the session.
-         *     Uses matching cookie attributes to ensure reliable removal across browsers.
+         *     Clears refresh token cookie to end the session. No authentication required
+         *     since logout is idempotent (just deletes browser cookies) and users may
+         *     call it when tokens are already expired.
+         *
+         *     Hybrid Authentication Note:
+         *     - Only deletes refresh token cookie (access token managed by frontend in localStorage)
+         *     - Frontend should clear localStorage access token separately
+         *     - Uses matching cookie attributes to ensure reliable removal across browsers
          *
          *     Args:
-         *         request: HTTP request object
+         *         request: HTTP request object (no authentication required)
          *         response: HTTP response object (for deleting cookies)
          *
          *     Returns:
@@ -308,9 +377,8 @@ export interface paths {
          *             - 200: Logout successful, cookies cleared
          *
          *     Cookie deletion:
-         *         - Deletes access token cookie
-         *         - Deletes refresh token cookie
-         *         - Uses same path, domain, samesite as when cookies were set
+         *         - Deletes refresh token cookie (HTTP-only, secure)
+         *         - Uses same path, domain, samesite as when cookie was set
          */
         post: operations["apps_authentication_api_logout"];
         delete?: never;
@@ -330,9 +398,10 @@ export interface paths {
          * Get Csrf Token
          * @description Get CSRF token for AJAX requests.
          *
-         *     Generates a CSRF token and sets it as a cookie that JavaScript can read.
-         *     This endpoint requires no authentication and is used by the frontend
-         *     to obtain a CSRF token for state-changing requests.
+         *     Generates a CSRF token using Django's built-in get_token() and ensures
+         *     it's available as a cookie that JavaScript can read. This endpoint requires
+         *     no authentication and is used by the frontend to obtain a CSRF token for
+         *     state-changing requests.
          *
          *     Args:
          *         request: HTTP request object
@@ -342,15 +411,18 @@ export interface paths {
          *         tuple: (status_code, response_data)
          *             - 200: CSRF token generated and set as cookie
          *
-         *     Cookie attributes:
-         *         - httponly: False (must be readable by JavaScript)
-         *         - secure: True (HTTPS only)
-         *         - samesite: Lax (less strict for localhost dev)
+         *     Cookie details:
+         *         - Name: 'csrftoken' (Django's default, configurable via CSRF_COOKIE_NAME)
+         *         - httponly: False (must be readable by JavaScript per CSRF_COOKIE_HTTPONLY setting)
+         *         - secure: True in production (per CSRF_COOKIE_SECURE setting)
+         *         - samesite: Lax (per SESSION_COOKIE_SAMESITE setting)
          *         - path: / (available everywhere)
          *
          *     Note:
-         *         The token is both set as an XSRF-TOKEN cookie and returned
-         *         in the response body for client convenience.
+         *         Django's CsrfViewMiddleware will automatically set the csrftoken cookie
+         *         when get_token() is called. The token is returned in the response body
+         *         for client convenience. We force the cookie to be set even if middleware
+         *         doesn't set it automatically.
          */
         get: operations["apps_authentication_api_get_csrf_token"];
         put?: never;
@@ -433,6 +505,8 @@ export interface paths {
         /**
          * Verify Email
          * @description Verify user's email address using the confirmation key.
+         *
+         *     Supports both HMAC-based confirmations (default) and database-stored confirmations.
          *
          *     Args:
          *         request: Django HTTP request
@@ -525,6 +599,9 @@ export interface paths {
         /**
          * Search Movies
          * @description Search for movies by query string with pagination.
+         *
+         *     Uses MovieSearchParamsSchema to handle Django Ninja 1.4.3 +
+         *     Pydantic 2.12.0 empty string validation issue with optional parameters.
          */
         get: operations["apps_movie_api_search_movies"];
         put?: never;
@@ -551,16 +628,21 @@ export interface paths {
          *     and more. It supports both TMDB standard parameters and custom aliases for
          *     frontend convenience.
          *
-         *     Query Parameters:
-         *         page: Page number for pagination (default: 1)
-         *         with_genres: Comma-separated genre IDs to include
-         *         genres: Alias for with_genres (frontend convenience)
-         *         decade: Decade filter (e.g., "1990s" → converts to date range)
-         *         sort_by: Sort criteria (popularity.desc, vote_average.desc, etc.)
-         *         vote_average_gte/lte: Rating range filtering
-         *         with_runtime_gte/lte: Runtime range filtering
-         *         primary_release_year: Filter by release year
-         *         [... many other TMDB discover parameters]
+         *     Uses FilterSchema to handle 40+ optional parameters cleanly, with automatic
+         *     empty string to None conversion to handle Django Ninja 1.4.3 + Pydantic 2.12.0
+         *     validation behavior.
+         *
+         *     Query Parameters (all in filters schema):
+         *         filters: MovieDiscoverFilterSchema with all TMDB discover parameters
+         *             - page: Page number for pagination (default: 1)
+         *             - with_genres: Comma-separated genre IDs to include
+         *             - genres: Alias for with_genres (frontend convenience)
+         *             - decade: Decade filter (e.g., "1990s" → converts to date range)
+         *             - sort_by: Sort criteria (popularity.desc, vote_average.desc, etc.)
+         *             - vote_average_gte/lte: Rating range filtering
+         *             - with_runtime_gte/lte: Runtime range filtering
+         *             - primary_release_year: Filter by release year
+         *             - [... many other TMDB discover parameters]
          *
          *     Returns:
          *         PaginatedMovieResponseSchema: Paginated list of movies matching criteria
@@ -997,14 +1079,14 @@ export interface components {
             password: string;
             /**
              * First Name
-             * @description User's first name
+             * @description User's first name (optional)
              */
-            first_name: string;
+            first_name?: string | null;
             /**
              * Last Name
-             * @description User's last name
+             * @description User's last name (optional)
              */
-            last_name: string;
+            last_name?: string | null;
         };
         /**
          * TokenResponseSchema
@@ -1015,15 +1097,15 @@ export interface components {
          */
         TokenResponseSchema: {
             /**
-             * Access
+             * Access Token
              * @description JWT access token (also set as httponly cookie)
              */
-            access: string;
+            access_token: string;
             /**
-             * Refresh
+             * Refresh Token
              * @description JWT refresh token (also set as httponly cookie)
              */
-            refresh: string;
+            refresh_token: string;
             /**
              * User Id
              * @description ID of the authenticated user
@@ -1053,6 +1135,35 @@ export interface components {
              * @description User's password
              */
             password: string;
+        };
+        /**
+         * HybridTokenRefreshResponseSchema
+         * @description Schema for hybrid authentication token refresh response.
+         *
+         *     Hybrid Architecture:
+         *     - Access token: Returned in response body (frontend stores in localStorage)
+         *     - Refresh token: NOT in response (remains in HTTP-only cookie)
+         *     - Metadata: Expiration info for frontend token management
+         *
+         *     This differs from TokenResponseSchema which returns both tokens for
+         *     cookie-based authentication.
+         */
+        HybridTokenRefreshResponseSchema: {
+            /**
+             * Access Token
+             * @description JWT access token for localStorage (5-min lifetime)
+             */
+            access_token: string;
+            /**
+             * Expires In
+             * @description Access token lifetime in seconds (300 for 5 minutes)
+             */
+            expires_in: number;
+            /**
+             * Issued At
+             * @description Token issue timestamp (ISO 8601 UTC)
+             */
+            issued_at: string;
         };
         /**
          * LogoutResponseSchema
@@ -1185,6 +1296,20 @@ export interface components {
             email: string;
         };
         /**
+         * PaginationParamsSchema
+         * @description Schema for pagination parameters with empty string handling.
+         *
+         *     Handles Django Ninja 1.4.3 + Pydantic 2.12.0 behavior where missing
+         *     query parameters are sent as empty strings instead of being omitted.
+         */
+        PaginationParamsSchema: {
+            /**
+             * Page
+             * @description Page number for pagination
+             */
+            page?: number | null;
+        };
+        /**
          * MovieBaseSchema
          * @description Minimal movie representation used in list endpoints.
          */
@@ -1256,6 +1381,146 @@ export interface components {
             user_rating?: number | null;
             /** User Review */
             user_review?: string | null;
+        };
+        /**
+         * MovieSearchParamsSchema
+         * @description Schema for movie search parameters with empty string handling.
+         *
+         *     Handles Django Ninja 1.4.3 + Pydantic 2.12.0 behavior where missing
+         *     query parameters are sent as empty strings instead of being omitted.
+         */
+        MovieSearchParamsSchema: {
+            /**
+             * Query
+             * @description Search query string
+             */
+            query: string;
+            /**
+             * Page
+             * @description Page number for pagination
+             */
+            page?: number | null;
+        };
+        /**
+         * MovieDiscoverFilterSchema
+         * @description Schema for TMDB discover endpoint filtering.
+         *
+         *     Handles 40+ optional query parameters with automatic empty string to None
+         *     conversion, solving Django Ninja 1.4.3 + Pydantic 2.12.0 validation issues
+         *     where missing parameters are sent as empty strings instead of being omitted.
+         *
+         *     See: External research on Django Ninja optional parameter handling (2025-10-09)
+         */
+        MovieDiscoverFilterSchema: {
+            /**
+             * Page
+             * @description Page number for pagination
+             */
+            page?: number | null;
+            /**
+             * With Genres
+             * @description Comma-separated genre IDs
+             */
+            with_genres?: string | null;
+            /**
+             * With Keywords
+             * @description Comma-separated keyword IDs
+             */
+            with_keywords?: string | null;
+            /** Without Genres */
+            without_genres?: string | null;
+            /** Without Keywords */
+            without_keywords?: string | null;
+            /**
+             * With Cast
+             * @description Comma-separated person IDs
+             */
+            with_cast?: string | null;
+            /** With Crew */
+            with_crew?: string | null;
+            /** With People */
+            with_people?: string | null;
+            /** With Companies */
+            with_companies?: string | null;
+            /** With Networks */
+            with_networks?: string | null;
+            /** Without Companies */
+            without_companies?: string | null;
+            /** Without Networks */
+            without_networks?: string | null;
+            /** With Watch Providers */
+            with_watch_providers?: string | null;
+            /** Without Watch Providers */
+            without_watch_providers?: string | null;
+            /** With Watch Monetization Types */
+            with_watch_monetization_types?: string | null;
+            /** Include Adult */
+            include_adult?: boolean | null;
+            /** Include Video */
+            include_video?: boolean | null;
+            /**
+             * Language
+             * @description ISO 639-1 language code
+             */
+            language?: string | null;
+            /**
+             * Region
+             * @description ISO 3166-1 country code
+             */
+            region?: string | null;
+            /** With Original Language */
+            with_original_language?: string | null;
+            /** Without Original Language */
+            without_original_language?: string | null;
+            /** Primary Release Year */
+            primary_release_year?: number | null;
+            /** Year */
+            year?: number | null;
+            /** Primary Release Date Gte */
+            primary_release_date_gte?: string | null;
+            /** Primary Release Date Lte */
+            primary_release_date_lte?: string | null;
+            /** Release Date Gte */
+            release_date_gte?: string | null;
+            /** Release Date Lte */
+            release_date_lte?: string | null;
+            /** With Release Type */
+            with_release_type?: string | null;
+            /** Vote Count Gte */
+            vote_count_gte?: number | null;
+            /** Vote Count Lte */
+            vote_count_lte?: number | null;
+            /** Vote Average Gte */
+            vote_average_gte?: number | null;
+            /** Vote Average Lte */
+            vote_average_lte?: number | null;
+            /** With Runtime Gte */
+            with_runtime_gte?: number | null;
+            /** With Runtime Lte */
+            with_runtime_lte?: number | null;
+            /** Certification Country */
+            certification_country?: string | null;
+            /** Certification */
+            certification?: string | null;
+            /** Certification Lte */
+            certification_lte?: string | null;
+            /** Certification Gte */
+            certification_gte?: string | null;
+            /**
+             * Sort By
+             * @description Sort by field (e.g., popularity.desc, vote_average.desc)
+             */
+            sort_by?: string | null;
+            /**
+             * Decade
+             * @description Decade filter (e.g., '1990s')
+             */
+            decade?: string | null;
+            /**
+             * Genres
+             * @description Alias for with_genres
+             */
+            genres?: string | null;
         };
         /** CastMemberSchema */
         CastMemberSchema: {
@@ -1758,6 +2023,59 @@ export interface operations {
                     };
                 };
             };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    apps_authentication_api_hybrid_refresh_token: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HybridTokenRefreshResponseSchema"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
         };
     };
     apps_authentication_api_logout: {
@@ -1928,7 +2246,8 @@ export interface operations {
     apps_movie_api_get_now_playing_movies: {
         parameters: {
             query?: {
-                page?: number;
+                /** @description Page number for pagination */
+                page?: number | null;
             };
             header?: never;
             path?: never;
@@ -1950,7 +2269,8 @@ export interface operations {
     apps_movie_api_get_upcoming_movies: {
         parameters: {
             query?: {
-                page?: number;
+                /** @description Page number for pagination */
+                page?: number | null;
             };
             header?: never;
             path?: never;
@@ -1972,8 +2292,10 @@ export interface operations {
     apps_movie_api_search_movies: {
         parameters: {
             query: {
+                /** @description Search query string */
                 query: string;
-                page?: number;
+                /** @description Page number for pagination */
+                page?: number | null;
             };
             header?: never;
             path?: never;
@@ -1995,46 +2317,55 @@ export interface operations {
     apps_movie_api_discover_movies: {
         parameters: {
             query?: {
-                page?: number;
+                /** @description Page number for pagination */
+                page?: number | null;
+                /** @description Comma-separated genre IDs */
                 with_genres?: string | null;
+                /** @description Comma-separated keyword IDs */
                 with_keywords?: string | null;
+                without_genres?: string | null;
+                without_keywords?: string | null;
+                /** @description Comma-separated person IDs */
                 with_cast?: string | null;
                 with_crew?: string | null;
                 with_people?: string | null;
                 with_companies?: string | null;
                 with_networks?: string | null;
-                with_watch_providers?: string | null;
-                with_watch_monetization_types?: string | null;
-                without_genres?: string | null;
-                without_keywords?: string | null;
                 without_companies?: string | null;
                 without_networks?: string | null;
+                with_watch_providers?: string | null;
                 without_watch_providers?: string | null;
+                with_watch_monetization_types?: string | null;
                 include_adult?: boolean | null;
                 include_video?: boolean | null;
+                /** @description ISO 639-1 language code */
                 language?: string | null;
+                /** @description ISO 3166-1 country code */
+                region?: string | null;
+                with_original_language?: string | null;
+                without_original_language?: string | null;
                 primary_release_year?: number | null;
+                year?: number | null;
                 primary_release_date_gte?: string | null;
                 primary_release_date_lte?: string | null;
                 release_date_gte?: string | null;
                 release_date_lte?: string | null;
                 with_release_type?: string | null;
-                year?: number | null;
                 vote_count_gte?: number | null;
                 vote_count_lte?: number | null;
                 vote_average_gte?: number | null;
                 vote_average_lte?: number | null;
                 with_runtime_gte?: number | null;
                 with_runtime_lte?: number | null;
-                region?: string | null;
-                sort_by?: string | null;
                 certification_country?: string | null;
                 certification?: string | null;
                 certification_lte?: string | null;
                 certification_gte?: string | null;
-                with_original_language?: string | null;
-                without_original_language?: string | null;
+                /** @description Sort by field (e.g., popularity.desc, vote_average.desc) */
+                sort_by?: string | null;
+                /** @description Decade filter (e.g., '1990s') */
                 decade?: string | null;
+                /** @description Alias for with_genres */
                 genres?: string | null;
             };
             header?: never;
@@ -2099,7 +2430,8 @@ export interface operations {
     apps_movie_api_get_popular_keywords: {
         parameters: {
             query?: {
-                page?: number;
+                /** @description Page number for pagination */
+                page?: number | null;
             };
             header?: never;
             path?: never;
@@ -2143,7 +2475,8 @@ export interface operations {
     apps_movie_api_get_popular_people: {
         parameters: {
             query?: {
-                page?: number;
+                /** @description Page number for pagination */
+                page?: number | null;
             };
             header?: never;
             path?: never;

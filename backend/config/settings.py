@@ -45,6 +45,8 @@ sys.path.insert(0, SHARED_DIR)
 ALLOWED_HOSTS = [
     "localhost",
     "127.0.0.1",
+    "localhost:8000",  # Django backend for OAuth callback_url validation
+    "localhost:5173",  # Frontend for OAuth callback_url validation
     "backend",
     "testserver",  # Django test client
 ]

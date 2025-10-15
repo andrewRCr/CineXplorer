@@ -16,7 +16,7 @@ Type Safety:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import pytest
 
@@ -69,10 +69,14 @@ def user(db: None) -> User:
     from django.contrib.auth import get_user_model
     User = get_user_model()  # noqa: N806 - Django model naming convention
 
-    return User.objects.create_user(
-        email="testuser@example.com",
-        password="testpass123",
-        username="testuser",
+    # django-types limitation - UserManager.create_user type not inferred
+    return cast(
+        "User",
+        User.objects.create_user(  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
+            email="testuser@example.com",
+            password="testpass123",
+            username="testuser",
+        )
     )
 
 

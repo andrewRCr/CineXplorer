@@ -127,11 +127,12 @@ class JWTCookieAuth(APIKeyCookie):
 
     def authenticate(self, request: HttpRequest, key: str | None) -> AbstractUser | None:
         """
-        Authenticate user from JWT token (Authorization header OR cookie).
+        Authenticate user from JWT token or Django session.
 
-        Hybrid Authentication Priority:
-        1. Authorization header (Bearer token from localStorage)
-        2. HTTP-only cookie (backward compatibility)
+        Two-Pattern Authentication Priority:
+        1. Authorization header (Bearer token from localStorage - email/password users)
+        2. HTTP-only JWT cookie (email/password users)
+        3. Django session (OAuth users via django-allauth)
 
         This method is called by Django Ninja's security system and provides
         native integration with the framework.
@@ -143,46 +144,50 @@ class JWTCookieAuth(APIKeyCookie):
         Returns:
             The authenticated user or None if authentication fails
         """
-        # Use hybrid token extraction (header OR cookie)
+        # Priority 1-2: Check for JWT token (header or cookie)
         token, source = get_token_from_request(request)
 
-        if not token:
-            logger.debug("No JWT token found in header or cookie")
-            return None
+        if token:
+            # Get user model outside try block for exception handler scope
+            User = get_user_model()  # noqa: N806
 
-        # Get user model outside try block for exception handler scope
-        User = get_user_model()  # noqa: N806
+            try:
+                # Validate token using AccessToken class (django-ninja-jwt)
+                validated_token = AccessToken(token)
 
-        try:
-            # Validate token using AccessToken class (django-ninja-jwt)
-            validated_token = AccessToken(token)
+                # Get user from token payload
+                user_id = validated_token.payload[api_settings.USER_ID_CLAIM]
+                user = User.objects.get(**{api_settings.USER_ID_FIELD: user_id})
 
-            # Get user from token payload
-            user_id = validated_token.payload[api_settings.USER_ID_CLAIM]
-            user = User.objects.get(**{api_settings.USER_ID_FIELD: user_id})
+                if user and hasattr(user, 'id'):
+                    username = getattr(cast(object, user), 'username', 'unknown')
+                    logger.debug(f"Successfully authenticated user {username} (via JWT {source})")
+                    return cast(AbstractUser, user)
 
-            if user and hasattr(user, 'id'):
-                username = getattr(cast(object, user), 'username', 'unknown')
-                logger.debug(f"Successfully authenticated user {username} (via {source})")
-                return cast(AbstractUser, user)
+                logger.warning("JWT token validated but no valid user found")
+            except InvalidToken as e:
+                logger.debug(f"Invalid JWT token from {source}: {e}")
+            except TokenError as e:
+                logger.warning(f"JWT token error from {source}: {e}")
+            except User.DoesNotExist:
+                logger.warning(f"JWT token from {source} valid but user not found in database")
+            except Exception as e:
+                logger.error(
+                    f"Unexpected authentication error (token from {source}): {e}",
+                    exc_info=True
+                )
 
-            logger.warning("JWT token validated but no valid user found")
-            return None
-        except InvalidToken as e:
-            logger.debug(f"Invalid JWT token from {source}: {e}")
-            return None
-        except TokenError as e:
-            logger.warning(f"JWT token error from {source}: {e}")
-            return None
-        except User.DoesNotExist:
-            logger.warning(f"JWT token from {source} valid but user not found in database")
-            return None
-        except Exception as e:
-            logger.error(
-                f"Unexpected authentication error (token from {source}): {e}",
-                exc_info=True
-            )
-            return None
+        # Priority 3: Check Django session (OAuth users)
+        # SessionMiddleware sets request.user to either authenticated User or AnonymousUser
+        # Cast request.user to AbstractUser for type safety
+        user = cast(AbstractUser, request.user)  # pyright: ignore[reportUnknownMemberType]
+        if user.is_authenticated:
+            username = getattr(cast(object, user), 'username', 'unknown')
+            logger.debug(f"Successfully authenticated user {username} (via Django session)")
+            return user
+
+        logger.debug("No valid JWT token or session found")
+        return None
 
 
 # Global instance for use in endpoints and API configuration

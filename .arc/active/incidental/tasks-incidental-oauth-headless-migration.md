@@ -102,8 +102,8 @@ See "Task List Coordination" section at bottom for detailed boundary documentati
             - [x] 6.9.7.6 Add test: `test_jwt_logout_clears_cookies` - JWT logout clears httponly cookies
             - [x] 6.9.7.7 Run full test suite and verify all 8+ tests pass (8 tests, 0 failures)
             - [x] 6.9.7.8 Run incremental quality checks (ruff: 0 errors, pyright: 0 errors with proper type ignores)
-    - [ ] 6.10 Quality Gates - Full project validation
-        - [ ] 6.10.1 Run all backend tests and fix API field naming regressions (`pytest apps/ -v` via Docker)
+    - [x] 6.10 Quality Gates - Full project validation ✅
+        - [x] 6.10.1 Run all backend tests and fix API field naming regressions (`pytest apps/ -v` via Docker) - ✅ 160/160 passing
             - [x] 6.10.1.1 Investigate CSRF protection test failures (8 failures in test_csrf_protection.py) - ✅ Root cause: hybrid auth pattern change
             - [x] 6.10.1.2 Fix authentication domain test failures (9 failures: test_error_responses.py, test_security.py, test_user_api.py) - ✅ 101/101 tests passing
             - [x] 6.10.1.3 Fix UserMovieData domain test failures (21 failures in test_user_movie_data_api.py) - ✅ 23/23 tests passing
@@ -111,13 +111,13 @@ See "Task List Coordination" section at bottom for detailed boundary documentati
             - **Context**: Hybrid auth pattern requires test fixtures to manually set access_token cookie (login only sets refresh_token cookie)
             - **DRY Improvement**: Created shared `authenticate_client()` helper in `core/tests/test_helpers.py` (single source of truth for auth pattern)
             - **Fix Applied**: Refactored 3 test fixtures across authentication and user_movie_data apps to use shared helper
-        - [ ] 6.10.2 Run all frontend tests (`npm test` via Docker)
-        - [ ] 6.10.3 Backend linting (`ruff check backend/apps/ backend/config/ --fix`)
-        - [ ] 6.10.4 Frontend linting (`npm run lint` via Docker)
-        - [ ] 6.10.5 Frontend type checking (`npm run type-check` via Docker)
-        - [ ] 6.10.6 Backend type checking (`npx pyright backend/apps/ backend/config/ --project backend`)
-        - [ ] 6.10.7 Markdown linting (`npx markdownlint-cli2 --fix "README.md" ".arc/**/*.md"`)
-        - [ ] 6.10.8 Verify: 100% test pass rate, 0 type errors, 0 linting violations
+        - [x] 6.10.2 Run all frontend tests (`npm test` via Docker) - ✅ 321/321 passing (13 test files)
+        - [x] 6.10.3 Backend linting (`ruff check backend/apps/ backend/config/ --fix`) - ✅ 0 violations (6 import order issues auto-fixed)
+        - [x] 6.10.4 Frontend linting (`npm run lint` via Docker) - ✅ 0 violations
+        - [x] 6.10.5 Frontend type checking (`npm run type-check` via Docker) - ✅ 0 errors
+        - [x] 6.10.6 Backend type checking (`npx pyright backend/apps/ backend/config/ --project backend`) - ✅ 0 errors (0 errors, 6 warnings, 53 informational)
+        - [x] 6.10.7 Markdown linting (`npx markdownlint-cli2 --fix "README.md" ".arc/**/*.md"`) - ✅ 0 violations (69 files checked)
+        - [x] 6.10.8 Verify: 100% test pass rate, 0 type errors, 0 linting violations - ✅ VERIFIED
 
 - [ ] **7. Manual E2E Validation** - Critical path testing (lean scope)
     - **Goal**: Prove OAuth implementation works in isolation, document expected behavior
@@ -180,7 +180,9 @@ See "Task List Coordination" section at bottom for detailed boundary documentati
 - `backend/apps/conftest.py` - Test fixtures with type safety fixes
 - `backend/apps/core/tests/test_helpers.py` - **NEW**: Shared `authenticate_client()` helper for hybrid auth pattern (DRY improvement)
 - `backend/apps/authentication/tests/test_csrf_protection.py` - Updated `csrf_client` fixture to use shared helper
-- `backend/apps/authentication/tests/test_user_api.py` - Updated `authenticated_user` fixture to use shared helper
+- `backend/apps/authentication/tests/test_user_api.py` - Updated `authenticated_user` fixture to use shared helper + import order fixes
+- `backend/apps/authentication/tests/test_session_auth.py` - Import order fixes (Ruff auto-fix)
+- `backend/apps/authentication/tests/test_security.py` - Import order fixes (Ruff auto-fix)
 - `backend/apps/user_movie_data/tests/test_user_movie_data_api.py` - Updated `authenticated_user` fixture to use shared helper
 
 **Frontend**:

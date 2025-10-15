@@ -31,6 +31,10 @@ https://localhost:8444 {
 
     # Proxy django-allauth headless API to the backend
     handle /_allauth/* {
+        header {
+            Access-Control-Allow-Origin "https://localhost:5173"
+            Access-Control-Allow-Credentials "true"
+        }
         reverse_proxy backend:8000 {
             transport http {
                 tls

@@ -152,9 +152,62 @@ This includes:
 
 ---
 
-**Decision Criteria: Relevance to Remaining Work**
+**Archival Mode vs Mid-Work Mode - Critical Distinction**
 
-Before migrating any content, ask these questions:
+**Mode 1 (Mid-Work Cleanup):**
+- **Goal**: Keep task file lean while work continues
+- **Decision Criteria**: "Do remaining tasks need this context?"
+- **What stays**: Top-matter context, task list, bottom-matter notes relevant to remaining work, Relevant Files
+- **What migrates**: Historical explanations with no future dependencies
+
+**Mode 2 (Archival Preparation - ALL WORK COMPLETE):**
+- **Goal**: Transform task file into quick-reference skeleton
+- **Decision Criteria**: "Is this part of the quick reference or the deep dive?"
+- **Task file becomes**: Top-matter + Task list + Relevant Files + Completion Summary ONLY
+- **Everything else migrates**: ALL bottom-matter sections (Implementation Notes, Task List Coordination, Decision Logs, etc.) → Notes file
+
+**Archival Task File Structure (Mode 2 only):**
+
+```markdown
+# Task File (Quick Reference Skeleton)
+
+## Top-Matter (KEEP - concise context)
+- Metadata (Created, Completed, Status, Effort)
+- Context (1-2 paragraphs: why this work, what triggered it)
+- Scope & Boundaries (what's in/out of scope)
+
+## Task List (KEEP - historical record)
+- [x] All task checkboxes with inline outcomes
+- Preserves what was actually done
+
+## Relevant Files (KEEP - quick reference)
+- File paths with one-line descriptions
+- Helps locate implementation quickly
+
+## Completion Summary (KEEP - archival summary)
+- Work Accomplished
+- Major Deliverables
+- Key Architectural Decisions
+- Metrics
+
+## EVERYTHING ELSE MIGRATES TO NOTES FILE:
+❌ Implementation Notes section → Notes file
+❌ Task List Coordination section → Notes file
+❌ Decision Logs section → Notes file
+❌ Investigation Details section → Notes file
+```
+
+**Why This Structure?**
+- **Quick reference** (2-3 min scan): "What was done, what files changed, what was achieved?"
+- **Deep dive** (notes file): "How was it done, why these decisions, what was the journey?"
+
+---
+
+**Decision Criteria: Relevance to Remaining Work (Mode 1 Only)**
+
+**⚠️ IN ARCHIVAL MODE (Mode 2), SKIP TO "ARCHIVAL MODE MIGRATION" BELOW**
+
+Before migrating any content during mid-work cleanup, ask these questions:
 
 **1. Does remaining work need this context?**
 - If YES → Keep in task file (even if verbose)
@@ -238,6 +291,83 @@ Before migrating any content, ask these questions:
 ```
 
 **Key principle:** The task line shows WHAT was done. The notes file explains WHY and HOW in detail.
+
+---
+
+**Archival Mode Migration (Mode 2 Only)**
+
+**⚠️ When all tasks are complete, apply different rules:**
+
+**Scan Top-Matter** (above task list):
+- ✅ **Keep**: Metadata, brief context (1-2 paragraphs), scope boundaries
+- ✅ **Keep concise**: If context/scope sections exceed 100 lines, migrate detailed subsections to notes
+- ❌ **Migrate**: Detailed background investigations, verbose decision rationale in context section
+
+**Scan Task List**:
+- ✅ **Keep verbatim**: All task lines exactly as written (never modify)
+
+**Scan Bottom-Matter** (below task list):
+- ✅ **Keep**: Relevant Files section (quick reference for finding implementation)
+- ✅ **Keep**: Completion Summary section (archival summary of what was achieved)
+- ❌ **Migrate ALL to notes file**: Implementation Notes, Task List Coordination, Decision Logs, Investigation Details, Architecture Decisions, Any other explanatory sections
+
+**Result**: Task file becomes 200-400 line quick reference skeleton showing WHAT was done. Notes file becomes comprehensive deep-dive showing HOW and WHY.
+
+**Example Archival Migration:**
+
+```markdown
+<!-- TASK FILE BEFORE ARCHIVAL CLEANUP (800 lines) -->
+
+## Context
+[50 lines of background]
+
+## Tasks
+[300 lines of task checklist]
+
+## Relevant Files
+[50 lines of file list]
+
+## Task List Coordination
+[100 lines explaining scope boundaries]
+
+## Implementation Notes
+
+### Task 5: OAuth Token Strategy
+[50 lines of architectural decisions]
+
+### Task 7: Hook Architecture
+[150 lines of design rationale]
+
+## Completion Summary
+[100 lines of metrics and achievements]
+
+<!-- TASK FILE AFTER ARCHIVAL CLEANUP (350 lines) -->
+
+## Context
+[50 lines of background - kept concise]
+
+## Tasks
+[300 lines of task checklist - unchanged]
+
+## Relevant Files
+[50 lines of file list - unchanged]
+
+## Completion Summary
+[100 lines of metrics - unchanged]
+
+<!-- NOTES FILE GAINS -->
+
+## Task List Coordination (Migrated from Task File)
+[100 lines explaining scope boundaries]
+
+## Implementation Notes (Migrated from Task File)
+
+### OAuth Token Strategy Architecture
+[50 lines of architectural decisions from Task 5]
+
+### Hook Facade Pattern Design
+[150 lines of design rationale from Task 7]
+```
 
 ### 4. Migrate Content to Notes File
 
@@ -356,12 +486,14 @@ Before migrating any content, ask these questions:
 ❌ **Ignoring stale references**: After restructuring tasks, "(Task 7)" might now mean Task 8 - fix these before they cause confusion
 ❌ **Leaving content out of order**: Task 8 notes appearing before Task 7 notes after restructuring - reorder sections to match current numbering
 ❌ **Cleaning notes file mid-work**: Notes file cleanup is ONLY for archival prep (Mode 2), not mid-work cleanup (Mode 1)
+❌ **Leaving bottom-matter in archived task files**: When all work complete, Implementation Notes/Coordination sections must migrate to notes file - task file is quick reference only
 ❌ **Leaving temporal markers in archived work**: "Pending approval", "To be filled" confuses future readers
 ❌ **Skipping TOC for archival**: 1500-line notes file without navigation is effectively unusable
 ❌ **Over-editing notes**: Don't remove the exploration journey - that's valuable context
 ❌ **Deleting instead of migrating**: Lost context can't be recovered
 ❌ **Inconsistent headers in archived work**: "Task 5.5.6.3" vs "Frontend CSRF Guide" - pick one style
 ❌ **Skipping archival prep**: "I'll clean it up later" = never gets cleaned up
+❌ **Treating all cleanup the same**: Mode 1 (mid-work) keeps relevant context in task file, Mode 2 (archival) migrates ALL bottom-matter to notes
 
 ✅ **Task lines stay verbatim** (historical record of what was done)
 ✅ **Task file shows the what and why** (scannable structure)

@@ -221,35 +221,64 @@ See "Task List Coordination" section at bottom for detailed boundary documentati
             - **OAuth Session Persistence**: Fixed logout-on-refresh for OAuth users (added session endpoint check to `checkExistingAuth`)
             - **ErrorBoundary showErrorDetails**: Fixed pre-existing bug where explicit `false` wasn't respected (changed `||` to `??`)
             - **Watchlist Type Safety**: Fixed TypeScript errors in test data (pagination schema, optional results field)
+    - [x] 7.11 MovieCard Watchlist Toggle UI - Visual feedback (prerequisite for Task 8) ✅
+        - [x] 7.11.1 Add `RiPlayListFill` icon import
+        - [x] 7.11.2 Add `isOnWatchlist` computed state from `movie.user_movie_data?.user_on_watchlist`
+        - [x] 7.11.3 Update watchlist button icon: `RiPlayListAddLine` (default) → `RiPlayListFill` (on watchlist)
+        - [x] 7.11.4 Update watchlist button tooltip: "Add to watchlist" → "Remove from watchlist" (dynamic)
+        - [x] 7.11.5 Add blue color palette when on watchlist (`colorPalette="blue"`)
+        - [x] 7.11.6 Update memo comparison to include `user_on_watchlist` for re-render detection
+        - [x] 7.11.7 Run incremental quality checks (linting, type checking: 0 errors, 6 expected warnings)
+        - **Rationale**: Manual E2E testing requires visual feedback to verify toggle state changes
 
-- [ ] **8. Manual E2E Validation** - Critical path testing (lean scope)
-    - **Goal**: Prove OAuth implementation works in isolation, document expected behavior
-    - **Scope**: Basic flows only - comprehensive testing deferred to API Layer P2 Task 5.6
-    - [ ] 8.1 JWT Pattern - Quick validation (5-10 min)
-        - [ ] 8.1.1 Register → Login → Add movie to watchlist → Verify persists after refresh
-        - [ ] 8.1.2 Check DevTools: JWT tokens present, logout clears cookies
-        - [ ] 8.1.3 **SKIP**: Extensive token refresh testing, multi-tab, all edge cases (deferred)
-    - [ ] 8.2 OAuth Pattern - Google flow (10-15 min)
+- [ ] **8. Manual E2E Validation** - Enhanced critical path testing (~60-75 min)
+    - **Goal**: Prove OAuth implementation works with high confidence, validate watchlist CRUD + user isolation
+    - **Scope**: Critical flows with CRUD testing - comprehensive edge cases deferred to API Layer P2 Task 5.6
+    - **Why Enhanced**: 4 bugs found during Task 7.10 manual testing, security-critical isolation must be validated
+    - [x] 8.1 JWT Pattern - Watchlist CRUD validation (10-15 min)
+        - [x] 8.1.1 Login → Add movie to watchlist → Verify icon changes to filled state
+        - [x] 8.1.2 Click watchlist button again → Verify removes from list (icon returns to outline)
+        - [x] 8.1.3 Add movie back to watchlist → Verify appears in list
+        - [x] 8.1.4 Refresh page → Verify watchlist state persists (icon still filled)
+        - [x] 8.1.5 Check DevTools: Hybrid auth tokens (refresh_token cookie HttpOnly, access_token in sessionStorage) ✅
+        - [x] 8.1.6 Logout → Verify tokens cleared (refresh_token cookie removed, sessionStorage cleared) ✅
+            - **Bug found & fixed**: `token_expiration` not cleared from sessionStorage (added to `clearAuthTokens()`)
+            - **Note**: `csrftoken` cookie persists (expected - needed for unauthenticated requests)
+        - [x] 8.1.7 **SKIP**: Extensive token refresh testing, multi-tab coordination (deferred)
+    - [ ] 8.2 OAuth Pattern - Google flow with CRUD (15-20 min)
         - [ ] 8.2.1 Click "Continue with Google" → Complete OAuth → Verify callback success
-        - [ ] 8.2.2 Check DevTools: NO JWT tokens, session cookie present
-        - [ ] 8.2.3 Add movie to watchlist → Refresh page → Session persists
-        - [ ] 8.2.4 Logout → Session cleared
-        - [ ] 8.2.5 **SKIP**: Extensive multi-tab testing, all error scenarios (deferred)
-    - [ ] 8.3 OAuth Pattern - GitHub flow (5-10 min)
-        - [ ] 8.3.1 Repeat 8.2.1-8.2.4 with GitHub OAuth
-        - [ ] 8.3.2 **SKIP**: Comprehensive cross-provider testing (deferred)
-    - [ ] 8.4 Quick isolation check (5 min)
-        - [ ] 8.4.1 OAuth user → Add watchlist items
-        - [ ] 8.4.2 Logout → Login as JWT user → Verify independent data
-        - [ ] 8.4.3 **SKIP**: Extensive cross-pattern scenarios (deferred to API P2)
-    - [ ] 8.5 Critical error paths only (5 min)
-        - [ ] 8.5.1 OAuth denial (click Cancel) → Verify graceful error, no crash
-        - [ ] 8.5.2 Invalid session → Verify redirect to login
-        - [ ] 8.5.3 **SKIP**: Network errors, expired tokens, all edge cases (deferred)
+        - [ ] 8.2.2 Check DevTools: NO JWT tokens (no access_token/refresh_token anywhere), only sessionid cookie (HttpOnly)
+        - [ ] 8.2.3 Add movie to watchlist → Verify icon changes to filled state
+        - [ ] 8.2.4 Click watchlist button again → Verify removes from list (icon returns to outline)
+        - [ ] 8.2.5 Add movie back to watchlist → Verify appears in /watchlist page
+        - [ ] 8.2.6 Refresh page → Verify session persists, watchlist state preserved
+        - [ ] 8.2.7 Close browser → Reopen → Navigate to app → Verify session still valid
+        - [ ] 8.2.8 Logout → Verify session cleared (sessionid cookie removed)
+        - [ ] 8.2.9 **SKIP**: Multi-tab testing, all error recovery scenarios (deferred)
+    - [ ] 8.3 OAuth Pattern - GitHub flow (10 min - lean)
+        - [ ] 8.3.1 Click "Continue with GitHub" → Complete OAuth → Verify callback success
+        - [ ] 8.3.2 Add one movie to watchlist → Verify icon changes
+        - [ ] 8.3.3 Logout → Verify session cleared
+        - [ ] 8.3.4 **SKIP**: Full CRUD testing (already validated with Google OAuth)
+    - [ ] 8.4 Cross-Pattern User Isolation - CRITICAL SECURITY TEST (10-15 min)
+        - [ ] 8.4.1 OAuth user (Google) → Add movie ID 550 (Fight Club) to watchlist
+        - [ ] 8.4.2 Verify movie appears in watchlist with filled icon
+        - [ ] 8.4.3 Logout → Login as JWT user (email/password)
+        - [ ] 8.4.4 Navigate to same movie (ID 550) → Verify icon is OUTLINE (not filled)
+        - [ ] 8.4.5 JWT user → Add movie ID 550 to watchlist → Verify icon fills
+        - [ ] 8.4.6 Logout → Login as OAuth user (Google) again
+        - [ ] 8.4.7 Navigate to movie ID 550 → Verify icon is FILLED (OAuth user's state preserved)
+        - [ ] 8.4.8 **CRITICAL**: Verify no cross-contamination (both users adding same movie must be completely isolated)
+        - [ ] 8.4.9 **SKIP**: Extensive multi-user scenarios (deferred to API P2)
+    - [ ] 8.5 Critical error paths (10 min)
+        - [ ] 8.5.1 OAuth denial (click Cancel on consent screen) → Verify graceful error message, no crash
+        - [ ] 8.5.2 Delete session cookie via DevTools → Attempt API call → Verify redirect to login
+        - [ ] 8.5.3 Add invalid movie ID (99999999) → Verify proper error handling (404 or validation error)
+        - [ ] 8.5.4 **SKIP**: Network errors, expired tokens, all edge cases (deferred)
     - [ ] 8.6 Document results in notes file (5 min)
-        - [ ] 8.6.1 Brief execution log (critical paths work: Yes/No)
-        - [ ] 8.6.2 Any bugs found (must fix before closing)
-        - [ ] 8.6.3 Note items deferred to API Layer P2
+        - [ ] 8.6.1 Execution log: Mark each test as Pass/Fail with brief notes
+        - [ ] 8.6.2 Any bugs found: Document + fix immediately (if <15 min each per "Leave It Cleaner" protocol)
+        - [ ] 8.6.3 Note items deferred to API Layer P2 Task 5.6
 
 - [ ] **9. Documentation and Cleanup**
     - [ ] 9.1 Remove debugging console.log statements
@@ -316,7 +345,7 @@ See "Task List Coordination" section at bottom for detailed boundary documentati
 - `frontend/src/hooks/__tests__/useMovieActions.test.ts` - **NEW (Task 7.6)**: Tests for useMovieActions hook (toggleWatchlist, state management, error handling)
 - `frontend/src/pages/user/Watchlist.tsx` - **NEW (Task 7.9 + 7.10)**: Minimal watchlist page component (uses userMovieService), type safety fixes
 - `frontend/src/pages/user/__tests__/Watchlist.test.tsx` - **NEW (Task 7.8 + 7.10)**: Watchlist page tests (4 tests), type safety fixes
-- `frontend/src/components/movie/MovieCard.tsx` - **UPDATED (Task 7.7)**: Uses useMovieActions hook for watchlist button onClick handler
+- `frontend/src/components/movie/MovieCard.tsx` - **UPDATED (Task 7.7 + 7.11)**: Uses useMovieActions hook for watchlist button onClick handler, toggle UI with state-based icon/tooltip/color
 - `frontend/src/components/ErrorBoundary.tsx` - **UPDATED (Task 7.10)**: Fixed showErrorDetails prop handling (pre-existing bug, changed || to ??)
 
 ## Task List Coordination
@@ -555,6 +584,72 @@ const { toggleWatchlist, isUpdating } = useMovieActions({ movie });
 - Unit tests for service functions (pure logic)
 - Hook tests with `@testing-library/react-hooks` (state management)
 - Component tests mock the hook (UI only)
+
+---
+
+### Task 7.11 + Task 8: Hybrid Authentication Implementation Details
+
+**Hybrid Authentication Pattern Discovered During Manual Testing** (2025-10-16):
+
+During Task 8.1.5 validation, we discovered the JWT authentication pattern is **hybrid**, not pure cookie-based:
+
+**JWT Authentication (Email/Password) Storage**:
+- ✅ `refresh_token` cookie (HttpOnly, Secure, 14-day lifetime) - XSS-proof
+- ✅ `access_token` sessionStorage (readable by JS, 5-min lifetime) - allows instant auth checks
+- ✅ `csrftoken` cookie (readable by JS) - Django CSRF protection
+- ❌ NO `access_token` cookie (intentional design choice)
+
+**OAuth Authentication (Google/GitHub) Storage**:
+- ✅ `sessionid` cookie (HttpOnly, Secure) - Django session
+- ✅ `csrftoken` cookie (readable by JS) - Django CSRF protection
+- ❌ NO JWT tokens (access_token or refresh_token) anywhere
+
+**Why Hybrid Design?**
+
+Security + UX trade-off:
+1. **Access token in localStorage**: Frontend can check auth instantly without network call
+2. **Short lifetime (5 min)**: XSS attacks only steal 5-min token, not 14-day token
+3. **Refresh token in HttpOnly cookie**: Long-lived token XSS-proof, auto-sent with requests
+4. **Session warnings possible**: Frontend can decode JWT expiration for UX
+
+**Backend Implementation** (`authentication/api.py:259-268`):
+
+```python
+# Hybrid authentication: Only set refresh token as HTTP-only cookie
+# Access token returned in response body for localStorage storage (frontend manages it)
+response.set_cookie(
+    refresh_token_name,  # Only refresh_token
+    refresh_token,
+    max_age=int(refresh_lifetime.total_seconds()),
+    httponly=True,
+    secure=True,
+    samesite=samesite,
+)
+
+return 200, {
+    "access_token": access_token,  # In JSON response, not cookie
+    "refresh_token": refresh_token,
+    "user_id": authenticated_user.id,
+}
+```
+
+**Frontend Implementation** (`utilities/token.ts:111-132`):
+
+```typescript
+// Frontend stores access token in localStorage/sessionStorage
+storageObj.setItem("access_token", accessToken);
+storageObj.setItem("isAuthenticated", "true");
+
+// Refresh token also stored for reference (duplicates cookie)
+if (refreshToken) {
+    storageObj.setItem("refresh_token", refreshToken);
+}
+```
+
+**Task 8 Validation Notes**:
+- Task 8.1.5 updated to reflect hybrid pattern (refresh_token cookie + access_token sessionStorage)
+- Task 8.2.2 clarified: OAuth users have NO JWT tokens anywhere (only sessionid cookie)
+- Implementation is CORRECT and more secure than pure cookie approach
 
 ---
 

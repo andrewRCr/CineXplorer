@@ -134,23 +134,23 @@ See "Task List Coordination" section at bottom for detailed boundary documentati
         - [x] 7.1.3 Implement `enrich_movies_with_user_data()` method with bulk query optimization
         - [x] 7.1.4 Add professional type annotations (no Any usage)
         - [x] 7.1.5 Add docstrings following project standards
-    - [ ] 7.2a **RETROACTIVE** - Write tests for endpoint enrichment integration
-        - [ ] 7.2a.1 Test: `get_movie_detail` includes user_movie_data for authenticated users
-        - [ ] 7.2a.2 Test: `discover_movies` includes user_movie_data in results for authenticated users
-        - [ ] 7.2a.3 Test: Discovery endpoints work for unauthenticated users (user_movie_data is None)
-        - [ ] 7.2a.4 Run tests and verify all pass
+    - [x] 7.2a **RETROACTIVE** - Write tests for endpoint enrichment integration
+        - [x] 7.2a.1 Test: `get_movie_detail` includes user_movie_data for authenticated users
+        - [x] 7.2a.2 Test: `discover_movies` includes user_movie_data in results for authenticated users
+        - [x] 7.2a.3 Test: Discovery endpoints work for unauthenticated users (user_movie_data is None)
+        - [x] 7.2a.4 Run tests and verify all pass
     - [x] 7.2 Backend Integration - Update movie discovery endpoints to use enrichment **⚠️ IMPLEMENTED WITHOUT TESTS**
         - [x] 7.2.1 Update `movie/api.py` endpoints to pass authenticated user to service
         - [x] 7.2.2 Call enrichment service on response before returning
         - [x] 7.2.3 Update endpoints: `get_now_playing_movies`, `get_upcoming_movies`, `search_movies`, `discover_movies`, `get_movie_detail`
         - [x] 7.2.4 Verify no breaking changes (enrichment is transparent)
-    - [ ] 7.3a **RETROACTIVE** - Write tests for watchlist endpoint
-        - [ ] 7.3a.1 Test: GET `/api/user-movie-data/movies` returns user's movies with enrichment
-        - [ ] 7.3a.2 Test: `?watchlist=true` filters to only watchlist movies
-        - [ ] 7.3a.3 Test: Returns empty list if user has no movies
-        - [ ] 7.3a.4 Test: Requires authentication (401 for unauthenticated)
-        - [ ] 7.3a.5 Test: Pagination works correctly
-        - [ ] 7.3a.6 Run tests and verify all pass
+    - [x] 7.3a **RETROACTIVE** - Write tests for watchlist endpoint
+        - [x] 7.3a.1 Test: GET `/api/user-movie-data/movies` returns user's movies with enrichment
+        - [x] 7.3a.2 Test: `?watchlist=true` filters to only watchlist movies
+        - [x] 7.3a.3 Test: Returns empty list if user has no movies
+        - [x] 7.3a.4 Test: Requires authentication (401 for unauthenticated)
+        - [x] 7.3a.5 Test: Pagination works correctly
+        - [x] 7.3a.6 Run tests and verify all pass
     - [x] 7.3 Backend API - Watchlist endpoint using enrichment service **⚠️ IMPLEMENTED WITHOUT TESTS**
         - [x] 7.3.1 Add GET `/api/user-movie-data/movies` endpoint (authenticated only)
         - [x] 7.3.2 Implement optional query param: `?watchlist=true` for filtering
@@ -265,6 +265,8 @@ See "Task List Coordination" section at bottom for detailed boundary documentati
 - `backend/apps/user_movie_data/tests/test_user_movie_data_api.py` - Updated `authenticated_user` fixture to use shared helper
 - `backend/apps/user_movie_data/services/movie_enrichment_service.py` - **NEW (Task 7)**: Class-based enrichment service with DI (Backend Modernization Task 2.0 pattern)
 - `backend/apps/user_movie_data/tests/test_movie_enrichment_service.py` - **NEW (Task 7.1a)**: Retroactive unit tests for MovieEnrichmentService (11 tests, all passing)
+- `backend/apps/movie/tests/test_endpoint_enrichment_integration.py` - **NEW (Task 7.2a)**: Retroactive integration tests for endpoint enrichment (16 tests, all passing)
+- `backend/apps/user_movie_data/tests/test_watchlist_endpoint.py` - **NEW (Task 7.3a)**: Retroactive integration tests for watchlist endpoint (10 tests, all passing)
 - `backend/apps/movie/api.py` - **UPDATED (Task 7)**: Discovery endpoints now use enrichment service for authenticated users
 - `backend/apps/movie/schemas.py` - **EXISTING**: MovieBaseSchema already has `user_movie_data` field (no changes needed)
 - `backend/apps/user_movie_data/api.py` - **UPDATED (Task 7)**: New watchlist endpoint using enrichment service
@@ -389,9 +391,9 @@ Tasks 7.1-7.4 (backend) were implemented WITHOUT test-first protocol:
 4. ⏳ Writing comprehensive tests before continuing to frontend (in progress)
 
 **Test Coverage Added** (retroactive):
-- 7.1a: MovieEnrichmentService tests (unit)
-- 7.2a: Endpoint enrichment integration tests
-- 7.3a: Watchlist endpoint tests (API integration)
+- 7.1a: MovieEnrichmentService tests (11 unit tests) ✅ COMPLETE
+- 7.2a: Endpoint enrichment integration tests (16 integration tests) ✅ COMPLETE
+- 7.3a: Watchlist endpoint tests (10 integration tests) ✅ COMPLETE
 
 **Lesson Learned**: Task lists must explicitly show test sub-tasks BEFORE implementation sub-tasks. Documentation updates prevent future occurrences.
 

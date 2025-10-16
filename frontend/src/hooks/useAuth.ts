@@ -231,12 +231,10 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
 
 					if (response.ok) {
 						const data = await response.json();
-						console.log('[useAuth] Session data:', data);
 
 						// Session endpoint returns: {status: 200, data: {user, methods}, meta: {is_authenticated}}
 						if (data?.meta?.is_authenticated && data?.data?.user) {
 							console.log('OAuth callback detected - authenticated via session cookie');
-							console.log('[useAuth] User:', data.data.user);
 
 							// Set user data from session response (no need to call getUserProfile)
 							setUser(data.data.user);
@@ -332,11 +330,6 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
 		try {
 			console.log('[useAuth] login() called, attempting authentication...');
 			const response = await authService.login(username, password);
-			console.log('[useAuth] login() response received:', {
-				has_user_id: !!response.user_id,
-				has_access_token: !!response.access_token,
-				has_refresh_token: !!response.refresh_token
-			});
 
 			const user_id = response.user_id;
 			const accessToken = response.access_token;
@@ -348,19 +341,12 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
 					? "localStorage"
 					: "sessionStorage";
 
-				console.log('[useAuth] Storing tokens in:', storage);
 				// Store tokens in the appropriate storage
 				setAuthTokens(accessToken, refreshToken, storage);
-
-				console.log('[useAuth] Setting isAuthenticated to true');
 				setIsAuthenticated(true);
-
-				console.log('[useAuth] Calling getUserDetails()...');
 				await getUserDetails();
-				console.log('[useAuth] Login complete!');
 				return;
 			}
-			console.log('[useAuth] Missing tokens, calling getUserDetails() anyway...');
 			await getUserDetails();
 			return;
 		} catch (error: unknown) {

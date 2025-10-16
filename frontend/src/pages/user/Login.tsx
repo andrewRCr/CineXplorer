@@ -354,8 +354,6 @@ const Login = () => {
 				.find((row) => row.startsWith("csrftoken="))
 				?.split("=")[1];
 
-			console.log(`[OAuth] CSRF token: ${csrfToken ? 'found' : 'not found'}`);
-
 			// Step 2: Create form and submit through Caddy proxy
 			// Use absolute URL with protocol to force full page navigation (bypass React Router)
 			const form = document.createElement("form");
@@ -364,8 +362,6 @@ const Login = () => {
 			// CRITICAL: Force full page reload, prevent React Router interception
 			form.target = "_self";
 
-			console.log(`[OAuth] Form action: ${form.action}`);
-
 			// Add form fields
 			const fields = {
 				provider: provider,
@@ -373,8 +369,6 @@ const Login = () => {
 				process: "login",
 				...(csrfToken ? { csrfmiddlewaretoken: csrfToken } : {}),
 			};
-
-			console.log("[OAuth] Form fields:", { ...fields, csrfmiddlewaretoken: csrfToken ? "[PRESENT]" : "[NOT PRESENT]" });
 
 			Object.entries(fields).forEach(([key, value]) => {
 				const input = document.createElement("input");
@@ -392,7 +386,6 @@ const Login = () => {
 			// Submit form immediately (browser will perform full page navigation)
 			// No artificial delay - user will see Google/GitHub login form immediately if needed
 			// Loading spinner will show when returning FROM OAuth (not when going TO OAuth)
-			console.log("[OAuth] Submitting form through Caddy proxy...");
 			document.body.appendChild(form);
 			form.submit();
 		} catch (error) {

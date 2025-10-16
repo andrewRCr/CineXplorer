@@ -132,7 +132,10 @@ def test_409_username_exists_uses_error_format(
 
 @pytest.mark.enable_throttling
 @pytest.mark.django_db
-@override_settings(TESTING=False)  # Required: TestAware throttles bypass when TESTING=True
+@override_settings(
+    TESTING=False,  # Required: TestAware throttles bypass when TESTING=True
+    ZEPTOMAIL_API_KEY=''  # Prevent real email sending (triggers dev_mode in adapters)
+)
 def test_429_rate_limit_uses_error_format(
     api_client: Client,
     verified_user: User,

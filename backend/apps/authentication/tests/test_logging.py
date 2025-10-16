@@ -400,7 +400,10 @@ def test_token_values_never_logged(
 
 @pytest.mark.django_db
 @pytest.mark.enable_throttling
-@override_settings(TESTING=False)  # Required: TestAware throttles bypass when TESTING=True
+@override_settings(
+    TESTING=False,  # Required: TestAware throttles bypass when TESTING=True
+    ZEPTOMAIL_API_KEY=''  # Prevent real email sending (triggers dev_mode in adapters)
+)
 def test_rate_limit_violation_logs_throttle_event(
     api_client: Client,
     enable_throttling_for_test: None,

@@ -62,7 +62,10 @@ def test_login_allows_5_rapid_attempts(
 
 @pytest.mark.enable_throttling
 @pytest.mark.django_db
-@override_settings(TESTING=False)  # Required: TestAware throttles bypass when TESTING=True
+@override_settings(
+    TESTING=False,  # Required: TestAware throttles bypass when TESTING=True
+    ZEPTOMAIL_API_KEY=''  # Prevent real email sending (triggers dev_mode in adapters)
+)
 def test_login_throttles_6th_attempt(
     api_client: Client,
     verified_user: User,
@@ -225,7 +228,10 @@ def test_token_refresh_allows_10_rapid_attempts(
 
 @pytest.mark.enable_throttling
 @pytest.mark.django_db
-@override_settings(TESTING=False)  # Required: TestAware throttles bypass when TESTING=True
+@override_settings(
+    TESTING=False,  # Required: TestAware throttles bypass when TESTING=True
+    ZEPTOMAIL_API_KEY=''  # Prevent real email sending (triggers dev_mode in adapters)
+)
 def test_token_refresh_throttles_11th_attempt(
     api_client: Client,
     verified_user: User,

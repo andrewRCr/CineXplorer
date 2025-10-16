@@ -41,22 +41,82 @@ const Login = () => {
 		null
 	);
 	const [isLoggingIn, setIsLoggingIn] = useState(false);
-	const [oauthLoading, setOauthLoading] = useState<{
+
+	// Initialize OAuth loading state immediately from sessionStorage (prevents form flash)
+	// Note: State never updates after initialization - component unmounts during navigation
+	const [oauthLoading] = useState<{
 		provider: string;
 		loading: boolean;
-	} | null>(null);
+	} | null>(() => {
+		const oauthProvider = sessionStorage.getItem('oauth_in_progress');
+		if (oauthProvider) {
+			console.log(`[OAuth] Component initializing with OAuth flow in progress: ${oauthProvider}`);
+			return { provider: oauthProvider, loading: true };
+		}
+		return null;
+	});
+
+	// Initialize timing gate: closed if OAuth in progress (will open after minimum display time)
+	const [minDisplayTimeElapsed, setMinDisplayTimeElapsed] = useState(() => {
+		const oauthProvider = sessionStorage.getItem('oauth_in_progress');
+		// If OAuth flow in progress, gate starts CLOSED (false) - will open after minimum display time
+		// Otherwise gate starts OPEN (true) - no delay needed for normal login
+		return !oauthProvider;
+	});
+
+	// Check if returning from OAuth flow and set up timing gate
+	useEffect(() => {
+		const oauthProvider = sessionStorage.getItem('oauth_in_progress');
+		const startTimeStr = sessionStorage.getItem('oauth_start_time');
+
+		if (oauthProvider && startTimeStr) {
+			const startTime = parseInt(startTimeStr, 10);
+			const elapsedTime = Date.now() - startTime;
+			const FAST_OAUTH_THRESHOLD = 3000; // 3 seconds
+			const MINIMUM_DISPLAY_TIME = 500; // 0.5 seconds minimum (actual display time from when spinner appears)
+
+			console.log(`[OAuth] Detected return from ${oauthProvider} OAuth flow after ${elapsedTime}ms`);
+
+			// For fast OAuth, enforce minimum display time before allowing navigation
+			if (elapsedTime < FAST_OAUTH_THRESHOLD) {
+				setMinDisplayTimeElapsed(false);
+
+				// Display spinner for MINIMUM_DISPLAY_TIME from NOW (not from original click time)
+				// This ensures consistent visible duration regardless of OAuth speed
+				console.log(`[OAuth] Fast OAuth detected, enforcing ${MINIMUM_DISPLAY_TIME}ms minimum display time`);
+
+				setTimeout(() => {
+					console.log('[OAuth] Minimum display time elapsed, allowing navigation');
+					setMinDisplayTimeElapsed(true);
+				}, MINIMUM_DISPLAY_TIME);
+			} else {
+				console.log('[OAuth] Slow OAuth detected, no minimum display time needed');
+				// Slow OAuth - user already waited, allow immediate navigation
+				setMinDisplayTimeElapsed(true);
+			}
+
+			// Cleanup function: Clear flags when component unmounts (during navigation)
+			return () => {
+				console.log('[OAuth] Login component unmounting, clearing OAuth flags');
+				sessionStorage.removeItem('oauth_in_progress');
+				sessionStorage.removeItem('oauth_start_time');
+			};
+		}
+	}, []);
 
 	// Redirect authenticated users away from login page
-	// Note: Disabled during login to prevent race condition with setAuthTokens()
-	// The login function handles navigation after storing tokens in localStorage
+	// Note: Gate navigation with minDisplayTimeElapsed to enforce minimum spinner display for fast OAuth
 	useEffect(() => {
-		// Only redirect if user is already authenticated when page loads
-		// Don't redirect during active login process
-		if (authContext?.isAuthenticated && !isLoggingIn) {
+		// Only redirect if:
+		// 1. User is authenticated
+		// 2. Not in active login process
+		// 3. Minimum OAuth display time has elapsed (for fast OAuth UX)
+		if (authContext?.isAuthenticated && !isLoggingIn && minDisplayTimeElapsed) {
 			console.log("User already authenticated, redirecting to home");
-			navigate(ROUTES.HOME);
+			// Use replace to avoid adding login page to history
+			navigate(ROUTES.HOME, { replace: true });
 		}
-	}, [authContext?.isAuthenticated, navigate, isLoggingIn]);
+	}, [authContext?.isAuthenticated, navigate, isLoggingIn, minDisplayTimeElapsed]);
 
 	const formik = useFormik({
 		initialValues: {
@@ -288,10 +348,6 @@ const Login = () => {
 		try {
 			console.log(`[OAuth] Initializing ${provider} OAuth login`);
 
-			// Show loading overlay immediately
-			const startTime = Date.now();
-			setOauthLoading({ provider, loading: true });
-
 			// Step 1: Get CSRF token from cookie (if available)
 			const csrfToken = document.cookie
 				.split("; ")
@@ -329,25 +385,19 @@ const Login = () => {
 			});
 
 			// Set flag to indicate OAuth flow is in progress
-			// This prevents auto-login on /login page visits that aren't from OAuth redirect
-			sessionStorage.setItem('oauth_in_progress', 'true');
+			// Store provider name and timestamp for UX timing decisions on return
+			sessionStorage.setItem('oauth_in_progress', provider);
+			sessionStorage.setItem('oauth_start_time', Date.now().toString());
 
-			// Ensure minimum display time of 1000ms for loading overlay
-			// This prevents the overlay from flashing too quickly and being unreadable
-			const elapsed = Date.now() - startTime;
-			const minDisplayTime = 1000; // 1 second minimum
-			const remainingTime = Math.max(0, minDisplayTime - elapsed);
-
-			await new Promise(resolve => setTimeout(resolve, remainingTime));
-
-			// Submit form (browser will perform full page navigation and follow OAuth redirect to Google)
+			// Submit form immediately (browser will perform full page navigation)
+			// No artificial delay - user will see Google/GitHub login form immediately if needed
+			// Loading spinner will show when returning FROM OAuth (not when going TO OAuth)
 			console.log("[OAuth] Submitting form through Caddy proxy...");
 			document.body.appendChild(form);
 			form.submit();
 		} catch (error) {
 			console.error("OAuth initialization error:", error);
 			setGeneralError("Failed to initiate OAuth login. Please try again.");
-			setOauthLoading(null); // Clear loading state on error
 		}
 	};
 
@@ -494,7 +544,7 @@ const Login = () => {
 								}}
 							>
 								<Checkbox.HiddenInput />
-								<Checkbox.Control 
+								<Checkbox.Control
 									borderColor="border.separator"
 									_hover={{
 										bg: "background.subItem",

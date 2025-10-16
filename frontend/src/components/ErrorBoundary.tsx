@@ -421,7 +421,7 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
 						error={this.state.error}
 						errorInfo={this.state.errorInfo}
 						errorId={this.state.errorId}
-						showErrorDetails={this.props.showErrorDetails || process.env.NODE_ENV === 'development'}
+						showErrorDetails={this.props.showErrorDetails ?? (process.env.NODE_ENV === 'development')}
 						onReset={this.handleReset}
 						onReportError={this.handleReportError}
 					/>

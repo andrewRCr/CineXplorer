@@ -396,11 +396,16 @@ def test_create_user_movie_data_duplicate_returns_400(
 def test_create_user_movie_data_invalid_movie_id_returns_404(
     authenticated_user: tuple[Client, User]
 ) -> None:
-    """Test that creating with nonexistent movie_id returns 404."""
+    """
+    Test that creating with nonexistent movie_id returns 404.
+
+    Uses an extremely large TMDB ID that doesn't exist in TMDB API.
+    The endpoint will attempt to fetch from TMDB and fail with 404.
+    """
     client, _user = authenticated_user
     csrf_token = get_csrf_token(client)
     payload = {
-        'movie_id': 99999,  # Nonexistent movie
+        'movie_id': 999999999,  # ID that doesn't exist in TMDB
         'user_rating': 8
     }
 

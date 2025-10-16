@@ -157,6 +157,9 @@ def create_user_movie_data(
     This endpoint creates a new UserMovieData record when a user first
     interacts with a movie (adds to watchlist, rates, reviews, etc.).
 
+    If the movie doesn't exist in our local database yet, it fetches the
+    movie data from TMDB and creates a local Movie stub record.
+
     Args:
         request: HTTP request with authenticated user
         payload: User movie data to create (includes movie_id for FK lookup)
@@ -165,13 +168,31 @@ def create_user_movie_data(
         UserMovieDataDetailSchema: Created user movie data
 
     Raises:
-        HttpError: 400 if movie_id is invalid or entry already exists
+        HttpError: 400 if entry already exists
+        HttpError: 404 if movie not found in TMDB
     """
     # Get authenticated user with explicit error handling
     user = get_current_user(request)
 
-    # Verify movie exists
-    movie = get_object_or_404(Movie, tmdb_id=payload.movie_id)
+    # Get or create Movie record
+    # If movie doesn't exist locally, fetch from TMDB and create stub
+    try:
+        movie = Movie.objects.get(tmdb_id=payload.movie_id)
+    except Movie.DoesNotExist:
+        # Fetch movie data from TMDB to create local stub
+        try:
+            movie_detail = movie_service.get_movie_by_id(payload.movie_id)
+        except HttpError as e:
+            # Re-raise if movie not found in TMDB
+            raise HttpError(404, f"Movie not found in TMDB: {e.message}") from e
+
+        # Create minimal Movie stub from TMDB data
+        movie = Movie.objects.create(
+            tmdb_id=movie_detail.tmdb_id,
+            title=movie_detail.title,
+            poster_path=movie_detail.poster_path,
+            release_date=movie_detail.release_date
+        )
 
     # Atomically get or create to avoid race condition
     obj, created = UserMovieData.objects.get_or_create(

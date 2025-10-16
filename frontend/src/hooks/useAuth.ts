@@ -83,6 +83,38 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
 
 				setIsAuthenticated(true);
 				// getUserDetails will be called on next render when isAuthenticated changes
+				return;
+			}
+
+			// No JWT tokens found - check for OAuth session cookie
+			// This handles page refreshes for OAuth users (Google/GitHub login)
+			try {
+				console.log('[useAuth] No JWT tokens found, checking for OAuth session...');
+				const response = await fetch(
+					'https://localhost:8444/_allauth/browser/v1/auth/session',
+					{
+						method: 'GET',
+						credentials: 'include', // Send session cookie if present
+					}
+				);
+
+				if (response.ok) {
+					const data = await response.json();
+
+					// Session endpoint returns: {status: 200, data: {user, methods}, meta: {is_authenticated}}
+					if (data?.meta?.is_authenticated && data?.data?.user) {
+						console.log('[useAuth] OAuth session detected, user authenticated');
+						// Set user data from session response
+						setUser(data.data.user);
+						// Set authenticated state (session cookie handles auth automatically)
+						setIsAuthenticated(true);
+					} else {
+						console.log('[useAuth] No active session found');
+					}
+				}
+			} catch (error) {
+				console.log('[useAuth] Session check failed (user not logged in):', error);
+				// Silently fail - user is not authenticated, which is fine
 			}
 		};
 

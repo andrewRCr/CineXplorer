@@ -119,7 +119,7 @@ See "Task List Coordination" section at bottom for detailed boundary documentati
         - [x] 6.10.7 Markdown linting (`npx markdownlint-cli2 --fix "README.md" ".arc/**/*.md"`) - ✅ 0 violations (69 files checked)
         - [x] 6.10.8 Verify: 100% test pass rate, 0 type errors, 0 linting violations - ✅ VERIFIED
 
-- [ ] **7. Minimal Watchlist Implementation** - Testing infrastructure (prerequisite for Task 8)
+- [x] **7. Minimal Watchlist Implementation** - Testing infrastructure (prerequisite for Task 8) ✅
     - **Note**: Tasks 7.1-7.4 completed WITHOUT test-first (protocol violation). Retroactively adding tests in 7.1a-7.3a.
     - [x] 7.1a **RETROACTIVE** - Write tests for MovieEnrichmentService
         - [x] 7.1a.1 Create `user_movie_data/tests/test_movie_enrichment_service.py`
@@ -167,7 +167,7 @@ See "Task List Coordination" section at bottom for detailed boundary documentati
         - [x] 7.5.3 Create new `userMovieService.ts` for movie-first queries (`getUserMovies()` with enrichment)
         - [x] 7.5.4 Add comprehensive file-level docstrings explaining distinction between services
         - [x] 7.5.5 Run incremental quality checks (linting, type checking)
-    - [ ] 7.6 Frontend Hook Tests - `useMovieActions` hook (test-first for interaction logic)
+    - [x] 7.6 Frontend Hook Tests - `useMovieActions` hook (test-first for interaction logic)
         - **Architecture Decision**: Custom hook pattern chosen over inline handlers
         - **Rationale**:
             - Survives upcoming TanStack Query migration (hook facade pattern)
@@ -183,7 +183,7 @@ See "Task List Coordination" section at bottom for detailed boundary documentati
         - [x] 7.6.4 Write test: Hook returns `isUpdating` state during API call
         - [x] 7.6.5 Write test: Hook returns error state on failure
         - [x] 7.6.6 Write test: Hook handles 400 "already exists" edge case (race condition fallback)
-    - [ ] 7.7 Frontend Hook Implementation - `useMovieActions` with watchlist toggle (implement to pass tests)
+    - [x] 7.7 Frontend Hook Implementation - `useMovieActions` with watchlist toggle (implement to pass tests)
         - **Implementation Notes**:
             - Backend CREATE endpoint uses `movie_id` field but expects TMDB ID (not database ID)
             - Backend performs `Movie.objects.get(tmdb_id=payload.movie_id)` lookup internally
@@ -197,26 +197,30 @@ See "Task List Coordination" section at bottom for detailed boundary documentati
         - [x] 7.7.7 Show simple success notification (console.log for minimal impl)
         - [x] 7.7.8 Run tests and verify implementation passes all 7.6 tests (8/8 passing)
         - [x] 7.7.9 Run incremental quality checks (linting, type checking: 0 errors, 6 expected warnings)
-    - [ ] 7.8 Frontend Page Tests - Watchlist display (test-first for page logic)
-        - [ ] 7.8.1 Write test: Fetches watchlist data on mount
-        - [ ] 7.8.2 Write test: Displays movie list when data present
-        - [ ] 7.8.3 Write test: Shows empty state when no movies
-        - [ ] 7.8.4 Run tests and verify all pass
-    - [ ] 7.9 Frontend Page - Minimal Watchlist display (implement to pass tests)
-        - [ ] 7.9.1 Create `/watchlist` route in router
-        - [ ] 7.9.2 Create simple Watchlist page component
-        - [ ] 7.9.3 Fetch watchlist data on mount (use `userMovieService.getUserMovies({watchlist: true})`)
-        - [ ] 7.9.4 Display movie titles as simple text list (no fancy UI needed)
-        - [ ] 7.9.5 Show "No movies on watchlist" if empty
-        - [ ] 7.9.6 Run tests and verify implementation passes
-    - [ ] 7.10 Quality Checks - Full stack validation
-        - [ ] 7.10.1 Backend tests: All pass (including new enrichment/watchlist tests)
-        - [ ] 7.10.2 Frontend tests: All pass (including new component/page tests)
-        - [ ] 7.10.3 Frontend linting: 0 violations (`npm run lint`)
-        - [ ] 7.10.4 Frontend type checking: 0 errors (`npm run type-check`)
-        - [ ] 7.10.5 Manual smoke test: Add movie → See in list → Verify enrichment on discover pages
-        - [ ] 7.10.6 Verify: Unauthenticated users see movies without user_movie_data (null)
-        - [ ] 7.10.7 Verify: Authenticated users see movies with user_movie_data populated
+    - [x] 7.8 Frontend Page Tests - Watchlist display (test-first for page logic)
+        - [x] 7.8.1 Write test: Fetches watchlist data on mount
+        - [x] 7.8.2 Write test: Displays movie list when data present
+        - [x] 7.8.3 Write test: Shows empty state when no movies
+    - [x] 7.9 Frontend Page - Minimal Watchlist display (implement to pass tests)
+        - [x] 7.9.1 Create `/watchlist` route in router
+        - [x] 7.9.2 Create simple Watchlist page component
+        - [x] 7.9.3 Fetch watchlist data on mount (use `userMovieService.getUserMovies({watchlist: true})`)
+        - [x] 7.9.4 Display movie titles as simple text list (no fancy UI needed)
+        - [x] 7.9.5 Show "No movies on watchlist" if empty
+        - [x] 7.9.6 Run tests and verify implementation passes (4/4 tests passing)
+    - [x] 7.10 Quality Checks - Full stack validation ✅
+        - [x] 7.10.1 Backend tests: All pass (197/197 including new enrichment/watchlist tests)
+        - [x] 7.10.2 Frontend tests: All pass (333/333 including new component/page tests)
+        - [x] 7.10.3 Frontend linting: 0 violations (`npm run lint`)
+        - [x] 7.10.4 Frontend type checking: 0 errors (`npm run type-check`)
+        - [x] 7.10.5 Manual smoke test: Add movie → See in list → Verify enrichment on discover pages ✅
+        - [x] 7.10.6 Verify: Unauthenticated users see movies without user_movie_data (null) ✅
+        - [x] 7.10.7 Verify: Authenticated users see movies with user_movie_data populated ✅
+        - **Bugs Fixed During Testing**:
+            - **Movie Auto-Creation**: Fixed 404 error when adding movies from discover pages (backend expected Movie record to exist locally, now auto-creates from TMDB)
+            - **OAuth Session Persistence**: Fixed logout-on-refresh for OAuth users (added session endpoint check to `checkExistingAuth`)
+            - **ErrorBoundary showErrorDetails**: Fixed pre-existing bug where explicit `false` wasn't respected (changed `||` to `??`)
+            - **Watchlist Type Safety**: Fixed TypeScript errors in test data (pagination schema, optional results field)
 
 - [ ] **8. Manual E2E Validation** - Critical path testing (lean scope)
     - **Goal**: Prove OAuth implementation works in isolation, document expected behavior
@@ -289,12 +293,13 @@ See "Task List Coordination" section at bottom for detailed boundary documentati
 - `backend/apps/user_movie_data/tests/test_watchlist_endpoint.py` - **NEW (Task 7.3a)**: Retroactive integration tests for watchlist endpoint (10 tests, all passing)
 - `backend/apps/movie/api.py` - **UPDATED (Task 7)**: Discovery endpoints now use enrichment service for authenticated users
 - `backend/apps/movie/schemas.py` - **EXISTING**: MovieBaseSchema already has `user_movie_data` field (no changes needed)
-- `backend/apps/user_movie_data/api.py` - **UPDATED (Task 7)**: New watchlist endpoint using enrichment service
+- `backend/apps/user_movie_data/api.py` - **UPDATED (Task 7 + 7.10)**: New watchlist endpoint using enrichment service, auto-creates Movie stubs from TMDB
+- `backend/apps/user_movie_data/tests/test_user_movie_data_api.py` - **UPDATED (Task 7.10)**: Updated test for invalid movie ID (uses truly invalid TMDB ID)
 
 **Frontend**:
 
 - `frontend/src/pages/user/Login.tsx` - OAuth initiation (form POST), loading state with minimum display time
-- `frontend/src/hooks/useAuth.ts` - Session-based OAuth callback handler, JWT checks skipped for OAuth users
+- `frontend/src/hooks/useAuth.ts` - **UPDATED (Task 6.9 + 7.10)**: Session-based OAuth callback handler, OAuth session persistence on page refresh, JWT checks skipped for OAuth users
 - `frontend/src/utilities/token.ts` - Token utilities (JWT pattern)
 - `frontend/src/services/apiClient.ts` - Two-pattern auth support (`credentials: 'include'`)
 - `frontend/src/components/layout/LoadingContent.tsx` - Reusable loading component (DRY)
@@ -309,8 +314,10 @@ See "Task List Coordination" section at bottom for detailed boundary documentati
 - `frontend/src/hooks/useUserMovieData.ts` - **VERIFIED (Task 7.5)**: Correctly uses isolation service (userMovieDataService)
 - `frontend/src/hooks/useMovieActions.ts` - **NEW (Task 7.7)**: Hook facade for movie interactions, encapsulates CREATE/UPDATE logic, TanStack Query migration target
 - `frontend/src/hooks/__tests__/useMovieActions.test.ts` - **NEW (Task 7.6)**: Tests for useMovieActions hook (toggleWatchlist, state management, error handling)
-- `frontend/src/pages/user/Watchlist.tsx` - **NEW (Task 7.9)**: Minimal watchlist page component (uses userMovieService)
+- `frontend/src/pages/user/Watchlist.tsx` - **NEW (Task 7.9 + 7.10)**: Minimal watchlist page component (uses userMovieService), type safety fixes
+- `frontend/src/pages/user/__tests__/Watchlist.test.tsx` - **NEW (Task 7.8 + 7.10)**: Watchlist page tests (4 tests), type safety fixes
 - `frontend/src/components/movie/MovieCard.tsx` - **UPDATED (Task 7.7)**: Uses useMovieActions hook for watchlist button onClick handler
+- `frontend/src/components/ErrorBoundary.tsx` - **UPDATED (Task 7.10)**: Fixed showErrorDetails prop handling (pre-existing bug, changed || to ??)
 
 ## Task List Coordination
 

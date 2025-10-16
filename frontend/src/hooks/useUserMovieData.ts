@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import {
-	getUserMovieData,
+	getUserMovieDataByTmdbId,
 	updateUserMovieData,
 } from "../services/userMovieDataService";
 import type { components } from "../types/api";
@@ -22,13 +22,18 @@ export function useUserMovieData(tmdbId: string): {
 	useEffect(() => {
 		if (!tmdbId) return; // don't fetch if tmdbId is empty
 		setLoading(true);
-		getUserMovieData(tmdbId)
-			.then((res) => {
-				setData(res);
+		const tmdbIdNum = Number(tmdbId);
+		getUserMovieDataByTmdbId({ tmdb_id: tmdbIdNum })
+			.request.then((res) => {
+				setData(res.data);
 				setError(null);
 			})
-			.catch((err) => {
-				setError(err.message || "Failed to fetch user movie data");
+			.catch((err: unknown) => {
+				setError(
+					err instanceof Error
+						? err.message
+						: "Failed to fetch user movie data"
+				);
 				setData(null);
 			})
 			.finally(() => setLoading(false));
@@ -38,8 +43,8 @@ export function useUserMovieData(tmdbId: string): {
 		if (!data || !data.id) return;
 		setLoading(true);
 		try {
-			const updated = await updateUserMovieData(String(data.id), changes);
-			setData(updated);
+			const response = await updateUserMovieData(data.id, changes);
+			setData(response.data as UserMovieData);
 			setError(null);
 		} catch (err: unknown) {
 			setError(

@@ -558,7 +558,7 @@ export interface paths {
         };
         /**
          * Get Now Playing Movies
-         * @description Retrieve currently playing movies with pagination.
+         * @description Retrieve currently playing movies with pagination and user-specific data.
          */
         get: operations["apps_movie_api_get_now_playing_movies"];
         put?: never;
@@ -578,7 +578,7 @@ export interface paths {
         };
         /**
          * Get Upcoming Movies
-         * @description Retrieve upcoming movies with pagination.
+         * @description Retrieve upcoming movies with pagination and user-specific data.
          */
         get: operations["apps_movie_api_get_upcoming_movies"];
         put?: never;
@@ -598,7 +598,7 @@ export interface paths {
         };
         /**
          * Search Movies
-         * @description Search for movies by query string with pagination.
+         * @description Search for movies by query string with pagination and user-specific data.
          *
          *     Uses MovieSearchParamsSchema to handle Django Ninja 1.4.3 +
          *     Pydantic 2.12.0 empty string validation issue with optional parameters.
@@ -621,7 +621,7 @@ export interface paths {
         };
         /**
          * Discover Movies
-         * @description Discover movies with advanced filtering options.
+         * @description Discover movies with advanced filtering options and user-specific data.
          *
          *     This endpoint provides comprehensive movie discovery with extensive filtering
          *     capabilities including genres, keywords, cast, crew, release dates, ratings,
@@ -645,7 +645,7 @@ export interface paths {
          *             - [... many other TMDB discover parameters]
          *
          *     Returns:
-         *         PaginatedMovieResponseSchema: Paginated list of movies matching criteria
+         *         PaginatedMovieResponseSchema: Paginated list of movies with user data if authenticated
          *
          *     Raises:
          *         HttpError: 400 for invalid parameters, 500 for TMDB API errors
@@ -784,6 +784,44 @@ export interface paths {
          * @description Search for people by query string.
          */
         get: operations["apps_movie_api_search_people"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/user-movie-data/movies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get User Movies
+         * @description Retrieve movies associated with the authenticated user.
+         *
+         *     This endpoint returns a paginated list of movies that the user has interacted
+         *     with (watched, rated, added to watchlist, etc.). Movies are enriched with
+         *     complete TMDB data and user-specific metadata.
+         *
+         *     Args:
+         *         request: HTTP request with authenticated user
+         *         watchlist: Optional filter to show only watchlist movies (default: False)
+         *
+         *     Returns:
+         *         PaginatedMovieResponseSchema: Paginated list of movies with user data
+         *
+         *     Raises:
+         *         HttpError: 401 if authentication fails
+         *
+         *     Example:
+         *         GET /api/user-movie-data/movies - All user movies
+         *         GET /api/user-movie-data/movies?watchlist=true - Watchlist only
+         */
+        get: operations["apps_user_movie_data_api_get_user_movies"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2513,6 +2551,28 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PaginatedPersonResponseSchema"];
+                };
+            };
+        };
+    };
+    apps_user_movie_data_api_get_user_movies: {
+        parameters: {
+            query?: {
+                watchlist?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedMovieResponseSchema"];
                 };
             };
         };

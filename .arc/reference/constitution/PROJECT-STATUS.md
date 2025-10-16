@@ -73,7 +73,7 @@ CineXplorer is a movie discovery web application in active development. The core
 
 ### ✅ Authentication Modernization
 
-**Status**: Completed January 2, 2025 | [Archive](../archive/completion-metadata/completion-authentication-modernization.md)
+**Status**: Completed October 2, 2025 | [Archive](../archive/completion-metadata/completion-authentication-modernization.md)
 
 - Migrated from custom JWT to django-allauth (52 commits, 42 files, +1,968/-526 lines)
 - OAuth 2.0 social login fully functional (Google + GitHub with comprehensive test infrastructure)

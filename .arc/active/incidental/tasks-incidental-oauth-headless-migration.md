@@ -121,13 +121,13 @@ See "Task List Coordination" section at bottom for detailed boundary documentati
 
 - [ ] **7. Minimal Watchlist Implementation** - Testing infrastructure (prerequisite for Task 8)
     - **Note**: Tasks 7.1-7.4 completed WITHOUT test-first (protocol violation). Retroactively adding tests in 7.1a-7.3a.
-    - [ ] 7.1a **RETROACTIVE** - Write tests for MovieEnrichmentService
-        - [ ] 7.1a.1 Create `user_movie_data/tests/test_movie_enrichment_service.py`
-        - [ ] 7.1a.2 Test: Enrichment with authenticated user populates user_movie_data
-        - [ ] 7.1a.3 Test: Enrichment with unauthenticated user (None) leaves user_movie_data as None
-        - [ ] 7.1a.4 Test: Bulk query optimization (single query, no N+1)
-        - [ ] 7.1a.5 Test: Movies without user data show None for user_movie_data
-        - [ ] 7.1a.6 Run tests and verify all pass
+    - [x] 7.1a **RETROACTIVE** - Write tests for MovieEnrichmentService
+        - [x] 7.1a.1 Create `user_movie_data/tests/test_movie_enrichment_service.py`
+        - [x] 7.1a.2 Test: Enrichment with authenticated user populates user_movie_data
+        - [x] 7.1a.3 Test: Enrichment with unauthenticated user (None) leaves user_movie_data as None
+        - [x] 7.1a.4 Test: Bulk query optimization (single query, no N+1)
+        - [x] 7.1a.5 Test: Movies without user data show None for user_movie_data
+        - [x] 7.1a.6 Run tests and verify all pass
     - [x] 7.1 Backend Service - MovieEnrichmentService (class-based with dependency injection) **⚠️ IMPLEMENTED WITHOUT TESTS**
         - [x] 7.1.1 Create `user_movie_data/services/movie_enrichment_service.py`
         - [x] 7.1.2 Implement `MovieEnrichmentService` class with `__init__(user_movie_data_repository=None)` for DI
@@ -264,6 +264,7 @@ See "Task List Coordination" section at bottom for detailed boundary documentati
 - `backend/apps/authentication/tests/test_security.py` - Import order fixes (Ruff auto-fix)
 - `backend/apps/user_movie_data/tests/test_user_movie_data_api.py` - Updated `authenticated_user` fixture to use shared helper
 - `backend/apps/user_movie_data/services/movie_enrichment_service.py` - **NEW (Task 7)**: Class-based enrichment service with DI (Backend Modernization Task 2.0 pattern)
+- `backend/apps/user_movie_data/tests/test_movie_enrichment_service.py` - **NEW (Task 7.1a)**: Retroactive unit tests for MovieEnrichmentService (11 tests, all passing)
 - `backend/apps/movie/api.py` - **UPDATED (Task 7)**: Discovery endpoints now use enrichment service for authenticated users
 - `backend/apps/movie/schemas.py` - **EXISTING**: MovieBaseSchema already has `user_movie_data` field (no changes needed)
 - `backend/apps/user_movie_data/api.py` - **UPDATED (Task 7)**: New watchlist endpoint using enrichment service

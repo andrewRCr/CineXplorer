@@ -161,22 +161,42 @@ See "Task List Coordination" section at bottom for detailed boundary documentati
         - [x] 7.4.1 Backend linting: 0 violations (`ruff check` with auto-fix)
         - [x] 7.4.2 Backend type checking: 0 errors (`npx pyright`)
         - [x] 7.4.3 Run tests: Verify no regressions in movie/user_movie_data domains (47/47 passing - but NO new tests for Task 7 code)
-    - [ ] 7.5 Frontend Service - Watchlist API client (test-after acceptable - simple CRUD)
-        - [ ] 7.5.1 Regenerate TypeScript types from OpenAPI schema (`npm run generate-types`)
-        - [ ] 7.5.2 Create `userMovieDataService.ts` with `getUserMovies()` function
-        - [ ] 7.5.3 Implement type-safe request/response handling (uses generated types)
-        - [ ] 7.5.4 Run incremental quality checks (linting, type checking)
-    - [ ] 7.6 Frontend Component Tests - MovieCard watchlist button (test-first for component logic)
-        - [ ] 7.6.1 Write test: Click watchlist button calls API with correct payload
-        - [ ] 7.6.2 Write test: Success shows notification
-        - [ ] 7.6.3 Write test: Error shows error message
-        - [ ] 7.6.4 Run tests and verify all pass
-    - [ ] 7.7 Frontend Component - MovieCard onClick handler (implement to pass tests)
-        - [ ] 7.7.1 Add onClick handler to watchlist button (RiPlayListAddLine)
-        - [ ] 7.7.2 POST to `/api/user-movie-data` with `{movie_id, user_on_watchlist: true}`
-        - [ ] 7.7.3 Show simple success notification (toast or console.log for minimal impl)
-        - [ ] 7.7.4 Handle error cases (movie already on watchlist, network errors)
-        - [ ] 7.7.5 Run tests and verify implementation passes
+    - [x] 7.5 Frontend Service - Service architecture refactor (test-after acceptable - simple CRUD)
+        - [x] 7.5.1 Regenerate TypeScript types from OpenAPI schema (`npm run generate-types`)
+        - [x] 7.5.2 Refactor `userMovieDataService.ts` to isolation-focused CRUD only (metadata operations)
+        - [x] 7.5.3 Create new `userMovieService.ts` for movie-first queries (`getUserMovies()` with enrichment)
+        - [x] 7.5.4 Add comprehensive file-level docstrings explaining distinction between services
+        - [x] 7.5.5 Run incremental quality checks (linting, type checking)
+    - [ ] 7.6 Frontend Hook Tests - `useMovieActions` hook (test-first for interaction logic)
+        - **Architecture Decision**: Custom hook pattern chosen over inline handlers
+        - **Rationale**:
+            - Survives upcoming TanStack Query migration (hook facade pattern)
+            - Component code unchanged during Frontend Modernization
+            - Matches existing app patterns (`useUserMovieData`, `useAuth`)
+            - Encapsulates CREATE vs UPDATE logic (movie without user_movie_data → POST, with data → PATCH)
+            - Easy expansion for future actions (watched, liked, rating, review)
+            - Three-layer architecture (service → hook → component) aligns with TanStack Query best practices
+        - **Migration Path**: Hook internals swap to TanStack Query mutations, API stays identical
+        - [x] 7.6.1 Create test file: `frontend/src/hooks/__tests__/useMovieActions.test.ts`
+        - [x] 7.6.2 Write test: `toggleWatchlist` creates UserMovieData when movie.user_movie_data is null (POST)
+        - [x] 7.6.3 Write test: `toggleWatchlist` updates existing UserMovieData when present (PATCH)
+        - [x] 7.6.4 Write test: Hook returns `isUpdating` state during API call
+        - [x] 7.6.5 Write test: Hook returns error state on failure
+        - [x] 7.6.6 Write test: Hook handles 400 "already exists" edge case (race condition fallback)
+    - [ ] 7.7 Frontend Hook Implementation - `useMovieActions` with watchlist toggle (implement to pass tests)
+        - **Implementation Notes**:
+            - Backend CREATE endpoint uses `movie_id` field but expects TMDB ID (not database ID)
+            - Backend performs `Movie.objects.get(tmdb_id=payload.movie_id)` lookup internally
+            - Use `get_or_create` pattern to prevent duplicates (returns 400 if exists)
+        - [x] 7.7.1 Create service function: `movieInteractionService.ts` with `toggleMovieWatchlist(movie: Movie)`
+        - [x] 7.7.2 Service function logic: Check `movie.user_movie_data` → POST if null, PATCH if exists
+        - [x] 7.7.3 Create hook: `useMovieActions({ movie })` with `toggleWatchlist` function
+        - [x] 7.7.4 Hook manages `isUpdating` and `error` state
+        - [x] 7.7.5 Handle 400 "already exists" race condition (fetch current data, retry PATCH)
+        - [x] 7.7.6 Add onClick handler to MovieCard watchlist button (RiPlayListAddLine) using hook
+        - [x] 7.7.7 Show simple success notification (console.log for minimal impl)
+        - [x] 7.7.8 Run tests and verify implementation passes all 7.6 tests (8/8 passing)
+        - [x] 7.7.9 Run incremental quality checks (linting, type checking: 0 errors, 6 expected warnings)
     - [ ] 7.8 Frontend Page Tests - Watchlist display (test-first for page logic)
         - [ ] 7.8.1 Write test: Fetches watchlist data on mount
         - [ ] 7.8.2 Write test: Displays movie list when data present
@@ -185,7 +205,7 @@ See "Task List Coordination" section at bottom for detailed boundary documentati
     - [ ] 7.9 Frontend Page - Minimal Watchlist display (implement to pass tests)
         - [ ] 7.9.1 Create `/watchlist` route in router
         - [ ] 7.9.2 Create simple Watchlist page component
-        - [ ] 7.9.3 Fetch watchlist data on mount (`getUserMovies({watchlist: true})`)
+        - [ ] 7.9.3 Fetch watchlist data on mount (use `userMovieService.getUserMovies({watchlist: true})`)
         - [ ] 7.9.4 Display movie titles as simple text list (no fancy UI needed)
         - [ ] 7.9.5 Show "No movies on watchlist" if empty
         - [ ] 7.9.6 Run tests and verify implementation passes
@@ -281,11 +301,16 @@ See "Task List Coordination" section at bottom for detailed boundary documentati
 - `frontend/src/components/layout/LoadingLayout.tsx` - Uses LoadingContent
 - `frontend/src/assets/GoogleLogo.tsx` - Official Google brand logo
 - `frontend/src/assets/GitHubLogo.tsx` - Official GitHub Octocat logo
-- `frontend/src/types/api.ts` - **UPDATED (Task 7)**: Regenerated TypeScript types (PaginatedMovieResponseSchema with user_movie_data)
-- `frontend/openapi.json` - **UPDATED (Task 7)**: Regenerated OpenAPI schema from backend
-- `frontend/src/services/userMovieDataService.ts` - **NEW (Task 7)**: API client for getUserMovies() and watchlist operations
-- `frontend/src/pages/user/Watchlist.tsx` - **NEW (Task 7)**: Minimal watchlist page component
-- `frontend/src/components/movie/MovieCard.tsx` - **UPDATED (Task 7)**: Add onClick handler for watchlist button
+- `frontend/src/types/api.ts` - **UPDATED (Task 7.5)**: Regenerated TypeScript types (PaginatedMovieResponseSchema with user_movie_data)
+- `frontend/openapi.json` - **UPDATED (Task 7.5)**: Regenerated OpenAPI schema from backend
+- `frontend/src/services/userMovieDataService.ts` - **REFACTORED (Task 7.5)**: Isolation-focused CRUD for UserMovieData metadata (create, update, delete, get by tmdb_id)
+- `frontend/src/services/userMovieService.ts` - **NEW (Task 7.5)**: Movie-first queries with enrichment (getUserMovies with watchlist filtering)
+- `frontend/src/services/movieInteractionService.ts` - **NEW (Task 7.7)**: Pure service functions for movie interactions (toggleWatchlist, future: toggleWatched, toggleLiked, setRating, setReview)
+- `frontend/src/hooks/useUserMovieData.ts` - **VERIFIED (Task 7.5)**: Correctly uses isolation service (userMovieDataService)
+- `frontend/src/hooks/useMovieActions.ts` - **NEW (Task 7.7)**: Hook facade for movie interactions, encapsulates CREATE/UPDATE logic, TanStack Query migration target
+- `frontend/src/hooks/__tests__/useMovieActions.test.ts` - **NEW (Task 7.6)**: Tests for useMovieActions hook (toggleWatchlist, state management, error handling)
+- `frontend/src/pages/user/Watchlist.tsx` - **NEW (Task 7.9)**: Minimal watchlist page component (uses userMovieService)
+- `frontend/src/components/movie/MovieCard.tsx` - **UPDATED (Task 7.7)**: Uses useMovieActions hook for watchlist button onClick handler
 
 ## Task List Coordination
 
@@ -423,6 +448,106 @@ Tasks 7.1-7.4 (backend) were implemented WITHOUT test-first protocol:
 - **Breaking changes**: None - enrichment is transparent (existing `user_movie_data: None` becomes populated)
 
 **Future Enhancement** (API Layer P2): Full MovieCard grid, pagination, filtering, remove from watchlist, bulk operations
+
+---
+
+### Task 7.6-7.7: Movie Interaction Hook Architecture
+
+**Architecture Decision** (2025-10-16): Custom hook pattern chosen for movie interactions (watchlist, watched, liked, rating, review)
+
+**Context**: Upcoming Frontend Modernization will introduce TanStack Query + Redux Toolkit for state management. Need to choose implementation approach that:
+1. Works for OAuth validation timeline (minimal implementation now)
+2. Minimizes refactoring effort during Frontend Modernization
+3. Establishes patterns that survive migration
+
+**Options Considered**:
+
+1. **Inline handlers in components** - Simplest now, but requires component changes during migration
+2. **Service functions only** - No encapsulation, still requires component changes during migration
+3. **Custom hook facade** - More initial work, but component code unchanged during migration
+
+**Decision: Custom Hook Facade Pattern**
+
+**Rationale**:
+
+1. **TanStack Query Migration Path**:
+   - Custom hooks SURVIVE TanStack Query migration (hook facade pattern)
+   - Migration is **internal refactoring only** (swap `useState` for `useMutation`)
+   - Component code stays identical (just swap hook internals)
+   - Matches TanStack Query community best practices (service → hook → component)
+
+2. **Existing App Patterns**:
+   - Matches `useUserMovieData`, `useAuth`, etc. (consistency)
+   - Team already familiar with custom hook pattern
+   - Established testing patterns for hooks
+
+3. **Encapsulation from Day 1**:
+   - Hides CREATE vs UPDATE complexity (movie without user_movie_data → POST, with data → PATCH)
+   - Single place to add optimistic updates, notifications, analytics during modernization
+   - Easy expansion for future actions (watched, liked, rating, review)
+
+4. **Less Total Work**:
+   - Building hook now vs. during migration = same effort
+   - But now = zero component changes during migration (less churn)
+   - Without hook: All call sites change during migration (inline → hook)
+
+**Three-Layer Architecture**:
+
+```typescript
+// Layer 1: Service functions (pure, testable, survive all migrations)
+export async function toggleMovieWatchlist(movie: Movie): Promise<UserMovieData> {
+  if (!movie.user_movie_data) {
+    return createUserMovieData({ movie_id: movie.tmdb_id, user_on_watchlist: true });
+  } else {
+    return updateUserMovieData(movie.user_movie_data.id, {
+      user_on_watchlist: !movie.user_movie_data.user_on_watchlist
+    });
+  }
+}
+
+// Layer 2: Hook facade (encapsulates state management, swappable implementation)
+// NOW (manual state):
+export function useMovieActions({ movie }: { movie: Movie }) {
+  const [isUpdating, setIsUpdating] = useState(false);
+  const toggleWatchlist = async () => {
+    setIsUpdating(true);
+    await toggleMovieWatchlist(movie);
+    setIsUpdating(false);
+  };
+  return { toggleWatchlist, isUpdating };
+}
+
+// FUTURE (TanStack Query - same API, different internals):
+export function useMovieActions({ movie }: { movie: Movie }) {
+  const mutation = useMutation({
+    mutationFn: () => toggleMovieWatchlist(movie)
+  });
+  return { toggleWatchlist: mutation.mutate, isUpdating: mutation.isPending };
+}
+
+// Layer 3: Component (unchanged during migration!)
+const { toggleWatchlist, isUpdating } = useMovieActions({ movie });
+<IconButton onClick={toggleWatchlist} disabled={isUpdating}>
+```
+
+**Backend Integration Notes**:
+
+- CREATE endpoint: POST `/api/user-movie-data` with `movie_id` field
+- Backend expects TMDB ID (not database ID): `Movie.objects.get(tmdb_id=payload.movie_id)`
+- UPDATE endpoint: PATCH `/api/user-movie-data/{id}` with partial fields
+- Race condition handling: 400 "already exists" → fetch current data, retry PATCH
+
+**Expansion Path**:
+
+- Task 7.7: `toggleWatchlist` only (minimal for OAuth validation)
+- Future (API Layer P2): Add `toggleWatched`, `toggleLiked`, `setRating`, `setReview` to same hook
+- Frontend Modernization: Swap hook internals to TanStack Query, add optimistic updates
+
+**Testing Strategy**:
+
+- Unit tests for service functions (pure logic)
+- Hook tests with `@testing-library/react-hooks` (state management)
+- Component tests mock the hook (UI only)
 
 ---
 

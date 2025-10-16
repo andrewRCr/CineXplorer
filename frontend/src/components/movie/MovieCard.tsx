@@ -15,6 +15,7 @@ import { Tooltip } from "../chakra/tooltip";
 import { LuEye, LuHeart } from "react-icons/lu";
 import { RiPlayListAddLine } from "react-icons/ri";
 import MovieUserScore from "./MovieUserScore";
+import { useMovieActions } from "../../hooks/useMovieActions";
 
 interface MovieCardProps {
 	movie: Movie;
@@ -31,6 +32,9 @@ const MovieCard = ({ movie, currentPage, source, query }: MovieCardProps) => {
 	const cardWidth = useBreakpointValue({
 		base: "100%",
 	});
+
+	// Movie actions hook for watchlist, watched, liked, etc.
+	const { toggleWatchlist, isUpdating } = useMovieActions({ movie });
 
 	// Optimize title truncation check with debounced callback
 	const checkTruncation = useCallback(() => {
@@ -263,7 +267,18 @@ const MovieCard = ({ movie, currentPage, source, query }: MovieCardProps) => {
 									</IconButton>
 								</Tooltip>
 								<Tooltip content="Add to watchlist" openDelay={500}>
-									<IconButton variant="ghost" size="sm">
+									<IconButton
+										variant="ghost"
+										size="sm"
+										onClick={async (e) => {
+											e.preventDefault();
+											e.stopPropagation();
+											await toggleWatchlist();
+											// TODO (7.7.7): Show success notification
+											console.log('Movie added to watchlist');
+										}}
+										disabled={isUpdating}
+									>
 										<RiPlayListAddLine />
 									</IconButton>
 								</Tooltip>

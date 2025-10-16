@@ -132,11 +132,17 @@ def create_movie_base_from_tmdb(tmdb_data: Mapping[str, object]) -> MovieBaseSch
         tmdb_movie = TMDBMovieBase.model_validate(tmdb_data, strict=False)
 
         # Then convert to application schema
+        # Note: TMDB sometimes returns empty string for release_date instead of null
+        # Convert empty strings to None to avoid Pydantic validation errors
+        release_date = tmdb_movie.release_date
+        if isinstance(release_date, str) and release_date.strip() == '':
+            release_date = None
+
         validated_data = {
             'tmdb_id': tmdb_movie.id,
             'title': tmdb_movie.title,
             'poster_path': tmdb_movie.poster_path,
-            'release_date': tmdb_movie.release_date,
+            'release_date': release_date,
             'vote_average': tmdb_movie.vote_average,
             'runtime': 0,  # Runtime not available in base movie responses
         }

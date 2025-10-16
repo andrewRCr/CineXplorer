@@ -111,6 +111,11 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
 					} else {
 						console.log('[useAuth] No active session found');
 					}
+				} else if (response.status === 401) {
+					// 401 means no active session - expected when logged out
+					console.log('[useAuth] No OAuth session (401 - not authenticated)');
+				} else {
+					console.warn(`[useAuth] Session check returned unexpected status: ${response.status}`);
 				}
 			} catch (error) {
 				console.log('[useAuth] Session check failed (user not logged in):', error);
@@ -273,17 +278,23 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
 			} else {
 				// OAuth user - logout via session endpoint
 				console.log('[useAuth] Logging out OAuth user via session endpoint');
-				await fetch('https://localhost:8444/_allauth/browser/v1/auth/session', {
+				const response = await fetch('https://localhost:8444/_allauth/browser/v1/auth/session', {
 					method: 'DELETE',
 					credentials: 'include', // Send session cookie
 					headers: {
 						'Content-Type': 'application/json',
 					},
 				});
+
+				// 401 is acceptable - means session already expired/cleared
+				// We've already cleared local state, so logout succeeded from UX perspective
+				if (!response.ok && response.status !== 401) {
+					console.warn(`[useAuth] Session DELETE returned ${response.status}, but local state already cleared`);
+				}
 			}
 		} catch (error) {
 			console.error("Logout failed:", error);
-			return Promise.reject(error);
+			// Don't reject - we've already cleared local state, user is logged out from UX perspective
 		}
 	}, [navigate]);
 

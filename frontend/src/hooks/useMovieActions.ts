@@ -80,6 +80,9 @@ interface UseMovieActionsReturn {
  *   // Show success notification
  * };
  * ```
+ *
+ * Note: Component should handle optimistic UI updates locally.
+ * Hook only manages API call state (loading, error).
  */
 export function useMovieActions({ movie }: UseMovieActionsProps): UseMovieActionsReturn {
 	const [isUpdating, setIsUpdating] = useState(false);
@@ -94,6 +97,8 @@ export function useMovieActions({ movie }: UseMovieActionsProps): UseMovieAction
 	 * 3. Call service function (handles CREATE vs UPDATE)
 	 * 4. On success: clear error, set isUpdating to false
 	 * 5. On error: set error message, set isUpdating to false
+	 *
+	 * Note: Caller should handle optimistic UI updates before calling this.
 	 */
 	const toggleWatchlist = async (): Promise<void> => {
 		setIsUpdating(true);
@@ -102,12 +107,14 @@ export function useMovieActions({ movie }: UseMovieActionsProps): UseMovieAction
 		try {
 			await toggleMovieWatchlist(movie);
 			// Success: Service function handles CREATE/UPDATE/race conditions
+			// Component handles optimistic UI updates
 			// TODO (7.7.7): Show success notification here
 		} catch (err: unknown) {
 			// Error: Extract message and set error state
 			const errorMessage = err instanceof Error ? err.message : 'Failed to update watchlist';
 			setError(errorMessage);
 			// TODO: Show error notification/toast
+			throw err; // Re-throw for caller to handle rollback
 		} finally {
 			setIsUpdating(false);
 		}

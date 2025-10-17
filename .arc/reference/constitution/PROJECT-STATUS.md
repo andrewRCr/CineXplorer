@@ -40,10 +40,24 @@ CineXplorer is a movie discovery web application in active development. The core
 
 ### ✅ Technical Foundation
 
-- Django/DRF backend with PostgreSQL database
+**Core Infrastructure**:
+- Django Ninja backend (DRF fully eliminated) with PostgreSQL database
 - React/TypeScript frontend with modern tooling
-- Containerized Docker setup for all services
-- Caddy reverse proxy for development environment
+- Containerized Docker setup for all services (5 containers: backend, frontend, postgres, redis, caddy)
+- Caddy reverse proxy for development environment with HTTPS
+
+**Type Safety & Quality** (Completed via 8 incidental task lists):
+- Zero type errors across entire codebase (Pyright strict mode)
+- Custom type stubs for third-party libraries (django-allauth, ninja-jwt)
+- Pytest test infrastructure (197 backend tests, 333 frontend tests - 530 total, 100% pass rate)
+- Parallel test execution support (pytest-xdist, 2-4x faster)
+- CI/CD with blocking type checks and quality gates
+
+**Security Posture** (A+ grade):
+- Rate limiting (5/min login, 3/hr register, 10/min token refresh)
+- Token blacklisting with automatic rotation
+- Environment-aware security headers (HSTS, CSP, X-Frame-Options)
+- CSRF protection for hybrid authentication
 
 ### ✅ Logging System
 
@@ -71,65 +85,160 @@ CineXplorer is a movie discovery web application in active development. The core
 - Zero technical debt in movie app and core infrastructure
 - **Phase 2 Deferred**: UserMovieData and User/Accounts migration awaits Authentication Modernization
 
-### ✅ Authentication Modernization
+### ✅ Authentication System (Two-Pattern Architecture)
 
-**Status**: Completed October 2, 2025 | [Archive](../archive/completion-metadata/completion-authentication-modernization.md)
+**Status**: Completed October 16, 2025 | [Archives](../archive/completion-metadata/)
 
+**Foundation** (Authentication Modernization - Oct 2):
 - Migrated from custom JWT to django-allauth (52 commits, 42 files, +1,968/-526 lines)
-- OAuth 2.0 social login fully functional (Google + GitHub with comprehensive test infrastructure)
+- Django default User model (removed custom User, maintained compatibility)
 - ZeptoMail production email integration via custom allauth adapter
 - Email verification system with mandatory verification for password-based signup
-- Django default User model migration (removed custom User, maintained compatibility)
-- Type safety foundation established (Pyright + MyPy hybrid, 0 errors in authentication module)
-- Comprehensive testing (89 backend tests, 100% pass rate, OAuth mock infrastructure)
-- Quality infrastructure enhancements (markdown linting, CI improvements, CodeRabbit review integration)
-- Strategic Phase 2 deferrals documented (email bridge removal, frontend OAuth UI, DRF endpoint tests)
+
+**Dual Authentication Patterns** (OAuth Headless Migration - Oct 16):
+- **JWT Pattern**: Email/password login (refresh_token cookie + access_token in sessionStorage)
+- **Session Cookie Pattern**: OAuth login (sessionid cookie, HTTP-only)
+- OAuth 2.0 fully functional (Google + GitHub with 500ms loading UX)
+- Automatic token refresh via interceptor
+- 8 session auth tests + 20 password auth tests (100% pass rate)
+- Frontend OAuth callback handler with error recovery
+
+**Service Layer Architecture**:
+- Class-based services with dependency injection pattern
+- MovieEnrichmentService for user-specific data enrichment
+- Minimal watchlist implementation validating API integration
+
+**Test Infrastructure**:
+- OAuth mock infrastructure (fixtures, test helpers)
+- Session authentication test coverage
+- CSRF protection tests (12 tests)
+
+### ✅ Incidental Quality Improvements (8 Task Lists)
+
+**Status**: Completed October 2-16, 2025 (~170-210 hours of work) | [Archives](../archive/tasks/incidental/)
+
+During API Layer P2 execution, eight focused quality improvement task lists were completed:
+
+**1. WSL2 Migration** - Linux development environment setup
+**2. Backend Type Safety** - Pyright strict mode, custom stubs (django-allauth, ninja-jwt)
+**3. Config Type Safety** - Settings module typing infrastructure
+**4. Fix Backend Type Errors** - Zero type errors achieved across entire codebase
+**5. Pytest Migration** - 197 tests converted (unittest → pytest), parallel execution, 100% pass rate
+**6. Security Updates** - Rate limiting, token blacklisting, security headers (93 tests)
+**7. Auth Service Extraction** - Class-based services with dependency injection
+**8. OAuth Headless Migration** - Two-pattern authentication (JWT + session cookies, 8 OAuth tests)
+
+**Impact**:
+- Established production-ready type safety infrastructure
+- Modern test framework with fixtures and parallel execution
+- A+ security posture with comprehensive hardening
+- Service layer patterns for maintainable architecture
+- 45 additional tests (530 total: 197 backend + 333 frontend)
+
+**Opportunistic Refactoring Strategy**:
+Quality improvements extracted into focused task lists rather than bloating main feature work, providing clear separation of concerns and comprehensive documentation while "pre-completing" testing infrastructure originally planned for API Layer P2 Phase 6.
+
+### 🚧 API Layer Modernization Phase 2
+
+**Status**: In Progress (~90% complete, ~5-8 hours remaining) | [Task List](.arc/active/feature/tasks-api-layer-modernization-p2.md)
+
+**Branch**: `feature/api-layer-modernization-p2`
+
+**Completed** (Phases 1-5, ~95% complete):
+- UserMovieData domain migrated to Django Ninja (4 endpoints, 24 tests)
+- Authentication domain migrated to Django Ninja (9 endpoints, 93 tests)
+- JWT migration (djangorestframework-simplejwt → django-ninja-jwt)
+- Email verification bridge removed (direct allauth API usage)
+- TypeScript types auto-generated from OpenAPI schema (2,279 lines)
+- Frontend services updated to use Django Ninja endpoints
+- OAuth login buttons added (Google, GitHub)
+- Basic E2E validation complete (registration, OAuth flows, watchlist CRUD)
+- DRF completely eliminated from codebase
+
+**In Progress** (Phases 6-7, ~75% remaining work complete):
+- ⏳ Task 5.6: Cross-pattern validation, multi-user scenarios (~10-15 min)
+- ⏳ Formal coverage runs and baseline documentation (~1-2 hours)
+- ⏳ Email verification tests (~1-2 hours)
+- ⏳ File cleanup and documentation verification (~2-3 hours)
+
+**Scope Note**: API Layer P2 validates infrastructure migration (DRF → Django Ninja), NOT feature completeness. Ratings/reviews/favorites APIs exist but frontend UI not yet implemented - deferred to future feature work.
+
+**Key Achievement**: Most Phase 6 testing/quality work "pre-completed" via incidental task lists, leaving only formal coverage documentation and cleanup remaining.
 
 ## Work in Progress
 
-### 🚧 Placeholders & Partial Implementation
+### 🚧 Feature Implementation Status
 
-- **User-Specific Pages**: Routes exist (`/watchlist`, `/library`, `/journal`, `/log`) but pages are not built
-- **Personnel Pages**: Frontend for actor/director detail pages is placeholder
-- **Recommendation Engine**: `/foryou` page route exists but is conceptual
+See [Feature Backlog](.arc/upcoming/notes/notes-feature-backlog.md) for comprehensive status tracking.
+
+**Backend Complete, Frontend Missing** (5 features):
+- ⏳ **Ratings System**: API ready (user_rating field), UI placeholder
+- ⏳ **Reviews System**: API ready (user_review field), UI placeholder
+- ⏳ **Library/Watched Tracking**: API ready (user_watched field), UI placeholder page
+- ⏳ **Liked Movies**: API ready (user_liked field), filtering UI needed
+- ⏳ **Log (Quick Add)**: APIs exist, modal not implemented
+
+**Not Yet Started** (4 features):
+- ❌ **Favorites Subset**: Field not yet added (user_favorited), UI needed
+- ❌ **Movie Lists/Collections**: Backend + frontend not started (has PRD)
+- ❌ **Person Detail Pages**: Frontend not implemented (TMDB API available)
+- ❌ **Recommendations System**: Major feature, backend + frontend needed
+
+**Rough Draft** (needs polish):
+- ⚠️ **Movie Detail Pages**: Functional but rough, user action controls placeholder
+- ⚠️ **Watchlist Page**: Minimal (text list only), needs movie grid + drag-and-drop
+
+**Tentative** (decision pending):
+- 🤔 **Journal Timeline View**: Backend data exists, decision pending on implementation
 
 ## Upcoming Priorities
 
-### High Priority
+### Immediate (Next ~1-2 weeks)
 
-- **API Layer Modernization Phase 2** (In Planning - Branch: `feature/api-layer-modernization-p2`):
-    - Migrate UserMovieData and Authentication domains from DRF to Django Ninja (~15-20 endpoints)
-    - Remove email verification bridge and complete allauth integration
-    - Add OAuth UI integration (Google + GitHub login buttons)
-    - Complete deferred authentication tests from Auth Modernization
-    - Achieve zero type errors across all domains (Pyright + MyPy --strict)
-    - Establish unified Django Ninja architecture across entire backend API
-    - **Key Deliverables**: Complete DRF removal, full type safety, OAuth UI, comprehensive testing
+**1. Complete API Layer P2** (~5-8 hours remaining):
+- Finish Task 5.6 cross-pattern validation (~10-15 min)
+- Run formal coverage reports and establish baseline (~1-2 hours)
+- Add email verification tests (~1-2 hours)
+- File cleanup and documentation (~2-3 hours)
+- Update PROJECT-STATUS to mark complete
 
-- **User Movie Lists System** (In Planning):
-    - Backend models and API for custom movie collections.
-    - System collections (AFI Top 100, IMDb Top 250, Oscar Winners, Palme d'Or).
-    - Individual list display pages with composite cover generation.
-    - Sidebar integration with collections section.
+**2. Backend Modernization** (Paused, will resume after API Layer P2):
+- Apply service layer patterns to remaining function-based services
+- Implement Celery/Redis for asynchronous task processing
+- Implement Playwright for end-to-end testing
+- Continue SOLID/DRY refactoring efforts
+- See [Backend Modernization Notes](.arc/upcoming/notes/notes-backend-modernization.md) for details
 
-- **User-Specific Pages Implementation**:
-    - Library Page (`/library`) - display watched movies with favorites section.
-    - Watchlist Page (`/watchlist`) - drag-and-drop reordering with "Next Up" queue.
+### High Priority (Feature Work)
 
-- **Full Integration of User Actions**: Connect frontend controls to existing backend endpoints.
-- **User Profile Page**: Complete UI for `/profile` page.
+**UserMovieData Feature UIs** (11 features, backend APIs complete):
+- Ratings UI (star/numeric component, display on cards)
+- Reviews UI (text area, display, edit/delete)
+- Library page (movie grid, favorites section, filters)
+- Watchlist page enhancement (movie grid, drag-and-drop, "Next Up" queue)
+- Liked movies filtering (filter controls on library/watchlist)
+- Favorites implementation (add field, cap enforcement, reorderable display)
+- Log modal (fuzzy search, quick toggles, rating input)
+- Movie detail page polish (layout, user action controls integration)
+
+**Collections System**:
+- Movie Lists/Collections (backend models + API, frontend display, system collections)
+- Has existing PRD (may need updates for Django Ninja patterns)
+
+**Recommendations**:
+- "For You" page with metadata-based recommendation engine
+- Major full-stack feature, likely needs dedicated PRD
 
 ### Medium Priority
 
-- **Personnel Pages**: Complete backend endpoints and frontend pages for actors/directors.
-- **Personalized Recommendations**: Implement metadata-based recommendation engine.
-- **UI/UX Polish**: Enhanced movie detail pages and general UX improvements.
+- **Person Detail Pages**: Actor/crew profile pages with filmography
+- **Journal Timeline View**: User action timeline (if decision made to implement)
+- **UI/UX Polish**: General layout improvements, responsive design refinements
 
 ### Lower Priority
 
-- **General Layout Features**: Responsive improvements, sticky headers, collections.
-- **Expanded Test Coverage**: Integration and end-to-end tests.
-- **Deployment**: Production environment preparation.
+- **Deployment**: Production environment preparation and optimization
+- **Performance Optimization**: Caching, query optimization, profiling
 
 ## Stretch Goals
 
@@ -142,14 +251,42 @@ CineXplorer is a movie discovery web application in active development. The core
 - Expanded test suite with significant integration and e2e coverage.
 - Clear deployment plan.
 
+## Project Metrics (Current)
+
+**Codebase Health**:
+- ✅ 530 tests passing (197 backend + 333 frontend), 100% pass rate
+- ✅ 0 type errors (Pyright strict mode across entire backend)
+- ✅ 0 linting violations (Ruff backend + ESLint frontend)
+- ✅ A+ security posture (rate limiting, token blacklisting, security headers)
+
+**API Coverage**:
+- ✅ 13 Django Ninja endpoints (Movie: 10, UserMovieData: 4, Authentication: 9)
+- ✅ DRF fully eliminated from codebase
+- ✅ OpenAPI schema auto-generation → TypeScript types (2,279 lines)
+
+**Features Status**:
+- ✅ Complete: 4 features (Authentication, Movie Discovery, Advanced Search, Watchlist backend)
+- ⏳ Backend done, Frontend needed: 5 features
+- ❌ Not started: 4 features
+- ⚠️ Rough draft: 2 features
+
+**Development Velocity**:
+- Last 6 weeks: 8 incidental task lists + API Layer P2 (~90% complete)
+- ~170-210 hours of quality/infrastructure work
+- ~50 hours of API migration work
+- Next milestone: API Layer P2 completion (~5-8 hours)
+
 ## Development Workflow
 
 The project follows a structured approach using:
 
-- META-PRD for high-level product requirements.
-- Sub-PRDs for individual feature specifications.
-- Generated task lists for implementation tracking.
-- Systematic testing and code quality checks.
-- Regular PROJECT-STATUS updates as features progress through planning → development → completion.
+- **META-PRD** for high-level product requirements
+- **Sub-PRDs** for individual feature specifications
+- **Generated task lists** for implementation tracking
+- **Feature backlog** for tracking user-facing feature status
+- **Technical notes docs** for tracking infrastructure/quality work
+- **Systematic testing** and code quality checks (pytest, type checking, linting)
+- **Opportunistic refactoring** via incidental task lists for quality improvements
+- **Regular PROJECT-STATUS updates** as features progress through planning → development → completion
 
-_Last updated: 2025-09-30_
+_Last updated: 2025-10-17_

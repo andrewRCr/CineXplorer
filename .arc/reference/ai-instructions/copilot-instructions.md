@@ -1,6 +1,6 @@
 # GitHub Copilot Instructions
 
-Copilot suggestions must align with the canonical docs: [AI-SHARED](AI-SHARED.md), [DEVELOPMENT-RULES](../constitution/DEVELOPMENT-RULES.md) v2.6, and [QUICK-REFERENCE](../QUICK-REFERENCE.md) v1.0.
+Copilot suggestions must align with the canonical docs: [AGENTS](AGENTS.md), [DEVELOPMENT-RULES](../constitution/DEVELOPMENT-RULES.md) v2.7, and [QUICK-REFERENCE](../QUICK-REFERENCE.md) v1.1.
 
 ## Copilot-Specific Notes
 

@@ -13,7 +13,7 @@ Core development rules and quality standards for CineXplorer. These rules are **
 1. **Confirm rules version:** "Acknowledging DEVELOPMENT-RULES v2.7, hash h3n5p8r2"
 2. **Verify environment:** Follow Session Startup Protocol in CURRENT-SESSION.md (check working directory, Docker status, venv availability)
 3. **State understanding:** Confirm commit protocols, test-first protocol, task analysis, quality gates, "Leave It Cleaner" protocol, CURRENT-SESSION control, and feature branch workflow
-4. **Verify context access:** Confirm access to required documents (QUICK-REFERENCE, AI-SHARED, META-PRD, etc.)
+4. **Verify context access:** Confirm access to required documents (QUICK-REFERENCE, AGENTS, META-PRD, etc.)
 5. **Check branch status:** Verify current git branch and alignment with intended work
 
 ## Git & Commit Control
@@ -275,7 +275,7 @@ This document provides core rules and standards. See related documentation:
 - **[QUICK-REFERENCE.md](../QUICK-REFERENCE.md)** - Environment context, command patterns, and tool usage
 - [Task Processing Workflow](../workflows/3-process-task-loop.md) - Detailed task execution workflow
 - [Atomic Commit Workflow](../workflows/supplemental/atomic-commit.md) - Enhanced commit workflow with comprehensive task context analysis
-- [AI Shared Context](../ai-instructions/AI-SHARED.md) - Complete project context for AI
+- [AI Agent Reference Card](../ai-instructions/AGENTS.md) - Complete project context for AI
 - [Current Session](.arc/active/CURRENT-SESSION.md) - Session handoff template (untracked)
 - [Technical Architecture](TECHNICAL-ARCHITECTURE.md) - Testing methodology details
 - [Type Safety Strategy](../strategies/strategy-type-safety.md) - Type checking approach and patterns

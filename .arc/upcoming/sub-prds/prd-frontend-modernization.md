@@ -1,10 +1,21 @@
 # Frontend Modernization - Sub-PRD
 
-**Document Version:** 1.0  
-**Created:** 2025-01-30  
-**Status:** Possibilities Document - To Be Refined  
-**Feature Priority:** Medium-High (Post Backend Modernization)  
-**Implementation Phase:** After Backend Modernization completion  
+**Document Version:** 1.0
+**Created:** 2025-01-30
+**Status:** Possibilities Document - To Be Refined
+**Feature Priority:** Medium-High (Post Backend Modernization)
+**Implementation Phase:** After Backend Modernization completion
+
+> **⚠️ IMPORTANT - DOCUMENT STATUS:**
+> This PRD is from an earlier planning stage and is **out of date**. The more current and refined thinking is in `.arc/upcoming/notes/notes-frontend-modernization.md`.
+>
+> **Before implementation:** This PRD should be updated to incorporate the refined approach from the notes file, including:
+> - State management decision tree (TanStack Query vs Redux Toolkit)
+> - Routing architecture modernization
+> - Clear migration phases and priorities
+> - Updated technical considerations based on current architecture
+>
+> **For planning purposes:** Reference the notes file as the primary source of truth until this PRD is updated.
 
 > **Note:** This is a comprehensive possibilities document outlining potential frontend improvements. Final implementation scope will be determined based on timeline constraints and portfolio impact priorities at the time of development.
 

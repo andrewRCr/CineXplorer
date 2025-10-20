@@ -74,7 +74,9 @@
     - [x] 1.8 Add type annotations to email service and other utility services
     - [x] 1.9 Fix Django-specific type patterns using django-stubs
     - [x] 1.10 Run hybrid type checking (python scripts/type_check.py) and resolve Pyright errors in movie views
-    - [ ] 1.11 Run hybrid type checking (python scripts/type_check.py) and resolve ANY remaining Pyright errors across backend, while also ensuring zero usage of `Any` and minimal `type: ignore` comments with explanations as to their necessity
+    - [ ] 1.11 Run hybrid type checking (python scripts/type_check.py) and resolve ANY remaining Pyright errors
+          across backend, while also ensuring zero usage of `Any` and minimal `type: ignore` comments with
+          explanations as to their necessity
     - [ ] 1.12 Validate all tests pass with type-safe code
 
 - [ ] 2.0 **Architecture Review & SOLID/DRY Refactoring**

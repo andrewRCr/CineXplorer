@@ -7,7 +7,10 @@
 
 ## 1. Introduction/Overview
 
-This document outlines Phase 2 of the API Layer Modernization initiative, which will complete the migration from Django REST Framework (DRF) to Django Ninja across all remaining backend applications. Building on the proven patterns and architecture established in Phase 1 (movie domain), Phase 2 will migrate the `user_movie_data`, `authentication`, and `accounts` domains to achieve a fully unified, type-safe API layer.
+This document outlines Phase 2 of the API Layer Modernization initiative, which will complete the migration from Django REST
+Framework (DRF) to Django Ninja across all remaining backend applications. Building on the proven patterns and architecture
+established in Phase 1 (movie domain), Phase 2 will migrate the `user_movie_data`, `authentication`, and `accounts`
+domains to achieve a fully unified, type-safe API layer.
 
 **Important Note:** This PRD integrates all deferred work from Authentication Modernization, including:
 
@@ -16,46 +19,60 @@ This document outlines Phase 2 of the API Layer Modernization initiative, which 
 - Deferred authentication tests (Tasks 7.3-7.11)
 - Complete type safety for authentication module
 
-All Authentication Modernization components (CustomAccountAdapter, email_verification_service, OAuth configuration) are documented and ready for Phase 2 integration.
+All Authentication Modernization components (CustomAccountAdapter, email_verification_service, OAuth configuration)
+are documented and ready for Phase 2 integration.
 
 ## 2. Goals
 
-1. **Complete API Layer Unification:** Migrate all remaining DRF endpoints to Django Ninja, establishing a single, consistent API framework across the entire backend.
+1. **Complete API Layer Unification:** Migrate all remaining DRF endpoints to Django Ninja, establishing a single,
+consistent API framework across the entire backend.
 
-2. **Achieve Comprehensive Type Safety:** Eliminate all remaining type errors in the API layer using Pyright strict mode validation with django-types, leveraging the django-allauth foundation to enable full type checking.
+2. **Achieve Comprehensive Type Safety:** Eliminate all remaining type errors in the API layer using Pyright strict mode
+validation with django-types, leveraging the django-allauth foundation to enable full type checking.
 
-3. **Apply Phase 1 Lessons Learned:** Implement the proven patterns, testing strategies, and architectural approaches established during the movie domain migration.
+3. **Apply Phase 1 Lessons Learned:** Implement the proven patterns, testing strategies, and architectural approaches
+established during the movie domain migration.
 
-4. **Establish Production-Ready API:** Create a fully type-safe, well-documented, and maintainable API layer that serves as the foundation for all future backend development.
+4. **Establish Production-Ready API:** Create a fully type-safe, well-documented, and maintainable API layer
+that serves as the foundation for all future backend development.
 
-5. **Enable Full Frontend Type Generation:** Complete the auto-generated TypeScript workflow to cover all API endpoints, eliminating manual type maintenance.
+5. **Enable Full Frontend Type Generation:** Complete the auto-generated TypeScript workflow to cover all API endpoints,
+eliminating manual type maintenance.
 
 ## 3. User Stories
 
-- **As a frontend developer,** I want all API endpoints to follow consistent Django Ninja patterns so that I can rely on unified error handling, authentication, and response structures across all features.
+- **As a frontend developer,** I want all API endpoints to follow consistent Django Ninja patterns so that I can rely on
+unified error handling, authentication, and response structures across all features.
 
-- **As a backend developer,** I want comprehensive type safety across the entire API layer so that I can catch integration bugs during development and refactor with complete confidence.
+- **As a backend developer,** I want comprehensive type safety across the entire API layer so that I can catch integration
+bugs during development and refactor with complete confidence.
 
-- **As a product owner,** I want the API migration completed so that the team can focus on feature development rather than framework modernization tasks.
+- **As a product owner,** I want the API migration completed so that the team can focus on feature development rather than
+framework modernization tasks.
 
-- **As a prospective employer,** I want to see a fully modernized, type-safe API architecture that demonstrates expertise in contemporary Python/Django practices and commitment to code quality.
+- **As a prospective employer,** I want to see a fully modernized, type-safe API architecture that demonstrates expertise
+in contemporary Python/Django practices and commitment to code quality.
 
-- **As a system maintainer,** I want unified API documentation and consistent endpoint patterns so that debugging and extending the system is straightforward.
+- **As a system maintainer,** I want unified API documentation and consistent endpoint patterns so that debugging and extending
+the system is straightforward.
 
 ## 4. Functional Requirements
 
 ### 4.1 UserMovieData Domain Migration
 
-1. **Replace DRF Views:** All DRF-based views in `backend/apps/user_movie_data/views.py` must be migrated to Django Ninja path operation functions with proper routing structure.
+1. **Replace DRF Views:** All DRF-based views in `backend/apps/user_movie_data/views.py` must be migrated to Django Ninja
+path operation functions with proper routing structure.
 
-2. **Replace DRF Serializers:** All DRF serializers in `backend/apps/user_movie_data/serializers.py` must be replaced with Pydantic schemas in a new `backend/apps/user_movie_data/schemas.py` file using `ModelSchema` pattern (see Section 6).
+2. **Replace DRF Serializers:** All DRF serializers in `backend/apps/user_movie_data/serializers.py` must be replaced with
+Pydantic schemas in a new `backend/apps/user_movie_data/schemas.py` file using `ModelSchema` pattern (see Section 6).
 
 3. **Required Endpoints:** Migrate the following standalone CRUD operations:
-   - `GET /user-movie-data/by-tmdb-id/?tmdb_id={id}` - Check if user data exists for a movie (returns 404 if not)
-   - `POST /user-movie-data/` - Create user data on first interaction (requires movie_id)
-   - `PATCH /user-movie-data/{pk}/` - Update existing user data
-   - `DELETE /user-movie-data/{pk}/` - Remove user data (for correcting mistakes)
-   - **Note:** Full list endpoint (`GET /user-movie-data/`) is not required - user data is primarily accessed in context of specific movies
+    - `GET /user-movie-data/by-tmdb-id/?tmdb_id={id}` - Check if user data exists for a movie (returns 404 if not)
+    - `POST /user-movie-data/` - Create user data on first interaction (requires movie_id)
+    - `PATCH /user-movie-data/{pk}/` - Update existing user data
+    - `DELETE /user-movie-data/{pk}/` - Remove user data (for correcting mistakes)
+        - **Note:** Full list endpoint (`GET /user-movie-data/`) is not required - user data is primarily accessed in context
+            of specific movies
 
 4. **Preserve User Data Functionality:** All existing user movie data operations must maintain identical functionality:
    - Movie rating/unrating operations
@@ -65,14 +82,18 @@ All Authentication Modernization components (CustomAccountAdapter, email_verific
    - Favorites management
    - User movie data retrieval by TMDB ID
 
-5. **Maintain Movie Domain Integration:** User movie data endpoints must continue to integrate seamlessly with the migrated movie domain APIs, preserving the `user_movie_data` field population in movie responses.
-   - **Important:** The embedded `UserMovieDataSchema` in `movie/schemas.py` (Phase 1) serves a different purpose than standalone CRUD schemas and remains unchanged.
+5. **Maintain Movie Domain Integration:** User movie data endpoints must continue to integrate seamlessly with the migrated
+movie domain APIs, preserving the `user_movie_data` field population in movie responses.
+    - **Important:** The embedded `UserMovieDataSchema` in `movie/schemas.py` (Phase 1) serves a different purpose than
+      standalone CRUD schemas and remains unchanged.
 
-6. **Apply Authentication Patterns:** Use the established JWT cookie authentication scheme consistently across all user movie data endpoints.
+6. **Apply Authentication Patterns:** Use the established JWT cookie authentication scheme consistently across all user movie
+data endpoints.
 
 ### 4.2 Authentication/Accounts Domain Migration
 
-6. **Replace DRF Authentication Views:** All remaining DRF-based authentication endpoints in `backend/apps/authentication/views.py` must be migrated to Django Ninja, including:
+6. **Replace DRF Authentication Views:** All remaining DRF-based authentication endpoints in
+`backend/apps/authentication/views.py` must be migrated to Django Ninja, including:
    - User registration endpoints (RegisterAPIView, CreateUserView)
    - User profile management (ManageUserView)
    - JWT token management (JWTCookieTokenObtainPairView, JWTCookieTokenRefreshView)
@@ -81,20 +102,26 @@ All Authentication Modernization components (CustomAccountAdapter, email_verific
    - Email verification workflow (EmailVerificationView - currently returns 503, deferred from Auth Modernization)
    - Resend verification endpoint (ResendVerificationView - currently returns 503)
 
-7. **Replace DRF User Serializers:** All DRF serializers related to user management must be replaced with Pydantic schemas that work with the modernized authentication system.
+7. **Replace DRF User Serializers:** All DRF serializers related to user management must be replaced with Pydantic schemas
+that work with the modernized authentication system.
 
-8. **Remove Email Verification Bridge:** Delete the temporary email verification bridge (`backend/apps/authentication/email_verification.py`) deferred from Authentication Modernization (Tasks 8.1-8.2).
-   - Replace all `email_verification_service` calls with direct allauth EmailAddress API in Django Ninja endpoints
-   - Remove bridge dependency from email_service.py stubbed methods
-   - Update all remaining references to use allauth native methods
+8. **Remove Email Verification Bridge:** Delete the temporary email verification bridge
+(`backend/apps/authentication/email_verification.py`) deferred from Authentication Modernization (Tasks 8.1-8.2).
+    - Replace all `email_verification_service` calls with direct allauth EmailAddress API in Django Ninja endpoints
+    - Remove bridge dependency from email_service.py stubbed methods
+    - Update all remaining references to use allauth native methods
 
-9. **Integrate with django-allauth:** Ensure all migrated endpoints work seamlessly with the django-allauth foundation established during Authentication Modernization.
-   - Use allauth EmailAddress API directly: `EmailAddress.objects.filter(user=user, verified=True).exists()`
-   - Ensure API-triggered flows (registration, resend verification) invoke the ZeptoMail integration via custom account adapter (`authentication.adapters.CustomAccountAdapter`)
-   - Leverage allauth's native email confirmation workflow instead of custom token generation
+9. **Integrate with django-allauth:** Ensure all migrated endpoints work seamlessly with the django-allauth foundation
+established during Authentication Modernization.
+    - Use allauth EmailAddress API directly: `EmailAddress.objects.filter(user=user, verified=True).exists()`
+        - Ensure API-triggered flows (registration, resend verification) invoke the ZeptoMail integration via custom account
+            adapter (`authentication.adapters.CustomAccountAdapter`)
+    - Leverage allauth's native email confirmation workflow instead of custom token generation
 
-10. **Preserve Authentication Workflows:** All existing authentication and user management functionality must be preserved with identical behavior.
-    - Maintain the public contract for fields like `email_verified`, `full_name`, and JWT cookie handling while delegating persistence to django-allauth.
+10. **Preserve Authentication Workflows:** All existing authentication and user management functionality must be preserved
+with identical behavior.
+        - Maintain the public contract for fields like `email_verified`, `full_name`, and JWT cookie handling while delegating
+            persistence to django-allauth.
 
 11. **Complete Type Safety:** Eliminate all temporary type: ignore comments from authentication module.
     - Remove type: ignore comments from email_verification.py when bridge is deleted
@@ -103,19 +130,24 @@ All Authentication Modernization components (CustomAccountAdapter, email_verific
 
 ### 4.3 Cross-Domain Integration and Type Safety
 
-12. **Unified API Structure:** All endpoints must follow the clean URL structure established in Phase 1 (`/api/domain/action` pattern).
+12. **Unified API Structure:** All endpoints must follow the clean URL structure established in Phase 1
+(`/api/domain/action` pattern).
 
-13. **Consistent Error Handling:** Apply the standardized error response patterns established in Phase 1 across all migrated endpoints.
+13. **Consistent Error Handling:** Apply the standardized error response patterns established in Phase 1 across all
+migrated endpoints.
 
-14. **Complete Type Safety:** Achieve zero Pyright strict mode errors across all migrated domains, with documented type: ignore statements only for unavoidable Django internals.
+14. **Complete Type Safety:** Achieve zero Pyright strict mode errors across all migrated domains, with documented
+type: ignore statements only for unavoidable Django internals.
 
-15. **Comprehensive Testing Migration:** Update all existing tests to use Django Ninja patterns, following the three-layer testing strategy established in Phase 1.
+15. **Comprehensive Testing Migration:** Update all existing tests to use Django Ninja patterns, following the three-layer
+testing strategy established in Phase 1.
 
 ### 4.4 DRF Endpoint Inventory
 
 The following DRF views require migration to Django Ninja:
 
 **Authentication Domain (9 endpoints):**
+
 1. `RegisterAPIView` - User registration via DRF
 2. `CreateUserView` - Alternative user creation endpoint
 3. `ManageUserView` - User profile retrieval and updates
@@ -127,17 +159,21 @@ The following DRF views require migration to Django Ninja:
 9. `ResendVerificationView` - Resend verification email (currently 503)
 
 **UserMovieData Domain:**
+
 - All DRF views in `backend/apps/user_movie_data/views.py` (specific count TBD during task generation)
 
 **Total Estimated:** ~15-20 DRF endpoints requiring migration
 
 ### 4.5 Frontend Integration
 
-16. **Complete Type Generation:** Extend the OpenAPI-based TypeScript generation to cover all API endpoints, eliminating all manual type definitions.
+16. **Complete Type Generation:** Extend the OpenAPI-based TypeScript generation to cover all API endpoints,
+eliminating all manual type definitions.
 
-17. **Frontend Service Updates:** Update all frontend API service modules to use the new Django Ninja endpoints and auto-generated types.
+17. **Frontend Service Updates:** Update all frontend API service modules to use the new Django Ninja endpoints and
+auto-generated types.
 
-18. **OAuth UI Integration:** Add social login buttons to frontend Login.tsx and integrate with allauth OAuth flows (deferred from Authentication Modernization Task 8.9-8.10).
+18. **OAuth UI Integration:** Add social login buttons to frontend Login.tsx and integrate with allauth OAuth flows
+    (deferred from Authentication Modernization Task 8.9-8.10).
     - Implement Google and GitHub login buttons
     - Update authentication context to handle OAuth redirects
     - Ensure consistent UX between OAuth and password authentication flows
@@ -146,11 +182,13 @@ The following DRF views require migration to Django Ninja:
 
 ## 5. Non-Goals (Out of Scope)
 
-- **Architectural Refactoring:** Major service layer restructuring, parameter logic movement, and other architectural improvements are deferred to the Backend Modernization feature.
+- **Architectural Refactoring:** Major service layer restructuring, parameter logic movement, and other architectural
+improvements are deferred to the Backend Modernization feature.
 - **Database Schema Changes:** No changes to underlying data models or database structure.
 - **New Feature Development:** No new functionality beyond what currently exists in DRF endpoints.
 - **Performance Optimization:** Focus is on migration correctness, not performance improvements.
-- **UI/UX Changes:** No modifications to frontend user interface beyond type integration and OAuth login button integration (Item 18 - deferred from Authentication Modernization).
+- **UI/UX Changes:** No modifications to frontend user interface beyond type integration and OAuth login button integration
+    (Item 18 - deferred from Authentication Modernization).
 
 ## 6. Design Considerations
 
@@ -166,7 +204,9 @@ Phase 1 established clear patterns for when to use `ModelSchema` vs manual `Sche
 
 **Use `ModelSchema` from `ninja.orm` for Django model CRUD:**
 
-- **Pattern:** Direct Django model representation for API responses
+**Composite/embedded schemas:** Phase 1 `UserMovieDataSchema` embedded in `MovieBaseSchema` (combines data from
+multiple models)
+
 - **Phase 1 Example:** `MovieModelSchema(ModelSchema)` with `class Meta: model = Movie`
 - **Phase 2 Application:**
     - `UserMovieDataModelSchema` for UserMovieData CRUD endpoints (create/update/detail responses)
@@ -177,7 +217,8 @@ Phase 1 established clear patterns for when to use `ModelSchema` vs manual `Sche
 **Use manual `Schema` for:**
 
 - **External API responses:** TMDB data, third-party integrations (no Django model backing)
-- **Composite/embedded schemas:** Phase 1 `UserMovieDataSchema` embedded in `MovieBaseSchema` (combines data from multiple models)
+- **Composite/embedded schemas:** Phase 1 `UserMovieDataSchema` embedded in `MovieBaseSchema`
+  (combines data from multiple models)
 - **Input-only DTOs:** Create/update schemas that don't map 1:1 to model fields
     - Example: `UserMovieDataCreateSchema` requires `movie_id` field (not on model)
     - Example: `UserMovieDataUpdateSchema` with all optional fields for PATCH operations
@@ -220,7 +261,8 @@ class UserMovieDataUpdateSchema(Schema):
     # ... other fields optional
 ```
 
-**Critical Note:** The embedded `UserMovieDataSchema` in `movie/schemas.py` (from Phase 1) remains unchanged - it serves a different purpose (embedded in movie responses) and is correctly implemented as a manual `Schema`.
+**Critical Note:** The embedded `UserMovieDataSchema` in `movie/schemas.py` (from Phase 1) remains unchanged -
+it serves a different purpose (embedded in movie responses) and is correctly implemented as a manual `Schema`.
 
 ### Type-Safe ORM Conversion Pattern
 
@@ -261,13 +303,15 @@ def get_user_movie_data_by_tmdb_id(request: HttpRequest, tmdb_id: int):
 ```
 
 **Benefits:**
+
 - Encapsulates type handling in schema layer (not API endpoints)
 - Zero `cast()` calls in API layer
 - Clean separation of concerns
 - Professional code organization
 - Well-documented django-stubs limitations
 
-**Critical Note:** The embedded `UserMovieDataSchema` in `movie/schemas.py` (from Phase 1) remains unchanged - it serves a different purpose (embedded in movie responses) and is correctly implemented as a manual `Schema`.
+**Critical Note:** The embedded `UserMovieDataSchema` in `movie/schemas.py` (from Phase 1) remains unchanged -
+it serves a different purpose (embedded in movie responses) and is correctly implemented as a manual `Schema`.
 
 ### Type Safety Strategy
 
@@ -290,11 +334,14 @@ def get_user_movie_data_by_tmdb_id(request: HttpRequest, tmdb_id: int):
 ### Dependencies
 
 - **Authentication Modernization:** Must be 100% complete before Phase 2 begins, including:
-    - Custom account adapter: `authentication.adapters.CustomAccountAdapter` (extends `allauth.account.adapter.DefaultAccountAdapter`) with ZeptoMail integration
-    - Email verification bridge: `authentication.email_verification.email_verification_service` (temporary compatibility layer to be removed in Phase 2)
+        - Custom account adapter: `authentication.adapters.CustomAccountAdapter` (extends
+            `allauth.account.adapter.DefaultAccountAdapter`) with ZeptoMail integration
+        - Email verification bridge: `authentication.email_verification.email_verification_service`
+            (temporary compatibility layer to be removed in Phase 2)
     - OAuth configuration: Google and GitHub social apps configured in Django admin
     - django-allauth URLs: `/accounts/*` for OAuth callbacks and email verification
-    - **Note:** All deferred work from Authentication Modernization (Tasks 8.1-8.2, 8.9-8.10) must be completed in Phase 2
+        - **Note:** All deferred work from Authentication Modernization (Tasks 8.1-8.2, 8.9-8.10) must be completed in
+            Phase 2
 - **Phase 1 Foundation:** All Phase 1 patterns and utilities must remain stable
 - **Frontend Type Generation:** OpenAPI workflow must be working reliably
 
@@ -321,18 +368,23 @@ def get_user_movie_data_by_tmdb_id(request: HttpRequest, tmdb_id: int):
    - **Rationale:** Phase 2 is the FINAL API modernization phase - must certify entire API layer is production-ready
    - **Regression Check:** Verify Phase 1 domains (Movie, Core) have no regressions from Phase 2 work
    - **CI Check:** Pyright command must pass in GitHub Actions workflow before merge approval
-   - **Justification Required:** Any `type: ignore` comments must have inline explanation (Django settings, framework internals only)
+     - **Justification Required:** Any `type: ignore` comments must have inline explanation (Django settings,
+         framework internals only)
    - **Note:** MyPy removed in backend type safety modernization (see tasks-incidental-backend-type-safety.md)
 
 2. **Complete Test Coverage - ENTIRE API LAYER:** All API functionality has comprehensive test coverage
-   - **Backend Tests:** `docker compose exec backend coverage run --source='apps' manage.py test --settings=config.settings_test` (100% pass rate - ALL apps)
-   - **Coverage Requirement:** Minimum 70% test coverage across entire API layer (per TECHNICAL-ARCHITECTURE.md)
-   - **Coverage Verification:** `coverage report -m` must show 70%+ coverage for critical paths and user-facing functionality
-   - **Scope:** Phase 2 domains (UserMovieData, Authentication) PLUS regression verification for Phase 1 domains (Movie, Core)
-   - **Phase 1 Regression Check:** Verify Movie and Core domain tests still pass with no degradation in coverage
-   - **Authentication Tests:** Include comprehensive integration tests deferred from Authentication Modernization (password auth, CSRF, JWT refresh, logout, email verification, password reset)
-   - **OAuth Tests:** Utilize fixtures and mocks created in Authentication Modernization for Google/GitHub OAuth flow testing
-   - **CI Check:** Full test suite must pass with 0 failures and meet coverage targets in GitHub Actions workflow
+     - **Backend Tests:** `docker compose exec backend coverage run --source='apps' manage.py test --settings=config.settings_test`
+         (100% pass rate - ALL apps)
+
+- **Coverage Requirement:** Minimum 70% test coverage across entire API layer (per TECHNICAL-ARCHITECTURE.md)
+    - **Coverage Verification:** `coverage report -m` must show 70%+ coverage for critical paths and user-facing functionality
+        - **Scope:** Phase 2 domains (UserMovieData, Authentication) PLUS regression verification for Phase 1 domains
+         (Movie, Core)
+    - **Phase 1 Regression Check:** Verify Movie and Core domain tests still pass with no degradation in coverage
+        - **Authentication Tests:** Include comprehensive integration tests deferred from Authentication Modernization
+         (password auth, CSRF, JWT refresh, logout, email verification, password reset)
+    - **OAuth Tests:** Utilize fixtures and mocks created in Authentication Modernization for Google/GitHub OAuth flow testing
+    - **CI Check:** Full test suite must pass with 0 failures and meet coverage targets in GitHub Actions workflow
 
 3. **Full Frontend Integration:** All frontend features work identically with new API endpoints
    - **Type Generation:** `npm run generate-types` produces valid TypeScript types from OpenAPI schema
@@ -346,20 +398,23 @@ def get_user_movie_data_by_tmdb_id(request: HttpRequest, tmdb_id: int):
 ### Secondary Success Criteria
 
 5. **Performance Parity:** Response times are equivalent or better than DRF endpoints
-   - **Measurement:** Compare average response times for equivalent operations before/after migration
+    - **Measurement:** Compare average response times for equivalent operations before/after migration
 
 6. **Code Reduction:** Overall reduction in boilerplate code compared to DRF implementation
-   - **Measurement:** Line count comparison between old DRF serializers/views and new Pydantic schemas/routers
+    - **Measurement:** Line count comparison between old DRF serializers/views and new Pydantic schemas/routers
 
 7. **Developer Experience:** Improved development workflow with better type checking and validation
-   - **Measurement:** Qualitative assessment of development friction reduction
+    - **Measurement:** Qualitative assessment of development friction reduction
 
 ## 9. Open Questions
 
-1. ~~**Authentication Integration Complexity:** Will the django-allauth migration introduce any new patterns that require PRD updates?~~
-   - **Resolved (January 2, 2025):** Authentication Modernization complete. All components documented in Section 7 (Dependencies). 9 DRF authentication endpoints identified in Section 4.4.
+1. ~~**Authentication Integration Complexity:** Will the django-allauth migration introduce any new patterns that require
+    PRD updates?~~
+     - **Resolved (January 2, 2025):** Authentication Modernization complete. All components documented in Section 7
+         (Dependencies). 9 DRF authentication endpoints identified in Section 4.4.
 
-2. **UserMovieData Schema Complexity:** Are there complex nested relationships in user movie data that will require special Pydantic schema design?
+2. **UserMovieData Schema Complexity:** Are there complex nested relationships in user movie data that will require
+    special Pydantic schema design?
 
 3. **Frontend Breaking Changes:** Will the migration require any breaking changes to frontend API consumption patterns?
 

@@ -8,25 +8,31 @@
 
 > **⚠️ IMPORTANT - DOCUMENT STATUS:**
 > This PRD is from an earlier planning stage and is **out of date**. The more current and refined thinking is in `.arc/upcoming/notes/notes-frontend-modernization.md`.
->
 > **Before implementation:** This PRD should be updated to incorporate the refined approach from the notes file, including:
+>
 > - State management decision tree (TanStack Query vs Redux Toolkit)
 > - Routing architecture modernization
 > - Clear migration phases and priorities
 > - Updated technical considerations based on current architecture
->
 > **For planning purposes:** Reference the notes file as the primary source of truth until this PRD is updated.
-
-> **Note:** This is a comprehensive possibilities document outlining potential frontend improvements. Final implementation scope will be determined based on timeline constraints and portfolio impact priorities at the time of development.
+> **Note:** This is a comprehensive possibilities document outlining potential frontend improvements.
+> Final implementation scope will be determined based on timeline constraints and portfolio impact priorities
+> at the time of development.
 
 ## Introduction/Overview
 
-This Sub-PRD defines a comprehensive frontend modernization effort for CineXplorer that demonstrates professional React development practices suitable for portfolio showcase. The modernization will transform the frontend architecture to use modern state management patterns, improve developer experience, enhance testing practices, and establish patterns that reflect current industry best practices. This effort positions the frontend codebase as an exemplary showcase of modern React/TypeScript development while maintaining focus on realistic implementation timelines.
+This Sub-PRD defines a comprehensive frontend modernization effort for CineXplorer that demonstrates professional
+React development practices suitable for portfolio showcase. The modernization will transform the frontend
+architecture to use modern state management patterns, improve developer experience, enhance testing practices,
+and establish patterns that reflect current industry best practices. This effort positions the frontend codebase
+as an exemplary showcase of modern React/TypeScript development while maintaining focus on realistic
+implementation timelines.
 
 ## Goals
 
 1. **Demonstrate mastery of modern React ecosystem** through implementation of current best practices and patterns
-2. **Establish professional state management architecture** using TanStack Query for server state and Redux Toolkit for client state
+2. **Establish professional state management architecture** using TanStack Query for server state
+   and Redux Toolkit for client state
 3. **Showcase comprehensive testing expertise** across unit, integration, and E2E testing levels
 4. **Implement performance optimization patterns** demonstrating understanding of web performance best practices
 5. **Create maintainable, scalable architecture** that shows ability to build enterprise-grade applications
@@ -35,27 +41,38 @@ This Sub-PRD defines a comprehensive frontend modernization effort for CineXplor
 
 ## User Stories
 
-1. **As a prospective employer reviewing the codebase**, I want to see modern React patterns and state management so that I can assess the developer's knowledge of current best practices.
+1. **As a prospective employer reviewing the codebase**,
+   I want to see modern React patterns and state management
+   so that I can assess the developer's knowledge of current best practices.
 
-2. **As a prospective employer**, I want to see comprehensive testing strategies so that I can evaluate the developer's commitment to code quality and reliability.
+2. **As a prospective employer**,
+   I want to see comprehensive testing strategies
+   so that I can evaluate the developer's commitment to code quality and reliability.
 
-3. **As a prospective employer**, I want to see performance optimization techniques so that I can assess the developer's understanding of web performance.
+3. **As a prospective employer**,
+   I want to see performance optimization techniques
+   so that I can assess the developer's understanding of web performance.
 
-4. **As the developer maintaining this project**, I want robust state management so that adding new features follows predictable patterns.
+4. **As the developer maintaining this project**,
+   I want robust state management so that adding new features follows predictable patterns.
 
 5. **As the developer**, I want excellent developer tooling so that development is efficient and errors are caught early.
 
-6. **As an end user**, I want responsive UI with proper loading and error states so that I always understand what the application is doing.
+6. **As an end user**, I want responsive UI with proper loading and error states
+   so that I always understand what the application is doing.
 
-7. **As an end user**, I want smooth interactions and fast performance so that using the application feels professional and polished.
+7. **As an end user**, I want smooth interactions and fast performance
+   so that using the application feels professional and polished.
 
 ## Functional Requirements
 
 ### Priority Tier 1: Core Architecture (Must Have)
 
-1. **The system must implement TanStack Query for server state management**, replacing current custom fetch hooks with robust caching and synchronization.
+1. **The system must implement TanStack Query for server state management**, replacing current custom fetch hooks
+   with robust caching and synchronization.
 
-2. **The system must implement Redux Toolkit for global client state**, centralizing complex state currently spread across contexts and hooks.
+2. **The system must implement Redux Toolkit for global client state**, centralizing complex state currently spread
+   across contexts and hooks.
 
 3. **The system must establish clear separation between server and client state**, with defined patterns for each type.
 
@@ -202,4 +219,6 @@ When implementation begins, the following approach will be taken:
 5. Begin implementation on dedicated feature branch
 
 **Note for Implementation Time:**
-This document will be refined with specific implementation details, final priority decisions, and detailed technical specifications when the Frontend Modernization phase begins. The comprehensive list of possibilities ensures all options are considered, with final scope determined by timeline and portfolio impact priorities.
+This document will be refined with specific implementation details, final priority decisions, and detailed technical
+specifications when the Frontend Modernization phase begins. The comprehensive list of possibilities ensures all
+options are considered, with final scope determined by timeline and portfolio impact priorities.

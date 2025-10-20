@@ -2,9 +2,14 @@
 
 ## 1. Introduction/Overview
 
-This feature introduces a comprehensive User Movie Lists system that enables users to create, manage, and organize custom collections of movies. The system serves dual purposes: providing immediate value through curated system collections (for sidebar content) while establishing the foundation for user-generated content and future recommendation capabilities.
+This feature introduces a comprehensive User Movie Lists system that enables users to create, manage, and organize
+custom collections of movies. The system serves dual purposes: providing immediate value through curated system
+collections (for sidebar content) while establishing the foundation for user-generated content and future
+recommendation capabilities.
 
-The feature leverages existing TMDB keywords infrastructure for tagging and integrates seamlessly with the current application architecture. System collections will showcase prestigious film lists (AFI Top 100, IMDb Top 250, Oscar winners, Palme d'Or winners) while user lists provide personal organization capabilities.
+The feature leverages existing TMDB keywords infrastructure for tagging and integrates seamlessly with the current
+application architecture. System collections will showcase prestigious film lists (AFI Top 100, IMDb Top 250,
+Oscar winners, Palme d'Or winners) while user lists provide personal organization capabilities.
 
 ## 2. Goals
 
@@ -16,8 +21,10 @@ The feature leverages existing TMDB keywords infrastructure for tagging and inte
 
 ## 3. User Stories
 
-- **As a movie enthusiast**, I want to view curated collections like "AFI Top 100" so I can discover critically acclaimed films
-- **As a user**, I want to see a list page with movie grid and composite cover art so I can browse collection contents effectively  
+- **As a movie enthusiast**, I want to view curated collections like "AFI Top 100"
+  so I can discover critically acclaimed films
+- **As a user**, I want to see a list page with movie grid and composite cover art
+  so I can browse collection contents effectively
 - **As a user**, I want lists to show movies in meaningful order so I can understand the collection's structure
 - **As a developer**, I want a scalable backend architecture so I can easily add list management UI later
 - **As a product owner**, I want to leverage TMDB keywords so the system integrates with future recommendation features
@@ -26,14 +33,15 @@ The feature leverages existing TMDB keywords infrastructure for tagging and inte
 
 ### 4.1 Data Model & Backend (Phase 1)
 
-1. **UserMovieList model** with fields: id, user (nullable for system lists), title, description, created_at, updated_at, is_system_list
-2. **UserMovieListItem model** with fields: id, list, movie (TMDB ID), position/order, added_at  
+1. **UserMovieList model** with fields: id, user (nullable for system lists), title, description, created_at,
+   updated_at, is_system_list
+2. **UserMovieListItem model** with fields: id, list, movie (TMDB ID), position/order, added_at
 3. **Keywords integration** using existing TMDB keyword endpoints for list tagging
 4. **CRUD API endpoints** for list management (create, read, update, delete lists and list items)
 5. **Ordering support** with position field for drag-and-drop reordering capability
 6. **System list flagging** to distinguish curated collections from user-generated content
 
-### 4.2 Frontend Display (Phase 2)  
+### 4.2 Frontend Display (Phase 2)
 
 7. **Individual list page** with URL pattern `/lists/{id}`
 8. **Composite cover image generation** using 2×6 grid of movie posters from list contents
@@ -58,7 +66,7 @@ The feature leverages existing TMDB keywords infrastructure for tagging and inte
 
 - User list creation/editing UI (Phase 4 - future implementation)
 - Public/private list settings (no social features planned)
-- List sharing or collaborative editing capabilities  
+- List sharing or collaborative editing capabilities
 - User comments or notes on individual movies within lists
 - Advanced filtering within list views (keep simple for now)
 - Integration with user's existing watchlist/library (separate features)
@@ -72,7 +80,7 @@ The feature leverages existing TMDB keywords infrastructure for tagging and inte
 - **Many-to-many** relationship with Movie via through model for ordering
 - **Indexing** on user_id and is_system_list for efficient queries
 
-### 6.2 TMDB Integration  
+### 6.2 TMDB Integration
 
 - **Existing keywords API** already implemented in backend
 - **Movie ID validation** ensuring referenced movies exist in TMDB
@@ -113,7 +121,7 @@ The feature leverages existing TMDB keywords infrastructure for tagging and inte
 ### Phase 2: Frontend Display
 
 - Individual list page component development
-- Composite cover image generation functionality  
+- Composite cover image generation functionality
 - Movie grid integration with existing components
 - Responsive design implementation and testing
 

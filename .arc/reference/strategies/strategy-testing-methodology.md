@@ -223,13 +223,28 @@ def test_user_email_normalized() -> None:
 - CSRF helper (`get_csrf_token`)
 - Status codes (re-exported `HTTPStatus`)
 - Basic model creation (`create_user`)
+- Authentication helpers (`create_user_and_auth_payload`)
 - Generic assertions
 - Cross-test type definitions (`UserParams`)
 
 ```python path=null start=null
-from core.tests.test_helpers import create_user, json_post, get_csrf_token, HTTPStatus
+from core.tests.test_helpers import (
+    create_user,
+    create_user_and_auth_payload,
+    json_post,
+    get_csrf_token,
+    HTTPStatus
+)
 
+# Basic user creation
 user = create_user(username='testuser', email='test@example.com')
+
+# Authentication tests (DRY pattern - reduces 3 lines to 1)
+user, payload = create_user_and_auth_payload(username='testuser', password='TestPass123!')
+response = json_post(client, '/api/token/', payload)
+assert response.status_code == HTTPStatus.OK
+
+# Generic endpoint test
 response = json_post(client, '/api/endpoint/', {'data': 'value'})
 assert response.status_code == HTTPStatus.OK
 
@@ -372,7 +387,7 @@ __all__ = ["HTTPStatus", "create_user", "json_post", "json_patch", "json_put"]
 **Test Infrastructure:**
 
 - ✅ `apps/conftest.py` - Root fixtures (api_client, user, auth_client)
-- ✅ `core/tests/test_helpers.py` - HTTP helpers, CSRF helper, `create_user`, HTTPStatus
+- ✅ `core/tests/test_helpers.py` - HTTP helpers, CSRF helper, `create_user`, `create_user_and_auth_payload`, HTTPStatus
 - ✅ `authentication/tests/conftest.py` - OAuth, throttling, verified_user fixtures
 - ✅ `authentication/tests/fixtures.py` - Factory functions for test data
 - ✅ All tests use function-based patterns with typed fixtures

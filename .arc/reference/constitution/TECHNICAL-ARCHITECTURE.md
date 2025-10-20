@@ -48,8 +48,15 @@ The backend is a REST API built with Django and Django REST Framework (DRF).
   middleware for login/verification):
     - `accounts`: User authentication models (`User`, `EmailVerificationToken`)
     - `authentication`: Authentication processes (JWT, serializers, views, middleware)
-    - `core`: Core business models (`Movie` and shared utilities)
+        - `authentication/utils.py`: JWT token management, settings retrieval, cookie handling
+    - `core`: Core business models (`Movie`) and cross-domain utilities
+        - `core/utils/`: Cross-domain utilities layer (DRY refactoring, Phase 2)
+            - `http.py`: HTTP request/response helpers (`get_client_info`, `build_error_response`)
+            - `validators.py`: Pydantic field validators (`empty_str_to_none`)
+            - `schemas.py`: Generic schema definitions (`PaginatedResponse[T]` with Python 3.13 type params)
+        - `core/tests/test_helpers.py`: Cross-domain test utilities (`create_user`, `create_user_and_auth_payload`)
     - `movie`: Movie-related functionality and API endpoints
+        - `movie/helpers.py`: Movie enrichment helpers for UserMovieData integration
     - `user_movie_data`: User-movie interaction models and API (`UserMovieData`, watchlist, ratings)
 
 ## 3. Frontend

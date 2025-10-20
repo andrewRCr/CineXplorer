@@ -676,45 +676,60 @@ Service layer testing deferred to Backend Modernization.
 user_movie_data domains. Service layer excluded (scheduled for Backend Modernization refactor per
 `.arc/upcoming/notes/notes-backend-modernization.md` lines 446-475).
 
-- [ ] R.4.1: Audit API layer production code for repeated patterns
-    - [ ] R.4.1.1: Review `authentication/api.py` + `schemas.py` for repeated patterns (error handling, response
-        formatting, auth checks)
-    - [ ] R.4.1.2: Review `core/api.py` + `schemas.py` for repeated patterns (logging, health checks)
-    - [ ] R.4.1.3: Review `movie/api.py` + `schemas.py` for repeated patterns (pagination, TMDB enrichment)
-    - [ ] R.4.1.4: Review `user_movie_data/api.py` + `schemas.py` for repeated patterns (CRUD operations, user
-        isolation)
-    - [ ] R.4.1.5: Identify common error handling patterns across endpoints (exception handling, error responses)
-    - [ ] R.4.1.6: Identify common authentication/authorization patterns (JWT checks, user retrieval)
-    - [ ] R.4.1.7: Identify common schema patterns and field definitions (ModelSchema usage, computed fields)
-    - [ ] R.4.1.8: Document all repeated patterns found with specific file/line references
+- [x] R.4.1: Audit API layer production code for repeated patterns ✅ COMPLETE
+    - [x] R.4.1.1: Review `authentication/api.py` + `schemas.py` for repeated patterns (8 patterns identified: JWT
+        settings, cookie setting, client info, error responses, token extraction, email verification, full name, blacklist)
+    - [x] R.4.1.2: Review `core/api.py` + `schemas.py` for repeated patterns (well-factored, minimal duplication,
+        correlation ID already centralized)
+    - [x] R.4.1.3: Review `movie/api.py` + `schemas.py` for repeated patterns (4 patterns: user enrichment, empty list
+        factories, empty string validators, paginated response schemas)
+    - [x] R.4.1.4: Review `user_movie_data/api.py` + `schemas.py` for repeated patterns (mostly clean, 2 minor patterns:
+        movie stub creation, schema field repetition)
+    - [x] R.4.1.5: Identify common error handling patterns across endpoints (error response with DEBUG detail, token
+        errors)
+    - [x] R.4.1.6: Identify common authentication/authorization patterns (get_current_user already centralized,
+        user ownership checks use Django helpers)
+    - [x] R.4.1.7: Identify common schema patterns and field definitions (paginated responses, empty list factories,
+        field validation patterns)
+    - [x] R.4.1.8: Document all repeated patterns found with specific file/line references (documented in notes file
+        with severity ratings and refactoring recommendations)
 
-- [ ] R.4.2: Audit API layer test code for repeated patterns
-    - [ ] R.4.2.1: Review authentication tests (`test_user_api.py`, `test_csrf_protection.py`,
-        `test_token_blacklisting.py`, `test_error_recovery.py`, `test_token_refresh_scenarios.py`,
-        `test_session_auth.py`, `test_email_verification.py`) for repeated setup/assertions
-    - [ ] R.4.2.2: Review core tests (`test_logging_api.py`, any other test_*.py in core/tests/) for repeated patterns
-    - [ ] R.4.2.3: Review movie API tests (`test_movie_api.py`, `test_endpoint_enrichment_integration.py`) for
-        repeated patterns (exclude `test_movie_service.py` - service layer)
-    - [ ] R.4.2.4: Review user_movie_data tests (`test_user_movie_data_api.py`, `test_watchlist_endpoint.py`) for
-        repeated CRUD patterns (exclude `test_movie_enrichment_service.py` - service layer)
-    - [ ] R.4.2.5: Identify common test setup patterns (authentication, fixtures, factories, user creation)
-    - [ ] R.4.2.6: Identify common assertion patterns (status codes, error messages, data validation, response structure)
-    - [ ] R.4.2.7: Document all repeated patterns found with specific test file/function references
+- [x] R.4.2: Audit API layer test code for repeated patterns ✅ COMPLETE (test infrastructure already excellent)
+    - [x] R.4.2.1: Review authentication tests (130 tests across 14 files) - Excellent OAuth/throttling infrastructure,
+        minor opportunity: extract `create_user_and_auth_payload()` helper
+    - [x] R.4.2.2: Review core tests (17 tests) - Minimal, focused, no significant duplication
+    - [x] R.4.2.3: Review movie API tests (24 tests) - Good use of parametrized tests, `create_movie_stub()` already
+        centralized
+    - [x] R.4.2.4: Review user_movie_data tests (45 tests) - CRUD patterns use fixtures appropriately, ownership tests
+        consistent
+    - [x] R.4.2.5: Identify common test setup patterns - 3-tier fixture hierarchy (Core → Root → Domain) already
+        excellent, shared helpers centralized in `core/tests/test_helpers.py`
+    - [x] R.4.2.6: Identify common assertion patterns - Status code assertions pervasive but appropriate (clarity over
+        abstraction)
+    - [x] R.4.2.7: Document all repeated test patterns - Only 2 minor improvements identified: auth payload helper,
+        json_post signature. Test code already follows DRY principles excellently.
 
-- [ ] R.4.3: Evaluate and apply DRY refactoring
-    - [ ] R.4.3.1: Assess severity of each pattern (critical = used 5+ times, important = 3-4 times, minor = 2 times)
-    - [ ] R.4.3.2: Create shared utilities/mixins for production code patterns (3+ repetitions, following "Rule of Three")
-    - [ ] R.4.3.3: Create shared test fixtures/utilities for test patterns (3+ repetitions, following "Rule of Three")
-    - [ ] R.4.3.4: Apply refactoring to eliminate important and critical violations (3+ repetitions)
-    - [ ] R.4.3.5: Document minor violations for awareness (2 repetitions - acceptable, avoid premature abstraction)
-    - [ ] R.4.3.6: Run incremental quality checks after each refactoring (linting, type checking on modified files)
-    - [ ] R.4.3.7: Run full quality gates after all refactoring (tests, linting, type checking)
-    - [ ] R.4.3.8: Verify no regressions from DRY refactoring (243 tests still passing, 0 type errors)
+- [x] R.4.3: Evaluate and apply DRY refactoring
+    - [x] R.4.3.1: Assess severity of each pattern (critical = used 5+ times, important = 3-4 times, minor = 2 times)
+    - [x] R.4.3.2: Create shared utilities/mixins for production code patterns (3+ repetitions, following "Rule of Three")
+    - [x] R.4.3.3: Create shared test fixtures/utilities for test patterns (3+ repetitions, following "Rule of Three")
+    - [x] R.4.3.4: Apply refactoring to eliminate important and critical violations (3+ repetitions)
+    - [x] R.4.3.5: Document minor violations for awareness (2 repetitions - acceptable, avoid premature abstraction)
+    - [x] R.4.3.6: Run incremental quality checks after each refactoring (linting, type checking on modified files)
+    - [x] R.4.3.7: Run full quality gates after all refactoring (tests, linting, type checking)
+    - [x] R.4.3.8: Verify no regressions from DRY refactoring (243 tests still passing, 0 type errors)
 
-- [ ] R.4.4: Document new shared utilities in test infrastructure
-    - [ ] R.4.4.1: Update docstrings in conftest.py files (document new fixtures with usage examples)
-    - [ ] R.4.4.2: Update `core/tests/test_helpers.py` docstrings (document new helpers with usage examples)
-    - [ ] R.4.4.3: Update strategy-testing-methodology.md if new patterns established (new DRY patterns section)
+- [ ] R.4.4: Document new shared utilities and Core app cross-module helpers
+    - [ ] R.4.4.1: Document Core app utilities created during R.4.3 refactoring (core/utils/http.py, validators.py,
+        schemas.py with docstrings and usage examples)
+    - [ ] R.4.4.2: Update Core app README or `init.py` to document new cross-module utilities (purpose, when to use,
+        examples)
+    - [ ] R.4.4.3: Update domain-specific utility modules with docstrings (authentication/utils.py, movie/decorators.py)
+    - [ ] R.4.4.4: Update conftest.py files if new test fixtures created (document with usage examples)
+    - [ ] R.4.4.5: Update `core/tests/test_helpers.py` if test helpers modified (document new helpers with usage examples)
+    - [ ] R.4.4.6: Update strategy-testing-methodology.md if new test patterns established (new DRY patterns section)
+    - [ ] R.4.4.7: Update TECHNICAL-ARCHITECTURE.md and/or other relevant docs if Core app structure significantly changed
+        (document new utilities layer)
 
 ### R.5: Final Certification & Documentation
 

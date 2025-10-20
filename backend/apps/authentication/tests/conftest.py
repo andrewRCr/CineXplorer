@@ -5,6 +5,19 @@ Provides pytest fixtures for authentication testing. This module combines
 throttling infrastructure, OAuth mocks, and convenience wrappers around
 factory functions for common test data needs.
 
+**Test Infrastructure Hierarchy:**
+    1. **Core Shared Helpers**: `core/tests/test_helpers.py`
+       - HTTP helpers (json_post, json_patch, json_put, get_csrf_token)
+       - User creation (create_user)
+       - Auth helpers (login_and_get_tokens, authenticate_client, create_fresh_client)
+       - Types (HTTPStatus, UserParams)
+    2. **Root Fixtures**: `apps/conftest.py`
+       - api_client, user, auth_client
+    3. **Domain Fixtures**: This file (authentication-specific fixtures)
+    4. **Domain Factories**: `fixtures.py` (create_social_app, create_register_payload, etc.)
+
+See: `.arc/reference/strategies/strategy-testing-methodology.md` for full architecture.
+
 Fixture Architecture:
     This conftest.py provides pytest fixtures (dependency-injected, single instance).
     For tests needing multiple instances or custom parameters, use the factory

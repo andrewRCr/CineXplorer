@@ -4,6 +4,18 @@ Root-level pytest configuration for CineXplorer backend tests.
 Provides common fixtures that can be used across all Django apps.
 App-specific fixtures should be defined in their respective conftest.py files.
 
+**Test Infrastructure Hierarchy:**
+    1. **Core Shared Helpers**: `core/tests/test_helpers.py`
+       - HTTP helpers (json_post, json_patch, json_put, get_csrf_token)
+       - User creation (create_user)
+       - Auth helpers (login_and_get_tokens, authenticate_client, create_fresh_client)
+       - Types (HTTPStatus, UserParams)
+    2. **Root Fixtures**: This file (api_client, user, auth_client)
+    3. **Domain Fixtures**: `{app}/tests/conftest.py` (app-specific fixtures)
+    4. **Domain Factories**: `{app}/tests/fixtures.py` (factory functions for test data)
+
+See: `.arc/reference/strategies/strategy-testing-methodology.md` for full architecture.
+
 Fixtures:
     - api_client: Django test client for API requests
     - user: Test user instance with standard credentials

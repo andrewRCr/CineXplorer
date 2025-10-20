@@ -1,7 +1,30 @@
 """Shared test utilities for Django Ninja API testing.
 
+**Location in Test Hierarchy:** Tier 1 - Core Shared Helpers
+
 This module provides reusable helpers for testing Django Ninja endpoints
-with proper JSON encoding and type safety.
+with proper JSON encoding and type safety. Used by ALL Django apps for
+cross-cutting test utilities.
+
+**Test Infrastructure Hierarchy:**
+    1. **Core Shared Helpers**: This file (`core/tests/test_helpers.py`)
+       - HTTP helpers (json_post, json_patch, json_put, get_csrf_token)
+       - User creation (create_user)
+       - Auth helpers (login_and_get_tokens, authenticate_client, create_fresh_client)
+       - Types (HTTPStatus, UserParams)
+    2. **Root Fixtures**: `apps/conftest.py`
+       - api_client, user, auth_client
+    3. **Domain Fixtures**: `{app}/tests/conftest.py` (pytest fixtures per app)
+    4. **Domain Factories**: `{app}/tests/fixtures.py` (factory functions for test data)
+
+See: `.arc/reference/strategies/strategy-testing-methodology.md` for full architecture.
+
+**Exported Helpers:**
+- HTTP: json_post(), json_patch(), json_put()
+- CSRF: get_csrf_token()
+- Auth: login_and_get_tokens(), authenticate_client(), create_fresh_client()
+- User: create_user()
+- Types: HTTPStatus (stdlib enum), UserParams (TypedDict)
 
 HTTP Status Codes
 -----------------
@@ -36,11 +59,13 @@ __all__ = [
     "HTTPStatus",
     "UserParams",
     "authenticate_client",
+    "create_fresh_client",
     "create_user",
     "get_csrf_token",
     "json_patch",
     "json_post",
     "json_put",
+    "login_and_get_tokens",
 ]
 
 
@@ -86,6 +111,88 @@ def authenticate_client(client: Client, username: str, password: str) -> None:
     # Extract access_token from response and set as cookie (hybrid auth pattern)
     response_data: dict[str, str] = json.loads(response.content.decode())
     client.cookies['access_token'] = response_data['access_token']
+
+
+def login_and_get_tokens(
+    client: Client,
+    username: str,
+    password: str
+) -> tuple[str, str]:
+    """
+    Login and return access and refresh tokens (hybrid auth pattern).
+
+    Unlike authenticate_client(), this function returns tokens as strings
+    without modifying the client. Useful for tests that need explicit
+    token manipulation (e.g., testing token expiration).
+
+    Args:
+        client: Django test client instance
+        username: Username for authentication
+        password: Password for authentication
+
+    Returns:
+        Tuple of (access_token, refresh_token) as strings
+
+    Example:
+        from core.tests.test_helpers import create_user, login_and_get_tokens
+
+        user = create_user(username='testuser', password='testpass123')
+        access_token, refresh_token = login_and_get_tokens(
+            api_client, 'testuser', 'testpass123'
+        )
+        # Manual token manipulation for testing
+        response = client.get('/api/profile/', HTTP_AUTHORIZATION=f'Bearer {access_token}')
+
+    Note:
+        The refresh token is ALSO automatically set as HTTP-only cookie by the backend.
+        This function returns it for tests that need to manipulate it manually.
+    """
+    token_url = "/api/token/"
+    auth_payload: dict[str, object] = {"login": username, "password": password}
+    response = json_post(client, token_url, auth_payload)
+
+    response_data: dict[str, str] = json.loads(response.content.decode())
+    return response_data['access_token'], response_data['refresh_token']
+
+
+def create_fresh_client(refresh_token: str | None = None) -> Client:
+    """
+    Create a fresh Django test client without session authentication.
+
+    This is useful for JWT token refresh tests where you need to ensure
+    there's NO Django session fallback, only pure JWT authentication.
+
+    Args:
+        refresh_token: Optional refresh token to set as cookie
+
+    Returns:
+        Fresh Client instance (no session, optional refresh token cookie)
+
+    Example:
+        from core.tests.test_helpers import create_fresh_client
+        from ninja_jwt.tokens import RefreshToken
+
+        # Create tokens manually
+        refresh = RefreshToken.for_user(user)
+        access_token_str = str(refresh.access_token)
+
+        # Create fresh client with refresh token cookie
+        fresh_client = create_fresh_client(refresh_token=str(refresh))
+
+        # Test JWT auth without session fallback
+        response = fresh_client.get(
+            '/api/profile/',
+            HTTP_AUTHORIZATION=f'Bearer {access_token_str}'
+        )
+
+    Note:
+        Regular api_client fixture may have Django session authentication.
+        This function creates a client that ONLY authenticates via JWT.
+    """
+    fresh_client = Client()
+    if refresh_token:
+        fresh_client.cookies["refresh_token"] = refresh_token
+    return fresh_client
 
 
 def get_csrf_token(client: Client) -> str:

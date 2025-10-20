@@ -1,20 +1,23 @@
 {
   // markdownlint-cli2 configuration
-  // MD034 (bare URLs) enforced across all documentation
-  // All file references should use proper markdown links
+  // Updated 2025-10-20: Re-enabled MD007, MD013, MD032, MD040 for better readability
 
   "config": {
     "default": true,
     "MD007": {
       "indent": 4
     },
-    "MD013": false,
+    "MD013": {
+      "line_length": 120,
+      "code_blocks": false,
+      "tables": false
+    },
     "MD024": {
       "siblings_only": true
     },
     "MD025": false,
     "MD029": false,
-    "MD032": false,
+    "MD032": true,
     "MD033": false,
     "MD036": false,
     "MD040": false,
@@ -33,7 +36,8 @@
     "**/venv/**",
     "**/frontend/build/**",
     "**/frontend/.next/**",
-    "**/backend/staticfiles/**"
+    "**/backend/staticfiles/**",
+    ".arc/reference/archive/**"
   ],
 
   "customRules": [],

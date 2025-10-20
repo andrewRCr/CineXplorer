@@ -140,14 +140,24 @@ docker compose -f infrastructure/docker-compose.yml exec frontend npm run type-c
 **⚠️ Run from repo root** - Config file (`.markdownlint-cli2.jsonc`) must be discoverable
 
 ```bash
-# Check
+# Check all files
 npx markdownlint-cli2 "README.md" ".arc/**/*.md"
 
-# Auto-fix
+# Auto-fix all files
 npx markdownlint-cli2 --fix "README.md" ".arc/**/*.md"
+
+# Check single file only (bypass config globs)
+npx markdownlint-cli2 --no-globs "path/to/file.md"
+
+# Auto-fix single file only
+npx markdownlint-cli2 --fix --no-globs "path/to/file.md"
 ```
 
-**Note:** VS Code extension uses separate config (`.markdownlint.jsonc`)
+**Important:**
+
+- Without `--no-globs`, markdownlint-cli2 processes config globs **in addition to** specified files
+- Use `--no-globs` when checking/fixing individual files to avoid processing entire workspace
+- VS Code extension uses separate config (`.markdownlint.jsonc`)
 
 ---
 

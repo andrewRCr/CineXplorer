@@ -15,7 +15,6 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 
-from core.views.health_check import HealthCheckView
 from django.contrib import admin
 from django.urls import include, path
 
@@ -33,7 +32,6 @@ urlpatterns = [
     # These are still needed even in headless mode for OAuth flow completion
     path("accounts/", include("allauth.urls")),
     # Django Ninja API (modern, type-safe endpoints)
-    # All authentication, movie, and user data endpoints provided by Django Ninja
+    # All authentication, movie, core, and user data endpoints provided by Django Ninja
     path("api/", api.urls),
-    path("api/health-check/", HealthCheckView.as_view(), name="health-check"),
 ]

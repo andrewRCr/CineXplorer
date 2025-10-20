@@ -21,10 +21,7 @@ try:
         DB_QUERY_PERFORMANCE,
         LOG_ROTATION_CONFIG,
         VALID_LOG_LEVELS,
-        get_log_file_info,
         get_logging_config,
-        print_database_logging_info,
-        print_log_status,
         validate_log_level,
     )
 except ImportError:
@@ -116,7 +113,7 @@ def test_environment_variables():
 
         # Update config to use temp directory
         test_config = config.copy()
-        for handler_name, handler_config in test_config["handlers"].items():
+        for _handler_name, handler_config in test_config["handlers"].items():
             if "filename" in handler_config:
                 filename = handler_config["filename"]
                 # Replace /backend/logs with temp directory

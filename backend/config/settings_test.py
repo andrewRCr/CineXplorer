@@ -18,12 +18,12 @@ if TYPE_CHECKING:
 class MockEmailService:
     """Mock email service for testing."""
 
-    def send_verification_email(self, user: "CustomUser") -> bool:
+    def send_verification_email(self, user: CustomUser) -> bool:  # type: ignore[name-defined]
         """Mock verification email sending."""
         print(f"MOCK: Would send verification email to {user.email}")
         return True
 
-    def send_welcome_email(self, user: "CustomUser") -> bool:
+    def send_welcome_email(self, user: CustomUser) -> bool:  # type: ignore[name-defined]
         """Mock welcome email sending."""
         print(f"MOCK: Would send welcome email to {user.email}")
         return True

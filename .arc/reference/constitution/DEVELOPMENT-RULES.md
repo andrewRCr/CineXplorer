@@ -2,7 +2,8 @@
 
 **Version:** 2.7 | **Updated:** 2025-10-15 | **Hash:** `h3n5p8r2`
 
-Core development rules and quality standards for CineXplorer. These rules are **non-negotiable** and must be followed by all contributors, including AI assistants.
+Core development rules and quality standards for CineXplorer. These rules are **non-negotiable** and must be followed
+by all contributors, including AI assistants.
 
 **For command patterns and environment context**, see [QUICK-REFERENCE.md](../QUICK-REFERENCE.md).
 
@@ -11,8 +12,10 @@ Core development rules and quality standards for CineXplorer. These rules are **
 **Before starting ANY work, AI assistants must:**
 
 1. **Confirm rules version:** "Acknowledging DEVELOPMENT-RULES v2.7, hash h3n5p8r2"
-2. **Verify environment:** Follow Session Startup Protocol in CURRENT-SESSION.md (check working directory, Docker status, venv availability)
-3. **State understanding:** Confirm commit protocols, test-first protocol, task analysis, quality gates, "Leave It Cleaner" protocol, CURRENT-SESSION control, and feature branch workflow
+2. **Verify environment:** Follow Session Startup Protocol in CURRENT-SESSION.md
+   (check working directory, Docker status, venv availability)
+3. **State understanding:** Confirm commit protocols, test-first protocol, task analysis, quality gates,
+   "Leave It Cleaner" protocol, CURRENT-SESSION control, and feature branch workflow
 4. **Verify context access:** Confirm access to required documents (QUICK-REFERENCE, AGENTS, META-PRD, etc.)
 5. **Check branch status:** Verify current git branch and alignment with intended work
 
@@ -88,7 +91,8 @@ If quality gates fail after sub-task completion:
 
 ### Leave It Cleaner: Pre-existing Issue Protocol
 
-**Principle:** When touching any file, leave it cleaner than you found it. Quality issues discovered during work should be addressed, not ignored.
+**Principle:** When touching any file, leave it cleaner than you found it.
+Quality issues discovered during work should be addressed, not ignored.
 
 **When quality checks reveal pre-existing issues in files you're modifying:**
 
@@ -118,6 +122,7 @@ If quality gates fail after sub-task completion:
    - Never: Leave issues undocumented or unaddressed
 
 **Rationale:**
+
 - Prevents technical debt accumulation
 - Ensures quality gates actually improve codebase health
 - Makes incremental progress on code quality with every change
@@ -180,7 +185,8 @@ Break down a sub-task if it requires:
 
 **If unsure whether test-first applies, default to test-first.** Writing tests after implementation is harder and less effective.
 
-**During task list creation:** Ensure test sub-tasks appear BEFORE implementation sub-tasks for test-first work. This makes the protocol visible during execution.
+**During task list creation:** Ensure test sub-tasks appear BEFORE implementation sub-tasks for test-first work.
+This makes the protocol visible during execution.
 
 ## Testing Requirements
 
@@ -274,7 +280,7 @@ This document provides core rules and standards. See related documentation:
 
 - **[QUICK-REFERENCE.md](../QUICK-REFERENCE.md)** - Environment context, command patterns, and tool usage
 - [Task Processing Workflow](../workflows/3-process-task-loop.md) - Detailed task execution workflow
-- [Atomic Commit Workflow](../workflows/supplemental/atomic-commit.md) - Enhanced commit workflow with comprehensive task context analysis
+- [Atomic Commit Workflow](../workflows/supplemental/atomic-commit.md) - Enhanced commit workflow with task context analysis
 - [AI Agent Reference Card](../ai-instructions/AGENTS.md) - Complete project context for AI
 - [Current Session](.arc/active/CURRENT-SESSION.md) - Session handoff template (untracked)
 - [Technical Architecture](TECHNICAL-ARCHITECTURE.md) - Testing methodology details

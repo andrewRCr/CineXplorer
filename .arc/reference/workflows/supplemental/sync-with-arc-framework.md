@@ -126,7 +126,8 @@ and naming conventions.
 
 **2.1 Identify Framework Changes**
 
-**CRITICAL**: Always verify timestamps, not just content differences. AI agents can misidentify which version is newer based on content analysis alone.
+**CRITICAL**: Always verify timestamps, not just content differences.
+AI agents can misidentify which version is newer based on content analysis alone.
 
 Compare framework repo state with project state:
 
@@ -486,7 +487,8 @@ git show --stat
 git log -1 --format='%ai' -- path/to/file.md
 ```
 
-**Real scenario**: Agent concluded CineXplorer had "more refined" workflows based on content depth, but framework versions were actually 4-6 days newer with consolidated improvements.
+**Real scenario**: Agent concluded CineXplorer had "more refined" workflows based on content depth, but framework
+versions were actually 4-6 days newer with consolidated improvements.
 
 **Rule**: Timestamp wins. Newer = source of truth.
 

@@ -20,8 +20,10 @@ The backend is a REST API built with Django and Django REST Framework (DRF).
 - **Framework**: Django `5.2` with Django REST Framework.
 - **Language**: Python `3.x`.
 - **Database**: PostgreSQL, configured via environment variables.
-- **Authentication**: Authentication is handled by `rest_framework_simplejwt` using JSON Web Tokens. A custom `JWTCookieAuthentication` backend is implemented to manage tokens securely in HTTP-only cookies.
-- **API Documentation**: `drf-spectacular` is used to automatically generate an OpenAPI 3 schema and Swagger UI, available at `/api/docs/`.
+- **Authentication**: Authentication is handled by `rest_framework_simplejwt` using JSON Web Tokens.
+  A custom `JWTCookieAuthentication` backend is implemented to manage tokens securely in HTTP-only cookies.
+- **API Documentation**: `drf-spectacular` is used to automatically generate an OpenAPI 3 schema and Swagger UI.
+  The documentation is available at `/api/docs/`.
 - **Code Style**: Linting is enforced using `ruff` (configured via `backend/pyproject.toml`).
 - **Type Checking**: Pyright-only approach with django-types for Django ORM support
     - **Pyright**: Primary type checker with Python 3.13 support, configured via `backend/pyrightconfig.json`
@@ -31,14 +33,19 @@ The backend is a REST API built with Django and Django REST Framework (DRF).
         - `allauth/` - **Required** (no official stubs) - django-allauth models (EmailAddress, EmailConfirmation)
         - `ninja_jwt/` - **Required** (incomplete official stubs) - JWT token types with zero Any usage
         - `environ/` - **Required** (no official stubs) - django-environ Env class
-    - **Stub Maintenance**: Each stub documents version sync with django-types, upgrade procedures, and supplement vs required status
+    - **Stub Maintenance**: Each stub documents version sync with django-types and upgrade procedures.
+      The documentation also clarifies supplement vs required status.
     - **Type Safety Goal**: Zero errors with documented acceptable information-level warnings (Django ORM limitations)
     - **See**: [Type Safety Strategy](../strategies/strategy-type-safety.md) for complete Pyright-only approach and patterns
 - **Key Libraries**:
     - `django-cors-headers` for managing Cross-Origin Resource Sharing (CORS).
     - `django-debug-toolbar` for debugging during development.
     - `environ` for managing environment variables.
-- **Directory Structure**: The backend code is organized into discrete Django `apps` within the `backend/apps/` directory with clear domain boundaries. Note that `accounts` holds persistent user data/models (User, EmailVerificationToken), while `authentication` contains stateless auth flows (JWT handling, serializers, views, middleware for login/verification):
+- **Directory Structure**: The backend code is organized into discrete Django `apps` within the
+  `backend/apps/` directory with clear domain boundaries.
+  Note that `accounts` holds persistent user data/models (User, EmailVerificationToken),
+  while `authentication` contains stateless auth flows (JWT handling, serializers, views,
+  middleware for login/verification):
     - `accounts`: User authentication models (`User`, `EmailVerificationToken`)
     - `authentication`: Authentication processes (JWT, serializers, views, middleware)
     - `core`: Core business models (`Movie` and shared utilities)
@@ -53,11 +60,20 @@ The frontend is a single-page application (SPA) built with React.
 - **Language**: TypeScript `5.x`.
 - **UI Components**: The UI is built using **Chakra UI v3**. This provides a rich set of accessible and composable components.
 - **Routing**: `react-router-dom v7` is used for all client-side routing.
-- **State Management**: Global state, such as the user's authentication status, is managed using React's built-in Context API (`AuthContext`). Component-level state is managed with standard React hooks (`useState`, `useReducer`). A more complex, unified state management system is in place for the movie filter controls, handling shared state between default, minimal, and advanced filter UIs.
-- **Data Fetching**: API communication is handled by a service layer (`src/services/`) that uses `axios`. Custom hooks like `useApiRequest` provide a consistent, reusable interface for components to fetch and mutate data.
-- **Advanced Filtering Logic**: The filtering system is a hybrid model. While most filters map to TMDB API queries, it also applies custom client-side filtering to correct data inconsistencies from the API (e.g., movies with incorrect release dates). To prevent empty spaces in the UI from these removals, the application dynamically fills gaps using a pre-fetched buffer of results from subsequent pages.
+- **State Management**: Global state, such as the user's authentication status, is managed using React's built-in
+  Context API (`AuthContext`). Component-level state is managed with standard React hooks (`useState`, `useReducer`).
+  A more complex, unified state management system is in place for the movie filter controls, handling shared state
+  between default, minimal, and advanced filter UIs.
+- **Data Fetching**: API communication is handled by a service layer (`src/services/`) that uses `axios`.
+  Custom hooks like `useApiRequest` provide a consistent, reusable interface for components to fetch
+  and mutate data.
+- **Advanced Filtering Logic**: The filtering system is a hybrid model. While most filters map to TMDB API
+  queries, it also applies custom client-side filtering to correct data inconsistencies from the API
+  (e.g., movies with incorrect release dates). To prevent empty spaces in the UI from these removals,
+  the application dynamically fills gaps using a pre-fetched buffer of results from subsequent pages.
 - **Forms**: `formik` is used to manage form state and validation.
-- **Testing**: `vitest` is the testing framework, used for unit and component testing. `react-testing-library` is used for rendering components in tests.
+- **Testing**: `vitest` is the testing framework, used for unit and component testing.
+  `react-testing-library` is used for rendering components in tests.
 - **Directory Structure**: The `frontend/src/` directory is organized by feature and function:
     - `pages/`: Top-level components for each route.
     - `components/`: Reusable UI components.
@@ -67,19 +83,30 @@ The frontend is a single-page application (SPA) built with React.
 
 ## 4. Shared Code
 
-To ensure type safety and consistency between the frontend and backend, a `shared/` directory is used. This directory contains TypeScript files with type definitions (`api-types.ts`) and shared constants (`error-codes.ts`) that can be used by both the frontend and, where applicable, the backend, facilitating smoother integration.
+To ensure type safety and consistency between the frontend and backend, a `shared/` directory is used.
+This directory contains TypeScript files with type definitions (`api-types.ts`) and shared constants
+(`error-codes.ts`). These files can be used by both the frontend and, where applicable, the backend,
+facilitating smoother integration.
 
 ## 5. Infrastructure
 
 The entire application is designed to be run and deployed using containers.
 
-- **Containerization**: Docker and Docker Compose are used to define and run the multi-container application (`backend`, `frontend`, `postgres`, `redis`, `caddy`). Separate `docker-compose.*.yml` files exist for different environments (dev, CI, prod).
+- **Containerization**: Docker and Docker Compose are used to define and run the multi-container application
+  (`backend`, `frontend`, `postgres`, `redis`, `caddy`). Separate `docker-compose.*.yml` files exist for
+  different environments (dev, CI, prod).
 - **Cache & Task Queue**: **Redis 7.4** serves dual purposes using separate databases:
     - **DB 0**: Django cache backend for rate limiting (Django Ninja throttling - current)
     - **DB 1**: Future Celery broker for background task processing (Backend Modernization PRD - planned)
-- **Web Server / Reverse Proxy**: **Caddy** is used as the reverse proxy. It handles routing requests to the appropriate service (e.g., `/api/*` to the backend, all other requests to the frontend) and provides automatic HTTPS for secure connections.
-- **CI/CD**: Continuous integration is set up using **GitHub Actions**. The workflow, defined in `.github/workflows/ci.yml`, runs linters and tests on every push and pull request to ensure code quality.
-- **Development Environment (WSL2)**: The development environment runs on WSL2 with Docker. Container user UID/GID (1001) matches the host user for proper file permissions on mounted volumes. Configuration is managed via `infrastructure/.env` which sets `USER_UID` and `USER_GID` build arguments. A host Python virtual environment (`.venv-backend/`) provides faster linting/type checking alternatives to Docker commands.
+- **Web Server / Reverse Proxy**: **Caddy** is used as the reverse proxy. It handles routing requests to the
+  appropriate service (e.g., `/api/*` to the backend, all other requests to the frontend) and provides
+  automatic HTTPS for secure connections.
+- **CI/CD**: Continuous integration is set up using **GitHub Actions**. The workflow, defined in
+  `.github/workflows/ci.yml`, runs linters and tests on every push and pull request to ensure code quality.
+- **Development Environment (WSL2)**: The development environment runs on WSL2 with Docker.
+  Container user UID/GID (1001) matches the host user for proper file permissions on mounted volumes.
+  Configuration is managed via `infrastructure/.env` which sets `USER_UID` and `USER_GID` build arguments.
+  A host Python virtual environment (`.venv-backend/`) provides faster linting/type checking alternatives to Docker commands.
 
 ## 6. Testing Infrastructure
 

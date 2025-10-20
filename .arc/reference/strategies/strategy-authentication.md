@@ -6,7 +6,9 @@
 
 ## Purpose
 
-Authoritative guidance for authentication and authorization in CineXplorer. Documents the dual-pattern authentication architecture (JWT for email/password, session cookies for OAuth), security model, implementation patterns, and testing approach.
+Authoritative guidance for authentication and authorization in CineXplorer. Documents the dual-pattern
+authentication architecture (JWT for email/password, session cookies for OAuth), security model,
+implementation patterns, and testing approach.
 
 ## Table of Contents
 
@@ -35,19 +37,23 @@ Authoritative guidance for authentication and authorization in CineXplorer. Docu
 ### Why Two Patterns?
 
 **Email/Password (JWT Tokens)**:
+
 - ✅ Custom Django Ninja endpoint (full control over response format)
 - ✅ Hybrid authentication (localStorage for instant checks + HTTP-only cookie for security)
 - ✅ Explicit token lifecycle management
 - ✅ Suitable for programmatic access (future API clients)
 
 **OAuth (Session Cookies)**:
+
 - ✅ Django-allauth headless mode (battle-tested, maintained)
 - ✅ HTTP-only session cookies (more secure than localStorage tokens)
 - ✅ Simpler implementation (no client-side token management)
 - ✅ Standard OAuth 2.0 flow (works across all providers)
 - ⚠️ Backend controls authentication entirely (cannot customize token format without major hackery)
 
-**Consistency Note**: While using two patterns may seem inconsistent, it's the most pragmatic approach. Attempting to force JWT tokens for OAuth would require overriding django-allauth's callback views, going against its design and making upgrades difficult.
+**Consistency Note**: While using two patterns may seem inconsistent, it's the most pragmatic approach.
+Attempting to force JWT tokens for OAuth would require overriding django-allauth's callback views,
+going against its design and making upgrades difficult.
 
 ---
 
@@ -105,6 +111,7 @@ Authoritative guidance for authentication and authorization in CineXplorer. Docu
 | **CSRF Token** | Cookie (readable) | Session | JavaScript can read | CSRF protection for unsafe methods |
 
 **Why Hybrid Storage?**
+
 1. **Access token in sessionStorage**: Frontend can instantly check authentication without network call
 2. **Short lifetime (5 min)**: XSS attacks only steal 5-minute token, not 14-day refresh token
 3. **Refresh token in HTTP-only cookie**: Long-lived token is XSS-proof, auto-sent with requests
@@ -198,9 +205,11 @@ Django-allauth headless mode has two distinct client types:
 - **Browser mode** (`/_allauth/browser/v1/`) - Uses HTTP-only session cookies (what we use)
 - **App mode** (`/_allauth/app/v1/`) - Uses `X-Session-Token` header (for mobile apps)
 
-The browser mode intentionally uses session cookies for security. While django-allauth supports a `HEADLESS_TOKEN_STRATEGY` setting, it's **only used for app mode**, not browser OAuth flows.
+The browser mode intentionally uses session cookies for security. While django-allauth supports a
+`HEADLESS_TOKEN_STRATEGY` setting, it's **only used for app mode**, not browser OAuth flows.
 
 **Attempting to force JWT tokens for browser OAuth would require**:
+
 - Overriding django-allauth's callback view completely
 - Manually implementing OAuth token exchange
 - Fighting against the framework's design
@@ -239,6 +248,7 @@ if (config.method && unsafeMethods.includes(config.method.toLowerCase())) {
 ```
 
 **OAuth CSRF Protection**:
+
 - OAuth uses **OAuth 2.0 state parameter** (more secure than cookies)
 - State is random, session-bound, validated on callback
 - CSRF token is optional but included for defense-in-depth
@@ -281,15 +291,18 @@ const apiClient = axios.create({
 ### XSS Protection
 
 **JWT Pattern**:
+
 - Access token in sessionStorage (vulnerable to XSS but short-lived: 5 minutes)
 - Refresh token in HTTP-only cookie (XSS-proof, 14-day lifetime)
 - **Trade-off**: Convenience (instant auth checks) vs absolute security
 
 **OAuth Pattern**:
+
 - Session cookie is HTTP-only (XSS-proof, no JavaScript access)
 - **Better XSS protection** than JWT pattern
 
 **General XSS Mitigation**:
+
 1. Content Security Policy (CSP) headers
 2. Input sanitization on backend
 3. React automatically escapes JSX
@@ -298,11 +311,13 @@ const apiClient = axios.create({
 ### User Isolation
 
 **Database level**:
+
 - All user-specific data queries filtered by `request.user`
 - Django ORM enforces foreign key relationships
 - Backend tests validate isolation (see Task 8.4 - cross-pattern user isolation test)
 
 **API level**:
+
 - Django Ninja authentication required on protected endpoints
 - `auth=JWTAuth` or `auth=SessionAuth` decorators
 - Automatic 401 response if unauthenticated
@@ -401,7 +416,8 @@ urlpatterns = [
 ]
 ```
 
-**Critical**: Both `_allauth/` and `accounts/` URLs must be present. With `HEADLESS_ONLY = True`, the traditional URLs only register OAuth callback views (login/signup HTML views are disabled).
+**Critical**: Both `_allauth/` and `accounts/` URLs must be present. With `HEADLESS_ONLY = True`, the traditional
+URLs only register OAuth callback views (login/signup HTML views are disabled).
 
 ### Frontend: React + Axios
 
@@ -734,7 +750,8 @@ const initializeOAuthLogin = async (provider: string) => {
 3. **Synchronous State Initialization** - Initialize OAuth state from sessionStorage on component mount (prevents form flash)
 4. **OAuth-Aware Loading Layout** - Shows provider-specific spinner during callback (prevents visual jump)
 
-**Rationale**: Professional UX requires consistent visual feedback regardless of OAuth speed. Fast OAuth feels broken without minimum display time.
+**Rationale**: Professional UX requires consistent visual feedback regardless of OAuth speed.
+Fast OAuth feels broken without minimum display time.
 
 ### Token Utilities
 
@@ -869,7 +886,8 @@ def authenticate_client(client: Client, user: AbstractBaseUser) -> None:
     client.cookies["refresh_token"] = str(refresh)
 ```
 
-**Rationale for DRY Helper**: Hybrid auth pattern requires both cookies set. Centralizing this logic in a shared helper ensures consistency across all test fixtures and reduces duplication.
+**Rationale for DRY Helper**: Hybrid auth pattern requires both cookies set. Centralizing this logic in a shared
+helper ensures consistency across all test fixtures and reduces duplication.
 
 ### Manual E2E Validation
 
@@ -909,6 +927,7 @@ def authenticate_client(client: Client, user: AbstractBaseUser) -> None:
    - Verify error handling code exists (try/catch blocks in place)
 
 **Deferred to API Layer P2**:
+
 - Comprehensive edge case testing
 - Multi-tab coordination
 - Full error recovery scenarios
@@ -917,6 +936,7 @@ def authenticate_client(client: Client, user: AbstractBaseUser) -> None:
 ### Future Testing Improvements
 
 **Documented in** `.arc/upcoming/notes/notes-frontend-enhancements.md`:
+
 - Toast notification system (user feedback for auth errors)
 - Error logging/monitoring integration
 - Multi-tab session synchronization
@@ -996,6 +1016,7 @@ SESSION_COOKIE_SAMESITE = "Lax"  # NOT "Strict"
 **Cause**: OAuth provider configured with wrong redirect URI
 
 **Solution**: Verify OAuth app settings:
+
 - Google: `https://yourdomain.com/accounts/google/login/callback/`
 - GitHub: `https://yourdomain.com/accounts/github/login/callback/`
 
@@ -1025,6 +1046,7 @@ With `HEADLESS_ONLY = True`, traditional URLs only register OAuth callbacks (log
 ### OAuth Provider Configuration
 
 **Google Cloud Console**:
+
 1. Navigate to APIs & Services → Credentials
 2. Select OAuth 2.0 Client ID
 3. Authorized redirect URIs:
@@ -1032,6 +1054,7 @@ With `HEADLESS_ONLY = True`, traditional URLs only register OAuth callbacks (log
    - Production: `https://yourdomain.com/accounts/google/login/callback/`
 
 **GitHub OAuth App**:
+
 1. Navigate to Settings → Developer settings → OAuth Apps
 2. Select your app
 3. Authorization callback URL:
@@ -1039,6 +1062,7 @@ With `HEADLESS_ONLY = True`, traditional URLs only register OAuth callbacks (log
    - Production: `https://yourdomain.com/accounts/github/login/callback/`
 
 **Testing OAuth Changes**:
+
 1. Update provider configuration
 2. Test OAuth flow in browser (click "Continue with Google/GitHub")
 3. Verify callback succeeds (redirects to frontend, session established)
@@ -1059,6 +1083,7 @@ SIMPLE_JWT = {
 ```
 
 **Adjusting Lifetimes**:
+
 - **Access token**: Balance security (shorter = better) vs UX (longer = fewer refreshes)
 - **Refresh token**: 14 days is standard for "Remember Me" functionality
 - **Production**: Consider shorter lifetimes for high-security applications
@@ -1118,11 +1143,13 @@ Run before production deployment:
 
 - [DEVELOPMENT-RULES](../constitution/DEVELOPMENT-RULES.md) - Development standards and quality gates
 - [TECHNICAL-ARCHITECTURE](../constitution/TECHNICAL-ARCHITECTURE.md) - System architecture overview
-- [Research Report](../../active/incidental/research-django-allauth-headless-oauth.md) - Comprehensive OAuth research (1,200+ lines)
-- [OAuth Incidental Task List](../../active/incidental/tasks-incidental-oauth-headless-migration.md) - Complete implementation history
+- [Research Report](../../active/incidental/research-django-allauth-headless-oauth.md) - Comprehensive OAuth research
+- [OAuth Incidental Task List](../../active/incidental/tasks-incidental-oauth-headless-migration.md) - Implementation history
 - [django-allauth Headless Documentation](https://docs.allauth.org/en/latest/headless/) - Official docs
-- [React SPA Example](https://codeberg.org/allauth/django-allauth/src/branch/main/examples/react-spa) - Official working implementation
+- [React SPA Example](https://codeberg.org/allauth/django-allauth/src/branch/main/examples/react-spa) - Official implementation
 
 ---
 
-**Document Status**: This strategy document is the authoritative reference for all authentication-related decisions, implementations, and troubleshooting in CineXplorer. Update this document when authentication patterns change or new providers are added.
+**Document Status**: This strategy document is the authoritative reference for all authentication-related
+decisions, implementations, and troubleshooting in CineXplorer. Update this document when authentication
+patterns change or new providers are added.

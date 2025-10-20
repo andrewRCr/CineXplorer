@@ -1,6 +1,7 @@
 # Atomic Commit Workflow
 
-**Note**: This workflow is for AI execution when explicitly instructed by the user. AI should NEVER initiate this workflow without user approval. See DEVELOPMENT-RULES.md for complete protocols.
+**Note**: This workflow is for AI execution when explicitly instructed by the user.
+AI should NEVER initiate this workflow without user approval.  See DEVELOPMENT-RULES.md for complete protocols.
 
 Break changes into logical, atomic commits with clear messages.
 
@@ -16,7 +17,8 @@ steps:
 
 - name: Comprehensive Task Context Analysis
   description: |
-  **MANDATORY**: Before committing, perform comprehensive analysis of ALL uncommitted changes in the context of current task documentation:
+  **MANDATORY**: Before committing, perform comprehensive analysis of ALL uncommitted changes
+  in the context of current task documentation:
 
   **Step 1: Identify All Changes**
     - Run `git status` and `git --no-pager diff --name-only` to see all modified files
@@ -24,9 +26,11 @@ steps:
     - Look for task documentation files that may have been updated
 
   **Step 2: Find Relevant Task Documentation**
-    - Check [active tasks](.arc/active/) and [upcoming tasks](.arc/upcoming/tasks/) for active task lists related to current work
+    - Check [active tasks](.arc/active/) for active task lists related to current work
+    - Also check [upcoming tasks](.arc/upcoming/tasks/) for additional relevant tasks
     - Look for task files that reference modified files or related functionality
-    - Use `find .arc -name "*.md" -exec grep -l "user-auth" {} \;` to find related tasks (replace "user-auth" with your actual feature name, e.g., "payment-integration", "movie-api", etc.)
+    - Use `find .arc -name "*.md" -exec grep -l "user-auth" {} \;` to find related tasks
+      (replace "user-auth" with your actual feature name, e.g., "payment-integration", "movie-api", etc.)
 
   **Step 3: Analyze Task Progress Context**
     - Compare actual work completed against task documentation
@@ -177,4 +181,5 @@ Task Documentation Consistency:
 - **Analyze the full scope** of uncommitted changes, not just obvious files
 - Follow [Task Processing Workflow](../3-process-task-loop.md) completion protocol
 
-**Key Principle**: Commit messages should accurately reflect WHERE the project stands after the commit, not just what was changed. This includes identifying remaining work and providing proper milestone context.
+**Key Principle**: Commit messages should accurately reflect WHERE the project stands after the commit,
+not just what was changed. This includes identifying remaining work and providing proper milestone context.

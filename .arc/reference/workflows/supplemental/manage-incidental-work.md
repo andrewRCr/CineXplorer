@@ -8,9 +8,11 @@
 
 ## Overview
 
-**Incidental work** is quality improvements, refactoring, or tech debt discovered during feature development that should be fixed immediately rather than deferred. This workflow provides a complete lifecycle management system.
+**Incidental work** is quality improvements, refactoring, or tech debt discovered during feature development
+that should be fixed immediately rather than deferred. This workflow provides a complete lifecycle management system.
 
-**Key Principle**: Incidental work is **reactive** (discovered during implementation) vs **proactive** (planned feature work with PRDs).
+**Key Principle**: Incidental work is **reactive** (discovered during implementation) vs **proactive**
+(planned feature work with PRDs).
 
 ---
 
@@ -36,11 +38,13 @@
 ### Examples
 
 **Create incidental task list:**
+
 - Type safety tooling incompatibility discovered (affects entire backend)
 - Security vulnerability in authentication flow (critical, multi-step fix)
 - Broken test infrastructure affecting reliability (cross-cutting, urgent)
 
 **Fix inline (no task list):**
+
 - Missing type annotation on single function
 - Outdated comment in one file
 - Linting violation in modified file
@@ -65,6 +69,7 @@ Before creating incidental task list:
 **File location**: `.arc/active/incidental/tasks-incidental-{brief-slug}.md`
 
 **Naming convention**: `tasks-incidental-{brief-descriptive-slug}.md`
+
 - Example: `tasks-incidental-backend-type-safety.md`
 - Example: `tasks-incidental-security-updates.md`
 - Example: `tasks-incidental-oauth-headless-migration.md`
@@ -97,6 +102,7 @@ Related to: .arc/active/feature/tasks-{main-feature}.md
 ```
 
 **Why capture this commit early**:
+
 - ✅ Git log shows when/why work was paused
 - ✅ Session handoffs have full context
 - ✅ Audit trail of priority shifts
@@ -129,6 +135,7 @@ Related to: .arc/active/feature/tasks-{main-feature}.md
 **File location**: `.arc/active/incidental/notes-incidental-{same-slug}.md`
 
 **Notes are gitignored** - use for:
+
 - Research findings
 - Error diagnostics
 - Exploratory work
@@ -147,7 +154,6 @@ Incidental work follows **same rules** as feature work:
 3. **Wait for explicit user approval** before starting next sub-task
 4. **Run incremental quality checks** after each sub-task
 5. **Update task list immediately** - mark `[x]` after completion
-6. **Update "Relevant Files" section** when files created/modified
 
 See [3-process-task-loop.md](../3-process-task-loop.md) for detailed workflow.
 
@@ -205,7 +211,6 @@ Related to: .arc/active/incidental/tasks-incidental-security-updates.md
    {type}({branch}): {description}
 
    - Mark task {X.Y} complete
-   - Update relevant files section
 
    Related to: .arc/active/incidental/tasks-incidental-{slug}.md
    ```
@@ -213,6 +218,7 @@ Related to: .arc/active/incidental/tasks-incidental-security-updates.md
 4. Only run `git commit` after the user gives an explicit “yes”.
 
 **Why commit task list with code**:
+
 - ✅ Git history shows task progress with implementation
 - ✅ Rollback captures both code and documentation state
 - ✅ Session handoffs show exact progress point
@@ -293,6 +299,7 @@ git mv .arc/active/incidental/tasks-incidental-{slug}.md \
 **IMPORTANT**: AI suggests commit, **NEVER initiates** without user approval.
 
 **Commit includes**:
+
 - Archived task list (moved to archive)
 - Updated PROJECT-STATUS.md (if modified)
 - Updated strategy documents (if modified)
@@ -318,6 +325,7 @@ Related to: .arc/active/feature/tasks-{main-feature}.md
 ```
 
 **AI workflow**:
+
 1. Stage all relevant files (`git add …`), then show `git status`
 2. Present the proposed commit message/template above
 3. **Wait for user approval** before running `git commit`
@@ -328,6 +336,7 @@ Related to: .arc/active/feature/tasks-{main-feature}.md
 **IMPORTANT**: Update CURRENT-SESSION.md **AFTER** commit, not before.
 
 **Why this order**:
+
 - ✅ All tracked documentation changes included in commit
 - ✅ CURRENT-SESSION.md doesn't contain stale commit references
 - ✅ Session state reflects post-commit reality
@@ -390,15 +399,6 @@ Return to paused feature work and continue normal workflow.
 - [ ] 3. {Task 3 with verification step}
   - [ ] 3.1 {Sub-subtask}
 
-## Relevant Files
-
-**{Category}:**
-- `{file-path}`: {What changed and why}
-- `{file-path}`: {What changed and why}
-
-**{Category}:**
-- `{file-path}`: {What changed and why}
-
 ## Implementation Notes
 
 ### {Decision/Pattern Name}
@@ -445,6 +445,7 @@ Return to paused feature work and continue normal workflow.
 4. **Track in CURRENT-SESSION**: Show full dependency chain
 
 **Example**:
+
 - Main feature: API Layer Modernization
     - Incidental: Security Updates (discovered during feature work)
         - Nested Incidental: Type Safety Tooling Fix (discovered during security updates)
@@ -478,6 +479,7 @@ Return to paused feature work and continue normal workflow.
 ```
 
 **Key Points**:
+
 - ✅ Only `CURRENT-SESSION.md` remains in `.arc/active/` root
 - ✅ Task lists tracked by git (context visibility)
 - ✅ Notes files gitignored (scratch paper)

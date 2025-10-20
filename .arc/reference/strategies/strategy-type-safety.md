@@ -2,11 +2,16 @@
 
 **Version:** 2.1 | **Updated:** 2025-10-10 | **Status:** Active
 
-**Version history (latest first):** 2.1 – Ruff ANN401 enforcement + validation boundaries · 2.0 – Pyright-only migration · 1.1 – Ignore guidelines · 1.0 – Initial strategy
+**Version history (latest first):**
+2.1 – Ruff ANN401 enforcement + validation boundaries
+2.0 – Pyright-only migration
+1.1 – Ignore guidelines
+1.0 – Initial strategy
 
 ## Purpose
 
-Authoritative guidance for comprehensive type safety in CineXplorer's Django + Pydantic stack. Use when implementing models, schemas, or resolving type checking issues.
+Authoritative guidance for comprehensive type safety in CineXplorer's Django + Pydantic stack.
+Use when implementing models, schemas, or resolving type checking issues.
 
 ## Table of Contents
 
@@ -22,7 +27,8 @@ Authoritative guidance for comprehensive type safety in CineXplorer's Django + P
 
 ## The Challenge
 
-Django generates model fields dynamically at runtime using metaclass magic. Type checkers analyze statically, creating a mismatch:
+Django generates model fields dynamically at runtime using metaclass magic.
+Type checkers analyze statically, creating a mismatch:
 
 ```python path=null start=null
 class Movie(models.Model):
@@ -74,16 +80,19 @@ class Movie(models.Model):
 ### Primary Solution: Custom .pyi Stub Files
 
 **Benefits:**
+
 - 100% accurate type inference without modifying source code
 - Centralized declarations vs scattered `pyright: ignore` comments
 - Excellent IDE autocomplete support
 
 **Trade-offs:**
+
 - ✅ **Pros**: Clean code, eliminates repetitive `pyright: ignore`
 - ⚠️ **Cons**: Manual maintenance, can drift, ~250 LOC
 - 📊 **Use when**: Library is stable and changes infrequently
 
 **Our stub files** (`backend/stubs/`):
+
 1. **django/contrib/auth/** - Supplements django-types (explicit `id` field on AbstractUser)
 2. **allauth/** - Required (no official stubs)
 3. **ninja_jwt/** - Required (incomplete official typing)
@@ -166,6 +175,7 @@ class UserMovieDataUpdateSchema(Schema):
 ### Pyright with django-types
 
 **Why Pyright-only:**
+
 1. ✅ **Python 3.13 Support** - Full support vs limited MyPy support
 2. ✅ **Performance** - 3-5x faster than MyPy
 3. ✅ **Consistency** - Same checker locally (VSCode/Pylance) and CI
@@ -286,6 +296,7 @@ movie.user_movie_data.user_rating  # reportAttributeAccessIssue
 **PROHIBITED** except for external API boundaries.
 
 **Use instead:**
+
 - `object` for unknown data
 - `dict[str, object]` for generic dictionaries
 - Union types: `str | int | None`
@@ -366,6 +377,7 @@ def fetch_movie(movie_id: int) -> TMDBMovieResponse:
 3. **Documented edge cases** with justification
 
 **NOT acceptable:**
+
 - ❌ External library limitations (create stubs instead)
 - ❌ Avoiding proper typing work
 - ❌ Silencing real errors
@@ -397,6 +409,7 @@ class EmailAddress(models.Model):
 ```
 
 **Requirements:**
+
 - ✅ Specify error code: `# pyright: ignore[reportErrorName]`
 - ✅ Add explanation if not obvious
 - ✅ Line-level scope only
@@ -405,12 +418,14 @@ class EmailAddress(models.Model):
 ### Best Practices
 
 **Always:**
+
 - ✅ Specific codes: `# pyright: ignore[reportAttributeAccessIssue]`
 - ✅ Inline explanation for non-obvious cases
 - ✅ Line-level scope only
 - ✅ Verify error legitimacy
 
 **Never:**
+
 - ❌ Generic ignores: `# pyright: ignore`
 - ❌ Silencing without investigation
 - ❌ Avoiding proper typing work
@@ -436,18 +451,21 @@ def create_entry(request: HttpRequest) -> UserMovieDataModelSchema:
 ### Stub Maintenance
 
 **django-types upgrades:**
+
 1. Check release notes
 2. Run `npx pyright backend/apps/ backend/config/ --project backend`
 3. Update stub headers with new version
 4. Run backend test suite
 
 **Library upgrades:**
+
 1. Check API changes in release notes
 2. Update stub signatures if needed
 3. Update "Last verified" date
 4. Run backend test suite
 
 **Model change checklist:**
+
 1. Update model + related schema/stub (if applicable)
 2. Run `npx pyright backend/apps/ backend/config/ --project backend`
 3. Run backend tests to confirm runtime contract
@@ -476,6 +494,7 @@ python backend/scripts/type_check.py
 ## Domain Layer Alternative
 
 Use domain layer (separate dataclasses from ORM) when:
+
 - Business logic exceeds simple CRUD
 - Framework-independent testing needed
 - Complex algorithms require pure Python models

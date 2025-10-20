@@ -4,7 +4,8 @@
 
 ## Project Overview
 
-CineXplorer is a full-stack movie discovery and watchlist management application, serving as a solo showcase project demonstrating disciplined software engineering practices, comprehensive testing, and production-quality documentation.
+CineXplorer is a full-stack movie discovery and watchlist management application, serving as a solo showcase project
+demonstrating disciplined software engineering practices, comprehensive testing, and production-quality documentation.
 
 **Project Type**: Solo full-stack showcase
 **Primary Goal**: Demonstrate professional development practices with modern technologies

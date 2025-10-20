@@ -5,6 +5,7 @@
 ## Purpose
 
 Testing standards and patterns for CineXplorer's full-stack infrastructure (Django + React):
+
 - **DRY principle** - Eliminate duplicate test utilities
 - **Type safety** - Consistent helper signatures (Python + TypeScript)
 - **Database compatibility** - `--keepdb` support
@@ -30,11 +31,13 @@ Testing standards and patterns for CineXplorer's full-stack infrastructure (Djan
 ## Common Principles
 
 **Three-tier hierarchy** for test utilities (backend + frontend):
+
 1. **Core Shared Helpers** - Cross-cutting utilities (HTTP, models, assertions)
 2. **Domain/Feature Fixtures** - Domain-specific factories and setup
 3. **Inline Helpers** - Test-specific one-offs
 
 **Locations:**
+
 - Backend: `backend/apps/{app}/tests/`
 - Frontend: `frontend/src/{feature}/__tests__/`
 
@@ -43,11 +46,13 @@ Testing standards and patterns for CineXplorer's full-stack infrastructure (Djan
 ### Three-Layer Testing
 
 **Backend:**
+
 1. **API Integration Tests** - Full request/response via Django test client
 2. **Service Layer Tests** - Business logic isolated from HTTP/ORM
 3. **Specialized Tests** - Edge cases, mocks, performance
 
 **Frontend:**
+
 1. **Component Tests** - User interactions with React Testing Library
 2. **Integration Tests** - Feature flows with mocked APIs
 3. **E2E Tests** - Critical paths with Playwright
@@ -55,11 +60,13 @@ Testing standards and patterns for CineXplorer's full-stack infrastructure (Djan
 ### Coverage Targets
 
 **Backend:**
+
 - Minimum: 70% API layer coverage
 - Critical paths: 90%+ (auth, payments, data integrity)
 - Focus: Integration over unit tests
 
 **Frontend:**
+
 - Minimum: 70% component/feature coverage
 - Critical paths: 90%+ (auth, checkout, flows)
 - Focus: User behavior over implementation
@@ -211,6 +218,7 @@ def test_user_email_normalized() -> None:
 **Purpose:** Cross-cutting utilities for multiple domains
 
 **Contents:**
+
 - HTTP helpers (`json_post`, `json_patch`, `json_put`)
 - CSRF helper (`get_csrf_token`)
 - Status codes (re-exported `HTTPStatus`)
@@ -237,6 +245,7 @@ response = client.post('/api/mutations/', data, HTTP_X_CSRFTOKEN=csrf_token)
 **Purpose:** Domain-specific factories and complex setup
 
 **Contents:**
+
 - Domain model factories with rich defaults
 - Complex setup (OAuth, TMDB mocks, etc.)
 - Payload creation helpers
@@ -265,6 +274,7 @@ create_user_movie_data(user, movie, user_watched=True, user_rating=5)
 **Purpose:** Test-specific utilities that don't generalize
 
 **Use when:**
+
 - Used in single test file only
 - Testing edge cases
 - Too specific to extract
@@ -352,6 +362,7 @@ __all__ = ["HTTPStatus", "create_user", "json_post", "json_patch", "json_put"]
 ### Current State
 
 **pytest Migration Complete (2025-10-13):**
+
 - ✅ 103/103 tests converted to pytest (100% migration)
 - ✅ 0 unittest TestCase classes remaining
 - ✅ Parallel execution: 3.7x speedup (36.25s → 9.75s with 24 workers)
@@ -359,6 +370,7 @@ __all__ = ["HTTPStatus", "create_user", "json_post", "json_patch", "json_put"]
 - ✅ Full fixture hierarchy established
 
 **Test Infrastructure:**
+
 - ✅ `apps/conftest.py` - Root fixtures (api_client, user, auth_client)
 - ✅ `core/tests/test_helpers.py` - HTTP helpers, CSRF helper, `create_user`, HTTPStatus
 - ✅ `authentication/tests/conftest.py` - OAuth, throttling, verified_user fixtures
@@ -370,11 +382,13 @@ __all__ = ["HTTPStatus", "create_user", "json_post", "json_patch", "json_put"]
 ### Anti-Patterns
 
 **❌ Don't:**
+
 - Copy-paste helpers between files
 - Use `create()` for unique constraints
 - Import DRF utilities in Django Ninja tests
 
 **✅ Do:**
+
 - Import from shared locations
 - Use `get_or_create()` with defaults
 - Use Django test client and stdlib
@@ -390,6 +404,7 @@ __all__ = ["HTTPStatus", "create_user", "json_post", "json_patch", "json_put"]
 **Purpose:** Cross-cutting utilities for multiple features
 
 **Contents:**
+
 - Render helpers (`renderWithProviders`, `renderWithRouter`)
 - Mock factories (`createMockUser`, `createMockMovie`)
 - Common utilities (`waitForLoadingToFinish`, `findByTestId`)
@@ -416,6 +431,7 @@ export function renderWithProviders(ui: React.ReactElement, options = {}) {
 **Purpose:** Feature-specific helpers and mocks
 
 **Contents:**
+
 - Feature mock factories
 - Component-specific setup
 - API mock responses
@@ -514,6 +530,7 @@ afterAll(() => server.close());
 ### Anti-Patterns
 
 **❌ Don't:**
+
 - Test implementation details (component state)
 
 ```typescript
@@ -532,6 +549,7 @@ const createMockUser = () => ({ id: 1, username: 'test' }); // DUPLICATE!
 ```
 
 **✅ Do:**
+
 - Test user-visible behavior
 
 ```typescript
@@ -551,6 +569,7 @@ import { createMockUser } from '@/test/helpers/mocks';
 ### E2E Test Coordination
 
 **When to use E2E tests:**
+
 - Critical user flows (registration → verification → login)
 - Cross-layer interactions (frontend → API → database)
 - Payment/transaction flows

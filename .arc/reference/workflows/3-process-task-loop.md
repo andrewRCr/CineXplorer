@@ -4,32 +4,44 @@ Guidelines for managing task lists in markdown files to track progress on comple
 
 ## Task Implementation
 
-- **One sub-task at a time:** Do **NOT** start the next sub‑task until you ask the user for permission and they say "yes" or "y"
+- **One sub-task at a time:** Do **NOT** start the next sub‑task until you ask the user for permission and they say
+  "yes" or "y"
 - **Test-first approach:** For new models, APIs, and complex logic, write tests before implementation
-- **Incremental quality checks:** Run linting and type checking on modified files after each sub-task (Ruff for linting with auto-fix, Pyright for fast type checks, mypy for optional full-project CI/periodic validation)
+- **Incremental quality checks:** Run linting and type checking on modified files after each sub-task
+  (Ruff for linting with auto-fix, Pyright for fast type checks, mypy for optional full-project CI/periodic validation)
 - **Immediate documentation:** Update the task list file immediately after completing each subtask
 - **Completion protocol:**
 
   1. When you finish a **single sub‑task**:
      - **First**: Immediately mark it as completed by changing `[ ]` to `[x]` in the task list file
-     - **Second**: Update the "Relevant Files" section if new files were created or modified
-     - **Third**: **MANDATORY STOP** - Pause and ask for user review/approval of the subtask completion
-     - **Fourth**: Only proceed to next subtask with explicit user permission ("proceed to 4.x" or "y")
+     - **Second**: **MANDATORY STOP** - Pause and ask for user review/approval of the subtask completion
+     - **Third**: Only proceed to next subtask with explicit user permission ("proceed to 4.x" or "y")
      - **NEVER** continue to multiple subtasks without explicit user approval for each one
 
   2. If **all** subtasks underneath a parent task are now `[x]`, follow this sequence:
 
     - **First**: Ensure new code has appropriate test coverage (models, APIs, complex logic)
     - **Second**: Run the full test suite (`python manage.py test --settings=config.settings_test`, `npm test`, etc.)
-    - **Third**: Run all linting checks (`ruff check apps/ config/`, `python scripts/type_check.py` [runs hybrid Pyright+mypy; requires `npm install` for pyright], `npm run lint`, `npm run type-check`, `npx markdownlint-cli2 "**/*.md"`)
-    - **Fourth**: Check if [PROJECT-STATUS](.arc/reference/constitution/PROJECT-STATUS.md) needs updates (feature progress, completed functionality, updated priorities)
+    - **Third**: Run all linting checks:
+        - `ruff check apps/ config/`
+        - `python scripts/type_check.py` (runs hybrid Pyright+mypy; requires `npm install` for pyright)
+        - `npm run lint`
+        - `npm run type-check`
+        - `npx markdownlint-cli2 "**/*.md"`
+    - **Fourth**: Check if [PROJECT-STATUS](.arc/reference/constitution/PROJECT-STATUS.md) needs updates
+      (feature progress, completed functionality, updated priorities)
 
-  3. Generate standardized readiness report (see [Development Rules](../constitution/DEVELOPMENT-RULES.md) for format) and await user instructions on how to proceed. User may choose to commit changes (AI can execute only if explicitly approved to do so) or review first. When committing, follow [Atomic Commit Workflow](atomic-commit.md) guidelines:
+  3. Generate standardized readiness report
+     (see [Development Rules](../constitution/DEVELOPMENT-RULES.md) for format)
+     and await user instructions on how to proceed.
+     User may choose to commit changes (AI can execute only if explicitly approved to do so) or review first.
+     When committing, follow [Atomic Commit Workflow](atomic-commit.md) guidelines:
 
     - Uses conventional commit format (`feat:`, `fix:`, `refactor:`, etc.)
     - Summarizes what was accomplished in the parent task
     - Lists key changes and additions
-    - **Accurately references the specific task number being completed** (e.g., "Complete task {TASK_ID}" where {TASK_ID} is the actual subtask like "4.2.3")
+    - **Accurately references the specific task number being completed** (e.g., "Complete task {TASK_ID}"
+      where {TASK_ID} is the actual subtask like "4.2.3")
     - References the PRD context and current branch {BRANCH}
     - **Formats the message as a single-line command using `-m` flags**, replacing placeholders with real values:
 
@@ -122,16 +134,19 @@ When all parent tasks are complete and ready for integration:
     - Any other work completed outside the current task list
 
 - **Stop after each individual sub‑task and wait for the user's go‑ahead**
-- **Never complete multiple subtasks in one implementation cycle** - each subtask represents a discrete deliverable that requires individual review
+- **Never complete multiple subtasks in one implementation cycle** -
+  each subtask represents a discrete deliverable that requires individual review
 - **Each subtask should be documented and approved before moving forward**
 
 ## Incidental Work Management
 
 ### Quick Decision Guide
 
-While working on feature tasks, you may discover quality improvements, refactoring, or tech debt that should be fixed immediately. **Quick decision tree**:
+While working on feature tasks, you may discover quality improvements, refactoring, or tech debt that should be fixed
+immediately. **Quick decision tree**:
 
 **Create incidental task list when:**
+
 - ✅ Multiple subtasks needed (>1 subtask)
 - ✅ Non-trivial effort (>30 minutes estimated)
 - ✅ Cross-cutting concern (affects multiple domains/files)
@@ -139,6 +154,7 @@ While working on feature tasks, you may discover quality improvements, refactori
 - ✅ Worth documenting for handoffs
 
 **Fix inline (no task list) when:**
+
 - ❌ Simple fixes (<30 min, 1 subtask)
 - ❌ Typos, formatting, trivial refactors
 - ❌ Work already in main task list - add subtasks there
@@ -151,6 +167,7 @@ While working on feature tasks, you may discover quality improvements, refactori
 **→ [manage-incidental-work.md](manage-incidental-work.md)** ← Complete workflow documentation
 
 This dedicated workflow covers:
+
 - Decision tree with examples
 - Creation protocol with commit standards
 - Execution following task loop rules
@@ -174,9 +191,9 @@ This dedicated workflow covers:
    - Mark tasks and subtasks as completed (`[x]`) per the protocol above.
    - Add new tasks as they emerge.
 
-2. **Maintain the "Relevant Files" section:**
-   - List every file created or modified.
-   - Give each file a one‑line description of its purpose.
+2. **Track file changes via git:**
+   - Git status and diffs provide the most accurate record of changes.
+   - No need to manually maintain file lists - tools like `git status` and `git diff` are always current.
 
 ## AI Instructions
 
@@ -188,15 +205,13 @@ When working with task lists, the AI must:
    - Mark the **parent task** `[x]` once **all** its subtasks are `[x]`.
    - **Verify parent task completion happens in documentation commits**.
 3. Add newly discovered tasks.
-4. Keep "Relevant Files" accurate and up to date.
-5. Before starting work, check which **single sub‑task** is next.
+4. Before starting work, check which **single sub‑task** is next.
 6. **Complete only ONE subtask at a time** - never bundle multiple subtasks together.
 7. After implementing a **single sub‑task**:
    - **Run incremental quality checks** on modified files (linting, hybrid type checking)
    - **Do not mark the subtask [x] until all checks pass (0 errors)**
    - **Fix any issues immediately** before marking complete
    - Update the task list file immediately (mark subtask as [x])
-   - Update "Relevant Files" section if applicable
    - Pause and request user review/approval of the specific subtask completion
    - Wait for explicit permission before starting the next subtask
 8. **Generate standardized readiness reports** using format from DEVELOPMENT-RULES.md

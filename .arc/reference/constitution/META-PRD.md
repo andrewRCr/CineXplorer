@@ -2,7 +2,10 @@
 
 ## 1. Purpose
 
-CineXplorer is a web application for movie enthusiasts to discover, track, and engage with movies. It allows users to browse movie information, get personalized recommendations, maintain personal watchlists, rate and review movies, and keep a log of movies they have watched. The application leverages The Movie Database (TMDB) for its movie data.
+CineXplorer is a web application for movie enthusiasts to discover, track, and engage with movies.
+It allows users to browse movie information, get personalized recommendations, maintain personal watchlists,
+rate and review movies, and keep a log of movies they have watched. The application leverages The Movie Database
+(TMDB) for its movie data.
 
 ## 2. Core Features
 
@@ -44,7 +47,12 @@ CineXplorer is a web application for movie enthusiasts to discover, track, and e
 
 ## 4. User Flow (Target)
 
-A user registers and logs in. They can browse movies or go to their "For You" page for recommendations. On a movie page, they can add it to their watchlist, mark it as watched (adding it to their library), like, rate, or review it. They can view actor/director pages by clicking links from a movie detail page. The user can visit their "Watchlist" page, which includes a "Next Up" queue, and reorder the list via drag-and-drop. They can visit their "Library" page to see all watched movies, including a special "Favorites" section that is also reorderable. Finally, they can edit their basic profile information.
+A user registers and logs in. They can browse movies or go to their "For You" page for recommendations.
+On a movie page, they can add it to their watchlist, mark it as watched (adding it to their library),
+like, rate, or review it. They can view actor/director pages by clicking links from a movie detail page.
+The user can visit their "Watchlist" page, which includes a "Next Up" queue, and reorder the list via drag-and-drop.
+They can visit their "Library" page to see all watched movies, including a special "Favorites" section
+that is also reorderable. Finally, they can edit their basic profile information.
 
 ## 5. Success Metrics
 

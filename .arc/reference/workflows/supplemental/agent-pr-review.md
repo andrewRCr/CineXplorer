@@ -4,7 +4,9 @@
 
 ## Overview
 
-This workflow documents the process for addressing AI code review agent comments (e.g., CodeRabbit, GitHub Copilot Reviews) efficiently, balancing thoroughness with pragmatic decision-making and minimizing automated review triggers.
+This workflow documents the process for addressing AI code review agent comments
+(e.g., CodeRabbit, GitHub Copilot Reviews) efficiently, balancing thoroughness with pragmatic decision-making
+and minimizing automated review triggers.
 
 ## Core Principles
 

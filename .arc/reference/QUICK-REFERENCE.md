@@ -35,7 +35,8 @@
 | Frontend code | `frontend/src/` | Frontend operations |
 | .arc docs | `.arc/` | Documentation |
 
-**Working Directory Note**: Your actual working directory may vary (backend/, frontend/, or root). CURRENT-SESSION.md contains context-specific paths adjusted for your current location.
+**Working Directory Note**: Your actual working directory may vary (backend/, frontend/, or root).
+CURRENT-SESSION.md contains context-specific paths adjusted for your current location.
 
 ### Network Architecture & Ports
 
@@ -47,16 +48,19 @@ Browser → Caddy Proxy (8444) → Backend (8000) HTTPS
 ```
 
 **Direct Access Ports:**
+
 - **Backend API**: `https://localhost:8000` (direct HTTPS access, self-signed cert)
 - **Frontend Dev Server**: `http://localhost:5173` (Vite dev server)
 - **Caddy Proxy**: `https://localhost:8444` (unified entry point, production-like)
 
 **For Testing/Development:**
+
 - **API Testing (curl/Postman)**: Use `https://localhost:8000` with `-k` flag (skip cert verification)
 - **Browser Testing**: Use `https://localhost:8444` (Caddy proxy, handles CORS)
 - **Frontend Development**: Use `http://localhost:5173` (hot reload, dev tools)
 
 **Important Notes:**
+
 - Backend serves HTTPS only (self-signed cert in development)
 - Frontend `.env` has `VITE_BASE_API_URL="https://localhost:8444/api"` (includes `/api` prefix)
 - All API endpoints are relative to `/api/` (e.g., `/movies/discover`, not `/api/movies/discover`)
@@ -66,7 +70,8 @@ Browser → Caddy Proxy (8444) → Backend (8000) HTTPS
 
 ## Command Patterns
 
-All commands shown from **repository root**. If you're in a subdirectory, adjust paths accordingly (see CURRENT-SESSION.md for your context).
+All commands shown from **repository root**.
+If you're in a subdirectory, adjust paths accordingly (see CURRENT-SESSION.md for your context).
 
 ### Type Checking (Python)
 
@@ -132,6 +137,8 @@ docker compose -f infrastructure/docker-compose.yml exec frontend npm run type-c
 
 ### Markdown Linting
 
+**⚠️ Run from repo root** - Config file (`.markdownlint-cli2.jsonc`) must be discoverable
+
 ```bash
 # Check
 npx markdownlint-cli2 "README.md" ".arc/**/*.md"
@@ -139,6 +146,8 @@ npx markdownlint-cli2 "README.md" ".arc/**/*.md"
 # Auto-fix
 npx markdownlint-cli2 --fix "README.md" ".arc/**/*.md"
 ```
+
+**Note:** VS Code extension uses separate config (`.markdownlint.jsonc`)
 
 ---
 
@@ -310,4 +319,5 @@ docker compose -f infrastructure/docker-compose.yml exec backend pytest --cov=ap
 
 ---
 
-**Version Note**: Commands assume repo root. If working from subdirectory (backend/, frontend/), see CURRENT-SESSION.md "Session Startup Protocol" for adjusted paths.
+**Version Note**: Commands assume repo root. If working from subdirectory (backend/, frontend/), see
+CURRENT-SESSION.md "Session Startup Protocol" for adjusted paths.

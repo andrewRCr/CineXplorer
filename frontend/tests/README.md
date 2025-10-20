@@ -163,6 +163,7 @@ The test environment is fully TypeScript compatible:
 ### VSCode Integration
 
 The project includes VSCode settings for optimal TypeScript experience:
+
 - Auto-imports from path aliases
 - Proper IntelliSense for test utilities
 - Error highlighting for test files

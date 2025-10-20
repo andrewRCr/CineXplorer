@@ -84,8 +84,7 @@ reference-ready.
 - Search task file for notes content patterns like "(Task 7)", "Task 7:", "Tasks 7-9", "Task 7.x"
 - Verify each reference points to the correct current task, as per the actual task list structure
 - Update references that became stale after restructuring
-- Common locations: "Implementation Notes", similar sections (at the bottom of the task list doc),
-  Relevant Files section, inline notes
+- Common locations: "Implementation Notes", similar sections (at the bottom of the task list doc), inline notes
 
 **Check content ordering in task file:**
 
@@ -172,14 +171,14 @@ This includes:
 
 - **Goal**: Keep task file lean while work continues
 - **Decision Criteria**: "Do remaining tasks need this context?"
-- **What stays**: Top-matter context, task list, bottom-matter notes relevant to remaining work, Relevant Files
+- **What stays**: Top-matter context, task list, bottom-matter notes relevant to remaining work
 - **What migrates**: Historical explanations with no future dependencies
 
 **Mode 2 (Archival Preparation - ALL WORK COMPLETE):**
 
 - **Goal**: Transform task file into quick-reference skeleton
 - **Decision Criteria**: "Is this part of the quick reference or the deep dive?"
-- **Task file becomes**: Top-matter + Task list + Relevant Files + Completion Summary ONLY
+- **Task file becomes**: Top-matter + Task list + Completion Summary ONLY
 - **Everything else migrates**: ALL bottom-matter sections (Implementation Notes, Task List Coordination,
   Decision Logs, etc.) → Notes file
 
@@ -196,10 +195,6 @@ This includes:
 ## Task List (KEEP - historical record)
 - [x] All task checkboxes with inline outcomes
 - Preserves what was actually done
-
-## Relevant Files (KEEP - quick reference)
-- File paths with one-line descriptions
-- Helps locate implementation quickly
 
 ## Completion Summary (KEEP - archival summary)
 - Work Accomplished
@@ -274,7 +269,6 @@ Before migrating any content during mid-work cleanup, ask these questions:
 
 - ✅ **All task lines exactly as written** (checkboxes, descriptions, inline outcome notes)
 - ✅ Task structure and hierarchy (parent tasks, subtasks, indentation)
-- ✅ "Relevant Files" section (helpful reference during work)
 - ✅ "Completion Summary" section (for completed work)
 - ✅ **Context needed by remaining uncompleted tasks** (even if verbose)
 - ✅ **Implementation patterns/constraints guiding future work** (critical reference)
@@ -335,7 +329,6 @@ Before migrating any content during mid-work cleanup, ask these questions:
 
 **Scan Bottom-Matter** (below task list):
 
-- ✅ **Keep**: Relevant Files section (quick reference for finding implementation)
 - ✅ **Keep**: Completion Summary section (archival summary of what was achieved)
 - ❌ **Migrate ALL to notes file**: Implementation Notes, Task List Coordination, Decision Logs,
   Investigation Details, Architecture Decisions, Any other explanatory sections
@@ -346,16 +339,13 @@ comprehensive deep-dive showing HOW and WHY.
 **Example Archival Migration:**
 
 ```markdown
-<!-- TASK FILE BEFORE ARCHIVAL CLEANUP (800 lines) -->
+<!-- TASK FILE BEFORE ARCHIVAL CLEANUP (750 lines) -->
 
 ## Context
 [50 lines of background]
 
 ## Tasks
 [300 lines of task checklist]
-
-## Relevant Files
-[50 lines of file list]
 
 ## Task List Coordination
 [100 lines explaining scope boundaries]
@@ -378,9 +368,6 @@ comprehensive deep-dive showing HOW and WHY.
 
 ## Tasks
 [300 lines of task checklist - unchanged]
-
-## Relevant Files
-[50 lines of file list - unchanged]
 
 ## Completion Summary
 [100 lines of metrics - unchanged]

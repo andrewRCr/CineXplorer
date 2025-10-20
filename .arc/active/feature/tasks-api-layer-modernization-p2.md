@@ -719,17 +719,13 @@ user_movie_data domains. Service layer excluded (scheduled for Backend Moderniza
     - [x] R.4.3.7: Run full quality gates after all refactoring (tests, linting, type checking)
     - [x] R.4.3.8: Verify no regressions from DRY refactoring (243 tests still passing, 0 type errors)
 
-- [ ] R.4.4: Document new shared utilities and Core app cross-module helpers
-    - [ ] R.4.4.1: Document Core app utilities created during R.4.3 refactoring (core/utils/http.py, validators.py,
-        schemas.py with docstrings and usage examples)
-    - [ ] R.4.4.2: Update Core app README or `init.py` to document new cross-module utilities (purpose, when to use,
-        examples)
-    - [ ] R.4.4.3: Update domain-specific utility modules with docstrings (authentication/utils.py, movie/decorators.py)
-    - [ ] R.4.4.4: Update conftest.py files if new test fixtures created (document with usage examples)
-    - [ ] R.4.4.5: Update `core/tests/test_helpers.py` if test helpers modified (document new helpers with usage examples)
-    - [ ] R.4.4.6: Update strategy-testing-methodology.md if new test patterns established (new DRY patterns section)
-    - [ ] R.4.4.7: Update TECHNICAL-ARCHITECTURE.md and/or other relevant docs if Core app structure significantly changed
-        (document new utilities layer)
+- [x] R.4.4: Document new shared utilities and Core app cross-module helpers
+    - [x] R.4.4.1: Create Core app README documenting utilities layer (purpose, when to use, examples for http.py,
+        validators.py, schemas.py). Note: All utility modules already have comprehensive docstrings per DEVELOPMENT-RULES
+    - [x] R.4.4.2: Update strategy-testing-methodology.md with new test helper pattern (create_user_and_auth_payload
+        in core/tests/test_helpers.py reduces 3-line auth setup to 1-line)
+    - [x] R.4.4.3: Update TECHNICAL-ARCHITECTURE.md to document new Core utilities layer (cross-domain utilities
+        structure: core/utils/, authentication/utils.py, movie/helpers.py)
 
 ### R.5: Final Certification & Documentation
 

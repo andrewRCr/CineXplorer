@@ -61,6 +61,7 @@ __all__ = [
     "authenticate_client",
     "create_fresh_client",
     "create_user",
+    "create_user_and_auth_payload",
     "get_csrf_token",
     "json_patch",
     "json_post",
@@ -366,3 +367,56 @@ def create_user(
         )
 
     return user
+
+
+def create_user_and_auth_payload(
+    **params: Unpack[UserParams]
+) -> tuple["UserType", dict[str, str]]:
+    """
+    Create a user and return both the user instance and authentication payload.
+
+    Combines user creation with auth payload generation for login/token tests.
+    This eliminates the common 3-line pattern of creating user details,
+    creating the user, then building the auth payload.
+
+    Args:
+        **params: User parameters (username, email, password, etc.)
+                  If password not provided, defaults to 'testpass123'
+
+    Returns:
+        Tuple of (user, auth_payload) where:
+        - user: Created user instance
+        - auth_payload: Dict with {"login": username, "password": password}
+                       ready for json_post to /api/token/ endpoint
+
+    Example:
+        from core.tests.test_helpers import create_user_and_auth_payload, json_post
+
+        # Old 3-line pattern:
+        user_details = {"username": "testuser", "password": "testpass123"}
+        user = create_user(**user_details)
+        auth_payload = {"login": user_details["username"], "password": user_details["password"]}
+
+        # New 1-line pattern:
+        user, auth_payload = create_user_and_auth_payload(
+            username="testuser",
+            password="testpass123"
+        )
+
+        # Use in tests:
+        res = json_post(api_client, "/api/token/", auth_payload)
+        assert res.status_code == HTTPStatus.OK
+    """
+    # Extract password before creating user (need it for auth payload)
+    password = params.get('password', 'testpass123')
+
+    # Create user (email_verified=True by default in create_user)
+    user = create_user(**params)
+
+    # Build auth payload for token endpoint
+    auth_payload = {
+        "login": user.username,
+        "password": password
+    }
+
+    return user, auth_payload

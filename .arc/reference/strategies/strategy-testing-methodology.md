@@ -61,20 +61,25 @@ Testing standards and patterns for CineXplorer's full-stack infrastructure (Djan
 
 **Backend:**
 
-- Minimum: 70% API layer coverage
-- Critical paths: 90%+ (auth, payments, data integrity)
+- Minimum: 80% branch coverage (general application code)
+- Critical paths: 90%+ branch coverage (auth, payments, data integrity)
+- Security-critical: 95%+ branch coverage (token management, session handling)
 - Focus: Integration over unit tests
 
 **Frontend:**
 
-- Minimum: 70% component/feature coverage
-- Critical paths: 90%+ (auth, checkout, flows)
+- Minimum: 80% branch coverage (component/feature coverage)
+- Critical paths: 90%+ branch coverage (auth, checkout, flows)
 - Focus: User behavior over implementation
+
+**Rationale:** Targets align with industry consensus (Google "commendable" tier, Microsoft standard, OWASP
+security guidance). 80% represents practical ROI inflection point; 90%+ for critical paths reflects
+risk-based testing prioritization per industry best practices.
 
 ### Quality Gates
 
-**Backend:** 100% pass rate, 70%+ coverage, zero lint/type errors
-**Frontend:** 100% pass rate, 70%+ coverage, zero lint/type errors
+**Backend:** 100% pass rate, 80%+ coverage, zero lint/type errors
+**Frontend:** 100% pass rate, 80%+ coverage, zero lint/type errors
 
 ---
 

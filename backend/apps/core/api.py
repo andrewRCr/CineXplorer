@@ -2,6 +2,7 @@
 Django Ninja API endpoints for core app.
 
 This module provides:
+- General health check endpoint (GET /health-check/)
 - Frontend logging endpoint (POST /logs/)
 - Logging health check endpoint (GET /logs/health/)
 """
@@ -101,6 +102,24 @@ def frontend_log(
         return (201, FrontendLogSuccessResponse(success=True, message="Log entry received"))
     else:
         return (500, FrontendLogErrorResponse(success=False, error="Failed to process log entry"))
+
+
+@core_router.get("/health-check/", auth=None)
+def health_check(request: HttpRequest) -> dict[str, str]:
+    """
+    General health check endpoint for Docker orchestration.
+
+    This lightweight endpoint confirms the Django application is running
+    and responsive. Infrastructure dependencies (PostgreSQL, Redis) are
+    validated independently by Docker Compose health checks.
+
+    Args:
+        request: HTTP request object
+
+    Returns:
+        Status response indicating the application is healthy
+    """
+    return {"status": "healthy"}
 
 
 @core_router.get("/logs/health/", auth=None, response=LogHealthCheckResponse)

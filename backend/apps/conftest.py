@@ -51,7 +51,7 @@ def api_client() -> Client:
 
     Example:
         def test_public_endpoint(api_client):
-            response = api_client.get('/api/health/')
+            response = api_client.get('/api/health-check/')
             assert response.status_code == 200
     """
     from django.test import Client

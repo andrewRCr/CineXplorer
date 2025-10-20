@@ -76,6 +76,7 @@ This migration will begin with a proof-of-concept (PoC) focused on the `movie` a
 
 **Foundational Issues Discovered (September 2025):**
 During initial Django Ninja setup, several foundational issues were identified that require resolution before full authentication migration:
+
 * Import path inconsistencies between `apps.core.models` vs `core.models` across the codebase
 * Missing `shared` module dependency containing TMDB API type definitions (available in Docker but not local development)
 * These issues prevent `python manage.py check` from passing, blocking validation of Django Ninja setup

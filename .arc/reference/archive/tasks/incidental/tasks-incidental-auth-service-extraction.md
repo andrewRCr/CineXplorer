@@ -12,6 +12,7 @@
 **Discovery**: While updating `useAuth.ts` to use generated types, noticed it contains inline axios calls, mixed state management + API logic, and is not reusable outside React context. Meanwhile, `userMovieDataService.ts` demonstrates the correct pattern: clean service functions, reusable, testable.
 
 **Impact**:
+
 - **Consistency**: All API calls follow the same service layer pattern
 - **Testability**: Pure functions can be tested without React Testing Library
 - **Reusability**: Auth functions can be used anywhere (hooks, components, utilities)
@@ -21,6 +22,7 @@
 ## Scope
 
 **Will Do**:
+
 - Create `frontend/src/services/authService.ts` following `userMovieDataService.ts` pattern
 - Extract 6 auth API functions: `login`, `register`, `logout`, `getUserProfile`, `verifyEmail`, `resendVerificationEmail`
 - Update `useAuth.ts` to use authService (remove inline axios calls)
@@ -31,6 +33,7 @@
 - Run frontend type checking and linting
 
 **Won't Do** (deferred to Frontend Modernization PRD):
+
 - TanStack Query migration (future PRD)
 - React Hook Form migration (future PRD)
 - Comprehensive error boundary implementation (future PRD)

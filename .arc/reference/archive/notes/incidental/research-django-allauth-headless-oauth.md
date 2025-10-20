@@ -27,6 +27,7 @@ Authorized Redirect URI: https://yourdomain.com/accounts/google/login/callback/
 ```
 
 **Critical Points:**
+
 1. **Always use traditional callback URLs** (`/accounts/<provider>/login/callback/`)
 2. **With `HEADLESS_ONLY = True`**, these callback views are still registered (they are NOT skipped)
 3. **The OAuth provider redirects to the backend**, not the frontend
@@ -51,6 +52,7 @@ export function redirectToProvider(providerId, callbackURL, process = AuthProces
 ```
 
 **What `callback_url` does:**
+
 - **Stores the frontend URL** where the user should be redirected **after** OAuth completes
 - **Saved in Django session state** during the OAuth handshake
 - **Used by django-allauth** to redirect the user back to your SPA after authentication
@@ -115,12 +117,14 @@ Body: {
 ```
 
 **Step 2: Django Creates Session & Redirects to Provider**
+
 - Django creates a session with state information
 - Session stores `callback_url` for later use
 - Django returns HTTP 302 redirect to Google OAuth URL
 - Browser follows redirect to Google
 
 **Step 3: User Authenticates with Google**
+
 - User logs into Google
 - Google validates credentials
 - Google redirects browser back to Django's callback URL
@@ -136,6 +140,7 @@ GET /accounts/google/login/callback/?code=...&state=...
 - Django validates OAuth `state` parameter against session
 
 **Step 5: Django Completes OAuth & Invokes Token Strategy**
+
 - Django exchanges authorization code for OAuth tokens from Google
 - Django creates or updates user account
 - Django authenticates the user (`request.user` is now authenticated)
@@ -147,6 +152,7 @@ GET /accounts/google/login/callback/?code=...&state=...
   ```
 
 **Step 6: Django Sets Response with Tokens**
+
 - **Access token**: Included in response body (or redirect URL parameters)
 - **Refresh token**: Set as HTTP-only cookie automatically by django-allauth
 - Django retrieves `callback_url` from session state
@@ -195,6 +201,7 @@ fetch('/api/movies', {
 ### KEY INSIGHT: Mixed Mode is Actually Required
 
 Our concern about "mixed mode problems" was understandable but incorrect:
+
 - **You MUST have both** `path("accounts/", ...)` and `path("_allauth/", ...)`
 - With `HEADLESS_ONLY = True`, the traditional URLs **only register OAuth callbacks**
 - Login/signup HTML views are disabled, but OAuth callbacks remain functional
@@ -360,6 +367,7 @@ MIDDLEWARE = [
 ```
 
 **Delete files:**
+
 - `backend/apps/authentication/oauth_cookie_middleware.py` (entire file)
 - Remove `CustomSocialAccountAdapter` from `adapters.py` (if only for OAuth tokens)
 
@@ -368,6 +376,7 @@ The Token Strategy handles token generation automatically.
 ### STEP 7: Test the Complete Flow
 
 **Test checklist:**
+
 1. ✅ Frontend POSTs to `/_allauth/browser/v1/auth/provider/redirect`
 2. ✅ Backend redirects to Google OAuth
 3. ✅ Google redirects to `/accounts/google/login/callback/` (not 404)
@@ -757,12 +766,14 @@ The Token Strategy handles token generation automatically.
 ### What create_access_token_payload() Actually Does
 
 **Browser Mode (OAuth via browser redirects)**:
+
 - `create_access_token_payload()` is **NOT called**
 - Session cookie is the authentication mechanism
 - No JWT tokens generated for OAuth flows
 - Token Strategy only used for app mode
 
 **App Mode (mobile apps with X-Session-Token header)**:
+
 - `create_access_token_payload()` **IS called**
 - Returns session token in response body
 - Client includes `X-Session-Token` header in subsequent requests
@@ -852,12 +863,14 @@ export function useAuthStatus () {
 We conflated two separate authentication flows:
 
 **Email/Password Login** (Django Ninja endpoints):
+
 - Uses our custom `/api/token/` endpoint
 - Returns JWT tokens in response body
 - Frontend stores in localStorage + HTTP-only cookie
 - This DOES use hybrid auth
 
 **OAuth Login** (django-allauth browser endpoints):
+
 - Uses django-allauth's `/_allauth/browser/v1/` endpoints
 - Establishes authentication via session cookie
 - No JWT tokens involved
@@ -1062,11 +1075,13 @@ Frontend → /_allauth/browser/v1/auth/provider/redirect → OAuth flow → Sess
 ### Why Two Patterns?
 
 **Email/Password**:
+
 - ✅ Custom Django Ninja endpoint (we control response format)
 - ✅ Can return JWT tokens in response body
 - ✅ Hybrid auth works (localStorage + HTTP-only cookie)
 
 **OAuth**:
+
 - ⚠️ Django-allauth controls OAuth callback response
 - ⚠️ Browser mode uses session cookies only
 - ⚠️ Cannot customize to return JWT tokens (without major hackery)
@@ -1075,12 +1090,14 @@ Frontend → /_allauth/browser/v1/auth/provider/redirect → OAuth flow → Sess
 ### Consistency Considerations
 
 **Option A: Accept Two Patterns** (RECOMMENDED):
+
 - Email/password: JWT tokens (localStorage + cookie)
 - OAuth: Session cookies only
 - Both work, just different mechanisms
 - Simpler implementation, follows official patterns
 
 **Option B: Force JWT for Everything**:
+
 - Would require custom OAuth callback view override
 - Goes against django-allauth design
 - More complex, harder to maintain
@@ -1115,16 +1132,19 @@ Frontend → /_allauth/browser/v1/auth/provider/redirect → OAuth flow → Sess
 ## 18. Testing Checklist (Updated)
 
 **Backend Configuration**:
+
 - [ ] `ALLOWED_HOSTS` includes `localhost:5173`
 - [ ] `SESSION_COOKIE_SAMESITE = "Lax"`
 - [ ] `CORS_ALLOW_CREDENTIALS = True`
 - [ ] Both `/_allauth/` and `/accounts/` URLs configured
 
 **OAuth Provider Setup**:
+
 - [ ] Google redirect URI: `http://localhost:8000/accounts/google/login/callback/`
 - [ ] GitHub redirect URI: `http://localhost:8000/accounts/github/login/callback/`
 
 **OAuth Flow**:
+
 - [ ] Click "Login with Google" redirects to Google
 - [ ] After authentication, redirected to frontend `/login`
 - [ ] Session endpoint returns `authenticated: true`
@@ -1132,6 +1152,7 @@ Frontend → /_allauth/browser/v1/auth/provider/redirect → OAuth flow → Sess
 - [ ] Subsequent API calls work with `credentials: 'include'`
 
 **Session Management**:
+
 - [ ] Session persists across page refreshes
 - [ ] Logout clears session cookie
 - [ ] Session expires after configured timeout
@@ -1225,11 +1246,13 @@ This confirms that browser mode (which uses cookies) is fundamentally different 
    - All API requests include `credentials: 'include'`
 
 **Document the Architectural Decision**:
+
 - Two authentication patterns (JWT vs session)
 - Why each pattern exists
 - Security tradeoffs and benefits
 
 **Update Task List**:
+
 - Remove URL token extraction tasks
 - Add session endpoint integration tasks
 - Update testing checklist for session-based OAuth

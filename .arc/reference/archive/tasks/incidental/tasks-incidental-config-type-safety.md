@@ -12,6 +12,7 @@
 **Discovery**: After completing Task 2.2 (test_csrf_protection.py conversion), ran comprehensive type check to verify authentication app improvements. Discovered Config module has 6 pre-existing type errors unrelated to our changes.
 
 **Impact**:
+
 - Blocks clean type safety baseline for pytest migration
 - Violates zero type errors quality gate policy
 - Pre-existing pattern that works but violates Pyright constant reassignment rules
@@ -19,6 +20,7 @@
 ## Scope
 
 **Will Do**:
+
 - Analyze the 6 `reportConstantRedefinition` errors in config module
 - Refactor settings pattern to avoid uppercase constant reassignment
 - Options: lowercase mutable variables, settings class pattern, or typed configuration
@@ -27,6 +29,7 @@
 - Achieve 0 type errors in config module
 
 **Won't Do** (not needed for this fix):
+
 - Full settings architecture redesign
 - Environment-specific config file splitting
 - Django settings optimization or restructuring beyond type safety needs
@@ -66,10 +69,12 @@
 ## Relevant Files
 
 **Configuration Files:**
+
 - `backend/config/settings.py` - Main settings file (ENVIRONMENT reassignment at line 235, security settings at lines 419+)
 - `backend/config/settings_test.py` - Test settings (likely has similar pattern)
 
 **Type Configuration:**
+
 - `backend/pyrightconfig.json` - Pyright configuration (may need updates if using suppression)
 
 ## Implementation Notes
@@ -87,9 +92,11 @@
    - Reassignment: line 419 staging environment override
 
 3-6. `backend/config/settings_test.py` - Multiple constant reassignments
+
 - Test settings override production values using uppercase pattern
 
 **Pattern Analysis:**
+
 - Django convention: ALL settings use UPPERCASE names
 - Pyright rule: UPPERCASE = constant (immutable)
 - Conflict: Conditional reassignment violates constant semantics
@@ -97,6 +104,7 @@
 - Static analysis: Fails (Pyright enforces constant invariant)
 
 **Verification:**
+
 - ✅ Style violations only (static analysis mismatch)
 - ✅ No runtime errors or bugs
 - ✅ Settings load correctly in all environments
@@ -107,6 +115,7 @@
 **Chosen approach**: Option A - Lowercase Mutables
 
 **Rationale:**
+
 - Clean, Pythonic pattern with clear intent
 - Lowercase = mutable working variable
 - Final UPPERCASE assignment = immutable constant (Django convention)
@@ -149,26 +158,31 @@ ENVIRONMENT = "development"  # type: ignore[misc]
 **Completion Date**: 2025-10-13
 
 **Summary**:
+
 - Fixed all 6 Pyright `reportConstantRedefinition` errors in config module using lowercase mutable pattern
 - Config module now has 0 type errors, joining all other apps in perfect type safety (6/6 apps passing)
 - Zero regressions: 80 tests passing, 0 linting violations, settings load correctly across all environments
 
 **Pattern Introduced**:
+
 - Lowercase mutable variables for conditional logic (e.g., `_environment`, `_hsts_seconds`)
 - Single UPPERCASE constant assignment after logic completes
 - Clean, Pythonic solution that maintains Django conventions while satisfying Pyright's constant semantics
 - Pattern can be reused for similar environment-based configuration scenarios
 
 **Files Changed**:
+
 - 1 file modified: `backend/config/settings.py`
 - Changes: ENVIRONMENT validation block (lines 222-237), security settings block (lines 408-439)
 
 **Quality Gate Results**:
+
 - Type checking: 0 errors across all 6 apps (Core, Authentication, Movie, UserMovieData, Accounts, Config)
 - Tests: 80 passed, 15 skipped (expected DRF endpoints)
 - Linting: All checks passed
 - No regressions in functionality
 
 **Next Steps**:
+
 1. Resume pytest migration work in `tasks-incidental-pytest-migration.md`
 2. Continue with Task 2.3 (convert test_security.py)

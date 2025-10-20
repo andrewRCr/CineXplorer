@@ -7,6 +7,7 @@
 ### Completed Tasks
 
 **Tasks 1.0 & 2.0: Setup and Database Migration - COMPLETE**
+
 - Feature branch created, django-allauth installed
 - Database migrated to `cinexplorer_dev` / `cinexplorer_user`
 - Custom User and EmailVerificationToken models removed (163 lines)
@@ -14,25 +15,30 @@
 - Database backup: `backup_pre_auth_migration_20251001.sql`
 
 **Task 3.0: Django-allauth Integration - COMPLETE**
+
 - All 6 subtasks completed
 - Allauth fully integrated and tested (20/20 tests passing)
 
 **Task 4.0: OAuth Provider Configuration - COMPLETE**
+
 - Google OAuth: Configured and tested ✅
 - GitHub OAuth: Configured and tested ✅
 
 ### Task 3.1 & 3.2 - Allauth Apps and Configuration - COMPLETED
 
 **Apps Added to INSTALLED_APPS:**
+
 - `django.contrib.sites`
 - `allauth`, `allauth.account`, `allauth.socialaccount`
 - `allauth.socialaccount.providers.google`
 - `allauth.socialaccount.providers.github`
 
 **Middleware Added:**
+
 - `allauth.account.middleware.AccountMiddleware` (required)
 
 **Allauth Settings Configured:**
+
 - `SITE_ID = 1` (for django.contrib.sites)
 - Modern API settings (allauth 65.11.2):
     - `ACCOUNT_LOGIN_METHODS = {"email", "username"}`
@@ -46,11 +52,13 @@
 ### Important Implementation Notes
 
 **Email Verification Compatibility:**
+
 - `backend/apps/authentication/email_verification.py` is a **temporary bridge** (remove in Task 8.1)
 - Email verification temporarily stubbed in `email_service.py` and `views.py` (will be replaced in Task 5.0)
 - Tests currently failing (4 tests) - expected until allauth migrations run
 
 **CodeRabbit Review Fixes Applied:**
+
 - Fixed `get_or_create()` bug in email_verification.py
 - Added exception logging to all error handlers
 - Updated security documentation in .env.example
@@ -58,12 +66,14 @@
 - Fixed import organization in tests
 
 **CI Configuration:**
+
 - CI uses simpler database credentials (`postgres/cinexplorer`) - intentional for ephemeral environments
 - Dev uses `cinexplorer_user/cinexplorer_dev` - documented in docker-compose.ci.yml
 
 ### Task 4.0 Implementation Details
 
 **OAuth Credentials Created:**
+
 - **Google Cloud Console**: OAuth 2.0 Client ID created
     - Authorized JavaScript origins: `https://localhost:8444`
     - Authorized redirect URIs: `https://localhost:8444/accounts/google/login/callback/`
@@ -77,19 +87,23 @@
     - Client Secret stored in `.env` as `GITHUB_CLIENT_SECRET`
 
 **Django Configuration:**
+
 - SocialApp entries created for both Google and GitHub providers
 - Linked to Site ID 1 (localhost:8444)
 - Authentication backends updated to include `allauth.account.auth_backends.AuthenticationBackend`
 - Redirect URLs configured: `LOGIN_REDIRECT_URL = "/"` and `ACCOUNT_LOGOUT_REDIRECT_URL = "/"`
 
 **Caddy Proxy Configuration:**
+
 - Added `/accounts/*` and `/admin/*` handlers to proxy django-allauth URLs to backend
 
 **Test Accounts:**
+
 - Google OAuth: <andrew.creekmore@outlook.com> (user: `andrew`)
 - GitHub OAuth: andrewRCr (GitHub UID: 44483269)
 
 **Known Frontend Issue (Deferred to Task 8.0):**
+
 - OAuth login creates session cookie but doesn't sync with JWT-based frontend auth
 - Frontend shows "Login" button instead of user menu after successful OAuth
 - To be addressed in Task 8.9-8.10 (Frontend authentication service updates)
@@ -153,23 +167,27 @@ SITE_DOMAIN=yourdomain.com
 ```
 
 **OAuth Provider Configuration:**
+
 - Google: Create OAuth 2.0 credentials at console.cloud.google.com
     - Redirect URI: `https://yourdomain.com/accounts/google/login/callback/`
 - GitHub: Create OAuth App at github.com/settings/developers
     - Callback URL: `https://yourdomain.com/accounts/github/login/callback/`
 
 **Django Admin Setup:**
+
 1. Update Site domain: `Site.objects.get(id=1).update(domain='yourdomain.com')`
 2. Create SocialApp entries for Google and GitHub with production credentials
 3. Link SocialApps to production Site
 
 **Security:**
+
 - HTTPS required (OAuth providers enforce this)
 - Use separate credentials for dev/staging/production
 - Rotate secrets periodically
 - Never commit credentials
 
 **Troubleshooting:**
+
 - `redirect_uri_mismatch`: Verify exact URL match including trailing slash
 - Social app not found: Check provider name ('google', 'github') and Site linkage
 - Users not created: Verify email backend configured for production

@@ -8,6 +8,7 @@
 ## Table of Contents
 
 **Major Investigations & Decisions:**
+
 - [CSRF Integration Issue Resolution](#csrf-integration-issue-resolution) - Django Ninja bug #1464 investigation and custom middleware solution
 - [Refresh Endpoint CSRF Requirement](#refresh-endpoint-csrf-requirement) - Security analysis and Option A decision
 - [Decorator vs Path-Based CSRF Exemptions](#decorator-vs-path-based-csrf-exemptions) - Architectural evaluation
@@ -15,12 +16,14 @@
 - [CSRF Monitoring and Logging](#csrf-monitoring-and-logging) - Production monitoring strategy
 
 **Implementation Details:**
+
 - [Security Settings Priority](#security-settings-priority) - Initial planning and priority order
 - [Rate Limiting Implementation](#rate-limiting-implementation) - Django Ninja throttling with Redis
 - [Token Blacklisting Implementation](#token-blacklisting-implementation) - django-ninja-jwt configuration
 - [Error Response Standardization](#error-response-standardization) - Consistent error format across endpoints
 
 **Historical Context:**
+
 - [Task 3.6 – Throttling Lazy Evaluation](#task-36--throttling-lazy-evaluation-refactoring-2025-10-13) - Test-friendly refactoring
 - [Task 4.3.3 – Alert Threshold Deferral](#task-433--alert-threshold-deferral-decision-2025-10-10) - Observability sprint deferral
 - [Task 4.4 – Token Blacklisting Bug Fix](#task-44--token-blacklisting-bug-fix-2025-10-10) - RefreshToken.for_user() fix
@@ -28,6 +31,7 @@
 - [Task 7.5.9 – Pragmatic Testing Approach](#task-759--pragmatic-testing-approach-decision-2025-10-14) - Coverage threshold decision
 
 **Reference:**
+
 - [External References](#external-references) - Research reports, standards, framework docs
 
 ---
@@ -41,6 +45,7 @@
 Django Ninja's CSRF implementation conflicts with Django's `CsrfViewMiddleware`:
 
 **Symptoms:**
+
 - With `csrf=True` on auth class: CSRF blocks requests but **rejects valid tokens** ("CSRF check Failed")
 - With `csrf=False`: Need to verify if CSRF protection actually works
 - Mixed results during testing required deep investigation
@@ -48,11 +53,13 @@ Django Ninja's CSRF implementation conflicts with Django's `CsrfViewMiddleware`:
 ### Root Cause Analysis
 
 **Django Ninja Bug #1464** (unresolved as of v1.4.3):
+
 - URL: <https://github.com/vitalik/django-ninja/issues/1464>
 - Issue: Setting `csrf=True` on `APIKeyCookie` subclasses causes valid CSRF tokens to be rejected
 - Status: Unresolved, no official workaround from maintainers
 
 **How Django Ninja CSRF is designed to work:**
+
 1. `csrf=False` (default): Applies `@csrf_exempt` decorator → NO CSRF protection
 2. `csrf=True`: Removes `@csrf_exempt` → Django's `CsrfViewMiddleware` handles validation
 
@@ -82,6 +89,7 @@ MIDDLEWARE = [
 ```
 
 **How this works:**
+
 1. `csrf=False` on both auth class and API tells Django Ninja to stay out of CSRF handling
 2. Django's `CsrfViewMiddleware` (enabled in settings) performs all CSRF validation
 3. Django Ninja doesn't interfere, allowing Django's middleware to work correctly
@@ -91,6 +99,7 @@ MIDDLEWARE = [
 **Attempted Solution:** Use `csrf=False` on both API and auth class to avoid bug #1464.
 
 **Test Results:** Created comprehensive CSRF tests - **VERIFICATION FAILED**
+
 - ❌ Requests WITHOUT CSRF tokens accepted (HTTP 200 instead of 403)
 - ❌ Invalid/fake tokens also accepted
 - ⚠️ **CRITICAL**: `csrf=False` disables ALL CSRF protection, not just Django Ninja's layer
@@ -105,6 +114,7 @@ MIDDLEWARE = [
 
 **Date**: 2025-10-10 (after comprehensive testing)
 **Options Evaluated:**
+
 1. ❌ **Option 1: csrf=True on NinjaAPI, csrf=False on auth** - FAILED verification (still disabled CSRF)
 2. ✅ **Option 2: Custom CSRF middleware** - SUCCESS (all 9 tests passing)
 3. ⏭️ **Option 3: Per-endpoint auth** - Not needed (Option 2 solved the problem)
@@ -170,6 +180,7 @@ class JWTCookieAuth(APIKeyCookie):
 **Test Coverage:** 12 tests passing - blocks invalid tokens, allows valid tokens, exempts public endpoints, handles edge cases
 
 **Edge Cases Documented:**
+
 - Refresh endpoint CSRF requirement (see next section)
 - Expired JWT cookie handling
 - Frontend integration requirements (see [Frontend CSRF Integration Guide](#frontend-csrf-integration-guide))
@@ -184,6 +195,7 @@ class JWTCookieAuth(APIKeyCookie):
 ### Background Context
 
 **Current State:**
+
 - `/api/token/refresh/` endpoint has JWT cookies (access_token + refresh_token)
 - NOT in `EXEMPT_PATH_PREFIXES` list
 - Currently **REQUIRES CSRF token** due to JWT cookie presence
@@ -194,6 +206,7 @@ class JWTCookieAuth(APIKeyCookie):
 ### Option A: Require CSRF on Refresh Endpoint (Current Behavior)
 
 **Pros:**
+
 - ✅ **Defense-in-depth** - Multiple layers of protection (rate limiting + CSRF)
 - ✅ **Consistent with other state-changing endpoints** - All POST/PATCH/DELETE with JWT cookies require CSRF
 - ✅ **Prevents CSRF on token refresh** - Attacker with stolen JWT cookie can't refresh tokens without CSRF
@@ -202,6 +215,7 @@ class JWTCookieAuth(APIKeyCookie):
 - ✅ **Mitigates session extension attacks** - Attacker can't keep stolen session alive by refreshing
 
 **Cons:**
+
 - ⚠️ **Extra frontend complexity** - Frontend must send CSRF token on refresh (automatic refresh flows need token)
 - ⚠️ **Potential UX friction** - If CSRF token expires but JWT refresh is valid, user gets 403 instead of seamless refresh
 - ⚠️ **Background refresh complexity** - Automatic token refresh in service workers/background tabs must manage CSRF
@@ -210,6 +224,7 @@ class JWTCookieAuth(APIKeyCookie):
 **Security Analysis:**
 
 **Threat Model:**
+
 1. **Attacker has JWT cookies but NOT CSRF token** (cookie theft via XSS)
    - Attacker can READ data (GET requests)
    - Attacker CANNOT refresh tokens (blocked by CSRF) ✅
@@ -228,6 +243,7 @@ class JWTCookieAuth(APIKeyCookie):
 ### Option B: Exempt Refresh Endpoint from CSRF (Add to Exempt List)
 
 **Pros:**
+
 - ✅ **Simpler frontend** - Refresh endpoint works like login (no CSRF needed)
 - ✅ **Better UX** - Token refresh always works if JWT is valid (no CSRF mismatch errors)
 - ✅ **Mobile-friendly** - Native apps don't need CSRF token management
@@ -235,6 +251,7 @@ class JWTCookieAuth(APIKeyCookie):
 - ✅ **Consistent with login** - Both login and refresh work without CSRF (symmetric design)
 
 **Cons:**
+
 - ❌ **Reduced security** - Stolen JWT cookies can be refreshed indefinitely
 - ❌ **Only rate limiting protects refresh** - Single layer of defense (10/minute)
 - ❌ **Session extension vulnerability** - Attacker keeps stolen session alive by refreshing every 5 minutes
@@ -244,6 +261,7 @@ class JWTCookieAuth(APIKeyCookie):
 **Security Analysis:**
 
 **Threat Model:**
+
 1. **Attacker has JWT cookies** (cookie theft via XSS)
    - Attacker can READ data (GET requests)
    - Attacker CAN refresh tokens indefinitely ❌
@@ -263,17 +281,20 @@ class JWTCookieAuth(APIKeyCookie):
 ### Option C: Hybrid Approach - Optional CSRF on Refresh
 
 **Implementation:**
+
 - Check for CSRF token on refresh endpoint
 - If present and valid: proceed
 - If absent but rate limit OK: proceed (backward compatibility)
 - If absent and rate limit exceeded: 429
 
 **Pros:**
+
 - ✅ **Backward compatible** - Works with or without CSRF
 - ✅ **Gradual adoption** - Frontend can add CSRF when ready
 - ✅ **Mobile flexibility** - Native apps can skip CSRF
 
 **Cons:**
+
 - ❌ **Security confusion** - Unclear which clients are protected
 - ❌ **Implementation complexity** - Custom middleware logic for one endpoint
 - ❌ **Maintenance burden** - Special case to document and maintain
@@ -321,16 +342,19 @@ async function refreshTokens() {
 ```
 
 **Edge Case Handling:**
+
 1. **CSRF expires before JWT refresh:** Get new CSRF token from `/api/csrf/`, then retry
 2. **Background refresh:** Store CSRF token in memory, include in refresh requests
 3. **Service workers:** Pass CSRF token to service worker during registration
 
 **Testing:**
+
 - Verify refresh works with valid CSRF token
 - Verify refresh blocked without CSRF token (403)
 - Verify refresh blocked with invalid CSRF token (403)
 
 **Documentation Needed:**
+
 - Frontend integration guide for CSRF + refresh flow
 - Error handling strategies for CSRF/refresh mismatches
 - Service worker CSRF token management patterns
@@ -340,6 +364,7 @@ async function refreshTokens() {
 ### Alternative Consideration: Access Token Lifetime
 
 **If CSRF on refresh is too problematic**, consider:
+
 - **Increase access token lifetime** from 5 minutes to 15-30 minutes
 - **Trade-off:** Longer-lived stolen access tokens vs simpler refresh flow
 - **Security impact:** Less frequent refresh = smaller CSRF attack surface
@@ -354,6 +379,7 @@ async function refreshTokens() {
 **Rationale:** Security over convenience - limits stolen session lifetime to 5 minutes (access token lifetime)
 
 **Justification:**
+
 - Security best practices align with requiring CSRF
 - Defense-in-depth principle demands multiple protection layers
 - Frontend complexity is manageable with modern frameworks
@@ -386,6 +412,7 @@ class CsrfHeaderMiddleware(MiddlewareMixin):
 ```
 
 **Pros:**
+
 - ✅ **Centralized visibility** - All exemptions in one place (easy to audit)
 - ✅ **Simple implementation** - Straightforward middleware logic
 - ✅ **Framework agnostic** - Works with any Django view/endpoint
@@ -394,6 +421,7 @@ class CsrfHeaderMiddleware(MiddlewareMixin):
 - ✅ **Regex support** - Can use patterns like `/api/public/*`
 
 **Cons:**
+
 - ❌ **Path maintenance** - Must remember to update list when adding/renaming endpoints
 - ❌ **Disconnect from code** - Exemption logic separated from endpoint definition
 - ❌ **Refactoring risk** - Endpoint URL changes can break exemption
@@ -456,6 +484,7 @@ def refresh_token(request):
 ```
 
 **Pros:**
+
 - ✅ **Explicit intent** - Exemption visible at endpoint definition
 - ✅ **Co-located logic** - Security decision near the code it affects
 - ✅ **Self-documenting** - Developer sees exemption immediately
@@ -465,6 +494,7 @@ def refresh_token(request):
 - ✅ **Scalable** - Works well as API grows (no central list to maintain)
 
 **Cons:**
+
 - ❌ **Scattered exemptions** - Harder to get global view of all exempt endpoints
 - ❌ **Implementation complexity** - Middleware needs to inspect view functions
 - ❌ **Django Ninja integration** - Need to handle Django Ninja's view wrapping
@@ -561,6 +591,7 @@ def refresh_token(request):
 ```
 
 **Benefits of Hybrid:**
+
 - ✅ **Best of both** - Path-based for infrastructure, decorator for application
 - ✅ **Clear separation** - Infrastructure exemptions centralized, app exemptions co-located
 - ✅ **Explicit app logic** - Application endpoints clearly marked
@@ -570,6 +601,7 @@ def refresh_token(request):
 - ✅ **Scalable** - Grows with API without central list bloat
 
 **Trade-offs:**
+
 - ⚠️ **Two patterns** - Developers need to know when to use each
 - ⚠️ **More code** - Slightly more complex middleware
 - ⚠️ **Documentation burden** - Must document when to use path vs decorator
@@ -596,11 +628,13 @@ def refresh_token(request):
 **For Task 5.5.6.2 (Document exempt path pattern):**
 
 **Immediate Action:**
+
 1. ✅ Document current path-based pattern in middleware comments
 2. ✅ Add clear examples of when to add paths to EXEMPT_PATH_PREFIXES
 3. ✅ Add warning about path typos and refactoring risks
 
 **Future Enhancement (Optional - separate task):**
+
 1. Implement hybrid approach (decorator + path-based)
 2. Migrate application endpoints to decorator pattern
 3. Keep infrastructure endpoints path-based
@@ -608,6 +642,7 @@ def refresh_token(request):
 5. Add examples and tests
 
 **Conclusion:**
+
 - **Current approach (path-based)**: Simple, works well for current scale
 - **Future consideration**: Hybrid approach when API grows (10+ exempt endpoints)
 - **Decision**: Keep path-based, document pattern clearly
@@ -619,6 +654,7 @@ def refresh_token(request):
 ### Quick Reference
 
 **CSRF Protection Essentials:**
+
 1. **Get token:** `GET /api/csrf/` → returns `{csrfToken: "..."}`
 2. **Send header:** `X-CSRFToken: <token>` on POST/PATCH/DELETE requests
 3. **Exempt endpoints:** login, register, logout, verify-email, resend-verification (no CSRF needed)
@@ -716,11 +752,13 @@ await fetch('/api/token/', {
 **Context:** OAuth headless migration (tasks-incidental-oauth-headless-migration.md) will add social login.
 
 **OAuth Callback Endpoints:**
+
 - `/_allauth/*/callback/` endpoints will need CSRF exemption
 - OAuth state parameter provides CSRF protection (different mechanism)
 - Add to `EXEMPT_PATH_PREFIXES` when implementing
 
 **OAuth Flow with CSRF:**
+
 1. User clicks "Login with Google/GitHub"
 2. Frontend initiates OAuth redirect to provider
 3. Provider redirects to `/_allauth/*/callback/`
@@ -749,6 +787,7 @@ EXEMPT_PATH_PREFIXES = [
 ```
 
 **Common Errors:**
+
 - **401 Unauthorized:** Invalid/missing JWT token (auth failed)
 - **403 Forbidden (CSRF):** Missing/invalid CSRF token
 - **429 Too Many Requests:** Rate limit exceeded
@@ -774,6 +813,7 @@ try {
 ### Testing Checklist
 
 **Before deploying frontend CSRF integration:**
+
 - [ ] Obtain CSRF token on app startup
 - [ ] Send `X-CSRFToken` header on POST/PUT/PATCH/DELETE
 - [ ] Verify exempt endpoints work without CSRF (login, register)
@@ -782,6 +822,7 @@ try {
 - [ ] Verify `credentials: 'include'` on all authenticated requests
 
 **Manual Testing:**
+
 1. Open DevTools → Network tab
 2. Trigger mutation (e.g., update profile)
 3. Verify `X-CSRFToken` header present
@@ -809,12 +850,14 @@ try {
 ### Monitoring Strategy
 
 **What to Monitor:**
+
 - **403 CSRF errors:** Potential attack OR frontend integration bug
 - **CSRF error rate spikes:** Check after frontend deployments
 - **Correlation with code changes:** New features breaking CSRF flow
 
 **Integration with Task 6 (Authentication Logging):**
 Task 6 will add comprehensive authentication event logging:
+
 - Failed login attempts (IP, username, user agent)
 - Token refresh attempts (successful and throttled)
 - CSRF failures already log via middleware (lines 96-102 in middleware.py):
@@ -829,6 +872,7 @@ Task 6 will add comprehensive authentication event logging:
 
 **Rate Limiting Context:**
 Django Ninja throttling (Task 3) provides baseline DDoS protection:
+
 - Login: 5 attempts/minute
 - Register: 3 attempts/hour
 - Refresh: 10 attempts/minute
@@ -836,6 +880,7 @@ Django Ninja throttling (Task 3) provides baseline DDoS protection:
 CSRF + rate limiting = defense-in-depth.
 
 **Production Monitoring Checklist:**
+
 - [ ] Monitor 403 error rates in application logs
 - [ ] Alert on >10 CSRF errors/hour (tunable based on traffic)
 - [ ] Track CSRF errors by endpoint (identify problematic flows)
@@ -859,18 +904,21 @@ grep "CSRF validation failed" /var/log/cinexplorer/backend.log | \
 ### Known Edge Cases (Documented and Tested)
 
 **1. Expired JWT + Valid CSRF**
+
 - **Behavior:** Returns 403 CSRF error (middleware runs before endpoint auth)
 - **Test:** `test_csrf_enforced_before_jwt_validation`
 - **Impact:** Minor UX issue - CSRF error shown before auth error
 - **Rationale:** Middleware ordering trade-off (acceptable)
 
 **2. CSRF Token Lifecycle**
+
 - **Behavior:** Single token valid for multiple requests (session lifetime)
 - **Test:** `test_csrf_token_valid_for_multiple_requests`
 - **Impact:** No need to fetch token per request (performance benefit)
 - **Django behavior:** CSRF tokens don't expire per-request
 
 **3. Refresh Endpoint CSRF Requirement**
+
 - **Behavior:** `/api/token/refresh/` requires CSRF token (Option A implemented)
 - **Test:** `test_refresh_endpoint_requires_csrf`
 - **Rationale:** Limits stolen session lifetime to 5 minutes (access token lifetime)
@@ -878,6 +926,7 @@ grep "CSRF validation failed" /var/log/cinexplorer/backend.log | \
 - **Decision:** Option A approved (security over convenience)
 
 **4. Path Prefix Matching (Mitigated)**
+
 - **Risk:** `/api/token/` would match both login and refresh endpoints
 - **Mitigation:** Explicit check for `/api/token/refresh/` in middleware (lines 97-101)
 - **Behavior:** Login exempt, refresh requires CSRF (as intended)
@@ -890,11 +939,13 @@ grep "CSRF validation failed" /var/log/cinexplorer/backend.log | \
 **When to Update `EXEMPT_PATH_PREFIXES` in middleware.py:**
 
 **Add new path when:**
+
 - Creating public auth endpoint (accessible before login)
 - Adding infrastructure endpoint (health checks, metrics)
 - Implementing OAuth callbacks (state parameter provides CSRF protection)
 
 **Do NOT add when:**
+
 - Endpoint requires authentication (has JWT cookie)
 - Endpoint performs state-changing operations with user data
 - Unsure → default to CSRF protection (more secure)
@@ -923,6 +974,7 @@ EXEMPT_PATH_PREFIXES = [
 ```
 
 **Refactoring Considerations:**
+
 - Prefix matching is powerful but risky (broad prefixes exempt too much)
 - URL changes must update this list (tests verify behavior)
 - Run CSRF test suite after URL structure changes
@@ -932,6 +984,7 @@ EXEMPT_PATH_PREFIXES = [
 ### Test Coverage Summary
 
 **Existing Tests (9 passing):**
+
 1. GET requests exempt from CSRF
 2. Login endpoint exempt
 3. Register endpoint exempt
@@ -943,6 +996,7 @@ EXEMPT_PATH_PREFIXES = [
 9. Unauthenticated requests fail with 401 (not 403)
 
 **New Tests (Task 5.5.6.5):**
+
 1. `test_csrf_enforced_before_jwt_validation` - Middleware ordering
 2. `test_csrf_token_valid_for_multiple_requests` - Token lifecycle
 3. `test_refresh_endpoint_requires_csrf` - Option A verification
@@ -956,23 +1010,27 @@ EXEMPT_PATH_PREFIXES = [
 **Status:** ✅ Complete and tested (2025-10-10)
 
 **Key Decisions:**
+
 - Custom middleware (workaround for Django Ninja bug #1464)
 - Path-based exemptions (simple, reliable for this project)
 - Refresh endpoint requires CSRF (Option A - security over convenience)
 - JWT cookie detection (not `request.user` - endpoint-level auth)
 
 **Frontend Requirements:**
+
 - Fetch token from `/api/csrf/`
 - Send `X-CSRFToken` header on mutations
 - Retry once on 403 CSRF errors
 - OAuth callbacks will be exempt (state parameter validates)
 
 **Next Steps:**
+
 - Task 6: Authentication logging (failed logins, token reuse)
 - Task 7: Environment-aware configuration
 - OAuth Headless Migration: Add social login with CSRF exemptions
 
 **Documentation:**
+
 - Frontend integration guide (this section)
 - Path maintenance guide (for future endpoints)
 - Edge case documentation (tested behaviors)
@@ -985,6 +1043,7 @@ EXEMPT_PATH_PREFIXES = [
 **Context**: Initial planning phase (2025-10-08) established priority order for security improvements based on risk assessment.
 
 **Immediate (Production Blockers)**:
+
 1. SESSION_COOKIE_SECURE, CSRF_COOKIE_SECURE
 2. Security headers (HSTS, X-Frame-Options)
 3. JWT_COOKIE_SAMESITE fix
@@ -1009,6 +1068,7 @@ EXEMPT_PATH_PREFIXES = [
 **Decision: Use Django Ninja built-in throttling instead of django-ratelimit**
 
 **Rationale:**
+
 - ✅ **Type safety**: Django Ninja has `py.typed` marker, fully type-safe (django-ratelimit has NO type annotations)
 - ✅ **Zero-tolerance compliant**: Passes Pyright strict mode without suppressions
 - ✅ **Native integration**: Built into Django Ninja framework (no additional package)
@@ -1022,6 +1082,7 @@ EXEMPT_PATH_PREFIXES = [
 **Current Need:** Django Ninja throttling requires Redis/Memcached for atomic operations (rate limiting state). This is a critical production security blocker (brute force vulnerability).
 
 **Rationale for adding Redis now:**
+
 - ✅ **Unblocks security work**: Enables Task 3 (rate limiting) immediately
 - ✅ **Foundation for future**: Same Redis instance will serve as Celery broker later (different database)
 - ✅ **Minimal scope**: Redis container only, no Celery yet (just throttling support)
@@ -1029,6 +1090,7 @@ EXEMPT_PATH_PREFIXES = [
 - 📊 **Strategic alignment**: Infrastructure foundation that future Backend Modernization extends
 
 **Redis Configuration Strategy:**
+
 - Use Redis database 0 for Django cache (throttling state)
 - Reserve Redis database 1 for future Celery broker (Backend Modernization PRD Task 6.0)
 - Document in docker-compose.yml and settings.py comments
@@ -1036,6 +1098,7 @@ EXEMPT_PATH_PREFIXES = [
 **Rate Format**: `'count/period'` where period: `s`(second), `m`(minute), `h`(hour), `d`(day)
 
 **Throttle Types:**
+
 - `AnonRateThrottle('5/m')` - Keys on IP address (for unauthenticated requests)
 - `UserRateThrottle('10/m')` - Keys on user ID (for authenticated requests)
 - Automatic 429 status code when limit exceeded
@@ -1049,6 +1112,7 @@ EXEMPT_PATH_PREFIXES = [
 **Technology**: django-ninja-jwt `token_blacklist` app (DRF-free, already installed)
 
 **Database Tables Created:**
+
 - `token_blacklist_outstandingtoken` - Tracks all issued tokens (JTI, user, creation time, expiry)
 - `token_blacklist_blacklistedtoken` - Tracks revoked tokens (foreign key to OutstandingToken, blacklisted_at timestamp)
 
@@ -1069,6 +1133,7 @@ SIMPLE_JWT = {
 ```
 
 **Expected Behavior:**
+
 - Refresh token lifetime: 14 days
 - Outstanding tokens accumulate during active user sessions
 - Blacklisted tokens created on each refresh (old token blacklisted, new token issued)
@@ -1117,6 +1182,7 @@ SIMPLE_JWT = {
 ### Error Response Catalog
 
 **400 Bad Request:**
+
 - Missing credentials: `{"error": "Username/email and password are required."}`
 - Invalid refresh token: `{"error": "Invalid or expired refresh token: <details>"}`
 - No refresh token: `{"error": "No valid refresh token found in cookies."}`
@@ -1124,26 +1190,31 @@ SIMPLE_JWT = {
 - Invalid verification key: `{"error": "Invalid or expired verification link."}`
 
 **401 Unauthorized:**
+
 - Invalid credentials: `{"error": "Unable to authenticate with provided credentials."}`
 - Token revoked (with dev detail):
     - Production: `{"error": "Token has been revoked. Please login again."}`
     - Development: `{"error": "...", "detail": "This refresh token has already been used and is no longer valid."}`
 
 **403 Forbidden:**
+
 - Email not verified: `{"error": "Please verify your email address before logging in. Check your email for the verification link."}`
 - CSRF validation failed (with dev detail):
     - Production: `{"error": "CSRF token missing or invalid."}`
     - Development: `{"error": "...", "detail": "CSRF validation failed for <METHOD> <PATH>. Ensure X-CSRFToken header matches csrftoken cookie."}`
 
 **409 Conflict:**
+
 - Forbidden username: `{"error": "Username \"<name>\" is not allowed."}`
 - Username exists: `{"error": "Username already associated with an existing account."}`
 - Email exists: `{"error": "Email address already associated with an existing account."}`
 
 **429 Too Many Requests:**
+
 - Rate limit exceeded: Automatic 429 response from Django Ninja throttling (no custom message needed)
 
 **500 Internal Server Error:**
+
 - Email sending failed: `{"error": "Registration failed. Unable to send verification email. Please try again later or contact support.", "email_sent": false}`
 
 ### Success Response Format (Different from Errors)
@@ -1164,6 +1235,7 @@ SIMPLE_JWT = {
 ### Implementation Changes (Task 6.1)
 
 **Files Modified:**
+
 1. `backend/apps/authentication/middleware.py` (lines 128-137):
    - Changed CSRF error from `{"detail": "..."}` to `{"error": "..."}`
    - Added development-only `detail` field with technical context
@@ -1192,6 +1264,7 @@ async function handleResponse(response: Response) {
 ```
 
 **Development vs Production:**
+
 - In development (`DEBUG=True`): Errors include `detail` field for debugging
 - In production (`DEBUG=False`): Errors only include user-facing `error` field
 - Frontend should display `error` field to users, log `detail` field if present
@@ -1209,6 +1282,7 @@ self.assertEqual(response.json()['error'], 'Expected error message')
 ```
 
 **Simplified test maintenance:**
+
 - Single field to check for errors (`error`)
 - Predictable error structure across all endpoints
 - No need to check multiple fields (`error`, `message`, `detail`)
@@ -1257,15 +1331,18 @@ self.assertEqual(response.json()['error'], 'Expected error message')
 **Decision**: Defer automatic alert thresholds for token reuse detection to future observability sprint.
 
 **Rationale:**
+
 - Current WARNING logs provide full audit trail for each reuse attempt
 - Alert thresholds should be designed holistically with monitoring dashboards and incident response workflows rather than as a point solution now
 - Current solution provides complete forensic data (user_id, IP, user_agent) per log entry
 
 **Current Implementation:**
+
 - Individual logs per reuse attempt with complete forensic data
 - Security team can manually review logs for patterns
 
 **Future Implementation Plan** (Observability Sprint):
+
 - Redis-based counter with sliding time window
 - Integrated with monitoring dashboards
 - Automatic alerting on threshold breach (e.g., 3+ reuse attempts from same IP in 1 hour)
@@ -1311,10 +1388,12 @@ old_refresh.blacklist()  # Manual blacklist call
 **Root Cause**: Angular/XSRF naming convention confusion. Django uses `csrftoken` by default, not `XSRF-TOKEN`.
 
 **Fix**: Updated test files to use correct double-submit cookie pattern:
+
 - Cookie: `csrftoken`
 - Header: `X-CSRFToken`
 
 **Files Modified:**
+
 - `test_security.py`
 - `test_user_api.py`
 
@@ -1363,6 +1442,7 @@ old_refresh.blacklist()  # Manual blacklist call
    - Better spent on full quality gates (Task 8) = HIGH ROI (production readiness)
 
 **Quality Metrics Summary:**
+
 - ✅ 93 total tests (85 baseline + 8 new coverage tests)
 - ✅ 100% pass rate
 - ✅ 0 linting violations
@@ -1371,6 +1451,7 @@ old_refresh.blacklist()  # Manual blacklist call
 - ✅ Primary API (api.py): 87.68% coverage (exceeds industry best practice)
 
 **References:**
+
 - Google Testing Blog: "Code Coverage Best Practices" (2020)
 - Martin Fowler: "Test Coverage" (bliki), "The Practical Test Pyramid" (2018)
 - Django REST Framework: "Testing Pragmatic Approach" (2024)
@@ -1381,11 +1462,13 @@ old_refresh.blacklist()  # Manual blacklist call
 ## External References
 
 **Research Reports:**
+
 - External Research Audit Report: 2025-10-08 comprehensive authentication audit
 - External Research Report: 2025-10-13 Django Ninja throttling testing patterns and lazy evaluation (Task 3.6)
 - External Research Report: 2025-10-14 pragmatic testing approach and coverage thresholds (Task 7.5.9)
 
 **Standards & Best Practices:**
+
 - OWASP Authentication Cheat Sheet: <https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html>
 - OWASP Session Management Cheat Sheet: <https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html>
 - RFC 8725: JWT Best Current Practices: <https://datatracker.ietf.org/doc/html/rfc8725>
@@ -1393,6 +1476,7 @@ old_refresh.blacklist()  # Manual blacklist call
 - Martin Fowler: "Test Coverage" (bliki), "The Practical Test Pyramid" (2018)
 
 **Framework Documentation:**
+
 - Django Security Settings: <https://docs.djangoproject.com/en/5.2/ref/settings/#security>
 - Django Settings Best Practices: <https://docs.djangoproject.com/en/5.2/topics/settings/> (lazy evaluation guidance)
 - Django Ninja Throttling: <https://django-ninja.dev/guides/throttling/>

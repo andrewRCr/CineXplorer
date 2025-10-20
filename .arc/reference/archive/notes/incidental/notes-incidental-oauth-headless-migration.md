@@ -54,6 +54,7 @@ This notes file documents research findings, technical decisions, and implementa
 **Official Types**: ✅ YES - Has `py.typed` marker (PEP 561 compliant)
 
 **Critical Gap Found**: `RefreshToken.for_user()` returns `Token` instead of `RefreshToken`
+
 - **Impact**: Mypy loses track of `access_token` property (only exists on `RefreshToken`, not base `Token`)
 - **Error Example**:
 
@@ -79,16 +80,19 @@ class RefreshToken(Token):
 **Decision**: ✅ **KEEP custom stubs** - Fix real type safety gap in official library
 
 **Files**:
+
 - `backend/stubs/ninja_jwt/tokens.pyi` (120 lines) - Token classes
 - `backend/stubs/ninja_jwt/exceptions.pyi` (40 lines) - Exception hierarchy
 - `backend/stubs/ninja_jwt/settings.pyi` (75 lines) - Settings API
 
 **Usage Locations**:
+
 - `apps/authentication/token_strategy.py` - Token generation
 - `apps/authentication/api.py` - Login endpoint token creation
 - `apps/authentication/auth_ninja.py` - JWT cookie authentication
 
 **Maintenance Notes**:
+
 - Last verified: 2025-01-27 against ninja-jwt 5.3.x
 - Synchronized with upstream API (fork of djangorestframework-simplejwt)
 - Zero `typing.Any` usage per DEVELOPMENT-RULES.md
@@ -100,11 +104,13 @@ class RefreshToken(Token):
 **Official Types**: ❌ NO - No `py.typed` marker, no community stubs package
 
 **Modules Requiring Stubs**:
+
 1. `allauth.account.adapter` - Custom adapter for email sending
 2. `allauth.account.models` - EmailAddress, EmailConfirmation models
 3. **`allauth.headless.tokens`** - Token Strategy API (NEW, needed for Task 5)
 
 **Current Custom Stubs**:
+
 - `backend/stubs/allauth/account/adapter.pyi` (verified 2025-01-08)
 - `backend/stubs/allauth/account/models.pyi` (verified 2025-01-08)
 - ❌ `backend/stubs/allauth/headless/tokens.pyi` - **MISSING** (blocks Task 5.4)
@@ -120,11 +126,13 @@ class RefreshToken(Token):
 **Official Types**: ✅ YES - Dedicated stub package from typeddjango organization
 
 **Known Gaps** (documented in GitHub issues):
+
 - `UserManager.create_user()` - Incomplete signature with custom user models
 - `AbstractBaseUser` - Missing attributes with custom user models
 - Custom manager type resolution issues
 
 **Our Supplemental Stubs**:
+
 - `backend/stubs/django/contrib/auth/models.pyi` - Fills django-stubs gaps
 - Last verified: 2025-01-27 against Django 5.1.x + django-stubs 5.1.x
 
@@ -176,6 +184,7 @@ class JWTTokenStrategy(AbstractTokenStrategy):
 ```
 
 **Issues**:
+
 1. **Signature mismatch**: `create_access_token()` returns `tuple[str, int]` but interface expects `Optional[str]`
 2. **Unused method**: `create_refresh_token()` not part of official API - never called by allauth
 3. **Missing abstract methods**: Not implementing required `create_session_token()` and `lookup_session()`
@@ -184,6 +193,7 @@ class JWTTokenStrategy(AbstractTokenStrategy):
 **Root Cause**: Implementation appears based on outdated/incorrect documentation or misunderstanding of Token Strategy API
 
 **Impact**:
+
 - Code may not work correctly with allauth headless mode
 - Abstract method violations should cause runtime errors
 - `create_refresh_token()` is dead code (never called)
@@ -193,11 +203,13 @@ class JWTTokenStrategy(AbstractTokenStrategy):
 ### Configuration Issues Found
 
 **mypy.ini Missing Stubs Path**:
+
 - **Before**: `mypy_path = apps`
 - **After**: `mypy_path = apps, stubs` (FIXED in this session)
 - **Impact**: Mypy was using installed package types instead of our custom stubs
 
 **pyrightconfig.json** (already correct):
+
 - Has `"stubPath": "stubs"` - Pyright was finding custom stubs correctly
 
 ---
@@ -227,18 +239,22 @@ class JWTTokenStrategy(AbstractTokenStrategy):
 From comprehensive type checking test (mypy output):
 
 **allauth/account/adapter.pyi**:
+
 - Unused `type: ignore` comments need cleanup
 
 **allauth/account/models.pyi**:
+
 - Manager type issues
 - Unused `type: ignore` comments
 - Related model reference issues
 
 **django/contrib/auth/models.pyi**:
+
 - Type variable issues with `Manager[AbstractUser]`
 - Unused `type: ignore` comments
 
 **All stub files need**:
+
 - Verification against current library versions
 - Cleanup of unused type: ignore comments
 - Correction of type annotations causing mypy errors
@@ -252,6 +268,7 @@ From comprehensive type checking test (mypy output):
 **Goal**: Determine if backend starts and if runtime errors occur
 
 **Steps**:
+
 1. Start backend container
 2. Check logs for Python import/runtime errors
 3. Test OAuth flow manually (optional)
@@ -265,6 +282,7 @@ From comprehensive type checking test (mypy output):
 **Goal**: Correct `token_strategy.py` to match `AbstractTokenStrategy` interface
 
 **Steps**:
+
 1. Research allauth Token Strategy API documentation
    - URL: <https://docs.allauth.org/en/dev/headless/tokens.html>
    - Check allauth source code for how token strategy is invoked
@@ -303,12 +321,14 @@ backend/stubs/allauth/headless/
 **3b) Fix existing stub issues**
 
 For each existing stub file:
+
 1. Run mypy and collect all errors
 2. Fix type variable issues
 3. Remove unused `type: ignore` comments
 4. Verify signatures match current library versions
 
 Files to fix:
+
 - `backend/stubs/allauth/account/adapter.pyi`
 - `backend/stubs/allauth/account/models.pyi`
 - `backend/stubs/django/contrib/auth/models.pyi`
@@ -325,6 +345,7 @@ docker compose exec backend mypy apps/authentication/auth_ninja.py --config-file
 **3d) Remove type: ignore from token_strategy.py**
 
 After stubs are correct:
+
 - Should have 0 `type: ignore` comments
 - Or document remaining ones with inline justification per DEVELOPMENT-RULES.md
 
@@ -344,6 +365,7 @@ docker compose -f ../infrastructure/docker-compose.yml exec backend mypy apps/au
 ```
 
 **Success Criteria**:
+
 - No `error:` lines in mypy output
 - Only `information:` level warnings for known Django ORM limitations
 - No new `type: ignore` comments needed
@@ -355,6 +377,7 @@ docker compose -f ../infrastructure/docker-compose.yml exec backend mypy apps/au
 **Goal**: Verify backend restarts without errors after token strategy changes
 
 **Steps**:
+
 1. Restart backend container
 2. Check startup logs for errors
 3. Test Django system check: `python manage.py check`
@@ -366,6 +389,7 @@ docker compose -f ../infrastructure/docker-compose.yml exec backend mypy apps/au
 #### Implementation Completion
 
 **Phases 6-9 Outcome**: All OAuth tasks completed successfully (Tasks 1-9), including:
+
 - Testing and Verification (E2E OAuth flows with manual validation)
 - Documentation and Cleanup (strategy doc, console.log cleanup)
 - Full quality gate validation (197 backend + 333 frontend tests passing)
@@ -376,21 +400,25 @@ docker compose -f ../infrastructure/docker-compose.yml exec backend mypy apps/au
 ### Related Files
 
 **Documentation**:
+
 - `.arc/reference/strategies/strategy-type-safety.md` - Type safety strategy
 - `.arc/reference/constitution/DEVELOPMENT-RULES.md` - Quality gate standards
 - `.arc/active/tasks-incidental-oauth-headless-migration.md` - Task tracking
 
 **Custom Stubs**:
+
 - `backend/stubs/ninja_jwt/` - JWT token type stubs (KEEP)
 - `backend/stubs/allauth/account/` - Allauth account stubs (KEEP, needs fixes)
 - `backend/stubs/allauth/headless/` - Allauth headless stubs (CREATE)
 - `backend/stubs/django/contrib/auth/` - Django auth stubs (KEEP, needs fixes)
 
 **Configuration**:
+
 - `backend/mypy.ini` - MyPy config (FIXED: added stubs to mypy_path line 20)
 - `backend/pyrightconfig.json` - Pyright config (already correct)
 
 **Implementation**:
+
 - `backend/apps/authentication/token_strategy.py` - NEEDS FIX (API mismatch)
 
 ---
@@ -398,6 +426,7 @@ docker compose -f ../infrastructure/docker-compose.yml exec backend mypy apps/au
 ### Investigation Resolution
 
 **Questions Answered**:
+
 1. **`create_refresh_token()` usage**: Not part of official API - backend worked without it
 2. **Token strategy signatures**: Implementation worked correctly with full headless mode
 3. **Abstract methods**: Implementation satisfied requirements through correct configuration
@@ -435,6 +464,7 @@ docker compose -f ../infrastructure/docker-compose.yml exec backend mypy apps/au
 **Symptom**: OAuth callback succeeds (302 redirect) but only creates Django session cookie - JWT access/refresh tokens never set in browser
 
 **Testing Steps That Revealed Issue**:
+
 1. Cleared all cookies and tested fresh OAuth flow with Google
 2. OAuth redirect initiated successfully (Google OAuth URL generated)
 3. Callback URL invoked correctly after Google authentication
@@ -446,6 +476,7 @@ docker compose -f ../infrastructure/docker-compose.yml exec backend mypy apps/au
 **Configuration Issue**: `HEADLESS_ONLY = False` (line 307 in settings.py) causes "mixed mode" behavior
 
 **What Mixed Mode Does**:
+
 - Uses headless API for OAuth **initiation** (`/_allauth/browser/v1/auth/provider/redirect`)
 - Uses traditional OAuth **callback** (redirects to `LOGIN_REDIRECT_URL`)
 - Token Strategy `create_access_token_payload()` generates tokens as dict for JSON response
@@ -453,6 +484,7 @@ docker compose -f ../infrastructure/docker-compose.yml exec backend mypy apps/au
 - Result: Tokens generated but never set as HTTP-only cookies
 
 **Historical Context**:
+
 - Previous implementation had `CustomSocialAccountAdapter.save_user()` override
 - That adapter method manually set JWT cookies after OAuth callback
 - Adapter override was intentionally removed in Task 5.3.3 during security updates
@@ -481,6 +513,7 @@ docker compose -f ../infrastructure/docker-compose.yml exec backend mypy apps/au
 ```
 
 **Why Token Strategy Wasn't Invoked**:
+
 - Token Strategy is only used by `allauth.headless` API endpoints
 - Traditional `allauth.socialaccount` URLs don't use Token Strategy API
 - `HEADLESS_ONLY = False` allows both URL patterns to coexist
@@ -492,17 +525,20 @@ docker compose -f ../infrastructure/docker-compose.yml exec backend mypy apps/au
 **Fix**: Set `HEADLESS_ONLY = True` in settings.py (line 307)
 
 **Why This Works**:
+
 - Forces all OAuth flows through headless API endpoints
 - Ensures callback uses `/_allauth/browser/v1/auth/provider/callback`
 - Headless callback properly invokes Token Strategy
 - Tokens set as HTTP-only cookies before redirect to frontend
 
 **Verification Needed**:
+
 - All code already uses `/_allauth/` endpoints (verified in Task 5.6.2)
 - CSRF exemption already added for `/_allauth/` paths in middleware
 - No code depends on traditional `/accounts/` URLs
 
 **Impact**:
+
 - Single configuration change (`False` → `True`)
 - No code changes required
 - Existing Token Strategy implementation works correctly with full headless mode
@@ -510,16 +546,19 @@ docker compose -f ../infrastructure/docker-compose.yml exec backend mypy apps/au
 ### Lessons Learned
 
 **Mixed Mode Anti-Pattern**:
+
 - Don't mix headless and traditional allauth URLs in same application
 - Token Strategy API only works with headless endpoints
 - `HEADLESS_ONLY = False` useful for gradual migration, not final state
 
 **Token Strategy Scope**:
+
 - Only invoked by `allauth.headless` API endpoints
 - Does not affect traditional `allauth.socialaccount` callback flow
 - Integration point is headless API, not signal/middleware layer
 
 **Why Previous Implementation Worked**:
+
 - `CustomSocialAccountAdapter.save_user()` was signal-based approach
 - Worked with traditional OAuth callback URLs
 - Token Strategy API is cleaner but requires full headless mode
@@ -527,14 +566,17 @@ docker compose -f ../infrastructure/docker-compose.yml exec backend mypy apps/au
 ### Related Files
 
 **Configuration**:
+
 - `backend/config/settings.py:307` - `HEADLESS_ONLY` setting (needs change to True)
 - `backend/apps/authentication/middleware.py` - CSRF exemption for `/_allauth/` paths
 
 **Implementation**:
+
 - `backend/apps/authentication/token_strategy.py` - JWT Token Strategy (works correctly)
 - `backend/config/urls.py:30` - Headless URL routing (already configured)
 
 **Frontend**:
+
 - `frontend/src/pages/user/Login.tsx:258-312` - OAuth handlers (already use headless endpoints)
 - `frontend/src/hooks/useAuth.ts:62-92` - OAuth callback detection (expects JWT cookies)
 
@@ -555,6 +597,7 @@ docker compose -f ../infrastructure/docker-compose.yml exec backend mypy apps/au
 ### This Task List (OAuth Incidental) - What We Do
 
 **Backend Automated Tests** (Task 6.9.7):
+
 - 8+ tests in `test_session_auth.py`
 - Session authentication works
 - JWT authentication still works
@@ -562,12 +605,14 @@ docker compose -f ../infrastructure/docker-compose.yml exec backend mypy apps/au
 - Token refresh works
 
 **Minimal Watchlist Implementation** (Task 7) - Testing Infrastructure:
+
 - Enrichment service for user data (class-based with DI)
 - Discovery endpoints enriched with user_movie_data
 - New watchlist endpoint: GET `/api/user-movie-data/movies?watchlist=true`
 - Prerequisite for Manual E2E Validation (Task 8)
 
 **Manual E2E Validation** (Task 8) - Critical Path Only:
+
 - ✅ OAuth flows work (Google, GitHub)
 - ✅ Session cookies authenticate correctly
 - ✅ Watchlist works (proves session auth + API integration)
@@ -576,6 +621,7 @@ docker compose -f ../infrastructure/docker-compose.yml exec backend mypy apps/au
 - ❌ NOT comprehensive - just prove it works
 
 **Quality Gates** (Task 6.10) - Incremental Only:
+
 - ✅ All backend tests pass (entire suite, verify no regressions)
 - ✅ All frontend tests pass
 - ✅ Zero linting violations
@@ -588,6 +634,7 @@ docker compose -f ../infrastructure/docker-compose.yml exec backend mypy apps/au
 See `.arc/active/feature/tasks-api-layer-modernization-p2.md`.
 
 **Comprehensive Integration Testing** (OAuth + UserMovieData + Full Workflows):
+
 - ✅ OAuth users → Full watchlist CRUD (create, update, delete, list)
 - ✅ OAuth users → Profile updates, password changes (if applicable)
 - ✅ JWT users → Same workflows, verify isolation
@@ -597,12 +644,14 @@ See `.arc/active/feature/tasks-api-layer-modernization-p2.md`.
 - ✅ Multi-tab coordination (if time permits, not critical)
 
 **Regression Testing** (5.6.2-5.6.3):
+
 - Quick smoke test: "OAuth still works after Phase 2 changes"
 - NOT full validation (already done in OAuth incidental)
 
 ### API Layer P2 Phase 6 - Final Certification
 
 **Full Project Quality Gates** (6.5):
+
 - ✅ 70%+ test coverage across ALL domains (Movie, Core, Auth, UserMovieData)
 - ✅ 100% test pass rate (all domains)
 - ✅ Zero type errors (entire API layer - Phase 1 + Phase 2)
@@ -610,6 +659,7 @@ See `.arc/active/feature/tasks-api-layer-modernization-p2.md`.
 - ✅ Production certification: "We're covered, we can move on from API layer"
 
 **What This Means**:
+
 - OAuth incidental = "OAuth works"
 - API P2 Task 5.6 = "OAuth + features work together"
 - API P2 Phase 6 = "Entire API layer is production-ready"
@@ -617,6 +667,7 @@ See `.arc/active/feature/tasks-api-layer-modernization-p2.md`.
 ### Backend Modernization (Later) - Infrastructure
 
 **NOT in OAuth or API Layer P2**:
+
 - ❌ Playwright E2E automation (dedicated task after API layer complete)
 - ❌ Redis/Celery infrastructure
 - ❌ Performance optimization
@@ -645,6 +696,7 @@ See `.arc/upcoming/tasks/tasks-backend-modernization.md` for future work.
 **Context**: Backend implementation (Tasks 7.1-7.4) completed before tests - protocol violation discovered during quality checks
 
 **Corrective Actions Taken**:
+
 1. ✅ Updated DEVELOPMENT-RULES v2.7 with explicit Test-First Protocol section
 2. ✅ Restructured TECHNICAL-ARCHITECTURE to remove methodology duplication
 3. ✅ Added retroactive test tasks (7.1a, 7.2a, 7.3a) with comprehensive coverage
@@ -688,6 +740,7 @@ See `.arc/upcoming/tasks/tasks-backend-modernization.md` for future work.
 **Architecture Decision** (2025-10-16): Custom hook facade pattern chosen for movie interactions to survive TanStack Query migration
 
 **Context**: Upcoming Frontend Modernization will introduce TanStack Query + Redux Toolkit for state management. Need to choose implementation approach that:
+
 1. Works for OAuth validation timeline (minimal implementation now)
 2. Minimizes refactoring effort during Frontend Modernization
 3. Establishes patterns that survive migration
@@ -790,12 +843,14 @@ const { toggleWatchlist, isUpdating } = useMovieActions({ movie });
 During Task 8.1.5 validation, we discovered the JWT authentication pattern is **hybrid**, not pure cookie-based:
 
 **JWT Authentication (Email/Password) Storage**:
+
 - ✅ `refresh_token` cookie (HttpOnly, Secure, 14-day lifetime) - XSS-proof
 - ✅ `access_token` sessionStorage (readable by JS, 5-min lifetime) - allows instant auth checks
 - ✅ `csrftoken` cookie (readable by JS) - Django CSRF protection
 - ❌ NO `access_token` cookie (intentional design choice)
 
 **OAuth Authentication (Google/GitHub) Storage**:
+
 - ✅ `sessionid` cookie (HttpOnly, Secure) - Django session
 - ✅ `csrftoken` cookie (readable by JS) - Django CSRF protection
 - ❌ NO JWT tokens (access_token or refresh_token) anywhere
@@ -803,6 +858,7 @@ During Task 8.1.5 validation, we discovered the JWT authentication pattern is **
 **Why Hybrid Design?**
 
 Security + UX trade-off:
+
 1. **Access token in localStorage**: Frontend can check auth instantly without network call
 2. **Short lifetime (5 min)**: XSS attacks only steal 5-min token, not 14-day token
 3. **Refresh token in HttpOnly cookie**: Long-lived token XSS-proof, auto-sent with requests
@@ -843,6 +899,7 @@ if (refreshToken) {
 ```
 
 **Task 8 Validation Notes**:
+
 - Task 8.1.5 updated to reflect hybrid pattern (refresh_token cookie + access_token sessionStorage)
 - Task 8.2.2 clarified: OAuth users have NO JWT tokens anywhere (only sessionid cookie)
 - Implementation is CORRECT and more secure than pure cookie approach
@@ -857,6 +914,7 @@ if (refreshToken) {
 ### Research Findings
 
 **External Research Agent Investigation** (2025-10-15):
+
 - Analyzed django-allauth documentation, official React SPA example, community resources
 - Key finding: OAuth callback flow misunderstood - tokens delivered via URL parameters, not just cookies
 - Documentation: `.arc/active/incidental/research-django-allauth-headless-oauth.md` (comprehensive report)
@@ -868,6 +926,7 @@ if (refreshToken) {
 **Actual purpose of callback_url**: Tells django-allauth where to send USER after OAuth completes
 
 **OAuth Flow (Correct Understanding)**:
+
 1. Frontend POSTs to `/_allauth/browser/v1/auth/provider/redirect` with `callback_url=/login`
 2. Django redirects browser to Google OAuth
 3. Google redirects to `/accounts/google/login/callback/` (Django backend)
@@ -878,30 +937,36 @@ if (refreshToken) {
 ### Configuration Fixes Applied
 
 **Backend** (settings.py):
+
 - Added `localhost:8000` to ALLOWED_HOSTS (OAuth callback_url validation)
 - Added `localhost:5173` to ALLOWED_HOSTS (frontend callback_url validation)
 
 **Frontend** (useAuth.ts):
+
 - PRIMARY: Extract tokens from URL parameters (`access_token`, `expires_in`, `issued_at`)
 - Store access token in localStorage when found in URL
 - Clean up URL with `window.history.replaceState()` (avoid token exposure in browser history)
 - FALLBACK: Check cookie/localStorage for existing sessions
 
 **OAuth Providers**:
+
 - Google Cloud Console: redirect URI = `http://localhost:8000/accounts/google/login/callback/`
 - GitHub OAuth App: callback URL = `http://localhost:8000/accounts/github/login/callback/`
 
 ### Files Modified
 
 **Backend**:
+
 - `backend/config/settings.py` - ALLOWED_HOSTS updated
 
 **Frontend**:
+
 - `frontend/src/hooks/useAuth.ts` - OAuth callback handler updated to extract tokens from URL
 
 ### Why Previous Attempts Failed
 
 **Attempt 1-4** (middleware/adapters): Tried to intercept OAuth callback response before Token Strategy ran
+
 - **Problem**: Token Strategy IS the official extension point - no need to intercept
 - **Problem**: Tokens delivered via redirect URL parameters, not response body or cookies during OAuth callback
 - **Problem**: Mixed mode (headless initiation + traditional callback) works correctly with `HEADLESS_ONLY=True`

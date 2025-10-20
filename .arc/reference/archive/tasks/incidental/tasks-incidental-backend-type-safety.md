@@ -11,12 +11,14 @@
 **Why Now**: External research audit revealed critical architectural issue with our type safety tooling. We're using `django-stubs` (mypy-specific, requires mypy plugin) with Pyright as our primary checker. This is fundamentally broken and causing inflated error counts.
 
 **Discovery**: During security updates Task 3, we upgraded the hybrid type check script to check entire `authentication/` app instead of just `api.py`. This revealed 141 type errors. Investigation and external research determined:
+
 - ❌ **Root Cause**: Using `django-stubs` with Pyright is incompatible (django-stubs requires mypy plugin that Pyright cannot use)
 - ✅ **Solution**: `django-types` (forked from django-stubs July 2025 specifically for Pyright compatibility)
 - ⚠️ **Hybrid Complexity**: Running both Pyright + MyPy adds complexity without proportional value
 - 📊 **Current CI**: MyPy non-blocking during Phase 2 migration, already experiencing django-stubs internal errors
 
 **Impact**:
+
 - Type checking is degraded (Pyright can't properly infer Django ORM types without correct stubs)
 - 141 errors in authentication app likely inflated due to stub mismatch
 - False confidence from checking selective files instead of entire apps
@@ -24,6 +26,7 @@
 - Cannot achieve true zero-error baseline until tooling fixed
 
 **External Research**: Comprehensive validation of Django type safety best practices (2025-10-08)
+
 - Validated our philosophy (zero-tolerance, custom stubs, avoiding `Any`) aligns with industry leaders (Zulip, Sentry)
 - Identified `django-types` as correct solution for Pyright
 - Recommended Pyright-only over hybrid approach (simpler, faster, Python 3.13 support)
@@ -32,6 +35,7 @@
 ## Scope
 
 **Will Do**:
+
 - Replace `django-stubs` with `django-types` (Pyright-compatible stub library)
 - Remove MyPy entirely (from CI, scripts, requirements, configuration)
 - Update Pyright configuration for optimal django-types integration
@@ -45,6 +49,7 @@
 - Document acceptable information-level warnings (Django ORM limitations per django-types)
 
 **Won't Do** (deferred to follow-up task list created in Task 14):
+
 - Fixing actual type errors discovered in audit (592 errors - separate task list for immediate fixing after this current task list completed)
 - Adding type stub validation tests (nice-to-have, not blocking)
 - Implementing type coverage dashboard (tooling enhancement, not critical)
@@ -356,29 +361,35 @@
 ## Relevant Files
 
 **Type Checking Configuration:**
+
 - `backend/pyrightconfig.json` - Pyright configuration (updated for django-types)
 - `backend/mypy.ini` - DELETED (MyPy removed)
 - `backend/scripts/type_check.py` - Rewritten for Pyright-only, comprehensive app coverage
 
 **Dependencies:**
+
 - `backend/requirements/req.txt` - Added django-types, removed django-stubs and mypy
 
 **Custom Type Stubs:**
+
 - `backend/stubs/django/contrib/auth/` - Review for redundancy with django-types, may delete
 - `backend/stubs/allauth/` - Keep (no official stubs)
 - `backend/stubs/ninja_jwt/` - Keep (incomplete official typing)
 - `backend/stubs/environ/` - Keep if exists (django-environ lacks stubs)
 
 **CI/CD:**
+
 - `.github/workflows/ci.yml` - Updated backend type checking step (MyPy → Pyright, made blocking)
 
 **Documentation:**
+
 - `backend/docs/type-coverage-status.md` - NEW: Per-app baseline and tracking
 - `.arc/reference/constitution/DEVELOPMENT-RULES.md` - Updated Python type safety section
 - `.arc/reference/constitution/TECHNICAL-ARCHITECTURE.md` - Updated type checking section
 - `.arc/reference/strategies/strategy-type-safety.md` - COMPREHENSIVELY UPDATED: Version 2.0 with Pyright-only, django-types, enhanced patterns and guidelines
 
 **Task Lists:**
+
 - `.arc/active/tasks-api-layer-modernization-p2.md` - Updated Task 7.6 references
 - `.arc/active/CURRENT-SESSION.md` - Session tracking
 
@@ -387,6 +398,7 @@
 ### Why Pyright-Only (Not Hybrid)
 
 **Decision Rationale:**
+
 1. ✅ **Python 3.13 Support**: Pyright fully supports Python 3.13, MyPy support limited
 2. ✅ **Performance**: Pyright 3-5x faster than MyPy (shorter CI times, faster local checks)
 3. ✅ **Consistency**: Same checker locally (VSCode/Pylance) and in CI
@@ -399,11 +411,13 @@
 ### django-types vs django-stubs
 
 **Critical Difference:**
+
 - `django-stubs`: Requires MyPy plugin for Django ORM type inference (Pyright cannot use plugins)
 - `django-types`: Forked from django-stubs July 2025 specifically for Pyright compatibility
 - Using django-stubs with Pyright results in degraded type checking (root cause of inflated errors)
 
 **django-types Details:**
+
 - Version: 0.22.0 (latest as of 2025-07-15)
 - Actively maintained fork
 - Removes MyPy plugin dependency
@@ -431,6 +445,7 @@
 ```
 
 **Why This Matters:**
+
 - Previous approach gave false confidence (1 file clean ≠ entire app clean)
 - Discovered 141 errors when checking full `authentication/` app
 - Must check ENTIRE apps to ensure comprehensive type safety
@@ -470,24 +485,28 @@ These are degraded from "error" to "information" per Zulip's approach and resear
 **Task 7.1 Discovery: Custom Django Stubs Provide Unique Value**
 
 Testing revealed custom `django/contrib/auth/` stubs are NOT redundant with django-types:
+
 - **Without custom stubs**: `user.id` triggers `reportAttributeAccessIssue` → 2 errors in authentication/api.py
 - **With custom stubs**: `user.id` properly typed → 0 errors
 - **Root cause**: django-types doesn't explicitly declare the `id` field on AbstractUser (inherited from models.Model), Pyright can't infer it
 - **Decision**: KEEP custom Django stubs - they **supplement** django-types (not replace it)
 
 **Current Custom Stubs:**
+
 1. ✅ `django/contrib/auth/` - **KEEP** (supplements django-types for explicit `id` field declaration - eliminates `reportAttributeAccessIssue` on `user.id`)
 2. ✅ `allauth/` - **KEEP** (no official stubs, stable API)
 3. ✅ `ninja_jwt/` - **KEEP** (incomplete official typing)
 4. ✅ `environ/` - **KEEP** (django-environ lacks official stubs)
 
 **Maintenance Contract Requirements** (per stub file):
+
 - Version synchronization note
 - Last verified date
 - Upgrade checklist
 - Explicit acknowledgment of maintenance trade-off
 
 **Quarterly Review Process** (document for future):
+
 - Check upstream for official stub improvements
 - Verify stubs match current library versions
 - Consider upstreaming high-quality stubs to typeshed
@@ -497,12 +516,14 @@ Testing revealed custom `django/contrib/auth/` stubs are NOT redundant with djan
 **Created in Task 14** - `.arc/active/tasks-incidental-fix-backend-type-errors.md`
 
 **Scope:**
+
 - Fix ALL 592 type errors discovered in baseline audit
 - Progressive approach: Movie (2) → UserMovieData (58) → Config (58) → Auth (194) → Core (280)
 - Categorized by error type (real errors vs framework limitations)
 - Target: Zero errors across entire backend immediately after this task list completes
 
 **Actual Baseline** (from Task 5 initial run):
+
 - Core app: 280 errors
 - Authentication app: 194 errors
 - UserMovieData app: 58 errors
@@ -516,6 +537,7 @@ Testing revealed custom `django/contrib/auth/` stubs are NOT redundant with djan
 **Completion Date**: 2025-10-09
 
 **Summary:**
+
 - ✅ Tooling modernized from hybrid (Pyright + MyPy with django-stubs) to Pyright-only with django-types
 - ✅ Type check script upgraded to comprehensive app coverage (not selective files)
 - ✅ Baseline audit completed with accurate error counts (592 total, 351 target architecture)
@@ -524,18 +546,21 @@ Testing revealed custom `django/contrib/auth/` stubs are NOT redundant with djan
 - ✅ Follow-up task list created for fixing 351 target architecture errors
 
 **Tooling Changes:**
+
 - Replaced `django-stubs` with `django-types` 0.22.0 (Pyright-compatible)
 - Removed MyPy entirely (CI, scripts, requirements, configuration)
 - Updated Pyright configuration for optimal django-types integration
 - CI now uses Pyright as blocking quality gate (was non-blocking MyPy)
 
 **Script Improvements:**
+
 - `backend/scripts/type_check.py` now checks ENTIRE apps (not selective files)
 - Comprehensive coverage: All 6 modules (core, auth, movie, user_movie_data, accounts, config)
 - Pyright-only execution (3-5x faster than hybrid)
 - Per-app error reporting with verbose mode
 
 **Baseline Audit Results:**
+
 - **Total Errors**: 592 (comprehensive, accurate)
 - **Legacy DRF (Excluded)**: 241 errors in 9 files
 - **Target Architecture**: 351 errors
@@ -547,6 +572,7 @@ Testing revealed custom `django/contrib/auth/` stubs are NOT redundant with djan
     - Accounts app: 0 errors ✅ (perfect reference!)
 
 **Documentation Created/Updated:**
+
 - `.arc/active/notes-type-coverage-status.md` - Comprehensive baseline tracking (gitignored)
 - `.arc/reference/strategies/strategy-type-safety.md` - v2.0 with Pyright-only, django-types patterns
 - `.arc/reference/constitution/DEVELOPMENT-RULES.md` - Updated Python type safety section
@@ -556,6 +582,7 @@ Testing revealed custom `django/contrib/auth/` stubs are NOT redundant with djan
 
 **Legacy Code Exclusions (Temporary):**
 Added to `backend/pyrightconfig.json`:
+
 - `apps/authentication/views.py` (legacy DRF)
 - `apps/authentication/serializers.py` (legacy DRF)
 - `apps/user_movie_data/views.py` (legacy DRF)
@@ -569,6 +596,7 @@ Added to `backend/pyrightconfig.json`:
 **Cleanup Plan**: Exclusions will be removed in `tasks-api-layer-modernization-p2.md` Task 7.1.9 after files deleted
 
 **Next Steps:**
+
 1. Execute follow-up task list: `tasks-incidental-fix-backend-type-errors.md` (8-11.5 hours estimated)
 2. Resume security updates (tasks-incidental-security-updates.md Task 4)
 3. Resume OAuth headless migration (tasks-incidental-oauth-headless-migration.md Task 5)

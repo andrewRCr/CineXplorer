@@ -11,17 +11,20 @@
 **Why Now**: During Task 3.6 in `tasks-incidental-security-updates.md` (throttling refactor), we needed test infrastructure for selective throttling tests. External research revealed pytest provides substantial benefits for Django Ninja API testing beyond just this use case.
 
 **Current State** (Initial):
+
 - ~104 test methods across 11 test files (initial estimate was inflated by counting management commands)
 - 19 TestCase classes using Django's unittest framework
 - ~3,382 lines of test code
 - Tests run via `python manage.py test --keepdb`
 
 **Actual State** (Post-Migration):
+
 - 103 tests across 11 test files (all converted to pytest)
 - 0 TestCase classes remaining (all converted to function-based tests)
 - Tests run via `pytest apps/` or `pytest -n auto apps/` (parallel)
 
 **Key Benefits Identified** (from external research 2025-10-13):
+
 1. **Parametrized API testing**: Test multiple input variations without code duplication (killer feature for validation tests)
 2. **Reusable fixtures**: Share authenticated clients, test data across modules (reduces boilerplate)
 3. **Parallel execution**: 2-4x speedup with `pytest -n auto` (critical as suite grows to 50+ tests)
@@ -29,6 +32,7 @@
 5. **Zero migration cost**: Existing tests run unchanged during incremental conversion
 
 **Impact**:
+
 - Prevents writing ~30 new rate limiting tests (Task 7.5.3 in `tasks-incidental-security-updates.md`) in old unittest style
 - Eliminates dual-system maintenance burden
 - Perfect timing: 100 tests is manageable but large enough to benefit immediately
@@ -39,6 +43,7 @@
 ## Scope
 
 **Will Do**:
+
 - Install pytest and pytest-django with proper configuration
 - Create shared fixture infrastructure (conftest.py files)
 - Convert all 104 existing tests to pytest style (function-based, fixtures, parametrize)
@@ -47,6 +52,7 @@
 - Run full quality gates to verify migration
 
 **Won't Do** (future enhancements):
+
 - pytest-xdist advanced features (initial setup uses basic parallel execution)
 - pytest-factoryboy integration (can add later if needed)
 - Custom pytest plugins (use built-in features first)
@@ -288,12 +294,15 @@
 ## Relevant Files
 
 **Dependencies:**
+
 - `requirements/req.dev.txt` - pytest and related packages (UPDATED - added pytest, pytest-django, pytest-xdist, pytest-cov)
 
 **Configuration:**
+
 - `pyproject.toml` - pytest configuration (UPDATED - added [tool.pytest.ini_options], filterwarnings for third-party Pydantic deprecations)
 
 **Test Infrastructure:**
+
 - `apps/conftest.py` - Root-level shared fixtures (CREATED - api_client, user, auth_client fixtures + FIXED User import pattern)
 - `apps/authentication/tests/conftest.py` - Auth-specific fixtures (UPDATED - throttling + OAuth + convenience wrappers for factory functions)
 - `apps/authentication/tests/fixtures.py` - Factory functions for test data creation (UPDATED - enhanced docstring explaining hybrid pattern)
@@ -302,6 +311,7 @@
 - `apps/user_movie_data/tests/conftest.py` - UserMovieData fixtures (SKIPPED - inline fixtures sufficient)
 
 **Test Files Converted (11 files, 103 total tests):**
+
 - ✅ `apps/authentication/tests/test_user_api.py` - 22 tests (CONVERTED + modernized HTTPStatus constants)
 - ✅ `apps/authentication/tests/test_csrf_protection.py` - 12 tests (CONVERTED + refactored to use shared get_csrf_token)
 - ✅ `apps/authentication/tests/test_security.py` - 10 tests (CONVERTED)
@@ -317,12 +327,14 @@
 - ✅ `apps/core/tests/test_commands.py` - 2 tests (CONVERTED to pytest - kept @patch decorators)
 
 **Management Commands** (NOT tests - excluded from migration):
+
 - ⚙️ `apps/core/management/commands/test_tmdb_logging.py` - Django management command (manual testing tool)
 - ⚙️ `apps/core/management/commands/test_logging.py` - Django management command (manual testing tool)
 
 **Migration Complete**: 103/103 tests (100%)
 
 **Documentation:**
+
 - `.arc/reference/strategies/strategy-testing-methodology.md` - Testing strategy (UPDATE)
 
 ## Active References
@@ -342,30 +354,35 @@
 ### Migration Outcomes
 
 **Test Conversion:**
+
 - ✅ 103/103 tests converted to pytest (100% migration)
 - ✅ 0 unittest TestCase classes remaining
 - ✅ 11 test files modernized
 - ✅ 0 test files deleted (1 redundant file: test_paginated_views.py)
 
 **Performance Improvements:**
+
 - Sequential execution: 36.25s (baseline)
 - Parallel execution: 9.75s with 24 workers
 - **Final speedup: 3.7x (73% time reduction)**
 - **Improvement trajectory**: 3.0x → 3.7x as test suite stabilized
 
 **Code Quality:**
+
 - ✅ 0 type errors (Pyright strict mode)
 - ✅ 0 linting violations (Ruff)
 - ✅ 100% test pass rate
 - ✅ CI/CD updated with pytest + coverage artifacts
 
 **Coverage Baselines** (Task 8.4):
+
 - Overall: 39.44% (includes 0% legacy DRF code to be deleted)
 - user_movie_data API: 100% ✅
 - authentication middleware: 96.43% ✅
 - movie API: 88.64% ✅
 
 **Infrastructure Created:**
+
 - `apps/conftest.py` - Root fixtures (api_client, user, auth_client)
 - `apps/authentication/tests/conftest.py` - OAuth, throttling, verified_user fixtures
 - `apps/core/tests/test_helpers.py` - HTTP/CSRF helpers, HTTPStatus enum
@@ -375,38 +392,45 @@
 ### Lessons Learned
 
 **1. Incremental Migration Works Beautifully**
+
 - pytest runs unittest tests unchanged during migration
 - Allowed app-by-app conversion with zero downtime
 - Could run partial test suite at any point
 
 **2. Parametrization is a Killer Feature**
+
 - Reduced 4 similar tests to 1 parametrized test (movie API endpoints)
 - Reduced 3 validation tests to 1 parametrized test (rating boundaries)
 - Net result: Fewer test functions, more test cases, better coverage
 
 **3. Typed Fixtures Provide Excellent DX**
+
 - `authenticated_user: tuple[Client, User]` pattern is clear and type-safe
 - Pyright infers all fixture types correctly
 - Zero `Any` types in test code
 
 **4. Discovery Prevented Estimation Errors**
+
 - Initial estimate: 113 tests
 - Discovery in Task 6: 10 "tests" were actually management commands
 - Actual count: 103 tests (10% estimation error)
 - Always verify test counts before starting migration
 
 **5. DRY Refactoring During Migration is Valuable**
+
 - Consolidated `get_csrf_token()` helper (was in 3 places)
 - Modernized HTTPStatus usage (stdlib enum vs raw integers)
 - Fixed production bug (Movie.id → Movie.tmdb_id)
 - "Leave It Cleaner" principle paid immediate dividends
 
 **6. Parallel Execution Requires Good Test Isolation**
+
 - Final 3.7x speedup demonstrates excellent isolation
 - No race conditions, no shared state issues
 - `--reuse-db` + `get_or_create()` pattern is key
 
 **7. Documentation Quality Matters**
+
 - strategy-testing-methodology.md was 95% accurate from Day 1
 - Only needed minor updates (version, current state, CSRF helper)
 - Good documentation compounds value across projects
@@ -414,26 +438,31 @@
 ### Special Handling Cases
 
 **1. UserMovieData Tests (Task 4)**
+
 - Wrote new Django Ninja tests instead of converting legacy DRF tests
 - Decision: Avoid throwaway work since DRF tests will be deleted in Phase 6
 - Result: Immediate value (0% → 100% coverage) + avoided wasted effort
 
 **2. OAuth Mock Fixtures (Task 2.4)**
+
 - Converted mock classes to pytest fixtures in conftest.py
 - Hybrid pattern: Factory functions (fixtures.py) + fixture wrappers (conftest.py)
 - Balance: Single-instance convenience vs multi-instance flexibility
 
 **3. Management Commands Discovery (Task 6)**
+
 - `test_tmdb_logging.py` and `test_logging.py` are NOT tests
 - They're Django management commands for manual testing
 - Recognition saved ~2 hours of unnecessary migration work
 
 **4. Coverage Configuration (Task 3.5.5)**
+
 - pyproject.toml omit patterns crucial for accurate coverage
 - Excludes: migrations, tests, schemas, apps.py, admin, etc.
 - Result: Coverage focuses on business logic, not boilerplate
 
 **5. Parallel Execution Decision (Task 7.3)**
+
 - Did NOT add `-n auto` to default pytest addopts
 - Too aggressive for CI environments
 - Kept as optional developer command for local iteration
@@ -441,6 +470,7 @@
 ### Bugs Fixed During Migration
 
 **Critical Production Bug:**
+
 - **File**: `apps/user_movie_data/api.py:90`
 - **Issue**: Create endpoint queried `Movie.id` instead of `Movie.tmdb_id`
 - **Impact**: All POST requests to create user movie data were failing
@@ -448,6 +478,7 @@
 - **Detection**: Discovered while writing comprehensive API tests in Task 4
 
 **Pre-existing Test Bug:**
+
 - **File**: `apps/authentication/tests/test_user_api.py`
 - **Issue**: CSRF cookie test had incorrect expectations
 - **Impact**: Test was failing before migration started
@@ -467,10 +498,12 @@
 ### Next Steps
 
 **Immediate:**
+
 - ✅ All tasks complete
 - Ready for commit
 
 **Future Enhancements** (not blocking):
+
 - Additional test coverage for authentication adapters (currently 0%)
 - Additional test coverage for TMDB API client (currently 16%)
 - pytest-factoryboy integration (if factory pattern becomes dominant)
@@ -479,6 +512,7 @@
 ### Success Metrics
 
 ✅ **All original goals achieved:**
+
 - ✅ 100% test conversion (103/103)
 - ✅ Parallel execution enabled (3.7x speedup)
 - ✅ Type safety maintained (0 type errors)
@@ -487,6 +521,7 @@
 - ✅ Quality gates passing
 
 **Bonus achievements:**
+
 - ✅ Fixed critical production bug
 - ✅ Came in 33% under time estimate
 - ✅ Comprehensive test coverage for user_movie_data (0% → 100%)

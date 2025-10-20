@@ -10,12 +10,14 @@
 **Why Now**: Backend type safety tooling modernization (Pyright + django-types) is complete. Accurate baseline established at 351 errors in target architecture code after excluding 241 errors in legacy DRF files scheduled for deletion.
 
 **Discovery**: After completing Tasks 1-13 of backend type safety modernization:
+
 - ✅ Tooling correct: Pyright-only with django-types
 - ✅ Comprehensive coverage: Checking entire apps, not selective files
 - ✅ Accurate baseline: 351 legitimate errors in code that will remain
 - ✅ Legacy code excluded: 241 DRF errors in files being deleted (no wasted effort)
 
 **Impact**:
+
 - Type checking now blocking in CI with correct tooling
 - Quality gates reliable for all incidental work
 - Can achieve 0 type errors in target architecture
@@ -24,6 +26,7 @@
 ## Scope
 
 **Will Do**:
+
 - Fix all 351 type errors in target architecture code (code that will remain after API Layer P2)
 - Create custom stubs for django.contrib.admin (supplements django-types)
 - Enhance existing stubs for ninja_jwt and allauth
@@ -31,6 +34,7 @@
 - Achieve 0 type errors for quality gates
 
 **Won't Do** (excluded or deferred):
+
 - Fixing errors in legacy DRF code (241 errors in 9 excluded files - being deleted)
 - Creating rest_framework stubs (framework being removed)
 - Fixing code scheduled for deletion in API Layer Modernization Phase 2
@@ -49,6 +53,7 @@
 | **TOTAL** | **353** | **253** | | **100 errors resolved** |
 
 **Progress Notes**:
+
 - Authentication: 53 → 42 after excluding authenticate.py (Task 2), then 42 → 38 after allauth.socialaccount stubs (Task 3)
 - Movie: 11 → 0 after fixing Query typing and test types (Task 4)
 - UserMovieData: 13 → 0 after fixing models.pyi and excluding legacy DRF urls.py (Task 5)
@@ -433,9 +438,11 @@
 ## Relevant Files
 
 **Type Checking Configuration:**
+
 - `backend/pyrightconfig.json` - ✅ MODIFIED: Added core/urls.py to legacy exclusions
 
 **Custom Type Stubs (created/enhanced):**
+
 - `backend/stubs/django/contrib/admin/__init__.pyi` - ✅ CREATED: Admin site and registration
 - `backend/stubs/django/contrib/admin/options.pyi` - ✅ CREATED: ModelAdmin class
 - `backend/stubs/django/contrib/admin/sites.pyi` - ✅ CREATED: AdminSite class
@@ -444,6 +451,7 @@
 - `backend/stubs/allauth/socialaccount/models.pyi` - ✅ CREATED: SocialApp, SocialAccount models
 
 **Target Architecture Code (fixed):**
+
 - `backend/apps/movie/api.py` - ✅ FIXED: Django Ninja Query typing
 - `backend/apps/movie/schemas.py` - ✅ Already passing
 - `backend/apps/movie/tests/test_movie_api.py` - ✅ FIXED: Test type issues
@@ -458,6 +466,7 @@
 - `backend/config/urls.py` - ✅ FIXED: Added type ignores for admin.site.urls (django-types limitation)
 
 **Target Architecture Code (fixed - Authentication app):**
+
 - `backend/apps/authentication/api.py` - ✅ FIXED: Throttle variance with type ignores
 - `backend/apps/authentication/schemas.py` - ✅ Already passing
 - `backend/apps/authentication/auth_ninja.py` - ✅ FIXED: User scoping refactor
@@ -467,6 +476,7 @@
 - `backend/apps/authentication/tests/test_user_api.py` - ✅ FIXED: dict casting, check_password
 
 **Target Architecture Code (fixed - Core app):**
+
 - `backend/apps/core/admin.py` - ✅ Already passing (Task 1 stubs)
 - `backend/apps/core/models.pyi` - ✅ FIXED: Removed duplicate Manager
 - `backend/apps/core/context_processors.py` - ✅ FIXED: HttpRequest type
@@ -481,12 +491,14 @@
 - `backend/apps/core/management/commands/wait_for_db.py` - ✅ FIXED: ArgumentParser type, object→int narrowing
 
 **Target Architecture Code (fixed - Core app tests/):**
+
 - `backend/apps/core/tests/test_models.py` - ✅ FIXED: User fixture pattern with cast()
 - `backend/apps/core/tests/test_commands.py` - ✅ FIXED: Mock parameter type annotations
 - `backend/apps/core/tests/test_admin.py` - ✅ FIXED: User fixtures + force_login cast
 - `backend/apps/core/tests/test_helpers.py` - ✅ FIXED: create_user return type + cast
 
 **Documentation:**
+
 - `.arc/active/notes-type-coverage-status.md` - Type coverage tracking (gitignored)
 - `.arc/reference/strategies/strategy-type-safety.md` - Type safety patterns
 
@@ -495,18 +507,21 @@
 ### Execution Order Rationale
 
 **Phase 1: Create/Enhance Stubs (Tasks 1-3, including 1.5)**
+
 - High leverage: Each stub resolves ~30-100 errors across multiple apps
 - Foundation work: Needed before fixing app-specific errors
 - Task 1.5: Audit and fix typing.Any violations (quality/compliance task)
 - Estimated: 2.5-3 hours, resolves ~180 errors (51%)
 
 **Phase 2: Progressive App Fixing (Tasks 4-8)**
+
 - Easiest first: Movie (11) → UserMovieData (13) → Config (59) → Auth (53) → Core (215)
 - Build confidence with quick wins
 - Each app can be completed independently
 - Estimated: 6-9 hours, resolves ~171 errors (49%)
 
 **Phase 3: Quality Gates & Docs (Tasks 9-10)**
+
 - Comprehensive validation
 - Update tracking documentation
 - Estimated: 30 minutes
@@ -514,17 +529,20 @@
 ### Custom Stub Strategy
 
 **django.contrib.admin** (NEW - Task 1):
+
 - Supplements django-types (incomplete admin coverage)
 - Focus on: ModelAdmin, AdminSite, register decorator
 - Impact: ~100 errors resolved
 - Quality: Task 1.5 ensures typing.Any compliance per strategy-type-safety.md
 
 **ninja_jwt** (ENHANCE):
+
 - Review existing stubs in backend/stubs/ninja_jwt/
 - Add missing token/authentication types
 - Impact: ~50 errors resolved
 
 **allauth** (ENHANCE):
+
 - Review existing stubs in backend/stubs/allauth/
 - Focus on account module and adapters
 - Impact: ~30 errors resolved
@@ -532,6 +550,7 @@
 ### Type Annotation Patterns
 
 Reference `.arc/reference/strategies/strategy-type-safety.md` for:
+
 - Django Ninja ModelSchema patterns
 - Pydantic schema best practices
 - HttpRequest type handling
@@ -541,6 +560,7 @@ Reference `.arc/reference/strategies/strategy-type-safety.md` for:
 ### Acceptable Information-Level Warnings
 
 Per pyrightconfig.json configuration, these are acceptable (not errors):
+
 - `reportUnknownMemberType` on Django ORM fields
 - `reportAttributeAccessIssue` on ForeignKey related managers
 - Rationale: django-types limitations, runtime-validated by tests
@@ -550,6 +570,7 @@ Per pyrightconfig.json configuration, these are acceptable (not errors):
 **When**: During API Layer Modernization Phase 2 completion
 **Action**: Sub-task already added to tasks-api-layer-modernization-p2.md
 **Steps**:
+
 1. Delete legacy DRF files (views.py, serializers.py, etc.)
 2. Remove temporary exclusions from pyrightconfig.json
 3. Run `python scripts/type_check.py` to verify 0 errors remain
@@ -560,6 +581,7 @@ Per pyrightconfig.json configuration, these are acceptable (not errors):
 **Completion Date**: 2025-10-10
 
 **Summary**:
+
 - Resolved all 353 type errors in backend target architecture (code that will remain after API Layer P2)
 - Created django.contrib.admin custom stubs (supplements django-types for admin functionality)
 - Enhanced allauth.socialaccount stubs (added missing models)
@@ -567,12 +589,14 @@ Per pyrightconfig.json configuration, these are acceptable (not errors):
 - Quality: Custom stubs follow strict typing.Any compliance per strategy-type-safety.md
 
 **Tooling/Architecture Changes**:
+
 - Custom stub quality gate created: `backend/scripts/check_stub_quality.py` (validates Any usage, maintenance headers)
 - Type check script verified as comprehensive: covers entire backend (apps/ AND config/), provides per-app error reporting
 - Excluded 9 legacy DRF files from type checking (241 errors in code scheduled for deletion)
 - Environment fixes: Added psycopg-binary for local test execution, configured Pylance exclusions for VS Code
 
 **Files Changed**:
+
 - **Created**: 6 stub files (django.contrib.admin package: 3 files, allauth.socialaccount: 2 files, quality gate script: 1 file)
 - **Modified**: 41 target architecture files across 5 apps + config module
     - Core app: 12 files (services, models, management commands, tests)
@@ -584,6 +608,7 @@ Per pyrightconfig.json configuration, these are acceptable (not errors):
 - **Configuration**: pyrightconfig.json (added legacy DRF exclusions), .vscode/settings.json (Pylance configuration)
 
 **Error Reduction by App**:
+
 - Core: 215 → 0 errors (100% resolved)
 - Config: 61 → 0 errors (100% resolved)
 - Authentication: 53 → 0 errors (100% resolved - excluding 9 legacy DRF files)
@@ -593,22 +618,26 @@ Per pyrightconfig.json configuration, these are acceptable (not errors):
 - **Total: 353 → 0 errors (100% target architecture clean)**
 
 **Quality Gates Status**:
+
 - ✅ Type checking: 0 errors (6/6 apps passing)
 - ✅ Linting: All checks passed (2 stub file warnings suppressed - mirror external library structure)
 - ✅ Tests: 76/76 passed (15 skipped - legacy DRF tests)
 - ✅ Stub quality: 0 unjustified typing.Any usage
 
 **Follow-Up Work**:
+
 - None required for this task list
 - Legacy DRF file deletion and pyrightconfig.json cleanup tracked in tasks-api-layer-modernization-p2.md
 
 **References**:
+
 - Parent task list: `.arc/active/tasks-incidental-backend-type-safety.md` (Tasks 1-14)
 - Type safety strategy: `.arc/reference/strategies/strategy-type-safety.md`
 - Key commits: fabd67b (Task 8.8 complete), plus earlier atomic commits for Tasks 1-7
 - Related PRD: `.arc/active/prd-api-layer-modernization-p2.md`
 
 **Next Steps**:
+
 1. Archive this incidental task list with completion notes
 2. Update CURRENT-SESSION.md after archival commit (per manage-incidental-work.md workflow)
 3. Resume paused work from tasks-incidental-backend-type-safety.md or main feature work

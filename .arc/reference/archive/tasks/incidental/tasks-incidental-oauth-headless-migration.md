@@ -422,12 +422,14 @@ Successfully migrated authentication system to django-allauth headless mode with
 **What Was Deferred**:
 
 Deferred to **API Layer P2 Task 5.6** (Comprehensive Integration Testing):
+
 - Extensive edge case testing (all network errors, token expiration scenarios)
 - Multi-tab coordination and synchronization
 - Full error recovery workflows
 - Comprehensive OAuth + UserMovieData integration testing
 
 Deferred to **Backend Modernization** (future epic):
+
 - Playwright E2E automation (dedicated task)
 - Redis/Celery infrastructure
 - Performance optimization initiatives

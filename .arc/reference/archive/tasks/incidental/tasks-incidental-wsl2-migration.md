@@ -12,6 +12,7 @@
 **Discovery**: During Task 5.6.1 E2E testing, discovered that code changes to backend files don't trigger Django auto-reload. Manual `docker compose restart backend` required after every change. Root cause: Linux inotify file watching doesn't work with Windows Docker Desktop mounted volumes.
 
 **Impact**:
+
 - **Performance**: 20x faster file I/O operations (native Linux filesystem vs Windows→Docker translation)
 - **Hot Reload**: Native inotify support enables instant backend auto-reload on code changes
 - **Developer Experience**: Eliminates manual container restarts, faster test iteration cycles
@@ -20,6 +21,7 @@
 ## Scope
 
 **Will Do**:
+
 - Research and document WSL2 migration approach (COMPLETED - external research agent)
 - Test WSL2 workflow with copied project (Phase 1 - reversible test)
 - Verify hot reload functionality in WSL2 environment
@@ -28,6 +30,7 @@
 - Archive incidental task documentation
 
 **Won't Do** (deferred to future if needed):
+
 - Delete Windows copy immediately (keep as backup for 1-2 weeks)
 - Migrate entire team workflow (individual developer decision)
 - Investigate alternative solutions (Docker Compose Watch) - WSL2 is industry standard
@@ -77,6 +80,7 @@
   **Migration Completed Successfully**: 2025-10-07
 
   **What was accomplished:**
+
 - ✅ Migrated CineXplorer development environment from Windows (`C:\dev\CineXplorer`) to WSL2
    Ubuntu (`~/dev/CineXplorer`)
 - ✅ Verified hot reload working with native inotify file watching

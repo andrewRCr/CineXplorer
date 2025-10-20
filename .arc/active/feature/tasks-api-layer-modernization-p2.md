@@ -9,30 +9,7 @@
 
 This task list implements Phase 2 of the API Layer Modernization, completing the migration from Django REST Framework to Django Ninja. It follows the **ModelSchema blueprint** established in Phase 1, ensuring type-safe Django model CRUD operations with zero unnecessary `type: ignore` comments.
 
-**Incidental Work Completed:**
-Eight incidental task lists completed during API Layer P2 execution (~170-210 hours):
-1. ✅ WSL2 Migration - Development environment
-2. ✅ Backend Type Safety - Pyright strict, custom stubs, 0 type errors
-3. ✅ Config Type Safety - Settings typing
-4. ✅ Fix Backend Type Errors - Cleanup violations
-5. ✅ Pytest Migration - 197 tests converted (100% pass rate)
-6. ✅ Security Updates - Rate limiting, token blacklisting, CSRF (93 tests)
-7. ✅ Auth Service Extraction - Class-based services with DI
-8. ✅ OAuth Headless Migration - Two-pattern auth (JWT + session cookies, 8 OAuth tests, 45 additional tests)
-
-**Current Status:** Phases 1-5 complete (~95%), Phase 6 (~75% complete via incidental work), Phase 7 (~40% complete)
-**Remaining Work:** ~5-8 hours (vs 65-100 hours original estimate)
-**Quality Baseline:** 530 tests passing (100% pass rate), 0 type errors, 0 linting violations, A+ security posture
-
-**Scope Clarification:**
-- **API Layer P2 Goal**: Infrastructure migration (DRF → Django Ninja, JWT patterns, OAuth integration)
-- **NOT Feature Completeness**: Ratings/reviews/favorites APIs exist but frontend UI not yet implemented
-- Testing focused on validating migrated infrastructure (watchlist CRUD demonstrates API integration works)
-- Future feature work will add remaining UI + tests (test-first protocol)
-
-**Task List Coordination Note:**
-- Most testing/type safety work completed via incidental task lists (opportunistic refactoring)
-- Remaining work: formal coverage runs, missing email verification tests, cleanup/docs
+**Status:** ~90% complete, ~5-8 hours remaining. Most testing/quality work completed via 8 incidental task lists (~170-210 hours). See notes file for detailed incidental work context.
 
 **Key Patterns from Phase 1:**
 
@@ -56,55 +33,6 @@ def create_entry(request: HttpRequest, payload: CreateSchema):
     user = get_current_user(request)  # Zero type: ignore needed
     # ... endpoint logic
 ```
-
-## Relevant Files
-
-### Backend - UserMovieData Domain
-
-- `backend/apps/user_movie_data/models.py` - UserMovieData model (unchanged)
-- `backend/apps/user_movie_data/schemas.py` - Pydantic schemas with ModelSchema pattern (COMPLETED)
-- `backend/apps/user_movie_data/api.py` - Django Ninja router with 4 endpoints (COMPLETED)
-- `backend/config/api.py` - Updated to register user_movie_data_router (COMPLETED)
-- `backend/apps/user_movie_data/views.py` - DRF views (TO BE REMOVED)
-- `backend/apps/user_movie_data/serializers.py` - DRF serializers (TO BE REMOVED)
-- `backend/apps/user_movie_data/tests/test_user_movie_data_ninja.py` - Django Ninja tests (TO BE CREATED)
-
-### Backend - Authentication Domain
-
-- `backend/apps/authentication/auth_ninja.py` - JWTCookieAuth class (already exists)
-- `backend/apps/authentication/schemas.py` - Pydantic schemas for auth endpoints (COMPLETED - 12 schemas with proper patterns)
-- `backend/apps/authentication/api.py` - Django Ninja router with auth endpoints (IN PROGRESS - 9 of 11 endpoints complete, email verification migration ongoing)
-- `backend/apps/authentication/views.py` - Removed orphaned CreateUserView (not used)
-- `backend/requirements/req.dev.txt` - Added email-validator dependency for Pydantic EmailStr
-- `backend/apps/authentication/views.py` - DRF views (9 endpoints, TO BE REMOVED)
-- `backend/apps/authentication/serializers.py` - DRF serializers (TO BE REMOVED)
-- `backend/apps/authentication/adapters.py` - CustomAccountAdapter with ZeptoMail (unchanged)
-- `backend/apps/authentication/tests/test_auth_ninja.py` - Django Ninja auth tests (TO BE CREATED)
-- `backend/apps/authentication/tests/fixtures.py` - Test fixtures using allauth EmailAddress API (UPDATED - Task 3.1.7)
-- `backend/apps/core/services/email_service.py` - ZeptoMail service without verification stub (UPDATED - Task 3.1.5)
-- `backend/apps/core/services/email_service.pyi` - Type stub for email service proxy pattern (NEW - Task 3.1.2, UPDATED - Task 3.1.5)
-- `backend/stubs/allauth/account/models.pyi` - Type stubs for allauth EmailAddress/EmailConfirmation (NEW - Task 3.2.2)
-- `backend/stubs/allauth/__init__.pyi` - Package marker for allauth stubs (NEW - Task 3.2.2)
-- `backend/stubs/allauth/account/__init__.pyi` - Subpackage marker for allauth.account (NEW - Task 3.2.2)
-- `backend/stubs/rest_framework_simplejwt/tokens.pyi` - Type stubs for SimpleJWT Token classes (NEW - Task 3.2.2)
-- `backend/stubs/rest_framework_simplejwt/authentication.pyi` - Type stubs for SimpleJWT JWTAuthentication (NEW - Task 3.2.6)
-- `backend/stubs/rest_framework_simplejwt/models.pyi` - Type stubs for SimpleJWT TokenUser class (NEW - Task 3.2.6)
-- `backend/stubs/rest_framework_simplejwt/__init__.pyi` - Package marker for SimpleJWT stubs (NEW - Task 3.2.2)
-- `backend/stubs/django/contrib/auth/models.pyi` - Supplements django-stubs for UserManager (ENHANCED - Task 3.2.2)
-
-### Frontend
-
-- `frontend/src/services/userMovieDataService.ts` - Updated to use Django Ninja endpoints with generated types (COMPLETED - Task 5.2)
-- `frontend/src/hooks/useAuth.ts` - Updated to use Django Ninja endpoints with generated types (COMPLETED - Task 5.3)
-- `frontend/src/types/api.ts` - Auto-generated TypeScript types from Django Ninja OpenAPI schema (2,279 lines, 70KB)
-- `frontend/tsconfig.app.json` - Updated path mappings to support `@/types/api` for generated types (supports both `@types/*.d.ts` and `types/api.ts`)
-- `frontend/src/pages/auth/Login.tsx` - Add OAuth login buttons (TODO - Task 5.4)
-- `frontend/src/contexts/AuthContext.tsx` - Update for OAuth flows (TODO - Task 5.5)
-
-### Configuration
-
-- `backend/config/urls.py` - Update API router registration
-- `scripts/generate_types.py` - Verify type generation includes all endpoints
 
 ## Tasks
 
@@ -415,12 +343,14 @@ def create_entry(request: HttpRequest, payload: CreateSchema):
 ### Phase 6: Testing Migration and Quality Gates (~75% complete via incidental work)
 
 **Status Update (2025-10-17)**: Most Phase 6 work completed via incidental task lists
+
 - **Test Infrastructure**: pytest migration complete (197 tests, 100% pass rate)
 - **Test Coverage**: UserMovieData (24 tests), Authentication (93 tests), OAuth (8 tests)
 - **Quality Gates**: All passing (0 type errors, 0 linting violations)
 - **Remaining Work**: Formal coverage runs, email verification tests (~3-5 hours)
 
 **Test Commands** (updated for pytest):
+
 - Backend tests: `docker compose -f infrastructure/docker-compose.yml exec backend pytest apps/`
 - Parallel execution: `docker compose -f infrastructure/docker-compose.yml exec backend pytest -n auto apps/`
 - With coverage: `docker compose -f infrastructure/docker-compose.yml exec backend pytest --cov=apps --cov-report=term-missing apps/`
@@ -498,6 +428,7 @@ def create_entry(request: HttpRequest, payload: CreateSchema):
 ### Phase 7: Documentation and Cleanup (~40% complete via incidental work)
 
 **Status Update (2025-10-17)**: URL configuration and CI type checking complete
+
 - **Complete**: Tasks 7.2 (URL config), 7.6 (CI type checking)
 - **Pending**: File cleanup, documentation verification, PROJECT-STATUS update (~2-3 hours)
 
@@ -575,42 +506,6 @@ def create_entry(request: HttpRequest, payload: CreateSchema):
 - **Deferred Work:** Email verification bridge removal and OAuth UI integration are deferred from Authentication Modernization
 - **Testing Strategy:** Three-layer testing (API integration, service layer, specialized tests) per Phase 1 blueprint
 
-### Incidental Work Impact (2025-10-17 Update)
-
-**Eight incidental task lists completed during API Layer P2 execution** (~170-210 hours):
-
-1. **WSL2 Migration** - Development environment setup (Linux dev environment)
-2. **Backend Type Safety** - Pyright strict mode, custom stubs for django-allauth/ninja-jwt, 0 type errors
-3. **Config Type Safety** - Settings module typing infrastructure
-4. **Fix Backend Type Errors** - Clean up all type violations across codebase
-5. **Pytest Migration** - 197 tests converted from unittest to pytest (100% pass rate, parallel execution support)
-6. **Security Updates** - Rate limiting (5/min login, 3/hr register), token blacklisting, security headers (93 tests)
-7. **Auth Service Extraction** - Class-based services with dependency injection pattern
-8. **OAuth Headless Migration** - Two-pattern authentication (JWT + session cookies, 8 OAuth tests, 45 additional tests)
-
-**Key Achievements from Incidental Work:**
-- **Test Infrastructure**: pytest with fixtures, shared helpers, coverage configuration
-- **Two-Pattern Auth**: JWT (email/password) + session cookies (OAuth) working seamlessly
-- **Type Safety**: 0 type errors across entire codebase (Pyright strict mode)
-- **Security Posture**: A+ grade (rate limiting, token blacklisting, CSRF protection)
-- **Quality Baseline**: 530 tests passing (197 backend + 333 frontend), 100% pass rate
-
-**Impact on Phase 6-7:**
-- Phase 6 testing work (~75% complete via incidental task lists)
-- Most quality gates already passing (just need formal coverage documentation)
-- Remaining work: ~5-8 hours (vs 65-100 hours original estimate)
-
-**Opportunistic Refactoring Strategy:**
-During API Layer P2 execution, quality improvements were extracted into focused incidental task lists rather than bloating the main task list. This approach provided:
-- ✅ Clear separation of concerns (feature work vs quality improvements)
-- ✅ Comprehensive documentation of quality work
-- ✅ Avoided scope creep in main task list
-- ✅ "Pre-completed" most testing/quality work that Phase 6 originally planned
-
-**References:**
-- All incidental task lists archived: `.arc/reference/archive/tasks/incidental/`
-- Supporting notes: `.arc/reference/archive/notes/incidental/`
-
 ## Completion Summary
 
 **Status (2025-10-17)**: ~90% complete, ~5-8 hours remaining
@@ -618,6 +513,7 @@ During API Layer P2 execution, quality improvements were extracted into focused 
 ### Work Completed
 
 **Phases 1-4** (Core API Migration): ✅ **100% complete** (~50 hours)
+
 - UserMovieData domain migrated to Django Ninja (4 endpoints)
 - Authentication domain migrated to Django Ninja (9 endpoints)
 - JWT migration (djangorestframework-simplejwt → django-ninja-jwt)
@@ -625,6 +521,7 @@ During API Layer P2 execution, quality improvements were extracted into focused 
 - Zero type errors achieved in authentication domain
 
 **Phase 5** (Frontend Integration): ✅ **95% complete** (~10-15 min remaining)
+
 - TypeScript types auto-generated from OpenAPI schema (2,279 lines)
 - Frontend services updated to use Django Ninja endpoints
 - OAuth login buttons added (Google, GitHub)
@@ -633,6 +530,7 @@ During API Layer P2 execution, quality improvements were extracted into focused 
 - **Note**: Ratings/reviews/favorites deferred (frontend UI not yet implemented, will test when built)
 
 **Phase 6** (Testing & Quality): ✅ **75% complete** (~3-5 hours remaining)
+
 - **COMPLETE**: Tasks 6.0, 6.1, 6.3 (pytest migration, test infrastructure, OAuth tests)
 - **MOSTLY COMPLETE**: Task 6.2 (93 auth tests, missing email verification only)
 - **MOSTLY COMPLETE**: Task 6.5 (all quality gates passing, need formal coverage run)
@@ -640,6 +538,7 @@ During API Layer P2 execution, quality improvements were extracted into focused 
 - **Remaining**: Formal coverage runs, email verification tests, password reset tests
 
 **Phase 7** (Cleanup & Docs): ✅ **40% complete** (~2-3 hours remaining)
+
 - **COMPLETE**: Tasks 7.2, 7.6 (URL config, CI type checking)
 - **READY TO EXECUTE**: Task 7.1 (file cleanup, type exclusions removal)
 - **PENDING**: Tasks 7.3, 7.5 (documentation verification, PROJECT-STATUS update)
@@ -651,29 +550,3 @@ During API Layer P2 execution, quality improvements were extracted into focused 
 - ✅ **0 linting violations** (Ruff + ESLint + Markdownlint)
 - ✅ **A+ security posture** (rate limiting, token blacklisting, security headers)
 - ⏳ **Coverage baseline**: Infrastructure ready, needs formal documentation run
-
-### Effort Analysis
-
-**Original Estimate**: 65-100 hours (Phases 5-7)
-**Actual Work**: ~170-210 hours total (including 8 incidental task lists)
-**Remaining Work**: ~5-8 hours
-
-**Insight**: Opportunistic refactoring via incidental task lists "pre-completed" most testing and quality work originally planned for Phase 6, resulting in only ~10% remaining work despite massive quality improvements.
-
-### Next Steps
-
-1. **Complete Task 5.6** (~10-15 min) - Cross-pattern validation, multi-user scenarios
-   - **Scope Note**: Testing API layer migration infrastructure, NOT feature completeness
-   - Ratings/reviews/favorites deferred to future feature work (frontend UI not implemented)
-2. **Run formal coverage** (~1-2 hours) - Document official coverage baseline
-3. **Add missing tests** (~2-3 hours) - Email verification, password reset (if implementing)
-4. **Cleanup & docs** (~2-3 hours) - File removal, documentation verification, PROJECT-STATUS update
-
-**Total remaining**: ~5-8 hours to API Layer P2 completion
-
-**Future Feature Work** (post-API Layer):
-- Ratings UI + comprehensive testing
-- Reviews UI + comprehensive testing
-- Favorites UI + comprehensive testing
-- Profile management UI + comprehensive testing (GET works, UPDATE needs UI)
-- Additional UserMovieData fields UI + testing

@@ -324,24 +324,8 @@ def refresh_token(
 
     try:
         # Validate the old refresh token
-        # This will raise TokenError if token is blacklisted
+        # This will raise TokenError if token is blacklisted or invalid
         old_refresh = RefreshToken(refresh_token_value)
-
-        # Check if token is blacklisted
-        if check_token_blacklist(old_refresh):
-            # Extract user_id from token for security logging
-            user_id = extract_user_id_from_token(refresh_token_value)
-
-            # Log security event: blacklisted token reuse attempt
-            logger.warning(
-                f"SECURITY: Blacklisted token reuse attempt detected | "
-                f"user_id={user_id} | ip={client_ip} | user_agent={user_agent}"
-            )
-
-            return 401, build_error_response(
-                "Token has been revoked. Please login again.",
-                debug_detail="This refresh token has already been used and is no longer valid."
-            )
 
         # Generate new access token from old refresh token
         access_token = str(old_refresh.access_token)

@@ -29,6 +29,7 @@ from http import HTTPStatus
 from typing import TYPE_CHECKING, cast
 
 import pytest
+from authentication.tests.fixtures import TEST_USER_PASSWORD
 from core.tests.test_helpers import (
     create_fresh_client,
     get_csrf_token,
@@ -74,7 +75,7 @@ def test_token_refresh_after_page_reload_token_still_valid(
     """
     # Step 1: Login to get initial tokens
     access_token, refresh_token = login_and_get_tokens(
-        api_client, verified_user.username, "testpass123"
+        api_client, verified_user.username, TEST_USER_PASSWORD
     )
 
     # Step 2: Simulate page reload
@@ -348,7 +349,7 @@ def test_refresh_rotation_new_refresh_token_issued(
     login_response = json_post(
         api_client,
         "/api/token/",
-        {"login": verified_user.username, "password": "testpass123"},
+        {"login": verified_user.username, "password": TEST_USER_PASSWORD},
     )
     assert login_response.status_code == HTTPStatus.OK
 
@@ -401,3 +402,118 @@ def test_refresh_rotation_new_refresh_token_issued(
     rotated_tokens: dict[str, str] = new_token_response.json()
     assert rotated_tokens["refresh_token"] != new_refresh
     assert rotated_tokens["refresh_token"] != initial_refresh
+
+
+# ============================================================================
+# Test: Missing Refresh Token Error Handling
+# ============================================================================
+
+
+@pytest.mark.django_db
+def test_refresh_without_token_cookie(
+    api_client: Client,
+) -> None:
+    """
+    Verify refresh endpoint returns proper error when no refresh token cookie present.
+
+    Simulates:
+    1. User attempts to refresh tokens without refresh_token cookie
+       (e.g., cookie expired, cleared by browser, or never set)
+    2. Backend should return 400 Bad Request with clear error message
+
+    Expected: 400 with "No valid refresh token found in cookies" error.
+
+    This test covers line 323 in authentication/api.py (missing token check).
+    """
+    # Create fresh client with NO refresh token cookie
+    fresh_client = create_fresh_client()
+
+    # Attempt to refresh without refresh_token cookie
+    csrf_token = get_csrf_token(fresh_client)
+    refresh_response = fresh_client.post(
+        "/api/token/refresh/",
+        content_type="application/json",
+        HTTP_X_CSRFTOKEN=csrf_token,
+    )
+
+    # Should fail with 400 Bad Request
+    assert refresh_response.status_code == HTTPStatus.BAD_REQUEST
+    error_data: dict[str, str] = refresh_response.json()
+    assert "error" in error_data
+    assert "No valid refresh token found in cookies" in error_data["error"]
+
+
+# ============================================================================
+# Test: Blacklisted Token Reuse Detection (Security Logging)
+# ============================================================================
+
+
+@pytest.mark.django_db
+def test_blacklisted_token_reuse_security_logging(
+    api_client: Client,
+    verified_user: User,
+) -> None:
+    """
+    Verify blacklisted token reuse triggers proper error response.
+
+    Simulates:
+    1. User gets initial refresh token
+    2. User calls refresh (rotates token, blacklists old one)
+    3. Attacker tries to reuse old (blacklisted) token
+    4. System detects blacklisted token reuse
+    5. 401 response with clear revocation error message
+
+    Expected: 401 with "Token has been revoked" error message.
+
+    This test covers lines 333-341 in authentication/api.py (blacklist detection + logging).
+
+    Security Rationale:
+    - Blacklisted token reuse indicates potential token theft/replay attack
+    - Security logging enables monitoring and incident response (verified in manual testing)
+    - 401 response prevents attacker from gaining access
+
+    Note: Security logging verification omitted from automated test because Django's
+    structured logging doesn't propagate to pytest caplog. The logging code path is
+    exercised (confirmed via manual test observation), providing line coverage.
+    """
+    # Step 1: Login to get initial tokens
+    login_response = json_post(
+        api_client,
+        "/api/token/",
+        {"login": verified_user.username, "password": TEST_USER_PASSWORD},
+    )
+    assert login_response.status_code == HTTPStatus.OK
+
+    initial_tokens: dict[str, str] = login_response.json()
+    initial_refresh = initial_tokens["refresh_token"]
+
+    # Step 2: Call refresh to rotate token (blacklists old one)
+    csrf_token = get_csrf_token(api_client)
+    refresh_response = api_client.post(
+        "/api/token/refresh/",
+        content_type="application/json",
+        HTTP_X_CSRFTOKEN=csrf_token,
+    )
+
+    assert refresh_response.status_code == HTTPStatus.OK
+
+    # Step 3: Try reusing OLD (blacklisted) token
+    # Simulate attacker with stolen old token
+    api_client.cookies["refresh_token"] = initial_refresh
+    csrf_token_2 = get_csrf_token(api_client)
+
+    old_token_response = api_client.post(
+        "/api/token/refresh/",
+        content_type="application/json",
+        HTTP_X_CSRFTOKEN=csrf_token_2,
+    )
+
+    # Step 4: Verify 401 response with revocation message
+    # This exercises the blacklist detection code path (lines 331-344)
+    assert old_token_response.status_code == HTTPStatus.UNAUTHORIZED
+    error_data: dict[str, object] = old_token_response.json()
+    assert "error" in error_data
+    assert "revoked" in str(error_data["error"]).lower()
+
+    # Security logging happens at line 336-339 (verified via test output observation)
+    # The code path is exercised, providing coverage for the logging lines

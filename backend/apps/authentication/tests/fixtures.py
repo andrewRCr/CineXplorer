@@ -36,6 +36,10 @@ if TYPE_CHECKING:
 
 User = get_user_model()
 
+# Test data constants
+# Used across all authentication tests for consistency
+TEST_USER_PASSWORD = 'testpass123'
+
 
 # Type definitions for fixture parameters
 class UserParams(TypedDict, total=False):
@@ -82,7 +86,7 @@ def create_user(
     defaults: dict[str, str] = {
         'username': 'testuser',
         'email': 'testuser@example.com',
-        'password': 'testpass123',
+        'password': TEST_USER_PASSWORD,
         'first_name': 'Test',
         'last_name': 'User'
     }
@@ -181,7 +185,7 @@ def create_social_account(
 def create_register_payload(
     username: str = 'testuser',
     email: str = 'testuser@example.com',
-    password: str = 'testpass123',
+    password: str = TEST_USER_PASSWORD,
     first_name: str = 'Test',
     last_name: str = 'User'
 ) -> RegisterPayload:
@@ -209,7 +213,7 @@ def create_register_payload(
 
 def create_login_payload(
     identifier: str = 'testuser',
-    password: str = 'testpass123',
+    password: str = TEST_USER_PASSWORD,
     use_email: bool = False
 ) -> LoginPayload:
     """

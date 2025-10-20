@@ -312,7 +312,11 @@ describe('useMovieActions', () => {
 			const { result } = renderHook(() => useMovieActions({ movie }));
 
 			await act(async () => {
+				try {
 				await result.current.toggleWatchlist();
+				} catch {
+					// Expected: Hook re-throws error after setting error state
+				}
 			});
 
 			// Assert: Should have error state
@@ -353,7 +357,11 @@ describe('useMovieActions', () => {
 
 			// Act: First attempt (fails)
 			await act(async () => {
-				await result.current.toggleWatchlist();
+				try {
+					await result.current.toggleWatchlist();
+				} catch {
+					// Expected: Hook re-throws error after setting error state
+				}
 			});
 
 			// Assert: Should have error
@@ -482,7 +490,11 @@ describe('useMovieActions', () => {
 			const { result } = renderHook(() => useMovieActions({ movie }));
 
 			await act(async () => {
-				await result.current.toggleWatchlist();
+				try {
+					await result.current.toggleWatchlist();
+				} catch {
+					// Expected: Hook re-throws error after setting error state
+				}
 			});
 
 			// Assert: Should have error from fallback

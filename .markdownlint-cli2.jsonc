@@ -37,7 +37,9 @@
     "**/frontend/build/**",
     "**/frontend/.next/**",
     "**/backend/staticfiles/**",
-    ".arc/reference/archive/**"
+    ".arc/reference/archive/**",
+    ".arc/upcoming/prds/prd-backend-modernization.md",
+    "README.md"
   ],
 
   "customRules": [],

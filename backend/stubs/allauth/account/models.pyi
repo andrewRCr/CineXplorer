@@ -125,3 +125,47 @@ class EmailConfirmation(models.Model):
 
     def key_expired(self) -> bool:
         """Check if confirmation key has expired."""
+
+
+class EmailConfirmationHMAC:
+    """
+    Type stub for allauth's EmailConfirmationHMAC.
+
+    HMAC-based email confirmation that doesn't require database storage.
+    Used for generating and validating email confirmation keys.
+    """
+
+    # Attributes
+    email_address: EmailAddress
+    key: str
+
+    def __init__(self, email_address: EmailAddress) -> None:
+        """
+        Create HMAC confirmation for email address.
+
+        Args:
+            email_address: EmailAddress to create confirmation for
+        """
+
+    @classmethod
+    def from_key(cls, key: str) -> EmailConfirmationHMAC | None:
+        """
+        Validate and load EmailConfirmationHMAC from key.
+
+        Args:
+            key: HMAC confirmation key to validate
+
+        Returns:
+            EmailConfirmationHMAC if key is valid, None otherwise
+        """
+
+    def confirm(self, request: HttpRequest | None = None) -> EmailAddress:
+        """
+        Confirm the email address associated with this HMAC confirmation.
+
+        Args:
+            request: HTTP request context
+
+        Returns:
+            The confirmed EmailAddress instance
+        """

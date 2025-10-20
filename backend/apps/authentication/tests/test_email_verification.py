@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING
 from unittest.mock import Mock, patch
 
 import pytest
-from allauth.account.models import EmailAddress, EmailConfirmation, EmailConfirmationHMAC
+from allauth.account.models import EmailAddress, EmailConfirmationHMAC
 
 if TYPE_CHECKING:
     from django.contrib.auth.models import User

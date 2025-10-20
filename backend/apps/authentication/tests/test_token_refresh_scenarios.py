@@ -24,12 +24,9 @@ Token Configuration (from settings.py):
 
 from __future__ import annotations
 
-import json
-import time
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
-from typing import TYPE_CHECKING
-from unittest.mock import patch
+from typing import TYPE_CHECKING, cast
 
 import pytest
 from core.tests.test_helpers import (
@@ -38,8 +35,8 @@ from core.tests.test_helpers import (
     json_post,
     login_and_get_tokens,
 )
+from django.contrib.auth.base_user import AbstractBaseUser
 from django.test import Client
-from django.utils import timezone
 from freezegun import freeze_time
 from ninja_jwt.tokens import RefreshToken
 
@@ -129,11 +126,11 @@ def test_expired_access_token_refresh_token_still_valid(
     """
     # Step 1: Create tokens at a fixed time
     # We'll freeze time, create tokens, then advance time to expire them
-    initial_time = datetime(2024, 1, 1, 12, 0, 0)
+    initial_time = datetime(2024, 1, 1, 12, 0, 0, tzinfo=UTC)
 
     with freeze_time(initial_time):
         # Create refresh token (14 days lifetime)
-        refresh = RefreshToken.for_user(verified_user)
+        refresh = RefreshToken.for_user(cast(AbstractBaseUser, verified_user))
         access_token_str = str(refresh.access_token)  # 5 minutes lifetime
 
     # Step 2: Advance time by 6 minutes to expire access token
@@ -208,9 +205,9 @@ def test_expired_refresh_token_redirect_to_login(
     """
     # Step 1: Create expired refresh token
     # (Simulates "14 days passed" - both access and refresh expired)
-    expired_refresh = RefreshToken.for_user(verified_user)
-    expired_refresh.set_exp(lifetime=timedelta(seconds=-1))  # pyright: ignore[reportAttributeAccessIssue]
-    expired_refresh.access_token.set_exp(  # pyright: ignore[reportAttributeAccessIssue]
+    expired_refresh = RefreshToken.for_user(cast(AbstractBaseUser, verified_user))
+    expired_refresh.set_exp(lifetime=timedelta(seconds=-1))  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
+    expired_refresh.access_token.set_exp(  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
         lifetime=timedelta(seconds=-1)
     )
 
@@ -264,11 +261,11 @@ def test_token_refresh_under_load_multiple_rapid_calls(
     Frontend interceptor (axios) handles request queuing; this verifies backend safety.
     """
     # Step 1: Create tokens at a fixed time, then expire them
-    initial_time = datetime(2024, 1, 1, 12, 0, 0)
+    initial_time = datetime(2024, 1, 1, 12, 0, 0, tzinfo=UTC)
 
     with freeze_time(initial_time):
         # Create refresh token (14 days lifetime)
-        refresh = RefreshToken.for_user(verified_user)
+        refresh = RefreshToken.for_user(cast(AbstractBaseUser, verified_user))
         access_token_str = str(refresh.access_token)  # 5 minutes lifetime
 
     # Advance time by 6 minutes to expire access token
@@ -305,10 +302,11 @@ def test_token_refresh_under_load_multiple_rapid_calls(
 
         # Step 4: Retry all failed requests with new access token
         # Frontend updates sessionStorage and retries with new token
+        new_access = new_tokens['access_token']
         retry_responses = [
-            fresh_client.get("/api/profile/", HTTP_AUTHORIZATION=f"Bearer {new_tokens['access_token']}"),
-            fresh_client.get("/api/profile/", HTTP_AUTHORIZATION=f"Bearer {new_tokens['access_token']}"),
-            fresh_client.get("/api/profile/", HTTP_AUTHORIZATION=f"Bearer {new_tokens['access_token']}"),
+            fresh_client.get("/api/profile/", HTTP_AUTHORIZATION=f"Bearer {new_access}"),
+            fresh_client.get("/api/profile/", HTTP_AUTHORIZATION=f"Bearer {new_access}"),
+            fresh_client.get("/api/profile/", HTTP_AUTHORIZATION=f"Bearer {new_access}"),
         ]
 
         for response in retry_responses:

@@ -335,9 +335,9 @@ def test_profile_endpoint_with_serialization_error() -> None:
         # Django test client raises exception by default (check_exception=True)
         # This verifies error is properly raised (not silently swallowed)
         try:
-            response = client.get("/api/profile/")
+            client.get("/api/profile/")
             # If we get here, exception wasn't raised (unexpected)
-            assert False, "Expected ValueError to be raised"  # noqa: B011, PT015
+            assert False, "Expected ValueError to be raised"
         except ValueError as e:
             # Expected: exception propagates correctly
             assert "Serialization failed" in str(e)

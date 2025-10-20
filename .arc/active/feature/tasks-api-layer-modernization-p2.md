@@ -540,48 +540,62 @@ solution to finalize our architecture.
 **Status:** ~6% remaining (~3-5 hours)
 **Objective:** Finalize API Layer Modernization with high confidence for moving beyond API work
 
-### R.1: Legacy Code Cleanup
+### ✅ R.1: Legacy Code Cleanup (COMPLETE)
 
 **Purpose:** Remove dead DRF code for clean coverage baseline
 
-- [ ] R.1.1: Delete legacy DRF files
-    - [ ] R.1.1.1: Delete `backend/apps/user_movie_data/views.py` (35 lines, 0% coverage)
-    - [ ] R.1.1.2: Delete `backend/apps/user_movie_data/serializers.py` (19 lines, 0% coverage)
-    - [ ] R.1.1.3: Delete `backend/apps/user_movie_data/urls.py` (7 lines, 0% coverage)
-    - [ ] R.1.1.4: Delete `backend/apps/authentication/views.py` (99 lines, 0% coverage)
-    - [ ] R.1.1.5: Delete `backend/apps/authentication/serializers.py` (88 lines, 0% coverage)
-    - [ ] R.1.1.6: Delete `backend/apps/authentication/urls.py` (5 lines, 0% coverage)
-    - [ ] R.1.1.7: Delete `backend/apps/authentication/authenticate.py` (17 lines, legacy auth)
-    - [ ] R.1.1.8: Delete `backend/apps/authentication/token_strategy.py` (35 lines, legacy token handling)
+- [x] R.1.1: Delete legacy DRF files
+    - [x] R.1.1.1: Delete `backend/apps/user_movie_data/views.py` (35 lines, 0% coverage)
+    - [x] R.1.1.2: Delete `backend/apps/user_movie_data/serializers.py` (19 lines, 0% coverage)
+    - [x] R.1.1.3: Delete `backend/apps/user_movie_data/urls.py` (7 lines, 0% coverage)
+    - [x] R.1.1.4: Delete `backend/apps/authentication/views.py` (99 lines, 0% coverage)
+    - [x] R.1.1.5: Delete `backend/apps/authentication/serializers.py` (88 lines, 0% coverage)
+    - [x] R.1.1.6: Delete `backend/apps/authentication/urls.py` (5 lines, 0% coverage)
+    - [x] R.1.1.7: Delete `backend/apps/authentication/authenticate.py` (17 lines, legacy auth)
+    - [x] R.1.1.8: Delete `backend/apps/authentication/token_strategy.py` (35 lines, legacy token handling)
 
-- [ ] R.1.2: Delete legacy test files
-    - [ ] R.1.2.1: Delete `backend/apps/movie/tests/test_paginated_views.py` (DRF test)
-    - [ ] R.1.2.2: Verify no old `test_user_movie_data_api.py` in DRF format (replaced by pytest version)
+- [x] R.1.2: Delete legacy test files
+    - [x] R.1.2.1: Delete `backend/apps/movie/tests/test_paginated_views.py` (DRF test) - already deleted
+    - [x] R.1.2.2: Verify no old `test_user_movie_data_api.py` in DRF format (replaced by pytest version) -
+        verified pytest version present
 
-- [ ] R.1.3: Delete unused legacy views
-    - [ ] R.1.3.1: Delete `backend/apps/core/views/logging.py` (114 lines, frontend logging - not actively used)
-    - [ ] R.1.3.2: Delete `backend/apps/core/views/tmdb.py` (56 lines, 0% coverage, superseded by Django Ninja)
-    - [ ] R.1.3.3: Delete `backend/apps/core/urls.py` (4 lines, if only contained legacy routes)
-    - [ ] R.1.3.4: Delete `backend/apps/core/utilities/__init__.py` (5 lines, 0% coverage)
+- [x] R.1.3: Migrate remaining core app endpoints to Django Ninja (previously missed; technical debt)
+    - [x] R.1.3.1: Create `backend/apps/core/schemas.py` with logging schemas (also updated frontend logger.ts to use snake_case)
+    - [x] R.1.3.2: Create `backend/apps/core/api.py` with Django Ninja core_router
+    - [x] R.1.3.3: Migrate `FrontendLogAPIView` to `POST /logs/` endpoint
+    - [x] R.1.3.4: Migrate `LogHealthCheckView` to `GET /logs/health/` endpoint
+    - [x] R.1.3.5: Register core_router in `backend/config/api.py`
+    - [x] R.1.3.6: Create pytest tests for Django Ninja logging endpoints (17 tests, 100% passing)
+    - [x] R.1.3.7: Delete `backend/apps/core/views/logging.py` (DRF logging endpoints)
+    - [x] R.1.3.8: Delete `backend/apps/core/views/health_check.py` (duplicate, Ninja version exists)
+    - [x] R.1.3.9: Delete `backend/apps/core/urls.py` (only registered logging endpoints)
+    - [x] R.1.3.10: Update `backend/config/urls.py` (remove HealthCheckView import and registration)
+    - [x] R.1.3.11: Update `backend/apps/core/views/__init__.py` (already clean - no imports to remove)
 
-- [ ] R.1.4: Remove type exclusions from pyrightconfig.json
-    - [ ] R.1.4.1: Open `backend/pyrightconfig.json`
-    - [ ] R.1.4.2: Remove all entries under "TEMPORARY EXCLUSIONS: Legacy DRF Code" comment
-    - [ ] R.1.4.3: Remove entire "TEMPORARY EXCLUSIONS" comment block
-    - [ ] R.1.4.4: Save file
+- [x] R.1.4: Delete remaining dead code
+    - [x] R.1.4.1: Delete `backend/apps/core/views/tmdb.py` (56 lines, 0% coverage, not imported)
+    - [x] R.1.4.2: Delete `backend/apps/core/utilities/__init__.py` (5 lines, 0% coverage, not imported)
 
-- [ ] R.1.5: Verify no remaining imports of deleted modules
-    - [ ] R.1.5.1: Run `grep -r "from.*views import\|from.*serializers import" backend/apps/ --include="*.py"`
-    - [ ] R.1.5.2: Run `grep -r "authenticate\.py\|token_strategy\.py" backend/ --include="*.py"`
-    - [ ] R.1.5.3: Fix any remaining imports (should be none)
+- [x] R.1.5: Verify no remaining imports of deleted modules
+    - [x] R.1.5.1: Run `grep -r "from.*views import\|from.*serializers import" backend/apps/ --include="*.py"`
+    - [x] R.1.5.2: Run `grep -r "authenticate\.py\|token_strategy\.py" backend/ --include="*.py"`
+    - [x] R.1.5.3: Fix any remaining imports (found and deleted user_movie_data_service.py -
+        orphaned code used only by deleted tmdb.py)
 
-- [ ] R.1.6: Run type checking to confirm 0 errors
-    - [ ] R.1.6.1: Run `npx pyright backend/apps/ backend/config/ --project backend`
-    - [ ] R.1.6.2: Verify 0 type errors (target architecture should be clean from fix-backend-type-errors incidental)
+- [x] R.1.6: Remove type exclusions from pyrightconfig.json
+    - [x] R.1.6.1: Open `backend/pyrightconfig.json`
+    - [x] R.1.6.2: Remove all entries under "TEMPORARY EXCLUSIONS: Legacy DRF Code" comment
+    - [x] R.1.6.3: Remove entire "TEMPORARY EXCLUSIONS" comment block
+    - [x] R.1.6.4: Save file
 
-- [ ] R.1.7: Run full test suite to confirm no regressions
-    - [ ] R.1.7.1: Run `docker compose -f infrastructure/docker-compose.yml exec backend pytest -n auto apps/`
-    - [ ] R.1.7.2: Verify 217/217 tests passing (no regressions from file deletion)
+- [x] R.1.7: Run type checking to confirm 0 errors
+    - [x] R.1.7.1: Run `npx pyright backend/apps/ backend/config/ --project backend`
+    - [x] R.1.7.2: Verify 0 type errors (fixed 12 errors: unused imports/variables +
+        added freezegun stub + fixed pyright ignore codes)
+
+- [x] R.1.8: Run full test suite to confirm no regressions
+    - [x] R.1.8.1: Run `docker compose -f infrastructure/docker-compose.yml exec backend pytest -n auto apps/`
+    - [x] R.1.8.2: Verify 234/234 tests passing (no regressions from file deletion - count increased from incidental work)
 
 ### R.2: Coverage Baseline & Gap Analysis
 

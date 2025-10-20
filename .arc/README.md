@@ -1,6 +1,7 @@
 # .arc - ARC Documentation System
 
-This directory contains the complete documentation system for the CineXplorer project, organized following the ARC (Agentic, Recursive, Coordination) framework methodology.
+This directory contains the complete documentation system for the CineXplorer project.
+It is organized following the ARC framework methodology.
 
 ## Directory Structure
 
@@ -9,7 +10,7 @@ This directory contains the complete documentation system for the CineXplorer pr
 ├── active/           # Current session work - PRD, tasks, notes, and session context
 ├── upcoming/         # Future work pipeline organized by work type
 │   ├── sub-prds/     # Feature specifications ready for development
-│   ├── notes/        # Research and decision logs for upcoming features  
+│   ├── notes/        # Research and decision logs for upcoming features
 │   └── tasks/        # Generated task lists from approved PRDs
 └── reference/        # Stable, long-term documentation
     ├── constitution/ # Foundational project documents (META-PRD, rules, architecture)
@@ -47,7 +48,7 @@ This directory contains the complete documentation system for the CineXplorer pr
 This structure implements the ARC framework's core principles:
 
 - **Agentic**: Optimized for AI agent collaboration with clear context boundaries
-- **Recursive**: Knowledge evolves from temporal notes → stable patterns → archived decisions  
+- **Recursive**: Knowledge evolves from temporal notes → stable patterns → archived decisions
 - **Coordination**: Shared language and systematic handoffs across development cycles
 
-For more information about the ARC framework, see the [arc-agentic-dev-framework](https://github.com/andrewRCr/arc-agentic-dev-framework) repository.
+For more info about the ARC framework: see the [arc-agentic-dev-framework](https://github.com/andrewRCr/arc-agentic-dev-framework).

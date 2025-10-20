@@ -7,9 +7,12 @@
 
 ## Overview
 
-This task list implements Phase 2 of the API Layer Modernization, completing the migration from Django REST Framework to Django Ninja. It follows the **ModelSchema blueprint** established in Phase 1, ensuring type-safe Django model CRUD operations with zero unnecessary `type: ignore` comments.
+This task list implements Phase 2 of the API Layer Modernization, completing the migration from Django REST
+Framework to Django Ninja. It follows the **ModelSchema blueprint** established in Phase 1, ensuring type-safe
+Django model CRUD operations with zero unnecessary `type: ignore` comments.
 
-**Status:** ~90% complete, ~5-8 hours remaining. Most testing/quality work completed via 8 incidental task lists (~170-210 hours). See notes file for detailed incidental work context.
+**Status:** ~90% complete, ~5-8 hours remaining. Most testing/quality work completed via 8 incidental task lists
+(~170-210 hours). See notes file for detailed incidental work context.
 
 **Key Patterns from Phase 1:**
 
@@ -136,9 +139,12 @@ def create_entry(request: HttpRequest, payload: CreateSchema):
 
 ### Phase 4: JWT Migration (Remove DRF Dependency)
 
-**Rationale:** `djangorestframework-simplejwt` is built FOR Django REST Framework and has DRF as a hard dependency. Before comprehensive quality gates (Phase 6), we must replace it with a Django Ninja-compatible solution to finalize our architecture.
+**Rationale:** `djangorestframework-simplejwt` is built FOR Django REST Framework and has DRF as a hard
+dependency. Before comprehensive quality gates (Phase 6), we must replace it with a Django Ninja-compatible
+solution to finalize our architecture.
 
-**Solution:** `django-ninja-jwt` - Official fork of simplejwt specifically for Django Ninja, actively maintained (latest: 5.3.5, Nov 2024).
+**Solution:** `django-ninja-jwt` - Official fork of simplejwt specifically for Django Ninja, actively maintained
+(latest: 5.3.5, Nov 2024).
 
 - [x] 4.1 Research and evaluate django-ninja-jwt
     - [x] 4.1.1 Review [django-ninja-jwt documentation](https://eadwincode.github.io/django-ninja-jwt/)
@@ -149,35 +155,52 @@ def create_entry(request: HttpRequest, payload: CreateSchema):
 
 - [x] 4.2 Install django-ninja-jwt and update configuration
     - [x] 4.2.1 Add `django-ninja-jwt` to `backend/requirements/req.txt` (corrected from req.base.txt)
-    - [x] 4.2.2 Verify Django settings compatibility (ninja-jwt uses same `SIMPLE_JWT` key - NO CHANGE needed) - VERIFIED
-    - [x] 4.2.3 Verify token lifetime settings preserved (ACCESS_TOKEN_LIFETIME, REFRESH_TOKEN_LIFETIME - NO CHANGE) - VERIFIED
-    - [x] 4.2.4 Verify cookie settings preserved (httponly, secure, samesite, cookie names - custom settings work as-is) - VERIFIED
+    - [x] 4.2.2 Verify Django settings compatibility (ninja-jwt uses same `SIMPLE_JWT` key - NO CHANGE needed)
+        - VERIFIED
+    - [x] 4.2.3 Verify token lifetime settings preserved (ACCESS_TOKEN_LIFETIME, REFRESH_TOKEN_LIFETIME - NO CHANGE)
+        - VERIFIED
+    - [x] 4.2.4 Verify cookie settings preserved (httponly, secure, samesite, cookie names - custom settings work
+        as-is) - VERIFIED
     - [x] 4.2.5 Install dependencies via docker rebuild (`docker compose up --build`) - INSTALLED v5.3.9
-    - [x] 4.2.6 **BONUS**: Fix stale `email_verification_service` imports from Phase 3 bridge removal (3 files updated, 2 docstrings updated)
+    - [x] 4.2.6 **BONUS**: Fix stale `email_verification_service` imports from Phase 3 bridge removal (3 files
+        updated, 2 docstrings updated)
 
 - [x] 4.3 Migrate auth_ninja.py to django-ninja-jwt
-    - [x] 4.3.1 Update imports (replaced `rest_framework_simplejwt` with `ninja_jwt` - tokens, exceptions, settings) - DONE
-    - [x] 4.3.2 Keep `JWTCookieAuth` extending `APIKeyCookie` (no change to base class - ninja-jwt has no cookie support) - VERIFIED
+    - [x] 4.3.1 Update imports (replaced `rest_framework_simplejwt` with `ninja_jwt` - tokens, exceptions,
+        settings) - DONE
+    - [x] 4.3.2 Keep `JWTCookieAuth` extending `APIKeyCookie` (no change to base class - ninja-jwt has no cookie
+        support) - VERIFIED
     - [x] 4.3.3 Add `get_user_model()` import for user lookup in authenticate() method - ADDED
-    - [x] 4.3.4 Rewrite `authenticate()` method: use `AccessToken(key)` directly, extract user_id from payload, lookup user via ORM - IMPLEMENTED
-    - [x] 4.3.5 Update exception handling: catch `InvalidToken`, `TokenError` from ninja_jwt, add `User.DoesNotExist` - COMPLETE
-    - [x] 4.3.6 Run incremental quality checks (Django check passes, Pyright shows same django-stubs limitations as before)
-    - [x] 4.3.7 **BONUS**: Created type stubs `backend/stubs/ninja_jwt/` (tokens.pyi, exceptions.pyi, settings.pyi) for type safety
+    - [x] 4.3.4 Rewrite `authenticate()` method: use `AccessToken(key)` directly, extract user_id from payload,
+        lookup user via ORM - IMPLEMENTED
+    - [x] 4.3.5 Update exception handling: catch `InvalidToken`, `TokenError` from ninja_jwt, add
+        `User.DoesNotExist` - COMPLETE
+    - [x] 4.3.6 Run incremental quality checks (Django check passes, Pyright shows same django-stubs limitations
+        as before)
+    - [x] 4.3.7 **BONUS**: Created type stubs `backend/stubs/ninja_jwt/` (tokens.pyi, exceptions.pyi, settings.pyi)
+        for type safety
 
 - [x] 4.4 Migrate authentication API endpoints
-    - [x] 4.4.1 Update `api.py` import: change `rest_framework_simplejwt.tokens` to `ninja_jwt.tokens` (RefreshToken API identical) - DONE
-    - [x] 4.4.2 Verify register endpoint token generation unchanged (`RefreshToken.for_user(user)` - same API) - VERIFIED (line 164)
+    - [x] 4.4.1 Update `api.py` import: change `rest_framework_simplejwt.tokens` to `ninja_jwt.tokens`
+        (RefreshToken API identical) - DONE
+    - [x] 4.4.2 Verify register endpoint token generation unchanged (`RefreshToken.for_user(user)` - same API)
+        - VERIFIED (line 164)
     - [x] 4.4.3 Verify login endpoint token generation unchanged (same API) - VERIFIED (line 164)
-    - [x] 4.4.4 Verify refresh endpoint token generation unchanged (`RefreshToken(token_string)` - same API) - VERIFIED (line 238)
-    - [x] 4.4.5 Verify cookie setting logic remains identical (httponly, secure, samesite - no changes) - VERIFIED (no cookie code changed)
-    - [x] 4.4.6 Run incremental quality checks (Django check passes, ruff clean, pyright shows expected django-stubs limitations)
+    - [x] 4.4.4 Verify refresh endpoint token generation unchanged (`RefreshToken(token_string)` - same API)
+        - VERIFIED (line 238)
+    - [x] 4.4.5 Verify cookie setting logic remains identical (httponly, secure, samesite - no changes)
+        - VERIFIED (no cookie code changed)
+    - [x] 4.4.6 Run incremental quality checks (Django check passes, ruff clean, pyright shows expected
+        django-stubs limitations)
 
 - [x] 4.5 Remove simplejwt dependencies and stubs
     - [x] 4.5.1 Delete `backend/stubs/rest_framework_simplejwt/` directory entirely - DONE
     - [x] 4.5.2 Remove `djangorestframework-simplejwt` from `backend/requirements/req.txt` - DONE
     - [x] 4.5.3 **CRITICAL DISCOVERY**: Remove all legacy DRF route includes from `config/urls.py`:
-        - Removed `/api/user/` (authentication.urls) - Django Ninja has `/api/profile/`, `/api/verify-email/`, `/api/resend-verification/`
-        - Removed `/api/user-movie-data/` (user_movie_data.urls) - Django Ninja has `/api/user-movie-data` router
+        - Removed `/api/user/` (authentication.urls) - Django Ninja has `/api/profile/`, `/api/verify-email/`,
+          `/api/resend-verification/`
+        - Removed `/api/user-movie-data/` (user_movie_data.urls) - Django Ninja has `/api/user-movie-data`
+          router
         - Removed `/api/core/` (core.urls) - Frontend logging endpoints not actively used
         - Removed DRF Spectacular documentation routes
         - **Frontend audit confirmed**: NO frontend code uses legacy DRF endpoints
@@ -189,9 +212,12 @@ def create_entry(request: HttpRequest, payload: CreateSchema):
 - [x] 4.6 Create type stubs for django-ninja-jwt (COMPLETED IN TASK 4.3.7)
     - [x] 4.6.1 Run type checking on authentication domain after migration - DONE (Task 4.3.6)
     - [x] 4.6.2 Check if type errors exist - CONFIRMED (ninja-jwt lacks type stubs like simplejwt)
-    - [x] 4.6.3 Created `backend/stubs/ninja_jwt/` stubs (tokens.pyi, exceptions.pyi, settings.pyi) - DONE in Task 4.3.7
-    - [x] 4.6.4 Document maintenance contract following type-safety-strategy.md pattern - DONE (maintenance contract headers in all stubs)
-    - [x] 4.6.5 Achieve zero type errors in authentication domain - ACHIEVED (9 errors in auth_ninja.py, 43 in api.py - all pre-existing django-stubs ORM limitations)
+    - [x] 4.6.3 Created `backend/stubs/ninja_jwt/` stubs (tokens.pyi, exceptions.pyi, settings.pyi) - DONE in
+        Task 4.3.7
+    - [x] 4.6.4 Document maintenance contract following type-safety-strategy.md pattern - DONE (maintenance
+        contract headers in all stubs)
+    - [x] 4.6.5 Achieve zero type errors in authentication domain - ACHIEVED (9 errors in auth_ninja.py, 43 in
+        api.py - all pre-existing django-stubs ORM limitations)
 
 - [x] 4.7 Update and run authentication tests
     - [x] 4.7.1 Update test fixtures if needed (token generation for tests)
@@ -202,48 +228,67 @@ def create_entry(request: HttpRequest, payload: CreateSchema):
         - Updated docstrings to reference Django Ninja (removed DRF references)
         - Verified test file has zero DRF imports remaining (grep confirms 0 matches)
         - **BONUS**: Created `backend/apps/core/tests/test_helpers.py` with:
-            - Reusable `json_post()`, `json_patch()`, `json_put()` helpers (type-safe with `dict[str, object]`)
-            - Re-export of `http.HTTPStatus` for type-safe status code assertions (stdlib, zero dependencies)
+            - Reusable `json_post()`, `json_patch()`, `json_put()` helpers (type-safe with
+              `dict[str, object]`)
+            - Re-export of `http.HTTPStatus` for type-safe status code assertions (stdlib, zero
+              dependencies)
         - **BONUS**: Removed DRF status import from `movie/tests/test_movie_api.py` (Phase 1 cleanup)
     - [x] 4.7.4 Fix any test failures from JWT library migration and test client migration
         - [x] 4.7.4.1 Update validation error assertions (Django Ninja uses 422, not 400 for validation errors)
-        - [x] 4.7.4.2 Replace force_authenticate() with actual JWT cookie authentication in PrivateUserApiTests
-        - [x] 4.7.4.3 Fix AuthCookieIntegrationTests registration to properly create users with first/last name
+        - [x] 4.7.4.2 Replace force_authenticate() with actual JWT cookie authentication in
+            PrivateUserApiTests
+        - [x] 4.7.4.3 Fix AuthCookieIntegrationTests registration to properly create users with first/last
+            name
         - [x] 4.7.4.4 Run tests and verify all 20 tests pass
     - [x] 4.7.5 Verify all authentication tests pass (100% pass rate) ✅ 20/20 tests passing
     - [x] 4.7.6 Verify no test regressions from simplejwt → ninja-jwt migration ✅ All tests pass
 
 - [x] 4.8 Verify JWT functionality end-to-end
-    - [x] 4.8.1 Manual test: User registration generates valid tokens ✅ Tokens set in httponly cookies, registration response includes user_id
-    - [x] 4.8.2 Manual test: Login generates httponly cookies with correct attributes ✅ HttpOnly, Secure, SameSite=None attributes verified
-    - [x] 4.8.3 Manual test: Authenticated endpoints accept JWT from cookies ✅ Profile endpoint returns user data with JWT cookies
-    - [x] 4.8.4 Manual test: Token refresh endpoint generates new access token ✅ Refresh generates new access + refresh tokens (rotation working)
-    - [x] 4.8.5 Manual test: Logout clears cookies properly ✅ Verified via automated tests (20/20 passing, CSRF working correctly)
-    - [x] 4.8.6 Manual test: Expired tokens rejected with proper error messages ✅ Missing/invalid tokens return 401 Unauthorized
-    - [x] 4.8.7 Verify no functional regressions from JWT library change ✅ All JWT flows working, django-ninja-jwt fully functional
+    - [x] 4.8.1 Manual test: User registration generates valid tokens ✅ Tokens set in httponly cookies,
+        registration response includes user_id
+    - [x] 4.8.2 Manual test: Login generates httponly cookies with correct attributes ✅ HttpOnly, Secure,
+        SameSite=None attributes verified
+    - [x] 4.8.3 Manual test: Authenticated endpoints accept JWT from cookies ✅ Profile endpoint returns user data
+        with JWT cookies
+    - [x] 4.8.4 Manual test: Token refresh endpoint generates new access token ✅ Refresh generates new access +
+        refresh tokens (rotation working)
+    - [x] 4.8.5 Manual test: Logout clears cookies properly ✅ Verified via automated tests (20/20 passing, CSRF
+        working correctly)
+    - [x] 4.8.6 Manual test: Expired tokens rejected with proper error messages ✅ Missing/invalid tokens return
+        401 Unauthorized
+    - [x] 4.8.7 Verify no functional regressions from JWT library change ✅ All JWT flows working, django-ninja-jwt
+        fully functional
 
 ### Phase 5: Frontend Integration and Type Generation
 
 - [x] 5.1 Generate TypeScript types from OpenAPI schema
-    - [x] 5.1.1 Run `npm run generate-types` to update `src/types/api.ts` ✅ Generated 2,279 lines (70KB) from Django Ninja OpenAPI schema
-    - [x] 5.1.2 Verify UserMovieData types generated correctly ✅ UserMovieDataDetailSchema, UserMovieDataCreateSchema, UserMovieDataUpdateSchema present
-    - [x] 5.1.3 Verify authentication types generated correctly ✅ RegisterInputSchema, TokenObtainInputSchema, UserProfileSchema, all auth endpoints present
+    - [x] 5.1.1 Run `npm run generate-types` to update `src/types/api.ts` ✅ Generated 2,279 lines (70KB) from
+        Django Ninja OpenAPI schema
+    - [x] 5.1.2 Verify UserMovieData types generated correctly ✅ UserMovieDataDetailSchema,
+        UserMovieDataCreateSchema, UserMovieDataUpdateSchema present
+    - [x] 5.1.3 Verify authentication types generated correctly ✅ RegisterInputSchema, TokenObtainInputSchema,
+        UserProfileSchema, all auth endpoints present
     - [x] 5.1.4 Fix any type generation issues (schema corrections if needed) ✅ No issues, all schemas valid
     - [x] 5.1.5 Run frontend type checking (`npm run type-check`) ✅ Zero type errors
 
 - [x] 5.2 Update UserMovieData frontend service
-    - [x] 5.2.1 Update `frontend/src/services/userMovieDataService.ts` to use new Django Ninja endpoints ✅ Already using correct endpoints
+    - [x] 5.2.1 Update `frontend/src/services/userMovieDataService.ts` to use new Django Ninja endpoints
+        ✅ Already using correct endpoints
     - [x] 5.2.2 Replace DRF endpoint URLs with Django Ninja URLs ✅ No changes needed (already correct)
-    - [x] 5.2.3 Update request/response types to use auto-generated types ✅ Using UserMovieDataDetailSchema, UserMovieDataUpdateSchema
+    - [x] 5.2.3 Update request/response types to use auto-generated types ✅ Using UserMovieDataDetailSchema,
+        UserMovieDataUpdateSchema
     - [x] 5.2.4 Verify error handling matches Django Ninja error responses ✅ Error handling compatible
     - [x] 5.2.5 Run frontend type checking (`npm run type-check`) ✅ Zero errors
     - [x] 5.2.6 Run incremental frontend linting (`npm run lint` on modified files) ✅ Zero violations
 
 - [x] 5.3 Update authentication frontend service
-    - [x] 5.3.1 Update `frontend/src/hooks/useAuth.ts` to use new Django Ninja endpoints (authentication logic in hook, not separate service)
+    - [x] 5.3.1 Update `frontend/src/hooks/useAuth.ts` to use new Django Ninja endpoints (authentication logic in
+        hook, not separate service)
     - [x] 5.3.2 Replace DRF endpoint URLs with Django Ninja URLs (profile: `/api/user/me/` → `/api/profile/`)
-    - [x] 5.3.3 Update request/response types to use auto-generated types (TokenObtainInput, TokenResponse, RegisterInput, UserProfile, LogoutResponse)
-    - [x] 5.3.4 Verify JWT cookie handling works correctly (httponly cookies, CORS) - No changes needed, already using correct endpoints
+    - [x] 5.3.3 Update request/response types to use auto-generated types (TokenObtainInput, TokenResponse,
+        RegisterInput, UserProfile, LogoutResponse)
+    - [x] 5.3.4 Verify JWT cookie handling works correctly (httponly cookies, CORS) - No changes needed, already
+        using correct endpoints
     - [x] 5.3.5 Run frontend type checking (`npm run type-check`) - ✅ Zero errors
     - [x] 5.3.6 Run incremental frontend linting (`npm run lint` on modified files) - ✅ Zero violations
 
@@ -255,21 +300,32 @@ def create_entry(request: HttpRequest, payload: CreateSchema):
     - [x] 5.4.5 Run incremental frontend linting and type checking
 
 - [x] 5.5 Update AuthContext for OAuth flows (deferred from Authentication Modernization)
-    - [x] 5.5.1 Update `frontend/src/hooks/useAuth.ts` to handle OAuth redirect callbacks (OAuth callback detection in useEffect)
-    - [x] 5.5.2 Implement OAuth success callback handling (extract tokens from cookies, update auth state, redirect to home)
-    - [x] 5.5.3 Implement OAuth error callback handling (check URL params for errors, display via Login.tsx generalError state)
-    - [x] 5.5.4 Ensure consistent UX between OAuth and password authentication flows (same error display mechanism, same redirect behavior)
+    - [x] 5.5.1 Update `frontend/src/hooks/useAuth.ts` to handle OAuth redirect callbacks (OAuth callback
+        detection in useEffect)
+    - [x] 5.5.2 Implement OAuth success callback handling (extract tokens from cookies, update auth state,
+        redirect to home)
+    - [x] 5.5.3 Implement OAuth error callback handling (check URL params for errors, display via Login.tsx
+        generalError state)
+    - [x] 5.5.4 Ensure consistent UX between OAuth and password authentication flows (same error display
+        mechanism, same redirect behavior)
     - [x] 5.5.5 Run incremental frontend linting and type checking (0 errors, 0 violations)
 
-- [ ] 5.6 Comprehensive Frontend Integration Testing (~15-30 min remaining, ~45 min completed by OAuth incidental)
-    - **Status**: Basic E2E validation complete via OAuth incidental (`.arc/reference/archive/tasks/incidental/tasks-incidental-oauth-headless-migration.md`)
-    - **Completed by incidental**: Registration, OAuth flows (Google/GitHub), basic watchlist CRUD, logout, basic error handling
-    - **Remaining**: Comprehensive multi-user scenarios, extensive edge cases (ratings/reviews deferred - see note below)
+- [ ] 5.6 Comprehensive Frontend Integration Testing (~15-30 min remaining, ~45 min completed by OAuth
+    incidental)
+    - **Status**: Basic E2E validation complete via OAuth incidental
+      (`.arc/reference/archive/tasks/incidental/tasks-incidental-oauth-headless-migration.md`)
+    - **Completed by incidental**: Registration, OAuth flows (Google/GitHub), basic watchlist CRUD, logout,
+      basic error handling
+    - **Remaining**: Comprehensive multi-user scenarios, extensive edge cases (ratings/reviews deferred - see
+      note below)
     - **Scope**: API Layer migration validation - verify migrated infrastructure works end-to-end
     - **Goal**: Verify OAuth + UserMovieData API integration works (NOT full feature coverage)
-    - **Note**: Ratings/reviews/favorites APIs exist but frontend UI not yet implemented - testing deferred to future feature work when UI is built (test-first protocol will apply then)
-    - [x] 5.6.1 Manual test: User registration with password → email verification → login ✅ Working (OAuth incidental Task 9.1)
-    - [x] 5.6.2 OAuth regression check - Google (5 min smoke test) ✅ Working (OAuth incidental Task 9.2, 500ms loading UX added)
+    - **Note**: Ratings/reviews/favorites APIs exist but frontend UI not yet implemented - testing deferred to
+      future feature work when UI is built (test-first protocol will apply then)
+    - [x] 5.6.1 Manual test: User registration with password → email verification → login ✅ Working (OAuth
+        incidental Task 9.1)
+    - [x] 5.6.2 OAuth regression check - Google (5 min smoke test) ✅ Working (OAuth incidental Task 9.2, 500ms
+        loading UX added)
         - [x] 5.6.2.1 Quick OAuth flow → Verify still works after Phase 2 changes ✅ Complete
         - [x] 5.6.2.2 **NOT full validation** (already done in OAuth incidental work) ✅ Complete
     - [x] 5.6.3 OAuth regression check - GitHub (5 min smoke test) ✅ Working (OAuth incidental Task 9.3, callback URI configured)
@@ -353,10 +409,12 @@ def create_entry(request: HttpRequest, payload: CreateSchema):
 
 - Backend tests: `docker compose -f infrastructure/docker-compose.yml exec backend pytest apps/`
 - Parallel execution: `docker compose -f infrastructure/docker-compose.yml exec backend pytest -n auto apps/`
-- With coverage: `docker compose -f infrastructure/docker-compose.yml exec backend pytest --cov=apps --cov-report=term-missing apps/`
+- With coverage:
+  `docker compose -f infrastructure/docker-compose.yml exec backend pytest --cov=apps --cov-report=term-missing apps/`
 
 - [x] 6.0 Implement shared test helper utilities (DRY improvement) ✅ **COMPLETE** (pytest migration Task 4)
-    - [x] 6.0.1 Implement shared fixtures (`apps/conftest.py`, `authentication/tests/conftest.py`) ✅ Complete
+    - [x] 6.0.1 Implement shared fixtures (`apps/conftest.py`, `authentication/tests/conftest.py`)
+        ✅ Complete
     - [x] 6.0.2 Implement test helpers (`core/tests/test_helpers.py`) ✅ Complete
     - [x] 6.0.3 Implement `authenticate_client()` helper ✅ Complete
     - [x] 6.0.4 Implement `get_csrf_token()` helper ✅ Complete
@@ -367,22 +425,30 @@ def create_entry(request: HttpRequest, payload: CreateSchema):
     - **Reference**: See `.arc/reference/archive/tasks/incidental/tasks-incidental-pytest-migration.md` Task 4
 
 - [x] 6.1 Create UserMovieData Django Ninja tests ✅ **COMPLETE** (pytest migration Task 4)
-    - [x] 6.1.1 Create `backend/apps/user_movie_data/tests/test_user_movie_data_api.py` ✅ Complete (24 tests total)
+    - [x] 6.1.1 Create `backend/apps/user_movie_data/tests/test_user_movie_data_api.py` ✅ Complete
+        (24 tests total)
     - [x] 6.1.2 Implement test for `GET /by-tmdb-id/` ✅ Complete (3 tests: success, not found, user isolation)
-    - [x] 6.1.3 Implement test for `POST /` ✅ Complete (6 tests: success, defaults, duplicate, invalid movie, invalid rating)
-    - [x] 6.1.4 Implement test for `PATCH /{pk}/` ✅ Complete (6 tests: partial, single field, not found, wrong user, invalid rating)
+    - [x] 6.1.3 Implement test for `POST /` ✅ Complete (6 tests: success, defaults, duplicate, invalid movie,
+        invalid rating)
+    - [x] 6.1.4 Implement test for `PATCH /{pk}/` ✅ Complete (6 tests: partial, single field, not found, wrong
+        user, invalid rating)
     - [x] 6.1.5 Implement test for `DELETE /{pk}/` ✅ Complete (4 tests: success, not found, wrong user)
-    - [x] 6.1.6 Implement test for authentication requirement ✅ Complete (5 tests: parametrized unauthenticated access)
+    - [x] 6.1.6 Implement test for authentication requirement ✅ Complete (5 tests: parametrized unauthenticated
+        access)
     - [x] 6.1.7 Implement test for user isolation ✅ Complete (covered in GET, PATCH, DELETE tests)
     - [x] 6.1.8 Run user_movie_data tests ✅ Complete (24/24 tests passing)
     - [x] 6.1.9 Legacy DRF tests replaced ✅ Complete
     - **Reference**: See `.arc/reference/archive/tasks/incidental/tasks-incidental-pytest-migration.md` Task 4
 
 - [ ] 6.2 Create authentication Django Ninja tests (~80% complete via security updates)
-    - [x] 6.2.1 Create authentication test files ✅ Complete (`test_user_api.py`, `test_csrf_protection.py`, `test_token_blacklisting.py`)
-    - [x] 6.2.2 Implement password authentication tests ✅ Complete (20 tests in `test_user_api.py` - register, login, token obtain)
-    - [x] 6.2.3 Implement CSRF protection tests ✅ Complete (12 tests in `test_csrf_protection.py` - security updates Task 6)
-    - [x] 6.2.4 Implement JWT token refresh tests ✅ Complete (6 tests in `test_token_blacklisting.py` - security updates Task 5)
+    - [x] 6.2.1 Create authentication test files ✅ Complete (`test_user_api.py`, `test_csrf_protection.py`,
+        `test_token_blacklisting.py`)
+    - [x] 6.2.2 Implement password authentication tests ✅ Complete (20 tests in `test_user_api.py` - register,
+        login, token obtain)
+    - [x] 6.2.3 Implement CSRF protection tests ✅ Complete (12 tests in `test_csrf_protection.py` - security
+        updates Task 6)
+    - [x] 6.2.4 Implement JWT token refresh tests ✅ Complete (6 tests in `test_token_blacklisting.py` - security
+        updates Task 5)
     - [x] 6.2.5 Implement logout tests ✅ Complete (covered in `test_user_api.py`)
     - [ ] 6.2.6 Implement email verification tests ⏳ **NEEDS COMPLETION** (endpoints exist, tests missing)
     - [x] 6.2.7 Implement email uniqueness tests ✅ Complete (covered in `test_user_api.py`)
@@ -419,10 +485,12 @@ def create_entry(request: HttpRequest, payload: CreateSchema):
     - [x] 6.5.8 Run backend type checking - Pyright ✅ Complete (0 errors - fix-backend-type-errors incidental)
     - [x] 6.5.9 Run comprehensive type check script ✅ Complete (0 errors - fix-backend-type-errors incidental)
     - [x] 6.5.10 Fix all type errors across entire backend ✅ Complete (0 errors achieved)
-    - [x] 6.5.11 Verify Phase 1 domains have no type safety regressions ✅ Complete (0 errors in Movie, Core)
+    - [x] 6.5.11 Verify Phase 1 domains have no type safety regressions ✅ Complete (0 errors in Movie,
+        Core)
     - [x] 6.5.12 Verify complete DRF elimination from test suite ✅ Complete (0 DRF imports in tests)
     - [x] 6.5.13 Run markdown linting ✅ Complete (0 violations - continuous quality gates)
-    - [ ] 6.5.14 **Final Certification**: Document official coverage baseline and verify 100% pass rate ⏳ **NEEDS FORMAL RUN**
+    - [ ] 6.5.14 **Final Certification**: Document official coverage baseline and verify 100% pass rate
+        ⏳ **NEEDS FORMAL RUN**
     - **Status**: All quality gates passing, just need official coverage baseline documentation
 
 ### Phase 7: Documentation and Cleanup (~40% complete via incidental work)
@@ -498,13 +566,22 @@ def create_entry(request: HttpRequest, payload: CreateSchema):
 
 ## Notes
 
-- **ModelSchema Usage:** UserMovieData CRUD endpoints use `ModelSchema` for automatic schema generation from Django models. Type safety is provided by custom `.pyi` stub files (not django-stubs field inference), which give type checkers explicit field type information.
-- **Manual Schema Usage:** Create/Update schemas use manual `Schema` due to non-model fields (e.g., `movie_id` lookup)
-- **Embedded Schema Unchanged:** `UserMovieDataSchema` in `movie/schemas.py` serves different purpose (embedding in movie responses), remains unchanged
-- **Type Safety Implementation:** Custom `.pyi` stub files in `backend/apps/*/models.pyi` provide explicit type annotations for Django model fields, enabling zero `type: ignore` comments for model field access in ModelSchema patterns. See [Type Safety Strategy](.arc/reference/strategies/strategy-type-safety.md) for complete guidance.
-- **Authentication Foundation:** All work builds on Authentication Modernization foundation (CustomAccountAdapter, allauth integration)
-- **Deferred Work:** Email verification bridge removal and OAuth UI integration are deferred from Authentication Modernization
-- **Testing Strategy:** Three-layer testing (API integration, service layer, specialized tests) per Phase 1 blueprint
+- **ModelSchema Usage:** UserMovieData CRUD endpoints use `ModelSchema` for automatic schema generation from Django
+  models. Type safety is provided by custom `.pyi` stub files (not django-stubs field inference), which give type
+  checkers explicit field type information.
+- **Manual Schema Usage:** Create/Update schemas use manual `Schema` due to non-model fields (e.g., `movie_id`
+  lookup)
+- **Embedded Schema Unchanged:** `UserMovieDataSchema` in `movie/schemas.py` serves different purpose (embedding in
+  movie responses), remains unchanged
+- **Type Safety Implementation:** Custom `.pyi` stub files in `backend/apps/*/models.pyi` provide explicit type
+  annotations for Django model fields, enabling zero `type: ignore` comments for model field access in ModelSchema
+  patterns. See [Type Safety Strategy](.arc/reference/strategies/strategy-type-safety.md) for complete guidance.
+- **Authentication Foundation:** All work builds on Authentication Modernization foundation (CustomAccountAdapter,
+  allauth integration)
+- **Deferred Work:** Email verification bridge removal and OAuth UI integration are deferred from Authentication
+  Modernization
+- **Testing Strategy:** Three-layer testing (API integration, service layer, specialized tests) per Phase 1
+  blueprint
 
 ## Completion Summary
 

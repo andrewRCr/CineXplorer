@@ -12,11 +12,13 @@ for user-specific data population.
 
 from __future__ import annotations
 
-from authentication.auth_ninja import get_current_user_optional
 from django.http import HttpRequest
 from ninja import Query, Router
-from user_movie_data.services.movie_enrichment_service import MovieEnrichmentService
 
+from .helpers import (
+    enrich_response_with_user_movie_data,
+    enrich_single_movie_with_user_movie_data,
+)
 from .schemas import (
     GenreSchema,
     MovieDetailSchema,
@@ -30,9 +32,6 @@ from .schemas import (
 
 # Import service functions
 from .services import movie_service
-
-# Initialize enrichment service (class-based with DI support)
-enrichment_service = MovieEnrichmentService()
 
 # Create separate router instances for logical grouping
 movies_router = Router(tags=["movies"])
@@ -116,13 +115,7 @@ def get_now_playing_movies(
     response = movie_service.get_now_playing_movies(page=params.page or 1)
 
     # Enrich with user data if authenticated
-    user = get_current_user_optional(request)
-    response.results = enrichment_service.enrich_movies_with_user_data(
-        response.results,
-        user
-    )
-
-    return response
+    return enrich_response_with_user_movie_data(request, response)
 
 
 @movies_router.get("/upcoming", response=PaginatedMovieResponseSchema, auth=None)
@@ -135,13 +128,7 @@ def get_upcoming_movies(
     response = movie_service.get_upcoming_movies(page=params.page or 1)
 
     # Enrich with user data if authenticated
-    user = get_current_user_optional(request)
-    response.results = enrichment_service.enrich_movies_with_user_data(
-        response.results,
-        user
-    )
-
-    return response
+    return enrich_response_with_user_movie_data(request, response)
 
 
 @movies_router.get("/search", response=PaginatedMovieResponseSchema, auth=None)
@@ -159,13 +146,7 @@ def search_movies(
     response = movie_service.search_movies(query=params.query, page=params.page or 1)
 
     # Enrich with user data if authenticated
-    user = get_current_user_optional(request)
-    response.results = enrichment_service.enrich_movies_with_user_data(
-        response.results,
-        user
-    )
-
-    return response
+    return enrich_response_with_user_movie_data(request, response)
 
 
 @movies_router.get("/discover", response=PaginatedMovieResponseSchema, auth=None)
@@ -210,13 +191,7 @@ def discover_movies(
     response = movie_service.discover_movies(page=filters.page or 1, **params)
 
     # Enrich with user data if authenticated
-    user = get_current_user_optional(request)
-    response.results = enrichment_service.enrich_movies_with_user_data(
-        response.results,
-        user
-    )
-
-    return response
+    return enrich_response_with_user_movie_data(request, response)
 
 
 @movies_router.get("/{tmdb_id}", response=MovieDetailSchema, auth=None)
@@ -241,16 +216,4 @@ def get_movie_detail(request: HttpRequest, tmdb_id: int) -> MovieDetailSchema:
     movie_data = movie_service.get_movie_by_id(tmdb_id)
 
     # Enrich with user data if authenticated
-    # Note: enrichment service expects a list, so wrap single movie
-    # Type narrowing: movie_service.get_movie_by_id returns MovieDetailSchema
-    # but enrichment service signature is generic for MovieBaseSchema
-    user = get_current_user_optional(request)
-    enriched_movies = enrichment_service.enrich_movies_with_user_data(
-        [movie_data],
-        user
-    )
-
-    # Safe to cast: input was MovieDetailSchema, enrichment preserves type
-    # MovieDetailSchema extends MovieBaseSchema, so enrichment is transparent
-    from typing import cast
-    return cast(MovieDetailSchema, enriched_movies[0])
+    return enrich_single_movie_with_user_movie_data(request, movie_data)  # type: ignore[return-value]

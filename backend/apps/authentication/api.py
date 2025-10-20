@@ -5,10 +5,8 @@ using Django Ninja, following the patterns established in Phase 1.
 """
 from __future__ import annotations
 
-import contextlib
 import logging
 from datetime import UTC, datetime, timedelta
-from typing import Literal
 
 from allauth.account.models import EmailAddress, EmailConfirmation
 from authentication.auth_ninja import get_current_user, jwt_cookie_auth
@@ -28,6 +26,14 @@ from authentication.schemas import (
     UserProfileUpdateSchema,
 )
 from authentication.throttles import TestAwareAnonThrottle, TestAwareUserThrottle
+from authentication.utils import (
+    blacklist_token,
+    check_token_blacklist,
+    extract_user_id_from_token,
+    get_jwt_settings,
+    set_auth_cookie,
+)
+from core.utils import build_error_response, get_client_info
 from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model
 from django.http import HttpRequest, HttpResponse
@@ -40,14 +46,6 @@ logger = logging.getLogger('cinexplorer.auth')
 
 # Create authentication router
 auth_router = Router(tags=["Authentication"])
-
-
-def _get_jwt_settings() -> dict[str, object]:
-    """Get JWT settings from Django settings.
-
-    Returns SIMPLE_JWT settings dictionary.
-    """
-    return settings.SIMPLE_JWT  # type: ignore[return-value]  # Django settings are dynamic
 
 
 @auth_router.post(
@@ -83,7 +81,7 @@ def register_user(
     user_model = get_user_model()
 
     # Get client info for logging
-    client_ip = request.META.get('REMOTE_ADDR', 'unknown')
+    client_ip, _ = get_client_info(request)
 
     # Check for forbidden usernames
     forbidden_usernames = settings.FORBIDDEN_USERNAMES
@@ -211,8 +209,7 @@ def obtain_token(
     password = payload.password
 
     # Get client info for logging
-    client_ip = request.META.get('REMOTE_ADDR', 'unknown')
-    user_agent = request.META.get('HTTP_USER_AGENT', 'unknown')
+    client_ip, user_agent = get_client_info(request)
 
     if not login or not password:
         return 400, {"error": "Username/email and password are required."}
@@ -251,20 +248,16 @@ def obtain_token(
     refresh_token = str(refresh)
 
     # Get JWT settings
-    jwt_settings = _get_jwt_settings()
-    refresh_token_name = str(jwt_settings['REFRESH_TOKEN_NAME'])
-    refresh_lifetime = jwt_settings['REFRESH_TOKEN_LIFETIME']  # type: ignore[assignment]  # Django settings dynamic
-    samesite: Literal['Lax', 'Strict', 'None'] = jwt_settings.get('JWT_COOKIE_SAMESITE', 'Lax')  # type: ignore[assignment]  # Django settings dynamic
+    jwt_settings = get_jwt_settings()
 
     # Hybrid authentication: Only set refresh token as HTTP-only cookie
     # Access token returned in response body for localStorage storage (frontend manages it)
-    response.set_cookie(
-        refresh_token_name,
+    set_auth_cookie(
+        response,
+        jwt_settings.refresh_token_name,
         refresh_token,
-        max_age=int(refresh_lifetime.total_seconds()),  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType, reportAttributeAccessIssue]
-        httponly=True,
-        secure=True,
-        samesite=samesite,
+        jwt_settings.refresh_lifetime,
+        jwt_settings.samesite
     )
 
     # Log successful login
@@ -318,15 +311,13 @@ def refresh_token(
         - Sets new access and refresh tokens as httponly cookies
     """
     # Get JWT settings
-    jwt_settings = _get_jwt_settings()
-    refresh_token_name = str(jwt_settings['REFRESH_TOKEN_NAME'])
-    access_token_name = str(jwt_settings['ACCESS_TOKEN_NAME'])
-    access_lifetime = jwt_settings['ACCESS_TOKEN_LIFETIME']  # type: ignore[assignment]  # Django settings dynamic
-    refresh_lifetime = jwt_settings['REFRESH_TOKEN_LIFETIME']  # type: ignore[assignment]  # Django settings dynamic
-    samesite: Literal['Lax', 'Strict', 'None'] = jwt_settings.get('JWT_COOKIE_SAMESITE', 'Lax')  # type: ignore[assignment]  # Django settings dynamic
+    jwt_settings = get_jwt_settings()
+
+    # Get client info for logging
+    client_ip, user_agent = get_client_info(request)
 
     # Get refresh token from cookie
-    refresh_token_value = request.COOKIES.get(refresh_token_name)
+    refresh_token_value = request.COOKIES.get(jwt_settings.refresh_token_name)
 
     if not refresh_token_value:
         return 400, {"error": "No valid refresh token found in cookies."}
@@ -336,11 +327,21 @@ def refresh_token(
         # This will raise TokenError if token is blacklisted
         old_refresh = RefreshToken(refresh_token_value)
 
-        # Check if token is blacklisted (manual check required)
-        # ninja-jwt blacklist check - method missing from type stubs
-        with contextlib.suppress(AttributeError):
-            # check_blacklist() not available, blacklist check will happen on next use
-            old_refresh.check_blacklist()  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
+        # Check if token is blacklisted
+        if check_token_blacklist(old_refresh):
+            # Extract user_id from token for security logging
+            user_id = extract_user_id_from_token(refresh_token_value)
+
+            # Log security event: blacklisted token reuse attempt
+            logger.warning(
+                f"SECURITY: Blacklisted token reuse attempt detected | "
+                f"user_id={user_id} | ip={client_ip} | user_agent={user_agent}"
+            )
+
+            return 401, build_error_response(
+                "Token has been revoked. Please login again.",
+                debug_detail="This refresh token has already been used and is no longer valid."
+            )
 
         # Generate new access token from old refresh token
         access_token = str(old_refresh.access_token)
@@ -354,39 +355,28 @@ def refresh_token(
         new_refresh = RefreshToken.for_user(user)  # pyright: ignore[reportArgumentType]
         new_refresh_token = str(new_refresh)
 
-        # Blacklist the old refresh token (manual blacklist with BLACKLIST_AFTER_ROTATION)
-        # This prevents reuse of the old token
-        try:
-            old_refresh.blacklist()  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
-        except AttributeError:
-            # blacklist() method not available - library might not support it
-            logger.warning(
-                "Token blacklist not available - check ninja_jwt.token_blacklist in INSTALLED_APPS"
-            )
-        except Exception as e:
-            # Token might already be blacklisted or blacklist table not available
-            logger.warning(f"Failed to blacklist old refresh token: {e!s}")
+        # Blacklist the old refresh token (prevents reuse)
+        blacklist_token(old_refresh)
 
-        # Set new tokens as httponly cookies
-        response.set_cookie(
-            access_token_name,
+        # Set new access token cookie
+        set_auth_cookie(
+            response,
+            jwt_settings.access_token_name,
             access_token,
-            max_age=int(access_lifetime.total_seconds()),  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType, reportAttributeAccessIssue]
-            httponly=True,
-            secure=True,
-            samesite=samesite,
+            jwt_settings.access_lifetime,
+            jwt_settings.samesite
         )
-        response.set_cookie(
-            refresh_token_name,
+
+        # Set new refresh token cookie
+        set_auth_cookie(
+            response,
+            jwt_settings.refresh_token_name,
             new_refresh_token,
-            max_age=int(refresh_lifetime.total_seconds()),  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType, reportAttributeAccessIssue]
-            httponly=True,
-            secure=True,
-            samesite=samesite,
+            jwt_settings.refresh_lifetime,
+            jwt_settings.samesite
         )
 
         # Log successful token refresh
-        client_ip = request.META.get('REMOTE_ADDR', 'unknown')
         logger.info(
             f"Token refresh successful | "
             f"user_id={user_id} | ip={client_ip}"
@@ -405,22 +395,8 @@ def refresh_token(
 
         # Detect blacklisted token reuse attempts (potential security incident)
         if 'blacklist' in error_message or 'blacklisted' in error_message:
-            # Get client info for security logging
-            client_ip = request.META.get('REMOTE_ADDR', 'unknown')
-            user_agent = request.META.get('HTTP_USER_AGENT', 'unknown')
-
             # Extract user_id from token if possible (for attribution)
-            try:
-                # Decode without verification to get payload
-                # Token might be blacklisted but payload still readable
-                import jwt
-                payload = jwt.decode(
-                    refresh_token_value,
-                    options={"verify_signature": False}
-                )
-                user_id = payload.get('user_id', 'unknown')
-            except Exception:
-                user_id = 'unknown'
+            user_id = extract_user_id_from_token(refresh_token_value)
 
             # Log security event: blacklisted token reuse attempt
             logger.warning(
@@ -428,15 +404,10 @@ def refresh_token(
                 f"user_id={user_id} | ip={client_ip} | user_agent={user_agent}"
             )
 
-            # Standardized error format with development-only detail field
-            error_response: dict[str, object] = {
-                "error": "Token has been revoked. Please login again."
-            }
-            if settings.DEBUG:
-                error_response["detail"] = (
-                    "This refresh token has already been used and is no longer valid."
-                )
-            return 401, error_response
+            return 401, build_error_response(
+                "Token has been revoked. Please login again.",
+                debug_detail="This refresh token has already been used and is no longer valid."
+            )
 
         # Other token errors (expired, invalid signature, malformed)
         return 400, {"error": f"Invalid or expired refresh token: {e!s}"}
@@ -487,14 +458,13 @@ def hybrid_refresh_token(
         - Reuse detection: Blacklisted token attempts logged as security events
     """
     # Get JWT settings
-    jwt_settings = _get_jwt_settings()
-    refresh_token_name = str(jwt_settings['REFRESH_TOKEN_NAME'])
-    refresh_lifetime = jwt_settings['REFRESH_TOKEN_LIFETIME']  # type: ignore[assignment]  # Django settings dynamic
-    access_lifetime = jwt_settings['ACCESS_TOKEN_LIFETIME']  # type: ignore[assignment]  # Django settings dynamic
-    samesite: Literal['Lax', 'Strict', 'None'] = jwt_settings.get('JWT_COOKIE_SAMESITE', 'Lax')  # type: ignore[assignment]  # Django settings dynamic
+    jwt_settings = get_jwt_settings()
+
+    # Get client info for logging
+    client_ip, user_agent = get_client_info(request)
 
     # Get refresh token from HTTP-only cookie
-    refresh_token_value = request.COOKIES.get(refresh_token_name)
+    refresh_token_value = request.COOKIES.get(jwt_settings.refresh_token_name)
 
     if not refresh_token_value:
         return 400, {"error": "No valid refresh token found in cookies."}
@@ -504,8 +474,20 @@ def hybrid_refresh_token(
         old_refresh = RefreshToken(refresh_token_value)
 
         # Check if token is blacklisted
-        with contextlib.suppress(AttributeError):
-            old_refresh.check_blacklist()  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
+        if check_token_blacklist(old_refresh):
+            # Extract user_id from token for security logging
+            user_id = extract_user_id_from_token(refresh_token_value)
+
+            # Log security event
+            logger.warning(
+                f"SECURITY: Blacklisted token reuse attempt (hybrid auth) | "
+                f"user_id={user_id} | ip={client_ip} | user_agent={user_agent}"
+            )
+
+            return 401, build_error_response(
+                "Token has been revoked. Please login again.",
+                debug_detail="This refresh token has already been used and is no longer valid."
+            )
 
         # Generate new access token from old refresh token
         access_token = str(old_refresh.access_token)
@@ -520,31 +502,22 @@ def hybrid_refresh_token(
         new_refresh_token = str(new_refresh)
 
         # Blacklist the old refresh token (prevents reuse)
-        try:
-            old_refresh.blacklist()  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
-        except AttributeError:
-            logger.warning(
-                "Token blacklist not available - check ninja_jwt.token_blacklist in INSTALLED_APPS"
-            )
-        except Exception as e:
-            logger.warning(f"Failed to blacklist old refresh token: {e!s}")
+        blacklist_token(old_refresh)
 
         # Set new refresh token as HTTP-only cookie
         # Note: Access token is NOT set as cookie (frontend manages in localStorage)
-        response.set_cookie(
-            refresh_token_name,
+        set_auth_cookie(
+            response,
+            jwt_settings.refresh_token_name,
             new_refresh_token,
-            max_age=int(refresh_lifetime.total_seconds()),  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType, reportAttributeAccessIssue]
-            httponly=True,
-            secure=True,
-            samesite=samesite,
+            jwt_settings.refresh_lifetime,
+            jwt_settings.samesite
         )
 
         # Calculate issued_at timestamp (UTC, ISO 8601 format)
         issued_at = datetime.now(UTC)
 
         # Log successful token refresh
-        client_ip = request.META.get('REMOTE_ADDR', 'unknown')
         logger.info(
             f"Hybrid token refresh successful | "
             f"user_id={user_id} | ip={client_ip}"
@@ -552,10 +525,10 @@ def hybrid_refresh_token(
 
         # Return access token in response body for localStorage
         # Refresh token is ONLY in HTTP-only cookie (hybrid architecture)
-        assert isinstance(access_lifetime, timedelta)
+        assert isinstance(jwt_settings.access_lifetime, timedelta)
         return 200, {
             "access_token": access_token,
-            "expires_in": int(access_lifetime.total_seconds()),
+            "expires_in": int(jwt_settings.access_lifetime.total_seconds()),
             "issued_at": issued_at.isoformat(),
         }
     except TokenError as e:
@@ -564,19 +537,8 @@ def hybrid_refresh_token(
 
         # Detect blacklisted token reuse attempts
         if 'blacklist' in error_message or 'blacklisted' in error_message:
-            client_ip = request.META.get('REMOTE_ADDR', 'unknown')
-            user_agent = request.META.get('HTTP_USER_AGENT', 'unknown')
-
             # Extract user_id for attribution
-            try:
-                import jwt
-                payload = jwt.decode(
-                    refresh_token_value,
-                    options={"verify_signature": False}
-                )
-                user_id = payload.get('user_id', 'unknown')
-            except Exception:
-                user_id = 'unknown'
+            user_id = extract_user_id_from_token(refresh_token_value)
 
             # Log security event
             logger.warning(
@@ -584,14 +546,10 @@ def hybrid_refresh_token(
                 f"user_id={user_id} | ip={client_ip} | user_agent={user_agent}"
             )
 
-            error_response: dict[str, object] = {
-                "error": "Token has been revoked. Please login again."
-            }
-            if settings.DEBUG:
-                error_response["detail"] = (
-                    "This refresh token has already been used and is no longer valid."
-                )
-            return 401, error_response
+            return 401, build_error_response(
+                "Token has been revoked. Please login again.",
+                debug_detail="This refresh token has already been used and is no longer valid."
+            )
 
         # Other token errors
         return 400, {"error": f"Invalid or expired refresh token: {e!s}"}
@@ -626,9 +584,7 @@ def logout(request: HttpRequest, response: HttpResponse) -> tuple[int, dict[str,
         - Uses same path, domain, samesite as when cookie was set
     """
     # Get JWT settings
-    jwt_settings = _get_jwt_settings()
-    refresh_token_name = str(jwt_settings['REFRESH_TOKEN_NAME'])
-    samesite: Literal['Lax', 'Strict', 'None'] = jwt_settings.get('JWT_COOKIE_SAMESITE', 'Lax')  # type: ignore[assignment]  # Django settings dynamic
+    jwt_settings = get_jwt_settings()
 
     # Delete refresh token cookie with matching attributes for reliable removal
     # Hybrid authentication: Only refresh token is stored as HTTP-only cookie
@@ -636,10 +592,10 @@ def logout(request: HttpRequest, response: HttpResponse) -> tuple[int, dict[str,
     cookie_kwargs = {
         'path': '/',  # Default path
         'domain': None,  # Use default domain
-        'samesite': samesite,
+        'samesite': jwt_settings.samesite,
     }
 
-    response.delete_cookie(refresh_token_name, **cookie_kwargs)  # pyright: ignore[reportArgumentType]
+    response.delete_cookie(jwt_settings.refresh_token_name, **cookie_kwargs)  # pyright: ignore[reportArgumentType]
 
     return 200, {"message": "Logged out successfully."}
 

@@ -149,7 +149,7 @@ def test_enrich_with_authenticated_user_populates_user_movie_data(
     ]
 
     # Act
-    enriched_movies = service.enrich_movies_with_user_data(movies, user)  # pyright: ignore[reportUnknownArgumentType]
+    enriched_movies = service.enrich_movies_with_user_movie_data(movies, user)  # pyright: ignore[reportUnknownArgumentType]
 
     # Assert
     assert len(enriched_movies) == 1
@@ -201,7 +201,7 @@ def test_enrich_multiple_movies_with_mixed_user_data(
     ]
 
     # Act
-    enriched_movies = service.enrich_movies_with_user_data(movies, user)  # pyright: ignore[reportUnknownArgumentType]
+    enriched_movies = service.enrich_movies_with_user_movie_data(movies, user)  # pyright: ignore[reportUnknownArgumentType]
 
     # Assert
     assert len(enriched_movies) == 3
@@ -244,7 +244,7 @@ def test_enrich_with_unauthenticated_user_leaves_data_unchanged(
     ]
 
     # Act
-    enriched_movies = service.enrich_movies_with_user_data(movies, None)
+    enriched_movies = service.enrich_movies_with_user_movie_data(movies, None)
 
     # Assert
     assert len(enriched_movies) == 1
@@ -268,7 +268,7 @@ def test_enrich_with_unauthenticated_user_returns_same_list_reference(
     ]
 
     # Act
-    enriched_movies = service.enrich_movies_with_user_data(movies, None)
+    enriched_movies = service.enrich_movies_with_user_movie_data(movies, None)
 
     # Assert: Same list reference (early return for performance)
     assert enriched_movies is movies
@@ -308,7 +308,7 @@ def test_bulk_query_optimization_single_query(
 
     # Act & Assert: Should execute exactly 1 query regardless of movie count
     with django_assert_num_queries(1):  # type: ignore[operator]
-        enriched_movies = service.enrich_movies_with_user_data(movies, user)  # pyright: ignore[reportUnknownArgumentType]
+        enriched_movies = service.enrich_movies_with_user_movie_data(movies, user)  # pyright: ignore[reportUnknownArgumentType]
 
     # Verify both movies were enriched
     assert len(enriched_movies) == 2
@@ -331,7 +331,7 @@ def test_enrich_empty_movie_list_returns_empty_list(
     movies: list[MovieBaseSchema] = []
 
     # Act
-    enriched_movies = service.enrich_movies_with_user_data(movies, user)  # pyright: ignore[reportUnknownArgumentType]
+    enriched_movies = service.enrich_movies_with_user_movie_data(movies, user)  # pyright: ignore[reportUnknownArgumentType]
 
     # Assert
     assert enriched_movies == []
@@ -356,7 +356,7 @@ def test_movies_without_user_data_have_none_field(
     ]
 
     # Act
-    enriched_movies = service.enrich_movies_with_user_data(movies, user)  # pyright: ignore[reportUnknownArgumentType]
+    enriched_movies = service.enrich_movies_with_user_movie_data(movies, user)  # pyright: ignore[reportUnknownArgumentType]
 
     # Assert
     assert len(enriched_movies) == 1
@@ -393,7 +393,7 @@ def test_user_isolation_other_users_data_not_included(
     ]
 
     # Act: Enrich for 'user' (not 'other_user')
-    enriched_movies = service.enrich_movies_with_user_data(movies, user)  # pyright: ignore[reportUnknownArgumentType]
+    enriched_movies = service.enrich_movies_with_user_movie_data(movies, user)  # pyright: ignore[reportUnknownArgumentType]
 
     # Assert: Should NOT include other_user's data
     assert len(enriched_movies) == 1
@@ -429,7 +429,7 @@ def test_enrichment_preserves_original_movie_data(
     ]
 
     # Act
-    enriched_movies = service.enrich_movies_with_user_data(movies, user)  # pyright: ignore[reportUnknownArgumentType]
+    enriched_movies = service.enrich_movies_with_user_movie_data(movies, user)  # pyright: ignore[reportUnknownArgumentType]
 
     # Assert: Original fields preserved
     assert enriched_movies[0].tmdb_id == movie1.tmdb_id

@@ -97,7 +97,7 @@ def get_user_movies(
     # Enrich movies with user-specific data
     # Note: enrichment_service mutates the input list in place,
     # so MovieDetailSchema objects stay as MovieDetailSchema
-    enriched_movies = enrichment_service.enrich_movies_with_user_data(movies, user)
+    enriched_movies = enrichment_service.enrich_movies_with_user_movie_data(movies, user)
 
     # Return paginated response
     # Note: Pagination not implemented in this minimal version

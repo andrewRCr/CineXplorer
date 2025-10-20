@@ -36,11 +36,11 @@ class MovieEnrichmentService:
     Usage:
         # Basic usage (no DI)
         service = MovieEnrichmentService()
-        enriched_movies = service.enrich_movies_with_user_data(movies, user)
+        enriched_movies = service.enrich_movies_with_user_movie_data(movies, user)
 
         # Future usage with DI (when repository pattern is implemented)
         service = MovieEnrichmentService(user_movie_data_repository=mock_repo)
-        enriched_movies = service.enrich_movies_with_user_data(movies, user)
+        enriched_movies = service.enrich_movies_with_user_movie_data(movies, user)
     """
 
     def __init__(
@@ -61,17 +61,18 @@ class MovieEnrichmentService:
         # refactoring without breaking the public API
         self._repository = user_movie_data_repository
 
-    def enrich_movies_with_user_data(
+    def enrich_movies_with_user_movie_data(
         self,
         movies: list[MovieBaseSchema],
         user: AbstractBaseUser | None
     ) -> list[MovieBaseSchema]:
         """
-        Enrich movie schemas with user-specific data.
+        Enrich movie schemas with user movie data.
 
         For authenticated users, this method bulk-queries UserMovieData records
-        and populates the user_movie_data field on each MovieBaseSchema. For
-        unauthenticated users, returns movies unchanged (user_movie_data remains None).
+        and populates the user_movie_data field on each MovieBaseSchema from the
+        UserMovieData model. For unauthenticated users, returns movies unchanged
+        (user_movie_data field remains None).
 
         The method uses efficient bulk querying to avoid N+1 query problems:
         - Single database query fetches all UserMovieData for the user and movie set

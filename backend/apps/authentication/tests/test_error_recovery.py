@@ -335,13 +335,11 @@ def test_profile_endpoint_with_serialization_error() -> None:
 
         # Django test client raises exception by default (check_exception=True)
         # This verifies error is properly raised (not silently swallowed)
-        try:
+        with pytest.raises(ValueError) as exc_info:
             client.get("/api/profile/")
-            # If we get here, exception wasn't raised (unexpected)
-            assert False, "Expected ValueError to be raised"
-        except ValueError as e:
-            # Expected: exception propagates correctly
-            assert "Serialization failed" in str(e)
+
+        # Verify the exception message
+        assert "Serialization failed" in str(exc_info.value)
 
 
 @pytest.mark.django_db(transaction=True)
@@ -440,16 +438,14 @@ def test_concurrent_token_refresh_requests() -> None:
 
 
 @pytest.mark.django_db
-def test_sql_injection_attempt_in_login() -> None:
+def test_sql_injection_attempt_in_login(api_client: Client) -> None:
     """
     Verify SQL injection attempts in login are handled safely.
 
     Django ORM protects against SQL injection, but test edge case.
     """
-    client = Client()
-
     # Attempt SQL injection in username field
-    response = json_post(client, "/api/token/", {
+    response = json_post(api_client, "/api/token/", {
         "login": "admin' OR '1'='1",
         "password": "password"
     })

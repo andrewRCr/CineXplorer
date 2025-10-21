@@ -42,9 +42,15 @@ coderabbit review local
 # Agent generates findings report (not PR comments)
 ```
 
+**Note**: Findings are typically **pasted directly into the conversation** rather than saved to a
+tracking file. This allows for immediate evaluation and fixes without additional file management overhead.
+
 #### 2. Process Findings
 
 Work through agent findings sequentially using the **Decision Framework**:
+
+**Workflow**: User pastes finding → AI helps evaluate → AI suggests fix (or recommends deferral/rejection) →
+fix if applicable or move on → Repeat for next finding
 
 **✅ FIX NOW** if:
 

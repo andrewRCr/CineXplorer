@@ -17,6 +17,7 @@ These tests validate error responses across various HTTP status codes:
 
 from __future__ import annotations
 
+import json as json_module
 from http import HTTPStatus
 from typing import TYPE_CHECKING
 
@@ -337,8 +338,6 @@ def test_csrf_error_uses_error_format_production(
     - Login returns access token in response body
     - Test must manually set access token cookie for authentication
     """
-    import json as json_module
-
     # Login to get JWT tokens
     login_data = {
         "login": verified_user.username,
@@ -386,8 +385,6 @@ def test_csrf_error_includes_detail_in_debug_mode(
     - Login returns access token in response body
     - Test must manually set access token cookie for authentication
     """
-    import json as json_module
-
     # Login to get JWT tokens
     login_data = {
         "login": verified_user.username,

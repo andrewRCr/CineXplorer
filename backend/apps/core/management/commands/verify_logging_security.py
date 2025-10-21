@@ -8,7 +8,7 @@ sanitized from log files and console output for security compliance.
 import json
 import logging
 import time
-from collections.abc import Mapping
+from collections.abc import Mapping, Sized
 from pathlib import Path
 
 from core.services.api_response import ApiResponse
@@ -201,9 +201,9 @@ class Command(BaseCommand):
                     # For list endpoints (popular, search), check 'results' array
                     if 'results' in api_response.data:
                         results = api_response.data['results']
-                        # Results is object from Mapping[str, object], check if it's Sized
-                        if hasattr(results, '__len__'):
-                            count = len(results)  # pyright: ignore[reportArgumentType]  # Runtime validation via hasattr
+                        # Use isinstance(Sized) for type narrowing
+                        if isinstance(results, Sized):
+                            count = len(results)
                             self.stdout.write(f"  ✅ {endpoint}: {count} item(s) returned")
                         else:
                             self.stdout.write(f"  ✅ {endpoint}: Results returned (count unknown)")

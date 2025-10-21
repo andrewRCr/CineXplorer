@@ -11,6 +11,7 @@ Endpoints tested:
 
 from __future__ import annotations
 
+import logging
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
@@ -217,22 +218,39 @@ class TestFrontendLogEndpoint:
 
     @override_settings(FRONTEND_LOG_MAX_MESSAGE_LENGTH=50)
     def test_message_truncation(
-        self, client: Client, valid_log_payload: dict[str, object]
+        self,
+        client: Client,
+        valid_log_payload: dict[str, object],
+        caplog: pytest.LogCaptureFixture,
     ) -> None:
         """Test that long messages are truncated."""
         payload = {
             **valid_log_payload,
+            # Use INFO to avoid dual logging (ERROR logs to both frontend and app)
+            "level": "INFO",
             "message": "X" * 100,  # Message longer than 50 chars
         }
 
-        response = client.post(
-            "/api/logs/",
-            data=payload,
-            content_type="application/json",
-        )
+        with caplog.at_level(logging.INFO, logger="frontend"):
+            response = client.post(
+                "/api/logs/",
+                data=payload,
+                content_type="application/json",
+            )
 
         # Should still succeed, message just gets truncated internally
         assert response.status_code == 201
+
+        # Verify truncation occurred in logged message
+        assert len(caplog.records) == 1
+        logged_message = caplog.records[0].message
+        # Message should be "[FRONTEND] " + 50 chars + "…[truncated]"
+        assert "[FRONTEND] " in logged_message
+        assert "X" * 50 in logged_message
+        assert logged_message.endswith("…[truncated]")
+        # Verify the raw message part (after "[FRONTEND] ") was truncated correctly
+        raw_part = logged_message.replace("[FRONTEND] ", "")
+        assert len(raw_part) == 50 + len("…[truncated]")
 
     def test_malformed_json(self, client: Client) -> None:
         """Test that malformed JSON returns appropriate error."""

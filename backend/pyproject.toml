@@ -138,7 +138,6 @@ omit = [
     "*/conftest.py",            # pytest configuration
     "apps/*/apps.py",           # Django app configuration (no logic)
     "apps/*/admin.py",          # Django admin registration (typically no logic)
-    "apps/*/schemas.py",        # Pydantic schemas (pure data structures)
     "apps/*/management/commands/*",  # Management commands (tested separately if needed)
     "apps/*/__init__.py",       # Package initialization files
     "apps/__init__.py",         # Root package init

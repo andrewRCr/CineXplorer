@@ -8,6 +8,19 @@ Tests the environment-specific security settings implemented in Task 7:
 
 These tests validate that security settings correctly adjust based on the
 ENVIRONMENT setting (production/staging/development).
+
+MAINTENANCE NOTE:
+These tests replicate the conditional logic from config/settings.py (lines 369+)
+where cookie security settings are set based on ENVIRONMENT:
+
+    SESSION_COOKIE_SECURE = ENVIRONMENT in ["production", "staging"]
+    CSRF_COOKIE_SECURE = ENVIRONMENT in ["production", "staging"]
+
+Because Django's override_settings() doesn't re-evaluate conditional expressions,
+these tests manually replicate the logic to verify environment-specific behavior.
+
+⚠️ If you modify the environment-based security logic in config/settings.py,
+   you MUST update the corresponding logic in these tests to match.
 """
 
 from __future__ import annotations

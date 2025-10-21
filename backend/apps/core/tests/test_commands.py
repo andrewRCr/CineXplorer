@@ -52,3 +52,5 @@ def test_wait_for_db_delay(
     assert (
         patched_connections.__getitem__.return_value.ensure_connection.call_count == 6
     )
+    # Verify sleep was called 5 times (once per OperationalError retry)
+    assert patched_sleep.call_count == 5

@@ -16,6 +16,9 @@ from ninja import Schema
 from ninja.orm import ModelSchema
 from pydantic import EmailStr, Field
 
+# Password validation constants
+PASSWORD_MIN_LENGTH = 8  # Minimum password length for registration and updates
+
 
 # Registration Schemas
 class RegisterInputSchema(Schema):
@@ -37,8 +40,8 @@ class RegisterInputSchema(Schema):
     )
     password: str = Field(
         ...,
-        min_length=5,
-        description="Account password (minimum 5 characters)"
+        min_length=PASSWORD_MIN_LENGTH,
+        description=f"Account password (minimum {PASSWORD_MIN_LENGTH} characters)"
     )
     first_name: str | None = Field(
         default=None,
@@ -161,8 +164,8 @@ class UserProfileUpdateSchema(Schema):
     )
     password: str | None = Field(
         default=None,
-        min_length=5,
-        description="Updated password (minimum 5 characters)"
+        min_length=PASSWORD_MIN_LENGTH,
+        description=f"Updated password (minimum {PASSWORD_MIN_LENGTH} characters)"
     )
 
 

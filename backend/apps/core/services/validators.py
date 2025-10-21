@@ -9,7 +9,6 @@ the service layer.
 from __future__ import annotations
 
 import logging
-from typing import TypeVar
 
 from ninja.errors import HttpError
 from pydantic import BaseModel, ValidationError
@@ -17,8 +16,6 @@ from pydantic import BaseModel, ValidationError
 from .api_response import ApiResponse
 
 logger = logging.getLogger(__name__)
-
-T = TypeVar('T', bound=BaseModel)
 
 
 def validate_tmdb_response[T: BaseModel](

@@ -36,6 +36,8 @@ from authentication.utils import (
 from core.utils import build_error_response, get_client_info
 from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
 from django.http import HttpRequest, HttpResponse
 from ninja import Router
 from ninja_jwt.exceptions import TokenError
@@ -51,7 +53,12 @@ auth_router = Router(tags=["Authentication"])
 @auth_router.post(
     "/register/",
     auth=None,
-    response={201: RegisterResponseSchema, 409: dict[str, object], 500: dict[str, object]},
+    response={
+        201: RegisterResponseSchema,
+        400: dict[str, object],
+        409: dict[str, object],
+        500: dict[str, object]
+    },
     throttle=[TestAwareAnonThrottle('3/h')],
 )
 def register_user(
@@ -69,8 +76,14 @@ def register_user(
     Returns:
         tuple: (status_code, response_data)
             - 201: User created successfully, verification email sent
+            - 400: Password validation failed (too weak, common, or similar to user attributes)
             - 409: Username/email already exists or forbidden username
             - 500: Email sending failed (user creation rolled back)
+
+    Password validation:
+        - Enforced at schema level: min_length=8 (Pydantic)
+        - Enforced at registration: Django password validators
+          (common passwords, user similarity, etc.)
 
     Email verification flow:
         1. User created with Django's create_user()
@@ -112,6 +125,20 @@ def register_user(
         )
         return 409, {
             "error": "Email address already associated with an existing account."
+        }
+
+    # Validate password strength using Django's configured validators
+    # (MinimumLengthValidator, CommonPasswordValidator, UserAttributeSimilarityValidator, etc.)
+    try:
+        validate_password(payload.password)
+    except ValidationError as e:
+        logger.warning(
+            f"Registration failed: Weak password | "
+            f"username={payload.username} | ip={client_ip}"
+        )
+        return 400, {
+            "error": "Password validation failed.",
+            "details": list(e.messages)
         }
 
     # Create the user (convert None to empty string for Django CharField)
@@ -573,7 +600,7 @@ def logout(request: HttpRequest, response: HttpResponse) -> tuple[int, dict[str,
     # Delete refresh token cookie with matching attributes for reliable removal
     # Hybrid authentication: Only refresh token is stored as HTTP-only cookie
     # Access token is managed by frontend in localStorage (frontend clears it)
-    cookie_kwargs = {
+    cookie_kwargs: dict[str, str | None] = {
         'path': '/',  # Default path
         'domain': None,  # Use default domain
         'samesite': jwt_settings.samesite,
@@ -745,12 +772,9 @@ def verify_email(
     Returns:
         Success message if verification succeeds, error if key is invalid/expired
     """
-    import logging
-
     from allauth.account.models import (
         EmailConfirmationHMAC,  # pyright: ignore[reportAttributeAccessIssue, reportUnknownVariableType]
     )
-    logger = logging.getLogger(__name__)
 
     try:
         logger.info(f"Attempting to verify email with key: {payload.key[:20]}...")

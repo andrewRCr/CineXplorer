@@ -8,6 +8,8 @@ This module provides Pydantic schemas for:
 
 from __future__ import annotations
 
+from typing import Literal
+
 from ninja import Schema
 
 # Frontend Logging Schemas
@@ -21,7 +23,7 @@ class FrontendLogEntrySchema(Schema):
     monitoring, and debugging of client-side issues.
     """
 
-    level: str  # Required: DEBUG, INFO, WARNING, WARN, ERROR, CRITICAL
+    level: Literal["DEBUG", "INFO", "WARNING", "WARN", "ERROR", "CRITICAL"]  # Required: Log level
     message: str  # Required: Log message
     timestamp: str  # Required: ISO format timestamp
     data: dict[str, object] | None = None  # Optional: Additional structured data
@@ -30,7 +32,7 @@ class FrontendLogEntrySchema(Schema):
     url: str | None = None  # Optional: Frontend URL where log occurred
     user_id: int | None = None  # Optional: Authenticated user ID
     session_id: str | None = None  # Optional: Frontend session ID
-    source: str | None = "frontend"  # Optional: Log source identifier
+    source: str = "frontend"  # Default: Log source identifier
     environment: str | None = None  # Optional: Environment (development, production)
     browser_info: dict[str, object] | None = None  # Optional: Browser context
     recent_interactions: list[object] | None = None  # Optional: User interaction history

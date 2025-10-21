@@ -182,26 +182,14 @@ def test_registration_throttles_4th_attempt(
 @pytest.mark.enable_throttling
 @pytest.mark.django_db
 def test_token_refresh_allows_10_rapid_attempts(
-    api_client: Client,
-    verified_user: User,
+    authenticated_client_with_throttling: Client,
     clear_throttle_cache: Iterator[None],
     enable_throttling_for_test: Iterator[None],
 ) -> None:
     """Test that 10 rapid token refresh attempts succeed within rate limit."""
-    # First, login to get initial refresh token
-    login_data = {
-        "login": verified_user.username,
-        "password": "testpass123",
-    }
-    login_response = api_client.post(
-        "/api/token/",
-        data=login_data,
-        content_type="application/json",
-    )
-    assert login_response.status_code == HTTPStatus.OK
-
+    # Client is already authenticated with JWT tokens via fixture
     # Get CSRF token for refresh endpoint (required per Task 5)
-    csrf_token = get_csrf_token(api_client)
+    csrf_token = get_csrf_token(authenticated_client_with_throttling)
 
     # Now make 10 rapid refresh attempts - all should succeed
     # Note: We're testing throttling, not token rotation, so we expect
@@ -209,7 +197,7 @@ def test_token_refresh_allows_10_rapid_attempts(
     # We just need to verify that throttling doesn't kick in before 10 attempts
     success_count = 0
     for attempt in range(1, 11):
-        response = api_client.post(
+        response = authenticated_client_with_throttling.post(
             "/api/token/refresh/",
             content_type="application/json",
             HTTP_X_CSRFTOKEN=csrf_token,
@@ -233,37 +221,25 @@ def test_token_refresh_allows_10_rapid_attempts(
     ZEPTOMAIL_API_KEY=''  # Prevent real email sending (triggers dev_mode in adapters)
 )
 def test_token_refresh_throttles_11th_attempt(
-    api_client: Client,
-    verified_user: User,
+    authenticated_client_with_throttling: Client,
     clear_throttle_cache: Iterator[None],
     enable_throttling_for_test: Iterator[None],
 ) -> None:
     """Test that 11th token refresh attempt within minute returns 429."""
-    # First, login to get initial refresh token
-    login_data = {
-        "login": verified_user.username,
-        "password": "testpass123",
-    }
-    login_response = api_client.post(
-        "/api/token/",
-        data=login_data,
-        content_type="application/json",
-    )
-    assert login_response.status_code == HTTPStatus.OK
-
+    # Client is already authenticated with JWT tokens via fixture
     # Get CSRF token for refresh endpoint (required per Task 5)
-    csrf_token = get_csrf_token(api_client)
+    csrf_token = get_csrf_token(authenticated_client_with_throttling)
 
     # Make 10 refresh attempts (some may fail due to blacklist, that's OK)
     for _ in range(10):
-        api_client.post(
+        authenticated_client_with_throttling.post(
             "/api/token/refresh/",
             content_type="application/json",
             HTTP_X_CSRFTOKEN=csrf_token,
         )
 
     # 11th attempt should be throttled (regardless of token state)
-    response = api_client.post(
+    response = authenticated_client_with_throttling.post(
         "/api/token/refresh/",
         content_type="application/json",
         HTTP_X_CSRFTOKEN=csrf_token,

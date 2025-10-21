@@ -32,6 +32,7 @@ from typing import TYPE_CHECKING, cast
 
 import pytest
 from allauth.account.models import EmailAddress
+from authentication.schemas import PASSWORD_MIN_LENGTH
 from core.tests.test_helpers import create_user, json_post
 from django.contrib.auth import get_user_model
 
@@ -182,8 +183,10 @@ def test_user_with_same_email_exists_error(api_client: Client) -> None:
 
 @pytest.mark.django_db
 def test_password_too_short_error(api_client: Client) -> None:
-    """Tests an error is returned if password < 5 characters."""
-    payload = create_payload(password="pw")
+    """Tests an error is returned if password < PASSWORD_MIN_LENGTH."""
+    # Use password shorter than minimum (currently 8 characters)
+    short_password = "x" * (PASSWORD_MIN_LENGTH - 1)
+    payload = create_payload(password=short_password)
     res = json_post(api_client, CREATE_USER_URL, cast(dict[str, object], payload))
 
     assert res.status_code == HTTP_422_UNPROCESSABLE_ENTITY

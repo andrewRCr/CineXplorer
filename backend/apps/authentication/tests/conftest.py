@@ -196,27 +196,43 @@ def clear_throttle_cache() -> Iterator[None]:
 
 
 @pytest.fixture  # type: ignore[misc]  # pytest decorator type
-def authenticated_client_with_throttling(client: Client) -> Client:
+def authenticated_client_with_throttling(client: Client, verified_user: Any) -> Client:  # noqa: ANN401
     """
     Provide authenticated client with throttling enabled.
 
     This fixture combines authentication setup with the throttling flag,
     useful for testing authenticated endpoints with rate limiting.
 
+    Uses the hybrid JWT authentication pattern (access_token + refresh_token cookies)
+    to authenticate the client with a verified user.
+
     Args:
         client: Django test client fixture
+        verified_user: User fixture with verified email
 
     Returns:
-        Authenticated client with _test_enable_throttling flag set
+        Authenticated client with JWT tokens set as cookies
 
     Example:
         @pytest.mark.enable_throttling
         def test_refresh_rate_limit(authenticated_client_with_throttling):
-            # Client is authenticated and throttling is enabled
-            ...
+            # Client is authenticated with JWT tokens, throttling enabled
+            response = authenticated_client_with_throttling.post('/api/token/refresh/')
+            assert response.status_code in (200, 429)
+
+    Note:
+        This fixture uses verified_user fixture internally, so the user
+        has username 'testuser' and password 'testpass123' by default.
+        See authentication.tests.fixtures.create_user() for details.
     """
-    # Note: Authentication setup would be added here if needed
-    # For now, just return client with marker for future use
+    from core.tests.test_helpers import authenticate_client
+
+    # Authenticate using hybrid JWT pattern (sets access_token + refresh_token cookies)
+    authenticate_client(client, verified_user.username, 'testpass123')
+
+    # Set throttling flag for test-aware throttle classes
+    client._test_enable_throttling = True  # type: ignore[attr-defined]
+
     return client
 
 

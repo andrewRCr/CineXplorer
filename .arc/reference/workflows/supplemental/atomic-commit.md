@@ -27,11 +27,11 @@ steps:
 
   **Step 2: Find Relevant Task Documentation**
     - Check [active tasks](.arc/active/) for active task lists related to current work
-      - Feature work: `.arc/active/feature/`
-      - Technical work: `.arc/active/technical/`
-      - Incidental work: `.arc/active/incidental/`
+        - Feature work: `.arc/active/feature/`
+        - Technical work: `.arc/active/technical/`
+        - Incidental work: `.arc/active/incidental/`
     - Also check [upcoming tasks](.arc/upcoming/) for additional relevant tasks
-      - `.arc/upcoming/feature/` and `.arc/upcoming/technical/`
+        - `.arc/upcoming/feature/` and `.arc/upcoming/technical/`
     - Look for task files that reference modified files or related functionality
     - Use `find .arc -name "*.md" -exec grep -l "user-auth" {} \;` to find related tasks
       (replace "user-auth" with your actual feature name, e.g., "payment-integration", "movie-api", etc.)

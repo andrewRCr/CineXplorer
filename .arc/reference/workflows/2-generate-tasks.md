@@ -10,8 +10,8 @@ through implementation.
 
 - **Format:** Markdown (`.md`)
 - **Location:**
-  - Feature work: `.arc/upcoming/feature/`
-  - Technical work: `.arc/upcoming/technical/`
+    - Feature work: `.arc/upcoming/feature/`
+    - Technical work: `.arc/upcoming/technical/`
 - **Filename:** `tasks-[name].md` (e.g., `tasks-user-profile-editing.md`, `tasks-api-modernization.md`)
 
 ## Process

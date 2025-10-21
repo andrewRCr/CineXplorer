@@ -714,7 +714,7 @@ The Token Strategy handles token generation automatically.
 
 **INITIAL RESEARCH WAS PARTIALLY INCORRECT.** The first research phase incorrectly stated that tokens are delivered via URL parameters after OAuth callback. This is NOT how django-allauth headless browser mode works.
 
-**Critical Finding**: Django-allauth headless mode has **TWO separate client types** with completely different authentication mechanisms:
+**Critical Finding**: Django-allauth headless mode has **TWO separate client types** with different authentication mechanisms:
 
 1. **Browser Client Type** (`/_allauth/browser/v1/`) - Uses **HTTP-only session cookies ONLY**
    - No tokens in URL parameters
@@ -1180,7 +1180,7 @@ Frontend → /_allauth/browser/v1/auth/provider/redirect → OAuth flow → Sess
 
 ### Key Quote from Maintainer (pennersr)
 
-> "For app based usage, cookies play no role"
+> "For app-based usage, cookies play no role"
 
 This confirms that browser mode (which uses cookies) is fundamentally different from app mode (which uses X-Session-Token header).
 
@@ -1190,7 +1190,7 @@ This confirms that browser mode (which uses cookies) is fundamentally different 
 
 ### What We Learned About Browser vs App Mode
 
-1. **Browser mode and app mode are completely different**
+1. **Browser mode and app mode are different**
    - Browser: Session cookies, `/_allauth/browser/v1/` endpoints
    - App: X-Session-Token header, `/_allauth/app/v1/` endpoints
    - Token Strategy only applies to app mode
@@ -1202,7 +1202,7 @@ This confirms that browser mode (which uses cookies) is fundamentally different 
 
 3. **create_access_token_payload() is misnamed (confusing)**
    - Sounds like it affects all authentication
-   - Actually only used for app mode (mobile apps)
+   - Only used for app mode (mobile apps)
    - Not invoked during browser OAuth flows
 
 4. **Browser OAuth is intentionally simple**
@@ -1220,7 +1220,7 @@ This confirms that browser mode (which uses cookies) is fundamentally different 
 2. **Testing revealed the truth**
    - No tokens in URL after OAuth (confirmed by observation)
    - Backend logs showed 302 redirect without tokens
-   - Official example uses completely different pattern
+   - Official example uses different pattern
 
 3. **Importance of following official patterns**
    - Trying to force custom patterns causes problems

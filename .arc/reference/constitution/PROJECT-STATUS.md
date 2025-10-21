@@ -103,7 +103,7 @@ features implemented and others in various stages of development.
 - TypeScript types auto-generated from OpenAPI schema (2,279 lines)
 - Frontend services updated to use Django Ninja endpoints
 - OAuth login buttons added (Google, GitHub)
-- DRF completely eliminated from codebase
+- DRF eliminated from codebase
 - 100% test pass rate (197 backend, 333 frontend), 0 type errors, 0 linting violations
 - Quality infrastructure built via 8 incidental task lists (~170-210 hours)
 - **Key Achievement**: Infrastructure migration validated (DRF → Django Ninja complete)

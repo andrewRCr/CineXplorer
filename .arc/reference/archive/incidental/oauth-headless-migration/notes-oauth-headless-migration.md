@@ -32,7 +32,7 @@
 
 This notes file documents research findings, technical decisions, and implementation details discovered during the OAuth Headless Mode migration. This work was triggered by CSRF issues during E2E testing and evolved into a comprehensive authentication modernization.
 
-**Final Outcome**: Dual-pattern authentication (JWT + session cookies) successfully implemented with 100% test pass rate (530 tests), comprehensive strategy documentation, and production-ready OAuth flows.
+**Outcome**: Dual-pattern authentication (JWT + session cookies) successfully implemented with 100% test pass rate (530 tests), comprehensive strategy documentation, and production-ready OAuth flows.
 
 ---
 
@@ -244,7 +244,7 @@ From comprehensive type checking test (mypy output):
 
 **allauth/account/models.pyi**:
 
-- Manager type issues
+- Manager-type issues
 - Unused `type: ignore` comments
 - Related model reference issues
 

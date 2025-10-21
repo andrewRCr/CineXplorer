@@ -209,7 +209,7 @@ See "Task List Coordination" section (in paired notes doc) for detailed boundary
         - [x] 7.9.4 Display movie titles as simple text list (no fancy UI needed)
         - [x] 7.9.5 Show "No movies on watchlist" if empty
         - [x] 7.9.6 Run tests and verify implementation passes (4/4 tests passing)
-    - [x] 7.10 Quality Checks - Full stack validation ✅
+    - [x] 7.10 Quality Checks - Full-stack validation ✅
         - [x] 7.10.1 Backend tests: All pass (197/197 including new enrichment/watchlist tests)
         - [x] 7.10.2 Frontend tests: All pass (333/333 including new component/page tests)
         - [x] 7.10.3 Frontend linting: 0 violations (`npm run lint`)

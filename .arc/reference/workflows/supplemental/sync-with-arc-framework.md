@@ -240,7 +240,7 @@ Mark sections that are project-specific:
 
 - Project name references (not just placeholders)
 - Custom workflows added by you for this project
-- Tech stack specific commands or patterns
+- Tech-stack-specific commands or patterns
 - Project-specific examples
 
 **3.4 Merge Strategy**
@@ -509,7 +509,7 @@ Framework improvements should enhance, not erase, project-specific adaptations:
 
 - Keep project-specific examples that work well
 - Preserve custom workflows that solve project-unique problems
-- Maintain tech stack specific commands
+- Maintain tech-stack-specific commands
 - Don't over-genericize what works
 
 ### Mark Custom Sections Clearly

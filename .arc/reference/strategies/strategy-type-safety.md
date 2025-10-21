@@ -12,14 +12,14 @@
 ## Purpose
 
 Authoritative guidance for comprehensive type safety in CineXplorer's Django + Pydantic stack.
-Use when implementing models, schemas, or resolving type checking issues.
+Use when implementing models, schemas, or resolving Type-Checking issues.
 
 ## Table of Contents
 
 1. [The Challenge](#the-challenge)
 2. [Our Solution](#our-solution)
 3. [Implementation Patterns](#implementation-patterns)
-4. [Type Checking Configuration](#type-checking-configuration)
+4. [Type-Checking Configuration](#type-checking-configuration)
 5. [Django ORM Type Patterns](#django-orm-type-patterns)
 6. [Type Ignore Guidelines](#type-ignore-guidelines)
 7. [Maintenance Guidelines](#maintenance-guidelines)
@@ -243,7 +243,7 @@ Our Pyright config provides **tolerance for unavoidable framework limitations**,
   these warnings.
 
 - **General principle**: If a warning can be eliminated with clean, idiomatic code, fix the code.
-  Don't rely on configuration tolerance outside of Django ORM contexts.
+  Don't rely on configuration tolerance outside Django ORM contexts.
 
 **Commands:**
 

@@ -13,7 +13,7 @@ while preserving history and context.
 
 **Decision rules:**
 
-1. Was this planned in advance (has PRD)? → Yes: Continue to step 2 | No: Incidental
+1. Was this planned (has PRD)? → Yes: Continue to step 2 | No: Incidental
 2. Does it add user-visible capability from product vision? → Yes: Feature | No: Technical
 
 See [Work Categorization Strategy](../../strategies/strategy-work-categorization.md) for complete decision tree.

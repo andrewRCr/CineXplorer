@@ -15,15 +15,15 @@ CineXplorer is a modern full-stack web application. The architecture is composed
 
 ## 2. Backend
 
-The backend is a REST API built with Django and Django REST Framework (DRF).
+The backend is a REST API built with Django and Django Ninja.
 
-- **Framework**: Django `5.2` with Django REST Framework.
+- **Framework**: Django `5.2` with Django Ninja.
 - **Language**: Python `3.x`.
 - **Database**: PostgreSQL, configured via environment variables.
 - **Authentication**: Authentication is handled by `rest_framework_simplejwt` using JSON Web Tokens.
   A custom `JWTCookieAuthentication` backend is implemented to manage tokens securely in HTTP-only cookies.
-- **API Documentation**: `drf-spectacular` is used to automatically generate an OpenAPI 3 schema and Swagger UI.
-  The documentation is available at `/api/docs/`.
+- **API Documentation**: Django Ninja automatically generates an OpenAPI 3 schema and Swagger UI.
+  The documentation is available at `/api/docs` with the schema at `/api/openapi.json`.
 - **Code Style**: Linting is enforced using `ruff` (configured via `backend/pyproject.toml`).
 - **Type Checking**: Pyright-only approach with django-types for Django ORM support
     - **Pyright**: Primary type checker with Python 3.13 support, configured via `backend/pyrightconfig.json`

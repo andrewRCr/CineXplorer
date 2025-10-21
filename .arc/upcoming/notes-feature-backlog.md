@@ -88,7 +88,7 @@ detail pages and library/watchlist views.
 - NOT a complex review system with separate model
 - Display below movie details or in dedicated tab
 - Character counter during composition
-- Basic markdown formatting support?
+- Basic Markdown formatting support?
 
 ---
 

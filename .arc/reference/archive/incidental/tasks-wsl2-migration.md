@@ -2,7 +2,7 @@
 
 **Created**: 2025-01-27
 **Triggered By**: Task 5.6.1 in API Layer Modernization Phase 2
-**Status**: In Progress
+**Status**: Completed
 **Estimated Effort**: 1-2 hours
 
 ## Context
@@ -63,11 +63,11 @@
     - [x] Update CURRENT-SESSION.md with new workspace location
     - [x] Document Windows backup location and retention period (1-2 weeks)
     - [x] Verify git status, branch, and recent commits match
-- [ ] Document and archive
-    - [ ] Add completion notes to this file
-    - [ ] Move to `.arc/reference/archive/tasks/tasks-incidental-wsl2-migration.md`
-    - [ ] Update CURRENT-SESSION.md: "Next Action: Resume Task 5.6.2 (Google OAuth E2E testing)"
-    - [ ] Commit archive with docs commit message
+- [x] Document and archive
+    - [x] Add completion notes to this file
+    - [x] Move to `.arc/reference/archive/tasks/tasks-incidental-wsl2-migration.md`
+    - [x] Update CURRENT-SESSION.md: "Next Action: Resume Task 5.6.2 (Google OAuth E2E testing)"
+    - [x] Commit archive with docs commit message
 
 ## Relevant Files
 

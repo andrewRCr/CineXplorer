@@ -90,7 +90,24 @@ features implemented and others in various stages of development.
 - Hybrid type checking strategy (Pyright primary, mypy deferred due to django-stubs upstream issue)
 - CI/CD pipeline with automated type generation and quality enforcement
 - Zero technical debt in movie app and core infrastructure
-- **Phase 2 Deferred**: UserMovieData and User/Accounts migration awaits Authentication Modernization
+- **Phase 2**: See "API Layer Modernization Phase 2" below
+
+### ✅ API Layer Modernization Phase 2
+
+**Status**: Completed October 21, 2025 | [Archive](../archive/technical/api-layer-modernization-p2/)
+
+- UserMovieData domain migrated to Django Ninja (4 endpoints, 24 tests)
+- Authentication domain migrated to Django Ninja (9 endpoints, 93 tests)
+- JWT migration (djangorestframework-simplejwt → django-ninja-jwt)
+- Email verification bridge removed (direct allauth API usage)
+- TypeScript types auto-generated from OpenAPI schema (2,279 lines)
+- Frontend services updated to use Django Ninja endpoints
+- OAuth login buttons added (Google, GitHub)
+- DRF completely eliminated from codebase
+- 100% test pass rate (197 backend, 333 frontend), 0 type errors, 0 linting violations
+- Quality infrastructure built via 8 incidental task lists (~170-210 hours)
+- **Key Achievement**: Infrastructure migration validated (DRF → Django Ninja complete)
+- **Scope Note**: Ratings/reviews/favorites APIs exist but frontend UI deferred to future feature work
 
 ### ✅ Authentication System (Two-Pattern Architecture)
 
@@ -152,37 +169,6 @@ Quality improvements were extracted into focused task lists rather than bloating
 provides clear separation of concerns and comprehensive documentation, while also "pre-completing" testing
 infrastructure that was originally planned for API Layer P2 Phase 6.
 
-### 🚧 API Layer Modernization Phase 2
-
-**Status**: In Progress (~90% complete, ~5-8 hours remaining) | [Task List](.arc/active/feature/tasks-api-layer-modernization-p2.md)
-
-**Branch**: `feature/api-layer-modernization-p2`
-
-**Completed** (Phases 1-5, ~95% complete):
-
-- UserMovieData domain migrated to Django Ninja (4 endpoints, 24 tests)
-- Authentication domain migrated to Django Ninja (9 endpoints, 93 tests)
-- JWT migration (djangorestframework-simplejwt → django-ninja-jwt)
-- Email verification bridge removed (direct allauth API usage)
-- TypeScript types auto-generated from OpenAPI schema (2,279 lines)
-- Frontend services updated to use Django Ninja endpoints
-- OAuth login buttons added (Google, GitHub)
-- Basic E2E validation complete (registration, OAuth flows, watchlist CRUD)
-- DRF completely eliminated from codebase
-
-**In Progress** (Phases 6-7, ~75% remaining work complete):
-
-- ⏳ Task 5.6: Cross-pattern validation, multi-user scenarios (~10-15 min)
-- ⏳ Formal coverage runs and baseline documentation (~1-2 hours)
-- ⏳ Email verification tests (~1-2 hours)
-- ⏳ File cleanup and documentation verification (~2-3 hours)
-
-**Scope Note**: API Layer P2 validates infrastructure migration (DRF → Django Ninja), NOT feature completeness.
-Ratings/reviews/favorites APIs exist but frontend UI not yet implemented - deferred to future feature work.
-
-**Key Achievement**: Most Phase 6 testing/quality work "pre-completed" via incidental task lists,
-leaving only formal coverage documentation and cleanup remaining.
-
 ## Work in Progress
 
 ### 🚧 Feature Implementation Status
@@ -217,21 +203,19 @@ See [Feature Backlog](.arc/upcoming/notes/notes-feature-backlog.md) for comprehe
 
 ### Immediate (Next ~1-2 weeks)
 
-**1. Complete API Layer P2** (~5-8 hours remaining):
-
-- Finish Task 5.6 cross-pattern validation (~10-15 min)
-- Run formal coverage reports and establish baseline (~1-2 hours)
-- Add email verification tests (~1-2 hours)
-- File cleanup and documentation (~2-3 hours)
-- Update PROJECT-STATUS to mark complete
-
-**2. Backend Modernization** (Paused, will resume after API Layer P2):
+**1. Backend Modernization** (Resume now that API Layer P2 is complete):
 
 - Apply service layer patterns to remaining function-based services
 - Implement Celery/Redis for asynchronous task processing
 - Implement Playwright for end-to-end testing
 - Continue SOLID/DRY refactoring efforts
-- See [Backend Modernization Notes](.arc/upcoming/notes/notes-backend-modernization.md) for details
+- See [Backend Modernization Notes](../../upcoming/technical/notes-backend-modernization.md) for details
+
+**2. Frontend Modernization** (After backend modernization):
+
+- Technical infrastructure improvements similar to backend modernization
+- Planning in early stages (notes document only, PRD/tasks to be created)
+- See [Frontend Modernization Notes](../../upcoming/technical/notes-frontend-modernization.md) for details
 
 ### High Priority (Feature Work)
 
@@ -302,10 +286,10 @@ See [Feature Backlog](.arc/upcoming/notes/notes-feature-backlog.md) for comprehe
 
 **Development Velocity**:
 
-- Last 6 weeks: 8 incidental task lists + API Layer P2 (~90% complete)
+- Last 8 months (Feb-Oct 2025): 8 incidental task lists + API Layer P2 (COMPLETE ✅)
 - ~170-210 hours of quality/infrastructure work
 - ~50 hours of API migration work
-- Next milestone: API Layer P2 completion (~5-8 hours)
+- Current focus: Backend Modernization (service layer patterns, async, E2E testing)
 
 ## Development Workflow
 

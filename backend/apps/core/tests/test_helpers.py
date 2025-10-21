@@ -43,6 +43,7 @@ Example:
     assert response.status_code == HTTPStatus.UNAUTHORIZED
 """
 import json
+import uuid
 from http import HTTPStatus
 from typing import TYPE_CHECKING, TypedDict, Unpack, cast
 
@@ -351,20 +352,51 @@ def create_user(
         'last_name': 'User'
     }
 
-    # django-types limitation - UserManager.create_user type not inferred
-    user = cast(
-        "UserType",
-        User.objects.create_user(**{**defaults, **params})  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
-    )
+    # Generate unique defaults for --keepdb compatibility
+    if 'username' not in params:
+        unique_suffix = str(uuid.uuid4())[:8]
+        defaults['username'] = f"testuser_{unique_suffix}"
+    if 'email' not in params:
+        unique_suffix = str(uuid.uuid4())[:8]
+        defaults['email'] = f"testuser_{unique_suffix}@example.com"
+
+    user_data = {**defaults, **params}
+
+    # For --keepdb compatibility: reuse existing user if present, else create new
+    user: "UserType"
+    try:
+        user = cast("UserType", User.objects.get(username=user_data['username']))
+        # Update user attributes to match requested params
+        for key, value in user_data.items():
+            if key != 'password':
+                setattr(user, key, value)
+        user.save()
+        # Update password if provided
+        if 'password' in user_data:
+            password_value = user_data['password']
+            if isinstance(password_value, str):
+                user.set_password(password_value)
+                user.save()
+    except User.DoesNotExist:
+        # Create new user
+        user = cast(
+            "UserType",
+            User.objects.create_user(**user_data)  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
+        )
 
     # Mark email as verified if requested using allauth EmailAddress API
     # Use get_or_create to support --keepdb flag (reusing test database)
     if email_verified:
-        EmailAddress.objects.get_or_create(
+        email_address, created = EmailAddress.objects.get_or_create(
             user=user,
-            email=user.email,
+            email=str(user.email),  # Cast to str for type safety
             defaults={'verified': True, 'primary': True}
         )
+        if not created:
+            # Update existing EmailAddress if it was already there
+            email_address.verified = True
+            email_address.primary = True
+            email_address.save()
 
     return user
 

@@ -96,21 +96,6 @@ from authentication.tests.test_oauth_mocks import (
 )
 
 
-def pytest_configure(config: Any) -> None:  # noqa: ANN401 - pytest.Config not in stubs
-    """
-    Register custom pytest markers.
-
-    Markers:
-        enable_throttling: Mark tests that need real throttling behavior
-                          (uses LocMemCache instead of DummyCache)
-    """
-    config.addinivalue_line(
-        "markers",
-        "enable_throttling: Enable real rate limiting for this test "
-        "(uses LocMemCache instead of DummyCache)",
-    )
-
-
 @pytest.fixture(autouse=True)  # type: ignore[misc]  # pytest decorator type
 def use_dummy_cache(settings: object) -> None:
     """
@@ -407,7 +392,7 @@ def verified_user(db: None) -> Any:  # noqa: ANN401 - User type from fixtures mo
         user1 = create_user(email='custom1@example.com')
         user2 = create_user(email='custom2@example.com', email_verified=False)
     """
-    from authentication.tests.fixtures import create_user
+    from core.tests.test_helpers import create_user
     return create_user(email_verified=True)
 
 
@@ -488,3 +473,18 @@ def login_payload() -> Any:  # noqa: ANN401 - LoginPayload type from fixtures
     """
     from authentication.tests.fixtures import create_login_payload
     return create_login_payload()
+
+
+def pytest_configure(config: Any) -> None:  # noqa: ANN401 - pytest.Config not in stubs
+    """
+    Register custom pytest markers.
+
+    Markers:
+        enable_throttling: Mark tests that need real throttling behavior
+                          (uses LocMemCache instead of DummyCache)
+    """
+    config.addinivalue_line(
+        "markers",
+        "enable_throttling: Enable real rate limiting for this test "
+        "(uses LocMemCache instead of DummyCache)",
+    )

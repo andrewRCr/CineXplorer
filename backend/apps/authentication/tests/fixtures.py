@@ -24,10 +24,12 @@ Example:
     def test_user_profile(verified_user):
         assert verified_user.email == 'testuser@example.com'
 """
-from typing import TYPE_CHECKING, TypedDict, Unpack, cast
+from typing import TYPE_CHECKING, TypedDict, Unpack
 
-from allauth.account.models import EmailAddress
 from allauth.socialaccount.models import SocialAccount, SocialApp
+
+# Import canonical create_user from core test helpers
+from core.tests.test_helpers import create_user
 from django.contrib.auth import get_user_model
 from django.contrib.sites.models import Site
 
@@ -68,43 +70,7 @@ class LoginPayload(TypedDict, total=False):
 
 
 # User creation fixtures
-def create_user(
-    email_verified: bool = True,
-    **params: Unpack[UserParams]
-) -> "UserType":
-    """
-    Create and return a new user for testing.
-
-    Args:
-        email_verified: Whether to mark the user's email as verified (default: True)
-        **params: Additional user parameters (username, email, password, etc.)
-
-    Returns:
-        Created user instance
-    """
-    # Set defaults
-    defaults: dict[str, str] = {
-        'username': 'testuser',
-        'email': 'testuser@example.com',
-        'password': TEST_USER_PASSWORD,
-        'first_name': 'Test',
-        'last_name': 'User'
-    }
-
-    # Create user - django-types limitation on create_user typing
-    # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue] - UserManager.create_user type not inferred
-    user = cast("UserType", User.objects.create_user(**{**defaults, **params}))  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
-
-    # Mark email as verified if requested using allauth EmailAddress API
-    # Use get_or_create to support --keepdb flag (reusing test database)
-    if email_verified:
-        EmailAddress.objects.get_or_create(
-            user=user,
-            email=user.email,  # pyright: ignore[reportUnknownMemberType]
-            defaults={'verified': True, 'primary': True}
-        )
-
-    return user
+# Note: create_user is imported from core.tests.test_helpers (canonical version)
 
 
 def create_unverified_user(**params: Unpack[UserParams]) -> "UserType":

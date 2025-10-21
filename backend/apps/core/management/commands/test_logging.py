@@ -6,6 +6,7 @@ This command tests all aspects of the logging system to ensure proper integratio
 
 import logging
 from argparse import ArgumentParser
+from typing import cast
 
 from django.core.management.base import BaseCommand
 
@@ -28,13 +29,8 @@ class Command(BaseCommand):
     def handle(self, *args: object, **options: object) -> None:
         self.stdout.write(self.style.SUCCESS("Testing CineXplorer logging system..."))
 
-        # Django management command framework guarantees these types
-        include_db_obj = options.get("include_db", False)
-        include_slow_query_obj = options.get("include_slow_query", False)
-        assert isinstance(include_db_obj, bool)
-        assert isinstance(include_slow_query_obj, bool)
-        include_db: bool = include_db_obj
-        include_slow_query: bool = include_slow_query_obj
+        include_db: bool = cast(bool, options.get("include_db", False))
+        include_slow_query: bool = cast(bool, options.get("include_slow_query", False))
 
         # Test all loggers
         self.test_application_loggers()

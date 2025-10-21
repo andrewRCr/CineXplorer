@@ -7,6 +7,7 @@ is working correctly and producing expected output.
 
 import time
 from argparse import ArgumentParser
+from typing import cast
 
 from django.core.management.base import BaseCommand
 from movie.services.movie_service import (
@@ -39,13 +40,8 @@ class Command(BaseCommand):
     def handle(self, *args: object, **options: object) -> None:
         self.stdout.write("🎬 Starting TMDB API logging test...")
 
-        # Django management command framework guarantees these types
-        operations_obj = options.get('operations', 'all')
-        delay_obj = options.get('delay', 0.5)
-        assert isinstance(operations_obj, str)
-        assert isinstance(delay_obj, (int, float))
-        operations: str = operations_obj
-        delay: float = float(delay_obj)
+        operations: str = cast(str, options.get('operations', 'all'))
+        delay: float = cast(float, options.get('delay', 0.5))
 
         # Test operations mapping
         test_operations = {

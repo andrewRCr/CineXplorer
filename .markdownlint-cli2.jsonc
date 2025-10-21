@@ -1,6 +1,6 @@
 {
   // markdownlint-cli2 configuration
-  // Updated 2025-10-20: Re-enabled MD007, MD013, MD032, MD040 for better readability
+  // Updated 2025-10-20: Re-enabled MD007, MD013, MD032 for better readability
 
   "config": {
     "default": true,

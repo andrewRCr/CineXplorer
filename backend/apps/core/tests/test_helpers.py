@@ -363,7 +363,7 @@ def create_user(
     user_data = {**defaults, **params}
 
     # For --keepdb compatibility: reuse existing user if present, else create new
-    user: "UserType"
+    user: UserType
     try:
         user = cast("UserType", User.objects.get(username=user_data['username']))
         # Update user attributes to match requested params

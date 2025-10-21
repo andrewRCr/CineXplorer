@@ -1,9 +1,31 @@
-# Incidental Work: User Movie Data Pagination & DRY Improvements
+# User Movie Data API Enhancements (Reclassified from Incidental)
+
+> **⚠️ RECLASSIFICATION DECISION (2025-10-21)**
+>
+> **Originally Created As**: Incidental work during API Layer Modernization P2
+>
+> **Reclassified To**: Separate planned work streams to better align with project structure:
+>
+> - **Pagination Feature** → Integrate with upcoming UserMovieData feature work (feature branch)
+>     - Rationale: Pagination is a product feature enhancement, not technical infrastructure
+>     - Grouping: Combine with other planned UserMovieData features for cohesive feature release
+>
+> - **DRY Helpers, Type Safety, N+1 Optimization** → Integrate into Backend Modernization phase
+>     - Rationale: Service layer patterns, architectural improvements, performance optimization
+>     - Perfect fit: Backend Modernization explicitly scoped for service layer pattern application
+>     - Scope alignment: These are infrastructure/architecture improvements, not feature additions
+>
+> **Why Not Incidental**: The original "incidental" classification was made during active feature work.
+> Upon reflection, this work represents two distinct categories of planned improvements that deserve
+> proper integration into their respective workflows rather than ad-hoc "incidental" treatment.
+>
+> **Action**: This task list remains in `.arc/upcoming/` as reference material. Work will be broken out
+> and integrated into appropriate feature/technical branches when those phases begin.
 
 **Created**: 2025-10-21
 **Triggered By**: CodeRabbit Finding #7 during local pre-PR review (agent-pre-merge-review workflow)
-**Status**: Not Started
-**Estimated Effort**: 3-4 hours
+**Status**: Deferred (awaiting integration into appropriate work streams)
+**Original Estimated Effort**: 3-4 hours (will be re-estimated when broken out)
 
 ## Context
 

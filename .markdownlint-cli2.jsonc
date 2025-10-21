@@ -38,6 +38,7 @@
     "**/backend/staticfiles/**",
     ".arc/reference/archive/**",
     ".arc/upcoming/prds/prd-backend-modernization.md",
+    ".arc/upcoming/technical/prd-backend-modernization.md",
     "README.md"
   ],
 

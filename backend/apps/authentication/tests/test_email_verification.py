@@ -145,9 +145,10 @@ def test_verify_email_handles_attribute_error(
     # Mock to return confirmation object that raises AttributeError when accessing email_address
     with patch('allauth.account.models.EmailConfirmationHMAC.from_key') as mock_from_key:
         mock_confirmation = Mock()
-        # Configure email_address to raise AttributeError when accessed
+        # Standard unittest.mock pattern for AttributeError: create then delete attribute
+        # PropertyMock doesn't work here because Mock uses __getattr__ for attribute access
         mock_confirmation.configure_mock(**{'email_address': Mock()})
-        del mock_confirmation.email_address  # Delete to cause AttributeError on access
+        del mock_confirmation.email_address
 
         mock_from_key.return_value = mock_confirmation
 

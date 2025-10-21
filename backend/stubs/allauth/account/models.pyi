@@ -26,6 +26,7 @@ Status: NO official allauth stubs exist - this is REQUIRED (not a supplement)
 """
 from __future__ import annotations
 
+from datetime import datetime
 from typing import TYPE_CHECKING, ClassVar
 
 from django.contrib.auth.base_user import AbstractBaseUser
@@ -106,7 +107,7 @@ class EmailConfirmation(models.Model):
     # Fields
     key: str
     email_address: EmailAddress
-    sent: object  # datetime field
+    sent: datetime | None  # DateTimeField(null=True)
 
     # Manager (override acceptable in stub files)
     objects: ClassVar[Manager[EmailConfirmation]]  # pyright: ignore[reportIncompatibleVariableOverride]

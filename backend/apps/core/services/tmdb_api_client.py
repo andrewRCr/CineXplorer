@@ -367,20 +367,22 @@ class TMDBApiClient(BaseApiClient):
         }
 
         # Headers typed as object to support mock objects in tests
-        # Runtime checks with hasattr ensure safe access
+        # Use try/except for safe access to non-dict or mock header objects
         for header_name, key in rate_limit_headers.items():
-            has_contains = hasattr(headers, '__contains__')
-            has_getitem = hasattr(headers, '__getitem__')
-            if has_contains and has_getitem and header_name in headers:  # type: ignore[operator]  # Mock object support
+            try:
                 value = headers[header_name]  # type: ignore[index]  # Mock object support
-                # Convert numeric values to integers
-                if key in ['limit', 'remaining', 'retry_after', 'reset']:
-                    try:
-                        rate_limit_info[key] = int(value)  # type: ignore[arg-type]  # Runtime-validated in try/except
-                    except (ValueError, TypeError):
-                        rate_limit_info[key] = value
-                else:
+            except (TypeError, KeyError, IndexError):
+                # Skip non-subscriptable or missing headers
+                continue
+
+            # Convert numeric values to integers
+            if key in ['limit', 'remaining', 'retry_after', 'reset']:
+                try:
+                    rate_limit_info[key] = int(value)  # type: ignore[arg-type]  # Runtime-validated in try/except
+                except (ValueError, TypeError):
                     rate_limit_info[key] = value
+            else:
+                rate_limit_info[key] = value
 
         return rate_limit_info if rate_limit_info else None
 

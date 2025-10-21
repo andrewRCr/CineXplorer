@@ -285,13 +285,24 @@ Before archiving, ensure:
 
 ### Step 4: Move to Archive
 
-**Archive path**: `.arc/reference/archive/tasks/incidental/tasks-incidental-{slug}.md`
+**Archive path depends on whether notes exist:**
+
+- **Without notes** (simple task list): `.arc/reference/archive/incidental/tasks-incidental-{slug}.md`
+- **With notes** (work package): `.arc/reference/archive/incidental/{slug}/` (all files together)
 
 **Use git mv** (file is tracked):
 
 ```bash
+# Without notes - move to incidental root
 git mv .arc/active/incidental/tasks-incidental-{slug}.md \
-       .arc/reference/archive/tasks/incidental/tasks-incidental-{slug}.md
+       .arc/reference/archive/incidental/
+
+# With notes - create subdirectory and move all files
+mkdir -p .arc/reference/archive/incidental/{slug}
+git mv .arc/active/incidental/tasks-incidental-{slug}.md \
+       .arc/reference/archive/incidental/{slug}/
+mv .arc/active/incidental/notes-incidental-{slug}.md \
+   .arc/reference/archive/incidental/{slug}/
 ```
 
 ### Step 5: Suggest Atomic Commit of All Changes
@@ -471,19 +482,32 @@ Return to paused feature work and continue normal workflow.
 ### Archived Work
 
 ```
-.arc/reference/archive/tasks/
+.arc/reference/archive/
 ├── feature/
-│   └── tasks-{feature}.md       # Archived feature task lists
+│   └── {name}/                       # Work package subdirectories
+│       ├── prd-{name}.md
+│       ├── tasks-{name}.md
+│       ├── notes-{name}.md (optional)
+│       └── completion-{name}.md
+├── technical/
+│   └── {name}/                       # Work package subdirectories
+│       ├── prd-{name}.md
+│       ├── tasks-{name}.md
+│       ├── notes-{name}.md (optional)
+│       └── completion-{name}.md
 └── incidental/
-    └── tasks-incidental-{slug}.md     # Archived incidental task lists
+    ├── {name}/                       # Work package (if has notes)
+    │   ├── tasks-incidental-{name}.md
+    │   └── notes-incidental-{name}.md
+    └── tasks-incidental-{name}.md    # Simple task list (no notes, stays in root)
 ```
 
 **Key Points**:
 
 - ✅ Only `CURRENT-SESSION.md` remains in `.arc/active/` root
 - ✅ Task lists tracked by git (context visibility)
-- ✅ Notes files gitignored (scratch paper)
-- ✅ Archive preserves same structure as active
+- ✅ Notes files gitignored until archival (scratch paper)
+- ✅ Archive uses work-package subdirectories (all docs for a work item together)
 
 ---
 

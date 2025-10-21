@@ -9,8 +9,10 @@ through implementation.
 ## Output
 
 - **Format:** Markdown (`.md`)
-- **Location:** [upcoming tasks](.arc/upcoming/tasks/)
-- **Filename:** `tasks-[feature-name].md` (e.g., `tasks-user-profile-editing.md`)
+- **Location:**
+  - Feature work: `.arc/upcoming/feature/`
+  - Technical work: `.arc/upcoming/technical/`
+- **Filename:** `tasks-[name].md` (e.g., `tasks-user-profile-editing.md`, `tasks-api-modernization.md`)
 
 ## Process
 
@@ -35,8 +37,11 @@ through implementation.
    relevant without being constrained by them.
 8. **Generate Final Output:** Combine the parent tasks, sub-tasks, and notes into the final Markdown structure.
 10. **Save Task List:**
-    Save the generated document in the [upcoming tasks](.arc/upcoming/tasks/) directory with the filename
-    `tasks-[feature-name].md`, where `[feature-name]` matches the base name of the input Sub-PRD file
+    Save the generated document in the appropriate category directory matching the PRD location:
+    - Feature work: `.arc/upcoming/feature/tasks-[name].md`
+    - Technical work: `.arc/upcoming/technical/tasks-[name].md`
+
+    The `[name]` should match the base name of the input PRD file
     (e.g., if the input was `prd-user-profile-editing.md`, the output is `tasks-user-profile-editing.md`).
 11. **Create Feature Branch:**
     Create a new feature branch with the naming convention `feature/[feature-name]`

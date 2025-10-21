@@ -126,7 +126,7 @@ features implemented and others in various stages of development.
 
 ### ✅ Incidental Quality Improvements (8 Task Lists)
 
-**Status**: Completed October 2-16, 2025 (~170-210 hours of work) | [Archives](../archive/tasks/incidental/)
+**Status**: Completed October 2-16, 2025 (~170-210 hours of work) | [Archives](../archive/incidental/)
 
 During API Layer P2 execution, eight focused quality improvement task lists were completed:
 

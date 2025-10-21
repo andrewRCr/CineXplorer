@@ -9,17 +9,24 @@ focus on feature-level PRD creation, dual-audience design, and feature-branch sc
 
 ## Purpose
 
-This workflow guides the creation of **feature-level PRDs** (Product Requirements Documents) that define
-the scope and requirements for individual features or logical chunks of work, typically aligned with feature
-branches. Feature PRDs build upon the broader product vision established in the META-PRD.
+This workflow guides the creation of **work-level PRDs** (Product Requirements Documents) that define
+the scope and requirements for individual pieces of planned work - either user-facing features or technical
+infrastructure improvements. Work PRDs build upon the broader product vision established in the META-PRD.
 
-**Note**: This workflow is for creating **feature-level PRDs**, not the project-wide META-PRD. For establishing
+**Work Types:**
+
+- **Feature PRDs** - User-facing capabilities (e.g., movie ratings, user profiles, search functionality)
+- **Technical PRDs** - Infrastructure work (e.g., API modernization, type safety improvements, testing infrastructure)
+
+See [Work Categorization Strategy](../strategies/strategy-work-categorization.md) for the complete decision tree.
+
+**Note**: This workflow is for creating **work-level PRDs**, not the project-wide META-PRD. For establishing
 or updating constitutional documents (META-PRD, PROJECT-STATUS, TECHNICAL-ARCHITECTURE, DEVELOPMENT-RULES),
 use [0-define-constitution.md](0-define-constitution.md) instead.
 
 ## Goal
 
-Create a detailed feature PRD in Markdown format based on an initial feature concept. The PRD should be
+Create a detailed PRD in Markdown format based on an initial concept. The PRD should be
 clear, actionable, and provide sufficient context for implementation while maintaining alignment with the
 overall product direction.
 
@@ -37,17 +44,35 @@ documents to understand the complete context:
 
 Ensure the requested feature aligns with the overall product direction, technical approach, and current priorities.
 
-### Step 2: Conduct Discovery Session
+### Step 2: Determine Work Category
 
-Ask clarifying questions to gather sufficient detail about the "what" and "why" of the feature. The "how"
+Before detailed discovery, determine whether this is **feature** or **technical** work:
+
+**Decision criteria:**
+
+1. **Does it add user-visible capability from the product vision?** → Feature work
+2. **Is it infrastructure/architecture improvement?** → Technical work
+
+See [Work Categorization Strategy](../strategies/strategy-work-categorization.md) for complete decision tree and examples.
+
+### Step 3: Conduct Discovery Session
+
+Ask clarifying questions to gather sufficient detail about the "what" and "why" of the work. The "how"
 (implementation details) will be determined during task generation and development.
 
 **For interactive sessions:** Provide options in numbered lists to enable quick responses and maintain momentum.
 
-### Step 3: Generate and Save PRD
+### Step 4: Generate and Save PRD
 
-Using the project context, initial request, and discovery session responses, create a feature PRD following
-the structure outlined below. Save the completed PRD as `prd-{{FEATURE_NAME}}.md` in `.arc/upcoming/prds/` directory.
+Using the project context, initial request, and discovery session responses, create a PRD following
+the structure outlined below.
+
+**Save location:**
+
+- **Feature work** (user-facing): `.arc/upcoming/feature/prd-{{FEATURE_NAME}}.md`
+- **Technical work** (infrastructure): `.arc/upcoming/technical/prd-{{FEATURE_NAME}}.md`
+
+See [Work Categorization Strategy](../strategies/strategy-work-categorization.md) for guidance on feature vs. technical.
 
 ## Clarifying Questions (Examples)
 

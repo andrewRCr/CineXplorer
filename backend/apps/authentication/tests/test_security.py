@@ -126,7 +126,7 @@ def test_login_sets_access_token_samesite_lax(
     - Access token cookie is NOT set during login (frontend manages in localStorage)
     - Refresh endpoint sets BOTH tokens as cookies (see test_token_refresh_maintains_samesite_lax)
     """
-    import json as json_module
+    import json
     from typing import cast
 
     from core.tests.test_helpers import json_post
@@ -141,7 +141,7 @@ def test_login_sets_access_token_samesite_lax(
     assert response.status_code == 200
 
     # Verify access_token is in response body (NOT cookie)
-    response_data = json_module.loads(response.content.decode())
+    response_data = json.loads(response.content.decode())
     assert 'access_token' in response_data
     assert response_data['access_token'] is not None
 

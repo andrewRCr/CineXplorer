@@ -7,6 +7,7 @@ that wasn't covered by integration tests.
 
 Converted to pytest style with function-based tests organized by concern.
 """
+import datetime
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -328,7 +329,6 @@ def test_get_upcoming_movies_date_range_logic(mock_tmdb_get: MagicMock) -> None:
     assert 'primary_release_date.lte' in params
 
     # Date should be today or later
-    import datetime
     today = datetime.datetime.now(tz=datetime.UTC).strftime("%Y-%m-%d")
     assert params['primary_release_date.gte'] >= today
 

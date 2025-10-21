@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 
 class TMDBGenre(BaseModel):
@@ -57,8 +57,8 @@ class TMDBCrewMember(BaseModel):
 class TMDBCreditsResponse(BaseModel):
     """TMDB movie credits response structure."""
     id: int | None = None
-    cast: list[TMDBCastMember] = Field(default_factory=list[TMDBCastMember])
-    crew: list[TMDBCrewMember] = Field(default_factory=list[TMDBCrewMember])
+    cast: list[TMDBCastMember] = []
+    crew: list[TMDBCrewMember] = []
 
 
 class TMDBMovieBase(BaseModel):
@@ -78,16 +78,14 @@ class TMDBMovieBase(BaseModel):
     video: bool | None = None
     original_language: str | None = None
     original_title: str | None = None
-    genre_ids: list[int] = Field(default_factory=list[int])
+    genre_ids: list[int] = []
 
 
 class TMDBMovieDetail(TMDBMovieBase):
     """TMDB movie detail response structure (extends base with detail fields)."""
     runtime: int | None = None
-    genres: list[TMDBGenre] = Field(default_factory=list[TMDBGenre])
-    production_companies: list[TMDBProductionCompany] = Field(
-        default_factory=list[TMDBProductionCompany]
-    )
+    genres: list[TMDBGenre] = []
+    production_companies: list[TMDBProductionCompany] = []
     budget: int | None = None
     revenue: int | None = None
     status: str | None = None
@@ -99,8 +97,8 @@ class TMDBMovieDetail(TMDBMovieBase):
     belongs_to_collection: dict[str, Any] | None = None
     # Any: TMDB /movie/{id} - country/language structures unused in current codebase
     # TODO: Create TMDBCountryModel and TMDBLanguageModel if needed for internationalization
-    production_countries: list[dict[str, Any]] = Field(default_factory=list[dict[str, Any]])
-    spoken_languages: list[dict[str, Any]] = Field(default_factory=list[dict[str, Any]])
+    production_countries: list[dict[str, Any]] = []
+    spoken_languages: list[dict[str, Any]] = []
 
 
 class TMDBPaginatedResponse(BaseModel):
@@ -112,7 +110,7 @@ class TMDBPaginatedResponse(BaseModel):
 
 class TMDBMovieSearchResponse(TMDBPaginatedResponse):
     """TMDB movie search/discover response structure."""
-    results: list[TMDBMovieBase] = Field(default_factory=list[TMDBMovieBase])
+    results: list[TMDBMovieBase] = []
 
 
 class TMDBKeyword(BaseModel):
@@ -123,7 +121,7 @@ class TMDBKeyword(BaseModel):
 
 class TMDBKeywordSearchResponse(TMDBPaginatedResponse):
     """TMDB keyword search response structure."""
-    results: list[TMDBKeyword] = Field(default_factory=list[TMDBKeyword])
+    results: list[TMDBKeyword] = []
 
 
 class TMDBPerson(BaseModel):
@@ -137,14 +135,14 @@ class TMDBPerson(BaseModel):
     gender: int | None = None
     # Any: TMDB /search/person - known_for contains mixed movie/TV show structures
     # TODO: Create TMDBKnownForModel with discriminated union if person search features expand
-    known_for: list[dict[str, Any]] = Field(default_factory=list[dict[str, Any]])
+    known_for: list[dict[str, Any]] = []
 
 
 class TMDBPersonSearchResponse(TMDBPaginatedResponse):
     """TMDB person search response structure."""
-    results: list[TMDBPerson] = Field(default_factory=list[TMDBPerson])
+    results: list[TMDBPerson] = []
 
 
 class TMDBGenreListResponse(BaseModel):
     """TMDB genre list response structure."""
-    genres: list[TMDBGenre] = Field(default_factory=list[TMDBGenre])
+    genres: list[TMDBGenre] = []

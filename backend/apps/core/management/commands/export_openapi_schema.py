@@ -10,8 +10,23 @@ import sys
 from typing import Any
 
 from django.core.management.base import BaseCommand
+from django.utils.functional import Promise
 
 from config.api import api
+
+
+class LazyTranslationEncoder(json.JSONEncoder):
+    """JSON encoder that handles Django's lazy translation proxies.
+
+    Django's gettext_lazy() returns __proxy__ objects that aren't directly
+    JSON serializable. This encoder converts them to strings before serialization.
+    """
+
+    def default(self, o: Any) -> Any:
+        """Convert Django Promise (lazy translation) objects to strings."""
+        if isinstance(o, Promise):
+            return str(o)
+        return super().default(o)
 
 
 class Command(BaseCommand):
@@ -54,10 +69,20 @@ class Command(BaseCommand):
 
             # Format JSON output based on options
             if options["minify"]:
-                output = json.dumps(schema, separators=(",", ":"), ensure_ascii=False)
+                output = json.dumps(
+                    schema,
+                    separators=(",", ":"),
+                    ensure_ascii=False,
+                    cls=LazyTranslationEncoder
+                )
             else:
                 indent = options["indent"]
-                output = json.dumps(schema, indent=indent, ensure_ascii=False)
+                output = json.dumps(
+                    schema,
+                    indent=indent,
+                    ensure_ascii=False,
+                    cls=LazyTranslationEncoder
+                )
 
             # Output ONLY the JSON directly to stdout
             # Use sys.stdout.write to bypass any Django management command formatting

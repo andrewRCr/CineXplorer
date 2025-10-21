@@ -52,8 +52,9 @@ This migration will begin with a proof-of-concept (PoC) focused on the `movie` a
     4c. **Preserve error envelope and status codes** (map DRF `{"detail": ...}` to Ninja consistently).
     4d. **Preserve content types and headers** (JSON only vs negotiation).
 5. **Update Tests:** All existing backend tests for the `movie` API must be updated to use the new Ninja endpoint structure, and all tests must pass.
-6. **Establish Type Generation Workflow:** A process must be established to demonstrate the automatic generation of TypeScript interfaces from the new Pydantic schemas, replacing the manually maintained types for the `movie` API.## 6. Non-Goals (Out of Scope)
+6. **Establish Type Generation Workflow:** A process must be established to demonstrate the automatic generation of TypeScript interfaces from the new Pydantic schemas, replacing the manually maintained types for the `movie` API.
 
+## 6. Non-Goals (Out of Scope)
 * This migration will not alter the database schema or the core business logic contained within service layers.
 * Changes to other applications (`authentication`, `user_movie_data`, etc.) are out of scope for this initial PoC.
 * Minor adjustments to adjacent components (e.g., URL structures) are permissible if they result in a more idiomatic and maintainable integration with Django Ninja, in line with the project's goal of demonstrating best practices.

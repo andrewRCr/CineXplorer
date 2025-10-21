@@ -108,7 +108,7 @@ This task list currently covers **Phase 1 (Proof of Concept)** of the API Layer 
     - [x] 5.5 Update `frontend/src/services/movieService.ts` to use auto-generated types, ensuring API client compatibility.
     - [x] 5.5.5 Restructure Django Ninja API endpoints for clean URL design using multiple routers (movies, genres, keywords, people).
     - [x] 5.6 Refactor frontend components to import and use the new auto-generated types, removing manual type definitions.
-    - [x] 5.6.5 Verify and update type checking scripts, perform comprehensive type safety validation across frontend and backend.
+    - [x] 5.6.5 Verify and update type-checking scripts, perform comprehensive type safety validation across frontend and backend.
     - [x] 5.6.6 Fix test infrastructure to use new clean URL structure instead of legacy `/api/movie/movies/` paths.
     - [x] 5.6.7 Fix remaining test failures (parameter validation, authentication flow, Django Ninja migration issues).
     - [x] 5.6.8 Implement proper TMDB response Pydantic models to replace TypedDict stubs and achieve complete type safety.

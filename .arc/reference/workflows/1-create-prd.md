@@ -123,7 +123,7 @@ during implementation.
 ## Output Specifications
 
 - **Format:** Markdown (`.md`)
-- **Location:** `.arc/upcoming/prds/`
+- **Location:** `.arc/upcoming/feature/` (user-facing) or `.arc/upcoming/technical/` (infrastructure)
 - **Filename:** `prd-{{FEATURE_NAME}}.md`
 - **Token Format:** Use `{{UPPERCASE_SNAKE_CASE}}` for any placeholder values
 

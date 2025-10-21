@@ -77,7 +77,12 @@ If you're in a subdirectory, adjust paths accordingly (see CURRENT-SESSION.md fo
 
 ```bash
 # Fast: Pyright via npx (works from any directory with correct paths)
+# IMPORTANT: Always use directories or no args - NOT individual files
+# Individual files may use default settings instead of pyrightconfig.json
 npx pyright backend/apps/ backend/config/ --project backend
+
+# From backend/ directory (uses pyrightconfig.json include list)
+npx pyright
 
 # Comprehensive: Type check script with per-app reporting
 .venv-backend/bin/python backend/scripts/type_check.py
@@ -255,8 +260,8 @@ Need to run a command?
 ### Incremental Quality Checks (After Sub-Task)
 
 ```bash
-# Type check specific files
-npx pyright backend/apps/authentication/api.py --project backend
+# Type check specific module (use directory, not file - ensures config applies)
+npx pyright backend/apps/authentication/ --project backend
 
 # Lint and fix specific files
 .venv-backend/bin/ruff check backend/apps/authentication/api.py --fix

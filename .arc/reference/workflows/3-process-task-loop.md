@@ -71,13 +71,14 @@ docker compose -f infrastructure/docker-compose.yml exec backend ruff check apps
 # Option 2: WSL2 host venv (faster)
 .venv-backend/bin/ruff check backend/apps/path/to/file.py --fix
 
-# Type check specific files
-# Option 1: Pyright via npx (fastest, from project root)
-npx pyright backend/apps/path/to/file.py --project backend
-# Option 2: Django-aware mypy via Docker
-docker compose -f infrastructure/docker-compose.yml exec backend mypy apps/path/to/file.py --config-file mypy.ini
+# Type check specific module/directory (use directory, NOT individual files)
+# IMPORTANT: Individual files may use default settings instead of pyrightconfig.json
+npx pyright backend/apps/authentication/ --project backend
 
-# Note: Ruff is very fast with auto-fix; Pyright for quick type checks; mypy for Django-aware validation
+# Or from backend/ directory (no args uses pyrightconfig.json include list)
+cd backend && npx pyright
+
+# Note: Ruff is very fast with auto-fix; Pyright uses directory-based checking for config consistency
 ```
 
 **Frontend Files** (TypeScript/JavaScript):

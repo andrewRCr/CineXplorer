@@ -66,7 +66,8 @@ Before any commit consideration, ALL of the following must pass with **zero exce
    - Every type error must be resolved
 
 6. **Python Type Safety**: Pyright with django-types for minimal Any usage
-   - Use Pyright via npx for fast checks
+   - Use Pyright via npx: `npx pyright backend/apps/ backend/config/ --project backend`
+   - **IMPORTANT**: Use directories or no args, NOT individual files (config may not apply)
    - Optional: type check script for comprehensive per-app reporting
    - **PROHIBITED**: Using `typing.Any` except for external API payloads (TMDB, etc.)
    - **REQUIRED**: Use `object` for unknown data, `dict[str, object]` for generic dictionaries

@@ -1,8 +1,9 @@
 # Type Safety Strategy and Guidelines
 
-**Version:** 2.1 | **Updated:** 2025-10-10 | **Status:** Active
+**Version:** 2.2 | **Updated:** 2025-10-21 | **Status:** Active
 
 **Version history (latest first):**
+2.2 – Clarified configuration tolerance philosophy (Pydantic vs Django ORM)
 2.1 – Ruff ANN401 enforcement + validation boundaries
 2.0 – Pyright-only migration
 1.1 – Ignore guidelines
@@ -170,6 +171,34 @@ class UserMovieDataUpdateSchema(Schema):
     user_rating: int | None = None
 ```
 
+### Pattern 4: Pydantic List Defaults (Type-Safe)
+
+**Use when:** Pydantic models need list fields with empty defaults.
+
+**✅ Correct (Pydantic 2 pattern):**
+```python path=null start=null
+from pydantic import BaseModel
+
+class TMDBMovieResponse(BaseModel):
+    genres: list[TMDBGenre] = []  # Type-safe, zero warnings
+    cast: list[TMDBCastMember] = []
+```
+
+**❌ Incorrect (triggers reportUnknownVariableType):**
+```python path=null start=null
+from pydantic import BaseModel, Field
+
+class TMDBMovieResponse(BaseModel):
+    genres: list[TMDBGenre] = Field(default_factory=list)  # Pyright can't infer type
+```
+
+**Why `= []` is safe in Pydantic 2:**
+- Pydantic 2 uses field descriptors (`__set_name__`)
+- Each instance gets its own list (no shared mutable default)
+- This is the idiomatic Pydantic 2 pattern per official docs
+
+**Benefits:** Zero type warnings, cleaner code, no `Field()` import needed.
+
 ## Type Checking Configuration
 
 ### Pyright with django-types
@@ -195,7 +224,17 @@ class UserMovieDataUpdateSchema(Schema):
 }
 ```
 
-**"information" level:** Django ORM warnings represent django-types limitations, not code problems.
+**"information" level for Django ORM:** These settings downgrade certain warnings to information level because they represent django-types limitations, not code problems.
+
+**IMPORTANT - Configuration Philosophy:**
+
+Our Pyright configuration provides **tolerance for unavoidable framework limitations**, NOT permission to write suboptimal code:
+
+- **Django ORM code**: `reportUnknownVariableType`, `reportUnknownMemberType`, and `reportAttributeAccessIssue` are set to "information" because django-types has inherent limitations. These warnings are **expected and acceptable** in Django ORM code.
+
+- **Pydantic code**: Should achieve **zero type errors**. Pydantic 2 has excellent typing support—use idiomatic patterns (like `field: list[Type] = []` instead of `Field(default_factory=list)`) to avoid triggering these warnings.
+
+- **General principle**: If a warning can be eliminated with clean, idiomatic code, fix the code. Don't rely on configuration tolerance outside of Django ORM contexts.
 
 **Commands:**
 

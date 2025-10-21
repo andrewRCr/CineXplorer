@@ -36,24 +36,24 @@ through implementation.
    cover the implementation details implied by the Sub-PRD, and consider existing codebase patterns where
    relevant without being constrained by them.
 8. **Generate Final Output:** Combine the parent tasks, sub-tasks, and notes into the final Markdown structure.
-10. **Save Task List:**
+9. **Save Task List:**
     Save the generated document in the appropriate category directory matching the PRD location:
     - Feature work: `.arc/upcoming/feature/tasks-[name].md`
     - Technical work: `.arc/upcoming/technical/tasks-[name].md`
 
     The `[name]` should match the base name of the input PRD file
     (e.g., if the input was `prd-user-profile-editing.md`, the output is `tasks-user-profile-editing.md`).
-11. **Create Feature Branch:**
+10. **Create Feature Branch:**
     Create a new feature branch with the naming convention `feature/[feature-name]`
     (e.g., `feature/user-profile-editing`).
     Use the command:
     `git checkout -b feature/[feature-name]`
-12. **Update PROJECT-STATUS:**
+11. **Update PROJECT-STATUS:**
     Add the new feature to the "Upcoming Priorities" section with status
     "(In Planning - Branch: feature/[feature-name])" and a brief description of key deliverables.
-13. **Stage Initial Documentation:**
+12. **Stage Initial Documentation:**
     Stage the new Sub-PRD, the new task list, and the updated `PROJECT-STATUS.md` file using `git add`.
-14. **Propose Initial Commit:**
+13. **Propose Initial Commit:**
     Present the staged files to the user and propose a commit message for the initial documentation.
     Await explicit user approval before executing the commit, in accordance with `DEVELOPMENT-RULES.md`.
 

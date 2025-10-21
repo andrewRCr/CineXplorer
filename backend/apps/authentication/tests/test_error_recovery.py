@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import base64
 import json
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from http import HTTPStatus
 from typing import cast
 from unittest.mock import patch
@@ -343,29 +344,74 @@ def test_profile_endpoint_with_serialization_error() -> None:
             assert "Serialization failed" in str(e)
 
 
-@pytest.mark.django_db
+@pytest.mark.django_db(transaction=True)
 def test_concurrent_token_refresh_requests() -> None:
     """
     Verify concurrent token refresh requests don't cause race conditions.
 
-    Tests token rotation under concurrent load.
-    Multiple simultaneous refreshes should handle gracefully.
+    Tests token rotation under concurrent load by executing multiple
+    refresh requests in parallel threads. This simulates real-world
+    scenarios where multiple tabs/devices might refresh tokens simultaneously.
 
-    Note: This is a basic test. Production would need load testing.
+    Expected behavior:
+    - At least one request succeeds (first one to acquire lock)
+    - Other requests may fail with 401 (token already rotated/blacklisted)
+    - No 500 errors (database locking handled correctly)
+
+    Implementation notes:
+    - Uses transaction=True to allow real transaction commits (required for
+      thread visibility in pytest-django)
+    - Each thread gets its own Client instance (Django's Client is not thread-safe)
+    - Explicitly closes database connections in each thread to prevent leaks
+    - ThreadPoolExecutor provides true concurrent execution (subject to GIL)
+
+    Production consideration: A grace period/reuse interval (allowing the same
+    refresh token to be used multiple times within 2-5 seconds) is the industry
+    best practice for handling this race condition in production. This test
+    verifies behavior WITHOUT a grace period.
     """
-    user = create_user(username="testuser", email_verified=True)
+    import uuid
+
+    from django.db import connection
+
+    # Use unique username/email to avoid IntegrityError from previous test runs
+    # (transaction=True uses database flush, not rollback, which can leave residual data)
+    unique_id = uuid.uuid4().hex[:8]
+    user = create_user(
+        username=f"testuser_{unique_id}",
+        email=f"testuser_{unique_id}@example.com",
+        email_verified=True
+    )
     refresh = RefreshToken.for_user(cast(AbstractBaseUser, user))
+    refresh_token_str = str(refresh)
 
-    # Create multiple fresh clients with same refresh token
-    clients = [create_fresh_client(refresh_token=str(refresh)) for _ in range(3)]
+    def make_refresh_request() -> HttpResponse:
+        """
+        Execute refresh request in thread.
 
-    # Simulate concurrent refresh requests
+        Creates a new Client per thread (required - Django's Client is not thread-safe).
+        Closes database connection after request to prevent connection leaks.
+        """
+        client = create_fresh_client(refresh_token=refresh_token_str)
+        try:
+            response = client.post("/api/token/refresh/")
+            return response
+        finally:
+            # Critical: Close database connection to prevent leaks
+            # Each thread creates a new connection that must be explicitly closed
+            connection.close()
+
+    # Execute concurrent refresh requests using ThreadPoolExecutor
     responses: list[HttpResponse] = []
-    for client in clients:
-        response = client.post("/api/token/refresh/")
-        responses.append(response)
+    with ThreadPoolExecutor(max_workers=3) as executor:
+        # Submit all requests simultaneously
+        futures = [executor.submit(make_refresh_request) for _ in range(3)]
 
-    # At least one should succeed (first one)
+        # Collect responses as they complete
+        for future in as_completed(futures):
+            responses.append(future.result())
+
+    # At least one should succeed (first one to acquire lock)
     success_count = sum(1 for r in responses if r.status_code == HTTPStatus.OK)  # type: ignore[attr-defined]
     assert success_count >= 1, "At least one concurrent refresh should succeed"
 

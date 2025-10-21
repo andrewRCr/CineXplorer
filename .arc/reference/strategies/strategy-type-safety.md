@@ -176,6 +176,7 @@ class UserMovieDataUpdateSchema(Schema):
 **Use when:** Pydantic models need list fields with empty defaults.
 
 **✅ Correct (Pydantic 2 pattern):**
+
 ```python path=null start=null
 from pydantic import BaseModel
 
@@ -185,6 +186,7 @@ class TMDBMovieResponse(BaseModel):
 ```
 
 **❌ Incorrect (triggers reportUnknownVariableType):**
+
 ```python path=null start=null
 from pydantic import BaseModel, Field
 
@@ -193,6 +195,7 @@ class TMDBMovieResponse(BaseModel):
 ```
 
 **Why `= []` is safe in Pydantic 2:**
+
 - Pydantic 2 uses field descriptors (`__set_name__`)
 - Each instance gets its own list (no shared mutable default)
 - This is the idiomatic Pydantic 2 pattern per official docs
@@ -224,17 +227,23 @@ class TMDBMovieResponse(BaseModel):
 }
 ```
 
-**"information" level for Django ORM:** These settings downgrade certain warnings to information level because they represent django-types limitations, not code problems.
+**"information" level for Django ORM:** These settings downgrade certain warnings to information level because
+they represent django-types limitations, not code problems.
 
 **IMPORTANT - Configuration Philosophy:**
 
-Our Pyright configuration provides **tolerance for unavoidable framework limitations**, NOT permission to write suboptimal code:
+Our Pyright config provides **tolerance for unavoidable framework limitations**, NOT permission to write suboptimal code:
 
-- **Django ORM code**: `reportUnknownVariableType`, `reportUnknownMemberType`, and `reportAttributeAccessIssue` are set to "information" because django-types has inherent limitations. These warnings are **expected and acceptable** in Django ORM code.
+- **Django ORM code**: `reportUnknownVariableType`, `reportUnknownMemberType`, and
+  `reportAttributeAccessIssue` are set to "information" because django-types has inherent limitations.
+  These warnings are **expected and acceptable** in Django ORM code.
 
-- **Pydantic code**: Should achieve **zero type errors**. Pydantic 2 has excellent typing support—use idiomatic patterns (like `field: list[Type] = []` instead of `Field(default_factory=list)`) to avoid triggering these warnings.
+- **Pydantic code**: Should achieve **zero type errors**. Pydantic 2 has excellent typing support—use idiomatic
+  patterns (like `field: list[Type] = []` instead of `Field(default_factory=list)`) to avoid triggering
+  these warnings.
 
-- **General principle**: If a warning can be eliminated with clean, idiomatic code, fix the code. Don't rely on configuration tolerance outside of Django ORM contexts.
+- **General principle**: If a warning can be eliminated with clean, idiomatic code, fix the code.
+  Don't rely on configuration tolerance outside of Django ORM contexts.
 
 **Commands:**
 

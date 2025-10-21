@@ -55,11 +55,28 @@ reference-ready.
 
 ## Checklist
 
-### 1. Confirm Pairing
+### 1. Confirm Pairing and Status
+
+**Step 1a: Verify Pairing**
 
 - Verify both files refer to each other and cover the same scope
-- Note overall status (In Progress, Completed) and remaining unchecked tasks
-- Update status metadata at top of both files (Created/Completed dates)
+- Check cross-references are accurate
+
+**Step 1b: Verify Completion Status (Mode 2 Only)**
+
+- **CRITICAL FIRST CHECK**: Scan entire task list to verify ALL checkboxes are marked `[x]`
+- If any unchecked tasks found → STOP - Use Mode 1 instead (mid-work cleanup)
+- Only proceed with Mode 2 if 100% tasks complete
+
+**Step 1c: Update Status Metadata**
+
+- Update `**Status**:` field in task file header:
+    - Change from "IN PROGRESS" to "COMPLETE"
+    - Remove any temporal notes (e.g., "~90% complete, ~5-8 hours remaining")
+    - Update to reflect final state
+- Add/update `**Completed**:` date in both files (YYYY-MM-DD format)
+- Note: Incidental work uses "Completion Summary" section in task file; planned work uses separate
+  completion-metadata.md (created later in archive-completed workflow)
 
 ### 2. Inventory Open Work
 
@@ -196,7 +213,9 @@ This includes:
 - [x] All task checkboxes with inline outcomes
 - Preserves what was actually done
 
-## Completion Summary (KEEP - archival summary)
+## Completion Summary (KEEP for incidental work only)
+- **Incidental work**: Completion Summary section stays in task file
+- **Planned work** (features/PRDs): NO Completion Summary in task file - uses separate completion-metadata.md instead (created in archive-completed workflow)
 - Work Accomplished
 - Major Deliverables
 - Key Architectural Decisions
@@ -417,7 +436,84 @@ can remove context needed for remaining tasks. Only clean up when all work is do
 
 ---
 
+**Step 5a: Consolidate and Deduplicate Content (CRITICAL FIRST STEP)**
+
 **This step makes the difference between a notes file that gets used vs ignored.**
+
+Notes files are messy and unorganized during work - content gets added as discoveries happen, leading to repetition
+and scattered information. **Before formatting, consolidate the content.**
+
+**Guiding Principle:** Lean heavily towards keeping everything for historical reasons, but eliminate clear repetition.
+
+**Process:**
+
+1. **Read through entire notes file** to identify repeated information:
+   - Same decision explained in multiple places
+   - Duplicate code examples or patterns
+   - Repeated explanations of the same issue/solution
+   - Multiple sections covering the same topic from different angles
+
+2. **For each repetition found:**
+   - **Keep the most complete version** (usually the later one, as it has more context)
+   - **Delete clear duplicates** (exact same information, no new insights)
+   - **Consolidate similar content** (merge related sections that cover same topic)
+   - **Add "See also" cross-references** if related info lives elsewhere
+
+3. **What to keep (bias towards preservation):**
+   - ✅ Different perspectives on the same decision (shows evolution of thinking)
+   - ✅ Chronological progression (how understanding developed over time)
+   - ✅ Context-specific details (even if topic is repeated)
+   - ✅ Investigation journeys (even if verbose - this is the messy reference)
+   - ✅ When in doubt, KEEP IT
+
+4. **What to remove (only clear repetition):**
+   - ❌ Exact duplicate paragraphs (copy-pasted content)
+   - ❌ Redundant code examples (same code shown multiple times with no variation)
+   - ❌ Repeated summaries of the same decision with no new information
+
+5. **Consolidation patterns:**
+   - Merge multiple sections about the same investigation into one comprehensive section
+   - Move scattered notes about a topic into a single "Topic Name" section
+   - Combine duplicate "lessons learned" or "key insights" lists
+
+**Example - Before Consolidation:**
+
+```markdown
+## Task 4.1: JWT Migration Research
+[300 lines about django-ninja-jwt compatibility]
+
+## Task 4.3: JWT Implementation
+[50 lines repeating same django-ninja-jwt compatibility info]
+[200 lines of implementation details]
+
+## Task 4.7: JWT Testing
+[Another 30 lines about django-ninja-jwt compatibility]
+[Testing details]
+```
+
+**Example - After Consolidation:**
+
+```markdown
+## Django Ninja JWT Migration
+**Context:** Migrated from djangorestframework-simplejwt (Tasks 4.1-4.8)
+
+### Compatibility Research (Task 4.1)
+[300 lines - kept as comprehensive reference]
+
+### Implementation (Task 4.3)
+[200 lines of implementation details - kept]
+See "Compatibility Research" above for library evaluation.
+
+### Testing (Task 4.7)
+[Testing details - kept]
+See "Compatibility Research" above for compatibility notes.
+```
+
+**Time Estimate:** 20-40 minutes for thorough deduplication (depends on notes file size)
+
+**Step 5b: Format for Archival**
+
+After content consolidation, format for navigation and long-term reference:
 
 **Add Table of Contents:**
 

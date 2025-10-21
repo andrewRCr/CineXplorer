@@ -11,6 +11,8 @@ Two-Pattern Authentication:
 """
 from __future__ import annotations
 
+import json
+
 import pytest
 from django.apps import apps
 from django.contrib.auth import get_user_model
@@ -88,7 +90,6 @@ def test_session_authentication_supports_write_operations():
     csrf_token = csrf_response.json()['csrf_token']
 
     # Test: POST request to create user-movie-data entry
-    import json
     response = client.post(
         '/api/user-movie-data',
         data=json.dumps({
@@ -164,7 +165,6 @@ def test_jwt_authentication_still_works():
     client = Client()
 
     # Login to get JWT tokens
-    import json
     response = client.post(
         '/api/token/',
         data=json.dumps({
@@ -219,7 +219,6 @@ def test_jwt_token_refresh_works():
     client = Client()
 
     # Login to get initial tokens
-    import json
     login_response = client.post(
         '/api/token/',
         data=json.dumps({
@@ -357,7 +356,6 @@ def test_jwt_logout_clears_cookies():
     client = Client()
 
     # Login to get JWT tokens (sets refresh token cookie)
-    import json
     login_response = client.post(
         '/api/token/',
         data=json.dumps({

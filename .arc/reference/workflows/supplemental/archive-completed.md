@@ -29,8 +29,8 @@ For planned work with PRDs, formal task lists, and git branches. Applies to both
 
 **Archive destinations differ by category:**
 
-- Feature work → `archive/prds/feature/`, `archive/tasks/feature/`, `archive/completion-metadata/feature/`
-- Technical work → `archive/prds/technical/`, `archive/tasks/technical/`, `archive/completion-metadata/technical/`
+- Feature work → `archive/feature/{work-name}/` (all docs together)
+- Technical work → `archive/technical/{work-name}/` (all docs together)
 
 ### 1) Verify Completion
 
@@ -59,53 +59,37 @@ becomes comprehensive deep-dive showing HOW and WHY.
 
 **Do not skip this step** - Archives without this cleanup are difficult to use 6 months later.
 
-### 3) Move PRD to Archive
+### 3) Create Work Package Directory and Move All Files
 
 **For feature work:**
 
 ```bash
-mv .arc/active/feature/prd-{name}.md .arc/reference/archive/prds/feature/
+# Create work package directory
+mkdir -p .arc/reference/archive/feature/{name}
+
+# Move all related files together
+mv .arc/active/feature/prd-{name}.md .arc/reference/archive/feature/{name}/
+mv .arc/active/feature/tasks-{name}.md .arc/reference/archive/feature/{name}/
+mv .arc/active/feature/notes-{name}.md .arc/reference/archive/feature/{name}/  # if exists
 ```
 
 **For technical work:**
 
 ```bash
-mv .arc/active/technical/prd-{name}.md .arc/reference/archive/prds/technical/
+# Create work package directory
+mkdir -p .arc/reference/archive/technical/{name}
+
+# Move all related files together
+mv .arc/active/technical/prd-{name}.md .arc/reference/archive/technical/{name}/
+mv .arc/active/technical/tasks-{name}.md .arc/reference/archive/technical/{name}/
+mv .arc/active/technical/notes-{name}.md .arc/reference/archive/technical/{name}/  # if exists
 ```
 
-### 4) Move Task List to Archive
+### 4) Create Completion Metadata
 
-**For feature work:**
+**For feature work**, create `.arc/reference/archive/feature/{name}/completion-{name}.md`:
 
-```bash
-mv .arc/active/feature/tasks-{name}.md .arc/reference/archive/tasks/feature/
-```
-
-**For technical work:**
-
-```bash
-mv .arc/active/technical/tasks-{name}.md .arc/reference/archive/tasks/technical/
-```
-
-### 5) Move Notes File to Archive (if exists)
-
-**For feature work:**
-
-```bash
-mv .arc/active/feature/notes-{name}.md .arc/reference/archive/notes/feature/
-```
-
-**For technical work:**
-
-```bash
-mv .arc/active/technical/notes-{name}.md .arc/reference/archive/notes/technical/
-```
-
-### 6) Create Completion Metadata
-
-**For feature work**, create `.arc/reference/archive/completion-metadata/feature/completion-{name}.md`:
-
-**For technical work**, create `.arc/reference/archive/completion-metadata/technical/completion-{name}.md`:
+**For technical work**, create `.arc/reference/archive/technical/{name}/completion-{name}.md`:
 
 ```markdown
 # Completion: {Work Name}
@@ -135,9 +119,10 @@ mv .arc/active/technical/notes-{name}.md .arc/reference/archive/notes/technical/
 
 ## Related Documentation
 
-- PRD: `.arc/reference/archive/prds/{category}/prd-{name}.md`
-- Tasks: `.arc/reference/archive/tasks/{category}/tasks-{name}.md`
-- Notes: `.arc/reference/archive/notes/{category}/notes-{name}.md`
+- PRD: `.arc/reference/archive/{category}/{name}/prd-{name}.md`
+- Tasks: `.arc/reference/archive/{category}/{name}/tasks-{name}.md`
+- Notes: `.arc/reference/archive/{category}/{name}/notes-{name}.md` (if exists)
+- Completion: `.arc/reference/archive/{category}/{name}/completion-{name}.md`
 
 ## Incidental Work Completed
 
@@ -166,14 +151,14 @@ work uses `technical/` category per
 [Work Categorization Strategy](../../strategies/strategy-work-categorization.md).
 ```
 
-### 7) Update PROJECT-STATUS
+### 5) Update PROJECT-STATUS
 
 - Ensure work is in "Completed Work" section (if applicable)
 - Remove from "Work in Progress"
 - Add archive reference if appropriate
 - Update project metrics (tests, coverage, capabilities)
 
-### 8) Commit Archive Changes
+### 6) Commit Archive Changes
 
 **For feature work:**
 
@@ -182,7 +167,7 @@ git add .arc/reference/archive/ .arc/active/feature/ .arc/reference/constitution
 
 git commit -m "docs(archive): archive feature/{name} documentation
 
-- Move PRD, tasks, and notes to structured archive (feature/)
+- Move all work docs to archive/feature/{name}/ (PRD, tasks, notes, completion)
 - Add completion metadata with metrics and summary
 - Update PROJECT-STATUS references
 - Maintain clean active workspace"
@@ -195,7 +180,7 @@ git add .arc/reference/archive/ .arc/active/technical/ .arc/reference/constituti
 
 git commit -m "docs(archive): archive technical/{name} documentation
 
-- Move PRD, tasks, and notes to structured archive (technical/)
+- Move all work docs to archive/technical/{name}/ (PRD, tasks, notes, completion)
 - Add completion metadata with metrics and summary
 - Update PROJECT-STATUS references
 - Maintain clean active workspace"
@@ -221,27 +206,28 @@ For unplanned reactive work (no PRD, no separate git branch, discovered during d
 - Confirm completion summary appended to task list (see maintain-task-notes.md)
 - Confirm `maintain-task-notes.md` workflow was executed (Mode 2: Archival Preparation)
 
-### 2) Move Task List to Archive
+### 2) Move Files to Archive
 
-**Incidental work uses conventional commit type prefixes in filenames:**
-
-```bash
-# Examples:
-mv .arc/active/incidental/tasks-chore-{name}.md .arc/reference/archive/tasks/incidental/
-mv .arc/active/incidental/tasks-refactor-{name}.md .arc/reference/archive/tasks/incidental/
-mv .arc/active/incidental/tasks-fix-{name}.md .arc/reference/archive/tasks/incidental/
-mv .arc/active/incidental/tasks-test-{name}.md .arc/reference/archive/tasks/incidental/
-```
-
-### 3) Move Notes File to Archive (if exists)
+**If notes file exists** (create work package subdirectory):
 
 ```bash
-# Optional - only if notes file was created
-mv .arc/active/incidental/notes-chore-{name}.md .arc/reference/archive/notes/incidental/
-mv .arc/active/incidental/notes-refactor-{name}.md .arc/reference/archive/notes/incidental/
+# Create work package directory for incidental work with notes
+mkdir -p .arc/reference/archive/incidental/{name}
+
+# Move task list and notes together
+mv .arc/active/incidental/tasks-incidental-{name}.md .arc/reference/archive/incidental/{name}/
+mv .arc/active/incidental/notes-incidental-{name}.md .arc/reference/archive/incidental/{name}/
+# Plus any research docs (research-*.md)
 ```
 
-### 4) Commit Archive Changes
+**If no notes file** (move task list to incidental root):
+
+```bash
+# Simple task lists without notes stay in incidental/ root
+mv .arc/active/incidental/tasks-incidental-{name}.md .arc/reference/archive/incidental/
+```
+
+### 3) Commit Archive Changes
 
 ```bash
 git add .arc/reference/archive/ .arc/active/incidental/
@@ -265,48 +251,52 @@ git commit -m "docs(archive): archive incidental/{type}-{name} documentation
 
 ```
 .arc/reference/archive/
-├── README.md                                    # Archive overview and navigation
-├── prds/
-│   ├── feature/                                 # User-facing planned work PRDs
+├── README.md                                     # Archive overview and navigation
+├── feature/                                      # User-facing planned work (work packages)
+│   ├── user-authentication/                      # All docs for one feature together
 │   │   ├── prd-user-authentication.md
-│   │   ├── prd-movie-ratings.md
-│   │   └── prd-{feature-name}.md
-│   └── technical/                               # Infrastructure planned work PRDs
-│       ├── prd-api-layer-modernization-p2.md
-│       ├── prd-backend-modernization.md
-│       └── prd-{technical-name}.md
-├── tasks/
-│   ├── feature/                                 # Feature task lists
 │   │   ├── tasks-user-authentication.md
-│   │   └── tasks-{feature-name}.md
-│   ├── technical/                               # Technical task lists
-│   │   ├── tasks-api-layer-modernization-p2.md
-│   │   └── tasks-{technical-name}.md
-│   └── incidental/                              # Incidental task lists
-│       ├── tasks-chore-type-safety.md
-│       ├── tasks-refactor-auth-service.md
-│       ├── tasks-fix-csrf-middleware.md
-│       └── tasks-{type}-{name}.md
-├── notes/
-│   ├── feature/                                 # Feature notes
-│   │   ├── notes-user-authentication.md
-│   │   └── notes-{feature-name}.md
-│   ├── technical/                               # Technical notes
-│   │   ├── notes-api-layer-modernization-p2.md
-│   │   └── notes-{technical-name}.md
-│   └── incidental/                              # Incidental notes (optional)
-│       ├── notes-chore-type-safety.md
-│       └── notes-{type}-{name}.md
-└── completion-metadata/
-    ├── feature/                                 # Feature completion summaries
-    │   ├── completion-user-authentication.md
-    │   └── completion-{feature-name}.md
-    └── technical/                               # Technical completion summaries
-        ├── completion-api-layer-modernization-p2.md
-        └── completion-{technical-name}.md
+│   │   ├── notes-user-authentication.md          # optional
+│   │   └── completion-user-authentication.md
+│   └── movie-ratings/
+│       ├── prd-movie-ratings.md
+│       ├── tasks-movie-ratings.md
+│       ├── notes-movie-ratings.md                # optional
+│       └── completion-movie-ratings.md
+├── technical/                                    # Infrastructure planned work (work packages)
+│   ├── api-layer-modernization-p1/               # All docs for one technical work together
+│   │   ├── prd-api-layer-modernization-p1.md
+│   │   ├── tasks-api-layer-modernization-p1.md
+│   │   ├── notes-api-layer-modernization-p1.md   # optional
+│   │   └── completion-api-layer-modernization-p1.md
+│   ├── authentication-modernization/
+│   │   ├── prd-authentication-modernization.md
+│   │   ├── tasks-authentication-modernization.md
+│   │   ├── notes-authentication-modernization.md
+│   │   └── completion-authentication-modernization.md
+│   └── logging-system/
+│       ├── prd-logging-system.md
+│       ├── tasks-logging-system.md
+│       └── completion-logging-system.md           # no notes for this one
+└── incidental/                                   # Unplanned reactive work
+    ├── oauth-headless-migration/                 # Work package (has notes)
+    │   ├── tasks-incidental-oauth-headless-migration.md
+    │   ├── notes-incidental-oauth-headless-migration.md
+    │   └── research-django-allauth-headless-oauth.md
+    ├── security-updates/                         # Work package (has notes)
+    │   ├── tasks-incidental-security-updates.md
+    │   └── notes-incidental-security-updates.md
+    ├── tasks-incidental-backend-type-safety.md   # Simple task list (no notes)
+    ├── tasks-incidental-pytest-migration.md      # Simple task list (no notes)
+    └── tasks-incidental-wsl2-migration.md        # Simple task list (no notes)
 ```
 
-**Note**: Incidental work does NOT get completion-metadata files - completion summary is appended to task list itself.
+**Organization principles:**
+
+- **Feature/Technical work**: Each work item gets its own subdirectory with all related docs (PRD, tasks, notes, completion)
+- **Incidental work with notes**: Gets subdirectory with task list + notes files
+- **Incidental work without notes**: Task list stays in incidental/ root (no subdirectory needed)
+- **No nested doc-type directories**: All files for a work item live together in one place
 
 ---
 
@@ -392,9 +382,11 @@ git commit -m "docs(archive): archive incidental/{type}-{name} documentation
 
 ---
 
-**Version**: 2.0 | **Updated**: 2025-10-20
+**Version**: 2.1 | **Updated**: 2025-10-21
 **Changelog**:
 
+- v2.1 (2025-10-21): Reorganized archives into work-package subdirectories - all docs for a piece of work
+  live together (no more nested prds/, tasks/, notes/, completion-metadata/ subdirectories)
 - v2.0 (2025-10-20): Added three-way categorization (feature/technical/incidental), integrated
-  maintain-task-notes as mandatory Step 2, updated archive structure
-- v1.0 (previous): Initial two-way categorization (feature/incidental)
+  maintain-task-notes as mandatory Step 2
+- v1.0 (previous): Initial two-way categorization (feature/incidental) with nested doc-type subdirectories

@@ -88,7 +88,7 @@ def get_error_preview(output: str, max_errors: int = 5) -> str:
     preview = error_lines[:max_errors]
     if len(error_lines) > max_errors:
         preview.append(f"... and {len(error_lines) - max_errors} more errors")
-    return '\n  '.join(preview) if preview else "See full output with --verbose"
+    return '\n  '.join(preview) if preview else "No type errors or warnings"
 
 
 def main() -> None:

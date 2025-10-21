@@ -22,7 +22,37 @@ NC='\033[0m' # No Color
 # Configuration
 API_BASE_URL="${API_BASE_URL:-http://localhost:8000}"
 COOKIE_FILE=$(mktemp)
-trap "rm -f $COOKIE_FILE" EXIT
+USERNAME_FILE=$(mktemp)
+
+# Cleanup function - runs on script exit
+cleanup() {
+    rm -f "$COOKIE_FILE"
+
+    # Delete test user if created
+    if [[ -f "$USERNAME_FILE" ]]; then
+        local username=$(cat "$USERNAME_FILE")
+        if [[ -n "$username" ]]; then
+            log_info "Cleaning up test user: ${username}"
+
+            # Delete via Django shell (works in both Docker and host environments)
+            local delete_cmd="from django.contrib.auth import get_user_model; User = get_user_model(); deleted = User.objects.filter(username='${username}').delete(); print(f'Deleted {deleted[0]} user(s)')"
+
+            # Try Docker first (most common dev environment)
+            if docker compose -f infrastructure/docker-compose.yml exec -T backend python manage.py shell -c "$delete_cmd" 2>/dev/null; then
+                log_success "Test user deleted via Docker"
+            # Fallback to host venv if Docker not available
+            elif [[ -f "../.venv-backend/bin/python" ]]; then
+                cd backend && ../.venv-backend/bin/python manage.py shell -c "$delete_cmd" && cd .. && log_success "Test user deleted via host venv"
+            else
+                log_info "Could not delete test user automatically (Docker/venv not available)"
+                log_info "  Manual cleanup: User.objects.filter(username='${username}').delete()"
+            fi
+        fi
+        rm -f "$USERNAME_FILE"
+    fi
+}
+
+trap cleanup EXIT
 
 # Test counters
 TESTS_PASSED=0
@@ -93,8 +123,8 @@ setup_test_user() {
         exit 1
     fi
 
-    # Export for cleanup
-    echo "$username" > /tmp/csrf_test_user.txt
+    # Save username for cleanup
+    echo "$username" > "$USERNAME_FILE"
 }
 
 # Test 1: Login endpoint works WITHOUT CSRF token (auth=None)

@@ -16,6 +16,7 @@ Exit codes:
 
 import re
 import sys
+from collections.abc import Generator
 from pathlib import Path
 from typing import TypedDict
 
@@ -30,6 +31,40 @@ class StubIssue(TypedDict):
 def find_stub_files(stubs_dir: Path) -> list[Path]:
     """Find all .pyi files in stubs directory."""
     return sorted(stubs_dir.rglob("*.pyi"))
+
+def _iter_code_lines(lines: list[str]) -> Generator[tuple[int, str]]:
+    """
+    Yield (line_num, line) pairs, skipping docstrings and comments.
+
+    Handles both triple-quoted docstrings and comment lines (#).
+    Line numbers are 1-indexed for error reporting.
+    """
+    in_docstring = False
+    docstring_delimiter: str | None = None
+
+    for i, line in enumerate(lines, start=1):
+        stripped = line.strip()
+
+        # Track docstring boundaries
+        if '"""' in stripped or '\'\'\'' in stripped:
+            if not in_docstring:
+                in_docstring = True
+                docstring_delimiter = '"""' if '"""' in stripped else '\'\'\''
+                # Single-line docstring (e.g., """text""")
+                if stripped.count(docstring_delimiter) >= 2:
+                    in_docstring = False
+                    docstring_delimiter = None
+            elif docstring_delimiter is not None and docstring_delimiter in stripped:
+                # Ending a multi-line docstring
+                in_docstring = False
+                docstring_delimiter = None
+            continue
+
+        # Skip lines inside docstrings or comment-only lines
+        if in_docstring or stripped.startswith("#"):
+            continue
+
+        yield i, line
 
 def check_any_usage(file_path: Path) -> list[StubIssue]:
     """Check for typing.Any usage that isn't justified."""
@@ -67,27 +102,7 @@ def check_any_usage(file_path: Path) -> list[StubIssue]:
     # Also check if file has ANY justified Any usage (for import acceptance)
     has_justified_any = file_has_global_justification
     if not has_justified_any:
-        in_docstring = False
-        docstring_delimiter = None
-
-        for line in lines:
-            stripped = line.strip()
-
-            # Track docstring boundaries
-            if '"""' in stripped or "'''" in stripped:
-                if not in_docstring:
-                    in_docstring = True
-                    docstring_delimiter = '"""' if '"""' in stripped else "'''"
-                    if stripped.count(docstring_delimiter) >= 2:
-                        in_docstring = False
-                elif docstring_delimiter in stripped:
-                    in_docstring = False
-                    docstring_delimiter = None
-                continue
-
-            if in_docstring or stripped.startswith("#"):
-                continue
-
+        for _, line in _iter_code_lines(lines):
             if re.search(r'\bAny\b', line):
                 code_part = line.split('#')[0] if '#' in line else line
                 has_pattern = any(
@@ -99,35 +114,7 @@ def check_any_usage(file_path: Path) -> list[StubIssue]:
                     break
 
     # Second pass: check individual Any usages
-    in_docstring = False
-    docstring_delimiter = None
-
-    for i, line in enumerate(lines, start=1):
-        stripped = line.strip()
-
-        # Track docstring boundaries
-        if '"""' in stripped or "'''" in stripped:
-            if not in_docstring:
-                # Starting a docstring
-                in_docstring = True
-                docstring_delimiter = '"""' if '"""' in stripped else "'''"
-                # Check if docstring closes on same line
-                if stripped.count(docstring_delimiter) >= 2:
-                    in_docstring = False
-            elif docstring_delimiter in stripped:
-                # Ending a docstring
-                in_docstring = False
-                docstring_delimiter = None
-            continue
-
-        # Skip lines inside docstrings
-        if in_docstring:
-            continue
-
-        # Skip comment-only lines
-        if stripped.startswith("#"):
-            continue
-
+    for i, line in _iter_code_lines(lines):
         # Check if line uses typing.Any (not just the word "Any" in comments)
         # Look for actual type annotations with Any
         if re.search(r'\bAny\b', line):

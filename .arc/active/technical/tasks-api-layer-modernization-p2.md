@@ -1,8 +1,9 @@
 # Tasks: API Layer Modernization Phase 2
 
-**Feature:** Complete Django Ninja Migration (UserMovieData + Authentication Domains)
+**Category:** Technical (infrastructure modernization)
+**Description:** Complete Django Ninja Migration (UserMovieData + Authentication Domains)
 **PRD:** [PRD](.arc/active/prd-api-layer-modernization-p2.md)
-**Branch:** `feature/api-layer-modernization-p2`
+**Branch:** `technical/api-layer-modernization-p2`
 **Status:** IN PROGRESS (resumed 2025-10-17 after 8 incidental task lists complete)
 
 ## Overview
@@ -798,7 +799,3 @@ user_movie_data domains. Service layer excluded (scheduled for Backend Moderniza
   Modernization
 - **Testing Strategy:** Three-layer testing (API integration, service layer, specialized tests) per Phase 1
   blueprint See [Testing Strategy](.arc/reference/strategies/strategy-testing-methodology.md) for complete guidance.
-
-## Completion Summary
-
-{ To be filled out upon completion of remaining work }

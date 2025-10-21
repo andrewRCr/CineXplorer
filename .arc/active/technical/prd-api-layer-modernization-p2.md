@@ -2,8 +2,10 @@
 
 **Document Version:** 1.0
 **Created:** 2025-09-29
-**Feature Priority:** High (Post-Authentication Modernization)
+**Category:** Technical (infrastructure modernization)
+**Priority:** High (Post-Authentication Modernization)
 **Implementation Phase:** Deferred (After Authentication Modernization completion)
+**Branch:** `technical/api-layer-modernization-p2`
 
 ## 1. Introduction/Overview
 

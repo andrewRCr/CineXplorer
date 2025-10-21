@@ -4,171 +4,6 @@
  */
 
 export interface paths {
-    "/api/health": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Health Check
-         * @description Health check endpoint to verify Django Ninja setup.
-         *
-         *     This endpoint is publicly accessible and does not require authentication.
-         *     It's used for monitoring and ensuring the API is operational.
-         *
-         *     Returns:
-         *         Simple status response indicating the API is working.
-         */
-        get: operations["config_api_health_check"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/health/auth": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Health Check Auth
-         * @description Authenticated health check endpoint to verify JWT cookie authentication.
-         *
-         *     This endpoint demonstrates native Django Ninja security integration with:
-         *     - Automatic OpenAPI security schema documentation
-         *     - Native authentication via the global auth scheme
-         *     - Proper error response documentation
-         *
-         *     The endpoint will automatically require JWT authentication via the configured
-         *     HTTP-only cookie and return appropriate error responses if authentication fails.
-         *
-         *     Returns:
-         *         Status response with authentication confirmation.
-         *     Raises:
-         *         HttpError: 401 if authentication fails
-         *         HttpError: 500 if internal authentication error occurs
-         */
-        get: operations["config_api_health_check_auth"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/health/user": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Health Check User
-         * @description Health check using enhanced dependency injection patterns.
-         *
-         *     This endpoint demonstrates the enhanced dependency injection approach with:
-         *     - Manual authentication control (bypassing global auth)
-         *     - Comprehensive error handling and logging
-         *     - Structured error responses
-         *     - Type-safe user access
-         *
-         *     Args:
-         *         request: HTTP request object
-         *
-         *     Returns:
-         *         Status response with authenticated user information.
-         *     Raises:
-         *         HttpError: 401 if authentication fails with structured error
-         *         HttpError: 500 if internal authentication error occurs
-         */
-        get: operations["config_api_health_check_user"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/test/auth": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Test Authentication
-         * @description Comprehensive authentication test endpoint.
-         *
-         *     This endpoint verifies that the JWT cookie authentication scheme:
-         *     1. Correctly protects routes (requires valid JWT token)
-         *     2. Properly identifies and provides access to the authenticated user
-         *     3. Integrates seamlessly with Django Ninja's global auth system
-         *     4. Generates proper OpenAPI documentation
-         *
-         *     The endpoint will automatically enforce authentication via the global
-         *     auth scheme and return detailed information about the authenticated user.
-         *
-         *     Returns:
-         *         Comprehensive authentication test response with user details.
-         *
-         *     Raises:
-         *         HttpError: 401 if JWT token is missing, invalid, or expired
-         *         HttpError: 500 if internal authentication error occurs
-         */
-        get: operations["config_api_test_authentication"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/test/auth-status": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Test Auth Status
-         * @description Authentication status test endpoint (no authentication required).
-         *
-         *     This endpoint demonstrates the authentication system's behavior by:
-         *     1. Bypassing global authentication (auth=None)
-         *     2. Manually checking for JWT token presence and validity
-         *     3. Showing the difference between authenticated and unauthenticated requests
-         *     4. Providing debugging information for authentication testing
-         *
-         *     This is useful for:
-         *     - Testing the authentication system without requiring valid credentials
-         *     - Debugging authentication issues
-         *     - Understanding the authentication flow
-         *
-         *     Returns:
-         *         Authentication status information and guidance.
-         */
-        get: operations["config_api_test_auth_status"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/register/": {
         parameters: {
             query?: never;
@@ -192,8 +27,14 @@ export interface paths {
          *     Returns:
          *         tuple: (status_code, response_data)
          *             - 201: User created successfully, verification email sent
+         *             - 400: Password validation failed (too weak, common, or similar to user attributes)
          *             - 409: Username/email already exists or forbidden username
          *             - 500: Email sending failed (user creation rolled back)
+         *
+         *     Password validation:
+         *         - Enforced at schema level: min_length=8 (Pydantic)
+         *         - Enforced at registration: Django password validators
+         *           (common passwords, user similarity, etc.)
          *
          *     Email verification flow:
          *         1. User created with Django's create_user()
@@ -549,6 +390,106 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/logs/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Frontend Log
+         * @description Receive frontend log entries for centralized logging.
+         *
+         *     This endpoint allows the frontend to send log entries to the backend
+         *     for centralized logging, monitoring, and debugging.
+         *
+         *     Security:
+         *     - Rate limited via middleware (scope: 'frontend_logs')
+         *     - Payload size limited to prevent abuse
+         *     - Available to anonymous users but throttled aggressively
+         *
+         *     Args:
+         *         request: HTTP request object
+         *         payload: Frontend log entry data
+         *
+         *     Returns:
+         *         Success response with 201 status or error response with appropriate status
+         *
+         *     Raises:
+         *         HttpError: 400 for validation errors, 413 for payload too large, 500 for server errors
+         */
+        post: operations["apps_core_api_frontend_log"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/health-check/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Health Check
+         * @description General health check endpoint for Docker orchestration.
+         *
+         *     This lightweight endpoint confirms the Django application is running
+         *     and responsive. Infrastructure dependencies (PostgreSQL, Redis) are
+         *     validated independently by Docker Compose health checks.
+         *
+         *     Args:
+         *         request: HTTP request object
+         *
+         *     Returns:
+         *         Status response indicating the application is healthy
+         */
+        get: operations["apps_core_api_health_check"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/logs/health/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Log Health Check
+         * @description Health check endpoint for the logging system.
+         *
+         *     This endpoint verifies that the logging system is working correctly
+         *     and can receive frontend logs.
+         *
+         *     Args:
+         *         request: HTTP request object
+         *
+         *     Returns:
+         *         Health status response with correlation ID and timestamp
+         *
+         *     Raises:
+         *         HttpError: 500 if logging system is unhealthy
+         */
+        get: operations["apps_core_api_log_health_check"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/movies/now-playing": {
         parameters: {
             query?: never;
@@ -879,6 +820,9 @@ export interface paths {
          *     This endpoint creates a new UserMovieData record when a user first
          *     interacts with a movie (adds to watchlist, rates, reviews, etc.).
          *
+         *     If the movie doesn't exist in our local database yet, it fetches the
+         *     movie data from TMDB and creates a local Movie stub record.
+         *
          *     Args:
          *         request: HTTP request with authenticated user
          *         payload: User movie data to create (includes movie_id for FK lookup)
@@ -887,7 +831,8 @@ export interface paths {
          *         UserMovieDataDetailSchema: Created user movie data
          *
          *     Raises:
-         *         HttpError: 400 if movie_id is invalid or entry already exists
+         *         HttpError: 400 if entry already exists
+         *         HttpError: 404 if movie not found in TMDB
          */
         post: operations["apps_user_movie_data_api_create_user_movie_data"];
         delete?: never;
@@ -952,120 +897,6 @@ export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
         /**
-         * HealthResponse
-         * @description Health check response schema.
-         */
-        HealthResponse: {
-            /** Status */
-            status: string;
-            /** Message */
-            message: string;
-        };
-        /**
-         * AuthHealthResponse
-         * @description Authenticated health check response schema.
-         */
-        AuthHealthResponse: {
-            /** Status */
-            status: string;
-            /** Message */
-            message: string;
-            /** Auth Method */
-            auth_method: string;
-        };
-        /**
-         * UserHealthResponse
-         * @description User health check response with authentication details.
-         */
-        UserHealthResponse: {
-            /** Status */
-            status: string;
-            /** Message */
-            message: string;
-            /** User Id */
-            user_id: number;
-            /** Auth Method */
-            auth_method: string;
-            /** Features */
-            features: string[];
-        };
-        /**
-         * AuthTestResponse
-         * @description Comprehensive authentication test response.
-         */
-        AuthTestResponse: {
-            /** Status */
-            status: string;
-            /** Message */
-            message: string;
-            /** Auth Scheme */
-            auth_scheme: string;
-            /** User Id */
-            user_id: number;
-            /** Username */
-            username: string;
-            /** Email */
-            email: string;
-            /** Is Staff */
-            is_staff: boolean;
-            /** Is Superuser */
-            is_superuser: boolean;
-            /** Is Active */
-            is_active: boolean;
-            /** Date Joined */
-            date_joined: string;
-            /** Last Login */
-            last_login: string | null;
-            /** Groups Count */
-            groups_count: number;
-            /** Permissions Count */
-            permissions_count: number;
-            auth_verification: components["schemas"]["AuthVerification"];
-        };
-        /**
-         * AuthVerification
-         * @description Authentication verification details.
-         */
-        AuthVerification: {
-            /** Scheme Active */
-            scheme_active: boolean;
-            /** Token Valid */
-            token_valid: boolean;
-            /** User Authenticated */
-            user_authenticated: boolean;
-            /** Session Info */
-            session_info: string;
-        };
-        /**
-         * AuthGuidance
-         * @description Authentication guidance information.
-         */
-        AuthGuidance: {
-            /** Next Step */
-            next_step: string;
-            /** Note */
-            note?: string | null;
-            /** Protected Endpoint */
-            protected_endpoint?: string | null;
-            /** Public Endpoints */
-            public_endpoints?: string | null;
-        };
-        /**
-         * AuthStatusResponse
-         * @description Authentication status response schema.
-         */
-        AuthStatusResponse: {
-            /** Auth Status */
-            auth_status: string;
-            /** Message */
-            message: string;
-            /** User Id */
-            user_id: number | null;
-            /** Has Valid Token */
-            has_valid_token: boolean;
-            guidance: components["schemas"]["AuthGuidance"];
-        };
-        /**
          * RegisterResponseSchema
          * @description Schema for successful registration response.
          */
@@ -1112,7 +943,7 @@ export interface components {
             email: string;
             /**
              * Password
-             * @description Account password (minimum 5 characters)
+             * @description Account password (minimum 8 characters)
              */
             password: string;
             /**
@@ -1284,7 +1115,7 @@ export interface components {
             last_name?: string | null;
             /**
              * Password
-             * @description Updated password (minimum 5 characters)
+             * @description Updated password (minimum 8 characters)
              */
             password?: string | null;
         };
@@ -1332,6 +1163,89 @@ export interface components {
              * @description Email address to resend verification to
              */
             email: string;
+        };
+        /**
+         * FrontendLogSuccessResponse
+         * @description Response for successful log entry submission.
+         */
+        FrontendLogSuccessResponse: {
+            /** Success */
+            success: boolean;
+            /** Message */
+            message: string;
+        };
+        /**
+         * FrontendLogErrorResponse
+         * @description Response for failed log entry submission.
+         */
+        FrontendLogErrorResponse: {
+            /** Success */
+            success: boolean;
+            /** Error */
+            error: string;
+            /** Max Size Bytes */
+            max_size_bytes?: number | null;
+        };
+        /**
+         * FrontendLogEntrySchema
+         * @description Schema for frontend log entries sent to the backend.
+         *
+         *     The frontend sends structured log data to enable centralized logging,
+         *     monitoring, and debugging of client-side issues.
+         */
+        FrontendLogEntrySchema: {
+            /**
+             * Level
+             * @enum {string}
+             */
+            level: "DEBUG" | "INFO" | "WARNING" | "WARN" | "ERROR" | "CRITICAL";
+            /** Message */
+            message: string;
+            /** Timestamp */
+            timestamp: string;
+            /** Data */
+            data?: {
+                [key: string]: unknown;
+            } | null;
+            /** Correlation Id */
+            correlation_id?: string | null;
+            /** User Agent */
+            user_agent?: string | null;
+            /** Url */
+            url?: string | null;
+            /** User Id */
+            user_id?: number | null;
+            /** Session Id */
+            session_id?: string | null;
+            /**
+             * Source
+             * @default frontend
+             */
+            source: string;
+            /** Environment */
+            environment?: string | null;
+            /** Browser Info */
+            browser_info?: {
+                [key: string]: unknown;
+            } | null;
+            /** Recent Interactions */
+            recent_interactions?: unknown[] | null;
+        };
+        /**
+         * LogHealthCheckResponse
+         * @description Response for logging system health check.
+         */
+        LogHealthCheckResponse: {
+            /** Status */
+            status: string;
+            /** Service */
+            service: string;
+            /** Correlation Id */
+            correlation_id?: string | null;
+            /** Timestamp */
+            timestamp?: string | null;
+            /** Error */
+            error?: string | null;
         };
         /**
          * PaginationParamsSchema
@@ -1829,106 +1743,6 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
-    config_api_health_check: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HealthResponse"];
-                };
-            };
-        };
-    };
-    config_api_health_check_auth: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AuthHealthResponse"];
-                };
-            };
-        };
-    };
-    config_api_health_check_user: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["UserHealthResponse"];
-                };
-            };
-        };
-    };
-    config_api_test_authentication: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AuthTestResponse"];
-                };
-            };
-        };
-    };
-    config_api_test_auth_status: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AuthStatusResponse"];
-                };
-            };
-        };
-    };
     apps_authentication_api_register_user: {
         parameters: {
             query?: never;
@@ -1949,6 +1763,17 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RegisterResponseSchema"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
             /** @description Conflict */
@@ -2277,6 +2102,95 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     };
+                };
+            };
+        };
+    };
+    apps_core_api_frontend_log: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FrontendLogEntrySchema"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FrontendLogSuccessResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FrontendLogErrorResponse"];
+                };
+            };
+            /** @description Content Too Large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FrontendLogErrorResponse"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FrontendLogErrorResponse"];
+                };
+            };
+        };
+    };
+    apps_core_api_health_check: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    apps_core_api_log_health_check: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LogHealthCheckResponse"];
                 };
             };
         };

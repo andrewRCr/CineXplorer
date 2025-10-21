@@ -103,7 +103,7 @@ jobs:
         env:
           COMPOSE_PROJECT_NAME: cinexplorer-ci
         run: |
-          docker compose exec -T backend ruff check apps/ config/
+          docker compose exec -T -e RUFF_CACHE_DIR=/tmp/.ruff_cache backend ruff check apps/ config/
 
       - name: Setup Node.js for Pyright
         uses: actions/setup-node@v4

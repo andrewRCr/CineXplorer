@@ -30,7 +30,8 @@ cleanup() {
 
     # Delete test user if created
     if [[ -f "$USERNAME_FILE" ]]; then
-        local username=$(cat "$USERNAME_FILE")
+        local username
+        username=$(cat "$USERNAME_FILE")
         if [[ -n "$username" ]]; then
             log_info "Cleaning up test user: ${username}"
 
@@ -90,13 +91,16 @@ setup_test_user() {
     log_section "Setup: Creating Test User"
 
     # Register test user
-    local response=$(curl -s -w "\n%{http_code}" -X POST \
+    local response
+    response=$(curl -s -w "\n%{http_code}" -X POST \
         "${API_BASE_URL}/api/register/" \
         -H "Content-Type: application/json" \
         -d "{\"username\":\"${username}\",\"password\":\"${password}\",\"email\":\"${email}\"}")
 
-    local http_code=$(echo "$response" | tail -n1)
-    local body=$(echo "$response" | head -n-1)
+    local http_code
+    http_code=$(echo "$response" | tail -n1)
+    local body
+    body=$(echo "$response" | head -n-1)
 
     if [[ "$http_code" == "200" || "$http_code" == "201" ]]; then
         log_success "Test user created: ${username}"
@@ -131,12 +135,14 @@ setup_test_user() {
 test_login_without_csrf() {
     log_section "Test 1: Login Endpoint (auth=None) Works Without CSRF"
 
-    local response=$(curl -s -w "\n%{http_code}" -X POST \
+    local response
+    response=$(curl -s -w "\n%{http_code}" -X POST \
         "${API_BASE_URL}/api/token/" \
         -H "Content-Type: application/json" \
         -d '{"username":"testuser","password":"wrongpass"}')
 
-    local http_code=$(echo "$response" | tail -n1)
+    local http_code
+    http_code=$(echo "$response" | tail -n1)
 
     # Should get 401 (wrong credentials) NOT 403 (CSRF failure)
     if [[ "$http_code" == "401" ]]; then
@@ -154,11 +160,14 @@ test_login_without_csrf() {
 get_csrf_token() {
     log_section "Test 2: Get CSRF Token from /api/csrf/"
 
-    local response=$(curl -s -w "\n%{http_code}" -c "$COOKIE_FILE" -b "$COOKIE_FILE" \
+    local response
+    response=$(curl -s -w "\n%{http_code}" -c "$COOKIE_FILE" -b "$COOKIE_FILE" \
         "${API_BASE_URL}/api/csrf/")
 
-    local http_code=$(echo "$response" | tail -n1)
-    local body=$(echo "$response" | head -n-1)
+    local http_code
+    http_code=$(echo "$response" | tail -n1)
+    local body
+    body=$(echo "$response" | head -n-1)
 
     if [[ "$http_code" == "200" ]]; then
         CSRF_TOKEN=$(echo "$body" | grep -o '"csrfToken":"[^"]*"' | cut -d'"' -f4)
@@ -186,13 +195,16 @@ get_csrf_token() {
 test_protected_without_csrf() {
     log_section "Test 3: Protected Endpoint Blocks Request WITHOUT CSRF Token"
 
-    local response=$(curl -s -w "\n%{http_code}" -b "$COOKIE_FILE" -X PATCH \
+    local response
+    response=$(curl -s -w "\n%{http_code}" -b "$COOKIE_FILE" -X PATCH \
         "${API_BASE_URL}/api/profile/" \
         -H "Content-Type: application/json" \
         -d '{"first_name":"Test"}')
 
-    local http_code=$(echo "$response" | tail -n1)
-    local body=$(echo "$response" | head -n-1)
+    local http_code
+    http_code=$(echo "$response" | tail -n1)
+    local body
+    body=$(echo "$response" | head -n-1)
 
     if [[ "$http_code" == "403" ]]; then
         log_success "Protected endpoint correctly blocked without CSRF token (HTTP 403)"
@@ -218,14 +230,17 @@ test_protected_with_csrf() {
         return 1
     fi
 
-    local response=$(curl -s -w "\n%{http_code}" -b "$COOKIE_FILE" -X PATCH \
+    local response
+    response=$(curl -s -w "\n%{http_code}" -b "$COOKIE_FILE" -X PATCH \
         "${API_BASE_URL}/api/profile/" \
         -H "Content-Type: application/json" \
         -H "X-CSRFToken: ${CSRF_TOKEN}" \
         -d '{"first_name":"CSRF Test User"}')
 
-    local http_code=$(echo "$response" | tail -n1)
-    local body=$(echo "$response" | head -n-1)
+    local http_code
+    http_code=$(echo "$response" | tail -n1)
+    local body
+    body=$(echo "$response" | head -n-1)
 
     if [[ "$http_code" == "200" ]]; then
         log_success "Protected endpoint accepted request with valid CSRF token (HTTP 200)"
@@ -254,7 +269,8 @@ test_csrf_cookie_header_match() {
     log_section "Test 5: Verify CSRF Cookie/Header Integration"
 
     # Extract csrftoken cookie value
-    local cookie_value=$(grep -o 'csrftoken[[:space:]]*[^[:space:]]*' "$COOKIE_FILE" | awk '{print $NF}')
+    local cookie_value
+    cookie_value=$(grep -o 'csrftoken[[:space:]]*[^[:space:]]*' "$COOKIE_FILE" | awk '{print $NF}')
 
     if [[ -n "$cookie_value" ]]; then
         log_success "csrftoken cookie value: ${cookie_value:0:30}..."
@@ -277,13 +293,15 @@ test_protected_with_wrong_csrf() {
 
     local fake_token="invalid-csrf-token-12345"
 
-    local response=$(curl -s -w "\n%{http_code}" -b "$COOKIE_FILE" -X PATCH \
+    local response
+    response=$(curl -s -w "\n%{http_code}" -b "$COOKIE_FILE" -X PATCH \
         "${API_BASE_URL}/api/profile/" \
         -H "Content-Type: application/json" \
         -H "X-CSRFToken: ${fake_token}" \
         -d '{"first_name":"Should Fail"}')
 
-    local http_code=$(echo "$response" | tail -n1)
+    local http_code
+    http_code=$(echo "$response" | tail -n1)
 
     if [[ "$http_code" == "403" ]]; then
         log_success "Protected endpoint correctly rejected invalid CSRF token (HTTP 403)"

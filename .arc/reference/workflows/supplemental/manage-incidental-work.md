@@ -66,18 +66,21 @@ Before creating incidental task list:
 
 ### Step 2: Create Incidental Task File
 
-**File location**: `.arc/active/incidental/tasks-incidental-{brief-slug}.md`
+**File location**: `.arc/active/incidental/tasks-{brief-slug}.md`
 
-**Naming convention**: `tasks-incidental-{brief-descriptive-slug}.md`
+**Naming convention**: `tasks-{brief-descriptive-slug}.md`
 
-- Example: `tasks-incidental-backend-type-safety.md`
-- Example: `tasks-incidental-security-updates.md`
-- Example: `tasks-incidental-oauth-headless-migration.md`
+- Example: `tasks-backend-type-safety.md`
+- Example: `tasks-security-updates.md`
+- Example: `tasks-oauth-headless-migration.md`
+
+**Note**: The `incidental/` directory already indicates this is incidental work, so the `incidental-` filename
+prefix is omitted for clarity.
 
 **Create file**:
 
 ```bash
-touch .arc/active/incidental/tasks-incidental-{brief-slug}.md
+touch .arc/active/incidental/tasks-{brief-slug}.md
  ```
 
 **Use template** (see "Template" section below)
@@ -86,7 +89,7 @@ touch .arc/active/incidental/tasks-incidental-{brief-slug}.md
 
 **Immediately stage and suggest commit for context visibility**:
 
-1. `git add .arc/active/incidental/tasks-incidental-{brief-slug}.md`
+1. `git add .arc/active/incidental/tasks-{brief-slug}.md`
 2. Show `git status` to confirm only the new file is staged
 3. Propose a commit message (example below) and wait for user approval before running it
 
@@ -132,7 +135,7 @@ Related to: .arc/active/feature/tasks-{main-feature}.md
 
 **For complex incidental work**, create a companion notes file (pairs well with [maintain-task-notes.md](maintain-task-notes.md)):
 
-**File location**: `.arc/active/incidental/notes-incidental-{same-slug}.md`
+**File location**: `.arc/active/incidental/notes-{same-slug}.md`
 
 **Notes are gitignored** - use for:
 
@@ -167,7 +170,7 @@ See [3-process-task-loop.md](../3-process-task-loop.md) for detailed workflow.
 {details}
 
 Complete incidental task {X.Y}
-Related to: .arc/active/incidental/tasks-incidental-{slug}.md
+Related to: .arc/active/incidental/tasks-{slug}.md
 ```
 
 **Pick an appropriate type** (`refactor`, `fix`, `config`, `test`, `feat`) and use the current branch as the scope.
@@ -184,7 +187,7 @@ config(api-layer-p2): replace django-stubs with django-types
 - Update pyrightconfig.json for django-types
 
 Complete incidental task 2.2
-Related to: .arc/active/incidental/tasks-incidental-backend-type-safety.md
+Related to: .arc/active/incidental/tasks-backend-type-safety.md
 ```
 
 ```
@@ -194,7 +197,7 @@ fix(api-layer-p2): add rate limiting to authentication endpoints
 - Add tests for rate limit enforcement
 
 Complete incidental task 3.1
-Related to: .arc/active/incidental/tasks-incidental-security-updates.md
+Related to: .arc/active/incidental/tasks-security-updates.md
 ```
 
 ### Update Task List During Execution
@@ -212,7 +215,7 @@ Related to: .arc/active/incidental/tasks-incidental-security-updates.md
 
    - Mark task {X.Y} complete
 
-   Related to: .arc/active/incidental/tasks-incidental-{slug}.md
+   Related to: .arc/active/incidental/tasks-{slug}.md
    ```
 
 4. Only run `git commit` after the user gives an explicit “yes”.
@@ -259,7 +262,7 @@ Before archiving, ensure:
 - {Key files and their purpose}
 
 **Follow-Up Work Created** (if any):
-- `.arc/active/incidental/tasks-incidental-{follow-up-slug}.md` ({brief description})
+- `.arc/active/incidental/tasks-{follow-up-slug}.md` ({brief description})
 - {Estimated effort for follow-up}
 
 **References**:
@@ -287,21 +290,21 @@ Before archiving, ensure:
 
 **Archive path depends on whether notes exist:**
 
-- **Without notes** (simple task list): `.arc/reference/archive/incidental/tasks-incidental-{slug}.md`
+- **Without notes** (simple task list): `.arc/reference/archive/incidental/tasks-{slug}.md`
 - **With notes** (work package): `.arc/reference/archive/incidental/{slug}/` (all files together)
 
 **Use git mv** (file is tracked):
 
 ```bash
 # Without notes - move to incidental root
-git mv .arc/active/incidental/tasks-incidental-{slug}.md \
+git mv .arc/active/incidental/tasks-{slug}.md \
        .arc/reference/archive/incidental/
 
 # With notes - create subdirectory and move all files
 mkdir -p .arc/reference/archive/incidental/{slug}
-git mv .arc/active/incidental/tasks-incidental-{slug}.md \
+git mv .arc/active/incidental/tasks-{slug}.md \
        .arc/reference/archive/incidental/{slug}/
-mv .arc/active/incidental/notes-incidental-{slug}.md \
+mv .arc/active/incidental/notes-{slug}.md \
    .arc/reference/archive/incidental/{slug}/
 ```
 
@@ -328,7 +331,7 @@ Resuming {main work description}.
 Summary: {1-2 sentence outcome}
 
 Changes:
-- Archive tasks-incidental-{slug}.md with completion notes
+- Archive tasks-{slug}.md with completion notes
 - Update PROJECT-STATUS.md with {improvements}
 - Update {strategy/constitution docs} to reflect {changes}
 
@@ -475,8 +478,8 @@ Return to paused feature work and continue normal workflow.
 │   ├── tasks-{feature}.md       # Feature task list
 │   └── notes-{feature}.md       # Feature notes (gitignored)
 └── incidental/
-    ├── tasks-incidental-{slug}.md     # Incidental task list
-    └── notes-incidental-{slug}.md     # Incidental notes (gitignored)
+    ├── tasks-{slug}.md     # Incidental task list
+    └── notes-{slug}.md     # Incidental notes (gitignored)
 ```
 
 ### Archived Work
@@ -497,9 +500,9 @@ Return to paused feature work and continue normal workflow.
 │       └── completion-{name}.md
 └── incidental/
     ├── {name}/                       # Work package (if has notes)
-    │   ├── tasks-incidental-{name}.md
-    │   └── notes-incidental-{name}.md
-    └── tasks-incidental-{name}.md    # Simple task list (no notes, stays in root)
+    │   ├── tasks-{name}.md
+    │   └── notes-{name}.md
+    └── tasks-{name}.md    # Simple task list (no notes, stays in root)
 ```
 
 **Key Points**:

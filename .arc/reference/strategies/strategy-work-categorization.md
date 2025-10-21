@@ -822,8 +822,8 @@ git commit -m "feat(auth): complete authentication flow"
 **Problem:** Repeating "incidental" in filename.
 
 ```
-incidental/tasks-incidental-type-safety.md  # ❌ Redundant
-incidental/notes-incidental-refactoring.md  # ❌ Redundant
+incidental/tasks-type-safety.md  # ✅ Clean naming
+incidental/notes-refactoring.md  # ✅ Clean naming
 ```
 
 **Why it fails:**

@@ -34,7 +34,7 @@ archive/technical/logging-system/
 Incidental work (unplanned reactive fixes/improvements):
 
 - **With notes**: Gets subdirectory (e.g., `incidental/oauth-headless-migration/`)
-- **Without notes**: Task list stays in `incidental/` root (e.g., `incidental/tasks-incidental-pytest-migration.md`)
+- **Without notes**: Task list stays in `incidental/` root (e.g., `incidental/tasks-pytest-migration.md`)
 
 ## Completed Work
 
@@ -81,7 +81,7 @@ Incidental work (unplanned reactive fixes/improvements):
 
 - [`incidental/oauth-headless-migration/`](incidental/oauth-headless-migration/) - OAuth implementation research and migration
 - [`incidental/security-updates/`](incidental/security-updates/) - Security vulnerability fixes
-- [`incidental/tasks-incidental-pytest-migration.md`](incidental/tasks-incidental-pytest-migration.md) - Test runner migration
+- [`incidental/tasks-pytest-migration.md`](incidental/tasks-pytest-migration.md) - Test runner migration
 
 ---
 
@@ -122,8 +122,8 @@ This archive serves multiple purposes:
 - **Tasks**: `tasks-{name}.md`
 - **Notes**: `notes-{name}.md` (optional)
 - **Completion**: `completion-{name}.md`
-- **Incidental Tasks**: `tasks-incidental-{name}.md`
-- **Incidental Notes**: `notes-incidental-{name}.md` (optional)
+- **Incidental Tasks**: `tasks-{name}.md`
+- **Incidental Notes**: `notes-{name}.md` (optional)
 
 ## Adding New Archives
 

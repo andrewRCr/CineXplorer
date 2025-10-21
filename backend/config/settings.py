@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+import logging
 import os
 import socket
 import sys
@@ -66,9 +67,6 @@ INSTALLED_APPS = [
     "core",
     "debug_toolbar",
     "corsheaders",
-    "rest_framework",
-    "rest_framework.authtoken",
-    "drf_spectacular",
     # django-allauth
     "allauth",
     "allauth.account",
@@ -108,8 +106,12 @@ _base_internal_ips = [
 ]
 
 # Add Docker network IPs dynamically
-hostname, _, ips = socket.gethostbyname_ex(socket.gethostname())
-_docker_network_ips = [".".join([*ip.split(".")[:-1], "1"]) for ip in ips]
+try:
+    hostname, _, ips = socket.gethostbyname_ex(socket.gethostname())
+    _docker_network_ips = [".".join([*ip.split(".")[:-1], "1"]) for ip in ips]
+except (socket.gaierror, socket.herror, Exception) as e:
+    logging.warning("Docker network detection failed: %s", e)
+    _docker_network_ips = []
 
 INTERNAL_IPS = _base_internal_ips + _docker_network_ips
 
@@ -207,15 +209,6 @@ AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",  # Django default (for admin, etc.)
     "allauth.account.auth_backends.AuthenticationBackend",  # allauth (OAuth + email)
 ]
-
-# generate openAPI schema with drf-spectacular (for remaining legacy DRF endpoints)
-# Note: DRF authentication removed - Django Ninja handles all active authentication
-REST_FRAMEWORK = {
-    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
-    "DEFAULT_THROTTLE_RATES": {
-        "frontend_logs": "100/minute",
-    },
-}
 
 # default environment variables
 DEBUG = env.bool("DEBUG", default=False)

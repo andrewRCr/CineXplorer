@@ -12,18 +12,18 @@ from unittest.mock import MagicMock
 from .settings import *  # noqa: F403
 
 if TYPE_CHECKING:
-    from apps.accounts.models import CustomUser
+    from django.contrib.auth.models import User
 
 
 class MockEmailService:
     """Mock email service for testing."""
 
-    def send_verification_email(self, user: CustomUser) -> bool:  # type: ignore[name-defined]
+    def send_verification_email(self, user: "User") -> bool:
         """Mock verification email sending."""
         print(f"MOCK: Would send verification email to {user.email}")
         return True
 
-    def send_welcome_email(self, user: CustomUser) -> bool:  # type: ignore[name-defined]
+    def send_welcome_email(self, user: "User") -> bool:
         """Mock welcome email sending."""
         print(f"MOCK: Would send welcome email to {user.email}")
         return True
@@ -88,16 +88,9 @@ else:
     }
 
 # Add TESTING flag for environment detection
+# Django Ninja's TestAware throttles automatically bypass when TESTING=True
+# (see authentication/throttles.py for implementation)
 TESTING = True  # pyright: ignore[reportConstantRedefinition]
-
-# Disable Django Ninja throttling for tests (prevents rate limit failures)
-REST_FRAMEWORK = {  # pyright: ignore[reportConstantRedefinition]
-    **REST_FRAMEWORK,  # noqa: F405
-    "DEFAULT_THROTTLE_RATES": {
-        "anon": None,  # Disable anonymous throttling
-        "user": None,  # Disable user throttling
-    },
-}
 
 # Note: Logging configuration is now handled by the unified config in config/logging.py
 # The unified config works well for both development and test environments

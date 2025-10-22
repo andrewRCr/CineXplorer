@@ -91,7 +91,7 @@ Oscar winners, Palme d'Or winners) while user lists provide personal organizatio
 
 - **React components** following existing patterns (PageHeader, MovieGrid, etc.)
 - **Composite image generation** using HTML5 Canvas API for poster collages
-  - *Note: Caching strategy (client-side vs backend) to be determined during implementation*
+    - *Note: Caching strategy (client-side vs backend) to be determined during implementation*
 - **Responsive grid** leveraging existing Chakra UI MovieGrid component
 - **URL routing** with React Router for individual list pages
 

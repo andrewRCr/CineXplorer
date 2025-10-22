@@ -88,14 +88,14 @@ patterns across movie, UserMovieData, and authentication domains.
         - Comprehensive docstring
     - [x] 1.2.3 Run tests and incremental quality checks (batch_operations.py, test_batch_operations.py)
 
-- [ ] **1.3 Create User Movies Response Builder**
-    - [ ] 1.3.1 Write tests for `build_user_movies_response` function (test-first)
+- [x] **1.3 Create User Movies Response Builder**
+    - [x] 1.3.1 Write tests for `build_user_movies_response` function (test-first)
         - Full flow validation (pagination → fetch → enrich → response)
         - Pagination metadata correctness
         - User-specific enrichment data inclusion
         - Edge cases (empty watchlist, unavailable movies)
         - Target coverage: 80%+ (general)
-    - [ ] 1.3.2 Implement `build_user_movies_response` in `backend/apps/user_movie_data/services/response_builder.py`
+    - [x] 1.3.2 Implement `build_user_movies_response` in `backend/apps/user_movie_data/services/response_builder.py`
         - Accept UserMovieData QuerySet, user object, page number, optional page_size
         - Compose: pagination → TMDB fetch → enrichment → response
         - Return `PaginatedMovieResponseSchema` with enriched data
@@ -103,7 +103,7 @@ patterns across movie, UserMovieData, and authentication domains.
         - Use `fetch_movies_batch` from 1.2.2
         - Use `MovieEnrichmentService` for enrichment
         - Full type annotations, comprehensive docstring
-    - [ ] 1.3.3 Run tests and incremental quality checks (response_builder.py, test_response_builder.py)
+    - [x] 1.3.3 Run tests and incremental quality checks (response_builder.py, test_response_builder.py)
 
 - [ ] **1.4 Investigate and Eliminate Type Ignores**
     - [ ] 1.4.1 Audit type ignores in `backend/apps/user_movie_data/api.py`

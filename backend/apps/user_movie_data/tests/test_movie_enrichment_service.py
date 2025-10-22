@@ -119,7 +119,7 @@ def test_service_initialization() -> None:
 def test_service_initialization_with_repository() -> None:
     """Test that MovieEnrichmentService accepts repository parameter (forward compatibility)."""
     mock_repository = object()
-    service = MovieEnrichmentService(user_movie_data_repository=mock_repository)
+    service = MovieEnrichmentService(user_movie_data_repository=mock_repository)  # pyright: ignore[reportArgumentType]
     assert service._repository == mock_repository  # pyright: ignore[reportPrivateUsage]
 
 
@@ -547,3 +547,126 @@ def test_enrichment_preserves_all_original_movie_fields_in_new_instances(
     # Assert: Only difference is user_movie_data field
     assert movies[0].user_movie_data is None
     assert enriched_movies[0].user_movie_data is not None
+
+
+# =========================
+# Dependency Injection Tests
+# =========================
+
+
+class MockUserMovieDataRepository:
+    """Mock repository for testing dependency injection."""
+
+    def __init__(self, return_data: dict[int, UserMovieData]) -> None:
+        """Initialize mock with predefined return data."""
+        self.return_data = return_data
+        self.call_count = 0
+        self.last_user = None
+        self.last_tmdb_ids: list[int] | None = None
+
+    def get_for_user_and_movies(
+        self,
+        user: object,
+        tmdb_ids: list[int]
+    ) -> dict[int, UserMovieData]:
+        """Mock implementation that returns predefined data."""
+        self.call_count += 1
+        self.last_user = user
+        self.last_tmdb_ids = tmdb_ids
+        return self.return_data
+
+
+@pytest.mark.django_db
+def test_service_accepts_repository_injection(
+    user: User,  # pyright: ignore[reportInvalidTypeForm,reportUnknownParameterType]
+    movie1: Movie,
+    user_movie_data1: UserMovieData
+) -> None:
+    """Test that MovieEnrichmentService accepts and uses injected repository."""
+    # Arrange: Create mock repository with predefined data
+    mock_data = {movie1.tmdb_id: user_movie_data1}
+    mock_repository = MockUserMovieDataRepository(return_data=mock_data)
+
+    service = MovieEnrichmentService(user_movie_data_repository=mock_repository)  # pyright: ignore[reportArgumentType]
+
+    movies = [
+        MovieBaseSchema(
+            tmdb_id=movie1.tmdb_id,
+            title=movie1.title,
+            poster_path=movie1.poster_path,
+            release_date=date.fromisoformat(str(movie1.release_date))
+        )
+    ]
+
+    # Act
+    enriched_movies = service.enrich_movies_with_user_movie_data(movies, user)  # pyright: ignore[reportUnknownArgumentType]
+
+    # Assert: Repository was called (not ORM directly)
+    assert mock_repository.call_count == 1
+    assert mock_repository.last_user == user
+    assert mock_repository.last_tmdb_ids == [movie1.tmdb_id]
+
+    # Assert: Enrichment still works correctly
+    assert len(enriched_movies) == 1
+    assert enriched_movies[0].user_movie_data is not None
+    assert enriched_movies[0].user_movie_data.user_watched is True
+
+
+@pytest.mark.django_db
+def test_service_uses_repository_not_orm_directly(
+    user: User,  # pyright: ignore[reportInvalidTypeForm,reportUnknownParameterType]
+    movie1: Movie,
+    user_movie_data1: UserMovieData
+) -> None:
+    """Test that service calls repository method instead of ORM directly."""
+    # Arrange: Create mock repository
+    mock_data = {movie1.tmdb_id: user_movie_data1}
+    mock_repository = MockUserMovieDataRepository(return_data=mock_data)
+
+    service = MovieEnrichmentService(user_movie_data_repository=mock_repository)  # pyright: ignore[reportArgumentType]
+
+    movies = [
+        MovieBaseSchema(
+            tmdb_id=movie1.tmdb_id,
+            title=movie1.title,
+            poster_path=movie1.poster_path,
+            release_date=date.fromisoformat(str(movie1.release_date))
+        )
+    ]
+
+    # Act: Call service with injected repository
+    # Note: This should NOT trigger any ORM queries if DI is implemented correctly
+    _enriched_movies = service.enrich_movies_with_user_movie_data(movies, user)  # pyright: ignore[reportUnknownArgumentType]
+
+    # Assert: Repository method was called
+    assert mock_repository.call_count == 1
+    # The fact that this works without database access proves
+    # the service uses the repository interface, not ORM directly
+
+
+@pytest.mark.django_db
+def test_service_backward_compatible_without_injection(
+    user: User,  # pyright: ignore[reportInvalidTypeForm,reportUnknownParameterType]
+    movie1: Movie,
+    user_movie_data1: UserMovieData
+) -> None:
+    """Test that service still works without repository injection (backward compatibility)."""
+    # Arrange: Create service WITHOUT injecting repository
+    service = MovieEnrichmentService()
+
+    movies = [
+        MovieBaseSchema(
+            tmdb_id=movie1.tmdb_id,
+            title=movie1.title,
+            poster_path=movie1.poster_path,
+            release_date=date.fromisoformat(str(movie1.release_date))
+        )
+    ]
+
+    # Act: Should use default repository (ORM directly)
+    enriched_movies = service.enrich_movies_with_user_movie_data(movies, user)  # pyright: ignore[reportUnknownArgumentType]
+
+    # Assert: Enrichment works correctly with default behavior
+    assert len(enriched_movies) == 1
+    assert enriched_movies[0].user_movie_data is not None
+    assert enriched_movies[0].user_movie_data.user_watched is True

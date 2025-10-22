@@ -2,21 +2,25 @@
 Movie enrichment service for populating user-specific movie data.
 
 This service follows the class-based architecture with dependency injection
-pattern from Backend Modernization Task 2.0, providing forward-compatible
-code that won't require immediate refactoring.
+pattern, enabling testability and separation of concerns.
 
 Architecture:
 - Class-based service (not function-based)
 - Dependency injection for testability
 - Professional type annotations (no Any usage)
 - Single responsibility: enrich movie data with user context
+- Repository pattern for data access abstraction
 """
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from django.contrib.auth.models import AbstractBaseUser
-from django.db.models import QuerySet
 from movie.schemas import MovieBaseSchema, UserMovieDataSchema
 from user_movie_data.models import UserMovieData
+
+if TYPE_CHECKING:
+    from user_movie_data.repositories import UserMovieDataRepository
 
 
 class MovieEnrichmentService:
@@ -25,41 +29,57 @@ class MovieEnrichmentService:
 
     This service takes movie data (typically from TMDB) and enriches it with
     user-specific data like watchlist status, ratings, and reviews. It uses
-    efficient bulk queries to avoid N+1 query problems.
+    dependency injection with the repository pattern to abstract data access,
+    enabling testability and maintaining separation of concerns.
+
+    The service performs efficient bulk queries through the repository layer
+    to avoid N+1 query problems, ensuring optimal performance regardless of
+    the number of movies being enriched.
 
     Architecture Pattern:
-        Class-based with dependency injection following Backend Modernization
-        Task 2.0 patterns. While the current implementation doesn't inject
-        dependencies, the constructor signature is designed to support future
-        repository injection for enhanced testability.
+        - Dependency injection with repository pattern
+        - Functional programming principles (returns new instances, no mutation)
+        - Type-safe with full annotations
+        - Single responsibility (enrichment logic only)
 
     Usage:
-        # Basic usage (no DI)
+        # Production usage (default repository)
         service = MovieEnrichmentService()
         enriched_movies = service.enrich_movies_with_user_movie_data(movies, user)
 
-        # Future usage with DI (when repository pattern is implemented)
+        # Testing with mock repository
+        mock_repo = MockUserMovieDataRepository()
         service = MovieEnrichmentService(user_movie_data_repository=mock_repo)
         enriched_movies = service.enrich_movies_with_user_movie_data(movies, user)
     """
 
     def __init__(
         self,
-        user_movie_data_repository: object | None = None
+        user_movie_data_repository: UserMovieDataRepository | None = None
     ) -> None:
         """
         Initialize the movie enrichment service.
 
         Args:
             user_movie_data_repository: Optional repository for UserMovieData
-                access. Reserved for future dependency injection when repository
-                pattern is implemented in Backend Modernization Task 2.0.
-                Currently unused but included for forward compatibility.
+                access. If None, creates default repository using Django ORM.
+                Inject mock repositories for testing.
+
+        Example:
+            # Production usage (default repository)
+            service = MovieEnrichmentService()
+
+            # Testing with mock repository
+            mock_repo = MockUserMovieDataRepository()
+            service = MovieEnrichmentService(user_movie_data_repository=mock_repo)
         """
-        # Reserved for future DI when repository pattern is implemented
-        # Currently we use Django ORM directly, but this enables future
-        # refactoring without breaking the public API
-        self._repository = user_movie_data_repository
+        # Use injected repository or create default
+        if user_movie_data_repository is not None:
+            self._repository = user_movie_data_repository
+        else:
+            # Import here to avoid circular dependency
+            from user_movie_data.repositories import UserMovieDataRepository
+            self._repository = UserMovieDataRepository()
 
     def enrich_movies_with_user_movie_data(
         self,
@@ -114,21 +134,10 @@ class MovieEnrichmentService:
         # Extract all tmdb_ids from the movie list
         tmdb_ids = [movie.tmdb_id for movie in movies]
 
-        # Bulk query: fetch all UserMovieData for this user and these movies
-        # Using select_related('movie') to avoid additional queries when accessing movie fields
-        user_data_qs: QuerySet[UserMovieData] = UserMovieData.objects.filter(
-            user=user,
-            movie__tmdb_id__in=tmdb_ids
-        ).select_related('movie')
-
-        # Build lookup dictionary: {tmdb_id: UserMovieData}
-        # Use select_related to avoid N+1, then build dict from QuerySet
-        user_data_list = list(user_data_qs)
-        user_data_map: dict[int, UserMovieData] = {}
-        for umd in user_data_list:
-            # Access movie.tmdb_id via select_related - type-safe through .pyi stub
-            movie_obj = umd.movie
-            user_data_map[movie_obj.tmdb_id] = umd
+        # Use repository to fetch UserMovieData (dependency injection)
+        user_data_map: dict[int, UserMovieData] = (
+            self._repository.get_for_user_and_movies(user, tmdb_ids)
+        )
 
         # Create new enriched movie instances (non-mutating approach)
         enriched_movies: list[MovieBaseSchema] = []

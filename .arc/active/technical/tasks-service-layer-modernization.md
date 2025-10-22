@@ -156,25 +156,30 @@ patterns across movie, UserMovieData, and authentication domains.
     - [x] 2.1.3 Run tests and verify no regressions (test_movie_enrichment_service.py)
         - **Result**: Ruff 0 errors, Pyright 0 errors, 14/14 tests passing
 
-- [ ] **2.2 Implement Actual Dependency Injection**
-    - [ ] 2.2.1 Create UserMovieData repository interface/class
+- [x] **2.2 Implement Actual Dependency Injection**
+    - [x] 2.2.1 Create UserMovieData repository interface/class
         - Define repository with `get_for_user_and_movies(user, tmdb_ids)` method
         - Implement concrete repository using Django ORM
         - Located in `backend/apps/user_movie_data/repositories.py`
-    - [ ] 2.2.2 Write tests verifying DI implementation (test-first)
+        - **Result**: Repository created, returns `dict[int, UserMovieData]`
+    - [x] 2.2.2 Write tests verifying DI implementation (test-first)
         - Test service with mocked repository
         - Verify ORM is NOT called directly (uses injected repository)
         - Verify repository injection works correctly
-    - [ ] 2.2.3 Refactor MovieEnrichmentService to use injected repository
+        - **Result**: 3 DI tests added (MockUserMovieDataRepository class), all passing
+    - [x] 2.2.3 Refactor MovieEnrichmentService to use injected repository
         - Update constructor to inject repository (already has signature)
         - Replace direct ORM calls with repository method calls
         - Update `_repository` usage (currently unused)
         - Maintain backward compatibility (default repository if none injected)
-    - [ ] 2.2.4 Update service factory function
-        - Create `get_movie_enrichment_service(user)` factory
+        - **Result**: 10-line ORM query replaced with 1 repository call, updated docstrings
+    - [x] 2.2.4 Update service factory function
+        - Create `get_movie_enrichment_service()` factory
         - Located in `backend/apps/user_movie_data/services/service_factory.py`
         - Returns MovieEnrichmentService with default repository
-    - [ ] 2.2.5 Run tests and incremental quality checks (user_movie_data service/tests)
+        - **Result**: Factory created with 3 tests, all passing
+    - [x] 2.2.5 Run tests and incremental quality checks (user_movie_data service/tests)
+        - **Result**: Ruff 0 errors, Pyright 0 errors, 64/64 tests passing
 
 - [ ] **2.3 Phase 2 Quality Gate**
     - [ ] 2.3.1 Run full backend test suite

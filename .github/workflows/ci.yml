@@ -80,8 +80,9 @@ jobs:
           echo "Running pytest with coverage..."
           docker compose exec -T -e COVERAGE_FILE=/tmp/.coverage backend pytest apps/ --cov=apps --cov-report=term --cov-report=xml:/tmp/coverage.xml
 
-          # Copy coverage report from container to host
+          # Copy coverage report and pytest cache from container to host
           docker compose cp backend:/tmp/coverage.xml backend/coverage.xml
+          docker compose cp backend:/app/.pytest_cache backend/.pytest_cache || true
 
       - name: Upload coverage reports
         if: always()

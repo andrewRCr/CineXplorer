@@ -20,7 +20,7 @@ from unittest.mock import patch
 
 import pytest
 from core.models import Movie
-from django.contrib.auth import get_user_model
+from core.tests.test_helpers import create_user
 from movie.schemas import MovieBaseSchema, PaginatedMovieResponseSchema
 from user_movie_data.models import UserMovieData
 from user_movie_data.services.response_builder import build_user_movies_response
@@ -28,13 +28,11 @@ from user_movie_data.services.response_builder import build_user_movies_response
 if TYPE_CHECKING:
     from django.contrib.auth.models import AbstractBaseUser
 
-User = get_user_model()
-
 
 @pytest.fixture
 def test_user(db: object) -> AbstractBaseUser:
     """Create a test user."""
-    return User.objects.create_user(
+    return create_user(
         username='testuser',
         email='test@example.com',
         password='testpass123'
@@ -205,11 +203,13 @@ class TestBuildUserMoviesResponse:
 
             # Verify specific enrichment data for Fight Club (tmdb_id=550)
             fight_club = next(m for m in response.results if m.tmdb_id == 550)
+            assert fight_club.user_movie_data is not None  # Explicit narrowing for Pyright
             assert fight_club.user_movie_data.user_on_watchlist is True
             assert fight_club.user_movie_data.user_watched is False
 
             # Verify specific enrichment data for The Matrix (tmdb_id=551)
             matrix = next(m for m in response.results if m.tmdb_id == 551)
+            assert matrix.user_movie_data is not None  # Explicit narrowing for Pyright
             assert matrix.user_movie_data.user_on_watchlist is True
             assert matrix.user_movie_data.user_watched is True
             assert matrix.user_movie_data.user_rating == 9

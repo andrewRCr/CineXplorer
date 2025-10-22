@@ -14,9 +14,6 @@ from __future__ import annotations
 import pytest
 from core.models import Movie
 from core.pagination import paginate_queryset
-from django.contrib.auth import get_user_model
-
-User = get_user_model()
 
 
 @pytest.fixture

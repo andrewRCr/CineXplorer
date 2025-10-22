@@ -141,17 +141,20 @@ patterns across movie, UserMovieData, and authentication domains.
 
 ### **Phase 2.0: Complete MovieEnrichmentService Refactoring (1-2 hours)**
 
-- [ ] **2.1 Fix Mutation Anti-Pattern**
-    - [ ] 2.1.1 Write tests verifying non-mutation behavior (test-first)
+- [x] **2.1 Fix Mutation Anti-Pattern**
+    - [x] 2.1.1 Write tests verifying non-mutation behavior (test-first)
         - Assert input list unchanged after enrichment
         - Verify enriched data returns new list with new MovieBaseSchema instances
         - Ensure original schemas remain unmodified
-    - [ ] 2.1.2 Refactor `enrich_movies_with_user_movie_data` method
+        - **Result**: 3 new tests added, all failing as expected (RED phase)
+    - [x] 2.1.2 Refactor `enrich_movies_with_user_movie_data` method
         - Return new list with enriched copies
         - Do NOT mutate input list in-place
         - Use Pydantic's `.model_copy(update={...})` for immutable updates
         - Update docstring to document non-mutation guarantee
-    - [ ] 2.1.3 Run tests and verify no regressions (test_movie_enrichment_service.py)
+        - **Result**: All 14 tests passing (GREEN phase)
+    - [x] 2.1.3 Run tests and verify no regressions (test_movie_enrichment_service.py)
+        - **Result**: Ruff 0 errors, Pyright 0 errors, 14/14 tests passing
 
 - [ ] **2.2 Implement Actual Dependency Injection**
     - [ ] 2.2.1 Create UserMovieData repository interface/class

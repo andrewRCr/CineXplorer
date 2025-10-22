@@ -439,3 +439,111 @@ def test_enrichment_preserves_original_movie_data(
     assert enriched_movies[0].runtime == original_runtime
     # Only user_movie_data field added
     assert enriched_movies[0].user_movie_data is not None
+
+
+# =========================
+# Non-Mutation Tests
+# =========================
+
+
+@pytest.mark.django_db
+def test_enrichment_does_not_mutate_input_list(
+    user: User,  # pyright: ignore[reportInvalidTypeForm,reportUnknownParameterType]
+    movie1: Movie,
+    user_movie_data1: UserMovieData
+) -> None:
+    """Test that enrichment does not mutate the input list of movies."""
+    # Arrange
+    service = MovieEnrichmentService()
+    movies = [
+        MovieBaseSchema(
+            tmdb_id=movie1.tmdb_id,
+            title=movie1.title,
+            poster_path=movie1.poster_path,
+            release_date=date.fromisoformat(str(movie1.release_date))
+        )
+    ]
+
+    # Store original state
+    original_user_movie_data = movies[0].user_movie_data
+
+    # Act
+    _enriched_movies = service.enrich_movies_with_user_movie_data(movies, user)  # pyright: ignore[reportUnknownArgumentType]
+
+    # Assert: Input list unchanged (we verify the INPUT, not the output)
+    assert movies[0].user_movie_data is original_user_movie_data  # Should be None (unchanged)
+    assert movies[0].user_movie_data is None  # Explicitly verify no mutation
+
+
+@pytest.mark.django_db
+def test_enrichment_returns_new_list_with_new_instances(
+    user: User,  # pyright: ignore[reportInvalidTypeForm,reportUnknownParameterType]
+    movie1: Movie,
+    user_movie_data1: UserMovieData
+) -> None:
+    """Test that enrichment returns a new list with new MovieBaseSchema instances."""
+    # Arrange
+    service = MovieEnrichmentService()
+    movies = [
+        MovieBaseSchema(
+            tmdb_id=movie1.tmdb_id,
+            title=movie1.title,
+            poster_path=movie1.poster_path,
+            release_date=date.fromisoformat(str(movie1.release_date))
+        )
+    ]
+
+    # Act
+    enriched_movies = service.enrich_movies_with_user_movie_data(movies, user)  # pyright: ignore[reportUnknownArgumentType]
+
+    # Assert: New list (different reference)
+    assert enriched_movies is not movies
+
+    # Assert: New instances (different object references)
+    assert enriched_movies[0] is not movies[0]
+
+    # Assert: Original movie unchanged
+    assert movies[0].user_movie_data is None
+
+    # Assert: Enriched movie has user data
+    assert enriched_movies[0].user_movie_data is not None
+    assert enriched_movies[0].user_movie_data.user_watched is True
+
+
+@pytest.mark.django_db
+def test_enrichment_preserves_all_original_movie_fields_in_new_instances(
+    user: User,  # pyright: ignore[reportInvalidTypeForm,reportUnknownParameterType]
+    movie1: Movie,
+    user_movie_data1: UserMovieData
+) -> None:
+    """Test that new enriched instances preserve all fields from original movies."""
+    # Arrange
+    service = MovieEnrichmentService()
+    original_vote_average = 8.5
+    original_runtime = 117
+
+    movies = [
+        MovieBaseSchema(
+            tmdb_id=movie1.tmdb_id,
+            title=movie1.title,
+            poster_path=movie1.poster_path,
+            release_date=date.fromisoformat(str(movie1.release_date)),
+            vote_average=original_vote_average,
+            runtime=original_runtime
+        )
+    ]
+
+    # Act
+    enriched_movies = service.enrich_movies_with_user_movie_data(movies, user)  # pyright: ignore[reportUnknownArgumentType]
+
+    # Assert: All original fields preserved in new instance
+    assert enriched_movies[0].tmdb_id == movies[0].tmdb_id
+    assert enriched_movies[0].title == movies[0].title
+    assert enriched_movies[0].poster_path == movies[0].poster_path
+    assert enriched_movies[0].release_date == movies[0].release_date
+    assert enriched_movies[0].vote_average == original_vote_average
+    assert enriched_movies[0].runtime == original_runtime
+
+    # Assert: Only difference is user_movie_data field
+    assert movies[0].user_movie_data is None
+    assert enriched_movies[0].user_movie_data is not None

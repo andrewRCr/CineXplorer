@@ -70,14 +70,18 @@ class MovieEnrichmentService:
         Enrich movie schemas with user movie data.
 
         For authenticated users, this method bulk-queries UserMovieData records
-        and populates the user_movie_data field on each MovieBaseSchema from the
-        UserMovieData model. For unauthenticated users, returns movies unchanged
+        and creates new MovieBaseSchema instances with the user_movie_data field
+        populated. For unauthenticated users, returns movies unchanged
         (user_movie_data field remains None).
+
+        This method follows functional programming principles by NOT mutating
+        input data. It returns new instances, leaving the original list and
+        movie objects unchanged.
 
         The method uses efficient bulk querying to avoid N+1 query problems:
         - Single database query fetches all UserMovieData for the user and movie set
         - O(n) mapping builds lookup dictionary by tmdb_id
-        - O(n) population updates each movie schema
+        - O(n) copy operation creates new enriched instances
 
         Args:
             movies: List of movie schemas to enrich (typically from TMDB API)
@@ -86,7 +90,7 @@ class MovieEnrichmentService:
         Returns:
             List of movie schemas with user_movie_data field populated.
             For unauthenticated users, returns input list unchanged.
-            For authenticated users, returns new list with populated user data.
+            For authenticated users, returns NEW list with NEW enriched instances.
 
         Type Safety:
             Uses AbstractBaseUser (not Any) for maximum type safety. Django ORM
@@ -96,7 +100,7 @@ class MovieEnrichmentService:
 
         Performance:
             - Unauthenticated: O(1) - immediate return
-            - Authenticated with N movies: O(N) - single query + linear mapping
+            - Authenticated with N movies: O(N) - single query + linear copy
             - No N+1 queries regardless of movie count
         """
         # Early return for unauthenticated users - no enrichment needed
@@ -126,26 +130,35 @@ class MovieEnrichmentService:
             movie_obj = umd.movie
             user_data_map[movie_obj.tmdb_id] = umd
 
-        # Enrich each movie with user data if available
+        # Create new enriched movie instances (non-mutating approach)
+        enriched_movies: list[MovieBaseSchema] = []
         for movie in movies:
             user_movie_data = user_data_map.get(movie.tmdb_id)
 
             if user_movie_data is not None:
-                # Use movie.tmdb_id and movie.title from the MovieBaseSchema
-                # (already validated by Pydantic), not from the ORM object
-                movie.user_movie_data = UserMovieDataSchema(
-                    id=user_movie_data.id,
-                    tmdb_id=movie.tmdb_id,  # From MovieBaseSchema parameter
-                    title=movie.title,  # From MovieBaseSchema parameter
-                    user_watched=user_movie_data.user_watched,
-                    user_on_watchlist=user_movie_data.user_on_watchlist,
-                    user_liked=user_movie_data.user_liked,
-                    user_rating=user_movie_data.user_rating,
-                    user_review=user_movie_data.user_review,
+                # Create new instance with user data populated
+                # Use model_copy() to preserve all fields from original
+                enriched_movie = movie.model_copy(
+                    update={
+                        'user_movie_data': UserMovieDataSchema(
+                            id=user_movie_data.id,
+                            tmdb_id=movie.tmdb_id,  # From MovieBaseSchema parameter
+                            title=movie.title,  # From MovieBaseSchema parameter
+                            user_watched=user_movie_data.user_watched,
+                            user_on_watchlist=user_movie_data.user_on_watchlist,
+                            user_liked=user_movie_data.user_liked,
+                            user_rating=user_movie_data.user_rating,
+                            user_review=user_movie_data.user_review,
+                        )
+                    }
                 )
-            # If no user data exists, user_movie_data remains None (default)
+                enriched_movies.append(enriched_movie)
+            else:
+                # No user data: create copy without enrichment
+                # This ensures we return new instances even when no enrichment occurs
+                enriched_movies.append(movie.model_copy())
 
-        return movies
+        return enriched_movies
 
 
 __all__ = ["MovieEnrichmentService"]

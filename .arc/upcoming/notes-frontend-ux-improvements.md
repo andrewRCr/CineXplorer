@@ -3,7 +3,7 @@
 **Work Classification**: Technical
 
 **Document Purpose:** Track user interface and user experience improvements that make the app better without
-adding new features. This covers visual polish, accessibility, performance optimizations, and UX infrastructure.
+adding new features. These cover visual polish, accessibility, performance optimizations, and UX infrastructure.
 
 **Scope:**
 

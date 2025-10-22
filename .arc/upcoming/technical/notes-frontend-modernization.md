@@ -149,11 +149,23 @@ Auth State → AuthContext (existing pattern)
 - Performance budgets
 - Core Web Vitals tracking
 
+**Performance Targets** (from earlier planning):
+- First Contentful Paint: < 1.5s
+- Time to Interactive: < 3.5s
+- Bundle Size: < 200KB gzipped for initial load
+- Lighthouse score: > 90 for performance
+
 ### Developer Experience
 
 - Improved type generation from OpenAPI
 - Better error boundaries
 - Enhanced debugging tools
+
+### Form State Management
+
+**Consideration:** Evaluate React Hook Form (vs current Formik) during implementation
+- Benefits: Better performance, smaller bundle, TypeScript-first
+- Decision: Evaluate when implementing forms-heavy features (user profile editing, etc.)
 
 ---
 

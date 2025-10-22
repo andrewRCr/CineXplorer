@@ -211,17 +211,11 @@ infrastructure/dev-certs/*.conf
 infrastructure/dev-certs/*.crt
 infrastructure/dev-certs/*.key
 
-# Personal reference documentation and notes (work-in-progress only)
-.arc/active/*/notes-*
+# Messy research notes (transient); regular notes- are tracked for context visibility
 .arc/active/*/research-*
-.arc/upcoming/notes/
 
 # Session handoff file (transient)
 .arc/active/CURRENT-SESSION.md
-
-# Note: Task lists are TRACKED by default for context visibility
-# Note: Archived notes (.arc/reference/archive/notes/) ARE TRACKED once cleaned and archived
-# Only active/upcoming notes remain untracked (messy temporal reference → clean historical reference)
 
 # AI tool settings (personal development environment preferences)
 .claude/

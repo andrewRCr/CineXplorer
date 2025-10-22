@@ -118,22 +118,25 @@ class MovieEnrichmentService:
         ).select_related('movie')
 
         # Build lookup dictionary: {tmdb_id: UserMovieData}
-        # This enables O(1) lookup when enriching each movie
-        user_data_map: dict[int, UserMovieData] = {
-            umd.movie.tmdb_id: umd  # pyright: ignore[reportUnknownMemberType]
-            for umd in user_data_qs
-        }
+        # Use select_related to avoid N+1, then build dict from QuerySet
+        user_data_list = list(user_data_qs)
+        user_data_map: dict[int, UserMovieData] = {}
+        for umd in user_data_list:
+            # Access movie.tmdb_id via select_related - type-safe through .pyi stub
+            movie_obj = umd.movie
+            user_data_map[movie_obj.tmdb_id] = umd
 
         # Enrich each movie with user data if available
         for movie in movies:
             user_movie_data = user_data_map.get(movie.tmdb_id)
 
             if user_movie_data is not None:
-                # Populate UserMovieDataSchema from the ORM instance
+                # Use movie.tmdb_id and movie.title from the MovieBaseSchema
+                # (already validated by Pydantic), not from the ORM object
                 movie.user_movie_data = UserMovieDataSchema(
                     id=user_movie_data.id,
-                    tmdb_id=user_movie_data.movie.tmdb_id,  # pyright: ignore[reportUnknownMemberType]
-                    title=user_movie_data.movie.title,  # pyright: ignore[reportUnknownMemberType]
+                    tmdb_id=movie.tmdb_id,  # From MovieBaseSchema parameter
+                    title=movie.title,  # From MovieBaseSchema parameter
                     user_watched=user_movie_data.user_watched,
                     user_on_watchlist=user_movie_data.user_on_watchlist,
                     user_liked=user_movie_data.user_liked,

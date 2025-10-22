@@ -67,8 +67,11 @@ def get_user_movies(
     if watchlist:
         user_data_qs = user_data_qs.filter(user_on_watchlist=True)
 
-    # Extract tmdb_ids from user data
-    tmdb_ids = [umd.movie.tmdb_id for umd in user_data_qs]  # pyright: ignore[reportUnknownMemberType]
+    # Extract tmdb_ids using values_list for type-safe, efficient query
+    # Avoids chained attribute access and evaluates in single SQL query
+    tmdb_ids: list[int] = list(
+        user_data_qs.values_list('movie__tmdb_id', flat=True)
+    )
 
     # If no movies, return empty response
     if not tmdb_ids:

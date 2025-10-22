@@ -105,15 +105,23 @@ patterns across movie, UserMovieData, and authentication domains.
         - Full type annotations, comprehensive docstring
     - [x] 1.3.3 Run tests and incremental quality checks (response_builder.py, test_response_builder.py)
 
-- [ ] **1.4 Investigate and Eliminate Type Ignores**
-    - [ ] 1.4.1 Audit type ignores in `backend/apps/user_movie_data/api.py`
-        - Review each `# pyright: ignore` or `# type: ignore` comment
-        - Attempt to resolve using proper type annotations
-        - Document remaining ignores as legitimate django-types limitations
-    - [ ] 1.4.2 Audit type ignores in `backend/apps/movie/movie_enrichment_service.py`
-        - Review and resolve type ignores
-        - Document any remaining legitimate ignores
-    - [ ] 1.4.3 Run type checking to verify improvements (target: zero unnecessary type ignores)
+- [x] **1.4 Investigate and Eliminate Type Ignores**
+    - [x] 1.4.1 Audit type ignores in `backend/apps/user_movie_data/api.py`
+        - **Found**: 1 type ignore for `reportUnknownMemberType` on `umd.movie.tmdb_id` list comprehension
+        - **Root cause**: Chained attribute access through ForeignKey relationship
+        - **Solution**: Replaced with `values_list('movie__tmdb_id', flat=True)` for type-safe query
+        - **Result**: Type ignore eliminated, more efficient SQL (single query vs iteration)
+    - [x] 1.4.2 Audit type ignores in `backend/apps/user_movie_data/services/movie_enrichment_service.py`
+        - **Found**: 3 type ignores for `reportUnknownMemberType` on ForeignKey field access
+        - **Root cause**: Dict comprehension with chained access + redundant field extraction
+        - **Solution 1**: Explicit loop with intermediate variable for dict building
+        - **Solution 2**: Reuse Pydantic-validated data instead of re-extracting from ORM
+        - **Result**: All 3 type ignores eliminated, clearer logic (use validated data)
+    - [x] 1.4.3 Run type checking to verify improvements (target: zero unnecessary type ignores)
+        - **Achievement**: 4/4 type ignores eliminated (100% removal)
+        - **Pyright**: 0 errors, 0 warnings, 0 informations
+        - **Tests**: 55/55 passing (all user_movie_data tests)
+        - **Key insight**: Better patterns > suppression comments
 
 - [ ] **1.5 Phase 1 Quality Gate**
     - [ ] 1.5.1 Run full backend test suite

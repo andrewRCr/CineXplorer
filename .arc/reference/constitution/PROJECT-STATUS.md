@@ -203,15 +203,29 @@ See [Feature Backlog](.arc/upcoming/notes/notes-feature-backlog.md) for comprehe
 
 ### Immediate (Next ~1-2 weeks)
 
-**1. Backend Modernization** (Resume now that API Layer P2 is complete):
+**1. Service Layer Modernization** (HIGH PRIORITY - Unblocks UserMovieData features):
 
-- Apply service layer patterns to remaining function-based services
-- Implement Celery/Redis for asynchronous task processing
-- Implement Playwright for end-to-end testing
-- Continue SOLID/DRY refactoring efforts
+- **Status**: Planning complete, PRD creation in progress
+- **Scope**: Pagination helpers + class-based service refactoring (14-21 hours)
+- **Why First**: Establishes reusable patterns, unblocks UserMovieData features (pagination required),
+shorter scope enables faster delivery
+- **Key Deliverables**:
+    - Generic pagination helper for Django QuerySets
+    - TMDB batch fetch helper with error handling
+    - User movies response builder (high-level composition)
+    - MovieEnrichmentService mutation fix (functional approach)
+    - Type safety improvements (eliminate unnecessary ignores)
+    - Movie/Email service refactoring (function-based → class-based with DI)
+- See [Service Layer Modernization Notes](../../active/technical/notes-service-layer-modernization.md) for details
+
+**2. Backend Modernization Phase 2** (After Service Layer):
+
+- Asynchronous task processing (Celery/Redis)
+- End-to-end testing (Playwright)
+- Code quality improvements (SOLID/DRY refactoring)
 - See [Backend Modernization Notes](../../upcoming/technical/notes-backend-modernization.md) for details
 
-**2. Frontend Modernization** (After backend modernization):
+**3. Frontend Modernization** (After backend work):
 
 - Technical infrastructure improvements similar to backend modernization
 - Planning in early stages (notes document only, PRD/tasks to be created)
@@ -304,4 +318,4 @@ The project follows a structured approach using:
 - **Opportunistic refactoring** via incidental task lists for quality improvements
 - **Regular PROJECT-STATUS updates** as features progress through planning → development → completion
 
-_Last updated: 2025-10-17_
+_Last updated: 2025-10-22_

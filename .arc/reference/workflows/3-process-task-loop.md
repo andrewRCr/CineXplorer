@@ -20,18 +20,24 @@ Guidelines for managing task lists in markdown files to track progress on comple
 
   2. If **all** subtasks underneath a parent task are now `[x]`, follow this sequence:
 
-    - **First**: Ensure new code has appropriate test coverage (models, APIs, complex logic)
-    - **Second**: Run the full test suite (`python manage.py test --settings=config.settings_test`, `npm test`, etc.)
-    - **Third**: Run all linting checks:
+    - **First**: Mark the **parent task** as `[x]` in the task list file (ensures docs reflect completion)
+    - **Second**: Ensure new code has appropriate test coverage (models, APIs, complex logic)
+    - **Third**: Run the full test suite (`python manage.py test --settings=config.settings_test`, `npm test`, etc.)
+    - **Fourth**: Run all linting checks:
         - `ruff check apps/ config/`
         - `python scripts/type_check.py` (runs hybrid Pyright+mypy; requires `npm install` for pyright)
         - `npm run lint`
         - `npm run type-check`
         - `npx markdownlint-cli2 "**/*.md"`
-    - **Fourth**: Check if [PROJECT-STATUS](.arc/reference/constitution/PROJECT-STATUS.md) needs updates
+    - **Fifth**: Check if [PROJECT-STATUS](.arc/reference/constitution/PROJECT-STATUS.md) needs updates
       (feature progress, completed functionality, updated priorities)
 
   3. Generate standardized readiness report
+     **IMPORTANT:** Before reporting, verify task list file reflects all completed work:
+     - All subtasks under parent task marked `[x]`
+     - Parent task marked `[x]`
+     - Task list file saved
+     This ensures task list accuracy is included in any subsequent commit.
      (see [Development Rules](../constitution/DEVELOPMENT-RULES.md) for format)
      and await user instructions on how to proceed.
      User may choose to commit changes (AI can execute only if explicitly approved to do so) or review first.
@@ -55,7 +61,8 @@ Guidelines for managing task lists in markdown files to track progress on comple
       git commit -m "feat(feature/payment-flow): add payment validation logic" -m "- Validates card type and expiry" -m "- Adds unit tests for edge cases" -m "Complete task 4.2.3" -m "Related to Payment PRD"
       ```
 
-  4. Once the user commits changes, mark the **parent task** as completed in task documentation.
+  4. User reviews readiness report and decides whether to commit or request changes.
+     When committing, task list file should already reflect completion (parent task marked `[x]` in step 2).
   5. **Verify task documentation accuracy** - ensure task status matches what was actually completed.
 
 ### Incremental Quality Checks
@@ -202,9 +209,9 @@ When working with task lists, the AI must:
 
 1. Regularly update the task list file after finishing any significant work.
 2. Follow the completion protocol:
-   - Mark each finished **sub‑task** `[x]`.
-   - Mark the **parent task** `[x]` once **all** its subtasks are `[x]`.
-   - **Verify parent task completion happens in documentation commits**.
+   - Mark each finished **sub‑task** `[x]` immediately after completion.
+   - Mark the **parent task** `[x]` once **all** its subtasks are `[x]` (BEFORE generating readiness report).
+   - **Task list updates must be saved before commit consideration** - never commit with stale task docs.
 3. Add newly discovered tasks.
 4. Before starting work, check which **single sub‑task** is next.
 6. **Complete only ONE subtask at a time** - never bundle multiple subtasks together.

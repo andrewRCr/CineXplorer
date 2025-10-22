@@ -27,6 +27,9 @@ by all contributors, including AI assistants.
 - **AI CAN execute commits** when user explicitly approves/instructs it
 - **User approval required** for all git operations
 - **MANDATORY:** Comprehensive task context analysis before any commit consideration (see atomic-commit workflow)
+- **Task list accuracy required**: Before commit consideration, verify task documentation reflects completed work
+  (parent task marked `[x]` if all subtasks complete)
+- **Never commit stale task docs**: Task list updates must be saved and included in commits for completed work
 - AI reports completion with readiness report, then awaits commit instructions
 
 ### Feature Branch Workflow
@@ -199,9 +202,11 @@ This makes the protocol visible during execution.
 
 ### Documentation Updates
 
-- **Immediate task list updates**: Mark `[x]` in task files after each sub-task
+- **Immediate subtask updates**: Mark `[x]` in task files after each sub-task completion
+- **Parent task updates**: Mark parent task `[x]` when all subtasks complete (BEFORE generating readiness report)
 - **Update "Relevant Files"** section when files are created/modified
 - **Never batch documentation updates** - do immediately after work
+- **Never commit with stale task docs** - task list must reflect completion status before commit
 
 ### Parent Task Completion
 

@@ -196,23 +196,31 @@ patterns across movie, UserMovieData, and authentication domains.
 ### **Phase 3.0: Refactor MovieService to Class-Based Architecture (6-9 hours)**
 
 - [ ] **3.1 Create MovieService Class**
-    - [ ] 3.1.1 Write tests for MovieService class methods (test-first)
+    - [x] 3.1.1 Write tests for MovieService class methods (test-first)
         - Test `get_movie_by_id` with mocked TMDB client
         - Test `search_movies` with mocked TMDB client
         - Test `discover_movies` with mocked TMDB client
         - Test all existing function-based operations
         - Target coverage: 80%+ (general)
-    - [ ] 3.1.2 Create `MovieService` class in `backend/apps/movie/services/movie_service.py`
+        - **Result**: 14 tests created, all failing as expected (RED phase)
+        - **File**: `backend/apps/movie/tests/test_movie_service_class.py`
+    - [x] 3.1.2 Create `MovieService` class in `backend/apps/movie/services/movie_service.py`
         - Convert all function-based TMDB integration to class methods
         - Inject TMDB client via constructor (dependency injection)
         - Methods: `get_movie_by_id`, `search_movies`, `discover_movies`, etc.
         - Maintain existing functionality exactly (no behavior changes)
         - Follow pattern from MovieEnrichmentService and ZeptomailService
         - Full type annotations, comprehensive docstrings
-    - [ ] 3.1.3 Create service factory function
+        - **Result**: MovieService class implemented, 12/14 tests passing
+        - **Remaining**: Factory function tests (next subtask)
+    - [x] 3.1.3 Create service factory function
         - Implement `get_movie_service()` in `backend/apps/movie/services/service_factory.py`
         - Returns MovieService with default TMDB client
-    - [ ] 3.1.4 Run tests and incremental quality checks (movie service/tests)
+        - **Result**: Factory function implemented, all 14/14 tests passing
+    - [x] 3.1.4 Run tests and incremental quality checks (movie service/tests)
+        - **Tests**: 14/14 passing (100%)
+        - **Linting**: 0 violations (Ruff)
+        - **Type checking**: 0 errors, 0 warnings (Pyright)
 
 - [ ] **3.2 Add TMDB Result Filtering & Buffer Mechanism**
     - [ ] 3.2.1 Write tests for filtering and buffer logic (test-first)
@@ -256,6 +264,12 @@ patterns across movie, UserMovieData, and authentication domains.
         - Update imports if necessary
     - [ ] 3.3.3 Run API integration tests (test_api.py - verify all endpoints work)
     - [ ] 3.3.4 Run incremental quality checks (movie app)
+    - [ ] 3.3.5 Clean up old function-based implementations
+        - Remove all old function-based service functions from `movie_service.py`
+        - Remove any temporal comments distinguishing new from old
+        - Remove "Class-Based Service Architecture" section header (no longer needed)
+        - Verify no references to old functions remain
+        - Run full test suite to confirm nothing broken
 
 - [ ] **3.4 Phase 3 Quality Gate**
     - [ ] 3.4.1 Run full backend test suite

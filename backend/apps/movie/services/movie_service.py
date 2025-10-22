@@ -1056,3 +1056,463 @@ def search_people(query: str) -> PaginatedPersonResponseSchema:
         result['results'] = []
 
     return create_paginated_person_response_from_tmdb(result)
+
+
+# =========================
+# Class-Based Service Architecture
+# =========================
+
+
+class MovieService:
+    """
+    Class-based movie service with dependency injection for TMDB integration.
+
+    This service encapsulates all TMDB API interactions with constructor-based
+    dependency injection, enabling testability and maintaining separation of
+    concerns. All business logic for movie discovery, search, and retrieval
+    is centralized in this service layer.
+
+    Architecture Pattern:
+        - Dependency injection with TMDBApiClient
+        - Class-based for state management and testability
+        - Type-safe with full annotations
+        - Single responsibility (TMDB integration)
+
+    Usage:
+        # Production usage (default client)
+        service = MovieService()
+        movies = service.search_movies("inception")
+
+        # Testing with mock client
+        mock_client = MockTMDBApiClient()
+        service = MovieService(tmdb_client=mock_client)
+        movies = service.search_movies("test")
+    """
+
+    def __init__(self, tmdb_client: TMDBApiClient | None = None) -> None:
+        """
+        Initialize the movie service with optional TMDB client injection.
+
+        Args:
+            tmdb_client: Optional TMDBApiClient instance. If None, creates
+                default client. Inject mock clients for testing.
+
+        Example:
+            # Production usage (default client)
+            service = MovieService()
+
+            # Testing with mock client
+            mock_client = MockTMDBApiClient()
+            service = MovieService(tmdb_client=mock_client)
+        """
+        # Use injected client or create default
+        if tmdb_client is not None:
+            self._tmdb_client = tmdb_client
+        else:
+            self._tmdb_client = TMDBApiClient()
+
+    def get_movie_by_id(self, tmdb_id: int) -> MovieDetailSchema:
+        """
+        Retrieves movie details and credits from TMDB by movie ID.
+
+        Args:
+            tmdb_id: TMDB movie ID
+
+        Returns:
+            MovieDetailSchema instance with validated movie data
+
+        Raises:
+            HttpError: If movie not found, API error, or data processing fails
+        """
+        # Use injected TMDB client for movie details
+        info_response = self._tmdb_client.get_movie_details(tmdb_id)
+        if not info_response.is_success():
+            handle_tmdb_api_error(
+                info_response,
+                operation='get_movie_details',
+                movie_id=tmdb_id,
+                error_stage='fetching_movie_info'
+            )
+
+        # Use injected TMDB client for credits
+        credits_response = self._tmdb_client.get(f"movie/{tmdb_id}/credits")
+        if not credits_response.is_success():
+            handle_tmdb_api_error(
+                credits_response,
+                operation='get_movie_credits',
+                movie_id=tmdb_id,
+                error_stage='fetching_credits'
+            )
+
+        info_result = info_response.get_json_data()
+        credits_result = credits_response.get_json_data()
+
+        # Type guard: ensure we have valid dictionaries
+        if not info_result or not credits_result:
+            logger.error(
+                "Failed to get valid response data from TMDB",
+                extra={
+                    'correlation_id': info_response.correlation_id,
+                    'operation': 'get_movie_by_id',
+                    'movie_id': tmdb_id,
+                    'info_data_valid': bool(info_result),
+                    'credits_data_valid': bool(credits_result)
+                }
+            )
+            raise HttpError(500, "Failed to get valid response data from TMDB")
+
+        # Use factory function to create properly typed MovieDetailSchema
+        return create_movie_detail_from_tmdb(info_result, credits_result)
+
+    def get_now_playing_movies(self, page: int = 1) -> PaginatedMovieResponseSchema:
+        """
+        Retrieves a list of now playing movies from TMDB.
+
+        Args:
+            page: Page number for pagination
+
+        Returns:
+            PaginatedMovieResponseSchema with now playing movies
+
+        Raises:
+            HttpError: If API error or data processing fails
+        """
+        # Use the injected client's direct now playing method
+        response = self._tmdb_client.get_now_playing_movies(page=page)
+
+        if not response.is_success():
+            handle_tmdb_api_error(
+                response,
+                operation='get_now_playing_movies',
+                page=page,
+                error_stage='fetching_now_playing'
+            )
+
+        result = response.get_json_data()
+
+        # Type guard: ensure we have a valid dictionary
+        if not result:
+            logger.error(
+                "Failed to get valid response data from TMDB",
+                extra={
+                    'correlation_id': response.correlation_id,
+                    'operation': 'get_now_playing_movies',
+                    'page': page
+                }
+            )
+            raise HttpError(500, "Failed to get valid response data from TMDB")
+
+        # Use factory function to create properly typed response
+        return create_paginated_movie_response_from_tmdb(result)
+
+    def get_upcoming_movies(self, page: int = 1) -> PaginatedMovieResponseSchema:
+        """
+        Retrieves a list of upcoming movies from TMDB.
+
+        Args:
+            page: Page number for pagination
+
+        Returns:
+            PaginatedMovieResponseSchema with upcoming movies
+
+        Raises:
+            HttpError: If API error or data processing fails
+        """
+        today = datetime.now(tz=UTC)
+        min_date = today.strftime("%Y-%m-%d")
+        max_date = (today + timedelta(days=30)).strftime("%Y-%m-%d")
+
+        params: TMDBParams = {
+            "include_adult": False,
+            "include_video": False,
+            "language": "en-US",
+            "region": "US",
+            "page": page,
+            "sort_by": "popularity.desc",
+            "with_release_type": "2|3",
+            "primary_release_date.gte": min_date,
+            "primary_release_date.lte": max_date,
+        }
+
+        response = self._tmdb_client.get("discover/movie", cast(dict[str, object], params))
+
+        # Use type-safe validator instead of manual error handling
+        tmdb_response = validate_tmdb_paginated_response(response, TMDBMovieSearchResponse)
+        result = tmdb_response.model_dump()
+        if not result:
+            logger.error(
+                "Failed to get valid response data from TMDB",
+                extra={
+                    'correlation_id': response.correlation_id,
+                    'operation': 'get_upcoming_movies',
+                    'page': page
+                }
+            )
+            raise HttpError(500, "Failed to get valid response data from TMDB")
+
+        return create_paginated_movie_response_from_tmdb(result)
+
+    def search_movies(self, query: str, page: int = 1) -> PaginatedMovieResponseSchema:
+        """
+        Searches for movies by query string using TMDB.
+
+        Args:
+            query: Search query string
+            page: Page number for pagination
+
+        Returns:
+            PaginatedMovieResponseSchema with filtered search results
+
+        Raises:
+            HttpError: If API error or data processing fails
+        """
+        # Use the injected client's direct search method
+        response = self._tmdb_client.search_movies(
+            query=query,
+            page=page,
+            include_adult=False,
+            language="en-US",
+            region="US"
+        )
+
+        # Use type-safe validator to get properly validated response
+        tmdb_response = validate_tmdb_paginated_response(response, TMDBMovieSearchResponse)
+
+        # Get the validated movies list
+        movies = tmdb_response.results
+
+        logger.debug("Search movies processing", extra={
+            'operation': 'search_movies',
+            'query': query,
+            'page': page,
+            'raw_results_count': len(movies)
+        })
+
+        # Filter out non-visual content (conservative approach)
+        filtered_movies: list[TMDBMovieBase] = []
+        for movie in movies:
+            title = movie.title or ''
+            title_lower = title.lower()
+
+            # Skip obvious non-visual content (very conservative)
+            skip_terms = [
+                'soundtrack', 'score', 'music from',
+                'original motion picture soundtrack',
+                'original score', 'music score', 'film score',
+                'motion picture score'
+            ]
+            if any(skip_term in title_lower for skip_term in skip_terms):
+                logger.debug("Filtering out non-visual content", extra={
+                    'operation': 'search_filter',
+                    'title': title,
+                    'reason': 'non_visual_content'
+                })
+                continue
+
+            filtered_movies.append(movie)
+
+        logger.debug("Search filtering completed", extra={
+            'operation': 'search_filter_complete',
+            'query': query,
+            'raw_count': len(movies),
+            'filtered_count': len(filtered_movies),
+            'filtered_out': len(movies) - len(filtered_movies)
+        })
+
+        # Create filtered response using validated data
+        filtered_total_results = (
+            len(filtered_movies) +
+            (tmdb_response.total_results - len(movies))
+        )
+
+        # Create a new TMDBMovieSearchResponse with filtered results
+        filtered_response = TMDBMovieSearchResponse(
+            page=tmdb_response.page,
+            total_pages=tmdb_response.total_pages,
+            total_results=filtered_total_results,
+            results=filtered_movies
+        )
+
+        return create_paginated_movie_response_from_tmdb(filtered_response.model_dump())
+
+    def discover_movies(
+        self,
+        page: int = 1,
+        **filters: str | int | float | bool | None
+    ) -> PaginatedMovieResponseSchema:
+        """
+        Flexible movie discovery with full TMDB filtering capabilities.
+
+        Args:
+            page: Page number for pagination
+            **filters: Discovery filters including:
+                - sort_by: Sort order (popularity.desc, release_date.desc, etc.)
+                - genres: Comma-separated genre IDs
+                - year: Release year
+                - vote_average_gte/lte: Rating range
+                - keywords: Comma-separated keyword IDs
+                - people: Comma-separated person IDs
+                - release_date_gte/lte: Release date range
+                - certification: Certification rating
+                - region: Country code for regional release dates
+
+        Returns:
+            PaginatedMovieResponseSchema with discovered movies
+
+        Raises:
+            HttpError: If API error or data processing fails
+
+        Note:
+            Runtime filtering is disabled due to TMDB API limitations
+        """
+        logger.debug("Discover movies request", extra={
+            'operation': 'discover_movies',
+            'page': page,
+            'filters': filters,
+            'filter_count': len(filters)
+        })
+
+        # Build TMDB API parameters
+        params: TMDBParams = {
+            "include_adult": False,
+            "include_video": False,
+            "language": "en-US",
+            "region": filters.get('region', 'US'),
+            "page": page,
+        }
+
+        # Map filter names to TMDB parameter names
+        # Support both underscore (direct service calls) and dot (API layer) parameter names
+        filter_mapping = {
+            'sort_by': 'sort_by',
+            'genres': 'with_genres',
+            'year': 'year',
+            'vote_average_gte': 'vote_average.gte',  # Direct service calls with underscore
+            'vote_average.gte': 'vote_average.gte',  # API sends with dot
+            'vote_average_lte': 'vote_average.lte',  # Direct service calls with underscore
+            'vote_average.lte': 'vote_average.lte',  # API sends with dot
+            'keywords': 'with_keywords',
+            'people': 'with_people',
+            'release_date_gte': 'primary_release_date.gte',  # Direct service calls with underscore
+            'release_date.gte': 'primary_release_date.gte',  # API sends with dot
+            'release_date_lte': 'primary_release_date.lte',  # Direct service calls with underscore
+            'release_date.lte': 'primary_release_date.lte',  # API sends with dot
+            'certification': 'certification',
+        }
+
+        # Apply filters if provided
+        for filter_name, tmdb_param in filter_mapping.items():
+            if filter_name in filters and filters[filter_name] is not None:
+                # Preserve data types for numeric parameters (support both naming conventions)
+                numeric_params = [
+                    'year', 'primary_release_year',
+                    'vote_average_gte', 'vote_average.gte',
+                    'vote_average_lte', 'vote_average.lte',
+                    'vote_count', 'vote_count_gte', 'vote_count.gte',
+                    'vote_count_lte', 'vote_count.lte',
+                    'runtime', 'runtime_gte', 'runtime.gte',
+                    'runtime_lte', 'runtime.lte'
+                ]
+                if filter_name in numeric_params:
+                    params[tmdb_param] = filters[filter_name]
+                else:
+                    params[tmdb_param] = str(filters[filter_name])
+
+        # Set default sort if not specified
+        if 'sort_by' not in params:
+            params['sort_by'] = 'popularity.desc'
+
+        response = self._tmdb_client.get("discover/movie", cast(dict[str, object], params))
+
+        # Use type-safe validator to get properly validated response
+        tmdb_response = validate_tmdb_paginated_response(response, TMDBMovieSearchResponse)
+
+        # Get the validated movies list
+        movies = tmdb_response.results
+
+        # Log detailed discover response for debugging
+        discover_metadata = {
+            'operation': 'discover_response',
+            'page': page,
+            'movies_count': len(movies),
+            'total_results': tmdb_response.total_results,
+            'total_pages': tmdb_response.total_pages
+        }
+
+        if movies:
+            first_movie = movies[0]
+            discover_metadata['first_movie_release_date'] = str(
+                first_movie.release_date) if first_movie.release_date else 'None'
+            discover_metadata['first_movie_title'] = str(first_movie.title)
+            discover_metadata['first_movie_id'] = int(first_movie.id)
+
+        logger.debug("Discover movies response processed", extra=discover_metadata)
+
+        return create_paginated_movie_response_from_tmdb(tmdb_response.model_dump())
+
+    def get_movie_genres(self) -> list[GenreSchema]:
+        """
+        Retrieves the list of movie genres from TMDB.
+
+        Returns:
+            List of GenreSchema instances
+
+        Raises:
+            HttpError: If API error or data processing fails
+        """
+        response = self._tmdb_client.get("genre/movie/list")
+
+        # Use type-safe validator
+        tmdb_response = validate_tmdb_response(response, TMDBGenreListResponse)
+        result = tmdb_response.model_dump()
+
+        return create_genre_list_from_tmdb(result)
+
+    def fetch_movie_runtimes(self, movie_ids: list[int]) -> dict[int, int]:
+        """
+        Fetch runtime data for multiple movies using typed API responses.
+
+        Args:
+            movie_ids: List of TMDB movie IDs
+
+        Returns:
+            Dictionary mapping movie IDs to runtime in minutes
+        """
+        runtimes: dict[int, int] = {}
+
+        logger.info(
+            f"Fetching runtimes for {len(movie_ids)} movies", extra={
+                'operation': 'fetch_runtimes',
+                'movie_count': len(movie_ids)
+            }
+        )
+
+        for movie_id in movie_ids:
+            try:
+                # Use the typed get_movie_by_id method
+                movie_detail = self.get_movie_by_id(movie_id)
+                runtimes[movie_id] = movie_detail.runtime or 0
+
+            except HttpError as e:
+                logger.warning(
+                    f"Failed to fetch runtime for movie {movie_id}", extra={
+                        'operation': 'fetch_runtime',
+                        'movie_id': movie_id,
+                        'error_status': getattr(e, 'status_code', None),
+                        'error_message': getattr(e, 'message', str(e))
+                    },
+                    exc_info=True
+                )
+                runtimes[movie_id] = 0
+            except Exception as e:
+                logger.error(
+                    f"Unexpected error fetching runtime for movie {movie_id}", extra={
+                        'operation': 'fetch_runtime',
+                        'movie_id': movie_id,
+                        'error_type': type(e).__name__,
+                        'error': str(e)
+                    }
+                )
+                runtimes[movie_id] = 0
+
+        return runtimes

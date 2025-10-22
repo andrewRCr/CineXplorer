@@ -19,20 +19,21 @@ patterns across movie, UserMovieData, and authentication domains.
 ## Current State
 
 - `MovieEnrichmentService`: Exists but incomplete DI (has constructor signature, doesn't use it; mutates in-place)
-- `movie_service.py`: Function-based TMDB integration (needs class conversion)
+- `movie_service.py`: Function-based TMDB integration (needs class conversion + result filtering/buffer)
 - `ZeptomailService`: Already class-based (verify patterns only)
 - `UserMovieDataService`: Doesn't exist (logic currently in API layer)
 - `AuthenticationService`: Doesn't exist (logic currently in API layer)
+- **TMDB Result Filtering**: Currently in frontend (`useEnhancedFetcher`), needs migration to service layer
 
 ## Testing Strategy
 
 - **Test-first protocol** applies to all new services/helpers
-- **Coverage targets**: 80% general, 90%+ critical paths (pagination, batch fetch, authentication)
+- **Coverage targets**: 80% general, 90%+ critical paths (pagination, batch fetch, result filtering, authentication)
 - **Integration tests** verify API endpoints unchanged after service extraction
 
 ## Test-First Protocol Reminders
 
-- Tasks 1.1, 1.2, 1.3, 2.1, 2.2, 3.1, 4.1, 5.1 all follow test-first protocol
+- Tasks 1.1, 1.2, 1.3, 2.1, 2.2, 3.1, 3.2, 4.1, 5.1 all follow test-first protocol
 - Write tests BEFORE implementation for all new helpers/services
 - Verify tests fail initially (red), then pass after implementation (green)
 
@@ -70,22 +71,22 @@ patterns across movie, UserMovieData, and authentication domains.
         - Comprehensive docstring with usage examples
     - [x] 1.1.3 Run tests and incremental quality checks (pagination.py, test_pagination.py)
 
-- [ ] **1.2 Create TMDB Batch Fetch Helper**
-    - [ ] 1.2.1 Write tests for `fetch_movies_batch` function (test-first)
+- [x] **1.2 Create TMDB Batch Fetch Helper**
+    - [x] 1.2.1 Write tests for `fetch_movies_batch` function (test-first)
         - Successful batch fetches (all IDs valid)
         - Partial failures (some IDs return 404)
         - Complete failures (all IDs fail)
         - Empty input list handling
         - TMDB API error handling
         - Target coverage: 90%+ (critical path)
-    - [ ] 1.2.2 Implement `fetch_movies_batch` in `backend/apps/movie/services/batch_operations.py`
+    - [x] 1.2.2 Implement `fetch_movies_batch` in `backend/apps/movie/services/batch_operations.py`
         - Accept list of TMDB IDs
         - Return list of successfully fetched `MovieBaseSchema` objects
         - Gracefully handle partial failures (don't fail entire batch)
         - Structured logging for batch operations
         - Full type annotations
         - Comprehensive docstring
-    - [ ] 1.2.3 Run tests and incremental quality checks (batch_operations.py, test_batch_operations.py)
+    - [x] 1.2.3 Run tests and incremental quality checks (batch_operations.py, test_batch_operations.py)
 
 - [ ] **1.3 Create User Movies Response Builder**
     - [ ] 1.3.1 Write tests for `build_user_movies_response` function (test-first)
@@ -163,7 +164,7 @@ patterns across movie, UserMovieData, and authentication domains.
 
 ---
 
-### **Phase 3.0: Refactor MovieService to Class-Based Architecture (4-6 hours)**
+### **Phase 3.0: Refactor MovieService to Class-Based Architecture (6-9 hours)**
 
 - [ ] **3.1 Create MovieService Class**
     - [ ] 3.1.1 Write tests for MovieService class methods (test-first)
@@ -184,21 +185,53 @@ patterns across movie, UserMovieData, and authentication domains.
         - Returns MovieService with default TMDB client
     - [ ] 3.1.4 Run tests and incremental quality checks (movie service/tests)
 
-- [ ] **3.2 Update API Endpoints to Use MovieService Class**
-    - [ ] 3.2.1 Update movie API endpoints in `backend/apps/movie/api.py`
+- [ ] **3.2 Add TMDB Result Filtering & Buffer Mechanism**
+    - [ ] 3.2.1 Write tests for filtering and buffer logic (test-first)
+        - Mock TMDB client returns movies with incorrect release years
+        - Verify service filters out mismatched movies (year, rating)
+        - **Note**: Runtime filtering NOT tested (TMDB API limitation - not implemented)
+        - Verify service backfills from next page when gaps detected
+        - Test minimum threshold logic (don't backfill if <10 natural results)
+        - Test buffer application maintains correct filters
+        - Test across different endpoint contexts (discover, search, now playing, upcoming)
+        - Target coverage: 90%+ (critical UX path)
+    - [ ] 3.2.2 Implement filtering helper in `backend/apps/movie/services/result_filtering.py`
+        - Create `filter_movies_by_year(movies, year_criteria)` function
+        - Create `filter_movies_by_rating(movies, rating_criteria)` function
+        - **Note**: Runtime filtering NOT implemented (TMDB API doesn't support it - documented limitation)
+        - Full type annotations, comprehensive docstrings
+        - Document TMDB API quirks (incorrect year filtering despite API filters)
+    - [ ] 3.2.3 Implement buffer mechanism in MovieService paginated methods
+        - Add `_fetch_and_filter_page()` private helper method
+        - Add `_apply_buffer_if_needed()` private helper method
+        - Update `discover_movies()` to use filtering + buffer
+        - Update `search_movies()` to use filtering + buffer (used in search results with filter refinement)
+        - Update `get_now_playing_movies()` to use filtering + buffer
+        - Update `get_upcoming_movies()` to use filtering + buffer
+        - Strategy: Fetch page N+1 if results < 18 after filtering (maintain 20/page target)
+        - Ensure buffer movies also pass client-side filters (prevent leakage)
+        - Apply across all contexts: discover pages, search results (wherever users refine filters)
+    - [ ] 3.2.4 Run tests and incremental quality checks (result_filtering.py, movie service)
+    - [ ] 3.2.5 Document frontend simplification opportunities
+        - Create tech debt task to remove client-side filtering from `useEnhancedFetcher`
+        - Note: Frontend can now trust backend returns correctly filtered results
+        - Future: Remove `movieFilterUtils.ts` filtering functions (after verification)
+
+- [ ] **3.3 Update API Endpoints to Use MovieService Class**
+    - [ ] 3.3.1 Update movie API endpoints in `backend/apps/movie/api.py`
         - Replace direct function calls with `get_movie_service()` factory
         - Instantiate service at endpoint level or module level (determine best approach)
         - Maintain exact same API behavior (backward compatibility)
-    - [ ] 3.2.2 Update movie helpers in `backend/apps/movie/helpers.py` if needed
+    - [ ] 3.3.2 Update movie helpers in `backend/apps/movie/helpers.py` if needed
         - Verify enrichment helpers work with new service class
         - Update imports if necessary
-    - [ ] 3.2.3 Run API integration tests (test_api.py - verify all endpoints work)
-    - [ ] 3.2.4 Run incremental quality checks (movie app)
+    - [ ] 3.3.3 Run API integration tests (test_api.py - verify all endpoints work)
+    - [ ] 3.3.4 Run incremental quality checks (movie app)
 
-- [ ] **3.3 Phase 3 Quality Gate**
-    - [ ] 3.3.1 Run full backend test suite
-    - [ ] 3.3.2 Run all backend linting checks
-    - [ ] 3.3.3 Run Python type checking
+- [ ] **3.4 Phase 3 Quality Gate**
+    - [ ] 3.4.1 Run full backend test suite
+    - [ ] 3.4.2 Run all backend linting checks
+    - [ ] 3.4.3 Run Python type checking
 
 ---
 

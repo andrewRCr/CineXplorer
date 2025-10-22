@@ -96,6 +96,15 @@ unexpected side effects in complex operations.
 - Convert all function-based TMDB integration functions to class methods
 - Inject TMDB client via constructor (dependency injection pattern)
 - Maintain existing functionality: `get_movie_by_id`, `search_movies`, `discover_movies`
+- **Add TMDB result filtering and buffer mechanism** (migrate from frontend):
+    - Filter out movies with incorrect release years (TMDB API quirk - returns wrong years despite API filters)
+    - Filter movies by rating criteria (client-side validation)
+    - **Note**: Runtime filtering NOT implemented (TMDB API doesn't support it properly - documented limitation)
+    - Backfill from next page when filtering creates gaps (<18 results)
+    - Ensure buffer movies also pass client-side filters (prevent leakage)
+    - Maintain consistent page size (target 20 results per page)
+    - Apply to all paginated endpoints: `discover_movies()`, `search_movies()`, `get_now_playing_movies()`, `get_upcoming_movies()`
+    - Used across multiple UI contexts: discover pages, search results (all support filter refinement)
 - Follow established pattern from authentication services
 
 **4.2.2** The system must create `UserMovieDataService` class to extract business logic from API layer:
@@ -186,11 +195,20 @@ unexpected side effects in complex operations.
 **4.3.6** The system must provide tests for refactored service classes:
 
 - MovieService class methods (with mocked TMDB client)
+- **TMDB result filtering and buffer mechanism:**
+    - Mock TMDB client returns movies with incorrect release years
+    - Verify service filters out mismatched movies (year, rating)
+    - **Note**: Runtime filtering not tested (TMDB API limitation - not implemented)
+    - Verify service backfills from next page when gaps detected
+    - Test minimum threshold logic (don't backfill if <10 natural results)
+    - Test buffer application maintains correct filters (prevent leakage)
+    - Test across different endpoint contexts (discover, search, now playing, upcoming)
 - UserMovieDataService class methods (CRUD operations with mocked dependencies)
 - AuthenticationService class methods (registration, login, token management, email verification, user profile)
 - Email service verification (already has tests, verify they follow patterns)
 - Service factory functions return correctly configured instances
-- **Target Coverage:** 80%+ (general) for service classes, 90%+ for authentication (security-critical)
+- **Target Coverage:** 80%+ (general) for service classes, 90%+ for authentication (security-critical),
+  90%+ for result filtering (critical UX path)
 
 **4.3.7** The system must verify API endpoints still work after service extraction:
 
@@ -230,9 +248,10 @@ unexpected side effects in complex operations.
 - Asynchronous task processing (Celery/Redis) - deferred to Backend Modernization
 - End-to-end testing infrastructure (Playwright) - deferred to Backend Modernization
 - Additional service layer refactoring beyond movie, UserMovieData, and authentication services
-- Cache layer implementation for TMDB responses
+- Cache layer implementation for TMDB responses (future enhancement after filtering in place)
 - New UserMovieData or authentication features (only refactoring existing operations)
 - OAuth provider integration changes (keep existing allauth integration as-is)
+- **Removing frontend filtering logic immediately** (document as tech debt, remove after backend verification)
 
 **5.2** Generic pagination helper is NOT:
 
@@ -311,6 +330,20 @@ unexpected side effects in complex operations.
 - Structured logging for observability
 - Consider future caching layer (out of scope for this work)
 
+**Result Filtering & Buffer Mechanism:**
+
+- **TMDB API Quirk:** TMDB often returns movies with incorrect release years despite API filters
+- **Client-side filtering:** Apply year/rating filters after TMDB responds to ensure accuracy
+    - **Genre filtering:** Handled by TMDB API (works correctly)
+    - **Year filtering:** Client-side (TMDB returns incorrect years)
+    - **Rating filtering:** Client-side validation
+    - **Runtime filtering:** NOT implemented (TMDB API doesn't support it properly - documented limitation)
+- **Buffer strategy:** Fetch page N+1 when filtering creates gaps (<18 results), backfill to maintain 20/page
+- **Minimum threshold:** Only backfill if ≥10 natural results (avoid filling when filter is too restrictive)
+- **Filter consistency:** Buffer movies must also pass client-side filters to prevent "leakage"
+- **Performance:** Server-side filtering enables future caching layer (cache filtered results, not raw TMDB)
+- **Usage scope:** Applied to discover pages AND search results (all contexts where users refine filters)
+
 ## 7. Success Metrics
 
 **Objective Criteria:**
@@ -359,23 +392,47 @@ None. Scope is well-defined based on comprehensive planning completed during Bac
 - MovieEnrichmentService completion (mutation fix + actual DI implementation) + tests
 - Type safety improvements
 
-**Phase 2: Class-Based Service Refactoring (16-22 hours)**
+**Phase 2: MovieEnrichmentService Completion (1-2 hours)**
 
-- MovieService class refactoring + tests
+- Fix mutation anti-pattern (return new list instead of mutating input)
+- Implement actual dependency injection (use injected repository instead of ORM)
+- Create UserMovieData repository interface/class
+- Update service factory function
+- Tests + quality checks
+
+**Phase 3: MovieService Class-Based Refactoring (6-9 hours)**
+
+- MovieService class creation + tests
+- **TMDB result filtering and buffer mechanism:**
+    - Filtering helper functions (year, rating, runtime)
+    - Buffer mechanism implementation (fetch page N+1 when gaps detected)
+    - Integration into all paginated methods (discover, search, now playing, upcoming)
+    - Document frontend simplification opportunities
+- Update API endpoints to use MovieService class
+- Integration testing + quality checks
+
+**Phase 4: UserMovieDataService Creation (4-5 hours)**
+
 - UserMovieDataService creation (extract from API layer) + tests
+- Update API endpoints to use service class
+- Service factory function + tests
+- Integration testing
+
+**Phase 5: AuthenticationService Creation (4-6 hours)**
+
 - AuthenticationService creation (extract from API layer) + tests
+- Update API endpoints to use service class
+- Service factory function + tests
 - Verify email service patterns (already class-based)
-- Update API endpoints to use service classes
-- Service factory functions + tests
-- Integration testing (verify UserMovieData + Authentication endpoints unchanged)
+- Integration testing (verify Authentication endpoints unchanged)
 
-**Phase 3: Documentation & Validation (included in phases)**
+**Phase 6: Integration Testing & Documentation (2-3 hours)**
 
-- Inline documentation (as code is written)
-- TECHNICAL-ARCHITECTURE.md update (final task)
+- Final integration testing across all services
+- TECHNICAL-ARCHITECTURE.md update with service patterns
 - Verify all quality gates pass
 
-**Total Effort Estimate:** 21-29 hours
+**Total Effort Estimate:** 23-32 hours
 
 **Note:** Initial estimate was 14-21h. Adjustments:
 
@@ -383,6 +440,7 @@ None. Scope is well-defined based on comprehensive planning completed during Bac
 - Added 1h (MovieEnrichmentService needs actual DI implementation, not just mutation fix)
 - Added 4-5h (UserMovieDataService creation - extract business logic from API layer)
 - Added 4-6h (AuthenticationService creation - extract security-critical logic, complete service layer coverage)
+- Added 2-3h (TMDB result filtering and buffer mechanism - migrate from frontend to service layer)
 
 ### 9.2 Feature Branch Workflow
 
@@ -403,6 +461,13 @@ None. Scope is well-defined based on comprehensive planning completed during Bac
 
 - `.arc/reference/archive/tasks/incidental/tasks-incidental-auth-service-extraction.md`
 - `.arc/reference/archive/tasks/incidental/tasks-incidental-oauth-headless-migration.md`
+
+**Current Frontend Implementation (to be migrated):**
+
+- TMDB result filtering: `frontend/src/hooks/useEnhancedFetcher.ts` (lines 126-272)
+- Filter utilities: `frontend/src/utilities/movieFilterUtils.ts` (year, rating, runtime filters)
+- TECHNICAL-ARCHITECTURE.md reference (line 80): "dynamically fills gaps using a pre-fetched buffer"
+- Current limitation: Only fills from current page buffer, not next page
 
 ### 9.4 Related Work
 

@@ -65,6 +65,7 @@ becomes comprehensive deep-dive showing HOW and WHY.
 
 ```bash
 # Create work package directory
+# Note: {name} should match the branch name in kebab-case (e.g., "user-authentication")
 mkdir -p .arc/reference/archive/feature/{name}
 
 # Move all related files together
@@ -77,6 +78,7 @@ mv .arc/active/feature/notes-{name}.md .arc/reference/archive/feature/{name}/  #
 
 ```bash
 # Create work package directory
+# Note: {name} should match the branch name in kebab-case (e.g., "api-layer-modernization-p2")
 mkdir -p .arc/reference/archive/technical/{name}
 
 # Move all related files together
@@ -362,7 +364,7 @@ git commit -m "docs(archive): archive incidental/{type}-{name} documentation
    → **Fix**: Incidental work uses completion summary in task list, not separate metadata file
 
 ❌ **Forgetting to update PROJECT-STATUS**: Work completed but still shows "In Progress"
-   → **Fix**: Update PROJECT-STATUS in Step 7 before committing
+   → **Fix**: Update PROJECT-STATUS in Step 5 before committing
 
 ❌ **Inconsistent naming**: Different conventions for different archives
    → **Fix**: Follow naming patterns consistently (`prd-{name}.md`, `tasks-{name}.md`, `completion-{name}.md`)

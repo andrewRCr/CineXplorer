@@ -20,7 +20,7 @@ The backend is a REST API built with Django and Django Ninja.
 - **Framework**: Django `5.2` with Django Ninja.
 - **Language**: Python `3.x`.
 - **Database**: PostgreSQL, configured via environment variables.
-- **Authentication**: Authentication is handled by `rest_framework_simplejwt` using JSON Web Tokens.
+- **Authentication**: Authentication is handled by `django-ninja-jwt` using JSON Web Tokens.
   A custom `JWTCookieAuthentication` backend is implemented to manage tokens securely in HTTP-only cookies.
 - **API Documentation**: Django Ninja automatically generates an OpenAPI 3 schema and Swagger UI.
   The documentation is available at `/api/docs` with the schema at `/api/openapi.json`.

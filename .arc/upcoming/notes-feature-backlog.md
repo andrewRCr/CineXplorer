@@ -1,242 +1,29 @@
 # Feature Backlog - Implementation Status
 
+**Work Classification**: Feature
+
 **Document Purpose:** Track user-facing feature implementation status per META-PRD. This focuses on FEATURES
-(what users can do), NOT technical/infrastructure work (see
-`notes-backend-modernization.md` and `notes-frontend-modernization.md` for that).
+(what users can do), NOT technical/infrastructure work.
 
-**Scope:** Only features from META-PRD Section 2 "Core Features" or approved sub-PRDs.
+**Scope:**
 
-**Status Update:** 2025-10-17 (aligned with API Layer P2 near-completion + 8 completed incidental task lists)
+- Features from META-PRD Section 2 "Core Features" or approved sub-PRDs
+- **EXCLUDES UserMovieData features** - see `feature/notes-user-movie-data-features.md` for comprehensive tracking
+  of ratings, reviews, watchlist, library, favorites, liked, log, and journal features
 
----
+**Related Documentation:**
 
-## UserMovieData Features
+- **UserMovieData features**: `feature/notes-user-movie-data-features.md` (dedicated tracking doc)
+- **Technical/infrastructure**: `technical/notes-backend-modernization.md`, `technical/notes-frontend-modernization.md`
+- **UI/UX improvements**: `notes-frontend-ux-improvements.md` (polish, accessibility, performance, UX infrastructure)
 
-These features all share the same backend foundation (UserMovieData model) and will have integrated UI on movie
-detail pages and library/watchlist views.
-
-### Watchlist Management
-
-**Backend**: ✅ Complete
-
-- `user_watchlist` field in UserMovieData
-- CRUD API endpoints tested (Django Ninja)
-- User isolation validated
-
-**Frontend**: ❌ Minimal implementation
-
-- Current: Text list display only
-- Missing: Movie grid with posters, drag-and-drop reordering, "Next Up" queue section
-
-**META-PRD Reference**: Section 2.3 "Watchlist: Movies the user wants to watch"
-
-- Drag-and-drop reordering capability
-- "Next Up" queue featuring top watchlist items
-
-**Priority**: HIGH (core feature)
-
-**Notes**: Basic CRUD validated during OAuth incidental work, but UI needs significant enhancement.
+**Status Update:** 2025-10-22 (UserMovieData features moved to dedicated tracking document)
 
 ---
 
-### Ratings System
-
-**Backend**: ✅ Complete
-
-- `user_rating` field in UserMovieData (IntegerField, 1-10 scale)
-- API endpoints tested
-- Validation in place
-
-**Frontend**: ❌ Placeholder controls only
-
-- Current: No functional rating UI on movie detail pages
-- Missing: Star/numeric rating component, display on movie cards, edit capability, rating distribution display
-
-**META-PRD Reference**: Section 2.3 "Personal ratings"
-
-**Priority**: HIGH (core feature, drives recommendations)
-
-**Implementation Notes**:
-
-- 1-10 integer scale (no half ratings)
-- Display on movie cards when user has rated
-- Rating component on movie detail page
-- Consider showing aggregate/community ratings alongside user rating (TMDB provides this)
-
----
-
-### Reviews System
-
-**Backend**: ✅ Complete
-
-- `user_review` field in UserMovieData (TextField)
-- Character limit: 800-1000 chars (to be enforced in validation)
-- API endpoints support review CRUD
-
-**Frontend**: ❌ Placeholder
-
-- Current: No review creation/editing UI
-- Missing: Review text area on movie detail, review display/formatting, character counter, edit/delete capability
-
-**META-PRD Reference**: Section 2.3 "Reviews: User-generated movie reviews and ratings"
-
-**Priority**: HIGH (core feature)
-
-**Implementation Notes**:
-
-- Simple text field (few paragraphs max)
-- NOT a complex review system with separate model
-- Display below movie details or in dedicated tab
-- Character counter during composition
-- Basic Markdown formatting support?
-
----
-
-### Library/Watched Tracking
-
-**Backend**: ✅ Complete
-
-- `user_watched` field in UserMovieData (BooleanField)
-- Marking movie as watched automatically adds to library
-- API endpoints complete
-
-**Frontend**: ❌ Placeholder page
-
-- Current: Library navigation exists, page is placeholder
-- Missing: Movie grid view of watched movies, sort/filter controls (by rating, liked, date watched), favorites section integration
-
-**META-PRD Reference**: Section 2.3 "Library: Movies the user has watched"
-
-- Watch history and personal ratings
-- "Favorites" section with reorderable subset
-
-**Priority**: HIGH (core feature)
-
-**Implementation Notes**:
-
-- Library page will extend existing discovery filter/sort controls
-- Can filter by: liked movies only, rating ranges, watch date
-- Can sort by: user rating, watch date, title, release date
-- Includes "Favorites" section at top (see below)
-
----
-
-### Favorites Subset
-
-**Backend**: ❌ Not implemented yet
-
-- Need to add `user_favorited` field to UserMovieData (BooleanField or PositiveSmallIntegerField for ordering)
-- Cap: 6-10 movies maximum (validation needed)
-- Ordering support if drag-and-drop reordering planned
-
-**Frontend**: ❌ Not implemented
-
-- Will be displayed as separate section at top of Library page
-- NOT a separate page
-- Similar structure to "Next Up" queue on Watchlist page
-
-**META-PRD Reference**: Section 2.3 "Favorites section with reorderable subset"
-
-**Priority**: HIGH (enhances library organization)
-
-**Implementation Notes**:
-
-- Small, curated subset of library (6-10 movie cap)
-- Displayed at top of Library page as dedicated section
-- Reorderable (drag-and-drop) - requires position/ordering field
-- Distinct from `user_liked` (which is unlimited and used for filtering)
-
----
-
-### Liked Movies (Filtering/Sorting)
-
-**Backend**: ✅ Complete
-
-- `user_liked` field in UserMovieData (BooleanField)
-- API supports filtering by liked status
-
-**Frontend**: ❌ Toggle exists, filtering not implemented
-
-- Current: Like toggle on movie cards/details (functionality unclear)
-- Missing: Filter/sort controls on Library and Watchlist pages
-
-**META-PRD Reference**: Implicit in Section 2.3 (part of library management)
-
-**Priority**: HIGH (core organization feature)
-
-**Implementation Notes**:
-
-- NOT the same as Favorites (which is limited subset)
-- Used for filtering: "Show only liked movies in library"
-- Icon toggle on movie cards (heart icon?)
-- No cap on number of liked movies
-
----
-
-### Log (Quick Add)
-
-**Backend**: ✅ APIs exist
-
-- UserMovieData CRUD endpoints support all operations
-- No additional backend work needed
-
-**Frontend**: ❌ Button exists (non-functional)
-
-- Current: "Log" button in layout, no modal/functionality
-- Missing: Modal with fuzzy movie search, quick toggles (watched/liked), rating input, submit flow
-
-**META-PRD Reference**: Not explicit in META-PRD (convenience feature)
-
-**Priority**: HIGH (major UX convenience, similar to Letterboxd)
-
-**Concept**:
-
-- Quick add outside of movie context (you know exact movie, want fast entry)
-- Modal with fuzzy search by title
-- Once movie selected: toggle watched/liked, enter rating, optionally add review
-- Submit creates/updates UserMovieData entry
-- Similar to Letterboxd's quick log feature
-
-**Implementation Notes**:
-
-- Fuzzy search uses existing TMDB search API
-- Form pre-fills if movie already in user's data
-- Can be accessed from anywhere in app (global button/shortcut)
-
----
-
-### Journal (Timeline View)
-
-**Backend**: ✅ Data exists
-
-- UserMovieData has timestamps (created_at, updated_at)
-- Can query user's actions in chronological order
-- No additional backend work needed beyond sorting/pagination
-
-**Frontend**: ❌ Placeholder navigation only
-
-- Current: Journal navigation button exists, no page/content
-- Missing: Timeline view component, action formatting, date grouping
-
-**META-PRD Reference**: Not explicit in META-PRD (view-only feature)
-
-**Status**: 🤔 Tentatively planned (not final decision)
-
-**Priority**: MEDIUM (view-only convenience feature)
-
-**Concept**:
-
-- Timeline of user's movie actions in descending chronological order
-- "On this day you watched and rated X movie"
-- Strictly a VIEW page (no editing from journal)
-- Group by date (today, yesterday, this week, etc.)
-
-**Implementation Notes**:
-
-- Uses existing UserMovieData with timestamp sorting
-- Display format: Date header → movie cards with actions shown
-- Actions: watched date, rating given, review added, etc.
-- Pagination for long histories
+**Note:** UserMovieData domain features (watchlist, ratings, reviews, library, favorites, liked, log, journal)
+are tracked in `feature/notes-user-movie-data-features.md`. This document covers Discovery, Collections, and
+Recommendations features only.
 
 ---
 
@@ -402,29 +189,28 @@ detail pages and library/watchlist views.
 
 ## Summary Statistics
 
+**Scope Note:** This backlog tracks NON-UserMovieData features only. For UserMovieData domain features
+(8 features including watchlist, ratings, reviews, library, etc.), see `feature/notes-user-movie-data-features.md`.
+
 **By Implementation Status**:
 
-- ✅ **Fully Complete**: 4 features (Advanced Search, Authentication, Watchlist backend, Ratings backend)
-- ⚠️ **Backend Complete, Frontend Missing**: 5 features
-  (Ratings UI, Reviews UI, Library/Watched UI, Liked filtering, Log modal)
-- ❌ **Not Started**: 4 features (Favorites field, Movie Lists, Person Pages, Recommendations)
-- 🤔 **Rough Draft**: 1 feature (Movie Detail pages - needs polish)
-- 🤷 **Tentative**: 1 feature (Journal - decision pending)
+- ✅ **Fully Complete**: 1 feature (Advanced Search)
+- ⚠️ **Rough Draft**: 1 feature (Movie Detail pages - needs polish)
+- ❌ **Not Started**: 3 features (Movie Lists/Collections, Person Pages, Recommendations)
 
 **By Priority**:
 
-- **HIGH**: 11 features
-  (Watchlist UI, Ratings UI, Reviews UI, Library UI, Favorites, Liked, Log,
-  Movie Detail polish, Movie Lists, Recommendations)
-- **MEDIUM**: 2 features (Person Pages, Journal)
+- **HIGH**: 3 features (Movie Detail polish, Movie Lists, Recommendations)
+- **MEDIUM**: 1 feature (Person Pages)
 
 **By Feature Category**:
 
-- **UserMovieData**: 8 features (Watchlist, Ratings, Reviews, Library, Favorites, Liked, Log, Journal)
-- **Discovery/Browse**: 3 features (Movie Detail, Person Detail, Advanced Search)
+- **Discovery/Browse**: 2 features (Movie Detail, Person Detail)
 - **Collections**: 1 feature (Movie Lists)
 - **Recommendations**: 1 feature (For You page)
 
+**Total Features Tracked**: 4 features (+ 8 UserMovieData features in separate doc = 12 total feature set)
+
 ---
 
-**Last Updated**: 2025-10-17 (aligned with API Layer P2 completion, backend status verified against code)
+**Last Updated**: 2025-10-22 (UserMovieData features moved to dedicated tracking document)

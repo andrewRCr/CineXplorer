@@ -1,5 +1,7 @@
 # Potential Future Modernization Backlog Notes
 
+**Work Classification**: Technical
+
 This note captures cross-cutting follow-ups to revisit after the core modernization phases
 (authentication → API Layer Phase 2 → backend → frontend) are underway.
 Use it as the starting point when planning post-backend tasks or preparing a deployment-readiness push.

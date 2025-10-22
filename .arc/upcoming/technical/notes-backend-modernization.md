@@ -8,7 +8,513 @@ that should be addressed in a comprehensive backend modernization effort.
 
 ---
 
-## App Configuration - Django Best Practices
+## Document Organization
+
+This document is organized by implementation priority:
+
+1. **Service Layer Patterns** - Core architectural improvements (apply patterns established during API Layer P2)
+   - Pagination & Batch Operations (reusable helpers)
+   - Class-Based Service Refactoring (function-based → class-based with DI)
+2. **Asynchronous Task Processing** - Background job infrastructure (Celery/Redis)
+3. **End-to-End Testing** - Comprehensive E2E testing (Playwright)
+4. **Code Quality Improvements** - Django best practices, refactoring opportunities
+5. **Completed Foundation Work** - Reference for what's already done
+
+---
+
+## Service Layer Patterns
+
+### Pagination & Batch Operations
+
+**Status:** Not yet implemented, HIGH PRIORITY for Backend Modernization
+**Source:** Extracted from `tasks-enhance-user-movie-data-api.md` (originally created as incidental work)
+
+**Context:**
+
+During API Layer Modernization P2, discovered that the `/api/user-movie-data/movies` endpoint is missing
+pagination support and has architectural inconsistencies (N+1 queries, DRY violations). Rather than fixing
+ad-hoc, this work establishes **reusable service layer patterns** that become reference implementations for
+the broader Backend Modernization effort.
+
+**Why This Is Infrastructure Work (Not Feature Work):**
+
+- Creates **generic, reusable helpers** (pagination, batch fetching, response building)
+- Establishes **architectural patterns** for service composition
+- Fixes **mutation anti-patterns** in enrichment service (functional approach)
+- Improves **type safety** (remove unnecessary type ignores)
+- These patterns will be **applied across all services** during Backend Modernization
+
+**What Will Be Created:**
+
+### 1. Generic Pagination Helper
+
+**Location:** `backend/apps/core/pagination.py`
+
+**Purpose:** Reusable Django QuerySet pagination (not limited to user-movie-data domain)
+
+**Signature:**
+
+```python
+def paginate_queryset(
+    queryset: QuerySet,
+    page: int,
+    page_size: int = 20
+) -> tuple[QuerySet, dict[str, int]]:
+    """
+    Generic Django QuerySet pagination.
+
+    Returns:
+        - Paginated queryset (sliced)
+        - Pagination metadata (page, total_pages, total_results)
+
+    """
+```
+
+**Benefits:**
+
+- DRY: Single implementation for all endpoints needing pagination
+- Type-safe: Full type annotations
+- Validated: Bounds checking (page >= 1, page_size limits)
+- Tested: Comprehensive edge case coverage
+
+### 2. TMDB Batch Fetch Helper
+
+**Location:** `backend/apps/movie/helpers.py` (addition)
+
+**Purpose:** Encapsulate N+1 TMDB API call pattern with error handling
+
+**Signature:**
+
+```python
+def fetch_movies_batch(tmdb_ids: list[int]) -> list[MovieBaseSchema]:
+    """
+    Fetch multiple movies from TMDB with graceful error handling.
+
+    Skips movies that are unavailable (404) rather than failing entire batch.
+    Returns successfully fetched movies only.
+
+    """
+```
+
+**Benefits:**
+
+- DRY: Eliminates copy-paste TMDB fetch loops across endpoints
+- Resilient: Graceful error handling (skip unavailable movies)
+- Observable: Structured logging for batch operations
+- Tested: Handles partial failures, complete failures, empty input
+
+### 3. User Movies Response Builder (High-Level Composition)
+
+**Location:** `backend/apps/movie/helpers.py` (addition)
+
+**Purpose:** Compose pagination + TMDB fetch + enrichment into single high-level function
+
+**Signature:**
+
+```python
+def build_user_movies_response(
+    user_data_qs: QuerySet[UserMovieData],
+    user: AbstractBaseUser,
+    page: int,
+    page_size: int = 20
+) -> PaginatedMovieResponseSchema:
+    """
+    Build paginated movie response from UserMovieData QuerySet.
+
+    Handles complete flow: pagination → TMDB fetch → enrichment → response.
+
+    """
+```
+
+**Benefits:**
+
+- DRY: Eliminates duplicate pagination + fetch + enrich logic
+- Clear: Single function encapsulates entire flow
+- Maintainable: Changes to flow happen in one place
+- Testable: High-level integration tests
+
+### 4. Fix MovieEnrichmentService Mutation
+
+**Location:** `backend/apps/movie/movie_enrichment_service.py`
+
+**Current Issue:** `enrich_movies_with_user_movie_data()` mutates input list in-place
+
+**Fix:** Return new list with enriched copies (functional approach)
+
+**Benefits:**
+
+- Prevents unexpected side effects (callers get clean data)
+- Aligns with Pydantic's immutable-by-default philosophy
+- Makes code easier to reason about (pure function)
+
+### 5. Type Safety Improvements
+
+**Location:** `backend/apps/user_movie_data/api.py`, `backend/apps/movie/movie_enrichment_service.py`
+
+**Current Issue:** Unnecessary `# pyright: ignore[reportUnknownMemberType]` comments despite `.pyi` stubs
+
+**Fix:** Investigate why type ignores are needed and remove if possible
+
+**Potential Causes:**
+
+- ForeignKey traversal limitations in django-types
+- Missing type information in `.pyi` stubs
+- Type narrowing opportunities
+
+**Expected Outcome:** Either eliminate ignores OR document as legitimate django-types limitation
+
+**Testing Requirements:**
+
+- Unit tests for generic pagination helper (edge cases, bounds checking)
+- Unit tests for batch fetch helper (partial failures, empty input, TMDB errors)
+- Integration tests for response builder (full flow validation)
+- Update existing watchlist endpoint tests (pagination parameters)
+- Mutation fix validation (ensure no in-place mutations)
+
+**Documentation:**
+
+- Inline docstrings with usage examples
+- Add architectural pattern documentation to TECHNICAL-ARCHITECTURE.md
+- Document when to use each helper (decision guide)
+
+**Effort Estimate:** 4-6 hours
+
+- Helper creation: 2-3 hours
+- Testing: 1-2 hours
+- Documentation: 1 hour
+
+**References:**
+
+- Original incidental task list: `.arc/upcoming/tasks-enhance-user-movie-data-api.md` (to be deleted after migration)
+- CodeRabbit Finding #7: Identified missing pagination + architectural issues
+- Type Safety Strategy: `.arc/reference/strategies/strategy-type-safety.md`
+
+---
+
+### Class-Based Service Refactoring (Function-Based → Class-Based)
+
+**Status:** Not yet implemented, HIGH PRIORITY for Backend Modernization
+
+**Context:**
+
+During API Layer P2, established service layer pattern via MovieEnrichmentService and authentication services
+(class-based with dependency injection). This pattern needs to be applied to remaining function-based services
+across the codebase for consistency, testability, and maintainability.
+
+**Why Class-Based Services:**
+
+- **Dependency Injection**: Clear dependencies passed via constructor (easier testing, no hidden globals)
+- **Single Responsibility**: Each service class has one clear purpose
+- **State Management**: Instance variables for service configuration (user context, API clients)
+- **Composability**: Services can depend on other services via DI
+- **Testability**: Easy to mock dependencies in tests
+
+**Current Function-Based Services (Need Refactoring):**
+
+1. **`backend/apps/movie/movie_service.py`** - Movie TMDB integration functions
+   - Multiple functions with repeated TMDB client instantiation
+   - No shared state management
+   - Difficult to mock TMDB calls in tests
+
+2. **`backend/apps/core/email_service.py`** - Email sending functions (ZeptoMail)
+   - Functions taking configuration as parameters
+   - No session/connection reuse
+   - Difficult to test without actual email sends
+
+3. **Other service modules** - Any remaining function-based utilities
+
+**Target Pattern (Established Reference):**
+
+```python
+class MovieEnrichmentService:
+    """
+    Class-based service with dependency injection.
+
+    Example of established pattern from API Layer P2.
+    """
+    def __init__(self, user: User, tmdb_client: TMDBClient):
+        self.user = user
+        self.tmdb_client = tmdb_client
+
+    def enrich_movies_with_user_movie_data(
+        self,
+        movies: list[MovieBaseSchema]
+    ) -> list[MovieBaseSchema]:
+        """
+        Single responsibility: enrich movie data with user-specific info.
+
+        Benefits:
+        - User context available via self.user
+        - TMDB client injected (easy to mock in tests)
+        - Clear method signature (no hidden dependencies)
+        """
+        # Implementation...
+```
+
+**Refactoring Tasks:**
+
+**1. Movie Service Refactoring:**
+
+Create `MovieService` class to replace function-based `movie_service.py`:
+
+```python
+class MovieService:
+    """Movie TMDB integration service."""
+
+    def __init__(self, tmdb_client: TMDBClient):
+        self.tmdb_client = tmdb_client
+
+    def get_movie_by_id(self, tmdb_id: int) -> MovieDetailSchema:
+        """Fetch single movie from TMDB."""
+        # Migrate from function
+
+    def search_movies(
+        self,
+        query: str,
+        page: int = 1
+    ) -> PaginatedMovieResponseSchema:
+        """Search movies by title."""
+        # Migrate from function
+
+    def discover_movies(
+        self,
+        filters: DiscoverFilters,
+        page: int = 1
+    ) -> PaginatedMovieResponseSchema:
+        """Discover movies with filters."""
+        # Migrate from function
+```
+
+**2. Email Service Refactoring:**
+
+Create `EmailService` class to replace function-based `email_service.py`:
+
+```python
+class EmailService:
+    """Email sending service via ZeptoMail."""
+
+    def __init__(self, api_key: str, from_email: str):
+        self.api_key = api_key
+        self.from_email = from_email
+        self._session = None  # Reusable HTTP session
+
+    def send_verification_email(self, user: User, token: str) -> None:
+        """Send email verification message."""
+        # Migrate from function
+
+    def send_password_reset_email(self, user: User, token: str) -> None:
+        """Send password reset message."""
+        # Migrate from function
+```
+
+**3. Update API Endpoints:**
+
+Update all API endpoints to instantiate service classes:
+
+```python
+# Before (function-based)
+from movie.movie_service import get_movie_by_id
+
+@router.get("/movies/{tmdb_id}")
+def movie_detail(tmdb_id: int):
+    movie = get_movie_by_id(tmdb_id)  # Direct function call
+    return movie
+
+# After (class-based with DI)
+from movie.movie_service import MovieService
+from movie.tmdb_client import get_tmdb_client
+
+@router.get("/movies/{tmdb_id}")
+def movie_detail(tmdb_id: int):
+    tmdb_client = get_tmdb_client()  # Factory function
+    movie_service = MovieService(tmdb_client)
+    movie = movie_service.get_movie_by_id(tmdb_id)
+    return movie
+```
+
+**4. Service Factory Functions:**
+
+Create factory functions for common service instantiation patterns:
+
+```python
+# backend/apps/movie/service_factory.py
+def get_movie_service() -> MovieService:
+    """Factory for MovieService with default TMDB client."""
+    return MovieService(get_tmdb_client())
+
+def get_movie_enrichment_service(user: User) -> MovieEnrichmentService:
+    """Factory for MovieEnrichmentService with user context."""
+    return MovieEnrichmentService(user, get_tmdb_client())
+```
+
+**Testing Improvements:**
+
+Class-based services enable better testing via dependency injection:
+
+```python
+# Before: Hard to test without actual TMDB calls
+def test_get_movie_by_id():
+    movie = get_movie_by_id(123)  # Makes actual API call
+    assert movie.title == "Expected Title"
+
+# After: Easy to mock dependencies
+def test_get_movie_by_id():
+    mock_client = MockTMDBClient()
+    mock_client.set_movie_response(123, {"title": "Expected Title"})
+
+    service = MovieService(mock_client)
+    movie = service.get_movie_by_id(123)
+
+    assert movie.title == "Expected Title"
+    assert mock_client.get_movie_called_with == 123
+```
+
+**Documentation Requirements:**
+
+- Add service layer architecture documentation to TECHNICAL-ARCHITECTURE.md
+- Document when to use class-based vs function-based approaches
+- Provide decision guide: "Is this a service? Should it be a class?"
+- Document DI patterns and factory functions
+
+**Effort Estimate:** 10-15 hours
+
+- Movie service refactoring: 4-5 hours
+- Email service refactoring: 2-3 hours
+- Update API endpoints: 2-3 hours
+- Factory functions + tests: 2-3 hours
+- Documentation: 1-2 hours
+
+**Benefits:**
+
+- Consistent service layer pattern across entire codebase
+- Easier testing via dependency injection
+- Better code organization (related methods grouped in classes)
+- Clear dependency graphs (explicit via constructor parameters)
+- Established pattern for future services
+
+**References:**
+
+- Established patterns: `backend/apps/movie/movie_enrichment_service.py`
+- Authentication services: `backend/apps/authentication/services/`
+- Service Layer Architecture (completed): See "Completed Foundation Work" section below
+
+---
+
+## Asynchronous Task Processing (Celery/Redis) - PLANNED
+
+**Status:** Not yet implemented, planned for Backend Modernization
+
+**Goal:** Implement background task processing for heavy operations and demonstrate scalable backend architecture patterns.
+
+**Candidate Operations for Background Tasks:**
+
+1. **Email Notifications** (High Priority)
+   - Email verification sends (already using ZeptoMail service)
+   - Password reset emails (when implemented)
+   - User notification emails (future features)
+   - Benefit: Non-blocking user registration/login flows
+
+2. **Data Synchronization** (Medium Priority)
+   - TMDB data refresh for cached movies
+   - Bulk movie data imports (if needed)
+   - User data exports (future feature)
+   - Benefit: Keep data fresh without blocking user requests
+
+3. **Heavy Computational Operations** (Low Priority)
+   - Movie recommendation calculations (future feature)
+   - User statistics aggregation (future feature)
+   - Benefit: Responsive UI for compute-intensive operations
+
+**Technical Considerations:**
+
+- Redis already available in Docker Compose (used for Django cache)
+- Celery worker needs to be added to docker-compose.yml
+- Task monitoring/retry logic needs design
+- Result backend for frontend progress tracking
+- Integration with existing Django patterns
+
+**Open Questions:**
+
+- Should we implement comprehensive async infrastructure first, or start with high-impact operations (emails)?
+- How do we handle task failures and retries?
+- What monitoring/observability do we need for background tasks?
+
+**References:**
+
+- Celery documentation: <https://docs.celeryq.dev/>
+- Django + Celery integration patterns
+- Redis backend configuration
+
+---
+
+## End-to-End Testing (Playwright) - PLANNED
+
+**Status:** Not yet implemented, planned for Backend Modernization
+
+**Goal:** Comprehensive e2e testing covering critical user journeys and validating full application stack.
+
+**Critical User Flows to Test:**
+
+1. **Authentication Flows** (Highest Priority)
+   - Password-based registration → email verification → login → logout
+   - OAuth Google login → logout
+   - OAuth GitHub login → logout
+   - JWT token refresh (automatic via interceptor)
+   - Two-pattern auth isolation (JWT vs session cookies)
+
+2. **Movie Discovery & Search** (High Priority)
+   - Search movies by title
+   - Browse discover page (trending, popular)
+   - View movie details
+   - Navigate between pages
+
+3. **Watchlist Management** (High Priority)
+   - Add movie to watchlist (authenticated user)
+   - Remove movie from watchlist
+   - View watchlist page
+   - Verify user isolation (different users see different watchlists)
+
+4. **Future Features** (Medium Priority - when UI is built)
+   - Movie ratings (when UI implemented)
+   - Movie reviews (when UI implemented)
+   - Profile management (when UI implemented)
+
+**Technical Considerations:**
+
+- Playwright runs browser-based tests (Chrome, Firefox, Safari)
+- Requires test database + Docker environment running
+- Test data management (fixtures, cleanup between tests)
+- CI integration (run on PR, detect failures before merge)
+- Visual regression testing (screenshot comparison)
+
+**Test Strategy:**
+
+- Focus on critical paths first (auth, watchlist)
+- Expand coverage iteratively
+- Parallel test execution for speed
+- Headless mode for CI, headed mode for debugging
+
+**Open Questions:**
+
+- Should Playwright tests run in CI on every commit, or only on PR?
+- How do we handle test data isolation between parallel test runs?
+- Should we implement visual regression testing from the start, or add later?
+- How do we coordinate e2e tests with existing backend unit/integration tests?
+
+**References:**
+
+- Playwright documentation: <https://playwright.dev/>
+- Playwright with Django patterns
+- CI integration examples
+
+---
+
+## Code Quality Improvements
+
+This section covers Django best practices, refactoring opportunities, and technical debt items
+that should be addressed during Backend Modernization.
+
+### App Configuration - Django Best Practices
 
 **Issue:** All Django apps use short names in `AppConfig.name`
 (e.g., `name = 'authentication'`) instead of full dotted module paths
@@ -44,174 +550,11 @@ Django documentation recommends full dotted paths in `AppConfig.name` to:
 - No database migrations required
 
 **CodeRabbit Finding:** Identified in Task 7.4 IDE-based CodeRabbit review
-**Deferred Reason:** Auth modernization is next priority; should be done comprehensively for all apps
+**Deferred Reason:** Should be done comprehensively for all apps at once
 
 ---
 
-## Authentication Serializers - DRF Anti-Pattern
-
-**Issue:** `UserRegistrationSerializer.is_valid()` override mutates `self._errors` directly, breaking DRF's
-`raise_exception=True` behavior.
-
-**Current State:**
-
-- Located in `backend/apps/authentication/serializers.py` lines 47-67
-- Overrides `is_valid()` to check duplicate username/email and password length
-- Directly assigns to `self._errors` instead of raising `ValidationError`
-- Breaks expected DRF behavior where `is_valid(raise_exception=True)` should raise exceptions
-
-**Best Practice:**
-DRF serializers should use `validate()` or `validate_<field>()` methods:
-
-```python
-def validate_username(self, value):
-    if User.objects.filter(username=value).exists():
-        raise serializers.ValidationError('Username already exists.')
-    return value
-
-def validate_email(self, value):
-    if User.objects.filter(email=value).exists():
-        raise serializers.ValidationError('Email already exists.')
-    return value
-
-def validate_password(self, value):
-    if len(value) < 5:
-        raise serializers.ValidationError('Password must be at least 5 characters.')
-    return value
-```
-
-**Recommended Fix:**
-
-1. Remove the `is_valid()` override entirely
-2. Add `validate_username()`, `validate_email()`, and `validate_password()` methods
-3. Raise `serializers.ValidationError` with appropriate messages
-4. Test that `is_valid(raise_exception=True)` properly raises exceptions
-
-**Effort Estimate:** Low (30 minutes)
-
-- Simple refactoring, well-documented DRF pattern
-- Requires testing registration validation flows
-
-**CodeRabbit Finding:** Identified in Task 7.4 IDE-based CodeRabbit review
-**Deferred Reason:** Auth modernization will replace entire authentication system including this serializer
-
----
-
-## User Model **str** Method - Verify After Auth Modernization
-
-**Issue:** `UserMovieData.__str__()` uses `self.user.username` directly instead of `self.user.get_username()`.
-
-**Current State:**
-
-- Located in `backend/apps/user_movie_data/models.py` lines 48-51
-- Hard-codes `.username` attribute access which may not work with all User models
-- Has type-ignore comment for Django field access
-
-**Best Practice:**
-Use `get_username()` method for compatibility with AbstractBaseUser:
-
-```python
-def __str__(self) -> str:
-    username = getattr(self.user, 'get_username', lambda: str(self.user))()
-    movie_title = getattr(self.movie, 'title', 'Unknown')
-    return f"{username} - {movie_title}"
-```
-
-**Post-Auth-Modernization Action:**
-After migrating to Django's default User model, verify that:
-
-1. The default User model has `get_username()` method (it does)
-2. The `__str__` method works correctly with the new User model
-3. Update to use `get_username()` if still using direct `.username` access
-
-**Effort Estimate:** Trivial (5 minutes)
-
-- Verify during auth modernization testing
-- Update if needed for consistency
-
-**CodeRabbit Finding:** Identified in Task 7.4 IDE-based CodeRabbit review
-**Deferred Reason:** Auth modernization will replace User model; verify after migration completes
-
----
-
-## Dependency Management - Reproducible Builds
-
-**Issue:** Top-level `requirements/req.txt` uses loose version ranges without pinning transitive dependencies,
-leading to non-reproducible builds.
-
-**Current State:**
-
-- Requirements use ranges like `djangorestframework-stubs >= 3.16.0, < 3.17`
-- Transitive dependencies (dependencies of dependencies) not pinned
-- Same `req.txt` can produce different environments over time as transitive deps update
-- Works reliably with Docker + Python 3.13 but no guarantee of reproducibility
-- No dependency-related CI failures observed yet
-
-**Problem:**
-
-- CI builds may differ from local development over time
-- Hard to debug "works on my machine" issues related to transitive dependencies
-- Difficult to rollback to exact dependency set if issues arise
-- Production deployments should have deterministic dependency resolution
-
-**Industry Best Practices:**
-
-**Option 1: pip-tools (Recommended)**
-
-```bash
-# Install pip-tools
-pip install pip-tools
-
-# Generate locked requirements
-pip-compile requirements/req.txt --output-file requirements/requirements.lock
-
-# Install from lock file
-pip-sync requirements/requirements.lock
-
-# Regenerate when req.txt changes
-pip-compile requirements/req.txt --upgrade
-```
-
-**Option 2: constraints.txt (Manual)**
-
-```bash
-# Generate current state
-pip freeze > requirements/constraints.txt
-
-# Install with constraints
-pip install -r requirements/req.txt -c requirements/constraints.txt
-```
-
-**Recommended Approach:**
-
-1. Adopt pip-tools for deterministic dependency management
-2. Generate `requirements.lock` from `req.txt`
-3. Update CI to install from lock file: `pip-sync requirements/requirements.lock`
-4. Regenerate lock file when dependencies change or during releases
-5. Commit lock file to git for full reproducibility
-
-**When to Address:**
-
-- After auth-modernization completes (will change dependencies anyway)
-- If CI flakiness from dependency changes is observed
-- Before production deployment
-- As part of dedicated dependency management improvement task
-
-**Effort Estimate:** Low-Medium (1-2 hours)
-
-- Install and configure pip-tools
-- Generate initial lock file
-- Update CI workflows
-- Document regeneration process
-- Test builds with lock file
-
-**CodeRabbit Finding:** Identified in Task 7.4 IDE-based CodeRabbit review
-**Deferred Reason:** Auth modernization next; no current CI issues; more valuable to address comprehensively
-after major dependency changes
-
----
-
-## Shared Module Deprecation and Migration
+### Shared Module Deprecation and Migration
 
 **Issue:** Root-level `shared/` module contains redundant TypedDict definitions that duplicate Django Ninja's
 Pydantic schema functionality.
@@ -283,11 +626,10 @@ Pydantic schema functionality.
 - Cleaner project structure
 
 **CodeRabbit Finding:** Identified in Task 7.4 IDE-based CodeRabbit review (deprecation warning suggestion)
-**Deferred Reason:** Auth modernization is next priority; TMDB integration can be improved comprehensively in Backend Modernization
 
 ---
 
-## TMDB Model Double Validation Performance
+### TMDB Model Double Validation Performance
 
 **Issue:** Movie service validates TMDB responses twice: first into TMDB* Pydantic models, then
 `model_dump()` and re-validate into application schemas.
@@ -321,7 +663,7 @@ def create_movie_base_from_tmdb_model(tmdb_movie: TMDBMovieBase) -> MovieBaseSch
     )
 ```
 
-**Benefits:**
+**Benefits:******
 
 - Eliminate redundant validation overhead
 - Reduce allocations (no intermediate dicts)
@@ -350,8 +692,6 @@ def create_movie_base_from_tmdb_model(tmdb_movie: TMDBMovieBase) -> MovieBaseSch
 **CodeRabbit Finding:** Identified in Task 7.4 IDE-based CodeRabbit review
 **Deferred Reason:** Premature optimization; current performance acceptable; Backend Modernization will
 comprehensively refactor service patterns
-
----
 
 ---
 
@@ -522,126 +862,8 @@ class MovieEnrichmentService:
 
 **Notes for Backend Modernization:**
 
-- DRF serializers referenced in notes (lines 44-86) are GONE - replaced with Django Ninja schemas
-- User model is Django's default User (via allauth) - no custom user model
 - Authentication patterns are FINAL - don't refactor them
-
----
-
-## Asynchronous Task Processing (Celery/Redis) - PLANNED
-
-**Status:** Not yet implemented, planned for Backend Modernization
-
-**Context from PRD:**
-
-- Requirements 33-37 in prd-backend-modernization.md
-- Goal: Implement background task processing for heavy operations
-- Demonstrate scalable backend architecture patterns for portfolio
-
-**Candidate Operations for Background Tasks:**
-
-1. **Email Notifications** (High Priority)
-   - Email verification sends (already using ZeptoMail service)
-   - Password reset emails (when implemented)
-   - User notification emails (future features)
-   - Benefit: Non-blocking user registration/login flows
-
-2. **Data Synchronization** (Medium Priority)
-   - TMDB data refresh for cached movies
-   - Bulk movie data imports (if needed)
-   - User data exports (future feature)
-   - Benefit: Keep data fresh without blocking user requests
-
-3. **Heavy Computational Operations** (Low Priority)
-   - Movie recommendation calculations (future feature)
-   - User statistics aggregation (future feature)
-   - Benefit: Responsive UI for compute-intensive operations
-
-**Technical Considerations:**
-
-- Redis already available in Docker Compose (used for Django cache)
-- Celery worker needs to be added to docker-compose.yml
-- Task monitoring/retry logic needs design
-- Result backend for frontend progress tracking
-- Integration with existing Django patterns
-
-**Open Questions:**
-
-- Should we implement comprehensive async infrastructure first, or start with high-impact operations (emails)?
-- How do we handle task failures and retries?
-- What monitoring/observability do we need for background tasks?
-
-**References:**
-
-- Celery documentation: <https://docs.celeryq.dev/>
-- Django + Celery integration patterns
-- Redis backend configuration
-
----
-
-## End-to-End Testing (Playwright) - PLANNED
-
-**Status:** Not yet implemented, planned for Backend Modernization
-
-**Context from PRD:**
-
-- Requirements 38-42 in prd-backend-modernization.md
-- Goal: Comprehensive e2e testing covering critical user journeys
-- Validate full application stack (backend + frontend integration)
-
-**Critical User Flows to Test:**
-
-1. **Authentication Flows** (Highest Priority)
-   - Password-based registration → email verification → login → logout
-   - OAuth Google login → logout
-   - OAuth GitHub login → logout
-   - JWT token refresh (automatic via interceptor)
-   - Two-pattern auth isolation (JWT vs session cookies)
-
-2. **Movie Discovery & Search** (High Priority)
-   - Search movies by title
-   - Browse discover page (trending, popular)
-   - View movie details
-   - Navigate between pages
-
-3. **Watchlist Management** (High Priority)
-   - Add movie to watchlist (authenticated user)
-   - Remove movie from watchlist
-   - View watchlist page
-   - Verify user isolation (different users see different watchlists)
-
-4. **Future Features** (Medium Priority - when UI is built)
-   - Movie ratings (when UI implemented)
-   - Movie reviews (when UI implemented)
-   - Profile management (when UI implemented)
-
-**Technical Considerations:**
-
-- Playwright runs browser-based tests (Chrome, Firefox, Safari)
-- Requires test database + Docker environment running
-- Test data management (fixtures, cleanup between tests)
-- CI integration (run on PR, detect failures before merge)
-- Visual regression testing (screenshot comparison)
-
-**Test Strategy:**
-
-- Focus on critical paths first (auth, watchlist)
-- Expand coverage iteratively
-- Parallel test execution for speed
-- Headless mode for CI, headed mode for debugging
-
-**Open Questions:**
-
-- Should Playwright tests run in CI on every commit, or only on PR?
-- How do we handle test data isolation between parallel test runs?
-- Should we implement visual regression testing from the start, or add later?
-- How do we coordinate e2e tests with existing backend unit/integration tests?
-
-**References:**
-
-- Playwright documentation: <https://playwright.dev/>
-- Playwright with Django patterns
-- CI integration examples
+- User model is Django's default User (via allauth) - no custom user model
 
 ---
 
@@ -649,26 +871,20 @@ class MovieEnrichmentService:
 
 **The following notes sections reference work that is now COMPLETE and should NOT be re-done in Backend Modernization:**
 
-1. **Authentication Serializers - DRF Anti-Pattern (Lines 44-86)**
+1. **Authentication Serializers - DRF Anti-Pattern**
    - **Status:** ✅ OBSOLETE - DRF completely eliminated
    - **Resolution:** Replaced with Django Ninja Pydantic schemas in API Layer P2
    - **Action:** No work needed
 
-2. **User Model **str** Method (Lines 89-120)**
+2. **User Model **str** Method**
    - **Status:** ✅ COMPLETE - Verified during auth modernization
    - **Resolution:** Using Django's default User model (via allauth), `get_username()` works correctly
    - **Action:** No work needed
 
-3. **Dependency Management (Lines 123-190)**
+3. **Dependency Management**
    - **Status:** ⏳ DEFERRED - No current issues, can address if needed
    - **Note:** Auth modernization changed dependencies significantly, but no CI flakiness observed
    - **Action:** Monitor for CI flakiness, address if becomes a problem
-
-4. **Shared Module Deprecation (Lines 193-259)**
-   - **Status:** ⏳ PARTIALLY ADDRESSED
-   - **Resolution:** Django Ninja Pydantic schemas are source of truth, TypedDict usage minimal
-   - **Remaining:** Migrate TMDB types to Pydantic schemas, relocate error_codes.py
-   - **Action:** Can be addressed in Backend Modernization if time permits (low priority)
 
 ---
 

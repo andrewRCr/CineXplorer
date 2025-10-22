@@ -155,6 +155,7 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+backend/.mypy_cache/
 .dmypy.json
 dmypy.json
 
@@ -210,21 +211,27 @@ infrastructure/dev-certs/*.conf
 infrastructure/dev-certs/*.crt
 infrastructure/dev-certs/*.key
 
-# Personal reference documentation
-_docs/archive/notes/
-_docs/notes/
+# Personal reference documentation and notes (work-in-progress only)
+.arc/active/*/notes-*
+.arc/active/*/research-*
+.arc/upcoming/notes/
 
 # Session handoff file (transient)
-_docs/CURRENT-SESSION.md
+.arc/active/CURRENT-SESSION.md
+
+# Note: Task lists are TRACKED by default for context visibility
+# Note: Archived notes (.arc/reference/archive/notes/) ARE TRACKED once cleaned and archived
+# Only active/upcoming notes remain untracked (messy temporal reference → clean historical reference)
 
 # AI tool settings (personal development environment preferences)
 .claude/
 .warp/
 
-# Note: frontend/openapi.json is now vendored (not ignored) to prevent type drift
+# Markdownlint VS Code config (local dev tooling - project standards in .markdownlint-cli2.jsonc)
+.markdownlint.jsonc
 
-# Note: _docs/ai-instructions/, _docs/workflows/, and other high-level docs are included
-# to showcase systematic AI-assisted development methodology
+# Note: frontend/openapi.json is now vendored (not ignored) to prevent type drift
 
 # Type checking output files
 *type_errors.json
+.venv-backend/

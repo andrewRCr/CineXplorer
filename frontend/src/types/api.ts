@@ -4,7 +4,431 @@
  */
 
 export interface paths {
-    "/api/health": {
+    "/api/register/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Register User
+         * @description Register a new user and send email verification.
+         *
+         *     Creates a new user account and triggers email verification via
+         *     django-allauth CustomAccountAdapter.
+         *
+         *     Args:
+         *         request: HTTP request object
+         *         payload: Registration data (username, email, password, first_name, last_name)
+         *
+         *     Returns:
+         *         tuple: (status_code, response_data)
+         *             - 201: User created successfully, verification email sent
+         *             - 400: Password validation failed (too weak, common, or similar to user attributes)
+         *             - 409: Username/email already exists or forbidden username
+         *             - 500: Email sending failed (user creation rolled back)
+         *
+         *     Password validation:
+         *         - Enforced at schema level: min_length=8 (Pydantic)
+         *         - Enforced at registration: Django password validators
+         *           (common passwords, user similarity, etc.)
+         *
+         *     Email verification flow:
+         *         1. User created with Django's create_user()
+         *         2. EmailAddress.objects.add_email() creates EmailAddress record and sends confirmation
+         *         3. User receives email with verification link via CustomAccountAdapter (ZeptoMail)
+         *         4. Email verification handled by allauth EmailAddress model
+         */
+        post: operations["apps_authentication_api_register_user"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/token/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Obtain Token
+         * @description Obtain JWT access and refresh tokens (login) for hybrid authentication.
+         *
+         *     Hybrid Authentication Architecture:
+         *     - Authenticates user with username/email and password
+         *     - Returns access token in response body (frontend stores in localStorage)
+         *     - Sets refresh token as HTTP-only cookie (XSS-proof, secure)
+         *     - Access token has 5-minute lifetime (short-lived, reduces XSS risk)
+         *     - Refresh token has 14-day lifetime (long-lived, stored securely)
+         *
+         *     Args:
+         *         request: HTTP request object
+         *         response: HTTP response object (for setting refresh token cookie)
+         *         payload: Login credentials (login, password)
+         *
+         *     Returns:
+         *         tuple: (status_code, response_data)
+         *             - 200: Authentication successful, access token in body, refresh token in cookie
+         *             - 400: Missing credentials
+         *             - 401: Invalid credentials
+         *             - 403: Email not verified
+         *
+         *     Response body includes:
+         *         - access: JWT access token for localStorage (frontend manages)
+         *         - refresh: JWT refresh token value (also in HTTP-only cookie)
+         *         - user_id: Authenticated user's ID
+         *         - email_verified: Email verification status
+         *
+         *     Cookie attributes (refresh token only):
+         *         - httponly: True (prevents JavaScript access)
+         *         - secure: True (HTTPS only)
+         *         - samesite: Lax (CSRF protection)
+         */
+        post: operations["apps_authentication_api_obtain_token"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/token/refresh/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Refresh Token
+         * @description Refresh JWT access token using refresh token from cookie.
+         *
+         *     Reads refresh token from httponly cookie and generates new access token.
+         *     Implements token rotation security: old refresh tokens are automatically
+         *     blacklisted after rotation (via BLACKLIST_AFTER_ROTATION setting).
+         *
+         *     Args:
+         *         request: HTTP request object
+         *         response: HTTP response object (for setting new cookies)
+         *
+         *     Returns:
+         *         tuple: (status_code, response_data)
+         *             - 200: Token refreshed successfully, new tokens set as cookies
+         *             - 400: No valid refresh token in cookies or invalid format
+         *             - 401: Token blacklisted (reuse attempt detected)
+         *
+         *     Security:
+         *         - Automatic token rotation: new refresh token issued on each refresh
+         *         - Old tokens blacklisted automatically via BLACKLIST_AFTER_ROTATION
+         *         - Reuse attempts logged as security events with IP and user agent
+         *
+         *     Cookie handling:
+         *         - Reads refresh token from httponly cookie
+         *         - Sets new access and refresh tokens as httponly cookies
+         */
+        post: operations["apps_authentication_api_refresh_token"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/refresh": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Hybrid Refresh Token
+         * @description Refresh JWT access token for hybrid authentication.
+         *
+         *     Hybrid Authentication Architecture:
+         *     - Reads refresh token from HTTP-only cookie (secure, XSS-proof)
+         *     - Returns new access token in response body (frontend stores in localStorage)
+         *     - Does NOT set access token as cookie (frontend manages it)
+         *     - Rotates refresh token in HTTP-only cookie (automatic blacklisting)
+         *
+         *     This endpoint supports the hybrid auth pattern where:
+         *     - Short-lived access tokens (5 min) in localStorage for instant auth checks
+         *     - Long-lived refresh tokens (14 days) in HTTP-only cookies for security
+         *
+         *     Args:
+         *         request: HTTP request object
+         *         response: HTTP response object (for setting new refresh token cookie)
+         *
+         *     Returns:
+         *         tuple: (status_code, response_data)
+         *             - 200: New access token in response body, refresh token rotated in cookie
+         *             - 400: No refresh token found or invalid token format
+         *             - 401: Token blacklisted (reuse attempt detected)
+         *
+         *     Security:
+         *         - Token rotation: New refresh token issued on each refresh
+         *         - Automatic blacklisting: Old tokens blacklisted via BLACKLIST_AFTER_ROTATION
+         *         - Reuse detection: Blacklisted token attempts logged as security events
+         */
+        post: operations["apps_authentication_api_hybrid_refresh_token"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/logout/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Logout
+         * @description Logout user by clearing JWT cookies (hybrid authentication).
+         *
+         *     Clears refresh token cookie to end the session. No authentication required
+         *     since logout is idempotent (just deletes browser cookies) and users may
+         *     call it when tokens are already expired.
+         *
+         *     Hybrid Authentication Note:
+         *     - Only deletes refresh token cookie (access token managed by frontend in localStorage)
+         *     - Frontend should clear localStorage access token separately
+         *     - Uses matching cookie attributes to ensure reliable removal across browsers
+         *
+         *     Args:
+         *         request: HTTP request object (no authentication required)
+         *         response: HTTP response object (for deleting cookies)
+         *
+         *     Returns:
+         *         tuple: (status_code, response_data)
+         *             - 200: Logout successful, cookies cleared
+         *
+         *     Cookie deletion:
+         *         - Deletes refresh token cookie (HTTP-only, secure)
+         *         - Uses same path, domain, samesite as when cookie was set
+         */
+        post: operations["apps_authentication_api_logout"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/csrf/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Csrf Token
+         * @description Get CSRF token for AJAX requests.
+         *
+         *     Generates a CSRF token using Django's built-in get_token() and ensures
+         *     it's available as a cookie that JavaScript can read. This endpoint requires
+         *     no authentication and is used by the frontend to obtain a CSRF token for
+         *     state-changing requests.
+         *
+         *     Args:
+         *         request: HTTP request object
+         *         response: HTTP response object (for setting cookie)
+         *
+         *     Returns:
+         *         tuple: (status_code, response_data)
+         *             - 200: CSRF token generated and set as cookie
+         *
+         *     Cookie details:
+         *         - Name: 'csrftoken' (Django's default, configurable via CSRF_COOKIE_NAME)
+         *         - httponly: False (must be readable by JavaScript per CSRF_COOKIE_HTTPONLY setting)
+         *         - secure: True in production (per CSRF_COOKIE_SECURE setting)
+         *         - samesite: Lax (per SESSION_COOKIE_SAMESITE setting)
+         *         - path: / (available everywhere)
+         *
+         *     Note:
+         *         Django's CsrfViewMiddleware will automatically set the csrftoken cookie
+         *         when get_token() is called. The token is returned in the response body
+         *         for client convenience. We force the cookie to be set even if middleware
+         *         doesn't set it automatically.
+         */
+        get: operations["apps_authentication_api_get_csrf_token"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/profile/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get User Profile
+         * @description Retrieve authenticated user's profile.
+         *
+         *     Returns the current user's profile information including computed fields
+         *     for email verification status and full name.
+         *
+         *     Args:
+         *         request: HTTP request object with authenticated user
+         *
+         *     Returns:
+         *         UserProfileSchema: User profile with computed fields
+         *
+         *     Raises:
+         *         HttpError: 401 if user is not authenticated
+         *
+         *     Computed fields:
+         *         - email_verified: Checked via allauth EmailAddress model
+         *         - full_name: Concatenated first_name + last_name
+         */
+        get: operations["apps_authentication_api_get_user_profile"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update User Profile
+         * @description Update authenticated user's profile.
+         *
+         *     Supports partial updates (PATCH) for user profile fields including
+         *     password changes with proper hashing.
+         *
+         *     Args:
+         *         request: HTTP request object with authenticated user
+         *         payload: Fields to update (all optional)
+         *
+         *     Returns:
+         *         tuple: (status_code, response_data)
+         *             - 200: Profile updated successfully
+         *             - 400: Validation error
+         *
+         *     Password handling:
+         *         - Password is hashed using set_password() before saving
+         *         - Password is write-only (not returned in response)
+         *
+         *     Computed fields in response:
+         *         - email_verified: Checked via allauth EmailAddress model
+         *         - full_name: Concatenated first_name + last_name
+         */
+        patch: operations["apps_authentication_api_update_user_profile"];
+        trace?: never;
+    };
+    "/api/verify-email/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Verify Email
+         * @description Verify user's email address using the confirmation key.
+         *
+         *     Supports both HMAC-based confirmations (default) and database-stored confirmations.
+         *
+         *     Args:
+         *         request: Django HTTP request
+         *         payload: Email verification input with confirmation key
+         *
+         *     Returns:
+         *         Success message if verification succeeds, error if key is invalid/expired
+         */
+        post: operations["apps_authentication_api_verify_email"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/resend-verification/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Resend Verification
+         * @description Resend email verification to the provided email address.
+         *
+         *     Args:
+         *         request: Django HTTP request
+         *         payload: Email address to resend verification to
+         *
+         *     Returns:
+         *         Success message (even if email doesn't exist for security)
+         */
+        post: operations["apps_authentication_api_resend_verification"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/logs/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Frontend Log
+         * @description Receive frontend log entries for centralized logging.
+         *
+         *     This endpoint allows the frontend to send log entries to the backend
+         *     for centralized logging, monitoring, and debugging.
+         *
+         *     Security:
+         *     - Rate limited via middleware (scope: 'frontend_logs')
+         *     - Payload size limited to prevent abuse
+         *     - Available to anonymous users but throttled aggressively
+         *
+         *     Args:
+         *         request: HTTP request object
+         *         payload: Frontend log entry data
+         *
+         *     Returns:
+         *         Success response with 201 status or error response with appropriate status
+         *
+         *     Raises:
+         *         HttpError: 400 for validation errors, 413 for payload too large, 500 for server errors
+         */
+        post: operations["apps_core_api_frontend_log"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/health-check/": {
         parameters: {
             query?: never;
             header?: never;
@@ -13,84 +437,19 @@ export interface paths {
         };
         /**
          * Health Check
-         * @description Health check endpoint to verify Django Ninja setup.
+         * @description General health check endpoint for Docker orchestration.
          *
-         *     This endpoint is publicly accessible and does not require authentication.
-         *     It's used for monitoring and ensuring the API is operational.
-         *
-         *     Returns:
-         *         Simple status response indicating the API is working.
-         */
-        get: operations["config_api_health_check"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/health/auth": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Health Check Auth
-         * @description Authenticated health check endpoint to verify JWT cookie authentication.
-         *
-         *     This endpoint demonstrates native Django Ninja security integration with:
-         *     - Automatic OpenAPI security schema documentation
-         *     - Native authentication via the global auth scheme
-         *     - Proper error response documentation
-         *
-         *     The endpoint will automatically require JWT authentication via the configured
-         *     HTTP-only cookie and return appropriate error responses if authentication fails.
-         *
-         *     Returns:
-         *         Status response with authentication confirmation.
-         *     Raises:
-         *         HttpError: 401 if authentication fails
-         *         HttpError: 500 if internal authentication error occurs
-         */
-        get: operations["config_api_health_check_auth"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/health/user": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Health Check User
-         * @description Health check using enhanced dependency injection patterns.
-         *
-         *     This endpoint demonstrates the enhanced dependency injection approach with:
-         *     - Manual authentication control (bypassing global auth)
-         *     - Comprehensive error handling and logging
-         *     - Structured error responses
-         *     - Type-safe user access
+         *     This lightweight endpoint confirms the Django application is running
+         *     and responsive. Infrastructure dependencies (PostgreSQL, Redis) are
+         *     validated independently by Docker Compose health checks.
          *
          *     Args:
          *         request: HTTP request object
          *
          *     Returns:
-         *         Status response with authenticated user information.
-         *     Raises:
-         *         HttpError: 401 if authentication fails with structured error
-         *         HttpError: 500 if internal authentication error occurs
+         *         Status response indicating the application is healthy
          */
-        get: operations["config_api_health_check_user"];
+        get: operations["apps_core_api_health_check"];
         put?: never;
         post?: never;
         delete?: never;
@@ -99,7 +458,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/test/auth": {
+    "/api/logs/health/": {
         parameters: {
             query?: never;
             header?: never;
@@ -107,60 +466,22 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Test Authentication
-         * @description Comprehensive authentication test endpoint.
+         * Log Health Check
+         * @description Health check endpoint for the logging system.
          *
-         *     This endpoint verifies that the JWT cookie authentication scheme:
-         *     1. Correctly protects routes (requires valid JWT token)
-         *     2. Properly identifies and provides access to the authenticated user
-         *     3. Integrates seamlessly with Django Ninja's global auth system
-         *     4. Generates proper OpenAPI documentation
+         *     This endpoint verifies that the logging system is working correctly
+         *     and can receive frontend logs.
          *
-         *     The endpoint will automatically enforce authentication via the global
-         *     auth scheme and return detailed information about the authenticated user.
+         *     Args:
+         *         request: HTTP request object
          *
          *     Returns:
-         *         Comprehensive authentication test response with user details.
+         *         Health status response with correlation ID and timestamp
          *
          *     Raises:
-         *         HttpError: 401 if JWT token is missing, invalid, or expired
-         *         HttpError: 500 if internal authentication error occurs
+         *         HttpError: 500 if logging system is unhealthy
          */
-        get: operations["config_api_test_authentication"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/test/auth-status": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Test Auth Status
-         * @description Authentication status test endpoint (no authentication required).
-         *
-         *     This endpoint demonstrates the authentication system's behavior by:
-         *     1. Bypassing global authentication (auth=None)
-         *     2. Manually checking for JWT token presence and validity
-         *     3. Showing the difference between authenticated and unauthenticated requests
-         *     4. Providing debugging information for authentication testing
-         *
-         *     This is useful for:
-         *     - Testing the authentication system without requiring valid credentials
-         *     - Debugging authentication issues
-         *     - Understanding the authentication flow
-         *
-         *     Returns:
-         *         Authentication status information and guidance.
-         */
-        get: operations["config_api_test_auth_status"];
+        get: operations["apps_core_api_log_health_check"];
         put?: never;
         post?: never;
         delete?: never;
@@ -178,9 +499,9 @@ export interface paths {
         };
         /**
          * Get Now Playing Movies
-         * @description Retrieve currently playing movies with pagination.
+         * @description Retrieve currently playing movies with pagination and user-specific data.
          */
-        get: operations["movie_api_get_now_playing_movies"];
+        get: operations["apps_movie_api_get_now_playing_movies"];
         put?: never;
         post?: never;
         delete?: never;
@@ -198,9 +519,9 @@ export interface paths {
         };
         /**
          * Get Upcoming Movies
-         * @description Retrieve upcoming movies with pagination.
+         * @description Retrieve upcoming movies with pagination and user-specific data.
          */
-        get: operations["movie_api_get_upcoming_movies"];
+        get: operations["apps_movie_api_get_upcoming_movies"];
         put?: never;
         post?: never;
         delete?: never;
@@ -218,9 +539,12 @@ export interface paths {
         };
         /**
          * Search Movies
-         * @description Search for movies by query string with pagination.
+         * @description Search for movies by query string with pagination and user-specific data.
+         *
+         *     Uses MovieSearchParamsSchema to handle Django Ninja 1.4.3 +
+         *     Pydantic 2.12.0 empty string validation issue with optional parameters.
          */
-        get: operations["movie_api_search_movies"];
+        get: operations["apps_movie_api_search_movies"];
         put?: never;
         post?: never;
         delete?: never;
@@ -238,31 +562,36 @@ export interface paths {
         };
         /**
          * Discover Movies
-         * @description Discover movies with advanced filtering options.
+         * @description Discover movies with advanced filtering options and user-specific data.
          *
          *     This endpoint provides comprehensive movie discovery with extensive filtering
          *     capabilities including genres, keywords, cast, crew, release dates, ratings,
          *     and more. It supports both TMDB standard parameters and custom aliases for
          *     frontend convenience.
          *
-         *     Query Parameters:
-         *         page: Page number for pagination (default: 1)
-         *         with_genres: Comma-separated genre IDs to include
-         *         genres: Alias for with_genres (frontend convenience)
-         *         decade: Decade filter (e.g., "1990s" → converts to date range)
-         *         sort_by: Sort criteria (popularity.desc, vote_average.desc, etc.)
-         *         vote_average_gte/lte: Rating range filtering
-         *         with_runtime_gte/lte: Runtime range filtering
-         *         primary_release_year: Filter by release year
-         *         [... many other TMDB discover parameters]
+         *     Uses FilterSchema to handle 40+ optional parameters cleanly, with automatic
+         *     empty string to None conversion to handle Django Ninja 1.4.3 + Pydantic 2.12.0
+         *     validation behavior.
+         *
+         *     Query Parameters (all in filters schema):
+         *         filters: MovieDiscoverFilterSchema with all TMDB discover parameters
+         *             - page: Page number for pagination (default: 1)
+         *             - with_genres: Comma-separated genre IDs to include
+         *             - genres: Alias for with_genres (frontend convenience)
+         *             - decade: Decade filter (e.g., "1990s" → converts to date range)
+         *             - sort_by: Sort criteria (popularity.desc, vote_average.desc, etc.)
+         *             - vote_average_gte/lte: Rating range filtering
+         *             - with_runtime_gte/lte: Runtime range filtering
+         *             - primary_release_year: Filter by release year
+         *             - [... many other TMDB discover parameters]
          *
          *     Returns:
-         *         PaginatedMovieResponseSchema: Paginated list of movies matching criteria
+         *         PaginatedMovieResponseSchema: Paginated list of movies with user data if authenticated
          *
          *     Raises:
          *         HttpError: 400 for invalid parameters, 500 for TMDB API errors
          */
-        get: operations["movie_api_discover_movies"];
+        get: operations["apps_movie_api_discover_movies"];
         put?: never;
         post?: never;
         delete?: never;
@@ -295,7 +624,7 @@ export interface paths {
          *     Raises:
          *         HttpError: 404 if movie not found, 500 for TMDB API errors
          */
-        get: operations["movie_api_get_movie_detail"];
+        get: operations["apps_movie_api_get_movie_detail"];
         put?: never;
         post?: never;
         delete?: never;
@@ -315,7 +644,7 @@ export interface paths {
          * Get Movie Genres
          * @description Retrieve the list of available movie genres from TMDB.
          */
-        get: operations["movie_api_get_movie_genres"];
+        get: operations["apps_movie_api_get_movie_genres"];
         put?: never;
         post?: never;
         delete?: never;
@@ -335,7 +664,7 @@ export interface paths {
          * Get Popular Keywords
          * @description Retrieve popular keywords with pagination.
          */
-        get: operations["movie_api_get_popular_keywords"];
+        get: operations["apps_movie_api_get_popular_keywords"];
         put?: never;
         post?: never;
         delete?: never;
@@ -355,7 +684,7 @@ export interface paths {
          * Search Keywords
          * @description Search for keywords by query string.
          */
-        get: operations["movie_api_search_keywords"];
+        get: operations["apps_movie_api_search_keywords"];
         put?: never;
         post?: never;
         delete?: never;
@@ -375,7 +704,7 @@ export interface paths {
          * Get Popular People
          * @description Retrieve popular people (actors, directors, etc.) with pagination.
          */
-        get: operations["movie_api_get_popular_people"];
+        get: operations["apps_movie_api_get_popular_people"];
         put?: never;
         post?: never;
         delete?: never;
@@ -395,7 +724,7 @@ export interface paths {
          * Search People
          * @description Search for people by query string.
          */
-        get: operations["movie_api_search_people"];
+        get: operations["apps_movie_api_search_people"];
         put?: never;
         post?: never;
         delete?: never;
@@ -404,123 +733,533 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/user-movie-data/movies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get User Movies
+         * @description Retrieve movies associated with the authenticated user.
+         *
+         *     This endpoint returns a paginated list of movies that the user has interacted
+         *     with (watched, rated, added to watchlist, etc.). Movies are enriched with
+         *     complete TMDB data and user-specific metadata.
+         *
+         *     Args:
+         *         request: HTTP request with authenticated user
+         *         watchlist: Optional filter to show only watchlist movies (default: False)
+         *
+         *     Returns:
+         *         PaginatedMovieResponseSchema: Paginated list of movies with user data
+         *
+         *     Raises:
+         *         HttpError: 401 if authentication fails
+         *
+         *     Example:
+         *         GET /api/user-movie-data/movies - All user movies
+         *         GET /api/user-movie-data/movies?watchlist=true - Watchlist only
+         */
+        get: operations["apps_user_movie_data_api_get_user_movies"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/user-movie-data/by-tmdb-id": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get User Movie Data By Tmdb Id
+         * @description Retrieve user movie data for a specific movie by TMDB ID.
+         *
+         *     This endpoint checks if the authenticated user has existing data
+         *     (watchlist, rating, review, etc.) for a movie identified by its TMDB ID.
+         *
+         *     Args:
+         *         request: HTTP request with authenticated user
+         *         tmdb_id: TMDB ID of the movie
+         *
+         *     Returns:
+         *         UserMovieDataDetailSchema: User's data for the specified movie
+         *
+         *     Raises:
+         *         HttpError: 404 if no data exists for this user/movie combination
+         */
+        get: operations["apps_user_movie_data_api_get_user_movie_data_by_tmdb_id"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/user-movie-data": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create User Movie Data
+         * @description Create new user movie data entry.
+         *
+         *     This endpoint creates a new UserMovieData record when a user first
+         *     interacts with a movie (adds to watchlist, rates, reviews, etc.).
+         *
+         *     If the movie doesn't exist in our local database yet, it fetches the
+         *     movie data from TMDB and creates a local Movie stub record.
+         *
+         *     Args:
+         *         request: HTTP request with authenticated user
+         *         payload: User movie data to create (includes movie_id for FK lookup)
+         *
+         *     Returns:
+         *         UserMovieDataDetailSchema: Created user movie data
+         *
+         *     Raises:
+         *         HttpError: 400 if entry already exists
+         *         HttpError: 404 if movie not found in TMDB
+         */
+        post: operations["apps_user_movie_data_api_create_user_movie_data"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/user-movie-data/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete User Movie Data
+         * @description Delete user movie data entry.
+         *
+         *     This endpoint removes a UserMovieData record. This is rare and typically
+         *     used only to correct mistakes in user input.
+         *
+         *     Args:
+         *         request: HTTP request with authenticated user
+         *         id: Primary key of the UserMovieData object
+         *
+         *     Returns:
+         *         204 No Content on successful deletion
+         *
+         *     Raises:
+         *         HttpError: 404 if object not found or doesn't belong to user
+         */
+        delete: operations["apps_user_movie_data_api_delete_user_movie_data"];
+        options?: never;
+        head?: never;
+        /**
+         * Update User Movie Data
+         * @description Update existing user movie data entry.
+         *
+         *     This endpoint supports partial updates (PATCH) to modify any subset
+         *     of user movie data fields (watchlist, rating, review, etc.).
+         *
+         *     Args:
+         *         request: HTTP request with authenticated user
+         *         id: Primary key of the UserMovieData object
+         *         payload: Fields to update (all optional for PATCH)
+         *
+         *     Returns:
+         *         UserMovieDataDetailSchema: Updated user movie data
+         *
+         *     Raises:
+         *         HttpError: 404 if object not found or doesn't belong to user
+         */
+        patch: operations["apps_user_movie_data_api_update_user_movie_data"];
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
         /**
-         * HealthResponse
-         * @description Health check response schema.
+         * RegisterResponseSchema
+         * @description Schema for successful registration response.
          */
-        HealthResponse: {
-            /** Status */
-            status: string;
-            /** Message */
+        RegisterResponseSchema: {
+            /**
+             * Message
+             * @description Success message with email verification instruction
+             */
             message: string;
-        };
-        /**
-         * AuthHealthResponse
-         * @description Authenticated health check response schema.
-         */
-        AuthHealthResponse: {
-            /** Status */
-            status: string;
-            /** Message */
-            message: string;
-            /** Auth Method */
-            auth_method: string;
-        };
-        /**
-         * UserHealthResponse
-         * @description User health check response with authentication details.
-         */
-        UserHealthResponse: {
-            /** Status */
-            status: string;
-            /** Message */
-            message: string;
-            /** User Id */
+            /**
+             * User Id
+             * @description ID of the newly created user
+             */
             user_id: number;
-            /** Auth Method */
-            auth_method: string;
-            /** Features */
-            features: string[];
-        };
-        /**
-         * AuthTestResponse
-         * @description Comprehensive authentication test response.
-         */
-        AuthTestResponse: {
-            /** Status */
-            status: string;
-            /** Message */
-            message: string;
-            /** Auth Scheme */
-            auth_scheme: string;
-            /** User Id */
-            user_id: number;
-            /** Username */
-            username: string;
-            /** Email */
+            /**
+             * Email
+             * @description Email address where verification was sent
+             */
             email: string;
-            /** Is Staff */
-            is_staff: boolean;
-            /** Is Superuser */
-            is_superuser: boolean;
-            /** Is Active */
-            is_active: boolean;
-            /** Date Joined */
-            date_joined: string;
-            /** Last Login */
-            last_login: string | null;
-            /** Groups Count */
-            groups_count: number;
-            /** Permissions Count */
-            permissions_count: number;
-            auth_verification: components["schemas"]["AuthVerification"];
+            /**
+             * Email Sent
+             * @description Whether verification email was successfully sent
+             */
+            email_sent: boolean;
         };
         /**
-         * AuthVerification
-         * @description Authentication verification details.
+         * RegisterInputSchema
+         * @description Schema for user registration input.
+         *
+         *     Manual Schema (not ModelSchema) because registration includes
+         *     password handling and validation logic not directly on User model.
          */
-        AuthVerification: {
-            /** Scheme Active */
-            scheme_active: boolean;
-            /** Token Valid */
-            token_valid: boolean;
-            /** User Authenticated */
-            user_authenticated: boolean;
-            /** Session Info */
-            session_info: string;
+        RegisterInputSchema: {
+            /**
+             * Username
+             * @description Unique username for the account
+             */
+            username: string;
+            /**
+             * Email
+             * Format: email
+             * @description User's email address (must be unique)
+             */
+            email: string;
+            /**
+             * Password
+             * @description Account password (minimum 8 characters)
+             */
+            password: string;
+            /**
+             * First Name
+             * @description User's first name (optional)
+             */
+            first_name?: string | null;
+            /**
+             * Last Name
+             * @description User's last name (optional)
+             */
+            last_name?: string | null;
         };
         /**
-         * AuthGuidance
-         * @description Authentication guidance information.
+         * TokenResponseSchema
+         * @description Schema for JWT token response (obtain and refresh).
+         *
+         *     Tokens are set as httponly cookies, but also returned in
+         *     response body for client convenience.
          */
-        AuthGuidance: {
-            /** Next Step */
-            next_step: string;
-            /** Note */
-            note?: string | null;
-            /** Protected Endpoint */
-            protected_endpoint?: string | null;
-            /** Public Endpoints */
-            public_endpoints?: string | null;
+        TokenResponseSchema: {
+            /**
+             * Access Token
+             * @description JWT access token (also set as httponly cookie)
+             */
+            access_token: string;
+            /**
+             * Refresh Token
+             * @description JWT refresh token (also set as httponly cookie)
+             */
+            refresh_token: string;
+            /**
+             * User Id
+             * @description ID of the authenticated user
+             */
+            user_id: number;
+            /**
+             * Email Verified
+             * @description Whether user's email has been verified via allauth
+             */
+            email_verified: boolean;
         };
         /**
-         * AuthStatusResponse
-         * @description Authentication status response schema.
+         * TokenObtainInputSchema
+         * @description Schema for JWT token obtain (login) input.
+         *
+         *     Supports authentication with either username or email.
+         *     Field name follows django-allauth convention (allauth.account.forms.LoginForm).
          */
-        AuthStatusResponse: {
-            /** Auth Status */
-            auth_status: string;
+        TokenObtainInputSchema: {
+            /**
+             * Login
+             * @description Username or email for authentication
+             */
+            login: string;
+            /**
+             * Password
+             * @description User's password
+             */
+            password: string;
+        };
+        /**
+         * HybridTokenRefreshResponseSchema
+         * @description Schema for hybrid authentication token refresh response.
+         *
+         *     Hybrid Architecture:
+         *     - Access token: Returned in response body (frontend stores in localStorage)
+         *     - Refresh token: NOT in response (remains in HTTP-only cookie)
+         *     - Metadata: Expiration info for frontend token management
+         *
+         *     This differs from TokenResponseSchema which returns both tokens for
+         *     cookie-based authentication.
+         */
+        HybridTokenRefreshResponseSchema: {
+            /**
+             * Access Token
+             * @description JWT access token for localStorage (5-min lifetime)
+             */
+            access_token: string;
+            /**
+             * Expires In
+             * @description Access token lifetime in seconds (300 for 5 minutes)
+             */
+            expires_in: number;
+            /**
+             * Issued At
+             * @description Token issue timestamp (ISO 8601 UTC)
+             */
+            issued_at: string;
+        };
+        /**
+         * LogoutResponseSchema
+         * @description Schema for logout response.
+         */
+        LogoutResponseSchema: {
+            /**
+             * Message
+             * @description Logout success message
+             */
+            message: string;
+        };
+        /**
+         * CsrfTokenResponseSchema
+         * @description Schema for CSRF token response.
+         *
+         *     Token is set as cookie and returned in response body.
+         */
+        CsrfTokenResponseSchema: {
+            /**
+             * Csrf Token
+             * @description CSRF token for state-changing requests
+             */
+            csrf_token: string;
+        };
+        /**
+         * UserProfileSchema
+         * @description Schema for user profile retrieval and updates.
+         *
+         *     Uses ModelSchema for direct mapping to Django User model.
+         *     Password field excluded from responses (write_only in updates).
+         */
+        UserProfileSchema: {
+            /**
+             * Email Verified
+             * @description Whether user's email is verified (computed from allauth)
+             */
+            email_verified?: boolean | null;
+            /**
+             * Full Name
+             * @description User's full name (first_name + last_name)
+             */
+            full_name?: string | null;
+            /** ID */
+            id?: number | null;
+            /**
+             * Username
+             * @description Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.
+             */
+            username: string;
+            /** Email Address */
+            email?: string | null;
+            /** First Name */
+            first_name?: string | null;
+            /** Last Name */
+            last_name?: string | null;
+        };
+        /**
+         * UserProfileUpdateSchema
+         * @description Schema for user profile updates.
+         *
+         *     Manual Schema with all optional fields for partial updates (PATCH).
+         *     Password updates handled separately for security.
+         */
+        UserProfileUpdateSchema: {
+            /**
+             * Email
+             * @description Updated email address
+             */
+            email?: string | null;
+            /**
+             * First Name
+             * @description Updated first name
+             */
+            first_name?: string | null;
+            /**
+             * Last Name
+             * @description Updated last name
+             */
+            last_name?: string | null;
+            /**
+             * Password
+             * @description Updated password (minimum 8 characters)
+             */
+            password?: string | null;
+        };
+        /**
+         * EmailVerificationResponseSchema
+         * @description Schema for email verification response.
+         */
+        EmailVerificationResponseSchema: {
+            /**
+             * Message
+             * @description Verification success/failure message
+             */
+            message: string;
+        };
+        /**
+         * EmailVerificationInputSchema
+         * @description Schema for email verification input.
+         */
+        EmailVerificationInputSchema: {
+            /**
+             * Key
+             * @description Email verification key from confirmation link
+             */
+            key: string;
+        };
+        /**
+         * ResendVerificationResponseSchema
+         * @description Schema for resend verification response.
+         */
+        ResendVerificationResponseSchema: {
+            /**
+             * Message
+             * @description Resend operation result message
+             */
+            message: string;
+        };
+        /**
+         * ResendVerificationInputSchema
+         * @description Schema for resend verification email input.
+         */
+        ResendVerificationInputSchema: {
+            /**
+             * Email
+             * Format: email
+             * @description Email address to resend verification to
+             */
+            email: string;
+        };
+        /**
+         * FrontendLogSuccessResponse
+         * @description Response for successful log entry submission.
+         */
+        FrontendLogSuccessResponse: {
+            /** Success */
+            success: boolean;
             /** Message */
             message: string;
+        };
+        /**
+         * FrontendLogErrorResponse
+         * @description Response for failed log entry submission.
+         */
+        FrontendLogErrorResponse: {
+            /** Success */
+            success: boolean;
+            /** Error */
+            error: string;
+            /** Max Size Bytes */
+            max_size_bytes?: number | null;
+        };
+        /**
+         * FrontendLogEntrySchema
+         * @description Schema for frontend log entries sent to the backend.
+         *
+         *     The frontend sends structured log data to enable centralized logging,
+         *     monitoring, and debugging of client-side issues.
+         */
+        FrontendLogEntrySchema: {
+            /**
+             * Level
+             * @enum {string}
+             */
+            level: "DEBUG" | "INFO" | "WARNING" | "WARN" | "ERROR" | "CRITICAL";
+            /** Message */
+            message: string;
+            /** Timestamp */
+            timestamp: string;
+            /** Data */
+            data?: {
+                [key: string]: unknown;
+            } | null;
+            /** Correlation Id */
+            correlation_id?: string | null;
+            /** User Agent */
+            user_agent?: string | null;
+            /** Url */
+            url?: string | null;
             /** User Id */
-            user_id: number | null;
-            /** Has Valid Token */
-            has_valid_token: boolean;
-            guidance: components["schemas"]["AuthGuidance"];
+            user_id?: number | null;
+            /** Session Id */
+            session_id?: string | null;
+            /**
+             * Source
+             * @default frontend
+             */
+            source: string;
+            /** Environment */
+            environment?: string | null;
+            /** Browser Info */
+            browser_info?: {
+                [key: string]: unknown;
+            } | null;
+            /** Recent Interactions */
+            recent_interactions?: unknown[] | null;
+        };
+        /**
+         * LogHealthCheckResponse
+         * @description Response for logging system health check.
+         */
+        LogHealthCheckResponse: {
+            /** Status */
+            status: string;
+            /** Service */
+            service: string;
+            /** Correlation Id */
+            correlation_id?: string | null;
+            /** Timestamp */
+            timestamp?: string | null;
+            /** Error */
+            error?: string | null;
+        };
+        /**
+         * PaginationParamsSchema
+         * @description Schema for pagination parameters with empty string handling.
+         *
+         *     Handles Django Ninja 1.4.3 + Pydantic 2.12.0 behavior where missing
+         *     query parameters are sent as empty strings instead of being omitted.
+         */
+        PaginationParamsSchema: {
+            /**
+             * Page
+             * @description Page number for pagination
+             */
+            page?: number | null;
         };
         /**
          * MovieBaseSchema
@@ -594,6 +1333,146 @@ export interface components {
             user_rating?: number | null;
             /** User Review */
             user_review?: string | null;
+        };
+        /**
+         * MovieSearchParamsSchema
+         * @description Schema for movie search parameters with empty string handling.
+         *
+         *     Handles Django Ninja 1.4.3 + Pydantic 2.12.0 behavior where missing
+         *     query parameters are sent as empty strings instead of being omitted.
+         */
+        MovieSearchParamsSchema: {
+            /**
+             * Query
+             * @description Search query string
+             */
+            query: string;
+            /**
+             * Page
+             * @description Page number for pagination
+             */
+            page?: number | null;
+        };
+        /**
+         * MovieDiscoverFilterSchema
+         * @description Schema for TMDB discover endpoint filtering.
+         *
+         *     Handles 40+ optional query parameters with automatic empty string to None
+         *     conversion, solving Django Ninja 1.4.3 + Pydantic 2.12.0 validation issues
+         *     where missing parameters are sent as empty strings instead of being omitted.
+         *
+         *     See: External research on Django Ninja optional parameter handling (2025-10-09)
+         */
+        MovieDiscoverFilterSchema: {
+            /**
+             * Page
+             * @description Page number for pagination
+             */
+            page?: number | null;
+            /**
+             * With Genres
+             * @description Comma-separated genre IDs
+             */
+            with_genres?: string | null;
+            /**
+             * With Keywords
+             * @description Comma-separated keyword IDs
+             */
+            with_keywords?: string | null;
+            /** Without Genres */
+            without_genres?: string | null;
+            /** Without Keywords */
+            without_keywords?: string | null;
+            /**
+             * With Cast
+             * @description Comma-separated person IDs
+             */
+            with_cast?: string | null;
+            /** With Crew */
+            with_crew?: string | null;
+            /** With People */
+            with_people?: string | null;
+            /** With Companies */
+            with_companies?: string | null;
+            /** With Networks */
+            with_networks?: string | null;
+            /** Without Companies */
+            without_companies?: string | null;
+            /** Without Networks */
+            without_networks?: string | null;
+            /** With Watch Providers */
+            with_watch_providers?: string | null;
+            /** Without Watch Providers */
+            without_watch_providers?: string | null;
+            /** With Watch Monetization Types */
+            with_watch_monetization_types?: string | null;
+            /** Include Adult */
+            include_adult?: boolean | null;
+            /** Include Video */
+            include_video?: boolean | null;
+            /**
+             * Language
+             * @description ISO 639-1 language code
+             */
+            language?: string | null;
+            /**
+             * Region
+             * @description ISO 3166-1 country code
+             */
+            region?: string | null;
+            /** With Original Language */
+            with_original_language?: string | null;
+            /** Without Original Language */
+            without_original_language?: string | null;
+            /** Primary Release Year */
+            primary_release_year?: number | null;
+            /** Year */
+            year?: number | null;
+            /** Primary Release Date Gte */
+            primary_release_date_gte?: string | null;
+            /** Primary Release Date Lte */
+            primary_release_date_lte?: string | null;
+            /** Release Date Gte */
+            release_date_gte?: string | null;
+            /** Release Date Lte */
+            release_date_lte?: string | null;
+            /** With Release Type */
+            with_release_type?: string | null;
+            /** Vote Count Gte */
+            vote_count_gte?: number | null;
+            /** Vote Count Lte */
+            vote_count_lte?: number | null;
+            /** Vote Average Gte */
+            vote_average_gte?: number | null;
+            /** Vote Average Lte */
+            vote_average_lte?: number | null;
+            /** With Runtime Gte */
+            with_runtime_gte?: number | null;
+            /** With Runtime Lte */
+            with_runtime_lte?: number | null;
+            /** Certification Country */
+            certification_country?: string | null;
+            /** Certification */
+            certification?: string | null;
+            /** Certification Lte */
+            certification_lte?: string | null;
+            /** Certification Gte */
+            certification_gte?: string | null;
+            /**
+             * Sort By
+             * @description Sort by field (e.g., popularity.desc, vote_average.desc)
+             */
+            sort_by?: string | null;
+            /**
+             * Decade
+             * @description Decade filter (e.g., '1990s')
+             */
+            decade?: string | null;
+            /**
+             * Genres
+             * @description Alias for with_genres
+             */
+            genres?: string | null;
         };
         /** CastMemberSchema */
         CastMemberSchema: {
@@ -739,6 +1618,122 @@ export interface components {
             /** Known For */
             known_for?: components["schemas"]["MediaReferenceSchema"][];
         };
+        /**
+         * UserMovieDataDetailSchema
+         * @description Extended ModelSchema with computed movie context fields.
+         *
+         *     Includes tmdb_id and title computed from the related Movie object.
+         *     These fields are populated at runtime in the API layer.
+         */
+        UserMovieDataDetailSchema: {
+            /**
+             * Tmdb Id
+             * @description TMDB ID of the associated movie (computed from obj.movie.tmdb_id)
+             */
+            tmdb_id?: number | null;
+            /**
+             * Title
+             * @description Title of the associated movie (computed from obj.movie.title)
+             */
+            title?: string | null;
+            /** ID */
+            id?: number | null;
+            /**
+             * User Watched
+             * @default false
+             */
+            user_watched: boolean;
+            /**
+             * User On Watchlist
+             * @default false
+             */
+            user_on_watchlist: boolean;
+            /**
+             * User Liked
+             * @default false
+             */
+            user_liked: boolean;
+            /** User Rating */
+            user_rating?: number | null;
+            /** User Review */
+            user_review?: string | null;
+        };
+        /**
+         * UserMovieDataCreateSchema
+         * @description Schema for creating new user movie data entries.
+         *
+         *     Uses manual Schema (not ModelSchema) because it includes movie_id field
+         *     which is not directly on the UserMovieData model (requires FK lookup).
+         */
+        UserMovieDataCreateSchema: {
+            /**
+             * Movie Id
+             * @description ID of the Movie object (database ID, not TMDB ID)
+             */
+            movie_id: number;
+            /**
+             * User Watched
+             * @description Whether the user has marked this movie as watched
+             * @default false
+             */
+            user_watched: boolean;
+            /**
+             * User On Watchlist
+             * @description Whether the movie is on the user's watchlist
+             * @default false
+             */
+            user_on_watchlist: boolean;
+            /**
+             * User Liked
+             * @description Whether the user has liked this movie
+             * @default false
+             */
+            user_liked: boolean;
+            /**
+             * User Rating
+             * @description User's rating of the movie (1-10)
+             */
+            user_rating?: number | null;
+            /**
+             * User Review
+             * @description User's text review of the movie
+             */
+            user_review?: string | null;
+        };
+        /**
+         * UserMovieDataUpdateSchema
+         * @description Schema for updating existing user movie data entries.
+         *
+         *     Uses manual Schema (not ModelSchema) with all optional fields
+         *     to support partial updates (PATCH operations).
+         */
+        UserMovieDataUpdateSchema: {
+            /**
+             * User Watched
+             * @description Whether the user has marked this movie as watched
+             */
+            user_watched?: boolean | null;
+            /**
+             * User On Watchlist
+             * @description Whether the movie is on the user's watchlist
+             */
+            user_on_watchlist?: boolean | null;
+            /**
+             * User Liked
+             * @description Whether the user has liked this movie
+             */
+            user_liked?: boolean | null;
+            /**
+             * User Rating
+             * @description User's rating of the movie (1-10)
+             */
+            user_rating?: number | null;
+            /**
+             * User Review
+             * @description User's text review of the movie
+             */
+            user_review?: string | null;
+        };
     };
     responses: never;
     parameters: never;
@@ -748,7 +1743,121 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
-    config_api_health_check: {
+    apps_authentication_api_register_user: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegisterInputSchema"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RegisterResponseSchema"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    apps_authentication_api_obtain_token: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TokenObtainInputSchema"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TokenResponseSchema"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    apps_authentication_api_refresh_token: {
         parameters: {
             query?: never;
             header?: never;
@@ -763,12 +1872,34 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HealthResponse"];
+                    "application/json": components["schemas"]["TokenResponseSchema"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
         };
     };
-    config_api_health_check_auth: {
+    apps_authentication_api_hybrid_refresh_token: {
         parameters: {
             query?: never;
             header?: never;
@@ -783,12 +1914,34 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AuthHealthResponse"];
+                    "application/json": components["schemas"]["HybridTokenRefreshResponseSchema"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
         };
     };
-    config_api_health_check_user: {
+    apps_authentication_api_logout: {
         parameters: {
             query?: never;
             header?: never;
@@ -803,12 +1956,12 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["UserHealthResponse"];
+                    "application/json": components["schemas"]["LogoutResponseSchema"];
                 };
             };
         };
     };
-    config_api_test_authentication: {
+    apps_authentication_api_get_csrf_token: {
         parameters: {
             query?: never;
             header?: never;
@@ -823,12 +1976,12 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AuthTestResponse"];
+                    "application/json": components["schemas"]["CsrfTokenResponseSchema"];
                 };
             };
         };
     };
-    config_api_test_auth_status: {
+    apps_authentication_api_get_user_profile: {
         parameters: {
             query?: never;
             header?: never;
@@ -843,15 +1996,210 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AuthStatusResponse"];
+                    "application/json": components["schemas"]["UserProfileSchema"];
                 };
             };
         };
     };
-    movie_api_get_now_playing_movies: {
+    apps_authentication_api_update_user_profile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UserProfileUpdateSchema"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserProfileSchema"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    apps_authentication_api_verify_email: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EmailVerificationInputSchema"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmailVerificationResponseSchema"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    apps_authentication_api_resend_verification: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResendVerificationInputSchema"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResendVerificationResponseSchema"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    apps_core_api_frontend_log: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FrontendLogEntrySchema"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FrontendLogSuccessResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FrontendLogErrorResponse"];
+                };
+            };
+            /** @description Content Too Large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FrontendLogErrorResponse"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FrontendLogErrorResponse"];
+                };
+            };
+        };
+    };
+    apps_core_api_health_check: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    apps_core_api_log_health_check: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LogHealthCheckResponse"];
+                };
+            };
+        };
+    };
+    apps_movie_api_get_now_playing_movies: {
         parameters: {
             query?: {
-                page?: number;
+                /** @description Page number for pagination */
+                page?: number | null;
             };
             header?: never;
             path?: never;
@@ -870,10 +2218,11 @@ export interface operations {
             };
         };
     };
-    movie_api_get_upcoming_movies: {
+    apps_movie_api_get_upcoming_movies: {
         parameters: {
             query?: {
-                page?: number;
+                /** @description Page number for pagination */
+                page?: number | null;
             };
             header?: never;
             path?: never;
@@ -892,11 +2241,13 @@ export interface operations {
             };
         };
     };
-    movie_api_search_movies: {
+    apps_movie_api_search_movies: {
         parameters: {
             query: {
+                /** @description Search query string */
                 query: string;
-                page?: number;
+                /** @description Page number for pagination */
+                page?: number | null;
             };
             header?: never;
             path?: never;
@@ -915,49 +2266,58 @@ export interface operations {
             };
         };
     };
-    movie_api_discover_movies: {
+    apps_movie_api_discover_movies: {
         parameters: {
             query?: {
-                page?: number;
+                /** @description Page number for pagination */
+                page?: number | null;
+                /** @description Comma-separated genre IDs */
                 with_genres?: string | null;
+                /** @description Comma-separated keyword IDs */
                 with_keywords?: string | null;
+                without_genres?: string | null;
+                without_keywords?: string | null;
+                /** @description Comma-separated person IDs */
                 with_cast?: string | null;
                 with_crew?: string | null;
                 with_people?: string | null;
                 with_companies?: string | null;
                 with_networks?: string | null;
-                with_watch_providers?: string | null;
-                with_watch_monetization_types?: string | null;
-                without_genres?: string | null;
-                without_keywords?: string | null;
                 without_companies?: string | null;
                 without_networks?: string | null;
+                with_watch_providers?: string | null;
                 without_watch_providers?: string | null;
+                with_watch_monetization_types?: string | null;
                 include_adult?: boolean | null;
                 include_video?: boolean | null;
+                /** @description ISO 639-1 language code */
                 language?: string | null;
+                /** @description ISO 3166-1 country code */
+                region?: string | null;
+                with_original_language?: string | null;
+                without_original_language?: string | null;
                 primary_release_year?: number | null;
+                year?: number | null;
                 primary_release_date_gte?: string | null;
                 primary_release_date_lte?: string | null;
                 release_date_gte?: string | null;
                 release_date_lte?: string | null;
                 with_release_type?: string | null;
-                year?: number | null;
                 vote_count_gte?: number | null;
                 vote_count_lte?: number | null;
                 vote_average_gte?: number | null;
                 vote_average_lte?: number | null;
                 with_runtime_gte?: number | null;
                 with_runtime_lte?: number | null;
-                region?: string | null;
-                sort_by?: string | null;
                 certification_country?: string | null;
                 certification?: string | null;
                 certification_lte?: string | null;
                 certification_gte?: string | null;
-                with_original_language?: string | null;
-                without_original_language?: string | null;
+                /** @description Sort by field (e.g., popularity.desc, vote_average.desc) */
+                sort_by?: string | null;
+                /** @description Decade filter (e.g., '1990s') */
                 decade?: string | null;
+                /** @description Alias for with_genres */
                 genres?: string | null;
             };
             header?: never;
@@ -977,7 +2337,7 @@ export interface operations {
             };
         };
     };
-    movie_api_get_movie_detail: {
+    apps_movie_api_get_movie_detail: {
         parameters: {
             query?: never;
             header?: never;
@@ -999,7 +2359,7 @@ export interface operations {
             };
         };
     };
-    movie_api_get_movie_genres: {
+    apps_movie_api_get_movie_genres: {
         parameters: {
             query?: never;
             header?: never;
@@ -1019,10 +2379,11 @@ export interface operations {
             };
         };
     };
-    movie_api_get_popular_keywords: {
+    apps_movie_api_get_popular_keywords: {
         parameters: {
             query?: {
-                page?: number;
+                /** @description Page number for pagination */
+                page?: number | null;
             };
             header?: never;
             path?: never;
@@ -1041,7 +2402,7 @@ export interface operations {
             };
         };
     };
-    movie_api_search_keywords: {
+    apps_movie_api_search_keywords: {
         parameters: {
             query: {
                 query: string;
@@ -1063,10 +2424,11 @@ export interface operations {
             };
         };
     };
-    movie_api_get_popular_people: {
+    apps_movie_api_get_popular_people: {
         parameters: {
             query?: {
-                page?: number;
+                /** @description Page number for pagination */
+                page?: number | null;
             };
             header?: never;
             path?: never;
@@ -1085,7 +2447,7 @@ export interface operations {
             };
         };
     };
-    movie_api_search_people: {
+    apps_movie_api_search_people: {
         parameters: {
             query: {
                 query: string;
@@ -1103,6 +2465,120 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PaginatedPersonResponseSchema"];
+                };
+            };
+        };
+    };
+    apps_user_movie_data_api_get_user_movies: {
+        parameters: {
+            query?: {
+                watchlist?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedMovieResponseSchema"];
+                };
+            };
+        };
+    };
+    apps_user_movie_data_api_get_user_movie_data_by_tmdb_id: {
+        parameters: {
+            query: {
+                tmdb_id: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserMovieDataDetailSchema"];
+                };
+            };
+        };
+    };
+    apps_user_movie_data_api_create_user_movie_data: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UserMovieDataCreateSchema"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserMovieDataDetailSchema"];
+                };
+            };
+        };
+    };
+    apps_user_movie_data_api_delete_user_movie_data: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    apps_user_movie_data_api_update_user_movie_data: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UserMovieDataUpdateSchema"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserMovieDataDetailSchema"];
                 };
             };
         };

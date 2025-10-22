@@ -16,36 +16,22 @@ Including another URLconf
 """
 
 from django.contrib import admin
-from django.urls import path, include
-from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
-from authentication.views import (
-    JWTCookieTokenObtainPairView,
-    JWTCookieTokenRefreshView,
-    LogOutAPIView,
-    RegisterAPIView,
-    CsrfTokenView,
-)
-from core.views.health_check import HealthCheckView
+from django.urls import include, path
+
 from .api import api
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
+    path("admin/", admin.site.urls),  # pyright: ignore[reportCallIssue,reportArgumentType]  # django-types limitation: admin.site.urls type inference incomplete
     path("__debug__/", include("debug_toolbar.urls")),
-    # django-allauth
-    # Provides: email verification, password reset, OAuth callbacks
+    # django-allauth Headless Mode (SPA/API-only)
+    # Provides JSON API endpoints for OAuth, email verification, password reset
+    # Browser API: /_allauth/browser/v1/...
+    path("_allauth/", include("allauth.headless.urls")),
+    # django-allauth Traditional URLs (needed for OAuth callbacks)
+    # OAuth providers redirect to /accounts/<provider>/login/callback/
+    # These are still needed even in headless mode for OAuth flow completion
     path("accounts/", include("allauth.urls")),
-    # Legacy DRF API documentation (for remaining DRF endpoints)
-    path("api/drf-schema/", SpectacularAPIView.as_view(), name="drf-schema"),
-    path("api/drf-docs/", SpectacularSwaggerView.as_view(url_name="drf-schema"), name="drf-docs"),
-    path("api/user/", include("authentication.urls")),
-    path("api/user-movie-data/", include("user_movie_data.urls")),
-    path("api/core/", include("core.urls")),  # Core app for logging and utilities
     # Django Ninja API (modern, type-safe endpoints)
+    # All authentication, movie, core, and user data endpoints provided by Django Ninja
     path("api/", api.urls),
-    path("api/token/", JWTCookieTokenObtainPairView.as_view(), name="token_obtain_pair"),
-    path("api/token/refresh/", JWTCookieTokenRefreshView.as_view(), name="token_refresh"),
-    path("api/logout/", LogOutAPIView.as_view(), name="logout"),
-    path("api/register/", RegisterAPIView.as_view(), name="register"),
-    path("api/csrf-token/", CsrfTokenView.as_view(), name="csrf-token"),
-    path("api/health-check/", HealthCheckView.as_view(), name="health-check"),
 ]

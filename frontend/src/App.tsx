@@ -18,6 +18,7 @@ const TestLogin = lazy(() => import("./pages/user/TestLogin"));
 const Register = lazy(() => import("./pages/user/Register"));
 const VerifyEmail = lazy(() => import("./pages/user/VerifyEmail"));
 const Profile = lazy(() => import("./pages/user/Profile"));
+const Watchlist = lazy(() => import("./pages/user/Watchlist"));
 const Settings = lazy(() => import("./pages/user/Settings"));
 const MovieDetail = lazy(() => import("./pages/movie/MovieDetail"));
 const Upcoming = lazy(() => import("./pages/movie/Upcoming"));
@@ -64,6 +65,7 @@ const App: React.FC = () => {
 							{/* Redirect home to Popular movies */}
 							<Route path={ROUTES.HOME} element={<Navigate to={ROUTES.POPULAR} replace />} />
 							<Route path={ROUTES.PROFILE} element={<Profile />} />
+							<Route path={ROUTES.WATCHLIST} element={<Watchlist />} />
 							<Route path={ROUTES.SETTINGS} element={<Settings />} />
 
 							{/* Movie collection routes with shared layout */}

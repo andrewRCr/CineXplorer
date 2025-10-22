@@ -13,8 +13,9 @@ import { Link } from "react-router-dom";
 import { type Movie } from "@/types/movie";
 import { Tooltip } from "../chakra/tooltip";
 import { LuEye, LuHeart } from "react-icons/lu";
-import { RiPlayListAddLine } from "react-icons/ri";
+import { RiPlayListAddLine, RiPlayListFill } from "react-icons/ri";
 import MovieUserScore from "./MovieUserScore";
+import { useMovieActions } from "../../hooks/useMovieActions";
 
 interface MovieCardProps {
 	movie: Movie;
@@ -31,6 +32,18 @@ const MovieCard = ({ movie, currentPage, source, query }: MovieCardProps) => {
 	const cardWidth = useBreakpointValue({
 		base: "100%",
 	});
+
+	// Local state for watchlist to handle immediate UI updates
+	const [localWatchlistState, setLocalWatchlistState] = useState<boolean | null>(null);
+
+	// Movie actions hook for watchlist, watched, liked, etc.
+	const { toggleWatchlist, isUpdating } = useMovieActions({ movie });
+
+	// Compute watchlist state: prefer local state (after toggle), fallback to prop
+	const isOnWatchlist = useMemo(
+		() => localWatchlistState ?? movie.user_movie_data?.user_on_watchlist ?? false,
+		[localWatchlistState, movie.user_movie_data]
+	);
 
 	// Optimize title truncation check with debounced callback
 	const checkTruncation = useCallback(() => {
@@ -262,9 +275,36 @@ const MovieCard = ({ movie, currentPage, source, query }: MovieCardProps) => {
 										<LuHeart />
 									</IconButton>
 								</Tooltip>
-								<Tooltip content="Add to watchlist" openDelay={500}>
-									<IconButton variant="ghost" size="sm">
-										<RiPlayListAddLine />
+								<Tooltip
+									content={isOnWatchlist ? "Remove from watchlist" : "Add to watchlist"}
+									openDelay={500}
+								>
+									<IconButton
+										variant="ghost"
+										colorPalette={isOnWatchlist ? "blue" : undefined}
+										size="sm"
+										onClick={async (e) => {
+											e.preventDefault();
+											e.stopPropagation();
+											// Optimistically update local state for immediate UI feedback
+											setLocalWatchlistState(!isOnWatchlist);
+											try {
+												await toggleWatchlist();
+												// TODO (7.7.7): Show success notification
+												console.log(
+													isOnWatchlist
+														? "Movie removed from watchlist"
+														: "Movie added to watchlist"
+												);
+											} catch (error) {
+												// Rollback on error
+												setLocalWatchlistState(isOnWatchlist);
+												console.error("Failed to toggle watchlist:", error);
+											}
+										}}
+										disabled={isUpdating}
+									>
+										{isOnWatchlist ? <RiPlayListFill /> : <RiPlayListAddLine />}
 									</IconButton>
 								</Tooltip>
 							</ButtonGroup>
@@ -293,6 +333,8 @@ const MemoizedMovieCard = memo(MovieCard, (prevProps, nextProps) => {
 	// Custom comparison function for better performance
 	return (
 		prevProps.movie.tmdb_id === nextProps.movie.tmdb_id &&
+		prevProps.movie.user_movie_data?.user_on_watchlist ===
+			nextProps.movie.user_movie_data?.user_on_watchlist &&
 		prevProps.currentPage === nextProps.currentPage &&
 		prevProps.source === nextProps.source &&
 		prevProps.query === nextProps.query

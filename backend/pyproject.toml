@@ -1,0 +1,189 @@
+# CineXplorer Backend - Python Project Configuration
+
+[tool.ruff]
+# Target Python 3.13
+target-version = "py313"
+
+# Line length to match existing standard
+line-length = 99
+
+# Exclude patterns (matches .flake8 config)
+exclude = [
+    "migrations",
+    "__pycache__",
+    "manage.py",
+    ".git",
+    ".venv",
+    "env",
+    "venv",
+    ".pytest_cache",
+    ".tox",
+]
+
+[tool.ruff.lint]
+# Enable rule categories
+select = [
+    "E",     # pycodestyle errors
+    "W",     # pycodestyle warnings
+    "F",     # pyflakes
+    "I",     # isort
+    "N",     # pep8-naming
+    "UP",    # pyupgrade
+    "RUF",   # Ruff-specific rules
+    "B",     # flake8-bugbear
+    "C4",    # flake8-comprehensions
+    "DTZ",   # flake8-datetimez
+    "T10",   # flake8-debugger
+    "DJ",    # flake8-django
+    "PIE",   # flake8-pie
+    "PT",    # flake8-pytest-style
+    "SIM",   # flake8-simplify
+    "ANN401", # Explicit typing.Any detection (type safety quality gate)
+]
+
+# Ignore specific rules
+ignore = [
+    "DJ001",   # Django model without __str__ (not always needed)
+    "RUF012",  # Mutable class attributes (Django/DRF/Pydantic Meta classes)
+]
+
+[tool.ruff.lint.mccabe]
+# Maximum complexity (matches .flake8 max-complexity = 10)
+max-complexity = 10
+
+[tool.ruff.lint.isort]
+# Django-aware import sorting
+known-first-party = ["apps", "config"]
+section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
+
+[tool.ruff.lint.per-file-ignores]
+# Allow unused imports in __init__.py files
+"__init__.py" = ["F401"]
+# Allow fixtures and test-specific patterns in tests
+"tests/**/*.py" = ["PT", "B", "PIE"]
+"*/tests/**/*.py" = ["PT", "B", "PIE"]
+
+# Typing.Any exceptions for justified external API boundaries
+# See: .arc/reference/strategies/strategy-type-safety.md for justification policy
+"apps/authentication/adapters.py" = ["ANN401"]  # Allauth library contracts
+"apps/authentication/auth_ninja.py" = ["ANN401"]  # Django settings & OpenAPI schemas
+"apps/core/services/metrics.py" = ["ANN401"]  # Monitoring system mixed-type labels
+"apps/core/management/commands/export_openapi_schema.py" = ["ANN401"]  # OpenAPI schema dict
+"apps/core/management/commands/wait_for_db.py" = ["N806", "ANN401"]  # ALL_CAPS OK, Django command args
+"stubs/**/*.pyi" = ["ANN401"]  # Type stubs may use Any for external library contracts
+
+# To-be-deleted DRF files (ignore violations until Phase 6 cleanup)
+"apps/authentication/serializers.py" = ["N806", "N815", "ANN401"]
+"apps/authentication/views.py" = ["N806", "N815", "ANN401"]
+"apps/user_movie_data/serializers.py" = ["N806", "N815", "ANN401"]
+"apps/user_movie_data/views.py" = ["N806", "N815", "ANN401"]
+"apps/core/views/logging.py" = ["N806", "ANN401"]  # DRF view, will be migrated later
+"apps/core/views/tmdb.py" = ["N806", "ANN401"]     # DRF view, will be migrated later
+
+[tool.ruff.format]
+# Use double quotes (Python default)
+quote-style = "double"
+
+# Respect magic trailing commas
+skip-magic-trailing-comma = false
+
+# Format docstrings
+docstring-code-format = true
+
+[tool.pytest.ini_options]
+# Django settings module for tests
+DJANGO_SETTINGS_MODULE = "config.settings_test"
+
+# Test discovery patterns
+testpaths = ["apps"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+
+# Additional options
+addopts = [
+    "--reuse-db",              # Reuse test database (equivalent to --keepdb in manage.py test)
+    "--import-mode=importlib", # Use importlib for module imports (modern approach)
+    "--strict-markers",        # Raise error on unregistered markers
+    "-ra",                     # Show extra test summary info for all except passed tests
+    "--tb=short",              # Shorter traceback format
+]
+
+# Markers for categorizing tests
+markers = [
+    "enable_throttling: Enable throttling for specific tests (default: bypassed for speed)",
+    "slow: Mark tests that take significant time to run",
+]
+
+# Warning filters
+filterwarnings = [
+    # Suppress Pydantic V2 deprecation warnings from third-party libraries
+    # (django-ninja, django-ninja-extra) until they migrate to ConfigDict
+    # Our code warnings will still be shown - these are library-specific
+    "ignore::pydantic.warnings.PydanticDeprecatedSince20:ninja.schema",
+    "ignore::pydantic.warnings.PydanticDeprecatedSince20:ninja.conf",
+    "ignore::pydantic.warnings.PydanticDeprecatedSince20:ninja_extra.conf",
+]
+
+[tool.coverage.run]
+# Source paths to measure (only application code)
+source = ["apps"]
+
+# Omit patterns - files that shouldn't be in coverage reports
+omit = [
+    "*/migrations/*",           # Django migrations (auto-generated)
+    "*/tests/*",                # Test files themselves
+    "*/test_*.py",              # Test files
+    "*_test.py",                # Test files
+    "*/conftest.py",            # pytest configuration
+    "apps/*/apps.py",           # Django app configuration (no logic)
+    "apps/*/admin.py",          # Django admin registration (typically no logic)
+    "apps/*/management/commands/*",  # Management commands (tested separately if needed)
+    "apps/*/__init__.py",       # Package initialization files
+    "apps/__init__.py",         # Root package init
+    "config/django_types.py",   # Type stub utilities
+    "scripts/*",                # Utility scripts (not application code)
+    "shared/*",                 # Shared utilities (tested via usage)
+]
+
+# Parallel mode for pytest-xdist compatibility
+parallel = true
+
+[tool.coverage.report]
+# Minimum coverage threshold (will fail if below this)
+# Target: 80% general (pending service layer work), 90%+ critical paths (API layer complete)
+# Current: 71.67% reflects API layer completion; service layer deferred to Backend Modernization PRD
+fail_under = 71
+
+# Precision for coverage percentages
+precision = 2
+
+# Skip files with no executable code
+skip_empty = true
+
+# Show lines that weren't covered
+show_missing = true
+
+# Sort report by coverage percentage (lowest first)
+sort = "Cover"
+
+# Exclude lines/patterns from coverage
+exclude_lines = [
+    "pragma: no cover",         # Explicit coverage exclusion
+    "def __repr__",             # String representations (not critical)
+    "def __str__",              # String representations (not critical)
+    "raise AssertionError",     # Defensive assertions
+    "raise NotImplementedError", # Abstract methods
+    "if __name__ == .__main__.:", # Script entry points
+    "if TYPE_CHECKING:",        # Type checking imports
+    "class .*\\bProtocol\\):",  # Protocol definitions
+    "@(abc\\.)?abstractmethod", # Abstract methods
+]
+
+[tool.coverage.html]
+# HTML report directory
+directory = "htmlcov"
+
+[tool.coverage.json]
+# JSON report file
+output = "coverage.json"

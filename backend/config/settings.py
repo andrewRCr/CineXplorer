@@ -10,12 +10,16 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
-from datetime import timedelta
-import environ
-import socket
+import logging
 import os
+import socket
 import sys
+from collections.abc import Mapping
+from datetime import timedelta
 from pathlib import Path
+
+import environ
+
 from .logging import get_logging_config
 
 # initialize environment variables
@@ -42,6 +46,8 @@ sys.path.insert(0, SHARED_DIR)
 ALLOWED_HOSTS = [
     "localhost",
     "127.0.0.1",
+    "localhost:8000",  # Django backend for OAuth callback_url validation
+    "localhost:5173",  # Frontend for OAuth callback_url validation
     "backend",
     "testserver",  # Django test client
 ]
@@ -61,15 +67,15 @@ INSTALLED_APPS = [
     "core",
     "debug_toolbar",
     "corsheaders",
-    "rest_framework",
-    "rest_framework.authtoken",
-    "drf_spectacular",
     # django-allauth
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
     "allauth.socialaccount.providers.google",
     "allauth.socialaccount.providers.github",
+    "allauth.headless",  # Headless mode for SPA integration
+    # django-ninja-jwt token blacklist (refresh token rotation security)
+    "ninja_jwt.token_blacklist",
     # Project apps
     "authentication",
     "movie",
@@ -83,23 +89,31 @@ MIDDLEWARE = [
     "django.contrib.sessions.middleware.SessionMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
-    "django.middleware.csrf.CsrfViewMiddleware",
-    "authentication.middleware.CsrfHeaderMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    # Custom CSRF middleware with path-based exemptions (workaround for Django Ninja bug #1464)
+    # Must run AFTER AuthenticationMiddleware to check request.user.is_authenticated
+    # Replaces Django's CsrfViewMiddleware to avoid conflict with Django Ninja
+    "apps.authentication.middleware.CsrfHeaderMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "allauth.account.middleware.AccountMiddleware",  # Required for django-allauth
 ]
 
-INTERNAL_IPS = [
-    # ...
+# Internal IPs for Django Debug Toolbar
+_base_internal_ips = [
     "127.0.0.1",
     "0.0.0.0:8000",
-    # ...
 ]
 
-hostname, _, ips = socket.gethostbyname_ex(socket.gethostname())
-INTERNAL_IPS += [".".join(ip.split(".")[:-1] + ["1"]) for ip in ips]
+# Add Docker network IPs dynamically
+try:
+    hostname, _, ips = socket.gethostbyname_ex(socket.gethostname())
+    _docker_network_ips = [".".join([*ip.split(".")[:-1], "1"]) for ip in ips]
+except (socket.gaierror, socket.herror, Exception) as e:
+    logging.warning("Docker network detection failed: %s", e)
+    _docker_network_ips = []
+
+INTERNAL_IPS = _base_internal_ips + _docker_network_ips
 
 ROOT_URLCONF = "config.urls"
 
@@ -132,6 +146,18 @@ DATABASES = {
         "NAME": env("POSTGRES_DB"),
         "USER": env("POSTGRES_USER"),
         "PASSWORD": env("POSTGRES_PASSWORD"),
+    }
+}
+
+# Cache configuration
+# https://docs.djangoproject.com/en/5.2/ref/settings/#caches
+# Redis serves dual purposes (same instance, different databases):
+#   - DB 0: Django cache backend (rate limiting for Django Ninja throttling)
+#   - DB 1: Future Celery broker (Backend Modernization PRD - async task processing)
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": env("REDIS_URL", default="redis://redis:6379/0"),
     }
 }
 
@@ -184,22 +210,26 @@ AUTHENTICATION_BACKENDS = [
     "allauth.account.auth_backends.AuthenticationBackend",  # allauth (OAuth + email)
 ]
 
-# generate openAPI schema with drf-spectacular
-REST_FRAMEWORK = {
-    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
-    "DEFAULT_AUTHENTICATION_CLASSES": [
-        # 'rest_framework.authentication.TokenAuthentication',
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
-        "authentication.authenticate.JWTCookieAuthentication",
-    ],
-    "DEFAULT_THROTTLE_RATES": {
-        "frontend_logs": "100/minute",
-    },
-}
-
 # default environment variables
 DEBUG = env.bool("DEBUG", default=False)
 SECRET_KEY = env("DJANGO_SECRET_KEY")
+
+# Environment configuration (development, staging, production)
+# Controls environment-aware security settings and logging
+# Use lowercase mutable variable, then assign to UPPERCASE constant (Pyright type safety)
+_environment = env("ENVIRONMENT", default="development")
+# Validate ENVIRONMENT value
+if _environment not in ["development", "staging", "production"]:
+    import warnings
+    warnings.warn(
+        f"Invalid ENVIRONMENT value: {_environment}. "
+        f"Must be 'development', 'staging', or 'production'. "
+        f"Defaulting to 'development'.",
+        RuntimeWarning,
+        stacklevel=2
+    )
+    _environment = "development"
+ENVIRONMENT = _environment  # Final constant assignment
 
 # custom environment variables
 TMDB_API_KEY = env("TMDB_API_KEY")
@@ -266,6 +296,21 @@ ACCOUNT_EMAIL_SUBJECT_PREFIX = "[CineXplorer] "
 # Adapter configuration - Custom adapter for ZeptoMail integration
 ACCOUNT_ADAPTER = "authentication.adapters.CustomAccountAdapter"
 
+# Headless Mode Configuration (for SPA/React frontend)
+# Provides JSON API endpoints instead of HTML templates
+# Must be True to enable Token Strategy API for OAuth JWT generation
+HEADLESS_ONLY = True
+HEADLESS_FRONTEND_URLS = {
+    "account_confirm_email": f"{FRONTEND_URL}/auth/verify-email",
+    "account_reset_password_from_key": f"{FRONTEND_URL}/auth/reset-password",
+    "account_signup": f"{FRONTEND_URL}/auth/signup",
+    "socialaccount_login_error": f"{FRONTEND_URL}/login?error=oauth",
+}
+
+# Token Strategy - JWT token generation for headless mode
+# Official django-allauth extension point for custom token generation
+HEADLESS_TOKEN_STRATEGY = "authentication.token_strategy.JWTTokenStrategy"
+
 # Social account settings
 SOCIALACCOUNT_AUTO_SIGNUP = True  # Auto-create account from social login
 SOCIALACCOUNT_EMAIL_VERIFICATION = "none"  # Social providers verify email
@@ -314,17 +359,97 @@ CSRF_TRUSTED_ORIGINS = [
     "http://localhost:5173",   # Development (direct frontend dev server)
     "https://localhost:5173",  # Development (if using HTTPS)
     "https://localhost:5174",
+    "https://localhost:8000",  # Development (direct backend access for testing)
     "https://localhost:8444",  # Production-like (Caddy proxy)
 ]
 
+# Cookie Security Settings (Environment-Aware)
+# Session cookie security - enforce HTTPS in production/staging, allow HTTP in development
+# Requires HTTPS (prevents interception)
+SESSION_COOKIE_SECURE = ENVIRONMENT in ["production", "staging"]
+SESSION_COOKIE_HTTPONLY = True  # Prevent JavaScript access (XSS protection)
+SESSION_COOKIE_SAMESITE = 'Lax'  # CSRF protection - same-site requests only
+# Requires HTTPS (prevents interception)
+CSRF_COOKIE_SECURE = ENVIRONMENT in ["production", "staging"]
+
+# CSRF Cookie Configuration (for headless mode / API usage)
+# Must be False so JavaScript can read the CSRF token from cookies
+# This is safe - CSRF tokens are defense mechanisms, not secrets
+CSRF_COOKIE_HTTPONLY = False
+
+# CSRF Configuration for Django Ninja + Django Middleware Integration
+# Solution: Use Django's CsrfViewMiddleware exclusively (NOT Django Ninja's CSRF)
+#
+# Background:
+# - Django Ninja v1+ auto-detects APIKeyCookie subclasses and enables CSRF
+# - Django Ninja's csrf parameter controls @csrf_exempt decorator (not validation)
+# - Passing csrf=True to auth classes causes conflict with Django's middleware
+# - Django Ninja Issue #1464: csrf=True rejects valid tokens (unresolved bug)
+#
+# Implementation:
+# 1. NinjaAPI(csrf=False) - Disable Django Ninja's CSRF entirely
+# 2. JWTCookieAuth.__init__() - No csrf parameter (avoid bug #1464)
+# 3. CsrfViewMiddleware enabled - Django handles all CSRF validation
+# 4. CSRF_TRUSTED_ORIGINS - Must include all origins sending requests
+#
+# Requirements:
+# - Frontend MUST send X-CSRFToken header with CSRF token value
+# - Frontend MUST send Referer header for HTTPS requests
+# - Referer must match one of CSRF_TRUSTED_ORIGINS
+#
+# See: https://github.com/vitalik/django-ninja/issues/1464
+CSRF_TRUSTED_ORIGINS_USE_HTTPS = not DEBUG  # Use HTTPS for trusted origins in production
+
+# HSTS and SSL/TLS Security Settings (Environment-Aware)
+# HSTS (HTTP Strict Transport Security) - forces browsers to use HTTPS
+# Production: Full HSTS with 1-year duration and preload
+# Staging: HSTS with shorter duration (1 hour) for testing
+# Development: No HSTS (allow HTTP)
+# Use lowercase mutables, then assign to UPPERCASE constants (Pyright type safety)
+if ENVIRONMENT == "production":
+    _hsts_seconds = 31536000  # 1 year (recommended minimum for production)
+    _hsts_include_subdomains = True  # Apply HSTS to all subdomains
+    _hsts_preload = True  # Allow inclusion in browser HSTS preload lists
+    _ssl_redirect = True  # Redirect all HTTP requests to HTTPS
+    # Caddy proxy compatibility - trust X-Forwarded-Proto header for HTTPS detection
+    _proxy_ssl_header = ('HTTP_X_FORWARDED_PROTO', 'https')
+elif ENVIRONMENT == "staging":
+    _hsts_seconds = 3600  # 1 hour (shorter for staging to allow testing)
+    _hsts_include_subdomains = False  # More flexible for staging subdomains
+    _hsts_preload = False  # Don't preload staging
+    _ssl_redirect = True  # Still redirect HTTP to HTTPS
+    _proxy_ssl_header = ('HTTP_X_FORWARDED_PROTO', 'https')
+else:  # Development: No HSTS settings (allow HTTP for local development)
+    _hsts_seconds = 0
+    _hsts_include_subdomains = False
+    _hsts_preload = False
+    _ssl_redirect = False
+    _proxy_ssl_header = None
+
+# Final constant assignments
+SECURE_HSTS_SECONDS = _hsts_seconds
+SECURE_HSTS_INCLUDE_SUBDOMAINS = _hsts_include_subdomains
+SECURE_HSTS_PRELOAD = _hsts_preload
+SECURE_SSL_REDIRECT = _ssl_redirect
+SECURE_PROXY_SSL_HEADER = _proxy_ssl_header
+
+# Additional Security Headers
+X_FRAME_OPTIONS = 'DENY'  # Prevent clickjacking attacks (no iframe embedding)
+SECURE_CONTENT_TYPE_NOSNIFF = True  # Prevent MIME type sniffing
+SECURE_BROWSER_XSS_FILTER = True  # Enable legacy XSS filter in older browsers
+
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=5),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=30),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=14),  # RFC 8725 recommendation: reduce from 30 days
     "ACCESS_TOKEN_NAME": "access_token",
     "REFRESH_TOKEN_NAME": "refresh_token",
-    # For cross-site cookies with HTTPS, use 'None'.
-    # If you only use same-site cookies, 'Lax' is more secure but will block cross-site requests.
-    "JWT_COOKIE_SAMESITE": "None",
+    # SameSite='Lax' provides CSRF protection for same-origin requests
+    # Frontend and backend served via same Caddy proxy (same-origin), so 'Lax' is appropriate
+    # 'None' would be needed only for true cross-site scenarios (e.g., API on different domain)
+    "JWT_COOKIE_SAMESITE": "Lax",
+    # Token rotation security - prevents stolen refresh token reuse
+    "ROTATE_REFRESH_TOKENS": True,  # Issue new refresh token on each refresh
+    "BLACKLIST_AFTER_ROTATION": True,  # Auto-blacklist old token after rotation
 }
 
 # Testing flag
@@ -387,31 +512,36 @@ LOG_DIRECTORY = ensure_log_directory()
 # - File rotation with appropriate backup counts
 # - Database query performance monitoring
 # - Separate log files for different components
-try:
-    LOGGING = get_logging_config(log_dir=LOG_DIRECTORY)
-except Exception as e:
-    print(f"Error configuring logging: {e}", file=sys.stderr)
-    # Fallback to basic console-only logging
-    LOGGING = {
-        'version': 1,
-        'disable_existing_loggers': False,
-        'formatters': {
-            'simple': {
-                'format': '{levelname} {name} {message}',
-                'style': '{',
+
+def _get_logging_config() -> Mapping[str, object]:
+    """Get logging configuration with fallback to basic console logging."""
+    try:
+        return get_logging_config(log_dir=LOG_DIRECTORY)
+    except Exception as e:
+        print(f"Error configuring logging: {e}", file=sys.stderr)
+        # Fallback to basic console-only logging
+        return {
+            'version': 1,
+            'disable_existing_loggers': False,
+            'formatters': {
+                'simple': {
+                    'format': '{levelname} {name} {message}',
+                    'style': '{',
+                },
             },
-        },
-        'handlers': {
-            'console': {
-                'class': 'logging.StreamHandler',
-                'formatter': 'simple',
+            'handlers': {
+                'console': {
+                    'class': 'logging.StreamHandler',
+                    'formatter': 'simple',
+                },
             },
-        },
-        'root': {
-            'handlers': ['console'],
-            'level': 'INFO',
-        },
-    }
+            'root': {
+                'handlers': ['console'],
+                'level': 'INFO',
+            },
+        }
+
+LOGGING = _get_logging_config()
 
 
 # Logging-related settings for development

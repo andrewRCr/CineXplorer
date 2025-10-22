@@ -6,10 +6,16 @@ is working correctly and producing expected output.
 """
 
 import time
+from argparse import ArgumentParser
+from typing import cast
+
 from django.core.management.base import BaseCommand
 from movie.services.movie_service import (
-    get_movie_by_id, discover_movies, search_movies,
-    get_now_playing_movies, get_upcoming_movies
+    discover_movies,
+    get_movie_by_id,
+    get_now_playing_movies,
+    get_upcoming_movies,
+    search_movies,
 )
 from ninja.errors import HttpError
 
@@ -17,7 +23,7 @@ from ninja.errors import HttpError
 class Command(BaseCommand):
     help = 'Test TMDB API logging by exercising typical API operations'
 
-    def add_arguments(self, parser):
+    def add_arguments(self, parser: ArgumentParser) -> None:
         parser.add_argument(
             '--operations',
             type=str,
@@ -31,11 +37,11 @@ class Command(BaseCommand):
             help='Delay between requests in seconds (default: 0.5)'
         )
 
-    def handle(self, *args, **options):
+    def handle(self, *args: object, **options: object) -> None:
         self.stdout.write("🎬 Starting TMDB API logging test...")
 
-        operations = options['operations']
-        delay = options['delay']
+        operations: str = cast(str, options.get('operations', 'all'))
+        delay: float = cast(float, options.get('delay', 0.5))
 
         # Test operations mapping
         test_operations = {
@@ -77,70 +83,70 @@ class Command(BaseCommand):
         self.stdout.write("  - backend/logs/requests.log")
         self.stdout.write("  - backend/logs/django.log")
 
-    def test_discover_movies(self):
+    def test_discover_movies(self) -> None:
         """Test discover movies API call."""
         self.stdout.write("  📊 Discover popular movies...")
         try:
             result = discover_movies(page=1, sort_by='popularity.desc')
             self.stdout.write(f"  🎭 Found {len(result.results)} movies")
         except HttpError as e:
-            self.stdout.write(f"  ❌ Error: {e.detail}")
+            self.stdout.write(f"  ❌ Error: {e.message}")
         except Exception as e:
-            self.stdout.write(f"  ❌ Error: {str(e)}")
+            self.stdout.write(f"  ❌ Error: {e!s}")
 
-    def test_search_movies(self):
+    def test_search_movies(self) -> None:
         """Test search movies API call."""
         self.stdout.write("  🔍 Searching for 'Inception'...")
         try:
             result = search_movies(query='Inception', page=1)
             self.stdout.write(f"  🎬 Found {len(result.results)} results")
         except HttpError as e:
-            self.stdout.write(f"  ❌ Error: {e.detail}")
+            self.stdout.write(f"  ❌ Error: {e.message}")
         except Exception as e:
-            self.stdout.write(f"  ❌ Error: {str(e)}")
+            self.stdout.write(f"  ❌ Error: {e!s}")
 
-    def test_movie_details(self):
+    def test_movie_details(self) -> None:
         """Test movie details API call."""
         self.stdout.write("  📄 Getting details for movie ID 27205 (Inception)...")
         try:
             result = get_movie_by_id(27205)
             title = result.title
-            year = result.release_date[:4] if result.release_date else 'Unknown'
+            year = str(result.release_date.year) if result.release_date else 'Unknown'
             self.stdout.write(f"  🎯 Retrieved: {title} ({year})")
         except HttpError as e:
-            self.stdout.write(f"  ❌ Error: {e.detail}")
+            self.stdout.write(f"  ❌ Error: {e.message}")
         except Exception as e:
-            self.stdout.write(f"  ❌ Error: {str(e)}")
+            self.stdout.write(f"  ❌ Error: {e!s}")
 
-    def test_popular_movies(self):
+    def test_popular_movies(self) -> None:
         """Test popular movies API call."""
         self.stdout.write("  🌟 Getting popular movies...")
         try:
             result = discover_movies(page=1, sort_by='popularity.desc')
             self.stdout.write(f"  🏆 Found {len(result.results)} popular movies")
         except HttpError as e:
-            self.stdout.write(f"  ❌ Error: {e.detail}")
+            self.stdout.write(f"  ❌ Error: {e.message}")
         except Exception as e:
-            self.stdout.write(f"  ❌ Error: {str(e)}")
+            self.stdout.write(f"  ❌ Error: {e!s}")
 
-    def test_now_playing(self):
+    def test_now_playing(self) -> None:
         """Test now playing movies API call."""
         self.stdout.write("  🎪 Getting now playing movies...")
         try:
             result = get_now_playing_movies(page=1)
             self.stdout.write(f"  🎭 Found {len(result.results)} now playing movies")
         except HttpError as e:
-            self.stdout.write(f"  ❌ Error: {e.detail}")
+            self.stdout.write(f"  ❌ Error: {e.message}")
         except Exception as e:
-            self.stdout.write(f"  ❌ Error: {str(e)}")
+            self.stdout.write(f"  ❌ Error: {e!s}")
 
-    def test_upcoming_movies(self):
+    def test_upcoming_movies(self) -> None:
         """Test upcoming movies API call."""
         self.stdout.write("  🔮 Getting upcoming movies...")
         try:
             result = get_upcoming_movies(page=1)
             self.stdout.write(f"  📅 Found {len(result.results)} upcoming movies")
         except HttpError as e:
-            self.stdout.write(f"  ❌ Error: {e.detail}")
+            self.stdout.write(f"  ❌ Error: {e.message}")
         except Exception as e:
-            self.stdout.write(f"  ❌ Error: {str(e)}")
+            self.stdout.write(f"  ❌ Error: {e!s}")

@@ -4,14 +4,16 @@ Django management command to test logging configuration.
 This command tests all aspects of the logging system to ensure proper integration.
 """
 
-from django.core.management.base import BaseCommand
 import logging
+from argparse import ArgumentParser
+
+from django.core.management.base import BaseCommand
 
 
 class Command(BaseCommand):
     help = "Test the logging system configuration and verify all components work correctly"
 
-    def add_arguments(self, parser):
+    def add_arguments(self, parser: ArgumentParser) -> None:
         parser.add_argument(
             "--include-db",
             action="store_true",
@@ -23,26 +25,31 @@ class Command(BaseCommand):
             help="Test slow query logging (simulates slow database operations)",
         )
 
-    def handle(self, *args, **options):
+    def handle(self, *args: object, **options: object) -> None:
         self.stdout.write(self.style.SUCCESS("Testing CineXplorer logging system..."))
+
+        # Django guarantees these exist with default False (action="store_true")
+        include_db: bool = bool(options["include_db"])
+        include_slow_query: bool = bool(options["include_slow_query"])
+
         # Test all loggers
         self.test_application_loggers()
         # Test formatters by checking log output
         self.test_log_levels()
         # Test database logging if requested
-        if options["include_db"]:
-            self.test_database_logging(include_slow=options["include_slow_query"])
+        if include_db:
+            self.test_database_logging(include_slow=include_slow_query)
         # Test error logging
         self.test_error_logging()
         # Display logging configuration summary
         self.display_logging_summary()
         self.stdout.write(self.style.SUCCESS("Logging system test completed!"))
 
-    def test_application_loggers(self):
+    def test_application_loggers(self) -> None:
         """Test all application-specific loggers."""
         self.stdout.write("Testing application loggers...")
         # Import from our logging configuration
-        from config.logging import app_logger, request_logger, tmdb_logger, db_logger
+        from config.logging import app_logger, db_logger, request_logger, tmdb_logger
 
         # Test each logger
         loggers_to_test = [
@@ -56,7 +63,7 @@ class Command(BaseCommand):
             logger.info(f"Testing {description} - this message should appear in logs")
             self.stdout.write(f"  ✓ {name}: {description}")
 
-    def test_log_levels(self):
+    def test_log_levels(self) -> None:
         """Test different log levels and their output."""
         self.stdout.write("Testing log levels...")
         app_logger = logging.getLogger("cinexplorer")
@@ -68,7 +75,7 @@ class Command(BaseCommand):
         app_logger.critical("CRITICAL level message - critical system error")
         self.stdout.write("  ✓ All log levels tested")
 
-    def test_database_logging(self, include_slow=False):
+    def test_database_logging(self, include_slow: bool = False) -> None:
         """Test database query logging."""
         self.stdout.write("Testing database logging...")
         try:
@@ -101,7 +108,7 @@ class Command(BaseCommand):
         except Exception as e:
             self.stdout.write(self.style.WARNING(f"Database logging test failed: {e}"))
 
-    def test_error_logging(self):
+    def test_error_logging(self) -> None:
         """Test error logging and exception handling."""
         self.stdout.write("Testing error logging...")
         app_logger = logging.getLogger("cinexplorer")
@@ -113,14 +120,14 @@ class Command(BaseCommand):
             app_logger.error(f"Caught test exception: {e}", exc_info=True)
             self.stdout.write("  ✓ Exception logging tested (should appear in errors.log)")
 
-    def display_logging_summary(self):
+    def display_logging_summary(self) -> None:
         """Display summary of logging configuration."""
         self.stdout.write("\nLogging Configuration Summary:")
         try:
             from config.logging import (
-                get_database_performance_summary,
                 LOG_ROTATION_CONFIG,
                 LOG_STORAGE_ESTIMATES,
+                get_database_performance_summary,
             )
 
             # Performance thresholds

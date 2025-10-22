@@ -5,13 +5,14 @@ This test ensures that the logging configuration in settings_test.py behaves
 as expected for CI/CD environments.
 """
 
-import os
+import io
 import logging
 import logging.config
-import io
+import os
 from contextlib import redirect_stderr
-from django.test import TestCase
+
 from django.conf import settings
+from django.test import TestCase
 
 
 class TestLoggingConfigurationTest(TestCase):

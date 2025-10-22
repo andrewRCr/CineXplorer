@@ -8,10 +8,11 @@ response data, status codes, headers, timing, and error information.
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+import contextlib
 import json
 import logging
+from collections.abc import Mapping, Sequence
+from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
 
@@ -132,11 +133,9 @@ class ApiResponse:
 
             # Convert content length to integer if possible
             content_length = content_info['content_length']
-            if content_length and isinstance(content_length, str):
-                try:
+            if content_length:
+                with contextlib.suppress(ValueError):
                     content_info['content_length'] = int(content_length)
-                except ValueError:
-                    pass
 
         # Add data size information (in bytes)
         if self.data is not None:
@@ -191,7 +190,7 @@ class ApiResponse:
             return {}
 
         # For errors, return the legacy error format
-        error_dict = {
+        error_dict: dict[str, object] = {
             "error": self.error_message or f"Request failed with status {self.status_code}",
             "status": self.status_code,
             "correlation_id": self.correlation_id

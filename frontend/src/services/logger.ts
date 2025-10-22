@@ -48,11 +48,11 @@ export interface LogEntry {
 	message: string;
 	timestamp: Date;
 	data?: unknown;
-	correlationId?: string;
-	userAgent: string;
+	correlation_id?: string;
+	user_agent: string;
 	url: string;
-	userId?: string | number;
-	sessionId: string;
+	user_id?: string | number;
+	session_id: string;
 }
 
 export interface LoggerConfig {
@@ -77,7 +77,7 @@ interface UserInteraction {
 	target?: string; // Element selector or description
 	data?: Record<string, unknown>; // Additional context
 	url: string;
-	sessionId: string;
+	session_id: string;
 }
 
 class Logger {
@@ -112,10 +112,11 @@ class Logger {
 			...config, // Allow override of defaults
 		};
 
-		// Enable interaction tracking in development mode
-		if (environment === 'development') {
-			this.enableInteractionTracking();
-		}
+		// Interaction tracking disabled by default (too verbose for console)
+		// Can be manually enabled via logger.enableInteractionTracking() if needed
+		// if (environment === 'development') {
+		// 	this.enableInteractionTracking();
+		// }
 
 		// Initialize logger with environment context
 		this.info('Frontend Logger initialized', {
@@ -208,11 +209,11 @@ class Logger {
 	/**
 	 * Set correlation ID for request tracking (integrates with backend correlation)
 	 */
-	setCorrelationId(correlationId: string): void {
+	setCorrelationId(correlation_id: string): void {
 		// Store correlation ID for subsequent logs in this context
 		this.logStorage.forEach(entry => {
-			if (!entry.correlationId) {
-				entry.correlationId = correlationId;
+			if (!entry.correlation_id) {
+				entry.correlation_id = correlation_id;
 			}
 		});
 	}
@@ -232,10 +233,10 @@ class Logger {
 			message,
 			timestamp: new Date(),
 			data,
-			userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'test-environment',
+			user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : 'test-environment',
 			url: typeof window !== 'undefined' ? window.location.href : 'test-environment',
-			userId: this.getCurrentUserId(),
-			sessionId: this.sessionId,
+			user_id: this.getCurrentUserId(),
+			session_id: this.sessionId,
 		};
 
 		// Console logging
@@ -331,14 +332,14 @@ class Logger {
 				message: entry.message,
 				timestamp: entry.timestamp.toISOString(),
 				data: this.sanitizeDataForBackend(entry.data),
-				correlationId: entry.correlationId,
-				userAgent: entry.userAgent,
+				correlation_id: entry.correlation_id,
+				user_agent: entry.user_agent,
 				url: entry.url,
-				userId: entry.userId,
-				sessionId: entry.sessionId,
+				user_id: entry.user_id,
+				session_id: entry.session_id,
 				source: 'frontend',
 				environment: this.detectEnvironment(),
-				browserInfo: this.getBrowserInfo(),
+				browser_info: this.getBrowserInfo(),
 			};
 
 			// Send to backend with timeout
@@ -480,10 +481,10 @@ class Logger {
 				message: context ? `[${context}] ${message}` : message,
 				timestamp: new Date(),
 				data: enhancedErrorData,
-				userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'test-environment',
+				user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : 'test-environment',
 				url: typeof window !== 'undefined' ? window.location.href : 'test-environment',
-				userId: this.getCurrentUserId(),
-				sessionId: this.sessionId,
+				user_id: this.getCurrentUserId(),
+				session_id: this.sessionId,
 			};
 			
 			// Report to backend immediately
@@ -599,7 +600,7 @@ class Logger {
 	/**
 	 * Enable user interaction tracking (development mode only)
 	 */
-	private enableInteractionTracking(): void {
+	public enableInteractionTracking(): void {
 		if (typeof window === 'undefined' || this.interactionTrackingEnabled) {
 			return; // Don't enable in SSR or if already enabled
 		}
@@ -710,7 +711,7 @@ class Logger {
 			type,
 			timestamp: new Date(),
 			url: typeof window !== 'undefined' ? window.location.href : 'test-environment',
-			sessionId: this.sessionId,
+			session_id: this.sessionId,
 			...data,
 		};
 
@@ -913,14 +914,14 @@ class Logger {
 	 * Get browser information for backend reporting
 	 */
 	private getBrowserInfo(): {
-		userAgent: string;
+		user_agent: string;
 		language: string;
 		platform: string;
 		viewport: { width: number; height: number };
 		timezone: string;
 	} {
 		return {
-			userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'test-environment',
+			user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : 'test-environment',
 			language: typeof navigator !== 'undefined' ? navigator.language : 'en-US',
 			platform: typeof navigator !== 'undefined' ? navigator.platform : 'test-environment',
 			viewport: {
@@ -939,10 +940,10 @@ class Logger {
 			// Use module path to avoid require() linting error
 			// eslint-disable-next-line @typescript-eslint/no-require-imports
 			const { getAuthTokens } = require('@/utilities/token');
-			const { authToken } = getAuthTokens();
-			if (authToken) {
+			const { access_token } = getAuthTokens();
+			if (access_token) {
 				// Decode JWT payload to get user ID (basic decode, not verification)
-				const payload = JSON.parse(atob(authToken.split('.')[1]));
+				const payload = JSON.parse(atob(access_token.split('.')[1]));
 				return payload.user_id || payload.sub;
 			}
 		} catch {

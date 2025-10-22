@@ -31,13 +31,13 @@ const AppLayout = () => {
 						<Sidebar />
 					</Box>
 				)}
-				
+
 				{/* Main Content */}
 				<Box flex="1">
 					<Outlet />
 				</Box>
 			</Container>
-			
+
 			{/* Sidebar Drawer Viewport - Required for Chakra v3 overlay manager */}
 			<SidebarDrawerViewport />
 		</BaseLayout>

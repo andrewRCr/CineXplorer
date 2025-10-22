@@ -4,6 +4,8 @@ services:
       context: ../backend
       args:
         DEV: "true"
+        USER_UID: ${USER_UID:-1000}
+        USER_GID: ${USER_GID:-1000}
     ports:
       - "8000:8000"
     volumes:
@@ -34,6 +36,10 @@ services:
     depends_on:
       dev-db:
         condition: service_healthy
+      redis:
+        condition: service_healthy
+    # Note: Auto-reload may not work reliably on Windows/Docker due to file watching limitations
+    # Use: docker compose restart backend after code changes
     command: sh -c "python manage.py runserver_plus 0.0.0.0:8000 --cert-file $${BACKEND_CERT_PATH} --key-file $${BACKEND_KEY_PATH}"
 
   frontend:
@@ -51,6 +57,11 @@ services:
       - ./dev-certs/cert.pem:/certs/frontend/cert.pem:ro
     environment:
       - HOST=0.0.0.0
+      # OpenAPI schema URL for type generation (inter-container communication)
+      - OPENAPI_SCHEMA_URL=https://backend:8000/api/openapi.json
+      # Skip TLS verification for dev self-signed certs (inter-container only)
+      - DEV_SKIP_TLS=true
+      - NODE_ENV=development
 
     depends_on:
       - backend
@@ -73,6 +84,22 @@ services:
       timeout: 5s
       retries: 5
 
+  redis:
+    image: redis:7.4-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    # Redis serves two purposes (both use same instance, different databases):
+    # 1. Django cache backend (DB 0) - Rate limiting for Django Ninja throttling (current)
+    # 2. Celery broker (DB 1) - Background task processing (future: Backend Modernization PRD)
+
   caddy:
     image: caddy:latest
     ports:
@@ -94,4 +121,5 @@ services:
 
 volumes:
   dev-db-data:
+  redis-data:
   frontend-node-modules:

@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Box, Text, Spinner, Alert, VStack, Button } from "@chakra-ui/react";
 import { ROUTES } from "@/constants/routes";
-import axios from "axios";
+import * as authService from "@/services/authService";
 
 const VerifyEmail = () => {
 	const { token } = useParams<{ token: string }>();
@@ -30,44 +30,23 @@ const VerifyEmail = () => {
 			hasVerifiedRef.current = true;
 
 			try {
-				const BASE_URL = import.meta.env.VITE_BASE_API_URL;
+				const response = await authService.verifyEmail(token);
 
-				// Get CSRF token from cookie
-				const csrfToken = document.cookie
-					.split("; ")
-					.find((row) => row.startsWith("XSRF-TOKEN="))
-					?.split("=")[1];
-
-				const response = await axios.get(
-					`${BASE_URL}/user/verify-email/${token}/`,
-					{
-						headers: {
-							"X-CSRFToken": csrfToken || "",
-						},
-						withCredentials: true,
-					}
-				);
-
-				if (response.status === 200) {
-					setStatus("success");
-					setMessage(response.data.message || "Email verified successfully!");
-					// Auto-redirect to login after 3 seconds on success
-					let count = 3;
+				setStatus("success");
+				setMessage(response.message || "Email verified successfully!");
+				// Auto-redirect to login after 3 seconds on success
+				let count = 3;
+				setCountdown(count);
+				const timer = setInterval(() => {
+					count--;
 					setCountdown(count);
-					const timer = setInterval(() => {
-						count--;
-						setCountdown(count);
-						if (count <= 0) {
-							clearInterval(timer);
-							navigate(ROUTES.LOGIN, {
-								state: { emailVerified: true, message: response.data.message },
-							});
-						}
-					}, 1000);
-				} else {
-					setStatus("error");
-					setMessage("Email verification failed. Please try again.");
-				}
+					if (count <= 0) {
+						clearInterval(timer);
+						navigate(ROUTES.LOGIN, {
+							state: { emailVerified: true, message: response.message },
+						});
+					}
+				}, 1000);
 			} catch (error: unknown) {
 				console.error("Email verification error:", error);
 				setStatus("error");

@@ -1,19 +1,46 @@
 """
-Test fixtures and helpers for authentication tests.
+Test data factory functions for authentication tests.
 
-This module provides reusable test data creation utilities for authentication
-testing, following the pattern established in the movie app tests.
+This module provides factory functions for creating test data with fine-grained
+control over parameters. Use these when you need multiple instances with custom
+values in a single test (e.g., creating users with different email verification
+states, custom credentials, or OAuth configurations).
+
+For simple single-instance cases, use the pytest fixtures in conftest.py instead,
+which wrap these factory functions for convenience.
+
+Pattern Choice:
+    - Use pytest fixtures (conftest.py): Single instance, standard configuration
+    - Use factory functions (this file): Multiple instances, custom parameters
+
+Example:
+    # Factory pattern (this file) - for complex scenarios
+    def test_email_verification_edge_cases():
+        verified = create_user(email='verified@example.com', email_verified=True)
+        unverified = create_user(email='unverified@example.com', email_verified=False)
+        assert verified != unverified
+
+    # Fixture pattern (conftest.py) - for simple scenarios
+    def test_user_profile(verified_user):
+        assert verified_user.email == 'testuser@example.com'
 """
-from typing import TypedDict, Unpack
+from typing import TYPE_CHECKING, TypedDict, Unpack
 
 from allauth.socialaccount.models import SocialAccount, SocialApp
+
+# Import canonical create_user from core test helpers
+from core.tests.test_helpers import create_user
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import AbstractUser
 from django.contrib.sites.models import Site
 
-from authentication.email_verification import email_verification_service
+if TYPE_CHECKING:
+    from django.contrib.auth.models import User as UserType
 
 User = get_user_model()
+
+# Test data constants
+# Used across all authentication tests for consistency
+TEST_USER_PASSWORD = 'testpass123'
 
 
 # Type definitions for fixture parameters
@@ -43,40 +70,10 @@ class LoginPayload(TypedDict, total=False):
 
 
 # User creation fixtures
-def create_user(
-    email_verified: bool = True,
-    **params: Unpack[UserParams]
-) -> AbstractUser:
-    """
-    Create and return a new user for testing.
-
-    Args:
-        email_verified: Whether to mark the user's email as verified (default: True)
-        **params: Additional user parameters (username, email, password, etc.)
-
-    Returns:
-        Created user instance
-    """
-    # Set defaults
-    defaults: dict[str, str] = {
-        'username': 'testuser',
-        'email': 'testuser@example.com',
-        'password': 'testpass123',
-        'first_name': 'Test',
-        'last_name': 'User'
-    }
-
-    # Create user
-    user = User.objects.create_user(**{**defaults, **params})
-
-    # Mark email as verified if requested
-    if email_verified:
-        email_verification_service.mark_email_verified(user)
-
-    return user
+# Note: create_user is imported from core.tests.test_helpers (canonical version)
 
 
-def create_unverified_user(**params: Unpack[UserParams]) -> AbstractUser:
+def create_unverified_user(**params: Unpack[UserParams]) -> "UserType":
     """
     Create a user with unverified email.
 
@@ -117,7 +114,7 @@ def create_social_app(provider: str = 'google', site_id: int = 1) -> SocialApp:
 
 
 def create_social_account(
-    user: AbstractUser,
+    user: "UserType",
     provider: str = 'google',
     uid: str | None = None
 ) -> SocialAccount:
@@ -151,10 +148,10 @@ def create_social_account(
 
 
 # Payload creation fixtures
-def create_register_payload(  # noqa: S107 - test default password is intentional
+def create_register_payload(
     username: str = 'testuser',
     email: str = 'testuser@example.com',
-    password: str = 'testpass123',
+    password: str = TEST_USER_PASSWORD,
     first_name: str = 'Test',
     last_name: str = 'User'
 ) -> RegisterPayload:
@@ -180,9 +177,9 @@ def create_register_payload(  # noqa: S107 - test default password is intentiona
     }
 
 
-def create_login_payload(  # noqa: S107 - test default password is intentional
+def create_login_payload(
     identifier: str = 'testuser',
-    password: str = 'testpass123',
+    password: str = TEST_USER_PASSWORD,
     use_email: bool = False
 ) -> LoginPayload:
     """

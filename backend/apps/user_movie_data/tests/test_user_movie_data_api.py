@@ -1,389 +1,666 @@
 """
-Tests for the user movie data API.
+Integration tests for the UserMovieData Django Ninja API endpoints.
 
-This module contains tests for the UserMovieData API endpoints, including authentication,
-CRUD operations, and user-specific data filtering. All tests use static movie data for reliability.
+This module contains comprehensive tests for the user movie data API,
+including authentication, CRUD operations, and user-specific data filtering.
+
+Endpoints tested:
+    - GET /api/user-movie-data/by-tmdb-id - Retrieve by TMDB ID
+    - POST /api/user-movie-data - Create new entry
+    - PATCH /api/user-movie-data/{id} - Partial update
+    - DELETE /api/user-movie-data/{id} - Delete entry
+
+All endpoints require JWT authentication via cookies.
 """
+from __future__ import annotations
 
+from typing import TYPE_CHECKING
 
-import random
-
-from user_movie_data.serializers import UserMovieDataSerializer, UserMovieDataDetailSerializer
-from user_movie_data.models import UserMovieData
-from django.contrib.auth.models import User
+import pytest
 from core.models import Movie
-from django.test import TestCase
-from django.urls import reverse
-from rest_framework.test import APIClient
-from rest_framework import status
+from core.tests.test_helpers import HTTPStatus, get_csrf_token
+from user_movie_data.models import UserMovieData
+
+if TYPE_CHECKING:
+    from django.contrib.auth.models import User
+    from django.test import Client
+
+# HTTP status codes for Django Ninja endpoints
+HTTP_200_OK = HTTPStatus.OK
+HTTP_201_CREATED = HTTPStatus.CREATED
+HTTP_204_NO_CONTENT = HTTPStatus.NO_CONTENT
+HTTP_400_BAD_REQUEST = HTTPStatus.BAD_REQUEST
+HTTP_401_UNAUTHORIZED = HTTPStatus.UNAUTHORIZED
+HTTP_403_FORBIDDEN = HTTPStatus.FORBIDDEN
+HTTP_404_NOT_FOUND = HTTPStatus.NOT_FOUND
+HTTP_422_UNPROCESSABLE_ENTITY = HTTPStatus.UNPROCESSABLE_ENTITY
+
+# =========================
+# Django Ninja API URLs
+# =========================
+USER_MOVIE_DATA_CREATE_URL = '/api/user-movie-data'
+
+
+def user_movie_data_by_tmdb_url(tmdb_id: int) -> str:
+    """Return URL for finding UserMovieData by TMDB ID."""
+    return f'/api/user-movie-data/by-tmdb-id?tmdb_id={tmdb_id}'
+
+
+def user_movie_data_detail_url(user_movie_data_id: int) -> str:
+    """Return URL for UserMovieData detail operations (PATCH/DELETE)."""
+    return f'/api/user-movie-data/{user_movie_data_id}'
 
 
 # =========================
-# URLs
+# Test Fixtures
 # =========================
 
-USER_MOVIE_DATA_URL = reverse('user_movie_data:user-movie-data-list')
+
+@pytest.fixture
+def movie(db: None) -> Movie:
+    """Create a test movie stub."""
+    return Movie.objects.create(
+        tmdb_id=12345,
+        title='Blade Runner',
+        poster_path='/blade_runner.jpg',
+        release_date='1982-06-25'
+    )
 
 
-def find_by_movie_url(tmdb_id):
+@pytest.fixture
+def other_movie(db: None) -> Movie:
+    """Create a second test movie stub."""
+    return Movie.objects.create(
+        tmdb_id=54321,
+        title='Chinatown',
+        poster_path='/chinatown.jpg',
+        release_date='1974-06-20'
+    )
+
+
+@pytest.fixture
+def other_user(db: None) -> User:
+    """Create a second test user for ownership tests."""
+    from core.tests.test_helpers import create_user
+    return create_user(
+        email="otheruser@example.com",
+        password="testpass123",
+        username="otheruser",
+    )
+
+
+@pytest.fixture
+def authenticated_user(api_client: Client, db: None) -> tuple[Client, User]:
     """
-    Returns the URL for finding UserMovieData by movie tmdb_id.
+    Create an authenticated user and return (client, user) tuple.
+
+    Creates a verified user (can login) and authenticates via the JWT token
+    endpoint which sets the necessary cookies for Django Ninja JWTCookieAuth.
     """
-    return reverse('user_movie_data:user-movie-data-by-tmdb-id') + f'?tmdb_id={tmdb_id}'
+    from core.tests.test_helpers import authenticate_client, create_user
+
+    # Create verified user (create_user() verifies email by default)
+    user = create_user(
+        username="testuser",
+        email="testuser@example.com",
+        password="testpass123"
+    )
+
+    # Authenticate client (handles hybrid auth pattern automatically)
+    authenticate_client(api_client, user.username, "testpass123")
+
+    return api_client, user
 
 
-def detail_url(user_movie_data_id):
-    """
-    Returns the detail URL for a specific UserMovieData object.
-    Args:
-        user_movie_data_id (int): The ID of the UserMovieData object.
-    Returns:
-        str: The URL for the object's detail endpoint.
-    """
-    return reverse('user_movie_data:user-movie-data-detail', args=[user_movie_data_id])
-
-
-# =========================
-# Test Setup Helper Methods
-# =========================
-
-def create_user_movie_data(user, **params):
-    """
-    Helper to create and return a sample UserMovieData object for testing.
-    Uses static movie data for reliability and repeatability.
-    Args:
-        user (User): The user to associate with the data.
-        **params: Optional fields to override defaults.
-    Returns:
-        UserMovieData: The created object.
-    """
-    # Create a Movie object for association
-    # Ensure tmdb_id is unique for each test instance
-    movie_defaults = {
-        'title': params.get('title', 'Blade Runner'),
-        'tmdb_id': params.get('tmdb_id', random.randint(10000, 99999)),
-        # Add other required fields for Movie if needed
-    }
-    movie, _ = Movie.objects.get_or_create(**movie_defaults)
-
-    user_movie_data_defaults = {
-        'user_watched': params.get('user_watched', True),
-        'user_on_watchlist': params.get('user_on_watchlist', True),
-        'user_liked': params.get('user_liked', True),
-        'user_rating': params.get('user_rating', 10),
-        'user_review': params.get('user_review', 'This is a sample review.'),
-        'movie': movie,
-    }
-    user_movie_data = UserMovieData.objects.create(user=user, **user_movie_data_defaults)
-    return user_movie_data
-
-
-def create_user(**params):
-    """
-    Helper to create and return a new user for testing.
-    Args:
-        **params: Fields for the user (username, email, password, etc).
-    Returns:
-        User: The created user object.
-    """
-    return User.objects.create_user(
-        username=params.get('username'),
-        email=params.get('email'),
-        password=params.get('password'),
-        first_name=params.get('first_name', ''),
-        last_name=params.get('last_name', ''),
+@pytest.fixture
+def user_movie_data(authenticated_user: tuple[Client, User], movie: Movie) -> UserMovieData:
+    """Create a UserMovieData entry for the authenticated test user."""
+    _client, user = authenticated_user
+    return UserMovieData.objects.create(
+        user=user,
+        movie=movie,
+        user_watched=True,
+        user_on_watchlist=False,
+        user_liked=True,
+        user_rating=9,
+        user_review='Great movie!'
     )
 
 
 # =========================
-# Test Classes
+# Authentication Tests
 # =========================
 
 
-class PublicUserMovieDataAPITests(TestCase):
+@pytest.mark.django_db
+def test_unauthenticated_get_by_tmdb_id_denied(api_client: Client) -> None:
     """
-    Tests for the public (unauthenticated) features of the user movie data API.
-    Ensures endpoints are protected and require authentication.
+    Test that unauthenticated GET by TMDB ID is denied.
+
+    The /by-tmdb-id endpoint requires JWT authentication.
     """
-
-    def setUp(self):
-        """
-        Set up the test client for unauthenticated requests.
-        """
-        self.client = APIClient()
-
-    def test_unauthenticated_cannot_access_list(self):
-        """
-        Test that unauthenticated requests to list user movie data are denied.
-        """
-        res = self.client.get(USER_MOVIE_DATA_URL)
-        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
-
-    def test_unauthenticated_cannot_create(self):
-        """
-        Test that unauthenticated requests to create user movie data are denied.
-        """
-        movie = Movie.objects.create(title='Chinatown', tmdb_id=829)
-        payload = {
-            'movie': movie.tmdb_id,
-            'user_watched': True,
-            'user_on_watchlist': False,
-            'user_liked': True,
-            'user_rating': 9,
-            'user_review': 'Chinatown is one of my all-time favorites.',
-        }
-        res = self.client.post(USER_MOVIE_DATA_URL, payload)
-        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
-
-    def test_unauthenticated_cannot_access_detail(self):
-        """
-        Test that unauthenticated requests to retrieve user movie data detail are denied.
-        """
-        user = create_user(username='otherUser',
-                           email='otherUser@example.com', password='testPass123')
-        user_movie_data = create_user_movie_data(user=user)
-        url = detail_url(user_movie_data.id)
-        res = self.client.get(url)
-        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
-
-    def test_unauthenticated_cannot_update(self):
-        """
-        Test that unauthenticated requests to update user movie data are denied.
-        """
-        user = create_user(username='otherUser',
-                           email='otherUser@example.com', password='testPass123')
-        user_movie_data = create_user_movie_data(user=user)
-        url = detail_url(user_movie_data.id)
-        payload = {'user_liked': False}
-        res = self.client.patch(url, payload)
-        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
-
-    def test_unauthenticated_cannot_delete(self):
-        """
-        Test that unauthenticated requests to delete user movie data are denied.
-        """
-        user = create_user(username='otherUser',
-                           email='otherUser@example.com', password='testPass123')
-        user_movie_data = create_user_movie_data(user=user)
-        url = detail_url(user_movie_data.id)
-        res = self.client.delete(url)
-        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
+    url = user_movie_data_by_tmdb_url(12345)
+    res = api_client.get(url)
+    assert res.status_code == HTTP_401_UNAUTHORIZED
 
 
-class PrivateUserMovieDataAPITests(TestCase):
+@pytest.mark.django_db
+def test_unauthenticated_create_denied(api_client: Client, movie: Movie) -> None:
+    """Test that unauthenticated POST requests are denied."""
+    payload = {
+        'movie_id': movie.tmdb_id,
+        'user_watched': True,
+        'user_rating': 8
+    }
+    res = api_client.post(
+        USER_MOVIE_DATA_CREATE_URL,
+        data=payload,
+        content_type='application/json'
+    )
+    assert res.status_code == HTTP_401_UNAUTHORIZED
+
+
+@pytest.mark.django_db
+def test_unauthenticated_update_denied(
+    api_client: Client,
+    user_movie_data: UserMovieData
+) -> None:
     """
-    Tests for the private (authenticated) features of the user movie data API.
-    Ensures endpoints are accessible only to authenticated users.
+    Test that unauthenticated PATCH requests are denied.
+
+    NOTE: Returns 403 (CSRF error) not 401 because CSRF middleware runs
+    before endpoint authentication. This is expected behavior.
     """
+    url = user_movie_data_detail_url(user_movie_data.id)
+    payload = {'user_rating': 10}
+    res = api_client.patch(
+        url,
+        data=payload,
+        content_type='application/json'
+    )
+    assert res.status_code == HTTP_403_FORBIDDEN
 
-    def setUp(self):
-        """
-        Set up the test client for authenticated requests.
-        """
-        self.client = APIClient()
-        self.user = create_user(username='testUser',
-                                email='testUser@example.com', password='testPass123')
-        self.client.force_authenticate(user=self.user)
 
-    def test_full_update(self):
-        movie = Movie.objects.create(title='Chinatown', tmdb_id=12346)
-        user_movie_data = UserMovieData.objects.create(
-            user=self.user,
-            movie=movie,
-            user_watched=True,
-            user_on_watchlist=False,
-            user_liked=True,
-            user_rating=8,
-            user_review='Great movie!'
-        )
-        payload = {
-            'user_watched': False,
-            'user_on_watchlist': True,
-            'user_liked': False,
-            'user_rating': 5,
-            'user_review': 'Updated review.'
-        }
-        url = detail_url(user_movie_data.id)
-        res = self.client.put(url, payload)
-        self.assertEqual(res.status_code, status.HTTP_200_OK)
-        user_movie_data.refresh_from_db()
-        self.assertEqual(user_movie_data.movie.tmdb_id, movie.tmdb_id)
-        self.assertEqual(user_movie_data.user_watched, payload['user_watched'])
-        self.assertEqual(user_movie_data.user_on_watchlist, payload['user_on_watchlist'])
-        self.assertEqual(user_movie_data.user_liked, payload['user_liked'])
-        self.assertEqual(user_movie_data.user_rating, payload['user_rating'])
-        self.assertEqual(user_movie_data.user_review, payload['user_review'])
+@pytest.mark.django_db
+def test_unauthenticated_delete_denied(
+    api_client: Client,
+    user_movie_data: UserMovieData
+) -> None:
+    """
+    Test that unauthenticated DELETE requests are denied.
 
-    def test_all_user_movie_data_limited_to_user(self):
-        other_user = create_user(
-            username='otherUser',
-            email='otherUser@example.com',
-            password='testPass123'
-        )
-        create_user_movie_data(user=other_user, tmdb_id=12347, title='Chinatown_12347')
-        create_user_movie_data(user=self.user, tmdb_id=12348, title='Blade_Runner_12348')
-        res = self.client.get(USER_MOVIE_DATA_URL)
-        all_user_movie_data = UserMovieData.objects.filter(user=self.user)
-        serializer = UserMovieDataSerializer(all_user_movie_data, many=True)
-        self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertEqual(res.data, serializer.data)
+    NOTE: Returns 403 (CSRF error) not 401 because CSRF middleware runs
+    before endpoint authentication. This is expected behavior.
+    """
+    url = user_movie_data_detail_url(user_movie_data.id)
+    res = api_client.delete(url)
+    assert res.status_code == HTTP_403_FORBIDDEN
 
-    def test_get_user_movie_data_detail(self):
-        user_movie_data = create_user_movie_data(
-            user=self.user, tmdb_id=12349, title='Chinatown_12349')
-        url = detail_url(user_movie_data.id)
-        res = self.client.get(url)
-        serializer = UserMovieDataDetailSerializer(user_movie_data)
-        self.assertEqual(res.data, serializer.data)
 
-    def test_create_user_movie_data(self):
-        # NOTE: In production, creation is via API and tmdb_id;
-        # here we use ORM for direct DB linkage.
-        movie = Movie.objects.create(title='Chinatown_12350', tmdb_id=12350)
-        user_movie_data = UserMovieData.objects.create(
-            user=self.user,
-            movie=movie,
-            user_watched=True,
-            user_on_watchlist=False,
-            user_liked=True,
-            user_rating=9,
-            user_review='Chinatown is one of my all-time favorites.',
-        )
-        self.assertEqual(user_movie_data.movie.tmdb_id, movie.tmdb_id)
-        self.assertEqual(user_movie_data.user_watched, True)
-        self.assertEqual(user_movie_data.user_on_watchlist, False)
-        self.assertEqual(user_movie_data.user_liked, True)
-        self.assertEqual(user_movie_data.user_rating, 9)
-        self.assertEqual(user_movie_data.user_review,
-                         'Chinatown is one of my all-time favorites.')
-        self.assertEqual(user_movie_data.user, self.user)
+# =========================
+# GET by TMDB ID Tests
+# =========================
 
-    def test_partial_update(self):
-        user_movie_data = create_user_movie_data(
-            user=self.user,
-            tmdb_id=12351,
-            title='Chinatown_12351',
-            user_watched=True,
-            user_on_watchlist=False,
-            user_liked=True,
-            user_rating=10
-        )
-        payload = {'user_liked': False}
-        url = detail_url(user_movie_data.id)
-        res = self.client.patch(url, payload)
-        self.assertEqual(res.status_code, status.HTTP_200_OK)
-        user_movie_data.refresh_from_db()
-        self.assertEqual(user_movie_data.user_liked, payload['user_liked'])
-        self.assertEqual(user_movie_data.user_rating, 10)
-        self.assertEqual(user_movie_data.user, self.user)
 
-    def test_delete_other_users_user_movie_data_error(self):
-        new_user = create_user(
-            username='testUser2',
-            email='testUser2@example.com',
-            password='testPass123'
-        )
-        user_movie_data = create_user_movie_data(user=new_user)
-        url = detail_url(user_movie_data.id)
-        res = self.client.delete(url)
-        self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertTrue(UserMovieData.objects.filter(id=user_movie_data.id).exists())
+@pytest.mark.django_db
+def test_get_user_movie_data_by_tmdb_id_success(
+    authenticated_user: tuple[Client, User],
+    movie: Movie
+) -> None:
+    """Test successfully retrieving user movie data by TMDB ID."""
+    client, user = authenticated_user
 
-    def test_update_movie_field_is_ignored(self):
-        """
-        Test that attempting to change the movie field on a UserMovieData object fails.
-        The movie association should remain unchanged.
-        """
-        movie1 = Movie.objects.create(title='Chinatown_12352', tmdb_id=12352)
-        user_movie_data = UserMovieData.objects.create(
-            user=self.user,
-            movie=movie1,
-            user_watched=True,
-            user_on_watchlist=False,
-            user_liked=True,
-            user_rating=8,
-            user_review='Great movie!'
-        )
-        movie2 = Movie.objects.create(title='Blade_Runner_12353', tmdb_id=12353)
-        payload = {
-            'movie': movie2.tmdb_id,
-            'user_watched': False,
-            'user_on_watchlist': True,
-            'user_liked': False
-        }
-        url = detail_url(user_movie_data.id)
-        res = self.client.put(url, payload)
-        self.assertEqual(res.status_code, status.HTTP_200_OK)
+    # Arrange: Create user movie data
+    user_movie_data = UserMovieData.objects.create(
+        user=user,
+        movie=movie,
+        user_watched=True,
+        user_on_watchlist=False,
+        user_liked=True,
+        user_rating=9,
+        user_review='Excellent film!'
+    )
 
-        user_movie_data.refresh_from_db()
-        # Movie association should not be updatable by user; assert it remains unchanged
-        self.assertEqual(user_movie_data.movie.tmdb_id, movie1.tmdb_id)
-        self.assertEqual(user_movie_data.user_watched, payload['user_watched'])
-        self.assertEqual(user_movie_data.user_on_watchlist,
-                         payload['user_on_watchlist'])
-        self.assertEqual(user_movie_data.user_liked, payload['user_liked'])
-        self.assertEqual(user_movie_data.user, self.user)
+    # Act
+    url = user_movie_data_by_tmdb_url(movie.tmdb_id)
+    res = client.get(url)
 
-    def test_update_user_returns_error(self):
-        """
-        Test that attempting to change the user field on a UserMovieData object fails.
-        The user association should remain unchanged.
-        """
-        new_user = create_user(
-            username='testUser2',
-            email='testUser2@example.com',
-            password='testPass123'
-        )
-        user_movie_data = create_user_movie_data(user=self.user)
-        payload = {'user': new_user.id}
-        url = detail_url(user_movie_data.id)
-        self.client.patch(url, payload)
-        user_movie_data.refresh_from_db()
-        self.assertEqual(user_movie_data.user, self.user)
+    # Assert: Status and basic structure
+    assert res.status_code == HTTP_200_OK
+    data = res.json()
 
-    def test_delete_user_movie_data(self):
-        """
-        Test deleting a UserMovieData object for the authenticated user.
-        The object should be removed from the database.
-        """
-        user_movie_data = create_user_movie_data(user=self.user)
-        url = detail_url(user_movie_data.id)
-        res = self.client.delete(url)
-        self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
-        self.assertFalse(UserMovieData.objects.filter(id=user_movie_data.id).exists())
+    # Assert: UserMovieData fields
+    assert data['id'] == user_movie_data.id
+    assert data['user_watched'] is True
+    assert data['user_on_watchlist'] is False
+    assert data['user_liked'] is True
+    assert data['user_rating'] == 9
+    assert data['user_review'] == 'Excellent film!'
 
-    def test_find_by_movie_tmdb_id(self):
-        """
-        Test retrieving UserMovieData by the movie's tmdb_id.
-        """
-        # Create a movie and associated user movie data
-        movie1_tmdb_id = 9876
-        movie1 = Movie.objects.create(title='Correct Movie', tmdb_id=movie1_tmdb_id)
-        user_movie_data1 = UserMovieData.objects.create(
-            user=self.user,
-            movie=movie1,
-            user_rating=9
-        )
+    # Assert: Computed movie fields (from from_orm_with_movie)
+    assert data['tmdb_id'] == movie.tmdb_id
+    assert data['title'] == movie.title
 
-        # Create another movie and data that should NOT be found
-        movie2_tmdb_id = 5432
-        movie2 = Movie.objects.create(title='Wrong Movie', tmdb_id=movie2_tmdb_id)
-        UserMovieData.objects.create(
-            user=self.user,
-            movie=movie2,
-            user_rating=5
-        )
 
-        # Test finding the correct data
-        url = find_by_movie_url(movie1_tmdb_id)
-        res = self.client.get(url)
+@pytest.mark.django_db
+def test_get_user_movie_data_by_tmdb_id_not_found(
+    authenticated_user: tuple[Client, User],
+    movie: Movie
+) -> None:
+    """Test GET by TMDB ID returns 404 when no data exists."""
+    client, _user = authenticated_user
+    # Don't create UserMovieData - test nonexistent case
+    url = user_movie_data_by_tmdb_url(movie.tmdb_id)
+    res = client.get(url)
 
-        self.assertEqual(res.status_code, status.HTTP_200_OK)
-        serializer = UserMovieDataDetailSerializer(user_movie_data1)
-        self.assertEqual(res.data, serializer.data)
+    assert res.status_code == HTTP_404_NOT_FOUND
+    data = res.json()
+    assert 'detail' in data
+    assert 'not found' in data['detail'].lower()
 
-        # Test that a non-existent tmdb_id returns 404
-        non_existent_tmdb_id = 1111
-        url = find_by_movie_url(non_existent_tmdb_id)
-        res = self.client.get(url)
-        self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
+
+@pytest.mark.django_db
+def test_get_user_movie_data_by_tmdb_id_user_isolation(
+    authenticated_user: tuple[Client, User],
+    other_user: User,
+    movie: Movie
+) -> None:
+    """Test that users can only retrieve their own movie data by TMDB ID."""
+    client, _user = authenticated_user
+    # Arrange: Create data for OTHER user only
+    UserMovieData.objects.create(
+        user=other_user,
+        movie=movie,
+        user_rating=5
+    )
+
+    # Act: Authenticated as 'user', try to get data that belongs to 'other_user'
+    url = user_movie_data_by_tmdb_url(movie.tmdb_id)
+    res = client.get(url)
+
+    # Assert: Should return 404 (data exists but not for this user)
+    assert res.status_code == HTTP_404_NOT_FOUND
+
+
+# =========================
+# CREATE (POST) Tests
+# =========================
+
+
+@pytest.mark.django_db
+def test_create_user_movie_data_success(
+    authenticated_user: tuple[Client, User],
+    movie: Movie
+) -> None:
+    """Test successfully creating a new UserMovieData entry."""
+    client, user = authenticated_user
+    csrf_token = get_csrf_token(client)
+    # Arrange
+    payload = {
+        'movie_id': movie.tmdb_id,
+        'user_watched': True,
+        'user_on_watchlist': False,
+        'user_liked': True,
+        'user_rating': 8,
+        'user_review': 'Really enjoyed this film.'
+    }
+
+    # Act
+    res = client.post(
+        USER_MOVIE_DATA_CREATE_URL,
+        data=payload,
+        content_type='application/json',
+        HTTP_X_CSRFTOKEN=csrf_token
+    )
+
+    # Assert: Response
+    assert res.status_code == HTTP_200_OK
+    data = res.json()
+    assert data['user_watched'] is True
+    assert data['user_on_watchlist'] is False
+    assert data['user_liked'] is True
+    assert data['user_rating'] == 8
+    assert data['user_review'] == 'Really enjoyed this film.'
+    assert data['tmdb_id'] == movie.tmdb_id
+    assert data['title'] == movie.title
+
+    # Assert: Database state
+    assert UserMovieData.objects.filter(user=user, movie=movie).exists()
+    obj = UserMovieData.objects.get(user=user, movie=movie)
+    assert obj.user_rating == 8
+    assert obj.user_review == 'Really enjoyed this film.'
+
+
+@pytest.mark.django_db
+def test_create_user_movie_data_with_defaults(
+    authenticated_user: tuple[Client, User],
+    movie: Movie
+) -> None:
+    """Test creating UserMovieData with minimal payload (defaults apply)."""
+    client, _user = authenticated_user
+    csrf_token = get_csrf_token(client)
+    # Arrange: Only movie_id is required
+    payload = {
+        'movie_id': movie.tmdb_id
+    }
+
+    # Act
+    res = client.post(
+        USER_MOVIE_DATA_CREATE_URL,
+        data=payload,
+        content_type='application/json',
+        HTTP_X_CSRFTOKEN=csrf_token
+    )
+
+    # Assert
+    assert res.status_code == HTTP_200_OK
+    data = res.json()
+    # Verify defaults per UserMovieDataCreateSchema
+    assert data['user_watched'] is False
+    assert data['user_on_watchlist'] is False
+    assert data['user_liked'] is False
+    assert data['user_rating'] is None
+    assert data['user_review'] is None
+
+
+@pytest.mark.django_db
+def test_create_user_movie_data_duplicate_returns_400(
+    authenticated_user: tuple[Client, User],
+    user_movie_data: UserMovieData
+) -> None:
+    """Test that creating duplicate UserMovieData returns 400."""
+    client, _user = authenticated_user
+    csrf_token = get_csrf_token(client)
+    # Arrange: user_movie_data fixture already exists
+    payload = {
+        'movie_id': user_movie_data.movie.tmdb_id,
+        'user_rating': 10
+    }
+
+    # Act
+    res = client.post(
+        USER_MOVIE_DATA_CREATE_URL,
+        data=payload,
+        content_type='application/json',
+        HTTP_X_CSRFTOKEN=csrf_token
+    )
+
+    # Assert
+    assert res.status_code == HTTP_400_BAD_REQUEST
+    data = res.json()
+    assert 'detail' in data
+    assert 'already exists' in data['detail'].lower()
+
+
+@pytest.mark.django_db
+def test_create_user_movie_data_invalid_movie_id_returns_404(
+    authenticated_user: tuple[Client, User]
+) -> None:
+    """
+    Test that creating with nonexistent movie_id returns 404.
+
+    Uses an extremely large TMDB ID that doesn't exist in TMDB API.
+    The endpoint will attempt to fetch from TMDB and fail with 404.
+    """
+    client, _user = authenticated_user
+    csrf_token = get_csrf_token(client)
+    payload = {
+        'movie_id': 999999999,  # ID that doesn't exist in TMDB
+        'user_rating': 8
+    }
+
+    res = client.post(
+        USER_MOVIE_DATA_CREATE_URL,
+        data=payload,
+        content_type='application/json',
+        HTTP_X_CSRFTOKEN=csrf_token
+    )
+
+    assert res.status_code == HTTP_404_NOT_FOUND
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('invalid_rating', [0, 11, -5], ids=['zero', 'too_high', 'negative'])
+def test_create_user_movie_data_invalid_rating_returns_422(
+    authenticated_user: tuple[Client, User],
+    movie: Movie,
+    invalid_rating: int
+) -> None:
+    """
+    Test that creating with invalid rating (outside 1-10 range) returns 422.
+
+    Parametrized to test: below minimum (0), above maximum (11), and negative.
+    """
+    client, _user = authenticated_user
+    csrf_token = get_csrf_token(client)
+    payload = {
+        'movie_id': movie.tmdb_id,
+        'user_rating': invalid_rating
+    }
+
+    res = client.post(
+        USER_MOVIE_DATA_CREATE_URL,
+        data=payload,
+        content_type='application/json',
+        HTTP_X_CSRFTOKEN=csrf_token
+    )
+
+    assert res.status_code == HTTP_422_UNPROCESSABLE_ENTITY
+    data = res.json()
+    assert 'detail' in data
+
+
+# =========================
+# UPDATE (PATCH) Tests
+# =========================
+
+
+@pytest.mark.django_db
+def test_update_user_movie_data_partial_success(
+    authenticated_user: tuple[Client, User],
+    user_movie_data: UserMovieData
+) -> None:
+    """Test partial update (PATCH) of UserMovieData."""
+    client, _user = authenticated_user
+    csrf_token = get_csrf_token(client)
+    # Arrange
+    url = user_movie_data_detail_url(user_movie_data.id)
+    payload = {
+        'user_rating': 10,
+        'user_review': 'Updated review - even better on rewatch!'
+    }
+
+    # Act
+    res = client.patch(
+        url,
+        data=payload,
+        content_type='application/json',
+        HTTP_X_CSRFTOKEN=csrf_token
+    )
+
+    # Assert: Response
+    assert res.status_code == HTTP_200_OK
+    data = res.json()
+    assert data['user_rating'] == 10
+    assert data['user_review'] == 'Updated review - even better on rewatch!'
+    # Other fields should remain unchanged
+    assert data['user_watched'] is True
+    assert data['user_liked'] is True
+
+    # Assert: Database state
+    user_movie_data.refresh_from_db()
+    assert user_movie_data.user_rating == 10
+    assert user_movie_data.user_review == 'Updated review - even better on rewatch!'
+    assert user_movie_data.user_watched is True  # Unchanged
+
+
+@pytest.mark.django_db
+def test_update_user_movie_data_single_field(
+    authenticated_user: tuple[Client, User],
+    user_movie_data: UserMovieData
+) -> None:
+    """Test updating a single field (true partial update)."""
+    client, _user = authenticated_user
+    csrf_token = get_csrf_token(client)
+    url = user_movie_data_detail_url(user_movie_data.id)
+    payload = {'user_on_watchlist': True}
+
+    res = client.patch(
+        url,
+        data=payload,
+        content_type='application/json',
+        HTTP_X_CSRFTOKEN=csrf_token
+    )
+
+    assert res.status_code == HTTP_200_OK
+    user_movie_data.refresh_from_db()
+    assert user_movie_data.user_on_watchlist is True
+    # Original values preserved
+    assert user_movie_data.user_rating == 9
+    assert user_movie_data.user_review == 'Great movie!'
+
+
+@pytest.mark.django_db
+def test_update_user_movie_data_not_found(
+    authenticated_user: tuple[Client, User]
+) -> None:
+    """Test updating nonexistent UserMovieData returns 404."""
+    client, _user = authenticated_user
+    csrf_token = get_csrf_token(client)
+    url = user_movie_data_detail_url(99999)
+    payload = {'user_rating': 10}
+
+    res = client.patch(
+        url,
+        data=payload,
+        content_type='application/json',
+        HTTP_X_CSRFTOKEN=csrf_token
+    )
+
+    assert res.status_code == HTTP_404_NOT_FOUND
+
+
+@pytest.mark.django_db
+def test_update_user_movie_data_wrong_user_returns_404(
+    authenticated_user: tuple[Client, User],
+    other_user: User,
+    movie: Movie
+) -> None:
+    """Test that users cannot update other users' movie data."""
+    client, _user = authenticated_user
+    csrf_token = get_csrf_token(client)
+    # Arrange: Create data for OTHER user
+    other_user_data = UserMovieData.objects.create(
+        user=other_user,
+        movie=movie,
+        user_rating=5
+    )
+
+    # Act: Authenticated as 'user', try to update 'other_user' data
+    url = user_movie_data_detail_url(other_user_data.id)
+    payload = {'user_rating': 10}
+
+    res = client.patch(
+        url,
+        data=payload,
+        content_type='application/json',
+        HTTP_X_CSRFTOKEN=csrf_token
+    )
+
+    # Assert: Should return 404 (object exists but doesn't belong to user)
+    assert res.status_code == HTTP_404_NOT_FOUND
+
+    # Assert: Data remains unchanged
+    other_user_data.refresh_from_db()
+    assert other_user_data.user_rating == 5
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('invalid_rating', [0, 11], ids=['zero', 'too_high'])
+def test_update_user_movie_data_invalid_rating_returns_422(
+    authenticated_user: tuple[Client, User],
+    user_movie_data: UserMovieData,
+    invalid_rating: int
+) -> None:
+    """Test that updating with invalid rating returns 422."""
+    client, _user = authenticated_user
+    csrf_token = get_csrf_token(client)
+    url = user_movie_data_detail_url(user_movie_data.id)
+    payload = {'user_rating': invalid_rating}
+
+    res = client.patch(
+        url,
+        data=payload,
+        content_type='application/json',
+        HTTP_X_CSRFTOKEN=csrf_token
+    )
+
+    assert res.status_code == HTTP_422_UNPROCESSABLE_ENTITY
+
+
+# =========================
+# DELETE Tests
+# =========================
+
+
+@pytest.mark.django_db
+def test_delete_user_movie_data_success(
+    authenticated_user: tuple[Client, User],
+    user_movie_data: UserMovieData
+) -> None:
+    """Test successfully deleting UserMovieData."""
+    client, _user = authenticated_user
+    csrf_token = get_csrf_token(client)
+    # Arrange
+    url = user_movie_data_detail_url(user_movie_data.id)
+    data_id = user_movie_data.id
+
+    # Act
+    res = client.delete(url, HTTP_X_CSRFTOKEN=csrf_token)
+
+    # Assert: Response
+    assert res.status_code == HTTP_204_NO_CONTENT
+
+    # Assert: Object removed from database
+    assert not UserMovieData.objects.filter(id=data_id).exists()
+
+
+@pytest.mark.django_db
+def test_delete_user_movie_data_not_found(
+    authenticated_user: tuple[Client, User]
+) -> None:
+    """Test deleting nonexistent UserMovieData returns 404."""
+    client, _user = authenticated_user
+    csrf_token = get_csrf_token(client)
+    url = user_movie_data_detail_url(99999)
+    res = client.delete(url, HTTP_X_CSRFTOKEN=csrf_token)
+
+    assert res.status_code == HTTP_404_NOT_FOUND
+
+
+@pytest.mark.django_db
+def test_delete_user_movie_data_wrong_user_returns_404(
+    authenticated_user: tuple[Client, User],
+    other_user: User,
+    movie: Movie
+) -> None:
+    """Test that users cannot delete other users' movie data."""
+    client, _user = authenticated_user
+    csrf_token = get_csrf_token(client)
+    # Arrange: Create data for OTHER user
+    other_user_data = UserMovieData.objects.create(
+        user=other_user,
+        movie=movie,
+        user_rating=5
+    )
+    data_id = other_user_data.id
+
+    # Act: Authenticated as 'user', try to delete 'other_user' data
+    url = user_movie_data_detail_url(data_id)
+    res = client.delete(url, HTTP_X_CSRFTOKEN=csrf_token)
+
+    # Assert: Should return 404
+    assert res.status_code == HTTP_404_NOT_FOUND
+
+    # Assert: Data still exists
+    assert UserMovieData.objects.filter(id=data_id).exists()

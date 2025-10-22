@@ -30,20 +30,20 @@ class MetricsService:
     @staticmethod
     def increment(
         metric_name: str,
-        labels: dict[str, Any] | None = None,
+        labels: dict[str, Any] | None = None,  # Any: Mixed types from monitoring systems
         value: int = 1
     ) -> None:
         """
         Increment a counter metric.
 
         Args:
-            metric_name: Metric name (e.g., 'email_verification_mark_failed_total')
+            metric_name: Metric name (e.g., 'login_failed_total')
             labels: Optional labels/tags (e.g., {'service': 'auth', 'user_id': 123})
             value: Increment value (default: 1)
 
         Example:
             MetricsService.increment(
-                'email_verification_mark_failed_total',
+                'login_failed_total',
                 labels={'service': 'authentication', 'user_id': 123}
             )
         """
@@ -67,22 +67,22 @@ class MetricsService:
     def record_error(
         error_type: str,
         error_message: str,
-        context: dict[str, Any] | None = None,
+        context: dict[str, Any] | None = None,  # Any: Error context accepts mixed diagnostic data
         exception: Exception | None = None
     ) -> None:
         """
         Record an error event for monitoring/alerting.
 
         Args:
-            error_type: Error classification (e.g., 'email_verification_failure')
+            error_type: Error classification (e.g., 'authentication_failure')
             error_message: Human-readable error description
             context: Optional context data (user_id, request_id, etc.)
             exception: Optional exception object for stack trace
 
         Example:
             MetricsService.record_error(
-                'email_verification_failure',
-                'Failed to mark email as verified',
+                'authentication_failure',
+                'Failed to authenticate user',
                 context={'user_id': 123, 'email': 'user@example.com'},
                 exception=e
             )
@@ -117,7 +117,7 @@ _metrics = MetricsService()
 
 def increment(
     metric_name: str,
-    labels: dict[str, Any] | None = None,
+    labels: dict[str, Any] | None = None,  # Any: Labels accept mixed types from monitoring systems
     value: int = 1
 ) -> None:
     """Convenience function for incrementing metrics."""
@@ -127,7 +127,7 @@ def increment(
 def record_error(
     error_type: str,
     error_message: str,
-    context: dict[str, Any] | None = None,
+    context: dict[str, Any] | None = None,  # Any: Error context accepts mixed diagnostic data
     exception: Exception | None = None
 ) -> None:
     """Convenience function for recording errors."""

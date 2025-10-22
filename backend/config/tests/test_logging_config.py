@@ -10,22 +10,19 @@ Usage:
 """
 
 import os
-import tempfile
 import shutil
+import tempfile
 from logging import getLogger
 from logging.config import dictConfig
 
 # Import our logging configuration
 try:
     from ..logging import (
+        DB_QUERY_PERFORMANCE,
+        LOG_ROTATION_CONFIG,
+        VALID_LOG_LEVELS,
         get_logging_config,
         validate_log_level,
-        VALID_LOG_LEVELS,
-        LOG_ROTATION_CONFIG,
-        get_log_file_info,
-        print_log_status,
-        DB_QUERY_PERFORMANCE,
-        print_database_logging_info,
     )
 except ImportError:
     # For standalone execution
@@ -47,11 +44,11 @@ except ImportError:
 
     get_logging_config = custom_logging.get_logging_config
     validate_log_level = custom_logging.validate_log_level
-    VALID_LOG_LEVELS = custom_logging.VALID_LOG_LEVELS
-    LOG_ROTATION_CONFIG = custom_logging.LOG_ROTATION_CONFIG
+    VALID_LOG_LEVELS = custom_logging.VALID_LOG_LEVELS  # pyright: ignore[reportConstantRedefinition]
+    LOG_ROTATION_CONFIG = custom_logging.LOG_ROTATION_CONFIG  # pyright: ignore[reportConstantRedefinition]
     get_log_file_info = custom_logging.get_log_file_info
     print_log_status = custom_logging.print_log_status
-    DB_QUERY_PERFORMANCE = custom_logging.DB_QUERY_PERFORMANCE
+    DB_QUERY_PERFORMANCE = custom_logging.DB_QUERY_PERFORMANCE  # pyright: ignore[reportConstantRedefinition]
     print_database_logging_info = custom_logging.print_database_logging_info
 
 
@@ -95,8 +92,18 @@ def test_environment_variables():
     # Test configuration generation
     config = get_logging_config()
 
-    print(f"Generated log level: {config['loggers']['cinexplorer']['level']}")
-    print(f"Console handler level: {config['handlers']['console']['level']}")
+    loggers = config["loggers"]
+    assert isinstance(loggers, dict), "loggers should be dict"
+    cinexplorer_logger = loggers["cinexplorer"]
+    assert isinstance(cinexplorer_logger, dict), "logger config should be dict"
+
+    handlers = config["handlers"]
+    assert isinstance(handlers, dict), "handlers should be dict"
+    console_handler = handlers["console"]
+    assert isinstance(console_handler, dict), "handler config should be dict"
+
+    print(f"Generated log level: {cinexplorer_logger['level']}")
+    print(f"Console handler level: {console_handler['level']}")
 
     # Test that configuration is valid
     temp_dir = None
@@ -106,7 +113,7 @@ def test_environment_variables():
 
         # Update config to use temp directory
         test_config = config.copy()
-        for handler_name, handler_config in test_config["handlers"].items():
+        for _handler_name, handler_config in test_config["handlers"].items():
             if "filename" in handler_config:
                 filename = handler_config["filename"]
                 # Replace /backend/logs with temp directory
@@ -153,12 +160,16 @@ def test_rotation_configuration():
     # Test configuration includes rotation settings
     config = get_logging_config()
 
+    handlers = config["handlers"]
+    assert isinstance(handlers, dict), "handlers should be dict"
+
     # Check that all file handlers have rotation configured
-    file_handlers = [name for name in config["handlers"] if name.startswith("file_")]
+    file_handlers = [name for name in handlers if name.startswith("file_")]
     print(f"Found file handlers: {file_handlers}")
 
     for handler_name in file_handlers:
-        handler_config = config["handlers"][handler_name]
+        handler_config = handlers[handler_name]
+        assert isinstance(handler_config, dict), "handler config should be dict"
 
         # Verify RotatingFileHandler class
         assert (
@@ -208,9 +219,15 @@ def test_database_logging_configuration():
     # Test database logging configuration
     config = get_logging_config()
 
+    handlers = config["handlers"]
+    assert isinstance(handlers, dict), "handlers should be dict"
+    loggers = config["loggers"]
+    assert isinstance(loggers, dict), "loggers should be dict"
+
     # Check database handler exists
-    assert "file_database" in config["handlers"], "Database file handler not found"
-    db_handler = config["handlers"]["file_database"]
+    assert "file_database" in handlers, "Database file handler not found"
+    db_handler = handlers["file_database"]
+    assert isinstance(db_handler, dict), "db_handler should be dict"
 
     # Verify database handler configuration
     assert (
@@ -225,8 +242,9 @@ def test_database_logging_configuration():
     db_loggers = ["django.db.backends",
                   "django.db.backends.schema", "django.db.migrations"]
     for logger_name in db_loggers:
-        assert logger_name in config["loggers"], f"Database logger {logger_name} not found"
-        logger_config = config["loggers"][logger_name]
+        assert logger_name in loggers, f"Database logger {logger_name} not found"
+        logger_config = loggers[logger_name]
+        assert isinstance(logger_config, dict), "logger config should be dict"
 
         # Check that handlers are configured appropriately
         assert "handlers" in logger_config, f"{logger_name} missing handlers configuration"

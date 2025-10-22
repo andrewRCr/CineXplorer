@@ -2,18 +2,24 @@
 Custom django-allauth adapter for CineXplorer.
 
 Integrates allauth's email sending with ZeptoMail transactional email service.
+JWT token generation is handled by HEADLESS_TOKEN_STRATEGY setting.
 """
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import requests
 from allauth.account.adapter import DefaultAccountAdapter
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.http import HttpRequest
 
+if TYPE_CHECKING:
+    from allauth.account.models import EmailConfirmation
+
 logger = logging.getLogger(__name__)
+User = get_user_model()
 
 
 class CustomAccountAdapter(DefaultAccountAdapter):
@@ -117,6 +123,17 @@ class CustomAccountAdapter(DefaultAccountAdapter):
                 "track_opens": True,
             }
 
+            # Log outgoing email details for debugging
+            logger.info(
+                f"Sending email via ZeptoMail to {email}",
+                extra={
+                    "recipient": email,
+                    "subject": subject,
+                    "template": template_prefix,
+                    "sender": self.sender_email,
+                },
+            )
+
             try:
                 response = requests.post(
                     f"{self.base_url}/email",
@@ -156,12 +173,15 @@ class CustomAccountAdapter(DefaultAccountAdapter):
                 raise
 
             if 200 <= response.status_code < 300:
+                # Parse response for debugging (ZeptoMail API response structure unknown)
+                response_data: dict[str, object] = response.json() if response.text else {}
                 logger.info(
-                    "Email sent successfully via ZeptoMail",
+                    f"Email sent successfully via ZeptoMail to {email}",
                     extra={
                         "recipient": email,
                         "template": template_prefix,
                         "status_code": response.status_code,
+                        "zeptomail_response": response_data,
                     },
                 )
             else:
@@ -192,7 +212,7 @@ class CustomAccountAdapter(DefaultAccountAdapter):
             raise
 
     def get_email_confirmation_url(
-        self, _request: HttpRequest | None, emailconfirmation: Any
+        self, request: HttpRequest | None, emailconfirmation: EmailConfirmation
     ) -> str:
         """
         Construct the email confirmation URL.
@@ -211,3 +231,6 @@ class CustomAccountAdapter(DefaultAccountAdapter):
         key = emailconfirmation.key
         # Frontend will handle the verification and call backend API
         return f"{frontend_url}/verify-email/{key}"
+
+
+

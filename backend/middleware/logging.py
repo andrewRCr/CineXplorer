@@ -11,13 +11,14 @@ Usage:
     Add 'middleware.logging.RequestLoggingMiddleware' to MIDDLEWARE in Django settings.
 """
 
-import uuid
-import time
 import logging
+import time
+import uuid
 from typing import Protocol, cast
+
+from django.contrib.auth.models import AnonymousUser
 from django.http import HttpRequest, HttpResponse
 from django.utils.deprecation import MiddlewareMixin
-from django.contrib.auth.models import AnonymousUser
 
 
 class RequestWithLogging(Protocol):

@@ -16,8 +16,12 @@ import { useNavigate, useLocation, Link } from "react-router-dom";
 import useAuthContext from "@/hooks/useAuthContext";
 import { useState, useEffect } from "react";
 import { FiMail, FiX } from "react-icons/fi";
-import axios from "axios";
+import { FaGoogle, FaGithub } from "react-icons/fa";
 import { ERROR_CODES } from "@shared/error-codes";
+import * as authService from "@/services/authService";
+import GoogleLogo from "@/assets/GoogleLogo";
+import GitHubLogo from "@/assets/GitHubLogo";
+import LoadingContent from "@/components/layout/LoadingContent";
 
 const Login = () => {
 	const authContext = useAuthContext();
@@ -36,14 +40,83 @@ const Login = () => {
 	const [registrationSuccess, setRegistrationSuccess] = useState<string | null>(
 		null
 	);
+	const [isLoggingIn, setIsLoggingIn] = useState(false);
+
+	// Initialize OAuth loading state immediately from sessionStorage (prevents form flash)
+	// Note: State never updates after initialization - component unmounts during navigation
+	const [oauthLoading] = useState<{
+		provider: string;
+		loading: boolean;
+	} | null>(() => {
+		const oauthProvider = sessionStorage.getItem('oauth_in_progress');
+		if (oauthProvider) {
+			console.log(`[OAuth] Component initializing with OAuth flow in progress: ${oauthProvider}`);
+			return { provider: oauthProvider, loading: true };
+		}
+		return null;
+	});
+
+	// Initialize timing gate: closed if OAuth in progress (will open after minimum display time)
+	const [minDisplayTimeElapsed, setMinDisplayTimeElapsed] = useState(() => {
+		const oauthProvider = sessionStorage.getItem('oauth_in_progress');
+		// If OAuth flow in progress, gate starts CLOSED (false) - will open after minimum display time
+		// Otherwise gate starts OPEN (true) - no delay needed for normal login
+		return !oauthProvider;
+	});
+
+	// Check if returning from OAuth flow and set up timing gate
+	useEffect(() => {
+		const oauthProvider = sessionStorage.getItem('oauth_in_progress');
+		const startTimeStr = sessionStorage.getItem('oauth_start_time');
+
+		if (oauthProvider && startTimeStr) {
+			const startTime = parseInt(startTimeStr, 10);
+			const elapsedTime = Date.now() - startTime;
+			const FAST_OAUTH_THRESHOLD = 3000; // 3 seconds
+			const MINIMUM_DISPLAY_TIME = 500; // 0.5 seconds minimum (actual display time from when spinner appears)
+
+			console.log(`[OAuth] Detected return from ${oauthProvider} OAuth flow after ${elapsedTime}ms`);
+
+			// For fast OAuth, enforce minimum display time before allowing navigation
+			if (elapsedTime < FAST_OAUTH_THRESHOLD) {
+				setMinDisplayTimeElapsed(false);
+
+				// Display spinner for MINIMUM_DISPLAY_TIME from NOW (not from original click time)
+				// This ensures consistent visible duration regardless of OAuth speed
+				console.log(`[OAuth] Fast OAuth detected, enforcing ${MINIMUM_DISPLAY_TIME}ms minimum display time`);
+
+				setTimeout(() => {
+					console.log('[OAuth] Minimum display time elapsed, allowing navigation');
+					setMinDisplayTimeElapsed(true);
+				}, MINIMUM_DISPLAY_TIME);
+			} else {
+				console.log('[OAuth] Slow OAuth detected, no minimum display time needed');
+				// Slow OAuth - user already waited, allow immediate navigation
+				setMinDisplayTimeElapsed(true);
+			}
+
+			// Cleanup function: Clear flags when component unmounts (during navigation)
+			return () => {
+				console.log('[OAuth] Login component unmounting, clearing OAuth flags');
+				sessionStorage.removeItem('oauth_in_progress');
+				sessionStorage.removeItem('oauth_start_time');
+			};
+		}
+	}, []);
 
 	// Redirect authenticated users away from login page
+	// Note: Gate navigation with minDisplayTimeElapsed to enforce minimum spinner display for fast OAuth
 	useEffect(() => {
-		if (authContext?.isAuthenticated) {
+		// Only redirect if:
+		// 1. User is authenticated
+		// 2. Not in active login process
+		// 3. Minimum OAuth display time has elapsed (for fast OAuth UX)
+		if (authContext?.isAuthenticated && !isLoggingIn && minDisplayTimeElapsed) {
 			console.log("User already authenticated, redirecting to home");
-			navigate(ROUTES.HOME);
+			// Use replace to avoid adding login page to history
+			navigate(ROUTES.HOME, { replace: true });
 		}
-	}, [authContext?.isAuthenticated, navigate]);
+	}, [authContext?.isAuthenticated, navigate, isLoggingIn, minDisplayTimeElapsed]);
 
 	const formik = useFormik({
 		initialValues: {
@@ -68,11 +141,13 @@ const Login = () => {
 		onSubmit: async (values) => {
 			const { username, password } = values;
 			if (login) {
+				setIsLoggingIn(true);
 				const response = await login(
 					username,
 					password,
 					formik.values.rememberMe
 				);
+				setIsLoggingIn(false);
 				if (response === 401) {
 					formik.setErrors({
 						username: "Invalid username or password",
@@ -190,6 +265,14 @@ const Login = () => {
 			// Clear the state to prevent showing the message again on refresh
 			navigate(location.pathname, { replace: true, state: {} });
 		}
+		if (location.state?.oauthError) {
+			setGeneralError(
+				location.state.message ||
+					"OAuth authentication failed. Please try again."
+			);
+			// Clear the state to prevent showing the message again on refresh
+			navigate(location.pathname, { replace: true, state: {} });
+		}
 	}, [location, navigate]);
 
 	const handleResendVerification = async () => {
@@ -204,25 +287,7 @@ const Login = () => {
 		setResendMessage("");
 
 		try {
-			const BASE_URL = import.meta.env.VITE_BASE_API_URL;
-
-			// Get CSRF token from cookie
-			const csrfToken = document.cookie
-				.split("; ")
-				.find((row) => row.startsWith("XSRF-TOKEN="))
-				?.split("=")[1];
-
-			await axios.post(
-				`${BASE_URL}/user/resend-verification/`,
-				{ email: userEmail },
-				{
-					headers: {
-						"Content-Type": "application/json",
-						"X-CSRFToken": csrfToken || "",
-					},
-					withCredentials: true,
-				}
-			);
+			await authService.resendVerificationEmail(userEmail);
 			setResendMessage("Verification email sent! Please check your inbox.");
 		} catch (error: unknown) {
 			console.error("Resend error:", error);
@@ -248,6 +313,107 @@ const Login = () => {
 	const dismissRegistrationSuccessAlert = () => {
 		setRegistrationSuccess(null);
 	};
+
+	const handleGoogleLogin = async () => {
+		// Use django-allauth headless mode API
+		await initializeOAuthLogin("google");
+	};
+
+	const handleGithubLogin = async () => {
+		// Use django-allauth headless mode API
+		await initializeOAuthLogin("github");
+	};
+
+	/**
+	 * Initialize OAuth login using django-allauth headless mode.
+	 *
+	 * Security Model:
+	 * - OAuth endpoints (/_allauth/) are CSRF-exempt in backend middleware
+	 * - OAuth 2.0 'state' parameter provides CSRF protection at protocol level
+	 * - State is random, session-bound, validated on callback (more secure than cookies)
+	 * - CSRF token is optional but included for defense-in-depth
+	 *
+	 * Flow:
+	 * 1. Check session endpoint (validates django-allauth is available)
+	 * 2. Get CSRF token from existing cookie (may not exist, that's OK)
+	 * 3. POST to provider redirect endpoint (browser follows OAuth redirect)
+	 * 4. User authorizes on provider site (Google/GitHub)
+	 * 5. Provider redirects to backend callback with OAuth code
+	 * 6. Backend validates state, exchanges code, creates session, sets JWT cookies
+	 * 7. Backend redirects to frontend, useAuth detects tokens, logs in
+	 *
+	 * Note: Uses HTML form submission (not fetch) so browser follows OAuth redirect.
+	 */
+	const initializeOAuthLogin = async (provider: string) => {
+		try {
+			console.log(`[OAuth] Initializing ${provider} OAuth login`);
+
+			// Step 1: Get CSRF token from cookie (if available)
+			const csrfToken = document.cookie
+				.split("; ")
+				.find((row) => row.startsWith("csrftoken="))
+				?.split("=")[1];
+
+			// Step 2: Create form and submit through Caddy proxy
+			// Use absolute URL with protocol to force full page navigation (bypass React Router)
+			const form = document.createElement("form");
+			form.method = "POST";
+			form.action = "https://localhost:8444/_allauth/browser/v1/auth/provider/redirect";
+			// CRITICAL: Force full page reload, prevent React Router interception
+			form.target = "_self";
+
+			// Add form fields
+			const fields = {
+				provider: provider,
+				callback_url: "https://localhost:8444/login", // Use full URL with correct port
+				process: "login",
+				...(csrfToken ? { csrfmiddlewaretoken: csrfToken } : {}),
+			};
+
+			Object.entries(fields).forEach(([key, value]) => {
+				const input = document.createElement("input");
+				input.type = "hidden";
+				input.name = key;
+				input.value = value;
+				form.appendChild(input);
+			});
+
+			// Set flag to indicate OAuth flow is in progress
+			// Store provider name and timestamp for UX timing decisions on return
+			sessionStorage.setItem('oauth_in_progress', provider);
+			sessionStorage.setItem('oauth_start_time', Date.now().toString());
+
+			// Submit form immediately (browser will perform full page navigation)
+			// No artificial delay - user will see Google/GitHub login form immediately if needed
+			// Loading spinner will show when returning FROM OAuth (not when going TO OAuth)
+			document.body.appendChild(form);
+			form.submit();
+		} catch (error) {
+			console.error("OAuth initialization error:", error);
+			setGeneralError("Failed to initiate OAuth login. Please try again.");
+		}
+	};
+
+	// Show loading content when OAuth is in progress
+	if (oauthLoading?.loading) {
+		return (
+			<LoadingContent
+				mode="content"
+				message={`Logging in with ${
+					oauthLoading.provider === "google" ? "Google" : "GitHub"
+				}...`}
+				icon={
+					oauthLoading.provider === "google" ? (
+						<GoogleLogo size={64} />
+					) : (
+						<Box color="black">
+							<GitHubLogo size={64} />
+						</Box>
+					)
+				}
+			/>
+		);
+	}
 
 	return (
 		<Box
@@ -371,7 +537,7 @@ const Login = () => {
 								}}
 							>
 								<Checkbox.HiddenInput />
-								<Checkbox.Control 
+								<Checkbox.Control
 									borderColor="border.separator"
 									_hover={{
 										bg: "background.subItem",
@@ -393,6 +559,59 @@ const Login = () => {
 							>
 								Login
 							</Button>
+
+							{/* Divider */}
+							<Box position="relative" w="100%" mt={4}>
+								<Box
+									position="absolute"
+									top="50%"
+									left="0"
+									right="0"
+									h="1px"
+									bg="border.separator"
+								/>
+								<Text
+									position="relative"
+									textAlign="center"
+									bg="background.main"
+									px={3}
+									mx="auto"
+									w="fit-content"
+									fontSize="14px"
+									color="text.muted"
+								>
+									or continue with
+								</Text>
+							</Box>
+
+							{/* OAuth Buttons */}
+							<HStack gap={3} w="100%" mt={4}>
+								<Button
+									flex="1"
+									variant="outline"
+									fontSize="16px"
+									onClick={handleGoogleLogin}
+									_hover={{
+										bg: "background.subItem",
+									}}
+								>
+									<FaGoogle size={18} style={{ marginRight: "8px" }} />
+									Google
+								</Button>
+								<Button
+									flex="1"
+									variant="outline"
+									fontSize="16px"
+									onClick={handleGithubLogin}
+									_hover={{
+										bg: "background.subItem",
+									}}
+								>
+									<FaGithub size={18} style={{ marginRight: "8px" }} />
+									GitHub
+								</Button>
+							</HStack>
+
 							<Text mt="4px" textAlign="center" w="100%" fontSize="16px">
 								Don't have an account?{" "}
 								<Link

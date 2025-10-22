@@ -6,13 +6,12 @@ with TMDB-specific authentication, rate limiting, error handling, and response
 processing built on top of the BaseApiClient infrastructure.
 """
 
-# from typing import Any  # Removed per Quality Gate #6
 import requests
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 
-from .base_api_client import BaseApiClient
 from .api_response import ApiResponse
+from .base_api_client import BaseApiClient
 
 
 class TMDBApiClient(BaseApiClient):
@@ -165,7 +164,7 @@ class TMDBApiClient(BaseApiClient):
         response_metadata = self._extract_tmdb_response_metadata(data)
 
         # Enhanced logging for TMDB responses
-        log_data = {
+        log_data: dict[str, object] = {
             'correlation_id': correlation_id,
             'endpoint': endpoint,
             'status_code': response.status_code,
@@ -186,15 +185,11 @@ class TMDBApiClient(BaseApiClient):
 
         # Add performance warning for slow requests (>1000ms)
         if duration_ms > 1000:
-            performance_log_data = dict(log_data)  # Copy the log data
-            performance_log_data.update({
-                'performance_warning': True,
-                'threshold_exceeded': '1000ms',
-                'performance_ratio': round(duration_ms / 1000.0, 2),
-                'slow_request_impact': (
-                    'User experience degradation possible'
-                )
-            })
+            performance_log_data: dict[str, object] = dict(log_data)  # Copy the log data
+            performance_log_data['performance_warning'] = True
+            performance_log_data['threshold_exceeded'] = '1000ms'
+            performance_log_data['performance_ratio'] = round(duration_ms / 1000.0, 2)
+            performance_log_data['slow_request_impact'] = 'User experience degradation possible'
             self.logger.warning(
                 "TMDB API request slow performance",
                 extra=performance_log_data
@@ -244,7 +239,7 @@ class TMDBApiClient(BaseApiClient):
         error_message = f"TMDB request failed: {response.status_code}"
 
         # Enhanced logging for TMDB errors
-        log_data = {
+        log_data: dict[str, object] = {
             'correlation_id': correlation_id,
             'endpoint': endpoint,
             'status_code': response.status_code,
@@ -266,15 +261,13 @@ class TMDBApiClient(BaseApiClient):
 
         # Add performance warning for slow error responses (>1000ms)
         if duration_ms > 1000:
-            performance_log_data = dict(log_data)  # Copy the log data
-            performance_log_data.update({
-                'performance_warning': True,
-                'threshold_exceeded': '1000ms',
-                'performance_ratio': round(duration_ms / 1000.0, 2),
-                'slow_error_impact': (
-                    'Error response time exceeds performance threshold'
-                )
-            })
+            performance_log_data: dict[str, object] = dict(log_data)  # Copy the log data
+            performance_log_data['performance_warning'] = True
+            performance_log_data['threshold_exceeded'] = '1000ms'
+            performance_log_data['performance_ratio'] = round(duration_ms / 1000.0, 2)
+            performance_log_data['slow_error_impact'] = (
+                'Error response time exceeds performance threshold'
+            )
             self.logger.warning(
                 "TMDB API error response slow performance",
                 extra=performance_log_data
@@ -320,7 +313,7 @@ class TMDBApiClient(BaseApiClient):
         Returns:
             Dictionary with TMDB metadata or None if not applicable
         """
-        metadata = {}
+        metadata: dict[str, object] = {}
 
         # Common TMDB pagination fields
         if 'page' in data:
@@ -331,7 +324,12 @@ class TMDBApiClient(BaseApiClient):
             metadata['total_results'] = data['total_results']
         if 'results' in data:
             results = data['results']
-            metadata['results_count'] = len(results) if hasattr(results, '__len__') else 0
+            # Type-safe length check with hasattr
+            # Note: hasattr check doesn't narrow object to Sized protocol in Pyright
+            if hasattr(results, '__len__'):
+                metadata['results_count'] = len(results)  # type: ignore[arg-type]  # Runtime-validated by hasattr
+            else:
+                metadata['results_count'] = 0
 
         # Movie-specific fields
         if 'id' in data and isinstance(data['id'], int):
@@ -368,18 +366,23 @@ class TMDBApiClient(BaseApiClient):
             'retry-after': 'retry_after'
         }
 
+        # Headers typed as object to support mock objects in tests
+        # Use try/except for safe access to non-dict or mock header objects
         for header_name, key in rate_limit_headers.items():
-            if hasattr(headers, '__contains__') and hasattr(headers, '__getitem__'):
-                if header_name in headers:
-                    value = headers[header_name]
-                    # Convert numeric values to integers
-                    if key in ['limit', 'remaining', 'retry_after', 'reset']:
-                        try:
-                            rate_limit_info[key] = int(value)
-                        except (ValueError, TypeError):
-                            rate_limit_info[key] = value
-                    else:
-                        rate_limit_info[key] = value
+            try:
+                value = headers[header_name]  # type: ignore[index]  # Mock object support
+            except (TypeError, KeyError, IndexError):
+                # Skip non-subscriptable or missing headers
+                continue
+
+            # Convert numeric values to integers
+            if key in ['limit', 'remaining', 'retry_after', 'reset']:
+                try:
+                    rate_limit_info[key] = int(value)  # type: ignore[arg-type]  # Runtime-validated in try/except
+                except (ValueError, TypeError):
+                    rate_limit_info[key] = value
+            else:
+                rate_limit_info[key] = value
 
         return rate_limit_info if rate_limit_info else None
 

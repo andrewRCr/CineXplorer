@@ -1,40 +1,41 @@
 from __future__ import annotations
 
-from collections.abc import Mapping
 import logging
 import uuid
-from datetime import datetime, timedelta
+from collections.abc import Mapping
+from datetime import UTC, datetime, timedelta
 from typing import cast
 
 from core.services.api_response import ApiResponse
 from core.services.tmdb_api_client import TMDBApiClient
 from core.services.validators import (
-    validate_tmdb_response,
     validate_tmdb_paginated_response,
+    validate_tmdb_response,
 )
-from core.types.api_types import TMDBParams
 from core.tmdb_models.tmdb_responses import (
+    TMDBCreditsResponse,
+    TMDBGenreListResponse,
+    TMDBKeywordSearchResponse,
     TMDBMovieBase,
     TMDBMovieDetail,
-    TMDBCreditsResponse,
     TMDBMovieSearchResponse,
-    TMDBKeywordSearchResponse,
     TMDBPersonSearchResponse,
-    TMDBGenreListResponse,
 )
+from core.types.api_types import TMDBParams
 from ninja.errors import HttpError
+
 from ..schemas import (
-    MovieBaseSchema,
-    MovieDetailSchema,
-    PaginatedMovieResponseSchema,
-    GenreSchema,
-    ProductionCompanySchema,
     CastMemberSchema,
     CrewMemberSchema,
+    GenreSchema,
     KeywordSchema,
+    MovieBaseSchema,
+    MovieDetailSchema,
     PaginatedKeywordResponseSchema,
-    PersonSchema,
+    PaginatedMovieResponseSchema,
     PaginatedPersonResponseSchema,
+    PersonSchema,
+    ProductionCompanySchema,
 )
 
 # Use TMDB-specific logger for better log organization
@@ -131,11 +132,17 @@ def create_movie_base_from_tmdb(tmdb_data: Mapping[str, object]) -> MovieBaseSch
         tmdb_movie = TMDBMovieBase.model_validate(tmdb_data, strict=False)
 
         # Then convert to application schema
+        # Note: TMDB sometimes returns empty string for release_date instead of null
+        # Convert empty strings to None to avoid Pydantic validation errors
+        release_date = tmdb_movie.release_date
+        if isinstance(release_date, str) and release_date.strip() == '':
+            release_date = None
+
         validated_data = {
             'tmdb_id': tmdb_movie.id,
             'title': tmdb_movie.title,
             'poster_path': tmdb_movie.poster_path,
-            'release_date': tmdb_movie.release_date,
+            'release_date': release_date,
             'vote_average': tmdb_movie.vote_average,
             'runtime': 0,  # Runtime not available in base movie responses
         }
@@ -152,7 +159,7 @@ def create_movie_base_from_tmdb(tmdb_data: Mapping[str, object]) -> MovieBaseSch
                 'error_type': type(e).__name__
             }
         )
-        raise HttpError(500, "Failed to process movie data")
+        raise HttpError(500, "Failed to process movie data") from e
 
 
 def create_movie_detail_from_tmdb(
@@ -255,7 +262,7 @@ def create_movie_detail_from_tmdb(
                 'error_type': type(e).__name__
             }
         )
-        raise HttpError(500, "Failed to process movie details")
+        raise HttpError(500, "Failed to process movie details") from e
 
 
 def create_paginated_movie_response_from_tmdb(
@@ -305,7 +312,7 @@ def create_paginated_movie_response_from_tmdb(
                 'error_type': type(e).__name__
             }
         )
-        raise HttpError(500, "Failed to process movie search results")
+        raise HttpError(500, "Failed to process movie search results") from e
 
 
 def create_paginated_keyword_response_from_tmdb(
@@ -358,7 +365,7 @@ def create_paginated_keyword_response_from_tmdb(
                 'error_type': type(e).__name__
             }
         )
-        raise HttpError(500, "Failed to process keyword results")
+        raise HttpError(500, "Failed to process keyword results") from e
 
 
 def create_paginated_person_response_from_tmdb(
@@ -413,7 +420,7 @@ def create_paginated_person_response_from_tmdb(
                 'error_type': type(e).__name__
             }
         )
-        raise HttpError(500, "Failed to process person results")
+        raise HttpError(500, "Failed to process person results") from e
 
 
 def create_genre_list_from_tmdb(tmdb_response: Mapping[str, object]) -> list[GenreSchema]:
@@ -454,7 +461,7 @@ def create_genre_list_from_tmdb(tmdb_response: Mapping[str, object]) -> list[Gen
                 'error_type': type(e).__name__
             }
         )
-        raise HttpError(500, "Failed to process genre data")
+        raise HttpError(500, "Failed to process genre data") from e
 
 
 def handle_tmdb_api_error(api_response: ApiResponse, operation: str, **context: object) -> None:
@@ -612,7 +619,7 @@ def get_upcoming_movies(page: int = 1) -> PaginatedMovieResponseSchema:
     Raises:
         HttpError: If API error or data processing fails
     """
-    today = datetime.today()
+    today = datetime.now(tz=UTC)
     min_date = today.strftime("%Y-%m-%d")
     max_date = (today + timedelta(days=30)).strftime("%Y-%m-%d")
 

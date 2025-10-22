@@ -193,12 +193,16 @@ const MovieDetail = () => {
 				<Flex gap={4} justify="center">
 					{/* <Button colorScheme="teal">Add to Watchlist</Button> */}
 					<Button
-						colorScheme={userMovieData?.inWatchlist ? "gray" : "teal"}
+						colorScheme={userMovieData?.user_on_watchlist ? "gray" : "teal"}
 						loading={userMovieDataLoading && isAuthenticated}
-						onClick={() => update({ inWatchlist: !userMovieData?.inWatchlist })}
+						onClick={() =>
+							update({
+								user_on_watchlist: !userMovieData?.user_on_watchlist,
+							})
+						}
 						disabled={!isAuthenticated}
 					>
-						{userMovieData?.inWatchlist
+						{userMovieData?.user_on_watchlist
 							? "Remove from Watchlist"
 							: "Add to Watchlist"}
 					</Button>

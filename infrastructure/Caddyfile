@@ -29,7 +29,21 @@ https://localhost:8444 {
         }
     }
 
-    # Proxy django-allauth and admin URLs to the backend
+    # Proxy django-allauth headless API to the backend
+    handle /_allauth/* {
+        header {
+            Access-Control-Allow-Origin "https://localhost:5173"
+            Access-Control-Allow-Credentials "true"
+        }
+        reverse_proxy backend:8000 {
+            transport http {
+                tls
+            }
+        }
+    }
+
+    # Proxy django-allauth OAuth callbacks to the backend
+    # Even in headless mode, OAuth providers redirect to /accounts/<provider>/login/callback/
     handle /accounts/* {
         reverse_proxy backend:8000 {
             transport http {

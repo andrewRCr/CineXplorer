@@ -44,6 +44,38 @@ documents to understand the complete context:
 
 Ensure the requested feature aligns with the overall product direction, technical approach, and current priorities.
 
+### Step 1.5: Check for Existing Notes Document (Notes-First Pattern)
+
+Before conducting discovery, check if a corresponding `notes-*.md` file exists for this work. The "notes-first"
+pattern captures evolving understanding during planning, with PRDs created only when work becomes active.
+
+**Locations to check:**
+
+- `.arc/active/feature/notes-{{FEATURE_NAME}}.md` (active feature work)
+- `.arc/active/technical/notes-{{FEATURE_NAME}}.md` (active technical work)
+- `.arc/upcoming/feature/notes-{{FEATURE_NAME}}.md` (planned features)
+- `.arc/upcoming/technical/notes-{{FEATURE_NAME}}.md` (planned technical work)
+
+**If notes document exists:**
+
+1. **Read the entire notes document** - This becomes your primary context source
+2. **Extract key information:**
+   - Work scope, rationale, and priority
+   - Technical approach, patterns, and architecture decisions
+   - Effort estimates and time constraints
+   - Known dependencies, constraints, or blockers
+   - References to related work or completed foundation
+3. **Use notes as basis for PRD** - The notes document informs your clarifying questions
+4. **Focus discovery on gaps** - Ask targeted questions about ambiguities, missing details, or areas needing clarification
+
+**If no notes document exists:**
+
+- Proceed with standard discovery process (Step 2 onwards)
+- The PRD will be created from the initial request and discovery session
+
+**Rationale:** Notes documents prevent "PRD drift" (requirements becoming outdated before work starts) by
+capturing planning insights without committing to formal requirements until work is ready to begin.
+
 ### Step 2: Determine Work Category
 
 Before detailed discovery, determine whether this is **feature** or **technical** work:
@@ -59,6 +91,21 @@ See [Work Categorization Strategy](../strategies/strategy-work-categorization.md
 
 Ask clarifying questions to gather sufficient detail about the "what" and "why" of the work. The "how"
 (implementation details) will be determined during task generation and development.
+
+**If working from notes document:**
+
+- Ask **targeted clarifying questions** to fill gaps or resolve ambiguities in the notes
+- Validate key assumptions made in the notes document
+- Confirm scope boundaries, priorities, and sequencing
+- Address any "Open Questions" or "TBD" items from notes
+- Verify effort estimates and time constraints are still valid
+
+**If working from initial request only:**
+
+- Ask **broader clarifying questions** to establish the "what" and "why"
+- Focus on problem definition, user impact, and goals
+- Explore user stories, acceptance criteria, and scope boundaries
+- Gather context about constraints, dependencies, and technical considerations
 
 **For interactive sessions:** Provide options in numbered lists to enable quick responses and maintain momentum.
 

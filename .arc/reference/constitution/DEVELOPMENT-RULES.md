@@ -147,8 +147,10 @@ Quality issues discovered during work should be addressed, not ignored.
 ### One Sub-Task Rule
 
 - **Complete ONE sub-task at a time** - never bundle multiple deliverables
-- **Mandatory stop** after each sub-task completion
-- **Wait for explicit user approval** before starting next sub-task
+- **Mandatory stop** after each sub-task completion for user approval
+- **Report-then-mark pattern**: Report completed work → wait for approval → mark `[x]` → proceed
+- **Implied permission**: User approval implies permission to proceed UNLESS explicitly stated otherwise
+  (e.g., "looks good, but before moving on..."). Address such concerns before proceeding to next subtask.
 
 ### Sub-Task Granularity Guidelines
 
@@ -202,10 +204,10 @@ This makes the protocol visible during execution.
 
 ### Documentation Updates
 
-- **Immediate subtask updates**: Mark `[x]` in task files after each sub-task completion
+- **Subtask completion sequence**: Report work → user approves → mark `[x]` in task file
 - **Parent task updates**: Mark parent task `[x]` when all subtasks complete (BEFORE generating readiness report)
 - **Update "Relevant Files"** section when files are created/modified
-- **Never batch documentation updates** - do immediately after work
+- **Never batch documentation updates** - mark tasks after approval, not before
 - **Never commit with stale task docs** - task list must reflect completion status before commit
 
 ### Parent Task Completion

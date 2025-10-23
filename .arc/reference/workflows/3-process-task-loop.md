@@ -4,19 +4,23 @@ Guidelines for managing task lists in markdown files to track progress on comple
 
 ## Task Implementation
 
-- **One sub-task at a time:** Do **NOT** start the next sub‑task until you ask the user for permission and they say
-  "yes" or "y"
+- **One sub-task at a time:** Do **NOT** start the next sub‑task without user approval
 - **Test-first approach:** For new models, APIs, and complex logic, write tests before implementation
 - **Incremental quality checks:** Run linting and type checking on modified files after each sub-task
   (Ruff for linting with auto-fix, Pyright for fast type checks, mypy for optional full-project CI/periodic validation)
-- **Immediate documentation:** Update the task list file immediately after completing each subtask
 - **Completion protocol:**
 
   1. When you finish a **single sub‑task**:
-     - **First**: Immediately mark it as completed by changing `[ ]` to `[x]` in the task list file
-     - **Second**: **MANDATORY STOP** - Pause and ask for user review/approval of the subtask completion
-     - **Third**: Only proceed to next subtask with explicit user permission ("proceed to 4.x" or "y")
+     - **First**: Run incremental quality checks on modified files (linting, type checking)
+     - **Second**: **REPORT** completed work to user with summary of changes
+     - **Third**: **MANDATORY STOP** - Wait for user approval
+     - **Fourth**: After user approves, mark subtask as `[x]` in task list file
+     - **Fifth**: Proceed to next subtask (permission to proceed is implied by approval unless user specifies otherwise)
      - **NEVER** continue to multiple subtasks without explicit user approval for each one
+
+     **Note on implied permission:** User approval of completed work implies permission to proceed to the next
+     subtask UNLESS the user explicitly requests otherwise (e.g., "looks good, but before moving on...").
+     In such cases, address the new concern before proceeding to the next task-list-documented subtask.
 
   2. If **all** subtasks underneath a parent task are now `[x]`, follow this sequence:
 
@@ -207,21 +211,24 @@ This dedicated workflow covers:
 
 When working with task lists, the AI must:
 
-1. Regularly update the task list file after finishing any significant work.
-2. Follow the completion protocol:
-   - Mark each finished **sub‑task** `[x]` immediately after completion.
+1. Before starting work, check which **single sub‑task** is next.
+2. **Complete only ONE subtask at a time** - never bundle multiple subtasks together.
+3. After implementing a **single sub‑task**:
+   - **Run incremental quality checks** on modified files (linting, type checking)
+   - **Do not report until all checks pass (0 errors)**
+   - **Fix any issues immediately** before reporting
+   - **REPORT** completed work to user with summary of changes
+   - **MANDATORY STOP** - Wait for user approval
+   - After user approves, mark subtask as `[x]` in task list file
+   - Proceed to next subtask (permission implied by approval unless user specifies otherwise)
+4. Follow the completion protocol for marking tasks:
+   - Mark each finished **sub‑task** `[x]` AFTER user approval (not before).
    - Mark the **parent task** `[x]` once **all** its subtasks are `[x]` (BEFORE generating readiness report).
    - **Task list updates must be saved before commit consideration** - never commit with stale task docs.
-3. Add newly discovered tasks.
-4. Before starting work, check which **single sub‑task** is next.
-6. **Complete only ONE subtask at a time** - never bundle multiple subtasks together.
-7. After implementing a **single sub‑task**:
-   - **Run incremental quality checks** on modified files (linting, hybrid type checking)
-   - **Do not mark the subtask [x] until all checks pass (0 errors)**
-   - **Fix any issues immediately** before marking complete
-   - Update the task list file immediately (mark subtask as [x])
-   - Pause and request user review/approval of the specific subtask completion
-   - Wait for explicit permission before starting the next subtask
-8. **Generate standardized readiness reports** using format from DEVELOPMENT-RULES.md
-9. **Never initiate commits** without explicit user approval - await commit instructions
-10. **Never assume subtasks can be grouped** - each represents an individual deliverable requiring separate approval.
+5. Add newly discovered tasks as they emerge.
+6. **Generate standardized readiness reports** using format from DEVELOPMENT-RULES.md
+7. **Never initiate commits** without explicit user approval - await commit instructions
+8. **Never assume subtasks can be grouped** - each represents an individual deliverable requiring separate approval.
+9. **Implied permission to proceed**: User approval of completed work implies permission to proceed to next subtask
+   UNLESS user explicitly states otherwise (e.g., "looks good, but before moving on..."). In such cases, address
+   the concern before proceeding to next task-list-documented subtask.

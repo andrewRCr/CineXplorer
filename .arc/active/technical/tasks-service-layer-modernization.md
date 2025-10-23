@@ -325,24 +325,26 @@ patterns across movie, UserMovieData, and authentication domains.
         - **Type checking**: 0 errors (Pyright)
 
 - [ ] **3.4 Extract Keyword and People Services**
-    - [ ] 3.4.1 Write tests for KeywordService class (test-first)
-        - Create `backend/apps/movie/tests/test_keyword_service_class.py`
-        - Test constructor injection of TMDB client
-        - Test `get_popular_keywords()` uses injected client
-        - Test `search_keywords()` uses injected client
-        - Test error handling (API failures)
-        - Follow pattern from `test_movie_service_class.py`
-        - **Target coverage**: 80% (general service layer)
-    - [ ] 3.4.2 Create KeywordService class in `backend/apps/movie/services/keyword_service.py`
-        - Extract `get_popular_keywords()` and `search_keywords()` from old function-based code
-        - Convert to class-based architecture with DI (inject TMDB client)
-        - Methods:
-            - `get_popular_keywords(page: int = 1) -> PaginatedKeywordResponseSchema`
-            - `search_keywords(query: str) -> PaginatedKeywordResponseSchema`
-        - Follow established MovieService patterns
-        - Full type annotations, comprehensive docstrings
-        - **Rationale**: Keywords are separate TMDB entity type (`/keyword/*`), used for filtering/browsing
-        - **Make tests pass** (GREEN phase after RED phase from 3.4.1)
+    - [x] 3.4.1 Write tests for KeywordService class (test-first)
+        - Created `backend/apps/movie/tests/test_keyword_service_class.py` (246 lines)
+        - **Tests created (10 total)**:
+            - Constructor tests: injected client, default client
+            - get_popular_keywords: uses client, handles errors, default page
+            - search_keywords: uses client, handles empty query, handles errors
+            - Factory function tests: creates service, returns correct type
+        - **Result**: 10/10 tests failing as expected (RED phase - module doesn't exist yet)
+        - **Linting**: 0 violations (Ruff, 1 auto-fixed)
+        - **Type errors**: 65 (expected - module doesn't exist)
+    - [x] 3.4.2 Create KeywordService class in `backend/apps/movie/services/keyword_service.py`
+        - Created `keyword_service.py` (176 lines) with DI pattern
+        - **Methods implemented**:
+            - `get_popular_keywords(page: int = 1)` - Fetches popular keywords from TMDB
+            - `search_keywords(query: str)` - Searches keywords, handles empty/short queries
+        - Added `get_keyword_service()` factory to `service_factory.py`
+        - Full type annotations, comprehensive docstrings with examples
+        - **Result**: 10/10 tests passing (GREEN phase - successful TDD cycle)
+        - **Linting**: 0 violations (Ruff, 1 auto-fixed)
+        - **Type checking**: 0 errors (Pyright)
     - [ ] 3.4.3 Write tests for PeopleService class (test-first)
         - Create `backend/apps/movie/tests/test_people_service_class.py`
         - Test constructor injection of TMDB client
@@ -385,17 +387,33 @@ patterns across movie, UserMovieData, and authentication domains.
         - **Tests**: Verify API endpoints still work (keywords and people routes)
 
 - [ ] **3.5 Clean Up Old Code and Frontend Duplication**
-    - [ ] 3.5.1 Remove old function-based implementations from movie_service.py
-        - Remove all old function-based service functions (lines 44-658):
-            - `fetch_movie_runtimes()`, `get_movie_by_id()`, `get_now_playing_movies()`, `get_upcoming_movies()`
-            - `search_movies()`, `discover_movies()`, `get_movie_genres()`
-            - `get_popular_keywords()`, `search_keywords()`, `get_popular_people()`, `search_people()`
-        - Remove "Helper Functions" section header (line 44)
-        - Remove "Class-Based Service Architecture" section header (line 657)
-        - Remove any temporal comments distinguishing new from old
-        - Verify no references to old functions remain in codebase
-        - **Expected result**: movie_service.py reduces from 1489 lines → ~874 lines
-        - Run full test suite to confirm nothing broken (89/89 movie tests should still pass)
+    - [ ] 3.5.1 Remove old function-based implementations and tests
+        - **Remove old function-based service code from movie_service.py**:
+            - Remove all old function-based service functions (lines 44-658):
+                - `fetch_movie_runtimes()`, `get_movie_by_id()`, `get_now_playing_movies()`, `get_upcoming_movies()`
+                - `search_movies()`, `discover_movies()`, `get_movie_genres()`
+                - `get_popular_keywords()`, `search_keywords()`, `get_popular_people()`, `search_people()`
+            - Remove "Helper Functions" section header (line 44)
+            - Remove "Class-Based Service Architecture" section header (line 657)
+            - Remove any temporal comments distinguishing new from old
+            - **Expected result**: movie_service.py reduces from 1489 lines → ~874 lines
+        - **Remove old function-based tests**:
+            - Delete `backend/apps/movie/tests/test_movie_service.py` entirely
+            - **Rationale**: These test the old function-based code being removed
+            - New class-based code covered by test_movie_service_class.py, test_keyword_service_class.py, test_people_service_class.py
+        - **Remove temporal/relative language from remaining files**:
+            - Update `test_movie_service_class.py` docstring:
+                - Remove "class-based architecture" language (it's just "the architecture" now)
+                - Remove references to "injected client (not global tmdb_client)" - there is no global anymore
+                - Simplify to describe what the tests do, not what they're replacing
+            - Update `test_keyword_service_class.py` docstring (same changes)
+            - Update `test_people_service_class.py` docstring (same changes)
+            - Remove `_class` suffix consideration (optional - discuss with user):
+                - Option A: Keep `_class` suffix for now (backward compatibility during review)
+                - Option B: Rename to canonical names: test_movie_service.py, test_keyword_service.py, test_people_service.py
+                - Decision: Defer to 3.5.1 implementation
+        - Verify no references to old functions remain in codebase (grep for old function names)
+        - Run full test suite to confirm nothing broken
     - [ ] 3.5.2 Remove client-side filtering from frontend
         - **Context**: Backend now handles all year/rating filtering + buffer mechanism
         - Update `frontend/src/hooks/useEnhancedFetcher.ts`:

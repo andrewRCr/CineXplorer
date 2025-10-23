@@ -10,6 +10,7 @@ maintaining testability through constructor injection.
 from __future__ import annotations
 
 from core.services.tmdb_api_client import TMDBApiClient
+from movie.services.keyword_service import KeywordService
 from movie.services.movie_service import MovieService
 
 
@@ -40,4 +41,31 @@ def get_movie_service() -> MovieService:
     return MovieService(tmdb_client=tmdb_client)
 
 
-__all__ = ["get_movie_service"]
+def get_keyword_service() -> KeywordService:
+    """
+    Create a KeywordService with default dependencies.
+
+    This factory function instantiates the service with a default
+    TMDBApiClient, providing a convenient way to obtain a fully-configured
+    service instance for production use.
+
+    For testing, bypass this factory and inject mock dependencies directly
+    into the service constructor.
+
+    Returns:
+        KeywordService instance with default TMDBApiClient injected
+
+    Example:
+        # Production usage
+        service = get_keyword_service()
+        keywords = service.search_keywords("action")
+
+        # Testing (bypass factory, inject mock)
+        mock_client = MockTMDBApiClient()
+        service = KeywordService(tmdb_client=mock_client)
+    """
+    tmdb_client = TMDBApiClient()
+    return KeywordService(tmdb_client=tmdb_client)
+
+
+__all__ = ["get_keyword_service", "get_movie_service"]

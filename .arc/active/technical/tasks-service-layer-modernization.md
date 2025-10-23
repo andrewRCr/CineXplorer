@@ -257,10 +257,51 @@ patterns across movie, UserMovieData, and authentication domains.
         - **Tests**: 17/17 passing (100%) for result_filtering + 89/89 all movie tests (100%)
         - **Linting**: 0 violations (Ruff)
         - **Type checking**: 0 errors (Pyright)
-    - [ ] 3.2.5 Document frontend simplification opportunities
-        - Create tech debt task to remove client-side filtering from `useEnhancedFetcher`
-        - Note: Frontend can now trust backend returns correctly filtered results
-        - Future: Remove `movieFilterUtils.ts` filtering functions (after verification)
+    - [x] 3.2.5 Refactor MovieService for DRY & Separation of Concerns ("Leave It Cleaner" protocol)
+        - **Goal**: Reduce MovieService from 867 lines to ~500 lines by extracting repeated patterns
+        - **Context**: Post-implementation refactoring before moving to API endpoint updates (Task 3.3)
+        - [x] 3.2.5.1 Extract Pydantic factory functions to schema_factories.py
+            - Create `backend/apps/movie/services/schema_factories.py`
+            - Move 6 factory functions from movie_service.py:
+                - `create_movie_base_from_tmdb()`
+                - `create_movie_detail_from_tmdb()`
+                - `create_paginated_movie_response_from_tmdb()`
+                - `create_paginated_keyword_response_from_tmdb()`
+                - `create_paginated_person_response_from_tmdb()`
+                - `create_genre_list_from_tmdb()`
+            - Move `handle_tmdb_api_error()` helper
+            - Update imports in movie_service.py (import from schema_factories)
+            - **Rationale**: Separates TMDB→Schema conversion (data transformation) from business logic
+            - **Impact**: Removes ~390 lines from movie_service.py, creates reusable module for other services
+        - [x] 3.2.5.2 Extract non-visual content filtering to private helper method
+            - Create `_filter_non_visual_content(movies: list[TMDBMovieBase]) -> list[TMDBMovieBase]` in MovieService
+            - Centralizes skip_terms list (soundtrack, score, etc.) and filtering logic
+            - **Impact**: Eliminates 50 lines of duplication in search_movies (appears twice: main + buffer)
+        - [x] 3.2.5.3 Extract common response building logic to private helper method
+            - Create `_build_filtered_response(movies: list[MovieBaseSchema], page: int, total_pages: int) -> PaginatedMovieResponseSchema`
+            - Handles: MovieBaseSchema → TMDBMovieBase conversion + TMDBMovieSearchResponse creation + paginated response
+            - **Impact**: Eliminates 48 lines of duplication across 4 paginated methods
+        - [x] 3.2.5.4 Extract paginated fetch-filter-buffer pattern to private template method
+            - Create `_fetch_with_filters_and_buffer(fetch_func, page, year_min, year_max, rating_min, rating_max, pre_filter_func=None)`
+            - Encapsulates workflow: fetch → pre-filter (optional) → year/rating filter → buffer → response
+            - Uses template method pattern: invariant workflow with variant behavior injection
+            - **Impact**: Eliminates ~160 lines of duplication across 4 methods (discover, search, now_playing, upcoming)
+        - [x] 3.2.5.5 Update all 4 paginated methods to use new helpers
+            - Refactored discover_movies() - reduced from 167→117 lines (50 lines saved, uses template method)
+            - Refactored search_movies() - reduced from 124→50 lines (74 lines saved, uses template with non-visual pre-filter)
+            - Refactored get_now_playing_movies() - reduced from 91→62 lines (29 lines saved, uses template method)
+            - Refactored get_upcoming_movies() - reduced from 105→76 lines (29 lines saved, uses template method)
+            - **Actual impact**: Eliminated 182 lines of duplication, each method now follows consistent pattern
+            - Methods now highly readable: define fetch function → call template method
+            - **Quality gates**: 0 linting errors, 0 type errors, 89/89 tests passing (100%)
+        - [x] 3.2.5.6 Run tests and incremental quality checks
+            - **Tests**: 89/89 passing (100% pass rate, no behavior changes - pure refactoring)
+            - **Linting**: 0 violations (Ruff)
+            - **Type checking**: 0 errors (Pyright)
+            - **Actual final sizes**:
+                - `movie_service.py`: 1489 lines (down from 1933 → 1538 after DRY → 1489 final)
+                - `schema_factories.py`: 470 lines (new reusable module)
+                - **Net change**: -444 lines total (1933→1489), massive maintainability improvement
 
 - [ ] **3.3 Update API Endpoints to Use MovieService Class**
     - [ ] 3.3.1 Update movie API endpoints in `backend/apps/movie/api.py`
@@ -270,19 +311,107 @@ patterns across movie, UserMovieData, and authentication domains.
     - [ ] 3.3.2 Update movie helpers in `backend/apps/movie/helpers.py` if needed
         - Verify enrichment helpers work with new service class
         - Update imports if necessary
-    - [ ] 3.3.3 Run API integration tests (test_api.py - verify all endpoints work)
+    - [ ] 3.3.3 Run API integration tests (test_api.py - verify all movie endpoints work)
     - [ ] 3.3.4 Run incremental quality checks (movie app)
-    - [ ] 3.3.5 Clean up old function-based implementations
-        - Remove all old function-based service functions from `movie_service.py`
-        - Remove any temporal comments distinguishing new from old
-        - Remove "Class-Based Service Architecture" section header (no longer needed)
-        - Verify no references to old functions remain
-        - Run full test suite to confirm nothing broken
 
-- [ ] **3.4 Phase 3 Quality Gate**
-    - [ ] 3.4.1 Run full backend test suite
-    - [ ] 3.4.2 Run all backend linting checks
-    - [ ] 3.4.3 Run Python type checking
+- [ ] **3.4 Extract Keyword and People Services**
+    - [ ] 3.4.1 Write tests for KeywordService class (test-first)
+        - Create `backend/apps/movie/tests/test_keyword_service_class.py`
+        - Test constructor injection of TMDB client
+        - Test `get_popular_keywords()` uses injected client
+        - Test `search_keywords()` uses injected client
+        - Test error handling (API failures)
+        - Follow pattern from `test_movie_service_class.py`
+        - **Target coverage**: 80% (general service layer)
+    - [ ] 3.4.2 Create KeywordService class in `backend/apps/movie/services/keyword_service.py`
+        - Extract `get_popular_keywords()` and `search_keywords()` from old function-based code
+        - Convert to class-based architecture with DI (inject TMDB client)
+        - Methods:
+            - `get_popular_keywords(page: int = 1) -> PaginatedKeywordResponseSchema`
+            - `search_keywords(query: str) -> PaginatedKeywordResponseSchema`
+        - Follow established MovieService patterns
+        - Full type annotations, comprehensive docstrings
+        - **Rationale**: Keywords are separate TMDB entity type (`/keyword/*`), used for filtering/browsing
+        - **Make tests pass** (GREEN phase after RED phase from 3.4.1)
+    - [ ] 3.4.3 Write tests for PeopleService class (test-first)
+        - Create `backend/apps/movie/tests/test_people_service_class.py`
+        - Test constructor injection of TMDB client
+        - Test `get_popular_people()` uses injected client
+        - Test `search_people()` uses injected client
+        - Test error handling (API failures)
+        - Follow pattern from `test_movie_service_class.py`
+        - **Target coverage**: 80% (general service layer)
+    - [ ] 3.4.4 Create PeopleService class in `backend/apps/movie/services/people_service.py`
+        - Extract `get_popular_people()` and `search_people()` from old function-based code
+        - Convert to class-based architecture with DI (inject TMDB client)
+        - Methods:
+            - `get_popular_people(page: int = 1) -> PaginatedPersonResponseSchema`
+            - `search_people(query: str) -> PaginatedPersonResponseSchema`
+        - Follow established MovieService patterns
+        - Full type annotations, comprehensive docstrings
+        - **Rationale**: People are separate TMDB entity type (`/person/*`), used for filtering/cast browsing
+        - **Make tests pass** (GREEN phase after RED phase from 3.4.3)
+    - [ ] 3.4.5 Create service factory functions and tests
+        - Write tests first:
+            - Test `get_keyword_service()` returns KeywordService instance with default client
+            - Test `get_people_service()` returns PeopleService instance with default client
+            - Add to existing `test_movie_service_class.py` factory tests
+        - Implement `get_keyword_service()` in `backend/apps/movie/services/service_factory.py`
+        - Implement `get_people_service()` in `backend/apps/movie/services/service_factory.py`
+        - Returns services with default TMDB client injection
+        - **Note**: MovieService factory (`get_movie_service()`) already exists, add alongside it
+    - [ ] 3.4.6 Update API endpoints to use new services
+        - Update keywords endpoints in `backend/apps/movie/api.py`:
+            - Replace `movie_service.get_popular_keywords()` → `keyword_service.get_popular_keywords()`
+            - Replace `movie_service.search_keywords()` → `keyword_service.search_keywords()`
+        - Update people endpoints in `backend/apps/movie/api.py`:
+            - Replace `movie_service.get_popular_people()` → `people_service.get_popular_people()`
+            - Replace `movie_service.search_people()` → `people_service.search_people()`
+        - Use factory functions for instantiation
+        - Maintain exact same API behavior (backward compatibility)
+    - [ ] 3.4.7 Run incremental quality checks
+        - **Linting**: 0 violations (Ruff) on keyword_service.py, people_service.py, api.py
+        - **Type checking**: 0 errors (Pyright) on new services
+        - **Tests**: Verify API endpoints still work (keywords and people routes)
+
+- [ ] **3.5 Clean Up Old Code and Frontend Duplication**
+    - [ ] 3.5.1 Remove old function-based implementations from movie_service.py
+        - Remove all old function-based service functions (lines 44-658):
+            - `fetch_movie_runtimes()`, `get_movie_by_id()`, `get_now_playing_movies()`, `get_upcoming_movies()`
+            - `search_movies()`, `discover_movies()`, `get_movie_genres()`
+            - `get_popular_keywords()`, `search_keywords()`, `get_popular_people()`, `search_people()`
+        - Remove "Helper Functions" section header (line 44)
+        - Remove "Class-Based Service Architecture" section header (line 657)
+        - Remove any temporal comments distinguishing new from old
+        - Verify no references to old functions remain in codebase
+        - **Expected result**: movie_service.py reduces from 1489 lines → ~874 lines
+        - Run full test suite to confirm nothing broken (89/89 movie tests should still pass)
+    - [ ] 3.5.2 Remove client-side filtering from frontend
+        - **Context**: Backend now handles all year/rating filtering + buffer mechanism
+        - Update `frontend/src/hooks/useEnhancedFetcher.ts`:
+            - Remove client-side year filtering logic (lines 126-272)
+            - Remove buffer management logic (pre-fetching, gap filling)
+            - Simplify to: fetch from backend → return results (backend handles filtering/buffering)
+        - Remove `frontend/src/utilities/movieFilterUtils.ts` entirely:
+            - Year filtering functions no longer needed (backend handles)
+            - Rating filtering functions no longer needed (backend handles)
+            - **Note**: Keep file if any non-movie filtering utilities exist, otherwise delete
+        - Update any imports referencing removed utilities
+        - **Rationale**: Eliminates duplication, single source of truth in backend
+    - [ ] 3.5.3 Run frontend quality checks
+        - **Linting**: 0 violations (ESLint) on modified files
+        - **Type checking**: 0 errors (TypeScript) on modified files
+        - **Manual verification**: Test discover/search pages work correctly with backend filtering
+    - [ ] 3.5.4 Update CURRENT-SESSION.md if needed
+        - Document frontend simplification completed
+        - Note any observations about behavior differences (should be none)
+
+- [ ] **3.6 Phase 3 Quality Gate**
+    - [ ] 3.6.1 Run full backend test suite
+    - [ ] 3.6.2 Run all backend linting checks
+    - [ ] 3.6.3 Run Python type checking
+    - [ ] 3.6.4 Run full frontend test suite
+    - [ ] 3.6.5 Run frontend linting and type checking
 
 ---
 

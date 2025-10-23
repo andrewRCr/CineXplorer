@@ -345,24 +345,32 @@ patterns across movie, UserMovieData, and authentication domains.
         - **Result**: 10/10 tests passing (GREEN phase - successful TDD cycle)
         - **Linting**: 0 violations (Ruff, 1 auto-fixed)
         - **Type checking**: 0 errors (Pyright)
-    - [ ] 3.4.3 Write tests for PeopleService class (test-first)
-        - Create `backend/apps/movie/tests/test_people_service_class.py`
-        - Test constructor injection of TMDB client
-        - Test `get_popular_people()` uses injected client
-        - Test `search_people()` uses injected client
-        - Test error handling (API failures)
-        - Follow pattern from `test_movie_service_class.py`
-        - **Target coverage**: 80% (general service layer)
-    - [ ] 3.4.4 Create PeopleService class in `backend/apps/movie/services/people_service.py`
-        - Extract `get_popular_people()` and `search_people()` from old function-based code
-        - Convert to class-based architecture with DI (inject TMDB client)
-        - Methods:
-            - `get_popular_people(page: int = 1) -> PaginatedPersonResponseSchema`
-            - `search_people(query: str) -> PaginatedPersonResponseSchema`
-        - Follow established MovieService patterns
-        - Full type annotations, comprehensive docstrings
-        - **Rationale**: People are separate TMDB entity type (`/person/*`), used for filtering/cast browsing
-        - **Make tests pass** (GREEN phase after RED phase from 3.4.3)
+    - [x] 3.4.3 Write tests for PeopleService class (test-first)
+        - Created `backend/apps/movie/tests/test_people_service_class.py` (286 lines)
+        - **Tests created (10 total)**:
+            - Constructor tests: injected client, default client
+            - get_popular_people: uses client, handles errors, default page
+            - search_people: uses client, handles empty query, handles errors
+            - Factory function tests: creates service, returns correct type
+        - **Result**: 10/10 tests failing as expected (RED phase - module doesn't exist yet)
+        - **Linting**: 0 violations (Ruff)
+        - **Type errors**: 65 (expected - `movie.services.people_service` module not created yet)
+        - **Bonus work**: Created reusable TypedDict fixtures, eliminated all `typing.Any` usage from tests
+            - Created `test_fixtures_tmdb.py` (11 TypedDicts for TMDB API responses)
+            - Replaced 15 `dict[str, Any]` → precise TypedDicts across 4 test files
+            - Replaced 6 `TMDBResponseData` → `TMDBMovieResponse` for precision
+            - Used `NotRequired` (Python 3.11+) for explicit optional fields
+            - **Impact**: 0 type errors in all non-PeopleService test files, 0 ANN401 violations
+    - [x] 3.4.4 Create PeopleService class in `backend/apps/movie/services/people_service.py`
+        - Created `people_service.py` (176 lines) with DI pattern
+        - **Methods implemented**:
+            - `get_popular_people(page: int = 1)` - Fetches popular actors, directors from TMDB
+            - `search_people(query: str)` - Searches people by name, handles empty/short queries
+        - Added `get_people_service()` factory to `service_factory.py`
+        - Full type annotations, comprehensive docstrings with examples
+        - **Result**: 10/10 tests passing (GREEN phase - successful RED → GREEN TDD cycle)
+        - **Linting**: 0 violations (Ruff)
+        - **Type checking**: 0 errors (Pyright)
     - [ ] 3.4.5 Create service factory functions and tests
         - Write tests first:
             - Test `get_keyword_service()` returns KeywordService instance with default client

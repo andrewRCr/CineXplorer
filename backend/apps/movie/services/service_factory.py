@@ -12,6 +12,7 @@ from __future__ import annotations
 from core.services.tmdb_api_client import TMDBApiClient
 from movie.services.keyword_service import KeywordService
 from movie.services.movie_service import MovieService
+from movie.services.people_service import PeopleService
 
 
 def get_movie_service() -> MovieService:
@@ -68,4 +69,31 @@ def get_keyword_service() -> KeywordService:
     return KeywordService(tmdb_client=tmdb_client)
 
 
-__all__ = ["get_keyword_service", "get_movie_service"]
+def get_people_service() -> PeopleService:
+    """
+    Create a PeopleService with default dependencies.
+
+    This factory function instantiates the service with a default
+    TMDBApiClient, providing a convenient way to obtain a fully-configured
+    service instance for production use.
+
+    For testing, bypass this factory and inject mock dependencies directly
+    into the service constructor.
+
+    Returns:
+        PeopleService instance with default TMDBApiClient injected
+
+    Example:
+        # Production usage
+        service = get_people_service()
+        people = service.search_people("Tom Hanks")
+
+        # Testing (bypass factory, inject mock)
+        mock_client = MockTMDBApiClient()
+        service = PeopleService(tmdb_client=mock_client)
+    """
+    tmdb_client = TMDBApiClient()
+    return PeopleService(tmdb_client=tmdb_client)
+
+
+__all__ = ["get_keyword_service", "get_movie_service", "get_people_service"]

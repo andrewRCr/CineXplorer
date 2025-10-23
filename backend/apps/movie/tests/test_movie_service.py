@@ -20,6 +20,7 @@ from movie.schemas import (
     PaginatedMovieResponseSchema,
 )
 from movie.services import movie_service
+from movie.services import schema_factories
 from ninja.errors import HttpError
 
 # ============================================================================
@@ -205,7 +206,7 @@ def test_create_movie_base_from_tmdb_minimal_data() -> None:
     }
 
     # Act
-    result = movie_service.create_movie_base_from_tmdb(tmdb_data)
+    result = schema_factories.create_movie_base_from_tmdb(tmdb_data)
 
     # Assert
     assert isinstance(result, MovieBaseSchema)
@@ -228,7 +229,7 @@ def test_create_movie_base_from_tmdb_missing_optional_fields() -> None:
     }
 
     # Act
-    result = movie_service.create_movie_base_from_tmdb(tmdb_data)
+    result = schema_factories.create_movie_base_from_tmdb(tmdb_data)
 
     # Assert: Should handle missing/empty fields gracefully
     assert isinstance(result, MovieBaseSchema)

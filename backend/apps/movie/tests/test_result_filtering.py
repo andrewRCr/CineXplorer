@@ -16,12 +16,13 @@ Related Frontend Code Being Replaced:
 """
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 from unittest.mock import Mock
 
 from core.services.api_response import ApiResponse
 from movie.schemas import PaginatedMovieResponseSchema
 from movie.services.movie_service import MovieService
+from movie.tests.test_fixtures_tmdb import TMDBMovieBase, TMDBMovieResponse
 
 if TYPE_CHECKING:
     pass
@@ -38,7 +39,7 @@ def create_movie_dict(
     release_date: str,
     vote_average: float,
     runtime: int | None = None,
-) -> dict[str, Any]:
+) -> TMDBMovieBase:
     """Create a mock TMDB movie dictionary for testing.
 
     Args:
@@ -62,11 +63,11 @@ def create_movie_dict(
 
 
 def create_paginated_tmdb_response(
-    movies: list[dict[str, Any]],
+    movies: list[TMDBMovieBase],
     page: int = 1,
     total_pages: int = 1,
     total_results: int | None = None,
-) -> dict[str, Any]:
+) -> TMDBMovieResponse:
     """Create a mock TMDB paginated response for testing.
 
     Args:
@@ -253,12 +254,20 @@ def test_year_filtering_handles_missing_release_dates() -> None:
     # Arrange: Mock client returns some movies without release dates
     mock_client = Mock(spec=['get'])
 
-    tmdb_movies = [
+    # Mix of valid and invalid release dates to test TMDB data quality handling
+    movie_without_date: TMDBMovieBase = {
+        'id': 2, 'title': "Movie without date", 'poster_path': '/test.jpg',
+        'vote_average': 7.5, 'release_date': None  # TMDB data quality issue
+    }
+    movie_empty_date: TMDBMovieBase = {
+        'id': 3, 'title': "Movie with empty date", 'poster_path': '/test.jpg',
+        'vote_average': 8.0, 'release_date': ""  # TMDB data quality issue
+    }
+
+    tmdb_movies: list[TMDBMovieBase] = [
         create_movie_dict(1, "Movie with date", "2022-01-01", 8.0),
-        {'id': 2, 'title': "Movie without date", 'poster_path': '/test.jpg',
-         'vote_average': 7.5, 'release_date': None},  # Missing release_date
-        {'id': 3, 'title': "Movie with empty date", 'poster_path': '/test.jpg',
-         'vote_average': 8.0, 'release_date': ""},  # Empty release_date
+        movie_without_date,
+        movie_empty_date,
         create_movie_dict(4, "Another with date", "2022-06-15", 7.8),
     ]
 
@@ -389,10 +398,15 @@ def test_rating_filtering_handles_missing_ratings() -> None:
     # Arrange: Mock client returns some movies without ratings
     mock_client = Mock(spec=['get'])
 
-    tmdb_movies = [
+    # Movie with missing rating to test TMDB data quality handling
+    movie_without_rating: TMDBMovieBase = {
+        'id': 2, 'title': "Movie without rating", 'poster_path': '/test.jpg',
+        'release_date': "2022-01-01", 'vote_average': None  # TMDB data quality issue
+    }
+
+    tmdb_movies: list[TMDBMovieBase] = [
         create_movie_dict(1, "Movie with rating", "2022-01-01", 8.0),
-        {'id': 2, 'title': "Movie without rating", 'poster_path': '/test.jpg',
-         'release_date': "2022-01-01", 'vote_average': None},  # Missing rating
+        movie_without_rating,
         create_movie_dict(3, "Another with rating", "2022-01-01", 7.5),
     ]
 

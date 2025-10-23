@@ -13,12 +13,12 @@ Test Coverage Target: 80% (general service layer coverage)
 """
 from __future__ import annotations
 
-from typing import Any
 from unittest.mock import Mock
 
 import pytest
 from core.services.api_response import ApiResponse
 from movie.schemas import PaginatedKeywordResponseSchema
+from movie.tests.test_fixtures_tmdb import TMDBKeywordResponse
 from ninja.errors import HttpError
 
 # ============================================================================
@@ -64,7 +64,7 @@ def test_get_popular_keywords_uses_injected_client() -> None:
     # Arrange: Create mock client with successful response
     mock_client = Mock(spec=['get'])
 
-    keyword_data: dict[str, Any] = {
+    keyword_data: TMDBKeywordResponse = {
         'page': 1,
         'total_pages': 10,
         'total_results': 200,
@@ -114,7 +114,7 @@ def test_get_popular_keywords_default_page() -> None:
 
     # Arrange: Create mock client
     mock_client = Mock(spec=['get'])
-    keyword_data: dict[str, Any] = {
+    keyword_data: TMDBKeywordResponse = {
         'page': 1,
         'total_pages': 5,
         'total_results': 100,
@@ -144,7 +144,7 @@ def test_search_keywords_uses_injected_client() -> None:
     # Arrange: Create mock client with successful response
     mock_client = Mock(spec=['get'])
 
-    keyword_data: dict[str, Any] = {
+    keyword_data: TMDBKeywordResponse = {
         'page': 1,
         'total_pages': 1,
         'total_results': 3,

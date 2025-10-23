@@ -13,15 +13,20 @@ Test Coverage Target: 80% (general service layer coverage)
 """
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 from unittest.mock import Mock
 
 import pytest
 from core.services.api_response import ApiResponse
-from core.types.api_types import TMDBResponseData
 from movie.schemas import (
     MovieDetailSchema,
     PaginatedMovieResponseSchema,
+)
+from movie.tests.test_fixtures_tmdb import (
+    TMDBCreditsResponse,
+    TMDBGenreListResponse,
+    TMDBMovieDetail,
+    TMDBMovieResponse,
 )
 from ninja.errors import HttpError
 
@@ -76,7 +81,7 @@ def test_get_movie_by_id_uses_injected_client() -> None:
     mock_client = Mock(spec=['get', 'get_movie_details'])
 
     # Mock movie details response
-    movie_data: dict[str, Any] = {
+    movie_data: TMDBMovieDetail = {
         'id': 123,
         'title': 'Test Movie',
         'poster_path': '/test.jpg',
@@ -91,7 +96,7 @@ def test_get_movie_by_id_uses_injected_client() -> None:
     mock_client.get_movie_details.return_value = mock_details_response
 
     # Mock credits response
-    credits_data: dict[str, Any] = {
+    credits_data: TMDBCreditsResponse = {
         'cast': [],
         'crew': []
     }
@@ -145,7 +150,7 @@ def test_search_movies_uses_injected_client() -> None:
     # Arrange: Mock client
     mock_client = Mock(spec=['search_movies'])
 
-    search_response: TMDBResponseData = {
+    search_response: TMDBMovieResponse = {
         'results': [
             {
                 'id': 1,
@@ -186,7 +191,7 @@ def test_search_movies_filters_soundtrack_results() -> None:
     # Arrange: Mock response with soundtrack entry
     mock_client = Mock(spec=['search_movies'])
 
-    search_response: TMDBResponseData = {
+    search_response: TMDBMovieResponse = {
         'results': [
             {
                 'id': 1,
@@ -239,7 +244,7 @@ def test_discover_movies_uses_injected_client() -> None:
     # Arrange: Mock client
     mock_client = Mock(spec=['get'])
 
-    discover_response: TMDBResponseData = {
+    discover_response: TMDBMovieResponse = {
         'results': [],
         'page': 1,
         'total_pages': 1,
@@ -277,7 +282,7 @@ def test_discover_movies_sets_default_parameters() -> None:
 
     # Arrange
     mock_client = Mock(spec=['get'])
-    discover_response: TMDBResponseData = {
+    discover_response: TMDBMovieResponse = {
         'results': [], 'page': 1, 'total_pages': 1, 'total_results': 0
     }
     mock_api_response = ApiResponse(status_code=200, data=discover_response)
@@ -311,7 +316,7 @@ def test_get_now_playing_movies_uses_injected_client() -> None:
     # Arrange
     mock_client = Mock(spec=['get_now_playing_movies'])
 
-    now_playing_response: TMDBResponseData = {
+    now_playing_response: TMDBMovieResponse = {
         'results': [
             {
                 'id': 1,
@@ -351,7 +356,7 @@ def test_get_upcoming_movies_uses_injected_client() -> None:
     # Arrange
     mock_client = Mock(spec=['get'])
 
-    upcoming_response: TMDBResponseData = {
+    upcoming_response: TMDBMovieResponse = {
         'results': [
             {
                 'id': 1,
@@ -427,7 +432,7 @@ def test_get_movie_genres_uses_injected_client() -> None:
     # Arrange
     mock_client = Mock(spec=['get'])
 
-    genres_response: dict[str, Any] = {
+    genres_response: TMDBGenreListResponse = {
         'genres': [
             {'id': 1, 'name': 'Action'},
             {'id': 2, 'name': 'Comedy'}
@@ -455,7 +460,7 @@ def test_fetch_movie_runtimes_uses_injected_client() -> None:
     mock_client = Mock(spec=['get_movie_details', 'get'])
 
     # Mock movie details responses
-    movie_data_1: dict[str, Any] = {
+    movie_data_1: TMDBMovieDetail = {
         'id': 1,
         'title': 'Movie 1',
         'poster_path': '/test1.jpg',
@@ -466,7 +471,7 @@ def test_fetch_movie_runtimes_uses_injected_client() -> None:
         'genres': [],
         'production_companies': []
     }
-    movie_data_2: dict[str, Any] = {
+    movie_data_2: TMDBMovieDetail = {
         'id': 2,
         'title': 'Movie 2',
         'poster_path': '/test2.jpg',
@@ -478,7 +483,7 @@ def test_fetch_movie_runtimes_uses_injected_client() -> None:
         'production_companies': []
     }
 
-    credits_data: dict[str, Any] = {'cast': [], 'crew': []}
+    credits_data: TMDBCreditsResponse = {'cast': [], 'crew': []}
 
     # Mock responses for both movies
     mock_client.get_movie_details.side_effect = [

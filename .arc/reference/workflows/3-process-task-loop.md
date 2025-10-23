@@ -12,15 +12,15 @@ Guidelines for managing task lists in markdown files to track progress on comple
 
   1. When you finish a **single sub‑task**:
      - **First**: Run incremental quality checks on modified files (linting, type checking)
-     - **Second**: **REPORT** completed work to user with summary of changes
-     - **Third**: **MANDATORY STOP** - Wait for user approval
-     - **Fourth**: After user approves, mark subtask as `[x]` in task list file
-     - **Fifth**: Proceed to next subtask (permission to proceed is implied by approval unless user specifies otherwise)
+     - **Second**: Mark subtask as `[x]` in task list file (work is complete, task list should reflect reality)
+     - **Third**: **REPORT** completed work to user with summary of changes
+     - **Fourth**: **MANDATORY STOP** - Wait for user approval to proceed
+     - **Fifth**: After approval, proceed to next subtask
      - **NEVER** continue to multiple subtasks without explicit user approval for each one
 
-     **Note on implied permission:** User approval of completed work implies permission to proceed to the next
-     subtask UNLESS the user explicitly requests otherwise (e.g., "looks good, but before moving on...").
-     In such cases, address the new concern before proceeding to the next task-list-documented subtask.
+     **Note on implied permission:** User approval ("great!", "looks good", "proceed") implies permission to
+     continue to the next subtask UNLESS explicitly stated otherwise (e.g., "that's done, but before moving on...").
+     In such cases, address the concern before proceeding to the next task-list-documented subtask.
 
   2. If **all** subtasks underneath a parent task are now `[x]`, follow this sequence:
 

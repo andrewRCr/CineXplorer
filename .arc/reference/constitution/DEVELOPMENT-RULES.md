@@ -147,10 +147,10 @@ Quality issues discovered during work should be addressed, not ignored.
 ### One Sub-Task Rule
 
 - **Complete ONE sub-task at a time** - never bundle multiple deliverables
-- **Mandatory stop** after each sub-task completion for user approval
-- **Report-then-mark pattern**: Report completed work → wait for approval → mark `[x]` → proceed
+- **Mark complete immediately** when work is done (tests pass, quality checks pass)
+- **Mandatory stop** after reporting completion for user approval to proceed
 - **Implied permission**: User approval implies permission to proceed UNLESS explicitly stated otherwise
-  (e.g., "looks good, but before moving on..."). Address such concerns before proceeding to next subtask.
+  (e.g., "that's done, but before moving on..."). Address such concerns before proceeding to next subtask.
 
 ### Sub-Task Granularity Guidelines
 

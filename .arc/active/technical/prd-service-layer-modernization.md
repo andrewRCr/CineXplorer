@@ -93,9 +93,10 @@ unexpected side effects in complex operations.
 
 **4.2.1** The system must refactor `backend/apps/movie/movie_service.py` to `MovieService` class:
 
-- Convert all function-based TMDB integration functions to class methods
+- Convert movie-related function-based TMDB integration functions to class methods
 - Inject TMDB client via constructor (dependency injection pattern)
-- Maintain existing functionality: `get_movie_by_id`, `search_movies`, `discover_movies`
+- Maintain existing functionality: `get_movie_by_id`, `search_movies`, `discover_movies`, `get_movie_genres`, `fetch_movie_runtimes`
+- **Exclude keyword and people methods** - these belong in separate services (see 4.2.7)
 - **Add TMDB result filtering and buffer mechanism** (migrate from frontend):
     - Filter out movies with incorrect release years (TMDB API quirk - returns wrong years despite API filters)
     - Filter movies by rating criteria (client-side validation)
@@ -146,11 +147,28 @@ unexpected side effects in complex operations.
 **4.2.6** The system must create service factory functions for common instantiation patterns:
 
 - `get_movie_service()` - MovieService with default TMDB client
+- `get_keyword_service()` - KeywordService with default TMDB client
+- `get_people_service()` - PeopleService with default TMDB client
 - `get_user_movie_data_service()` - UserMovieDataService with dependencies
 - `get_authentication_service()` - AuthenticationService with email service, token utilities
 - `get_movie_enrichment_service(user)` - MovieEnrichmentService with user context
 - Email service factory already exists (`get_email_service()` in email_service.py)
 - Located in appropriate `service_factory.py` modules per domain
+
+**4.2.7** The system must create `KeywordService` and `PeopleService` classes:
+
+- **KeywordService** (`backend/apps/movie/services/keyword_service.py`):
+    - Extract `get_popular_keywords()` and `search_keywords()` from function-based code
+    - Inject TMDB client via constructor (dependency injection pattern)
+    - **Rationale**: Keywords are independent TMDB entities (`/keyword/*` API namespace) with their own lifecycle,
+      used for filtering/browsing, not movie attributes. API layer already treats them separately via `keywords_router`.
+- **PeopleService** (`backend/apps/movie/services/people_service.py`):
+    - Extract `get_popular_people()` and `search_people()` from function-based code
+    - Inject TMDB client via constructor (dependency injection pattern)
+    - **Rationale**: People are independent TMDB entities (`/person/*` API namespace) with their own lifecycle,
+      used for filtering/cast browsing, not movie attributes. API layer already treats them separately via `people_router`.
+- Follow established MovieService patterns for consistency
+- Full type annotations, comprehensive docstrings
 
 ### 4.3 Testing Requirements
 
@@ -247,11 +265,10 @@ unexpected side effects in complex operations.
 - Frontend UI implementation for UserMovieData features (separate feature work)
 - Asynchronous task processing (Celery/Redis) - deferred to Backend Modernization
 - End-to-end testing infrastructure (Playwright) - deferred to Backend Modernization
-- Additional service layer refactoring beyond movie, UserMovieData, and authentication services
+- Additional service layer refactoring beyond movie, keyword, people, UserMovieData, and authentication services
 - Cache layer implementation for TMDB responses (future enhancement after filtering in place)
 - New UserMovieData or authentication features (only refactoring existing operations)
 - OAuth provider integration changes (keep existing allauth integration as-is)
-- **Removing frontend filtering logic immediately** (document as tech debt, remove after backend verification)
 
 **5.2** Generic pagination helper is NOT:
 
@@ -351,9 +368,10 @@ unexpected side effects in complex operations.
 1. **Pattern Establishment:**
    - All service layer code uses class-based services with DI (100% adoption)
    - Generic pagination helper used by UserMovieData service
-   - Zero function-based services remaining (movie, UserMovieData, authentication complete)
+   - Zero function-based services remaining (movie, keyword, people, UserMovieData, authentication complete)
    - Zero business logic in API endpoints (all extracted to services)
    - Complete backend service layer coverage across all domains
+   - Clean service boundaries: MovieService (movies, genres, runtimes), KeywordService (keywords), PeopleService (people)
 
 2. **Code Quality:**
    - Zero type errors (Pyright strict mode)
@@ -400,16 +418,26 @@ None. Scope is well-defined based on comprehensive planning completed during Bac
 - Update service factory function
 - Tests + quality checks
 
-**Phase 3: MovieService Class-Based Refactoring (6-9 hours)**
+**Phase 3: MovieService Class-Based Refactoring (9-13 hours)**
 
 - MovieService class creation + tests
 - **TMDB result filtering and buffer mechanism:**
     - Filtering helper functions (year, rating, runtime)
     - Buffer mechanism implementation (fetch page N+1 when gaps detected)
     - Integration into all paginated methods (discover, search, now playing, upcoming)
-    - Document frontend simplification opportunities
 - Update API endpoints to use MovieService class
-- Integration testing + quality checks
+- **Extract Keyword and People Services (2-3 hours):**
+    - Create KeywordService class with tests (test-first protocol)
+    - Create PeopleService class with tests (test-first protocol)
+    - Update API endpoints to use new services
+    - **Rationale**: Keywords and people are independent TMDB entities with their own lifecycle,
+      not movie attributes. API layer already treats them separately with dedicated routers.
+- **Clean up old code and frontend duplication (1-2 hours):**
+    - Remove all old function-based service implementations
+    - Remove client-side filtering from `useEnhancedFetcher.ts`
+    - Remove `movieFilterUtils.ts` (no longer needed - backend handles filtering)
+    - **Rationale**: Single source of truth in backend, eliminates duplication
+- Integration testing + quality checks (backend + frontend)
 
 **Phase 4: UserMovieDataService Creation (4-5 hours)**
 
@@ -432,7 +460,7 @@ None. Scope is well-defined based on comprehensive planning completed during Bac
 - TECHNICAL-ARCHITECTURE.md update with service patterns
 - Verify all quality gates pass
 
-**Total Effort Estimate:** 23-32 hours
+**Total Effort Estimate:** 26-37 hours
 
 **Note:** Initial estimate was 14-21h. Adjustments:
 
@@ -441,6 +469,10 @@ None. Scope is well-defined based on comprehensive planning completed during Bac
 - Added 4-5h (UserMovieDataService creation - extract business logic from API layer)
 - Added 4-6h (AuthenticationService creation - extract security-critical logic, complete service layer coverage)
 - Added 2-3h (TMDB result filtering and buffer mechanism - migrate from frontend to service layer)
+- Added 2-3h (Keyword and People service extraction - discovered during Phase 3 implementation,
+  architectural oversight in planning)
+- Added 1-2h (Frontend filtering cleanup - changed from "document for later" to "do now" during implementation,
+  directly related to backend filtering work)
 
 ### 9.2 Feature Branch Workflow
 

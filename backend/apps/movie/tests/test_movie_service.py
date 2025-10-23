@@ -19,8 +19,7 @@ from movie.schemas import (
     MovieDetailSchema,
     PaginatedMovieResponseSchema,
 )
-from movie.services import movie_service
-from movie.services import schema_factories
+from movie.services import movie_service, schema_factories
 from ninja.errors import HttpError
 
 # ============================================================================

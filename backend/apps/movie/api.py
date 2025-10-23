@@ -30,8 +30,12 @@ from .schemas import (
     PaginationParamsSchema,
 )
 
-# Import service functions
-from .services import movie_service
+# Import service factory and old function-based services
+from .services import movie_service  # Old function-based keyword/people services (until Task 3.4)
+from .services.service_factory import get_movie_service
+
+# Module-level service instance (singleton pattern for request handling)
+_movie_service = get_movie_service()
 
 # Create separate router instances for logical grouping
 movies_router = Router(tags=["movies"])
@@ -57,7 +61,7 @@ FilterParams = Query[MovieDiscoverFilterSchema]  # type: ignore[valid-type]
 @genres_router.get("", response=list[GenreSchema], auth=None)
 def get_movie_genres(request: HttpRequest):
     """Retrieve the list of available movie genres from TMDB."""
-    return movie_service.get_movie_genres()
+    return _movie_service.get_movie_genres()
 
 
 # =========================
@@ -71,12 +75,14 @@ def get_popular_keywords(
     params: PaginationParams,
 ):
     """Retrieve popular keywords with pagination."""
+    # TODO (Task 3.4): Replace with KeywordService.get_popular_keywords()
     return movie_service.get_popular_keywords(page=params.page or 1)
 
 
 @keywords_router.get("/search", response=PaginatedKeywordResponseSchema, auth=None)
 def search_keywords(request: HttpRequest, query: str):
     """Search for keywords by query string."""
+    # TODO (Task 3.4): Replace with KeywordService.search_keywords()
     return movie_service.search_keywords(query)
 
 
@@ -91,12 +97,14 @@ def get_popular_people(
     params: PaginationParams,
 ):
     """Retrieve popular people (actors, directors, etc.) with pagination."""
+    # TODO (Task 3.4): Replace with PeopleService.get_popular_people()
     return movie_service.get_popular_people(page=params.page or 1)
 
 
 @people_router.get("/search", response=PaginatedPersonResponseSchema, auth=None)
 def search_people(request: HttpRequest, query: str):
     """Search for people by query string."""
+    # TODO (Task 3.4): Replace with PeopleService.search_people()
     return movie_service.search_people(query)
 
 
@@ -112,7 +120,7 @@ def get_now_playing_movies(
 ):
     """Retrieve currently playing movies with pagination and user-specific data."""
     # Fetch movies from TMDB
-    response = movie_service.get_now_playing_movies(page=params.page or 1)
+    response = _movie_service.get_now_playing_movies(page=params.page or 1)
 
     # Enrich with user data if authenticated
     return enrich_response_with_user_movie_data(request, response)
@@ -125,7 +133,7 @@ def get_upcoming_movies(
 ):
     """Retrieve upcoming movies with pagination and user-specific data."""
     # Fetch movies from TMDB
-    response = movie_service.get_upcoming_movies(page=params.page or 1)
+    response = _movie_service.get_upcoming_movies(page=params.page or 1)
 
     # Enrich with user data if authenticated
     return enrich_response_with_user_movie_data(request, response)
@@ -143,7 +151,7 @@ def search_movies(
     Pydantic 2.12.0 empty string validation issue with optional parameters.
     """
     # Fetch movies from TMDB
-    response = movie_service.search_movies(query=params.query, page=params.page or 1)
+    response = _movie_service.search_movies(query=params.query, page=params.page or 1)
 
     # Enrich with user data if authenticated
     return enrich_response_with_user_movie_data(request, response)
@@ -188,7 +196,10 @@ def discover_movies(
     params = filters.to_service_params()
 
     # Fetch movies from TMDB
-    response = movie_service.discover_movies(page=filters.page or 1, **params)
+    # Note: Type ignore needed for **kwargs unpacking with typed parameters
+    # The params dict contains general filter values; year_min/year_max/rating_min/rating_max
+    # are not currently in the API schema and default to None in the service method
+    response = _movie_service.discover_movies(page=filters.page or 1, **params)  # type: ignore[arg-type]
 
     # Enrich with user data if authenticated
     return enrich_response_with_user_movie_data(request, response)
@@ -213,7 +224,7 @@ def get_movie_detail(request: HttpRequest, tmdb_id: int) -> MovieDetailSchema:
         HttpError: 404 if movie not found, 500 for TMDB API errors
     """
     # Fetch movie details from TMDB
-    movie_data = movie_service.get_movie_by_id(tmdb_id)
+    movie_data = _movie_service.get_movie_by_id(tmdb_id)
 
     # Enrich with user data if authenticated
     return enrich_single_movie_with_user_movie_data(request, movie_data)  # type: ignore[return-value]

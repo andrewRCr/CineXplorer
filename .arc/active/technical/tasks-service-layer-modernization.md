@@ -195,7 +195,7 @@ patterns across movie, UserMovieData, and authentication domains.
 
 ### **Phase 3.0: Refactor MovieService to Class-Based Architecture (6-9 hours)**
 
-- [ ] **3.1 Create MovieService Class**
+- [x] **3.1 Create MovieService Class**
     - [x] 3.1.1 Write tests for MovieService class methods (test-first)
         - Test `get_movie_by_id` with mocked TMDB client
         - Test `search_movies` with mocked TMDB client
@@ -222,7 +222,7 @@ patterns across movie, UserMovieData, and authentication domains.
         - **Linting**: 0 violations (Ruff)
         - **Type checking**: 0 errors, 0 warnings (Pyright)
 
-- [ ] **3.2 Add TMDB Result Filtering & Buffer Mechanism**
+- [x] **3.2 Add TMDB Result Filtering & Buffer Mechanism**
     - [x] 3.2.1 Write tests for filtering and buffer logic (test-first)
         - Mock TMDB client returns movies with incorrect release years
         - Verify service filters out mismatched movies (year, rating)
@@ -303,16 +303,26 @@ patterns across movie, UserMovieData, and authentication domains.
                 - `schema_factories.py`: 470 lines (new reusable module)
                 - **Net change**: -444 lines total (1933→1489), massive maintainability improvement
 
-- [ ] **3.3 Update API Endpoints to Use MovieService Class**
-    - [ ] 3.3.1 Update movie API endpoints in `backend/apps/movie/api.py`
-        - Replace direct function calls with `get_movie_service()` factory
-        - Instantiate service at endpoint level or module level (determine best approach)
-        - Maintain exact same API behavior (backward compatibility)
-    - [ ] 3.3.2 Update movie helpers in `backend/apps/movie/helpers.py` if needed
-        - Verify enrichment helpers work with new service class
-        - Update imports if necessary
-    - [ ] 3.3.3 Run API integration tests (test_api.py - verify all movie endpoints work)
-    - [ ] 3.3.4 Run incremental quality checks (movie app)
+- [x] **3.3 Update API Endpoints to Use MovieService Class**
+    - [x] 3.3.1 Update movie API endpoints in `backend/apps/movie/api.py`
+        - Replaced direct function calls with `get_movie_service()` factory
+        - Used module-level singleton pattern (`_movie_service = get_movie_service()`)
+        - Maintained backward compatibility (keyword/people endpoints still use old functions until Task 3.4)
+        - Added TODO comments for keyword/people migration in Task 3.4
+        - Added justified type ignore for discover_movies **kwargs unpacking
+        - **Result**: 6 movie endpoints migrated to MovieService class, 4 keyword/people deferred
+    - [x] 3.3.2 Update movie helpers in `backend/apps/movie/helpers.py` if needed
+        - **No changes needed**: Helpers work on response schemas, not service layer
+        - Enrichment helpers use MovieEnrichmentService (separate from MovieService)
+        - Verified separation of concerns: MovieService (TMDB) → helpers (user enrichment)
+    - [x] 3.3.3 Run API integration tests (test_movie_api.py - verify all movie endpoints work)
+        - **test_movie_api.py**: 15/15 passing (100%)
+        - **test_endpoint_enrichment_integration.py**: 16/16 passing (100%)
+        - **All movie tests**: 89/89 passing (100%)
+        - Verified backward compatibility maintained
+    - [x] 3.3.4 Run incremental quality checks (movie app)
+        - **Linting**: 0 violations (Ruff, 1 auto-fixed)
+        - **Type checking**: 0 errors (Pyright)
 
 - [ ] **3.4 Extract Keyword and People Services**
     - [ ] 3.4.1 Write tests for KeywordService class (test-first)
@@ -397,6 +407,15 @@ patterns across movie, UserMovieData, and authentication domains.
             - Rating filtering functions no longer needed (backend handles)
             - **Note**: Keep file if any non-movie filtering utilities exist, otherwise delete
         - Update any imports referencing removed utilities
+        - **Re-evaluate discover_movies type safety** (backend/apps/movie/api.py:202):
+            - Currently has `type: ignore[arg-type]` for **params unpacking
+            - Reason: MovieService.discover_movies has explicit year_min/year_max/rating_min/rating_max params
+            - These aren't in MovieDiscoverFilterSchema or to_service_params() dict
+            - After frontend cleanup, determine if these params should be:
+                - Added to API schema (expose to frontend)
+                - Removed from service method (not needed)
+                - Kept internal-only (remove type ignore with better typing)
+            - Goal: Eliminate type ignore with proper solution
         - **Rationale**: Eliminates duplication, single source of truth in backend
     - [ ] 3.5.3 Run frontend quality checks
         - **Linting**: 0 violations (ESLint) on modified files

@@ -37,6 +37,7 @@ from ..schemas import (
     PersonSchema,
     ProductionCompanySchema,
 )
+from .result_filtering import filter_movies_by_rating, filter_movies_by_year
 
 # Use TMDB-specific logger for better log organization
 logger = logging.getLogger('cinexplorer.tmdb')
@@ -1111,6 +1112,144 @@ class MovieService:
         else:
             self._tmdb_client = TMDBApiClient()
 
+    # ========================================================================
+    # Private Helper Methods
+    # ========================================================================
+
+    def _convert_schema_to_tmdb_movie(self, schema: MovieBaseSchema) -> TMDBMovieBase:
+        """Convert MovieBaseSchema back to TMDBMovieBase for TMDB response.
+
+        Args:
+            schema: MovieBaseSchema instance to convert
+
+        Returns:
+            TMDBMovieBase instance with properly mapped fields
+        """
+        movie_dict = schema.model_dump()
+        # Map tmdb_id → id
+        movie_dict['id'] = movie_dict.pop('tmdb_id')
+        # Convert date object to string if present
+        if movie_dict.get('release_date'):
+            movie_dict['release_date'] = movie_dict['release_date'].strftime('%Y-%m-%d')
+        return TMDBMovieBase.model_validate(movie_dict)
+
+    def _apply_filters(
+        self,
+        movies: list[TMDBMovieBase],
+        year_min: int | None = None,
+        year_max: int | None = None,
+        rating_min: float | None = None,
+        rating_max: float | None = None,
+    ) -> list[MovieBaseSchema]:
+        """Apply year and rating filters to movie list.
+
+        Args:
+            movies: List of TMDBMovieBase objects from API response
+            year_min: Minimum release year (inclusive), None for no lower bound
+            year_max: Maximum release year (inclusive), None for no upper bound
+            rating_min: Minimum rating (inclusive), None for no lower bound
+            rating_max: Maximum rating (inclusive), None for no upper bound
+
+        Returns:
+            Filtered list of MovieBaseSchema objects matching all criteria
+        """
+        # Convert TMDB models to schemas first
+        # Map id → tmdb_id for MovieBaseSchema compatibility
+        movie_schemas: list[MovieBaseSchema] = []
+        for m in movies:
+            movie_dict = m.model_dump()
+            # Rename id to tmdb_id for MovieBaseSchema
+            movie_dict['tmdb_id'] = movie_dict.pop('id')
+            # Normalize empty string dates to None (TMDB API quirk)
+            if movie_dict.get('release_date') == '':
+                movie_dict['release_date'] = None
+            movie_schemas.append(MovieBaseSchema.model_validate(movie_dict))
+
+        # Apply year filtering if specified
+        if year_min is not None or year_max is not None:
+            movie_schemas = filter_movies_by_year(movie_schemas, year_min, year_max)
+
+        # Apply rating filtering if specified
+        if rating_min is not None or rating_max is not None:
+            movie_schemas = filter_movies_by_rating(movie_schemas, rating_min, rating_max)
+
+        return movie_schemas
+
+    def _apply_buffer_if_needed(
+        self,
+        filtered_movies: list[MovieBaseSchema],
+        current_page: int,
+        total_pages: int,
+        year_min: int | None,
+        year_max: int | None,
+        rating_min: float | None,
+        rating_max: float | None,
+        fetch_next_page_func: object,  # Callable that fetches next page
+    ) -> list[MovieBaseSchema]:
+        """Apply 3-tier buffer mechanism to maintain consistent page sizes.
+
+        Buffer threshold logic:
+        - If filtered_count >= 20: Return first 20 (full page achieved)
+        - If 10 <= filtered_count < 20: Fetch page N+1 to backfill
+        - If filtered_count < 10: Return what we have (filter too restrictive)
+
+        Args:
+            filtered_movies: Movies from current page after filtering
+            current_page: Current page number
+            total_pages: Total pages available
+            year_min: Year filter (passed to buffer page)
+            year_max: Year filter (passed to buffer page)
+            rating_min: Rating filter (passed to buffer page)
+            rating_max: Rating filter (passed to buffer page)
+            fetch_next_page_func: Function to fetch next page (takes page number)
+
+        Returns:
+            Up to 20 movies with buffer applied if needed
+        """
+        filtered_count = len(filtered_movies)
+
+        # Full page achieved - return first 20
+        if filtered_count >= 20:
+            return filtered_movies[:20]
+
+        # Filter too restrictive - don't waste API calls
+        if filtered_count < 10:
+            return filtered_movies
+
+        # Between 10-19 results - fetch buffer if not on last page
+        if current_page < total_pages:
+            # Fetch page N+1 and apply same filters
+            # fetch_next_page_func returns validated TMDBMovieSearchResponse
+            import typing
+            if typing.TYPE_CHECKING:
+                from collections.abc import Callable
+                fetch_func = typing.cast(
+                    Callable[[int], TMDBMovieSearchResponse],
+                    fetch_next_page_func
+                )
+            else:
+                fetch_func = fetch_next_page_func
+
+            buffer_response = fetch_func(current_page + 1)
+            buffer_movies = self._apply_filters(
+                buffer_response.results,
+                year_min,
+                year_max,
+                rating_min,
+                rating_max
+            )
+
+            # Combine and return up to 20 total
+            combined = filtered_movies + buffer_movies
+            return combined[:20]
+
+        # On last page with 10-19 results - return what we have
+        return filtered_movies
+
+    # ========================================================================
+    # Public Service Methods
+    # ========================================================================
+
     def get_movie_by_id(self, tmdb_id: int) -> MovieDetailSchema:
         """
         Retrieves movie details and credits from TMDB by movie ID.
@@ -1164,59 +1303,134 @@ class MovieService:
         # Use factory function to create properly typed MovieDetailSchema
         return create_movie_detail_from_tmdb(info_result, credits_result)
 
-    def get_now_playing_movies(self, page: int = 1) -> PaginatedMovieResponseSchema:
+    def get_now_playing_movies(
+        self,
+        page: int = 1,
+        year_min: int | None = None,
+        year_max: int | None = None,
+        rating_min: float | None = None,
+        rating_max: float | None = None,
+    ) -> PaginatedMovieResponseSchema:
         """
         Retrieves a list of now playing movies from TMDB.
 
         Args:
             page: Page number for pagination
+            year_min: Minimum release year (inclusive), client-side filtered
+            year_max: Maximum release year (inclusive), client-side filtered
+            rating_min: Minimum rating (inclusive), client-side filtered
+            rating_max: Maximum rating (inclusive), client-side filtered
 
         Returns:
             PaginatedMovieResponseSchema with now playing movies
 
         Raises:
             HttpError: If API error or data processing fails
+
+        Note:
+            Year and rating filters are applied client-side due to TMDB API quirks.
         """
-        # Use the injected client's direct now playing method
-        response = self._tmdb_client.get_now_playing_movies(page=page)
+        # Helper function to fetch a specific page (used for buffering)
+        def fetch_now_playing_page(page_num: int) -> TMDBMovieSearchResponse:
+            """Fetch a specific now playing page."""
+            page_response = self._tmdb_client.get_now_playing_movies(page=page_num)
 
-        if not response.is_success():
-            handle_tmdb_api_error(
-                response,
-                operation='get_now_playing_movies',
-                page=page,
-                error_stage='fetching_now_playing'
-            )
+            if not page_response.is_success():
+                handle_tmdb_api_error(
+                    page_response,
+                    operation='get_now_playing_movies',
+                    page=page_num,
+                    error_stage='fetching_now_playing'
+                )
 
-        result = response.get_json_data()
+            result = page_response.get_json_data()
 
-        # Type guard: ensure we have a valid dictionary
-        if not result:
-            logger.error(
-                "Failed to get valid response data from TMDB",
-                extra={
-                    'correlation_id': response.correlation_id,
-                    'operation': 'get_now_playing_movies',
-                    'page': page
-                }
-            )
-            raise HttpError(500, "Failed to get valid response data from TMDB")
+            if not result:
+                logger.error(
+                    "Failed to get valid response data from TMDB",
+                    extra={
+                        'correlation_id': page_response.correlation_id,
+                        'operation': 'get_now_playing_movies',
+                        'page': page_num
+                    }
+                )
+                raise HttpError(500, "Failed to get valid response data from TMDB")
 
-        # Use factory function to create properly typed response
-        return create_paginated_movie_response_from_tmdb(result)
+            return TMDBMovieSearchResponse.model_validate(result)
 
-    def get_upcoming_movies(self, page: int = 1) -> PaginatedMovieResponseSchema:
+        # Fetch initial page
+        tmdb_response = fetch_now_playing_page(page)
+
+        # Check if filtering is needed
+        has_filters = (
+            year_min is not None or year_max is not None or
+            rating_min is not None or rating_max is not None
+        )
+
+        if not has_filters:
+            # No filtering - return as-is
+            return create_paginated_movie_response_from_tmdb(tmdb_response.model_dump())
+
+        # Apply client-side filtering
+        filtered_movies = self._apply_filters(
+            tmdb_response.results,
+            year_min,
+            year_max,
+            rating_min,
+            rating_max
+        )
+
+        # Apply buffer mechanism if needed
+        final_movies = self._apply_buffer_if_needed(
+            filtered_movies,
+            page,
+            tmdb_response.total_pages,
+            year_min,
+            year_max,
+            rating_min,
+            rating_max,
+            fetch_now_playing_page
+        )
+
+        # Create response with filtered results
+        # Convert MovieBaseSchema back to TMDBMovieBase
+        tmdb_movies = [self._convert_schema_to_tmdb_movie(m) for m in final_movies]
+
+        filtered_response = TMDBMovieSearchResponse(
+            page=page,
+            total_pages=tmdb_response.total_pages,
+            total_results=len(final_movies),
+            results=tmdb_movies
+        )
+
+        return create_paginated_movie_response_from_tmdb(filtered_response.model_dump())
+
+    def get_upcoming_movies(
+        self,
+        page: int = 1,
+        year_min: int | None = None,
+        year_max: int | None = None,
+        rating_min: float | None = None,
+        rating_max: float | None = None,
+    ) -> PaginatedMovieResponseSchema:
         """
         Retrieves a list of upcoming movies from TMDB.
 
         Args:
             page: Page number for pagination
+            year_min: Minimum release year (inclusive), client-side filtered
+            year_max: Maximum release year (inclusive), client-side filtered
+            rating_min: Minimum rating (inclusive), client-side filtered
+            rating_max: Maximum rating (inclusive), client-side filtered
 
         Returns:
             PaginatedMovieResponseSchema with upcoming movies
 
         Raises:
             HttpError: If API error or data processing fails
+
+        Note:
+            Year and rating filters are applied client-side due to TMDB API quirks.
         """
         today = datetime.now(tz=UTC)
         min_date = today.strftime("%Y-%m-%d")
@@ -1227,56 +1441,129 @@ class MovieService:
             "include_video": False,
             "language": "en-US",
             "region": "US",
-            "page": page,
             "sort_by": "popularity.desc",
             "with_release_type": "2|3",
             "primary_release_date.gte": min_date,
             "primary_release_date.lte": max_date,
         }
 
-        response = self._tmdb_client.get("discover/movie", cast(dict[str, object], params))
-
-        # Use type-safe validator instead of manual error handling
-        tmdb_response = validate_tmdb_paginated_response(response, TMDBMovieSearchResponse)
-        result = tmdb_response.model_dump()
-        if not result:
-            logger.error(
-                "Failed to get valid response data from TMDB",
-                extra={
-                    'correlation_id': response.correlation_id,
-                    'operation': 'get_upcoming_movies',
-                    'page': page
-                }
+        # Helper function to fetch a specific page (used for buffering)
+        def fetch_upcoming_page(page_num: int) -> TMDBMovieSearchResponse:
+            """Fetch a specific upcoming page."""
+            page_params = params.copy()
+            page_params['page'] = page_num  # type: ignore[assignment]
+            page_response = self._tmdb_client.get(
+                "discover/movie",
+                cast(dict[str, object], page_params)
             )
-            raise HttpError(500, "Failed to get valid response data from TMDB")
+            tmdb_resp = validate_tmdb_paginated_response(
+                page_response,
+                TMDBMovieSearchResponse
+            )
 
-        return create_paginated_movie_response_from_tmdb(result)
+            if not tmdb_resp:
+                logger.error(
+                    "Failed to get valid response data from TMDB",
+                    extra={
+                        'correlation_id': page_response.correlation_id,
+                        'operation': 'get_upcoming_movies',
+                        'page': page_num
+                    }
+                )
+                raise HttpError(500, "Failed to get valid response data from TMDB")
 
-    def search_movies(self, query: str, page: int = 1) -> PaginatedMovieResponseSchema:
+            return tmdb_resp
+
+        # Fetch initial page
+        tmdb_response = fetch_upcoming_page(page)
+
+        # Check if filtering is needed
+        has_filters = (
+            year_min is not None or year_max is not None or
+            rating_min is not None or rating_max is not None
+        )
+
+        if not has_filters:
+            # No filtering - return as-is
+            return create_paginated_movie_response_from_tmdb(tmdb_response.model_dump())
+
+        # Apply client-side filtering
+        filtered_movies = self._apply_filters(
+            tmdb_response.results,
+            year_min,
+            year_max,
+            rating_min,
+            rating_max
+        )
+
+        # Apply buffer mechanism if needed
+        final_movies = self._apply_buffer_if_needed(
+            filtered_movies,
+            page,
+            tmdb_response.total_pages,
+            year_min,
+            year_max,
+            rating_min,
+            rating_max,
+            fetch_upcoming_page
+        )
+
+        # Create response with filtered results
+        # Convert MovieBaseSchema back to TMDBMovieBase
+        tmdb_movies = [self._convert_schema_to_tmdb_movie(m) for m in final_movies]
+
+        filtered_response = TMDBMovieSearchResponse(
+            page=page,
+            total_pages=tmdb_response.total_pages,
+            total_results=len(final_movies),
+            results=tmdb_movies
+        )
+
+        return create_paginated_movie_response_from_tmdb(filtered_response.model_dump())
+
+    def search_movies(
+        self,
+        query: str,
+        page: int = 1,
+        year_min: int | None = None,
+        year_max: int | None = None,
+        rating_min: float | None = None,
+        rating_max: float | None = None,
+    ) -> PaginatedMovieResponseSchema:
         """
         Searches for movies by query string using TMDB.
 
         Args:
             query: Search query string
             page: Page number for pagination
+            year_min: Minimum release year (inclusive), client-side filtered
+            year_max: Maximum release year (inclusive), client-side filtered
+            rating_min: Minimum rating (inclusive), client-side filtered
+            rating_max: Maximum rating (inclusive), client-side filtered
 
         Returns:
             PaginatedMovieResponseSchema with filtered search results
 
         Raises:
             HttpError: If API error or data processing fails
-        """
-        # Use the injected client's direct search method
-        response = self._tmdb_client.search_movies(
-            query=query,
-            page=page,
-            include_adult=False,
-            language="en-US",
-            region="US"
-        )
 
-        # Use type-safe validator to get properly validated response
-        tmdb_response = validate_tmdb_paginated_response(response, TMDBMovieSearchResponse)
+        Note:
+            Year and rating filters are applied client-side due to TMDB API quirks.
+        """
+        # Helper function to fetch a specific page (used for buffering)
+        def fetch_search_page(page_num: int) -> TMDBMovieSearchResponse:
+            """Fetch a specific search page with current query."""
+            page_response = self._tmdb_client.search_movies(
+                query=query,
+                page=page_num,
+                include_adult=False,
+                language="en-US",
+                region="US"
+            )
+            return validate_tmdb_paginated_response(page_response, TMDBMovieSearchResponse)
+
+        # Fetch initial page
+        tmdb_response = fetch_search_page(page)
 
         # Get the validated movies list
         movies = tmdb_response.results
@@ -1289,7 +1576,7 @@ class MovieService:
         })
 
         # Filter out non-visual content (conservative approach)
-        filtered_movies: list[TMDBMovieBase] = []
+        non_visual_filtered: list[TMDBMovieBase] = []
         for movie in movies:
             title = movie.title or ''
             title_lower = title.lower()
@@ -1309,28 +1596,93 @@ class MovieService:
                 })
                 continue
 
-            filtered_movies.append(movie)
+            non_visual_filtered.append(movie)
 
         logger.debug("Search filtering completed", extra={
             'operation': 'search_filter_complete',
             'query': query,
             'raw_count': len(movies),
-            'filtered_count': len(filtered_movies),
-            'filtered_out': len(movies) - len(filtered_movies)
+            'filtered_count': len(non_visual_filtered),
+            'filtered_out': len(movies) - len(non_visual_filtered)
         })
 
-        # Create filtered response using validated data
-        filtered_total_results = (
-            len(filtered_movies) +
-            (tmdb_response.total_results - len(movies))
+        # Check if year/rating filtering is needed
+        has_filters = (
+            year_min is not None or year_max is not None or
+            rating_min is not None or rating_max is not None
         )
 
-        # Create a new TMDBMovieSearchResponse with filtered results
+        if not has_filters:
+            # No year/rating filtering - return with just non-visual filtering
+            filtered_total_results = (
+                len(non_visual_filtered) +
+                (tmdb_response.total_results - len(movies))
+            )
+
+            filtered_response = TMDBMovieSearchResponse(
+                page=tmdb_response.page,
+                total_pages=tmdb_response.total_pages,
+                total_results=filtered_total_results,
+                results=non_visual_filtered
+            )
+
+            return create_paginated_movie_response_from_tmdb(filtered_response.model_dump())
+
+        # Apply year/rating filtering
+        filtered_movies = self._apply_filters(
+            non_visual_filtered,
+            year_min,
+            year_max,
+            rating_min,
+            rating_max
+        )
+
+        # Apply buffer mechanism if needed
+        # Note: Buffer needs to apply non-visual filtering too
+        def fetch_and_filter_search_buffer(page_num: int) -> TMDBMovieSearchResponse:
+            """Fetch buffer page and apply non-visual filtering."""
+            buffer_response = fetch_search_page(page_num)
+            # Apply non-visual filtering to buffer too
+            buffer_filtered: list[TMDBMovieBase] = []
+            for movie in buffer_response.results:
+                title = movie.title or ''
+                title_lower = title.lower()
+                skip_terms = [
+                    'soundtrack', 'score', 'music from',
+                    'original motion picture soundtrack',
+                    'original score', 'music score', 'film score',
+                    'motion picture score'
+                ]
+                if not any(skip_term in title_lower for skip_term in skip_terms):
+                    buffer_filtered.append(movie)
+
+            return TMDBMovieSearchResponse(
+                page=buffer_response.page,
+                total_pages=buffer_response.total_pages,
+                total_results=buffer_response.total_results,
+                results=buffer_filtered
+            )
+
+        final_movies = self._apply_buffer_if_needed(
+            filtered_movies,
+            page,
+            tmdb_response.total_pages,
+            year_min,
+            year_max,
+            rating_min,
+            rating_max,
+            fetch_and_filter_search_buffer
+        )
+
+        # Create response with filtered results
+        # Convert MovieBaseSchema back to TMDBMovieBase
+        tmdb_movies = [self._convert_schema_to_tmdb_movie(m) for m in final_movies]
+
         filtered_response = TMDBMovieSearchResponse(
-            page=tmdb_response.page,
+            page=page,
             total_pages=tmdb_response.total_pages,
-            total_results=filtered_total_results,
-            results=filtered_movies
+            total_results=len(final_movies),
+            results=tmdb_movies
         )
 
         return create_paginated_movie_response_from_tmdb(filtered_response.model_dump())
@@ -1338,6 +1690,10 @@ class MovieService:
     def discover_movies(
         self,
         page: int = 1,
+        year_min: int | None = None,
+        year_max: int | None = None,
+        rating_min: float | None = None,
+        rating_max: float | None = None,
         **filters: str | int | float | bool | None
     ) -> PaginatedMovieResponseSchema:
         """
@@ -1345,6 +1701,10 @@ class MovieService:
 
         Args:
             page: Page number for pagination
+            year_min: Minimum release year (inclusive), client-side filtered
+            year_max: Maximum release year (inclusive), client-side filtered
+            rating_min: Minimum rating (inclusive), client-side filtered
+            rating_max: Maximum rating (inclusive), client-side filtered
             **filters: Discovery filters including:
                 - sort_by: Sort order (popularity.desc, release_date.desc, etc.)
                 - genres: Comma-separated genre IDs
@@ -1363,7 +1723,8 @@ class MovieService:
             HttpError: If API error or data processing fails
 
         Note:
-            Runtime filtering is disabled due to TMDB API limitations
+            Runtime filtering is disabled due to TMDB API limitations.
+            Year and rating filters are applied client-side due to TMDB API quirks.
         """
         logger.debug("Discover movies request", extra={
             'operation': 'discover_movies',
@@ -1422,10 +1783,22 @@ class MovieService:
         if 'sort_by' not in params:
             params['sort_by'] = 'popularity.desc'
 
-        response = self._tmdb_client.get("discover/movie", cast(dict[str, object], params))
+        # Helper function to fetch a specific page (used for buffering)
+        def fetch_discover_page(page_num: int) -> TMDBMovieSearchResponse:
+            """Fetch a specific discover page with current filters."""
+            page_params = params.copy()
+            page_params['page'] = page_num
+            page_response = self._tmdb_client.get(
+                "discover/movie",
+                cast(dict[str, object], page_params)
+            )
+            return validate_tmdb_paginated_response(
+                page_response,
+                TMDBMovieSearchResponse
+            )
 
-        # Use type-safe validator to get properly validated response
-        tmdb_response = validate_tmdb_paginated_response(response, TMDBMovieSearchResponse)
+        # Fetch initial page
+        tmdb_response = fetch_discover_page(page)
 
         # Get the validated movies list
         movies = tmdb_response.results
@@ -1448,7 +1821,49 @@ class MovieService:
 
         logger.debug("Discover movies response processed", extra=discover_metadata)
 
-        return create_paginated_movie_response_from_tmdb(tmdb_response.model_dump())
+        # Check if filtering is needed
+        has_filters = (
+            year_min is not None or year_max is not None or
+            rating_min is not None or rating_max is not None
+        )
+
+        if not has_filters:
+            # No filtering - return as-is
+            return create_paginated_movie_response_from_tmdb(tmdb_response.model_dump())
+
+        # Apply client-side filtering
+        filtered_movies = self._apply_filters(
+            movies,
+            year_min,
+            year_max,
+            rating_min,
+            rating_max
+        )
+
+        # Apply buffer mechanism if needed
+        final_movies = self._apply_buffer_if_needed(
+            filtered_movies,
+            page,
+            tmdb_response.total_pages,
+            year_min,
+            year_max,
+            rating_min,
+            rating_max,
+            fetch_discover_page
+        )
+
+        # Create response with filtered results
+        # Convert MovieBaseSchema back to TMDBMovieBase
+        tmdb_movies = [self._convert_schema_to_tmdb_movie(m) for m in final_movies]
+
+        filtered_response = TMDBMovieSearchResponse(
+            page=page,
+            total_pages=tmdb_response.total_pages,
+            total_results=len(final_movies),  # Adjust to actual filtered count
+            results=tmdb_movies
+        )
+
+        return create_paginated_movie_response_from_tmdb(filtered_response.model_dump())
 
     def get_movie_genres(self) -> list[GenreSchema]:
         """

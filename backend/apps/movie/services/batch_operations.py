@@ -175,7 +175,7 @@ def _create_movie_base_from_tmdb_data(tmdb_data: Mapping[str, object]) -> MovieB
         if isinstance(release_date, str) and release_date.strip() == '':
             release_date = None
 
-        validated_data = {
+        validated_data: dict[str, object] = {
             'tmdb_id': tmdb_movie.id,
             'title': tmdb_movie.title,
             'poster_path': tmdb_movie.poster_path,

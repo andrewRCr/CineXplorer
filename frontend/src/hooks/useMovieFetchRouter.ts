@@ -1,7 +1,7 @@
 import { useCallback, useRef } from "react";
 import type { PaginatedMoviesResponse } from "@/services/movieService";
 import type { MovieFilters as MovieFiltersType } from "@/components/movie/filters/AdvancedMovieFilters";
-import { mapFiltersToApiParams } from "@/utilities/movieFilterUtils";
+import { mapFiltersToApiParams } from "@/utilities/movieFilterMapper";
 import { fetchSearchMoviesService } from "@/services/movieService";
 
 /**
@@ -83,7 +83,7 @@ export function useMovieFetchRouter({
 			const hasSearchQuery = !!currentFilters.query?.trim();
 
 			// Map UI filters to API parameters
-			const { filterParams } = mapFiltersToApiParams(
+			const filterParams = mapFiltersToApiParams(
 				currentFilters,
 				currentFilterStyle
 			);

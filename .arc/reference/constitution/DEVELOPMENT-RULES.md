@@ -6,18 +6,7 @@ Core development rules and quality standards for CineXplorer. These rules are **
 by all contributors, including AI assistants.
 
 **For command patterns and environment context**, see [QUICK-REFERENCE.md](../QUICK-REFERENCE.md).
-
-## AI Session Initialization Required
-
-**Before starting ANY work, AI assistants must:**
-
-1. **Confirm rules version:** "Acknowledging DEVELOPMENT-RULES v2.7, hash h3n5p8r2"
-2. **Verify environment:** Follow Session Startup Protocol in CURRENT-SESSION.md
-   (check working directory, Docker status, venv availability)
-3. **State understanding:** Confirm commit protocols, test-first protocol, task analysis, quality gates,
-   "Leave It Cleaner" protocol, CURRENT-SESSION control, and feature branch workflow
-4. **Verify context access:** Confirm access to required documents (QUICK-REFERENCE, AGENTS, META-PRD, etc.)
-5. **Check branch status:** Verify current git branch and alignment with intended work
+**For session initialization protocol**, see [session-init.md](../workflows/supplemental/session-init.md).
 
 ## Git & Commit Control
 
@@ -227,60 +216,14 @@ After completing all sub-tasks under a parent task:
 
 ## Code Quality Principles
 
-Apply standard software engineering principles to maintain clean, maintainable code:
+Apply standard software engineering principles:
 
-### Core Principles
+- **DRY** (don't repeat yourself)
+- **SOLID** (single responsibility, open/closed, dependency inversion)
+- **KISS** (keep it simple)
+- **YAGNI** (you aren't gonna need it)
 
-**DRY (Don't Repeat Yourself)**
-
-- Extract repeated logic into reusable functions, components, or utilities
-- Wait for 2-3 instances before abstracting (avoid premature optimization)
-- Share types and interfaces instead of duplicating definitions
-
-**SOLID Principles**
-
-- **Single Responsibility**: Each component/function should have one clear purpose
-- **Open/Closed**: Use composition and configuration over modification
-- **Liskov Substitution**: Subtypes must be substitutable for their base types
-- **Interface Segregation**: Keep interfaces focused and minimal
-- **Dependency Inversion**: Depend on abstractions, not concrete implementations
-
-**KISS (Keep It Simple)**
-
-- Choose simple solutions over clever ones
-- Prefer clarity over brevity when they conflict
-- Question complexity - if it's hard to explain, simplify it
-
-**YAGNI (You Aren't Gonna Need It)**
-
-- Implement features when required, not when anticipated
-- Start specific, generalize later when patterns actually emerge
-- Delete unused code
-
-### Practical Application
-
-- **Separate concerns**: UI from business logic, data fetching from presentation
-- **Use custom hooks** to abstract and share logic
-- **Prefer composition** over inheritance or duplication
-- **Design component APIs** that accept configuration
-- **When principles conflict**: Favor readability and simplicity
-
-## Error Handling
-
-### When Things Go Wrong
-
-- **Report immediately** with full context
-- **Provide diagnostic information** (error messages, stack traces)
-- **Suggest investigation areas** based on the changes made
-- **Wait for guidance** rather than attempting fixes without approval
-
-### Never Proceed If
-
-- Quality gates are failing
-- Tests are broken
-- Linting violations exist
-- TypeScript errors are present
-- User has not approved the next step
+Separate concerns, prefer composition over duplication, favor readability when principles conflict.
 
 ## Reference Documentation
 

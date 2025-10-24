@@ -12,9 +12,11 @@ Guidelines for managing task lists in markdown files to track progress on comple
 
   1. When you finish a **single sub‑task**:
      - **First**: Run incremental quality checks on modified files (linting, type checking)
-     - **Second**: Mark subtask as `[x]` in task list file (work is complete, task list should reflect reality)
+       - Task list specifies critical checkpoints, but use judgment: if changes warrant validation, run appropriate checks
+       - When task list explicitly calls for quality gates, they are mandatory
+     - **Second**: Mark subtask as `[x]` in task list file (task list reflects completed work when reporting)
      - **Third**: **REPORT** completed work to user with summary of changes
-     - **Fourth**: **MANDATORY STOP** - Wait for user approval to proceed
+     - **Fourth**: ⛔ **MANDATORY STOP** - Wait for user approval before proceeding
      - **Fifth**: After approval, proceed to next subtask
      - **NEVER** continue to multiple subtasks without explicit user approval for each one
 
@@ -145,11 +147,6 @@ When all parent tasks are complete and ready for integration:
     - Dependencies that are now resolved
     - Any other work completed outside the current task list
 
-- **Stop after each individual sub‑task and wait for the user's go‑ahead**
-- **Never complete multiple subtasks in one implementation cycle** -
-  each subtask represents a discrete deliverable that requires individual review
-- **Each subtask should be documented and approved before moving forward**
-
 ## Incidental Work Management
 
 ### Quick Decision Guide
@@ -198,6 +195,27 @@ This dedicated workflow covers:
 
 ## Task List Maintenance
 
+### TodoWrite Tool vs Task List Files
+
+**TodoWrite Tool** (session-only tracking):
+
+- Used for organizing work during active implementation
+- Ephemeral, not saved to git
+- Helps AI break down current work into steps
+- **NOT a substitute for task list markdown updates**
+
+**Task List Markdown Files** (permanent record):
+
+- Official project documentation (`.arc/active/*/tasks-*.md`)
+- Committed to git with code changes
+- Source of truth for completion status
+- **MUST be updated when completing tasks** (before reporting to user)
+
+Both tools serve different purposes - use TodoWrite for work-in-progress organization.
+Always update task list markdown for permanent completion tracking.
+
+### Updating Task Lists
+
 1. **Update the task list as you work:**
 
    - Mark tasks and subtasks as completed (`[x]`) per the protocol above.
@@ -206,29 +224,3 @@ This dedicated workflow covers:
 2. **Track file changes via git:**
    - Git status and diffs provide the most accurate record of changes.
    - No need to manually maintain file lists - tools like `git status` and `git diff` are always current.
-
-## AI Instructions
-
-When working with task lists, the AI must:
-
-1. Before starting work, check which **single sub‑task** is next.
-2. **Complete only ONE subtask at a time** - never bundle multiple subtasks together.
-3. After implementing a **single sub‑task**:
-   - **Run incremental quality checks** on modified files (linting, type checking)
-   - **Do not report until all checks pass (0 errors)**
-   - **Fix any issues immediately** before reporting
-   - **REPORT** completed work to user with summary of changes
-   - **MANDATORY STOP** - Wait for user approval
-   - After user approves, mark subtask as `[x]` in task list file
-   - Proceed to next subtask (permission implied by approval unless user specifies otherwise)
-4. Follow the completion protocol for marking tasks:
-   - Mark each finished **sub‑task** `[x]` AFTER user approval (not before).
-   - Mark the **parent task** `[x]` once **all** its subtasks are `[x]` (BEFORE generating readiness report).
-   - **Task list updates must be saved before commit consideration** - never commit with stale task docs.
-5. Add newly discovered tasks as they emerge.
-6. **Generate standardized readiness reports** using format from DEVELOPMENT-RULES.md
-7. **Never initiate commits** without explicit user approval - await commit instructions
-8. **Never assume subtasks can be grouped** - each represents an individual deliverable requiring separate approval.
-9. **Implied permission to proceed**: User approval of completed work implies permission to proceed to next subtask
-   UNLESS user explicitly states otherwise (e.g., "looks good, but before moving on..."). In such cases, address
-   the concern before proceeding to next task-list-documented subtask.

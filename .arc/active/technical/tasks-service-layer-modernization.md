@@ -324,7 +324,7 @@ patterns across movie, UserMovieData, and authentication domains.
         - **Linting**: 0 violations (Ruff, 1 auto-fixed)
         - **Type checking**: 0 errors (Pyright)
 
-- [ ] **3.4 Extract Keyword and People Services**
+- [x] **3.4 Extract Keyword and People Services**
     - [x] 3.4.1 Write tests for KeywordService class (test-first)
         - Created `backend/apps/movie/tests/test_keyword_service_class.py` (246 lines)
         - **Tests created (10 total)**:
@@ -371,16 +371,7 @@ patterns across movie, UserMovieData, and authentication domains.
         - **Result**: 10/10 tests passing (GREEN phase - successful RED → GREEN TDD cycle)
         - **Linting**: 0 violations (Ruff)
         - **Type checking**: 0 errors (Pyright)
-    - [ ] 3.4.5 Create service factory functions and tests
-        - Write tests first:
-            - Test `get_keyword_service()` returns KeywordService instance with default client
-            - Test `get_people_service()` returns PeopleService instance with default client
-            - Add to existing `test_movie_service_class.py` factory tests
-        - Implement `get_keyword_service()` in `backend/apps/movie/services/service_factory.py`
-        - Implement `get_people_service()` in `backend/apps/movie/services/service_factory.py`
-        - Returns services with default TMDB client injection
-        - **Note**: MovieService factory (`get_movie_service()`) already exists, add alongside it
-    - [ ] 3.4.6 Update API endpoints to use new services
+    - [x] 3.4.5 Update API endpoints to use new services
         - Update keywords endpoints in `backend/apps/movie/api.py`:
             - Replace `movie_service.get_popular_keywords()` → `keyword_service.get_popular_keywords()`
             - Replace `movie_service.search_keywords()` → `keyword_service.search_keywords()`
@@ -389,7 +380,7 @@ patterns across movie, UserMovieData, and authentication domains.
             - Replace `movie_service.search_people()` → `people_service.search_people()`
         - Use factory functions for instantiation
         - Maintain exact same API behavior (backward compatibility)
-    - [ ] 3.4.7 Run incremental quality checks
+    - [x] 3.4.6 Run incremental quality checks
         - **Linting**: 0 violations (Ruff) on keyword_service.py, people_service.py, api.py
         - **Type checking**: 0 errors (Pyright) on new services
         - **Tests**: Verify API endpoints still work (keywords and people routes)

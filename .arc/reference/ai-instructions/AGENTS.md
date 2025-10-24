@@ -84,30 +84,6 @@ When you need to find information, use these pointers (don't load everything upf
 - **Workflows** → `.arc/reference/workflows/` (core + supplemental)
 - **Patterns** → `.arc/reference/strategies/` (architectural decisions, testing methodology, type safety)
 
-## Document Dependencies
-
-When constitutional documents change, update related files to keep documentation in sync:
-
-**META-PRD.md changes** → Update:
-
-- `ai-instructions/AGENTS.md` (this file) - project overview and features
-- Potentially `PROJECT-STATUS.md` - if scope or priorities change
-
-**DEVELOPMENT-RULES.md changes** → Update:
-
-- Version number in DEVELOPMENT-RULES.md
-- All `ai-instructions/*.md` files - if protocols change
-- Team communication about rule changes (if applicable)
-
-**TECHNICAL-ARCHITECTURE.md changes** → Update:
-
-- `ai-instructions/AGENTS.md` (this file) - technology stack and patterns
-- Consider `PROJECT-STATUS.md` if architectural decisions affect roadmap
-
-**PROJECT-STATUS.md changes** → Update:
-
-- Consider if major status changes affect ongoing work priorities
-
 ## AI Collaboration Principles
 
 **Working Approach:**
@@ -123,16 +99,6 @@ When constitutional documents change, update related files to keep documentation
 
 - **Focus on value** - Prioritize findings, risks, and actionable next steps in summaries
 - **Be clear and targeted** - Provide enough detail to be useful, not so much it's overwhelming
-
-## Maintenance Notes
-
-- When `DEVELOPMENT-RULES.md` or `TECHNICAL-ARCHITECTURE.md` change, skim this file and update only if the
-  high-level snapshot is now inaccurate
-- Agent-specific instruction files (CLAUDE.md, WARP.md, etc.) should reference this file rather than duplicating content
-- Commands and detailed workflows live in other docs - this is just a reference card
-- Keep this file lean - if something is covered in CURRENT-SESSION/DEVELOPMENT-RULES/QUICK-REFERENCE, don't
-  repeat it here
-- Tool-specific files should be minimal: reference AGENTS.md + add tool-specific tips only
 
 ---
 

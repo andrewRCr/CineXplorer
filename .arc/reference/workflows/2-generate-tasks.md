@@ -1,10 +1,18 @@
-# Rule: Generating a Task List from a Sub-PRD
+# Workflow: Generate Task List
+
+## Purpose
+
+This workflow guides the creation of detailed, executable task lists from PRDs (Product Requirements Documents).
+Task lists break down feature or technical work into step-by-step implementation plans that can be followed
+incrementally, with clear checkpoints and quality gates.
+
+**When to use:** After a PRD has been created and work is ready to move into active implementation planning.
 
 ## Goal
 
-To guide an AI assistant in creating a detailed, step-by-step task list in Markdown format based on an
-existing Sub-PRD (feature-level Product Requirements Document). The task list should guide a developer
-through implementation.
+Create a comprehensive task list in Markdown format that transforms PRD requirements into actionable development
+steps. The task list should provide clear implementation guidance while respecting existing codebase patterns and
+architectural decisions.
 
 ## Output
 
@@ -14,80 +22,162 @@ through implementation.
     - Technical work: `.arc/upcoming/technical/`
 - **Filename:** `tasks-[name].md` (e.g., `tasks-user-profile-editing.md`, `tasks-api-modernization.md`)
 
+**Note:** Task lists typically start in `.arc/upcoming/` during planning, then move to `.arc/active/` when
+work begins. See [Project Structure](../strategies/strategy-work-categorization.md) for complete lifecycle.
+
 ## Process
 
-1. **Receive Sub-PRD Reference:** The user points the AI to a specific Sub-PRD file
-2. **Review Context:** Read the [META-PRD](../constitution/META-PRD.md) and [PROJECT-STATUS](../constitution/PROJECT-STATUS.md)
-   to understand the overall product vision and current state
-3. **Analyze Sub-PRD:** The AI reads and analyzes the functional requirements, user stories, and other sections
-   of the specified Sub-PRD.
-4. **Assess Current State:** Review the existing codebase to understand existing infrastructure, architectural patterns
-   and conventions. Also, identify any existing components or features that already exist and could be relevant
-   to the Sub-PRD requirements. Then, identify existing related files, components, and utilities that can be
-   leveraged or need modification.
-5. **Phase 1: Generate Parent Tasks:** Based on the Sub-PRD analysis and current state assessment, create the file
-   and generate the main, high-level tasks required to implement the feature. Use your judgement on how many
-   high-level tasks to use. It's likely to be about 5. Present these tasks to the user in the specified format
-   (without sub-tasks yet). Inform the user: "I have generated the high-level tasks based on the Sub-PRD.
-   Ready to generate the sub-tasks? Respond with 'Go' to proceed."
-6. **Wait for Confirmation:** Pause and wait for the user to respond with "Go".
-7. **Phase 2: Generate Sub-Tasks:** Once the user confirms, break down each parent task into smaller, actionable
-   sub-tasks necessary to complete the parent task. Ensure sub-tasks logically follow from the parent task,
-   cover the implementation details implied by the Sub-PRD, and consider existing codebase patterns where
-   relevant without being constrained by them.
-8. **Generate Final Output:** Combine the parent tasks, sub-tasks, and notes into the final Markdown structure.
-9. **Save Task List:**
-    Save the generated document in the appropriate category directory matching the PRD location:
-    - Feature work: `.arc/upcoming/feature/tasks-[name].md`
-    - Technical work: `.arc/upcoming/technical/tasks-[name].md`
+### Step 1: Review PRD and Project Context
 
-    The `[name]` should match the base name of the input PRD file
-    (e.g., if the input was `prd-user-profile-editing.md`, the output is `tasks-user-profile-editing.md`).
-10. **Create Feature Branch:**
-    Create a new feature branch with the naming convention `feature/[feature-name]`
-    (e.g., `feature/user-profile-editing`).
-    Use the command:
-    `git checkout -b feature/[feature-name]`
-11. **Update PROJECT-STATUS:**
-    Add the new feature to the "Upcoming Priorities" section with status
-    "(In Planning - Branch: feature/[feature-name])" and a brief description of key deliverables.
-12. **Stage Initial Documentation:**
-    Stage the new Sub-PRD, the new task list, and the updated `PROJECT-STATUS.md` file using `git add`.
-13. **Propose Initial Commit:**
-    Present the staged files to the user and propose a commit message for the initial documentation.
-    Await explicit user approval before executing the commit, in accordance with `DEVELOPMENT-RULES.md`.
+Read the specified PRD to understand requirements, user stories, and acceptance criteria. Then review
+foundational documents for broader context:
 
-    **Safety Note:** Before committing, you can:
-    - Preview staged changes: `git diff --staged`
-    - Unstage files if needed: `git restore --staged <files>` (or `git reset HEAD <files>`)
-    - Review what will be committed: `git status`
+- **[META-PRD](../constitution/META-PRD.md)** - Product vision and core features
+- **[PROJECT-STATUS](../constitution/PROJECT-STATUS.md)** - Current priorities and project state
+- **[TECHNICAL-ARCHITECTURE](../constitution/TECHNICAL-ARCHITECTURE.md)** - Architectural patterns and conventions
 
-## Interaction Model
+### Step 2: Assess Current Codebase State
 
-The process explicitly requires a pause after generating parent tasks to get user confirmation ("Go") before
-proceeding to generate the detailed sub-tasks. This ensures the high-level plan aligns with user expectations
-before diving into details.
+Review the existing codebase to identify:
 
-## Target Audience
+- Existing infrastructure and architectural patterns that can be leveraged
+- Components or features that already exist and relate to PRD requirements
+- Files, components, and utilities that may need modification
+- Testing patterns and quality standards to follow
 
-Assume the primary reader of the task list is a **junior developer** who will implement the feature with awareness
-of the existing codebase context and the broader product vision from the META-PRD.
+### Step 3: Generate Parent Tasks
 
-## Output Format
+Based on the PRD analysis and codebase assessment, identify the major phases of work required to implement
+the feature or technical improvement. Create 3-7 high-level parent tasks that represent logical implementation
+phases.
 
-The generated task list _must_ follow this structure:
+**Considerations:**
+
+- Each parent task should represent a complete phase that produces testable value
+- Order tasks to minimize dependencies and enable incremental progress
+- Include phases for testing, documentation, and quality validation
+
+**Example parent task structure:**
 
 ```markdown
+## Tasks
+
+- [ ] 1.0 Create Core Data Models
+- [ ] 2.0 Implement API Endpoints
+- [ ] 3.0 Build UI Components
+- [ ] 4.0 Testing and Validation
+- [ ] 5.0 Documentation and Polish
+```
+
+Present parent tasks and confirm the high-level plan aligns with expectations before proceeding to detailed
+sub-tasks.
+
+### Step 4: Break Down into Sub-Tasks
+
+For each parent task, define specific, actionable sub-tasks that:
+
+- Follow logically from the parent task
+- Cover implementation details implied by the PRD
+- Include quality checkpoints (linting, type checking, tests) at appropriate stages
+- Reference specific files, components, or patterns where appropriate
+- Are small enough to complete in a single work session (typically < 3 files modified)
+
+**Sub-task guidelines:**
+
+- **Test-first protocol**: For models, APIs, and business logic, include test sub-tasks before implementation
+- **Quality gates**: Include linting and type-checking steps after significant changes
+- **Incremental validation**: Structure tasks so progress can be verified at each step
+
+### Step 5: Add Implementation Notes Section (Placeholder)
+
+If architectural decisions, patterns, or constraints emerged during planning, they can be documented in an
+"Implementation Notes" section at the bottom of the task list. This provides context for future developers
+and explains why certain approaches were chosen.
+
+### Step 6: Generate Final Task List
+
+Combine parent tasks, sub-tasks, and optional implementation notes into the standard Markdown structure:
+
+```markdown
+# Task List: [Feature/Work Name]
+
+**PRD Reference:** `.arc/active/[category]/prd-[name].md`
+**Branch:** `feature/[feature-name]` or `technical/[work-name]`
+
 ## Implementation Notes
 
-_(Optional section for documenting architectural decisions, patterns, or constraints discovered during planning)_
+_(Optional: Document architectural decisions, patterns, constraints discovered during planning)_
 
 ## Tasks
 
 - [ ] 1.0 Parent Task Title
-  - [ ] 1.1 [Sub-task description 1.1]
-  - [ ] 1.2 [Sub-task description 1.2]
+  - [ ] 1.1 Sub-task description
+  - [ ] 1.2 Sub-task description
 - [ ] 2.0 Parent Task Title
-  - [ ] 2.1 [Sub-task description 2.1]
+  - [ ] 2.1 Sub-task description
+  - [ ] 2.2 Sub-task description
+```
+
+### Step 7: Save Task List
+
+Save the generated task list in the appropriate category directory matching the PRD location:
+
+- Feature work: `.arc/upcoming/feature/tasks-[name].md`
+- Technical work: `.arc/upcoming/technical/tasks-[name].md`
+
+The `[name]` should match the base name of the input PRD file
+(e.g., if the input was `prd-user-profile-editing.md`, the output is `tasks-user-profile-editing.md`).
+
+## Target Audience
+
+Task lists should be written for developers (junior to mid-level) who will implement the feature with:
+
+- Awareness of existing codebase context
+- Understanding of the broader product vision from the META-PRD
+- Familiarity with the project's testing and quality standards
+
+**Writing style:**
+
+- Clear, actionable sub-task descriptions
+- Specific enough to guide implementation without over-prescribing solutions
+- References to patterns, files, or approaches where helpful
+- Assumes familiarity with the tech stack but not with every project-specific pattern
+
+## Task List Structure
+
+**Numbering convention:**
+
+- Parent tasks: `1.0`, `2.0`, `3.0`, etc.
+- Sub-tasks: `1.1`, `1.2`, `2.1`, `2.2`, etc.
+- All tasks start unchecked: `- [ ]`
+
+**Task completion tracking:**
+
+- Mark completed: `- [x] 1.1 Sub-task description`
+- Task list is a living document, updated throughout implementation
+- See [Task Processing Loop](3-process-task-loop.md) for execution workflow
+
+## Reference Template
+
+**The task list must follow this exact structure:**
+
+```markdown
+# Task List: [Feature/Work Name]
+
+**PRD Reference:** `.arc/active/[category]/prd-[name].md`
+**Branch:** `[category]/[name]`
+
+## Tasks
+
+- [ ] 1.0 Parent Task Title
+  - [ ] 1.1 Sub-task description (specific, actionable)
+  - [ ] 1.2 Sub-task description (includes quality checkpoints)
+- [ ] 2.0 Parent Task Title
+  - [ ] 2.1 Sub-task description
 - [ ] 3.0 Parent Task Title (may not require sub-tasks if purely structural or configuration)
+
+
+## Implementation Notes
+
+_(Optional section for documenting architectural decisions, patterns, or constraints discovered during planning)_
 ```

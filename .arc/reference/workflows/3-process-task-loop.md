@@ -1,13 +1,13 @@
--# Task List Management
+# Workflow: Task Processing Loop
 
-Guidelines for managing task lists in markdown files to track progress on completing a PRD
+## Purpose
+
+This workflow defines the detailed process for executing tasks defined in ARC task lists (e.g., `.arc/active/*/tasks-*.md`).
+It ensures consistent execution, quality control, and documentation of work.
 
 ## Task Implementation
 
 - **One sub-task at a time:** Do **NOT** start the next sub‑task without user approval
-- **Test-first approach:** For new models, APIs, and complex logic, write tests before implementation
-- **Incremental quality checks:** Run linting and type checking on modified files after each sub-task
-  (Ruff for linting with auto-fix, Pyright for fast type checks, mypy for optional full-project CI/periodic validation)
 - **Completion protocol:**
 
   1. When you finish a **single sub‑task**:
@@ -15,10 +15,31 @@ Guidelines for managing task lists in markdown files to track progress on comple
        - Task list specifies critical checkpoints, but use judgment: if changes warrant validation, run appropriate checks
        - When task list explicitly calls for quality gates, they are mandatory
      - **Second**: Mark subtask as `[x]` in task list file (task list reflects completed work when reporting)
-     - **Third**: **REPORT** completed work to user with summary of changes
-     - **Fourth**: ⛔ **MANDATORY STOP** - Wait for user approval before proceeding
-     - **Fifth**: After approval, proceed to next subtask
+       - Update task description to reflect actual work done (not just original plan)
+       - Add "Completed" section with key findings/changes if work deviated from plan
+       - **Streamline verbose planning details**: Task descriptions serve different purposes before vs. after completion.
+         During planning, verbose details help guide execution. After completion, they become historical records.
+         When marking a task complete, retain information useful for understanding what was done and why,
+         but remove excessive planning scaffolding (detailed step-by-step instructions, pre-implementation
+         considerations, etc.) that no longer serves a purpose. Keep: actual changes made, key decisions,
+         architectural impact, anything needed to understand the implementation later.
+     - **Third**: Verify completion before reporting (use pre-report checklist below)
+     - **Fourth**: **REPORT** completed work to user with summary of changes
+     - **Fifth**: ⛔ **MANDATORY STOP** - Wait for user approval before proceeding
+     - **Sixth**: After approval, proceed to next subtask
      - **NEVER** continue to multiple subtasks without explicit user approval for each one
+
+     **Pre-Report Checklist** (verify before generating completion report):
+
+     ```
+     - [ ] Quality checks passed (linting, type checking, tests as appropriate)
+     - [ ] Task list markdown file edited and saved
+     - [ ] Subtask marked [x] in task list
+     - [ ] Task description updated to reflect actual work done
+     - [ ] Ready to generate user-facing completion report
+     ```
+
+     If any item is unchecked, complete it before proceeding to report generation.
 
      **Note on implied permission:** User approval ("great!", "looks good", "proceed") implies permission to
      continue to the next subtask UNLESS explicitly stated otherwise (e.g., "that's done, but before moving on...").
@@ -28,124 +49,30 @@ Guidelines for managing task lists in markdown files to track progress on comple
 
     - **First**: Mark the **parent task** as `[x]` in the task list file (ensures docs reflect completion)
     - **Second**: Ensure new code has appropriate test coverage (models, APIs, complex logic)
-    - **Third**: Run the full test suite (`python manage.py test --settings=config.settings_test`, `npm test`, etc.)
-    - **Fourth**: Run all linting checks:
-        - `ruff check apps/ config/`
-        - `python scripts/type_check.py` (runs hybrid Pyright+mypy; requires `npm install` for pyright)
-        - `npm run lint`
-        - `npm run type-check`
-        - `npx markdownlint-cli2 "**/*.md"`
-    - **Fifth**: Check if [PROJECT-STATUS](.arc/reference/constitution/PROJECT-STATUS.md) needs updates
+    - **Third**: Run the full quality gates (all tests, linting, type checks)
+    - **Fourth**: Check if [PROJECT-STATUS](.arc/reference/constitution/PROJECT-STATUS.md) needs updates
       (feature progress, completed functionality, updated priorities)
+    - **Fifth**: Verify completion before reporting (use pre-report checklist below)
 
-  3. Generate standardized readiness report
-     **IMPORTANT:** Before reporting, verify task list file reflects all completed work:
-     - All subtasks under parent task marked `[x]`
-     - Parent task marked `[x]`
-     - Task list file saved
-     This ensures task list accuracy is included in any subsequent commit.
-     (see [Development Rules](../constitution/DEVELOPMENT-RULES.md) for format)
-     and await user instructions on how to proceed.
-     User may choose to commit changes (AI can execute only if explicitly approved to do so) or review first.
-     When committing, follow [Atomic Commit Workflow](atomic-commit.md) guidelines:
+  3. Report completion to user
 
-    - Uses conventional commit format (`feat:`, `fix:`, `refactor:`, etc.)
-    - Summarizes what was accomplished in the parent task
-    - Lists key changes and additions
-    - **Accurately references the specific task number being completed** (e.g., "Complete task {TASK_ID}"
-      where {TASK_ID} is the actual subtask like "4.2.3")
-    - References the PRD context and current branch {BRANCH}
-    - **Formats the message as a single-line command using `-m` flags**, replacing placeholders with real values:
+     **Pre-Report Checklist for Parent Task Completion** (verify before reporting):
 
-      ```
-      git commit -m "feat({BRANCH}): add payment validation logic" -m "- Validates card type and expiry" -m "- Adds unit tests for edge cases" -m "Complete task {TASK_ID}" -m "Related to Payment PRD"
-      ```
+     ```
+     - [ ] All subtasks under parent task marked [x] in task list
+     - [ ] Parent task marked [x] in task list
+     - [ ] Task list file edited and saved
+     - [ ] Full test suite passed (backend + frontend)
+     - [ ] All linting checks passed (backend + frontend + markdown)
+     - [ ] PROJECT-STATUS checked and updated if needed
+     - [ ] Ready to report completion to user
+     ```
 
-      Example with real values:
+     If any item is unchecked, complete it before proceeding to report generation.
 
-      ```
-      git commit -m "feat(feature/payment-flow): add payment validation logic" -m "- Validates card type and expiry" -m "- Adds unit tests for edge cases" -m "Complete task 4.2.3" -m "Related to Payment PRD"
-      ```
-
-  4. User reviews readiness report and decides whether to commit or request changes.
-     When committing, task list file should already reflect completion (parent task marked `[x]` in step 2).
-  5. **Verify task documentation accuracy** - ensure task status matches what was actually completed.
-
-### Incremental Quality Checks
-
-After each sub-task, run relevant quality checks on modified files only:
-
-**Backend Files** (Python):
-
-```bash
-# Lint specific files (with auto-fix)
-# Option 1: Docker (consistent across environments)
-docker compose -f infrastructure/docker-compose.yml exec backend ruff check apps/path/to/file.py --fix
-# Option 2: WSL2 host venv (faster)
-.venv-backend/bin/ruff check backend/apps/path/to/file.py --fix
-
-# Type check specific module/directory (use directory, NOT individual files)
-# IMPORTANT: Individual files may use default settings instead of pyrightconfig.json
-npx pyright backend/apps/authentication/ --project backend
-
-# Or from backend/ directory (no args uses pyrightconfig.json include list)
-cd backend && npx pyright
-
-# Note: Ruff is very fast with auto-fix; Pyright uses directory-based checking for config consistency
-```
-
-**Frontend Files** (TypeScript/JavaScript):
-
-```bash
-# Lint specific files
-docker-compose exec frontend npm run lint -- path/to/modified/file.ts
-
-# Type check (runs on entire project but focuses on errors)
-docker-compose exec frontend npm run type-check
-```
-
-**Fix issues immediately** - don't accumulate technical debt across sub-tasks.
-
-### Feature Branch Management
-
-#### Starting Feature Work
-
-- **Ensure correct branch**: Verify you're on the feature branch (e.g., `feature/user-profile-editing`)
-- **Check branch status**: `git status` should show the feature branch as current
-- **If not on feature branch**: `git checkout feature/[feature-name]`
-
-#### During Task Execution
-
-- **All commits go to feature branch**: Normal atomic commit workflow applies within the branch
-- **Stay on feature branch**: Don't switch branches during active task work
-- **Branch context in handoffs**: Include current branch in any AI context handoffs
-
-#### Feature Completion
-
-When all parent tasks are complete and ready for integration:
-
-1. **Final quality gates**: All tests pass, zero linting violations, zero type errors
-2. **Generate completion report**: Use standardized format from DEVELOPMENT-RULES.md
-3. **Await user approval**: User decides when to merge to main
-4. **Merge process** (user executes):
-
-   ```bash
-   git checkout main
-   git merge feature/[feature-name]  # Preserve commit history
-   git branch -d feature/[feature-name]  # Clean up feature branch
-   ```
-
-5. **Update [PROJECT-STATUS](.arc/reference/constitution/PROJECT-STATUS.md)**: Move feature from "In Progress" to "Completed"
-
-### PROJECT-STATUS Maintenance
-
-- **After each sub-task**: Update task documentation only
-- **After each parent task**: Check if [PROJECT-STATUS](.arc/reference/constitution/PROJECT-STATUS.md) needs updates:
-    - Feature progress milestones reached
-    - Newly completed functionality to highlight
-    - Updated timelines or priorities
-    - Dependencies that are now resolved
-    - Any other work completed outside the current task list
+  4. Await user instructions on how to proceed.
+     User may choose to commit changes (AI can execute only if explicitly approved) or request modifications.
+     When committing, follow [Atomic Commit Workflow](supplemental/atomic-commit.md) guidelines.
 
 ## Incidental Work Management
 
@@ -172,26 +99,7 @@ immediately. **Quick decision tree**:
 ### Complete Workflow
 
 **For full incidental work lifecycle** (creation, execution, archival), see:
-
 **→ [manage-incidental-work.md](manage-incidental-work.md)** ← Complete workflow documentation
-
-This dedicated workflow covers:
-
-- Decision tree with examples
-- Creation protocol with commit standards
-- Execution following task loop rules
-- **Archival order: docs → commit → CURRENT-SESSION**
-- Directory structure (`feature/` and `incidental/` subdirs)
-- Task list template
-- Best practices and common pitfalls
-
-### Key Reminders for Incidental Work
-
-- **Follow same task loop rules**: One subtask at a time, quality gates, user approval
-- **Update task list with code**: Commit task list updates alongside implementation
-- **Archive order**: Update docs → commit archive → update CURRENT-SESSION
-- **Track creation**: Commit task list creation immediately for context visibility
-- **No PRDs needed**: Incidental work is reactive, not strategic feature work
 
 ## Task List Maintenance
 
@@ -213,6 +121,30 @@ This dedicated workflow covers:
 
 Both tools serve different purposes - use TodoWrite for work-in-progress organization.
 Always update task list markdown for permanent completion tracking.
+
+#### TodoWrite Best Practice: Always Include Documentation Step
+
+**IMPORTANT:** When creating TodoWrite items for a subtask, ALWAYS include a dedicated item for updating the task list markdown:
+
+```json
+[
+  {"content": "Analyze the code/requirements", "status": "pending", ...},
+  {"content": "Make technical changes", "status": "pending", ...},
+  {"content": "Run quality checks", "status": "pending", ...},
+  {"content": "Update task list markdown with [x] and details", "status": "pending", ...},
+  {"content": "Report completion to user", "status": "pending", ...}
+]
+```
+
+**Rationale:** This creates a forcing function to remember the task list update before generating
+the completion report. The TodoWrite item serves as a checklist reminder.
+
+**When to mark this item complete:**
+
+- After editing the task list markdown file
+- After marking the subtask `[x]`
+- After adding any "Completed" details about actual work done
+- BEFORE generating the user-facing completion report
 
 ### Updating Task Lists
 

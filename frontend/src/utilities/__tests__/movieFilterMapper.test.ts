@@ -14,7 +14,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { mapFiltersToApiParams } from '../movieFilterMapper';
-import type { MovieFilters } from '../../types/movieTypes';
+import type { MovieFilters } from '../../components/movie/filters/AdvancedMovieFilters';
 
 describe('movieFilterMapper - Backend Schema Compatibility', () => {
   describe('Year Filter Parameter Generation', () => {

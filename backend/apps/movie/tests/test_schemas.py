@@ -19,8 +19,6 @@ layer that was missing test coverage in Phase 1 analysis.
 """
 from __future__ import annotations
 
-import pytest
-
 from movie.schemas import MovieDiscoverFilterSchema
 
 

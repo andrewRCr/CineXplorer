@@ -486,13 +486,6 @@ patterns across movie, UserMovieData, and authentication domains.
             - See incidental task list for full scope (Phase 1: Discovery, Phase 2: Fix)
 
             **Type Ignore Resolution**: Will be addressed in incidental work Phase 2.2.2
-    - [ ] 3.5.3 Run frontend quality checks
-        - **Linting**: 0 violations (ESLint) on modified files
-        - **Type checking**: 0 errors (TypeScript) on modified files
-        - **Manual verification**: Test discover/search pages work correctly with backend filtering
-    - [ ] 3.5.4 Update CURRENT-SESSION.md if needed
-        - Document frontend simplification completed
-        - Note any observations about behavior differences (should be none)
 
 - [ ] **3.6 Phase 3 Quality Gate**
     - [ ] 3.6.1 Run full backend test suite

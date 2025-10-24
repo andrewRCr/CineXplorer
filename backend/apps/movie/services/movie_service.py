@@ -21,17 +21,13 @@ from ..schemas import (
     GenreSchema,
     MovieBaseSchema,
     MovieDetailSchema,
-    PaginatedKeywordResponseSchema,
     PaginatedMovieResponseSchema,
-    PaginatedPersonResponseSchema,
 )
 from .result_filtering import filter_movies_by_rating, filter_movies_by_year
 from .schema_factories import (
     create_genre_list_from_tmdb,
     create_movie_detail_from_tmdb,
-    create_paginated_keyword_response_from_tmdb,
     create_paginated_movie_response_from_tmdb,
-    create_paginated_person_response_from_tmdb,
     handle_tmdb_api_error,
 )
 
@@ -203,10 +199,10 @@ class MovieService:
             fetch_page_func: Function to fetch a specific page (takes page_num: int)
                 Returns TMDBMovieSearchResponse
             page: Current page number
-            year_min: Minimum release year (inclusive), client-side filtered
-            year_max: Maximum release year (inclusive), client-side filtered
-            rating_min: Minimum rating (inclusive), client-side filtered
-            rating_max: Maximum rating (inclusive), client-side filtered
+            year_min: Minimum release year (inclusive), backend filtered (second-pass data hygiene)
+            year_max: Maximum release year (inclusive), backend filtered (second-pass data hygiene)
+            rating_min: Minimum rating (inclusive), backend filtered (second-pass data hygiene)
+            rating_max: Maximum rating (inclusive), backend filtered (second-pass data hygiene)
             pre_filter_func: Optional pre-filter function (e.g., non-visual filtering)
                 Takes list[TMDBMovieBase], returns list[TMDBMovieBase]
                 Applied BEFORE year/rating filters
@@ -509,10 +505,10 @@ class MovieService:
 
         Args:
             page: Page number for pagination
-            year_min: Minimum release year (inclusive), client-side filtered
-            year_max: Maximum release year (inclusive), client-side filtered
-            rating_min: Minimum rating (inclusive), client-side filtered
-            rating_max: Maximum rating (inclusive), client-side filtered
+            year_min: Minimum release year (inclusive), backend filtered (second-pass data hygiene)
+            year_max: Maximum release year (inclusive), backend filtered (second-pass data hygiene)
+            rating_min: Minimum rating (inclusive), backend filtered (second-pass data hygiene)
+            rating_max: Maximum rating (inclusive), backend filtered (second-pass data hygiene)
 
         Returns:
             PaginatedMovieResponseSchema with now playing movies
@@ -521,7 +517,8 @@ class MovieService:
             HttpError: If API error or data processing fails
 
         Note:
-            Year and rating filters are applied client-side due to TMDB API quirks.
+            Year and rating filters use two-pass architecture: TMDB API (primary)
+            + backend filtering (catches data quality issues).
         """
         def fetch_now_playing_page(page_num: int) -> TMDBMovieSearchResponse:
             """Fetch a specific now playing page."""
@@ -572,10 +569,10 @@ class MovieService:
 
         Args:
             page: Page number for pagination
-            year_min: Minimum release year (inclusive), client-side filtered
-            year_max: Maximum release year (inclusive), client-side filtered
-            rating_min: Minimum rating (inclusive), client-side filtered
-            rating_max: Maximum rating (inclusive), client-side filtered
+            year_min: Minimum release year (inclusive), backend filtered (second-pass data hygiene)
+            year_max: Maximum release year (inclusive), backend filtered (second-pass data hygiene)
+            rating_min: Minimum rating (inclusive), backend filtered (second-pass data hygiene)
+            rating_max: Maximum rating (inclusive), backend filtered (second-pass data hygiene)
 
         Returns:
             PaginatedMovieResponseSchema with upcoming movies
@@ -584,7 +581,8 @@ class MovieService:
             HttpError: If API error or data processing fails
 
         Note:
-            Year and rating filters are applied client-side due to TMDB API quirks.
+            Year and rating filters use two-pass architecture: TMDB API (primary)
+            + backend filtering (catches data quality issues).
         """
         today = datetime.now(tz=UTC)
         min_date = today.strftime("%Y-%m-%d")
@@ -651,10 +649,10 @@ class MovieService:
         Args:
             query: Search query string
             page: Page number for pagination
-            year_min: Minimum release year (inclusive), client-side filtered
-            year_max: Maximum release year (inclusive), client-side filtered
-            rating_min: Minimum rating (inclusive), client-side filtered
-            rating_max: Maximum rating (inclusive), client-side filtered
+            year_min: Minimum release year (inclusive), backend filtered (second-pass data hygiene)
+            year_max: Maximum release year (inclusive), backend filtered (second-pass data hygiene)
+            rating_min: Minimum rating (inclusive), backend filtered (second-pass data hygiene)
+            rating_max: Maximum rating (inclusive), backend filtered (second-pass data hygiene)
 
         Returns:
             PaginatedMovieResponseSchema with filtered search results
@@ -663,7 +661,8 @@ class MovieService:
             HttpError: If API error or data processing fails
 
         Note:
-            Year and rating filters are applied client-side due to TMDB API quirks.
+            Year and rating filters use two-pass architecture: TMDB API (primary)
+            + backend filtering (catches data quality issues).
             Non-visual content (soundtracks, scores, etc.) is filtered out.
         """
         def fetch_search_page(page_num: int) -> TMDBMovieSearchResponse:
@@ -701,10 +700,10 @@ class MovieService:
 
         Args:
             page: Page number for pagination
-            year_min: Minimum release year (inclusive), client-side filtered
-            year_max: Maximum release year (inclusive), client-side filtered
-            rating_min: Minimum rating (inclusive), client-side filtered
-            rating_max: Maximum rating (inclusive), client-side filtered
+            year_min: Minimum release year (inclusive), backend filtered (second-pass data hygiene)
+            year_max: Maximum release year (inclusive), backend filtered (second-pass data hygiene)
+            rating_min: Minimum rating (inclusive), backend filtered (second-pass data hygiene)
+            rating_max: Maximum rating (inclusive), backend filtered (second-pass data hygiene)
             **filters: Discovery filters including:
                 - sort_by: Sort order (popularity.desc, release_date.desc, etc.)
                 - genres: Comma-separated genre IDs
@@ -724,7 +723,8 @@ class MovieService:
 
         Note:
             Runtime filtering is disabled due to TMDB API limitations.
-            Year and rating filters are applied client-side due to TMDB API quirks.
+            Year and rating filters use two-pass architecture: TMDB API (primary)
+            + backend filtering (catches data quality issues).
         """
         logger.debug("Discover movies request", extra={
             'operation': 'discover_movies',

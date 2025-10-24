@@ -30,12 +30,17 @@ from .schemas import (
     PaginationParamsSchema,
 )
 
-# Import service factory and old function-based services
-from .services import movie_service  # Old function-based keyword/people services (until Task 3.4)
-from .services.service_factory import get_movie_service
+# Import service factories
+from .services.service_factory import (
+    get_keyword_service,
+    get_movie_service,
+    get_people_service,
+)
 
-# Module-level service instance (singleton pattern for request handling)
+# Module-level service instances (singleton pattern for request handling)
 _movie_service = get_movie_service()
+_keyword_service = get_keyword_service()
+_people_service = get_people_service()
 
 # Create separate router instances for logical grouping
 movies_router = Router(tags=["movies"])
@@ -75,15 +80,13 @@ def get_popular_keywords(
     params: PaginationParams,
 ):
     """Retrieve popular keywords with pagination."""
-    # TODO (Task 3.4): Replace with KeywordService.get_popular_keywords()
-    return movie_service.get_popular_keywords(page=params.page or 1)
+    return _keyword_service.get_popular_keywords(page=params.page or 1)
 
 
 @keywords_router.get("/search", response=PaginatedKeywordResponseSchema, auth=None)
 def search_keywords(request: HttpRequest, query: str):
     """Search for keywords by query string."""
-    # TODO (Task 3.4): Replace with KeywordService.search_keywords()
-    return movie_service.search_keywords(query)
+    return _keyword_service.search_keywords(query)
 
 
 # =========================
@@ -97,15 +100,13 @@ def get_popular_people(
     params: PaginationParams,
 ):
     """Retrieve popular people (actors, directors, etc.) with pagination."""
-    # TODO (Task 3.4): Replace with PeopleService.get_popular_people()
-    return movie_service.get_popular_people(page=params.page or 1)
+    return _people_service.get_popular_people(page=params.page or 1)
 
 
 @people_router.get("/search", response=PaginatedPersonResponseSchema, auth=None)
 def search_people(request: HttpRequest, query: str):
     """Search for people by query string."""
-    # TODO (Task 3.4): Replace with PeopleService.search_people()
-    return movie_service.search_people(query)
+    return _people_service.search_people(query)
 
 
 # =========================

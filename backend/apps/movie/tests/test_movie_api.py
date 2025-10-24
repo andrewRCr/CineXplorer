@@ -513,3 +513,295 @@ def test_get_movie_detail_unauthenticated(
     assert data['tmdb_id'] == tmdb_id
     assert 'user_movie_data' in data
     assert data['user_movie_data'] is None
+
+
+# =========================
+# Filter Integration Tests
+# =========================
+# These tests validate the complete filter parameter flow from API → Schema → Service
+# Critical for two-pass filtering architecture (TMDB API + backend data hygiene)
+
+
+@pytest.mark.django_db
+@patch('core.services.tmdb_api_client.TMDBApiClient.get')
+def test_discover_api_extracts_backend_filter_params(
+    mock_tmdb_get: Mock,
+    api_client: Client
+) -> None:
+    """Test discover API extracts year_min/max and rating_min/max for backend filtering.
+
+    This integration test validates the critical missing functionality:
+    1. API receives release_date_gte/lte and vote_average_gte/lte
+    2. Schema extracts these into backend filtering parameters
+    3. Service receives year_min/max, rating_min/max for data hygiene
+
+    This test will FAIL initially because schema.to_service_params() doesn't
+    extract backend filtering parameters. This demonstrates the bug.
+    """
+    # Arrange: Mock TMDB to return movies with some bad data
+    tmdb_payload: TMDBResponseData = {
+        'results': [
+            {
+                'id': 1,
+                'title': '2022 Movie (Good)',
+                'poster_path': '/test.jpg',
+                'release_date': '2022-01-01',
+                'vote_average': 8.0
+            },
+            {
+                'id': 2,
+                'title': '2019 Movie (Bad - Outside Range)',
+                'poster_path': '/test2.jpg',
+                'release_date': '2019-01-01',  # Should be filtered out
+                'vote_average': 8.0
+            },
+        ],
+        'page': 1,
+        'total_pages': 1,
+        'total_results': 2
+    }
+    mock_api_response = ApiResponse(
+        status_code=200,
+        data=tmdb_payload  # type: ignore[arg-type]
+    )
+    mock_tmdb_get.return_value = mock_api_response
+
+    # Act: Call API with year range filter
+    filters: dict[str, str | int | float] = {
+        'release_date_gte': '2020-01-01',
+        'release_date_lte': '2029-12-31',
+        'vote_average_gte': 7.0
+    }
+    res = api_client.get(DISCOVER_URL, filters)
+
+    # Assert: Response successful
+    assert res.status_code == HTTP_200_OK
+    data = res.json()
+
+    # CRITICAL: Backend filtering should remove the 2019 movie
+    # This will FAIL because backend filtering never activates (params not extracted)
+    assert len(data['results']) == 1, (
+        "Backend filtering should remove movies outside year range. "
+        "Expected 1 movie (2022), got {} movies. "
+        "This failure demonstrates the bug: schema doesn't extract year_min/max."
+    ).format(len(data['results']))
+
+    # Verify only the 2022 movie is in results
+    returned_ids = {movie['tmdb_id'] for movie in data['results']}
+    assert 1 in returned_ids, "2022 movie should be in results"
+    assert 2 not in returned_ids, (
+        "2019 movie should be filtered out by backend filtering. "
+        "Bug: year_min/max not extracted from release_date params"
+    )
+
+
+@pytest.mark.django_db
+@patch('core.services.tmdb_api_client.TMDBApiClient.get')
+def test_discover_api_filters_bad_ratings_from_tmdb(
+    mock_tmdb_get: Mock,
+    api_client: Client
+) -> None:
+    """Test discover API backend filtering removes movies with bad ratings.
+
+    TMDB sometimes returns movies with placeholder 0.0 ratings or ratings
+    outside the requested range. Backend filtering should catch these.
+    """
+    # Arrange: Mock TMDB to return movies with placeholder ratings
+    tmdb_payload: TMDBResponseData = {
+        'results': [
+            {
+                'id': 1,
+                'title': 'Good Rating Movie',
+                'poster_path': '/test.jpg',
+                'release_date': '2022-01-01',
+                'vote_average': 8.0  # Good
+            },
+            {
+                'id': 2,
+                'title': 'Placeholder Rating Movie',
+                'poster_path': '/test2.jpg',
+                'release_date': '2022-01-01',
+                'vote_average': 0.0  # Bad - placeholder
+            },
+            {
+                'id': 3,
+                'title': 'Low Rating Movie',
+                'poster_path': '/test3.jpg',
+                'release_date': '2022-01-01',
+                'vote_average': 6.5  # Bad - below threshold
+            },
+        ],
+        'page': 1,
+        'total_pages': 1,
+        'total_results': 3
+    }
+    mock_api_response = ApiResponse(
+        status_code=200,
+        data=tmdb_payload  # type: ignore[arg-type]
+    )
+    mock_tmdb_get.return_value = mock_api_response
+
+    # Act: Request movies rated 7.5+
+    filters: dict[str, str | int | float] = {
+        'vote_average_gte': 7.5
+    }
+    res = api_client.get(DISCOVER_URL, filters)
+
+    # Assert: Only high-rated movie returned
+    assert res.status_code == HTTP_200_OK
+    data = res.json()
+
+    # CRITICAL: Backend filtering should remove placeholder and low-rated movies
+    # This will FAIL because rating_min not extracted from vote_average_gte
+    assert len(data['results']) == 1, (
+        "Backend filtering should remove movies with rating < 7.5. "
+        "Expected 1 movie, got {} movies. "
+        "Bug: rating_min not extracted from vote_average_gte"
+    ).format(len(data['results']))
+
+    returned_ids = {movie['tmdb_id'] for movie in data['results']}
+    assert 1 in returned_ids, "Good rating movie should be in results"
+    assert 2 not in returned_ids, "Placeholder rating (0.0) should be filtered"
+    assert 3 not in returned_ids, "Low rating (6.5) should be filtered"
+
+
+@pytest.mark.django_db
+@patch('core.services.tmdb_api_client.TMDBApiClient.get')
+def test_discover_api_buffer_mechanism_with_filtering(
+    mock_tmdb_get: Mock,
+    api_client: Client
+) -> None:
+    """Test buffer mechanism still works correctly with backend filtering enabled.
+
+    When page 1 has < 20 valid movies after filtering, the buffer mechanism
+    should fetch page 2 AND apply the same filters to buffer movies.
+
+    Critical: Buffer movies must also pass backend filtering (no leakage).
+    """
+    # Arrange: Page 1 has 15 valid + 5 invalid, page 2 has 10 valid
+    page_1_movies = [
+        # 15 valid movies (2020-2029, rating 7.5+)
+        *[
+            {
+                'id': i,
+                'title': f'Valid Movie {i}',
+                'poster_path': f'/test{i}.jpg',
+                'release_date': '2022-01-01',
+                'vote_average': 8.0
+            }
+            for i in range(1, 16)
+        ],
+        # 5 invalid movies (wrong year or rating)
+        {
+            'id': 101,
+            'title': 'Wrong Year 2019',
+            'poster_path': '/bad1.jpg',
+            'release_date': '2019-01-01',  # Outside range
+            'vote_average': 8.0
+        },
+        {
+            'id': 102,
+            'title': 'Low Rating',
+            'poster_path': '/bad2.jpg',
+            'release_date': '2022-01-01',
+            'vote_average': 6.0  # Below threshold
+        },
+        {
+            'id': 103,
+            'title': 'Wrong Year 2030',
+            'poster_path': '/bad3.jpg',
+            'release_date': '2030-01-01',  # Outside range
+            'vote_average': 8.0
+        },
+        {
+            'id': 104,
+            'title': 'Placeholder Rating',
+            'poster_path': '/bad4.jpg',
+            'release_date': '2022-01-01',
+            'vote_average': 0.0  # Placeholder
+        },
+        {
+            'id': 105,
+            'title': 'Wrong Year 2018',
+            'poster_path': '/bad5.jpg',
+            'release_date': '2018-01-01',  # Outside range
+            'vote_average': 8.0
+        },
+    ]
+
+    page_2_movies = [
+        # 10 valid movies for buffer
+        *[
+            {
+                'id': 20 + i,
+                'title': f'Buffer Movie {i}',
+                'poster_path': f'/buffer{i}.jpg',
+                'release_date': '2023-01-01',
+                'vote_average': 7.8
+            }
+            for i in range(1, 11)
+        ],
+    ]
+
+    page_1_response = ApiResponse(
+        status_code=200,
+        data=cast(TMDBResponseData, {
+            'results': page_1_movies,
+            'page': 1,
+            'total_pages': 5,
+            'total_results': 80
+        })
+    )
+
+    page_2_response = ApiResponse(
+        status_code=200,
+        data=cast(TMDBResponseData, {
+            'results': page_2_movies,
+            'page': 2,
+            'total_pages': 5,
+            'total_results': 80
+        })
+    )
+
+    # Mock returns page 1, then page 2 when buffer is triggered
+    mock_tmdb_get.side_effect = [page_1_response, page_2_response]
+
+    # Act: Request filtered movies
+    filters: dict[str, str | int | float] = {
+        'release_date_gte': '2020-01-01',
+        'release_date_lte': '2029-12-31',
+        'vote_average_gte': 7.5
+    }
+    res = api_client.get(DISCOVER_URL, filters)
+
+    # Assert: Buffer mechanism activated (2 TMDB calls)
+    assert mock_tmdb_get.call_count == 2, (
+        "Buffer mechanism should fetch page 2 when filtered results < 20"
+    )
+
+    assert res.status_code == HTTP_200_OK
+    data = res.json()
+
+    # CRITICAL: Result should have 20 movies (15 from page 1 + 5 from page 2)
+    # Invalid movies should NOT leak into results
+    # This will FAIL because backend filtering not active
+    assert len(data['results']) == 20, (
+        "Buffer should fetch page 2 to reach 20 results. "
+        "Expected 20 valid movies, got {}. "
+        "Bug: Backend filtering not active → buffer doesn't filter properly"
+    ).format(len(data['results']))
+
+    returned_ids = {movie['tmdb_id'] for movie in data['results']}
+
+    # Verify invalid movies NOT in results
+    invalid_ids = {101, 102, 103, 104, 105}
+    assert invalid_ids.isdisjoint(returned_ids), (
+        "Invalid movies should be filtered out. "
+        "Bug: Backend filtering not working"
+    )
+
+    # Verify buffer movies ARE in results
+    buffer_ids = set(range(21, 26))  # First 5 buffer movies
+    assert buffer_ids.issubset(returned_ids), (
+        "Buffer movies should be included to reach 20 results"
+    )

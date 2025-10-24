@@ -436,15 +436,28 @@ patterns across movie, UserMovieData, and authentication domains.
                 - Net: -190 lines (42% reduction), -1 file, +comprehensive documentation
                 - Quality: 0 TypeScript errors, 0 ESLint violations
                 - Architecture now self-documenting through clear naming + data flow diagrams
-        - [ ] 3.5.2.2 Evaluate and clean up movieFilterUtils.ts
-            - Analyze `frontend/src/utilities/movieFilterUtils.ts` (394 lines):
-                - Identify which functions are still needed (mapFiltersToApiParams likely needed)
-                - Remove unused filtering functions: filterMoviesByYear, filterMoviesByRating, filterMoviesByRuntime
-                - Remove unused helper: calculatePaginationMetadata
-                - Keep mapFiltersToApiParams if still used for converting UI filters → API params
-            - Update imports in files referencing removed utilities
-            - If no functions remain useful, delete file entirely
-            - **Expected result**: Either significantly smaller file or complete deletion
+        - [x] 3.5.2.2 Evaluate and clean up movieFilterUtils.ts
+            - **Completed**: Comprehensive cleanup and rename of filter utilities
+            - **Analysis findings**:
+                - Only mapFiltersToApiParams actively used (by useMovieFetchRouter.ts)
+                - 4 filter functions never imported (filterMoviesByYear, filterMoviesByRating, filterMoviesByRuntime, calculatePaginationMetadata)
+                - 3 type definitions only used internally by deleted functions
+                - mapFiltersToApiParams returned 4 values but only filterParams was used
+                - 90 lines of commented-out runtime filtering code (dead weight)
+            - **Changes made**:
+                - Created `movieFilterMapper.ts` (115 lines) - renamed for clarity (mapping, not filtering)
+                - Deleted `movieFilterUtils.ts` (394 lines)
+                - Removed 4 unused functions (160 lines)
+                - Removed 3 unused type definitions
+                - Removed 90 lines of commented-out code
+                - Simplified mapFiltersToApiParams to return only filterParams (removed dead criteria objects)
+                - Updated import in useMovieFetchRouter.ts (removed destructuring)
+            - **Results**:
+                - Net reduction: 279 lines (70% smaller)
+                - Clear single responsibility (UI filters → API params transformation)
+                - Name accurately reflects purpose (mapper vs utils)
+                - Quality: 0 TypeScript errors, 333/333 tests passing
+                - Architecture: Clean separation (mapping in utility, routing in hook, filtering in backend)
         - [ ] 3.5.2.3 Re-evaluate discover_movies type safety
             - Fix `backend/apps/movie/api.py:202` type ignore for **params unpacking
             - **Current issue**: `type: ignore[arg-type]` for MovieService.discover_movies call

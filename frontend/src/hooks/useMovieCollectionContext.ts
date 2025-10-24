@@ -54,8 +54,29 @@ interface ResolvedContext {
 }
 
 /**
- * Custom hook to resolve context and props for MovieCollectionGrid
- * Handles the complex logic of merging context from outlet with component props
+ * Movie Collection Context Hook
+ *
+ * **Purpose:** Resolves movie collection data from React Router outlet context or props.
+ *
+ * **Responsibilities:**
+ * - Retrieves context passed from MovieCollectionLayout via outlet
+ * - Merges outlet context with direct component props (props override context)
+ * - Resolves final fetcher to use (enhanced fetcher if available, else base fetcher)
+ * - Memoizes resolved values to prevent unnecessary re-renders
+ *
+ * **React Router Pattern:**
+ * ```
+ * MovieCollectionLayout (provides context)
+ *   └─> Outlet
+ *         └─> MovieCollectionGrid (consumes via this hook)
+ * ```
+ *
+ * **Why This Exists:** Allows MovieCollectionGrid to work both:
+ * 1. As a child route (gets data from outlet context)
+ * 2. Standalone (gets data from props)
+ *
+ * @param props - Optional props to override or supplement outlet context
+ * @returns Resolved context with fetcher, pagination data, and handlers
  */
 export function useMovieCollectionContext(props: MovieCollectionGridProps): ResolvedContext {
 	// Get context from parent layout, or use props as fallback

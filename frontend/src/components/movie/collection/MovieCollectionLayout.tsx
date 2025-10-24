@@ -2,7 +2,7 @@ import { useState, useMemo, type ReactNode } from "react";
 import { useLocation, Outlet } from "react-router-dom";
 import { Box } from "@chakra-ui/react";
 import { type MovieFilters as MovieFiltersType } from "@/components/movie/filters/AdvancedMovieFilters";
-import { useEnhancedFetcher } from "@/hooks/useEnhancedFetcher";
+import { useMovieFetchRouter } from "@/hooks/useMovieFetchRouter";
 import {
 	getFetcherAndSource,
 	type RouteConfig,
@@ -81,8 +81,8 @@ const MovieCollectionLayout = ({
 		handleUnifiedFiltersChange,
 	} = useMovieCollectionUrl(defaultFilters, actualSource);
 
-	// Use the enhanced fetcher hook
-	const enhancedFetcher = useEnhancedFetcher({
+	// Use the movie fetch router hook to route between search/discover endpoints
+	const enhancedFetcher = useMovieFetchRouter({
 		fetcher: actualFetcher,
 		filters: unifiedFilters,
 		filterStyle,

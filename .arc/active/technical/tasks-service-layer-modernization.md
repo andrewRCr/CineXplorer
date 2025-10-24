@@ -413,35 +413,48 @@ patterns across movie, UserMovieData, and authentication domains.
     - [ ] 3.5.2 Remove client-side filtering from frontend (broken into 3 subtasks)
         - **Context**: Backend now handles all year/rating filtering + buffer mechanism
         - **Rationale**: Eliminates duplication, single source of truth in backend
-    - [ ] 3.5.2.1 Remove client-side filtering from useEnhancedFetcher.ts
-        - Update `frontend/src/hooks/useEnhancedFetcher.ts`:
-            - Remove client-side year filtering logic (lines 127-140)
-            - Remove client-side rating filtering logic (lines 132-140)
-            - Remove client-side runtime filtering logic (lines 137-140)
-            - Remove buffer management logic (lines 143-192: filling, gap detection)
-            - Remove pagination metadata calculation (lines 195-228)
-            - Simplify to: fetch from backend → return results directly
-            - Backend now handles all filtering/buffering via year_min/year_max/rating_min/rating_max params
-        - **Expected result**: useEnhancedFetcher becomes much simpler (~100 lines removed)
-    - [ ] 3.5.2.2 Evaluate and clean up movieFilterUtils.ts
-        - Analyze `frontend/src/utilities/movieFilterUtils.ts` (394 lines):
-            - Identify which functions are still needed (mapFiltersToApiParams likely needed)
-            - Remove unused filtering functions: filterMoviesByYear, filterMoviesByRating, filterMoviesByRuntime
-            - Remove unused helper: calculatePaginationMetadata
-            - Keep mapFiltersToApiParams if still used for converting UI filters → API params
-        - Update imports in files referencing removed utilities
-        - If no functions remain useful, delete file entirely
-        - **Expected result**: Either significantly smaller file or complete deletion
-    - [ ] 3.5.2.3 Re-evaluate discover_movies type safety
-        - Fix `backend/apps/movie/api.py:202` type ignore for **params unpacking
-        - **Current issue**: `type: ignore[arg-type]` for MovieService.discover_movies call
-        - **Root cause**: Service has year_min/year_max/rating_min/rating_max params not in schema
-        - **Investigation needed**:
-            - Are these params used by frontend? (Check if MovieDiscoverFilterSchema needs them)
-            - Are these params used internally only? (Check service implementation)
-            - Should they be removed or properly typed?
-        - **Goal**: Eliminate type ignore with proper solution (add to schema, remove params, or fix typing)
-        - **Expected result**: Zero type errors, no type: ignore comments
+        - [x] 3.5.2.1 Refactor frontend fetcher architecture and remove client-side filtering
+            - **Completed**: Comprehensive refactoring of frontend fetcher hooks
+            - **Files Created**:
+                - `useMovieFetchRouter.ts` (119 lines) - Simplified from useEnhancedFetcher (290→119 lines, 59% reduction)
+                - `usePaginatedMovies.ts` (64 lines) - Renamed from useMoviesArray with enhanced docs
+            - **Files Deleted**:
+                - `useEnhancedFetcher.ts` (290 lines removed)
+                - `useMoviesArray.ts` (39 lines removed)
+                - `useMoviesFetcher.ts` (30 lines removed - thin wrapper inlined to MovieCollectionGrid)
+            - **Files Enhanced**:
+                - `useApiRequest.ts` - Added comprehensive docstring with data flow diagram
+                - `useMovieCollectionContext.ts` - Added comprehensive docstring explaining outlet pattern
+            - **Files Updated** (imports):
+                - `MovieCollectionLayout.tsx` - useEnhancedFetcher → useMovieFetchRouter
+                - `MovieCollectionGrid.tsx` - useMoviesArray → usePaginatedMovies, inlined adapter
+                - `MovieGrid.tsx` - useMoviesArray → usePaginatedMovies
+            - **Results**:
+                - Removed client-side filtering (backend handles year/rating/runtime filters)
+                - Removed buffer filling logic (backend handles pagination)
+                - Removed pagination metadata calculation (backend provides correct values)
+                - Net: -190 lines (42% reduction), -1 file, +comprehensive documentation
+                - Quality: 0 TypeScript errors, 0 ESLint violations
+                - Architecture now self-documenting through clear naming + data flow diagrams
+        - [ ] 3.5.2.2 Evaluate and clean up movieFilterUtils.ts
+            - Analyze `frontend/src/utilities/movieFilterUtils.ts` (394 lines):
+                - Identify which functions are still needed (mapFiltersToApiParams likely needed)
+                - Remove unused filtering functions: filterMoviesByYear, filterMoviesByRating, filterMoviesByRuntime
+                - Remove unused helper: calculatePaginationMetadata
+                - Keep mapFiltersToApiParams if still used for converting UI filters → API params
+            - Update imports in files referencing removed utilities
+            - If no functions remain useful, delete file entirely
+            - **Expected result**: Either significantly smaller file or complete deletion
+        - [ ] 3.5.2.3 Re-evaluate discover_movies type safety
+            - Fix `backend/apps/movie/api.py:202` type ignore for **params unpacking
+            - **Current issue**: `type: ignore[arg-type]` for MovieService.discover_movies call
+            - **Root cause**: Service has year_min/year_max/rating_min/rating_max params not in schema
+            - **Investigation needed**:
+                - Are these params used by frontend? (Check if MovieDiscoverFilterSchema needs them)
+                - Are these params used internally only? (Check service implementation)
+                - Should they be removed or properly typed?
+            - **Goal**: Eliminate type ignore with proper solution (add to schema, remove params, or fix typing)
+            - **Expected result**: Zero type errors, no type: ignore comments
     - [ ] 3.5.3 Run frontend quality checks
         - **Linting**: 0 violations (ESLint) on modified files
         - **Type checking**: 0 errors (TypeScript) on modified files

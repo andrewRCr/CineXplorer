@@ -3,7 +3,7 @@ import { Text, Button, Box, Skeleton } from "@chakra-ui/react";
 import MovieCard from "../MovieCard";
 import MovieCardContainer from "../MovieCardContainer";
 import { PaginationCtrl } from "../../layout/PaginationCtrl";
-import useMoviesArray from "@/hooks/useMoviesArray";
+import { usePaginatedMovies } from "@/hooks/usePaginatedMovies";
 import { useMovieGridPagination } from "@/hooks/useMovieGridPagination";
 import { usePaginationDisplay } from "@/hooks/usePaginationDisplay";
 import { type PaginatedMoviesResponse } from "@/types/movie";
@@ -38,7 +38,7 @@ const MovieGrid = forwardRef<MovieGridRef, MovieGridProps>(
 		}, [fetcher, currentPage]);
 
 		const { total_pages, total_results, movies, error, setError, isLoading } =
-			useMoviesArray(fetcherCallback);
+			usePaginatedMovies(fetcherCallback);
 
 		// Use display hook for pagination UI logic
 		const { shouldShowEmptyState, shouldShowPagination, resultText } =

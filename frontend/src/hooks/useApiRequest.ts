@@ -15,9 +15,26 @@ interface FetcherResult<T> {
 }
 
 /**
- * Generic data fetching hook for handling API requests w/ loading and error state management.
- * @param fetcher - {() => { request: Promise<{ data: T }>; cancel: () => void; }}
- * @returns { data, error, setData, setError, isLoading }
+ * Generic API Request Hook
+ *
+ * **Purpose:** Generic HTTP layer providing loading/error state management and request cancellation.
+ *
+ * **Responsibilities:**
+ * - Executes provided fetcher function
+ * - Manages loading, error, and data states
+ * - Handles request cancellation on component unmount
+ * - Re-fetches when fetcher reference changes
+ *
+ * **Data Flow Position:**
+ * ```
+ * [Any Hook] → useApiRequest → HTTP Request
+ * ```
+ *
+ * **Design:** Generic reusable hook - not specific to movies or any domain.
+ * Used by usePaginatedMovies, useMovieDetail, and other data-fetching hooks.
+ *
+ * @param fetcher - Function that returns { request: Promise, cancel: () => void }
+ * @returns Object with data, error, loading state, and state setters
  */
 export function useApiRequest<T>(
 	fetcher: () => FetcherResult<T>

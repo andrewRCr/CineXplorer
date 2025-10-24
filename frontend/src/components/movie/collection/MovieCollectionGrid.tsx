@@ -1,12 +1,11 @@
-import { forwardRef, useImperativeHandle } from "react";
+import { forwardRef, useImperativeHandle, useMemo } from "react";
 import { Text, Button, Box, Skeleton } from "@chakra-ui/react";
 import MovieCard from "../MovieCard";
 import MovieCardContainer from "../MovieCardContainer";
 import { PaginationCtrl } from "../../layout/PaginationCtrl";
-import useMoviesArray from "@/hooks/useMoviesArray";
+import { usePaginatedMovies } from "@/hooks/usePaginatedMovies";
 import { useMovieCollectionContext } from "@/hooks/useMovieCollectionContext";
 import { usePageChangeHandler } from "@/hooks/usePageChangeHandler";
-import { useMoviesFetcher } from "@/hooks/useMoviesFetcher";
 import { usePaginationDisplay } from "@/hooks/usePaginationDisplay";
 import { type Movie, type PaginatedMoviesResponse } from "@/types/movie";
 
@@ -51,11 +50,29 @@ const MovieCollectionGrid = forwardRef<MovieGridRef, MovieCollectionGridProps>(
 
 		const pageSize = 20;
 
-		// Create fetcher for useMoviesArray using custom hook
-		const fetcherForMoviesArray = useMoviesFetcher(finalFetcher, currentPage);
+		/**
+		 * Adapter: Convert page-based fetcher to parameterless fetcher for usePaginatedMovies.
+		 *
+		 * usePaginatedMovies expects: () => { request, cancel }
+		 * finalFetcher provides: (page: number) => { request, cancel }
+		 *
+		 * This adapter closes over currentPage to satisfy the expected signature.
+		 * Memoized to prevent unnecessary re-fetches when other state changes.
+		 */
+		const fetcherForMoviesArray = useMemo(() => {
+			if (!finalFetcher) {
+				return () => ({
+					request: Promise.resolve({
+						data: { page: 1, results: [], total_pages: 1, total_results: 0 },
+					}),
+					cancel: () => {},
+				});
+			}
+			return () => finalFetcher(currentPage);
+		}, [finalFetcher, currentPage]);
 
 		const { total_pages, total_results, movies, error, setError, isLoading } =
-			useMoviesArray(fetcherForMoviesArray);
+			usePaginatedMovies(fetcherForMoviesArray);
 
 		// Handle page changes using custom hook
 		const { handlePageChange } = usePageChangeHandler(onPageChange);

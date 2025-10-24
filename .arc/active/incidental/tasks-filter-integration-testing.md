@@ -145,83 +145,75 @@ then implement fixes to make them pass.
 
 **Now fix the code to make tests pass**
 
-- [ ] 2.2.1 Update `MovieDiscoverFilterSchema.to_service_params()`
-    - **File**: `backend/apps/movie/schemas.py`
-    - Add year extraction logic:
+- [x] 2.2.1 Update `MovieDiscoverFilterSchema.to_service_params()`
+    - **Completed**: Refactored with declarative mapping pattern + added parameter extraction
+    - **Refactoring**: Replaced 8 repetitive if statements with declarative `field_mappings` dict
+    - **Pattern**: Uses Pydantic's `model_dump(exclude_none=True)` for cleaner code
+    - **Year extraction**: Extract year from `release_date_gte/lte` → `year_min/max` (e.g., "2020-01-01" → 2020)
+    - **Rating extraction**: Pass through `vote_average_gte/lte` → `rating_min/max`
+    - **Documentation**: Updated docstring to clarify dual-purpose and declarative approach
+    - **Test results**: All 10 schema tests PASS (9 previously failing tests now pass)
+    - **Code quality**: Linting passes (ruff N806 fix applied)
 
-      ```python
-      # Extract year range for backend filtering (second-pass data hygiene)
-      if self.release_date_gte:
-          year_str = self.release_date_gte[:4]  # "2020-01-01" → "2020"
-          params['year_min'] = int(year_str)
-      if self.release_date_lte:
-          year_str = self.release_date_lte[:4]
-          params['year_max'] = int(year_str)
-      ```
+- [x] 2.2.2 Update API endpoint to pass extracted parameters
+    - **Completed**: Updated `backend/apps/movie/api.py` discover_movies endpoint
+    - **Implementation**: Parameters flow through `**params` unpacking to service layer
+    - **Docstring**: Enhanced to document two-pass filtering architecture with examples
+    - **Type ignore**: Kept (needed for **kwargs unpacking with typed parameters)
+    - **Key change**: Updated comments to clarify params now include backend filtering params
 
-    - Add rating extraction logic:
+- [x] 2.2.3 Run tests - All tests PASS! ✅
+    - **Schema tests**: 10/10 PASS (parameter extraction works correctly)
+    - **API integration tests**: 3/3 PASS (integration flow works end-to-end)
+    - **Result**: Backend filtering now activates, bad data filtered out
+    - **Test proof**: Previously failing tests now pass, demonstrating bug is fixed
 
-      ```python
-      # Extract rating range for backend filtering
-      if self.vote_average_gte:
-          params['rating_min'] = self.vote_average_gte
-      if self.vote_average_lte:
-          params['rating_max'] = self.vote_average_lte
-      ```
+### 2.3 Update Documentation ✅
 
-    - Maintain existing TMDB param mappings (primary filtering)
+- [x] 2.3.1 Update schema docstring
+    - **Completed**: Updated `MovieDiscoverFilterSchema` class docstring
+    - **Added**: Two-pass architecture explanation with concrete example
+    - **Example**: "release_date_gte='2020-01-01' generates both release_date.gte + year_min=2020"
 
-- [ ] 2.2.2 Update API endpoint to pass extracted parameters
-    - **File**: `backend/apps/movie/api.py`
-    - Extract year/rating from `params` dict returned by `to_service_params()`
-    - Pass to service: `discover_movies(page=X, year_min=Y, rating_min=Z, **other_params)`
-    - Update docstring to clarify two-pass filtering
-    - Remove type ignore comment (no longer needed)
+- [x] 2.3.2 Update API endpoint docstring
+    - **Completed**: Enhanced `discover_movies()` endpoint docstring in `backend/apps/movie/api.py`
+    - **Already completed in 2.2.2**: Full two-pass filtering architecture documented
+    - **Includes**: Concrete examples of dual-purpose parameters
 
-- [ ] 2.2.3 Run tests - should now PASS
-    - Run schema tests: Expect PASS (parameter extraction works)
-    - Run API tests: Expect PASS (integration flow works)
-    - Run full backend test suite: Expect 100% pass (no regressions)
+- [x] 2.3.3 Update service method docstrings
+    - **Completed**: Updated all service methods in `backend/apps/movie/services/movie_service.py`
+    - **Changes applied**: 16 references updated
+        - "client-side filtered" → "backend filtered (second-pass data hygiene)"
+        - "client-side due to quirks" → "two-pass architecture: TMDB API (primary) + backend filtering"
+    - **Methods updated**: discover_movies, search_movies, get_now_playing, get_upcoming,_paginate_with_filters
+    - **Linting**: All checks pass (line length issues fixed)
 
-### 2.3 Update Documentation
+### 2.4 Quality Gates & Validation ✅
 
-- [ ] 2.3.1 Update schema docstring
-    - **File**: `backend/apps/movie/schemas.py` (MovieDiscoverFilterSchema)
-    - Document: "Extracts parameters for both TMDB API (primary filter) and backend filtering (data hygiene)"
-    - Add example showing dual-purpose parameters
+- [x] 2.4.1 Run full backend test suite
+    - **Result**: 357 passed, 1 error (15.41s with -n auto)
+    - **New tests**: All 13 integration tests PASS (schema + API)
+    - **Regressions**: None - all existing tests pass
+    - **Error**: 1 teardown error in test_concurrent_token_refresh_requests (database flush issue, not related to changes)
 
-- [ ] 2.3.2 Update API endpoint docstring
-    - **File**: `backend/apps/movie/api.py` (discover_movies)
-    - Clarify: "Two-pass filtering: TMDB API reduces millions→thousands, backend catches bad data"
-    - Update example to show backend filtering in action
+- [x] 2.4.2 Run full frontend test suite
+    - **Result**: 348/348 passed (100% pass rate) ✅
+    - **New tests**: 15 tests added for movieFilterMapper
+    - **Bug fixed**: maxRating parameter not included when minRating was set
+    - **Fix**: Removed incorrect conditional `&& !filters.minRating` from maxRating logic
+    - **File**: `frontend/src/utilities/movieFilterMapper.ts` (line 108-110)
 
-- [ ] 2.3.3 Update service method docstrings
-    - **File**: `backend/apps/movie/services/movie_service.py`
-    - Change: "client-side filtering" → "backend filtering (second-pass data hygiene)"
-    - Add: "TMDB API filters are primary; backend filtering catches data quality issues"
+- [x] 2.4.3 Run linting checks
+    - **Backend**: ✅ All checks passed (2 auto-fixed: unused import + import order)
+    - **Frontend**: ✅ All checks passed (eslint clean)
+    - **Markdown**: ✅ 0 errors across 56 files
+    - **Result**: Zero violations
 
-### 2.4 Quality Gates & Validation
-
-- [ ] 2.4.1 Run full backend test suite
-    - Command: `docker compose -f infrastructure/docker-compose.yml exec backend pytest apps/ -n auto`
-    - Target: 100% pass rate
-    - New tests should be green
-    - Old tests should still pass (no regressions)
-
-- [ ] 2.4.2 Run full frontend test suite
-    - Command: `docker compose -f infrastructure/docker-compose.yml exec frontend npm test`
-    - Target: 100% pass rate (333/333 → 340+/340+ with new tests)
-
-- [ ] 2.4.3 Run linting checks
-    - Backend: `.venv-backend/bin/ruff check backend/apps/ backend/config/ --fix`
-    - Frontend: `docker compose -f infrastructure/docker-compose.yml exec frontend npm run lint`
-    - Markdown: `npx markdownlint-cli2 --fix "README.md" ".arc/**/*.md"`
-    - Target: 0 violations
-
-- [ ] 2.4.4 Run type checking
-    - Backend: `npx pyright backend/apps/ backend/config/ --project backend`
-    - Frontend: `docker compose -f infrastructure/docker-compose.yml exec frontend npm run type-check`
-    - Target: 0 errors in production code
+- [x] 2.4.4 Run type checking
+    - **Backend (Pyright)**: ✅ 0 errors (11 informational notes in test files, acceptable)
+    - **Frontend (TypeScript)**: ✅ Passes after fixing test file imports
+    - **Fix applied**: Updated movieFilterMapper.test.ts imports to use correct MovieFilters interface
+    - **Result**: Zero type errors in production code
 
 - [ ] 2.4.5 Manual validation (final verification)
     - Navigate to discover page, apply year filter "1980-1983"

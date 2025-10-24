@@ -386,7 +386,7 @@ patterns across movie, UserMovieData, and authentication domains.
         - **Tests**: Verify API endpoints still work (keywords and people routes)
 
 - [ ] **3.5 Clean Up Old Code and Frontend Duplication**
-    - [ ] 3.5.1 Remove old function-based implementations and tests
+    - [x] 3.5.1 Remove old function-based implementations and tests
         - **Remove old function-based service code from movie_service.py**:
             - Remove all old function-based service functions (lines 44-658):
                 - `fetch_movie_runtimes()`, `get_movie_by_id()`, `get_now_playing_movies()`, `get_upcoming_movies()`
@@ -407,33 +407,41 @@ patterns across movie, UserMovieData, and authentication domains.
                 - Simplify to describe what the tests do, not what they're replacing
             - Update `test_keyword_service_class.py` docstring (same changes)
             - Update `test_people_service_class.py` docstring (same changes)
-            - Remove `_class` suffix consideration (optional - discuss with user):
-                - Option A: Keep `_class` suffix for now (backward compatibility during review)
-                - Option B: Rename to canonical names: test_movie_service.py, test_keyword_service.py, test_people_service.py
-                - Decision: Defer to 3.5.1 implementation
+            - Remove `_class` suffix from test file names (now the only implementation)
         - Verify no references to old functions remain in codebase (grep for old function names)
         - Run full test suite to confirm nothing broken
-    - [ ] 3.5.2 Remove client-side filtering from frontend
+    - [ ] 3.5.2 Remove client-side filtering from frontend (broken into 3 subtasks)
         - **Context**: Backend now handles all year/rating filtering + buffer mechanism
-        - Update `frontend/src/hooks/useEnhancedFetcher.ts`:
-            - Remove client-side year filtering logic (lines 126-272)
-            - Remove buffer management logic (pre-fetching, gap filling)
-            - Simplify to: fetch from backend → return results (backend handles filtering/buffering)
-        - Remove `frontend/src/utilities/movieFilterUtils.ts` entirely:
-            - Year filtering functions no longer needed (backend handles)
-            - Rating filtering functions no longer needed (backend handles)
-            - **Note**: Keep file if any non-movie filtering utilities exist, otherwise delete
-        - Update any imports referencing removed utilities
-        - **Re-evaluate discover_movies type safety** (backend/apps/movie/api.py:202):
-            - Currently has `type: ignore[arg-type]` for **params unpacking
-            - Reason: MovieService.discover_movies has explicit year_min/year_max/rating_min/rating_max params
-            - These aren't in MovieDiscoverFilterSchema or to_service_params() dict
-            - After frontend cleanup, determine if these params should be:
-                - Added to API schema (expose to frontend)
-                - Removed from service method (not needed)
-                - Kept internal-only (remove type ignore with better typing)
-            - Goal: Eliminate type ignore with proper solution
         - **Rationale**: Eliminates duplication, single source of truth in backend
+    - [ ] 3.5.2.1 Remove client-side filtering from useEnhancedFetcher.ts
+        - Update `frontend/src/hooks/useEnhancedFetcher.ts`:
+            - Remove client-side year filtering logic (lines 127-140)
+            - Remove client-side rating filtering logic (lines 132-140)
+            - Remove client-side runtime filtering logic (lines 137-140)
+            - Remove buffer management logic (lines 143-192: filling, gap detection)
+            - Remove pagination metadata calculation (lines 195-228)
+            - Simplify to: fetch from backend → return results directly
+            - Backend now handles all filtering/buffering via year_min/year_max/rating_min/rating_max params
+        - **Expected result**: useEnhancedFetcher becomes much simpler (~100 lines removed)
+    - [ ] 3.5.2.2 Evaluate and clean up movieFilterUtils.ts
+        - Analyze `frontend/src/utilities/movieFilterUtils.ts` (394 lines):
+            - Identify which functions are still needed (mapFiltersToApiParams likely needed)
+            - Remove unused filtering functions: filterMoviesByYear, filterMoviesByRating, filterMoviesByRuntime
+            - Remove unused helper: calculatePaginationMetadata
+            - Keep mapFiltersToApiParams if still used for converting UI filters → API params
+        - Update imports in files referencing removed utilities
+        - If no functions remain useful, delete file entirely
+        - **Expected result**: Either significantly smaller file or complete deletion
+    - [ ] 3.5.2.3 Re-evaluate discover_movies type safety
+        - Fix `backend/apps/movie/api.py:202` type ignore for **params unpacking
+        - **Current issue**: `type: ignore[arg-type]` for MovieService.discover_movies call
+        - **Root cause**: Service has year_min/year_max/rating_min/rating_max params not in schema
+        - **Investigation needed**:
+            - Are these params used by frontend? (Check if MovieDiscoverFilterSchema needs them)
+            - Are these params used internally only? (Check service implementation)
+            - Should they be removed or properly typed?
+        - **Goal**: Eliminate type ignore with proper solution (add to schema, remove params, or fix typing)
+        - **Expected result**: Zero type errors, no type: ignore comments
     - [ ] 3.5.3 Run frontend quality checks
         - **Linting**: 0 violations (ESLint) on modified files
         - **Type checking**: 0 errors (TypeScript) on modified files

@@ -13,7 +13,7 @@ from core.models import Movie
 from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
 from movie.schemas import MovieBaseSchema, PaginatedMovieResponseSchema
-from movie.services import movie_service
+from movie.services.service_factory import get_movie_service
 from ninja import Router
 from ninja.errors import HttpError
 from user_movie_data.models import UserMovieData
@@ -27,8 +27,9 @@ from user_movie_data.services.movie_enrichment_service import MovieEnrichmentSer
 # Create router with JWT authentication
 user_movie_data_router = Router(tags=["user-movie-data"], auth=JWTCookieAuth())
 
-# Initialize enrichment service
+# Initialize services
 enrichment_service = MovieEnrichmentService()
+_movie_service = get_movie_service()
 
 
 @user_movie_data_router.get("/movies", response=PaginatedMovieResponseSchema)
@@ -87,7 +88,7 @@ def get_user_movies(
     movies: list[MovieBaseSchema] = []
     for tmdb_id in tmdb_ids:
         try:
-            movie_detail = movie_service.get_movie_by_id(tmdb_id)
+            movie_detail = _movie_service.get_movie_by_id(tmdb_id)
             # MovieDetailSchema extends MovieBaseSchema, so we can use it directly
             # For watchlist, we only need the base fields, but keeping detail data
             # doesn't hurt and avoids unnecessary data conversion
@@ -184,7 +185,7 @@ def create_user_movie_data(
     except Movie.DoesNotExist:
         # Fetch movie data from TMDB to create local stub
         try:
-            movie_detail = movie_service.get_movie_by_id(payload.movie_id)
+            movie_detail = _movie_service.get_movie_by_id(payload.movie_id)
         except HttpError as e:
             # Re-raise if movie not found in TMDB
             raise HttpError(404, f"Movie not found in TMDB: {e.message}") from e

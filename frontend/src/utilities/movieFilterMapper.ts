@@ -105,7 +105,7 @@ export function mapFiltersToApiParams(
 		if (filters.minRating) {
 			filterParams.vote_average_gte = filters.minRating;
 		}
-		if (filters.maxRating && !filters.minRating) {
+		if (filters.maxRating) {
 			filterParams.vote_average_lte = filters.maxRating;
 		}
 		if (filters.sortBy) filterParams.sort_by = filters.sortBy;

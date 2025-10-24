@@ -39,7 +39,7 @@ more value in having complete context upfront than discovering missing rules mid
 
 **Read these documents to establish complete context:**
 
-1. `.arc/reference/ai-instructions/AGENTS.md` - **MUST READ IN FULL** (~140 lines)
+1. `.arc/reference/ai-instructions/AGENTS.md` - **MUST READ IN FULL**
    - Project overview and technology stack
    - Quick lookup guide for finding information
    - AI collaboration principles
@@ -64,14 +64,14 @@ more value in having complete context upfront than discovering missing rules mid
      large to internalize upfront. But you MUST read the overview + current task context.
    - **What to extract**: Current phase, next task, overall completion status, key patterns, current task details
 
-4. `.arc/reference/workflows/3-process-task-loop.md` - **MUST READ IN FULL** (~220 lines)
+4. `.arc/reference/workflows/3-process-task-loop.md` - **MUST READ IN FULL**
    - One-subtask-at-a-time workflow
    - Task execution protocol
    - Quality gate requirements per subtask
    - Documentation update protocol
    - **Why full read needed**: Defines workflow that governs ALL task execution - can't avoid violations if rules unknown
 
-5. `.arc/reference/constitution/DEVELOPMENT-RULES.md` - **MUST READ IN FULL** (~289 lines)
+5. `.arc/reference/constitution/DEVELOPMENT-RULES.md` - **MUST READ IN FULL**
    - Quality gate requirements (zero tolerance policies)
    - Commit standards and protocols
    - AI collaboration rules (CURRENT-SESSION control, manual commit control)
@@ -79,7 +79,7 @@ more value in having complete context upfront than discovering missing rules mid
    - Test-first protocol
    - **Why full read needed**: Behavioral constraints - can't avoid violating rules you haven't read
 
-6. `.arc/reference/QUICK-REFERENCE.md` - **MUST READ IN FULL** (~330 lines)
+6. `.arc/reference/QUICK-REFERENCE.md` - **MUST READ IN FULL**
    - Environment-specific command patterns
    - Quality gate commands
    - Path context and common workflows

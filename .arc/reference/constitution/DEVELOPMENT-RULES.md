@@ -1,6 +1,6 @@
 # Development Rules - CineXplorer
 
-**Version:** 2.7 | **Updated:** 2025-10-15 | **Hash:** `h3n5p8r2`
+**Version:** 2.8 | **Updated:** 2025-10-24 | **Hash:** `h3n5p8r2`
 
 Core development rules and quality standards for CineXplorer. These rules are **non-negotiable** and must be followed
 by all contributors, including AI assistants.

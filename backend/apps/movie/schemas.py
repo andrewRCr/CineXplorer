@@ -194,7 +194,15 @@ class PaginatedPersonResponseSchema(Schema):
 
 class MovieDiscoverFilterSchema(Schema):
     """
-    Schema for TMDB discover endpoint filtering.
+    Schema for TMDB discover endpoint filtering with two-pass architecture.
+
+    Extracts parameters for both:
+    1. TMDB API filtering (primary) - Reduces millions of movies to thousands
+    2. Backend filtering (second-pass) - Catches TMDB data quality issues
+
+    For example, release_date_gte="2020-01-01" generates:
+    - release_date.gte for TMDB API (primary filter)
+    - year_min=2020 for backend filtering (data hygiene)
 
     Handles 40+ optional query parameters with automatic empty string to None
     conversion, solving Django Ninja 1.4.3 + Pydantic 2.12.0 validation issues
@@ -293,6 +301,46 @@ class MovieDiscoverFilterSchema(Schema):
             return None
         return v
 
+    def _extract_year_from_date(self, date_str: str) -> int:
+        """Extract year as integer from ISO date string (e.g., '2020-01-01' → 2020)."""
+        return int(date_str[:4])
+
+    def _apply_derived_params(
+        self,
+        data: dict[str, object],
+        params: dict[str, str | int | float | bool]
+    ) -> None:
+        """Apply derived parameters (backend filtering, aliases, transformations)."""
+        # Backend filtering: Extract year boundaries from date strings
+        if 'release_date_gte' in data:
+            params['year_min'] = self._extract_year_from_date(str(data['release_date_gte']))  # type: ignore[assignment]
+        if 'release_date_lte' in data:
+            params['year_max'] = self._extract_year_from_date(str(data['release_date_lte']))  # type: ignore[assignment]
+
+        # Backend filtering: Extract rating boundaries
+        if 'vote_average_gte' in data:
+            params['rating_min'] = data['vote_average_gte']  # type: ignore[assignment]
+        if 'vote_average_lte' in data:
+            params['rating_max'] = data['vote_average_lte']  # type: ignore[assignment]
+
+        # Alias handling: 'genres' or 'with_genres' → 'genres'
+        if 'genres' in data:
+            params['genres'] = data['genres']  # type: ignore[assignment]
+        elif 'with_genres' in data:
+            params['genres'] = data['with_genres']  # type: ignore[assignment]
+
+        # Decade conversion: "1990s" → date range
+        if 'decade' in data:
+            try:
+                decade_str = str(data['decade'])
+                year = int(decade_str[:4])
+                start_year = year if decade_str.endswith('s') else (year // 10) * 10
+                end_year = start_year + 9
+                params['release_date.gte'] = f"{start_year}-01-01"
+                params['release_date.lte'] = f"{end_year}-12-31"
+            except (ValueError, TypeError):
+                pass
+
     def to_service_params(self) -> dict[str, str | int | float | bool]:
         """
         Convert filter schema to service layer parameter format.
@@ -301,47 +349,38 @@ class MovieDiscoverFilterSchema(Schema):
         in its own format (e.g., 'genres', 'vote_average.gte') which it then maps
         to TMDB API format internally.
 
+        This method extracts parameters for both:
+        1. TMDB API filtering (primary filter - reduces millions to thousands)
+        2. Backend filtering (second-pass data hygiene - catches TMDB quality issues)
+
+        Uses declarative field mappings for maintainability and extensibility.
+
         Returns:
             Dictionary with service layer parameters (None values excluded)
         """
+        # Get all non-None values from schema using Pydantic's model_dump
+        data = self.model_dump(exclude_none=True)
         params: dict[str, str | int | float | bool] = {}
 
-        # Map schema fields to service layer parameter names
-        # The service layer will handle further mapping to TMDB API format
-        if self.sort_by is not None:
-            params['sort_by'] = self.sort_by  # type: ignore[assignment]
-        if self.year is not None:
-            params['year'] = self.year  # type: ignore[assignment]
-        if self.vote_average_gte is not None:
-            params['vote_average.gte'] = self.vote_average_gte  # type: ignore[assignment]
-        if self.vote_average_lte is not None:
-            params['vote_average.lte'] = self.vote_average_lte  # type: ignore[assignment]
-        if self.release_date_gte is not None:
-            params['release_date.gte'] = self.release_date_gte  # type: ignore[assignment]
-        if self.release_date_lte is not None:
-            params['release_date.lte'] = self.release_date_lte  # type: ignore[assignment]
-        if self.certification is not None:
-            params['certification'] = self.certification  # type: ignore[assignment]
-        if self.region is not None:
-            params['region'] = self.region  # type: ignore[assignment]
+        # Declarative field mappings: schema_field → service_parameter_name
+        field_mappings: dict[str, str] = {
+            'sort_by': 'sort_by',
+            'year': 'year',
+            'vote_average_gte': 'vote_average.gte',
+            'vote_average_lte': 'vote_average.lte',
+            'release_date_gte': 'release_date.gte',
+            'release_date_lte': 'release_date.lte',
+            'certification': 'certification',
+            'region': 'region',
+        }
 
-        # Handle 'genres' alias - service layer expects 'genres', not 'with_genres'
-        if self.genres is not None:
-            params['genres'] = self.genres  # type: ignore[assignment]
-        elif self.with_genres is not None:
-            params['genres'] = self.with_genres  # type: ignore[assignment]
+        # Apply simple field mappings (passthrough and renames)
+        for schema_field, param_name in field_mappings.items():
+            if schema_field in data:
+                params[param_name] = data[schema_field]  # type: ignore[assignment]
 
-        # Handle decade conversion
-        if self.decade is not None:
-            try:
-                decade_str = str(self.decade)
-                year = int(decade_str[:4])
-                start_year = year if decade_str.endswith('s') else (year // 10) * 10
-                end_year = start_year + 9
-                params['release_date.gte'] = f"{start_year}-01-01"
-                params['release_date.lte'] = f"{end_year}-12-31"
-            except (ValueError, TypeError):
-                pass
+        # Apply derived parameters (backend filtering, aliases, transformations)
+        self._apply_derived_params(data, params)
 
         return params
 

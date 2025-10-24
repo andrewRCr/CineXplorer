@@ -166,10 +166,17 @@ def discover_movies(
     """
     Discover movies with advanced filtering options and user-specific data.
 
-    This endpoint provides comprehensive movie discovery with extensive filtering
-    capabilities including genres, keywords, cast, crew, release dates, ratings,
-    and more. It supports both TMDB standard parameters and custom aliases for
-    frontend convenience.
+    This endpoint implements a two-pass filtering architecture:
+    1. TMDB API filtering (primary) - Reduces millions of movies to thousands
+    2. Backend filtering (second-pass) - Catches TMDB data quality issues
+
+    The schema layer extracts parameters for both passes from incoming filter
+    parameters. For example, release_date_gte="2020-01-01" generates both:
+    - release_date.gte for TMDB API (primary filter)
+    - year_min=2020 for backend filtering (data hygiene)
+
+    This ensures users see only movies matching their filters, even when TMDB
+    API returns movies with incorrect release dates or ratings.
 
     Uses FilterSchema to handle 40+ optional parameters cleanly, with automatic
     empty string to None conversion to handle Django Ninja 1.4.3 + Pydantic 2.12.0
@@ -182,7 +189,8 @@ def discover_movies(
             - genres: Alias for with_genres (frontend convenience)
             - decade: Decade filter (e.g., "1990s" → converts to date range)
             - sort_by: Sort criteria (popularity.desc, vote_average.desc, etc.)
-            - vote_average_gte/lte: Rating range filtering
+            - vote_average_gte/lte: Rating range filtering (both TMDB + backend)
+            - release_date_gte/lte: Date range filtering (both TMDB + backend)
             - with_runtime_gte/lte: Runtime range filtering
             - primary_release_year: Filter by release year
             - [... many other TMDB discover parameters]
@@ -194,12 +202,13 @@ def discover_movies(
         HttpError: 400 for invalid parameters, 500 for TMDB API errors
     """
     # Convert filter schema to service layer parameters
+    # This extracts both TMDB API params and backend filtering params
     params = filters.to_service_params()
 
-    # Fetch movies from TMDB
-    # Note: Type ignore needed for **kwargs unpacking with typed parameters
-    # The params dict contains general filter values; year_min/year_max/rating_min/rating_max
-    # are not currently in the API schema and default to None in the service method
+    # Fetch movies from TMDB with two-pass filtering
+    # The params dict includes: TMDB params (release_date.gte, vote_average.gte, etc.)
+    # and backend filtering params (year_min, year_max, rating_min, rating_max)
+    # Type ignore needed for **kwargs unpacking with typed parameters
     response = _movie_service.discover_movies(page=filters.page or 1, **params)  # type: ignore[arg-type]
 
     # Enrich with user data if authenticated

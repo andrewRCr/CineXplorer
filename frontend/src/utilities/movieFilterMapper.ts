@@ -21,7 +21,7 @@ import type { MovieFilters as MovieFiltersType } from "@/components/movie/filter
  * //   genres: "28,12",
  * //   release_date_gte: "2020-01-01",
  * //   release_date_lte: "2025-12-31",
- * //   min_rating: "7.0"
+ * //   vote_average_gte: "7.0"
  * // }
  * ```
  */
@@ -59,7 +59,7 @@ export function mapFiltersToApiParams(
 		}
 
 		if (filters.minRating) {
-			filterParams.min_rating = filters.minRating;
+			filterParams.vote_average_gte = filters.minRating;
 		}
 
 		if (filters.query) {
@@ -69,10 +69,10 @@ export function mapFiltersToApiParams(
 		if (filters.sortBy) {
 			const sortBy = filters.sortBy as string;
 			if (sortBy === "runtime_90") {
-				filterParams.max_runtime = "90";
+				filterParams.with_runtime_lte = "90";
 				filterParams.sort_by = "popularity.desc";
 			} else if (sortBy === "runtime_120") {
-				filterParams.max_runtime = "120";
+				filterParams.with_runtime_lte = "120";
 				filterParams.sort_by = "popularity.desc";
 			} else if (sortBy === "rating_desc") {
 				filterParams.sort_by = "vote_average.desc";
@@ -103,10 +103,10 @@ export function mapFiltersToApiParams(
 		}
 
 		if (filters.minRating) {
-			filterParams.min_rating = filters.minRating;
+			filterParams.vote_average_gte = filters.minRating;
 		}
 		if (filters.maxRating && !filters.minRating) {
-			filterParams.max_rating = filters.maxRating;
+			filterParams.vote_average_lte = filters.maxRating;
 		}
 		if (filters.sortBy) filterParams.sort_by = filters.sortBy;
 	}

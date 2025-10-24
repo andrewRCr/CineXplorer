@@ -458,16 +458,34 @@ patterns across movie, UserMovieData, and authentication domains.
                 - Name accurately reflects purpose (mapper vs utils)
                 - Quality: 0 TypeScript errors, 333/333 tests passing
                 - Architecture: Clean separation (mapping in utility, routing in hook, filtering in backend)
-        - [ ] 3.5.2.3 Re-evaluate discover_movies type safety
-            - Fix `backend/apps/movie/api.py:202` type ignore for **params unpacking
-            - **Current issue**: `type: ignore[arg-type]` for MovieService.discover_movies call
-            - **Root cause**: Service has year_min/year_max/rating_min/rating_max params not in schema
-            - **Investigation needed**:
-                - Are these params used by frontend? (Check if MovieDiscoverFilterSchema needs them)
-                - Are these params used internally only? (Check service implementation)
-                - Should they be removed or properly typed?
-            - **Goal**: Eliminate type ignore with proper solution (add to schema, remove params, or fix typing)
-            - **Expected result**: Zero type errors, no type: ignore comments
+        - [ ] 3.5.2.3 Re-evaluate discover_movies type safety (BLOCKED - see incidental work)
+            - **Status**: Investigation revealed critical gaps requiring dedicated incidental work
+            - **Blocking Issue**: Filter integration test coverage gaps and incomplete migration
+            - **Quick Fix Applied**: Rating parameter rename (min_rating → vote_average_gte)
+            - **Incidental Work**: `.arc/active/incidental/tasks-incidental-filter-integration-testing.md`
+
+            **Investigation Completed**:
+            - ✅ Root cause identified: Schema `to_service_params()` never populates year_min/rating_min
+            - ✅ Frontend parameter mismatch found: Sent min_rating/max_rating instead of vote_average_gte/lte
+            - ✅ Test coverage gaps documented: Service tests pass, but no integration tests validate parameter flow
+            - ✅ User-visible bug confirmed: 1979 movies appearing in 1980-1983 filter results
+            - ✅ Design intent clarified: Backend filtering is second-pass data hygiene, not primary filtering
+
+            **Quick Fixes Applied (working tree)**:
+            - Changed frontend `min_rating` → `vote_average_gte` in movieFilterMapper.ts
+            - Changed frontend `max_rating` → `vote_average_lte` in movieFilterMapper.ts
+            - Changed frontend `max_runtime` → `with_runtime_lte` in movieFilterMapper.ts
+            - Updated docstring examples to reflect correct parameter names
+            - Quality: 333/333 frontend tests passing, 0 type errors, 0 lint errors
+
+            **Remaining Work**:
+            - Complete schema → service wiring (year_min/rating_min extraction)
+            - Add comprehensive integration tests (frontend → API → service → response)
+            - Fix misleading docstrings ("client-side" → "second-pass data hygiene")
+            - Validate all filters work correctly with no data leakage
+            - See incidental task list for full scope (Phase 1: Discovery, Phase 2: Fix)
+
+            **Type Ignore Resolution**: Will be addressed in incidental work Phase 2.2.2
     - [ ] 3.5.3 Run frontend quality checks
         - **Linting**: 0 violations (ESLint) on modified files
         - **Type checking**: 0 errors (TypeScript) on modified files

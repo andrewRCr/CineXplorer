@@ -343,11 +343,16 @@ def test_profile_endpoint_with_serialization_error() -> None:
         assert "Serialization failed" in str(exc_info.value)
 
 
-@pytest.mark.skipif(
-    os.environ.get("CI") == "true",
-    reason="Skipped in CI due to pytest-django teardown limitation with transaction=True tests"
+@pytest.mark.django_db(
+    transaction=True,
+    available_apps=[
+        'authentication',
+        'accounts',
+        'django.contrib.auth',
+        'django.contrib.contenttypes',
+        'ninja_jwt.token_blacklist',
+    ]
 )
-@pytest.mark.django_db(transaction=True, serialized_rollback=True)
 def test_concurrent_token_refresh_requests() -> None:
     """
     Verify concurrent token refresh requests don't cause race conditions.
@@ -364,20 +369,12 @@ def test_concurrent_token_refresh_requests() -> None:
     Implementation notes:
     - Uses transaction=True to allow real transaction commits (required for
       thread visibility in pytest-django)
+    - Uses available_apps to enable TRUNCATE...CASCADE during teardown,
+      resolving PostgreSQL foreign key constraint errors
     - Each thread gets its own Client instance (Django's Client is not thread-safe)
     - Explicitly closes database connections in each thread to prevent leaks
     - ThreadPoolExecutor provides true concurrent execution (subject to GIL)
     - Uses UUID-based uniqueness to avoid test isolation issues
-
-    Known limitation (local dev only):
-    - Teardown may fail with "cannot truncate table referenced in FK constraint"
-      error on PostgreSQL. This is a known pytest-django limitation with
-      transaction=True tests. The test itself PASSES (all assertions succeed);
-      only the cleanup phase encounters the TRUNCATE CASCADE issue.
-    - Test is SKIPPED in CI to avoid false negatives in automated quality gates.
-      The concurrent token refresh behavior is still validated locally during development.
-    - Alternative: Complex pytest-django fixture overrides or `available_apps` configuration,
-      but test logic correctness outweighs teardown aesthetic issues for local testing.
 
     Production consideration: A grace period/reuse interval (allowing the same
     refresh token to be used multiple times within 2-5 seconds) is the industry

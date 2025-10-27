@@ -18,11 +18,11 @@ architectural decisions.
 
 - **Format:** Markdown (`.md`)
 - **Location:**
-    - Feature work: `.arc/upcoming/feature/`
-    - Technical work: `.arc/upcoming/technical/`
+    - Feature work: `.arc/backlog/feature/`
+    - Technical work: `.arc/backlog/technical/`
 - **Filename:** `tasks-[name].md` (e.g., `tasks-user-profile-editing.md`, `tasks-api-modernization.md`)
 
-**Note:** Task lists typically start in `.arc/upcoming/` during planning, then move to `.arc/active/` when
+**Note:** Task lists typically start in `.arc/backlog/` during planning, then move to `.arc/active/` when
 work begins. See [Project Structure](../strategies/strategy-work-categorization.md) for complete lifecycle.
 
 ## Process
@@ -122,8 +122,8 @@ _(Optional: Document architectural decisions, patterns, constraints discovered d
 
 Save the generated task list in the appropriate category directory matching the PRD location:
 
-- Feature work: `.arc/upcoming/feature/tasks-[name].md`
-- Technical work: `.arc/upcoming/technical/tasks-[name].md`
+- Feature work: `.arc/backlog/feature/tasks-[name].md`
+- Technical work: `.arc/backlog/technical/tasks-[name].md`
 
 The `[name]` should match the base name of the input PRD file
 (e.g., if the input was `prd-user-profile-editing.md`, the output is `tasks-user-profile-editing.md`).

@@ -901,7 +901,7 @@ git commit -m "refactor: extract test helper (tasks-refactor-test-helpers.md Tas
 
    ```bash
    mkdir -p .arc/active/{feature,technical,incidental}
-   mkdir -p .arc/upcoming
+   mkdir -p .arc/backlog
    mkdir -p .arc/archive
    ```
 
@@ -937,7 +937,7 @@ git commit -m "refactor: extract test helper (tasks-refactor-test-helpers.md Tas
 mkdir -p .arc/active/technical
 
 # 3. Move planned technical work
-mv .arc/upcoming/prd-backend-modernization.md .arc/active/technical/
+mv .arc/backlog/prd-backend-modernization.md .arc/active/technical/
 
 # 4. Update documentation
 # - Update DEVELOPMENT-RULES.md

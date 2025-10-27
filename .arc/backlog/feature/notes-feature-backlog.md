@@ -112,9 +112,9 @@ Recommendations features only.
 - Planned: Composite cover generation (2×6 poster grid)
 - Planned: Sidebar integration with system collections
 
-**PRD**: `.arc/upcoming/sub-prds/prd-user-movie-lists.md` (pre-modernization, may need updates)
+**PRD**: `.arc/backlog/sub-prds/prd-user-movie-lists.md` (pre-modernization, may need updates)
 
-**Task List**: `.arc/upcoming/tasks/tasks-user-movie-lists.md` (not started)
+**Task List**: `.arc/backlog/tasks/tasks-user-movie-lists.md` (not started)
 
 **META-PRD Reference**: Implicit in Section 2.3 (personal movie management)
 

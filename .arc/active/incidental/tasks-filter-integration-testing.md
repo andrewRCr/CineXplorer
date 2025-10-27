@@ -483,7 +483,7 @@ then implement fixes to make them pass.
 
 **Integration/E2E Bug Protocol**: During manual testing, bugs requiring integration or E2E test coverage
 (navigation, URL state, pagination display, etc.) will be documented in
-`.arc/upcoming/technical/notes-backend-modernization.md` under "Known Bugs Requiring E2E Test Coverage"
+`.arc/backlog/technical/notes-backend-modernization.md` under "Known Bugs Requiring E2E Test Coverage"
 for comprehensive testing during Backend Modernization Phase 1. These bugs may receive quick fixes or
 incidental tasks for the fix, but E2E test infrastructure will be built as dedicated planned work.
 

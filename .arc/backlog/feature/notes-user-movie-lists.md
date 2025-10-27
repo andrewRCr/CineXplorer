@@ -200,8 +200,8 @@ system collections for discovery.
 
 **Original Planning Documents** (archived for historical context):
 
-- `.arc/upcoming/feature/prd-user-movie-lists.md` (deleted - consolidated into notes)
-- `.arc/upcoming/feature/tasks-user-movie-lists.md` (deleted - consolidated into notes)
+- `.arc/backlog/feature/prd-user-movie-lists.md` (deleted - consolidated into notes)
+- `.arc/backlog/feature/tasks-user-movie-lists.md` (deleted - consolidated into notes)
 
 **Related Features:**
 

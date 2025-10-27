@@ -173,7 +173,7 @@ infrastructure that was originally planned for API Layer P2 Phase 6.
 
 ### 🚧 Feature Implementation Status
 
-See [Feature Backlog](.arc/upcoming/notes/notes-feature-backlog.md) for comprehensive status tracking.
+See [Feature Backlog](.arc/backlog/notes/notes-feature-backlog.md) for comprehensive status tracking.
 
 **Backend Complete, Frontend Missing** (5 features):
 

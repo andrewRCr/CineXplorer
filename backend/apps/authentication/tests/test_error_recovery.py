@@ -27,7 +27,6 @@ from __future__ import annotations
 
 import base64
 import json
-import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from http import HTTPStatus
 from typing import cast

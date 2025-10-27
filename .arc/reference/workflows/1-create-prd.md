@@ -53,8 +53,8 @@ pattern captures evolving understanding during planning, with PRDs created only 
 
 - `.arc/active/feature/notes-{{FEATURE_NAME}}.md` (active feature work)
 - `.arc/active/technical/notes-{{FEATURE_NAME}}.md` (active technical work)
-- `.arc/upcoming/feature/notes-{{FEATURE_NAME}}.md` (planned features)
-- `.arc/upcoming/technical/notes-{{FEATURE_NAME}}.md` (planned technical work)
+- `.arc/backlog/feature/notes-{{FEATURE_NAME}}.md` (planned features)
+- `.arc/backlog/technical/notes-{{FEATURE_NAME}}.md` (planned technical work)
 
 **If notes document exists:**
 
@@ -116,8 +116,8 @@ the structure outlined below.
 
 **Save location:**
 
-- **Feature work** (user-facing): `.arc/upcoming/feature/prd-{{FEATURE_NAME}}.md`
-- **Technical work** (infrastructure): `.arc/upcoming/technical/prd-{{FEATURE_NAME}}.md`
+- **Feature work** (user-facing): `.arc/backlog/feature/prd-{{FEATURE_NAME}}.md`
+- **Technical work** (infrastructure): `.arc/backlog/technical/prd-{{FEATURE_NAME}}.md`
 
 See [Work Categorization Strategy](../strategies/strategy-work-categorization.md) for guidance on feature vs. technical.
 
@@ -170,7 +170,7 @@ during implementation.
 ## Output Specifications
 
 - **Format:** Markdown (`.md`)
-- **Location:** `.arc/upcoming/feature/` (user-facing) or `.arc/upcoming/technical/` (infrastructure)
+- **Location:** `.arc/backlog/feature/` (user-facing) or `.arc/backlog/technical/` (infrastructure)
 - **Filename:** `prd-{{FEATURE_NAME}}.md`
 - **Token Format:** Use `{{UPPERCASE_SNAKE_CASE}}` for any placeholder values
 

@@ -935,7 +935,7 @@ helper ensures consistency across all test fixtures and reduces duplication.
 
 ### Future Testing Improvements
 
-**Documented in** `.arc/upcoming/notes/notes-frontend-enhancements.md`:
+**Documented in** `.arc/backlog/notes/notes-frontend-enhancements.md`:
 
 - Toast notification system (user feedback for auth errors)
 - Error logging/monitoring integration

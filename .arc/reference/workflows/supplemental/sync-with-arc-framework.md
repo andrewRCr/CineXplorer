@@ -67,7 +67,7 @@ CineXplorer (primary) ──sync-cinexplorer-refinements.md──> ARC Framework
 **Active Work**:
 
 - Current `.arc/active/` content (except format improvements to CURRENT-SESSION.md)
-- `.arc/upcoming/` planning specific to that project
+- `.arc/backlog/` planning specific to that project
 - `.arc/reference/archive/` completed work history
 
 **Note on `.arc-internal/`**: The framework repository (arc-agentic-dev-framework) maintains its own `.arc-internal/`

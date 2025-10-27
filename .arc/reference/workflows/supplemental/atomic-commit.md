@@ -30,8 +30,8 @@ steps:
         - Feature work: `.arc/active/feature/`
         - Technical work: `.arc/active/technical/`
         - Incidental work: `.arc/active/incidental/`
-    - Also check [upcoming tasks](.arc/upcoming/) for additional relevant tasks
-        - `.arc/upcoming/feature/` and `.arc/upcoming/technical/`
+    - Also check [upcoming tasks](.arc/backlog/) for additional relevant tasks
+        - `.arc/backlog/feature/` and `.arc/backlog/technical/`
     - Look for task files that reference modified files or related functionality
     - Use `find .arc -name "*.md" -exec grep -l "user-auth" {} \;` to find related tasks
       (replace "user-auth" with your actual feature name, e.g., "payment-integration", "movie-api", etc.)
@@ -111,7 +111,7 @@ steps:
         - "Complete Feature X Phase 1" (only when entire phase is done)
     - **Identify remaining work clearly** in commit messages
     - Commit messages should match actual task progress, not aspirational goals
-    - Always check [active tasks](.arc/active/) and [upcoming tasks](.arc/upcoming/tasks/) files before committing docs changes
+    - Always check [active tasks](.arc/active/) and [upcoming tasks](.arc/backlog/tasks/) files before committing docs changes
     - **Review multiple task files** - work often spans multiple task lists
 
   Example Commit Messages with Proper Task Context:

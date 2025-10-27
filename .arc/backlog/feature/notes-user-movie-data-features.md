@@ -362,8 +362,8 @@ in the status summary.
 
 **Existing Resources:**
 
-- **PRD**: `.arc/upcoming/feature/prd-user-movie-lists.md` (existing, may need updates)
-- **Task List**: `.arc/upcoming/feature/tasks-user-movie-lists.md` (existing, may need updates)
+- **PRD**: `.arc/backlog/feature/prd-user-movie-lists.md` (existing, may need updates)
+- **Task List**: `.arc/backlog/feature/tasks-user-movie-lists.md` (existing, may need updates)
 
 **Important Note:** This PRD and task list were created before Django Ninja migration. They will need review
 and updates to align with current Django Ninja + Pydantic patterns before implementation begins.
@@ -474,8 +474,8 @@ because it's more complex and benefits from having established patterns for:
 
 **References:**
 
-- Existing PRD: `.arc/upcoming/feature/prd-user-movie-lists.md`
-- Existing task list: `.arc/upcoming/feature/tasks-user-movie-lists.md`
+- Existing PRD: `.arc/backlog/feature/prd-user-movie-lists.md`
+- Existing task list: `.arc/backlog/feature/tasks-user-movie-lists.md`
 - META-PRD context: `.arc/reference/constitution/META-PRD.md` (Personal Movie Management section)
 
 ---

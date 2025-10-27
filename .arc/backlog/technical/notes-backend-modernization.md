@@ -147,7 +147,7 @@ captured as E2E regression tests:
    - **Root Cause**: MovieCard only passes `page`, `from`, `query` params; doesn't preserve filter state
    - **Impact**: Poor UX - users lose filter context, must re-apply filters
    - **Workaround**: Browser back button works correctly (uses full history state)
-   - **Incidental Task**: `.arc/active/incidental/tasks-back-button-filter-preservation.md`
+   - **Incidental Task**: `.arc/backlog/incidental/tasks-back-button-filter-preservation.md`
    - **E2E Test**: Navigate to popular with filters (1980-1983) → click movie → click "Back to Results" →
      assert URL contains all filter params and results display correctly
 

@@ -142,7 +142,8 @@ class MovieService:
         self,
         movies: list[MovieBaseSchema],
         page: int,
-        total_pages: int
+        total_pages: int,
+        total_results: int
     ) -> PaginatedMovieResponseSchema:
         """Build a paginated movie response from filtered MovieBaseSchema list.
 
@@ -153,6 +154,7 @@ class MovieService:
             movies: Filtered list of MovieBaseSchema objects
             page: Current page number
             total_pages: Total pages available
+            total_results: Total results available (from original TMDB response)
 
         Returns:
             PaginatedMovieResponseSchema with converted movie data
@@ -162,6 +164,10 @@ class MovieService:
             1. Converting MovieBaseSchema → TMDBMovieBase
             2. Creating TMDBMovieSearchResponse
             3. Converting to PaginatedMovieResponseSchema
+
+            The total_results preserves the original TMDB count, even though
+            the results array may be smaller due to backend filtering (completeness,
+            year, rating filters). This maintains accurate pagination display.
         """
         # Convert MovieBaseSchema back to TMDBMovieBase
         tmdb_movies = [self._convert_schema_to_tmdb_movie(m) for m in movies]
@@ -170,7 +176,7 @@ class MovieService:
         filtered_response = TMDBMovieSearchResponse(
             page=page,
             total_pages=total_pages,
-            total_results=len(movies),
+            total_results=total_results,
             results=tmdb_movies
         )
 
@@ -294,7 +300,12 @@ class MovieService:
         )
 
         # Step 6: Build filtered response
-        return self._build_filtered_response(final_movies, page, tmdb_response.total_pages)
+        return self._build_filtered_response(
+            final_movies,
+            page,
+            tmdb_response.total_pages,
+            tmdb_response.total_results
+        )
 
     def _convert_schema_to_tmdb_movie(self, schema: MovieBaseSchema) -> TMDBMovieBase:
         """Convert MovieBaseSchema back to TMDBMovieBase for TMDB response.

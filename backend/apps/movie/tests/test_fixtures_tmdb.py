@@ -95,6 +95,7 @@ class TMDBMovieBase(TypedDict):
     IMPORTANT: TMDB API data quality issues mean fields can be missing, null, or invalid:
     - release_date: Can be None, empty string, or missing entirely (data hygiene issues)
     - vote_average: Can be None or missing (placeholder ratings, unreleased movies)
+    - vote_count: Can be None or missing (unreleased or limited release movies)
     - poster_path: Can be None or missing (no poster uploaded)
     - runtime: Can be None or missing (not available for all movies)
 
@@ -109,6 +110,7 @@ class TMDBMovieBase(TypedDict):
     poster_path: NotRequired[str | None]  # May be missing or null
     release_date: NotRequired[str | None]  # May be missing, null, or empty - data quality issue
     vote_average: NotRequired[float | None]  # May be missing or null - placeholder/unreleased
+    vote_count: NotRequired[int | None]  # May be missing or null - unreleased/limited release
     runtime: NotRequired[int | None]  # May be missing or null
 
 

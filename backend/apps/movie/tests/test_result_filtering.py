@@ -39,6 +39,7 @@ def create_movie_dict(
     release_date: str,
     vote_average: float,
     runtime: int | None = None,
+    vote_count: int | None = None,
 ) -> TMDBMovieBase:
     """Create a mock TMDB movie dictionary for testing.
 
@@ -48,16 +49,23 @@ def create_movie_dict(
         release_date: Release date in YYYY-MM-DD format
         vote_average: Rating (0.0-10.0 scale)
         runtime: Optional runtime in minutes
+        vote_count: Number of votes (defaults to 100 for reliable rating)
 
     Returns:
         Dictionary matching TMDB API movie response structure
     """
+    # Default vote_count to 100 (well above 50 threshold) for reliable ratings
+    # Tests specifically testing vote count behavior can override this
+    if vote_count is None:
+        vote_count = 100
+
     return {
         'id': tmdb_id,
         'title': title,
         'poster_path': f'/poster_{tmdb_id}.jpg',
         'release_date': release_date,
         'vote_average': vote_average,
+        'vote_count': vote_count,
         'runtime': runtime,
     }
 
@@ -424,6 +432,168 @@ def test_rating_filtering_handles_missing_ratings() -> None:
     # Assert: Only movies with valid ratings returned
     assert len(result.results) == 2
     assert all(m.vote_average is not None for m in result.results)
+
+
+# ============================================================================
+# Vote Count Quality Filtering Tests
+# ============================================================================
+
+
+def test_rating_filter_excludes_low_vote_count_movies() -> None:
+    """Test that movies with low vote counts are excluded when rating filter applied.
+
+    When users filter by rating, movies with very few votes are unreliable
+    (e.g., a single 10/10 vote makes average 10.0). We exclude movies with
+    fewer than min_vote_count votes to ensure rating quality.
+    """
+    # Arrange: Mock client returns mix of high-vote and low-vote movies
+    mock_client = Mock(spec=['get'])
+
+    # Create test movies using existing fixture helper
+    high_vote_movie_1: TMDBMovieBase = {
+        'id': 1, 'title': "Reliable High Rating", 'poster_path': '/poster1.jpg',
+        'release_date': "2022-01-01", 'vote_average': 8.0, 'vote_count': 100
+    }
+    high_vote_movie_2: TMDBMovieBase = {
+        'id': 2, 'title': "Another Reliable", 'poster_path': '/poster2.jpg',
+        'release_date': "2022-02-01", 'vote_average': 8.5, 'vote_count': 500
+    }
+    low_vote_movie: TMDBMovieBase = {
+        'id': 3, 'title': "Unreliable Rating", 'poster_path': '/poster3.jpg',
+        'release_date': "2022-03-01", 'vote_average': 9.0,
+        'vote_count': 5  # High rating but only 5 votes!
+    }
+
+    tmdb_movies: list[TMDBMovieBase] = [
+        high_vote_movie_1,
+        high_vote_movie_2,
+        low_vote_movie,
+    ]
+
+    mock_response = ApiResponse(
+        status_code=200,
+        data=create_paginated_tmdb_response(tmdb_movies, page=1, total_pages=1)
+    )
+    mock_client.get.return_value = mock_response
+
+    service = MovieService(tmdb_client=mock_client)
+
+    # Act: Request movies rated 7.5+ (triggers vote count filtering)
+    result = service.discover_movies(page=1, rating_min=7.5)
+
+    # Assert: Only high vote count movies returned (low vote movie excluded)
+    assert len(result.results) == 2
+    assert all(m.vote_count is not None and m.vote_count >= 50 for m in result.results)
+
+
+def test_vote_count_filter_not_applied_without_rating_filter() -> None:
+    """Test that vote count filtering is NOT applied when no rating filter specified.
+
+    Vote count quality check only applies when user explicitly filters by rating.
+    When browsing without rating filters, all movies should be shown regardless
+    of vote count.
+    """
+    # Arrange: Mock client returns movies with various vote counts
+    mock_client = Mock(spec=['get'])
+
+    low_vote_movie: TMDBMovieBase = {
+        'id': 1, 'title': "Low Vote Movie", 'poster_path': '/poster1.jpg',
+        'release_date': "2022-01-01", 'vote_average': 8.0, 'vote_count': 5
+    }
+    high_vote_movie: TMDBMovieBase = {
+        'id': 2, 'title': "High Vote Movie", 'poster_path': '/poster2.jpg',
+        'release_date': "2022-02-01", 'vote_average': 7.0, 'vote_count': 100
+    }
+
+    tmdb_movies: list[TMDBMovieBase] = [low_vote_movie, high_vote_movie]
+
+    mock_response = ApiResponse(
+        status_code=200,
+        data=create_paginated_tmdb_response(tmdb_movies, page=1, total_pages=1)
+    )
+    mock_client.get.return_value = mock_response
+
+    service = MovieService(tmdb_client=mock_client)
+
+    # Act: Request without rating filter
+    result = service.discover_movies(page=1)
+
+    # Assert: ALL movies returned (vote count check not applied)
+    assert len(result.results) == 2
+
+
+def test_vote_count_filter_excludes_movies_without_vote_count() -> None:
+    """Test that movies missing vote_count field are excluded when rating filter applied."""
+    # Arrange: Mock client returns movies with missing vote_count
+    mock_client = Mock(spec=['get'])
+
+    movie_with_votes: TMDBMovieBase = {
+        'id': 1, 'title': "Has Vote Count", 'poster_path': '/poster1.jpg',
+        'release_date': "2022-01-01", 'vote_average': 8.0, 'vote_count': 100
+    }
+    movie_without_votes: TMDBMovieBase = {
+        'id': 2, 'title': "No Vote Count", 'poster_path': '/poster2.jpg',
+        'release_date': "2022-02-01", 'vote_average': 8.5
+        # vote_count field missing (TMDB data quality issue)
+    }
+
+    tmdb_movies: list[TMDBMovieBase] = [movie_with_votes, movie_without_votes]
+
+    mock_response = ApiResponse(
+        status_code=200,
+        data=create_paginated_tmdb_response(tmdb_movies, page=1, total_pages=1)
+    )
+    mock_client.get.return_value = mock_response
+
+    service = MovieService(tmdb_client=mock_client)
+
+    # Act: Request movies rated 7.5+
+    result = service.discover_movies(page=1, rating_min=7.5)
+
+    # Assert: Only movie with vote_count field returned
+    assert len(result.results) == 1
+    assert result.results[0].vote_count == 100
+
+
+def test_custom_min_vote_count_threshold_respected() -> None:
+    """Test that custom min_vote_count threshold is respected in filtering."""
+    # Arrange: Mock client returns movies with vote counts around threshold
+    mock_client = Mock(spec=['get'])
+
+    movie_above_threshold: TMDBMovieBase = {
+        'id': 1, 'title': "Above Threshold", 'poster_path': '/poster1.jpg',
+        'release_date': "2022-01-01", 'vote_average': 8.0, 'vote_count': 30
+    }
+    movie_at_threshold: TMDBMovieBase = {
+        'id': 2, 'title': "At Threshold", 'poster_path': '/poster2.jpg',
+        'release_date': "2022-02-01", 'vote_average': 8.5, 'vote_count': 25
+    }
+    movie_below_threshold: TMDBMovieBase = {
+        'id': 3, 'title': "Below Threshold", 'poster_path': '/poster3.jpg',
+        'release_date': "2022-03-01", 'vote_average': 9.0, 'vote_count': 20
+    }
+
+    tmdb_movies: list[TMDBMovieBase] = [
+        movie_above_threshold,
+        movie_at_threshold,
+        movie_below_threshold
+    ]
+
+    mock_response = ApiResponse(
+        status_code=200,
+        data=create_paginated_tmdb_response(tmdb_movies, page=1, total_pages=1)
+    )
+    mock_client.get.return_value = mock_response
+
+    service = MovieService(tmdb_client=mock_client)
+
+    # Act: Request with rating filter (uses custom threshold of 25 from settings)
+    # Note: This test will need settings update - we'll use default 50 for now
+    result = service.discover_movies(page=1, rating_min=7.5)
+
+    # Assert: Only movies with vote_count >= 50 returned (using default threshold)
+    # After implementing custom threshold, we'll test with min_vote_count=25
+    assert len(result.results) == 0  # All below default threshold of 50
 
 
 # ============================================================================

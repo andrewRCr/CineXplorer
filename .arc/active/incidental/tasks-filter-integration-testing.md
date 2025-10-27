@@ -263,35 +263,48 @@ then implement fixes to make them pass.
 
 **Approach**: Conservative enhancements with high ROI, low risk. No aggressive Phase 2 enhancements (too many false positives).
 
-### 3.1 Implement Vote Count Quality Filter
+### 3.1 Implement Vote Count Quality Filter ✅
 
 **Goal**: Exclude movies with unreliable ratings (low vote counts) when user filters by rating.
 
-- [ ] 3.1.1 Write unit tests for vote count filtering (TEST-FIRST)
-    - Test: Movies with <50 votes excluded when rating filter applied
-    - Test: Custom `min_vote_count` threshold respected
-    - Test: Movies without vote_count field excluded
-    - Test: Filtering not applied when no rating filter specified
-    - File: `backend/apps/movie/tests/test_result_filtering.py`
+- [x] 3.1.1 Write unit tests for vote count filtering (TEST-FIRST)
+    - **Completed**: 4 comprehensive tests added to `test_result_filtering.py`
+    - Tests: Low vote exclusion, no filter bypass, missing vote_count handling, threshold respect
+    - All tests follow existing patterns using `create_movie_dict()` helper
+    - Used DRY principles with existing fixtures and helpers
 
-- [ ] 3.1.2 Update `filter_movies_by_rating()` in `result_filtering.py`
-    - Add `min_vote_count` parameter (default: 50)
-    - Skip movies with `vote_count < min_vote_count` when rating filters applied
-    - Only applies when user filters by rating (doesn't affect unfiltered discovery)
+- [x] 3.1.2 Update `filter_movies_by_rating()` in `result_filtering.py`
+    - **Completed**: Added `min_vote_count` parameter (default: 50)
+    - Vote count check only applies when rating filters active (rating_min/rating_max specified)
+    - Movies with `vote_count < min_vote_count` or `None` excluded
+    - Comprehensive docstring with quality rationale and examples
 
-- [ ] 3.1.3 Add configuration to `settings.py`
-    - Environment variable: `TMDB_MIN_VOTE_COUNT_THRESHOLD` (default: 50)
-    - Configurable threshold for different environments
+- [x] 3.1.3 Add configuration to `settings.py`
+    - **Completed**: `TMDB_MIN_VOTE_COUNT_THRESHOLD` environment variable
+    - Default: 50 votes (statistically significant threshold)
+    - Configurable via environment for different deployments
 
-- [ ] 3.1.4 Update `_apply_filters()` to use vote count check
-    - Pass `min_vote_count` from settings when rating filters specified
-    - Log when movies excluded due to low vote count
+- [x] 3.1.4 Update `_apply_filters()` to use vote count check
+    - **Completed**: Passes `settings.TMDB_MIN_VOTE_COUNT_THRESHOLD` to filter function
+    - Import added: `from django.conf import settings`
+    - Integrated seamlessly with existing filter chain
 
-- [ ] 3.1.5 Verify tests pass
-    - Run unit tests, confirm all passing
-    - Verify implementation matches test expectations
+- [x] 3.1.5 Verify tests pass
+    - **Completed**: All 21 tests pass (4 new + 17 existing)
+    - Linting passes (ruff clean)
+    - Type checking passes (pyright 0 errors on modified files)
+    - Fixed compatibility: Updated `create_movie_dict()` helper to include `vote_count=100` default
+    - Additional changes needed:
+        - Added `vote_count` field to `MovieBaseSchema`
+        - Added `vote_count` field to `TMDBMovieBase` TypedDict (test fixtures)
+        - Updated `create_movie_base_from_tmdb()` to include vote_count in mapping
 
-**Expected Impact**: Significantly more reliable rating filters (no 1-2 vote movies with 10/10 ratings)
+**Actual Impact**:
+
+- Rating filters now exclude unreliable low-vote movies (e.g., 2 votes @ 10/10)
+- Only applies when user explicitly filters by rating (browsing unaffected)
+- Configurable threshold allows tuning for different environments
+- Comprehensive test coverage ensures behavior correctness
 
 ### 3.2 Implement Completeness Filter
 

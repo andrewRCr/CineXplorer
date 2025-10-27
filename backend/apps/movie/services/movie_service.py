@@ -24,7 +24,11 @@ from ..schemas import (
     MovieDetailSchema,
     PaginatedMovieResponseSchema,
 )
-from .result_filtering import filter_movies_by_rating, filter_movies_by_year
+from .result_filtering import (
+    filter_movies_by_completeness,
+    filter_movies_by_rating,
+    filter_movies_by_year,
+)
 from .schema_factories import (
     create_genre_list_from_tmdb,
     create_movie_detail_from_tmdb,
@@ -241,32 +245,8 @@ class MovieService:
         if pre_filter is not None:
             movies = pre_filter(movies)
 
-        # Step 3: Check if year/rating filtering is needed
-        has_filters = (
-            year_min is not None or year_max is not None or
-            rating_min is not None or rating_max is not None
-        )
-
-        # Early return if no filters needed
-        if not has_filters:
-            # If pre-filter was applied, we need to adjust the response
-            if pre_filter is not None:
-                adjusted_total = (
-                    len(movies) +
-                    (tmdb_response.total_results - len(tmdb_response.results))
-                )
-                filtered_response = TMDBMovieSearchResponse(
-                    page=tmdb_response.page,
-                    total_pages=tmdb_response.total_pages,
-                    total_results=adjusted_total,
-                    results=movies
-                )
-                return create_paginated_movie_response_from_tmdb(filtered_response.model_dump())
-            else:
-                # No filters at all - return original response
-                return create_paginated_movie_response_from_tmdb(tmdb_response.model_dump())
-
-        # Step 4: Apply year/rating filters
+        # Step 3: Apply completeness and year/rating filters (completeness always applied)
+        # Note: Completeness filter is ALWAYS applied for UI quality, even without other filters
         original_count = len(movies)
         filtered_movies = self._apply_filters(
             movies,
@@ -341,7 +321,7 @@ class MovieService:
         rating_min: float | None = None,
         rating_max: float | None = None,
     ) -> list[MovieBaseSchema]:
-        """Apply year and rating filters to movie list.
+        """Apply completeness, year, and rating filters to movie list.
 
         Args:
             movies: List of TMDBMovieBase objects from API response
@@ -364,6 +344,10 @@ class MovieService:
             if movie_dict.get('release_date') == '':
                 movie_dict['release_date'] = None
             movie_schemas.append(MovieBaseSchema.model_validate(movie_dict))
+
+        # Apply completeness filter first (always enabled - basic quality requirement)
+        # Exclude movies without posters or titles for better UI display quality
+        movie_schemas = filter_movies_by_completeness(movie_schemas)
 
         # Apply year filtering if specified
         if year_min is not None or year_max is not None:

@@ -181,6 +181,60 @@ def filter_movies_by_rating(
 
 
 # ============================================================================
+# Completeness Filtering
+# ============================================================================
+
+
+def filter_movies_by_completeness(
+    movies: list[MovieBaseSchema],
+) -> list[MovieBaseSchema]:
+    """Filter movies to ensure display quality by excluding incomplete records.
+
+    Excludes movies that are missing critical display fields. This ensures
+    the UI can properly render movie cards without broken images or missing data.
+
+    Exclusion criteria:
+    - Missing poster_path (empty string or None): No broken image placeholders in grid
+    - Empty or whitespace-only title: No blank movie cards
+
+    Args:
+        movies: List of MovieBaseSchema objects to filter
+
+    Returns:
+        Filtered list containing only movies with complete display data.
+
+    Examples:
+        >>> # Filter out movies without posters or titles
+        >>> complete = filter_movies_by_completeness(movies)
+
+    Note:
+        This filter is ALWAYS applied (not configurable) as it's a basic quality
+        requirement for proper UI display. Movies without posters create broken
+        image placeholders; movies without titles create confusing blank cards.
+
+    Quality Rationale:
+        TMDB sometimes returns movies with missing posters (especially older or
+        unreleased films) or placeholder/empty titles. These create poor UX and
+        should be filtered out before display.
+    """
+    filtered: list[MovieBaseSchema] = []
+
+    for movie in movies:
+        # Exclude movies without poster (broken images in grid)
+        if not movie.poster_path or movie.poster_path.strip() == '':
+            continue
+
+        # Exclude movies with empty or whitespace-only titles (blank cards)
+        if not movie.title or movie.title.strip() == '':
+            continue
+
+        # Movie has complete display data
+        filtered.append(movie)
+
+    return filtered
+
+
+# ============================================================================
 # Runtime Filtering (NOT IMPLEMENTED)
 # ============================================================================
 # Runtime filtering is NOT implemented because:

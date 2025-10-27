@@ -102,5 +102,5 @@ When you need to find information, use these pointers (don't load everything upf
 
 ---
 
-*This reference card is part of the ARC (Agentic, Recursive, Coordination) development framework. It provides
+*This reference card is part of the ARC development framework. It provides
 quick orientation and lookup guidance for AI assistants working on this project.*

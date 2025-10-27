@@ -266,6 +266,7 @@ class MovieService:
                 return create_paginated_movie_response_from_tmdb(tmdb_response.model_dump())
 
         # Step 4: Apply year/rating filters
+        original_count = len(movies)
         filtered_movies = self._apply_filters(
             movies,
             year_min,
@@ -273,6 +274,15 @@ class MovieService:
             rating_min,
             rating_max
         )
+        filtered_count = len(filtered_movies)
+
+        # Log if any movies were filtered out (data quality issues)
+        if filtered_count < original_count:
+            removed_count = original_count - filtered_count
+            logger.warning(
+                f"Backend filtering removed {removed_count} movies from TMDB response "
+                f"(TMDB sent {original_count}, we're returning {filtered_count})"
+            )
 
         # Step 5: Apply buffer mechanism if needed
         # If pre-filter exists, wrap fetch function to apply it to buffer too
@@ -726,19 +736,22 @@ class MovieService:
             Year and rating filters use two-pass architecture: TMDB API (primary)
             + backend filtering (catches data quality issues).
         """
-        logger.debug("Discover movies request", extra={
-            'operation': 'discover_movies',
-            'page': page,
-            'filters': filters,
-            'filter_count': len(filters)
-        })
+        logger.debug(
+            f"Discover movies request: page={page}, year_min={year_min}, year_max={year_max}, "
+            f"rating_min={rating_min}, rating_max={rating_max}, filters={filters}"
+        )
 
         # Build TMDB API parameters
         params: TMDBParams = {
             "include_adult": False,
             "include_video": False,
             "language": "en-US",
-            "region": filters.get('region', 'US'),
+            # NOTE: 'region' parameter is NOT compatible with primary_release_date filters
+            # When region is specified with primary_release_date, TMDB's behavior becomes
+            # undefined - it may ignore date filters or check ALL release dates worldwide.
+            # See: TMDB API research (external-research-analyst, 2025-10-27)
+            # For year-based filtering, we use primary_release_date without region.
+            # "region": filters.get('region', 'US'),  # REMOVED - incompatible with primary_release_date
             "page": page,
         }
 

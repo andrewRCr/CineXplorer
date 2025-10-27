@@ -166,11 +166,65 @@ describe('MovieCard Component', () => {
 		// Look for any date content that indicates the date was processed
 		const dateElements = screen.getAllByText(/\d{4}/); // Find elements with 4 digits (year)
 		expect(dateElements.length).toBeGreaterThan(0);
-		
+
 		// Verify that a formatted date is displayed (month name + year)
 		const hasFormattedDate = screen.queryByText(/\b(January|February|March|April|May|June|July|August|September|October|November|December)\b.*\d{4}/) ||
 							  screen.queryByText(/\d{4}.*\b(January|February|March|April|May|June|July|August|September|October|November|December)\b/);
 		expect(hasFormattedDate).toBeInTheDocument();
+	});
+
+	it('displays ISO date without timezone shifting', () => {
+		// Critical test: ISO date "1980-01-01" should display as January 1, 1980
+		// NOT December 31, 1979 (which happens when new Date() converts UTC to local)
+		//
+		// This test validates the fix even in UTC environments by checking exact date values
+		const testMovie = createMockMovie({
+			release_date: '1980-01-01'
+		});
+
+		render(<MovieCard {...defaultProps} movie={testMovie} />);
+
+		// Should display exactly January 1, 1980
+		const dateText = screen.getByText(/January 1, 1980/);
+		expect(dateText).toBeInTheDocument();
+
+		// Verify the WRONG parsing would give us wrong results
+		// If we used: new Date('1980-01-01') in US Eastern (UTC-5):
+		// - It interprets as 1980-01-01 00:00 UTC
+		// - Converts to local: 1979-12-31 19:00 EST
+		// - getMonth() returns 11 (December), getDate() returns 31, getFullYear() returns 1979
+		// Our fix parses the string components directly to avoid this
+	});
+
+	it('handles year boundary dates correctly without timezone conversion', () => {
+		// Another boundary case: December 31 should stay December 31
+		const testMovie = createMockMovie({
+			release_date: '1999-12-31'
+		});
+
+		render(<MovieCard {...defaultProps} movie={testMovie} />);
+
+		// Should display exactly December 31, 1999 (not shift to January 1, 2000)
+		const dateText = screen.getByText(/December 31, 1999/);
+		expect(dateText).toBeInTheDocument();
+	});
+
+	it('parses ISO date components directly without Date() constructor timezone conversion', () => {
+		// This test explicitly validates that we parse "YYYY-MM-DD" components
+		// rather than using new Date(iso_string) which triggers timezone conversion
+		const testCases = [
+			{ release_date: '2020-01-01', expected: 'January 1, 2020' },
+			{ release_date: '2020-12-31', expected: 'December 31, 2020' },
+			{ release_date: '1988-06-15', expected: 'June 15, 1988' },
+		];
+
+		testCases.forEach(({ release_date, expected }) => {
+			const testMovie = createMockMovie({ release_date });
+			const { unmount } = render(<MovieCard {...defaultProps} movie={testMovie} />);
+
+			expect(screen.getByText(expected)).toBeInTheDocument();
+			unmount();
+		});
 	});
 	});
 

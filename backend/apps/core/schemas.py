@@ -66,7 +66,26 @@ class LogHealthCheckResponse(Schema):
     error: str | None = None  # Only included on failure
 
 
+# Development Console Logging Schemas
+
+
+class DevConsoleLogRequest(Schema):
+    """Request schema for development console log file writes."""
+
+    log_line: str  # Formatted log line to write to file
+
+
+class DevConsoleLogResponse(Schema):
+    """Response schema for development console log writes."""
+
+    status: str  # "ok" or "error"
+    file: str | None = None  # File name written to (on success)
+    error: str | None = None  # Error message (on failure)
+
+
 __all__ = [
+    "DevConsoleLogRequest",
+    "DevConsoleLogResponse",
     "FrontendLogEntrySchema",
     "FrontendLogErrorResponse",
     "FrontendLogSuccessResponse",

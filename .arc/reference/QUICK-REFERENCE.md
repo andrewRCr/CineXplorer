@@ -66,6 +66,21 @@ Browser → Caddy Proxy (8444) → Backend (8000) HTTPS
 - All API endpoints are relative to `/api/` (e.g., `/movies/discover`, not `/api/movies/discover`)
 - Redis runs internally (no exposed port needed for development)
 
+### Console Logging for AI Debugging
+
+Browser console logs automatically captured to `backend/logs/frontend/.console-logs.txt` in development.
+
+```bash
+# Read logs
+cat backend/logs/frontend/.console-logs.txt
+
+# Clear logs
+rm backend/logs/frontend/.console-logs.txt
+
+# Tail in real-time
+tail -f backend/logs/frontend/.console-logs.txt
+```
+
 ---
 
 ## Command Patterns

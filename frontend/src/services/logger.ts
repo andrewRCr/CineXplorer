@@ -249,6 +249,11 @@ class Logger {
 			this.logToStorage(logEntry);
 		}
 
+		// File logging for development (AI debugging)
+		if (this.detectEnvironment() === 'development') {
+			this.logToFile(logEntry);
+		}
+
 		// Backend reporting for critical errors
 		if (this.config.enableBackendReporting && level >= this.config.backendReportingThreshold) {
 			this.reportToBackend(logEntry);
@@ -316,6 +321,46 @@ class Logger {
 		if (this.logStorage.length > this.config.maxStorageEntries) {
 			this.logStorage.shift(); // Remove oldest entry
 		}
+	}
+
+	/**
+	 * Write logs to file for AI debugging (development only)
+	 *
+	 * Sends formatted log lines to Django endpoint which writes to frontend/logs/.console-logs.txt.
+	 * This allows AI assistants to read browser console logs without manual copy/paste.
+	 */
+	private logToFile(entry: LogEntry): void {
+		// Format log entry for file output
+		const timestamp = entry.timestamp.toISOString();
+		const level = LogLevel[entry.level];
+		const message = entry.message;
+
+		// Include data if present (formatted for readability)
+		let dataStr = '';
+		if (entry.data) {
+			try {
+				const jsonData = JSON.stringify(entry.data, null, 2);
+				// Indent each line of the JSON for nice formatting
+				const indentedData = jsonData.split('\n').map(line => '  ' + line).join('\n');
+				dataStr = `\n  Data:\n${indentedData}`;
+			} catch {
+				dataStr = `\n  Data: [Could not serialize]`;
+			}
+		}
+
+		const logLine = `[${timestamp}] ${level}: ${message}${dataStr}\n`;
+
+		// Send to Django backend endpoint (fire-and-forget)
+		fetch('https://localhost:8000/api/dev-logs/write/', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify({ log_line: logLine }),
+		}).catch(() => {
+			// Silent fail if endpoint not available
+			// Don't pollute console with file logging errors
+		});
 	}
 
 	/**

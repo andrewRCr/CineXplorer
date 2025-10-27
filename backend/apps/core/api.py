@@ -21,6 +21,8 @@ from ninja.errors import HttpError
 from middleware.logging import get_correlation_id
 
 from .schemas import (
+    DevConsoleLogRequest,
+    DevConsoleLogResponse,
     FrontendLogEntrySchema,
     FrontendLogErrorResponse,
     FrontendLogSuccessResponse,
@@ -273,6 +275,63 @@ def _process_log_entry(data: FrontendLogEntrySchema, request: HttpRequest) -> bo
             },
         )
         return False
+
+
+@core_router.post(
+    "/dev-logs/write/",
+    auth=None,  # Development only, no auth needed
+    response={200: DevConsoleLogResponse, 403: DevConsoleLogResponse, 500: DevConsoleLogResponse},
+)
+def write_dev_console_log(
+    request: HttpRequest, payload: DevConsoleLogRequest
+) -> tuple[int, DevConsoleLogResponse]:
+    """
+    Development-only endpoint to write browser console logs to file.
+
+    This endpoint receives formatted log lines from the frontend logger
+    and appends them to backend/logs/frontend/.console-logs.txt for AI debugging.
+
+    Args:
+        request: HTTP request object
+        log_line: Formatted log line to write to file
+
+    Returns:
+        Status response indicating success or failure
+
+    Security:
+        - Only available in DEBUG mode
+        - No authentication required (localhost development only)
+        - File path is fixed to prevent directory traversal
+    """
+    from pathlib import Path
+
+    # Only available in development mode
+    if not settings.DEBUG:
+        return 403, DevConsoleLogResponse(
+            status="forbidden",
+            error="This endpoint is only available in development mode",
+        )
+
+    try:
+        # Fixed path to prevent directory traversal
+        # Write to backend/logs/frontend which is mounted in Docker
+        log_file = Path(settings.BASE_DIR) / "logs" / "frontend" / ".console-logs.txt"
+
+        # Ensure parent directory exists
+        log_file.parent.mkdir(parents=True, exist_ok=True)
+
+        # Append log line to file
+        with log_file.open("a", encoding="utf-8") as f:
+            f.write(payload.log_line)
+
+        return 200, DevConsoleLogResponse(status="ok", file=str(log_file.name))
+
+    except Exception as e:
+        app_logger.error(f"Failed to write dev console log: {e!s}")
+        return 500, DevConsoleLogResponse(
+            status="error",
+            error="Failed to write log file",
+        )
 
 
 __all__ = ["core_router"]

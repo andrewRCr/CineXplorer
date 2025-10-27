@@ -64,10 +64,20 @@ const MovieDetail = () => {
 
 	const formattedReleaseDate = movie?.release_date
 		? (() => {
-				const date = new Date(movie.release_date);
-				const month = date.getMonth() + 1;
-				const day = date.getDate();
-				const year = date.getFullYear();
+				// Parse ISO date (YYYY-MM-DD) without timezone conversion
+				// Using new Date(iso_string) causes timezone shifts (e.g., "1980-01-01" → "12/31/1979" in US Eastern)
+				// Solution: Parse components directly to avoid UTC → local timezone conversion
+				const dateParts = movie.release_date.split("-");
+				if (dateParts.length !== 3) return "";
+
+				const year = Number.parseInt(dateParts[0], 10);
+				const month = Number.parseInt(dateParts[1], 10);
+				const day = Number.parseInt(dateParts[2], 10);
+
+				if (Number.isNaN(year) || Number.isNaN(month) || Number.isNaN(day)) {
+					return "";
+				}
+
 				return `${month}/${day}/${year}`;
 		  })()
 		: "";

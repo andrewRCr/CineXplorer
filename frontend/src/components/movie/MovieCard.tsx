@@ -101,8 +101,27 @@ const MovieCard = ({ movie, currentPage, source, query }: MovieCardProps) => {
 	// Memoize expensive date formatting
 	const formattedDate = useMemo(() => {
 		if (!movie.release_date) return "Release date unknown";
-		const date = new Date(movie.release_date);
+
+		// Parse ISO date (YYYY-MM-DD) without timezone conversion
+		// CRITICAL: new Date(iso_string) interprets as UTC then converts to local timezone
+		// which causes "1980-01-01" to display as "December 31, 1979" in US timezones
+		// Solution: Parse components and create date in local timezone directly
+		const dateParts = movie.release_date.split("-");
+		if (dateParts.length !== 3) return "Release date unknown";
+
+		const year = Number.parseInt(dateParts[0], 10);
+		const month = Number.parseInt(dateParts[1], 10);
+		const day = Number.parseInt(dateParts[2], 10);
+
+		// Validate parsed values
+		if (Number.isNaN(year) || Number.isNaN(month) || Number.isNaN(day)) {
+			return "Release date unknown";
+		}
+
+		// Create date in local timezone (month is 0-indexed in Date constructor)
+		const date = new Date(year, month - 1, day);
 		if (Number.isNaN(date.getTime())) return "Release date unknown";
+
 		return date.toLocaleDateString("en-US", {
 			year: "numeric",
 			month: "long",

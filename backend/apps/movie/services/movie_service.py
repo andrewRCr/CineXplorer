@@ -349,9 +349,9 @@ class MovieService:
         # Exclude movies without posters or titles for better UI display quality
         movie_schemas = filter_movies_by_completeness(movie_schemas)
 
-        # Apply year filtering if specified
-        if year_min is not None or year_max is not None:
-            movie_schemas = filter_movies_by_year(movie_schemas, year_min, year_max)
+        # Apply year filtering (always enabled for historical validation)
+        # Even without user filters, this excludes pre-1888 dates (data quality)
+        movie_schemas = filter_movies_by_year(movie_schemas, year_min, year_max)
 
         # Apply rating filtering if specified (includes vote count quality check)
         if rating_min is not None or rating_max is not None:

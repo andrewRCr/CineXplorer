@@ -33,18 +33,27 @@ if TYPE_CHECKING:
 # Year Filtering
 # ============================================================================
 
+# First film ever made: Roundhay Garden Scene (1888)
+# Any movies with earlier release dates are TMDB data quality issues
+FIRST_FILM_YEAR = 1888
+
 
 def filter_movies_by_year(
     movies: list[MovieBaseSchema],
     year_min: int | None = None,
     year_max: int | None = None,
 ) -> list[MovieBaseSchema]:
-    """Filter movies by release year range.
+    """Filter movies by release year range with historical validation.
 
     Filters out movies with release dates outside the specified year range.
     This is necessary because TMDB API sometimes returns movies from incorrect
     years despite API filters being applied (likely due to re-releases,
     international releases, or data hygiene issues).
+
+    Historical Validation:
+        Always excludes movies with release dates before 1888 (first film ever made).
+        Any dates before 1888 are TMDB data quality issues and cannot represent
+        actual films. This validation applies regardless of user-specified filters.
 
     Args:
         movies: List of MovieBaseSchema objects to filter
@@ -52,11 +61,11 @@ def filter_movies_by_year(
         year_max: Maximum year (inclusive). None means no upper bound.
 
     Returns:
-        Filtered list containing only movies within the year range.
+        Filtered list containing only movies within the year range and after 1888.
         Movies without release_date are excluded.
 
     Examples:
-        >>> # Filter to 2020s movies
+        >>> # Filter to 2020s movies (automatically excludes pre-1888)
         >>> filtered = filter_movies_by_year(movies, year_min=2020, year_max=2029)
 
         >>> # Filter to movies from 2020 onward
@@ -68,14 +77,13 @@ def filter_movies_by_year(
         >>> # Single year (2022 only)
         >>> filtered = filter_movies_by_year(movies, year_min=2022, year_max=2022)
 
+        >>> # No filters specified - still validates historical dates
+        >>> filtered = filter_movies_by_year(movies)  # Excludes pre-1888
+
     Note:
         Movies with missing release_date (None) are automatically filtered out,
         as we cannot determine if they match the year criteria.
     """
-    # If no year filters specified, return all movies
-    if year_min is None and year_max is None:
-        return movies
-
     filtered: list[MovieBaseSchema] = []
 
     for movie in movies:
@@ -85,13 +93,18 @@ def filter_movies_by_year(
 
         movie_year = movie.release_date.year
 
-        # Apply year range filters
+        # Historical validation: Exclude movies before first film (1888)
+        # This is ALWAYS applied, regardless of user filters
+        if movie_year < FIRST_FILM_YEAR:
+            continue
+
+        # Apply user-specified year range filters
         if year_min is not None and movie_year < year_min:
             continue
         if year_max is not None and movie_year > year_max:
             continue
 
-        # Movie passes year filter
+        # Movie passes all year filters
         filtered.append(movie)
 
     return filtered

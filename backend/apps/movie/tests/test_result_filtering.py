@@ -22,7 +22,11 @@ from unittest.mock import Mock
 from core.services.api_response import ApiResponse
 from movie.schemas import PaginatedMovieResponseSchema
 from movie.services.movie_service import MovieService
-from movie.tests.test_fixtures_tmdb import TMDBMovieBase, TMDBMovieResponse
+from movie.tests.test_fixtures_tmdb import (
+    TMDBMovieBase,
+    create_movie_dict,
+    create_paginated_tmdb_response,
+)
 
 if TYPE_CHECKING:
     pass
@@ -31,71 +35,10 @@ if TYPE_CHECKING:
 # ============================================================================
 # Test Fixtures and Helpers
 # ============================================================================
-
-
-def create_movie_dict(
-    tmdb_id: int,
-    title: str,
-    release_date: str,
-    vote_average: float,
-    runtime: int | None = None,
-    vote_count: int | None = None,
-) -> TMDBMovieBase:
-    """Create a mock TMDB movie dictionary for testing.
-
-    Args:
-        tmdb_id: TMDB movie ID
-        title: Movie title
-        release_date: Release date in YYYY-MM-DD format
-        vote_average: Rating (0.0-10.0 scale)
-        runtime: Optional runtime in minutes
-        vote_count: Number of votes (defaults to 100 for reliable rating)
-
-    Returns:
-        Dictionary matching TMDB API movie response structure
-    """
-    # Default vote_count to 100 (well above 50 threshold) for reliable ratings
-    # Tests specifically testing vote count behavior can override this
-    if vote_count is None:
-        vote_count = 100
-
-    return {
-        'id': tmdb_id,
-        'title': title,
-        'poster_path': f'/poster_{tmdb_id}.jpg',
-        'release_date': release_date,
-        'vote_average': vote_average,
-        'vote_count': vote_count,
-        'runtime': runtime,
-    }
-
-
-def create_paginated_tmdb_response(
-    movies: list[TMDBMovieBase],
-    page: int = 1,
-    total_pages: int = 1,
-    total_results: int | None = None,
-) -> TMDBMovieResponse:
-    """Create a mock TMDB paginated response for testing.
-
-    Args:
-        movies: List of movie dictionaries
-        page: Current page number
-        total_pages: Total number of pages
-        total_results: Total number of results (defaults to len(movies))
-
-    Returns:
-        Dictionary matching TMDB API paginated response structure
-    """
-    if total_results is None:
-        total_results = len(movies)
-
-    return {
-        'page': page,
-        'total_pages': total_pages,
-        'total_results': total_results,
-        'results': movies,
-    }
+# Helpers imported from test_fixtures_tmdb.py:
+# - create_movie_dict(): Create mock TMDB movie dictionaries
+# - create_paginated_tmdb_response(): Create mock paginated responses
+# ============================================================================
 
 
 # ============================================================================
@@ -1044,3 +987,174 @@ def test_no_buffer_fetch_when_no_filters_applied() -> None:
     # Assert: Only one API call (no buffer fetch)
     assert mock_client.get.call_count == 1
     assert len(result.results) == 20
+
+
+# ============================================================================
+# Completeness Filtering Tests
+# ============================================================================
+
+
+def test_filter_movies_excludes_missing_poster() -> None:
+    """Test that movies without poster_path are excluded for display quality."""
+    # Arrange: Mock movies with and without posters
+    movies_with_data = [
+        create_movie_dict(1, "Has Poster", "2022-01-01", 7.5),
+        create_movie_dict(2, "Missing Poster", "2022-01-01", 8.0, poster_path=''),
+        create_movie_dict(3, "Has Poster 2", "2022-01-01", 7.8),
+        create_movie_dict(4, "Null Poster", "2022-01-01", 8.2, poster_path=''),
+    ]
+
+    mock_client = Mock(spec=['get'])
+    mock_response = ApiResponse(
+        status_code=200,
+        data=create_paginated_tmdb_response(movies_with_data, page=1, total_pages=1)
+    )
+    mock_client.get.return_value = mock_response
+
+    service = MovieService(tmdb_client=mock_client)
+
+    # Act: Request movies
+    result = service.discover_movies(page=1)
+
+    # Assert: Only movies with posters returned
+    assert len(result.results) == 2
+    returned_ids = {movie.tmdb_id for movie in result.results}
+    assert returned_ids == {1, 3}
+
+    # Verify all returned movies have posters
+    for movie in result.results:
+        assert movie.poster_path is not None
+        assert movie.poster_path != ''
+
+
+def test_filter_movies_excludes_empty_title() -> None:
+    """Test that movies with empty or whitespace-only titles are excluded."""
+    # Arrange: Mock movies with various title states
+    # Note: We need to override TypedDict validation, so create dicts directly
+
+    tmdb_movies: list[TMDBMovieBase] = [
+        create_movie_dict(1, "Valid Title", "2022-01-01", 7.5),
+        {  # Empty title
+            'id': 2,
+            'title': '',
+            'poster_path': '/poster_2.jpg',
+            'release_date': '2022-01-01',
+            'vote_average': 8.0,
+            'vote_count': 100,
+            'runtime': None,
+        },  # type: ignore
+        create_movie_dict(3, "Another Valid", "2022-01-01", 7.8),
+        {  # Whitespace-only title
+            'id': 4,
+            'title': '   ',
+            'poster_path': '/poster_4.jpg',
+            'release_date': '2022-01-01',
+            'vote_average': 8.2,
+            'vote_count': 100,
+            'runtime': None,
+        },  # type: ignore
+    ]
+
+    mock_client = Mock(spec=['get'])
+    mock_response = ApiResponse(
+        status_code=200,
+        data=create_paginated_tmdb_response(tmdb_movies, page=1, total_pages=1)
+    )
+    mock_client.get.return_value = mock_response
+
+    service = MovieService(tmdb_client=mock_client)
+
+    # Act: Request movies
+    result = service.discover_movies(page=1)
+
+    # Assert: Only movies with valid titles returned
+    assert len(result.results) == 2
+    returned_ids = {movie.tmdb_id for movie in result.results}
+    assert returned_ids == {1, 3}
+
+    # Verify all returned movies have valid titles
+    for movie in result.results:
+        assert movie.title is not None
+        assert movie.title.strip() != ''
+
+
+def test_filter_movies_completeness_with_all_valid() -> None:
+    """Test that completeness filter doesn't exclude valid movies."""
+    # Arrange: All movies have complete data
+    movies_with_data = [
+        create_movie_dict(i, f"Complete Movie {i}", "2022-01-01", 7.5 + (i * 0.1))
+        for i in range(1, 21)
+    ]
+
+    mock_client = Mock(spec=['get'])
+    mock_response = ApiResponse(
+        status_code=200,
+        data=create_paginated_tmdb_response(movies_with_data, page=1, total_pages=1)
+    )
+    mock_client.get.return_value = mock_response
+
+    service = MovieService(tmdb_client=mock_client)
+
+    # Act: Request movies
+    result = service.discover_movies(page=1)
+
+    # Assert: All movies returned (none excluded)
+    assert len(result.results) == 20
+
+
+def test_completeness_filter_applies_with_other_filters() -> None:
+    """Test that completeness filter works in combination with year/rating filters."""
+    # Arrange: Mix of complete/incomplete movies with year/rating variations
+    tmdb_movies: list[TMDBMovieBase] = [
+        # Complete, matching all filters
+        create_movie_dict(1, "Perfect Movie", "2022-01-01", 8.0),
+        # Missing poster, matches year/rating (should be excluded)
+        create_movie_dict(2, "No Poster", "2022-01-01", 8.0, poster_path=''),
+        # Complete, wrong year (should be excluded)
+        create_movie_dict(3, "Wrong Year", "2019-01-01", 8.0),
+        # Complete, low rating (should be excluded)
+        create_movie_dict(4, "Low Rating", "2022-01-01", 6.0),
+        # Complete, matching all filters
+        create_movie_dict(5, "Another Perfect", "2022-01-01", 8.5),
+        # Empty title, matches year/rating (should be excluded)
+        {
+            'id': 6,
+            'title': '',
+            'poster_path': '/poster_6.jpg',
+            'release_date': '2022-01-01',
+            'vote_average': 8.0,
+            'vote_count': 100,
+            'runtime': None,
+        },  # type: ignore
+    ]
+
+    mock_client = Mock(spec=['get'])
+    mock_response = ApiResponse(
+        status_code=200,
+        data=create_paginated_tmdb_response(tmdb_movies, page=1, total_pages=1)
+    )
+    mock_client.get.return_value = mock_response
+
+    service = MovieService(tmdb_client=mock_client)
+
+    # Act: Request with year and rating filters
+    result = service.discover_movies(
+        page=1,
+        year_min=2022,
+        year_max=2022,
+        rating_min=7.5
+    )
+
+    # Assert: Only complete movies matching all filters returned
+    assert len(result.results) == 2
+    returned_ids = {movie.tmdb_id for movie in result.results}
+    assert returned_ids == {1, 5}
+
+    # Verify all movies have complete data and match filters
+    for movie in result.results:
+        assert movie.poster_path is not None and movie.poster_path != ''
+        assert movie.title is not None and movie.title.strip() != ''
+        assert movie.release_date is not None
+        assert movie.release_date.year == 2022
+        assert movie.vote_average is not None
+        assert movie.vote_average >= 7.5

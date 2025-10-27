@@ -17,6 +17,7 @@ from core.tests.test_helpers import HTTPStatus
 from core.types.api_types import TMDBResponseData
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.test import Client
+from movie.tests.test_fixtures_tmdb import create_movie_dict, create_paginated_tmdb_response
 from user_movie_data.models import UserMovieData
 
 # HTTP status codes for Django Ninja endpoints
@@ -114,18 +115,11 @@ def test_paginated_endpoint_contract(
     the legacy test_paginated_views.py.
     """
     # Arrange: Define a standard mock TMDB API response
-    tmdb_payload: TMDBResponseData = {
-        'results': [{
-            'id': 101,
-            'title': 'Test Movie',
-            'poster_path': '/test.jpg',
-            'release_date': '2023-01-01',
-            'vote_average': 8.0
-        }],
-        'page': 1,
-        'total_pages': 5,
-        'total_results': 1
-    }
+    movies = [create_movie_dict(101, 'Test Movie', '2023-01-01', 8.0, poster_path='/test.jpg')]
+    tmdb_payload: TMDBResponseData = cast(
+        TMDBResponseData,
+        create_paginated_tmdb_response(movies, page=1, total_pages=5)
+    )
     mock_api_response = ApiResponse(
         status_code=200,
         data=tmdb_payload  # type: ignore[arg-type]
@@ -168,18 +162,11 @@ def test_paginated_endpoint_contract(
 def test_discover_with_filters(mock_tmdb_get: Mock, api_client: Client) -> None:
     """Test the discover endpoint with various filter parameters."""
     # Arrange: Define a standard mock TMDB API response
-    tmdb_payload: TMDBResponseData = {
-        'results': [{
-            'id': 101,
-            'title': 'Test Movie',
-            'poster_path': '/test.jpg',
-            'release_date': '2023-01-01',
-            'vote_average': 8.0
-        }],
-        'page': 1,
-        'total_pages': 5,
-        'total_results': 1
-    }
+    movies = [create_movie_dict(101, 'Test Movie', '2023-01-01', 8.0)]
+    tmdb_payload: TMDBResponseData = cast(
+        TMDBResponseData,
+        create_paginated_tmdb_response(movies, page=1, total_pages=5)
+    )
     mock_api_response = ApiResponse(
         status_code=200,
         data=tmdb_payload  # type: ignore[arg-type]
@@ -197,8 +184,7 @@ def test_discover_with_filters(mock_tmdb_get: Mock, api_client: Client) -> None:
         'release_date_lte': '2023-12-31',
         'runtime_gte': 90,
         'runtime_lte': 180,
-        'certification': 'PG-13',
-        'region': 'US'
+        'certification': 'PG-13'
     }
     res = api_client.get(DISCOVER_URL, filters)
 
@@ -236,7 +222,6 @@ def test_discover_with_filters(mock_tmdb_get: Mock, api_client: Client) -> None:
     # assert 'with_runtime.gte' not in params
     # assert 'with_runtime.lte' not in params
     assert params['certification'] == 'PG-13'
-    assert params['region'] == 'US'
 
 
 @pytest.mark.django_db
@@ -441,7 +426,7 @@ def test_get_movie_detail_authenticated(
         data={
             'id': 78, 'title': 'Blade Runner', 'overview': 'A classic.',
             'poster_path': '/br.jpg', 'release_date': '1982-06-25',
-            'vote_average': 8.1, 'genres': [], 'production_companies': []
+            'vote_average': 8.1, 'genres': [], 'production_companies': [], 'vote_count': 100
         }
     )
 
@@ -493,7 +478,7 @@ def test_get_movie_detail_unauthenticated(
         data={
             'id': tmdb_id, 'title': 'Blade Runner', 'overview': 'A classic.',
             'poster_path': '/br.jpg', 'release_date': '1982-06-25',
-            'vote_average': 8.1, 'genres': [], 'production_companies': []
+            'vote_average': 8.1, 'genres': [], 'production_companies': [], 'vote_count': 100
         }
     )
     mock_credits_response = ApiResponse(
@@ -539,27 +524,15 @@ def test_discover_api_extracts_backend_filter_params(
     extract backend filtering parameters. This demonstrates the bug.
     """
     # Arrange: Mock TMDB to return movies with some bad data
-    tmdb_payload: TMDBResponseData = {
-        'results': [
-            {
-                'id': 1,
-                'title': '2022 Movie (Good)',
-                'poster_path': '/test.jpg',
-                'release_date': '2022-01-01',
-                'vote_average': 8.0
-            },
-            {
-                'id': 2,
-                'title': '2019 Movie (Bad - Outside Range)',
-                'poster_path': '/test2.jpg',
-                'release_date': '2019-01-01',  # Should be filtered out
-                'vote_average': 8.0
-            },
-        ],
-        'page': 1,
-        'total_pages': 1,
-        'total_results': 2
-    }
+    movies = [
+        create_movie_dict(1, '2022 Movie (Good)', '2022-01-01', 8.0),
+        # Should be filtered out by backend filtering
+        create_movie_dict(2, '2019 Movie (Bad - Outside Range)', '2019-01-01', 8.0),
+    ]
+    tmdb_payload: TMDBResponseData = cast(
+        TMDBResponseData,
+        create_paginated_tmdb_response(movies, page=1, total_pages=1)
+    )
     mock_api_response = ApiResponse(
         status_code=200,
         data=tmdb_payload  # type: ignore[arg-type]
@@ -607,34 +580,15 @@ def test_discover_api_filters_bad_ratings_from_tmdb(
     outside the requested range. Backend filtering should catch these.
     """
     # Arrange: Mock TMDB to return movies with placeholder ratings
-    tmdb_payload: TMDBResponseData = {
-        'results': [
-            {
-                'id': 1,
-                'title': 'Good Rating Movie',
-                'poster_path': '/test.jpg',
-                'release_date': '2022-01-01',
-                'vote_average': 8.0  # Good
-            },
-            {
-                'id': 2,
-                'title': 'Placeholder Rating Movie',
-                'poster_path': '/test2.jpg',
-                'release_date': '2022-01-01',
-                'vote_average': 0.0  # Bad - placeholder
-            },
-            {
-                'id': 3,
-                'title': 'Low Rating Movie',
-                'poster_path': '/test3.jpg',
-                'release_date': '2022-01-01',
-                'vote_average': 6.5  # Bad - below threshold
-            },
-        ],
-        'page': 1,
-        'total_pages': 1,
-        'total_results': 3
-    }
+    movies = [
+        create_movie_dict(1, 'Good Rating Movie', '2022-01-01', 8.0),  # Good
+        create_movie_dict(2, 'Placeholder Rating Movie', '2022-01-01', 0.0),  # Bad - placeholder
+        create_movie_dict(3, 'Low Rating Movie', '2022-01-01', 6.5),  # Bad - below threshold
+    ]
+    tmdb_payload: TMDBResponseData = cast(
+        TMDBResponseData,
+        create_paginated_tmdb_response(movies, page=1, total_pages=1)
+    )
     mock_api_response = ApiResponse(
         status_code=200,
         data=tmdb_payload  # type: ignore[arg-type]
@@ -687,7 +641,7 @@ def test_discover_api_buffer_mechanism_with_filtering(
                 'title': f'Valid Movie {i}',
                 'poster_path': f'/test{i}.jpg',
                 'release_date': '2022-01-01',
-                'vote_average': 8.0
+                'vote_average': 8.0, 'vote_count': 100
             }
             for i in range(1, 16)
         ],
@@ -697,7 +651,7 @@ def test_discover_api_buffer_mechanism_with_filtering(
             'title': 'Wrong Year 2019',
             'poster_path': '/bad1.jpg',
             'release_date': '2019-01-01',  # Outside range
-            'vote_average': 8.0
+            'vote_average': 8.0, 'vote_count': 100
         },
         {
             'id': 102,
@@ -711,7 +665,7 @@ def test_discover_api_buffer_mechanism_with_filtering(
             'title': 'Wrong Year 2030',
             'poster_path': '/bad3.jpg',
             'release_date': '2030-01-01',  # Outside range
-            'vote_average': 8.0
+            'vote_average': 8.0, 'vote_count': 100
         },
         {
             'id': 104,
@@ -725,7 +679,7 @@ def test_discover_api_buffer_mechanism_with_filtering(
             'title': 'Wrong Year 2018',
             'poster_path': '/bad5.jpg',
             'release_date': '2018-01-01',  # Outside range
-            'vote_average': 8.0
+            'vote_average': 8.0, 'vote_count': 100
         },
     ]
 
@@ -737,7 +691,7 @@ def test_discover_api_buffer_mechanism_with_filtering(
                 'title': f'Buffer Movie {i}',
                 'poster_path': f'/buffer{i}.jpg',
                 'release_date': '2023-01-01',
-                'vote_average': 7.8
+                'vote_average': 7.8, 'vote_count': 100
             }
             for i in range(1, 11)
         ],

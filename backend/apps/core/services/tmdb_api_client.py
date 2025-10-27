@@ -201,43 +201,46 @@ class TMDBApiClient(BaseApiClient):
 
         # DEBUG-level detailed logging: Log first few results for debugging
         # This helps diagnose TMDB filtering behavior and data quality issues
-        if self.logger.isEnabledFor(logging.DEBUG):
-            # Include sample results if available (first 3 movies)
-            if 'results' in data and hasattr(data['results'], '__iter__'):
-                results = data['results']
-                if hasattr(results, '__len__') and len(results) > 0:  # type: ignore[arg-type]
-                    sample_count = min(3, len(results))  # type: ignore[arg-type]
-                    sample_results = []
-                    for i in range(sample_count):
-                        try:
-                            movie = results[i]  # type: ignore[index]
-                            # Extract key fields for debugging (title, year, ID)
-                            sample_results.append({
-                                'tmdb_id': movie.get('id') if hasattr(movie, 'get') else None,
-                                'title': movie.get('title') if hasattr(movie, 'get') else None,
-                                'release_date': movie.get('release_date') if hasattr(movie, 'get') else None,
-                                'vote_average': movie.get('vote_average') if hasattr(movie, 'get') else None,
-                            })
-                        except (IndexError, TypeError, AttributeError):
-                            continue
+        has_results = 'results' in data and hasattr(data['results'], '__iter__')
+        if self.logger.isEnabledFor(logging.DEBUG) and has_results:
+            results = data['results']
+            if hasattr(results, '__len__') and len(results) > 0:  # type: ignore[arg-type]
+                sample_count = min(3, len(results))  # type: ignore[arg-type]
+                sample_results: list[dict[str, object]] = []
+                for i in range(sample_count):
+                    try:
+                        movie = results[i]  # type: ignore[index]
+                        # Extract key fields for debugging (title, year, ID)
+                        release = movie.get('release_date') if hasattr(movie, 'get') else None
+                        vote_avg = movie.get('vote_average') if hasattr(movie, 'get') else None
+                        sample_results.append({
+                            'tmdb_id': movie.get('id') if hasattr(movie, 'get') else None,
+                            'title': movie.get('title') if hasattr(movie, 'get') else None,
+                            'release_date': release,
+                            'vote_average': vote_avg,
+                        })
+                    except (IndexError, TypeError, AttributeError):
+                        continue
 
-                    # Log ALL results for complete debugging visibility
-                    all_results = []
-                    for i in range(len(results)):  # type: ignore[arg-type]
-                        try:
-                            movie = results[i]  # type: ignore[index]
-                            all_results.append({
-                                'tmdb_id': movie.get('id') if hasattr(movie, 'get') else None,
-                                'title': movie.get('title') if hasattr(movie, 'get') else None,
-                                'release_date': movie.get('release_date') if hasattr(movie, 'get') else None,
-                                'vote_average': movie.get('vote_average') if hasattr(movie, 'get') else None,
-                            })
-                        except (IndexError, TypeError, AttributeError):
-                            continue
+                # Log ALL results for complete debugging visibility
+                all_results: list[dict[str, object]] = []
+                for i in range(len(results)):  # type: ignore[arg-type]
+                    try:
+                        movie = results[i]  # type: ignore[index]
+                        release = movie.get('release_date') if hasattr(movie, 'get') else None
+                        vote_avg = movie.get('vote_average') if hasattr(movie, 'get') else None
+                        all_results.append({
+                            'tmdb_id': movie.get('id') if hasattr(movie, 'get') else None,
+                            'title': movie.get('title') if hasattr(movie, 'get') else None,
+                            'release_date': release,
+                            'vote_average': vote_avg,
+                        })
+                    except (IndexError, TypeError, AttributeError):
+                        continue
 
-                    self.logger.debug(
-                        f"TMDB response (ALL {len(all_results)} results): {all_results}"
-                    )
+                self.logger.debug(
+                    f"TMDB response (ALL {len(all_results)} results): {all_results}"
+                )
 
         # Handle headers safely for both real responses and mocked responses
         try:

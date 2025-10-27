@@ -305,7 +305,8 @@ def _get_loggers_config(
         # TMDB API logging
         "cinexplorer.tmdb": {
             "handlers": (["console"] + (["file_app"] if not is_ci and not is_testing else [])),
-            "level": "DEBUG" if debug_mode else "INFO",  # Enable DEBUG in development for detailed TMDB diagnostics
+            # Enable DEBUG in development for detailed TMDB diagnostics
+            "level": "DEBUG" if debug_mode else "INFO",
             "propagate": False,
         },
         # Werkzeug server logs

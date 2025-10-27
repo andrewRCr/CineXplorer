@@ -106,40 +106,51 @@ def filter_movies_by_rating(
     movies: list[MovieBaseSchema],
     rating_min: float | None = None,
     rating_max: float | None = None,
+    min_vote_count: int = 50,
 ) -> list[MovieBaseSchema]:
-    """Filter movies by vote average (rating) range.
+    """Filter movies by vote average (rating) range with vote count quality check.
 
-    Filters out movies with ratings outside the specified range.
-    This is necessary because TMDB API sometimes returns movies with placeholder
-    0.0 ratings despite rating filters being applied (likely for movies with
-    limited release data or alternative releases).
+    Filters out movies with ratings outside the specified range. When rating
+    filters are applied, also excludes movies with low vote counts to ensure
+    rating reliability (e.g., a single 10/10 vote creates 10.0 average, but
+    is not statistically significant).
 
     Args:
         movies: List of MovieBaseSchema objects to filter
         rating_min: Minimum rating (inclusive, 0.0-10.0 scale). None means no lower bound.
         rating_max: Maximum rating (inclusive, 0.0-10.0 scale). None means no upper bound.
+        min_vote_count: Minimum number of votes required for reliable rating.
+                       Only applied when rating filters are active. Default: 50 votes.
 
     Returns:
-        Filtered list containing only movies within the rating range.
-        Movies without vote_average are excluded.
+        Filtered list containing only movies within the rating range with sufficient votes.
+        Movies without vote_average or vote_count are excluded when rating filter applied.
 
     Examples:
-        >>> # Filter to highly-rated movies (7.5+)
+        >>> # Filter to highly-rated movies (7.5+) with at least 50 votes
         >>> filtered = filter_movies_by_rating(movies, rating_min=7.5)
 
-        >>> # Filter to rating range (7.0-8.5)
-        >>> filtered = filter_movies_by_rating(movies, rating_min=7.0, rating_max=8.5)
+        >>> # Filter to rating range with custom vote threshold
+        >>> filtered = filter_movies_by_rating(
+        ...     movies, rating_min=7.0, rating_max=8.5, min_vote_count=100
+        ... )
 
-        >>> # Filter to movies rated below 6.0
-        >>> filtered = filter_movies_by_rating(movies, rating_max=6.0)
+        >>> # No rating filter = no vote count filter applied
+        >>> all_movies = filter_movies_by_rating(movies)  # Returns all movies
 
     Note:
-        Movies with missing vote_average (None) are automatically filtered out,
-        as we cannot determine if they match the rating criteria.
+        Vote count filtering ONLY applies when rating_min or rating_max is specified.
+        When browsing without rating filters, all movies are shown regardless of vote count.
 
         TMDB ratings are on a 0.0-10.0 scale (e.g., 7.5 = 75%).
+
+    Quality Rationale:
+        Movies with few votes have unreliable ratings. A movie with 2 votes averaging
+        10.0 is statistically meaningless compared to a movie with 500 votes averaging
+        8.5. The min_vote_count threshold ensures users see reliable ratings when
+        filtering by rating.
     """
-    # If no rating filters specified, return all movies
+    # If no rating filters specified, return all movies (no vote count check needed)
     if rating_min is None and rating_max is None:
         return movies
 
@@ -150,6 +161,11 @@ def filter_movies_by_rating(
         if movie.vote_average is None:
             continue
 
+        # Vote count quality check: When filtering by rating, require minimum vote count
+        # This ensures rating reliability (avoid movies with 1-2 votes showing 10/10)
+        if movie.vote_count is None or movie.vote_count < min_vote_count:
+            continue
+
         movie_rating = movie.vote_average
 
         # Apply rating range filters
@@ -158,7 +174,7 @@ def filter_movies_by_rating(
         if rating_max is not None and movie_rating > rating_max:
             continue
 
-        # Movie passes rating filter
+        # Movie passes rating filter and vote count quality check
         filtered.append(movie)
 
     return filtered

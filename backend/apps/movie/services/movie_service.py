@@ -15,6 +15,7 @@ from core.tmdb_models.tmdb_responses import (
     TMDBMovieSearchResponse,
 )
 from core.types.api_types import TMDBParams
+from django.conf import settings
 from ninja.errors import HttpError
 
 from ..schemas import (
@@ -368,9 +369,15 @@ class MovieService:
         if year_min is not None or year_max is not None:
             movie_schemas = filter_movies_by_year(movie_schemas, year_min, year_max)
 
-        # Apply rating filtering if specified
+        # Apply rating filtering if specified (includes vote count quality check)
         if rating_min is not None or rating_max is not None:
-            movie_schemas = filter_movies_by_rating(movie_schemas, rating_min, rating_max)
+            min_vote_count = settings.TMDB_MIN_VOTE_COUNT_THRESHOLD
+            movie_schemas = filter_movies_by_rating(
+                movie_schemas,
+                rating_min,
+                rating_max,
+                min_vote_count=min_vote_count
+            )
 
         return movie_schemas
 
@@ -742,7 +749,8 @@ class MovieService:
         )
 
         # Build TMDB API parameters
-        params: TMDBParams = {
+        # Start as mutable dict for construction, will be passed as TMDBParams (immutable Mapping)
+        params: dict[str, str | int | float | bool | None] = {
             "include_adult": False,
             "include_video": False,
             "language": "en-US",
@@ -751,7 +759,7 @@ class MovieService:
             # undefined - it may ignore date filters or check ALL release dates worldwide.
             # See: TMDB API research (external-research-analyst, 2025-10-27)
             # For year-based filtering, we use primary_release_date without region.
-            # "region": filters.get('region', 'US'),  # REMOVED - incompatible with primary_release_date
+            # "region": filters.get('region', 'US'),  # REMOVED - incompatible
             "page": page,
         }
 

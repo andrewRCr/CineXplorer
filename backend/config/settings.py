@@ -235,6 +235,14 @@ ENVIRONMENT = _environment  # Final constant assignment
 TMDB_API_KEY = env("TMDB_API_KEY")
 BACKEND_URL = env("BACKEND_URL")
 
+# TMDB data quality thresholds
+# Minimum vote count for reliable ratings - movies with fewer votes are excluded
+# when users filter by rating. Prevents showing movies with 1-2 votes and 10/10 avg.
+# Default: 50 votes (statistically significant threshold based on TMDB data analysis)
+TMDB_MIN_VOTE_COUNT_THRESHOLD = int(
+    os.environ.get("TMDB_MIN_VOTE_COUNT_THRESHOLD", "50")
+)
+
 # Email verification settings
 ZEPTOMAIL_API_KEY = os.environ.get("ZEPTOMAIL_API_KEY", "")
 ZEPTOMAIL_SENDER_EMAIL = os.environ.get(

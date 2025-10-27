@@ -306,31 +306,82 @@ then implement fixes to make them pass.
 - Configurable threshold allows tuning for different environments
 - Comprehensive test coverage ensures behavior correctness
 
-### 3.2 Implement Completeness Filter
+### 3.2 Implement Completeness Filter ✅
 
 **Goal**: Always exclude movies without critical display fields (poster, title).
 
-- [ ] 3.2.1 Write unit tests for completeness filtering (TEST-FIRST)
-    - Test: Movies without poster_path excluded
-    - Test: Movies with empty title excluded
-    - Test: Movies with whitespace-only title excluded
-    - Test: Movies with complete data included
-    - File: `backend/apps/movie/tests/test_result_filtering.py`
+- [x] 3.2.1 Write unit tests for completeness filtering (TEST-FIRST)
+    - **Completed**: Added 4 comprehensive tests (lines 1061-1225 in test_result_filtering.py)
+    - Test: `test_filter_movies_excludes_missing_poster()` - excludes movies without poster_path
+    - Test: `test_filter_movies_excludes_empty_title()` - excludes movies with empty/whitespace titles
+    - Test: `test_filter_movies_completeness_with_all_valid()` - doesn't exclude valid movies
+    - Test: `test_completeness_filter_applies_with_other_filters()` - works with combined filters
+    - **Test-first approach**: Tests written first, failed initially, then passed after implementation
+    - Enhanced `create_movie_dict()` helper with optional `poster_path` parameter for testing
 
-- [ ] 3.2.2 Create `filter_movies_by_completeness()` in `result_filtering.py`
-    - Exclude movies with missing `poster_path` (no broken images in grid)
-    - Exclude movies with empty `title` (no blank cards)
+- [x] 3.2.2 Create `filter_movies_by_completeness()` in `result_filtering.py`
+    - **Completed**: Lines 188-234 in result_filtering.py
+    - Excludes movies with missing/empty `poster_path` (prevents broken images)
+    - Excludes movies with empty/whitespace-only `title` (prevents blank cards)
+    - Comprehensive docstring with quality rationale and examples
+    - Always applied (not configurable - basic UI quality requirement)
 
-- [ ] 3.2.3 Update `_apply_filters()` to apply completeness filter
-    - Always enabled (not configurable - basic quality requirement)
-    - Apply before year/rating filters
-    - Log how many movies excluded for missing fields
+- [x] 3.2.3 Update `_apply_filters()` to apply completeness filter
+    - **Completed**: Integrated at line 370 in movie_service.py
+    - Applied FIRST in filter chain (before year/rating filters)
+    - Always enabled for all endpoints (discover, search, now_playing, upcoming)
+    - Logging inherited from existing filter warning system
+    - Removed early-return optimization to ensure completeness filter always runs
 
-- [ ] 3.2.4 Verify tests pass
-    - Run unit tests, confirm all passing
-    - Verify implementation matches test expectations
+- [x] 3.2.4 Verify tests pass
+    - **Completed**: All 25 result_filtering tests pass (21 existing + 4 new)
+    - Quality gates clean: ruff (0 violations), pyright (0 errors)
+    - Fixed test data consistency: Added vote_count to all TMDB test payloads
 
-**Expected Impact**: Better grid display quality, no broken images or empty titles
+**Actual Impact**:
+
+- UI grid quality improved: No broken poster images or empty title cards
+- Always-on filtering ensures consistent quality across all movie endpoints
+- Test coverage comprehensive: Validates poster, title, and combined filter scenarios
+- DRY test helpers: Enhanced existing `create_movie_dict()` for reusability
+
+**Phase 3.2 Cleanup (Leave It Cleaner)** ✅
+
+- [x] Fix 4 tests with removed 'region' parameter references
+    - **Completed**: Removed 'region' assertions from test_movie_api.py, test_movie_service.py, test_schemas.py
+    - **Root cause**: Phase 2 removed 'region' parameter (TMDB incompatible), tests not updated
+    - **Files**: 3 test files, 4 locations total
+    - **No comments left**: Removed parameter doesn't need explanation in code
+
+- [x] Fix 5 ruff violations in tmdb_api_client.py
+    - **Completed**: Fixed nested if (SIM102) + 4 line-length violations (E501)
+    - **SIM102**: Combined nested if statements using `and` operator
+    - **E501**: Split long lines, extracted variables for readability
+    - **Files**: backend/apps/core/services/tmdb_api_client.py (lines 204, 218, 219, 232, 233)
+
+- [x] Complete test helper refactor (consistency)
+    - **Completed**: Converted 2 remaining movie tests to use helpers
+    - **Tests converted**: test_paginated_endpoint_contract, test_discover_with_filters
+    - **Pattern established**: All movie tests now use create_movie_dict() + create_paginated_tmdb_response()
+    - **Keyword/people tests**: Left as-is (simple 2-3 field payloads, no reuse benefit)
+    - **Rationale**: Consistency across movie tests, wait for keyword/people expansion before adding helpers
+
+- [x] Fix 3 pyright type errors (type safety strategy compliance)
+    - **Completed**: Added explicit type annotations to logging code
+    - **Files**: backend/apps/core/services/tmdb_api_client.py
+    - **Fix**: Added `list[dict[str, object]]` annotations to sample_results and all_results
+    - **Result**: 0 errors (down from 3), consistent with strategy-type-safety.md
+
+- [x] Fix 3 additional line-length violations discovered during cleanup
+    - **Completed**: Fixed E501 violations in test_fixtures_tmdb.py, test_movie_api.py, logging.py
+    - **Pattern**: Moved comments above lines, split long parameter documentation
+
+**Cleanup Quality Gates** ✅
+
+- Tests: 365/365 pass (1 pre-existing teardown error unrelated to changes)
+- Linting: 0 violations (ruff clean across backend + config)
+- Type checking: 0 errors, 46 informational (expected Django ORM limitations)
+- Markdown: 0 errors (58 files checked)
 
 ### 3.3 Implement Historical Validation
 

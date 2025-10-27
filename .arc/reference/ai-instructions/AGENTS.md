@@ -42,48 +42,6 @@ demonstrating disciplined software engineering practices, comprehensive testing,
 - **Network architecture**: Backend HTTPS (8000), Frontend HTTP (5173), Caddy proxy (8444)
 - **Type generation**: Frontend types auto-generated from Django Ninja OpenAPI schema via `npm run generate-types`
 
-## Quick Lookup Guide
-
-When you need to find information, use these pointers (don't load everything upfront):
-
-### "How do I...?"
-
-**ARC Framework Processes:**
-
-- **Set up project foundation** → `workflows/0-define-constitution.md`
-- **Start a new feature** → `workflows/1-create-prd.md`
-- **Break down tasks** → `workflows/2-generate-tasks.md`
-- **Implement tasks** → `workflows/3-process-task-loop.md`
-- **Handle maintenance work** → `workflows/supplemental/manage-incidental-work.md`
-- **Hand off session** → `workflows/supplemental/session-handoff.md`
-- **Clean up completed work** → `workflows/supplemental/archive-completed.md`
-- **Initialize session** → `workflows/supplemental/session-init.md`
-
-**Project Information:**
-
-- **Run tests/linting** → `DEVELOPMENT-RULES.md` + `QUICK-REFERENCE.md` (commands section)
-- **Understand the product** → `META-PRD.md`
-- **See current progress** → `PROJECT-STATUS.md`
-- **Learn the architecture** → `TECHNICAL-ARCHITECTURE.md`
-- **Get environment context** → `QUICK-REFERENCE.md`
-
-### "What are the rules for...?"
-
-- **Development standards** → `DEVELOPMENT-RULES.md`
-- **AI collaboration protocols** → `DEVELOPMENT-RULES.md` (AI Session sections)
-- **Code quality requirements** → `TECHNICAL-ARCHITECTURE.md` + `DEVELOPMENT-RULES.md`
-- **Commit format and process** → `workflows/supplemental/atomic-commit.md`
-- **Task management** → `workflows/3-process-task-loop.md`
-
-### "Where is...?"
-
-- **Active work** → `.arc/active/` (current feature work, CURRENT-SESSION.md)
-- **Upcoming work** → `.arc/upcoming/` (planned features, PRDs, notes)
-- **Completed work** → `.arc/reference/archive/` (historical context, completion metadata)
-- **Project rules** → `.arc/reference/constitution/` (META-PRD, DEVELOPMENT-RULES, etc.)
-- **Workflows** → `.arc/reference/workflows/` (core + supplemental)
-- **Patterns** → `.arc/reference/strategies/` (architectural decisions, testing methodology, type safety)
-
 ## AI Collaboration Principles
 
 **Working Approach:**

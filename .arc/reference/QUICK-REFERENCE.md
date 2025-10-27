@@ -224,57 +224,6 @@ docker compose -f infrastructure/docker-compose.yml down
 
 ---
 
-## Tool Decision Tree
-
-```
-Need to run a command?
-│
-├─ Type checking (Python)?
-│  └─ npx pyright backend/apps/ backend/config/ --project backend
-│
-├─ Linting (Python)?
-│  └─ .venv-backend/bin/ruff check backend/apps/ backend/config/ --fix
-│
-├─ Testing (Backend)?
-│  └─ docker compose -f infrastructure/docker-compose.yml exec backend pytest apps/
-│     (MUST use Docker - requires database/Redis)
-│
-├─ API Testing (curl/Postman)?
-│  └─ curl -k https://localhost:8000/api/endpoint
-│     (Direct backend access, -k skips cert verification)
-│
-├─ Linting/Type-checking (Frontend)?
-│  └─ docker compose -f infrastructure/docker-compose.yml exec frontend npm run [lint|type-check]
-│
-├─ Markdown linting?
-│  └─ npx markdownlint-cli2 --fix "README.md" ".arc/**/*.md"
-│
-└─ Unsure?
-   └─ Use Docker (always consistent)
-```
-
----
-
-## Common Patterns
-
-### Incremental Quality Checks (After Sub-Task)
-
-```bash
-# Type check specific module (use directory, not file - ensures config applies)
-npx pyright backend/apps/authentication/ --project backend
-
-# Lint and fix specific files
-.venv-backend/bin/ruff check backend/apps/authentication/api.py --fix
-
-# Run specific test file
-docker compose -f infrastructure/docker-compose.yml exec backend pytest apps/authentication/tests/test_user_api.py -v
-
-# Coverage for specific modules (use module paths, not file paths)
-docker compose -f infrastructure/docker-compose.yml exec backend pytest --cov=apps.authentication.api --cov-report=term-missing apps/authentication/tests/
-```
-
----
-
 ## Anti-Patterns
 
 ### Path Confusion
@@ -308,29 +257,6 @@ docker compose -f infrastructure/docker-compose.yml exec backend pytest --cov=ap
 ✅ Use commands from QUICK-REFERENCE (paths correct for repo root)
 ✅ Adjust paths based on your working directory (see CURRENT-SESSION.md)
 ✅ Use explicit paths for venv tools: `.venv-backend/bin/[tool]`
-
----
-
-## Key Reminders
-
-1. **Docker Compose location**: `infrastructure/docker-compose.yml` (from repo root)
-2. **Tests require Docker**: NEVER run backend tests from host (no database access)
-3. **Venv location**: `.venv-backend/bin/` (from repo root)
-4. **Working directory varies**: Check CURRENT-SESSION.md for context-specific paths
-5. **Pyright from anywhere**: `npx pyright backend/apps/ --project backend` works regardless of CWD
-
----
-
-## Additional Resources
-
-- **DEVELOPMENT-RULES.md** - Quality standards and protocols (what/why)
-- **CURRENT-SESSION.md** - Current work context and adjusted paths for your working directory
-- **TECHNICAL-ARCHITECTURE.md** - System design and testing methodology
-- **3-process-task-loop.md** - Workflow for task execution
-- **supplemental/atomic-commit.md** - Commit creation and review process
-- **supplemental/session-handoff.md** - Session handoff protocol
-- **strategy-type-safety.md** - Type checking approach and patterns
-- **strategy-testing-methodology.md** - Testing philosophy and practices
 
 ---
 

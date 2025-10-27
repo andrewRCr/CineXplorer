@@ -458,6 +458,10 @@ class BaseApiClient(ABC):
             'param_count': len(sanitized_params) if sanitized_params else 0
         })
 
+        # DEBUG-level: Log full request parameters for debugging
+        if self.logger.isEnabledFor(logging.DEBUG) and params:
+            self.logger.debug(f"API request params: {sanitized_params}")
+
         start_time = time.time()
 
         try:

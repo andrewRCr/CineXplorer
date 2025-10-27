@@ -75,9 +75,16 @@ This document covers Backend Modernization work AFTER Service Layer Modernizatio
 
 ## End-to-End Testing (Playwright) - PLANNED
 
-**Status:** Not yet implemented, planned for Backend Modernization
+**Status:** Not yet implemented, planned for Backend Modernization **Phase 1** (moved up from Phase 2)
+
+**Priority:** HIGH - Will be Phase 1 of Backend Modernization (ahead of async tasks, code quality)
 
 **Goal:** Comprehensive e2e testing covering critical user journeys and validating full application stack.
+
+**Rationale for Priority Increase:**
+E2E tests provide regression protection for subsequent Backend Modernization work (async tasks, refactoring).
+Bugs discovered during Service Layer manual testing (see "Known Bugs" below) demonstrate the need for
+comprehensive integration/E2E coverage beyond unit tests.
 
 **Critical User Flows to Test:**
 
@@ -93,6 +100,8 @@ This document covers Backend Modernization work AFTER Service Layer Modernizatio
    - Browse discover page (trending, popular)
    - View movie details
    - Navigate between pages
+   - **Filter preservation during navigation** ← Known bug (see below)
+   - **Pagination result count display** ← Known bug (fixed, needs regression test)
 
 3. **Watchlist Management** (High Priority)
    - Add movie to watchlist (authenticated user)
@@ -126,6 +135,43 @@ This document covers Backend Modernization work AFTER Service Layer Modernizatio
 - How do we handle test data isolation between parallel test runs?
 - Should we implement visual regression testing from the start, or add later?
 - How do we coordinate e2e tests with existing backend unit/integration tests?
+
+**Known Bugs Requiring E2E Test Coverage:**
+
+Bugs discovered during manual testing (Service Layer Modernization Phase 3.6, 2025-10-27) that should be
+captured as E2E regression tests:
+
+1. **Back Button Filter Preservation** (UNFIXED - Incidental task created)
+   - **Issue**: "Back to Results" button on movie detail pages loses filter query parameters (minYear, maxYear,
+     genres, etc.), resulting in blank/black screen when returning to list view
+   - **Root Cause**: MovieCard only passes `page`, `from`, `query` params; doesn't preserve filter state
+   - **Impact**: Poor UX - users lose filter context, must re-apply filters
+   - **Workaround**: Browser back button works correctly (uses full history state)
+   - **Incidental Task**: `.arc/active/incidental/tasks-back-button-filter-preservation.md`
+   - **E2E Test**: Navigate to popular with filters (1980-1983) → click movie → click "Back to Results" →
+     assert URL contains all filter params and results display correctly
+
+2. **Pagination Result Count Display** (FIXED - Needs regression test)
+   - **Issue**: Frontend displayed "Showing 1-20 of 20 results" instead of "Showing 1-20 of 10,000+ results"
+   - **Root Cause**: Backend `_build_filtered_response()` set `total_results=len(movies)` (filtered count)
+     instead of preserving original TMDB count
+   - **Impact**: Misleading pagination display, users don't see true dataset scale
+   - **Fixed**: Commit 382a822 (2025-10-27) - pass through original `total_results`
+   - **E2E Test**: Load popular page → assert result count text contains "10,000+" (not "20")
+
+**Why Unit Tests Didn't Catch These:**
+
+- Backend unit tests focus on filtering logic, don't assert pagination metadata fields
+- Frontend component tests use mock data with hardcoded values
+- No integration tests exercising full request → response → display flow
+- Navigation tested in isolation, not as complete user journeys
+
+**Testing Strategy to Prevent Similar Bugs:**
+
+- E2E tests for critical user flows (discovery with filters, navigation, pagination)
+- Integration tests for backend API responses (assert all response fields, not just results)
+- Frontend integration tests for URL state management and navigation
+- Visual regression testing (detect blank screens, incorrect displays)
 
 **References:**
 

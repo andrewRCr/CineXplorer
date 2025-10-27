@@ -424,7 +424,8 @@ then implement fixes to make them pass.
     - Test: `displays ISO date without timezone shifting` - validates exact "January 1, 1980" format
     - Test: `handles year boundary dates correctly` - validates "December 31, 1999" stays correct
     - Test: `parses ISO date components directly` - validates multiple edge cases
-    - **Critical improvement**: Tests check exact formatted strings (e.g., "January 1, 1980") to catch the bug even in UTC test environments
+    - **Critical improvement**: Tests check exact formatted strings (e.g., "January 1, 1980") to catch the bug even in UTC
+      test environments
     - **Test environment issue addressed**: Container runs in UTC, so generic tests would pass with broken code
 
 - [x] 3.4.2 Update `MovieCard.tsx` date formatting (lines 102-130)
@@ -452,35 +453,49 @@ then implement fixes to make them pass.
 - Robust tests validate fix even in UTC environments
 - Zero performance impact (string parsing is negligible)
 
-### 3.5 Quality Gate & Testing
+### 3.5 Quality Gate & Testing ✅
 
-- [ ] 3.5.1 Run all backend tests
-    - Verify new filtering logic doesn't break existing tests
-    - All new unit tests passing (vote count, completeness, historical validation)
-    - 100% pass rate required
+**Completed**: 2025-10-27
 
-- [ ] 3.5.2 Run frontend tests
-    - Verify date fix doesn't break components
-    - All tests passing
+- [x] 3.5.1 Run all backend tests
+    - ✅ 368/368 tests passing (100% pass rate)
+    - All Phase 3 filtering logic verified (vote count, completeness, historical validation)
+    - Test teardown error remains fixed
 
-- [ ] 3.5.3 Run linting checks
-    - Backend: `ruff check` passes
-    - Frontend: `npm run lint` passes
-    - Markdown: `markdownlint` passes
+- [x] 3.5.2 Run frontend tests
+    - ✅ 348/348 tests passing
+    - Date fix working correctly, all component tests passing
 
-- [ ] 3.5.4 Run type checking
-    - Backend: `pyright` zero errors
-    - Frontend: `npm run type-check` passes
+- [x] 3.5.3 Run linting checks
+    - ✅ Backend: ruff check passes (1 unused import auto-fixed)
+    - ✅ Frontend: npm run lint passes
+    - ✅ Markdown: markdownlint passes (58 files, 0 errors)
+
+- [x] 3.5.4 Run type checking
+    - ✅ Backend: pyright 0 errors (46 informational messages expected)
+    - ✅ Frontend: npm run type-check passes
+
+**Summary**: All quality gates passing. Codebase is in excellent health with all Phase 3 enhancements verified.
 
 ### 3.6 Manual Validation - Final Data Quality Assessment
 
 **Goal**: Assess end-result data quality after all enhancements to determine if additional work needed.
 
-- [ ] 3.6.1 Test discover page with year filters
+**Integration/E2E Bug Protocol**: During manual testing, bugs requiring integration or E2E test coverage
+(navigation, URL state, pagination display, etc.) will be documented in
+`.arc/upcoming/technical/notes-backend-modernization.md` under "Known Bugs Requiring E2E Test Coverage"
+for comprehensive testing during Backend Modernization Phase 1. These bugs may receive quick fixes or
+incidental tasks for the fix, but E2E test infrastructure will be built as dedicated planned work.
+
+- [x] 3.6.1 Test discover page with year filters
     - Apply filter: 1980-1983
     - Verify: No pre-1980 or post-1983 movies appear
     - Check: Date display matches backend data (timezone bug fixed)
     - Sample 20-30 movies, assess accuracy rate
+    - **Result**: ✅ PASSING - Year filters accurate, no bad data leaking through
+    - **Bugs found**: Adult content question (resolved - TMDB correctly classifies), pagination result
+      count bug (fixed immediately - 382a822), back button navigation bug (incidental task + documented
+      in backend-modernization notes for E2E testing)
 
 - [ ] 3.6.2 Test rating filters with vote count threshold
     - Apply filter: 7.5+ rating

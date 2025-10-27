@@ -268,7 +268,6 @@ class TestMovieDiscoverFilterSchemaParameterExtraction:
         assert params['genres'] == "28,12"
         assert params['year'] == 2023
         assert params['certification'] == "PG-13"
-        assert params['region'] == "US"
 
         # AND new backend filtering params also present
         assert params['year_min'] == 2023

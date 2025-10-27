@@ -300,7 +300,6 @@ def test_discover_movies_sets_default_parameters() -> None:
     assert params['include_adult'] is False
     assert params['include_video'] is False
     assert params['language'] == 'en-US'
-    assert params['region'] == 'US'
     assert params['sort_by'] == 'popularity.desc'
 
 

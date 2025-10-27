@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from datetime import date
+from typing import Annotated
 
 from core.models import Movie
 from ninja import Schema
@@ -105,6 +106,7 @@ class MovieBaseSchema(Schema):
     poster_path: str | None = None
     release_date: date | None = None
     vote_average: float | None = None
+    vote_count: int | None = None
     runtime: int | None = None
     user_movie_data: UserMovieDataSchema | None = None
 
@@ -212,16 +214,16 @@ class MovieDiscoverFilterSchema(Schema):
     """
 
     # Pagination
-    page: int | None = Field(None, description="Page number for pagination")
+    page: Annotated[int | None, Field(description="Page number for pagination")] = None
 
     # Genre/Keyword filters
-    with_genres: str | None = Field(None, description="Comma-separated genre IDs")
-    with_keywords: str | None = Field(None, description="Comma-separated keyword IDs")
+    with_genres: Annotated[str | None, Field(description="Comma-separated genre IDs")] = None
+    with_keywords: Annotated[str | None, Field(description="Comma-separated keyword IDs")] = None
     without_genres: str | None = None
     without_keywords: str | None = None
 
     # Cast/Crew filters
-    with_cast: str | None = Field(None, description="Comma-separated person IDs")
+    with_cast: Annotated[str | None, Field(description="Comma-separated person IDs")] = None
     with_crew: str | None = None
     with_people: str | None = None
 
@@ -241,8 +243,8 @@ class MovieDiscoverFilterSchema(Schema):
     include_video: bool | None = None
 
     # Language/Region filters
-    language: str | None = Field(None, description="ISO 639-1 language code")
-    region: str | None = Field(None, description="ISO 3166-1 country code")
+    language: Annotated[str | None, Field(description="ISO 639-1 language code")] = None
+    region: Annotated[str | None, Field(description="ISO 3166-1 country code")] = None
     with_original_language: str | None = None
     without_original_language: str | None = None
 
@@ -272,14 +274,14 @@ class MovieDiscoverFilterSchema(Schema):
     certification_gte: str | None = None
 
     # Sorting
-    sort_by: str | None = Field(
-        None,
-        description="Sort by field (e.g., popularity.desc, vote_average.desc)"
-    )
+    sort_by: Annotated[
+        str | None,
+        Field(description="Sort by field (e.g., popularity.desc, vote_average.desc)")
+    ] = None
 
     # Frontend convenience aliases
-    decade: str | None = Field(None, description="Decade filter (e.g., '1990s')")
-    genres: str | None = Field(None, description="Alias for with_genres")
+    decade: Annotated[str | None, Field(description="Decade filter (e.g., '1990s')")] = None
+    genres: Annotated[str | None, Field(description="Alias for with_genres")] = None
 
     @field_validator('*', mode='before')
     @classmethod

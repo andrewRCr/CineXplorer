@@ -145,6 +145,7 @@ def create_movie_base_from_tmdb(tmdb_data: Mapping[str, object]) -> MovieBaseSch
             'poster_path': tmdb_movie.poster_path,
             'release_date': release_date,
             'vote_average': tmdb_movie.vote_average,
+            'vote_count': tmdb_movie.vote_count,
             'runtime': 0,  # Runtime not available in base movie responses
         }
 

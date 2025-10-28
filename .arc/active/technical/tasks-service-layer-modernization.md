@@ -386,6 +386,7 @@ patterns across movie, UserMovieData, and authentication domains.
         - **Tests**: Verify API endpoints still work (keywords and people routes)
 
 - [ ] **3.5 Clean Up Old Code and Frontend Duplication**
+
     - [x] 3.5.1 Remove old function-based implementations and tests
         - **Remove old function-based service code from movie_service.py**:
             - Remove all old function-based service functions (lines 44-658):
@@ -410,9 +411,11 @@ patterns across movie, UserMovieData, and authentication domains.
             - Remove `_class` suffix from test file names (now the only implementation)
         - Verify no references to old functions remain in codebase (grep for old function names)
         - Run full test suite to confirm nothing broken
+
     - [ ] 3.5.2 Remove client-side filtering from frontend (broken into 3 subtasks)
         - **Context**: Backend now handles all year/rating filtering + buffer mechanism
         - **Rationale**: Eliminates duplication, single source of truth in backend
+
         - [x] 3.5.2.1 Refactor frontend fetcher architecture and remove client-side filtering
             - **Completed**: Comprehensive refactoring of frontend fetcher hooks
             - **Files Created**:
@@ -436,6 +439,7 @@ patterns across movie, UserMovieData, and authentication domains.
                 - Net: -190 lines (42% reduction), -1 file, +comprehensive documentation
                 - Quality: 0 TypeScript errors, 0 ESLint violations
                 - Architecture now self-documenting through clear naming + data flow diagrams
+
         - [x] 3.5.2.2 Evaluate and clean up movieFilterUtils.ts
             - **Completed**: Comprehensive cleanup and rename of filter utilities
             - **Analysis findings**:
@@ -458,6 +462,7 @@ patterns across movie, UserMovieData, and authentication domains.
                 - Name accurately reflects purpose (mapper vs utils)
                 - Quality: 0 TypeScript errors, 333/333 tests passing
                 - Architecture: Clean separation (mapping in utility, routing in hook, filtering in backend)
+
         - [ ] 3.5.2.3 Re-evaluate discover_movies type safety (BLOCKED - see incidental work)
             - **Status**: Investigation revealed critical gaps requiring dedicated incidental work
             - **Blocking Issue**: Filter integration test coverage gaps and incomplete migration
@@ -499,6 +504,10 @@ patterns across movie, UserMovieData, and authentication domains.
 ### **Phase 4:** Create UserMovieDataService
 
 - [ ] **4.1 Create UserMovieDataService Class**
+
+    **Goal:** Encapsulate all business logic related to user movie data management, including CRUD operations
+    and filtering with pagination.
+
     - [ ] 4.1.1 Write tests for UserMovieDataService CRUD operations (test-first)
         - Test CREATE: TMDB fetch → Movie stub creation → UserMovieData creation
         - Test UPDATE: Partial field updates with validation
@@ -506,6 +515,7 @@ patterns across movie, UserMovieData, and authentication domains.
         - Test QUERY: Filtering (watchlist, ratings) with pagination
         - Mock dependencies: Movie repository, TMDB client
         - Target coverage: 80%+ (general)
+
     - [ ] 4.1.2 Create `UserMovieDataService` class in `backend/apps/user_movie_data/services/user_movie_data_service.py`
         - Extract business logic from `backend/apps/user_movie_data/api.py`
         - Implement CREATE operations (fetch from TMDB, create Movie stub, create UserMovieData)
@@ -517,22 +527,29 @@ patterns across movie, UserMovieData, and authentication domains.
         - Use batch fetch helper from 1.2.2
         - Follow DI pattern from MovieEnrichmentService
         - Full type annotations, comprehensive docstrings
+
     - [ ] 4.1.3 Create service factory function
         - Implement `get_user_movie_data_service()` in `backend/apps/user_movie_data/services/service_factory.py`
         - Returns UserMovieDataService with injected dependencies
+
     - [ ] 4.1.4 Run tests and incremental quality checks (user_movie_data service/tests)
 
 - [ ] **4.2 Update UserMovieData API Endpoints to Use Service Layer**
+
+    **Goal:** Refactor API endpoints to delegate business logic to the new service layer, ensuring separation of concerns.
+
     - [ ] 4.2.1 Refactor UserMovieData API endpoints in `backend/apps/user_movie_data/api.py`
         - Replace inline business logic with service calls
         - Extract all CREATE/UPDATE/DELETE/QUERY logic to service layer
         - Use `get_user_movie_data_service()` factory
         - API layer should ONLY handle: request/response, authentication, validation
         - Maintain exact same API contracts (backward compatibility)
+
     - [ ] 4.2.2 Update watchlist endpoint tests to verify pagination
         - Validate pagination parameters work correctly
         - Test pagination metadata in responses
         - Verify page size enforcement
+
     - [ ] 4.2.3 Run API integration tests (verify all 5 endpoints work, auth/error handling unchanged)
     - [ ] 4.2.4 Run incremental quality checks (user_movie_data app)
 
@@ -546,6 +563,10 @@ patterns across movie, UserMovieData, and authentication domains.
 ### **Phase 5:** Create AuthenticationService
 
 - [ ] **5.1 Create AuthenticationService Class**
+
+    **Goal:** Encapsulate all business logic related to user authentication, registration, token management,
+    email verification, and profile management (?) in a dedicated service layer.
+
     - [ ] 5.1.1 Write tests for AuthenticationService methods (test-first)
         - Test REGISTRATION: User creation, password validation, forbidden usernames, allauth EmailAddress integration
         - Test LOGIN/LOGOUT: Authentication, token generation/blacklisting, cookie management
@@ -554,6 +575,7 @@ patterns across movie, UserMovieData, and authentication domains.
         - Test USER PROFILE: GET/PATCH operations with validation
         - Mock dependencies: Email service, token utilities
         - Target coverage: 90%+ (security-critical)
+
     - [ ] 5.1.2 Create `AuthenticationService` class in `backend/apps/authentication/services/authentication_service.py`
         - Extract business logic from `backend/apps/authentication/api.py`
         - Implement registration logic (user creation, validation, allauth integration)
@@ -565,18 +587,22 @@ patterns across movie, UserMovieData, and authentication domains.
         - Follow established DI pattern
         - Full type annotations, comprehensive docstrings
         - **Note**: This is backend service; frontend auth service already exists
+
     - [ ] 5.1.3 Create service factory function
         - Implement `get_authentication_service()` in `backend/apps/authentication/services/service_factory.py`
         - Returns AuthenticationService with injected email service, token utilities
+
     - [ ] 5.1.4 Run tests and incremental quality checks (authentication service/tests)
 
 - [ ] **5.2 Update Authentication API Endpoints to Use Service Layer**
+
     - [ ] 5.2.1 Refactor Authentication API endpoints in `backend/apps/authentication/api.py`
         - Replace inline business logic with service calls
         - Extract all registration/login/token/verification/profile logic to service layer
         - Use `get_authentication_service()` factory
         - API layer should ONLY handle: request/response, authentication, rate limiting
         - Maintain exact same API contracts (backward compatibility)
+
     - [ ] 5.2.2 Run API integration tests (verify all 9 endpoints work, security features unchanged)
     - [ ] 5.2.3 Run incremental quality checks (authentication app)
 
@@ -590,13 +616,16 @@ patterns across movie, UserMovieData, and authentication domains.
 ### **Phase 6:** Integration Testing & Documentation
 
 - [ ] **6.1 Verify Email Service Patterns**
+
     - [ ] 6.1.1 Review `ZeptomailService` in `backend/apps/core/services/email_service.py`
         - Verify it follows same DI patterns as other services
         - Verify constructor injection for configuration
         - Confirm it's already class-based (no refactoring needed)
+
     - [ ] 6.1.2 Verify email service factory exists
         - Check for `get_email_service()` factory function
         - Ensure it follows established pattern
+
     - [ ] 6.1.3 Document email service as reference implementation (if exemplary)
 
 - [ ] **6.2 Run Comprehensive Integration Tests**
@@ -605,23 +634,27 @@ patterns across movie, UserMovieData, and authentication domains.
     - [ ] 6.2.3 Run full Movie integration test suite (all endpoints after MovieService refactoring)
 
 - [ ] **6.3 Update TECHNICAL-ARCHITECTURE.md**
+
     - [ ] 6.3.1 Add service layer architecture patterns section
         - Document class-based service pattern with DI
         - Provide decision guide: "When to use class-based vs function-based"
         - Document pagination helper usage guidelines
         - Document batch operation patterns
         - Document dependency injection patterns and best practices
+
     - [ ] 6.3.2 Add reference implementations section
         - Link to MovieService (TMDB integration)
         - Link to UserMovieDataService (CRUD with pagination)
         - Link to AuthenticationService (security-critical operations)
         - Link to MovieEnrichmentService (composition pattern)
         - Link to ZeptomailService (email integration)
+
     - [ ] 6.3.3 Add architectural guidelines
         - Guideline: "Business logic belongs in service layer, NOT API endpoints"
         - Guideline: "Use factory functions for service instantiation"
         - Guideline: "Use dependency injection for testability"
         - Security note: "Authentication service handles security-critical operations"
+
     - [ ] 6.3.4 Run markdown linting on TECHNICAL-ARCHITECTURE.md
 
 - [ ] **6.4 Final Quality Gate (All Gates)**
@@ -635,10 +668,12 @@ patterns across movie, UserMovieData, and authentication domains.
     - [ ] 6.4.8 Run markdown linting on all documentation
 
 - [ ] **6.5 Final Pre-Archival and PR Documentation Pass**
+
     - [ ] 6.5.1 Generate completion metadata
         - Document all completed work across 6 phases
         - List success metrics achieved
         - Provide quality gate results summary
+
     - [ ] 6.5.2 Check if PROJECT-STATUS.md needs updates
         - Update Service Layer Modernization status to "Complete"
         - Update next priorities if needed

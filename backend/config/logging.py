@@ -309,6 +309,13 @@ def _get_loggers_config(
             "level": "DEBUG" if debug_mode else "INFO",
             "propagate": False,
         },
+        # Movie service logging (including rating filter debugging)
+        "cinexplorer.movie": {
+            "handlers": (["console"] + (["file_app"] if not is_ci and not is_testing else [])),
+            # Enable DEBUG in development for detailed service diagnostics
+            "level": "DEBUG" if debug_mode else "INFO",
+            "propagate": False,
+        },
         # Werkzeug server logs
         "werkzeug": {
             "handlers": (["console"] + (["file_app"] if not is_ci and not is_testing else [])),

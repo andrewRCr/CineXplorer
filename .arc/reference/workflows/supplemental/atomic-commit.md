@@ -30,11 +30,12 @@ steps:
         - Feature work: `.arc/active/feature/`
         - Technical work: `.arc/active/technical/`
         - Incidental work: `.arc/active/incidental/`
-    - Also check [upcoming tasks](.arc/backlog/) for additional relevant tasks
+    - Also check [backlog tasks](.arc/backlog/) for additional relevant tasks
         - `.arc/backlog/feature/` and `.arc/backlog/technical/`
     - Look for task files that reference modified files or related functionality
-    - Use `find .arc -name "*.md" -exec grep -l "user-auth" {} \;` to find related tasks
-      (replace "user-auth" with your actual feature name, e.g., "payment-integration", "movie-api", etc.)
+    - Use `find .arc -name "*.md" -exec grep -l "pagination" {} \;` to find related tasks
+      (replace "pagination" with relevant keyword, e.g., "authentication", "api-layer", etc.)
+    - This task list reference will be used in Context: footer of commit message
 
   **Step 3: Analyze Task Progress Context**
     - Compare actual work completed against task documentation
@@ -53,11 +54,10 @@ steps:
     - Update any progress notes or status indicators
     - Add any new tasks that were discovered during implementation
 
-  **Common Scenarios to Check:**
-    - Code quality improvements (linting, formatting) often accompany feature completion
-    - Documentation updates may signal completion of analysis or design phases
-    - Test file changes may indicate testing milestones reached
-    - Configuration changes may be part of larger feature enablement
+  **Step 6: Determine Context Footer**
+    - For task list work: Use exact filename and task number(s)
+    - For incidental without task list: Reference parent task list with "incidental - discovered during"
+    - For boundary scenarios: Use appropriate category (planning, documentation, maintenance, archival prep, archival)
 
 - name: Plan Commits
   description: |
@@ -66,86 +66,184 @@ steps:
   1. Core functionality (new features, major logic)
   2. Configuration/Infrastructure (settings, configs)
   3. Tests (test files, test configurations)
-  4. Documentation (README, docs, task updates)
-  5. Code formatting (linting fixes, style)
-  6. Dependencies (package.json, requirements)
-  7. Cleanup (removals, refactoring)
+  4. Documentation - Task list updates (use task list Context:)
+  5. Documentation - Boundary scenarios (use category Context: if no task list)
+  6. Code formatting (linting fixes, style)
+  7. Dependencies (package.json, requirements)
+  8. Cleanup (removals, refactoring)
 
 - name: Create Atomic Commits
   description: |
-  For each logical group:
 
-  1. git add [specific files for this group]
-  2. git commit -m "[type](feature-scope): Brief description
+  ## Commit Message Standard
 
-     - Detailed change 1
-     - Detailed change 2
-     - Impact or rationale"
-
-  Commit types:
-
-    - feat: new features
-    - fix: bug fixes
-    - docs: documentation (including task status updates)
-    - style: code formatting
-    - refactor: code restructuring
-    - test: adding/fixing tests
-    - config: configuration changes
-    - chore: maintenance tasks
-
-  Scope Guidelines (Feature Context):
-
-    - Use feature/system name for multi-task features (e.g., "logging-system", "user-auth", "movie-api")
-    - Use specific component for single changes (e.g., "middleware", "database", "frontend")
-    - Examples: feat(logging-system), config(user-auth), docs(movie-api)
-    - Provides context for related commits across multiple tasks
-
-  Task Documentation Guidelines:
-
-    - **Always examine task context BEFORE writing commit messages**
-    - Reference specific task numbers with feature context (e.g., "Complete logging-system task 2.0")
-    - Include parent feature name when completing sub-tasks
-    - When all subtasks are done, mark parent task complete in same commit
-    - **Distinguish between partial progress and milestone completion**
-        - "Complete backend portion of Feature X" (when frontend remains)
-        - "Complete Feature X Phase 1" (only when entire phase is done)
-    - **Identify remaining work clearly** in commit messages
-    - Commit messages should match actual task progress, not aspirational goals
-    - Always check [active tasks](.arc/active/) and [upcoming tasks](.arc/backlog/tasks/) files before committing docs changes
-    - **Review multiple task files** - work often spans multiple task lists
-
-  Example Commit Messages with Proper Task Context:
+  All commits must follow this format:
 
   ```
-  # Milestone completion with proper context
-  feat(backend): Complete backend portion of API Layer Modernization Phase 1
+  <type>(scope): Brief description (50-72 chars)
 
-  ✅ **BACKEND MILESTONE: Backend PoC Complete - Ready for Frontend Integration**
+  - Key change (1-2 lines)
+  - Rationale (1-2 lines)
+  - Impact if significant (1-2 lines)
 
-  **Completed Tasks:**
-  - ✅ 4.0 Testing and Validation - All movie app tests passing with Django Ninja
-  - ✅ 4.4 Type Safety Compliance - Zero type errors with strict type checking
-  - ✅ 4.4.5 Documentation - Testing standards documented for future migrations
-
-  **Remaining for Phase 1 Completion:** Frontend Integration (Tasks 5.0-5.6)
-
-  Related to: API Layer Modernization PRD - Backend portion of Phase 1 PoC
-
-  # Feature branch commits with task context
-  feat(user-profile): Implement profile editing form component (Task 2.1)
-  config(user-profile): Add validation schema for profile updates (Task 2.3)
-  test(user-profile): Add comprehensive profile editing tests (Task 2.5)
-  docs(user-profile): Complete Task 2.0 - Profile Editing UI
-
-  # Quality improvements that accompany feature work
-  style(backend): Fix flake8 violations for code compliance
-
-  - Resolve line length and complexity violations across movie app
-  - Support completion of API modernization quality gates
-  - Enable successful completion of Task 4.4 (Type Safety Compliance)
-
-  Related to: API Layer Modernization PRD - Quality standards requirement
+  Context: [task-reference or category]
   ```
+
+  **Body limits:** 10-15 lines (20-25 for milestones), 1-2 lines per bullet
+
+  **Types:** `feat` `fix` `docs` `style` `refactor` `test` `chore` `perf` `config`
+
+  **Scope:** Functional area (auth, movie, api, tests, types, config, docs, arc, deps)
+
+  ## Context Footer Format
+
+  **With task list (most common):**
+
+  ```bash
+  Context: tasks-[exact-filename].md (Task X.Y)              # Single task
+  Context: tasks-[exact-filename].md (Tasks X.Y-X.Z)         # Sequential range
+  Context: tasks-[exact-filename].md (Tasks X.Y, A.B, C.D)   # Non-contiguous
+  Context: tasks-[exact-filename].md                         # Completion/many tasks
+  ```
+
+  **Incidental without dedicated task list:**
+
+  ```bash
+  Context: tasks-[parent-filename].md (incidental - discovered during Task X.Y)
+  ```
+
+  **No associated task list (boundary scenarios):**
+
+  ```bash
+  Context: planning (no associated task list)        # PRD creation, task generation
+  Context: documentation (no associated task list)   # PROJECT-STATUS, README
+  Context: maintenance (no associated task list)     # Dependencies, tooling
+  Context: archival prep (no associated task list)   # Pre-archival documentation
+  Context: archival (no associated task list)        # Archival workflow execution
+  ```
+
+  **Parent task completion:**
+  Add single line before Context: footer:
+
+  ```bash
+  Completes parent task X.0: [Parent Task Name]
+  ```
+
+  ## Mandatory Rules
+
+  **Required:**
+
+    - ✅ Conventional Commits format: `<type>(scope): description`
+    - ✅ Subject 50-72 characters
+    - ✅ Context: footer with exact filename and task reference
+    - ✅ Task numbers: "Task 3.6" NOT "Phase 3.6"
+    - ✅ Body: 10-15 lines (20-25 max for milestones)
+
+  **Prohibited:**
+
+    - ❌ PRD references (use task list instead)
+    - ❌ Display names (use exact filenames)
+    - ❌ Checkbox lists in body
+    - ❌ Implementation details (code shows what, commits show why)
+    - ❌ "Phase X.Y" when referring to tasks
+
+  ## Complete Examples
+
+  ### Standard Single Task
+
+  ```
+  fix(movie): resolve buffer pagination duplicate issue
+
+  - Smart buffer now tracks consumed TMDB pages via metadata
+  - Prevents duplicate movies appearing across pagination
+  - Maintains consistent 20-result pages with restrictive filters
+
+  Context: tasks-pagination-buffer-tracking.md (Task 2.1)
+  ```
+
+  ### Multiple Tasks
+
+  ```
+  refactor(api): extract service layer for movie operations
+
+  - Extracted MovieService class with business logic
+  - Updated discover/search endpoints to use service layer
+  - Added comprehensive service layer test coverage
+
+  Context: tasks-api-layer-modernization.md (Tasks 3.1-3.4)
+  ```
+
+  ### Parent Task Completion
+
+  ```
+  test(movie): verify rating filter accuracy in manual testing
+
+  - Tested rating ranges 1.0-3.5, 0-6.0, 8.5-10.0
+  - Verified accurate filtering with vote_count threshold
+  - All 368 backend + 351 frontend tests passing
+
+  Completes parent task 3.0: Manual Testing Phase
+
+  Context: tasks-filter-integration-testing.md (Task 3.6)
+  ```
+
+  ### Incidental Without Task List
+
+  ```
+  style(types): fix variable naming convention
+
+  - Changed MAX_BUFFER_PAGES to max_buffer_pages
+  - Resolves ruff N806 violation
+
+  Context: tasks-pagination-buffer-tracking.md (incidental - discovered during Task 2.1)
+  ```
+
+  ### Planning Work
+
+  ```
+  docs(arc): create PRD for pagination improvements feature
+
+  - Analyzed current pagination limitations
+  - Defined solution approach with metadata tracking
+  - Generated initial task breakdown (7 phases)
+
+  Context: planning (no associated task list)
+  ```
+
+  ### Repository Maintenance
+
+  ```
+  chore(deps): update Django to 5.2.8 security patch
+
+  - Updated Django from 5.2.7 to 5.2.8
+  - Addresses CVE-2024-XXXXX
+  - All tests passing post-update
+
+  Context: maintenance (no associated task list)
+  ```
+
+  ## Commit Message Guidelines
+
+  **Focus on WHY and IMPACT:**
+
+    - ✅ "Prevents duplicate movies across pages" (impact)
+    - ✅ "Improves query performance by 40%" (measurable)
+    - ❌ "Changed function name" (code shows this)
+
+  **Provide context for future readers:**
+
+    - What problem existed?
+    - What solution was chosen?
+    - What impact does this have?
+
+  **Keep it scannable:**
+
+    - One idea per bullet
+    - 1-2 lines max per bullet
+    - Active voice
+
+  **Remember:** Commit messages should accurately reflect WHERE the project stands after the commit.
+  All commits should be independently understandable without extensive archaeology.
 
 - name: Verify Commits
   command: git log --oneline -10
@@ -156,34 +254,25 @@ steps:
   description: Ensure all changes are committed and verify branch state
 
 notes: |
-Good atomic commit practices:
 
-- Each commit should be a single logical change
-- Commits should be independently buildable/testable
-- Use descriptive commit messages with context
-- Group related changes together
-- Separate formatting from functional changes
-- Keep commits focused and purposeful
+## Planned Work Branch Practices
 
-Feature Branch Practices:
-
-- Always verify you're on the correct feature branch before committing
-- All feature work commits should happen on the feature branch
-- Use feature context in commit scopes (e.g., feat(user-profile))
+- Verify you're on the correct feature/technical branch before committing
+- Branch naming: `feature/[name]` for user-facing work, `technical/[name]` for infrastructure
+- Incidental work commits to feature/technical branch (no separate branches)
 - Preserve commit history when merging (no squash merge)
-- Clean up feature branches after successful merge
+- Clean up branches after successful merge
 
-Task Documentation Consistency:
+## Task Documentation Requirements
 
 - **MANDATORY**: Perform comprehensive task context analysis before every commit
-- Always verify task status matches commit content across ALL relevant task files
-- Mark parent tasks [x] when all subtasks are [x], but ONLY then
-- Reference correct task numbers in commit messages with full context
-- **Distinguish clearly** between partial progress and complete milestones
-- Include task status updates in documentation commits
-- **Check multiple task files** - work often affects multiple task lists
-- **Analyze the full scope** of uncommitted changes, not just obvious files
+- Always include Context: footer with exact task list filename or boundary category
+- Mark parent tasks [x] when all subtasks complete, in same commit as final subtask
+- Verify task status in files matches actual implementation
 - Follow [Task Processing Workflow](../3-process-task-loop.md) completion protocol
+- See [Work Categorization Strategy](../../strategies/strategy-work-categorization.md) for branch naming
 
-**Key Principle**: Commit messages should accurately reflect WHERE the project stands after the commit,
-not just what was changed. This includes identifying remaining work and providing proper milestone context.
+---
+
+Commit messages should accurately reflect WHERE the project stands after the commit,
+not just what changed. This includes identifying remaining work and providing proper milestone context.

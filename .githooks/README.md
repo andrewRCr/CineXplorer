@@ -5,6 +5,7 @@ This directory contains git hooks that enforce commit message standards and run 
 ## What Are Git Hooks?
 
 Git hooks are scripts that run automatically at specific points in the git workflow:
+
 - **pre-commit** - Runs before commit is created (checks files, detects issues)
 - **commit-msg** - Runs after commit message is written (validates format)
 
@@ -26,6 +27,7 @@ That's it! Hooks will now run automatically for all commits.
 Validates commit message format against project standards:
 
 ✅ **Enforced (blocks commit):**
+
 - Conventional Commits format: `<type>(scope): description`
 - Subject line length: 50-72 characters
 - Context: footer present
@@ -34,6 +36,7 @@ Validates commit message format against project standards:
 - Task number format: "Task X.Y" not "Phase X.Y"
 
 ⚠️ **Warned (allows commit):**
+
 - Subject line 50+ chars (warns at 50, blocks at 72)
 - Body length over 15 lines (warns at 15, blocks at 25)
 - Common mistakes (referencing PRD, using "Phase X.Y")
@@ -43,10 +46,12 @@ Validates commit message format against project standards:
 Checks files before commit is created:
 
 ✅ **Enforced (blocks commit):**
+
 - No merge conflict markers (`<<<<<<<`, `=======`, `>>>>>>>`)
 - No sensitive files (`.env`, `credentials.json`, etc.)
 
 ⚠️ **Warned (allows commit):**
+
 - Committing directly to main branch
 - Large files (> 1MB)
 - Debug statements (`console.log`, `pdb.set_trace`, etc.)
@@ -113,11 +118,13 @@ git commit -n -m "emergency fix"
 ```
 
 **When to bypass:**
+
 - Emergency hotfixes (review format later)
 - Work-in-progress commits on feature branch
 - Experimental/temporary commits
 
 **Don't bypass for:**
+
 - Regular development work
 - Commits to main branch
 - Pull request commits
@@ -128,12 +135,14 @@ git commit -n -m "emergency fix"
 ### Hooks Not Running
 
 **Check configuration:**
+
 ```bash
 git config core.hooksPath
 # Should output: .githooks
 ```
 
 **Re-run setup if needed:**
+
 ```bash
 git config core.hooksPath .githooks
 ```
@@ -141,12 +150,14 @@ git config core.hooksPath .githooks
 ### Hook Fails on Valid Commit
 
 **Check if hooks are executable:**
+
 ```bash
 ls -la .githooks/
 # Should show: -rwxr-xr-x for commit-msg and pre-commit
 ```
 
 **Make executable if needed:**
+
 ```bash
 chmod +x .githooks/commit-msg .githooks/pre-commit
 ```
@@ -154,10 +165,12 @@ chmod +x .githooks/commit-msg .githooks/pre-commit
 ### False Positive Warnings
 
 **Debug statements in test files:**
+
 - pre-commit hook skips test files
 - Pattern: `test_`, `_test.py`, `.test.ts`, `.spec.js`
 
 **Task list file not found:**
+
 - Warning if file doesn't exist in `.arc/active/`
 - This is just a warning, commit still proceeds
 - OK if file was just created or archived
@@ -165,12 +178,14 @@ chmod +x .githooks/commit-msg .githooks/pre-commit
 ## Disabling Hooks
 
 **Temporary (one session):**
+
 ```bash
 git config --unset core.hooksPath
 # Re-enable: git config core.hooksPath .githooks
 ```
 
 **Permanent (not recommended):**
+
 ```bash
 rm .githooks/commit-msg .githooks/pre-commit
 ```
@@ -180,6 +195,7 @@ rm .githooks/commit-msg .githooks/pre-commit
 ### Commit Type Validation
 
 **Valid types:**
+
 - `feat` - New features
 - `fix` - Bug fixes
 - `docs` - Documentation
@@ -237,12 +253,14 @@ git commit -m "chore(hooks): update commit message validation"
 ### Testing Hooks Locally
 
 **Test commit-msg hook:**
+
 ```bash
 echo "test message" > /tmp/test-msg
 .githooks/commit-msg /tmp/test-msg
 ```
 
 **Test pre-commit hook:**
+
 ```bash
 .githooks/pre-commit
 ```
@@ -256,6 +274,7 @@ echo "test message" > /tmp/test-msg
 ## Support
 
 For issues or questions about git hooks:
+
 1. Check this README
 2. Review atomic-commit.md for commit message format
 3. Test hooks manually to identify issues

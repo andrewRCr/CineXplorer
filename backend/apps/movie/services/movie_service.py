@@ -143,7 +143,8 @@ class MovieService:
         movies: list[MovieBaseSchema],
         page: int,
         total_pages: int,
-        total_results: int
+        total_results: int,
+        next_tmdb_page_start: int | None = None
     ) -> PaginatedMovieResponseSchema:
         """Build a paginated movie response from filtered MovieBaseSchema list.
 
@@ -155,6 +156,8 @@ class MovieService:
             page: Current page number
             total_pages: Total pages available
             total_results: Total results available (from original TMDB response)
+            next_tmdb_page_start: Next TMDB page to fetch for pagination continuation
+                (smart buffer tracking to prevent duplicates)
 
         Returns:
             PaginatedMovieResponseSchema with converted movie data
@@ -181,7 +184,13 @@ class MovieService:
         )
 
         # Convert to application schema
-        return create_paginated_movie_response_from_tmdb(filtered_response.model_dump())
+        response = create_paginated_movie_response_from_tmdb(filtered_response.model_dump())
+
+        # Include pagination metadata if provided
+        if next_tmdb_page_start is not None:
+            response.next_tmdb_page_start = next_tmdb_page_start
+
+        return response
 
     def _fetch_with_filters_and_buffer(
         self,
@@ -192,6 +201,7 @@ class MovieService:
         rating_min: float | None,
         rating_max: float | None,
         pre_filter_func: object | None = None,  # Optional pre-filter callable
+        tmdb_page_start: int | None = None,  # Starting TMDB page for smart buffer continuation
     ) -> PaginatedMovieResponseSchema:
         """Template method for paginated fetch-filter-buffer workflow.
 
@@ -201,7 +211,7 @@ class MovieService:
         3. Check if year/rating filters are needed
         4. Apply year/rating filters if needed
         5. Apply buffer mechanism if needed (fetch page N+1 to backfill)
-        6. Build filtered response
+        6. Build filtered response with pagination metadata
 
         This eliminates ~160 lines of duplication across discover_movies,
         search_movies, get_now_playing_movies, and get_upcoming_movies.
@@ -217,9 +227,13 @@ class MovieService:
             pre_filter_func: Optional pre-filter function (e.g., non-visual filtering)
                 Takes list[TMDBMovieBase], returns list[TMDBMovieBase]
                 Applied BEFORE year/rating filters
+            tmdb_page_start: Starting TMDB page for smart buffer continuation.
+                If provided, overrides `page` for TMDB fetching
+                (enables metadata-driven pagination)
 
         Returns:
-            PaginatedMovieResponseSchema with filtered and buffered results
+            PaginatedMovieResponseSchema with filtered and buffered results, including
+            next_tmdb_page_start metadata for pagination continuation
 
         Note:
             Template method pattern: invariant workflow with variant behavior
@@ -243,8 +257,9 @@ class MovieService:
             fetch_func = fetch_page_func
             pre_filter = pre_filter_func
 
-        # Step 1: Fetch initial page
-        tmdb_response = fetch_func(page)
+        # Step 1: Fetch initial page (use tmdb_page_start if provided, otherwise use page)
+        effective_page = tmdb_page_start if tmdb_page_start is not None else page
+        tmdb_response = fetch_func(effective_page)
 
         # Step 2: Apply optional pre-filter (e.g., non-visual content for search)
         movies = tmdb_response.results
@@ -288,9 +303,9 @@ class MovieService:
         else:
             buffer_fetch_func = fetch_page_func
 
-        final_movies = self._apply_buffer_if_needed(
+        final_movies, pages_consumed = self._apply_buffer_if_needed(
             filtered_movies,
-            page,
+            effective_page,
             tmdb_response.total_pages,
             year_min,
             year_max,
@@ -299,12 +314,16 @@ class MovieService:
             buffer_fetch_func
         )
 
-        # Step 6: Build filtered response
+        # Step 6: Calculate next TMDB page start for pagination continuation
+        next_tmdb_page_start = effective_page + pages_consumed
+
+        # Step 7: Build filtered response with pagination metadata
         return self._build_filtered_response(
             final_movies,
             page,
             tmdb_response.total_pages,
-            tmdb_response.total_results
+            tmdb_response.total_results,
+            next_tmdb_page_start
         )
 
     def _convert_schema_to_tmdb_movie(self, schema: MovieBaseSchema) -> TMDBMovieBase:
@@ -386,7 +405,7 @@ class MovieService:
         rating_min: float | None,
         rating_max: float | None,
         fetch_next_page_func: object,  # Callable that fetches next page
-    ) -> list[MovieBaseSchema]:
+    ) -> tuple[list[MovieBaseSchema], int]:
         """Apply smart buffer mechanism to maintain consistent page sizes.
 
         Smart buffer logic:
@@ -409,15 +428,17 @@ class MovieService:
             fetch_next_page_func: Function to fetch next page (takes page number)
 
         Returns:
-            Up to 20 movies with buffer applied if needed
+            Tuple of (movies, pages_consumed) where:
+            - movies: Up to 20 movies with buffer applied if needed
+            - pages_consumed: Total TMDB pages consumed (includes initial page)
         """
-        # Full page achieved - return first 20
+        # Full page achieved - return first 20 with page count = 1
         if len(filtered_movies) >= 20:
-            return filtered_movies[:20]
+            return (filtered_movies[:20], 1)
 
-        # If we're on the last page, return what we have
+        # If we're on the last page, return what we have with page count = 1
         if current_page >= total_pages:
-            return filtered_movies
+            return (filtered_movies, 1)
 
         # Type casting for static analysis
         import typing
@@ -455,8 +476,9 @@ class MovieService:
             next_page += 1
             pages_fetched += 1
 
-        # Return up to 20 movies
-        return combined_movies[:20]
+        # Return up to 20 movies + total pages consumed (initial + buffered)
+        total_pages_consumed = 1 + pages_fetched
+        return (combined_movies[:20], total_pages_consumed)
 
     # ========================================================================
     # Public Service Methods
@@ -716,6 +738,7 @@ class MovieService:
         year_max: int | None = None,
         rating_min: float | None = None,
         rating_max: float | None = None,
+        tmdb_page_start: int | None = None,
         **filters: str | int | float | bool | None
     ) -> PaginatedMovieResponseSchema:
         """
@@ -727,6 +750,8 @@ class MovieService:
             year_max: Maximum release year (inclusive), backend filtered (second-pass data hygiene)
             rating_min: Minimum rating (inclusive), backend filtered (second-pass data hygiene)
             rating_max: Maximum rating (inclusive), backend filtered (second-pass data hygiene)
+            tmdb_page_start: Starting TMDB page for smart buffer continuation
+                (enables metadata-driven pagination to prevent duplicates)
             **filters: Discovery filters including:
                 - sort_by: Sort order (popularity.desc, release_date.desc, etc.)
                 - genres: Comma-separated genre IDs
@@ -739,7 +764,8 @@ class MovieService:
                 - region: Country code for regional release dates
 
         Returns:
-            PaginatedMovieResponseSchema with discovered movies
+            PaginatedMovieResponseSchema with discovered movies, including
+            next_tmdb_page_start metadata for pagination continuation
 
         Raises:
             HttpError: If API error or data processing fails
@@ -829,7 +855,8 @@ class MovieService:
             year_min,
             year_max,
             rating_min,
-            rating_max
+            rating_max,
+            tmdb_page_start=tmdb_page_start
         )
 
     def get_movie_genres(self) -> list[GenreSchema]:

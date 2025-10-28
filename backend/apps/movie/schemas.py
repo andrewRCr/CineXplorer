@@ -150,12 +150,22 @@ class MovieDetailSchema(MovieBaseSchema):
 
 
 class PaginatedMovieResponseSchema(Schema):
-    """Standard TMDB-style pagination envelope for movie collections."""
+    """Standard TMDB-style pagination envelope for movie collections.
+
+    Includes pagination metadata tracking for smart buffer mechanism:
+    - next_tmdb_page_start: Tracks the next TMDB page to fetch when buffer
+      consumes multiple pages per API response. This prevents duplicates when
+      client requests subsequent pages.
+    """
 
     page: int = 1
     total_pages: int = 0
     total_results: int = 0
     results: list[MovieBaseSchema] = Field(default_factory=_empty_movie_list)
+    next_tmdb_page_start: int | None = Field(
+        default=None,
+        description="Next TMDB page to fetch for pagination continuation (smart buffer tracking)"
+    )
 
 
 class KeywordSchema(Schema):
@@ -215,6 +225,10 @@ class MovieDiscoverFilterSchema(Schema):
 
     # Pagination
     page: Annotated[int | None, Field(description="Page number for pagination")] = None
+    tmdb_page_start: Annotated[
+        int | None,
+        Field(description="TMDB page to start fetching from (smart buffer continuation)")
+    ] = None
 
     # Genre/Keyword filters
     with_genres: Annotated[str | None, Field(description="Comma-separated genre IDs")] = None
@@ -374,6 +388,7 @@ class MovieDiscoverFilterSchema(Schema):
             'release_date_lte': 'release_date.lte',
             'certification': 'certification',
             'region': 'region',
+            'tmdb_page_start': 'tmdb_page_start',
         }
 
         # Apply simple field mappings (passthrough and renames)

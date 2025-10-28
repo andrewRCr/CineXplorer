@@ -119,7 +119,7 @@ def filter_movies_by_rating(
     movies: list[MovieBaseSchema],
     rating_min: float | None = None,
     rating_max: float | None = None,
-    min_vote_count: int = 50,
+    min_vote_count: int | None = 50,
 ) -> list[MovieBaseSchema]:
     """Filter movies by vote average (rating) range with vote count quality check.
 
@@ -174,9 +174,11 @@ def filter_movies_by_rating(
         if movie.vote_average is None:
             continue
 
-        # Vote count quality check: When filtering by rating, require minimum vote count
-        # This ensures rating reliability (avoid movies with 1-2 votes showing 10/10)
-        if movie.vote_count is None or movie.vote_count < min_vote_count:
+        # Vote count quality check: Only applied when threshold specified
+        # min_vote_count=None means skip threshold (show all rating matches)
+        if min_vote_count is not None and (
+            movie.vote_count is None or movie.vote_count < min_vote_count
+        ):
             continue
 
         movie_rating = movie.vote_average

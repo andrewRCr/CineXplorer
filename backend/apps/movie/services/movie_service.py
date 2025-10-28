@@ -353,6 +353,12 @@ class MovieService:
     ) -> list[MovieBaseSchema]:
         """Apply completeness, year, and rating filters to movie list.
 
+        Vote count threshold behavior:
+        - When rating filter specified: No vote threshold (show all matches).
+          Low-rated movies naturally have fewer votes, threshold would filter 95% of results.
+        - General browsing (no rating filter): Apply TMDB_MIN_VOTE_COUNT_THRESHOLD
+          to filter statistical noise (1-2 vote ratings).
+
         Args:
             movies: List of TMDBMovieBase objects from API response
             year_min: Minimum release year (inclusive), None for no lower bound
@@ -383,14 +389,22 @@ class MovieService:
         # Even without user filters, this excludes pre-1888 dates (data quality)
         movie_schemas = filter_movies_by_year(movie_schemas, year_min, year_max)
 
-        # Apply rating filtering if specified (includes vote count quality check)
+        # Apply rating filtering with intent-based vote threshold (see docstring)
         if rating_min is not None or rating_max is not None:
-            min_vote_count = settings.TMDB_MIN_VOTE_COUNT_THRESHOLD
+            # Explicit rating filter: Skip vote threshold, show all matches
             movie_schemas = filter_movies_by_rating(
                 movie_schemas,
                 rating_min,
                 rating_max,
-                min_vote_count=min_vote_count
+                min_vote_count=None
+            )
+        else:
+            # General browsing: Apply vote threshold for quality
+            movie_schemas = filter_movies_by_rating(
+                movie_schemas,
+                rating_min=None,
+                rating_max=None,
+                min_vote_count=settings.TMDB_MIN_VOTE_COUNT_THRESHOLD
             )
 
         return movie_schemas
@@ -775,6 +789,9 @@ class MovieService:
             Year and rating filters use two-pass architecture: TMDB API (primary)
             + backend filtering (catches data quality issues).
         """
+        import logging
+        logger = logging.getLogger('cinexplorer.movie')
+
         logger.debug(
             f"Discover movies request: page={page}, year_min={year_min}, year_max={year_max}, "
             f"rating_min={rating_min}, rating_max={rating_max}, filters={filters}"
@@ -835,6 +852,19 @@ class MovieService:
         # Set default sort if not specified
         if 'sort_by' not in params:
             params['sort_by'] = 'popularity.desc'
+
+        # Add rating filters to TMDB params for first-pass filtering
+        # This prevents excessive backend filtering and buffer page fetching
+        if rating_min is not None:
+            params['vote_average.gte'] = rating_min
+        if rating_max is not None:
+            params['vote_average.lte'] = rating_max
+
+        # Log TMDB params at DEBUG level for diagnostics
+        logger.debug(
+            f"TMDB discover params: rating_min={rating_min}, "
+            f"rating_max={rating_max}, full_params={params}"
+        )
 
         def fetch_discover_page(page_num: int) -> TMDBMovieSearchResponse:
             """Fetch a specific discover page with current filters."""

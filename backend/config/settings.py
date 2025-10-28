@@ -235,12 +235,12 @@ ENVIRONMENT = _environment  # Final constant assignment
 TMDB_API_KEY = env("TMDB_API_KEY")
 BACKEND_URL = env("BACKEND_URL")
 
-# TMDB data quality thresholds
-# Minimum vote count for reliable ratings - movies with fewer votes are excluded
-# when users filter by rating. Prevents showing movies with 1-2 votes and 10/10 avg.
-# Default: 50 votes (statistically significant threshold based on TMDB data analysis)
+# Minimum vote count threshold for general movie browsing (popular/top-rated)
+# Applied only when NO rating filter specified. When users explicitly filter by rating,
+# threshold is skipped (all matches shown) since low-rated movies naturally have fewer votes.
+# Default: 10 votes (removes 1-2 vote statistical noise, filters <15% on popular pages)
 TMDB_MIN_VOTE_COUNT_THRESHOLD = int(
-    os.environ.get("TMDB_MIN_VOTE_COUNT_THRESHOLD", "50")
+    os.environ.get("TMDB_MIN_VOTE_COUNT_THRESHOLD", "10")
 )
 
 # Email verification settings

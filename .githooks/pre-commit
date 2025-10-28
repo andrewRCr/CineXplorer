@@ -51,13 +51,11 @@ fi
 # CHECK 3: Sensitive file patterns (prevent credential leaks)
 # ============================================================================
 sensitive_patterns=(
-    "*.env"
-    "*.env.local"
-    "*credentials*.json"
-    "*secrets*.yaml"
-    "*private*.key"
-    ".env"
-    ".env.local"
+    "\.env$"
+    "\.env\.local$"
+    "credentials.*\.json"
+    "secrets.*\.yaml"
+    "private.*\.key"
 )
 
 for pattern in "${sensitive_patterns[@]}"; do

@@ -751,8 +751,8 @@ def test_buffer_mechanism_fills_page_even_with_few_initial_results() -> None:
           for i in range(8)],
     ]
 
-    def mock_get_side_effect(*args, **kwargs):
-        params = args[1] if len(args) > 1 else kwargs.get('params', {})
+    def mock_get_side_effect(*args: object, **kwargs: object) -> ApiResponse:
+        params: dict[str, object] = args[1] if len(args) > 1 else kwargs.get('params', {})  # type: ignore[assignment]
         page_num = params.get('page', 1)
 
         if page_num == 1:
@@ -764,6 +764,12 @@ def test_buffer_mechanism_fills_page_even_with_few_initial_results() -> None:
             return ApiResponse(
                 status_code=200,
                 data=create_paginated_tmdb_response(page_2_movies, page=2, total_pages=10)
+            )
+        else:
+            # Fallback for unexpected page numbers
+            return ApiResponse(
+                status_code=200,
+                data=create_paginated_tmdb_response([], page=page_num, total_pages=10)  # type: ignore[arg-type]
             )
 
     mock_client.get.side_effect = mock_get_side_effect

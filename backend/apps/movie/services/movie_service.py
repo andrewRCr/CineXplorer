@@ -433,13 +433,13 @@ class MovieService:
         # Smart buffering: Keep fetching pages until we have 20 results or run out
         combined_movies = filtered_movies
         next_page = current_page + 1
-        MAX_BUFFER_PAGES = 5  # Safety limit to prevent excessive API calls
+        max_buffer_pages = 5  # Safety limit to prevent excessive API calls
 
         pages_fetched = 0
         while (
             len(combined_movies) < 20
             and next_page <= total_pages
-            and pages_fetched < MAX_BUFFER_PAGES
+            and pages_fetched < max_buffer_pages
         ):
             # Fetch next page and apply same filters
             buffer_response = fetch_func(next_page)

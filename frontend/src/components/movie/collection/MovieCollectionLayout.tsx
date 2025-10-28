@@ -81,11 +81,15 @@ const MovieCollectionLayout = ({
 		handleUnifiedFiltersChange,
 	} = useMovieCollectionUrl(defaultFilters, actualSource);
 
+	// Determine actual filter style: when advanced filters are shown, use expanded style
+	// This ensures maxRating and other advanced filter params are properly sent to API
+	const actualFilterStyle = showAdvanced ? "expanded" : filterStyle;
+
 	// Use the movie fetch router hook to route between search/discover endpoints
 	const enhancedFetcher = useMovieFetchRouter({
 		fetcher: actualFetcher,
 		filters: unifiedFilters,
-		filterStyle,
+		filterStyle: actualFilterStyle,
 	});
 
 	// Memoized container configuration for better performance
@@ -145,7 +149,7 @@ const MovieCollectionLayout = ({
 			{showFilters && (
 				<FilterSection
 					showFilters={showFilters}
-					filterStyle={filterStyle}
+					filterStyle={actualFilterStyle}
 					showAdvanced={showAdvanced}
 					filters={unifiedFilters}
 					onFiltersChange={handleUnifiedFiltersChange}

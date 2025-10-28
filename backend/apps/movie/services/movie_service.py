@@ -387,12 +387,16 @@ class MovieService:
         rating_max: float | None,
         fetch_next_page_func: object,  # Callable that fetches next page
     ) -> list[MovieBaseSchema]:
-        """Apply 3-tier buffer mechanism to maintain consistent page sizes.
+        """Apply smart buffer mechanism to maintain consistent page sizes.
 
-        Buffer threshold logic:
-        - If filtered_count >= 20: Return first 20 (full page achieved)
-        - If 10 <= filtered_count < 20: Fetch page N+1 to backfill
-        - If filtered_count < 10: Return what we have (filter too restrictive)
+        Smart buffer logic:
+        - If we have >= 20 results: Return first 20 (full page achieved)
+        - If we have < 20 results AND more pages available: Keep fetching
+          additional pages until we reach 20 results or run out of pages
+        - Safety limit: Maximum 5 additional page fetches to prevent pathological cases
+
+        This ensures consistent 20-result pages even with very restrictive filters
+        (e.g., rating 0-6.0) as long as sufficient results exist in the dataset.
 
         Args:
             filtered_movies: Movies from current page after filtering
@@ -407,31 +411,38 @@ class MovieService:
         Returns:
             Up to 20 movies with buffer applied if needed
         """
-        filtered_count = len(filtered_movies)
-
         # Full page achieved - return first 20
-        if filtered_count >= 20:
+        if len(filtered_movies) >= 20:
             return filtered_movies[:20]
 
-        # Filter too restrictive - don't waste API calls
-        if filtered_count < 10:
+        # If we're on the last page, return what we have
+        if current_page >= total_pages:
             return filtered_movies
 
-        # Between 10-19 results - fetch buffer if not on last page
-        if current_page < total_pages:
-            # Fetch page N+1 and apply same filters
-            # fetch_next_page_func returns validated TMDBMovieSearchResponse
-            import typing
-            if typing.TYPE_CHECKING:
-                from collections.abc import Callable
-                fetch_func = typing.cast(
-                    Callable[[int], TMDBMovieSearchResponse],
-                    fetch_next_page_func
-                )
-            else:
-                fetch_func = fetch_next_page_func
+        # Type casting for static analysis
+        import typing
+        if typing.TYPE_CHECKING:
+            from collections.abc import Callable
+            fetch_func = typing.cast(
+                Callable[[int], TMDBMovieSearchResponse],
+                fetch_next_page_func
+            )
+        else:
+            fetch_func = fetch_next_page_func
 
-            buffer_response = fetch_func(current_page + 1)
+        # Smart buffering: Keep fetching pages until we have 20 results or run out
+        combined_movies = filtered_movies
+        next_page = current_page + 1
+        MAX_BUFFER_PAGES = 5  # Safety limit to prevent excessive API calls
+
+        pages_fetched = 0
+        while (
+            len(combined_movies) < 20
+            and next_page <= total_pages
+            and pages_fetched < MAX_BUFFER_PAGES
+        ):
+            # Fetch next page and apply same filters
+            buffer_response = fetch_func(next_page)
             buffer_movies = self._apply_filters(
                 buffer_response.results,
                 year_min,
@@ -440,12 +451,12 @@ class MovieService:
                 rating_max
             )
 
-            # Combine and return up to 20 total
-            combined = filtered_movies + buffer_movies
-            return combined[:20]
+            combined_movies = combined_movies + buffer_movies
+            next_page += 1
+            pages_fetched += 1
 
-        # On last page with 10-19 results - return what we have
-        return filtered_movies
+        # Return up to 20 movies
+        return combined_movies[:20]
 
     # ========================================================================
     # Public Service Methods

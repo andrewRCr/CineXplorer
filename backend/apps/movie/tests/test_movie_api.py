@@ -759,3 +759,246 @@ def test_discover_api_buffer_mechanism_with_filtering(
     assert buffer_ids.issubset(returned_ids), (
         "Buffer movies should be included to reach 20 results"
     )
+
+
+# =========================
+# Pagination Metadata Tracking Tests (Smart Buffer)
+# =========================
+
+
+@pytest.mark.django_db
+@patch('core.services.tmdb_api_client.TMDBApiClient.get')
+def test_discover_returns_next_tmdb_page_start_after_buffer(
+    mock_tmdb_get: Mock,
+    api_client: Client
+) -> None:
+    """Test that API returns next_tmdb_page_start metadata when buffer consumes multiple pages.
+
+    When buffer mechanism fetches multiple TMDB pages (e.g., pages 1-4) to fill
+    a single API response, the API should return next_tmdb_page_start=5 to tell
+    the client where pagination should continue.
+
+    This prevents duplicates when client requests next API page.
+    """
+    # Arrange: Create scenario where page 1 needs buffering (sparse results)
+    # Page 1: 11 valid movies (triggers buffer)
+    page_1_movies = [
+        create_movie_dict(i, f'Movie {i}', '2022-01-01', 8.0)
+        for i in range(1, 12)
+    ]
+
+    # Pages 2-4: Fill buffer to reach 20 results (3 pages, 3 movies each = 9 more)
+    page_2_movies = [
+        create_movie_dict(i, f'Movie {i}', '2022-01-01', 8.0)
+        for i in range(12, 15)
+    ]
+    page_3_movies = [
+        create_movie_dict(i, f'Movie {i}', '2022-01-01', 8.0)
+        for i in range(15, 18)
+    ]
+    page_4_movies = [
+        create_movie_dict(i, f'Movie {i}', '2022-01-01', 8.0)
+        for i in range(18, 21)
+    ]
+
+    # Mock TMDB responses
+    mock_tmdb_get.side_effect = [
+        ApiResponse(200, cast(TMDBResponseData, create_paginated_tmdb_response(
+            page_1_movies, page=1, total_pages=10, total_results=200
+        ))),
+        ApiResponse(200, cast(TMDBResponseData, create_paginated_tmdb_response(
+            page_2_movies, page=2, total_pages=10, total_results=200
+        ))),
+        ApiResponse(200, cast(TMDBResponseData, create_paginated_tmdb_response(
+            page_3_movies, page=3, total_pages=10, total_results=200
+        ))),
+        ApiResponse(200, cast(TMDBResponseData, create_paginated_tmdb_response(
+            page_4_movies, page=4, total_pages=10, total_results=200
+        ))),
+    ]
+
+    # Act: Request discover with filters that trigger sparse results
+    filters: dict[str, str | float] = {
+        'vote_average_gte': 7.5
+    }
+    res = api_client.get(DISCOVER_URL, filters)
+
+    # Assert: Response includes next_tmdb_page_start metadata
+    assert res.status_code == HTTP_200_OK
+    data = res.json()
+
+    # Buffer fetched pages 1-4, so next request should start at page 5
+    assert 'next_tmdb_page_start' in data, (
+        "Response must include next_tmdb_page_start metadata"
+    )
+    assert data['next_tmdb_page_start'] == 5, (
+        f"After consuming TMDB pages 1-4, next start should be 5, "
+        f"got {data.get('next_tmdb_page_start')}"
+    )
+
+    # Should have exactly 20 results (11 from page 1 + 9 from pages 2-4)
+    assert len(data['results']) == 20, (
+        f"Expected 20 results after buffering, got {len(data['results'])}"
+    )
+
+
+@pytest.mark.django_db
+@patch('core.services.tmdb_api_client.TMDBApiClient.get')
+def test_discover_continues_from_tmdb_page_start_parameter(
+    mock_tmdb_get: Mock,
+    api_client: Client
+) -> None:
+    """Test that tmdb_page_start parameter correctly continues pagination.
+
+    When client provides tmdb_page_start from previous response's next_tmdb_page_start,
+    the API should start fetching from that TMDB page instead of using simple 1:1 mapping.
+
+    This ensures sequential page requests don't create duplicates.
+    """
+    # Arrange: Simulate requesting "API page 2" but starting from TMDB page 5
+    # (because previous request consumed TMDB pages 1-4)
+    page_5_movies = [
+        create_movie_dict(i, f'Movie {i}', '2022-01-01', 8.0)
+        for i in range(21, 41)  # 20 movies, IDs 21-40
+    ]
+
+    mock_tmdb_get.return_value = ApiResponse(
+        200,
+        cast(TMDBResponseData, create_paginated_tmdb_response(
+            page_5_movies, page=5, total_pages=10, total_results=200
+        ))
+    )
+
+    # Act: Request with tmdb_page_start=5 (from previous next_tmdb_page_start)
+    filters: dict[str, str | int] = {
+        'page': 2,  # API page 2
+        'tmdb_page_start': 5,  # But continue from TMDB page 5
+    }
+    res = api_client.get(DISCOVER_URL, filters)
+
+    # Assert: Request succeeded
+    assert res.status_code == HTTP_200_OK
+    data = res.json()
+
+    # Verify tmdb_page_start parameter was respected (behavior check)
+    # Results should be from TMDB page 5 (IDs 21-40), NOT from API page 2
+    returned_ids = {movie['tmdb_id'] for movie in data['results']}
+    expected_ids = set(range(21, 41))
+    assert returned_ids == expected_ids, (
+        f"Expected IDs 21-40 from TMDB page 5 (tmdb_page_start=5), got {returned_ids}. "
+        "This validates tmdb_page_start parameter correctly overrides simple page mapping."
+    )
+
+
+@pytest.mark.django_db
+@patch('core.services.tmdb_api_client.TMDBApiClient.get')
+def test_discover_no_duplicates_across_sequential_pages(
+    mock_tmdb_get: Mock,
+    api_client: Client
+) -> None:
+    """Test that sequential pagination with metadata produces no duplicates.
+
+    Real-world scenario:
+    1. Request API page 1 → returns movies 1-20, next_tmdb_page_start=5
+    2. Request API page 2 with tmdb_page_start=5 → returns movies 21-40
+    3. No movies should appear in both responses
+    """
+    # Arrange: Set up two sequential requests with buffer scenario
+    # Request 1: API page 1, consumes TMDB pages 1-4
+    page_1_movies = [create_movie_dict(i, f'Movie {i}', '2022-01-01', 8.0) for i in range(1, 12)]
+    page_2_movies = [create_movie_dict(i, f'Movie {i}', '2022-01-01', 8.0) for i in range(12, 15)]
+    page_3_movies = [create_movie_dict(i, f'Movie {i}', '2022-01-01', 8.0) for i in range(15, 18)]
+    page_4_movies = [create_movie_dict(i, f'Movie {i}', '2022-01-01', 8.0) for i in range(18, 21)]
+
+    # Request 2: API page 2, starts from TMDB page 5
+    page_5_movies = [create_movie_dict(i, f'Movie {i}', '2022-01-01', 8.0) for i in range(21, 41)]
+
+    # Mock responses for both requests
+    mock_tmdb_get.side_effect = [
+        # First request: pages 1-4
+        ApiResponse(200, cast(TMDBResponseData, create_paginated_tmdb_response(
+            page_1_movies, page=1, total_pages=10
+        ))),
+        ApiResponse(200, cast(TMDBResponseData, create_paginated_tmdb_response(
+            page_2_movies, page=2, total_pages=10
+        ))),
+        ApiResponse(200, cast(TMDBResponseData, create_paginated_tmdb_response(
+            page_3_movies, page=3, total_pages=10
+        ))),
+        ApiResponse(200, cast(TMDBResponseData, create_paginated_tmdb_response(
+            page_4_movies, page=4, total_pages=10
+        ))),
+        # Second request: page 5
+        ApiResponse(200, cast(TMDBResponseData, create_paginated_tmdb_response(
+            page_5_movies, page=5, total_pages=10
+        ))),
+    ]
+
+    # Act 1: Request API page 1
+    res1 = api_client.get(DISCOVER_URL, {'vote_average_gte': 7.5})
+    assert res1.status_code == HTTP_200_OK
+    data1 = res1.json()
+    movies_page_1 = {m['tmdb_id'] for m in data1['results']}
+    next_tmdb_start = data1['next_tmdb_page_start']
+
+    # Act 2: Request API page 2 with metadata
+    res2 = api_client.get(DISCOVER_URL, {
+        'page': 2,
+        'tmdb_page_start': next_tmdb_start,
+        'vote_average_gte': 7.5
+    })
+    assert res2.status_code == HTTP_200_OK
+    data2 = res2.json()
+    movies_page_2 = {m['tmdb_id'] for m in data2['results']}
+
+    # Assert: No duplicates between pages
+    duplicates = movies_page_1 & movies_page_2
+    assert len(duplicates) == 0, (
+        f"Found {len(duplicates)} duplicate movies across pages: {duplicates}"
+    )
+
+    # Assert: Page 1 has IDs 1-20, Page 2 has IDs 21-40
+    assert movies_page_1 == set(range(1, 21)), "Page 1 should have movies 1-20"
+    assert movies_page_2 == set(range(21, 41)), "Page 2 should have movies 21-40"
+
+
+@pytest.mark.django_db
+@patch('core.services.tmdb_api_client.TMDBApiClient.get')
+def test_discover_fallback_when_tmdb_page_start_omitted(
+    mock_tmdb_get: Mock,
+    api_client: Client
+) -> None:
+    """Test fallback behavior when tmdb_page_start parameter is missing.
+
+    For backward compatibility, if client doesn't provide tmdb_page_start,
+    API should fall back to simple 1:1 page mapping (old behavior).
+
+    This ensures existing clients continue to work (though may see duplicates).
+    """
+    # Arrange: Simulate old-style request without metadata
+    page_2_movies = [
+        create_movie_dict(i, f'Movie {i}', '2022-01-01', 8.0)
+        for i in range(21, 41)
+    ]
+
+    mock_tmdb_get.return_value = ApiResponse(
+        200,
+        cast(TMDBResponseData, create_paginated_tmdb_response(
+            page_2_movies, page=2, total_pages=10
+        ))
+    )
+
+    # Act: Request API page 2 WITHOUT tmdb_page_start
+    res = api_client.get(DISCOVER_URL, {'page': 2})
+
+    # Assert: Should fall back to simple mapping (API page 2 → TMDB page 2)
+    assert res.status_code == HTTP_200_OK
+    data = res.json()
+
+    # Verify fallback behavior: results from TMDB page 2 (IDs 21-40)
+    returned_ids = {movie['tmdb_id'] for movie in data['results']}
+    expected_ids = set(range(21, 41))
+    assert returned_ids == expected_ids, (
+        f"Expected IDs 21-40 from TMDB page 2 (fallback behavior), got {returned_ids}. "
+        "Without tmdb_page_start, should use simple 1:1 mapping (API page = TMDB page)"
+    )

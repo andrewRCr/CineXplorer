@@ -118,7 +118,7 @@ def test_paginated_endpoint_contract(
     movies = [create_movie_dict(101, 'Test Movie', '2023-01-01', 8.0, poster_path='/test.jpg')]
     tmdb_payload: TMDBResponseData = cast(
         TMDBResponseData,
-        create_paginated_tmdb_response(movies, page=1, total_pages=5)
+        create_paginated_tmdb_response(movies, page=1, total_pages=1)
     )
     mock_api_response = ApiResponse(
         status_code=200,
@@ -136,7 +136,7 @@ def test_paginated_endpoint_contract(
     assert 'page' in data
     assert 'total_pages' in data
     assert data['page'] == 1
-    assert data['total_pages'] == 5
+    assert data['total_pages'] == 1  # Single page result
     assert len(data['results']) == 1
 
     # Assert: Check the structure and content of individual movie data
@@ -165,7 +165,7 @@ def test_discover_with_filters(mock_tmdb_get: Mock, api_client: Client) -> None:
     movies = [create_movie_dict(101, 'Test Movie', '2023-01-01', 8.0)]
     tmdb_payload: TMDBResponseData = cast(
         TMDBResponseData,
-        create_paginated_tmdb_response(movies, page=1, total_pages=5)
+        create_paginated_tmdb_response(movies, page=1, total_pages=1)
     )
     mock_api_response = ApiResponse(
         status_code=200,

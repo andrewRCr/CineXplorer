@@ -143,7 +143,7 @@ def test_search_movies_filters_incorrect_release_years() -> None:
 
     mock_response = ApiResponse(
         status_code=200,
-        data=create_paginated_tmdb_response(tmdb_movies, page=1, total_pages=5)
+        data=create_paginated_tmdb_response(tmdb_movies, page=1, total_pages=1)
     )
     mock_client.search_movies.return_value = mock_response
 
@@ -158,6 +158,7 @@ def test_search_movies_filters_incorrect_release_years() -> None:
     )
 
     # Assert: Only 2020s Batman movies returned (7 correct movies)
+    # Note: total_pages=1 means we're on last page, so buffer doesn't activate
     assert isinstance(result, PaginatedMovieResponseSchema)
     assert len(result.results) == 7
 
@@ -715,13 +716,14 @@ def test_buffer_mechanism_does_not_fetch_when_full_page_achieved() -> None:
     assert len(result.results) == 20
 
 
-def test_buffer_mechanism_respects_minimum_threshold() -> None:
-    """Test that service does NOT fetch buffer when results < 10 (filter too restrictive).
+def test_buffer_mechanism_fills_page_even_with_few_initial_results() -> None:
+    """Test that service keeps fetching pages to fill to 20 even with restrictive filters.
 
-    If we only get 8 movies after filtering page 1, the filter is probably
-    too restrictive - don't waste API calls fetching page 2.
+    With smart buffering, if page 1 only yields 8 movies after filtering but more
+    pages are available, we should fetch additional pages to reach 20 results.
+    This ensures consistent page sizes even with restrictive filters.
     """
-    # Arrange: Page 1 has only 8 valid movies after filtering
+    # Arrange: Page 1 has only 8 valid movies, page 2 has 12 more
     mock_client = Mock(spec=['get'])
 
     # Page 1: 20 movies, but only 8 match very restrictive filters
@@ -740,12 +742,31 @@ def test_buffer_mechanism_respects_minimum_threshold() -> None:
           for i in range(12)],
     ]
 
-    page_1_response = ApiResponse(
-        status_code=200,
-        data=create_paginated_tmdb_response(page_1_movies, page=1, total_pages=10)
-    )
-    mock_client.get.return_value = page_1_response
+    # Page 2: 12 more matching movies
+    page_2_movies = [
+        *[create_movie_dict(20 + i, f"Good {chr(73 + i)}", "2022-01-01", 8.5 + i * 0.1)
+          for i in range(12)],
+        # 8 movies filtered out
+        *[create_movie_dict(200 + i, f"Wrong {i}", "2022-01-01", 7.0)
+          for i in range(8)],
+    ]
 
+    def mock_get_side_effect(*args, **kwargs):
+        params = args[1] if len(args) > 1 else kwargs.get('params', {})
+        page_num = params.get('page', 1)
+
+        if page_num == 1:
+            return ApiResponse(
+                status_code=200,
+                data=create_paginated_tmdb_response(page_1_movies, page=1, total_pages=10)
+            )
+        elif page_num == 2:
+            return ApiResponse(
+                status_code=200,
+                data=create_paginated_tmdb_response(page_2_movies, page=2, total_pages=10)
+            )
+
+    mock_client.get.side_effect = mock_get_side_effect
     service = MovieService(tmdb_client=mock_client)
 
     # Act: Request page 1 with restrictive filters (rating 8.5+)
@@ -756,11 +777,11 @@ def test_buffer_mechanism_respects_minimum_threshold() -> None:
         rating_min=8.5
     )
 
-    # Assert: Service only fetched page 1 (no buffer - filter too restrictive)
-    assert mock_client.get.call_count == 1
+    # Assert: Service fetched pages 1 and 2 to fill to 20
+    assert mock_client.get.call_count == 2
 
-    # Assert: Result contains only 8 movies (showing what we have)
-    assert len(result.results) == 8
+    # Assert: Result contains exactly 20 movies (full page achieved)
+    assert len(result.results) == 20
 
 
 def test_buffer_mechanism_does_not_fetch_on_last_page() -> None:

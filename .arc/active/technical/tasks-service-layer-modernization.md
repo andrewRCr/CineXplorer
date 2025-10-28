@@ -56,7 +56,7 @@ patterns across movie, UserMovieData, and authentication domains.
 
 ## Tasks
 
-### **Phase 1.0: Create Pagination & Batch Operation Helpers (5-7 hours)**
+### **Phase 1:** Create Pagination & Batch Operation Helpers
 
 - [x] **1.1 Create Generic Pagination Helper**
     - [x] 1.1.1 Write tests for `paginate_queryset` function (test-first)
@@ -139,7 +139,7 @@ patterns across movie, UserMovieData, and authentication domains.
 
 ---
 
-### **Phase 2.0: Complete MovieEnrichmentService Refactoring (1-2 hours)**
+### **Phase 2:** Complete MovieEnrichmentService Refactoring
 
 - [x] **2.1 Fix Mutation Anti-Pattern**
     - [x] 2.1.1 Write tests verifying non-mutation behavior (test-first)
@@ -193,7 +193,7 @@ patterns across movie, UserMovieData, and authentication domains.
 
 ---
 
-### **Phase 3.0: Refactor MovieService to Class-Based Architecture (6-9 hours)**
+### **Phase 3:** Refactor MovieService to Class-Based Architecture
 
 - [x] **3.1 Create MovieService Class**
     - [x] 3.1.1 Write tests for MovieService class methods (test-first)
@@ -496,7 +496,7 @@ patterns across movie, UserMovieData, and authentication domains.
 
 ---
 
-### **Phase 4.0: Create UserMovieDataService (4-5 hours)**
+### **Phase 4:** Create UserMovieDataService
 
 - [ ] **4.1 Create UserMovieDataService Class**
     - [ ] 4.1.1 Write tests for UserMovieDataService CRUD operations (test-first)
@@ -543,7 +543,7 @@ patterns across movie, UserMovieData, and authentication domains.
 
 ---
 
-### **Phase 5.0: Create AuthenticationService (4-6 hours)**
+### **Phase 5:** Create AuthenticationService
 
 - [ ] **5.1 Create AuthenticationService Class**
     - [ ] 5.1.1 Write tests for AuthenticationService methods (test-first)
@@ -587,7 +587,7 @@ patterns across movie, UserMovieData, and authentication domains.
 
 ---
 
-### **Phase 6.0: Integration Testing & Documentation (2-3 hours)**
+### **Phase 6:** Integration Testing & Documentation
 
 - [ ] **6.1 Verify Email Service Patterns**
     - [ ] 6.1.1 Review `ZeptomailService` in `backend/apps/core/services/email_service.py`

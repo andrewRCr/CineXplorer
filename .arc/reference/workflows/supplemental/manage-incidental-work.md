@@ -67,8 +67,73 @@ Examples:
 
 - Context section explaining discovery and why now
 - Scope section (will do / won't do)
-- Phased task breakdown
+- Phased task breakdown with standardized format (see example below)
 - Implementation notes as work proceeds
+
+**Test-first protocol applies**: Incidental work fixing bugs or refactoring business logic MUST follow
+test-first approach. Write failing tests before implementation. See [strategy-testing-methodology.md](../strategies/strategy-testing-methodology.md)
+and [DEVELOPMENT-RULES.md](../constitution/DEVELOPMENT-RULES.md) Test-First Protocol section.
+
+**Task list format example:**
+
+```markdown
+### **Phase 1:** Backend Integration Tests
+
+- [ ] **1.1 Add integration test for metadata tracking**
+    - [ ] 1.1.1 Create test validating metadata flows
+        - Test: Buffer returns `next_tmdb_page_start` metadata
+        - Test: Second request with `tmdb_page_start` parameter works
+        - Expect tests to FAIL initially (fields don't exist yet)
+    - [ ] 1.1.2 Run tests and verify failure messages are clear
+
+- [ ] **1.2 Add test for fallback behavior**
+    - [ ] 1.2.1 Create tests for graceful degradation
+        - Test: Missing metadata uses fallback logic
+        - Expect tests to FAIL initially
+```
+
+**Format guidelines:**
+
+- Phase headers: `### **Phase X:** Description` (no time estimates)
+- Parent tasks: `- [ ] **X.Y Description**` (checkbox + bold + numbered)
+- Numbered subtasks: `- [ ] X.Y.Z Description` - Use ONLY when parent has 2+ distinct, independently completable steps
+- Unnumbered bullets: Implementation details, checklists, context - Use for single-task guidance
+- Backticks for technical terms: `field_name`, `ClassName`, `method_name()`, `/api/endpoint/`
+- Indent with 4 spaces per level
+
+**Optional formatting enhancements:**
+
+- **Blank lines between subtasks**: Use when subtasks have 2+ lines of implementation details and parent has 3+ subtasks. Include blank line after parent task for visual consistency. Improves readability through chunking.
+
+- **Goal:** **clarification line**: Use beneath parent task (indented to subtask level) when title is technical/terse and needs context. Must illuminate purpose/impact, not repeat title. Format:
+
+  ```markdown
+  - [ ] **X.Y Parent task**
+
+      **Goal:** One-line purpose/rationale clarification.
+
+      - [ ] X.Y.Z First subtask
+          - Implementation detail
+
+      - [ ] X.Y.Z Second subtask
+  ```
+
+**When to include implementation details (optimize signal-to-noise):**
+
+✅ **Include details when:**
+
+- Non-obvious implementation approach or architecture decision
+- Edge cases or tradeoffs to consider
+- Specific patterns to follow from existing codebase
+- Context that helps future readers understand "why"
+- Expected behaviors (tests FAIL initially, tests should PASS after)
+
+❌ **Omit details when:**
+
+- Restating the task title in different words
+- Generic advice that applies to all tasks
+- Step-by-step for trivial operations obvious to anyone in the codebase
+- Reminders that are already in quality gates (e.g., "run type checking")
 
 **Key difference**: Incidental task lists get **completion notes appended at bottom** when finished
 (feature/technical work uses separate completion metadata files).

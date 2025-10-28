@@ -78,180 +78,102 @@ but pagination assumes 1:1 mapping between API pages and TMDB pages.
 
 ## Task Breakdown
 
-### Phase 1: Backend Schema Updates (30 min)
+### **Phase 1:** Backend Tests and Schemas
 
-**1.1** Update PaginatedMovieResponseSchema with pagination metadata ⏱️ 10 min
-
-- [ ] Add `next_tmdb_page_start` field to response schema
-    - Add optional `next_tmdb_page_start: int | None` field
-    - Update docstring explaining metadata tracks consumed TMDB pages
-    - Run type checking to verify
-
-**1.2** Update MovieDiscoverFilterSchema to accept pagination metadata ⏱️ 10 min
-
-- [ ] Add `tmdb_page_start` parameter to filter schema
-    - Add optional `tmdb_page_start: int | None` field
-    - Update docstring explaining client sends last known TMDB page
-    - Run type checking to verify
-
-**1.3** Add unit tests for schema pagination metadata ⏱️ 10 min
-
-- [ ] Create tests validating metadata serialization
-    - Test response schema includes `next_tmdb_page_start`
-    - Test request schema accepts `tmdb_page_start` parameter
-    - Verify all schema tests pass
-
----
-
-### Phase 2: Backend Buffer Logic Updates (60 min)
-
-**2.1** Update `_apply_buffer_if_needed` to track consumed pages ⏱️ 20 min
-
-- [ ] Modify buffer function to return consumed page count
-    - Change return type to tuple: `(movies, pages_consumed)`
-    - Track `pages_fetched` counter in while loop
-    - Return `(combined_movies[:20], pages_fetched + 1)` (includes current page)
-    - Update all callers (`_fetch_with_filters_and_buffer`) to handle tuple
-
-**2.2** Update `_fetch_with_filters_and_buffer` to use metadata ⏱️ 15 min
-
-- [ ] Thread `tmdb_page_start` parameter through fetch function
-    - Accept `tmdb_page_start` parameter (defaults to None)
-    - If provided, use as `current_page`; otherwise use `page` from request
-    - Calculate `next_tmdb_page_start = current_page + pages_consumed`
-    - Pass to `_build_filtered_response`
-
-**2.3** Update `_build_filtered_response` with metadata field ⏱️ 10 min
-
-- [ ] Add pagination metadata to response builder
-    - Add `next_tmdb_page_start: int | None` parameter
-    - Include in PaginatedMovieResponseSchema instantiation
-    - Update docstring explaining metadata purpose
-
-**2.4** Wire metadata through discover_movies endpoint ⏱️ 15 min
-
-- [ ] Connect filter schema to service layer metadata
-    - Extract `tmdb_page_start` from MovieDiscoverFilterSchema
-    - Pass to `_fetch_with_filters_and_buffer`
-    - Verify metadata flows from request → response
-    - Manual test with curl to confirm metadata present
-
----
-
-### Phase 3: Backend Tests (40 min)
-
-**3.1** Add integration test for metadata tracking ⏱️ 20 min
-
-- [ ] Create test validating metadata flows through pagination
-    - Test: Buffer consumes pages 1-4, returns `next_tmdb_page_start=5`
-    - Test: Second request with `tmdb_page_start=5` starts from page 5
+- [ ] **1.1 Write integration tests for metadata tracking**
+    - Test: Buffer consumes multiple pages, returns `next_tmdb_page_start` in response
+    - Test: Subsequent request with `tmdb_page_start` parameter continues from correct page
     - Test: No duplicate movies across sequential page requests
-    - Verify all pagination tests pass
+    - Test: Fallback behavior when `tmdb_page_start` omitted (uses simple 1:1 mapping)
+    - Location: `backend/apps/movie/tests/test_movie_api.py` or new test file
+    - Expect tests to FAIL initially (schema fields don't exist yet)
 
-**3.2** Add test for metadata fallback behavior ⏱️ 10 min
-
-- [ ] Create tests for graceful degradation without metadata
-    - Test: Request without `tmdb_page_start` uses old 1:1 mapping
-    - Test: Missing metadata doesn't break pagination
-    - Verify fallback tests pass
-
-**3.3** Run full backend quality gates ⏱️ 10 min
-
-- [ ] Verify all backend tests and quality checks pass
-    - 368+ backend tests pass
-    - 0 type errors (pyright)
-    - 0 linting violations (ruff)
+- [ ] **1.2 Add pagination metadata fields to schemas**
+    - Add `next_tmdb_page_start: int | None` to `PaginatedMovieResponseSchema`
+    - Add `tmdb_page_start: int | None` to `MovieDiscoverFilterSchema`
+    - Document: Response field tracks last TMDB page consumed, request field continues from there
+    - Run type checking to verify changes compile
 
 ---
 
-### Phase 4: Frontend State Management (45 min)
+### **Phase 2:** Backend Implementation and Quality Gates
 
-**4.1** Update usePaginatedMovies to track metadata ⏱️ 15 min
+- [ ] **2.1 Implement buffer tracking and metadata flow**
+    - [ ] 2.1.1 Update `_apply_buffer_if_needed` to return consumed page count
+        - Change return type from `list[MovieBaseSchema]` to `tuple[list[MovieBaseSchema], int]`
+        - Track pages fetched in while loop, return `(movies[:20], pages_consumed)`
+        - Note: Include initial page in count (e.g., fetched pages 1-4 → return 4, not 3)
+    - [ ] 2.1.2 Thread metadata through `_fetch_with_filters_and_buffer`
+        - Accept `tmdb_page_start: int | None` parameter
+        - Use as starting page if provided, otherwise use `page` from request
+        - Calculate `next_tmdb_page_start = current_page + pages_consumed` after buffer
+        - Pass to `_build_filtered_response` as new parameter
+    - [ ] 2.1.3 Update `_build_filtered_response` to include metadata
+        - Add `next_tmdb_page_start: int | None` parameter
+        - Include in `PaginatedMovieResponseSchema` instantiation
+    - [ ] 2.1.4 Wire through `discover_movies` endpoint
+        - Extract `tmdb_page_start` from request schema
+        - Pass to `_fetch_with_filters_and_buffer`
+        - Run integration tests - should now PASS
 
-- [ ] Add pagination metadata to state management
-    - Add `nextTmdbPageStart` to pagination state
-    - Store value from API `next_tmdb_page_start` response field
-    - Reset metadata when filters change (new search)
-
-**4.2** Update API requests to send metadata ⏱️ 15 min
-
-- [ ] Include pagination metadata in discover/search requests
-    - Add `tmdb_page_start` parameter to request payload
-    - Send previous response's `next_tmdb_page_start` value
-    - Handle undefined/null gracefully (omit parameter if missing)
-
-**4.3** Fix pagination display to use actual result count ⏱️ 15 min
-
-- [ ] Update usePaginationDisplay to show accurate counts
-    - Use actual `moviesCount` instead of assuming 20 per page
-    - Fix calculation: `endIndex = (currentPage - 1) * 20 + moviesCount`
-    - Test displays "Showing 1-11" correctly when 11 results returned
-
----
-
-### Phase 5: Sequential Pagination Testing (30 min)
-
-**5.1** Manual test sequential pagination with metadata ⏱️ 15 min
-
-- [ ] Verify metadata fixes duplicate/count issues
-    - Test rating 1.0-3.5: No duplicates across pages 1→2→3
-    - Test rating 0-6.0: Full 20 results per page maintained
-    - Verify accurate counts: "Showing X-Y of Z"
-    - Confirm `next_tmdb_page_start` present in API responses
-
-**5.2** Run full quality gates after sequential pagination ⏱️ 15 min
-
-- [ ] Verify all tests pass with metadata implementation
-    - 368+ backend tests pass
-    - 351+ frontend tests pass
-    - 0 linting violations
-    - 0 type errors
+- [ ] **2.2 Run backend quality gates**
+    - 368+ tests pass (including new pagination tests)
+    - 0 type errors, 0 linting violations
 
 ---
 
-### Phase 6: Jump-to-Page Approximation (45 min)
+### **Phase 3:** Frontend Implementation
 
-**6.1** Implement TMDB page approximation for jumps ⏱️ 20 min
+- [ ] **3.1 Add pagination metadata to state and requests**
+    - Update `usePaginatedMovies` hook to track `nextTmdbPageStart` in state
+    - Store value from API response's `next_tmdb_page_start` field
+    - Include `tmdb_page_start` parameter in discover/search API requests
+    - Send previous response's `next_tmdb_page_start` value (omit if undefined/null)
+    - Reset metadata when filters change (indicates new search context)
 
-- [ ] Add jump-to-page logic with smart approximation
-    - Track rolling average of `pages_consumed` per request
-    - Calculate approximate TMDB page for jumps: `tmdb_start ≈ last_known + (gap * avg_consumed)`
-    - Accept ±1 page boundary duplicates as acceptable tradeoff
-    - Add docstring explaining approximation strategy and tradeoffs
-
-**6.2** Enable jump-to-page controls in frontend ⏱️ 15 min
-
-- [ ] Update pagination UI to support approximate jumps
-    - Re-enable jump-to-page controls for filtered results
-    - Send best-guess `tmdb_page_start` based on available metadata
-    - Fallback to simple mapping if metadata unavailable
-    - Test jumps: page 1→5, page 1→10
-
-**6.3** Add tests for approximation accuracy ⏱️ 10 min
-
-- [ ] Create tests validating jump approximation
-    - Test: Jump with metadata yields ~correct page (±1 tolerance)
-    - Test: Jump without metadata uses fallback gracefully
-    - Verify approximation tests pass
+- [ ] **3.2 Fix pagination display to use actual result count**
+    - Update `usePaginationDisplay` to calculate from actual `moviesCount`
+    - Formula: `endIndex = (currentPage - 1) * 20 + moviesCount`
+    - Fixes incorrect "showing 1-20" when only 11 results returned
 
 ---
 
-### Phase 7: Final Integration Testing (20 min)
+### **Phase 4:** Sequential Pagination Validation
 
-**7.1** End-to-end validation of pagination with all features ⏱️ 15 min
+- [ ] **4.1 Manual test and run quality gates**
+    - Verify no duplicates: rating 1.0-3.5 across pages 1→2→3
+    - Verify full pages: rating 0-6.0 maintains 20 results per page
+    - Verify counts: "Showing X-Y of Z" accurate
+    - Confirm `next_tmdb_page_start` in API responses
+    - Run full quality gates: 368+ backend tests, 351+ frontend tests, 0 violations
 
-- [ ] Comprehensive pagination testing across scenarios
-    - Sequential: rating 1.0-3.5 pages 1→2→3→4 (no duplicates)
-    - Jumps: rating 1.0-3.5 pages 1→5→10 (approximate, acceptable ±1)
+---
+
+### **Phase 5:** Jump-to-Page Feature (Optional)
+
+- [ ] **5.1 Write tests for jump approximation**
+    - Test: Jump with metadata yields approximately correct page (±1 page tolerance acceptable)
+    - Test: Jump without metadata uses simple fallback (page * 1 mapping)
+    - Test: Rolling average calculation tracks consumed pages correctly
+    - Expect tests to FAIL initially
+
+- [ ] **5.2 Implement jump-to-page approximation**
+    - Track rolling average of `pages_consumed` over recent requests
+    - Calculate approximate TMDB page: `tmdb_start ≈ last_known + (gap * avg_consumed)`
+    - Document tradeoff: ±1 page boundary duplicates acceptable vs. disabled feature
+    - Frontend: Re-enable jump-to-page controls, send best-guess `tmdb_page_start`
+    - Run tests - should now PASS
+
+---
+
+### **Phase 6:** Final Integration Testing
+
+- [ ] **6.1 End-to-end validation across all scenarios**
+    - Sequential pagination: rating 1.0-3.5 pages 1→2→3→4 (no duplicates)
+    - Jump-to-page: rating 1.0-3.5 pages 1→5→10 (approximate, ±1 acceptable)
     - Full pages: rating 0-6.0 maintains 20 results per page
-    - Counts: "Showing X-Y of Z" accurate in all scenarios
-
-**7.2** Final quality gate verification ⏱️ 5 min
-
-- [ ] Confirm all quality standards met
-    - All backend tests pass
-    - All frontend tests pass
-    - 0 violations/errors across stack
+    - Display accuracy: "Showing X-Y of Z" correct in all scenarios
+    - Final quality gates: All tests pass, 0 violations/errors
 
 ---
 
@@ -282,6 +204,5 @@ Example: User on page 3 (last_tmdb_page=15, avg_consumed=5) jumps to page 7
 
 ---
 
-**Estimated Total**: 3.5 hours (210 minutes)
 **Priority**: HIGH (blocks Phase 3.6.2, user-facing data integrity bug)
 **Risk Level**: LOW-MEDIUM (isolated changes, good test coverage, graceful fallback)

@@ -1,4 +1,4 @@
-import { useMemo, forwardRef, useImperativeHandle } from "react";
+import { useMemo, forwardRef, useImperativeHandle, useRef, useEffect } from "react";
 import { Text, Button, Box, Skeleton } from "@chakra-ui/react";
 import MovieCard from "../MovieCard";
 import MovieCardContainer from "../MovieCardContainer";
@@ -9,7 +9,7 @@ import { usePaginationDisplay } from "@/hooks/usePaginationDisplay";
 import { type PaginatedMoviesResponse } from "@/types/movie";
 
 interface MovieGridProps {
-	fetcher: (page: number) => {
+	fetcher: (page: number, tmdb_page_start?: number) => {
 		request: Promise<{ data: PaginatedMoviesResponse }>;
 		cancel: () => void;
 	};
@@ -30,15 +30,30 @@ const MovieGrid = forwardRef<MovieGridRef, MovieGridProps>(
 		const { currentPage, handlePageChange, resetToPageOne } =
 			useMovieGridPagination(initialCurrentPage);
 
+		// Track smart buffer pagination metadata using ref to avoid triggering re-renders
+		const nextTmdbPageStartRef = useRef<number | undefined>(undefined);
+		const prevFetcherRef = useRef(fetcher);
+
+		// Reset metadata synchronously when fetcher changes (filter/route change)
+		if (prevFetcherRef.current !== fetcher) {
+			nextTmdbPageStartRef.current = undefined;
+			prevFetcherRef.current = fetcher;
+		}
+
 		// Create fetcher callback that uses the current page from pagination hook
 		const fetcherCallback = useMemo(() => {
 			return () => {
-				return fetcher(currentPage);
+				return fetcher(currentPage, nextTmdbPageStartRef.current);
 			};
 		}, [fetcher, currentPage]);
 
-		const { total_pages, total_results, movies, error, setError, isLoading } =
+		const { total_pages, total_results, movies, error, setError, isLoading, next_tmdb_page_start } =
 			usePaginatedMovies(fetcherCallback);
+
+		// Update metadata ref when API returns new value (doesn't trigger re-render)
+		useEffect(() => {
+			nextTmdbPageStartRef.current = next_tmdb_page_start;
+		}, [next_tmdb_page_start]);
 
 		// Use display hook for pagination UI logic
 		const { shouldShowEmptyState, shouldShowPagination, resultText } =

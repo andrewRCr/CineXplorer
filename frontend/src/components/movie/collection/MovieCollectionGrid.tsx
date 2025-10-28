@@ -1,4 +1,4 @@
-import { forwardRef, useImperativeHandle, useMemo } from "react";
+import { forwardRef, useImperativeHandle, useMemo, useRef, useEffect } from "react";
 import { Text, Button, Box, Skeleton } from "@chakra-ui/react";
 import MovieCard from "../MovieCard";
 import MovieCardContainer from "../MovieCardContainer";
@@ -28,7 +28,7 @@ export interface MovieGridRef {
 
 // Props interface for when used without Outlet context
 interface MovieCollectionGridProps {
-	fetcher?: (page: number) => {
+	fetcher?: (page: number, tmdb_page_start?: number) => {
 		request: Promise<{ data: PaginatedMoviesResponse }>;
 		cancel: () => void;
 	};
@@ -36,7 +36,7 @@ interface MovieCollectionGridProps {
 	query?: string;
 	initialCurrentPage?: number;
 	onPageChange?: (page: number) => void; // New callback from parent
-	enhancedFetcher?: (page: number) => {
+	enhancedFetcher?: (page: number, tmdb_page_start?: number) => {
 		request: Promise<{ data: PaginatedMoviesResponse }>;
 		cancel: () => void;
 	};
@@ -50,13 +50,23 @@ const MovieCollectionGrid = forwardRef<MovieGridRef, MovieCollectionGridProps>(
 
 		const pageSize = 20;
 
+		// Track smart buffer pagination metadata using ref to avoid triggering re-renders
+		const nextTmdbPageStartRef = useRef<number | undefined>(undefined);
+		const prevFetcherRef = useRef(finalFetcher);
+
+		// Reset metadata synchronously when fetcher changes (filter/route change)
+		if (prevFetcherRef.current !== finalFetcher) {
+			nextTmdbPageStartRef.current = undefined;
+			prevFetcherRef.current = finalFetcher;
+		}
+
 		/**
 		 * Adapter: Convert page-based fetcher to parameterless fetcher for usePaginatedMovies.
 		 *
 		 * usePaginatedMovies expects: () => { request, cancel }
-		 * finalFetcher provides: (page: number) => { request, cancel }
+		 * finalFetcher provides: (page: number, tmdb_page_start?: number) => { request, cancel }
 		 *
-		 * This adapter closes over currentPage to satisfy the expected signature.
+		 * This adapter closes over currentPage and nextTmdbPageStartRef to satisfy the expected signature.
 		 * Memoized to prevent unnecessary re-fetches when other state changes.
 		 */
 		const fetcherForMoviesArray = useMemo(() => {
@@ -68,11 +78,16 @@ const MovieCollectionGrid = forwardRef<MovieGridRef, MovieCollectionGridProps>(
 					cancel: () => {},
 				});
 			}
-			return () => finalFetcher(currentPage);
+			return () => finalFetcher(currentPage, nextTmdbPageStartRef.current);
 		}, [finalFetcher, currentPage]);
 
-		const { total_pages, total_results, movies, error, setError, isLoading } =
+		const { total_pages, total_results, movies, error, setError, isLoading, next_tmdb_page_start } =
 			usePaginatedMovies(fetcherForMoviesArray);
+
+		// Update metadata ref when API returns new value (doesn't trigger re-render)
+		useEffect(() => {
+			nextTmdbPageStartRef.current = next_tmdb_page_start;
+		}, [next_tmdb_page_start]);
 
 		// Handle page changes using custom hook
 		const { handlePageChange } = usePageChangeHandler(onPageChange);

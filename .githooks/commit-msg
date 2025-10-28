@@ -92,16 +92,18 @@ else
         fi
 
         # Validate task reference format
-        if echo "$context_line" | grep -qE '\(Task [0-9]+\.[0-9]+\)$'; then
+        # Support multi-level task numbering: X.Y, X.Y.Z, X.Y.R.Z, etc.
+        # Task IDs can contain numbers and letters (e.g., 3.2.R.2)
+        if echo "$context_line" | grep -qE '\(Task [0-9]+(\.[0-9A-Za-z]+)+\)$'; then
             # Single task format - valid
             :
-        elif echo "$context_line" | grep -qE '\(Tasks [0-9]+\.[0-9]+-[0-9]+\.[0-9]+\)$'; then
+        elif echo "$context_line" | grep -qE '\(Tasks [0-9]+(\.[0-9A-Za-z]+)+-[0-9]+(\.[0-9A-Za-z]+)+\)$'; then
             # Task range format - valid
             :
-        elif echo "$context_line" | grep -qE '\(Tasks [0-9]+\.[0-9]+(, [0-9]+\.[0-9]+)+\)$'; then
+        elif echo "$context_line" | grep -qE '\(Tasks [0-9]+(\.[0-9A-Za-z]+)+(, [0-9]+(\.[0-9A-Za-z]+)+)+\)$'; then
             # Multiple non-contiguous tasks - valid
             :
-        elif echo "$context_line" | grep -qE '\(incidental - discovered during Task [0-9]+\.[0-9]+\)$'; then
+        elif echo "$context_line" | grep -qE '\(incidental - discovered during Task [0-9]+(\.[0-9A-Za-z]+)+\)$'; then
             # Incidental without task list - valid
             :
         elif echo "$context_line" | grep -qE '^Context: tasks-[a-z0-9-]+\.md$'; then
@@ -110,9 +112,9 @@ else
         else
             echo -e "${RED}❌ Error: Invalid task reference format in Context: line${NC}"
             echo "   Expected formats:"
-            echo "   - (Task X.Y)"
-            echo "   - (Tasks X.Y-X.Z)"
-            echo "   - (Tasks X.Y, A.B, C.D)"
+            echo "   - (Task X.Y) or (Task X.Y.Z) - multi-level task numbers supported"
+            echo "   - (Tasks X.Y-X.Z) or (Tasks X.Y.Z-X.Y.W) - task range"
+            echo "   - (Tasks X.Y, A.B, C.D) - non-contiguous tasks"
             echo "   - (incidental - discovered during Task X.Y)"
             echo "   - No parenthetical (for completions spanning many tasks)"
             echo ""

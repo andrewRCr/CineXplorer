@@ -292,6 +292,54 @@ but pagination assumes 1:1 mapping between API pages and TMDB pages.
 
 ---
 
+### **Phase 3.6:** Data Quality Filtering (TMDB Content Issues)
+
+**Discovered during Task 4.1 preparation** - TMDB occasionally incorrectly classifies adult content as non-adult
+
+**Context**: Rating filter 1.0-3.5 exposed movies with inappropriate poster art (e.g., TMDB ID 800981)
+despite `adult: false` and `include_adult: False` parameters. Investigation revealed TMDB data quality
+gaps: empty genres, minimal votes, missing metadata.
+
+**Root Cause**: Task 3.5.5 removed vote threshold for rating filters to show legitimate low-rated content,
+but this also exposed garbage/misclassified TMDB entries.
+
+**Solution**: Dual quality filter approach using available metadata signals.
+
+- [ ] **3.6.1 Add genre_ids to MovieBaseSchema and update transformations**
+    - Add `genre_ids: list[int]` field to `MovieBaseSchema` (apps/movie/schemas.py)
+    - Update TMDB→schema transformation to include genre_ids from discover responses
+    - Verify field appears in API responses with manual test
+    - **Rationale**: Genre data available in TMDB responses, needed for filtering
+
+- [ ] **3.6.2 Write tests for data quality filtering**
+    - Test: Movies with empty genre_ids are filtered out when `require_genres=True`
+    - Test: Movies with < 5 votes are filtered when rating filters active
+    - Test: Legitimate movies with genres and 5+ votes pass through
+    - Test: Backward compatibility when `require_genres=False`
+    - Location: `backend/apps/movie/tests/test_result_filtering.py`
+    - Expect tests to FAIL initially (TDD Red phase)
+
+- [ ] **3.6.3 Implement genre filtering in result_filtering.py**
+    - Update `filter_movies_by_completeness()` to accept `require_genres` parameter
+    - Filter movies where `len(movie.genre_ids) == 0` when enabled
+    - Add docstring explaining rationale (TMDB data quality signal)
+    - Tests from 3.6.2 should now PASS (TDD Green phase)
+
+- [ ] **3.6.4 Update movie_service.py to apply quality filters**
+    - Enable `require_genres=True` in `filter_movies_by_completeness()` call
+    - Change vote threshold for rating filters from `None` to `5`
+    - Update docstring to explain dual quality filter approach
+    - **Impact**: Filters movies with 0 genres OR <5 votes when rating filters active
+
+- [ ] **3.6.5 Run quality gates and verify filtering**
+    - Backend tests: 372+ passing (includes 3.6.2 new tests)
+    - Type checking: 0 errors
+    - Linting: 0 violations
+    - Manual verification: Rating filter 1.0-3.5 no longer shows problematic content
+    - Verify legitimate low-rated movies still appear (e.g., "Deathstalker III" - 62 votes, has genres)
+
+---
+
 ### **Phase 4:** Sequential Pagination Validation
 
 - [ ] **4.1 Manual test and run quality gates**

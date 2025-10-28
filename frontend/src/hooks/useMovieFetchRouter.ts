@@ -42,7 +42,8 @@ import { fetchSearchMoviesService } from "@/services/movieService";
 // Type for fetcher function signature
 type FetcherFn = (
 	page: number,
-	filters?: Record<string, string | number | number[]>
+	filters?: Record<string, string | number | number[]>,
+	tmdb_page_start?: number
 ) => {
 	request: Promise<{ data: PaginatedMoviesResponse }>;
 	cancel: () => void;
@@ -58,7 +59,7 @@ export function useMovieFetchRouter({
 	fetcher,
 	filters,
 	filterStyle,
-}: UseMovieFetchRouterOptions): (page: number) => {
+}: UseMovieFetchRouterOptions): (page: number, tmdb_page_start?: number) => {
 	request: Promise<{ data: PaginatedMoviesResponse }>;
 	cancel: () => void;
 } {
@@ -73,7 +74,7 @@ export function useMovieFetchRouter({
 	baseFetcherRef.current = fetcher;
 
 	const routedFetcher = useCallback(
-		(page: number) => {
+		(page: number, tmdb_page_start?: number) => {
 			// Get current values from refs
 			const currentFilters = filtersRef.current;
 			const currentFilterStyle = filterStyleRef.current;
@@ -101,6 +102,7 @@ export function useMovieFetchRouter({
 					page,
 					query,
 					...otherFilters,
+					...(tmdb_page_start !== undefined && { tmdb_page_start }),
 				};
 
 				return fetchSearchMoviesService.getPaginated<PaginatedMoviesResponse>(
@@ -108,7 +110,7 @@ export function useMovieFetchRouter({
 				);
 			} else {
 				// Route to base fetcher (discover, top-rated, etc.)
-				return currentBaseFetcher(page, filterParams);
+				return currentBaseFetcher(page, filterParams, tmdb_page_start);
 			}
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps

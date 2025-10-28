@@ -29,6 +29,7 @@ export interface MovieQueryParams {
 	with_runtime_gte?: number;
 	with_runtime_lte?: number;
 	with_original_language?: string;
+	tmdb_page_start?: number;
 }
 
 export interface KeywordQueryParams {

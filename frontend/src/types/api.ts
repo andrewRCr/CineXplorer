@@ -490,6 +490,41 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/dev-logs/write/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Write Dev Console Log
+         * @description Development-only endpoint to write browser console logs to file.
+         *
+         *     This endpoint receives formatted log lines from the frontend logger
+         *     and appends them to backend/logs/frontend/.console-logs.txt for AI debugging.
+         *
+         *     Args:
+         *         request: HTTP request object
+         *         log_line: Formatted log line to write to file
+         *
+         *     Returns:
+         *         Status response indicating success or failure
+         *
+         *     Security:
+         *         - Only available in DEBUG mode
+         *         - No authentication required (localhost development only)
+         *         - File path is fixed to prevent directory traversal
+         */
+        post: operations["apps_core_api_write_dev_console_log"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/movies/now-playing": {
         parameters: {
             query?: never;
@@ -564,10 +599,17 @@ export interface paths {
          * Discover Movies
          * @description Discover movies with advanced filtering options and user-specific data.
          *
-         *     This endpoint provides comprehensive movie discovery with extensive filtering
-         *     capabilities including genres, keywords, cast, crew, release dates, ratings,
-         *     and more. It supports both TMDB standard parameters and custom aliases for
-         *     frontend convenience.
+         *     This endpoint implements a two-pass filtering architecture:
+         *     1. TMDB API filtering (primary) - Reduces millions of movies to thousands
+         *     2. Backend filtering (second-pass) - Catches TMDB data quality issues
+         *
+         *     The schema layer extracts parameters for both passes from incoming filter
+         *     parameters. For example, release_date_gte="2020-01-01" generates both:
+         *     - release_date.gte for TMDB API (primary filter)
+         *     - year_min=2020 for backend filtering (data hygiene)
+         *
+         *     This ensures users see only movies matching their filters, even when TMDB
+         *     API returns movies with incorrect release dates or ratings.
          *
          *     Uses FilterSchema to handle 40+ optional parameters cleanly, with automatic
          *     empty string to None conversion to handle Django Ninja 1.4.3 + Pydantic 2.12.0
@@ -580,7 +622,8 @@ export interface paths {
          *             - genres: Alias for with_genres (frontend convenience)
          *             - decade: Decade filter (e.g., "1990s" → converts to date range)
          *             - sort_by: Sort criteria (popularity.desc, vote_average.desc, etc.)
-         *             - vote_average_gte/lte: Rating range filtering
+         *             - vote_average_gte/lte: Rating range filtering (both TMDB + backend)
+         *             - release_date_gte/lte: Date range filtering (both TMDB + backend)
          *             - with_runtime_gte/lte: Runtime range filtering
          *             - primary_release_year: Filter by release year
          *             - [... many other TMDB discover parameters]
@@ -1248,6 +1291,26 @@ export interface components {
             error?: string | null;
         };
         /**
+         * DevConsoleLogResponse
+         * @description Response schema for development console log writes.
+         */
+        DevConsoleLogResponse: {
+            /** Status */
+            status: string;
+            /** File */
+            file?: string | null;
+            /** Error */
+            error?: string | null;
+        };
+        /**
+         * DevConsoleLogRequest
+         * @description Request schema for development console log file writes.
+         */
+        DevConsoleLogRequest: {
+            /** Log Line */
+            log_line: string;
+        };
+        /**
          * PaginationParamsSchema
          * @description Schema for pagination parameters with empty string handling.
          *
@@ -1276,6 +1339,8 @@ export interface components {
             release_date?: string | null;
             /** Vote Average */
             vote_average?: number | null;
+            /** Vote Count */
+            vote_count?: number | null;
             /** Runtime */
             runtime?: number | null;
             user_movie_data?: components["schemas"]["UserMovieDataSchema"] | null;
@@ -1283,6 +1348,11 @@ export interface components {
         /**
          * PaginatedMovieResponseSchema
          * @description Standard TMDB-style pagination envelope for movie collections.
+         *
+         *     Includes pagination metadata tracking for smart buffer mechanism:
+         *     - next_tmdb_page_start: Tracks the next TMDB page to fetch when buffer
+         *       consumes multiple pages per API response. This prevents duplicates when
+         *       client requests subsequent pages.
          */
         PaginatedMovieResponseSchema: {
             /**
@@ -1302,6 +1372,11 @@ export interface components {
             total_results: number;
             /** Results */
             results?: components["schemas"]["MovieBaseSchema"][];
+            /**
+             * Next Tmdb Page Start
+             * @description Next TMDB page to fetch for pagination continuation (smart buffer tracking)
+             */
+            next_tmdb_page_start?: number | null;
         };
         /**
          * UserMovieDataSchema
@@ -1355,7 +1430,15 @@ export interface components {
         };
         /**
          * MovieDiscoverFilterSchema
-         * @description Schema for TMDB discover endpoint filtering.
+         * @description Schema for TMDB discover endpoint filtering with two-pass architecture.
+         *
+         *     Extracts parameters for both:
+         *     1. TMDB API filtering (primary) - Reduces millions of movies to thousands
+         *     2. Backend filtering (second-pass) - Catches TMDB data quality issues
+         *
+         *     For example, release_date_gte="2020-01-01" generates:
+         *     - release_date.gte for TMDB API (primary filter)
+         *     - year_min=2020 for backend filtering (data hygiene)
          *
          *     Handles 40+ optional query parameters with automatic empty string to None
          *     conversion, solving Django Ninja 1.4.3 + Pydantic 2.12.0 validation issues
@@ -1369,6 +1452,11 @@ export interface components {
              * @description Page number for pagination
              */
             page?: number | null;
+            /**
+             * Tmdb Page Start
+             * @description TMDB page to start fetching from (smart buffer continuation)
+             */
+            tmdb_page_start?: number | null;
             /**
              * With Genres
              * @description Comma-separated genre IDs
@@ -1518,6 +1606,8 @@ export interface components {
             release_date?: string | null;
             /** Vote Average */
             vote_average?: number | null;
+            /** Vote Count */
+            vote_count?: number | null;
             /** Runtime */
             runtime?: number | null;
             user_movie_data?: components["schemas"]["UserMovieDataSchema"] | null;
@@ -2195,6 +2285,48 @@ export interface operations {
             };
         };
     };
+    apps_core_api_write_dev_console_log: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DevConsoleLogRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DevConsoleLogResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DevConsoleLogResponse"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DevConsoleLogResponse"];
+                };
+            };
+        };
+    };
     apps_movie_api_get_now_playing_movies: {
         parameters: {
             query?: {
@@ -2271,6 +2403,8 @@ export interface operations {
             query?: {
                 /** @description Page number for pagination */
                 page?: number | null;
+                /** @description TMDB page to start fetching from (smart buffer continuation) */
+                tmdb_page_start?: number | null;
                 /** @description Comma-separated genre IDs */
                 with_genres?: string | null;
                 /** @description Comma-separated keyword IDs */

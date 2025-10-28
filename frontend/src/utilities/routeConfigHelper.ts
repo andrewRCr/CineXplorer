@@ -11,7 +11,8 @@ import { PAGINATED_SOURCES } from "@/constants/routes";
 export interface RouteConfig {
 	fetcher: (
 		page: number,
-		filters?: Record<string, string | number | number[]>
+		filters?: Record<string, string | number | number[]>,
+		tmdb_page_start?: number
 	) => {
 		request: Promise<{ data: PaginatedMoviesResponse }>;
 		cancel: () => void;
@@ -33,11 +34,13 @@ export const getFetcherAndSource = (pathname: string): RouteConfig => {
 		return {
 			fetcher: (
 				page: number,
-				filters?: Record<string, string | number | number[]>
+				filters?: Record<string, string | number | number[]>,
+				tmdb_page_start?: number
 			) =>
 				fetchNowPlayingMoviesService.getPaginated<PaginatedMoviesResponse>({
 					page,
 					...filters,
+					...(tmdb_page_start !== undefined && { tmdb_page_start }),
 				}),
 			source: PAGINATED_SOURCES.NOW_PLAYING,
 			title: "Now Playing",
@@ -47,11 +50,13 @@ export const getFetcherAndSource = (pathname: string): RouteConfig => {
 		return {
 			fetcher: (
 				page: number,
-				filters?: Record<string, string | number | number[]>
+				filters?: Record<string, string | number | number[]>,
+				tmdb_page_start?: number
 			) =>
 				fetchUpcomingMovies().getPaginated<PaginatedMoviesResponse>({
 					page,
 					...filters,
+					...(tmdb_page_start !== undefined && { tmdb_page_start }),
 				}),
 			source: PAGINATED_SOURCES.UPCOMING,
 			title: "Upcoming",
@@ -61,12 +66,14 @@ export const getFetcherAndSource = (pathname: string): RouteConfig => {
 		return {
 			fetcher: (
 				page: number,
-				filters?: Record<string, string | number | number[]>
+				filters?: Record<string, string | number | number[]>,
+				tmdb_page_start?: number
 			) =>
 				fetchDiscoverMoviesService.getPaginated<PaginatedMoviesResponse>({
 					page,
 					sort_by: "popularity.desc",
 					...filters,
+					...(tmdb_page_start !== undefined && { tmdb_page_start }),
 				}),
 			source: PAGINATED_SOURCES.POPULAR,
 			title: "Popular",
@@ -76,12 +83,14 @@ export const getFetcherAndSource = (pathname: string): RouteConfig => {
 		return {
 			fetcher: (
 				page: number,
-				filters?: Record<string, string | number | number[]>
+				filters?: Record<string, string | number | number[]>,
+				tmdb_page_start?: number
 			) =>
 				fetchTopRatedMoviesService.getPaginated<PaginatedMoviesResponse>({
 					page,
 					sort_by: "vote_average.desc",
 					...filters,
+					...(tmdb_page_start !== undefined && { tmdb_page_start }),
 				}),
 			source: PAGINATED_SOURCES.TOP_RATED,
 			title: "Top Rated",
@@ -92,12 +101,14 @@ export const getFetcherAndSource = (pathname: string): RouteConfig => {
 		return {
 			fetcher: (
 				page: number,
-				filters?: Record<string, string | number | number[]>
+				filters?: Record<string, string | number | number[]>,
+				tmdb_page_start?: number
 			) =>
 				fetchSearchMoviesService.getPaginated<PaginatedMoviesResponse>({
 					page,
 					query,
 					...filters,
+					...(tmdb_page_start !== undefined && { tmdb_page_start }),
 				}),
 			source: PAGINATED_SOURCES.SEARCH,
 			title: {
@@ -110,11 +121,13 @@ export const getFetcherAndSource = (pathname: string): RouteConfig => {
 	return {
 		fetcher: (
 			page: number,
-			filters?: Record<string, string | number | number[]>
+			filters?: Record<string, string | number | number[]>,
+			tmdb_page_start?: number
 		) =>
 			fetchDiscoverMoviesService.getPaginated<PaginatedMoviesResponse>({
 				page,
 				...filters,
+				...(tmdb_page_start !== undefined && { tmdb_page_start }),
 			}),
 		source: PAGINATED_SOURCES.POPULAR,
 		title: "Movies",

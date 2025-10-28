@@ -502,6 +502,11 @@ incidental tasks for the fix, but E2E test infrastructure will be built as dedic
     - Verify: No low-vote-count movies with unreliable ratings
     - Check: All displayed ratings based on 50+ votes
     - Note any remaining quality issues
+    - **Status**: ⏸️ PAUSED - Discovered critical pagination bug with buffer mechanism
+    - **Bug**: Duplicate movies across pages (e.g., rating 1.0-3.5 shows same movies on page 1 and 2)
+    - **Cause**: Smart buffer fetches multiple TMDB pages but doesn't track consumed pages
+    - **Action**: Created `.arc/active/incidental/tasks-pagination-buffer-tracking.md` to fix
+    - **Will resume**: After pagination fix is complete and verified
 
 - [ ] 3.6.3 Assess completeness filter effectiveness
     - Browse discover/search results

@@ -71,7 +71,7 @@ const MovieDetail = () => {
 		const backUrl =
 			from === "search"
 				? `/search?${queryString}`
-				: `/${from}?${queryString}`;
+				: `/movies/${from}?${queryString}`;
 		console.log("MovieDetail: Back to Results URL", backUrl);
 
 		return (

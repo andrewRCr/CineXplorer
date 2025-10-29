@@ -361,14 +361,107 @@ but this also exposed garbage/misclassified TMDB entries.
 
 ---
 
+### **Phase 3.7:** Metadata Persistence Across Navigation
+
+**Context:** Discovered during manual testing of navigation-filter-state-preservation (Task 3.3).
+When navigating away and back, `tmdb_page_start` metadata is lost because it's only stored in React state.
+Without metadata, backend falls back to 1:1 mapping, causing results to shift position on back navigation
+(e.g., page 3 shows different movies after detail→back because TMDB pages 1-10 were already consumed).
+
+**Integration Note:** Uses same URL persistence pattern established in navigation-filter-state-preservation
+Phase 2 (filter params in URL). This ensures consistent behavior across all navigation scenarios.
+
+- [ ] **3.7.1 Write tests for URL metadata reading (TDD Red Phase)**
+
+    **Test-First Approach:** Write failing tests before implementation.
+
+    - [ ] **3.7.1.1 Add tests to usePaginatedMovies test suite**
+        - Test: Component mounts with `tmdb_page_start` in URL → sends to API
+        - Test: Component mounts without metadata → sends undefined (backward compat)
+        - Test: Page change after mount → uses `next_tmdb_page_start` from response (existing behavior)
+        - Test: URL metadata takes precedence on initial mount, response metadata on pagination
+        - **Expect:** Tests FAIL (TDD Red) - URL reading not implemented yet
+        - File: `hooks/__tests__/usePaginatedMovies.test.ts`
+
+    - [ ] **3.7.1.2 Verify URL preservation already works**
+        - Check MovieCard tests: verify unknown params preserved (from Phase 2)
+        - Check MovieDetail tests: verify `allParams` pattern preserves all params (from Phase 2)
+        - Manual test: Navigate → verify URL contains page/from/filters
+        - **Expect:** Existing tests pass - Phase 2 already handles URL preservation
+
+- [ ] **3.7.2 Implement URL metadata reading (TDD Green Phase)**
+
+    **Implementation:** Make tests pass by reading metadata from URL.
+
+    - [ ] **3.7.2.1 Update usePaginatedMovies to read from URL**
+        - Import `useSearchParams` from react-router-dom
+        - Read `tmdb_page_start` parameter on mount
+        - Parse to number (or undefined if absent)
+        - Pass to initial fetch call
+        - Store response's `next_tmdb_page_start` for subsequent pagination
+        - File: `hooks/usePaginatedMovies.ts`
+
+    - [ ] **3.7.2.2 Run tests - should now PASS (TDD Green)**
+        - usePaginatedMovies tests: All passing (expect 4+ new tests)
+        - MovieCard tests: Still passing (no changes needed)
+        - MovieDetail tests: Still passing (no changes needed)
+        - Full frontend suite: All passing (expect 457+)
+        - 0 type errors, 0 lint violations
+
+- [ ] **3.7.3 Update pagination to write metadata to URL**
+
+    **Note:** This may already be handled by `useMovieCollectionUrl` if `currentPage` updates URL.
+    Verify and implement if needed.
+
+    - [ ] **3.7.3.1 Verify page navigation updates URL**
+        - Check if `onPageChange` from `useMovieCollectionUrl` updates URL with new page number
+        - If yes, metadata flows: API response → state → URL (already works)
+        - If no, need to update `useMovieCollectionUrl` to sync `tmdb_page_start` to URL
+        - Manual test: Navigate page 1→2 → verify URL updates
+
+    - [ ] **3.7.3.2 Implement URL sync if needed**
+        - Only if 3.7.3.1 reveals gap: Add `tmdb_page_start` to URL state
+        - Update `handlePageChange` to include metadata when changing pages
+        - Write tests if new code added
+        - Run quality gates
+
+- [ ] **3.7.4 End-to-end verification (TDD Integration)**
+
+    **Critical UX Test:** Ensure results stay in same position on back navigation.
+
+    - [ ] **3.7.4.1 Manual end-to-end test**
+        - Apply rating filter 1.0-3.5
+        - Navigate to page 3, note first 3 movie titles
+        - Click middle movie, go to detail
+        - Click "Back to Results"
+        - **VERIFY:** Same 3 movies in same positions on page 3
+        - **VERIFY:** URL contains `tmdb_page_start` parameter
+        - **VERIFY:** No duplicate movies when navigating forward to page 4
+
+    - [ ] **3.7.4.2 Run quality gates**
+        - Frontend tests: All passing (expect 457+)
+        - Backend tests: All passing (30/30)
+        - Type checking: 0 errors (frontend + backend)
+        - Linting: 0 violations (frontend + backend)
+
+    - [ ] **3.7.4.3 Document integration**
+        - Update Phase 3.7 task with test results
+        - Note any edge cases discovered
+        - Confirm ready for Phase 4 sequential pagination validation
+
+---
+
 ### **Phase 4:** Sequential Pagination Validation
+
+**Prerequisite:** Phase 3.7 complete (metadata persistence through navigation must work for meaningful testing)
 
 - [ ] **4.1 Manual test and run quality gates**
     - Verify no duplicates: rating 1.0-3.5 across pages 1→2→3
     - Verify full pages: rating 0-6.0 maintains 20 results per page
     - Verify counts: "Showing X-Y of Z" accurate
     - Confirm `next_tmdb_page_start` in API responses
-    - Run full quality gates: 368+ backend tests, 351+ frontend tests, 0 violations
+    - **Verify navigation stability:** page 3 → detail → back → same results (Phase 3.7 integration)
+    - Run full quality gates: 30+ backend tests, 453+ frontend tests, 0 violations
 
 ---
 

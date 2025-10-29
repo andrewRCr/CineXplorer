@@ -4,7 +4,7 @@ import type { PaginatedMoviesResponse } from "@/types/movie";
 
 // Define the context type that matches what MovieCollectionLayout passes
 interface MovieCollectionContext {
-	fetcher: (page: number) => {
+	fetcher: (page: number, tmdb_page_start?: number) => {
 		request: Promise<{ data: PaginatedMoviesResponse }>;
 		cancel: () => void;
 	};
@@ -12,7 +12,7 @@ interface MovieCollectionContext {
 	query?: string;
 	initialCurrentPage?: number;
 	onPageChange: (page: number) => void;
-	enhancedFetcher: (page: number) => {
+	enhancedFetcher: (page: number, tmdb_page_start?: number) => {
 		request: Promise<{ data: PaginatedMoviesResponse }>;
 		cancel: () => void;
 	};
@@ -20,7 +20,7 @@ interface MovieCollectionContext {
 
 // Props interface for when used without Outlet context
 interface MovieCollectionGridProps {
-	fetcher?: (page: number) => {
+	fetcher?: (page: number, tmdb_page_start?: number) => {
 		request: Promise<{ data: PaginatedMoviesResponse }>;
 		cancel: () => void;
 	};
@@ -28,14 +28,14 @@ interface MovieCollectionGridProps {
 	query?: string;
 	initialCurrentPage?: number;
 	onPageChange?: (page: number) => void;
-	enhancedFetcher?: (page: number) => {
+	enhancedFetcher?: (page: number, tmdb_page_start?: number) => {
 		request: Promise<{ data: PaginatedMoviesResponse }>;
 		cancel: () => void;
 	};
 }
 
 interface ResolvedContext {
-	fetcher: ((page: number) => {
+	fetcher: ((page: number, tmdb_page_start?: number) => {
 		request: Promise<{ data: PaginatedMoviesResponse }>;
 		cancel: () => void;
 	}) | undefined;
@@ -43,11 +43,11 @@ interface ResolvedContext {
 	query: string | undefined;
 	currentPage: number;
 	onPageChange: ((page: number) => void) | undefined;
-	enhancedFetcher: ((page: number) => {
+	enhancedFetcher: ((page: number, tmdb_page_start?: number) => {
 		request: Promise<{ data: PaginatedMoviesResponse }>;
 		cancel: () => void;
 	}) | undefined;
-	finalFetcher: ((page: number) => {
+	finalFetcher: ((page: number, tmdb_page_start?: number) => {
 		request: Promise<{ data: PaginatedMoviesResponse }>;
 		cancel: () => void;
 	}) | undefined;

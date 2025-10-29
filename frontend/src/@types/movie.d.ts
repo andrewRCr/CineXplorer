@@ -40,7 +40,7 @@ export type PaginatedPersonResponse = components['schemas']['PaginatedPersonResp
 export interface Movie extends MovieDetailSchema {
   // Additional fields that frontend expects from TMDB API
   backdrop_path?: string | null;
-  vote_count?: number;
+  vote_count?: number | null;
   popularity?: number;
   original_language?: string;
   original_title?: string;

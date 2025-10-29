@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useRef } from "react";
+import { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import { type MovieFilters as MovieFiltersType } from "@/components/movie/filters/AdvancedMovieFilters";
 import { useMovieCollectionUrl } from "./useMovieCollectionUrl";
 
@@ -61,6 +61,19 @@ interface MovieCollectionState {
 	resetToDefaults: () => void;
 }
 
+// Helper: Check if filters contain advanced filter values
+const hasAdvancedFilterValues = (filters: MovieFiltersType): boolean => {
+	// Rating filters are advanced
+	if (filters.minRating || filters.maxRating) return true;
+
+	// Custom year range (not single year) is advanced
+	if (filters.minYear && filters.maxYear && filters.minYear !== filters.maxYear) {
+		return true;
+	}
+
+	return false;
+};
+
 // Custom hook with better composition and TypeScript
 export const useMovieCollectionState = ({
 	defaultFilters,
@@ -69,31 +82,31 @@ export const useMovieCollectionState = ({
 	enableAdvancedFilters = true,
 	enableCollapsibleFilters = true,
 }: UseMovieCollectionStateConfig = {}): MovieCollectionState => {
-	
+
 	// URL management (only if enabled)
 	const urlState = useMovieCollectionUrl(
 		enableUrlSync ? defaultFilters : undefined,
 		enableUrlSync ? source : undefined
 	);
-	
+
 	// Extract specific functions for stable dependencies
-	const { 
+	const {
 		unifiedFilters: urlFilters,
 		handleUnifiedFiltersChange: urlHandleFiltersChange,
 		currentPageFromUrl: urlCurrentPage,
 		handlePageChange: urlHandlePageChange
 	} = urlState;
-	
-	// Local UI state for non-URL-synced features
-	const [localShowAdvanced, setLocalShowAdvanced] = useState(false);
-	const [localIsFiltersCollapsed, setLocalIsFiltersCollapsed] = useState(false);
-	
+
 	// Memoize initial local filter state to prevent recreation
 	const initialLocalFilters = useMemo(() => ({
 		...DEFAULT_FILTERS,
 		...defaultFilters,
 	}), [defaultFilters]);
-	
+
+	// Local UI state for non-URL-synced features
+	const [localShowAdvanced, setLocalShowAdvanced] = useState(false);
+	const [localIsFiltersCollapsed, setLocalIsFiltersCollapsed] = useState(false);
+
 	// For non-URL-synced mode, maintain local filter state
 	const [localFilters, setLocalFilters] = useState<MovieFiltersType>(initialLocalFilters);
 	
@@ -102,7 +115,15 @@ export const useMovieCollectionState = ({
 	
 	// Choose between URL-synced or local state
 	const filters = enableUrlSync ? urlFilters : localFilters;
-	
+
+	// Auto-expand advanced panel when advanced filters become active (from URL or user input)
+	// This ensures panel stays expanded after navigation (remount reads filters from URL → effect detects → expands)
+	useEffect(() => {
+		if (enableAdvancedFilters && hasAdvancedFilterValues(filters)) {
+			setLocalShowAdvanced(true);
+		}
+	}, [filters, enableAdvancedFilters]);
+
 	// Optimize onFiltersChange with stable references
 	const onFiltersChange = useCallback((newFilters: Partial<MovieFiltersType> | ((prev: MovieFiltersType) => MovieFiltersType)) => {
 		if (enableUrlSync) {

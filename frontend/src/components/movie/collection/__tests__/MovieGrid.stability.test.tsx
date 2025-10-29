@@ -99,7 +99,7 @@ describe('MovieGrid - Stability Tests', () => {
 	 */
 	it('should use stored metadata only when navigating to next page', async () => {
 		// Arrange
-		const mockFetcher = vi.fn((page: number, tmdb_page_start?: number) => ({
+		const mockFetcher = vi.fn((page: number, _tmdb_page_start?: number) => ({
 			request: Promise.resolve({
 				data: createMockResponse({
 					page,

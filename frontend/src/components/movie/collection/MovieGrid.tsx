@@ -52,7 +52,7 @@ const MovieGrid = forwardRef<MovieGridRef, MovieGridProps>(
 
 		// Update metadata ref when API returns new value (doesn't trigger re-render)
 		useEffect(() => {
-			nextTmdbPageStartRef.current = next_tmdb_page_start;
+			nextTmdbPageStartRef.current = next_tmdb_page_start ?? undefined;
 		}, [next_tmdb_page_start]);
 
 		// Use display hook for pagination UI logic

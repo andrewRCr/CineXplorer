@@ -117,31 +117,62 @@ If architectural decisions, patterns, or constraints emerged during planning, th
 "Implementation Notes" section at the bottom of the task list. This provides context for future developers
 and explains why certain approaches were chosen.
 
-### Step 6: Generate Final Task List
+### Step 6: Review Task List Formatting Standards
 
-Combine parent tasks, sub-tasks, and optional implementation notes into the standard Markdown structure:
+**CRITICAL:** Before generating the task list, review formatting standards:
+
+**→ [strategy-task-list-formatting.md](../strategies/strategy-task-list-formatting.md)** ← **Required reading**
+
+This strategy document defines:
+
+- Exact format for all task list elements (phase headers, parent tasks, subtasks)
+- Test-first task structure patterns
+- Complete annotated examples
+- Common mistakes to avoid
+- Decision guidelines for numbered subtasks vs. detail bullets
+
+**Use the strategy's Quick Format Checklist to verify your generated task list.**
+
+### Step 7: Generate Final Task List
+
+Combine parent tasks, sub-tasks, and optional implementation notes into the standard Markdown structure following [strategy-task-list-formatting.md](../strategies/strategy-task-list-formatting.md).
+
+**Basic structure:**
 
 ```markdown
 # Task List: [Feature/Work Name]
 
 **PRD Reference:** `.arc/active/[category]/prd-[name].md`
 **Branch:** `feature/[feature-name]` or `technical/[work-name]`
+**Status**: In Progress
+
+## Tasks
+
+### **Phase 1:** Backend Tests and Implementation
+
+- [ ] **1.1 Write tests for core functionality**
+
+    - [ ] 1.1.1 Create test for validation
+        - Test cases listed here
+        - Expect tests to FAIL initially
+    - [ ] 1.1.2 Run tests and verify failures
+
+- [ ] **1.2 Implement core functionality**
+
+    - [ ] 1.2.1 Create implementation
+        - Implementation details here
+    - [ ] 1.2.2 Run tests - should now PASS
+    - [ ] 1.2.3 Run quality gates
 
 ## Implementation Notes
 
 _(Optional: Document architectural decisions, patterns, constraints discovered during planning)_
-
-## Tasks
-
-- [ ] 1.0 Parent Task Title
-  - [ ] 1.1 Sub-task description
-  - [ ] 1.2 Sub-task description
-- [ ] 2.0 Parent Task Title
-  - [ ] 2.1 Sub-task description
-  - [ ] 2.2 Sub-task description
 ```
 
-### Step 7: Save Task List
+See [strategy-task-list-formatting.md](../strategies/strategy-task-list-formatting.md) for complete formatting rules
+and annotated examples.
+
+### Step 8: Save Task List
 
 Save the generated task list in the appropriate category directory matching the PRD location:
 
@@ -150,6 +181,10 @@ Save the generated task list in the appropriate category directory matching the 
 
 The `[name]` should match the base name of the input PRD file
 (e.g., if the input was `prd-user-profile-editing.md`, the output is `tasks-user-profile-editing.md`).
+
+**Format verification:** Use the Quick Format Checklist in
+[strategy-task-list-formatting.md](../strategies/strategy-task-list-formatting.md)
+to verify the generated task list follows all formatting standards before saving.
 
 ## Target Audience
 
@@ -166,125 +201,12 @@ Task lists should be written for developers (junior to mid-level) who will imple
 - References to patterns, files, or approaches where helpful
 - Assumes familiarity with the tech stack but not with every project-specific pattern
 
-## Task List Structure
+**Formatting standards:** See [strategy-task-list-formatting.md](../strategies/strategy-task-list-formatting.md)
+for complete formatting rules, test-first patterns, and examples.
 
-**Numbering convention:**
+## Task Completion Tracking
 
-- Parent tasks: `1.0`, `2.0`, `3.0`, etc.
-- Sub-tasks: `1.1`, `1.2`, `2.1`, `2.2`, etc.
 - All tasks start unchecked: `- [ ]`
-
-**Task completion tracking:**
-
 - Mark completed: `- [x] 1.1 Sub-task description`
 - Task list is a living document, updated throughout implementation
 - See [Task Processing Loop](3-process-task-loop.md) for execution workflow
-
-## Reference Template
-
-**The task list must follow this exact structure:**
-
-```markdown
-# Task List: [Feature/Work Name]
-
-**PRD Reference:** `.arc/active/[category]/prd-[name].md`
-**Branch:** `[category]/[name]`
-
-## Tasks
-
-### **Phase 1:** Backend Tests and Implementation
-
-- [ ] **1.1 Write tests for core functionality**
-    - [ ] 1.1.1 Create test for `ModelName` validation
-        - Test: Field validation with valid inputs
-        - Test: Field validation with invalid inputs
-        - Expect tests to FAIL initially (model doesn't exist yet)
-    - [ ] 1.1.2 Create test for `ModelName.method()` behavior
-        - Test edge cases with `mock_data` fixture
-        - Use `pytest.mark.parametrize` for variants
-    - [ ] 1.1.3 Run tests and verify failure messages
-
-- [ ] **1.2 Implement core functionality**
-    - [ ] 1.2.1 Create `ModelName` in `app/models.py`
-        - Add fields: `field_name`, `other_field`
-        - Add validation logic in `clean()` method
-        - Full type annotations, comprehensive docstring
-    - [ ] 1.2.2 Run tests - should now PASS
-    - [ ] 1.2.3 Run quality gates (linting, type checking)
-
-### **Phase 2:** API Endpoints
-
-- [ ] **2.1 Write API integration tests**
-    - [ ] 2.1.1 Create tests in `test_api.py`
-        - Test successful endpoint responses
-        - Test error handling and validation
-- [ ] **2.2 Implement API endpoints**
-    - [ ] 2.2.1 Create endpoint in `api.py`
-    - [ ] 2.2.2 Run integration tests - should PASS
-
-## Implementation Notes
-
-_(Optional: Document architectural decisions, patterns, constraints discovered during planning)_
-```
-
-**Format guidelines:**
-
-- Phase headers: `### **Phase X:** Description` (no time estimates)
-- Parent tasks: `- [ ] **X.Y Description**` (checkbox + bold + numbered)
-- Numbered subtasks: `- [ ] X.Y.Z Description` - Use ONLY when parent has 2+ distinct, independently completable steps
-- Unnumbered bullets: Implementation details, checklists, context - Use for single-task guidance
-- Backticks for technical terms: `field_name`, `ClassName`, `method_name()`, `/api/endpoint/`
-- Indent with 4 spaces per level
-- Tests BEFORE implementation in each phase
-
-**Optional formatting enhancements:**
-
-- **Blank lines between subtasks**: Use when subtasks have 2+ lines of implementation details and parent has
-  3+ subtasks. Include blank line after parent task for visual consistency. Improves readability through chunking.
-
-- **Goal:** **clarification line**: Use beneath parent task (indented to subtask level) when title is
-  technical/terse and needs context. Must illuminate purpose/impact, not repeat title.
-  Format:
-
-  ```markdown
-  - [ ] **X.Y Parent task**
-
-      **Goal:** One-line purpose/rationale clarification.
-
-      - [ ] X.Y.Z First subtask
-          - Implementation detail
-
-      - [ ] X.Y.Z Second subtask
-  ```
-
-**When to use numbered subtasks vs. detail bullets:**
-
-Use **numbered subtasks (X.Y.Z)** when:
-
-- Parent task requires 2+ distinct, independently completable steps
-- Each step could potentially be worked on separately or by different people
-- Steps have clear completion criteria and can be checked off individually
-
-Use **unnumbered bullets** when:
-
-- Providing implementation details or guidance for a single task
-- Listing edge cases, considerations, or context
-- Describing what should be included/tested (checklists within a task)
-
-**When to include implementation details (optimize signal-to-noise):**
-
-✅ **Include details when:**
-
-- Non-obvious implementation approach or architecture decision
-- Edge cases or tradeoffs to consider
-- Specific patterns to follow from existing codebase
-- Context that helps future readers understand "why"
-- Expected behaviors (tests FAIL initially, tests should PASS after)
-- File locations when not obvious from task description
-
-❌ **Omit details when:**
-
-- Restating the task title in different words
-- Generic advice that applies to all tasks
-- Step-by-step for trivial operations obvious to anyone in the codebase
-- Reminders that are already in quality gates (e.g., "run type checking")

@@ -43,11 +43,56 @@ const MovieDetail = () => {
 	const from = searchParams.get("from") || "now-playing";
 	const query = searchParams.get("query") || "";
 
-	console.log("MovieDetail: Navigation params", { page, from, query });
+	// Preserve all URL parameters for back navigation (filters, etc.)
+	const allParams = useMemo(() => {
+		const params: Record<string, string> = {};
+		searchParams.forEach((value, key) => {
+			params[key] = value;
+		});
+		return params;
+	}, [searchParams]);
+
+	console.log("MovieDetail: Navigation params", { page, from, query, allParams });
 
 	/* ============================================================
        Helper Methods & Derived Data
        ============================================================ */
+
+	// Back button component - available in all states (loading, error, success)
+	// NOTE: If PersonDetail implements similar back navigation with query preservation,
+	// consider extracting to shared <BackToCollectionButton> component (DRY principle)
+	const BackButton = useMemo(() => {
+		// Build query string with all preserved parameters (skip empty values)
+		const queryString = Object.entries(allParams)
+			.filter(([, value]) => value !== "")
+			.map(([key, value]) => `${key}=${encodeURIComponent(value)}`)
+			.join("&");
+
+		const backUrl =
+			from === "search"
+				? `/search?${queryString}`
+				: `/${from}?${queryString}`;
+		console.log("MovieDetail: Back to Results URL", backUrl);
+
+		return (
+			<Box mb={4}>
+				<Link to={backUrl}>
+					<Button colorScheme="blue" variant="outline">
+						<span
+							style={{
+								display: "inline-block",
+								transform: "translateY(2px)",
+								marginRight: "8px",
+							}}
+						>
+							&larr;
+						</span>
+						Back to Results
+					</Button>
+				</Link>
+			</Box>
+		);
+	}, [allParams, from]);
 
 	// extract key crew members (creative leads)
 	const director = movie?.crew?.find(
@@ -87,16 +132,22 @@ const MovieDetail = () => {
        ============================================================ */
 	if (isLoading) {
 		return (
-			<Flex align="center" justify="center" minH="60vh">
-				<Spinner size="xl" />
-			</Flex>
+			<Box maxW="6xl" mx="auto" p={4}>
+				{BackButton}
+				<Flex align="center" justify="center" minH="60vh">
+					<Spinner size="xl" />
+				</Flex>
+			</Box>
 		);
 	}
 
 	if (error) {
 		return (
-			<Box p={8}>
-				<Text color="red.500">{error}</Text>
+			<Box maxW="6xl" mx="auto" p={4}>
+				{BackButton}
+				<Box p={8}>
+					<Text color="red.500">{error}</Text>
+				</Box>
 			</Box>
 		);
 	}
@@ -111,31 +162,7 @@ const MovieDetail = () => {
 	return (
 		<Box maxW="6xl" mx="auto" p={4}>
 			{/* Back to Results Button */}
-			<Box mb={4}>
-				{(() => {
-					const backUrl =
-						from === "search"
-							? `/search?query=${encodeURIComponent(query)}&page=${page}`
-							: `/${from}?page=${page}`;
-					console.log("MovieDetail: Back to Results URL", backUrl);
-					return (
-						<Link to={backUrl}>
-							<Button colorScheme="blue" variant="outline">
-								<span
-									style={{
-										display: "inline-block",
-										transform: "translateY(2px)",
-										marginRight: "8px",
-									}}
-								>
-									&larr;
-								</span>
-								Back to Results
-							</Button>
-						</Link>
-					);
-				})()}
-			</Box>
+			{BackButton}
 			{/* Header Section */}
 			<Flex gap={8} align="flex-start" mb={6}>
 				{/* Header: Movie Poster */}

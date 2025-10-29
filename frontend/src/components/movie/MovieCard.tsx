@@ -9,7 +9,7 @@ import {
 	Text,
 } from "@chakra-ui/react";
 import { useState, useRef, useEffect, memo, useMemo, useCallback } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { type Movie } from "@/types/movie";
 import { Tooltip } from "../chakra/tooltip";
 import { LuEye, LuHeart } from "react-icons/lu";
@@ -25,6 +25,7 @@ interface MovieCardProps {
 }
 
 const MovieCard = ({ movie, currentPage, source, query }: MovieCardProps) => {
+	const [searchParams] = useSearchParams();
 	const [isTitleTooltipOpen, setIsTitleTooltipOpen] = useState(false);
 	const [isTitleTruncated, setIsTitleTruncated] = useState(false);
 	const [isCardHovered, setIsCardHovered] = useState(false);
@@ -129,15 +130,34 @@ const MovieCard = ({ movie, currentPage, source, query }: MovieCardProps) => {
 		});
 	}, [movie.release_date]);
 
-	// Memoize query string building
+	// Memoize query string building - preserve all URL parameters
 	const queryString = useMemo(() => {
-		const queryParams: string[] = [];
-		if (typeof currentPage === "number")
-			queryParams.push(`page=${currentPage}`);
-		if (source) queryParams.push(`from=${source}`);
-		if (query) queryParams.push(`query=${encodeURIComponent(query)}`);
-		return queryParams.length > 0 ? `?${queryParams.join("&")}` : "";
-	}, [currentPage, source, query]);
+		// Start with all URL params (includes filter params parent doesn't track)
+		const params: Record<string, string> = {};
+		searchParams.forEach((value, key) => {
+			if (value) {
+				params[key] = value;
+			}
+		});
+
+		// Props override URL (parent controls pagination/source, we add filters)
+		if (typeof currentPage === "number") {
+			params.page = String(currentPage);
+		}
+		if (source) {
+			params.from = source;
+		}
+		if (query) {
+			params.query = query;
+		}
+
+		// Build query string
+		const queryStr = Object.entries(params)
+			.map(([key, value]) => `${key}=${encodeURIComponent(value)}`)
+			.join("&");
+
+		return queryStr ? `?${queryStr}` : "";
+	}, [searchParams, currentPage, source, query]);
 
 	// Memoize poster URL to avoid recreation
 	const posterUrl = useMemo(() => {

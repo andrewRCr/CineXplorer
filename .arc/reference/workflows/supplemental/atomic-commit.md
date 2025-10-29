@@ -112,10 +112,16 @@ steps:
   Context: tasks-[parent-filename].md (incidental - discovered during Task X.Y)
   ```
 
+  **Task list planning/maintenance:**
+
+  ```bash
+  Context: tasks-[exact-filename].md (planning)      # Adding/updating tasks in existing list
+  ```
+
   **No associated task list (boundary scenarios):**
 
   ```bash
-  Context: planning (no associated task list)        # PRD creation, task generation
+  Context: planning (no associated task list)        # PRD creation, NEW task list generation
   Context: documentation (no associated task list)   # PROJECT-STATUS, README
   Context: maintenance (no associated task list)     # Dependencies, tooling
   Context: archival prep (no associated task list)   # Pre-archival documentation
@@ -198,7 +204,7 @@ steps:
   Context: tasks-pagination-buffer-tracking.md (incidental - discovered during Task 2.1)
   ```
 
-  ### Planning Work
+  ### Planning Work - New Task List
 
   ```
   docs(arc): create PRD for pagination improvements feature
@@ -208,6 +214,19 @@ steps:
   - Generated initial task breakdown (7 phases)
 
   Context: planning (no associated task list)
+  ```
+
+  ### Planning Work - Updating Existing Task List
+
+  ```
+  docs(arc): add Task 3.7 for metadata persistence across navigation
+
+  - Discovered during tasks-navigation-filter-state-preservation.md (Task 3.3)
+  - Pagination metadata lost on component remount
+  - Task 3.7 adds URL persistence using filter param pattern
+  - Follows TDD structure
+
+  Context: tasks-pagination-buffer-tracking.md (planning)
   ```
 
   ### Repository Maintenance

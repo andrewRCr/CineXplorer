@@ -65,6 +65,7 @@ if ! echo "$commit_msg" | grep -qE '^Context: '; then
     echo "   Context: tasks-filter-integration-testing.md (Task 3.6)"
     echo "   Context: tasks-api-layer-modernization.md (Tasks 1.4-1.7)"
     echo "   Context: tasks-filter-testing.md (incidental - discovered during Task 3.6)"
+    echo "   Context: tasks-pagination-buffer-tracking.md (planning)"
     echo "   Context: planning (no associated task list)"
     errors=$((errors + 1))
 else
@@ -106,6 +107,9 @@ else
         elif echo "$context_line" | grep -qE '\(incidental - discovered during Task [0-9]+(\.[0-9A-Za-z]+)+\)$'; then
             # Incidental without task list - valid
             :
+        elif echo "$context_line" | grep -qE '\(planning\)$'; then
+            # Task list planning/maintenance - valid
+            :
         elif echo "$context_line" | grep -qE '^Context: tasks-[a-z0-9-]+\.md$'; then
             # No task number (completion or spans many) - valid
             :
@@ -116,6 +120,7 @@ else
             echo "   - (Tasks X.Y-X.Z) or (Tasks X.Y.Z-X.Y.W) - task range"
             echo "   - (Tasks X.Y, A.B, C.D) - non-contiguous tasks"
             echo "   - (incidental - discovered during Task X.Y)"
+            echo "   - (planning) - task list planning/maintenance"
             echo "   - No parenthetical (for completions spanning many tasks)"
             echo ""
             echo "   Your Context line: $context_line"
@@ -132,6 +137,7 @@ else
         echo "   - Context: tasks-[name].md (Task X.Y)"
         echo "   - Context: tasks-[name].md (Tasks X.Y-X.Z)"
         echo "   - Context: tasks-[name].md (incidental - discovered during Task X.Y)"
+        echo "   - Context: tasks-[name].md (planning)"
         echo "   - Context: [planning|documentation|maintenance|archival prep|archival] (no associated task list)"
         echo ""
         echo "   Your Context line: $context_line"

@@ -76,29 +76,40 @@ testing is the only verification method, which is time-consuming and error-prone
 
 ### **Phase 1:** Write Tests for URL Parameter Preservation
 
-- [ ] **1.1 Create test for MovieCard query string in `MovieCard.test.tsx`**
+- [x] **1.1 Create test for MovieCard query string in `MovieCard.test.tsx`** ✅
 
-    **Goal:** Verify all URL params captured and passed to detail page.
+    **Completed:** Added 6 comprehensive tests for URL parameter preservation in MovieCard.test.tsx:133-139
 
     - Test: All filter params included in detail page link
+    - Test: Preserves filter params from URL search params
     - Test: Unknown params preserved (forward compatibility)
-    - Test: Empty params handled correctly
-    - Expect tests to FAIL initially (implementation incomplete)
+    - Test: Empty filter params handled correctly
+    - Test: Genres array parameter correct format
+    - Test: URL-encodes special characters
+    - Tests FAIL as expected (implementation incomplete)
 
-- [ ] **1.2 Create test for MovieDetail back button URL in `MovieDetail.test.tsx`**
+- [x] **1.2 Create test for MovieDetail back button URL in `MovieDetail.test.tsx`** ✅
 
-    **Goal:** Verify complete param set reconstructed for back navigation.
+    **Completed:** Created comprehensive test suite with 20 tests covering:
 
-    - Test: All params from URL read correctly
-    - Test: Genres array parsed correctly
-    - Test: Back URL matches original filtered page
-    - Expect tests to FAIL initially (implementation incomplete)
+    - Basic back URL construction (4 tests)
+    - Search vs collection routes (5 tests)
+    - Filter combinations (5 tests)
+    - Edge cases (4 tests)
+    - Loading and error states (2 tests)
+    - Tests FAIL as expected (implementation incomplete)
 
-- [ ] **1.3 Create integration test in `MovieCollectionGrid.integration.test.tsx`**
-    - Test: Apply filters → navigate to detail → back → verify all params
-    - Test: Page + filters → detail → back → verify both preserved
-    - Test: Search query + filters → detail → back → verify both
-    - Expect tests to FAIL initially
+- [x] **1.3 Create integration test in `MovieCollectionGrid.integration.test.tsx`** ✅
+
+    **Completed:** Created integration test suite with 11 tests covering:
+
+    - Apply filters → navigate to detail (3 tests)
+    - Multiple navigation cycles (1 test)
+    - Different route types (3 tests)
+    - Complex filter combinations (2 tests)
+    - Edge cases (2 tests)
+    - Also created reusable `test-renderer-with-routes.tsx` helper for future integration tests
+    - Tests FAIL as expected (implementation incomplete)
 
 ### **Phase 2:** Implement URL Parameter Preservation
 

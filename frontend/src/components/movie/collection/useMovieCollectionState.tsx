@@ -55,10 +55,9 @@ interface MovieCollectionState {
 	hasActiveFilters: boolean;
 	hasAdvancedFilters: boolean;
 	filterCount: number;
-	
+
 	// Actions
 	clearFilters: () => void;
-	resetToDefaults: () => void;
 }
 
 // Helper: Check if filters contain advanced filter values
@@ -246,24 +245,12 @@ export const useMovieCollectionState = ({
 	
 	// Memoize cleared filters object to prevent recreation
 	const clearedFiltersRef = useRef<MovieFiltersType>(DEFAULT_FILTERS);
-	
-	// Memoize reset filters based on default filters
-	const resetFilters = useMemo(() => ({
-		...DEFAULT_FILTERS,
-		...defaultFilters,
-	}), [defaultFilters]);
-	
+
 	// Actions with optimized object references
 	const clearFilters = useCallback(() => {
 		onFiltersChange(clearedFiltersRef.current);
 		setShowAdvanced(false);
 	}, [onFiltersChange, setShowAdvanced]);
-	
-	const resetToDefaults = useCallback(() => {
-		onFiltersChange(resetFilters);
-		setShowAdvanced(false);
-		setIsFiltersCollapsed(false);
-	}, [resetFilters, onFiltersChange, setShowAdvanced, setIsFiltersCollapsed]);
 	
 	return {
 		// State
@@ -277,12 +264,11 @@ export const useMovieCollectionState = ({
 		toggleFiltersCollapsed,
 		currentPage,
 		onPageChange,
-		
+
 		// Derived state
 		...derivedState,
-		
+
 		// Actions
 		clearFilters,
-		resetToDefaults,
 	};
 };

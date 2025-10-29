@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen, waitFor } from '@tests/helpers/test-renderer';
+import { screen, waitFor } from '@tests/helpers/test-renderer';
+import { renderWithRoute } from '@tests/helpers/test-renderer-with-routes';
 import MovieDetail from '../MovieDetail';
 import { createMockMovie } from '@tests/mocks/movieData';
 import type { Movie } from '@/types/movie';
@@ -30,22 +31,14 @@ vi.mock('@/services/movieService', () => ({
 import useMovieDetail from '@/hooks/useMovieDetail';
 
 // Helper to render MovieDetail with router and URL params
-// Note: Don't wrap in additional MemoryRouter - test-renderer already provides one
 const renderMovieDetailWithRoute = (movieId: string, searchParams: string = '') => {
-	const path = `/movie/${movieId}${searchParams}`;
+	const initialRoute = `/movie/${movieId}${searchParams}`;
 
-	// Mock window.location for useSearchParams to work
-	const url = new URL(`http://localhost${path}`);
-	Object.defineProperty(window, 'location', {
-		writable: true,
-		value: {
-			search: url.search,
-			pathname: url.pathname,
-		},
-	});
-
-	// Render directly - test-renderer provides router context
-	return render(<MovieDetail />);
+	return renderWithRoute(
+		'/movie/:id',
+		<MovieDetail />,
+		{ initialRoute }
+	);
 };
 
 describe('MovieDetail - Back Button URL Construction', () => {
@@ -99,11 +92,11 @@ describe('MovieDetail - Back Button URL Construction', () => {
 				expect(href).toContain('page=3');
 				expect(href).toContain('from=top-rated');
 
-				// TODO: Should also include all filter params
-				// These will FAIL until implementation is complete
+				// Should include all filter params (URL-encoded)
 				expect(href).toContain('minYear=1980');
 				expect(href).toContain('maxYear=1990');
-				expect(href).toContain('genres=28,12');
+				// Genres are URL-encoded (comma becomes %2C)
+				expect(href).toContain('genres=28%2C12');
 				expect(href).toContain('minRating=7.0');
 				expect(href).toContain('maxRating=10.0');
 				expect(href).toContain('sortBy=vote_average.desc');
@@ -120,8 +113,8 @@ describe('MovieDetail - Back Button URL Construction', () => {
 				const backLink = screen.getByText('Back to Results').closest('a');
 				const href = backLink?.getAttribute('href') || '';
 
-				// Should preserve genres exactly as received
-				expect(href).toContain('genres=28,12,35');
+				// Should preserve genres exactly as received (URL-encoded)
+				expect(href).toContain('genres=28%2C12%2C35');
 			});
 		});
 
@@ -275,11 +268,12 @@ describe('MovieDetail - Back Button URL Construction', () => {
 				const backLink = screen.getByText('Back to Results').closest('a');
 				const href = backLink?.getAttribute('href') || '';
 
-				// All filters should be preserved
+				// All filters should be preserved (URL-encoded)
 				expect(href).toContain('page=2');
 				expect(href).toContain('minYear=1990');
 				expect(href).toContain('maxYear=2000');
-				expect(href).toContain('genres=28,12');
+				// Genres are URL-encoded
+				expect(href).toContain('genres=28%2C12');
 				expect(href).toContain('minRating=8.0');
 				expect(href).toContain('maxRating=10.0');
 				expect(href).toContain('minRuntime=90');

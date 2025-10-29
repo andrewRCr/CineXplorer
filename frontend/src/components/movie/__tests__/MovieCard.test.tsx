@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent } from '@tests/helpers/test-renderer';
+import { renderWithRoute } from '@tests/helpers/test-renderer-with-routes';
 import { createMockMovie } from '@tests/mocks/movieData';
 import MovieCard from '../MovieCard';
 
@@ -444,24 +445,27 @@ describe('MovieCard Component', () => {
 
 		it('preserves filter params from URL search params', () => {
 			// This test simulates the component reading from useSearchParams()
-			// Currently MovieCard only reads currentPage, source, query props
-			// After implementation, it should read ALL params from URL
+			// MovieCard should read ALL params from URL and preserve them
 
 			const testMovie = createMockMovie({ tmdb_id: 123 });
 
-			// In real scenario, useSearchParams would provide all these params
-			// After implementation, MovieCard should read and preserve them all
-
-			render(<MovieCard {...defaultProps} movie={testMovie} />);
+			// Render with full routing context and filter params in URL
+			renderWithRoute(
+				'/popular',
+				<MovieCard {...defaultProps} movie={testMovie} />,
+				{
+					initialRoute: '/popular?page=1&from=popular&minYear=1980&maxYear=1990&genres=28,12&minRating=7.0&maxRating=10.0&sortBy=vote_average.desc'
+				}
+			);
 
 			const link = document.querySelector('a[href*="/movie/123"]');
 			const href = link?.getAttribute('href') || '';
 
-			// After implementation, all these params should be preserved
-			// Currently will FAIL because only page, from, query are included
+			// All URL params should be preserved in detail page link
 			expect(href).toContain('minYear=1980');
 			expect(href).toContain('maxYear=1990');
-			expect(href).toContain('genres=28,12');
+			// Genres is URL-encoded (comma becomes %2C)
+			expect(href).toContain('genres=28%2C12');
 			expect(href).toContain('minRating=7.0');
 			expect(href).toContain('maxRating=10.0');
 			expect(href).toContain('sortBy=vote_average.desc');

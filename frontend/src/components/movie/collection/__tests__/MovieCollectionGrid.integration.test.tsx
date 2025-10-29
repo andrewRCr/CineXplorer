@@ -155,7 +155,8 @@ describe('MovieCollectionGrid - Navigation Integration', () => {
 			expect(detailHref).toContain('page=2');
 			expect(detailHref).toContain('minYear=1990');
 			expect(detailHref).toContain('maxYear=2000');
-			expect(detailHref).toContain('genres=28,12');
+			// Genres are URL-encoded (comma becomes %2C)
+			expect(detailHref).toContain('genres=28%2C12');
 			expect(detailHref).toContain('minRating=7.0');
 		});
 
@@ -318,7 +319,8 @@ describe('MovieCollectionGrid - Navigation Integration', () => {
 			const href = movieLink?.getAttribute('href') || '';
 
 			expect(href).toContain('from=top-rated');
-			expect(href).toContain('genres=28,12');
+			// Genres are URL-encoded
+			expect(href).toContain('genres=28%2C12');
 		});
 
 		it('handles Now Playing route with filters', async () => {
@@ -387,7 +389,8 @@ describe('MovieCollectionGrid - Navigation Integration', () => {
 			expect(href).toContain('page=5');
 			expect(href).toContain('minYear=1990');
 			expect(href).toContain('maxYear=2000');
-			expect(href).toContain('genres=28,12,35');
+			// Genres are URL-encoded
+			expect(href).toContain('genres=28%2C12%2C35');
 			expect(href).toContain('minRating=7.0');
 			expect(href).toContain('maxRating=9.0');
 			expect(href).toContain('minRuntime=90');

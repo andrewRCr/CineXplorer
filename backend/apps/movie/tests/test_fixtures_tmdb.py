@@ -98,6 +98,7 @@ class TMDBMovieBase(TypedDict):
     - vote_count: Can be None or missing (unreleased or limited release movies)
     - poster_path: Can be None or missing (no poster uploaded)
     - runtime: Can be None or missing (not available for all movies)
+    - genre_ids: Can be empty list (data quality signal - misclassified/garbage content)
 
     Fields marked NotRequired to explicitly show TMDB's actual response variability.
     Application code must handle these edge cases defensively.
@@ -112,6 +113,7 @@ class TMDBMovieBase(TypedDict):
     vote_average: NotRequired[float | None]  # May be missing or null - placeholder/unreleased
     vote_count: NotRequired[int | None]  # May be missing or null - unreleased/limited release
     runtime: NotRequired[int | None]  # May be missing or null
+    genre_ids: NotRequired[list[int]]  # May be empty list - data quality signal
 
 
 class TMDBMovieDetail(TypedDict):
@@ -163,6 +165,7 @@ def create_movie_dict(
     runtime: int | None = None,
     vote_count: int | None = None,
     poster_path: str | None = None,
+    genre_ids: list[int] | None = None,
 ) -> TMDBMovieBase:
     """Create a mock TMDB movie dictionary for testing.
 
@@ -178,6 +181,8 @@ def create_movie_dict(
         vote_count: Number of votes (defaults to 100 for reliable rating)
         poster_path: Poster path (defaults to '/poster_{tmdb_id}.jpg',
             pass empty string for missing)
+        genre_ids: Genre IDs (defaults to [18, 28] - Drama, Action).
+            Pass empty list [] for testing data quality filtering.
 
     Returns:
         Dictionary matching TMDB API movie response structure
@@ -188,6 +193,9 @@ def create_movie_dict(
 
         >>> # Movie without poster (for completeness filter tests)
         >>> no_poster = create_movie_dict(2, "No Poster", "2022-01-01", 7.5, poster_path='')
+
+        >>> # Movie without genres (for data quality filter tests)
+        >>> no_genres = create_movie_dict(3, "Garbage", "2022-01-01", 2.0, genre_ids=[])
     """
     # Default vote_count to 100 (well above 50 threshold) for reliable ratings
     # Tests specifically testing vote count behavior can override this
@@ -199,6 +207,11 @@ def create_movie_dict(
     if poster_path is None:
         poster_path = f'/poster_{tmdb_id}.jpg'
 
+    # Default genre_ids to [18, 28] (Drama, Action) for legitimate movies
+    # Tests for data quality filtering can explicitly pass empty list []
+    if genre_ids is None:
+        genre_ids = [18, 28]  # Drama, Action - common genres
+
     return {
         'id': tmdb_id,
         'title': title,
@@ -207,6 +220,7 @@ def create_movie_dict(
         'vote_average': vote_average,
         'vote_count': vote_count,
         'runtime': runtime,
+        'genre_ids': genre_ids,
     }
 
 

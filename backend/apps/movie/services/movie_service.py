@@ -15,7 +15,6 @@ from core.tmdb_models.tmdb_responses import (
     TMDBMovieSearchResponse,
 )
 from core.types.api_types import TMDBParams
-from django.conf import settings
 from ninja.errors import HttpError
 
 from ..schemas import (
@@ -25,6 +24,8 @@ from ..schemas import (
     PaginatedMovieResponseSchema,
 )
 from .result_filtering import (
+    GENERAL_MIN_VOTE_COUNT,
+    RATING_FILTER_MIN_VOTE_COUNT,
     filter_movies_by_completeness,
     filter_movies_by_rating,
     filter_movies_by_year,
@@ -391,20 +392,23 @@ class MovieService:
 
         # Apply rating filtering with intent-based vote threshold (see docstring)
         if rating_min is not None or rating_max is not None:
-            # Explicit rating filter: Skip vote threshold, show all matches
+            # Explicit rating filter: Use lower vote threshold (5 votes)
+            # Allows legitimate low-rated content with modest engagement
+            # while filtering statistical noise from 1-4 votes
+            # Works with genre completeness filtering for dual quality assurance
             movie_schemas = filter_movies_by_rating(
                 movie_schemas,
                 rating_min,
                 rating_max,
-                min_vote_count=None
+                min_vote_count=RATING_FILTER_MIN_VOTE_COUNT
             )
         else:
-            # General browsing: Apply vote threshold for quality
+            # General browsing: Apply higher vote threshold (10 votes) for quality
             movie_schemas = filter_movies_by_rating(
                 movie_schemas,
                 rating_min=None,
                 rating_max=None,
-                min_vote_count=settings.TMDB_MIN_VOTE_COUNT_THRESHOLD
+                min_vote_count=GENERAL_MIN_VOTE_COUNT
             )
 
         return movie_schemas

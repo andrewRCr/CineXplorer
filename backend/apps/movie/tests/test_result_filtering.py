@@ -386,32 +386,24 @@ def test_rating_filtering_handles_missing_ratings() -> None:
 def test_rating_filter_excludes_low_vote_count_movies() -> None:
     """Test that movies with low vote counts are excluded when rating filter applied.
 
+    Phase 3.6: Vote threshold changed from None to 5 votes when rating filter active.
+    This allows legitimate low-rated content while filtering statistical noise (1-4 votes).
+
     When users filter by rating, movies with very few votes are unreliable
     (e.g., a single 10/10 vote makes average 10.0). We exclude movies with
-    fewer than min_vote_count votes to ensure rating quality.
+    fewer than 5 votes to ensure rating quality.
     """
-    # Arrange: Mock client returns mix of high-vote and low-vote movies
+    # Arrange: Mock client returns movies with various vote counts
     mock_client = Mock(spec=['get'])
 
-    # Create test movies using existing fixture helper
-    high_vote_movie_1: TMDBMovieBase = {
-        'id': 1, 'title': "Reliable High Rating", 'poster_path': '/poster1.jpg',
-        'release_date': "2022-01-01", 'vote_average': 8.0, 'vote_count': 100
-    }
-    high_vote_movie_2: TMDBMovieBase = {
-        'id': 2, 'title': "Another Reliable", 'poster_path': '/poster2.jpg',
-        'release_date': "2022-02-01", 'vote_average': 8.5, 'vote_count': 500
-    }
-    low_vote_movie: TMDBMovieBase = {
-        'id': 3, 'title': "Unreliable Rating", 'poster_path': '/poster3.jpg',
-        'release_date': "2022-03-01", 'vote_average': 9.0,
-        'vote_count': 5  # High rating but only 5 votes!
-    }
-
-    tmdb_movies: list[TMDBMovieBase] = [
-        high_vote_movie_1,
-        high_vote_movie_2,
-        low_vote_movie,
+    tmdb_movies = [
+        # Movies with 5+ votes (should pass)
+        create_movie_dict(1, "Reliable High Rating", "2022-01-01", 8.0, vote_count=100),
+        create_movie_dict(2, "Another Reliable", "2022-02-01", 8.5, vote_count=500),
+        create_movie_dict(3, "At Threshold", "2022-03-01", 9.0, vote_count=5),
+        # Movies with < 5 votes (should be filtered)
+        create_movie_dict(101, "Noise Entry 1", "2022-04-01", 9.5, vote_count=4),
+        create_movie_dict(102, "Noise Entry 2", "2022-05-01", 8.0, vote_count=1),
     ]
 
     mock_response = ApiResponse(
@@ -422,34 +414,34 @@ def test_rating_filter_excludes_low_vote_count_movies() -> None:
 
     service = MovieService(tmdb_client=mock_client)
 
-    # Act: Request movies rated 7.5+ (triggers vote count filtering)
+    # Act: Request movies rated 7.5+ (triggers 5-vote threshold)
     result = service.discover_movies(page=1, rating_min=7.5)
 
-    # Assert: Only high vote count movies returned (low vote movie excluded)
-    assert len(result.results) == 2
-    assert all(m.vote_count is not None and m.vote_count >= 50 for m in result.results)
+    # Assert: Only movies with 5+ votes returned (noise entries excluded)
+    assert len(result.results) == 3, "Expected 3 movies with 5+ votes"
+    returned_ids = {movie.tmdb_id for movie in result.results}
+    assert returned_ids == {1, 2, 3}, "Movies with < 5 votes should be filtered"
+    assert all(m.vote_count is not None and m.vote_count >= 5 for m in result.results)
 
 
-def test_vote_count_filter_not_applied_without_rating_filter() -> None:
-    """Test that vote count filtering is NOT applied when no rating filter specified.
+def test_general_browsing_applies_higher_vote_threshold() -> None:
+    """Test that general browsing applies 10 vote threshold (higher than rating filter threshold).
 
-    Vote count quality check only applies when user explicitly filters by rating.
-    When browsing without rating filters, all movies should be shown regardless
-    of vote count.
+    When no rating filter is specified, general browsing uses a 10 vote threshold
+    to maintain catalog quality. This is higher than the 5 vote threshold used with
+    rating filters, which needs to be more permissive for legitimate low-rated content.
     """
     # Arrange: Mock client returns movies with various vote counts
     mock_client = Mock(spec=['get'])
 
-    low_vote_movie: TMDBMovieBase = {
-        'id': 1, 'title': "Low Vote Movie", 'poster_path': '/poster1.jpg',
-        'release_date': "2022-01-01", 'vote_average': 8.0, 'vote_count': 5
-    }
-    high_vote_movie: TMDBMovieBase = {
-        'id': 2, 'title': "High Vote Movie", 'poster_path': '/poster2.jpg',
-        'release_date': "2022-02-01", 'vote_average': 7.0, 'vote_count': 100
-    }
-
-    tmdb_movies: list[TMDBMovieBase] = [low_vote_movie, high_vote_movie]
+    tmdb_movies = [
+        # Above general threshold (10 votes) - should pass
+        create_movie_dict(1, "Above General Threshold", "2022-01-01", 8.0, vote_count=15),
+        create_movie_dict(2, "Well Above", "2022-02-01", 7.0, vote_count=100),
+        # Below general threshold (10 votes) - should be filtered
+        create_movie_dict(101, "Below General", "2022-03-01", 8.5, vote_count=9),
+        create_movie_dict(102, "Very Low", "2022-04-01", 7.5, vote_count=5),
+    ]
 
     mock_response = ApiResponse(
         status_code=200,
@@ -459,11 +451,13 @@ def test_vote_count_filter_not_applied_without_rating_filter() -> None:
 
     service = MovieService(tmdb_client=mock_client)
 
-    # Act: Request without rating filter
+    # Act: Request without rating filter (uses 10 vote general threshold)
     result = service.discover_movies(page=1)
 
-    # Assert: ALL movies returned (vote count check not applied)
-    assert len(result.results) == 2
+    # Assert: Only movies with 10+ votes returned (general threshold applied)
+    assert len(result.results) == 2, "Expected 2 movies with 10+ votes"
+    returned_ids = {movie.tmdb_id for movie in result.results}
+    assert returned_ids == {1, 2}, "Movies with < 10 votes should be filtered"
 
 
 def test_vote_count_filter_excludes_movies_without_vote_count() -> None:
@@ -473,11 +467,13 @@ def test_vote_count_filter_excludes_movies_without_vote_count() -> None:
 
     movie_with_votes: TMDBMovieBase = {
         'id': 1, 'title': "Has Vote Count", 'poster_path': '/poster1.jpg',
-        'release_date': "2022-01-01", 'vote_average': 8.0, 'vote_count': 100
+        'release_date': "2022-01-01", 'vote_average': 8.0, 'vote_count': 100,
+        'genre_ids': [18, 28]  # Drama, Action
     }
     movie_without_votes: TMDBMovieBase = {
         'id': 2, 'title': "No Vote Count", 'poster_path': '/poster2.jpg',
-        'release_date': "2022-02-01", 'vote_average': 8.5
+        'release_date': "2022-02-01", 'vote_average': 8.5,
+        'genre_ids': [12, 35]  # Adventure, Comedy
         # vote_count field missing (TMDB data quality issue)
     }
 
@@ -497,47 +493,6 @@ def test_vote_count_filter_excludes_movies_without_vote_count() -> None:
     # Assert: Only movie with vote_count field returned
     assert len(result.results) == 1
     assert result.results[0].vote_count == 100
-
-
-def test_custom_min_vote_count_threshold_respected() -> None:
-    """Test that custom min_vote_count threshold is respected in filtering."""
-    # Arrange: Mock client returns movies with vote counts around threshold
-    mock_client = Mock(spec=['get'])
-
-    movie_above_threshold: TMDBMovieBase = {
-        'id': 1, 'title': "Above Threshold", 'poster_path': '/poster1.jpg',
-        'release_date': "2022-01-01", 'vote_average': 8.0, 'vote_count': 30
-    }
-    movie_at_threshold: TMDBMovieBase = {
-        'id': 2, 'title': "At Threshold", 'poster_path': '/poster2.jpg',
-        'release_date': "2022-02-01", 'vote_average': 8.5, 'vote_count': 25
-    }
-    movie_below_threshold: TMDBMovieBase = {
-        'id': 3, 'title': "Below Threshold", 'poster_path': '/poster3.jpg',
-        'release_date': "2022-03-01", 'vote_average': 9.0, 'vote_count': 20
-    }
-
-    tmdb_movies: list[TMDBMovieBase] = [
-        movie_above_threshold,
-        movie_at_threshold,
-        movie_below_threshold
-    ]
-
-    mock_response = ApiResponse(
-        status_code=200,
-        data=create_paginated_tmdb_response(tmdb_movies, page=1, total_pages=1)
-    )
-    mock_client.get.return_value = mock_response
-
-    service = MovieService(tmdb_client=mock_client)
-
-    # Act: Request with rating filter (uses custom threshold of 25 from settings)
-    # Note: This test will need settings update - we'll use default 50 for now
-    result = service.discover_movies(page=1, rating_min=7.5)
-
-    # Assert: Only movies with vote_count >= 50 returned (using default threshold)
-    # After implementing custom threshold, we'll test with min_vote_count=25
-    assert len(result.results) == 0  # All below default threshold of 50
 
 
 # ============================================================================
@@ -1314,3 +1269,144 @@ def test_historical_validation_with_year_filters() -> None:
         assert movie.release_date is not None
         assert 1900 <= movie.release_date.year <= 1920
         assert movie.release_date.year >= 1888
+
+
+# ============================================================================
+# Genre Quality Filtering Tests (Phase 3.6)
+# ============================================================================
+
+
+def test_genre_filter_excludes_movies_with_empty_genres() -> None:
+    """Test that movies with empty genre_ids are ALWAYS filtered (completeness check).
+
+    TMDB data quality issue: Some movies (especially misclassified or low-quality
+    entries) have empty genre lists. Empty genres is a strong signal of data quality
+    problems and should be filtered out just like movies with missing posters.
+
+    This is part of the completeness filter that ALWAYS applies (not conditional
+    on rating filters).
+    """
+    # Arrange: Mock client returns movies with and without genres
+    mock_client = Mock(spec=['get'])
+
+    # TMDB returns mix of complete movies and incomplete (no genres) entries
+    tmdb_movies = [
+        # Complete movies WITH genres (should pass)
+        create_movie_dict(1, "Complete Movie A", "2020-01-01", 7.5, vote_count=100),
+        create_movie_dict(2, "Complete Movie B", "2021-01-01", 8.0, vote_count=150),
+        create_movie_dict(3, "Complete Movie C", "2022-01-01", 6.5, vote_count=75),
+        # Incomplete entries WITHOUT genres (should be filtered like missing posters)
+        create_movie_dict(
+            101, "No Genres Entry A", "2020-01-01", 7.0, vote_count=100, genre_ids=[]
+        ),
+        create_movie_dict(
+            102, "No Genres Entry B", "2021-01-01", 8.5, vote_count=200, genre_ids=[]
+        ),
+    ]
+
+    mock_response = ApiResponse(
+        status_code=200,
+        data=create_paginated_tmdb_response(tmdb_movies, page=1, total_pages=1)
+    )
+    mock_client.get.return_value = mock_response
+
+    service = MovieService(tmdb_client=mock_client)
+
+    # Act: Request movies WITHOUT rating filter (completeness check still applies)
+    result = service.discover_movies(page=1)
+
+    # Assert: Only movies with genres returned (incomplete entries excluded)
+    # Note: This test will FAIL initially (TDD Red phase) since genre filtering
+    # is not implemented yet in completeness filter
+    assert len(result.results) == 3, "Expected 3 complete movies with genres"
+    returned_ids = {movie.tmdb_id for movie in result.results}
+    assert returned_ids == {1, 2, 3}, "Movies without genres should be filtered out"
+
+    # Verify all returned movies have genres
+    for movie in result.results:
+        assert hasattr(movie, 'genre_ids'), "MovieBaseSchema should have genre_ids field"
+        assert isinstance(movie.genre_ids, list), "genre_ids should be a list"
+        assert len(movie.genre_ids) > 0, "Movies should have at least one genre"
+
+
+def test_genre_filter_works_with_completeness_checks() -> None:
+    """Test that genre filtering works alongside other completeness checks.
+
+    Genre check is part of completeness filtering (like poster/title checks).
+    All completeness filters should work together consistently.
+    """
+    # Arrange: Mix of complete/incomplete movies with various issues
+    mock_client = Mock(spec=['get'])
+
+    tmdb_movies = [
+        # Complete movie (has poster, title, genres)
+        create_movie_dict(1, "Complete Movie", "2022-01-01", 7.5, vote_count=100),
+        # Missing poster (should be filtered)
+        create_movie_dict(2, "No Poster", "2022-01-01", 8.0, vote_count=150, poster_path=''),
+        # Missing genres (should be filtered)
+        create_movie_dict(3, "No Genres", "2022-01-01", 6.5, vote_count=75, genre_ids=[]),
+        # Another complete movie
+        create_movie_dict(4, "Another Complete", "2022-01-01", 7.0, vote_count=200),
+    ]
+
+    mock_response = ApiResponse(
+        status_code=200,
+        data=create_paginated_tmdb_response(tmdb_movies, page=1, total_pages=1)
+    )
+    mock_client.get.return_value = mock_response
+
+    service = MovieService(tmdb_client=mock_client)
+
+    # Act: Request movies
+    result = service.discover_movies(page=1)
+
+    # Assert: Only complete movies returned (both poster and genre checks applied)
+    assert len(result.results) == 2, "Expected 2 complete movies"
+    returned_ids = {movie.tmdb_id for movie in result.results}
+    assert returned_ids == {1, 4}, "Incomplete movies should be filtered"
+
+
+def test_combined_genre_and_vote_filters_with_rating_filter() -> None:
+    """Test that completeness (genre) and vote count filters both apply with rating filter.
+
+    Phase 3.6 dual quality approach:
+    - Genre completeness filter: ALWAYS applies (like poster/title checks)
+    - Vote count threshold: Changes from 50 to 5 when rating filter active
+
+    When rating filter is active, both should apply together.
+    """
+    # Arrange: Mock client returns movies with various genre/vote combinations
+    mock_client = Mock(spec=['get'])
+
+    tmdb_movies = [
+        # Pass both filters (has genres + 5+ votes)
+        create_movie_dict(1, "Good Quality A", "2020-01-01", 2.0, vote_count=10),
+        create_movie_dict(2, "Good Quality B", "2021-01-01", 1.5, vote_count=62),
+        # Fail completeness filter (no genres) - filtered by completeness check
+        create_movie_dict(101, "No Genres", "2020-01-01", 2.5, vote_count=50, genre_ids=[]),
+        # Fail vote filter (has genres but < 5 votes) - filtered by vote threshold
+        create_movie_dict(102, "Low Votes", "2021-01-01", 1.8, vote_count=3),
+        # Fail both (no genres + < 5 votes)
+        create_movie_dict(103, "Fail Both", "2022-01-01", 2.2, vote_count=1, genre_ids=[]),
+    ]
+
+    mock_response = ApiResponse(
+        status_code=200,
+        data=create_paginated_tmdb_response(tmdb_movies, page=1, total_pages=1)
+    )
+    mock_client.get.return_value = mock_response
+
+    service = MovieService(tmdb_client=mock_client)
+
+    # Act: Request with rating filter (triggers 5-vote threshold + completeness check)
+    result = service.discover_movies(page=1, rating_min=1.0, rating_max=3.5)
+
+    # Assert: Only movies passing BOTH filters returned
+    assert len(result.results) == 2, "Expected 2 movies passing both filters"
+    returned_ids = {movie.tmdb_id for movie in result.results}
+    assert returned_ids == {1, 2}, "Movies failing either filter should be excluded"
+
+    # Verify all returned movies pass both filters
+    for movie in result.results:
+        assert hasattr(movie, 'genre_ids') and len(movie.genre_ids) > 0
+        assert movie.vote_count is not None and movie.vote_count >= 5

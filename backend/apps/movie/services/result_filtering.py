@@ -114,82 +114,103 @@ def filter_movies_by_year(
 # Rating Filtering
 # ============================================================================
 
+# Vote count quality thresholds for filtering movies by engagement level
+#
+# GENERAL_MIN_VOTE_COUNT (10 votes):
+#   Applied during general browsing (popular, top-rated, etc.) when NO rating filter specified.
+#   Removes statistical noise from movies with 1-9 votes while maintaining broad catalog access.
+#   Filters ~15% of results on popular pages, primarily affecting unreleased or limited releases.
+#
+# RATING_FILTER_MIN_VOTE_COUNT (5 votes):
+#   Applied when users explicitly filter by rating (e.g., rating 1.0-3.5).
+#   Lower threshold allows legitimate low-rated content with modest engagement to appear
+#   while still filtering garbage entries with 1-4 votes (statistical noise).
+#   Works with genre completeness filtering for dual quality assurance.
+GENERAL_MIN_VOTE_COUNT = 10
+RATING_FILTER_MIN_VOTE_COUNT = 5
+
 
 def filter_movies_by_rating(
     movies: list[MovieBaseSchema],
     rating_min: float | None = None,
     rating_max: float | None = None,
-    min_vote_count: int | None = 50,
+    min_vote_count: int | None = GENERAL_MIN_VOTE_COUNT,
 ) -> list[MovieBaseSchema]:
     """Filter movies by vote average (rating) range with vote count quality check.
 
-    Filters out movies with ratings outside the specified range. When rating
-    filters are applied, also excludes movies with low vote counts to ensure
-    rating reliability (e.g., a single 10/10 vote creates 10.0 average, but
-    is not statistically significant).
+    Filters out movies with ratings outside the specified range and/or with
+    insufficient vote counts. Vote count filtering can be applied independently
+    of rating filtering for general browsing quality.
 
     Args:
         movies: List of MovieBaseSchema objects to filter
         rating_min: Minimum rating (inclusive, 0.0-10.0 scale). None means no lower bound.
         rating_max: Maximum rating (inclusive, 0.0-10.0 scale). None means no upper bound.
-        min_vote_count: Minimum number of votes required for reliable rating.
-                       Only applied when rating filters are active. Default: 50 votes.
+        min_vote_count: Minimum number of votes required. Can be applied with or without
+                       rating filters. None means no vote threshold.
+                       Default: GENERAL_MIN_VOTE_COUNT.
 
     Returns:
-        Filtered list containing only movies within the rating range with sufficient votes.
-        Movies without vote_average or vote_count are excluded when rating filter applied.
+        Filtered list containing only movies matching criteria.
+        - With rating filters: Movies within range and meeting vote threshold
+        - Without rating filters but with vote threshold: Movies meeting vote threshold
+        - Neither filter: All movies returned
 
     Examples:
-        >>> # Filter to highly-rated movies (7.5+) with at least 50 votes
-        >>> filtered = filter_movies_by_rating(movies, rating_min=7.5)
+        >>> # Filter by rating with vote threshold
+        >>> filtered = filter_movies_by_rating(movies, rating_min=7.5, min_vote_count=50)
 
-        >>> # Filter to rating range with custom vote threshold
+        >>> # General browsing quality filter (vote threshold only, no rating filter)
+        >>> filtered = filter_movies_by_rating(movies, min_vote_count=10)
+
+        >>> # Rating filter with lower vote threshold
         >>> filtered = filter_movies_by_rating(
-        ...     movies, rating_min=7.0, rating_max=8.5, min_vote_count=100
+        ...     movies, rating_min=1.0, rating_max=3.5, min_vote_count=5
         ... )
 
-        >>> # No rating filter = no vote count filter applied
-        >>> all_movies = filter_movies_by_rating(movies)  # Returns all movies
+        >>> # No filters at all
+        >>> all_movies = filter_movies_by_rating(movies, min_vote_count=None)
 
     Note:
-        Vote count filtering ONLY applies when rating_min or rating_max is specified.
-        When browsing without rating filters, all movies are shown regardless of vote count.
+        Vote count filtering works independently of rating filters, allowing general
+        browsing quality filtering (10 votes) while still supporting lower thresholds
+        (5 votes) when rating filters are active.
 
         TMDB ratings are on a 0.0-10.0 scale (e.g., 7.5 = 75%).
 
     Quality Rationale:
-        Movies with few votes have unreliable ratings. A movie with 2 votes averaging
-        10.0 is statistically meaningless compared to a movie with 500 votes averaging
-        8.5. The min_vote_count threshold ensures users see reliable ratings when
-        filtering by rating.
+        Movies with few votes have unreliable ratings or represent statistical noise
+        (unreleased films, data entry errors, etc.). Vote thresholds improve catalog
+        quality during both general browsing and filtered searches.
     """
-    # If no rating filters specified, return all movies (no vote count check needed)
-    if rating_min is None and rating_max is None:
+    # Fast path: no filters at all
+    if rating_min is None and rating_max is None and min_vote_count is None:
         return movies
 
     filtered: list[MovieBaseSchema] = []
 
     for movie in movies:
-        # Skip movies without rating
-        if movie.vote_average is None:
-            continue
-
-        # Vote count quality check: Only applied when threshold specified
-        # min_vote_count=None means skip threshold (show all rating matches)
+        # Vote count quality check (can apply independently of rating filters)
         if min_vote_count is not None and (
             movie.vote_count is None or movie.vote_count < min_vote_count
         ):
             continue
 
-        movie_rating = movie.vote_average
+        # Rating filter checks (only if rating filters specified)
+        if rating_min is not None or rating_max is not None:
+            # Skip movies without rating when rating filter active
+            if movie.vote_average is None:
+                continue
 
-        # Apply rating range filters
-        if rating_min is not None and movie_rating < rating_min:
-            continue
-        if rating_max is not None and movie_rating > rating_max:
-            continue
+            movie_rating = movie.vote_average
 
-        # Movie passes rating filter and vote count quality check
+            # Apply rating range filters
+            if rating_min is not None and movie_rating < rating_min:
+                continue
+            if rating_max is not None and movie_rating > rating_max:
+                continue
+
+        # Movie passes all applicable filters
         filtered.append(movie)
 
     return filtered
@@ -211,6 +232,8 @@ def filter_movies_by_completeness(
     Exclusion criteria:
     - Missing poster_path (empty string or None): No broken image placeholders in grid
     - Empty or whitespace-only title: No blank movie cards
+    - Empty genre_ids list: Strong TMDB data quality signal (often correlates with
+      inappropriate content, data entry errors, or unreleased/placeholder entries)
 
     Args:
         movies: List of MovieBaseSchema objects to filter
@@ -219,18 +242,21 @@ def filter_movies_by_completeness(
         Filtered list containing only movies with complete display data.
 
     Examples:
-        >>> # Filter out movies without posters or titles
+        >>> # Filter out movies without posters, titles, or genres
         >>> complete = filter_movies_by_completeness(movies)
 
     Note:
         This filter is ALWAYS applied (not configurable) as it's a basic quality
         requirement for proper UI display. Movies without posters create broken
-        image placeholders; movies without titles create confusing blank cards.
+        image placeholders; movies without titles create confusing blank cards;
+        movies without genres indicate poor data quality.
 
     Quality Rationale:
         TMDB sometimes returns movies with missing posters (especially older or
-        unreleased films) or placeholder/empty titles. These create poor UX and
-        should be filtered out before display.
+        unreleased films), placeholder/empty titles, or empty genre lists. These
+        create poor UX and should be filtered out before display. Empty genre_ids
+        in particular is a strong signal of incomplete or problematic entries
+        (e.g., adult content with missing metadata, data entry errors).
     """
     filtered: list[MovieBaseSchema] = []
 
@@ -241,6 +267,11 @@ def filter_movies_by_completeness(
 
         # Exclude movies with empty or whitespace-only titles (blank cards)
         if not movie.title or movie.title.strip() == '':
+            continue
+
+        # Exclude movies with empty genre list (data quality signal)
+        # Empty genres correlate with inappropriate/incomplete content
+        if not movie.genre_ids or len(movie.genre_ids) == 0:
             continue
 
         # Movie has complete display data

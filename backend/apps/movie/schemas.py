@@ -77,6 +77,10 @@ def _empty_person_list() -> list[PersonSchema]:
     return []
 
 
+def _empty_genre_id_list() -> list[int]:
+    return []
+
+
 class MovieModelSchema(ModelSchema):
     """Mirror of the local `Movie` model for endpoints that touch persisted data."""
 
@@ -108,6 +112,7 @@ class MovieBaseSchema(Schema):
     vote_average: float | None = None
     vote_count: int | None = None
     runtime: int | None = None
+    genre_ids: list[int] = Field(default_factory=_empty_genre_id_list)
     user_movie_data: UserMovieDataSchema | None = None
 
 

@@ -147,6 +147,7 @@ def create_movie_base_from_tmdb(tmdb_data: Mapping[str, object]) -> MovieBaseSch
             'vote_average': tmdb_movie.vote_average,
             'vote_count': tmdb_movie.vote_count,
             'runtime': 0,  # Runtime not available in base movie responses
+            'genre_ids': tmdb_data.get('genre_ids', []),  # Genre IDs for data quality filtering
         }
 
         return MovieBaseSchema.model_validate(validated_data, strict=False)

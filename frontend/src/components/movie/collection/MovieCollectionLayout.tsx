@@ -1,4 +1,4 @@
-import { useState, useMemo, type ReactNode } from "react";
+import { useMemo, type ReactNode } from "react";
 import { useLocation, Outlet } from "react-router-dom";
 import { Box } from "@chakra-ui/react";
 import { type MovieFilters as MovieFiltersType } from "@/components/movie/filters/AdvancedMovieFilters";
@@ -9,7 +9,7 @@ import {
 } from "@/utilities/routeConfigHelper";
 import PageHeader from "@/components/movie/collection/PageHeader";
 import FilterSection from "@/components/movie/collection/FilterSection";
-import { useMovieCollectionUrl } from "@/components/movie/collection/useMovieCollectionUrl";
+import { useMovieCollectionState } from "@/components/movie/collection/useMovieCollectionState";
 
 // Better prop patterns with discriminated unions and required/optional groups
 type FilterConfig =
@@ -69,17 +69,20 @@ const MovieCollectionLayout = ({
 	const actualSource = source || routeSource;
 	const actualTitle = title || routeTitle;
 
-	// Local state for filter UI
-	const [isFiltersCollapsed, setIsFiltersCollapsed] = useState(false);
-	const [showAdvanced, setShowAdvanced] = useState(false);
-
-	// Use custom hook for URL management
+	// Use custom hook for state management with auto-expand
 	const {
-		unifiedFilters,
-		currentPageFromUrl,
-		handlePageChange,
-		handleUnifiedFiltersChange,
-	} = useMovieCollectionUrl(defaultFilters, actualSource);
+		filters: unifiedFilters,
+		onFiltersChange: handleUnifiedFiltersChange,
+		currentPage: currentPageFromUrl,
+		onPageChange: handlePageChange,
+		showAdvanced,
+		toggleAdvanced,
+		isFiltersCollapsed,
+		toggleFiltersCollapsed,
+	} = useMovieCollectionState({
+		defaultFilters,
+		source: actualSource,
+	});
 
 	// Determine actual filter style: when advanced filters are shown, use expanded style
 	// This ensures maxRating and other advanced filter params are properly sent to API
@@ -153,9 +156,9 @@ const MovieCollectionLayout = ({
 					showAdvanced={showAdvanced}
 					filters={unifiedFilters}
 					onFiltersChange={handleUnifiedFiltersChange}
-					onToggleAdvanced={() => setShowAdvanced(!showAdvanced)}
+					onToggleAdvanced={toggleAdvanced}
 					isFiltersCollapsed={isFiltersCollapsed}
-					onToggleCollapse={() => setIsFiltersCollapsed(!isFiltersCollapsed)}
+					onToggleCollapse={toggleFiltersCollapsed}
 					source={source}
 				/>
 			)}

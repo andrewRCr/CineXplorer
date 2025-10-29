@@ -24,8 +24,7 @@ from ..schemas import (
     PaginatedMovieResponseSchema,
 )
 from .result_filtering import (
-    GENERAL_MIN_VOTE_COUNT,
-    RATING_FILTER_MIN_VOTE_COUNT,
+    MIN_VOTE_COUNT,
     filter_movies_by_completeness,
     filter_movies_by_rating,
     filter_movies_by_year,
@@ -354,11 +353,9 @@ class MovieService:
     ) -> list[MovieBaseSchema]:
         """Apply completeness, year, and rating filters to movie list.
 
-        Vote count threshold behavior:
-        - When rating filter specified: No vote threshold (show all matches).
-          Low-rated movies naturally have fewer votes, threshold would filter 95% of results.
-        - General browsing (no rating filter): Apply TMDB_MIN_VOTE_COUNT_THRESHOLD
-          to filter statistical noise (1-2 vote ratings).
+        Vote count threshold: MIN_VOTE_COUNT (10 votes) applied universally.
+        Filters statistical noise and low-quality content while maintaining
+        broad catalog access to legitimate films.
 
         Args:
             movies: List of TMDBMovieBase objects from API response
@@ -390,26 +387,15 @@ class MovieService:
         # Even without user filters, this excludes pre-1888 dates (data quality)
         movie_schemas = filter_movies_by_year(movie_schemas, year_min, year_max)
 
-        # Apply rating filtering with intent-based vote threshold (see docstring)
-        if rating_min is not None or rating_max is not None:
-            # Explicit rating filter: Use lower vote threshold (5 votes)
-            # Allows legitimate low-rated content with modest engagement
-            # while filtering statistical noise from 1-4 votes
-            # Works with genre completeness filtering for dual quality assurance
-            movie_schemas = filter_movies_by_rating(
-                movie_schemas,
-                rating_min,
-                rating_max,
-                min_vote_count=RATING_FILTER_MIN_VOTE_COUNT
-            )
-        else:
-            # General browsing: Apply higher vote threshold (10 votes) for quality
-            movie_schemas = filter_movies_by_rating(
-                movie_schemas,
-                rating_min=None,
-                rating_max=None,
-                min_vote_count=GENERAL_MIN_VOTE_COUNT
-            )
+        # Apply rating filtering with universal vote threshold (see docstring)
+        # MIN_VOTE_COUNT (10 votes) filters statistical noise and low-quality content
+        # Works with genre completeness filtering for dual quality assurance
+        movie_schemas = filter_movies_by_rating(
+            movie_schemas,
+            rating_min,
+            rating_max,
+            min_vote_count=MIN_VOTE_COUNT
+        )
 
         return movie_schemas
 

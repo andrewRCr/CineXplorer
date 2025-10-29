@@ -114,27 +114,23 @@ def filter_movies_by_year(
 # Rating Filtering
 # ============================================================================
 
-# Vote count quality thresholds for filtering movies by engagement level
+# Vote count quality threshold for filtering movies by engagement level
 #
-# GENERAL_MIN_VOTE_COUNT (10 votes):
-#   Applied during general browsing (popular, top-rated, etc.) when NO rating filter specified.
-#   Removes statistical noise from movies with 1-9 votes while maintaining broad catalog access.
-#   Filters ~15% of results on popular pages, primarily affecting unreleased or limited releases.
-#
-# RATING_FILTER_MIN_VOTE_COUNT (5 votes):
-#   Applied when users explicitly filter by rating (e.g., rating 1.0-3.5).
-#   Lower threshold allows legitimate low-rated content with modest engagement to appear
-#   while still filtering garbage entries with 1-4 votes (statistical noise).
+# MIN_VOTE_COUNT (10 votes):
+#   Applied universally across all browsing and filtering scenarios.
+#   Removes statistical noise and low-quality content from movies with 1-9 votes
+#   while maintaining broad catalog access to legitimate films.
+#   Filters ~15% of results on popular pages, primarily affecting unreleased titles,
+#   limited releases, and adult-oriented content that slips through genre filtering.
 #   Works with genre completeness filtering for dual quality assurance.
-GENERAL_MIN_VOTE_COUNT = 10
-RATING_FILTER_MIN_VOTE_COUNT = 5
+MIN_VOTE_COUNT = 10
 
 
 def filter_movies_by_rating(
     movies: list[MovieBaseSchema],
     rating_min: float | None = None,
     rating_max: float | None = None,
-    min_vote_count: int | None = GENERAL_MIN_VOTE_COUNT,
+    min_vote_count: int | None = MIN_VOTE_COUNT,
 ) -> list[MovieBaseSchema]:
     """Filter movies by vote average (rating) range with vote count quality check.
 
@@ -148,7 +144,7 @@ def filter_movies_by_rating(
         rating_max: Maximum rating (inclusive, 0.0-10.0 scale). None means no upper bound.
         min_vote_count: Minimum number of votes required. Can be applied with or without
                        rating filters. None means no vote threshold.
-                       Default: GENERAL_MIN_VOTE_COUNT.
+                       Default: MIN_VOTE_COUNT (10 votes).
 
     Returns:
         Filtered list containing only movies matching criteria.

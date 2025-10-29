@@ -386,24 +386,24 @@ def test_rating_filtering_handles_missing_ratings() -> None:
 def test_rating_filter_excludes_low_vote_count_movies() -> None:
     """Test that movies with low vote counts are excluded when rating filter applied.
 
-    Phase 3.6: Vote threshold changed from None to 5 votes when rating filter active.
-    This allows legitimate low-rated content while filtering statistical noise (1-4 votes).
+    Universal 10-vote threshold applies to all scenarios (general browsing and rating filters).
+    This filters statistical noise and low-quality content while maintaining broad catalog access.
 
     When users filter by rating, movies with very few votes are unreliable
     (e.g., a single 10/10 vote makes average 10.0). We exclude movies with
-    fewer than 5 votes to ensure rating quality.
+    fewer than 10 votes to ensure rating quality.
     """
     # Arrange: Mock client returns movies with various vote counts
     mock_client = Mock(spec=['get'])
 
     tmdb_movies = [
-        # Movies with 5+ votes (should pass)
+        # Movies with 10+ votes (should pass)
         create_movie_dict(1, "Reliable High Rating", "2022-01-01", 8.0, vote_count=100),
         create_movie_dict(2, "Another Reliable", "2022-02-01", 8.5, vote_count=500),
-        create_movie_dict(3, "At Threshold", "2022-03-01", 9.0, vote_count=5),
-        # Movies with < 5 votes (should be filtered)
-        create_movie_dict(101, "Noise Entry 1", "2022-04-01", 9.5, vote_count=4),
-        create_movie_dict(102, "Noise Entry 2", "2022-05-01", 8.0, vote_count=1),
+        # Movies with < 10 votes (should be filtered)
+        create_movie_dict(101, "Noise Entry 1", "2022-04-01", 9.5, vote_count=9),
+        create_movie_dict(102, "Noise Entry 2", "2022-05-01", 8.0, vote_count=5),
+        create_movie_dict(103, "Noise Entry 3", "2022-06-01", 9.0, vote_count=1),
     ]
 
     mock_response = ApiResponse(
@@ -414,22 +414,22 @@ def test_rating_filter_excludes_low_vote_count_movies() -> None:
 
     service = MovieService(tmdb_client=mock_client)
 
-    # Act: Request movies rated 7.5+ (triggers 5-vote threshold)
+    # Act: Request movies rated 7.5+ (universal 10-vote threshold applies)
     result = service.discover_movies(page=1, rating_min=7.5)
 
-    # Assert: Only movies with 5+ votes returned (noise entries excluded)
-    assert len(result.results) == 3, "Expected 3 movies with 5+ votes"
+    # Assert: Only movies with 10+ votes returned (noise entries excluded)
+    assert len(result.results) == 2, "Expected 2 movies with 10+ votes"
     returned_ids = {movie.tmdb_id for movie in result.results}
-    assert returned_ids == {1, 2, 3}, "Movies with < 5 votes should be filtered"
-    assert all(m.vote_count is not None and m.vote_count >= 5 for m in result.results)
+    assert returned_ids == {1, 2}, "Movies with < 10 votes should be filtered"
+    assert all(m.vote_count is not None and m.vote_count >= 10 for m in result.results)
 
 
 def test_general_browsing_applies_higher_vote_threshold() -> None:
-    """Test that general browsing applies 10 vote threshold (higher than rating filter threshold).
+    """Test that general browsing applies universal 10 vote threshold.
 
-    When no rating filter is specified, general browsing uses a 10 vote threshold
-    to maintain catalog quality. This is higher than the 5 vote threshold used with
-    rating filters, which needs to be more permissive for legitimate low-rated content.
+    When no rating filter is specified, general browsing uses the universal
+    10 vote threshold to maintain catalog quality by filtering statistical noise
+    and low-quality content.
     """
     # Arrange: Mock client returns movies with various vote counts
     mock_client = Mock(spec=['get'])

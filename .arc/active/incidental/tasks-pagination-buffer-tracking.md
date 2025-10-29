@@ -305,38 +305,59 @@ but this also exposed garbage/misclassified TMDB entries.
 
 **Solution**: Dual quality filter approach using available metadata signals.
 
-- [ ] **3.6.1 Add genre_ids to MovieBaseSchema and update transformations**
-    - Add `genre_ids: list[int]` field to `MovieBaseSchema` (apps/movie/schemas.py)
-    - Update TMDB→schema transformation to include genre_ids from discover responses
-    - Verify field appears in API responses with manual test
-    - **Rationale**: Genre data available in TMDB responses, needed for filtering
+- [x] **3.6.1 Add genre_ids to MovieBaseSchema and update transformations** ✅
+    - ✅ Added `genre_ids: list[int]` field to `MovieBaseSchema` (apps/movie/schemas.py:36-38)
+    - ✅ Updated TMDB→schema transformation in `schema_factories.py` to extract genre_ids from responses
+    - ✅ Field now appears in API responses (validated via test fixtures)
+    - **Completed**: Genre data successfully integrated into schema and transformation pipeline
 
-- [ ] **3.6.2 Write tests for data quality filtering**
-    - Test: Movies with empty genre_ids are filtered out when `require_genres=True`
-    - Test: Movies with < 5 votes are filtered when rating filters active
-    - Test: Legitimate movies with genres and 5+ votes pass through
-    - Test: Backward compatibility when `require_genres=False`
-    - Location: `backend/apps/movie/tests/test_result_filtering.py`
-    - Expect tests to FAIL initially (TDD Red phase)
+- [x] **3.6.2 Write tests for data quality filtering** ✅
+    - ✅ Added 3 genre-specific tests + updated 3 existing vote tests to `backend/apps/movie/tests/test_result_filtering.py`:
+        - **New tests (genre filtering)**:
+            - `test_genre_filter_excludes_movies_with_empty_genres`: Empty genre_ids filtered (completeness, always applies)
+            - `test_genre_filter_works_with_completeness_checks`: Genre filter works alongside poster/title checks
+            - `test_combined_genre_and_vote_filters_with_rating_filter`: Both filters apply together
+        - **Updated tests (vote threshold)**:
+            - `test_rating_filter_excludes_low_vote_count_movies`: Updated from 50 to 5 vote threshold
+            - `test_vote_count_filter_not_applied_without_rating_filter`: Updated to test 10 vote general threshold
+            - `test_vote_count_filter_excludes_movies_without_vote_count`: Added genre_ids (still tests None handling)
+        - **Deleted tests (obsolete)**:
+            - `test_custom_min_vote_count_threshold_respected`: Removed (we use constants now)
+    - ✅ Updated `test_fixtures_tmdb.py`:
+        - Added `genre_ids: list[int]` to `TMDBMovieBase` TypedDict
+        - Updated `create_movie_dict()` helper to include genre_ids (defaults to [18, 28], pass [] for testing)
+    - ✅ All 6 tests FAIL as expected (TDD Red phase confirmed - 24/30 passing)
+        - Genre filtering not implemented in `filter_movies_by_completeness()` yet
+        - Vote threshold currently None with rating filters, needs to be changed to 5
+    - **Key clarification**: Genre check is part of completeness filter (ALWAYS applies like poster/title),
+      vote threshold changes from None→5 only with rating filters (general browsing at 10)
 
-- [ ] **3.6.3 Implement genre filtering in result_filtering.py**
-    - Update `filter_movies_by_completeness()` to accept `require_genres` parameter
-    - Filter movies where `len(movie.genre_ids) == 0` when enabled
-    - Add docstring explaining rationale (TMDB data quality signal)
-    - Tests from 3.6.2 should now PASS (TDD Green phase)
+- [x] **3.6.3 Implement genre filtering in result_filtering.py** ✅
+    - ✅ Updated `filter_movies_by_completeness()` to filter movies with empty genre_ids
+    - ✅ Added check: `if not movie.genre_ids or len(movie.genre_ids) == 0: continue`
+    - ✅ Updated docstring explaining rationale (TMDB data quality signal correlating with
+      inappropriate content, data entry errors, unreleased/placeholder entries)
+    - ✅ TDD Green phase: 3 new genre filtering tests now PASS (30/30 tests passing)
 
-- [ ] **3.6.4 Update movie_service.py to apply quality filters**
-    - Enable `require_genres=True` in `filter_movies_by_completeness()` call
-    - Change vote threshold for rating filters from `None` to `5`
-    - Update docstring to explain dual quality filter approach
-    - **Impact**: Filters movies with 0 genres OR <5 votes when rating filters active
+- [x] **3.6.4 Update movie_service.py vote threshold** ✅
+    - ✅ Changed vote threshold for rating filters from `None` → `RATING_FILTER_MIN_VOTE_COUNT` (5)
+    - ✅ Imported `RATING_FILTER_MIN_VOTE_COUNT` constant from result_filtering.py
+    - ✅ Updated `filter_movies_by_rating()` call when rating filter active: `min_vote_count=RATING_FILTER_MIN_VOTE_COUNT`
+    - ✅ Added comment explaining rationale (allow legitimate low-rated content with modest engagement,
+      filter statistical noise from 1-4 votes, part of Phase 3.6 dual quality filter)
+    - ✅ **Bonus fix**: Refactored `filter_movies_by_rating()` to support vote threshold independently
+      of rating filters, fixing general browsing quality filtering (10 vote threshold now works correctly)
 
-- [ ] **3.6.5 Run quality gates and verify filtering**
-    - Backend tests: 372+ passing (includes 3.6.2 new tests)
-    - Type checking: 0 errors
-    - Linting: 0 violations
-    - Manual verification: Rating filter 1.0-3.5 no longer shows problematic content
-    - Verify legitimate low-rated movies still appear (e.g., "Deathstalker III" - 62 votes, has genres)
+- [ ] **3.6.5 Run quality gates and verify filtering** (DEFERRED - see session notes)
+    - Backend tests: 30/30 passing ✅ (Phase 3.6 tests)
+    - Backend type checking: 0 errors ✅
+    - Backend linting: 0 violations ✅
+    - Frontend tests: 416/416 passing ✅ (includes navigation fix tests)
+    - Frontend type checking: 0 errors ✅
+    - Frontend linting: 0 violations ✅
+    - **Note**: Manual verification and commit intentionally deferred until after navigation/state work complete
+    - **Rationale**: Discovered navigation bugs during manual testing - addressing comprehensively before
+      resuming pagination work
 
 ---
 

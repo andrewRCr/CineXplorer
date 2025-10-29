@@ -1,6 +1,6 @@
 # Development Rules - CineXplorer
 
-**Version:** 2.8 | **Updated:** 2025-10-24 | **Hash:** `h3n5p8r2`
+**Version:** 2.9 | **Updated:** 2025-10-29 | **Hash:** `m7k4x9w1`
 
 Core development rules and quality standards for CineXplorer. These rules are **non-negotiable** and must be followed
 by all contributors, including AI assistants.
@@ -164,6 +164,13 @@ Apply standard software engineering principles:
 - **YAGNI** (you aren't gonna need it)
 
 Separate concerns, prefer composition over duplication, favor readability when principles conflict.
+
+### Code Documentation Standards
+
+- **No meta-project references in codebase**: Never reference task IDs, phase numbers, or `.arc/`
+  documentation in production code (comments, docstrings, variable names). Meta-project information
+  belongs only in `.arc/` documentation. Code should explain "what" and "why" independently of
+  project management context.
 
 ## Reference Documentation
 

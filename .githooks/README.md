@@ -120,15 +120,11 @@ git commit -n -m "emergency fix"
 **When to bypass:**
 
 - Emergency hotfixes (review format later)
-- Work-in-progress commits on feature branch
 - Experimental/temporary commits
 
 **Don't bypass for:**
 
-- Regular development work
-- Commits to main branch
-- Pull request commits
-- "I don't want to fix the format"
+- Anything else! Fix issues instead.
 
 ## Troubleshooting
 
@@ -270,17 +266,3 @@ echo "test message" > /tmp/test-msg
 - **Commit standards:** `.arc/reference/workflows/supplemental/atomic-commit.md`
 - **Work categorization:** `.arc/reference/strategies/strategy-work-categorization.md`
 - **Development rules:** `.arc/reference/constitution/DEVELOPMENT-RULES.md`
-
-## Support
-
-For issues or questions about git hooks:
-
-1. Check this README
-2. Review atomic-commit.md for commit message format
-3. Test hooks manually to identify issues
-4. Use `--no-verify` as temporary workaround
-5. Update hooks if standards change
-
----
-
-**Remember:** Hooks are tools to help maintain quality and consistency. They should make development easier by catching mistakes early, not slow you down. If hooks become frustrating, we should improve them, not bypass them.

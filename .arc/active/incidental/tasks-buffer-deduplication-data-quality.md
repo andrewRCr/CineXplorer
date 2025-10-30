@@ -34,8 +34,8 @@ showing 17-19 instead of 20), and represents missing second-pass data quality fi
 **Backend Buffer Logic (`movie_service.py:402-485`):**
 
 - Concatenates movies from multiple pages: `combined_movies = combined_movies + buffer_movies`
-- NO deduplication by `tmdb_id` before returning first 20 results
-- Result: Same movie appears twice in response array
+- Within-page deduplication implemented (Phase 2) but NO cross-page tracking
+- Result: Same movie can appear on consecutive pages
 
 **Frontend Impact:**
 
@@ -43,18 +43,19 @@ showing 17-19 instead of 20), and represents missing second-pass data quality fi
 - Duplicate keys cause React to skip rendering second occurrence
 - User sees 19 cards when backend sends 20 (with 1 duplicate)
 
-**Complete Investigation:** See `.arc/active/incidental/notes-filter-duplication-investigation.md` for full evidence,
-timeline, and API response analysis.
+**Complete Investigation:** See `.arc/active/incidental/notes-buffer-deduplication-data-quality.md` for full
+analysis and solution options.
 
 ## Scope
 
 ### Will Do
 
-- Add deduplication to backend buffer logic (`_apply_buffer_if_needed`)
-- Write comprehensive tests for deduplication (TDD approach)
+- ✅ Add within-page deduplication to backend buffer logic (Phase 1-2 complete)
+- Add session-based cross-page deduplication (Option 1 - Redis cache)
+- Write comprehensive tests for both deduplication types (TDD approach)
 - Clean up debug logging from frontend buffer reset fix
-- Restore and fix stashed performance optimization (filter visibility + re-render)
 - Manual verification of all three symptoms resolved
+- Integration with pagination-buffer-tracking Phase 3.7 (coordination)
 
 ### Won't Do
 
@@ -62,156 +63,308 @@ timeline, and API response analysis.
 - Frontend deduplication (backend is correct place for data quality)
 - Change React key strategy (using `tmdb_id` is correct)
 - Refactor buffer mechanism beyond deduplication (working as designed)
+- Cursor-based pagination (different approach, out of scope)
+- Frontend exclude lists (ugly URLs, complex state management)
 
 ---
 
 ## Tasks
 
-### **Phase 1:** Write Tests for Buffer Deduplication (TDD)
+### **Phase 1:** Write Tests for Within-Page Buffer Deduplication (TDD)
 
-- [ ] **1.1 Write unit tests for `_apply_buffer_if_needed` deduplication**
+**Status:** ✅ COMPLETE
+
+- [x] **1.1 Write unit tests for `_apply_buffer_if_needed` deduplication**
 
     **Goal:** Verify buffer correctly deduplicates and continues fetching to reach 20 unique movies.
 
-    - [ ] **1.1.1 Create test file `test_movie_service_buffer_deduplication.py`**
-        - Test: Buffer with no duplicates returns first 20 movies
-        - Test: Buffer with 1 duplicate fetches additional page to reach 20 unique
-        - Test: Buffer with multiple duplicates across pages continues until 20 unique
-        - Test: Buffer respects `max_buffer_pages` limit even with duplicates
-        - Test: Deduplication preserves first occurrence order
-        - Test: Empty results after deduplication handled correctly
-        - File location: `backend/apps/movie/tests/services/test_movie_service_buffer_deduplication.py`
-        - Expect tests to FAIL initially
+    - [x] **1.1.1 Create test file `test_movie_service_buffer_deduplication.py`**
+        - ✅ Test: Buffer with no duplicates returns first 20 movies
+        - ✅ Test: Buffer with 1 duplicate fetches additional page to reach 20 unique
+        - ✅ Test: Buffer with multiple duplicates across pages continues until 20 unique
+        - ✅ Test: Buffer respects `max_buffer_pages` limit even with duplicates
+        - ✅ Test: Deduplication preserves first occurrence order
+        - ✅ Test: Empty results after deduplication handled correctly
+        - ✅ Test: Buffer applies filters to buffer pages during deduplication
+        - File location: `backend/apps/movie/tests/test_movie_service_buffer_deduplication.py` (7 comprehensive tests)
 
-    - [ ] **1.1.2 Run unit tests and verify failure messages**
+    - [x] **1.1.2 Run unit tests and verify failure messages**
+        - ✅ All 7 tests executed successfully (TDD red phase)
+        - ✅ 6/7 tests FAILED as expected, 1/7 PASSED (baseline case)
 
-- [ ] **1.2 Write integration tests for discover endpoint with duplicates**
+- [x] **1.2 Write integration tests for discover endpoint with duplicates**
 
-    - [ ] **1.2.1 Create integration test in `test_discover_api.py`**
-        - Test: Multi-genre filter (16,10751) returns 20 unique movies
-        - Test: Response includes no duplicate `tmdb_id` values
-        - Test: `next_tmdb_page_start` correctly reflects pages consumed
-        - Test: Works across different filter combinations
-        - Expect tests to FAIL initially
+    - [x] **1.2.1 Create integration tests in `test_movie_api.py`**
+        - ✅ Test: Multi-genre filter returns 20 unique movies (Spirited Away scenario)
+        - ✅ Test: Multiple duplicates across pages handled correctly
+        - ✅ Test: Deduplication works with backend filters (year/rating)
+        - ✅ Test: Respects `max_buffer_pages` safety limit
+        - File location: `backend/apps/movie/tests/test_movie_api.py` (4 integration tests)
 
-    - [ ] **1.2.2 Run integration tests and verify failures**
+    - [x] **1.2.2 Run integration tests and verify failures**
+        - ✅ All 4 integration tests FAILED as expected (TDD red phase)
 
-### **Phase 2:** Implement Backend Buffer Deduplication
+### **Phase 2:** Implement Within-Page Backend Buffer Deduplication
 
-- [ ] **2.1 Implement deduplication in `_apply_buffer_if_needed`**
+**Status:** ✅ IMPLEMENTATION COMPLETE, QUALITY GATES PENDING
 
-    **Location:** `backend/apps/movie/services/movie_service.py` lines 402-485
+- [x] **2.1 Implement deduplication in `_apply_buffer_if_needed`**
 
-    - [ ] **2.1.1 Add deduplication logic after buffer concatenation**
-        - Create `seen_ids` set to track `tmdb_id` values
-        - Build `deduplicated` list excluding duplicates
-        - Continue buffer loop if deduplication reduces count below 20
-        - Return up to 20 unique movies with correct page count
-        - File: `backend/apps/movie/services/movie_service.py:402-485`
+    **Location:** `backend/apps/movie/services/movie_service.py:458-494`
 
-    - [ ] **2.1.2 Run unit tests - should now PASS**
+    - [x] **2.1.1 Add deduplication logic after buffer concatenation**
+        - ✅ Implemented deduplication inside buffer loop (lines 483-490)
+        - ✅ Track `seen_ids` with set for O(1) lookup
+        - ✅ Build `deduplicated` list preserving first occurrence order
+        - ✅ Loop continues after dedup if count < 20
+        - ✅ Returns up to 20 unique movies with correct page count
 
-    - [ ] **2.1.3 Run integration tests - should now PASS**
+    - [x] **2.1.2 Run unit tests - should now PASS**
+        - ✅ All 7 unit tests PASS (TDD green phase)
+
+    - [x] **2.1.3 Run integration tests - should now PASS**
+        - ✅ All 4 integration tests PASS (TDD green phase)
 
 - [ ] **2.2 Run backend quality gates**
-    - [ ] 2.2.1 Backend tests: `docker compose exec backend pytest apps/movie/`
-    - [ ] 2.2.2 Backend linting: `.venv-backend/bin/ruff check backend/apps/ backend/config/ --fix`
-    - [ ] 2.2.3 Python type checking: `npx pyright backend/apps/ backend/config/ --project backend`
 
-### **Phase 3:** Frontend Buffer Reset Fix Cleanup
+    - [ ] **2.2.1 Run backend tests**
+        - Command: `docker compose -f infrastructure/docker-compose.yml exec backend pytest apps/movie/`
+        - Expect: All tests pass (30+ tests)
 
-- [ ] **3.1 Remove debug console.log statements**
+    - [ ] **2.2.2 Run backend linting**
+        - Command: `.venv-backend/bin/ruff check backend/apps/ backend/config/ --fix`
+        - Expect: 0 violations
 
-    - [ ] **3.1.1 Clean up `MovieCollectionGrid.tsx` debug logging**
-        - Remove console.log from lines 60, 85-89, 101-110
-        - Keep buffer reset logic intact (lines 59-64, 98-111)
+    - [ ] **2.2.3 Run Python type checking**
+        - Command: `npx pyright backend/apps/ backend/config/ --project backend`
+        - Expect: 0 errors
+
+### **Phase 3:** Write Tests for Session-Based Cross-Page Deduplication (TDD Red Phase)
+
+**Purpose:** Implement Redis-based session tracking to prevent duplicates across pagination requests (Option 1).
+
+- [ ] **3.1 Write unit tests for `PaginationSessionManager` helper class**
+
+    **Goal:** Test session state management (store/retrieve/clear returned movie IDs).
+
+    - [ ] **3.1.1 Create test file `test_pagination_session_manager.py`**
+        - Test: `get_returned_ids()` returns empty set for new session
+        - Test: `add_returned_ids()` stores movie IDs in Redis cache
+        - Test: `get_returned_ids()` retrieves stored IDs correctly
+        - Test: `clear_session()` removes all IDs for filter combination
+        - Test: Filter hash generation consistent for same filters (order-independent)
+        - Test: Different filters generate different session keys
+        - Test: Session TTL set correctly (1 hour default)
+        - Test: Graceful degradation when Redis unavailable
+        - File: `backend/apps/movie/tests/test_pagination_session_manager.py`
+        - Expect tests to FAIL initially (class not implemented)
+
+    - [ ] **3.1.2 Run unit tests and verify failure messages**
+        - Verify import errors or assertion failures
+        - Document baseline behavior
+
+- [ ] **3.2 Write integration tests for cross-page deduplication**
+
+    **Goal:** Verify session tracking prevents duplicates across paginated requests.
+
+    - [ ] **3.2.1 Add cross-page deduplication tests to `test_movie_api.py`**
+        - Test: Movie appearing on TMDB pages 2 and 4 only returned once across our pages 1-2
+        - Test: Page 1 request stores returned IDs in session
+        - Test: Page 2 request excludes IDs already returned on page 1
+        - Test: Session cleared on page=1 (fresh start for backward navigation)
+        - Test: Different filter combinations use different sessions
+        - Test: Session expires after TTL (1 hour)
+        - Test: System works with Redis unavailable (degrades to within-page only)
+        - Expect tests to FAIL initially (session integration not implemented)
+
+    - [ ] **3.2.2 Run integration tests and verify failures**
+        - Document expected failure patterns
+        - Verify within-page deduplication still works (Phase 2)
+
+### **Phase 4:** Implement Session-Based Cross-Page Deduplication (TDD Green Phase)
+
+- [ ] **4.1 Create `PaginationSessionManager` helper class**
+
+    **Location:** `backend/apps/movie/services/pagination_session_manager.py` (new file)
+
+    - [ ] **4.1.1 Implement session manager class**
+        - Method: `get_returned_ids(filters: dict) -> set[int]` - Retrieve session state
+        - Method: `add_returned_ids(filters: dict, ids: list[int]) -> None` - Update session
+        - Method: `clear_session(filters: dict) -> None` - Reset on page 1 or filter change
+        - Method: `_generate_filter_hash(filters: dict) -> str` - Normalize and hash filters
+        - Use Django cache framework (Redis backend)
+        - Set 1-hour TTL on all cache operations
+        - Graceful degradation if cache unavailable (log warning, return empty set)
+        - ~100 lines estimated
+
+    - [ ] **4.1.2 Run unit tests - should now PASS**
+        - All `PaginationSessionManager` tests pass (8 tests)
+
+- [ ] **4.2 Integrate session tracking into buffer logic**
+
+    **Location:** `backend/apps/movie/services/movie_service.py`
+
+    - [ ] **4.2.1 Import and instantiate session manager**
+        - Add import: `from .pagination_session_manager import PaginationSessionManager`
+        - Instantiate in `MovieService.__init__()` or as module-level singleton
+
+    - [ ] **4.2.2 Update `_apply_buffer_if_needed` to use session tracking**
+        - Accept `filters` parameter (dict with all filter values)
+        - Call `session_manager.get_returned_ids(filters)` at start
+        - Add session IDs to `seen_ids` set (combine with within-page dedup)
+        - After building results, call `session_manager.add_returned_ids(filters, returned_ids)`
+        - ~20 lines modified
+
+    - [ ] **4.2.3 Thread filter context through endpoint methods**
+        - Update `discover_movies()`, `search_movies()`, etc. to build filter dict
+        - Pass filter dict to `_apply_buffer_if_needed()` calls
+        - ~30 lines modified across multiple methods
+
+    - [ ] **4.2.4 Implement page=1 session clearing**
+        - In endpoint methods, check if `page == 1`
+        - If page=1, call `session_manager.clear_session(filters)` before buffer
+        - Ensures backward navigation gets fresh results
+        - ~10 lines added
+
+    - [ ] **4.2.5 Run integration tests - should now PASS**
+        - All cross-page deduplication tests pass (7 tests)
+        - All existing within-page tests still pass (11 tests)
+
+- [ ] **4.3 Run backend quality gates**
+
+    - [ ] **4.3.1 Run all backend tests**
+        - Command: `docker compose -f infrastructure/docker-compose.yml exec backend pytest apps/`
+        - Expect: All tests pass (40+ tests now)
+
+    - [ ] **4.3.2 Run backend linting with auto-fix**
+        - Command: `.venv-backend/bin/ruff check backend/apps/ backend/config/ --fix`
+        - Expect: 0 violations
+
+    - [ ] **4.3.3 Run Python type checking**
+        - Command: `npx pyright backend/apps/ backend/config/ --project backend`
+        - Expect: 0 errors
+
+### **Phase 5:** Coordination with pagination-buffer-tracking Phase 3.7
+
+**Context:** Phase 3.7 in `tasks-pagination-buffer-tracking.md` handles URL metadata persistence (`tmdb_page_start`).
+Session-based deduplication complements this by ensuring no duplicates when metadata tracking is working correctly.
+
+**Integration Point:** Phase 3.7.4.1 manual verification includes "No duplicate movies when navigating forward to page 4"
+which depends on our cross-page deduplication being complete.
+
+- [ ] **5.1 Document dependency in pagination-buffer-tracking task list**
+
+    - [ ] **5.1.1 Add note to Phase 3.7 prerequisite section**
+        - Document that Phase 3.7 verification assumes cross-page dedup complete
+        - Cross-reference: `tasks-buffer-deduplication-data-quality.md` Phase 4 complete
+        - File: `.arc/active/incidental/tasks-pagination-buffer-tracking.md`
+
+    - [ ] **5.1.2 Verify no code conflicts**
+        - Phase 3.7 handles URL params (`tmdb_page_start`)
+        - Our Phase 4 handles session state (returned movie IDs)
+        - Confirm independent operation (no overlap)
+
+### **Phase 6:** Final Cleanup, Quality Gates, and Manual Verification
+
+- [ ] **6.1 Clean up frontend debug logging**
+
+    **Context:** Frontend buffer reset fix (Phase 2 prerequisite) added console.log statements for debugging.
+
+    - [ ] **6.1.1 Remove debug logging from `MovieCollectionGrid.tsx`**
+        - Remove console.log statements (buffer reset events)
+        - Keep buffer reset logic intact
         - File: `frontend/src/components/movie/collection/MovieCollectionGrid.tsx`
 
-    - [ ] **3.1.2 Clean up `MovieGrid.tsx` debug logging**
-        - Remove console.log statements (same pattern as MovieCollectionGrid)
+    - [ ] **6.1.2 Remove debug logging from `MovieGrid.tsx`**
+        - Remove console.log statements (same pattern)
         - Keep buffer reset logic intact
         - File: `frontend/src/components/movie/collection/MovieGrid.tsx`
 
-    - [ ] **3.1.3 Run frontend tests - should still PASS**
-        - `docker compose exec frontend npm test`
-        - Verify buffer reset fix still working (no stale params)
+    - [ ] **6.1.3 Run frontend tests - should still PASS**
+        - Command: `docker compose -f infrastructure/docker-compose.yml exec frontend npm test`
+        - Expect: All 453 tests pass
 
-- [ ] **3.2 Run frontend quality gates**
-    - [ ] 3.2.1 Frontend linting: `docker compose exec frontend npm run lint`
-    - [ ] 3.2.2 TypeScript checking: `docker compose exec frontend npm run type-check`
+- [ ] **6.2 Run frontend quality gates**
 
-### **Phase 4:** Restore and Fix Stashed Performance Optimization
+    - [ ] **6.2.1 Run frontend linting**
+        - Command: `docker compose -f infrastructure/docker-compose.yml exec frontend npm run lint`
+        - Expect: 0 violations
 
-**Context:** Stash contains filter visibility fix + re-render optimization with undefined
-variable bug (`actualFilterStyle` referenced but not defined)
+    - [ ] **6.2.2 Run TypeScript type checking**
+        - Command: `docker compose -f infrastructure/docker-compose.yml exec frontend npm run type-check`
+        - Expect: 0 errors
 
-- [ ] **4.1 Restore stashed changes**
+- [ ] **6.3 Manual browser verification**
 
-    - [ ] **4.1.1 Apply stash and review changes**
-        - Command: `git stash pop stash@{0}`
-        - Files affected: `MovieCollectionLayout.tsx`, `useMovieCollectionState.tsx`
-        - Review changes for merge conflicts
+    **Test Case:** Multi-genre filter (Animation + Family) across multiple pages
 
-- [ ] **4.2 Fix undefined variable bug**
-
-    - [ ] **4.2.1 Fix `actualFilterStyle` reference in `MovieCollectionLayout.tsx`**
-        - Replace undefined `actualFilterStyle` with `filterStyle` (line 183)
-        - Verify split logic: `apiFilterStyle` for API, `filterStyle` for UI
-        - File: `frontend/src/components/movie/collection/MovieCollectionLayout.tsx`
-
-    - [ ] **4.2.2 Run frontend tests - should PASS**
-
-- [ ] **4.3 Run frontend quality gates**
-    - [ ] 4.3.1 Frontend tests: `docker compose exec frontend npm test`
-    - [ ] 4.3.2 Frontend linting: `docker compose exec frontend npm run lint`
-    - [ ] 4.3.3 TypeScript checking: `docker compose exec frontend npm run type-check`
-
-### **Phase 5:** Manual Verification and Final Quality Gates
-
-- [ ] **5.1 Manual browser verification**
-
-    **Test Case:** Multi-genre filter (Animation + Family)
-
-    - [ ] **5.1.1 Verify duplicate fix**
+    - [ ] **6.3.1 Verify within-page duplicate fix**
         - Navigate to Popular page 1
         - Apply Animation (16) + Family (10751) filters
-        - Verify: NO duplicate movies visible (e.g., Spirited Away appears once only)
+        - Verify: NO duplicate movies on single page
         - Verify: Exactly 20 unique movies displayed
 
-    - [ ] **5.1.2 Verify page completeness**
-        - Check multiple filter combinations
-        - Verify: All pages show 20 results (no incomplete 17-19 pages)
-        - Verify: Pagination metadata correct (`next_tmdb_page_start` tracking)
+    - [ ] **6.3.2 Verify cross-page duplicate fix**
+        - From page 1, navigate to page 2
+        - Verify: NO movies from page 1 appear on page 2
+        - Navigate to page 3
+        - Verify: NO movies from pages 1-2 appear on page 3
+        - Check specific movies (Spirited Away, Mulan, Luca) appear only once
 
-    - [ ] **5.1.3 Verify no regressions**
+    - [ ] **6.3.3 Verify backward navigation consistency**
+        - From page 3, click browser back to page 2
+        - Verify: Same movies as original page 2 visit
+        - Click back to page 1
+        - Verify: Same movies as original page 1 visit (session cleared on page 1)
+
+    - [ ] **6.3.4 Verify filter change resets session**
+        - On page 2 with Animation+Family
+        - Change to Animation only
+        - Verify: New set of movies (session cleared)
+        - Page numbering restarts at 1
+
+    - [ ] **6.3.5 Verify no regressions**
         - Test: Popular, Now Playing, Top Rated, Upcoming views
         - Test: Single genre filters work correctly
         - Test: Search with filters works correctly
-        - Test: Navigation state preservation still working (from Task 3.1-3.2)
+        - Test: Pagination metadata (`next_tmdb_page_start`) still tracking
 
-- [ ] **5.2 Run full quality gates**
-    - [ ] 5.2.1 All backend tests: `docker compose exec backend pytest apps/`
-    - [ ] 5.2.2 All frontend tests: `docker compose exec frontend npm test`
-    - [ ] 5.2.3 All linting: backend + frontend + markdown
-    - [ ] 5.2.4 All type checking: Python + TypeScript
+- [ ] **6.4 Run comprehensive quality gates**
 
-- [ ] **5.3 Commit all changes**
-    - [ ] 5.3.1 Review `git status` and `git diff`
-    - [ ] 5.3.2 Commit backend deduplication + frontend fixes
-    - [ ] 5.3.3 Update CURRENT-SESSION.md to resume navigation work at Task 3.3
+    - [ ] **6.4.1 Run all backend tests**
+        - Command: `docker compose -f infrastructure/docker-compose.yml exec backend pytest apps/`
+        - Expect: All tests pass (40+ tests)
+
+    - [ ] **6.4.2 Run all frontend tests**
+        - Command: `docker compose -f infrastructure/docker-compose.yml exec frontend npm test`
+        - Expect: All 453 tests pass
+
+    - [ ] **6.4.3 Run all linting**
+        - Backend: `.venv-backend/bin/ruff check backend/apps/ backend/config/`
+        - Frontend: `docker compose -f infrastructure/docker-compose.yml exec frontend npm run lint`
+        - Markdown: `npx markdownlint-cli2 --fix "README.md" ".arc/**/*.md"`
+        - Expect: 0 violations total
+
+    - [ ] **6.4.4 Run all type checking**
+        - Python: `npx pyright backend/apps/ backend/config/ --project backend`
+        - TypeScript: `docker compose -f infrastructure/docker-compose.yml exec frontend npm run type-check`
+        - Expect: 0 errors total
 
 ---
 
 ## Success Criteria
 
-- [ ] NO duplicate movies in any API responses (verified by tests + manual testing)
-- [ ] All pages consistently show 20 results (no incomplete 17-19 pages)
-- [ ] Buffer deduplication transparent to users (handles TMDB instability automatically)
-- [ ] 100% test pass rate (backend + frontend)
+- [x] Within-page deduplication working (Phase 1-2 complete)
+- [ ] Cross-page deduplication working (no duplicates across pagination sequence)
+- [ ] Backward navigation consistent (page 1 results same after page 2 → page 1)
+- [ ] Filter changes reset session (new filters = new pagination sequence)
+- [ ] All pages consistently show 20 results (no incomplete pages)
+- [ ] Session tracking graceful degradation (works without Redis, logs warning)
+- [ ] 100% test pass rate (backend + frontend, 40+ backend, 453 frontend)
 - [ ] Zero linting violations, zero type errors
-- [ ] Performance optimization restored and working (no undefined variable bugs)
+- [ ] Coordination documented with pagination-buffer-tracking Phase 3.7
 - [ ] All quality gates pass
-- [ ] Can resume navigation work at Task 3.3 with confidence
+- [ ] Ready to resume navigation work at Task 3.3
 
 ---
 
@@ -219,17 +372,25 @@ variable bug (`actualFilterStyle` referenced but not defined)
 
 ### Backend
 
-- `backend/apps/movie/services/movie_service.py` - Buffer deduplication implementation
-- `backend/apps/movie/tests/services/test_movie_service_buffer_deduplication.py` - New test file
-- `backend/apps/movie/tests/test_discover_api.py` - Integration tests
+- `backend/apps/movie/services/movie_service.py` - Buffer deduplication implementation (within-page + cross-page)
+- `backend/apps/movie/services/pagination_session_manager.py` - Session tracking helper (new file, Phase 4)
+- `backend/apps/movie/tests/test_movie_service_buffer_deduplication.py` - Within-page dedup tests
+- `backend/apps/movie/tests/test_pagination_session_manager.py` - Session manager tests (new file, Phase 3)
+- `backend/apps/movie/tests/test_movie_api.py` - Integration tests (within-page + cross-page)
 
 ### Frontend
 
-- `frontend/src/components/movie/collection/MovieCollectionGrid.tsx` - Buffer reset fix cleanup
-- `frontend/src/components/movie/collection/MovieGrid.tsx` - Buffer reset fix cleanup
-- `frontend/src/components/movie/collection/MovieCollectionLayout.tsx` - Stashed performance optimization
-- `frontend/src/components/movie/collection/useMovieCollectionState.tsx` - Stashed helper export
+- `frontend/src/components/movie/collection/MovieCollectionGrid.tsx` - Buffer reset fix + debug logging (cleanup Phase 6)
+- `frontend/src/components/movie/collection/MovieGrid.tsx` - Buffer reset fix + debug logging (cleanup Phase 6)
+- `frontend/src/components/movie/collection/MovieCollectionLayout.tsx` - Filter style split (completed stash work)
+- `frontend/src/components/movie/collection/useMovieCollectionState.tsx` - Enhanced filter detection (completed stash work)
 
-### Investigation
+### Documentation
 
-- `.arc/active/incidental/notes-filter-duplication-investigation.md` - Complete investigation findings
+- `.arc/active/incidental/notes-buffer-deduplication-data-quality.md` - Complete investigation and solution analysis
+- `.arc/active/incidental/tasks-pagination-buffer-tracking.md` - Related Phase 3.7 (URL metadata persistence)
+
+### Configuration
+
+- `backend/config/settings.py` - Verify Redis cache backend configured (CACHES setting)
+- `infrastructure/docker-compose.yml` - Redis container already available

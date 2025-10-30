@@ -81,80 +81,61 @@ Framework, FastAPI, pytest documentation, and React ecosystem. Key findings:
 
 ### **Phase 1:** Update Testing Strategy Documentation
 
-- [ ] **1.1 Update strategy-testing-methodology.md with standardized patterns**
+- [x] **1.1 Update strategy-testing-methodology.md with standardized patterns**
 
     **Goal:** Document the new directory-based organization pattern as the project standard.
 
-    - [ ] **1.1.1 Add "Test Organization Standards" section**
-        - Backend structure: `tests/unit/`, `tests/integration/`, `tests/e2e/`
-        - Frontend structure: `__tests__/` with `.integration.test.tsx` suffix
-        - File size guidelines: 200-400 lines, split if larger
-        - When to split files: multiple features, different teams, >400 lines
-        - Location: After "Testing Philosophy" section, before "Backend Testing"
+    - [x] **1.1.1 Add "Test Organization Standards" section**
+        - Added directory structure examples for backend (pytest) and frontend (Vitest)
+        - Documented when to use unit vs integration vs E2E tests
+        - Added file splitting guidelines table (200-400 line thresholds)
+        - Location: After "Testing Philosophy" section (line 86)
 
-    - [ ] **1.1.2 Add "File Splitting Guidelines" section**
+    - [x] **1.1.2 Add "File Splitting Guidelines" section**
         - API tests: Split by endpoint + aspect (e.g., `test_discover_filtering.py`)
         - Business logic: Split by domain/feature (e.g., `test_genre_filters.py`)
         - Naming conventions: `test_{resource}_{feature}_{aspect}.py`
-        - When to keep together: shared fixtures, tightly coupled, <400 lines
-        - Location: After "Test Organization Standards"
+        - When NOT to split criteria included
+        - Organizing split files: subdirectories vs flat structure
+        - Location: Within "Test Organization Standards" section
 
-    - [ ] **1.1.3 Update pytest configuration examples**
-        - Add markers section (unit, integration, e2e, slow, api)
-        - Show directory-based test execution commands
-        - Document `pytest tests/unit/` vs `pytest tests/integration/` patterns
-        - Location: Update "Backend Testing" > "Running Tests" section
+    - [x] **1.1.3 Update pytest configuration examples**
+        - Added directory-based execution commands (`pytest apps/*/tests/unit/`)
+        - Added marker-based execution examples (`pytest -m unit`)
+        - Documented both approaches (directory is primary, markers as supplement)
+        - Location: "Backend Testing" > "Running Tests" section (line 262)
 
-    - [ ] **1.1.4 Run markdown linting on updated strategy doc**
+    - [x] **1.1.4 Run markdown linting on updated strategy doc**
         - Command: `npx markdownlint-cli2 --fix --no-globs ".arc/reference/strategies/strategy-testing-methodology.md"`
-        - Fix any line length or formatting violations
-        - Verify all examples render correctly
+        - Result: 0 errors, all formatting correct
+        - All code examples render properly
 
 ### **Phase 2:** Create Backend Directory Structure
 
 **Purpose:** Establish unit/integration/e2e directories for all backend apps.
 
-- [ ] **2.1 Create directory structure for movie app**
+- [x] **2.1 Create directory structure for movie app**
+    - Created `backend/apps/movie/tests/unit/`, `integration/`, `e2e/`
+    - Created placeholder `conftest.py` in unit/ and integration/
+    - Existing shared fixtures remain in parent `conftest.py`
 
-    - [ ] **2.1.1 Create directories**
-        - `backend/apps/movie/tests/unit/`
-        - `backend/apps/movie/tests/integration/`
-        - `backend/apps/movie/tests/e2e/` (placeholder for future)
+- [x] **2.2 Create directory structure for authentication app**
+    - Created `backend/apps/authentication/tests/unit/`, `integration/`, `e2e/`
+    - Created placeholder `conftest.py` in unit/ and integration/
 
-    - [ ] **2.1.2 Create placeholder conftest.py files**
-        - `backend/apps/movie/tests/unit/conftest.py` (empty, for future unit-specific fixtures)
-        - `backend/apps/movie/tests/integration/conftest.py` (empty, for future integration fixtures)
-        - Keep existing `backend/apps/movie/tests/conftest.py` (shared fixtures)
+- [x] **2.3 Create directory structure for user_movie_data app**
+    - Created `backend/apps/user_movie_data/tests/unit/`, `integration/`, `e2e/`
+    - Created placeholder `conftest.py` in unit/ and integration/
 
-- [ ] **2.2 Create directory structure for authentication app**
+- [x] **2.4 Create directory structure for core app**
+    - Created `backend/apps/core/tests/unit/`, `integration/`, `e2e/`
+    - Created placeholder `conftest.py` in unit/ and integration/
 
-    - [ ] **2.2.1 Create directories**
-        - `backend/apps/authentication/tests/unit/`
-        - `backend/apps/authentication/tests/integration/`
-        - `backend/apps/authentication/tests/e2e/`
+**Structure created:**
 
-    - [ ] **2.2.2 Create placeholder conftest.py files**
-        - Unit and integration conftest.py as above
-
-- [ ] **2.3 Create directory structure for user_movie_data app**
-
-    - [ ] **2.3.1 Create directories**
-        - `backend/apps/user_movie_data/tests/unit/`
-        - `backend/apps/user_movie_data/tests/integration/`
-        - `backend/apps/user_movie_data/tests/e2e/`
-
-    - [ ] **2.3.2 Create placeholder conftest.py files**
-        - Unit and integration conftest.py as above
-
-- [ ] **2.4 Create directory structure for core app**
-
-    - [ ] **2.4.1 Create directories**
-        - `backend/apps/core/tests/unit/`
-        - `backend/apps/core/tests/integration/`
-        - `backend/apps/core/tests/e2e/`
-
-    - [ ] **2.4.2 Create placeholder conftest.py files**
-        - Unit and integration conftest.py as above
+- 4 apps × 3 directories (unit, integration, e2e) = 12 directories total
+- 4 apps × 2 conftest files (unit, integration) = 8 conftest.py files
+- All directories verified present with correct paths
 
 ### **Phase 3:** Analyze and Split Large Test Files
 
@@ -166,13 +147,15 @@ Framework, FastAPI, pytest documentation, and React ecosystem. Key findings:
         - List all test functions with their purposes
         - Identify natural groupings (by endpoint, by feature, by test type)
         - Note shared fixtures and dependencies
-        - Document finding in task notes
+        - **Document findings:** Update `notes-test-organization-standardization.md` under
+          "test_movie_api.py Analysis" section
 
     - [ ] **3.1.2 Propose split strategy**
         - Based on research: Split by endpoint + aspect recommended for API tests
         - Likely groups: discover (filtering, pagination, sorting), search, list/detail
         - Create proposed file structure with line count estimates
-        - Document proposed structure in task notes for approval
+        - **Document proposed structure:** Update `notes-test-organization-standardization.md` under
+          "test_movie_api.py Analysis" section for approval
 
 - [ ] **3.2 Analyze test_result_filtering.py (1412 lines)**
 
@@ -180,25 +163,29 @@ Framework, FastAPI, pytest documentation, and React ecosystem. Key findings:
         - List test categories (genre filters, rating filters, date filters, etc.)
         - Identify test types (validation, application, edge cases, errors)
         - Note fixture dependencies
-        - Document findings in task notes
+        - **Document findings:** Update `notes-test-organization-standardization.md` under
+          "test_result_filtering.py Analysis" section
 
     - [ ] **3.2.2 Propose split strategy**
         - Based on research: Split by filter domain recommended for business logic tests
         - Likely groups: genre, rating, date, language, keyword, combined filters
         - Create proposed file structure with line count estimates
-        - Document proposed structure in task notes for approval
+        - **Document proposed structure:** Update `notes-test-organization-standardization.md` under
+          "test_result_filtering.py Analysis" section for approval
 
 - [ ] **3.3 Identify other oversized files (500+ lines)**
 
     - [ ] **3.3.1 Generate line count report**
         - Command: `find backend/apps -name "test_*.py" -exec wc -l {} + | sort -rn`
         - Identify files >500 lines that would benefit from splitting
-        - Document candidates in task notes
+        - **Document candidates:** Update `notes-test-organization-standardization.md` under
+          "Other Oversized Files" section
 
     - [ ] **3.3.2 Assess split necessity**
         - For each 500+ line file, determine if split is beneficial
         - Consider: logical boundaries, feature groupings, team ownership
-        - Document which files to split and which to keep as-is
+        - **Document decisions:** Update `notes-test-organization-standardization.md` under
+          "Other Oversized Files" section with split/keep rationale
 
 ### **Phase 4:** Execute File Splits and Migration
 
@@ -421,42 +408,48 @@ Framework, FastAPI, pytest documentation, and React ecosystem. Key findings:
         - Identify repeated assertion patterns that could become helper functions
         - Find duplicate mock/factory code that should be centralized
         - Check for copy-pasted test data that could use shared fixtures
-        - Document findings with file locations and recommendations
+        - **Document findings:** Update `notes-test-organization-standardization.md` under
+          "Post-Migration Refactoring Opportunities" section with file locations and recommendations
 
     - [ ] **7.3.2 Identify missing test helper opportunities**
         - Review common patterns across multiple test files
         - Look for complex assertions that repeat (could become `assert_movie_response()` helper)
         - Find repeated API call patterns (could become `create_movie_via_api()` helper)
         - Check for repeated mock setup (could become reusable fixtures)
-        - Document opportunities in testing methodology strategy doc
+        - **Document opportunities:** Update `notes-test-organization-standardization.md` under
+          "Post-Migration Refactoring Opportunities" section
 
     - [ ] **7.3.3 Check fixture organization and reuse**
         - Review all conftest.py files for duplicate fixtures
         - Identify fixtures that could be promoted to higher-level conftest
         - Look for over-specific fixtures that could be generalized
         - Check for unused fixtures (dead code)
-        - Document fixture consolidation opportunities
+        - **Document opportunities:** Update `notes-test-organization-standardization.md` under
+          "Post-Migration Refactoring Opportunities" section
 
     - [ ] **7.3.4 Assess test readability and naming**
         - Review test function names for clarity
         - Check docstrings - are they helpful or redundant?
         - Look for overly complex test setups that could be simplified
         - Identify tests that do too much (should be split into multiple tests)
-        - Document readability improvements
+        - **Document improvements:** Update `notes-test-organization-standardization.md` under
+          "Post-Migration Refactoring Opportunities" section
 
     - [ ] **7.3.5 Propose refactoring tasks**
         - Based on findings from 7.3.1-7.3.4, create prioritized list
         - Categorize: Critical (blocks maintainability) vs Nice-to-have (polish)
         - Estimate effort for each refactoring opportunity
         - Decide: Fix now or defer to follow-up task list
-        - Document decision and rationale
+        - **Document decision:** Update `notes-test-organization-standardization.md` under
+          "Post-Migration Refactoring Opportunities" section with prioritized list and rationale
 
     - [ ] **7.3.6 Execute approved refactorings (if any)**
         - For critical issues identified in 7.3.5, execute refactoring
         - Move duplicate code to shared helpers/fixtures
         - Consolidate repeated patterns
         - Run tests after each change to verify no regressions
-        - Document changes made
+        - **Document changes:** Update `notes-test-organization-standardization.md` under
+          "Post-Migration Refactoring Opportunities" section with summary of changes made
 
 - [ ] **7.4 Update test count baseline**
 

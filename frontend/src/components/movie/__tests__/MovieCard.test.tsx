@@ -126,8 +126,8 @@ describe('MovieCard Component', () => {
 
 			render(<MovieCard {...defaultProps} movie={testMovie} />);
 
-			// The MovieUserScore component should show the rating as a percentage
-			expect(screen.getByText('85%')).toBeInTheDocument();
+			// The MovieUserScore component should show the rating (0-10 scale)
+			expect(screen.getByText('8.5')).toBeInTheDocument();
 		});
 
 		it('passes correct score to MovieUserScore', () => {
@@ -137,7 +137,7 @@ describe('MovieCard Component', () => {
 
 			render(<MovieCard {...defaultProps} movie={testMovie} />);
 
-			expect(screen.getByText('72%')).toBeInTheDocument();
+			expect(screen.getByText('7.2')).toBeInTheDocument();
 		});
 	});
 

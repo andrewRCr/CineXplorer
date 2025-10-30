@@ -9,7 +9,7 @@ interface SortSelectorProps {
 	onChange: (sort: SortOptionValue) => void;
 }
 
-const SORT_WIDTH = "220px";
+const SORT_WIDTH = "240px";
 
 const SortSelector = ({ value, onChange }: SortSelectorProps) => {
 	const sortCollection = createListCollection({

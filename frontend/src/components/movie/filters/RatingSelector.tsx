@@ -18,23 +18,24 @@ const RatingSelector = ({
 	// Local state for immediate UI updates
 	const [localMinRating, setLocalMinRating] = useState(minRating);
 	const [localMaxRating, setLocalMaxRating] = useState(maxRating);
-	
-	// Sync local state when props change (convert from TMDB 0-10 to percentage 0-100)
+
+	// Sync local state when props change (no conversion needed - native 0-10 scale)
 	useEffect(() => {
-		const percentage = minRating ? (Math.round(parseFloat(minRating) * 10 * 100) / 100).toString() : "";
-		setLocalMinRating(percentage);
+		setLocalMinRating(minRating);
 	}, [minRating]);
-	
+
 	useEffect(() => {
-		const percentage = maxRating ? (Math.round(parseFloat(maxRating) * 10 * 100) / 100).toString() : "";
-		setLocalMaxRating(percentage);
+		setLocalMaxRating(maxRating);
 	}, [maxRating]);
 	
-	// Validate rating input (0-100 percentage scale for user-friendliness)
+	// Validate rating input (0-10 TMDB scale with decimals)
 	const isValidRating = (rating: string): boolean => {
 		if (!rating) return true; // Empty is valid (clears filter)
 		const num = parseFloat(rating);
-		return !isNaN(num) && num >= 0 && num <= 100;
+		// Allow 1-3 characters max (e.g., "7", "7.5", "10")
+		// This prevents excessive decimal places like "7.123"
+		if (rating.length > 3) return false;
+		return !isNaN(num) && num >= 0 && num <= 10;
 	};
 	
 	// Check if min/max relationship is logical
@@ -53,41 +54,41 @@ const RatingSelector = ({
 			// For non-numeric values, clamp to 0
 			return "0";
 		}
-		// Clamp numeric values to valid range
+		// Clamp numeric values to valid range (0-10 scale)
 		if (num < 0) return "0";
-		if (num > 100) return "100";
-		return Math.round(num).toString(); // Round to whole number for cleaner UX
+		if (num > 10) return "10";
+		// Round to 1 decimal place for cleaner UX
+		return (Math.round(num * 10) / 10).toString();
 	};
 	
-	// Debounced update functions with validation and conversion
+	// Debounced update functions with validation (no conversion needed)
 	// eslint-disable-next-line react-hooks/exhaustive-deps
 	const debouncedMinRatingUpdate = useCallback(
 		debounce((rating: string) => {
 			if (isValidRating(rating)) {
-				// Convert percentage (0-100) to TMDB scale (0-10)
-				const tmdbRating = (parseFloat(rating) / 10).toString();
-				onMinRatingChange(tmdbRating);
+				onMinRatingChange(rating);
 			}
-		}, 300), // Shorter debounce for ratings since they're typically single digits
+		}, 500), // Consistent with YearSelector debounce
 		[onMinRatingChange] // debounce function dependencies cannot be analyzed by ESLint
 	);
-	
+
 	// eslint-disable-next-line react-hooks/exhaustive-deps
 	const debouncedMaxRatingUpdate = useCallback(
 		debounce((rating: string) => {
 			if (isValidRating(rating)) {
-				// Convert percentage (0-100) to TMDB scale (0-10)
-				const tmdbRating = (parseFloat(rating) / 10).toString();
-				onMaxRatingChange(tmdbRating);
+				onMaxRatingChange(rating);
 			}
-		}, 300),
+		}, 500),
 		[onMaxRatingChange] // debounce function dependencies cannot be analyzed by ESLint
 	);
 	
 	// Handle input changes
 	const handleMinRatingChange = (value: string) => {
+		// Prevent input beyond 3 characters
+		if (value.length > 3) return;
+
 		setLocalMinRating(value);
-		
+
 		if (value === "") {
 			debouncedMinRatingUpdate.cancel();
 			onMinRatingChange("");
@@ -95,11 +96,14 @@ const RatingSelector = ({
 			debouncedMinRatingUpdate(value);
 		}
 	};
-	
+
 	const handleMaxRatingChange = (value: string) => {
+		// Prevent input beyond 3 characters
+		if (value.length > 3) return;
+
 		setLocalMaxRating(value);
-		
-		// For rating, max is typically 100% (implicit) unless user specifically wants a range
+
+		// If empty, update immediately to clear filter
 		if (value === "") {
 			debouncedMaxRatingUpdate.cancel();
 			onMaxRatingChange("");
@@ -116,9 +120,7 @@ const RatingSelector = ({
 			// Cancel any pending debounced update and send the clamped value immediately
 			debouncedMinRatingUpdate.cancel();
 			if (clampedValue && isValidRating(clampedValue)) {
-				// Convert percentage (0-100) to TMDB scale (0-10)
-				const tmdbRating = (parseFloat(clampedValue) / 10).toString();
-				onMinRatingChange(tmdbRating);
+				onMinRatingChange(clampedValue);
 			}
 		}
 	};
@@ -130,9 +132,7 @@ const RatingSelector = ({
 			// Cancel any pending debounced update and send the clamped value immediately
 			debouncedMaxRatingUpdate.cancel();
 			if (clampedValue && isValidRating(clampedValue)) {
-				// Convert percentage (0-100) to TMDB scale (0-10)
-				const tmdbRating = (parseFloat(clampedValue) / 10).toString();
-				onMaxRatingChange(tmdbRating);
+				onMaxRatingChange(clampedValue);
 			}
 		}
 	};
@@ -147,19 +147,19 @@ const RatingSelector = ({
 	return (
 		<Box>
 			<Text fontSize="sm" fontWeight="medium" mb={2} color="text.main">
-				Rating (%)
+				Rating
 			</Text>
 			<HStack gap={2} align="center">
 				<Input
-					placeholder="0"
+					placeholder="0.0"
 					value={localMinRating}
 					onChange={(e) => handleMinRatingChange(e.target.value)}
 					onBlur={handleMinRatingBlur}
 					type="number"
 					min="0"
-					max="100"
-					step="1"
-					w="80px"
+					max="10"
+					step="0.1"
+					w="70px"
 					h="32px"
 					minH="32px"
 					fontSize="14px"
@@ -182,15 +182,15 @@ const RatingSelector = ({
 				to
 			</Text>
 				<Input
-					placeholder="100"
+					placeholder="10.0"
 					value={localMaxRating}
 					onChange={(e) => handleMaxRatingChange(e.target.value)}
 					onBlur={handleMaxRatingBlur}
 					type="number"
 					min="0"
-					max="100"
-					step="1"
-					w="80px"
+					max="10"
+					step="0.1"
+					w="70px"
 					h="32px"
 					minH="32px"
 					fontSize="14px"

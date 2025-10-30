@@ -79,6 +79,9 @@ const YearSelector = ({
 
 	// Handle input changes
 	const handleMinYearChange = (value: string) => {
+		// Prevent input beyond 4 characters
+		if (value.length > 4) return;
+
 		setLocalMinYear(value);
 
 		// If empty, update immediately to clear filter
@@ -92,6 +95,9 @@ const YearSelector = ({
 	};
 
 	const handleMaxYearChange = (value: string) => {
+		// Prevent input beyond 4 characters
+		if (value.length > 4) return;
+
 		setLocalMaxYear(value);
 
 		// If empty, update immediately to clear filter
@@ -151,7 +157,7 @@ const YearSelector = ({
 					type="number"
 					min="1900"
 					max={currentYear}
-					w="100px"
+					w="85px"
 					h="32px"
 					minH="32px"
 					fontSize="14px"
@@ -179,7 +185,7 @@ const YearSelector = ({
 					type="number"
 					min="1900"
 					max={currentYear}
-					w="100px"
+					w="85px"
 					h="32px"
 					minH="32px"
 					fontSize="14px"

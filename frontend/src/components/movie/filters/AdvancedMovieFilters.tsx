@@ -143,7 +143,7 @@ const AdvancedMovieFilters = ({
 
 				<Separator />
 
-				<HStack gap={8} align="end">
+				<HStack justify="space-between" align="end">
 					<Box>
 						<YearSelector
 							minYear={filters.minYear}

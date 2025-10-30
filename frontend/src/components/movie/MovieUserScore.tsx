@@ -11,9 +11,9 @@ interface MovieUserScoreProps {
 }
 
 const SCORE_COLORS = {
-	high: "text.successDark", // >= 75
-	medium: "blue.700", // 50–74
-	low: "yellow.700", // < 50
+	high: "text.successDark", // >= 7.5
+	medium: "blue.700", // 5.0–7.4
+	low: "yellow.700", // < 5.0
 };
 
 const USER_RATING_COLORS = {
@@ -27,11 +27,10 @@ const MovieUserScore: React.FC<MovieUserScoreProps> = ({
 	userRating,
 	userRatingOnly = false,
 }) => {
-	// Helper to get TMDB color (percentage-based)
+	// Helper to get TMDB color (0-10 scale)
 	const getTmdbColor = (tmdbScore: number) => {
-		const percentage = Math.round(tmdbScore * 10);
-		if (percentage >= 75) return SCORE_COLORS.high;
-		if (percentage < 50) return SCORE_COLORS.low;
+		if (tmdbScore >= 7.5) return SCORE_COLORS.high;
+		if (tmdbScore < 5.0) return SCORE_COLORS.low;
 		return SCORE_COLORS.medium;
 	};
 
@@ -70,7 +69,7 @@ const MovieUserScore: React.FC<MovieUserScoreProps> = ({
 					borderRadius={4}
 					title="TMDB Rating"
 				>
-					{Math.round(score * 10)}%
+					{score.toFixed(1)}
 				</Badge>
 				<Badge
 					variant="surface"
@@ -87,7 +86,6 @@ const MovieUserScore: React.FC<MovieUserScoreProps> = ({
 	}
 
 	// Show only TMDB rating (current behavior)
-	const tmdbPercentage = Math.round(score * 10);
 	return (
 		<Badge
 			variant="surface"
@@ -98,7 +96,7 @@ const MovieUserScore: React.FC<MovieUserScoreProps> = ({
 			borderRadius={4}
 			title="TMDB Rating"
 		>
-			{tmdbPercentage}%
+			{score.toFixed(1)}
 		</Badge>
 	);
 };

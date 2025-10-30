@@ -2,6 +2,12 @@
 
 **PRD Reference:** `.arc/active/technical/prd-service-layer-modernization.md`
 **Branch:** `technical/service-layer-modernization`
+**Status:** Paused
+
+**Paused At:** Task 3.5.2.3 (Re-evaluate discover_movies type safety)
+
+**Paused To:** `.arc/active/incidental/tasks-filter-integration-testing.md` - Fix critical filter
+functionality and test coverage gaps discovered during type safety investigation
 
 # Overview
 

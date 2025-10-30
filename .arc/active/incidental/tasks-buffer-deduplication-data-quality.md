@@ -2,7 +2,7 @@
 
 **Created:** 2025-10-30
 **Branch:** `technical/service-layer-modernization`
-**Status:** In Progress
+**Status:** Paused
 
 ## Context
 
@@ -10,6 +10,11 @@
 (Animation + Family filters showing Spirited Away twice on page 1)
 
 **Interrupts:** `.arc/active/incidental/tasks-navigation-filter-state-preservation.md` at Task 3.3 (manual browser verification)
+
+**Paused At:** Task 3.1 (before writing tests for PaginationSessionManager)
+
+**Paused To:** `.arc/active/incidental/tasks-test-organization-standardization.md` - Establish test
+organization patterns before adding 15+ new tests
 
 **Problem:** TMDB API returns duplicate movies across pagination boundaries (e.g., Spirited Away on page 1 position 19
 AND page 2 position 1), backend buffer concatenates without deduplication, causing React key collisions and incomplete pages.
@@ -124,20 +129,6 @@ analysis and solution options.
 
     - [x] **2.1.3 Run integration tests - should now PASS**
         - ✅ All 4 integration tests PASS (TDD green phase)
-
-- [ ] **2.2 Run backend quality gates**
-
-    - [ ] **2.2.1 Run backend tests**
-        - Command: `docker compose -f infrastructure/docker-compose.yml exec backend pytest apps/movie/`
-        - Expect: All tests pass (30+ tests)
-
-    - [ ] **2.2.2 Run backend linting**
-        - Command: `.venv-backend/bin/ruff check backend/apps/ backend/config/ --fix`
-        - Expect: 0 violations
-
-    - [ ] **2.2.3 Run Python type checking**
-        - Command: `npx pyright backend/apps/ backend/config/ --project backend`
-        - Expect: 0 errors
 
 ### **Phase 3:** Write Tests for Session-Based Cross-Page Deduplication (TDD Red Phase)
 

@@ -2,7 +2,7 @@
 
 **Created:** 2025-10-29
 **Branch:** `technical/service-layer-modernization`
-**Status:** In Progress
+**Status:** Paused
 
 ## Context
 
@@ -11,6 +11,11 @@ pagination-buffer-tracking.md)
 
 **Interrupts:** `.arc/active/incidental/tasks-pagination-buffer-tracking.md` at Phase 3.6, Task 3.6.5
 (manual verification)
+
+**Paused At:** Task 3.3 (manual browser verification)
+
+**Paused To:** `.arc/active/incidental/tasks-buffer-deduplication-data-quality.md` - Fix duplicate
+movie issues discovered during testing
 
 **Problem:** Custom "Back to Results" button loses filter query params (blank screens), and advanced panel
 collapses when navigating back despite active filters.

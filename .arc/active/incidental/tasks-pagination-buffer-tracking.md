@@ -1,5 +1,9 @@
 # Incidental: Smart Pagination with Buffer Metadata Tracking
 
+**Created:** 2025-10-27
+**Branch:** `technical/service-layer-modernization`
+**Status:** Paused
+
 ## Context
 
 **Discovered During**: Task 3.6.2 (Rating Filter Manual Testing) of filter-integration-testing.md
@@ -22,7 +26,12 @@
 
 **Trigger**: Phase 3.6.2 rating filter testing (rating 1.0-3.5, rating 0-6.0)
 
-**Pausing**: `.arc/active/incidental/tasks-filter-integration-testing.md` Phase 3.6 at task 3.6.2
+**Interrupts**: `.arc/active/incidental/tasks-filter-integration-testing.md` Phase 3.6 at task 3.6.2
+
+**Paused At:** Phase 3.6, Task 3.6.5 (manual verification)
+
+**Paused To:** `.arc/active/incidental/tasks-navigation-filter-state-preservation.md` - Fix navigation
+state issues discovered during manual testing
 
 ---
 

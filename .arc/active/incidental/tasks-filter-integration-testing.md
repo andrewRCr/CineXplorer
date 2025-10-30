@@ -1,6 +1,8 @@
 # Incidental Task List: Complete Filter Integration Testing & Migration
 
 **Created**: 2025-10-24
+**Branch:** `technical/service-layer-modernization`
+**Status:** Paused
 **Priority**: High (blocking technical/service-layer-modernization Task 3.5.2.3)
 **Type**: Quality Improvement + Technical Debt
 **Estimated Effort**: 8-12 hours
@@ -8,6 +10,13 @@
 ## Context
 
 **Discovery Source**: Task 3.5.2.3 (Re-evaluate discover_movies type safety)
+
+**Interrupts:** `.arc/active/technical/tasks-service-layer-modernization.md` at Task 3.5.2.3
+
+**Paused At:** Phase 3.6.2 (rating filter manual testing)
+
+**Paused To:** `.arc/active/incidental/tasks-pagination-buffer-tracking.md` - Fix duplicate movies
+across pages discovered during rating filter testing
 
 **Problem Statement**:
 While investigating a type ignore at `backend/apps/movie/api.py:202`, discovered critical gaps in filter functionality

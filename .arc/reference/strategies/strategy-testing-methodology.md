@@ -83,6 +83,154 @@ risk-based testing prioritization per industry best practices.
 
 ---
 
+## Test Organization Standards
+
+### Directory Structure
+
+**Backend (pytest):** Use directory-based separation for test types.
+
+```
+backend/apps/{app}/
+├── models.py
+├── services/
+├── api.py
+└── tests/
+    ├── conftest.py              # App-level shared fixtures
+    ├── fixtures.py              # Factory functions (optional)
+    ├── unit/
+    │   ├── conftest.py          # Unit-specific fixtures (if needed)
+    │   ├── test_models.py
+    │   ├── test_services.py
+    │   └── test_validators.py
+    ├── integration/
+    │   ├── conftest.py          # Integration-specific fixtures (if needed)
+    │   ├── test_api_endpoints.py
+    │   └── test_database_queries.py
+    └── e2e/                     # Placeholder for future E2E tests
+        └── test_workflows.py
+```
+
+**Frontend (Vitest):** Co-locate tests with components, use suffixes for test types.
+
+```
+frontend/src/
+├── components/
+│   ├── Button/
+│   │   ├── Button.tsx
+│   │   └── Button.test.tsx              # Co-located unit test
+│   └── MovieCard/
+│       ├── MovieCard.tsx
+│       ├── MovieCard.test.tsx           # Unit tests
+│       └── MovieCard.integration.test.tsx  # Integration tests
+├── hooks/
+│   ├── useAuth.ts
+│   └── useAuth.test.ts
+└── __tests__/                           # Optional: cross-feature integration
+    └── integration/
+        └── checkout-flow.integration.test.tsx
+
+# Future E2E structure (Playwright)
+e2e/
+├── playwright.config.ts
+└── specs/
+    ├── auth.spec.ts
+    └── movie-discovery.spec.ts
+```
+
+### When to Use Each Test Type
+
+**Unit Tests** (`tests/unit/` or `.test.tsx`):
+
+- Isolated business logic (services, models, utilities)
+- Pure functions and transformations
+- Component behavior without external dependencies
+- Fast execution (<100ms per test)
+
+**Integration Tests** (`tests/integration/` or `.integration.test.tsx`):
+
+- API endpoints (full request/response cycle)
+- Database interactions (queries, transactions)
+- Service layer with real dependencies
+- Component interactions with mocked backend
+- Slower execution (100ms-1s per test)
+
+**E2E Tests** (`tests/e2e/` or `e2e/specs/*.spec.ts`):
+
+- Critical user workflows (registration → login → feature use)
+- Cross-layer interactions (frontend → API → database)
+- Payment/transaction flows
+- OAuth authentication flows
+- Slowest execution (1s+ per test)
+
+### File Splitting Guidelines
+
+**When to split test files:**
+
+| File Size | Action | Rationale |
+|-----------|--------|-----------|
+| < 200 lines | Keep together | Manageable, easy to navigate |
+| 200-400 lines | Consider splitting | If testing multiple features/endpoints |
+| 400-800 lines | Should split | Hard to navigate, split into 2-3 files |
+| 800+ lines | **Must split** | Unmaintainable, aim for 200-400 per file |
+
+**How to split:**
+
+1. **API integration tests:** Split by endpoint + aspect
+   - Example: `test_discover_filtering.py`, `test_discover_pagination.py`, `test_search_queries.py`
+   - Group related endpoint behavior together
+
+2. **Business logic tests:** Split by domain/feature
+   - Example: `test_genre_filters.py`, `test_rating_filters.py`, `test_date_filters.py`
+   - Each filter type gets its own file
+
+3. **Service tests:** Split by service method or concern
+   - Example: `test_movie_service_discovery.py`, `test_movie_service_enrichment.py`
+   - Group related methods together
+
+**Naming conventions:**
+
+```
+Backend:  test_{resource}_{feature}_{aspect}.py
+          test_movie_discover_filtering.py
+          test_user_authentication_tokens.py
+
+Frontend: {Component}.{type}.test.tsx
+          MovieCard.test.tsx
+          MovieCard.integration.test.tsx
+          CheckoutFlow.integration.test.tsx
+```
+
+**When NOT to split:**
+
+- Tests share significant setup/fixtures (refactor fixtures instead)
+- Tests are tightly coupled conceptually
+- File is well-organized with classes/describe blocks and <400 lines
+- Splitting would create artificial separation
+
+### Organizing Split Files
+
+**Option 1: Subdirectories** (when splitting creates 3+ files)
+
+```
+tests/integration/api/movies/
+├── conftest.py                    # Shared fixtures for movie API tests
+├── test_discover_filtering.py
+├── test_discover_pagination.py
+├── test_discover_sorting.py
+└── test_search.py
+```
+
+**Option 2: Flat structure** (when splitting creates 2-3 files)
+
+```
+tests/integration/
+├── test_movie_discover_api.py
+├── test_movie_search_api.py
+└── test_user_profile_api.py
+```
+
+---
+
 ## Backend Testing (Django/Ninja)
 
 ### Running Tests
@@ -109,6 +257,38 @@ pytest --cov=apps --cov-report=term-missing apps/
 
 # Keep database between runs (faster iteration)
 pytest --reuse-db apps/
+```
+
+**Directory-based execution:**
+
+```bash
+# Run only unit tests
+pytest apps/{app}/tests/unit/
+
+# Run only integration tests
+pytest apps/{app}/tests/integration/
+
+# Run all unit tests across all apps
+pytest apps/*/tests/unit/
+
+# Run all integration tests across all apps
+pytest apps/*/tests/integration/
+```
+
+**Marker-based execution** (after adding markers to pyproject.toml):
+
+```bash
+# Run tests marked as unit
+pytest -m unit
+
+# Run tests marked as integration
+pytest -m integration
+
+# Run all except slow tests
+pytest -m "not slow"
+
+# Run API-specific tests
+pytest -m api
 ```
 
 **Docker Execution** (required for tests that need database/Redis):

@@ -455,7 +455,7 @@ class MovieService:
         else:
             fetch_func = fetch_next_page_func
 
-        # Smart buffering: Keep fetching pages until we have 20 results or run out
+        # Smart buffering: Keep fetching pages until we have 20 unique results or run out
         combined_movies = filtered_movies
         next_page = current_page + 1
         max_buffer_pages = 5  # Safety limit to prevent excessive API calls
@@ -480,7 +480,16 @@ class MovieService:
             next_page += 1
             pages_fetched += 1
 
-        # Return up to 20 movies + total pages consumed (initial + buffered)
+            # Deduplicate by tmdb_id, preserving first occurrence order
+            seen_ids: set[int] = set()
+            deduplicated: list[MovieBaseSchema] = []
+            for movie in combined_movies:
+                if movie.tmdb_id not in seen_ids:
+                    seen_ids.add(movie.tmdb_id)
+                    deduplicated.append(movie)
+            combined_movies = deduplicated
+
+        # Return up to 20 unique movies + total pages consumed (initial + buffered)
         total_pages_consumed = 1 + pages_fetched
         return (combined_movies[:20], total_pages_consumed)
 

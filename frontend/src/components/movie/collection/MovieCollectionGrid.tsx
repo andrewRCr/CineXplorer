@@ -53,10 +53,13 @@ const MovieCollectionGrid = forwardRef<MovieGridRef, MovieCollectionGridProps>(
 		// Track smart buffer pagination metadata using ref to avoid triggering re-renders
 		const nextTmdbPageStartRef = useRef<number | undefined>(undefined);
 		const prevFetcherRef = useRef(finalFetcher);
+		const prevNextTmdbPageStartRef = useRef<number | undefined>(undefined);
 
 		// Reset metadata synchronously when fetcher changes (filter/route change)
 		if (prevFetcherRef.current !== finalFetcher) {
+			console.log('[MovieCollectionGrid] Buffer reset triggered - fetcher changed');
 			nextTmdbPageStartRef.current = undefined;
+			prevNextTmdbPageStartRef.current = undefined;
 			prevFetcherRef.current = finalFetcher;
 		}
 
@@ -78,15 +81,33 @@ const MovieCollectionGrid = forwardRef<MovieGridRef, MovieCollectionGridProps>(
 					cancel: () => {},
 				});
 			}
-			return () => finalFetcher(currentPage, nextTmdbPageStartRef.current);
+			return () => {
+				console.log('[MovieCollectionGrid] Fetcher executing with:', {
+					page: currentPage,
+					tmdb_page_start: nextTmdbPageStartRef.current
+				});
+				return finalFetcher(currentPage, nextTmdbPageStartRef.current);
+			};
 		}, [finalFetcher, currentPage]);
 
 		const { total_pages, total_results, movies, error, setError, isLoading, next_tmdb_page_start } =
 			usePaginatedMovies(fetcherForMoviesArray);
 
 		// Update metadata ref when API returns new value (doesn't trigger re-render)
+		// Only update if the value actually changed to avoid re-applying stale values
 		useEffect(() => {
-			nextTmdbPageStartRef.current = next_tmdb_page_start ?? undefined;
+			const newValue = next_tmdb_page_start ?? undefined;
+			if (prevNextTmdbPageStartRef.current !== newValue) {
+				console.log('[MovieCollectionGrid] Updating buffer metadata:', {
+					prev: prevNextTmdbPageStartRef.current,
+					new: newValue,
+					currentRefValue: nextTmdbPageStartRef.current
+				});
+				nextTmdbPageStartRef.current = newValue;
+				prevNextTmdbPageStartRef.current = newValue;
+			} else {
+				console.log('[MovieCollectionGrid] Skipping stale buffer update:', newValue);
+			}
 		}, [next_tmdb_page_start]);
 
 		// Handle page changes using custom hook

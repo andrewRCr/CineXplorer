@@ -33,10 +33,12 @@ const MovieGrid = forwardRef<MovieGridRef, MovieGridProps>(
 		// Track smart buffer pagination metadata using ref to avoid triggering re-renders
 		const nextTmdbPageStartRef = useRef<number | undefined>(undefined);
 		const prevFetcherRef = useRef(fetcher);
+		const prevNextTmdbPageStartRef = useRef<number | undefined>(undefined);
 
 		// Reset metadata synchronously when fetcher changes (filter/route change)
 		if (prevFetcherRef.current !== fetcher) {
 			nextTmdbPageStartRef.current = undefined;
+			prevNextTmdbPageStartRef.current = undefined;
 			prevFetcherRef.current = fetcher;
 		}
 
@@ -51,8 +53,13 @@ const MovieGrid = forwardRef<MovieGridRef, MovieGridProps>(
 			usePaginatedMovies(fetcherCallback);
 
 		// Update metadata ref when API returns new value (doesn't trigger re-render)
+		// Only update if the value actually changed to avoid re-applying stale values
 		useEffect(() => {
-			nextTmdbPageStartRef.current = next_tmdb_page_start ?? undefined;
+			const newValue = next_tmdb_page_start ?? undefined;
+			if (prevNextTmdbPageStartRef.current !== newValue) {
+				nextTmdbPageStartRef.current = newValue;
+				prevNextTmdbPageStartRef.current = newValue;
+			}
 		}, [next_tmdb_page_start]);
 
 		// Use display hook for pagination UI logic

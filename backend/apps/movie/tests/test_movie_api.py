@@ -1002,3 +1002,511 @@ def test_discover_fallback_when_tmdb_page_start_omitted(
         f"Expected IDs 21-40 from TMDB page 2 (fallback behavior), got {returned_ids}. "
         "Without tmdb_page_start, should use simple 1:1 mapping (API page = TMDB page)"
     )
+
+
+# =========================
+# Buffer Deduplication Integration Tests (TDD)
+# =========================
+
+
+@pytest.mark.django_db
+@patch('core.services.tmdb_api_client.TMDBApiClient.get')
+def test_discover_deduplicates_when_tmdb_returns_duplicate_across_pages(
+    mock_tmdb_get: Mock,
+    api_client: Client
+) -> None:
+    """Test discover endpoint deduplicates when TMDB returns same movie on consecutive pages.
+
+    Real-world bug scenario: TMDB eventually-consistent DB returns Spirited Away (ID 129)
+    on both page 1 position 19 AND page 2 position 1 (multi-genre filter: Animation + Family).
+
+    Expected behavior (after Phase 2 implementation):
+    - Buffer deduplicates by tmdb_id
+    - Continues fetching page 2 to reach 20 unique movies
+    - Returns 20 unique movies (no duplicate tmdb_id values)
+
+    TDD: Expect this test to FAIL before Phase 2 implementation.
+    """
+    # Arrange: Page 1 has 19 movies (IDs 1-18, then Spirited Away 129)
+    page_1_movies = [
+        create_movie_dict(i, f'Movie {i}', '2022-01-01', 8.0)
+        for i in range(1, 19)  # IDs 1-18
+    ] + [
+        create_movie_dict(129, 'Spirited Away', '2001-07-20', 8.5)  # ID 129 at position 19
+    ]
+
+    # Page 2: DUPLICATE 129 at position 1 + new movies 20-39
+    page_2_movies = [
+        create_movie_dict(129, 'Spirited Away', '2001-07-20', 8.5)  # DUPLICATE
+    ] + [
+        create_movie_dict(i, f'Movie {i}', '2022-01-01', 8.0)
+        for i in range(20, 40)  # IDs 20-39 (20 new movies)
+    ]
+
+    mock_tmdb_get.side_effect = [
+        ApiResponse(200, cast(TMDBResponseData, create_paginated_tmdb_response(
+            page_1_movies, page=1, total_pages=5
+        ))),
+        ApiResponse(200, cast(TMDBResponseData, create_paginated_tmdb_response(
+            page_2_movies, page=2, total_pages=5
+        ))),
+    ]
+
+    # Act: Request discover API page 1 with multi-genre filter
+    res = api_client.get(DISCOVER_URL, {
+        'page': 1,
+        'with_genres': '16,10751'  # Animation + Family (real-world filter)
+    })
+
+    # Assert: Should return 20 unique movies
+    assert res.status_code == HTTP_200_OK
+    data = res.json()
+    results = data['results']
+
+    # Verify: Exactly 20 movies returned
+    assert len(results) == 20, f"Expected 20 unique movies, got {len(results)}"
+
+    # Verify: No duplicate tmdb_id values
+    tmdb_ids = [movie['tmdb_id'] for movie in results]
+    unique_ids = set(tmdb_ids)
+    assert len(unique_ids) == 20, (
+        f"Found duplicate tmdb_id values. "
+        f"Unique: {len(unique_ids)}, Total: {len(tmdb_ids)}. "
+        f"Duplicates: {[id for id in tmdb_ids if tmdb_ids.count(id) > 1]}"
+    )
+
+    # Verify: Contains IDs 1-20 (Spirited Away 129 replaced by movie 20)
+    # After deduplication: 1-18, 129, 20 (first 20 unique after removing duplicate 129)
+    assert 129 in unique_ids, "Should contain Spirited Away (first occurrence)"
+    assert tmdb_ids.count(129) == 1, "Spirited Away should appear exactly once"
+
+    # Verify: next_tmdb_page_start reflects both pages consumed (1 + 1 buffer page)
+    assert data['next_tmdb_page_start'] == 3, (
+        "Should consume TMDB pages 1 and 2, next should be 3"
+    )
+
+
+@pytest.mark.django_db
+@patch('core.services.tmdb_api_client.TMDBApiClient.get')
+def test_discover_deduplicates_multiple_duplicates_across_pages(
+    mock_tmdb_get: Mock,
+    api_client: Client
+) -> None:
+    """Test discover endpoint handles multiple duplicates across multiple buffer pages.
+
+    Scenario: Heavy duplication from TMDB requires fetching multiple buffer pages
+    to accumulate 20 unique movies.
+
+    TDD: Expect this test to FAIL before Phase 2 implementation.
+    """
+    # Arrange: Page 1 has 17 movies (IDs 1-17)
+    page_1_movies = [
+        create_movie_dict(i, f'Movie {i}', '2022-01-01', 8.0)
+        for i in range(1, 18)  # IDs 1-17
+    ]
+
+    # Page 2: Heavy duplicates (15-17 repeated) + only 1 new (18) = 4 total
+    # After dedup: Just ID 18 is new → Total unique so far: 18
+    page_2_movies = [
+        create_movie_dict(15, 'Movie 15', '2022-01-01', 8.0),  # DUPLICATE
+        create_movie_dict(16, 'Movie 16', '2022-01-01', 8.0),  # DUPLICATE
+        create_movie_dict(17, 'Movie 17', '2022-01-01', 8.0),  # DUPLICATE
+        create_movie_dict(18, 'Movie 18', '2022-01-01', 8.0),  # NEW
+    ]
+
+    # Page 3: More duplicates (17, 18) + new 19-21 = 5 total
+    # After dedup: IDs 19, 20, 21 are new → Total unique: 21 (finally >= 20)
+    page_3_movies = [
+        create_movie_dict(17, 'Movie 17', '2022-01-01', 8.0),  # DUPLICATE
+        create_movie_dict(18, 'Movie 18', '2022-01-01', 8.0),  # DUPLICATE
+        create_movie_dict(19, 'Movie 19', '2022-01-01', 8.0),  # NEW
+        create_movie_dict(20, 'Movie 20', '2022-01-01', 8.0),  # NEW
+        create_movie_dict(21, 'Movie 21', '2022-01-01', 8.0),  # NEW
+    ]
+
+    mock_tmdb_get.side_effect = [
+        ApiResponse(200, cast(TMDBResponseData, create_paginated_tmdb_response(
+            page_1_movies, page=1, total_pages=5
+        ))),
+        ApiResponse(200, cast(TMDBResponseData, create_paginated_tmdb_response(
+            page_2_movies, page=2, total_pages=5
+        ))),
+        ApiResponse(200, cast(TMDBResponseData, create_paginated_tmdb_response(
+            page_3_movies, page=3, total_pages=5
+        ))),
+    ]
+
+    # Act: Request discover API
+    res = api_client.get(DISCOVER_URL, {'page': 1})
+
+    # Assert: Should return 20 unique movies
+    assert res.status_code == HTTP_200_OK
+    data = res.json()
+    results = data['results']
+
+    assert len(results) == 20, f"Expected 20 unique movies, got {len(results)}"
+
+    # Verify: No duplicates
+    tmdb_ids = [movie['tmdb_id'] for movie in results]
+    unique_ids = set(tmdb_ids)
+    assert len(unique_ids) == 20, f"Found {len(tmdb_ids) - len(unique_ids)} duplicates"
+
+    # Verify: Contains IDs 1-20
+    # Page 1: IDs 1-17 (17 unique)
+    # Page 2 after dedup: ID 18 (1 new) → Total: 18 unique
+    # Page 3 after dedup: IDs 19-21 (3 new) → Total: 21 unique
+    # Return first 20: IDs 1-20
+    expected_ids = set(range(1, 21))
+    assert unique_ids == expected_ids, f"Expected IDs 1-20, got {unique_ids}"
+
+    # Verify: Consumed 3 TMDB pages (1 initial + 2 buffer)
+    assert data['next_tmdb_page_start'] == 4, "Should consume pages 1, 2, 3"
+
+
+@pytest.mark.django_db
+@patch('core.services.tmdb_api_client.TMDBApiClient.get')
+def test_discover_deduplication_works_with_backend_filters(
+    mock_tmdb_get: Mock,
+    api_client: Client
+) -> None:
+    """Test deduplication works correctly when combined with backend year/rating filters.
+
+    Scenario: Year filter active (2020-2024), TMDB returns duplicates,
+    buffer must apply filters AND deduplicate.
+
+    TDD: Expect this test to FAIL before Phase 2 implementation.
+    """
+    # Arrange: Page 1 has 17 movies
+    page_1_movies = [
+        create_movie_dict(i, f'Movie {i}', '2023-01-01', 8.0)
+        for i in range(1, 18)  # IDs 1-17
+    ]
+
+    # Page 2: Heavy duplicates (15-17 repeated) + only 1 new (18) = 4 total
+    # After dedup: Just ID 18 is new → Total unique so far: 18
+    page_2_movies = [
+        create_movie_dict(15, 'Movie 15', '2023-01-01', 8.0),  # DUPLICATE
+        create_movie_dict(16, 'Movie 16', '2023-01-01', 8.0),  # DUPLICATE
+        create_movie_dict(17, 'Movie 17', '2023-01-01', 8.0),  # DUPLICATE
+        create_movie_dict(18, 'Movie 18', '2023-01-01', 8.0),  # NEW
+    ]
+
+    # Page 3: More duplicates (17, 18) + new 19-21 + low-rated movies = 8 total
+    # With rating filter (7.5+): IDs 19-21 pass, low-rated filtered out
+    # After dedup: IDs 19, 20, 21 are new → Total unique: 21 (finally >= 20)
+    page_3_movies = [
+        create_movie_dict(17, 'Movie 17', '2023-01-01', 8.0),  # DUPLICATE
+        create_movie_dict(18, 'Movie 18', '2023-01-01', 8.0),  # DUPLICATE
+        create_movie_dict(19, 'Movie 19', '2023-01-01', 8.0),  # NEW
+        create_movie_dict(20, 'Movie 20', '2023-01-01', 8.0),  # NEW
+        create_movie_dict(21, 'Movie 21', '2023-01-01', 8.0),  # NEW
+        create_movie_dict(100, 'Low Rated 1', '2023-01-01', 5.0),  # FILTERED (rating)
+        create_movie_dict(101, 'Low Rated 2', '2023-01-01', 6.0),  # FILTERED (rating)
+        create_movie_dict(102, 'Low Rated 3', '2023-01-01', 7.0),  # FILTERED (rating)
+    ]
+
+    mock_tmdb_get.side_effect = [
+        ApiResponse(200, cast(TMDBResponseData, create_paginated_tmdb_response(
+            page_1_movies, page=1, total_pages=5
+        ))),
+        ApiResponse(200, cast(TMDBResponseData, create_paginated_tmdb_response(
+            page_2_movies, page=2, total_pages=5
+        ))),
+        ApiResponse(200, cast(TMDBResponseData, create_paginated_tmdb_response(
+            page_3_movies, page=3, total_pages=5
+        ))),
+    ]
+
+    # Act: Request with rating filter
+    res = api_client.get(DISCOVER_URL, {
+        'page': 1,
+        'rating_min': 7.5,
+        'rating_max': 10.0
+    })
+
+    # Assert: Should return 20 unique movies passing rating filter
+    assert res.status_code == HTTP_200_OK
+    data = res.json()
+    results = data['results']
+
+    assert len(results) == 20, f"Expected 20 movies, got {len(results)}"
+
+    # Verify: No duplicates
+    tmdb_ids = [movie['tmdb_id'] for movie in results]
+    assert len(set(tmdb_ids)) == 20, "Should have 20 unique tmdb_id values"
+
+    # Verify: No low-rated movies leaked through
+    assert 100 not in tmdb_ids, "Low-rated movie 100 (5.0) should be filtered"
+    assert 101 not in tmdb_ids, "Low-rated movie 101 (6.0) should be filtered"
+    assert 102 not in tmdb_ids, "Low-rated movie 102 (7.0) should be filtered"
+
+    # Verify: IDs 15, 17, 18 appear exactly once (deduplicated)
+    assert tmdb_ids.count(15) == 1, "ID 15 should appear exactly once"
+    assert tmdb_ids.count(17) == 1, "ID 17 should appear exactly once"
+    assert tmdb_ids.count(18) == 1, "ID 18 should appear exactly once"
+
+    # Verify: All movies meet rating threshold
+    for movie in results:
+        rating = movie['vote_average']
+        assert rating >= 7.5, f"Movie {movie['tmdb_id']} rating {rating} below 7.5"
+
+
+@pytest.mark.django_db
+@patch('core.services.tmdb_api_client.TMDBApiClient.get')
+def test_discover_respects_max_buffer_pages_with_heavy_duplication(
+    mock_tmdb_get: Mock,
+    api_client: Client
+) -> None:
+    """Test discover respects max_buffer_pages safety limit with extreme duplication.
+
+    Scenario: Pathological case where TMDB returns mostly duplicates,
+    buffer should stop at 5 additional pages even if < 20 unique movies collected.
+
+    TDD: Expect this test to FAIL before Phase 2 implementation.
+    """
+    # Arrange: Page 1 has 10 movies
+    page_1_movies = [
+        create_movie_dict(i, f'Movie {i}', '2022-01-01', 8.0)
+        for i in range(1, 11)  # IDs 1-10
+    ]
+
+    # Pages 2-6: Each has 9 duplicates + 1 new movie (heavy duplication)
+    page_responses = [
+        ApiResponse(200, cast(TMDBResponseData, create_paginated_tmdb_response(
+            page_1_movies, page=1, total_pages=10
+        )))
+    ]
+
+    for page_num in range(2, 7):  # Pages 2-6 (5 buffer pages)
+        page_movies = [
+            create_movie_dict(i, f'Movie {i}', '2022-01-01', 8.0)
+            for i in range(1, 10)  # Duplicates 1-9
+        ] + [
+            create_movie_dict(
+                10 + page_num - 1,
+                f'Movie {10 + page_num - 1}',
+                '2022-01-01',
+                8.0
+            )  # One new movie per page
+        ]
+        page_responses.append(
+            ApiResponse(200, cast(TMDBResponseData, create_paginated_tmdb_response(
+                page_movies, page=page_num, total_pages=10
+            )))
+        )
+
+    mock_tmdb_get.side_effect = page_responses
+
+    # Act: Request discover API
+    res = api_client.get(DISCOVER_URL, {'page': 1})
+
+    # Assert: Should stop at max_buffer_pages=5 with only 15 unique movies
+    assert res.status_code == HTTP_200_OK
+    data = res.json()
+    results = data['results']
+
+    # After page 1 (10 movies) + 5 buffer pages (1 new each) = 15 unique total
+    assert len(results) == 15, (
+        f"Expected 15 unique movies (stopped at max_buffer_pages), got {len(results)}"
+    )
+
+    # Verify: All unique IDs (1-15)
+    tmdb_ids = [movie['tmdb_id'] for movie in results]
+    assert set(tmdb_ids) == set(range(1, 16)), "Should have unique IDs 1-15"
+
+    # Verify: Consumed exactly 6 pages (1 initial + 5 buffer max)
+    assert data['next_tmdb_page_start'] == 7, (
+        "Should consume pages 1-6 (max_buffer_pages=5), next should be 7"
+    )
+
+    # Verify: TMDB client called 6 times (initial + 5 buffer)
+    assert mock_tmdb_get.call_count == 6, (
+        f"Should call TMDB 6 times (1 initial + 5 buffer), got {mock_tmdb_get.call_count}"
+    )
+
+
+@pytest.mark.django_db
+@patch('core.services.tmdb_api_client.TMDBApiClient.get')
+def test_discover_no_cross_page_duplicates(
+    mock_tmdb_get: Mock,
+    api_client: Client
+) -> None:
+    """Test that movies don't appear on multiple pages (cross-page deduplication).
+
+    Scenario: TMDB returns duplicates across page boundaries (e.g., Spirited Away on
+    TMDB page 2 and TMDB page 4). Our page 1 shows it, page 2 should NOT show it again.
+
+    Real-world issue: After implementing within-page deduplication, users report
+    seeing Spirited Away on page 1 AND page 2, Mulan on page 2 AND page 3, etc.
+    """
+    # Simulate TMDB pagination instability: Movie ID 19 appears on TMDB pages 2 AND 4
+    # Our page 1 will consume TMDB pages 1-2 (with buffer)
+    # Our page 2 will consume TMDB pages 3-4 (starting from next_tmdb_page_start)
+    # Movie 19 should appear on our page 1 (from TMDB page 2), NOT on our page 2
+
+    # TMDB Page 1: IDs 1-17 (17 movies, triggers buffer)
+    tmdb_page_1 = [
+        create_movie_dict(i, f'Movie {i}', '2023-01-01', 8.0)
+        for i in range(1, 18)
+    ]
+
+    # TMDB Page 2: IDs 18-20 (3 movies) - Page 1 buffer fetch
+    # After dedup: Our page 1 has IDs 1-20, next_tmdb_page_start=3
+    tmdb_page_2 = [
+        create_movie_dict(i, f'Movie {i}', '2023-01-01', 8.0)
+        for i in range(18, 21)
+    ]
+
+    # TMDB Page 3: IDs 21-37 (17 movies, triggers buffer for our page 2)
+    tmdb_page_3 = [
+        create_movie_dict(i, f'Movie {i}', '2023-01-01', 8.0)
+        for i in range(21, 38)
+    ]
+
+    # TMDB Page 4: IDs 19, 38-40 (DUPLICATE 19 + 3 new) - Page 2 buffer fetch
+    # CRITICAL: ID 19 was already shown on our page 1 (from TMDB page 2)
+    # It should NOT appear on our page 2
+    tmdb_page_4 = [
+        create_movie_dict(19, 'Movie 19', '2023-01-01', 8.0),  # DUPLICATE from page 1!
+    ] + [
+        create_movie_dict(i, f'Movie {i}', '2023-01-01', 8.0)
+        for i in range(38, 41)
+    ]
+
+    mock_tmdb_get.side_effect = [
+        # Page 1 request: TMDB pages 1-2
+        ApiResponse(200, cast(TMDBResponseData, create_paginated_tmdb_response(
+            tmdb_page_1, page=1, total_pages=10
+        ))),
+        ApiResponse(200, cast(TMDBResponseData, create_paginated_tmdb_response(
+            tmdb_page_2, page=2, total_pages=10
+        ))),
+        # Page 2 request: TMDB pages 3-4 (starting from next_tmdb_page_start=3)
+        ApiResponse(200, cast(TMDBResponseData, create_paginated_tmdb_response(
+            tmdb_page_3, page=3, total_pages=10
+        ))),
+        ApiResponse(200, cast(TMDBResponseData, create_paginated_tmdb_response(
+            tmdb_page_4, page=4, total_pages=10
+        ))),
+    ]
+
+    # Act: Fetch page 1
+    page_1_res = api_client.get(DISCOVER_URL, {'page': 1})
+    assert page_1_res.status_code == HTTP_200_OK
+    page_1_data = page_1_res.json()
+    page_1_ids = {movie['tmdb_id'] for movie in page_1_data['results']}
+
+    # Act: Fetch page 2 using next_tmdb_page_start from page 1
+    page_2_res = api_client.get(DISCOVER_URL, {
+        'page': 2,
+        'tmdb_page_start': page_1_data['next_tmdb_page_start']
+    })
+    assert page_2_res.status_code == HTTP_200_OK
+    page_2_data = page_2_res.json()
+    page_2_ids = {movie['tmdb_id'] for movie in page_2_data['results']}
+
+    # Assert: NO overlap between page 1 and page 2
+    overlap = page_1_ids & page_2_ids
+    assert len(overlap) == 0, (
+        f"Found {len(overlap)} duplicate movie(s) across pages: {overlap}. "
+        f"Page 1 IDs: {sorted(page_1_ids)}, Page 2 IDs: {sorted(page_2_ids)}"
+    )
+
+    # Specifically verify movie 19 is NOT on both pages
+    assert 19 in page_1_ids, "Movie 19 should appear on page 1"
+    assert 19 not in page_2_ids, "Movie 19 should NOT appear on page 2 (cross-page duplicate)"
+
+
+@pytest.mark.django_db
+@patch('core.services.tmdb_api_client.TMDBApiClient.get')
+def test_discover_backward_navigation_consistency(
+    mock_tmdb_get: Mock,
+    api_client: Client
+) -> None:
+    """Test that navigating back to page 1 returns consistent results.
+
+    Scenario: User navigates page 1 → page 2 → back to page 1.
+    Page 1 should show identical results both times.
+
+    Real-world issue: Users report that navigating backwards changes page 1 results completely.
+    """
+    # Setup: Page 1 will fetch TMDB pages 1-2 (buffer), return IDs 1-20
+    tmdb_page_1 = [
+        create_movie_dict(i, f'Movie {i}', '2023-01-01', 8.0)
+        for i in range(1, 18)  # 17 movies, triggers buffer
+    ]
+
+    tmdb_page_2 = [
+        create_movie_dict(i, f'Movie {i}', '2023-01-01', 8.0)
+        for i in range(18, 21)  # 3 movies, total 20 after buffer
+    ]
+
+    # Page 2 will fetch TMDB pages 3-4
+    tmdb_page_3 = [
+        create_movie_dict(i, f'Movie {i}', '2023-01-01', 8.0)
+        for i in range(21, 38)  # 17 movies, triggers buffer
+    ]
+
+    tmdb_page_4 = [
+        create_movie_dict(i, f'Movie {i}', '2023-01-01', 8.0)
+        for i in range(38, 41)  # 3 movies, total 20
+    ]
+
+    # Mock will be called in order: page 1 fetch (TMDB 1, 2), page 2 fetch (TMDB 3, 4), page 1 again (TMDB 1, 2)
+    mock_tmdb_get.side_effect = [
+        # First page 1 request
+        ApiResponse(200, cast(TMDBResponseData, create_paginated_tmdb_response(
+            tmdb_page_1, page=1, total_pages=10
+        ))),
+        ApiResponse(200, cast(TMDBResponseData, create_paginated_tmdb_response(
+            tmdb_page_2, page=2, total_pages=10
+        ))),
+        # Page 2 request
+        ApiResponse(200, cast(TMDBResponseData, create_paginated_tmdb_response(
+            tmdb_page_3, page=3, total_pages=10
+        ))),
+        ApiResponse(200, cast(TMDBResponseData, create_paginated_tmdb_response(
+            tmdb_page_4, page=4, total_pages=10
+        ))),
+        # Second page 1 request (backward navigation)
+        ApiResponse(200, cast(TMDBResponseData, create_paginated_tmdb_response(
+            tmdb_page_1, page=1, total_pages=10
+        ))),
+        ApiResponse(200, cast(TMDBResponseData, create_paginated_tmdb_response(
+            tmdb_page_2, page=2, total_pages=10
+        ))),
+    ]
+
+    # Act: Fetch page 1 (first time)
+    page_1_first = api_client.get(DISCOVER_URL, {'page': 1})
+    assert page_1_first.status_code == HTTP_200_OK
+    page_1_first_data = page_1_first.json()
+    page_1_first_ids = [movie['tmdb_id'] for movie in page_1_first_data['results']]
+
+    # Act: Fetch page 2
+    page_2_res = api_client.get(DISCOVER_URL, {
+        'page': 2,
+        'tmdb_page_start': page_1_first_data['next_tmdb_page_start']
+    })
+    assert page_2_res.status_code == HTTP_200_OK
+
+    # Act: Navigate BACK to page 1 (should give same results as first time)
+    # IMPORTANT: Should NOT send tmdb_page_start when going back to page 1
+    page_1_second = api_client.get(DISCOVER_URL, {'page': 1})
+    assert page_1_second.status_code == HTTP_200_OK
+    page_1_second_data = page_1_second.json()
+    page_1_second_ids = [movie['tmdb_id'] for movie in page_1_second_data['results']]
+
+    # Assert: Page 1 results should be IDENTICAL both times
+    assert page_1_first_ids == page_1_second_ids, (
+        f"Page 1 results changed after backward navigation!\n"
+        f"First visit:  {page_1_first_ids}\n"
+        f"Second visit: {page_1_second_ids}\n"
+        f"Differences: Added {set(page_1_second_ids) - set(page_1_first_ids)}, "
+        f"Removed {set(page_1_first_ids) - set(page_1_second_ids)}"
+    )
+
+    # Assert: Order should also be preserved
+    assert page_1_first_data['results'] == page_1_second_data['results'], (
+        "Page 1 movie order changed after backward navigation"
+    )

@@ -94,7 +94,16 @@ test-first examples and patterns.
 
 ### 3. Track Creation with Commit
 
-**Guidance**: Commit the new task list immediately for visibility and audit trail.
+**Guidance**: Lint and commit the new task list immediately for visibility and audit trail.
+
+**Pre-commit check:**
+
+```bash
+# Run markdown linting with auto-fix on new task list
+npx markdownlint-cli2 --fix --no-globs ".arc/active/incidental/tasks-{slug}.md"
+```
+
+Markdown linting enforces line length limits, consistent formatting, and catches structural issues before committing.
 
 **Purpose**:
 

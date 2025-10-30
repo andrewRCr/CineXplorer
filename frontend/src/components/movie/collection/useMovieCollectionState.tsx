@@ -60,13 +60,49 @@ interface MovieCollectionState {
 	clearFilters: () => void;
 }
 
+// Minimal filter capabilities (Letterboxd-style UI)
+const CORE_GENRE_IDS = [
+	"28", // Action
+	"35", // Comedy
+	"99", // Documentary
+	"18", // Drama
+	"10751", // Family
+	"27", // Horror
+	"878", // Science Fiction
+	"53", // Thriller
+];
+
+const MINIMAL_SORT_OPTIONS = [
+	"popularity.desc",
+	"release_date.desc",
+	"original_title.asc",
+	"vote_average.desc",
+];
+
 // Helper: Check if filters contain advanced filter values
-const hasAdvancedFilterValues = (filters: MovieFiltersType): boolean => {
-	// Rating filters are advanced
+// Exported for use in parent components to determine API filter style
+export const hasAdvancedFilterValues = (filters: MovieFiltersType): boolean => {
+	// Rating filters are advanced-only
 	if (filters.minRating || filters.maxRating) return true;
 
-	// Custom year range (not single year) is advanced
+	// Custom year range (not single year) is advanced-only
 	if (filters.minYear && filters.maxYear && filters.minYear !== filters.maxYear) {
+		return true;
+	}
+
+	// Multiple genres are advanced-only (minimal supports single genre only)
+	if (filters.genres.length > 1) return true;
+
+	// Non-core genres are advanced-only
+	if (filters.genres.length === 1) {
+		const genreId = String(filters.genres[0]);
+		if (!CORE_GENRE_IDS.includes(genreId)) {
+			return true;
+		}
+	}
+
+	// Advanced sort options (minimal only has 4: popularity desc, release date desc, title asc, rating desc)
+	if (filters.sortBy && !MINIMAL_SORT_OPTIONS.includes(filters.sortBy)) {
 		return true;
 	}
 

@@ -9,7 +9,10 @@ import {
 } from "@/utilities/routeConfigHelper";
 import PageHeader from "@/components/movie/collection/PageHeader";
 import FilterSection from "@/components/movie/collection/FilterSection";
-import { useMovieCollectionState } from "@/components/movie/collection/useMovieCollectionState";
+import {
+	useMovieCollectionState,
+	hasAdvancedFilterValues,
+} from "@/components/movie/collection/useMovieCollectionState";
 
 // Better prop patterns with discriminated unions and required/optional groups
 type FilterConfig =
@@ -84,15 +87,43 @@ const MovieCollectionLayout = ({
 		source: actualSource,
 	});
 
-	// Determine actual filter style: when advanced filters are shown, use expanded style
-	// This ensures maxRating and other advanced filter params are properly sent to API
-	const actualFilterStyle = showAdvanced ? "expanded" : filterStyle;
+	/**
+	 * Filter Style Split: API vs UI Rendering
+	 *
+	 * CONTEXT: The backend has two filter parameter modes:
+	 * - "minimal": Only sends basic params (year, genres, sortBy) - simpler query strings
+	 * - "expanded": Sends all params including rating ranges - needed for advanced filters
+	 *
+	 * PROBLEM: We want to keep the minimal filter UI visible even when advanced filters
+	 * are expanded (Letterboxd-style UX), but API needs "expanded" mode to receive rating params.
+	 *
+	 * SOLUTION: Split the filterStyle concept into two separate concerns:
+	 *
+	 * 1. API Filter Style (apiFilterStyle):
+	 *    - Determines which params are sent to backend
+	 *    - Based on ACTUAL FILTER VALUES, not UI visibility state
+	 *    - "expanded" when rating filters or custom year ranges are active
+	 *    - "minimal" otherwise
+	 *    - Used by: useMovieFetchRouter hook for API calls
+	 *
+	 * 2. UI Filter Style (filterStyle prop):
+	 *    - Determines which UI components are rendered
+	 *    - Based on page configuration (discover pages use "minimal" by default)
+	 *    - Stays constant regardless of advanced panel visibility
+	 *    - Used by: FilterSection component for rendering logic
+	 *
+	 * WHY THIS MATTERS:
+	 * - Prevents unnecessary re-renders when toggling advanced panel with no filters applied
+	 * - Ensures API receives correct params when advanced filters ARE applied
+	 * - Preserves minimal filter visibility (UX requirement)
+	 */
+	const apiFilterStyle = hasAdvancedFilterValues(unifiedFilters) ? "expanded" : filterStyle;
 
 	// Use the movie fetch router hook to route between search/discover endpoints
 	const enhancedFetcher = useMovieFetchRouter({
 		fetcher: actualFetcher,
 		filters: unifiedFilters,
-		filterStyle: actualFilterStyle,
+		filterStyle: apiFilterStyle,
 	});
 
 	// Memoized container configuration for better performance
@@ -152,7 +183,7 @@ const MovieCollectionLayout = ({
 			{showFilters && (
 				<FilterSection
 					showFilters={showFilters}
-					filterStyle={actualFilterStyle}
+					filterStyle={filterStyle}
 					showAdvanced={showAdvanced}
 					filters={unifiedFilters}
 					onFiltersChange={handleUnifiedFiltersChange}

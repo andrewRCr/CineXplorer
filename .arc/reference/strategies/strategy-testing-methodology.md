@@ -800,7 +800,7 @@ test('user can register and verify email', async ({ page }) => {
 
 ## References
 
-- [TECHNICAL-ARCHITECTURE.md](../constitution/TECHNICAL-ARCHITECTURE.md) - `--keepdb` strategy, test database config
+- [TECHNICAL-OVERVIEW.md](../constitution/TECHNICAL-OVERVIEW.md) - `--keepdb` strategy, test database config
 - [DEVELOPMENT-RULES.md](../constitution/DEVELOPMENT-RULES.md) - Quality gates, test execution standards
 - [Type Safety Strategy](./strategy-type-safety.md) - Type safety patterns for test code
 - [Phase 2 Task List](../../active/tasks-api-layer-modernization-p2.md) - Task 6.0: Test helper utilities implementation

@@ -703,7 +703,7 @@ user_movie_data domains. Service layer excluded (scheduled for Backend Moderniza
         validators.py, schemas.py). Note: All utility modules already have comprehensive docstrings per DEVELOPMENT-RULES
     - [x] R.4.4.2: Update strategy-testing-methodology.md with new test helper pattern (create_user_and_auth_payload
         in core/tests/test_helpers.py reduces 3-line auth setup to 1-line)
-    - [x] R.4.4.3: Update TECHNICAL-ARCHITECTURE.md to document new Core utilities layer (cross-domain utilities
+    - [x] R.4.4.3: Update TECHNICAL-OVERVIEW.md to document new Core utilities layer (cross-domain utilities
         structure: core/utils/, authentication/utils.py, movie/helpers.py)
 
 ### R.5: Final Certification & Documentation

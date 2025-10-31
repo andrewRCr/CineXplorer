@@ -698,7 +698,7 @@ See `.arc/upcoming/tasks/tasks-backend-modernization.md` for future work.
 **Corrective Actions Taken**:
 
 1. ✅ Updated DEVELOPMENT-RULES v2.7 with explicit Test-First Protocol section
-2. ✅ Restructured TECHNICAL-ARCHITECTURE to remove methodology duplication
+2. ✅ Restructured TECHNICAL-OVERVIEW to remove methodology duplication
 3. ✅ Added retroactive test tasks (7.1a, 7.2a, 7.3a) with comprehensive coverage
 4. ✅ All 37 tests written and passing (11 enrichment + 16 endpoint integration + 10 watchlist)
 

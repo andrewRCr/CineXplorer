@@ -28,7 +28,7 @@ When constitutional documents change, update related files to keep documentation
 **Why**: Development rules govern AI behavior. Version tracking helps identify when behavioral issues stem from rule
 changes versus AI interpretation.
 
-### TECHNICAL-ARCHITECTURE.md Changes
+### TECHNICAL-OVERVIEW.md Changes
 
 **Update these files:**
 

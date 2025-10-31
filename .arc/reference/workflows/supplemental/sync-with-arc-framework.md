@@ -498,7 +498,7 @@ Sync foundation documents first:
 
 1. DEVELOPMENT-RULES
 2. META-PRD (if framework-based)
-3. TECHNICAL-ARCHITECTURE
+3. TECHNICAL-OVERVIEW
 4. PROJECT-STATUS
 
 Then workflows, strategies, and AI instructions.

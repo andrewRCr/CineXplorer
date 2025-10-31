@@ -21,7 +21,7 @@ infrastructure improvements. Work PRDs build upon the broader product vision est
 See [Work Categorization Strategy](../strategies/strategy-work-categorization.md) for the complete decision tree.
 
 **Note**: This workflow is for creating **work-level PRDs**, not the project-wide META-PRD. For establishing
-or updating constitutional documents (META-PRD, PROJECT-STATUS, TECHNICAL-ARCHITECTURE, DEVELOPMENT-RULES),
+or updating constitutional documents (META-PRD, PROJECT-STATUS, TECHNICAL-OVERVIEW, DEVELOPMENT-RULES),
 use [0-define-constitution.md](0-define-constitution.md) instead.
 
 ## Goal
@@ -38,7 +38,7 @@ After examining the feature description or request, but before asking questions,
 documents to understand the complete context:
 
 - **`.arc/reference/constitution/META-PRD.md`** - Product vision, core features, and user flows
-- **`.arc/reference/constitution/TECHNICAL-ARCHITECTURE.md`** - Technical constraints, patterns, and architectural decisions
+- **`.arc/reference/constitution/TECHNICAL-OVERVIEW.md`** - Technical constraints, patterns, and architectural decisions
 - **`.arc/reference/constitution/DEVELOPMENT-RULES.md`** - Code standards, quality gates, and development protocols
 - **`.arc/reference/constitution/PROJECT-STATUS.md`** - Current priorities, progress, and project state
 

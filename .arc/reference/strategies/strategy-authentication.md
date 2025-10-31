@@ -1142,7 +1142,7 @@ Run before production deployment:
 ## Related Documentation
 
 - [DEVELOPMENT-RULES](../constitution/DEVELOPMENT-RULES.md) - Development standards and quality gates
-- [TECHNICAL-ARCHITECTURE](../constitution/TECHNICAL-ARCHITECTURE.md) - System architecture overview
+- [TECHNICAL-OVERVIEW](../constitution/TECHNICAL-OVERVIEW.md) - System architecture overview
 - [Research Report](../../active/incidental/research-django-allauth-headless-oauth.md) - Comprehensive OAuth research
 - [OAuth Incidental Task List](../../active/incidental/tasks-incidental-oauth-headless-migration.md) - Implementation history
 - [django-allauth Headless Documentation](https://docs.allauth.org/en/latest/headless/) - Official docs

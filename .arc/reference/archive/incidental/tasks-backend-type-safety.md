@@ -45,7 +45,7 @@
 - Review and update custom stub files (some may be redundant with django-types)
 - Update CI configuration to use Pyright instead of MyPy (faster, consistent with local)
 - Create type safety handbook (patterns, acceptable exceptions, maintenance)
-- Update DEVELOPMENT-RULES.md and TECHNICAL-ARCHITECTURE.md to reflect Pyright-only approach
+- Update DEVELOPMENT-RULES.md and TECHNICAL-OVERVIEW.md to reflect Pyright-only approach
 - Document acceptable information-level warnings (Django ORM limitations per django-types)
 
 **Won't Do** (deferred to follow-up task list created in Task 14):
@@ -183,7 +183,7 @@
         - [x] 7.3.3 If no new errors, delete `stubs/django/` (django-types sufficient) - ❌ N/A (errors found)
         - [x] 7.3.4 If errors increase, restore `stubs/django/` and document why needed - ✅ Restored stubs, documented that custom stubs provide explicit `id` field (eliminates reportAttributeAccessIssue)
     - [x] 7.4 Document stub strategy in architecture
-        - [x] 7.4.1 Update TECHNICAL-ARCHITECTURE.md custom stubs section - ✅ Updated Type Checking section and Quality Gates
+        - [x] 7.4.1 Update TECHNICAL-OVERVIEW.md custom stubs section - ✅ Updated Type Checking section and Quality Gates
         - [x] 7.4.2 Note django-types as primary Django stub source - ✅ Documented as Pyright-compatible Django stubs
         - [x] 7.4.3 Document remaining custom stubs (allauth, ninja_jwt, environ) - ✅ Listed all with supplement vs required status
         - [x] 7.4.4 Add maintenance contract summary - ✅ Documented version sync and upgrade procedures
@@ -263,7 +263,7 @@
         - [x] 10.1.4 Remove "Hybrid approach" language, simplify to "Pyright with django-types"
         - [x] 10.1.5 Update quality gate commands (remove MyPy check)
         - [x] 10.1.6 Update "Custom Type Stub Maintenance" section if needed
-    - [x] 10.2 Update TECHNICAL-ARCHITECTURE.md
+    - [x] 10.2 Update TECHNICAL-OVERVIEW.md
         - [x] 10.2.1 Update "Type Checking" section (line 26-35) - Already updated in Task 7
         - [x] 10.2.2 Change from "Hybrid approach using Pyright + MyPy" to "Pyright with django-types" - Already updated in Task 7
         - [x] 10.2.3 Update stub library description: django-types (not django-stubs) - Already updated in Task 7
@@ -385,7 +385,7 @@
 
 - `backend/docs/type-coverage-status.md` - NEW: Per-app baseline and tracking
 - `.arc/reference/constitution/DEVELOPMENT-RULES.md` - Updated Python type safety section
-- `.arc/reference/constitution/TECHNICAL-ARCHITECTURE.md` - Updated type checking section
+- `.arc/reference/constitution/TECHNICAL-OVERVIEW.md` - Updated type checking section
 - `.arc/reference/strategies/strategy-type-safety.md` - COMPREHENSIVELY UPDATED: Version 2.0 with Pyright-only, django-types, enhanced patterns and guidelines
 
 **Task Lists:**
@@ -576,7 +576,7 @@ Testing revealed custom `django/contrib/auth/` stubs are NOT redundant with djan
 - `.arc/active/notes-type-coverage-status.md` - Comprehensive baseline tracking (gitignored)
 - `.arc/reference/strategies/strategy-type-safety.md` - v2.0 with Pyright-only, django-types patterns
 - `.arc/reference/constitution/DEVELOPMENT-RULES.md` - Updated Python type safety section
-- `.arc/reference/constitution/TECHNICAL-ARCHITECTURE.md` - Updated type checking section
+- `.arc/reference/constitution/TECHNICAL-OVERVIEW.md` - Updated type checking section
 - `.arc/active/tasks-incidental-fix-backend-type-errors.md` - Follow-up task list (351 errors, 8-11.5 hrs)
 - Custom stub maintenance contracts updated (django-types context added)
 

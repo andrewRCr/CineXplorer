@@ -379,7 +379,7 @@ it serves a different purpose (embedded in movie responses) and is correctly imp
      - **Backend Tests:** `docker compose exec backend coverage run --source='apps' manage.py test --settings=config.settings_test`
          (100% pass rate - ALL apps)
 
-- **Coverage Requirement:** Minimum 70% test coverage across entire API layer (per TECHNICAL-ARCHITECTURE.md)
+- **Coverage Requirement:** Minimum 70% test coverage across entire API layer (per TECHNICAL-OVERVIEW.md)
     - **Coverage Verification:** `coverage report -m` must show 70%+ coverage for critical paths and user-facing functionality
         - **Scope:** Phase 2 domains (UserMovieData, Authentication) PLUS regression verification for Phase 1 domains
          (Movie, Core)

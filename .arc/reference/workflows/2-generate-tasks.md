@@ -34,7 +34,7 @@ foundational documents for broader context:
 
 - **[META-PRD](../constitution/META-PRD.md)** - Product vision and core features
 - **[PROJECT-STATUS](../constitution/PROJECT-STATUS.md)** - Current priorities and project state
-- **[TECHNICAL-ARCHITECTURE](../constitution/TECHNICAL-ARCHITECTURE.md)** - Architectural patterns and conventions
+- **[TECHNICAL-OVERVIEW](../constitution/TECHNICAL-OVERVIEW.md)** - Architectural patterns and conventions
 
 ### Step 2: Assess Current Codebase State
 

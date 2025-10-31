@@ -52,6 +52,8 @@ demonstrating disciplined software engineering practices, comprehensive testing,
 - **Limit scope** - Avoid global mutations or widespread changes without explicit approval
 - **One subtask at a time** - Complete tasks incrementally, await approval between subtasks
 - **Manual commit control** - AI NEVER initiates commits without explicit user approval or instruction
+- **Respect layered architecture** - Backend: business logic belongs in Service layer (presets, filtering,
+  calculations), NOT in API routes (HTTP concerns only). See DEVELOPMENT-RULES.md for details.
 
 **Communication:**
 

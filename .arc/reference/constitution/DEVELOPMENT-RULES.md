@@ -1,6 +1,6 @@
 # Development Rules - CineXplorer
 
-**Version:** 2.10 | **Updated:** 2025-10-30 | **Hash:** `n8p5q2r6`
+**Version:** 2.11 | **Updated:** 2025-10-31 | **Hash:** `k7m3p9w2`
 
 Core development rules and quality standards for CineXplorer. These rules are **non-negotiable** and must be followed
 by all contributors, including AI assistants.
@@ -164,6 +164,14 @@ Apply standard software engineering principles:
 - **YAGNI** (you aren't gonna need it)
 
 Separate concerns, prefer composition over duplication, favor readability when principles conflict.
+
+### Layered Architecture (Backend)
+
+Backend uses strict layered architecture: API routes handle HTTP concerns only, Service layer contains ALL
+business logic (filtering, calculations, presets, orchestration).
+
+**Rule of thumb:** If an API route does more than extract params → call service → return response, the extra
+logic likely belongs in Service layer.
 
 ### Code Documentation Standards
 

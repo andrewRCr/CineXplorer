@@ -30,6 +30,7 @@ interface MovieFiltersProps {
 	) => void;
 	isCollapsed?: boolean;
 	onToggleCollapse?: () => void;
+	pageSource?: string;
 }
 
 const AdvancedMovieFilters = ({
@@ -38,6 +39,7 @@ const AdvancedMovieFilters = ({
 	onFiltersChange,
 	isCollapsed = false,
 	onToggleCollapse,
+	pageSource,
 }: MovieFiltersProps) => {
 	const updateFilter = useCallback(
 		<K extends keyof MovieFilters>(key: K, value: MovieFilters[K]) => {
@@ -143,13 +145,14 @@ const AdvancedMovieFilters = ({
 
 				<Separator />
 
-				<HStack justify="space-between" align="end">
+				<HStack justify="space-between" align="start">
 					<Box>
 						<YearSelector
 							minYear={filters.minYear}
 							maxYear={filters.maxYear}
 							onMinYearChange={(year) => updateFilter("minYear", year)}
 							onMaxYearChange={(year) => updateFilter("maxYear", year)}
+					pageSource={pageSource}
 						/>
 					</Box>
 					<Box>

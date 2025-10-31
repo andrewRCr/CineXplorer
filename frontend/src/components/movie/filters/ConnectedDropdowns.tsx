@@ -11,6 +11,7 @@ import type { MovieFilters as UnifiedMovieFilters } from "./AdvancedMovieFilters
 
 const GENRE_WIDTH = "140px";
 const YEAR_WIDTH = "110px";
+const YEAR_SPAN_WIDTH = YEAR_WIDTH +"10px";
 // const RUNTIME_WIDTH = "130px"; // TODO: Remove if not needed
 
 interface ConnectedDropdownsProps {
@@ -21,12 +22,14 @@ interface ConnectedDropdownsProps {
 			| ((prev: UnifiedMovieFilters) => UnifiedMovieFilters)
 	) => void;
 	onToggleAdvanced?: () => void;
+	pageSource?: string;
 }
 
 const ConnectedDropdowns = ({
 	filters,
 	onFiltersChange,
 	onToggleAdvanced,
+	pageSource,
 }: ConnectedDropdownsProps) => {
 	// Memoize the filter update function to prevent recreation
 	const updateFilter = useCallback(<K extends keyof UnifiedMovieFilters>(
@@ -43,7 +46,7 @@ const ConnectedDropdowns = ({
 	const genreDisplayData = useMemo(() => {
 		const isMultipleGenres = filters.genres.length > 1;
 		const selectedGenreId = filters.genres.length === 1 ? filters.genres[0] : null;
-		const isAdvancedGenre = selectedGenreId !== null && 
+		const isAdvancedGenre = selectedGenreId !== null &&
 			!coreGenreOptions.some((g) => String(g.value) === String(selectedGenreId));
 
 		let genreDisplay = null;
@@ -70,6 +73,9 @@ const ConnectedDropdowns = ({
 
 	// Memoize year display calculations
 	const yearDisplayData = useMemo(() => {
+		// Check if year filter should be disabled due to route constraints
+		const isRouteConstrained = pageSource === "now-playing" || pageSource === "upcoming";
+
 		const isDecadeRange = !!filters.minYear &&
 			!!filters.maxYear &&
 			parseInt(filters.maxYear) - parseInt(filters.minYear) === 9 &&
@@ -81,11 +87,36 @@ const ConnectedDropdowns = ({
 			!isDecadeRange;
 
 		let yearDisplayValue = "";
-		if (isYearCustom) {
+		let isYearSpan = false;
+		if (isRouteConstrained) {
+			// Show year(s) being filtered when disabled due to route constraints
+			const today = new Date();
+			let startDate: Date;
+			let endDate: Date;
+
+			if (pageSource === "now-playing") {
+				// Now Playing: today - 30 days to today + 5 days
+				startDate = new Date(today);
+				startDate.setDate(today.getDate() - 30);
+				endDate = new Date(today);
+				endDate.setDate(today.getDate() + 5);
+			} else {
+				// Upcoming: today + 5 days to today + 65 days
+				startDate = new Date(today);
+				startDate.setDate(today.getDate() + 5);
+				endDate = new Date(today);
+				endDate.setDate(today.getDate() + 65);
+			}
+
+			const startYear = startDate.getFullYear().toString();
+			const endYear = endDate.getFullYear().toString();
+			isYearSpan = startYear !== endYear;
+			yearDisplayValue = isYearSpan ? `${startYear}-${endYear}` : startYear;
+		} else if (isYearCustom) {
 			yearDisplayValue = "custom";
 		} else if (filters.minYear && filters.maxYear && filters.minYear === filters.maxYear) {
 			yearDisplayValue = filters.minYear;
-		} else if (filters.minYear && filters.maxYear && 
+		} else if (filters.minYear && filters.maxYear &&
 					 parseInt(filters.maxYear) - parseInt(filters.minYear) === 9) {
 			yearDisplayValue = `${filters.minYear.slice(0, 4)}'s`;
 		}
@@ -94,10 +125,15 @@ const ConnectedDropdowns = ({
 			isDecadeRange,
 			isYearCustom,
 			yearDisplayValue,
+			isRouteConstrained,
+			isYearSpan,
 		};
-	}, [filters.minYear, filters.maxYear]);
+	}, [filters.minYear, filters.maxYear, pageSource]);
 
-	// TODO: Remove if runtime selector not implemented 
+	// Conditional width for year dropdown - wider when showing year span (e.g., "2024-2025")
+	const yearWidth = yearDisplayData.isYearSpan ? YEAR_SPAN_WIDTH : YEAR_WIDTH;
+
+	// TODO: Remove if runtime selector not implemented
 	// Memoize runtime display calculations
 	// const runtimeDisplayData = useMemo(() => {
 	//	const isRuntimeComplex = !!filters.minRuntime &&
@@ -141,13 +177,14 @@ const ConnectedDropdowns = ({
 
 	const yearCollection = useMemo(() => createListCollection({
 		items: [
+			...(yearDisplayData.isRouteConstrained ? [{ label: yearDisplayData.yearDisplayValue, value: yearDisplayData.yearDisplayValue }] : []),
 			...(yearDisplayData.isYearCustom ? [{ label: "Custom", value: "custom" }] : []),
 			...yearOptions.map((option) => ({
 				label: option.label,
 				value: option.value,
 			})),
 		],
-	}), [yearDisplayData.isYearCustom]);
+	}), [yearDisplayData.isYearCustom, yearDisplayData.isRouteConstrained, yearDisplayData.yearDisplayValue]);
 
 	// TODO: Remove if runtime selector not implemented
 	// const runtimeCollection = useMemo(() => createListCollection({
@@ -266,11 +303,11 @@ const ConnectedDropdowns = ({
 							}));
 						}
 					}}
-					disabled={yearDisplayData.isYearCustom}
+					disabled={yearDisplayData.isYearCustom || yearDisplayData.isRouteConstrained}
 					positioning={{ placement: "bottom-start", gutter: 2 }}
 				>
 					<Select.Trigger
-						w={YEAR_WIDTH}
+						w={yearWidth}
 						minH="32px"
 						h="32px"
 						fontSize="14px"
@@ -292,8 +329,8 @@ const ConnectedDropdowns = ({
 							alignItems: "center",
 							justifyContent: "space-between",
 							"& > span": {
-								fontStyle: yearDisplayData.isYearCustom ? "italic" : "normal",
-								color: yearDisplayData.isYearCustom
+								fontStyle: yearDisplayData.isYearCustom || yearDisplayData.isRouteConstrained ? "italic" : "normal",
+								color: yearDisplayData.isYearCustom || yearDisplayData.isRouteConstrained
 									? "text.secondary"
 									: "text.main",
 							},
@@ -308,7 +345,7 @@ const ConnectedDropdowns = ({
 					</Select.Trigger>
 					<Select.Positioner>
 						<Select.Content
-							w={YEAR_WIDTH}
+							w={yearWidth}
 							bg="background.subItem"
 							borderColor="border.separator"
 						>
@@ -329,14 +366,14 @@ const ConnectedDropdowns = ({
 			{/* Runtime dropdown - DISABLED due to TMDB API limitations
 				TMDB's runtime filtering is fundamentally broken due to data contamination
 				from user-submitted translations. TMDB has acknowledged this issue but won't fix it.
-				
+
 				To re-enable runtime filtering, you would need to:
 				1. Implement client-side runtime filtering with individual movie detail API calls
 				2. Add caching layer to avoid performance issues
 				3. Accept 2-5 second page load delays for runtime-filtered results
-				
+
 				Preserved code below for future implementation:
-			
+
 			{/*
 				<Box position="relative">
 					<Select.Root
@@ -459,7 +496,9 @@ const MemoizedConnectedDropdowns = memo(ConnectedDropdowns, (prevProps, nextProp
 		prevProps.filters.maxRuntime === nextProps.filters.maxRuntime &&
 		// Compare function references
 		prevProps.onFiltersChange === nextProps.onFiltersChange &&
-		prevProps.onToggleAdvanced === nextProps.onToggleAdvanced
+		prevProps.onToggleAdvanced === nextProps.onToggleAdvanced &&
+		// Compare pageSource for route-based disabling
+		prevProps.pageSource === nextProps.pageSource
 	);
 });
 

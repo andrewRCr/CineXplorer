@@ -190,7 +190,7 @@ const MovieCollectionLayout = ({
 					onToggleAdvanced={toggleAdvanced}
 					isFiltersCollapsed={isFiltersCollapsed}
 					onToggleCollapse={toggleFiltersCollapsed}
-					source={source}
+					source={actualSource}
 				/>
 			)}
 

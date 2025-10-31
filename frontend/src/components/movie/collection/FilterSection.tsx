@@ -54,6 +54,7 @@ const FilterSection = ({
 						onFiltersChange={onFiltersChange}
 						isCollapsed={isFiltersCollapsed}
 						onToggleCollapse={onToggleCollapse}
+						pageSource={source}
 					/>
 				</Box>
 			)}
@@ -66,6 +67,7 @@ const FilterSection = ({
 						onFiltersChange={onFiltersChange}
 						isCollapsed={false}
 						onToggleCollapse={() => onToggleAdvanced()}
+						pageSource={source}
 					/>
 				</Box>
 			)}

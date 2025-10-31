@@ -7,6 +7,7 @@ interface YearSelectorProps {
 	maxYear: string;
 	onMinYearChange: (year: string) => void;
 	onMaxYearChange: (year: string) => void;
+	pageSource?: string;
 }
 
 const YearSelector = ({
@@ -14,9 +15,55 @@ const YearSelector = ({
 	maxYear,
 	onMinYearChange,
 	onMaxYearChange,
+	pageSource,
 }: YearSelectorProps) => {
 	// Use current year dynamically (will update on component re-render)
 	const currentYear = new Date().getFullYear();
+
+	// Check if year filter should be disabled due to route constraints
+	const isRouteConstrained = pageSource === "now-playing" || pageSource === "upcoming";
+
+	// Calculate date range for route-constrained pages
+	const getDateRangeInfo = () => {
+		if (!isRouteConstrained) {
+			return { text: "", startPlaceholder: "1900", endPlaceholder: currentYear.toString() };
+		}
+
+		const today = new Date();
+		const options: Intl.DateTimeFormatOptions = {
+			month: "short",
+			day: "numeric",
+			year: "numeric",
+		};
+
+		if (pageSource === "now-playing") {
+			// Now Playing: today - 30 days to today + 5 days
+			const startDate = new Date(today);
+			startDate.setDate(today.getDate() - 30);
+			const endDate = new Date(today);
+			endDate.setDate(today.getDate() + 5);
+			return {
+				text: `${startDate.toLocaleDateString("en-US", options)} - ${endDate.toLocaleDateString("en-US", options)}`,
+				startPlaceholder: startDate.getFullYear().toString(),
+				endPlaceholder: endDate.getFullYear().toString(),
+			};
+		} else if (pageSource === "upcoming") {
+			// Upcoming: today + 5 days to today + 65 days
+			const startDate = new Date(today);
+			startDate.setDate(today.getDate() + 5);
+			const endDate = new Date(today);
+			endDate.setDate(today.getDate() + 65);
+			return {
+				text: `${startDate.toLocaleDateString("en-US", options)} - ${endDate.toLocaleDateString("en-US", options)}`,
+				startPlaceholder: startDate.getFullYear().toString(),
+				endPlaceholder: endDate.getFullYear().toString(),
+			};
+		}
+
+		return { text: "", startPlaceholder: "1900", endPlaceholder: currentYear.toString() };
+	};
+
+	const dateRangeInfo = getDateRangeInfo();
 
 	// Local state for immediate UI updates
 	const [localMinYear, setLocalMinYear] = useState(minYear);
@@ -143,15 +190,27 @@ const YearSelector = ({
 		};
 	}, [debouncedMinYearUpdate, debouncedMaxYearUpdate]);
 
+	const routeLabel =
+		pageSource === "now-playing"
+			? "Now Playing"
+			: pageSource === "upcoming"
+			? "Upcoming"
+			: "";
+
 	return (
 		<Box>
 			<Text fontSize="sm" fontWeight="medium" mb={2} color="text.main">
 				Release Year
+				{isRouteConstrained && (
+					<Text as="span" color="text.secondary" ml={1}>
+						({routeLabel})
+					</Text>
+				)}
 			</Text>
 			<HStack gap={2} align="center">
 				<Input
-					placeholder="1900"
-					value={localMinYear}
+					placeholder={dateRangeInfo.startPlaceholder}
+					value={isRouteConstrained ? "" : localMinYear}
 					onChange={(e) => handleMinYearChange(e.target.value)}
 					onBlur={handleMinYearBlur}
 					type="number"
@@ -162,24 +221,28 @@ const YearSelector = ({
 					minH="32px"
 					fontSize="14px"
 					borderRadius="4px"
-				borderColor={
-					localMinYear && !isValidYear(localMinYear) ? "red.300" : "border.separator"
-				}
-				bg="transparent"
-				_hover={{
-					backgroundColor: "background.main",
-				}}
+					borderColor={
+						localMinYear && !isValidYear(localMinYear)
+							? "red.300"
+							: "border.separator"
+					}
+					bg="transparent"
+					_hover={{
+						backgroundColor: "background.main",
+					}}
 					_invalid={{
 						borderColor: "red.300",
 						boxShadow: "0 0 0 1px red.300",
 					}}
+					disabled={isRouteConstrained}
+					cursor={isRouteConstrained ? "not-allowed" : "text"}
 				/>
-			<Text fontSize="sm" color="text.secondary">
-				to
-			</Text>
+				<Text fontSize="sm" color="text.secondary">
+					to
+				</Text>
 				<Input
-					placeholder={currentYear.toString()}
-					value={localMaxYear}
+					placeholder={dateRangeInfo.endPlaceholder}
+					value={isRouteConstrained ? "" : localMaxYear}
 					onChange={(e) => handleMaxYearChange(e.target.value)}
 					onBlur={handleMaxYearBlur}
 					type="number"
@@ -190,19 +253,28 @@ const YearSelector = ({
 					minH="32px"
 					fontSize="14px"
 					borderRadius="4px"
-				borderColor={
-					localMaxYear && !isValidYear(localMaxYear) ? "red.300" : "border.separator"
-				}
-				bg="transparent"
-				_hover={{
-					backgroundColor: "background.main",
-				}}
+					borderColor={
+						localMaxYear && !isValidYear(localMaxYear)
+							? "red.300"
+							: "border.separator"
+					}
+					bg="transparent"
+					_hover={{
+						backgroundColor: "background.main",
+					}}
 					_invalid={{
 						borderColor: "red.300",
 						boxShadow: "0 0 0 1px red.300",
 					}}
+					disabled={isRouteConstrained}
+					cursor={isRouteConstrained ? "not-allowed" : "text"}
 				/>
 			</HStack>
+			{isRouteConstrained && (
+				<Text fontSize="xs" color="text.secondary" mt={1}>
+					Showing: {dateRangeInfo.text}
+				</Text>
+			)}
 		</Box>
 	);
 };

@@ -107,6 +107,7 @@ const LetterboxdStyleFilters = ({
 								filters={filters}
 								onFiltersChange={onFiltersChange}
 								onToggleAdvanced={onToggleAdvanced}
+								pageSource={pageSource}
 							/>
 							<ClearFiltersButton
 								filters={filters}

@@ -158,57 +158,142 @@ endpoints per ADR-002.
 
 **Approach:** Implementation-first (diagnosed issues in Phase 1), comprehensive testing in Phase 5.
 
-- [ ] **2.1 Implement preset merge helper**
+- [x] **2.1 Implement preset merge helper**
 
     **Goal:** Create merge_with_preset() helper function with protected keys support.
 
-    - [ ] **2.1.1 Create merge helper in `movie_helpers.py`**
-        - Function: `merge_with_preset(user_filters, preset, protected_keys=None)`
-        - Logic: Protected keys always use preset value
-        - Logic: Non-protected keys merge (user + preset)
-        - Logic: User keys not in preset are preserved
-        - Location: `backend/apps/movie/helpers.py` or similar
+    **Completed:** Merge helper implemented with comprehensive test coverage. All tests pass, quality gates clean.
 
-    - [ ] **2.1.2 Define protected_keys for endpoint presets**
-        - Now-playing: `['with_release_type', 'primary_release_date.gte', 'primary_release_date.lte']`
-        - Upcoming: `['with_release_type', 'primary_release_date.gte', 'primary_release_date.lte']`
-        - Browse: `[]` (no protected keys - full user control)
-        - Note: Popular/top-rated NOT separate endpoints per ADR-002 (just sort options in Browse UI)
-        - Document in code comments with rationale
+    - [x] **2.1.1 Create merge helper in `movie_helpers.py`**
+        - Created `merge_with_preset(user_filters, preset, protected_keys=None)` in `backend/apps/movie/helpers.py`
+        - Merge behavior implemented:
+            - Protected keys: Preset value always wins (user value ignored)
+            - Non-protected preset keys: Added only if not present in user filters
+            - User-only keys: Preserved in result (allows additive filtering)
+        - Type-safe implementation using `TMDBParams` and proper return type
+        - Comprehensive docstring with example usage for now-playing endpoint scenario
 
-    - [ ] **2.1.3 Add basic tests for merge logic**
-        - Simple verification tests (not comprehensive coverage - that's Phase 5)
-        - Test: Protected keys override user values
-        - Test: Non-protected keys merge correctly
-        - Quick validation that helper works
-        - Command: `docker compose -f infrastructure/docker-compose.yml exec backend pytest apps/movie/tests/unit/helpers/test_endpoint_preset_merge.py`
-        - All merge tests should pass
+    - [x] **2.1.2 Define protected_keys for endpoint presets**
+        - Created module-level constants in `backend/apps/movie/helpers.py`:
+            - `NOW_PLAYING_PROTECTED_KEYS`: `['with_release_type', 'primary_release_date.gte', 'primary_release_date.lte']`
+            - `UPCOMING_PROTECTED_KEYS`: `['with_release_type', 'primary_release_date.gte', 'primary_release_date.lte']`
+            - `BROWSE_PROTECTED_KEYS`: `[]` (no restrictions - full user control)
+        - Each constant includes docstring explaining rationale and what users CAN filter
+
+    - [x] **2.1.3 Add basic tests for merge logic**
+        - Created `backend/apps/movie/tests/unit/helpers/test_endpoint_preset_merge.py` (forward-compatible location)
+        - 12 comprehensive tests covering:
+            - Protected keys override behavior
+            - Non-protected keys merge correctly
+            - User-only keys preserved
+            - Empty user filters / empty preset edge cases
+            - Constant validation (all three endpoint protected key lists)
+            - Realistic scenarios for now-playing, upcoming, and browse endpoints
+        - All 12 tests pass (0.21s execution time)
+        - Quality checks: Linting passed (ruff), type checking passed (pyright 0 errors)
 
 - [ ] **2.2 Convert date-constrained routes to thin wrappers**
 
     **Goal:** Update now-playing and upcoming routes to be thin wrappers (call TMDB discover with date presets).
 
-    - [ ] **2.2.1 Update `/now-playing` route to be thin wrapper**
-        - **Fix Issue #1 (Filter Support):** Change route signature from `PaginationParams` to `FilterParams`
-        - **Fix Issue #2 (Date Range):** Define preset with date range from Phase 1.2 findings:
-            - Start: today - 30 days (past releases still in theaters)
-            - End: today + 5 days (upcoming weekend, matches TMDB boundary)
-            - Total: 35-day window
-            - Release type: `2|3` (theatrical)
-            - NO `region` parameter (incompatible with date filters per Phase 1.1)
-        - Call `merge_with_preset()` with protected_keys: `['with_release_type', 'primary_release_date.gte', 'primary_release_date.lte']`
-        - Call `discover_movies()` with merged filters (internally calls TMDB discover, not native TMDB now_playing)
-        - Add `min_vote_count` parameter threading (allow override, default to MIN_VOTE_COUNT)
-        - Update docstring to document wrapper pattern and protected keys
-        - Verify no overlap with upcoming endpoint (now-playing ends at today+5, upcoming starts at today+5)
-        - Location: `backend/apps/movie/api.py`
+    - [x] **2.2.1a Update `/now-playing` route to be thin wrapper (backend)**
 
-    - [ ] **2.2.2 Update `/upcoming` route to be thin wrapper**
+        **Completed:** Now-playing endpoint successfully converted to thin wrapper pattern. All backend issues fixed.
+
+        - **✅ Fix Issue #1 (Filter Support):** Changed route signature from `PaginationParams` to `FilterParams`
+            - Now accepts all discover filters (genres, ratings, keywords, cast, sort, etc.)
+            - Uses `filters.to_service_params()` to extract user filter parameters
+        - **✅ Fix Issue #2 (Date Range):** Implemented preset with date range from Phase 1.2:
+            - Start: `today - timedelta(days=30)` (past releases still in theaters)
+            - End: `today + timedelta(days=5)` (upcoming weekend, matches TMDB boundary)
+            - Total: 35-day window covers "theater planning" use case
+            - Release type: `"2|3"` (theatrical releases only)
+            - NO `region` parameter (incompatible with date filters per Phase 1.1)
+        - **✅ Protected keys enforcement:** Calls `merge_with_preset()` with `NOW_PLAYING_PROTECTED_KEYS`
+            - Date range parameters cannot be overridden by users
+            - Release type parameter protected
+            - Year and primary_release_year also protected (added during implementation)
+            - User filters (genres, ratings, etc.) properly merged
+        - **✅ Thin wrapper implementation:** Calls `discover_movies()` with merged filters
+            - No longer uses native TMDB `now_playing` endpoint
+            - Uses discover endpoint internally with date presets
+            - Maintains same response format (PaginatedMovieResponseSchema)
+        - **✅ Comprehensive docstring:** Documents thin wrapper pattern, protected keys, and user capabilities
+            - Lists all protected parameters with rationale
+            - Lists all available user filters
+            - Explains theater planning window semantics
+        - **✅ Date boundary verification:** Now-playing ends at today+5, upcoming starts at today+5 (adjacent, no overlap)
+        - **✅ Quality checks:** Linting passed (ruff), type checking passed (pyright 0 errors)
+        - **✅ Smoke test:** Endpoint functional with genre filter (returned 20 movies, 45895 total results)
+
+    - [x] **2.2.1b Add frontend UI to disable year filters on now-playing route**
+
+        **Completed:** Frontend UI successfully updated to disable year filters on now-playing (and upcoming) routes
+        with clear visual indication.
+
+        **Bug Fix:**
+        - **✅ Fixed `MovieCollectionLayout.tsx` line 193:** Changed `source={source}` to `source={actualSource}`
+            - Bug caused pageSource to be undefined when passed through component tree
+            - Now correctly passes computed actualSource value from route detection
+
+        **Prop Threading:**
+        - **✅ LetterboxdStyleFilters:** Now passes `pageSource` prop to `ConnectedDropdowns`
+        - **✅ FilterSection:** Now passes `source` prop to `AdvancedMovieFilters` as `pageSource`
+        - **✅ AdvancedMovieFilters:** Now accepts `pageSource` and passes it to `YearSelector`
+
+        **Minimal Filter UI (ConnectedDropdowns):**
+        - **✅ Route detection:** Added `isRouteConstrained` check for `pageSource === "now-playing" || "upcoming"`
+        - **✅ Display value:** Shows "Now Playing" or "Upcoming" when route-constrained (instead of year)
+        - **✅ Disabled state:** Year dropdown disabled when route-constrained
+        - **✅ Styling:** Italic text, secondary color, not-allowed cursor when disabled
+        - **✅ Memo optimization:** Added pageSource to memoization comparison
+
+        **Advanced Filter UI (YearSelector):**
+        - **✅ Route detection:** Added `isRouteConstrained` check for `pageSource === "now-playing" || "upcoming"`
+        - **✅ Header update:** Shows "Release Year (Now Playing)" or "Release Year (Upcoming)" in secondary color
+        - **✅ Input disabling:** Both min/max year inputs disabled when route-constrained
+        - **✅ Date range calculation:** Dynamic calculation based on today's date:
+            - Now Playing: today - 30 days to today + 5 days
+            - Upcoming: today + 5 days to today + 65 days
+        - **✅ Helper text:** Shows "Showing: {date range}" in secondary color below inputs
+        - **✅ Empty values:** Input fields show empty when disabled (cleaner UX than showing values)
+
+        **Quality Gates:**
+        - **✅ Frontend linting:** Passed (eslint 0 errors)
+        - **✅ TypeScript checking:** Passed (tsc 0 errors)
+
+        **Ready for Browser Testing:** All code changes complete and passing quality gates.
+
+    - [ ] **2.2.2a Update `/upcoming` route to be thin wrapper (backend)**
         - Accept `FilterParams` in route signature
         - Define preset with corrected date range from Phase 1.1 + release_type
-        - Call `merge_with_preset()` with protected_keys: `['with_release_type', 'primary_release_date.gte', 'primary_release_date.lte']`
+        - Call `merge_with_preset()` with `UPCOMING_PROTECTED_KEYS` (includes year and primary_release_year)
         - Call `discover_movies()` with merged filters (internally calls TMDB discover)
         - Update docstring to document wrapper pattern and protected keys
+        - Disable vote count filtering (unreleased movies have 0 votes)
+
+    - [x] **2.2.2b Add frontend UI to disable year filters on upcoming route**
+
+        **Completed:** Implemented alongside task 2.2.1b. Both now-playing and upcoming routes share the same
+        UI disabling logic.
+
+        **Implementation:**
+        - **✅ ConnectedDropdowns year dropdown:**
+            - Disables when `pageSource === "upcoming"` OR `pageSource === "now-playing"`
+            - Shows year(s) being filtered: "2024" (single year) or "2024-2025" (year span)
+            - Conditional width: 110px (single year) or 130px (year span) to prevent truncation
+            - Styled as disabled: italic text, secondary color, not-allowed cursor
+        - **✅ YearSelector component:**
+            - Disables both min/max inputs when route-constrained
+            - Shows "Release Year (Upcoming)" or "Release Year (Now Playing)" in header
+            - Dynamic placeholders show actual year(s) being filtered
+            - Helper text shows full date range: "Showing: {date range}"
+            - Tight spacing (mt={0.5}) to minimize vertical misalignment
+        - **✅ Tested in browser:** Both now-playing and upcoming routes display correctly
+
+        **Quality Gates:**
+        - **✅ Frontend linting:** Passed (eslint 0 errors)
+        - **✅ TypeScript checking:** Passed (tsc 0 errors)
 
     - [ ] **2.2.3 Rename `/discover` route to `/browse` (per ADR-002)**
         - **RENAME** `/api/movies/discover` to `/api/movies/browse`

@@ -375,28 +375,127 @@ endpoints per ADR-002.
         - ✅ Pyright type checking: 0 errors, 0 warnings
         - ✅ Tests: 6/6 passed
 
-- [ ] **2.3 Update service layer**
+- [ ] **2.3 Refactor service layer to proper architecture**
 
-    **Goal:** Ensure service layer supports all three endpoints. Service functions call TMDB discover internally.
+    **Goal:** Move business logic from API layer to Service layer, maintaining proper separation of concerns.
 
-    - [ ] **2.3.1 Refactor/remove service methods to align with ADR-002**
-        - **KEEP** `get_now_playing_movies()` - refactor to call TMDB discover internally (not native TMDB now_playing)
-        - **KEEP** `get_upcoming_movies()` - already refactored in Phase 1.1 to call TMDB discover internally
-        - **KEEP** `discover_movies()` as core TMDB discover wrapper (calls TMDB `/discover/movie`)
-        - **REMOVE** `get_popular_movies()` - no longer needed (Browse endpoint calls discover_movies directly)
-        - **REMOVE** `get_top_rated_movies()` - no longer needed (Browse endpoint calls discover_movies directly)
-        - Location: `backend/apps/movie/services/movie_service.py`
+    **Current Problem:** Business logic (preset building, filter merging) is in API layer. Service methods exist but
+    are bypassed by API. This violates layered architecture - API should be thin (HTTP concerns only), Service should
+    contain business logic.
 
-    - [ ] **2.3.2 Update service docstrings**
-        - Document that `discover_movies()` wraps TMDB `/discover/movie`
-        - Document that all three backend endpoints call `discover_movies()` internally
-        - Note that API routes handle endpoint-specific presets, service layer is generic
-        - Update any outdated comments
+    **Target Architecture:**
+    - API layer: Thin (HTTP, validation, delegation only)
+    - Service layer: Business logic (presets, filter merging, TMDB calls)
+    - `get_now_playing_movies()` and `get_upcoming_movies()` service methods should accept filters and handle presets
+    - API routes should call service methods, not `discover_movies()` directly
 
-    - [ ] **2.3.3 Run existing test suite to check for regressions**
-        - Command: `docker compose -f infrastructure/docker-compose.yml exec backend pytest apps/movie/tests/`
+    - [ ] **2.3.1a Refactor `get_now_playing_movies()` service method**
+
+        **Current State:** Service method calls native TMDB `/movie/now_playing` endpoint. API layer bypasses this
+        and calls `discover_movies()` directly with preset logic in API layer.
+
+        **Target State:** Service method accepts filters, builds presets internally, calls `discover_movies()`.
+
+        **Changes needed:**
+        - Update signature: `get_now_playing_movies(page, **filters)` (accept filter kwargs)
+        - Move preset building logic FROM api.py TO service method:
+            - Date range: `today - 30 days` to `today + 5 days`
+            - Release type: `"2|3"` (theatrical)
+            - Protected keys: date range, release type, year, primary_release_year
+        - Import and use `merge_with_preset()` helper
+        - Import `NOW_PLAYING_PROTECTED_KEYS` constant
+        - Call `self.discover_movies()` with merged filters (not TMDB native endpoint)
+        - Remove old TMDB client call to `get_now_playing_movies()`
+        - Update docstring: document preset behavior, protected keys, thin wrapper pattern
+        - Location: `backend/apps/movie/services/movie_service.py` (around line 566)
+
+    - [ ] **2.3.1b Refactor `get_upcoming_movies()` service method**
+
+        **Current State:** Service method has old implementation. API layer bypasses this and calls
+        `discover_movies()` directly with preset logic in API layer.
+
+        **Target State:** Service method accepts filters, builds presets internally, calls `discover_movies()`.
+
+        **Changes needed:**
+        - Update signature: `get_upcoming_movies(page, **filters)` (accept filter kwargs)
+        - Move preset building logic FROM api.py TO service method:
+            - Date range: `today + 5 days` to `today + 65 days`
+            - Release type: `"2|3"` (theatrical)
+            - Protected keys: date range, release type, year, primary_release_year
+            - Vote count: `min_vote_count=None` (unreleased movies have 0 votes)
+        - Import and use `merge_with_preset()` helper
+        - Import `UPCOMING_PROTECTED_KEYS` constant
+        - Call `self.discover_movies()` with merged filters
+        - Update docstring: document preset behavior, protected keys, thin wrapper pattern
+        - Location: `backend/apps/movie/services/movie_service.py` (around line 630)
+
+    - [ ] **2.3.2 Update API layer to use refactored service methods**
+
+        **Goal:** Remove business logic from API layer. Make API routes thin again.
+
+        **Changes to `get_now_playing_movies()` route (api.py line 123):**
+        - Remove all preset building logic (lines 155-171)
+        - Remove `merge_with_preset()` call
+        - Change from: `response = _movie_service.discover_movies(page, **merged_filters)`
+        - Change to: `response = _movie_service.get_now_playing_movies(page=filters.page or 1, **filters.to_service_params())`
+        - Simplify docstring (remove implementation details now in service layer)
+
+        **Changes to `get_upcoming_movies()` route (api.py line 188):**
+        - Remove all preset building logic (lines 220-235)
+        - Remove `merge_with_preset()` call
+        - Change from: `response = _movie_service.discover_movies(page, min_vote_count=None, **merged_filters)`
+        - Change to: `response = _movie_service.get_upcoming_movies(page=filters.page or 1, **filters.to_service_params())`
+        - Simplify docstring (remove implementation details now in service layer)
+
+        **Imports cleanup:**
+        - Can remove `NOW_PLAYING_PROTECTED_KEYS`, `UPCOMING_PROTECTED_KEYS`, `merge_with_preset` from
+          api.py imports if no longer used
+        - Can remove `datetime`, `timedelta`, `UTC` imports if no longer used
+        - Keep imports needed for user data enrichment
+
+    - [ ] **2.3.3 Update tests that use old service method signatures**
+
+        **Goal:** Fix tests to work with new service method signatures that accept filter kwargs.
+
+        **Files to check/update:**
+        - `backend/apps/movie/tests/test_movie_service.py` - Update calls to use new signatures
+        - `backend/apps/movie/tests/test_result_filtering.py` - Update calls to use new signatures
+        - `backend/apps/core/management/commands/test_tmdb_logging.py` - Update if needed
+        - Run tests after each update to verify changes work
+        - Tests should pass with refactored service methods
+
+    - [ ] **2.3.4 Update service layer docstrings**
+
+        **`discover_movies()` docstring updates:**
+        - Clarify this is the core TMDB discover wrapper
+        - Document that now-playing/upcoming methods call this internally with presets
+        - Note: Service layer handles preset logic, API layer is thin
+
+        **`get_now_playing_movies()` docstring:**
+        - Already updated in 2.3.1a
+
+        **`get_upcoming_movies()` docstring:**
+        - Already updated in 2.3.1b
+
+        **Remove outdated comments:**
+        - Any comments suggesting API layer handles presets
+        - Any references to native TMDB now_playing/upcoming endpoints
+
+    - [ ] **2.3.5 Run existing test suite to verify no regressions**
+
+        **Full test suite:**
+        - Command: `docker compose -f infrastructure/docker-compose.yml exec backend pytest apps/movie/tests/ -v`
         - All movie tests should pass
-        - Verify test count matches expected (previous + new tests)
+        - Verify test count matches expected (existing tests + 6 new smoke tests)
+
+        **Specific smoke tests (from Task 2.2.5):**
+        - Command: `docker compose -f infrastructure/docker-compose.yml exec backend pytest
+          apps/movie/tests/integration/api/test_date_constrained_endpoints.py -v`
+        - All 6 smoke tests should still pass after refactor **without modification**
+        - **Why no updates needed:** Tests mock at TMDB client level, not service level. Refactor is internal
+          (moving logic between layers), but external behavior (parameters sent to TMDB) remains identical.
+        - **What this verifies:** Complete API→Service→TMDB integration flow works correctly with proper
+          layering. Tests confirm preset logic produces same TMDB calls regardless of which layer builds them.
 
 - [ ] **2.4 Run quality gates on backend changes**
 

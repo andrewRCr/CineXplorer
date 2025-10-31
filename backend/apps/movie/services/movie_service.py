@@ -202,6 +202,7 @@ class MovieService:
         rating_max: float | None,
         pre_filter_func: object | None = None,  # Optional pre-filter callable
         tmdb_page_start: int | None = None,  # Starting TMDB page for smart buffer continuation
+        min_vote_count: int | None = MIN_VOTE_COUNT,  # Vote count threshold
     ) -> PaginatedMovieResponseSchema:
         """Template method for paginated fetch-filter-buffer workflow.
 
@@ -230,6 +231,8 @@ class MovieService:
             tmdb_page_start: Starting TMDB page for smart buffer continuation.
                 If provided, overrides `page` for TMDB fetching
                 (enables metadata-driven pagination)
+            min_vote_count: Minimum vote count threshold. None to skip vote filtering.
+                Default: MIN_VOTE_COUNT (10)
 
         Returns:
             PaginatedMovieResponseSchema with filtered and buffered results, including
@@ -274,7 +277,8 @@ class MovieService:
             year_min,
             year_max,
             rating_min,
-            rating_max
+            rating_max,
+            min_vote_count
         )
         filtered_count = len(filtered_movies)
 
@@ -311,7 +315,8 @@ class MovieService:
             year_max,
             rating_min,
             rating_max,
-            buffer_fetch_func
+            buffer_fetch_func,
+            min_vote_count
         )
 
         # Step 6: Calculate next TMDB page start for pagination continuation
@@ -350,10 +355,11 @@ class MovieService:
         year_max: int | None = None,
         rating_min: float | None = None,
         rating_max: float | None = None,
+        min_vote_count: int | None = MIN_VOTE_COUNT,
     ) -> list[MovieBaseSchema]:
         """Apply completeness, year, and rating filters to movie list.
 
-        Vote count threshold: MIN_VOTE_COUNT (10 votes) applied universally.
+        Vote count threshold: MIN_VOTE_COUNT (10 votes) by default.
         Filters statistical noise and low-quality content while maintaining
         broad catalog access to legitimate films.
 
@@ -363,6 +369,8 @@ class MovieService:
             year_max: Maximum release year (inclusive), None for no upper bound
             rating_min: Minimum rating (inclusive), None for no lower bound
             rating_max: Maximum rating (inclusive), None for no upper bound
+            min_vote_count: Minimum vote count threshold. None to skip vote filtering
+                (useful for unreleased movies). Default: MIN_VOTE_COUNT (10)
 
         Returns:
             Filtered list of MovieBaseSchema objects matching all criteria
@@ -387,14 +395,15 @@ class MovieService:
         # Even without user filters, this excludes pre-1888 dates (data quality)
         movie_schemas = filter_movies_by_year(movie_schemas, year_min, year_max)
 
-        # Apply rating filtering with universal vote threshold (see docstring)
-        # MIN_VOTE_COUNT (10 votes) filters statistical noise and low-quality content
+        # Apply rating filtering with vote threshold (see docstring)
+        # Vote count filters statistical noise and low-quality content
         # Works with genre completeness filtering for dual quality assurance
+        # Can be disabled (min_vote_count=None) for unreleased movies
         movie_schemas = filter_movies_by_rating(
             movie_schemas,
             rating_min,
             rating_max,
-            min_vote_count=MIN_VOTE_COUNT
+            min_vote_count=min_vote_count
         )
 
         return movie_schemas
@@ -409,6 +418,7 @@ class MovieService:
         rating_min: float | None,
         rating_max: float | None,
         fetch_next_page_func: object,  # Callable that fetches next page
+        min_vote_count: int | None = MIN_VOTE_COUNT,
     ) -> tuple[list[MovieBaseSchema], int]:
         """Apply smart buffer mechanism to maintain consistent page sizes.
 
@@ -430,6 +440,8 @@ class MovieService:
             rating_min: Rating filter (passed to buffer page)
             rating_max: Rating filter (passed to buffer page)
             fetch_next_page_func: Function to fetch next page (takes page number)
+            min_vote_count: Minimum vote count threshold (passed to buffer page).
+                Default: MIN_VOTE_COUNT (10)
 
         Returns:
             Tuple of (movies, pages_consumed) where:
@@ -473,7 +485,8 @@ class MovieService:
                 year_min,
                 year_max,
                 rating_min,
-                rating_max
+                rating_max,
+                min_vote_count
             )
 
             combined_movies = combined_movies + buffer_movies
@@ -625,6 +638,10 @@ class MovieService:
         """
         Retrieves a list of upcoming movies from TMDB.
 
+        Date range: today + 5 days to today + 60 days (55-day window).
+        Starts 5 days in the future to avoid overlap with Now Playing endpoint,
+        which covers past releases + upcoming weekend (today + 5 days).
+
         Args:
             page: Page number for pagination
             year_min: Minimum release year (inclusive), backend filtered (second-pass data hygiene)
@@ -641,16 +658,20 @@ class MovieService:
         Note:
             Year and rating filters use two-pass architecture: TMDB API (primary)
             + backend filtering (catches data quality issues).
+
+            Region parameter intentionally omitted - incompatible with primary_release_date
+            filters per TMDB API research (see research-tmdb-api-date-filtering.md).
         """
         today = datetime.now(tz=UTC)
-        min_date = today.strftime("%Y-%m-%d")
-        max_date = (today + timedelta(days=30)).strftime("%Y-%m-%d")
+        min_date = (today + timedelta(days=5)).strftime("%Y-%m-%d")
+        max_date = (today + timedelta(days=60)).strftime("%Y-%m-%d")
 
         params: TMDBParams = {
             "include_adult": False,
             "include_video": False,
             "language": "en-US",
-            "region": "US",
+            # NOTE: "region" parameter omitted - incompatible with primary_release_date
+            # filters. TMDB behavior becomes undefined when both are used together.
             "sort_by": "popularity.desc",
             "with_release_type": "2|3",
             "primary_release_date.gte": min_date,
@@ -689,7 +710,8 @@ class MovieService:
             year_min,
             year_max,
             rating_min,
-            rating_max
+            rating_max,
+            min_vote_count=None  # Skip vote filtering for unreleased movies
         )
 
     def search_movies(

@@ -156,13 +156,15 @@ Task list headers provide essential metadata and context. Format varies by task 
 - Title uses `Incidental:` prefix
 - Created date in YYYY-MM-DD format
 - Branch indicates where work happens (often same as interrupted work)
+- Status values: `Pending` (not started), `In Progress` (active), `Paused` (blocked by other work), `Complete` (done)
 - Discovered field shows discovery context
 - Interrupts field shows workflow management (what's paused) OR `None` if fresh work
-- On completion: Resume where Interrupts indicates (implied, not documented separately)
+- **When paused**, add `Paused At` and `Paused To` fields to interrupted task list
+- **When resuming**, update `Status` back to `In Progress` and optionally add resume context
 - Scope section separates included vs deferred work
 - Horizontal rule (`---`) separates header from tasks
 
-**Example:**
+**Example (active work):**
 
 ```markdown
 # Incidental: Navigation Filter State Preservation
@@ -197,6 +199,47 @@ Task list headers provide essential metadata and context. Format varies by task 
 ---
 
 ## Tasks
+```
+
+**Example (paused work):**
+
+```markdown
+# Incidental: Test Organization Standardization
+
+**Created:** 2025-10-30
+**Branch:** `technical/service-layer-modernization`
+**Status:** Paused
+
+## Context
+
+**Discovered:** During Phase 3 planning for buffer deduplication work
+
+**Interrupts:** `.arc/active/incidental/tasks-buffer-deduplication.md` at Task 3.1
+
+**Paused At:** Phase 3 complete (test file analysis done, before Phase 4 file splits)
+
+**Paused To:** `.arc/active/incidental/tasks-discover-endpoint-consolidation.md` - Critical endpoint
+architecture issues discovered during browser testing
+
+**Problem:** Test organization inconsistent and files too large.
+
+**Why Now:** Must establish patterns before adding 15+ new tests.
+```
+
+**Pause chain traceability rules:**
+
+1. **When creating new work that interrupts active work:**
+   - New task list gets `Interrupts: [paused-task-path] at [location]`
+   - Paused task list gets `Status: Paused`, `Paused At: [location]`, `Paused To: [new-task-path]`
+
+2. **When resuming paused work:**
+   - Update `Status` from `Paused` to `In Progress`
+   - Optionally add resume note in Context or header
+
+3. **Purpose:**
+   - Git log shows priority shifts
+   - Team understands work dependencies
+   - Easy to reconstruct decision timeline
 ```
 
 ### Status Field Values

@@ -2,7 +2,7 @@
 
 **Created:** 2025-10-30
 **Branch:** `technical/service-layer-modernization`
-**Status:** In Progress
+**Status:** Paused
 
 ## Context
 
@@ -10,6 +10,11 @@
 inconsistencies and file size issues that would compound when adding 15+ new tests.
 
 **Interrupts:** `.arc/active/incidental/tasks-buffer-deduplication-data-quality.md` at Task 3.1 (before writing new tests)
+
+**Paused At:** Phase 3 complete (test file analysis and split decisions made, before Phase 4 file splits)
+
+**Paused To:** `.arc/active/incidental/tasks-discover-endpoint-consolidation.md` - Critical endpoint architecture
+issues discovered during Phase 3 browser testing must be fixed before continuing with endpoint-specific test file splits
 
 **Problem:** Test organization is inconsistent and some files have grown beyond maintainable size:
 
@@ -141,51 +146,65 @@ Framework, FastAPI, pytest documentation, and React ecosystem. Key findings:
 
 **Purpose:** Identify logical split points for oversized test files based on actual test structure.
 
-- [ ] **3.1 Analyze test_movie_api.py (1512 lines)**
+- [x] **3.1 Analyze test_movie_api.py (1512 lines)**
 
-    - [ ] **3.1.1 Read file and catalog test structure**
-        - List all test functions with their purposes
-        - Identify natural groupings (by endpoint, by feature, by test type)
-        - Note shared fixtures and dependencies
-        - **Document findings:** Update `notes-test-organization-standardization.md` under
-          "test_movie_api.py Analysis" section
+    - [x] **3.1.1 Read file and catalog test structure**
+        - Cataloged all 23 test functions with purposes
+        - Identified 7 natural groupings by endpoint + aspect
+        - Documented shared fixtures: api_client, user, TMDB mocks, test helpers
+        - **Findings documented** in notes file under "test_movie_api.py Analysis" section
 
-    - [ ] **3.1.2 Propose split strategy**
-        - Based on research: Split by endpoint + aspect recommended for API tests
-        - Likely groups: discover (filtering, pagination, sorting), search, list/detail
-        - Create proposed file structure with line count estimates
-        - **Document proposed structure:** Update `notes-test-organization-standardization.md` under
-          "test_movie_api.py Analysis" section for approval
+    - [x] **3.1.2 Propose split strategy**
+        - **Strategy:** Endpoint + aspect split (7 files, 80-500 lines each)
+        - **Files proposed:**
+          1. test_paginated_endpoints_contract.py (~80 lines) - Basic contract for all paginated endpoints
+          2. test_discover_filtering.py (~90 lines) - Filter parameters & validation
+          3. test_discover_filter_integration.py (~250 lines) - Backend filter integration
+          4. test_discover_pagination.py (~240 lines) - Pagination metadata tracking
+          5. test_discover_deduplication.py (~500 lines) - Buffer deduplication (TDD tests)
+          6. test_genres_keywords_people.py (~140 lines) - Genres/keywords/people endpoints
+          7. test_movie_detail.py (~100 lines) - Movie detail with auth variations
+        - **Rationale:** Discover endpoint dominates (71% of file), splitting by aspect creates maintainable files
+        - **Complete strategy documented** in notes file for approval
 
-- [ ] **3.2 Analyze test_result_filtering.py (1412 lines)**
+- [x] **3.2 Analyze test_result_filtering.py (1412 lines)**
 
-    - [ ] **3.2.1 Read file and catalog test structure**
-        - List test categories (genre filters, rating filters, date filters, etc.)
-        - Identify test types (validation, application, edge cases, errors)
-        - Note fixture dependencies
-        - **Document findings:** Update `notes-test-organization-standardization.md` under
-          "test_result_filtering.py Analysis" section
+    - [x] **3.2.1 Read file and catalog test structure**
+        - Cataloged all 30 test functions organized into 10 categories
+        - Identified test types: filter validation, buffer mechanism, endpoint integration, data quality checks
+        - Documented fixtures: None (unit tests use direct MovieService instantiation with mocked TMDB client)
+        - **Findings documented** in notes file under "test_result_filtering.py Analysis" section
 
-    - [ ] **3.2.2 Propose split strategy**
-        - Based on research: Split by filter domain recommended for business logic tests
-        - Likely groups: genre, rating, date, language, keyword, combined filters
-        - Create proposed file structure with line count estimates
-        - **Document proposed structure:** Update `notes-test-organization-standardization.md` under
-          "test_result_filtering.py Analysis" section for approval
+    - [x] **3.2.2 Propose split strategy**
+        - **Strategy:** Filter domain split (8 files, 80-294 lines each)
+        - **Files proposed:**
+          1. test_year_filtering.py (~200 lines) - Year filters + combined year+rating
+          2. test_rating_filtering.py (~140 lines) - Rating filters (placeholder, range, missing)
+          3. test_vote_count_filtering.py (~120 lines) - Vote count quality filters
+          4. test_completeness_filtering.py (~160 lines) - Completeness checks (poster, title)
+          5. test_historical_validation.py (~120 lines) - Pre-cinema date validation
+          6. test_genre_quality_filtering.py (~144 lines) - Genre quality checks
+          7. test_buffer_mechanism.py (~294 lines) - Buffer mechanism tests
+          8. test_endpoint_filtering_integration.py (~180 lines) - Cross-cutting concerns
+        - **Rationale:** Filter types are independent with clear boundaries, buffer is shared concern
+        - **Complete strategy documented** in notes file for approval
 
-- [ ] **3.3 Identify other oversized files (500+ lines)**
+- [x] **3.3 Identify other oversized files (500+ lines)**
 
-    - [ ] **3.3.1 Generate line count report**
-        - Command: `find backend/apps -name "test_*.py" -exec wc -l {} + | sort -rn`
-        - Identify files >500 lines that would benefit from splitting
-        - **Document candidates:** Update `notes-test-organization-standardization.md` under
-          "Other Oversized Files" section
+    - [x] **3.3.1 Generate line count report**
+        - Generated comprehensive line count report for all test files
+        - Identified 11 files over 500 lines (including already analyzed test_movie_api.py and
+          test_result_filtering.py)
+        - **Candidates documented** in notes file under "Other Oversized Files" section
 
-    - [ ] **3.3.2 Assess split necessity**
-        - For each 500+ line file, determine if split is beneficial
-        - Consider: logical boundaries, feature groupings, team ownership
-        - **Document decisions:** Update `notes-test-organization-standardization.md` under
-          "Other Oversized Files" section with split/keep rationale
+    - [x] **3.3.2 Assess split necessity**
+        - Assessed 9 additional files (500-672 lines)
+        - **Split recommended:** 3 files (test_user_movie_data_api.py, test_watchlist_endpoint.py,
+          test_user_api.py)
+        - **Keep intact:** 6 files (single focus, borderline threshold, parametrized tests, TDD features)
+        - **Decisions documented** with rationale in notes file under "Other Oversized Files" section
+        - Split criteria: Multiple concerns, multiple endpoints, 2x+ over threshold
+        - Keep criteria: Single cohesive focus, borderline threshold, artificial boundaries
 
 ### **Phase 4:** Execute File Splits and Migration
 

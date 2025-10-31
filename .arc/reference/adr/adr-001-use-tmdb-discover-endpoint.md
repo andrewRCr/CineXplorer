@@ -57,10 +57,14 @@ list endpoint behavior when needed.
 **Implementation pattern:**
 
 - User-facing routes remain semantic: `/movies/popular`, `/movies/now-playing`, `/movies/top-rated`, `/movies/upcoming`
-- Each route is a thin wrapper (10-20 lines) that:
-    1. Defines preset filters for that context (e.g., popularity sort, date ranges, release types)
-    2. Merges user-provided filters with presets using a `merge_with_preset()` function
-    3. Delegates to unified `discover_movies()` service method
+- **API layer** (thin routes, 5-10 lines): Handles HTTP concerns only (validation, user extraction)
+    - Extracts filter parameters from request
+    - Delegates to service layer methods (`get_now_playing_movies()`, `get_upcoming_movies()`, etc.)
+    - Returns enriched response with user-specific data
+- **Service layer** (business logic, 30-50 lines per method): Implements thin wrapper pattern
+    - Defines preset filters for context (e.g., popularity sort, date ranges, release types)
+    - Merges user-provided filters with presets using `merge_with_preset()` helper
+    - Delegates to unified `discover_movies()` method with merged parameters
 - All filtering, pagination, buffer management, and client-side data quality logic remains in the single
   discover implementation
 - Frontend code requires no changes (routes stay the same, filters now work as expected)

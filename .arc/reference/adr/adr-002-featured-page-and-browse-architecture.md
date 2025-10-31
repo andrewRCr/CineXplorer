@@ -165,11 +165,19 @@ All navigation items are filterable browse tools EXCEPT Featured (which is a cur
 
 **Endpoints to implement:**
 
-1. `/api/movies/browse` - General movie browsing with full filter control (thin wrapper around TMDB discover, zero presets)
-2. `/api/movies/now-playing` - Thin wrapper around TMDB discover with date/release-type preset
-3. `/api/movies/upcoming` - Thin wrapper around TMDB discover with future date/release-type preset
+1. `/api/movies/browse` - General movie browsing with full filter control
+2. `/api/movies/now-playing` - Date-constrained browsing (current theatrical releases)
+3. `/api/movies/upcoming` - Date-constrained browsing (future theatrical releases)
 
-All three endpoints are thin wrappers around TMDB's `/discover/movie` at the same abstraction layer.
+**Implementation architecture:**
+
+- **API routes** are thin (HTTP layer only): extract parameters, delegate to service methods, enrich responses
+- **Service layer** implements thin wrapper pattern: each service method (`browse_movies()`, `get_now_playing_movies()`,
+  `get_upcoming_movies()`) wraps the core `discover_movies()` method
+- **Now-playing and upcoming** service methods build date/release-type presets and merge with user filters before
+  calling `discover_movies()`
+- **Browse** service method calls `discover_movies()` directly with user filters (zero presets)
+- All three ultimately call TMDB's `/discover/movie` endpoint at the same abstraction layer
 
 **Endpoints NOT implemented:**
 

@@ -900,6 +900,9 @@ class MovieService:
                 TMDBMovieSearchResponse
             )
 
+        # Extract min_vote_count from filters if provided (for vote filtering control)
+        min_vote_count = filters.get('min_vote_count', MIN_VOTE_COUNT)  # type: ignore[arg-type]
+
         return self._fetch_with_filters_and_buffer(
             fetch_discover_page,
             page,
@@ -907,7 +910,8 @@ class MovieService:
             year_max,
             rating_min,
             rating_max,
-            tmdb_page_start=tmdb_page_start
+            tmdb_page_start=tmdb_page_start,
+            min_vote_count=min_vote_count  # type: ignore[arg-type]
         )
 
     def get_movie_genres(self) -> list[GenreSchema]:

@@ -163,6 +163,148 @@ params: TMDBParams = {
 
 ---
 
+## Phase 1.2: Now Playing Endpoint Investigation (COMPLETED 2025-10-31)
+
+**Purpose:** Investigate two known issues with now-playing endpoint before proceeding to test coverage audit.
+
+### Issue #1: Filter/Sort Parameters Not Working
+
+**Root Cause Identified:**
+
+API route signature mismatch - the endpoint doesn't accept filter parameters from the frontend.
+
+**Evidence:**
+
+1. **API Route** (`backend/apps/movie/api.py:117-127`):
+
+   ```python
+   @movies_router.get("/now-playing", ...)
+   def get_now_playing_movies(
+       request: HttpRequest,
+       params: PaginationParams,  # ← Only accepts page parameter
+   ):
+       response = _movie_service.get_now_playing_movies(page=params.page or 1)
+       # ← No filter parameters passed to service
+   ```
+
+2. **Service Method** (`backend/apps/movie/services/movie_service.py:566-573`):
+
+   ```python
+   def get_now_playing_movies(
+       self,
+       page: int = 1,
+       year_min: int | None = None,     # ← Service CAN accept filters
+       year_max: int | None = None,
+       rating_min: float | None = None,
+       rating_max: float | None = None,
+   ) -> PaginatedMovieResponseSchema:
+   ```
+
+3. **Comparison with Discover Endpoint** (`backend/apps/movie/api.py:161-165`):
+
+   ```python
+   @movies_router.get("/discover", ...)
+   def discover_movies(
+       request: HttpRequest,
+       filters: FilterParams,  # ← Accepts full FilterParams (genres, ratings, years, sort, etc.)
+   ):
+   ```
+
+**Finding:** The API route only accepts `PaginationParams` (page only), not `FilterParams` (genres, ratings, sort,
+etc.). Frontend sends filters, but they're silently ignored by Django Ninja because they're not in the route signature.
+
+### Issue #2: Date Range Coverage Gap
+
+**Root Cause Identified:**
+
+Using TMDB's native `/movie/now_playing` endpoint with uncontrollable date range instead of discover wrapper.
+
+**Evidence:**
+
+1. **Current Implementation** (`backend/apps/movie/services/movie_service.py:594-596`):
+
+   ```python
+   def fetch_now_playing_page(page_num: int) -> TMDBMovieSearchResponse:
+       """Fetch a specific now playing page."""
+       page_response = self._tmdb_client.get_now_playing_movies(page=page_num)
+       # ← Calls TMDB's native endpoint with NO date parameters
+   ```
+
+2. **TMDB Client** (`backend/apps/core/services/tmdb_api_client.py:545-557`):
+
+   ```python
+   def get_now_playing_movies(self, page: int = 1, **kwargs: object) -> ApiResponse:
+       params = {"page": page, **kwargs}
+       return self.get("movie/now_playing", params)
+       # ← Calls TMDB's native /movie/now_playing with TMDB's default date range
+   ```
+
+3. **Actual Date Range Behavior** (tested 2025-10-31):
+   - System date: Oct 31, 2025
+   - Returns movies through: Oct 22, 2025 (9 days in the PAST)
+   - Expected per ADR-002: Through today + 5 days (Nov 5) for "theater planning window"
+   - Gap: 13 days missing (Oct 23 - Nov 5)
+
+4. **TMDB Coverage Analysis** (from Phase 1.1, lines 111-126):
+   - TMDB's native now_playing: Sept 24 - Nov 5 (42-day window)
+   - TMDB's date range: 37 days past + 5 days future
+   - Endpoint boundary: Ends at today + 5, where Upcoming begins
+
+**Finding:** TMDB's native `/movie/now_playing` endpoint has its own date range logic that we cannot control. To match
+ADR-002 requirements (date range preset for "current window around today" extending to today + 5 days), we need to use
+the discover endpoint with explicit date filters, similar to the upcoming endpoint fix.
+
+### Recommended Fixes
+
+**Fix #1: Add Filter Parameter Support**
+
+Update API route to accept and pass through filter parameters:
+
+```python
+@movies_router.get("/now-playing", response=PaginatedMovieResponseSchema, auth=None)
+def get_now_playing_movies(
+    request: HttpRequest,
+    filters: FilterParams,  # ← Change from PaginationParams to FilterParams
+):
+    """Retrieve currently playing movies with pagination, filtering, and user-specific data."""
+    # Extract parameters from filters schema
+    # Pass to service layer with date presets (protected keys)
+    # Service should call discover endpoint, not native now_playing
+```
+
+**Fix #2: Convert to Discover Wrapper with Date Preset**
+
+Replace native TMDB endpoint call with discover wrapper pattern (same as upcoming endpoint):
+
+1. **Date Range Configuration:**
+   - Start: today - 30 days (past releases still in theaters)
+   - End: today + 5 days (upcoming weekend, matches TMDB boundary)
+   - Total window: 35 days
+   - Release type: `2|3` (theatrical)
+
+2. **Implementation Pattern** (follow upcoming endpoint):
+   - Use discover endpoint via `TMDBApiClient.discover_movies()`
+   - Add `primary_release_date.gte` and `primary_release_date.lte` parameters
+   - Remove any `region` parameter (incompatible with date filters per Phase 1.1 findings)
+   - Add `min_vote_count` parameter threading (allow override, default to MIN_VOTE_COUNT)
+   - Add `with_release_type=2|3` preset
+
+3. **Protected Keys** (per ADR-002):
+   - Date range (primary_release_date.gte/lte)
+   - Release type (with_release_type)
+   - User CAN filter by genre, rating, keywords
+   - User CAN change sort order
+
+**Rationale:**
+
+1. **Architecture Alignment**: Matches ADR-002 thin wrapper pattern and upcoming endpoint implementation
+2. **Filter Support**: Enables genre/rating/sort filtering that frontend already sends
+3. **Date Control**: Explicit date range ensures "theater planning window" coverage (past + upcoming weekend)
+4. **Consistency**: Both time-constrained endpoints (now-playing, upcoming) use same discover-based pattern
+5. **No Region Issues**: Avoid region + date incompatibility discovered in Phase 1.1
+
+---
+
 ## TMDB API Research Findings
 
 ### What TMDB Actually Supports

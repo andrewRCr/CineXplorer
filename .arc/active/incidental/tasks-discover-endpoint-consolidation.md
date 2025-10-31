@@ -56,117 +56,170 @@ don't.
 
 **Purpose:** Understand root causes and current state before writing code.
 
-- [ ] **1.1 Diagnose upcoming endpoint failure**
+- [x] **1.1 Diagnose upcoming endpoint failure**
 
     **Goal:** Determine why upcoming returns no results and fix date range.
 
-    - [ ] **1.1.1 Test current implementation with various date windows**
-        - Test with 30-day window (current)
-        - Test with 60, 90, 180-day windows
-        - Test with min_date = today vs today - 7 days
-        - Test without region parameter
-        - Document which configurations return results
+    **Completed:** Root cause identified and fixed. Endpoint now functional with clean separation from Now Playing.
+    See notes file Phase 1.1 section for full findings.
 
-    - [ ] **1.1.2 Compare with TMDB's upstream endpoint behavior**
-        - Test TMDB's `/movie/upcoming` directly via curl
-        - Document their date range and parameters
-        - Identify differences from our implementation
+    - [x] **1.1.1 Test current implementation with various date windows**
+        - Tested: 30, 60, 90, 180-day windows
+        - Tested: with and without `region` parameter
+        - Finding: WITH `region="US"`: 0 results; WITHOUT `region`: 1626-2039 results
+        - Conclusion: Region parameter breaks primary_release_date filtering (confirmed by research doc)
 
-    - [ ] **1.1.3 Document findings and determine correct date range**
-        - Root cause analysis (date window? region? TMDB data quality?)
-        - Recommended date range with rationale
-        - Update notes file with decision
+    - [x] **1.1.2 Compare with TMDB's upstream endpoint behavior**
+        - Tested TMDB's `/movie/upcoming` directly
+        - TMDB reports date range: Nov 5-26 (3 weeks)
+        - TMDB returns movies from July-October (outside range) - confirms TMDB bug
+        - Our endpoint: 1625 total results, 0 returned (backend filtered all out)
+        - TMDB coverage analysis: Now Playing ends at today+5, Upcoming starts at today+5 (adjacent, no overlap)
 
-- [ ] **1.2 Audit current test coverage**
+    - [x] **1.1.3 Document findings and determine correct date range**
+        - Root cause: `region: "US"` incompatible with `primary_release_date` filters
+        - Recommended fix: Remove `region` parameter, start at today + 5 days, 60-day window
+        - Rationale: Research doc confirms incompatibility (lines 77-88), testing validates
+        - TMDB analysis shows Now Playing ends at today + 5 days, Upcoming starts at today + 5 days
+        - Clean separation prevents overlap between endpoints
+        - Documented: Notes file Phase 1.1 section with full evidence and recommendation
+
+    - [x] **1.1.4 Apply immediate fix to unblock endpoint**
+        - Goal: Make upcoming endpoint functional before architectural refactor
+        - Changes to `get_upcoming_movies()` in movie_service.py:
+            - Removed `"region": "US"` parameter (incompatible with primary_release_date)
+            - Changed min_date: `today + timedelta(days=5)` (start where Now Playing ends)
+            - Changed max_date: `today + timedelta(days=60)` (55-day effective window)
+            - Added `min_vote_count` parameter threading through filter chain
+            - Set `min_vote_count=None` for upcoming (unreleased movies have 0 votes)
+        - Results: 1600 total results, 20 movies per page (working correctly)
+        - Overlap verification: Now Playing max date=Oct 22, Upcoming min date=Nov 5 (clean separation)
+        - Quality gates: Linting passed, type checking passed (0 errors)
+
+- [ ] **1.2 Diagnose now-playing endpoint issues**
+
+    **Goal:** Investigate and fix two known issues with now-playing endpoint before test coverage audit.
+
+    - [ ] **1.2.1 Investigate filter/sort parameter handling**
+        - Check API route signature in `backend/apps/movie/api.py`
+        - Verify FilterParams are accepted and passed to service layer
+        - Test if genre/rating filters work via manual curl/browser testing
+        - Test if sort parameter works
+        - Document findings: Are params accepted? Passed through? Working end-to-end?
+        - Root cause: "Backend silently drops filters" per notes line 14
+
+    - [ ] **1.2.2 Investigate date range coverage gap**
+        - Current behavior: Returns movies up to Oct 22 (9 days in past from Oct 31)
+        - Expected behavior: Should return movies through today + 5 days (Nov 5)
+        - Check `get_now_playing_movies()` implementation in movie_service.py
+        - Compare with TMDB's native `/movie/now_playing` endpoint date range
+        - Test with/without `region` parameter (may have same incompatibility as Upcoming)
+        - Document actual date range vs expected "theater planning window" (past releases + upcoming weekend)
+
+    - [ ] **1.2.3 Determine root causes and fixes needed**
+        - Summary of Issue 1: Filter/sort handling (route, service, or both?)
+        - Summary of Issue 2: Date range configuration
+        - Recommended fixes with rationale
+        - Update notes file with findings
+
+    - [ ] **1.2.4 Apply fixes to now-playing endpoint**
+        - Fix filter/sort parameter handling (route and/or service layer)
+        - Fix date range if needed (remove region? adjust window?)
+        - Add any needed parameter threading (like min_vote_count)
+        - Test endpoint returns results with filters working
+        - Verify date coverage matches expected range (through today + 5)
+        - Quality gates: Run linting and type checking on modified files
+
+- [ ] **1.3 Audit current test coverage**
 
     **Goal:** Create endpoint × feature matrix showing actual coverage and validated gaps.
 
-    - [ ] **1.2.1 Catalog existing tests per endpoint**
+    - [ ] **1.3.1 Catalog existing tests per endpoint**
         - List all tests touching discover, now-playing, upcoming, popular, top-rated
         - Identify which features each endpoint tests (filtering, pagination, buffer, errors)
         - Document test file locations and organization state
         - Note: Test organization is mid-migration, tests in intermediate state
 
-    - [ ] **1.2.2 Create coverage matrix**
+    - [ ] **1.3.2 Create coverage matrix**
         - Matrix format: Endpoint (rows) × Feature (columns)
         - Features: Genre filtering, rating filtering, pagination, buffer mechanism, error handling, user enrichment
         - Mark tested (✅) vs gaps (❌) for each combination
         - Document in notes file under "Coverage Matrix" section
 
-    - [ ] **1.2.3 Calculate actual test gap**
+    - [ ] **1.3.3 Calculate actual test gap**
         - Count missing endpoint × feature combinations
         - Estimate realistic test count needed (not speculation)
         - Consider DRY patterns will reduce test function count
         - Update notes file with validated estimate (replace "60-80" speculation)
 
-- [ ] **1.3 Design DRY test structure**
+- [ ] **1.4 Design DRY test structure**
 
     **Goal:** Minimize test duplication through parametrized patterns and shared fixtures.
 
-    - [ ] **1.3.1 Identify common behaviors across endpoints**
+    - [ ] **1.4.1 Identify common behaviors across endpoints**
         - All should handle genre filters
         - All should handle pagination correctly
         - All should handle invalid parameters gracefully
         - All should support buffer mechanism
         - All should respect user authentication for enrichment
 
-    - [ ] **1.3.2 Design parametrized test pattern**
+    - [ ] **1.4.2 Design parametrized test pattern**
         - Pattern for testing all 4 endpoints with same behavior
         - Use `@pytest.mark.parametrize('endpoint,preset_params', [...])` approach
         - Define endpoint configurations (URL, expected preset keys)
         - Document pattern in notes file with code example
 
-    - [ ] **1.3.3 Design shared fixtures for test data**
+    - [ ] **1.4.3 Design shared fixtures for test data**
         - Reusable TMDB mock responses
         - Common filter parameter sets
         - Expected response structures
         - Forward-compatible with test organization (place in integration/conftest.py)
         - Follow type safety strategy (properly typed fixtures, no `Any`)
 
-    - [ ] **1.3.4 Plan test file organization**
+    - [ ] **1.4.4 Plan test file organization**
         - Where new tests should live: `backend/apps/movie/tests/integration/api/`
         - File naming: Follow test organization Phase 3 decisions
         - Anticipated files: `test_curated_endpoints.py` for wrapper-specific tests
         - Shared behavior tests may extend existing discover test files
         - Document strategy for forward compatibility
 
-- [ ] **1.4 Featured page architecture research and planning**
+- [ ] **1.5 Featured page architecture research and planning**
 
     **Goal:** Research hero-style Featured page patterns and document future implementation approach.
 
-    - [ ] **1.4.1 Create notes file for future Featured page design work**
+    - [ ] **1.5.1 Create notes file for future Featured page design work**
         - Create: `.arc/active/incidental/notes-featured-page-design.md`
         - Document decision context (ADR-002 reference)
         - Create placeholder sections for research findings
 
-    - [ ] **1.4.2 Research TMDB trending/popular endpoints**
+    - [ ] **1.5.2 Research TMDB trending/popular endpoints**
         - Identify available TMDB endpoints: `/trending/*`, `/movie/popular`, others
         - Document parameters, response formats, update frequency
         - Determine what content can be used for Featured page
         - Document findings in notes file
 
-    - [ ] **1.4.3 Research industry patterns for hero landing pages**
+    - [ ] **1.5.3 Research industry patterns for hero landing pages**
         - TMDB website: Analyze home page structure, content types, layout
         - Letterboxd: Analyze featured content strategy, collections approach
         - Netflix: Analyze hero sections, horizontal scrolling patterns
         - Other movie discovery services (IMDb, Trakt, etc.)
         - Document findings in notes file
 
-    - [ ] **1.4.4 Analyze content strategy options for Featured page**
+    - [ ] **1.5.4 Analyze content strategy options for Featured page**
         - What content types: Trending, popular this week, featured collections, new releases
         - Update frequency: How to keep content fresh with TMDB APIs
         - Layout patterns: Hero sections, horizontal scrolls, grid layouts
         - Relationship to Browse/Now Playing/Upcoming: How Featured complements browse tools
         - Document options and trade-offs in notes file
 
-    - [ ] **1.4.5 Scope future Featured page hero implementation**
+    - [ ] **1.5.5 Scope future Featured page hero implementation**
         - Required components (hero section, collections, navigation)
-        - Data requirements (TMDB API endpoints identified in 1.4.2)
+        - Data requirements (TMDB API endpoints identified in 1.5.2)
         - Frontend work estimate
         - Testing approach
         - Document in notes file for future task list creation
 
-    - [ ] **1.4.6 Update notes file with implementation timeline**
+    - [ ] **1.5.6 Update notes file with implementation timeline**
         - Recommendation: After all active task lists complete
         - Rationale: This is feature work, not technical debt
         - Interim: Stub Featured page provides functional navigation

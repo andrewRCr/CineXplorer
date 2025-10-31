@@ -68,6 +68,101 @@ went unnoticed.
 
 ---
 
+## Phase 1.1: Upcoming Endpoint Diagnosis (COMPLETED 2025-10-31)
+
+### Root Cause: region + primary_release_date Incompatibility
+
+**Finding:** Upcoming endpoint returns NO results because our implementation uses `region: "US"` with
+`primary_release_date` filters, which are **incompatible** per TMDB API research (see
+`.arc/active/incidental/research-tmdb-api-date-filtering.md` lines 77-88).
+
+**Evidence:**
+
+1. **Our Implementation** (movie_service.py:645-658):
+
+   ```python
+   params: TMDBParams = {
+       "region": "US",  # ← PROBLEMATIC
+       "primary_release_date.gte": min_date,
+       "primary_release_date.lte": max_date,
+       # ...
+   }
+   ```
+
+2. **Test Results**:
+   - WITH `region="US"`: 0 results from TMDB
+   - WITHOUT `region`: 1626 results for 30-day window, 2039 for 60-day window
+   - System date: 2025-10-31
+   - Test window: Oct 31 - Nov 30 (30 days) or Oct 31 - Dec 30 (60 days)
+
+3. **TMDB Native Endpoint Behavior**:
+   - `/movie/upcoming` reports date range: Nov 5 - Nov 26 (3 weeks ahead)
+   - BUT returns movies from July-October (outside reported range)
+   - Shows TMDB's own bug (confirmed in research doc)
+
+4. **Our Endpoint Behavior**:
+   - Reports: 1625 total results (from TMDB)
+   - Returns: 0 movies (all filtered out by backend)
+   - `next_tmdb_page_start: 7` (buffer fetched 6 pages, gave up at safety limit)
+   - Backend filtering correctly removes out-of-range dates from TMDB
+
+### TMDB Coverage Analysis
+
+**Now Playing endpoint:**
+
+- Date range: Sept 24 to Nov 5 (42-day window)
+- Coverage: 37 days PAST + 5 days FUTURE
+- Logic: "Movies in theaters now + this coming weekend"
+- Results: 6,497 movies
+
+**Upcoming endpoint:**
+
+- Date range: Nov 5 to Nov 26 (21-day window)
+- Coverage: Starts exactly where Now Playing ends
+- Logic: "Plan ahead for next few weeks"
+- Results: 1,348 movies
+
+**Key Finding:** TMDB endpoints are **adjacent** (no gap, no overlap). The 5-day buffer isn't arbitrary - it's architectural.
+It defines the boundary between "theater planning window" (Now Playing) and "future anticipation" (Upcoming).
+
+### Date Window Recommendation
+
+**Optimal Configuration** (based on testing and TMDB coverage analysis):
+
+```python
+# Remove region parameter (incompatible with primary_release_date)
+today = datetime.now(tz=UTC)
+min_date = (today + timedelta(days=5)).strftime("%Y-%m-%d")  # Start where Now Playing ends
+max_date = (today + timedelta(days=60)).strftime("%Y-%m-%d")  # 60-day window from today
+
+params: TMDBParams = {
+    "include_adult": False,
+    "include_video": False,
+    "language": "en-US",
+    # "region": "US",  # ← REMOVE (incompatible)
+    "sort_by": "popularity.desc",
+    "with_release_type": "2|3",
+    "primary_release_date.gte": min_date,  # today + 5
+    "primary_release_date.lte": max_date,  # today + 60
+}
+```
+
+**Rationale:**
+
+1. **Remove `region`**: Research confirms incompatibility with `primary_release_date` filters (TMDB behavior becomes undefined)
+2. **Start at today + 5 days**: Matches TMDB's architectural boundary, prevents overlap with Now Playing
+3. **55-day effective window** (days 5-60): Better coverage than TMDB's 21-day window, supports "plan ahead" use case
+4. **Date-constrained with release_type**: Preserves "upcoming theatrical releases" semantics
+5. **Keep `primary_release_date`**: Correct choice per research (filters on world premiere date)
+
+### Now Playing Verification Needed
+
+**Status**: Not yet tested in Phase 1.1 (focused on upcoming diagnosis)
+**Next**: Should verify now-playing also works without `region` parameter
+**Note**: Research doc (lines 77-88) confirms same incompatibility applies to ALL primary_release_date usage
+
+---
+
 ## TMDB API Research Findings
 
 ### What TMDB Actually Supports

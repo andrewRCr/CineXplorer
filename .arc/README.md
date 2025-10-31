@@ -15,7 +15,7 @@ It is organized following the ARC framework methodology.
 └── reference/        # Stable, long-term documentation
     ├── constitution/ # Foundational project documents (META-PRD, rules, architecture)
     ├── strategies/   # Evolved implementation approaches and stable patterns
-    ├── ai-instructions/ # Agent configuration and context
+    ├── agent/        # Agent configuration and context
     ├── archive/      # Completed feature documentation and decisions
     └── workflows/    # Development process guidance
 ```

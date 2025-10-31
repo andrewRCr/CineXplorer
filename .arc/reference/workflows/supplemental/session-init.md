@@ -39,7 +39,7 @@ more value in having complete context upfront than discovering missing rules mid
 
 **Read these documents to establish complete context:**
 
-1. `.arc/reference/ai-instructions/AGENTS.md` - **MUST READ IN FULL**
+1. `.arc/reference/agent/AGENTS.md` - **MUST READ IN FULL**
    - Project overview and technology stack
    - Quick lookup guide for finding information
    - AI collaboration principles

@@ -41,7 +41,7 @@ CineXplorer (primary) ──sync-cinexplorer-refinements.md──> ARC Framework
 - `.arc/reference/` directory improvements:
     - `constitution/` - Constitutional documents and standards
     - `workflows/` - Process documentation
-    - `ai-instructions/` - AI collaboration guidance
+    - `agent/` - AI collaboration guidance
     - `strategies/` - Strategy and pattern documents
 - `.arc/active/CURRENT-SESSION.md` - **Format/structure improvements only**
     - Session Startup Protocol updates
@@ -444,7 +444,7 @@ git add .arc/
 # Or stage selectively
 git add .arc/reference/workflows/
 git add .arc/reference/constitution/
-git add .arc/reference/ai-instructions/
+git add .arc/reference/agent/
 ```
 
 **7.3 Commit Message**

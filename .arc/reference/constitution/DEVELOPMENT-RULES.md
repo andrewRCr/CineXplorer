@@ -1,6 +1,6 @@
 # Development Rules - CineXplorer
 
-**Version:** 2.9 | **Updated:** 2025-10-29 | **Hash:** `m7k4x9w1`
+**Version:** 2.10 | **Updated:** 2025-10-30 | **Hash:** `n8p5q2r6`
 
 Core development rules and quality standards for CineXplorer. These rules are **non-negotiable** and must be followed
 by all contributors, including AI assistants.
@@ -172,6 +172,33 @@ Separate concerns, prefer composition over duplication, favor readability when p
   belongs only in `.arc/` documentation. Code should explain "what" and "why" independently of
   project management context.
 
+## Architecture Documentation
+
+### Architecture Decision Records (ADRs)
+
+Document significant architectural decisions in ADRs (`.arc/reference/adr/`). ADRs capture the context,
+decision, and consequences of important design choices, serving as historical record and reference for
+understanding system constraints.
+
+**Write an ADR when:**
+
+- Decision affects system structure or external contracts
+- Multiple alternatives were considered
+- Decision driven by external constraint (API limitations, regulatory requirements)
+- Future developers will ask "why did we do it this way?"
+- Decision could be reversed later (context needed for reversal)
+
+**Don't write an ADR for:**
+
+- Purely tactical implementation choices (variable names, loop constructs)
+- Decisions obvious from reading code (standard CRUD, framework conventions)
+- Temporary or experimental choices
+
+**Format and guidance:** See [ADR Methodology Strategy](../strategies/strategy-adr-methodology.md)
+**Template:** See `.arc/reference/adr/adr-template.md`
+
+ADRs are immutable once accepted - new decisions require new ADRs that supersede old ones.
+
 ## Reference Documentation
 
 This document provides core rules and standards. See related documentation:
@@ -180,6 +207,7 @@ This document provides core rules and standards. See related documentation:
 - [Task Processing Workflow](../workflows/3-process-task-loop.md) - Detailed task execution workflow
 - [Atomic Commit Workflow](../workflows/supplemental/atomic-commit.md) - Enhanced commit workflow with task context analysis
 - [AI Agent Reference Card](../ai-instructions/AGENTS.md) - Complete project context for AI
-- [Technical Architecture](TECHNICAL-ARCHITECTURE.md) - Testing methodology details
+- [Technical Overview](TECHNICAL-OVERVIEW.md) - High-level system architecture and technology stack
+- [ADR Methodology Strategy](../strategies/strategy-adr-methodology.md) - Architecture decision record guidance
 - [Type Safety Strategy](../strategies/strategy-type-safety.md) - Type checking approach and patterns
 - [Testing Methodology Strategy](../strategies/strategy-testing-methodology.md) - Testing philosophy and practices

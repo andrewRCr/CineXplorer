@@ -62,6 +62,28 @@ are genuinely different contexts defined by time constraints.
 - Separates frontend (user actions) from backend (domain structure)
 - Future-proof: `/movie/:id` and `/person/:id` are detail views, `/browse/*` are discovery actions
 
+### Backend Endpoint Naming: "Browse" vs "Discover"
+
+**Terminology clarification:**
+
+- **"Discover"** = TMDB's implementation detail (their `/discover/movie` endpoint)
+- **"Browse"** = Our application's semantic layer (what users do in our app)
+
+**Architecture consistency:**
+
+All three backend endpoints are thin wrappers around TMDB's discover endpoint:
+
+- Now-playing wraps discover with date presets
+- Upcoming wraps discover with date presets
+- Browse wraps discover with zero presets (general purpose)
+
+For consistency, all three should be at the same abstraction layer. Using "discover" for one endpoint makes it feel
+like "raw TMDB access" while the others feel like "our wrappers." Using "browse" for all three keeps them at the same
+semantic layer as application-level resources.
+
+This also aligns backend naming with frontend naming (`/browse` → `/api/movies/browse`), though the frontend nesting
+structure (`/browse/now-playing`) is UX hierarchy, not API mirroring.
+
 ### Options Considered
 
 **Option A: Four curated endpoints with `/movies/*` routing**
@@ -143,13 +165,15 @@ All navigation items are filterable browse tools EXCEPT Featured (which is a cur
 
 **Endpoints to implement:**
 
-1. `/api/movies/discover` - Core discover endpoint (already exists, unchanged)
-2. `/api/movies/now-playing` - Thin wrapper around discover with date/release-type preset
-3. `/api/movies/upcoming` - Thin wrapper around discover with future date/release-type preset
+1. `/api/movies/browse` - General movie browsing with full filter control (thin wrapper around TMDB discover, zero presets)
+2. `/api/movies/now-playing` - Thin wrapper around TMDB discover with date/release-type preset
+3. `/api/movies/upcoming` - Thin wrapper around TMDB discover with future date/release-type preset
+
+All three endpoints are thin wrappers around TMDB's `/discover/movie` at the same abstraction layer.
 
 **Endpoints NOT implemented:**
 
-- ~~`/api/movies/popular`~~ - Frontend calls `/api/movies/discover` with default `sort_by=popularity.desc`
+- ~~`/api/movies/popular`~~ - Frontend calls `/api/movies/browse` with default `sort_by=popularity.desc`
 - ~~`/api/movies/top-rated`~~ - User selects top-rated sort via `/browse` UI
 
 **Rationale:** Popular and top-rated are sort options, not distinct endpoints. The browse page provides both via its
@@ -166,9 +190,9 @@ sort UI controls.
    - Purpose: Enable testing and provide interim navigation
 
 2. **Browse pages**:
-   - `/browse` - Calls discover endpoint, defaults to popularity sort, full filter control
-   - `/browse/now-playing` - Calls now-playing endpoint, filterable except date range
-   - `/browse/upcoming` - Calls upcoming endpoint, filterable except date range
+   - `/browse` - Calls browse endpoint (`/api/movies/browse`), defaults to popularity sort, full filter control
+   - `/browse/now-playing` - Calls now-playing endpoint (`/api/movies/now-playing`), filterable except date range
+   - `/browse/upcoming` - Calls upcoming endpoint (`/api/movies/upcoming`), filterable except date range
 
 3. **Routing updates**:
    - `/` redirects to `/featured`
@@ -189,18 +213,23 @@ sort UI controls.
 - **Better first impression**: Landing page is showcase, not limited browse view
 - **Solves protected keys UX issue**: Main browse page (`/browse`) has NO protected keys - full user control
 - **Cleaner architecture**: Only 3 backend endpoints instead of 4 (popular/top-rated eliminated as redundant)
+- **Consistent abstraction layer**: All three backend endpoints (`browse`, `now-playing`, `upcoming`) are thin
+  wrappers around TMDB discover at same semantic layer
+- **Clear terminology**: "Browse" = application layer, "discover" = TMDB implementation detail
 - **Clear navigation hierarchy**: Featured (showcase) vs. Browse tools (exploration)
 - **Action-oriented routing**: `/browse/*` is parallel with `/search` (both are user actions)
 - **Leaves paths open**: `/browse` available for general discover, distinct from time-constrained views
 - **Industry alignment**: Follows patterns from successful movie discovery services (TMDB, Letterboxd, Netflix)
-- **Separation of concerns**: Frontend routes (user actions) vs. backend routes (domain structure)
+- **Frontend-backend naming alignment**: `/browse` → `/api/movies/browse` (though nesting is UX hierarchy)
 - **Eliminates redundancy**: Popular/top-rated sorting already exists in browse UI controls
 - **Featured page dual purpose**: Landing page AND navigable trending content destination
 
 ### Negative
 
-- **Routing structure change**: Frontend routes diverge from backend routes (`/browse/*` vs. `/api/movies/*`)
-    - Mitigated by: Healthy separation of concerns, frontend is action-oriented, backend is domain-oriented
+- **Frontend nesting doesn't mirror API structure**: `/browse/now-playing` calls flat `/api/movies/now-playing`, not
+  `/api/movies/browse/now-playing`
+    - Mitigated by: This is standard practice - UI navigation hierarchy ≠ API resource structure. The nesting reflects
+      UX (specialized browse views), not API endpoints
 - **Content strategy required**: Featured page needs logic for trending content
     - Mitigated by: TMDB provides popular/trending endpoints, research in Phase 1.4
 - **Implementation effort**: Featured page design requires research and implementation

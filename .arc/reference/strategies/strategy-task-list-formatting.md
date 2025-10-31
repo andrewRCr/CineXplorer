@@ -240,6 +240,7 @@ architecture issues discovered during browser testing
    - Git log shows priority shifts
    - Team understands work dependencies
    - Easy to reconstruct decision timeline
+
 ```
 
 ### Status Field Values

@@ -95,29 +95,29 @@ We will implement **Option B: Featured page with simplified browse architecture*
 
 - `/` → Redirects to `/featured` (explicit endpoint for clarity and navigability)
 - `/featured` → Featured/hero page (trending/popular content showcase, no filtering)
-  - Navigable in nav as "Featured"
-  - Serves dual purpose: landing page + trending content destination
-  - Future: Rich hero design with featured collections, horizontal scrolling
-  - Immediate: Minimal stub with welcome message and browse links
+    - Navigable in nav as "Featured"
+    - Serves dual purpose: landing page + trending content destination
+    - Future: Rich hero design with featured collections, horizontal scrolling
+    - Immediate: Minimal stub with welcome message and browse links
 
 **Browse functionality:**
 
 - `/browse` → General movie discovery with full filter control
-  - Defaults to `sort_by=popularity.desc` but user can change (NO protected keys)
-  - Full access to all filters: genre, rating, year, keywords, people
-  - Primary unrestricted exploration tool
+    - Defaults to `sort_by=popularity.desc` but user can change (NO protected keys)
+    - Full access to all filters: genre, rating, year, keywords, people
+    - Primary unrestricted exploration tool
 
 - `/browse/now-playing` → Movies currently in theaters
-  - Date range preset (current window around today)
-  - Release type preset (theatrical)
-  - Protected keys: date range, release type
-  - User can still filter by genre, rating, etc.
+    - Date range preset (current window around today)
+    - Release type preset (theatrical)
+    - Protected keys: date range, release type
+    - User can still filter by genre, rating, etc.
 
 - `/browse/upcoming` → Movies coming soon to theaters
-  - Date range preset (future releases)
-  - Release type preset (theatrical)
-  - Protected keys: date range, release type
-  - User can still filter by genre, rating, etc.
+    - Date range preset (future releases)
+    - Release type preset (theatrical)
+    - Protected keys: date range, release type
+    - User can still filter by genre, rating, etc.
 
 **Detail views:**
 
@@ -200,20 +200,20 @@ sort UI controls.
 ### Negative
 
 - **Routing structure change**: Frontend routes diverge from backend routes (`/browse/*` vs. `/api/movies/*`)
-  - Mitigated by: Healthy separation of concerns, frontend is action-oriented, backend is domain-oriented
+    - Mitigated by: Healthy separation of concerns, frontend is action-oriented, backend is domain-oriented
 - **Content strategy required**: Featured page needs logic for trending content
-  - Mitigated by: TMDB provides popular/trending endpoints, research in Phase 1.4
+    - Mitigated by: TMDB provides popular/trending endpoints, research in Phase 1.4
 - **Implementation effort**: Featured page design requires research and implementation
-  - Mitigated by: Stub page provides interim functionality, full design is separate task list
+    - Mitigated by: Stub page provides interim functionality, full design is separate task list
 - **Three endpoints instead of TMDB's four list endpoints**: Deviates from direct API mapping
-  - Mitigated by: Our wrapper pattern already deviates, this simplification improves UX
+    - Mitigated by: Our wrapper pattern already deviates, this simplification improves UX
 
 ### Risks
 
 - **Featured stub period**: Minimal page may feel incomplete during interim
-  - Mitigated by: Clear browse navigation links, functional even if not polished
+    - Mitigated by: Clear browse navigation links, functional even if not polished
 - **Content freshness**: Featured page must stay current
-  - Addressed in: Future implementation research (Phase 1.4)
+    - Addressed in: Future implementation research (Phase 1.4)
 
 ---
 

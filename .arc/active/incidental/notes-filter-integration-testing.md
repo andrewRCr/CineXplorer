@@ -5,7 +5,7 @@
 
 This document captures detailed findings, data flow mappings, and implementation notes discovered during the filter
 integration testing incidental work. Content here will be streamlined and integrated into permanent documentation
-(TECHNICAL-ARCHITECTURE.md or standalone docs) at completion.
+(TECHNICAL-OVERVIEW.md or standalone docs) at completion.
 
 ---
 
@@ -377,7 +377,7 @@ even when TMDB API returns bad data.
 
 **Target Documents**:
 
-- TECHNICAL-ARCHITECTURE.md - Add "Movie Filtering Architecture" section
+- TECHNICAL-OVERVIEW.md - Add "Movie Filtering Architecture" section
     - Two-pass filtering design
     - TMDB API quirks and data quality issues
     - Backend filtering as data hygiene layer

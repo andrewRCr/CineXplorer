@@ -278,7 +278,7 @@ Pydantic schema functionality.
 
 4. **Post-Cleanup:**
    - If only error_codes remains, consider renaming `backend/shared/` → `backend/core/constants/` or similar
-   - Document in TECHNICAL-ARCHITECTURE.md that Pydantic schemas are the single source of truth
+   - Document in TECHNICAL-OVERVIEW.md that Pydantic schemas are the single source of truth
 
 **Effort Estimate:** Low-Medium (2-3 hours)
 
@@ -359,7 +359,7 @@ def create_movie_base_from_tmdb_model(tmdb_movie: TMDBMovieBase) -> MovieBaseSch
 - Create direct mapping functions for each TMDB → app schema conversion
 - Update all service methods to use direct mappers
 - Add benchmarks to verify performance improvement
-- Document new pattern in TECHNICAL-ARCHITECTURE.md
+- Document new pattern in TECHNICAL-OVERVIEW.md
 
 **CodeRabbit Finding:** Identified in Task 7.4 IDE-based CodeRabbit review
 **Deferred Reason:** Premature optimization; current performance acceptable; Backend Modernization will

@@ -247,7 +247,7 @@ unexpected side effects in complex operations.
 - Usage examples where helpful
 - Notes on error handling behavior
 
-**4.4.2** The system must update `TECHNICAL-ARCHITECTURE.md` (final task) with:
+**4.4.2** The system must update `TECHNICAL-OVERVIEW.md` (final task) with:
 
 - Service layer architecture patterns section
 - Decision guide: "When to use class-based vs function-based approaches"
@@ -381,7 +381,7 @@ unexpected side effects in complex operations.
 
 3. **Documentation:**
    - All helpers/services have comprehensive docstrings
-   - TECHNICAL-ARCHITECTURE.md updated with service layer patterns
+   - TECHNICAL-OVERVIEW.md updated with service layer patterns
    - Decision guides provided for future service implementations
 
 4. **Feature Enablement:**
@@ -457,7 +457,7 @@ None. Scope is well-defined based on comprehensive planning completed during Bac
 **Phase 6: Integration Testing & Documentation (2-3 hours)**
 
 - Final integration testing across all services
-- TECHNICAL-ARCHITECTURE.md update with service patterns
+- TECHNICAL-OVERVIEW.md update with service patterns
 - Verify all quality gates pass
 
 **Total Effort Estimate:** 26-37 hours
@@ -498,7 +498,7 @@ None. Scope is well-defined based on comprehensive planning completed during Bac
 
 - TMDB result filtering: `frontend/src/hooks/useEnhancedFetcher.ts` (lines 126-272)
 - Filter utilities: `frontend/src/utilities/movieFilterUtils.ts` (year, rating, runtime filters)
-- TECHNICAL-ARCHITECTURE.md reference (line 80): "dynamically fills gaps using a pre-fetched buffer"
+- TECHNICAL-OVERVIEW.md reference (line 80): "dynamically fills gaps using a pre-fetched buffer"
 - Current limitation: Only fills from current page buffer, not next page
 
 ### 9.4 Related Work

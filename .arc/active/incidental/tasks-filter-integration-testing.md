@@ -544,7 +544,7 @@ then implement fixes to make them pass.
 
 - [ ] **4.2 Documentation Integration**
 
-    - [ ] 4.2.1 Integrate notes into TECHNICAL-ARCHITECTURE.md
+    - [ ] 4.2.1 Integrate notes into TECHNICAL-OVERVIEW.md
         - Add "Filter Architecture" section based on notes Phase 1.1.3
         - Include: Two-pass filtering design, parameter flow diagram
         - Document: TMDB API quirks, backend data hygiene role

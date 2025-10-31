@@ -56,7 +56,7 @@ patterns across movie, UserMovieData, and authentication domains.
 - Zero business logic in API endpoints (all extracted to services)
 - 100% service layer adoption (movie, UserMovieData, authentication)
 - All tests pass, zero linting/type errors
-- TECHNICAL-ARCHITECTURE.md updated with service patterns
+- TECHNICAL-OVERVIEW.md updated with service patterns
 
 ---
 
@@ -639,7 +639,7 @@ patterns across movie, UserMovieData, and authentication domains.
     - [ ] 6.2.2 Run full Authentication integration test suite (all 9 endpoints after service extraction)
     - [ ] 6.2.3 Run full Movie integration test suite (all endpoints after MovieService refactoring)
 
-- [ ] **6.3 Update TECHNICAL-ARCHITECTURE.md**
+- [ ] **6.3 Update TECHNICAL-OVERVIEW.md**
 
     - [ ] 6.3.1 Add service layer architecture patterns section
         - Document class-based service pattern with DI
@@ -661,7 +661,7 @@ patterns across movie, UserMovieData, and authentication domains.
         - Guideline: "Use dependency injection for testability"
         - Security note: "Authentication service handles security-critical operations"
 
-    - [ ] 6.3.4 Run markdown linting on TECHNICAL-ARCHITECTURE.md
+    - [ ] 6.3.4 Run markdown linting on TECHNICAL-OVERVIEW.md
 
 - [ ] **6.4 Final Quality Gate (All Gates)**
     - [ ] 6.4.1 Run full backend test suite with coverage

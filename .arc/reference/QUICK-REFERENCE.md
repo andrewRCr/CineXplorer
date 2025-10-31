@@ -12,10 +12,11 @@
 
 **Key documentation:**
 
-- `constitution/` - Project principles (META-PRD, TECHNICAL-ARCHITECTURE, PROJECT-STATUS)
+- `constitution/` - Project principles (META-PRD, TECHNICAL-OVERVIEW, PROJECT-STATUS)
+- `adr/` - Architecture decision records (significant design decisions with context)
 - `workflows/` - Core process guides (0-define-constitution.md, 1-create-prd.md, 2-generate-tasks.md, 3-process-task-loop.md)
 - `workflows/supplemental/` - Supporting workflows (atomic-commit.md, session-handoff.md, manage-incidental-work.md)
-- `strategies/` - Technical approaches (strategy-testing-methodology.md, strategy-type-safety.md)
+- `strategies/` - Technical approaches (testing methodology, type safety, ADR methodology)
 - `ai-instructions/` - AI-specific guidance (AGENTS.md, CLAUDE.md, WARP.md, GEMINI.md, copilot-instructions.md)
 
 ---

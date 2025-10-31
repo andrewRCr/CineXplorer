@@ -192,7 +192,7 @@ endpoints per ADR-002.
         - All 12 tests pass (0.21s execution time)
         - Quality checks: Linting passed (ruff), type checking passed (pyright 0 errors)
 
-- [ ] **2.2 Convert date-constrained routes to thin wrappers**
+- [x] **2.2 Convert date-constrained routes to thin wrappers**
 
     **Goal:** Update now-playing and upcoming routes to be thin wrappers (call TMDB discover with date presets).
 
@@ -264,13 +264,35 @@ endpoints per ADR-002.
 
         **Ready for Browser Testing:** All code changes complete and passing quality gates.
 
-    - [ ] **2.2.2a Update `/upcoming` route to be thin wrapper (backend)**
-        - Accept `FilterParams` in route signature
-        - Define preset with corrected date range from Phase 1.1 + release_type
-        - Call `merge_with_preset()` with `UPCOMING_PROTECTED_KEYS` (includes year and primary_release_year)
-        - Call `discover_movies()` with merged filters (internally calls TMDB discover)
-        - Update docstring to document wrapper pattern and protected keys
-        - Disable vote count filtering (unreleased movies have 0 votes)
+    - [x] **2.2.2a Update `/upcoming` route to be thin wrapper (backend)**
+
+        **Completed:** Upcoming endpoint successfully converted to thin wrapper pattern. All backend issues fixed.
+
+        - **✅ Accept FilterParams:** Changed route signature from `PaginationParams` to `FilterParams`
+            - Now accepts all discover filters (genres, ratings, keywords, cast, sort, etc.)
+            - Uses `filters.to_service_params()` to extract user filter parameters
+        - **✅ Date range preset:** Implemented preset with date range from Phase 1.1:
+            - Start: `today + timedelta(days=5)` (starts where Now Playing ends)
+            - End: `today + timedelta(days=65)` (60-day window for upcoming releases)
+            - Release type: `"2|3"` (theatrical releases only)
+            - NO `region` parameter (incompatible with date filters per Phase 1.1)
+        - **✅ Protected keys enforcement:** Calls `merge_with_preset()` with `UPCOMING_PROTECTED_KEYS`
+            - Date range parameters cannot be overridden by users
+            - Release type parameter protected
+            - Year and primary_release_year also protected (per helper constant definition)
+            - User filters (genres, ratings, etc.) properly merged
+        - **✅ Thin wrapper implementation:** Calls `discover_movies()` with merged filters
+            - No longer uses native TMDB `upcoming` endpoint or service method
+            - Uses discover endpoint internally with date presets
+            - Maintains same response format (PaginatedMovieResponseSchema)
+        - **✅ Vote count filtering disabled:** `min_vote_count=None` (unreleased movies have 0 votes)
+        - **✅ Comprehensive docstring:** Documents thin wrapper pattern, protected keys, and user capabilities
+            - Lists all protected parameters with rationale
+            - Lists all available user filters
+            - Explains upcoming planning window semantics (60-day future window)
+        - **✅ Date boundary verification:** Upcoming starts at today+5 (where Now Playing ends - adjacent, no overlap)
+        - **✅ Quality checks:** Linting passed (ruff), type checking passed (pyright 0 errors)
+        - **✅ Smoke test:** Endpoint functional with genre filter (105 total results, 20 movies per page)
 
     - [x] **2.2.2b Add frontend UI to disable year filters on upcoming route**
 
@@ -295,27 +317,63 @@ endpoints per ADR-002.
         - **✅ Frontend linting:** Passed (eslint 0 errors)
         - **✅ TypeScript checking:** Passed (tsc 0 errors)
 
-    - [ ] **2.2.3 Rename `/discover` route to `/browse` (per ADR-002)**
-        - **RENAME** `/api/movies/discover` to `/api/movies/browse`
-        - Keep FilterParams signature (already correct)
-        - Update docstring to clarify this is general browsing endpoint, thin wrapper with zero presets
-        - Rationale (ADR-002): Consistent abstraction layer - all three endpoints are wrappers
+    - [x] **2.2.3 Rename `/discover` route to `/browse` (per ADR-002)**
 
-    - [ ] **2.2.4 Remove popular/top-rated routes (per ADR-002)**
-        - **REMOVE** `/api/movies/popular` route entirely (if it exists)
-        - **REMOVE** `/api/movies/top-rated` route entirely (if it exists)
-        - Rationale (ADR-002): These are just sort options, not distinct endpoints
-        - Browse page will call `/api/movies/browse` with user-selected sort (popularity, top-rated, etc.)
-        - Update API documentation to reflect 3-endpoint architecture
+        **Completed:** Successfully renamed discover endpoint to browse with updated documentation.
 
-    - [ ] **2.2.5 Add basic smoke tests for endpoints**
-        - Simple verification (not comprehensive - that's Phase 5)
-        - Test: Now-playing returns results with genre filter
-        - Test: Upcoming returns results with rating filter
-        - Test: Browse still works (no regressions from rename)
-        - Quick validation before moving to frontend
-        - Command: `docker compose -f infrastructure/docker-compose.yml exec backend pytest apps/movie/tests/integration/api/test_date_constrained_endpoints.py`
-        - All now-playing and upcoming tests should pass
+        - **✅ Route renamed:** Changed `/api/movies/discover` to `/api/movies/browse`
+            - Function name updated from `discover_movies` to `browse_movies`
+            - Route decorator updated: `@movies_router.get("/browse", ...)`
+        - **✅ FilterParams signature:** Kept unchanged (already correct for browse endpoint)
+        - **✅ Docstring updated:** Clarified this is general browsing endpoint
+            - Added explanation: "thin wrapper around TMDB discover with zero presets"
+            - Highlighted difference from now-playing/upcoming: "full control over all filter parameters"
+            - Emphasized "unrestricted filtering for general movie browsing"
+            - Kept existing two-pass filtering architecture documentation
+        - **✅ Quality checks:** Linting passed (ruff), type checking passed (pyright 0 errors)
+        - **✅ Smoke test:** Browse endpoint functional (45895 total results with genre filter)
+        - **✅ Old endpoint removed:** `/discover` no longer responds (returns 404)
+
+    - [x] **2.2.4 Remove popular/top-rated routes (per ADR-002)**
+
+        **Completed:** Verified that popular/top-rated movie routes never existed in the API.
+
+        - **✅ Route audit:** Checked all `@movies_router.get()` routes in api.py
+            - Found only: `/now-playing`, `/upcoming`, `/search`, `/browse`, `/{tmdb_id}`
+            - No `/popular` or `/top-rated` movie routes exist
+        - **✅ Verification:** Tested both URLs return 404
+            - `/api/movies/popular` → 404 (no route exists)
+            - `/api/movies/top-rated` → 404 (no route exists)
+        - **✅ Architecture confirmed:** 3-endpoint architecture already in place
+            - Date-constrained: `/now-playing`, `/upcoming`
+            - General browsing: `/browse`
+            - Browse page will use `/browse` with `sort_by` parameter for popularity/top-rated sorting
+        - **Note:** Keywords and people have `get_popular_*` endpoints (not affected by this task)
+
+    - [x] **2.2.5 Add basic smoke tests for endpoints**
+
+        **Completed:** All 6 smoke tests passing. Tests verify basic functionality and protected key enforcement.
+
+        **Tests Created** (forward-compatible location: `apps/movie/tests/integration/api/test_date_constrained_endpoints.py`):
+        1. `test_now_playing_returns_results_with_genre_filter` - Verifies now-playing with genre filtering
+        2. `test_upcoming_returns_results_with_rating_filter` - Verifies upcoming with rating filtering
+        3. `test_browse_still_works_after_rename` - Verifies browse endpoint after discover→browse rename
+        4. `test_now_playing_date_preset_cannot_be_overridden` - Verifies protected keys on now-playing
+        5. `test_upcoming_date_preset_cannot_be_overridden` - Verifies protected keys on upcoming
+        6. `test_browse_allows_full_date_control` - Verifies browse has no protected keys
+
+        **Key Fixes:**
+        - Fixed mock pagination (set `total_pages=1` to avoid multi-page fetching)
+        - Fixed call_args access pattern (use `call_args_list[0]` for positional args)
+        - Fixed URL parameter names (use underscores: `vote_average_gte`, `release_date_gte` not dots)
+        - Fixed line length violations (8 E501 errors - split long lines for readability)
+
+        **Test Results:** 6/6 passed in 0.43s
+
+        **Quality Gates:**
+        - ✅ Ruff linting: All checks passed
+        - ✅ Pyright type checking: 0 errors, 0 warnings
+        - ✅ Tests: 6/6 passed
 
 - [ ] **2.3 Update service layer**
 

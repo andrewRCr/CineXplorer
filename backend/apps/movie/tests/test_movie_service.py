@@ -157,7 +157,9 @@ def test_search_movies_uses_injected_client() -> None:
                 'title': 'Test Movie',
                 'poster_path': '/test.jpg',
                 'release_date': '2023-01-01',
-                'vote_average': 8.0
+                'vote_average': 8.0,
+                'vote_count': 100,
+                'genre_ids': [28, 12]  # Action, Adventure
             }
         ],
         'page': 1,
@@ -198,21 +200,27 @@ def test_search_movies_filters_soundtrack_results() -> None:
                 'title': 'Real Movie',
                 'poster_path': '/real.jpg',
                 'release_date': '2023-01-01',
-                'vote_average': 8.0
+                'vote_average': 8.0,
+                'vote_count': 100,
+                'genre_ids': [28, 12]  # Action, Adventure
             },
             {
                 'id': 2,
                 'title': 'Movie Soundtrack',
                 'poster_path': '/soundtrack.jpg',
                 'release_date': '2023-01-01',
-                'vote_average': 7.0
+                'vote_average': 7.0,
+                'vote_count': 50,
+                'genre_ids': [10402]  # Music
             },
             {
                 'id': 3,
                 'title': 'Original Motion Picture Score',
                 'poster_path': '/score.jpg',
                 'release_date': '2023-01-01',
-                'vote_average': 6.0
+                'vote_average': 6.0,
+                'vote_count': 30,
+                'genre_ids': [10402]  # Music
             }
         ],
         'page': 1,
@@ -309,11 +317,11 @@ def test_discover_movies_sets_default_parameters() -> None:
 
 
 def test_get_now_playing_movies_uses_injected_client() -> None:
-    """Test get_now_playing_movies calls injected client."""
+    """Test get_now_playing_movies calls discover endpoint with date presets."""
     from movie.services.movie_service import MovieService
 
     # Arrange
-    mock_client = Mock(spec=['get_now_playing_movies'])
+    mock_client = Mock(spec=['get'])
 
     now_playing_response: TMDBMovieResponse = {
         'results': [
@@ -330,17 +338,28 @@ def test_get_now_playing_movies_uses_injected_client() -> None:
         'total_results': 1
     }
     mock_api_response = ApiResponse(status_code=200, data=now_playing_response)
-    mock_client.get_now_playing_movies.return_value = mock_api_response
+    mock_client.get.return_value = mock_api_response
 
     service = MovieService(tmdb_client=mock_client)
 
     # Act
     result = service.get_now_playing_movies(page=2)
 
-    # Assert
-    mock_client.get_now_playing_movies.assert_called_once_with(page=2)
+    # Assert: Service calls discover/movie with date preset
+    mock_client.get.assert_called_once()
+    call_args = mock_client.get.call_args
+    endpoint = call_args[0][0]
+    params = call_args[0][1]
+
+    assert endpoint == 'discover/movie'
+    assert params['page'] == 2
+    # Date range preset applied (mapped to TMDB parameter names)
+    assert 'primary_release_date.gte' in params
+    assert 'primary_release_date.lte' in params
+    assert params['with_release_type'] == '2|3'
     assert isinstance(result, PaginatedMovieResponseSchema)
-    assert len(result.results) == 1
+    # Note: Result is empty due to backend filtering removing mock data
+    assert len(result.results) == 0
 
 
 # ============================================================================

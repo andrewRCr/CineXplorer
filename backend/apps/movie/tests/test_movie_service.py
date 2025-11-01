@@ -27,8 +27,8 @@ from movie.tests.test_fixtures_tmdb import (
     TMDBGenreListResponse,
     TMDBMovieResponse,
     create_movie_detail_dict,
-    create_raw_tmdb_movie,
     create_paginated_tmdb_response,
+    create_raw_tmdb_movie,
 )
 from ninja.errors import HttpError
 

@@ -17,7 +17,7 @@ from core.tests.test_helpers import HTTPStatus
 from core.types.api_types import TMDBResponseData
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.test import Client
-from movie.tests.test_fixtures_tmdb import create_raw_tmdb_movie, create_paginated_tmdb_response
+from movie.tests.test_fixtures_tmdb import create_paginated_tmdb_response, create_raw_tmdb_movie
 from user_movie_data.models import UserMovieData
 
 # HTTP status codes for Django Ninja endpoints
@@ -642,7 +642,8 @@ def test_browse_api_buffer_mechanism_with_filtering(
                 'poster_path': f'/test{i}.jpg',
                 'release_date': '2022-01-01',
                 'vote_average': 8.0, 'vote_count': 100,
-                'genre_ids': [28, 12]  # Required for backend filtering
+                'genre_ids': [28, 12],  # Required for backend filtering
+                'overview': f'An exciting adventure movie about Valid Movie {i}.'
             }
             for i in range(1, 16)
         ],
@@ -653,7 +654,8 @@ def test_browse_api_buffer_mechanism_with_filtering(
             'poster_path': '/bad1.jpg',
             'release_date': '2019-01-01',  # Outside range
             'vote_average': 8.0, 'vote_count': 100,
-            'genre_ids': [28, 12]
+            'genre_ids': [28, 12],
+            'overview': 'A movie from 2019.'
         },
         {
             'id': 102,
@@ -661,7 +663,8 @@ def test_browse_api_buffer_mechanism_with_filtering(
             'poster_path': '/bad2.jpg',
             'release_date': '2022-01-01',
             'vote_average': 6.0,  # Below threshold
-            'genre_ids': [28, 12]
+            'genre_ids': [28, 12],
+            'overview': 'A low-rated movie.'
         },
         {
             'id': 103,
@@ -669,7 +672,8 @@ def test_browse_api_buffer_mechanism_with_filtering(
             'poster_path': '/bad3.jpg',
             'release_date': '2030-01-01',  # Outside range
             'vote_average': 8.0, 'vote_count': 100,
-            'genre_ids': [28, 12]
+            'genre_ids': [28, 12],
+            'overview': 'A futuristic movie from 2030.'
         },
         {
             'id': 104,
@@ -677,7 +681,8 @@ def test_browse_api_buffer_mechanism_with_filtering(
             'poster_path': '/bad4.jpg',
             'release_date': '2022-01-01',
             'vote_average': 0.0,  # Placeholder
-            'genre_ids': [28, 12]
+            'genre_ids': [28, 12],
+            'overview': 'A movie with placeholder rating.'
         },
         {
             'id': 105,
@@ -685,7 +690,8 @@ def test_browse_api_buffer_mechanism_with_filtering(
             'poster_path': '/bad5.jpg',
             'release_date': '2018-01-01',  # Outside range
             'vote_average': 8.0, 'vote_count': 100,
-            'genre_ids': [28, 12]
+            'genre_ids': [28, 12],
+            'overview': 'A movie from 2018.'
         },
     ]
 
@@ -698,7 +704,8 @@ def test_browse_api_buffer_mechanism_with_filtering(
                 'poster_path': f'/buffer{i}.jpg',
                 'release_date': '2023-01-01',
                 'vote_average': 7.8, 'vote_count': 100,
-                'genre_ids': [28, 12]  # Required for backend filtering
+                'genre_ids': [28, 12],  # Required for backend filtering
+                'overview': f'A buffer movie about Buffer Movie {i}.'
             }
             for i in range(1, 11)
         ],

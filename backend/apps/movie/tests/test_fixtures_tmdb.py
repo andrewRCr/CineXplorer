@@ -99,6 +99,7 @@ class TMDBMovieBaseRawDict(TypedDict):
     - poster_path: Can be None or missing (no poster uploaded)
     - runtime: Can be None or missing (not available for all movies)
     - genre_ids: Can be empty list (data quality signal - misclassified/garbage content)
+    - overview: Can be None, empty string, or placeholder text "Details Here"
 
     Fields marked NotRequired to explicitly show TMDB's actual response variability.
     Application code must handle these edge cases defensively.
@@ -114,6 +115,7 @@ class TMDBMovieBaseRawDict(TypedDict):
     vote_count: NotRequired[int | None]  # May be missing or null - unreleased/limited release
     runtime: NotRequired[int | None]  # May be missing or null
     genre_ids: NotRequired[list[int]]  # May be empty list - data quality signal
+    overview: NotRequired[str | None]  # May be missing, null, empty, or placeholder text
 
 
 class TMDBMovieDetail(TypedDict):
@@ -166,6 +168,7 @@ def create_raw_tmdb_movie(
     vote_count: int | None = None,
     poster_path: str | None = None,
     genre_ids: list[int] | None = None,
+    overview: str | None = None,
 ) -> TMDBMovieBaseRawDict:
     """Create a mock raw TMDB movie dict (unvalidated API response) for testing.
 
@@ -183,6 +186,8 @@ def create_raw_tmdb_movie(
             pass empty string for missing)
         genre_ids: Genre IDs (defaults to [18, 28] - Drama, Action).
             Pass empty list [] for testing data quality filtering.
+        overview: Movie overview/description (defaults to valid overview text,
+            pass empty string '' for missing overview)
 
     Returns:
         Dictionary matching TMDB API movie response structure
@@ -196,6 +201,9 @@ def create_raw_tmdb_movie(
 
         >>> # Movie without genres (for data quality filter tests)
         >>> no_genres = create_raw_tmdb_movie(3, "Garbage", "2022-01-01", 2.0, genre_ids=[])
+
+        >>> # Movie without overview (for completeness filter tests)
+        >>> no_overview = create_raw_tmdb_movie(4, "No Overview", "2022-01-01", 7.0, overview='')
     """
     # Default vote_count to 100 (well above 50 threshold) for reliable ratings
     # Tests specifically testing vote count behavior can override this
@@ -212,6 +220,14 @@ def create_raw_tmdb_movie(
     if genre_ids is None:
         genre_ids = [18, 28]  # Drama, Action - common genres
 
+    # Default overview to valid description unless explicitly set
+    # Tests for completeness filter can explicitly pass empty string for missing overview
+    if overview is None:
+        overview = (
+            f'A compelling story about {title}. '
+            f'This film explores themes of drama and action.'
+        )
+
     return {
         'id': tmdb_id,
         'title': title,
@@ -221,6 +237,7 @@ def create_raw_tmdb_movie(
         'vote_count': vote_count,
         'runtime': runtime,
         'genre_ids': genre_ids,
+        'overview': overview,
     }
 
 

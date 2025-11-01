@@ -182,6 +182,9 @@ def _create_movie_base_from_tmdb_data(tmdb_data: Mapping[str, object]) -> MovieB
             'release_date': release_date,
             'vote_average': tmdb_movie.vote_average,
             'runtime': 0,  # Runtime not available in basic movie responses
+            'vote_count': tmdb_movie.vote_count,
+            'genre_ids': tmdb_movie.genre_ids,
+            'overview': tmdb_movie.overview,
         }
 
         return MovieBaseSchema.model_validate(validated_data, strict=False)

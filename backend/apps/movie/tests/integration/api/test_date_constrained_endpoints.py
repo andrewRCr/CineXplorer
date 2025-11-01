@@ -26,7 +26,7 @@ import pytest
 from core.services.api_response import ApiResponse
 from core.tests.test_helpers import HTTPStatus
 from core.types.api_types import TMDBResponseData
-from movie.tests.test_fixtures_tmdb import create_raw_tmdb_movie, create_paginated_tmdb_response
+from movie.tests.test_fixtures_tmdb import create_paginated_tmdb_response, create_raw_tmdb_movie
 
 if TYPE_CHECKING:
     from django.test import Client

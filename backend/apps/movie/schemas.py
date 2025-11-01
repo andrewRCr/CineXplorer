@@ -113,6 +113,7 @@ class MovieBaseSchema(Schema):
     vote_count: int | None = None
     runtime: int | None = None
     genre_ids: list[int] = Field(default_factory=_empty_genre_id_list)
+    overview: str | None = None
     user_movie_data: UserMovieDataSchema | None = None
 
 

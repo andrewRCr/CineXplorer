@@ -24,8 +24,8 @@ from movie.schemas import PaginatedMovieResponseSchema
 from movie.services.movie_service import MovieService
 from movie.tests.test_fixtures_tmdb import (
     TMDBMovieBaseRawDict,
-    create_raw_tmdb_movie,
     create_paginated_tmdb_response,
+    create_raw_tmdb_movie,
 )
 
 if TYPE_CHECKING:
@@ -468,12 +468,14 @@ def test_vote_count_filter_excludes_movies_without_vote_count() -> None:
     movie_with_votes: TMDBMovieBaseRawDict = {
         'id': 1, 'title': "Has Vote Count", 'poster_path': '/poster1.jpg',
         'release_date': "2022-01-01", 'vote_average': 8.0, 'vote_count': 100,
-        'genre_ids': [18, 28]  # Drama, Action
+        'genre_ids': [18, 28],  # Drama, Action
+        'overview': 'A great movie with vote count data.'
     }
     movie_without_votes: TMDBMovieBaseRawDict = {
         'id': 2, 'title': "No Vote Count", 'poster_path': '/poster2.jpg',
         'release_date': "2022-02-01", 'vote_average': 8.5,
-        'genre_ids': [12, 35]  # Adventure, Comedy
+        'genre_ids': [12, 35],  # Adventure, Comedy
+        'overview': 'A movie without vote count data.',
         # vote_count field missing (TMDB data quality issue)
     }
 
@@ -1142,6 +1144,205 @@ def test_completeness_filter_applies_with_other_filters() -> None:
         assert movie.release_date.year == 2022
         assert movie.vote_average is not None
         assert movie.vote_average >= 7.5
+
+
+def test_filter_movies_excludes_empty_overview() -> None:
+    """Test that movies with empty or whitespace-only overview are excluded.
+
+    TMDB data quality issue: Some movies (especially unreleased or low-quality
+    entries) have empty overview fields, providing no description to users.
+    These should be filtered out for display quality.
+    """
+    # Arrange: Mock movies with various overview states
+    tmdb_movies: list[TMDBMovieBaseRawDict] = [
+        # Valid overview - should pass
+        create_raw_tmdb_movie(1, "Valid Overview", "2022-01-01", 7.5),
+        # Empty overview - should be filtered
+        {
+            'id': 2,
+            'title': 'Empty Overview',
+            'poster_path': '/poster_2.jpg',
+            'release_date': '2022-01-01',
+            'vote_average': 8.0,
+            'vote_count': 100,
+            'overview': '',
+            'genre_ids': [18, 28],
+        },  # type: ignore
+        # Whitespace-only overview - should be filtered
+        {
+            'id': 3,
+            'title': 'Whitespace Overview',
+            'poster_path': '/poster_3.jpg',
+            'release_date': '2022-01-01',
+            'vote_average': 7.8,
+            'vote_count': 100,
+            'overview': '   ',
+            'genre_ids': [18, 28],
+        },  # type: ignore
+        # Another valid overview - should pass
+        create_raw_tmdb_movie(4, "Another Valid", "2022-01-01", 8.2),
+    ]
+
+    mock_client = Mock(spec=['get'])
+    mock_response = ApiResponse(
+        status_code=200,
+        data=create_paginated_tmdb_response(tmdb_movies, page=1, total_pages=1)
+    )
+    mock_client.get.return_value = mock_response
+
+    service = MovieService(tmdb_client=mock_client)
+
+    # Act: Request movies
+    result = service.discover_movies(page=1)
+
+    # Assert: Only movies with valid overviews returned
+    assert len(result.results) == 2
+    returned_ids = {movie.tmdb_id for movie in result.results}
+    assert returned_ids == {1, 4}
+
+    # Verify all returned movies have non-empty overviews
+    for movie in result.results:
+        assert movie.overview is not None
+        assert movie.overview.strip() != ''
+
+
+def test_filter_movies_excludes_placeholder_overview() -> None:
+    """Test that movies with placeholder overview 'details here' are excluded.
+
+    TMDB data quality issue: Some movies have the literal placeholder text
+    'Details Here' (case-insensitive) instead of actual descriptions. Based on
+    analysis of 100 upcoming movies, this is the only text placeholder pattern
+    TMDB actually uses (empty strings being the majority).
+    """
+    # Arrange: Mock movies with placeholder and valid overviews
+    tmdb_movies: list[TMDBMovieBaseRawDict] = [
+        # Valid overview - should pass
+        create_raw_tmdb_movie(1, "Valid Overview", "2022-01-01", 7.5),
+        # Placeholder "Details Here" - should be filtered
+        {
+            'id': 2,
+            'title': "Cat's Hair",
+            'poster_path': '/poster_2.jpg',
+            'release_date': '2022-01-01',
+            'vote_average': 0.0,
+            'vote_count': 0,
+            'overview': 'Details Here',
+            'genre_ids': [18, 10749],
+        },  # type: ignore
+        # Lowercase placeholder "details here" - should be filtered (case-insensitive)
+        {
+            'id': 3,
+            'title': 'Nympho',
+            'poster_path': '/poster_3.jpg',
+            'release_date': '2022-01-01',
+            'vote_average': 0.0,
+            'vote_count': 0,
+            'overview': 'details here',
+            'genre_ids': [18],
+        },  # type: ignore
+        # Mixed case "Details here" - should be filtered (case-insensitive)
+        {
+            'id': 4,
+            'title': 'Mixed Case Placeholder',
+            'poster_path': '/poster_4.jpg',
+            'release_date': '2022-01-01',
+            'vote_average': 7.8,
+            'vote_count': 100,
+            'overview': 'Details here',
+            'genre_ids': [28],
+        },  # type: ignore
+        # Another valid overview - should pass
+        create_raw_tmdb_movie(5, "Another Valid", "2022-01-01", 8.2),
+    ]
+
+    mock_client = Mock(spec=['get'])
+    mock_response = ApiResponse(
+        status_code=200,
+        data=create_paginated_tmdb_response(tmdb_movies, page=1, total_pages=1)
+    )
+    mock_client.get.return_value = mock_response
+
+    service = MovieService(tmdb_client=mock_client)
+
+    # Act: Request movies
+    result = service.discover_movies(page=1)
+
+    # Assert: Only movies with real overviews returned (placeholders filtered)
+    assert len(result.results) == 2
+    returned_ids = {movie.tmdb_id for movie in result.results}
+    assert returned_ids == {1, 5}
+
+    # Verify no placeholder overviews in results
+    for movie in result.results:
+        assert movie.overview is not None
+        assert movie.overview.strip().lower() != 'details here'
+
+
+def test_overview_filter_works_with_other_completeness_checks() -> None:
+    """Test that overview filtering works alongside poster/title/genre checks.
+
+    Overview check is part of completeness filtering (like poster/title/genre checks).
+    All completeness filters should work together consistently.
+    """
+    # Arrange: Mix of complete/incomplete movies with various issues
+    mock_client = Mock(spec=['get'])
+
+    tmdb_movies: list[TMDBMovieBaseRawDict] = [
+        # Complete movie (has poster, title, genres, overview) - should pass
+        create_raw_tmdb_movie(1, "Complete Movie", "2022-01-01", 7.5, vote_count=100),
+        # Missing poster - should be filtered
+        create_raw_tmdb_movie(2, "No Poster", "2022-01-01", 8.0, vote_count=150, poster_path=''),
+        # Empty overview - should be filtered
+        {
+            'id': 3,
+            'title': 'No Overview',
+            'poster_path': '/poster_3.jpg',
+            'release_date': '2022-01-01',
+            'vote_average': 6.5,
+            'vote_count': 75,
+            'overview': '',
+            'genre_ids': [18, 28],
+        },  # type: ignore
+        # Placeholder overview - should be filtered
+        {
+            'id': 4,
+            'title': 'Placeholder Overview',
+            'poster_path': '/poster_4.jpg',
+            'release_date': '2022-01-01',
+            'vote_average': 7.0,
+            'vote_count': 200,
+            'overview': 'Details Here',
+            'genre_ids': [18],
+        },  # type: ignore
+        # Missing genres - should be filtered
+        create_raw_tmdb_movie(5, "No Genres", "2022-01-01", 8.0, vote_count=100, genre_ids=[]),
+        # Another complete movie - should pass
+        create_raw_tmdb_movie(6, "Another Complete", "2022-01-01", 7.8, vote_count=120),
+    ]
+
+    mock_response = ApiResponse(
+        status_code=200,
+        data=create_paginated_tmdb_response(tmdb_movies, page=1, total_pages=1)
+    )
+    mock_client.get.return_value = mock_response
+
+    service = MovieService(tmdb_client=mock_client)
+
+    # Act: Request movies
+    result = service.discover_movies(page=1)
+
+    # Assert: Only complete movies returned (all completeness checks applied)
+    assert len(result.results) == 2, "Expected 2 complete movies"
+    returned_ids = {movie.tmdb_id for movie in result.results}
+    assert returned_ids == {1, 6}, "Incomplete movies should be filtered"
+
+    # Verify all returned movies have complete data
+    for movie in result.results:
+        assert movie.poster_path is not None and movie.poster_path != ''
+        assert movie.title is not None and movie.title.strip() != ''
+        assert hasattr(movie, 'genre_ids') and len(movie.genre_ids) > 0
+        assert movie.overview is not None and movie.overview.strip() != ''
+        assert movie.overview.strip().lower() != 'details here'
 
 
 # ============================================================================

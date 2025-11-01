@@ -59,6 +59,9 @@ more value in having complete context upfront than discovering missing rules mid
    - **Reading strategy**:
      - **ALWAYS read**: Overview section + current phase summary (first ~100 lines)
      - **ALWAYS read**: Current task section identified in CURRENT-SESSION.md (the specific task being worked on)
+       - **Line number hint**: If CURRENT-SESSION "Next Action" includes a line number (e.g., "Task 3.3 (line 247)"),
+         use Read tool with offset to jump directly to that task
+       - **Without hint**: Read overview first, then search/scan for the task mentioned in "Next Action"
      - **Read on-demand**: Other phases and tasks as needed during work
    - **Why partial read OK**: This is the ONLY exception - it's reference material, often 500+ lines, and too
      large to internalize upfront. But you MUST read the overview + current task context.

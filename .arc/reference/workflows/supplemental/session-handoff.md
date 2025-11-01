@@ -94,8 +94,10 @@ Update `.arc/active/CURRENT-SESSION.md` before ending session:
   **Work Type**: [structured | incidental: brief description]
   **Last Completed**: [specific task reference, e.g., "Task 3.2: Add validation logic"]
   [OR if work complete: "Backend Type Safety (Tasks 1-14, archived)"]
-  **Next Action**: [what should happen next, e.g., "Task 3.3: Write unit tests"]
+  **Next Action**: [what should happen next, e.g., "Task 3.3: Write unit tests (line 247)"]
   [OR if transitioning: "Begin tasks-next-work-work.md Task 1"]
+
+  _Note: Include line number from Read tool output (e.g., "line 247") to help AI jump directly to task during session init._
 
 ## Session Context & Status
 

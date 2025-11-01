@@ -640,41 +640,115 @@ endpoints per ADR-002.
             **Impact:** movie_service.py reduced from ~945 lines to ~578 lines (~39% reduction).
             Pagination logic now isolated in dedicated module for better maintainability and reusability.
 
-        - [ ] **2.3.6c Split MovieService into focused service classes**
-            - Create `MovieDiscoveryService` (discover, now_playing, upcoming, helper methods)
-            - Create `MovieSearchService` (search)
-            - Create `MovieDetailService` (get_by_id, genres, runtimes)
-            - Update API layer to use new service classes
-            - Update test fixtures and mocks
-            - Goal: Single Responsibility Principle - each service has one clear purpose
+        - [ ] **2.3.6c Reorganize MovieService method order for clarity**
 
-        - [ ] **2.3.6d Reorganize remaining MovieService method order**
-            - If keeping single service: public methods first, private helpers grouped by functionality
-            - Core methods (discover) before derived methods (now_playing, upcoming)
-            - Logical reading order: high-level → low-level
-            - Goal: Better code navigation and comprehension
+            **Goal:** Improve code navigation by organizing methods into logical sections with clear boundaries
+            and high-level → low-level reading order.
 
-        - [ ] **2.3.6e Update tests for new service architecture**
-            - Update imports in test files
-            - Update service instantiation in fixtures
-            - Verify all movie tests pass with new structure
-            - Verify no functionality changes (pure refactor)
+            **Rationale:** After extracting filtering (150 lines) and pagination (375 lines), MovieService is
+            now 563 lines with 7 public methods. This is manageable size, and all methods operate on the Movie
+            entity with a single dependency (TMDBApiClient). Splitting into separate services would create
+            artificial boundaries (e.g., where does `get_movie_genres()` go?) and add unnecessary complexity.
+            Entity cohesion suggests keeping unified MovieService.
 
-        - [ ] **2.3.6f Run full quality gates**
+            **Current method order** (illogical):
+
+            ```
+            147: get_movie_by_id (detail)
+            237: get_now_playing_movies (discovery)
+            291: get_upcoming_movies (discovery)
+            348: search_movies (query)
+            400: discover_movies (core discovery)
+            498: get_movie_genres (resource)
+            516: fetch_movie_runtimes (batch detail)
+            ```
+
+            **Proposed reorganization** (logical sections):
+
+            ```python
+            # ========================================================================
+            # Core Discovery Methods
+            # ========================================================================
+
+            def discover_movies(...) -> PaginatedMovieResponseSchema:
+                """Core TMDB discover endpoint - foundation for all discovery."""
+
+            def get_now_playing_movies(...) -> PaginatedMovieResponseSchema:
+                """Preset wrapper: theaters now (discover + date range)."""
+
+            def get_upcoming_movies(...) -> PaginatedMovieResponseSchema:
+                """Preset wrapper: releasing soon (discover + date range)."""
+
+            # ========================================================================
+            # Search Methods
+            # ========================================================================
+
+            def search_movies(...) -> PaginatedMovieResponseSchema:
+                """TMDB search endpoint with non-visual filtering."""
+
+            # ========================================================================
+            # Movie Detail Methods
+            # ========================================================================
+
+            def get_movie_by_id(...) -> MovieDetailSchema:
+                """Fetch single movie with credits."""
+
+            def fetch_movie_runtimes(...) -> dict[int, int]:
+                """Batch fetch runtimes for multiple movies."""
+
+            # ========================================================================
+            # Resource Methods
+            # ========================================================================
+
+            def get_movie_genres() -> list[GenreSchema]:
+                """Get all available genres from TMDB (for filtering UI)."""
+
+            # ========================================================================
+            # Private Helper Methods
+            # ========================================================================
+
+            def _build_date_constrained_preset(...) -> TMDBParams:
+                """Build date range preset for time-constrained endpoints."""
+
+            def _filter_non_visual_content(...) -> list[TMDBMovieBase]:
+                """Filter soundtracks and scores from search results."""
+            ```
+
+            **Implementation Steps:**
+            1. Reorder methods following proposed structure above
+            2. Add section divider comments (using `# ===` pattern)
+            3. Update method docstrings if needed for clarity
+            4. Run tests to verify no behavior changes (pure refactor)
+            5. Run quality gates (linting, type checking)
+
+            **Benefits:**
+            - Clear section boundaries make navigation intuitive
+            - High-level methods (discover) before low-level (presets, helpers)
+            - Related operations grouped together (discovery, search, detail, resources)
+            - Maintains entity cohesion (all operations on Movie entity)
+            - Natural home for `get_movie_genres()` (Resource Methods section)
+
+        - [ ] **2.3.6d Verify tests still pass after reorganization**
+            - Run full movie test suite
+            - Verify all tests pass (no behavior changes from reordering)
+            - Verify no import issues
+
+        - [ ] **2.3.6e Run quality gates**
             - Backend tests: 100% pass rate
             - Linting: 0 violations
             - Type checking: 0 errors
             - Verify no regressions from refactor
 
-        **Estimated Effort:** 2-3 hours (comprehensive architectural refactor)
+        **Estimated Effort:** 30-45 minutes (method reordering + verification)
 
-        **Dependencies:** Must complete after 2.3.5 (verify current tests pass) before starting
+        **Dependencies:** Must complete after 2.3.6b (pagination extraction)
 
         **Benefits:**
-        - Reduced complexity (smaller, focused classes)
-        - Improved maintainability (easier to find and modify logic)
-        - Better testability (can test services in isolation)
-        - Clearer responsibilities (explicit separation of concerns)
+        - Improved code navigation (logical grouping)
+        - Better comprehension (high-level → low-level flow)
+        - Maintains entity cohesion (unified Movie operations)
+        - No artificial service boundaries
+        - Simpler than splitting (1 service vs 3 services + factories)
 
 - [ ] **2.4 Run quality gates on backend changes**
 

@@ -87,7 +87,7 @@ class TMDBProductionCompany(TypedDict):
     origin_country: str
 
 
-class TMDBMovieBase(TypedDict):
+class TMDBMovieBaseRawDict(TypedDict):
     """Base movie result structure from TMDB list endpoints.
 
     Used in search results, discover, now_playing, upcoming, etc.
@@ -136,7 +136,7 @@ class TMDBMovieDetail(TypedDict):
 class TMDBMovieResponse(TMDBPaginatedResponse):
     """TMDB movie list response (search/movie, discover/movie, movie/now_playing, etc)."""
 
-    results: list[TMDBMovieBase]
+    results: list[TMDBMovieBaseRawDict]
 
 
 class TMDBCreditsResponse(TypedDict):
@@ -157,7 +157,7 @@ class TMDBGenreListResponse(TypedDict):
 # ============================================================================
 
 
-def create_movie_dict(
+def create_raw_tmdb_movie(
     tmdb_id: int,
     title: str,
     release_date: str,
@@ -166,8 +166,8 @@ def create_movie_dict(
     vote_count: int | None = None,
     poster_path: str | None = None,
     genre_ids: list[int] | None = None,
-) -> TMDBMovieBase:
-    """Create a mock TMDB movie dictionary for testing.
+) -> TMDBMovieBaseRawDict:
+    """Create a mock raw TMDB movie dict (unvalidated API response) for testing.
 
     This helper provides consistent TMDB API response structure across all tests,
     ensuring test data stays synchronized when TMDB API fields change.
@@ -189,13 +189,13 @@ def create_movie_dict(
 
     Example:
         >>> # Standard valid movie
-        >>> movie = create_movie_dict(1, "Test Movie", "2022-01-01", 8.0)
+        >>> movie = create_raw_tmdb_movie(1, "Test Movie", "2022-01-01", 8.0)
 
         >>> # Movie without poster (for completeness filter tests)
-        >>> no_poster = create_movie_dict(2, "No Poster", "2022-01-01", 7.5, poster_path='')
+        >>> no_poster = create_raw_tmdb_movie(2, "No Poster", "2022-01-01", 7.5, poster_path='')
 
         >>> # Movie without genres (for data quality filter tests)
-        >>> no_genres = create_movie_dict(3, "Garbage", "2022-01-01", 2.0, genre_ids=[])
+        >>> no_genres = create_raw_tmdb_movie(3, "Garbage", "2022-01-01", 2.0, genre_ids=[])
     """
     # Default vote_count to 100 (well above 50 threshold) for reliable ratings
     # Tests specifically testing vote count behavior can override this
@@ -225,7 +225,7 @@ def create_movie_dict(
 
 
 def create_paginated_tmdb_response(
-    movies: list[TMDBMovieBase],
+    movies: list[TMDBMovieBaseRawDict],
     page: int = 1,
     total_pages: int = 1,
     total_results: int | None = None,
@@ -236,7 +236,7 @@ def create_paginated_tmdb_response(
     matching TMDB API's actual response format.
 
     Args:
-        movies: List of movie dictionaries (use create_movie_dict() to create)
+        movies: List of movie dictionaries (use create_raw_tmdb_movie() to create)
         page: Current page number
         total_pages: Total number of pages
         total_results: Total number of results (defaults to len(movies))
@@ -246,8 +246,8 @@ def create_paginated_tmdb_response(
 
     Example:
         >>> movies = [
-        ...     create_movie_dict(1, "Movie 1", "2022-01-01", 8.0),
-        ...     create_movie_dict(2, "Movie 2", "2022-02-01", 7.5),
+        ...     create_raw_tmdb_movie(1, "Movie 1", "2022-01-01", 8.0),
+        ...     create_raw_tmdb_movie(2, "Movie 2", "2022-02-01", 7.5),
         ... ]
         >>> response = create_paginated_tmdb_response(movies, page=1, total_pages=5)
     """
@@ -277,7 +277,7 @@ def create_movie_detail_dict(
 ) -> TMDBMovieDetail:
     """Create a mock TMDB movie detail dictionary for testing.
 
-    This helper builds on create_movie_dict() and adds detail-specific fields
+    This helper builds on create_raw_tmdb_movie() and adds detail-specific fields
     (runtime, overview, genres, production_companies), ensuring consistent and
     complete movie detail data across all tests.
 
@@ -290,9 +290,9 @@ def create_movie_detail_dict(
         overview: Movie overview/synopsis (defaults to "Test movie overview")
         genres: List of genre objects (defaults to [])
         production_companies: List of production company objects (defaults to [])
-        poster_path: Poster path (passed to create_movie_dict())
-        vote_count: Number of votes (passed to create_movie_dict())
-        genre_ids: Genre IDs (passed to create_movie_dict())
+        poster_path: Poster path (passed to create_raw_tmdb_movie())
+        vote_count: Number of votes (passed to create_raw_tmdb_movie())
+        genre_ids: Genre IDs (passed to create_raw_tmdb_movie())
 
     Returns:
         Dictionary matching TMDB API movie detail response structure
@@ -313,7 +313,7 @@ def create_movie_detail_dict(
         ... )
     """
     # Build base movie dict with all common fields
-    base_movie = create_movie_dict(
+    base_movie = create_raw_tmdb_movie(
         tmdb_id,
         title,
         release_date,

@@ -23,8 +23,8 @@ from core.services.api_response import ApiResponse
 from movie.schemas import PaginatedMovieResponseSchema
 from movie.services.movie_service import MovieService
 from movie.tests.test_fixtures_tmdb import (
-    TMDBMovieBase,
-    create_movie_dict,
+    TMDBMovieBaseRawDict,
+    create_raw_tmdb_movie,
     create_paginated_tmdb_response,
 )
 
@@ -36,7 +36,7 @@ if TYPE_CHECKING:
 # Test Fixtures and Helpers
 # ============================================================================
 # Helpers imported from test_fixtures_tmdb.py:
-# - create_movie_dict(): Create mock TMDB movie dictionaries
+# - create_raw_tmdb_movie(): Create mock TMDB movie dictionaries
 # - create_paginated_tmdb_response(): Create mock paginated responses
 # ============================================================================
 
@@ -61,27 +61,27 @@ def test_discover_movies_filters_incorrect_release_years() -> None:
     # TMDB returns 20 movies, but 5 are from 2010s (incorrect data hygiene)
     tmdb_movies = [
         # Correct years (2020s) - should be kept
-        create_movie_dict(1, "Correct 2020", "2020-01-01", 8.0),
-        create_movie_dict(2, "Correct 2021", "2021-01-01", 7.5),
-        create_movie_dict(3, "Correct 2022", "2022-01-01", 8.2),
-        create_movie_dict(4, "Correct 2023", "2023-01-01", 7.8),
-        create_movie_dict(5, "Correct 2024", "2024-01-01", 8.5),
-        create_movie_dict(6, "Correct 2025", "2025-01-01", 7.9),
-        create_movie_dict(7, "Correct 2026", "2026-01-01", 8.1),
-        create_movie_dict(8, "Correct 2027", "2027-01-01", 7.6),
-        create_movie_dict(9, "Correct 2028", "2028-01-01", 8.3),
-        create_movie_dict(10, "Correct 2029", "2029-01-01", 7.7),
-        create_movie_dict(11, "Correct 2020 B", "2020-06-15", 8.0),
-        create_movie_dict(12, "Correct 2021 B", "2021-12-25", 7.4),
-        create_movie_dict(13, "Correct 2022 B", "2022-03-10", 8.6),
-        create_movie_dict(14, "Correct 2023 B", "2023-11-20", 7.9),
-        create_movie_dict(15, "Correct 2024 B", "2024-07-04", 8.2),
+        create_raw_tmdb_movie(1, "Correct 2020", "2020-01-01", 8.0),
+        create_raw_tmdb_movie(2, "Correct 2021", "2021-01-01", 7.5),
+        create_raw_tmdb_movie(3, "Correct 2022", "2022-01-01", 8.2),
+        create_raw_tmdb_movie(4, "Correct 2023", "2023-01-01", 7.8),
+        create_raw_tmdb_movie(5, "Correct 2024", "2024-01-01", 8.5),
+        create_raw_tmdb_movie(6, "Correct 2025", "2025-01-01", 7.9),
+        create_raw_tmdb_movie(7, "Correct 2026", "2026-01-01", 8.1),
+        create_raw_tmdb_movie(8, "Correct 2027", "2027-01-01", 7.6),
+        create_raw_tmdb_movie(9, "Correct 2028", "2028-01-01", 8.3),
+        create_raw_tmdb_movie(10, "Correct 2029", "2029-01-01", 7.7),
+        create_raw_tmdb_movie(11, "Correct 2020 B", "2020-06-15", 8.0),
+        create_raw_tmdb_movie(12, "Correct 2021 B", "2021-12-25", 7.4),
+        create_raw_tmdb_movie(13, "Correct 2022 B", "2022-03-10", 8.6),
+        create_raw_tmdb_movie(14, "Correct 2023 B", "2023-11-20", 7.9),
+        create_raw_tmdb_movie(15, "Correct 2024 B", "2024-07-04", 8.2),
         # Incorrect years (2010s) - should be filtered out (TMDB data hygiene issue)
-        create_movie_dict(101, "Wrong 2015", "2015-01-01", 8.0),
-        create_movie_dict(102, "Wrong 2016", "2016-01-01", 7.5),
-        create_movie_dict(103, "Wrong 2017", "2017-01-01", 8.2),
-        create_movie_dict(104, "Wrong 2018", "2018-01-01", 7.8),
-        create_movie_dict(105, "Wrong 2019", "2019-01-01", 8.5),
+        create_raw_tmdb_movie(101, "Wrong 2015", "2015-01-01", 8.0),
+        create_raw_tmdb_movie(102, "Wrong 2016", "2016-01-01", 7.5),
+        create_raw_tmdb_movie(103, "Wrong 2017", "2017-01-01", 8.2),
+        create_raw_tmdb_movie(104, "Wrong 2018", "2018-01-01", 7.8),
+        create_raw_tmdb_movie(105, "Wrong 2019", "2019-01-01", 8.5),
     ]
 
     mock_response = ApiResponse(
@@ -128,17 +128,17 @@ def test_search_movies_filters_incorrect_release_years() -> None:
     # TMDB returns 10 results, but 3 are from earlier decades
     tmdb_movies = [
         # Correct years (2020s)
-        create_movie_dict(1, "The Batman (2022)", "2022-03-04", 8.0),
-        create_movie_dict(2, "Batman: The Long Halloween (2021)", "2021-06-22", 7.5),
-        create_movie_dict(3, "Batman: Soul of the Dragon (2021)", "2021-01-12", 7.0),
-        create_movie_dict(4, "Batman: The Audio Adventures (2023)", "2023-09-01", 7.8),
-        create_movie_dict(5, "Batman: Caped Crusader (2024)", "2024-08-01", 8.2),
-        create_movie_dict(6, "Batman: Future State (2025)", "2025-01-15", 7.6),
-        create_movie_dict(7, "Batman: New 52 (2026)", "2026-05-20", 7.9),
+        create_raw_tmdb_movie(1, "The Batman (2022)", "2022-03-04", 8.0),
+        create_raw_tmdb_movie(2, "Batman: The Long Halloween (2021)", "2021-06-22", 7.5),
+        create_raw_tmdb_movie(3, "Batman: Soul of the Dragon (2021)", "2021-01-12", 7.0),
+        create_raw_tmdb_movie(4, "Batman: The Audio Adventures (2023)", "2023-09-01", 7.8),
+        create_raw_tmdb_movie(5, "Batman: Caped Crusader (2024)", "2024-08-01", 8.2),
+        create_raw_tmdb_movie(6, "Batman: Future State (2025)", "2025-01-15", 7.6),
+        create_raw_tmdb_movie(7, "Batman: New 52 (2026)", "2026-05-20", 7.9),
         # Incorrect years (older Batman movies leaking through)
-        create_movie_dict(101, "The Dark Knight (2008)", "2008-07-18", 9.0),
-        create_movie_dict(102, "Batman Begins (2005)", "2005-06-15", 8.2),
-        create_movie_dict(103, "Batman (1989)", "1989-06-23", 7.5),
+        create_raw_tmdb_movie(101, "The Dark Knight (2008)", "2008-07-18", 9.0),
+        create_raw_tmdb_movie(102, "Batman Begins (2005)", "2005-06-15", 8.2),
+        create_raw_tmdb_movie(103, "Batman (1989)", "1989-06-23", 7.5),
     ]
 
     mock_response = ApiResponse(
@@ -175,12 +175,12 @@ def test_year_filtering_handles_single_year() -> None:
     mock_client = Mock(spec=['get'])
 
     tmdb_movies = [
-        create_movie_dict(1, "2022 Movie A", "2022-01-01", 8.0),
-        create_movie_dict(2, "2022 Movie B", "2022-06-15", 7.5),
-        create_movie_dict(3, "2022 Movie C", "2022-12-31", 8.2),
+        create_raw_tmdb_movie(1, "2022 Movie A", "2022-01-01", 8.0),
+        create_raw_tmdb_movie(2, "2022 Movie B", "2022-06-15", 7.5),
+        create_raw_tmdb_movie(3, "2022 Movie C", "2022-12-31", 8.2),
         # Wrong years
-        create_movie_dict(101, "2021 Movie", "2021-01-01", 7.8),
-        create_movie_dict(102, "2023 Movie", "2023-01-01", 8.5),
+        create_raw_tmdb_movie(101, "2021 Movie", "2021-01-01", 7.8),
+        create_raw_tmdb_movie(102, "2023 Movie", "2023-01-01", 8.5),
     ]
 
     mock_response = ApiResponse(
@@ -207,20 +207,20 @@ def test_year_filtering_handles_missing_release_dates() -> None:
     mock_client = Mock(spec=['get'])
 
     # Mix of valid and invalid release dates to test TMDB data quality handling
-    movie_without_date: TMDBMovieBase = {
+    movie_without_date: TMDBMovieBaseRawDict = {
         'id': 2, 'title': "Movie without date", 'poster_path': '/test.jpg',
         'vote_average': 7.5, 'release_date': None  # TMDB data quality issue
     }
-    movie_empty_date: TMDBMovieBase = {
+    movie_empty_date: TMDBMovieBaseRawDict = {
         'id': 3, 'title': "Movie with empty date", 'poster_path': '/test.jpg',
         'vote_average': 8.0, 'release_date': ""  # TMDB data quality issue
     }
 
-    tmdb_movies: list[TMDBMovieBase] = [
-        create_movie_dict(1, "Movie with date", "2022-01-01", 8.0),
+    tmdb_movies: list[TMDBMovieBaseRawDict] = [
+        create_raw_tmdb_movie(1, "Movie with date", "2022-01-01", 8.0),
         movie_without_date,
         movie_empty_date,
-        create_movie_dict(4, "Another with date", "2022-06-15", 7.8),
+        create_raw_tmdb_movie(4, "Another with date", "2022-06-15", 7.8),
     ]
 
     mock_response = ApiResponse(
@@ -257,27 +257,27 @@ def test_discover_movies_filters_incorrect_ratings() -> None:
     # TMDB returns 20 movies, but 5 have placeholder 0.0 ratings
     tmdb_movies = [
         # Correct ratings (7.5+) - should be kept
-        create_movie_dict(1, "Good Movie A", "2022-01-01", 8.0),
-        create_movie_dict(2, "Good Movie B", "2022-01-01", 7.5),
-        create_movie_dict(3, "Good Movie C", "2022-01-01", 8.2),
-        create_movie_dict(4, "Good Movie D", "2022-01-01", 7.8),
-        create_movie_dict(5, "Good Movie E", "2022-01-01", 8.5),
-        create_movie_dict(6, "Good Movie F", "2022-01-01", 7.9),
-        create_movie_dict(7, "Good Movie G", "2022-01-01", 8.1),
-        create_movie_dict(8, "Good Movie H", "2022-01-01", 7.6),
-        create_movie_dict(9, "Good Movie I", "2022-01-01", 8.3),
-        create_movie_dict(10, "Good Movie J", "2022-01-01", 7.7),
-        create_movie_dict(11, "Good Movie K", "2022-01-01", 9.0),
-        create_movie_dict(12, "Good Movie L", "2022-01-01", 7.5),
-        create_movie_dict(13, "Good Movie M", "2022-01-01", 8.6),
-        create_movie_dict(14, "Good Movie N", "2022-01-01", 7.9),
-        create_movie_dict(15, "Good Movie O", "2022-01-01", 8.2),
+        create_raw_tmdb_movie(1, "Good Movie A", "2022-01-01", 8.0),
+        create_raw_tmdb_movie(2, "Good Movie B", "2022-01-01", 7.5),
+        create_raw_tmdb_movie(3, "Good Movie C", "2022-01-01", 8.2),
+        create_raw_tmdb_movie(4, "Good Movie D", "2022-01-01", 7.8),
+        create_raw_tmdb_movie(5, "Good Movie E", "2022-01-01", 8.5),
+        create_raw_tmdb_movie(6, "Good Movie F", "2022-01-01", 7.9),
+        create_raw_tmdb_movie(7, "Good Movie G", "2022-01-01", 8.1),
+        create_raw_tmdb_movie(8, "Good Movie H", "2022-01-01", 7.6),
+        create_raw_tmdb_movie(9, "Good Movie I", "2022-01-01", 8.3),
+        create_raw_tmdb_movie(10, "Good Movie J", "2022-01-01", 7.7),
+        create_raw_tmdb_movie(11, "Good Movie K", "2022-01-01", 9.0),
+        create_raw_tmdb_movie(12, "Good Movie L", "2022-01-01", 7.5),
+        create_raw_tmdb_movie(13, "Good Movie M", "2022-01-01", 8.6),
+        create_raw_tmdb_movie(14, "Good Movie N", "2022-01-01", 7.9),
+        create_raw_tmdb_movie(15, "Good Movie O", "2022-01-01", 8.2),
         # Incorrect ratings (placeholder 0.0) - should be filtered out
-        create_movie_dict(101, "Placeholder Rating A", "2022-01-01", 0.0),
-        create_movie_dict(102, "Placeholder Rating B", "2022-01-01", 0.0),
-        create_movie_dict(103, "Low Rating A", "2022-01-01", 6.0),
-        create_movie_dict(104, "Low Rating B", "2022-01-01", 5.5),
-        create_movie_dict(105, "Low Rating C", "2022-01-01", 7.0),
+        create_raw_tmdb_movie(101, "Placeholder Rating A", "2022-01-01", 0.0),
+        create_raw_tmdb_movie(102, "Placeholder Rating B", "2022-01-01", 0.0),
+        create_raw_tmdb_movie(103, "Low Rating A", "2022-01-01", 6.0),
+        create_raw_tmdb_movie(104, "Low Rating B", "2022-01-01", 5.5),
+        create_raw_tmdb_movie(105, "Low Rating C", "2022-01-01", 7.0),
     ]
 
     mock_response = ApiResponse(
@@ -315,16 +315,16 @@ def test_rating_filtering_handles_range() -> None:
 
     tmdb_movies = [
         # In range (7.0-8.0) - should be kept
-        create_movie_dict(1, "In Range A", "2022-01-01", 7.0),
-        create_movie_dict(2, "In Range B", "2022-01-01", 7.5),
-        create_movie_dict(3, "In Range C", "2022-01-01", 8.0),
-        create_movie_dict(4, "In Range D", "2022-01-01", 7.2),
-        create_movie_dict(5, "In Range E", "2022-01-01", 7.8),
+        create_raw_tmdb_movie(1, "In Range A", "2022-01-01", 7.0),
+        create_raw_tmdb_movie(2, "In Range B", "2022-01-01", 7.5),
+        create_raw_tmdb_movie(3, "In Range C", "2022-01-01", 8.0),
+        create_raw_tmdb_movie(4, "In Range D", "2022-01-01", 7.2),
+        create_raw_tmdb_movie(5, "In Range E", "2022-01-01", 7.8),
         # Out of range - should be filtered out
-        create_movie_dict(101, "Too Low A", "2022-01-01", 6.9),
-        create_movie_dict(102, "Too Low B", "2022-01-01", 5.0),
-        create_movie_dict(103, "Too High A", "2022-01-01", 8.1),
-        create_movie_dict(104, "Too High B", "2022-01-01", 9.0),
+        create_raw_tmdb_movie(101, "Too Low A", "2022-01-01", 6.9),
+        create_raw_tmdb_movie(102, "Too Low B", "2022-01-01", 5.0),
+        create_raw_tmdb_movie(103, "Too High A", "2022-01-01", 8.1),
+        create_raw_tmdb_movie(104, "Too High B", "2022-01-01", 9.0),
     ]
 
     mock_response = ApiResponse(
@@ -351,15 +351,15 @@ def test_rating_filtering_handles_missing_ratings() -> None:
     mock_client = Mock(spec=['get'])
 
     # Movie with missing rating to test TMDB data quality handling
-    movie_without_rating: TMDBMovieBase = {
+    movie_without_rating: TMDBMovieBaseRawDict = {
         'id': 2, 'title': "Movie without rating", 'poster_path': '/test.jpg',
         'release_date': "2022-01-01", 'vote_average': None  # TMDB data quality issue
     }
 
-    tmdb_movies: list[TMDBMovieBase] = [
-        create_movie_dict(1, "Movie with rating", "2022-01-01", 8.0),
+    tmdb_movies: list[TMDBMovieBaseRawDict] = [
+        create_raw_tmdb_movie(1, "Movie with rating", "2022-01-01", 8.0),
         movie_without_rating,
-        create_movie_dict(3, "Another with rating", "2022-01-01", 7.5),
+        create_raw_tmdb_movie(3, "Another with rating", "2022-01-01", 7.5),
     ]
 
     mock_response = ApiResponse(
@@ -398,12 +398,12 @@ def test_rating_filter_excludes_low_vote_count_movies() -> None:
 
     tmdb_movies = [
         # Movies with 10+ votes (should pass)
-        create_movie_dict(1, "Reliable High Rating", "2022-01-01", 8.0, vote_count=100),
-        create_movie_dict(2, "Another Reliable", "2022-02-01", 8.5, vote_count=500),
+        create_raw_tmdb_movie(1, "Reliable High Rating", "2022-01-01", 8.0, vote_count=100),
+        create_raw_tmdb_movie(2, "Another Reliable", "2022-02-01", 8.5, vote_count=500),
         # Movies with < 10 votes (should be filtered)
-        create_movie_dict(101, "Noise Entry 1", "2022-04-01", 9.5, vote_count=9),
-        create_movie_dict(102, "Noise Entry 2", "2022-05-01", 8.0, vote_count=5),
-        create_movie_dict(103, "Noise Entry 3", "2022-06-01", 9.0, vote_count=1),
+        create_raw_tmdb_movie(101, "Noise Entry 1", "2022-04-01", 9.5, vote_count=9),
+        create_raw_tmdb_movie(102, "Noise Entry 2", "2022-05-01", 8.0, vote_count=5),
+        create_raw_tmdb_movie(103, "Noise Entry 3", "2022-06-01", 9.0, vote_count=1),
     ]
 
     mock_response = ApiResponse(
@@ -436,11 +436,11 @@ def test_general_browsing_applies_higher_vote_threshold() -> None:
 
     tmdb_movies = [
         # Above general threshold (10 votes) - should pass
-        create_movie_dict(1, "Above General Threshold", "2022-01-01", 8.0, vote_count=15),
-        create_movie_dict(2, "Well Above", "2022-02-01", 7.0, vote_count=100),
+        create_raw_tmdb_movie(1, "Above General Threshold", "2022-01-01", 8.0, vote_count=15),
+        create_raw_tmdb_movie(2, "Well Above", "2022-02-01", 7.0, vote_count=100),
         # Below general threshold (10 votes) - should be filtered
-        create_movie_dict(101, "Below General", "2022-03-01", 8.5, vote_count=9),
-        create_movie_dict(102, "Very Low", "2022-04-01", 7.5, vote_count=5),
+        create_raw_tmdb_movie(101, "Below General", "2022-03-01", 8.5, vote_count=9),
+        create_raw_tmdb_movie(102, "Very Low", "2022-04-01", 7.5, vote_count=5),
     ]
 
     mock_response = ApiResponse(
@@ -465,19 +465,19 @@ def test_vote_count_filter_excludes_movies_without_vote_count() -> None:
     # Arrange: Mock client returns movies with missing vote_count
     mock_client = Mock(spec=['get'])
 
-    movie_with_votes: TMDBMovieBase = {
+    movie_with_votes: TMDBMovieBaseRawDict = {
         'id': 1, 'title': "Has Vote Count", 'poster_path': '/poster1.jpg',
         'release_date': "2022-01-01", 'vote_average': 8.0, 'vote_count': 100,
         'genre_ids': [18, 28]  # Drama, Action
     }
-    movie_without_votes: TMDBMovieBase = {
+    movie_without_votes: TMDBMovieBaseRawDict = {
         'id': 2, 'title': "No Vote Count", 'poster_path': '/poster2.jpg',
         'release_date': "2022-02-01", 'vote_average': 8.5,
         'genre_ids': [12, 35]  # Adventure, Comedy
         # vote_count field missing (TMDB data quality issue)
     }
 
-    tmdb_movies: list[TMDBMovieBase] = [movie_with_votes, movie_without_votes]
+    tmdb_movies: list[TMDBMovieBaseRawDict] = [movie_with_votes, movie_without_votes]
 
     mock_response = ApiResponse(
         status_code=200,
@@ -507,15 +507,15 @@ def test_combined_year_and_rating_filtering() -> None:
 
     tmdb_movies = [
         # Correct year AND rating - should be kept
-        create_movie_dict(1, "Good 2022 A", "2022-01-01", 8.0),
-        create_movie_dict(2, "Good 2022 B", "2022-06-15", 7.5),
-        create_movie_dict(3, "Good 2022 C", "2022-12-31", 8.5),
+        create_raw_tmdb_movie(1, "Good 2022 A", "2022-01-01", 8.0),
+        create_raw_tmdb_movie(2, "Good 2022 B", "2022-06-15", 7.5),
+        create_raw_tmdb_movie(3, "Good 2022 C", "2022-12-31", 8.5),
         # Correct year, wrong rating
-        create_movie_dict(101, "2022 Low Rating", "2022-01-01", 6.0),
+        create_raw_tmdb_movie(101, "2022 Low Rating", "2022-01-01", 6.0),
         # Wrong year, correct rating
-        create_movie_dict(102, "2021 High Rating", "2021-01-01", 8.0),
+        create_raw_tmdb_movie(102, "2021 High Rating", "2021-01-01", 8.0),
         # Wrong year AND rating
-        create_movie_dict(103, "2019 Low Rating", "2019-01-01", 5.0),
+        create_raw_tmdb_movie(103, "2019 Low Rating", "2019-01-01", 5.0),
     ]
 
     mock_response = ApiResponse(
@@ -562,42 +562,42 @@ def test_buffer_mechanism_fetches_page_n_plus_1_when_under_threshold() -> None:
     # Page 1: 20 movies, but only 12 match filters
     page_1_movies = [
         # 12 movies matching 2022 + 7.5+ rating
-        create_movie_dict(1, "Good A", "2022-01-01", 8.0),
-        create_movie_dict(2, "Good B", "2022-01-01", 7.5),
-        create_movie_dict(3, "Good C", "2022-01-01", 8.2),
-        create_movie_dict(4, "Good D", "2022-01-01", 7.8),
-        create_movie_dict(5, "Good E", "2022-01-01", 8.5),
-        create_movie_dict(6, "Good F", "2022-01-01", 7.9),
-        create_movie_dict(7, "Good G", "2022-01-01", 8.1),
-        create_movie_dict(8, "Good H", "2022-01-01", 7.6),
-        create_movie_dict(9, "Good I", "2022-01-01", 8.3),
-        create_movie_dict(10, "Good J", "2022-01-01", 7.7),
-        create_movie_dict(11, "Good K", "2022-01-01", 8.0),
-        create_movie_dict(12, "Good L", "2022-01-01", 7.5),
+        create_raw_tmdb_movie(1, "Good A", "2022-01-01", 8.0),
+        create_raw_tmdb_movie(2, "Good B", "2022-01-01", 7.5),
+        create_raw_tmdb_movie(3, "Good C", "2022-01-01", 8.2),
+        create_raw_tmdb_movie(4, "Good D", "2022-01-01", 7.8),
+        create_raw_tmdb_movie(5, "Good E", "2022-01-01", 8.5),
+        create_raw_tmdb_movie(6, "Good F", "2022-01-01", 7.9),
+        create_raw_tmdb_movie(7, "Good G", "2022-01-01", 8.1),
+        create_raw_tmdb_movie(8, "Good H", "2022-01-01", 7.6),
+        create_raw_tmdb_movie(9, "Good I", "2022-01-01", 8.3),
+        create_raw_tmdb_movie(10, "Good J", "2022-01-01", 7.7),
+        create_raw_tmdb_movie(11, "Good K", "2022-01-01", 8.0),
+        create_raw_tmdb_movie(12, "Good L", "2022-01-01", 7.5),
         # 8 movies filtered out (wrong year or rating)
-        create_movie_dict(101, "Wrong Year", "2021-01-01", 8.0),
-        create_movie_dict(102, "Wrong Rating", "2022-01-01", 6.0),
-        create_movie_dict(103, "Wrong Year 2", "2019-01-01", 7.5),
-        create_movie_dict(104, "Wrong Rating 2", "2022-01-01", 5.5),
-        create_movie_dict(105, "Wrong Year 3", "2023-01-01", 8.0),
-        create_movie_dict(106, "Wrong Rating 3", "2022-01-01", 7.0),
-        create_movie_dict(107, "Wrong Year 4", "2020-01-01", 7.5),
-        create_movie_dict(108, "Wrong Rating 4", "2022-01-01", 6.5),
+        create_raw_tmdb_movie(101, "Wrong Year", "2021-01-01", 8.0),
+        create_raw_tmdb_movie(102, "Wrong Rating", "2022-01-01", 6.0),
+        create_raw_tmdb_movie(103, "Wrong Year 2", "2019-01-01", 7.5),
+        create_raw_tmdb_movie(104, "Wrong Rating 2", "2022-01-01", 5.5),
+        create_raw_tmdb_movie(105, "Wrong Year 3", "2023-01-01", 8.0),
+        create_raw_tmdb_movie(106, "Wrong Rating 3", "2022-01-01", 7.0),
+        create_raw_tmdb_movie(107, "Wrong Year 4", "2020-01-01", 7.5),
+        create_raw_tmdb_movie(108, "Wrong Rating 4", "2022-01-01", 6.5),
     ]
 
     # Page 2: 20 movies, 10 match filters (buffer page)
     page_2_movies = [
         # 10 movies matching filters (for buffer)
-        create_movie_dict(21, "Buffer A", "2022-01-01", 8.0),
-        create_movie_dict(22, "Buffer B", "2022-01-01", 7.5),
-        create_movie_dict(23, "Buffer C", "2022-01-01", 8.2),
-        create_movie_dict(24, "Buffer D", "2022-01-01", 7.8),
-        create_movie_dict(25, "Buffer E", "2022-01-01", 8.5),
-        create_movie_dict(26, "Buffer F", "2022-01-01", 7.9),
-        create_movie_dict(27, "Buffer G", "2022-01-01", 8.1),
-        create_movie_dict(28, "Buffer H", "2022-01-01", 7.6),
+        create_raw_tmdb_movie(21, "Buffer A", "2022-01-01", 8.0),
+        create_raw_tmdb_movie(22, "Buffer B", "2022-01-01", 7.5),
+        create_raw_tmdb_movie(23, "Buffer C", "2022-01-01", 8.2),
+        create_raw_tmdb_movie(24, "Buffer D", "2022-01-01", 7.8),
+        create_raw_tmdb_movie(25, "Buffer E", "2022-01-01", 8.5),
+        create_raw_tmdb_movie(26, "Buffer F", "2022-01-01", 7.9),
+        create_raw_tmdb_movie(27, "Buffer G", "2022-01-01", 8.1),
+        create_raw_tmdb_movie(28, "Buffer H", "2022-01-01", 7.6),
         # 10 movies filtered out
-        *[create_movie_dict(200 + i, f"Buffer Wrong {i}", "2021-01-01", 6.0)
+        *[create_raw_tmdb_movie(200 + i, f"Buffer Wrong {i}", "2021-01-01", 6.0)
           for i in range(10)],
     ]
 
@@ -644,7 +644,7 @@ def test_buffer_mechanism_does_not_fetch_when_full_page_achieved() -> None:
 
     # Page 1: 20 movies, all 20 match filters (full page)
     page_1_movies = [
-        create_movie_dict(i, f"Good Movie {i}", "2022-01-01", 7.5 + (i * 0.1))
+        create_raw_tmdb_movie(i, f"Good Movie {i}", "2022-01-01", 7.5 + (i * 0.1))
         for i in range(1, 21)
     ]
 
@@ -684,25 +684,25 @@ def test_buffer_mechanism_fills_page_even_with_few_initial_results() -> None:
     # Page 1: 20 movies, but only 8 match very restrictive filters
     page_1_movies = [
         # 8 movies matching filters
-        create_movie_dict(1, "Good A", "2022-01-01", 9.0),
-        create_movie_dict(2, "Good B", "2022-01-01", 8.9),
-        create_movie_dict(3, "Good C", "2022-01-01", 8.8),
-        create_movie_dict(4, "Good D", "2022-01-01", 8.7),
-        create_movie_dict(5, "Good E", "2022-01-01", 8.6),
-        create_movie_dict(6, "Good F", "2022-01-01", 8.5),
-        create_movie_dict(7, "Good G", "2022-01-01", 9.1),
-        create_movie_dict(8, "Good H", "2022-01-01", 9.2),
+        create_raw_tmdb_movie(1, "Good A", "2022-01-01", 9.0),
+        create_raw_tmdb_movie(2, "Good B", "2022-01-01", 8.9),
+        create_raw_tmdb_movie(3, "Good C", "2022-01-01", 8.8),
+        create_raw_tmdb_movie(4, "Good D", "2022-01-01", 8.7),
+        create_raw_tmdb_movie(5, "Good E", "2022-01-01", 8.6),
+        create_raw_tmdb_movie(6, "Good F", "2022-01-01", 8.5),
+        create_raw_tmdb_movie(7, "Good G", "2022-01-01", 9.1),
+        create_raw_tmdb_movie(8, "Good H", "2022-01-01", 9.2),
         # 12 movies filtered out
-        *[create_movie_dict(100 + i, f"Wrong {i}", "2022-01-01", 7.0)
+        *[create_raw_tmdb_movie(100 + i, f"Wrong {i}", "2022-01-01", 7.0)
           for i in range(12)],
     ]
 
     # Page 2: 12 more matching movies
     page_2_movies = [
-        *[create_movie_dict(20 + i, f"Good {chr(73 + i)}", "2022-01-01", 8.5 + i * 0.1)
+        *[create_raw_tmdb_movie(20 + i, f"Good {chr(73 + i)}", "2022-01-01", 8.5 + i * 0.1)
           for i in range(12)],
         # 8 movies filtered out
-        *[create_movie_dict(200 + i, f"Wrong {i}", "2022-01-01", 7.0)
+        *[create_raw_tmdb_movie(200 + i, f"Wrong {i}", "2022-01-01", 7.0)
           for i in range(8)],
     ]
 
@@ -754,7 +754,7 @@ def test_buffer_mechanism_does_not_fetch_on_last_page() -> None:
     mock_client = Mock(spec=['get'])
 
     page_10_movies = [
-        create_movie_dict(i, f"Movie {i}", "2022-01-01", 7.5 + (i * 0.1))
+        create_raw_tmdb_movie(i, f"Movie {i}", "2022-01-01", 7.5 + (i * 0.1))
         for i in range(1, 16)
     ]
 
@@ -786,17 +786,17 @@ def test_buffer_movies_also_pass_filters_no_leakage() -> None:
     mock_client = Mock(spec=['get'])
 
     page_1_movies = [
-        create_movie_dict(i, f"Page1 Movie {i}", "2022-01-01", 7.5 + (i * 0.1))
+        create_raw_tmdb_movie(i, f"Page1 Movie {i}", "2022-01-01", 7.5 + (i * 0.1))
         for i in range(1, 16)
     ]
 
     # Page 2 buffer: 10 valid + 10 invalid movies
     page_2_movies = [
         # 10 valid movies (should be used for buffer)
-        *[create_movie_dict(20 + i, f"Valid Buffer {i}", "2022-01-01", 7.5 + (i * 0.1))
+        *[create_raw_tmdb_movie(20 + i, f"Valid Buffer {i}", "2022-01-01", 7.5 + (i * 0.1))
           for i in range(1, 11)],
         # 10 invalid movies (should NOT leak into results)
-        *[create_movie_dict(100 + i, f"Invalid Buffer {i}", "2019-01-01", 6.0)
+        *[create_raw_tmdb_movie(100 + i, f"Invalid Buffer {i}", "2019-01-01", 6.0)
           for i in range(1, 11)],
     ]
 
@@ -850,11 +850,11 @@ def test_filtering_applies_to_now_playing_endpoint() -> None:
     # Now playing includes some 2021 movies (extended theatrical runs)
     tmdb_movies = [
         # Current 2024 movies
-        create_movie_dict(1, "New Release A", "2024-01-01", 7.5),
-        create_movie_dict(2, "New Release B", "2024-02-01", 8.0),
-        create_movie_dict(3, "New Release C", "2024-03-01", 7.8),
+        create_raw_tmdb_movie(1, "New Release A", "2024-01-01", 7.5),
+        create_raw_tmdb_movie(2, "New Release B", "2024-02-01", 8.0),
+        create_raw_tmdb_movie(3, "New Release C", "2024-03-01", 7.8),
         # Extended run from 2021 (should be filtered if user wants 2024 only)
-        create_movie_dict(101, "Extended Run", "2021-01-01", 8.5),
+        create_raw_tmdb_movie(101, "Extended Run", "2021-01-01", 8.5),
     ]
 
     mock_response = ApiResponse(
@@ -884,11 +884,11 @@ def test_filtering_applies_to_upcoming_endpoint() -> None:
     # Upcoming movies often have placeholder 0.0 ratings
     tmdb_movies = [
         # Movies with ratings
-        create_movie_dict(1, "Upcoming A", "2024-06-01", 7.5),
-        create_movie_dict(2, "Upcoming B", "2024-07-01", 8.0),
+        create_raw_tmdb_movie(1, "Upcoming A", "2024-06-01", 7.5),
+        create_raw_tmdb_movie(2, "Upcoming B", "2024-07-01", 8.0),
         # Movies with placeholder ratings
-        create_movie_dict(101, "No Rating Yet", "2024-08-01", 0.0),
-        create_movie_dict(102, "Also No Rating", "2024-09-01", 0.0),
+        create_raw_tmdb_movie(101, "No Rating Yet", "2024-08-01", 0.0),
+        create_raw_tmdb_movie(102, "Also No Rating", "2024-09-01", 0.0),
     ]
 
     mock_response = ApiResponse(
@@ -921,7 +921,7 @@ def test_no_filters_returns_all_results_unchanged() -> None:
     mock_client = Mock(spec=['get'])
 
     tmdb_movies = [
-        create_movie_dict(i, f"Movie {i}", f"{2020 + (i % 5)}-01-01", 5.0 + (i * 0.2))
+        create_raw_tmdb_movie(i, f"Movie {i}", f"{2020 + (i % 5)}-01-01", 5.0 + (i * 0.2))
         for i in range(1, 21)
     ]
 
@@ -953,7 +953,7 @@ def test_no_buffer_fetch_when_no_filters_applied() -> None:
     mock_client = Mock(spec=['get'])
 
     tmdb_movies = [
-        create_movie_dict(i, f"Movie {i}", "2022-01-01", 7.0)
+        create_raw_tmdb_movie(i, f"Movie {i}", "2022-01-01", 7.0)
         for i in range(1, 21)
     ]
 
@@ -982,10 +982,10 @@ def test_filter_movies_excludes_missing_poster() -> None:
     """Test that movies without poster_path are excluded for display quality."""
     # Arrange: Mock movies with and without posters
     movies_with_data = [
-        create_movie_dict(1, "Has Poster", "2022-01-01", 7.5),
-        create_movie_dict(2, "Missing Poster", "2022-01-01", 8.0, poster_path=''),
-        create_movie_dict(3, "Has Poster 2", "2022-01-01", 7.8),
-        create_movie_dict(4, "Null Poster", "2022-01-01", 8.2, poster_path=''),
+        create_raw_tmdb_movie(1, "Has Poster", "2022-01-01", 7.5),
+        create_raw_tmdb_movie(2, "Missing Poster", "2022-01-01", 8.0, poster_path=''),
+        create_raw_tmdb_movie(3, "Has Poster 2", "2022-01-01", 7.8),
+        create_raw_tmdb_movie(4, "Null Poster", "2022-01-01", 8.2, poster_path=''),
     ]
 
     mock_client = Mock(spec=['get'])
@@ -1016,8 +1016,8 @@ def test_filter_movies_excludes_empty_title() -> None:
     # Arrange: Mock movies with various title states
     # Note: We need to override TypedDict validation, so create dicts directly
 
-    tmdb_movies: list[TMDBMovieBase] = [
-        create_movie_dict(1, "Valid Title", "2022-01-01", 7.5),
+    tmdb_movies: list[TMDBMovieBaseRawDict] = [
+        create_raw_tmdb_movie(1, "Valid Title", "2022-01-01", 7.5),
         {  # Empty title
             'id': 2,
             'title': '',
@@ -1027,7 +1027,7 @@ def test_filter_movies_excludes_empty_title() -> None:
             'vote_count': 100,
             'runtime': None,
         },  # type: ignore
-        create_movie_dict(3, "Another Valid", "2022-01-01", 7.8),
+        create_raw_tmdb_movie(3, "Another Valid", "2022-01-01", 7.8),
         {  # Whitespace-only title
             'id': 4,
             'title': '   ',
@@ -1066,7 +1066,7 @@ def test_filter_movies_completeness_with_all_valid() -> None:
     """Test that completeness filter doesn't exclude valid movies."""
     # Arrange: All movies have complete data
     movies_with_data = [
-        create_movie_dict(i, f"Complete Movie {i}", "2022-01-01", 7.5 + (i * 0.1))
+        create_raw_tmdb_movie(i, f"Complete Movie {i}", "2022-01-01", 7.5 + (i * 0.1))
         for i in range(1, 21)
     ]
 
@@ -1089,17 +1089,17 @@ def test_filter_movies_completeness_with_all_valid() -> None:
 def test_completeness_filter_applies_with_other_filters() -> None:
     """Test that completeness filter works in combination with year/rating filters."""
     # Arrange: Mix of complete/incomplete movies with year/rating variations
-    tmdb_movies: list[TMDBMovieBase] = [
+    tmdb_movies: list[TMDBMovieBaseRawDict] = [
         # Complete, matching all filters
-        create_movie_dict(1, "Perfect Movie", "2022-01-01", 8.0),
+        create_raw_tmdb_movie(1, "Perfect Movie", "2022-01-01", 8.0),
         # Missing poster, matches year/rating (should be excluded)
-        create_movie_dict(2, "No Poster", "2022-01-01", 8.0, poster_path=''),
+        create_raw_tmdb_movie(2, "No Poster", "2022-01-01", 8.0, poster_path=''),
         # Complete, wrong year (should be excluded)
-        create_movie_dict(3, "Wrong Year", "2019-01-01", 8.0),
+        create_raw_tmdb_movie(3, "Wrong Year", "2019-01-01", 8.0),
         # Complete, low rating (should be excluded)
-        create_movie_dict(4, "Low Rating", "2022-01-01", 6.0),
+        create_raw_tmdb_movie(4, "Low Rating", "2022-01-01", 6.0),
         # Complete, matching all filters
-        create_movie_dict(5, "Another Perfect", "2022-01-01", 8.5),
+        create_raw_tmdb_movie(5, "Another Perfect", "2022-01-01", 8.5),
         # Empty title, matches year/rating (should be excluded)
         {
             'id': 6,
@@ -1162,15 +1162,15 @@ def test_filter_movies_excludes_pre_cinema_dates() -> None:
 
     tmdb_movies = [
         # Valid movies (1888 and later)
-        create_movie_dict(1, "Roundhay Garden Scene", "1888-10-14", 7.0),
-        create_movie_dict(2, "Early Silent Film", "1895-12-28", 6.5),
-        create_movie_dict(3, "The Great Train Robbery", "1903-01-01", 7.5),
-        create_movie_dict(4, "Modern Movie", "2022-01-01", 8.0),
+        create_raw_tmdb_movie(1, "Roundhay Garden Scene", "1888-10-14", 7.0),
+        create_raw_tmdb_movie(2, "Early Silent Film", "1895-12-28", 6.5),
+        create_raw_tmdb_movie(3, "The Great Train Robbery", "1903-01-01", 7.5),
+        create_raw_tmdb_movie(4, "Modern Movie", "2022-01-01", 8.0),
         # Invalid movies (before 1888) - TMDB data quality issues
-        create_movie_dict(101, "Invalid 1887", "1887-01-01", 7.0),
-        create_movie_dict(102, "Invalid 1800", "1800-01-01", 7.0),
-        create_movie_dict(103, "Invalid 1500", "1500-01-01", 7.0),
-        create_movie_dict(104, "Invalid Year 1", "0001-01-01", 7.0),
+        create_raw_tmdb_movie(101, "Invalid 1887", "1887-01-01", 7.0),
+        create_raw_tmdb_movie(102, "Invalid 1800", "1800-01-01", 7.0),
+        create_raw_tmdb_movie(103, "Invalid 1500", "1500-01-01", 7.0),
+        create_raw_tmdb_movie(104, "Invalid Year 1", "0001-01-01", 7.0),
     ]
 
     mock_response = ApiResponse(
@@ -1204,8 +1204,8 @@ def test_filter_movies_includes_first_film_year() -> None:
     mock_client = Mock(spec=['get'])
 
     tmdb_movies = [
-        create_movie_dict(1, "Roundhay Garden Scene", "1888-10-14", 7.0),
-        create_movie_dict(2, "Another 1888 Film", "1888-12-31", 6.5),
+        create_raw_tmdb_movie(1, "Roundhay Garden Scene", "1888-10-14", 7.0),
+        create_raw_tmdb_movie(2, "Another 1888 Film", "1888-12-31", 6.5),
     ]
 
     mock_response = ApiResponse(
@@ -1238,12 +1238,12 @@ def test_historical_validation_with_year_filters() -> None:
     # User requests 1900-1920, but TMDB returns some pre-1888 movies (data bug)
     tmdb_movies = [
         # Valid movies in requested range
-        create_movie_dict(1, "Valid 1900", "1900-01-01", 7.0),
-        create_movie_dict(2, "Valid 1910", "1910-01-01", 7.5),
-        create_movie_dict(3, "Valid 1920", "1920-01-01", 8.0),
+        create_raw_tmdb_movie(1, "Valid 1900", "1900-01-01", 7.0),
+        create_raw_tmdb_movie(2, "Valid 1910", "1910-01-01", 7.5),
+        create_raw_tmdb_movie(3, "Valid 1920", "1920-01-01", 8.0),
         # Invalid pre-cinema dates (should be excluded by historical validation)
-        create_movie_dict(101, "Invalid 1850", "1850-01-01", 7.0),
-        create_movie_dict(102, "Invalid 1700", "1700-01-01", 7.0),
+        create_raw_tmdb_movie(101, "Invalid 1850", "1850-01-01", 7.0),
+        create_raw_tmdb_movie(102, "Invalid 1700", "1700-01-01", 7.0),
     ]
 
     mock_response = ApiResponse(
@@ -1294,14 +1294,14 @@ def test_genre_filter_excludes_movies_with_empty_genres() -> None:
     # TMDB returns mix of complete movies and incomplete (no genres) entries
     tmdb_movies = [
         # Complete movies WITH genres (should pass)
-        create_movie_dict(1, "Complete Movie A", "2020-01-01", 7.5, vote_count=100),
-        create_movie_dict(2, "Complete Movie B", "2021-01-01", 8.0, vote_count=150),
-        create_movie_dict(3, "Complete Movie C", "2022-01-01", 6.5, vote_count=75),
+        create_raw_tmdb_movie(1, "Complete Movie A", "2020-01-01", 7.5, vote_count=100),
+        create_raw_tmdb_movie(2, "Complete Movie B", "2021-01-01", 8.0, vote_count=150),
+        create_raw_tmdb_movie(3, "Complete Movie C", "2022-01-01", 6.5, vote_count=75),
         # Incomplete entries WITHOUT genres (should be filtered like missing posters)
-        create_movie_dict(
+        create_raw_tmdb_movie(
             101, "No Genres Entry A", "2020-01-01", 7.0, vote_count=100, genre_ids=[]
         ),
-        create_movie_dict(
+        create_raw_tmdb_movie(
             102, "No Genres Entry B", "2021-01-01", 8.5, vote_count=200, genre_ids=[]
         ),
     ]
@@ -1342,13 +1342,13 @@ def test_genre_filter_works_with_completeness_checks() -> None:
 
     tmdb_movies = [
         # Complete movie (has poster, title, genres)
-        create_movie_dict(1, "Complete Movie", "2022-01-01", 7.5, vote_count=100),
+        create_raw_tmdb_movie(1, "Complete Movie", "2022-01-01", 7.5, vote_count=100),
         # Missing poster (should be filtered)
-        create_movie_dict(2, "No Poster", "2022-01-01", 8.0, vote_count=150, poster_path=''),
+        create_raw_tmdb_movie(2, "No Poster", "2022-01-01", 8.0, vote_count=150, poster_path=''),
         # Missing genres (should be filtered)
-        create_movie_dict(3, "No Genres", "2022-01-01", 6.5, vote_count=75, genre_ids=[]),
+        create_raw_tmdb_movie(3, "No Genres", "2022-01-01", 6.5, vote_count=75, genre_ids=[]),
         # Another complete movie
-        create_movie_dict(4, "Another Complete", "2022-01-01", 7.0, vote_count=200),
+        create_raw_tmdb_movie(4, "Another Complete", "2022-01-01", 7.0, vote_count=200),
     ]
 
     mock_response = ApiResponse(
@@ -1382,14 +1382,14 @@ def test_combined_genre_and_vote_filters_with_rating_filter() -> None:
 
     tmdb_movies = [
         # Pass both filters (has genres + 5+ votes)
-        create_movie_dict(1, "Good Quality A", "2020-01-01", 2.0, vote_count=10),
-        create_movie_dict(2, "Good Quality B", "2021-01-01", 1.5, vote_count=62),
+        create_raw_tmdb_movie(1, "Good Quality A", "2020-01-01", 2.0, vote_count=10),
+        create_raw_tmdb_movie(2, "Good Quality B", "2021-01-01", 1.5, vote_count=62),
         # Fail completeness filter (no genres) - filtered by completeness check
-        create_movie_dict(101, "No Genres", "2020-01-01", 2.5, vote_count=50, genre_ids=[]),
+        create_raw_tmdb_movie(101, "No Genres", "2020-01-01", 2.5, vote_count=50, genre_ids=[]),
         # Fail vote filter (has genres but < 5 votes) - filtered by vote threshold
-        create_movie_dict(102, "Low Votes", "2021-01-01", 1.8, vote_count=3),
+        create_raw_tmdb_movie(102, "Low Votes", "2021-01-01", 1.8, vote_count=3),
         # Fail both (no genres + < 5 votes)
-        create_movie_dict(103, "Fail Both", "2022-01-01", 2.2, vote_count=1, genre_ids=[]),
+        create_raw_tmdb_movie(103, "Fail Both", "2022-01-01", 2.2, vote_count=1, genre_ids=[]),
     ]
 
     mock_response = ApiResponse(

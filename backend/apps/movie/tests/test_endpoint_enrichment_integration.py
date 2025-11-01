@@ -25,7 +25,7 @@ from core.tests.test_helpers import HTTPStatus
 from core.types.api_types import TMDBResponseData
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.test import Client
-from movie.tests.test_fixtures_tmdb import create_movie_dict, create_paginated_tmdb_response
+from movie.tests.test_fixtures_tmdb import create_raw_tmdb_movie, create_paginated_tmdb_response
 from user_movie_data.models import UserMovieData
 
 if TYPE_CHECKING:
@@ -98,7 +98,7 @@ def test_discovery_endpoint_enriches_user_movie_data_for_authenticated_user(
     )
 
     # Arrange: Mock TMDB API response using test helper
-    movies = [create_movie_dict(101, 'Blade Runner', '1982-06-25', 8.1, poster_path='/test.jpg')]
+    movies = [create_raw_tmdb_movie(101, 'Blade Runner', '1982-06-25', 8.1, poster_path='/test.jpg')]
     tmdb_payload: TMDBResponseData = cast(
         TMDBResponseData,
         create_paginated_tmdb_response(movies, page=1, total_pages=1)
@@ -161,7 +161,7 @@ def test_discovery_endpoint_works_for_unauthenticated_user(
     create_movie_stub(tmdb_id=101, title='Blade Runner')
 
     # Arrange: Mock TMDB API response using test helper
-    movies = [create_movie_dict(101, 'Blade Runner', '1982-06-25', 8.1, poster_path='/test.jpg')]
+    movies = [create_raw_tmdb_movie(101, 'Blade Runner', '1982-06-25', 8.1, poster_path='/test.jpg')]
     tmdb_payload: TMDBResponseData = cast(
         TMDBResponseData,
         create_paginated_tmdb_response(movies, page=1, total_pages=1)
@@ -219,7 +219,7 @@ def test_discovery_endpoint_returns_none_for_movies_without_user_data(
     create_movie_stub(tmdb_id=101, title='Blade Runner')
 
     # Arrange: Mock TMDB API response using test helper
-    movies = [create_movie_dict(101, 'Blade Runner', '1982-06-25', 8.1, poster_path='/test.jpg')]
+    movies = [create_raw_tmdb_movie(101, 'Blade Runner', '1982-06-25', 8.1, poster_path='/test.jpg')]
     tmdb_payload: TMDBResponseData = cast(
         TMDBResponseData,
         create_paginated_tmdb_response(movies, page=1, total_pages=1)
@@ -405,9 +405,9 @@ def test_enrichment_handles_multiple_movies_efficiently(
 
     # Arrange: Mock TMDB API response with 3 movies using test helper
     movies = [
-        create_movie_dict(101, 'Blade Runner', '1982-06-25', 8.1, poster_path='/test1.jpg'),
-        create_movie_dict(102, 'Chinatown', '1974-06-20', 8.2, poster_path='/test2.jpg'),
-        create_movie_dict(103, 'The Matrix', '1999-03-31', 8.7, poster_path='/test3.jpg')
+        create_raw_tmdb_movie(101, 'Blade Runner', '1982-06-25', 8.1, poster_path='/test1.jpg'),
+        create_raw_tmdb_movie(102, 'Chinatown', '1974-06-20', 8.2, poster_path='/test2.jpg'),
+        create_raw_tmdb_movie(103, 'The Matrix', '1999-03-31', 8.7, poster_path='/test3.jpg')
     ]
     tmdb_payload: TMDBResponseData = cast(
         TMDBResponseData,

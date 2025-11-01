@@ -27,7 +27,7 @@ from movie.tests.test_fixtures_tmdb import (
     TMDBGenreListResponse,
     TMDBMovieResponse,
     create_movie_detail_dict,
-    create_movie_dict,
+    create_raw_tmdb_movie,
     create_paginated_tmdb_response,
 )
 from ninja.errors import HttpError
@@ -148,7 +148,7 @@ def test_search_movies_uses_injected_client() -> None:
     # Arrange: Mock client
     mock_client = Mock(spec=['search_movies'])
 
-    movie = create_movie_dict(1, 'Test Movie', '2023-01-01', 8.0, poster_path='/test.jpg')
+    movie = create_raw_tmdb_movie(1, 'Test Movie', '2023-01-01', 8.0, poster_path='/test.jpg')
     search_response: TMDBMovieResponse = create_paginated_tmdb_response(
         [movie], page=1, total_pages=1
     )
@@ -180,9 +180,9 @@ def test_search_movies_filters_soundtrack_results() -> None:
     mock_client = Mock(spec=['search_movies'])
 
     movies = [
-        create_movie_dict(1, 'Real Movie', '2023-01-01', 8.0, poster_path='/real.jpg'),
-        create_movie_dict(2, 'Movie Soundtrack', '2023-01-01', 7.0, poster_path='/soundtrack.jpg'),
-        create_movie_dict(
+        create_raw_tmdb_movie(1, 'Real Movie', '2023-01-01', 8.0, poster_path='/real.jpg'),
+        create_raw_tmdb_movie(2, 'Movie Soundtrack', '2023-01-01', 7.0, poster_path='/soundtrack.jpg'),
+        create_raw_tmdb_movie(
             3, 'Original Motion Picture Score', '2023-01-01', 6.0, poster_path='/score.jpg'
         )
     ]
@@ -285,7 +285,7 @@ def test_get_now_playing_movies_uses_injected_client() -> None:
     # Arrange
     mock_client = Mock(spec=['get'])
 
-    movie = create_movie_dict(1, 'Now Playing', '2023-01-01', 8.0, poster_path='/now.jpg')
+    movie = create_raw_tmdb_movie(1, 'Now Playing', '2023-01-01', 8.0, poster_path='/now.jpg')
     now_playing_response: TMDBMovieResponse = create_paginated_tmdb_response(
         [movie], page=1, total_pages=1
     )
@@ -326,7 +326,7 @@ def test_get_upcoming_movies_uses_injected_client() -> None:
     # Arrange
     mock_client = Mock(spec=['get'])
 
-    movie = create_movie_dict(1, 'Upcoming', '2024-01-01', 8.0, poster_path='/upcoming.jpg')
+    movie = create_raw_tmdb_movie(1, 'Upcoming', '2024-01-01', 8.0, poster_path='/upcoming.jpg')
     upcoming_response: TMDBMovieResponse = create_paginated_tmdb_response(
         [movie], page=1, total_pages=1
     )

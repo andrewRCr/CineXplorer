@@ -32,7 +32,7 @@ HTTP_422_UNPROCESSABLE_ENTITY = HTTPStatus.UNPROCESSABLE_ENTITY
 NOW_PLAYING_URL = '/api/movies/now-playing'
 UPCOMING_URL = '/api/movies/upcoming'
 SEARCH_URL = '/api/movies/search'
-DISCOVER_URL = '/api/movies/discover'
+BROWSE_URL = '/api/movies/browse'
 
 
 def movie_detail_url(tmdb_id: int) -> str:
@@ -76,7 +76,7 @@ def create_movie_stub(tmdb_id: int, **params: Unpack[MovieParams]) -> Movie:
 @pytest.mark.django_db
 @pytest.mark.parametrize('mock_path,url,params', [
     (
-        'core.services.tmdb_api_client.TMDBApiClient.get_now_playing_movies',
+        'core.services.tmdb_api_client.TMDBApiClient.get',  # Now uses browse endpoint
         NOW_PLAYING_URL,
         {'page': 1}
     ),
@@ -86,16 +86,16 @@ def create_movie_stub(tmdb_id: int, **params: Unpack[MovieParams]) -> Movie:
         {'page': 1}
     ),
     (
-        'core.services.tmdb_api_client.TMDBApiClient.search_movies',
+        'core.services.tmdb_api_client.TMDBApiClient.get',  # Now uses browse endpoint
         SEARCH_URL,
         {'query': 'test'}
     ),
     (
         'core.services.tmdb_api_client.TMDBApiClient.get',
-        DISCOVER_URL,
+        BROWSE_URL,
         {'page': 1}
     ),
-], ids=['now_playing', 'upcoming', 'search', 'discover'])
+], ids=['now_playing', 'upcoming', 'search', 'browse'])
 def test_paginated_endpoint_contract(
     api_client: Client,
     mock_path: str,
@@ -105,7 +105,7 @@ def test_paginated_endpoint_contract(
     """
     Test that paginated movie endpoints return the correct response structure.
 
-    Parametrized to test: now-playing, upcoming, search, and discover endpoints.
+    Parametrized to test: now-playing, upcoming, search, and browse endpoints.
     All should return paginated results with the same structure, including:
     - Pagination metadata (page, total_pages, results count)
     - Individual movie fields (tmdb_id, title, poster_path, release_date)
@@ -153,14 +153,14 @@ def test_paginated_endpoint_contract(
 
 
 # =========================
-# Discover Endpoint Tests
+# Browse Endpoint Tests
 # =========================
 
 
 @pytest.mark.django_db
 @patch('core.services.tmdb_api_client.TMDBApiClient.get')
-def test_discover_with_filters(mock_tmdb_get: Mock, api_client: Client) -> None:
-    """Test the discover endpoint with various filter parameters."""
+def test_browse_with_filters(mock_tmdb_get: Mock, api_client: Client) -> None:
+    """Test the browse endpoint with various filter parameters."""
     # Arrange: Define a standard mock TMDB API response
     movies = [create_movie_dict(101, 'Test Movie', '2023-01-01', 8.0)]
     tmdb_payload: TMDBResponseData = cast(
@@ -173,7 +173,7 @@ def test_discover_with_filters(mock_tmdb_get: Mock, api_client: Client) -> None:
     )
     mock_tmdb_get.return_value = mock_api_response
 
-    # Act: Call the discover endpoint with filters
+    # Act: Call the browse endpoint with filters
     filters: dict[str, str | int | float] = {
         'sort_by': 'release_date.desc',
         'genres': '28,12',  # Action, Adventure
@@ -186,7 +186,7 @@ def test_discover_with_filters(mock_tmdb_get: Mock, api_client: Client) -> None:
         'runtime_lte': 180,
         'certification': 'PG-13'
     }
-    res = api_client.get(DISCOVER_URL, filters)
+    res = api_client.get(BROWSE_URL, filters)
 
     # Assert: Check the response status and structure
     assert res.status_code == HTTP_200_OK
@@ -230,19 +230,19 @@ def test_discover_with_filters(mock_tmdb_get: Mock, api_client: Client) -> None:
     ('vote_average_gte', 'invalid'),
     ('with_runtime_gte', 'invalid'),
 ], ids=['invalid_year', 'invalid_vote_average_gte', 'invalid_runtime_gte'])
-def test_discover_invalid_parameters(
+def test_browse_invalid_parameters(
     api_client: Client,
     invalid_param: str,
     invalid_value: str
 ) -> None:
     """
-    Test the discover endpoint with invalid parameter values.
+    Test the browse endpoint with invalid parameter values.
 
     Parametrized to test various Pydantic validation errors.
     All should return 422 status with error details.
     """
     # Act: Send request with invalid parameter
-    res = api_client.get(DISCOVER_URL, {invalid_param: invalid_value})
+    res = api_client.get(BROWSE_URL, {invalid_param: invalid_value})
 
     # Assert: Check validation error response
     assert res.status_code == HTTP_422_UNPROCESSABLE_ENTITY
@@ -509,11 +509,11 @@ def test_get_movie_detail_unauthenticated(
 
 @pytest.mark.django_db
 @patch('core.services.tmdb_api_client.TMDBApiClient.get')
-def test_discover_api_extracts_backend_filter_params(
+def test_browse_api_extracts_backend_filter_params(
     mock_tmdb_get: Mock,
     api_client: Client
 ) -> None:
-    """Test discover API extracts year_min/max and rating_min/max for backend filtering.
+    """Test browse API extracts year_min/max and rating_min/max for backend filtering.
 
     This integration test validates the critical missing functionality:
     1. API receives release_date_gte/lte and vote_average_gte/lte
@@ -545,7 +545,7 @@ def test_discover_api_extracts_backend_filter_params(
         'release_date_lte': '2029-12-31',
         'vote_average_gte': 7.0
     }
-    res = api_client.get(DISCOVER_URL, filters)
+    res = api_client.get(BROWSE_URL, filters)
 
     # Assert: Response successful
     assert res.status_code == HTTP_200_OK
@@ -570,11 +570,11 @@ def test_discover_api_extracts_backend_filter_params(
 
 @pytest.mark.django_db
 @patch('core.services.tmdb_api_client.TMDBApiClient.get')
-def test_discover_api_filters_bad_ratings_from_tmdb(
+def test_browse_api_filters_bad_ratings_from_tmdb(
     mock_tmdb_get: Mock,
     api_client: Client
 ) -> None:
-    """Test discover API backend filtering removes movies with bad ratings.
+    """Test browse API backend filtering removes movies with bad ratings.
 
     TMDB sometimes returns movies with placeholder 0.0 ratings or ratings
     outside the requested range. Backend filtering should catch these.
@@ -599,7 +599,7 @@ def test_discover_api_filters_bad_ratings_from_tmdb(
     filters: dict[str, str | int | float] = {
         'vote_average_gte': 7.5
     }
-    res = api_client.get(DISCOVER_URL, filters)
+    res = api_client.get(BROWSE_URL, filters)
 
     # Assert: Only high-rated movie returned
     assert res.status_code == HTTP_200_OK
@@ -621,7 +621,7 @@ def test_discover_api_filters_bad_ratings_from_tmdb(
 
 @pytest.mark.django_db
 @patch('core.services.tmdb_api_client.TMDBApiClient.get')
-def test_discover_api_buffer_mechanism_with_filtering(
+def test_browse_api_buffer_mechanism_with_filtering(
     mock_tmdb_get: Mock,
     api_client: Client
 ) -> None:
@@ -641,7 +641,8 @@ def test_discover_api_buffer_mechanism_with_filtering(
                 'title': f'Valid Movie {i}',
                 'poster_path': f'/test{i}.jpg',
                 'release_date': '2022-01-01',
-                'vote_average': 8.0, 'vote_count': 100
+                'vote_average': 8.0, 'vote_count': 100,
+                'genre_ids': [28, 12]  # Required for backend filtering
             }
             for i in range(1, 16)
         ],
@@ -651,35 +652,40 @@ def test_discover_api_buffer_mechanism_with_filtering(
             'title': 'Wrong Year 2019',
             'poster_path': '/bad1.jpg',
             'release_date': '2019-01-01',  # Outside range
-            'vote_average': 8.0, 'vote_count': 100
+            'vote_average': 8.0, 'vote_count': 100,
+            'genre_ids': [28, 12]
         },
         {
             'id': 102,
             'title': 'Low Rating',
             'poster_path': '/bad2.jpg',
             'release_date': '2022-01-01',
-            'vote_average': 6.0  # Below threshold
+            'vote_average': 6.0,  # Below threshold
+            'genre_ids': [28, 12]
         },
         {
             'id': 103,
             'title': 'Wrong Year 2030',
             'poster_path': '/bad3.jpg',
             'release_date': '2030-01-01',  # Outside range
-            'vote_average': 8.0, 'vote_count': 100
+            'vote_average': 8.0, 'vote_count': 100,
+            'genre_ids': [28, 12]
         },
         {
             'id': 104,
             'title': 'Placeholder Rating',
             'poster_path': '/bad4.jpg',
             'release_date': '2022-01-01',
-            'vote_average': 0.0  # Placeholder
+            'vote_average': 0.0,  # Placeholder
+            'genre_ids': [28, 12]
         },
         {
             'id': 105,
             'title': 'Wrong Year 2018',
             'poster_path': '/bad5.jpg',
             'release_date': '2018-01-01',  # Outside range
-            'vote_average': 8.0, 'vote_count': 100
+            'vote_average': 8.0, 'vote_count': 100,
+            'genre_ids': [28, 12]
         },
     ]
 
@@ -691,7 +697,8 @@ def test_discover_api_buffer_mechanism_with_filtering(
                 'title': f'Buffer Movie {i}',
                 'poster_path': f'/buffer{i}.jpg',
                 'release_date': '2023-01-01',
-                'vote_average': 7.8, 'vote_count': 100
+                'vote_average': 7.8, 'vote_count': 100,
+                'genre_ids': [28, 12]  # Required for backend filtering
             }
             for i in range(1, 11)
         ],
@@ -726,7 +733,7 @@ def test_discover_api_buffer_mechanism_with_filtering(
         'release_date_lte': '2029-12-31',
         'vote_average_gte': 7.5
     }
-    res = api_client.get(DISCOVER_URL, filters)
+    res = api_client.get(BROWSE_URL, filters)
 
     # Assert: Buffer mechanism activated (2 TMDB calls)
     assert mock_tmdb_get.call_count == 2, (
@@ -768,7 +775,7 @@ def test_discover_api_buffer_mechanism_with_filtering(
 
 @pytest.mark.django_db
 @patch('core.services.tmdb_api_client.TMDBApiClient.get')
-def test_discover_returns_next_tmdb_page_start_after_buffer(
+def test_browse_returns_next_tmdb_page_start_after_buffer(
     mock_tmdb_get: Mock,
     api_client: Client
 ) -> None:
@@ -817,11 +824,11 @@ def test_discover_returns_next_tmdb_page_start_after_buffer(
         ))),
     ]
 
-    # Act: Request discover with filters that trigger sparse results
+    # Act: Request browse with filters that trigger sparse results
     filters: dict[str, str | float] = {
         'vote_average_gte': 7.5
     }
-    res = api_client.get(DISCOVER_URL, filters)
+    res = api_client.get(BROWSE_URL, filters)
 
     # Assert: Response includes next_tmdb_page_start metadata
     assert res.status_code == HTTP_200_OK
@@ -844,7 +851,7 @@ def test_discover_returns_next_tmdb_page_start_after_buffer(
 
 @pytest.mark.django_db
 @patch('core.services.tmdb_api_client.TMDBApiClient.get')
-def test_discover_continues_from_tmdb_page_start_parameter(
+def test_browse_continues_from_tmdb_page_start_parameter(
     mock_tmdb_get: Mock,
     api_client: Client
 ) -> None:
@@ -874,7 +881,7 @@ def test_discover_continues_from_tmdb_page_start_parameter(
         'page': 2,  # API page 2
         'tmdb_page_start': 5,  # But continue from TMDB page 5
     }
-    res = api_client.get(DISCOVER_URL, filters)
+    res = api_client.get(BROWSE_URL, filters)
 
     # Assert: Request succeeded
     assert res.status_code == HTTP_200_OK
@@ -892,7 +899,7 @@ def test_discover_continues_from_tmdb_page_start_parameter(
 
 @pytest.mark.django_db
 @patch('core.services.tmdb_api_client.TMDBApiClient.get')
-def test_discover_no_duplicates_across_sequential_pages(
+def test_browse_no_duplicates_across_sequential_pages(
     mock_tmdb_get: Mock,
     api_client: Client
 ) -> None:
@@ -935,14 +942,14 @@ def test_discover_no_duplicates_across_sequential_pages(
     ]
 
     # Act 1: Request API page 1
-    res1 = api_client.get(DISCOVER_URL, {'vote_average_gte': 7.5})
+    res1 = api_client.get(BROWSE_URL, {'vote_average_gte': 7.5})
     assert res1.status_code == HTTP_200_OK
     data1 = res1.json()
     movies_page_1 = {m['tmdb_id'] for m in data1['results']}
     next_tmdb_start = data1['next_tmdb_page_start']
 
     # Act 2: Request API page 2 with metadata
-    res2 = api_client.get(DISCOVER_URL, {
+    res2 = api_client.get(BROWSE_URL, {
         'page': 2,
         'tmdb_page_start': next_tmdb_start,
         'vote_average_gte': 7.5
@@ -964,7 +971,7 @@ def test_discover_no_duplicates_across_sequential_pages(
 
 @pytest.mark.django_db
 @patch('core.services.tmdb_api_client.TMDBApiClient.get')
-def test_discover_fallback_when_tmdb_page_start_omitted(
+def test_browse_fallback_when_tmdb_page_start_omitted(
     mock_tmdb_get: Mock,
     api_client: Client
 ) -> None:
@@ -989,7 +996,7 @@ def test_discover_fallback_when_tmdb_page_start_omitted(
     )
 
     # Act: Request API page 2 WITHOUT tmdb_page_start
-    res = api_client.get(DISCOVER_URL, {'page': 2})
+    res = api_client.get(BROWSE_URL, {'page': 2})
 
     # Assert: Should fall back to simple mapping (API page 2 → TMDB page 2)
     assert res.status_code == HTTP_200_OK
@@ -1011,11 +1018,11 @@ def test_discover_fallback_when_tmdb_page_start_omitted(
 
 @pytest.mark.django_db
 @patch('core.services.tmdb_api_client.TMDBApiClient.get')
-def test_discover_deduplicates_when_tmdb_returns_duplicate_across_pages(
+def test_browse_deduplicates_when_tmdb_returns_duplicate_across_pages(
     mock_tmdb_get: Mock,
     api_client: Client
 ) -> None:
-    """Test discover endpoint deduplicates when TMDB returns same movie on consecutive pages.
+    """Test browse endpoint deduplicates when TMDB returns same movie on consecutive pages.
 
     Real-world bug scenario: TMDB eventually-consistent DB returns Spirited Away (ID 129)
     on both page 1 position 19 AND page 2 position 1 (multi-genre filter: Animation + Family).
@@ -1052,8 +1059,8 @@ def test_discover_deduplicates_when_tmdb_returns_duplicate_across_pages(
         ))),
     ]
 
-    # Act: Request discover API page 1 with multi-genre filter
-    res = api_client.get(DISCOVER_URL, {
+    # Act: Request browse API page 1 with multi-genre filter
+    res = api_client.get(BROWSE_URL, {
         'page': 1,
         'with_genres': '16,10751'  # Animation + Family (real-world filter)
     })
@@ -1088,11 +1095,11 @@ def test_discover_deduplicates_when_tmdb_returns_duplicate_across_pages(
 
 @pytest.mark.django_db
 @patch('core.services.tmdb_api_client.TMDBApiClient.get')
-def test_discover_deduplicates_multiple_duplicates_across_pages(
+def test_browse_deduplicates_multiple_duplicates_across_pages(
     mock_tmdb_get: Mock,
     api_client: Client
 ) -> None:
-    """Test discover endpoint handles multiple duplicates across multiple buffer pages.
+    """Test browse endpoint handles multiple duplicates across multiple buffer pages.
 
     Scenario: Heavy duplication from TMDB requires fetching multiple buffer pages
     to accumulate 20 unique movies.
@@ -1136,8 +1143,8 @@ def test_discover_deduplicates_multiple_duplicates_across_pages(
         ))),
     ]
 
-    # Act: Request discover API
-    res = api_client.get(DISCOVER_URL, {'page': 1})
+    # Act: Request browse API
+    res = api_client.get(BROWSE_URL, {'page': 1})
 
     # Assert: Should return 20 unique movies
     assert res.status_code == HTTP_200_OK
@@ -1165,7 +1172,7 @@ def test_discover_deduplicates_multiple_duplicates_across_pages(
 
 @pytest.mark.django_db
 @patch('core.services.tmdb_api_client.TMDBApiClient.get')
-def test_discover_deduplication_works_with_backend_filters(
+def test_browse_deduplication_works_with_backend_filters(
     mock_tmdb_get: Mock,
     api_client: Client
 ) -> None:
@@ -1218,7 +1225,7 @@ def test_discover_deduplication_works_with_backend_filters(
     ]
 
     # Act: Request with rating filter
-    res = api_client.get(DISCOVER_URL, {
+    res = api_client.get(BROWSE_URL, {
         'page': 1,
         'rating_min': 7.5,
         'rating_max': 10.0
@@ -1253,11 +1260,11 @@ def test_discover_deduplication_works_with_backend_filters(
 
 @pytest.mark.django_db
 @patch('core.services.tmdb_api_client.TMDBApiClient.get')
-def test_discover_respects_max_buffer_pages_with_heavy_duplication(
+def test_browse_respects_max_buffer_pages_with_heavy_duplication(
     mock_tmdb_get: Mock,
     api_client: Client
 ) -> None:
-    """Test discover respects max_buffer_pages safety limit with extreme duplication.
+    """Test browse respects max_buffer_pages safety limit with extreme duplication.
 
     Scenario: Pathological case where TMDB returns mostly duplicates,
     buffer should stop at 5 additional pages even if < 20 unique movies collected.
@@ -1297,8 +1304,8 @@ def test_discover_respects_max_buffer_pages_with_heavy_duplication(
 
     mock_tmdb_get.side_effect = page_responses
 
-    # Act: Request discover API
-    res = api_client.get(DISCOVER_URL, {'page': 1})
+    # Act: Request browse API
+    res = api_client.get(BROWSE_URL, {'page': 1})
 
     # Assert: Should stop at max_buffer_pages=5 with only 15 unique movies
     assert res.status_code == HTTP_200_OK
@@ -1327,7 +1334,7 @@ def test_discover_respects_max_buffer_pages_with_heavy_duplication(
 
 @pytest.mark.django_db
 @patch('core.services.tmdb_api_client.TMDBApiClient.get')
-def test_discover_no_cross_page_duplicates(
+def test_browse_no_cross_page_duplicates(
     mock_tmdb_get: Mock,
     api_client: Client
 ) -> None:
@@ -1391,13 +1398,13 @@ def test_discover_no_cross_page_duplicates(
     ]
 
     # Act: Fetch page 1
-    page_1_res = api_client.get(DISCOVER_URL, {'page': 1})
+    page_1_res = api_client.get(BROWSE_URL, {'page': 1})
     assert page_1_res.status_code == HTTP_200_OK
     page_1_data = page_1_res.json()
     page_1_ids = {movie['tmdb_id'] for movie in page_1_data['results']}
 
     # Act: Fetch page 2 using next_tmdb_page_start from page 1
-    page_2_res = api_client.get(DISCOVER_URL, {
+    page_2_res = api_client.get(BROWSE_URL, {
         'page': 2,
         'tmdb_page_start': page_1_data['next_tmdb_page_start']
     })
@@ -1419,7 +1426,7 @@ def test_discover_no_cross_page_duplicates(
 
 @pytest.mark.django_db
 @patch('core.services.tmdb_api_client.TMDBApiClient.get')
-def test_discover_backward_navigation_consistency(
+def test_browse_backward_navigation_consistency(
     mock_tmdb_get: Mock,
     api_client: Client
 ) -> None:
@@ -1478,13 +1485,13 @@ def test_discover_backward_navigation_consistency(
     ]
 
     # Act: Fetch page 1 (first time)
-    page_1_first = api_client.get(DISCOVER_URL, {'page': 1})
+    page_1_first = api_client.get(BROWSE_URL, {'page': 1})
     assert page_1_first.status_code == HTTP_200_OK
     page_1_first_data = page_1_first.json()
     page_1_first_ids = [movie['tmdb_id'] for movie in page_1_first_data['results']]
 
     # Act: Fetch page 2
-    page_2_res = api_client.get(DISCOVER_URL, {
+    page_2_res = api_client.get(BROWSE_URL, {
         'page': 2,
         'tmdb_page_start': page_1_first_data['next_tmdb_page_start']
     })
@@ -1492,7 +1499,7 @@ def test_discover_backward_navigation_consistency(
 
     # Act: Navigate BACK to page 1 (should give same results as first time)
     # IMPORTANT: Should NOT send tmdb_page_start when going back to page 1
-    page_1_second = api_client.get(DISCOVER_URL, {'page': 1})
+    page_1_second = api_client.get(BROWSE_URL, {'page': 1})
     assert page_1_second.status_code == HTTP_200_OK
     page_1_second_data = page_1_second.json()
     page_1_second_ids = [movie['tmdb_id'] for movie in page_1_second_data['results']]

@@ -25,6 +25,7 @@ from core.tests.test_helpers import HTTPStatus
 from core.types.api_types import TMDBResponseData
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.test import Client
+from movie.tests.test_fixtures_tmdb import create_movie_dict, create_paginated_tmdb_response
 from user_movie_data.models import UserMovieData
 
 if TYPE_CHECKING:
@@ -61,15 +62,15 @@ def create_movie_stub(tmdb_id: int, title: str = 'Test Movie') -> Movie:
 @pytest.mark.parametrize('endpoint,mock_path', [
     (
         '/api/movies/now-playing',
-        'core.services.tmdb_api_client.TMDBApiClient.get_now_playing_movies'
+        'core.services.tmdb_api_client.TMDBApiClient.get'  # Now uses discover endpoint
     ),
     ('/api/movies/upcoming', 'core.services.tmdb_api_client.TMDBApiClient.get'),
     (
         '/api/movies/search?query=test',
-        'core.services.tmdb_api_client.TMDBApiClient.search_movies'
+        'core.services.tmdb_api_client.TMDBApiClient.get'  # Now uses discover endpoint
     ),
-    ('/api/movies/discover', 'core.services.tmdb_api_client.TMDBApiClient.get'),
-], ids=['now_playing', 'upcoming', 'search', 'discover'])
+    ('/api/movies/browse', 'core.services.tmdb_api_client.TMDBApiClient.get'),
+], ids=['now_playing', 'upcoming', 'search', 'browse'])
 def test_discovery_endpoint_enriches_user_movie_data_for_authenticated_user(
     api_client: Client,
     user: User,  # type: ignore[valid-type]
@@ -96,19 +97,12 @@ def test_discovery_endpoint_enriches_user_movie_data_for_authenticated_user(
         user_review='Classic sci-fi!'
     )
 
-    # Arrange: Mock TMDB API response
-    tmdb_payload: TMDBResponseData = {
-        'results': [{
-            'id': 101,
-            'title': 'Blade Runner',
-            'poster_path': '/test.jpg',
-            'release_date': '1982-06-25',
-            'vote_average': 8.1
-        }],
-        'page': 1,
-        'total_pages': 1,
-        'total_results': 1
-    }
+    # Arrange: Mock TMDB API response using test helper
+    movies = [create_movie_dict(101, 'Blade Runner', '1982-06-25', 8.1, poster_path='/test.jpg')]
+    tmdb_payload: TMDBResponseData = cast(
+        TMDBResponseData,
+        create_paginated_tmdb_response(movies, page=1, total_pages=1)
+    )
     mock_api_response = ApiResponse(
         status_code=200,
         data=tmdb_payload  # type: ignore[arg-type]
@@ -141,15 +135,15 @@ def test_discovery_endpoint_enriches_user_movie_data_for_authenticated_user(
 @pytest.mark.parametrize('endpoint,mock_path', [
     (
         '/api/movies/now-playing',
-        'core.services.tmdb_api_client.TMDBApiClient.get_now_playing_movies'
+        'core.services.tmdb_api_client.TMDBApiClient.get'  # Now uses discover endpoint
     ),
     ('/api/movies/upcoming', 'core.services.tmdb_api_client.TMDBApiClient.get'),
     (
         '/api/movies/search?query=test',
-        'core.services.tmdb_api_client.TMDBApiClient.search_movies'
+        'core.services.tmdb_api_client.TMDBApiClient.get'  # Now uses discover endpoint
     ),
-    ('/api/movies/discover', 'core.services.tmdb_api_client.TMDBApiClient.get'),
-], ids=['now_playing', 'upcoming', 'search', 'discover'])
+    ('/api/movies/browse', 'core.services.tmdb_api_client.TMDBApiClient.get'),
+], ids=['now_playing', 'upcoming', 'search', 'browse'])
 def test_discovery_endpoint_works_for_unauthenticated_user(
     api_client: Client,
     endpoint: str,
@@ -166,19 +160,12 @@ def test_discovery_endpoint_works_for_unauthenticated_user(
     # Arrange: Create movie stub (but NO UserMovieData since no user is authenticated)
     create_movie_stub(tmdb_id=101, title='Blade Runner')
 
-    # Arrange: Mock TMDB API response
-    tmdb_payload: TMDBResponseData = {
-        'results': [{
-            'id': 101,
-            'title': 'Blade Runner',
-            'poster_path': '/test.jpg',
-            'release_date': '1982-06-25',
-            'vote_average': 8.1
-        }],
-        'page': 1,
-        'total_pages': 1,
-        'total_results': 1
-    }
+    # Arrange: Mock TMDB API response using test helper
+    movies = [create_movie_dict(101, 'Blade Runner', '1982-06-25', 8.1, poster_path='/test.jpg')]
+    tmdb_payload: TMDBResponseData = cast(
+        TMDBResponseData,
+        create_paginated_tmdb_response(movies, page=1, total_pages=1)
+    )
     mock_api_response = ApiResponse(
         status_code=200,
         data=tmdb_payload  # type: ignore[arg-type]
@@ -204,15 +191,15 @@ def test_discovery_endpoint_works_for_unauthenticated_user(
 @pytest.mark.parametrize('endpoint,mock_path', [
     (
         '/api/movies/now-playing',
-        'core.services.tmdb_api_client.TMDBApiClient.get_now_playing_movies'
+        'core.services.tmdb_api_client.TMDBApiClient.get'  # Now uses discover endpoint
     ),
     ('/api/movies/upcoming', 'core.services.tmdb_api_client.TMDBApiClient.get'),
     (
         '/api/movies/search?query=test',
-        'core.services.tmdb_api_client.TMDBApiClient.search_movies'
+        'core.services.tmdb_api_client.TMDBApiClient.get'  # Now uses discover endpoint
     ),
-    ('/api/movies/discover', 'core.services.tmdb_api_client.TMDBApiClient.get'),
-], ids=['now_playing', 'upcoming', 'search', 'discover'])
+    ('/api/movies/browse', 'core.services.tmdb_api_client.TMDBApiClient.get'),
+], ids=['now_playing', 'upcoming', 'search', 'browse'])
 def test_discovery_endpoint_returns_none_for_movies_without_user_data(
     api_client: Client,
     user: User,  # type: ignore[valid-type]
@@ -231,19 +218,12 @@ def test_discovery_endpoint_returns_none_for_movies_without_user_data(
     # Arrange: Create movie stub but NO UserMovieData (user hasn't interacted with this movie)
     create_movie_stub(tmdb_id=101, title='Blade Runner')
 
-    # Arrange: Mock TMDB API response
-    tmdb_payload: TMDBResponseData = {
-        'results': [{
-            'id': 101,
-            'title': 'Blade Runner',
-            'poster_path': '/test.jpg',
-            'release_date': '1982-06-25',
-            'vote_average': 8.1
-        }],
-        'page': 1,
-        'total_pages': 1,
-        'total_results': 1
-    }
+    # Arrange: Mock TMDB API response using test helper
+    movies = [create_movie_dict(101, 'Blade Runner', '1982-06-25', 8.1, poster_path='/test.jpg')]
+    tmdb_payload: TMDBResponseData = cast(
+        TMDBResponseData,
+        create_paginated_tmdb_response(movies, page=1, total_pages=1)
+    )
     mock_api_response = ApiResponse(
         status_code=200,
         data=tmdb_payload  # type: ignore[arg-type]
@@ -387,10 +367,10 @@ def test_movie_detail_endpoint_works_for_unauthenticated_user(
 @pytest.mark.parametrize('endpoint,mock_path', [
     (
         '/api/movies/now-playing',
-        'core.services.tmdb_api_client.TMDBApiClient.get_now_playing_movies'
+        'core.services.tmdb_api_client.TMDBApiClient.get'  # Now uses discover endpoint
     ),
-    ('/api/movies/discover?genres=28', 'core.services.tmdb_api_client.TMDBApiClient.get'),
-], ids=['now_playing', 'discover_with_filters'])
+    ('/api/movies/browse?genres=28', 'core.services.tmdb_api_client.TMDBApiClient.get'),
+], ids=['now_playing', 'browse_with_filters'])
 def test_enrichment_handles_multiple_movies_efficiently(
     api_client: Client,
     user: User,  # type: ignore[valid-type]
@@ -423,35 +403,16 @@ def test_enrichment_handles_multiple_movies_efficiently(
         user_on_watchlist=True
     )
 
-    # Arrange: Mock TMDB API response with 3 movies
-    tmdb_payload: TMDBResponseData = {
-        'results': [
-            {
-                'id': 101,
-                'title': 'Blade Runner',
-                'poster_path': '/test1.jpg',
-                'release_date': '1982-06-25',
-                'vote_average': 8.1
-            },
-            {
-                'id': 102,
-                'title': 'Chinatown',
-                'poster_path': '/test2.jpg',
-                'release_date': '1974-06-20',
-                'vote_average': 8.2
-            },
-            {
-                'id': 103,
-                'title': 'The Matrix',
-                'poster_path': '/test3.jpg',
-                'release_date': '1999-03-31',
-                'vote_average': 8.7
-            }
-        ],
-        'page': 1,
-        'total_pages': 1,
-        'total_results': 3
-    }
+    # Arrange: Mock TMDB API response with 3 movies using test helper
+    movies = [
+        create_movie_dict(101, 'Blade Runner', '1982-06-25', 8.1, poster_path='/test1.jpg'),
+        create_movie_dict(102, 'Chinatown', '1974-06-20', 8.2, poster_path='/test2.jpg'),
+        create_movie_dict(103, 'The Matrix', '1999-03-31', 8.7, poster_path='/test3.jpg')
+    ]
+    tmdb_payload: TMDBResponseData = cast(
+        TMDBResponseData,
+        create_paginated_tmdb_response(movies, page=1, total_pages=1)
+    )
     mock_api_response = ApiResponse(
         status_code=200,
         data=tmdb_payload  # type: ignore[arg-type]

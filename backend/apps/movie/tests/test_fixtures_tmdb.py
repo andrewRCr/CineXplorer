@@ -260,3 +260,75 @@ def create_paginated_tmdb_response(
         'total_results': total_results,
         'results': movies,
     }
+
+
+def create_movie_detail_dict(
+    tmdb_id: int,
+    title: str,
+    release_date: str,
+    vote_average: float,
+    runtime: int = 120,
+    overview: str = 'Test movie overview',
+    genres: list[TMDBGenre] | None = None,
+    production_companies: list[TMDBProductionCompany] | None = None,
+    poster_path: str | None = None,
+    vote_count: int | None = None,
+    genre_ids: list[int] | None = None
+) -> TMDBMovieDetail:
+    """Create a mock TMDB movie detail dictionary for testing.
+
+    This helper builds on create_movie_dict() and adds detail-specific fields
+    (runtime, overview, genres, production_companies), ensuring consistent and
+    complete movie detail data across all tests.
+
+    Args:
+        tmdb_id: TMDB movie ID
+        title: Movie title
+        release_date: Release date in YYYY-MM-DD format
+        vote_average: Rating (0.0-10.0 scale)
+        runtime: Runtime in minutes (defaults to 120)
+        overview: Movie overview/synopsis (defaults to "Test movie overview")
+        genres: List of genre objects (defaults to [])
+        production_companies: List of production company objects (defaults to [])
+        poster_path: Poster path (passed to create_movie_dict())
+        vote_count: Number of votes (passed to create_movie_dict())
+        genre_ids: Genre IDs (passed to create_movie_dict())
+
+    Returns:
+        Dictionary matching TMDB API movie detail response structure
+
+    Example:
+        >>> # Standard movie detail
+        >>> detail = create_movie_detail_dict(
+        ...     1, "Test Movie", "2022-01-01", 8.0,
+        ...     runtime=150,
+        ...     genres=[{'id': 28, 'name': 'Action'}]
+        ... )
+
+        >>> # With custom poster and overview
+        >>> detail = create_movie_detail_dict(
+        ...     2, "Drama", "2023-01-01", 7.5,
+        ...     overview="A compelling drama",
+        ...     poster_path="/custom.jpg"
+        ... )
+    """
+    # Build base movie dict with all common fields
+    base_movie = create_movie_dict(
+        tmdb_id,
+        title,
+        release_date,
+        vote_average,
+        runtime=None,  # Not used in detail response
+        vote_count=vote_count,
+        poster_path=poster_path,
+        genre_ids=genre_ids
+    )
+
+    # Add detail-specific fields
+    return {
+        **base_movie,  # type: ignore[typeddict-item]
+        'runtime': runtime,
+        'overview': overview,
+        'genres': genres or [],
+        'production_companies': production_companies or []
+    }

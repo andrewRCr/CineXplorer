@@ -25,8 +25,10 @@ from movie.schemas import (
 from movie.tests.test_fixtures_tmdb import (
     TMDBCreditsResponse,
     TMDBGenreListResponse,
-    TMDBMovieDetail,
     TMDBMovieResponse,
+    create_movie_detail_dict,
+    create_movie_dict,
+    create_paginated_tmdb_response,
 )
 from ninja.errors import HttpError
 
@@ -81,17 +83,13 @@ def test_get_movie_by_id_uses_injected_client() -> None:
     mock_client = Mock(spec=['get', 'get_movie_details'])
 
     # Mock movie details response
-    movie_data: TMDBMovieDetail = {
-        'id': 123,
-        'title': 'Test Movie',
-        'poster_path': '/test.jpg',
-        'release_date': '2023-01-01',
-        'vote_average': 8.0,
-        'runtime': 120,
-        'overview': 'Test overview',
-        'genres': [{'id': 1, 'name': 'Action'}],
-        'production_companies': []
-    }
+    movie_data = create_movie_detail_dict(
+        123, 'Test Movie', '2023-01-01', 8.0,
+        runtime=120,
+        overview='Test overview',
+        genres=[{'id': 1, 'name': 'Action'}],
+        poster_path='/test.jpg'
+    )
     mock_details_response = ApiResponse(status_code=200, data=movie_data)
     mock_client.get_movie_details.return_value = mock_details_response
 
@@ -150,22 +148,10 @@ def test_search_movies_uses_injected_client() -> None:
     # Arrange: Mock client
     mock_client = Mock(spec=['search_movies'])
 
-    search_response: TMDBMovieResponse = {
-        'results': [
-            {
-                'id': 1,
-                'title': 'Test Movie',
-                'poster_path': '/test.jpg',
-                'release_date': '2023-01-01',
-                'vote_average': 8.0,
-                'vote_count': 100,
-                'genre_ids': [28, 12]  # Action, Adventure
-            }
-        ],
-        'page': 1,
-        'total_pages': 1,
-        'total_results': 1
-    }
+    movie = create_movie_dict(1, 'Test Movie', '2023-01-01', 8.0, poster_path='/test.jpg')
+    search_response: TMDBMovieResponse = create_paginated_tmdb_response(
+        [movie], page=1, total_pages=1
+    )
     mock_api_response = ApiResponse(status_code=200, data=search_response)
     mock_client.search_movies.return_value = mock_api_response
 
@@ -193,40 +179,16 @@ def test_search_movies_filters_soundtrack_results() -> None:
     # Arrange: Mock response with soundtrack entry
     mock_client = Mock(spec=['search_movies'])
 
-    search_response: TMDBMovieResponse = {
-        'results': [
-            {
-                'id': 1,
-                'title': 'Real Movie',
-                'poster_path': '/real.jpg',
-                'release_date': '2023-01-01',
-                'vote_average': 8.0,
-                'vote_count': 100,
-                'genre_ids': [28, 12]  # Action, Adventure
-            },
-            {
-                'id': 2,
-                'title': 'Movie Soundtrack',
-                'poster_path': '/soundtrack.jpg',
-                'release_date': '2023-01-01',
-                'vote_average': 7.0,
-                'vote_count': 50,
-                'genre_ids': [10402]  # Music
-            },
-            {
-                'id': 3,
-                'title': 'Original Motion Picture Score',
-                'poster_path': '/score.jpg',
-                'release_date': '2023-01-01',
-                'vote_average': 6.0,
-                'vote_count': 30,
-                'genre_ids': [10402]  # Music
-            }
-        ],
-        'page': 1,
-        'total_pages': 1,
-        'total_results': 3
-    }
+    movies = [
+        create_movie_dict(1, 'Real Movie', '2023-01-01', 8.0, poster_path='/real.jpg'),
+        create_movie_dict(2, 'Movie Soundtrack', '2023-01-01', 7.0, poster_path='/soundtrack.jpg'),
+        create_movie_dict(
+            3, 'Original Motion Picture Score', '2023-01-01', 6.0, poster_path='/score.jpg'
+        )
+    ]
+    search_response: TMDBMovieResponse = create_paginated_tmdb_response(
+        movies, page=1, total_pages=1
+    )
     mock_api_response = ApiResponse(status_code=200, data=search_response)
     mock_client.search_movies.return_value = mock_api_response
 
@@ -323,20 +285,10 @@ def test_get_now_playing_movies_uses_injected_client() -> None:
     # Arrange
     mock_client = Mock(spec=['get'])
 
-    now_playing_response: TMDBMovieResponse = {
-        'results': [
-            {
-                'id': 1,
-                'title': 'Now Playing',
-                'poster_path': '/now.jpg',
-                'release_date': '2023-01-01',
-                'vote_average': 8.0
-            }
-        ],
-        'page': 1,
-        'total_pages': 1,
-        'total_results': 1
-    }
+    movie = create_movie_dict(1, 'Now Playing', '2023-01-01', 8.0, poster_path='/now.jpg')
+    now_playing_response: TMDBMovieResponse = create_paginated_tmdb_response(
+        [movie], page=1, total_pages=1
+    )
     mock_api_response = ApiResponse(status_code=200, data=now_playing_response)
     mock_client.get.return_value = mock_api_response
 
@@ -358,8 +310,8 @@ def test_get_now_playing_movies_uses_injected_client() -> None:
     assert 'primary_release_date.lte' in params
     assert params['with_release_type'] == '2|3'
     assert isinstance(result, PaginatedMovieResponseSchema)
-    # Note: Result is empty due to backend filtering removing mock data
-    assert len(result.results) == 0
+    # Result now passes backend filtering (complete mock data with genre_ids, vote_count)
+    assert len(result.results) == 1
 
 
 # ============================================================================
@@ -374,20 +326,10 @@ def test_get_upcoming_movies_uses_injected_client() -> None:
     # Arrange
     mock_client = Mock(spec=['get'])
 
-    upcoming_response: TMDBMovieResponse = {
-        'results': [
-            {
-                'id': 1,
-                'title': 'Upcoming',
-                'poster_path': '/upcoming.jpg',
-                'release_date': '2024-01-01',
-                'vote_average': 8.0
-            }
-        ],
-        'page': 1,
-        'total_pages': 1,
-        'total_results': 1
-    }
+    movie = create_movie_dict(1, 'Upcoming', '2024-01-01', 8.0, poster_path='/upcoming.jpg')
+    upcoming_response: TMDBMovieResponse = create_paginated_tmdb_response(
+        [movie], page=1, total_pages=1
+    )
     mock_api_response = ApiResponse(status_code=200, data=upcoming_response)
     mock_client.get.return_value = mock_api_response
 
@@ -478,28 +420,18 @@ def test_fetch_movie_runtimes_uses_injected_client() -> None:
     mock_client = Mock(spec=['get_movie_details', 'get'])
 
     # Mock movie details responses
-    movie_data_1: TMDBMovieDetail = {
-        'id': 1,
-        'title': 'Movie 1',
-        'poster_path': '/test1.jpg',
-        'release_date': '2023-01-01',
-        'vote_average': 8.0,
-        'runtime': 120,
-        'overview': 'Test',
-        'genres': [],
-        'production_companies': []
-    }
-    movie_data_2: TMDBMovieDetail = {
-        'id': 2,
-        'title': 'Movie 2',
-        'poster_path': '/test2.jpg',
-        'release_date': '2023-01-02',
-        'vote_average': 7.5,
-        'runtime': 90,
-        'overview': 'Test',
-        'genres': [],
-        'production_companies': []
-    }
+    movie_data_1 = create_movie_detail_dict(
+        1, 'Movie 1', '2023-01-01', 8.0,
+        runtime=120,
+        overview='Test',
+        poster_path='/test1.jpg'
+    )
+    movie_data_2 = create_movie_detail_dict(
+        2, 'Movie 2', '2023-01-02', 7.5,
+        runtime=90,
+        overview='Test',
+        poster_path='/test2.jpg'
+    )
 
     credits_data: TMDBCreditsResponse = {'cast': [], 'crew': []}
 

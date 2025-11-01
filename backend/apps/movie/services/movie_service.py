@@ -94,145 +94,106 @@ class MovieService:
             self._tmdb_client = TMDBApiClient()
 
     # ========================================================================
-    # Private Helper Methods
+    # Core Discovery Methods
     # ========================================================================
 
-    def _filter_non_visual_content(self, movies: list[TMDBMovieBase]) -> list[TMDBMovieBase]:
-        """Filter out non-visual content from movie search results.
+    def discover_movies(
+        self,
+        page: int = 1,
+        year_min: int | None = None,
+        year_max: int | None = None,
+        rating_min: float | None = None,
+        rating_max: float | None = None,
+        tmdb_page_start: int | None = None,
+        **filters: str | int | float | bool | None
+    ) -> PaginatedMovieResponseSchema:
+        """
+        Core TMDB discover wrapper with full filtering capabilities.
 
-        This filters out soundtracks, scores, and other non-visual media that
-        sometimes appear in TMDB search results despite being irrelevant to
-        visual movie discovery.
+        This is the foundational discovery method that other service methods build upon.
+        Date-constrained methods (get_now_playing_movies, get_upcoming_movies) call this
+        method internally with preset filters to create curated endpoints.
+
+        Architecture:
+            - Service layer handles all business logic (presets, filter merging)
+            - API layer is thin (HTTP concerns only, delegates to service methods)
+            - This method is the internal workhorse for all discovery operations
 
         Args:
-            movies: List of TMDB movie objects to filter
+            page: Page number for pagination
+            year_min: Minimum release year (inclusive), backend filtered (second-pass data hygiene)
+            year_max: Maximum release year (inclusive), backend filtered (second-pass data hygiene)
+            rating_min: Minimum rating (inclusive), backend filtered (second-pass data hygiene)
+            rating_max: Maximum rating (inclusive), backend filtered (second-pass data hygiene)
+            tmdb_page_start: Starting TMDB page for smart buffer continuation
+                (enables metadata-driven pagination to prevent duplicates)
+            **filters: Discovery filters including:
+                - sort_by: Sort order (popularity.desc, release_date.desc, etc.)
+                - genres: Comma-separated genre IDs
+                - year: Release year
+                - vote_average_gte/lte: Rating range
+                - keywords: Comma-separated keyword IDs
+                - people: Comma-separated person IDs
+                - release_date_gte/lte: Release date range (mapped to primary_release_date)
+                - with_release_type: Release type (2|3 for theatrical)
+                - certification: Certification rating
+                - region: Country code for regional release dates
 
         Returns:
-            Filtered list with non-visual content removed
-
-        Note:
-            Uses a conservative approach - only filters obvious non-visual content
-            to minimize false positives.
-        """
-        # Skip terms for identifying non-visual content
-        skip_terms = [
-            'soundtrack', 'score', 'music from',
-            'original motion picture soundtrack',
-            'original score', 'music score', 'film score',
-            'motion picture score'
-        ]
-
-        filtered: list[TMDBMovieBase] = []
-        for movie in movies:
-            title = movie.title or ''
-            title_lower = title.lower()
-
-            # Skip if title contains non-visual indicators
-            if any(skip_term in title_lower for skip_term in skip_terms):
-                logger.debug("Filtering out non-visual content", extra={
-                    'operation': 'filter_non_visual',
-                    'title': title,
-                    'reason': 'non_visual_content'
-                })
-                continue
-
-            filtered.append(movie)
-
-        return filtered
-
-    # ========================================================================
-    # Public Service Methods
-    # ========================================================================
-
-    def get_movie_by_id(self, tmdb_id: int) -> MovieDetailSchema:
-        """
-        Retrieves movie details and credits from TMDB by movie ID.
-
-        Args:
-            tmdb_id: TMDB movie ID
-
-        Returns:
-            MovieDetailSchema instance with validated movie data
+            PaginatedMovieResponseSchema with discovered movies, including
+            next_tmdb_page_start metadata for pagination continuation
 
         Raises:
-            HttpError: If movie not found, API error, or data processing fails
+            HttpError: If API error or data processing fails
+
+        Note:
+            Runtime filtering is disabled due to TMDB API limitations.
+            Year and rating filters use two-pass architecture: TMDB API (primary)
+            + backend filtering (catches data quality issues).
         """
-        # Use injected TMDB client for movie details
-        info_response = self._tmdb_client.get_movie_details(tmdb_id)
-        if not info_response.is_success():
-            handle_tmdb_api_error(
-                info_response,
-                operation='get_movie_details',
-                movie_id=tmdb_id,
-                error_stage='fetching_movie_info'
+        import logging
+        logger = logging.getLogger('cinexplorer.movie')
+
+        logger.debug(
+            f"Discover movies request: page={page}, year_min={year_min}, year_max={year_max}, "
+            f"rating_min={rating_min}, rating_max={rating_max}, filters={filters}"
+        )
+
+        # Build TMDB API parameters using filtering module
+        params = build_tmdb_params(page, rating_min, rating_max, **filters)
+
+        # Log TMDB params at DEBUG level for diagnostics
+        logger.debug(
+            f"TMDB discover params: rating_min={rating_min}, "
+            f"rating_max={rating_max}, full_params={params}"
+        )
+
+        def fetch_discover_page(page_num: int) -> TMDBMovieSearchResponse:
+            """Fetch a specific discover page with current filters."""
+            page_params = params.copy()
+            page_params['page'] = page_num
+            page_response = self._tmdb_client.get(
+                "discover/movie",
+                cast(dict[str, object], page_params)
+            )
+            return validate_tmdb_paginated_response(
+                page_response,
+                TMDBMovieSearchResponse
             )
 
-        # Use injected TMDB client for credits
-        credits_response = self._tmdb_client.get(f"movie/{tmdb_id}/credits")
-        if not credits_response.is_success():
-            handle_tmdb_api_error(
-                credits_response,
-                operation='get_movie_credits',
-                movie_id=tmdb_id,
-                error_stage='fetching_credits'
-            )
+        # Extract min_vote_count from filters if provided (for vote filtering control)
+        min_vote_count = filters.get('min_vote_count', MIN_VOTE_COUNT)  # type: ignore[arg-type]
 
-        info_result = info_response.get_json_data()
-        credits_result = credits_response.get_json_data()
-
-        # Type guard: ensure we have valid dictionaries
-        if not info_result or not credits_result:
-            logger.error(
-                "Failed to get valid response data from TMDB",
-                extra={
-                    'correlation_id': info_response.correlation_id,
-                    'operation': 'get_movie_by_id',
-                    'movie_id': tmdb_id,
-                    'info_data_valid': bool(info_result),
-                    'credits_data_valid': bool(credits_result)
-                }
-            )
-            raise HttpError(500, "Failed to get valid response data from TMDB")
-
-        # Use factory function to create properly typed MovieDetailSchema
-        return create_movie_detail_from_tmdb(info_result, credits_result)
-
-    def _build_date_constrained_preset(
-        self,
-        start_days_offset: int,
-        end_days_offset: int,
-    ) -> TMDBParams:
-        """Build date range preset for time-constrained endpoints.
-
-        Creates a preset dictionary with date range and release type filters
-        for endpoints like now-playing and upcoming that enforce specific
-        time windows.
-
-        Args:
-            start_days_offset: Days to offset from today for start date
-                (negative for past, positive for future)
-            end_days_offset: Days to offset from today for end date
-                (negative for past, positive for future)
-
-        Returns:
-            TMDBParams dict with date range and release type preset
-
-        Example:
-            # Now Playing: today - 30 days to today + 5 days
-            preset = self._build_date_constrained_preset(-30, 5)
-
-            # Upcoming: today + 5 days to today + 65 days
-            preset = self._build_date_constrained_preset(5, 65)
-        """
-        today = datetime.now(tz=UTC)
-        start_date = (today + timedelta(days=start_days_offset)).strftime("%Y-%m-%d")
-        end_date = (today + timedelta(days=end_days_offset)).strftime("%Y-%m-%d")
-
-        return {
-            "release_date.gte": start_date,
-            "release_date.lte": end_date,
-            "with_release_type": "2|3",  # Theatrical releases only
-        }
+        return fetch_with_filters_and_buffer(
+            fetch_discover_page,
+            page,
+            year_min,
+            year_max,
+            rating_min,
+            rating_max,
+            tmdb_page_start=tmdb_page_start,
+            min_vote_count=min_vote_count  # type: ignore[arg-type]
+        )
 
     def get_now_playing_movies(
         self,
@@ -345,6 +306,10 @@ class MovieService:
             **merged_filters  # type: ignore[arg-type]
         )
 
+    # ========================================================================
+    # Search Methods
+    # ========================================================================
+
     def search_movies(
         self,
         query: str,
@@ -397,121 +362,62 @@ class MovieService:
             pre_filter_func=self._filter_non_visual_content
         )
 
-    def discover_movies(
-        self,
-        page: int = 1,
-        year_min: int | None = None,
-        year_max: int | None = None,
-        rating_min: float | None = None,
-        rating_max: float | None = None,
-        tmdb_page_start: int | None = None,
-        **filters: str | int | float | bool | None
-    ) -> PaginatedMovieResponseSchema:
+    # ========================================================================
+    # Movie Detail Methods
+    # ========================================================================
+
+    def get_movie_by_id(self, tmdb_id: int) -> MovieDetailSchema:
         """
-        Core TMDB discover wrapper with full filtering capabilities.
-
-        This is the foundational discovery method that other service methods build upon.
-        Date-constrained methods (get_now_playing_movies, get_upcoming_movies) call this
-        method internally with preset filters to create curated endpoints.
-
-        Architecture:
-            - Service layer handles all business logic (presets, filter merging)
-            - API layer is thin (HTTP concerns only, delegates to service methods)
-            - This method is the internal workhorse for all discovery operations
+        Retrieves movie details and credits from TMDB by movie ID.
 
         Args:
-            page: Page number for pagination
-            year_min: Minimum release year (inclusive), backend filtered (second-pass data hygiene)
-            year_max: Maximum release year (inclusive), backend filtered (second-pass data hygiene)
-            rating_min: Minimum rating (inclusive), backend filtered (second-pass data hygiene)
-            rating_max: Maximum rating (inclusive), backend filtered (second-pass data hygiene)
-            tmdb_page_start: Starting TMDB page for smart buffer continuation
-                (enables metadata-driven pagination to prevent duplicates)
-            **filters: Discovery filters including:
-                - sort_by: Sort order (popularity.desc, release_date.desc, etc.)
-                - genres: Comma-separated genre IDs
-                - year: Release year
-                - vote_average_gte/lte: Rating range
-                - keywords: Comma-separated keyword IDs
-                - people: Comma-separated person IDs
-                - release_date_gte/lte: Release date range (mapped to primary_release_date)
-                - with_release_type: Release type (2|3 for theatrical)
-                - certification: Certification rating
-                - region: Country code for regional release dates
+            tmdb_id: TMDB movie ID
 
         Returns:
-            PaginatedMovieResponseSchema with discovered movies, including
-            next_tmdb_page_start metadata for pagination continuation
+            MovieDetailSchema instance with validated movie data
 
         Raises:
-            HttpError: If API error or data processing fails
-
-        Note:
-            Runtime filtering is disabled due to TMDB API limitations.
-            Year and rating filters use two-pass architecture: TMDB API (primary)
-            + backend filtering (catches data quality issues).
+            HttpError: If movie not found, API error, or data processing fails
         """
-        import logging
-        logger = logging.getLogger('cinexplorer.movie')
-
-        logger.debug(
-            f"Discover movies request: page={page}, year_min={year_min}, year_max={year_max}, "
-            f"rating_min={rating_min}, rating_max={rating_max}, filters={filters}"
-        )
-
-        # Build TMDB API parameters using filtering module
-        params = build_tmdb_params(page, rating_min, rating_max, **filters)
-
-        # Log TMDB params at DEBUG level for diagnostics
-        logger.debug(
-            f"TMDB discover params: rating_min={rating_min}, "
-            f"rating_max={rating_max}, full_params={params}"
-        )
-
-        def fetch_discover_page(page_num: int) -> TMDBMovieSearchResponse:
-            """Fetch a specific discover page with current filters."""
-            page_params = params.copy()
-            page_params['page'] = page_num
-            page_response = self._tmdb_client.get(
-                "discover/movie",
-                cast(dict[str, object], page_params)
-            )
-            return validate_tmdb_paginated_response(
-                page_response,
-                TMDBMovieSearchResponse
+        # Use injected TMDB client for movie details
+        info_response = self._tmdb_client.get_movie_details(tmdb_id)
+        if not info_response.is_success():
+            handle_tmdb_api_error(
+                info_response,
+                operation='get_movie_details',
+                movie_id=tmdb_id,
+                error_stage='fetching_movie_info'
             )
 
-        # Extract min_vote_count from filters if provided (for vote filtering control)
-        min_vote_count = filters.get('min_vote_count', MIN_VOTE_COUNT)  # type: ignore[arg-type]
+        # Use injected TMDB client for credits
+        credits_response = self._tmdb_client.get(f"movie/{tmdb_id}/credits")
+        if not credits_response.is_success():
+            handle_tmdb_api_error(
+                credits_response,
+                operation='get_movie_credits',
+                movie_id=tmdb_id,
+                error_stage='fetching_credits'
+            )
 
-        return fetch_with_filters_and_buffer(
-            fetch_discover_page,
-            page,
-            year_min,
-            year_max,
-            rating_min,
-            rating_max,
-            tmdb_page_start=tmdb_page_start,
-            min_vote_count=min_vote_count  # type: ignore[arg-type]
-        )
+        info_result = info_response.get_json_data()
+        credits_result = credits_response.get_json_data()
 
-    def get_movie_genres(self) -> list[GenreSchema]:
-        """
-        Retrieves the list of movie genres from TMDB.
+        # Type guard: ensure we have valid dictionaries
+        if not info_result or not credits_result:
+            logger.error(
+                "Failed to get valid response data from TMDB",
+                extra={
+                    'correlation_id': info_response.correlation_id,
+                    'operation': 'get_movie_by_id',
+                    'movie_id': tmdb_id,
+                    'info_data_valid': bool(info_result),
+                    'credits_data_valid': bool(credits_result)
+                }
+            )
+            raise HttpError(500, "Failed to get valid response data from TMDB")
 
-        Returns:
-            List of GenreSchema instances
-
-        Raises:
-            HttpError: If API error or data processing fails
-        """
-        response = self._tmdb_client.get("genre/movie/list")
-
-        # Use type-safe validator
-        tmdb_response = validate_tmdb_response(response, TMDBGenreListResponse)
-        result = tmdb_response.model_dump()
-
-        return create_genre_list_from_tmdb(result)
+        # Use factory function to create properly typed MovieDetailSchema
+        return create_movie_detail_from_tmdb(info_result, credits_result)
 
     def fetch_movie_runtimes(self, movie_ids: list[int]) -> dict[int, int]:
         """
@@ -561,3 +467,109 @@ class MovieService:
                 runtimes[movie_id] = 0
 
         return runtimes
+
+    # ========================================================================
+    # Resource Methods
+    # ========================================================================
+
+    def get_movie_genres(self) -> list[GenreSchema]:
+        """
+        Retrieves the list of movie genres from TMDB.
+
+        Returns:
+            List of GenreSchema instances
+
+        Raises:
+            HttpError: If API error or data processing fails
+        """
+        response = self._tmdb_client.get("genre/movie/list")
+
+        # Use type-safe validator
+        tmdb_response = validate_tmdb_response(response, TMDBGenreListResponse)
+        result = tmdb_response.model_dump()
+
+        return create_genre_list_from_tmdb(result)
+
+    # ========================================================================
+    # Private Helper Methods
+    # ========================================================================
+
+    def _build_date_constrained_preset(
+        self,
+        start_days_offset: int,
+        end_days_offset: int,
+    ) -> TMDBParams:
+        """Build date range preset for time-constrained endpoints.
+
+        Creates a preset dictionary with date range and release type filters
+        for endpoints like now-playing and upcoming that enforce specific
+        time windows.
+
+        Args:
+            start_days_offset: Days to offset from today for start date
+                (negative for past, positive for future)
+            end_days_offset: Days to offset from today for end date
+                (negative for past, positive for future)
+
+        Returns:
+            TMDBParams dict with date range and release type preset
+
+        Example:
+            # Now Playing: today - 30 days to today + 5 days
+            preset = self._build_date_constrained_preset(-30, 5)
+
+            # Upcoming: today + 5 days to today + 65 days
+            preset = self._build_date_constrained_preset(5, 65)
+        """
+        today = datetime.now(tz=UTC)
+        start_date = (today + timedelta(days=start_days_offset)).strftime("%Y-%m-%d")
+        end_date = (today + timedelta(days=end_days_offset)).strftime("%Y-%m-%d")
+
+        return {
+            "release_date.gte": start_date,
+            "release_date.lte": end_date,
+            "with_release_type": "2|3",  # Theatrical releases only
+        }
+
+    def _filter_non_visual_content(self, movies: list[TMDBMovieBase]) -> list[TMDBMovieBase]:
+        """Filter out non-visual content from movie search results.
+
+        This filters out soundtracks, scores, and other non-visual media that
+        sometimes appear in TMDB search results despite being irrelevant to
+        visual movie discovery.
+
+        Args:
+            movies: List of TMDB movie objects to filter
+
+        Returns:
+            Filtered list with non-visual content removed
+
+        Note:
+            Uses a conservative approach - only filters obvious non-visual content
+            to minimize false positives.
+        """
+        # Skip terms for identifying non-visual content
+        skip_terms = [
+            'soundtrack', 'score', 'music from',
+            'original motion picture soundtrack',
+            'original score', 'music score', 'film score',
+            'motion picture score'
+        ]
+
+        filtered: list[TMDBMovieBase] = []
+        for movie in movies:
+            title = movie.title or ''
+            title_lower = title.lower()
+
+            # Skip if title contains non-visual indicators
+            if any(skip_term in title_lower for skip_term in skip_terms):
+                logger.debug("Filtering out non-visual content", extra={
+                    'operation': 'filter_non_visual',
+                    'title': title,
+                    'reason': 'non_visual_content'
+                })
+                continue
+
+            filtered.append(movie)
+
+        return filtered

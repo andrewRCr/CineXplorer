@@ -17,7 +17,7 @@ from core.tests.test_helpers import HTTPStatus
 from core.types.api_types import TMDBResponseData
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.test import Client
-from movie.tests.test_fixtures_tmdb import create_movie_dict, create_paginated_tmdb_response
+from movie.tests.test_fixtures_tmdb import create_raw_tmdb_movie, create_paginated_tmdb_response
 from user_movie_data.models import UserMovieData
 
 # HTTP status codes for Django Ninja endpoints
@@ -115,7 +115,7 @@ def test_paginated_endpoint_contract(
     the legacy test_paginated_views.py.
     """
     # Arrange: Define a standard mock TMDB API response
-    movies = [create_movie_dict(101, 'Test Movie', '2023-01-01', 8.0, poster_path='/test.jpg')]
+    movies = [create_raw_tmdb_movie(101, 'Test Movie', '2023-01-01', 8.0, poster_path='/test.jpg')]
     tmdb_payload: TMDBResponseData = cast(
         TMDBResponseData,
         create_paginated_tmdb_response(movies, page=1, total_pages=1)
@@ -162,7 +162,7 @@ def test_paginated_endpoint_contract(
 def test_browse_with_filters(mock_tmdb_get: Mock, api_client: Client) -> None:
     """Test the browse endpoint with various filter parameters."""
     # Arrange: Define a standard mock TMDB API response
-    movies = [create_movie_dict(101, 'Test Movie', '2023-01-01', 8.0)]
+    movies = [create_raw_tmdb_movie(101, 'Test Movie', '2023-01-01', 8.0)]
     tmdb_payload: TMDBResponseData = cast(
         TMDBResponseData,
         create_paginated_tmdb_response(movies, page=1, total_pages=1)
@@ -525,9 +525,9 @@ def test_browse_api_extracts_backend_filter_params(
     """
     # Arrange: Mock TMDB to return movies with some bad data
     movies = [
-        create_movie_dict(1, '2022 Movie (Good)', '2022-01-01', 8.0),
+        create_raw_tmdb_movie(1, '2022 Movie (Good)', '2022-01-01', 8.0),
         # Should be filtered out by backend filtering
-        create_movie_dict(2, '2019 Movie (Bad - Outside Range)', '2019-01-01', 8.0),
+        create_raw_tmdb_movie(2, '2019 Movie (Bad - Outside Range)', '2019-01-01', 8.0),
     ]
     tmdb_payload: TMDBResponseData = cast(
         TMDBResponseData,
@@ -581,9 +581,9 @@ def test_browse_api_filters_bad_ratings_from_tmdb(
     """
     # Arrange: Mock TMDB to return movies with placeholder ratings
     movies = [
-        create_movie_dict(1, 'Good Rating Movie', '2022-01-01', 8.0),  # Good
-        create_movie_dict(2, 'Placeholder Rating Movie', '2022-01-01', 0.0),  # Bad - placeholder
-        create_movie_dict(3, 'Low Rating Movie', '2022-01-01', 6.5),  # Bad - below threshold
+        create_raw_tmdb_movie(1, 'Good Rating Movie', '2022-01-01', 8.0),  # Good
+        create_raw_tmdb_movie(2, 'Placeholder Rating Movie', '2022-01-01', 0.0),  # Bad - placeholder
+        create_raw_tmdb_movie(3, 'Low Rating Movie', '2022-01-01', 6.5),  # Bad - below threshold
     ]
     tmdb_payload: TMDBResponseData = cast(
         TMDBResponseData,
@@ -790,21 +790,21 @@ def test_browse_returns_next_tmdb_page_start_after_buffer(
     # Arrange: Create scenario where page 1 needs buffering (sparse results)
     # Page 1: 11 valid movies (triggers buffer)
     page_1_movies = [
-        create_movie_dict(i, f'Movie {i}', '2022-01-01', 8.0)
+        create_raw_tmdb_movie(i, f'Movie {i}', '2022-01-01', 8.0)
         for i in range(1, 12)
     ]
 
     # Pages 2-4: Fill buffer to reach 20 results (3 pages, 3 movies each = 9 more)
     page_2_movies = [
-        create_movie_dict(i, f'Movie {i}', '2022-01-01', 8.0)
+        create_raw_tmdb_movie(i, f'Movie {i}', '2022-01-01', 8.0)
         for i in range(12, 15)
     ]
     page_3_movies = [
-        create_movie_dict(i, f'Movie {i}', '2022-01-01', 8.0)
+        create_raw_tmdb_movie(i, f'Movie {i}', '2022-01-01', 8.0)
         for i in range(15, 18)
     ]
     page_4_movies = [
-        create_movie_dict(i, f'Movie {i}', '2022-01-01', 8.0)
+        create_raw_tmdb_movie(i, f'Movie {i}', '2022-01-01', 8.0)
         for i in range(18, 21)
     ]
 
@@ -865,7 +865,7 @@ def test_browse_continues_from_tmdb_page_start_parameter(
     # Arrange: Simulate requesting "API page 2" but starting from TMDB page 5
     # (because previous request consumed TMDB pages 1-4)
     page_5_movies = [
-        create_movie_dict(i, f'Movie {i}', '2022-01-01', 8.0)
+        create_raw_tmdb_movie(i, f'Movie {i}', '2022-01-01', 8.0)
         for i in range(21, 41)  # 20 movies, IDs 21-40
     ]
 
@@ -912,13 +912,13 @@ def test_browse_no_duplicates_across_sequential_pages(
     """
     # Arrange: Set up two sequential requests with buffer scenario
     # Request 1: API page 1, consumes TMDB pages 1-4
-    page_1_movies = [create_movie_dict(i, f'Movie {i}', '2022-01-01', 8.0) for i in range(1, 12)]
-    page_2_movies = [create_movie_dict(i, f'Movie {i}', '2022-01-01', 8.0) for i in range(12, 15)]
-    page_3_movies = [create_movie_dict(i, f'Movie {i}', '2022-01-01', 8.0) for i in range(15, 18)]
-    page_4_movies = [create_movie_dict(i, f'Movie {i}', '2022-01-01', 8.0) for i in range(18, 21)]
+    page_1_movies = [create_raw_tmdb_movie(i, f'Movie {i}', '2022-01-01', 8.0) for i in range(1, 12)]
+    page_2_movies = [create_raw_tmdb_movie(i, f'Movie {i}', '2022-01-01', 8.0) for i in range(12, 15)]
+    page_3_movies = [create_raw_tmdb_movie(i, f'Movie {i}', '2022-01-01', 8.0) for i in range(15, 18)]
+    page_4_movies = [create_raw_tmdb_movie(i, f'Movie {i}', '2022-01-01', 8.0) for i in range(18, 21)]
 
     # Request 2: API page 2, starts from TMDB page 5
-    page_5_movies = [create_movie_dict(i, f'Movie {i}', '2022-01-01', 8.0) for i in range(21, 41)]
+    page_5_movies = [create_raw_tmdb_movie(i, f'Movie {i}', '2022-01-01', 8.0) for i in range(21, 41)]
 
     # Mock responses for both requests
     mock_tmdb_get.side_effect = [
@@ -984,7 +984,7 @@ def test_browse_fallback_when_tmdb_page_start_omitted(
     """
     # Arrange: Simulate old-style request without metadata
     page_2_movies = [
-        create_movie_dict(i, f'Movie {i}', '2022-01-01', 8.0)
+        create_raw_tmdb_movie(i, f'Movie {i}', '2022-01-01', 8.0)
         for i in range(21, 41)
     ]
 
@@ -1036,17 +1036,17 @@ def test_browse_deduplicates_when_tmdb_returns_duplicate_across_pages(
     """
     # Arrange: Page 1 has 19 movies (IDs 1-18, then Spirited Away 129)
     page_1_movies = [
-        create_movie_dict(i, f'Movie {i}', '2022-01-01', 8.0)
+        create_raw_tmdb_movie(i, f'Movie {i}', '2022-01-01', 8.0)
         for i in range(1, 19)  # IDs 1-18
     ] + [
-        create_movie_dict(129, 'Spirited Away', '2001-07-20', 8.5)  # ID 129 at position 19
+        create_raw_tmdb_movie(129, 'Spirited Away', '2001-07-20', 8.5)  # ID 129 at position 19
     ]
 
     # Page 2: DUPLICATE 129 at position 1 + new movies 20-39
     page_2_movies = [
-        create_movie_dict(129, 'Spirited Away', '2001-07-20', 8.5)  # DUPLICATE
+        create_raw_tmdb_movie(129, 'Spirited Away', '2001-07-20', 8.5)  # DUPLICATE
     ] + [
-        create_movie_dict(i, f'Movie {i}', '2022-01-01', 8.0)
+        create_raw_tmdb_movie(i, f'Movie {i}', '2022-01-01', 8.0)
         for i in range(20, 40)  # IDs 20-39 (20 new movies)
     ]
 
@@ -1108,27 +1108,27 @@ def test_browse_deduplicates_multiple_duplicates_across_pages(
     """
     # Arrange: Page 1 has 17 movies (IDs 1-17)
     page_1_movies = [
-        create_movie_dict(i, f'Movie {i}', '2022-01-01', 8.0)
+        create_raw_tmdb_movie(i, f'Movie {i}', '2022-01-01', 8.0)
         for i in range(1, 18)  # IDs 1-17
     ]
 
     # Page 2: Heavy duplicates (15-17 repeated) + only 1 new (18) = 4 total
     # After dedup: Just ID 18 is new → Total unique so far: 18
     page_2_movies = [
-        create_movie_dict(15, 'Movie 15', '2022-01-01', 8.0),  # DUPLICATE
-        create_movie_dict(16, 'Movie 16', '2022-01-01', 8.0),  # DUPLICATE
-        create_movie_dict(17, 'Movie 17', '2022-01-01', 8.0),  # DUPLICATE
-        create_movie_dict(18, 'Movie 18', '2022-01-01', 8.0),  # NEW
+        create_raw_tmdb_movie(15, 'Movie 15', '2022-01-01', 8.0),  # DUPLICATE
+        create_raw_tmdb_movie(16, 'Movie 16', '2022-01-01', 8.0),  # DUPLICATE
+        create_raw_tmdb_movie(17, 'Movie 17', '2022-01-01', 8.0),  # DUPLICATE
+        create_raw_tmdb_movie(18, 'Movie 18', '2022-01-01', 8.0),  # NEW
     ]
 
     # Page 3: More duplicates (17, 18) + new 19-21 = 5 total
     # After dedup: IDs 19, 20, 21 are new → Total unique: 21 (finally >= 20)
     page_3_movies = [
-        create_movie_dict(17, 'Movie 17', '2022-01-01', 8.0),  # DUPLICATE
-        create_movie_dict(18, 'Movie 18', '2022-01-01', 8.0),  # DUPLICATE
-        create_movie_dict(19, 'Movie 19', '2022-01-01', 8.0),  # NEW
-        create_movie_dict(20, 'Movie 20', '2022-01-01', 8.0),  # NEW
-        create_movie_dict(21, 'Movie 21', '2022-01-01', 8.0),  # NEW
+        create_raw_tmdb_movie(17, 'Movie 17', '2022-01-01', 8.0),  # DUPLICATE
+        create_raw_tmdb_movie(18, 'Movie 18', '2022-01-01', 8.0),  # DUPLICATE
+        create_raw_tmdb_movie(19, 'Movie 19', '2022-01-01', 8.0),  # NEW
+        create_raw_tmdb_movie(20, 'Movie 20', '2022-01-01', 8.0),  # NEW
+        create_raw_tmdb_movie(21, 'Movie 21', '2022-01-01', 8.0),  # NEW
     ]
 
     mock_tmdb_get.side_effect = [
@@ -1185,31 +1185,31 @@ def test_browse_deduplication_works_with_backend_filters(
     """
     # Arrange: Page 1 has 17 movies
     page_1_movies = [
-        create_movie_dict(i, f'Movie {i}', '2023-01-01', 8.0)
+        create_raw_tmdb_movie(i, f'Movie {i}', '2023-01-01', 8.0)
         for i in range(1, 18)  # IDs 1-17
     ]
 
     # Page 2: Heavy duplicates (15-17 repeated) + only 1 new (18) = 4 total
     # After dedup: Just ID 18 is new → Total unique so far: 18
     page_2_movies = [
-        create_movie_dict(15, 'Movie 15', '2023-01-01', 8.0),  # DUPLICATE
-        create_movie_dict(16, 'Movie 16', '2023-01-01', 8.0),  # DUPLICATE
-        create_movie_dict(17, 'Movie 17', '2023-01-01', 8.0),  # DUPLICATE
-        create_movie_dict(18, 'Movie 18', '2023-01-01', 8.0),  # NEW
+        create_raw_tmdb_movie(15, 'Movie 15', '2023-01-01', 8.0),  # DUPLICATE
+        create_raw_tmdb_movie(16, 'Movie 16', '2023-01-01', 8.0),  # DUPLICATE
+        create_raw_tmdb_movie(17, 'Movie 17', '2023-01-01', 8.0),  # DUPLICATE
+        create_raw_tmdb_movie(18, 'Movie 18', '2023-01-01', 8.0),  # NEW
     ]
 
     # Page 3: More duplicates (17, 18) + new 19-21 + low-rated movies = 8 total
     # With rating filter (7.5+): IDs 19-21 pass, low-rated filtered out
     # After dedup: IDs 19, 20, 21 are new → Total unique: 21 (finally >= 20)
     page_3_movies = [
-        create_movie_dict(17, 'Movie 17', '2023-01-01', 8.0),  # DUPLICATE
-        create_movie_dict(18, 'Movie 18', '2023-01-01', 8.0),  # DUPLICATE
-        create_movie_dict(19, 'Movie 19', '2023-01-01', 8.0),  # NEW
-        create_movie_dict(20, 'Movie 20', '2023-01-01', 8.0),  # NEW
-        create_movie_dict(21, 'Movie 21', '2023-01-01', 8.0),  # NEW
-        create_movie_dict(100, 'Low Rated 1', '2023-01-01', 5.0),  # FILTERED (rating)
-        create_movie_dict(101, 'Low Rated 2', '2023-01-01', 6.0),  # FILTERED (rating)
-        create_movie_dict(102, 'Low Rated 3', '2023-01-01', 7.0),  # FILTERED (rating)
+        create_raw_tmdb_movie(17, 'Movie 17', '2023-01-01', 8.0),  # DUPLICATE
+        create_raw_tmdb_movie(18, 'Movie 18', '2023-01-01', 8.0),  # DUPLICATE
+        create_raw_tmdb_movie(19, 'Movie 19', '2023-01-01', 8.0),  # NEW
+        create_raw_tmdb_movie(20, 'Movie 20', '2023-01-01', 8.0),  # NEW
+        create_raw_tmdb_movie(21, 'Movie 21', '2023-01-01', 8.0),  # NEW
+        create_raw_tmdb_movie(100, 'Low Rated 1', '2023-01-01', 5.0),  # FILTERED (rating)
+        create_raw_tmdb_movie(101, 'Low Rated 2', '2023-01-01', 6.0),  # FILTERED (rating)
+        create_raw_tmdb_movie(102, 'Low Rated 3', '2023-01-01', 7.0),  # FILTERED (rating)
     ]
 
     mock_tmdb_get.side_effect = [
@@ -1273,7 +1273,7 @@ def test_browse_respects_max_buffer_pages_with_heavy_duplication(
     """
     # Arrange: Page 1 has 10 movies
     page_1_movies = [
-        create_movie_dict(i, f'Movie {i}', '2022-01-01', 8.0)
+        create_raw_tmdb_movie(i, f'Movie {i}', '2022-01-01', 8.0)
         for i in range(1, 11)  # IDs 1-10
     ]
 
@@ -1286,10 +1286,10 @@ def test_browse_respects_max_buffer_pages_with_heavy_duplication(
 
     for page_num in range(2, 7):  # Pages 2-6 (5 buffer pages)
         page_movies = [
-            create_movie_dict(i, f'Movie {i}', '2022-01-01', 8.0)
+            create_raw_tmdb_movie(i, f'Movie {i}', '2022-01-01', 8.0)
             for i in range(1, 10)  # Duplicates 1-9
         ] + [
-            create_movie_dict(
+            create_raw_tmdb_movie(
                 10 + page_num - 1,
                 f'Movie {10 + page_num - 1}',
                 '2022-01-01',
@@ -1353,20 +1353,20 @@ def test_browse_no_cross_page_duplicates(
 
     # TMDB Page 1: IDs 1-17 (17 movies, triggers buffer)
     tmdb_page_1 = [
-        create_movie_dict(i, f'Movie {i}', '2023-01-01', 8.0)
+        create_raw_tmdb_movie(i, f'Movie {i}', '2023-01-01', 8.0)
         for i in range(1, 18)
     ]
 
     # TMDB Page 2: IDs 18-20 (3 movies) - Page 1 buffer fetch
     # After dedup: Our page 1 has IDs 1-20, next_tmdb_page_start=3
     tmdb_page_2 = [
-        create_movie_dict(i, f'Movie {i}', '2023-01-01', 8.0)
+        create_raw_tmdb_movie(i, f'Movie {i}', '2023-01-01', 8.0)
         for i in range(18, 21)
     ]
 
     # TMDB Page 3: IDs 21-37 (17 movies, triggers buffer for our page 2)
     tmdb_page_3 = [
-        create_movie_dict(i, f'Movie {i}', '2023-01-01', 8.0)
+        create_raw_tmdb_movie(i, f'Movie {i}', '2023-01-01', 8.0)
         for i in range(21, 38)
     ]
 
@@ -1374,9 +1374,9 @@ def test_browse_no_cross_page_duplicates(
     # CRITICAL: ID 19 was already shown on our page 1 (from TMDB page 2)
     # It should NOT appear on our page 2
     tmdb_page_4 = [
-        create_movie_dict(19, 'Movie 19', '2023-01-01', 8.0),  # DUPLICATE from page 1!
+        create_raw_tmdb_movie(19, 'Movie 19', '2023-01-01', 8.0),  # DUPLICATE from page 1!
     ] + [
-        create_movie_dict(i, f'Movie {i}', '2023-01-01', 8.0)
+        create_raw_tmdb_movie(i, f'Movie {i}', '2023-01-01', 8.0)
         for i in range(38, 41)
     ]
 
@@ -1439,27 +1439,28 @@ def test_browse_backward_navigation_consistency(
     """
     # Setup: Page 1 will fetch TMDB pages 1-2 (buffer), return IDs 1-20
     tmdb_page_1 = [
-        create_movie_dict(i, f'Movie {i}', '2023-01-01', 8.0)
+        create_raw_tmdb_movie(i, f'Movie {i}', '2023-01-01', 8.0)
         for i in range(1, 18)  # 17 movies, triggers buffer
     ]
 
     tmdb_page_2 = [
-        create_movie_dict(i, f'Movie {i}', '2023-01-01', 8.0)
+        create_raw_tmdb_movie(i, f'Movie {i}', '2023-01-01', 8.0)
         for i in range(18, 21)  # 3 movies, total 20 after buffer
     ]
 
     # Page 2 will fetch TMDB pages 3-4
     tmdb_page_3 = [
-        create_movie_dict(i, f'Movie {i}', '2023-01-01', 8.0)
+        create_raw_tmdb_movie(i, f'Movie {i}', '2023-01-01', 8.0)
         for i in range(21, 38)  # 17 movies, triggers buffer
     ]
 
     tmdb_page_4 = [
-        create_movie_dict(i, f'Movie {i}', '2023-01-01', 8.0)
+        create_raw_tmdb_movie(i, f'Movie {i}', '2023-01-01', 8.0)
         for i in range(38, 41)  # 3 movies, total 20
     ]
 
-    # Mock will be called in order: page 1 fetch (TMDB 1, 2), page 2 fetch (TMDB 3, 4), page 1 again (TMDB 1, 2)
+    # Mock will be called in order: page 1 fetch (TMDB 1, 2),
+    # page 2 fetch (TMDB 3, 4), page 1 again (TMDB 1, 2)
     mock_tmdb_get.side_effect = [
         # First page 1 request
         ApiResponse(200, cast(TMDBResponseData, create_paginated_tmdb_response(

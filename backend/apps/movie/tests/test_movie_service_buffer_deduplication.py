@@ -1,6 +1,6 @@
-"""Unit tests for MovieService buffer deduplication logic.
+"""Unit tests for pagination module's buffer deduplication logic.
 
-Tests the _apply_buffer_if_needed method to verify:
+Tests the apply_buffer_if_needed function to verify:
 - Buffer correctly deduplicates movies by tmdb_id
 - Buffer continues fetching to reach 20 unique movies when duplicates present
 - Buffer respects max_buffer_pages safety limit
@@ -18,15 +18,14 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from unittest.mock import Mock
 
-import pytest
-from core.services.api_response import ApiResponse
-from core.tmdb_models.tmdb_responses import TMDBMovieBase, TMDBMovieSearchResponse
+from core.tmdb_models.tmdb_responses import TMDBMovieSearchResponse
 from movie.schemas import MovieBaseSchema
-from movie.services.movie_service import MovieService
+from movie.services.pagination import apply_buffer_if_needed
 from movie.tests.test_fixtures_tmdb import (
+    TMDBMovieBaseRawDict,
     TMDBMovieResponse,
-    create_movie_dict,
     create_paginated_tmdb_response,
+    create_raw_tmdb_movie,
 )
 
 if TYPE_CHECKING:
@@ -38,18 +37,19 @@ if TYPE_CHECKING:
 # ============================================================================
 
 
-def convert_tmdb_dict_to_schema(tmdb_movie: dict[str, object]) -> MovieBaseSchema:
-    """Convert TMDB movie dict (with 'id' field) to MovieBaseSchema (with 'tmdb_id' field).
+def convert_tmdb_dict_to_schema(tmdb_movie: TMDBMovieBaseRawDict) -> MovieBaseSchema:
+    """Convert raw TMDB movie dict (with 'id' field) to MovieBaseSchema (with 'tmdb_id' field).
 
-    Mirrors the transformation done in MovieService._apply_filters (line 376).
+    Mirrors the transformation done in pagination module.
 
     Args:
-        tmdb_movie: TMDB API response dict with 'id' field
+        tmdb_movie: Raw TMDB API response dict with 'id' field
 
     Returns:
         MovieBaseSchema with 'tmdb_id' field
     """
-    movie_dict = tmdb_movie.copy()
+    # TypedDict is a dict at runtime, so we can copy it directly
+    movie_dict = dict(tmdb_movie)
     # Rename id to tmdb_id for MovieBaseSchema
     movie_dict['tmdb_id'] = movie_dict.pop('id')
     # Normalize empty string dates to None (TMDB API quirk)
@@ -103,7 +103,7 @@ def test_buffer_no_duplicates_returns_first_20() -> None:
     """
     # Arrange: Create 20 unique movies for page 1
     page1_movies = [
-        create_movie_dict(
+        create_raw_tmdb_movie(
             tmdb_id=i,
             title=f"Movie {i}",
             release_date="2023-01-01",
@@ -116,9 +116,8 @@ def test_buffer_no_duplicates_returns_first_20() -> None:
     # Create mock fetch function (should not be called)
     mock_fetch = Mock()
 
-    # Create service and call buffer method
-    service = MovieService()
-    result_movies, pages_consumed = service._apply_buffer_if_needed(  # pyright: ignore[reportPrivateUsage]
+    # Call buffer function directly from pagination module
+    result_movies, pages_consumed = apply_buffer_if_needed(
         filtered_movies=filtered_movies,
         current_page=1,
         total_pages=5,
@@ -145,7 +144,7 @@ def test_buffer_with_one_duplicate_fetches_additional_page() -> None:
     """
     # Arrange: Create page 1 with 19 movies (IDs 1-19)
     page1_movies = [
-        create_movie_dict(
+        create_raw_tmdb_movie(
             tmdb_id=i,
             title=f"Movie {i}",
             release_date="2023-01-01",
@@ -156,14 +155,14 @@ def test_buffer_with_one_duplicate_fetches_additional_page() -> None:
 
     # Create page 2: Duplicate ID 19 at start + new movies 20-39
     page2_movies = [
-        create_movie_dict(
+        create_raw_tmdb_movie(
             tmdb_id=19,  # DUPLICATE from page 1
             title="Movie 19",
             release_date="2023-01-01",
             vote_average=7.0
         )
     ] + [
-        create_movie_dict(
+        create_raw_tmdb_movie(
             tmdb_id=i,
             title=f"Movie {i}",
             release_date="2023-01-01",
@@ -182,8 +181,7 @@ def test_buffer_with_one_duplicate_fetches_additional_page() -> None:
     filtered_movies = [convert_tmdb_dict_to_schema(movie) for movie in page1_movies]
 
     # Act: Call buffer method
-    service = MovieService()
-    result_movies, pages_consumed = service._apply_buffer_if_needed(  # pyright: ignore[reportPrivateUsage]
+    result_movies, pages_consumed = apply_buffer_if_needed(
         filtered_movies=filtered_movies,
         current_page=1,
         total_pages=5,
@@ -215,7 +213,7 @@ def test_buffer_with_multiple_duplicates_continues_until_20_unique() -> None:
     """
     # Arrange: Page 1 with 17 movies (IDs 1-17)
     page1_movies = [
-        create_movie_dict(
+        create_raw_tmdb_movie(
             tmdb_id=i,
             title=f"Movie {i}",
             release_date="2023-01-01",
@@ -227,20 +225,38 @@ def test_buffer_with_multiple_duplicates_continues_until_20_unique() -> None:
     # Page 2: Heavy duplicates (15-17 repeated) + only 1 new (18) = 4 total
     # After dedup: Just ID 18 is new → Total unique so far: 18
     page2_movies = [
-        create_movie_dict(tmdb_id=15, title="Movie 15", release_date="2023-01-01", vote_average=7.0),
-        create_movie_dict(tmdb_id=16, title="Movie 16", release_date="2023-01-01", vote_average=7.0),
-        create_movie_dict(tmdb_id=17, title="Movie 17", release_date="2023-01-01", vote_average=7.0),
-        create_movie_dict(tmdb_id=18, title="Movie 18", release_date="2023-01-01", vote_average=7.0),
+        create_raw_tmdb_movie(
+            tmdb_id=15, title="Movie 15", release_date="2023-01-01", vote_average=7.0
+        ),
+        create_raw_tmdb_movie(
+            tmdb_id=16, title="Movie 16", release_date="2023-01-01", vote_average=7.0
+        ),
+        create_raw_tmdb_movie(
+            tmdb_id=17, title="Movie 17", release_date="2023-01-01", vote_average=7.0
+        ),
+        create_raw_tmdb_movie(
+            tmdb_id=18, title="Movie 18", release_date="2023-01-01", vote_average=7.0
+        ),
     ]
 
     # Page 3: More duplicates (17, 18) + new 19-21 = 5 total
     # After dedup: IDs 19, 20, 21 are new → Total unique: 21 (finally >= 20)
     page3_movies = [
-        create_movie_dict(tmdb_id=17, title="Movie 17", release_date="2023-01-01", vote_average=7.0),
-        create_movie_dict(tmdb_id=18, title="Movie 18", release_date="2023-01-01", vote_average=7.0),
-        create_movie_dict(tmdb_id=19, title="Movie 19", release_date="2023-01-01", vote_average=7.0),
-        create_movie_dict(tmdb_id=20, title="Movie 20", release_date="2023-01-01", vote_average=7.0),
-        create_movie_dict(tmdb_id=21, title="Movie 21", release_date="2023-01-01", vote_average=7.0),
+        create_raw_tmdb_movie(
+            tmdb_id=17, title="Movie 17", release_date="2023-01-01", vote_average=7.0
+        ),
+        create_raw_tmdb_movie(
+            tmdb_id=18, title="Movie 18", release_date="2023-01-01", vote_average=7.0
+        ),
+        create_raw_tmdb_movie(
+            tmdb_id=19, title="Movie 19", release_date="2023-01-01", vote_average=7.0
+        ),
+        create_raw_tmdb_movie(
+            tmdb_id=20, title="Movie 20", release_date="2023-01-01", vote_average=7.0
+        ),
+        create_raw_tmdb_movie(
+            tmdb_id=21, title="Movie 21", release_date="2023-01-01", vote_average=7.0
+        ),
     ]
 
     # Setup page responses
@@ -254,8 +270,7 @@ def test_buffer_with_multiple_duplicates_continues_until_20_unique() -> None:
     filtered_movies = [convert_tmdb_dict_to_schema(movie) for movie in page1_movies]
 
     # Act: Call buffer method
-    service = MovieService()
-    result_movies, pages_consumed = service._apply_buffer_if_needed(  # pyright: ignore[reportPrivateUsage]
+    result_movies, pages_consumed = apply_buffer_if_needed(
         filtered_movies=filtered_movies,
         current_page=1,
         total_pages=5,
@@ -291,7 +306,7 @@ def test_buffer_respects_max_buffer_pages_limit() -> None:
     """
     # Arrange: Page 1 with 10 movies (IDs 1-10)
     page1_movies = [
-        create_movie_dict(
+        create_raw_tmdb_movie(
             tmdb_id=i,
             title=f"Movie {i}",
             release_date="2023-01-01",
@@ -301,11 +316,11 @@ def test_buffer_respects_max_buffer_pages_limit() -> None:
     ]
 
     # Create pages 2-6 each with heavy duplication (only 1 new movie per page)
-    page_responses = {}
+    page_responses: dict[int, TMDBMovieResponse] = {}
     for page_num in range(2, 7):  # Pages 2-6 (5 buffer pages)
         # Each page has 9 duplicates + 1 new movie
         page_movies = [
-            create_movie_dict(
+            create_raw_tmdb_movie(
                 tmdb_id=i,
                 title=f"Movie {i}",
                 release_date="2023-01-01",
@@ -313,7 +328,7 @@ def test_buffer_respects_max_buffer_pages_limit() -> None:
             )
             for i in range(1, 10)  # Duplicates 1-9
         ] + [
-            create_movie_dict(
+            create_raw_tmdb_movie(
                 tmdb_id=10 + page_num - 1,  # One new movie per page
                 title=f"Movie {10 + page_num - 1}",
                 release_date="2023-01-01",
@@ -330,8 +345,7 @@ def test_buffer_respects_max_buffer_pages_limit() -> None:
     filtered_movies = [convert_tmdb_dict_to_schema(movie) for movie in page1_movies]
 
     # Act: Call buffer method
-    service = MovieService()
-    result_movies, pages_consumed = service._apply_buffer_if_needed(  # pyright: ignore[reportPrivateUsage]
+    result_movies, pages_consumed = apply_buffer_if_needed(
         filtered_movies=filtered_movies,
         current_page=1,
         total_pages=10,
@@ -343,7 +357,9 @@ def test_buffer_respects_max_buffer_pages_limit() -> None:
     )
 
     # Assert: Should stop at max_buffer_pages=5 with only 15 unique movies (10 + 5 new)
-    assert len(result_movies) == 15, "Should return 15 unique movies (10 initial + 5 from buffer pages)"
+    assert len(result_movies) == 15, (
+        "Should return 15 unique movies (10 initial + 5 from buffer pages)"
+    )
     assert pages_consumed == 6, "Should consume page 1 + 5 buffer pages (max limit)"
 
     # Verify fetched exactly 5 buffer pages (pages 2-6)
@@ -363,7 +379,7 @@ def test_buffer_deduplication_preserves_first_occurrence_order() -> None:
     """
     # Arrange: Page 1 with movies 1-19 (Spirited Away at position 19)
     page1_movies = [
-        create_movie_dict(
+        create_raw_tmdb_movie(
             tmdb_id=i,
             title=f"Movie {i}",
             release_date="2023-01-01",
@@ -372,7 +388,7 @@ def test_buffer_deduplication_preserves_first_occurrence_order() -> None:
         for i in range(1, 20)  # 1-19
     ]
     # Make ID 19 "Spirited Away" for clarity
-    page1_movies[-1] = create_movie_dict(
+    page1_movies[-1] = create_raw_tmdb_movie(
         tmdb_id=129,
         title="Spirited Away",
         release_date="2001-07-20",
@@ -381,14 +397,14 @@ def test_buffer_deduplication_preserves_first_occurrence_order() -> None:
 
     # Page 2: Spirited Away appears FIRST (duplicate) + new movies 20-39
     page2_movies = [
-        create_movie_dict(
+        create_raw_tmdb_movie(
             tmdb_id=129,  # DUPLICATE - Spirited Away
             title="Spirited Away",
             release_date="2001-07-20",
             vote_average=8.5
         )
     ] + [
-        create_movie_dict(
+        create_raw_tmdb_movie(
             tmdb_id=i,
             title=f"Movie {i}",
             release_date="2023-01-01",
@@ -407,8 +423,7 @@ def test_buffer_deduplication_preserves_first_occurrence_order() -> None:
     filtered_movies = [convert_tmdb_dict_to_schema(movie) for movie in page1_movies]
 
     # Act: Call buffer method
-    service = MovieService()
-    result_movies, pages_consumed = service._apply_buffer_if_needed(  # pyright: ignore[reportPrivateUsage]
+    result_movies, _pages_consumed = apply_buffer_if_needed(
         filtered_movies=filtered_movies,
         current_page=1,
         total_pages=5,
@@ -442,7 +457,7 @@ def test_buffer_empty_results_after_deduplication() -> None:
     """
     # Arrange: Page 1 with 10 movies (IDs 1-10)
     page1_movies = [
-        create_movie_dict(
+        create_raw_tmdb_movie(
             tmdb_id=i,
             title=f"Movie {i}",
             release_date="2023-01-01",
@@ -453,7 +468,7 @@ def test_buffer_empty_results_after_deduplication() -> None:
 
     # Page 2: All duplicates (IDs 1-10 again)
     page2_movies = [
-        create_movie_dict(
+        create_raw_tmdb_movie(
             tmdb_id=i,
             title=f"Movie {i}",
             release_date="2023-01-01",
@@ -464,7 +479,7 @@ def test_buffer_empty_results_after_deduplication() -> None:
 
     # Page 3: New movies 11-30
     page3_movies = [
-        create_movie_dict(
+        create_raw_tmdb_movie(
             tmdb_id=i,
             title=f"Movie {i}",
             release_date="2023-01-01",
@@ -484,8 +499,7 @@ def test_buffer_empty_results_after_deduplication() -> None:
     filtered_movies = [convert_tmdb_dict_to_schema(movie) for movie in page1_movies]
 
     # Act: Call buffer method
-    service = MovieService()
-    result_movies, pages_consumed = service._apply_buffer_if_needed(  # pyright: ignore[reportPrivateUsage]
+    result_movies, pages_consumed = apply_buffer_if_needed(
         filtered_movies=filtered_movies,
         current_page=1,
         total_pages=5,
@@ -519,7 +533,7 @@ def test_buffer_deduplication_with_filters_applied_to_buffer_pages() -> None:
     """
     # Arrange: Page 1 with 15 movies from 2020-2024 (IDs 1-15)
     page1_movies = [
-        create_movie_dict(
+        create_raw_tmdb_movie(
             tmdb_id=i,
             title=f"Movie {i}",
             release_date="2023-01-01",
@@ -531,17 +545,17 @@ def test_buffer_deduplication_with_filters_applied_to_buffer_pages() -> None:
     # Page 2: Mix of old movies (filtered out) and new movies (2020-2024)
     # Include duplicate ID 15 + movies from 2019 (filtered) + new 2023 movies
     page2_movies = [
-        create_movie_dict(
+        create_raw_tmdb_movie(
             tmdb_id=15, title="Movie 15", release_date="2023-01-01", vote_average=7.0
         ),  # Duplicate
-        create_movie_dict(
+        create_raw_tmdb_movie(
             tmdb_id=100, title="Old Movie 1", release_date="2019-01-01", vote_average=7.0
         ),  # Filtered
-        create_movie_dict(
+        create_raw_tmdb_movie(
             tmdb_id=101, title="Old Movie 2", release_date="2018-01-01", vote_average=7.0
         ),  # Filtered
     ] + [
-        create_movie_dict(
+        create_raw_tmdb_movie(
             tmdb_id=i,
             title=f"Movie {i}",
             release_date="2023-01-01",
@@ -560,8 +574,7 @@ def test_buffer_deduplication_with_filters_applied_to_buffer_pages() -> None:
     filtered_movies = [convert_tmdb_dict_to_schema(movie) for movie in page1_movies]
 
     # Act: Call buffer method with year filter
-    service = MovieService()
-    result_movies, pages_consumed = service._apply_buffer_if_needed(  # pyright: ignore[reportPrivateUsage]
+    result_movies, pages_consumed = apply_buffer_if_needed(
         filtered_movies=filtered_movies,
         current_page=1,
         total_pages=5,
@@ -572,7 +585,8 @@ def test_buffer_deduplication_with_filters_applied_to_buffer_pages() -> None:
         fetch_next_page_func=mock_fetch,
     )
 
-    # Assert: Should deduplicate ID 15, filter out 2019/2018 movies, return 20 unique from 2020-2024
+    # Assert: Should deduplicate ID 15, filter out 2019/2018 movies,
+    # return 20 unique from 2020-2024
     assert len(result_movies) == 20, "Should return 20 unique movies"
     assert pages_consumed == 2, "Should consume pages 1 and 2"
 
@@ -585,5 +599,6 @@ def test_buffer_deduplication_with_filters_applied_to_buffer_pages() -> None:
 
     # Verify all movies are from 2020-2024
     for movie in result_movies:
+        assert movie.release_date is not None, f"Movie {movie.tmdb_id} should have release_date"
         year = movie.release_date.year
         assert 2020 <= year <= 2024, f"Movie {movie.tmdb_id} year {year} should be 2020-2024"

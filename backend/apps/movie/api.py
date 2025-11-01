@@ -12,17 +12,12 @@ for user-specific data population.
 
 from __future__ import annotations
 
-from datetime import UTC, datetime, timedelta
-
 from django.http import HttpRequest
 from ninja import Query, Router
 
 from .helpers import (
-    NOW_PLAYING_PROTECTED_KEYS,
-    UPCOMING_PROTECTED_KEYS,
     enrich_response_with_user_movie_data,
     enrich_single_movie_with_user_movie_data,
-    merge_with_preset,
 )
 from .schemas import (
     GenreSchema,
@@ -127,21 +122,9 @@ def get_now_playing_movies(
     """
     Retrieve movies currently playing in theaters with filtering and user-specific data.
 
-    This is a thin wrapper around the discover endpoint with protected date range
-    and release type presets. The date range covers the "theater planning window"
-    (today - 30 days to today + 5 days) to include both current releases and
-    upcoming weekend movies.
-
-    Protected parameters (cannot be overridden by user):
-    - Date range: today - 30 days to today + 5 days (35-day window)
-    - Release type: 2|3 (theatrical releases only)
-
-    Users can still apply additional filters:
-    - Genres (with_genres): Filter by genre IDs
-    - Ratings (vote_average.gte/lte): Filter by rating range
-    - Keywords (with_keywords): Filter by keyword IDs
-    - People (with_cast/with_people): Filter by cast/crew
-    - Sort (sort_by): Change sort order (default: popularity.desc)
+    Thin HTTP wrapper that delegates to service layer for business logic.
+    See MovieService.get_now_playing_movies() for implementation details including
+    date range presets, protected parameters, and user filter capabilities.
 
     Query Parameters:
         filters: MovieDiscoverFilterSchema with all optional filter parameters
@@ -152,32 +135,10 @@ def get_now_playing_movies(
     Raises:
         HttpError: 400 for invalid parameters, 500 for TMDB API errors
     """
-    # Build date range preset (today - 30 days to today + 5 days)
-    today = datetime.now(tz=UTC)
-    start_date = (today - timedelta(days=30)).strftime("%Y-%m-%d")
-    end_date = (today + timedelta(days=5)).strftime("%Y-%m-%d")
-
-    # Define preset with protected keys for now-playing semantics
-    # Use schema parameter names (release_date.gte) not TMDB names (primary_release_date.gte)
-    # The discover_movies service layer handles the mapping to TMDB format
-    preset = {
-        "release_date.gte": start_date,
-        "release_date.lte": end_date,
-        "with_release_type": "2|3",  # Theatrical releases only
-    }
-
-    # Extract user filters and merge with preset (protected keys override user values)
-    user_filters = filters.to_service_params()
-    merged_filters = merge_with_preset(user_filters, preset, NOW_PLAYING_PROTECTED_KEYS)
-
-    # Call discover endpoint with merged filters (thin wrapper pattern)
-    # Disable vote count filtering for now-playing window (past 30 days + next 5 days)
-    # This includes both released and unreleased movies; empirical testing will determine
-    # if we need a lower threshold (e.g., 5 votes) vs no filtering
-    response = _movie_service.discover_movies(
+    # Extract filters and delegate to service layer (business logic handled there)
+    response = _movie_service.get_now_playing_movies(
         page=filters.page or 1,
-        min_vote_count=None,  # Disabled for empirical evaluation
-        **merged_filters  # type: ignore[arg-type]
+        **filters.to_service_params()
     )
 
     # Enrich with user data if authenticated
@@ -192,20 +153,9 @@ def get_upcoming_movies(
     """
     Retrieve upcoming movies with filtering and user-specific data.
 
-    This is a thin wrapper around the discover endpoint with protected date range
-    and release type presets. The date range covers the "upcoming planning window"
-    (today + 5 days to today + 65 days) to show movies releasing soon in theaters.
-
-    Protected parameters (cannot be overridden by user):
-    - Date range: today + 5 days to today + 65 days (60-day window)
-    - Release type: 2|3 (theatrical releases only)
-
-    Users can still apply additional filters:
-    - Genres (with_genres): Filter by genre IDs
-    - Ratings (vote_average.gte/lte): Filter by rating range
-    - Keywords (with_keywords): Filter by keyword IDs
-    - People (with_cast/with_people): Filter by cast/crew
-    - Sort (sort_by): Change sort order (default: popularity.desc)
+    Thin HTTP wrapper that delegates to service layer for business logic.
+    See MovieService.get_upcoming_movies() for implementation details including
+    date range presets, protected parameters, and user filter capabilities.
 
     Query Parameters:
         filters: MovieDiscoverFilterSchema with all optional filter parameters
@@ -216,30 +166,10 @@ def get_upcoming_movies(
     Raises:
         HttpError: 400 for invalid parameters, 500 for TMDB API errors
     """
-    # Build date range preset (today + 5 days to today + 65 days)
-    today = datetime.now(tz=UTC)
-    start_date = (today + timedelta(days=5)).strftime("%Y-%m-%d")
-    end_date = (today + timedelta(days=65)).strftime("%Y-%m-%d")
-
-    # Define preset with protected keys for upcoming semantics
-    # Use schema parameter names (release_date.gte) not TMDB names (primary_release_date.gte)
-    # The discover_movies service layer handles the mapping to TMDB format
-    preset = {
-        "release_date.gte": start_date,
-        "release_date.lte": end_date,
-        "with_release_type": "2|3",  # Theatrical releases only
-    }
-
-    # Extract user filters and merge with preset (protected keys override user values)
-    user_filters = filters.to_service_params()
-    merged_filters = merge_with_preset(user_filters, preset, UPCOMING_PROTECTED_KEYS)
-
-    # Call discover endpoint with merged filters (thin wrapper pattern)
-    # Disable vote count filtering for upcoming movies (unreleased movies have 0 votes)
-    response = _movie_service.discover_movies(
+    # Extract filters and delegate to service layer (business logic handled there)
+    response = _movie_service.get_upcoming_movies(
         page=filters.page or 1,
-        min_vote_count=None,  # Disabled - unreleased movies have 0 votes
-        **merged_filters  # type: ignore[arg-type]
+        **filters.to_service_params()
     )
 
     # Enrich with user data if authenticated

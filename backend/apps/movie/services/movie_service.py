@@ -17,6 +17,11 @@ from core.tmdb_models.tmdb_responses import (
 from core.types.api_types import TMDBParams
 from ninja.errors import HttpError
 
+from ..helpers import (
+    NOW_PLAYING_PROTECTED_KEYS,
+    UPCOMING_PROTECTED_KEYS,
+    merge_with_preset,
+)
 from ..schemas import (
     GenreSchema,
     MovieBaseSchema,
@@ -41,6 +46,47 @@ logger = logging.getLogger('cinexplorer.tmdb')
 
 # Initialize the TMDB API client
 tmdb_client = TMDBApiClient()
+
+# Filter mapping: service parameter names → TMDB API parameter names
+# Supports both underscore (direct service calls) and dot (API layer) parameter names
+FILTER_MAPPING: dict[str, str] = {
+    'sort_by': 'sort_by',
+    'genres': 'with_genres',
+    'year': 'year',
+    'vote_average_gte': 'vote_average.gte',  # Direct service calls with underscore
+    'vote_average.gte': 'vote_average.gte',  # API sends with dot
+    'vote_average_lte': 'vote_average.lte',  # Direct service calls with underscore
+    'vote_average.lte': 'vote_average.lte',  # API sends with dot
+    'keywords': 'with_keywords',
+    'people': 'with_people',
+    'release_date_gte': 'primary_release_date.gte',  # Direct service calls with underscore
+    'release_date.gte': 'primary_release_date.gte',  # API sends with dot
+    'release_date_lte': 'primary_release_date.lte',  # Direct service calls with underscore
+    'release_date.lte': 'primary_release_date.lte',  # API sends with dot
+    'certification': 'certification',
+    'with_release_type': 'with_release_type',  # Theatrical release type filtering
+}
+
+# Numeric parameters that should preserve type (not convert to string)
+# Used during filter mapping to TMDB API parameters
+NUMERIC_FILTER_PARAMS: frozenset[str] = frozenset([
+    'year',
+    'primary_release_year',
+    'vote_average_gte',
+    'vote_average.gte',
+    'vote_average_lte',
+    'vote_average.lte',
+    'vote_count',
+    'vote_count_gte',
+    'vote_count.gte',
+    'vote_count_lte',
+    'vote_count.lte',
+    'runtime',
+    'runtime_gte',
+    'runtime.gte',
+    'runtime_lte',
+    'runtime.lte',
+])
 
 
 class MovieService:
@@ -563,23 +609,71 @@ class MovieService:
         # Use factory function to create properly typed MovieDetailSchema
         return create_movie_detail_from_tmdb(info_result, credits_result)
 
+    def _build_date_constrained_preset(
+        self,
+        start_days_offset: int,
+        end_days_offset: int,
+    ) -> TMDBParams:
+        """Build date range preset for time-constrained endpoints.
+
+        Creates a preset dictionary with date range and release type filters
+        for endpoints like now-playing and upcoming that enforce specific
+        time windows.
+
+        Args:
+            start_days_offset: Days to offset from today for start date
+                (negative for past, positive for future)
+            end_days_offset: Days to offset from today for end date
+                (negative for past, positive for future)
+
+        Returns:
+            TMDBParams dict with date range and release type preset
+
+        Example:
+            # Now Playing: today - 30 days to today + 5 days
+            preset = self._build_date_constrained_preset(-30, 5)
+
+            # Upcoming: today + 5 days to today + 65 days
+            preset = self._build_date_constrained_preset(5, 65)
+        """
+        today = datetime.now(tz=UTC)
+        start_date = (today + timedelta(days=start_days_offset)).strftime("%Y-%m-%d")
+        end_date = (today + timedelta(days=end_days_offset)).strftime("%Y-%m-%d")
+
+        return {
+            "release_date.gte": start_date,
+            "release_date.lte": end_date,
+            "with_release_type": "2|3",  # Theatrical releases only
+        }
+
     def get_now_playing_movies(
         self,
         page: int = 1,
-        year_min: int | None = None,
-        year_max: int | None = None,
-        rating_min: float | None = None,
-        rating_max: float | None = None,
+        **filters: str | int | float | bool | None,
     ) -> PaginatedMovieResponseSchema:
         """
-        Retrieves a list of now playing movies from TMDB.
+        Retrieves movies currently playing in theaters with filtering.
+
+        This is a thin wrapper around discover_movies() with protected date range
+        and release type presets. The date range covers the "theater planning window"
+        (today - 30 days to today + 5 days) to include both current releases and
+        upcoming weekend movies.
+
+        Protected parameters (enforced by preset, cannot be overridden):
+        - Date range: today - 30 days to today + 5 days (35-day window)
+        - Release type: 2|3 (theatrical releases only)
+        - Year/primary_release_year: Redundant with date range (prevented)
+
+        Users can apply additional filters:
+        - Genres (with_genres): Filter by genre IDs
+        - Ratings (vote_average_gte/lte): Filter by rating range
+        - Keywords (with_keywords): Filter by keyword IDs
+        - People (with_cast/with_people): Filter by cast/crew
+        - Sort (sort_by): Change sort order (default: popularity.desc)
 
         Args:
             page: Page number for pagination
-            year_min: Minimum release year (inclusive), backend filtered (second-pass data hygiene)
-            year_max: Maximum release year (inclusive), backend filtered (second-pass data hygiene)
-            rating_min: Minimum rating (inclusive), backend filtered (second-pass data hygiene)
-            rating_max: Maximum rating (inclusive), backend filtered (second-pass data hygiene)
+            **filters: User-provided filter parameters from API layer
 
         Returns:
             PaginatedMovieResponseSchema with now playing movies
@@ -588,66 +682,52 @@ class MovieService:
             HttpError: If API error or data processing fails
 
         Note:
-            Year and rating filters use two-pass architecture: TMDB API (primary)
-            + backend filtering (catches data quality issues).
+            Business logic (preset building, filter merging) handled in Service layer.
+            API layer is thin - only extracts parameters and delegates to this method.
         """
-        def fetch_now_playing_page(page_num: int) -> TMDBMovieSearchResponse:
-            """Fetch a specific now playing page."""
-            page_response = self._tmdb_client.get_now_playing_movies(page=page_num)
+        # Build date range preset (today - 30 days to today + 5 days)
+        preset = self._build_date_constrained_preset(-30, 5)
 
-            if not page_response.is_success():
-                handle_tmdb_api_error(
-                    page_response,
-                    operation='get_now_playing_movies',
-                    page=page_num,
-                    error_stage='fetching_now_playing'
-                )
+        # Merge user filters with preset (protected keys override user values)
+        merged_filters = merge_with_preset(
+            dict(filters), preset, NOW_PLAYING_PROTECTED_KEYS
+        )
 
-            result = page_response.get_json_data()
-
-            if not result:
-                logger.error(
-                    "Failed to get valid response data from TMDB",
-                    extra={
-                        'correlation_id': page_response.correlation_id,
-                        'operation': 'get_now_playing_movies',
-                        'page': page_num
-                    }
-                )
-                raise HttpError(500, "Failed to get valid response data from TMDB")
-
-            return TMDBMovieSearchResponse.model_validate(result)
-
-        return self._fetch_with_filters_and_buffer(
-            fetch_now_playing_page,
-            page,
-            year_min,
-            year_max,
-            rating_min,
-            rating_max
+        # Call discover endpoint with merged filters (thin wrapper pattern)
+        return self.discover_movies(
+            page=page,
+            min_vote_count=None,  # Disabled for now-playing window
+            **merged_filters  # type: ignore[arg-type]
         )
 
     def get_upcoming_movies(
         self,
         page: int = 1,
-        year_min: int | None = None,
-        year_max: int | None = None,
-        rating_min: float | None = None,
-        rating_max: float | None = None,
+        **filters: str | int | float | bool | None,
     ) -> PaginatedMovieResponseSchema:
         """
-        Retrieves a list of upcoming movies from TMDB.
+        Retrieves upcoming movies releasing soon in theaters with filtering.
 
-        Date range: today + 5 days to today + 60 days (55-day window).
-        Starts 5 days in the future to avoid overlap with Now Playing endpoint,
-        which covers past releases + upcoming weekend (today + 5 days).
+        This is a thin wrapper around discover_movies() with protected date range
+        and release type presets. The date range covers the "upcoming planning window"
+        (today + 5 days to today + 65 days) to show movies releasing soon in theaters.
+        Starts 5 days in the future to avoid overlap with Now Playing endpoint.
+
+        Protected parameters (enforced by preset, cannot be overridden):
+        - Date range: today + 5 days to today + 65 days (60-day window)
+        - Release type: 2|3 (theatrical releases only)
+        - Year/primary_release_year: Redundant with date range (prevented)
+
+        Users can apply additional filters:
+        - Genres (with_genres): Filter by genre IDs
+        - Ratings (vote_average_gte/lte): Filter by rating range
+        - Keywords (with_keywords): Filter by keyword IDs
+        - People (with_cast/with_people): Filter by cast/crew
+        - Sort (sort_by): Change sort order (default: popularity.desc)
 
         Args:
             page: Page number for pagination
-            year_min: Minimum release year (inclusive), backend filtered (second-pass data hygiene)
-            year_max: Maximum release year (inclusive), backend filtered (second-pass data hygiene)
-            rating_min: Minimum rating (inclusive), backend filtered (second-pass data hygiene)
-            rating_max: Maximum rating (inclusive), backend filtered (second-pass data hygiene)
+            **filters: User-provided filter parameters from API layer
 
         Returns:
             PaginatedMovieResponseSchema with upcoming movies
@@ -656,62 +736,25 @@ class MovieService:
             HttpError: If API error or data processing fails
 
         Note:
-            Year and rating filters use two-pass architecture: TMDB API (primary)
-            + backend filtering (catches data quality issues).
+            Business logic (preset building, filter merging) handled in Service layer.
+            API layer is thin - only extracts parameters and delegates to this method.
 
             Region parameter intentionally omitted - incompatible with primary_release_date
             filters per TMDB API research (see research-tmdb-api-date-filtering.md).
         """
-        today = datetime.now(tz=UTC)
-        min_date = (today + timedelta(days=5)).strftime("%Y-%m-%d")
-        max_date = (today + timedelta(days=60)).strftime("%Y-%m-%d")
+        # Build date range preset (today + 5 days to today + 65 days)
+        preset = self._build_date_constrained_preset(5, 65)
 
-        params: TMDBParams = {
-            "include_adult": False,
-            "include_video": False,
-            "language": "en-US",
-            # NOTE: "region" parameter omitted - incompatible with primary_release_date
-            # filters. TMDB behavior becomes undefined when both are used together.
-            "sort_by": "popularity.desc",
-            "with_release_type": "2|3",
-            "primary_release_date.gte": min_date,
-            "primary_release_date.lte": max_date,
-        }
+        # Merge user filters with preset (protected keys override user values)
+        merged_filters = merge_with_preset(
+            dict(filters), preset, UPCOMING_PROTECTED_KEYS
+        )
 
-        def fetch_upcoming_page(page_num: int) -> TMDBMovieSearchResponse:
-            """Fetch a specific upcoming page."""
-            page_params = params.copy()
-            page_params['page'] = page_num  # type: ignore[assignment]
-            page_response = self._tmdb_client.get(
-                "discover/movie",
-                cast(dict[str, object], page_params)
-            )
-            tmdb_resp = validate_tmdb_paginated_response(
-                page_response,
-                TMDBMovieSearchResponse
-            )
-
-            if not tmdb_resp:
-                logger.error(
-                    "Failed to get valid response data from TMDB",
-                    extra={
-                        'correlation_id': page_response.correlation_id,
-                        'operation': 'get_upcoming_movies',
-                        'page': page_num
-                    }
-                )
-                raise HttpError(500, "Failed to get valid response data from TMDB")
-
-            return tmdb_resp
-
-        return self._fetch_with_filters_and_buffer(
-            fetch_upcoming_page,
-            page,
-            year_min,
-            year_max,
-            rating_min,
-            rating_max,
-            min_vote_count=None  # Skip vote filtering for unreleased movies
+        # Call discover endpoint with merged filters (thin wrapper pattern)
+        return self.discover_movies(
+            page=page,
+            min_vote_count=None,  # Disabled - unreleased movies have 0 votes
+            **merged_filters  # type: ignore[arg-type]
         )
 
     def search_movies(
@@ -777,7 +820,16 @@ class MovieService:
         **filters: str | int | float | bool | None
     ) -> PaginatedMovieResponseSchema:
         """
-        Flexible movie discovery with full TMDB filtering capabilities.
+        Core TMDB discover wrapper with full filtering capabilities.
+
+        This is the foundational discovery method that other service methods build upon.
+        Date-constrained methods (get_now_playing_movies, get_upcoming_movies) call this
+        method internally with preset filters to create curated endpoints.
+
+        Architecture:
+            - Service layer handles all business logic (presets, filter merging)
+            - API layer is thin (HTTP concerns only, delegates to service methods)
+            - This method is the internal workhorse for all discovery operations
 
         Args:
             page: Page number for pagination
@@ -794,7 +846,8 @@ class MovieService:
                 - vote_average_gte/lte: Rating range
                 - keywords: Comma-separated keyword IDs
                 - people: Comma-separated person IDs
-                - release_date_gte/lte: Release date range
+                - release_date_gte/lte: Release date range (mapped to primary_release_date)
+                - with_release_type: Release type (2|3 for theatrical)
                 - certification: Certification rating
                 - region: Country code for regional release dates
 
@@ -833,39 +886,11 @@ class MovieService:
             "page": page,
         }
 
-        # Map filter names to TMDB parameter names
-        # Support both underscore (direct service calls) and dot (API layer) parameter names
-        filter_mapping = {
-            'sort_by': 'sort_by',
-            'genres': 'with_genres',
-            'year': 'year',
-            'vote_average_gte': 'vote_average.gte',  # Direct service calls with underscore
-            'vote_average.gte': 'vote_average.gte',  # API sends with dot
-            'vote_average_lte': 'vote_average.lte',  # Direct service calls with underscore
-            'vote_average.lte': 'vote_average.lte',  # API sends with dot
-            'keywords': 'with_keywords',
-            'people': 'with_people',
-            'release_date_gte': 'primary_release_date.gte',  # Direct service calls with underscore
-            'release_date.gte': 'primary_release_date.gte',  # API sends with dot
-            'release_date_lte': 'primary_release_date.lte',  # Direct service calls with underscore
-            'release_date.lte': 'primary_release_date.lte',  # API sends with dot
-            'certification': 'certification',
-        }
-
-        # Apply filters if provided
-        for filter_name, tmdb_param in filter_mapping.items():
+        # Apply filters using module-level mapping constants
+        for filter_name, tmdb_param in FILTER_MAPPING.items():
             if filter_name in filters and filters[filter_name] is not None:
-                # Preserve data types for numeric parameters (support both naming conventions)
-                numeric_params = [
-                    'year', 'primary_release_year',
-                    'vote_average_gte', 'vote_average.gte',
-                    'vote_average_lte', 'vote_average.lte',
-                    'vote_count', 'vote_count_gte', 'vote_count.gte',
-                    'vote_count_lte', 'vote_count.lte',
-                    'runtime', 'runtime_gte', 'runtime.gte',
-                    'runtime_lte', 'runtime.lte'
-                ]
-                if filter_name in numeric_params:
+                # Preserve data types for numeric parameters, convert others to string
+                if filter_name in NUMERIC_FILTER_PARAMS:
                     params[tmdb_param] = filters[filter_name]
                 else:
                     params[tmdb_param] = str(filters[filter_name])

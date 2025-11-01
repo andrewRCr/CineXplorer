@@ -594,21 +594,51 @@ endpoints per ADR-002.
 
         **Subtasks:**
 
-        - [ ] **2.3.6a Extract filtering logic to dedicated module**
-            - Create `backend/apps/movie/services/filtering.py`
-            - Move filter mapping constants (service→TMDB parameter mapping)
-            - Move numeric parameter type checking logic
-            - Create `build_tmdb_params()` function that takes service params and returns TMDB API params
-            - Update `discover_movies()` to use new filtering module
-            - Goal: Isolate complex mapping/validation logic from service orchestration
+        - [x] **2.3.6a Extract filtering logic to dedicated module**
 
-        - [ ] **2.3.6b Extract pagination logic to dedicated module**
-            - Create `backend/apps/movie/services/pagination.py`
-            - Move `_fetch_with_filters_and_buffer()` method
-            - Move `_apply_buffer_if_needed()` method
-            - Move `_build_filtered_response()` method
-            - Create `PaginationService` or similar with buffer management
-            - Goal: Separate pagination concerns from discovery logic
+            **Completed:** Filter mapping logic successfully extracted to dedicated module.
+
+            **Changes Made:**
+            - ✅ Created `backend/apps/movie/services/filtering.py` with:
+                - `FILTER_MAPPING` constant (service param → TMDB param mapping)
+                - `NUMERIC_FILTER_PARAMS` constant (type preservation list)
+                - `build_tmdb_params()` function (converts service filters to TMDB API params)
+            - ✅ Updated `movie_service.py`:
+                - Removed 45 lines of constants and parameter building logic
+                - Added import: `from .filtering import build_tmdb_params`
+                - Simplified `discover_movies()` method (replaced 40 lines with 1 function call)
+            - ✅ Quality gates passed:
+                - Ruff linting: 0 errors (3 auto-fixed)
+                - Pyright type checking: 0 errors, 0 warnings
+
+            **Impact:** movie_service.py reduced from 984 lines to ~945 lines. Filter mapping logic now
+            isolated in dedicated module for better maintainability and testability.
+
+        - [x] **2.3.6b Extract pagination logic to dedicated module**
+
+            **Completed:** Pagination logic successfully extracted to functional helper module.
+
+            **Changes Made:**
+            - ✅ Created `backend/apps/movie/services/pagination.py` with functional helpers:
+                - `convert_schema_to_tmdb_movie()` - Schema conversion helper
+                - `build_filtered_response()` - Builds paginated responses
+                - `apply_filters()` - Applies completeness, year, and rating filters
+                - `apply_buffer_if_needed()` - Smart buffer mechanism
+                - `fetch_with_filters_and_buffer()` - Template function for fetch-filter-buffer workflow
+            - ✅ Updated `movie_service.py`:
+                - Removed 5 instance methods (~367 lines removed)
+                - Added import: `from .pagination import fetch_with_filters_and_buffer`
+                - Updated 2 call sites to use new function
+            - ✅ Quality gates passed:
+                - Ruff linting: 0 errors (5 auto-fixed)
+                - Pyright type checking: 0 errors, 0 warnings
+
+            **Approach:** Used functional helpers (aligned with Phase 1 of service-layer-modernization PRD)
+            instead of class-based PaginationService. Pagination functions are stateless helpers
+            that compose well, matching the pattern established by filtering.py.
+
+            **Impact:** movie_service.py reduced from ~945 lines to ~578 lines (~39% reduction).
+            Pagination logic now isolated in dedicated module for better maintainability and reusability.
 
         - [ ] **2.3.6c Split MovieService into focused service classes**
             - Create `MovieDiscoveryService` (discover, now_playing, upcoming, helper methods)

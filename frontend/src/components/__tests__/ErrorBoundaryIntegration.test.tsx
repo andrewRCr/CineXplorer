@@ -10,7 +10,7 @@ import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 import { ChakraProvider } from '@chakra-ui/react';
 import ErrorBoundary from '../ErrorBoundary';
-import { system } from '@/theme';
+import { defaultSystem } from '@/theme';
 
 // Mock components to test error scenarios
 const ThrowError: React.FC<{ shouldThrow?: boolean }> = ({ shouldThrow = true }) => {
@@ -22,7 +22,7 @@ const ThrowError: React.FC<{ shouldThrow?: boolean }> = ({ shouldThrow = true })
 
 const TestApp: React.FC<{ hasError?: boolean }> = ({ hasError = false }) => {
   return (
-    <ChakraProvider value={system}>
+    <ChakraProvider value={defaultSystem}>
       <ErrorBoundary showErrorDetails={true}>
         <MemoryRouter>
           <div>
@@ -98,7 +98,7 @@ describe('ErrorBoundary Integration', () => {
   it('integrates properly with routing context', () => {
     // Test that ErrorBoundary works even when routing components are involved
     const AppWithRouting: React.FC<{ hasError?: boolean }> = ({ hasError = false }) => (
-      <ChakraProvider value={system}>
+      <ChakraProvider value={defaultSystem}>
         <ErrorBoundary showErrorDetails={false}>
           <MemoryRouter initialEntries={['/test-route']}>
             <div>
@@ -123,7 +123,7 @@ describe('ErrorBoundary Integration', () => {
   it('handles environment-based showErrorDetails prop correctly', () => {
     // Test with showErrorDetails disabled (production-like)
     const ProductionApp: React.FC = () => (
-      <ChakraProvider value={system}>
+      <ChakraProvider value={defaultSystem}>
         <ErrorBoundary showErrorDetails={false}>
           <ThrowError shouldThrow={true} />
         </ErrorBoundary>

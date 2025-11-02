@@ -1,17 +1,23 @@
 "use client";
 
 import * as React from "react";
+import { ChakraProvider } from "@chakra-ui/react";
 import type { ThemeName } from "@/theme";
+import { createThemeSystem, getTheme, defaultSystem } from "@/theme";
 import { ThemeContext, STORAGE_KEY, getInitialTheme } from "@/hooks/useThemeSelect";
 
 /**
  * Theme Selection Provider
  *
  * Manages theme selection (github, ibm-carbon, etc.) with localStorage persistence.
- * Separate from color mode (light/dark) which is managed by next-themes.
+ * Dynamically creates Chakra UI system when theme changes.
  *
- * This provider manages the `data-theme` attribute on the document root,
- * enabling dynamic theme switching via Chakra UI conditions.
+ * Uses provider-based theme switching pattern (Crema article approach):
+ * - When user selects a theme, we create a new Chakra system with those colors
+ * - ChakraProvider re-renders with the new system
+ * - No CSS selectors or data-theme attributes needed
+ *
+ * Separate from color mode (light/dark) which is managed by Chakra's color-mode system.
  *
  * Usage:
  * ```tsx
@@ -22,17 +28,39 @@ import { ThemeContext, STORAGE_KEY, getInitialTheme } from "@/hooks/useThemeSele
  * ```
  */
 export function ThemeSelectProvider({ children }: { children: React.ReactNode }) {
-	const [theme, setThemeState] = React.useState<ThemeName>(getInitialTheme);
+	const [themeName, setThemeNameState] = React.useState<ThemeName>(getInitialTheme);
+	const [system, setSystem] = React.useState(defaultSystem);
 
-	// Update data-theme attribute when theme changes
-	React.useEffect(() => {
+	// When theme changes, create new system and update localStorage
+	const setTheme = React.useCallback((newThemeName: ThemeName) => {
+		setThemeNameState(newThemeName);
+		const theme = getTheme(newThemeName);
+		const newSystem = createThemeSystem(theme);
+		setSystem(newSystem);
+
 		if (typeof window !== "undefined") {
-			document.documentElement.setAttribute("data-theme", theme);
-			localStorage.setItem(STORAGE_KEY, theme);
+			localStorage.setItem(STORAGE_KEY, newThemeName);
 		}
-	}, [theme]);
+	}, []);
 
-	const value = React.useMemo(() => ({ theme, setTheme: setThemeState }), [theme]);
+	// Initialize system from saved theme on mount
+	React.useEffect(() => {
+		const savedTheme = getInitialTheme();
+		if (savedTheme !== themeName) {
+			setTheme(savedTheme);
+		}
+	}, []); // Only run once on mount
 
-	return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
+	const contextValue = React.useMemo(
+		() => ({ theme: themeName, setTheme }),
+		[themeName, setTheme]
+	);
+
+	return (
+		<ThemeContext.Provider value={contextValue}>
+			<ChakraProvider value={system}>
+				{children}
+			</ChakraProvider>
+		</ThemeContext.Provider>
+	);
 }

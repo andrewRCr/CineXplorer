@@ -1,13 +1,13 @@
 /**
  * Chakra UI Theme Configuration
  *
- * Implements shadcn/ui-style semantic tokens with Chakra UI v3 conditional color mode support.
- * Uses `_light` and `_dark` properties for automatic light/dark mode switching.
+ * Implements provider-based theme switching with semantic tokens.
+ * Uses Chakra UI v3's `_dark` property for automatic light/dark mode switching.
  *
  * Theme system architecture:
- * - Palettes: Raw color values (hex) for light + dark modes
- * - Definitions: Semantic token mappings (background, foreground, primary, etc.)
- * - This file: Chakra UI integration with all available themes
+ * - Semantic tokens contain raw RGB values directly (no intermediate palette)
+ * - Light/dark mode handled by `default` and `_dark` properties
+ * - Provider recreates system when theme changes
  */
 
 import { createSystem, defaultConfig, defineConfig } from "@chakra-ui/react";
@@ -20,7 +20,7 @@ import { tangereTerminalTheme } from "./definitions/tangere-terminal";
 import { sageBoneTheme } from "./definitions/sage-bone";
 import { stoneGreigeTheme } from "./definitions/stone-greige";
 import { mutedEarthTheme } from "./definitions/muted-earth";
-import type { Theme } from "./types";
+import type { Theme, ThemeColors } from "./types";
 
 /**
  * Theme Registry
@@ -57,80 +57,37 @@ export function getTheme(name: string): Theme {
 }
 
 /**
- * Auto-generate theme conditions from registry.
+ * Create semantic tokens with raw color values.
  *
- * Creates Chakra UI conditions for each theme in the registry.
- * Example: `githubTheme: '[data-theme="github"] &'`
- *
- * These conditions allow semantic tokens to respond to the `data-theme` attribute.
+ * No intermediate palette - just put RGB values directly in semantic tokens.
+ * This is simpler and avoids circular reference issues.
  */
-function generateThemeConditions() {
-	const conditions: Record<string, string> = {};
-
-	for (const themeName of Object.keys(themeRegistry)) {
-		// Convert kebab-case to camelCase and append "Theme"
-		// Example: "ibm-carbon" → "ibmCarbonTheme"
-		const conditionName = themeName.replace(/-([a-z])/g, (g) => g[1].toUpperCase()) + "Theme";
-		conditions[conditionName] = `[data-theme="${themeName}"] &`;
-	}
-
-	return conditions;
-}
-
-/**
- * Programmatically generate semantic tokens from all themes in registry.
- *
- * For each semantic token (background, foreground, primary, etc.):
- * - Creates a condition for each theme with light and dark variants
- * - Example structure:
- *   ```
- *   background: {
- *     value: {
- *       _githubTheme: { base: "rgb(255 255 255)", _dark: "rgb(13 17 23)" },
- *       _ibmCarbonTheme: { base: "rgb(244 244 244)", _dark: "rgb(22 22 22)" },
- *       ...
- *     }
- *   }
- *   ```
- *
- * This enables "just add a file" workflow: new themes auto-generate without config changes.
- */
-function generateSemanticTokens() {
-	// Get all semantic token keys from first theme (all themes have same structure)
-	const tokenKeys = Object.keys(githubTheme.light) as Array<
-		keyof typeof githubTheme.light
-	>;
+function createSemanticTokens(theme: Theme) {
+	const tokenKeys = Object.keys(theme.light) as Array<keyof ThemeColors>;
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const colors: Record<string, any> = {};
 
-	// For each semantic token...
 	for (const tokenKey of tokenKeys) {
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const value: Record<string, any> = {};
-
-		// For each theme in registry...
-		for (const [themeName, theme] of Object.entries(themeRegistry)) {
-			// Generate condition name (same logic as generateThemeConditions)
-			const conditionName = "_" + themeName.replace(/-([a-z])/g, (g) => g[1].toUpperCase()) + "Theme";
-
-			// Add theme-specific light and dark values
-			value[conditionName] = {
-				base: `rgb(${theme.light[tokenKey]})`,
-				_dark: `rgb(${theme.dark[tokenKey]})`,
-			};
-		}
-
-		colors[tokenKey] = { value };
+		// Wrap RGB values in rgb() function for valid CSS
+		colors[tokenKey] = {
+			value: {
+				base: `rgb(${theme.light[tokenKey]})`,   // "rgb(255 255 255)" - use 'base' not 'default'
+				_dark: `rgb(${theme.dark[tokenKey]})`,   // "rgb(13 17 23)"
+			},
+		};
 	}
 
 	return { colors };
 }
 
-const config = defineConfig({
-	// Auto-generated theme conditions
-	conditions: generateThemeConditions(),
-
+/**
+ * Base theme configuration (fonts, global styles, etc.)
+ *
+ * This is the foundation config that all themes extend.
+ * Colors are NOT included here - they come from the active theme.
+ */
+const baseConfig = defineConfig({
 	theme: {
 		tokens: {
 			fonts: {
@@ -151,13 +108,7 @@ const config = defineConfig({
 				},
 			},
 		},
-		// Auto-generated semantic tokens for all themes
-		semanticTokens: generateSemanticTokens(),
 	},
-});
-
-export const system = createSystem(defaultConfig, {
-	...config,
 	globalCss: {
 		body: {
 			bg: "background",
@@ -165,6 +116,37 @@ export const system = createSystem(defaultConfig, {
 		},
 	},
 });
+
+/**
+ * Create a Chakra UI system for a specific theme.
+ *
+ * This is the key function that enables dynamic theme switching.
+ * It creates a complete system with semantic tokens from the theme.
+ *
+ * When the user switches themes, we call this function with the new theme
+ * and pass the resulting system to ChakraProvider.
+ *
+ * @param theme - Theme definition with light/dark color palettes
+ * @returns Chakra UI system configured for the theme
+ */
+export function createThemeSystem(theme: Theme) {
+	// Create theme-specific config with semantic tokens
+	const themeConfig = defineConfig({
+		theme: {
+			semanticTokens: createSemanticTokens(theme),
+		},
+	});
+
+	// Merge base config + theme config + Chakra defaults
+	// Order matters: later configs override earlier ones
+	return createSystem(defaultConfig, baseConfig, themeConfig);
+}
+
+/**
+ * Default system using GitHub theme.
+ * Used as initial system before user preferences load.
+ */
+export const defaultSystem = createThemeSystem(githubTheme);
 
 // Re-export types for external use
 export type { Theme, ThemeColors } from "./types";

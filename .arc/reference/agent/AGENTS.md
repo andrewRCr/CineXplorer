@@ -1,6 +1,6 @@
 # CineXplorer - AI Agent Reference Card
 
-**Version:** 2025-10-19 | **Maintained by:** Andrew | **Source of truth:** `.arc/reference/`
+**Version:** 2025-11-2 | **Source of truth:** `.arc/reference/`
 
 ## Project Overview
 
@@ -15,7 +15,7 @@ demonstrating disciplined software engineering practices, comprehensive testing,
 **Technology Stack:**
 
 - **Backend**: Django 5.2 + Django Ninja (API framework), Python 3.13
-- **Frontend**: React 19 + TypeScript, Vite dev server
+- **Frontend**: React 19 + TypeScript, Vite dev server, Chakra UI v3 (component library)
 - **Database**: PostgreSQL 17
 - **Infrastructure**: Docker Compose + Caddy reverse proxy
 - **External Services**: TMDB API (movie data), ZeptoMail (transactional emails), OAuth (Google/GitHub)

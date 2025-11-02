@@ -1,5 +1,5 @@
 import { ROUTES } from "@/constants/routes";
-import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import "./App.css";
 
@@ -12,6 +12,7 @@ import ProtectedRoute from "./components/auth/ProtectedRoute";
 import ErrorBoundary from "./components/ErrorBoundary";
 
 // Lazy load page components
+const Featured = lazy(() => import("./pages/Featured"));
 const NowPlaying = lazy(() => import("./pages/movie/NowPlaying"));
 const Login = lazy(() => import("./pages/user/Login"));
 const TestLogin = lazy(() => import("./pages/user/TestLogin"));
@@ -62,8 +63,8 @@ const App: React.FC = () => {
 
 						{/* Content routes - full app layout */}
 						<Route element={<AppLayout />}>
-							{/* Redirect home to Popular movies */}
-							<Route path={ROUTES.HOME} element={<Navigate to={ROUTES.POPULAR} replace />} />
+							{/* Home page - Featured landing */}
+							<Route path={ROUTES.HOME} element={<Featured />} />
 							<Route path={ROUTES.PROFILE} element={<Profile />} />
 							<Route path={ROUTES.WATCHLIST} element={<Watchlist />} />
 							<Route path={ROUTES.SETTINGS} element={<Settings />} />

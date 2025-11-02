@@ -1,5 +1,7 @@
 import tmdbLogo from "../../assets/tmdb_logo_alt_short.svg";
-import { Box, Text, VStack } from "@chakra-ui/react";
+import { Box, HStack, Text, VStack } from "@chakra-ui/react";
+import { ColorModeButton } from "../chakra/color-mode";
+import { ThemeSelector } from "../ThemeSelector";
 
 const Footer = () => {
 	return (
@@ -11,16 +13,25 @@ const Footer = () => {
 			textAlign="center"
 			borderTop="1px solid"
 			borderColor="border.separator"
-			aria-label="Application footer with TMDB attribution"
+			aria-label="Application footer with TMDB attribution and theme controls"
 			position="relative"
 			zIndex={6} // Above sidebar (zIndex 5) and shadow (zIndex 4)
 		>
 			<VStack gap={1} alignItems="center">
+				{/* Theme Controls Row */}
+				<HStack gap={2} justifyContent="center">
+					<ThemeSelector />
+					<ColorModeButton />
+				</HStack>
+
+				{/* Copyright Row */}
 				<Box display="inline-flex" alignItems="center" gap={2}>
 					<Text fontSize="sm" color="text.muted" fontWeight="light">
 						© 2025 CineXplorer. All rights reserved.
 					</Text>
 				</Box>
+
+				{/* TMDB Attribution Row */}
 				<Box display="inline-flex" alignItems="center" gap={2}>
 					<a
 						href="https://www.themoviedb.org/documentation/api"

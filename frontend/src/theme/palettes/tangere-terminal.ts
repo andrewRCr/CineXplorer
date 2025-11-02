@@ -88,6 +88,14 @@ export const tangerePaletteLight = {
 	/** Info state - blue (color 4) */
 	fg_info: "#223355",
 
+	// ===================================================================
+	// EXTENDED COLORS (CineXplorer Extensions)
+	// ===================================================================
+
+	// Movie-specific - Rating
+	/** Rating display - golden brown (adapted from color 3) */
+	fg_rating: "#805619",
+
 	// Special content colors
 	/** Strings, special content - dark yellow (color 11) */
 	fg_string: "#40290a",
@@ -163,6 +171,14 @@ export const tangerePaletteDark = {
 	fg_warning: "#e0ba70",
 	/** Info state - light blue (color 4) */
 	fg_info: "#8fb4cd",
+
+	// ===================================================================
+	// EXTENDED COLORS (CineXplorer Extensions)
+	// ===================================================================
+
+	// Movie-specific - Rating
+	/** Rating display - golden yellow (uses color 3 for consistency) */
+	fg_rating: "#e0ba70",
 
 	// Special content colors
 	/** Strings, special content - bright yellow (color 11) */

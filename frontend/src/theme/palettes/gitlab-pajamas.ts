@@ -70,11 +70,19 @@ export const gitlabPajamasPaletteLight = {
 	/** Interactive button active (blue-600) */
 	bg_accent_active: "#2f68b4",
 
-	// Additional status colors
-	/** Warning state (orange-600) - GitLab's distinctive orange */
+	// Additional status colors (OFFICIAL GitLab Pajamas)
+	/** Warning state (orange-600) - OFFICIAL GitLab color (distinctive orange) */
 	fg_warning: "#995715",
-	/** Info state (blue-500) */
+	/** Info state (blue-500) - OFFICIAL GitLab color */
 	fg_info: "#1f75cb",
+
+	// ===================================================================
+	// EXTENDED COLORS (Adapted for CineXplorer - Not Official Pajamas)
+	// ===================================================================
+
+	// Movie-specific - Rating
+	/** Rating display (ADAPTED - IMDb gold adapted for GitLab's clean aesthetic) */
+	fg_rating: "#c17d10",
 
 	// Special surfaces
 	/** Strong text/headings (neutral-950) */
@@ -142,11 +150,19 @@ export const gitlabPajamasPaletteDark = {
 	/** Interactive button active (blue-400) */
 	bg_accent_active: "#428fdc",
 
-	// Additional status colors
-	/** Warning state (orange-300) - lighter for dark bg */
+	// Additional status colors (OFFICIAL GitLab Pajamas)
+	/** Warning state (orange-300) - OFFICIAL GitLab color (lighter for dark bg) */
 	fg_warning: "#d99530",
-	/** Info state (blue-300) */
+	/** Info state (blue-300) - OFFICIAL GitLab color */
 	fg_info: "#63a6e9",
+
+	// ===================================================================
+	// EXTENDED COLORS (Adapted for CineXplorer - Not Official Pajamas)
+	// ===================================================================
+
+	// Movie-specific - Rating
+	/** Rating display (ADAPTED - IMDb gold adjusted for dark mode) */
+	fg_rating: "#f5c518",
 
 	// Special surfaces
 	/** Strong text/headings (neutral-0) */

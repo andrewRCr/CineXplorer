@@ -84,6 +84,33 @@ export const ibmCarbonTheme: Theme = {
 		destructive: hexToRgb(pLight.bg_danger), // Red
 		"destructive-foreground": hexToRgb(pLight.fg_onEmphasis), // White text
 
+		// Status colors - Success (positive outcomes)
+		success: hexToRgb(pLight.bg_success), // Green
+		"success-foreground": hexToRgb(pLight.fg_onEmphasis), // White text
+
+		// Status colors - Warning (caution/attention)
+		warning: hexToRgb(pLight.fg_warning), // IBM yellow (support-03)
+		"warning-foreground": hexToRgb(pLight.fg_default), // Near black text
+
+		// Status colors - Info (informational)
+		info: hexToRgb(pLight.fg_info), // Dark blue (support-04)
+		"info-foreground": hexToRgb(pLight.fg_onEmphasis), // White text
+
+		// Rating colors (movie-specific)
+		rating: hexToRgb(pLight.fg_rating), // Professional gold
+		"rating-foreground": hexToRgb(pLight.fg_default), // Near black text
+
+		// Surface elevation (featured sections, modals)
+		"surface-elevated": hexToRgb(pLight.bg_emphasis), // Gray emphasis (3rd layer)
+
+		// Badge colors (neutral tags)
+		badge: hexToRgb(pLight.bg_muted), // Light gray (layer-01)
+		"badge-foreground": hexToRgb(pLight.fg_muted), // Medium gray text
+
+		// Interactive states - Drag and drop
+		"drag-active": hexToRgb(pLight.bg_accent_active), // Darker blue (active state)
+		"drop-zone": hexToRgb(pLight.bg_emphasis), // Gray emphasis
+
 		// UI element colors
 		border: hexToRgb(pLight.border_default), // Medium gray
 		input: hexToRgb(pLight.bg_muted), // Light gray background
@@ -123,6 +150,33 @@ export const ibmCarbonTheme: Theme = {
 		// Destructive colors (delete, remove, etc.)
 		destructive: hexToRgb(pDark.bg_danger), // Lighter red for dark bg
 		"destructive-foreground": hexToRgb(pDark.fg_onEmphasis), // Near black text
+
+		// Status colors - Success (positive outcomes)
+		success: hexToRgb(pDark.bg_success), // Brighter green for dark bg
+		"success-foreground": hexToRgb(pDark.fg_onEmphasis), // Near black text
+
+		// Status colors - Warning (caution/attention)
+		warning: hexToRgb(pDark.fg_warning), // IBM yellow (same in dark)
+		"warning-foreground": hexToRgb(pDark.fg_onEmphasis), // Near black text
+
+		// Status colors - Info (informational)
+		info: hexToRgb(pDark.fg_info), // Lighter blue (support-04 dark)
+		"info-foreground": hexToRgb(pDark.fg_onEmphasis), // Near black text
+
+		// Rating colors (movie-specific)
+		rating: hexToRgb(pDark.fg_rating), // Bright gold for dark mode
+		"rating-foreground": hexToRgb(pDark.fg_onEmphasis), // Near black text
+
+		// Surface elevation (featured sections, modals)
+		"surface-elevated": hexToRgb(pDark.bg_emphasis), // Gray-80 (3rd layer, lighter than card)
+
+		// Badge colors (neutral tags)
+		badge: hexToRgb(pDark.bg_button_secondary), // Medium gray
+		"badge-foreground": hexToRgb(pDark.fg_muted), // Light gray text
+
+		// Interactive states - Drag and drop
+		"drag-active": hexToRgb(pDark.bg_accent_active), // Darker blue (active state)
+		"drop-zone": hexToRgb(pDark.bg_emphasis), // Gray-80 emphasis
 
 		// UI element colors
 		border: hexToRgb(pDark.border_default), // Dark gray

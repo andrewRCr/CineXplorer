@@ -83,6 +83,33 @@ export const githubTheme: Theme = {
 		destructive: hexToRgb(pLight.bg_danger), // Red
 		"destructive-foreground": hexToRgb(pLight.fg_onEmphasis), // White text
 
+		// Status colors - Success (positive outcomes)
+		success: hexToRgb(pLight.bg_success), // Green
+		"success-foreground": hexToRgb(pLight.fg_onEmphasis), // White text
+
+		// Status colors - Warning (caution/attention)
+		warning: hexToRgb(pLight.bg_attention), // Gold/yellow
+		"warning-foreground": hexToRgb(pLight.fg_attention), // Dark brown text
+
+		// Status colors - Info (informational)
+		info: hexToRgb(pLight.bg_info), // Blue
+		"info-foreground": hexToRgb(pLight.fg_onEmphasis), // White text
+
+		// Rating colors (movie-specific)
+		rating: hexToRgb(pLight.fg_rating), // IMDb gold adapted
+		"rating-foreground": hexToRgb(pLight.fg_onEmphasis), // White text
+
+		// Surface elevation (featured sections, modals)
+		"surface-elevated": hexToRgb(pLight.bg_emphasis), // Light blue emphasis
+
+		// Badge colors (neutral tags)
+		badge: hexToRgb(pLight.bg_muted), // Light gray
+		"badge-foreground": hexToRgb(pLight.fg_muted), // Medium gray text
+
+		// Interactive states - Drag and drop
+		"drag-active": hexToRgb(pLight.bg_button_secondary_hover), // Darker gray (active)
+		"drop-zone": hexToRgb(pLight.bg_emphasis), // Light blue (success tint)
+
 		// UI element colors
 		border: hexToRgb(pLight.border_default), // Medium gray
 		input: hexToRgb(pLight.bg_default), // White background
@@ -121,6 +148,33 @@ export const githubTheme: Theme = {
 		// Destructive colors (delete, remove, etc.)
 		destructive: hexToRgb(pDark.bg_danger), // Red
 		"destructive-foreground": hexToRgb(pDark.fg_onEmphasis), // Near black text
+
+		// Status colors - Success (positive outcomes)
+		success: hexToRgb(pDark.bg_success), // Green
+		"success-foreground": hexToRgb(pDark.fg_onEmphasis), // Near black text
+
+		// Status colors - Warning (caution/attention)
+		warning: hexToRgb(pDark.bg_attention), // Gold/brown
+		"warning-foreground": hexToRgb(pDark.fg_attention), // Light yellow text
+
+		// Status colors - Info (informational)
+		info: hexToRgb(pDark.bg_info), // Blue
+		"info-foreground": hexToRgb(pDark.fg_onEmphasis), // Near black text
+
+		// Rating colors (movie-specific)
+		rating: hexToRgb(pDark.fg_rating), // Brighter gold for dark mode
+		"rating-foreground": hexToRgb(pDark.fg_onEmphasis), // Near black text
+
+		// Surface elevation (featured sections, modals)
+		"surface-elevated": hexToRgb(pDark.bg_muted), // Lighter than card (tonal progression)
+
+		// Badge colors (neutral tags)
+		badge: hexToRgb(pDark.bg_button_secondary), // Dark gray
+		"badge-foreground": hexToRgb(pDark.fg_muted), // Medium gray text
+
+		// Interactive states - Drag and drop
+		"drag-active": hexToRgb(pDark.bg_button_secondary_hover), // Lighter gray (active)
+		"drop-zone": hexToRgb(pDark.bg_emphasis), // Blue (accent tint)
 
 		// UI element colors
 		border: hexToRgb(pDark.border_default), // Dark gray

@@ -74,6 +74,14 @@ export const mutedEarthPaletteLight = {
 	fg_warning: "#D97706",
 	/** Info state - uses terracotta */
 	fg_info: "#B95C50",
+
+	// ===================================================================
+	// EXTENDED COLORS (CineXplorer Extensions)
+	// ===================================================================
+
+	// Movie-specific - Rating
+	/** Rating display - warm golden tone (reuses warning amber) */
+	fg_rating: "#D97706",
 } as const;
 
 /**
@@ -142,6 +150,14 @@ export const mutedEarthPaletteDark = {
 	fg_warning: "#F59E0B",
 	/** Info state - uses terracotta */
 	fg_info: "#B95C50",
+
+	// ===================================================================
+	// EXTENDED COLORS (CineXplorer Extensions)
+	// ===================================================================
+
+	// Movie-specific - Rating
+	/** Rating display - warm golden tone (reuses warning amber for dark) */
+	fg_rating: "#F59E0B",
 } as const;
 
 /**

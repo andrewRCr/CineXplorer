@@ -84,6 +84,33 @@ export const gitlabPajamasTheme: Theme = {
 		destructive: hexToRgb(pLight.bg_danger), // Red-600
 		"destructive-foreground": hexToRgb(pLight.fg_onEmphasis), // White text
 
+		// Status colors - Success (positive outcomes)
+		success: hexToRgb(pLight.bg_success), // Green-500
+		"success-foreground": hexToRgb(pLight.fg_onEmphasis), // White text
+
+		// Status colors - Warning (caution/attention)
+		warning: hexToRgb(pLight.fg_warning), // Orange-600 (GitLab official)
+		"warning-foreground": hexToRgb(pLight.fg_onEmphasis), // White text
+
+		// Status colors - Info (informational)
+		info: hexToRgb(pLight.fg_info), // Blue-500 (GitLab official)
+		"info-foreground": hexToRgb(pLight.fg_onEmphasis), // White text
+
+		// Rating colors (movie-specific)
+		rating: hexToRgb(pLight.fg_rating), // Gold adapted for GitLab
+		"rating-foreground": hexToRgb(pLight.fg_default), // Dark text
+
+		// Surface elevation (featured sections, modals)
+		"surface-elevated": hexToRgb(pLight.bg_emphasis), // Neutral-50 (3rd layer)
+
+		// Badge colors (neutral tags)
+		badge: hexToRgb(pLight.bg_muted), // Neutral-10
+		"badge-foreground": hexToRgb(pLight.fg_muted), // Neutral-600
+
+		// Interactive states - Drag and drop
+		"drag-active": hexToRgb(pLight.bg_accent_active), // Blue-600 (active state)
+		"drop-zone": hexToRgb(pLight.bg_emphasis), // Neutral-50 (subtle emphasis)
+
 		// UI element colors
 		border: hexToRgb(pLight.border_default), // Medium gray
 		input: hexToRgb(pLight.bg_default), // White background
@@ -122,6 +149,33 @@ export const gitlabPajamasTheme: Theme = {
 		// Destructive colors (delete, remove, etc.)
 		destructive: hexToRgb(pDark.bg_danger), // Red-400 (lighter for dark)
 		"destructive-foreground": hexToRgb(pDark.fg_onEmphasis), // Near black text
+
+		// Status colors - Success (positive outcomes)
+		success: hexToRgb(pDark.bg_success), // Green-300 (lighter for dark)
+		"success-foreground": hexToRgb(pDark.fg_onEmphasis), // Near black text
+
+		// Status colors - Warning (caution/attention)
+		warning: hexToRgb(pDark.fg_warning), // Orange-300 (GitLab official)
+		"warning-foreground": hexToRgb(pDark.fg_onEmphasis), // Near black text
+
+		// Status colors - Info (informational)
+		info: hexToRgb(pDark.fg_info), // Blue-300 (GitLab official)
+		"info-foreground": hexToRgb(pDark.fg_onEmphasis), // Near black text
+
+		// Rating colors (movie-specific)
+		rating: hexToRgb(pDark.fg_rating), // Bright gold for dark mode
+		"rating-foreground": hexToRgb(pDark.fg_onEmphasis), // Near black text
+
+		// Surface elevation (featured sections, modals)
+		"surface-elevated": hexToRgb(pDark.bg_emphasis), // Neutral-800 (3rd layer, lighter than card)
+
+		// Badge colors (neutral tags)
+		badge: hexToRgb(pDark.bg_button_secondary), // Neutral-900
+		"badge-foreground": hexToRgb(pDark.fg_muted), // Neutral-200
+
+		// Interactive states - Drag and drop
+		"drag-active": hexToRgb(pDark.bg_accent_active), // Blue-400 (active state)
+		"drop-zone": hexToRgb(pDark.bg_emphasis), // Neutral-800 (subtle emphasis)
 
 		// UI element colors
 		border: hexToRgb(pDark.border_default), // Neutral-700

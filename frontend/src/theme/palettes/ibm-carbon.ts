@@ -69,11 +69,19 @@ export const ibmCarbonPaletteLight = {
 	/** Primary active state (active-primary, blue-80) */
 	bg_accent_active: "#002d9c",
 
-	// Additional status colors
-	/** Warning state (support-03) */
+	// Additional status colors (OFFICIAL Carbon)
+	/** Warning state (support-03) - OFFICIAL Carbon color */
 	fg_warning: "#f1c21b",
-	/** Info state (support-04) */
+	/** Info state (support-04) - OFFICIAL Carbon color */
 	fg_info: "#0043ce",
+
+	// ===================================================================
+	// EXTENDED COLORS (Adapted for CineXplorer - Not Official Carbon)
+	// ===================================================================
+
+	// Movie-specific - Rating
+	/** Rating display (ADAPTED - IMDb gold adjusted for Carbon's professional aesthetic) */
+	fg_rating: "#d4a518",
 } as const;
 
 /**
@@ -137,11 +145,19 @@ export const ibmCarbonPaletteDark = {
 	/** Primary active state (active-primary, blue-80) */
 	bg_accent_active: "#002d9c",
 
-	// Additional status colors
-	/** Warning state (support-03) - same yellow works in dark */
+	// Additional status colors (OFFICIAL Carbon)
+	/** Warning state (support-03) - OFFICIAL Carbon color (same in dark) */
 	fg_warning: "#f1c21b",
-	/** Info state (support-04, blue-50) - lighter blue */
+	/** Info state (support-04, blue-50) - OFFICIAL Carbon color (lighter blue for dark) */
 	fg_info: "#4589ff",
+
+	// ===================================================================
+	// EXTENDED COLORS (Adapted for CineXplorer - Not Official Carbon)
+	// ===================================================================
+
+	// Movie-specific - Rating
+	/** Rating display (ADAPTED - reuses Carbon yellow for consistency in dark mode) */
+	fg_rating: "#f1c21b",
 } as const;
 
 /**

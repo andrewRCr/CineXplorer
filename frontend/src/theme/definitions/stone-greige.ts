@@ -82,7 +82,33 @@ export const stoneGreigeTheme: Theme = {
 
 		// Destructive colors (delete, remove, etc.)
 		destructive: hexToRgb(pLight.bg_danger), // Muted red
-		"destructive-foreground": hexToRgb(pLight.fg_onEmphasis), // White
+		"destructive-foreground": hexToRgb(pLight.fg_onEmphasis),
+		// Status colors - Success (positive outcomes)
+		success: hexToRgb(pLight.bg_success),
+		"success-foreground": hexToRgb(pLight.fg_onEmphasis),
+
+		// Status colors - Warning (caution/attention)
+		warning: hexToRgb(pLight.fg_warning),
+		"warning-foreground": hexToRgb(pLight.fg_onEmphasis),
+
+		// Status colors - Info (informational)
+		info: hexToRgb(pLight.fg_info),
+		"info-foreground": hexToRgb(pLight.fg_onEmphasis),
+
+		// Rating colors (movie-specific)
+		rating: hexToRgb(pLight.fg_rating),
+		"rating-foreground": hexToRgb(pLight.fg_onEmphasis),
+
+		// Surface elevation (featured sections, modals)
+		"surface-elevated": hexToRgb(pLight.bg_emphasis),
+
+		// Badge colors (neutral tags)
+		badge: hexToRgb(pLight.bg_muted),
+		"badge-foreground": hexToRgb(pLight.fg_muted),
+
+		// Interactive states - Drag and drop
+		"drag-active": hexToRgb(pLight.bg_accent_active),
+		"drop-zone": hexToRgb(pLight.bg_emphasis),
 
 		// UI element colors
 		border: hexToRgb(pLight.border_default), // Light stone gray
@@ -122,6 +148,33 @@ export const stoneGreigeTheme: Theme = {
 		// Destructive colors (delete, remove, etc.)
 		destructive: hexToRgb(pDark.bg_danger), // Lighter red for dark bg
 		"destructive-foreground": hexToRgb(pDark.fg_onEmphasis), // Dark brown
+
+		// Status colors - Success (positive outcomes)
+		success: hexToRgb(pDark.bg_success),
+		"success-foreground": hexToRgb(pDark.fg_onEmphasis),
+
+		// Status colors - Warning (caution/attention)
+		warning: hexToRgb(pDark.fg_warning),
+		"warning-foreground": hexToRgb(pDark.fg_onEmphasis),
+
+		// Status colors - Info (informational)
+		info: hexToRgb(pDark.fg_info),
+		"info-foreground": hexToRgb(pDark.fg_onEmphasis),
+
+		// Rating colors (movie-specific)
+		rating: hexToRgb(pDark.fg_rating),
+		"rating-foreground": hexToRgb(pDark.fg_onEmphasis),
+
+		// Surface elevation (featured sections, modals)
+		"surface-elevated": hexToRgb(pDark.bg_emphasis),
+
+		// Badge colors (neutral tags)
+		badge: hexToRgb(pDark.bg_button_secondary),
+		"badge-foreground": hexToRgb(pDark.fg_muted),
+
+		// Interactive states - Drag and drop
+		"drag-active": hexToRgb(pDark.bg_accent_active),
+		"drop-zone": hexToRgb(pDark.bg_emphasis),
 
 		// UI element colors
 		border: hexToRgb(pDark.border_default), // Dark warm gray

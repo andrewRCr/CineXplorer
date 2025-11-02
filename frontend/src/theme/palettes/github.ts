@@ -51,6 +51,29 @@ export const githubPaletteLight = {
 	/** Danger button hover */
 	bg_danger_hover: "#ca1e29",
 
+	// ===================================================================
+	// EXTENDED COLORS (Adapted for CineXplorer - Not Official Primer)
+	// ===================================================================
+	// The colors below are CineXplorer adaptations to fill semantic token
+	// requirements. They follow Primer's design principles but are not
+	// official Primer colors. Based on Primer's color scales and patterns.
+
+	// Semantic colors - Warning (Attention/caution)
+	/** Warning/attention background (ADAPTED - based on Primer yellow scale) */
+	bg_attention: "#d4a72c",
+	/** Warning text on light background (ADAPTED - based on Primer yellow-9) */
+	fg_attention: "#744500",
+
+	// Semantic colors - Info (Informational)
+	/** Info/informational background (ADAPTED - uses Primer blue-60) */
+	bg_info: "#0969da",
+	/** Info text (ADAPTED - uses Primer blue-60) */
+	fg_info: "#0969da",
+
+	// Movie-specific - Rating
+	/** Rating display (ADAPTED - IMDb gold adapted to Primer's aesthetic) */
+	fg_rating: "#bf8700",
+
 	// Border colors
 	/** Primary borders, dividers */
 	border_default: "#d1d9e0",
@@ -106,6 +129,29 @@ export const githubPaletteDark = {
 	bg_danger: "#da3633",
 	/** Danger button hover */
 	bg_danger_hover: "#e5534b",
+
+	// ===================================================================
+	// EXTENDED COLORS (Adapted for CineXplorer - Not Official Primer)
+	// ===================================================================
+	// The colors below are CineXplorer adaptations to fill semantic token
+	// requirements. They follow Primer's design principles but are not
+	// official Primer colors. Based on Primer's color scales and patterns.
+
+	// Semantic colors - Warning (Attention/caution)
+	/** Warning/attention background (ADAPTED - based on Primer yellow scale) */
+	bg_attention: "#bb8009",
+	/** Warning text on dark background (ADAPTED - based on Primer yellow-3) */
+	fg_attention: "#e3b341",
+
+	// Semantic colors - Info (Informational)
+	/** Info/informational background (ADAPTED - uses Primer blue-60) */
+	bg_info: "#0969da",
+	/** Info text (ADAPTED - uses Primer blue-40 for dark bg) */
+	fg_info: "#58a6ff",
+
+	// Movie-specific - Rating
+	/** Rating display (ADAPTED - IMDb gold #ffc107 for dark mode contrast) */
+	fg_rating: "#ffc107",
 
 	// Border colors
 	/** Primary borders, dividers */

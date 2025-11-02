@@ -22,7 +22,7 @@
 		"validate-generated-types": "tsc --noEmit src/types/api.ts"
 	},
 	"dependencies": {
-		"@chakra-ui/react": "^3.22.0",
+		"@chakra-ui/react": "^3.28.0",
 		"@chakra-ui/tag": "^3.1.1",
 		"@emotion/react": "^11.14.0",
 		"@types/lodash": "^4.17.20",

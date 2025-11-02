@@ -1,58 +1,138 @@
+/**
+ * Chakra UI Theme Configuration
+ *
+ * Implements shadcn/ui-style semantic tokens with Chakra UI v3 conditional color mode support.
+ * Uses `_light` and `_dark` properties for automatic light/dark mode switching.
+ *
+ * Theme system architecture:
+ * - Palettes: Raw color values (hex) for light + dark modes
+ * - Definitions: Semantic token mappings (background, foreground, primary, etc.)
+ * - This file: Chakra UI integration with all available themes
+ */
+
 import { createSystem, defaultConfig, defineConfig } from "@chakra-ui/react";
 
+// Import all theme definitions
+import { githubTheme } from "./definitions/github";
+import { ibmCarbonTheme } from "./definitions/ibm-carbon";
+import { gitlabPajamasTheme } from "./definitions/gitlab-pajamas";
+import { tangereTerminalTheme } from "./definitions/tangere-terminal";
+import { sageBoneTheme } from "./definitions/sage-bone";
+import { stoneGreigeTheme } from "./definitions/stone-greige";
+import { mutedEarthTheme } from "./definitions/muted-earth";
+import type { Theme } from "./types";
+
+/**
+ * Theme Registry
+ *
+ * Maps theme names (kebab-case) to theme definitions.
+ * Used by theme selector component for available themes.
+ */
+export const themeRegistry = {
+	github: githubTheme,
+	"ibm-carbon": ibmCarbonTheme,
+	"gitlab-pajamas": gitlabPajamasTheme,
+	"tangere-terminal": tangereTerminalTheme,
+	"sage-bone": sageBoneTheme,
+	"stone-greige": stoneGreigeTheme,
+	"muted-earth": mutedEarthTheme,
+} as const;
+
+/**
+ * Default theme name.
+ * Used on first visit or if saved preference is invalid.
+ */
+export const defaultThemeName = "github";
+
+/**
+ * Type-safe theme names for validation.
+ */
+export type ThemeName = keyof typeof themeRegistry;
+
+/**
+ * Get theme by name with fallback to default.
+ */
+export function getTheme(name: string): Theme {
+	return themeRegistry[name as ThemeName] || themeRegistry[defaultThemeName];
+}
+
+/**
+ * Auto-generate theme conditions from registry.
+ *
+ * Creates Chakra UI conditions for each theme in the registry.
+ * Example: `githubTheme: '[data-theme="github"] &'`
+ *
+ * These conditions allow semantic tokens to respond to the `data-theme` attribute.
+ */
+function generateThemeConditions() {
+	const conditions: Record<string, string> = {};
+
+	for (const themeName of Object.keys(themeRegistry)) {
+		// Convert kebab-case to camelCase and append "Theme"
+		// Example: "ibm-carbon" → "ibmCarbonTheme"
+		const conditionName = themeName.replace(/-([a-z])/g, (g) => g[1].toUpperCase()) + "Theme";
+		conditions[conditionName] = `[data-theme="${themeName}"] &`;
+	}
+
+	return conditions;
+}
+
+/**
+ * Programmatically generate semantic tokens from all themes in registry.
+ *
+ * For each semantic token (background, foreground, primary, etc.):
+ * - Creates a condition for each theme with light and dark variants
+ * - Example structure:
+ *   ```
+ *   background: {
+ *     value: {
+ *       _githubTheme: { base: "rgb(255 255 255)", _dark: "rgb(13 17 23)" },
+ *       _ibmCarbonTheme: { base: "rgb(244 244 244)", _dark: "rgb(22 22 22)" },
+ *       ...
+ *     }
+ *   }
+ *   ```
+ *
+ * This enables "just add a file" workflow: new themes auto-generate without config changes.
+ */
+function generateSemanticTokens() {
+	// Get all semantic token keys from first theme (all themes have same structure)
+	const tokenKeys = Object.keys(githubTheme.light) as Array<
+		keyof typeof githubTheme.light
+	>;
+
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	const colors: Record<string, any> = {};
+
+	// For each semantic token...
+	for (const tokenKey of tokenKeys) {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const value: Record<string, any> = {};
+
+		// For each theme in registry...
+		for (const [themeName, theme] of Object.entries(themeRegistry)) {
+			// Generate condition name (same logic as generateThemeConditions)
+			const conditionName = "_" + themeName.replace(/-([a-z])/g, (g) => g[1].toUpperCase()) + "Theme";
+
+			// Add theme-specific light and dark values
+			value[conditionName] = {
+				base: `rgb(${theme.light[tokenKey]})`,
+				_dark: `rgb(${theme.dark[tokenKey]})`,
+			};
+		}
+
+		colors[tokenKey] = { value };
+	}
+
+	return { colors };
+}
+
 const config = defineConfig({
+	// Auto-generated theme conditions
+	conditions: generateThemeConditions(),
+
 	theme: {
 		tokens: {
-			colors: {
-				// Raw color palette
-				white: { value: "#FFFFFF" },
-				black: { value: "#000000" },
-				// Gray color palette
-				gray: {
-					"200": { value: "#E2E8F0" },
-					"300": { value: "#CBD5E0" },
-					"400": { value: "#A0AEC0" },
-					"500": { value: "#718096" },
-					"700": { value: "#4A5568" },
-				},
-				// Red color palette
-				red: {
-					"500": { value: "#E53E3E" },
-				},
-				// Blue color palette
-				blue: {
-					"500": { value: "#3182CE" },
-					"700": { value: "#2C5282" },
-				},
-				// Teal color palette
-				teal: { value: "#38B2AC" },
-				// Purple color palette
-				purple: { value: "#805AD5" },
-				// Custom colors
-				nearBlack: { value: "#0d0e0e" },
-				discordDark: { value: "#23272f" },
-				chakraGray900: { value: "#1a202c" },
-				tailwindZinc900: { value: "#18181b" },
-				gradientGrayLeft: {
-					value:
-						"linear-gradient(90deg, #18181b 0%, #222227ff 25%, #18181b 50%)",
-				},
-				gradientGrayCentered: {
-					value:
-						"linear-gradient(90deg, #18181b 25%, #222227ff 50%, #18181b 75%)",
-				},
-				gradientNavy: {
-					value:
-						"linear-gradient(90deg, #071629ff 25%, #0c1e34ff 50%, #071629ff 75%)",
-				},
-				fed7d7: { value: "#fed7d7" },
-				c6f6d5: { value: "#c6f6d5" },
-				"48bb78": { value: "#48bb78" },
-				"2f855a": { value: "#2f855a" },
-				"63b3ed": { value: "#63b3ed" },
-				"4299e1": { value: "#4299e1" },
-				customGrayBorder: { value: "#718096" },
-			},
 			fonts: {
 				heading: {
 					value: `'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif`,
@@ -71,47 +151,8 @@ const config = defineConfig({
 				},
 			},
 		},
-		semanticTokens: {
-			colors: {
-				background: {
-					main: { value: "{colors.discordDark}" },
-					navBar: { value: "{colors.tailwindZinc900}" },
-					footer: { value: "{colors.gradientGrayCentered}" },
-					sidebar: { value: "{colors.discordDark}" },
-					sidebarInterior: { value: "{colors.tailwindZinc900}" },
-					subItem: { value: "{colors.chakraGray900}" },
-					hover: { value: "{colors.chakraGray900}" },
-					selected: { value: "{colors.chakraGray900}" },
-					skeleton: { value: "{colors.tailwindZinc900}" },
-				},
-				border: {
-					subtle: { value: "{colors.gray.500}" },
-					separator: { value: "{colors.gray.700}" },
-					sidebar: { value: "{colors.gray.700}" },
-					input: { value: "{colors.white}" },
-					error: { value: "{colors.fed7d7}" },
-					success: { value: "{colors.c6f6d5}" },
-				},
-				text: {
-					main: { value: "{colors.white}" },
-					muted: { value: "{colors.gray.300}" },
-					error: { value: "{colors.red.500}" },
-					info: { value: "{colors.gray.500}" },
-					secondary: { value: "{colors.gray.400}" },
-					success: { value: "{colors.48bb78}" },
-					successDark: { value: "{colors.2f855a}" },
-				},
-				accent: {
-					primary: { value: "{colors.blue.500}" },
-					secondary: { value: "{colors.blue.700}" },
-					tertiary: { value: "{colors.white}" },
-					highlight: { value: "{colors.63b3ed}" },
-					link: { value: "{colors.4299e1}" },
-					tagTeal: { value: "{colors.teal}" },
-					tagPurple: { value: "{colors.purple}" },
-				},
-			},
-		},
+		// Auto-generated semantic tokens for all themes
+		semanticTokens: generateSemanticTokens(),
 	},
 });
 
@@ -119,8 +160,11 @@ export const system = createSystem(defaultConfig, {
 	...config,
 	globalCss: {
 		body: {
-			bg: "background.main",
-			color: "text.main",
+			bg: "background",
+			color: "foreground",
 		},
 	},
 });
+
+// Re-export types for external use
+export type { Theme, ThemeColors } from "./types";

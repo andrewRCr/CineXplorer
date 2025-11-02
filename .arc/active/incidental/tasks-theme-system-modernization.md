@@ -55,42 +55,116 @@ color decisions difficult and prevents proper light mode implementation.
 
 **Purpose:** Understand current color usage and preserve reference for future theme decisions.
 
-- [ ] **1.1 Audit color usage in codebase**
-    - [ ] **1.1.1 Search for direct color references in components**
-        - Find all uses of theme tokens in components
-        - Find any hardcoded colors bypassing theme system
-        - Document which semantic tokens are actually used
-    - [ ] **1.1.2 Identify unused colors**
-        - Check each token in `theme/index.ts` for usage
-        - Verify gradients are used (suspect they aren't)
-        - Create list of used vs unused tokens
-    - [ ] **1.1.3 Document findings**
-        - Create summary of actual color usage
-        - Note any patterns or inconsistencies
+- [x] **1.1 Audit color usage in codebase**
 
-- [ ] **1.2 Create reference palette from current colors**
-    - Location: `frontend/src/theme/palettes/cinexplorer-original.ts`
-    - Include only colors actually in use (no unused gradients)
-    - Map hex values to descriptive names
-    - Dark mode only (no light mode, for reference purposes only)
-    - Add clear documentation: "Reference only - won't be used, preserved for future custom theme work"
+    **Completed:** Comprehensive audit of all color usage across components and pages.
+
+    **Findings documented in:** `notes-theme-system-modernization.md` (Phase 1.1 section)
+
+    **Key discoveries:**
+    - Most semantic tokens actively used and well-structured
+    - All gradients are UNUSED (candidates for removal)
+    - Several components bypass semantic tokens (ErrorBoundary, Featured, Login/Register)
+    - Unused raw tokens: `nearBlack`, `customGrayBorder`, all three gradient tokens
+    - Hardcoded colors found: Chakra `red.*`, `gray.*`, `blue.*`, inline hex `#4299e1`
+    - 8 semantic tokens defined but not found in audit (may be unused or search missed edge cases)
+
+    **Recommendation:** Preserve only actively-used colors for reference palette
+
+- [x] **1.2 Create reference palette from current colors**
+
+    **Completed:** Created reference palette documenting actively-used colors from original theme.
+
+    **File created:** `frontend/src/theme/palettes/cinexplorer-original.ts`
+
+    **Colors preserved (26 total):**
+    - Base: white, black
+    - Grays: gray_200, gray_300, gray_400, gray_500, gray_700
+    - Dark surfaces: discord_dark, chakra_gray_900, tailwind_zinc_900
+    - Blues (accent): blue_500, blue_700, blue_63b3ed, blue_4299e1
+    - Status: red_500, error_border, success_green, success_green_dark, success_border
+    - Tags: teal, purple
+
+    **Colors excluded (unused):**
+    - nearBlack - No usage found
+    - All gradients (gradientGrayLeft, gradientGrayCentered, gradientNavy) - No usage found
+    - customGrayBorder - Duplicate of gray_500, not referenced
+
+    **Documentation:**
+    - Marked as "REFERENCE ONLY - will NOT be used in application"
+    - Comprehensive JSDoc comments explaining each color's original usage
+    - Notes on excluded colors and rationale
+    - Usage guide for future custom theme development
+
+    **Quality gates:** ✅ Frontend linting (0 errors), TypeScript (0 errors)
 
 ### **Phase 2:** Semantic Structure Implementation
 
 **Purpose:** Set up shadcn/ui semantic token structure adapted for Chakra UI v3.
 
-- [ ] **2.1 Create type definitions**
-    - Location: `frontend/src/theme/types.ts`
-    - Define `ThemeColors` interface (shadcn/ui semantic tokens)
-    - Define `Theme` interface (light + dark palettes)
-    - Add JSDoc comments explaining each semantic token
+- [x] **2.1 Create type definitions**
 
-- [ ] **2.2 Select and implement initial palette**
-    - Use GitHub theme (neutral, professional, proven at scale)
-    - Reference: GitHub Primer design system
-    - Create palette file: `frontend/src/theme/palettes/github.ts`
-    - Create definition file: `frontend/src/theme/definitions/github.ts`
-    - Map palette to semantic tokens for light + dark modes
+    **Completed:** Created comprehensive TypeScript type definitions for theme system.
+
+    **File created:** `frontend/src/theme/types.ts`
+
+    **Types defined:**
+    - `ThemeColors` interface - shadcn/ui semantic tokens (20 tokens total)
+        - Base colors: background, foreground
+        - Card colors: card, card-foreground
+        - Popover colors: popover, popover-foreground
+        - Primary colors: primary, primary-foreground
+        - Secondary colors: secondary, secondary-foreground
+        - Muted colors: muted, muted-foreground
+        - Accent colors: accent, accent-foreground
+        - Destructive colors: destructive, destructive-foreground
+        - UI elements: border, input, ring
+    - `Theme` interface - Complete theme with name, label, light, dark palettes
+    - `ThemeRegistry` type - Registry mapping theme names to definitions
+
+    **Documentation:**
+    - Comprehensive JSDoc for all interfaces and properties
+    - Organized by semantic category (Base, Card, Popover, etc.)
+    - Explains RGB space-separated format for Chakra UI opacity support
+    - Usage examples and notes on theme immutability
+
+    **Quality gates:** ✅ Frontend linting (0 errors), TypeScript (0 errors)
+
+- [x] **2.2 Implement starter theme collection**
+
+    **Completed:** Implemented 7 complete theme options (palettes + definitions) following shadcn/ui semantic structure.
+
+    **Researched Themes** (external-research-analyst agent):
+    - IBM Carbon - `palettes/ibm-carbon.ts`, `definitions/ibm-carbon.ts`
+        - Enterprise-grade, distinctive blue accent, 3-layer system, WCAG AA
+        - Source: <https://carbondesignsystem.com> (official Carbon v10 tokens)
+    - GitLab Pajamas - `palettes/gitlab-pajamas.ts`, `definitions/gitlab-pajamas.ts`
+        - Clean modern neutral with blue primary accent
+        - Source: <https://design.gitlab.com> (official @gitlab/ui tokens)
+    - Tangere Terminal - `palettes/tangere-terminal.ts`, `definitions/tangere-terminal.ts`
+        - Sophisticated terminal-inspired, complementary color harmony
+        - Source: <https://github.com/ftonneau/tangere-terminal> (MIT licensed)
+        - Semantic mappings derived from Vim/Kakoune colorschemes
+    - GitHub Primer - `palettes/github.ts`, `definitions/github.ts`
+        - Neutral professional baseline, proven at scale
+        - Source: <https://primer.style> (official Primer primitives)
+
+    **Custom Themes** (provided values):
+    - Sage & Bone - `palettes/sage-bone.ts`, `definitions/sage-bone.ts`
+        - Calm nature-inspired, soft sage green on warm bone whites
+    - Stone & Greige - `palettes/stone-greige.ts`, `definitions/stone-greige.ts`
+        - Minimal architectural, refined neutrals with subtle warmth
+    - Muted Earth - `palettes/muted-earth.ts`, `definitions/muted-earth.ts`
+        - Warmest option, creamy linen with terracotta/rust accents
+
+    **Implementation pattern** (consistent across all themes):
+    - Palette files: Raw hex color values for light + dark modes (~26 colors each)
+    - Definition files: Semantic token mappings using `hexToRgb()` helper
+    - Full shadcn/ui coverage: 20 semantic tokens per mode
+    - TypeScript type safety with palette color name types
+    - Comprehensive JSDoc documentation with design philosophy notes
+
+    **Quality gates:** ✅ Frontend linting (0 errors), TypeScript (0 errors)
 
 - [ ] **2.3 Update Chakra UI theme configuration**
     - Update `frontend/src/theme/index.ts`

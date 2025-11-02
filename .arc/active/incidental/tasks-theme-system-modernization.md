@@ -446,57 +446,71 @@ comprehensive component migration.
     - Create ADR for token extension decision
     - Run TypeScript validation
 
-- [ ] **3.4 Implement validated 13-token extension**
+- [x] **3.4 Implement validated 13-token extension**
+
+    **Completed:** Extended theme system from 20 to 33 semantic tokens with comprehensive documentation.
 
     **Goal:** Extend shadcn/ui's 20 base tokens with 13 research-validated semantic tokens (total: 33 tokens).
 
-    - [ ] **3.4.1 Update TypeScript types in `frontend/src/theme/types.ts`**
-        - Add 13 new tokens to `ThemeColors` interface (maintaining shadcn/ui pair convention):
-            - **Status semantic pairs (6 tokens):**
-                - `success` / `success-foreground` - Positive outcomes, completions (#198038 IBM Carbon green)
-                - `warning` / `warning-foreground` - Cautions, alerts (#faad14 Ant Design gold)
-                - `info` / `info-foreground` - Informational messages, tips (#0f62fe IBM Carbon blue)
-            - **Movie-specific rating (2 tokens):**
-                - `rating` / `rating-foreground` - Movie score displays (#F5C518 IMDb gold, industry standard)
-            - **Surface elevation (1 token):**
-                - `surface-elevated` - Featured sections, modals (3rd surface level between card and popover)
-            - **Badge system (2 tokens):**
-                - `badge` / `badge-foreground` - Neutral badges (genres, default tags)
-            - **Drag-and-drop states (2 tokens):**
-                - `drag-active` - Element being dragged (darker/emphasized appearance)
-                - `drop-zone` - Valid drop target indicator (subtle success/accent tint)
-        - Update JSDoc comments with usage guidance
-        - Note light/dark mode variations:
-            - Rating: `#F5C518` (light) vs `#FFD700` or `#FFC107` (dark) for better contrast
-            - Surface-elevated: Lighter than card in both modes, follows tonal progression
-        - Quality gate: TypeScript type checking passes (0 errors)
+    - [x] **3.4.1 Update TypeScript types in `frontend/src/theme/types.ts`**
 
-    - [ ] **3.4.2 Create ADR documenting token extension decision**
-        - File: `.arc/reference/adr/adr-XXX-semantic-token-extension.md`
-        - **Context section** - Reference Phase 3.1 synthesis findings:
-            - All 4 research systems (MD3, Carbon, Primer, Ant Design) have status tokens
-            - Our 33 tokens conservative vs industry averages (40-415+)
-            - Movie app specific needs (rating displays, content badges)
-        - **Decision section** - Reference Phase 3.2 gap analysis:
-            - 8 critical tokens: success, warning, info, rating pairs
-            - 5 high priority: surface-elevated, badge pair, drag-and-drop pair
-            - Specific color values justified by research (IMDb gold standard, etc.)
+        **Completed:** Added 13 new tokens to `ThemeColors` interface in organized sections.
+
+        **Tokens added (all with JSDoc documentation):**
+        - **Status Colors** (6 tokens): `success`, `success-foreground`, `warning`, `warning-foreground`, `info`, `info-foreground`
+        - **Rating Colors** (2 tokens): `rating`, `rating-foreground` (with note about IMDb gold #F5C518 and light/dark variations)
+        - **Surface Elevation** (1 token): `surface-elevated` (documented elevation hierarchy and Material Design 3 approach)
+        - **Badge Colors** (2 tokens): `badge`, `badge-foreground`
+        - **Interactive States** (2 tokens): `drag-active`, `drop-zone`
+
+        **File modified:** `frontend/src/theme/types.ts` (extended from 20 to 33 tokens)
+
+        **Type checking result:** TypeScript correctly identifies that all 7 theme definitions now need
+        updating (expected behavior, will be resolved in Task 3.5)
+
+    - [x] **3.4.2 Create ADR documenting token extension decision**
+
+        **Completed:** Created comprehensive ADR following strategy-adr-methodology.md guidelines.
+
+        **File created:** `.arc/reference/adr/adr-003-extend-semantic-token-system.md`
+
+        **ADR structure:**
+        - **Status:** Accepted
+        - **Context:** Phase 3.1 research (89KB across 4 design systems), Phase 3.2 gap analysis,
+          movie application specific needs, external constraints
+        - **Decision:** Extend from 20 to 33 tokens (13 new) organized into 5 semantic categories
+          with baseline colors and implementation plan
         - **Alternatives considered:**
             - Option A: Reuse existing tokens creatively (rejected - semantic clarity lost)
             - Option B: Add only critical 8 tokens (rejected - defers known needs)
-            - Option C: Implement all 13 tokens now (selected - comprehensive, still minimal)
-        - **Consequences:**
-            - Positive: Covers all current + planned needs, industry-aligned patterns
-            - Negative: 7 theme definitions require updates (manageable, one-time)
-            - Trade-offs: Slightly more tokens to maintain vs cleaner semantics
-        - Quality gate: Markdown linting passes
+            - Option C: Implement all 13 tokens now (selected - comprehensive approach)
+        - **Consequences:** Complete coverage, industry alignment, semantic clarity vs one-time
+          maintenance cost and increased complexity
+
+        **Quality gate:** ✅ Markdown linting passes (0 errors)
 
 - [ ] **3.5 Update all theme definitions with extended tokens**
 
     **Goal:** Add 13 new token values to all 7 themes while maintaining each theme's character and contrast standards.
 
-    - [ ] **3.5.1 Add tokens to each theme definition file**
-        - For EACH of the 7 themes, add new token definitions:
+    - [x] **3.5.1 Add tokens to each theme definition file**
+
+        **Completed:** Added 13 new tokens to all 7 themes (light + dark modes) with clear official vs adapted distinctions.
+
+        **Official Design Systems (with official/adapted markers):**
+        - ✅ GitHub Primer - Extended palette + definitions (warning/info adapted, rating adapted from Primer yellow scale)
+        - ✅ IBM Carbon - Extended palette + definitions (warning/info official, rating adapted from Carbon yellow)
+        - ✅ GitLab Pajamas - Extended palette + definitions (warning/info official, rating adapted for GitLab aesthetic)
+
+        **Custom/Community Themes (with extension markers):**
+        - ✅ Tangere Terminal - Extended palette + definitions (rating reuses existing warning color)
+        - ✅ Sage & Bone - Extended palette + definitions (rating uses warm amber)
+        - ✅ Stone & Greige - Extended palette + definitions (rating uses warm amber)
+        - ✅ Muted Earth - Extended palette + definitions (rating uses warm amber)
+
+        **Quality gate:** ✅ TypeScript type checking passes (0 errors)
+
+        - For EACH of the 7 themes, new token definitions added:
             - GitHub Primer (`definitions/github.ts`, `palettes/github.ts` if needed)
             - IBM Carbon (`definitions/ibm-carbon.ts`, `palettes/ibm-carbon.ts` if needed)
             - GitLab Pajamas (`definitions/gitlab-pajamas.ts`, `palettes/gitlab-pajamas.ts` if needed)

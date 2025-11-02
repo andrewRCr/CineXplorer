@@ -290,130 +290,351 @@ Measure twice, cut once - ensure our semantic token structure handles all movie 
 **Exit Criteria:** Token structure validated, all UI patterns mappable, migration guide complete, ready for
 comprehensive component migration.
 
-- [ ] **3.1 Research semantic token best practices**
-    - Study established design systems:
-        - Material Design 3 (token structure and naming conventions)
-        - IBM Carbon Design System (enterprise patterns)
-        - GitHub Primer (proven at scale)
-        - Ant Design (comprehensive token taxonomy)
-    - Focus areas:
-        - How many semantic layers do production systems use?
-        - Success/warning/info state patterns (we only have destructive)
-        - Surface elevation systems (card vs elevated vs overlay)
-        - Interactive state tokens (hover, focus, active, disabled)
-        - Specialized UI tokens (badges, tags, scores, ratings)
-    - Document findings in `notes-theme-system-modernization.md` (append with "Phase 3.1" header)
-    - Extract best practices applicable to movie application context
+- [x] **3.1 Research semantic token best practices**
 
-- [ ] **3.2 Analyze movie application UI patterns**
-    - Inventory all UI patterns in CineXplorer:
-        - Movie cards (primary content display)
-        - User scores/ratings (numeric displays, progress indicators)
-        - Filter panels and sidebars (secondary surfaces)
-        - Navigation elements (navbar, footer, sidebar)
-        - Form elements (login, register, search)
-        - Status indicators (error, success, loading, empty states)
-        - Badges and tags (genres, ratings, certifications)
-        - Overlays and modals (dialogs, tooltips, popovers)
-        - Hero sections and featured content
-        - Interactive states across all components
-    - Reference similar applications for patterns:
-        - Netflix (card design, hover states, rating displays)
-        - IMDb (score displays, badges, list layouts)
-        - Letterboxd (filtering, tagging, collection displays)
-    - Document token requirements for each pattern
-    - Identify patterns not covered by shadcn/ui's 20 base tokens
+    **Completed:** 2025-11-02
 
-- [ ] **3.3 Audit current token coverage**
-    - List all 20 current shadcn/ui tokens with intended use cases
-    - Map existing component color usage to new token structure:
-        - Old semantic tokens → New tokens (background.main → background, etc.)
-        - Hardcoded Chakra colors → New tokens (red.600 → destructive, etc.)
-        - Raw hex values → New tokens (#4299e1 → accent, etc.)
-    - Identify gaps where NO appropriate token exists:
-        - Success states (forms, notifications)
-        - Warning states (validation, cautions)
-        - Info states (tips, help text)
-        - Multiple surface levels (background vs card vs elevated)
-        - Score/rating specific styles
-        - Badge/tag variations
-    - Document gap analysis in `notes-theme-system-modernization.md` (append with "Phase 3.3" header)
-    - Prioritize gaps: critical (blocks migration) vs nice-to-have
+    **Comprehensive synthesis documented in:** `notes-theme-system-modernization.md` (Phase 3.1 section, ~640 lines)
 
-- [ ] **3.4 Design token structure extensions**
-    - Based on research and gap analysis, propose token additions:
-        - Success semantic pair (success, success-foreground)
-        - Warning semantic pair (warning, warning-foreground)
-        - Info semantic pair (info, info-foreground)
-        - Surface elevation tokens if needed (surface-elevated, overlay, etc.)
-        - Specialized tokens if justified (score, badge, etc.)
-    - Document rationale for each addition in notes file (why needed, what it solves)
-    - Update TypeScript types in `frontend/src/theme/types.ts`:
-        - Add new tokens to `ThemeColors` interface
-        - Update JSDoc comments
-        - Maintain shadcn/ui structure (pairs with foreground variants)
-    - Keep additions minimal - only what's necessary
-    - Validate against best practices from research (Task 3.1)
-    - **Create ADR documenting token extension decision:**
+    **Research Conducted:**
+    - ✅ Material Design 3 (20KB) - Google's design system, tone-based surfaces
+    - ✅ IBM Carbon Design System (22KB) - Enterprise patterns, layer system
+    - ✅ GitHub Primer (23KB) - Proven at scale, foundation-first approach
+    - ✅ Ant Design (24KB) - Comprehensive token taxonomy, Rate component
+    - **Total:** 89KB analyzed across 4 production design systems
+
+    **Key Findings:**
+
+    1. **Success/Warning/Info Tokens (CRITICAL):**
+       - All 4 systems include complete status token sets
+       - Recommended colors: Success `#198038` (IBM Carbon), Warning `#faad14` (Ant Design), Info `#0f62fe` (IBM Carbon)
+       - Pattern validated: All systems use semantic role + foreground pairs
+
+    2. **Rating Tokens (CRITICAL - Movie-Specific):**
+       - Ant Design has dedicated Rate component with gold star default
+       - IMDb gold `#F5C518` validated as industry standard
+       - Justification confirmed: Rating ≠ warning (distinct semantic meaning)
+
+    3. **Surface Elevation (HIGH PRIORITY):**
+       - All 4 systems have 3+ surface levels (MD3: 6 levels, Carbon: 4 layers, Primer: 3 levels, Ant: 5 variants)
+       - Pattern: Tonal variation creates depth (not shadows alone)
+       - CineXplorer needs 3 levels: background, card, surface-elevated
+
+    4. **Badge/Tag Tokens (HIGH PRIORITY):**
+       - All 4 systems have dedicated badge/tag patterns
+       - IBM Carbon: Layer-contextual tags, GitHub Primer: Muted/emphasis variants, Ant Design: Status presets
+       - Minimal implementation: 2 tokens (badge, badge-foreground) + leverage semantic colors
+
+    5. **Drag-and-Drop States (HIGH PRIORITY):**
+       - Material Design 3 has dedicated 16% opacity drag state
+       - Most systems reuse active/hover states
+       - User-requested feature justifies dedicated tokens for clarity
+
+    **Cross-System Insights:**
+    - Token counts: Production systems range from 64 (Primer) to 1000+ (Material Design 3)
+    - Our proposed 33 tokens is conservative vs industry averages (40-415+)
+    - Universal patterns: Hierarchical structure, semantic naming, paired tokens, accessibility standards
+    - All systems require 4.5:1 contrast (WCAG AA) for normal text
+
+    **Validated Token Extension:** 13 new tokens confirmed
+    - Status pairs: 6 tokens (success, warning, info + foregrounds)
+    - Rating pair: 2 tokens (movie-specific)
+    - Surface elevation: 1 token (3rd surface level)
+    - Badge pair: 2 tokens (neutral badges)
+    - Drag-and-drop: 2 tokens (drag-active, drop-zone)
+    - **Total: 33 semantic tokens** (20 base + 13 extension)
+
+    **Research Quality:**
+    - ✅ Coverage: Excellent (4 systems, enterprise + consumer + OSS)
+    - ✅ Relevance: High (all gaps addressed, movie patterns found)
+    - ✅ Actionability: Strong (specific colors, naming, implementation guidance)
+    - ✅ Confidence: High (consistent patterns, no contradictions)
+
+- [x] **3.2 Analyze movie application UI patterns**
+
+    **Completed:** 2025-11-02
+
+    **Comprehensive analysis documented in:** `notes-theme-system-modernization.md` (Phase 3.2 section)
+
+    **Work Completed:**
+    1. ✅ Inventoried 10 UI pattern categories in CineXplorer codebase:
+       - Movie cards, score displays, hero sections, forms, navigation, filters, pagination,
+         error boundaries, status indicators, badges
+       - Documented current token usage and hardcoded colors per component
+       - Identified token requirements for each pattern
+
+    2. ✅ Researched reference applications via external-research-analyst agent:
+       - **Letterboxd**: Dark-first design, 5-star gold ratings, 2-level surfaces, minimal badges
+       - **Netflix**: Black bg, red accent, 3-4 surface levels, % match scores, strong hover states
+       - **IMDb**: Light mode default, iconic gold (#F5C518) rating badges, 10-point scale
+       - Cross-platform synthesis documented with common patterns
+
+    3. ✅ Documented token requirements per pattern with file/line references
+
+    4. ✅ Identified critical gaps in shadcn/ui base 20 tokens:
+       - **CRITICAL (4 gaps):** success, warning, info semantic pairs + rating color
+       - **HIGH PRIORITY (2 gaps):** surface-elevated (3rd level) + badge semantic pairs
+       - **NICE-TO-HAVE (2 gaps):** watch status colors + interactive button accent
+
+    **Key Findings:**
+    - Current system has extensive hardcoded colors: ErrorBoundary (red.*/gray.*/blue.*),
+      MovieUserScore (blue.700/yellow.700/green.600), Login (#4299e1 inline), others
+    - Industry standard: IMDb gold (#F5C518) for ratings, success/warning/info in all major systems
+    - Production systems use 40-140+ tokens vs shadcn/ui's intentionally minimal 20
+    - Minimum viable extension: 8 new tokens (4 pairs: success, warning, info, rating)
+    - Recommended extension: 13 tokens (adds surface-elevated, badge pair, 2 badge variants)
+    - Comprehensive extension: 18 tokens (adds rating thresholds, watch status)
+
+    **Next Steps (Task 3.3):**
+    - Map ALL 20 shadcn/ui tokens with use cases
+    - Create comprehensive migration guide (old tokens → new tokens)
+    - Identify every instance of hardcoded colors for migration
+    - Prioritize gaps (critical vs nice-to-have)
+
+- [x] **3.3 Audit current token coverage**
+
+    **Completed:** 2025-11-02
+
+    **Comprehensive audit documented in:** `notes-theme-system-modernization.md` (Phase 3.3 section)
+
+    **Work Completed:**
+    1. ✅ Listed all 20 shadcn/ui tokens with semantic purposes and use cases
+       - Documented in reference table (11 pairs + 3 singles = 20 concepts)
+
+    2. ✅ Mapped 28 legacy custom tokens to new shadcn/ui structure:
+       - **Direct 1:1 mappings:** 4 tokens (background.main → background, etc.)
+       - **Many-to-one deduplication:** 16 tokens consolidate to 5 shadcn/ui tokens
+       - **Gaps requiring new tokens:** 8 old tokens have no shadcn/ui equivalent
+
+    3. ✅ Created comprehensive migration guide with 3 categories:
+       - Direct mappings (no changes needed)
+       - Deduplication opportunities (simplification)
+       - Missing tokens (requires extension)
+
+    4. ✅ Cataloged all hardcoded colors needing migration:
+       - **ErrorBoundary:** 15+ instances (red.*, gray.*, blue.*)
+       - **MovieUserScore:** 7 instances (rating color thresholds)
+       - **Login:** 5 instances (alerts, links)
+       - **Featured, MovieCard, PaginationCtrl:** 3 instances each (colorScheme props)
+       - **Total:** 25+ hardcoded colors across 7 components
+
+    5. ✅ Prioritized gaps into 3 tiers:
+       - **CRITICAL (8 tokens):** success, warning, info, rating pairs - blocks migration
+       - **HIGH (5 tokens):** surface-elevated, badge pair, drag-and-drop states
+       - **NICE-TO-HAVE (5 tokens):** rating thresholds, watch status (deferred)
+
+    6. ✅ Added drag-and-drop states per user request:
+       - `drag-active` and `drop-zone` tokens for watchlist/favorites reordering
+       - Classified as HIGH priority (META-PRD core feature)
+
+    **Key Findings:**
+    - **70% alignment:** Most legacy tokens map cleanly to shadcn/ui
+    - **13 new tokens recommended:** 8 critical + 5 high priority = 33 total tokens
+    - **Migration is incremental:** Extend tokens first, migrate components one-by-one
+    - **Concentrated violations:** ErrorBoundary has 60% of all hardcoded colors
+    - **Final structure:** 20 (base) + 13 (extensions) = 33 tokens vs industry 40-140+
+
+    **Migration Impact:**
+    - 7 components need updates (2-4 hours estimated)
+    - ErrorBoundary: High complexity (15+ colors)
+    - MovieUserScore: Medium complexity (rating logic)
+    - Login/Featured/MovieCard/PaginationCtrl: Low complexity (simple replacements)
+
+    **Next Steps (Task 3.4):**
+    - Implement 13-token extension in TypeScript types
+    - Document rationale for each token in notes
+    - Create ADR for token extension decision
+    - Run TypeScript validation
+
+- [ ] **3.4 Implement validated 13-token extension**
+
+    **Goal:** Extend shadcn/ui's 20 base tokens with 13 research-validated semantic tokens (total: 33 tokens).
+
+    - [ ] **3.4.1 Update TypeScript types in `frontend/src/theme/types.ts`**
+        - Add 13 new tokens to `ThemeColors` interface (maintaining shadcn/ui pair convention):
+            - **Status semantic pairs (6 tokens):**
+                - `success` / `success-foreground` - Positive outcomes, completions (#198038 IBM Carbon green)
+                - `warning` / `warning-foreground` - Cautions, alerts (#faad14 Ant Design gold)
+                - `info` / `info-foreground` - Informational messages, tips (#0f62fe IBM Carbon blue)
+            - **Movie-specific rating (2 tokens):**
+                - `rating` / `rating-foreground` - Movie score displays (#F5C518 IMDb gold, industry standard)
+            - **Surface elevation (1 token):**
+                - `surface-elevated` - Featured sections, modals (3rd surface level between card and popover)
+            - **Badge system (2 tokens):**
+                - `badge` / `badge-foreground` - Neutral badges (genres, default tags)
+            - **Drag-and-drop states (2 tokens):**
+                - `drag-active` - Element being dragged (darker/emphasized appearance)
+                - `drop-zone` - Valid drop target indicator (subtle success/accent tint)
+        - Update JSDoc comments with usage guidance
+        - Note light/dark mode variations:
+            - Rating: `#F5C518` (light) vs `#FFD700` or `#FFC107` (dark) for better contrast
+            - Surface-elevated: Lighter than card in both modes, follows tonal progression
+        - Quality gate: TypeScript type checking passes (0 errors)
+
+    - [ ] **3.4.2 Create ADR documenting token extension decision**
         - File: `.arc/reference/adr/adr-XXX-semantic-token-extension.md`
-        - Context: Movie app needs vs shadcn/ui base tokens
-        - Decision: Specific tokens added and rationale
-        - Alternatives considered: Creative use of existing vs dedicated tokens
-        - Consequences: Theme maintenance burden, migration complexity, future flexibility
-    - Quality gates: TypeScript type checking passes
+        - **Context section** - Reference Phase 3.1 synthesis findings:
+            - All 4 research systems (MD3, Carbon, Primer, Ant Design) have status tokens
+            - Our 33 tokens conservative vs industry averages (40-415+)
+            - Movie app specific needs (rating displays, content badges)
+        - **Decision section** - Reference Phase 3.2 gap analysis:
+            - 8 critical tokens: success, warning, info, rating pairs
+            - 5 high priority: surface-elevated, badge pair, drag-and-drop pair
+            - Specific color values justified by research (IMDb gold standard, etc.)
+        - **Alternatives considered:**
+            - Option A: Reuse existing tokens creatively (rejected - semantic clarity lost)
+            - Option B: Add only critical 8 tokens (rejected - defers known needs)
+            - Option C: Implement all 13 tokens now (selected - comprehensive, still minimal)
+        - **Consequences:**
+            - Positive: Covers all current + planned needs, industry-aligned patterns
+            - Negative: 7 theme definitions require updates (manageable, one-time)
+            - Trade-offs: Slightly more tokens to maintain vs cleaner semantics
+        - Quality gate: Markdown linting passes
 
 - [ ] **3.5 Update all theme definitions with extended tokens**
-    - For EACH of the 7 themes, add new token definitions:
-        - GitHub Primer (`definitions/github.ts`, `palettes/github.ts` if needed)
-        - IBM Carbon (`definitions/ibm-carbon.ts`, `palettes/ibm-carbon.ts` if needed)
-        - GitLab Pajamas (`definitions/gitlab-pajamas.ts`, `palettes/gitlab-pajamas.ts` if needed)
-        - Tangere Terminal (`definitions/tangere-terminal.ts`, `palettes/tangere-terminal.ts` if needed)
-        - Sage & Bone (`definitions/sage-bone.ts`, `palettes/sage-bone.ts` if needed)
-        - Stone & Greige (`definitions/stone-greige.ts`, `palettes/stone-greige.ts` if needed)
-        - Muted Earth (`definitions/muted-earth.ts`, `palettes/muted-earth.ts` if needed)
-    - Ensure consistency:
-        - Success/warning/info colors appropriate for each theme's palette
-        - Maintain theme character (professional vs warm vs terminal, etc.)
-        - Verify WCAG contrast requirements met
-        - Test visually with ThemeSelector to ensure cohesion
-    - Update `frontend/src/theme/index.ts`:
-        - Extend `generateSemanticTokens()` to include new tokens
-        - Update Chakra UI theme config with new conditional tokens
-    - Quality gates: TypeScript (0 errors), linting (0 errors), themes visually verified
 
-- [ ] **3.6 Create comprehensive component migration mapping guide**
-    - Create new file: `.arc/reference/strategies/strategy-semantic-tokens.md`
-    - Document token structure overview:
-        - Base shadcn/ui tokens (20 original)
-        - Extended tokens (if added in 3.4-3.5)
-        - Token naming conventions and usage philosophy
-    - Create migration mapping tables:
-        - Old semantic token → New semantic token
-        - Chakra raw colors → New semantic token (red.600 → destructive, gray.500 → muted, etc.)
-        - Inline hex values → New semantic token
-    - Document UI pattern → Token mappings:
-        - Movie cards → Use card/card-foreground
-        - User scores → Use success/warning based on value
-        - Filter panels → Use muted/muted-foreground
-        - Error states → Use destructive/destructive-foreground
-        - Navigation → Use background/foreground with muted accents
-        - etc. (comprehensive list for all patterns from 3.2)
-    - Include code examples for common migrations
-    - Add decision tree: "Which token should I use for X?"
-    - Quality gates: Markdown linting passes
+    **Goal:** Add 13 new token values to all 7 themes while maintaining each theme's character and contrast standards.
+
+    - [ ] **3.5.1 Add tokens to each theme definition file**
+        - For EACH of the 7 themes, add new token definitions:
+            - GitHub Primer (`definitions/github.ts`, `palettes/github.ts` if needed)
+            - IBM Carbon (`definitions/ibm-carbon.ts`, `palettes/ibm-carbon.ts` if needed)
+            - GitLab Pajamas (`definitions/gitlab-pajamas.ts`, `palettes/gitlab-pajamas.ts` if needed)
+            - Tangere Terminal (`definitions/tangere-terminal.ts`, `palettes/tangere-terminal.ts` if needed)
+            - Sage & Bone (`definitions/sage-bone.ts`, `palettes/sage-bone.ts` if needed)
+            - Stone & Greige (`definitions/stone-greige.ts`, `palettes/stone-greige.ts` if needed)
+            - Muted Earth (`definitions/muted-earth.ts`, `palettes/muted-earth.ts` if needed)
+        - **Color selection guidance per token (from Phase 3.1 synthesis):**
+            - Success/warning/info: Use theme-appropriate variants of baseline colors, maintain semantic meaning
+            - Rating token: Use `#F5C518` (IMDb gold) as baseline, adjust hue to match theme palette
+            - Surface-elevated: Follow tonal progression (lighter in dark mode per Material Design 3 approach)
+            - Badge: Neutral variant from theme palette (similar to muted but distinct)
+            - Drag-and-drop: Drag-active similar to accent emphasis, drop-zone subtle success/accent tint
+        - **Ensure consistency:**
+            - Maintain theme character (professional vs warm vs terminal, etc.)
+            - Success/warning/info colors appropriate for each theme's palette
+            - Rating gold adapted to theme (warmer for warm themes, cooler for professional)
+        - **Quality gates per theme:**
+            - Verify WCAG AA contrast (4.5:1 for normal text on all new token backgrounds)
+            - Test visually with ThemeSelector to ensure cohesion
+            - No TypeScript errors after updates
+
+    - [ ] **3.5.2 Update `frontend/src/theme/index.ts` for token generation**
+        - Extend `generateSemanticTokens()` function to include all 13 new tokens
+        - Update Chakra UI theme config with new conditional tokens (light/dark mode)
+        - Handle light/dark variations:
+            - Rating token: Different values per mode for optimal contrast
+            - Surface-elevated: Tonal shift appropriate to mode
+        - Quality gate: All 7 themes generate correctly, no runtime errors
+
+    - [ ] **3.5.3 Verify contrast requirements using WebAIM or similar tool**
+        - Test all extended tokens in light and dark modes
+        - Verify 4.5:1 contrast ratio minimum (WCAG AA) for text tokens
+        - Verify 3:1 contrast ratio minimum for UI component tokens
+        - Document any adjustments needed per theme
+        - Quality gate: All tokens meet or exceed WCAG AA standards
+
+- [ ] **3.6 Consolidate migration mappings into strategy document**
+
+    **Goal:** Create reusable strategy document from existing Phase 3.3 migration analysis.
+
+    - [ ] **3.6.1 Create strategy document structure**
+        - Create new file: `.arc/reference/strategies/strategy-semantic-tokens.md`
+        - Document token structure overview:
+            - Base shadcn/ui tokens (20 original)
+            - Extended tokens (13 new = 33 total)
+            - Token naming conventions and usage philosophy
+        - Quality gate: File structure created
+
+    - [ ] **3.6.2 Extract and consolidate migration mappings from Phase 3.3**
+        - **Source:** `notes-theme-system-modernization.md` Phase 3.3 section (~390 lines)
+        - Extract existing mapping tables (already documented):
+            - Legacy token mapping (28 old tokens → new tokens)
+            - Hardcoded color catalog (25+ instances with file:line references)
+            - Migration guide (3 categories: direct 1:1, many-to-one, gaps requiring extensions)
+        - Consolidate into strategy document with clear sections
+        - Add any missing mappings discovered during Phase 3 work
+        - Quality gate: All Phase 3.3 mappings incorporated
+
+    - [ ] **3.6.3 Add code examples for common migration patterns**
+        - ErrorBoundary: `red.600` → `destructive`, `gray.*` → `muted`, `blue.*` → `info`
+        - MovieUserScore: Rating value → `rating` token, background → `success`/`warning` by threshold
+        - Login/Auth: Inline `#4299e1` → `accent`, alerts → `success`/`destructive`/`info`
+        - Featured page: Hero section → `surface-elevated`, `fg.muted` → `muted-foreground`
+        - Genre tags: Neutral tags → `badge`/`badge-foreground`, status → semantic tokens
+        - Before/after code snippets for clarity
+        - Quality gate: Code examples compile correctly
+
+    - [ ] **3.6.4 Create decision tree: "Which token should I use for X?"**
+        - Flowchart or decision table for common scenarios
+        - Q: "Is this a status indicator?" → success/warning/info/destructive
+        - Q: "Is this a movie rating?" → rating/rating-foreground
+        - Q: "Is this a neutral badge/tag?" → badge/badge-foreground
+        - Q: "Is this a surface/container?" → background/card/surface-elevated/popover
+        - Q: "Is this interactive?" → accent/primary variants, hover patterns
+        - Quality gate: Decision tree covers all 33 tokens
+
+    - [ ] **3.6.5 Final quality gate**
+        - Markdown linting passes (0 errors)
+        - All Phase 3.3 content successfully migrated
+        - Strategy document complete and usable for Phase 4 migration
 
 - [ ] **3.7 Document token usage patterns and guidelines**
-    - Add to strategy doc (from 3.6):
-        - When to use semantic tokens vs Chakra raw colors (always semantic)
-        - How to handle edge cases (document, don't bypass system)
-        - Interactive state patterns (hover brightens foreground, etc.)
-        - Accessibility requirements (contrast ratios, color-blind safe)
-    - Create quick reference card for developers:
-        - Most common patterns
-        - Token decision flowchart
-        - Anti-patterns to avoid
-    - Document in strategy-semantic-tokens.md
-    - Quality gates: Reviewed for completeness and clarity
+
+    **Goal:** Extract best practices from Phase 3.1 research synthesis into actionable developer guidelines.
+
+    - [ ] **3.7.1 Extract accessibility standards from Phase 3.1 synthesis**
+        - **Source:** `notes-theme-system-modernization.md` Phase 3.1 section (Accessibility Standards subsection)
+        - Document in strategy-semantic-tokens.md:
+            - 4.5:1 contrast minimum for normal text (WCAG AA)
+            - 3:1 contrast minimum for large text and UI components (WCAG AA)
+            - 7:1 contrast enhanced accessibility (WCAG AAA)
+            - Never use color alone (always pair with icons, text, or patterns)
+            - Focus indicators required, never removed
+            - Interactive sizing: 48×48dp minimum touch targets
+        - Quality gate: All accessibility requirements documented
+
+    - [ ] **3.7.2 Extract interactive state patterns from Phase 3.1 synthesis**
+        - **Source:** Phase 3.1 Material Design 3 state layer system findings
+        - Document opacity-based patterns:
+            - Hover: 8% opacity overlay
+            - Focus: 12% opacity overlay
+            - Pressed/Active: 12% opacity overlay
+            - Drag: 16% opacity overlay
+            - Disabled: 38% opacity (reduced contrast)
+        - Note: Overlays use foreground color at specified opacity, not color changes
+        - Provide Chakra UI implementation guidance
+        - Quality gate: Interactive patterns clearly explained
+
+    - [ ] **3.7.3 Document semantic naming philosophy**
+        - **Source:** Phase 3.1 cross-system insights (Common Architectural Patterns)
+        - Semantic over descriptive naming:
+            - ✅ `success`, `warning`, `info` (semantic meaning)
+            - ❌ `green`, `yellow`, `blue` (descriptive colors)
+            - Why: Enables theme switching without renaming tokens
+        - Token pairing conventions:
+            - Always pair colors with foreground variants (`success` / `success-foreground`)
+            - Ensures contrast maintained across themes
+        - Quality gate: Philosophy clearly articulated
+
+    - [ ] **3.7.4 Create developer quick reference card**
+        - Most common patterns:
+            - When to use semantic tokens vs Chakra raw colors (always semantic)
+            - How to handle edge cases (document, don't bypass system)
+            - Token decision flowchart (link to 3.6.4)
+        - Anti-patterns to avoid:
+            - Never hardcode colors (use tokens)
+            - Never use Chakra `red.*`, `gray.*`, `blue.*` directly
+            - Never bypass system without documenting rationale
+        - Quality gate: Quick reference concise and actionable
+
+    - [ ] **3.7.5 Final strategy document review**
+        - Verify completeness:
+            - All Phase 3.1 best practices extracted
+            - All Phase 3.3 migration mappings consolidated
+            - Code examples for all common patterns
+            - Decision tree covers all use cases
+        - Quality gates: Markdown linting passes, reviewed for clarity
 
 ### **Phase 4:** Component Migration (Comprehensive)
 
@@ -434,16 +655,38 @@ and ongoing migration overhead in future tasks.
     - **Footer** - Already migrated in Phase 2, verify consistency with new tokens from Phase 3
     - **MobileMenuButton, LoadingContent, LoadingLayout** - Apply tokens as needed
 
-- [ ] **4.2 Convert ErrorBoundary** (highest priority - most hardcoded colors)
-    - File: `components/ErrorBoundary.tsx`
-    - Replace ALL hardcoded Chakra colors:
+- [ ] **4.2 Convert ErrorBoundary** (60% of all hardcoded colors - 15+ instances)
+
+    **Note:** ErrorBoundary scheduled for end of Phase 4 due to complexity.
+    Handle simpler components first to build confidence with token patterns.
+
+    - [ ] **4.2.1 Replace error state colors in `components/ErrorBoundary.tsx`**
+        - **Source:** Phase 3.3 hardcoded color catalog
         - `red.600`, `red.700`, `red.800` → `destructive` / `destructive-foreground`
-        - `red.50` → `destructive` with low opacity or muted destructive background
-        - `red.200` → `destructive` border variant
-        - `gray.*` values → `muted` / `muted-foreground`
-        - `blue.*` values → `info` (if added in Phase 3) or `accent`
-    - Test error display in all themes
-    - Verify readability and contrast
+        - `red.50` → `destructive` with low opacity or use `destructive` background with reduced opacity
+        - `red.200` → `destructive` with border styling
+        - File location: Multiple instances throughout component
+        - Quality gate: All red.* colors replaced
+
+    - [ ] **4.2.2 Replace neutral/muted colors**
+        - `gray.50`, `gray.100`, `gray.200`, `gray.300`, `gray.400`, `gray.500`,
+          `gray.600`, `gray.700` → appropriate semantic tokens:
+            - Backgrounds: `muted` / `background`
+            - Text: `muted-foreground` / `foreground`
+            - Borders: `border`
+        - Reference Phase 3.3 mapping guide for specific instances
+        - Quality gate: All gray.* colors replaced
+
+    - [ ] **4.2.3 Replace informational message colors**
+        - `blue.50`, `blue.100`, `blue.500`, `blue.700` → `info` / `info-foreground`
+        - Use for helpful hints, debugging information, non-error messages
+        - Quality gate: All blue.* colors replaced with info tokens
+
+    - [ ] **4.2.4 Test error display comprehensively**
+        - Test in all 7 themes × 2 modes (14 combinations)
+        - Verify readability and contrast in each theme
+        - Ensure error messages remain clear and actionable
+        - Quality gate: ErrorBoundary displays correctly in all themes
 
 - [ ] **4.3 Convert authentication pages**
     - **Login** (`pages/user/Login.tsx`)
@@ -458,21 +701,48 @@ and ongoing migration overhead in future tasks.
         - Apply semantic border colors
 
 - [ ] **4.4 Convert movie components**
-    - **Featured** (`pages/Featured.tsx`)
-        - Replace Chakra `fg`, `fg.muted` with semantic equivalents
+
+    - [ ] **4.4.1 Convert Featured page** (`pages/Featured.tsx`)
+        - Replace Chakra `fg`, `fg.muted` with semantic equivalents:
+            - `fg` → `foreground`
+            - `fg.muted` → `muted-foreground`
+        - **Hero section background:** Use `surface-elevated` token for featured content area
         - Apply semantic tokens throughout
-    - **MovieDetail** (`pages/movie/MovieDetail.tsx`)
-        - Replace `gray.*` usage with semantic tokens
-    - **MovieCard** (`components/movie/MovieCard.tsx`)
+        - Quality gate: Featured page uses semantic tokens exclusively
+
+    - [ ] **4.4.2 Convert MovieDetail page** (`pages/movie/MovieDetail.tsx`)
+        - Replace `gray.*` usage with semantic tokens per Phase 3.3 mapping
+        - Apply tokens to detail sections
+        - Quality gate: MovieDetail uses semantic tokens exclusively
+
+    - [ ] **4.4.3 Convert MovieCard component** (`components/movie/MovieCard.tsx`)
         - Apply semantic `card` / `card-foreground` tokens
-        - Ensure hover states use semantic patterns
-    - **MovieCardContainer** (`components/movie/MovieCardContainer.tsx`)
+        - Ensure hover states use semantic patterns (Phase 3.7 interactive patterns)
+        - **Genre tags:** Use `badge` / `badge-foreground` for neutral genre labels
+        - Quality gate: MovieCard uses semantic tokens exclusively
+
+    - [ ] **4.4.4 Convert MovieCardContainer** (`components/movie/MovieCardContainer.tsx`)
         - Coordinate with MovieCard for consistent styling
-    - **MovieUserScore** (`components/movie/MovieUserScore.tsx`)
-        - Apply success/warning tokens based on score value (if added in Phase 3)
-        - Otherwise use accent/muted appropriately
-    - **MovieCollectionGrid, MovieGrid** - Apply tokens as needed
-    - **PageHeader** - Update header styling
+        - Quality gate: Container styling consistent with MovieCard
+
+    - [ ] **4.4.5 Convert MovieUserScore component** (`components/movie/MovieUserScore.tsx`)
+        - **Score value display:** Use `rating` / `rating-foreground` tokens (IMDb gold standard)
+        - **Score threshold backgrounds (optional):**
+            - 8.0+ score: `success` background (subtle)
+            - 6.0-7.9 score: `warning` background (subtle) or neutral
+            - Below 6.0: neutral or `muted` background
+        - Pattern: Rating token for value, semantic background for context
+        - Reference: Phase 3.2 MovieUserScore analysis
+        - Quality gate: Score displays use rating token, backgrounds use semantic tokens
+
+    - [ ] **4.4.6 Convert MovieCollectionGrid, MovieGrid**
+        - Apply tokens as needed
+        - Ensure grid container styling uses semantic tokens
+        - Quality gate: Grid components use semantic tokens
+
+    - [ ] **4.4.7 Convert PageHeader**
+        - Update header styling to semantic tokens
+        - Quality gate: PageHeader uses semantic tokens
 
 - [ ] **4.5 Convert remaining components**
     - **PaginationCtrl** (`components/layout/PaginationCtrl.tsx`)
@@ -518,13 +788,46 @@ and ongoing migration overhead in future tasks.
     - Determine what needs to be created vs updated
 
 - [ ] **5.2 Create/update theme showcase page**
-    - Location: `frontend/src/pages/ThemeShowcase.tsx` (or update existing)
-    - Showcase all Chakra UI v3 components used in app
-    - Typography samples (all heading levels, body text, etc.)
-    - Color palette display (ALL semantic tokens including extensions from Phase 3)
-    - Interactive light/dark mode toggle
-    - Theme selector to preview all 7 themes
-    - Organized sections for easy reference
+
+    - [ ] **5.2.1 Create showcase page structure**
+        - Location: `frontend/src/pages/ThemeShowcase.tsx` (or update existing)
+        - Organized sections for easy reference:
+            - Token palette display
+            - Typography samples
+            - Component examples
+            - Interactive controls
+        - Quality gate: Page structure created
+
+    - [ ] **5.2.2 Create comprehensive token palette display**
+        - **Display all 33 semantic tokens** (20 base + 13 extended), grouped by category:
+            - **Status tokens (8):** success, success-foreground, warning, warning-foreground, info,
+              info-foreground, destructive, destructive-foreground
+            - **Surfaces (5):** background, foreground, card, card-foreground, surface-elevated, popover, popover-foreground
+            - **Interactive (8):** primary, primary-foreground, secondary, secondary-foreground, accent,
+              accent-foreground, muted, muted-foreground
+            - **Borders & Inputs (3):** border, input, ring
+            - **Movie-specific (2):** rating, rating-foreground
+            - **Badges (2):** badge, badge-foreground
+            - **Drag-and-drop (2):** drag-active, drop-zone
+        - Show token name, hex value, and color swatch
+        - Update automatically when theme/mode changes
+        - Quality gate: All 33 tokens displayed correctly
+
+    - [ ] **5.2.3 Add typography samples**
+        - All heading levels (h1-h6)
+        - Body text variants
+        - Code/monospace
+        - Quality gate: Typography displays correctly
+
+    - [ ] **5.2.4 Add component examples**
+        - Showcase all Chakra UI v3 components used in app
+        - Demonstrate token usage in context
+        - Quality gate: Components render correctly
+
+    - [ ] **5.2.5 Add interactive controls**
+        - Interactive light/dark mode toggle
+        - Theme selector to preview all 7 themes
+        - Quality gate: Controls functional, updates showcase live
 
 - [ ] **5.3 Add routing and navigation**
     - Add route in App.tsx
@@ -576,11 +879,33 @@ and ongoing migration overhead in future tasks.
         - Cross-reference strategy-semantic-tokens.md created in Phase 3
 
 - [ ] **6.3 Run final quality gates**
-    - Backend tests (ensure no breakage from any imports/side effects)
-    - Frontend tests
-    - Frontend linting
-    - TypeScript checking
-    - Markdown linting on all updated .arc docs
+
+    - [ ] **6.3.1 Verify extended tokens meet WCAG AA contrast in all themes**
+        - Test all 13 extended tokens in all 7 themes × 2 modes (14 combinations per token)
+        - Use WebAIM Contrast Checker or browser DevTools
+        - **Minimum requirements:**
+            - Normal text: 4.5:1 contrast ratio (WCAG AA)
+            - Large text: 3:1 contrast ratio (WCAG AA)
+            - UI components: 3:1 contrast ratio (WCAG AA)
+        - Document any failing combinations
+        - Adjust token values if needed to meet standards
+        - Quality gate: All tokens meet or exceed WCAG AA in all themes
+
+    - [ ] **6.3.2 Run automated test suites**
+        - Backend tests (ensure no breakage from any imports/side effects)
+        - Frontend tests (all pass)
+        - Quality gate: 100% test pass rate
+
+    - [ ] **6.3.3 Run linting and type checking**
+        - Frontend linting (0 errors)
+        - TypeScript checking (0 errors)
+        - Quality gate: Zero violations
+
+    - [ ] **6.3.4 Run markdown linting**
+        - Markdown linting on all updated .arc docs
+        - Verify ADR from Task 3.4.2 passes linting
+        - Verify strategy-semantic-tokens.md from Task 3.6 passes linting
+        - Quality gate: All documentation linting passes
 
 ---
 

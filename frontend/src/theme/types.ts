@@ -102,6 +102,79 @@ export interface ThemeColors {
 	"destructive-foreground": string;
 
 	// ===================================================================
+	// STATUS COLORS (Semantic Feedback States)
+	// ===================================================================
+
+	/** Success/positive state (completions, confirmations, positive feedback) */
+	success: string;
+
+	/** Text/icon color on success backgrounds */
+	"success-foreground": string;
+
+	/** Warning/caution state (alerts, potential issues, careful attention needed) */
+	warning: string;
+
+	/** Text/icon color on warning backgrounds */
+	"warning-foreground": string;
+
+	/** Info/neutral state (informational messages, tips, helpful guidance) */
+	info: string;
+
+	/** Text/icon color on info backgrounds */
+	"info-foreground": string;
+
+	// ===================================================================
+	// RATING COLORS (Movie-Specific Semantic)
+	// ===================================================================
+
+	/**
+	 * Rating/score displays (movie ratings, user scores, quality indicators).
+	 * Distinct from warning token - ratings have different semantic meaning.
+	 * Light mode: #F5C518 (IMDb gold standard), Dark mode: adjusted for contrast.
+	 */
+	rating: string;
+
+	/** Text/icon color on rating backgrounds */
+	"rating-foreground": string;
+
+	// ===================================================================
+	// SURFACE ELEVATION (Additional Elevation Layer)
+	// ===================================================================
+
+	/**
+	 * Elevated surface level (featured sections, emphasized cards, modals).
+	 * Third surface level in elevation hierarchy: background < card < surface-elevated < popover.
+	 * Uses tonal variation to create depth (lighter in dark mode per Material Design 3 approach).
+	 */
+	"surface-elevated": string;
+
+	// ===================================================================
+	// BADGE COLORS (Neutral Tags & Labels)
+	// ===================================================================
+
+	/** Neutral badge backgrounds (genre tags, default labels, non-semantic tags) */
+	badge: string;
+
+	/** Text/icon color on badge backgrounds */
+	"badge-foreground": string;
+
+	// ===================================================================
+	// INTERACTIVE STATES (Drag-and-Drop)
+	// ===================================================================
+
+	/**
+	 * Element being actively dragged (darker/emphasized appearance).
+	 * Indicates item is in dragged state, provides visual feedback during drag operation.
+	 */
+	"drag-active": string;
+
+	/**
+	 * Valid drop target indicator (subtle success/accent tint).
+	 * Shows where dragged item can be dropped, provides clear affordance for drop zones.
+	 */
+	"drop-zone": string;
+
+	// ===================================================================
 	// UI ELEMENT COLORS
 	// ===================================================================
 

@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useThemeSelect } from "./chakra/theme-provider";
+import { useThemeSelect } from "@/hooks/useThemeSelect";
 import { Button, Menu, Portal, ClientOnly, Skeleton } from "@chakra-ui/react";
 import { themeRegistry, type ThemeName } from "@/theme";
 

@@ -1,16 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { defaultThemeName, themeRegistry, type ThemeName } from "@/theme";
-
-interface ThemeContextValue {
-	theme: ThemeName;
-	setTheme: (theme: ThemeName) => void;
-}
-
-const ThemeContext = React.createContext<ThemeContextValue | undefined>(undefined);
-
-const STORAGE_KEY = "cinexplorer-theme";
+import type { ThemeName } from "@/theme";
+import { ThemeContext, STORAGE_KEY, getInitialTheme } from "@/hooks/useThemeSelect";
 
 /**
  * Theme Selection Provider
@@ -23,23 +15,14 @@ const STORAGE_KEY = "cinexplorer-theme";
  *
  * Usage:
  * ```tsx
- * import { useThemeSelect } from "./chakra/theme-provider"
+ * import { useThemeSelect } from "@/hooks/useThemeSelect"
  *
  * const { theme, setTheme } = useThemeSelect()
  * setTheme("ibm-carbon") // Switch to IBM Carbon theme
  * ```
  */
 export function ThemeSelectProvider({ children }: { children: React.ReactNode }) {
-	const [theme, setThemeState] = React.useState<ThemeName>(() => {
-		// Initialize from localStorage or use default
-		if (typeof window !== "undefined") {
-			const saved = localStorage.getItem(STORAGE_KEY) as ThemeName;
-			if (saved && saved in themeRegistry) {
-				return saved;
-			}
-		}
-		return defaultThemeName;
-	});
+	const [theme, setThemeState] = React.useState<ThemeName>(getInitialTheme);
 
 	// Update data-theme attribute when theme changes
 	React.useEffect(() => {
@@ -52,18 +35,4 @@ export function ThemeSelectProvider({ children }: { children: React.ReactNode })
 	const value = React.useMemo(() => ({ theme, setTheme: setThemeState }), [theme]);
 
 	return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
-}
-
-/**
- * Hook to access theme selection state
- *
- * Returns current theme and setter function.
- * Must be used within ThemeSelectProvider.
- */
-export function useThemeSelect(): ThemeContextValue {
-	const context = React.useContext(ThemeContext);
-	if (context === undefined) {
-		throw new Error("useThemeSelect must be used within a ThemeSelectProvider");
-	}
-	return context;
 }

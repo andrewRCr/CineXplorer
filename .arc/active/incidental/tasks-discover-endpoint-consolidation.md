@@ -2,7 +2,9 @@
 
 **Created:** 2025-10-31
 **Branch:** `technical/service-layer-modernization`
-**Status:** In Progress
+**Status:** PAUSED (at Phase 3.1 complete)
+**Paused for:** `.arc/active/incidental/tasks-theme-system-modernization.md` - Theme system must be
+established before continuing frontend component work
 
 ## Context
 
@@ -734,15 +736,33 @@ Popular/Top-Rated code.
 
 **Approach:** Build working frontend that integrates with fixed backend endpoints from Phase 2.
 
-- [ ] **3.1 Create Featured page component**
-        - Location: `frontend/src/pages/Featured.tsx` (or similar based on structure)
-        - Content: Welcome message "Welcome to CineXplorer"
-        - Content: Browse navigation section with links to:
-            - Browse → `/browse` (general discover)
-            - Now Playing → `/browse/now-playing`
-            - Upcoming → `/browse/upcoming`
-        - Style: Basic, functional layout (no hero design yet)
-        - Purpose: Interim landing page for testing and navigation
+- [x] **3.1 Create Featured page component**
+
+    **Completed:** Featured page created as interim landing page with navigation to movie browsing routes.
+
+    **Implementation:**
+    - ✅ Created `frontend/src/pages/Featured.tsx` using Chakra UI v3
+    - ✅ Welcome heading "Welcome to CineXplorer" with descriptive tagline
+    - ✅ Navigation card with three browse options:
+        - Browse Popular Movies → `/movies/popular` (primary action, blue button)
+        - Now Playing in Theaters → `/movies/now-playing` (outline button)
+        - Upcoming Releases → `/movies/upcoming` (outline button)
+    - ✅ Updated App.tsx routing:
+        - Changed home route (`/`) from redirect to Popular to Featured page
+        - Added lazy-loaded Featured component import
+        - Removed unused Navigate import
+    - ✅ Centered layout with responsive container
+    - ✅ Chakra UI Card component for navigation section
+    - ✅ Navigation using `useNavigate()` hook with onClick handlers (matches project pattern)
+
+    **Note:** Links currently point to existing `/movies/*` routes. Will update to `/browse/*` structure in Task 3.3.
+
+    **Documentation Update:**
+    - ✅ Updated AGENTS.md to specify Chakra UI v3 as frontend component library
+
+    **Quality Gates:** ✅ All passed
+    - Frontend linting: 0 errors (eslint)
+    - TypeScript checking: 0 errors (tsc)
 
 - [ ] **3.2 Create or update Browse page component**
         - Location: `frontend/src/pages/Browse.tsx` or update existing Popular component

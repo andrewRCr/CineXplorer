@@ -1364,11 +1364,61 @@ and ongoing migration overhead in future tasks.
         **Files modified:**
         - `frontend/src/pages/Featured.tsx` - 5 token conversions
 
-    - [ ] **4.3.2 Convert MovieDetail page** (`pages/movie/MovieDetail.tsx`)
-        - Replace `gray.*` usage with semantic tokens per Phase 3.3 mapping
-        - Apply tokens to detail sections
-        - **Review token usage:** Verify against Task 4.1.5e checklist (line ~1007)
-        - Quality gate: MovieDetail uses semantic tokens exclusively
+    - [x] **4.3.2 Convert MovieDetail page** (`pages/movie/MovieDetail.tsx`)
+
+        Converted MovieDetail page from Chakra raw tokens and hardcoded colors to semantic tokens.
+        Original task description incomplete - also found colorScheme buttons and tags requiring conversion.
+
+        **Changes Made:**
+
+        1. **Line 80**: Back button
+           - Removed: `colorScheme="blue"`
+           - Added: `borderWidth="1px"`, `borderColor="border"`
+           - Enforces border system strategy for outline buttons
+
+        2. **Line 149**: Error state text
+           - Changed: `color="red.500"` → `color="destructive-foreground"`
+
+        3. **Lines 181, 194**: Release date and runtime text
+           - Changed: `color="gray.500"`, `color="gray.600"` → `color="muted-foreground"`
+
+        4. **Line 187**: Genre tags (in header)
+           - Removed: `colorScheme="teal"`
+           - Added: `bg="badge"`, `color="badge-foreground"`
+
+        5. **Lines 232-253**: User action buttons (3 buttons)
+           - Watchlist toggle: Conditional `bg="secondary"/"primary"` + matching foreground tokens
+           - Mark as Watched: `bg="primary"`, `color="primary-foreground"`, `_hover={{ opacity: 0.92 }}`
+           - Rate Movie: Same as Mark as Watched
+           - Removed all `colorScheme` props
+
+        6. **Line 279**: Cast member boxes
+           - Changed: `bg="gray.600"` → `bg="card"`
+
+        7. **Line 313**: Crew member boxes
+           - Changed: `bg="gray.600"` → `bg="card"`
+
+        8. **Line 331**: Production company tags
+           - Removed: `colorScheme="purple"`
+           - Added: `bg="badge"`, `color="badge-foreground"`
+
+        **Token Usage Review (4.1.5e checklist):**
+        - ✅ Surface tokens: `card` used for cast/crew boxes (elevated surfaces)
+        - ✅ Interactive elements: `primary`/`secondary` with matching foreground tokens
+        - ✅ Text tokens: `muted-foreground` for secondary text, `destructive-foreground` for errors
+        - ✅ Badge tokens: `badge`/`badge-foreground` for all tag elements
+        - ✅ Border tokens: `border` with explicit 1px width per strategy
+        - ✅ Interactive states: Hover opacity pattern (0.92) for primary buttons
+        - ✅ No hardcoded colors or Chakra raw tokens remaining
+
+        **Quality gate:**
+        - ✅ All Chakra raw tokens eliminated (gray.*, red.*, colorScheme)
+        - ✅ Border system strategy followed (1px + explicit props)
+        - ✅ TypeScript type checking: PASSED
+        - ✅ Frontend linting: PASSED
+
+        **Files modified:**
+        - `frontend/src/pages/movie/MovieDetail.tsx` - 11 token conversions
 
     - [ ] **4.3.3 Convert MovieCard component** (`components/movie/MovieCard.tsx`)
         - Apply semantic `card` / `card-foreground` tokens

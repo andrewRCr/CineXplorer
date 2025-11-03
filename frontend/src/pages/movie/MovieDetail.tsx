@@ -77,7 +77,7 @@ const MovieDetail = () => {
 		return (
 			<Box mb={4}>
 				<Link to={backUrl}>
-					<Button colorScheme="blue" variant="outline">
+					<Button variant="outline" borderWidth="1px" borderColor="border">
 						<span
 							style={{
 								display: "inline-block",
@@ -146,7 +146,7 @@ const MovieDetail = () => {
 			<Box maxW="6xl" mx="auto" p={4}>
 				{BackButton}
 				<Box p={8}>
-					<Text color="red.500">{error}</Text>
+					<Text color="destructive-foreground">{error}</Text>
 				</Box>
 			</Box>
 		);
@@ -178,20 +178,20 @@ const MovieDetail = () => {
 					{/* Header: Movie Title */}
 					<Heading size="lg">{movie.title}</Heading>
 					{/* Header: Release Date */}
-					<Text fontSize="md" color="gray.500">
+					<Text fontSize="md" color="muted-foreground">
 						{formattedReleaseDate}
 					</Text>
 					{/* Header: Genres */}
 					<Flex gap={2} wrap="wrap" justify="center" align="center">
 					{movie.genres?.map((genre: Genre) => (
-							<Tag key={genre.id} colorScheme="teal">
+							<Tag key={genre.id} bg="badge" color="badge-foreground">
 								{genre.name}
 							</Tag>
 						))}
 					</Flex>
 					{/* Header: Runtime */}
 					{movie.runtime && (
-						<Text fontSize="sm" color="gray.600">
+						<Text fontSize="sm" color="muted-foreground">
 							Runtime: {Math.floor(movie.runtime / 60)}h {movie.runtime % 60}m
 						</Text>
 					)}
@@ -228,9 +228,11 @@ const MovieDetail = () => {
 					Your Actions
 				</Heading>
 				<Flex gap={4} justify="center">
-					{/* <Button colorScheme="teal">Add to Watchlist</Button> */}
+					{/* <Button bg="primary" color="primary-foreground">Add to Watchlist</Button> */}
 					<Button
-						colorScheme={userMovieData?.user_on_watchlist ? "gray" : "teal"}
+						bg={userMovieData?.user_on_watchlist ? "secondary" : "primary"}
+						color={userMovieData?.user_on_watchlist ? "secondary-foreground" : "primary-foreground"}
+						_hover={{ opacity: 0.92 }}
 						loading={userMovieDataLoading && isAuthenticated}
 						onClick={() =>
 							update({
@@ -243,10 +245,10 @@ const MovieDetail = () => {
 							? "Remove from Watchlist"
 							: "Add to Watchlist"}
 					</Button>
-					<Button colorScheme="teal" disabled={!isAuthenticated}>
+					<Button bg="primary" color="primary-foreground" _hover={{ opacity: 0.92 }} disabled={!isAuthenticated}>
 						Mark as Watched
 					</Button>
-					<Button colorScheme="teal" disabled={!isAuthenticated}>
+					<Button bg="primary" color="primary-foreground" _hover={{ opacity: 0.92 }} disabled={!isAuthenticated}>
 						Rate Movie
 					</Button>
 				</Flex>
@@ -274,7 +276,7 @@ const MovieDetail = () => {
 				{movie.cast?.slice(0, 5).map((actor: CastMember, idx: number) => (
 						<Box
 							key={actor.id || idx}
-							bg="gray.600"
+							bg="card"
 							p={2}
 							borderRadius="md"
 							minW="120px"
@@ -308,7 +310,7 @@ const MovieDetail = () => {
 				.map((member: CrewMember, idx: number) => (
 							<Box
 								key={member.id || idx}
-								bg="gray.600"
+								bg="card"
 								p={2}
 								borderRadius="md"
 								minW="120px"
@@ -328,7 +330,7 @@ const MovieDetail = () => {
 				</Heading>
 				<Flex gap={2} wrap="wrap" justify="center">
 				{movie.production_companies?.map((company: ProductionCompany, idx: number) => (
-						<Tag key={company.id || idx} colorScheme="purple">
+						<Tag key={company.id || idx} bg="badge" color="badge-foreground">
 							{company.name}
 						</Tag>
 					))}

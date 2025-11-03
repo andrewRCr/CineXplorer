@@ -957,42 +957,41 @@ and ongoing migration overhead in future tasks.
         (evolving guidance). This keeps strategy-semantic-tokens.md focused on "how to use tokens"
         rather than "how the theme system works internally".
 
-    - [ ] **4.1.5d Fix theme persistence (localStorage broken)**
+    - [x] **4.1.5d Fix theme persistence (localStorage broken)**
 
-        **Problem:** Theme selection doesn't persist across page reloads - always reverts to GitHub theme.
+        **Problem:** Theme selection didn't persist across page reloads - always reverted to GitHub theme.
 
-        **Root Cause:** In `frontend/src/components/chakra/theme-provider.tsx` line 32:
+        **Root Cause:** In `frontend/src/components/chakra/theme-provider.tsx` line 32, `system` state was
+        always initialized with `defaultSystem` (GitHub theme). While `themeName` state correctly read from
+        localStorage, the system didn't match, causing visual mismatch.
 
-        ```tsx
-        const [system, setSystem] = React.useState(defaultSystem);  // Always GitHub!
-        ```
+        **Solution Implemented:**
 
-        The `themeName` state correctly reads from localStorage (line 31), but `system` state is always
-        initialized with `defaultSystem` (GitHub theme). The useEffect (lines 47-52) doesn't fix this because
-        `savedTheme === themeName` (both from localStorage), so the condition fails and system never updates.
+        1. Replaced direct initialization with lazy initializer:
 
-        **Fix:**
+           ```tsx
+           const [system, setSystem] = React.useState(() => {
+             const initialThemeName = getInitialTheme();
+             const initialTheme = getTheme(initialThemeName);
+             return createThemeSystem(initialTheme);
+           });
+           ```
 
-        ```tsx
-        const [system, setSystem] = React.useState(() => {
-          const initialThemeName = getInitialTheme();
-          const initialTheme = getTheme(initialThemeName);
-          return createThemeSystem(initialTheme);
-        });
-        ```
+        2. Removed unused `defaultSystem` import (no longer needed)
 
-        **Testing:**
-        - Select a non-GitHub theme (e.g., IBM Carbon)
-        - Refresh page
-        - Verify theme persists (not GitHub)
-        - Test with all 7 themes
-        - Test in both light and dark modes
+        3. Removed useEffect that attempted to fix the issue (no longer needed with correct initialization)
 
-        **Quality gates:**
-        - Theme selection persists across page reloads
-        - Color mode persists independently from theme
-        - No console errors
-        - TypeScript type checking passes
+        **Testing Results:**
+        - ✅ Theme selection persists across page reloads
+        - ✅ Color mode persists independently from theme
+        - ✅ Tested with all 7 themes
+        - ✅ Tested in both light and dark modes
+        - ✅ No console errors
+        - ✅ TypeScript type checking passes
+        - ✅ Frontend linting passes
+
+        **Files Modified:**
+        - `frontend/src/components/chakra/theme-provider.tsx` - Fixed system initialization, cleaned up imports
 
 - [ ] **4.2 Convert authentication pages**
     - **Login** (`pages/user/Login.tsx`)

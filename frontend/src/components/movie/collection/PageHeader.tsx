@@ -98,7 +98,7 @@ const PageHeader = forwardRef(
 					fontWeight="normal"
 					fontStyle="italic"
 					fontFamily="heading"
-					color="text.main"
+					color="foreground"
 					textAlign="left"
 					mb={1}
 					position="relative"
@@ -115,7 +115,7 @@ const PageHeader = forwardRef(
 								left="0"
 								width={animationPhase === "animating" ? "100%" : "0%"}
 								height="2px"
-								backgroundColor="accent.secondary"
+								backgroundColor="accent"
 								borderRadius="1px"
 								transition={
 									animationPhase === "reset" ? "none" : "width 0.3s ease-out"

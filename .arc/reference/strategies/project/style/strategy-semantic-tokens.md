@@ -610,6 +610,43 @@ text labels, patterns, or layout cues.
 
 Based on Material Design 3's state layer system, adopted by most modern design systems.
 
+### Link Interaction Patterns
+
+**Research:** External-research-analyst investigation of IBM Carbon, GitHub Primer, Material Design 3, Ant Design,
+Nielsen Norman Group, WCAG 2.4.13, and accessibility.org best practices (2024).
+
+**Industry Standard Pattern (Inline Text Links):**
+
+```tsx
+<Link
+  color="accent"
+  textDecoration="underline"
+  textDecorationThickness="2px"
+  textUnderlineOffset="2px"
+  _hover={{
+    color: "accent-hover",  // Brighter/more saturated shade
+  }}
+  _focus={{
+    outline: "2px solid",
+    outlineColor: "ring",
+    outlineOffset: "2px",
+  }}
+>
+  Already have an account? Sign in
+</Link>
+```
+
+**Key findings:**
+- **Default underline:** Required for accessibility (WCAG non-color indicators, helps color-blind users)
+- **Hover color change:** `accent` → `accent-hover` (warmer/brighter shade)
+- **Focus ring:** Same 2px pattern as buttons (WCAG 2.4.13 compliance, keyboard navigation)
+- **Visited states:** Declining trend in modern design - skip unless user research shows need
+
+**Pattern rationale:**
+- Underlines maximize perceived clickability (Nielsen Norman Group, Smart Interface Design 2024)
+- Color change alone is insufficient (Baymard Institute, WebAIM accessibility guidelines)
+- Consistency with button focus states improves UX across interactive elements
+
 ### State Layer Philosophy
 
 **Use opacity overlays, not color changes**, for interactive states. This approach is consistent across all tokens,

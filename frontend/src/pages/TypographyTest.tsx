@@ -1,4 +1,4 @@
-import { Box, Heading, Text, VStack, HStack } from "@chakra-ui/react";
+import { Box, Heading, Text, VStack } from "@chakra-ui/react";
 
 const TypographyTest = () => {
   return (
@@ -61,83 +61,83 @@ const TypographyTest = () => {
           <Heading as="h3" size="2xl" mb={4}>
             Font Weight Variants (Work Sans - Body Font)
           </Heading>
-          
+
           <VStack gap={4} align="start">
             <Box>
-              <Text mb={2} fontWeight="bold" fontSize="sm" color="text.muted">Footer Text Examples:</Text>
-              
+              <Text mb={2} fontWeight="bold" fontSize="sm" color="muted-foreground">Footer Text Examples:</Text>
+
               <VStack gap={3} align="start" pl={4}>
                 <Box>
-                  <Text fontSize="xs" color="text.muted" mb={1}>fontWeight="thin" (100)</Text>
-                  <Text fontSize="sm" fontWeight="thin" color="text.muted">
+                  <Text fontSize="xs" color="muted-foreground" mb={1}>fontWeight="thin" (100)</Text>
+                  <Text fontSize="sm" fontWeight="thin" color="muted-foreground">
                     © 2025 CineXplorer. All rights reserved.
                   </Text>
                 </Box>
-                
+
                 <Box>
-                  <Text fontSize="xs" color="text.muted" mb={1}>fontWeight="light" (300)</Text>
-                  <Text fontSize="sm" fontWeight="light" color="text.muted">
+                  <Text fontSize="xs" color="muted-foreground" mb={1}>fontWeight="light" (300)</Text>
+                  <Text fontSize="sm" fontWeight="light" color="muted-foreground">
                     © 2025 CineXplorer. All rights reserved.
                   </Text>
                 </Box>
-                
+
                 <Box>
-                  <Text fontSize="xs" color="text.muted" mb={1}>fontWeight="normal" (400) - Current Footer</Text>
-                  <Text fontSize="sm" fontWeight="normal" color="text.muted">
+                  <Text fontSize="xs" color="muted-foreground" mb={1}>fontWeight="normal" (400) - Current Footer</Text>
+                  <Text fontSize="sm" fontWeight="normal" color="muted-foreground">
                     © 2025 CineXplorer. All rights reserved.
                   </Text>
                 </Box>
-                
+
                 <Box>
-                  <Text fontSize="xs" color="text.muted" mb={1}>fontWeight="medium" (500) - Current Footer</Text>
-                  <Text fontSize="sm" fontWeight="medium" color="text.muted">
+                  <Text fontSize="xs" color="muted-foreground" mb={1}>fontWeight="medium" (500) - Current Footer</Text>
+                  <Text fontSize="sm" fontWeight="medium" color="muted-foreground">
                     © 2025 CineXplorer. All rights reserved.
                   </Text>
                 </Box>
-                
+
                 <Box>
-                  <Text fontSize="xs" color="text.muted" mb={1}>fontWeight="semibold" (600)</Text>
-                  <Text fontSize="sm" fontWeight="semibold" color="text.muted">
+                  <Text fontSize="xs" color="muted-foreground" mb={1}>fontWeight="semibold" (600)</Text>
+                  <Text fontSize="sm" fontWeight="semibold" color="muted-foreground">
                     © 2025 CineXplorer. All rights reserved.
                   </Text>
                 </Box>
-                
+
                 <Box>
-                  <Text fontSize="xs" color="text.muted" mb={1}>fontWeight="bold" (700)</Text>
-                  <Text fontSize="sm" fontWeight="bold" color="text.muted">
+                  <Text fontSize="xs" color="muted-foreground" mb={1}>fontWeight="bold" (700)</Text>
+                  <Text fontSize="sm" fontWeight="bold" color="muted-foreground">
                     © 2025 CineXplorer. All rights reserved.
                   </Text>
                 </Box>
               </VStack>
             </Box>
-            
+
             <Box>
-              <Text mb={2} fontWeight="bold" fontSize="sm" color="text.muted">Regular Text Examples:</Text>
-              
+              <Text mb={2} fontWeight="bold" fontSize="sm" color="muted-foreground">Regular Text Examples:</Text>
+
               <VStack gap={3} align="start" pl={4}>
                 <Box>
-                  <Text fontSize="xs" color="text.muted" mb={1}>fontWeight="thin" (100)</Text>
+                  <Text fontSize="xs" color="muted-foreground" mb={1}>fontWeight="thin" (100)</Text>
                   <Text fontWeight="thin">
                     This is regular body text in Work Sans thin weight.
                   </Text>
                 </Box>
-                
+
                 <Box>
-                  <Text fontSize="xs" color="text.muted" mb={1}>fontWeight="light" (300)</Text>
+                  <Text fontSize="xs" color="muted-foreground" mb={1}>fontWeight="light" (300)</Text>
                   <Text fontWeight="light">
                     This is regular body text in Work Sans light weight.
                   </Text>
                 </Box>
-                
+
                 <Box>
-                  <Text fontSize="xs" color="text.muted" mb={1}>fontWeight="normal" (400) - Default</Text>
+                  <Text fontSize="xs" color="muted-foreground" mb={1}>fontWeight="normal" (400) - Default</Text>
                   <Text fontWeight="normal">
                     This is regular body text in Work Sans normal weight.
                   </Text>
                 </Box>
-                
+
                 <Box>
-                  <Text fontSize="xs" color="text.muted" mb={1}>fontWeight="medium" (500)</Text>
+                  <Text fontSize="xs" color="muted-foreground" mb={1}>fontWeight="medium" (500)</Text>
                   <Text fontWeight="medium">
                     This is regular body text in Work Sans medium weight.
                   </Text>
@@ -152,34 +152,34 @@ const TypographyTest = () => {
           <Heading as="h3" size="2xl" mb={4}>
             Inter Font Demonstration
           </Heading>
-          
+
           <VStack gap={4} align="start">
             <Box>
-              <Text mb={2} fontWeight="bold" fontSize="sm" color="text.muted">Inter - Modern and Clean:</Text>
+              <Text mb={2} fontWeight="bold" fontSize="sm" color="muted-foreground">Inter - Modern and Clean:</Text>
               <VStack gap={3} align="start" pl={4}>
                 <Box>
-                  <Text fontSize="xs" color="text.muted" mb={1}>Heading style (fontFamily="inter", fontSize="2xl", fontWeight="semibold")</Text>
+                  <Text fontSize="xs" color="muted-foreground" mb={1}>Heading style (fontFamily="inter", fontSize="2xl", fontWeight="semibold")</Text>
                   <Text fontFamily="inter" fontSize="2xl" fontWeight="semibold">
                     Modern Interface Heading
                   </Text>
                 </Box>
-                
+
                 <Box>
-                  <Text fontSize="xs" color="text.muted" mb={1}>Body text (fontFamily="inter", fontSize="md")</Text>
+                  <Text fontSize="xs" color="muted-foreground" mb={1}>Body text (fontFamily="inter", fontSize="md")</Text>
                   <Text fontFamily="inter" fontSize="md">
                     This is regular body text in Inter. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
                   </Text>
                 </Box>
-                
+
                 <Box>
-                  <Text fontSize="xs" color="text.muted" mb={1}>Small utility text (fontFamily="inter", fontSize="sm", color="text.secondary")</Text>
+                  <Text fontSize="xs" color="muted-foreground" mb={1}>Small utility text (fontFamily="inter", fontSize="sm", color="text.secondary")</Text>
                   <Text fontFamily="inter" fontSize="sm" color="text.secondary">
                     Browse by • Sort by • Filter options
                   </Text>
                 </Box>
-                
+
                 <Box>
-                  <Text fontSize="xs" color="text.muted" mb={1}>Weight variants</Text>
+                  <Text fontSize="xs" color="muted-foreground" mb={1}>Weight variants</Text>
                   <VStack align="start" gap={2} pl={2}>
                     <Text fontFamily="inter" fontSize="md" fontWeight="light">Inter Light (300)</Text>
                     <Text fontFamily="inter" fontSize="md" fontWeight="normal">Inter Regular (400)</Text>
@@ -197,34 +197,34 @@ const TypographyTest = () => {
           <Heading as="h3" size="2xl" mb={4}>
             Source Sans 3 Font Demonstration
           </Heading>
-          
+
           <VStack gap={4} align="start">
             <Box>
-              <Text mb={2} fontWeight="bold" fontSize="sm" color="text.muted">Source Sans 3 - Professional and Readable:</Text>
+              <Text mb={2} fontWeight="bold" fontSize="sm" color="muted-foreground">Source Sans 3 - Professional and Readable:</Text>
               <VStack gap={3} align="start" pl={4}>
                 <Box>
-                  <Text fontSize="xs" color="text.muted" mb={1}>Heading style (fontFamily="sourcesans", fontSize="2xl", fontWeight="semibold")</Text>
+                  <Text fontSize="xs" color="muted-foreground" mb={1}>Heading style (fontFamily="sourcesans", fontSize="2xl", fontWeight="semibold")</Text>
                   <Text fontFamily="sourcesans" fontSize="2xl" fontWeight="semibold">
                     Professional Interface Heading
                   </Text>
                 </Box>
-                
+
                 <Box>
-                  <Text fontSize="xs" color="text.muted" mb={1}>Body text (fontFamily="sourcesans", fontSize="md")</Text>
+                  <Text fontSize="xs" color="muted-foreground" mb={1}>Body text (fontFamily="sourcesans", fontSize="md")</Text>
                   <Text fontFamily="sourcesans" fontSize="md">
                     This is regular body text in Source Sans 3. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
                   </Text>
                 </Box>
-                
+
                 <Box>
-                  <Text fontSize="xs" color="text.muted" mb={1}>Small utility text (fontFamily="sourcesans", fontSize="sm", color="text.secondary")</Text>
+                  <Text fontSize="xs" color="muted-foreground" mb={1}>Small utility text (fontFamily="sourcesans", fontSize="sm", color="text.secondary")</Text>
                   <Text fontFamily="sourcesans" fontSize="sm" color="text.secondary">
                     Advanced filters • Search options • Results
                   </Text>
                 </Box>
-                
+
                 <Box>
-                  <Text fontSize="xs" color="text.muted" mb={1}>Weight variants</Text>
+                  <Text fontSize="xs" color="muted-foreground" mb={1}>Weight variants</Text>
                   <VStack align="start" gap={2} pl={2}>
                     <Text fontFamily="sourcesans" fontSize="md" fontWeight="extraLight">Source Sans 3 ExtraLight (200)</Text>
                     <Text fontFamily="sourcesans" fontSize="md" fontWeight="light">Source Sans 3 Light (300)</Text>
@@ -244,127 +244,74 @@ const TypographyTest = () => {
           <Heading as="h3" size="2xl" mb={4}>
             All Font Family Comparison
           </Heading>
-          
+
           <VStack gap={4} align="start">
             <Box>
-              <Text mb={2} fontWeight="bold" fontSize="sm" color="text.muted">All Available Font Families - Same Text for Direct Comparison:</Text>
-              
+              <Text mb={2} fontWeight="bold" fontSize="sm" color="muted-foreground">All Available Font Families - Same Text for Direct Comparison:</Text>
+
               <VStack gap={3} align="start" pl={4}>
                 <Box>
-                  <Text fontSize="xs" color="text.muted" mb={1}>fontFamily="heading" (Space Grotesk) - Current heading font</Text>
+                  <Text fontSize="xs" color="muted-foreground" mb={1}>fontFamily="heading" (Space Grotesk) - Current heading font</Text>
                   <Text fontSize="lg" fontFamily="heading" fontWeight="semibold">
                     The quick brown fox jumps over the lazy dog.
                   </Text>
                 </Box>
-                
+
                 <Box>
-                  <Text fontSize="xs" color="text.muted" mb={1}>fontFamily="body" (Work Sans) - Current body font</Text>
+                  <Text fontSize="xs" color="muted-foreground" mb={1}>fontFamily="body" (Work Sans) - Current body font</Text>
                   <Text fontSize="lg" fontFamily="body" fontWeight="medium">
                     The quick brown fox jumps over the lazy dog.
                   </Text>
                 </Box>
-                
+
                 <Box>
-                  <Text fontSize="xs" color="text.muted" mb={1}>fontFamily="inter" (Inter) - New option</Text>
+                  <Text fontSize="xs" color="muted-foreground" mb={1}>fontFamily="inter" (Inter) - New option</Text>
                   <Text fontSize="lg" fontFamily="inter" fontWeight="medium">
                     The quick brown fox jumps over the lazy dog.
                   </Text>
                 </Box>
-                
+
                 <Box>
-                  <Text fontSize="xs" color="text.muted" mb={1}>fontFamily="sourcesans" (Source Sans 3) - New option</Text>
+                  <Text fontSize="xs" color="muted-foreground" mb={1}>fontFamily="sourcesans" (Source Sans 3) - New option</Text>
                   <Text fontSize="lg" fontFamily="sourcesans" fontWeight="medium">
                     The quick brown fox jumps over the lazy dog.
                   </Text>
                 </Box>
-                
+
                 <Box>
-                  <Text fontSize="xs" color="text.muted" mb={1}>fontFamily="system" (System fonts) - For utility text</Text>
+                  <Text fontSize="xs" color="muted-foreground" mb={1}>fontFamily="system" (System fonts) - For utility text</Text>
                   <Text fontSize="lg" fontFamily="system" fontWeight="medium">
                     The quick brown fox jumps over the lazy dog.
                   </Text>
                 </Box>
               </VStack>
             </Box>
-            
+
             <Box>
-              <Text mb={2} fontWeight="bold" fontSize="sm" color="text.muted">Current Usage Strategy:</Text>
-              
+              <Text mb={2} fontWeight="bold" fontSize="sm" color="muted-foreground">Current Usage Strategy:</Text>
+
               <VStack gap={3} align="start" pl={4}>
                 <Box>
-                  <Text fontSize="xs" color="text.muted" mb={1}>Headings & Branding → Space Grotesk</Text>
+                  <Text fontSize="xs" color="muted-foreground" mb={1}>Headings & Branding → Space Grotesk</Text>
                   <Text fontSize="md" fontFamily="heading" fontWeight="semibold">
                     CineXplorer • Movie Discovery • Section Headers
                   </Text>
                 </Box>
-                
+
                 <Box>
-                  <Text fontSize="xs" color="text.muted" mb={1}>Body Content → Work Sans</Text>
+                  <Text fontSize="xs" color="muted-foreground" mb={1}>Body Content → Work Sans</Text>
                   <Text fontSize="md" fontFamily="body">
                     Movie descriptions, user content, and main text blocks.
                   </Text>
                 </Box>
-                
+
                 <Box>
-                  <Text fontSize="xs" color="text.muted" mb={1}>Utility Labels → System Fonts</Text>
+                  <Text fontSize="xs" color="muted-foreground" mb={1}>Utility Labels → System Fonts</Text>
                   <Text fontSize="sm" fontFamily="system" color="text.secondary">
                     Browse by • Sort by • Filter options
                   </Text>
                 </Box>
               </VStack>
-            </Box>
-          </VStack>
-        </Box>
-
-        {/* Theme Colors Test */}
-        <Box>
-          <Heading as="h3" size="2xl" mb={4}>
-            Theme Colors Test
-          </Heading>
-          
-          <VStack gap={4} align="stretch">
-            <Box>
-              <Text mb={2} fontWeight="bold">Border Colors:</Text>
-              <HStack gap={4}>
-                <Box 
-                  p={4} 
-                  border="2px solid" 
-                  borderColor="border.separator" 
-                  borderRadius="md"
-                >
-                  border.separator (should be gray.700 #4A5568)
-                </Box>
-                <Box 
-                  p={4} 
-                  border="2px solid" 
-                  borderColor="border.subtle" 
-                  borderRadius="md"
-                >
-                  border.subtle (should be gray.200)
-                </Box>
-              </HStack>
-            </Box>
-
-            <Box>
-              <Text mb={2} fontWeight="bold">Text Colors:</Text>
-              <VStack align="start" gap={2}>
-                <Text color="text.main">text.main (white)</Text>
-                <Text color="text.muted">text.muted (gray.300)</Text>
-                <Text color="text.error">text.error (red.500)</Text>
-                <Text color="text.secondary">text.secondary (gray.400)</Text>
-              </VStack>
-            </Box>
-
-            <Box>
-              <Text mb={2} fontWeight="bold">Accent Colors:</Text>
-              <HStack gap={4}>
-                <Box p={4} bg="accent.primary" borderRadius="md" color="white">
-                  accent.primary (blue.500)
-                </Box>
-                <Box p={4} bg="accent.secondary" borderRadius="md" color="white">
-                  accent.secondary (blue.700)
-                </Box>
-              </HStack>
             </Box>
           </VStack>
         </Box>

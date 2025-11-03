@@ -957,40 +957,44 @@ and ongoing migration overhead in future tasks.
         (evolving guidance). This keeps strategy-semantic-tokens.md focused on "how to use tokens"
         rather than "how the theme system works internally".
 
-- [ ] **4.2 Convert ErrorBoundary** (60% of all hardcoded colors - 15+ instances)
+    - [ ] **4.1.5d Fix theme persistence (localStorage broken)**
 
-    **Note:** ErrorBoundary scheduled for end of Phase 4 due to complexity.
-    Handle simpler components first to build confidence with token patterns.
+        **Problem:** Theme selection doesn't persist across page reloads - always reverts to GitHub theme.
 
-    - [ ] **4.2.1 Replace error state colors in `components/ErrorBoundary.tsx`**
-        - **Source:** Phase 3.3 hardcoded color catalog
-        - `red.600`, `red.700`, `red.800` → `destructive` / `destructive-foreground`
-        - `red.50` → `destructive` with low opacity or use `destructive` background with reduced opacity
-        - `red.200` → `destructive` with border styling
-        - File location: Multiple instances throughout component
-        - Quality gate: All red.* colors replaced
+        **Root Cause:** In `frontend/src/components/chakra/theme-provider.tsx` line 32:
 
-    - [ ] **4.2.2 Replace neutral/muted colors**
-        - `gray.50`, `gray.100`, `gray.200`, `gray.300`, `gray.400`, `gray.500`,
-          `gray.600`, `gray.700` → appropriate semantic tokens:
-            - Backgrounds: `muted` / `background`
-            - Text: `muted-foreground` / `foreground`
-            - Borders: `border`
-        - Reference Phase 3.3 mapping guide for specific instances
-        - Quality gate: All gray.* colors replaced
+        ```tsx
+        const [system, setSystem] = React.useState(defaultSystem);  // Always GitHub!
+        ```
 
-    - [ ] **4.2.3 Replace informational message colors**
-        - `blue.50`, `blue.100`, `blue.500`, `blue.700` → `info` / `info-foreground`
-        - Use for helpful hints, debugging information, non-error messages
-        - Quality gate: All blue.* colors replaced with info tokens
+        The `themeName` state correctly reads from localStorage (line 31), but `system` state is always
+        initialized with `defaultSystem` (GitHub theme). The useEffect (lines 47-52) doesn't fix this because
+        `savedTheme === themeName` (both from localStorage), so the condition fails and system never updates.
 
-    - [ ] **4.2.4 Test error display comprehensively**
-        - Test in all 7 themes × 2 modes (14 combinations)
-        - Verify readability and contrast in each theme
-        - Ensure error messages remain clear and actionable
-        - Quality gate: ErrorBoundary displays correctly in all themes
+        **Fix:**
 
-- [ ] **4.3 Convert authentication pages**
+        ```tsx
+        const [system, setSystem] = React.useState(() => {
+          const initialThemeName = getInitialTheme();
+          const initialTheme = getTheme(initialThemeName);
+          return createThemeSystem(initialTheme);
+        });
+        ```
+
+        **Testing:**
+        - Select a non-GitHub theme (e.g., IBM Carbon)
+        - Refresh page
+        - Verify theme persists (not GitHub)
+        - Test with all 7 themes
+        - Test in both light and dark modes
+
+        **Quality gates:**
+        - Theme selection persists across page reloads
+        - Color mode persists independently from theme
+        - No console errors
+        - TypeScript type checking passes
+
+- [ ] **4.2 Convert authentication pages**
     - **Login** (`pages/user/Login.tsx`)
         - Replace inline hex `#4299e1` with semantic token (likely `accent`)
         - Apply semantic tokens to form elements
@@ -1002,9 +1006,9 @@ and ongoing migration overhead in future tasks.
         - Update success/error state colors to semantic tokens
         - Apply semantic border colors
 
-- [ ] **4.4 Convert movie components**
+- [ ] **4.3 Convert movie components**
 
-    - [ ] **4.4.1 Convert Featured page** (`pages/Featured.tsx`)
+    - [ ] **4.3.1 Convert Featured page** (`pages/Featured.tsx`)
         - Replace Chakra `fg`, `fg.muted` with semantic equivalents:
             - `fg` → `foreground`
             - `fg.muted` → `muted-foreground`
@@ -1012,22 +1016,22 @@ and ongoing migration overhead in future tasks.
         - Apply semantic tokens throughout
         - Quality gate: Featured page uses semantic tokens exclusively
 
-    - [ ] **4.4.2 Convert MovieDetail page** (`pages/movie/MovieDetail.tsx`)
+    - [ ] **4.3.2 Convert MovieDetail page** (`pages/movie/MovieDetail.tsx`)
         - Replace `gray.*` usage with semantic tokens per Phase 3.3 mapping
         - Apply tokens to detail sections
         - Quality gate: MovieDetail uses semantic tokens exclusively
 
-    - [ ] **4.4.3 Convert MovieCard component** (`components/movie/MovieCard.tsx`)
+    - [ ] **4.3.3 Convert MovieCard component** (`components/movie/MovieCard.tsx`)
         - Apply semantic `card` / `card-foreground` tokens
         - Ensure hover states use semantic patterns (Phase 3.7 interactive patterns)
         - **Genre tags:** Use `badge` / `badge-foreground` for neutral genre labels
         - Quality gate: MovieCard uses semantic tokens exclusively
 
-    - [ ] **4.4.4 Convert MovieCardContainer** (`components/movie/MovieCardContainer.tsx`)
+    - [ ] **4.3.4 Convert MovieCardContainer** (`components/movie/MovieCardContainer.tsx`)
         - Coordinate with MovieCard for consistent styling
         - Quality gate: Container styling consistent with MovieCard
 
-    - [ ] **4.4.5 Convert MovieUserScore component** (`components/movie/MovieUserScore.tsx`)
+    - [ ] **4.3.5 Convert MovieUserScore component** (`components/movie/MovieUserScore.tsx`)
         - **Score value display:** Use `rating` / `rating-foreground` tokens (IMDb gold standard)
         - **Score threshold backgrounds (optional):**
             - 8.0+ score: `success` background (subtle)
@@ -1037,16 +1041,16 @@ and ongoing migration overhead in future tasks.
         - Reference: Phase 3.2 MovieUserScore analysis
         - Quality gate: Score displays use rating token, backgrounds use semantic tokens
 
-    - [ ] **4.4.6 Convert MovieCollectionGrid, MovieGrid**
+    - [ ] **4.3.6 Convert MovieCollectionGrid, MovieGrid**
         - Apply tokens as needed
         - Ensure grid container styling uses semantic tokens
         - Quality gate: Grid components use semantic tokens
 
-    - [ ] **4.4.7 Convert PageHeader**
+    - [ ] **4.3.7 Convert PageHeader**
         - Update header styling to semantic tokens
         - Quality gate: PageHeader uses semantic tokens
 
-- [ ] **4.5 Convert remaining components**
+- [ ] **4.4 Convert remaining components**
     - **PaginationCtrl** (`components/layout/PaginationCtrl.tsx`)
         - Update pagination button styling
     - **TypographyTest** (`pages/TypographyTest.tsx`)
@@ -1059,6 +1063,39 @@ and ongoing migration overhead in future tasks.
     - **Other pages** - Verify and update:
         - Profile, Settings, Watchlist, PersonDetail
         - NowPlaying, Popular, TopRated, Upcoming, SearchResults
+
+- [ ] **4.5 Convert ErrorBoundary** (60% of all hardcoded colors - 15+ instances)
+
+    **Note:** ErrorBoundary scheduled for end of Phase 4 due to complexity.
+    Handle simpler components first to build confidence with token patterns.
+
+    - [ ] **4.5.1 Replace error state colors in `components/ErrorBoundary.tsx`**
+        - **Source:** Phase 3.3 hardcoded color catalog
+        - `red.600`, `red.700`, `red.800` → `destructive` / `destructive-foreground`
+        - `red.50` → `destructive/8` (8% opacity for subtle error backgrounds)
+        - `red.200` → `destructive` (border styling)
+        - File location: Multiple instances throughout component
+        - Quality gate: All red.* colors replaced
+
+    - [ ] **4.5.2 Replace neutral/muted colors**
+        - `gray.50`, `gray.100`, `gray.200`, `gray.300`, `gray.400`, `gray.500`,
+          `gray.600`, `gray.700` → appropriate semantic tokens:
+            - Backgrounds: `muted` / `background`
+            - Text: `muted-foreground` / `foreground`
+            - Borders: `border`
+        - Reference Phase 3.3 mapping guide for specific instances
+        - Quality gate: All gray.* colors replaced
+
+    - [ ] **4.5.3 Replace informational message colors**
+        - `blue.50`, `blue.100`, `blue.500`, `blue.700` → `info` / `info-foreground`
+        - Use for helpful hints, debugging information, non-error messages
+        - Quality gate: All blue.* colors replaced with info tokens
+
+    - [ ] **4.5.4 Test error display comprehensively**
+        - Test in all 7 themes × 2 modes (14 combinations)
+        - Verify readability and contrast in each theme
+        - Ensure error messages remain clear and actionable
+        - Quality gate: ErrorBoundary displays correctly in all themes
 
 - [ ] **4.6 Comprehensive theme system verification**
     - **Test all theme combinations:**

@@ -4,9 +4,11 @@
 
 ## Purpose
 
-Comprehensive standards for border treatment across CineXplorer's UI component system, covering border widths, colors, accessibility requirements, and focus state patterns.
+Comprehensive standards for border treatment across CineXplorer's UI component system, covering border widths,
+colors, accessibility requirements, and focus state patterns.
 
 **Use this when:**
+
 - Determining border width for any component type
 - Setting border color values in theme definitions
 - Implementing focus states on interactive elements
@@ -14,8 +16,10 @@ Comprehensive standards for border treatment across CineXplorer's UI component s
 - Making decisions about border treatment across 7 themes
 
 **Related documentation:**
+
 - [Semantic Token Strategy](strategy-semantic-tokens.md) - Token usage patterns (when to use which token)
-- [ADR-004: Provider-Based Multi-Theme Switching](../../adr/adr-004-provider-based-multi-theme-switching.md) - Theme system implementation
+- [ADR-004: Provider-Based Multi-Theme Switching](../../adr/adr-004-provider-based-multi-theme-switching.md) -
+  Theme system implementation
 
 ---
 
@@ -35,9 +39,11 @@ Comprehensive standards for border treatment across CineXplorer's UI component s
 
 ### Industry Standard: 1px Universal Default
 
-**Key Finding:** Modern design systems (Material Design 3, IBM Carbon, GitHub Primer, Ant Design, Bootstrap, Polaris) universally use **1px borders** for virtually all components.
+**Key Finding:** Modern design systems (Material Design 3, IBM Carbon, GitHub Primer, Ant Design, Bootstrap, Polaris)
+universally use **1px borders** for virtually all components.
 
 **No Component Type Differentiation:**
+
 - Text inputs: 1px
 - Buttons (outline): 1px
 - Cards: 1px
@@ -50,6 +56,7 @@ Comprehensive standards for border treatment across CineXplorer's UI component s
 ### Border Width Does NOT Compensate for Poor Contrast
 
 **Critical Principle from WCAG:**
+
 - A 1px border with 4.5:1 contrast is more accessible than a 2px border with 2:1 contrast
 - Thicker borders don't fix visibility if color contrast is insufficient
 - WCAG has no trade-off mechanism between width and contrast
@@ -58,6 +65,7 @@ Comprehensive standards for border treatment across CineXplorer's UI component s
 ### State Differentiation via Focus Rings, Not Border Width
 
 **Industry Best Practice:**
+
 - Keep border at 1px across all states (default, hover, focus)
 - Add 2-3px **outline ring with offset** on focus
 - Avoids layout shift when element receives focus
@@ -87,41 +95,49 @@ Comprehensive standards for border treatment across CineXplorer's UI component s
 ### By State
 
 **Default State:**
+
 - 1px for all components (except checkboxes/radios: 2px)
 - Explicit `borderWidth="1px"` in component props
 
 **Hover State:**
+
 - Keep same width (1px)
 - May change border color to darker/stronger variant
 - Never increase border width on hover
 
 **Focus State:**
+
 - Keep border at 1px
 - Add 2-3px outline ring with 2px offset
 - Change border color to focus color (optional)
 - **Do not increase border width** (causes layout shift)
 
 **Active/Pressed State:**
+
 - Same as focus or slight color variation
 - Keep 1px border width
 
 **Disabled State:**
+
 - Keep 1px border width
 - Reduce opacity or change to muted color
 
 ### Exceptions to 1px Standard
 
 **Checkboxes and Radio Buttons: 2px**
+
 - Rationale: Helps differentiate these controls from text inputs
 - Common across design systems
 - Aligns with 2px stroke width in icon sets
 
 **Active Tab Indicators: 2-3px**
+
 - Bottom border used as visual indicator of active state
 - Not a structural border, but a state indicator
 - Only on active tab, not all tabs
 
 **Strong Emphasis Borders: 3-4px (Rare)**
+
 - Use sparingly for very strong visual emphasis
 - Example: Error state on critical validation
 - Consider whether shadow or background color is better alternative
@@ -134,9 +150,11 @@ Comprehensive standards for border treatment across CineXplorer's UI component s
 
 **Shared Border Color Approach (Recommended):**
 
-Modern design systems predominantly use shared border colors across component types (60%+ of systems). When systems differentiate, they use semantic aliases pointing to the same base value.
+Modern design systems predominantly use shared border colors across component types (60%+ of systems). When systems
+differentiate, they use semantic aliases pointing to the same base value.
 
 **Token Structure:**
+
 ```typescript
 // Base border color variants
 border: {
@@ -160,6 +178,7 @@ border-ring: 'primary.500',   // Focus ring color
 ### Why Use Shared Colors?
 
 **Benefits:**
+
 1. Visual consistency across UI
 2. Simpler maintenance (single source of truth)
 3. Aligns with 60%+ of modern design systems
@@ -167,6 +186,7 @@ border-ring: 'primary.500',   // Focus ring color
 5. Reduces cognitive load for developers
 
 **When semantic aliases help:**
+
 - Future flexibility: Can change `input` token without affecting all borders
 - Clear intent: `borderColor="input"` communicates purpose
 - Component-specific tuning: Can adjust inputs independently if needed later
@@ -174,11 +194,13 @@ border-ring: 'primary.500',   // Focus ring color
 ### Color Contrast Requirements
 
 **All border colors must meet:**
+
 - Minimum 3:1 contrast ratio with adjacent backgrounds (WCAG SC 1.4.11)
 - Recommended 4.5:1 for better visibility
 - Test across all themes and modes (light/dark)
 
 **Testing Example:**
+
 ```typescript
 // Light mode - checking if #D4D4D4 border on white background passes
 background: '#FFFFFF' (L = 1.0)
@@ -199,6 +221,7 @@ contrast = (1.0 + 0.05) / (0.27 + 0.05) = 3.28:1 ✅ PASS
 ### Recommended Pattern: Outline Ring with Offset
 
 **Implementation:**
+
 ```tsx
 <Input
   borderWidth="1px"
@@ -213,6 +236,7 @@ contrast = (1.0 + 0.05) / (0.27 + 0.05) = 3.28:1 ✅ PASS
 ```
 
 **Why This Pattern:**
+
 - ✅ No layout shift on focus (outline is outside element)
 - ✅ Meets WCAG 2.4.13 (2px minimum thickness)
 - ✅ Clear visual indication (separated from border)
@@ -222,6 +246,7 @@ contrast = (1.0 + 0.05) / (0.27 + 0.05) = 3.28:1 ✅ PASS
 ### Alternative Pattern: Border Width Increase
 
 **Implementation:**
+
 ```tsx
 <Input
   borderWidth="1px"
@@ -234,6 +259,7 @@ contrast = (1.0 + 0.05) / (0.27 + 0.05) = 3.28:1 ✅ PASS
 ```
 
 **Trade-offs:**
+
 - ✅ Simpler CSS
 - ❌ Causes layout shift (element grows by 1px)
 - ❌ Requires careful spacing adjustments
@@ -244,17 +270,20 @@ contrast = (1.0 + 0.05) / (0.27 + 0.05) = 3.28:1 ✅ PASS
 ### Focus Indicator Specifications
 
 **Minimum Requirements (WCAG 2.4.13):**
+
 - Thickness: ≥2px
 - Contrast: ≥3:1 change between focused/unfocused states
 - Visibility: Always visible when element has focus
 
 **Recommended Values:**
+
 - **Ring width:** 2-3px (2px minimum, 3px better visibility)
 - **Ring offset:** 2px (separates from border)
 - **Ring color:** High contrast accent (primary color)
 - **Border color change:** Optional, but helpful
 
 **Accessibility Enhancement:**
+
 ```tsx
 // Enhanced focus pattern with maximum visibility
 _focus={{
@@ -286,16 +315,19 @@ This improves mobile UX by hiding focus rings on touch interactions while mainta
 ### WCAG Success Criteria
 
 **SC 1.4.11: Non-text Contrast (Level AA)**
+
 - Requires **3:1 contrast ratio** for UI component boundaries
 - Applies to borders that define interactive elements
 - **Critical for inputs, buttons, checkboxes, radio buttons**
 
 **SC 2.4.7: Focus Visible (Level AA)**
+
 - Focus indicators must be visible when element has focus
 - No specific contrast/size requirements in this criterion
 - Baseline requirement: something must be visible
 
 **SC 2.4.13: Focus Appearance (Level AAA - WCAG 2.2)**
+
 - Focus indicator ≥2px thick perimeter area OR
 - ≥3:1 contrast ratio change between focused/unfocused states
 - Most strict requirement, recommended target
@@ -303,11 +335,13 @@ This improves mobile UX by hiding focus rings on touch interactions while mainta
 ### Component-Specific Requirements
 
 **Interactive Elements (Inputs, Buttons, Checkboxes):**
+
 - Border contrast: ≥3:1 minimum (4.5:1 recommended)
 - Focus indicator: ≥2px thickness with ≥3:1 contrast change
 - Must be perceivable to indicate interactivity
 
 **Non-Interactive Boundaries (Cards, Dividers):**
+
 - Border contrast: ≥3:1 recommended (not strictly required)
 - Can be more subtle since not interactive
 - Use shadow if border doesn't meet contrast
@@ -331,6 +365,7 @@ Before deploying any theme:
 ### Theme Definition Pattern
 
 **For all 7 themes:**
+
 ```typescript
 // In theme definition file (e.g., github.ts, ibm-carbon.ts)
 export const themeName: Theme = {
@@ -355,6 +390,7 @@ export const themeName: Theme = {
 ```
 
 **Key Points:**
+
 1. `border` and `input` tokens should reference **border colors**, never background colors
 2. Ensure `border_default` palette color has ≥3:1 contrast with page background
 3. `ring` token should be high contrast accent (primary color)
@@ -363,6 +399,7 @@ export const themeName: Theme = {
 ### Component Implementation Pattern
 
 **Text Input:**
+
 ```tsx
 <Input
   borderWidth="1px"
@@ -380,6 +417,7 @@ export const themeName: Theme = {
 ```
 
 **Checkbox:**
+
 ```tsx
 <Checkbox.Control
   borderWidth="2px"              // Thicker than text inputs
@@ -393,6 +431,7 @@ export const themeName: Theme = {
 ```
 
 **Outlined Button:**
+
 ```tsx
 <Button
   variant="outline"
@@ -407,6 +446,7 @@ export const themeName: Theme = {
 ```
 
 **Card:**
+
 ```tsx
 <Card
   borderWidth="1px"
@@ -448,6 +488,7 @@ console.log(`Contrast: ${result.ratio}:1 - ${result.passes ? 'PASS' : 'FAIL'}`);
 ### Border Width by Component
 
 **Standard (1px):**
+
 - Text inputs, select, textarea
 - Outlined buttons
 - Cards (when using borders)
@@ -456,13 +497,16 @@ console.log(`Contrast: ${result.ratio}:1 - ${result.passes ? 'PASS' : 'FAIL'}`);
 - Modals, popovers
 
 **Thicker (2px):**
+
 - Checkboxes
 - Radio buttons
 
 **Focus Rings (2-3px):**
+
 - All interactive elements when focused
 
 **Indicators (2-3px):**
+
 - Active tab underlines
 
 ### Decision Tree
@@ -477,6 +521,7 @@ console.log(`Contrast: ${result.ratio}:1 - ${result.passes ? 'PASS' : 'FAIL'}`);
 ### Common Patterns
 
 **Form Input with Focus:**
+
 ```tsx
 borderWidth="1px"
 borderColor="input"
@@ -488,12 +533,14 @@ _focus={{
 ```
 
 **Card with Subtle Border:**
+
 ```tsx
 borderWidth="1px"
 borderColor="border.subtle"
 ```
 
 **Button Outline:**
+
 ```tsx
 borderWidth="1px"
 borderColor="border.default"
@@ -519,16 +566,20 @@ _focus={{
 
 ## Version History
 
-- **1.0** (2025-11-03): Initial comprehensive guide based on external research across 15+ design systems (Material Design 3, IBM Carbon, GitHub Primer, Ant Design, Bootstrap, Polaris, USWDS, and others). Establishes 1px universal standard, focus ring pattern, and WCAG compliance requirements.
+- **1.0** (2025-11-03): Initial comprehensive guide based on external research across 15+ design systems
+  (Material Design 3, IBM Carbon, GitHub Primer, Ant Design, Bootstrap, Polaris, USWDS, and others).
+  Establishes 1px universal standard, focus ring pattern, and WCAG compliance requirements.
 
 ---
 
 ## Sources
 
 **Research Foundation:**
-This strategy is based on comprehensive external research analyzing 15+ production design systems and WCAG 2.2 accessibility specifications. Full research report available in session notes (2025-11-03 validation work).
+This strategy is based on comprehensive external research analyzing 15+ production design systems and WCAG 2.2
+accessibility specifications. Full research report available in session notes (2025-11-03 validation work).
 
 **Key Design Systems Analyzed:**
+
 - Material Design 3 (Google)
 - IBM Carbon Design System
 - GitHub Primer
@@ -541,17 +592,20 @@ This strategy is based on comprehensive external research analyzing 15+ producti
 - Atlassian Design System
 
 **WCAG Specifications:**
+
 - WCAG 2.2 SC 1.4.11: Non-text Contrast
 - WCAG 2.2 SC 2.4.7: Focus Visible
 - WCAG 2.2 SC 2.4.13: Focus Appearance (Level AAA)
 
 **Accessibility Resources:**
+
 - WebAIM Contrast Checker
 - Sara Soueidan: Accessible Focus Indicators Guide
 
 ---
 
 **Document Maintainer:** Update this strategy when:
+
 - Adding new component types requiring border decisions
 - Changing theme border color definitions
 - Discovering accessibility issues with current approach

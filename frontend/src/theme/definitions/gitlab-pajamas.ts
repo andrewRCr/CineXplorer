@@ -18,26 +18,6 @@ import type { Theme } from "../types";
  * Chakra UI uses RGB space-separated format to support opacity modifiers
  * like bg="primary/50" for 50% opacity.
  */
-function hexToRgb(hex: string): string {
-	// Remove # if present
-	const cleanHex = hex.replace("#", "");
-
-	// Handle translucent colors (8-char hex with alpha)
-	if (cleanHex.length === 8) {
-		const r = parseInt(cleanHex.substring(0, 2), 16);
-		const g = parseInt(cleanHex.substring(2, 4), 16);
-		const b = parseInt(cleanHex.substring(4, 6), 16);
-		// Ignore alpha channel - Chakra handles opacity separately
-		return `${r} ${g} ${b}`;
-	}
-
-	// Standard 6-char hex
-	const result = /^([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(cleanHex);
-	if (!result) {
-		throw new Error(`Invalid hex color: ${hex}`);
-	}
-	return `${parseInt(result[1], 16)} ${parseInt(result[2], 16)} ${parseInt(result[3], 16)}`;
-}
 
 /**
  * GitLab Pajamas theme for CineXplorer.
@@ -52,134 +32,134 @@ export const gitlabPajamasTheme: Theme = {
 
 	light: {
 		// Base colors
-		background: hexToRgb(pLight.bg_default), // Pure white
-		foreground: hexToRgb(pLight.fg_default), // Dark gray text
+		background: pLight.bg_default, // Pure white
+		foreground: pLight.fg_default, // Dark gray text
 
 		// Card colors (elevated surfaces)
-		card: hexToRgb(pLight.bg_muted), // Very subtle gray (neutral-10)
-		"card-foreground": hexToRgb(pLight.fg_default),
+		card: pLight.bg_muted, // Very subtle gray (neutral-10)
+		"card-foreground": pLight.fg_default,
 
 		// Popover colors (dropdowns, tooltips)
-		popover: hexToRgb(pLight.bg_default), // White
-		"popover-foreground": hexToRgb(pLight.fg_default),
+		popover: pLight.bg_default, // White
+		"popover-foreground": pLight.fg_default,
 
 		// Primary colors (main action buttons)
 		// GitLab uses blue for primary interactive elements
-		primary: hexToRgb(pLight.bg_accent_hover), // Blue-500
-		"primary-foreground": hexToRgb(pLight.fg_onEmphasis), // White text
+		primary: pLight.bg_accent_hover, // Blue-500
+		"primary-foreground": pLight.fg_onEmphasis, // White text
 
 		// Secondary colors (alternate actions, less prominent)
-		secondary: hexToRgb(pLight.bg_button_secondary), // White with borders
-		"secondary-foreground": hexToRgb(pLight.fg_default), // Dark text
+		secondary: pLight.bg_button_secondary, // White with borders
+		"secondary-foreground": pLight.fg_default, // Dark text
 
 		// Muted colors (backgrounds, disabled states)
-		muted: hexToRgb(pLight.bg_muted), // Subtle gray background
-		"muted-foreground": hexToRgb(pLight.fg_muted), // Medium gray text
+		muted: pLight.bg_muted, // Subtle gray background
+		"muted-foreground": pLight.fg_muted, // Medium gray text
 
 		// Accent colors (links, selections, focus)
-		accent: hexToRgb(pLight.fg_accent), // Blue-700 (darker for links)
-		"accent-foreground": hexToRgb(pLight.fg_onEmphasis), // White text
+		accent: pLight.fg_accent, // Blue-700 (darker for links)
+		"accent-foreground": pLight.fg_onEmphasis, // White text
 
 		// Destructive colors (delete, remove, etc.)
-		destructive: hexToRgb(pLight.bg_danger), // Red-600
-		"destructive-foreground": hexToRgb(pLight.fg_onEmphasis), // White text
+		destructive: pLight.bg_danger, // Red-600
+		"destructive-foreground": pLight.fg_onEmphasis, // White text
 
 		// Status colors - Success (positive outcomes)
-		success: hexToRgb(pLight.bg_success), // Green-500
-		"success-foreground": hexToRgb(pLight.fg_onEmphasis), // White text
+		success: pLight.bg_success, // Green-500
+		"success-foreground": pLight.fg_onEmphasis, // White text
 
 		// Status colors - Warning (caution/attention)
-		warning: hexToRgb(pLight.fg_warning), // Orange-600 (GitLab official)
-		"warning-foreground": hexToRgb(pLight.fg_onEmphasis), // White text
+		warning: pLight.fg_warning, // Orange-600 (GitLab official)
+		"warning-foreground": pLight.fg_onEmphasis, // White text
 
 		// Status colors - Info (informational)
-		info: hexToRgb(pLight.fg_info), // Blue-500 (GitLab official)
-		"info-foreground": hexToRgb(pLight.fg_onEmphasis), // White text
+		info: pLight.fg_info, // Blue-500 (GitLab official)
+		"info-foreground": pLight.fg_onEmphasis, // White text
 
 		// Rating colors (movie-specific)
-		rating: hexToRgb(pLight.fg_rating), // Gold adapted for GitLab
-		"rating-foreground": hexToRgb(pLight.fg_default), // Dark text
+		rating: pLight.fg_rating, // Gold adapted for GitLab
+		"rating-foreground": pLight.fg_default, // Dark text
 
 		// Surface elevation (featured sections, modals)
-		"surface-elevated": hexToRgb(pLight.bg_emphasis), // Neutral-50 (3rd layer)
+		"surface-elevated": pLight.bg_emphasis, // Neutral-50 (3rd layer)
 
 		// Badge colors (neutral tags)
-		badge: hexToRgb(pLight.bg_muted), // Neutral-10
-		"badge-foreground": hexToRgb(pLight.fg_muted), // Neutral-600
+		badge: pLight.bg_muted, // Neutral-10
+		"badge-foreground": pLight.fg_muted, // Neutral-600
 
 		// Interactive states - Drag and drop
-		"drag-active": hexToRgb(pLight.bg_accent_active), // Blue-600 (active state)
-		"drop-zone": hexToRgb(pLight.bg_emphasis), // Neutral-50 (subtle emphasis)
+		"drag-active": pLight.bg_accent_active, // Blue-600 (active state)
+		"drop-zone": pLight.bg_emphasis, // Neutral-50 (subtle emphasis)
 
 		// UI element colors
-		border: hexToRgb(pLight.border_default), // Medium gray
-		input: hexToRgb(pLight.bg_default), // White background
-		ring: hexToRgb(pLight.fg_accent), // Blue focus ring
+		border: pLight.border_default, // Medium gray
+		input: pLight.bg_default, // White background
+		ring: pLight.fg_accent, // Blue focus ring
 	},
 
 	dark: {
 		// Base colors
-		background: hexToRgb(pDark.bg_default), // Near black (neutral-950)
-		foreground: hexToRgb(pDark.fg_default), // Light gray text
+		background: pDark.bg_default, // Near black (neutral-950)
+		foreground: pDark.fg_default, // Light gray text
 
 		// Card colors (elevated surfaces)
-		card: hexToRgb(pDark.bg_muted), // Neutral-900 (lighter than background)
-		"card-foreground": hexToRgb(pDark.fg_default),
+		card: pDark.bg_muted, // Neutral-900 (lighter than background)
+		"card-foreground": pDark.fg_default,
 
 		// Popover colors (dropdowns, tooltips)
-		popover: hexToRgb(pDark.bg_inset), // Neutral-800 (elevated)
-		"popover-foreground": hexToRgb(pDark.fg_default),
+		popover: pDark.bg_inset, // Neutral-800 (elevated)
+		"popover-foreground": pDark.fg_default,
 
 		// Primary colors (main action buttons)
-		primary: hexToRgb(pDark.bg_accent_hover), // Blue-300 (lighter for dark)
-		"primary-foreground": hexToRgb(pDark.fg_onEmphasis), // Near black text
+		primary: pDark.bg_accent_hover, // Blue-300 (lighter for dark)
+		"primary-foreground": pDark.fg_onEmphasis, // Near black text
 
 		// Secondary colors (alternate actions, less prominent)
-		secondary: hexToRgb(pDark.bg_button_secondary), // Neutral-900
-		"secondary-foreground": hexToRgb(pDark.fg_default), // Light text
+		secondary: pDark.bg_button_secondary, // Neutral-900
+		"secondary-foreground": pDark.fg_default, // Light text
 
 		// Muted colors (backgrounds, disabled states)
-		muted: hexToRgb(pDark.bg_muted), // Neutral-900 background
-		"muted-foreground": hexToRgb(pDark.fg_muted), // Medium gray text
+		muted: pDark.bg_muted, // Neutral-900 background
+		"muted-foreground": pDark.fg_muted, // Medium gray text
 
 		// Accent colors (links, selections, focus)
-		accent: hexToRgb(pDark.fg_accent), // Blue-200 (lighter for dark bg)
-		"accent-foreground": hexToRgb(pDark.fg_onEmphasis), // Near black text
+		accent: pDark.fg_accent, // Blue-200 (lighter for dark bg)
+		"accent-foreground": pDark.fg_onEmphasis, // Near black text
 
 		// Destructive colors (delete, remove, etc.)
-		destructive: hexToRgb(pDark.bg_danger), // Red-400 (lighter for dark)
-		"destructive-foreground": hexToRgb(pDark.fg_onEmphasis), // Near black text
+		destructive: pDark.bg_danger, // Red-400 (lighter for dark)
+		"destructive-foreground": pDark.fg_onEmphasis, // Near black text
 
 		// Status colors - Success (positive outcomes)
-		success: hexToRgb(pDark.bg_success), // Green-300 (lighter for dark)
-		"success-foreground": hexToRgb(pDark.fg_onEmphasis), // Near black text
+		success: pDark.bg_success, // Green-300 (lighter for dark)
+		"success-foreground": pDark.fg_onEmphasis, // Near black text
 
 		// Status colors - Warning (caution/attention)
-		warning: hexToRgb(pDark.fg_warning), // Orange-300 (GitLab official)
-		"warning-foreground": hexToRgb(pDark.fg_onEmphasis), // Near black text
+		warning: pDark.fg_warning, // Orange-300 (GitLab official)
+		"warning-foreground": pDark.fg_onEmphasis, // Near black text
 
 		// Status colors - Info (informational)
-		info: hexToRgb(pDark.fg_info), // Blue-300 (GitLab official)
-		"info-foreground": hexToRgb(pDark.fg_onEmphasis), // Near black text
+		info: pDark.fg_info, // Blue-300 (GitLab official)
+		"info-foreground": pDark.fg_onEmphasis, // Near black text
 
 		// Rating colors (movie-specific)
-		rating: hexToRgb(pDark.fg_rating), // Bright gold for dark mode
-		"rating-foreground": hexToRgb(pDark.fg_onEmphasis), // Near black text
+		rating: pDark.fg_rating, // Bright gold for dark mode
+		"rating-foreground": pDark.fg_onEmphasis, // Near black text
 
 		// Surface elevation (featured sections, modals)
-		"surface-elevated": hexToRgb(pDark.bg_emphasis), // Neutral-800 (3rd layer, lighter than card)
+		"surface-elevated": pDark.bg_emphasis, // Neutral-800 (3rd layer, lighter than card)
 
 		// Badge colors (neutral tags)
-		badge: hexToRgb(pDark.bg_button_secondary), // Neutral-900
-		"badge-foreground": hexToRgb(pDark.fg_muted), // Neutral-200
+		badge: pDark.bg_button_secondary, // Neutral-900
+		"badge-foreground": pDark.fg_muted, // Neutral-200
 
 		// Interactive states - Drag and drop
-		"drag-active": hexToRgb(pDark.bg_accent_active), // Blue-400 (active state)
-		"drop-zone": hexToRgb(pDark.bg_emphasis), // Neutral-800 (subtle emphasis)
+		"drag-active": pDark.bg_accent_active, // Blue-400 (active state)
+		"drop-zone": pDark.bg_emphasis, // Neutral-800 (subtle emphasis)
 
 		// UI element colors
-		border: hexToRgb(pDark.border_default), // Neutral-700
-		input: hexToRgb(pDark.bg_muted), // Neutral-900 background
-		ring: hexToRgb(pDark.fg_accent), // Light blue focus ring
+		border: pDark.border_default, // Neutral-700
+		input: pDark.bg_muted, // Neutral-900 background
+		ring: pDark.fg_accent, // Light blue focus ring
 	},
 } as const;

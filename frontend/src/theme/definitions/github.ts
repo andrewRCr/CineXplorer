@@ -12,34 +12,6 @@ import { githubPaletteLight as pLight, githubPaletteDark as pDark } from "../pal
 import type { Theme } from "../types";
 
 /**
- * Convert hex color to RGB space-separated string for Chakra UI.
- * Example: "#ffffff" → "255 255 255"
- *
- * Chakra UI uses RGB space-separated format to support opacity modifiers
- * like bg="primary/50" for 50% opacity.
- */
-function hexToRgb(hex: string): string {
-	// Remove # if present
-	const cleanHex = hex.replace("#", "");
-
-	// Handle translucent colors (8-char hex with alpha)
-	if (cleanHex.length === 8) {
-		const r = parseInt(cleanHex.substring(0, 2), 16);
-		const g = parseInt(cleanHex.substring(2, 4), 16);
-		const b = parseInt(cleanHex.substring(4, 6), 16);
-		// Ignore alpha channel - Chakra handles opacity separately
-		return `${r} ${g} ${b}`;
-	}
-
-	// Standard 6-char hex
-	const result = /^([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(cleanHex);
-	if (!result) {
-		throw new Error(`Invalid hex color: ${hex}`);
-	}
-	return `${parseInt(result[1], 16)} ${parseInt(result[2], 16)} ${parseInt(result[3], 16)}`;
-}
-
-/**
  * GitHub Primer theme for CineXplorer.
  *
  * Provides neutral, accessible color palette following GitHub's proven
@@ -50,135 +22,134 @@ export const githubTheme: Theme = {
 	label: "GitHub",
 
 	light: {
-		// Base colors
-		background: hexToRgb(pLight.bg_default), // Pure white
-		foreground: hexToRgb(pLight.fg_default), // Near black text
+		// Base colors - DIRECT HEX (no conversion)
+		background: pLight.bg_default,
+		foreground: pLight.fg_default,
 
-		// Card colors (elevated surfaces)
-		card: hexToRgb(pLight.bg_default), // Same as background (flat design)
-		"card-foreground": hexToRgb(pLight.fg_default),
+		// Card colors
+		card: pLight.bg_default,
+		"card-foreground": pLight.fg_default,
 
-		// Popover colors (dropdowns, tooltips)
-		popover: hexToRgb(pLight.bg_default),
-		"popover-foreground": hexToRgb(pLight.fg_default),
+		// Popover colors
+		popover: pLight.bg_default,
+		"popover-foreground": pLight.fg_default,
 
-		// Primary colors (main action buttons)
-		// Note: GitHub uses green for primary actions (success semantic)
-		primary: hexToRgb(pLight.bg_success), // Green
-		"primary-foreground": hexToRgb(pLight.fg_onEmphasis), // White text
+		// Primary colors
+		primary: pLight.bg_success,
+		"primary-foreground": pLight.fg_onEmphasis,
 
-		// Secondary colors (alternate actions, less prominent)
-		secondary: hexToRgb(pLight.bg_button_secondary), // Light gray
-		"secondary-foreground": hexToRgb(pLight.fg_default), // Dark text
+		// Secondary colors
+		secondary: pLight.bg_button_secondary,
+		"secondary-foreground": pLight.fg_default,
 
-		// Muted colors (backgrounds, disabled states)
-		muted: hexToRgb(pLight.bg_muted), // Light gray background
-		"muted-foreground": hexToRgb(pLight.fg_muted), // Medium gray text
+		// Muted colors
+		muted: pLight.bg_muted,
+		"muted-foreground": pLight.fg_muted,
 
-		// Accent colors (links, selections, focus)
-		accent: hexToRgb(pLight.fg_accent), // Blue
-		"accent-foreground": hexToRgb(pLight.fg_onEmphasis), // White text
+		// Accent colors
+		accent: pLight.fg_accent,
+		"accent-foreground": pLight.fg_onEmphasis,
 
-		// Destructive colors (delete, remove, etc.)
-		destructive: hexToRgb(pLight.bg_danger), // Red
-		"destructive-foreground": hexToRgb(pLight.fg_onEmphasis), // White text
+		// Destructive colors
+		destructive: pLight.bg_danger,
+		"destructive-foreground": pLight.fg_onEmphasis,
 
-		// Status colors - Success (positive outcomes)
-		success: hexToRgb(pLight.bg_success), // Green
-		"success-foreground": hexToRgb(pLight.fg_onEmphasis), // White text
+		// Status colors - Success
+		success: pLight.bg_success,
+		"success-foreground": pLight.fg_onEmphasis,
 
-		// Status colors - Warning (caution/attention)
-		warning: hexToRgb(pLight.bg_attention), // Gold/yellow
-		"warning-foreground": hexToRgb(pLight.fg_attention), // Dark brown text
+		// Status colors - Warning
+		warning: pLight.bg_attention,
+		"warning-foreground": pLight.fg_attention,
 
-		// Status colors - Info (informational)
-		info: hexToRgb(pLight.bg_info), // Blue
-		"info-foreground": hexToRgb(pLight.fg_onEmphasis), // White text
+		// Status colors - Info
+		info: pLight.bg_info,
+		"info-foreground": pLight.fg_onEmphasis,
 
-		// Rating colors (movie-specific)
-		rating: hexToRgb(pLight.fg_rating), // IMDb gold adapted
-		"rating-foreground": hexToRgb(pLight.fg_onEmphasis), // White text
+		// Rating colors
+		rating: pLight.fg_rating,
+		"rating-foreground": pLight.fg_onEmphasis,
 
-		// Surface elevation (featured sections, modals)
-		"surface-elevated": hexToRgb(pLight.bg_emphasis), // Light blue emphasis
+		// Surface elevation
+		"surface-elevated": pLight.bg_emphasis,
 
-		// Badge colors (neutral tags)
-		badge: hexToRgb(pLight.bg_muted), // Light gray
-		"badge-foreground": hexToRgb(pLight.fg_muted), // Medium gray text
+		// Badge colors
+		badge: pLight.bg_muted,
+		"badge-foreground": pLight.fg_muted,
 
-		// Interactive states - Drag and drop
-		"drag-active": hexToRgb(pLight.bg_button_secondary_hover), // Darker gray (active)
-		"drop-zone": hexToRgb(pLight.bg_emphasis), // Light blue (success tint)
+		// Interactive states
+		"drag-active": pLight.bg_button_secondary_hover,
+		"drop-zone": pLight.bg_emphasis,
 
 		// UI element colors
-		border: hexToRgb(pLight.border_default), // Medium gray
-		input: hexToRgb(pLight.bg_default), // White background
-		ring: hexToRgb(pLight.fg_accent), // Blue focus ring
+		border: pLight.border_default,
+		input: pLight.bg_default,
+		ring: pLight.fg_accent,
 	},
 
 	dark: {
-		// Base colors
-		background: hexToRgb(pDark.bg_default), // Near black
-		foreground: hexToRgb(pDark.fg_default), // Near white text
+		// Base colors - DIRECT HEX (no conversion)
+		background: pDark.bg_default,
+		foreground: pDark.fg_default,
 
-		// Card colors (elevated surfaces)
-		card: hexToRgb(pDark.bg_inset), // Darker than background
-		"card-foreground": hexToRgb(pDark.fg_default),
+		// Card colors
+		card: pDark.bg_inset,
+		"card-foreground": pDark.fg_default,
 
-		// Popover colors (dropdowns, tooltips)
-		popover: hexToRgb(pDark.bg_inset),
-		"popover-foreground": hexToRgb(pDark.fg_default),
+		// Popover colors
+		popover: pDark.bg_inset,
+		"popover-foreground": pDark.fg_default,
 
-		// Primary colors (main action buttons)
-		primary: hexToRgb(pDark.bg_success), // Green
-		"primary-foreground": hexToRgb(pDark.fg_onEmphasis), // Near black text
+		// Primary colors
+		primary: pDark.bg_success,
+		"primary-foreground": pDark.fg_onEmphasis,
 
-		// Secondary colors (alternate actions, less prominent)
-		secondary: hexToRgb(pDark.bg_button_secondary), // Dark gray
-		"secondary-foreground": hexToRgb(pDark.fg_default), // Light text
+		// Secondary colors
+		secondary: pDark.bg_button_secondary,
+		"secondary-foreground": pDark.fg_default,
 
-		// Muted colors (backgrounds, disabled states)
-		muted: hexToRgb(pDark.bg_muted), // Medium dark background
-		"muted-foreground": hexToRgb(pDark.fg_muted), // Medium gray text
+		// Muted colors
+		muted: pDark.bg_muted,
+		"muted-foreground": pDark.fg_muted,
 
-		// Accent colors (links, selections, focus)
-		accent: hexToRgb(pDark.fg_accent), // Lighter blue for dark bg
-		"accent-foreground": hexToRgb(pDark.fg_onEmphasis), // Near black text
+		// Accent colors
+		accent: pDark.fg_accent,
+		"accent-foreground": pDark.fg_onEmphasis,
 
-		// Destructive colors (delete, remove, etc.)
-		destructive: hexToRgb(pDark.bg_danger), // Red
-		"destructive-foreground": hexToRgb(pDark.fg_onEmphasis), // Near black text
+		// Destructive colors
+		destructive: pDark.bg_danger,
+		"destructive-foreground": pDark.fg_onEmphasis,
 
-		// Status colors - Success (positive outcomes)
-		success: hexToRgb(pDark.bg_success), // Green
-		"success-foreground": hexToRgb(pDark.fg_onEmphasis), // Near black text
+		// Status colors - Success
+		success: pDark.bg_success,
+		"success-foreground": pDark.fg_onEmphasis,
 
-		// Status colors - Warning (caution/attention)
-		warning: hexToRgb(pDark.bg_attention), // Gold/brown
-		"warning-foreground": hexToRgb(pDark.fg_attention), // Light yellow text
+		// Status colors - Warning
+		warning: pDark.bg_attention,
+		"warning-foreground": pDark.fg_attention,
 
-		// Status colors - Info (informational)
-		info: hexToRgb(pDark.bg_info), // Blue
-		"info-foreground": hexToRgb(pDark.fg_onEmphasis), // Near black text
+		// Status colors - Info
+		info: pDark.bg_info,
+		"info-foreground": pDark.fg_onEmphasis,
 
-		// Rating colors (movie-specific)
-		rating: hexToRgb(pDark.fg_rating), // Brighter gold for dark mode
-		"rating-foreground": hexToRgb(pDark.fg_onEmphasis), // Near black text
+		// Rating colors
+		rating: pDark.fg_rating,
+		"rating-foreground": pDark.fg_onEmphasis,
 
-		// Surface elevation (featured sections, modals)
-		"surface-elevated": hexToRgb(pDark.bg_muted), // Lighter than card (tonal progression)
+		// Surface elevation
+		"surface-elevated": pDark.bg_muted,
 
-		// Badge colors (neutral tags)
-		badge: hexToRgb(pDark.bg_button_secondary), // Dark gray
-		"badge-foreground": hexToRgb(pDark.fg_muted), // Medium gray text
+		// Badge colors
+		badge: pDark.bg_button_secondary,
+		"badge-foreground": pDark.fg_muted,
 
-		// Interactive states - Drag and drop
-		"drag-active": hexToRgb(pDark.bg_button_secondary_hover), // Lighter gray (active)
-		"drop-zone": hexToRgb(pDark.bg_emphasis), // Blue (accent tint)
+		// Interactive states
+		"drag-active": pDark.bg_button_secondary_hover,
+		"drop-zone": pDark.bg_emphasis,
 
 		// UI element colors
-		border: hexToRgb(pDark.border_default), // Dark gray
-		input: hexToRgb(pDark.bg_default), // Near black background
-		ring: hexToRgb(pDark.fg_accent), // Light blue focus ring
+		border: pDark.border_default,
+		input: pDark.bg_default,
+		ring: pDark.fg_accent,
 	},
 } as const;

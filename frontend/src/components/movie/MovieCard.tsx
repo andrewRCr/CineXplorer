@@ -175,6 +175,7 @@ const MovieCard = ({ movie, currentPage, source, query }: MovieCardProps) => {
 			onMouseLeave={() => setIsCardHovered(false)}
 		>
 			<Card.Root
+				bg="card"
 				height="100%"
 				display="flex"
 				flexDirection="column"
@@ -243,8 +244,8 @@ const MovieCard = ({ movie, currentPage, source, query }: MovieCardProps) => {
 									pointerEvents="none"
 								>
 									<Box
-										bg="background.main"
-										borderColor="border.subtle"
+										bg="popover"
+										borderColor="border"
 										borderWidth="1px"
 										borderRadius="md"
 										shadow="lg"
@@ -263,7 +264,7 @@ const MovieCard = ({ movie, currentPage, source, query }: MovieCardProps) => {
 											height="0"
 											borderLeft="6px solid transparent"
 											borderRight="6px solid transparent"
-											borderTopColor="background.main"
+											borderTopColor="popover"
 											borderTopWidth="6px"
 											borderTopStyle="solid"
 										/>
@@ -271,7 +272,7 @@ const MovieCard = ({ movie, currentPage, source, query }: MovieCardProps) => {
 											fontSize="sm"
 											fontWeight="medium"
 											fontFamily="sourcesans"
-											color="text.main"
+											color="popover-foreground"
 											lineHeight="1.2"
 										>
 											{movie.title}
@@ -289,7 +290,7 @@ const MovieCard = ({ movie, currentPage, source, query }: MovieCardProps) => {
 								<Text
 									fontSize="sm"
 									fontFamily="sourcesans"
-									color="text.secondary"
+									color="muted-foreground"
 								>
 									{formattedDate}
 								</Text>
@@ -303,7 +304,6 @@ const MovieCard = ({ movie, currentPage, source, query }: MovieCardProps) => {
 								<Tooltip content="Watched" openDelay={500}>
 									<IconButton
 										variant="ghost"
-										colorPalette="blue"
 										size="sm"
 									>
 										<LuEye />
@@ -320,7 +320,7 @@ const MovieCard = ({ movie, currentPage, source, query }: MovieCardProps) => {
 								>
 									<IconButton
 										variant="ghost"
-										colorPalette={isOnWatchlist ? "blue" : undefined}
+										color={isOnWatchlist ? "accent" : undefined}
 										size="sm"
 										onClick={async (e) => {
 											e.preventDefault();
@@ -358,7 +358,7 @@ const MovieCard = ({ movie, currentPage, source, query }: MovieCardProps) => {
 					left="0"
 					width={isCardHovered ? "100%" : "0%"}
 					height="3px"
-					backgroundColor="accent.primary"
+					backgroundColor="accent"
 					transition="width 0.3s ease-in-out"
 					zIndex="1"
 				/>

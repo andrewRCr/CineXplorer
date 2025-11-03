@@ -46,7 +46,7 @@ const LogoAndTitle = () => (
 			<Heading
 				as="h1"
 				size="4xl"
-				color="foreground"
+				color="card-foreground"
 				transition="all 0.2s"
 				position="relative"
 				_after={{

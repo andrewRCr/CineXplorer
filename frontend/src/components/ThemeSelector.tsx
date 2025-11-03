@@ -77,6 +77,10 @@ export function ThemeSelector() {
 									onClick={() => setTheme(option.value)}
 									bg={theme === option.value ? "accent" : undefined}
 									color={theme === option.value ? "accent-foreground" : undefined}
+									_hover={{
+										bg: theme === option.value ? "accent" : "accent/8",
+										opacity: theme === option.value ? 0.92 : 1,
+									}}
 								>
 									{option.label}
 								</Menu.Item>

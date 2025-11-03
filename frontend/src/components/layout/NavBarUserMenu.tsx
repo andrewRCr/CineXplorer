@@ -66,9 +66,10 @@ const NavBarUserMenu = () => {
 				<Button
 					size="sm"
 					variant="outline"
+					color="card-foreground"
+					borderColor="border"
 					_hover={{
 						bg: "accent/8",
-						color: "accent-foreground",
 						borderColor: "accent",
 					}}
 				>

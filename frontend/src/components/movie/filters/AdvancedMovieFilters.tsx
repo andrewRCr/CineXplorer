@@ -89,10 +89,10 @@ const AdvancedMovieFilters = ({
 					onClick={onToggleCollapse}
 					variant="outline"
 					size="sm"
-				borderColor="border.separator"
+				borderColor="border"
 				_hover={{
-					borderColor: "accent.primary",
-					backgroundColor: "background.subItem",
+					borderColor: "accent",
+					backgroundColor: "muted",
 				}}
 				>
 					<FiFilter style={{ marginRight: "6px" }} />
@@ -110,10 +110,10 @@ const AdvancedMovieFilters = ({
 		border="1px solid"
 		borderColor="border.input"
 		borderRadius="md"
-		backgroundColor="background.subItem"
+		backgroundColor="muted"
 		>
 			<HStack justify="space-between" mb={4}>
-			<Text fontSize="lg" fontWeight="medium" color="text.main">
+			<Text fontSize="lg" fontWeight="medium" color="foreground">
 					Advanced Filters
 				</Text>
 				<HStack>

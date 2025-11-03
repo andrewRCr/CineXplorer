@@ -21,7 +21,7 @@ const SortSelector = ({ value, onChange }: SortSelectorProps) => {
 
 	return (
 		<Box>
-			<Text fontSize="sm" fontWeight="medium" mb={2} color="text.main">
+			<Text fontSize="sm" fontWeight="medium" mb={2} color="foreground">
 				Sort By
 			</Text>
 			<Select.Root
@@ -42,7 +42,7 @@ const SortSelector = ({ value, onChange }: SortSelectorProps) => {
 					lineHeight="1.3"
 					borderRadius="4px"
 					_hover={{
-						backgroundColor: "background.main",
+						backgroundColor: "background",
 					}}
 					css={{
 						padding: "6px 12px",
@@ -50,7 +50,7 @@ const SortSelector = ({ value, onChange }: SortSelectorProps) => {
 						alignItems: "center",
 						justifyContent: "space-between",
 						border: "1px solid",
-						borderColor: "border.separator",
+						borderColor: "border",
 						backgroundColor: "transparent",
 						"& [data-part='indicator']": {
 							width: "16px",
@@ -64,14 +64,14 @@ const SortSelector = ({ value, onChange }: SortSelectorProps) => {
 				<Select.Positioner>
 					<Select.Content
 						w={SORT_WIDTH}
-						bg="background.subItem"
-						borderColor="border.separator"
+						bg="muted"
+						borderColor="border"
 					>
 						{sortCollection.items.map((item) => (
 							<Select.Item
 								key={item.value}
 								item={item}
-								_hover={{ bg: "accent.primary" }}
+								_hover={{ bg: "accent" }}
 							>
 								{item.label}
 							</Select.Item>

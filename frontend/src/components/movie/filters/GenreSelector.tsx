@@ -10,7 +10,7 @@ const GenreSelector = ({ selectedGenres, onChange }: GenreSelectorProps) => {
 	console.log("GenreSelector re-rendered with selectedGenres:", selectedGenres);
 	return (
 		<Box>
-			<Text fontSize="sm" fontWeight="medium" mb={2} color="text.main">
+			<Text fontSize="sm" fontWeight="medium" mb={2} color="foreground">
 				Genres
 			</Text>
 			<SimpleGrid columns={5} gap={2}>
@@ -33,16 +33,16 @@ const GenreSelector = ({ selectedGenres, onChange }: GenreSelectorProps) => {
 							>
 								<Checkbox.HiddenInput />
 							<Checkbox.Control
-								borderColor="border.separator"
+								borderColor="border"
 								borderRadius="4px"
 								_hover={{
-									backgroundColor: "background.main",
+									backgroundColor: "background",
 								}}
 								>
 									{checked && <Checkbox.Indicator />}
 								</Checkbox.Control>
 								<Checkbox.Label>
-									<Text as="span" fontSize="sm" color="text.main">
+									<Text as="span" fontSize="sm" color="foreground">
 										{g.label}
 									</Text>
 								</Checkbox.Label>

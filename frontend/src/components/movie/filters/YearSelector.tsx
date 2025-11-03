@@ -199,10 +199,10 @@ const YearSelector = ({
 
 	return (
 		<Box>
-			<Text fontSize="sm" fontWeight="medium" mb={2} color="text.main">
+			<Text fontSize="sm" fontWeight="medium" mb={2} color="foreground">
 				Release Year
 				{isRouteConstrained && (
-					<Text as="span" color="text.secondary" ml={1}>
+					<Text as="span" color="muted-foreground" ml={1}>
 						({routeLabel})
 					</Text>
 				)}
@@ -223,21 +223,21 @@ const YearSelector = ({
 					borderRadius="4px"
 					borderColor={
 						localMinYear && !isValidYear(localMinYear)
-							? "red.300"
-							: "border.separator"
+							? "destructive"
+							: "border"
 					}
 					bg="transparent"
 					_hover={{
-						backgroundColor: "background.main",
+						backgroundColor: "background",
 					}}
 					_invalid={{
-						borderColor: "red.300",
+						borderColor: "destructive",
 						boxShadow: "0 0 0 1px red.300",
 					}}
 					disabled={isRouteConstrained}
 					cursor={isRouteConstrained ? "not-allowed" : "text"}
 				/>
-				<Text fontSize="sm" color="text.secondary">
+				<Text fontSize="sm" color="muted-foreground">
 					to
 				</Text>
 				<Input
@@ -255,15 +255,15 @@ const YearSelector = ({
 					borderRadius="4px"
 					borderColor={
 						localMaxYear && !isValidYear(localMaxYear)
-							? "red.300"
-							: "border.separator"
+							? "destructive"
+							: "border"
 					}
 					bg="transparent"
 					_hover={{
-						backgroundColor: "background.main",
+						backgroundColor: "background",
 					}}
 					_invalid={{
-						borderColor: "red.300",
+						borderColor: "destructive",
 						boxShadow: "0 0 0 1px red.300",
 					}}
 					disabled={isRouteConstrained}
@@ -271,7 +271,7 @@ const YearSelector = ({
 				/>
 			</HStack>
 			{isRouteConstrained && (
-				<Text fontSize="xs" color="text.secondary" mt={1}>
+				<Text fontSize="xs" color="muted-foreground" mt={1}>
 					Showing: {dateRangeInfo.text}
 				</Text>
 			)}

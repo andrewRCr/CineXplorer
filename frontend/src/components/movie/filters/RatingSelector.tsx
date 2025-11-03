@@ -146,7 +146,7 @@ const RatingSelector = ({
 	}, [debouncedMinRatingUpdate, debouncedMaxRatingUpdate]);
 	return (
 		<Box>
-			<Text fontSize="sm" fontWeight="medium" mb={2} color="text.main">
+			<Text fontSize="sm" fontWeight="medium" mb={2} color="foreground">
 				Rating
 			</Text>
 			<HStack gap={2} align="center">
@@ -166,19 +166,19 @@ const RatingSelector = ({
 					borderRadius="4px"
 				borderColor={
 					(localMinRating && !isValidRating(localMinRating)) || !hasLogicalRange()
-						? "red.300"
-						: "border.separator"
+						? "destructive"
+						: "border"
 				}
 				bg="transparent"
 				_hover={{
-					backgroundColor: "background.main",
+					backgroundColor: "background",
 				}}
 					_invalid={{
-						borderColor: "red.300",
+						borderColor: "destructive",
 						boxShadow: "0 0 0 1px red.300",
 					}}
 				/>
-			<Text fontSize="sm" color="text.secondary">
+			<Text fontSize="sm" color="muted-foreground">
 				to
 			</Text>
 				<Input
@@ -197,15 +197,15 @@ const RatingSelector = ({
 					borderRadius="4px"
 				borderColor={
 					(localMaxRating && !isValidRating(localMaxRating)) || !hasLogicalRange()
-						? "red.300"
-						: "border.separator"
+						? "destructive"
+						: "border"
 				}
 				bg="transparent"
 				_hover={{
-					backgroundColor: "background.main",
+					backgroundColor: "background",
 				}}
 					_invalid={{
-						borderColor: "red.300",
+						borderColor: "destructive",
 						boxShadow: "0 0 0 1px red.300",
 					}}
 				/>

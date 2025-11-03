@@ -136,7 +136,7 @@ const MovieCollectionGrid = forwardRef<MovieGridRef, MovieCollectionGridProps>(
 				{/* Existing content */}
 				{error && (
 					<Box textAlign="center" mb={4}>
-						<Text color="text.error" mb={2}>
+						<Text color="destructive-foreground" mb={2}>
 							{error}
 						</Text>
 						<Button size="sm" onClick={() => setError("")}>
@@ -154,6 +154,9 @@ const MovieCollectionGrid = forwardRef<MovieGridRef, MovieCollectionGridProps>(
 					flexWrap="wrap"
 					gap={2}
 					minHeight="40px" // Prevent layout shift
+					paddingBottom={2}
+					borderBottom="1px solid"
+					borderBottomColor="border"
 					opacity={shouldShowPagination ? 1 : 0}
 					pointerEvents={shouldShowPagination ? "auto" : "none"}
 					transition="opacity 0.2s ease"
@@ -162,7 +165,7 @@ const MovieCollectionGrid = forwardRef<MovieGridRef, MovieCollectionGridProps>(
 						<Text
 							fontSize="sm"
 							fontFamily={"inter"}
-							color="text.secondary"
+							color="muted-foreground"
 							fontWeight="medium"
 							opacity={isLoading ? 0.6 : 1}
 							transition="opacity 0.2s ease"
@@ -185,10 +188,10 @@ const MovieCollectionGrid = forwardRef<MovieGridRef, MovieCollectionGridProps>(
 				{/* Movie Grid */}
 				{shouldShowEmptyState ? (
 					<Box textAlign="center" py={12}>
-						<Text fontSize="lg" color="text.secondary" mb={0}>
+						<Text fontSize="lg" color="muted-foreground" mb={0}>
 							No movies found matching your filters.
 						</Text>
-						<Text fontSize="sm" color="text.secondary">
+						<Text fontSize="sm" color="muted-foreground">
 							Try adjusting your search criteria or filters.
 						</Text>
 					</Box>
@@ -212,7 +215,7 @@ const MovieCollectionGrid = forwardRef<MovieGridRef, MovieCollectionGridProps>(
 											key={i}
 											borderRadius="md"
 											overflow="hidden"
-											bg="background.skeleton"
+											bg="muted"
 										>
 											<MovieCardContainer>
 												<MovieCard movie={placeholderMovie} />
@@ -241,7 +244,7 @@ const MovieCollectionGrid = forwardRef<MovieGridRef, MovieCollectionGridProps>(
 					mb={1}
 					mt={1}
 					borderTop="1px solid"
-					borderTopColor="red.300"
+					borderTopColor="border"
 					minHeight="50px" // Prevent layout shift
 					paddingTop={2}
 					opacity={shouldShowPagination ? 1 : 0}

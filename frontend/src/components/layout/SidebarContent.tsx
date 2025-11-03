@@ -90,6 +90,8 @@ export const SidebarContent: React.FC<SidebarContentProps> = ({
 						p={2}
 						mb={1}
 						variant="outline"
+						borderWidth="1px"
+						borderColor="border"
 						aria-label="Log activity"
 						size="sm"
 						onClick={() => {

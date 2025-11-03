@@ -11,7 +11,7 @@ const MovieCardContainer = ({ children }: MovieCardContainerProps) => {
 			borderRadius={10}
 			boxShadow="0 2px 8px rgba(0, 0, 0, 0.1)"
 			border="1px solid"
-			borderColor="border.separator"
+			borderColor="border"
 			overflow="hidden"
 		>
 			{children}

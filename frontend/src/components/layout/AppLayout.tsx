@@ -1,6 +1,5 @@
 import BaseLayout from "./BaseLayout";
 import Sidebar from "./Sidebar";
-import { SidebarDrawerViewport } from "./SidebarDrawer";
 import {
 	Box,
 	Container,
@@ -37,9 +36,6 @@ const AppLayout = () => {
 					<Outlet />
 				</Box>
 			</Container>
-
-			{/* Sidebar Drawer Viewport - Required for Chakra v3 overlay manager */}
-			<SidebarDrawerViewport />
 		</BaseLayout>
 	);
 };

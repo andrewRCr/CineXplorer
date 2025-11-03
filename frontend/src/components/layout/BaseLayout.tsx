@@ -1,5 +1,6 @@
 import NavBar from "./NavBar";
 import Footer from "./Footer";
+import { SidebarDrawerViewport } from "./SidebarDrawer";
 import { Box } from "@chakra-ui/react";
 import { type ReactNode } from "react";
 
@@ -13,7 +14,7 @@ const BaseLayout = ({ children }: BaseLayoutProps) => {
 			minH="100vh"
 			display="flex"
 			flexDirection="column"
-			bg="background.main"
+			bg="background"
 		>
 			{/* NavBar */}
 			<NavBar />
@@ -23,6 +24,9 @@ const BaseLayout = ({ children }: BaseLayoutProps) => {
 
 			{/* Footer */}
 			<Footer />
+
+			{/* Sidebar Drawer Viewport - Required for Chakra v3 overlay manager */}
+			<SidebarDrawerViewport />
 		</Box>
 	);
 };

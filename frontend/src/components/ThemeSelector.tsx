@@ -63,7 +63,12 @@ export function ThemeSelector() {
 		<ClientOnly fallback={<Skeleton height="10" width="32" />}>
 			<Menu.Root positioning={{ placement: "top-start", gutter: 8 }}>
 				<Menu.Trigger asChild>
-					<Button variant="outline" size="sm">
+					<Button
+						variant="outline"
+						size="sm"
+						borderWidth="1px"
+						borderColor="border"
+					>
 						{displayLabel}
 					</Button>
 				</Menu.Trigger>

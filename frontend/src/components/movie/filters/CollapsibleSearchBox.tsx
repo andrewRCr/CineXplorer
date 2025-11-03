@@ -97,7 +97,7 @@ const CollapsibleSearchBox = ({
 			gap={0}
 			align="stretch"
 			border="1px solid"
-			borderColor="border.separator"
+			borderColor="border"
 			borderRadius="4px"
 			width={isSearchExpanded ? "260px" : "32px"}
 			height="32px"
@@ -113,11 +113,11 @@ const CollapsibleSearchBox = ({
 				size="sm"
 				border="none"
 				borderRadius="0"
-			backgroundColor="background.main"
-			color="text.main"
+			backgroundColor="background"
+			color="foreground"
 			_focus={{ boxShadow: "none" }}
 			_hover={{
-				backgroundColor: "background.subItem",
+				bg: "accent/8",
 			}}
 				fontSize="14px"
 				height="30px"
@@ -135,10 +135,10 @@ const CollapsibleSearchBox = ({
 				size="sm"
 				variant="ghost"
 				borderRadius={0}
-			backgroundColor="background.main"
-			color="text.main"
+			backgroundColor="background"
+			color="foreground"
 			_hover={{
-				backgroundColor: "background.subItem",
+				bg: "accent/8",
 			}}
 				height="30px"
 				minW="30px"
@@ -155,10 +155,10 @@ const CollapsibleSearchBox = ({
 					variant="ghost"
 					borderRadius="0 4px 4px 0"
 					backgroundColor="transparent"
-				color="text.secondary"
+				color="muted-foreground"
 				_hover={{
-					backgroundColor: "background.subItem",
-					color: "text.main",
+					bg: "accent/8",
+					color: "foreground",
 				}}
 					height="30px"
 					minW="30px"

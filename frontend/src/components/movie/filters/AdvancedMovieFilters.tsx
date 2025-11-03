@@ -108,7 +108,7 @@ const AdvancedMovieFilters = ({
 			ml={4}
 			p={6}
 		border="1px solid"
-		borderColor="border.input"
+		borderColor="border"
 		borderRadius="md"
 		backgroundColor="muted"
 		>

@@ -1601,11 +1601,27 @@ and ongoing migration overhead in future tasks.
             - `red.300` → `destructive` (validation error states in Year/Rating selectors)
         - **Quality gates:** ✅ Frontend linting PASSED, TypeScript type checking PASSED
 
-    - [ ] **4.4.4 Convert LetterboxdStyleFilters system**
-        - **Parent:** `components/movie/filters/LetterboxdStyleFilters.tsx`
-        - **Children:** ConnectedDropdowns, CollapsibleSearchBox, SortDropdownMinimal, ClearFiltersButton
-        - **Note:** Carefully styled filter controls - verify tokens in browser across themes
-        - **Quality gate:** Frontend linting + TypeScript type checking
+    - [x] **4.4.4 Convert LetterboxdStyleFilters system**
+
+        **Completed:** Converted parent component and all 4 child components to semantic tokens.
+
+        **Components converted:**
+        - **Parent:** LetterboxdStyleFilters.tsx (2 token conversions)
+        - **Children:**
+            - ConnectedDropdowns.tsx (9 token conversions across 2 Select dropdowns + button)
+            - CollapsibleSearchBox.tsx (7 token conversions across input + 2 buttons)
+            - SortDropdownMinimal.tsx (6 token conversions across label + Select dropdown)
+            - ClearFiltersButton.tsx (no old tokens - uses Chakra colorScheme prop)
+
+        **Token mappings used:**
+        - `background.main` → `background` (main surface backgrounds)
+        - `background.subItem` → `muted` (hover states, dropdown backgrounds)
+        - `border.separator` → `border` (all borders and separators)
+        - `text.main` → `foreground` (primary text, enabled states)
+        - `text.secondary` → `muted-foreground` (labels, disabled states, helper text)
+        - `accent.primary` → `accent` (hover states on dropdown items)
+
+        **Quality gates:** ✅ Frontend linting (0 errors), TypeScript type checking (0 errors)
 
     - [ ] **4.4.5 Convert Watchlist page**
         - **File:** `pages/user/Watchlist.tsx`

@@ -71,7 +71,7 @@ const LetterboxdStyleFilters = ({
 		<VStack
 			w="100%"
 			p={4}
-			bg="background.main"
+			bg="background"
 			gap={4}
 			align="stretch"
 			overflow="visible"
@@ -91,7 +91,7 @@ const LetterboxdStyleFilters = ({
 						fontSize="sm"
 						fontWeight="400"
 						fontFamily="inter"
-						color="text.secondary"
+						color="muted-foreground"
 						mr={2}
 						alignSelf="center"
 						flexShrink={0}

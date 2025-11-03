@@ -71,7 +71,7 @@ const SortDropdownMinimal = ({
 				fontSize="sm"
 				fontWeight="400"
 				fontFamily="inter"
-				color="text.secondary"
+				color="muted-foreground"
 				alignSelf="center"
 				flexShrink={0}
 				mr={2}
@@ -107,10 +107,10 @@ const SortDropdownMinimal = ({
 						lineHeight="1.2"
 						borderRadius="4px"
 						border="1px solid"
-						borderColor="border.separator"
+						borderColor="border"
 						backgroundColor="transparent"
 						_hover={{
-							backgroundColor: "background.subItem",
+							bg: "accent/8",
 						}}
 						_disabled={{
 							opacity: 1,
@@ -123,7 +123,7 @@ const SortDropdownMinimal = ({
 							justifyContent: "space-between",
 							"& > span": {
 								fontStyle: isSortCustom ? "italic" : "normal",
-								color: isSortCustom ? "text.secondary" : "text.main",
+								color: isSortCustom ? "muted-foreground" : "foreground",
 							},
 							"& [data-part='indicator']": {
 								width: "16px",
@@ -137,8 +137,8 @@ const SortDropdownMinimal = ({
 					<Select.Positioner>
 						<Select.Content
 							w={SORT_WIDTH}
-							bg="background.subItem"
-							borderColor="border.separator"
+							bg="muted"
+							borderColor="border"
 						>
 							{sortCollection.items.map((item) => (
 								<Select.Item
@@ -147,15 +147,15 @@ const SortDropdownMinimal = ({
 									style={{
 										color:
 											"disabled" in item && item.disabled
-												? "text.secondary"
-												: "text.main",
+												? "muted-foreground"
+												: "foreground",
 										fontStyle:
 											"disabled" in item && item.disabled ? "italic" : "normal",
 									}}
 									_hover={
 										"disabled" in item && item.disabled
 											? {}
-											: { bg: "accent.primary" }
+											: { bg: "accent" }
 									}
 								>
 									{item.label}

@@ -42,7 +42,7 @@ const SortSelector = ({ value, onChange }: SortSelectorProps) => {
 					lineHeight="1.3"
 					borderRadius="4px"
 					_hover={{
-						backgroundColor: "background",
+						bg: "accent/8",
 					}}
 					css={{
 						padding: "6px 12px",

@@ -236,10 +236,10 @@ const ConnectedDropdowns = ({
 						lineHeight="1.2"
 				borderRadius="4px 0 0 4px"
 						border="1px solid"
-						borderColor="border.separator"
+						borderColor="border"
 						backgroundColor="transparent"
 						_hover={{
-							backgroundColor: "background.subItem",
+							bg: "accent/8",
 						}}
 						_disabled={{
 							opacity: 1,
@@ -253,8 +253,8 @@ const ConnectedDropdowns = ({
 							"& > span": {
 								fontStyle: genreDisplayData.isGenreDisabled ? "italic" : "normal",
 								color: genreDisplayData.isGenreDisabled
-									? "text.secondary"
-									: "text.main",
+									? "muted-foreground"
+									: "foreground",
 							},
 							"& [data-part='indicator']": {
 								width: "16px",
@@ -268,14 +268,14 @@ const ConnectedDropdowns = ({
 					<Select.Positioner>
 						<Select.Content
 							w={GENRE_WIDTH}
-							bg="background.subItem"
-							borderColor="border.separator"
+							bg="muted"
+							borderColor="border"
 						>
 							{genreCollection.items.map((item) => (
 								<Select.Item
 									key={item.value}
 									item={item}
-									_hover={{ bg: "accent.primary" }}
+									_hover={{ bg: "accent" }}
 								>
 									{item.label}
 								</Select.Item>
@@ -325,10 +325,10 @@ const ConnectedDropdowns = ({
 						lineHeight="1.2"
 			borderRadius="0"
 						border="1px solid"
-						borderColor="border.separator"
+						borderColor="border"
 						backgroundColor="transparent"
 						_hover={{
-							backgroundColor: "background.subItem",
+							bg: "accent/8",
 						}}
 						_disabled={{
 							opacity: 1,
@@ -342,8 +342,8 @@ const ConnectedDropdowns = ({
 							"& > span": {
 								fontStyle: yearDisplayData.isYearCustom || yearDisplayData.isRouteConstrained ? "italic" : "normal",
 								color: yearDisplayData.isYearCustom || yearDisplayData.isRouteConstrained
-									? "text.secondary"
-									: "text.main",
+									? "muted-foreground"
+									: "foreground",
 							},
 							"& [data-part='indicator']": {
 								width: "16px",
@@ -357,14 +357,14 @@ const ConnectedDropdowns = ({
 					<Select.Positioner>
 						<Select.Content
 							w={yearWidth}
-							bg="background.subItem"
-							borderColor="border.separator"
+							bg="muted"
+							borderColor="border"
 						>
 							{yearCollection.items.map((item) => (
 								<Select.Item
 									key={item.value}
 									item={item}
-									_hover={{ bg: "accent.primary" }}
+									_hover={{ bg: "accent" }}
 								>
 									{item.label}
 								</Select.Item>
@@ -482,7 +482,10 @@ const ConnectedDropdowns = ({
 					size="sm"
 					variant="outline"
 				borderRadius="0 4px 4px 0"
-				borderColor="border.separator"
+				borderColor="border"
+					_hover={{
+						bg: "accent/8",
+					}}
 					minW="auto"
 					px={3}
 					height="32px"

@@ -1134,7 +1134,8 @@ and ongoing migration overhead in future tasks.
     **Additional Accessibility Enhancements (Completed):**
 
     9. **OAuth button focus states** - COMPLETED ✅ (Issue #2)
-       - **Implementation**: Added `_focus={{ outline: "2px solid", outlineColor: "ring", outlineOffset: "2px" }}` to OAuth buttons
+       - **Implementation**: Added `_focus={{ outline: "2px solid", outlineColor: "ring",`
+         `outlineOffset: "2px" }}` to OAuth buttons
        - **Location**: Login.tsx Google/GitHub buttons (lines 608-611, 627-630)
        - **Rationale**: WCAG 2.4.13 requires 2px+ focus indicators with 3:1 contrast for keyboard navigation
        - **Verification**: Tested keyboard navigation, focus states visible across all themes
@@ -1228,6 +1229,54 @@ and ongoing migration overhead in future tasks.
     - `.arc/active/incidental/tasks-theme-system-modernization.md` - This file (updated with completion details)
 
     **Total uncommitted files**: 26 files across 4 logical groups (auth, layout, theme system, docs)
+
+- [x] **4.2.1 Fix BaseLayout legacy token and mobile menu (Incidental)**
+
+    **Problem discovered during Phase 4.1 component review:**
+    - BaseLayout.tsx not in original Phase 4.1 component list, still had legacy token `background.main`
+    - Mobile menu button non-functional on auth pages (/login, /register)
+    - Footer theme controls (ThemeSelector, ColorModeButton) had invisible borders in certain themes (Issue #3)
+
+    **Root causes:**
+    1. BaseLayout legacy token: `background.main` should be `background` (semantic token)
+    2. Mobile menu: SidebarDrawerViewport only in AppLayout, but NavBar (with button) in BaseLayout
+       - Auth pages use AuthLayout → no viewport → button can't open drawer
+       - Content pages use AppLayout → has viewport → button works
+    3. Footer controls: Missing explicit `borderWidth` and `borderColor` props on outline variant buttons
+
+    **Fixes implemented:**
+    1. BaseLayout.tsx:
+       - Fixed legacy token: `bg="background.main"` → `bg="background"`
+       - Added `<SidebarDrawerViewport />` (moved from AppLayout)
+       - Now all pages (auth + content) have viewport available
+    2. AppLayout.tsx:
+       - Removed `<SidebarDrawerViewport />` (moved to BaseLayout)
+       - Removed duplicate import
+    3. ThemeSelector.tsx:
+       - Added `borderWidth="1px"` and `borderColor="border"` to outline button
+       - Ensures border visibility across all theme/mode combinations
+    4. ColorModeButton (color-mode.tsx):
+       - Changed `variant="ghost"` → `variant="outline"` for consistency
+       - Added `borderWidth="1px"` and `borderColor="border"`
+       - Now matches ThemeSelector visual style
+
+    **Testing:**
+    - ✅ Mobile menu works on auth pages (/login, /register, /verify-email)
+    - ✅ Mobile menu works on content pages (/, /movies/*, etc.)
+    - ✅ Footer theme controls have visible borders in all 7 themes (light + dark)
+    - ✅ TypeScript type checking: PASSED
+    - ✅ Frontend linting: PASSED
+
+    **Quality gate:** ✅ COMPLETE
+    - Mobile menu functional on all pages
+    - Footer theme controls have consistent visible borders
+    - BaseLayout uses semantic tokens
+
+    **Files modified:**
+    - `frontend/src/components/layout/BaseLayout.tsx` - Fixed token, added viewport
+    - `frontend/src/components/layout/AppLayout.tsx` - Removed viewport
+    - `frontend/src/components/ThemeSelector.tsx` - Added border props
+    - `frontend/src/components/chakra/color-mode.tsx` - Changed variant, added border props
 
 - [ ] **4.3 Convert movie components**
 

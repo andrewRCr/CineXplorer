@@ -1460,35 +1460,48 @@ and ongoing migration overhead in future tasks.
 
     - [x] **4.3.5 Convert MovieUserScore component** (`components/movie/MovieUserScore.tsx`)
 
-        Converted MovieUserScore from old custom tokens and Chakra raw tokens to semantic tokens.
-        Implemented threshold-based background colors for visual score distinction.
+        **Completed:** Major refactoring involving multiple iterations to solve text contrast issues on solid
+        colored backgrounds. Led to creation of new token architecture (`on-*` tokens) and theme system improvements.
 
-        **Strategy Decision (Approach 3):**
-        - TMDB scores use semantic status tokens (`success`/`warning`/`muted`) for backgrounds
-        - Text color uses paired foreground tokens (typography consistency)
-        - `rating` token reserved for future personal user ratings feature (star system)
-
-        **Changes:**
+        **Final Color Mapping (after testing):**
+        - Green (high ≥7.5) → Blue (medium 5.0-7.4) → Yellow (low <5.0)
+        - Rationale: NOT traffic light (medium scores aren't "bad"), NOT single neutral (loses distinction)
+        - Chosen: Green (good) → Blue (neutral/data) → Yellow (caution/low quality)
+        - Reserves `rating` token for future personal user ratings (star system)
 
         **TMDB Score Thresholds:**
-        - High (>= 7.5): `bg="success"`, `color="success-foreground"` (was `text.successDark`)
-        - Medium (5.0-7.4): `bg="warning"`, `color="warning-foreground"` (was `blue.700`)
-        - Low (< 5.0): `bg="muted"`, `color="muted-foreground"` (was `yellow.700`)
+        - High (≥7.5): `bg="success"`, `color="on-success"` (was custom `text.successDark`)
+        - Medium (5.0-7.4): `bg="info"`, `color="on-info"` (was Chakra raw `blue.700`)
+        - Low (<5.0): `bg="warning"`, `color="on-warning"` (was Chakra raw `yellow.700`)
 
         **User Rating Thresholds (future feature, code exists):**
-        - High (>= 8): `bg="success"`, `color="success-foreground"` (was `green.600`)
-        - Medium (5-7): `bg="warning"`, `color="warning-foreground"` (was `orange.600`)
-        - Low (< 5): `bg="destructive"`, `color="destructive-foreground"` (was `red.600`)
-        - NOTE: Future enhancement will use `rating` token for personal ratings display
+        - High (≥8): `bg="success"`, `color="on-success"` (was Chakra raw `green.600`)
+        - Medium (5-7): `bg="warning"`, `color="on-warning"` (was Chakra raw `orange.600`)
+        - Low (<5): `bg="destructive"`, `color="on-destructive"` (was Chakra raw `red.600`)
 
         **Refactoring:**
+        - Replaced Chakra raw `colorPalette` with explicit token pairs
         - Replaced color constants with helper functions returning token pairs
-        - Proper token pairing ensures contrast across all themes
-        - Added comments documenting future `rating` token usage
+        - Added explicit 1px border props to outline buttons (border strategy enforcement)
+        - Added explicit `bg="card"` to Card.Root for consistency
 
-        **Result:** All old custom tokens and Chakra raw tokens eliminated ✅
+        **Theme System Improvements Triggered by This Task:**
+        - **Created 4 new tokens:** `on-success`, `on-warning`, `on-destructive`, `on-info`
+        - **Problem discovered:** GitHub dark mode used black text on solid colors (unreadable)
+        - **Solution:** Theme-specific contrast handling via `on-*` tokens
+            - GitHub/GitLab/Tangere: White text on all solid colored backgrounds
+            - IBM Carbon: Dark text on light yellow warning, white on other colors
+        - **Removed 4 non-production themes:** tangere-terminal, sage-bone, stone-greige, muted-earth
+        - **Theme registry reduced:** 7 themes → 3 production-ready (GitHub, IBM Carbon, GitLab Pajamas)
 
-        **Quality gate:** TypeScript type checking PASSED, Frontend linting PASSED
+        **Result:** All Chakra raw tokens eliminated, border strategy enforced, contrast issues resolved ✅
+
+        **Commits Created (3 total):**
+        - `c89774e` - feat(theme): add on-* tokens for solid colored backgrounds
+        - `7ef0dbe` - fix(theme): correct on-* tokens for solid badge contrast
+        - `32c6f4c` - feat(theme): convert MovieUserScore with semantic rating colors
+
+        **Quality gates:** TypeScript type checking PASSED, Frontend linting PASSED
 
     - [ ] **4.3.6 Convert MovieCollectionGrid, MovieGrid**
         - Apply tokens as needed

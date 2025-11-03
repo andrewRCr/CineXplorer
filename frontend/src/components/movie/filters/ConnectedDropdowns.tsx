@@ -175,16 +175,27 @@ const ConnectedDropdowns = ({
 		],
 	}), [genreDisplayData]);
 
-	const yearCollection = useMemo(() => createListCollection({
-		items: [
+	const yearCollection = useMemo(() => {
+		const allItems = [
 			...(yearDisplayData.isRouteConstrained ? [{ label: yearDisplayData.yearDisplayValue, value: yearDisplayData.yearDisplayValue }] : []),
 			...(yearDisplayData.isYearCustom ? [{ label: "Custom", value: "custom" }] : []),
 			...yearOptions.map((option) => ({
 				label: option.label,
 				value: option.value,
 			})),
-		],
-	}), [yearDisplayData.isYearCustom, yearDisplayData.isRouteConstrained, yearDisplayData.yearDisplayValue]);
+		];
+
+		// Deduplicate by value to prevent React key conflicts
+		// (e.g., now-playing in 2025 adds "2025" but yearOptions also includes it)
+		const seen = new Set<string>();
+		const uniqueItems = allItems.filter(item => {
+			if (seen.has(item.value)) return false;
+			seen.add(item.value);
+			return true;
+		});
+
+		return createListCollection({ items: uniqueItems });
+	}, [yearDisplayData.isYearCustom, yearDisplayData.isRouteConstrained, yearDisplayData.yearDisplayValue]);
 
 	// TODO: Remove if runtime selector not implemented
 	// const runtimeCollection = useMemo(() => createListCollection({

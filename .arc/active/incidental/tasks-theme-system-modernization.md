@@ -993,6 +993,75 @@ and ongoing migration overhead in future tasks.
         **Files Modified:**
         - `frontend/src/components/chakra/theme-provider.tsx` - Fixed system initialization, cleaned up imports
 
+    - [ ] **4.1.5e Review Phase 4.1 component token usage**
+
+        **Purpose:** Verify components migrated in Phase 4.1 follow the semantic token strategy
+        (strategy-semantic-tokens.md) synthesized from Material Design 3, IBM Carbon, and movie-domain research.
+
+        **Components to review:**
+        1. NavBar (`components/layout/NavBar.tsx`)
+        2. Footer (`components/layout/Footer.tsx`)
+        3. LoadingLayout (`components/layout/LoadingLayout.tsx`)
+        4. ThemeSelector (`components/ThemeSelector.tsx`)
+
+        **Review Checklist (from strategy-semantic-tokens.md):**
+
+        **1. Token Selection (Decision Tree - strategy lines 375-448):**
+        - **Surfaces:** Right elevation level?
+            - Base page → `background` + `foreground`
+            - Elevated panels (nav, footer, cards) → `card` + `card-foreground`
+            - Featured content → `surface-elevated`
+            - Dropdowns/tooltips → `popover` + `popover-foreground`
+        - **Interactive elements:** Semantically correct?
+            - Primary CTAs → `primary` + `primary-foreground`
+            - Secondary actions → `secondary` + `secondary-foreground`
+            - Links/active states → `accent` + `accent-foreground`
+            - Disabled → `muted` + `muted-foreground`
+        - **Status/alerts:** Right semantic meaning?
+            - Success → `success` + `success-foreground`
+            - Warnings → `warning` + `warning-foreground`
+            - Info → `info` + `info-foreground`
+            - Errors → `destructive` + `destructive-foreground`
+        - **Movie-specific:** Correct domain tokens?
+            - TMDB scores → `rating` + `rating-foreground`
+            - Genre tags → `badge` + `badge-foreground`
+        - **UI elements:** Standard usage?
+            - Borders → `border`
+            - Input borders → `input`
+            - Focus rings → `ring`
+
+        **2. Interactive States (Material Design 3 - strategy lines 609-711):**
+        - Hover: 8% opacity (`accent/8` or token-specific)
+        - Active/pressed: 12% opacity (`accent/12` or token-specific)
+        - Focus: `ring` token for accessibility
+        - Disabled: 38% opacity
+
+        **3. Token Pairing (strategy lines 452-469):**
+        - Every background token has matching `-foreground`
+        - Example: `bg="card"` paired with `color="card-foreground"`
+
+        **4. Anti-Patterns (strategy lines 864-897):**
+        - No hardcoded colors (`red.600`, `#4299e1`, `gray.100`, etc.)
+        - No Chakra raw tokens (`colorScheme="blue"`, `fg.muted`, etc.)
+        - Any exceptions have explanatory comments with rationale
+
+        **5. Common Patterns (strategy lines 782-843):**
+        - Alerts use `/10` opacity for backgrounds + solid border
+        - Surface hierarchy properly nested (background → card → surface-elevated)
+
+        **Process per component:**
+        1. Read component file
+        2. Check against all 5 checklist sections
+        3. Apply only < 2 min fixes for violations
+        4. Document larger issues as `// TODO:` comments in code
+
+        **Time box:** 10 minutes per component maximum (40 min total)
+
+        **Quality gate:**
+        - All 4 components reviewed against full checklist
+        - Quick violations fixed
+        - Larger issues documented with TODO comments
+
 - [ ] **4.2 Convert authentication pages**
     - **Login** (`pages/user/Login.tsx`)
         - Replace inline hex `#4299e1` with semantic token (likely `accent`)
@@ -1004,6 +1073,8 @@ and ongoing migration overhead in future tasks.
     - **VerifyEmail** (`pages/user/VerifyEmail.tsx`)
         - Update success/error state colors to semantic tokens
         - Apply semantic border colors
+    - **Review token usage:** Verify all 3 auth pages against Task 4.1.5e checklist (line ~1007)
+        - Time box: 5-10 minutes per page
 
 - [ ] **4.3 Convert movie components**
 
@@ -1013,21 +1084,25 @@ and ongoing migration overhead in future tasks.
             - `fg.muted` → `muted-foreground`
         - **Hero section background:** Use `surface-elevated` token for featured content area
         - Apply semantic tokens throughout
+        - **Review token usage:** Verify against Task 4.1.5e checklist (line ~1007)
         - Quality gate: Featured page uses semantic tokens exclusively
 
     - [ ] **4.3.2 Convert MovieDetail page** (`pages/movie/MovieDetail.tsx`)
         - Replace `gray.*` usage with semantic tokens per Phase 3.3 mapping
         - Apply tokens to detail sections
+        - **Review token usage:** Verify against Task 4.1.5e checklist (line ~1007)
         - Quality gate: MovieDetail uses semantic tokens exclusively
 
     - [ ] **4.3.3 Convert MovieCard component** (`components/movie/MovieCard.tsx`)
         - Apply semantic `card` / `card-foreground` tokens
         - Ensure hover states use semantic patterns (Phase 3.7 interactive patterns)
         - **Genre tags:** Use `badge` / `badge-foreground` for neutral genre labels
+        - **Review token usage:** Verify against Task 4.1.5e checklist (line ~1007)
         - Quality gate: MovieCard uses semantic tokens exclusively
 
     - [ ] **4.3.4 Convert MovieCardContainer** (`components/movie/MovieCardContainer.tsx`)
         - Coordinate with MovieCard for consistent styling
+        - **Review token usage:** Verify against Task 4.1.5e checklist (line ~1007)
         - Quality gate: Container styling consistent with MovieCard
 
     - [ ] **4.3.5 Convert MovieUserScore component** (`components/movie/MovieUserScore.tsx`)
@@ -1038,15 +1113,18 @@ and ongoing migration overhead in future tasks.
             - Below 6.0: neutral or `muted` background
         - Pattern: Rating token for value, semantic background for context
         - Reference: Phase 3.2 MovieUserScore analysis
+        - **Review token usage:** Verify against Task 4.1.5e checklist (line ~1007)
         - Quality gate: Score displays use rating token, backgrounds use semantic tokens
 
     - [ ] **4.3.6 Convert MovieCollectionGrid, MovieGrid**
         - Apply tokens as needed
         - Ensure grid container styling uses semantic tokens
+        - **Review token usage:** Verify against Task 4.1.5e checklist (line ~1007)
         - Quality gate: Grid components use semantic tokens
 
     - [ ] **4.3.7 Convert PageHeader**
         - Update header styling to semantic tokens
+        - **Review token usage:** Verify against Task 4.1.5e checklist (line ~1007)
         - Quality gate: PageHeader uses semantic tokens
 
 - [ ] **4.4 Convert remaining components**
@@ -1062,6 +1140,8 @@ and ongoing migration overhead in future tasks.
     - **Other pages** - Verify and update:
         - Profile, Settings, Watchlist, PersonDetail
         - NowPlaying, Popular, TopRated, Upcoming, SearchResults
+    - **Review token usage:** Verify all remaining components against Task 4.1.5e checklist (line ~1007)
+        - Time box: 15 minutes total for all components
 
 - [ ] **4.5 Convert ErrorBoundary** (60% of all hardcoded colors - 15+ instances)
 
@@ -1094,6 +1174,7 @@ and ongoing migration overhead in future tasks.
         - Test in all 7 themes × 2 modes (14 combinations)
         - Verify readability and contrast in each theme
         - Ensure error messages remain clear and actionable
+        - **Review token usage:** Verify against Task 4.1.5e checklist (line ~1007)
         - Quality gate: ErrorBoundary displays correctly in all themes
 
 - [ ] **4.6 Comprehensive theme system verification**

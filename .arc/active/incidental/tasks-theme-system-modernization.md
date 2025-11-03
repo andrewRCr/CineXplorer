@@ -927,20 +927,35 @@ and ongoing migration overhead in future tasks.
 
         **Next Step:** Task 4.1.5c - Update strategy doc with refined approach
 
-    - [ ] **4.1.5c Update strategy-semantic-tokens.md with accurate implementation details**
+    - [x] **4.1.5c Document theme system implementation architecture**
 
-        **Purpose:** Document the correct provider-based approach in the strategy document, replacing outdated
-        CSS selector approach that was abandoned.
+        **Original Purpose:** Update strategy-semantic-tokens.md with implementation details.
 
-        **Updates needed:**
-        - Replace CSS selector/conditions approach with provider-based pattern
-        - Document `base` vs `default` property distinction for light/dark modes
-        - Add lessons learned from investigation (what doesn't work and why)
-        - Include code examples from working implementation
-        - Document theme switching architecture (createThemeSystem → ChakraProvider pattern)
+        **Actual Approach:** Created ADR-004 for theme system implementation architecture, kept strategy doc
+        focused on semantic token usage guidance (correct separation of concerns).
 
-        **Important:** Should be completed AFTER 4.1.5b architectural analysis, so we document the final
-        refined approach (not intermediate solution).
+        **Completed Work:**
+
+        1. **Created ADR-004: Provider-Based Multi-Theme Switching**
+           - Documents provider recreation pattern with `createThemeSystem()`
+           - Explains why CSS selector approach failed (Panda vs Chakra UI v3)
+           - Includes performance measurements (10ms initial, 19ms theme switch)
+           - Documents Crema pattern (hex + token references)
+           - Explains `base` vs `_dark` properties for light/dark modes
+           - Lists key sources: Crema blog post, GitHub discussion #3873
+           - Covers lessons learned and trade-offs
+
+        2. **Updated strategy-semantic-tokens.md (minimal changes)**
+           - Version bump to 1.1
+           - Added reference to ADR-004 for implementation architecture
+           - Added version history section
+           - Verified all token usage guidance remains accurate
+           - Added Phase 4.1.5 opacity validation to sources
+
+        **Rationale:** ADR vs Strategy separation follows ADR methodology - implementation decisions
+        belong in ADRs (immutable, point-in-time), token usage patterns belong in strategy docs
+        (evolving guidance). This keeps strategy-semantic-tokens.md focused on "how to use tokens"
+        rather than "how the theme system works internally".
 
 - [ ] **4.2 Convert ErrorBoundary** (60% of all hardcoded colors - 15+ instances)
 

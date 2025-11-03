@@ -126,6 +126,38 @@ export interface ThemeColors {
 	"info-foreground": string;
 
 	// ===================================================================
+	// SOLID STATUS BACKGROUND TEXT COLORS
+	// ===================================================================
+
+	/**
+	 * Text color for solid success backgrounds (badges, pills with full color fill).
+	 * Separate from success-foreground which is for subtle/transparent backgrounds.
+	 * Typically white in light mode, black/dark in dark mode depending on shade.
+	 */
+	"on-success": string;
+
+	/**
+	 * Text color for solid warning backgrounds (badges, pills with full color fill).
+	 * Separate from warning-foreground which is for subtle/transparent backgrounds.
+	 * Typically white in light mode, may vary in dark mode based on warning shade.
+	 */
+	"on-warning": string;
+
+	/**
+	 * Text color for solid destructive backgrounds (badges, pills with full color fill).
+	 * Separate from destructive-foreground which is for subtle/transparent backgrounds.
+	 * Typically white in light mode, black/dark in dark mode depending on shade.
+	 */
+	"on-destructive": string;
+
+	/**
+	 * Text color for solid info backgrounds (badges, pills with full color fill).
+	 * Separate from info-foreground which is for subtle/transparent backgrounds.
+	 * Typically white in light mode, may vary in dark mode based on info shade.
+	 */
+	"on-info": string;
+
+	// ===================================================================
 	// RATING COLORS (Movie-Specific Semantic)
 	// ===================================================================
 

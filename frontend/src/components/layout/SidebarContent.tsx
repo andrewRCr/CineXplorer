@@ -129,7 +129,7 @@ export const SidebarContent: React.FC<SidebarContentProps> = ({
 					onValueChange={handleNavigation}
 					selectionMode="single"
 				>
-					<Listbox.Content background={"background.sidebarInterior"}>
+					<Listbox.Content background="transparent">
 						{/* User items */}
 						{userSection.items
 							.filter((item) => !item.isAction)
@@ -141,11 +141,11 @@ export const SidebarContent: React.FC<SidebarContentProps> = ({
 									py={2}
 									fontSize="sm"
 									fontWeight="normal"
-									color="text.main"
-									_hover={{ bg: "background.hover" }}
+									color="card-foreground"
+									_hover={{ bg: "accent/8" }}
 									_selected={{
-										bg: "background.selected",
-										color: "text.main",
+										bg: "accent/12",
+										color: "accent-foreground",
 										fontWeight: "medium",
 									}}
 									cursor="pointer"
@@ -157,7 +157,7 @@ export const SidebarContent: React.FC<SidebarContentProps> = ({
 
 						{/* Separator inside the listbox */}
 						<Box px={3} py={2}>
-							<Separator borderColor="border.separator" opacity={0.6} />
+							<Separator borderColor="border" opacity={0.6} />
 						</Box>
 
 						{/* Browse section header inside listbox */}
@@ -165,7 +165,7 @@ export const SidebarContent: React.FC<SidebarContentProps> = ({
 							<Text
 								fontSize="xs"
 								fontWeight="medium"
-								color="text.secondary"
+								color="muted-foreground"
 								textTransform="uppercase"
 								letterSpacing="wider"
 							>
@@ -182,11 +182,11 @@ export const SidebarContent: React.FC<SidebarContentProps> = ({
 								py={2}
 								fontSize="sm"
 								fontWeight="normal"
-								color="text.main"
-								_hover={{ bg: "background.hover" }}
+								color="card-foreground"
+								_hover={{ bg: "accent/8" }}
 								_selected={{
-									bg: "background.selected",
-									color: "text.main",
+									bg: "accent/12",
+									color: "accent-foreground",
 									fontWeight: "medium",
 								}}
 								cursor="pointer"

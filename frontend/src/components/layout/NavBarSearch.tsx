@@ -40,13 +40,13 @@ const NavBarSearch = ({ onSearch }: NavBarSearchProps = {}) => {
 			onMouseLeave={() => setIsHovered(false)}
 			borderRadius="md"
 			border="1px solid"
-			borderColor="border.separator"
-			backgroundColor={isHovered ? "background.subItem" : "transparent"}
+			borderColor="border"
+			backgroundColor={isHovered ? "accent/8" : "transparent"}
 			transition="all 0.2s ease"
 			_focusWithin={{
-				borderColor: "background.subItem",
+				borderColor: "ring",
 				boxShadow: "0 0 0 1px",
-				boxShadowColor: "background.subItem",
+				boxShadowColor: "ring/50",
 				backgroundColor: "transparent",
 			}}
 		>
@@ -82,7 +82,7 @@ const NavBarSearch = ({ onSearch }: NavBarSearchProps = {}) => {
 					backgroundColor: "transparent",
 				}}
 				disabled={!query.trim()}
-				color={!query.trim() ? "text.secondary" : "text.main"}
+				color={!query.trim() ? "muted-foreground" : "foreground"}
 			>
 				<FiSearch />
 			</IconButton>

@@ -8,11 +8,11 @@ const Footer = () => {
 		<Box
 			as="footer"
 			w="100%"
-			bg="background.footer"
+			bg="card"
 			py={2}
 			textAlign="center"
 			borderTop="1px solid"
-			borderColor="border.separator"
+			borderColor="border"
 			aria-label="Application footer with TMDB attribution and theme controls"
 			position="relative"
 			zIndex={6} // Above sidebar (zIndex 5) and shadow (zIndex 4)
@@ -26,7 +26,7 @@ const Footer = () => {
 
 				{/* Copyright Row */}
 				<Box display="inline-flex" alignItems="center" gap={2}>
-					<Text fontSize="sm" color="text.muted" fontWeight="light">
+					<Text fontSize="sm" color="muted-foreground" fontWeight="light">
 						© 2025 CineXplorer. All rights reserved.
 					</Text>
 				</Box>
@@ -45,7 +45,7 @@ const Footer = () => {
 							style={{ height: "18px", opacity: 0.7 }}
 						/>
 					</a>
-					<Text fontSize="sm" color="text.muted" fontWeight="light">
+					<Text fontSize="sm" color="muted-foreground" fontWeight="light">
 						This product uses the TMDB API but is not endorsed or certified by
 						TMDB.
 					</Text>

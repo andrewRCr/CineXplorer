@@ -39,7 +39,7 @@ const LoadingContent = ({
 			{/* Optional icon/logo */}
 			{icon && (
 				<Box
-					bg="white"
+					bg="surface-elevated"
 					p={8}
 					borderRadius="20px"
 					boxShadow="0 8px 32px rgba(0, 0, 0, 0.3)"
@@ -56,11 +56,11 @@ const LoadingContent = ({
 				<Text
 					fontSize={icon ? "2xl" : "lg"}
 					fontWeight={icon ? "600" : "normal"}
-					color="text.main"
+					color="foreground"
 				>
 					{message}
 				</Text>
-				<Spinner size="xl" color="accent.primary" />
+				<Spinner size="xl" color="accent" />
 			</VStack>
 		</VStack>
 	);
@@ -86,7 +86,7 @@ const LoadingContent = ({
 			minH="100vh"
 			display="flex"
 			flexDirection="column"
-			bg="background.main"
+			bg="background"
 		>
 			<Box flex="1" display="flex" alignItems="center" justifyContent="center">
 				{content}

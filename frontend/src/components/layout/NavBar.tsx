@@ -21,17 +21,16 @@ import MobileMenuButton from "./MobileMenuButton";
 // Reusable Logo and Title Component
 const LogoAndTitle = () => (
 	<Link to={ROUTES.HOME} style={{ textDecoration: "none" }}>
-		<HStack 
-			gap={3} 
+		<HStack
+			gap={3}
 			alignItems="center"
 			cursor="pointer"
 			transition="all 0.2s"
 			_hover={{
 				"& > *": {
-					filter: "brightness(1.1) drop-shadow(0 0 8px rgba(99, 179, 237, 0.3))",
+					filter: "brightness(1.1)",
 				},
 				"& h1": {
-					textShadow: "0 0 8px rgba(99, 179, 237, 0.3)",
 					_after: {
 						width: "100%",
 					},
@@ -47,7 +46,7 @@ const LogoAndTitle = () => (
 			<Heading
 				as="h1"
 				size="4xl"
-				color="text.main"
+				color="foreground"
 				transition="all 0.2s"
 				position="relative"
 				_after={{
@@ -58,7 +57,7 @@ const LogoAndTitle = () => (
 					transform: "translateX(-50%)",
 					width: "0%",
 					height: "2px",
-					backgroundColor: "accent.secondary",
+					backgroundColor: "accent",
 					transition: "width 0.3s ease",
 					borderRadius: "1px",
 				}}
@@ -87,13 +86,13 @@ const NavBar = () => {
 	return (
 		<Box
 			w="100%"
-			bg="background.navBar"
+			bg="card"
 			position="sticky"
 			top={0}
 			zIndex={10}
 			boxShadow="base"
 			borderBottom="1px solid"
-			borderColor="border.separator"
+			borderColor="border"
 		>
 			<Container maxW="container.xl" px={{ base: 2, md: 6, lg: 8 }} w="100%">
 				<HStack
@@ -136,7 +135,7 @@ const NavBar = () => {
 
 			{/* Desktop User Navigation Tabs - Secondary Row */}
 			{!isMobile && (
-				<Box bg="background.navBar">
+				<Box bg="card">
 					<Container
 						maxW="container.xl"
 						px={{ base: 2, md: 6, lg: 8 }}
@@ -150,7 +149,7 @@ const NavBar = () => {
 								variant="ghost"
 								aria-label="Log activity"
 								onClick={handleLogClick}
-								_hover={{ bg: "background.hover" }}
+								_hover={{ bg: "accent/8" }}
 							>
 								<BsFillPlusCircleFill size={14} />
 								LOG
@@ -167,13 +166,13 @@ const NavBar = () => {
 										<Button
 											size="sm"
 											variant={isTabActive(item.path) ? "solid" : "ghost"}
-											colorScheme={
-												isTabActive(item.path) ? "accent" : undefined
-											}
+											bg={isTabActive(item.path) ? "accent" : undefined}
+											color={isTabActive(item.path) ? "accent-foreground" : undefined}
 											_hover={{
 												bg: isTabActive(item.path)
-													? "accent.600"
-													: "background.hover",
+													? "accent"
+													: "accent/8",
+												opacity: isTabActive(item.path) ? 0.92 : 1,
 											}}
 											borderRadius="md"
 											px={3}

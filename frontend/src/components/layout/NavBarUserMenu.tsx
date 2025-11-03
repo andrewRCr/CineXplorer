@@ -67,11 +67,9 @@ const NavBarUserMenu = () => {
 					size="sm"
 					variant="outline"
 					_hover={{
-						bg: "background.hover",
-						// opacity: 0.8,
-						color: "colors.white",
-						borderColor: "colors.white",
-						border: "1px solid",
+						bg: "accent/8",
+						color: "accent-foreground",
+						borderColor: "accent",
 					}}
 				>
 					Login
@@ -108,9 +106,9 @@ const NavBarUserMenu = () => {
 						minW="200px"
 						shadow="lg"
 						border="1px solid"
-						borderColor="border.subtle"
+						borderColor="border"
 						borderRadius="md"
-						background="background.main"
+						background="popover"
 						zIndex={9999}
 					>
 						<VStack gap={0} align="stretch">
@@ -123,8 +121,7 @@ const NavBarUserMenu = () => {
 										px={4}
 										py={3}
 										_hover={{
-											background: "background.subItem",
-											opacity: 0.8,
+											background: "accent/8",
 											"& > div": { opacity: 1 },
 										}}
 										cursor="pointer"
@@ -139,7 +136,7 @@ const NavBarUserMenu = () => {
 											top={0}
 											bottom={0}
 											w="3px"
-											background="accent.link"
+											background="accent"
 											opacity={0}
 											transition="opacity 0.2s ease-in-out"
 											borderRadius="md"
@@ -148,8 +145,8 @@ const NavBarUserMenu = () => {
 										<HStack gap={2} ml={2}>
 											<BsFillPlusCircleFill size={14} />
 											<Text
-												color="text.main"
-												_hover={{ color: "accent.link" }}
+												color="popover-foreground"
+												_hover={{ color: "accent" }}
 												transition="color 0.2s ease-in-out"
 											>
 												LOG
@@ -174,8 +171,7 @@ const NavBarUserMenu = () => {
 													px={4}
 													py={3}
 													_hover={{
-														background: "background.subItem",
-														opacity: 0.8,
+														background: "accent/8",
 														"& > div": { opacity: 1 },
 													}}
 													cursor="pointer"
@@ -189,15 +185,15 @@ const NavBarUserMenu = () => {
 														top={0}
 														bottom={0}
 														w="3px"
-														background="accent.link"
+														background="accent"
 														opacity={0}
 														transition="opacity 0.2s ease-in-out"
 														borderRadius="md"
 														borderBottomRadius={0}
 													/>
 													<Text
-														color="text.main"
-														_hover={{ color: "accent.link" }}
+														color="popover-foreground"
+														_hover={{ color: "accent" }}
 														transition="color 0.2s ease-in-out"
 														ml={2}
 													>
@@ -224,8 +220,7 @@ const NavBarUserMenu = () => {
 									px={4}
 									py={3}
 									_hover={{
-										background: "background.subItem",
-										opacity: 0.8,
+										background: "accent/8",
 										"& > div": { opacity: 1 },
 									}}
 									cursor="pointer"
@@ -239,15 +234,15 @@ const NavBarUserMenu = () => {
 										top={0}
 										bottom={0}
 										w="3px"
-										background="accent.link"
+										background="accent"
 										opacity={0}
 										transition="opacity 0.2s ease-in-out"
 										borderRadius="md"
 										borderBottomRadius={0}
 									/>
 									<Text
-										color="text.main"
-										_hover={{ color: "accent.link" }}
+										color="popover-foreground"
+										_hover={{ color: "accent" }}
 										transition="color 0.2s ease-in-out"
 										ml={2}
 									>
@@ -268,8 +263,7 @@ const NavBarUserMenu = () => {
 									px={4}
 									py={3}
 									_hover={{
-										background: "background.subItem",
-										opacity: 0.8,
+										background: "accent/8",
 										"& > div": { opacity: 1 },
 									}}
 									cursor="pointer"
@@ -281,13 +275,13 @@ const NavBarUserMenu = () => {
 										top={0}
 										bottom={0}
 										w="3px"
-										background="accent.link"
+										background="accent"
 										opacity={0}
 										transition="opacity 0.2s ease-in-out"
 									/>
 									<Text
-										color="text.main"
-										_hover={{ color: "accent.link" }}
+										color="popover-foreground"
+										_hover={{ color: "accent" }}
 										transition="color 0.2s ease-in-out"
 										ml={2}
 									>
@@ -300,8 +294,7 @@ const NavBarUserMenu = () => {
 								px={4}
 								py={3}
 								_hover={{
-									background: "background.subItem",
-									opacity: 0.8,
+									background: "accent/8",
 									"& > div": { opacity: 1 },
 								}}
 								cursor="pointer"
@@ -324,15 +317,15 @@ const NavBarUserMenu = () => {
 									top={0}
 									bottom={0}
 									w="3px"
-									background="accent.primary"
+									background="accent"
 									opacity={0}
 									transition="opacity 0.2s ease-in-out"
 									borderRadius="md"
 									borderTopRadius={0}
 								/>
 								<Text
-									color="text.main"
-									_hover={{ color: "accent.primary" }}
+									color="popover-foreground"
+									_hover={{ color: "accent" }}
 									transition="color 0.2s ease-in-out"
 									ml={2}
 								>

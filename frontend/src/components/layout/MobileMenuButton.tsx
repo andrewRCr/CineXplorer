@@ -23,16 +23,14 @@ const MobileMenuButton: React.FC<MobileMenuButtonProps> = ({ size = "md" }) => {
 			onClick={handleOpen}
 			size={size}
 			variant="outline"
-			color="text.main"
+			color="foreground"
 			border="1px solid"
-			borderColor="border.separator"
+			borderColor="border"
 			borderRadius="md"
 			_hover={{
-				bg: "background.hover",
-				opacity: 0.8,
-				color: "colors.white",
-				borderColor: "colors.white",
-				border: "1px solid",
+				bg: "accent/8",
+				color: "accent-foreground",
+				borderColor: "accent",
 			}}
 		>
 			<LuMenu />

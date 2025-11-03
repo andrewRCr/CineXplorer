@@ -88,7 +88,7 @@
 	color: #888;
 }
 
+/* Background and text colors now handled by Chakra UI theme system */
 body {
-	background: #000000;
 	margin: 0;
 }

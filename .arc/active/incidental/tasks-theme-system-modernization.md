@@ -1029,6 +1029,46 @@ and ongoing migration overhead in future tasks.
         - ✅ TypeScript type checking: PASSED
         - ✅ Frontend linting: PASSED
 
+    - [x] **4.1.5f Review remaining Phase 4.1 components**
+
+        Completed review of 4 additional Phase 4.1 components against semantic token checklist and updated
+        border system strategy. One minor fix applied for border consistency.
+
+        **Components Reviewed:**
+
+        1. **NavBarSearch.tsx** - ✅ EXCELLENT
+           - All semantic tokens correct (`border`, `accent/8`, `ring`, `foreground`, `muted-foreground`)
+           - Proper interactive states (hover 8%, focus ring with offset)
+           - Border system follows strategy (1px border, borderColor="border", focus ring)
+           - No changes needed
+
+        2. **Sidebar.tsx** - ✅ GOOD
+           - Uses `bg="card"` correctly for elevated surface
+           - Hardcoded boxShadow acceptable (shadows not in token system)
+           - Simple, clean component
+           - No changes needed
+
+        3. **SidebarContent.tsx** - ⚠️ FIXED
+           - Line 92: IconButton with `variant="outline"` missing explicit border props
+           - Fixed: Added `borderWidth="1px"` and `borderColor="border"` per border strategy
+           - All other tokens correct (card-foreground, accent/8, accent/12, border, muted-foreground)
+           - Interactive states correct (hover 8%, selected 12%)
+
+        4. **LoadingContent.tsx** - ✅ EXCELLENT
+           - All semantic tokens perfect (`surface-elevated`, `foreground`, `accent`, `background`)
+           - Clean, well-documented component
+           - No changes needed
+
+        **Key Finding:**
+        - Border system strategy (1px universal standard, explicit props for outline buttons) now enforced
+        - All components follow updated semantic token guidance from strategy documents
+
+        **Quality gate:**
+        - ✅ All 4 components reviewed against checklist + strategy documents
+        - ✅ One minor fix applied (SidebarContent IconButton border props)
+        - ✅ TypeScript type checking: PASSED
+        - ✅ Frontend linting: PASSED
+
 - [x] **4.2 Convert authentication pages**
 
     Converted all 3 authentication pages from legacy tokens and hardcoded colors to semantic tokens through
@@ -1280,14 +1320,49 @@ and ongoing migration overhead in future tasks.
 
 - [ ] **4.3 Convert movie components**
 
-    - [ ] **4.3.1 Convert Featured page** (`pages/Featured.tsx`)
-        - Replace Chakra `fg`, `fg.muted` with semantic equivalents:
-            - `fg` → `foreground`
-            - `fg.muted` → `muted-foreground`
-        - **Hero section background:** Use `surface-elevated` token for featured content area
-        - Apply semantic tokens throughout
-        - **Review token usage:** Verify against Task 4.1.5e checklist (line ~1007)
-        - Quality gate: Featured page uses semantic tokens exclusively
+    - [x] **4.3.1 Convert Featured page** (`pages/Featured.tsx`)
+
+        Converted Featured page from Chakra raw tokens to semantic tokens. Page is currently a stub
+        (no hero section yet), contains centered card with navigation buttons.
+
+        **Changes Made:**
+
+        1. **Line 29**: `color="fg.muted"` → `color="muted-foreground"`
+           - Subtitle text below heading
+
+        2. **Lines 51-60**: Primary button conversion
+           - Removed: `colorScheme="blue"`
+           - Added: `bg="accent"`, `color="accent-foreground"`, `_hover={{ opacity: 0.92 }}`
+           - Follows semantic token pattern for primary actions
+
+        3. **Lines 62-71**: First outline button
+           - Added: `borderWidth="1px"`, `borderColor="border"`
+           - Enforces border system strategy (1px universal standard)
+
+        4. **Lines 73-82**: Second outline button
+           - Added: `borderWidth="1px"`, `borderColor="border"`
+           - Consistent with border system strategy
+
+        5. **Line 38**: Card.Root
+           - Added: `bg="card"`
+           - Optional improvement for explicit token usage consistency
+
+        **Token Usage Review (4.1.5e checklist):**
+        - ✅ Surface tokens: `card` used for elevated card surface
+        - ✅ Interactive elements: `accent`/`accent-foreground` for primary action
+        - ✅ Text tokens: `muted-foreground` for secondary text
+        - ✅ Border tokens: `border` used with explicit 1px width
+        - ✅ Interactive states: Hover opacity pattern (0.92) for accent button
+        - ✅ No hardcoded colors or Chakra raw tokens remaining
+
+        **Quality gate:**
+        - ✅ All Chakra raw tokens eliminated (`fg.muted`, `colorScheme`)
+        - ✅ Border system strategy followed (1px + explicit props)
+        - ✅ TypeScript type checking: PASSED
+        - ✅ Frontend linting: PASSED
+
+        **Files modified:**
+        - `frontend/src/pages/Featured.tsx` - 5 token conversions
 
     - [ ] **4.3.2 Convert MovieDetail page** (`pages/movie/MovieDetail.tsx`)
         - Replace `gray.*` usage with semantic tokens per Phase 3.3 mapping

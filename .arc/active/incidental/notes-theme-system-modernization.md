@@ -1891,3 +1891,509 @@ badge: string;                // Neutral badge background
 - Patterns consistent across all 4 systems
 - No contradictions found
 - Aligns with shadcn/ui conventions
+
+---
+
+## Systematic Investigation: Transparent Colors Issue (2025-11-02)
+
+**Problem Statement:**
+ALL themes showing transparent/empty colors. Navbar and sidebar are see-through. Light/dark toggle changes body
+background (black ↔ white) but semantic tokens (`bg="card"`, `bg="background"`, etc.) render as transparent.
+
+**What IS Working:**
+
+- ✅ Light/dark mode toggle (body background changes correctly)
+- ✅ Theme selection state (data-theme attribute set correctly)
+- ✅ Color mode class application (`.dark` class toggles correctly)
+
+**What ISN'T Working:**
+
+- ❌ Semantic tokens return transparent values for ALL themes
+- ❌ Components using semantic tokens have no backgrounds (see-through)
+- ❌ Not "stuck on one theme" - it's a fundamental CSS variable generation issue
+
+### Investigation Plan
+
+**Step 1: Trace Data Flow**
+
+1. Theme palettes (hex colors) → Theme definitions (hexToRgb conversion) → Registry
+2. Registry → generateBaseTokens() → base color tokens
+3. Registry → generateSemanticTokens() → semantic tokens
+4. Config → createSystem() → Chakra system
+5. System → CSS variables → Browser rendering
+
+**Step 2: Validate Each Layer**
+
+- Verify palette data structure
+- Verify hexToRgb() conversions
+- Verify token generation output
+- Verify Chakra config structure
+- Verify CSS variable output in browser
+
+**Step 3: Document Findings**
+
+- List ALL issues found (not just first one)
+- Categorize: configuration vs. data vs. structure
+- Prioritize by likelihood and impact
+
+**Step 4: External Validation**
+
+- Research Chakra UI v3 semantic token requirements
+- Verify condition syntax requirements
+- Check for breaking changes in Chakra v3
+
+**Step 5: Test Hypotheses**
+
+- Create minimal reproduction cases
+- Test each potential fix in isolation
+- Verify with browser inspection
+
+### Layer-by-Layer Analysis
+
+#### Layer 1: Palette Data (Source Colors)
+
+**File:** `frontend/src/theme/palettes/github.ts`
+
+**Expected:**
+
+- Hex color strings (e.g., `"#ffffff"`, `"#0d1117"`)
+- All 33 semantic tokens defined for light + dark
+- Valid hex format (6 or 8 characters)
+
+**Actual (verified by code reading):**
+✅ Palette data structure is correct
+
+- `githubPaletteLight.bg_default = "#ffffff"` ✅
+- `githubPaletteLight.fg_default = "#1f2328"` ✅
+- `githubPaletteDark.bg_default = "#0d1117"` ✅
+- `githubPaletteDark.fg_default = "#f0f6fc"` ✅
+- All hex colors properly formatted (6 chars, some 8 with alpha)
+
+**Conclusion:** Layer 1 data is correct ✅
+
+#### Layer 2: Theme Definitions (hexToRgb Conversion)
+
+**File:** `frontend/src/theme/definitions/github.ts`
+
+**Function:** `hexToRgb(hex: string): string`
+
+```typescript
+// Standard 6-char hex
+const result = /^([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(cleanHex);
+return `${parseInt(result[1], 16)} ${parseInt(result[2], 16)} ${parseInt(result[3], 16)}`;
+```
+
+**Expected Conversions:**
+
+- `"#ffffff"` → `"255 255 255"`
+- `"#0d1117"` → `"13 17 23"`
+- `"#1f2328"` → `"31 35 40"`
+
+**Actual (verified by code reading):**
+✅ hexToRgb function logic is correct
+
+- Regex extracts 3 pairs of hex digits ✅
+- parseInt converts to decimal ✅
+- Returns space-separated string ✅
+
+**Theme Definition Structure:**
+
+```typescript
+export const githubTheme: Theme = {
+  name: "github",
+  label: "GitHub",
+  light: {
+    background: hexToRgb(pLight.bg_default),  // "#ffffff" → "255 255 255"
+    foreground: hexToRgb(pLight.fg_default),  // "#1f2328" → "31 35 40"
+    card: hexToRgb(pLight.bg_default),        // "#ffffff" → "255 255 255"
+    // ... etc for all 33 tokens
+  },
+  dark: {
+    background: hexToRgb(pDark.bg_default),   // "#0d1117" → "13 17 23"
+    // ... etc
+  }
+}
+```
+
+**Conclusion:** Layer 2 conversion logic is correct ✅
+
+#### Layer 3: Theme Registry
+
+**File:** `frontend/src/theme/index.ts` (lines 31-39)
+
+**Expected:**
+
+```typescript
+export const themeRegistry = {
+  github: githubTheme,
+  "ibm-carbon": ibmCarbonTheme,
+  // ... 7 themes total
+}
+```
+
+**Actual (verified by code reading):**
+✅ Registry structure is correct
+
+- All 7 themes imported ✅
+- Mapped to kebab-case keys ✅
+- Exported as const ✅
+
+**Conclusion:** Layer 3 registry is correct ✅
+
+#### Layer 4: Token Generation Functions
+
+**Function 1: `generateBaseTokens()`** (lines 99-125)
+
+**Purpose:** Create base tokens like `colors.github.light.background = "255 255 255"`
+
+**Logic Trace:**
+
+```typescript
+for (const [themeName, theme] of Object.entries(themeRegistry)) {
+  // themeName = "github", theme = githubTheme
+
+  const themeKey = themeName.replace(/-([a-z])/g, (g) => g[1].toUpperCase());
+  // "github" → "github"
+  // "ibm-carbon" → "ibmCarbon"
+
+  colors[themeKey] = {
+    light: {},
+    dark: {},
+  };
+
+  for (const tokenKey of Object.keys(theme.light)) {
+    // tokenKey = "background", "foreground", "card", etc.
+
+    colors[themeKey].light[tokenKey] = {
+      value: theme.light[tokenKey],  // e.g., "255 255 255"
+    };
+    colors[themeKey].dark[tokenKey] = {
+      value: theme.dark[tokenKey],   // e.g., "13 17 23"
+    };
+  }
+}
+```
+
+**Expected Output Structure:**
+
+```typescript
+{
+  colors: {
+    github: {
+      light: {
+        background: { value: "255 255 255" },
+        foreground: { value: "31 35 40" },
+        // ... all 33 tokens
+      },
+      dark: {
+        background: { value: "13 17 23" },
+        // ... all 33 tokens
+      }
+    },
+    ibmCarbon: { light: {...}, dark: {...} },
+    // ... all 7 themes
+  }
+}
+```
+
+**Conclusion:** Layer 4A (base tokens) structure looks correct ✅ (though unused)
+
+**Function 2: `generateSemanticTokens()`** (current implementation after changes)
+
+**Current Structure (lines 159-192):**
+
+```typescript
+// CURRENT: Flat conditions
+value.base = "255 255 255";                      // Default light
+value._dark = "13 17 23";                        // Default dark
+value._githubThemeLight = "255 255 255";         // GitHub + light
+value._githubThemeDark = "13 17 23";             // GitHub + dark
+value._ibmCarbonThemeLight = "255 255 255";      // IBM Carbon + light
+value._ibmCarbonThemeDark = "22 22 22";          // IBM Carbon + dark
+```
+
+**🚨 ROOT CAUSE FOUND!**
+
+According to external research (Chakra UI v3/Panda CSS documentation):
+
+**NESTED conditions ARE supported and CORRECT for multi-theme scenarios:**
+
+```typescript
+// ✅ CORRECT: Nested structure (from research)
+value: {
+  _pinkTheme: {
+    base: "{colors.pink.500}",      // Pink theme light mode
+    _dark: "{colors.pink.300}"      // Pink theme dark mode
+  },
+  _blueTheme: {
+    base: "{colors.blue.500}",      // Blue theme light mode
+    _dark: "{colors.blue.300}"      // Blue theme dark mode
+  }
+}
+```
+
+**The ORIGINAL nested structure was CORRECT!** The issue is:
+
+1. ❌ Condition names need underscore prefix: `_githubTheme` not `githubTheme`
+2. ❌ `_dark` is a BUILT-IN condition that works INSIDE custom conditions
+3. ❌ We should NOT create separate `_githubThemeLight` and `_githubThemeDark` conditions
+4. ✅ We SHOULD use nested structure with `_githubTheme` containing `{ base, _dark }`
+
+**Correct Structure:**
+
+```typescript
+// Define conditions (ONE per theme, not two)
+conditions: {
+  _githubTheme: '[data-theme="github"] &',
+  _ibmCarbonTheme: '[data-theme="ibm-carbon"] &',
+  // ... (7 conditions total, not 14)
+}
+
+// Use nested structure in semantic tokens
+background: {
+  value: {
+    base: "255 255 255",               // Default (fallback)
+    _dark: "13 17 23",                 // Default dark mode
+    _githubTheme: {                    // GitHub theme
+      base: "255 255 255",            // Light mode
+      _dark: "13 17 23"               // Dark mode
+    },
+    _ibmCarbonTheme: {                 // IBM Carbon theme
+      base: "255 255 255",            // Light mode
+      _dark: "22 22 22"               // Dark mode
+    },
+    // ... (7 theme conditions)
+  }
+}
+```
+
+This generates CSS like:
+
+```css
+:root {
+  --chakra-colors-background: 255 255 255;  /* Default */
+}
+.dark {
+  --chakra-colors-background: 13 17 23;  /* Default dark */
+}
+[data-theme="github"] {
+  --chakra-colors-background: 255 255 255;  /* GitHub light */
+}
+[data-theme="github"].dark {
+  --chakra-colors-background: 13 17 23;  /* GitHub dark */
+}
+[data-theme="ibm-carbon"] {
+  --chakra-colors-background: 255 255 255;  /* IBM Carbon light */
+}
+[data-theme="ibm-carbon"].dark {
+  --chakra-colors-background: 22 22 22;  /* IBM Carbon dark */
+}
+```
+
+**Conclusion:** The transparent colors are caused by incorrect condition structure.
+We flattened conditions when we should have kept them nested. ⚠️🎯
+
+---
+
+### Summary of Findings
+
+**Root Cause Identified:**
+The transparent color issue is caused by using FLAT condition structure when Chakra UI v3 expects NESTED conditions
+for multi-theme scenarios.
+
+**What Went Wrong:**
+
+1. Original code had nested structure BUT wrong condition names (`githubTheme` → should be `_githubTheme`)
+2. Investigation attempted to "fix" by flattening (`_githubThemeLight`, `_githubThemeDark`)
+3. Flat structure doesn't work because `_dark` is a BUILT-IN condition that must nest INSIDE custom conditions
+4. Chakra v3 docs confirm: nested syntax is correct for multi-theme + color mode
+
+**Correct Fix:**
+
+1. Revert to NESTED structure: `_githubTheme: { base: "...", _dark: "..." }`
+2. Add underscore prefix to condition names: `_githubTheme` not `githubTheme`
+3. Use ONE condition per theme (not two): 7 conditions total, not 14
+4. Let `_dark` work as nested built-in inside theme conditions
+
+**Layers Verified:**
+
+- ✅ Layer 1: Palette data is correct
+- ✅ Layer 2: hexToRgb conversion is correct
+- ✅ Layer 3: Theme registry is correct
+- ✅ Layer 4: Token generation logic is sound
+- ✅ Layer 5: Condition selectors have correct `&` syntax
+- ❌ Layer 6: **Config structure is WRONG** - using flat when should use nested
+
+**Next Steps:**
+
+1. Revert `generateThemeConditions()` to create single conditions per theme
+2. Revert `generateSemanticTokens()` to use nested structure
+3. Ensure condition names have underscore prefix
+4. Test in browser to verify CSS variables generate correctly
+
+**Confidence Level:** HIGH - External research confirms nested structure is correct for multi-theme scenarios.
+
+**Note from User:** We may have tried nested + underscore prefix combination before.
+If this fix doesn't work, there may be another structural issue.
+
+---
+
+### Reference: Complete Working Example from Chakra UI v3 Docs
+
+**Source:** Official Chakra UI v3 documentation (confirmed working pattern)
+
+**Complete Configuration:**
+
+```typescript
+// theme.config.ts
+import { createSystem, defaultConfig, defineConfig } from "@chakra-ui/react"
+
+const config = defineConfig({
+  theme: {
+    // Step 1: Define base design tokens (raw values)
+    tokens: {
+      colors: {
+        // Neutral palette
+        neutral: {
+          50: { value: "#F9FAFB" },
+          100: { value: "#F3F4F6" },
+          900: { value: "#111827" },
+          950: { value: "#030712" }
+        },
+        // Brand colors
+        brand: {
+          400: { value: "#60A5FA" },
+          500: { value: "#3B82F6" },
+          600: { value: "#2563EB" }
+        },
+        // Pink palette
+        pink: {
+          50: { value: "#FDF2F8" },
+          500: { value: "#EC4899" },
+          950: { value: "#500724" }
+        },
+        // Blue palette
+        blue: {
+          50: { value: "#EFF6FF" },
+          500: { value: "#3B82F6" },
+          950: { value: "#172554" }
+        }
+      }
+    },
+
+    // Step 2: Define custom conditions (ONE per theme, with & placeholder)
+    conditions: {
+      light: '[data-color-mode="light"] &',
+      dark: '[data-color-mode="dark"] &',
+      pink: '[data-theme="pink"] &',
+      blue: '[data-theme="blue"] &',
+      highContrast: '[data-high-contrast] &'
+    },
+
+    // Step 3: Define semantic tokens with NESTED conditions
+    semanticTokens: {
+      colors: {
+        // Simple color mode variant
+        text: {
+          value: {
+            base: "{colors.neutral.900}",      // Default light
+            _dark: "{colors.neutral.50}"       // Default dark
+          }
+        },
+
+        // Multi-theme with NESTED color mode
+        surface: {
+          value: {
+            // Default fallback (no theme selected)
+            base: "{colors.neutral.50}",
+            _dark: "{colors.neutral.900}",
+
+            // Pink Theme (NESTED structure)
+            _pink: {
+              base: "{colors.pink.50}",        // Pink + light mode
+              _dark: "{colors.pink.950}"       // Pink + dark mode
+            },
+
+            // Blue Theme (NESTED structure)
+            _blue: {
+              base: "{colors.blue.50}",        // Blue + light mode
+              _dark: "{colors.blue.950}"       // Blue + dark mode
+            }
+          }
+        },
+
+        // Mixed: flat conditions for accessibility override
+        interactive: {
+          value: {
+            base: "{colors.brand.500}",
+            _dark: "{colors.brand.400}",
+            _highContrast: "{colors.neutral.900}"   // Flat override
+          }
+        }
+      }
+    }
+  },
+
+  // Step 4: Global CSS (optional)
+  globalCss: {
+    body: {
+      bg: "surface",      // Uses semantic token
+      color: "text"       // Uses semantic token
+    }
+  }
+})
+
+// Step 5: Create system by merging with defaults
+export const system = createSystem(defaultConfig, config)
+```
+
+**Generated CSS Output:**
+
+```css
+/* Default values */
+:root {
+  --chakra-colors-text: var(--chakra-colors-neutral-900);
+  --chakra-colors-surface: var(--chakra-colors-neutral-50);
+}
+
+/* Default dark mode */
+.dark {
+  --chakra-colors-text: var(--chakra-colors-neutral-50);
+  --chakra-colors-surface: var(--chakra-colors-neutral-900);
+}
+
+/* Pink theme light mode */
+[data-theme="pink"] {
+  --chakra-colors-surface: var(--chakra-colors-pink-50);
+}
+
+/* Pink theme dark mode */
+[data-theme="pink"].dark {
+  --chakra-colors-surface: var(--chakra-colors-pink-950);
+}
+
+/* Blue theme light mode */
+[data-theme="blue"] {
+  --chakra-colors-surface: var(--chakra-colors-blue-50);
+}
+
+/* Blue theme dark mode */
+[data-theme="blue"].dark {
+  --chakra-colors-surface: var(--chakra-colors-blue-950);
+}
+```
+
+**Key Points from Working Example:**
+
+1. ✅ Underscore prefix on custom conditions: `_pink`, `_blue` (not `pink`, `blue`)
+2. ✅ Nested structure for theme + color mode: `_pink: { base, _dark }`
+3. ✅ `_dark` is built-in, works inside custom conditions
+4. ✅ Token references use curly braces: `{colors.neutral.900}`
+5. ✅ Mandatory `&` placeholder in condition definitions
+6. ✅ ONE condition per theme (not separate light/dark conditions)
+
+**What We're Currently Doing Wrong:**
+
+- Creating 14 flat conditions (`_githubThemeLight`, `_githubThemeDark`) instead of 7 nested
+- Not using token references (`{colors.github.light.background}`) - using direct RGB values
+- May have had wrong underscore prefix in earlier attempts

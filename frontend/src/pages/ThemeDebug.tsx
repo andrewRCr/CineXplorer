@@ -227,7 +227,7 @@ export default function ThemeDebug() {
 				<Box bg="card" p={6} borderRadius="md" borderWidth="1px" borderColor="border">
 					<Text fontSize="xl" fontWeight="bold" mb={4}>Quick Theme Switch</Text>
 					<HStack wrap="wrap" gap={2}>
-						{(['github', 'ibm-carbon', 'gitlab-pajamas', 'tangere-terminal'] as const).map((t) => (
+						{(['github', 'ibm-carbon', 'gitlab-pajamas'] as const).map((t) => (
 							<Button
 								key={t}
 								onClick={() => setTheme(t as ThemeName)}

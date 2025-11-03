@@ -17,23 +17,17 @@ import { createSystem, defaultConfig, defineConfig } from "@chakra-ui/react";
 import { githubTheme } from "./definitions/github";
 import { ibmCarbonTheme } from "./definitions/ibm-carbon";
 import { gitlabPajamasTheme } from "./definitions/gitlab-pajamas";
-import { tangereTerminalTheme } from "./definitions/tangere-terminal";
-import { sageBoneTheme } from "./definitions/sage-bone";
-import { stoneGreigeTheme } from "./definitions/stone-greige";
-import { mutedEarthTheme } from "./definitions/muted-earth";
 import type { Theme, ThemeColors } from "./types";
 
 /**
  * Theme Registry
+ *
+ * Production themes optimized for accessibility and visual consistency.
  */
 export const themeRegistry = {
 	github: githubTheme,
 	"ibm-carbon": ibmCarbonTheme,
 	"gitlab-pajamas": gitlabPajamasTheme,
-	"tangere-terminal": tangereTerminalTheme,
-	"sage-bone": sageBoneTheme,
-	"stone-greige": stoneGreigeTheme,
-	"muted-earth": mutedEarthTheme,
 } as const;
 
 export const defaultThemeName = "github";

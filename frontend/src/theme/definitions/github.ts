@@ -1,7 +1,7 @@
 /**
  * GitHub Primer Theme Definition
  *
- * Maps GitHub Primer palette colors to shadcn/ui semantic roles.
+ * Maps GitHub Primer palette colors to semantic token roles.
  * Provides neutral, professional aesthetic proven at massive scale.
  * Source: GitHub Primer design system (https://primer.style)
  * Research: .arc/active/incidental/notes-theme-system-modernization.md

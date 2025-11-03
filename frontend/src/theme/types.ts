@@ -2,19 +2,14 @@
  * Theme System Type Definitions
  *
  * Defines type-safe interfaces for CineXplorer's theme system.
- * Based on shadcn/ui semantic color convention, adapted for Chakra UI v3.
- *
- * @see https://ui.shadcn.com/docs/theming
+ * Uses semantic token naming inspired by shadcn/ui, implemented for Chakra UI v3.
  */
 
 /**
- * Theme color palette following shadcn/ui semantic naming convention.
+ * Theme color palette with semantic token naming.
  *
- * All colors are RGB space-separated values (e.g., "249 245 229") to support
- * Chakra UI's opacity modifiers (e.g., bg="primary/50").
- *
- * Color values must be RGB triplets (no `rgb()` wrapper, no hex values).
- * Example: "255 255 255" for white, "0 0 0" for black.
+ * All colors are hex values (e.g., "#ffffff"). Chakra UI v3 supports
+ * opacity modifiers with hex colors (e.g., bg="primary/50").
  *
  * Semantic tokens provide meaning-based color names rather than appearance-based.
  * This allows themes to change colors while maintaining consistent meaning across

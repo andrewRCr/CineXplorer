@@ -5,7 +5,7 @@
 ## Purpose
 
 Comprehensive guide for CineXplorer's semantic token system, covering the 33-token structure
-(shadcn/ui base + extensions), legacy token migration, and component migration patterns.
+(20 base tokens + 13 extensions), legacy token migration, and component migration patterns.
 
 **Use this when:**
 
@@ -34,9 +34,9 @@ see [ADR-004: Provider-Based Multi-Theme Switching](../adr/adr-004-provider-base
 
 ## Token Structure Overview
 
-### Base System: 20 shadcn/ui Tokens
+### Base System: 20 Semantic Tokens
 
-CineXplorer's theme system is built on shadcn/ui's semantic token structure.
+CineXplorer's theme system uses semantic token naming inspired by shadcn/ui, implemented for Chakra UI v3.
 
 | Token | Purpose | Use Cases |
 |-------|---------|-----------|
@@ -73,7 +73,7 @@ CineXplorer's theme system is built on shadcn/ui's semantic token structure.
 
 ### Extended System: +13 Movie App Tokens
 
-CineXplorer extends shadcn/ui with 13 additional tokens for movie-specific UI patterns
+CineXplorer extends the base semantic tokens with 13 additional tokens for movie-specific UI patterns
 and complete alert system coverage.
 
 | Token | Purpose | Use Cases | Rationale |
@@ -637,12 +637,14 @@ Nielsen Norman Group, WCAG 2.4.13, and accessibility.org best practices (2024).
 ```
 
 **Key findings:**
+
 - **Default underline:** Required for accessibility (WCAG non-color indicators, helps color-blind users)
 - **Hover color change:** `accent` → `accent-hover` (warmer/brighter shade)
 - **Focus ring:** Same 2px pattern as buttons (WCAG 2.4.13 compliance, keyboard navigation)
 - **Visited states:** Declining trend in modern design - skip unless user research shows need
 
 **Pattern rationale:**
+
 - Underlines maximize perceived clickability (Nielsen Norman Group, Smart Interface Design 2024)
 - Color change alone is insufficient (Baymard Institute, WebAIM accessibility guidelines)
 - Consistency with button focus states improves UX across interactive elements

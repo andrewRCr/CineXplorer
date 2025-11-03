@@ -3,7 +3,7 @@
 import * as React from "react";
 import { ChakraProvider } from "@chakra-ui/react";
 import type { ThemeName } from "@/theme";
-import { createThemeSystem, getTheme, defaultSystem } from "@/theme";
+import { createThemeSystem, getTheme } from "@/theme";
 import { ThemeContext, STORAGE_KEY, getInitialTheme } from "@/hooks/useThemeSelect";
 
 /**
@@ -29,7 +29,13 @@ import { ThemeContext, STORAGE_KEY, getInitialTheme } from "@/hooks/useThemeSele
  */
 export function ThemeSelectProvider({ children }: { children: React.ReactNode }) {
 	const [themeName, setThemeNameState] = React.useState<ThemeName>(getInitialTheme);
-	const [system, setSystem] = React.useState(defaultSystem);
+
+	// Initialize system from saved theme (lazy initializer ensures persistence works)
+	const [system, setSystem] = React.useState(() => {
+		const initialThemeName = getInitialTheme();
+		const initialTheme = getTheme(initialThemeName);
+		return createThemeSystem(initialTheme);
+	});
 
 	// When theme changes, create new system and update localStorage
 	const setTheme = React.useCallback((newThemeName: ThemeName) => {
@@ -42,14 +48,6 @@ export function ThemeSelectProvider({ children }: { children: React.ReactNode })
 			localStorage.setItem(STORAGE_KEY, newThemeName);
 		}
 	}, []);
-
-	// Initialize system from saved theme on mount
-	React.useEffect(() => {
-		const savedTheme = getInitialTheme();
-		if (savedTheme !== themeName) {
-			setTheme(savedTheme);
-		}
-	}, []); // Only run once on mount
 
 	const contextValue = React.useMemo(
 		() => ({ theme: themeName, setTheme }),

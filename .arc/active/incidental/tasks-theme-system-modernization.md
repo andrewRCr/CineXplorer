@@ -1560,20 +1560,55 @@ and ongoing migration overhead in future tasks.
         **Quality gates:** ✅ TypeScript type checking PASSED, Frontend linting PASSED
 
 - [ ] **4.4 Convert remaining components**
-    - **PaginationCtrl** (`components/layout/PaginationCtrl.tsx`)
-        - Update pagination button styling
-    - **TypographyTest** (`pages/TypographyTest.tsx`)
-        - Update to use semantic tokens (this is a test/showcase page)
-    - **Filter components** - Verify already using tokens, update if needed:
-        - AdvancedMovieFilters, ClearFiltersButton, CollapsibleSearchBox
-        - ConnectedDropdowns, GenreSelector, LetterboxdStyleFilters
-        - RatingSelector, SearchBar, SortDropdownMinimal, SortSelector, YearSelector
-    - **UserProfile** (`components/user/UserProfile.tsx`) - Apply tokens if needed
-    - **Other pages** - Verify and update:
-        - Profile, Settings, Watchlist, PersonDetail
-        - NowPlaying, Popular, TopRated, Upcoming, SearchResults
-    - **Review token usage:** Verify all remaining components against Task 4.1.5e checklist (line ~1007)
-        - Time box: 15 minutes total for all components
+
+    - [x] **4.4.1 Convert PaginationCtrl**
+        - **File:** `components/layout/PaginationCtrl.tsx`
+        - **Tokens converted (4 total):**
+            - `text.main` → `foreground` (navigation buttons, page numbers)
+            - `text.secondary` → `muted-foreground` (ellipsis)
+            - `border.separator` → `border` (button borders)
+            - `accent.primary` → `accent` (active page border)
+        - **Active page styling refined:**
+            - Initial: `bg="secondary"` + accent underline (bold approach)
+            - **Final: `bg="muted"` + accent text + accent border + semibold font** (subtle approach)
+            - Removed accent underline (redundant with bg + border + text color)
+            - Fixed IBM Carbon issue: `secondary` = dark gray (#393939) in light mode - wrong token for subtle selection
+            - Fixed GitLab Pajamas issue: `secondary` too close to background in both modes - invisible hover
+            - `muted` token designed for "subtle surfaces" - correct semantic choice
+        - **Design research:** Launched external-research-analyst to study modern pagination patterns
+            - Finding: 75% of design systems use subtle differentiation (bg tints + emphasis text)
+            - Pattern used: Hybrid approach (subtle bg + emphasis text + border + font weight)
+        - **Quality gates:** ✅ Frontend linting PASSED, TypeScript type checking PASSED
+
+    - [ ] **4.4.2 Convert TypographyTest page**
+        - **File:** `pages/TypographyTest.tsx`
+        - **Old tokens to replace:**
+            - `text.muted` → `muted-foreground`
+        - **Note:** Showcase/test page only
+        - **Quality gate:** Frontend linting + TypeScript type checking
+
+    - [ ] **4.4.3 Convert AdvancedMovieFilters system**
+        - **Parent:** `components/movie/filters/AdvancedMovieFilters.tsx`
+        - **Children:** GenreSelector, YearSelector, RatingSelector, SortSelector
+        - **Note:** Carefully styled filter controls - verify tokens in browser across themes
+        - **Quality gate:** Frontend linting + TypeScript type checking
+
+    - [ ] **4.4.4 Convert LetterboxdStyleFilters system**
+        - **Parent:** `components/movie/filters/LetterboxdStyleFilters.tsx`
+        - **Children:** ConnectedDropdowns, CollapsibleSearchBox, SortDropdownMinimal, ClearFiltersButton
+        - **Note:** Carefully styled filter controls - verify tokens in browser across themes
+        - **Quality gate:** Frontend linting + TypeScript type checking
+
+    - [ ] **4.4.5 Convert Watchlist page**
+        - **File:** `pages/user/Watchlist.tsx`
+        - **Old tokens to replace:**
+            - `red.500` → `destructive-foreground` (error text, line 61)
+        - **Note:** Minimal implementation page
+        - **Quality gate:** Frontend linting + TypeScript type checking
+
+    **Components verified as NOT needing conversion:**
+    - NowPlaying, Popular, TopRated, Upcoming, SearchResults - Thin wrappers around MovieCollectionGrid (already converted)
+    - Profile, Settings, PersonDetail, UserProfile - Placeholder stubs with no styling
 
 - [ ] **4.5 Convert ErrorBoundary** (60% of all hardcoded colors - 15+ instances)
 

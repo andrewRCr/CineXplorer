@@ -26,7 +26,7 @@ const Featured = () => {
 
 				<Text
 					fontSize="xl"
-					color="fg.muted"
+					color="muted-foreground"
 					textAlign="center"
 					mb={12}
 					maxW="600px"
@@ -35,6 +35,7 @@ const Featured = () => {
 				</Text>
 
 				<Card.Root
+					bg="card"
 					p={8}
 					width="100%"
 					maxW="500px"
@@ -50,7 +51,9 @@ const Featured = () => {
 					<VStack gap={4}>
 						<Button
 							onClick={() => navigate(ROUTES.POPULAR)}
-							colorScheme="blue"
+							bg="accent"
+							color="accent-foreground"
+							_hover={{ opacity: 0.92 }}
 							size="lg"
 							width="100%"
 						>
@@ -60,6 +63,8 @@ const Featured = () => {
 						<Button
 							onClick={() => navigate(ROUTES.NOW_PLAYING)}
 							variant="outline"
+							borderWidth="1px"
+							borderColor="border"
 							size="lg"
 							width="100%"
 						>
@@ -69,6 +74,8 @@ const Featured = () => {
 						<Button
 							onClick={() => navigate(ROUTES.UPCOMING)}
 							variant="outline"
+							borderWidth="1px"
+							borderColor="border"
 							size="lg"
 							width="100%"
 						>

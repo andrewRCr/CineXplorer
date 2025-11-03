@@ -2,12 +2,13 @@
  * Chakra UI Theme Configuration
  *
  * Implements provider-based theme switching with semantic tokens.
- * Uses Chakra UI v3's `_dark` property for automatic light/dark mode switching.
+ * Uses Chakra UI v3 token reference system with hex color values.
  *
  * Theme system architecture:
- * - Semantic tokens contain raw RGB values directly (no intermediate palette)
- * - Light/dark mode handled by `default` and `_dark` properties
- * - Provider recreates system when theme changes
+ * - Base tokens: Hex color values from theme palettes
+ * - Semantic tokens: References to base tokens (e.g., {colors.light.background})
+ * - Light/dark mode: Handled by `base` and `_dark` properties
+ * - Theme switching: Provider recreates system when theme changes
  */
 
 import { createSystem, defaultConfig, defineConfig } from "@chakra-ui/react";
@@ -24,9 +25,6 @@ import type { Theme, ThemeColors } from "./types";
 
 /**
  * Theme Registry
- *
- * Maps theme names (kebab-case) to theme definitions.
- * Used by theme selector component for available themes.
  */
 export const themeRegistry = {
 	github: githubTheme,
@@ -38,29 +36,41 @@ export const themeRegistry = {
 	"muted-earth": mutedEarthTheme,
 } as const;
 
-/**
- * Default theme name.
- * Used on first visit or if saved preference is invalid.
- */
 export const defaultThemeName = "github";
-
-/**
- * Type-safe theme names for validation.
- */
 export type ThemeName = keyof typeof themeRegistry;
 
-/**
- * Get theme by name with fallback to default.
- */
 export function getTheme(name: string): Theme {
 	return themeRegistry[name as ThemeName] || themeRegistry[defaultThemeName];
 }
 
 /**
- * Create semantic tokens with raw color values.
+ * Create base tokens from theme.
  *
- * No intermediate palette - just put RGB values directly in semantic tokens.
- * This is simpler and avoids circular reference issues.
+ * Base tokens are the foundation layer containing raw hex color values.
+ * Semantic tokens reference these to create meaningful, mode-aware color names.
+ */
+function createBaseTokens(theme: Theme) {
+	const tokenKeys = Object.keys(theme.light) as Array<keyof ThemeColors>;
+
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	const light: Record<string, any> = {};
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	const dark: Record<string, any> = {};
+
+	for (const tokenKey of tokenKeys) {
+		light[tokenKey] = { value: theme.light[tokenKey] };
+		dark[tokenKey] = { value: theme.dark[tokenKey] };
+	}
+
+	return { light, dark };
+}
+
+/**
+ * Create semantic tokens with references to base tokens.
+ *
+ * Semantic tokens provide meaningful color names (background, foreground, etc.)
+ * that automatically switch between light and dark values based on color mode.
+ * Uses Chakra's token reference syntax: {colors.light.tokenName}
  */
 function createSemanticTokens(theme: Theme) {
 	const tokenKeys = Object.keys(theme.light) as Array<keyof ThemeColors>;
@@ -69,11 +79,10 @@ function createSemanticTokens(theme: Theme) {
 	const colors: Record<string, any> = {};
 
 	for (const tokenKey of tokenKeys) {
-		// Wrap RGB values in rgb() function for valid CSS
 		colors[tokenKey] = {
 			value: {
-				base: `rgb(${theme.light[tokenKey]})`,   // "rgb(255 255 255)" - use 'base' not 'default'
-				_dark: `rgb(${theme.dark[tokenKey]})`,   // "rgb(13 17 23)"
+				base: `{colors.light.${tokenKey}}`,   // Light mode reference
+				_dark: `{colors.dark.${tokenKey}}`,    // Dark mode reference
 			},
 		};
 	}
@@ -83,9 +92,6 @@ function createSemanticTokens(theme: Theme) {
 
 /**
  * Base theme configuration (fonts, global styles, etc.)
- *
- * This is the foundation config that all themes extend.
- * Colors are NOT included here - they come from the active theme.
  */
 const baseConfig = defineConfig({
 	theme: {
@@ -120,31 +126,33 @@ const baseConfig = defineConfig({
 /**
  * Create a Chakra UI system for a specific theme.
  *
- * This is the key function that enables dynamic theme switching.
- * It creates a complete system with semantic tokens from the theme.
+ * This is the core function for dynamic theme switching. It creates a complete
+ * Chakra UI system with base tokens and semantic tokens for the given theme.
  *
  * When the user switches themes, we call this function with the new theme
- * and pass the resulting system to ChakraProvider.
+ * and pass the resulting system to ChakraProvider, triggering a re-render
+ * with the new color palette.
  *
  * @param theme - Theme definition with light/dark color palettes
  * @returns Chakra UI system configured for the theme
  */
 export function createThemeSystem(theme: Theme) {
-	// Create theme-specific config with semantic tokens
+	const baseTokens = createBaseTokens(theme);
+
 	const themeConfig = defineConfig({
 		theme: {
+			tokens: {
+				colors: baseTokens,
+			},
 			semanticTokens: createSemanticTokens(theme),
 		},
 	});
 
-	// Merge base config + theme config + Chakra defaults
-	// Order matters: later configs override earlier ones
 	return createSystem(defaultConfig, baseConfig, themeConfig);
 }
 
 /**
  * Default system using GitHub theme.
- * Used as initial system before user preferences load.
  */
 export const defaultSystem = createThemeSystem(githubTheme);
 

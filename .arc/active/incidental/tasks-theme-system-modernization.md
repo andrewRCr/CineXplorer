@@ -1588,11 +1588,18 @@ and ongoing migration overhead in future tasks.
         - **Note:** Showcase/test page - displays font families, weights, and text styles
         - **Quality gates:** ✅ Frontend linting PASSED, TypeScript type checking PASSED
 
-    - [ ] **4.4.3 Convert AdvancedMovieFilters system**
+    - [x] **4.4.3 Convert AdvancedMovieFilters system**
         - **Parent:** `components/movie/filters/AdvancedMovieFilters.tsx`
         - **Children:** GenreSelector, YearSelector, RatingSelector, SortSelector
-        - **Note:** Carefully styled filter controls - verify tokens in browser across themes
-        - **Quality gate:** Frontend linting + TypeScript type checking
+        - **Tokens converted across all 5 components:**
+            - `text.main` → `foreground` (labels, headings)
+            - `text.secondary` → `muted-foreground` (helper text, route labels)
+            - `border.separator` → `border` (input borders, separators)
+            - `accent.primary` → `accent` (hover states, active items)
+            - `background.main` → `background` (input backgrounds)
+            - `background.subItem` → `muted` (dropdown items, selected states)
+            - `red.300` → `destructive` (validation error states in Year/Rating selectors)
+        - **Quality gates:** ✅ Frontend linting PASSED, TypeScript type checking PASSED
 
     - [ ] **4.4.4 Convert LetterboxdStyleFilters system**
         - **Parent:** `components/movie/filters/LetterboxdStyleFilters.tsx`

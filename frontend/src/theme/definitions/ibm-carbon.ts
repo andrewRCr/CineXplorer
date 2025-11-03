@@ -44,6 +44,11 @@ export const ibmCarbonTheme: Theme = {
 		// Status colors - Info
 		info: pLight.fg_info,
 		"info-foreground": pLight.fg_onEmphasis,
+		// Solid status background text colors
+		"on-success": pLight.fg_onEmphasis, // White text on dark green
+		"on-warning": pLight.fg_default, // Dark text on light yellow (better contrast)
+		"on-destructive": pLight.fg_onEmphasis, // White text on dark red
+		"on-info": pLight.fg_onEmphasis, // White text on dark blue
 		// Rating colors
 		rating: pLight.fg_rating,
 		"rating-foreground": pLight.fg_default,
@@ -85,6 +90,10 @@ background: pDark.bg_default,
 		"warning-foreground": pDark.fg_onEmphasis,
 		info: pDark.fg_info,
 		"info-foreground": pDark.fg_onEmphasis,
+		"on-success": pDark.fg_default, // White text on dark green
+		"on-warning": pDark.fg_onEmphasis, // Dark text on light yellow (IBM uses lighter yellow)
+		"on-destructive": pDark.fg_default, // White text on dark red
+		"on-info": pDark.fg_default, // White text on dark blue
 		rating: pDark.fg_rating,
 		"rating-foreground": pDark.fg_onEmphasis,
 		"surface-elevated": pDark.bg_emphasis,

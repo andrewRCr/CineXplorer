@@ -53,6 +53,11 @@ export const githubTheme: Theme = {
 		// Status colors - Info
 		info: pLight.bg_info,
 		"info-foreground": pLight.fg_onEmphasis,
+		// Solid status background text colors
+		"on-success": pLight.fg_onEmphasis, // White on green
+		"on-warning": pLight.fg_onEmphasis, // White on yellow
+		"on-destructive": pLight.fg_onEmphasis,
+		"on-info": pLight.fg_onEmphasis, // White on red
 		// Rating colors
 		rating: pLight.fg_rating,
 		"rating-foreground": pLight.fg_onEmphasis,
@@ -93,6 +98,10 @@ export const githubTheme: Theme = {
 		"warning-foreground": pDark.fg_attention,
 		info: pDark.bg_info,
 		"info-foreground": pDark.fg_onEmphasis,
+		"on-success": pDark.fg_default, // White text on dark green
+		"on-warning": pDark.fg_default, // White text on dark yellow
+		"on-destructive": pDark.fg_default, // White text on dark red
+		"on-info": pDark.fg_default, // White text on dark blue
 		rating: pDark.fg_rating,
 		"rating-foreground": pDark.fg_onEmphasis,
 		"surface-elevated": pDark.bg_muted,

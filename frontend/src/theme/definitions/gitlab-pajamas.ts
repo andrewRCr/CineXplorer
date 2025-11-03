@@ -45,6 +45,11 @@ export const gitlabPajamasTheme: Theme = {
 		// Status colors - Info (informational)
 		info: pLight.fg_info, // Blue-500 (GitLab official)
 		"info-foreground": pLight.fg_onEmphasis, // White text
+		// Solid status background text colors
+		"on-success": pLight.fg_onEmphasis, // White on green
+		"on-warning": pLight.fg_onEmphasis, // White on orange
+		"on-destructive": pLight.fg_onEmphasis,
+		"on-info": pLight.fg_onEmphasis, // White on red
 		// Rating colors (movie-specific)
 		rating: pLight.fg_rating, // Gold adapted for GitLab
 		"rating-foreground": pLight.fg_default, // Dark text
@@ -86,6 +91,10 @@ background: pDark.bg_default, // Near black (neutral-950)
 		"warning-foreground": pDark.fg_onEmphasis, // Near black text
 		info: pDark.fg_info, // Blue-300 (GitLab official)
 		"info-foreground": pDark.fg_onEmphasis, // Near black text
+		"on-success": pDark.fg_onEmphasis, // Dark text on light green
+		"on-warning": pDark.fg_onEmphasis, // Dark text on light orange
+		"on-destructive": pDark.fg_onEmphasis,
+		"on-info": pDark.fg_onEmphasis, // Dark text on light red
 		rating: pDark.fg_rating, // Bright gold for dark mode
 		"rating-foreground": pDark.fg_onEmphasis, // Near black text
 		"surface-elevated": pDark.bg_emphasis, // Neutral-800 (3rd layer, lighter than card)

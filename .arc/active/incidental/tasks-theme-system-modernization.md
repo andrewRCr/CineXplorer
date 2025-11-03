@@ -1580,12 +1580,13 @@ and ongoing migration overhead in future tasks.
             - Pattern used: Hybrid approach (subtle bg + emphasis text + border + font weight)
         - **Quality gates:** ✅ Frontend linting PASSED, TypeScript type checking PASSED
 
-    - [ ] **4.4.2 Convert TypographyTest page**
+    - [x] **4.4.2 Convert TypographyTest page**
         - **File:** `pages/TypographyTest.tsx`
-        - **Old tokens to replace:**
-            - `text.muted` → `muted-foreground`
-        - **Note:** Showcase/test page only
-        - **Quality gate:** Frontend linting + TypeScript type checking
+        - **Tokens converted (1 type, 41 instances):**
+            - `text.muted` → `muted-foreground` (all label and description text)
+        - **Cleanup:** Removed Theme Colors Test section (redundant with upcoming theme showcase page)
+        - **Note:** Showcase/test page - displays font families, weights, and text styles
+        - **Quality gates:** ✅ Frontend linting PASSED, TypeScript type checking PASSED
 
     - [ ] **4.4.3 Convert AdvancedMovieFilters system**
         - **Parent:** `components/movie/filters/AdvancedMovieFilters.tsx`

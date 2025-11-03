@@ -5,7 +5,7 @@ while preserving history and context.
 
 ## Before You Start: Verify Work Category
 
-**This work is** (check the [Work Categorization Strategy](../../strategies/strategy-work-categorization.md) if unsure):
+**This work is** (check the [Work Categorization Strategy](../../strategies/arc/strategy-work-categorization.md) if unsure):
 
 - [ ] **Feature** (planned user-facing capability) → Use Planned Work Archiving, `feature/` directories
 - [ ] **Technical** (planned infrastructure work) → Use Planned Work Archiving, `technical/` directories
@@ -16,7 +16,7 @@ while preserving history and context.
 1. Was this planned (has PRD)? → Yes: Continue to step 2 | No: Incidental
 2. Does it add user-visible capability from product vision? → Yes: Feature | No: Technical
 
-See [Work Categorization Strategy](../../strategies/strategy-work-categorization.md) for complete decision tree.
+See [Work Categorization Strategy](../../strategies/arc/strategy-work-categorization.md) for complete decision tree.
 
 ---
 
@@ -150,7 +150,7 @@ completion metadata:
 categorization standards, this would be categorized as `technical/` work (infrastructure improvements,
 not user-facing features). Branch name preserved for historical accuracy. All future infrastructure
 work uses `technical/` category per
-[Work Categorization Strategy](../../strategies/strategy-work-categorization.md).
+[Work Categorization Strategy](../../strategies/arc/strategy-work-categorization.md).
 ```
 
 ### 5) Update PROJECT-STATUS
@@ -322,7 +322,7 @@ git commit -m "docs(archive): archive incidental/{type}-{name} documentation
     - Archive to: `incidental/` subdirectories
 
 **When uncertain**, consult
-[Work Categorization Strategy](../../strategies/strategy-work-categorization.md) for complete decision tree.
+[Work Categorization Strategy](../../strategies/arc/strategy-work-categorization.md) for complete decision tree.
 
 ---
 
@@ -358,7 +358,7 @@ git commit -m "docs(archive): archive incidental/{type}-{name} documentation
    → **Fix**: This is a MANDATORY step - do not skip
 
 ❌ **Wrong category**: Feature work archived to technical/, or vice versa
-   → **Fix**: Check [Work Categorization Strategy](../../strategies/strategy-work-categorization.md) decision rules
+   → **Fix**: Check [Work Categorization Strategy](../../strategies/arc/strategy-work-categorization.md) decision rules
 
 ❌ **Creating completion metadata for incidental work**: Unnecessary overhead
    → **Fix**: Incidental work uses completion summary in task list, not separate metadata file

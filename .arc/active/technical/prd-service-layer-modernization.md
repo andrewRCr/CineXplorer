@@ -317,7 +317,7 @@ unexpected side effects in complex operations.
 
 ### 6.3 Type Safety Strategy
 
-**Follow established patterns from [Type Safety Strategy](../strategies/strategy-type-safety.md):**
+**Follow established patterns from [Type Safety Strategy](../../reference/strategies/project/strategy-type-safety.md):**
 
 - Zero tolerance for unnecessary `Any` usage
 - Use `object` for unknown types, `dict[str, object]` for generic dictionaries
@@ -326,7 +326,7 @@ unexpected side effects in complex operations.
 
 ### 6.4 Testing Strategy
 
-**Follow established patterns from [Testing Methodology Strategy](../strategies/strategy-testing-methodology.md):**
+**Follow established patterns from [Testing Methodology Strategy](../../reference/strategies/project/strategy-testing-methodology.md):**
 
 - **Coverage Targets:** 80% general, 90%+ critical paths (pagination, batch fetch)
 - **Test-First Protocol:** Write tests before implementation for all new helpers/services per DEVELOPMENT-RULES

@@ -60,13 +60,13 @@ def create_entry(request: HttpRequest, payload: CreateSchema):
   movie responses), remains unchanged
 - **Type Safety Implementation:** Custom `.pyi` stub files in `backend/apps/*/models.pyi` provide explicit type
   annotations for Django model fields, enabling zero `type: ignore` comments for model field access in ModelSchema
-  patterns. See [Type Safety Strategy](../../reference/strategies/strategy-type-safety.md) for complete guidance.
+  patterns. See [Type Safety Strategy](../../reference/strategies/project/strategy-type-safety.md) for complete guidance.
 - **Authentication Foundation:** All work builds on Authentication Modernization foundation (CustomAccountAdapter,
   allauth integration)
 - **Deferred Work:** Email verification bridge removal and OAuth UI integration are deferred from Authentication
   Modernization
 - **Testing Strategy:** Three-layer testing (API integration, service layer, specialized tests) per Phase 1
-  blueprint. See [Testing Strategy](../../reference/strategies/strategy-testing-methodology.md) for complete guidance.
+  blueprint. See [Testing Strategy](../../reference/strategies/project/strategy-testing-methodology.md) for complete guidance.
 
 ---
 

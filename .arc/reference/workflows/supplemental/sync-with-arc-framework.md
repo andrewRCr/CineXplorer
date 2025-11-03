@@ -119,7 +119,7 @@ For significant syncs, create a task list in the adopting project:
 ```
 
 **Work Categorization**: Framework syncs are "chore" type incidental work - operational improvements rather than
-feature development. See `strategies/strategy-work-categorization.md` for the three-way categorization system
+feature development. See `strategies/arc/strategy-work-categorization.md` for the three-way categorization system
 and naming conventions.
 
 ### 2. Analysis

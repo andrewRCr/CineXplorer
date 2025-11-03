@@ -51,7 +51,7 @@ For specific commands, see [QUICK-REFERENCE.md](../QUICK-REFERENCE.md).
    - **PROHIBITED**: Using `typing.Any` except for external API payloads (TMDB, etc.)
    - **REQUIRED**: Use `object` for unknown data, `dict[str, object]` for generic dictionaries
    - **JUSTIFICATION**: Any `Any` usage must have inline comment explaining necessity
-   - **Full guidelines**: See [Type Safety Strategy](../strategies/strategy-type-safety.md) for complete strategy
+   - **Full guidelines**: See [Type Safety Strategy](../strategies/project/strategy-type-safety.md) for complete strategy
    - **Stub maintenance**: `backend/stubs/` must stay in sync with dependency versions (see strategy doc)
 
 7. **Markdown Linting**
@@ -152,7 +152,7 @@ This makes the protocol visible during execution.
 - **Integration focus**: Prefer flow-level coverage over isolated units when practical
 - **All tests must pass** before any commit discussion (see quality gates above)
 - **Command patterns**: See [QUICK-REFERENCE.md](../QUICK-REFERENCE.md) for execution commands
-- **Detailed guidance**: See [Testing Methodology Strategy](../strategies/strategy-testing-methodology.md)
+- **Detailed guidance**: See [Testing Methodology Strategy](../strategies/project/strategy-testing-methodology.md)
 
 ## Code Quality Principles
 
@@ -202,7 +202,7 @@ understanding system constraints.
 - Decisions obvious from reading code (standard CRUD, framework conventions)
 - Temporary or experimental choices
 
-**Format and guidance:** See [ADR Methodology Strategy](../strategies/strategy-adr-methodology.md)
+**Format and guidance:** See [ADR Methodology Strategy](../strategies/arc/strategy-adr-methodology.md)
 **Template:** See `.arc/reference/adr/adr-template.md`
 
 ADRs are immutable once accepted - new decisions require new ADRs that supersede old ones.
@@ -216,6 +216,6 @@ This document provides core rules and standards. See related documentation:
 - [Atomic Commit Workflow](../workflows/supplemental/atomic-commit.md) - Enhanced commit workflow with task context analysis
 - [AI Agent Reference Card](../agent/AGENTS.md) - Complete project context for AI
 - [Technical Overview](TECHNICAL-OVERVIEW.md) - High-level system architecture and technology stack
-- [ADR Methodology Strategy](../strategies/strategy-adr-methodology.md) - Architecture decision record guidance
-- [Type Safety Strategy](../strategies/strategy-type-safety.md) - Type checking approach and patterns
-- [Testing Methodology Strategy](../strategies/strategy-testing-methodology.md) - Testing philosophy and practices
+- [ADR Methodology Strategy](../strategies/arc/strategy-adr-methodology.md) - Architecture decision record guidance
+- [Type Safety Strategy](../strategies/project/strategy-type-safety.md) - Type checking approach and patterns
+- [Testing Methodology Strategy](../strategies/project/strategy-testing-methodology.md) - Testing philosophy and practices

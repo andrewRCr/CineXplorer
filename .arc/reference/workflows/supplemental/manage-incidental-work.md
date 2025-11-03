@@ -72,7 +72,7 @@ Examples:
 
 **Formatting standards**: Before creating the task list, review:
 
-**→ [strategy-task-list-formatting.md](../../strategies/strategy-task-list-formatting.md)** ← **Required reading**
+**→ [strategy-task-list-formatting.md](../../strategies/arc/strategy-task-list-formatting.md)** ← **Required reading**
 
 This strategy document defines:
 
@@ -83,10 +83,10 @@ This strategy document defines:
 - Decision guidelines
 
 **Test-first protocol applies**: Incidental work fixing bugs or refactoring business logic MUST follow
-test-first approach. Write failing tests before implementation. See [strategy-testing-methodology.md](../../strategies/strategy-testing-methodology.md)
+test-first approach. Write failing tests before implementation. See [strategy-testing-methodology.md](../../strategies/project/strategy-testing-methodology.md)
 and [DEVELOPMENT-RULES.md](../../constitution/DEVELOPMENT-RULES.md) Test-First Protocol section.
 
-The [strategy-task-list-formatting.md](../../strategies/strategy-task-list-formatting.md) document includes comprehensive
+The [strategy-task-list-formatting.md](../../strategies/arc/strategy-task-list-formatting.md) document includes comprehensive
 test-first examples and patterns.
 
 **Key difference**: Incidental task lists get **completion notes appended at bottom** when finished

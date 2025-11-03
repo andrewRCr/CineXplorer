@@ -62,7 +62,7 @@ Don't write an ADR for:
 ## Detailed Guidance
 
 For complete methodology, writing tips, and examples, see:
-**[ADR Methodology Strategy](../strategies/strategy-adr-methodology.md)**
+**[ADR Methodology Strategy](../strategies/arc/strategy-adr-methodology.md)**
 
 ## Template
 

@@ -23,7 +23,7 @@ architectural decisions.
 - **Filename:** `tasks-[name].md` (e.g., `tasks-user-profile-editing.md`, `tasks-api-modernization.md`)
 
 **Note:** Task lists typically start in `.arc/backlog/` during planning, then move to `.arc/active/` when
-work begins. See [Project Structure](../strategies/strategy-work-categorization.md) for complete lifecycle.
+work begins. See [Project Structure](../strategies/arc/strategy-work-categorization.md) for complete lifecycle.
 
 ## Process
 
@@ -104,7 +104,7 @@ For each parent task, define specific, actionable sub-tasks that:
     - Data models (Django models, schemas)
     - API endpoints and business logic
     - Service layer functions
-    - See [strategy-testing-methodology.md](../strategies/strategy-testing-methodology.md)
+    - See [strategy-testing-methodology.md](../strategies/project/strategy-testing-methodology.md)
       and [DEVELOPMENT-RULES.md](../constitution/DEVELOPMENT-RULES.md) for complete protocol
 - **Quality gates**: Include linting and type-checking steps after significant changes
 - **Incremental validation**: Structure tasks so progress can be verified at each step
@@ -121,7 +121,7 @@ and explains why certain approaches were chosen.
 
 **CRITICAL:** Before generating the task list, review formatting standards:
 
-**→ [strategy-task-list-formatting.md](../strategies/strategy-task-list-formatting.md)** ← **Required reading**
+**→ [strategy-task-list-formatting.md](../strategies/arc/strategy-task-list-formatting.md)** ← **Required reading**
 
 This strategy document defines:
 
@@ -135,7 +135,7 @@ This strategy document defines:
 
 ### Step 7: Generate Final Task List
 
-Combine parent tasks, sub-tasks, and optional implementation notes into the standard Markdown structure following [strategy-task-list-formatting.md](../strategies/strategy-task-list-formatting.md).
+Combine parent tasks, sub-tasks, and optional implementation notes into the standard Markdown structure following [strategy-task-list-formatting.md](../strategies/arc/strategy-task-list-formatting.md).
 
 **Basic structure:**
 
@@ -169,7 +169,7 @@ Combine parent tasks, sub-tasks, and optional implementation notes into the stan
 _(Optional: Document architectural decisions, patterns, constraints discovered during planning)_
 ```
 
-See [strategy-task-list-formatting.md](../strategies/strategy-task-list-formatting.md) for complete formatting rules
+See [strategy-task-list-formatting.md](../strategies/arc/strategy-task-list-formatting.md) for complete formatting rules
 and annotated examples.
 
 ### Step 8: Save Task List
@@ -183,7 +183,7 @@ The `[name]` should match the base name of the input PRD file
 (e.g., if the input was `prd-user-profile-editing.md`, the output is `tasks-user-profile-editing.md`).
 
 **Format verification:** Use the Quick Format Checklist in
-[strategy-task-list-formatting.md](../strategies/strategy-task-list-formatting.md)
+[strategy-task-list-formatting.md](../strategies/arc/strategy-task-list-formatting.md)
 to verify the generated task list follows all formatting standards before saving.
 
 ## Target Audience
@@ -201,7 +201,7 @@ Task lists should be written for developers (junior to mid-level) who will imple
 - References to patterns, files, or approaches where helpful
 - Assumes familiarity with the tech stack but not with every project-specific pattern
 
-**Formatting standards:** See [strategy-task-list-formatting.md](../strategies/strategy-task-list-formatting.md)
+**Formatting standards:** See [strategy-task-list-formatting.md](../strategies/arc/strategy-task-list-formatting.md)
 for complete formatting rules, test-first patterns, and examples.
 
 ## Task Completion Tracking

@@ -12,14 +12,6 @@ import { mutedEarthPaletteLight as pLight, mutedEarthPaletteDark as pDark } from
 import type { Theme } from "../types";
 
 /**
- * Convert hex color to RGB space-separated string for Chakra UI.
- * Example: "#ffffff" → "255 255 255"
- *
- * Chakra UI uses RGB space-separated format to support opacity modifiers
- * like bg="primary/50" for 50% opacity.
- */
-
-/**
  * Muted Earth theme for CineXplorer.
  *
  * Provides warm, grounded color palette with creamy linen backgrounds and

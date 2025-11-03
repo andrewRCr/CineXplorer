@@ -12,14 +12,6 @@ import { sageBonePaletteLight as pLight, sageBonePaletteDark as pDark } from "..
 import type { Theme } from "../types";
 
 /**
- * Convert hex color to RGB space-separated string for Chakra UI.
- * Example: "#ffffff" → "255 255 255"
- *
- * Chakra UI uses RGB space-separated format to support opacity modifiers
- * like bg="primary/50" for 50% opacity.
- */
-
-/**
  * Sage & Bone theme for CineXplorer.
  *
  * Provides nature-inspired color palette with soft sage green as primary accent.

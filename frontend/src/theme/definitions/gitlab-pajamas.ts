@@ -12,14 +12,6 @@ import { gitlabPajamasPaletteLight as pLight, gitlabPajamasPaletteDark as pDark 
 import type { Theme } from "../types";
 
 /**
- * Convert hex color to RGB space-separated string for Chakra UI.
- * Example: "#ffffff" → "255 255 255"
- *
- * Chakra UI uses RGB space-separated format to support opacity modifiers
- * like bg="primary/50" for 50% opacity.
- */
-
-/**
  * GitLab Pajamas theme for CineXplorer.
  *
  * Provides clean, modern color palette following GitLab's Pajamas Design System.

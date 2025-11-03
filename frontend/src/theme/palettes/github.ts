@@ -38,6 +38,8 @@ export const githubPaletteLight = {
 	// Semantic colors - Accent (Links, selections)
 	/** Links, interactive elements, focus */
 	fg_accent: "#0969da",
+	/** Link hover state (darker/more saturated blue - official GitHub pattern) */
+	fg_accent_hover: "#0550ae",
 	/** Primary action button background */
 	bg_success: "#1f883d",
 	/** Success button hover */
@@ -117,6 +119,8 @@ export const githubPaletteDark = {
 	// Semantic colors - Accent (Links, selections)
 	/** Links, interactive elements - Lighter blue for dark bg */
 	fg_accent: "#58a6ff",
+	/** Link hover state (brighter blue for dark mode - maintains visibility) */
+	fg_accent_hover: "#79c0ff",
 	/** Primary action button background */
 	bg_success: "#238636",
 	/** Success button hover */

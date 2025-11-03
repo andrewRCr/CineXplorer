@@ -39,6 +39,8 @@ export const mutedEarthPaletteLight = {
 	/** Primary terracotta/rust accent */
 	fg_accent: "#B95C50",
 	/** Primary action button - terracotta */
+	/** Link hover state (darker/more saturated terracotta) */
+	fg_accent_hover: "#a04438",
 	bg_success: "#B95C50",
 	/** Success hover - darker terracotta */
 	bg_success_hover: "#A54D42",
@@ -115,6 +117,8 @@ export const mutedEarthPaletteDark = {
 	/** Primary terracotta/rust accent - same as light mode */
 	fg_accent: "#B95C50",
 	/** Primary action button - terracotta */
+	/** Link hover state (brighter terracotta for dark mode) */
+	fg_accent_hover: "#d17b6f",
 	bg_success: "#B95C50",
 	/** Success hover - brighter terracotta */
 	bg_success_hover: "#C76A5E",

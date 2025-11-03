@@ -39,6 +39,8 @@ export const sageBonePaletteLight = {
 	/** Primary sage green accent */
 	fg_accent: "#819981",
 	/** Primary action button - sage green */
+	/** Link hover state (darker/more saturated green) */
+	fg_accent_hover: "#6b846b",
 	bg_success: "#819981",
 	/** Success hover - slightly darker sage */
 	bg_success_hover: "#6F876F",
@@ -115,6 +117,8 @@ export const sageBonePaletteDark = {
 	/** Primary sage green accent - same as light mode */
 	fg_accent: "#819981",
 	/** Primary action button - sage green */
+	/** Link hover state (brighter green for dark mode) */
+	fg_accent_hover: "#9db09d",
 	bg_success: "#819981",
 	/** Success hover - slightly brighter sage */
 	bg_success_hover: "#93AB93",

@@ -25,6 +25,8 @@ export const gitlabPajamasPaletteLight = {
 	bg_inset: "#fbfafd",
 	/** Strong emphasis backgrounds (neutral-50) */
 	bg_emphasis: "#ececef",
+	/** Action hover background (neutral-300 @ 16% opacity over white) */
+	bg_field_hover: "#f0f0f1",
 
 	// Foreground colors
 	/** Primary text color (neutral-800) */
@@ -39,6 +41,8 @@ export const gitlabPajamasPaletteLight = {
 	// Semantic colors - Accent (Links, interactive)
 	/** Links, primary interactive (blue-700) */
 	fg_accent: "#2f5ca0",
+	/** Link hover state (darker/more saturated blue - GitLab blue-700) */
+	fg_accent_hover: "#1f4787",
 	/** Primary action button background (green-500) */
 	bg_success: "#108548",
 	/** Success button hover - darker green */
@@ -105,6 +109,8 @@ export const gitlabPajamasPaletteDark = {
 	bg_inset: "#3a383f",
 	/** Strong emphasis backgrounds (neutral-800) */
 	bg_emphasis: "#3a383f",
+	/** Action hover background (neutral-400 @ 40% opacity over neutral-900) */
+	bg_field_hover: "#4f4e53",
 
 	// Foreground colors
 	/** Primary text color (neutral-50) */
@@ -119,6 +125,8 @@ export const gitlabPajamasPaletteDark = {
 	// Semantic colors - Accent (Links, interactive)
 	/** Links in dark mode (blue-200) - lighter for contrast */
 	fg_accent: "#9dc7f1",
+	/** Link hover state (brighter blue for dark mode) */
+	fg_accent_hover: "#c6e2ff",
 	/** Primary action button background (green-300) */
 	bg_success: "#52b87a",
 	/** Success button hover - brighter green */

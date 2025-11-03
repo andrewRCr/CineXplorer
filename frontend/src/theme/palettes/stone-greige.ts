@@ -39,6 +39,8 @@ export const stoneGreigePaletteLight = {
 	/** Primary accent - dark greige */
 	fg_accent: "#44403C",
 	/** Primary action button - dark greige */
+	/** Link hover state (darker for emphasis) */
+	fg_accent_hover: "#322e2b",
 	bg_success: "#44403C",
 	/** Success hover - darker greige */
 	bg_success_hover: "#292524",
@@ -115,6 +117,8 @@ export const stoneGreigePaletteDark = {
 	/** Primary accent - light stone (inverted from light mode) */
 	fg_accent: "#F5F5F4",
 	/** Primary action button - light stone */
+	/** Link hover state (white for maximum brightness in dark mode) */
+	fg_accent_hover: "#ffffff",
 	bg_success: "#F5F5F4",
 	/** Success hover - slightly darker stone */
 	bg_success_hover: "#E7E6E5",

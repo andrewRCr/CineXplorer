@@ -85,11 +85,18 @@ export interface ThemeColors {
 	// ACCENT COLORS (Highlights & Callouts)
 	// ===================================================================
 
-	/** Highlighted elements, callouts, badges, interactive accents */
+	/** Highlighted elements, callouts, badges, interactive accents, links */
 	accent: string;
 
 	/** Text/icon color on accent backgrounds */
 	"accent-foreground": string;
+
+	/**
+	 * Link hover state (brighter/more saturated than accent).
+	 * Used for interactive link hover feedback, creating visual distinction on mouse-over.
+	 * Typically a warmer or more vibrant shade of the accent color.
+	 */
+	"accent-hover": string;
 
 	// ===================================================================
 	// DESTRUCTIVE COLORS (Danger/Error States)

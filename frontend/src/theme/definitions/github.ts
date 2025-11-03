@@ -3,7 +3,6 @@
  *
  * Maps GitHub Primer palette colors to shadcn/ui semantic roles.
  * Provides neutral, professional aesthetic proven at massive scale.
- *
  * Source: GitHub Primer design system (https://primer.style)
  * Research: .arc/active/incidental/notes-theme-system-modernization.md
  */
@@ -13,143 +12,96 @@ import type { Theme } from "../types";
 
 /**
  * GitHub Primer theme for CineXplorer.
- *
  * Provides neutral, accessible color palette following GitHub's proven
  * design system. Suitable as baseline theme before custom branding.
  */
 export const githubTheme: Theme = {
 	name: "github",
 	label: "GitHub",
-
 	light: {
 		// Base colors - DIRECT HEX (no conversion)
 		background: pLight.bg_default,
 		foreground: pLight.fg_default,
-
 		// Card colors
 		card: pLight.bg_default,
 		"card-foreground": pLight.fg_default,
-
 		// Popover colors
 		popover: pLight.bg_default,
 		"popover-foreground": pLight.fg_default,
-
 		// Primary colors
 		primary: pLight.bg_success,
 		"primary-foreground": pLight.fg_onEmphasis,
-
 		// Secondary colors
 		secondary: pLight.bg_button_secondary,
 		"secondary-foreground": pLight.fg_default,
-
 		// Muted colors
 		muted: pLight.bg_muted,
 		"muted-foreground": pLight.fg_muted,
-
 		// Accent colors
 		accent: pLight.fg_accent,
 		"accent-foreground": pLight.fg_onEmphasis,
-
+		"accent-hover": pLight.fg_accent_hover,
 		// Destructive colors
 		destructive: pLight.bg_danger,
 		"destructive-foreground": pLight.fg_onEmphasis,
-
 		// Status colors - Success
 		success: pLight.bg_success,
 		"success-foreground": pLight.fg_onEmphasis,
-
 		// Status colors - Warning
 		warning: pLight.bg_attention,
 		"warning-foreground": pLight.fg_attention,
-
 		// Status colors - Info
 		info: pLight.bg_info,
 		"info-foreground": pLight.fg_onEmphasis,
-
 		// Rating colors
 		rating: pLight.fg_rating,
 		"rating-foreground": pLight.fg_onEmphasis,
-
 		// Surface elevation
 		"surface-elevated": pLight.bg_emphasis,
-
 		// Badge colors
 		badge: pLight.bg_muted,
 		"badge-foreground": pLight.fg_muted,
-
 		// Interactive states
 		"drag-active": pLight.bg_button_secondary_hover,
 		"drop-zone": pLight.bg_emphasis,
-
 		// UI element colors
 		border: pLight.border_default,
-		input: pLight.bg_default,
+		input: pLight.border_default,
 		ring: pLight.fg_accent,
 	},
-
 	dark: {
-		// Base colors - DIRECT HEX (no conversion)
 		background: pDark.bg_default,
 		foreground: pDark.fg_default,
-
-		// Card colors
 		card: pDark.bg_inset,
 		"card-foreground": pDark.fg_default,
-
-		// Popover colors
 		popover: pDark.bg_inset,
 		"popover-foreground": pDark.fg_default,
-
-		// Primary colors
 		primary: pDark.bg_success,
 		"primary-foreground": pDark.fg_onEmphasis,
-
-		// Secondary colors
 		secondary: pDark.bg_button_secondary,
 		"secondary-foreground": pDark.fg_default,
-
-		// Muted colors
 		muted: pDark.bg_muted,
 		"muted-foreground": pDark.fg_muted,
-
-		// Accent colors
 		accent: pDark.fg_accent,
 		"accent-foreground": pDark.fg_onEmphasis,
-
-		// Destructive colors
+		"accent-hover": pDark.fg_accent_hover,
 		destructive: pDark.bg_danger,
 		"destructive-foreground": pDark.fg_onEmphasis,
-
-		// Status colors - Success
 		success: pDark.bg_success,
 		"success-foreground": pDark.fg_onEmphasis,
-
-		// Status colors - Warning
 		warning: pDark.bg_attention,
 		"warning-foreground": pDark.fg_attention,
-
-		// Status colors - Info
 		info: pDark.bg_info,
 		"info-foreground": pDark.fg_onEmphasis,
-
-		// Rating colors
 		rating: pDark.fg_rating,
 		"rating-foreground": pDark.fg_onEmphasis,
-
-		// Surface elevation
 		"surface-elevated": pDark.bg_muted,
-
-		// Badge colors
 		badge: pDark.bg_button_secondary,
 		"badge-foreground": pDark.fg_muted,
-
-		// Interactive states
 		"drag-active": pDark.bg_button_secondary_hover,
 		"drop-zone": pDark.bg_emphasis,
-
-		// UI element colors
 		border: pDark.border_default,
-		input: pDark.bg_default,
+		input: pDark.border_default,
 		ring: pDark.fg_accent,
 	},
 } as const;

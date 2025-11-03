@@ -24,6 +24,8 @@ export const ibmCarbonPaletteLight = {
 	bg_inset: "#ffffff",
 	/** Selected state backgrounds */
 	bg_emphasis: "#e0e0e0",
+	/** Field/layer hover state (field-01-hover, gray10Hover) */
+	bg_field_hover: "#e8e8e8",
 
 	// Foreground colors
 	/** Primary text color (text-01) - Near black */
@@ -38,6 +40,8 @@ export const ibmCarbonPaletteLight = {
 	// Semantic colors - Accent (Links, interactive)
 	/** Links, primary interactive (interactive-01, blue-60) */
 	fg_accent: "#0f62fe",
+	/** Link hover state (blue-70 - darker/more saturated, official Carbon hover) */
+	fg_accent_hover: "#0353e9",
 	/** Primary action button background */
 	bg_success: "#24a148",
 	/** Success button hover - darker green */
@@ -100,6 +104,8 @@ export const ibmCarbonPaletteDark = {
 	bg_inset: "#393939",
 	/** Selected state backgrounds */
 	bg_emphasis: "#393939",
+	/** Field/layer hover state (field-01-hover, gray90Hover) */
+	bg_field_hover: "#333333",
 
 	// Foreground colors
 	/** Primary text color (text-01) - Near white */
@@ -114,6 +120,8 @@ export const ibmCarbonPaletteDark = {
 	// Semantic colors - Accent (Links, interactive)
 	/** Links in dark mode (link-01, blue-40) - lighter for contrast */
 	fg_accent: "#78a9ff",
+	/** Link hover state (blue-30 - brighter for dark mode visibility) */
+	fg_accent_hover: "#a6c8ff",
 	/** Primary action button background (blue-60 - same as light) */
 	bg_success: "#42be65",
 	/** Success button hover - brighter green for dark bg */

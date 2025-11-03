@@ -52,6 +52,8 @@ export const tangerePaletteLight = {
 	/** Links, interactive elements - blue (color 4) */
 	fg_accent: "#223355",
 	/** Success/functions - teal (color 2) */
+	/** Link hover state (darker - more emphasis) */
+	fg_accent_hover: "#1a2844",
 	bg_success: "#004c73",
 	/** Success hover - darker teal (color 14) */
 	bg_success_hover: "#002a40",
@@ -136,6 +138,8 @@ export const tangerePaletteDark = {
 	/** Links, interactive elements - light blue (color 4) */
 	fg_accent: "#8fb4cd",
 	/** Success/statements - teal (color 2) */
+	/** Link hover state (brighter for dark mode visibility) */
+	fg_accent_hover: "#aed5f1",
 	bg_success: "#6dafb5",
 	/** Success hover - brighter teal (color 10) */
 	bg_success_hover: "#6dafb5",

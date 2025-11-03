@@ -205,7 +205,7 @@ const MovieCard = ({ movie, currentPage, source, query }: MovieCardProps) => {
 					</Box>
 				</Link>
 				<Box flex="1" display="flex" flexDirection="column">
-					<Card.Body flex="1" display="flex" flexDirection="column" p={3}>
+					<Card.Body display="flex" flexDirection="column" p={3} height="100px">
 						<Box mb={2} position="relative">
 							<Text
 								ref={titleRef}

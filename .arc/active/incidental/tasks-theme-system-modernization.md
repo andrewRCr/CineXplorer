@@ -993,88 +993,170 @@ and ongoing migration overhead in future tasks.
         **Files Modified:**
         - `frontend/src/components/chakra/theme-provider.tsx` - Fixed system initialization, cleaned up imports
 
-    - [ ] **4.1.5e Review Phase 4.1 component token usage**
+    - [x] **4.1.5e Review Phase 4.1 component token usage**
 
-        **Purpose:** Verify components migrated in Phase 4.1 follow the semantic token strategy
-        (strategy-semantic-tokens.md) synthesized from Material Design 3, IBM Carbon, and movie-domain research.
+        Verified all 4 Phase 4.1 components against semantic token checklist. Two quick fixes applied,
+        all components now follow token strategy correctly.
 
-        **Components to review:**
-        1. NavBar (`components/layout/NavBar.tsx`)
-        2. Footer (`components/layout/Footer.tsx`)
-        3. LoadingLayout (`components/layout/LoadingLayout.tsx`)
-        4. ThemeSelector (`components/ThemeSelector.tsx`)
+        **Completed:**
 
-        **Review Checklist (from strategy-semantic-tokens.md):**
+        1. **NavBar.tsx** - Fixed token pairing: `color="foreground"` → `color="card-foreground"` (line 49)
+        2. **Footer.tsx** - All tokens correct, no changes needed
+        3. **LoadingLayout.tsx** - Hardcoded `color="black"` properly documented with brand exception (acceptable)
+        4. **ThemeSelector.tsx** - Added missing hover state: `_hover={{ bg: "accent/8" }}` for menu items (line 80-83)
 
-        **1. Token Selection (Decision Tree - strategy lines 375-448):**
-        - **Surfaces:** Right elevation level?
-            - Base page → `background` + `foreground`
-            - Elevated panels (nav, footer, cards) → `card` + `card-foreground`
-            - Featured content → `surface-elevated`
-            - Dropdowns/tooltips → `popover` + `popover-foreground`
-        - **Interactive elements:** Semantically correct?
-            - Primary CTAs → `primary` + `primary-foreground`
-            - Secondary actions → `secondary` + `secondary-foreground`
-            - Links/active states → `accent` + `accent-foreground`
-            - Disabled → `muted` + `muted-foreground`
-        - **Status/alerts:** Right semantic meaning?
-            - Success → `success` + `success-foreground`
-            - Warnings → `warning` + `warning-foreground`
-            - Info → `info` + `info-foreground`
-            - Errors → `destructive` + `destructive-foreground`
-        - **Movie-specific:** Correct domain tokens?
-            - TMDB scores → `rating` + `rating-foreground`
-            - Genre tags → `badge` + `badge-foreground`
-        - **UI elements:** Standard usage?
-            - Borders → `border`
-            - Input borders → `input`
-            - Focus rings → `ring`
+        **Review Checklist** (retained for Phase 4.2+ component migrations):
 
-        **2. Interactive States (Material Design 3 - strategy lines 609-711):**
-        - Hover: 8% opacity (`accent/8` or token-specific)
-        - Active/pressed: 12% opacity (`accent/12` or token-specific)
-        - Focus: `ring` token for accessibility
-        - Disabled: 38% opacity
+        **1. Token Selection:** Surfaces use correct elevation (`card`, `surface-elevated`, `popover`),
+        interactive elements semantically correct (`accent`, `primary`, `secondary`), status/alerts proper
+        (`success`, `warning`, `info`, `destructive`), movie-specific correct (`rating`, `badge`),
+        UI elements standard (`border`, `input`, `ring`)
 
-        **3. Token Pairing (strategy lines 452-469):**
-        - Every background token has matching `-foreground`
-        - Example: `bg="card"` paired with `color="card-foreground"`
+        **2. Interactive States:** Hover 8% opacity (`accent/8`), Active/pressed 12% (`accent/12`),
+        Focus `ring` token, Disabled 38% opacity
 
-        **4. Anti-Patterns (strategy lines 864-897):**
-        - No hardcoded colors (`red.600`, `#4299e1`, `gray.100`, etc.)
-        - No Chakra raw tokens (`colorScheme="blue"`, `fg.muted`, etc.)
-        - Any exceptions have explanatory comments with rationale
+        **3. Token Pairing:** Every background has matching `-foreground` (e.g., `card` + `card-foreground`)
 
-        **5. Common Patterns (strategy lines 782-843):**
-        - Alerts use `/10` opacity for backgrounds + solid border
-        - Surface hierarchy properly nested (background → card → surface-elevated)
+        **4. Anti-Patterns:** No hardcoded colors (`red.600`, `#4299e1`), no Chakra raw tokens
+        (`colorScheme`, `fg.muted`), exceptions have explanatory comments
 
-        **Process per component:**
-        1. Read component file
-        2. Check against all 5 checklist sections
-        3. Apply only < 2 min fixes for violations
-        4. Document larger issues as `// TODO:` comments in code
-
-        **Time box:** 10 minutes per component maximum (40 min total)
+        **5. Common Patterns:** Alerts use `/10` opacity backgrounds, surface hierarchy properly nested
 
         **Quality gate:**
-        - All 4 components reviewed against full checklist
-        - Quick violations fixed
-        - Larger issues documented with TODO comments
+        - ✅ All 4 components reviewed against full checklist
+        - ✅ Quick violations fixed (NavBar token pairing, ThemeSelector hover state)
+        - ✅ No larger issues requiring TODO comments
+        - ✅ TypeScript type checking: PASSED
+        - ✅ Frontend linting: PASSED
 
-- [ ] **4.2 Convert authentication pages**
-    - **Login** (`pages/user/Login.tsx`)
-        - Replace inline hex `#4299e1` with semantic token (likely `accent`)
-        - Apply semantic tokens to form elements
-        - Update border colors (`border.error` → `destructive`, etc.)
-    - **Register** (`pages/user/Register.tsx`)
-        - Same as Login - replace hardcoded colors
-        - Ensure consistent form styling across auth pages
-    - **VerifyEmail** (`pages/user/VerifyEmail.tsx`)
-        - Update success/error state colors to semantic tokens
-        - Apply semantic border colors
-    - **Review token usage:** Verify all 3 auth pages against Task 4.1.5e checklist (line ~1007)
-        - Time box: 5-10 minutes per page
+- [x] **4.2 Convert authentication pages** ⚠️ IN VALIDATION
+
+    Converted all 3 authentication pages from legacy tokens and hardcoded colors to semantic tokens through
+    multiple iteration rounds. **Status**: Core conversion complete, but remaining visual issues require
+    systematic validation before these components serve as templates for Phase 4.3+.
+
+    **Completed (awaiting final validation):**
+
+    1. **Login.tsx** - Converted 15+ instances:
+       - `#4299e1` (inline hex) → `var(--chakra-colors-accent)` (link color)
+       - `background.main` → `background` (2x)
+       - `border.separator` → `input` (3x for inputs), `border` (1x for divider)
+       - `background.subItem` → `muted` (6x hover states)
+       - `text.muted` → `muted-foreground`
+       - `border.success` → `success` (2x)
+       - `border.error` → `destructive`
+       - `text.success` → `success-foreground`
+       - `colorScheme="gray"` → removed (3x)
+       - `colorScheme="blue"` → `bg="accent"` + `color="accent-foreground"` + `_hover={{ opacity: 0.92 }}`
+
+    2. **Register.tsx** - Converted 10+ instances:
+       - `#4299e1` (inline hex) → `var(--chakra-colors-accent)` (link color)
+       - `background.main` → `background`
+       - `border.separator` → `input` (3x for inputs)
+       - `background.subItem` → `muted` (4x hover states)
+       - `red.500` (hardcoded) → `destructive-foreground` (error text)
+       - Removed redundant `bg="transparent"`, `borderColor`, `color` overrides from button
+
+    3. **VerifyEmail.tsx** - Converted 15+ instances:
+       - `accent.primary` → `accent` (spinner)
+       - `border.success` → `success`
+       - `text.successDark` → `success-foreground`
+       - `border.error` → `destructive`
+       - `colorScheme="blue"` → removed (2x)
+       - `colorScheme="gray"` → removed
+       - `bg="white"`, `color="black"`, `_hover={{ bg: "gray.50" }}`, `borderColor="gray.300"` → all removed (3x buttons)
+       - All buttons now use `_hover={{ bg: "muted" }}` consistently
+
+    **Semantic Refinements (after initial conversion):**
+
+    After initial mechanical conversion, discovered UX issues requiring semantic fixes:
+
+    1. **Input field visibility** - Added `borderWidth="1px"` to all inputs/checkboxes (7x total)
+       - Issue: `borderColor="input"` alone was nearly invisible in unfocused state
+       - Fix: Explicit border width ensures visibility across all theme/mode combinations
+
+    2. **Focus states** - Added `_focus` with `ring` token to all inputs/checkboxes (4x)
+       - Pattern: `_focus={{ borderColor: "ring", boxShadow: "0 0 0 1px var(--chakra-colors-ring)" }}`
+       - Ensures proper keyboard navigation accessibility
+
+    3. **Primary CTAs** - Changed from `variant="outline"` to proper primary styling (3x)
+       - Login button: `bg="primary"` + `color="primary-foreground"` + `_hover={{ opacity: 0.92 }}`
+       - Register button: Same treatment
+       - VerifyEmail "Continue" button: Same treatment
+       - Issue: Outline variant made primary CTAs invisible/same color as background
+
+    4. **Secondary action buttons** - Added explicit borders to outline variants (4x)
+       - OAuth buttons (Google, GitHub): `borderWidth="1px"` + `borderColor="border"`
+       - VerifyEmail navigation buttons: Same treatment
+       - Ensures outline buttons are visible across themes
+
+    **Critical Semantic Fixes (after user testing):**
+
+    User testing revealed deeper semantic misunderstandings requiring fundamental fixes:
+
+    5. **Login/Register box backgrounds** - WRONG SURFACE TYPE (2x)
+       - **Issue**: Using `bg="background"` for login/register form boxes
+       - **Why wrong**: `background` is BASE page background, forms are ELEVATED SURFACES
+       - **Root cause of input border invisibility**: Inputs on `background` with `borderColor="input"` had no contrast
+       - **Fix**: Changed to `bg="card"` + `color="card-foreground"`
+       - **Result**: Input borders now visible across ALL themes (tested: GitHub, IBM Carbon, GitLab, Tangere)
+       - Also fixed divider text background (line 593 Login.tsx) to match card surface
+
+    6. **Navbar button consistency** - MobileMenuButton vs NavBarUserMenu Login button
+       - **Issue**: Login button missing base `borderColor`, causing visual inconsistency
+       - **Fix**: Added `borderColor="border"` + `color="card-foreground"` to match hamburger button
+       - **Result**: Both buttons now visually consistent
+
+    7. **Hover state readability** - WRONG TOKEN PAIRING (2x)
+       - **Issue**: Hover used `color="accent-foreground"` on `bg="accent/8"` (semi-transparent)
+       - **Why wrong**: `accent-foreground` designed for SOLID `accent` backgrounds, unreadable on 8% opacity
+       - **Fix**: Removed `color="accent-foreground"` from hover, keep base text color
+       - **Components**: MobileMenuButton.tsx, NavBarUserMenu.tsx
+       - **Result**: Text remains readable during hover states
+
+    **Remaining Issues (pending systematic validation):**
+
+    User testing identified additional problems requiring resolution before Phase 4.3:
+
+    1. **Login input borders** - Still invisible/extremely faint in many theme/mode combinations
+       - Inconsistent: OAuth buttons visible in same conditions where inputs are NOT
+       - Need investigation: Why different behavior if both use `borderColor="border"`?
+       - Requires cross-theme testing matrix (7 themes × 2 modes)
+
+    2. **OAuth button states** - May lack proper `_focus` states for keyboard navigation accessibility
+
+    3. **Footer theme controls** - Theme switcher and light/dark toggle borders invisible in certain combinations
+       - Different pattern than Login inputs (different root cause)
+       - Components: ThemeSelector button trigger, ColorModeButton
+
+    **Next steps**: Systematic validation of all 4 components across all themes before proceeding to Phase 4.3.
+    These components will serve as templates for remaining Phase 4 work, so must ensure idiomatic token usage
+    aligned with strategy-semantic-tokens.md.
+
+    **Quality gate (current status):**
+    - ✅ All 3 pages converted to semantic tokens exclusively
+    - ✅ No hardcoded colors remaining (except GitHub logo brand exception in Login)
+    - ✅ No legacy tokens remaining
+    - ⚠️ **Input field visibility** - Improved but still issues in multiple themes (needs validation)
+    - ✅ **Primary CTAs properly prominent and actionable**
+    - ✅ **Focus states accessible with ring token** (inputs/checkboxes have _focus)
+    - ⚠️ **OAuth buttons focus states** - May need _focus for keyboard nav (needs validation)
+    - ⚠️ **Footer theme control borders** - Invisible in some combinations (needs investigation)
+    - ✅ TypeScript type checking: PASSED
+    - ✅ Frontend linting: PASSED
+    - ✅ Consistent form styling across all auth pages
+    - ✅ Proper token pairing throughout (background + foreground)
+    - ✅ Surface hierarchy correct (card surfaces for elevated forms)
+
+    **Files modified (uncommitted, awaiting validation completion):**
+    - `frontend/src/pages/user/Login.tsx`
+    - `frontend/src/pages/user/Register.tsx`
+    - `frontend/src/pages/user/VerifyEmail.tsx`
+    - `frontend/src/components/layout/MobileMenuButton.tsx`
+    - `frontend/src/components/layout/NavBarUserMenu.tsx`
+    - Plus Phase 4.1.5e changes: NavBar.tsx, ThemeSelector.tsx
+
+    **TODO**: Update this section with final validation results and complete quality gate before marking fully complete.
 
 - [ ] **4.3 Convert movie components**
 
@@ -1288,20 +1370,68 @@ and ongoing migration overhead in future tasks.
         - Note all components migrated to semantic tokens
         - Update technical accomplishments section
 
-- [ ] **6.2 Create theme strategy documentation**
-    - [ ] **6.2.1 Adapt strategy-style-guide.md from arc-portfolio**
-        - Copy from `/home/andrew/dev/arc-portfolio/.arc/reference/strategies/strategy-style-guide.md`
-        - Adapt for CineXplorer context
-        - Keep as placeholder documenting evolving styling decisions
-        - Note: Final styling decisions are future work (post-technical tasks)
-    - [ ] **6.2.2 Adapt strategy-visual-design-principles.md from arc-portfolio**
-        - Copy from `/home/andrew/dev/arc-portfolio/.arc/reference/strategies/strategy-visual-design-principles.md`
-        - Adapt for CineXplorer context
-        - General design principles (not CineXplorer-specific yet)
-    - [ ] **6.2.3 Reference strategy docs from other documentation**
-        - Update references in docs from 6.1 where appropriate
-        - Ensure no overlap between docs (each doc has clear scope)
-        - Cross-reference strategy-semantic-tokens.md created in Phase 3
+- [ ] **6.2 Extract and consolidate knowledge from notes/research docs**
+
+    **Purpose:** Comprehensive extraction of all relevant knowledge from working notes and research docs into permanent
+    strategy documentation, enabling cleanup and archival.
+    Uses new modular strategy approach (focused docs vs monolithic style guide).
+
+    **Files to extract from:**
+    - `notes-theme-system-modernization.md` (3000+ lines) - Implementation decisions, learnings, patterns
+    - `research-github-primer.md` - GitHub design system findings
+    - `research-ibm-carbon.md` - IBM Carbon design system findings
+    - `research-material-design-3.md` - Material Design 3 findings
+    - `research-ant-design.md` - Ant Design findings
+
+    **Target location:** `.arc/reference/strategies/project/style/`
+
+    - [ ] **6.2.1 Audit notes file for undocumented knowledge**
+        - Review `notes-theme-system-modernization.md` comprehensively
+        - Identify patterns, decisions, and insights not yet captured in strategy docs
+        - Tag sections: "already documented", "needs extraction", "temporary/discard"
+        - Examples to look for:
+            - Component-specific token patterns
+            - Theme creation workflows
+            - Color palette design principles
+            - Cross-theme testing approaches
+            - Lessons learned from Phase 4 migrations
+
+    - [ ] **6.2.2 Audit research docs for CineXplorer-relevant knowledge**
+        - Review all 4 research-*.md files
+        - Identify findings applicable to CineXplorer (vs generic research)
+        - Extract design system patterns relevant to movie discovery apps
+        - Document sources and rationale for any extracted patterns
+        - Mark extractable vs archive-only content
+
+    - [ ] **6.2.3 Create additional strategy docs as needed**
+        - **Evaluate need for:** `strategy-typography-system.md`, `strategy-spacing-system.md`, `strategy-motion-system.md`
+        - **Criteria:** Create new doc if >200 lines of extracted content on cohesive topic
+        - **Alternative:** Add as sections to existing strategy-semantic-tokens.md or strategy-border-system.md if <200 lines
+        - **Decision tree:**
+            - Typography system findings? → New `strategy-typography-system.md`
+            - Spacing/layout patterns? → New `strategy-spacing-system.md`
+            - Animation/transition standards? → New `strategy-motion-system.md`
+            - Token usage clarifications? → Add to `strategy-semantic-tokens.md`
+            - Border-related patterns? → Add to `strategy-border-system.md`
+
+    - [ ] **6.2.4 Update existing strategy docs with extracted knowledge**
+        - Add relevant sections to `strategy-semantic-tokens.md` (token usage patterns discovered during Phase 4)
+        - Add relevant sections to `strategy-border-system.md` (any additional border patterns)
+        - Ensure no duplication across docs
+        - Cross-reference related sections
+
+    - [ ] **6.2.5 Enable research doc deletion**
+        - Verify all CineXplorer-relevant knowledge extracted
+        - Document what was preserved vs what was discarded (and why)
+        - Add comment in task completion notes listing which research findings were NOT extracted
+          (generic, not applicable, superseded by later research, etc.)
+        - Quality gate: Safe to delete research-*.md files after task completion
+
+    - [ ] **6.2.6 Prepare notes file for cleanup**
+        - Tag all sections in notes file as "extracted" or "temporary"
+        - Identify sections that should remain for historical context
+        - Create summary of what knowledge was preserved where
+        - Quality gate: Notes file ready for archival cleanup (separate meta workflow)
 
 - [ ] **6.3 Run final quality gates**
 

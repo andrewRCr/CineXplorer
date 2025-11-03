@@ -1503,16 +1503,61 @@ and ongoing migration overhead in future tasks.
 
         **Quality gates:** TypeScript type checking PASSED, Frontend linting PASSED
 
-    - [ ] **4.3.6 Convert MovieCollectionGrid, MovieGrid**
-        - Apply tokens as needed
-        - Ensure grid container styling uses semantic tokens
-        - **Review token usage:** Verify against Task 4.1.5e checklist (line ~1007)
-        - Quality gate: Grid components use semantic tokens
+    - [x] **4.3.6 Convert MovieCollectionGrid, MovieGrid**
 
-    - [ ] **4.3.7 Convert PageHeader**
-        - Update header styling to semantic tokens
-        - **Review token usage:** Verify against Task 4.1.5e checklist (line ~1007)
-        - Quality gate: PageHeader uses semantic tokens
+        **Completed:** Converted both grid components from legacy tokens and hardcoded colors to semantic tokens.
+        Also fixed pagination separator inconsistency discovered during review.
+
+        **MovieCollectionGrid.tsx (6 conversions + 1 consistency fix):**
+        - Line 139: `color="text.error"` → `destructive-foreground` (error message)
+        - Line 165: `color="text.secondary"` → `muted-foreground` (results count)
+        - Lines 188, 191: `color="text.secondary"` → `muted-foreground` (2x empty state text)
+        - Line 215: `bg="background.skeleton"` → `muted` (skeleton loading)
+        - Line 244: `borderTopColor="red.300"` → `border` (bottom pagination separator - was hardcoded)
+        - **Consistency fix:** Added matching `borderBottom="1px solid"` + `borderBottomColor="border"` to top
+          pagination (lines 158-159) - previously only bottom had separator
+
+        **MovieGrid.tsx (5 conversions + 1 consistency fix):**
+        - Line 91: `color="text.error"` → `destructive-foreground` (error message)
+        - Line 112: `color="text.secondary"` → `muted-foreground` (results count)
+        - Lines 129, 132: `color="text.secondary"` → `muted-foreground` (2x empty state text)
+        - Line 171: `borderTopColor="red.300"` → `border` (bottom pagination separator - was hardcoded)
+        - **Consistency fix:** Added matching `borderBottom="1px solid"` + `borderBottomColor="border"` to top
+          pagination (lines 110-111) - previously only bottom had separator
+
+        **Checklist Verification:**
+        - ✅ Token Selection: All semantic tokens correctly chosen per strategy docs
+        - ✅ Token Pairing: Text colors use appropriate `-foreground` tokens
+        - ✅ Anti-Patterns: Eliminated all legacy tokens and hardcoded colors
+        - ✅ Common Patterns: Error states use `destructive-foreground`, muted text uses `muted-foreground`
+        - ✅ Border System: Pagination separators use standard 1px borders with `border` token
+        - ✅ Visual Consistency: Both top and bottom pagination now have matching border separators
+
+        **Quality gates:** ✅ TypeScript type checking PASSED, Frontend linting PASSED
+
+    - [x] **4.3.7 Convert PageHeader**
+
+        **Completed:** Converted PageHeader from legacy tokens to semantic tokens and **restored animated underline accent**.
+
+        **PageHeader.tsx (2 conversions + bug fix):**
+        - Line 101: `color="text.main"` → `foreground` (title text color)
+        - Line 118: `backgroundColor="accent.secondary"` → `accent` (animated underline)
+        - **Bug discovered and fixed:** Animated underline was invisible due to non-existent `accent.secondary` token
+        - **Result:** Animated underline accent now visible and working across all themes
+
+        **Animation Details:**
+        - 3-phase animation system intact (reset → ready → animating)
+        - Width animates from 0% to 100% over 0.3s with ease-out
+        - Triggers on mount and title changes
+        - 2px height, 1px border radius, positioned 2px below title text
+
+        **Checklist Verification:**
+        - ✅ Token Selection: `foreground` for text, `accent` for highlight underline
+        - ✅ Token Pairing: Not applicable (no background/foreground pairs in this component)
+        - ✅ Anti-Patterns: Eliminated legacy `text.main` and `accent.secondary` tokens
+        - ✅ Common Patterns: Accent used correctly for visual emphasis/branding element
+
+        **Quality gates:** ✅ TypeScript type checking PASSED, Frontend linting PASSED
 
 - [ ] **4.4 Convert remaining components**
     - **PaginationCtrl** (`components/layout/PaginationCtrl.tsx`)

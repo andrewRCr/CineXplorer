@@ -1,6 +1,6 @@
 # Semantic Token Strategy and Migration Guide
 
-**Version:** 1.0 | **Updated:** 2025-11-02 | **Status:** Active
+**Version:** 1.1 | **Updated:** 2025-11-03 | **Status:** Active
 
 ## Purpose
 
@@ -13,6 +13,9 @@ Comprehensive guide for CineXplorer's semantic token system, covering the 33-tok
 - Deciding which semantic token to use for a UI element
 - Understanding the token extension rationale (13 new tokens)
 - Converting hardcoded colors to semantic tokens
+
+**For theme system implementation architecture** (provider pattern, system creation, light/dark mode mechanics),
+see [ADR-004: Provider-Based Multi-Theme Switching](../adr/adr-004-provider-based-multi-theme-switching.md).
 
 ## Table of Contents
 
@@ -909,7 +912,12 @@ whether theme interprets it as gold, orange, or yellow.
 
 ---
 
-**Document Version:** 1.0 (2025-11-02)
+**Document Version:** 1.1 (2025-11-03)
+
+**Version History:**
+
+- 1.1 (2025-11-03): Verified accuracy, added ADR-004 reference for implementation architecture
+- 1.0 (2025-11-02): Initial comprehensive guide
 
 **Sources:**
 
@@ -918,5 +926,13 @@ This document consolidates research and analysis from CineXplorer's theme system
 
 - **Phase 3.1**: Research synthesis from 4 production design systems (Material Design 3, IBM Carbon, GitHub Primer, Ant Design)
 - **Phase 3.3**: Migration analysis and hardcoded color audit from codebase (`notes-theme-system-modernization.md`)
+- **Phase 4.1.5**: Opacity modifier validation, hex format verification
+
+**Related Documentation:**
+
+- [ADR-004: Provider-Based Multi-Theme Switching](../adr/adr-004-provider-based-multi-theme-switching.md) -
+  Theme system implementation
+- [ADR-003: Extend Semantic Token System](../adr/adr-003-extend-semantic-token-system.md) -
+  Token extension rationale
 
 **Maintainer:** Update this document when adding new tokens or discovering new migration patterns

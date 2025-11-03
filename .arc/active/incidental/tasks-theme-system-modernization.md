@@ -1420,28 +1420,75 @@ and ongoing migration overhead in future tasks.
         **Files modified:**
         - `frontend/src/pages/movie/MovieDetail.tsx` - 11 token conversions
 
-    - [ ] **4.3.3 Convert MovieCard component** (`components/movie/MovieCard.tsx`)
-        - Apply semantic `card` / `card-foreground` tokens
-        - Ensure hover states use semantic patterns (Phase 3.7 interactive patterns)
-        - **Genre tags:** Use `badge` / `badge-foreground` for neutral genre labels
-        - **Review token usage:** Verify against Task 4.1.5e checklist (line ~1007)
-        - Quality gate: MovieCard uses semantic tokens exclusively
+    - [x] **4.3.3 Convert MovieCard component** (`components/movie/MovieCard.tsx`)
 
-    - [ ] **4.3.4 Convert MovieCardContainer** (`components/movie/MovieCardContainer.tsx`)
-        - Coordinate with MovieCard for consistent styling
-        - **Review token usage:** Verify against Task 4.1.5e checklist (line ~1007)
-        - Quality gate: Container styling consistent with MovieCard
+        Converted MovieCard from old custom tokens and Chakra raw tokens to semantic tokens.
 
-    - [ ] **4.3.5 Convert MovieUserScore component** (`components/movie/MovieUserScore.tsx`)
-        - **Score value display:** Use `rating` / `rating-foreground` tokens (IMDb gold standard)
-        - **Score threshold backgrounds (optional):**
-            - 8.0+ score: `success` background (subtle)
-            - 6.0-7.9 score: `warning` background (subtle) or neutral
-            - Below 6.0: neutral or `muted` background
-        - Pattern: Rating token for value, semantic background for context
-        - Reference: Phase 3.2 MovieUserScore analysis
-        - **Review token usage:** Verify against Task 4.1.5e checklist (line ~1007)
-        - Quality gate: Score displays use rating token, backgrounds use semantic tokens
+        **Changes (9 total):**
+
+        1. Card.Root: Added explicit `bg="card"` for consistent surface styling
+        2. Tooltip background: `bg="background.main"` → `bg="popover"`
+        3. Tooltip border: `borderColor="border.subtle"` → `borderColor="border"`
+        4. Tooltip arrow: `borderTopColor="background.main"` → `borderTopColor="popover"`
+        5. Tooltip text: `color="text.main"` → `color="popover-foreground"`
+        6. Release date text: `color="text.secondary"` → `color="muted-foreground"`
+        7. Watched IconButton: Removed `colorPalette="blue"` (default ghost styling)
+        8. Watchlist IconButton: `colorPalette={...}` → `color={isOnWatchlist ? "accent" : undefined}`
+        9. Animated accent line: `backgroundColor="accent.primary"` → `backgroundColor="accent"`
+
+        **Result:** All old custom tokens and Chakra raw tokens eliminated ✅
+
+        **Quality gate:** TypeScript type checking PASSED, Frontend linting PASSED
+
+    - [x] **4.3.4 Convert MovieCardContainer** (`components/movie/MovieCardContainer.tsx`)
+
+        Converted MovieCardContainer from old custom token to semantic token. Simple wrapper component
+        with border styling.
+
+        **Changes (1 total):**
+
+        1. Border color: `borderColor="border.separator"` → `borderColor="border"`
+
+        **Result:** Old custom token eliminated, consolidated to semantic `border` token ✅
+
+        **Border System Compliance:**
+        - ✅ Uses 1px border width (via `border="1px solid"`)
+        - ✅ Uses semantic `border` token for color
+        - ✅ Consistent with MovieCard and border strategy
+
+        **Quality gate:** TypeScript type checking PASSED, Frontend linting PASSED
+
+    - [x] **4.3.5 Convert MovieUserScore component** (`components/movie/MovieUserScore.tsx`)
+
+        Converted MovieUserScore from old custom tokens and Chakra raw tokens to semantic tokens.
+        Implemented threshold-based background colors for visual score distinction.
+
+        **Strategy Decision (Approach 3):**
+        - TMDB scores use semantic status tokens (`success`/`warning`/`muted`) for backgrounds
+        - Text color uses paired foreground tokens (typography consistency)
+        - `rating` token reserved for future personal user ratings feature (star system)
+
+        **Changes:**
+
+        **TMDB Score Thresholds:**
+        - High (>= 7.5): `bg="success"`, `color="success-foreground"` (was `text.successDark`)
+        - Medium (5.0-7.4): `bg="warning"`, `color="warning-foreground"` (was `blue.700`)
+        - Low (< 5.0): `bg="muted"`, `color="muted-foreground"` (was `yellow.700`)
+
+        **User Rating Thresholds (future feature, code exists):**
+        - High (>= 8): `bg="success"`, `color="success-foreground"` (was `green.600`)
+        - Medium (5-7): `bg="warning"`, `color="warning-foreground"` (was `orange.600`)
+        - Low (< 5): `bg="destructive"`, `color="destructive-foreground"` (was `red.600`)
+        - NOTE: Future enhancement will use `rating` token for personal ratings display
+
+        **Refactoring:**
+        - Replaced color constants with helper functions returning token pairs
+        - Proper token pairing ensures contrast across all themes
+        - Added comments documenting future `rating` token usage
+
+        **Result:** All old custom tokens and Chakra raw tokens eliminated ✅
+
+        **Quality gate:** TypeScript type checking PASSED, Frontend linting PASSED
 
     - [ ] **4.3.6 Convert MovieCollectionGrid, MovieGrid**
         - Apply tokens as needed

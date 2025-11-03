@@ -74,7 +74,8 @@ const Register = () => {
 			{/* Register Box - Centered */}
 			<Box position="relative" zIndex={1} w="480px">
 				<Box
-					bg="background.main"
+					bg="card"
+					color="card-foreground"
 					p={10}
 					rounded="lg"
 					boxShadow="xl"
@@ -105,9 +106,14 @@ const Register = () => {
 										value={formik.values.email}
 										onChange={formik.handleChange}
 										onBlur={formik.handleBlur}
-										borderColor="border.separator"
+										borderWidth="1px"
+										borderColor="input"
 										_hover={{
-											bg: "background.subItem",
+											bg: "accent/5",
+										}}
+										_focus={{
+											borderColor: "ring",
+											boxShadow: "0 0 0 1px var(--chakra-colors-ring)",
 										}}
 									/>
 									<Field.ErrorText
@@ -144,9 +150,14 @@ const Register = () => {
 										value={formik.values.username}
 										onChange={formik.handleChange}
 										onBlur={formik.handleBlur}
-										borderColor="border.separator"
+										borderWidth="1px"
+										borderColor="input"
 										_hover={{
-											bg: "background.subItem",
+											bg: "accent/5",
+										}}
+										_focus={{
+											borderColor: "ring",
+											boxShadow: "0 0 0 1px var(--chakra-colors-ring)",
 										}}
 									/>
 									<Field.ErrorText
@@ -183,9 +194,14 @@ const Register = () => {
 										value={formik.values.password}
 										onChange={formik.handleChange}
 										onBlur={formik.handleBlur}
-										borderColor="border.separator"
+										borderWidth="1px"
+										borderColor="input"
 										_hover={{
-											bg: "background.subItem",
+											bg: "accent/5",
+										}}
+										_focus={{
+											borderColor: "ring",
+											boxShadow: "0 0 0 1px var(--chakra-colors-ring)",
 										}}
 									/>
 									<Field.ErrorText
@@ -202,7 +218,7 @@ const Register = () => {
 							</Box>
 
 							{errorMessage && (
-								<Text color="red.500" fontSize="14px" textAlign="center">
+								<Text color="destructive-foreground" fontSize="14px" textAlign="center">
 									{errorMessage}
 								</Text>
 							)}
@@ -213,20 +229,39 @@ const Register = () => {
 								fontSize="16px"
 								loading={formik.isSubmitting}
 								loadingText="Registering..."
-								variant="outline"
-								bg="transparent"
-								borderColor="border.separator"
+								bg="primary"
+								color="primary-foreground"
 								_hover={{
-									bg: "background.subItem",
-									borderColor: "white",
-									color: "white",
+									opacity: 0.92,
 								}}
 							>
 								Register
 							</Button>
 							<Text mt="16px" textAlign="center" w="100%" fontSize="16px">
 								Already have an account?{" "}
-								<Link to={ROUTES.LOGIN} style={{ color: "#4299e1" }}>
+								<Link
+									to={ROUTES.LOGIN}
+									style={{
+										color: "var(--chakra-colors-accent)",
+										textDecoration: "underline",
+										textDecorationThickness: "2px",
+										textUnderlineOffset: "2px",
+									}}
+									onMouseEnter={(e) => {
+										e.currentTarget.style.color = "var(--chakra-colors-accent-hover)";
+									}}
+									onMouseLeave={(e) => {
+										e.currentTarget.style.color = "var(--chakra-colors-accent)";
+									}}
+									onFocus={(e) => {
+										e.currentTarget.style.outline = "2px solid";
+										e.currentTarget.style.outlineColor = "var(--chakra-colors-ring)";
+										e.currentTarget.style.outlineOffset = "2px";
+									}}
+									onBlur={(e) => {
+										e.currentTarget.style.outline = "none";
+									}}
+								>
 									Sign In
 								</Link>
 							</Text>

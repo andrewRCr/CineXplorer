@@ -427,7 +427,8 @@ const Login = () => {
 			{/* Login Box - Centered */}
 			<Box position="relative" zIndex={1} w="480px">
 				<Box
-					bg="background.main"
+					bg="card"
+					color="card-foreground"
 					p={10}
 					rounded="lg"
 					boxShadow="xl"
@@ -462,9 +463,10 @@ const Login = () => {
 											setRegistrationSuccess(null); // Clear registration success when user types
 										}}
 										onBlur={formik.handleBlur}
-										borderColor="border.separator"
+										borderWidth="1px"
+									borderColor="input"
 										_hover={{
-											bg: "background.subItem",
+											bg: "accent/5",
 										}}
 									/>
 									<Field.ErrorText
@@ -505,9 +507,10 @@ const Login = () => {
 											setRegistrationSuccess(null); // Clear registration success when user types
 										}}
 										onBlur={formik.handleBlur}
-										borderColor="border.separator"
+										borderWidth="1px"
+									borderColor="input"
 										_hover={{
-											bg: "background.subItem",
+											bg: "accent/5",
 										}}
 									/>
 									<Field.ErrorText
@@ -538,9 +541,14 @@ const Login = () => {
 							>
 								<Checkbox.HiddenInput />
 								<Checkbox.Control
-									borderColor="border.separator"
+									borderWidth="1px"
+									borderColor="input"
 									_hover={{
-										bg: "background.subItem",
+										bg: "accent/5",
+									}}
+									_focus={{
+										borderColor: "ring",
+										boxShadow: "0 0 0 1px var(--chakra-colors-ring)",
 									}}
 								/>
 								<Checkbox.Label fontSize="16px">Remember Me</Checkbox.Label>
@@ -550,9 +558,10 @@ const Login = () => {
 								type="submit"
 								width="full"
 								fontSize="16px"
-								variant="outline"
+								bg="primary"
+								color="primary-foreground"
 								_hover={{
-									bg: "background.subItem",
+									opacity: 0.92,
 								}}
 								loading={formik.isSubmitting}
 								loadingText="Logging in..."
@@ -568,17 +577,17 @@ const Login = () => {
 									left="0"
 									right="0"
 									h="1px"
-									bg="border.separator"
+									bg="border"
 								/>
 								<Text
 									position="relative"
 									textAlign="center"
-									bg="background.main"
+									bg="card"
 									px={3}
 									mx="auto"
 									w="fit-content"
 									fontSize="14px"
-									color="text.muted"
+									color="muted-foreground"
 								>
 									or continue with
 								</Text>
@@ -589,10 +598,17 @@ const Login = () => {
 								<Button
 									flex="1"
 									variant="outline"
+									borderWidth="1px"
+									borderColor="border"
 									fontSize="16px"
 									onClick={handleGoogleLogin}
 									_hover={{
-										bg: "background.subItem",
+										bg: "accent/8",
+									}}
+									_focus={{
+										outline: "2px solid",
+										outlineColor: "ring",
+										outlineOffset: "2px",
 									}}
 								>
 									<FaGoogle size={18} style={{ marginRight: "8px" }} />
@@ -601,10 +617,17 @@ const Login = () => {
 								<Button
 									flex="1"
 									variant="outline"
+									borderWidth="1px"
+									borderColor="border"
 									fontSize="16px"
 									onClick={handleGithubLogin}
 									_hover={{
-										bg: "background.subItem",
+										bg: "accent/8",
+									}}
+									_focus={{
+										outline: "2px solid",
+										outlineColor: "ring",
+										outlineOffset: "2px",
 									}}
 								>
 									<FaGithub size={18} style={{ marginRight: "8px" }} />
@@ -612,11 +635,30 @@ const Login = () => {
 								</Button>
 							</HStack>
 
-							<Text mt="4px" textAlign="center" w="100%" fontSize="16px">
+							<Text mt="4px" textAlign="center" w="100%" fontSize="16px" color="foreground">
 								Don't have an account?{" "}
 								<Link
 									to={ROUTES.REGISTER}
-									style={{ color: "#4299e1" }}
+									style={{
+										color: "var(--chakra-colors-accent)",
+										textDecoration: "underline",
+										textDecorationThickness: "2px",
+										textUnderlineOffset: "2px",
+									}}
+									onMouseEnter={(e) => {
+										e.currentTarget.style.color = "var(--chakra-colors-accent-hover)";
+									}}
+									onMouseLeave={(e) => {
+										e.currentTarget.style.color = "var(--chakra-colors-accent)";
+									}}
+									onFocus={(e) => {
+										e.currentTarget.style.outline = "2px solid";
+										e.currentTarget.style.outlineColor = "var(--chakra-colors-ring)";
+										e.currentTarget.style.outlineOffset = "2px";
+									}}
+									onBlur={(e) => {
+										e.currentTarget.style.outline = "none";
+									}}
 								>
 									Register
 								</Link>
@@ -636,16 +678,16 @@ const Login = () => {
 						{registrationSuccess && (
 							<Alert.Root
 								status="success"
+								bg="success/10"
 								borderRadius="lg"
-								border="1px solid"
-								borderColor="border.success"
+								borderWidth="1px"
+								borderColor="success"
 								boxShadow="sm"
 								position="relative"
 							>
 								<IconButton
 									size="sm"
 									variant="ghost"
-									colorScheme="gray"
 									aria-label="Dismiss"
 									onClick={dismissRegistrationSuccessAlert}
 									position="absolute"
@@ -656,7 +698,7 @@ const Login = () => {
 									<FiX size={16} />
 								</IconButton>
 								<Alert.Indicator />
-								<Alert.Description fontSize="sm">
+								<Alert.Description fontSize="sm" color="success-foreground">
 									{registrationSuccess}
 								</Alert.Description>
 							</Alert.Root>
@@ -664,16 +706,16 @@ const Login = () => {
 						{emailVerifiedSuccess && (
 							<Alert.Root
 								status="success"
+								bg="success/10"
 								borderRadius="lg"
-								border="1px solid"
-								borderColor="border.success"
+								borderWidth="1px"
+								borderColor="success"
 								boxShadow="sm"
 								position="relative"
 							>
 								<IconButton
 									size="sm"
 									variant="ghost"
-									colorScheme="gray"
 									aria-label="Dismiss"
 									onClick={dismissEmailVerifiedAlert}
 									position="absolute"
@@ -684,7 +726,7 @@ const Login = () => {
 									<FiX size={16} />
 								</IconButton>
 								<Alert.Indicator />
-								<Alert.Description fontSize="sm">
+								<Alert.Description fontSize="sm" color="success-foreground">
 									{emailVerifiedSuccess}
 								</Alert.Description>
 							</Alert.Root>
@@ -692,13 +734,14 @@ const Login = () => {
 						{generalError && (
 							<Alert.Root
 								status="error"
+								bg="destructive/10"
 								borderRadius="lg"
-								border="1px solid"
-								borderColor="border.error"
+								borderWidth="1px"
+								borderColor="destructive"
 								boxShadow="sm"
 							>
 								<Alert.Indicator />
-								<Alert.Description fontSize="sm">
+								<Alert.Description fontSize="sm" color="destructive-foreground">
 									{generalError}
 								</Alert.Description>
 							</Alert.Root>
@@ -706,16 +749,16 @@ const Login = () => {
 						{emailVerificationNeeded && (
 							<Alert.Root
 								status="warning"
+								bg="warning/10"
 								borderRadius="lg"
-								border="1px solid"
-								borderColor="border.subtle"
+								borderWidth="1px"
+								borderColor="warning"
 								boxShadow="sm"
 								position="relative"
 							>
 								<IconButton
 									size="sm"
 									variant="ghost"
-									colorScheme="gray"
 									aria-label="Dismiss"
 									onClick={dismissVerificationAlert}
 									position="absolute"
@@ -740,8 +783,9 @@ const Login = () => {
 										<Box textAlign="center" mt={3} ml={-2}>
 											<Button
 												size="sm"
-												colorScheme="blue"
-												variant="solid"
+												bg="accent"
+												color="accent-foreground"
+												_hover={{ opacity: 0.92 }}
 												onClick={handleResendVerification}
 												loading={isResendingEmail}
 												loadingText="Sending..."
@@ -752,7 +796,7 @@ const Login = () => {
 										</Box>
 										{resendMessage && (
 											<Box textAlign="center" mt={2}>
-												<Text fontSize="sm" color="text.success">
+												<Text fontSize="sm" color="success-foreground">
 													{resendMessage}
 												</Text>
 											</Box>

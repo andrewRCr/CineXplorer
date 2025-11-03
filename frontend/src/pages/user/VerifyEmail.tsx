@@ -86,7 +86,7 @@ const VerifyEmail = () => {
 			<Box maxW="500px" w="100%" textAlign="center">
 				{status === "loading" && (
 					<VStack gap={4}>
-						<Spinner size="xl" color="accent.primary" />
+						<Spinner size="xl" color="accent" />
 						<Text fontSize="lg">Verifying your email...</Text>
 					</VStack>
 				)}
@@ -97,7 +97,7 @@ const VerifyEmail = () => {
 							status="success"
 							borderRadius="lg"
 							border="1px solid"
-							borderColor="border.success"
+							borderColor="success"
 							boxShadow="sm"
 						>
 							<Alert.Indicator />
@@ -110,7 +110,7 @@ const VerifyEmail = () => {
 								</Alert.Description>
 								<Text
 									fontSize="sm"
-									color="text.successDark"
+									color="success-foreground"
 									fontWeight="medium"
 								>
 									Redirecting to login in {countdown} second
@@ -119,14 +119,11 @@ const VerifyEmail = () => {
 							</Box>
 						</Alert.Root>
 						<Button
-							colorScheme="blue"
 							size="lg"
 							onClick={handleContinue}
-							variant="outline"
-							bg="white"
-							color="black"
-							_hover={{ bg: "gray.50" }}
-							borderColor="gray.300"
+							bg="primary"
+							color="primary-foreground"
+							_hover={{ opacity: 0.92 }}
 						>
 							Continue to Login Now
 						</Button>
@@ -139,7 +136,7 @@ const VerifyEmail = () => {
 							status="error"
 							borderRadius="lg"
 							border="1px solid"
-							borderColor="border.error"
+							borderColor="destructive"
 							boxShadow="sm"
 						>
 							<Alert.Indicator />
@@ -152,30 +149,26 @@ const VerifyEmail = () => {
 						</Alert.Root>
 						<VStack gap={3}>
 							<Button
-								colorScheme="blue"
 								variant="outline"
 								onClick={() => navigate(ROUTES.LOGIN)}
 								size="lg"
 								w="full"
 								maxW="200px"
-								bg="white"
-								color="black"
-								_hover={{ bg: "gray.50" }}
-								borderColor="gray.300"
+								borderWidth="1px"
+								borderColor="border"
+								_hover={{ bg: "muted" }}
 							>
 								Back to Login
 							</Button>
 							<Button
-								colorScheme="gray"
 								variant="outline"
 								onClick={() => window.location.reload()}
 								size="lg"
 								w="full"
 								maxW="200px"
-								bg="white"
-								color="black"
-								_hover={{ bg: "gray.50" }}
-								borderColor="gray.300"
+								borderWidth="1px"
+								borderColor="border"
+								_hover={{ bg: "muted" }}
 							>
 								Try Again
 							</Button>

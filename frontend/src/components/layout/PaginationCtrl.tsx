@@ -2,9 +2,6 @@ import { ButtonGroup, IconButton } from "@chakra-ui/react";
 import { memo, useMemo, useCallback } from "react";
 import { LuChevronLeft, LuChevronRight } from "react-icons/lu";
 
-// Constants for pagination styling
-const PAGINATION_CURRENT_PAGE_INDICATOR_WIDTH = "60%";
-
 // Memoized helper functions outside component to prevent recreation
 const formatPageNumberCache = new Map<number, string>();
 const formatPageNumber = (page: number): string => {
@@ -110,8 +107,8 @@ const PaginationCtrl = (props: iPaginationCtrlProps) => {
 			<ButtonGroup variant="ghost" size="sm">
 					<IconButton
 						aria-label="Previous page"
-						color="text.main"
-						borderColor="border.separator"
+						color="foreground"
+						borderColor="border"
 						disabled={currentPage === 1}
 						onClick={handlePrevious}
 				>
@@ -126,28 +123,14 @@ const PaginationCtrl = (props: iPaginationCtrlProps) => {
 					return (
 						<IconButton
 							key={page}
-							variant={isCurrentPage ? "solid" : "ghost"}
-							colorScheme={isCurrentPage ? "blue" : undefined}
+							variant="ghost"
+							bg={isCurrentPage ? "muted" : undefined}
+							color={isCurrentPage ? "accent" : "foreground"}
+							borderColor={isCurrentPage ? "accent" : "border"}
+							fontWeight={isCurrentPage ? "semibold" : "normal"}
 							aria-current={isCurrentPage ? "page" : undefined}
-						color={isCurrentPage ? undefined : "text.main"}
-						borderColor={isCurrentPage ? undefined : "border.separator"}
-							position="relative"
 							px={getDynamicPadding(formattedPage)}
-							_after={
-								isCurrentPage
-									? {
-											content: '""',
-											position: "absolute",
-											bottom: "-2px",
-											left: "50%",
-											transform: "translateX(-50%)",
-											width: PAGINATION_CURRENT_PAGE_INDICATOR_WIDTH,
-											height: "2px",
-											backgroundColor: "accent.primary",
-											borderRadius: "1px",
-									  }
-									: undefined
-							}
+							_hover={isCurrentPage ? undefined : { bg: "muted/70" }}
 							onClick={createPageClickHandler(page)}
 						>
 							{formattedPage}
@@ -157,8 +140,8 @@ const PaginationCtrl = (props: iPaginationCtrlProps) => {
 
 					<IconButton
 						aria-label="Next page"
-						color="text.main"
-						borderColor="border.separator"
+						color="foreground"
+						borderColor="border"
 						disabled={currentPage === effectiveTotalPages}
 						onClick={handleNext}
 				>
@@ -253,8 +236,8 @@ const PaginationCtrl = (props: iPaginationCtrlProps) => {
 					<IconButton
 						key={`ellipsis-${index}`}
 						disabled
-						color="text.secondary"
-						borderColor="border.separator"
+						color="muted-foreground"
+						borderColor="border"
 						_hover={{ bg: "transparent" }}
 						cursor="default"
 						px="0.75rem"
@@ -270,30 +253,16 @@ const PaginationCtrl = (props: iPaginationCtrlProps) => {
 			return (
 				<IconButton
 					key={page}
-					variant={isCurrentPage ? "solid" : "ghost"}
-					colorScheme={isCurrentPage ? "blue" : undefined}
+					variant="ghost"
+					bg={isCurrentPage ? "muted" : undefined}
+					color={isCurrentPage ? "accent" : "foreground"}
+					borderColor={isCurrentPage ? "accent" : "border"}
+					fontWeight={isCurrentPage ? "semibold" : "normal"}
 					aria-current={isCurrentPage ? "page" : undefined}
-					color={isCurrentPage ? undefined : "text.main"}
-					borderColor={isCurrentPage ? undefined : "border.separator"}
-					position="relative"
 					px={getDynamicPadding(formattedPage)}
 					disabled={false} // Explicitly set disabled to false
 					cursor="pointer" // Explicitly set cursor
-					_after={
-						isCurrentPage
-							? {
-									content: '""',
-									position: "absolute",
-									bottom: "-2px",
-									left: "50%",
-									transform: "translateX(-50%)",
-									width: PAGINATION_CURRENT_PAGE_INDICATOR_WIDTH,
-									height: "2px",
-									backgroundColor: "accent.primary",
-									borderRadius: "1px",
-							  }
-							: undefined
-					}
+					_hover={isCurrentPage ? undefined : { bg: "muted/70" }}
 					onClick={createPageClickHandler(page)}
 				>
 					{formattedPage}
@@ -311,8 +280,8 @@ const PaginationCtrl = (props: iPaginationCtrlProps) => {
 		<ButtonGroup variant="ghost" size="sm">
 			<IconButton
 				aria-label="Previous page"
-				color="text.main"
-				borderColor="border.separator"
+				color="foreground"
+				borderColor="border"
 				disabled={currentPage === 1}
 				onClick={handlePrevious}
 			>
@@ -323,8 +292,8 @@ const PaginationCtrl = (props: iPaginationCtrlProps) => {
 
 			<IconButton
 				aria-label="Next page"
-				color="text.main"
-				borderColor="border.separator"
+				color="foreground"
+				borderColor="border"
 				disabled={currentPage === effectiveTotalPages}
 				onClick={handleNext}
 			>

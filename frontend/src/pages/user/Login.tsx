@@ -541,8 +541,8 @@ const Login = () => {
 							>
 								<Checkbox.HiddenInput />
 								<Checkbox.Control
-									borderWidth="1px"
-									borderColor="input"
+									borderWidth="2px"
+									borderColor="border"
 									_hover={{
 										bg: "accent/5",
 									}}

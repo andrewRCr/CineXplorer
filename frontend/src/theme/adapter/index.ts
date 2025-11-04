@@ -35,11 +35,17 @@
 
 // Type exports
 export type { UnifiedTheme } from "./types";
+import type { UnifiedTheme } from "./types";
 
 // Adapter function exports (Phase 2)
 export { createGithubAdapter } from "./github";
 export { createCarbonAdapter } from "./carbon";
 export { createPajamasAdapter } from "./pajamas";
+
+// Import for use within this module
+import { createGithubAdapter } from "./github";
+import { createCarbonAdapter } from "./carbon";
+import { createPajamasAdapter } from "./pajamas";
 
 // Utility exports (for adapter implementations)
 export {

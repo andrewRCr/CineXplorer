@@ -20,12 +20,6 @@
  * 2. **Derived Tokens**: Unofficial tokens generated for cross-theme consistency
  * 3. **CineXplorer Extensions**: App-specific tokens (ratings, custom semantic colors)
  *
- * Related:
- * - ADR-005: Unified Theme Adapter Layer architecture decision
- * - Task list: .arc/active/incidental/tasks-theme-definition-semantic-corrections.md
- * - Research notes: .arc/active/incidental/notes-theme-definition-semantic-corrections.md
- *
- * @see {@link https://github.com/anthropics/claude-code CineXplorer}
  */
 
 /**

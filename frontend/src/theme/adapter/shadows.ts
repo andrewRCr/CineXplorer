@@ -13,8 +13,6 @@
  * - GitHub Primer: @primer/primitives v8.x shadow tokens
  * - IBM Carbon: Carbon Design System elevation guidance
  * - GitLab Pajamas: design.gitlab.com elevation system
- *
- * Related: .arc/active/incidental/notes-theme-definition-semantic-corrections.md
  */
 
 /**
@@ -126,7 +124,7 @@ export const pajamasShadows = {
  */
 export function getShadowValues(
 	designSystem: "github" | "ibm-carbon" | "gitlab-pajamas",
-	mode: "light" | "dark",
+	mode: "light" | "dark"
 ): ShadowValues {
 	switch (designSystem) {
 		case "github":

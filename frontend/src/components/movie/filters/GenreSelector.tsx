@@ -37,7 +37,7 @@ const GenreSelector = ({ selectedGenres, onChange }: GenreSelectorProps) => {
 								borderColor="border"
 								borderRadius="4px"
 								_hover={{
-									bg: "accent/8",
+									bg: "layer-hover-01",
 								}}
 								>
 									{checked && <Checkbox.Indicator />}

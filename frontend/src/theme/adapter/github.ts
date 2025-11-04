@@ -1,82 +1,235 @@
 /**
  * GitHub Primer Theme Adapter
  *
- * Adapter that maps GitHub Primer design system tokens to CineXplorer's unified
- * theme vocabulary. Provides consistent ~47-token interface while preserving
- * Primer's visual character and design principles.
+ * Maps official GitHub Primer design system tokens to CineXplorer's unified
+ * theme vocabulary. This adapter applies corrections discovered during Phase 1
+ * research and generates derived tokens for consistency across themes.
  *
- * **Design System:** GitHub Primer
- * **Source Package:** @primer/primitives v8.x
- * **Documentation:** https://primer.style/design/foundations/color
+ * **Design System Source:**
+ * - Package: @primer/primitives v8.x
+ * - Documentation: https://primer.style/product/primitives/color/
  *
- * **Elevation Strategy:** Shadow-based
- * - All surfaces use bgColor-default (same background color)
- * - Elevation differentiated via shadows (shadow-sm, shadow-md, shadow-lg)
- * - Minimal background color changes for depth
+ * **Elevation Strategy:**
+ * - Primary method: Shadows (bgColor-default with varying shadow levels)
+ * - Layer progression: Minimal (bg_default → bg_muted, shadow-based elevation)
+ * - layer-03: Derived from layer-02 (shadows provide differentiation)
  *
- * **Border Philosophy:** Intentionally subtle
- * - Default borders may not meet WCAG 3:1 (compensated by shadows, spacing)
- * - Provides borderColor-emphasis for accessibility-critical contexts
+ * **Token Organization:**
+ * - Section 1: Official mappings (with corrections from Phase 1 research)
+ * - Section 2: Derived tokens (unofficial, for cross-theme consistency)
+ * - Section 3: CineXplorer extensions (app-specific semantic colors)
  *
- * **Implementation Structure:**
- *
- * ```typescript
- * export function createGithubAdapter(mode: "light" | "dark"): UnifiedTheme {
- *   // SECTION 1: Official Mappings (with corrections)
- *   // - Map Primer tokens → unified vocabulary
- *   // - Apply research-discovered corrections
- *   // - Document source tokens
- *
- *   // SECTION 2: Derived Tokens (unofficial, for consistency)
- *   // - Generate per-layer border tokens (Primer lacks these)
- *   // - Derive interaction states (hover, selected, active)
- *   // - Clearly mark as "unofficial" with derivation rationale
- *
- *   // SECTION 3: CineXplorer Extensions (app-specific)
- *   // - Apply centralized extensions (rating, badges)
- *   // - Adapt to Primer's color palette character
- *
- *   return { ...official, ...derived, ...extensions };
- * }
- * ```
- *
- * **Key Corrections from Research:**
- * - Light mode `card`: bgColor-muted (#f6f8fa) NOT bgColor-default for differentiation
- * - Light mode `layer-02`: bgColor-default (#ffffff) + shadow-lg NOT bg_emphasis (blue)
- * - Dark mode `card`: Consider bgColor-muted (#151b23) vs current bg_inset (#010409)
- * - Border hierarchy: Derive from borderColor-default/emphasis tokens
- *
- * Related:
- * - Research: .arc/active/incidental/notes-theme-definition-semantic-corrections.md
- * - Task: Phase 2.1 (GitHub Primer per-theme migration)
+ * Related: ADR-005 (Unified Theme Adapter Layer)
  */
 
 import type { UnifiedTheme } from "./types";
-import { getShadowValues as _getShadowValues } from "./shadows";
-import { createExtensions as _createExtensions } from "./extensions";
 import {
-	deriveBorderHierarchy as _deriveBorderHierarchy,
-	deriveInteractionStates as _deriveInteractionStates,
-	deriveLayer03 as _deriveLayer03,
+	githubPaletteLight,
+	githubPaletteDark,
+} from "../palettes/github";
+import { primerShadows } from "./shadows";
+import { createExtensions } from "./extensions";
+import {
+	deriveBorderHierarchy,
+	deriveInteractionStates,
+	deriveLayer03,
 } from "./utils";
 
 /**
- * Create GitHub Primer theme adapter.
- *
- * **IMPLEMENTATION STATUS:** Skeleton only - Phase 2.1 will implement full mapping.
- *
- * @param _mode - Color mode (light or dark)
- * @returns UnifiedTheme with Primer → unified token mappings
+ * GitHub Primer palette type (light or dark mode).
  */
-export function createGithubAdapter(_mode: "light" | "dark"): UnifiedTheme {
-	// TODO (Phase 2.1): Implement GitHub Primer adapter
-	// 1. Import palette: import { githubPaletteLight, githubPaletteDark } from "../palettes/github"
-	// 2. Map official tokens with corrections
-	// 3. Derive unofficial tokens (border hierarchy, interaction states, layer-03)
-	// 4. Apply CineXplorer extensions
-	// 5. Return complete UnifiedTheme
+export type GitHubPalette = typeof githubPaletteLight | typeof githubPaletteDark;
 
-	throw new Error(
-		"GitHub Primer adapter not yet implemented. See Phase 2.1 in task list.",
+/**
+ * Create GitHub Primer adapter mapping to unified theme vocabulary.
+ *
+ * @param mode - Color mode (light or dark)
+ * @returns UnifiedTheme with all tokens mapped
+ *
+ * @example
+ * ```typescript
+ * const lightTheme = createGithubAdapter('light');
+ * const darkTheme = createGithubAdapter('dark');
+ * ```
+ */
+export function createGithubAdapter(mode: "light" | "dark"): UnifiedTheme {
+	// Select palette based on mode
+	const palette = mode === "light" ? githubPaletteLight : githubPaletteDark;
+
+	// ===================================================================
+	// SECTION 1: OFFICIAL MAPPINGS (With Corrections)
+	// ===================================================================
+	// These mappings use official Primer tokens. Corrections from Phase 1:
+	// - Light mode: card uses bg_muted (was incorrectly bg_default - indistinguishable)
+	// - Both modes: surface-elevated uses bg_default + shadow (was bg_emphasis - blue tint)
+	// - Both modes: Added border_emphasis for accessible borders
+
+	// Core structure
+	const background = palette.bg_default;
+	const foreground = palette.fg_default;
+	const layer01 = palette.bg_muted; // CORRECTED: Cards distinct from background
+	const layer02 = palette.bg_default; // CORRECTED: Modals use bg_default + shadow (not bg_emphasis)
+
+	// Popover (typically layer-02 context)
+	const popover = palette.bg_default;
+	const popoverForeground = palette.fg_default;
+
+	// Border (official Primer tokens)
+	const border = palette.border_default;
+	const borderStrong01 = palette.border_emphasis; // NEW: Added in Task 2.1.1
+
+	// Semantic colors (official Primer)
+	const primary = palette.bg_success;
+	const primaryForeground = palette.fg_onEmphasis;
+
+	const secondary = palette.bg_button_secondary;
+	const secondaryForeground = palette.fg_default;
+
+	const muted = palette.bg_muted;
+	const mutedForeground = palette.fg_muted;
+
+	const accent = palette.fg_accent;
+	const accentForeground = palette.fg_onEmphasis;
+	const accentHover = palette.fg_accent_hover;
+
+	const destructive = palette.bg_danger;
+	const destructiveForeground = palette.fg_onEmphasis;
+
+	const success = palette.bg_success;
+	const successForeground = palette.fg_onEmphasis;
+
+	// Shadows (official Primer shadow tokens)
+	const shadows = primerShadows[mode];
+
+	// ===================================================================
+	// SECTION 2: DERIVED TOKENS (Unofficial - For Consistency)
+	// ===================================================================
+	// These tokens don't exist in official Primer but are derived to provide
+	// consistent vocabulary across all themes. Clearly marked as derived.
+
+	// Layer-03: Primer doesn't provide a third layer - shadows handle elevation
+	// Derivation: Same as layer-02 (shadows differentiate, not color)
+	const layer03 = deriveLayer03(layer01, layer02, true); // true = shadow-based theme
+
+	// Border hierarchy: Primer has single border token + emphasis
+	// Derivation: Generate per-layer borders for consistency with Carbon pattern
+	const borderHierarchy = deriveBorderHierarchy(palette.border_default, mode);
+	const borderSubtle00 = borderHierarchy.subtle00; // = border_default
+	const borderSubtle02 = borderHierarchy.subtle02; // Slightly darker/lighter for layer-02
+	const borderStrong02 = borderHierarchy.strong02; // More contrast for layer-02
+	const borderStrong03 = borderHierarchy.strong03; // Most contrast for layer-03
+
+	// Interaction states: Derive hover/selected/active per layer
+	// Primer doesn't provide these systematically - we derive from layer colors
+	const layer01States = deriveInteractionStates(layer01, mode);
+	const layer02States = deriveInteractionStates(layer02, mode);
+
+	// Input border: Use standard border
+	const input = palette.border_default;
+
+	// Focus ring: Use accent color for consistency
+	const ring = palette.fg_accent;
+
+	// Warning colors: Derived from Primer's attention scale (yellow-based)
+	// Note: These were in palette previously, now derived in adapter
+	const warning = mode === "light" ? "#d4a72c" : "#bb8009";
+	const warningForeground = mode === "light" ? "#744500" : "#e3b341";
+	const onWarning = "#ffffff";
+
+	// Info colors: Derived from Primer's accent blue
+	const info = palette.fg_accent;
+	const infoForeground = palette.fg_accent;
+	const onInfo = palette.fg_onEmphasis;
+
+	// On-status colors for solid backgrounds
+	const onSuccess = palette.fg_onEmphasis;
+	const onDestructive = palette.fg_onEmphasis;
+
+	// ===================================================================
+	// SECTION 3: CINEXPLORER EXTENSIONS (App-Specific)
+	// ===================================================================
+	// Apply centralized CineXplorer extensions adapted to Primer's aesthetic
+
+	const extensions = createExtensions(
+		{
+			muted: palette.bg_muted,
+			mutedForeground: palette.fg_muted,
+			accentEmphasis: palette.bg_emphasis,
+			secondaryHover: palette.bg_button_secondary_hover,
+		},
+		mode,
 	);
+
+	// ===================================================================
+	// UNIFIED THEME ASSEMBLY
+	// ===================================================================
+
+	return {
+		// Core structure
+		background,
+		foreground,
+		"layer-01": layer01,
+		"layer-02": layer02,
+		"layer-03": layer03,
+		popover,
+		"popover-foreground": popoverForeground,
+
+		// Border hierarchy
+		"border-subtle-00": borderSubtle00,
+		"border-subtle-02": borderSubtle02,
+		"border-strong-01": borderStrong01,
+		"border-strong-02": borderStrong02,
+		"border-strong-03": borderStrong03,
+
+		// Shadows (official Primer)
+		"shadow-sm": shadows.sm,
+		"shadow-md": shadows.md,
+		"shadow-lg": shadows.lg,
+
+		// Interaction states (derived)
+		"layer-hover-01": layer01States.hover,
+		"layer-hover-02": layer02States.hover,
+		"layer-selected-01": layer01States.selected,
+		"layer-selected-02": layer02States.selected,
+		"layer-active-01": layer01States.active,
+		"layer-active-02": layer02States.active,
+
+		// Semantic colors (official Primer)
+		primary,
+		"primary-foreground": primaryForeground,
+		secondary,
+		"secondary-foreground": secondaryForeground,
+		muted,
+		"muted-foreground": mutedForeground,
+		accent,
+		"accent-foreground": accentForeground,
+		"accent-hover": accentHover,
+		destructive,
+		"destructive-foreground": destructiveForeground,
+		success,
+		"success-foreground": successForeground,
+		warning,
+		"warning-foreground": warningForeground,
+		info,
+		"info-foreground": infoForeground,
+
+		// On-status colors
+		"on-success": onSuccess,
+		"on-warning": onWarning,
+		"on-destructive": onDestructive,
+		"on-info": onInfo,
+
+		// CineXplorer extensions
+		rating: extensions.rating,
+		"rating-foreground": extensions["rating-foreground"],
+		badge: extensions.badge,
+		"badge-foreground": extensions["badge-foreground"],
+		"drag-active": extensions["drag-active"],
+		"drop-zone": extensions["drop-zone"],
+
+		// UI elements
+		border,
+		input,
+		ring,
+	};
 }

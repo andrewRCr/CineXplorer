@@ -1,11 +1,15 @@
 /**
  * GitHub Primer Color Palette
  *
- * Official GitHub Primer design system colors for light and dark modes.
- * Source: https://primer.style/product/primitives/color/
+ * Contains ONLY official GitHub Primer design system tokens for light and dark modes.
+ * All CineXplorer-specific extensions (warning, info, rating) have been extracted to
+ * the adapter layer (frontend/src/theme/adapter/extensions.ts).
  *
- * All values verified from official Primer primitives documentation (2025-11-02).
- * See research: .arc/active/incidental/notes-theme-system-modernization.md
+ * Source: https://primer.style/product/primitives/color/
+ * Package: @primer/primitives v8.x
+ *
+ * All values verified from official Primer primitives documentation.
+ * Last updated: 2025-11-04 (Task 2.1.1 - palette corrections)
  */
 
 /**
@@ -53,34 +57,13 @@ export const githubPaletteLight = {
 	/** Danger button hover */
 	bg_danger_hover: "#ca1e29",
 
-	// ===================================================================
-	// EXTENDED COLORS (Adapted for CineXplorer - Not Official Primer)
-	// ===================================================================
-	// The colors below are CineXplorer adaptations to fill semantic token
-	// requirements. They follow Primer's design principles but are not
-	// official Primer colors. Based on Primer's color scales and patterns.
-
-	// Semantic colors - Warning (Attention/caution)
-	/** Warning/attention background (ADAPTED - based on Primer yellow scale) */
-	bg_attention: "#d4a72c",
-	/** Warning text on light background (ADAPTED - based on Primer yellow-9) */
-	fg_attention: "#744500",
-
-	// Semantic colors - Info (Informational)
-	/** Info/informational background (ADAPTED - uses Primer blue-60) */
-	bg_info: "#0969da",
-	/** Info text (ADAPTED - uses Primer blue-60) */
-	fg_info: "#0969da",
-
-	// Movie-specific - Rating
-	/** Rating display (ADAPTED - IMDb gold adapted to Primer's aesthetic) */
-	fg_rating: "#bf8700",
-
 	// Border colors
 	/** Primary borders, dividers */
 	border_default: "#d1d9e0",
 	/** Subtle borders (translucent) */
 	border_muted: "#d1d9e0b3",
+	/** Strong borders, emphasis (borderColor-emphasis - official Primer) */
+	border_emphasis: "#818b98",
 
 	// Button colors
 	/** Secondary button background */
@@ -101,7 +84,13 @@ export const githubPaletteDark = {
 	bg_default: "#0d1117",
 	/** Secondary surfaces, subtle emphasis */
 	bg_muted: "#161b22",
-	/** Card/elevated surface backgrounds (darker than default) */
+	/**
+	 * Card/elevated surface backgrounds (darker than default)
+	 * Decision: Using official bgColor-inset (#010409) instead of bgColor-muted (#151b23).
+	 * Rationale: Primer's bgColor-inset is semantically correct for recessed/inset surfaces
+	 * (darker than default in dark mode). bgColor-muted (#151b23) would be too light and
+	 * violate Primer's inset surface principle. Verified from @primer/primitives v8.x.
+	 */
 	bg_inset: "#010409",
 	/** Strong emphasis backgrounds (accent) */
 	bg_emphasis: "#0969da",
@@ -134,34 +123,13 @@ export const githubPaletteDark = {
 	/** Danger button hover */
 	bg_danger_hover: "#e5534b",
 
-	// ===================================================================
-	// EXTENDED COLORS (Adapted for CineXplorer - Not Official Primer)
-	// ===================================================================
-	// The colors below are CineXplorer adaptations to fill semantic token
-	// requirements. They follow Primer's design principles but are not
-	// official Primer colors. Based on Primer's color scales and patterns.
-
-	// Semantic colors - Warning (Attention/caution)
-	/** Warning/attention background (ADAPTED - based on Primer yellow scale) */
-	bg_attention: "#bb8009",
-	/** Warning text on dark background (ADAPTED - based on Primer yellow-3) */
-	fg_attention: "#e3b341",
-
-	// Semantic colors - Info (Informational)
-	/** Info/informational background (ADAPTED - uses Primer blue-60) */
-	bg_info: "#0969da",
-	/** Info text (ADAPTED - uses Primer blue-40 for dark bg) */
-	fg_info: "#58a6ff",
-
-	// Movie-specific - Rating
-	/** Rating display (ADAPTED - IMDb gold #ffc107 for dark mode contrast) */
-	fg_rating: "#ffc107",
-
 	// Border colors
 	/** Primary borders, dividers */
 	border_default: "#30363d",
 	/** Subtle borders (translucent) */
 	border_muted: "#30363d66",
+	/** Strong borders, emphasis (borderColor-emphasis - official Primer) */
+	border_emphasis: "#656c76",
 
 	// Button colors
 	/** Secondary button background */

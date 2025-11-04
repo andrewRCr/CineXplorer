@@ -47,19 +47,19 @@ export const githubTheme: Theme = {
 		// Status colors - Success
 		success: pLight.bg_success,
 		"success-foreground": pLight.fg_onEmphasis,
-		// Status colors - Warning
-		warning: pLight.bg_attention,
-		"warning-foreground": pLight.fg_attention,
-		// Status colors - Info
-		info: pLight.bg_info,
+		// Status colors - Warning (TEMP: hardcoded after palette extraction)
+		warning: "#d4a72c",
+		"warning-foreground": "#744500",
+		// Status colors - Info (TEMP: hardcoded after palette extraction)
+		info: "#0969da",
 		"info-foreground": pLight.fg_onEmphasis,
 		// Solid status background text colors
 		"on-success": pLight.fg_onEmphasis, // White on green
 		"on-warning": pLight.fg_onEmphasis, // White on yellow
 		"on-destructive": pLight.fg_onEmphasis,
 		"on-info": pLight.fg_onEmphasis, // White on red
-		// Rating colors
-		rating: pLight.fg_rating,
+		// Rating colors (TEMP: hardcoded after palette extraction)
+		rating: "#bf8700",
 		"rating-foreground": pLight.fg_onEmphasis,
 		// Surface elevation
 		"surface-elevated": pLight.bg_emphasis,
@@ -94,15 +94,15 @@ export const githubTheme: Theme = {
 		"destructive-foreground": pDark.fg_onEmphasis,
 		success: pDark.bg_success,
 		"success-foreground": pDark.fg_onEmphasis,
-		warning: pDark.bg_attention,
-		"warning-foreground": pDark.fg_attention,
-		info: pDark.bg_info,
+		warning: "#bb8009", // TEMP: hardcoded after palette extraction
+		"warning-foreground": "#e3b341", // TEMP: hardcoded after palette extraction
+		info: "#0969da", // TEMP: hardcoded after palette extraction
 		"info-foreground": pDark.fg_onEmphasis,
 		"on-success": pDark.fg_default, // White text on dark green
 		"on-warning": pDark.fg_default, // White text on dark yellow
 		"on-destructive": pDark.fg_default, // White text on dark red
 		"on-info": pDark.fg_default, // White text on dark blue
-		rating: pDark.fg_rating,
+		rating: "#ffc107", // TEMP: hardcoded after palette extraction
 		"rating-foreground": pDark.fg_onEmphasis,
 		"surface-elevated": pDark.bg_muted,
 		badge: pDark.bg_button_secondary,

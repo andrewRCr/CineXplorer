@@ -38,14 +38,14 @@ export type { UnifiedTheme } from "./types";
 import type { UnifiedTheme } from "./types";
 
 // Adapter function exports (Phase 2)
-export { createGithubAdapter } from "./github";
-export { createCarbonAdapter } from "./carbon";
-export { createPajamasAdapter } from "./pajamas";
+export { createGithubAdapter } from "./mappings/github-primer";
+export { createCarbonAdapter } from "./mappings/ibm-carbon";
+export { createPajamasAdapter } from "./mappings/gitlab-pajamas";
 
 // Import for use within this module
-import { createGithubAdapter } from "./github";
-import { createCarbonAdapter } from "./carbon";
-import { createPajamasAdapter } from "./pajamas";
+import { createGithubAdapter } from "./mappings/github-primer";
+import { createCarbonAdapter } from "./mappings/ibm-carbon";
+import { createPajamasAdapter } from "./mappings/gitlab-pajamas";
 
 // Utility exports (for adapter implementations)
 export {

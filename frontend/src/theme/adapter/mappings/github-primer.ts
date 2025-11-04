@@ -22,18 +22,18 @@
  * Related: ADR-005 (Unified Theme Adapter Layer)
  */
 
-import type { UnifiedTheme } from "./types";
+import type { UnifiedTheme } from "../types";
 import {
 	githubPaletteLight,
 	githubPaletteDark,
-} from "../palettes/github";
-import { primerShadows } from "./shadows";
-import { createExtensions } from "./extensions";
+} from "../../palettes/github-primer";
+import { primerShadows } from "../shadows";
+import { createExtensions } from "../extensions";
 import {
 	deriveBorderHierarchy,
 	deriveInteractionStates,
 	deriveLayer03,
-} from "./utils";
+} from "../utils";
 
 /**
  * GitHub Primer palette type (light or dark mode).

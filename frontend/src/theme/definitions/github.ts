@@ -7,7 +7,7 @@
  * Research: .arc/active/incidental/notes-theme-system-modernization.md
  */
 
-import { githubPaletteLight as pLight, githubPaletteDark as pDark } from "../palettes/github";
+import { githubPaletteLight as pLight, githubPaletteDark as pDark } from "../palettes/github-primer";
 import type { Theme } from "../types";
 
 /**

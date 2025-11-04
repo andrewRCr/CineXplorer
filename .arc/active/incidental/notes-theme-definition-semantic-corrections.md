@@ -1000,3 +1000,838 @@ Before deleting old system:
 
 **Document Status:** Phase 1 complete (research + architecture), ready for Phase 2 implementation
 **Last Updated:** 2025-11-04
+
+---
+
+## Component Token Usage Audit (Task 1.3.1)
+
+**Audit Date:** 2025-11-04
+**Purpose:** Document current semantic token usage across all migrated components to inform Phase 3 component migration planning.
+
+### Audit Methodology
+
+**Source:** Analyzed completed migration work documented in `.arc/active/incidental/tasks-theme-system-modernization.md`
+(Phases 4.1-4.4, paused at Task 4.4.5).
+
+**Scope:** All components migrated during theme system modernization (Phases 4.1-4.4 complete).
+
+**Token Usage Analysis:** Extracted from migration completion notes documenting specific token conversions per component.
+
+### Component Inventory: Already Migrated (34 Components Total)
+
+#### Phase 4.1: Layout Components (11 components)
+
+**1. NavBar.tsx** - 7 token conversions
+
+- `foreground` - main text
+- `accent` - active tab, hover states (8% opacity)
+- `accent-foreground` - active tab text
+- `card` - elevated navbar background (2 instances)
+- `border` - separators
+
+**2. NavBarSearch.tsx** - 5 token conversions
+
+- `border` - input border
+- `accent/8` - hover state (Material Design 3 pattern)
+- `ring`, `ring/50` - focus states (accessibility-compliant)
+- `muted-foreground`, `foreground` - text colors
+
+**3. NavBarUserMenu.tsx** - 20+ instances
+
+- `popover` - dropdown overlay background (correct semantics)
+- `popover-foreground` - dropdown text
+- `accent/8` - menu item hover
+- `accent/12` - menu item active/pressed
+- `accent` - links
+- `border` - dropdown border
+
+**4. Sidebar.tsx** - 1 token conversion
+
+- `card` - sidebar background
+
+**5. SidebarContent.tsx** - 7 token conversions
+
+- `card-foreground` - list item text
+- `accent/8` - hover states
+- `accent/12` - selected state
+- `accent-foreground` - selected text
+- `border` - separators
+- `muted-foreground` - section headers
+
+**6. sidebarOverlay.tsx** - 6 token conversions
+
+- `card` - sidebar background
+- `card-foreground` - text
+- `border` - borders, separators (2 instances)
+- `accent` - links
+
+**7. MobileMenuButton.tsx** - 4 token conversions
+
+- `foreground` - icon color
+- `border` - button border
+- `accent/8` - hover state
+
+**8. LoadingContent.tsx** - 4 token conversions
+
+- `surface-elevated` - loading card background
+- `foreground` - text
+- `accent` - spinner color
+- `background` - page background
+
+**9. LoadingLayout.tsx** - No semantic tokens (brand exception: GitHub logo `color="black"` documented)
+
+**10. Footer.tsx** - 3 token conversions
+
+- `card` - footer background
+- `border` - separator
+- `muted-foreground` - secondary text (2 instances)
+
+**11. BaseLayout.tsx** (Task 4.2.1) - 1 token conversion
+
+- `background` - page background
+
+#### Phase 4.2: Authentication Pages (3 components)
+
+**12. Login.tsx** - 15+ conversions
+
+- `card` - form container background (elevated surface - critical semantic fix)
+- `card-foreground` - form text
+- `input` - input borders (3 instances)
+- `muted` - input hover states (4 instances)
+- `accent/5` - input hover (Material Design 3)
+- `destructive-foreground` - error text
+- `muted-foreground` - labels, help text
+- `primary`, `primary-foreground` - primary CTA button
+- `accent`, `accent-foreground` - resend button
+- `accent`, `accent-hover` - links with underline pattern
+- `ring` - focus states (OAuth buttons, inputs)
+- `border` - button borders, input borders
+
+**13. Register.tsx** - Similar to Login.tsx
+
+- `card`, `card-foreground` - form container
+- `input` - input borders
+- `accent/5` - input hover (consistent with Login)
+- `muted-foreground` - labels
+- `primary`, `primary-foreground` - submit button
+- `accent`, `accent-hover` - link with underline
+- `ring` - focus states
+- `border` - borders
+
+**14. VerifyEmail.tsx** - 15+ conversions
+
+- `accent` - spinner
+- `success`, `success-foreground` - success alerts
+- `destructive`, `destructive-foreground` - error alerts
+- `muted` - button hover states
+- All buttons use semantic tokens (removed `colorScheme` props)
+
+#### Phase 4.3: Movie Components (8 components)
+
+**15. Featured.tsx** (page) - 5 token conversions
+
+- `muted-foreground` - subtitle text
+- `accent`, `accent-foreground` - primary action button
+- `border` - outline button borders (2 buttons, 1px width enforced)
+- `card` - elevated card surface
+
+**16. MovieDetail.tsx** (page) - 10+ conversions
+
+- `border` - back button border
+- `destructive-foreground` - error text
+- `muted-foreground` - release date, runtime text (2 instances)
+- `badge`, `badge-foreground` - genre tags
+- `primary`, `primary-foreground` - Mark as Watched, Rate Movie buttons
+- `secondary`, `secondary-foreground` - Watchlist toggle (conditional)
+- All buttons use semantic tokens (removed `colorScheme` props)
+
+**17. MovieCard.tsx** - Token conversions documented
+
+- Uses semantic tokens for card surfaces, text, borders
+- Specific conversions not detailed in paused task list
+
+**18. MovieCardContainer.tsx** - 1 token conversion
+
+- `border` - border color (consolidated from `border.separator`)
+- 1px border width enforced via `border="1px solid"`
+
+**19. MovieUserScore.tsx** - Major refactoring with threshold mappings
+
+- **TMDB scores:**
+    - High (≥7.5): `success`, `on-success` (green)
+    - Medium (5.0-7.4): `info`, `on-info` (blue)
+    - Low (<5.0): `warning`, `on-warning` (yellow)
+- **User ratings (future feature):**
+    - High (≥8): `success`, `on-success`
+    - Medium (5-7): `warning`, `on-warning`
+    - Low (<5): `destructive`, `on-destructive`
+- `card` - explicit card background
+- `border` - 1px border enforced on outline buttons
+- Eliminated all Chakra raw `colorPalette` props
+
+**20. MovieCollectionGrid.tsx** - 6 conversions + consistency fix
+
+- `destructive-foreground` - error messages
+- `muted-foreground` - results count, empty state text (3 instances)
+- `muted` - skeleton loading background
+- `border` - pagination separators (top + bottom, 1px solid)
+
+**21. MovieGrid.tsx** - 5 conversions + consistency fix
+
+- `destructive-foreground` - error messages
+- `muted-foreground` - results count, empty state text (3 instances)
+- `border` - pagination separators (top + bottom, 1px solid)
+
+**22. PageHeader.tsx** - 2 conversions + bug fix
+
+- `foreground` - title text
+- `accent` - animated underline (was invisible due to non-existent `accent.secondary`)
+- Animation now visible and functional across all themes
+
+#### Phase 4.4: Additional Components (12 components)
+
+**23. PaginationCtrl.tsx** (Task 4.4.1) - 4 token conversions
+
+- `foreground` - navigation buttons, page numbers
+- `muted-foreground` - ellipsis
+- `border` - button borders
+- `accent` - active page border and text color
+- `muted` - active page background (subtle selection)
+- Semibold font weight for active page
+
+**24. TypographyTest.tsx** (page, Task 4.4.2) - 41 instances
+
+- `muted-foreground` - all labels and descriptions (replaced `text.muted`)
+- Showcase/test page for font families and weights
+
+**25-29. AdvancedMovieFilters System** (Task 4.4.3) - 5 components
+Parent: **AdvancedMovieFilters.tsx**
+
+- `foreground` - labels, headings
+- `border` - input borders, separators
+- `muted` - panel background, hover states
+- `accent` - hover state on collapse button
+
+Children: **GenreSelector, YearSelector, RatingSelector, SortSelector**
+
+- `foreground` - labels
+- `muted-foreground` - helper text, route labels
+- `border` - input borders, dropdown separators
+- `accent` - hover states, active dropdown items
+- `background` - input backgrounds
+- `muted` - dropdown items, selected states
+- `destructive` - validation errors (Year/Rating selectors)
+
+**30-34. LetterboxdStyleFilters System** (Task 4.4.4) - 5 components
+Parent: **LetterboxdStyleFilters.tsx** - 2 token conversions
+
+- Token conversions present but not detailed
+
+Children:
+
+- **ConnectedDropdowns.tsx** - 9 token conversions (2 Select dropdowns + button)
+- **CollapsibleSearchBox.tsx** - 7 token conversions (input + 2 buttons)
+- **SortDropdownMinimal.tsx** - 6 token conversions (label + Select dropdown)
+- **ClearFiltersButton.tsx** - No old tokens (uses Chakra colorScheme prop)
+
+**Common token mappings across LetterboxdStyleFilters system:**
+
+- `background` - main surface backgrounds
+- `muted` - hover states, dropdown backgrounds
+- `border` - all borders and separators
+- `foreground` - primary text, enabled states
+- `muted-foreground` - labels, disabled states, helper text
+- `accent` - hover states on dropdown items
+
+### NOT Yet Migrated
+
+**35. Watchlist.tsx** (Task 4.4.5) - Blocked by theme definition bugs
+
+- `red.500` → `destructive-foreground` (error text, line 61) - documented but not converted
+- Minimal implementation page
+
+**36. ErrorBoundary.tsx** (Phase 4.5) - Scheduled for end of phase
+
+- 15+ hardcoded color instances across multiple categories:
+    - Error states: `red.600`, `red.700`, `red.800`, `red.50`, `red.200`
+    - Neutral/muted: `gray.50` through `gray.800` (8 shades)
+    - Informational: `blue.50`, `blue.100`, `blue.500`, `blue.700`
+- 60% of all hardcoded colors in codebase
+- Complex component requiring careful semantic token mapping
+
+### Token Usage Summary by Category
+
+#### Most Frequently Used Tokens (Across All 34 Components)
+
+**Surface Tokens:**
+
+- `card` - 11+ components (elevated surfaces: navbar, footer, sidebar, form containers, loading states)
+- `background` - 5+ components (page backgrounds, input backgrounds)
+- `popover` - 1 component (NavBarUserMenu dropdown - correct overlay semantics)
+- `surface-elevated` - 1 component (LoadingContent - third elevation level)
+
+**Text Tokens:**
+
+- `foreground` - 15+ components (primary text, default text color)
+- `muted-foreground` - 20+ components (labels, helper text, secondary text, timestamps)
+- `card-foreground` - 4 components (text on card backgrounds)
+- `popover-foreground` - 1 component (text on popover backgrounds)
+
+**Interactive Tokens:**
+
+- `accent` - 20+ components (hover states, active tabs, links, spinners, highlights)
+- `accent-foreground` - 5+ components (active tab text, button text on accent backgrounds)
+- `accent-hover` - 2 components (link hover states - new token from auth pages)
+- `primary`, `primary-foreground` - 5+ components (primary action buttons: submit, CTA)
+- `secondary`, `secondary-foreground` - 2 components (Watchlist toggle, secondary actions)
+- `muted` - 15+ components (disabled states, subtle backgrounds, skeleton loading, dropdown items)
+
+**Border/Input Tokens:**
+
+- `border` - 25+ components (universal: separators, button borders, input borders, card outlines)
+- `input` - 3 components (Login, Register, VerifyEmail input field borders)
+- `ring` - 5+ components (focus indicators: inputs, checkboxes, OAuth buttons - WCAG compliance)
+
+**Status Tokens:**
+
+- `success`, `success-foreground` - 2 components (VerifyEmail alerts, MovieUserScore high ratings)
+- `warning`, `warning-foreground` - 1 component (MovieUserScore low ratings)
+- `destructive`, `destructive-foreground` - 8+ components (error messages, delete actions, validation errors)
+- `info`, `info-foreground` - 1 component (MovieUserScore medium ratings)
+
+**Movie-Specific Tokens:**
+
+- `badge`, `badge-foreground` - 2 components (MovieDetail genre tags)
+- `on-success`, `on-warning`, `on-destructive`, `on-info` - 1 component (MovieUserScore solid badge text)
+    - **Note:** `on-*` tokens created during MovieUserScore refactoring for contrast on solid colored backgrounds
+
+**Interaction State Patterns:**
+
+- `accent/8` - 10+ components (8% opacity hover states - Material Design 3 pattern)
+- `accent/12` - 3 components (12% opacity active/pressed states)
+- `accent/5` - 2 components (5% input hover - auth pages only)
+- `ring/50` - 1 component (50% opacity focus ring - NavBarSearch)
+- `muted/70` - 1 component (70% opacity hover - PaginationCtrl)
+
+### Token Usage Patterns Identified
+
+#### Pattern 1: Elevated Surface Hierarchy
+
+```typescript
+background (page) → card (elevated) → surface-elevated (nested) → popover (overlay)
+```
+
+- **Usage:** 11 components use `card` for first-level elevation
+- **Usage:** 1 component uses `surface-elevated` for nested elevation
+- **Usage:** 1 component uses `popover` for dropdown overlays
+
+#### Pattern 2: Text Contrast Pairing
+
+```typescript
+background + foreground
+card + card-foreground
+popover + popover-foreground
+accent + accent-foreground
+```
+
+- **Compliance:** All migrated components follow token pairing convention
+- **Critical Fix:** Login/Register forms corrected from `background` to `card` (semantic surface type)
+
+#### Pattern 3: Material Design 3 State Layers
+
+```typescript
+hover: accent/8 (8% opacity)
+focus: accent/12 (12% opacity)
+pressed: accent/12 (12% opacity)
+```
+
+- **Usage:** 13+ components use this pattern
+- **Rationale:** Maintains contrast ratios, consistent across all tokens
+
+#### Pattern 4: Border System Universal Standard
+
+```typescript
+borderWidth="1px" + borderColor="border"
+```
+
+- **Usage:** 20+ components enforce explicit 1px borders
+- **Compliance:** Follows `.arc/reference/strategies/project/style/strategy-border-system.md`
+- **Exception:** Checkboxes/radios use 2px (differentiation from text inputs)
+
+#### Pattern 5: Focus Ring Accessibility
+
+```typescript
+_focus={{ outline: "2px solid", outlineColor: "ring", outlineOffset: "2px" }}
+```
+
+- **Usage:** 5+ components (inputs, checkboxes, OAuth buttons)
+- **Compliance:** WCAG 2.4.13 (2px minimum thickness, 3:1 contrast)
+- **Rationale:** Keyboard navigation accessibility
+
+#### Pattern 6: Semantic Error States
+
+```typescript
+destructive-foreground (error text)
+destructive/10 (error background, 10% opacity)
+destructive (error border)
+```
+
+- **Usage:** 8+ components for error messages and validation
+- **Consistency:** Replaces hardcoded `red.*` colors across all components
+
+#### Pattern 7: Link Interaction (Accessibility Pattern)
+
+```typescript
+textDecoration="underline"
+color="accent"
+_hover={{ color: "accent-hover" }}
+_focus={{ outline: "2px solid", outlineColor: "ring" }}
+```
+
+- **Usage:** 2 components (Login, Register links)
+- **Rationale:** WCAG compliance (color alone insufficient), Nielsen Norman Group best practices
+- **Research:** External-research-analyst findings (IBM Carbon, GitHub Primer, Material Design 3)
+
+### Components Verified as NOT Needing Migration
+
+Per `.arc/active/incidental/tasks-theme-system-modernization.md` Task 4.4 notes:
+
+- **NowPlaying, Popular, TopRated, Upcoming, SearchResults** - Thin wrappers around MovieCollectionGrid (already converted)
+- **Profile, Settings, PersonDetail, UserProfile** - Placeholder stubs with no styling
+
+### Key Findings for Phase 3 Planning
+
+1. **Current token coverage is comprehensive** - 34 components successfully using current 33-token system
+2. **No missing tokens identified** - All components found appropriate tokens for their use cases
+3. **Token pairing discipline** - All components follow background + foreground pairing convention
+4. **Border system adoption** - 20+ components enforce 1px universal standard with explicit props
+5. **Material Design 3 pattern adoption** - 13+ components use opacity-based state layers
+6. **Focus accessibility** - 5+ components implement WCAG-compliant focus rings
+
+### Enhancement Opportunities (For Task 1.3.2 Analysis)
+
+**Potential candidates for new unified vocabulary tokens:**
+
+1. **Border hierarchy** - Components using `border` token universally
+   - **Opportunity:** `border-strong-02` for elevated surfaces (modals, panels on layer-02)
+   - **Candidates:** AdvancedMovieFilters panel, overlay modals, elevated form containers
+
+2. **Interaction states** - Components manually handling hover/active states
+   - **Opportunity:** `layer-hover-01`, `layer-selected-01`, `layer-active-01` per layer
+   - **Candidates:** Sidebar list items, pagination buttons, filter dropdowns, menu items
+
+3. **Layer-03 elevation** - No components currently using highest elevation
+   - **Opportunity:** `layer-03` for dropdowns over modals
+   - **Candidates:** Dropdown menus appearing over modal dialogs (future use case)
+
+4. **Shadow system** - No components currently using shadow tokens
+   - **Opportunity:** `shadow-sm/md/lg` to replace elevation via color change
+   - **Candidates:** MovieCard hover states, modal dialogs, elevated panels
+   - **Note:** Primer/Pajamas official tokens, Carbon minimal shadows
+
+**Token migration targets:**
+
+- `card` → `layer-01` (11 components)
+- `surface-elevated` → `layer-02` (1 component)
+- `popover` → keep as semantic alias or map to `layer-03`
+
+---
+
+**Audit Status:** Complete ✅
+**Components Documented:** 34 migrated + 2 pending
+**Token Usage Patterns:** 7 major patterns identified
+**Enhancement Opportunities:** 4 categories identified for Task 1.3.2 analysis
+
+---
+
+## Component Enhancement Opportunities Analysis (Task 1.3.2)
+
+**Analysis Date:** 2025-11-04
+**Purpose:** Identify specific components that would benefit from new unified vocabulary tokens (border hierarchy,
+interaction states, layer-03, shadows).
+
+### Methodology
+
+**Approach:** Review each of the 34 migrated components against the 4 enhancement categories to identify optional
+improvements that would leverage the richer unified vocabulary from the adapter layer.
+
+**Criteria:**
+
+- **Enhancement is optional** - Component works correctly with current tokens
+- **Enhancement adds value** - Improved semantics, reduced manual color manipulation, or better cross-theme consistency
+- **Enhancement is practical** - Reasonable effort to implement, clear benefit
+
+**Note:** These are enhancement opportunities, NOT migration requirements. Components will function correctly with current
+token mappings (`card`, `surface-elevated`, `border`). Enhanced tokens provide richer vocabulary for optional improvements.
+
+---
+
+### Category 1: Border Hierarchy Enhancements
+
+**Unified Vocabulary Available:**
+
+- `border-subtle-00` - Subtle borders on background/layer-01 surfaces
+- `border-subtle-02` - Subtle borders on layer-02 surfaces (maintains visibility across elevation)
+- `border-strong-01`, `border-strong-02`, `border-strong-03` - Accessible borders per layer
+
+**Problem Solved:** Current `border` token is universal but doesn't adapt to elevation level. Carbon Design System provides
+per-layer borders to maintain visibility - a universal border on layer-02 may be invisible due to insufficient contrast.
+
+#### High-Priority Candidates (Clear Benefit)
+
+**AdvancedMovieFilters.tsx** - Filter panel on elevated surface
+
+- **Current:** `bg="muted"` (subtle background) + `borderColor="border"` (universal)
+- **Enhancement:** `borderColor="border-strong-02"` if panel uses `layer-02` background
+- **Benefit:** Ensures border visibility across all themes on elevated panel
+- **Component location:** Lines 110-114 (panel border), line 92 (button border)
+- **Estimated effort:** 5 minutes (change borderColor prop)
+
+**Login.tsx, Register.tsx** - Form containers on elevated surface
+
+- **Current:** `bg="card"` (layer-01) + `borderColor="border"` on inputs
+- **Enhancement:** No change needed - using layer-01, current `border` is correct
+- **Note:** Already using correct border token for elevation level
+
+**NavBarUserMenu.tsx** - Dropdown menu (overlay)
+
+- **Current:** `bg="popover"` + `borderColor="border"` (line ~41 in migration notes)
+- **Enhancement:** Consider `borderColor="border-strong-01"` for popover outline
+- **Benefit:** Ensures dropdown border distinct from page content
+- **Estimated effort:** 5 minutes
+
+#### Medium-Priority Candidates (Marginal Benefit)
+
+**MovieDetail.tsx** - Card containers for movie info
+
+- **Current:** Likely uses `card` background + `border` for sections
+- **Enhancement:** Evaluate if any nested sections use elevated backgrounds
+- **Benefit:** Improved visual hierarchy for nested elevated content
+- **Estimated effort:** 10-15 minutes (requires component review)
+
+**MovieCard.tsx** - Movie card borders
+
+- **Current:** Uses `border` for card outlines
+- **Enhancement:** Consider `border-subtle-00` for subtle card differentiation
+- **Benefit:** Softer card outlines, relies more on shadow for elevation
+- **Estimated effort:** 5 minutes
+- **Trade-off:** May reduce card distinction in themes without shadows
+
+#### Low-Priority Candidates (Minimal Benefit)
+
+**Footer.tsx, NavBar.tsx** - Layout component borders
+
+- **Current:** `bg="card"` + `borderColor="border"` for separators
+- **Enhancement:** No change recommended - separator borders intentionally universal
+- **Rationale:** Separators should be consistent regardless of elevation
+
+---
+
+### Category 2: Interaction State Enhancements
+
+**Unified Vocabulary Available:**
+
+- `layer-hover-01`, `layer-hover-02` - Hover states per layer (derived from base layer colors)
+- `layer-selected-01`, `layer-selected-02` - Selected states per layer
+- `layer-active-01`, `layer-active-02` - Active/pressed states per layer
+
+**Problem Solved:** Current pattern uses manual opacity (`accent/8`, `accent/12`) which works but requires component
+logic. Derived interaction tokens are automatically adapted per layer for consistent appearance.
+
+#### High-Priority Candidates (Clear Benefit)
+
+**SidebarContent.tsx** - Interactive list items
+
+- **Current:** Hover `accent/8`, selected `accent/12` (lines from migration notes)
+- **Enhancement:** Hover `layer-hover-01`, selected `layer-selected-01`
+- **Benefit:** Automatic adaptation to sidebar's `card` (layer-01) background
+- **Component:** List item hover/selected states
+- **Estimated effort:** 10 minutes (replace opacity tokens with layer tokens)
+
+**PaginationCtrl.tsx** - Page number buttons
+
+- **Current:** Active page uses `bg="muted"` + `color="accent"` + `borderColor="accent"`
+- **Enhancement:** Active page uses `bg="layer-selected-01"` (consistent with sidebar pattern)
+- **Benefit:** Semantic token for "selected item on layer-01" instead of generic "muted"
+- **Component:** Active page button styling (lines 127, 257-259 in component)
+- **Estimated effort:** 10 minutes
+
+**NavBarUserMenu.tsx** - Dropdown menu items
+
+- **Current:** Hover `accent/8`, active `accent/12` on `popover` background
+- **Enhancement:** Hover `layer-hover-02` (or layer-hover-popover if popover treated as layer-02)
+- **Benefit:** Consistent with popover overlay elevation level
+- **Component:** Menu item interactive states
+- **Estimated effort:** 10 minutes
+
+**AdvancedMovieFilters - GenreSelector, dropdown items** - Interactive filter options
+
+- **Current:** Hover `accent`, selected `muted` (from migration notes)
+- **Enhancement:** Hover `layer-hover-01`, selected `layer-selected-01`
+- **Benefit:** Consistent interaction semantics across all filterable lists
+- **Component:** Genre chips, year/rating dropdown items
+- **Estimated effort:** 15 minutes (multiple child components)
+
+#### Medium-Priority Candidates (Marginal Benefit)
+
+**MobileMenuButton.tsx, NavBar active tabs** - Interactive buttons/tabs
+
+- **Current:** Hover `accent/8` on various buttons
+- **Enhancement:** Hover `layer-hover-01` (navbar uses `card`/layer-01)
+- **Benefit:** Consistency with other layer-01 interactive elements
+- **Trade-off:** Current accent overlay works well for emphasis
+- **Estimated effort:** 5-10 minutes
+
+**MovieCard hover states** - Card hover elevation
+
+- **Current:** Likely uses `accent/8` overlay or manual opacity
+- **Enhancement:** `layer-hover-01` for subtle hover state on cards
+- **Benefit:** Semantic hover token instead of manual opacity
+- **Component:** MovieCard component
+- **Estimated effort:** 10 minutes (requires component review)
+
+#### Low-Priority Candidates (Minimal Benefit)
+
+**Login/Register form inputs** - Input hover states
+
+- **Current:** `accent/5` hover on inputs (auth pages only, Task 4.2 notes)
+- **Enhancement:** Keep as-is - input hover emphasis is intentional accent overlay
+- **Rationale:** Accent overlay draws attention to active input, different from layer hover
+
+---
+
+### Category 3: Layer-03 Elevation Enhancements
+
+**Unified Vocabulary Available:**
+
+- `layer-03` - Highest elevation level (dropdowns over modals, tooltips over dialogs)
+
+**Problem Solved:** Provides explicit token for maximum elevation instead of reusing `surface-elevated` or `popover`.
+
+#### High-Priority Candidates (Clear Benefit)
+
+**None identified in current implementation** - No components currently render dropdowns over modals
+
+#### Medium-Priority Candidates (Future Use Cases)
+
+**Potential: Modal with dropdown** - If future modals include select dropdowns
+
+- **Current pattern:** Modal uses `surface-elevated` (layer-02), dropdown uses `popover`
+- **Enhancement:** Modal uses `layer-02`, dropdown uses `layer-03`
+- **Benefit:** Explicit semantic hierarchy (page → card → modal → dropdown)
+- **Component:** Not yet implemented
+- **Estimated effort:** N/A (future consideration)
+
+**Potential: Tooltip over modal** - If tooltips added to modal content
+
+- **Current pattern:** Likely would use `popover` token
+- **Enhancement:** Tooltip uses `layer-03` for maximum elevation
+- **Benefit:** Clear semantic intent for "above everything" overlays
+- **Component:** Not yet implemented
+- **Estimated effort:** N/A (future consideration)
+
+#### Low-Priority Candidates (Minimal Benefit)
+
+**NavBarUserMenu dropdown** - Currently uses `popover`
+
+- **Current:** `bg="popover"` (correct for dropdown overlay)
+- **Enhancement:** Consider mapping `popover` → `layer-03` in adapter
+- **Benefit:** Semantic mapping of overlay to highest elevation
+- **Trade-off:** `popover` semantic alias may be clearer than numeric layer
+- **Estimated effort:** 0 (decision at adapter level, not component level)
+
+---
+
+### Category 4: Shadow System Enhancements
+
+**Unified Vocabulary Available:**
+
+- `shadow-sm` - Subtle shadows for cards (Primer/Pajamas official, Carbon minimal)
+- `shadow-md` - Medium shadows for popovers/dropdowns
+- `shadow-lg` - Large shadows for modals
+
+**Problem Solved:** Provides official shadow tokens from design systems. Currently, elevation differentiation relies
+primarily on background color changes. Shadows can supplement or replace color-based elevation.
+
+**Design System Context:**
+
+- **GitHub Primer:** Shadow-based elevation (same background, differentiate with shadow)
+- **IBM Carbon:** Layer progression (minimal shadows, layer colors are primary)
+- **GitLab Pajamas:** Hybrid (section tokens + shadows)
+
+#### High-Priority Candidates (Clear Benefit)
+
+**MovieCard.tsx** - Card elevation and hover states
+
+- **Current:** Likely uses background color change for hover
+- **Enhancement:** Add `shadow="shadow-sm"` default, `shadow="shadow-md"` on hover
+- **Benefit:** Follows Primer/Pajamas elevation pattern, adds depth without color change
+- **Component:** Movie card container
+- **Estimated effort:** 10 minutes (add shadow props)
+- **Note:** Shadows are opt-in per component, adapter provides tokens
+
+**NavBarUserMenu dropdown** - Dropdown elevation
+
+- **Current:** `bg="popover"` provides color-based elevation
+- **Enhancement:** Add `shadow="shadow-md"` to dropdown container
+- **Benefit:** Clear visual elevation above page content, especially in light mode
+- **Component:** Dropdown menu container
+- **Estimated effort:** 5 minutes
+
+**Modal dialogs (future)** - If modals added to app
+
+- **Current:** N/A (no modals in current implementation)
+- **Enhancement:** `bg="layer-02"` + `shadow="shadow-lg"`
+- **Benefit:** Maximum elevation signal for modal overlays
+- **Component:** Not yet implemented
+- **Estimated effort:** N/A (future consideration)
+
+#### Medium-Priority Candidates (Marginal Benefit)
+
+**AdvancedMovieFilters panel** - Filter panel elevation
+
+- **Current:** `bg="muted"` (subtle background)
+- **Enhancement:** Add `shadow="shadow-sm"` for subtle elevation
+- **Benefit:** Distinguishes filter panel from page content without strong background
+- **Component:** Filter panel container (line 106-174)
+- **Estimated effort:** 5 minutes
+- **Trade-off:** May be too subtle in Carbon (minimal shadow philosophy)
+
+**Login/Register form containers** - Elevated form cards
+
+- **Current:** `bg="card"` provides color-based elevation
+- **Enhancement:** Add `shadow="shadow-sm"` to form containers
+- **Benefit:** Reinforces elevation in light mode, subtle depth
+- **Component:** Form card containers
+- **Estimated effort:** 5 minutes
+- **Trade-off:** Shadows may not align with Carbon's layer-first approach
+
+#### Low-Priority Candidates (Minimal Benefit)
+
+**NavBar, Footer, Sidebar** - Layout component elevation
+
+- **Current:** `bg="card"` with `border` separators
+- **Enhancement:** Add subtle shadows to layout components
+- **Benefit:** Marginal - layout components use borders effectively
+- **Trade-off:** May add unnecessary visual complexity
+- **Estimated effort:** 5 minutes each
+- **Recommendation:** Keep current border-based approach
+
+**PaginationCtrl buttons** - Button elevation on hover
+
+- **Current:** `bg="muted"` for active page, hover uses opacity
+- **Enhancement:** Add `shadow="shadow-sm"` on hover
+- **Benefit:** Subtle depth cue for interactive elements
+- **Trade-off:** May be over-designed for simple pagination
+- **Estimated effort:** 10 minutes
+- **Recommendation:** Current approach is sufficient
+
+---
+
+### Enhancement Opportunities Summary
+
+#### By Category
+
+**Border Hierarchy (5 components):**
+
+- High-priority: AdvancedMovieFilters (panel), NavBarUserMenu (dropdown) - **2 components**
+- Medium-priority: MovieDetail, MovieCard - **2 components**
+- Low-priority: Footer, NavBar - **1 component** (no change recommended)
+
+**Interaction States (9 components):**
+
+- High-priority: SidebarContent, PaginationCtrl, NavBarUserMenu, AdvancedMovieFilters - **4 components**
+- Medium-priority: MobileMenuButton, NavBar tabs, MovieCard - **3 components**
+- Low-priority: Login/Register inputs - **2 components** (no change recommended)
+
+**Layer-03 Elevation (0 components):**
+
+- No current use cases identified
+- Future consideration: Modals with dropdowns, tooltips over dialogs
+
+**Shadow System (7 components):**
+
+- High-priority: MovieCard, NavBarUserMenu dropdown - **2 components**
+- Medium-priority: AdvancedMovieFilters, Login/Register forms - **3 components**
+- Low-priority: NavBar, Footer, Sidebar, PaginationCtrl - **4 components** (not recommended)
+
+#### By Component (Aggregate Enhancement Opportunities)
+
+**Top Enhancement Candidates (Multiple Categories):**
+
+1. **MovieCard.tsx** (3 categories)
+   - Border: `border-subtle-00` for softer outlines
+   - Interaction: `layer-hover-01` for hover state
+   - Shadow: `shadow-sm` default, `shadow-md` hover
+   - **Total estimated effort:** 25 minutes
+
+2. **NavBarUserMenu.tsx** (3 categories)
+   - Border: `border-strong-01` for popover outline
+   - Interaction: `layer-hover-02` for menu items
+   - Shadow: `shadow-md` for dropdown elevation
+   - **Total estimated effort:** 20 minutes
+
+3. **AdvancedMovieFilters.tsx** (3 categories)
+   - Border: `border-strong-02` if using layer-02 background
+   - Interaction: `layer-hover-01`, `layer-selected-01` for filter items
+   - Shadow: `shadow-sm` for panel elevation
+   - **Total estimated effort:** 25 minutes
+
+4. **SidebarContent.tsx** (1 category)
+   - Interaction: `layer-hover-01`, `layer-selected-01` for list items
+   - **Total estimated effort:** 10 minutes
+
+5. **PaginationCtrl.tsx** (1 category)
+   - Interaction: `layer-selected-01` for active page
+   - **Total estimated effort:** 10 minutes
+
+**Components with No/Minimal Enhancement Opportunities:**
+
+- Login.tsx, Register.tsx, VerifyEmail.tsx (auth pages work correctly as-is)
+- Footer.tsx, NavBar.tsx, Sidebar.tsx (layout components effective with current tokens)
+- Featured.tsx, MovieDetail.tsx, MovieGrid.tsx, MovieCollectionGrid.tsx (content pages work well)
+- TypographyTest.tsx (showcase page, not production UI)
+
+---
+
+### Recommendations for Phase 3 Planning
+
+**Tiered Approach:**
+
+**Tier 1: High-Value Enhancements (Quick Wins)**
+
+- **Target:** 5 components (MovieCard, NavBarUserMenu, AdvancedMovieFilters, SidebarContent, PaginationCtrl)
+- **Total effort:** ~90 minutes
+- **Benefit:** Demonstrates richer vocabulary, improves consistency across interactive elements
+
+**Tier 2: Optional Enhancements (Nice-to-Have)**
+
+- **Target:** 5 components (MobileMenuButton, NavBar tabs, MovieDetail nested sections, filter dropdowns)
+- **Total effort:** ~45 minutes
+- **Benefit:** Marginal consistency improvements
+
+**Tier 3: No Enhancement Recommended**
+
+- **Target:** 24 components (auth pages, layout, content pages work correctly)
+- **Rationale:** Current tokens are semantically correct and functional
+
+**Migration-Only Tasks (No Enhancements):**
+
+- All 34 components require token name migration (`card` → `layer-01`, etc.)
+- Enhancement opportunities are OPTIONAL and can be applied selectively
+
+**Phase 3 Task Breakdown Strategy:**
+
+- **Batch 1:** Simple migrations (no enhancements) - 24 components, ~5 min each = 120 minutes
+- **Batch 2:** Migrations + Tier 1 enhancements - 5 components, ~20 min each = 100 minutes
+- **Batch 3:** Migrations + Tier 2 enhancements (optional) - 5 components, ~15 min each = 75 minutes
+
+**Total Phase 3 Estimated Effort:** 220-295 minutes (3.7-4.9 hours)
+
+---
+
+**Analysis Status:** Complete ✅
+**Components Analyzed:** 34 migrated components
+**Enhancement Candidates Identified:** 14 components across 4 categories
+**High-Priority Enhancements:** 5 components (Tier 1)
+**Estimated Total Enhancement Effort:** 90 minutes (Tier 1 only)

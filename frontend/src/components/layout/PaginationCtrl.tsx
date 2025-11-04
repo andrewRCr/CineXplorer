@@ -124,7 +124,7 @@ const PaginationCtrl = (props: iPaginationCtrlProps) => {
 						<IconButton
 							key={page}
 							variant="ghost"
-							bg={isCurrentPage ? "muted" : undefined}
+							bg={isCurrentPage ? "layer-selected-01" : undefined}
 							color={isCurrentPage ? "accent" : "foreground"}
 							borderColor={isCurrentPage ? "accent" : "border"}
 							fontWeight={isCurrentPage ? "semibold" : "normal"}
@@ -254,7 +254,7 @@ const PaginationCtrl = (props: iPaginationCtrlProps) => {
 				<IconButton
 					key={page}
 					variant="ghost"
-					bg={isCurrentPage ? "muted" : undefined}
+					bg={isCurrentPage ? "layer-selected-01" : undefined}
 					color={isCurrentPage ? "accent" : "foreground"}
 					borderColor={isCurrentPage ? "accent" : "border"}
 					fontWeight={isCurrentPage ? "semibold" : "normal"}

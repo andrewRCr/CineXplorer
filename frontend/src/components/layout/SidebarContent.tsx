@@ -143,10 +143,10 @@ export const SidebarContent: React.FC<SidebarContentProps> = ({
 									py={2}
 									fontSize="sm"
 									fontWeight="normal"
-									color="card-foreground"
-									_hover={{ bg: "accent/8" }}
+									color="foreground"
+									_hover={{ bg: "layer-hover-01" }}
 									_selected={{
-										bg: "accent/12",
+										bg: "layer-selected-01",
 										color: "accent-foreground",
 										fontWeight: "medium",
 									}}
@@ -184,10 +184,10 @@ export const SidebarContent: React.FC<SidebarContentProps> = ({
 								py={2}
 								fontSize="sm"
 								fontWeight="normal"
-								color="card-foreground"
-								_hover={{ bg: "accent/8" }}
+								color="foreground"
+								_hover={{ bg: "layer-hover-01" }}
 								_selected={{
-									bg: "accent/12",
+									bg: "layer-selected-01",
 									color: "accent-foreground",
 									fontWeight: "medium",
 								}}

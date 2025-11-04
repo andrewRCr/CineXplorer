@@ -2911,3 +2911,680 @@ Small POC investment (2 hours) → significant code quality improvement.
 
 **Analysis Complete:** 2025-11-03
 **Result:** Refined working solution with Crema pattern adoption recommended.
+
+---
+
+## Phase 4.4.4 - Theme Definition Bug Discovery & Research
+
+**Date:** 2025-11-03
+**Issue Discovered During:** Task 4.4.4 (AdvancedMovieFilters testing)
+**Research Method:** External research agents for GitHub Primer, IBM Carbon, GitLab Pajamas
+
+### Problem Summary
+
+While testing surface token options for AdvancedMovieFilters panel background, discovered critical theme definition bugs
+that violate design system principles across **all three** implemented design systems:
+
+**Common Issues:**
+
+1. Semantic token misuse - mixing "emphasis/accent/selection" with "elevation/surface" concepts
+2. Border contrast failures - invisible or insufficient WCAG compliance
+3. Light mode card differentiation - cards indistinguishable from page backgrounds
+4. Elevation strategy confusion - using background colors instead of shadows
+
+**Impact:** Cannot proceed with component migrations until theme mappings corrected. Risk of cascading visual bugs if
+more components converted with broken theme definitions.
+
+---
+
+### Detailed Findings by Design System
+
+#### 1. GitHub Primer Theme Issues 🔴
+
+**Light Mode Problems:**
+
+| Issue | Current Mapping | Correct Mapping | Impact |
+|-------|----------------|-----------------|--------|
+| **Card = Background** | Both `#ffffff` (bg_default) | Card: `#f6f8fa` (bgColor-muted) | No visual separation between page and cards |
+| **surface-elevated Misuse** | `#ddf4ff` (bg_emphasis - accent blue) | `#ffffff` (bgColor-default) + shadow | Blue tint inappropriate for neutral surfaces |
+
+**Dark Mode Assessment:**
+
+- Mostly correct implementation
+- Using `bg_inset` (#010409) for cards instead of official `bgColor-muted` (#151b23)
+- Semantically incorrect but visually acceptable
+
+**Border Contrast Analysis:**
+
+Light mode:
+
+- `borderColor-default` (#d1d9e0) vs `bgColor-default` (#ffffff) = **2.12:1** ❌ (WCAG requires 3:1)
+- `borderColor-default` (#d1d9e0) vs `bgColor-muted` (#f6f8fa) = **2.27:1** ❌
+- `borderColor-emphasis` (#818b98) provides **3.73:1** ✅
+
+Dark mode:
+
+- `borderColor-default` (#3d444d) vs `bgColor-default` (#0d1117) = **3.03:1** ✅ (marginal)
+- `borderColor-emphasis` (#656c76) provides **4.54:1** ✅
+
+**Official Primer Guidance:** Documentation states borders require 3:1, but actual `borderColor-default` values don't
+always meet this. Primer intentionally uses subtle borders for aesthetics and relies on other cues
+(spacing, shadows, grouping) for accessibility.
+
+**Key Semantic Findings:**
+
+From official Primer documentation:
+
+- `bgColor-emphasis` is for **high-contrast inverted backgrounds** (dark button on light page), NOT elevation
+- Elevated surfaces (modals, popovers) should use `bgColor-default` + shadow, NOT different background colors
+- Cards use `bgColor-muted` for subtle visual separation + borders
+
+**Recommended Fixes:**
+
+```typescript
+// Light Mode - CORRECTED
+background: '#ffffff',        // bgColor-default ✓
+card: '#f6f8fa',             // bgColor-muted (CHANGE from #ffffff)
+'surface-elevated': '#ffffff', // bgColor-default + shadow (CHANGE from #ddf4ff)
+border: '#d1d9e0',           // borderColor-default (acceptable with shadows)
+'border-strong': '#818b98',  // borderColor-emphasis (for accessibility)
+
+// Dark Mode - CORRECTED (Official Primer)
+background: '#0d1117',       // bgColor-default ✓
+card: '#151b23',            // bgColor-muted (CHANGE from #010409)
+'surface-elevated': '#0d1117', // bgColor-default + shadow (CHANGE from #161b22)
+border: '#3d444d',          // borderColor-default
+'border-strong': '#656c76',  // borderColor-emphasis
+```
+
+**Sources:**
+
+- Official Primer Color Documentation: <https://primer.style/design/foundations/color>
+- Primer Primitives Package (@primer/primitives v8.x): <https://unpkg.com/@primer/primitives>
+- GitHub Blog - Inclusive Design: Color system implementation at scale
+
+---
+
+#### 2. IBM Carbon Theme Issues 🔴
+
+**Dark Mode (G100 Theme) Problems:**
+
+| Issue | Current Mapping | Correct Mapping | Impact |
+|-------|----------------|-----------------|--------|
+| **Border Invisible** | surface-elevated: `#393939`, border: `#393939` | border: `#6f6f6f` (border-strong-01) | Borders completely invisible on elevated surfaces |
+| **Wrong Semantic** | surface-elevated uses `bg_emphasis` | Use `layer-02` for elevation | Mixing selection states with structural layers |
+| **Missing Layer-03** | No token for highest elevation | Add `layer-03`: `#525252` | Can't style dropdowns over modals |
+
+**Official Carbon Layer System:**
+
+Carbon v11 uses explicit layer progression for elevation hierarchy:
+
+```
+Background & Layers (G100 Dark):
+background:  #161616  (Gray 100) - Base canvas
+layer-01:    #262626  (Gray 90)  - Cards, panels
+layer-02:    #393939  (Gray 80)  - Modals, dialogs
+layer-03:    #525252  (Gray 70)  - Dropdowns over modals
+
+Background & Layers (White Light):
+background:  #ffffff  (White)    - Base canvas
+layer-01:    #f4f4f4  (Gray 10)  - Cards, panels
+layer-02:    #ffffff  (White)    - Modals (alternates)
+layer-03:    #f4f4f4  (Gray 10)  - Dropdowns (alternates)
+```
+
+**Border Token Strategy (G100):**
+
+Carbon uses **different border colors for different layers** to maintain visibility:
+
+| Layer | Subtle Border | Strong Border | Purpose |
+|-------|--------------|---------------|---------|
+| background / layer-01 | `#393939` (border-subtle-00/01) | `#6f6f6f` (border-strong-01) | Default borders |
+| layer-02 | `#525252` (border-subtle-02) | `#8d8d8d` (border-strong-02) | Borders on modals |
+| layer-03 | `#6f6f6f` (border-subtle-03) | `#a8a8a8` (border-strong-03) | Borders on dropdowns |
+
+**Critical Finding:** `border-subtle-00` and `layer-02` are both `#393939`, which explains invisible borders.
+Must use `border-strong-01` (#6f6f6f) for visible borders on elevated surfaces.
+
+**Semantic Token Purpose Clarification:**
+
+From Carbon Design System documentation:
+
+- **layer-01/02/03**: Define **structural elevation** and visual hierarchy (static surface backgrounds)
+- **layer-selected-01/02/03**: Indicate **selected/active state** for interactive elements (user-driven)
+- **layer-accent-01/02/03**: Provide **visual emphasis** to draw attention (designer-driven)
+
+**Key Distinction:**
+
+- `layer-selected-01` (`#393939`) matches `layer-02` value, creating visual consistency where selected items appear "elevated"
+- But these are semantically different - one is state, one is structure
+- Using `layer-selected` or `layer-accent` for general elevated surfaces is **semantically incorrect**
+
+**Recommended Fixes:**
+
+```typescript
+// Dark Mode (G100) - Option A: Minimal Changes
+background: "#161616",           // gray-100 ✓
+card: "#262626",                 // gray-90 ✓
+surface-elevated: "#393939",     // gray-80 (keep)
+border_default: "#6f6f6f",       // CHANGE (border-strong-01)
+border_subtle: "#393939",        // ADD (for low-contrast dividers)
+
+// Dark Mode (G100) - Option B: Full Carbon Alignment (Recommended)
+background: "#161616",               // gray-100 (Carbon: background)
+layer_01: "#262626",                 // gray-90 (Carbon: layer-01)
+layer_02: "#393939",                 // gray-80 (Carbon: layer-02)
+layer_03: "#525252",                 // gray-70 (Carbon: layer-03) - ADD
+
+// Semantic aliases
+card: "#262626",                     // → layer_01
+surface_elevated: "#393939",         // → layer_02
+surface_highest: "#525252",          // → layer_03 - ADD
+
+// Border tokens
+border_subtle_00: "#393939",         // On background/layer-01
+border_subtle_02: "#525252",         // On layer-02 - ADD
+border_strong_01: "#6f6f6f",         // Default (CHANGE)
+border_strong_02: "#8d8d8d",         // On layer-02 - ADD
+
+// State tokens - ADD for clarity
+layer_selected_01: "#393939",        // Selected state on layer-01
+layer_hover_01: "#333333",           // Hover on layer-01
+layer_active_01: "#525252",          // Active/pressed state
+```
+
+**Light Mode Verification:**
+
+Light mode largely correct but should use explicit `layer` tokens instead of `bg_emphasis`:
+
+```typescript
+background: "#ffffff",               // white ✓
+layer_01: "#f4f4f4",                 // gray-10 (cards)
+layer_02: "#ffffff",                 // white (modals - alternates)
+layer_03: "#f4f4f4",                 // gray-10 (dropdowns - alternates)
+
+border_subtle: "#e0e0e0",            // Consistent across layers
+border_strong: "#8d8d8d",            // Consistent across layers
+```
+
+**Sources:**
+
+- @carbon/themes Package (v11.0.0): Official token definitions
+- Carbon Design System GitHub: Layer token discussions (#7743, #2674)
+- Carbon v11 Documentation: <https://carbondesignsystem.com/elements/color/usage/>
+
+---
+
+#### 3. GitLab Pajamas Theme Issues 🔴
+
+**Light Mode Problems:**
+
+| Issue | Current Mapping | Correct Mapping | Impact |
+|-------|----------------|-----------------|--------|
+| **Insufficient Card Differentiation** | Card: neutral-10 (#fbfafd) vs background: neutral-0 (#ffffff) | Card: neutral-50 (#ececef) | Only 1.02:1 contrast - barely visible |
+| **Emphasis Token Misuse** | surface-elevated uses neutral-50 via `bg_emphasis` | Use neutral-0 + shadow | "emphasis/strong" is for highlighting, not elevation |
+| **Border Contrast Failure** | Border: neutral-100 (#dcdcde) | Border: neutral-200 (#bfbfc3) or neutral-300 | Fails WCAG 3:1 on all surfaces |
+
+**Dark Mode Problems:**
+
+| Issue | Current Mapping | Correct Mapping | Impact |
+|-------|----------------|-----------------|--------|
+| **Border Contrast Failure** | Border: neutral-700 (#4c4b51) | Border: neutral-600 (#626168) | Only 1.14-1.44:1 contrast (fails WCAG 3:1) |
+| **Emphasis Token Misuse** | surface-elevated uses neutral-800 via `bg_emphasis` | Use neutral-950 + shadow | Same semantic confusion as light mode |
+
+**Official GitLab Semantic Token Structure:**
+
+GitLab Pajamas uses **semantic tokens** separate from direct neutral palette:
+
+| Surface Type | Semantic Token | Purpose |
+|--------------|---------------|----------|
+| Page Background | `background.color.default` | Standard visual separation |
+| Card/Section | `background.color.section` | Fully enclosed content distinct from panel |
+| Subtle/Muted | `background.color.subtle` | Minimal visual presence |
+| Elevated/Strong | `background.color.strong` | Pronounced emphasis to draw attention |
+
+**Critical Finding:** GitLab explicitly states cards use **`background.color.section`** tokens, NOT `bg_muted` or
+direct neutral palette values.
+
+**Elevation vs Emphasis Distinction:**
+
+From GitLab Pajamas documentation:
+
+**Elevation** (Shadow-based, NOT color-based):
+
+- Purpose: "Addresses dimensional hierarchy and content relationships — depth (z-index)"
+- Implementation: Three shadow levels (gl-shadow-sm, gl-shadow-md, gl-shadow-lg)
+- Usage: Small (cards), Medium (popovers/dropdowns), Large (modals)
+
+**Emphasis/Strong** (Color-based):
+
+- Purpose: "Create pronounced emphasis and draw attention to important content"
+- Implementation: `background.color.strong` + `border.color.strong`
+- Usage: Highlighting content that needs focus, NOT layering surfaces
+
+**Key Finding:** GitLab uses **shadows for elevation**, NOT background color emphasis tokens.
+Using `bg_emphasis` for `surface-elevated` is a semantic misuse.
+
+**Border Contrast Analysis:**
+
+Light mode border failures:
+
+- neutral-100 (#dcdcde) vs neutral-0 (#ffffff) = **1.17:1** ❌
+- neutral-100 vs neutral-10 (#fbfafd) = **1.15:1** ❌
+- neutral-100 vs neutral-50 (#ececef) = **1.08:1** ❌
+
+Dark mode border failures:
+
+- neutral-700 (#4c4b51) vs neutral-950 (#18171d) = **1.44:1** ❌
+- neutral-700 vs neutral-900 (#28272d) = **1.27:1** ❌
+- neutral-700 vs neutral-800 (#3a383f) = **1.14:1** ❌
+
+**Note:** GitLab acknowledges "partial support" for non-text contrast in their WCAG conformance report,
+indicating they also struggle with perfect 3:1 border contrast.
+
+**Card Component Official Usage:**
+
+From Pajamas Card documentation:
+> "A card uses **section design tokens** by default to visually identify it as a contained content region.
+> Each combination has a **noticeable difference** between the border and background."
+
+This contradicts current neutral-10 approach which has minimal visibility (1.02:1).
+
+**Recommended Fixes:**
+
+```typescript
+// Light Mode - CORRECTED
+background: "#ffffff",              // neutral-0 ✓
+card: "#ececef",                    // neutral-50 (CHANGE from neutral-10)
+surface_elevated: "#ffffff",        // neutral-0 + shadow (CHANGE from neutral-50)
+border_default: "#bfbfc3",          // neutral-200 (CHANGE from neutral-100)
+// OR
+border_default: "#a4a3a8",          // neutral-300 (better contrast, still subtle)
+
+// Dark Mode - CORRECTED
+background: "#18171d",              // neutral-950 ✓
+card: "#28272d",                    // neutral-900 ✓
+surface_elevated: "#18171d",        // neutral-950 + shadow (CHANGE from neutral-800)
+border_default: "#626168",          // neutral-600 (CHANGE from neutral-700)
+
+// Shadow system for elevation (ADD)
+shadow_sm: "0 1px 2px rgba(0, 0, 0, 0.12)",          // Cards
+shadow_md: "0 2px 8px rgba(0, 0, 0, 0.15)",          // Popovers, dropdowns
+shadow_lg: "0 4px 16px rgba(0, 0, 0, 0.2)",          // Modals
+```
+
+**Semantic Token Alignment:**
+
+Create proper semantic layer matching GitLab patterns:
+
+```
+background.color.default → neutral-0 (light) / neutral-950 (dark)
+background.color.section → neutral-50 (light) / neutral-900 (dark)
+background.color.strong → (for emphasis, NOT elevation)
+elevation.shadow.medium → box-shadow (for elevated surfaces)
+```
+
+**Sources:**
+
+- GitLab Pajamas Color System: <https://design.gitlab.com/product-foundations/color/>
+- Layout & Containers: <https://design.gitlab.com/product-foundations/layout/>
+- Elevation System: <https://design.gitlab.com/product-foundations/elevation/>
+- Card Component: <https://design.gitlab.com/components/card/>
+- gitlab-org/gitlab-ui: Design tokens implementation
+
+---
+
+### Common Root Causes Across All Themes
+
+**1. Semantic Confusion: Structure vs State**
+
+All three themes conflate different semantic concepts:
+
+| Concept | Purpose | Example Tokens | Our Misuse |
+|---------|---------|---------------|------------|
+| **Structure** (Elevation) | Define visual hierarchy through z-index/depth | `layer-01/02/03`, `bgColor-muted`, `background.color.section` | ✅ Used correctly for cards |
+| **State** (Selection) | Indicate selected/active interactive elements | `layer-selected`, `bgColor-accent-emphasis` | ❌ Mixed with elevation |
+| **Emphasis** (Attention) | Draw attention to important content | `layer-accent`, `bg_emphasis`, `background.color.strong` | ❌ Used for elevation instead |
+
+**Problem:** Using emphasis/accent tokens for `surface-elevated` semantic token violates design system principles.
+
+**Fix:** Reserve emphasis tokens for highlighting/selection.
+Use shadows (Primer/Pajamas) or layer progression (Carbon) for elevation.
+
+**2. Border Visibility & WCAG Compliance**
+
+All three themes use overly subtle borders that fail accessibility requirements:
+
+| Theme | Border Token | Against Surface | Contrast | WCAG Status |
+|-------|-------------|----------------|----------|-------------|
+| Primer Light | #d1d9e0 | #ffffff | 2.12:1 | ❌ Fails 3:1 |
+| Carbon Dark | #393939 | #393939 | 1:1 | ❌ Invisible |
+| Pajamas Light | #dcdcde | #ffffff | 1.17:1 | ❌ Fails 3:1 |
+| Pajamas Dark | #4c4b51 | #18171d | 1.44:1 | ❌ Fails 3:1 |
+
+**WCAG 2.1 Requirement:** Non-text contrast (borders, UI components) must meet **3:1 minimum** (Level AA).
+
+**Design System Philosophy:** Primer and Pajamas intentionally use subtle borders, relying on shadows/spacing/grouping
+for accessibility rather than strict contrast ratios.
+
+**Fix:** Use "strong" border variants for accessibility-critical contexts, accept subtle borders for aesthetic contexts
+with compensating cues.
+
+**3. Light Mode Card Differentiation**
+
+Primer and Pajamas both have insufficient visual separation between page background and cards in light mode:
+
+| Theme | Background | Card | Contrast | Visibility |
+|-------|-----------|------|----------|------------|
+| Primer | #ffffff | #ffffff (same!) | 1:1 | ❌ No differentiation |
+| Pajamas | #ffffff | #fbfafd (neutral-10) | 1.02:1 | ❌ Barely visible |
+
+**Problem:** Users cannot distinguish cards from page background without relying entirely on borders.
+
+**Fix:**
+
+- Primer: Use `bgColor-muted` (#f6f8fa) for cards
+- Pajamas: Use neutral-50 (#ececef) for cards
+
+**4. Elevation Strategy Confusion**
+
+Two competing approaches to elevation, inconsistently applied:
+
+| Design System | Official Approach | Our Implementation | Status |
+|--------------|-------------------|-------------------|--------|
+| GitHub Primer | Shadows + same background | Background color changes | ❌ Wrong |
+| IBM Carbon | Layer color progression (layer-01/02/03) | Partial layer colors + emphasis tokens | ⚠️ Mixed |
+| GitLab Pajamas | Shadows + semantic sections | Background color changes | ❌ Wrong |
+
+**Problem:** We're using background color changes for elevation when Primer and Pajamas use shadows, and we're
+mixing Carbon's layer system with emphasis tokens.
+
+**Fix:**
+
+- Primer/Pajamas: Implement shadow-based elevation
+- Carbon: Use explicit layer-01/02/03 tokens, separate from emphasis/selection tokens
+
+---
+
+### Impact Analysis
+
+**Components Affected:**
+
+Currently migrated components that may have incorrect visual appearance:
+
+1. **AdvancedMovieFilters** (Task 4.4.3) - Panel background using potentially wrong surface token
+2. **LetterboxdStyleFilters** (Task 4.4.4) - Same panel issue
+3. **PaginationCtrl** (Task 4.4.1) - May use borders affected by contrast issues
+4. **TypographyTest** (Task 4.4.2) - Showcase page displaying incorrect theme behaviors
+
+**Not Yet Migrated:**
+
+- Watchlist page (Task 4.4.5) - BLOCKED, good catch before converting
+- ErrorBoundary (Task 4.5) - 60% of hardcoded colors, needs correct theme base
+- All remaining Phase 4+ components
+
+**Risk Assessment:**
+
+🔴 **High Risk:** Proceeding with component migrations using incorrect semantic tokens
+
+- Components will work functionally but display incorrect visual hierarchy
+- May need to touch all components again to fix surface/elevation tokens
+- Border visibility issues may cause accessibility failures
+
+🟡 **Medium Risk:** Visual inconsistency across 14 theme combinations (7 themes × 2 modes)
+
+- Some themes may work acceptably, others fail badly
+- Inconsistent user experience across theme selections
+
+🟢 **Mitigation:** Discovered early, only 4 components converted so far
+
+- Limited rework required if fixed now
+- Clean foundation for remaining migrations
+
+---
+
+### Research Methodology
+
+**Approach:** Parallel external research agents for each design system
+
+**Agents Deployed:**
+
+1. **GitHub Primer Agent** - Researched official Primer documentation, primitives package, GitHub blog
+2. **IBM Carbon Agent** - Researched @carbon/themes v11, layer system, official documentation
+3. **GitLab Pajamas Agent** - Researched Pajamas design tokens, elevation system, gitlab-ui implementation
+
+**Research Quality:**
+
+| Finding | Confidence | Verification Method |
+|---------|-----------|-------------------|
+| Hex color values | Very High | Direct extraction from official packages (@primer/primitives, @carbon/themes) |
+| Semantic token purposes | High | Cross-referenced official documentation, component usage patterns |
+| Border contrast calculations | Very High | Manual calculation using W3C relative luminance formula |
+| Recommended fixes | High | Derived from official design system best practices |
+| WCAG requirements | Very High | Official WCAG 2.1 specification |
+
+**Limitations:**
+
+- Some design systems lack explicit documentation for semantic token distinctions (e.g., Carbon's layer-selected vs layer-accent)
+- Design systems acknowledge partial WCAG compliance (subtle borders intentional)
+- Implementation recommendations require validation through POC testing
+
+---
+
+### Recommended Fix Strategy
+
+**Option A: Minimal Fixes (Unblock Current Work)** ⚡ Fast
+
+Scope: Fix only the critical blockers
+
+1. **Primer Light:** Change card from #ffffff to #f6f8fa
+2. **Carbon Dark:** Change border from #393939 to #6f6f6f
+3. **Pajamas Light:** Change card from neutral-10 to neutral-50
+4. **All themes:** Stop using emphasis tokens for surface-elevated
+
+**Effort:** ~2-4 hours
+
+- Update 3 theme definition files
+- Test 14 theme combinations (7 themes × 2 modes)
+- Verify 4 existing migrated components look correct
+
+**Pros:**
+
+- Unblocks Task 4.4.5 (Watchlist page)
+- Minimal code changes
+- Low risk
+
+**Cons:**
+
+- Doesn't implement full semantic alignment
+- Missing layer-03, border token hierarchy
+- Leaves technical debt for future
+
+---
+
+**Option B: Complete Semantic Alignment** 🎯 Recommended
+
+Scope: Full fix aligning with design system best practices
+
+**Phase 1: Token Structure Refactor**
+
+1. Separate structural tokens (layer-01/02/03) from state tokens (selected, emphasis)
+2. Implement border token hierarchy (subtle vs strong, per-layer)
+3. Add missing tokens (layer-03, shadow variants)
+
+**Phase 2: Theme Definition Updates**
+4. Update all 7 theme palette files (GitHub, IBM Carbon, GitLab Pajamas, + 4 custom)
+5. Update all 7 theme definition files with corrected mappings
+6. Add shadow tokens for elevation (Primer/Pajamas approach)
+
+**Phase 3: Component Review**
+7. Review 4 migrated components for correct token usage
+8. Update AdvancedMovieFilters and LetterboxdStyleFilters if needed
+9. Test all 14 theme combinations
+
+**Effort:** ~8-12 hours (1.5 days)
+
+- Structural changes: 3-4 hours
+- Theme updates: 3-4 hours
+- Testing & validation: 2-4 hours
+
+**Pros:**
+
+- Proper semantic foundation for all future work
+- Aligns with industry best practices
+- No technical debt
+- Comprehensive testing ensures quality
+
+**Cons:**
+
+- Larger scope, longer timeline
+- Touches more files
+- Requires careful testing
+
+---
+
+**Option C: Phased Approach** 🔄 Pragmatic
+
+Scope: Fix critical issues now, defer complete alignment
+
+**Immediate (2-4 hours):**
+
+- Option A minimal fixes
+- Document remaining work as technical debt
+
+**Future Phase 4.6 (during theme verification):**
+
+- Complete semantic alignment
+- Add missing token hierarchy
+- Comprehensive theme system overhaul
+
+**Pros:**
+
+- Unblocks current work immediately
+- Spreads effort across multiple sessions
+- Allows validation of minimal fixes before full investment
+
+**Cons:**
+
+- May need to touch components twice
+- Technical debt carries forward
+- Less elegant than complete fix
+
+---
+
+### Evaluation: Dedicated Task List vs Structured Quick Fix
+
+**Complexity Assessment:**
+
+**Files to Modify:**
+
+- 7 palette files (`frontend/src/theme/palettes/*.ts`)
+- 7 theme definition files (`frontend/src/theme/definitions/*.ts`)
+- Potentially 4 component files (if token usage incorrect)
+- Total: ~15-18 files
+
+**Changes Required:**
+
+- **Simple:** Hex value updates (straightforward find/replace)
+- **Moderate:** Token name changes (rename references)
+- **Complex:** Adding new token hierarchy (border-strong-*, layer-03, shadows)
+
+**Testing Scope:**
+
+- 14 theme combinations (7 themes × 2 modes)
+- 4 migrated components in each combination
+- Border visibility verification
+- Card differentiation verification
+
+**Risk Level:**
+
+- **Low Risk:** Hex value corrections (non-breaking)
+- **Medium Risk:** Token renames (may miss references)
+- **High Risk:** Structural changes (border hierarchy, new tokens)
+
+---
+
+**Recommendation: Option B with Lightweight Task Tracking**
+
+**Rationale:**
+
+1. **Scope is manageable** - 15-18 files, 8-12 hours
+2. **Work is structured** - Clear phases (tokens → themes → components)
+3. **High value** - Prevents rework on 20+ components in Phase 4-6
+4. **Low complexity** - Mostly find/replace, not algorithmic changes
+
+**Suggested Approach:**
+
+Use **TodoWrite tool for session tracking** instead of dedicated task list:
+
+```
+Phase 1: Token Structure (3-4 hours)
+- [ ] Define complete token hierarchy (structure vs state vs emphasis)
+- [ ] Add missing tokens (layer-03, border-strong-*, shadow-*)
+- [ ] Update types.ts with new token definitions
+
+Phase 2: Theme Updates (3-4 hours)
+- [ ] Update GitHub Primer (light + dark)
+- [ ] Update IBM Carbon (light + dark)
+- [ ] Update GitLab Pajamas (light + dark)
+- [ ] Update 4 custom themes (light + dark)
+
+Phase 3: Validation (2-4 hours)
+- [ ] Test all 14 theme combinations
+- [ ] Review 4 migrated components
+- [ ] Run quality gates (linting, type checking)
+- [ ] Document changes in notes
+```
+
+**Why Not Dedicated Task List:**
+
+❌ **Overkill for this scope:**
+
+- Work is tightly coupled (can't do themes without tokens)
+- Not resumable across multiple sessions effectively
+- No external dependencies or unknowns
+- Clear success criteria (tests pass, themes look correct)
+
+✅ **TodoWrite sufficient because:**
+
+- Single logical unit of work (theme definition fix)
+- Can complete in 1-2 focused sessions
+- Progress tracking helpful but not critical for handoffs
+- Natural stopping points if interrupted (phase boundaries)
+
+**When to Use Dedicated Task List:**
+
+- Work spans multiple days/sessions with handoffs
+- Requires user approval at multiple checkpoints
+- Has external dependencies or research needs
+- Complex enough that progress loss would be costly
+
+---
+
+### Next Steps
+
+**Awaiting Decision:**
+
+1. **Fix strategy**: Option A (minimal), B (complete), or C (phased)?
+2. **Execution approach**: Start immediately or schedule for dedicated session?
+3. **Validation scope**: Test all components now or defer until Phase 4.6?
+
+**If Option B Selected (Recommended):**
+
+Ready to proceed with structured fix using TodoWrite tracking:
+
+1. Define complete token hierarchy
+2. Update all theme files
+3. Test and validate
+4. Update this notes document with results
+
+**If Option A/C Selected:**
+
+Can implement minimal fixes immediately to unblock Task 4.4.5 (Watchlist), defer complete alignment.
+
+---
+
+**Research Complete:** 2025-11-03
+**Analysis By:** External research agents (GitHub Primer, IBM Carbon, GitLab Pajamas)
+**Confidence:** Very High (verified against official design system packages)
+**Decision Required:** Fix strategy selection

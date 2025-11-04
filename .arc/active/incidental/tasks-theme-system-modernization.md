@@ -2,8 +2,13 @@
 
 **Created:** 2025-11-02
 **Branch:** `technical/service-layer-modernization`
-**Status:** In Progress
+**Status:** Paused
 **Resumes:** `.arc/active/incidental/tasks-discover-endpoint-consolidation.md` at Phase 3.2 upon completion
+
+**Paused At:** Task 4.4.5 (Watchlist page conversion) - blocked by theme definition bugs
+
+**Paused To:** `.arc/active/incidental/tasks-theme-definition-semantic-corrections.md` - Critical theme mapping fixes
+discovered during Task 4.4.4 testing
 
 ## Context
 

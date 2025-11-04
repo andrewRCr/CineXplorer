@@ -8,7 +8,7 @@ const Footer = () => {
 		<Box
 			as="footer"
 			w="100%"
-			bg="card"
+			bg="layer-01"
 			py={2}
 			textAlign="center"
 			borderTop="1px solid"

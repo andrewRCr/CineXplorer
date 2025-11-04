@@ -39,7 +39,7 @@ const LoadingContent = ({
 			{/* Optional icon/logo */}
 			{icon && (
 				<Box
-					bg="surface-elevated"
+					bg="layer-02"
 					p={8}
 					borderRadius="20px"
 					boxShadow="0 8px 32px rgba(0, 0, 0, 0.3)"

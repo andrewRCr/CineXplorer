@@ -42,7 +42,7 @@ export const sidebarDrawer = createOverlay<SidebarDrawerProps>((props) => {
 				<Drawer.Backdrop />
 				<Drawer.Positioner>
 					<Drawer.Content
-						bg="card"
+						bg="layer-01"
 						borderRight="1px solid"
 						borderColor="border"
 						width="280px"
@@ -91,7 +91,7 @@ export const sidebarDrawer = createOverlay<SidebarDrawerProps>((props) => {
 										fontSize="xl"
 										fontFamily="heading"
 										fontWeight="bold"
-										color="card-foreground"
+										color="foreground"
 										transition="all 0.2s"
 										position="relative"
 										_after={{
@@ -115,7 +115,7 @@ export const sidebarDrawer = createOverlay<SidebarDrawerProps>((props) => {
 								<IconButton
 									variant="ghost"
 									size="xs"
-									color="card-foreground"
+									color="foreground"
 									flexShrink={0}
 									onClick={() => sidebarDrawer.close("sidebar")}
 									aria-label="Close menu"

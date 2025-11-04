@@ -46,7 +46,7 @@ const LogoAndTitle = () => (
 			<Heading
 				as="h1"
 				size="4xl"
-				color="card-foreground"
+				color="foreground"
 				transition="all 0.2s"
 				position="relative"
 				_after={{
@@ -86,7 +86,7 @@ const NavBar = () => {
 	return (
 		<Box
 			w="100%"
-			bg="card"
+			bg="layer-01"
 			position="sticky"
 			top={0}
 			zIndex={10}
@@ -135,7 +135,7 @@ const NavBar = () => {
 
 			{/* Desktop User Navigation Tabs - Secondary Row */}
 			{!isMobile && (
-				<Box bg="card">
+				<Box bg="layer-01">
 					<Container
 						maxW="container.xl"
 						px={{ base: 2, md: 6, lg: 8 }}

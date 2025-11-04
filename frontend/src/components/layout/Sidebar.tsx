@@ -29,7 +29,7 @@ const Sidebar: React.FC = () => {
 		<Box
 			as="aside"
 			w="280px"
-			bg="card"
+			bg="layer-01"
 			boxShadow="2px 0 8px 0 rgba(0,0,0,0.08)"
 			position="sticky"
 			top={SIDEBAR_STICKY_TOP_OFFSET}

@@ -50,9 +50,9 @@ export const gitlabPajamasTheme: Theme = {
 		"on-warning": pLight.fg_onEmphasis, // White on orange
 		"on-destructive": pLight.fg_onEmphasis,
 		"on-info": pLight.fg_onEmphasis, // White on red
-		// Rating colors (movie-specific)
-		rating: pLight.fg_rating, // Gold adapted for GitLab
-		"rating-foreground": pLight.fg_default, // Dark text
+		// Rating colors (movie-specific) - TEMP: hardcoded after palette extraction
+		rating: "#c17d10", // Gold adapted for GitLab's clean aesthetic
+		"rating-foreground": "#000000", // Dark text
 		// Surface elevation (featured sections, modals)
 		"surface-elevated": pLight.bg_emphasis, // Neutral-50 (3rd layer)
 		// Badge colors (neutral tags)
@@ -95,8 +95,8 @@ background: pDark.bg_default, // Near black (neutral-950)
 		"on-warning": pDark.fg_onEmphasis, // Dark text on light orange
 		"on-destructive": pDark.fg_onEmphasis,
 		"on-info": pDark.fg_onEmphasis, // Dark text on light red
-		rating: pDark.fg_rating, // Bright gold for dark mode
-		"rating-foreground": pDark.fg_onEmphasis, // Near black text
+		rating: "#f5c518", // TEMP: hardcoded after palette extraction (IMDb gold for dark mode)
+		"rating-foreground": "#000000", // Black text
 		"surface-elevated": pDark.bg_emphasis, // Neutral-800 (3rd layer, lighter than card)
 		badge: pDark.bg_button_secondary, // Neutral-900
 		"badge-foreground": pDark.fg_muted, // Neutral-200

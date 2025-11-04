@@ -3,9 +3,13 @@
  *
  * Official GitLab Pajamas design system colors for light and dark modes.
  * Source: https://design.gitlab.com/product-foundations/color/
+ * Package: @gitlab/ui (design tokens)
  *
- * All values verified from @gitlab/ui design tokens (2025-11-02).
+ * All values verified from @gitlab/ui design tokens.
  * GitLab uses semantic tokens that map to constant color scales (neutral, blue, orange, etc.).
+ *
+ * **IMPORTANT:** This file contains ONLY official Pajamas tokens.
+ * CineXplorer-specific extensions (rating colors, custom semantics) are in adapter/extensions.ts.
  */
 
 /**
@@ -16,15 +20,22 @@
  * Note: GitLab's primary interactive color is blue, not orange (orange used for warnings).
  */
 export const gitlabPajamasPaletteLight = {
-	// Base colors
-	/** Primary page background - Pure white (neutral-0) */
+	// Base colors - Layer System
+	/** Primary page background - Pure white (background, neutral-0) */
 	bg_default: "#ffffff",
-	/** Cards, panels, subtle backgrounds (neutral-10) */
+	/** First layer - Cards, sections (layer-01, neutral-50, official section token) */
+	bg_section: "#ececef",
+	/** Elevated surfaces - Modals use bg_default + shadow (shadow-based elevation) */
+	bg_elevated: "#ffffff",
+
+	// Legacy aliases (deprecated - use bg_section for cards)
+	/** @deprecated Use bg_section for cards (neutral-10 insufficient contrast 1.02:1) */
 	bg_muted: "#fbfafd",
-	/** Section backgrounds, elevated surfaces (neutral-10) */
+	/** @deprecated Use bg_section for elevated surfaces */
 	bg_inset: "#fbfafd",
-	/** Strong emphasis backgrounds (neutral-50) */
+	/** @deprecated Use bg_section */
 	bg_emphasis: "#ececef",
+
 	/** Action hover background (neutral-300 @ 16% opacity over white) */
 	bg_field_hover: "#f0f0f1",
 
@@ -56,10 +67,16 @@ export const gitlabPajamasPaletteLight = {
 	/** Danger button hover - darker red */
 	bg_danger_hover: "#a02911",
 
-	// Border colors
-	/** Primary borders, dividers (neutral-100) */
-	border_default: "#dcdcde",
+	// Border colors - Improved contrast
+	/** Strong borders (neutral-200, improved contrast 2.1:1 on white) */
+	border_strong: "#bfbfc3",
 	/** Subtle borders (neutral-50) */
+	border_subtle: "#ececef",
+
+	// Legacy aliases (deprecated - use border hierarchy)
+	/** @deprecated Use border_strong (neutral-100 had insufficient contrast 1.17:1) */
+	border_default: "#dcdcde",
+	/** @deprecated Use border_subtle */
 	border_muted: "#ececef",
 
 	// Button colors
@@ -80,14 +97,6 @@ export const gitlabPajamasPaletteLight = {
 	/** Info state (blue-500) - OFFICIAL GitLab color */
 	fg_info: "#1f75cb",
 
-	// ===================================================================
-	// EXTENDED COLORS (Adapted for CineXplorer - Not Official Pajamas)
-	// ===================================================================
-
-	// Movie-specific - Rating
-	/** Rating display (ADAPTED - IMDb gold adapted for GitLab's clean aesthetic) */
-	fg_rating: "#c17d10",
-
 	// Special surfaces
 	/** Strong text/headings (neutral-950) */
 	fg_strong: "#18171d",
@@ -100,15 +109,22 @@ export const gitlabPajamasPaletteLight = {
  * GitLab treats dark mode as "dimming the lights" with natural depth hierarchy.
  */
 export const gitlabPajamasPaletteDark = {
-	// Base colors
-	/** Primary page background - Near black (neutral-950) */
+	// Base colors - Layer System
+	/** Primary page background - Near black (background, neutral-950) */
 	bg_default: "#18171d",
-	/** Cards, panels, subtle backgrounds (neutral-900) */
+	/** First layer - Cards, sections (layer-01, neutral-900, good contrast) */
+	bg_section: "#28272d",
+	/** Elevated surfaces - Modals use bg_default + shadow (shadow-based elevation) */
+	bg_elevated: "#18171d",
+
+	// Legacy aliases (deprecated - use bg_section for cards)
+	/** @deprecated Use bg_section for cards */
 	bg_muted: "#28272d",
-	/** Section backgrounds, elevated surfaces (neutral-800) */
+	/** @deprecated Use bg_section for elevated surfaces */
 	bg_inset: "#3a383f",
-	/** Strong emphasis backgrounds (neutral-800) */
+	/** @deprecated Use bg_section */
 	bg_emphasis: "#3a383f",
+
 	/** Action hover background (neutral-400 @ 40% opacity over neutral-900) */
 	bg_field_hover: "#4f4e53",
 
@@ -140,10 +156,16 @@ export const gitlabPajamasPaletteDark = {
 	/** Danger button hover - lighter red */
 	bg_danger_hover: "#f6806d",
 
-	// Border colors
-	/** Primary borders, dividers (neutral-700) */
-	border_default: "#4c4b51",
+	// Border colors - Improved contrast
+	/** Strong borders (neutral-600, improved contrast on dark backgrounds) */
+	border_strong: "#626168",
 	/** Subtle borders (neutral-800) */
+	border_subtle: "#3a383f",
+
+	// Legacy aliases (deprecated - use border hierarchy)
+	/** @deprecated Use border_strong */
+	border_default: "#4c4b51",
+	/** @deprecated Use border_subtle */
 	border_muted: "#3a383f",
 
 	// Button colors
@@ -163,14 +185,6 @@ export const gitlabPajamasPaletteDark = {
 	fg_warning: "#d99530",
 	/** Info state (blue-300) - OFFICIAL GitLab color */
 	fg_info: "#63a6e9",
-
-	// ===================================================================
-	// EXTENDED COLORS (Adapted for CineXplorer - Not Official Pajamas)
-	// ===================================================================
-
-	// Movie-specific - Rating
-	/** Rating display (ADAPTED - IMDb gold adjusted for dark mode) */
-	fg_rating: "#f5c518",
 
 	// Special surfaces
 	/** Strong text/headings (neutral-0) */

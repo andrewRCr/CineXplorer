@@ -175,14 +175,18 @@ const MovieCard = ({ movie, currentPage, source, query }: MovieCardProps) => {
 			onMouseLeave={() => setIsCardHovered(false)}
 		>
 			<Card.Root
-				bg="card"
+				bg="layer-01"
 				height="100%"
 				display="flex"
 				flexDirection="column"
 				position="relative"
 				overflow="hidden"
 				borderRadius={10}
-				border={"0px"}
+				border="1px solid"
+				borderColor="border-subtle-00"
+				boxShadow={isCardHovered ? "shadow-md" : "shadow-sm"}
+				transition="all 0.3s ease-in-out"
+				_hover={{ bg: "layer-hover-01" }}
 			>
 				<Link
 					to={`/movie/${movie.tmdb_id}${queryString}`}

@@ -66,7 +66,7 @@ const NavBarUserMenu = () => {
 				<Button
 					size="sm"
 					variant="outline"
-					color="card-foreground"
+					color="foreground"
 					borderColor="border"
 					_hover={{
 						bg: "accent/8",
@@ -105,11 +105,11 @@ const NavBarUserMenu = () => {
 						left={`${buttonRef.current?.getBoundingClientRect().right ?? 0}px`}
 						transform="translateX(-100%)"
 						minW="200px"
-						shadow="lg"
+						boxShadow="shadow-md"
 						border="1px solid"
-						borderColor="border"
+						borderColor="border-strong-01"
 						borderRadius="md"
-						background="popover"
+						background="layer-03"
 						zIndex={9999}
 					>
 						<VStack gap={0} align="stretch">
@@ -122,7 +122,7 @@ const NavBarUserMenu = () => {
 										px={4}
 										py={3}
 										_hover={{
-											background: "accent/8",
+											background: "layer-hover-02",
 											"& > div": { opacity: 1 },
 										}}
 										cursor="pointer"
@@ -172,7 +172,7 @@ const NavBarUserMenu = () => {
 													px={4}
 													py={3}
 													_hover={{
-														background: "accent/8",
+														background: "layer-hover-02",
 														"& > div": { opacity: 1 },
 													}}
 													cursor="pointer"
@@ -221,7 +221,7 @@ const NavBarUserMenu = () => {
 									px={4}
 									py={3}
 									_hover={{
-										background: "accent/8",
+										background: "layer-hover-02",
 										"& > div": { opacity: 1 },
 									}}
 									cursor="pointer"
@@ -264,7 +264,7 @@ const NavBarUserMenu = () => {
 									px={4}
 									py={3}
 									_hover={{
-										background: "accent/8",
+										background: "layer-hover-02",
 										"& > div": { opacity: 1 },
 									}}
 									cursor="pointer"
@@ -295,7 +295,7 @@ const NavBarUserMenu = () => {
 								px={4}
 								py={3}
 								_hover={{
-									background: "accent/8",
+									background: "layer-hover-02",
 									"& > div": { opacity: 1 },
 								}}
 								cursor="pointer"

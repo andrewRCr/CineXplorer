@@ -106,88 +106,132 @@ elevation mapping).
         - WCAG contrast calculations for all border/surface combinations
         - Optional shadow token recommendations
 
-- [ ] **1.2 Design unified vocabulary & adapter architecture**
+- [x] **1.2 Design unified vocabulary & adapter architecture**
 
-    **Goal:** Create unified token vocabulary (~40 tokens) and adapter layer structure.
-    This will replace current definitions files.
+    **Completed:** Created comprehensive adapter layer with ~47 canonical tokens:
+    - 5 core structure
+    - 5 borders
+    - 3 shadows
+    - 6 interaction states
+    - 28 semantic/extension tokens.
+    Architecture enforces canonical names via TypeScript (no aliases in interface).
 
-    - [ ] **1.2.1 Define UnifiedTheme interface**
+    **Key Decision:** Canonical names ONLY in interface - aliases ("card", "surface-elevated", "surface-highest")
+    exist only in documentation/comments for semantic clarity. Components MUST use `layer-01`, `layer-02`,
+    `layer-03` directly.
 
-        Create comprehensive interface in `theme/adapter/types.ts`:
+    - [x] **1.2.1 Define UnifiedTheme interface**
 
-        - **Core structure tokens** (8):
-          `background`, `foreground`, `layer-01`, `layer-02`, `layer-03`,
-          `card` (alias), `surface-elevated` (alias), `surface-highest` (alias)
-        - **Border hierarchy** (5): `border-subtle-00`, `border-subtle-02`, `border-strong-01`, `border-strong-02`, `border-strong-03`
+        Created `frontend/src/theme/adapter/types.ts` with complete interface:
+
+        - **Core structure tokens** (5 canonical):
+          `background`, `foreground`, `layer-01` (card semantic), `layer-02` (elevated semantic), `layer-03` (highest semantic)
+            - NOTE: NO aliases in interface - "card", "surface-elevated" are documentation-only
+        - **Border hierarchy** (5): `border-subtle-00`, `border-subtle-02`, `border-strong-01/02/03`
         - **Shadow system** (3): `shadow-sm`, `shadow-md`, `shadow-lg`
-        - **Interaction states** (6):
-          `layer-hover-01`, `layer-hover-02`,
-          `layer-selected-01`, `layer-selected-02`,
-          `layer-active-01`, `layer-active-02`
-        - **Semantic colors** (keep existing): `primary`, `secondary`, `accent`, `destructive`, `success`,
-          `warning`, `info`, etc.
-        - **Text colors** (keep existing): `muted-foreground`, `accent-foreground`, etc.
-        - **CineXplorer extensions** (extract from palettes): `rating`, `rating-foreground`, etc.
-        - Document official vs derived vs app-specific for each token group
+        - **Interaction states** (6): `layer-hover-01/02`, `layer-selected-01/02`, `layer-active-01/02`
+        - **Semantic colors** (28): All existing tokens from ThemeColors kept
+          (primary, secondary, accent, destructive, success, warning, info
+            - foreground pairs, on-status variants)
+        - **Popover** (2): Kept `popover`, `popover-foreground` for backwards compatibility (typically maps to layer-02/03)
+        - **CineXplorer extensions** (8): rating, badge, drag-active, drop-zone + foreground pairs
+        - **UI elements** (3): border, input, ring
+        - Comprehensive JSDoc for each token explaining semantic meaning, usage, and design system sources
+        - Marked ThemeColors as deprecated with migration guide
 
-    - [ ] **1.2.2 Create adapter module structure**
+    - [x] **1.2.2 Create adapter module structure**
 
-        Set up adapter directory and supporting files:
+        Created complete adapter directory structure with 7 files:
 
-        - Create `frontend/src/theme/adapter/` directory
-        - Create `adapter/types.ts` - UnifiedTheme interface, ThemeAdapter function type
-        - Create `adapter/shadows.ts` - Shadow value definitions per design system
-          (Primer official, Pajamas official, Carbon minimal)
-        - Create `adapter/extensions.ts` - CineXplorer-specific token function (ratings, custom colors)
-        - Create `adapter/utils.ts` - Helper functions for token derivation (e.g., derivePerLayerBorders)
-        - Create `adapter/index.ts` - Public API exports
+        - ✅ `frontend/src/theme/adapter/types.ts` - UnifiedTheme interface (47 tokens), deprecated ThemeColors marker
+        - ✅ `adapter/shadows.ts` - Shadow definitions per design system
+          (Primer: official tokens, Carbon: minimal conservative, Pajamas: gl-shadow values)
+        - ✅ `adapter/extensions.ts` - CineXplorer-specific tokens (rating colors: IMDb gold standard, badge/drag-drop adaptations)
+        - ✅ `adapter/utils.ts` - Derivation helpers (adjustColor, deriveBorderHierarchy,
+          deriveInteractionStates, deriveLayer03, isLightColor)
+        - ✅ `adapter/github.ts` - Primer adapter skeleton with implementation notes
+        - ✅ `adapter/carbon.ts` - Carbon adapter skeleton with critical dark mode border fix notes
+        - ✅ `adapter/pajamas.ts` - Pajamas adapter skeleton with card differentiation corrections
+        - ✅ `adapter/index.ts` - Public API (createUnifiedTheme factory, type/utility exports)
 
-    - [ ] **1.2.3 Document adapter mapping strategy**
+    - [x] **1.2.3 Document adapter mapping strategy**
 
-        Add mapping strategy section to notes file:
+        Comprehensive documentation added throughout adapter files:
 
-        - **Per design system breakdown:** What's official (from design system), what's derived (for consistency),
-          what's extended (CineXplorer-specific)
-        - **Derivation rules:** Document logic (e.g., "Primer: all border-strong-* map to same value since no per-layer
-          borders officially")
-        - **Extension extraction plan:** List all CineXplorer tokens to extract from palettes
-          (ratings, warning/info colors, movie-specific)
-        - **Comment strategy:** How to mark official vs derived vs extended in adapter code
+        - **Per-adapter documentation:** Each adapter file (github.ts, carbon.ts, pajamas.ts) includes:
+            - Official token mapping strategy with corrections from research
+            - Derived token strategy (what needs derivation and why)
+            - CineXplorer extension adaptation approach
+            - Critical fixes (e.g., Carbon dark mode invisible borders #393939 → #6f6f6f)
+        - **Utility documentation:** utils.ts explains all derivation algorithms with examples
+        - **Extension documentation:** extensions.ts documents IMDb gold standard + theme adaptation
+        - **Type documentation:** types.ts includes extensive JSDoc for all 47 tokens
+        - **Three-category demarcation:** Official / Derived / Extended clearly marked in all adapter implementations
 
-- [ ] **1.3 Identify component migration scope**
+    - [x] **1.2.4 Create theme switching integration plan**
 
-    **Goal:** Audit what needs updating and plan component migration approach.
+        Added comprehensive integration strategy section to notes file with:
 
-    - [ ] **1.3.1 List all files requiring updates**
+        - **Architecture diagrams:** Current vs target architecture flows
+        - **Integration strategy:** Option A (parallel systems) selected - run old/new systems in parallel during migration
+        - **Implementation steps:** 5-step integration process (extend interface, update registry, update system
+          creation, component migration, cleanup)
+        - **Rollback strategy:** Clear rollback path until Phase 4 cleanup (revert components, old system still present)
+        - **Testing strategy:** Per-phase requirements (unit tests, visual testing, type checking)
+        - **Timeline estimate:** 12-17 hours total (Phase 2: 6-8h, Phase 3: 4-6h, Phase 4: 2-3h)
+        - **Risk mitigation:** 4 risks identified with specific mitigation strategies (token mapping errors, component
+          breakage, type errors, visual regressions)
+        - **Success criteria:** Clear checkpoints for Phase 2, 3, and 4 completion
+        - Integrated as new section in notes file (lines 699-1002)
 
-        Document complete file change list:
+- [ ] **1.3 Build detailed Phase 3 component migration plan**
 
-        - **3 palette files:** `palettes/github.ts`, `palettes/ibm-carbon.ts`,
-          `palettes/gitlab-pajamas.ts` (corrections + extract extensions)
-        - **3 new adapter files:** `adapter/github.ts`, `adapter/carbon.ts`, `adapter/pajamas.ts` (replace definitions)
-        - **3 definitions files:** Mark for deletion after migration
-        - **~19 component files:** List components needing import changes
-        - **1 theme index:** `theme/index.ts` (export from adapter instead of definitions)
-        - **Type files:** Update `theme/types.ts` with UnifiedTheme reference
+    **Goal:** Create concrete Phase 3 execution plan in this task list by auditing current component usage and
+    expanding the integration strategy (from notes file) into specific work items.
 
-    - [ ] **1.3.2 Component import audit**
+    **Approach:** Use integration strategy section (notes file lines 699-1002) as strategic foundation, then add
+    tactical details: which exact components need migration, what token changes each requires, which components
+    can benefit from new unified vocabulary (border hierarchy, interaction states, layer-03).
 
-        Find all components importing from theme system:
+    - [ ] **1.3.1 Audit component token usage**
 
-        - Grep for `from "../theme"` or `from "~/theme"` patterns
-        - Grep for `useTheme`, `useColorMode`, theme-related hooks
-        - Document current token usage patterns (which tokens are actually used)
-        - Identify components that would benefit from richer vocabulary (filters, modals)
-        - Create component migration checklist
+        Identify what's actually used today:
 
-    - [ ] **1.3.3 Verify type safety approach**
+        - Grep for components using theme tokens: `bg="card"`, `bg="surface-elevated"`, `color="card-foreground"`
+        - Find all components importing from theme system (`from "../theme"`, `from "~/theme"`)
+        - Document token usage patterns per component (which tokens, how many instances)
+        - Identify "Phase 4.4 migrated components" (19 components from theme modernization) - these are priority
+        - Result: Concrete list of components with current token usage counts
 
-        Ensure smooth migration without breaking types:
+    - [ ] **1.3.2 Identify enhancement opportunities**
 
-        - Verify UnifiedTheme maintains all existing token names (backward compatible)
-        - Plan for gradual adoption of new tokens (optional, not required)
-        - Ensure TypeScript catches any broken imports during migration
-        - Document type-checking strategy per batch
+        Find components that would benefit from new unified vocabulary:
+
+        - **Border hierarchy candidates:** Components with borders on elevated surfaces (modals, panels, filters)
+            - Would benefit from `border-strong-02` (visible on layer-02) instead of generic `border`
+        - **Interaction state candidates:** Interactive cards, list items, filters
+            - Would benefit from `layer-hover-01`, `layer-selected-01` instead of manual color manipulation
+        - **Layer-03 candidates:** Dropdowns/tooltips appearing over modals
+            - Would benefit from explicit `layer-03` instead of hardcoded z-index hacks
+        - Document specific enhancement opportunities per component (optional improvements, not required for migration)
+
+    - [ ] **1.3.3 Create Phase 3 task breakdown**
+
+        Expand Phase 3 section of this task list with:
+
+        - **3.1 Update theme integration** (extend Theme interface, update registry - from integration strategy Step 1-3)
+        - **3.2 Component migration batches** - Group components by complexity:
+            - Simple batch: Components with only `card` → `layer-01` changes (quick wins)
+            - Medium batch: Components with `surface-elevated` → `layer-02` + other changes
+            - Complex batch: Components with enhancement opportunities (borders, interaction states)
+        - **3.3 Per-component subtasks** with specific details:
+            - Component name + file path
+            - Required changes: `bg="card"` → `bg="layer-01"` (line numbers if practical)
+            - Optional enhancements: "Consider `border-strong-02` on panel header (line X)"
+            - Estimated time: 5 min (simple), 10-15 min (medium), 20+ min (complex)
+        - **3.4 Visual verification checklist** per batch (test all 6 theme combinations)
+
+        **Result:** Phase 3 becomes actionable checklist ready to execute after Phase 2 complete.
 
 ### **Phase 2:** Per-Theme Migration
 

@@ -696,5 +696,307 @@ Primary test targets from Phase 4.4:
 
 ---
 
-**Document Status:** Initial research complete, implementation pending
-**Last Updated:** 2025-11-03
+## Integration Strategy: Unified Theme Adapter
+
+**Added:** 2025-11-04 (from Task 1.2.4)
+
+This section outlines the integration strategy for connecting the new unified theme adapter layer
+to CineXplorer's existing theme system. The adapter provides UnifiedTheme instances that must be
+compatible with the current Chakra UI v3 system creation in `frontend/src/theme/index.ts`.
+
+### Current Architecture
+
+```
+Palettes (design system tokens)
+    ↓
+Definitions (map to ThemeColors interface - 39 tokens)
+    ↓
+createBaseTokens() + createSemanticTokens()
+    ↓
+Chakra UI defineConfig() → createSystem()
+    ↓
+Components (use semantic tokens like "card", "surface-elevated")
+```
+
+**Current flow in `theme/index.ts`:**
+
+1. Import theme definitions (e.g., `githubTheme` from `definitions/github.ts`)
+2. `Theme` interface has `light` and `dark` properties of type `ThemeColors`
+3. `createThemeSystem(theme)` creates Chakra system from Theme
+4. Components use current token names (`card`, `surface-elevated`, etc.)
+
+### Target Architecture
+
+```
+Palettes (design system tokens - corrections applied in Phase 2)
+    ↓
+Adapter Layer (createUnifiedTheme)
+    ↓
+UnifiedTheme interface (~47 canonical tokens)
+    ↓
+createBaseTokens() + createSemanticTokens() (updated)
+    ↓
+Chakra UI defineConfig() → createSystem()
+    ↓
+Components (use canonical names: "layer-01", "layer-02", etc.)
+```
+
+### Integration Approach: Parallel Systems
+
+**Selected: Option A (Parallel Systems)** - Run old and new systems in parallel during Phase 2-3 migration.
+
+**Implementation:**
+
+1. **Phase 2:** Adapters created, old definitions remain
+   - `adapter/github.ts`, `adapter/carbon.ts`, `adapter/pajamas.ts` implemented
+   - Old `definitions/` files unchanged (still used by components)
+   - No component breakage - everything still works
+
+2. **Phase 3:** Component-by-component migration
+   - Update components: `bg="card"` → `bg="layer-01"`
+   - Both token systems present in Chakra config
+   - Components gradually switch to canonical names
+
+3. **Phase 4:** Remove old system
+   - Delete `definitions/` directory
+   - Remove `ThemeColors` interface
+   - Update `theme/index.ts` to use adapters exclusively
+
+**Pros:**
+
+- ✅ Zero-risk migration (no component breakage)
+- ✅ Can test adapters before full cutover
+- ✅ Rollback path if issues found
+
+**Cons:**
+
+- ⚠️ Temporary duplication (~86 tokens in Chakra config during Phase 3)
+- ⚠️ More complex during migration period
+
+**Rejected Alternative: Direct Replacement** - Replace definitions with adapters immediately.
+Too risky (all-or-nothing cutover, no rollback path).
+
+### Integration Implementation Steps
+
+#### Step 1: Extend Theme Interface (Phase 2)
+
+Update `frontend/src/theme/types.ts`:
+
+```typescript
+// Keep existing ThemeColors (deprecated during migration)
+export interface ThemeColors {
+  // ... current 39 tokens
+}
+
+// Add UnifiedTheme import
+import type { UnifiedTheme } from "./adapter/types";
+
+// Extend Theme interface to support both
+export interface Theme {
+  readonly name: string;
+  readonly label: string;
+
+  // OLD (deprecated, Phase 4 removal)
+  readonly light: ThemeColors;
+  readonly dark: ThemeColors;
+
+  // NEW (Phase 2+)
+  readonly lightUnified?: UnifiedTheme;
+  readonly darkUnified?: UnifiedTheme;
+}
+```
+
+#### Step 2: Update Theme Registry (Phase 2.1-2.3)
+
+As each adapter is implemented, add unified versions:
+
+```typescript
+// frontend/src/theme/index.ts
+
+import { createUnifiedTheme } from "./adapter";
+
+export const themeRegistry = {
+  github: {
+    ...githubTheme,  // Old definition
+    lightUnified: createUnifiedTheme("github", "light"),  // NEW
+    darkUnified: createUnifiedTheme("github", "dark"),    // NEW
+  },
+  // ... other themes
+} as const;
+```
+
+#### Step 3: Update System Creation (Phase 2)
+
+Modify `createThemeSystem()` to include both token systems:
+
+```typescript
+function createBaseTokens(theme: Theme) {
+  const tokenKeys = Object.keys(theme.light) as Array<keyof ThemeColors>;
+
+  const light: Record<string, any> = {};
+  const dark: Record<string, any> = {};
+
+  // OLD tokens (deprecated, for existing components)
+  for (const tokenKey of tokenKeys) {
+    light[tokenKey] = { value: theme.light[tokenKey] };
+    dark[tokenKey] = { value: theme.dark[tokenKey] };
+  }
+
+  // NEW unified tokens (if present)
+  if (theme.lightUnified && theme.darkUnified) {
+    const unifiedKeys = Object.keys(theme.lightUnified) as Array<keyof UnifiedTheme>;
+    for (const tokenKey of unifiedKeys) {
+      light[tokenKey] = { value: theme.lightUnified[tokenKey] };
+      dark[tokenKey] = { value: theme.darkUnified[tokenKey] };
+    }
+  }
+
+  return { light, dark };
+}
+```
+
+**Result:** Chakra config contains ~86 tokens during Phase 3 (39 old + 47 new).
+
+#### Step 4: Component Migration (Phase 3)
+
+Update components one-by-one:
+
+```typescript
+// BEFORE (old token names)
+<Box bg="card" color="card-foreground">
+  <Text color="muted-foreground">Caption</Text>
+</Box>
+
+// AFTER (canonical names)
+<Box bg="layer-01" color="foreground">
+  <Text color="muted-foreground">Caption</Text>
+</Box>
+```
+
+**Migration checklist per component:**
+
+- `bg="card"` → `bg="layer-01"`
+- `bg="surface-elevated"` → `bg="layer-02"`
+- `color="card-foreground"` → `color="foreground"`
+- All other tokens: No changes
+
+#### Step 5: Cleanup (Phase 4)
+
+After all components migrated:
+
+1. Remove old token system from `createBaseTokens()`
+2. Remove `ThemeColors` properties from `Theme` interface
+3. Delete `frontend/src/theme/definitions/` directory
+4. Update type imports across codebase
+5. Run full test suite + visual verification
+
+### Rollback Strategy
+
+**If issues discovered during Phase 3 migration:**
+
+1. Revert component changes (git restore affected files)
+2. Old token system still present - components work immediately
+3. Fix adapter issues
+4. Resume migration
+
+**Point of No Return:** Phase 4 cleanup (definitions deleted)
+
+### Testing Strategy
+
+#### Phase 2 Testing (Per-Theme Adapter)
+
+After implementing each adapter:
+
+1. **Unit tests:** Verify token mappings correct
+2. **Visual test:** Load theme in dev, spot-check key components
+3. **Token audit:** Ensure all ~47 tokens present and non-empty
+
+#### Phase 3 Testing (Component Migration)
+
+After migrating each component:
+
+1. **Visual test:** Component looks identical in all 6 theme combinations
+2. **Token usage:** Component only uses canonical names (no old tokens)
+3. **Type check:** No TypeScript errors
+
+#### Phase 4 Testing (Final Verification)
+
+Before deleting old system:
+
+1. **Full test suite:** All backend + frontend tests pass
+2. **Visual regression:** All 19 components in 6 theme combinations
+3. **Type checking:** Frontend passes with no errors
+4. **Linting:** No violations
+
+### Timeline Estimate
+
+**Phase 2:** Per-theme adapter implementation (6-8 hours)
+
+- 2.1 GitHub Primer: 2-3 hours
+- 2.2 IBM Carbon: 2-2.5 hours
+- 2.3 GitLab Pajamas: 2-2.5 hours
+
+**Phase 3:** Component migration (4-6 hours)
+
+- 19 components × 15-20 minutes each
+- Batch processing possible for simple updates
+
+**Phase 4:** Cleanup and verification (2-3 hours)
+
+- Remove old system
+- Comprehensive testing
+- Documentation updates
+
+**Total:** 12-17 hours (aligns with ADR-005 estimate of 15-21 hours)
+
+### Risk Mitigation
+
+**Risk: Token Mapping Errors**
+
+- Mitigation: Comprehensive hex value reference tables in this notes file
+- Cross-reference with official design system packages
+- Visual testing in all 6 theme combinations
+
+**Risk: Component Breakage During Migration**
+
+- Mitigation: Parallel systems (Option A) - both old and new tokens present
+- Gradual component migration
+- Easy rollback (revert file changes)
+
+**Risk: TypeScript Type Errors**
+
+- Mitigation: Type checking after each subtask
+- UnifiedTheme interface enforces canonical names
+- Compiler catches non-canonical token usage
+
+**Risk: Visual Regressions**
+
+- Mitigation: Visual testing checklist per theme combination
+- Compare before/after screenshots
+- User acceptance testing
+
+### Success Criteria
+
+**Phase 2 Complete:**
+
+- ✅ All 3 adapters implemented and pass type checking
+- ✅ Visual spot-check shows correct colors in dev
+- ✅ No linting or type errors
+
+**Phase 3 Complete:**
+
+- ✅ All 19 components migrated to canonical names
+- ✅ Visual verification passed for all components × 6 themes
+- ✅ No TypeScript errors
+
+**Phase 4 Complete:**
+
+- ✅ Old `definitions/` directory removed
+- ✅ `ThemeColors` interface removed
+- ✅ Full test suite passes
+- ✅ strategy-semantic-tokens.md updated
+
+---
+
+**Document Status:** Phase 1 complete (research + architecture), ready for Phase 2 implementation
+**Last Updated:** 2025-11-04

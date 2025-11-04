@@ -276,7 +276,7 @@ const MovieDetail = () => {
 				{movie.cast?.slice(0, 5).map((actor: CastMember, idx: number) => (
 						<Box
 							key={actor.id || idx}
-							bg="card"
+							bg="layer-01"
 							p={2}
 							borderRadius="md"
 							minW="120px"
@@ -310,7 +310,7 @@ const MovieDetail = () => {
 				.map((member: CrewMember, idx: number) => (
 							<Box
 								key={member.id || idx}
-								bg="card"
+								bg="layer-01"
 								p={2}
 								borderRadius="md"
 								minW="120px"

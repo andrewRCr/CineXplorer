@@ -35,7 +35,7 @@ const Featured = () => {
 				</Text>
 
 				<Card.Root
-					bg="card"
+					bg="layer-01"
 					p={8}
 					width="100%"
 					maxW="500px"

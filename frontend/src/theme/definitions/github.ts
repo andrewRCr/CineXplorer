@@ -9,6 +9,7 @@
 
 import { githubPaletteLight as pLight, githubPaletteDark as pDark } from "../palettes/github-primer";
 import type { Theme } from "../types";
+import { createUnifiedTheme } from "../adapter";
 
 /**
  * GitHub Primer theme for CineXplorer.
@@ -113,4 +114,7 @@ export const githubTheme: Theme = {
 		input: pDark.border_default,
 		ring: pDark.fg_accent,
 	},
+	// Phase 3 integration: Unified adapter instances
+	lightUnified: createUnifiedTheme("github", "light"),
+	darkUnified: createUnifiedTheme("github", "dark"),
 } as const;

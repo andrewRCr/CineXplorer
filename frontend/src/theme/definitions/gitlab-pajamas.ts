@@ -4,6 +4,7 @@
 
 import { gitlabPajamasPaletteLight as pLight, gitlabPajamasPaletteDark as pDark } from "../palettes/gitlab-pajamas";
 import type { Theme } from "../types";
+import { createUnifiedTheme } from "../adapter";
 
 export const gitlabPajamasTheme: Theme = {
 	name: "gitlab-pajamas",
@@ -106,4 +107,7 @@ background: pDark.bg_default, // Near black (neutral-950)
 		input: pDark.border_default, // Input border
 		ring: pDark.fg_accent, // Light blue focus ring
 	},
+	// Phase 3 integration: Unified adapter instances
+	lightUnified: createUnifiedTheme("gitlab-pajamas", "light"),
+	darkUnified: createUnifiedTheme("gitlab-pajamas", "dark"),
 } as const;

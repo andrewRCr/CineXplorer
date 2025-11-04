@@ -5,6 +5,8 @@
  * Uses semantic token naming inspired by shadcn/ui, implemented for Chakra UI v3.
  */
 
+import type { UnifiedTheme } from "./adapter/types";
+
 /**
  * Theme color palette with semantic token naming.
  *
@@ -229,8 +231,14 @@ export interface ThemeColors {
  * - Unique identifier and display name
  * - Light mode color palette (ThemeColors)
  * - Dark mode color palette (ThemeColors)
+ * - Optional unified adapter instances (Phase 3 integration)
  *
  * Themes are immutable once defined. To change colors, create a new theme.
+ *
+ * **Parallel Systems Approach:**
+ * During Phase 3 migration, both old (light/dark) and new (lightUnified/darkUnified)
+ * token systems coexist. Components gradually migrate from ThemeColors tokens to
+ * UnifiedTheme tokens. After migration complete, ThemeColors will be removed.
  */
 export interface Theme {
 	/** Unique theme identifier (kebab-case, e.g., "github", "cinexplorer-custom") */
@@ -239,11 +247,37 @@ export interface Theme {
 	/** Human-readable theme name for display (e.g., "GitHub", "CineXplorer Custom") */
 	readonly label: string;
 
-	/** Light mode color palette */
+	/**
+	 * Light mode color palette (legacy - deprecated).
+	 * @deprecated Use lightUnified instead. Will be removed after Phase 3 migration.
+	 */
 	readonly light: ThemeColors;
 
-	/** Dark mode color palette */
+	/**
+	 * Dark mode color palette (legacy - deprecated).
+	 * @deprecated Use darkUnified instead. Will be removed after Phase 3 migration.
+	 */
 	readonly dark: ThemeColors;
+
+	/**
+	 * Light mode unified adapter tokens (Phase 3+).
+	 *
+	 * Provides ~47 tokens including layer system, border hierarchy, shadows,
+	 * and interaction states. Replaces deprecated ThemeColors tokens.
+	 *
+	 * **Optional during migration:** Present after Phase 3.1 integration complete.
+	 */
+	readonly lightUnified?: UnifiedTheme;
+
+	/**
+	 * Dark mode unified adapter tokens (Phase 3+).
+	 *
+	 * Provides ~47 tokens including layer system, border hierarchy, shadows,
+	 * and interaction states. Replaces deprecated ThemeColors tokens.
+	 *
+	 * **Optional during migration:** Present after Phase 3.1 integration complete.
+	 */
+	readonly darkUnified?: UnifiedTheme;
 }
 
 /**

@@ -4,6 +4,7 @@
 
 import { ibmCarbonPaletteLight as pLight, ibmCarbonPaletteDark as pDark } from "../palettes/ibm-carbon";
 import type { Theme } from "../types";
+import { createUnifiedTheme } from "../adapter";
 
 export const ibmCarbonTheme: Theme = {
 	name: "ibm-carbon",
@@ -105,4 +106,7 @@ background: pDark.bg_default,
 		input: pDark.border_default,
 		ring: pDark.fg_accent,
 	},
+	// Phase 3 integration: Unified adapter instances
+	lightUnified: createUnifiedTheme("ibm-carbon", "light"),
+	darkUnified: createUnifiedTheme("ibm-carbon", "dark"),
 } as const;

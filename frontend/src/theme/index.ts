@@ -19,6 +19,9 @@ import { ibmCarbonTheme } from "./definitions/ibm-carbon";
 import { gitlabPajamasTheme } from "./definitions/gitlab-pajamas";
 import type { Theme, ThemeColors } from "./types";
 
+// Import unified adapter factory (Phase 3 integration)
+import { createUnifiedTheme } from "./adapter";
+
 /**
  * Theme Registry
  *
@@ -42,6 +45,10 @@ export function getTheme(name: string): Theme {
  *
  * Base tokens are the foundation layer containing raw hex color values.
  * Semantic tokens reference these to create meaningful, mode-aware color names.
+ *
+ * **Phase 3 Update:** During parallel systems migration, this includes both
+ * old ThemeColors tokens (~39) and new UnifiedTheme tokens (~47) when available.
+ * Result: ~86 tokens available during migration, enabling gradual component updates.
  */
 function createBaseTokens(theme: Theme) {
 	const tokenKeys = Object.keys(theme.light) as Array<keyof ThemeColors>;
@@ -51,9 +58,20 @@ function createBaseTokens(theme: Theme) {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const dark: Record<string, any> = {};
 
+	// Add legacy ThemeColors tokens
 	for (const tokenKey of tokenKeys) {
 		light[tokenKey] = { value: theme.light[tokenKey] };
 		dark[tokenKey] = { value: theme.dark[tokenKey] };
+	}
+
+	// Phase 3: Add unified adapter tokens if available (parallel systems)
+	if (theme.lightUnified && theme.darkUnified) {
+		const unifiedKeys = Object.keys(theme.lightUnified) as Array<keyof typeof theme.lightUnified>;
+
+		for (const tokenKey of unifiedKeys) {
+			light[tokenKey] = { value: theme.lightUnified[tokenKey] };
+			dark[tokenKey] = { value: theme.darkUnified[tokenKey] };
+		}
 	}
 
 	return { light, dark };
@@ -65,6 +83,8 @@ function createBaseTokens(theme: Theme) {
  * Semantic tokens provide meaningful color names (background, foreground, etc.)
  * that automatically switch between light and dark values based on color mode.
  * Uses Chakra's token reference syntax: {colors.light.tokenName}
+ *
+ * **Phase 3 Update:** Includes unified adapter token references when available.
  */
 function createSemanticTokens(theme: Theme) {
 	const tokenKeys = Object.keys(theme.light) as Array<keyof ThemeColors>;
@@ -72,6 +92,7 @@ function createSemanticTokens(theme: Theme) {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const colors: Record<string, any> = {};
 
+	// Add legacy ThemeColors semantic tokens
 	for (const tokenKey of tokenKeys) {
 		colors[tokenKey] = {
 			value: {
@@ -79,6 +100,20 @@ function createSemanticTokens(theme: Theme) {
 				_dark: `{colors.dark.${tokenKey}}`,    // Dark mode reference
 			},
 		};
+	}
+
+	// Phase 3: Add unified adapter semantic tokens if available
+	if (theme.lightUnified && theme.darkUnified) {
+		const unifiedKeys = Object.keys(theme.lightUnified) as Array<keyof typeof theme.lightUnified>;
+
+		for (const tokenKey of unifiedKeys) {
+			colors[tokenKey] = {
+				value: {
+					base: `{colors.light.${tokenKey}}`,
+					_dark: `{colors.dark.${tokenKey}}`,
+				},
+			};
+		}
 	}
 
 	return { colors };

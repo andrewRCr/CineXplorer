@@ -427,8 +427,8 @@ const Login = () => {
 			{/* Login Box - Centered */}
 			<Box position="relative" zIndex={1} w="480px">
 				<Box
-					bg="card"
-					color="card-foreground"
+					bg="layer-01"
+					color="foreground"
 					p={10}
 					rounded="lg"
 					boxShadow="xl"
@@ -582,7 +582,7 @@ const Login = () => {
 								<Text
 									position="relative"
 									textAlign="center"
-									bg="card"
+									bg="layer-01"
 									px={3}
 									mx="auto"
 									w="fit-content"

@@ -74,8 +74,8 @@ const Register = () => {
 			{/* Register Box - Centered */}
 			<Box position="relative" zIndex={1} w="480px">
 				<Box
-					bg="card"
-					color="card-foreground"
+					bg="layer-01"
+					color="foreground"
 					p={10}
 					rounded="lg"
 					boxShadow="xl"

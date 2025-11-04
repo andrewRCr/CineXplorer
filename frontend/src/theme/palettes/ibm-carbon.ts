@@ -3,9 +3,13 @@
  *
  * Official IBM Carbon Design System colors for light and dark modes.
  * Source: https://carbondesignsystem.com/guidelines/color/overview/
+ * Package: @carbon/themes v11.0.0
  *
- * All values verified from official Carbon v10.7.0 design tokens (2025-11-02).
+ * All values verified from official Carbon v11.0.0 design tokens.
  * Carbon uses a 3-layer system with semantic token names that map to the IBM Design Language color scale.
+ *
+ * **IMPORTANT:** This file contains ONLY official Carbon tokens.
+ * CineXplorer-specific extensions (rating colors, custom semantics) are in adapter/extensions.ts.
  */
 
 /**
@@ -15,13 +19,22 @@
  * Values are official hex colors from IBM Carbon Design System v10.
  */
 export const ibmCarbonPaletteLight = {
-	// Base colors
-	/** Primary page background - Pure white */
+	// Base colors - Layer System
+	/** Primary page background - Pure white (background) */
 	bg_default: "#ffffff",
-	/** Cards, panels, first layer (ui-01) */
+	/** First layer - Cards, panels (layer-01, gray-10) */
+	bg_layer_01: "#f4f4f4",
+	/** Second layer - Modals, elevated surfaces (layer-02, alternates to white) */
+	bg_layer_02: "#ffffff",
+	/** Third layer - Highest elevation, dropdowns over modals (layer-03, gray-10) */
+	bg_layer_03: "#f4f4f4",
+
+	// Legacy aliases (deprecated - use bg_layer_* tokens)
+	/** @deprecated Use bg_layer_01 */
 	bg_muted: "#f4f4f4",
-	/** Elevated surfaces, second layer (ui-02) - uses white */
+	/** @deprecated Use bg_layer_02 */
 	bg_inset: "#ffffff",
+
 	/** Selected state backgrounds */
 	bg_emphasis: "#e0e0e0",
 	/** Field/layer hover state (field-01-hover, gray10Hover) */
@@ -55,10 +68,22 @@ export const ibmCarbonPaletteLight = {
 	/** Danger button hover (hover-danger) */
 	bg_danger_hover: "#ba1b23",
 
-	// Border colors
-	/** Primary borders, dividers (ui-03) */
+	// Border colors - Hierarchy
+	/** Subtle borders on background/layer-01 (border-subtle-00, gray-20) */
+	border_subtle_00: "#e0e0e0",
+	/** Subtle borders on layer-02 (border-subtle-02, gray-20) */
+	border_subtle_02: "#e0e0e0",
+	/** Strong borders on layer-01 (border-strong-01, gray-50) */
+	border_strong_01: "#8d8d8d",
+	/** Strong borders on layer-02 (border-strong-02, gray-50) */
+	border_strong_02: "#8d8d8d",
+	/** Strong borders on layer-03 (border-strong-03, gray-50) */
+	border_strong_03: "#8d8d8d",
+
+	// Legacy aliases (deprecated - use border hierarchy tokens)
+	/** @deprecated Use border_subtle_00 */
 	border_default: "#e0e0e0",
-	/** Strong borders (ui-04) */
+	/** @deprecated Use border_strong_01/02/03 */
 	border_muted: "#8d8d8d",
 
 	// Button colors
@@ -78,14 +103,6 @@ export const ibmCarbonPaletteLight = {
 	fg_warning: "#f1c21b",
 	/** Info state (support-04) - OFFICIAL Carbon color */
 	fg_info: "#0043ce",
-
-	// ===================================================================
-	// EXTENDED COLORS (Adapted for CineXplorer - Not Official Carbon)
-	// ===================================================================
-
-	// Movie-specific - Rating
-	/** Rating display (ADAPTED - IMDb gold adjusted for Carbon's professional aesthetic) */
-	fg_rating: "#d4a518",
 } as const;
 
 /**
@@ -95,13 +112,22 @@ export const ibmCarbonPaletteLight = {
  * Maintains IBM's strict accessibility standards (WCAG AA).
  */
 export const ibmCarbonPaletteDark = {
-	// Base colors
-	/** Primary page background - Near black (gray-100) */
+	// Base colors - Layer System
+	/** Primary page background - Near black (background, gray-100) */
 	bg_default: "#161616",
-	/** Cards, panels, first layer (ui-01, gray-90) */
+	/** First layer - Cards, panels (layer-01, gray-90) */
+	bg_layer_01: "#262626",
+	/** Second layer - Modals, elevated surfaces (layer-02, gray-80) */
+	bg_layer_02: "#393939",
+	/** Third layer - Highest elevation, dropdowns over modals (layer-03, gray-70) */
+	bg_layer_03: "#525252",
+
+	// Legacy aliases (deprecated - use bg_layer_* tokens)
+	/** @deprecated Use bg_layer_01 */
 	bg_muted: "#262626",
-	/** Elevated surfaces, second layer (ui-02, gray-80) */
+	/** @deprecated Use bg_layer_02 */
 	bg_inset: "#393939",
+
 	/** Selected state backgrounds */
 	bg_emphasis: "#393939",
 	/** Field/layer hover state (field-01-hover, gray90Hover) */
@@ -135,10 +161,22 @@ export const ibmCarbonPaletteDark = {
 	/** Danger button hover (hover-danger) */
 	bg_danger_hover: "#ba1b23",
 
-	// Border colors
-	/** Primary borders, dividers (ui-03) */
+	// Border colors - Hierarchy (CRITICAL FIX: #393939 borders invisible on layer-02!)
+	/** Subtle borders on background/layer-01 (border-subtle-00, gray-80) */
+	border_subtle_00: "#393939",
+	/** Subtle borders on layer-02 (border-subtle-02, gray-70) */
+	border_subtle_02: "#525252",
+	/** Strong borders on layer-01 (border-strong-01, gray-60) - VISIBLE on #262626 */
+	border_strong_01: "#6f6f6f",
+	/** Strong borders on layer-02 (border-strong-02, gray-50) - VISIBLE on #393939 */
+	border_strong_02: "#8d8d8d",
+	/** Strong borders on layer-03 (border-strong-03, gray-40) - VISIBLE on #525252 */
+	border_strong_03: "#a8a8a8",
+
+	// Legacy aliases (deprecated - use border hierarchy tokens)
+	/** @deprecated Use border_subtle_00 */
 	border_default: "#393939",
-	/** Strong borders (ui-04) */
+	/** @deprecated Use border_strong_01 */
 	border_muted: "#6f6f6f",
 
 	// Button colors
@@ -158,14 +196,6 @@ export const ibmCarbonPaletteDark = {
 	fg_warning: "#f1c21b",
 	/** Info state (support-04, blue-50) - OFFICIAL Carbon color (lighter blue for dark) */
 	fg_info: "#4589ff",
-
-	// ===================================================================
-	// EXTENDED COLORS (Adapted for CineXplorer - Not Official Carbon)
-	// ===================================================================
-
-	// Movie-specific - Rating
-	/** Rating display (ADAPTED - reuses Carbon yellow for consistency in dark mode) */
-	fg_rating: "#f1c21b",
 } as const;
 
 /**

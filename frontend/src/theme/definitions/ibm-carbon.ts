@@ -49,9 +49,9 @@ export const ibmCarbonTheme: Theme = {
 		"on-warning": pLight.fg_default, // Dark text on light yellow (better contrast)
 		"on-destructive": pLight.fg_onEmphasis, // White text on dark red
 		"on-info": pLight.fg_onEmphasis, // White text on dark blue
-		// Rating colors
-		rating: pLight.fg_rating,
-		"rating-foreground": pLight.fg_default,
+		// Rating colors (IMDb gold standard - was pLight.fg_rating before extraction)
+		rating: "#d4a518",
+		"rating-foreground": "#000000",
 		// Surface elevation
 		"surface-elevated": pLight.bg_emphasis,
 		// Badge colors
@@ -94,8 +94,8 @@ background: pDark.bg_default,
 		"on-warning": pDark.fg_onEmphasis, // Dark text on light yellow (IBM uses lighter yellow)
 		"on-destructive": pDark.fg_default, // White text on dark red
 		"on-info": pDark.fg_default, // White text on dark blue
-		rating: pDark.fg_rating,
-		"rating-foreground": pDark.fg_onEmphasis,
+		rating: "#f1c21b", // TEMP: hardcoded after palette extraction
+		"rating-foreground": "#000000",
 		"surface-elevated": pDark.bg_emphasis,
 		badge: pDark.bg_button_secondary,
 		"badge-foreground": pDark.fg_muted,

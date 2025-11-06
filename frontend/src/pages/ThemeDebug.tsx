@@ -22,7 +22,7 @@ export default function ThemeDebug() {
       <Box
         position="sticky"
         top="var(--chakra-sizes-layout-navbar)"
-        bg="layer-01"
+        bg="layer-02"
         borderBottomWidth="1px"
         borderColor="border"
         px={6}

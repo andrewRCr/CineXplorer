@@ -807,92 +807,211 @@ on timeline and priorities.
 
 ---
 
-**Phase 3 Complete Summary:**
+### **Phase 3.5:** Review & Validation (Local Testing)
 
-**Branch:** `claude/theme-phase3-component-migration-011CUoR62JhE7AQFJrCVSXzk` (pushed to remote)
+**Purpose:** Visual testing and issue remediation for migrated components across all 6 theme combinations before merge.
 
-**Total commits:** 7 atomic commits
-
-- Task 3.1: 1 commit (theme integration)
-- Task 3.2: 3 commits (Batch 1 - simple migrations)
-- Task 3.3: 2 commits (Batch 2 - enhanced migrations)
-- Task 3.4: 1 commit (Batch 3 - optional enhancements)
-
-**Total components migrated:** 16 components with token changes
-
-- Batch 1: 9 components (simple token replacements)
-- Batch 2: 5 components (with enhancements)
-- Batch 3: 2 components (with enhancements)
-
-**Token replacement statistics:**
-
-- `card` → `layer-01`: ~15 instances
-- `surface-elevated` → `layer-02`: ~2 instances
-- `card-foreground` → `foreground`: ~10 instances
-- `popover` → `layer-03`: 1 instance
-- `accent/8` → `layer-hover-01` or `layer-hover-02`: ~8 instances
-- `accent/12` → `layer-selected-01`: 2 instances
-- `muted` → `layer-02` (panels) or `layer-selected-01` (active states): 3 instances
-
-**Enhancements applied:**
-
-- Border hierarchy: 3 components (MovieCard, NavBarUserMenu, AdvancedMovieFilters)
-- Shadow system: 3 components (MovieCard, NavBarUserMenu, AdvancedMovieFilters)
-- Interaction states: 6 components (MovieCard, NavBarUserMenu, SidebarContent, PaginationCtrl, MobileMenuButton, GenreSelector)
-
-**Quality gates:**
-
-- ✅ TypeScript type checking: 0 errors (all commits)
-- ✅ Parallel systems: Both old and new tokens available
-- ✅ No breaking changes: Old components still functional
-- ✅ All migrated components verified and rendering correctly
-
-**Next steps:**
-
-- Task 3.5 (Cleanup) is optional - parallel systems allow indefinite coexistence
-- Resume main work: `tasks-theme-system-modernization.md` at Task 4.4.5 (Watchlist page)
-- Merge this branch into `technical/service-layer-modernization` when ready
+**Context:** Phase 3.1-3.4 completed in Claude Code web (component migrations). Local review discovered token system
+gaps, layout concerns, and component-specific issues requiring remediation before merge could proceed.
 
 ---
 
-- [ ] **3.5 Cleanup: Remove old definitions files**
+- [x] **3.5.0 Address layout system concerns (prerequisite for review)**
 
-    **Goal:** Remove deprecated theme definitions after all components migrated and verified.
+    **Context:** During initial review of migrated components, discovered pre-existing layout inconsistencies that would
+    block validation of component migrations. Paused theme review to modernize layout token system, enabling clearer
+    assessment of theme-specific issues vs layout issues.
 
-    **Critical:** Only proceed after Batch 1 complete and verified. Batch 2/3 are optional.
+    **Work completed:** Full layout constants modernization (separate incidental task list)
 
-    - [ ] **3.5.1 Verify no old token usage remaining**
-        - Grep for `bg="card"` across components (should be 0 matches in migrated components)
-        - Grep for `bg="surface-elevated"` (should be 0 matches)
-        - Grep for `color="card-foreground"` (should be 0 matches)
-        - Document any remaining old tokens (unmigrated components: Watchlist, ErrorBoundary OK)
+    **Task list:** `.arc/reference/archive/incidental/tasks-layout-constants-modernization.md`
 
-    - [ ] **3.5.2 Remove old system from createBaseTokens**
-        - Remove old token generation loop from `createBaseTokens()` function
-        - Keep only unified token generation
-        - Update Theme interface: remove `light` and `dark` properties (keep only `lightUnified`, `darkUnified`)
-        - Quality gate: Type checking passes (will show errors if components still use old tokens)
+    **Scope:**
+    - Created unified layout token system (ADR-007)
+    - Migrated responsive patterns to CSS display props
+    - Created LayoutDebug visualization page
+    - Comprehensive documentation (strategy-layout-tokens.md, 591 lines)
+    - Fixed 29 Footer tests for structural changes
 
-    - [ ] **3.5.3 Delete definitions directory**
-        - Delete `frontend/src/theme/definitions/github.ts`
-        - Delete `frontend/src/theme/definitions/ibm-carbon.ts`
-        - Delete `frontend/src/theme/definitions/gitlab-pajamas.ts`
-        - Delete `frontend/src/theme/definitions/` directory (if empty)
-        - Verify no import errors: `grep -r "definitions/" frontend/src/`
-        - Quality gate: No stray imports, type checking passes
+    **Completion:** 2025-11-06 | **Commits:** 4 commits (see archived task list)
 
-    - [ ] **3.5.4 Update imports and exports**
-        - Remove `ThemeColors` interface from `types.ts` (deprecated)
-        - Update any type imports in `theme/index.ts`
-        - Verify theme registry only uses `UnifiedTheme` properties
-        - Quality gate: Type checking passes, themes load correctly
+    **Rationale:** Layout tokens (spacing, sizing, responsive behavior) separate concern from theme tokens (colors,
+    shadows, borders). Modernizing layout system first allowed cleaner validation of theme implementation without layout
+    noise interfering with visual assessment.
 
-    **Final Verification After Cleanup:**
-    - [ ] All 6 theme combinations work correctly
-    - [ ] No console errors
-    - [ ] Type checking passes (0 errors)
-    - [ ] Frontend linting passes (0 errors)
-    - [ ] Components migrated in Batch 1-3 all display correctly
+- [x] **3.5.1 Light mode layer alternating pattern decision (ADR-008)**
+
+    **Context:** After layout work complete, resumed theme review. Layer system testing revealed light mode progressive
+    lightening strategy (inherited from dark mode approach) created insufficient contrast for 3-layer hierarchy.
+
+    **Decision:** Adopt Carbon's official alternating pattern for light mode across all themes (white → gray → white →
+    gray). Dark mode progressive lightening unchanged.
+
+    **Documentation:** ADR-008 created, partially supersedes ADR-006 light mode strategy
+
+    **Implementation:**
+    - Updated all three theme adapters (Carbon uses official tokens, Primer/Pajamas derive alternating)
+    - Removed A/B comparison from ThemeDebug (decision made)
+
+    **Commits:** 6 commits (feat/docs commits for ADR-008 implementation and documentation)
+
+- [x] **3.5.2 Shadow System Integration & Validation**
+
+    **Problem:** Shadow tokens (shadow-sm/md/lg) defined in adapters but never wired into Chakra UI token system.
+    `boxShadow="shadow-sm"` fails token lookup, shadows don't render on ThemeDebug or migrated components.
+
+    - [x] **3.5.2.1 Wire shadow tokens into Chakra UI system**
+        - Modified `createBaseTokens()` to extract shadow tokens separately from colors
+        - Modified `createSemanticTokens()` to create semantic shadow refs (light/dark mode)
+        - Modified `createThemeSystem()` to register shadows as separate token category
+        - Added comprehensive inline documentation explaining shadow architecture
+        - Type checking: 0 errors
+        - Commit: `feat(theme): wire shadow tokens into Chakra UI system`
+        - Verification: Shadows now render correctly on ThemeDebug page
+
+    - [x] **3.5.2.2 Visual validation across themes**
+        - Tested ThemeDebug Shadow System section in all 6 combinations
+        - Verified progressive depth: sm → md → lg visually distinct
+        - Confirmed design system philosophies evident:
+            - IBM Carbon: Minimal shadows (subtle, as expected)
+            - GitHub Primer: Heavy shadows (obvious, primary elevation indicator)
+            - GitLab Pajamas: Moderate shadows (balanced approach)
+        - Shadows render correctly on migrated components
+
+- [ ] **3.5.3 Border Hierarchy Validation**
+
+    - [ ] **3.5.3.1 Test border visibility in dark mode**
+        - Navigate to ThemeDebug Border Hierarchy section
+        - Test all 6 theme combinations (focus on dark modes)
+        - Verify `border-subtle-00` and `border-subtle-02` visible (not invisible)
+        - Verify `border-strong-01/02/03` sufficiently distinct from subtle variants
+        - Test on migrated components using border hierarchy
+        - Document any themes where borders fail visibility
+
+    - [ ] **3.5.3.2 Fix invisible border issues (if found)**
+        - Adjust border color derivation in affected theme adapters
+        - Re-test after adjustments across all themes
+        - Document changes and rationale (inline comments + commit message)
+
+- [ ] **3.5.4 Interaction State Validation**
+
+    **Known Issue:** NavBarUserMenu dark mode hover appears invisible (user-reported during initial review)
+
+    - [ ] **3.5.4.1 Test interaction states on ThemeDebug**
+        - Navigate to ThemeDebug Interaction States section
+        - Test `layer-hover-01/02` visibility in all 6 combinations
+        - Test `layer-selected-01/02` distinction
+        - Test `layer-active-01/02` clarity
+        - Document which states fail in which themes/modes
+
+    - [ ] **3.5.4.2 Fix NavBarUserMenu dark mode hover**
+        - Likely cause: `layer-hover-02` not distinct enough from `layer-02` in dark mode
+        - Adjust hover derivation in affected adapters (higher contrast adjustment needed)
+        - Re-test NavBarUserMenu across all themes
+        - Verify hover state visible and provides adequate feedback
+
+    - [ ] **3.5.4.3 Fix other interaction state issues (if found)**
+        - Address any issues discovered in 3.5.4.1
+        - Re-test after fixes across all themes
+
+- [ ] **3.5.5 Component-Specific Polish**
+
+    - [ ] **3.5.5.1 Sidebar visual hierarchy**
+        - Fix header background to match navbar (`layer-01` consistency)
+        - Update LOG button to use primary colors (`bg="primary"`, `color="primary-foreground"`)
+        - Add elevation to link container (`layer-02` background or stronger border)
+        - Fix active/selected navlinks text color (difficult to read, likely using wrong tokens)
+        - Test across all themes
+
+    - [ ] **3.5.5.2 Featured page button visibility**
+        - Investigate why 2/3 buttons appear invisible (same color as background)
+        - Apply appropriate button styling (outline style with border, or filled secondary style)
+        - Verify button hierarchy matches design intent (primary vs secondary distinction)
+        - Test across all themes
+
+    - [ ] **3.5.5.3 AdvancedMovieFilters elevation**
+        - Add visual elevation to filter panel (`layer-02` or `boxShadow="shadow-sm"`)
+        - Currently uses same background as page (no visual distinction)
+        - Test across themes
+
+    - [ ] **3.5.5.4 Form placeholder precision**
+        - Change max rating placeholder from `10.0` to `10`
+        - AdvancedMovieFilters component only
+        - Simple string change, no theme implications
+
+    - [ ] **3.5.5.5 Footer theme select control popover background**
+        - Investigate incorrect popover background (flat black/white, not theme-consistent)
+        - Should use appropriate layer token (`layer-03` for dropdown menu)
+        - Verify theme selector dropdown uses proper elevation and colors
+        - Test across all themes
+
+- [ ] **3.5.6 Login session bug investigation**
+
+    **Priority:** Unknown (evaluate when reached)
+
+    **Issue:** User reported session appeared lost during testing (no explicit logout)
+
+    **Context:** Discovered during Phase 3 review visual testing
+
+    - [ ] **3.5.6.1 Attempt to reproduce session loss**
+        - Test session persistence during normal navigation
+        - Test session across browser refreshes
+        - Test session timeout behavior
+        - Document reproduction steps if found
+
+    - [ ] **3.5.6.2 Evaluate and triage**
+        - If reproduced: Assess severity (critical vs low priority)
+        - If not reproduced: Document as potential testing artifact
+        - If critical: Create separate task list for session management investigation
+        - If low priority: Create backlog item for future work
+        - If testing artifact: Close with documentation
+
+---
+
+### **Phase 3.6:** Cleanup (REQUIRED)
+
+**Goal:** Remove deprecated theme definitions after all components migrated and verified.
+
+**CRITICAL:** This cleanup is REQUIRED for Phase 3 completion. Parallel systems allowed during migration, but must be
+removed before declaring work complete and merging.
+
+---
+
+- [ ] **3.6.1 Verify no old token usage remaining**
+
+    - Grep for `bg="card"` across components (should be 0 matches in migrated components)
+    - Grep for `bg="surface-elevated"` (should be 0 matches)
+    - Grep for `color="card-foreground"` (should be 0 matches)
+    - Document any remaining old tokens (unmigrated components: Watchlist, ErrorBoundary OK)
+
+- [ ] **3.6.2 Remove old system from theme infrastructure**
+
+    - Remove old token generation loop from `createBaseTokens()` function
+    - Keep only unified token generation (`lightUnified`/`darkUnified`)
+    - Update Theme interface: remove `light` and `dark` properties (breaking change)
+    - Remove `ThemeColors` interface entirely (deprecated since Phase 3.1)
+    - Quality gate: Type checking will show errors if components still use old tokens
+
+- [ ] **3.6.3 Remove definitions/ directory**
+
+    - Delete `frontend/src/theme/definitions/` directory entirely
+    - Remove: `github.ts`, `ibm-carbon.ts`, `gitlab-pajamas.ts`, `cinexplorer-original.ts`
+    - Update imports in any remaining files referencing definitions
+    - Quality gate: Frontend builds without errors
+
+- [ ] **3.6.4 Update documentation**
+
+    - Mark strategy-semantic-tokens.md as covering color tokens only (shadows separate)
+    - Verify all theme-related docs reference adapter system (not definitions)
+    - Update any component migration guides to reference unified tokens only
+
+- [ ] **3.6.5 Final verification**
+
+    - Full quality gates: Backend tests, frontend tests, type checking, linting
+    - Visual regression testing: All 6 theme combinations
+    - All 34 migrated components + 2 unmigrated render correctly
+    - No console errors related to theme tokens
+    - Ready for merge into `technical/service-layer-modernization`
 
 ### **Phase 4:** Verification & Documentation
 

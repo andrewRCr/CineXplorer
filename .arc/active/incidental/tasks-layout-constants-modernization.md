@@ -113,43 +113,48 @@ Migration complete, verification paused. Use this opportunity to restructure for
         - ✅ Linting: 0 violations
         - Theme switching verified working (existing commits used theme system)
 
-- [ ] **2.2 Create layout token foundation**
+- [x] **2.2 Create layout token foundation**
 
     **Goal:** Set up Chakra UI v3 token architecture for layout values.
 
-    - [ ] **2.2.1 Create `theme/layout/` directory structure**
-        - Create directory: `frontend/src/theme/layout/`
+    - [x] **2.2.1 Create `theme/layout/` directory structure**
+        - ✅ Created `frontend/src/theme/layout/` directory
         - Parallel to `theme/color/` for symmetry
 
-    - [ ] **2.2.2 Create `theme/layout/foundations.ts` with base layout values**
-        - Define `navbar-height: '93px'` (56px top + 36px bottom + 1px border)
-        - Define `sidebar-width: '280px'`
-        - Define `footer-height: '64px'` (approximate)
-        - Export as Chakra token format
+    - [x] **2.2.2 Create `theme/layout/foundations.ts` with base layout values**
+        - ✅ Created with Chakra token format
+        - `navbar-height: '93px'` (56px + 36px + 1px border)
+        - `sidebar-width: '280px'`
+        - `footer-height: '64px'` (approximate)
+        - Comprehensive JSDoc comments documenting each token
 
-    - [ ] **2.2.3 Create `theme/layout/semantic-tokens.ts` for responsive tokens**
-        - Define `layout.navbar` with responsive values
-        - Define `layout.sidebar` (0 on mobile, 280px on desktop)
-        - Define `layout.footer`
-        - Reference foundation tokens using `{sizes.navbar-height}` syntax
+    - [x] **2.2.3 Create `theme/layout/semantic-tokens.ts` for responsive tokens**
+        - ✅ Created responsive layout tokens
+        - `layout-navbar`: References foundation (same all breakpoints)
+        - `layout-sidebar`: Responsive (0px mobile, 280px desktop)
+        - `layout-footer`: References foundation (same all breakpoints)
+        - Uses Chakra token reference syntax: `{sizes.token-name}`
 
-    - [ ] **2.2.4 Create `theme/layout/z-index.ts` for stacking context**
-        - Define semantic z-index scale
-        - Values: `base: 1`, `sidebar: 5`, `themeDebug: 5`, `layoutDebug: 5`, `footer: 6`, `navbar: 10`, `dropdown: 9999`
-        - Export as semantic tokens
+    - [x] **2.2.4 Create `theme/layout/z-index.ts` for stacking context**
+        - ✅ Created semantic z-index scale with clear hierarchy
+        - Values: `base: 1`, `sidebar: 5`, `theme-debug: 5`, `layout-debug: 5`, `footer: 6`, `navbar: 10`, `dropdown: 9999`
+        - Comprehensive JSDoc comments explaining scale philosophy
 
-- [ ] **2.3 Integrate tokens into Chakra theme config**
+- [x] **2.3 Integrate tokens into Chakra theme config**
 
-    - [ ] **2.3.1 Update `theme/index.ts` to include layout tokens**
-        - Import foundation sizes from `layout/foundations`
-        - Import semantic layout tokens from `layout/semantic-tokens`
-        - Import semantic z-index tokens from `layout/z-index`
-        - Merge into theme config using `defineConfig`
+    - [x] **2.3.1 Update `theme/index.ts` to include layout tokens**
+        - ✅ Imported all three layout token files
+        - ✅ Merged layout foundations into `baseConfig.theme.tokens`
+        - ✅ Merged z-index tokens into `baseConfig.theme.tokens`
+        - ✅ Merged semantic layout tokens into `baseConfig.theme.semanticTokens`
+        - ✅ Added default export for Chakra CLI typegen compatibility
 
-    - [ ] **2.3.2 Generate TypeScript types for tokens**
-        - Run: `npx @chakra-ui/cli typegen ./src/theme/index.ts`
-        - Verify generated types in `styled-system/tokens`
-        - Test autocomplete works in IDE
+    - [x] **2.3.2 Generate TypeScript types for tokens**
+        - ✅ Ran: `npx @chakra-ui/cli typegen ./src/theme/index.ts`
+        - ✅ Type generation succeeded (conditions, recipes, utilities, tokens, system)
+        - ✅ TypeScript compilation passes (0 errors)
+        - ✅ IDE autocomplete verified working (layout-navbar, zIndex tokens)
+        - ✅ Fixed default theme consistency (GitHub → IBM Carbon)
 
 ### **Phase 3:** Core Component Migration
 

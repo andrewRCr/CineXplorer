@@ -19,6 +19,11 @@ import { ibmCarbonTheme } from "./definitions/ibm-carbon";
 import { gitlabPajamasTheme } from "./definitions/gitlab-pajamas";
 import type { Theme, ThemeColors } from "./types";
 
+// Import layout tokens
+import { layoutFoundations } from "./layout/foundations";
+import { layoutSemanticTokens } from "./layout/semantic-tokens";
+import { zIndexSemanticTokens } from "./layout/z-index";
+
 /**
  * Theme Registry
  *
@@ -119,7 +124,7 @@ function createSemanticTokens(theme: Theme) {
 }
 
 /**
- * Base theme configuration (fonts, global styles, etc.)
+ * Base theme configuration (fonts, layout foundations, global styles, etc.)
  */
 const baseConfig = defineConfig({
     theme: {
@@ -141,6 +146,14 @@ const baseConfig = defineConfig({
                     value: `'Source Sans 3', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif`,
                 },
             },
+            // Layout foundation tokens (base sizes)
+            ...layoutFoundations,
+            // Z-index scale
+            ...zIndexSemanticTokens,
+        },
+        semanticTokens: {
+            // Layout semantic tokens (responsive sizing)
+            ...layoutSemanticTokens,
         },
     },
     globalCss: {
@@ -152,17 +165,17 @@ const baseConfig = defineConfig({
 });
 
 /**
- * Create a Chakra UI system for a specific theme.
+ * Create a Chakra UI system for a specific color theme.
  *
  * This is the core function for dynamic theme switching. It creates a complete
- * Chakra UI system with base tokens and semantic tokens for the given theme.
+ * Chakra UI system combining the given color theme with global layout tokens.
  *
- * When the user switches themes, we call this function with the new theme
+ * When the user switches themes, we call this function with the new color theme
  * and pass the resulting system to ChakraProvider, triggering a re-render
- * with the new color palette.
+ * with the new color palette. Layout tokens remain consistent across all themes.
  *
- * @param theme - Theme definition with light/dark color palettes
- * @returns Chakra UI system configured for the theme
+ * @param theme - Color theme definition with light/dark palettes
+ * @returns Chakra UI system configured with color theme + layout tokens
  */
 export function createThemeSystem(theme: Theme) {
     const baseTokens = createBaseTokens(theme);
@@ -180,9 +193,12 @@ export function createThemeSystem(theme: Theme) {
 }
 
 /**
- * Default system using GitHub theme.
+ * Default system using the default theme (IBM Carbon).
  */
-export const defaultSystem = createThemeSystem(githubTheme);
+export const defaultSystem = createThemeSystem(themeRegistry[defaultThemeName]);
+
+// Default export for Chakra CLI typegen
+export default defaultSystem;
 
 // Re-export types for external use
 export type { Theme, ThemeColors } from "./types";

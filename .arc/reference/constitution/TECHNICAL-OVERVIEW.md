@@ -35,8 +35,10 @@ The backend is a REST API built with Django and Django Ninja.
         - `environ/` - **Required** (no official stubs) - django-environ Env class
     - **Stub Maintenance**: Each stub documents version sync with django-types and upgrade procedures.
       The documentation also clarifies supplement vs required status.
-    - **Type Safety Goal**: Zero errors with documented acceptable information-level warnings (Django ORM limitations)
-    - **See**: [Type Safety Strategy](../strategies/project/strategy-type-safety.md) for complete Pyright-only approach and patterns
+    - **Type Safety Goal**: Zero errors with documented acceptable information-level warnings
+      (Django ORM limitations)
+    - **See**: [Type Safety Strategy](../strategies/project/strategy-type-safety.md) for complete
+      Pyright-only approach and patterns
 - **Key Libraries**:
     - `django-cors-headers` for managing Cross-Origin Resource Sharing (CORS).
     - `django-debug-toolbar` for debugging during development.
@@ -137,4 +139,5 @@ The project uses modern testing frameworks for both backend and frontend:
 **For testing methodology, quality gates, and test-first protocols**, see:
 
 - [DEVELOPMENT-RULES.md](DEVELOPMENT-RULES.md) - Test-first protocol, quality gates, command patterns
-- [Testing Methodology Strategy](../strategies/project/strategy-testing-methodology.md) - Complete testing philosophy and patterns
+- [Testing Methodology Strategy](../strategies/project/strategy-testing-methodology.md) - Complete testing
+  philosophy and patterns

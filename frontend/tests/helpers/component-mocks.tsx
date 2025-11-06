@@ -19,7 +19,6 @@
  * - Reference implementations (copy-paste into test files)
  * - Documentation of standard mock patterns
  */
-import React from 'react';
 
 /**
  * Mock for ThemeSelector component

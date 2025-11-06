@@ -4,7 +4,7 @@
 
 import { ibmCarbonPaletteLight as pLight, ibmCarbonPaletteDark as pDark } from "../palettes/ibm-carbon";
 import type { Theme } from "../types";
-import { createUnifiedTheme } from "../adapter";
+import { createUnifiedTheme } from "../color";
 
 export const ibmCarbonTheme: Theme = {
     name: "ibm-carbon",

@@ -4,7 +4,7 @@
 
 import { gitlabPajamasPaletteLight as pLight, gitlabPajamasPaletteDark as pDark } from "../palettes/gitlab-pajamas";
 import type { Theme } from "../types";
-import { createUnifiedTheme } from "../adapter";
+import { createUnifiedTheme } from "../color";
 
 export const gitlabPajamasTheme: Theme = {
     name: "gitlab-pajamas",

@@ -9,7 +9,7 @@
 
 import { githubPaletteLight as pLight, githubPaletteDark as pDark } from "../palettes/github-primer";
 import type { Theme } from "../types";
-import { createUnifiedTheme } from "../adapter";
+import { createUnifiedTheme } from "../color";
 
 /**
  * GitHub Primer theme for CineXplorer.

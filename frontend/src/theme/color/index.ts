@@ -12,7 +12,7 @@
  *
  * **Usage in Theme System:**
  * ```typescript
- * import { createUnifiedTheme } from "./adapter";
+ * import { createUnifiedTheme } from "./color";
  *
  * // Create adapted theme
  * const unifiedTheme = createUnifiedTheme("github", "light");
@@ -38,14 +38,14 @@ export type { UnifiedTheme } from "./types";
 import type { UnifiedTheme } from "./types";
 
 // Adapter function exports (Phase 2)
-export { createGithubAdapter } from "./mappings/github-primer";
-export { createCarbonAdapter } from "./mappings/ibm-carbon";
-export { createPajamasAdapter } from "./mappings/gitlab-pajamas";
+export { createGithubAdapter } from "./adapters/github-primer";
+export { createCarbonAdapter } from "./adapters/ibm-carbon";
+export { createPajamasAdapter } from "./adapters/gitlab-pajamas";
 
 // Import for use within this module
-import { createGithubAdapter } from "./mappings/github-primer";
-import { createCarbonAdapter } from "./mappings/ibm-carbon";
-import { createPajamasAdapter } from "./mappings/gitlab-pajamas";
+import { createGithubAdapter } from "./adapters/github-primer";
+import { createCarbonAdapter } from "./adapters/ibm-carbon";
+import { createPajamasAdapter } from "./adapters/gitlab-pajamas";
 
 // Utility exports (for adapter implementations)
 export {

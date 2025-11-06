@@ -5,7 +5,7 @@
  * Uses semantic token naming inspired by shadcn/ui, implemented for Chakra UI v3.
  */
 
-import type { UnifiedTheme } from "./adapter/types";
+import type { UnifiedTheme } from "./color/types";
 
 /**
  * Theme color palette with semantic token naming.

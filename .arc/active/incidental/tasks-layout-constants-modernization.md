@@ -437,39 +437,44 @@ Migration complete, verification paused. Use this opportunity to restructure for
     - ✅ Aligns with Carbon layer elevation standard (ADR-006)
     - ✅ Semantic correctness: sticky headers overlay content, should use layer-02
 
-### **Phase 6:** Validation and Documentation
+### **Phase 6:** Documentation
 
-**Purpose:** Ensure migrations work correctly and document patterns for future reference.
+**Purpose:** Create comprehensive strategy documentation for layout token system.
 
-- [ ] **6.1 Add development-time validation (optional)**
+**Rationale:** Validation tasks (6.1, 6.2 from original plan) deemed unnecessary:
 
-    - [ ] **6.1.1 Create useLayoutValidation hook**
-        - Dev-mode only: Compare actual rendered height vs token value
-        - Console warning on mismatch
-        - File: `frontend/src/hooks/useLayoutValidation.ts`
+- LayoutDebug page provides better visual validation than runtime hooks
+- Manual visual regression sufficient for current project scope
+- Focus on actionable documentation instead
 
-    - [ ] **6.1.2 Integrate validation into NavBar (optional)**
-        - Use hook to validate navbar height
-        - Only runs in development mode
+- [x] **6.1 Create layout tokens strategy document**
 
-- [ ] **6.2 Visual regression test setup (optional, documentation only)**
+    **Completed:** Created comprehensive strategy-layout-tokens.md (400+ lines).
 
-    - [ ] **6.2.1 Document Playwright test pattern for layout validation**
-        - Example test checking navbar height
-        - Example snapshot test for layout structure
-        - Note: Implementation deferred, just document pattern
+    - [x] **6.1.1 Create strategy-layout-tokens.md**
+        - ✅ File: `.arc/reference/strategies/project/style/strategy-layout-tokens.md`
+        - ✅ Parallel to existing `strategy-semantic-tokens.md` (color-focused)
+        - ✅ Parallel to existing `strategy-border-system.md`
+        - ✅ Version 1.0, comprehensive documentation
 
-- [ ] **6.3 Update documentation**
+    - [x] **6.1.2 Document token system architecture**
+        - ✅ Three layers: foundations, semantic tokens, z-index
+        - ✅ Code examples for each layer
+        - ✅ References ADR-007 for architectural context
+        - ✅ Cross-references color strategy doc
 
-    - [ ] **6.3.1 Add JSDoc comments to theme token files**
-        - Document token purposes and usage
-        - Provide examples for common patterns
-        - Note dependencies and calculations
+    - [x] **6.1.3 Document decision trees and patterns**
+        - ✅ Decision tree: layout tokens vs Chakra spacing scale
+        - ✅ Three access patterns: Chakra props, CSS vars, useToken hook
+        - ✅ Responsive patterns: CSS display props vs useBreakpointValue
+        - ✅ Real migration examples from Phase 4 (AppLayout, NavBar, MovieCard)
+        - ✅ When to use useBreakpointValue (behavioral logic only)
 
-    - [ ] **6.3.2 Document when to use tokens vs Chakra scale**
-        - Tokens: Layout dimensions (navbar, sidebar)
-        - Chakra scale: Generic spacing (padding, margins)
-        - Add to theme file comments
+    - [x] **6.1.4 Document LayoutDebug page usage**
+        - ✅ How to access and what it shows (8 sections)
+        - ✅ Using for validation after changes
+        - ✅ Debugging layout issues
+        - ✅ Interpreting token values and breakpoint behavior
 
 ### **Phase 7:** Final Quality Gates
 

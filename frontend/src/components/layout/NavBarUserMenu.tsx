@@ -21,6 +21,9 @@ const NavBarUserMenu = () => {
   const [isOpen, setIsOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // useBreakpointValue acceptable here: controls menu interaction behavior, not visibility.
+  // See ADR-007 for CSS-vs-JS responsive patterns.
   const isMobile =
     useBreakpointValue({ base: true, lg: false }, { ssr: false }) ?? true;
 

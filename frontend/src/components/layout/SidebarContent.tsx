@@ -23,6 +23,9 @@ export const SidebarContent: React.FC<SidebarContentProps> = ({
 }) => {
   const location = useLocation();
   const navigate = useNavigate();
+
+  // useBreakpointValue acceptable here: controls navigation click behavior (close drawer on mobile).
+  // See ADR-007 for CSS-vs-JS responsive patterns.
   const isMobile =
     useBreakpointValue({ base: true, lg: false }, { ssr: false }) ?? true;
 

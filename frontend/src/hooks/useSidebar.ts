@@ -21,11 +21,12 @@ export interface UseSidebarReturn {
  */
 export const useSidebar = (): UseSidebarReturn => {
     const [isOpen, setIsOpen] = useState(false);
-    
-    // Determine if we're in mobile mode
-    const isMobile = useBreakpointValue({ 
-        base: true, 
-        lg: false 
+
+    // useBreakpointValue acceptable here: controls behavioral logic (drawer vs persistent),
+    // not just visibility. See ADR-007 for CSS-vs-JS responsive patterns.
+    const isMobile = useBreakpointValue({
+        base: true,
+        lg: false
     }, { ssr: false }) ?? true;
     
     // On desktop (lg+), sidebar should be persistent and visible

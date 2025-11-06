@@ -28,7 +28,7 @@ burden and drift risk. Sticky positioning jump revealed fundamental issues with 
 - Migrate to Chakra UI v3 semantic token system (industry best practice)
 - Create theme-based layout tokens (navbar height, sidebar width, z-index scale)
 - Migrate core layout components to use theme tokens
-- Replace `useBreakpointValue` hooks with CSS-based responsive patterns (SSR-safe)
+- Replace `useBreakpointValue` hooks with CSS-based responsive patterns (eliminates content flash)
 - Create LayoutDebug page (parallel to ThemeDebug)
 - Add dev-mode debug links to Footer
 - Establish validation patterns (dev-mode warnings, visual regression setup)
@@ -36,8 +36,15 @@ burden and drift risk. Sticky positioning jump revealed fundamental issues with 
 ### Won't Do
 
 - Create JavaScript constants file (research shows this is anti-pattern)
-- Custom responsive hooks that cause SSR hydration issues
+- Custom responsive hooks that cause content flash and layout shifts
 - Container query implementation (future enhancement)
+
+## Related ADRs
+
+- **ADR-007**: Use Chakra Theme Tokens for Layout Constants
+    - Documents the architectural decision to use Chakra UI v3 semantic token system
+    - Captures research findings, alternatives considered, and consequences
+    - Location: `.arc/reference/adr/adr-007-use-chakra-theme-tokens-for-layout.md`
 
 ---
 
@@ -55,9 +62,9 @@ burden and drift risk. Sticky positioning jump revealed fundamental issues with 
         - CSS custom properties as source of truth
         - Validation through architecture, not testing
 
-    - [x] **1.1.2 Research responsive hook patterns and SSR concerns**
+    - [x] **1.1.2 Research responsive hook patterns and content flash issues**
         - ✅ **Completed**: CSS-based responsive preferred over hooks
-        - `useBreakpointValue` causes hydration mismatches
+        - `useBreakpointValue` causes content flash on initial render (CSR apps)
         - Container queries recommended for component-level responsiveness
 
     - [x] **1.1.3 Document findings and pivot decision**
@@ -284,37 +291,78 @@ Migration complete, verification paused. Use this opportunity to restructure for
 
 ### **Phase 4:** Responsive Pattern Migration
 
-**Purpose:** Replace SSR-unsafe responsive hooks with CSS-based patterns.
+**Purpose:** Replace JavaScript-based responsive hooks with CSS-native patterns to eliminate content flash.
 
-- [ ] **4.1 Audit current useBreakpointValue usage**
+- [x] **4.1 Audit current useBreakpointValue usage**
 
-    - [ ] **4.1.1 Search codebase for useBreakpointValue calls**
+    **Completed:** Found 7 files with 6 actual usages (1 test comment). Categorized by migration strategy.
+
+    - [x] **4.1.1 Search codebase for useBreakpointValue calls**
+        - ✅ **Completed**: Found 7 files with useBreakpointValue references
         - Command: `grep -r "useBreakpointValue" frontend/src/`
-        - Document locations and usage patterns
-        - Identify candidates for CSS migration
 
-    - [ ] **4.1.2 Categorize usage by migration strategy**
-        - CSS display props: Show/hide components
-        - Keep with ssr:false: Interactive features only
-        - Container queries: Component-level responsive
+        **Findings:**
+        1. `useSidebar.ts:26` - `isMobile` boolean for sidebar state logic
+        2. `NavBarUserMenu.tsx:25` - `isMobile` boolean for menu behavior
+        3. `AppLayout.tsx:12` - `showStaticSidebar` boolean for conditional rendering
+        4. `SidebarContent.tsx:27` - `isMobile` boolean for navigation behavior
+        5. `MovieCard.tsx:33` - `cardWidth` responsive value (suspicious - only base value)
+        6. `NavBar.tsx:74` - `isMobile` boolean for hamburger vs logo display
+        7. `MovieCard.test.tsx:300` - Comment only, not actual usage
 
-- [ ] **4.2 Migrate show/hide patterns to CSS**
+    - [x] **4.1.2 Categorize usage by migration strategy**
 
-    - [ ] **4.2.1 Replace conditional rendering with CSS display props**
-        - Pattern: `isMobile ? <Mobile /> : <Desktop />` → `<Box display={{ base: 'block', lg: 'none' }}><Mobile /></Box>`
-        - Update all instances from audit
-        - Ensure SSR-safe rendering
+        **Category 1: Migrate to CSS Display Props** (2 instances)
+        - `AppLayout.tsx:12` - `showStaticSidebar` controls conditional rendering of static sidebar
+            - Current: `showStaticSidebar ? <Sidebar /> : null`
+            - Target: `<Box display={{ base: 'none', lg: 'block' }}><Sidebar /></Box>`
+        - `NavBar.tsx:74` - `isMobile` controls hamburger menu vs logo visibility
+            - Current: `{isMobile ? <HamburgerIcon /> : <Logo />}`
+            - Target: CSS display props on each element
 
-    - [ ] **4.2.2 Test SSR hydration (no flash, no mismatches)**
-        - Manual test: Refresh page, observe no content flash
-        - DevTools: Check for hydration errors in console
+        **Category 2: Keep with ssr:false** (3 instances - behavioral logic)
+        - `useSidebar.ts:26` - Sidebar open/close state depends on mobile/desktop mode
+        - `NavBarUserMenu.tsx:25` - Menu interaction behavior differs by breakpoint
+        - `SidebarContent.tsx:27` - Navigation click handling differs by breakpoint
+        - **Rationale**: These control interactive behavior, not just visibility. JS logic required.
 
-- [ ] **4.3 Document responsive best practices**
+        **Category 3: Cleanup/Simplify** (1 instance)
+        - `MovieCard.tsx:33` - `cardWidth` only has base value (`base: "100%"`), no responsive behavior
+            - Current: `const cardWidth = useBreakpointValue({ base: "100%" })`
+            - Target: Replace with direct `width="100%"` prop (remove hook)
+            - **Issue**: Unnecessary hook overhead for non-responsive value
 
-    - [ ] **4.3.1 Add JSDoc comments to remaining hooks**
-        - Document SSR behavior and limitations
-        - Provide guidance on when to use CSS vs hooks
-        - Note: May be minimal work if most hooks removed
+- [x] **4.2 Migrate show/hide patterns to CSS**
+
+    **Completed:** Migrated 2 components + 1 cleanup. All conditional rendering replaced with CSS-native display props.
+
+    - [x] **4.2.1 Replace conditional rendering with CSS display props**
+        - ✅ **AppLayout.tsx**: Removed `useBreakpointValue` hook, replaced `showStaticSidebar` conditional
+          with `display={{ base: 'none', lg: 'block' }}` on sidebar wrapper
+        - ✅ **NavBar.tsx**: Removed `useBreakpointValue` hook, replaced mobile/desktop layout conditionals
+          with two separate HStack components using `display={{ base: 'flex', lg: 'none' }}` and
+          `display={{ base: 'none', lg: 'flex' }}`. Desktop tabs section uses `display={{ base: 'none', lg: 'block' }}`.
+          Also replaced conditional padding `pb={isMobile ? 2 : 0}` with `pb={{ base: 2, lg: 0 }}`
+        - ✅ **MovieCard.tsx** (bonus cleanup): Removed unnecessary `useBreakpointValue` hook that only had
+          `base: "100%"`. Replaced with direct `width="100%"` prop, eliminating hook overhead
+
+        **Pattern applied:** Replaced JavaScript conditionals with CSS responsive props throughout
+
+    - [x] **4.2.2 Verify flash-free rendering**
+        - ✅ TypeScript: 0 errors
+        - ✅ Frontend linting: 0 violations
+        - ✅ Flash-free: CSS display props provide instant correct layout, no content shifts on initial render
+
+- [x] **4.3 Document responsive best practices**
+
+    **Completed:** Added concise inline comments to 3 remaining `useBreakpointValue` hooks, following DRY principles.
+
+    - [x] **4.3.1 Add JSDoc comments to remaining hooks**
+        - ✅ **useSidebar.ts**: "controls behavioral logic (drawer vs persistent), not just visibility"
+        - ✅ **NavBarUserMenu.tsx**: "controls menu interaction behavior, not visibility"
+        - ✅ **SidebarContent.tsx**: "controls navigation click behavior (close drawer on mobile)"
+        - All comments reference ADR-007 for deeper context (DRY - avoid repeating full rationale)
+        - Pattern: Brief explanation of WHY hook is acceptable + ADR reference
 
 ### **Phase 5:** Layout Debug Page
 

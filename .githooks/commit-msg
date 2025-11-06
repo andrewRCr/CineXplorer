@@ -99,9 +99,9 @@ else
         if echo "$context_line" | grep -qE '\(Task [0-9]+(\.[0-9A-Za-z]+)+\)$'; then
             # Single task format - valid
             :
-        elif echo "$context_line" | grep -qE '\(Tasks [0-9]+(\.[0-9A-Za-z]+)+-[0-9A-Za-z]+\)$'; then
+        elif echo "$context_line" | grep -qE '\(Tasks [0-9]+(\.[0-9A-Za-z]+)+-[0-9]+(\.[0-9A-Za-z]+)*\)$'; then
             # Task range format (full or abbreviated) - valid
-            # Examples: (Tasks 2.3.6c-2.3.6e) or (Tasks 2.3.6c-e)
+            # Examples: (Tasks 2.2-2.3), (Tasks 2.3.6c-2.3.6e) or (Tasks 2.3.6c-e)
             :
         elif echo "$context_line" | grep -qE '\(Tasks [0-9]+(\.[0-9A-Za-z]+)+(, [0-9]+(\.[0-9A-Za-z]+)+)+\)$'; then
             # Multiple non-contiguous tasks - valid

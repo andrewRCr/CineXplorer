@@ -18,6 +18,16 @@ import NavBarUserMenu from "./NavBarUserMenu";
 import NavBarSearch from "./NavBarSearch";
 import MobileMenuButton from "./MobileMenuButton";
 
+/**
+ * Navbar height constant - single source of truth for layout calculations.
+ * Height includes both rows PLUS bottom border:
+ * - Top row (logo, search, user menu): ~56px
+ * - Bottom row (LOG + navigation tabs): ~36px
+ * - Bottom border: 1px
+ * Total: 93px
+ */
+export const NAVBAR_HEIGHT = "93px";
+
 // Reusable Logo and Title Component
 const LogoAndTitle = () => (
   <Link to={ROUTES.HOME} style={{ textDecoration: "none" }}>

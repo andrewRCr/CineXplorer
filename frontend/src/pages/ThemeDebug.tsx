@@ -2,6 +2,7 @@ import { Box, Text, VStack, HStack, Button } from "@chakra-ui/react";
 import { useThemeSelect } from "@/hooks/useThemeSelect";
 import { type ThemeName } from "@/theme";
 import { ColorModeButton, useColorMode } from "@/components/chakra/color-mode";
+import { NAVBAR_HEIGHT } from "@/components/layout/NavBar";
 
 /**
  * Theme System Debug Page
@@ -13,41 +14,53 @@ export default function ThemeDebug() {
   const { colorMode } = useColorMode();
 
   return (
-    <Box p={8} bg="background" color="foreground" minH="100vh">
-      <VStack align="stretch" gap={6} maxW="800px" mx="auto">
-        <Text fontSize="3xl" fontWeight="bold">Theme System Debug</Text>
+    <Box
+      bg="background"
+      color="foreground"
+      minH="100vh"
+    >
+      {/* Sticky Header - flush with navbar bottom, no gap */}
+      <Box
+        position="sticky"
+        top={NAVBAR_HEIGHT}
+        bg="layer-01"
+        borderBottomWidth="1px"
+        borderColor="border"
+        px={6}
+        py={3}
+        zIndex={5}
+        style={{ willChange: 'transform' }}
+      >
+        <HStack justify="space-between" gap={4} flexWrap="wrap">
+          {/* Title */}
+          <Text fontSize="xl" fontWeight="bold" flexShrink={0}>
+            Theme System Debug
+          </Text>
 
-        {/* Current State */}
-        <Box bg="layer-01" p={6} borderRadius="md" borderWidth="1px" borderColor="border">
-          <Text fontSize="xl" fontWeight="bold" mb={4}>Current State</Text>
-          <VStack align="stretch" gap={2}>
-            <Text><strong>Selected Theme:</strong> {theme}</Text>
-            <Text><strong>Color Mode:</strong> {colorMode}</Text>
-          </VStack>
-        </Box>
+          {/* Current State (Compact) */}
+          <Text fontSize="sm" color="foreground/80" flexShrink={0}>
+            {theme === 'ibm-carbon' ? 'IBM Carbon' : theme === 'github-primer' ? 'GitHub Primer' : 'GitLab Pajamas'} · {colorMode}
+          </Text>
 
-        {/* Theme Switcher */}
-        <Box bg="layer-01" p={6} borderRadius="md" borderWidth="1px" borderColor="border">
-          <Text fontSize="xl" fontWeight="bold" mb={4}>Quick Theme Switch</Text>
-          <VStack align="stretch" gap={3}>
-            <HStack wrap="wrap" gap={2}>
-              {(['ibm-carbon', 'github-primer', 'gitlab-pajamas'] as const).map((t) => (
-                <Button
-                  key={t}
-                  onClick={() => setTheme(t as ThemeName)}
-                  size="sm"
-                  variant={theme === t ? "solid" : "outline"}
-                >
-                  {t === 'ibm-carbon' ? 'IBM Carbon' : t === 'github-primer' ? 'GitHub Primer' : 'GitLab Pajamas'}
-                </Button>
-              ))}
-            </HStack>
-            <Box>
-              <ColorModeButton />
-            </Box>
-          </VStack>
-        </Box>
+          {/* Theme Switcher */}
+          <HStack gap={2} flexShrink={0}>
+            {(['ibm-carbon', 'github-primer', 'gitlab-pajamas'] as const).map((t) => (
+              <Button
+                key={t}
+                onClick={() => setTheme(t as ThemeName)}
+                size="sm"
+                variant={theme === t ? "solid" : "outline"}
+              >
+                {t === 'ibm-carbon' ? 'IBM' : t === 'github-primer' ? 'GitHub' : 'GitLab'}
+              </Button>
+            ))}
+            <ColorModeButton />
+          </HStack>
+        </HStack>
+      </Box>
 
+      {/* Content */}
+      <VStack align="stretch" gap={6} maxW="800px" mx="auto" p={8}>
         {/* Opacity Modifier Tests */}
         <Box bg="layer-01" p={6} borderRadius="md" borderWidth="1px" borderColor="border">
           <Text fontSize="xl" fontWeight="bold" mb={4}>Opacity Modifier Tests</Text>

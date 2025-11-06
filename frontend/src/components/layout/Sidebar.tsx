@@ -1,27 +1,22 @@
 import React from "react";
 import SidebarContent from "./SidebarContent";
 import { Box } from "@chakra-ui/react";
+import { NAVBAR_HEIGHT } from "./NavBar";
 
 /**
- * Sticky positioning offset for sidebar to eliminate visual "jump" when scrolling starts.
+ * Gap between navbar and sidebar (provides visual separation).
  *
- * This value is empirically determined to position the sidebar such that when it becomes
- * sticky, the visible content appears in the exact same position as when naturally positioned.
+ * Calculation breakdown:
+ * - Navbar height: 92px
+ * - Desired gap below navbar: 48px (3rem)
+ * - Content should start at: 92px + 48px = 140px
+ * - Internal padding in SidebarContent: 28px (pt={7})
+ * - Container must stick at: 140px - 28px = 112px
  *
- * DEPENDENCIES:
- * - NavBar height (~76px): Logo (60px) + padding (py={2} = 16px) + borders
- * - SidebarContent padding (pt={9} = 36px): Top padding that would cause visual jump
- * - Browser rendering: Additional ~2px for borders/margins
- *
- * IF YOU CHANGE:
- * - NavBar height or styling
- * - SidebarContent padding (py prop)
- * - Container or layout structure
- *
- * THEN UPDATE: This value may need adjustment. Test by scrolling and checking for
- * any visual "jump" of the sidebar content when sticky positioning activates.
+ * Formula: calc(92px + 3rem - 28px) = calc(92px + 48px - 28px) = 112px
  */
-const SIDEBAR_STICKY_TOP_OFFSET = "82px";
+const SIDEBAR_TOP_GAP = "3rem"; // 48px spacing below navbar
+const SIDEBAR_INTERNAL_PADDING = "28px"; // pt={7} in SidebarContent = 7 * 4px
 
 // Static sidebar component for desktop use
 const Sidebar: React.FC = () => {
@@ -30,13 +25,17 @@ const Sidebar: React.FC = () => {
       as="aside"
       w="280px"
       bg="layer-01"
-      boxShadow="2px 0 8px 0 rgba(0,0,0,0.08)"
+      borderRadius="md"
+      borderWidth="1px"
+      borderColor="border"
+      boxShadow="sm"
       position="sticky"
-      top={SIDEBAR_STICKY_TOP_OFFSET}
+      top={`calc(${NAVBAR_HEIGHT} + ${SIDEBAR_TOP_GAP} - ${SIDEBAR_INTERNAL_PADDING})`}
       alignSelf="flex-start"
-      maxH="100vh"
+      maxH={`calc(100vh - ${NAVBAR_HEIGHT})`}
       overflowY="auto"
       zIndex={1}
+      style={{ willChange: 'transform' }}
     >
       <SidebarContent />
     </Box>

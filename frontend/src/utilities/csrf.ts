@@ -9,8 +9,8 @@
  * Gets the CSRF token from the browser cookie.
  */
 export function getCsrfToken(): string | null {
-	const match = document.cookie.match(new RegExp("(^| )XSRF-TOKEN=([^;]+)"));
-	return match ? match[2] : null;
+    const match = document.cookie.match(new RegExp("(^| )XSRF-TOKEN=([^;]+)"));
+    return match ? match[2] : null;
 }
 
 /**
@@ -19,8 +19,8 @@ export function getCsrfToken(): string | null {
  * @param baseUrl - The base API URL to use for fetching the CSRF token.
  */
 export async function ensureCsrfTokenCookie(baseUrl: string): Promise<void> {
-	if (!getCsrfToken()) {
-		await fetch(`${baseUrl}/csrf/`, { credentials: "include" });
-		await new Promise((resolve) => setTimeout(resolve, 100));
-	}
+    if (!getCsrfToken()) {
+        await fetch(`${baseUrl}/csrf/`, { credentials: "include" });
+        await new Promise((resolve) => setTimeout(resolve, 100));
+    }
 }

@@ -19,12 +19,12 @@
  * Shadow values for a single theme/mode combination.
  */
 export interface ShadowValues {
-	/** Small shadow for subtle elevation (cards) */
-	sm: string;
-	/** Medium shadow for moderate elevation (popovers, dropdowns) */
-	md: string;
-	/** Large shadow for high elevation (modals, overlays) */
-	lg: string;
+    /** Small shadow for subtle elevation (cards) */
+    sm: string;
+    /** Medium shadow for moderate elevation (popovers, dropdowns) */
+    md: string;
+    /** Large shadow for high elevation (modals, overlays) */
+    lg: string;
 }
 
 /**
@@ -42,16 +42,16 @@ export interface ShadowValues {
  * - Slightly higher opacity for visibility
  */
 export const primerShadows = {
-	light: {
-		sm: "0 1px 0 rgba(27, 31, 36, 0.04)",
-		md: "0 3px 6px rgba(140, 149, 159, 0.15)",
-		lg: "0 8px 24px rgba(140, 149, 159, 0.2)",
-	},
-	dark: {
-		sm: "0 1px 0 rgba(0, 0, 0, 0.12)",
-		md: "0 3px 6px rgba(0, 0, 0, 0.25)",
-		lg: "0 8px 24px rgba(0, 0, 0, 0.4)",
-	},
+    light: {
+        sm: "0 1px 0 rgba(27, 31, 36, 0.04)",
+        md: "0 3px 6px rgba(140, 149, 159, 0.15)",
+        lg: "0 8px 24px rgba(140, 149, 159, 0.2)",
+    },
+    dark: {
+        sm: "0 1px 0 rgba(0, 0, 0, 0.12)",
+        md: "0 3px 6px rgba(0, 0, 0, 0.25)",
+        lg: "0 8px 24px rgba(0, 0, 0, 0.4)",
+    },
 } as const;
 
 /**
@@ -74,16 +74,16 @@ export const primerShadows = {
  * relying entirely on layer color differentiation.
  */
 export const carbonShadows = {
-	light: {
-		sm: "0 1px 2px rgba(0, 0, 0, 0.06)",
-		md: "0 2px 4px rgba(0, 0, 0, 0.08)",
-		lg: "0 4px 8px rgba(0, 0, 0, 0.12)",
-	},
-	dark: {
-		sm: "0 1px 2px rgba(0, 0, 0, 0.08)",
-		md: "0 2px 4px rgba(0, 0, 0, 0.12)",
-		lg: "0 4px 8px rgba(0, 0, 0, 0.16)",
-	},
+    light: {
+        sm: "0 1px 2px rgba(0, 0, 0, 0.06)",
+        md: "0 2px 4px rgba(0, 0, 0, 0.08)",
+        lg: "0 4px 8px rgba(0, 0, 0, 0.12)",
+    },
+    dark: {
+        sm: "0 1px 2px rgba(0, 0, 0, 0.08)",
+        md: "0 2px 4px rgba(0, 0, 0, 0.12)",
+        lg: "0 4px 8px rgba(0, 0, 0, 0.16)",
+    },
 } as const;
 
 /**
@@ -103,16 +103,16 @@ export const carbonShadows = {
  * **Source:** design.gitlab.com elevation documentation, gitlab-ui component library
  */
 export const pajamasShadows = {
-	light: {
-		sm: "0 1px 2px rgba(0, 0, 0, 0.12)",
-		md: "0 2px 8px rgba(0, 0, 0, 0.15)",
-		lg: "0 4px 16px rgba(0, 0, 0, 0.2)",
-	},
-	dark: {
-		sm: "0 1px 2px rgba(0, 0, 0, 0.16)",
-		md: "0 2px 8px rgba(0, 0, 0, 0.24)",
-		lg: "0 4px 16px rgba(0, 0, 0, 0.32)",
-	},
+    light: {
+        sm: "0 1px 2px rgba(0, 0, 0, 0.12)",
+        md: "0 2px 8px rgba(0, 0, 0, 0.15)",
+        lg: "0 4px 16px rgba(0, 0, 0, 0.2)",
+    },
+    dark: {
+        sm: "0 1px 2px rgba(0, 0, 0, 0.16)",
+        md: "0 2px 8px rgba(0, 0, 0, 0.24)",
+        lg: "0 4px 16px rgba(0, 0, 0, 0.32)",
+    },
 } as const;
 
 /**
@@ -123,15 +123,15 @@ export const pajamasShadows = {
  * @returns Shadow values for the specified system and mode
  */
 export function getShadowValues(
-	designSystem: "github" | "ibm-carbon" | "gitlab-pajamas",
-	mode: "light" | "dark"
+    designSystem: "github" | "ibm-carbon" | "gitlab-pajamas",
+    mode: "light" | "dark"
 ): ShadowValues {
-	switch (designSystem) {
-		case "github":
-			return primerShadows[mode];
-		case "ibm-carbon":
-			return carbonShadows[mode];
-		case "gitlab-pajamas":
-			return pajamasShadows[mode];
-	}
+    switch (designSystem) {
+        case "github":
+            return primerShadows[mode];
+        case "ibm-carbon":
+            return carbonShadows[mode];
+        case "gitlab-pajamas":
+            return pajamasShadows[mode];
+    }
 }

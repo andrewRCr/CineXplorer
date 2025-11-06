@@ -25,22 +25,22 @@ const SIDEBAR_STICKY_TOP_OFFSET = "82px";
 
 // Static sidebar component for desktop use
 const Sidebar: React.FC = () => {
-	return (
-		<Box
-			as="aside"
-			w="280px"
-			bg="layer-01"
-			boxShadow="2px 0 8px 0 rgba(0,0,0,0.08)"
-			position="sticky"
-			top={SIDEBAR_STICKY_TOP_OFFSET}
-			alignSelf="flex-start"
-			maxH="100vh"
-			overflowY="auto"
-			zIndex={1}
-		>
-			<SidebarContent />
-		</Box>
-	);
+  return (
+    <Box
+      as="aside"
+      w="280px"
+      bg="layer-01"
+      boxShadow="2px 0 8px 0 rgba(0,0,0,0.08)"
+      position="sticky"
+      top={SIDEBAR_STICKY_TOP_OFFSET}
+      alignSelf="flex-start"
+      maxH="100vh"
+      overflowY="auto"
+      zIndex={1}
+    >
+      <SidebarContent />
+    </Box>
+  );
 };
 
 export default Sidebar;

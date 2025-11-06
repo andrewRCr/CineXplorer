@@ -14,65 +14,65 @@ import apiClient from "./apiClient";
  * This service is decoupled from the shape of the data (entities) it handles.
  */
 class HttpService {
-	endpoint: string;
+    endpoint: string;
 
-	constructor(endpoint: string) {
-		this.endpoint = endpoint;
-	}
+    constructor(endpoint: string) {
+        this.endpoint = endpoint;
+    }
 
-	/**
-	 * Fetch a single entity by ID.
-	 * @param id - The entity's unique identifier.
-	 */
-	get<T>(id: string | number) {
-		const controller = new AbortController();
-		const request = apiClient
-			.get<T>(`${this.endpoint}/${id}`, {
-				signal: controller.signal,
-			})
-			.then((response) => ({ data: response.data }));
-		return { request, cancel: () => controller.abort() };
-	}
+    /**
+     * Fetch a single entity by ID.
+     * @param id - The entity's unique identifier.
+     */
+    get<T>(id: string | number) {
+        const controller = new AbortController();
+        const request = apiClient
+            .get<T>(`${this.endpoint}/${id}`, {
+                signal: controller.signal,
+            })
+            .then((response) => ({ data: response.data }));
+        return { request, cancel: () => controller.abort() };
+    }
 
-	/**
-	 * Fetch a paginated resource.
-	 * @param params - Optional query parameters for pagination, filtering, etc.
-	 */
-	getPaginated<T>(params?: Record<string, unknown> | object) {
-		const controller = new AbortController();
-		const request = apiClient
-			.get<T>(this.endpoint, {
-				signal: controller.signal,
-				params,
-			})
-			.then((response) => ({ data: response.data }));
-		return { request, cancel: () => controller.abort() };
-	}
+    /**
+     * Fetch a paginated resource.
+     * @param params - Optional query parameters for pagination, filtering, etc.
+     */
+    getPaginated<T>(params?: Record<string, unknown> | object) {
+        const controller = new AbortController();
+        const request = apiClient
+            .get<T>(this.endpoint, {
+                signal: controller.signal,
+                params,
+            })
+            .then((response) => ({ data: response.data }));
+        return { request, cancel: () => controller.abort() };
+    }
 
-	/**
-	 * Create a new entity.
-	 * @param entity - The data for the new entity.
-	 */
-	create<T>(entity: T) {
-		return apiClient.post(this.endpoint, entity);
-	}
+    /**
+     * Create a new entity.
+     * @param entity - The data for the new entity.
+     */
+    create<T>(entity: T) {
+        return apiClient.post(this.endpoint, entity);
+    }
 
-	/**
-	 * Update an existing entity.
-	 * @param id - The unique identifier of the entity to update.
-	 * @param entity - The updated data for the entity.
-	 */
-	update<T>(id: string | number, entity: T) {
-		return apiClient.patch(`${this.endpoint}/${id}`, entity);
-	}
+    /**
+     * Update an existing entity.
+     * @param id - The unique identifier of the entity to update.
+     * @param entity - The updated data for the entity.
+     */
+    update<T>(id: string | number, entity: T) {
+        return apiClient.patch(`${this.endpoint}/${id}`, entity);
+    }
 
-	/**
-	 * Remove an entity by its ID.
-	 * @param id - The unique identifier of the entity to remove.
-	 */
-	remove(id: string | number) {
-		return apiClient.delete(`${this.endpoint}/${id}`);
-	}
+    /**
+     * Remove an entity by its ID.
+     * @param id - The unique identifier of the entity to remove.
+     */
+    remove(id: string | number) {
+        return apiClient.delete(`${this.endpoint}/${id}`);
+    }
 }
 
 const create = (endpoint: string) => new HttpService(endpoint);

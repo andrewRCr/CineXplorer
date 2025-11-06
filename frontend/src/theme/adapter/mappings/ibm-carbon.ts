@@ -39,8 +39,8 @@
 
 import type { UnifiedTheme } from "../types";
 import {
-	ibmCarbonPaletteLight,
-	ibmCarbonPaletteDark,
+    ibmCarbonPaletteLight,
+    ibmCarbonPaletteDark,
 } from "../../palettes/ibm-carbon";
 import { carbonShadows } from "../shadows";
 import { createExtensions } from "../extensions";
@@ -50,8 +50,8 @@ import { adjustColor, deriveInteractionStates } from "../utils";
  * IBM Carbon palette type (light or dark mode).
  */
 export type CarbonPalette =
-	| typeof ibmCarbonPaletteLight
-	| typeof ibmCarbonPaletteDark;
+    | typeof ibmCarbonPaletteLight
+    | typeof ibmCarbonPaletteDark;
 
 /**
  * Create IBM Carbon adapter mapping to unified theme vocabulary.
@@ -69,188 +69,188 @@ export type CarbonPalette =
  * ```
  */
 export function createCarbonAdapter(mode: "light" | "dark"): UnifiedTheme {
-	// Select palette based on mode
-	const palette =
-		mode === "light" ? ibmCarbonPaletteLight : ibmCarbonPaletteDark;
+    // Select palette based on mode
+    const palette =
+        mode === "light" ? ibmCarbonPaletteLight : ibmCarbonPaletteDark;
 
-	// ===================================================================
-	// SECTION 1: OFFICIAL MAPPINGS (With Corrections)
-	// ===================================================================
-	// Carbon provides the most complete official vocabulary. Most tokens map
-	// directly from Carbon's layer system and border hierarchy.
-	//
-	// CRITICAL CORRECTION (Dark Mode G100):
-	// - border: border_strong_01 (#6f6f6f) NOT border_default (#393939)
-	// - border_default (#393939) matches layer-02 (#393939) = invisible borders!
+    // ===================================================================
+    // SECTION 1: OFFICIAL MAPPINGS (With Corrections)
+    // ===================================================================
+    // Carbon provides the most complete official vocabulary. Most tokens map
+    // directly from Carbon's layer system and border hierarchy.
+    //
+    // CRITICAL CORRECTION (Dark Mode G100):
+    // - border: border_strong_01 (#6f6f6f) NOT border_default (#393939)
+    // - border_default (#393939) matches layer-02 (#393939) = invisible borders!
 
-	// Core structure (Carbon's explicit layer system)
-	const background = palette.bg_default;
-	const foreground = palette.fg_default;
-	const layer01 = palette.bg_layer_01; // Official: Cards, first layer
-	// DERIVED for light mode: Carbon Light alternates white/gray, we need distinct progression
-	// Dark mode uses official tokens (already distinct: #161616 → #262626 → #393939 → #525252)
-	const layer02 = mode === "light"
-		? adjustColor(palette.bg_layer_01, -12) // Darker than layer-01 for clear distinction
-		: palette.bg_layer_02; // Dark mode: Official token
-	// DERIVED for light mode: Continuing visible progression
-	const layer03 = mode === "light"
-		? adjustColor(palette.bg_layer_01, -24) // Even darker for clear hierarchy
-		: palette.bg_layer_03; // Dark mode: Official token
+    // Core structure (Carbon's explicit layer system)
+    const background = palette.bg_default;
+    const foreground = palette.fg_default;
+    const layer01 = palette.bg_layer_01; // Official: Cards, first layer
+    // DERIVED for light mode: Carbon Light alternates white/gray, we need distinct progression
+    // Dark mode uses official tokens (already distinct: #161616 → #262626 → #393939 → #525252)
+    const layer02 = mode === "light"
+        ? adjustColor(palette.bg_layer_01, -12) // Darker than layer-01 for clear distinction
+        : palette.bg_layer_02; // Dark mode: Official token
+    // DERIVED for light mode: Continuing visible progression
+    const layer03 = mode === "light"
+        ? adjustColor(palette.bg_layer_01, -24) // Even darker for clear hierarchy
+        : palette.bg_layer_03; // Dark mode: Official token
 
-	// Popover (typically layer-02/03 context)
-	const popover = palette.bg_layer_02;
-	const popoverForeground = palette.fg_default;
+    // Popover (typically layer-02/03 context)
+    const popover = palette.bg_layer_02;
+    const popoverForeground = palette.fg_default;
 
-	// Border hierarchy (Carbon's official per-layer borders)
-	// CRITICAL: Use border_strong_01 for default border (visible on all layers)
-	const border = palette.border_strong_01; // CORRECTED from border_default
-	const borderSubtle00 = palette.border_subtle_00; // Low-contrast dividers on background/layer-01
-	const borderSubtle02 = palette.border_subtle_02; // Low-contrast dividers on layer-02
-	const borderStrong01 = palette.border_strong_01; // Accessible borders on layer-01
-	const borderStrong02 = palette.border_strong_02; // Accessible borders on layer-02
-	const borderStrong03 = palette.border_strong_03; // Accessible borders on layer-03
+    // Border hierarchy (Carbon's official per-layer borders)
+    // CRITICAL: Use border_strong_01 for default border (visible on all layers)
+    const border = palette.border_strong_01; // CORRECTED from border_default
+    const borderSubtle00 = palette.border_subtle_00; // Low-contrast dividers on background/layer-01
+    const borderSubtle02 = palette.border_subtle_02; // Low-contrast dividers on layer-02
+    const borderStrong01 = palette.border_strong_01; // Accessible borders on layer-01
+    const borderStrong02 = palette.border_strong_02; // Accessible borders on layer-02
+    const borderStrong03 = palette.border_strong_03; // Accessible borders on layer-03
 
-	// Semantic colors (official Carbon)
-	const primary = palette.bg_success;
-	const primaryForeground = palette.fg_onEmphasis;
+    // Semantic colors (official Carbon)
+    const primary = palette.bg_success;
+    const primaryForeground = palette.fg_onEmphasis;
 
-	const secondary = palette.bg_button_secondary;
-	const secondaryForeground =
-		mode === "light" ? palette.fg_onEmphasis : palette.fg_default;
+    const secondary = palette.bg_button_secondary;
+    const secondaryForeground =
+        mode === "light" ? palette.fg_onEmphasis : palette.fg_default;
 
-	const muted = palette.bg_layer_01; // Use layer-01 for muted
-	const mutedForeground = palette.fg_muted;
+    const muted = palette.bg_layer_01; // Use layer-01 for muted
+    const mutedForeground = palette.fg_muted;
 
-	const accent = palette.fg_accent;
-	const accentForeground = palette.fg_onEmphasis;
-	const accentHover = palette.fg_accent_hover;
+    const accent = palette.fg_accent;
+    const accentForeground = palette.fg_onEmphasis;
+    const accentHover = palette.fg_accent_hover;
 
-	const destructive = palette.bg_danger;
-	const destructiveForeground = palette.fg_onEmphasis;
+    const destructive = palette.bg_danger;
+    const destructiveForeground = palette.fg_onEmphasis;
 
-	const success = palette.bg_success;
-	const successForeground = palette.fg_onEmphasis;
+    const success = palette.bg_success;
+    const successForeground = palette.fg_onEmphasis;
 
-	// Warning/Info colors (official Carbon)
-	const warning = palette.fg_warning;
-	const warningForeground = mode === "light" ? palette.fg_default : "#000000";
-	const onWarning =
-		mode === "light" ? palette.fg_default : palette.fg_onEmphasis;
+    // Warning/Info colors (official Carbon)
+    const warning = palette.fg_warning;
+    const warningForeground = mode === "light" ? palette.fg_default : "#000000";
+    const onWarning =
+        mode === "light" ? palette.fg_default : palette.fg_onEmphasis;
 
-	const info = palette.fg_info;
-	const infoForeground = palette.fg_onEmphasis;
-	const onInfo = palette.fg_onEmphasis;
+    const info = palette.fg_info;
+    const infoForeground = palette.fg_onEmphasis;
+    const onInfo = palette.fg_onEmphasis;
 
-	// On-status colors for solid backgrounds
-	const onSuccess = palette.fg_onEmphasis;
-	const onDestructive = palette.fg_onEmphasis;
+    // On-status colors for solid backgrounds
+    const onSuccess = palette.fg_onEmphasis;
+    const onDestructive = palette.fg_onEmphasis;
 
-	// Shadows (minimal for Carbon - layer colors indicate elevation)
-	const shadows = carbonShadows[mode];
+    // Shadows (minimal for Carbon - layer colors indicate elevation)
+    const shadows = carbonShadows[mode];
 
-	// ===================================================================
-	// SECTION 2: DERIVED TOKENS (Minimal - Carbon Provides Most)
-	// ===================================================================
-	// Carbon provides most tokens officially. Only derive interaction states
-	// if they're not available in the palette.
+    // ===================================================================
+    // SECTION 2: DERIVED TOKENS (Minimal - Carbon Provides Most)
+    // ===================================================================
+    // Carbon provides most tokens officially. Only derive interaction states
+    // if they're not available in the palette.
 
-	// Interaction states: Derive hover/selected/active per layer
-	// Carbon has official hover states, but we ensure consistency across layers
-	const layer01States = deriveInteractionStates(layer01, mode);
-	const layer02States = deriveInteractionStates(layer02, mode);
+    // Interaction states: Derive hover/selected/active per layer
+    // Carbon has official hover states, but we ensure consistency across layers
+    const layer01States = deriveInteractionStates(layer01, mode);
+    const layer02States = deriveInteractionStates(layer02, mode);
 
-	// Input border: Use subtle border for form fields
-	const input = palette.border_subtle_00;
+    // Input border: Use subtle border for form fields
+    const input = palette.border_subtle_00;
 
-	// Focus ring: Use accent color for consistency
-	const ring = palette.fg_accent;
+    // Focus ring: Use accent color for consistency
+    const ring = palette.fg_accent;
 
-	// ===================================================================
-	// SECTION 3: CINEXPLORER EXTENSIONS (App-Specific)
-	// ===================================================================
-	// Apply centralized CineXplorer extensions adapted to Carbon's neutral,
-	// professional aesthetic.
+    // ===================================================================
+    // SECTION 3: CINEXPLORER EXTENSIONS (App-Specific)
+    // ===================================================================
+    // Apply centralized CineXplorer extensions adapted to Carbon's neutral,
+    // professional aesthetic.
 
-	const extensions = createExtensions(
-		{
-			muted: palette.bg_layer_01,
-			mutedForeground: palette.fg_muted,
-			accentEmphasis: palette.bg_emphasis,
-			secondaryHover: palette.bg_button_secondary_hover,
-		},
-		mode,
-	);
+    const extensions = createExtensions(
+        {
+            muted: palette.bg_layer_01,
+            mutedForeground: palette.fg_muted,
+            accentEmphasis: palette.bg_emphasis,
+            secondaryHover: palette.bg_button_secondary_hover,
+        },
+        mode,
+    );
 
-	// ===================================================================
-	// UNIFIED THEME ASSEMBLY
-	// ===================================================================
+    // ===================================================================
+    // UNIFIED THEME ASSEMBLY
+    // ===================================================================
 
-	return {
-		// Core structure
-		background,
-		foreground,
-		"layer-01": layer01,
-		"layer-02": layer02,
-		"layer-03": layer03,
-		popover,
-		"popover-foreground": popoverForeground,
+    return {
+        // Core structure
+        background,
+        foreground,
+        "layer-01": layer01,
+        "layer-02": layer02,
+        "layer-03": layer03,
+        popover,
+        "popover-foreground": popoverForeground,
 
-		// Border hierarchy (mostly official Carbon)
-		"border-subtle-00": borderSubtle00,
-		"border-subtle-02": borderSubtle02,
-		"border-strong-01": borderStrong01,
-		"border-strong-02": borderStrong02,
-		"border-strong-03": borderStrong03,
+        // Border hierarchy (mostly official Carbon)
+        "border-subtle-00": borderSubtle00,
+        "border-subtle-02": borderSubtle02,
+        "border-strong-01": borderStrong01,
+        "border-strong-02": borderStrong02,
+        "border-strong-03": borderStrong03,
 
-		// Shadows (conservative - Carbon relies on layers)
-		"shadow-sm": shadows.sm,
-		"shadow-md": shadows.md,
-		"shadow-lg": shadows.lg,
+        // Shadows (conservative - Carbon relies on layers)
+        "shadow-sm": shadows.sm,
+        "shadow-md": shadows.md,
+        "shadow-lg": shadows.lg,
 
-		// Interaction states (derived)
-		"layer-hover-01": layer01States.hover,
-		"layer-hover-02": layer02States.hover,
-		"layer-selected-01": layer01States.selected,
-		"layer-selected-02": layer02States.selected,
-		"layer-active-01": layer01States.active,
-		"layer-active-02": layer02States.active,
+        // Interaction states (derived)
+        "layer-hover-01": layer01States.hover,
+        "layer-hover-02": layer02States.hover,
+        "layer-selected-01": layer01States.selected,
+        "layer-selected-02": layer02States.selected,
+        "layer-active-01": layer01States.active,
+        "layer-active-02": layer02States.active,
 
-		// Semantic colors (official Carbon)
-		primary,
-		"primary-foreground": primaryForeground,
-		secondary,
-		"secondary-foreground": secondaryForeground,
-		muted,
-		"muted-foreground": mutedForeground,
-		accent,
-		"accent-foreground": accentForeground,
-		"accent-hover": accentHover,
-		destructive,
-		"destructive-foreground": destructiveForeground,
-		success,
-		"success-foreground": successForeground,
-		warning,
-		"warning-foreground": warningForeground,
-		info,
-		"info-foreground": infoForeground,
+        // Semantic colors (official Carbon)
+        primary,
+        "primary-foreground": primaryForeground,
+        secondary,
+        "secondary-foreground": secondaryForeground,
+        muted,
+        "muted-foreground": mutedForeground,
+        accent,
+        "accent-foreground": accentForeground,
+        "accent-hover": accentHover,
+        destructive,
+        "destructive-foreground": destructiveForeground,
+        success,
+        "success-foreground": successForeground,
+        warning,
+        "warning-foreground": warningForeground,
+        info,
+        "info-foreground": infoForeground,
 
-		// On-status colors
-		"on-success": onSuccess,
-		"on-warning": onWarning,
-		"on-destructive": onDestructive,
-		"on-info": onInfo,
+        // On-status colors
+        "on-success": onSuccess,
+        "on-warning": onWarning,
+        "on-destructive": onDestructive,
+        "on-info": onInfo,
 
-		// CineXplorer extensions
-		rating: extensions.rating,
-		"rating-foreground": extensions["rating-foreground"],
-		badge: extensions.badge,
-		"badge-foreground": extensions["badge-foreground"],
-		"drag-active": extensions["drag-active"],
-		"drop-zone": extensions["drop-zone"],
+        // CineXplorer extensions
+        rating: extensions.rating,
+        "rating-foreground": extensions["rating-foreground"],
+        badge: extensions.badge,
+        "badge-foreground": extensions["badge-foreground"],
+        "drag-active": extensions["drag-active"],
+        "drop-zone": extensions["drop-zone"],
 
-		// UI elements
-		border,
-		input,
-		ring,
-	};
+        // UI elements
+        border,
+        input,
+        ring,
+    };
 }

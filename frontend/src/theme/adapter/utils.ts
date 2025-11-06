@@ -35,30 +35,30 @@
  * ```
  */
 export function adjustColor(hex: string, percent: number): string {
-	// Remove # if present
-	hex = hex.replace("#", "");
+    // Remove # if present
+    hex = hex.replace("#", "");
 
-	// Parse RGB
-	const r = Number.parseInt(hex.substring(0, 2), 16);
-	const g = Number.parseInt(hex.substring(2, 4), 16);
-	const b = Number.parseInt(hex.substring(4, 6), 16);
+    // Parse RGB
+    const r = Number.parseInt(hex.substring(0, 2), 16);
+    const g = Number.parseInt(hex.substring(2, 4), 16);
+    const b = Number.parseInt(hex.substring(4, 6), 16);
 
-	// Calculate adjustment
-	const adjust = (value: number) => {
-		const adjusted = percent > 0
-			? value + ((255 - value) * percent) / 100 // Lighten
-			: value + (value * percent) / 100; // Darken
-		return Math.round(Math.max(0, Math.min(255, adjusted)));
-	};
+    // Calculate adjustment
+    const adjust = (value: number) => {
+        const adjusted = percent > 0
+            ? value + ((255 - value) * percent) / 100 // Lighten
+            : value + (value * percent) / 100; // Darken
+        return Math.round(Math.max(0, Math.min(255, adjusted)));
+    };
 
-	// Apply adjustment
-	const newR = adjust(r);
-	const newG = adjust(g);
-	const newB = adjust(b);
+    // Apply adjustment
+    const newR = adjust(r);
+    const newG = adjust(g);
+    const newB = adjust(b);
 
-	// Convert back to hex
-	const toHex = (value: number) => value.toString(16).padStart(2, "0");
-	return `#${toHex(newR)}${toHex(newG)}${toHex(newB)}`;
+    // Convert back to hex
+    const toHex = (value: number) => value.toString(16).padStart(2, "0");
+    return `#${toHex(newR)}${toHex(newG)}${toHex(newB)}`;
 }
 
 /**
@@ -93,24 +93,24 @@ export function adjustColor(hex: string, percent: number): string {
  * ```
  */
 export function deriveBorderHierarchy(
-	baseBorder: string,
-	mode: "light" | "dark",
+    baseBorder: string,
+    mode: "light" | "dark",
 ): {
-	subtle00: string;
-	subtle02: string;
-	strong01: string;
-	strong02: string;
-	strong03: string;
+    subtle00: string;
+    subtle02: string;
+    strong01: string;
+    strong02: string;
+    strong03: string;
 } {
-	const adjustmentDirection = mode === "light" ? -1 : 1;
+    const adjustmentDirection = mode === "light" ? -1 : 1;
 
-	return {
-		subtle00: baseBorder, // Base (unchanged)
-		subtle02: adjustColor(baseBorder, adjustmentDirection * 5), // Slightly more contrast for layer-02
-		strong01: adjustColor(baseBorder, adjustmentDirection * 40), // Accessible (WCAG 3:1 target)
-		strong02: adjustColor(baseBorder, adjustmentDirection * 50), // More contrast for layer-02
-		strong03: adjustColor(baseBorder, adjustmentDirection * 60), // Highest contrast for layer-03
-	};
+    return {
+        subtle00: baseBorder, // Base (unchanged)
+        subtle02: adjustColor(baseBorder, adjustmentDirection * 5), // Slightly more contrast for layer-02
+        strong01: adjustColor(baseBorder, adjustmentDirection * 40), // Accessible (WCAG 3:1 target)
+        strong02: adjustColor(baseBorder, adjustmentDirection * 50), // More contrast for layer-02
+        strong03: adjustColor(baseBorder, adjustmentDirection * 60), // Highest contrast for layer-03
+    };
 }
 
 /**
@@ -141,20 +141,20 @@ export function deriveBorderHierarchy(
  * ```
  */
 export function deriveInteractionStates(
-	layerColor: string,
-	mode: "light" | "dark",
+    layerColor: string,
+    mode: "light" | "dark",
 ): {
-	hover: string;
-	selected: string;
-	active: string;
+    hover: string;
+    selected: string;
+    active: string;
 } {
-	const direction = mode === "light" ? -1 : 1;
+    const direction = mode === "light" ? -1 : 1;
 
-	return {
-		hover: adjustColor(layerColor, direction * 8),
-		selected: adjustColor(layerColor, direction * 12),
-		active: adjustColor(layerColor, direction * 16),
-	};
+    return {
+        hover: adjustColor(layerColor, direction * 8),
+        selected: adjustColor(layerColor, direction * 12),
+        active: adjustColor(layerColor, direction * 16),
+    };
 }
 
 /**
@@ -185,39 +185,39 @@ export function deriveInteractionStates(
  * ```
  */
 export function deriveLayer03(
-	layer01: string,
-	layer02: string,
-	useShadows: boolean,
+    layer01: string,
+    layer02: string,
+    useShadows: boolean,
 ): string {
-	if (useShadows) {
-		// Shadow-based themes: layer-03 = layer-02 (shadows provide differentiation)
-		return layer02;
-	}
+    if (useShadows) {
+        // Shadow-based themes: layer-03 = layer-02 (shadows provide differentiation)
+        return layer02;
+    }
 
-	// Layer-based themes: Continue progression
-	// Calculate the difference between layer-01 and layer-02
-	const parseHex = (hex: string) => {
-		hex = hex.replace("#", "");
-		return {
-			r: Number.parseInt(hex.substring(0, 2), 16),
-			g: Number.parseInt(hex.substring(2, 4), 16),
-			b: Number.parseInt(hex.substring(4, 6), 16),
-		};
-	};
+    // Layer-based themes: Continue progression
+    // Calculate the difference between layer-01 and layer-02
+    const parseHex = (hex: string) => {
+        hex = hex.replace("#", "");
+        return {
+            r: Number.parseInt(hex.substring(0, 2), 16),
+            g: Number.parseInt(hex.substring(2, 4), 16),
+            b: Number.parseInt(hex.substring(4, 6), 16),
+        };
+    };
 
-	const color1 = parseHex(layer01);
-	const color2 = parseHex(layer02);
+    const color1 = parseHex(layer01);
+    const color2 = parseHex(layer02);
 
-	// Calculate progression (double the difference)
-	const r = Math.round(color2.r + (color2.r - color1.r));
-	const g = Math.round(color2.g + (color2.g - color1.g));
-	const b = Math.round(color2.b + (color2.b - color1.b));
+    // Calculate progression (double the difference)
+    const r = Math.round(color2.r + (color2.r - color1.r));
+    const g = Math.round(color2.g + (color2.g - color1.g));
+    const b = Math.round(color2.b + (color2.b - color1.b));
 
-	// Clamp to valid range
-	const clamp = (value: number) => Math.max(0, Math.min(255, value));
-	const toHex = (value: number) => value.toString(16).padStart(2, "0");
+    // Clamp to valid range
+    const clamp = (value: number) => Math.max(0, Math.min(255, value));
+    const toHex = (value: number) => value.toString(16).padStart(2, "0");
 
-	return `#${toHex(clamp(r))}${toHex(clamp(g))}${toHex(clamp(b))}`;
+    return `#${toHex(clamp(r))}${toHex(clamp(g))}${toHex(clamp(b))}`;
 }
 
 /**
@@ -236,12 +236,12 @@ export function deriveLayer03(
  * ```
  */
 export function isLightColor(hex: string): boolean {
-	hex = hex.replace("#", "");
-	const r = Number.parseInt(hex.substring(0, 2), 16) / 255;
-	const g = Number.parseInt(hex.substring(2, 4), 16) / 255;
-	const b = Number.parseInt(hex.substring(4, 6), 16) / 255;
+    hex = hex.replace("#", "");
+    const r = Number.parseInt(hex.substring(0, 2), 16) / 255;
+    const g = Number.parseInt(hex.substring(2, 4), 16) / 255;
+    const b = Number.parseInt(hex.substring(4, 6), 16) / 255;
 
-	// Calculate relative luminance (ITU-R BT.709)
-	const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-	return luminance > 0.5;
+    // Calculate relative luminance (ITU-R BT.709)
+    const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    return luminance > 0.5;
 }

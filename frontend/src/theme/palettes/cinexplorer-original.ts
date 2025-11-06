@@ -17,94 +17,94 @@
  * Colors organized by usage category for easy reference.
  */
 export const cinexplorerOriginalPalette = {
-	// ===================================================================
-	// BASE COLORS
-	// ===================================================================
+    // ===================================================================
+    // BASE COLORS
+    // ===================================================================
 
-	/** Pure white - Used for primary text and some borders */
-	white: "#FFFFFF",
+    /** Pure white - Used for primary text and some borders */
+    white: "#FFFFFF",
 
-	/** Pure black - Used sparingly in specific components */
-	black: "#000000",
+    /** Pure black - Used sparingly in specific components */
+    black: "#000000",
 
-	// ===================================================================
-	// GRAY SCALE (Chakra UI grays)
-	// ===================================================================
+    // ===================================================================
+    // GRAY SCALE (Chakra UI grays)
+    // ===================================================================
 
-	/** Light gray - Used for muted/secondary text */
-	gray_200: "#E2E8F0",
+    /** Light gray - Used for muted/secondary text */
+    gray_200: "#E2E8F0",
 
-	/** Medium-light gray - Used for muted text (text.muted) */
-	gray_300: "#CBD5E0",
+    /** Medium-light gray - Used for muted text (text.muted) */
+    gray_300: "#CBD5E0",
 
-	/** Medium gray - Used for secondary text (text.secondary) */
-	gray_400: "#A0AEC0",
+    /** Medium gray - Used for secondary text (text.secondary) */
+    gray_400: "#A0AEC0",
 
-	/** Medium-dark gray - Used for subtle borders and info text */
-	gray_500: "#718096",
+    /** Medium-dark gray - Used for subtle borders and info text */
+    gray_500: "#718096",
 
-	/** Dark gray - Used for separators and borders */
-	gray_700: "#4A5568",
+    /** Dark gray - Used for separators and borders */
+    gray_700: "#4A5568",
 
-	// ===================================================================
-	// DARK BACKGROUNDS (Custom Dark Surfaces)
-	// ===================================================================
+    // ===================================================================
+    // DARK BACKGROUNDS (Custom Dark Surfaces)
+    // ===================================================================
 
-	/** Discord-inspired dark - Primary background color */
-	discord_dark: "#23272f",
+    /** Discord-inspired dark - Primary background color */
+    discord_dark: "#23272f",
 
-	/** Chakra gray 900 - Used for sub-items, hover, and selected states */
-	chakra_gray_900: "#1a202c",
+    /** Chakra gray 900 - Used for sub-items, hover, and selected states */
+    chakra_gray_900: "#1a202c",
 
-	/** Tailwind zinc 900 - Used for navbar, sidebar interior, skeletons */
-	tailwind_zinc_900: "#18181b",
+    /** Tailwind zinc 900 - Used for navbar, sidebar interior, skeletons */
+    tailwind_zinc_900: "#18181b",
 
-	// ===================================================================
-	// ACCENT COLORS (Blue)
-	// ===================================================================
+    // ===================================================================
+    // ACCENT COLORS (Blue)
+    // ===================================================================
 
-	/** Primary blue - Used for primary accent color */
-	blue_500: "#3182CE",
+    /** Primary blue - Used for primary accent color */
+    blue_500: "#3182CE",
 
-	/** Dark blue - Used for secondary accent */
-	blue_700: "#2C5282",
+    /** Dark blue - Used for secondary accent */
+    blue_700: "#2C5282",
 
-	/** Light blue - Used for highlights */
-	blue_63b3ed: "#63b3ed",
+    /** Light blue - Used for highlights */
+    blue_63b3ed: "#63b3ed",
 
-	/** Medium blue - Used for links */
-	blue_4299e1: "#4299e1",
+    /** Medium blue - Used for links */
+    blue_4299e1: "#4299e1",
 
-	// ===================================================================
-	// STATUS COLORS
-	// ===================================================================
+    // ===================================================================
+    // STATUS COLORS
+    // ===================================================================
 
-	// Error colors
-	/** Error text color */
-	red_500: "#E53E3E",
+    // Error colors
+    /** Error text color */
+    red_500: "#E53E3E",
 
-	/** Error border (light pink) */
-	error_border: "#fed7d7",
+    /** Error border (light pink) */
+    error_border: "#fed7d7",
 
-	// Success colors
-	/** Success text color */
-	success_green: "#48bb78",
+    // Success colors
+    /** Success text color */
+    success_green: "#48bb78",
 
-	/** Dark success text color */
-	success_green_dark: "#2f855a",
+    /** Dark success text color */
+    success_green_dark: "#2f855a",
 
-	/** Success border (light green) */
-	success_border: "#c6f6d5",
+    /** Success border (light green) */
+    success_border: "#c6f6d5",
 
-	// ===================================================================
-	// TAG COLORS
-	// ===================================================================
+    // ===================================================================
+    // TAG COLORS
+    // ===================================================================
 
-	/** Teal tag color */
-	teal: "#38B2AC",
+    /** Teal tag color */
+    teal: "#38B2AC",
 
-	/** Purple tag color */
-	purple: "#805AD5",
+    /** Purple tag color */
+    purple: "#805AD5",
 } as const;
 
 /**

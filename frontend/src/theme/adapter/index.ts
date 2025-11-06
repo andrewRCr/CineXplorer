@@ -49,11 +49,11 @@ import { createPajamasAdapter } from "./mappings/gitlab-pajamas";
 
 // Utility exports (for adapter implementations)
 export {
-	adjustColor,
-	deriveBorderHierarchy,
-	deriveInteractionStates,
-	deriveLayer03,
-	isLightColor,
+    adjustColor,
+    deriveBorderHierarchy,
+    deriveInteractionStates,
+    deriveLayer03,
+    isLightColor,
 } from "./utils";
 
 // Shadow value exports
@@ -86,17 +86,17 @@ export { createExtensions, createCustomRatingColors } from "./extensions";
  * ```
  */
 export function createUnifiedTheme(
-	themeName: "github" | "ibm-carbon" | "gitlab-pajamas",
-	mode: "light" | "dark",
+    themeName: "github" | "ibm-carbon" | "gitlab-pajamas",
+    mode: "light" | "dark",
 ): UnifiedTheme {
-	switch (themeName) {
-		case "github":
-			return createGithubAdapter(mode);
-		case "ibm-carbon":
-			return createCarbonAdapter(mode);
-		case "gitlab-pajamas":
-			return createPajamasAdapter(mode);
-		default:
-			throw new Error(`Unknown theme: ${themeName as string}`);
-	}
+    switch (themeName) {
+        case "github":
+            return createGithubAdapter(mode);
+        case "ibm-carbon":
+            return createCarbonAdapter(mode);
+        case "gitlab-pajamas":
+            return createPajamasAdapter(mode);
+        default:
+            throw new Error(`Unknown theme: ${themeName as string}`);
+    }
 }

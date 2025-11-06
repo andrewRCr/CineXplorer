@@ -6,271 +6,271 @@ import { useState } from "react";
 import useAuthContext from "@/hooks/useAuthContext";
 
 const Register = () => {
-	const authContext = useAuthContext();
-	const register = authContext?.register;
-	const navigate = useNavigate();
-	const [errorMessage, setErrorMessage] = useState<string>("");
-	const formik = useFormik({
-		initialValues: {
-			username: "",
-			email: "",
-			password: "",
-		},
-		validate: (values) => {
-			const errors: Partial<typeof values> = {};
-			if (!values.username) {
-				errors.username = "Required";
-			}
-			if (!values.email) {
-				errors.email = "Required";
-			}
-			if (!values.password) {
-				errors.password = "Required";
-			}
-			return errors;
-		},
-		onSubmit: async (values) => {
-			const { username, email, password } = values;
-			if (register) {
-				setErrorMessage("");
-				const response = await register(username, email, password);
-				if (response instanceof Error) {
-					setErrorMessage(
-						"Network error. Please check your connection and try again."
-					);
-				} else if (response === 409) {
-					formik.setErrors({
-						username: "Username invalid or already taken.",
-						email: "Email invalid or already taken.",
-					});
-				} else if (response === 400) {
-					formik.setErrors({
-						password: "Password invalid.",
-					});
-				} else if (response === 201) {
-					navigate(ROUTES.LOGIN, {
-						state: {
-							registrationSuccess: true,
-							message:
-								"Registration successful! Please check your email to verify your account before logging in.",
-						},
-					});
-				} else {
-					setErrorMessage("Registration failed. Please try again.");
-				}
-			}
-		},
-	});
+  const authContext = useAuthContext();
+  const register = authContext?.register;
+  const navigate = useNavigate();
+  const [errorMessage, setErrorMessage] = useState<string>("");
+  const formik = useFormik({
+    initialValues: {
+      username: "",
+      email: "",
+      password: "",
+    },
+    validate: (values) => {
+      const errors: Partial<typeof values> = {};
+      if (!values.username) {
+        errors.username = "Required";
+      }
+      if (!values.email) {
+        errors.email = "Required";
+      }
+      if (!values.password) {
+        errors.password = "Required";
+      }
+      return errors;
+    },
+    onSubmit: async (values) => {
+      const { username, email, password } = values;
+      if (register) {
+        setErrorMessage("");
+        const response = await register(username, email, password);
+        if (response instanceof Error) {
+          setErrorMessage(
+            "Network error. Please check your connection and try again."
+          );
+        } else if (response === 409) {
+          formik.setErrors({
+            username: "Username invalid or already taken.",
+            email: "Email invalid or already taken.",
+          });
+        } else if (response === 400) {
+          formik.setErrors({
+            password: "Password invalid.",
+          });
+        } else if (response === 201) {
+          navigate(ROUTES.LOGIN, {
+            state: {
+              registrationSuccess: true,
+              message:
+                "Registration successful! Please check your email to verify your account before logging in.",
+            },
+          });
+        } else {
+          setErrorMessage("Registration failed. Please try again.");
+        }
+      }
+    },
+  });
 
-	return (
-		<Box
-			position="relative"
-			minH="100%"
-			display="flex"
-			alignItems="center"
-			justifyContent="center"
-			paddingY="32px"
-		>
-			{/* Register Box - Centered */}
-			<Box position="relative" zIndex={1} w="480px">
-				<Box
-					bg="layer-01"
-					color="foreground"
-					p={10}
-					rounded="lg"
-					boxShadow="xl"
-					w="100%"
-				>
-					<form onSubmit={formik.handleSubmit}>
-						<VStack gap="24px" align="flex-start">
-							<Box minH="80px" w="100%">
-								<Field.Root
-									required
-									invalid={!!formik.errors.email && formik.touched.email}
-									w="100%"
-									position="relative"
-								>
-									<Field.Label
-										htmlFor="email"
-										fontSize="16px"
-										fontWeight="medium"
-										mb={2}
-									>
-										Email Address
-									</Field.Label>
-									<Input
-										autoFocus
-										id="email"
-										name="email"
-										type="email"
-										value={formik.values.email}
-										onChange={formik.handleChange}
-										onBlur={formik.handleBlur}
-										borderWidth="1px"
-										borderColor="input"
-										_hover={{
-											bg: "accent/5",
-										}}
-										_focus={{
-											borderColor: "ring",
-											boxShadow: "0 0 0 1px var(--chakra-colors-ring)",
-										}}
-									/>
-									<Field.ErrorText
-										fontSize="14px"
-										position="absolute"
-										top="100%"
-										left="0"
-										right="0"
-										mt="4px"
-									>
-										{formik.errors.email}
-									</Field.ErrorText>
-								</Field.Root>
-							</Box>
-							<Box minH="80px" w="100%">
-								<Field.Root
-									required
-									invalid={!!formik.errors.username && formik.touched.username}
-									w="100%"
-									position="relative"
-								>
-									<Field.Label
-										htmlFor="username"
-										fontSize="16px"
-										fontWeight="medium"
-										mb={2}
-									>
-										CineXplorer Username
-									</Field.Label>
-									<Input
-										id="username"
-										name="username"
-										type="text"
-										value={formik.values.username}
-										onChange={formik.handleChange}
-										onBlur={formik.handleBlur}
-										borderWidth="1px"
-										borderColor="input"
-										_hover={{
-											bg: "accent/5",
-										}}
-										_focus={{
-											borderColor: "ring",
-											boxShadow: "0 0 0 1px var(--chakra-colors-ring)",
-										}}
-									/>
-									<Field.ErrorText
-										fontSize="14px"
-										position="absolute"
-										top="100%"
-										left="0"
-										right="0"
-										mt="4px"
-									>
-										{formik.errors.username}
-									</Field.ErrorText>
-								</Field.Root>
-							</Box>
-							<Box minH="80px" w="100%">
-								<Field.Root
-									required
-									invalid={!!formik.errors.password && formik.touched.password}
-									w="100%"
-									position="relative"
-								>
-									<Field.Label
-										htmlFor="password"
-										fontSize="16px"
-										fontWeight="medium"
-										mb={2}
-									>
-										Password
-									</Field.Label>
-									<Input
-										id="password"
-										name="password"
-										type="password"
-										value={formik.values.password}
-										onChange={formik.handleChange}
-										onBlur={formik.handleBlur}
-										borderWidth="1px"
-										borderColor="input"
-										_hover={{
-											bg: "accent/5",
-										}}
-										_focus={{
-											borderColor: "ring",
-											boxShadow: "0 0 0 1px var(--chakra-colors-ring)",
-										}}
-									/>
-									<Field.ErrorText
-										fontSize="14px"
-										position="absolute"
-										top="100%"
-										left="0"
-										right="0"
-										mt="4px"
-									>
-										{formik.errors.password}
-									</Field.ErrorText>
-								</Field.Root>
-							</Box>
+  return (
+    <Box
+      position="relative"
+      minH="100%"
+      display="flex"
+      alignItems="center"
+      justifyContent="center"
+      paddingY="32px"
+    >
+      {/* Register Box - Centered */}
+      <Box position="relative" zIndex={1} w="480px">
+        <Box
+          bg="layer-01"
+          color="foreground"
+          p={10}
+          rounded="lg"
+          boxShadow="xl"
+          w="100%"
+        >
+          <form onSubmit={formik.handleSubmit}>
+            <VStack gap="24px" align="flex-start">
+              <Box minH="80px" w="100%">
+                <Field.Root
+                  required
+                  invalid={!!formik.errors.email && formik.touched.email}
+                  w="100%"
+                  position="relative"
+                >
+                  <Field.Label
+                    htmlFor="email"
+                    fontSize="16px"
+                    fontWeight="medium"
+                    mb={2}
+                  >
+                    Email Address
+                  </Field.Label>
+                  <Input
+                    autoFocus
+                    id="email"
+                    name="email"
+                    type="email"
+                    value={formik.values.email}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    borderWidth="1px"
+                    borderColor="input"
+                    _hover={{
+                      bg: "accent/5",
+                    }}
+                    _focus={{
+                      borderColor: "ring",
+                      boxShadow: "0 0 0 1px var(--chakra-colors-ring)",
+                    }}
+                  />
+                  <Field.ErrorText
+                    fontSize="14px"
+                    position="absolute"
+                    top="100%"
+                    left="0"
+                    right="0"
+                    mt="4px"
+                  >
+                    {formik.errors.email}
+                  </Field.ErrorText>
+                </Field.Root>
+              </Box>
+              <Box minH="80px" w="100%">
+                <Field.Root
+                  required
+                  invalid={!!formik.errors.username && formik.touched.username}
+                  w="100%"
+                  position="relative"
+                >
+                  <Field.Label
+                    htmlFor="username"
+                    fontSize="16px"
+                    fontWeight="medium"
+                    mb={2}
+                  >
+                    CineXplorer Username
+                  </Field.Label>
+                  <Input
+                    id="username"
+                    name="username"
+                    type="text"
+                    value={formik.values.username}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    borderWidth="1px"
+                    borderColor="input"
+                    _hover={{
+                      bg: "accent/5",
+                    }}
+                    _focus={{
+                      borderColor: "ring",
+                      boxShadow: "0 0 0 1px var(--chakra-colors-ring)",
+                    }}
+                  />
+                  <Field.ErrorText
+                    fontSize="14px"
+                    position="absolute"
+                    top="100%"
+                    left="0"
+                    right="0"
+                    mt="4px"
+                  >
+                    {formik.errors.username}
+                  </Field.ErrorText>
+                </Field.Root>
+              </Box>
+              <Box minH="80px" w="100%">
+                <Field.Root
+                  required
+                  invalid={!!formik.errors.password && formik.touched.password}
+                  w="100%"
+                  position="relative"
+                >
+                  <Field.Label
+                    htmlFor="password"
+                    fontSize="16px"
+                    fontWeight="medium"
+                    mb={2}
+                  >
+                    Password
+                  </Field.Label>
+                  <Input
+                    id="password"
+                    name="password"
+                    type="password"
+                    value={formik.values.password}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    borderWidth="1px"
+                    borderColor="input"
+                    _hover={{
+                      bg: "accent/5",
+                    }}
+                    _focus={{
+                      borderColor: "ring",
+                      boxShadow: "0 0 0 1px var(--chakra-colors-ring)",
+                    }}
+                  />
+                  <Field.ErrorText
+                    fontSize="14px"
+                    position="absolute"
+                    top="100%"
+                    left="0"
+                    right="0"
+                    mt="4px"
+                  >
+                    {formik.errors.password}
+                  </Field.ErrorText>
+                </Field.Root>
+              </Box>
 
-							{errorMessage && (
-								<Text color="destructive-foreground" fontSize="14px" textAlign="center">
-									{errorMessage}
-								</Text>
-							)}
+              {errorMessage && (
+                <Text color="destructive-foreground" fontSize="14px" textAlign="center">
+                  {errorMessage}
+                </Text>
+              )}
 
-							<Button
-								type="submit"
-								width="full"
-								fontSize="16px"
-								loading={formik.isSubmitting}
-								loadingText="Registering..."
-								bg="primary"
-								color="primary-foreground"
-								_hover={{
-									opacity: 0.92,
-								}}
-							>
-								Register
-							</Button>
-							<Text mt="16px" textAlign="center" w="100%" fontSize="16px">
-								Already have an account?{" "}
-								<Link
-									to={ROUTES.LOGIN}
-									style={{
-										color: "var(--chakra-colors-accent)",
-										textDecoration: "underline",
-										textDecorationThickness: "2px",
-										textUnderlineOffset: "2px",
-									}}
-									onMouseEnter={(e) => {
-										e.currentTarget.style.color = "var(--chakra-colors-accent-hover)";
-									}}
-									onMouseLeave={(e) => {
-										e.currentTarget.style.color = "var(--chakra-colors-accent)";
-									}}
-									onFocus={(e) => {
-										e.currentTarget.style.outline = "2px solid";
-										e.currentTarget.style.outlineColor = "var(--chakra-colors-ring)";
-										e.currentTarget.style.outlineOffset = "2px";
-									}}
-									onBlur={(e) => {
-										e.currentTarget.style.outline = "none";
-									}}
-								>
-									Sign In
-								</Link>
-							</Text>
-						</VStack>
-					</form>
-				</Box>
-			</Box>
-		</Box>
-	);
+              <Button
+                type="submit"
+                width="full"
+                fontSize="16px"
+                loading={formik.isSubmitting}
+                loadingText="Registering..."
+                bg="primary"
+                color="primary-foreground"
+                _hover={{
+                  opacity: 0.92,
+                }}
+              >
+                Register
+              </Button>
+              <Text mt="16px" textAlign="center" w="100%" fontSize="16px">
+                Already have an account?{" "}
+                <Link
+                  to={ROUTES.LOGIN}
+                  style={{
+                    color: "var(--chakra-colors-accent)",
+                    textDecoration: "underline",
+                    textDecorationThickness: "2px",
+                    textUnderlineOffset: "2px",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.color = "var(--chakra-colors-accent-hover)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.color = "var(--chakra-colors-accent)";
+                  }}
+                  onFocus={(e) => {
+                    e.currentTarget.style.outline = "2px solid";
+                    e.currentTarget.style.outlineColor = "var(--chakra-colors-ring)";
+                    e.currentTarget.style.outlineOffset = "2px";
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.outline = "none";
+                  }}
+                >
+                  Sign In
+                </Link>
+              </Text>
+            </VStack>
+          </form>
+        </Box>
+      </Box>
+    </Box>
+  );
 };
 
 export default Register;

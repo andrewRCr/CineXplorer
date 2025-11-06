@@ -9,51 +9,51 @@ import type { SortOptionValue } from "@/constants/movieFilterOptions";
  * @returns An object containing the populated filter states.
  */
 export function initializeFiltersFromUrl(search: string): {
-	filters: MovieFiltersType;
-	minimalFilters: MinimalMovieFilters;
+    filters: MovieFiltersType;
+    minimalFilters: MinimalMovieFilters;
 } {
-	const params = new URLSearchParams(search);
+    const params = new URLSearchParams(search);
 
-	// Always parse all possible filter values from the URL.
-	const query = params.get("query") || "";
-	const genres =
-		params
-			.get("genres")
-			?.split(",")
-			.filter(Boolean)
-			.map((g) => parseInt(g))
-			.filter((g) => !isNaN(g)) || [];
-	const sortBy = (params.get("sortBy") as SortOptionValue) || "popularity.desc";
-	const year = params.get("year") || "";
-	const rating = params.get("rating") || "";
-	const minYear = params.get("minYear") || "";
-	const maxYear = params.get("maxYear") || "";
-	const minRating = params.get("minRating") || "";
-	const maxRating = params.get("maxRating") || "";
-	const minRuntime = params.get("minRuntime") || "";
-	const maxRuntime = params.get("maxRuntime") || "";
+    // Always parse all possible filter values from the URL.
+    const query = params.get("query") || "";
+    const genres =
+        params
+            .get("genres")
+            ?.split(",")
+            .filter(Boolean)
+            .map((g) => parseInt(g))
+            .filter((g) => !isNaN(g)) || [];
+    const sortBy = (params.get("sortBy") as SortOptionValue) || "popularity.desc";
+    const year = params.get("year") || "";
+    const rating = params.get("rating") || "";
+    const minYear = params.get("minYear") || "";
+    const maxYear = params.get("maxYear") || "";
+    const minRating = params.get("minRating") || "";
+    const maxRating = params.get("maxRating") || "";
+    const minRuntime = params.get("minRuntime") || "";
+    const maxRuntime = params.get("maxRuntime") || "";
 
-	// Populate both filter objects from the parsed URL params.
-	const filters: MovieFiltersType = {
-		query,
-		genres,
-		minYear,
-		maxYear,
-		minRating,
-		maxRating,
-		minRuntime,
-		maxRuntime,
-		sortBy,
-	};
+    // Populate both filter objects from the parsed URL params.
+    const filters: MovieFiltersType = {
+        query,
+        genres,
+        minYear,
+        maxYear,
+        minRating,
+        maxRating,
+        minRuntime,
+        maxRuntime,
+        sortBy,
+    };
 
-	const minimalFilters: MinimalMovieFilters = {
-		genres,
-		year,
-		rating,
-		// runtime removed - TMDB API returns incorrect results
-		query,
-		sortBy,
-	};
+    const minimalFilters: MinimalMovieFilters = {
+        genres,
+        year,
+        rating,
+        // runtime removed - TMDB API returns incorrect results
+        query,
+        sortBy,
+    };
 
-	return { filters, minimalFilters };
+    return { filters, minimalFilters };
 }

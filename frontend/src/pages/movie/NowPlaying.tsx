@@ -1,7 +1,7 @@
 import MovieCollectionGrid from "@/components/movie/collection/MovieCollectionGrid";
 
 const NowPlaying = () => {
-	return <MovieCollectionGrid />;
+  return <MovieCollectionGrid />;
 };
 
 export default NowPlaying;

@@ -41,81 +41,81 @@ import { fetchSearchMoviesService } from "@/services/movieService";
 
 // Type for fetcher function signature
 type FetcherFn = (
-	page: number,
-	filters?: Record<string, string | number | number[]>,
-	tmdb_page_start?: number
+    page: number,
+    filters?: Record<string, string | number | number[]>,
+    tmdb_page_start?: number
 ) => {
-	request: Promise<{ data: PaginatedMoviesResponse }>;
-	cancel: () => void;
+    request: Promise<{ data: PaginatedMoviesResponse }>;
+    cancel: () => void;
 };
 
 interface UseMovieFetchRouterOptions {
-	fetcher: FetcherFn;
-	filters: MovieFiltersType;
-	filterStyle: "expanded" | "minimal";
+    fetcher: FetcherFn;
+    filters: MovieFiltersType;
+    filterStyle: "expanded" | "minimal";
 }
 
 export function useMovieFetchRouter({
-	fetcher,
-	filters,
-	filterStyle,
+    fetcher,
+    filters,
+    filterStyle,
 }: UseMovieFetchRouterOptions): (page: number, tmdb_page_start?: number) => {
-	request: Promise<{ data: PaginatedMoviesResponse }>;
-	cancel: () => void;
+    request: Promise<{ data: PaginatedMoviesResponse }>;
+    cancel: () => void;
 } {
-	// Use refs to store the latest filter values without causing re-renders
-	const filtersRef = useRef(filters);
-	const filterStyleRef = useRef(filterStyle);
-	const baseFetcherRef = useRef(fetcher);
+    // Use refs to store the latest filter values without causing re-renders
+    const filtersRef = useRef(filters);
+    const filterStyleRef = useRef(filterStyle);
+    const baseFetcherRef = useRef(fetcher);
 
-	// Update refs when values change
-	filtersRef.current = filters;
-	filterStyleRef.current = filterStyle;
-	baseFetcherRef.current = fetcher;
+    // Update refs when values change
+    filtersRef.current = filters;
+    filterStyleRef.current = filterStyle;
+    baseFetcherRef.current = fetcher;
 
-	const routedFetcher = useCallback(
-		(page: number, tmdb_page_start?: number) => {
-			// Get current values from refs
-			const currentFilters = filtersRef.current;
-			const currentFilterStyle = filterStyleRef.current;
-			const currentBaseFetcher = baseFetcherRef.current;
+    const routedFetcher = useCallback(
+        (page: number, tmdb_page_start?: number) => {
+            // Get current values from refs
+            const currentFilters = filtersRef.current;
+            const currentFilterStyle = filterStyleRef.current;
+            const currentBaseFetcher = baseFetcherRef.current;
 
-			// Check if there's a search query - if so, use search endpoint instead of base fetcher
-			const hasSearchQuery = !!currentFilters.query?.trim();
+            // Check if there's a search query - if so, use search endpoint instead of base fetcher
+            const hasSearchQuery = !!currentFilters.query?.trim();
 
-			// Map UI filters to API parameters
-			const filterParams = mapFiltersToApiParams(
-				currentFilters,
-				currentFilterStyle
-			);
+            // Map UI filters to API parameters
+            const filterParams = mapFiltersToApiParams(
+                currentFilters,
+                currentFilterStyle
+            );
 
-			if (hasSearchQuery) {
-				// Route to search endpoint
-				const query = currentFilters.query;
+            if (hasSearchQuery) {
+                // Route to search endpoint
+                const query = currentFilters.query;
 
-				// Remove query from filterParams since it's handled separately by search endpoint
-				const otherFilters = Object.fromEntries(
-					Object.entries(filterParams).filter(([key]) => key !== "query")
-				);
+                // Remove query from filterParams since it's handled separately by search endpoint
+                const otherFilters = Object.fromEntries(
+                    Object.entries(filterParams).filter(([key]) => key !== "query")
+                );
 
-				const searchParams = {
-					page,
-					query,
-					...otherFilters,
-					...(tmdb_page_start !== undefined && { tmdb_page_start }),
-				};
+                const searchParams = {
+                    page,
+                    query,
+                    ...otherFilters,
+                    ...(tmdb_page_start !== undefined && { tmdb_page_start }),
+                };
 
-				return fetchSearchMoviesService.getPaginated<PaginatedMoviesResponse>(
-					searchParams
-				);
-			} else {
-				// Route to base fetcher (discover, top-rated, etc.)
-				return currentBaseFetcher(page, filterParams, tmdb_page_start);
-			}
-		},
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[filters, filterStyle] // Recreate fetcher when filters change
-	);
+                return fetchSearchMoviesService.getPaginated<PaginatedMoviesResponse>(
+                    searchParams
+                );
+            } else {
+                // Route to base fetcher (discover, top-rated, etc.)
+                return currentBaseFetcher(page, filterParams, tmdb_page_start);
+            }
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [filters, filterStyle] // Recreate fetcher when filters change
+    );
 
-	return routedFetcher;
+    return routedFetcher;
 }

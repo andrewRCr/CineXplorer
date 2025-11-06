@@ -27,16 +27,16 @@ import type { Theme, ThemeColors } from "./types";
  * CineXplorer's unified theme system architecture.
  */
 export const themeRegistry = {
-	"ibm-carbon": ibmCarbonTheme,
-	"github-primer": githubTheme,
-	"gitlab-pajamas": gitlabPajamasTheme,
+    "ibm-carbon": ibmCarbonTheme,
+    "github-primer": githubTheme,
+    "gitlab-pajamas": gitlabPajamasTheme,
 } as const;
 
 export const defaultThemeName = "ibm-carbon";
 export type ThemeName = keyof typeof themeRegistry;
 
 export function getTheme(name: string): Theme {
-	return themeRegistry[name as ThemeName] || themeRegistry[defaultThemeName];
+    return themeRegistry[name as ThemeName] || themeRegistry[defaultThemeName];
 }
 
 /**
@@ -50,30 +50,30 @@ export function getTheme(name: string): Theme {
  * Result: ~86 tokens available during migration, enabling gradual component updates.
  */
 function createBaseTokens(theme: Theme) {
-	const tokenKeys = Object.keys(theme.light) as Array<keyof ThemeColors>;
+    const tokenKeys = Object.keys(theme.light) as Array<keyof ThemeColors>;
 
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	const light: Record<string, any> = {};
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	const dark: Record<string, any> = {};
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const light: Record<string, any> = {};
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const dark: Record<string, any> = {};
 
-	// Add legacy ThemeColors tokens
-	for (const tokenKey of tokenKeys) {
-		light[tokenKey] = { value: theme.light[tokenKey] };
-		dark[tokenKey] = { value: theme.dark[tokenKey] };
-	}
+    // Add legacy ThemeColors tokens
+    for (const tokenKey of tokenKeys) {
+        light[tokenKey] = { value: theme.light[tokenKey] };
+        dark[tokenKey] = { value: theme.dark[tokenKey] };
+    }
 
-	// Phase 3: Add unified adapter tokens if available (parallel systems)
-	if (theme.lightUnified && theme.darkUnified) {
-		const unifiedKeys = Object.keys(theme.lightUnified) as Array<keyof typeof theme.lightUnified>;
+    // Phase 3: Add unified adapter tokens if available (parallel systems)
+    if (theme.lightUnified && theme.darkUnified) {
+        const unifiedKeys = Object.keys(theme.lightUnified) as Array<keyof typeof theme.lightUnified>;
 
-		for (const tokenKey of unifiedKeys) {
-			light[tokenKey] = { value: theme.lightUnified[tokenKey] };
-			dark[tokenKey] = { value: theme.darkUnified[tokenKey] };
-		}
-	}
+        for (const tokenKey of unifiedKeys) {
+            light[tokenKey] = { value: theme.lightUnified[tokenKey] };
+            dark[tokenKey] = { value: theme.darkUnified[tokenKey] };
+        }
+    }
 
-	return { light, dark };
+    return { light, dark };
 }
 
 /**
@@ -86,69 +86,69 @@ function createBaseTokens(theme: Theme) {
  * **Phase 3 Update:** Includes unified adapter token references when available.
  */
 function createSemanticTokens(theme: Theme) {
-	const tokenKeys = Object.keys(theme.light) as Array<keyof ThemeColors>;
+    const tokenKeys = Object.keys(theme.light) as Array<keyof ThemeColors>;
 
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	const colors: Record<string, any> = {};
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const colors: Record<string, any> = {};
 
-	// Add legacy ThemeColors semantic tokens
-	for (const tokenKey of tokenKeys) {
-		colors[tokenKey] = {
-			value: {
-				base: `{colors.light.${tokenKey}}`,   // Light mode reference
-				_dark: `{colors.dark.${tokenKey}}`,    // Dark mode reference
-			},
-		};
-	}
+    // Add legacy ThemeColors semantic tokens
+    for (const tokenKey of tokenKeys) {
+        colors[tokenKey] = {
+            value: {
+                base: `{colors.light.${tokenKey}}`,   // Light mode reference
+                _dark: `{colors.dark.${tokenKey}}`,    // Dark mode reference
+            },
+        };
+    }
 
-	// Phase 3: Add unified adapter semantic tokens if available
-	if (theme.lightUnified && theme.darkUnified) {
-		const unifiedKeys = Object.keys(theme.lightUnified) as Array<keyof typeof theme.lightUnified>;
+    // Phase 3: Add unified adapter semantic tokens if available
+    if (theme.lightUnified && theme.darkUnified) {
+        const unifiedKeys = Object.keys(theme.lightUnified) as Array<keyof typeof theme.lightUnified>;
 
-		for (const tokenKey of unifiedKeys) {
-			colors[tokenKey] = {
-				value: {
-					base: `{colors.light.${tokenKey}}`,
-					_dark: `{colors.dark.${tokenKey}}`,
-				},
-			};
-		}
-	}
+        for (const tokenKey of unifiedKeys) {
+            colors[tokenKey] = {
+                value: {
+                    base: `{colors.light.${tokenKey}}`,
+                    _dark: `{colors.dark.${tokenKey}}`,
+                },
+            };
+        }
+    }
 
-	return { colors };
+    return { colors };
 }
 
 /**
  * Base theme configuration (fonts, global styles, etc.)
  */
 const baseConfig = defineConfig({
-	theme: {
-		tokens: {
-			fonts: {
-				heading: {
-					value: `'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif`,
-				},
-				body: {
-					value: `'Work Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif`,
-				},
-				system: {
-					value: `-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif`,
-				},
-				inter: {
-					value: `'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif`,
-				},
-				sourcesans: {
-					value: `'Source Sans 3', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif`,
-				},
-			},
-		},
-	},
-	globalCss: {
-		body: {
-			bg: "background",
-			color: "foreground",
-		},
-	},
+    theme: {
+        tokens: {
+            fonts: {
+                heading: {
+                    value: `'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif`,
+                },
+                body: {
+                    value: `'Work Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif`,
+                },
+                system: {
+                    value: `-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif`,
+                },
+                inter: {
+                    value: `'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif`,
+                },
+                sourcesans: {
+                    value: `'Source Sans 3', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif`,
+                },
+            },
+        },
+    },
+    globalCss: {
+        body: {
+            bg: "background",
+            color: "foreground",
+        },
+    },
 });
 
 /**
@@ -165,18 +165,18 @@ const baseConfig = defineConfig({
  * @returns Chakra UI system configured for the theme
  */
 export function createThemeSystem(theme: Theme) {
-	const baseTokens = createBaseTokens(theme);
+    const baseTokens = createBaseTokens(theme);
 
-	const themeConfig = defineConfig({
-		theme: {
-			tokens: {
-				colors: baseTokens,
-			},
-			semanticTokens: createSemanticTokens(theme),
-		},
-	});
+    const themeConfig = defineConfig({
+        theme: {
+            tokens: {
+                colors: baseTokens,
+            },
+            semanticTokens: createSemanticTokens(theme),
+        },
+    });
 
-	return createSystem(defaultConfig, baseConfig, themeConfig);
+    return createSystem(defaultConfig, baseConfig, themeConfig);
 }
 
 /**

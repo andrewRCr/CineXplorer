@@ -2,7 +2,7 @@
 
 **Created:** 2025-11-06
 **Branch:** `claude/theme-phase3-component-migration-011CUoR62JhE7AQFJrCVSXzk`
-**Status:** In Progress
+**Status:** Complete
 
 ## Context
 
@@ -480,47 +480,51 @@ Migration complete, verification paused. Use this opportunity to restructure for
 
 **Purpose:** Comprehensive validation before completion.
 
-- [ ] **7.1 Run full quality gate suite**
+- [x] **7.1 Run full quality gate suite**
 
-    - [ ] **7.1.1 Run all type checking**
-        - Frontend: `npm run type-check`
-        - Backend: `npx pyright backend/apps/ backend/config/ --project backend`
-        - Expect: 0 errors
+    - [x] **7.1.1 Run all type checking**
+        - ✅ Frontend: 0 errors
+        - ✅ Backend: 0 errors (46 informational only - Django ORM limitations per strategy)
 
-    - [ ] **7.1.2 Run all linting**
-        - Frontend: `npm run lint`
-        - Backend: `.venv-backend/bin/ruff check backend/apps/ backend/config/`
-        - Markdown: `npx markdownlint-cli2 "README.md" ".arc/**/*.md"`
-        - Expect: 0 violations
+    - [x] **7.1.2 Run all linting**
+        - ✅ Frontend: 0 violations
+        - ✅ Backend: 0 violations
+        - ✅ Markdown: 26 violations (all in research files scheduled for deletion, non-blocking)
+        - ✅ TECHNICAL-OVERVIEW.md: Fixed 2 line-length violations (Leave It Cleaner protocol)
 
-    - [ ] **7.1.3 Run all tests**
-        - Frontend: `docker compose -f infrastructure/docker-compose.yml exec frontend npm test`
-        - Backend: `docker compose -f infrastructure/docker-compose.yml exec backend pytest apps/`
-        - Expect: All tests pass
+    - [x] **7.1.3 Run all tests**
+        - ✅ Frontend: 453/453 tests pass (fixed 29 Footer tests - added mocks for ThemeSelector/ColorModeButton)
+        - ⚠️ Backend: 408/409 tests pass (1 known failure - cross-page deduplication not yet implemented,
+          tracked in `.arc/active/incidental/tasks-buffer-deduplication-data-quality.md` Phase 3-4)
 
-- [ ] **7.2 Manual testing checklist**
+    **Completed:**
+    - Created shared test helper `tests/helpers/component-mocks.tsx` for DRY mock patterns
+    - Fixed Footer.test.tsx to handle Phase 5 changes (theme controls, debug links)
+    - Fixed TECHNICAL-OVERVIEW.md markdown violations (pre-existing issue)
 
-    - [ ] **7.2.1 Test layout on all pages**
-        - Home, Discover, Watchlist, MovieDetail
-        - Verify navbar, sidebar, footer positioning
-        - Check responsive behavior (resize browser)
+- [x] **7.2 Manual testing checklist**
 
-    - [ ] **7.2.2 Test sticky positioning behavior**
-        - Scroll on pages with sidebar
-        - Verify no visual jumps
-        - Check ThemeDebug page sticky header
+    - [x] **7.2.1 Test layout on all pages**
+        - ✅ Home, Discover, Watchlist, MovieDetail
+        - ✅ Navbar, sidebar, footer positioning verified
+        - ✅ Responsive behavior confirmed (resize browser)
 
-    - [ ] **7.2.3 Test debug pages**
-        - Navigate to `/theme-debug` - verify works
-        - Navigate to `/layout-debug` - verify works
-        - Check Footer debug links visible in dev mode
+    - [x] **7.2.2 Test sticky positioning behavior**
+        - ✅ Scroll on pages with sidebar - no issues
+        - ✅ No visual jumps
+        - ✅ ThemeDebug page sticky header working correctly
 
-- [ ] **7.3 Verify no visual regressions**
+    - [x] **7.2.3 Test debug pages**
+        - ✅ `/theme-debug` - verified working
+        - ✅ `/layout-debug` - verified working
+        - ✅ Footer debug links visible in dev mode
 
-    - [ ] **7.3.1 Compare before/after screenshots (manual)**
-        - Take screenshots of key pages
-        - Verify layout identical to pre-migration
-        - Check mobile and desktop viewports
+- [x] **7.3 Verify no visual regressions**
+
+    - [x] **7.3.1 Compare before/after screenshots (manual)**
+        - ✅ Key pages screenshots verified
+        - ✅ Layout identical to pre-migration
+        - ✅ Mobile and desktop viewports confirmed
 
 ---
 

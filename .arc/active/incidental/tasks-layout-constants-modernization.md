@@ -162,16 +162,36 @@ Migration complete, verification paused. Use this opportunity to restructure for
 
 - [ ] **3.1 Migrate NavBar component**
 
-    - [ ] **3.1.1 Replace hardcoded height with theme token**
-        - Change `height` prop to use `layout.navbar` token
+    - [ ] **3.1.1 Make navbar-height token responsive**
+        - **Issue**: NavBar uses `pb={isMobile ? 2 : 0}` making height dynamic
+        - Desktop: pt(2) + content + pb(0) + border(1) = 93px
+        - Mobile: pt(2) + content + pb(2) + border(1) = 101px (approx)
+        - Update `theme/layout/foundations.ts` with responsive values:
+
+          ```typescript
+          "navbar-height": {
+            value: {
+              base: "101px",  // Mobile (with bottom padding)
+              lg: "93px"      // Desktop (no bottom padding)
+            }
+          }
+          ```
+
+        - Re-generate TypeScript types: `npx @chakra-ui/cli typegen ./src/theme/index.ts`
+        - **Why now**: Foundation change affects all downstream components
+
+    - [ ] **3.1.2 Replace hardcoded height with theme token**
+        - Change `height` prop to use `layout-navbar` token (now responsive)
         - Remove exported `NAVBAR_HEIGHT` constant
         - Update z-index to use `zIndex.navbar` token
         - File: `frontend/src/components/layout/NavBar.tsx`
 
-    - [ ] **3.1.2 Verify NavBar renders correctly**
-        - Manual test: Check navbar appears at correct height
+    - [ ] **3.1.3 Verify NavBar renders correctly on both breakpoints**
+        - Manual test: Check navbar appears at correct height (desktop)
+        - Manual test: Check navbar appears at correct height (mobile)
+        - Manual test: Verify ThemeDebug header positioned correctly (both)
         - DevTools: Verify CSS variable applied correctly
-        - Test responsive behavior (mobile vs desktop)
+        - Test responsive behavior by resizing browser
 
 - [ ] **3.2 Migrate Sidebar component**
 

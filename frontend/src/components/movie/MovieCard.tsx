@@ -2,7 +2,6 @@ import {
   Card,
   Image,
   Box,
-  useBreakpointValue,
   ButtonGroup,
   IconButton,
   Center,
@@ -30,9 +29,6 @@ const MovieCard = ({ movie, currentPage, source, query }: MovieCardProps) => {
   const [isTitleTruncated, setIsTitleTruncated] = useState(false);
   const [isCardHovered, setIsCardHovered] = useState(false);
   const titleRef = useRef<HTMLParagraphElement>(null);
-  const cardWidth = useBreakpointValue({
-    base: "100%",
-  });
 
   // Local state for watchlist to handle immediate UI updates
   const [localWatchlistState, setLocalWatchlistState] = useState<boolean | null>(null);
@@ -168,7 +164,7 @@ const MovieCard = ({ movie, currentPage, source, query }: MovieCardProps) => {
 
   return (
     <Box
-      width={cardWidth}
+      width="100%"
       height="100%"
       position="relative"
       onMouseEnter={() => setIsCardHovered(true)}

@@ -3,17 +3,10 @@ import Sidebar from "./Sidebar";
 import {
   Box,
   Container,
-  useBreakpointValue,
 } from "@chakra-ui/react";
 import { Outlet } from "react-router-dom";
 
 const AppLayout = () => {
-  // Show static sidebar on desktop, drawer on mobile
-  const showStaticSidebar = useBreakpointValue({
-    base: false,
-    lg: true,
-  }, { ssr: false }) ?? false;
-
   return (
     <BaseLayout>
       {/* Main Content Area */}
@@ -24,12 +17,15 @@ const AppLayout = () => {
         flex="1"
         display="flex"
       >
-        {/* Static Sidebar - Desktop only */}
-        {showStaticSidebar && (
-          <Box width="layout-sidebar" flexShrink={0} mr={6}>
-            <Sidebar />
-          </Box>
-        )}
+        {/* Static Sidebar - Desktop only (hidden on mobile via CSS) */}
+        <Box
+          width="layout-sidebar"
+          flexShrink={0}
+          mr={6}
+          display={{ base: 'none', lg: 'block' }}
+        >
+          <Sidebar />
+        </Box>
 
         {/* Main Content */}
         <Box flex="1">

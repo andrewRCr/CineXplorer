@@ -6,7 +6,6 @@ import {
   Heading,
   Button,
   IconButton,
-  useBreakpointValue,
 } from "@chakra-ui/react";
 import { Link, useLocation } from "react-router-dom";
 import { BsFillPlusCircleFill } from "react-icons/bs";
@@ -69,9 +68,6 @@ const LogoAndTitle = () => (
 );
 
 const NavBar = () => {
-  // Show hamburger menu on mobile, logo on left for desktop
-  const isMobile =
-    useBreakpointValue({ base: true, lg: false }, { ssr: false }) ?? true;
   const location = useLocation();
 
   // Handle LOG button click
@@ -98,95 +94,99 @@ const NavBar = () => {
         <HStack
           justifyContent="space-between"
           pt={2}
-          pb={isMobile ? 2 : 0}
+          pb={{ base: 2, lg: 0 }}
           position="relative"
         >
-          {isMobile ? (
-            /* Mobile Layout: Hamburger - Logo/Title - User Controls */
-            <>
-              {/* Left - Hamburger Menu */}
-              <Box>
-                <MobileMenuButton size="sm" />
-              </Box>
+          {/* Mobile Layout: Hamburger - Logo/Title - User Controls */}
+          <HStack
+            justifyContent="space-between"
+            w="100%"
+            display={{ base: 'flex', lg: 'none' }}
+          >
+            {/* Left - Hamburger Menu */}
+            <Box>
+              <MobileMenuButton size="sm" />
+            </Box>
 
-              {/* Center - Logo and Title */}
-              <LogoAndTitle />
+            {/* Center - Logo and Title */}
+            <LogoAndTitle />
 
-              {/* Right side - User controls */}
-              <HStack gap={4} alignItems="center">
-                <NavBarUserMenu />
-              </HStack>
-            </>
-          ) : (
-            /* Desktop Layout: Logo and title left-aligned, search and user controls on right */
-            <>
-              {/* Left - Logo and Title together */}
-              <LogoAndTitle />
+            {/* Right side - User controls */}
+            <HStack gap={4} alignItems="center">
+              <NavBarUserMenu />
+            </HStack>
+          </HStack>
 
-              {/* Right side - Search and User controls */}
-              <HStack gap={4} alignItems="center">
-                <NavBarSearch />
-                <NavBarUserMenu />
-              </HStack>
-            </>
-          )}
+          {/* Desktop Layout: Logo and title left-aligned, search and user controls on right */}
+          <HStack
+            justifyContent="space-between"
+            w="100%"
+            display={{ base: 'none', lg: 'flex' }}
+          >
+            {/* Left - Logo and Title together */}
+            <LogoAndTitle />
+
+            {/* Right side - Search and User controls */}
+            <HStack gap={4} alignItems="center">
+              <NavBarSearch />
+              <NavBarUserMenu />
+            </HStack>
+          </HStack>
         </HStack>
       </Container>
 
       {/* Desktop User Navigation Tabs - Secondary Row */}
-      {!isMobile && (
-        <Box bg="layer-01">
-          <Container
-            maxW="container.xl"
-            px={{ base: 2, md: 6, lg: 8 }}
-            w="100%"
-          >
-            <HStack gap={1} pt={0} pb={0}>
-              {/* LOG Button */}
-              <IconButton
-                p={2}
-                size="sm"
-                variant="ghost"
-                aria-label="Log activity"
-                onClick={handleLogClick}
-                _hover={{ bg: "accent/8" }}
-              >
-                <BsFillPlusCircleFill size={14} />
-                LOG
-              </IconButton>
+      <Box bg="layer-01" display={{ base: 'none', lg: 'block' }}>
+        <Container
+          maxW="container.xl"
+          px={{ base: 2, md: 6, lg: 8 }}
+          w="100%"
+        >
+          <HStack gap={1} pt={0} pb={0}>
+            {/* LOG Button */}
+            <IconButton
+              p={2}
+              size="sm"
+              variant="ghost"
+              aria-label="Log activity"
+              onClick={handleLogClick}
+              _hover={{ bg: "accent/8" }}
+            >
+              <BsFillPlusCircleFill size={14} />
+              LOG
+            </IconButton>
 
-              {/* User Navigation Tabs */}
-              {USER_NAVIGATION_ITEMS.filter((item) => !item.isAction).map(
-                (item) => (
-                  <Link
-                    key={item.value}
-                    to={item.path}
-                    style={{ textDecoration: "none" }}
+            {/* User Navigation Tabs */}
+            {USER_NAVIGATION_ITEMS.filter((item) => !item.isAction).map(
+              (item) => (
+                <Link
+                  key={item.value}
+                  to={item.path}
+                  style={{ textDecoration: "none" }}
+                >
+                  <Button
+                    size="sm"
+                    variant={isTabActive(item.path) ? "solid" : "ghost"}
+                    bg={isTabActive(item.path) ? "accent" : undefined}
+                    color={isTabActive(item.path) ? "accent-foreground" : undefined}
+                    _hover={{
+                      bg: isTabActive(item.path)
+                        ? "accent"
+                        : "accent/8",
+                      opacity: isTabActive(item.path) ? 0.92 : 1,
+                    }}
+                    borderRadius="md"
+                    px={3}
+                    fontWeight={isTabActive(item.path) ? "medium" : "normal"}
                   >
-                    <Button
-                      size="sm"
-                      variant={isTabActive(item.path) ? "solid" : "ghost"}
-                      bg={isTabActive(item.path) ? "accent" : undefined}
-                      color={isTabActive(item.path) ? "accent-foreground" : undefined}
-                      _hover={{
-                        bg: isTabActive(item.path)
-                          ? "accent"
-                          : "accent/8",
-                        opacity: isTabActive(item.path) ? 0.92 : 1,
-                      }}
-                      borderRadius="md"
-                      px={3}
-                      fontWeight={isTabActive(item.path) ? "medium" : "normal"}
-                    >
-                      {item.label}
-                    </Button>
-                  </Link>
-                )
-              )}
-            </HStack>
-          </Container>
-        </Box>
-      )}
+                    {item.label}
+                  </Button>
+                </Link>
+              )
+            )}
+          </HStack>
+        </Container>
+      </Box>
     </Box>
   );
 };

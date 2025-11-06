@@ -11,7 +11,7 @@ const AuthLayout = ({ children }: AuthLayoutProps) => {
       {/* Full viewport container for auth pages */}
       <Box
         position="relative"
-        minH="calc(100vh - 144px)" // Account for NavBar (72px) + Footer (~72px)
+        flex="1"
         w="100%"
       >
         {children}

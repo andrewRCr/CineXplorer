@@ -41,7 +41,7 @@ import type { UnifiedTheme } from "../types";
 import {
     ibmCarbonPaletteLight,
     ibmCarbonPaletteDark,
-} from "../../palettes/ibm-carbon";
+} from "../palettes/ibm-carbon";
 import { carbonShadows } from "../shadows";
 import { createExtensions } from "../extensions";
 import { adjustColor, deriveInteractionStates } from "../utils";

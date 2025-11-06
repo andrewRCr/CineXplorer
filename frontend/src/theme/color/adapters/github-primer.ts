@@ -26,7 +26,7 @@ import type { UnifiedTheme } from "../types";
 import {
     githubPaletteLight,
     githubPaletteDark,
-} from "../../palettes/github-primer";
+} from "../palettes/github-primer";
 import { primerShadows } from "../shadows";
 import { createExtensions } from "../extensions";
 import {

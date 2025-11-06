@@ -26,7 +26,7 @@ const AppLayout = () => {
       >
         {/* Static Sidebar - Desktop only */}
         {showStaticSidebar && (
-          <Box width="280px" flexShrink={0} mr={6}>
+          <Box width="layout-sidebar" flexShrink={0} mr={6}>
             <Sidebar />
           </Box>
         )}

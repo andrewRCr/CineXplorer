@@ -2,7 +2,7 @@
  * IBM Carbon Theme Definition
  */
 
-import { ibmCarbonPaletteLight as pLight, ibmCarbonPaletteDark as pDark } from "../palettes/ibm-carbon";
+import { ibmCarbonPaletteLight as pLight, ibmCarbonPaletteDark as pDark } from "../color/palettes/ibm-carbon";
 import type { Theme } from "../types";
 import { createUnifiedTheme } from "../color";
 

@@ -2,7 +2,6 @@ import { Box, Text, VStack, HStack, Button } from "@chakra-ui/react";
 import { useThemeSelect } from "@/hooks/useThemeSelect";
 import { type ThemeName } from "@/theme";
 import { ColorModeButton, useColorMode } from "@/components/chakra/color-mode";
-import { NAVBAR_HEIGHT } from "@/components/layout/NavBar";
 
 /**
  * Theme System Debug Page
@@ -22,7 +21,7 @@ export default function ThemeDebug() {
       {/* Sticky Header - flush with navbar bottom, no gap */}
       <Box
         position="sticky"
-        top={NAVBAR_HEIGHT}
+        top="var(--chakra-sizes-layout-navbar)"
         bg="layer-01"
         borderBottomWidth="1px"
         borderColor="border"

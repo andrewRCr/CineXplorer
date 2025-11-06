@@ -2,7 +2,7 @@
  * GitLab Pajamas Theme Definition
  */
 
-import { gitlabPajamasPaletteLight as pLight, gitlabPajamasPaletteDark as pDark } from "../palettes/gitlab-pajamas";
+import { gitlabPajamasPaletteLight as pLight, gitlabPajamasPaletteDark as pDark } from "../color/palettes/gitlab-pajamas";
 import type { Theme } from "../types";
 import { createUnifiedTheme } from "../color";
 

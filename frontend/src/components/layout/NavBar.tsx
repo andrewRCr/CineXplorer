@@ -18,16 +18,6 @@ import NavBarUserMenu from "./NavBarUserMenu";
 import NavBarSearch from "./NavBarSearch";
 import MobileMenuButton from "./MobileMenuButton";
 
-/**
- * Navbar height constant - single source of truth for layout calculations.
- * Height includes both rows PLUS bottom border:
- * - Top row (logo, search, user menu): ~56px
- * - Bottom row (LOG + navigation tabs): ~36px
- * - Bottom border: 1px
- * Total: 93px
- */
-export const NAVBAR_HEIGHT = "93px";
-
 // Reusable Logo and Title Component
 const LogoAndTitle = () => (
   <Link to={ROUTES.HOME} style={{ textDecoration: "none" }}>
@@ -87,7 +77,7 @@ const NavBar = () => {
   // Handle LOG button click
   const handleLogClick = () => {
     // TODO: Implement actual log action
-    console.log("Log action triggered");
+    // console.log("Log action triggered");
   };
 
   // Check if a tab is active
@@ -99,7 +89,7 @@ const NavBar = () => {
       bg="layer-01"
       position="sticky"
       top={0}
-      zIndex={10}
+      zIndex="navbar"
       boxShadow="base"
       borderBottom="1px solid"
       borderColor="border"

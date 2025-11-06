@@ -45,7 +45,7 @@ export const sidebarDrawer = createOverlay<SidebarDrawerProps>((props) => {
             bg="layer-01"
             borderRight="1px solid"
             borderColor="border"
-            width="280px"
+            width="sidebar-width"
           >
             <Drawer.Header
               borderBottom="1px solid"

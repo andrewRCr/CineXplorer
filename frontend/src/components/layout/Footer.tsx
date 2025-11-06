@@ -15,7 +15,7 @@ const Footer = () => {
       borderColor="border"
       aria-label="Application footer with TMDB attribution and theme controls"
       position="relative"
-      zIndex={6} // Above sidebar (zIndex 5) and shadow (zIndex 4)
+      zIndex="footer"
     >
       <VStack gap={1} alignItems="center">
         {/* Theme Controls Row */}

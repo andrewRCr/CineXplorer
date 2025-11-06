@@ -35,7 +35,7 @@ import type { UnifiedTheme } from "../types";
 import {
     gitlabPajamasPaletteLight,
     gitlabPajamasPaletteDark,
-} from "../../palettes/gitlab-pajamas";
+} from "../palettes/gitlab-pajamas";
 import { pajamasShadows } from "../shadows";
 import { createExtensions } from "../extensions";
 import {

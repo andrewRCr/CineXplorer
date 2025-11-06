@@ -27,7 +27,7 @@ const NavBarUserMenu = () => {
   // Handle LOG button click
   const handleLogClick = () => {
     // TODO: Implement actual log action
-    console.log("Log action triggered");
+    // console.log("Log action triggered");
     setIsOpen(false);
   };
 
@@ -110,7 +110,7 @@ const NavBarUserMenu = () => {
             borderColor="border-strong-01"
             borderRadius="md"
             background="layer-03"
-            zIndex={9999}
+            zIndex="dropdown"
           >
             <VStack gap={0} align="stretch">
               {/* Mobile: Add LOG button and user navigation items */}

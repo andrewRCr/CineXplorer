@@ -2194,4 +2194,6 @@ into `technical/service-layer-modernization`, manual visual review revealed crit
 
 **Document Status:** Phase 3 Review Analysis Complete
 **Last Updated:** 2025-11-06 (Session: Layer System Testing)
-**Next Session:** Light mode layer contrast remediation
+**Next Session:** Light mode layer contrast remediation (after layout constants modernization complete)
+
+**Related incidental work:** Layout constants modernization

@@ -57,7 +57,7 @@ export function ThemeSelector() {
 
 	// Find current theme option for display
 	const currentTheme = THEME_OPTIONS.find((option) => option.value === theme);
-	const displayLabel = currentTheme?.label || "GitHub Primer"; // Fallback to default
+	const displayLabel = currentTheme?.label || "IBM Carbon"; // Fallback to default
 
 	return (
 		<ClientOnly fallback={<Skeleton height="10" width="32" />}>

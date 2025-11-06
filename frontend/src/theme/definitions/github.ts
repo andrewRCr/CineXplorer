@@ -17,8 +17,8 @@ import { createUnifiedTheme } from "../adapter";
  * design system. Suitable as baseline theme before custom branding.
  */
 export const githubTheme: Theme = {
-	name: "github",
-	label: "GitHub",
+	name: "github-primer",
+	label: "GitHub Primer",
 	light: {
 		// Base colors - DIRECT HEX (no conversion)
 		background: pLight.bg_default,

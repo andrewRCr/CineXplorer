@@ -1835,3 +1835,363 @@ primarily on background color changes. Shadows can supplement or replace color-b
 **Enhancement Candidates Identified:** 14 components across 4 categories
 **High-Priority Enhancements:** 5 components (Tier 1)
 **Estimated Total Enhancement Effort:** 90 minutes (Tier 1 only)
+
+---
+
+## Phase 3 Review Analysis: Layer System Testing & Visual Validation
+
+**Review Date:** 2025-11-06
+**Purpose:** Document visual testing results from Phase 3 component migration
+(cloud branch: `claude/theme-phase3-component-migration-011CUoR62JhE7AQFJrCVSXzk`),
+identify layer contrast issues, and plan remediation strategy.
+
+### Context
+
+Phase 3 component migration was completed by Claude Code Web (cloud environment) on a feature branch. Before merging
+into `technical/service-layer-modernization`, manual visual review revealed critical layer system contrast issues.
+
+**Testing Environment:**
+
+- **Page:** `/theme-debug` (expanded with unified token test sections)
+- **Themes tested:** All 6 combinations (3 themes × 2 modes)
+- **Focus:** Layer System section visual validation
+
+---
+
+### Layer System Visual Testing Results
+
+#### ✅ Working Correctly (Dark Modes)
+
+**IBM Carbon Dark:**
+
+- All 4 layers clearly distinct
+- Progression: #161616 → #262626 → #393939 → #525252
+- Uses 100% official Carbon G100 tokens (no derivation needed)
+- **Status:** PERFECT ✅
+
+**GitHub Primer Dark:**
+
+- All 4 layers distinct
+- Base: `bg_muted` + 7% adjustments
+- Subtle but appropriate for Primer's aesthetic
+- **Status:** ACCEPTABLE ✅
+
+**GitLab Pajamas Dark:**
+
+- All 4 layers distinct
+- Layer-01 clearly differentiated
+- Layers 02/03 subtle but visible
+- **Status:** ACCEPTABLE ✅
+
+#### ❌ FAILING (Light Modes - Critical Issues)
+
+**GitHub Primer Light:**
+
+- **FAIL:** Layers 01, 02, 03 visually IDENTICAL to naked eye
+- Only layer-01 distinguishable from background
+- Adjustment percentage (15% light, 7% dark) insufficient for light backgrounds
+- **Root cause:** Light backgrounds need DARKER adjustments (negative values), and 15% not enough
+
+**GitLab Pajamas Light:**
+
+- **FAIL:** Layers 01, 02, 03 visually IDENTICAL to naked eye
+- Required color picker inspection to detect differences
+- Far too subtle for practical use
+- **Root cause:** Same as GitHub Primer - insufficient contrast on white backgrounds
+
+**IBM Carbon Light:**
+
+- **Needs verification:** User did not test this combination during review session
+- **Expected issue:** -12%/-24% adjustments likely insufficient (similar to Primer/Pajamas)
+- **Note:** Carbon Light officially alternates (white/gray/white/gray) - we derive to avoid this
+
+---
+
+### Technical Analysis: Why Light Modes Fail
+
+**Problem:**
+15% adjustment on light backgrounds creates imperceptible differences:
+
+- `#f6f8fa` (bg_muted) + 15% lighter = `#f7f9fb` (barely distinguishable)
+- `#ececef` (bg_section) + 15% lighter = `#edeeef` (requires color picker to detect)
+
+**Why Dark Modes Work:**
+
+- Smaller 7% adjustment on dark backgrounds is sufficient
+- Dark colors show distinction more readily at lower percentages
+- Example: `#262626` + 7% lighter creates visible jump
+
+**Why We Can't Just Increase Percentage:**
+
+- Going too light on white backgrounds quickly hits #ffffff ceiling
+- Need to darken instead of lighten for light mode progression
+- Carbon Light inspiration: Progressively darken from gray base
+
+---
+
+### What We've Tried (Iteration History)
+
+**Attempt 1: Initial Implementation (3% adjustments)**
+
+- **Result:** ALL light modes failed, dark modes too subtle
+- **Learning:** 3% insufficient for any background color
+
+**Attempt 2: Increased to 15% light / 7% dark**
+
+- **Result:** Dark modes now acceptable, light modes still failing
+- **Learning:** Light modes need different strategy than dark modes
+
+**Attempt 3: Changed approach for Carbon Light (-12% / -24% darkening)**
+
+- **Result:** Not yet tested by user (pending next session)
+- **Theory:** Darkening from gray base should create visible progression
+
+---
+
+### Current Implementation Status
+
+**Adapter Files:**
+
+- `frontend/src/theme/adapter/mappings/github-primer.ts` - 15%/7% adjustments
+- `frontend/src/theme/adapter/mappings/gitlab-pajamas.ts` - 15%/7% adjustments
+- `frontend/src/theme/adapter/mappings/ibm-carbon.ts` - -12%/-24% for light, official tokens for dark
+
+**System Integration:**
+
+- Theme registry updated: `ibm-carbon` now default (was `github`)
+- Theme registry reordered: IBM Carbon first in dropdown
+- ThemeDebug expanded with unified token test sections
+- Color mode toggle added to ThemeDebug quick switcher
+
+**Quality Gates:**
+
+- ✅ TypeScript: 0 errors
+- ✅ Frontend Linting: 0 warnings
+- ✅ Backend Linting: All checks passed
+- ✅ Frontend Tests: 82/82 passing
+
+---
+
+### Next Steps: Light Mode Remediation Plan
+
+**Strategy:** Use Carbon as inspiration for light mode layer progression
+
+**Option A: Aggressive Darkening (Recommended)**
+
+- GitHub Primer Light: Base `bg_muted` (#f6f8fa), darken by -20%, -40%, -60%
+- GitLab Pajamas Light: Base `bg_section` (#ececef), darken by -20%, -40%, -60%
+- **Pro:** Creates clearly visible progression
+- **Con:** May deviate significantly from design system aesthetic
+
+**Option B: Hybrid (Lighten then darken)**
+
+- Layer-01: Use official token (slight lightening from background)
+- Layer-02: Darken from layer-01 by -15%
+- Layer-03: Darken further by -30% total
+- **Pro:** Respects official layer-01, progresses from there
+- **Con:** More complex logic
+
+**Option C: Carbon-Inspired Absolute Values**
+
+- Research Carbon White theme exact progressions
+- Apply similar step sizes to Primer/Pajamas light modes
+- **Pro:** Proven approach from design system
+- **Con:** Requires additional research
+
+**Decision:** Defer to next session after user feedback
+
+---
+
+### Deferred Testing & Issues (Not Yet Addressed)
+
+#### 1. Shadow System Validation
+
+**Status:** NOT TESTED
+
+**What needs testing:**
+
+- Do shadows render correctly on MovieCard?
+- Is `boxShadow="shadow-sm"` resolved as token lookup or string literal?
+- Visual progression: sm → md → lg clear?
+- IBM Carbon minimal shadows vs Primer/Pajamas heavy shadows
+
+**Test location:** ThemeDebug "Shadow System" section (implemented)
+
+**Priority:** MEDIUM (shadows work or they don't, but won't break components)
+
+---
+
+#### 2. Border Hierarchy Validation
+
+**Status:** NOT TESTED
+
+**What needs testing:**
+
+- Are subtle borders (`border-subtle-00`, `border-subtle-02`) visible in dark mode?
+- Are strong borders (`border-strong-01/02/03`) sufficiently distinct?
+- Does border hierarchy maintain visibility across elevation levels?
+
+**Test location:** ThemeDebug "Border Hierarchy" section (implemented)
+
+**Priority:** HIGH (invisible borders = accessibility fail)
+
+---
+
+#### 3. Interaction State Validation
+
+**Status:** PARTIALLY TESTED (user noted NavBarUserMenu dark mode hover issue)
+
+**What needs testing:**
+
+- `layer-hover-01` / `layer-hover-02` visible in dark mode? ✅ ISSUE CONFIRMED
+- `layer-selected-01` / `layer-selected-02` sufficiently distinct?
+- `layer-active-01` / `layer-active-02` clear indication?
+
+**Test location:** ThemeDebug "Interaction States" section (implemented)
+
+**Known issue:**
+
+- **NavBarUserMenu dark mode hover:** Appears invisible or too subtle
+- **Likely cause:** `layer-hover-02` on dark mode not sufficiently distinct from `layer-02`
+
+**Priority:** HIGH (interaction feedback is UX-critical)
+
+---
+
+#### 4. Component-Specific Issues (User-Reported)
+
+##### Sidebar Visual Hierarchy
+
+**Issues:**
+
+1. **Header background:** Sidebar header (CineXplorer logo area) should match navbar bg
+   - Currently: Different from navbar
+   - Should be: Same `layer-01` background
+
+2. **LOG button styling:** Should use primary color
+   - Currently: Not using primary semantic color
+   - Should be: `bg="primary"` + `color="primary-foreground"`
+
+3. **Link container elevation:** Container for profile/watchlist (etc) links needs visual distinction
+   - Currently: Has border but identical bg to sidebar
+   - Should be: Elevated background (layer-02?) or other differentiation
+
+**Priority:** MEDIUM (visual polish, not functional failure)
+
+---
+
+##### Featured Page Button Visibility
+
+**Issues:**
+
+1. **Popular button:** Shows correctly (?) (primary color)
+2. **Other two buttons:** Identical color to background (invisible)
+   - Currently: Using `background` or similar
+   - Should be (?): `border="1px solid"` + `borderColor="border"` for outline style (?)
+
+**Question:** Should these be outline style or filled style buttons? Should they be primary or secondary?
+
+**Priority:** MEDIUM (functional but poor UX)
+
+---
+
+##### AdvancedMovieFilters Elevation
+
+**Issues:**
+
+1. **No visual elevation:** Filter panel uses same bg as surrounding page
+   - Currently: `background` or `layer-01`
+   - Should be: Elevated surface (layer-02?) or shadow
+
+**Priority:** LOW (functional, but lacks visual hierarchy)
+
+---
+
+##### Form Input Placeholder Precision
+
+**Issue:**
+
+- Max rating placeholder: `10.0` should be `10`
+- Location: AdvancedMovieFilters max rating input
+
+**Priority:** TRIVIAL (cosmetic polish)
+
+---
+
+##### Login Session Bug
+
+**Issue:**
+
+- User logged in successfully
+- While navigating site for testing, session appeared to be lost
+- User did not explicitly log out
+
+**Status:** DOCUMENTED, DEFERRED
+
+**Priority:** UNKNOWN (could be critical if session management broken, or trivial if just testing artifact)
+
+**Action:** Investigate separately after theme work complete
+
+---
+
+### Approach Validation
+
+**User consensus:** The Carbon-inspired layer system approach is SOUND
+
+**Reasoning:**
+
+- The adapter architecture is correct
+- The concept of deriving distinct layers is correct
+- We simply need better adjustment percentages for light modes
+- Dark modes already working proves the approach viable
+
+**NOT a fundamental architecture problem** - just tuning needed
+
+---
+
+### Documentation Completeness Checklist
+
+**This session covered:**
+
+- ✅ Layer system visual test results (6 theme combinations)
+- ✅ Technical analysis of why light modes fail
+- ✅ Iteration history (what we've tried)
+- ✅ Current implementation status
+- ✅ Next steps (remediation options)
+- ✅ Deferred testing (shadows, borders, interaction states)
+- ✅ Component-specific issues (sidebar, buttons, filters, placeholders, login bug)
+- ✅ Approach validation (architecture sound, just needs tuning)
+
+**Nothing lost** - all context preserved for next session
+
+---
+
+### Success Criteria for Next Session
+
+**Must achieve:**
+
+1. ✅ GitHub Primer Light: 4 visibly distinct layers
+2. ✅ GitLab Pajamas Light: 4 visibly distinct layers
+3. ✅ IBM Carbon Light: 4 visibly distinct layers (verify current implementation)
+
+**Then test:**
+4. ⏭️ Shadow system visual validation
+5. ⏭️ Border hierarchy visual validation
+6. ⏭️ Interaction states (especially dark mode hover)
+
+**Then address:**
+7. ⏭️ Component-specific polish (sidebar, buttons, filters)
+8. ⏭️ Login session bug investigation
+
+**Final gate:**
+
+- All quality checks pass
+- Visual regression testing complete
+- ADR-006 created documenting approach
+- Ready to merge Phase 3 into `technical/service-layer-modernization`
+
+---
+
+**Document Status:** Phase 3 Review Analysis Complete
+**Last Updated:** 2025-11-06 (Session: Layer System Testing)
+**Next Session:** Light mode layer contrast remediation

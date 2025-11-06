@@ -10,9 +10,9 @@
  * - Documentation: https://design.gitlab.com/product-foundations/color/
  *
  * **Elevation Strategy:**
- * - Primary method: Shadows (gl-shadow-sm/md/lg for elevation)
- * - Cards use semantic section token (neutral-50, distinct from background)
- * - Modals/popovers use bg_default + shadows (shadow-based elevation)
+ * - Official Pajamas: Shadows (gl-shadow-sm/md/lg for elevation)
+ * - CineXplorer: Derived layer colors for consistency (Carbon-inspired)
+ * - Trade-off: Simple component code + consistency > design system purity
  *
  * **Key Correction:**
  * Pajamas uses semantic "section" token (neutral-50) for cards - NOT neutral-10
@@ -28,7 +28,7 @@
  * - Section 2: Derived tokens (border hierarchy, interaction states, layer-03)
  * - Section 3: CineXplorer extensions (app-specific semantic colors)
  *
- * Related: ADR-005 (Unified Theme Adapter Layer)
+ * Related: ADR-005 (Unified Theme Adapter Layer), ADR-006 (Layer-Based Elevation Standard)
  */
 
 import type { UnifiedTheme } from "../types";
@@ -39,9 +39,9 @@ import {
 import { pajamasShadows } from "../shadows";
 import { createExtensions } from "../extensions";
 import {
+	adjustColor,
 	deriveBorderHierarchy,
 	deriveInteractionStates,
-	deriveLayer03,
 } from "../utils";
 
 /**
@@ -83,8 +83,10 @@ export function createPajamasAdapter(mode: "light" | "dark"): UnifiedTheme {
 	// Core structure (Pajamas semantic + shadow-based)
 	const background = palette.bg_default;
 	const foreground = palette.fg_default;
-	const layer01 = palette.bg_section; // CORRECTED: Official section token for cards
-	const layer02 = palette.bg_elevated; // Shadow-based elevation for modals
+	const layer01 = palette.bg_section; // Official: Cards use bg_section
+	// DERIVED: layer-02 for visible distinction (Pajamas bg_elevated = bg_default)
+	// CineXplorer uses Carbon-inspired layer system for consistency across themes
+	const layer02 = adjustColor(palette.bg_section, mode === "light" ? 15 : 7); // Visible distinction from layer-01
 
 	// Popover (typically layer-02 context with shadow)
 	const popover = palette.bg_elevated;
@@ -137,8 +139,9 @@ export function createPajamasAdapter(mode: "light" | "dark"): UnifiedTheme {
 	// Pajamas lacks per-layer border hierarchy and layer-03. Derive these
 	// for consistency with unified vocabulary.
 
-	// Layer-03: Pajamas doesn't provide - derive from layer-02 (shadows differentiate)
-	const layer03 = deriveLayer03(layer01, layer02, true); // true = shadow-based theme
+	// DERIVED: layer-03 for highest elevation
+	// CineXplorer requires visible color distinction at all elevation levels
+	const layer03 = adjustColor(layer02, mode === "light" ? 15 : 7); // Clear visual progression
 
 	// Border hierarchy: Pajamas has single strong border token
 	// Derivation: Generate per-layer borders from neutral scale

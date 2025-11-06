@@ -233,7 +233,9 @@ def test_browse_allows_full_date_control(
     """Browse endpoint: user HAS full control over all filters including dates."""
     # Mock TMDB response using existing helpers
     movies = [
-        create_raw_tmdb_movie(1000, "2020 Movie", "2020-06-15", 7.5, vote_count=5000, genre_ids=[18]),
+        create_raw_tmdb_movie(
+            1000, "2020 Movie", "2020-06-15", 7.5, vote_count=5000, genre_ids=[18]
+        ),
     ]
     tmdb_response = create_paginated_tmdb_response(movies, page=1, total_pages=1, total_results=1)
     mock_tmdb_get.return_value = ApiResponse(200, cast(TMDBResponseData, tmdb_response))

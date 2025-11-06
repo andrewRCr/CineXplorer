@@ -14,9 +14,15 @@
  * - Each layer has distinct color (minimal shadows, color indicates depth)
  * - Per-layer border tokens maintain visibility at each elevation
  *
+ * **CineXplorer Architectural Standard:**
+ * Carbon's layer-based elevation philosophy serves as the architectural standard
+ * for CineXplorer's unified theme system. All themes derive layer colors to match
+ * this approach, prioritizing component simplicity and cross-theme consistency.
+ *
  * **Key Advantage:**
  * Carbon's rich official vocabulary requires the LEAST derivation of all three
- * themes. Most tokens map 1:1 from official Carbon tokens.
+ * themes. Dark mode uses 100% official tokens. Light mode derives layers to avoid
+ * Carbon's alternating pattern (white/gray/white/gray → progressive darkening).
  *
  * **Critical Corrections Applied:**
  * - Dark mode (G100): border uses border_strong_01 (#6f6f6f) not border_default (#393939 = invisible!)
@@ -28,7 +34,7 @@
  * - Section 2: Derived tokens (minimal - only interaction states and shadows)
  * - Section 3: CineXplorer extensions (app-specific semantic colors)
  *
- * Related: ADR-005 (Unified Theme Adapter Layer)
+ * Related: ADR-005 (Unified Theme Adapter Layer), ADR-006 (Layer-Based Elevation Standard)
  */
 
 import type { UnifiedTheme } from "../types";
@@ -38,7 +44,7 @@ import {
 } from "../../palettes/ibm-carbon";
 import { carbonShadows } from "../shadows";
 import { createExtensions } from "../extensions";
-import { deriveInteractionStates } from "../utils";
+import { adjustColor, deriveInteractionStates } from "../utils";
 
 /**
  * IBM Carbon palette type (light or dark mode).
@@ -80,9 +86,16 @@ export function createCarbonAdapter(mode: "light" | "dark"): UnifiedTheme {
 	// Core structure (Carbon's explicit layer system)
 	const background = palette.bg_default;
 	const foreground = palette.fg_default;
-	const layer01 = palette.bg_layer_01; // Cards, first layer
-	const layer02 = palette.bg_layer_02; // Modals, elevated surfaces
-	const layer03 = palette.bg_layer_03; // Dropdowns over modals, highest elevation
+	const layer01 = palette.bg_layer_01; // Official: Cards, first layer
+	// DERIVED for light mode: Carbon Light alternates white/gray, we need distinct progression
+	// Dark mode uses official tokens (already distinct: #161616 → #262626 → #393939 → #525252)
+	const layer02 = mode === "light"
+		? adjustColor(palette.bg_layer_01, -12) // Darker than layer-01 for clear distinction
+		: palette.bg_layer_02; // Dark mode: Official token
+	// DERIVED for light mode: Continuing visible progression
+	const layer03 = mode === "light"
+		? adjustColor(palette.bg_layer_01, -24) // Even darker for clear hierarchy
+		: palette.bg_layer_03; // Dark mode: Official token
 
 	// Popover (typically layer-02/03 context)
 	const popover = palette.bg_layer_02;

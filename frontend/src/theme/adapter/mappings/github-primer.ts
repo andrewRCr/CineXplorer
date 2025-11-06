@@ -30,9 +30,9 @@ import {
 import { primerShadows } from "../shadows";
 import { createExtensions } from "../extensions";
 import {
+	adjustColor,
 	deriveBorderHierarchy,
 	deriveInteractionStates,
-	deriveLayer03,
 } from "../utils";
 
 /**
@@ -67,8 +67,9 @@ export function createGithubAdapter(mode: "light" | "dark"): UnifiedTheme {
 	// Core structure
 	const background = palette.bg_default;
 	const foreground = palette.fg_default;
-	const layer01 = palette.bg_muted; // CORRECTED: Cards distinct from background
-	const layer02 = palette.bg_default; // CORRECTED: Modals use bg_default + shadow (not bg_emphasis)
+	const layer01 = palette.bg_muted; // Official: Cards use bg_muted
+	// DERIVED: layer-02 for visible distinction (Primer doesn't provide distinct token)
+	const layer02 = adjustColor(palette.bg_muted, mode === "light" ? 15 : 7);
 
 	// Popover (typically layer-02 context)
 	const popover = palette.bg_default;
@@ -107,9 +108,8 @@ export function createGithubAdapter(mode: "light" | "dark"): UnifiedTheme {
 	// These tokens don't exist in official Primer but are derived to provide
 	// consistent vocabulary across all themes. Clearly marked as derived.
 
-	// Layer-03: Primer doesn't provide a third layer - shadows handle elevation
-	// Derivation: Same as layer-02 (shadows differentiate, not color)
-	const layer03 = deriveLayer03(layer01, layer02, true); // true = shadow-based theme
+	// DERIVED: layer-03 for highest elevation
+	const layer03 = adjustColor(layer02, mode === "light" ? 15 : 7);
 
 	// Border hierarchy: Primer has single border token + emphasis
 	// Derivation: Generate per-layer borders for consistency with Carbon pattern

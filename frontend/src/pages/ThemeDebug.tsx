@@ -1,47 +1,16 @@
 import { Box, Text, VStack, HStack, Button } from "@chakra-ui/react";
 import { useThemeSelect } from "@/hooks/useThemeSelect";
 import { type ThemeName } from "@/theme";
-import { useColorMode } from "@/components/chakra/color-mode";
-import { useEffect, useState } from "react";
+import { ColorModeButton, useColorMode } from "@/components/chakra/color-mode";
 
 /**
  * Theme System Debug Page
  *
- * Displays actual computed CSS values to debug theme system issues.
+ * Visual testing and validation for the unified theme token system.
  */
 export default function ThemeDebug() {
 	const { theme, setTheme } = useThemeSelect();
 	const { colorMode } = useColorMode();
-	const [computedStyles, setComputedStyles] = useState<Record<string, string>>({});
-	const [domInfo, setDomInfo] = useState<Record<string, string>>({});
-
-	useEffect(() => {
-		// Get computed styles for semantic tokens
-		const testElement = document.createElement('div');
-		testElement.style.cssText = `
-			background: var(--background);
-			color: var(--foreground);
-		`;
-		document.body.appendChild(testElement);
-		const computed = window.getComputedStyle(testElement);
-
-		setComputedStyles({
-			'--background': computed.backgroundColor,
-			'--foreground': computed.color,
-			'--card': computed.getPropertyValue('background'), // Try different ways
-			'raw-background': getComputedStyle(document.documentElement).getPropertyValue('--background').trim(),
-			'raw-card': getComputedStyle(document.documentElement).getPropertyValue('--card').trim(),
-		});
-
-		document.body.removeChild(testElement);
-
-		// Get DOM attributes
-		setDomInfo({
-			'data-theme': document.documentElement.getAttribute('data-theme') || 'NOT SET',
-			'data-color-mode': document.documentElement.getAttribute('data-color-mode') || 'NOT SET',
-			'class': document.documentElement.className || 'NO CLASS',
-		});
-	}, [theme, colorMode]);
 
 	return (
 		<Box p={8} bg="background" color="foreground" minH="100vh">
@@ -49,7 +18,7 @@ export default function ThemeDebug() {
 				<Text fontSize="3xl" fontWeight="bold">Theme System Debug</Text>
 
 				{/* Current State */}
-				<Box bg="card" p={6} borderRadius="md" borderWidth="1px" borderColor="border">
+				<Box bg="layer-01" p={6} borderRadius="md" borderWidth="1px" borderColor="border">
 					<Text fontSize="xl" fontWeight="bold" mb={4}>Current State</Text>
 					<VStack align="stretch" gap={2}>
 						<Text><strong>Selected Theme:</strong> {theme}</Text>
@@ -57,73 +26,30 @@ export default function ThemeDebug() {
 					</VStack>
 				</Box>
 
-				{/* DOM Attributes */}
-				<Box bg="card" p={6} borderRadius="md" borderWidth="1px" borderColor="border">
-					<Text fontSize="xl" fontWeight="bold" mb={4}>DOM Attributes</Text>
-					<VStack align="stretch" gap={2} fontFamily="mono" fontSize="sm">
-						{Object.entries(domInfo).map(([key, value]) => (
-							<Text key={key}>
-								<strong>{key}:</strong> {value}
-							</Text>
-						))}
-					</VStack>
-				</Box>
-
-				{/* Computed CSS Values */}
-				<Box bg="card" p={6} borderRadius="md" borderWidth="1px" borderColor="border">
-					<Text fontSize="xl" fontWeight="bold" mb={4}>Computed CSS Values</Text>
-					<VStack align="stretch" gap={2} fontFamily="mono" fontSize="sm">
-						{Object.entries(computedStyles).map(([key, value]) => (
-							<Text key={key}>
-								<strong>{key}:</strong> {value || 'EMPTY'}
-							</Text>
-						))}
-					</VStack>
-				</Box>
-
-				{/* Visual Tests - Try Different Syntax */}
-				<Box bg="card" p={6} borderRadius="md" borderWidth="1px" borderColor="border">
-					<Text fontSize="xl" fontWeight="bold" mb={4}>Syntax Tests</Text>
-					<VStack align="stretch" gap={4}>
-						<Box bg="background" p={4} borderWidth="1px" borderColor="border">
-							<Text color="foreground">Method 1: bg="background"</Text>
-						</Box>
-						<Box background="background" p={4} borderWidth="1px" borderColor="border">
-							<Text color="foreground">Method 2: background="background"</Text>
-						</Box>
-						<Box style={{ background: 'var(--background)' }} p={4} borderWidth="1px" borderColor="border">
-							<Text color="foreground">Method 3: style var(--background)</Text>
-						</Box>
-						<Box bg="colors.background" p={4} borderWidth="1px" borderColor="border">
-							<Text color="colors.foreground">Method 4: bg="colors.background"</Text>
-						</Box>
-						<Box bg="colorPalette.background" p={4} borderWidth="1px" borderColor="border">
-							<Text color="colorPalette.foreground">Method 5: bg="colorPalette.background"</Text>
-						</Box>
-						<Box bg="semantic.background" p={4} borderWidth="1px" borderColor="border">
-							<Text color="semantic.foreground">Method 6: bg="semantic.background"</Text>
-						</Box>
-					</VStack>
-				</Box>
-
-				{/* Chakra Default Tokens Test */}
-				<Box bg="card" p={6} borderRadius="md" borderWidth="1px" borderColor="border">
-					<Text fontSize="xl" fontWeight="bold" mb={4}>Chakra Default Tokens Test</Text>
-					<VStack align="stretch" gap={4}>
-						<Box bg="bg" p={4} borderWidth="1px" borderColor="border">
-							<Text color="fg">bg + fg (Chakra defaults)</Text>
-						</Box>
-						<Box bg="gray.500" p={4}>
-							<Text color="white">gray.500 (raw color)</Text>
-						</Box>
-						<Box bg="red.500" p={4}>
-							<Text color="white">red.500 (raw color)</Text>
+				{/* Theme Switcher */}
+				<Box bg="layer-01" p={6} borderRadius="md" borderWidth="1px" borderColor="border">
+					<Text fontSize="xl" fontWeight="bold" mb={4}>Quick Theme Switch</Text>
+					<VStack align="stretch" gap={3}>
+						<HStack wrap="wrap" gap={2}>
+							{(['ibm-carbon', 'github-primer', 'gitlab-pajamas'] as const).map((t) => (
+								<Button
+									key={t}
+									onClick={() => setTheme(t as ThemeName)}
+									size="sm"
+									variant={theme === t ? "solid" : "outline"}
+								>
+									{t === 'ibm-carbon' ? 'IBM Carbon' : t === 'github-primer' ? 'GitHub Primer' : 'GitLab Pajamas'}
+								</Button>
+							))}
+						</HStack>
+						<Box>
+							<ColorModeButton />
 						</Box>
 					</VStack>
 				</Box>
 
 				{/* Opacity Modifier Tests */}
-				<Box bg="card" p={6} borderRadius="md" borderWidth="1px" borderColor="border">
+				<Box bg="layer-01" p={6} borderRadius="md" borderWidth="1px" borderColor="border">
 					<Text fontSize="xl" fontWeight="bold" mb={4}>Opacity Modifier Tests</Text>
 					<VStack align="stretch" gap={4}>
 						{/* Test with semantic tokens */}
@@ -223,21 +149,173 @@ export default function ThemeDebug() {
 					</VStack>
 				</Box>
 
-				{/* Theme Switcher */}
-				<Box bg="card" p={6} borderRadius="md" borderWidth="1px" borderColor="border">
-					<Text fontSize="xl" fontWeight="bold" mb={4}>Quick Theme Switch</Text>
-					<HStack wrap="wrap" gap={2}>
-						{(['github', 'ibm-carbon', 'gitlab-pajamas'] as const).map((t) => (
-							<Button
-								key={t}
-								onClick={() => setTheme(t as ThemeName)}
-								size="sm"
-								variant={theme === t ? "solid" : "outline"}
+				{/* ========== UNIFIED TOKENS TESTING (Phase 3) ========== */}
+
+				{/* Layer System */}
+				<Box bg="layer-01" p={6} borderRadius="md" borderWidth="1px" borderColor="border">
+					<Text fontSize="xl" fontWeight="bold" mb={4}>Layer System (Elevation Hierarchy)</Text>
+					<VStack align="stretch" gap={4}>
+						<Box bg="background" p={4} borderWidth="1px" borderColor="border">
+							<Text color="foreground" fontWeight="bold">background</Text>
+							<Text color="foreground/60" fontSize="sm">Base page background (lowest)</Text>
+						</Box>
+						<Box bg="layer-01" p={4} borderWidth="1px" borderColor="border">
+							<Text color="foreground" fontWeight="bold">layer-01</Text>
+							<Text color="foreground/60" fontSize="sm">Cards, panels (first elevation)</Text>
+						</Box>
+						<Box bg="layer-02" p={4} borderWidth="1px" borderColor="border">
+							<Text color="foreground" fontWeight="bold">layer-02</Text>
+							<Text color="foreground/60" fontSize="sm">Elevated panels, popovers (second elevation)</Text>
+						</Box>
+						<Box bg="layer-03" p={4} borderWidth="1px" borderColor="border">
+							<Text color="foreground" fontWeight="bold">layer-03</Text>
+							<Text color="foreground/60" fontSize="sm">Highest elevation (dropdowns, modals)</Text>
+						</Box>
+						<Box p={4}>
+							<Text fontSize="sm" color="foreground/80" fontStyle="italic">
+								Expected: Each layer should be visually distinct. layer-03 should NOT match background.
+							</Text>
+						</Box>
+					</VStack>
+				</Box>
+
+				{/* Shadow System */}
+				<Box bg="layer-01" p={6} borderRadius="md" borderWidth="1px" borderColor="border">
+					<Text fontSize="xl" fontWeight="bold" mb={4}>Shadow System</Text>
+					<VStack align="stretch" gap={6}>
+						<HStack gap={4} wrap="wrap" justify="center">
+							<Box
+								bg="layer-01"
+								p={8}
+								borderRadius="md"
+								boxShadow="shadow-sm"
+								minW="200px"
+								textAlign="center"
 							>
-								{t}
-							</Button>
-						))}
-					</HStack>
+								<Text fontWeight="bold" mb={2}>shadow-sm</Text>
+								<Text fontSize="sm" color="foreground/60">Subtle (cards)</Text>
+							</Box>
+							<Box
+								bg="layer-01"
+								p={8}
+								borderRadius="md"
+								boxShadow="shadow-md"
+								minW="200px"
+								textAlign="center"
+							>
+								<Text fontWeight="bold" mb={2}>shadow-md</Text>
+								<Text fontSize="sm" color="foreground/60">Moderate (popovers)</Text>
+							</Box>
+							<Box
+								bg="layer-01"
+								p={8}
+								borderRadius="md"
+								boxShadow="shadow-lg"
+								minW="200px"
+								textAlign="center"
+							>
+								<Text fontWeight="bold" mb={2}>shadow-lg</Text>
+								<Text fontSize="sm" color="foreground/60">Large (modals)</Text>
+							</Box>
+						</HStack>
+						<Box p={4}>
+							<Text fontSize="sm" color="foreground/80" fontStyle="italic">
+								Expected: Progressive depth increase from sm → md → lg. Shadows should be clearly visible.
+								Note: IBM Carbon uses minimal shadows (prefers layer colors).
+							</Text>
+						</Box>
+					</VStack>
+				</Box>
+
+				{/* Border Hierarchy */}
+				<Box bg="layer-01" p={6} borderRadius="md" borderWidth="1px" borderColor="border">
+					<Text fontSize="xl" fontWeight="bold" mb={4}>Border Hierarchy</Text>
+					<VStack align="stretch" gap={3}>
+						<Box p={4} borderWidth="2px" borderColor="border-subtle-00" bg="layer-01">
+							<Text fontWeight="bold">border-subtle-00</Text>
+							<Text fontSize="sm" color="foreground/60">Most subtle border (barely visible)</Text>
+						</Box>
+						<Box p={4} borderWidth="2px" borderColor="border-subtle-02" bg="layer-02">
+							<Text fontWeight="bold">border-subtle-02</Text>
+							<Text fontSize="sm" color="foreground/60">Subtle border for layer-02</Text>
+						</Box>
+						<Box p={4} borderWidth="2px" borderColor="border-strong-01" bg="layer-01">
+							<Text fontWeight="bold">border-strong-01</Text>
+							<Text fontSize="sm" color="foreground/60">Strong border for layer-01 (clear visibility)</Text>
+						</Box>
+						<Box p={4} borderWidth="2px" borderColor="border-strong-02" bg="layer-02">
+							<Text fontWeight="bold">border-strong-02</Text>
+							<Text fontSize="sm" color="foreground/60">Strong border for layer-02</Text>
+						</Box>
+						<Box p={4} borderWidth="2px" borderColor="border-strong-03" bg="layer-03">
+							<Text fontWeight="bold">border-strong-03</Text>
+							<Text fontSize="sm" color="foreground/60">Strong border for layer-03 (highest contrast)</Text>
+						</Box>
+						<Box p={4}>
+							<Text fontSize="sm" color="foreground/80" fontStyle="italic">
+								Expected: Subtle borders are faint, strong borders are clearly visible. All should meet contrast requirements.
+							</Text>
+						</Box>
+					</VStack>
+				</Box>
+
+				{/* Interaction States */}
+				<Box bg="layer-01" p={6} borderRadius="md" borderWidth="1px" borderColor="border">
+					<Text fontSize="xl" fontWeight="bold" mb={4}>Interaction States</Text>
+					<VStack align="stretch" gap={6}>
+						{/* Layer 01 states */}
+						<Box>
+							<Text fontSize="lg" fontWeight="bold" mb={3}>Layer-01 States</Text>
+							<HStack gap={4} wrap="wrap">
+								<Box bg="layer-01" p={6} borderRadius="md" minW="150px" textAlign="center">
+									<Text fontWeight="bold">layer-01</Text>
+									<Text fontSize="sm" color="foreground/60">Default</Text>
+								</Box>
+								<Box bg="layer-hover-01" p={6} borderRadius="md" minW="150px" textAlign="center">
+									<Text fontWeight="bold">layer-hover-01</Text>
+									<Text fontSize="sm" color="foreground/60">Hover</Text>
+								</Box>
+								<Box bg="layer-selected-01" p={6} borderRadius="md" minW="150px" textAlign="center">
+									<Text fontWeight="bold">layer-selected-01</Text>
+									<Text fontSize="sm" color="foreground/60">Selected</Text>
+								</Box>
+								<Box bg="layer-active-01" p={6} borderRadius="md" minW="150px" textAlign="center">
+									<Text fontWeight="bold">layer-active-01</Text>
+									<Text fontSize="sm" color="foreground/60">Active</Text>
+								</Box>
+							</HStack>
+						</Box>
+
+						{/* Layer 02 states */}
+						<Box>
+							<Text fontSize="lg" fontWeight="bold" mb={3}>Layer-02 States</Text>
+							<HStack gap={4} wrap="wrap">
+								<Box bg="layer-02" p={6} borderRadius="md" minW="150px" textAlign="center">
+									<Text fontWeight="bold">layer-02</Text>
+									<Text fontSize="sm" color="foreground/60">Default</Text>
+								</Box>
+								<Box bg="layer-hover-02" p={6} borderRadius="md" minW="150px" textAlign="center">
+									<Text fontWeight="bold">layer-hover-02</Text>
+									<Text fontSize="sm" color="foreground/60">Hover</Text>
+								</Box>
+								<Box bg="layer-selected-02" p={6} borderRadius="md" minW="150px" textAlign="center">
+									<Text fontWeight="bold">layer-selected-02</Text>
+									<Text fontSize="sm" color="foreground/60">Selected</Text>
+								</Box>
+								<Box bg="layer-active-02" p={6} borderRadius="md" minW="150px" textAlign="center">
+									<Text fontWeight="bold">layer-active-02</Text>
+									<Text fontSize="sm" color="foreground/60">Active</Text>
+								</Box>
+							</HStack>
+						</Box>
+
+						<Box p={4}>
+							<Text fontSize="sm" color="foreground/80" fontStyle="italic">
+								Expected: Hover/selected/active states should be visibly different from default.
+								Test in both light and dark modes - hover must be visible in dark mode!
+							</Text>
+						</Box>
+					</VStack>
 				</Box>
 			</VStack>
 		</Box>

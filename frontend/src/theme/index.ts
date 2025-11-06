@@ -19,21 +19,20 @@ import { ibmCarbonTheme } from "./definitions/ibm-carbon";
 import { gitlabPajamasTheme } from "./definitions/gitlab-pajamas";
 import type { Theme, ThemeColors } from "./types";
 
-// Import unified adapter factory (Phase 3 integration)
-import { createUnifiedTheme } from "./adapter";
-
 /**
  * Theme Registry
  *
  * Production themes optimized for accessibility and visual consistency.
+ * IBM Carbon is the default - its layer-based elevation philosophy guides
+ * CineXplorer's unified theme system architecture.
  */
 export const themeRegistry = {
-	github: githubTheme,
 	"ibm-carbon": ibmCarbonTheme,
+	"github-primer": githubTheme,
 	"gitlab-pajamas": gitlabPajamasTheme,
 } as const;
 
-export const defaultThemeName = "github";
+export const defaultThemeName = "ibm-carbon";
 export type ThemeName = keyof typeof themeRegistry;
 
 export function getTheme(name: string): Theme {

@@ -7,7 +7,7 @@ vi.mock('@/constants/theme', () => ({
   COLORS: {
     background: { footer: '#f8f9fa' },
     border: { main: '#e2e8f0' },
-    text: { 
+    text: {
       muted: '#6b7280'
     }
   }
@@ -18,14 +18,24 @@ vi.mock('../../../assets/tmdb_logo_alt_short.svg', () => ({
   default: '/mock-tmdb-logo.svg'
 }));
 
+// Mock components that require context providers
+// Note: Using inline factories to avoid hoisting issues with imported helpers
+vi.mock('@/components/ThemeSelector', () => ({
+  ThemeSelector: () => <div data-testid="theme-selector">Theme Selector</div>
+}));
+
+vi.mock('@/components/chakra/color-mode', () => ({
+  ColorModeButton: () => <button data-testid="color-mode-button">Color Mode</button>
+}));
+
 describe('Footer Component', () => {
   describe('Basic Rendering', () => {
     it('renders footer with correct semantic structure', () => {
       render(<Footer />);
-      
+
       const footer = screen.getByRole('contentinfo');
       expect(footer).toBeInTheDocument();
-      expect(footer).toHaveAttribute('aria-label', 'Application footer with TMDB attribution');
+      expect(footer).toHaveAttribute('aria-label', 'Application footer with TMDB attribution and theme controls');
     });
 
     it('renders copyright text', () => {
@@ -136,13 +146,13 @@ describe('Footer Component', () => {
 
     it('maintains consistent spacing between sections', () => {
       render(<Footer />);
-      
+
       // Both text sections should be present and structured properly
       expect(screen.getByText('© 2025 CineXplorer. All rights reserved.')).toBeInTheDocument();
       expect(screen.getByText(/This product uses the TMDB API/)).toBeInTheDocument();
-      
+
       // Logo and link should be in the same section as attribution text
-      const tmdbLink = screen.getByRole('link');
+      const tmdbLink = screen.getByRole('link', { name: 'TMDB API Documentation' });
       const logo = screen.getByAltText('TMDB Logo');
       expect(tmdbLink).toContainElement(logo);
     });
@@ -158,9 +168,9 @@ describe('Footer Component', () => {
 
     it('includes descriptive aria-label for footer', () => {
       render(<Footer />);
-      
+
       const footer = screen.getByRole('contentinfo');
-      expect(footer).toHaveAttribute('aria-label', 'Application footer with TMDB attribution');
+      expect(footer).toHaveAttribute('aria-label', 'Application footer with TMDB attribution and theme controls');
     });
 
     it('ensures external link has proper accessibility attributes', () => {
@@ -229,12 +239,12 @@ describe('Footer Component', () => {
 
     it('maintains consistent component structure', () => {
       render(<Footer />);
-      
+
       // Should have all expected elements
       expect(screen.getByRole('contentinfo')).toBeInTheDocument();
       expect(screen.getByText('© 2025 CineXplorer. All rights reserved.')).toBeInTheDocument();
       expect(screen.getByText(/This product uses the TMDB API/)).toBeInTheDocument();
-      expect(screen.getByRole('link')).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'TMDB API Documentation' })).toBeInTheDocument();
       expect(screen.getByAltText('TMDB Logo')).toBeInTheDocument();
     });
 
@@ -258,22 +268,23 @@ describe('Footer Component', () => {
     it('handles missing logo asset gracefully', () => {
       // Component should render even if logo fails to load
       render(<Footer />);
-      
+
       const logo = screen.getByAltText('TMDB Logo');
       expect(logo).toBeInTheDocument();
-      
+
       // Component structure should remain intact
       expect(screen.getByRole('contentinfo')).toBeInTheDocument();
-      expect(screen.getByRole('link')).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'TMDB API Documentation' })).toBeInTheDocument();
     });
 
     it('maintains functionality with broken external link', () => {
       render(<Footer />);
-      
+
       // Link should still be present with correct attributes even if destination is unreachable
       const tmdbLink = screen.getByRole('link', { name: 'TMDB API Documentation' });
       expect(tmdbLink).toHaveAttribute('href', 'https://www.themoviedb.org/documentation/api');
       expect(tmdbLink).toHaveAttribute('target', '_blank');
+      expect(tmdbLink).toHaveAttribute('rel', 'noopener noreferrer');
     });
 
     it('handles theme color constants gracefully', () => {

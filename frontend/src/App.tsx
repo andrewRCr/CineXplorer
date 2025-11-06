@@ -28,6 +28,7 @@ const TopRated = lazy(() => import("./pages/movie/TopRated"));
 const SearchResults = lazy(() => import("./pages/movie/SearchResults"));
 const TypographyTest = lazy(() => import("./pages/TypographyTest"));
 const ThemeDebug = lazy(() => import("./pages/ThemeDebug"));
+const LayoutDebug = lazy(() => import("./pages/LayoutDebug"));
 
 const App: React.FC = () => {
   return (
@@ -100,6 +101,7 @@ const App: React.FC = () => {
               <Route path={ROUTES.MOVIE_DETAIL} element={<MovieDetail />} />
               <Route path={ROUTES.TYPOGRAPHY_TEST} element={<TypographyTest />} />
               <Route path="/theme-debug" element={<ThemeDebug />} />
+              <Route path="/layout-debug" element={<LayoutDebug />} />
               {/* ...other content routes... */}
             </Route>
 

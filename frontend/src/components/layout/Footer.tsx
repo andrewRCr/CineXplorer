@@ -1,5 +1,6 @@
 import tmdbLogo from "../../assets/tmdb_logo_alt_short.svg";
 import { Box, HStack, Text, VStack } from "@chakra-ui/react";
+import { Link } from "react-router-dom";
 import { ColorModeButton } from "../chakra/color-mode";
 import { ThemeSelector } from "../ThemeSelector";
 
@@ -23,6 +24,19 @@ const Footer = () => {
           <ThemeSelector />
           <ColorModeButton />
         </HStack>
+
+        {/* Debug Links Row (dev mode only) */}
+        {import.meta.env.DEV && (
+          <HStack gap={3} fontSize="xs" color="muted-foreground">
+            <Text fontWeight="medium">Debug:</Text>
+            <Link to="/theme-debug" style={{ textDecoration: "underline" }}>
+              Theme
+            </Link>
+            <Link to="/layout-debug" style={{ textDecoration: "underline" }}>
+              Layout
+            </Link>
+          </HStack>
+        )}
 
         {/* Copyright Row */}
         <Box display="inline-flex" alignItems="center" gap={2}>

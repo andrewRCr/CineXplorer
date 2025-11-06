@@ -1902,8 +1902,9 @@ into `technical/service-layer-modernization`, manual visual review revealed crit
 **IBM Carbon Light:**
 
 - **Needs verification:** User did not test this combination during review session
-- **Expected issue:** -12%/-24% adjustments likely insufficient (similar to Primer/Pajamas)
-- **Note:** Carbon Light officially alternates (white/gray/white/gray) - we derive to avoid this
+- **DECISION (ADR-008):** Adopt Carbon's official alternating pattern (white/gray/white/gray)
+- **Rationale:** Carbon is our architectural blueprint - adopt the entire pattern, not just token count
+- Previous derived approach (-12%/-24% progressive) was naive attempt at universal strategy
 
 ---
 
@@ -1972,33 +1973,53 @@ into `technical/service-layer-modernization`, manual visual review revealed crit
 
 ---
 
-### Next Steps: Light Mode Remediation Plan
+### DECISION: Adopt Carbon Light Mode Alternating Pattern (ADR-008)
 
-**Strategy:** Use Carbon as inspiration for light mode layer progression
+**Implemented:** 2025-11-06
 
-**Option A: Aggressive Darkening (Recommended)**
+**Final Strategy:** Adopt Carbon's official alternating pattern for ALL themes in light mode.
 
-- GitHub Primer Light: Base `bg_muted` (#f6f8fa), darken by -20%, -40%, -60%
-- GitLab Pajamas Light: Base `bg_section` (#ececef), darken by -20%, -40%, -60%
-- **Pro:** Creates clearly visible progression
-- **Con:** May deviate significantly from design system aesthetic
+**Rationale:**
 
-**Option B: Hybrid (Lighten then darken)**
+- Carbon is our architectural blueprint (ADR-006) - adopt the **entire pattern**, not just token count
+- Progressive darkening in light mode fails (15% adjustments create indistinguishable grays)
+- Carbon's alternating pattern addresses real challenges (accessibility, visual nesting, avoids muddy mid-grays)
+- Proven approach from Carbon's design team based on extensive research
 
-- Layer-01: Use official token (slight lightening from background)
-- Layer-02: Darken from layer-01 by -15%
-- Layer-03: Darken further by -30% total
-- **Pro:** Respects official layer-01, progresses from there
-- **Con:** More complex logic
+**Implementation:**
 
-**Option C: Carbon-Inspired Absolute Values**
+**IBM Carbon Light:**
 
-- Research Carbon White theme exact progressions
-- Apply similar step sizes to Primer/Pajamas light modes
-- **Pro:** Proven approach from design system
-- **Con:** Requires additional research
+- Use official tokens: white → gray (#f4f4f4) → white → gray
+- No derivation needed (100% official)
 
-**Decision:** Defer to next session after user feedback
+**GitHub Primer Light:**
+
+- Derive alternating: `bg_default` (white) ↔ `bg_muted` (gray)
+- Pattern: white → gray → white → gray
+
+**GitLab Pajamas Light:**
+
+- Derive alternating: `bg_default` (white) ↔ `bg_section` (gray)
+- Pattern: white → gray → white → gray
+
+**All Dark Modes:**
+
+- Continue progressive lightening (no change)
+- Carbon: Official tokens
+- Primer/Pajamas: Derived progressive (7% adjustments)
+
+**Re-evaluation Trigger:**
+
+- Decision may be revisited once more frontend components are complete
+- Monitor for white-on-white issues in specific component contexts
+- Border hierarchy (`border-strong-01/02/03`) becomes critical for light mode
+
+**Deprecated Options (kept for historical record):**
+
+~~**Option A: Aggressive Darkening**~~ - Rejected, doesn't respect Carbon blueprint
+~~**Option B: Hybrid (Lighten then darken)**~~ - Rejected, unnecessary complexity
+~~**Option C: Carbon-Inspired Absolute Values**~~ - Superseded by adopting Carbon's actual pattern
 
 ---
 

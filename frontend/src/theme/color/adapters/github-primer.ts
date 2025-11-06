@@ -68,8 +68,13 @@ export function createGithubAdapter(mode: "light" | "dark"): UnifiedTheme {
     const background = palette.bg_default;
     const foreground = palette.fg_default;
     const layer01 = palette.bg_muted; // Official: Cards use bg_muted
-    // DERIVED: layer-02 for visible distinction (Primer doesn't provide distinct token)
-    const layer02 = adjustColor(palette.bg_muted, mode === "light" ? 15 : 7);
+
+    // DERIVED: Alternating pattern (ADR-008) - Carbon-inspired for consistency
+    // Dark mode: Progressive lightening (7% adjustment from layer-01)
+    // Light mode: Alternating (bg_default ↔ bg_muted pattern)
+    const layer02 = mode === "light"
+        ? palette.bg_default // Alternates back to background (white)
+        : adjustColor(palette.bg_muted, 7); // Progressive for dark mode
 
     // Popover (typically layer-02 context)
     const popover = palette.bg_default;
@@ -108,8 +113,12 @@ export function createGithubAdapter(mode: "light" | "dark"): UnifiedTheme {
     // These tokens don't exist in official Primer but are derived to provide
     // consistent vocabulary across all themes. Clearly marked as derived.
 
-    // DERIVED: layer-03 for highest elevation
-    const layer03 = adjustColor(layer02, mode === "light" ? 15 : 7);
+    // DERIVED: layer-03 alternates again (ADR-008)
+    // Dark mode: Progressive lightening continues from layer-02
+    // Light mode: Alternates back to gray (same as layer-01)
+    const layer03 = mode === "light"
+        ? palette.bg_muted // Alternates back to gray (matches layer-01)
+        : adjustColor(layer02, 7); // Progressive for dark mode
 
     // Border hierarchy: Primer has single border token + emphasis
     // Derivation: Generate per-layer borders for consistency with Carbon pattern

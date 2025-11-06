@@ -84,9 +84,13 @@ export function createPajamasAdapter(mode: "light" | "dark"): UnifiedTheme {
     const background = palette.bg_default;
     const foreground = palette.fg_default;
     const layer01 = palette.bg_section; // Official: Cards use bg_section
-    // DERIVED: layer-02 for visible distinction (Pajamas bg_elevated = bg_default)
-    // CineXplorer uses Carbon-inspired layer system for consistency across themes
-    const layer02 = adjustColor(palette.bg_section, mode === "light" ? 15 : 7); // Visible distinction from layer-01
+
+    // DERIVED: Alternating pattern (ADR-008) - Carbon-inspired for consistency
+    // Dark mode: Progressive lightening (7% adjustment from layer-01)
+    // Light mode: Alternating (bg_default ↔ bg_section pattern)
+    const layer02 = mode === "light"
+        ? palette.bg_default // Alternates back to background (white)
+        : adjustColor(palette.bg_section, 7); // Progressive for dark mode
 
     // Popover (typically layer-02 context with shadow)
     const popover = palette.bg_elevated;
@@ -139,9 +143,12 @@ export function createPajamasAdapter(mode: "light" | "dark"): UnifiedTheme {
     // Pajamas lacks per-layer border hierarchy and layer-03. Derive these
     // for consistency with unified vocabulary.
 
-    // DERIVED: layer-03 for highest elevation
-    // CineXplorer requires visible color distinction at all elevation levels
-    const layer03 = adjustColor(layer02, mode === "light" ? 15 : 7); // Clear visual progression
+    // DERIVED: layer-03 alternates again (ADR-008)
+    // Dark mode: Progressive lightening continues from layer-02
+    // Light mode: Alternates back to gray (same as layer-01)
+    const layer03 = mode === "light"
+        ? palette.bg_section // Alternates back to gray (matches layer-01)
+        : adjustColor(layer02, 7); // Progressive for dark mode
 
     // Border hierarchy: Pajamas has single strong border token
     // Derivation: Generate per-layer borders from neutral scale

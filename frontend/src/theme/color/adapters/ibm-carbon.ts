@@ -21,8 +21,9 @@
  *
  * **Key Advantage:**
  * Carbon's rich official vocabulary requires the LEAST derivation of all three
- * themes. Dark mode uses 100% official tokens. Light mode derives layers to avoid
- * Carbon's alternating pattern (white/gray/white/gray → progressive darkening).
+ * themes. Both dark and light modes use 100% official layer tokens (ADR-008).
+ * Light mode: Adopts Carbon's official alternating pattern (white/gray/white/gray).
+ * Dark mode: Uses Carbon's official progressive pattern (#161616 → #262626 → #393939 → #525252).
  *
  * **Critical Corrections Applied:**
  * - Dark mode (G100): border uses border_strong_01 (#6f6f6f) not border_default (#393939 = invisible!)
@@ -44,7 +45,7 @@ import {
 } from "../palettes/ibm-carbon";
 import { carbonShadows } from "../shadows";
 import { createExtensions } from "../extensions";
-import { adjustColor, deriveInteractionStates } from "../utils";
+import { deriveInteractionStates } from "../utils";
 
 /**
  * IBM Carbon palette type (light or dark mode).
@@ -87,15 +88,18 @@ export function createCarbonAdapter(mode: "light" | "dark"): UnifiedTheme {
     const background = palette.bg_default;
     const foreground = palette.fg_default;
     const layer01 = palette.bg_layer_01; // Official: Cards, first layer
-    // DERIVED for light mode: Carbon Light alternates white/gray, we need distinct progression
-    // Dark mode uses official tokens (already distinct: #161616 → #262626 → #393939 → #525252)
-    const layer02 = mode === "light"
-        ? adjustColor(palette.bg_layer_01, -12) // Darker than layer-01 for clear distinction
-        : palette.bg_layer_02; // Dark mode: Official token
-    // DERIVED for light mode: Continuing visible progression
-    const layer03 = mode === "light"
-        ? adjustColor(palette.bg_layer_01, -24) // Even darker for clear hierarchy
-        : palette.bg_layer_03; // Dark mode: Official token
+
+    // OFFICIAL TOKENS (both modes) - ADR-008: Adopt Carbon's alternating pattern for light mode
+    // Dark mode: Progressive lightening (#161616 → #262626 → #393939 → #525252)
+    // Light mode: Alternating (white → gray → white → gray)
+    const layer02 = palette.bg_layer_02;
+    const layer03 = palette.bg_layer_03;
+
+    // DEPRECATED (ADR-008): Previous derived progressive approach for light mode
+    // These values attempted universal progressive darkening but failed visual hierarchy requirements.
+    // Kept for reference:
+    //   layer02 (light): adjustColor(palette.bg_layer_01, -12) = ~#e2e2e2
+    //   layer03 (light): adjustColor(palette.bg_layer_01, -24) = ~#d0d0d0
 
     // Popover (typically layer-02/03 context)
     const popover = palette.bg_layer_02;

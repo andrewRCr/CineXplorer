@@ -654,69 +654,88 @@ Nielsen Norman Group, WCAG 2.4.13, and accessibility.org best practices (2024).
 **Use opacity overlays, not color changes**, for interactive states. This approach is consistent across all tokens,
 maintains contrast ratios, and performs better than color calculations.
 
+**Implementation:** CineXplorer provides dedicated interaction state tokens (`layer-hover-01`, `layer-selected-01`, etc.)
+that internally use opacity overlay calculations.
+See **ADR-009: Use Material Design Opacity Overlays for Interaction States** for full rationale.
+
+### Interaction State Tokens
+
+**For surfaces (cards, list items, menu items):**
+
+```tsx
+// Use dedicated tokens - they handle opacity internally
+<Box
+  bg="layer-01"
+  _hover={{ bg: "layer-hover-01" }}      // Internally: layer-01 + 8% foreground
+  _active={{ bg: "layer-selected-01" }}   // Internally: layer-01 + 12% foreground
+>
+  Hover me
+</Box>
+```
+
+**Available tokens per layer:**
+
+- `layer-hover-01` / `layer-hover-02` - Hover states (8% foreground overlay)
+- `layer-selected-01` / `layer-selected-02` - Selected states (12% foreground overlay)
+- `layer-active-01` / `layer-active-02` - Active/pressed states (12% foreground overlay)
+
+**Why dedicated tokens?**
+
+- Consistent across all themes (not slavishly beholden to design systems)
+- Works with ADR-008's alternating layer pattern (avoids layer-03 = layer-01 issue)
+- Simpler component code (no manual overlay logic)
+- Future-proof (auto-adapts to new themes)
+
 ### Standard Opacity Values
 
 **From Material Design 3 research:**
 
-| State | Opacity | Usage | Implementation |
-|-------|---------|-------|----------------|
-| **Hover** | 8% | Mouse over interactive element | `bg="accent/8"` |
-| **Focus** | 12% | Keyboard navigation focus | `bg="accent/12"` |
-| **Pressed/Active** | 12% | Button press, active tab | `bg="accent/12"` |
-| **Drag** | 16% | Element being dragged | `bg="drag-active/16"` |
-| **Disabled** | 38% | Disabled controls | `opacity={0.38}` |
+| State | Opacity | Token Usage | Manual Usage (if needed) |
+|-------|---------|-------------|--------------------------|
+| **Hover** | 8% | `bg="layer-hover-01"` | `bg="foreground/8"` |
+| **Focus** | 12% | N/A (use ring) | `bg="foreground/12"` |
+| **Pressed/Active** | 12% | `bg="layer-active-01"` | `bg="foreground/12"` |
+| **Selected** | 12% | `bg="layer-selected-01"` | `bg="foreground/12"` |
+| **Drag** | 16% | `bg="drag-active"` | `bg="foreground/16"` |
+| **Disabled** | 38% | N/A | `opacity={0.38}` |
 
-**Note:** Overlay uses foreground color at specified opacity, not the background color itself.
-
-### Chakra UI Implementation
-
-**Opacity modifiers with `/` syntax:**
-
-```tsx
-// Hover state
-<Box
-  bg="card"
-  _hover={{ bg: "accent/8" }}
->
-  Hover me
-</Box>
-
-// Active state (button press)
-<Button
-  bg="primary"
-  _active={{ bg: "primary/12" }}
->
-  Press me
-</Button>
-
-// Focus state
-<Input
-  _focus={{
-    borderColor: "ring",
-    boxShadow: "0 0 0 2px",
-    boxShadowColor: "ring/50"
-  }}
-/>
-```
+**Note:** Prefer dedicated tokens over manual overlays. Manual overlays shown for reference or special cases.
 
 ### Common Patterns
 
-**Card hover state:**
+**Surface hover (cards, list items, menu items):**
+
+```tsx
+// Use dedicated tokens
+<Box
+  bg="layer-01"
+  _hover={{ bg: "layer-hover-01" }}
+  _active={{ bg: "layer-selected-01" }}
+  cursor="pointer"
+>
+  Hoverable surface
+</Box>
+```
+
+**Selected state (list items, tabs):**
+
+```tsx
+<Box
+  bg={isSelected ? "layer-selected-01" : "layer-01"}
+  _hover={{ bg: isSelected ? "layer-selected-01" : "layer-hover-01" }}
+>
+  {isSelected ? "Selected" : "Not selected"}
+</Box>
+```
+
+**Card with elevation change on hover:**
 
 ```tsx
 <Card
-  bg="card"
+  bg="layer-01"
   _hover={{
-    bg: "card",
-    shadow: "lg",
-    // Subtle accent overlay
-    "&::after": {
-      content: '""',
-      position: "absolute",
-      inset: 0,
-      bg: "accent/8",
-      borderRadius: "inherit"
-    }
+    bg: "layer-hover-01",
+    boxShadow: "shadow-md"  // Add elevation
   }}
 >
   Movie Card

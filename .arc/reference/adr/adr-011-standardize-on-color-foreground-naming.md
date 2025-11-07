@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed
+Accepted
 
 ## Context
 
@@ -137,23 +137,51 @@ We will **standardize on the `on-` prefix** for all foreground text tokens that 
    "on-info": string;         // already exists
    ```
 
-3. **Deprecate `-foreground` suffix tokens:**
+3. **Deprecate ALL `-foreground` suffix tokens (semantic AND status colors):**
+
+   **Semantic colors:**
+   - `primary-foreground` → deprecated (use `on-primary`)
+   - `secondary-foreground` → deprecated (use `on-secondary`)
+   - `tertiary-foreground` → deprecated (use `on-tertiary`)
+   - `muted-foreground` → deprecated (use `on-muted`)
+
+   **Status colors:**
+   - `success-foreground` → deprecated (use `on-success`)
+   - `destructive-foreground` → deprecated (use `on-destructive`)
+   - `warning-foreground` → deprecated (use `on-warning`)
+   - `info-foreground` → deprecated (use `on-info`)
+
+4. **Implementation details:**
    - Mark with `@deprecated` JSDoc comments
    - Implement as aliases pointing to new `on-` tokens
    - Maintain during component migration period
    - Remove in future cleanup phase (no timeline set)
 
-4. **Migration strategy:**
+5. **Migration strategy:**
    - Phase 1: Add `on-` tokens to all adapters (GitHub, IBM, GitLab, Material)
-   - Phase 2: Update components to use `on-` tokens (gradual, no rush)
-   - Phase 3: Remove deprecated `-foreground` tokens (future, when migration complete)
+   - Phase 2: Deprecate all `-foreground` tokens with JSDoc + aliases
+   - Phase 3: Update components to use `on-` tokens (~33 files)
+   - Phase 4: Remove deprecated `-foreground` tokens (future, when migration complete)
 
 **Implementation scope:**
 
 - Update `UnifiedTheme` interface in `frontend/src/theme/color/types.ts`
+    - Add 4 new semantic `on-*` tokens (on-primary, on-secondary, on-tertiary, on-muted)
+    - Deprecate 8 total `-foreground` tokens (4 semantic + 4 status)
+    - Implement deprecated tokens as aliases to `on-*` equivalents
 - Update all 4 theme adapters (GitHub, IBM Carbon, GitLab, Material)
-- Add JSDoc documentation explaining the pattern
-- Components migrate gradually (not part of this ADR)
+    - Implement new `on-*` tokens for semantic colors
+    - Verify existing `on-*` tokens for status colors
+    - Maintain deprecated `-foreground` aliases pointing to `on-*` tokens
+- Add comprehensive JSDoc documentation explaining the pattern
+- Migrate components from `-foreground` to `on-*` pattern (Task 3.5.5.8)
+
+**Material Design 3 Note:**
+
+Material's static baseline tokens (what we use) only provide `onError` for status colors.
+The official palette lacks `onSuccess`, `onWarning`, and `onInfo` tokens. We derive these
+from Material's color roles (`onPrimaryContainer`, `onSecondaryContainer`, etc.) to maintain
+consistency with our other themes (GitHub, IBM, GitLab) which do provide full status token sets.
 
 ## Consequences
 
@@ -168,10 +196,11 @@ We will **standardize on the `on-` prefix** for all foreground text tokens that 
 
 ### Negative
 
-1. **Migration effort**: Need to update ~33 component files that use `-foreground` tokens
-2. **Token count**: Temporarily doubles foreground token count during deprecation period
+1. **Migration effort**: Need to update ~33 component files that use `-foreground` tokens (both semantic and status)
+2. **Token count**: Temporarily doubles foreground token count during deprecation period (8 deprecated aliases)
 3. **Breaking change**: Eventually removes `-foreground` tokens (gradual, phased approach mitigates)
 4. **Learning curve**: Developers familiar with `-foreground` pattern need to learn new convention
+5. **Material Design gap**: Material's static baseline lacks `on-*` tokens for success/warning/info (must derive)
 
 ### Risks
 

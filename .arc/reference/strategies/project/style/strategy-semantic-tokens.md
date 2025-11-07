@@ -1,6 +1,6 @@
 # Semantic Token Strategy and Migration Guide
 
-**Version:** 1.1 | **Updated:** 2025-11-03 | **Status:** Active
+**Version:** 1.2 | **Updated:** 2025-11-07 | **Status:** Active
 
 ## Purpose
 
@@ -68,7 +68,8 @@ CineXplorer's theme system uses semantic token naming inspired by shadcn/ui, imp
 | `brandSecondary` | Secondary brand color | Additional brand accents (GitLab orange) |
 | **Destructive Colors** (Danger) | | |
 | `destructive` | Danger/error/delete actions | Delete buttons, error states, destructive actions |
-| `destructive-foreground` | Text on destructive backgrounds | Destructive button text |
+| `on-destructive` | Text on destructive backgrounds | Destructive button text (replaces destructive-foreground) |
+| `destructive-foreground` | @deprecated Use `on-destructive` | Legacy alias (migration in progress) |
 | **UI Elements** | | |
 | `border` | Standard borders | Dividers, card outlines, separators |
 | `input` | Input field borders | Text inputs, select boxes, form fields |
@@ -83,13 +84,16 @@ and complete alert system coverage.
 
 | Token | Purpose | Use Cases | Rationale |
 |-------|---------|-----------|-----------|
-| **Status Pairs (6 tokens)** | | | |
+| **Status Pairs (6 canonical + 4 deprecated = 10 tokens during migration)** | | | |
 | `success` | Success background | Success alerts, positive feedback, high ratings | Industry standard (all 4 design systems researched) |
-| `success-foreground` | Text on success | Success message text | Completes success semantic pair |
+| `on-success` | Text on success | Success message text | ADR-011: Standardized on-* naming |
+| `success-foreground` | @deprecated Use `on-success` | Legacy alias | Migration in progress (ADR-011) |
 | `warning` | Warning background | Caution states, validation warnings | Standard alert system component |
-| `warning-foreground` | Text on warning | Warning message text | Completes warning semantic pair |
+| `on-warning` | Text on warning | Warning message text | ADR-011: Standardized on-* naming |
+| `warning-foreground` | @deprecated Use `on-warning` | Legacy alias | Migration in progress (ADR-011) |
 | `info` | Info background | Informational messages, help text | Completes alert system (success/warning/error/info) |
-| `info-foreground` | Text on info | Info message text | Completes info semantic pair |
+| `on-info` | Text on info | Info message text | ADR-011: Standardized on-* naming |
+| `info-foreground` | @deprecated Use `on-info` | Legacy alias | Migration in progress (ADR-011) |
 | **Movie-Specific (2 tokens)** | | | |
 | `rating` | Rating value display | TMDB scores, user ratings, score badges | Core movie app feature, IMDb gold (#F5C518) standard |
 | `rating-foreground` | Text on rating | Score text | Completes rating semantic pair |
@@ -102,24 +106,29 @@ and complete alert system coverage.
 | `drag-active` | Item being dragged | Watchlist reordering, favorites reordering | Core META-PRD feature for interactive lists |
 | `drop-zone` | Valid drop target | Drop zone indicators | Completes drag-and-drop interaction pattern |
 
-**Extended Total:** 33 semantic tokens (still under industry averages of 40-140+)
+**Extended Total:** 33 canonical tokens + 8 deprecated aliases during migration (ADR-011)
 
 **Token Extension Summary:**
 
 All 13 extended tokens are backed by cross-system research (Material Design 3, IBM Carbon, GitHub Primer, Ant Design)
-or address movie app-specific requirements. Total of 33 tokens remains conservative compared to industry averages (40-140+).
+or address movie app-specific requirements. Total of 33 canonical tokens remains conservative compared to industry
+averages (40-140+). During ADR-011 migration, 8 deprecated `-foreground` aliases maintained for backward compatibility.
 
 ---
 
-## Semantic Token Definitions (Per ADR-010)
+## Semantic Token Definitions (Per ADR-010 + ADR-011)
 
 The table below defines the precise semantic meaning, visual characteristics, and usage patterns for each color token
 in CineXplorer's unified vocabulary. These definitions govern how official design system tokens are mapped to our
 semantic vocabulary.
 
-**Context:** ADR-010 established the primary/secondary/tertiary hierarchy (Material Design 3-aligned) with optional
-brand separation and proper token type distinction (background vs foreground tokens). These definitions ensure
-cross-theme consistency while respecting official design system token values.
+**Context:**
+
+- **ADR-010** established the primary/secondary/tertiary hierarchy (Material Design 3-aligned) with optional
+  brand separation and proper token type distinction (background vs foreground tokens).
+- **ADR-011** standardized on `on-*` prefix for ALL foreground tokens (semantic + status), deprecating `-foreground` suffix.
+
+These definitions ensure cross-theme consistency while respecting official design system token values.
 
 | Token | Semantic Meaning | Visual Characteristics | Usage Examples | Token Type | Mapping Notes |
 |-------|-----------------|----------------------|----------------|------------|---------------|
@@ -143,7 +152,8 @@ cross-theme consistency while respecting official design system token values.
 
 **Key Distinctions (Per ADR-010):**
 
-- **Primary vs Tertiary:** Primary is for **button fills** (background token), Tertiary is for **links/text** (foreground token)
+- **Primary vs Tertiary:** Primary is for **button fills** (background token),
+  Tertiary is for **links/text** (foreground token)
 - **Primary vs Brand:** Primary is for **UI actions**, Brand is for **identity** (may be same color, e.g., IBM)
 - **Primary vs Success:** Primary is **action color** (varies by system), Success is **feedback state** (always green)
 - **Secondary vs Muted:** Secondary is **interactive** (clickable buttons), Muted is **non-interactive** (backgrounds)
@@ -176,6 +186,7 @@ cross-theme consistency while respecting official design system token values.
 **See Also:**
 
 - ADR-010: Establish Core Semantic Color Token Architecture (full rationale and decisions)
+- ADR-011: Standardize on "on-color" Foreground Naming Convention (on-* prefix standardization)
 - strategy-border-system.md: Border patterns and outline styling details
 - ADR-003: Extend Semantic Token System (token count extension)
 - ADR-005: Unified Theme Adapter Layer (adapter architecture)
@@ -527,15 +538,20 @@ Use this decision tree to select the appropriate semantic token for any UI eleme
 
 ## Token Naming Conventions
 
-### Pair Convention
+### Pair Convention (Updated per ADR-011)
 
-Most semantic tokens come in pairs: `{name}` (background) and `{name}-foreground` (text on background).
+Most semantic tokens come in pairs: `{name}` (background) and `on-{name}` (text on background).
 
-**Examples:**
+**Canonical naming (use in new code):**
 
-- `card` + `card-foreground`
-- `success` + `success-foreground`
-- `rating` + `rating-foreground`
+- `primary` + `on-primary`
+- `success` + `on-success`
+- `rating` + `rating-foreground` (legacy exception, not yet migrated)
+
+**Deprecated aliases (backward compatibility during migration):**
+
+- `primary-foreground` → use `on-primary` instead
+- `success-foreground` → use `on-success` instead
 
 **Exception:** Single tokens without pairs
 
@@ -917,27 +933,27 @@ whether theme interprets it as gold, orange, or yellow.
 
 ### Most Common Patterns
 
-**Status indicators:**
+**Status indicators (ADR-011 canonical naming):**
 
 ```tsx
 // Success
 <Alert bg="success/10" borderColor="success">
-  <Text color="success-foreground">Action completed</Text>
+  <Text color="on-success">Action completed</Text>
 </Alert>
 
 // Warning
 <Alert bg="warning/10" borderColor="warning">
-  <Text color="warning-foreground">Please verify</Text>
+  <Text color="on-warning">Please verify</Text>
 </Alert>
 
 // Info
 <Alert bg="info/10" borderColor="info">
-  <Text color="info-foreground">Helpful tip</Text>
+  <Text color="on-info">Helpful tip</Text>
 </Alert>
 
 // Error
 <Alert bg="destructive/10" borderColor="destructive">
-  <Text color="destructive-foreground">Error occurred</Text>
+  <Text color="on-destructive">Error occurred</Text>
 </Alert>
 ```
 
@@ -1021,12 +1037,12 @@ whether theme interprets it as gold, orange, or yellow.
     <Box bg="#F5C518">Rating</Box>
 ```
 
-**Always use semantic tokens:**
+**Always use semantic tokens (ADR-011 canonical naming):**
 
 ```tsx
-✅ <Text color="destructive-foreground">Error</Text>
+✅ <Text color="on-destructive">Error</Text>
 ✅ <Box bg="muted">Container</Box>
-✅ <Badge bg="info" color="info-foreground">Info</Badge>
+✅ <Badge bg="info" color="on-info">Info</Badge>
 ✅ <Box bg="rating" color="rating-foreground">8.5</Box>
 ```
 
@@ -1046,10 +1062,11 @@ whether theme interprets it as gold, orange, or yellow.
 
 ---
 
-**Document Version:** 1.1 (2025-11-03)
+**Document Version:** 1.2 (2025-11-07)
 
 **Version History:**
 
+- 1.2 (2025-11-07): Updated for ADR-011 on-* naming convention, marked -foreground tokens as deprecated
 - 1.1 (2025-11-03): Verified accuracy, added ADR-004 reference for implementation architecture
 - 1.0 (2025-11-02): Initial comprehensive guide
 

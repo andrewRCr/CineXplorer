@@ -1005,38 +1005,275 @@ gaps, layout concerns, and component-specific issues requiring remediation befor
         **Completed:** No additional issues found. Material Design opacity overlay approach provides consistent, adequate
         contrast across all interaction states in all themes.
 
-- [ ] **3.5.5 Component-Specific Polish**
+- [x] **3.5.5 Semantic Colors Standardization Audit**
 
-    - [ ] **3.5.5.1 Sidebar visual hierarchy**
+    **Context:** During Phase 3 review, discovered semantic token misuse across all theme adapters. Several tokens
+    violated design system principles: primary/success redundancy (both mapped to green), aesthetic concerns with
+    official tokens (IBM Carbon secondary, GitLab warning), and missing GitHub Primer attention tokens.
+
+    **Decision:** Separate Primary (blue brand) from Success (green feedback) per industry standard (8 of 9 design
+    systems). Standardize Secondary with mandatory outline pattern. Accept official token aesthetics as design system
+    choices. See ADR-010 for full rationale.
+
+    - [x] **3.5.5.1 Verify token authenticity**
+
+        **Completed:** All tokens verified against official design system sources via external research agent.
+
+        - [x] Verify IBM Carbon `bg_button_secondary` (`#393939`) - ✅ CORRECT (official token, intentional dark gray)
+        - [x] Verify GitLab Pajamas `fg_warning` (`#995715`) - ✅ CORRECT (official orange-600, intentional aesthetic)
+        - [x] Find GitHub Primer attention tokens - ✅ FOUND (official tokens exist, must add to palette)
+        - [x] Verify GitLab Pajamas dark secondary/muted - ⚠️ BOTH `#28272d` (may be intentional per semantic design)
+
+        **Key Findings:** IBM Carbon and GitLab aesthetic concerns are valid but represent official design choices
+        (accept as-is). GitHub Primer has official "attention" tokens that should replace derived warning colors.
+
+    - [x] **3.5.5.2 Document decision and strategy**
+
+        **Completed:** ADR-010 drafted establishing unified semantic vocabulary, strategy docs updated with comprehensive
+        definitions, ThemeDebug enhanced with secondary pattern demonstration.
+
+        - [x] Draft ADR-010: Separate Primary from Success Semantic Colors
+            - Established unified semantic vocabulary with clear definitions
+            - Decision: Primary = blue brand (maps to `fg_accent`), Success = green feedback (maps to `bg_success`)
+            - Secondary pattern: Mandatory outline styling with `border-strong-01` (all themes)
+            - Mapping philosophy: Use official tokens + standardize semantics + enhance with patterns
+            - Comprehensive context, verification results, implementation notes
+
+        - [x] Update strategy-semantic-tokens.md with semantic definitions
+            - Added "Semantic Token Definitions (Per ADR-010)" section
+            - Comprehensive table with meaning, visual characteristics, usage, mapping notes
+            - Key distinctions (Primary vs Accent, Primary vs Success, Secondary vs Muted)
+            - Mapping philosophy (4 principles)
+
+        - [x] Enhance ThemeDebug page with secondary pattern demo
+            - Added secondary outline pattern demonstration to Semantic Colors section
+            - Shows token value + mandatory usage pattern with border-strong-01
+            - Explanatory note about industry standard and cross-references
+
+        **Quality Gates:** ✅ TypeScript 0 errors, ✅ Markdown linting 0 errors
+
+    - [x] **3.5.5.3 Revert incorrect adapter changes**
+
+        **Completed:** Manually reverted all incorrect changes from previous 3.5.5.3 attempt. All adapters restored to
+        pre-implementation state with `primary = palette.bg_success` (green). TypeScript passes with 0 errors.
+
+        **What was reverted:**
+        - All 3 adapters: Removed incorrect `primary = palette.fg_accent` mappings
+        - All 3 adapters: Removed all ADR-010 comments (outdated references)
+        - GitHub adapter: Removed attention token usage, restored derived warning colors
+        - GitHub palette: Removed 6 attention tokens (`fg_attention`, `bg_attention_emphasis`,
+        `bg_attention_subtle` from both light/dark)
+        - Verified TypeScript still passes (0 errors)
+
+        **Ready for:** Task 3.5.5.4 (Update UnifiedTheme interface with new tokens)
+
+    - [x] **3.5.5.4 Update UnifiedTheme interface**
+
+        **Completed:** Added all new tokens to UnifiedTheme interface with comprehensive JSDoc documentation.
+
+        **What was added:**
+        - ✅ `tertiary` token (FOREGROUND type) - Interactive text, links, accents
+        - ✅ `tertiary-foreground` token (optional) - Text on tertiary backgrounds
+        - ✅ `brand` token (optional) - Logo/brand identity color
+        - ✅ `brandSecondary` token (optional) - Secondary brand color (GitLab orange)
+        - ✅ Marked `accent` as `@deprecated` - "Use 'tertiary' instead"
+        - ✅ Marked `accent-foreground` as `@deprecated` - "Use 'tertiary-foreground' instead"
+        - ✅ Added comprehensive JSDoc for all semantic tokens (primary, secondary, tertiary, muted)
+        - ✅ Documented token types (BACKGROUND vs FOREGROUND)
+        - ✅ Documented design system mappings per ADR-010
+        - ✅ Added usage examples and distinction notes
+
+        **File modified:** `frontend/src/theme/color/types.ts`
+
+        **Note:** TypeScript errors expected until adapters implement new tokens (task 3.5.5.5)
+
+        **Ready for:** Task 3.5.5.5 (Update adapters with correct mappings)
+
+    - [x] **3.5.5.5 Update adapters with correct mappings**
+
+        **Completed:** All three adapters updated with correct Primary/Secondary/Tertiary mappings per ADR-010.
+        Proper token type distinction enforced (background tokens for buttons, foreground tokens for links).
+
+        **GitHub Primer Adapter (2-tier architecture):**
+        - ✅ `brand = undefined` (GitHub has no brand color)
+        - ✅ `primary = palette.bg_success` (GREEN #1f883d, background token for action buttons)
+        - ✅ `tertiary = palette.fg_accent` (BLUE #0969da, foreground token for links)
+        - ✅ `accent` maintained as deprecated alias
+        - ✅ Comprehensive inline comments explaining 2-tier architecture (actions≠links)
+        - ✅ ADR-010 references added
+
+        **IBM Carbon Adapter (1-tier unified blue):**
+        - ✅ `brand = palette.fg_accent` (IBM Blue #0f62fe, brand identity)
+        - ✅ `primary = palette.fg_accent` (BLUE, used as background for buttons)
+        - ✅ `tertiary = palette.fg_accent` (BLUE foreground for links, same value but semantically distinct)
+        - ✅ `accent` maintained as deprecated alias
+        - ✅ Inline comments explaining 1-tier philosophy (brand=actions=links, unified blue)
+        - ✅ ADR-010 references added
+
+        **GitLab Pajamas Adapter (3-tier architecture):**
+        - ✅ Added 8 brand color tokens to palette (light + dark modes):
+            - `brand_purple`: #554488 light, #9d89c7 dark
+            - `brand_orange`: #e24329 (both modes)
+            - `fg_link_purple`: #7759c2 light, #c5aee0 dark
+            - `bg_action_blue`: #1f75cb light, #63a6e9 dark
+        - ✅ `brand = palette.brand_purple` (GitLab primary brand color)
+        - ✅ `brandSecondary = palette.brand_orange` (GitLab tangerine accent)
+        - ✅ `primary = palette.bg_action_blue` (BLUE background for action buttons)
+        - ✅ `tertiary = palette.fg_link_purple` (PURPLE foreground for links, brand-aligned)
+        - ✅ `accent` maintained as deprecated alias
+        - ✅ Comprehensive inline comments explaining 3-tier architecture (brand≠actions≠links)
+        - ✅ ADR-010 references added
+
+        **Quality Gates:**
+        - ✅ TypeScript type checking: **0 errors** ✓
+        - ✅ Frontend linting: **0 violations** ✓
+
+        **Files Modified:**
+        - `frontend/src/theme/color/adapters/github-primer.ts`
+        - `frontend/src/theme/color/adapters/ibm-carbon.ts`
+        - `frontend/src/theme/color/adapters/gitlab-pajamas.ts`
+        - `frontend/src/theme/color/palettes/gitlab-pajamas.ts` (added brand colors)
+
+        **Ready for:** Task 3.5.5.6 (Global accent → tertiary migration)
+
+    - [ ] **3.5.5.6 Global accent → tertiary migration**
+
+        **Migrate all component usage from deprecated `accent` to new `tertiary` token.**
+
+        - [ ] Global find/replace across frontend codebase
+            - Pattern: `accent` → `tertiary`
+            - Pattern: `accent-foreground` → `tertiary-foreground`
+            - Scope: `frontend/src/components/**/*`, `frontend/src/pages/**/*`
+            - Estimated: ~50-100 occurrences based on codebase size
+
+        - [ ] Manual review of critical components
+            - Buttons: Verify tertiary usage makes sense (links, not filled buttons)
+            - Links: Confirm all using tertiary color
+            - Badges: Check if using tertiary appropriately
+            - Focus states: Verify ring/focus indicators
+
+        - [ ] Update component examples in docs/comments
+            - Any code examples using accent should use tertiary
+            - Update inline documentation
+
+        - [ ] Run quality gates post-migration
+            - TypeScript: 0 errors
+            - Linting: 0 violations
+            - Visual regression testing recommended
+
+    - [ ] **3.5.5.7 Add Material Design 3 theme**
+
+        **Add Material as 4th theme to validate architecture handles diverse color systems.**
+
+        - [ ] Research Material baseline static palette
+            - Source: <https://m3.material.io/styles/color/static/baseline>
+            - Document hex values for light/dark modes
+            - Primary: Purple (#6750a4 light)
+            - Secondary: Gray-purple
+            - Tertiary: Maroon (#7d5260 per baseline)
+            - Surface variants (for muted)
+            - All status colors (success, warning, error, info)
+
+        - [ ] Create `material-design-3.ts` palette file
+            - Location: `frontend/src/theme/color/palettes/material-design-3.ts`
+            - Static palette approach (no dynamic generation)
+            - Comprehensive JSDoc documenting source
+            - ~60-70 tokens (Material's semantic + tonal system)
+
+        - [ ] Create Material adapter
+            - Location: `frontend/src/theme/color/adapters/material-design-3.ts`
+            - Map brand: purple (Material's primary = brand)
+            - Map primary: purple (filled button background)
+            - Map tertiary: maroon (Material's tertiary accent)
+            - Map all required tokens to UnifiedTheme interface
+            - Comprehensive inline documentation
+            - Reference ADR-010
+
+        - [ ] Register Material theme in theme system
+            - Add to theme registry
+            - Add theme switcher option
+            - Test theme switching works
+
+        - [ ] Test all 8 theme combinations (4 themes × 2 modes)
+            - GitHub Primer (light/dark)
+            - IBM Carbon (light/dark)
+            - GitLab Pajamas (light/dark)
+            - Material Design 3 (light/dark)
+
+    - [ ] **3.5.5.8 Visual validation and documentation**
+
+        **Final validation across all themes and update documentation.**
+
+        - [ ] Test all 8 theme combinations
+            - Verify primary buttons show correct colors:
+                - GitHub: GREEN (not blue)
+                - IBM: BLUE
+                - GitLab: BLUE (not purple)
+                - Material: PURPLE
+            - Verify links show correct colors:
+                - GitHub: BLUE
+                - IBM: BLUE
+                - GitLab: PURPLE
+                - Material: TEAL
+            - Verify success always shows GREEN
+            - Secondary buttons: outline pattern with border visible
+
+        - [ ] Update ThemeDebug page
+            - Add tertiary color display
+            - Add brand color display (when defined)
+            - Show primary vs tertiary distinction clearly
+            - Demonstrate secondary outline pattern
+            - Add Material Design 3 to theme examples
+
+        - [ ] Verify component usage patterns
+            - Buttons: Primary (filled), Secondary (outline), Tertiary (text/link style)
+            - Links: All using tertiary color
+            - Alerts: Success (green), Warning (yellow/orange), Info (blue), Destructive (red)
+            - Badges: Appropriate color usage
+
+        - [ ] Update documentation
+            - Ensure ADR-010 references are accurate
+            - strategy-semantic-tokens.md is up to date ✅
+            - Any component docs mentioning colors updated
+
+        - [ ] Run final quality gates
+            - TypeScript: 0 errors
+            - Linting: 0 violations
+            - Markdown linting: 0 errors
+            - Visual regression testing if available
+
+- [ ] **3.5.6 Component-Specific Polish**
+
+    - [ ] **3.5.6.1 Sidebar visual hierarchy**
         - Fix header background to match navbar (`layer-01` consistency)
         - Update LOG button to use primary colors (`bg="primary"`, `color="primary-foreground"`)
         - Add elevation to link container (`layer-02` background or stronger border)
         - Fix active/selected navlinks text color (difficult to read, likely using wrong tokens)
         - Test across all themes
 
-    - [ ] **3.5.5.2 Featured page button visibility**
+    - [ ] **3.5.6.2 Featured page button visibility**
         - Investigate why 2/3 buttons appear invisible (same color as background)
         - Apply appropriate button styling (outline style with border, or filled secondary style)
         - Verify button hierarchy matches design intent (primary vs secondary distinction)
         - Test across all themes
 
-    - [ ] **3.5.5.3 AdvancedMovieFilters elevation**
+    - [ ] **3.5.6.3 AdvancedMovieFilters elevation**
         - Add visual elevation to filter panel (`layer-02` or `boxShadow="shadow-sm"`)
         - Currently uses same background as page (no visual distinction)
         - Test across themes
 
-    - [ ] **3.5.5.4 Form placeholder precision**
+    - [ ] **3.5.6.4 Form placeholder precision**
         - Change max rating placeholder from `10.0` to `10`
         - AdvancedMovieFilters component only
         - Simple string change, no theme implications
 
-    - [ ] **3.5.5.5 Footer theme select control popover background**
+    - [ ] **3.5.6.5 Footer theme select control popover background**
         - Investigate incorrect popover background (flat black/white, not theme-consistent)
         - Should use appropriate layer token (`layer-03` for dropdown menu)
         - Verify theme selector dropdown uses proper elevation and colors
         - Test across all themes
 
-- [ ] **3.5.6 Login session bug investigation**
+- [ ] **3.5.7 Login session bug investigation**
 
     **Priority:** Unknown (evaluate when reached)
 
@@ -1044,13 +1281,13 @@ gaps, layout concerns, and component-specific issues requiring remediation befor
 
     **Context:** Discovered during Phase 3 review visual testing
 
-    - [ ] **3.5.6.1 Attempt to reproduce session loss**
+    - [ ] **3.5.7.1 Attempt to reproduce session loss**
         - Test session persistence during normal navigation
         - Test session across browser refreshes
         - Test session timeout behavior
         - Document reproduction steps if found
 
-    - [ ] **3.5.6.2 Evaluate and triage**
+    - [ ] **3.5.7.2 Evaluate and triage**
         - If reproduced: Assess severity (critical vs low priority)
         - If not reproduced: Document as potential testing artifact
         - If critical: Create separate task list for session management investigation

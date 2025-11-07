@@ -6,9 +6,18 @@
 
 ## Purpose
 
-Documentation and research notes for fixing critical semantic token misuse across GitHub Primer, IBM Carbon, and GitLab
-Pajamas theme implementations. This work was discovered during Task 4.4.4 (AdvancedMovieFilters testing) and blocks
-remaining component migrations.
+**This is a research archive**, not a task tracking document. It contains design system research, token verification
+findings, and analysis that informed ADR-008 (Carbon light mode alternating layers), ADR-009 (Material Design opacity
+overlays), and ADR-010 (Separate primary from success semantic colors).
+
+**For implementation tracking**, see task list 3.5.5 (Semantic Colors Standardization Audit) in
+`tasks-theme-definition-semantic-corrections.md`.
+
+**Document Scope:**
+
+This file documents research for fixing critical semantic token misuse across GitHub Primer, IBM Carbon, and GitLab
+Pajamas theme implementations. Work was discovered during Task 4.4.4 (AdvancedMovieFilters testing) and addressed
+through systematic verification and standardization.
 
 ---
 
@@ -591,78 +600,6 @@ IBM Carbon, and GitLab Pajamas remain in production.
 1. `frontend/src/theme/types.ts` - Check if new tokens need type additions
 
 **Total Files:** ~7 files (3 palettes + 3 definitions + 1 types)
-
----
-
-## Testing Requirements
-
-### Theme Combinations to Test
-
-With 3 design systems × 2 modes = **6 combinations:**
-
-1. GitHub Primer - Light
-2. GitHub Primer - Dark
-3. IBM Carbon - Light
-4. IBM Carbon - Dark
-5. GitLab Pajamas - Light
-6. GitLab Pajamas - Dark
-
----
-
-### Visual Verification Checklist
-
-For each theme combination, verify:
-
-- [ ] **Card Differentiation:** Cards visually distinct from page background
-- [ ] **Border Visibility:** Borders visible on elevated surfaces (not invisible)
-- [ ] **Elevation Clarity:** Modals/popovers clearly elevated above page content
-- [ ] **No Color Tints:** Elevated surfaces neutral (no inappropriate accent colors)
-- [ ] **Consistent Hierarchy:** Visual layering matches semantic token intent
-
----
-
-### Component Testing Scope
-
-**Already Migrated (19 components):**
-
-Primary test targets from Phase 4.4:
-
-1. `PaginationCtrl` (Task 4.4.1)
-2. `TypographyTest` (Task 4.4.2)
-3. `AdvancedMovieFilters` system (Task 4.4.3) - 5 components
-4. `LetterboxdStyleFilters` system (Task 4.4.4) - 5 components
-
-**Test Focus:**
-
-- Do filter panels display correctly with new `surface-elevated` mappings?
-- Are borders visible on card surfaces?
-- Does card background differentiate from page background?
-
----
-
-## Success Criteria
-
-### Phase 1 (Token Structure & Documentation)
-
-- [x] Token semantic mapping guide created (this document)
-- [x] Hex value reference table created (this document)
-- [ ] All files requiring updates identified (documented above)
-- [ ] Type definitions verified for new token additions
-
-### Phase 2-4 (Implementation)
-
-- [ ] All 3 palette files updated with correct hex values
-- [ ] All 3 theme definition files updated with correct semantic mappings
-- [ ] New tokens added (`border-strong`, `layer-03`, optional shadows)
-- [ ] 6 theme combinations tested visually
-- [ ] 19 migrated components verified in each theme
-
-### Phase 5-6 (Quality & Documentation)
-
-- [ ] Type checking passes (frontend)
-- [ ] Linting passes (frontend)
-- [ ] Strategy documents updated with semantic token guidance
-- [ ] Component review completed (verify correct token usage)
 
 ---
 
@@ -2035,3 +1972,749 @@ into `technical/service-layer-modernization`, manual visual review revealed crit
 - Dark modes already working proves the approach viable
 
 **NOT a fundamental architecture problem** - just tuning needed
+
+---
+
+## Semantic Colors Audit
+
+**Date Initiated:** 2025-11-07
+**Triggered By:** ThemeDebug page enhancement revealing semantic color inconsistencies
+**Status:** Investigation Phase
+
+### Discovery Context
+
+While enhancing the ThemeDebug page to demonstrate all semantic color tokens, several critical issues were discovered:
+
+1. **Primary and Success are identical** - Both map to `palette.bg_success` in all three adapters
+2. **Secondary color questionable** - IBM Carbon light mode uses dark gray (`#393939`), inconsistent with rest of theme
+3. **Muted color unclear** - GitLab Pajamas dark mode: muted and secondary are nearly indistinguishable
+4. **Warning color questionable** - GitLab Pajamas light mode uses dark amber/gold (`#995715`), feels out of step with palette
+5. **GitHub Primer missing official tokens** - Warning and Info are derived, not from official Primer palette
+
+### Industry Research Findings
+
+**Research Method:** External research agent analyzing major design systems (Material Design, Ant Design, Bootstrap,
+Atlassian, Shopify Polaris, Adobe Spectrum, Microsoft Fluent, GitHub Primer, IBM Carbon)
+
+#### Key Finding 1: Primary vs Success Distinction
+
+**Industry Standard Pattern:**
+
+- **Primary** = Brand identity color, typically **blue** for primary action buttons
+- **Success** = Positive feedback color, typically **green** for success states
+- **Separation is idiomatic** across 8 of 9 major design systems
+- **Material Design 3 is the outlier** (integrates success into primary)
+
+**Examples from major systems:**
+
+```
+Bootstrap:     Primary (blue) ≠ Success (green)
+Ant Design:    Primary (#1677ff blue) ≠ Success (green)
+Atlassian:     Primary (B400 blue) ≠ Success (green)
+GitHub Primer: Accent (blue) ≠ Success (green)
+Shopify:       Primary (indigo) ≠ Success (green)
+IBM Carbon:    Primary (blue-60) ≠ Success (green)
+```
+
+**Exception:** GitHub Primer uses green (success) for primary action buttons, but this is an **intentional outlier**
+reflecting GitHub's focus on positive actions ("merge", "create").
+
+**Recommendation:** Adopt **Option B** (separate Primary=blue, Success=green) as industry standard pattern.
+
+#### Key Finding 2: Primary Action Button Color
+
+**Clear Consensus:** Primary action buttons use **brand/primary color (usually blue)**
+
+**Frequency across 9 major systems:**
+
+- Blue: 8 systems
+- Green: 1 system (GitHub Primer - intentional outlier)
+
+**Why blue?**
+
+- Strong action connotations in digital interfaces
+- Long-established user expectation (links are blue)
+- Doesn't conflict with semantic meanings (green=success, red=danger, yellow=warning)
+- Works well for brand differentiation
+
+#### Key Finding 3: Secondary Button Semantics
+
+**Three interpretations found, ordered by frequency:**
+
+1. **Neutral/Gray Supporting Actions (Most Common)**
+   - Bootstrap: Explicitly defines "Secondary" as supporting actions with different styling
+   - Color: Gray/neutral tones with outline or ghost styling
+   - Examples: Cancel, Skip, Back buttons
+   - **EightShapes Best Practice:** "Secondary actions should be styled to reflect their lower priority"
+
+2. **Secondary Brand Color (Less Common)**
+   - Used if system has distinct primary + secondary brand colors
+   - Example: If primary is blue, secondary might be purple
+   - Not typically for buttons, more for status/semantic feedback
+
+3. **Supporting but Visually Distinct Color**
+   - Atlassian approach: Secondary palette with accent colors (red, yellow, green, teal, purple)
+   - Used for meaningful feedback, warnings, special states
+   - Not typically used for "secondary buttons"
+
+**Consensus:** Secondary buttons should be **neutral gray with outline styling**, not a distinct brand color.
+
+#### Key Finding 4: Muted Color Role
+
+**Well-established semantic token** with consistent meaning across all systems:
+
+**Primary Uses:**
+
+1. Deemphasized/secondary content (text and elements with lower importance)
+2. Disabled states (reduced visibility for inactive components)
+3. Tertiary text (following primary → secondary → tertiary hierarchy)
+
+**Technical Implementation Pattern:**
+
+- Desaturate base color (add gray)
+- Reduce opacity (typically 40-70%)
+- Lower contrast ratio (often 1.1:1 against default surface)
+
+**Design Systems Examples:**
+
+- **GitHub Primer:** "Muted background and border colors draw attention with subtle emphasis"
+- **Shopify Polaris:** Tokens like `surface-subdued`, `text-muted`, `icon-disabled`
+- **Textual Framework:** `$text-muted` at 70% opacity for lower importance content
+
+**Consensus:** Muted is for deemphasized content, NOT a distinct brand color.
+
+### Current Implementation Issues
+
+#### Issue 1: Primary = Success (Redundancy)
+
+**Current Code (All Three Adapters):**
+
+```typescript
+// github-primer.ts:89, ibm-carbon.ts:118, gitlab-pajamas.ts:105
+const primary = palette.bg_success;   // ← Same source
+const success = palette.bg_success;   // ← Same source
+```
+
+**Problem:**
+
+- Creates redundancy: Two semantic tokens with different meanings map to identical color
+- Violates industry standard separation (primary=blue brand, success=green feedback)
+- Confuses semantic meaning in component usage
+
+**Root Cause Analysis:**
+All three official design systems explicitly label `bg_success` as "Primary action button background":
+
+- GitHub Primer: "Primary action button background" → `#1f883d` (green)
+- IBM Carbon: "Primary action button background" → `#24a148` (green)
+- GitLab Pajamas: "Primary action button background (green-500)" → `#108548` (green)
+
+**Why this happened:** The source design systems themselves conflate these concepts - they use green for BOTH:
+
+- Primary action buttons (main CTA)
+- Success feedback states
+
+**Resolution Required:** Decide unified system approach:
+
+- Do we follow source systems (primary=green, success=green)?
+- Or follow industry standard (primary=blue brand, success=green feedback)?
+
+#### Issue 2: Secondary Color Inconsistencies
+
+**IBM Carbon Light Mode:**
+
+```typescript
+// ibm-carbon.ts:121
+const secondary = palette.bg_button_secondary;  // #393939 (dark gray)
+```
+
+**Problem:** Dark gray (`#393939`) stands out dramatically in IBM Carbon light mode (white/gray palette).
+Appears out of place.
+
+**Expected:** Neutral gray that fits the light mode aesthetic.
+
+**Investigation Needed:**
+
+- Is `#393939` the correct IBM Carbon token for secondary buttons in light mode?
+- Check official Carbon documentation for `bg_button_secondary` usage
+- Verify if this is an outlier or if we're misusing the token
+
+**GitLab Pajamas Dark Mode:**
+
+```typescript
+// gitlab-pajamas.ts:108
+const secondary = palette.bg_button_secondary;  // #28272d
+const muted = palette.bg_muted;                 // #28272d
+```
+
+**Problem:** Secondary and muted are identical or nearly indistinguishable in dark mode.
+
+**Investigation Needed:**
+
+- Are these the correct GitLab tokens?
+- Should they be visually distinct?
+- Check official Pajamas documentation
+
+#### Issue 3: GitHub Primer Missing Official Tokens
+
+**Warning Color:**
+
+```typescript
+// github-primer.ts:150-151
+const warning = mode === "light" ? "#d4a72c" : "#bb8009";  // DERIVED (not official)
+const warningForeground = mode === "light" ? "#744500" : "#e3b341";
+```
+
+**Problem:** These are **custom values, not from official Primer palette**.
+
+**Official Primer Token Found:**
+
+- **Role:** "attention" (for warning states)
+- **Hex Values:**
+    - Light mode foreground: `#9a6700` (dark amber/gold)
+    - Light mode muted background: `#fff8c5` (pale yellow)
+    - Dark mode: TBD (need to research)
+
+**Action Required:** Add official Primer "attention" tokens to palette, update adapter to use them.
+
+**Info Color:**
+
+```typescript
+// github-primer.ts:155-156
+const info = palette.fg_accent;        // Reuses accent (blue)
+const infoForeground = palette.fg_accent;
+```
+
+**Problem:** We're reusing accent, not deriving separate info color.
+
+**Investigation Finding:** This is **CORRECT** per official Primer documentation:
+
+- Primer's "accent" role is explicitly for "Links, selected, active, focus states, **and neutral information**"
+- Primer does NOT have a separate "info" semantic role
+- Reusing accent for info is intentional and matches Primer's design
+
+**Action Required:** None - current implementation correct, but should document this clearly.
+
+#### Issue 4: Warning Color Aesthetics
+
+**GitLab Pajamas Light Mode:**
+
+```typescript
+// gitlab-pajamas.ts:95-96
+fg_warning: "#995715"  // Dark amber/gold
+```
+
+**Problem:** User observation - "feels kind of out of step with the rest of the colors in that mode"
+
+**Investigation Needed:**
+
+- Verify this is the official GitLab Pajamas warning color
+- Check GitLab's official design documentation
+- Compare with other colors in light mode palette
+- Determine if aesthetic concern reflects actual GitLab usage or if our token usage is incorrect
+
+### Systematic Audit Plan
+
+#### Phase 1: Verify Palette Accuracy (All Official Tokens)
+
+**Goal:** Ensure ALL tokens in palette files match official design system values.
+
+**For Each Theme (GitHub Primer, IBM Carbon, GitLab Pajamas):**
+
+1. **Brand Colors Verification:**
+   - [ ] Verify `fg_accent` hex values (light + dark)
+   - [ ] Verify `bg_success` hex values (light + dark)
+   - [ ] Verify `bg_danger` / `fg_danger` hex values (light + dark)
+   - [ ] Document official sources (design system docs, npm package versions)
+
+2. **Warning/Info Colors Verification:**
+   - [ ] **GitHub Primer:** Add missing "attention" token to palette (official warning)
+   - [ ] **IBM Carbon:** Verify `fg_warning` and `fg_info` are official (they appear to be - lines 102-105)
+   - [ ] **GitLab Pajamas:** Verify `fg_warning` and `fg_info` are official (lines 95-98)
+
+3. **Secondary Button Verification:**
+   - [ ] **IBM Carbon:** Verify `bg_button_secondary` is correct token for light mode (`#393939`)
+   - [ ] **GitHub Primer:** Verify `bg_button_secondary` usage
+   - [ ] **GitLab Pajamas:** Verify `bg_button_secondary` usage
+
+4. **Muted Token Verification:**
+   - [ ] Verify all `bg_muted` / `fg_muted` tokens against official sources
+   - [ ] Check if muted and secondary should be visually distinct in all modes
+
+**Deliverable:** Corrected palette files with verified official tokens only.
+
+#### Phase 2: Evaluate Adapter Mappings (Unified System Design)
+
+**Goal:** Design optimal mapping from official palette → unified semantic vocabulary.
+
+**Decision Points:**
+
+1. **Primary vs Success Resolution:**
+   - [ ] **Option A:** Keep current (primary=success=green), accept redundancy
+   - [ ] **Option B (Recommended):** Primary=blue accent (brand), Success=green (feedback)
+   - [ ] **Option C:** Create `primary-action` token separate from brand `primary`
+   - [ ] Document rationale and industry context
+
+2. **Secondary Button Semantic:**
+   - [ ] Define what "secondary" means in our unified system
+   - [ ] Map appropriately: gray outline vs secondary brand color vs palette.bg_button_secondary
+   - [ ] Ensure consistency across all 3 themes
+
+3. **Muted Token Semantic:**
+   - [ ] Define what "muted" means in our unified system (disabled? tertiary text? deemphasized bg?)
+   - [ ] Ensure visual distinction from secondary in all 6 theme combinations
+   - [ ] Map appropriately from palette tokens
+
+4. **Warning Color Consistency:**
+   - [ ] Evaluate GitLab Pajamas warning color aesthetic concern
+   - [ ] Decide: use official token (respect design system) vs derive custom (visual consistency)
+   - [ ] Document decision rationale
+
+**Deliverable:** Updated adapter mapping strategy with documented decisions.
+
+#### Phase 3: Visual Validation (All 6 Theme Combinations)
+
+**Goal:** Validate all brand and status colors render correctly and consistently.
+
+**For Each Theme Combination (6 total):**
+
+**GitHub Primer - Light:**
+
+- [ ] Primary color appropriate for brand/actions (expected: blue if Option B)
+- [ ] Success color distinct (expected: green)
+- [ ] Secondary color appropriate for supporting actions (expected: gray)
+- [ ] Muted color visually distinct from secondary
+- [ ] Warning color (attention) uses official amber/gold
+- [ ] Info color (accent blue) appropriate
+
+**GitHub Primer - Dark:**
+
+- [ ] Same checks as light mode
+- [ ] Verify contrast ratios meet WCAG AA
+
+**IBM Carbon - Light:**
+
+- [ ] Primary color appropriate (expected: blue if Option B)
+- [ ] Success color distinct (expected: green)
+- [ ] **Secondary color aesthetic check** - does `#393939` (dark gray) fit light mode aesthetic?
+- [ ] Muted color visually distinct
+- [ ] Warning color (yellow `#f1c21b`) appropriate
+- [ ] Info color (blue `#0043ce`) appropriate
+
+**IBM Carbon - Dark:**
+
+- [ ] Same checks as light mode
+- [ ] Verify contrast ratios
+
+**GitLab Pajamas - Light:**
+
+- [ ] Primary color appropriate (expected: blue if Option B)
+- [ ] Success color distinct (expected: green)
+- [ ] Secondary color appropriate
+- [ ] Muted color visually distinct from secondary
+- [ ] **Warning color aesthetic check** - does `#995715` (dark amber) fit light mode aesthetic?
+- [ ] Info color appropriate
+
+**GitLab Pajamas - Dark:**
+
+- [ ] Same checks as light mode
+- [ ] **Muted vs Secondary distinction check** - are they distinguishable?
+- [ ] Verify contrast ratios
+
+**Deliverable:** Visual validation report documenting any issues found.
+
+#### Phase 4: Documentation
+
+**Goal:** Document semantic meanings and mapping decisions.
+
+**Deliverables:**
+
+1. **Update This Notes File:**
+   - [ ] Document final decisions on Primary/Success/Secondary/Muted semantics
+   - [ ] Document any deviations from official palettes with rationale
+   - [ ] Document industry research findings summary
+
+2. **Update Palette Files:**
+   - [ ] Add comprehensive comments explaining each token's official source
+   - [ ] Add version numbers for official design system packages
+   - [ ] Flag any derived/custom tokens clearly
+
+3. **Update Adapter Files:**
+   - [ ] Add comments explaining mapping decisions
+   - [ ] Document why we deviate from official usage (if applicable)
+   - [ ] Reference this notes file for detailed rationale
+
+### Open Questions
+
+1. **Primary Action Button Color:** If we adopt Option B (primary=blue brand, success=green feedback), what do we use
+for primary action buttons?
+   - Use `primary` (blue) for primary action buttons?
+   - Create separate `primary-action` token?
+   - Override in component styling?
+
+2. **IBM Carbon Secondary:** Is `#393939` the correct interpretation of Carbon's secondary button in light mode, or are
+we misusing the token?
+
+3. **GitLab Warning Aesthetic:** Is the concern about `#995715` valid, or does it fit GitLab's official aesthetic when
+seen in full context?
+
+4. **Material Design 3 Pattern:** Should we consider Material's approach (integrating success into primary) as a valid
+alternative, or stick with industry standard separation?
+
+### Next Actions
+
+**Immediate:**
+
+1. Add GitHub Primer "attention" token to palette file
+2. Research IBM Carbon `bg_button_secondary` official usage
+3. Research GitLab Pajamas warning color in official docs
+4. Make decision on Primary vs Success (Option A/B/C)
+
+**After Decision:**
+5. Update all three adapter files with new mappings
+6. Run visual validation across all 6 theme combinations
+7. Update ThemeDebug page to reflect any semantic changes
+8. Document final decisions in this notes file
+
+---
+
+## Comprehensive Analysis & Recommendations
+
+**Date:** 2025-11-07
+**Status:** Awaiting decision
+**Scope:** All semantic color concerns are interconnected - warrant unified approach
+
+### Executive Summary
+
+All identified issues stem from a **fundamental semantic mapping challenge**: our three source design systems
+(GitHub Primer, IBM Carbon, GitLab Pajamas) label their green buttons as "primary action button background",
+but industry standard separates Primary (brand identity, typically blue) from Success (positive feedback,
+typically green).
+
+**Recommendation:** Adopt **Option B** (separate Primary=blue, Success=green) with comprehensive semantic
+clarifications documented in ADR. This approach:
+
+- Aligns with 8 of 9 major design systems
+- Provides clear semantic distinction between brand identity and feedback states
+- Resolves current redundancy where primary and success are identical
+- Requires updating all 3 adapters to map blue accent tokens to primary
+
+**ADR Warranted:** Yes - this decision affects system structure, has multiple alternatives, requires industry
+context, and future developers will need rationale for understanding the mapping philosophy.
+
+### Issue Interconnections
+
+**Core Problem:** All issues relate to semantic token mapping philosophy:
+
+```
+Source Design Systems         CineXplorer Unified Vocabulary
+--------------------         -------------------------------
+bg_success (green)    ?→     primary (brand identity?)
+bg_success (green)    →      success (positive feedback)
+fg_accent (blue)      ?→     primary (brand identity?)
+```
+
+**Current State (All 3 Adapters):**
+
+```typescript
+// github-primer.ts:89, ibm-carbon.ts:118, gitlab-pajamas.ts:105
+const primary = palette.bg_success;   // GREEN button
+const success = palette.bg_success;   // GREEN feedback (redundant!)
+```
+
+**Issue Cascade:**
+
+1. **Primary = Success** (redundancy)
+   - Both tokens map to same green color
+   - Unclear semantic distinction
+   - Violates industry standard (8 of 9 systems separate these)
+
+2. **Secondary unclear** (IBM Carbon light mode)
+   - `#393939` (very dark gray) in light mode aesthetic
+   - Need to verify if this is correct Carbon token usage
+   - Related: What does "secondary" mean in our unified system?
+
+3. **Muted indistinguishable** (GitLab Pajamas dark mode)
+   - Secondary and muted both map to `#28272d`
+   - Need semantic clarity: What is "muted" vs "secondary"?
+
+4. **Warning missing official tokens** (GitHub Primer)
+   - Using derived values instead of official "attention" token
+   - Related: How do we handle design system gaps?
+
+5. **Warning aesthetic concern** (GitLab Pajamas light)
+   - `#995715` feels out of step
+   - Need verification: Is this official Pajamas color?
+
+### Recommended Solution: Option B + Semantic Clarifications
+
+#### Decision 1: Primary vs Success (Option B)
+
+**Adopt industry standard separation:**
+
+```typescript
+// Recommended mapping for all 3 adapters:
+const primary = palette.fg_accent;        // BLUE (brand identity)
+const primaryForeground = palette.fg_onEmphasis;
+
+const success = palette.bg_success;       // GREEN (positive feedback)
+const successForeground = palette.fg_onEmphasis;
+```
+
+**Rationale:**
+
+- **Industry alignment:** 8 of 9 major design systems separate primary (blue brand) from success (green feedback)
+- **Semantic clarity:** Primary = brand/identity, Success = outcome/feedback
+- **Component usage patterns:**
+    - Primary action buttons → use `primary` (blue)
+    - Success alerts/badges → use `success` (green)
+    - High TMDB scores → use `success` (green feedback)
+
+**Trade-offs:**
+
+- ✅ Eliminates redundancy
+- ✅ Provides semantic clarity
+- ✅ Aligns with industry standards
+- ⚠️ Deviates from source design system labeling (they call green "primary button")
+- ⚠️ Requires updating all 3 adapters
+
+**What this means for primary action buttons:**
+Primary action buttons should use `primary` token (blue brand color), not green. This aligns with
+8 of 9 major design systems where primary buttons represent brand identity.
+
+#### Decision 2: Secondary Semantic Meaning
+
+**Define "secondary" as neutral supporting actions:**
+
+**Industry consensus:** Secondary buttons are neutral (gray) with outline styling, representing lower-priority
+supporting actions (Cancel, Back, Skip).
+
+**Recommended mapping:**
+
+```typescript
+// All adapters should map to neutral gray tokens:
+const secondary = palette.bg_button_secondary;  // Keep existing (verify tokens are correct)
+const secondaryForeground = palette.fg_default; // Use default foreground
+```
+
+**Actions Required:**
+
+1. **IBM Carbon light mode:** Verify `#393939` (dark gray) is correct official token for `bg_button_secondary`
+   - If correct: Accept as Carbon's design choice
+   - If incorrect: Find correct Carbon neutral button token
+2. **All themes:** Ensure visual distinction from muted in both light and dark modes
+
+#### Decision 3: Muted Semantic Meaning
+
+**Define "muted" as deemphasized content and disabled states:**
+
+**Industry consensus:** Muted is for:
+
+- Deemphasized/secondary text (lower importance)
+- Disabled states (inactive components)
+- Tertiary text hierarchy
+
+**Recommended approach:**
+
+- `muted` (background): Subtle background for disabled or deemphasized surfaces
+- `muted-foreground` (text): Secondary/tertiary text with reduced contrast
+
+**Distinction from secondary:**
+
+- **Secondary:** Interactive supporting actions (buttons, links)
+- **Muted:** Non-interactive deemphasized content
+
+#### Decision 4: Warning Token Handling
+
+**GitHub Primer:**
+
+- **Action:** Add official "attention" token to palette from Primer's attention scale
+- **Hex values:** Light mode `#9a6700` (foreground), `#fff8c5` (muted background)
+- **Rationale:** Use official design system tokens when available
+
+**GitLab Pajamas:**
+
+- **Action:** Verify `#995715` is official warning color from Pajamas documentation
+- **If official:** Accept aesthetic as GitLab's design choice
+- **If incorrect:** Find correct Pajamas warning token
+
+#### Decision 5: Info Token Handling
+
+**GitHub Primer:**
+
+- **Current:** Reusing accent (blue) for info
+- **Action:** No change needed - this is CORRECT per Primer's official documentation
+- **Rationale:** Primer explicitly states accent is for "Links, selected, active, focus states, and neutral information"
+- **Documentation:** Add inline comment in adapter explaining this is intentional per Primer docs
+
+### Verification Requirements
+
+**Before finalizing:**
+
+1. **IBM Carbon `bg_button_secondary`:**
+   - Check official Carbon documentation for light mode secondary button token
+   - Verify `#393939` hex value matches official specification
+
+2. **GitLab Pajamas `fg_warning`:**
+   - Check official Pajamas documentation for warning color
+   - Verify `#995715` hex value matches official specification
+   - Evaluate if aesthetic concern reflects misuse or is valid GitLab design
+
+3. **GitLab Pajamas dark mode:**
+   - Verify secondary (`#28272d`) and muted (`#28272d`) tokens
+   - Determine if they should be visually distinct
+
+4. **GitHub Primer "attention":**
+   - Add complete attention token set to palette
+   - Find dark mode values from Primer primitives
+
+### Verification Results
+
+**Research Date:** 2025-11-07
+**Method:** External research agent analysis of official design system documentation
+
+#### 1. IBM Carbon Secondary Button - ✅ CONFIRMED CORRECT
+
+**Our Current Value:** `#393939` (labeled as "interactive-02")
+
+**Official Verification:**
+
+- **Token (v10):** `$interactive-02` or `--cds-interactive-02`
+- **Token (v11):** `$button-secondary` (component-level token)
+- **Hex Value (Light/G10):** `#393939`
+- **Source:** <https://carbondesignsystem.com/elements/themes/overview/>
+
+**Findings:**
+
+- ✅ `#393939` is the **official** IBM Carbon color for secondary buttons in light mode
+- This is `@gray-80` in Carbon's color scale
+- The dark gray is **intentional** design choice to provide clear visual contrast against light backgrounds
+- In v11, the token was renamed from `$interactive-02` to `$button-secondary`, but the hex value remains the same
+
+**Conclusion:** The aesthetic concern about `#393939` being "too dark" for light mode is **valid from a visual perspective**,
+but this is **Carbon's official design choice**. We should accept it as the correct Carbon aesthetic.
+
+**Action:** Document this in palette with inline comment explaining it's the official token, not an error.
+
+---
+
+#### 2. GitLab Pajamas Warning Color - ✅ CONFIRMED CORRECT
+
+**Our Current Value:** `#995715` (labeled as "orange-600")
+
+**Official Verification:**
+
+- **Token:** `orange-600`
+- **Hex Value (Light):** `#995715`
+- **Source:** <https://design.gitlab.com/product-foundations/color/>
+
+**Findings:**
+
+- ✅ `#995715` is the **official** GitLab Pajamas orange-600 color
+- Used to communicate warning, pending, missing, or impeded progress
+- CSS variable: `var(--gl-text-color-warning, var(--gl-color-orange-600, #995715))`
+- Orange indicates attention is required (part of functional color palette)
+
+**Conclusion:** The aesthetic concern about `#995715` feeling "out of step" is **valid from a visual perspective**,
+but this is **GitLab's official design choice**. We should accept it as the correct Pajamas aesthetic.
+
+**Action:** Document this in palette with inline comment explaining it's the official token.
+
+---
+
+#### 3. GitHub Primer Attention Tokens - ℹ️ FOUND (NEW DATA)
+
+**Current Implementation:** Derived custom values in adapter (`#d4a72c` light, `#bb8009` dark)
+
+**Official Tokens Found:**
+
+**Light Mode:**
+
+- `attention.fg` (foreground/text): `#9a6700`
+- `attention.emphasis` (background emphasis): `#9a6700`
+- `attention.muted` (background muted): `rgba(212,167,44,0.4)` → `#d4a72c` @ 40% opacity
+- `attention.subtle` (background subtle): `#fff8c5`
+- `borderColor.attention.emphasis`: `#9a6700`
+
+**Dark Mode:**
+
+- `attention.fg`: `#d29922` (partially verified)
+- `attention.emphasis`: `#9e6a03` (partially verified)
+- `attention.muted`: `rgba(187,128,9,0.4)` (partially verified)
+- `attention.subtle`: `rgba(187,128,9,0.15)` (partially verified)
+
+**Source:** <https://primer.style/primitives/colors/>, @primer/primitives npm package
+
+**Findings:**
+
+- ✅ Primer has official "attention" role tokens for warnings/caution states
+- ⚠️ Our derived light mode value (`#d4a72c`) happens to match the official muted background at full opacity
+- ⚠️ Our derived dark mode value (`#bb8009`) is close but not exact to official values
+- Light mode values are fully documented and confirmed
+- Dark mode values found but need npm package verification
+
+**Conclusion:** We should use **official Primer attention tokens** instead of derived values.
+
+**Actions Required:**
+
+1. Add all attention tokens to GitHub Primer palette (both light and dark)
+2. Update adapter to use official tokens instead of derived values
+3. Consider installing `@primer/primitives` npm package to verify exact dark mode values
+
+---
+
+#### 4. GitLab Pajamas Dark Mode Secondary vs Muted - ⚠️ INCONCLUSIVE
+
+**Current Implementation:** Both use `#28272d` (neutral-900)
+
+**Official Verification:**
+
+- **Token (Muted):** `neutral-900` = `#28272d` ✅ Confirmed
+- **Token (Secondary Button):** Semantic token (not explicit hex value)
+- **Source:** <https://design.gitlab.com/product-foundations/color/>
+
+**Findings:**
+
+- ✅ `neutral-900` = `#28272d` is correct for the neutral color scale
+- ⚠️ GitLab uses **semantic design tokens** that automatically adapt between modes
+- Secondary buttons described as having "a border that matches the variant and a background that is close to,
+  or the same as the page background color"
+- Both may intentionally use the same value - secondary buttons designed to blend with page background
+- Muted backgrounds serve as subtle, deemphasized backgrounds for content
+
+**Conclusion:** The fact that both use `#28272d` **may be intentional** in GitLab's design system. Secondary buttons
+are designed to visually recede (blend with background).
+
+**Recommendations:**
+
+1. **If UX testing shows buttons are indistinguishable:** Consider using `neutral-950` (`#18171d`) for one of them
+2. **Add border to secondary buttons:** GitLab docs mention borders for secondary buttons - this may be the
+   intended distinction mechanism
+3. **Accept as intentional:** If buttons have borders, the background color matching muted may be correct
+
+**Action:** Document both tokens with inline comments explaining they intentionally share the same value in dark mode
+per GitLab's semantic token philosophy. If UX issues arise, revisit with border-based distinction.
+
+---
+
+### Verification Summary Table
+
+| Design System | Token | Our Value | Official Value | Status |
+|---------------|-------|------------|----------------|---------|
+| **Carbon (Light)** | `interactive-02` / `button-secondary` | `#393939` | `#393939` | ✅ Correct |
+| **GitLab Pajamas** | `orange-600` (warning) | `#995715` | `#995715` | ✅ Correct |
+| **Primer (Light)** | `attention.fg` | (derived) | `#9a6700` | ℹ️ Add to palette |
+| **Primer (Light)** | `attention.subtle` | (derived) | `#fff8c5` | ℹ️ Add to palette |
+| **Primer (Dark)** | `attention.fg` | (derived) | `#d29922` | ⚠️ Add to palette |
+| **GitLab (Dark)** | `neutral-900` | `#28272d` | `#28272d` | ✅ Correct |
+
+**Key Takeaways:**
+
+1. ✅ IBM Carbon `#393939` is correct - dark gray is intentional design choice
+2. ✅ GitLab Pajamas `#995715` is correct - orange-brown is intentional design choice
+3. ℹ️ GitHub Primer attention tokens exist - we should use official values instead of derived
+4. ⚠️ GitLab secondary/muted matching in dark mode may be intentional - investigate if UX issues arise
+
+---
+
+**Note:** This research led to ADR-010 (Separate Primary from Success Semantic Colors) and task list 3.5.5
+(Semantic Colors Standardization Audit). See those documents for decisions and implementation tracking.

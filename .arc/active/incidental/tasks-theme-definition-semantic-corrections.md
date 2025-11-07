@@ -1265,11 +1265,62 @@ gaps, layout concerns, and component-specific issues requiring remediation befor
             - Aligns with Material Design 3 industry standard
             - Defers container tokens for future evaluation
 
-        **Ready for:** Task 3.5.5.8 (Visual validation and documentation updates)
+        **Ready for:** Task 3.5.5.8 (Implement ADR-011 on-color naming)
 
-    - [ ] **3.5.5.8 Visual validation and documentation**
+    - [ ] **3.5.5.8 Implement ADR-011: on-color naming standardization**
 
-        **Final validation across all themes and update documentation.**
+        **Implement ADR-011 proposal to standardize on `on-*` prefix for foreground text tokens.**
+
+        - [ ] Update UnifiedTheme interface with new on-color tokens
+            - Add `on-primary`, `on-secondary`, `on-tertiary`, `on-muted` to types.ts
+            - Mark existing `-foreground` tokens as `@deprecated` with JSDoc comments
+            - Add comprehensive documentation explaining the pattern
+            - Reference ADR-011 in JSDoc comments
+
+        - [ ] Update GitHub Primer adapter
+            - Implement new `on-primary`, `on-secondary`, `on-tertiary`, `on-muted` tokens
+            - Keep deprecated `-foreground` tokens as aliases (point to new tokens)
+            - Add JSDoc comments marking deprecation
+            - Verify token mappings match Material's pattern semantically
+
+        - [ ] Update IBM Carbon adapter
+            - Implement new `on-primary`, `on-secondary`, `on-tertiary`, `on-muted` tokens
+            - Keep deprecated `-foreground` tokens as aliases
+            - Add JSDoc comments marking deprecation
+
+        - [ ] Update GitLab Pajamas adapter
+            - Implement new `on-primary`, `on-secondary`, `on-tertiary`, `on-muted` tokens
+            - Keep deprecated `-foreground` tokens as aliases
+            - Add JSDoc comments marking deprecation
+
+        - [ ] Update Material Design 3 adapter
+            - Implement new `on-primary`, `on-secondary`, `on-tertiary`, `on-muted` tokens
+            - Keep deprecated `-foreground` tokens as aliases
+            - Note: Material already has these natively (onPrimary, etc.)
+
+        - [ ] Migrate all components from -foreground to on-* tokens
+            - Global find/replace across frontend codebase:
+                - `primary-foreground` → `on-primary`
+                - `secondary-foreground` → `on-secondary`
+                - `tertiary-foreground` → `on-tertiary`
+                - `muted-foreground` → `on-muted`
+            - Scope: `frontend/src/components/**/*`, `frontend/src/pages/**/*`
+            - Estimated: ~33 files (similar scope to accent → tertiary migration)
+            - Manual review of critical components for correctness
+            - Verify no `-foreground` tokens remain in components (deprecated tokens OK in adapters)
+
+        - [ ] Run quality gates
+            - TypeScript type checking: 0 errors
+            - Frontend linting: 0 violations
+            - Verify all 4 themes compile successfully
+            - Verify all 8 theme combinations render correctly
+            - Confirm deprecated aliases still work (backward compatibility for future extensions)
+
+        **Ready for:** Task 3.5.5.9 (Visual validation including new on-color tokens)
+
+    - [ ] **3.5.5.9 Visual validation and documentation**
+
+        **Final validation across all themes, including new ADR-011 on-color tokens.**
 
         - [ ] Test all 8 theme combinations
             - Verify primary buttons show correct colors:
@@ -1285,12 +1336,21 @@ gaps, layout concerns, and component-specific issues requiring remediation befor
             - Verify success always shows GREEN
             - Secondary buttons: outline pattern with border visible
 
+        - [ ] Validate new on-color tokens (ADR-011)
+            - Test `on-primary` vs `primary-foreground` produce identical results
+            - Test `on-secondary` vs `secondary-foreground` produce identical results
+            - Test `on-tertiary` vs `tertiary-foreground` produce identical results
+            - Test `on-muted` vs `muted-foreground` produce identical results
+            - Verify deprecated aliases work across all 4 themes × 2 modes
+            - Create simple test component if needed to validate token parity
+
         - [ ] Update ThemeDebug page
             - Add tertiary color display
             - Add brand color display (when defined)
             - Show primary vs tertiary distinction clearly
             - Demonstrate secondary outline pattern
-            - Add Material Design 3 to theme examples
+            - Add on-color token examples (show new naming alongside deprecated)
+            - Material Design 3 theme examples
 
         - [ ] Verify component usage patterns
             - Buttons: Primary (filled), Secondary (outline), Tertiary (text/link style)
@@ -1299,8 +1359,9 @@ gaps, layout concerns, and component-specific issues requiring remediation befor
             - Badges: Appropriate color usage
 
         - [ ] Update documentation
+            - Mark ADR-011 as "Accepted" (currently "Proposed")
             - Ensure ADR-010 references are accurate
-            - strategy-semantic-tokens.md is up to date ✅
+            - strategy-semantic-tokens.md updated to mention on-color pattern (if needed)
             - Any component docs mentioning colors updated
 
         - [ ] Run final quality gates
@@ -1308,6 +1369,7 @@ gaps, layout concerns, and component-specific issues requiring remediation befor
             - Linting: 0 violations
             - Markdown linting: 0 errors
             - Visual regression testing if available
+            - All 8 theme combinations render correctly
 
 - [ ] **3.5.6 Component-Specific Polish**
 

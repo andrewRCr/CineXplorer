@@ -17,6 +17,7 @@ import { createSystem, defaultConfig, defineConfig } from "@chakra-ui/react";
 import { githubTheme } from "./definitions/github";
 import { ibmCarbonTheme } from "./definitions/ibm-carbon";
 import { gitlabPajamasTheme } from "./definitions/gitlab-pajamas";
+import { materialDesign3Theme } from "./definitions/material-design-3";
 import type { Theme, ThemeColors } from "./types";
 
 // Import layout tokens
@@ -30,11 +31,14 @@ import { zIndexSemanticTokens } from "./layout/z-index";
  * Production themes optimized for accessibility and visual consistency.
  * IBM Carbon is the default - its layer-based elevation philosophy guides
  * CineXplorer's unified theme system architecture.
+ *
+ * Material Design 3 added for ADR-010 validation (Task 3.5.5.7).
  */
 export const themeRegistry = {
     "ibm-carbon": ibmCarbonTheme,
     "github-primer": githubTheme,
     "gitlab-pajamas": gitlabPajamasTheme,
+    "material-design-3": materialDesign3Theme,
 } as const;
 
 export const defaultThemeName = "ibm-carbon";

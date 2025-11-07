@@ -1177,44 +1177,95 @@ gaps, layout concerns, and component-specific issues requiring remediation befor
 
         **Ready for:** Task 3.5.5.7 (Add Material Design 3 theme to validate architecture)
 
-    - [ ] **3.5.5.7 Add Material Design 3 theme**
+    - [x] **3.5.5.7 Add Material Design 3 theme**
 
-        **Add Material as 4th theme to validate architecture handles diverse color systems.**
+        **Completed:** Added Material Design 3 as 4th production theme, validating ADR-010 Primary/Secondary/Tertiary
+        architecture with a 3-tier color system (brand=primary=purple, tertiary=maroon).
 
-        - [ ] Research Material baseline static palette
-            - Source: <https://m3.material.io/styles/color/static/baseline>
-            - Document hex values for light/dark modes
-            - Primary: Purple (#6750a4 light)
-            - Secondary: Gray-purple
-            - Tertiary: Maroon (#7d5260 per baseline)
-            - Surface variants (for muted)
-            - All status colors (success, warning, error, info)
+        **What was created:**
 
-        - [ ] Create `material-design-3.ts` palette file
-            - Location: `frontend/src/theme/color/palettes/material-design-3.ts`
-            - Static palette approach (no dynamic generation)
-            - Comprehensive JSDoc documenting source
-            - ~60-70 tokens (Material's semantic + tonal system)
+        **1. Material Design 3 Palette** (`frontend/src/theme/color/palettes/material-design-3.ts`)
+        - ✅ Researched official Material Design 3 baseline static palette
+        - ✅ Documented all hex values from <https://m3.material.io/styles/color/static/baseline>
+        - ✅ Light mode: primary #6750A4, secondary #625B71, tertiary #7D5260, error #B3261E
+        - ✅ Dark mode: primary #D0BCFF, secondary #CCC2DC, tertiary #EFB8C8, error #F2B8B5
+        - ✅ 6-tier surface system: surfaceContainerLowest → surface → surfaceContainer → surfaceContainerHigh
+        - ✅ Border tokens: outline (#79747E light, #938F99 dark), outlineVariant (#CAC4D0 light, #49454F dark)
+        - ✅ Comprehensive JSDoc documenting official Material sources
+        - ✅ 30 palette tokens covering all Material baseline semantic roles
 
-        - [ ] Create Material adapter
-            - Location: `frontend/src/theme/color/adapters/material-design-3.ts`
-            - Map brand: purple (Material's primary = brand)
-            - Map primary: purple (filled button background)
-            - Map tertiary: maroon (Material's tertiary accent)
-            - Map all required tokens to UnifiedTheme interface
-            - Comprehensive inline documentation
-            - Reference ADR-010
+        **2. Material Design 3 Adapter** (`frontend/src/theme/color/adapters/material-design-3.ts`)
+        - ✅ Maps Material's 6-tier surface system → our 4-layer architecture:
+            - background: surfaceContainerLowest (#FFFFFF light, #0F0D13 dark)
+            - layer-01: surface (#FEF7FF light, #141218 dark) - Material's "cards, sheets, menus"
+            - layer-02: surfaceContainer (#F3EDF7 light, #211F26 dark)
+            - layer-03: surfaceContainerHigh (#ECE6F0 light, #2B2930 dark)
+        - ✅ ADR-010 compliant mappings (3-tier architecture):
+            - brand: purple (#6750A4 light) - Material's signature color
+            - primary: purple (same as brand) - Material unifies brand + primary
+            - tertiary: maroon (#7D5260 light) - Contrasting accent per baseline
+        - ✅ Industry-standard status colors (Material baseline doesn't provide):
+            - success: Material green 700/400 (#2E7D32 light, #66BB6A dark)
+            - warning: Material orange 700/400 (#F57C00 light, #FFA726 dark)
+            - info: Material blue 700/400 (#1976D2 light, #42A5F5 dark)
+        - ✅ Derived border hierarchy from outline + outlineVariant
+        - ✅ Derived minimal conservative shadows (Material baseline doesn't specify)
+        - ✅ Comprehensive inline documentation with design system rationale
+        - ✅ Full UnifiedTheme interface implementation (~47 tokens)
 
-        - [ ] Register Material theme in theme system
-            - Add to theme registry
-            - Add theme switcher option
-            - Test theme switching works
+        **3. Theme Registration**
+        - ✅ Updated `frontend/src/theme/color/index.ts`:
+            - Added createMaterialAdapter export
+            - Added "material-design-3" to createUnifiedTheme() type union
+            - Added Material case to theme factory switch
+        - ✅ Created `frontend/src/theme/definitions/material-design-3.ts`:
+            - Legacy ThemeColors mappings for parallel systems support
+            - Unified adapter integration (lightUnified, darkUnified)
+        - ✅ Updated `frontend/src/theme/index.ts`:
+            - Added materialDesign3Theme to themeRegistry
+            - Updated theme registry comment noting Material for ADR-010 validation
+        - ✅ Updated `frontend/src/pages/ThemeDebug.tsx`:
+            - Added "material-design-3" to sticky header theme switcher
+            - Updated current state display to show "Material Design 3"
+            - Button label shortened to "Material" for space
 
-        - [ ] Test all 8 theme combinations (4 themes × 2 modes)
-            - GitHub Primer (light/dark)
-            - IBM Carbon (light/dark)
-            - GitLab Pajamas (light/dark)
-            - Material Design 3 (light/dark)
+        **Quality Gates:**
+        - ✅ TypeScript type checking: **0 errors** ✓
+        - ✅ Frontend linting: **0 violations** ✓
+
+        **Files Created (3 new):**
+        - `frontend/src/theme/color/palettes/material-design-3.ts` (132 lines)
+        - `frontend/src/theme/color/adapters/material-design-3.ts` (295 lines)
+        - `frontend/src/theme/definitions/material-design-3.ts` (168 lines)
+
+        **Files Modified (3 existing):**
+        - `frontend/src/theme/color/index.ts` (added Material adapter integration)
+        - `frontend/src/theme/index.ts` (added to theme registry)
+        - `frontend/src/pages/ThemeDebug.tsx` (added theme switcher button)
+
+        **Architecture Validation:**
+        Material Design 3 successfully validates ADR-010's Primary/Secondary/Tertiary hierarchy with a 3-tier
+        architecture similar to GitLab Pajamas. Key distinction: Material unifies brand + primary (both purple),
+        while GitLab separates them (purple brand, blue primary). This proves the architecture handles both
+        unified and separated brand/primary patterns.
+
+        **Theme Switching:** Ready for visual testing - all 8 combinations (4 themes × 2 modes) available in
+        ThemeDebug page sticky header switcher.
+
+        **Post-Implementation Updates:**
+        - ✅ Fixed Material surface mapping for better contrast (2025-11-07):
+            - Background: surface (#FEF7FF light) instead of surfaceContainerLowest
+            - Layer-01: surfaceContainer (#F3EDF7 light) instead of surface
+            - Layer-02: surfaceContainerHigh instead of surfaceContainer
+            - Layer-03: surfaceContainerHighest instead of surfaceContainerHigh
+            - Rationale: Better visual hierarchy, aligns with Material's semantic intent
+        - ✅ Created ADR-011: Standardize on "on-color" foreground naming convention
+            - Proposes adding `on-primary`, `on-secondary`, `on-tertiary`, `on-muted` tokens
+            - Deprecates `-foreground` suffix tokens for consistency
+            - Aligns with Material Design 3 industry standard
+            - Defers container tokens for future evaluation
+
+        **Ready for:** Task 3.5.5.8 (Visual validation and documentation updates)
 
     - [ ] **3.5.5.8 Visual validation and documentation**
 
@@ -1224,13 +1275,13 @@ gaps, layout concerns, and component-specific issues requiring remediation befor
             - Verify primary buttons show correct colors:
                 - GitHub: GREEN (not blue)
                 - IBM: BLUE
-                - GitLab: BLUE (not purple)
+                - GitLab: ORANGE
                 - Material: PURPLE
             - Verify links show correct colors:
                 - GitHub: BLUE
                 - IBM: BLUE
                 - GitLab: PURPLE
-                - Material: TEAL
+                - Material: MAROON-PINK
             - Verify success always shows GREEN
             - Secondary buttons: outline pattern with border visible
 

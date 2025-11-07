@@ -41,11 +41,13 @@ import type { UnifiedTheme } from "./types";
 export { createGithubAdapter } from "./adapters/github-primer";
 export { createCarbonAdapter } from "./adapters/ibm-carbon";
 export { createPajamasAdapter } from "./adapters/gitlab-pajamas";
+export { createMaterialAdapter } from "./adapters/material-design-3";
 
 // Import for use within this module
 import { createGithubAdapter } from "./adapters/github-primer";
 import { createCarbonAdapter } from "./adapters/ibm-carbon";
 import { createPajamasAdapter } from "./adapters/gitlab-pajamas";
+import { createMaterialAdapter } from "./adapters/material-design-3";
 
 // Utility exports (for adapter implementations)
 export {
@@ -86,7 +88,7 @@ export { createExtensions, createCustomRatingColors } from "./extensions";
  * ```
  */
 export function createUnifiedTheme(
-    themeName: "github" | "ibm-carbon" | "gitlab-pajamas",
+    themeName: "github" | "ibm-carbon" | "gitlab-pajamas" | "material-design-3",
     mode: "light" | "dark",
 ): UnifiedTheme {
     switch (themeName) {
@@ -96,6 +98,8 @@ export function createUnifiedTheme(
             return createCarbonAdapter(mode);
         case "gitlab-pajamas":
             return createPajamasAdapter(mode);
+        case "material-design-3":
+            return createMaterialAdapter(mode);
         default:
             throw new Error(`Unknown theme: ${themeName as string}`);
     }

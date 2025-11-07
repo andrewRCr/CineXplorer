@@ -51,12 +51,12 @@ export default function ThemeDebug() {
 
             {/* Current State (Compact) */}
             <Text fontSize="sm" color="foreground/80" flexShrink={0}>
-              {theme === 'ibm-carbon' ? 'IBM Carbon' : theme === 'github-primer' ? 'GitHub Primer' : 'GitLab Pajamas'} · {colorMode}
+              {theme === 'ibm-carbon' ? 'IBM Carbon' : theme === 'github-primer' ? 'GitHub Primer' : theme === 'gitlab-pajamas' ? 'GitLab Pajamas' : 'Material Design 3'} · {colorMode}
             </Text>
 
             {/* Theme Switcher */}
             <HStack gap={2} flexShrink={0}>
-              {(['ibm-carbon', 'github-primer', 'gitlab-pajamas'] as const).map((t) => (
+              {(['ibm-carbon', 'github-primer', 'gitlab-pajamas', 'material-design-3'] as const).map((t) => (
                 <Button
                   key={t}
                   onClick={() => setTheme(t as ThemeName)}
@@ -68,7 +68,7 @@ export default function ThemeDebug() {
                   _hover={{ bg: theme === t ? "layer-selected-02" : "layer-hover-02" }}
                   _active={{ bg: "layer-active-02" }}
                 >
-                  {t === 'ibm-carbon' ? 'IBM' : t === 'github-primer' ? 'GitHub' : 'GitLab'}
+                  {t === 'ibm-carbon' ? 'IBM' : t === 'github-primer' ? 'GitHub' : t === 'gitlab-pajamas' ? 'GitLab' : 'Material'}
                 </Button>
               ))}
               <ColorModeButton

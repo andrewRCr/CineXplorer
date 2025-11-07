@@ -290,25 +290,210 @@ export interface UnifiedTheme {
     // ===================================================================
     // SEMANTIC COLORS (Status, Brand, Interactive)
     // ===================================================================
-    // Kept from existing ThemeColors (33-token system). These remain unchanged
-    // in the unified adapter architecture.
+    // Per ADR-010: Primary/Secondary/Tertiary hierarchy with optional brand separation.
+    // Token types match usage: background tokens for fills, foreground tokens for text.
 
-    // Primary colors (main brand/action)
+    /**
+     * Primary action button background color.
+     *
+     * **Token Type:** BACKGROUND (for filled buttons, large color areas)
+     *
+     * **Semantic Meaning:** Primary action buttons, submit buttons, key CTAs
+     *
+     * **Usage:**
+     * - Submit buttons, "Save" buttons, primary CTAs
+     * - Always use with `primary-foreground` for text
+     * - Mandatory for all filled primary buttons
+     *
+     * **Design System Mappings (ADR-010):**
+     * - GitHub Primer: GREEN (bg_success, #1f883d) - actions use green
+     * - IBM Carbon: BLUE (fg_accent, #0f62fe used as bg) - unified blue
+     * - GitLab Pajamas: BLUE (#1f75cb) - actions use blue
+     *
+     * **Distinction from `tertiary`:**
+     * - Primary: Background token for button fills
+     * - Tertiary: Foreground token for links/interactive text
+     *
+     * @see ADR-010 for full rationale on Primary/Secondary/Tertiary hierarchy
+     */
     primary: string;
+
+    /**
+     * Text color on primary button backgrounds.
+     */
     "primary-foreground": string;
 
-    // Secondary colors (supporting actions)
+    /**
+     * Secondary action button background color.
+     *
+     * **Token Type:** BACKGROUND + BORDER (outline pattern mandatory)
+     *
+     * **Semantic Meaning:** Secondary actions, less prominent buttons
+     *
+     * **Usage:**
+     * - "Cancel", "Back", "Skip" buttons
+     * - REQUIRED: Use with `borderWidth="1px"` + `borderColor="border-strong-01"`
+     * - Industry standard: outline style with 1px border
+     *
+     * **Pattern Example:**
+     * ```tsx
+     * <Button
+     *   bg="secondary"
+     *   color="secondary-foreground"
+     *   borderWidth="1px"
+     *   borderColor="border-strong-01"
+     * >
+     *   Cancel
+     * </Button>
+     * ```
+     *
+     * @see ADR-010 for mandatory outline pattern rationale
+     */
     secondary: string;
+
+    /**
+     * Text color on secondary button backgrounds.
+     */
     "secondary-foreground": string;
 
-    // Muted colors (deemphasized content)
+    /**
+     * Deemphasized, non-interactive background color.
+     *
+     * **Token Type:** BACKGROUND (non-interactive)
+     *
+     * **Semantic Meaning:** Disabled states, subtle backgrounds, deemphasized content
+     *
+     * **Usage:**
+     * - Disabled buttons, inactive states
+     * - Subtle backgrounds for non-critical content
+     * - Deemphasized surfaces
+     *
+     * **Distinction from `secondary`:**
+     * - Muted: Non-interactive, disabled, deemphasized
+     * - Secondary: Interactive, clickable, actionable
+     *
+     * @see ADR-010 for muted vs secondary distinction
+     */
     muted: string;
+
+    /**
+     * Text color for deemphasized, secondary text.
+     *
+     * **Usage:** Help text, labels, captions, timestamps, secondary information
+     */
     "muted-foreground": string;
 
-    // Accent colors (highlights, links, focus)
+    /**
+     * Interactive text, links, and accent highlights.
+     *
+     * **Token Type:** FOREGROUND (for text, links, icons)
+     *
+     * **Semantic Meaning:** Hyperlinks, interactive text, focus states, highlights
+     *
+     * **Usage:**
+     * - Hyperlinks, clickable text
+     * - Focus indicators, active tab highlights
+     * - Interactive text elements
+     *
+     * **Design System Mappings (ADR-010):**
+     * - GitHub Primer: BLUE (fg_accent, #0969da) - links use blue
+     * - IBM Carbon: BLUE (fg_accent, #0f62fe) - same as primary, semantically distinct
+     * - GitLab Pajamas: PURPLE (#7759c2) - links use purple (brand-aligned)
+     *
+     * **Distinction from `primary`:**
+     * - Tertiary: Foreground token for links/text
+     * - Primary: Background token for button fills
+     *
+     * **Replaces:** `accent` (deprecated - use `tertiary` for new code)
+     *
+     * @see ADR-010 for Primary/Secondary/Tertiary hierarchy rationale
+     */
+    tertiary: string;
+
+    /**
+     * Text color on tertiary backgrounds (rarely used).
+     *
+     * **Usage:** Text on tertiary-colored backgrounds (e.g., tertiary badges)
+     * **Note:** Most tertiary usage is foreground-only (links), so this is optional
+     */
+    "tertiary-foreground"?: string;
+
+    /**
+     * @deprecated Use `tertiary` instead. This is a legacy alias maintained for
+     * backward compatibility during component migration (ADR-010 Phase 4).
+     *
+     * **Migration:** Replace all `accent` usage with `tertiary` in components.
+     * This alias will be removed after global accent → tertiary migration completes.
+     *
+     * @see tertiary for current token documentation
+     */
     accent: string;
+
+    /**
+     * @deprecated Use `tertiary-foreground` instead. Legacy alias for compatibility.
+     *
+     * @see tertiary-foreground for current token documentation
+     */
     "accent-foreground": string;
+
+    /**
+     * Hover state for accent/tertiary interactive elements.
+     *
+     * **Usage:** Link hover states, focus state brightening
+     * **Note:** Will be renamed to `tertiary-hover` after accent deprecation complete
+     */
     "accent-hover": string;
+
+    /**
+     * Logo and brand identity color (optional - not all themes have brand colors).
+     *
+     * **Token Type:** EITHER (context-dependent - can be background or foreground)
+     *
+     * **Semantic Meaning:** Brand identity, logo color, special brand moments
+     *
+     * **Usage:**
+     * - Logo sections, brand identity elements
+     * - Special brand moments (hero sections, marketing pages)
+     * - Company-specific UI elements
+     *
+     * **NOT for general component use** - Use `primary`/`secondary`/`tertiary` for UI actions
+     *
+     * **Design System Mappings (ADR-010):**
+     * - GitHub Primer: `undefined` (no brand color - black/white logo)
+     * - IBM Carbon: BLUE (#0f62fe) - IBM brand blue
+     * - GitLab Pajamas: PURPLE (#554488) - GitLab brand purple
+     *
+     * **Example - GitLab:**
+     * - Logo: Uses `brand` (purple) + `brandSecondary` (orange)
+     * - Primary button: Uses `primary` (blue), NOT brand
+     * - Links: Use `tertiary` (purple, matches brand but semantically different)
+     *
+     * @see ADR-010 for brand vs primary distinction and usage guidelines
+     */
+    brand?: string;
+
+    /**
+     * Secondary brand color (optional - for systems with multiple brand colors).
+     *
+     * **Token Type:** EITHER (context-dependent)
+     *
+     * **Semantic Meaning:** Secondary brand accents, additional brand colors
+     *
+     * **Usage:**
+     * - Additional brand accents (e.g., GitLab orange)
+     * - Secondary brand moments
+     * - Complementary brand elements
+     *
+     * **NOT for general component use** - Use functional tokens for UI
+     *
+     * **Design System Mappings (ADR-010):**
+     * - GitHub Primer: `undefined`
+     * - IBM Carbon: `undefined`
+     * - GitLab Pajamas: ORANGE (#e24329) - tangerine accent
+     *
+     * @see ADR-010 for optional brand token usage guidelines
+     */
+    brandSecondary?: string;
 
     // Destructive colors (danger, errors, delete actions)
     destructive: string;

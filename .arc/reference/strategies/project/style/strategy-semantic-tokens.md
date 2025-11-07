@@ -58,9 +58,14 @@ CineXplorer's theme system uses semantic token naming inspired by shadcn/ui, imp
 | **Muted Colors** (Deemphasized) | | |
 | `muted` | Muted/disabled backgrounds | Disabled buttons, subtle surfaces |
 | `muted-foreground` | Secondary text, labels | Help text, labels, captions, timestamps |
-| **Accent Colors** (Highlights) | | |
-| `accent` | Highlighted elements | Links, badges, focus states, callouts |
-| `accent-foreground` | Text on accent backgrounds | Accent badge text |
+| **Tertiary Colors** (Interactive Text & Accents) | | |
+| `tertiary` | Interactive text, links, highlights | Hyperlinks, focus states, active tabs, highlights |
+| `tertiary-foreground` | Text on tertiary backgrounds | Tertiary badge text (rarely used) |
+| `accent` | @deprecated Use `tertiary` | Legacy alias for tertiary (migration in progress) |
+| `accent-foreground` | @deprecated Use `tertiary-foreground` | Legacy alias (migration in progress) |
+| **Brand Colors** (Optional - Identity) | | |
+| `brand` | Logo/brand identity color | Logo sections, special brand moments (GitLab purple, IBM blue) |
+| `brandSecondary` | Secondary brand color | Additional brand accents (GitLab orange) |
 | **Destructive Colors** (Danger) | | |
 | `destructive` | Danger/error/delete actions | Delete buttons, error states, destructive actions |
 | `destructive-foreground` | Text on destructive backgrounds | Destructive button text |
@@ -103,6 +108,77 @@ and complete alert system coverage.
 
 All 13 extended tokens are backed by cross-system research (Material Design 3, IBM Carbon, GitHub Primer, Ant Design)
 or address movie app-specific requirements. Total of 33 tokens remains conservative compared to industry averages (40-140+).
+
+---
+
+## Semantic Token Definitions (Per ADR-010)
+
+The table below defines the precise semantic meaning, visual characteristics, and usage patterns for each color token
+in CineXplorer's unified vocabulary. These definitions govern how official design system tokens are mapped to our
+semantic vocabulary.
+
+**Context:** ADR-010 established the primary/secondary/tertiary hierarchy (Material Design 3-aligned) with optional
+brand separation and proper token type distinction (background vs foreground tokens). These definitions ensure
+cross-theme consistency while respecting official design system token values.
+
+| Token | Semantic Meaning | Visual Characteristics | Usage Examples | Token Type | Mapping Notes |
+|-------|-----------------|----------------------|----------------|------------|---------------|
+| **Action Hierarchy** | | | | | |
+| `primary` | Primary action buttons | Filled buttons, green or blue | "Submit", "Save", "Continue" | **Background** | GitHub: green (bg_success), IBM: blue (fg_accent), GitLab: blue |
+| `secondary` | Secondary actions | Outline buttons (**mandatory** 1px border) | "Cancel", "Back", "Skip" | Background + Border | Maps to `bg_button_secondary` + REQUIRED `border-strong-01` |
+| `tertiary` | Interactive text, links, accents | Blue or brand color, foreground | Hyperlinks, focus states, highlights | **Foreground** | Replaces deprecated `accent`. GitHub: blue (fg_accent), GitLab: purple |
+| `muted` | Deemphasized, non-interactive | Subtle gray backgrounds | Disabled states, subtle surfaces | Background | Distinct from secondary (interactive vs non-interactive) |
+| **Brand Identity (Optional)** | | | | | |
+| `brand` | Logo/brand identity | Purple, blue, or brand color | Logo sections, brand moments | Either | Optional. GitLab: purple, IBM: blue, GitHub: undefined |
+| `brandSecondary` | Secondary brand color | Orange or secondary brand | Additional brand accents | Either | Optional. GitLab: orange. Not for general component use. |
+| **Status & Feedback** | | | | | |
+| `success` | Positive feedback, outcomes | Green, filled backgrounds | Success alerts, "✓ Saved", high ratings | Background | Maps to `bg_success` (green). Distinct from primary per ADR-010. |
+| `warning` | Caution, validation warnings | Yellow/amber, filled | Warning alerts, validation messages | Background | Official token when available (Primer: attention, Carbon/Pajamas: warning). |
+| `info` | Informational, help content | Blue, filled backgrounds | Info alerts, help text, neutral info | Background | Some systems reuse tertiary (Primer), others have dedicated token. |
+| `destructive` | Danger, errors, delete actions | Red, filled backgrounds | Delete buttons, error alerts | Background | Maps to `bg_danger` or equivalent error/danger token. |
+| **UI Elements** | | | | | |
+| `border` | Standard dividers, separators | Subtle gray | General borders, card outlines | Border | Per border hierarchy (border-subtle-00, border-strong-01, etc). |
+| `input` | Form field borders | Accessible contrast border | Text inputs, select boxes | Border | Typically maps to `border-subtle-00` or dedicated input border. |
+| `ring` | Focus indicators (accessibility) | High-contrast accent | Keyboard focus rings (2px outline + offset) | Border | Must meet WCAG 2.4.13 (≥3:1 contrast change). |
+
+**Key Distinctions (Per ADR-010):**
+
+- **Primary vs Tertiary:** Primary is for **button fills** (background token), Tertiary is for **links/text** (foreground token)
+- **Primary vs Brand:** Primary is for **UI actions**, Brand is for **identity** (may be same color, e.g., IBM)
+- **Primary vs Success:** Primary is **action color** (varies by system), Success is **feedback state** (always green)
+- **Secondary vs Muted:** Secondary is **interactive** (clickable buttons), Muted is **non-interactive** (backgrounds)
+- **Tertiary vs Accent:** Tertiary is the new name (Material-aligned), Accent is deprecated (alias during migration)
+- **Secondary Pattern:** ALWAYS use with `borderWidth="1px"` + `borderColor="border-strong-01"` per industry standard
+
+**Token Type Architecture:**
+
+- **Background tokens** (for large color areas): primary, secondary, muted, success, warning, info, destructive
+- **Foreground tokens** (for text/icons): tertiary, all `-foreground` pairs
+- **Either type** (context-dependent): brand, brandSecondary
+
+**Mapping Philosophy:**
+
+1. **Use official tokens when available** - Respect design system values for colors
+2. **Match token types to usage** - Background tokens for fills, foreground tokens for text
+3. **Standardize semantic meanings** - Primary = action, Tertiary = interactive text, Brand = identity
+4. **Handle color architecture diversity** - Support 1-tier (IBM), 2-tier (GitHub), 3-tier (GitLab) systems
+5. **Document deviations** - Inline comments explain when/why we deviate from source labeling
+
+**Design System Mappings:**
+
+| System | Brand | Primary (buttons) | Tertiary (links) | Architecture |
+|--------|-------|------------------|------------------|--------------|
+| **GitHub Primer** | undefined | green (bg_success) | blue (fg_accent) | 2-tier: Actions ≠ Links |
+| **IBM Carbon** | blue | blue (fg_accent) | blue (fg_accent) | 1-tier: Unified blue |
+| **GitLab Pajamas** | purple + orange | blue | purple | 3-tier: Brand ≠ Actions ≠ Links |
+| **Material Design 3** | purple | purple (primary) | teal (tertiary) | 3-tier: Full separation |
+
+**See Also:**
+
+- ADR-010: Establish Core Semantic Color Token Architecture (full rationale and decisions)
+- strategy-border-system.md: Border patterns and outline styling details
+- ADR-003: Extend Semantic Token System (token count extension)
+- ADR-005: Unified Theme Adapter Layer (adapter architecture)
 
 ---
 

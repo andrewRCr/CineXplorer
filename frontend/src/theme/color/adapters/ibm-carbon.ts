@@ -114,28 +114,56 @@ export function createCarbonAdapter(mode: "light" | "dark"): UnifiedTheme {
     const borderStrong02 = palette.border_strong_02; // Accessible borders on layer-02
     const borderStrong03 = palette.border_strong_03; // Accessible borders on layer-03
 
-    // Semantic colors (official Carbon)
-    const primary = palette.bg_success;
+    // Semantic colors (official Carbon) - ADR-010 compliant mappings
+    // IBM Carbon uses a 1-tier unified blue architecture:
+    // - Brand: BLUE (#0f62fe - IBM brand color)
+    // - Actions (buttons): BLUE (same as brand)
+    // - Interactive text (links): BLUE (same as brand)
+    // Note: Same color value, semantically distinct tokens
+
+    // BRAND: IBM Blue (brand identity color) - ADR-010
+    const brand = palette.fg_accent; // IBM Blue (#0f62fe light, #78a9ff dark)
+
+    // PRIMARY: Blue background token for action buttons (ADR-010)
+    // Token type: BACKGROUND (fg_accent used as background)
+    // Rationale: IBM uses unified blue for everything (brand = actions = links)
+    // Note: Same value as brand and tertiary, but semantically distinct
+    const primary = palette.fg_accent; // BLUE (#0f62fe light, #78a9ff dark)
     const primaryForeground = palette.fg_onEmphasis;
 
+    // SECONDARY: Gray background + mandatory 1px border (ADR-010)
+    // Token type: BACKGROUND + BORDER
     const secondary = palette.bg_button_secondary;
     const secondaryForeground =
         mode === "light" ? palette.fg_onEmphasis : palette.fg_default;
 
+    // MUTED: Deemphasized, non-interactive
     const muted = palette.bg_layer_01; // Use layer-01 for muted
     const mutedForeground = palette.fg_muted;
 
-    const accent = palette.fg_accent;
+    // TERTIARY: Blue foreground token for links/interactive text (ADR-010)
+    // Token type: FOREGROUND (for text, links, icons)
+    // Rationale: IBM's unified blue philosophy - same color for all interactive elements
+    // Note: Same value as primary and brand, but semantically distinct
+    // Distinction: tertiary is FOREGROUND (links), primary is BACKGROUND (buttons)
+    const tertiary = palette.fg_accent; // BLUE (#0f62fe light, #78a9ff dark)
+    const tertiaryForeground = palette.fg_onEmphasis; // Rarely used (tertiary mostly foreground-only)
+
+    // ACCENT: @deprecated - Use tertiary instead (ADR-010 Phase 4 migration)
+    // Maintained as alias during component migration period
+    const accent = palette.fg_accent; // Same as tertiary
     const accentForeground = palette.fg_onEmphasis;
     const accentHover = palette.fg_accent_hover;
 
+    // DESTRUCTIVE: Red for errors/delete actions
     const destructive = palette.bg_danger;
     const destructiveForeground = palette.fg_onEmphasis;
 
+    // SUCCESS: Green for positive feedback (distinct from primary per ADR-010)
+    // Primary = blue (actions), Success = green (feedback state)
     const success = palette.bg_success;
     const successForeground = palette.fg_onEmphasis;
 
-    // Warning/Info colors (official Carbon)
     const warning = palette.fg_warning;
     const warningForeground = mode === "light" ? palette.fg_default : "#000000";
     const onWarning =
@@ -219,14 +247,17 @@ export function createCarbonAdapter(mode: "light" | "dark"): UnifiedTheme {
         "layer-active-01": layer01States.active,
         "layer-active-02": layer02States.active,
 
-        // Semantic colors (official Carbon)
+        // Semantic colors (ADR-010 compliant)
+        brand, // IBM Blue
         primary,
         "primary-foreground": primaryForeground,
         secondary,
         "secondary-foreground": secondaryForeground,
         muted,
         "muted-foreground": mutedForeground,
-        accent,
+        tertiary,
+        "tertiary-foreground": tertiaryForeground,
+        accent, // @deprecated alias
         "accent-foreground": accentForeground,
         "accent-hover": accentHover,
         destructive,

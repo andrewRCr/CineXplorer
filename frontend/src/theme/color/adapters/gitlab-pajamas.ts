@@ -101,27 +101,57 @@ export function createPajamasAdapter(mode: "light" | "dark"): UnifiedTheme {
     const borderSubtle00 = palette.border_subtle; // Subtle dividers
     const borderStrong01 = palette.border_strong; // Accessible borders
 
-    // Semantic colors (official Pajamas)
-    const primary = palette.bg_success;
+    // Semantic colors (official Pajamas) - ADR-010 compliant mappings
+    // GitLab Pajamas brand colors per design.gitlab.com/brand-design/color:
+    // - Brand: PURPLE (#a989f5 Purple 01p) + ORANGE (#fca326 Orange 01p)
+    // - Actions (buttons): ORANGE (#e24329 Orange 03p, used on about.gitlab.com)
+    // - Interactive text (links): PURPLE (#7759c2 Purple 02p light, #a989f5 Purple 01p dark)
+
+    // BRAND: GitLab purple (primary brand color) - ADR-010
+    const brand = palette.brand_purple; // PURPLE (#a989f5 Purple 01p, both modes)
+
+    // BRAND SECONDARY: GitLab orange (secondary brand color) - ADR-010
+    const brandSecondary = palette.brand_orange; // ORANGE (#fca326 Orange 01p, both modes)
+
+    // PRIMARY: Orange background token for action buttons (ADR-010)
+    // Token type: BACKGROUND (for filled buttons)
+    // Rationale: GitLab uses orange for primary CTAs (Orange 03p on about.gitlab.com)
+    const primary = palette.bg_action_primary; // ORANGE (#e24329 light, #fca326 dark)
     const primaryForeground = palette.fg_onEmphasis;
 
+    // SECONDARY: Gray background + mandatory 1px border (ADR-010)
+    // Token type: BACKGROUND + BORDER
     const secondary = palette.bg_button_secondary;
     const secondaryForeground = palette.fg_default;
 
+    // MUTED: Deemphasized, non-interactive
     const muted = palette.bg_section; // Use section token for muted
     const mutedForeground = palette.fg_muted;
 
-    const accent = palette.fg_accent;
+    // TERTIARY: Purple foreground token for links/interactive text (ADR-010)
+    // Token type: FOREGROUND (for text, links, icons)
+    // Rationale: GitLab uses purple for links (Purple 02p light, Purple 01p dark)
+    // Brand-aligned but semantically distinct from brand token
+    // Distinction: tertiary is FOREGROUND (links), primary is BACKGROUND (buttons)
+    const tertiary = palette.fg_link_purple; // PURPLE (#7759c2 light, #a989f5 dark)
+    const tertiaryForeground = palette.fg_onEmphasis; // Rarely used (tertiary mostly foreground-only)
+
+    // ACCENT: @deprecated - Use tertiary instead (ADR-010 Phase 4 migration)
+    // Maintained as alias during component migration period
+    const accent = palette.fg_link_purple; // Same as tertiary
     const accentForeground = palette.fg_onEmphasis;
     const accentHover = palette.fg_accent_hover;
 
+    // DESTRUCTIVE: Red for errors/delete actions
     const destructive = palette.bg_danger;
     const destructiveForeground = palette.fg_onEmphasis;
 
+    // SUCCESS: Green for positive feedback (distinct from primary per ADR-010)
+    // Primary = orange (actions), Success = green (feedback state)
     const success = palette.bg_success;
     const successForeground = palette.fg_onEmphasis;
 
-    // Warning/Info colors (official Pajamas)
+    // WARNING/INFO: Official GitLab status colors
     const warning = palette.fg_warning;
     const warningForeground = palette.fg_onEmphasis;
     const onWarning = palette.fg_onEmphasis;
@@ -223,14 +253,18 @@ export function createPajamasAdapter(mode: "light" | "dark"): UnifiedTheme {
         "layer-active-01": layer01States.active,
         "layer-active-02": layer02States.active,
 
-        // Semantic colors (official Pajamas)
+        // Semantic colors (ADR-010 compliant)
+        brand, // GitLab purple
+        brandSecondary, // GitLab orange
         primary,
         "primary-foreground": primaryForeground,
         secondary,
         "secondary-foreground": secondaryForeground,
         muted,
         "muted-foreground": mutedForeground,
-        accent,
+        tertiary,
+        "tertiary-foreground": tertiaryForeground,
+        accent, // @deprecated alias
         "accent-foreground": accentForeground,
         "accent-hover": accentHover,
         destructive,

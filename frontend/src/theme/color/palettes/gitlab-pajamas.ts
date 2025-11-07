@@ -59,6 +59,16 @@ export const gitlabPajamasPaletteLight = {
     /** Success button hover - darker green */
     bg_success_hover: "#0d6938",
 
+    // GitLab Brand Colors (official from design.gitlab.com/brand-design/color)
+    /** GitLab brand purple - Purple 01p (primary brand color) */
+    brand_purple: "#a989f5",
+    /** GitLab brand orange - Orange 01p (secondary brand color) */
+    brand_orange: "#fca326",
+    /** GitLab purple for links - Purple 02p (used on light backgrounds) */
+    fg_link_purple: "#7759c2",
+    /** GitLab orange for primary actions - Orange 03p (used for CTAs on about.gitlab.com) */
+    bg_action_primary: "#e24329",
+
     // Semantic colors - Danger (Destructive actions)
     /** Error/danger text (red-600) */
     fg_danger: "#c02f12",
@@ -147,6 +157,16 @@ export const gitlabPajamasPaletteDark = {
     bg_success: "#52b87a",
     /** Success button hover - brighter green */
     bg_success_hover: "#91d4a8",
+
+    // GitLab Brand Colors (official from design.gitlab.com/brand-design/color)
+    /** GitLab brand purple - Purple 01p (works in dark mode) */
+    brand_purple: "#a989f5",
+    /** GitLab brand orange - Orange 01p (same in both modes) */
+    brand_orange: "#fca326",
+    /** GitLab purple for links - Purple 01p (lighter purple for dark mode readability) */
+    fg_link_purple: "#a989f5",
+    /** GitLab orange for primary actions - Orange 01p (lighter variant for dark mode) */
+    bg_action_primary: "#fca326",
 
     // Semantic colors - Danger (Destructive actions)
     /** Error/danger text (red-400) - lighter red for dark bg */

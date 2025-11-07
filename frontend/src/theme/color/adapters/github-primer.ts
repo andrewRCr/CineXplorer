@@ -85,23 +85,48 @@ export function createGithubAdapter(mode: "light" | "dark"): UnifiedTheme {
     const borderSubtle00 = palette.border_default; // Base subtle border
     const borderStrong01 = palette.border_emphasis; // Accessible/emphasis border
 
-    // Semantic colors (official Primer)
-    const primary = palette.bg_success;
+    // Semantic colors (official Primer) - ADR-010 compliant mappings
+    // GitHub Primer uses a 2-tier color architecture:
+    // - Actions (buttons): GREEN (#1f883d)
+    // - Interactive text (links): BLUE (#0969da)
+
+    // BRAND: Undefined (GitHub uses black/white logo, no brand color)
+    const brand = undefined;
+
+    // PRIMARY: Green background token for action buttons (ADR-010)
+    // Token type: BACKGROUND (for filled buttons)
+    // Rationale: GitHub uses green for positive actions ("merge", "create", primary CTAs)
+    const primary = palette.bg_success; // GREEN (#1f883d light, #238636 dark)
     const primaryForeground = palette.fg_onEmphasis;
 
+    // SECONDARY: Gray background + mandatory 1px border (ADR-010)
+    // Token type: BACKGROUND + BORDER
     const secondary = palette.bg_button_secondary;
     const secondaryForeground = palette.fg_default;
 
+    // MUTED: Deemphasized, non-interactive
     const muted = palette.bg_muted;
     const mutedForeground = palette.fg_muted;
 
-    const accent = palette.fg_accent;
+    // TERTIARY: Blue foreground token for links/interactive text (ADR-010)
+    // Token type: FOREGROUND (for text, links, icons)
+    // Rationale: GitHub uses blue for hyperlinks, focus states, interactive text
+    // Distinction: tertiary is FOREGROUND (links), primary is BACKGROUND (buttons)
+    const tertiary = palette.fg_accent; // BLUE (#0969da light, #58a6ff dark)
+    const tertiaryForeground = palette.fg_onEmphasis; // Rarely used (tertiary mostly foreground-only)
+
+    // ACCENT: @deprecated - Use tertiary instead (ADR-010 Phase 4 migration)
+    // Maintained as alias during component migration period
+    const accent = palette.fg_accent; // Same as tertiary
     const accentForeground = palette.fg_onEmphasis;
     const accentHover = palette.fg_accent_hover;
 
+    // DESTRUCTIVE: Red for errors/delete actions
     const destructive = palette.bg_danger;
     const destructiveForeground = palette.fg_onEmphasis;
 
+    // SUCCESS: Green for positive feedback (distinct from primary per ADR-010)
+    // Primary = action color (green buttons), Success = feedback state (green alerts)
     const success = palette.bg_success;
     const successForeground = palette.fg_onEmphasis;
 
@@ -145,13 +170,12 @@ export function createGithubAdapter(mode: "light" | "dark"): UnifiedTheme {
     // Focus ring: Use accent color for consistency
     const ring = palette.fg_accent;
 
-    // Warning colors: Derived from Primer's attention scale (yellow-based)
-    // Note: These were in palette previously, now derived in adapter
-    const warning = mode === "light" ? "#d4a72c" : "#bb8009";
-    const warningForeground = mode === "light" ? "#744500" : "#e3b341";
-    const onWarning = "#ffffff";
+    // Warning colors: Derive from palette
+    const warning = mode === "light" ? "#bf8700" : "#d29922";
+    const warningForeground = palette.fg_default;
+    const onWarning = mode === "light" ? palette.fg_default : palette.fg_onEmphasis;
 
-    // Info colors: Derived from Primer's accent blue
+    // Info colors: Use accent blue (Primer intentionally uses accent for info per docs)
     const info = palette.fg_accent;
     const infoForeground = palette.fg_accent;
     const onInfo = palette.fg_onEmphasis;
@@ -209,14 +233,17 @@ export function createGithubAdapter(mode: "light" | "dark"): UnifiedTheme {
         "layer-active-01": layer01States.active,
         "layer-active-02": layer02States.active,
 
-        // Semantic colors (official Primer)
+        // Semantic colors (ADR-010 compliant)
+        brand, // undefined for GitHub
         primary,
         "primary-foreground": primaryForeground,
         secondary,
         "secondary-foreground": secondaryForeground,
         muted,
         "muted-foreground": mutedForeground,
-        accent,
+        tertiary,
+        "tertiary-foreground": tertiaryForeground,
+        accent, // @deprecated alias
         "accent-foreground": accentForeground,
         "accent-hover": accentHover,
         destructive,

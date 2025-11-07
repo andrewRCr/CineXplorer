@@ -82,7 +82,8 @@ export function createGithubAdapter(mode: "light" | "dark"): UnifiedTheme {
 
     // Border (official Primer tokens)
     const border = palette.border_default;
-    const borderStrong01 = palette.border_emphasis; // NEW: Added in Task 2.1.1
+    const borderSubtle00 = palette.border_default; // Base subtle border
+    const borderStrong01 = palette.border_emphasis; // Accessible/emphasis border
 
     // Semantic colors (official Primer)
     const primary = palette.bg_success;
@@ -120,13 +121,18 @@ export function createGithubAdapter(mode: "light" | "dark"): UnifiedTheme {
         ? palette.bg_muted // Alternates back to gray (matches layer-01)
         : adjustColor(layer02, 7); // Progressive for dark mode
 
-    // Border hierarchy: Primer has single border token + emphasis
-    // Derivation: Generate per-layer borders for consistency with Carbon pattern
-    const borderHierarchy = deriveBorderHierarchy(palette.border_default, mode);
-    const borderSubtle00 = borderHierarchy.subtle00; // = border_default
-    const borderSubtle02 = borderHierarchy.subtle02; // Slightly darker/lighter for layer-02
-    const borderStrong02 = borderHierarchy.strong02; // More contrast for layer-02
-    const borderStrong03 = borderHierarchy.strong03; // Most contrast for layer-03
+    // Border hierarchy: Primer provides two border colors (default + emphasis)
+    // Derivation: Generate per-layer borders following Carbon's architectural pattern
+    // - Light mode (alternating layers): 2 distinct values (default + emphasis)
+    // - Dark mode (progressive layers): 5 distinct values (progressive lightening)
+    const borderHierarchy = deriveBorderHierarchy(
+        palette.border_default, // Subtle base
+        palette.border_emphasis, // Strong base (FIXED: was deriving from default)
+        mode === "light" ? "alternating" : "progressive", // Pattern selection per ADR-008
+    );
+    const borderSubtle02 = borderHierarchy.subtle02; // Same as subtle00 (light) or +12.6% (dark)
+    const borderStrong02 = borderHierarchy.strong02; // Same as strong01 (light) or +20.8% (dark)
+    const borderStrong03 = borderHierarchy.strong03; // Same as strong01 (light) or +23.7% compound (dark)
 
     // Interaction states: Derive hover/selected/active per layer
     // Primer doesn't provide these systematically - we derive from layer colors

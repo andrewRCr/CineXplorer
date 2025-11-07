@@ -62,39 +62,63 @@ export function adjustColor(hex: string, percent: number): string {
 }
 
 /**
- * Derive border hierarchy tokens from a single base border color.
+ * Derive complete border hierarchy from base subtle and strong border colors.
  *
- * **Strategy (inspired by IBM Carbon):**
- * - `border-subtle-00`: Base border (unchanged)
- * - `border-subtle-02`: Lightened border for layer-02 (maintain subtle aesthetic)
- * - `border-strong-01`: Darkened border for accessibility (WCAG 3:1 target)
- * - `border-strong-02`: Further darkened for layer-02 visibility
- * - `border-strong-03`: Most contrast for layer-03 visibility
+ * **Pattern Selection:**
  *
- * **Mode-specific adjustments:**
- * - Light mode: Darken for "strong" variants (more contrast)
- * - Dark mode: Lighten for "strong" variants (more contrast)
+ * - `alternating` (2-tier): Light mode with alternating layer pattern (ADR-008)
+ *   - Returns same values for all layers (2 distinct colors total)
+ *   - Use when: Light mode where layers alternate (white ↔ gray ↔ white) per
+ *     Carbon's architectural pattern adopted project-wide
+ *   - Rationale: Same border visible on both white and gray backgrounds,
+ *     no per-layer adjustment needed
  *
- * @param baseBorder - Base border color from design system
- * @param mode - Color mode (affects adjustment direction)
- * @returns Complete border hierarchy
+ * - `progressive` (5-tier): Dark mode with progressive layer lightening (ADR-008)
+ *   - Returns distinct values per layer (5 distinct colors total)
+ *   - Use when: Dark mode where layers progressively lighten (darker → lighter)
+ *     per Carbon's architectural pattern adopted project-wide
+ *   - Rationale: Each layer lighter than previous, borders must lighten too
+ *     to maintain visibility on progressively lighter backgrounds
+ *
+ * **Design Philosophy:**
+ * Follows IBM Carbon's architectural pattern where border complexity matches
+ * layer elevation strategy. The alternating layer pattern (adopted project-wide
+ * for light mode in ADR-008) doesn't require per-layer border adjustments, while
+ * the progressive layer pattern (used for dark mode) requires borders to adjust
+ * per layer for consistent visibility.
+ *
+ * **Delta Matching:**
+ * Progressive mode uses Carbon's official deltas (compound adjustments):
+ * - subtle-00 → subtle-02: +12.6% lightening
+ * - strong-01 → strong-02: +20.8% lightening
+ * - strong-02 → strong-03: +23.7% lightening (compound)
+ *
+ * @param baseSubtle - Subtle border color from design system
+ * @param baseStrong - Strong/emphasis border color from design system
+ * @param pattern - 'alternating' (light/2-tier) or 'progressive' (dark/5-tier)
+ * @returns Complete 5-token border hierarchy
+ *
+ * @see ADR-008 (Adopt Carbon Light Alternating Layers)
+ * @see strategy-border-system.md (Border Color Hierarchy section)
  *
  * @example
  * ```typescript
- * // GitHub Primer light mode
- * const borders = deriveBorderHierarchy("#d1d9e0", "light");
- * // Returns: {
- * //   subtle00: "#d1d9e0",   // Original
- * //   subtle02: "#c5cdd5",   // Darker for layer-02
- * //   strong01: "#818b98",   // Accessible
- * //   strong02: "#6b7580",   // More contrast
- * //   strong03: "#555f6b"    // Highest contrast
- * // }
+ * // Primer Light (alternating layer pattern)
+ * const borders = deriveBorderHierarchy('#d1d9e0', '#818b98', 'alternating');
+ * // Returns: All subtle tokens = #d1d9e0, all strong tokens = #818b98
+ * ```
+ *
+ * @example
+ * ```typescript
+ * // Primer Dark (progressive layer pattern)
+ * const borders = deriveBorderHierarchy('#30363d', '#656c76', 'progressive');
+ * // Returns: 5 distinct values with Carbon-matched progression
  * ```
  */
 export function deriveBorderHierarchy(
-    baseBorder: string,
-    mode: "light" | "dark",
+    baseSubtle: string,
+    baseStrong: string,
+    pattern: "alternating" | "progressive",
 ): {
     subtle00: string;
     subtle02: string;
@@ -102,14 +126,29 @@ export function deriveBorderHierarchy(
     strong02: string;
     strong03: string;
 } {
-    const adjustmentDirection = mode === "light" ? -1 : 1;
+    if (pattern === "alternating") {
+        // 2-tier system: All layers use same border values
+        // Works because alternating layer pattern (white ↔ gray) means
+        // same border is visible on both backgrounds
+        return {
+            subtle00: baseSubtle,
+            subtle02: baseSubtle, // Same as 00
+            strong01: baseStrong,
+            strong02: baseStrong, // Same as 01
+            strong03: baseStrong, // Same as 01
+        };
+    }
 
+    // 5-tier system: Progressive lightening per layer
+    // Each layer is lighter than previous, borders must lighten too
+    // to maintain visibility. Uses Carbon's official deltas (compound).
+    const strong02 = adjustColor(baseStrong, 20.8);
     return {
-        subtle00: baseBorder, // Base (unchanged)
-        subtle02: adjustColor(baseBorder, adjustmentDirection * 5), // Slightly more contrast for layer-02
-        strong01: adjustColor(baseBorder, adjustmentDirection * 40), // Accessible (WCAG 3:1 target)
-        strong02: adjustColor(baseBorder, adjustmentDirection * 50), // More contrast for layer-02
-        strong03: adjustColor(baseBorder, adjustmentDirection * 60), // Highest contrast for layer-03
+        subtle00: baseSubtle,
+        subtle02: adjustColor(baseSubtle, 12.6), // Carbon delta
+        strong01: baseStrong,
+        strong02: strong02, // Carbon delta
+        strong03: adjustColor(strong02, 23.7), // Compound adjustment
     };
 }
 

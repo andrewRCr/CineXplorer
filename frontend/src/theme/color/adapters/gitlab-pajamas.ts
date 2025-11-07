@@ -150,12 +150,18 @@ export function createPajamasAdapter(mode: "light" | "dark"): UnifiedTheme {
         ? palette.bg_section // Alternates back to gray (matches layer-01)
         : adjustColor(layer02, 7); // Progressive for dark mode
 
-    // Border hierarchy: Pajamas has single strong border token
-    // Derivation: Generate per-layer borders from neutral scale
-    const borderHierarchy = deriveBorderHierarchy(palette.border_strong, mode);
-    const borderSubtle02 = borderHierarchy.subtle02; // Slightly adjusted for layer-02
-    const borderStrong02 = borderHierarchy.strong02; // More contrast for layer-02
-    const borderStrong03 = borderHierarchy.strong03; // Most contrast for layer-03
+    // Border hierarchy: Pajamas provides two border colors (subtle + strong)
+    // Derivation: Generate per-layer borders following Carbon's architectural pattern
+    // - Light mode (alternating layers): 2 distinct values (subtle + strong)
+    // - Dark mode (progressive layers): 5 distinct values (progressive lightening)
+    const borderHierarchy = deriveBorderHierarchy(
+        palette.border_subtle, // Subtle base (FIXED: was incorrectly passing border_strong!)
+        palette.border_strong, // Strong base
+        mode === "light" ? "alternating" : "progressive", // Pattern selection per ADR-008
+    );
+    const borderSubtle02 = borderHierarchy.subtle02; // Same as subtle00 (light) or +12.6% (dark)
+    const borderStrong02 = borderHierarchy.strong02; // Same as strong01 (light) or +20.8% (dark)
+    const borderStrong03 = borderHierarchy.strong03; // Same as strong01 (light) or +23.7% compound (dark)
 
     // Interaction states: Derive hover/selected/active per layer
     const layer01States = deriveInteractionStates(layer01, mode);

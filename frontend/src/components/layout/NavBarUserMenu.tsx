@@ -88,7 +88,10 @@ const NavBarUserMenu = () => {
         ref={buttonRef}
         onClick={() => setIsOpen(!isOpen)}
         size="sm"
-        variant="ghost"
+        bg="layer-01"
+        color="foreground"
+        _hover={{ bg: "layer-hover-01" }}
+        _active={{ bg: "layer-active-01" }}
       >
         <HStack gap={2}>
           <Text fontWeight="bold">{user?.username}</Text>
@@ -112,7 +115,7 @@ const NavBarUserMenu = () => {
             border="1px solid"
             borderColor="border-strong-01"
             borderRadius="md"
-            background="layer-03"
+            background="layer-02"
             zIndex="dropdown"
           >
             <VStack gap={0} align="stretch">

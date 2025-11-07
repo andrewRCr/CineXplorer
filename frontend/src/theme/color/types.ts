@@ -291,7 +291,9 @@ export interface UnifiedTheme {
     // SEMANTIC COLORS (Status, Brand, Interactive)
     // ===================================================================
     // Per ADR-010: Primary/Secondary/Tertiary hierarchy with optional brand separation.
+    // Per ADR-011: Standardized on `on-*` prefix for ALL foreground tokens.
     // Token types match usage: background tokens for fills, foreground tokens for text.
+    // All `-foreground` suffix tokens are deprecated in favor of `on-*` prefix.
 
     /**
      * Primary action button background color.
@@ -319,7 +321,34 @@ export interface UnifiedTheme {
     primary: string;
 
     /**
-     * Text color on primary button backgrounds.
+     * Text color on primary button backgrounds (ADR-011 canonical naming).
+     *
+     * **Naming Convention:** Uses industry-standard `on-*` prefix to clearly indicate
+     * "text that goes ON a primary background" (Material Design 3 pattern).
+     *
+     * **Usage:**
+     * - Text on primary buttons
+     * - Icons on primary surfaces
+     * - Any content overlaid on `primary` background
+     *
+     * **Example:**
+     * ```tsx
+     * <Button bg="primary" color="on-primary">Submit</Button>
+     * ```
+     *
+     * @see ADR-011 for on-* naming convention rationale
+     */
+    "on-primary": string;
+
+    /**
+     * @deprecated Use `on-primary` instead. This alias is maintained for backward
+     * compatibility during component migration (ADR-011).
+     *
+     * **Migration:** Replace all `primary-foreground` usage with `on-primary`.
+     * This alias will be removed in a future version.
+     *
+     * @see on-primary for current token documentation
+     * @see ADR-011 for migration rationale
      */
     "primary-foreground": string;
 
@@ -352,7 +381,35 @@ export interface UnifiedTheme {
     secondary: string;
 
     /**
-     * Text color on secondary button backgrounds.
+     * Text color on secondary button backgrounds (ADR-011 canonical naming).
+     *
+     * **Naming Convention:** Uses industry-standard `on-*` prefix for consistency.
+     *
+     * **Usage:**
+     * - Text on secondary buttons
+     * - Icons on secondary surfaces
+     * - Any content overlaid on `secondary` background
+     *
+     * **Example:**
+     * ```tsx
+     * <Button bg="secondary" color="on-secondary" borderWidth="1px" borderColor="border-strong-01">
+     *   Cancel
+     * </Button>
+     * ```
+     *
+     * @see ADR-011 for on-* naming convention rationale
+     */
+    "on-secondary": string;
+
+    /**
+     * @deprecated Use `on-secondary` instead. This alias is maintained for backward
+     * compatibility during component migration (ADR-011).
+     *
+     * **Migration:** Replace all `secondary-foreground` usage with `on-secondary`.
+     * This alias will be removed in a future version.
+     *
+     * @see on-secondary for current token documentation
+     * @see ADR-011 for migration rationale
      */
     "secondary-foreground": string;
 
@@ -377,9 +434,35 @@ export interface UnifiedTheme {
     muted: string;
 
     /**
-     * Text color for deemphasized, secondary text.
+     * Text color for deemphasized, secondary text (ADR-011 canonical naming).
      *
-     * **Usage:** Help text, labels, captions, timestamps, secondary information
+     * **Naming Convention:** Uses industry-standard `on-*` prefix for consistency.
+     *
+     * **Usage:**
+     * - Help text, labels, captions
+     * - Timestamps, metadata
+     * - Secondary information that should be less prominent
+     * - Text on `muted` backgrounds
+     *
+     * **Example:**
+     * ```tsx
+     * <Text color="on-muted" fontSize="sm">Last updated 2 hours ago</Text>
+     * <Box bg="muted"><Text color="on-muted">Disabled content</Text></Box>
+     * ```
+     *
+     * @see ADR-011 for on-* naming convention rationale
+     */
+    "on-muted": string;
+
+    /**
+     * @deprecated Use `on-muted` instead. This alias is maintained for backward
+     * compatibility during component migration (ADR-011).
+     *
+     * **Migration:** Replace all `muted-foreground` usage with `on-muted`.
+     * This alias will be removed in a future version.
+     *
+     * @see on-muted for current token documentation
+     * @see ADR-011 for migration rationale
      */
     "muted-foreground": string;
 
@@ -411,10 +494,29 @@ export interface UnifiedTheme {
     tertiary: string;
 
     /**
-     * Text color on tertiary backgrounds (rarely used).
+     * Text color on tertiary backgrounds (ADR-011 canonical naming).
      *
-     * **Usage:** Text on tertiary-colored backgrounds (e.g., tertiary badges)
-     * **Note:** Most tertiary usage is foreground-only (links), so this is optional
+     * **Naming Convention:** Uses industry-standard `on-*` prefix for consistency.
+     *
+     * **Usage:**
+     * - Text on tertiary-colored backgrounds (e.g., tertiary badges)
+     * - Rarely used since tertiary is primarily a foreground token for links
+     *
+     * **Note:** Optional token - most tertiary usage is foreground-only (links)
+     *
+     * @see ADR-011 for on-* naming convention rationale
+     */
+    "on-tertiary"?: string;
+
+    /**
+     * @deprecated Use `on-tertiary` instead. This alias is maintained for backward
+     * compatibility during component migration (ADR-011).
+     *
+     * **Migration:** Replace all `tertiary-foreground` usage with `on-tertiary`.
+     * This alias will be removed in a future version.
+     *
+     * @see on-tertiary for current token documentation
+     * @see ADR-011 for migration rationale
      */
     "tertiary-foreground"?: string;
 
@@ -495,25 +597,167 @@ export interface UnifiedTheme {
      */
     brandSecondary?: string;
 
-    // Destructive colors (danger, errors, delete actions)
+    // ===================================================================
+    // STATUS COLORS (Semantic Feedback)
+    // ===================================================================
+    // Per ADR-011: All foreground tokens use `on-*` prefix for consistency.
+    // The `-foreground` suffix variants are deprecated.
+
+    /**
+     * Danger, error, and delete action background color.
+     *
+     * **Usage:** Delete buttons, error alerts, destructive actions
+     */
     destructive: string;
+
+    /**
+     * Text color on destructive backgrounds (ADR-011 canonical naming).
+     *
+     * **Naming Convention:** Uses industry-standard `on-*` prefix.
+     *
+     * **Usage:**
+     * - Text on destructive buttons
+     * - Text in error alerts
+     * - Any content overlaid on `destructive` background
+     *
+     * **Example:**
+     * ```tsx
+     * <Button bg="destructive" color="on-destructive">Delete</Button>
+     * <Alert bg="destructive/10"><Text color="on-destructive">Error occurred</Text></Alert>
+     * ```
+     *
+     * @see ADR-011 for on-* naming convention rationale
+     */
+    "on-destructive": string;
+
+    /**
+     * @deprecated Use `on-destructive` instead. This alias is maintained for backward
+     * compatibility during component migration (ADR-011).
+     *
+     * **Migration:** Replace all `destructive-foreground` usage with `on-destructive`.
+     * This alias will be removed in a future version.
+     *
+     * @see on-destructive for current token documentation
+     * @see ADR-011 for migration rationale
+     */
     "destructive-foreground": string;
 
-    // Status colors (semantic feedback)
+    /**
+     * Success, confirmation, and positive feedback background color.
+     *
+     * **Usage:** Success alerts, confirmation messages, high ratings
+     */
     success: string;
+
+    /**
+     * Text color on success backgrounds (ADR-011 canonical naming).
+     *
+     * **Naming Convention:** Uses industry-standard `on-*` prefix.
+     *
+     * **Usage:**
+     * - Text in success alerts
+     * - Text on success badges
+     * - Any content overlaid on `success` background
+     *
+     * **Example:**
+     * ```tsx
+     * <Alert bg="success/10"><Text color="on-success">Action completed</Text></Alert>
+     * <Badge bg="success" color="on-success">Active</Badge>
+     * ```
+     *
+     * @see ADR-011 for on-* naming convention rationale
+     */
+    "on-success": string;
+
+    /**
+     * @deprecated Use `on-success` instead. This alias is maintained for backward
+     * compatibility during component migration (ADR-011).
+     *
+     * **Migration:** Replace all `success-foreground` usage with `on-success`.
+     * This alias will be removed in a future version.
+     *
+     * @see on-success for current token documentation
+     * @see ADR-011 for migration rationale
+     */
     "success-foreground": string;
 
+    /**
+     * Warning, caution, and validation warning background color.
+     *
+     * **Usage:** Warning alerts, validation messages, caution states
+     */
     warning: string;
+
+    /**
+     * Text color on warning backgrounds (ADR-011 canonical naming).
+     *
+     * **Naming Convention:** Uses industry-standard `on-*` prefix.
+     *
+     * **Usage:**
+     * - Text in warning alerts
+     * - Text on warning badges
+     * - Any content overlaid on `warning` background
+     *
+     * **Example:**
+     * ```tsx
+     * <Alert bg="warning/10"><Text color="on-warning">Please verify</Text></Alert>
+     * <Badge bg="warning" color="on-warning">Pending</Badge>
+     * ```
+     *
+     * @see ADR-011 for on-* naming convention rationale
+     */
+    "on-warning": string;
+
+    /**
+     * @deprecated Use `on-warning` instead. This alias is maintained for backward
+     * compatibility during component migration (ADR-011).
+     *
+     * **Migration:** Replace all `warning-foreground` usage with `on-warning`.
+     * This alias will be removed in a future version.
+     *
+     * @see on-warning for current token documentation
+     * @see ADR-011 for migration rationale
+     */
     "warning-foreground": string;
 
+    /**
+     * Informational message background color.
+     *
+     * **Usage:** Info alerts, help text, neutral information
+     */
     info: string;
-    "info-foreground": string;
 
-    // Solid status background text colors
-    "on-success": string;
-    "on-warning": string;
-    "on-destructive": string;
+    /**
+     * Text color on info backgrounds (ADR-011 canonical naming).
+     *
+     * **Naming Convention:** Uses industry-standard `on-*` prefix.
+     *
+     * **Usage:**
+     * - Text in info alerts
+     * - Text on info badges
+     * - Any content overlaid on `info` background
+     *
+     * **Example:**
+     * ```tsx
+     * <Alert bg="info/10"><Text color="on-info">Helpful tip</Text></Alert>
+     * <Badge bg="info" color="on-info">New</Badge>
+     * ```
+     *
+     * @see ADR-011 for on-* naming convention rationale
+     */
     "on-info": string;
+
+    /**
+     * @deprecated Use `on-info` instead. This alias is maintained for backward
+     * compatibility during component migration (ADR-011).
+     *
+     * **Migration:** Replace all `info-foreground` usage with `on-info`.
+     * This alias will be removed in a future version.
+     *
+     * @see on-info for current token documentation
+     * @see ADR-011 for migration rationale
+     */
+    "info-foreground": string;
 
     // ===================================================================
     // CINEXPLORER EXTENSIONS (App-Specific Semantic Tokens)

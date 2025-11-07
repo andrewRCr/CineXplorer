@@ -129,17 +129,19 @@ export function createCarbonAdapter(mode: "light" | "dark"): UnifiedTheme {
     // Rationale: IBM uses unified blue for everything (brand = actions = links)
     // Note: Same value as brand and tertiary, but semantically distinct
     const primary = palette.fg_accent; // BLUE (#0f62fe light, #78a9ff dark)
-    const primaryForeground = palette.fg_onEmphasis;
+    const onPrimary = palette.fg_onEmphasis; // ADR-011: Canonical on-* naming
+    const primaryForeground = onPrimary; // @deprecated: Use on-primary instead (ADR-011)
 
     // SECONDARY: Gray background + mandatory 1px border (ADR-010)
     // Token type: BACKGROUND + BORDER
     const secondary = palette.bg_button_secondary;
-    const secondaryForeground =
-        mode === "light" ? palette.fg_onEmphasis : palette.fg_default;
+    const onSecondary = mode === "light" ? palette.fg_onEmphasis : palette.fg_default; // ADR-011: Canonical on-* naming
+    const secondaryForeground = onSecondary; // @deprecated: Use on-secondary instead (ADR-011)
 
     // MUTED: Deemphasized, non-interactive
     const muted = palette.bg_layer_01; // Use layer-01 for muted
-    const mutedForeground = palette.fg_muted;
+    const onMuted = palette.fg_muted; // ADR-011: Canonical on-* naming
+    const mutedForeground = onMuted; // @deprecated: Use on-muted instead (ADR-011)
 
     // TERTIARY: Blue foreground token for links/interactive text (ADR-010)
     // Token type: FOREGROUND (for text, links, icons)
@@ -147,7 +149,8 @@ export function createCarbonAdapter(mode: "light" | "dark"): UnifiedTheme {
     // Note: Same value as primary and brand, but semantically distinct
     // Distinction: tertiary is FOREGROUND (links), primary is BACKGROUND (buttons)
     const tertiary = palette.fg_accent; // BLUE (#0f62fe light, #78a9ff dark)
-    const tertiaryForeground = palette.fg_onEmphasis; // Rarely used (tertiary mostly foreground-only)
+    const onTertiary = palette.fg_onEmphasis; // ADR-011: Canonical on-* naming (rarely used)
+    const tertiaryForeground = onTertiary; // @deprecated: Use on-tertiary instead (ADR-011)
 
     // ACCENT: @deprecated - Use tertiary instead (ADR-010 Phase 4 migration)
     // Maintained as alias during component migration period
@@ -157,25 +160,24 @@ export function createCarbonAdapter(mode: "light" | "dark"): UnifiedTheme {
 
     // DESTRUCTIVE: Red for errors/delete actions
     const destructive = palette.bg_danger;
-    const destructiveForeground = palette.fg_onEmphasis;
+    const onDestructive = palette.fg_onEmphasis; // ADR-011: Canonical on-* naming
+    const destructiveForeground = onDestructive; // @deprecated: Use on-destructive instead (ADR-011)
 
     // SUCCESS: Green for positive feedback (distinct from primary per ADR-010)
     // Primary = blue (actions), Success = green (feedback state)
     const success = palette.bg_success;
-    const successForeground = palette.fg_onEmphasis;
+    const onSuccess = palette.fg_onEmphasis; // ADR-011: Canonical on-* naming
+    const successForeground = onSuccess; // @deprecated: Use on-success instead (ADR-011)
 
+    // WARNING: Yellow/amber for caution states
     const warning = palette.fg_warning;
-    const warningForeground = mode === "light" ? palette.fg_default : "#000000";
-    const onWarning =
-        mode === "light" ? palette.fg_default : palette.fg_onEmphasis;
+    const onWarning = mode === "light" ? palette.fg_default : palette.fg_onEmphasis; // ADR-011: Canonical on-* naming
+    const warningForeground = onWarning; // @deprecated: Use on-warning instead (ADR-011)
 
+    // INFO: Blue for informational messages
     const info = palette.fg_info;
-    const infoForeground = palette.fg_onEmphasis;
-    const onInfo = palette.fg_onEmphasis;
-
-    // On-status colors for solid backgrounds
-    const onSuccess = palette.fg_onEmphasis;
-    const onDestructive = palette.fg_onEmphasis;
+    const onInfo = palette.fg_onEmphasis; // ADR-011: Canonical on-* naming
+    const infoForeground = onInfo; // @deprecated: Use on-info instead (ADR-011)
 
     // Shadows (minimal for Carbon - layer colors indicate elevation)
     const shadows = carbonShadows[mode];
@@ -247,33 +249,35 @@ export function createCarbonAdapter(mode: "light" | "dark"): UnifiedTheme {
         "layer-active-01": layer01States.active,
         "layer-active-02": layer02States.active,
 
-        // Semantic colors (ADR-010 compliant)
+        // Semantic colors (ADR-010 + ADR-011 compliant)
         brand, // IBM Blue
         primary,
-        "primary-foreground": primaryForeground,
+        "on-primary": onPrimary, // ADR-011: Canonical naming
+        "primary-foreground": primaryForeground, // @deprecated
         secondary,
-        "secondary-foreground": secondaryForeground,
+        "on-secondary": onSecondary, // ADR-011: Canonical naming
+        "secondary-foreground": secondaryForeground, // @deprecated
         muted,
-        "muted-foreground": mutedForeground,
+        "on-muted": onMuted, // ADR-011: Canonical naming
+        "muted-foreground": mutedForeground, // @deprecated
         tertiary,
-        "tertiary-foreground": tertiaryForeground,
-        accent, // @deprecated alias
-        "accent-foreground": accentForeground,
+        "on-tertiary": onTertiary, // ADR-011: Canonical naming
+        "tertiary-foreground": tertiaryForeground, // @deprecated
+        accent, // @deprecated alias (ADR-010)
+        "accent-foreground": accentForeground, // @deprecated
         "accent-hover": accentHover,
         destructive,
-        "destructive-foreground": destructiveForeground,
+        "on-destructive": onDestructive, // ADR-011: Canonical naming
+        "destructive-foreground": destructiveForeground, // @deprecated
         success,
-        "success-foreground": successForeground,
+        "on-success": onSuccess, // ADR-011: Canonical naming
+        "success-foreground": successForeground, // @deprecated
         warning,
-        "warning-foreground": warningForeground,
+        "on-warning": onWarning, // ADR-011: Canonical naming
+        "warning-foreground": warningForeground, // @deprecated
         info,
-        "info-foreground": infoForeground,
-
-        // On-status colors
-        "on-success": onSuccess,
-        "on-warning": onWarning,
-        "on-destructive": onDestructive,
-        "on-info": onInfo,
+        "on-info": onInfo, // ADR-011: Canonical naming
+        "info-foreground": infoForeground, // @deprecated
 
         // CineXplorer extensions
         rating: extensions.rating,

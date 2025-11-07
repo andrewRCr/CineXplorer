@@ -97,23 +97,27 @@ export function createGithubAdapter(mode: "light" | "dark"): UnifiedTheme {
     // Token type: BACKGROUND (for filled buttons)
     // Rationale: GitHub uses green for positive actions ("merge", "create", primary CTAs)
     const primary = palette.bg_success; // GREEN (#1f883d light, #238636 dark)
-    const primaryForeground = palette.fg_onEmphasis;
+    const onPrimary = palette.fg_onEmphasis; // ADR-011: Canonical on-* naming
+    const primaryForeground = onPrimary; // @deprecated: Use on-primary instead (ADR-011)
 
     // SECONDARY: Gray background + mandatory 1px border (ADR-010)
     // Token type: BACKGROUND + BORDER
     const secondary = palette.bg_button_secondary;
-    const secondaryForeground = palette.fg_default;
+    const onSecondary = palette.fg_default; // ADR-011: Canonical on-* naming
+    const secondaryForeground = onSecondary; // @deprecated: Use on-secondary instead (ADR-011)
 
     // MUTED: Deemphasized, non-interactive
     const muted = palette.bg_muted;
-    const mutedForeground = palette.fg_muted;
+    const onMuted = palette.fg_muted; // ADR-011: Canonical on-* naming
+    const mutedForeground = onMuted; // @deprecated: Use on-muted instead (ADR-011)
 
     // TERTIARY: Blue foreground token for links/interactive text (ADR-010)
     // Token type: FOREGROUND (for text, links, icons)
     // Rationale: GitHub uses blue for hyperlinks, focus states, interactive text
     // Distinction: tertiary is FOREGROUND (links), primary is BACKGROUND (buttons)
     const tertiary = palette.fg_accent; // BLUE (#0969da light, #58a6ff dark)
-    const tertiaryForeground = palette.fg_onEmphasis; // Rarely used (tertiary mostly foreground-only)
+    const onTertiary = palette.fg_onEmphasis; // ADR-011: Canonical on-* naming (rarely used)
+    const tertiaryForeground = onTertiary; // @deprecated: Use on-tertiary instead (ADR-011)
 
     // ACCENT: @deprecated - Use tertiary instead (ADR-010 Phase 4 migration)
     // Maintained as alias during component migration period
@@ -123,12 +127,14 @@ export function createGithubAdapter(mode: "light" | "dark"): UnifiedTheme {
 
     // DESTRUCTIVE: Red for errors/delete actions
     const destructive = palette.bg_danger;
-    const destructiveForeground = palette.fg_onEmphasis;
+    const onDestructive = palette.fg_onEmphasis; // ADR-011: Canonical on-* naming
+    const destructiveForeground = onDestructive; // @deprecated: Use on-destructive instead (ADR-011)
 
     // SUCCESS: Green for positive feedback (distinct from primary per ADR-010)
     // Primary = action color (green buttons), Success = feedback state (green alerts)
     const success = palette.bg_success;
-    const successForeground = palette.fg_onEmphasis;
+    const onSuccess = palette.fg_onEmphasis; // ADR-011: Canonical on-* naming
+    const successForeground = onSuccess; // @deprecated: Use on-success instead (ADR-011)
 
     // Shadows (official Primer shadow tokens)
     const shadows = primerShadows[mode];
@@ -170,19 +176,15 @@ export function createGithubAdapter(mode: "light" | "dark"): UnifiedTheme {
     // Focus ring: Use accent color for consistency
     const ring = palette.fg_accent;
 
-    // Warning colors: Derive from palette
+    // WARNING: Derive from palette (Primer lacks official warning token)
     const warning = mode === "light" ? "#bf8700" : "#d29922";
-    const warningForeground = palette.fg_default;
-    const onWarning = mode === "light" ? palette.fg_default : palette.fg_onEmphasis;
+    const onWarning = mode === "light" ? palette.fg_default : palette.fg_onEmphasis; // ADR-011: Canonical on-* naming
+    const warningForeground = onWarning; // @deprecated: Use on-warning instead (ADR-011)
 
-    // Info colors: Use accent blue (Primer intentionally uses accent for info per docs)
+    // INFO: Use accent blue (Primer intentionally uses accent for info per docs)
     const info = palette.fg_accent;
-    const infoForeground = palette.fg_accent;
-    const onInfo = palette.fg_onEmphasis;
-
-    // On-status colors for solid backgrounds
-    const onSuccess = palette.fg_onEmphasis;
-    const onDestructive = palette.fg_onEmphasis;
+    const onInfo = palette.fg_onEmphasis; // ADR-011: Canonical on-* naming
+    const infoForeground = onInfo; // @deprecated: Use on-info instead (ADR-011)
 
     // ===================================================================
     // SECTION 3: CINEXPLORER EXTENSIONS (App-Specific)
@@ -233,33 +235,35 @@ export function createGithubAdapter(mode: "light" | "dark"): UnifiedTheme {
         "layer-active-01": layer01States.active,
         "layer-active-02": layer02States.active,
 
-        // Semantic colors (ADR-010 compliant)
+        // Semantic colors (ADR-010 + ADR-011 compliant)
         brand, // undefined for GitHub
         primary,
-        "primary-foreground": primaryForeground,
+        "on-primary": onPrimary, // ADR-011: Canonical naming
+        "primary-foreground": primaryForeground, // @deprecated
         secondary,
-        "secondary-foreground": secondaryForeground,
+        "on-secondary": onSecondary, // ADR-011: Canonical naming
+        "secondary-foreground": secondaryForeground, // @deprecated
         muted,
-        "muted-foreground": mutedForeground,
+        "on-muted": onMuted, // ADR-011: Canonical naming
+        "muted-foreground": mutedForeground, // @deprecated
         tertiary,
-        "tertiary-foreground": tertiaryForeground,
-        accent, // @deprecated alias
-        "accent-foreground": accentForeground,
+        "on-tertiary": onTertiary, // ADR-011: Canonical naming
+        "tertiary-foreground": tertiaryForeground, // @deprecated
+        accent, // @deprecated alias (ADR-010)
+        "accent-foreground": accentForeground, // @deprecated
         "accent-hover": accentHover,
         destructive,
-        "destructive-foreground": destructiveForeground,
+        "on-destructive": onDestructive, // ADR-011: Canonical naming
+        "destructive-foreground": destructiveForeground, // @deprecated
         success,
-        "success-foreground": successForeground,
+        "on-success": onSuccess, // ADR-011: Canonical naming
+        "success-foreground": successForeground, // @deprecated
         warning,
-        "warning-foreground": warningForeground,
+        "on-warning": onWarning, // ADR-011: Canonical naming
+        "warning-foreground": warningForeground, // @deprecated
         info,
-        "info-foreground": infoForeground,
-
-        // On-status colors
-        "on-success": onSuccess,
-        "on-warning": onWarning,
-        "on-destructive": onDestructive,
-        "on-info": onInfo,
+        "on-info": onInfo, // ADR-011: Canonical naming
+        "info-foreground": infoForeground, // @deprecated
 
         // CineXplorer extensions
         rating: extensions.rating,

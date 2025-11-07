@@ -1,4 +1,4 @@
-import { Box, Text, VStack, HStack, Button } from "@chakra-ui/react";
+import { Box, Text, VStack, HStack, Button, Code } from "@chakra-ui/react";
 import { useThemeSelect } from "@/hooks/useThemeSelect";
 import { type ThemeName } from "@/theme";
 import { ColorModeButton, useColorMode } from "@/components/chakra/color-mode";
@@ -264,8 +264,26 @@ export default function ThemeDebug() {
               <Text fontSize="sm" color="foreground/60">Strong border for layer-03 (highest contrast)</Text>
             </Box>
             <Box p={4}>
-              <Text fontSize="sm" color="foreground/80" fontStyle="italic">
-                Expected: Subtle borders are faint, strong borders are clearly visible. All should meet contrast requirements.
+              <Text fontSize="sm" color="foreground/80" fontStyle="italic" lineHeight="1.6">
+                Expected: 5 tokens following IBM Carbon's architectural pattern:
+                <br />
+                • <strong>Light mode (alternating layers)</strong>: 2 distinct values
+                  (subtle + strong, reused across layers)
+                <br />
+                • <strong>Dark mode (progressive layers)</strong>: 5 distinct values
+                  (progressive lightening per layer for visibility)
+                <br />
+                • Subtle borders are intentionally faint, strong borders clearly visible
+                <br />
+                • All strong borders should meet WCAG 3:1 contrast requirements
+                <br />
+                <br />
+                <Text as="span" fontSize="xs">
+                  *Note: GitLab Pajamas light mode <Code fontSize="xs">border-subtle-00</Code> (#ececef)
+                  matches <Code fontSize="xs">layer-01</Code> background. This is intentional per Pajamas
+                  design philosophy (acknowledged "partial WCAG 3:1 support"). Not a bug - just
+                  visible in debug view. Use <Code fontSize="xs">border-strong-*</Code> for accessible borders.
+                </Text>
               </Text>
             </Box>
           </VStack>

@@ -144,6 +144,62 @@ universally use **1px borders** for virtually all components.
 
 ---
 
+## Border Color Hierarchy: 2-Tier vs 5-Tier Patterns
+
+**Pattern Selection by Layer Strategy (ADR-008):**
+
+Modern design systems align border complexity with layer elevation patterns. CineXplorer follows IBM Carbon's
+architectural blueprint where border hierarchy matches the layer elevation strategy:
+
+| Layer Pattern | Border Tiers | Rationale |
+|--------------|--------------|-----------|
+| **Alternating** (white ↔ gray ↔ white) | **2 tiers** (subtle + strong) | Same border visible on both white and gray, no per-layer adjustment needed |
+| **Progressive** (darker → lighter → lightest) | **5 tiers** (per-layer progression) | Each layer requires adjusted border for visibility on progressively lighter backgrounds |
+
+**CineXplorer Implementation:**
+
+Following IBM Carbon's architectural blueprint (adopted project-wide in ADR-008):
+
+- **Light Mode (all themes)**: Uses alternating layer pattern → 2 distinct border colors
+    - `border-subtle-00` and `border-subtle-02` map to same value
+    - `border-strong-01`, `border-strong-02`, `border-strong-03` map to same value
+    - Rationale: Layers alternate (white ↔ gray), same border works on both backgrounds
+
+- **Dark Mode (all themes)**: Uses progressive layer pattern → 5 distinct border colors
+    - Each token has distinct value, progressively lightening for layer visibility
+    - Rationale: Layers progressively lighten, borders must adjust per layer
+    - Deltas match Carbon's official progression (~13% subtle, ~21%/24% strong)
+
+**Why This Approach:**
+
+1. **Semantic clarity**: 5 tokens in API provide clear intent (`border-strong-02` on modal)
+2. **Flexible architecture**: Can differentiate per-layer if needed without API changes
+3. **Industry-aligned**: Carbon (IBM), Polaris (Shopify) use similar patterns
+4. **Optimal DX**: Components don't need mode-specific border logic
+
+**Example Usage:**
+
+```tsx
+// Light mode: Both use same actual color, but semantic clarity maintained
+<Box bg="layer-01" borderColor="border-strong-01">Card</Box>
+<Modal bg="layer-02" borderColor="border-strong-02">Modal</Modal>
+
+// Dark mode: Each uses distinct color for visibility
+// strong-02 lighter than strong-01 to show on lighter layer-02
+```
+
+**Design System Sources:**
+
+- **IBM Carbon**: Provides official 5-tier hierarchy (both modes)
+- **GitHub Primer**: Provides 2 colors (default + emphasis), CineXplorer derives 5-tier
+- **GitLab Pajamas**: Provides 2 colors (subtle + strong), CineXplorer derives 5-tier
+
+**Implementation:**
+
+See `frontend/src/theme/color/utils.ts` (`deriveBorderHierarchy` function) for derivation logic.
+
+---
+
 ## Border Color Strategy
 
 ### Token Architecture

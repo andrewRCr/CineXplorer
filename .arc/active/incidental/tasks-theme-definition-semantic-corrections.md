@@ -924,26 +924,86 @@ gaps, layout concerns, and component-specific issues requiring remediation befor
         Both adapters now correctly call: `deriveBorderHierarchy(subtle, strong, pattern)` with pattern selection
         based on mode (alternating for light, progressive for dark) per ADR-008
 
-- [ ] **3.5.4 Interaction State Validation**
+- [x] **3.5.4 Interaction State Validation**
 
-    **Known Issue:** NavBarUserMenu dark mode hover appears invisible (user-reported during initial review)
+    **Completed:** Implemented Material Design 3 opacity overlay approach (ADR-009) for universal cross-theme consistency.
+    Previous adjustColor() approach had insufficient contrast in dark mode and created inconsistent feel across themes.
 
-    - [ ] **3.5.4.1 Test interaction states on ThemeDebug**
-        - Navigate to ThemeDebug Interaction States section
-        - Test `layer-hover-01/02` visibility in all 6 combinations
-        - Test `layer-selected-01/02` distinction
-        - Test `layer-active-01/02` clarity
-        - Document which states fail in which themes/modes
+    **Solution:** Per ADR-009, replaced mode-specific lightening/darkening with universal foreground opacity overlays
+    (8% hover, 12% selected/active) for consistent behavior across all 6 theme combinations.
 
-    - [ ] **3.5.4.2 Fix NavBarUserMenu dark mode hover**
-        - Likely cause: `layer-hover-02` not distinct enough from `layer-02` in dark mode
-        - Adjust hover derivation in affected adapters (higher contrast adjustment needed)
-        - Re-test NavBarUserMenu across all themes
-        - Verify hover state visible and provides adequate feedback
+    - [x] **3.5.4.1 Test interaction states and implement ADR-009**
 
-    - [ ] **3.5.4.3 Fix other interaction state issues (if found)**
-        - Address any issues discovered in 3.5.4.1
-        - Re-test after fixes across all themes
+        **Research Phase:**
+        - External research (via external-research-analyst agent): Analyzed official interaction state approaches from
+          Carbon, Primer, and Pajamas design systems
+        - Finding: 18x magnitude variance across systems (Carbon 5%, Pajamas 94%) makes per-theme official tokens impractical
+        - Built A/B test component on ThemeDebug page comparing 3 approaches across all 6 theme combinations
+        - Tested: Current (adjustColor 8%), "Next Layer Up" (Carbon architectural), Material Design opacity overlay (8%/12%)
+
+        **Decision:**
+        - **Rejected "Next Layer Up"**: Fatal flaw - breaks with ADR-008 alternating pattern (layer-03 = layer-01 in
+        light mode,
+          making selected states invisible on gray backgrounds)
+        - **Adopted Material Design opacity overlay**: Consistent across all themes, works with ADR-008, adequate
+        contrast verified
+        - Trade-off accepted: Minor deviation from Carbon (~2-3%) for cross-theme consistency
+
+        **Implementation:**
+        - Created ADR-009: Use Material Design Opacity Overlays for Interaction States
+        - Added `blendColors()` utility function in `utils.ts` (opacity overlay calculation)
+        - Updated `deriveInteractionStates()` signature: removed unused `mode` parameter, added `foregroundColor` parameter
+        - Updated all 3 adapters (ibm-carbon.ts, github-primer.ts, gitlab-pajamas.ts) to pass foreground color
+        - Consolidated ThemeDebug page: Removed 256-line A/B test component, replaced with interactive demonstration
+        - Fixed ThemeDebug sticky header buttons to use correct layer-02 interaction states (buttons sit on layer-02 header)
+
+        **Files Modified:**
+        - `frontend/src/theme/color/utils.ts` - Added blendColors(), updated deriveInteractionStates()
+        - `frontend/src/theme/color/adapters/ibm-carbon.ts` - Updated adapter calls
+        - `frontend/src/theme/color/adapters/github-primer.ts` - Updated adapter calls
+        - `frontend/src/theme/color/adapters/gitlab-pajamas.ts` - Updated adapter calls
+        - `frontend/src/pages/ThemeDebug.tsx` - Replaced A/B test with interactive section, fixed header button tokens
+        - `.arc/reference/adr/adr-009-use-material-design-opacity-overlays-for-interaction-states.md` - New ADR
+        - `.arc/reference/strategies/project/style/strategy-semantic-tokens.md` - Updated interaction state section
+        with ADR-009 reference
+
+        **Quality Gates:**
+        - ✅ TypeScript type checking: 0 errors
+        - ✅ Interactive demonstration on ThemeDebug shows correct behavior across all 6 theme combinations
+        - ✅ Sticky header buttons demonstrate proper layer-02 interaction states in live context
+
+        **Expected Behavior:**
+        - Hover/selected/active states visibly different from default across all 6 theme combinations
+        - Universal opacity approach ensures consistent interaction feel across all themes
+        - Dark mode hover visibility issue resolved (8% opacity overlay provides adequate contrast)
+
+    - [x] **3.5.4.2 Fix NavBarUserMenu dark mode hover**
+
+        **Investigation:** Component inspection revealed architectural issues beyond just dark mode contrast:
+
+        **Problems Found:**
+        1. **Menu button hover**: Used Chakra `variant="ghost"` instead of semantic tokens
+           - Should use `layer-01` base (sits on layer-01 navbar) with `layer-hover-01` hover
+        2. **Dropdown elevation mismatch**:
+           - Dropdown used `layer-03` background
+           - Menu items used `layer-hover-02` hovers (wrong layer!)
+           - Architectural correction: Dropdown should be `layer-02` (navbar = layer-01, dropdown elevated above = layer-02)
+
+        **Fixes Applied:**
+        - Menu button: Replaced `variant="ghost"` with explicit tokens
+        (`bg="layer-01"`, `_hover={{ bg: "layer-hover-01" }}`, `_active={{ bg: "layer-active-01" }}`)
+        - Dropdown: Changed `background="layer-03"` → `background="layer-02"` (now `layer-hover-02` hovers are
+        architecturally correct)
+
+        **File Modified:** `frontend/src/components/layout/NavBarUserMenu.tsx`
+
+        **Verification:** Menu button hover now uses correct layer-01 interaction states, dropdown properly elevated as
+        layer-02 with matching interaction states.
+
+    - [x] **3.5.4.3 Fix other interaction state issues (if found)**
+
+        **Completed:** No additional issues found. Material Design opacity overlay approach provides consistent, adequate
+        contrast across all interaction states in all themes.
 
 - [ ] **3.5.5 Component-Specific Polish**
 

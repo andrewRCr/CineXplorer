@@ -1269,54 +1269,71 @@ gaps, layout concerns, and component-specific issues requiring remediation befor
 
     - [ ] **3.5.5.8 Implement ADR-011: on-color naming standardization**
 
-        **Implement ADR-011 proposal to standardize on `on-*` prefix for foreground text tokens.**
+        **Implement ADR-011 to standardize on `on-*` prefix for ALL foreground text tokens (semantic + status).**
 
-        - [ ] Update UnifiedTheme interface with new on-color tokens
-            - Add `on-primary`, `on-secondary`, `on-tertiary`, `on-muted` to types.ts
-            - Mark existing `-foreground` tokens as `@deprecated` with JSDoc comments
-            - Add comprehensive documentation explaining the pattern
-            - Reference ADR-011 in JSDoc comments
+        - [x] Update UnifiedTheme interface with new on-color tokens
+            - ✅ Added `on-primary`, `on-secondary`, `on-tertiary`, `on-muted` to types.ts
+            - ✅ Marked semantic `-foreground` tokens as `@deprecated` (primary, secondary, tertiary, muted)
+            - ✅ Marked status `-foreground` tokens as `@deprecated` (success, destructive, warning, info)
+            - ✅ Total: 8 deprecated tokens (4 semantic + 4 status) with comprehensive JSDoc
+            - ✅ All deprecated tokens implemented as aliases pointing to canonical `on-*` tokens
+            - ✅ Referenced ADR-011 in JSDoc comments
 
-        - [ ] Update GitHub Primer adapter
-            - Implement new `on-primary`, `on-secondary`, `on-tertiary`, `on-muted` tokens
-            - Keep deprecated `-foreground` tokens as aliases (point to new tokens)
-            - Add JSDoc comments marking deprecation
-            - Verify token mappings match Material's pattern semantically
+        - [x] Update GitHub Primer adapter
+            - ✅ Implemented new `on-primary`, `on-secondary`, `on-tertiary`, `on-muted` tokens
+            - ✅ Verified existing `on-success`, `on-destructive`, `on-warning`, `on-info` tokens
+            - ✅ ALL deprecated `-foreground` tokens configured as aliases (semantic + status)
+            - ✅ JSDoc comments marking deprecation on all aliases
+            - ✅ Token mappings verified to match Material's pattern semantically
 
-        - [ ] Update IBM Carbon adapter
-            - Implement new `on-primary`, `on-secondary`, `on-tertiary`, `on-muted` tokens
-            - Keep deprecated `-foreground` tokens as aliases
-            - Add JSDoc comments marking deprecation
+        - [x] Update IBM Carbon adapter
+            - ✅ Implemented new `on-primary`, `on-secondary`, `on-tertiary`, `on-muted` tokens
+            - ✅ Verified existing `on-success`, `on-destructive`, `on-warning`, `on-info` tokens
+            - ✅ ALL deprecated `-foreground` tokens configured as aliases (semantic + status)
+            - ✅ JSDoc comments marking deprecation on all aliases
 
-        - [ ] Update GitLab Pajamas adapter
-            - Implement new `on-primary`, `on-secondary`, `on-tertiary`, `on-muted` tokens
-            - Keep deprecated `-foreground` tokens as aliases
-            - Add JSDoc comments marking deprecation
+        - [x] Update GitLab Pajamas adapter
+            - ✅ Implemented new `on-primary`, `on-secondary`, `on-tertiary`, `on-muted` tokens
+            - ✅ Verified existing `on-success`, `on-destructive`, `on-warning`, `on-info` tokens
+            - ✅ ALL deprecated `-foreground` tokens configured as aliases (semantic + status)
+            - ✅ JSDoc comments marking deprecation on all aliases
 
-        - [ ] Update Material Design 3 adapter
-            - Implement new `on-primary`, `on-secondary`, `on-tertiary`, `on-muted` tokens
-            - Keep deprecated `-foreground` tokens as aliases
-            - Note: Material already has these natively (onPrimary, etc.)
+        - [x] Update Material Design 3 adapter
+            - ✅ Leveraged Material's native `on-*` tokens (onPrimary, onSecondary, onTertiary, onError)
+            - ✅ Verified existing status `on-*` tokens exist in all adapters
+            - ✅ ALL deprecated `-foreground` tokens configured as aliases (semantic + status)
+            - ✅ Documented: Material has onPrimary/onSecondary/onTertiary natively, but only onError for status
+            - ✅ Derived on-success/on-warning/on-info (Material baseline lacks these in static tokens)
+
+        - [x] Run quality gates
+            - ✅ TypeScript type checking: 0 errors
+            - ✅ Frontend linting: 0 violations
+            - ✅ All 4 theme adapters compile successfully
+            - ✅ All 8 theme combinations validated (4 themes × 2 modes)
+            - ✅ Deprecated aliases confirmed working (backward compatibility maintained)
 
         - [ ] Migrate all components from -foreground to on-* tokens
             - Global find/replace across frontend codebase:
-                - `primary-foreground` → `on-primary`
-                - `secondary-foreground` → `on-secondary`
-                - `tertiary-foreground` → `on-tertiary`
-                - `muted-foreground` → `on-muted`
+                - **Semantic colors:**
+                    - `primary-foreground` → `on-primary`
+                    - `secondary-foreground` → `on-secondary`
+                    - `tertiary-foreground` → `on-tertiary`
+                    - `muted-foreground` → `on-muted`
+                - **Status colors:**
+                    - `success-foreground` → `on-success`
+                    - `destructive-foreground` → `on-destructive`
+                    - `warning-foreground` → `on-warning`
+                    - `info-foreground` → `on-info`
             - Scope: `frontend/src/components/**/*`, `frontend/src/pages/**/*`
             - Estimated: ~33 files (similar scope to accent → tertiary migration)
             - Manual review of critical components for correctness
             - Verify no `-foreground` tokens remain in components (deprecated tokens OK in adapters)
 
-        - [ ] Run quality gates
+        - [ ] Run quality gates after migration
             - TypeScript type checking: 0 errors
             - Frontend linting: 0 violations
-            - Verify all 4 themes compile successfully
-            - Verify all 8 theme combinations render correctly
-            - Confirm deprecated aliases still work (backward compatibility for future extensions)
-
-        **Ready for:** Task 3.5.5.9 (Visual validation including new on-color tokens)
+            - Visual regression testing if available
+            - All 8 theme combinations render correctly
 
     - [ ] **3.5.5.9 Visual validation and documentation**
 
@@ -1337,20 +1354,18 @@ gaps, layout concerns, and component-specific issues requiring remediation befor
             - Secondary buttons: outline pattern with border visible
 
         - [ ] Validate new on-color tokens (ADR-011)
-            - Test `on-primary` vs `primary-foreground` produce identical results
-            - Test `on-secondary` vs `secondary-foreground` produce identical results
-            - Test `on-tertiary` vs `tertiary-foreground` produce identical results
-            - Test `on-muted` vs `muted-foreground` produce identical results
-            - Verify deprecated aliases work across all 4 themes × 2 modes
+            - **Semantic colors:**
+                - Test `on-primary` vs `primary-foreground` produce identical results
+                - Test `on-secondary` vs `secondary-foreground` produce identical results
+                - Test `on-tertiary` vs `tertiary-foreground` produce identical results
+                - Test `on-muted` vs `muted-foreground` produce identical results
+            - **Status colors:**
+                - Test `on-success` vs `success-foreground` produce identical results
+                - Test `on-destructive` vs `destructive-foreground` produce identical results
+                - Test `on-warning` vs `warning-foreground` produce identical results
+                - Test `on-info` vs `info-foreground` produce identical results
+            - Verify all 8 deprecated aliases work across all 4 themes × 2 modes
             - Create simple test component if needed to validate token parity
-
-        - [ ] Update ThemeDebug page
-            - Add tertiary color display
-            - Add brand color display (when defined)
-            - Show primary vs tertiary distinction clearly
-            - Demonstrate secondary outline pattern
-            - Add on-color token examples (show new naming alongside deprecated)
-            - Material Design 3 theme examples
 
         - [ ] Verify component usage patterns
             - Buttons: Primary (filled), Secondary (outline), Tertiary (text/link style)
@@ -1359,9 +1374,9 @@ gaps, layout concerns, and component-specific issues requiring remediation befor
             - Badges: Appropriate color usage
 
         - [ ] Update documentation
-            - Mark ADR-011 as "Accepted" (currently "Proposed")
+            - ✅ Mark ADR-011 as "Accepted" (done)
             - Ensure ADR-010 references are accurate
-            - strategy-semantic-tokens.md updated to mention on-color pattern (if needed)
+            - strategy-semantic-tokens.md: Update to reflect on-* naming convention
             - Any component docs mentioning colors updated
 
         - [ ] Run final quality gates
@@ -1448,6 +1463,57 @@ removed before declaring work complete and merging.
     - Update Theme interface: remove `light` and `dark` properties (breaking change)
     - Remove `ThemeColors` interface entirely (deprecated since Phase 3.1)
     - Quality gate: Type checking will show errors if components still use old tokens
+
+- [ ] **3.6.2.1 Remove all deprecated token aliases (ADR-010 + ADR-011 cleanup)**
+
+    **Remove deprecated tokens after component migration complete. Must verify zero usage first.**
+
+    **Scope:** UnifiedTheme interface + all 4 theme adapters (GitHub, IBM, GitLab, Material)
+
+    - [ ] Verify zero usage of deprecated tokens in components
+        - `grep -r "accent-foreground" frontend/src/components/ frontend/src/pages/` → 0 matches
+        - `grep -r "primary-foreground" frontend/src/components/ frontend/src/pages/` → 0 matches
+        - `grep -r "secondary-foreground" frontend/src/components/ frontend/src/pages/` → 0 matches
+        - `grep -r "tertiary-foreground" frontend/src/components/ frontend/src/pages/` → 0 matches
+        - `grep -r "muted-foreground" frontend/src/components/ frontend/src/pages/` → 0 matches
+        - `grep -r "success-foreground" frontend/src/components/ frontend/src/pages/` → 0 matches
+        - `grep -r "destructive-foreground" frontend/src/components/ frontend/src/pages/` → 0 matches
+        - `grep -r "warning-foreground" frontend/src/components/ frontend/src/pages/` → 0 matches
+        - `grep -r "info-foreground" frontend/src/components/ frontend/src/pages/` → 0 matches
+        - Deprecated tokens OK in theme adapters (they're the source), but NOT in components
+
+    - [ ] Remove deprecated ADR-011 tokens from UnifiedTheme interface (8 tokens)
+        - Remove `primary-foreground` (use `on-primary`)
+        - Remove `secondary-foreground` (use `on-secondary`)
+        - Remove `tertiary-foreground` (use `on-tertiary`)
+        - Remove `muted-foreground` (use `on-muted`)
+        - Remove `success-foreground` (use `on-success`)
+        - Remove `destructive-foreground` (use `on-destructive`)
+        - Remove `warning-foreground` (use `on-warning`)
+        - Remove `info-foreground` (use `on-info`)
+
+    - [ ] Remove deprecated ADR-010 tokens from UnifiedTheme interface (2 tokens)
+        - Remove `accent` (use `tertiary`)
+        - Remove `accent-foreground` (use `on-tertiary`)
+        - Keep `accent-hover` temporarily (no replacement yet, low priority)
+
+    - [ ] Remove deprecated token aliases from all 4 theme adapters
+        - GitHub Primer: Remove 10 deprecated aliases (8 `-foreground` + 2 `accent*`)
+        - IBM Carbon: Remove 10 deprecated aliases (8 `-foreground` + 2 `accent*`)
+        - GitLab Pajamas: Remove 10 deprecated aliases (8 `-foreground` + 2 `accent*`)
+        - Material Design 3: Remove 10 deprecated aliases (8 `-foreground` + 2 `accent*`)
+        - Remove variable definitions AND return statement entries
+        - Keep only canonical `on-*` tokens
+
+    - [ ] Quality gates after removal
+        - TypeScript: 0 errors (breaking change if components still use deprecated tokens)
+        - Linting: 0 violations
+        - Frontend builds successfully
+        - All tests pass
+        - All 4 themes × 2 modes render correctly
+
+    **Breaking Change:** This is intentionally a breaking change. Components MUST migrate to canonical
+    `on-*` tokens before this cleanup. Timing: After Task 3.5.5.8 component migration complete.
 
 - [ ] **3.6.3 Remove definitions/ directory**
 

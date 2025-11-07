@@ -164,8 +164,8 @@ export function createPajamasAdapter(mode: "light" | "dark"): UnifiedTheme {
     const borderStrong03 = borderHierarchy.strong03; // Same as strong01 (light) or +23.7% compound (dark)
 
     // Interaction states: Derive hover/selected/active per layer
-    const layer01States = deriveInteractionStates(layer01, mode);
-    const layer02States = deriveInteractionStates(layer02, mode);
+    const layer01States = deriveInteractionStates(layer01, foreground);
+    const layer02States = deriveInteractionStates(layer02, foreground);
 
     // Input border: Use subtle border for form fields
     const input = palette.border_subtle;

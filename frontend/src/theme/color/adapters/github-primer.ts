@@ -136,8 +136,8 @@ export function createGithubAdapter(mode: "light" | "dark"): UnifiedTheme {
 
     // Interaction states: Derive hover/selected/active per layer
     // Primer doesn't provide these systematically - we derive from layer colors
-    const layer01States = deriveInteractionStates(layer01, mode);
-    const layer02States = deriveInteractionStates(layer02, mode);
+    const layer01States = deriveInteractionStates(layer01, foreground);
+    const layer02States = deriveInteractionStates(layer02, foreground);
 
     // Input border: Use standard border
     const input = palette.border_default;

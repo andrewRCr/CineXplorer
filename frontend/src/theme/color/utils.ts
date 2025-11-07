@@ -153,46 +153,87 @@ export function deriveBorderHierarchy(
 }
 
 /**
- * Derive interaction state colors from a base layer color.
+ * Blend two colors using opacity overlay calculation.
  *
- * **Strategy (inspired by Material Design 3 state layers):**
- * - Hover: 8% adjustment (subtle)
- * - Selected: 12% adjustment (noticeable)
- * - Active: 16% adjustment (pronounced)
+ * Implements Material Design 3's state layer approach where foreground
+ * color is overlaid at specified opacity on base layer color.
  *
- * **Mode-specific behavior:**
- * - Light mode: Darken on hover/interaction (common pattern)
- * - Dark mode: Lighten on hover/interaction (Material Design 3)
+ * Formula: (1 - opacity) * baseRGB + opacity * overlayRGB
  *
- * @param layerColor - Base layer color
- * @param mode - Color mode (affects adjustment direction)
- * @returns Interaction states for the layer
+ * @param baseColor - Base layer hex color (e.g., "#f4f4f4")
+ * @param overlayColor - Foreground hex color to overlay (e.g., "#161616")
+ * @param opacity - Overlay opacity (0.0 to 1.0, e.g., 0.08 for 8%)
+ * @returns Blended hex color
  *
  * @example
  * ```typescript
- * // IBM Carbon layer-01 dark mode
- * const states = deriveInteractionStates("#262626", "dark");
- * // Returns: {
- * //   hover: "#2a2a2a",    // Lightened 8%
- * //   selected: "#2d2d2d", // Lightened 12%
- * //   active: "#303030"    // Lightened 16%
+ * // Carbon light mode hover
+ * blendColors("#f4f4f4", "#161616", 0.08)
+ * // Returns: "#e2e2e2" (layer-01 with 8% foreground overlay)
+ * ```
+ */
+export function blendColors(
+    baseColor: string,
+    overlayColor: string,
+    opacity: number,
+): string {
+    // Remove # if present
+    const base = baseColor.replace("#", "");
+    const overlay = overlayColor.replace("#", "");
+
+    // Parse RGB values
+    const baseR = Number.parseInt(base.substring(0, 2), 16);
+    const baseG = Number.parseInt(base.substring(2, 4), 16);
+    const baseB = Number.parseInt(base.substring(4, 6), 16);
+
+    const overlayR = Number.parseInt(overlay.substring(0, 2), 16);
+    const overlayG = Number.parseInt(overlay.substring(2, 4), 16);
+    const overlayB = Number.parseInt(overlay.substring(4, 6), 16);
+
+    // Apply opacity overlay formula
+    const blendedR = Math.round((1 - opacity) * baseR + opacity * overlayR);
+    const blendedG = Math.round((1 - opacity) * baseG + opacity * overlayG);
+    const blendedB = Math.round((1 - opacity) * baseB + opacity * overlayB);
+
+    // Convert back to hex
+    const toHex = (value: number) => value.toString(16).padStart(2, "0");
+    return `#${toHex(blendedR)}${toHex(blendedG)}${toHex(blendedB)}`;
+}
+
+/**
+ * Derive interaction state colors using Material Design 3 opacity overlay approach.
+ *
+ * Per ADR-009, all themes use universal opacity overlay calculation for consistency
+ * across themes and compatibility with ADR-008's alternating layer pattern.
+ *
+ * @param layerColor - Base layer color (e.g., "#f4f4f4" for layer-01)
+ * @param foregroundColor - Theme foreground color (e.g., "#161616" in light mode)
+ * @returns Interaction states with opacity overlays applied
+ *
+ * @example
+ * ```typescript
+ * // IBM Carbon light mode
+ * deriveInteractionStates("#f4f4f4", "#161616")
+ * // Returns:
+ * // {
+ * //   hover: "#e2e2e2",    // 8% foreground overlay
+ * //   selected: "#d6d6d6", // 12% foreground overlay
+ * //   active: "#d6d6d6"    // 12% foreground overlay
  * // }
  * ```
  */
 export function deriveInteractionStates(
     layerColor: string,
-    mode: "light" | "dark",
+    foregroundColor: string,
 ): {
     hover: string;
     selected: string;
     active: string;
 } {
-    const direction = mode === "light" ? -1 : 1;
-
     return {
-        hover: adjustColor(layerColor, direction * 8),
-        selected: adjustColor(layerColor, direction * 12),
-        active: adjustColor(layerColor, direction * 16),
+        hover: blendColors(layerColor, foregroundColor, 0.08),      // 8% overlay
+        selected: blendColors(layerColor, foregroundColor, 0.12),   // 12% overlay
+        active: blendColors(layerColor, foregroundColor, 0.12),     // 12% overlay
     };
 }
 

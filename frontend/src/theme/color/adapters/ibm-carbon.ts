@@ -160,8 +160,8 @@ export function createCarbonAdapter(mode: "light" | "dark"): UnifiedTheme {
 
     // Interaction states: Derive hover/selected/active per layer
     // Carbon has official hover states, but we ensure consistency across layers
-    const layer01States = deriveInteractionStates(layer01, mode);
-    const layer02States = deriveInteractionStates(layer02, mode);
+    const layer01States = deriveInteractionStates(layer01, foreground);
+    const layer02States = deriveInteractionStates(layer02, foreground);
 
     // Input border: Use subtle border for form fields
     const input = palette.border_subtle_00;

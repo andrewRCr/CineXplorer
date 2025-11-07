@@ -878,20 +878,51 @@ gaps, layout concerns, and component-specific issues requiring remediation befor
             - GitLab Pajamas: Moderate shadows (balanced approach)
         - Shadows render correctly on migrated components
 
-- [ ] **3.5.3 Border Hierarchy Validation**
+- [x] **3.5.3 Border Hierarchy Validation**
 
-    - [ ] **3.5.3.1 Test border visibility in dark mode**
-        - Navigate to ThemeDebug Border Hierarchy section
-        - Test all 6 theme combinations (focus on dark modes)
-        - Verify `border-subtle-00` and `border-subtle-02` visible (not invisible)
-        - Verify `border-strong-01/02/03` sufficiently distinct from subtle variants
-        - Test on migrated components using border hierarchy
-        - Document any themes where borders fail visibility
+    **Completed:** Validated border hierarchy across all 6 theme combinations. Discovered 2-tier vs 5-tier pattern
+    is intentional (matches Carbon's architectural blueprint from ADR-008). Fixed critical bugs in Primer/Pajamas
+    derivation logic.
 
-    - [ ] **3.5.3.2 Fix invisible border issues (if found)**
-        - Adjust border color derivation in affected theme adapters
-        - Re-test after adjustments across all themes
-        - Document changes and rationale (inline comments + commit message)
+    **Key Findings:**
+        - **GitLab Pajamas `border-subtle-00` "invisible" on `layer-01`**: Not a bug - intentional design system
+        choice (acknowledged "partial WCAG 3:1 support"). Only visible in ThemeDebug artificial scenario.
+        - **Only 2 distinct borders in light mode**: Expected behavior! Border complexity matches layer pattern:
+            - Light mode (alternating layers): 2-tier borders (same border works on white and gray)
+            - Dark mode (progressive layers): 5-tier borders (progressive lightening for visibility)
+        - **Origin**: 5-tier API from IBM Carbon (ADR-005), pattern follows ADR-008 layer strategy
+
+    **Bugs Fixed:**
+    - Primer: Was deriving `strong-02/03` from subtle base instead of emphasis base (suboptimal)
+    - Pajamas: Inverted hierarchy bug - `border-subtle-02` lighter than `border-strong-01` (parameter order)
+    - Core utility: Rewrote `deriveBorderHierarchy()` with pattern-aware logic (alternating vs progressive)
+
+    **Files Modified:**
+    - `frontend/src/theme/color/utils.ts` - Rewrote derivation function with pattern parameter
+    - `frontend/src/theme/color/adapters/github-primer.ts` - Fixed derivation base
+    - `frontend/src/theme/color/adapters/gitlab-pajamas.ts` - Fixed inverted hierarchy
+    - `frontend/src/pages/ThemeDebug.tsx` - Added 2-tier vs 5-tier explanation + Pajamas note
+    - `.arc/reference/strategies/project/style/strategy-border-system.md` - Added pattern section
+
+    - [x] **3.5.3.1 Test border visibility in dark mode**
+
+        Tested all 6 theme combinations. Confirmed:
+        - Carbon dark: 5 distinct progressive values (official) ✅
+        - Primer dark: 5 distinct progressive values (derived correctly after fix) ✅
+        - Pajamas dark: 5 distinct progressive values (derived correctly after fix) ✅
+        - All light modes: 2 distinct values (intentional, matches alternating layer pattern) ✅
+        - Visual verification: All borders visible and appropriately distinct
+
+    - [x] **3.5.3.2 Fix invisible border issues (if found)**
+
+        Fixed two derivation bugs:
+        1. **Primer adapter**: Changed `deriveBorderHierarchy()` to use `border_emphasis` (strong base) instead
+           of `border_default` (subtle base) for deriving strong-02/03 variants
+        2. **Pajamas adapter**: Fixed parameter order - was passing `border_strong` as first parameter (expected
+           subtle), causing `border-subtle-02` to be inverted (lighter than `border-strong-01`)
+
+        Both adapters now correctly call: `deriveBorderHierarchy(subtle, strong, pattern)` with pattern selection
+        based on mode (alternating for light, progressive for dark) per ADR-008
 
 - [ ] **3.5.4 Interaction State Validation**
 

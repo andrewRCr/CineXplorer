@@ -109,7 +109,7 @@ const Register = () => {
                     borderWidth="1px"
                     borderColor="input"
                     _hover={{
-                      bg: "accent/5",
+                      bg: "tertiary/5",
                     }}
                     _focus={{
                       borderColor: "ring",
@@ -153,7 +153,7 @@ const Register = () => {
                     borderWidth="1px"
                     borderColor="input"
                     _hover={{
-                      bg: "accent/5",
+                      bg: "tertiary/5",
                     }}
                     _focus={{
                       borderColor: "ring",
@@ -197,7 +197,7 @@ const Register = () => {
                     borderWidth="1px"
                     borderColor="input"
                     _hover={{
-                      bg: "accent/5",
+                      bg: "tertiary/5",
                     }}
                     _focus={{
                       borderColor: "ring",
@@ -242,16 +242,16 @@ const Register = () => {
                 <Link
                   to={ROUTES.LOGIN}
                   style={{
-                    color: "var(--chakra-colors-accent)",
+                    color: "var(--chakra-colors-tertiary)",
                     textDecoration: "underline",
                     textDecorationThickness: "2px",
                     textUnderlineOffset: "2px",
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.color = "var(--chakra-colors-accent-hover)";
+                    e.currentTarget.style.color = "var(--chakra-colors-tertiary-hover)";
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.color = "var(--chakra-colors-accent)";
+                    e.currentTarget.style.color = "var(--chakra-colors-tertiary)";
                   }}
                   onFocus={(e) => {
                     e.currentTarget.style.outline = "2px solid";

@@ -80,10 +80,10 @@ export function ThemeSelector() {
                   key={option.value}
                   value={option.value}
                   onClick={() => setTheme(option.value)}
-                  bg={theme === option.value ? "accent" : undefined}
-                  color={theme === option.value ? "accent-foreground" : undefined}
+                  bg={theme === option.value ? "tertiary" : undefined}
+                  color={theme === option.value ? "tertiary-foreground" : undefined}
                   _hover={{
-                    bg: theme === option.value ? "accent" : "accent/8",
+                    bg: theme === option.value ? "tertiary" : "tertiary/8",
                     opacity: theme === option.value ? 0.92 : 1,
                   }}
                 >

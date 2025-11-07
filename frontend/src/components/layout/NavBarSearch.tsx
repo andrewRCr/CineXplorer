@@ -41,7 +41,7 @@ const NavBarSearch = ({ onSearch }: NavBarSearchProps = {}) => {
       borderRadius="md"
       border="1px solid"
       borderColor="border"
-      backgroundColor={isHovered ? "accent/8" : "transparent"}
+      backgroundColor={isHovered ? "tertiary/8" : "transparent"}
       transition="all 0.2s ease"
       _focusWithin={{
         borderColor: "ring",

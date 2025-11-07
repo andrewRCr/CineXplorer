@@ -239,7 +239,7 @@ const ConnectedDropdowns = ({
             borderColor="border"
             backgroundColor="transparent"
             _hover={{
-              bg: "accent/8",
+              bg: "tertiary/8",
             }}
             _disabled={{
               opacity: 1,
@@ -275,7 +275,7 @@ const ConnectedDropdowns = ({
                 <Select.Item
                   key={item.value}
                   item={item}
-                  _hover={{ bg: "accent" }}
+                  _hover={{ bg: "tertiary" }}
                 >
                   {item.label}
                 </Select.Item>
@@ -328,7 +328,7 @@ const ConnectedDropdowns = ({
             borderColor="border"
             backgroundColor="transparent"
             _hover={{
-              bg: "accent/8",
+              bg: "tertiary/8",
             }}
             _disabled={{
               opacity: 1,
@@ -364,7 +364,7 @@ const ConnectedDropdowns = ({
                 <Select.Item
                   key={item.value}
                   item={item}
-                  _hover={{ bg: "accent" }}
+                  _hover={{ bg: "tertiary" }}
                 >
                   {item.label}
                 </Select.Item>
@@ -464,7 +464,7 @@ const ConnectedDropdowns = ({
                   <Select.Item
                     key={item.value}
                     item={item}
-                    _hover={{ bg: "accent.primary" }}
+                    _hover={{ bg: "tertiary.primary" }}
                   >
                     {item.label}
                   </Select.Item>
@@ -484,7 +484,7 @@ const ConnectedDropdowns = ({
         borderRadius="0 4px 4px 0"
         borderColor="border"
           _hover={{
-            bg: "accent/8",
+            bg: "tertiary/8",
           }}
           minW="auto"
           px={3}

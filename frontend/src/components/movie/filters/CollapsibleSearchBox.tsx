@@ -117,7 +117,7 @@ const CollapsibleSearchBox = ({
       color="foreground"
       _focus={{ boxShadow: "none" }}
       _hover={{
-        bg: "accent/8",
+        bg: "tertiary/8",
       }}
         fontSize="14px"
         height="30px"
@@ -138,7 +138,7 @@ const CollapsibleSearchBox = ({
       backgroundColor="background"
       color="foreground"
       _hover={{
-        bg: "accent/8",
+        bg: "tertiary/8",
       }}
         height="30px"
         minW="30px"
@@ -157,7 +157,7 @@ const CollapsibleSearchBox = ({
           backgroundColor="transparent"
         color="muted-foreground"
         _hover={{
-          bg: "accent/8",
+          bg: "tertiary/8",
           color: "foreground",
         }}
           height="30px"

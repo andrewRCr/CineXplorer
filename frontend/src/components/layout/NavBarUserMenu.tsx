@@ -72,8 +72,8 @@ const NavBarUserMenu = () => {
           color="foreground"
           borderColor="border"
           _hover={{
-            bg: "accent/8",
-            borderColor: "accent",
+            bg: "tertiary/8",
+            borderColor: "tertiary",
           }}
         >
           Login
@@ -143,7 +143,7 @@ const NavBarUserMenu = () => {
                       top={0}
                       bottom={0}
                       w="3px"
-                      background="accent"
+                      background="tertiary"
                       opacity={0}
                       transition="opacity 0.2s ease-in-out"
                       borderRadius="md"
@@ -153,7 +153,7 @@ const NavBarUserMenu = () => {
                       <BsFillPlusCircleFill size={14} />
                       <Text
                         color="popover-foreground"
-                        _hover={{ color: "accent" }}
+                        _hover={{ color: "tertiary" }}
                         transition="color 0.2s ease-in-out"
                       >
                         LOG
@@ -192,7 +192,7 @@ const NavBarUserMenu = () => {
                             top={0}
                             bottom={0}
                             w="3px"
-                            background="accent"
+                            background="tertiary"
                             opacity={0}
                             transition="opacity 0.2s ease-in-out"
                             borderRadius="md"
@@ -200,7 +200,7 @@ const NavBarUserMenu = () => {
                           />
                           <Text
                             color="popover-foreground"
-                            _hover={{ color: "accent" }}
+                            _hover={{ color: "tertiary" }}
                             transition="color 0.2s ease-in-out"
                             ml={2}
                           >
@@ -241,7 +241,7 @@ const NavBarUserMenu = () => {
                     top={0}
                     bottom={0}
                     w="3px"
-                    background="accent"
+                    background="tertiary"
                     opacity={0}
                     transition="opacity 0.2s ease-in-out"
                     borderRadius="md"
@@ -249,7 +249,7 @@ const NavBarUserMenu = () => {
                   />
                   <Text
                     color="popover-foreground"
-                    _hover={{ color: "accent" }}
+                    _hover={{ color: "tertiary" }}
                     transition="color 0.2s ease-in-out"
                     ml={2}
                   >
@@ -282,13 +282,13 @@ const NavBarUserMenu = () => {
                     top={0}
                     bottom={0}
                     w="3px"
-                    background="accent"
+                    background="tertiary"
                     opacity={0}
                     transition="opacity 0.2s ease-in-out"
                   />
                   <Text
                     color="popover-foreground"
-                    _hover={{ color: "accent" }}
+                    _hover={{ color: "tertiary" }}
                     transition="color 0.2s ease-in-out"
                     ml={2}
                   >
@@ -324,7 +324,7 @@ const NavBarUserMenu = () => {
                   top={0}
                   bottom={0}
                   w="3px"
-                  background="accent"
+                  background="tertiary"
                   opacity={0}
                   transition="opacity 0.2s ease-in-out"
                   borderRadius="md"
@@ -332,7 +332,7 @@ const NavBarUserMenu = () => {
                 />
                 <Text
                   color="popover-foreground"
-                  _hover={{ color: "accent" }}
+                  _hover={{ color: "tertiary" }}
                   transition="color 0.2s ease-in-out"
                   ml={2}
                 >

@@ -86,7 +86,7 @@ const VerifyEmail = () => {
       <Box maxW="500px" w="100%" textAlign="center">
         {status === "loading" && (
           <VStack gap={4}>
-            <Spinner size="xl" color="accent" />
+            <Spinner size="xl" color="tertiary" />
             <Text fontSize="lg">Verifying your email...</Text>
           </VStack>
         )}

@@ -102,7 +102,7 @@ export const sidebarDrawer = createOverlay<SidebarDrawerProps>((props) => {
                       transform: "translateX(-50%)",
                       width: "0%",
                       height: "2px",
-                      backgroundColor: "accent",
+                      backgroundColor: "tertiary",
                       transition: "width 0.3s ease",
                       borderRadius: "1px",
                     }}

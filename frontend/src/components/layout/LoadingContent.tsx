@@ -60,7 +60,7 @@ const LoadingContent = ({
         >
           {message}
         </Text>
-        <Spinner size="xl" color="accent" />
+        <Spinner size="xl" color="tertiary" />
       </VStack>
     </VStack>
   );

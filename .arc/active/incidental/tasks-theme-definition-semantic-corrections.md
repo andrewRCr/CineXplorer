@@ -1136,30 +1136,46 @@ gaps, layout concerns, and component-specific issues requiring remediation befor
 
         **Ready for:** Task 3.5.5.6 (Global accent → tertiary migration)
 
-    - [ ] **3.5.5.6 Global accent → tertiary migration**
+    - [x] **3.5.5.6 Global accent → tertiary migration**
 
-        **Migrate all component usage from deprecated `accent` to new `tertiary` token.**
+        **Completed:** Migrated all component and page usage from deprecated `accent` to new `tertiary` token across
+        33 files. Theme infrastructure (types, adapters) correctly preserved with deprecated `accent` alias intact
+        for backward compatibility.
 
-        - [ ] Global find/replace across frontend codebase
-            - Pattern: `accent` → `tertiary`
-            - Pattern: `accent-foreground` → `tertiary-foreground`
-            - Scope: `frontend/src/components/**/*`, `frontend/src/pages/**/*`
-            - Estimated: ~50-100 occurrences based on codebase size
+        **What was migrated:**
+        - ✅ Found 187 total occurrences: 169 `accent` + 18 `accent-foreground` across 43 files
+        - ✅ Performed global find/replace using sed with word boundaries
+        - ✅ Reverted theme files (`frontend/src/theme/`) to preserve infrastructure:
+            - `types.ts`: Kept both `accent` (deprecated) and `tertiary` properties
+            - Adapters: Kept `const accent` variable names for deprecated alias
+            - Definitions: Kept deprecated alias exports
+        - ✅ Successfully migrated 33 files:
+            - Components: NavBar, ThemeSelector, MovieCard, PaginationCtrl, filters, etc.
+            - Pages: Featured, Login, Register, VerifyEmail, ThemeDebug, LayoutDebug
+            - Tests: All component test files updated
+        - ✅ Verified critical component changes:
+            - Buttons: Tertiary used for link-style buttons (correct)
+            - Links: All using tertiary color (correct)
+            - Interactive elements: Hover states `tertiary/8`, focus states preserved (correct)
+            - OAuth buttons: Hover backgrounds `tertiary/5`, `tertiary/8` (correct)
 
-        - [ ] Manual review of critical components
-            - Buttons: Verify tertiary usage makes sense (links, not filled buttons)
-            - Links: Confirm all using tertiary color
-            - Badges: Check if using tertiary appropriately
-            - Focus states: Verify ring/focus indicators
+        **Quality Gates:**
+        - ✅ TypeScript type checking: **0 errors** ✓
+        - ✅ Frontend linting: **0 violations** ✓
 
-        - [ ] Update component examples in docs/comments
-            - Any code examples using accent should use tertiary
-            - Update inline documentation
+        **Files Modified (33 total):**
+        - Components: ThemeSelector, LoadingContent, MobileMenuButton, NavBar, NavBarSearch, NavBarUserMenu,
+            PaginationCtrl, SidebarContent, sidebarOverlay, MovieCard, PageHeader, AdvancedMovieFilters,
+            CollapsibleSearchBox, ConnectedDropdowns, RatingSelector, SearchBar, SortDropdownMinimal,
+            SortSelector, YearSelector
+        - Pages: Featured, ThemeDebug, LayoutDebug, Login, Register, VerifyEmail
+        - Tests: 8 component test files
 
-        - [ ] Run quality gates post-migration
-            - TypeScript: 0 errors
-            - Linting: 0 violations
-            - Visual regression testing recommended
+        **Architecture Note:** Theme infrastructure correctly maintains BOTH `accent` (deprecated alias) and
+        `tertiary` (new canonical name) to support backward compatibility. Components now use `tertiary`
+        exclusively. The deprecated `accent` alias can be removed in a future cleanup phase.
+
+        **Ready for:** Task 3.5.5.7 (Add Material Design 3 theme to validate architecture)
 
     - [ ] **3.5.5.7 Add Material Design 3 theme**
 

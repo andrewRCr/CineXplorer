@@ -50,33 +50,33 @@ describe('PageHeader Component', () => {
   });
 
   describe('Accent Line Feature', () => {
-  it('shows accent line by default', () => {
-    // The accent line is an implementation detail
+  it('shows tertiary line by default', () => {
+    // The tertiary line is an implementation detail
     // Better to test that showAccent prop works as expected
     const { container } = render(<PageHeader title="Test Title" />);
     
-    // Test that the component renders (accent line is visual detail)
+    // Test that the component renders (tertiary line is visual detail)
     expect(screen.getByText('Test Title')).toBeInTheDocument();
     // We can verify the component structure exists
     expect(container.firstChild).toBeInTheDocument();
   });
 
-  it('hides accent line when showAccent is false', () => {
-    // Test the prop interface - component should render without accent
+  it('hides tertiary line when showAccent is false', () => {
+    // Test the prop interface - component should render without tertiary
     const { container } = render(<PageHeader title="Test Title" showAccent={false} />);
     
     expect(screen.getByText('Test Title')).toBeInTheDocument();
     expect(container.firstChild).toBeInTheDocument();
-    // Visual accent absence would be tested via visual regression
+    // Visual tertiary absence would be tested via visual regression
   });
 
-  it('shows accent line when showAccent is explicitly true', () => {
+  it('shows tertiary line when showAccent is explicitly true', () => {
     // Testing the prop interface rather than CSS implementation
     const { container } = render(<PageHeader title="Test Title" showAccent={true} />);
     
     expect(screen.getByText('Test Title')).toBeInTheDocument();
     expect(container.firstChild).toBeInTheDocument();
-    // The accent line is a visual feature - in real testing we'd use visual regression
+    // The tertiary line is a visual feature - in real testing we'd use visual regression
   });
   });
 

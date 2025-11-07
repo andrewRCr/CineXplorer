@@ -51,8 +51,8 @@ const Featured = () => {
           <VStack gap={4}>
             <Button
               onClick={() => navigate(ROUTES.POPULAR)}
-              bg="accent"
-              color="accent-foreground"
+              bg="tertiary"
+              color="tertiary-foreground"
               _hover={{ opacity: 0.92 }}
               size="lg"
               width="100%"

@@ -42,7 +42,7 @@ const SortSelector = ({ value, onChange }: SortSelectorProps) => {
           lineHeight="1.3"
           borderRadius="4px"
           _hover={{
-            bg: "accent/8",
+            bg: "tertiary/8",
           }}
           css={{
             padding: "6px 12px",
@@ -71,7 +71,7 @@ const SortSelector = ({ value, onChange }: SortSelectorProps) => {
               <Select.Item
                 key={item.value}
                 item={item}
-                _hover={{ bg: "accent" }}
+                _hover={{ bg: "tertiary" }}
               >
                 {item.label}
               </Select.Item>

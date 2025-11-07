@@ -466,7 +466,7 @@ const Login = () => {
                     borderWidth="1px"
                   borderColor="input"
                     _hover={{
-                      bg: "accent/5",
+                      bg: "tertiary/5",
                     }}
                   />
                   <Field.ErrorText
@@ -510,7 +510,7 @@ const Login = () => {
                     borderWidth="1px"
                   borderColor="input"
                     _hover={{
-                      bg: "accent/5",
+                      bg: "tertiary/5",
                     }}
                   />
                   <Field.ErrorText
@@ -544,7 +544,7 @@ const Login = () => {
                   borderWidth="2px"
                   borderColor="border"
                   _hover={{
-                    bg: "accent/5",
+                    bg: "tertiary/5",
                   }}
                   _focus={{
                     borderColor: "ring",
@@ -603,7 +603,7 @@ const Login = () => {
                   fontSize="16px"
                   onClick={handleGoogleLogin}
                   _hover={{
-                    bg: "accent/8",
+                    bg: "tertiary/8",
                   }}
                   _focus={{
                     outline: "2px solid",
@@ -622,7 +622,7 @@ const Login = () => {
                   fontSize="16px"
                   onClick={handleGithubLogin}
                   _hover={{
-                    bg: "accent/8",
+                    bg: "tertiary/8",
                   }}
                   _focus={{
                     outline: "2px solid",
@@ -640,16 +640,16 @@ const Login = () => {
                 <Link
                   to={ROUTES.REGISTER}
                   style={{
-                    color: "var(--chakra-colors-accent)",
+                    color: "var(--chakra-colors-tertiary)",
                     textDecoration: "underline",
                     textDecorationThickness: "2px",
                     textUnderlineOffset: "2px",
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.color = "var(--chakra-colors-accent-hover)";
+                    e.currentTarget.style.color = "var(--chakra-colors-tertiary-hover)";
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.color = "var(--chakra-colors-accent)";
+                    e.currentTarget.style.color = "var(--chakra-colors-tertiary)";
                   }}
                   onFocus={(e) => {
                     e.currentTarget.style.outline = "2px solid";
@@ -783,8 +783,8 @@ const Login = () => {
                     <Box textAlign="center" mt={3} ml={-2}>
                       <Button
                         size="sm"
-                        bg="accent"
-                        color="accent-foreground"
+                        bg="tertiary"
+                        color="tertiary-foreground"
                         _hover={{ opacity: 0.92 }}
                         onClick={handleResendVerification}
                         loading={isResendingEmail}

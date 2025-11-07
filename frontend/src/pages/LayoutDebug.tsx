@@ -115,23 +115,23 @@ export default function LayoutDebug() {
           <VStack align="stretch" gap={2}>
             <HStack justify="space-between" p={3} bg="layer-02" borderRadius="sm">
               <Text fontWeight="medium">dropdown</Text>
-              <Text fontFamily="mono" color="accent">{zDropdown}</Text>
+              <Text fontFamily="mono" color="tertiary">{zDropdown}</Text>
             </HStack>
             <HStack justify="space-between" p={3} bg="layer-02" borderRadius="sm">
               <Text fontWeight="medium">navbar</Text>
-              <Text fontFamily="mono" color="accent">{zNavbar}</Text>
+              <Text fontFamily="mono" color="tertiary">{zNavbar}</Text>
             </HStack>
             <HStack justify="space-between" p={3} bg="layer-02" borderRadius="sm">
               <Text fontWeight="medium">footer</Text>
-              <Text fontFamily="mono" color="accent">{zFooter}</Text>
+              <Text fontFamily="mono" color="tertiary">{zFooter}</Text>
             </HStack>
             <HStack justify="space-between" p={3} bg="layer-02" borderRadius="sm">
               <Text fontWeight="medium">sidebar, theme-debug, layout-debug</Text>
-              <Text fontFamily="mono" color="accent">{zSidebar}</Text>
+              <Text fontFamily="mono" color="tertiary">{zSidebar}</Text>
             </HStack>
             <HStack justify="space-between" p={3} bg="layer-02" borderRadius="sm">
               <Text fontWeight="medium">base</Text>
-              <Text fontFamily="mono" color="accent">{zBase}</Text>
+              <Text fontFamily="mono" color="tertiary">{zBase}</Text>
             </HStack>
           </VStack>
         </Box>
@@ -145,7 +145,7 @@ export default function LayoutDebug() {
           <Box
             position="relative"
             borderWidth="2px"
-            borderColor="accent"
+            borderColor="tertiary"
             borderRadius="md"
             p={4}
             bg="background"
@@ -166,9 +166,9 @@ export default function LayoutDebug() {
             <HStack align="start" gap={2}>
               {/* Sidebar - responsive */}
               <Box
-                bg="accent/20"
+                bg="tertiary/20"
                 borderWidth="1px"
-                borderColor="accent"
+                borderColor="tertiary"
                 p={2}
                 borderRadius="sm"
                 width={{ base: "0", lg: computedTokens.sidebarWidth }}
@@ -241,8 +241,8 @@ export default function LayoutDebug() {
             <Box
               position="sticky"
               top={0}
-              bg="accent"
-              color="accent-foreground"
+              bg="tertiary"
+              color="tertiary-foreground"
               p={3}
               fontWeight="bold"
               zIndex={1}
@@ -303,9 +303,9 @@ export default function LayoutDebug() {
               <Text fontSize="sm" fontWeight="bold" mb={2}>Show/Hide Pattern</Text>
               <Text fontSize="xs" color="foreground/60" mb={2}>Hide element on mobile, show on desktop:</Text>
               <Box fontFamily="mono" fontSize="xs" bg="background" p={2} borderRadius="sm">
-                <Text color="accent">{'<Box display={{ base: "none", lg: "block" }}>'}</Text>
+                <Text color="tertiary">{'<Box display={{ base: "none", lg: "block" }}>'}</Text>
                 <Text ml={2}>  Desktop Content</Text>
-                <Text color="accent">{'</Box>'}</Text>
+                <Text color="tertiary">{'</Box>'}</Text>
               </Box>
             </Box>
 
@@ -314,12 +314,12 @@ export default function LayoutDebug() {
               <Text fontSize="sm" fontWeight="bold" mb={2}>Alternate Content Pattern</Text>
               <Text fontSize="xs" color="foreground/60" mb={2}>Show different content per breakpoint:</Text>
               <Box fontFamily="mono" fontSize="xs" bg="background" p={2} borderRadius="sm">
-                <Text color="accent">{'<HStack display={{ base: "flex", lg: "none" }}>'}</Text>
+                <Text color="tertiary">{'<HStack display={{ base: "flex", lg: "none" }}>'}</Text>
                 <Text ml={2}>  Mobile Layout</Text>
-                <Text color="accent">{'</HStack>'}</Text>
-                <Text color="accent" mt={1}>{'<HStack display={{ base: "none", lg: "flex" }}>'}</Text>
+                <Text color="tertiary">{'</HStack>'}</Text>
+                <Text color="tertiary" mt={1}>{'<HStack display={{ base: "none", lg: "flex" }}>'}</Text>
                 <Text ml={2}>  Desktop Layout</Text>
-                <Text color="accent">{'</HStack>'}</Text>
+                <Text color="tertiary">{'</HStack>'}</Text>
               </Box>
             </Box>
 
@@ -328,10 +328,10 @@ export default function LayoutDebug() {
               <Text fontSize="sm" fontWeight="bold" mb={2}>Responsive Props Pattern</Text>
               <Text fontSize="xs" color="foreground/60" mb={2}>Responsive values without hooks:</Text>
               <Box fontFamily="mono" fontSize="xs" bg="background" p={2} borderRadius="sm">
-                <Text color="accent">{'<Box'}</Text>
+                <Text color="tertiary">{'<Box'}</Text>
                 <Text ml={2}>{'  width={{ base: "100%", lg: "280px" }}'}</Text>
                 <Text ml={2}>{'  pb={{ base: 2, lg: 0 }}'}</Text>
-                <Text color="accent">{'>'}</Text>
+                <Text color="tertiary">{'>'}</Text>
               </Box>
             </Box>
           </VStack>

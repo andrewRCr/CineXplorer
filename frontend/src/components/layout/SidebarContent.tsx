@@ -150,7 +150,7 @@ export const SidebarContent: React.FC<SidebarContentProps> = ({
                   _hover={{ bg: "layer-hover-01" }}
                   _selected={{
                     bg: "layer-selected-01",
-                    color: "accent-foreground",
+                    color: "tertiary-foreground",
                     fontWeight: "medium",
                   }}
                   cursor="pointer"
@@ -191,7 +191,7 @@ export const SidebarContent: React.FC<SidebarContentProps> = ({
                 _hover={{ bg: "layer-hover-01" }}
                 _selected={{
                   bg: "layer-selected-01",
-                  color: "accent-foreground",
+                  color: "tertiary-foreground",
                   fontWeight: "medium",
                 }}
                 cursor="pointer"

@@ -41,9 +41,9 @@ const SearchBar = ({
         pl="40px"
         transition="all 0.2s ease"
         _focus={{
-          borderColor: "accent.primary",
+          borderColor: "tertiary.primary",
           boxShadow: "0 0 0 1px",
-          boxShadowColor: "accent.primary",
+          boxShadowColor: "tertiary.primary",
           backgroundColor: "transparent",
         }}
         _hover={{}}

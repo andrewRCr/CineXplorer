@@ -13,7 +13,7 @@ vi.mock('@/constants/theme', () => ({
       main: '#1a202c',
       secondary: '#4a5568'
     },
-    accent: { primary: '#3182ce' }
+    tertiary: { primary: '#3182ce' }
   }
 }));
 

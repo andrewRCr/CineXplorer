@@ -29,7 +29,7 @@ const MobileMenuButton: React.FC<MobileMenuButtonProps> = ({ size = "md" }) => {
       borderRadius="md"
       _hover={{
         bg: "layer-hover-01",
-        borderColor: "accent",
+        borderColor: "tertiary",
       }}
     >
       <LuMenu />

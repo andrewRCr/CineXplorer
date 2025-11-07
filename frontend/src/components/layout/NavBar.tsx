@@ -56,7 +56,7 @@ const LogoAndTitle = () => (
           transform: "translateX(-50%)",
           width: "0%",
           height: "2px",
-          backgroundColor: "accent",
+          backgroundColor: "tertiary",
           transition: "width 0.3s ease",
           borderRadius: "1px",
         }}
@@ -150,7 +150,7 @@ const NavBar = () => {
               variant="ghost"
               aria-label="Log activity"
               onClick={handleLogClick}
-              _hover={{ bg: "accent/8" }}
+              _hover={{ bg: "tertiary/8" }}
             >
               <BsFillPlusCircleFill size={14} />
               LOG
@@ -167,12 +167,12 @@ const NavBar = () => {
                   <Button
                     size="sm"
                     variant={isTabActive(item.path) ? "solid" : "ghost"}
-                    bg={isTabActive(item.path) ? "accent" : undefined}
-                    color={isTabActive(item.path) ? "accent-foreground" : undefined}
+                    bg={isTabActive(item.path) ? "tertiary" : undefined}
+                    color={isTabActive(item.path) ? "tertiary-foreground" : undefined}
                     _hover={{
                       bg: isTabActive(item.path)
-                        ? "accent"
-                        : "accent/8",
+                        ? "tertiary"
+                        : "tertiary/8",
                       opacity: isTabActive(item.path) ? 0.92 : 1,
                     }}
                     borderRadius="md"

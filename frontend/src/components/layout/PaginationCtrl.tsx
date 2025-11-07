@@ -125,8 +125,8 @@ const PaginationCtrl = (props: iPaginationCtrlProps) => {
               key={page}
               variant="ghost"
               bg={isCurrentPage ? "layer-selected-01" : undefined}
-              color={isCurrentPage ? "accent" : "foreground"}
-              borderColor={isCurrentPage ? "accent" : "border"}
+              color={isCurrentPage ? "tertiary" : "foreground"}
+              borderColor={isCurrentPage ? "tertiary" : "border"}
               fontWeight={isCurrentPage ? "semibold" : "normal"}
               aria-current={isCurrentPage ? "page" : undefined}
               px={getDynamicPadding(formattedPage)}
@@ -255,8 +255,8 @@ const PaginationCtrl = (props: iPaginationCtrlProps) => {
           key={page}
           variant="ghost"
           bg={isCurrentPage ? "layer-selected-01" : undefined}
-          color={isCurrentPage ? "accent" : "foreground"}
-          borderColor={isCurrentPage ? "accent" : "border"}
+          color={isCurrentPage ? "tertiary" : "foreground"}
+          borderColor={isCurrentPage ? "tertiary" : "border"}
           fontWeight={isCurrentPage ? "semibold" : "normal"}
           aria-current={isCurrentPage ? "page" : undefined}
           px={getDynamicPadding(formattedPage)}

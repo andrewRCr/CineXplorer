@@ -171,7 +171,7 @@ const RatingSelector = ({
         }
         bg="transparent"
         _hover={{
-          bg: "accent/8",
+          bg: "tertiary/8",
         }}
           _invalid={{
             borderColor: "destructive",
@@ -202,7 +202,7 @@ const RatingSelector = ({
         }
         bg="transparent"
         _hover={{
-          bg: "accent/8",
+          bg: "tertiary/8",
         }}
           _invalid={{
             borderColor: "destructive",

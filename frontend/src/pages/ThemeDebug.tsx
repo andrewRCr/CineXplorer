@@ -96,10 +96,10 @@ export default function ThemeDebug() {
                   key={id}
                   as="button"
                   onClick={() => scrollToSection(id)}
-                  color="accent"
+                  color="tertiary"
                   cursor="pointer"
                   textDecoration="underline"
-                  _hover={{ color: "accent-hover" }}
+                  _hover={{ color: "tertiary-hover" }}
                 >
                   {label}
                 </Text>
@@ -176,14 +176,14 @@ export default function ThemeDebug() {
             <Box>
               <Text fontSize="sm" fontWeight="bold" mb={2}>Accent Token with Opacity</Text>
               <HStack gap={2} wrap="wrap">
-                <Box bg="accent/100" p={4} borderWidth="1px" borderColor="border" minW="150px">
-                  <Text color="foreground" fontSize="sm">accent/100</Text>
+                <Box bg="tertiary/100" p={4} borderWidth="1px" borderColor="border" minW="150px">
+                  <Text color="foreground" fontSize="sm">tertiary/100</Text>
                 </Box>
-                <Box bg="accent/60" p={4} borderWidth="1px" borderColor="border" minW="150px">
-                  <Text color="foreground" fontSize="sm">accent/60</Text>
+                <Box bg="tertiary/60" p={4} borderWidth="1px" borderColor="border" minW="150px">
+                  <Text color="foreground" fontSize="sm">tertiary/60</Text>
                 </Box>
-                <Box bg="accent/20" p={4} borderWidth="1px" borderColor="border" minW="150px">
-                  <Text color="foreground" fontSize="sm">accent/20</Text>
+                <Box bg="tertiary/20" p={4} borderWidth="1px" borderColor="border" minW="150px">
+                  <Text color="foreground" fontSize="sm">tertiary/20</Text>
                 </Box>
               </HStack>
             </Box>

@@ -110,7 +110,7 @@ const SortDropdownMinimal = ({
             borderColor="border"
             backgroundColor="transparent"
             _hover={{
-              bg: "accent/8",
+              bg: "tertiary/8",
             }}
             _disabled={{
               opacity: 1,
@@ -155,7 +155,7 @@ const SortDropdownMinimal = ({
                   _hover={
                     "disabled" in item && item.disabled
                       ? {}
-                      : { bg: "accent" }
+                      : { bg: "tertiary" }
                   }
                 >
                   {item.label}

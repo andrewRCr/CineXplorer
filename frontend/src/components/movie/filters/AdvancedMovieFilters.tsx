@@ -91,7 +91,7 @@ const AdvancedMovieFilters = ({
           size="sm"
         borderColor="border"
         _hover={{
-          borderColor: "accent",
+          borderColor: "tertiary",
           backgroundColor: "muted",
         }}
         >

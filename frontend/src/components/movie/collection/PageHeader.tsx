@@ -115,7 +115,7 @@ const PageHeader = forwardRef(
                 left="0"
                 width={animationPhase === "animating" ? "100%" : "0%"}
                 height="2px"
-                backgroundColor="accent"
+                backgroundColor="tertiary"
                 borderRadius="1px"
                 transition={
                   animationPhase === "reset" ? "none" : "width 0.3s ease-out"

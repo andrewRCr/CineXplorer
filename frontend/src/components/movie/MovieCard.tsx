@@ -320,7 +320,7 @@ const MovieCard = ({ movie, currentPage, source, query }: MovieCardProps) => {
                 >
                   <IconButton
                     variant="ghost"
-                    color={isOnWatchlist ? "accent" : undefined}
+                    color={isOnWatchlist ? "tertiary" : undefined}
                     size="sm"
                     onClick={async (e) => {
                       e.preventDefault();
@@ -358,7 +358,7 @@ const MovieCard = ({ movie, currentPage, source, query }: MovieCardProps) => {
           left="0"
           width={isCardHovered ? "100%" : "0%"}
           height="3px"
-          backgroundColor="accent"
+          backgroundColor="tertiary"
           transition="width 0.3s ease-in-out"
           zIndex="1"
         />

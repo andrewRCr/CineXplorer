@@ -134,9 +134,12 @@ These definitions ensure cross-theme consistency while respecting official desig
 |-------|-----------------|----------------------|----------------|------------|---------------|
 | **Action Hierarchy** | | | | | |
 | `primary` | Primary action buttons | Filled buttons, green or blue | "Submit", "Save", "Continue" | **Background** | GitHub: green (bg_success), IBM: blue (fg_accent), GitLab: blue |
-| `secondary` | Secondary actions | Outline buttons (**mandatory** 1px border) | "Cancel", "Back", "Skip" | Background + Border | Maps to `bg_button_secondary` + REQUIRED `border-strong-01` |
+| `secondary` | Subtle action backgrounds | Low-emphasis surfaces | Subtle buttons, muted panels | Background | Maps to `bg_button_secondary` or muted surface tokens |
 | `tertiary` | Interactive text, links, accents | Blue or brand color, foreground | Hyperlinks, focus states, highlights | **Foreground** | Replaces deprecated `accent`. GitHub: blue (fg_accent), GitLab: purple |
 | `muted` | Deemphasized, non-interactive | Subtle gray backgrounds | Disabled states, subtle surfaces | Background | Distinct from secondary (interactive vs non-interactive) |
+| **Button Pattern Helpers (Per ADR-012)** | | | | | |
+| `button-outline` | Outline button border/text | Primary color | Outline button strokes | Foreground/Border | Maps to `primary` for cross-theme consistency |
+| `button-subtle` | Subtle button background | Secondary color | Subtle button fills | Background | Maps to `secondary` for low-emphasis actions |
 | **Brand Identity (Optional)** | | | | | |
 | `brand` | Logo/brand identity | Purple, blue, or brand color | Logo sections, brand moments | Either | Optional. GitLab: purple, IBM: blue, GitHub: undefined |
 | `brandSecondary` | Secondary brand color | Orange or secondary brand | Additional brand accents | Either | Optional. GitLab: orange. Not for general component use. |
@@ -150,15 +153,16 @@ These definitions ensure cross-theme consistency while respecting official desig
 | `input` | Form field borders | Accessible contrast border | Text inputs, select boxes | Border | Typically maps to `border-subtle-00` or dedicated input border. |
 | `ring` | Focus indicators (accessibility) | High-contrast accent | Keyboard focus rings (2px outline + offset) | Border | Must meet WCAG 2.4.13 (≥3:1 contrast change). |
 
-**Key Distinctions (Per ADR-010):**
+**Key Distinctions (Per ADR-010 + ADR-012):**
 
 - **Primary vs Tertiary:** Primary is for **button fills** (background token),
   Tertiary is for **links/text** (foreground token)
 - **Primary vs Brand:** Primary is for **UI actions**, Brand is for **identity** (may be same color, e.g., IBM)
 - **Primary vs Success:** Primary is **action color** (varies by system), Success is **feedback state** (always green)
-- **Secondary vs Muted:** Secondary is **interactive** (clickable buttons), Muted is **non-interactive** (backgrounds)
+- **Secondary vs Muted:** Secondary is **interactive** (subtle buttons), Muted is **non-interactive** (disabled/deemphasized)
 - **Tertiary vs Accent:** Tertiary is the new name (Material-aligned), Accent is deprecated (alias during migration)
-- **Secondary Pattern:** ALWAYS use with `borderWidth="1px"` + `borderColor="border-strong-01"` per industry standard
+- **Button Patterns (ADR-012):** Solid/outline/subtle/ghost are **visual patterns**, separate from color semantics.
+  Use `button-outline` (maps to primary) and `button-subtle` (maps to secondary) for cross-theme consistency.
 
 **Token Type Architecture:**
 
@@ -187,6 +191,8 @@ These definitions ensure cross-theme consistency while respecting official desig
 
 - ADR-010: Establish Core Semantic Color Token Architecture (full rationale and decisions)
 - ADR-011: Standardize on "on-color" Foreground Naming Convention (on-* prefix standardization)
+- ADR-012: Separate Button Pattern Semantics from Color Semantics (button-outline, button-subtle helpers)
+- ADR-009: Use Material Design Opacity Overlays for Interaction States (hover/active state approach)
 - strategy-border-system.md: Border patterns and outline styling details
 - ADR-003: Extend Semantic Token System (token count extension)
 - ADR-005: Unified Theme Adapter Layer (adapter architecture)
@@ -711,12 +717,12 @@ Nielsen Norman Group, WCAG 2.4.13, and accessibility.org best practices (2024).
 
 ```tsx
 <Link
-  color="accent"
+  color="tertiary"
   textDecoration="underline"
   textDecorationThickness="2px"
   textUnderlineOffset="2px"
   _hover={{
-    color: "accent-hover",  // Brighter/more saturated shade
+    color: "tertiary-hover",  // Brighter/more saturated shade
   }}
   _focus={{
     outline: "2px solid",
@@ -731,7 +737,7 @@ Nielsen Norman Group, WCAG 2.4.13, and accessibility.org best practices (2024).
 **Key findings:**
 
 - **Default underline:** Required for accessibility (WCAG non-color indicators, helps color-blind users)
-- **Hover color change:** `accent` → `accent-hover` (warmer/brighter shade)
+- **Hover color change:** `tertiary` → `tertiary-hover` (warmer/brighter shade)
 - **Focus ring:** Same 2px pattern as buttons (WCAG 2.4.13 compliance, keyboard navigation)
 - **Visited states:** Declining trend in modern design - skip unless user research shows need
 
@@ -793,6 +799,136 @@ See **ADR-009: Use Material Design Opacity Overlays for Interaction States** for
 
 **Note:** Prefer dedicated tokens over manual overlays. Manual overlays shown for reference or special cases.
 
+### Button Patterns (Per ADR-012)
+
+ADR-012 separates **button patterns** (visual styles) from **color semantics** (functional meaning). This prevents
+confusion where "secondary" could mean either "outline button" OR "subtle background color".
+
+**Chakra UI Variants → Token Mappings:**
+
+| Variant | Visual Pattern | Color Tokens | Interaction Tokens | Use Case |
+|---------|---------------|--------------|-------------------|----------|
+| `solid` | Filled background | `primary` / `on-primary` | `primary-hover`, `primary-active` | Highest emphasis |
+| `outline` | Transparent + border | `button-outline` (border+text) | Direct opacity: `/8`, `/12` | High emphasis |
+| `subtle` | Subtle background | `button-subtle` / `on-button-subtle` | `secondary-hover`, `secondary-active` | Medium emphasis |
+| `ghost` | No background/border | `tertiary` or `foreground` | `tertiary-hover`, `tertiary-active` | Low emphasis |
+
+**Implementation Examples:**
+
+```tsx
+// Solid button (highest emphasis)
+<Button
+  variant="solid"
+  bg="primary"
+  color="on-primary"
+  _hover={{ bg: "primary-hover" }}
+  _active={{ bg: "primary-active" }}
+>
+  Save Changes
+</Button>
+
+// Outline button (high emphasis)
+<Button
+  variant="outline"
+  borderColor="button-outline"
+  color="button-outline"
+  _hover={{ bg: "button-outline/8" }}
+  _active={{ bg: "button-outline/12" }}
+>
+  Cancel
+</Button>
+
+// Subtle button (medium emphasis)
+<Button
+  variant="subtle"
+  bg="button-subtle"
+  color="on-button-subtle"
+  _hover={{ bg: "secondary-hover" }}
+  _active={{ bg: "secondary-active" }}
+>
+  Options
+</Button>
+
+// Ghost button (low emphasis)
+<Button
+  variant="ghost"
+  color="tertiary"
+  _hover={{ color: "tertiary-hover" }}
+  _active={{ color: "tertiary-active" }}
+>
+  Skip
+</Button>
+```
+
+**Why This Approach:**
+
+- ✅ Clear separation of visual pattern (solid/outline/subtle/ghost) from color meaning (primary/secondary)
+- ✅ `button-outline` and `button-subtle` provide self-documenting API
+- ✅ Works consistently across all themes (no Carbon vs Primer differences)
+- ✅ Aligns with Chakra v3's variant system
+
+**Common Mistake to Avoid:**
+
+```tsx
+// ❌ Wrong - "secondary" doesn't mean "outline button"
+<Button variant="outline" bg="secondary">Cancel</Button>
+
+// ✅ Correct - outline buttons use button-outline (maps to primary)
+<Button variant="outline" borderColor="button-outline" color="button-outline">
+  Cancel
+</Button>
+```
+
+### Choosing the Right Interaction Token
+
+Different UI elements need different interaction state tokens. Use this guide to choose correctly:
+
+**For surfaces (cards, list items, menu items):**
+
+- **Default:** `bg="layer-01"`
+- **Hover:** `_hover={{ bg: "layer-hover-01" }}`
+- **Selected:** `bg="layer-selected-01"`
+- **Why:** Surfaces use layer backgrounds, so layer interaction tokens match
+
+**For solid buttons (filled backgrounds):**
+
+- **Default:** `bg="primary"` + `color="on-primary"`
+- **Hover:** `_hover={{ bg: "primary-hover" }}`
+- **Active:** `_active={{ bg: "primary-active" }}`
+- **Why:** Buttons use color backgrounds, so color interaction tokens match
+
+**For outline buttons (transparent backgrounds):**
+
+- **Default:** `borderColor="button-outline"` + `color="button-outline"`
+- **Hover:** `_hover={{ bg: "button-outline/8" }}`
+- **Active:** `_active={{ bg: "button-outline/12" }}`
+- **Why:** Simple opacity overlay on transparent, no pre-calculated token needed
+
+**For subtle buttons (subtle backgrounds):**
+
+- **Default:** `bg="button-subtle"` + `color="on-button-subtle"`
+- **Hover:** `_hover={{ bg: "secondary-hover" }}`
+- **Active:** `_active={{ bg: "secondary-active" }}`
+- **Why:** Subtle buttons use secondary color, so secondary interaction tokens match
+
+**For interactive text/links:**
+
+- **Default:** `color="tertiary"`
+- **Hover:** `_hover={{ color: "tertiary-hover" }}`
+- **Active:** `_active={{ color: "tertiary-active" }}`
+- **Why:** Links use tertiary color, so tertiary interaction tokens match
+
+**Decision Tree:**
+
+```
+What am I styling?
+├─ Surface (card, list item, menu item) → Use layer-* tokens
+├─ Solid button → Use primary-* tokens
+├─ Outline button → Use button-outline with /8 opacity
+├─ Subtle button → Use button-subtle + secondary-* tokens
+└─ Link/interactive text → Use tertiary-* tokens
+```
+
 ### Common Patterns
 
 **Surface hover (cards, list items, menu items):**
@@ -834,17 +970,29 @@ See **ADR-009: Use Material Design Opacity Overlays for Interaction States** for
 </Card>
 ```
 
-**Button states:**
+**Button states (use dedicated interaction tokens):**
 
 ```tsx
+// Solid button - uses primary-hover/active tokens
 <Button
   bg="primary"
-  color="primary-foreground"
-  _hover={{ bg: "primary", opacity: 0.92 }}  // 8% lighter
-  _active={{ bg: "primary", opacity: 0.88 }} // 12% lighter
+  color="on-primary"
+  _hover={{ bg: "primary-hover" }}
+  _active={{ bg: "primary-active" }}
   _disabled={{ opacity: 0.38, cursor: "not-allowed" }}
 >
   Submit
+</Button>
+
+// Outline button - uses direct opacity on transparent
+<Button
+  variant="outline"
+  borderColor="button-outline"
+  color="button-outline"
+  _hover={{ bg: "button-outline/8" }}
+  _active={{ bg: "button-outline/12" }}
+>
+  Cancel
 </Button>
 ```
 

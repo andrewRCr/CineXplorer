@@ -123,7 +123,7 @@ const VerifyEmail = () => {
               onClick={handleContinue}
               bg="primary"
               color="on-primary"
-              _hover={{ opacity: 0.92 }}
+              _hover={{ bg: "primary-hover" }}
             >
               Continue to Login Now
             </Button>
@@ -155,8 +155,9 @@ const VerifyEmail = () => {
                 w="full"
                 maxW="200px"
                 borderWidth="1px"
-                borderColor="border"
-                _hover={{ bg: "muted" }}
+                borderColor="button-outline"
+                color="on-button-outline"
+                _hover={{ bg: "tertiary/8", borderColor: "tertiary", color: "tertiary" }}
               >
                 Back to Login
               </Button>
@@ -167,8 +168,9 @@ const VerifyEmail = () => {
                 w="full"
                 maxW="200px"
                 borderWidth="1px"
-                borderColor="border"
-                _hover={{ bg: "muted" }}
+                borderColor="button-outline"
+                color="on-button-outline"
+                _hover={{ bg: "tertiary/8", borderColor: "tertiary", color: "tertiary" }}
               >
                 Try Again
               </Button>

@@ -77,7 +77,13 @@ const MovieDetail = () => {
     return (
       <Box mb={4}>
         <Link to={backUrl}>
-          <Button variant="outline" borderWidth="1px" borderColor="border">
+          <Button
+            variant="outline"
+            borderWidth="1px"
+            borderColor="button-outline"
+            color="on-button-outline"
+            _hover={{ bg: "tertiary/8", borderColor: "tertiary", color: "tertiary" }}
+          >
             <span
               style={{
                 display: "inline-block",
@@ -232,7 +238,7 @@ const MovieDetail = () => {
           <Button
             bg={userMovieData?.user_on_watchlist ? "secondary" : "primary"}
             color={userMovieData?.user_on_watchlist ? "on-secondary" : "on-primary"}
-            _hover={{ opacity: 0.92 }}
+            _hover={{ bg: userMovieData?.user_on_watchlist ? "secondary-hover" : "primary-hover" }}
             loading={userMovieDataLoading && isAuthenticated}
             onClick={() =>
               update({
@@ -245,10 +251,10 @@ const MovieDetail = () => {
               ? "Remove from Watchlist"
               : "Add to Watchlist"}
           </Button>
-          <Button bg="primary" color="on-primary" _hover={{ opacity: 0.92 }} disabled={!isAuthenticated}>
+          <Button bg="primary" color="on-primary" _hover={{ bg: "primary-hover" }} disabled={!isAuthenticated}>
             Mark as Watched
           </Button>
-          <Button bg="primary" color="on-primary" _hover={{ opacity: 0.92 }} disabled={!isAuthenticated}>
+          <Button bg="primary" color="on-primary" _hover={{ bg: "primary-hover" }} disabled={!isAuthenticated}>
             Rate Movie
           </Button>
         </Flex>

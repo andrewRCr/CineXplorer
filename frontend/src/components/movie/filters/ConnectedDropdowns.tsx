@@ -481,10 +481,13 @@ const ConnectedDropdowns = ({
           onClick={onToggleAdvanced}
           size="sm"
           variant="outline"
-        borderRadius="0 4px 4px 0"
-        borderColor="border"
+          borderRadius="0 4px 4px 0"
+          borderColor="button-outline"
+          color="on-button-outline"
           _hover={{
             bg: "tertiary/8",
+            borderColor: "tertiary",
+            color: "tertiary",
           }}
           minW="auto"
           px={3}

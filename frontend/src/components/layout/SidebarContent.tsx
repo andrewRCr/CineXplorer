@@ -94,7 +94,10 @@ export const SidebarContent: React.FC<SidebarContentProps> = ({
             mb={1}
             variant="outline"
             borderWidth="1px"
-            borderColor="border"
+            borderColor="button-outline-primary"
+            color="on-button-outline-primary"
+            _hover={{ bg: "primary/8" }}
+            _active={{ bg: "primary/12" }}
             aria-label="Log activity"
             size="sm"
             onClick={() => {

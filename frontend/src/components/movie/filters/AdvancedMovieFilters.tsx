@@ -89,11 +89,13 @@ const AdvancedMovieFilters = ({
           onClick={onToggleCollapse}
           variant="outline"
           size="sm"
-        borderColor="border"
-        _hover={{
-          borderColor: "tertiary",
-          backgroundColor: "muted",
-        }}
+          borderColor="button-outline"
+          color="on-button-outline"
+          _hover={{
+            bg: "tertiary/8",
+            borderColor: "tertiary",
+            color: "tertiary",
+          }}
         >
           <FiFilter style={{ marginRight: "6px" }} />
           {hasActiveFilters ? "Filters (Active)" : "Filters"}

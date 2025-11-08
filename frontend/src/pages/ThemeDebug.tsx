@@ -61,20 +61,21 @@ export default function ThemeDebug() {
                   key={t}
                   onClick={() => setTheme(t as ThemeName)}
                   size="sm"
-                  bg={theme === t ? "layer-selected-02" : "layer-02"}
-                  color="foreground"
-                  borderWidth="1px"
-                  borderColor="border"
-                  _hover={{ bg: theme === t ? "layer-selected-02" : "layer-hover-02" }}
-                  _active={{ bg: "layer-active-02" }}
+                  variant="subtle"
+                  bg={theme === t ? "button-subtle-selected" : "button-subtle"}
+                  color={theme === t ? "on-button-subtle-selected" : "on-button-subtle"}
+                  _hover={{ bg: theme === t ? "button-subtle-selected" : "secondary-hover" }}
+                  _active={{ bg: "secondary-active" }}
                 >
                   {t === 'ibm-carbon' ? 'IBM' : t === 'github-primer' ? 'GitHub' : t === 'gitlab-pajamas' ? 'GitLab' : 'Material'}
                 </Button>
               ))}
               <ColorModeButton
-                bg="layer-02"
-                _hover={{ bg: "layer-hover-02" }}
-                _active={{ bg: "layer-active-02" }}
+                variant="outline"
+                borderColor="button-outline"
+                color="on-button-outline"
+                _hover={{ bg: "tertiary/8", borderColor: "tertiary" }}
+                _active={{ bg: "tertiary/12", borderColor: "tertiary" }}
               />
             </HStack>
           </HStack>
@@ -283,26 +284,43 @@ function SemanticColorsSection() {
                     <VStack gap={0}>
                       <Text fontSize="xs" fontWeight="medium">brand</Text>
                       <Text fontSize="2xs" color="foreground/60">
-                        {theme === 'ibm-carbon' ? 'IBM Blue' : theme === 'gitlab-pajamas' ? 'GitLab Purple' : 'Material Purple'}
+                        {theme === 'ibm-carbon' ? 'IBM Blue' : theme === 'gitlab-pajamas' ? 'Orange 01p' : 'Material Purple'}
                       </Text>
                     </VStack>
                   </VStack>
                   {theme === 'gitlab-pajamas' && (
-                    <VStack gap={2}>
-                      <Box
-                        bg="brandSecondary"
-                        w="80px"
-                        h="80px"
-                        borderRadius="full"
-                        display="flex"
-                        alignItems="center"
-                        justifyContent="center"
-                      />
-                      <VStack gap={0}>
-                        <Text fontSize="xs" fontWeight="medium">brandSecondary</Text>
-                        <Text fontSize="2xs" color="foreground/60">GitLab Orange</Text>
+                    <>
+                      <VStack gap={2}>
+                        <Box
+                          bg="brandSecondary"
+                          w="80px"
+                          h="80px"
+                          borderRadius="full"
+                          display="flex"
+                          alignItems="center"
+                          justifyContent="center"
+                        />
+                        <VStack gap={0}>
+                          <Text fontSize="xs" fontWeight="medium">brandSecondary</Text>
+                          <Text fontSize="2xs" color="foreground/60">Orange 02p</Text>
+                        </VStack>
                       </VStack>
-                    </VStack>
+                      <VStack gap={2}>
+                        <Box
+                          bg="brandTertiary"
+                          w="80px"
+                          h="80px"
+                          borderRadius="full"
+                          display="flex"
+                          alignItems="center"
+                          justifyContent="center"
+                        />
+                        <VStack gap={0}>
+                          <Text fontSize="xs" fontWeight="medium">brandTertiary</Text>
+                          <Text fontSize="2xs" color="foreground/60">Orange 03p (Tanuki Red)</Text>
+                        </VStack>
+                      </VStack>
+                    </>
                   )}
                 </HStack>
 
@@ -312,14 +330,21 @@ function SemanticColorsSection() {
                     on-brand
                   </Box>
                   {theme === 'gitlab-pajamas' && (
-                    <Box bg="brandSecondary" color="on-brandSecondary" px={3} py={2} borderRadius="md" fontSize="xs" fontWeight="medium">
-                      on-brandSecondary
-                    </Box>
+                    <>
+                      <Box bg="brandSecondary" color="on-brandSecondary" px={3} py={2} borderRadius="md" fontSize="xs" fontWeight="medium">
+                        on-brandSecondary
+                      </Box>
+                      <Box bg="brandTertiary" color="on-brandTertiary" px={3} py={2} borderRadius="md" fontSize="xs" fontWeight="medium">
+                        on-brandTertiary
+                      </Box>
+                    </>
                   )}
                 </HStack>
 
                 <Text fontSize="xs" color="foreground/60" textAlign="center" maxW="600px" mx="auto" lineHeight="1.5">
-                  Brand tokens are for logo/identity only. Use functional tokens (primary/tertiary) for UI components.
+                  {theme === 'gitlab-pajamas'
+                    ? 'GitLab brand: 3 tanuki logo oranges (bright → medium → red). Use primary/tertiary for UI components.'
+                    : 'Brand tokens are for logo/identity only. Use functional tokens (primary/tertiary) for UI components.'}
                 </Text>
               </VStack>
             )}
@@ -428,24 +453,38 @@ function SemanticColorsSection() {
                   >
                     Save
                   </Button>
-                  <Text fontSize="xs" color="foreground/60">solid (primary)</Text>
+                  <Text fontSize="xs" color="foreground/60">solid</Text>
                 </VStack>
 
-                {/* Outline button - high emphasis */}
+                {/* Primary outline button - high emphasis */}
                 <VStack gap={1}>
                   <Button
                     variant="outline"
-                    borderColor="button-outline"
-                    color="button-outline"
-                    _hover={{ bg: "button-outline/8" }}
-                    _active={{ bg: "button-outline/12" }}
+                    borderColor="button-outline-primary"
+                    color="on-button-outline-primary"
+                    _hover={{ bg: "primary/8" }}
+                    _active={{ bg: "primary/12" }}
                   >
-                    Cancel
+                    Learn More
                   </Button>
                   <Text fontSize="xs" color="foreground/60">outline (primary)</Text>
                 </VStack>
 
-                {/* Subtle button - medium emphasis */}
+                {/* Neutral outline button - medium emphasis */}
+                <VStack gap={1}>
+                  <Button
+                    variant="outline"
+                    borderColor="button-outline"
+                    color="on-button-outline"
+                    _hover={{ bg: "tertiary/8", borderColor: "tertiary" }}
+                    _active={{ bg: "tertiary/12", borderColor: "tertiary" }}
+                  >
+                    Cancel
+                  </Button>
+                  <Text fontSize="xs" color="foreground/60">outline (neutral)</Text>
+                </VStack>
+
+                {/* Subtle button - medium-low emphasis */}
                 <VStack gap={1}>
                   <Button
                     variant="subtle"
@@ -456,10 +495,10 @@ function SemanticColorsSection() {
                   >
                     Options
                   </Button>
-                  <Text fontSize="xs" color="foreground/60">subtle (secondary)</Text>
+                  <Text fontSize="xs" color="foreground/60">subtle</Text>
                 </VStack>
 
-                {/* Ghost button - low emphasis */}
+                {/* Ghost button - lowest emphasis */}
                 <VStack gap={1}>
                   <Button
                     variant="ghost"
@@ -469,7 +508,7 @@ function SemanticColorsSection() {
                   >
                     Skip
                   </Button>
-                  <Text fontSize="xs" color="foreground/60">ghost (tertiary)</Text>
+                  <Text fontSize="xs" color="foreground/60">ghost</Text>
                 </VStack>
                 </HStack>
               </VStack>
@@ -494,11 +533,12 @@ function SemanticColorsSection() {
                 <Text fontSize="xs" color="foreground/60">(uses tertiary + tertiary-hover)</Text>
               </VStack>
 
-              <Text fontSize="xs" color="foreground/60" textAlign="center" maxW="700px" lineHeight="1.5">
-                Per ADR-012: Button patterns (solid/outline/subtle/ghost) are separate from color semantics.
-                Outline buttons use <Code fontSize="xs">button-outline</Code> (maps to primary) for cross-theme consistency.
-                Subtle buttons use <Code fontSize="xs">button-subtle</Code> (maps to secondary).
-                Interactive text/links use <Code fontSize="xs">tertiary</Code> color.
+              <Text fontSize="xs" color="foreground/60" textAlign="center" maxW="800px" lineHeight="1.5">
+                Per ADR-012: Button patterns are separate from color semantics.
+                Neutral outline <Code fontSize="xs">button-outline</Code> (gray) for utility actions is DEFAULT.
+                Primary outline <Code fontSize="xs">button-outline-primary</Code> (brand color) for branded actions is EXPLICIT.
+                Subtle <Code fontSize="xs">button-subtle</Code> (filled gray) for embedded controls.
+                Links use <Code fontSize="xs">tertiary</Code> color.
               </Text>
             </VStack>
           </Box>

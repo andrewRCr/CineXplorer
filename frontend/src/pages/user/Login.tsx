@@ -561,7 +561,7 @@ const Login = () => {
                 bg="primary"
                 color="on-primary"
                 _hover={{
-                  opacity: 0.92,
+                  bg: "primary-hover",
                 }}
                 loading={formik.isSubmitting}
                 loadingText="Logging in..."
@@ -599,11 +599,14 @@ const Login = () => {
                   flex="1"
                   variant="outline"
                   borderWidth="1px"
-                  borderColor="border"
+                  borderColor="button-outline"
+                  color="on-button-outline"
                   fontSize="16px"
                   onClick={handleGoogleLogin}
                   _hover={{
                     bg: "tertiary/8",
+                    borderColor: "tertiary",
+                    color: "tertiary",
                   }}
                   _focus={{
                     outline: "2px solid",
@@ -618,11 +621,14 @@ const Login = () => {
                   flex="1"
                   variant="outline"
                   borderWidth="1px"
-                  borderColor="border"
+                  borderColor="button-outline"
+                  color="on-button-outline"
                   fontSize="16px"
                   onClick={handleGithubLogin}
                   _hover={{
                     bg: "tertiary/8",
+                    borderColor: "tertiary",
+                    color: "tertiary",
                   }}
                   _focus={{
                     outline: "2px solid",
@@ -637,31 +643,23 @@ const Login = () => {
 
               <Text mt="4px" textAlign="center" w="100%" fontSize="16px" color="foreground">
                 Don't have an account?{" "}
-                <Link
-                  to={ROUTES.REGISTER}
-                  style={{
-                    color: "var(--chakra-colors-tertiary)",
-                    textDecoration: "underline",
-                    textDecorationThickness: "2px",
-                    textUnderlineOffset: "2px",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.color = "var(--chakra-colors-tertiary-hover)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.color = "var(--chakra-colors-tertiary)";
-                  }}
-                  onFocus={(e) => {
-                    e.currentTarget.style.outline = "2px solid";
-                    e.currentTarget.style.outlineColor = "var(--chakra-colors-ring)";
-                    e.currentTarget.style.outlineOffset = "2px";
-                  }}
-                  onBlur={(e) => {
-                    e.currentTarget.style.outline = "none";
+                <Box
+                  asChild
+                  color="tertiary"
+                  textDecoration="underline"
+                  textDecorationThickness="2px"
+                  textUnderlineOffset="2px"
+                  _hover={{ color: "tertiary-hover" }}
+                  _focus={{
+                    outline: "2px solid",
+                    outlineColor: "ring",
+                    outlineOffset: "2px",
                   }}
                 >
-                  Register
-                </Link>
+                  <Link to={ROUTES.REGISTER}>
+                    Register
+                  </Link>
+                </Box>
               </Text>
             </VStack>
           </form>
@@ -785,7 +783,7 @@ const Login = () => {
                         size="sm"
                         bg="tertiary"
                         color="on-tertiary"
-                        _hover={{ opacity: 0.92 }}
+                        _hover={{ bg: "tertiary-hover" }}
                         onClick={handleResendVerification}
                         loading={isResendingEmail}
                         loadingText="Sending..."

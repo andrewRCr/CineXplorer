@@ -1,6 +1,6 @@
 # Task List Formatting Strategy
 
-**Version:** 1.3 | **Updated:** 2025-10-29 | **Status:** Active
+**Version:** 1.4 | **Updated:** 2025-11-08 | **Status:** Active
 
 ## Purpose
 
@@ -32,6 +32,7 @@ Before finalizing any task list, verify:
 - [ ] Phase headers use `### **Phase X:** Description` format
 - [ ] Parent tasks have checkboxes and bold: `- [ ] **X.Y Description**`
 - [ ] Numbered subtasks use `- [ ] **X.Y.Z Description**` when they have detail bullets (bold for hierarchy)
+- [ ] Letter numbering at third level: Use `X.Y.a`, `X.Y.b` for better readability (not `X.Y.1.1`)
 - [ ] Blank lines between subtasks when they have detail bullets beneath
 - [ ] Unnumbered bullets for implementation details (no checkboxes, no numbers)
 - [ ] Goal/Note lines indented 4 spaces from margin (same level as subtasks)
@@ -372,6 +373,93 @@ architecture issues discovered during browser testing
     - [ ] 1.1.1 Create test with details  # Not bold but should be (has details below)
         - Test details
 ```
+
+### Letter Numbering (Third Level and Beyond)
+
+**Format:** `X.Y.a`, `X.Y.b` for third level; `X.Y.a.1`, `X.Y.a.2` for fourth level
+
+**When to use:** After two number levels, use letters for visual differentiation
+
+**Rationale:**
+
+- **Readability:** `7.3.a` is instantly clearer than `7.3.1` (letter signals deeper nesting)
+- **Cognitive load:** Easier to track "I'm at the letter level" vs blending numbers
+- **Common pattern:** Legal documents, academic outlines use this effectively
+- **Visual differentiation:** Letters break up number sequences, reducing parsing effort
+
+**Numbering hierarchy:**
+
+```
+Phase: ### **Phase X:**
+Parent task: X.Y (e.g., 1.1, 2.3)
+Subtask: X.Y.Z (e.g., 1.1.1, 2.3.2)
+Sub-subtask: X.Y.a, X.Y.b (use letters for clarity)
+Fourth level (rare): X.Y.a.1, X.Y.a.2
+```
+
+**Guidelines:**
+
+- Use letters after two number levels (third level) for visual differentiation
+- If fourth level needed, resume numbers after letters
+- Maintain 4-space indentation per level regardless of numbering scheme
+
+**Examples:**
+
+✅ **Correct (letter numbering at third level):**
+
+```markdown
+- [ ] **7.1 Systematic component audit**
+
+    **Goal:** Review all components for token usage consistency.
+
+    - [ ] **7.1.a Catalog all components**
+        - Generate list of all `.tsx` files
+        - Categorize by type: pages, layout, features
+        - Create audit checklist
+
+    - [ ] **7.1.b Verify button pattern consistency**
+        - Check solid buttons use `bg="primary"` + `color="on-primary"`
+        - Check outline buttons use proper border tokens
+        - Document violations
+
+    - [ ] **7.1.c Verify form control consistency**
+        - Check all inputs use `input` token for borders
+        - Check all focus states use `ring` token
+        - Document violations
+```
+
+✅ **Correct (fourth level if needed):**
+
+```markdown
+- [ ] **7.2 Apply fixes from audit**
+
+    - [ ] **7.2.a Apply button pattern fixes**
+        - Work through button violation list from 7.1.b
+
+        - [ ] **7.2.a.1 Fix primary button patterns**
+            - Update 15 components with correct token pairs
+            - Test across all themes
+
+        - [ ] **7.2.a.2 Fix outline button patterns**
+            - Update 8 components with border tokens
+            - Test across all themes
+```
+
+❌ **Wrong (all numbers - hard to parse):**
+
+```markdown
+- [ ] **7.1 Systematic component audit**
+    - [ ] **7.1.1 Catalog all components**  # 7.1.1 blends together
+    - [ ] **7.1.2 Verify button patterns**  # 7.1.2 hard to distinguish from 7.1.1
+    - [ ] **7.1.3 Verify form controls**    # Numbers blend, cognitive load increases
+```
+
+**Comparison readability:**
+
+- `7.3.1` - Three numbers blend together (harder to parse)
+- `7.3.a` - Instantly clear it's a sub-level (letter signals depth)
+- `7.3.1.1` - Four segments, confusing
+- `7.3.a.1` - Much clearer hierarchy (number-number-letter-number)
 
 ### Unnumbered Implementation Bullets
 

@@ -236,7 +236,7 @@ const PaginationCtrl = (props: iPaginationCtrlProps) => {
           <IconButton
             key={`ellipsis-${index}`}
             disabled
-            color="muted-foreground"
+            color="on-muted"
             borderColor="border"
             _hover={{ bg: "transparent" }}
             cursor="default"

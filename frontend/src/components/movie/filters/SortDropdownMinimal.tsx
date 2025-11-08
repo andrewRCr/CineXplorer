@@ -71,7 +71,7 @@ const SortDropdownMinimal = ({
         fontSize="sm"
         fontWeight="400"
         fontFamily="inter"
-        color="muted-foreground"
+        color="on-muted"
         alignSelf="center"
         flexShrink={0}
         mr={2}
@@ -123,7 +123,7 @@ const SortDropdownMinimal = ({
               justifyContent: "space-between",
               "& > span": {
                 fontStyle: isSortCustom ? "italic" : "normal",
-                color: isSortCustom ? "muted-foreground" : "foreground",
+                color: isSortCustom ? "on-muted" : "foreground",
               },
               "& [data-part='indicator']": {
                 width: "16px",
@@ -147,7 +147,7 @@ const SortDropdownMinimal = ({
                   style={{
                     color:
                       "disabled" in item && item.disabled
-                        ? "muted-foreground"
+                        ? "on-muted"
                         : "foreground",
                     fontStyle:
                       "disabled" in item && item.disabled ? "italic" : "normal",

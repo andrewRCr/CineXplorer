@@ -110,7 +110,7 @@ const VerifyEmail = () => {
                 </Alert.Description>
                 <Text
                   fontSize="sm"
-                  color="success-foreground"
+                  color="on-success"
                   fontWeight="medium"
                 >
                   Redirecting to login in {countdown} second
@@ -122,7 +122,7 @@ const VerifyEmail = () => {
               size="lg"
               onClick={handleContinue}
               bg="primary"
-              color="primary-foreground"
+              color="on-primary"
               _hover={{ opacity: 0.92 }}
             >
               Continue to Login Now

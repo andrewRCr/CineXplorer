@@ -168,7 +168,7 @@ const NavBar = () => {
                     size="sm"
                     variant={isTabActive(item.path) ? "solid" : "ghost"}
                     bg={isTabActive(item.path) ? "tertiary" : undefined}
-                    color={isTabActive(item.path) ? "tertiary-foreground" : undefined}
+                    color={isTabActive(item.path) ? "on-tertiary" : undefined}
                     _hover={{
                       bg: isTabActive(item.path)
                         ? "tertiary"

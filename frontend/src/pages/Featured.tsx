@@ -26,7 +26,7 @@ const Featured = () => {
 
         <Text
           fontSize="xl"
-          color="muted-foreground"
+          color="on-muted"
           textAlign="center"
           mb={12}
           maxW="600px"
@@ -52,7 +52,7 @@ const Featured = () => {
             <Button
               onClick={() => navigate(ROUTES.POPULAR)}
               bg="tertiary"
-              color="tertiary-foreground"
+              color="on-tertiary"
               _hover={{ opacity: 0.92 }}
               size="lg"
               width="100%"

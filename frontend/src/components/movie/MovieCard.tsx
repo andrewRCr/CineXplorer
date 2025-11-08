@@ -290,7 +290,7 @@ const MovieCard = ({ movie, currentPage, source, query }: MovieCardProps) => {
                 <Text
                   fontSize="sm"
                   fontFamily="sourcesans"
-                  color="muted-foreground"
+                  color="on-muted"
                 >
                   {formattedDate}
                 </Text>

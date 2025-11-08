@@ -27,7 +27,7 @@ const Footer = () => {
 
         {/* Debug Links Row (dev mode only) */}
         {import.meta.env.DEV && (
-          <HStack gap={3} fontSize="xs" color="muted-foreground">
+          <HStack gap={3} fontSize="xs" color="on-muted">
             <Text fontWeight="medium">Debug:</Text>
             <Link to="/theme-debug" style={{ textDecoration: "underline" }}>
               Theme
@@ -40,7 +40,7 @@ const Footer = () => {
 
         {/* Copyright Row */}
         <Box display="inline-flex" alignItems="center" gap={2}>
-          <Text fontSize="sm" color="muted-foreground" fontWeight="light">
+          <Text fontSize="sm" color="on-muted" fontWeight="light">
             © 2025 CineXplorer. All rights reserved.
           </Text>
         </Box>
@@ -59,7 +59,7 @@ const Footer = () => {
               style={{ height: "18px", opacity: 0.7 }}
             />
           </a>
-          <Text fontSize="sm" color="muted-foreground" fontWeight="light">
+          <Text fontSize="sm" color="on-muted" fontWeight="light">
             This product uses the TMDB API but is not endorsed or certified by
             TMDB.
           </Text>

@@ -218,7 +218,7 @@ const Register = () => {
               </Box>
 
               {errorMessage && (
-                <Text color="destructive-foreground" fontSize="14px" textAlign="center">
+                <Text color="on-destructive" fontSize="14px" textAlign="center">
                   {errorMessage}
                 </Text>
               )}
@@ -230,7 +230,7 @@ const Register = () => {
                 loading={formik.isSubmitting}
                 loadingText="Registering..."
                 bg="primary"
-                color="primary-foreground"
+                color="on-primary"
                 _hover={{
                   opacity: 0.92,
                 }}

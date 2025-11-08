@@ -146,7 +146,7 @@ const MovieDetail = () => {
       <Box maxW="6xl" mx="auto" p={4}>
         {BackButton}
         <Box p={8}>
-          <Text color="destructive-foreground">{error}</Text>
+          <Text color="on-destructive">{error}</Text>
         </Box>
       </Box>
     );
@@ -178,7 +178,7 @@ const MovieDetail = () => {
           {/* Header: Movie Title */}
           <Heading size="lg">{movie.title}</Heading>
           {/* Header: Release Date */}
-          <Text fontSize="md" color="muted-foreground">
+          <Text fontSize="md" color="on-muted">
             {formattedReleaseDate}
           </Text>
           {/* Header: Genres */}
@@ -191,7 +191,7 @@ const MovieDetail = () => {
           </Flex>
           {/* Header: Runtime */}
           {movie.runtime && (
-            <Text fontSize="sm" color="muted-foreground">
+            <Text fontSize="sm" color="on-muted">
               Runtime: {Math.floor(movie.runtime / 60)}h {movie.runtime % 60}m
             </Text>
           )}
@@ -228,10 +228,10 @@ const MovieDetail = () => {
           Your Actions
         </Heading>
         <Flex gap={4} justify="center">
-          {/* <Button bg="primary" color="primary-foreground">Add to Watchlist</Button> */}
+          {/* <Button bg="primary" color="on-primary">Add to Watchlist</Button> */}
           <Button
             bg={userMovieData?.user_on_watchlist ? "secondary" : "primary"}
-            color={userMovieData?.user_on_watchlist ? "secondary-foreground" : "primary-foreground"}
+            color={userMovieData?.user_on_watchlist ? "on-secondary" : "on-primary"}
             _hover={{ opacity: 0.92 }}
             loading={userMovieDataLoading && isAuthenticated}
             onClick={() =>
@@ -245,10 +245,10 @@ const MovieDetail = () => {
               ? "Remove from Watchlist"
               : "Add to Watchlist"}
           </Button>
-          <Button bg="primary" color="primary-foreground" _hover={{ opacity: 0.92 }} disabled={!isAuthenticated}>
+          <Button bg="primary" color="on-primary" _hover={{ opacity: 0.92 }} disabled={!isAuthenticated}>
             Mark as Watched
           </Button>
-          <Button bg="primary" color="primary-foreground" _hover={{ opacity: 0.92 }} disabled={!isAuthenticated}>
+          <Button bg="primary" color="on-primary" _hover={{ opacity: 0.92 }} disabled={!isAuthenticated}>
             Rate Movie
           </Button>
         </Flex>

@@ -242,7 +242,7 @@ export default function LayoutDebug() {
               position="sticky"
               top={0}
               bg="tertiary"
-              color="tertiary-foreground"
+              color="on-tertiary"
               p={3}
               fontWeight="bold"
               zIndex={1}

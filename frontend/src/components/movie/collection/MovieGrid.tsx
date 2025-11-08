@@ -88,7 +88,7 @@ const MovieGrid = forwardRef<MovieGridRef, MovieGridProps>(
       <>
         {error && (
           <Box textAlign="center" mb={4}>
-            <Text color="destructive-foreground" mb={2}>
+            <Text color="on-destructive" mb={2}>
               {error}
             </Text>
             <Button size="sm" onClick={() => setError("")}>
@@ -112,7 +112,7 @@ const MovieGrid = forwardRef<MovieGridRef, MovieGridProps>(
           >
             <Text
               fontSize="sm"
-              color="muted-foreground"
+              color="on-muted"
               fontWeight="medium"
             >
               {resultText}
@@ -129,10 +129,10 @@ const MovieGrid = forwardRef<MovieGridRef, MovieGridProps>(
         {/* Movie Grid */}
         {shouldShowEmptyState ? (
           <Box textAlign="center" py={12}>
-            <Text fontSize="lg" color="muted-foreground" mb={0}>
+            <Text fontSize="lg" color="on-muted" mb={0}>
               No movies found matching your filters.
             </Text>
-            <Text fontSize="sm" color="muted-foreground">
+            <Text fontSize="sm" color="on-muted">
               Try adjusting your search criteria or filters.
             </Text>
           </Box>

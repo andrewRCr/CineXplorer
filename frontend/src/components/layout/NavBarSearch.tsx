@@ -82,7 +82,7 @@ const NavBarSearch = ({ onSearch }: NavBarSearchProps = {}) => {
           backgroundColor: "transparent",
         }}
         disabled={!query.trim()}
-        color={!query.trim() ? "muted-foreground" : "foreground"}
+        color={!query.trim() ? "on-muted" : "foreground"}
       >
         <FiSearch />
       </IconButton>

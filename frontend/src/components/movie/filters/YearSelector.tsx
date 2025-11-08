@@ -202,7 +202,7 @@ const YearSelector = ({
       <Text fontSize="sm" fontWeight="medium" mb={2} color="foreground">
         Release Year
         {isRouteConstrained && (
-          <Text as="span" color="muted-foreground" ml={1}>
+          <Text as="span" color="on-muted" ml={1}>
             ({routeLabel})
           </Text>
         )}
@@ -237,7 +237,7 @@ const YearSelector = ({
           disabled={isRouteConstrained}
           cursor={isRouteConstrained ? "not-allowed" : "text"}
         />
-        <Text fontSize="sm" color="muted-foreground">
+        <Text fontSize="sm" color="on-muted">
           to
         </Text>
         <Input
@@ -271,7 +271,7 @@ const YearSelector = ({
         />
       </HStack>
       {isRouteConstrained && (
-        <Text fontSize="xs" color="muted-foreground" mt={1}>
+        <Text fontSize="xs" color="on-muted" mt={1}>
           Showing: {dateRangeInfo.text}
         </Text>
       )}

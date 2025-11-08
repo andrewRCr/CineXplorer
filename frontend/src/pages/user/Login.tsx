@@ -559,7 +559,7 @@ const Login = () => {
                 width="full"
                 fontSize="16px"
                 bg="primary"
-                color="primary-foreground"
+                color="on-primary"
                 _hover={{
                   opacity: 0.92,
                 }}
@@ -587,7 +587,7 @@ const Login = () => {
                   mx="auto"
                   w="fit-content"
                   fontSize="14px"
-                  color="muted-foreground"
+                  color="on-muted"
                 >
                   or continue with
                 </Text>
@@ -698,7 +698,7 @@ const Login = () => {
                   <FiX size={16} />
                 </IconButton>
                 <Alert.Indicator />
-                <Alert.Description fontSize="sm" color="success-foreground">
+                <Alert.Description fontSize="sm" color="on-success">
                   {registrationSuccess}
                 </Alert.Description>
               </Alert.Root>
@@ -726,7 +726,7 @@ const Login = () => {
                   <FiX size={16} />
                 </IconButton>
                 <Alert.Indicator />
-                <Alert.Description fontSize="sm" color="success-foreground">
+                <Alert.Description fontSize="sm" color="on-success">
                   {emailVerifiedSuccess}
                 </Alert.Description>
               </Alert.Root>
@@ -741,7 +741,7 @@ const Login = () => {
                 boxShadow="sm"
               >
                 <Alert.Indicator />
-                <Alert.Description fontSize="sm" color="destructive-foreground">
+                <Alert.Description fontSize="sm" color="on-destructive">
                   {generalError}
                 </Alert.Description>
               </Alert.Root>
@@ -784,7 +784,7 @@ const Login = () => {
                       <Button
                         size="sm"
                         bg="tertiary"
-                        color="tertiary-foreground"
+                        color="on-tertiary"
                         _hover={{ opacity: 0.92 }}
                         onClick={handleResendVerification}
                         loading={isResendingEmail}
@@ -796,7 +796,7 @@ const Login = () => {
                     </Box>
                     {resendMessage && (
                       <Box textAlign="center" mt={2}>
-                        <Text fontSize="sm" color="success-foreground">
+                        <Text fontSize="sm" color="on-success">
                           {resendMessage}
                         </Text>
                       </Box>

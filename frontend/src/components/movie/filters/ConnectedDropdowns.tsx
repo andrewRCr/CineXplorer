@@ -253,7 +253,7 @@ const ConnectedDropdowns = ({
               "& > span": {
                 fontStyle: genreDisplayData.isGenreDisabled ? "italic" : "normal",
                 color: genreDisplayData.isGenreDisabled
-                  ? "muted-foreground"
+                  ? "on-muted"
                   : "foreground",
               },
               "& [data-part='indicator']": {
@@ -342,7 +342,7 @@ const ConnectedDropdowns = ({
               "& > span": {
                 fontStyle: yearDisplayData.isYearCustom || yearDisplayData.isRouteConstrained ? "italic" : "normal",
                 color: yearDisplayData.isYearCustom || yearDisplayData.isRouteConstrained
-                  ? "muted-foreground"
+                  ? "on-muted"
                   : "foreground",
               },
               "& [data-part='indicator']": {

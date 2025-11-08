@@ -81,7 +81,7 @@ export function ThemeSelector() {
                   value={option.value}
                   onClick={() => setTheme(option.value)}
                   bg={theme === option.value ? "tertiary" : undefined}
-                  color={theme === option.value ? "tertiary-foreground" : undefined}
+                  color={theme === option.value ? "on-tertiary" : undefined}
                   _hover={{
                     bg: theme === option.value ? "tertiary" : "tertiary/8",
                     opacity: theme === option.value ? 0.92 : 1,

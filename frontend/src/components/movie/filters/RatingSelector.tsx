@@ -178,7 +178,7 @@ const RatingSelector = ({
             boxShadow: "0 0 0 1px red.300",
           }}
         />
-      <Text fontSize="sm" color="muted-foreground">
+      <Text fontSize="sm" color="on-muted">
         to
       </Text>
         <Input

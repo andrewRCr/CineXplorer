@@ -155,7 +155,7 @@ const CollapsibleSearchBox = ({
           variant="ghost"
           borderRadius="0 4px 4px 0"
           backgroundColor="transparent"
-        color="muted-foreground"
+        color="on-muted"
         _hover={{
           bg: "tertiary/8",
           color: "foreground",

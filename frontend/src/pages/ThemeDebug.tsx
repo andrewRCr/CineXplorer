@@ -1,4 +1,4 @@
-import { Box, Text, VStack, HStack, Button, Code, Input } from "@chakra-ui/react";
+import { Box, Text, VStack, HStack, Button, Code, Input, Link } from "@chakra-ui/react";
 import { useState } from "react";
 import { useThemeSelect } from "@/hooks/useThemeSelect";
 import { type ThemeName } from "@/theme";
@@ -266,106 +266,322 @@ function SemanticColorsSection() {
                 </Text>
               </VStack>
             ) : (
-              // IBM Carbon and GitLab Pajamas have brand colors
-              <>
+              // IBM Carbon, GitLab Pajamas, and Material Design 3 have brand colors
+              <VStack gap={4}>
+                {/* Color swatches (circles) */}
+                <HStack gap={6} wrap="wrap" justify="center">
+                  <VStack gap={2}>
+                    <Box
+                      bg="brand"
+                      w="80px"
+                      h="80px"
+                      borderRadius="full"
+                      display="flex"
+                      alignItems="center"
+                      justifyContent="center"
+                    />
+                    <VStack gap={0}>
+                      <Text fontSize="xs" fontWeight="medium">brand</Text>
+                      <Text fontSize="2xs" color="foreground/60">
+                        {theme === 'ibm-carbon' ? 'IBM Blue' : theme === 'gitlab-pajamas' ? 'GitLab Purple' : 'Material Purple'}
+                      </Text>
+                    </VStack>
+                  </VStack>
+                  {theme === 'gitlab-pajamas' && (
+                    <VStack gap={2}>
+                      <Box
+                        bg="brandSecondary"
+                        w="80px"
+                        h="80px"
+                        borderRadius="full"
+                        display="flex"
+                        alignItems="center"
+                        justifyContent="center"
+                      />
+                      <VStack gap={0}>
+                        <Text fontSize="xs" fontWeight="medium">brandSecondary</Text>
+                        <Text fontSize="2xs" color="foreground/60">GitLab Orange</Text>
+                      </VStack>
+                    </VStack>
+                  )}
+                </HStack>
+
+                {/* Foreground token pairings */}
                 <HStack gap={3} wrap="wrap" justify="center">
-                  <Box bg="brand" color="foreground" p={3} borderRadius="md" minW="140px" textAlign="center" borderWidth="1px" borderColor="border">
-                    <Text fontWeight="bold" fontSize="sm">brand</Text>
-                    <Text fontSize="xs" color="foreground/60" mt={1}>
-                      {theme === 'ibm-carbon' ? 'IBM Blue' : 'GitLab Purple'}
-                    </Text>
+                  <Box bg="brand" color="on-brand" px={3} py={2} borderRadius="md" fontSize="xs" fontWeight="medium">
+                    on-brand
                   </Box>
                   {theme === 'gitlab-pajamas' && (
-                    <Box bg="brandSecondary" color="foreground" p={3} borderRadius="md" minW="140px" textAlign="center" borderWidth="1px" borderColor="border">
-                      <Text fontWeight="bold" fontSize="sm">brandSecondary</Text>
-                      <Text fontSize="xs" color="foreground/60" mt={1}>GitLab Orange</Text>
+                    <Box bg="brandSecondary" color="on-brandSecondary" px={3} py={2} borderRadius="md" fontSize="xs" fontWeight="medium">
+                      on-brandSecondary
                     </Box>
                   )}
                 </HStack>
-                <Text fontSize="xs" color="foreground/60" mt={2} textAlign="center" maxW="600px" mx="auto" lineHeight="1.5">
+
+                <Text fontSize="xs" color="foreground/60" textAlign="center" maxW="600px" mx="auto" lineHeight="1.5">
                   Brand tokens are for logo/identity only. Use functional tokens (primary/tertiary) for UI components.
                 </Text>
-              </>
+              </VStack>
             )}
           </Box>
         </Box>
 
-        {/* Core Actions - Primary/Secondary/Tertiary/Muted hierarchy per ADR-010 */}
+        {/* Core Colors - Primary/Secondary/Tertiary/Muted color tokens per ADR-010 */}
         <Box>
-          <Text fontSize="lg" fontWeight="bold" mb={2}>Core Actions</Text>
+          <Text fontSize="lg" fontWeight="bold" mb={2}>Core Colors</Text>
           <Box bg="background" p={4} borderRadius="md" borderWidth="1px" borderColor="border-subtle-00">
-            <HStack gap={3} wrap="wrap" justify="center">
-              <Box bg="primary" color="primary-foreground" p={3} borderRadius="md" minW="140px" textAlign="center">
-                <Text fontWeight="bold" fontSize="sm">primary</Text>
-              </Box>
-              <Box bg="secondary" color="secondary-foreground" p={3} borderRadius="md" minW="140px" textAlign="center" borderWidth="1px" borderColor="border-strong-01">
-                <Text fontWeight="bold" fontSize="sm">secondary</Text>
-              </Box>
-              <Box bg="tertiary" color="tertiary-foreground" p={3} borderRadius="md" minW="140px" textAlign="center">
-                <Text fontWeight="bold" fontSize="sm">tertiary</Text>
-              </Box>
-              <Box bg="muted" color="muted-foreground" p={3} borderRadius="md" minW="140px" textAlign="center">
-                <Text fontWeight="bold" fontSize="sm">muted</Text>
-              </Box>
-            </HStack>
-            <Text fontSize="xs" color="foreground/60" mt={2} textAlign="center" maxW="600px" mx="auto" lineHeight="1.5">
-              Per ADR-010: Primary (background token for buttons), Secondary (outline pattern), Tertiary (foreground token for links), Muted (non-interactive).
-            </Text>
-          </Box>
-        </Box>
+            <VStack gap={4}>
+              {/* Color swatches (circles) */}
+              <HStack gap={6} wrap="wrap" justify="center">
+                <VStack gap={2}>
+                  <Box
+                    bg="primary"
+                    w="80px"
+                    h="80px"
+                    borderRadius="full"
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="center"
+                  />
+                  <Text fontSize="xs" fontWeight="medium">primary</Text>
+                </VStack>
+                <VStack gap={2}>
+                  <Box
+                    bg="secondary"
+                    w="80px"
+                    h="80px"
+                    borderRadius="full"
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="center"
+                    borderWidth="1px"
+                    borderColor="border-strong-01"
+                  />
+                  <Text fontSize="xs" fontWeight="medium">secondary</Text>
+                </VStack>
+                <VStack gap={2}>
+                  <Box
+                    bg="tertiary"
+                    w="80px"
+                    h="80px"
+                    borderRadius="full"
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="center"
+                  />
+                  <Text fontSize="xs" fontWeight="medium">tertiary</Text>
+                </VStack>
+                <VStack gap={2}>
+                  <Box
+                    bg="muted"
+                    w="80px"
+                    h="80px"
+                    borderRadius="full"
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="center"
+                  />
+                  <Text fontSize="xs" fontWeight="medium">muted</Text>
+                </VStack>
+              </HStack>
 
-        {/* Secondary Outline Pattern */}
-        <Box>
-          <Text fontSize="sm" fontWeight="medium" mb={2} color="foreground/80">
-            Secondary Token Usage Pattern:
-          </Text>
-          <Box bg="background" p={4} borderRadius="md" borderWidth="1px" borderColor="border-subtle-00">
-            <VStack gap={3}>
-              <Box
-                bg="secondary"
-                color="secondary-foreground"
-                borderWidth="1px"
-                borderColor="border-strong-01"
-                p={3}
-                borderRadius="md"
-                minW="200px"
-                textAlign="center"
-              >
-                <Text fontWeight="bold" fontSize="sm">Secondary Button (Outline)</Text>
-              </Box>
-              <Text fontSize="xs" color="foreground/60" textAlign="center" maxW="600px" lineHeight="1.5">
-                Industry standard pattern (Bootstrap, Carbon, Primer, Pajamas): Secondary uses outline/ghost styling
-                with <Code fontSize="xs">border-strong-01</Code> token (per strategy-border-system.md). Background uses
-                official secondary token + mandatory 1px border for visual hierarchy (primary=filled, secondary=outline)
-                and cross-theme consistency.
+              {/* Foreground token pairings */}
+              <HStack gap={3} wrap="wrap" justify="center">
+                <Box bg="primary" color="on-primary" px={3} py={2} borderRadius="md" fontSize="xs" fontWeight="medium">
+                  on-primary
+                </Box>
+                <Box bg="secondary" color="on-secondary" px={3} py={2} borderRadius="md" fontSize="xs" fontWeight="medium" borderWidth="1px" borderColor="border-strong-01">
+                  on-secondary
+                </Box>
+                <Box bg="tertiary" color="on-tertiary" px={3} py={2} borderRadius="md" fontSize="xs" fontWeight="medium">
+                  on-tertiary
+                </Box>
+                <Box bg="muted" color="on-muted" px={3} py={2} borderRadius="md" fontSize="xs" fontWeight="medium">
+                  on-muted
+                </Box>
+              </HStack>
+
+              <Text fontSize="xs" color="foreground/60" textAlign="center" maxW="600px" mx="auto" lineHeight="1.5">
+                Per ADR-010: Color tokens for the semantic hierarchy. Primary (action color), Secondary (subtle backgrounds), Tertiary (interactive text/links), Muted (disabled/deemphasized).
               </Text>
             </VStack>
           </Box>
         </Box>
 
-        {/* Status Colors - All 4 in one row, content centered, header not */}
+        {/* Core Actions - Button patterns per ADR-012 */}
+        <Box>
+          <Text fontSize="lg" fontWeight="bold" mb={2}>Core Actions</Text>
+          <Box bg="background" p={4} borderRadius="md" borderWidth="1px" borderColor="border-subtle-00">
+            <VStack gap={4}>
+              {/* Buttons */}
+              <VStack gap={2}>
+                <Text fontSize="sm" fontWeight="medium">Buttons:</Text>
+                <HStack gap={3} wrap="wrap" justify="center">
+                {/* Solid button - highest emphasis */}
+                <VStack gap={1}>
+                  <Button
+                    variant="solid"
+                    bg="primary"
+                    color="on-primary"
+                    _hover={{ bg: "primary-hover" }}
+                    _active={{ bg: "primary-active" }}
+                  >
+                    Save
+                  </Button>
+                  <Text fontSize="xs" color="foreground/60">solid (primary)</Text>
+                </VStack>
+
+                {/* Outline button - high emphasis */}
+                <VStack gap={1}>
+                  <Button
+                    variant="outline"
+                    borderColor="button-outline"
+                    color="button-outline"
+                    _hover={{ bg: "button-outline/8" }}
+                    _active={{ bg: "button-outline/12" }}
+                  >
+                    Cancel
+                  </Button>
+                  <Text fontSize="xs" color="foreground/60">outline (primary)</Text>
+                </VStack>
+
+                {/* Subtle button - medium emphasis */}
+                <VStack gap={1}>
+                  <Button
+                    variant="subtle"
+                    bg="button-subtle"
+                    color="on-button-subtle"
+                    _hover={{ bg: "secondary-hover" }}
+                    _active={{ bg: "secondary-active" }}
+                  >
+                    Options
+                  </Button>
+                  <Text fontSize="xs" color="foreground/60">subtle (secondary)</Text>
+                </VStack>
+
+                {/* Ghost button - low emphasis */}
+                <VStack gap={1}>
+                  <Button
+                    variant="ghost"
+                    color="tertiary"
+                    _hover={{ color: "tertiary-hover" }}
+                    _active={{ color: "tertiary-active" }}
+                  >
+                    Skip
+                  </Button>
+                  <Text fontSize="xs" color="foreground/60">ghost (tertiary)</Text>
+                </VStack>
+                </HStack>
+              </VStack>
+
+              {/* Interactive text/links */}
+              <VStack gap={2}>
+                <Text fontSize="sm" fontWeight="medium">Interactive Text & Links:</Text>
+                <Link
+                  color="tertiary"
+                  textDecoration="underline"
+                  textDecorationThickness="2px"
+                  textUnderlineOffset="2px"
+                  _hover={{ color: "tertiary-hover" }}
+                  _focus={{
+                    outline: "2px solid",
+                    outlineColor: "ring",
+                    outlineOffset: "2px",
+                  }}
+                >
+                  Learn more about this feature
+                </Link>
+                <Text fontSize="xs" color="foreground/60">(uses tertiary + tertiary-hover)</Text>
+              </VStack>
+
+              <Text fontSize="xs" color="foreground/60" textAlign="center" maxW="700px" lineHeight="1.5">
+                Per ADR-012: Button patterns (solid/outline/subtle/ghost) are separate from color semantics.
+                Outline buttons use <Code fontSize="xs">button-outline</Code> (maps to primary) for cross-theme consistency.
+                Subtle buttons use <Code fontSize="xs">button-subtle</Code> (maps to secondary).
+                Interactive text/links use <Code fontSize="xs">tertiary</Code> color.
+              </Text>
+            </VStack>
+          </Box>
+        </Box>
+
+        {/* Status Colors - Consistent format with Core Colors */}
         <Box>
           <Text fontSize="lg" fontWeight="bold" mb={2}>Status Colors</Text>
           <Box bg="background" p={4} borderRadius="md" borderWidth="1px" borderColor="border-subtle-00">
-            <HStack gap={3} wrap="wrap" justify="center">
-              <Box bg="success" color="on-success" p={3} borderRadius="md" minW="140px" textAlign="center">
-                <Text fontWeight="bold" fontSize="sm">success</Text>
-              </Box>
-              <Box bg="warning" color="on-warning" p={3} borderRadius="md" minW="140px" textAlign="center">
-                <Text fontWeight="bold" fontSize="sm">warning</Text>
-              </Box>
-              <Box bg="info" color="on-info" p={3} borderRadius="md" minW="140px" textAlign="center">
-                <Text fontWeight="bold" fontSize="sm">info</Text>
-              </Box>
-              <Box bg="destructive" color="on-destructive" p={3} borderRadius="md" minW="140px" textAlign="center">
-                <Text fontWeight="bold" fontSize="sm">destructive</Text>
-              </Box>
-            </HStack>
+            <VStack gap={4}>
+              {/* Color swatches (circles) */}
+              <HStack gap={6} wrap="wrap" justify="center">
+                <VStack gap={2}>
+                  <Box
+                    bg="success"
+                    w="80px"
+                    h="80px"
+                    borderRadius="full"
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="center"
+                  />
+                  <Text fontSize="xs" fontWeight="medium">success</Text>
+                </VStack>
+                <VStack gap={2}>
+                  <Box
+                    bg="warning"
+                    w="80px"
+                    h="80px"
+                    borderRadius="full"
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="center"
+                  />
+                  <Text fontSize="xs" fontWeight="medium">warning</Text>
+                </VStack>
+                <VStack gap={2}>
+                  <Box
+                    bg="info"
+                    w="80px"
+                    h="80px"
+                    borderRadius="full"
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="center"
+                  />
+                  <Text fontSize="xs" fontWeight="medium">info</Text>
+                </VStack>
+                <VStack gap={2}>
+                  <Box
+                    bg="destructive"
+                    w="80px"
+                    h="80px"
+                    borderRadius="full"
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="center"
+                  />
+                  <Text fontSize="xs" fontWeight="medium">destructive</Text>
+                </VStack>
+              </HStack>
+
+              {/* Foreground token pairings */}
+              <HStack gap={3} wrap="wrap" justify="center">
+                <Box bg="success" color="on-success" px={3} py={2} borderRadius="md" fontSize="xs" fontWeight="medium">
+                  on-success
+                </Box>
+                <Box bg="warning" color="on-warning" px={3} py={2} borderRadius="md" fontSize="xs" fontWeight="medium">
+                  on-warning
+                </Box>
+                <Box bg="info" color="on-info" px={3} py={2} borderRadius="md" fontSize="xs" fontWeight="medium">
+                  on-info
+                </Box>
+                <Box bg="destructive" color="on-destructive" px={3} py={2} borderRadius="md" fontSize="xs" fontWeight="medium">
+                  on-destructive
+                </Box>
+              </HStack>
+            </VStack>
           </Box>
         </Box>
 
         <Text fontSize="xs" color="foreground/70" fontStyle="italic" px={2} textAlign="center">
-          Core action colors use -foreground pairs for text. Status colors show solid backgrounds with on-[status] text colors for optimal contrast.
+          Both Core and Status colors use on-* tokens for text on colored backgrounds (e.g., on-primary, on-success) per ADR-011 naming convention.
         </Text>
       </VStack>
     </Box>
@@ -598,8 +814,8 @@ function ShadowSystemSection() {
  * (8% hover, 12% selected/active) for consistent cross-theme behavior.
  */
 function InteractionStatesSection() {
-  const [selectedLayer01, setSelectedLayer01] = useState<number | null>(null);
-  const [selectedLayer02, setSelectedLayer02] = useState<number | null>(null);
+  const [selectedLayer01, setSelectedLayer01] = useState(false);
+  const [selectedLayer02, setSelectedLayer02] = useState(false);
 
   return (
     <Box id="interaction-states" bg="layer-01" p={6} borderRadius="md" borderWidth="1px" borderColor="border">
@@ -614,28 +830,24 @@ function InteractionStatesSection() {
 
           {/* Container showing layer-01 context */}
           <Box bg="background" p={4} borderRadius="md" borderWidth="1px" borderColor="border-subtle-00">
-            <Text fontSize="xs" color="foreground/60" mb={3}>On background (layer-01 cards):</Text>
-            <HStack gap={3} wrap="wrap" justify="center">
-              {[1, 2, 3].map((i) => (
-                <Box
-                  key={`layer01-${i}`}
-                  bg="layer-01"
-                  p={4}
-                  borderRadius="md"
-                  borderWidth="1px"
-                  borderColor="border"
-                  cursor="pointer"
-                  minW="160px"
-                  onClick={() => setSelectedLayer01(selectedLayer01 === i ? null : i)}
-                  _hover={{ bg: "layer-hover-01" }}
-                  {...(selectedLayer01 === i && { bg: "layer-selected-01" })}
-                >
-                  <Text fontSize="sm" textAlign="center" fontWeight="medium">
-                    {selectedLayer01 === i ? "Selected" : "Hover/Click me"}
-                  </Text>
-                </Box>
-              ))}
-            </HStack>
+            <Text fontSize="xs" color="foreground/60" mb={3}>On background (layer-01 card):</Text>
+            <Box display="flex" justifyContent="center">
+              <Box
+                bg={selectedLayer01 ? "layer-selected-01" : "layer-01"}
+                p={4}
+                borderRadius="md"
+                borderWidth="1px"
+                borderColor="border"
+                cursor="pointer"
+                minW="160px"
+                onClick={() => setSelectedLayer01(!selectedLayer01)}
+                _hover={{ bg: selectedLayer01 ? "layer-selected-01" : "layer-hover-01" }}
+              >
+                <Text fontSize="sm" textAlign="center" fontWeight="medium">
+                  {selectedLayer01 ? "Selected" : "Hover/Click me"}
+                </Text>
+              </Box>
+            </Box>
 
             {/* Static Reference Swatches */}
             <HStack gap={3} mt={4} justify="center">
@@ -661,28 +873,24 @@ function InteractionStatesSection() {
 
           {/* Container showing layer-02 context */}
           <Box bg="layer-01" p={4} borderRadius="md" borderWidth="1px" borderColor="border">
-            <Text fontSize="xs" color="foreground/60" mb={3}>On layer-01 (layer-02 elevated elements):</Text>
-            <HStack gap={3} wrap="wrap" justify="center">
-              {[1, 2, 3].map((i) => (
-                <Box
-                  key={`layer02-${i}`}
-                  bg="layer-02"
-                  p={4}
-                  borderRadius="md"
-                  borderWidth="1px"
-                  borderColor="border"
-                  cursor="pointer"
-                  minW="160px"
-                  onClick={() => setSelectedLayer02(selectedLayer02 === i ? null : i)}
-                  _hover={{ bg: "layer-hover-02" }}
-                  {...(selectedLayer02 === i && { bg: "layer-selected-02" })}
-                >
-                  <Text fontSize="sm" textAlign="center" fontWeight="medium">
-                    {selectedLayer02 === i ? "Selected" : "Hover/Click me"}
-                  </Text>
-                </Box>
-              ))}
-            </HStack>
+            <Text fontSize="xs" color="foreground/60" mb={3}>On layer-01 (layer-02 elevated element):</Text>
+            <Box display="flex" justifyContent="center">
+              <Box
+                bg={selectedLayer02 ? "layer-selected-02" : "layer-02"}
+                p={4}
+                borderRadius="md"
+                borderWidth="1px"
+                borderColor="border"
+                cursor="pointer"
+                minW="160px"
+                onClick={() => setSelectedLayer02(!selectedLayer02)}
+                _hover={{ bg: selectedLayer02 ? "layer-selected-02" : "layer-hover-02" }}
+              >
+                <Text fontSize="sm" textAlign="center" fontWeight="medium">
+                  {selectedLayer02 ? "Selected" : "Hover/Click me"}
+                </Text>
+              </Box>
+            </Box>
 
             {/* Static Reference Swatches */}
             <HStack gap={3} mt={4} justify="center">

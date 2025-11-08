@@ -546,6 +546,107 @@ export interface UnifiedTheme {
      */
     "accent-hover": string;
 
+    // ===================================================================
+    // INTERACTION STATE TOKENS (Color-Based)
+    // ===================================================================
+    // Per ADR-009: Material Design opacity overlays (8% hover, 12% active)
+    // These tokens provide pre-calculated interaction states for semantic colors.
+
+    /**
+     * Hover state for primary action buttons (ADR-009).
+     *
+     * **Implementation:** Primary color + 8% foreground opacity overlay
+     * **Usage:** Solid button hover effects
+     *
+     * **Example:**
+     * ```tsx
+     * <Button bg="primary" color="on-primary" _hover={{ bg: "primary-hover" }}>
+     *   Save
+     * </Button>
+     * ```
+     *
+     * @see ADR-009 for Material Design opacity overlay rationale
+     */
+    "primary-hover": string;
+
+    /**
+     * Active/pressed state for primary action buttons (ADR-009).
+     *
+     * **Implementation:** Primary color + 12% foreground opacity overlay
+     * **Usage:** Solid button active/pressed effects
+     *
+     * **Example:**
+     * ```tsx
+     * <Button bg="primary" _active={{ bg: "primary-active" }}>Save</Button>
+     * ```
+     *
+     * @see ADR-009 for Material Design opacity overlay rationale
+     */
+    "primary-active": string;
+
+    /**
+     * Hover state for secondary/subtle buttons (ADR-009).
+     *
+     * **Implementation:** Secondary color + 8% foreground opacity overlay
+     * **Usage:** Subtle button hover effects (via button-subtle token)
+     *
+     * **Example:**
+     * ```tsx
+     * <Button bg="button-subtle" _hover={{ bg: "secondary-hover" }}>Options</Button>
+     * ```
+     *
+     * @see ADR-009 for Material Design opacity overlay rationale
+     * @see ADR-012 for button-subtle usage pattern
+     */
+    "secondary-hover": string;
+
+    /**
+     * Active/pressed state for secondary/subtle buttons (ADR-009).
+     *
+     * **Implementation:** Secondary color + 12% foreground opacity overlay
+     * **Usage:** Subtle button active/pressed effects
+     *
+     * **Example:**
+     * ```tsx
+     * <Button bg="button-subtle" _active={{ bg: "secondary-active" }}>Options</Button>
+     * ```
+     *
+     * @see ADR-009 for Material Design opacity overlay rationale
+     */
+    "secondary-active": string;
+
+    /**
+     * Hover state for tertiary/interactive text (ADR-009).
+     *
+     * **Implementation:** Tertiary color brightened/saturated
+     * **Usage:** Link hover states, interactive text
+     *
+     * **Example:**
+     * ```tsx
+     * <Link color="tertiary" _hover={{ color: "tertiary-hover" }}>Learn more</Link>
+     * ```
+     *
+     * **Note:** Currently aliased as `accent-hover` during migration
+     *
+     * @see ADR-009 for interaction state approach
+     */
+    "tertiary-hover": string;
+
+    /**
+     * Active/pressed state for tertiary/interactive text (ADR-009).
+     *
+     * **Implementation:** Tertiary color darkened/desaturated
+     * **Usage:** Link active/pressed states
+     *
+     * **Example:**
+     * ```tsx
+     * <Link color="tertiary" _active={{ color: "tertiary-active" }}>Learn more</Link>
+     * ```
+     *
+     * @see ADR-009 for interaction state approach
+     */
+    "tertiary-active": string;
+
     /**
      * Logo and brand identity color (optional - not all themes have brand colors).
      *
@@ -596,6 +697,131 @@ export interface UnifiedTheme {
      * @see ADR-010 for optional brand token usage guidelines
      */
     brandSecondary?: string;
+
+    /**
+     * Text color on brand backgrounds (ADR-011 canonical naming, optional).
+     *
+     * **Naming Convention:** Uses industry-standard `on-*` prefix for consistency.
+     *
+     * **Usage:**
+     * - Text on brand-colored backgrounds
+     * - Logo text overlays
+     * - Brand moment text content
+     *
+     * **Design System Mappings (ADR-011):**
+     * - GitHub Primer: `undefined` (no brand token)
+     * - IBM Carbon: Maps to `on-primary` (brand IS primary blue)
+     * - GitLab Pajamas: Maps to `on-tertiary` (both use purple)
+     * - Material Design 3: Maps to `on-primary` (brand IS primary purple)
+     *
+     * **Example:**
+     * ```tsx
+     * <Box bg="brand" color="on-brand">Brand Section</Box>
+     * ```
+     *
+     * @see ADR-011 for on-* naming convention rationale
+     */
+    "on-brand"?: string;
+
+    /**
+     * Text color on secondary brand backgrounds (ADR-011 canonical naming, optional).
+     *
+     * **Naming Convention:** Uses industry-standard `on-*` prefix for consistency.
+     *
+     * **Usage:**
+     * - Text on brandSecondary-colored backgrounds
+     * - Secondary brand moment text content
+     *
+     * **Design System Mappings (ADR-011):**
+     * - GitHub Primer: `undefined` (no brandSecondary token)
+     * - IBM Carbon: `undefined` (no brandSecondary token)
+     * - GitLab Pajamas: Maps to `on-primary` (works well on orange)
+     * - Material Design 3: `undefined` (no brandSecondary token)
+     *
+     * **Example:**
+     * ```tsx
+     * <Box bg="brandSecondary" color="on-brandSecondary">Secondary Brand</Box>
+     * ```
+     *
+     * @see ADR-011 for on-* naming convention rationale
+     */
+    "on-brandSecondary"?: string;
+
+    // ===================================================================
+    // BUTTON PATTERN TOKENS (ADR-012)
+    // ===================================================================
+    // Separate button pattern semantics from color semantics.
+    // These tokens map consistently across all themes to avoid confusion.
+
+    /**
+     * Border and text color for outline buttons (ADR-012).
+     *
+     * **Pattern:** Transparent background with visible border
+     * **Mapping:** Always maps to `primary` color across all themes
+     *
+     * **Usage:**
+     * - Cancel, Back, Skip buttons (high-emphasis alternative to filled primary)
+     * - Use with Chakra's `variant="outline"`
+     *
+     * **Example:**
+     * ```tsx
+     * <Button variant="outline" borderColor="button-outline" color="button-outline">
+     *   Cancel
+     * </Button>
+     * ```
+     *
+     * **Rationale:** Outline buttons consistently use the primary action color
+     * across all design systems (GitHub green, Carbon blue, GitLab orange, Material purple).
+     * This token provides self-documenting API and cross-theme consistency.
+     *
+     * @see ADR-012 for button pattern semantics rationale
+     */
+    "button-outline": string;
+
+    /**
+     * Text color on outline button backgrounds (ADR-012).
+     *
+     * **Mapping:** Always maps to `on-primary` across all themes
+     *
+     * **Note:** For outline buttons, border and text use the same color (`button-outline`).
+     * This token exists for semantic completeness and potential future divergence.
+     *
+     * @see ADR-012 for button pattern semantics rationale
+     */
+    "on-button-outline": string;
+
+    /**
+     * Background color for subtle filled buttons (ADR-012).
+     *
+     * **Pattern:** Filled background with muted color
+     * **Mapping:** Always maps to `secondary` color across all themes
+     *
+     * **Usage:**
+     * - Medium-emphasis actions (between primary and ghost)
+     * - Use with Chakra's `variant="subtle"`
+     *
+     * **Example:**
+     * ```tsx
+     * <Button variant="subtle" bg="button-subtle" color="on-button-subtle">
+     *   Options
+     * </Button>
+     * ```
+     *
+     * **Rationale:** Subtle buttons use the secondary (gray-ish) color for
+     * medium emphasis without competing with primary action buttons.
+     *
+     * @see ADR-012 for button pattern semantics rationale
+     */
+    "button-subtle": string;
+
+    /**
+     * Text color on subtle button backgrounds (ADR-012).
+     *
+     * **Mapping:** Always maps to `on-secondary` across all themes
+     *
+     * @see ADR-012 for button pattern semantics rationale
+     */
+    "on-button-subtle": string;
 
     // ===================================================================
     // STATUS COLORS (Semantic Feedback)

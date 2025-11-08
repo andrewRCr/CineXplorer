@@ -199,6 +199,14 @@ export function createPajamasAdapter(mode: "light" | "dark"): UnifiedTheme {
     const layer01States = deriveInteractionStates(layer01, foreground);
     const layer02States = deriveInteractionStates(layer02, foreground);
 
+    // Color-based interaction states (ADR-009): For buttons and semantic colors
+    const primaryStates = deriveInteractionStates(primary, onPrimary);
+    const secondaryStates = deriveInteractionStates(secondary, onSecondary);
+
+    // Tertiary interaction states: For links/interactive text (foreground token)
+    const tertiaryHover = adjustColor(tertiary, mode === "light" ? -10 : 15); // Slightly darker/lighter
+    const tertiaryActive = adjustColor(tertiary, mode === "light" ? -15 : 10); // More pronounced
+
     // Input border: Use subtle border for form fields
     const input = palette.border_subtle;
 
@@ -257,7 +265,13 @@ export function createPajamasAdapter(mode: "light" | "dark"): UnifiedTheme {
 
         // Semantic colors (ADR-010 + ADR-011 compliant)
         brand, // GitLab purple
+        "on-brand": onTertiary, // ADR-011: Maps to on-tertiary (both purple)
         brandSecondary, // GitLab orange
+        "on-brandSecondary": onPrimary, // ADR-011: Maps to on-primary (works well on orange)
+        "button-outline": primary, // ADR-012: Outline buttons use primary color
+        "on-button-outline": onPrimary, // ADR-012
+        "button-subtle": secondary, // ADR-012: Subtle buttons use secondary color
+        "on-button-subtle": onSecondary, // ADR-012
         primary,
         "on-primary": onPrimary, // ADR-011: Canonical naming
         "primary-foreground": primaryForeground, // @deprecated
@@ -273,6 +287,15 @@ export function createPajamasAdapter(mode: "light" | "dark"): UnifiedTheme {
         accent, // @deprecated alias (ADR-010)
         "accent-foreground": accentForeground, // @deprecated
         "accent-hover": accentHover,
+
+        // Interaction state tokens (ADR-009)
+        "primary-hover": primaryStates.hover,
+        "primary-active": primaryStates.active,
+        "secondary-hover": secondaryStates.hover,
+        "secondary-active": secondaryStates.active,
+        "tertiary-hover": tertiaryHover,
+        "tertiary-active": tertiaryActive,
+
         destructive,
         "on-destructive": onDestructive, // ADR-011: Canonical naming
         "destructive-foreground": destructiveForeground, // @deprecated

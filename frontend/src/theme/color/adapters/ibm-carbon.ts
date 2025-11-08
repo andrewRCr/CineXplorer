@@ -45,7 +45,7 @@ import {
 } from "../palettes/ibm-carbon";
 import { carbonShadows } from "../shadows";
 import { createExtensions } from "../extensions";
-import { deriveInteractionStates } from "../utils";
+import { adjustColor, deriveInteractionStates } from "../utils";
 
 /**
  * IBM Carbon palette type (light or dark mode).
@@ -193,6 +193,15 @@ export function createCarbonAdapter(mode: "light" | "dark"): UnifiedTheme {
     const layer01States = deriveInteractionStates(layer01, foreground);
     const layer02States = deriveInteractionStates(layer02, foreground);
 
+    // Color-based interaction states (ADR-009): For buttons and semantic colors
+    const primaryStates = deriveInteractionStates(primary, onPrimary);
+    const secondaryStates = deriveInteractionStates(secondary, onSecondary);
+
+    // Tertiary interaction states: For links/interactive text (foreground token)
+    // Uses color adjustments instead of opacity overlays since tertiary is a text color
+    const tertiaryHover = palette.fg_accent_hover; // Carbon provides official hover
+    const tertiaryActive = adjustColor(tertiary, mode === "light" ? -10 : 10); // Slightly darker/lighter
+
     // Input border: Use subtle border for form fields
     const input = palette.border_subtle_00;
 
@@ -251,6 +260,11 @@ export function createCarbonAdapter(mode: "light" | "dark"): UnifiedTheme {
 
         // Semantic colors (ADR-010 + ADR-011 compliant)
         brand, // IBM Blue
+        "on-brand": onPrimary, // ADR-011: Maps to on-primary (brand IS primary blue)
+        "button-outline": primary, // ADR-012: Outline buttons use primary color
+        "on-button-outline": onPrimary, // ADR-012
+        "button-subtle": secondary, // ADR-012: Subtle buttons use secondary color
+        "on-button-subtle": onSecondary, // ADR-012
         primary,
         "on-primary": onPrimary, // ADR-011: Canonical naming
         "primary-foreground": primaryForeground, // @deprecated
@@ -266,6 +280,15 @@ export function createCarbonAdapter(mode: "light" | "dark"): UnifiedTheme {
         accent, // @deprecated alias (ADR-010)
         "accent-foreground": accentForeground, // @deprecated
         "accent-hover": accentHover,
+
+        // Interaction state tokens (ADR-009)
+        "primary-hover": primaryStates.hover,
+        "primary-active": primaryStates.active,
+        "secondary-hover": secondaryStates.hover,
+        "secondary-active": secondaryStates.active,
+        "tertiary-hover": tertiaryHover,
+        "tertiary-active": tertiaryActive,
+
         destructive,
         "on-destructive": onDestructive, // ADR-011: Canonical naming
         "destructive-foreground": destructiveForeground, // @deprecated

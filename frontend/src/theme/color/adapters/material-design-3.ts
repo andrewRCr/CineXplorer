@@ -156,6 +156,18 @@ export function createMaterialAdapter(mode: "light" | "dark"): UnifiedTheme {
     const layer01States = deriveInteractionStates(layer01, foreground);
     const layer02States = deriveInteractionStates(layer02, foreground);
 
+    // Color-based interaction states (ADR-009): For buttons and semantic colors
+    const primaryStates = deriveInteractionStates(primary, onPrimary);
+    const secondaryStates = deriveInteractionStates(secondary, onSecondary);
+
+    // Tertiary interaction states: For links/interactive text (foreground token)
+    const tertiaryHover = mode === "light"
+        ? adjustColor(palette.tertiary, -10) // Darken for light mode
+        : adjustColor(palette.tertiary, 10); // Lighten for dark mode
+    const tertiaryActive = mode === "light"
+        ? adjustColor(palette.tertiary, -15) // More pronounced darkening
+        : adjustColor(palette.tertiary, 5); // Subtle lightening
+
     // Shadows: Material baseline doesn't define shadows (relies on surface elevation)
     // Derive minimal conservative shadows for cross-theme consistency
     const shadowSm = mode === "light"
@@ -193,10 +205,8 @@ export function createMaterialAdapter(mode: "light" | "dark"): UnifiedTheme {
     const onInfo = "#FFFFFF"; // ADR-011: Derived on-* token
     const infoForeground = onInfo; // @deprecated: Use on-info instead (ADR-011)
 
-    // Hover state for tertiary (derive from tertiary color)
-    const accentHover = mode === "light"
-        ? adjustColor(palette.tertiary, -10) // Darken for light mode
-        : adjustColor(palette.tertiary, 10); // Lighten for dark mode
+    // Accent hover state (deprecated - aliased to tertiaryHover)
+    const accentHover = tertiaryHover;
 
     // ===================================================================
     // SECTION 3: CINEXPLORER EXTENSIONS (App-Specific)
@@ -249,7 +259,13 @@ export function createMaterialAdapter(mode: "light" | "dark"): UnifiedTheme {
 
         // Semantic colors (ADR-010 + ADR-011 compliant)
         brand, // purple for Material
+        "on-brand": onPrimary, // ADR-011: Maps to on-primary (brand IS primary purple)
         brandSecondary: undefined, // Material doesn't have secondary brand color
+        "on-brandSecondary": undefined, // No brandSecondary token
+        "button-outline": primary, // ADR-012: Outline buttons use primary color
+        "on-button-outline": onPrimary, // ADR-012
+        "button-subtle": secondary, // ADR-012: Subtle buttons use secondary color
+        "on-button-subtle": onSecondary, // ADR-012
         primary,
         "on-primary": onPrimary, // ADR-011: Material native on-* token
         "primary-foreground": primaryForeground, // @deprecated
@@ -265,6 +281,15 @@ export function createMaterialAdapter(mode: "light" | "dark"): UnifiedTheme {
         accent, // @deprecated alias (ADR-010)
         "accent-foreground": accentForeground, // @deprecated
         "accent-hover": accentHover,
+
+        // Interaction state tokens (ADR-009)
+        "primary-hover": primaryStates.hover,
+        "primary-active": primaryStates.active,
+        "secondary-hover": secondaryStates.hover,
+        "secondary-active": secondaryStates.active,
+        "tertiary-hover": tertiaryHover,
+        "tertiary-active": tertiaryActive,
+
         destructive,
         "on-destructive": onDestructive, // ADR-011: Material native on-* token
         "destructive-foreground": destructiveForeground, // @deprecated

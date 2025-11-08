@@ -103,27 +103,32 @@ export function createPajamasAdapter(mode: "light" | "dark"): UnifiedTheme {
 
     // Semantic colors (official Pajamas) - ADR-010 compliant mappings
     // GitLab Pajamas brand colors per design.gitlab.com/brand-design/color:
-    // - Brand: PURPLE (#a989f5 Purple 01p) + ORANGE (#fca326 Orange 01p)
-    // - Actions (buttons): ORANGE (#e24329 Orange 03p, used on about.gitlab.com)
-    // - Interactive text (links): PURPLE (#7759c2 Purple 02p light, #a989f5 Purple 01p dark)
+    // - Brand: 3 ORANGES from tanuki logo (Orange 01p/02p/03p)
+    // - Actions (buttons): ORANGE 01p (#fca326 brightest orange, matches brand)
+    // - Interactive text (links): PURPLE (#7759c2 Purple 02p light, #a989f5 Purple 01p dark) - UI accent, NOT brand
 
-    // BRAND: GitLab purple (primary brand color) - ADR-010
-    const brand = palette.brand_purple; // PURPLE (#a989f5 Purple 01p, both modes)
+    // BRAND: GitLab brand orange (primary brand color from logo) - ADR-010
+    const brand = palette.brand_orange; // ORANGE 01p (#fca326, brightest in logo gradient)
 
-    // BRAND SECONDARY: GitLab orange (secondary brand color) - ADR-010
-    const brandSecondary = palette.brand_orange; // ORANGE (#fca326 Orange 01p, both modes)
+    // BRAND SECONDARY: GitLab medium orange (secondary brand color from logo) - ADR-010
+    const brandSecondary = palette.brand_orange_medium; // ORANGE 02p (#fc6d26, middle of logo gradient)
 
-    // PRIMARY: Orange background token for action buttons (ADR-010)
+    // PRIMARY: Brand orange for action buttons (ADR-010)
     // Token type: BACKGROUND (for filled buttons)
-    // Rationale: GitLab uses orange for primary CTAs (Orange 03p on about.gitlab.com)
-    const primary = palette.bg_action_primary; // ORANGE (#e24329 light, #fca326 dark)
+    // Rationale: Light mode uses medium orange for better contrast, dark mode uses brightest for impact
+    const primary = mode === "light"
+        ? palette.brand_orange_medium  // Light: Orange 02p (#fc6d26, better contrast on white)
+        : palette.brand_orange;        // Dark: Orange 01p (#fca326, brightest for impact)
     const onPrimary = palette.fg_onEmphasis; // ADR-011: Canonical on-* naming
     const primaryForeground = onPrimary; // @deprecated: Use on-primary instead (ADR-011)
 
     // SECONDARY: Gray background + mandatory 1px border (ADR-010)
     // Token type: BACKGROUND + BORDER
+    // Fixed: Now uses neutral gray for visibility on white backgrounds
     const secondary = palette.bg_button_secondary;
-    const onSecondary = palette.fg_default; // ADR-011: Canonical on-* naming
+    const onSecondary = mode === "light"
+        ? palette.fg_onEmphasis  // Light mode: white text on medium gray
+        : palette.fg_default;     // Dark mode: light gray text on dark gray
     const secondaryForeground = onSecondary; // @deprecated: Use on-secondary instead (ADR-011)
 
     // MUTED: Deemphasized, non-interactive
@@ -264,14 +269,20 @@ export function createPajamasAdapter(mode: "light" | "dark"): UnifiedTheme {
         "layer-active-02": layer02States.active,
 
         // Semantic colors (ADR-010 + ADR-011 compliant)
-        brand, // GitLab purple
-        "on-brand": onTertiary, // ADR-011: Maps to on-tertiary (both purple)
-        brandSecondary, // GitLab orange
-        "on-brandSecondary": onPrimary, // ADR-011: Maps to on-primary (works well on orange)
-        "button-outline": primary, // ADR-012: Outline buttons use primary color
-        "on-button-outline": onPrimary, // ADR-012
+        brand, // GitLab brand orange (Orange 01p, brightest)
+        "on-brand": onPrimary, // ADR-011: White text on orange background
+        brandSecondary, // GitLab medium orange (Orange 02p, middle gradient)
+        "on-brandSecondary": onPrimary, // ADR-011: White text on orange background
+        brandTertiary: palette.brand_tanuki_red, // GitLab tanuki red (Orange 03p, darkest in logo)
+        "on-brandTertiary": onPrimary, // ADR-011: White text on tanuki red background
+        "button-outline": borderStrong01, // ADR-012: Neutral outline (DEFAULT) uses border
+        "on-button-outline": foreground, // ADR-012: Neutral outline text
+        "button-outline-primary": primary, // ADR-012: Primary outline (EXPLICIT) uses primary color
+        "on-button-outline-primary": primary, // ADR-012: Primary outline text (same as border on transparent bg)
         "button-subtle": secondary, // ADR-012: Subtle buttons use secondary color
         "on-button-subtle": onSecondary, // ADR-012
+        "button-subtle-selected": layer02States.selected, // ADR-012: Selected state for subtle buttons
+        "on-button-subtle-selected": foreground, // ADR-012: Text on selected subtle buttons
         primary,
         "on-primary": onPrimary, // ADR-011: Canonical naming
         "primary-foreground": primaryForeground, // @deprecated

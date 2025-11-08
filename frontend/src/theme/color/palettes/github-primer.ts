@@ -65,11 +65,11 @@ export const githubPaletteLight = {
     /** Strong borders, emphasis (borderColor-emphasis - official Primer) */
     border_emphasis: "#818b98",
 
-    // Button colors
-    /** Secondary button background */
-    bg_button_secondary: "#f6f8fa",
-    /** Secondary button hover */
-    bg_button_secondary_hover: "#f3f4f6",
+    // Button colors (DERIVED - Primer doesn't provide explicit secondary button tokens)
+    /** Secondary button background (DERIVED: medium gray for prominence and distinction from muted) */
+    bg_button_secondary: "#8c929d",
+    /** Secondary button hover (DERIVED: slightly darker gray) */
+    bg_button_secondary_hover: "#7a808b",
 } as const;
 
 /**

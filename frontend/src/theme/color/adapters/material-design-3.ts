@@ -262,10 +262,14 @@ export function createMaterialAdapter(mode: "light" | "dark"): UnifiedTheme {
         "on-brand": onPrimary, // ADR-011: Maps to on-primary (brand IS primary purple)
         brandSecondary: undefined, // Material doesn't have secondary brand color
         "on-brandSecondary": undefined, // No brandSecondary token
-        "button-outline": primary, // ADR-012: Outline buttons use primary color
-        "on-button-outline": onPrimary, // ADR-012
+        "button-outline": borderStrong01, // ADR-012: Neutral outline (DEFAULT) uses border
+        "on-button-outline": foreground, // ADR-012: Neutral outline text
+        "button-outline-primary": primary, // ADR-012: Primary outline (EXPLICIT) uses primary color
+        "on-button-outline-primary": primary, // ADR-012: Primary outline text (same as border on transparent bg)
         "button-subtle": secondary, // ADR-012: Subtle buttons use secondary color
         "on-button-subtle": onSecondary, // ADR-012
+        "button-subtle-selected": layer02States.selected, // ADR-012: Selected state for subtle buttons
+        "on-button-subtle-selected": foreground, // ADR-012: Text on selected subtle buttons
         primary,
         "on-primary": onPrimary, // ADR-011: Material native on-* token
         "primary-foreground": primaryForeground, // @deprecated

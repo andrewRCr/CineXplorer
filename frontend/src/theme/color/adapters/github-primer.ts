@@ -102,8 +102,11 @@ export function createGithubAdapter(mode: "light" | "dark"): UnifiedTheme {
 
     // SECONDARY: Gray background + mandatory 1px border (ADR-010)
     // Token type: BACKGROUND + BORDER
+    // Uses derived medium gray for distinction from muted
     const secondary = palette.bg_button_secondary;
-    const onSecondary = palette.fg_default; // ADR-011: Canonical on-* naming
+    const onSecondary = mode === "light"
+        ? palette.fg_onEmphasis  // Light mode: white text on medium gray (#8c929d)
+        : palette.fg_default;     // Dark mode: light text on dark gray
     const secondaryForeground = onSecondary; // @deprecated: Use on-secondary instead (ADR-011)
 
     // MUTED: Deemphasized, non-interactive
@@ -245,10 +248,14 @@ export function createGithubAdapter(mode: "light" | "dark"): UnifiedTheme {
 
         // Semantic colors (ADR-010 + ADR-011 compliant)
         brand, // undefined for GitHub
-        "button-outline": primary, // ADR-012: Outline buttons use primary color
-        "on-button-outline": onPrimary, // ADR-012
+        "button-outline": borderStrong01, // ADR-012: Neutral outline (DEFAULT) uses border
+        "on-button-outline": foreground, // ADR-012: Neutral outline text
+        "button-outline-primary": primary, // ADR-012: Primary outline (EXPLICIT) uses primary color
+        "on-button-outline-primary": primary, // ADR-012: Primary outline text (same as border on transparent bg)
         "button-subtle": secondary, // ADR-012: Subtle buttons use secondary color
         "on-button-subtle": onSecondary, // ADR-012
+        "button-subtle-selected": layer02States.selected, // ADR-012: Selected state for subtle buttons
+        "on-button-subtle-selected": foreground, // ADR-012: Text on selected subtle buttons
         primary,
         "on-primary": onPrimary, // ADR-011: Canonical naming
         "primary-foreground": primaryForeground, // @deprecated

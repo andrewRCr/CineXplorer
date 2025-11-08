@@ -310,7 +310,7 @@ export interface UnifiedTheme {
      * **Design System Mappings (ADR-010):**
      * - GitHub Primer: GREEN (bg_success, #1f883d) - actions use green
      * - IBM Carbon: BLUE (fg_accent, #0f62fe used as bg) - unified blue
-     * - GitLab Pajamas: BLUE (#1f75cb) - actions use blue
+     * - GitLab Pajamas: ORANGE (#fca326) - actions use brand orange (Orange 01p)
      *
      * **Distinction from `tertiary`:**
      * - Primary: Background token for button fills
@@ -481,7 +481,7 @@ export interface UnifiedTheme {
      * **Design System Mappings (ADR-010):**
      * - GitHub Primer: BLUE (fg_accent, #0969da) - links use blue
      * - IBM Carbon: BLUE (fg_accent, #0f62fe) - same as primary, semantically distinct
-     * - GitLab Pajamas: PURPLE (#7759c2) - links use purple (brand-aligned)
+     * - GitLab Pajamas: PURPLE (#7759c2) - links use purple (UI accent, not brand)
      *
      * **Distinction from `primary`:**
      * - Tertiary: Foreground token for links/text
@@ -664,12 +664,12 @@ export interface UnifiedTheme {
      * **Design System Mappings (ADR-010):**
      * - GitHub Primer: `undefined` (no brand color - black/white logo)
      * - IBM Carbon: BLUE (#0f62fe) - IBM brand blue
-     * - GitLab Pajamas: PURPLE (#554488) - GitLab brand purple
+     * - GitLab Pajamas: ORANGE (#fca326) - GitLab brand orange (Orange 01p from tanuki logo)
      *
      * **Example - GitLab:**
-     * - Logo: Uses `brand` (purple) + `brandSecondary` (orange)
-     * - Primary button: Uses `primary` (blue), NOT brand
-     * - Links: Use `tertiary` (purple, matches brand but semantically different)
+     * - Logo: Uses `brand` (orange 01p) + `brandSecondary` (orange 02p) + `brandTertiary` (orange 03p/tanuki red)
+     * - Primary button: Uses `primary` (orange 01p, same as brand)
+     * - Links: Use `tertiary` (purple, UI accent not brand)
      *
      * @see ADR-010 for brand vs primary distinction and usage guidelines
      */
@@ -692,7 +692,7 @@ export interface UnifiedTheme {
      * **Design System Mappings (ADR-010):**
      * - GitHub Primer: `undefined`
      * - IBM Carbon: `undefined`
-     * - GitLab Pajamas: ORANGE (#e24329) - tangerine accent
+     * - GitLab Pajamas: ORANGE (#fc6d26) - medium orange (Orange 02p, middle of tanuki logo gradient)
      *
      * @see ADR-010 for optional brand token usage guidelines
      */
@@ -711,7 +711,7 @@ export interface UnifiedTheme {
      * **Design System Mappings (ADR-011):**
      * - GitHub Primer: `undefined` (no brand token)
      * - IBM Carbon: Maps to `on-primary` (brand IS primary blue)
-     * - GitLab Pajamas: Maps to `on-tertiary` (both use purple)
+     * - GitLab Pajamas: Maps to `on-primary` (white text on brand orange)
      * - Material Design 3: Maps to `on-primary` (brand IS primary purple)
      *
      * **Example:**
@@ -747,6 +747,55 @@ export interface UnifiedTheme {
      */
     "on-brandSecondary"?: string;
 
+    /**
+     * Tertiary brand color (optional - for systems with three distinct brand colors).
+     *
+     * **Purpose:** Tertiary brand identity color (rare - only for multi-color brand identities)
+     *
+     * **Usage:**
+     * - Logo elements with 3+ colors
+     * - Tertiary brand accents
+     * - Brand gradient endpoints
+     *
+     * **NOT for general component use** - use semantic tokens (primary/secondary/tertiary) instead.
+     *
+     * **Design System Mappings:**
+     * - GitHub Primer: `undefined`
+     * - IBM Carbon: `undefined`
+     * - GitLab Pajamas: ORANGE (#e24329) - tanuki red (Orange 03p, darkest in logo gradient)
+     * - Material Design 3: `undefined`
+     *
+     * **Example - GitLab logo gradient:**
+     * GitLab's tanuki logo uses 3 oranges: bright (#fca326) → medium (#fc6d26) → red (#e24329)
+     *
+     * @see ADR-010 for optional brand token usage guidelines
+     */
+    brandTertiary?: string;
+
+    /**
+     * Text color on tertiary brand backgrounds (ADR-011 canonical naming, optional).
+     *
+     * **Naming Convention:** Uses industry-standard `on-*` prefix for consistency.
+     *
+     * **Usage:**
+     * - Text on brandTertiary-colored backgrounds
+     * - Tertiary brand moment text content
+     *
+     * **Design System Mappings (ADR-011):**
+     * - GitHub Primer: `undefined` (no brandTertiary token)
+     * - IBM Carbon: `undefined` (no brandTertiary token)
+     * - GitLab Pajamas: Maps to `on-primary` (white text on tanuki red)
+     * - Material Design 3: `undefined` (no brandTertiary token)
+     *
+     * **Example:**
+     * ```tsx
+     * <Box bg="brandTertiary" color="on-brandTertiary">Tertiary Brand</Box>
+     * ```
+     *
+     * @see ADR-011 for on-* naming convention rationale
+     */
+    "on-brandTertiary"?: string;
+
     // ===================================================================
     // BUTTON PATTERN TOKENS (ADR-012)
     // ===================================================================
@@ -754,41 +803,86 @@ export interface UnifiedTheme {
     // These tokens map consistently across all themes to avoid confusion.
 
     /**
-     * Border and text color for outline buttons (ADR-012).
+     * Border/text color for neutral outline buttons - DEFAULT (ADR-012).
      *
-     * **Pattern:** Transparent background with visible border
-     * **Mapping:** Always maps to `primary` color across all themes
+     * **Pattern:** Transparent background with neutral gray border
+     * **Mapping:** Always maps to `border-strong-01` (neutral) across all themes
      *
      * **Usage:**
-     * - Cancel, Back, Skip buttons (high-emphasis alternative to filled primary)
+     * - Utility actions: OAuth buttons, navigation (Back/Cancel), filter toggles
+     * - Most common outline button type
      * - Use with Chakra's `variant="outline"`
+     *
+     * **Hover behavior:** Shifts to tertiary/accent to signal interactivity
      *
      * **Example:**
      * ```tsx
-     * <Button variant="outline" borderColor="button-outline" color="button-outline">
+     * <Button
+     *   variant="outline"
+     *   borderColor="button-outline"
+     *   color="on-button-outline"
+     *   _hover={{ bg: "tertiary/8", borderColor: "tertiary" }}
+     * >
      *   Cancel
      * </Button>
      * ```
      *
-     * **Rationale:** Outline buttons consistently use the primary action color
-     * across all design systems (GitHub green, Carbon blue, GitLab orange, Material purple).
-     * This token provides self-documenting API and cross-theme consistency.
+     * **Rationale:** Most outline buttons are neutral utility actions, not branded.
+     * Default name (`button-outline`) is the most common use case.
      *
-     * @see ADR-012 for button pattern semantics rationale
+     * @see ADR-012 for button pattern semantics and neutral vs primary distinction
      */
     "button-outline": string;
 
     /**
-     * Text color on outline button backgrounds (ADR-012).
+     * Text color on neutral outline button backgrounds (ADR-012).
      *
-     * **Mapping:** Always maps to `on-primary` across all themes
-     *
-     * **Note:** For outline buttons, border and text use the same color (`button-outline`).
-     * This token exists for semantic completeness and potential future divergence.
+     * **Mapping:** Always maps to `foreground` across all themes
      *
      * @see ADR-012 for button pattern semantics rationale
      */
     "on-button-outline": string;
+
+    /**
+     * Border/text color for primary outline buttons - EXPLICIT (ADR-012).
+     *
+     * **Pattern:** Transparent background with primary brand color border
+     * **Mapping:** Always maps to `primary` across all themes
+     *
+     * **Usage:**
+     * - Branded actions in outline style (less common than neutral)
+     * - High emphasis but less visual weight than solid primary
+     * - Use with Chakra's `variant="outline"`
+     *
+     * **Hover behavior:** Stays in primary color family (bg overlay)
+     *
+     * **Example:**
+     * ```tsx
+     * <Button
+     *   variant="outline"
+     *   borderColor="button-outline-primary"
+     *   color="on-button-outline-primary"
+     *   _hover={{ bg: "primary/8" }}
+     * >
+     *   Learn More
+     * </Button>
+     * ```
+     *
+     * **Rationale:** Explicit name signals special case - when you want brand color
+     * in outline style (GitHub green, Carbon blue, GitLab orange, Material purple).
+     *
+     * @see ADR-012 for button pattern semantics and neutral vs primary distinction
+     */
+    "button-outline-primary": string;
+
+    /**
+     * Text color on primary outline button backgrounds (ADR-012).
+     *
+     * **Mapping:** Always maps to `on-primary` across all themes
+     *
+     * @see ADR-012 for button pattern semantics rationale
+     */
+    "on-button-outline-primary": string;
 
     /**
      * Background color for subtle filled buttons (ADR-012).
@@ -822,6 +916,47 @@ export interface UnifiedTheme {
      * @see ADR-012 for button pattern semantics rationale
      */
     "on-button-subtle": string;
+
+    /**
+     * Background color for selected state of subtle buttons (ADR-012 extension).
+     *
+     * **Pattern:** Selected state for subtle filled buttons
+     * **Mapping:** Always maps to `layer-selected-02` across all themes
+     *
+     * **Usage:**
+     * - Selected subtle buttons (e.g., theme selector, filter toggles)
+     * - Use when subtle button represents a selectable option
+     * - Transitions from "filled button" to "selected surface" semantics
+     *
+     * **Rationale:** When a subtle button is selected, it shifts from button
+     * semantics (secondary color) to surface semantics (layer-selected-*).
+     * This requires different foreground color for proper contrast across themes.
+     *
+     * **Example:**
+     * ```tsx
+     * <Button
+     *   bg={isSelected ? "button-subtle-selected" : "button-subtle"}
+     *   color={isSelected ? "on-button-subtle-selected" : "on-button-subtle"}
+     * >
+     *   Theme Option
+     * </Button>
+     * ```
+     *
+     * @see ADR-012 for button pattern semantics rationale
+     */
+    "button-subtle-selected": string;
+
+    /**
+     * Text color on selected subtle button backgrounds (ADR-012 extension).
+     *
+     * **Mapping:** Always maps to `foreground` across all themes
+     *
+     * **Rationale:** Selected subtle buttons use layer-selected-02 which pairs
+     * with foreground (not on-secondary), ensuring proper contrast in all themes.
+     *
+     * @see ADR-012 for button pattern semantics rationale
+     */
+    "on-button-subtle-selected": string;
 
     // ===================================================================
     // STATUS COLORS (Semantic Feedback)

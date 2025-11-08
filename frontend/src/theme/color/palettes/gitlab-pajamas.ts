@@ -60,14 +60,17 @@ export const gitlabPajamasPaletteLight = {
     bg_success_hover: "#0d6938",
 
     // GitLab Brand Colors (official from design.gitlab.com/brand-design/color)
-    /** GitLab brand purple - Purple 01p (primary brand color) */
-    brand_purple: "#a989f5",
-    /** GitLab brand orange - Orange 01p (secondary brand color) */
+    // The tanuki logo uses 3 orange shades (Orange 01p/02p/03p)
+    /** GitLab brand orange - Orange 01p (brightest, primary brand) */
     brand_orange: "#fca326",
-    /** GitLab purple for links - Purple 02p (used on light backgrounds) */
+    /** GitLab brand orange medium - Orange 02p (dark orange, middle gradient) */
+    brand_orange_medium: "#fc6d26",
+    /** GitLab tanuki red - Orange 03p (red-orange, darkest in logo) */
+    brand_tanuki_red: "#e24329",
+    /** GitLab purple for links - Purple 02p (used on light backgrounds, UI accent not brand) */
     fg_link_purple: "#7759c2",
-    /** GitLab orange for primary actions - Orange 03p (used for CTAs on about.gitlab.com) */
-    bg_action_primary: "#e24329",
+    /** GitLab light purple - Purple 01p (signature purple, UI accent not brand) */
+    ui_purple: "#a989f5",
 
     // Semantic colors - Danger (Destructive actions)
     /** Error/danger text (red-600) */
@@ -89,11 +92,11 @@ export const gitlabPajamasPaletteLight = {
     /** @deprecated Use border_subtle */
     border_muted: "#ececef",
 
-    // Button colors
-    /** Secondary button background (neutral-0 with borders) */
-    bg_button_secondary: "#ffffff",
-    /** Secondary button hover (neutral-10) */
-    bg_button_secondary_hover: "#fbfafd",
+    // Button colors (DERIVED - GitLab doesn't provide explicit secondary button tokens)
+    /** Secondary button background (DERIVED: neutral gray for visibility and distinction from muted) */
+    bg_button_secondary: "#8c929d",
+    /** Secondary button hover (DERIVED: darker neutral gray) */
+    bg_button_secondary_hover: "#7a808b",
 
     // Interactive states
     /** Interactive button background (blue-500) */
@@ -159,14 +162,17 @@ export const gitlabPajamasPaletteDark = {
     bg_success_hover: "#91d4a8",
 
     // GitLab Brand Colors (official from design.gitlab.com/brand-design/color)
-    /** GitLab brand purple - Purple 01p (works in dark mode) */
-    brand_purple: "#a989f5",
-    /** GitLab brand orange - Orange 01p (same in both modes) */
+    // The tanuki logo uses 3 orange shades (same in both modes - brand consistency)
+    /** GitLab brand orange - Orange 01p (brightest, primary brand) */
     brand_orange: "#fca326",
-    /** GitLab purple for links - Purple 01p (lighter purple for dark mode readability) */
+    /** GitLab brand orange medium - Orange 02p (dark orange, middle gradient) */
+    brand_orange_medium: "#fc6d26",
+    /** GitLab tanuki red - Orange 03p (red-orange, darkest in logo) */
+    brand_tanuki_red: "#e24329",
+    /** GitLab purple for links - Purple 01p (lighter purple for dark mode readability, UI accent) */
     fg_link_purple: "#a989f5",
-    /** GitLab orange for primary actions - Orange 01p (lighter variant for dark mode) */
-    bg_action_primary: "#fca326",
+    /** GitLab light purple - Purple 01p (signature purple, UI accent not brand) */
+    ui_purple: "#a989f5",
 
     // Semantic colors - Danger (Destructive actions)
     /** Error/danger text (red-400) - lighter red for dark bg */
@@ -188,11 +194,11 @@ export const gitlabPajamasPaletteDark = {
     /** @deprecated Use border_subtle */
     border_muted: "#3a383f",
 
-    // Button colors
-    /** Secondary button background (neutral-900) */
-    bg_button_secondary: "#28272d",
-    /** Secondary button hover (neutral-800) */
-    bg_button_secondary_hover: "#3a383f",
+    // Button colors (DERIVED - GitLab doesn't provide explicit secondary button tokens)
+    /** Secondary button background (DERIVED: medium-light gray for prominence vs muted) */
+    bg_button_secondary: "#6f6f6f",
+    /** Secondary button hover (DERIVED: slightly darker gray) */
+    bg_button_secondary_hover: "#5f5f5f",
 
     // Interactive states
     /** Interactive button background (blue-300) */

@@ -1506,74 +1506,156 @@ gaps, layout concerns, and component-specific issues requiring remediation befor
                 - Added `on-brand` and `on-brandSecondary` badge row
             - ✅ **File:** `frontend/src/pages/ThemeDebug.tsx`
 
-        - [ ] Audit frontend components for migration to new interaction tokens
+        - [x] Audit frontend components for migration to new interaction tokens
 
-            **Remaining work:** Systematically review all components to migrate manual hover patterns to new tokens.
+            **Completed:** Audited all frontend components and migrated in 3 batches.
 
-            - [ ] Identify components using manual `_hover` with opacity or color changes
-            - [ ] Migrate solid buttons to use `primary-hover/active`
-            - [ ] Migrate subtle buttons to use `secondary-hover/active`
-            - [ ] Migrate links to use `tertiary-hover/active`
-            - [ ] Update any pseudo-element patterns to use pre-calculated tokens
-            - [ ] Document any edge cases or components that need special handling
+            **Batch 1 - ADR-012 Outline Buttons - REFINED (10 buttons, 7 files):**
 
-        - [ ] Run final quality gates
-            - [ ] TypeScript type checking: 0 errors
-            - [ ] Frontend linting: 0 violations
-            - [ ] All 4 adapters validated
-            - [ ] All 8 theme combinations tested
-            - [ ] Markdown linting passed
+            Initial migration to `button-outline`, then refined ADR-012 to support two outline variants:
+            - `button-outline` (neutral DEFAULT) - utility actions, navigation
+            - `button-outline-primary` (EXPLICIT) - branded CTAs in outline style
 
-    - [ ] **3.5.5.11 Visual validation and documentation**
+            Migrated to NEUTRAL outline (gray border):
+            - MovieDetail.tsx: 1 back button → `button-outline` / `on-button-outline`
+            - Login.tsx: 2 OAuth buttons → `button-outline` / `on-button-outline`
+            - VerifyEmail.tsx: 2 buttons → `button-outline` / `on-button-outline`
+            - AdvancedMovieFilters.tsx: 1 filter toggle → `button-outline` / `on-button-outline`
 
-        **Final validation across all themes, including new ADR-011 on-color tokens.**
+            Migrated to PRIMARY outline (brand color border):
+            - Featured.tsx: 2 CTA buttons → `button-outline-primary` / `on-button-outline-primary`
+            - SidebarContent.tsx: 1 LOG button → `button-outline-primary` / `on-button-outline-primary`
+            - NavBarUserMenu.tsx: 1 Login button → `button-outline-primary` / `on-button-outline-primary`
 
-        - [ ] Test all 8 theme combinations
-            - Verify primary buttons show correct colors:
-                - GitHub: GREEN (not blue)
-                - IBM: BLUE
-                - GitLab: ORANGE
-                - Material: PURPLE
-            - Verify links show correct colors:
-                - GitHub: BLUE
-                - IBM: BLUE
-                - GitLab: PURPLE
-                - Material: MAROON-PINK
-            - Verify success always shows GREEN
-            - Secondary buttons: outline pattern with border visible
+            **Batch 2 - Solid Button Interaction Tokens (8 buttons, 4 files):**
+            - Featured.tsx: 1 button → `primary` (was `tertiary`) + `primary-hover` (HIERARCHY FIX)
+            - MovieDetail.tsx: 4 buttons → `primary-hover` / `secondary-hover` (conditional)
+            - Login.tsx: 2 buttons → `primary-hover` / `tertiary-hover`
+            - VerifyEmail.tsx: 1 button → `primary-hover`
 
-        - [ ] Validate new on-color tokens (ADR-011)
-            - **Semantic colors:**
-                - Test `on-primary` vs `primary-foreground` produce identical results
-                - Test `on-secondary` vs `secondary-foreground` produce identical results
-                - Test `on-tertiary` vs `tertiary-foreground` produce identical results
-                - Test `on-muted` vs `muted-foreground` produce identical results
-            - **Status colors:**
-                - Test `on-success` vs `success-foreground` produce identical results
-                - Test `on-destructive` vs `destructive-foreground` produce identical results
-                - Test `on-warning` vs `warning-foreground` produce identical results
-                - Test `on-info` vs `info-foreground` produce identical results
-            - Verify all 8 deprecated aliases work across all 4 themes × 2 modes
-            - Create simple test component if needed to validate token parity
+            **Batch 3 - Manual Link Hover Handlers:**
+            - Login.tsx: Simplified manual JS handlers to use Chakra `_hover={{ color: "tertiary-hover" }}`
 
-        - [ ] Verify component usage patterns
-            - Buttons: Primary (filled), Secondary (outline), Tertiary (text/link style)
-            - Links: All using tertiary color
-            - Alerts: Success (green), Warning (yellow/orange), Info (blue), Destructive (red)
-            - Badges: Appropriate color usage
+            **Already correct:**
+            - SidebarContent.tsx: Using `layer-hover-01`, `layer-selected-01`
+            - NavBarUserMenu.tsx: Using `layer-hover-01/02`, `layer-active-01`
 
-        - [ ] Update documentation
-            - ✅ Mark ADR-011 as "Accepted" (done)
-            - Ensure ADR-010 references are accurate
-            - strategy-semantic-tokens.md: Update to reflect on-* naming convention
-            - Any component docs mentioning colors updated
+            - [x] Identify components using manual `_hover` with opacity or color changes
+            - [x] Migrate solid buttons to use `primary-hover/active`
+            - [x] Migrate subtle buttons to use `secondary-hover/active`
+            - [x] Migrate links to use `tertiary-hover/active`
+            - [x] Update any pseudo-element patterns to use pre-calculated tokens
+            - [x] Document any edge cases or components that need special handling
 
-        - [ ] Run final quality gates
+        - [x] Refine ADR-012 and strategy-semantic-tokens.md
+            - [x] Updated ADR-012 with neutral outline (DEFAULT) + primary outline (EXPLICIT) semantics
+            - [x] Added decision tree, "when to use which" guidance, and usage examples
+            - [x] Updated strategy-semantic-tokens.md with comprehensive button pattern section
+            - [x] Documented neutral outline vs subtle button distinction
+
+        - [x] Implement 6 new button tokens (was 4, now 6 with outline split)
+            - [x] Added to types.ts: `button-outline`, `on-button-outline`, `button-outline-primary`, `on-button-outline-primary`
+            - [x] Updated all 4 adapters (GitHub, IBM, GitLab, Material) with mappings:
+                - Neutral: `borderStrong01` / `foreground`
+                - Primary: `primary` / `primary` (text uses primary on transparent bg)
+            - [x] Fixed `on-button-outline-primary` mapping (was `onPrimary`, now `primary` for visible text)
+
+        - [x] Update ThemeDebug demonstrations
+            - [x] Updated sticky header: theme buttons → `subtle`, mode toggle → `button-outline` (neutral)
+            - [x] Updated Core Actions section: shows BOTH outline variants with clear labels
+            - [x] Updated explanatory text to reflect neutral DEFAULT vs primary EXPLICIT
+
+        - [x] Run final quality gates
+            - [x] TypeScript type checking: 0 errors ✅
+            - [x] Frontend linting: 0 violations ✅
+            - [x] All 4 adapters validated ✅
+            - [x] Token mappings verified across all themes ✅
+
+    - [ ] **3.5.5.11 ThemeDebug Enhancement - Comprehensive Component Showcase**
+
+        **Transform ThemeDebug into complete visual reference guide for all UI patterns and controls.**
+
+        **Rationale:** During button hover state verification, discovered that ThemeDebug doesn't demonstrate all
+        controls used in the app (dropdowns, checkboxes, switches, etc.). Need comprehensive showcase to:
+        - Define correct token usage for form controls and interactive elements
+        - Validate token patterns across all 8 theme combinations
+        - Provide living style guide for future component development
+        - Catch token gaps and inconsistencies before they ship
+
+        **Current gaps identified:**
+        - Form controls (dropdowns/selects, checkboxes, radio buttons, switches)
+        - Navigation patterns (tabs, breadcrumbs)
+        - Interactive lists (menu items, list selections, accordions)
+        - Icon color patterns (especially in buttons with neutral outline)
+
+        - [ ] **Section 1: Action Patterns (Buttons) - Enhancement**
+            - Keep existing: Solid, Primary Outline, Neutral Outline, Subtle, Ghost
+            - **Add:** Disabled state examples for each button type
+            - **Add:** Button with icon (verify icon uses `on-button-outline` not `button-outline`)
+            - **Add:** Loading/spinner state example
+
+        - [ ] **Section 2: Form Controls - NEW SECTION**
+            - Text Input states: default, hover, focus, disabled, error
+            - Textarea with same state variations
+            - **Select/Dropdown:** default, hover, focus, disabled, open state
+                - Define token pattern: border, background, text, dropdown menu
+                - Test across all themes
+            - Checkbox: unchecked, checked, indeterminate, disabled
+            - Radio buttons: unselected, selected, disabled
+            - Switch/Toggle: off, on, disabled
+            - Number input with steppers
+
+        - [ ] **Section 3: Navigation Patterns - NEW SECTION**
+            - Inline text links (already have, verify comprehensive)
+            - Tabs: default, hover, active/selected, disabled
+            - Breadcrumbs with separators
+
+        - [ ] **Section 4: Feedback & Status - Enhancement**
+            - Keep existing alerts (success/warning/error/info)
+            - **Add:** Badges with all status variants
+            - **Add:** Progress indicators (determinate, indeterminate)
+            - **Add:** Tooltip examples
+
+        - [ ] **Section 5: Surfaces & Containers - Enhancement**
+            - Keep existing layer hierarchy
+            - **Add:** Card with hover state example
+            - **Add:** Modal/Dialog with backdrop
+            - **Add:** Popover/Menu dropdown content (demonstrates `layer-03`)
+
+        - [ ] **Section 6: Interactive Lists - NEW SECTION**
+            - List items with hover/selected states
+            - Menu items with hover (demonstrates popover pattern)
+            - Accordion items (collapsed, expanded)
+
+        - [ ] **Section 7: UI Element Tokens - Reorganize**
+            - Keep borders, input borders, focus rings
+            - **Add:** Separator/divider examples (horizontal, vertical)
+            - **Add:** Icon color examples (in different contexts)
+
+        - [ ] **Run quality gates**
             - TypeScript: 0 errors
             - Linting: 0 violations
-            - Markdown linting: 0 errors
-            - Visual regression testing if available
-            - All 8 theme combinations render correctly
+            - Visual validation: all 8 theme combinations render correctly
+            - All new components demonstrate correct token usage
+
+    - [ ] **3.5.5.12 Basic theme validation**
+
+        **Quick visual validation across all themes after button pattern refinements.**
+
+        - [ ] Test all 8 theme combinations
+            - Verify primary buttons show correct colors (GitHub: GREEN, IBM: BLUE, GitLab: ORANGE, Material: PURPLE)
+            - Verify links show correct colors (GitHub: BLUE, IBM: BLUE, GitLab: PURPLE, Material: MAROON-PINK)
+            - Verify success always shows GREEN
+            - Verify outline buttons show visible borders
+
+        - [ ] Validate on-color token aliases (ADR-011)
+            - Spot check `on-primary` vs `primary-foreground` produce identical results
+            - Spot check `on-destructive` vs `destructive-foreground` produce identical results
+            - Verify aliases work across themes
+
+        - [ ] Run quality gates
+            - TypeScript: 0 errors
+            - Linting: 0 violations
 
 - [ ] **3.5.6 Component-Specific Polish**
 
@@ -1606,7 +1688,123 @@ gaps, layout concerns, and component-specific issues requiring remediation befor
         - Verify theme selector dropdown uses proper elevation and colors
         - Test across all themes
 
-- [ ] **3.5.7 Login session bug investigation**
+- [ ] **3.5.7 Comprehensive Frontend Token Audit**
+
+    **Systematic review of EVERY component for token consistency and strategy adherence.**
+
+    **Goal:** Leave Phase 3 confident that the entire frontend is migrated with no gaps, inconsistencies,
+    or deviations from defined token strategy. This is the final validation step before cleanup.
+
+    - [ ] **3.5.7.1 Systematic component audit**
+
+        **Review all components for token usage consistency.**
+
+        - [ ] **3.5.7.1.a Catalog all components**
+            - Generate list of all `.tsx` files in `frontend/src/`
+            - Categorize by type: pages, layout, features, shared/common
+            - Identify components using color tokens
+            - Create audit checklist
+
+        - [ ] **3.5.7.1.b Button pattern consistency**
+            - Verify ALL buttons use correct variant and token combinations:
+                - Solid: `bg="primary"` + `color="on-primary"` + `_hover={{ bg: "primary-hover" }}`
+                - Neutral outline: `borderColor="button-outline"` + `color="on-button-outline"`
+                - Primary outline: `borderColor="button-outline-primary"` + `color="on-button-outline-primary"`
+                - Subtle: `bg="button-subtle"` + `color="on-button-subtle"`
+            - Check for any buttons using old tokens or inconsistent patterns
+            - **CRITICAL:** Icon colors in buttons (must use `on-*` not border tokens)
+            - Document violations and fix
+
+        - [ ] **3.5.7.1.c Form control consistency**
+            - Verify all text inputs use `input` token for borders
+            - Verify all focus states use `ring` token
+            - Check selects/dropdowns for consistent styling
+            - Verify error states use `destructive` appropriately
+            - Document violations and fix
+
+        - [ ] **3.5.7.1.d Link consistency**
+            - Verify ALL links use `color="tertiary"` + `_hover={{ color: "tertiary-hover" }}`
+            - Check for any hardcoded link colors
+            - Verify underline patterns match strategy (strategy-semantic-tokens.md)
+            - Document violations and fix
+
+        - [ ] **3.5.7.1.e Surface/container consistency**
+            - Verify page backgrounds use `background`
+            - Verify cards/panels use `layer-01`, `layer-02`, or `layer-03` appropriately
+            - Check for any hardcoded background colors
+            - Verify hover states on interactive surfaces use `layer-hover-*` tokens
+            - Document violations and fix
+
+        - [ ] **3.5.7.1.f Status/feedback consistency**
+            - Verify all alerts use correct status tokens (success/warning/info/destructive)
+            - Check badge usage for appropriate color semantics
+            - Verify error messages use correct tokens
+            - Document violations and fix
+
+        - [ ] **3.5.7.1.g Hard-coded color elimination**
+            - Search for any remaining Chakra color palette references (`red.600`, `blue.50`, etc.)
+            - Search for hex codes in component files (`#` in style props)
+            - Replace with appropriate semantic tokens
+            - Document any legitimate exceptions with rationale in code comments
+
+        - [ ] **3.5.7.1.h Gap analysis**
+            - Identify any UI patterns not covered by current token system
+            - Document missing tokens if any
+            - Propose additions to token system if needed
+            - Update strategy documentation with findings
+
+    - [ ] **3.5.7.2 Cross-theme validation**
+
+        **Validate fixes work correctly across all theme combinations.**
+
+        - [ ] Test all 8 theme combinations (4 themes × 2 modes)
+            - GitHub Primer (light/dark)
+            - IBM Carbon (light/dark)
+            - GitLab Pajamas (light/dark)
+            - Material Design 3 (light/dark)
+
+        - [ ] Verify component consistency
+            - Buttons: Primary (filled), Secondary (outline), Tertiary (text/link)
+            - Links: All using tertiary color with proper hover
+            - Alerts: Success (green), Warning (yellow/orange), Info (blue), Destructive (red)
+            - Badges: Appropriate color usage
+
+        - [ ] Validate on-color token parity (ADR-011)
+            - Test `on-*` vs `*-foreground` produce identical results
+            - Verify all deprecated aliases work across themes
+
+    - [ ] **3.5.7.3 Documentation updates**
+
+        **Document audit findings and update strategy docs.**
+
+        - [ ] Update strategy-semantic-tokens.md
+            - Add any patterns discovered during audit
+            - Document exceptions with rationale
+            - Update examples if needed
+
+        - [ ] Update ADR references
+            - Ensure ADR-010 references are accurate
+            - Ensure ADR-011 references are accurate
+            - Ensure ADR-012 references are accurate
+
+        - [ ] Document audit results
+            - Summary of violations found and fixed
+            - Any remaining technical debt
+            - Recommendations for future work
+
+    - [ ] **3.5.7.4 Final quality gates**
+
+        **Comprehensive validation before declaring Phase 3 complete.**
+
+        - [ ] TypeScript: 0 errors
+        - [ ] Frontend linting: 0 violations
+        - [ ] Backend linting: 0 violations
+        - [ ] Markdown linting: 0 errors
+        - [ ] All 8 theme combinations render correctly
+        - [ ] All components pass token consistency audit
+        - [ ] Visual regression testing if available
+
+- [ ] **3.5.8 Login session bug investigation**
 
     **Priority:** Unknown (evaluate when reached)
 
@@ -1614,13 +1812,13 @@ gaps, layout concerns, and component-specific issues requiring remediation befor
 
     **Context:** Discovered during Phase 3 review visual testing
 
-    - [ ] **3.5.7.1 Attempt to reproduce session loss**
+    - [ ] **3.5.8.1 Attempt to reproduce session loss**
         - Test session persistence during normal navigation
         - Test session across browser refreshes
         - Test session timeout behavior
         - Document reproduction steps if found
 
-    - [ ] **3.5.7.2 Evaluate and triage**
+    - [ ] **3.5.8.2 Evaluate and triage**
         - If reproduced: Assess severity (critical vs low priority)
         - If not reproduced: Document as potential testing artifact
         - If critical: Create separate task list for session management investigation

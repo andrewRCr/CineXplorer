@@ -138,8 +138,11 @@ These definitions ensure cross-theme consistency while respecting official desig
 | `tertiary` | Interactive text, links, accents | Blue or brand color, foreground | Hyperlinks, focus states, highlights | **Foreground** | Replaces deprecated `accent`. GitHub: blue (fg_accent), GitLab: purple |
 | `muted` | Deemphasized, non-interactive | Subtle gray backgrounds | Disabled states, subtle surfaces | Background | Distinct from secondary (interactive vs non-interactive) |
 | **Button Pattern Helpers (Per ADR-012)** | | | | | |
-| `button-outline` | Outline button border/text | Primary color | Outline button strokes | Foreground/Border | Maps to `primary` for cross-theme consistency |
-| `button-subtle` | Subtle button background | Secondary color | Subtle button fills | Background | Maps to `secondary` for low-emphasis actions |
+| `button-outline` | Neutral outline border/text | Neutral gray | Utility actions, navigation | Foreground/Border | DEFAULT: Maps to `border` (neutral) |
+| `button-outline-primary` | Primary outline border/text | Primary color | Branded actions in outline style | Foreground/Border | EXPLICIT: Maps to `primary` when brand color needed |
+| `button-subtle` | Subtle button background | Secondary color | Embedded/in-context actions | Background | Maps to `secondary` for low-emphasis fills |
+| `button-subtle-selected` | Selected subtle button state | Layer-selected color | Selected toggle-style buttons | Background | Maps to `layer-selected-02` (semantic shift to surface) |
+| `on-button-subtle-selected` | Text on selected subtle button | Foreground color | Selected toggle text | Foreground | Maps to `foreground` (pairs with layer-selected, not secondary) |
 | **Brand Identity (Optional)** | | | | | |
 | `brand` | Logo/brand identity | Purple, blue, or brand color | Logo sections, brand moments | Either | Optional. GitLab: purple, IBM: blue, GitHub: undefined |
 | `brandSecondary` | Secondary brand color | Orange or secondary brand | Additional brand accents | Either | Optional. GitLab: orange. Not for general component use. |
@@ -162,7 +165,10 @@ These definitions ensure cross-theme consistency while respecting official desig
 - **Secondary vs Muted:** Secondary is **interactive** (subtle buttons), Muted is **non-interactive** (disabled/deemphasized)
 - **Tertiary vs Accent:** Tertiary is the new name (Material-aligned), Accent is deprecated (alias during migration)
 - **Button Patterns (ADR-012):** Solid/outline/subtle/ghost are **visual patterns**, separate from color semantics.
-  Use `button-outline` (maps to primary) and `button-subtle` (maps to secondary) for cross-theme consistency.
+    - `button-outline` (neutral DEFAULT) maps to `border` for utility actions
+    - `button-outline-primary` (explicit) maps to `primary` for branded outline actions
+    - `button-subtle` maps to `secondary` for embedded/in-context actions
+- **Neutral vs Primary Outline:** Neutral outline (default) for utility/navigation, primary outline (explicit) for branded actions in outline style
 
 **Token Type Architecture:**
 
@@ -806,17 +812,18 @@ confusion where "secondary" could mean either "outline button" OR "subtle backgr
 
 **Chakra UI Variants → Token Mappings:**
 
-| Variant | Visual Pattern | Color Tokens | Interaction Tokens | Use Case |
-|---------|---------------|--------------|-------------------|----------|
-| `solid` | Filled background | `primary` / `on-primary` | `primary-hover`, `primary-active` | Highest emphasis |
-| `outline` | Transparent + border | `button-outline` (border+text) | Direct opacity: `/8`, `/12` | High emphasis |
-| `subtle` | Subtle background | `button-subtle` / `on-button-subtle` | `secondary-hover`, `secondary-active` | Medium emphasis |
-| `ghost` | No background/border | `tertiary` or `foreground` | `tertiary-hover`, `tertiary-active` | Low emphasis |
+| Variant | Visual Pattern | Color Tokens | Interaction Tokens | Use Case | Emphasis |
+|---------|---------------|--------------|-------------------|----------|----------|
+| `solid` | Filled background | `primary` / `on-primary` | `primary-hover`, `primary-active` | Primary actions | Highest |
+| `outline` (primary) | Transparent + primary border | `button-outline-primary` | Direct opacity: `/8`, `/12` | Branded actions in outline style | High |
+| `outline` (neutral) | Transparent + gray border | `button-outline` / `on-button-outline` | `tertiary/8`, `borderColor: tertiary` on hover | Utility/navigation (DEFAULT) | Medium |
+| `subtle` | Subtle filled background | `button-subtle` / `on-button-subtle` | `secondary-hover`, `secondary-active` | Embedded/in-context actions | Medium-Low |
+| `ghost` | No background/border | `tertiary` or `foreground` | `tertiary-hover`, `tertiary-active` | Dismissive actions | Lowest |
 
 **Implementation Examples:**
 
 ```tsx
-// Solid button (highest emphasis)
+// Solid button (highest emphasis) - primary actions
 <Button
   variant="solid"
   bg="primary"
@@ -827,18 +834,29 @@ confusion where "secondary" could mean either "outline button" OR "subtle backgr
   Save Changes
 </Button>
 
-// Outline button (high emphasis)
+// Primary outline (high emphasis) - branded actions in outline style
+<Button
+  variant="outline"
+  borderColor="button-outline-primary"
+  color="on-button-outline-primary"
+  _hover={{ bg: "primary/8" }}
+  _active={{ bg: "primary/12" }}
+>
+  Learn More
+</Button>
+
+// Neutral outline (medium emphasis) - DEFAULT for utility/navigation
 <Button
   variant="outline"
   borderColor="button-outline"
-  color="button-outline"
-  _hover={{ bg: "button-outline/8" }}
-  _active={{ bg: "button-outline/12" }}
+  color="on-button-outline"
+  _hover={{ bg: "tertiary/8", borderColor: "tertiary" }}
+  _active={{ bg: "tertiary/12", borderColor: "tertiary" }}
 >
   Cancel
 </Button>
 
-// Subtle button (medium emphasis)
+// Subtle button (medium-low emphasis) - embedded/in-context actions
 <Button
   variant="subtle"
   bg="button-subtle"
@@ -849,7 +867,17 @@ confusion where "secondary" could mean either "outline button" OR "subtle backgr
   Options
 </Button>
 
-// Ghost button (low emphasis)
+// Subtle button with selected state - toggle-style buttons (e.g., theme selector)
+<Button
+  variant="subtle"
+  bg={isSelected ? "button-subtle-selected" : "button-subtle"}
+  color={isSelected ? "on-button-subtle-selected" : "on-button-subtle"}
+  _hover={{ bg: isSelected ? "button-subtle-selected" : "secondary-hover" }}
+>
+  Theme Option
+</Button>
+
+// Ghost button (lowest emphasis) - dismissive actions
 <Button
   variant="ghost"
   color="tertiary"
@@ -863,21 +891,45 @@ confusion where "secondary" could mean either "outline button" OR "subtle backgr
 **Why This Approach:**
 
 - ✅ Clear separation of visual pattern (solid/outline/subtle/ghost) from color meaning (primary/secondary)
-- ✅ `button-outline` and `button-subtle` provide self-documenting API
+- ✅ `button-outline` (neutral), `button-outline-primary` (branded), and `button-subtle` provide self-documenting API
 - ✅ Works consistently across all themes (no Carbon vs Primer differences)
 - ✅ Aligns with Chakra v3's variant system
+- ✅ Two outline variants match real-world usage (most outlines are neutral utility, not branded)
+- ✅ Default name (`button-outline`) is most common use case (neutral)
 
-**Common Mistake to Avoid:**
+**Common Mistakes to Avoid:**
 
 ```tsx
-// ❌ Wrong - "secondary" doesn't mean "outline button"
-<Button variant="outline" bg="secondary">Cancel</Button>
+// ❌ Wrong - using primary color for utility actions
+<Button variant="outline" borderColor="primary">Cancel</Button>
 
-// ✅ Correct - outline buttons use button-outline (maps to primary)
-<Button variant="outline" borderColor="button-outline" color="button-outline">
+// ✅ Correct - neutral outline for utility actions
+<Button variant="outline" borderColor="button-outline" color="on-button-outline">
   Cancel
 </Button>
+
+// ❌ Wrong - "secondary" doesn't mean "outline button"
+<Button variant="outline" bg="secondary">Options</Button>
+
+// ✅ Correct - secondary is for subtle FILLED buttons
+<Button variant="subtle" bg="button-subtle" color="on-button-subtle">
+  Options
+</Button>
+
+// ❌ Wrong - using neutral outline when you want brand color
+<Button variant="outline" borderColor="button-outline">Learn More</Button>  // gray border
+
+// ✅ Correct - primary outline for branded actions
+<Button variant="outline" borderColor="button-outline-primary" color="on-button-outline-primary">
+  Learn More
+</Button>  // brand color border
 ```
+
+**When to use which outline:**
+
+- **Neutral outline** (`button-outline`): OAuth buttons, navigation ("Back"), filters, "Cancel" in neutral contexts
+- **Primary outline** (`button-outline-primary`): Branded CTAs in outline style, "Learn More" on landing pages
+- **Subtle filled** (`button-subtle`): Theme selectors, embedded controls, in-panel actions
 
 ### Choosing the Right Interaction Token
 

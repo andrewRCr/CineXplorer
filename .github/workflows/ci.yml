@@ -82,7 +82,7 @@ jobs:
 
           # Copy coverage report and pytest cache from container to host
           docker compose cp backend:/tmp/coverage.xml backend/coverage.xml
-          docker compose cp backend:/app/.pytest_cache backend/.pytest_cache || true
+          docker compose cp backend:/backend/.pytest_cache backend/.pytest_cache
 
       - name: Upload coverage reports
         if: always()

@@ -534,7 +534,20 @@ export interface paths {
         };
         /**
          * Get Now Playing Movies
-         * @description Retrieve currently playing movies with pagination and user-specific data.
+         * @description Retrieve movies currently playing in theaters with filtering and user-specific data.
+         *
+         *     Thin HTTP wrapper that delegates to service layer for business logic.
+         *     See MovieService.get_now_playing_movies() for implementation details including
+         *     date range presets, protected parameters, and user filter capabilities.
+         *
+         *     Query Parameters:
+         *         filters: MovieDiscoverFilterSchema with all optional filter parameters
+         *
+         *     Returns:
+         *         PaginatedMovieResponseSchema: Paginated movies with user data if authenticated
+         *
+         *     Raises:
+         *         HttpError: 400 for invalid parameters, 500 for TMDB API errors
          */
         get: operations["apps_movie_api_get_now_playing_movies"];
         put?: never;
@@ -554,7 +567,20 @@ export interface paths {
         };
         /**
          * Get Upcoming Movies
-         * @description Retrieve upcoming movies with pagination and user-specific data.
+         * @description Retrieve upcoming movies with filtering and user-specific data.
+         *
+         *     Thin HTTP wrapper that delegates to service layer for business logic.
+         *     See MovieService.get_upcoming_movies() for implementation details including
+         *     date range presets, protected parameters, and user filter capabilities.
+         *
+         *     Query Parameters:
+         *         filters: MovieDiscoverFilterSchema with all optional filter parameters
+         *
+         *     Returns:
+         *         PaginatedMovieResponseSchema: Paginated movies with user data if authenticated
+         *
+         *     Raises:
+         *         HttpError: 400 for invalid parameters, 500 for TMDB API errors
          */
         get: operations["apps_movie_api_get_upcoming_movies"];
         put?: never;
@@ -588,7 +614,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/movies/discover": {
+    "/api/movies/browse": {
         parameters: {
             query?: never;
             header?: never;
@@ -596,8 +622,13 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Discover Movies
-         * @description Discover movies with advanced filtering options and user-specific data.
+         * Browse Movies
+         * @description Browse movies with advanced filtering options and user-specific data.
+         *
+         *     This is a thin wrapper around the TMDB discover endpoint with zero presets,
+         *     giving users full control over all filter parameters. Unlike now-playing and
+         *     upcoming endpoints which protect date ranges, this endpoint allows unrestricted
+         *     filtering for general movie browsing.
          *
          *     This endpoint implements a two-pass filtering architecture:
          *     1. TMDB API filtering (primary) - Reduces millions of movies to thousands
@@ -634,7 +665,7 @@ export interface paths {
          *     Raises:
          *         HttpError: 400 for invalid parameters, 500 for TMDB API errors
          */
-        get: operations["apps_movie_api_discover_movies"];
+        get: operations["apps_movie_api_browse_movies"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1311,124 +1342,6 @@ export interface components {
             log_line: string;
         };
         /**
-         * PaginationParamsSchema
-         * @description Schema for pagination parameters with empty string handling.
-         *
-         *     Handles Django Ninja 1.4.3 + Pydantic 2.12.0 behavior where missing
-         *     query parameters are sent as empty strings instead of being omitted.
-         */
-        PaginationParamsSchema: {
-            /**
-             * Page
-             * @description Page number for pagination
-             */
-            page?: number | null;
-        };
-        /**
-         * MovieBaseSchema
-         * @description Minimal movie representation used in list endpoints.
-         */
-        MovieBaseSchema: {
-            /** Tmdb Id */
-            tmdb_id: number;
-            /** Title */
-            title: string;
-            /** Poster Path */
-            poster_path?: string | null;
-            /** Release Date */
-            release_date?: string | null;
-            /** Vote Average */
-            vote_average?: number | null;
-            /** Vote Count */
-            vote_count?: number | null;
-            /** Runtime */
-            runtime?: number | null;
-            user_movie_data?: components["schemas"]["UserMovieDataSchema"] | null;
-        };
-        /**
-         * PaginatedMovieResponseSchema
-         * @description Standard TMDB-style pagination envelope for movie collections.
-         *
-         *     Includes pagination metadata tracking for smart buffer mechanism:
-         *     - next_tmdb_page_start: Tracks the next TMDB page to fetch when buffer
-         *       consumes multiple pages per API response. This prevents duplicates when
-         *       client requests subsequent pages.
-         */
-        PaginatedMovieResponseSchema: {
-            /**
-             * Page
-             * @default 1
-             */
-            page: number;
-            /**
-             * Total Pages
-             * @default 0
-             */
-            total_pages: number;
-            /**
-             * Total Results
-             * @default 0
-             */
-            total_results: number;
-            /** Results */
-            results?: components["schemas"]["MovieBaseSchema"][];
-            /**
-             * Next Tmdb Page Start
-             * @description Next TMDB page to fetch for pagination continuation (smart buffer tracking)
-             */
-            next_tmdb_page_start?: number | null;
-        };
-        /**
-         * UserMovieDataSchema
-         * @description Shape of the user-specific movie metadata attached to TMDB responses.
-         */
-        UserMovieDataSchema: {
-            /** Id */
-            id?: number | null;
-            /** Tmdb Id */
-            tmdb_id?: number | null;
-            /** Title */
-            title?: string | null;
-            /**
-             * User Watched
-             * @default false
-             */
-            user_watched: boolean;
-            /**
-             * User On Watchlist
-             * @default false
-             */
-            user_on_watchlist: boolean;
-            /**
-             * User Liked
-             * @default false
-             */
-            user_liked: boolean;
-            /** User Rating */
-            user_rating?: number | null;
-            /** User Review */
-            user_review?: string | null;
-        };
-        /**
-         * MovieSearchParamsSchema
-         * @description Schema for movie search parameters with empty string handling.
-         *
-         *     Handles Django Ninja 1.4.3 + Pydantic 2.12.0 behavior where missing
-         *     query parameters are sent as empty strings instead of being omitted.
-         */
-        MovieSearchParamsSchema: {
-            /**
-             * Query
-             * @description Search query string
-             */
-            query: string;
-            /**
-             * Page
-             * @description Page number for pagination
-             */
-            page?: number | null;
-        };
-        /**
          * MovieDiscoverFilterSchema
          * @description Schema for TMDB discover endpoint filtering with two-pass architecture.
          *
@@ -1562,6 +1475,114 @@ export interface components {
              */
             genres?: string | null;
         };
+        /**
+         * MovieBaseSchema
+         * @description Minimal movie representation used in list endpoints.
+         */
+        MovieBaseSchema: {
+            /** Tmdb Id */
+            tmdb_id: number;
+            /** Title */
+            title: string;
+            /** Poster Path */
+            poster_path?: string | null;
+            /** Release Date */
+            release_date?: string | null;
+            /** Vote Average */
+            vote_average?: number | null;
+            /** Vote Count */
+            vote_count?: number | null;
+            /** Runtime */
+            runtime?: number | null;
+            /** Genre Ids */
+            genre_ids?: number[];
+            /** Overview */
+            overview?: string | null;
+            user_movie_data?: components["schemas"]["UserMovieDataSchema"] | null;
+        };
+        /**
+         * PaginatedMovieResponseSchema
+         * @description Standard TMDB-style pagination envelope for movie collections.
+         *
+         *     Includes pagination metadata tracking for smart buffer mechanism:
+         *     - next_tmdb_page_start: Tracks the next TMDB page to fetch when buffer
+         *       consumes multiple pages per API response. This prevents duplicates when
+         *       client requests subsequent pages.
+         */
+        PaginatedMovieResponseSchema: {
+            /**
+             * Page
+             * @default 1
+             */
+            page: number;
+            /**
+             * Total Pages
+             * @default 0
+             */
+            total_pages: number;
+            /**
+             * Total Results
+             * @default 0
+             */
+            total_results: number;
+            /** Results */
+            results?: components["schemas"]["MovieBaseSchema"][];
+            /**
+             * Next Tmdb Page Start
+             * @description Next TMDB page to fetch for pagination continuation (smart buffer tracking)
+             */
+            next_tmdb_page_start?: number | null;
+        };
+        /**
+         * UserMovieDataSchema
+         * @description Shape of the user-specific movie metadata attached to TMDB responses.
+         */
+        UserMovieDataSchema: {
+            /** Id */
+            id?: number | null;
+            /** Tmdb Id */
+            tmdb_id?: number | null;
+            /** Title */
+            title?: string | null;
+            /**
+             * User Watched
+             * @default false
+             */
+            user_watched: boolean;
+            /**
+             * User On Watchlist
+             * @default false
+             */
+            user_on_watchlist: boolean;
+            /**
+             * User Liked
+             * @default false
+             */
+            user_liked: boolean;
+            /** User Rating */
+            user_rating?: number | null;
+            /** User Review */
+            user_review?: string | null;
+        };
+        /**
+         * MovieSearchParamsSchema
+         * @description Schema for movie search parameters with empty string handling.
+         *
+         *     Handles Django Ninja 1.4.3 + Pydantic 2.12.0 behavior where missing
+         *     query parameters are sent as empty strings instead of being omitted.
+         */
+        MovieSearchParamsSchema: {
+            /**
+             * Query
+             * @description Search query string
+             */
+            query: string;
+            /**
+             * Page
+             * @description Page number for pagination
+             */
+            page?: number | null;
+        };
         /** CastMemberSchema */
         CastMemberSchema: {
             /** Id */
@@ -1610,9 +1631,11 @@ export interface components {
             vote_count?: number | null;
             /** Runtime */
             runtime?: number | null;
-            user_movie_data?: components["schemas"]["UserMovieDataSchema"] | null;
+            /** Genre Ids */
+            genre_ids?: number[];
             /** Overview */
             overview?: string | null;
+            user_movie_data?: components["schemas"]["UserMovieDataSchema"] | null;
             /** Genres */
             genres?: components["schemas"]["GenreSchema"][];
             /** Production Companies */
@@ -1632,6 +1655,20 @@ export interface components {
             logo_path?: string | null;
             /** Origin Country */
             origin_country?: string | null;
+        };
+        /**
+         * PaginationParamsSchema
+         * @description Schema for pagination parameters with empty string handling.
+         *
+         *     Handles Django Ninja 1.4.3 + Pydantic 2.12.0 behavior where missing
+         *     query parameters are sent as empty strings instead of being omitted.
+         */
+        PaginationParamsSchema: {
+            /**
+             * Page
+             * @description Page number for pagination
+             */
+            page?: number | null;
         };
         /** KeywordSchema */
         KeywordSchema: {
@@ -2332,6 +2369,56 @@ export interface operations {
             query?: {
                 /** @description Page number for pagination */
                 page?: number | null;
+                /** @description TMDB page to start fetching from (smart buffer continuation) */
+                tmdb_page_start?: number | null;
+                /** @description Comma-separated genre IDs */
+                with_genres?: string | null;
+                /** @description Comma-separated keyword IDs */
+                with_keywords?: string | null;
+                without_genres?: string | null;
+                without_keywords?: string | null;
+                /** @description Comma-separated person IDs */
+                with_cast?: string | null;
+                with_crew?: string | null;
+                with_people?: string | null;
+                with_companies?: string | null;
+                with_networks?: string | null;
+                without_companies?: string | null;
+                without_networks?: string | null;
+                with_watch_providers?: string | null;
+                without_watch_providers?: string | null;
+                with_watch_monetization_types?: string | null;
+                include_adult?: boolean | null;
+                include_video?: boolean | null;
+                /** @description ISO 639-1 language code */
+                language?: string | null;
+                /** @description ISO 3166-1 country code */
+                region?: string | null;
+                with_original_language?: string | null;
+                without_original_language?: string | null;
+                primary_release_year?: number | null;
+                year?: number | null;
+                primary_release_date_gte?: string | null;
+                primary_release_date_lte?: string | null;
+                release_date_gte?: string | null;
+                release_date_lte?: string | null;
+                with_release_type?: string | null;
+                vote_count_gte?: number | null;
+                vote_count_lte?: number | null;
+                vote_average_gte?: number | null;
+                vote_average_lte?: number | null;
+                with_runtime_gte?: number | null;
+                with_runtime_lte?: number | null;
+                certification_country?: string | null;
+                certification?: string | null;
+                certification_lte?: string | null;
+                certification_gte?: string | null;
+                /** @description Sort by field (e.g., popularity.desc, vote_average.desc) */
+                sort_by?: string | null;
+                /** @description Decade filter (e.g., '1990s') */
+                decade?: string | null;
+                /** @description Alias for with_genres */
+                genres?: string | null;
             };
             header?: never;
             path?: never;
@@ -2355,6 +2442,56 @@ export interface operations {
             query?: {
                 /** @description Page number for pagination */
                 page?: number | null;
+                /** @description TMDB page to start fetching from (smart buffer continuation) */
+                tmdb_page_start?: number | null;
+                /** @description Comma-separated genre IDs */
+                with_genres?: string | null;
+                /** @description Comma-separated keyword IDs */
+                with_keywords?: string | null;
+                without_genres?: string | null;
+                without_keywords?: string | null;
+                /** @description Comma-separated person IDs */
+                with_cast?: string | null;
+                with_crew?: string | null;
+                with_people?: string | null;
+                with_companies?: string | null;
+                with_networks?: string | null;
+                without_companies?: string | null;
+                without_networks?: string | null;
+                with_watch_providers?: string | null;
+                without_watch_providers?: string | null;
+                with_watch_monetization_types?: string | null;
+                include_adult?: boolean | null;
+                include_video?: boolean | null;
+                /** @description ISO 639-1 language code */
+                language?: string | null;
+                /** @description ISO 3166-1 country code */
+                region?: string | null;
+                with_original_language?: string | null;
+                without_original_language?: string | null;
+                primary_release_year?: number | null;
+                year?: number | null;
+                primary_release_date_gte?: string | null;
+                primary_release_date_lte?: string | null;
+                release_date_gte?: string | null;
+                release_date_lte?: string | null;
+                with_release_type?: string | null;
+                vote_count_gte?: number | null;
+                vote_count_lte?: number | null;
+                vote_average_gte?: number | null;
+                vote_average_lte?: number | null;
+                with_runtime_gte?: number | null;
+                with_runtime_lte?: number | null;
+                certification_country?: string | null;
+                certification?: string | null;
+                certification_lte?: string | null;
+                certification_gte?: string | null;
+                /** @description Sort by field (e.g., popularity.desc, vote_average.desc) */
+                sort_by?: string | null;
+                /** @description Decade filter (e.g., '1990s') */
+                decade?: string | null;
+                /** @description Alias for with_genres */
+                genres?: string | null;
             };
             header?: never;
             path?: never;
@@ -2398,7 +2535,7 @@ export interface operations {
             };
         };
     };
-    apps_movie_api_discover_movies: {
+    apps_movie_api_browse_movies: {
         parameters: {
             query?: {
                 /** @description Page number for pagination */

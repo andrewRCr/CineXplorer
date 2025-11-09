@@ -4,7 +4,8 @@
 
 Accepted
 
-**Note:** Light mode layer derivation strategy partially superseded by ADR-008 (adopts Carbon's official alternating pattern). Core decision (Carbon as architectural standard) remains in force.
+**Note:** Light mode layer derivation strategy partially superseded by ADR-008 (adopts Carbon's official alternating
+pattern). Core decision (Carbon as architectural standard) remains in force.
 
 ## Context
 

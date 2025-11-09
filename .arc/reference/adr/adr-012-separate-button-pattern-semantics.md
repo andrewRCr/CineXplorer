@@ -165,8 +165,10 @@ When a subtle button is selected, it transitions from "button semantics" (second
 to "interactive surface semantics" (layer-selected-02, paired with foreground). This semantic shift requires different
 foreground colors for proper contrast across themes:
 
-- **IBM Carbon light**: `button-subtle` is dark gray (#393939) with white text, but `layer-selected-02` is light gray (#e2e2e2) needing dark text
-- **Material Design dark**: `button-subtle` is light purple-gray (#CCC2DC) with dark text, but `layer-selected-02` needs inverted contrast
+- **IBM Carbon light**: `button-subtle` is dark gray (#393939) with white text, but `layer-selected-02` is light
+  gray (#e2e2e2) needing dark text
+- **Material Design dark**: `button-subtle` is light purple-gray (#CCC2DC) with dark text, but `layer-selected-02`
+  needs inverted contrast
 
 Without dedicated selected tokens, components would need conditional color logic per theme, defeating the purpose of
 a unified token system.

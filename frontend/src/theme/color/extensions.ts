@@ -23,20 +23,20 @@
  * CineXplorer-specific token values for a single mode (light or dark).
  */
 export interface ExtensionTokens {
-	/** Rating background (TMDB scores, IMDb gold standard) */
-	rating: string;
-	/** Text color on rating backgrounds */
-	"rating-foreground": string;
+    /** Rating background (TMDB scores, IMDb gold standard) */
+    rating: string;
+    /** Text color on rating backgrounds */
+    "rating-foreground": string;
 
-	/** Badge background (genre tags, neutral labels) */
-	badge: string;
-	/** Text color on badge backgrounds */
-	"badge-foreground": string;
+    /** Badge background (genre tags, neutral labels) */
+    badge: string;
+    /** Text color on badge backgrounds */
+    "badge-foreground": string;
 
-	/** Active drag state (item being dragged) */
-	"drag-active": string;
-	/** Valid drop zone indicator */
-	"drop-zone": string;
+    /** Active drag state (item being dragged) */
+    "drag-active": string;
+    /** Valid drop zone indicator */
+    "drop-zone": string;
 }
 
 /**
@@ -60,14 +60,14 @@ export interface ExtensionTokens {
  * - Dark: #D4A017 + #000000 = 11.24:1 (AAA level)
  */
 export const standardRatingColors = {
-	light: {
-		rating: "#F5C518",
-		"rating-foreground": "#000000",
-	},
-	dark: {
-		rating: "#D4A017",
-		"rating-foreground": "#000000",
-	},
+    light: {
+        rating: "#F5C518",
+        "rating-foreground": "#000000",
+    },
+    dark: {
+        rating: "#D4A017",
+        "rating-foreground": "#000000",
+    },
 } as const;
 
 /**
@@ -97,31 +97,31 @@ export const standardRatingColors = {
  * ```
  */
 export function createExtensions(
-	themeBase: {
-		/** Muted/subtle background (for badges) */
-		muted: string;
-		/** Muted text color (for badge text) */
-		mutedForeground: string;
-		/** Accent emphasis color (for drop zones) */
-		accentEmphasis: string;
-		/** Secondary hover state (for drag active) */
-		secondaryHover: string;
-	},
-	mode: "light" | "dark",
+    themeBase: {
+        /** Muted/subtle background (for badges) */
+        muted: string;
+        /** Muted text color (for badge text) */
+        mutedForeground: string;
+        /** Accent emphasis color (for drop zones) */
+        accentEmphasis: string;
+        /** Secondary hover state (for drag active) */
+        secondaryHover: string;
+    },
+    mode: "light" | "dark",
 ): ExtensionTokens {
-	return {
-		// Rating tokens: Use standard IMDb gold across all themes
-		rating: standardRatingColors[mode].rating,
-		"rating-foreground": standardRatingColors[mode]["rating-foreground"],
+    return {
+        // Rating tokens: Use standard IMDb gold across all themes
+        rating: standardRatingColors[mode].rating,
+        "rating-foreground": standardRatingColors[mode]["rating-foreground"],
 
-		// Badge tokens: Adapt to theme's neutral palette
-		badge: themeBase.muted,
-		"badge-foreground": themeBase.mutedForeground,
+        // Badge tokens: Adapt to theme's neutral palette
+        badge: themeBase.muted,
+        "badge-foreground": themeBase.mutedForeground,
 
-		// Drag-and-drop: Adapt to theme's interactive colors
-		"drag-active": themeBase.secondaryHover,
-		"drop-zone": themeBase.accentEmphasis,
-	};
+        // Drag-and-drop: Adapt to theme's interactive colors
+        "drag-active": themeBase.secondaryHover,
+        "drop-zone": themeBase.accentEmphasis,
+    };
 }
 
 /**
@@ -147,12 +147,12 @@ export function createExtensions(
  * ```
  */
 export function createCustomRatingColors(
-	background: string,
-	foreground: string,
+    background: string,
+    foreground: string,
 ): Pick<ExtensionTokens, "rating" | "rating-foreground"> {
-	// TODO: Add contrast validation in development mode
-	return {
-		rating: background,
-		"rating-foreground": foreground,
-	};
+    // TODO: Add contrast validation in development mode
+    return {
+        rating: background,
+        "rating-foreground": foreground,
+    };
 }

@@ -26,9 +26,9 @@
 import type { Movie } from '../@types/movie.d';
 import type { components } from '../types/api';
 import {
-	createUserMovieData,
-	updateUserMovieData,
-	getUserMovieDataByTmdbId,
+    createUserMovieData,
+    updateUserMovieData,
+    getUserMovieDataByTmdbId,
 } from './userMovieDataService';
 
 type UserMovieDataDetailSchema = components['schemas']['UserMovieDataDetailSchema'];
@@ -39,11 +39,11 @@ type UserMovieDataUpdateSchema = components['schemas']['UserMovieDataUpdateSchem
  * Type guard for API errors with status codes
  */
 interface ApiError extends Error {
-	status?: number;
+    status?: number;
 }
 
 function isApiError(error: unknown): error is ApiError {
-	return error instanceof Error && 'status' in error;
+    return error instanceof Error && 'status' in error;
 }
 
 /**
@@ -69,48 +69,48 @@ function isApiError(error: unknown): error is ApiError {
  * const result = await toggleMovieWatchlist(movieWithData);
  */
 export async function toggleMovieWatchlist(
-	movie: Movie
+    movie: Movie
 ): Promise<UserMovieDataDetailSchema> {
-	// Case 1: No existing user data → CREATE
-	if (!movie.user_movie_data) {
-		const createPayload: UserMovieDataCreateSchema = {
-			movie_id: movie.tmdb_id, // Backend expects TMDB ID as movie_id
-			user_on_watchlist: true,
-			user_watched: false,
-			user_liked: false,
-			user_rating: null,
-			user_review: null,
-		};
+    // Case 1: No existing user data → CREATE
+    if (!movie.user_movie_data) {
+        const createPayload: UserMovieDataCreateSchema = {
+            movie_id: movie.tmdb_id, // Backend expects TMDB ID as movie_id
+            user_on_watchlist: true,
+            user_watched: false,
+            user_liked: false,
+            user_rating: null,
+            user_review: null,
+        };
 
-		try {
-			const response = await createUserMovieData(createPayload);
-			return response.data;
-		} catch (error: unknown) {
-			// Handle race condition: Another request created the entry
-			if (isApiError(error) && error.status === 400) {
-				if (error.message.includes('already exists')) {
-					// Fetch the existing data and retry with UPDATE
-					const { request } = getUserMovieDataByTmdbId({ tmdb_id: movie.tmdb_id });
-					const existingDataResponse = await request;
-					const updateResponse = await updateUserMovieData(existingDataResponse.data.id!, {
-						user_on_watchlist: true,
-					});
-					return updateResponse.data;
-				}
-			}
-			// Re-throw other errors
-			throw error;
-		}
-	}
+        try {
+            const response = await createUserMovieData(createPayload);
+            return response.data;
+        } catch (error: unknown) {
+            // Handle race condition: Another request created the entry
+            if (isApiError(error) && error.status === 400) {
+                if (error.message.includes('already exists')) {
+                    // Fetch the existing data and retry with UPDATE
+                    const { request } = getUserMovieDataByTmdbId({ tmdb_id: movie.tmdb_id });
+                    const existingDataResponse = await request;
+                    const updateResponse = await updateUserMovieData(existingDataResponse.data.id!, {
+                        user_on_watchlist: true,
+                    });
+                    return updateResponse.data;
+                }
+            }
+            // Re-throw other errors
+            throw error;
+        }
+    }
 
-	// Case 2: Existing user data → UPDATE (toggle)
-	const currentWatchlistStatus = movie.user_movie_data.user_on_watchlist;
-	const updatePayload: UserMovieDataUpdateSchema = {
-		user_on_watchlist: !currentWatchlistStatus,
-	};
+    // Case 2: Existing user data → UPDATE (toggle)
+    const currentWatchlistStatus = movie.user_movie_data.user_on_watchlist;
+    const updatePayload: UserMovieDataUpdateSchema = {
+        user_on_watchlist: !currentWatchlistStatus,
+    };
 
-	const response = await updateUserMovieData(movie.user_movie_data.id!, updatePayload);
-	return response.data;
+    const response = await updateUserMovieData(movie.user_movie_data.id!, updatePayload);
+    return response.data;
 }
 
 /**
@@ -124,10 +124,10 @@ export async function toggleMovieWatchlist(
  */
  
 export async function toggleMovieWatched(
-	_movie: Movie
+    _movie: Movie
 ): Promise<UserMovieDataDetailSchema> {
-	// TODO: Implement (same pattern as toggleMovieWatchlist)
-	throw new Error('toggleMovieWatched not yet implemented');
+    // TODO: Implement (same pattern as toggleMovieWatchlist)
+    throw new Error('toggleMovieWatched not yet implemented');
 }
 
 /**
@@ -141,10 +141,10 @@ export async function toggleMovieWatched(
  */
  
 export async function toggleMovieLiked(
-	_movie: Movie
+    _movie: Movie
 ): Promise<UserMovieDataDetailSchema> {
-	// TODO: Implement (same pattern as toggleMovieWatchlist)
-	throw new Error('toggleMovieLiked not yet implemented');
+    // TODO: Implement (same pattern as toggleMovieWatchlist)
+    throw new Error('toggleMovieLiked not yet implemented');
 }
 
 /**
@@ -159,11 +159,11 @@ export async function toggleMovieLiked(
  */
  
 export async function setMovieRating(
-	_movie: Movie,
-	_rating: number
+    _movie: Movie,
+    _rating: number
 ): Promise<UserMovieDataDetailSchema> {
-	// TODO: Implement (may need UI modal integration)
-	throw new Error('setMovieRating not yet implemented');
+    // TODO: Implement (may need UI modal integration)
+    throw new Error('setMovieRating not yet implemented');
 }
 
 /**
@@ -178,9 +178,9 @@ export async function setMovieRating(
  */
  
 export async function setMovieReview(
-	_movie: Movie,
-	_review: string
+    _movie: Movie,
+    _review: string
 ): Promise<UserMovieDataDetailSchema> {
-	// TODO: Implement (may need UI modal integration)
-	throw new Error('setMovieReview not yet implemented');
+    // TODO: Implement (may need UI modal integration)
+    throw new Error('setMovieReview not yet implemented');
 }

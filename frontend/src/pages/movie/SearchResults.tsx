@@ -3,41 +3,41 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import MovieCollectionGrid from "@/components/movie/collection/MovieCollectionGrid";
 
 const SearchResults = () => {
-	console.log("🔍 SearchResults: COMPONENT STARTED");
-	const [searchParams] = useSearchParams();
-	const navigate = useNavigate();
-	const initialQuery = searchParams.get("query") || "";
+  console.log("🔍 SearchResults: COMPONENT STARTED");
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const initialQuery = searchParams.get("query") || "";
 
-	console.log("SearchResults: Component render", {
-		initialQuery,
-		searchParams: searchParams.toString(),
-	});
+  console.log("SearchResults: Component render", {
+    initialQuery,
+    searchParams: searchParams.toString(),
+  });
 
-	// Handle empty search query - redirect to home
-	useEffect(() => {
-		console.log("SearchResults: Checking for empty query", {
-			initialQuery,
-			searchParams: searchParams.toString(),
-		});
-		if (!initialQuery.trim()) {
-			console.log("SearchResults: No query found, redirecting to home");
-			navigate("/", { replace: true });
-		}
-	}, [initialQuery, navigate, searchParams]);
+  // Handle empty search query - redirect to home
+  useEffect(() => {
+    console.log("SearchResults: Checking for empty query", {
+      initialQuery,
+      searchParams: searchParams.toString(),
+    });
+    if (!initialQuery.trim()) {
+      console.log("SearchResults: No query found, redirecting to home");
+      navigate("/", { replace: true });
+    }
+  }, [initialQuery, navigate, searchParams]);
 
-	// If no query, don't render anything (will redirect)
-	if (!initialQuery.trim()) {
-		return null;
-	}
+  // If no query, don't render anything (will redirect)
+  if (!initialQuery.trim()) {
+    return null;
+  }
 
-	console.log("SearchResults: About to render MovieCollectionGrid - fetcher will be provided by MovieCollectionLayout");
+  console.log("SearchResults: About to render MovieCollectionGrid - fetcher will be provided by MovieCollectionLayout");
 
-	// MovieCollectionLayout will provide:
-	// - Page header with title from routeConfigHelper.ts
-	// - Search fetcher from routeConfigHelper.ts  
-	// - Pagination management
-	// - Consistent styling and layout
-	return <MovieCollectionGrid />;
+  // MovieCollectionLayout will provide:
+  // - Page header with title from routeConfigHelper.ts
+  // - Search fetcher from routeConfigHelper.ts  
+  // - Pagination management
+  // - Consistent styling and layout
+  return <MovieCollectionGrid />;
 };
 
 export default SearchResults;

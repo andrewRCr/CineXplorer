@@ -64,9 +64,12 @@ if ! echo "$commit_msg" | grep -qE '^Context: '; then
     echo "   Examples:"
     echo "   Context: tasks-filter-integration-testing.md (Task 3.6)"
     echo "   Context: tasks-api-layer-modernization.md (Tasks 1.4-1.7)"
+    echo "   Context: tasks-theme-modernization.md (Task 2.3.a)"
+    echo "   Context: tasks-theme-modernization.md (Tasks 2.3.c-e)"
     echo "   Context: tasks-filter-testing.md (incidental - discovered during Task 3.6)"
     echo "   Context: tasks-pagination-buffer-tracking.md (planning)"
     echo "   Context: planning (no associated task list)"
+    echo "   Context: refactor (no associated task list)"
     errors=$((errors + 1))
 else
     # Extract Context line for further validation
@@ -93,15 +96,16 @@ else
         fi
 
         # Validate task reference format
-        # Support multi-level task numbering: X.Y, X.Y.Z, X.Y.R.Z, etc.
-        # Task IDs can contain numbers and letters (e.g., 3.2.R.2, 2.3.6c)
-        # Ranges can be abbreviated (e.g., 2.3.6c-e means 2.3.6c-2.3.6e)
+        # Support multi-level task numbering: X.Y, X.Y.a, X.Y.a.1, etc.
+        # Level 3 uses letters for readability (strategy v1.4): 2.3.a, 2.3.b
+        # Special case: 'R' (capital) for revised/remedial/remaining work: X.Y.R, X.Y.R.1, X.Y.a.R
+        # Ranges can be abbreviated (e.g., 2.3.c-e means 2.3.c-2.3.e)
         if echo "$context_line" | grep -qE '\(Task [0-9]+(\.[0-9A-Za-z]+)+\)$'; then
             # Single task format - valid
             :
-        elif echo "$context_line" | grep -qE '\(Tasks [0-9]+(\.[0-9A-Za-z]+)+-[0-9A-Za-z]+\)$'; then
+        elif echo "$context_line" | grep -qE '\(Tasks [0-9]+(\.[0-9A-Za-z]+)+-[0-9A-Za-z]+(\.[0-9A-Za-z]+)*\)$'; then
             # Task range format (full or abbreviated) - valid
-            # Examples: (Tasks 2.3.6c-2.3.6e) or (Tasks 2.3.6c-e)
+            # Examples: (Tasks 2.2-2.3), (Tasks 2.3.6c-2.3.6e) or (Tasks 2.3.6c-e)
             :
         elif echo "$context_line" | grep -qE '\(Tasks [0-9]+(\.[0-9A-Za-z]+)+(, [0-9]+(\.[0-9A-Za-z]+)+)+\)$'; then
             # Multiple non-contiguous tasks - valid
@@ -112,25 +116,26 @@ else
         elif echo "$context_line" | grep -qE '\(planning\)$'; then
             # Task list planning/maintenance - valid
             :
-        elif echo "$context_line" | grep -qE '^Context: tasks-[a-z0-9-]+\.md$'; then
-            # No task number (completion or spans many) - valid
-            :
         else
             echo -e "${RED}❌ Error: Invalid task reference format in Context: line${NC}"
-            echo "   Expected formats:"
-            echo "   - (Task X.Y) or (Task X.Y.Z) - multi-level task numbers supported"
-            echo "   - (Tasks X.Y-X.Z) or (Tasks X.Y.Z-X.Y.W) - task range"
+            echo "   Expected formats for task list references:"
+            echo "   - (Task X.Y) or (Task X.Y.a) - level 3 uses letters (v1.4)"
+            echo "   - (Task X.Y.a.1) - level 4 if needed"
+            echo "   - (Task X.Y.R) or (Task X.Y.R.1) - 'R' for revised/remedial work"
+            echo "   - (Tasks X.Y-X.Z) or (Tasks X.Y.a-X.Y.d) - task range"
+            echo "   - (Tasks X.Y.c-e) or (Tasks 2.3.c-e) - abbreviated range"
             echo "   - (Tasks X.Y, A.B, C.D) - non-contiguous tasks"
             echo "   - (incidental - discovered during Task X.Y)"
             echo "   - (planning) - task list planning/maintenance"
-            echo "   - No parenthetical (for completions spanning many tasks)"
+            echo ""
+            echo "   Note: Parenthetical is REQUIRED for all commits"
             echo ""
             echo "   Your Context line: $context_line"
             errors=$((errors + 1))
         fi
 
     # Check for no-task-list categories
-    elif echo "$context_line" | grep -qE '^Context: (planning|documentation|maintenance|archival prep|archival) \(no associated task list\)$'; then
+    elif echo "$context_line" | grep -qE '^Context: (planning|documentation|maintenance|refactor|archival prep|archival) \(no associated task list\)$'; then
         # No task list category - valid
         :
     else
@@ -140,7 +145,9 @@ else
         echo "   - Context: tasks-[name].md (Tasks X.Y-X.Z)"
         echo "   - Context: tasks-[name].md (incidental - discovered during Task X.Y)"
         echo "   - Context: tasks-[name].md (planning)"
-        echo "   - Context: [planning|documentation|maintenance|archival prep|archival] (no associated task list)"
+        echo "   - Context: [planning|documentation|maintenance|refactor|archival prep|archival] (no associated task list)"
+        echo ""
+        echo "   Note: Parenthetical is REQUIRED for all commits"
         echo ""
         echo "   Your Context line: $context_line"
         errors=$((errors + 1))

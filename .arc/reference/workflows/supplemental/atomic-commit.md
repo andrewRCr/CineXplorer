@@ -55,9 +55,12 @@ steps:
     - Add any new tasks that were discovered during implementation
 
   **Step 6: Determine Context Footer**
-    - For task list work: Use exact filename and task number(s)
-    - For incidental without task list: Reference parent task list with "incidental - discovered during"
-    - For boundary scenarios: Use appropriate category (planning, documentation, maintenance, archival prep, archival)
+    - Task list work: MUST use task list filename WITH parenthetical:
+        - (Task X.Y) for specific task work
+        - (incidental - discovered during Task X.Y) for incidental during task
+        - (planning) for task list maintenance
+    - Non-task-list work: MUST use boundary category WITH (no associated task list):
+        - planning, documentation, maintenance, refactor, archival prep, archival
 
 - name: Plan Commits
   description: |
@@ -103,7 +106,7 @@ steps:
   Context: tasks-[exact-filename].md (Task X.Y)              # Single task
   Context: tasks-[exact-filename].md (Tasks X.Y-X.Z)         # Sequential range
   Context: tasks-[exact-filename].md (Tasks X.Y, A.B, C.D)   # Non-contiguous
-  Context: tasks-[exact-filename].md                         # Completion/many tasks
+  Context: tasks-[exact-filename].md (planning)              # Task list maintenance
   ```
 
   **Incidental without dedicated task list:**
@@ -123,7 +126,8 @@ steps:
   ```bash
   Context: planning (no associated task list)        # PRD creation, NEW task list generation
   Context: documentation (no associated task list)   # PROJECT-STATUS, README
-  Context: maintenance (no associated task list)     # Dependencies, tooling
+  Context: maintenance (no associated task list)     # Dependencies, tooling, configuration
+  Context: refactor (no associated task list)        # Quality improvements, cleanup discovered during reviews
   Context: archival prep (no associated task list)   # Pre-archival documentation
   Context: archival (no associated task list)        # Archival workflow execution
   ```
@@ -141,7 +145,7 @@ steps:
 
     - ✅ Conventional Commits format: `<type>(scope): description`
     - ✅ Subject 50-72 characters
-    - ✅ Context: footer with exact filename and task reference
+    - ✅ Context: footer with REQUIRED parenthetical (task reference OR boundary category)
     - ✅ Task numbers: "Task 3.6" NOT "Phase 3.6"
     - ✅ Body: 10-15 lines (20-25 max for milestones)
 

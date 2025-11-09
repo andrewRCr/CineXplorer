@@ -46,15 +46,15 @@ type PaginatedMovieResponseSchema = components["schemas"]["PaginatedMovieRespons
 
 // Query parameter types for type-safe API calls
 export interface UserMoviesQueryParams {
-	/**
-	 * Filter to only watchlist movies
-	 * When true, only returns movies where user_on_watchlist is true
-	 */
-	watchlist?: boolean;
-	/**
-	 * Page number for pagination
-	 */
-	page?: number;
+    /**
+     * Filter to only watchlist movies
+     * When true, only returns movies where user_on_watchlist is true
+     */
+    watchlist?: boolean;
+    /**
+     * Page number for pagination
+     */
+    page?: number;
 }
 
 // Re-export commonly used types for external consumers
@@ -106,12 +106,12 @@ const userMoviesService = create("/user-movie-data/movies");
  * useEffect(() => () => cancel(), []);
  */
 export const getUserMovies = (params?: UserMoviesQueryParams) => {
-	const controller = new AbortController();
-	const request = userMoviesService
-		.getPaginated<PaginatedMovieResponseSchema>(params)
-		.request;
+    const controller = new AbortController();
+    const request = userMoviesService
+        .getPaginated<PaginatedMovieResponseSchema>(params)
+        .request;
 
-	return { request, cancel: () => controller.abort() };
+    return { request, cancel: () => controller.abort() };
 };
 
 // Implementation Notes:

@@ -26,98 +26,100 @@ const Upcoming = lazy(() => import("./pages/movie/Upcoming"));
 const Popular = lazy(() => import("./pages/movie/Popular"));
 const TopRated = lazy(() => import("./pages/movie/TopRated"));
 const SearchResults = lazy(() => import("./pages/movie/SearchResults"));
-const TypographyTest = lazy(() => import("./pages/TypographyTest"));
-const ThemeDebug = lazy(() => import("./pages/ThemeDebug"));
+const TypographyDebug = lazy(() => import("./pages/dev/TypographyDebug"));
+const ThemeDebug = lazy(() => import("./pages/dev/theme-debug/ThemeDebug"));
+const LayoutDebug = lazy(() => import("./pages/dev/LayoutDebug"));
 
 const App: React.FC = () => {
-	return (
-		<ErrorBoundary showErrorDetails={import.meta.env.MODE === 'development'}>
-			<BrowserRouter>
-			<AuthContextProvider>
-				<Suspense fallback={<LoadingLayout />}>
-					<Routes>
-						{/* Auth routes - separate layout */}
-						<Route
-							path={ROUTES.LOGIN}
-							element={
-								<AuthLayout>
-									<Login />
-								</AuthLayout>
-							}
-						/>
-						<Route
-							path={ROUTES.REGISTER}
-							element={
-								<AuthLayout>
-									<Register />
-								</AuthLayout>
-							}
-						/>
-						<Route
-							path={ROUTES.VERIFY_EMAIL}
-							element={
-								<AuthLayout>
-									<VerifyEmail />
-								</AuthLayout>
-							}
-						/>
+  return (
+    <ErrorBoundary showErrorDetails={import.meta.env.MODE === 'development'}>
+      <BrowserRouter>
+      <AuthContextProvider>
+        <Suspense fallback={<LoadingLayout />}>
+          <Routes>
+            {/* Auth routes - separate layout */}
+            <Route
+              path={ROUTES.LOGIN}
+              element={
+                <AuthLayout>
+                  <Login />
+                </AuthLayout>
+              }
+            />
+            <Route
+              path={ROUTES.REGISTER}
+              element={
+                <AuthLayout>
+                  <Register />
+                </AuthLayout>
+              }
+            />
+            <Route
+              path={ROUTES.VERIFY_EMAIL}
+              element={
+                <AuthLayout>
+                  <VerifyEmail />
+                </AuthLayout>
+              }
+            />
 
-						{/* Content routes - full app layout */}
-						<Route element={<AppLayout />}>
-							{/* Home page - Featured landing */}
-							<Route path={ROUTES.HOME} element={<Featured />} />
-							<Route path={ROUTES.PROFILE} element={<Profile />} />
-							<Route path={ROUTES.WATCHLIST} element={<Watchlist />} />
-							<Route path={ROUTES.SETTINGS} element={<Settings />} />
+            {/* Content routes - full app layout */}
+            <Route element={<AppLayout />}>
+              {/* Home page - Featured landing */}
+              <Route path={ROUTES.HOME} element={<Featured />} />
+              <Route path={ROUTES.PROFILE} element={<Profile />} />
+              <Route path={ROUTES.WATCHLIST} element={<Watchlist />} />
+              <Route path={ROUTES.SETTINGS} element={<Settings />} />
 
-							{/* Movie collection routes with shared layout */}
-							<Route
-								path={ROUTES.MOVIES}
-								element={
-									<MovieCollectionLayout
-										showFilters={true}
-										filterStyle="minimal"
-									/>
-								}
-							>
-								<Route path="now-playing" element={<NowPlaying />} />
-								<Route path="upcoming" element={<Upcoming />} />
-								<Route path="popular" element={<Popular />} />
-								<Route path="top-rated" element={<TopRated />} />
-							</Route>
+              {/* Movie collection routes with shared layout */}
+              <Route
+                path={ROUTES.MOVIES}
+                element={
+                  <MovieCollectionLayout
+                    showFilters={true}
+                    filterStyle="minimal"
+                  />
+                }
+              >
+                <Route path="now-playing" element={<NowPlaying />} />
+                <Route path="upcoming" element={<Upcoming />} />
+                <Route path="popular" element={<Popular />} />
+                <Route path="top-rated" element={<TopRated />} />
+              </Route>
 
-							{/* Search results with shared layout */}
-							<Route
-								path={ROUTES.SEARCH_RESULTS}
-								element={
-									<MovieCollectionLayout
-										showFilters={false}
-									/>
-								}
-							>
-								<Route index element={<SearchResults />} />
-							</Route>
-							<Route path={ROUTES.MOVIE_DETAIL} element={<MovieDetail />} />
-							<Route path={ROUTES.TYPOGRAPHY_TEST} element={<TypographyTest />} />
-							<Route path="/theme-debug" element={<ThemeDebug />} />
-							{/* ...other content routes... */}
-						</Route>
+              {/* Search results with shared layout */}
+              <Route
+                path={ROUTES.SEARCH_RESULTS}
+                element={
+                  <MovieCollectionLayout
+                    showFilters={false}
+                  />
+                }
+              >
+                <Route index element={<SearchResults />} />
+              </Route>
+              <Route path={ROUTES.MOVIE_DETAIL} element={<MovieDetail />} />
+              <Route path={ROUTES.TYPOGRAPHY_TEST} element={<TypographyDebug />} />
+              <Route path="/dev/theme-debug" element={<ThemeDebug />} />
+              <Route path="/dev/layout-debug" element={<LayoutDebug />} />
+              {/* ...other content routes... */}
+            </Route>
 
-						{/* temp/dev routes... */}
-						<Route
-							path={ROUTES.TEST_LOGIN}
-							element={
-								<ProtectedRoute>
-									<TestLogin />
-								</ProtectedRoute>
-							}
-						/>
-					</Routes>
-				</Suspense>
-			</AuthContextProvider>
-			</BrowserRouter>
-		</ErrorBoundary>
-	);
+            {/* temp/dev routes... */}
+            <Route
+              path={ROUTES.TEST_LOGIN}
+              element={
+                <ProtectedRoute>
+                  <TestLogin />
+                </ProtectedRoute>
+              }
+            />
+          </Routes>
+        </Suspense>
+      </AuthContextProvider>
+      </BrowserRouter>
+    </ErrorBoundary>
+  );
 };
 
 export default App;

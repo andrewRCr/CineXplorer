@@ -4,9 +4,9 @@ import { Provider } from "@/components/chakra/provider";
 import App from "./App.tsx";
 
 createRoot(document.getElementById("root")!).render(
-	<StrictMode>
-		<Provider>
-			<App />
-		</Provider>
-	</StrictMode>
+  <StrictMode>
+    <Provider>
+      <App />
+    </Provider>
+  </StrictMode>
 );

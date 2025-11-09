@@ -4,8 +4,8 @@ import * as React from "react";
 import { defaultThemeName, themeRegistry, type ThemeName } from "@/theme";
 
 interface ThemeContextValue {
-	theme: ThemeName;
-	setTheme: (theme: ThemeName) => void;
+    theme: ThemeName;
+    setTheme: (theme: ThemeName) => void;
 }
 
 export const ThemeContext = React.createContext<ThemeContextValue | undefined>(undefined);
@@ -27,22 +27,22 @@ export const STORAGE_KEY = "cinexplorer-theme";
  * ```
  */
 export function useThemeSelect(): ThemeContextValue {
-	const context = React.useContext(ThemeContext);
-	if (context === undefined) {
-		throw new Error("useThemeSelect must be used within a ThemeSelectProvider");
-	}
-	return context;
+    const context = React.useContext(ThemeContext);
+    if (context === undefined) {
+        throw new Error("useThemeSelect must be used within a ThemeSelectProvider");
+    }
+    return context;
 }
 
 /**
  * Initialize theme from localStorage or use default
  */
 export function getInitialTheme(): ThemeName {
-	if (typeof window !== "undefined") {
-		const saved = localStorage.getItem(STORAGE_KEY) as ThemeName;
-		if (saved && saved in themeRegistry) {
-			return saved;
-		}
-	}
-	return defaultThemeName;
+    if (typeof window !== "undefined") {
+        const saved = localStorage.getItem(STORAGE_KEY) as ThemeName;
+        if (saved && saved in themeRegistry) {
+            return saved;
+        }
+    }
+    return defaultThemeName;
 }

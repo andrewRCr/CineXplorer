@@ -1,12 +1,12 @@
 import {
-	Box,
-	IconButton,
-	Listbox,
-	Separator,
-	Text,
-	VStack,
-	createListCollection,
-	useBreakpointValue,
+  Box,
+  IconButton,
+  Listbox,
+  Separator,
+  Text,
+  VStack,
+  createListCollection,
+  useBreakpointValue,
 } from "@chakra-ui/react";
 import { NAVIGATION_SECTIONS } from "@/constants/navigation";
 import { BsFillPlusCircleFill } from "react-icons/bs";
@@ -15,193 +15,192 @@ import NavBarSearch from "./NavBarSearch";
 import React from "react";
 
 interface SidebarContentProps {
-	onNavigate?: () => void; // Optional callback for when navigation occurs (useful for closing drawer)
+  onNavigate?: () => void; // Optional callback for when navigation occurs (useful for closing drawer)
 }
 
+// Shared styling props for all Listbox.Item components
+const listItemProps = {
+  px: 3,
+  py: 2,
+  fontSize: "sm" as const,
+  fontWeight: "normal" as const,
+  color: "foreground" as const,
+  _hover: { bg: "layer-hover-01" as const },
+  _selected: {
+    bg: "layer-selected-01" as const,
+    color: "on-tertiary" as const,
+    fontWeight: "medium" as const,
+  },
+  cursor: "pointer" as const,
+  borderRadius: "md" as const,
+} as const;
+
 export const SidebarContent: React.FC<SidebarContentProps> = ({
-	onNavigate,
+  onNavigate,
 }) => {
-	const location = useLocation();
-	const navigate = useNavigate();
-	const isMobile =
-		useBreakpointValue({ base: true, lg: false }, { ssr: false }) ?? true;
+  const location = useLocation();
+  const navigate = useNavigate();
 
-	// Get current active path to highlight the correct item
-	const getCurrentActiveValue = (): string[] => {
-		const currentPath = location.pathname;
-		// Find the navigation item that matches the current path
-		for (const section of NAVIGATION_SECTIONS) {
-			const matchingItem = section.items.find(
-				(item) => item.path === currentPath
-			);
-			if (matchingItem) {
-				return [matchingItem.value];
-			}
-		}
-		return [];
-	};
+  // useBreakpointValue acceptable here: controls navigation click behavior (close drawer on mobile).
+  // See ADR-007 for CSS-vs-JS responsive patterns.
+  const isMobile =
+    useBreakpointValue({ base: true, lg: false }, { ssr: false }) ?? true;
 
-	// Handle navigation selection
-	const handleNavigation = (details: { value: string[] }) => {
-		const selectedValue = details.value[0];
-		if (!selectedValue) return;
+  // Get current active path to highlight the correct item
+  const getCurrentActiveValue = (): string[] => {
+    const currentPath = location.pathname;
+    // Find the navigation item that matches the current path
+    for (const section of NAVIGATION_SECTIONS) {
+      const matchingItem = section.items.find(
+        (item) => item.path === currentPath
+      );
+      if (matchingItem) {
+        return [matchingItem.value];
+      }
+    }
+    return [];
+  };
 
-		// Find the navigation item by value
-		for (const section of NAVIGATION_SECTIONS) {
-			const item = section.items.find(
-				(navItem) => navItem.value === selectedValue
-			);
-			if (item) {
-				if (item.isAction) {
-					// Handle special action buttons (like Log)
-					// TODO: Implement actual log action
-					console.log("Log action triggered");
-				} else {
-					// Navigate to the path
-					navigate(item.path);
-				}
-				// Call optional callback (for closing drawer)
-				onNavigate?.();
-				break;
-			}
-		}
-	};
+  // Handle navigation selection
+  const handleNavigation = (details: { value: string[] }) => {
+    const selectedValue = details.value[0];
+    if (!selectedValue) return;
 
-	const userSection = NAVIGATION_SECTIONS.find(
-		(section) => section.title === "User"
-	);
-	const browseSection = NAVIGATION_SECTIONS.find(
-		(section) => section.title === "Browse"
-	);
+    // Find the navigation item by value
+    for (const section of NAVIGATION_SECTIONS) {
+      const item = section.items.find(
+        (navItem) => navItem.value === selectedValue
+      );
+      if (item) {
+        if (item.isAction) {
+          // Handle special action buttons (like Log)
+          // TODO: Implement actual log action
+          console.log("Log action triggered");
+        } else {
+          // Navigate to the path
+          navigate(item.path);
+        }
+        // Call optional callback (for closing drawer)
+        onNavigate?.();
+        break;
+      }
+    }
+  };
 
-	return (
-		<VStack align="stretch" gap={0} pt={7} pb={6} px={4}>
-			{/* Mobile Search - Only show on mobile */}
-			{isMobile && (
-				<Box mb={5} px={0}>
-					<NavBarSearch onSearch={onNavigate} />
-				</Box>
-			)}
+  const userSection = NAVIGATION_SECTIONS.find(
+    (section) => section.title === "User"
+  );
+  const browseSection = NAVIGATION_SECTIONS.find(
+    (section) => section.title === "Browse"
+  );
 
-			{/* Log Button - Outside the combined listbox */}
-			{userSection && (
-				<Box mb={3}>
-					<IconButton
-						p={2}
-						mb={1}
-						variant="outline"
-						borderWidth="1px"
-						borderColor="border"
-						aria-label="Log activity"
-						size="sm"
-						onClick={() => {
-							// TODO: Implement actual log action
-							console.log("Log action triggered");
-							onNavigate?.();
-						}}
-					>
-						<BsFillPlusCircleFill size={14} />
-						LOG
-					</IconButton>
-				</Box>
-			)}
+  return (
+    <VStack align="stretch" gap={0} pt={7} pb={6} px={4}>
+      {/* Mobile Search - Only show on mobile */}
+      {isMobile && (
+        <Box mb={5} px={0}>
+          <NavBarSearch onSearch={onNavigate} />
+        </Box>
+      )}
 
-			{/* Combined Navigation Section - Single Listbox */}
-			{userSection && browseSection && (
-				<Listbox.Root
-					collection={createListCollection({
-						items: [
-							// User items (excluding Log action)
-							...userSection.items
-								.filter((item) => !item.isAction)
-								.map((item) => ({
-									label: item.label,
-									value: item.value,
-									section: "user",
-								})),
-							// Browse items
-							...browseSection.items.map((item) => ({
-								label: item.label,
-								value: item.value,
-								section: "browse",
-							})),
-						],
-					})}
-					value={getCurrentActiveValue()}
-					onValueChange={handleNavigation}
-					selectionMode="single"
-				>
-					<Listbox.Content background="transparent">
-						{/* User items */}
-						{userSection.items
-							.filter((item) => !item.isAction)
-							.map((item) => (
-								<Listbox.Item
-									key={item.value}
-									item={{ label: item.label, value: item.value }}
-									px={3}
-									py={2}
-									fontSize="sm"
-									fontWeight="normal"
-									color="card-foreground"
-									_hover={{ bg: "accent/8" }}
-									_selected={{
-										bg: "accent/12",
-										color: "accent-foreground",
-										fontWeight: "medium",
-									}}
-									cursor="pointer"
-									borderRadius="md"
-								>
-									<Listbox.ItemText>{item.label}</Listbox.ItemText>
-								</Listbox.Item>
-							))}
+      {/* Log Button - Outside the combined listbox */}
+      {userSection && (
+        <Box mb={3}>
+          <IconButton
+            p={2}
+            mb={1}
+            variant="outline"
+            borderWidth="1px"
+            borderColor="button-outline-primary"
+            color="on-button-outline-primary"
+            _hover={{ bg: "primary/8" }}
+            _active={{ bg: "primary/12" }}
+            aria-label="Log activity"
+            size="sm"
+            onClick={() => {
+              // TODO: Implement actual log action
+              console.log("Log action triggered");
+              onNavigate?.();
+            }}
+          >
+            <BsFillPlusCircleFill size={14} />
+            LOG
+          </IconButton>
+        </Box>
+      )}
 
-						{/* Separator inside the listbox */}
-						<Box px={3} py={2}>
-							<Separator borderColor="border" opacity={0.6} />
-						</Box>
+      {/* Combined Navigation Section - Single Listbox */}
+      {userSection && browseSection && (
+        <Listbox.Root
+          collection={createListCollection({
+            items: [
+              // User items (excluding Log action)
+              ...userSection.items
+                .filter((item) => !item.isAction)
+                .map((item) => ({
+                  label: item.label,
+                  value: item.value,
+                  section: "user",
+                })),
+              // Browse items
+              ...browseSection.items.map((item) => ({
+                label: item.label,
+                value: item.value,
+                section: "browse",
+              })),
+            ],
+          })}
+          value={getCurrentActiveValue()}
+          onValueChange={handleNavigation}
+          selectionMode="single"
+        >
+          <Listbox.Content background="transparent">
+            {/* User items */}
+            {userSection.items
+              .filter((item) => !item.isAction)
+              .map((item) => (
+                <Listbox.Item
+                  key={item.value}
+                  item={{ label: item.label, value: item.value }}
+                  {...listItemProps}
+                >
+                  <Listbox.ItemText>{item.label}</Listbox.ItemText>
+                </Listbox.Item>
+              ))}
 
-						{/* Browse section header inside listbox */}
-						<Box px={3} py={1}>
-							<Text
-								fontSize="xs"
-								fontWeight="medium"
-								color="muted-foreground"
-								textTransform="uppercase"
-								letterSpacing="wider"
-							>
-								{browseSection.title}
-							</Text>
-						</Box>
+            {/* Separator inside the listbox */}
+            <Box px={3} py={2}>
+              <Separator borderColor="border" opacity={0.6} />
+            </Box>
 
-						{/* Browse items */}
-						{browseSection.items.map((item) => (
-							<Listbox.Item
-								key={item.value}
-								item={{ label: item.label, value: item.value }}
-								px={3}
-								py={2}
-								fontSize="sm"
-								fontWeight="normal"
-								color="card-foreground"
-								_hover={{ bg: "accent/8" }}
-								_selected={{
-									bg: "accent/12",
-									color: "accent-foreground",
-									fontWeight: "medium",
-								}}
-								cursor="pointer"
-								borderRadius="md"
-							>
-								<Listbox.ItemText>{item.label}</Listbox.ItemText>
-							</Listbox.Item>
-						))}
-					</Listbox.Content>
-				</Listbox.Root>
-			)}
-		</VStack>
-	);
+            {/* Browse section header inside listbox */}
+            <Box px={3} py={1}>
+              <Text
+                fontSize="xs"
+                fontWeight="medium"
+                color="on-muted"
+                textTransform="uppercase"
+                letterSpacing="wider"
+              >
+                {browseSection.title}
+              </Text>
+            </Box>
+
+            {/* Browse items */}
+            {browseSection.items.map((item) => (
+              <Listbox.Item
+                key={item.value}
+                item={{ label: item.label, value: item.value }}
+                {...listItemProps}
+              >
+                <Listbox.ItemText>{item.label}</Listbox.ItemText>
+              </Listbox.Item>
+            ))}
+          </Listbox.Content>
+        </Listbox.Root>
+      )}
+    </VStack>
+  );
 };
 
 export default SidebarContent;

@@ -3,7 +3,7 @@ import { LuMenu } from "react-icons/lu";
 import { sidebarDrawer } from "./sidebarOverlay";
 
 interface MobileMenuButtonProps {
-	size?: "sm" | "md" | "lg";
+  size?: "sm" | "md" | "lg";
 }
 
 /**
@@ -11,30 +11,30 @@ interface MobileMenuButtonProps {
  * Uses Chakra v3's overlay manager pattern for drawer control.
  */
 const MobileMenuButton: React.FC<MobileMenuButtonProps> = ({ size = "md" }) => {
-	const handleOpen = () => {
-		sidebarDrawer.open("sidebar", {
-			placement: "start",
-		});
-	};
+  const handleOpen = () => {
+    sidebarDrawer.open("sidebar", {
+      placement: "start",
+    });
+  };
 
-	return (
-		<IconButton
-			aria-label="Open navigation menu"
-			onClick={handleOpen}
-			size={size}
-			variant="outline"
-			color="card-foreground"
-			border="1px solid"
-			borderColor="border"
-			borderRadius="md"
-			_hover={{
-				bg: "accent/8",
-				borderColor: "accent",
-			}}
-		>
-			<LuMenu />
-		</IconButton>
-	);
+  return (
+    <IconButton
+      aria-label="Open navigation menu"
+      onClick={handleOpen}
+      size={size}
+      variant="outline"
+      color="foreground"
+      border="1px solid"
+      borderColor="border"
+      borderRadius="md"
+      _hover={{
+        bg: "layer-hover-01",
+        borderColor: "tertiary",
+      }}
+    >
+      <LuMenu />
+    </IconButton>
+  );
 };
 
 export default MobileMenuButton;

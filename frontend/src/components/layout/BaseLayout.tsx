@@ -5,30 +5,30 @@ import { Box } from "@chakra-ui/react";
 import { type ReactNode } from "react";
 
 interface BaseLayoutProps {
-	children: ReactNode;
+  children: ReactNode;
 }
 
 const BaseLayout = ({ children }: BaseLayoutProps) => {
-	return (
-		<Box
-			minH="100vh"
-			display="flex"
-			flexDirection="column"
-			bg="background"
-		>
-			{/* NavBar */}
-			<NavBar />
+  return (
+    <Box
+      minH="100vh"
+      display="flex"
+      flexDirection="column"
+      bg="background"
+    >
+      {/* NavBar */}
+      <NavBar />
 
-			{/* Main Content Area - Customizable */}
-			{children}
+      {/* Main Content Area - Customizable */}
+      {children}
 
-			{/* Footer */}
-			<Footer />
+      {/* Footer */}
+      <Footer />
 
-			{/* Sidebar Drawer Viewport - Required for Chakra v3 overlay manager */}
-			<SidebarDrawerViewport />
-		</Box>
-	);
+      {/* Sidebar Drawer Viewport - Required for Chakra v3 overlay manager */}
+      <SidebarDrawerViewport />
+    </Box>
+  );
 };
 
 export default BaseLayout;

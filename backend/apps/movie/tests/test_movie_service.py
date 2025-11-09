@@ -181,7 +181,9 @@ def test_search_movies_filters_soundtrack_results() -> None:
 
     movies = [
         create_raw_tmdb_movie(1, 'Real Movie', '2023-01-01', 8.0, poster_path='/real.jpg'),
-        create_raw_tmdb_movie(2, 'Movie Soundtrack', '2023-01-01', 7.0, poster_path='/soundtrack.jpg'),
+        create_raw_tmdb_movie(
+            2, 'Movie Soundtrack', '2023-01-01', 7.0, poster_path='/soundtrack.jpg'
+        ),
         create_raw_tmdb_movie(
             3, 'Original Motion Picture Score', '2023-01-01', 6.0, poster_path='/score.jpg'
         )

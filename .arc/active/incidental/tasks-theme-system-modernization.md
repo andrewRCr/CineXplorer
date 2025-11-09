@@ -1,14 +1,19 @@
 # Incidental: Theme System Modernization
 
 **Created:** 2025-11-02
-**Branch:** `technical/service-layer-modernization`
-**Status:** Paused
-**Resumes:** `.arc/active/incidental/tasks-discover-endpoint-consolidation.md` at Phase 3.2 upon completion
+**Branch:** `claude/theme-phase3-component-migration-011CUoR62JhE7AQFJrCVSXzk` (originally `technical/service-layer-modernization`)
+**Status:** Active (consolidated from theme-definition-semantic-corrections.md)
+**Current Task:** Phase 4.4.5 (Watchlist page conversion - final component migration step)
 
-**Paused At:** Task 4.4.5 (Watchlist page conversion) - blocked by theme definition bugs
+**Consolidation Note:** Theme work spawned from quick review branch into deep semantic refinement work over 3+ days.
+Remaining work from both task lists now consolidated here. See Phase 5+ for new consolidated tasks.
 
-**Paused To:** `.arc/active/incidental/tasks-theme-definition-semantic-corrections.md` - Critical theme mapping fixes
-discovered during Task 4.4.4 testing
+**Original Pause Context:**
+
+- Paused at Task 4.4.5 due to theme definition bugs
+- Created theme-definition-semantic-corrections.md for deep dive
+- Completed semantic token refinement, button patterns, interaction states
+- Now merged back for completion
 
 ## Context
 
@@ -1323,7 +1328,9 @@ and ongoing migration overhead in future tasks.
     - `frontend/src/components/ThemeSelector.tsx` - Added border props
     - `frontend/src/components/chakra/color-mode.tsx` - Changed variant, added border props
 
-- [ ] **4.3 Convert movie components**
+- [x] **4.3 Convert movie components**
+
+    **Completed:** All movie components converted to semantic tokens.
 
     - [x] **4.3.1 Convert Featured page** (`pages/Featured.tsx`)
 
@@ -1566,6 +1573,8 @@ and ongoing migration overhead in future tasks.
 
 - [ ] **4.4 Convert remaining components**
 
+    **Status:** 4/5 subtasks complete. Only Watchlist page remains (minimal - one error text token).
+
     - [x] **4.4.1 Convert PaginationCtrl**
         - **File:** `components/layout/PaginationCtrl.tsx`
         - **Tokens converted (4 total):**
@@ -1641,18 +1650,20 @@ and ongoing migration overhead in future tasks.
 
 - [ ] **4.5 Convert ErrorBoundary** (60% of all hardcoded colors - 15+ instances)
 
-    **Note:** ErrorBoundary scheduled for end of Phase 4 due to complexity.
+    **Goal:** Complete final component migration, eliminate all hardcoded colors from production code.
+
+    **Note:** ErrorBoundary scheduled for end of Phase 4 due to complexity (15+ color instances).
     Handle simpler components first to build confidence with token patterns.
 
-    - [ ] **4.5.1 Replace error state colors in `components/ErrorBoundary.tsx`**
+    - [ ] **4.5.a Replace error state colors in `components/ErrorBoundary.tsx`**
         - **Source:** Phase 3.3 hardcoded color catalog
-        - `red.600`, `red.700`, `red.800` → `destructive` / `destructive-foreground`
+        - `red.600`, `red.700`, `red.800` → `destructive` / `on-destructive`
         - `red.50` → `destructive/8` (8% opacity for subtle error backgrounds)
         - `red.200` → `destructive` (border styling)
         - File location: Multiple instances throughout component
         - Quality gate: All red.* colors replaced
 
-    - [ ] **4.5.2 Replace neutral/muted colors**
+    - [ ] **4.5.b Replace neutral/muted colors**
         - `gray.50`, `gray.100`, `gray.200`, `gray.300`, `gray.400`, `gray.500`,
           `gray.600`, `gray.700` → appropriate semantic tokens:
             - Backgrounds: `muted` / `background`
@@ -1661,220 +1672,874 @@ and ongoing migration overhead in future tasks.
         - Reference Phase 3.3 mapping guide for specific instances
         - Quality gate: All gray.* colors replaced
 
-    - [ ] **4.5.3 Replace informational message colors**
-        - `blue.50`, `blue.100`, `blue.500`, `blue.700` → `info` / `info-foreground`
+    - [ ] **4.5.c Replace informational message colors**
+        - `blue.50`, `blue.100`, `blue.500`, `blue.700` → `info` / `on-info`
         - Use for helpful hints, debugging information, non-error messages
         - Quality gate: All blue.* colors replaced with info tokens
 
-    - [ ] **4.5.4 Test error display comprehensively**
-        - Test in all 7 themes × 2 modes (14 combinations)
-        - Verify readability and contrast in each theme
-        - Ensure error messages remain clear and actionable
-        - **Review token usage:** Verify against Task 4.1.5e checklist (line ~1007)
-        - Quality gate: ErrorBoundary displays correctly in all themes
+    - [ ] **4.5.d Review token usage against checklist**
+        - Verify against Task 4.1.5e checklist (line ~1007)
+        - Ensure proper token pairing (on-destructive, on-info)
+        - Validate interactive states if applicable
+        - Quality gate: All tokens follow strategy patterns
 
-- [ ] **4.6 Comprehensive theme system verification**
-    - **Test all theme combinations:**
-        - Test all 14 combinations (7 themes × 2 color modes)
-        - Verify visual consistency across ALL migrated components (not just initial 4)
-        - Navigate through all major pages (Featured, detail pages, auth, lists, etc.)
-        - Document any theme-specific issues (readability, contrast, visual bugs)
-    - **Verify contrast requirements using WebAIM or similar tool:**
-        - Test all 33 semantic tokens in light and dark modes (all 7 themes)
-        - Verify 4.5:1 contrast ratio minimum (WCAG AA) for text tokens (foreground, muted-foreground, etc.)
-        - Verify 3:1 contrast ratio minimum for UI component tokens (borders, surfaces, interactive elements)
-        - Document any adjustments needed per theme
-        - Quality gate: All tokens meet or exceed WCAG AA standards
-    - **Test persistence:**
-        - Verify theme selection persists across page reloads (localStorage: "cinexplorer-theme")
-        - Verify color mode persists independently from theme selection (localStorage via next-themes)
-        - Test persistence with different combinations (change theme, reload; change mode, reload; change both, reload)
-    - **Test switcher controls:**
-        - Verify ThemeSelector displays correct current theme
-        - Verify ColorModeButton displays correct current mode (moon for dark, sun for light)
-        - Test switching between all themes (no errors, immediate visual update)
-        - Test toggling light/dark mode (no errors, immediate visual update)
-    - **Quality gates:**
-        - Run frontend linting (0 errors required)
-        - Run TypeScript type checking (0 errors required)
-        - Visual regression test across all theme/mode combinations
+### **Phase 5:** ThemeDebug Enhancement - Comprehensive Component Showcase
 
-### **Phase 5:** Theme Showcase
+**Goal:** Transform ThemeDebug into complete visual reference guide validating all UI patterns across themes.
 
-**Purpose:** Create comprehensive theme showcase page for verifying theme implementation and future reference.
+**Context:** Consolidated from theme-definition-semantic-corrections.md Task 3.5.5.11. During button hover state
+verification, discovered ThemeDebug doesn't demonstrate all controls used in the app (dropdowns, checkboxes,
+switches, etc.). Need comprehensive showcase to define correct token usage, validate patterns across themes,
+and provide living style guide.
 
-- [ ] **5.1 Check existing theme showcase**
-    - Verify if CineXplorer has existing theme/typography showcase
-    - Review arc-portfolio showcase for reference
-    - Determine what needs to be created vs updated
+- [ ] **5.1 Enhance Section 1: Action Patterns (Buttons)**
 
-- [ ] **5.2 Create/update theme showcase page**
+    - [ ] **5.1.a Add disabled state examples**
+        - Disabled variants for: Solid, Primary Outline, Neutral Outline, Subtle, Ghost
+        - Verify `cursor: not-allowed` and proper opacity
 
-    - [ ] **5.2.1 Create showcase page structure**
-        - Location: `frontend/src/pages/ThemeShowcase.tsx` (or update existing)
-        - Organized sections for easy reference:
-            - Token palette display
-            - Typography samples
-            - Component examples
-            - Interactive controls
-        - Quality gate: Page structure created
+    - [ ] **5.1.b Add button with icon examples**
+        - Create examples showing icon + text combinations
+        - **CRITICAL:** Verify icon uses `on-button-outline` not `button-outline`
+        - Test neutral outline and primary outline variants
 
-    - [ ] **5.2.2 Create comprehensive token palette display**
-        - **Display all 33 semantic tokens** (20 base + 13 extended), grouped by category:
-            - **Status tokens (8):** success, success-foreground, warning, warning-foreground, info,
-              info-foreground, destructive, destructive-foreground
-            - **Surfaces (5):** background, foreground, card, card-foreground, surface-elevated, popover, popover-foreground
-            - **Interactive (8):** primary, primary-foreground, secondary, secondary-foreground, accent,
-              accent-foreground, muted, muted-foreground
-            - **Borders & Inputs (3):** border, input, ring
-            - **Movie-specific (2):** rating, rating-foreground
-            - **Badges (2):** badge, badge-foreground
-            - **Drag-and-drop (2):** drag-active, drop-zone
-        - Show token name, hex value, and color swatch
-        - Update automatically when theme/mode changes
-        - Quality gate: All 33 tokens displayed correctly
+    - [ ] **5.1.c Add loading/spinner state example**
+        - Show button with spinner replacing content
+        - Maintain button size during loading state
 
-    - [ ] **5.2.3 Add typography samples**
-        - All heading levels (h1-h6)
-        - Body text variants
-        - Code/monospace
-        - Quality gate: Typography displays correctly
+- [ ] **5.2 Create Section 2: Form Controls**
 
-    - [ ] **5.2.4 Add component examples**
-        - Showcase all Chakra UI v3 components used in app
-        - Demonstrate token usage in context
-        - Quality gate: Components render correctly
+    **Goal:** Define and validate token patterns for all form inputs across themes.
 
-    - [ ] **5.2.5 Add interactive controls**
-        - Interactive light/dark mode toggle
-        - Theme selector to preview all 7 themes
-        - Quality gate: Controls functional, updates showcase live
+    - [ ] **5.2.a Text input state variations**
+        - Default, hover, focus, disabled, error states
+        - Verify `input` token for borders, `ring` token for focus
 
-- [ ] **5.3 Add routing and navigation**
-    - Add route in App.tsx
-    - Add link in footer or dev menu
-    - Update routes constants if needed
+    - [ ] **5.2.b Textarea state variations**
+        - Same states as text input
+        - Test with multiline content
 
-- [ ] **5.4 Quality gates for showcase**
-    - Frontend linting
-    - TypeScript type checking
-    - Verify showcase displays correctly in all themes and modes
+    - [ ] **5.2.c Select/Dropdown pattern definition**
+        - States: default, hover, focus, disabled, open
+        - Define tokens: border, background, text, dropdown menu surface
+        - Test across all 4 themes × 2 modes
 
-### **Phase 6:** Documentation and Handoff
+    - [ ] **5.2.d Checkbox states**
+        - Unchecked, checked, indeterminate, disabled
+        - Verify check mark visibility across themes
 
-**Purpose:** Document completed comprehensive migration and update project documentation.
+    - [ ] **5.2.e Radio button states**
+        - Unselected, selected, disabled
+        - Verify dot visibility across themes
 
-- [ ] **6.1 Update project documentation**
-    - [ ] **6.1.1 Update AGENTS.md**
-        - Add reference to semantic token system in use (brief, one-line mention in tech stack or critical path)
-        - No in-depth documentation (that lives elsewhere)
-    - [ ] **6.1.2 Update DEVELOPMENT-RULES.md**
-        - Add rule about always using existing semantic token system
-        - Emphasize consistent theme styling via semantic tokens
+    - [ ] **5.2.f Switch/Toggle states**
+        - Off, on, disabled
+        - Verify track and thumb colors
+
+    - [ ] **5.2.g Number input with steppers**
+        - Test increment/decrement button styling
+
+- [ ] **5.3 Create Section 3: Navigation Patterns**
+
+    - [ ] **5.3.a Verify inline text links**
+        - Check existing implementation comprehensiveness
+        - Ensure underline + hover + focus patterns shown
+
+    - [ ] **5.3.b Add tab pattern examples**
+        - States: default, hover, active/selected, disabled
+        - Test border/underline active indicators
+
+    - [ ] **5.3.c Add breadcrumb examples**
+        - Show separator styling
+        - Test current page emphasis
+
+- [ ] **5.4 Enhance Section 4: Feedback & Status**
+
+    - [ ] **5.4.a Verify existing alerts**
+        - Success, warning, error, info variants already present
+        - Ensure all show proper icon + color + contrast
+
+    - [ ] **5.4.b Add badge status variants**
+        - Success, warning, info, destructive badges
+        - Neutral badge with `badge`/`badge-foreground` tokens
+
+    - [ ] **5.4.c Add progress indicators**
+        - Determinate progress bar (with percentage)
+        - Indeterminate progress/spinner
+
+    - [ ] **5.4.d Add tooltip examples**
+        - Show popover positioning
+        - Verify `popover`/`popover-foreground` tokens
+
+- [ ] **5.5 Enhance Section 5: Surfaces & Containers**
+
+    - [ ] **5.5.a Verify existing layer hierarchy**
+        - Background → card → surface-elevated already shown
+        - Check visual distinction across themes
+
+    - [ ] **5.5.b Add card with hover state**
+        - Interactive card example
+        - Show `accent/8` hover pattern
+
+    - [ ] **5.5.c Add modal/dialog example**
+        - Show backdrop overlay
+        - Verify dialog surface token
+
+    - [ ] **5.5.d Add popover/menu dropdown**
+        - Demonstrates `popover` surface (layer-03 equivalent)
+        - Test menu item hover states
+
+- [ ] **5.6 Create Section 6: Interactive Lists**
+
+    - [ ] **5.6.a Add list item states**
+        - Hover, selected, disabled states
+        - Show proper state layering (8%, 12%)
+
+    - [ ] **5.6.b Add menu item examples**
+        - Demonstrates popover pattern with items
+        - Test hover highlighting
+
+    - [ ] **5.6.c Add accordion examples**
+        - Collapsed and expanded states
+        - Show header interactive states
+
+- [ ] **5.7 Reorganize Section 7: UI Element Tokens**
+
+    - [ ] **5.7.a Verify existing border/input/ring examples**
+        - Check comprehensiveness of current examples
+
+    - [ ] **5.7.b Add separator/divider examples**
+        - Horizontal and vertical dividers
+        - Show `border` token usage
+
+    - [ ] **5.7.c Add icon color context examples**
+        - Icons in buttons (using `on-*` tokens)
+        - Icons in text (using `foreground` variants)
+        - Icons as standalone (using `muted-foreground`)
+
+- [ ] **5.8 Run incremental quality gates**
+
+    **Note:** Checkpoint after ThemeDebug enhancements complete.
+
+    - [ ] TypeScript: 0 errors
+    - [ ] Linting: 0 violations
+    - [ ] Visual validation: All 4 themes × 2 modes (8 combinations) render correctly
+    - [ ] All new components demonstrate correct token usage per strategy docs
+
+### **Phase 6:** Visual Validation & Component Polish
+
+**Goal:** Establish baseline visual quality across all themes before comprehensive audit.
+
+**Context:** Consolidated from theme-definition-semantic-corrections.md Tasks 3.5.5.12, 3.5.6, and 4.1 (visual testing).
+This phase combines component-specific polish with systematic theme validation.
+
+- [ ] **6.1 Component-specific polish**
+
+    **Goal:** Fix cosmetic issues discovered during theme work (non-blocking, but improves quality).
+
+    **Note:** All items are cosmetic (not broken). Address after ThemeDebug patterns established.
+
+    - [ ] **6.1.a Sidebar visual hierarchy**
+        - Fix header background to match navbar (`card` consistency)
+        - Update LOG button to use primary colors (`bg="primary"`, `color="on-primary"`)
+        - Add elevation to link container (`card` background or stronger border)
+        - Fix active/selected navlinks text color (difficult to read, likely using wrong tokens)
+        - Test across all 4 themes × 2 modes
+
+    - [ ] **6.1.b Featured page button visibility**
+        - Investigate why 2/3 buttons appear invisible (same color as background)
+        - Apply appropriate button styling (outline style with border, or filled secondary style)
+        - Verify button hierarchy matches design intent (primary vs secondary distinction)
+        - Test across all 4 themes × 2 modes
+
+    - [ ] **6.1.c AdvancedMovieFilters elevation**
+        - Add visual elevation to filter panel (`card` or `boxShadow="shadow-sm"`)
+        - Currently uses same background as page (no visual distinction)
+        - Test across 4 themes × 2 modes
+
+    - [ ] **6.1.d Form placeholder precision**
+        - Change max rating placeholder from `10.0` to `10`
+        - AdvancedMovieFilters component only
+        - Simple string change, no theme implications
+
+    - [ ] **6.1.e Footer theme select control popover background**
+        - Investigate incorrect popover background (flat black/white, not theme-consistent)
+        - Should use `popover` token for dropdown menu surface
+        - Verify theme selector dropdown uses proper elevation and colors
+        - Test across all 4 themes × 2 modes
+
+- [ ] **6.2 Systematic baseline visual validation**
+
+    **Goal:** Comprehensive visual testing per theme with specific validation points (from semantic corrections 4.1).
+
+    **Context:** This replaces the shallow "quick validation" with detailed per-theme checklists that caught
+    real issues during semantic corrections work.
+
+    - [ ] **6.2.a Test GitHub Primer theme (light + dark)**
+
+        **Light mode checks:**
+        - Cards visually distinct from background (was same #ffffff in original system)
+        - Borders visible on all surfaces (verify `border` token working)
+        - Filter panels use appropriate elevation (`card` vs `background`)
+        - Primary buttons: GREEN (GitHub brand)
+        - Links: BLUE (GitHub brand)
+        - Success: GREEN (universal)
+        - Outline buttons: Visible borders
+
+        **Dark mode checks:**
+        - Border visibility maintained
+        - Proper elevation hierarchy visible
+        - Same color checks as light mode
+
+        **Navigation test:** Featured → MovieDetail → back → Filters (verify real usage flow)
+
+        **Document visual issues** (if any found)
+
+    - [ ] **6.2.b Test IBM Carbon theme (light + dark)**
+
+        **Dark mode checks (priority - previous issues here):**
+        - Borders NOW visible on elevated surfaces (was invisible #393939 in original)
+        - Layer hierarchy clear (background → card → surface-elevated visible progression)
+        - Filter panels use `card` appropriately
+        - Primary buttons: BLUE (IBM brand)
+        - Links: BLUE (IBM brand)
+        - Success: GREEN (universal)
+        - Outline buttons: Visible borders
+
+        **Light mode checks:**
+        - Alternating layer pattern clear
+        - Consistent border visibility
+        - Same color checks as dark mode
+
+        **Navigation test:** Featured → MovieDetail → back → Filters
+
+        **Document visual issues** (if any found)
+
+    - [ ] **6.2.c Test GitLab Pajamas theme (light + dark)**
+
+        **Light mode checks (priority - previous issues here):**
+        - Cards distinct from background (was 1.02:1 contrast, now should be 1.15:1+)
+        - Borders have better contrast (2.1:1+ instead of 1.17:1)
+        - Section elevation tokens used appropriately
+        - Primary buttons: ORANGE (GitLab brand)
+        - Links: PURPLE (GitLab brand)
+        - Success: GREEN (universal)
+        - Outline buttons: Visible borders
+
+        **Dark mode checks:**
+        - Border contrast improved
+        - Elevation clarity maintained
+        - Same color checks as light mode
+
+        **Navigation test:** Featured → MovieDetail → back → Filters
+
+        **Document visual issues** (if any found)
+
+    - [ ] **6.2.d Test Material Design 3 theme (light + dark)**
+
+        **Light mode checks:**
+        - Cards distinct from background
+        - Borders visible on all surfaces
+        - Filter panels use appropriate elevation
+        - Primary buttons: PURPLE (Material brand)
+        - Links: Appropriate Material color
+        - Success: GREEN (universal)
+        - Outline buttons: Visible borders
+
+        **Dark mode checks:**
+        - Border visibility maintained
+        - Proper elevation hierarchy visible
+        - Same color checks as light mode
+
+        **Navigation test:** Featured → MovieDetail → back → Filters
+
+        **Document visual issues** (if any found)
+
+    - [ ] **6.2.e Validate on-color token parity (ADR-011)**
+
+        **Spot check deprecated aliases produce identical visual results:**
+        - `on-primary` vs `primary-foreground` → identical
+        - `on-secondary` vs `secondary-foreground` → identical
+        - `on-destructive` vs `destructive-foreground` → identical
+        - Test across all 4 themes
+
+        **Rationale:** Verify alias cleanup in Phase 8 won't break anything.
+
+    - [ ] **6.2.f Run baseline quality gates**
+
+        **Checkpoint after visual validation complete.**
+
+        - [ ] TypeScript: 0 errors
+        - [ ] Frontend linting: 0 violations
+        - [ ] All 8 theme combinations (4 themes × 2 modes) validated visually
+        - [ ] Visual issues documented or fixed
+
+### **Phase 7:** Comprehensive Frontend Token Audit
+
+**Goal:** Ensure every component uses tokens consistently before cleanup (catch all gaps and deviations).
+
+**Context:** Consolidated from theme-definition-semantic-corrections.md Task 3.5.7. This comprehensive audit
+prevents discovering token issues after cleanup, when fixing them is harder.
+
+- [ ] **7.1 Systematic component audit**
+
+    **Goal:** Review all components for token usage consistency across 8 pattern categories.
+
+    - [ ] **7.1.a Catalog all components**
+        - Generate list of all `.tsx` files in `frontend/src/`
+        - Categorize by type: pages, layout, features, shared/common
+        - Identify components using color tokens
+        - Create audit checklist for manual review
+
+    - [ ] **7.1.b Verify button pattern consistency**
+        - **Solid buttons:** `bg="primary"` + `color="on-primary"` + `_hover={{ opacity: 0.92 }}`
+        - **Neutral outline:** `borderWidth="1px"` + `borderColor="button-outline"` + `color="on-button-outline"`
+        - **Primary outline:** `borderWidth="1px"` + `borderColor="button-outline-primary"` + `color="on-button-outline-primary"`
+        - **Subtle:** `bg="button-subtle"` + `color="on-button-subtle"`
+        - **Ghost:** Default styling, no explicit tokens typically
+        - **CRITICAL:** Icons in buttons must use `on-*` tokens (NOT border tokens)
+        - Document violations, create fix list
+
+    - [ ] **7.1.c Verify form control consistency**
+        - All text inputs: `borderWidth="1px"` + `borderColor="input"`
+        - All focus states: `_focus={{ borderColor: "ring", boxShadow: "0 0 0 1px var(--chakra-colors-ring)" }}`
+        - Selects/dropdowns: Consistent with text inputs
+        - Error states: `borderColor="destructive"` or `destructive-foreground` for error text
+        - Document violations, create fix list
+
+    - [ ] **7.1.d Verify link consistency**
+        - All text links: `color="accent"` + `_hover={{ color: "accent-hover" }}`
+        - Underline pattern: 2px thickness, 2px offset (accessibility requirement)
+        - Focus states: 2px outline with `ring` token
+        - No hardcoded link colors
+        - Document violations, create fix list
+
+    - [ ] **7.1.e Verify surface/container consistency**
+        - Page backgrounds: `background` token
+        - Cards/panels: `card` token (first elevation level)
+        - Elevated surfaces: `surface-elevated` token (second elevation level)
+        - Popovers/modals: `popover` token
+        - No hardcoded background colors
+        - Interactive surface hovers: `accent/8` (8% state layer)
+        - Document violations, create fix list
+
+    - [ ] **7.1.f Verify status/feedback consistency**
+        - Success alerts: `success` + `on-success` pairing
+        - Warning alerts: `warning` + `on-warning` pairing
+        - Info alerts: `info` + `on-info` pairing
+        - Destructive/error alerts: `destructive` + `on-destructive` pairing
+        - Neutral badges: `badge` + `badge-foreground` pairing
+        - Document violations, create fix list
+
+    - [ ] **7.1.g Eliminate hard-coded colors**
+        - Search: Chakra color palette references (`red.600`, `blue.50`, `gray.*`)
+        - Search: Inline hex codes in components (`#` in style props)
+        - Replace with appropriate semantic tokens
+        - Document legitimate exceptions with inline comments (e.g., brand logos)
+        - Create fix list
+
+    - [ ] **7.1.h Gap analysis**
+        - Identify UI patterns not covered by current token system
+        - Document any missing tokens needed
+        - Propose token additions if justified (rare at this stage)
+        - Update strategy documentation with findings
+
+- [ ] **7.2 Apply fixes from audit**
+
+    **Goal:** Fix all violations discovered in audit (7.1.a through 7.1.h).
+
+    - [ ] **7.2.a Apply button pattern fixes**
+        - Work through button violation list from 7.1.b
+        - Verify fixes against border strategy and button semantics (ADR-012)
+        - Test fixed buttons in all 4 themes × 2 modes
+
+    - [ ] **7.2.b Apply form control fixes**
+        - Work through form control violation list from 7.1.c
+        - Verify fixes against border strategy and input semantics
+        - Test fixed inputs/selects in all 4 themes × 2 modes
+
+    - [ ] **7.2.c Apply link fixes**
+        - Work through link violation list from 7.1.d
+        - Verify underline + hover + focus patterns implemented
+        - Test fixed links in all 4 themes × 2 modes
+
+    - [ ] **7.2.d Apply surface/container fixes**
+        - Work through surface violation list from 7.1.e
+        - Verify elevation hierarchy correct
+        - Test fixed surfaces in all 4 themes × 2 modes
+
+    - [ ] **7.2.e Apply status/feedback fixes**
+        - Work through status violation list from 7.1.f
+        - Verify proper token pairing (on-* tokens)
+        - Test fixed alerts/badges in all 4 themes × 2 modes
+
+    - [ ] **7.2.f Apply hard-coded color elimination**
+        - Work through elimination list from 7.1.g
+        - Replace all with semantic tokens
+        - Document and commit any legitimate exceptions
+
+- [ ] **7.3 Cross-theme validation after fixes**
+
+    **Goal:** Verify all audit fixes work correctly across theme combinations.
+
+    - [ ] **7.3.a Test all 8 theme combinations**
+        - GitHub Primer (light/dark)
+        - IBM Carbon (light/dark)
+        - GitLab Pajamas (light/dark)
+        - Material Design 3 (light/dark)
+
+    - [ ] **7.3.b Verify component consistency**
+        - Buttons: Primary (filled), Neutral outline, Primary outline, Subtle, Ghost
+        - Links: All using `accent` + `accent-hover` with underlines
+        - Alerts: Success (green), Warning (yellow/orange), Info (blue), Destructive (red)
+        - Badges: Neutral (`badge`/`badge-foreground`) + status variants
+        - Forms: Input borders visible, focus states clear
+
+    - [ ] **7.3.c Final on-color token parity check (ADR-011)**
+        - Verify `on-*` vs `*-foreground` still produce identical results
+        - Confirms alias cleanup in Phase 8 will be safe
+
+- [ ] **7.4 Documentation updates**
+
+    **Goal:** Document audit findings and update strategy docs with learnings.
+
+    - [ ] **7.4.a Update strategy-semantic-tokens.md**
+        - Add any new patterns discovered during audit
+        - Document exceptions found with rationale
+        - Update examples if patterns evolved
+
+    - [ ] **7.4.b Verify ADR accuracy**
+        - ADR-009: Material Design opacity overlays - still accurate?
+        - ADR-010: Primary/Secondary/Tertiary hierarchy - still accurate?
+        - ADR-011: On-color naming standardization - still accurate?
+        - ADR-012: Button pattern semantics - still accurate?
+        - Update ADRs if implementation deviated from decisions
+
+    - [ ] **7.4.c Document audit results**
+        - Summary: Violations found and fixed by category
+        - Technical debt: Any remaining issues deferred
+        - Recommendations: Patterns for future component development
+
+- [ ] **7.5 Comprehensive audit quality gates**
+
+    **Checkpoint:** All components audited, violations fixed, ready for cleanup.
+
+    - [ ] TypeScript: 0 errors
+    - [ ] Frontend linting: 0 violations
+    - [ ] Backend linting: 0 violations (ensure no regressions)
+    - [ ] Markdown linting: 0 errors (task list + strategy docs)
+    - [ ] All 8 theme combinations (4 themes × 2 modes) render correctly
+    - [ ] All components pass token consistency verification
+    - [ ] Audit documentation complete
+
+### **Phase 8:** Cleanup & Documentation
+
+**Goal:** Remove deprecated systems, clean temporal commentary, and consolidate knowledge before declaring theme work complete.
+
+**Context:** Merged from original Phase 5-6 and theme-definition-semantic-corrections.md Phase 3.6.
+This cleanup is REQUIRED - parallel systems allowed during migration, but must be removed before merge.
+
+- [ ] **8.1 Verify no old token usage remaining**
+
+    **Goal:** Confirm no components still using deprecated old token system before infrastructure removal.
+
+    - Grep: `bg="card"` across components → should be 0 matches  (was old system, now uses semantic `card`)
+    - Grep: `bg="surface-elevated"` → should be 0 matches (old elevated surface token)
+    - Grep: `color="card-foreground"` → should be 0 matches (old text color token)
+    - Document findings: Any remaining instances mean incomplete migration
+    - **Note:** All Phase 4 components should be converted before reaching this task
+
+- [ ] **8.2 Remove old theme system infrastructure**
+
+    **Goal:** Delete old dual-system code (light/dark separate palettes) now that unified system proven.
+
+    **Note:** Breaking change by design - if type errors appear, migration incomplete (fail fast).
+
+    - Remove old token generation loop from `createBaseTokens()` (if still exists)
+    - Keep only unified token generation (current provider-based system)
+    - Update Theme interface: remove `light` and `dark` properties if present (breaking change)
+    - Remove `ThemeColors` interface entirely (deprecated since Phase 3.1)
+    - Quality gate: TypeScript type checking will show errors if components still use old system
+
+- [ ] **8.3 Remove all deprecated token aliases (ADR-010 + ADR-011 cleanup)**
+
+    **Goal:** Remove `-foreground` aliases after verifying zero component usage (enforce canonical `on-*` forms).
+
+    **Scope:** UnifiedTheme interface + all 4 theme adapters (GitHub, IBM Carbon, GitLab, Material Design 3)
+
+    - [ ] **8.3.a Verify zero usage of deprecated tokens in components**
+        - `grep -r "accent-foreground" frontend/src/components/ frontend/src/pages/` → 0 matches
+        - `grep -r "primary-foreground" frontend/src/components/ frontend/src/pages/` → 0 matches
+        - `grep -r "secondary-foreground" frontend/src/components/ frontend/src/pages/` → 0 matches
+        - `grep -r "tertiary-foreground" frontend/src/components/ frontend/src/pages/` → 0 matches
+        - `grep -r "muted-foreground" frontend/src/components/ frontend/src/pages/` → 0 matches
+        - `grep -r "success-foreground" frontend/src/components/ frontend/src/pages/` → 0 matches
+        - `grep -r "destructive-foreground" frontend/src/components/ frontend/src/pages/` → 0 matches
+        - `grep -r "warning-foreground" frontend/src/components/ frontend/src/pages/` → 0 matches
+        - `grep -r "info-foreground" frontend/src/components/ frontend/src/pages/` → 0 matches
+        - Deprecated tokens OK in theme adapters (they're the source), but NOT in components
+
+    - [ ] **8.3.b Remove deprecated aliases from type system**
+        - Edit `frontend/src/theme/color/types.ts`
+        - Remove all `*-foreground` aliases (keep `on-*` canonical forms)
+        - Update comments to reflect removal
+
+    - [ ] **8.3.c Remove deprecated aliases from all adapters**
+        - Edit all 4 adapter files (github-primer, ibm-carbon, gitlab-pajamas, material-design-3)
+        - Remove deprecated alias mappings (e.g., `primaryForeground = onPrimary`)
+        - Keep only canonical `on-*` forms
+        - Update inline comments
+
+    - [ ] **8.3.d Verify type checking still passes**
+        - Run TypeScript type checking
+        - Should show NO errors (all components using canonical forms)
+        - Quality gate: 0 type errors
+
+- [ ] **8.4 Remove temporal commentary and verify docstring accuracy**
+
+    **Goal:** Clean all meta-project commentary from theme code and ensure inline documentation reflects final system state.
+
+    **Rationale:** Comments/docstrings serve as implementation scaffolding during development but become noise/confusion
+    in final state. Code should document "what" and "why" (architecture), not "when" and "how we got here" (history).
+    References to phases, tasks, corrections, and temporal markers should be removed. Replace with architecture rationale
+    where applicable (ADR and/or strategy doc references), or remove entirely.
+
+    **Scope:** All theme system files (`frontend/src/theme/**/*.ts`)
+
+    - [ ] **8.4.a Verify no `@deprecated` tags remain in theme system**
+
+        **Pre-check:** Tasks 8.1-8.3 should have removed all deprecated code/aliases.
+
+        - `grep -r "@deprecated" frontend/src/theme/` → 0 matches
+        - If matches found: Indicates incomplete cleanup from 8.1-8.3 (fix before proceeding)
+        - Quality gate: Zero `@deprecated` tags in theme system
+
+    - [ ] **8.4.b Clean file headers (remove temporal creation dates)**
+
+        **Target pattern:** Remove `Created: YYYY-MM-DD (Task X.Y.Z ...)` markers
+
+        **Files to update:** All adapter files, definition files, type files
+
+        **Before:**
+
+        ```typescript
+        /**
+         * Material Design 3 Theme Adapter (Baseline Static)
+         *
+         * Created: 2025-11-07 (Task 3.5.5.7 - ADR-010 validation)
+         */
+        ```
+
+        **After:**
+
+        ```typescript
+        /**
+         * Material Design 3 Theme Adapter (Baseline Static)
+         *
+         * Maps official Material Design 3 baseline tokens to CineXplorer's unified
+         * theme vocabulary.
+         */
+        ```
+
+        **Keep:** Package versions, documentation URLs, ADR references
+
+        **Remove:** Creation dates, task references, temporal markers
+
+    - [ ] **8.4.c Clean section headers (remove correction parentheticals)**
+
+        **Target patterns:**
+        - "SECTION 1: OFFICIAL MAPPINGS (With Corrections)" → "SECTION 1: OFFICIAL MAPPINGS"
+        - "Corrections from Phase X:" → Remove entire line
+
+        **Files to update:** All 4 adapter files (github-primer, ibm-carbon, gitlab-pajamas, material-design-3)
+
+        **Before:**
+
+        ```typescript
+        // SECTION 1: OFFICIAL MAPPINGS (With Corrections)
+        // These mappings use official Primer tokens. Corrections from Phase 1:
+        // - Light mode: card uses bg_muted (was incorrectly bg_default)
+        ```
+
+        **After:**
+
+        ```typescript
+        // SECTION 1: OFFICIAL MAPPINGS
+        // Maps official Primer tokens to unified vocabulary.
+        // - Light mode: card uses bg_muted for visual distinction
+        ```
+
+        **Replace "corrections" with architecture rationale (ADR references when applicable)**
+
+    - [ ] **8.4.d Clean inline comments (remove temporal/correction markers)**
+
+        **Target patterns to remove:**
+        - "CORRECTED from X" → Replace with ADR-based rationale or remove
+        - "FIXED: was incorrectly X" → Replace with "Why" not "what changed"
+        - "Phase X integration" → Remove
+        - "with corrections" → Remove
+        - "Key Corrections (from Phase X.Y):" → Replace with architecture rationale
+
+        **Files to scan:** All adapter files, types.ts, extensions.ts, utils.ts
+
+        **Before:**
+
+        ```typescript
+        const border = palette.border_strong_01; // CORRECTED from border_default
+        ```
+
+        **After:**
+
+        ```typescript
+        const border = palette.border_strong_01; // Use strong border for visibility (ADR-006)
+        ```
+
+        **Grep patterns for verification:**
+        - `grep -r "CORRECTED" frontend/src/theme/` → 0 matches
+        - `grep -r "FIXED:" frontend/src/theme/` → 0 matches
+        - `grep -r "Phase [0-9]" frontend/src/theme/` → 0 matches (excluding this task list reference)
+        - `grep -r "with corrections" frontend/src/theme/` → 0 matches
+        - `grep -r "Task [0-9]" frontend/src/theme/` → 0 matches
+
+    - [ ] **8.4.e Update deprecation comments in types (remove phase references)**
+
+        **File:** `frontend/src/theme/color/types.ts`, `frontend/src/theme/types.ts`
+
+        **Target:** Comments referencing "Phase 3 migration", "Phase 4 removal", etc.
+
+        **Before:**
+
+        ```typescript
+        /**
+         * @deprecated Use lightUnified instead. Will be removed after Phase 3 migration.
+         */
+        light?: ThemeColors;
+        ```
+
+        **After:** Should be REMOVED entirely (no deprecated code remains after 8.1-8.3)
+
+        **If any remain:** Indicates incomplete 8.1-8.3 cleanup
+
+    - [ ] **8.4.f Verify DERIVED markers are appropriate (keep architectural, not historical)**
+
+        **Purpose:** "DERIVED" describes token nature (official vs derived), NOT implementation history
+
+        **Acceptable:**
+
+        ```typescript
+        // DERIVED: Alternating pattern (ADR-008) - Carbon-inspired for consistency
+        const layer02 = mode === "light" ? bg_default : adjustColor(bg_muted, 7);
+        ```
+
+        **Unacceptable:** None found (DERIVED markers are architectural)
+
+        **Action:** Scan all adapter files, confirm DERIVED markers have ADR references or clear rationale
+
+    - [ ] **8.4.g Audit all inline documentation for accuracy to final system**
+
+        **Goal:** Ensure comments reflect reality of final implementation, not intermediate states.
+
+        **Strategy:** Systematic pass through each theme file:
+
+        **Files to audit:**
+        - `frontend/src/theme/index.ts` (transitional state comments)
+        - `frontend/src/theme/types.ts` (migration comments)
+        - `frontend/src/theme/color/types.ts` (deprecation markers)
+        - All 4 adapter files (implementation comments)
+        - All 4 definition files (integration comments)
+        - `frontend/src/theme/color/palettes/cinexplorer-original.ts` (reference comments)
+
+        **Check for:**
+        - Comments describing "parallel systems" (should be removed - single system now)
+        - Comments about "during migration" (should be removed - migration complete)
+        - Comments with "TODO" or "FIXME" (resolve or create separate tasks)
+        - Contradictory comments (e.g., describing behavior that changed)
+        - Outdated examples (e.g., showing old token names)
+
+        **Quality gate:** All inline documentation accurate to current implementation
+
+    - [ ] **8.4.h Clean definition file integration comments**
+
+        **Files:** `frontend/src/theme/definitions/*.ts`
+
+        **Target:** "Phase 3 integration" comments
+
+        **Before:**
+
+        ```typescript
+        // Phase 3 integration: Unified adapter instances
+        lightUnified: createGithubAdapter('light'),
+        darkUnified: createGithubAdapter('dark'),
+        ```
+
+        **After:**
+
+        ```typescript
+        // Unified adapter instances
+        lightUnified: createGithubAdapter('light'),
+        darkUnified: createGithubAdapter('dark'),
+        ```
+
+    - [ ] **8.4.i Final verification (grep-based quality gates)**
+
+        **Run all grep patterns to verify zero matches:**
+
+        ```bash
+        # Temporal markers
+        grep -r "Phase [0-9]" frontend/src/theme/ | grep -v "strategy-task"
+        grep -r "Task [0-9]" frontend/src/theme/
+        grep -r "Created:" frontend/src/theme/
+
+        # Correction markers
+        grep -r "CORRECTED" frontend/src/theme/
+        grep -r "FIXED:" frontend/src/theme/
+        grep -r "with corrections" frontend/src/theme/
+
+        # Deprecation (should be zero after 8.1-8.3)
+        grep -r "@deprecated" frontend/src/theme/
+
+        # Migration state markers
+        grep -r "during migration" frontend/src/theme/
+        grep -r "parallel systems" frontend/src/theme/
+        grep -r "transitional" frontend/src/theme/
+        ```
+
+        **Expected:** All patterns return 0 matches (or matches are false positives in strings/ADR references)
+
+        **Quality gate:** Clean codebase with architectural documentation only
+
+- [ ] **8.5 Extract and consolidate knowledge from notes/research docs**
+
+    **Purpose:** Extract relevant knowledge from working notes into permanent strategy documentation.
+
+    **Files to extract from:**
+    - `notes-theme-system-modernization.md` (3000+ lines)
+    - `research-github-primer.md`
+    - `research-ibm-carbon.md`
+    - `research-material-design-3.md`
+    - `research-ant-design.md`
+
+    **Target location:** `.arc/reference/strategies/project/style/`
+
+    - [ ] **8.5.a Audit notes file for undocumented knowledge**
+        - Review `notes-theme-system-modernization.md` comprehensively
+        - Identify patterns, decisions, insights not yet captured in strategy docs
+        - Tag sections: "already documented", "needs extraction", "temporary/discard"
+
+    - [ ] **8.5.b Audit research docs for CineXplorer-relevant knowledge**
+        - Review all 4 research-*.md files
+        - Identify findings applicable to CineXplorer (vs generic research)
+        - Extract design system patterns relevant to movie discovery apps
+        - Document sources and rationale
+
+    - [ ] **8.5.c Create additional strategy docs as needed**
+        - **Evaluate need for:** `strategy-typography-system.md`, `strategy-spacing-system.md`, `strategy-motion-system.md`
+        - **Criteria:** Create new doc if >200 lines of extracted content on cohesive topic
+        - **Alternative:** Add as sections to existing strategy docs if <200 lines
+
+    - [ ] **8.5.d Update existing strategy docs with extracted knowledge**
+        - Add relevant sections to `strategy-semantic-tokens.md`
+        - Add relevant sections to `strategy-border-system.md`
+        - Ensure no duplication across docs
+        - Cross-reference related sections
+
+    - [ ] **8.5.e Enable research doc deletion**
+        - Verify all CineXplorer-relevant knowledge extracted
+        - Document what was preserved vs discarded (and why)
+        - Quality gate: Safe to delete research-*.md files after completion
+
+    - [ ] **8.5.f Prepare notes file for cleanup**
+        - Tag all sections as "extracted" or "temporary"
+        - Identify sections for historical context
+        - Create summary of knowledge preservation
+        - Quality gate: Notes file ready for archival cleanup
+
+- [ ] **8.6 Update project documentation**
+
+    - [ ] **8.6.a Update AGENTS.md**
+        - Add reference to semantic token system (brief mention in tech stack)
+        - No in-depth documentation (lives in strategy docs)
+
+    - [ ] **8.6.b Update DEVELOPMENT-RULES.md**
+        - Add rule about always using semantic token system
+        - Emphasize consistent theme styling
         - No direct color/style values in components
         - Reference strategy-semantic-tokens.md for patterns
-    - [ ] **6.1.3 Update TECHNICAL-OVERVIEW.md**
-        - Add overview-level documentation of theme system structure
+
+    - [ ] **8.6.c Update TECHNICAL-OVERVIEW.md**
+        - Add overview of theme system structure
         - Mention semantic token convention (shadcn/ui adapted for Chakra UI v3)
-        - Note comprehensive migration complete (all components use semantic tokens)
-        - Reference strategy docs for in-depth documentation
-        - Keep it high-level (details belong in docstrings and strategy docs)
-    - [ ] **6.1.4 Update PROJECT-STATUS.md**
+        - Note comprehensive migration complete
+        - Keep high-level (details in strategy docs)
+
+    - [ ] **8.6.d Update PROJECT-STATUS.md**
         - Document theme system modernization complete
         - Note all components migrated to semantic tokens
         - Update technical accomplishments section
 
-- [ ] **6.2 Extract and consolidate knowledge from notes/research docs**
+- [ ] **8.7 Run final quality gates**
 
-    **Purpose:** Comprehensive extraction of all relevant knowledge from working notes and research docs into permanent
-    strategy documentation, enabling cleanup and archival.
-    Uses new modular strategy approach (focused docs vs monolithic style guide).
+    - [ ] **8.7.a Verify extended tokens meet WCAG AA contrast in all themes**
 
-    **Files to extract from:**
-    - `notes-theme-system-modernization.md` (3000+ lines) - Implementation decisions, learnings, patterns
-    - `research-github-primer.md` - GitHub design system findings
-    - `research-ibm-carbon.md` - IBM Carbon design system findings
-    - `research-material-design-3.md` - Material Design 3 findings
-    - `research-ant-design.md` - Ant Design findings
+        **Automated approach (preferred):**
+        - Implement Node/TypeScript script: `frontend/scripts/verify-theme-contrast.ts`
+        - Use contrast library (`wcag-contrast` or `color-contrast-checker`)
+        - Iterate all theme token combinations (8 themes × all fg/bg pairs)
+        - Validate each pair against WCAG AA thresholds:
+            - Normal text: 4.5:1 contrast ratio
+            - Large text: 3:1 contrast ratio
+            - UI components: 3:1 contrast ratio
+        - Emit report of failing pairs (with specific token names + contrast ratios)
+        - Fail CI job on any violations
+        - Wire into `package.json` scripts (e.g., `npm run verify-contrast`)
+        - Add CI pipeline step to run across all themes and store artifacts
 
-    **Target location:** `.arc/reference/strategies/project/style/`
-
-    - [ ] **6.2.1 Audit notes file for undocumented knowledge**
-        - Review `notes-theme-system-modernization.md` comprehensively
-        - Identify patterns, decisions, and insights not yet captured in strategy docs
-        - Tag sections: "already documented", "needs extraction", "temporary/discard"
-        - Examples to look for:
-            - Component-specific token patterns
-            - Theme creation workflows
-            - Color palette design principles
-            - Cross-theme testing approaches
-            - Lessons learned from Phase 4 migrations
-
-    - [ ] **6.2.2 Audit research docs for CineXplorer-relevant knowledge**
-        - Review all 4 research-*.md files
-        - Identify findings applicable to CineXplorer (vs generic research)
-        - Extract design system patterns relevant to movie discovery apps
-        - Document sources and rationale for any extracted patterns
-        - Mark extractable vs archive-only content
-
-    - [ ] **6.2.3 Create additional strategy docs as needed**
-        - **Evaluate need for:** `strategy-typography-system.md`, `strategy-spacing-system.md`, `strategy-motion-system.md`
-        - **Criteria:** Create new doc if >200 lines of extracted content on cohesive topic
-        - **Alternative:** Add as sections to existing strategy-semantic-tokens.md or strategy-border-system.md if <200 lines
-        - **Decision tree:**
-            - Typography system findings? → New `strategy-typography-system.md`
-            - Spacing/layout patterns? → New `strategy-spacing-system.md`
-            - Animation/transition standards? → New `strategy-motion-system.md`
-            - Token usage clarifications? → Add to `strategy-semantic-tokens.md`
-            - Border-related patterns? → Add to `strategy-border-system.md`
-
-    - [ ] **6.2.4 Update existing strategy docs with extracted knowledge**
-        - Add relevant sections to `strategy-semantic-tokens.md` (token usage patterns discovered during Phase 4)
-        - Add relevant sections to `strategy-border-system.md` (any additional border patterns)
-        - Ensure no duplication across docs
-        - Cross-reference related sections
-
-    - [ ] **6.2.5 Enable research doc deletion**
-        - Verify all CineXplorer-relevant knowledge extracted
-        - Document what was preserved vs what was discarded (and why)
-        - Add comment in task completion notes listing which research findings were NOT extracted
-          (generic, not applicable, superseded by later research, etc.)
-        - Quality gate: Safe to delete research-*.md files after task completion
-
-    - [ ] **6.2.6 Prepare notes file for cleanup**
-        - Tag all sections in notes file as "extracted" or "temporary"
-        - Identify sections that should remain for historical context
-        - Create summary of what knowledge was preserved where
-        - Quality gate: Notes file ready for archival cleanup (separate meta workflow)
-
-- [ ] **6.3 Run final quality gates**
-
-    - [ ] **6.3.1 Verify extended tokens meet WCAG AA contrast in all themes**
-        - Test all 13 extended tokens in all 7 themes × 2 modes (14 combinations per token)
+        **Manual fallback:**
         - Use WebAIM Contrast Checker or browser DevTools
-        - **Minimum requirements:**
-            - Normal text: 4.5:1 contrast ratio (WCAG AA)
-            - Large text: 3:1 contrast ratio (WCAG AA)
-            - UI components: 3:1 contrast ratio (WCAG AA)
+        - Test all tokens in all 8 theme combinations
         - Document any failing combinations
-        - Adjust token values if needed to meet standards
+
+        **Resolution:**
+        - Adjust token values if needed to meet requirements
         - Quality gate: All tokens meet or exceed WCAG AA in all themes
 
-    - [ ] **6.3.2 Run automated test suites**
-        - Backend tests (ensure no breakage from any imports/side effects)
+    - [ ] **8.7.b Run automated test suites**
+        - Backend tests (ensure no breakage)
         - Frontend tests (all pass)
         - Quality gate: 100% test pass rate
 
-    - [ ] **6.3.3 Run linting and type checking**
+    - [ ] **8.7.c Run linting and type checking**
         - Frontend linting (0 errors)
         - TypeScript checking (0 errors)
         - Quality gate: Zero violations
 
-    - [ ] **6.3.4 Run markdown linting**
+    - [ ] **8.7.d Run markdown linting**
         - Markdown linting on all updated .arc docs
-        - Verify ADR from Task 3.4.2 passes linting
-        - Verify strategy-semantic-tokens.md from Task 3.6 passes linting
+        - Verify all ADRs pass linting
+        - Verify all strategy docs pass linting
         - Quality gate: All documentation linting passes
+
+### **Phase 9:** Login Session Bug Investigation (OPTIONAL)
+
+**Priority:** Unknown (evaluate when reached)
+
+**Issue:** User reported session appeared lost during testing (no explicit logout)
+
+**Context:** Discovered during Phase 3 review visual testing.
+Consolidated from theme-definition-semantic-corrections.md Task 3.5.8.
+
+- [ ] **9.1 Attempt to reproduce session loss**
+    - Test session persistence during normal navigation
+    - Test session across browser refreshes
+    - Test session timeout behavior
+    - Document reproduction steps if found
+
+- [ ] **9.2 Evaluate and triage**
+    - If reproduced: Assess severity (critical vs low priority)
+    - If not reproduced: Document as potential testing artifact
+    - If critical: Create separate task list for session management investigation
+    - If low priority: Create backlog item for future work
+    - If testing artifact: Close with documentation
 
 ---
 

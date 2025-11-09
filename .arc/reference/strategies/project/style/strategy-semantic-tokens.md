@@ -1,6 +1,6 @@
 # Semantic Token Strategy and Migration Guide
 
-**Version:** 1.1 | **Updated:** 2025-11-03 | **Status:** Active
+**Version:** 1.2 | **Updated:** 2025-11-07 | **Status:** Active
 
 ## Purpose
 
@@ -58,12 +58,18 @@ CineXplorer's theme system uses semantic token naming inspired by shadcn/ui, imp
 | **Muted Colors** (Deemphasized) | | |
 | `muted` | Muted/disabled backgrounds | Disabled buttons, subtle surfaces |
 | `muted-foreground` | Secondary text, labels | Help text, labels, captions, timestamps |
-| **Accent Colors** (Highlights) | | |
-| `accent` | Highlighted elements | Links, badges, focus states, callouts |
-| `accent-foreground` | Text on accent backgrounds | Accent badge text |
+| **Tertiary Colors** (Interactive Text & Accents) | | |
+| `tertiary` | Interactive text, links, highlights | Hyperlinks, focus states, active tabs, highlights |
+| `tertiary-foreground` | Text on tertiary backgrounds | Tertiary badge text (rarely used) |
+| `accent` | @deprecated Use `tertiary` | Legacy alias for tertiary (migration in progress) |
+| `accent-foreground` | @deprecated Use `tertiary-foreground` | Legacy alias (migration in progress) |
+| **Brand Colors** (Optional - Identity) | | |
+| `brand` | Logo/brand identity color | Logo sections, special brand moments (GitLab purple, IBM blue) |
+| `brandSecondary` | Secondary brand color | Additional brand accents (GitLab orange) |
 | **Destructive Colors** (Danger) | | |
 | `destructive` | Danger/error/delete actions | Delete buttons, error states, destructive actions |
-| `destructive-foreground` | Text on destructive backgrounds | Destructive button text |
+| `on-destructive` | Text on destructive backgrounds | Destructive button text (replaces destructive-foreground) |
+| `destructive-foreground` | @deprecated Use `on-destructive` | Legacy alias (migration in progress) |
 | **UI Elements** | | |
 | `border` | Standard borders | Dividers, card outlines, separators |
 | `input` | Input field borders | Text inputs, select boxes, form fields |
@@ -78,13 +84,16 @@ and complete alert system coverage.
 
 | Token | Purpose | Use Cases | Rationale |
 |-------|---------|-----------|-----------|
-| **Status Pairs (6 tokens)** | | | |
+| **Status Pairs (6 canonical + 4 deprecated = 10 tokens during migration)** | | | |
 | `success` | Success background | Success alerts, positive feedback, high ratings | Industry standard (all 4 design systems researched) |
-| `success-foreground` | Text on success | Success message text | Completes success semantic pair |
+| `on-success` | Text on success | Success message text | ADR-011: Standardized on-* naming |
+| `success-foreground` | @deprecated Use `on-success` | Legacy alias | Migration in progress (ADR-011) |
 | `warning` | Warning background | Caution states, validation warnings | Standard alert system component |
-| `warning-foreground` | Text on warning | Warning message text | Completes warning semantic pair |
+| `on-warning` | Text on warning | Warning message text | ADR-011: Standardized on-* naming |
+| `warning-foreground` | @deprecated Use `on-warning` | Legacy alias | Migration in progress (ADR-011) |
 | `info` | Info background | Informational messages, help text | Completes alert system (success/warning/error/info) |
-| `info-foreground` | Text on info | Info message text | Completes info semantic pair |
+| `on-info` | Text on info | Info message text | ADR-011: Standardized on-* naming |
+| `info-foreground` | @deprecated Use `on-info` | Legacy alias | Migration in progress (ADR-011) |
 | **Movie-Specific (2 tokens)** | | | |
 | `rating` | Rating value display | TMDB scores, user ratings, score badges | Core movie app feature, IMDb gold (#F5C518) standard |
 | `rating-foreground` | Text on rating | Score text | Completes rating semantic pair |
@@ -97,12 +106,103 @@ and complete alert system coverage.
 | `drag-active` | Item being dragged | Watchlist reordering, favorites reordering | Core META-PRD feature for interactive lists |
 | `drop-zone` | Valid drop target | Drop zone indicators | Completes drag-and-drop interaction pattern |
 
-**Extended Total:** 33 semantic tokens (still under industry averages of 40-140+)
+**Extended Total:** 33 canonical tokens + 8 deprecated aliases during migration (ADR-011)
 
 **Token Extension Summary:**
 
 All 13 extended tokens are backed by cross-system research (Material Design 3, IBM Carbon, GitHub Primer, Ant Design)
-or address movie app-specific requirements. Total of 33 tokens remains conservative compared to industry averages (40-140+).
+or address movie app-specific requirements. Total of 33 canonical tokens remains conservative compared to industry
+averages (40-140+). During ADR-011 migration, 8 deprecated `-foreground` aliases maintained for backward compatibility.
+
+---
+
+## Semantic Token Definitions (Per ADR-010 + ADR-011)
+
+The table below defines the precise semantic meaning, visual characteristics, and usage patterns for each color token
+in CineXplorer's unified vocabulary. These definitions govern how official design system tokens are mapped to our
+semantic vocabulary.
+
+**Context:**
+
+- **ADR-010** established the primary/secondary/tertiary hierarchy (Material Design 3-aligned) with optional
+  brand separation and proper token type distinction (background vs foreground tokens).
+- **ADR-011** standardized on `on-*` prefix for ALL foreground tokens (semantic + status), deprecating `-foreground` suffix.
+
+These definitions ensure cross-theme consistency while respecting official design system token values.
+
+| Token | Semantic Meaning | Visual Characteristics | Usage Examples | Token Type | Mapping Notes |
+|-------|-----------------|----------------------|----------------|------------|---------------|
+| **Action Hierarchy** | | | | | |
+| `primary` | Primary action buttons | Filled buttons, green or blue | "Submit", "Save", "Continue" | **Background** | GitHub: green (bg_success), IBM: blue (fg_accent), GitLab: blue |
+| `secondary` | Subtle action backgrounds | Low-emphasis surfaces | Subtle buttons, muted panels | Background | Maps to `bg_button_secondary` or muted surface tokens |
+| `tertiary` | Interactive text, links, accents | Blue or brand color, foreground | Hyperlinks, focus states, highlights | **Foreground** | Replaces deprecated `accent`. GitHub: blue (fg_accent), GitLab: purple |
+| `muted` | Deemphasized, non-interactive | Subtle gray backgrounds | Disabled states, subtle surfaces | Background | Distinct from secondary (interactive vs non-interactive) |
+| **Button Pattern Helpers (Per ADR-012)** | | | | | |
+| `button-outline` | Neutral outline border/text | Neutral gray | Utility actions, navigation | Foreground/Border | DEFAULT: Maps to `border` (neutral) |
+| `button-outline-primary` | Primary outline border/text | Primary color | Branded actions in outline style | Foreground/Border | EXPLICIT: Maps to `primary` when brand color needed |
+| `button-subtle` | Subtle button background | Secondary color | Embedded/in-context actions | Background | Maps to `secondary` for low-emphasis fills |
+| `button-subtle-selected` | Selected subtle button state | Layer-selected color | Selected toggle-style buttons | Background | Maps to `layer-selected-02` (semantic shift to surface) |
+| `on-button-subtle-selected` | Text on selected subtle button | Foreground color | Selected toggle text | Foreground | Maps to `foreground` (pairs with layer-selected, not secondary) |
+| **Brand Identity (Optional)** | | | | | |
+| `brand` | Logo/brand identity | Purple, blue, or brand color | Logo sections, brand moments | Either | Optional. GitLab: purple, IBM: blue, GitHub: undefined |
+| `brandSecondary` | Secondary brand color | Orange or secondary brand | Additional brand accents | Either | Optional. GitLab: orange. Not for general component use. |
+| **Status & Feedback** | | | | | |
+| `success` | Positive feedback, outcomes | Green, filled backgrounds | Success alerts, "✓ Saved", high ratings | Background | Maps to `bg_success` (green). Distinct from primary per ADR-010. |
+| `warning` | Caution, validation warnings | Yellow/amber, filled | Warning alerts, validation messages | Background | Official token when available (Primer: attention, Carbon/Pajamas: warning). |
+| `info` | Informational, help content | Blue, filled backgrounds | Info alerts, help text, neutral info | Background | Some systems reuse tertiary (Primer), others have dedicated token. |
+| `destructive` | Danger, errors, delete actions | Red, filled backgrounds | Delete buttons, error alerts | Background | Maps to `bg_danger` or equivalent error/danger token. |
+| **UI Elements** | | | | | |
+| `border` | Standard dividers, separators | Subtle gray | General borders, card outlines | Border | Per border hierarchy (border-subtle-00, border-strong-01, etc). |
+| `input` | Form field borders | Accessible contrast border | Text inputs, select boxes | Border | Typically maps to `border-subtle-00` or dedicated input border. |
+| `ring` | Focus indicators (accessibility) | High-contrast accent | Keyboard focus rings (2px outline + offset) | Border | Must meet WCAG 2.4.13 (≥3:1 contrast change). |
+
+**Key Distinctions (Per ADR-010 + ADR-012):**
+
+- **Primary vs Tertiary:** Primary is for **button fills** (background token),
+  Tertiary is for **links/text** (foreground token)
+- **Primary vs Brand:** Primary is for **UI actions**, Brand is for **identity** (may be same color, e.g., IBM)
+- **Primary vs Success:** Primary is **action color** (varies by system), Success is **feedback state** (always green)
+- **Secondary vs Muted:** Secondary is **interactive** (subtle buttons), Muted is **non-interactive** (disabled/deemphasized)
+- **Tertiary vs Accent:** Tertiary is the new name (Material-aligned), Accent is deprecated (alias during migration)
+- **Button Patterns (ADR-012):** Solid/outline/subtle/ghost are **visual patterns**, separate from color semantics.
+    - `button-outline` (neutral DEFAULT) maps to `border` for utility actions
+    - `button-outline-primary` (explicit) maps to `primary` for branded outline actions
+    - `button-subtle` maps to `secondary` for embedded/in-context actions
+- **Neutral vs Primary Outline:** Neutral outline (default) for utility/navigation, primary outline (explicit) for
+branded actions in outline style
+
+**Token Type Architecture:**
+
+- **Background tokens** (for large color areas): primary, secondary, muted, success, warning, info, destructive
+- **Foreground tokens** (for text/icons): tertiary, all `-foreground` pairs
+- **Either type** (context-dependent): brand, brandSecondary
+
+**Mapping Philosophy:**
+
+1. **Use official tokens when available** - Respect design system values for colors
+2. **Match token types to usage** - Background tokens for fills, foreground tokens for text
+3. **Standardize semantic meanings** - Primary = action, Tertiary = interactive text, Brand = identity
+4. **Handle color architecture diversity** - Support 1-tier (IBM), 2-tier (GitHub), 3-tier (GitLab) systems
+5. **Document deviations** - Inline comments explain when/why we deviate from source labeling
+
+**Design System Mappings:**
+
+| System | Brand | Primary (buttons) | Tertiary (links) | Architecture |
+|--------|-------|------------------|------------------|--------------|
+| **GitHub Primer** | undefined | green (bg_success) | blue (fg_accent) | 2-tier: Actions ≠ Links |
+| **IBM Carbon** | blue | blue (fg_accent) | blue (fg_accent) | 1-tier: Unified blue |
+| **GitLab Pajamas** | purple + orange | blue | purple | 3-tier: Brand ≠ Actions ≠ Links |
+| **Material Design 3** | purple | purple (primary) | teal (tertiary) | 3-tier: Full separation |
+
+**See Also:**
+
+- ADR-010: Establish Core Semantic Color Token Architecture (full rationale and decisions)
+- ADR-011: Standardize on "on-color" Foreground Naming Convention (on-* prefix standardization)
+- ADR-012: Separate Button Pattern Semantics from Color Semantics (button-outline, button-subtle helpers)
+- ADR-009: Use Material Design Opacity Overlays for Interaction States (hover/active state approach)
+- strategy-border-system.md: Border patterns and outline styling details
+- ADR-003: Extend Semantic Token System (token count extension)
+- ADR-005: Unified Theme Adapter Layer (adapter architecture)
 
 ---
 
@@ -451,15 +551,20 @@ Use this decision tree to select the appropriate semantic token for any UI eleme
 
 ## Token Naming Conventions
 
-### Pair Convention
+### Pair Convention (Updated per ADR-011)
 
-Most semantic tokens come in pairs: `{name}` (background) and `{name}-foreground` (text on background).
+Most semantic tokens come in pairs: `{name}` (background) and `on-{name}` (text on background).
 
-**Examples:**
+**Canonical naming (use in new code):**
 
-- `card` + `card-foreground`
-- `success` + `success-foreground`
-- `rating` + `rating-foreground`
+- `primary` + `on-primary`
+- `success` + `on-success`
+- `rating` + `rating-foreground` (legacy exception, not yet migrated)
+
+**Deprecated aliases (backward compatibility during migration):**
+
+- `primary-foreground` → use `on-primary` instead
+- `success-foreground` → use `on-success` instead
 
 **Exception:** Single tokens without pairs
 
@@ -619,12 +724,12 @@ Nielsen Norman Group, WCAG 2.4.13, and accessibility.org best practices (2024).
 
 ```tsx
 <Link
-  color="accent"
+  color="tertiary"
   textDecoration="underline"
   textDecorationThickness="2px"
   textUnderlineOffset="2px"
   _hover={{
-    color: "accent-hover",  // Brighter/more saturated shade
+    color: "tertiary-hover",  // Brighter/more saturated shade
   }}
   _focus={{
     outline: "2px solid",
@@ -639,7 +744,7 @@ Nielsen Norman Group, WCAG 2.4.13, and accessibility.org best practices (2024).
 **Key findings:**
 
 - **Default underline:** Required for accessibility (WCAG non-color indicators, helps color-blind users)
-- **Hover color change:** `accent` → `accent-hover` (warmer/brighter shade)
+- **Hover color change:** `tertiary` → `tertiary-hover` (warmer/brighter shade)
 - **Focus ring:** Same 2px pattern as buttons (WCAG 2.4.13 compliance, keyboard navigation)
 - **Visited states:** Declining trend in modern design - skip unless user research shows need
 
@@ -654,86 +759,293 @@ Nielsen Norman Group, WCAG 2.4.13, and accessibility.org best practices (2024).
 **Use opacity overlays, not color changes**, for interactive states. This approach is consistent across all tokens,
 maintains contrast ratios, and performs better than color calculations.
 
+**Implementation:** CineXplorer provides dedicated interaction state tokens (`layer-hover-01`, `layer-selected-01`, etc.)
+that internally use opacity overlay calculations.
+See **ADR-009: Use Material Design Opacity Overlays for Interaction States** for full rationale.
+
+### Interaction State Tokens
+
+**For surfaces (cards, list items, menu items):**
+
+```tsx
+// Use dedicated tokens - they handle opacity internally
+<Box
+  bg="layer-01"
+  _hover={{ bg: "layer-hover-01" }}      // Internally: layer-01 + 8% foreground
+  _active={{ bg: "layer-selected-01" }}   // Internally: layer-01 + 12% foreground
+>
+  Hover me
+</Box>
+```
+
+**Available tokens per layer:**
+
+- `layer-hover-01` / `layer-hover-02` - Hover states (8% foreground overlay)
+- `layer-selected-01` / `layer-selected-02` - Selected states (12% foreground overlay)
+- `layer-active-01` / `layer-active-02` - Active/pressed states (12% foreground overlay)
+
+**Why dedicated tokens?**
+
+- Consistent across all themes (not slavishly beholden to design systems)
+- Works with ADR-008's alternating layer pattern (avoids layer-03 = layer-01 issue)
+- Simpler component code (no manual overlay logic)
+- Future-proof (auto-adapts to new themes)
+
 ### Standard Opacity Values
 
 **From Material Design 3 research:**
 
-| State | Opacity | Usage | Implementation |
-|-------|---------|-------|----------------|
-| **Hover** | 8% | Mouse over interactive element | `bg="accent/8"` |
-| **Focus** | 12% | Keyboard navigation focus | `bg="accent/12"` |
-| **Pressed/Active** | 12% | Button press, active tab | `bg="accent/12"` |
-| **Drag** | 16% | Element being dragged | `bg="drag-active/16"` |
-| **Disabled** | 38% | Disabled controls | `opacity={0.38}` |
+| State | Opacity | Token Usage | Manual Usage (if needed) |
+|-------|---------|-------------|--------------------------|
+| **Hover** | 8% | `bg="layer-hover-01"` | `bg="foreground/8"` |
+| **Focus** | 12% | N/A (use ring) | `bg="foreground/12"` |
+| **Pressed/Active** | 12% | `bg="layer-active-01"` | `bg="foreground/12"` |
+| **Selected** | 12% | `bg="layer-selected-01"` | `bg="foreground/12"` |
+| **Drag** | 16% | `bg="drag-active"` | `bg="foreground/16"` |
+| **Disabled** | 38% | N/A | `opacity={0.38}` |
 
-**Note:** Overlay uses foreground color at specified opacity, not the background color itself.
+**Note:** Prefer dedicated tokens over manual overlays. Manual overlays shown for reference or special cases.
 
-### Chakra UI Implementation
+### Button Patterns (Per ADR-012)
 
-**Opacity modifiers with `/` syntax:**
+ADR-012 separates **button patterns** (visual styles) from **color semantics** (functional meaning). This prevents
+confusion where "secondary" could mean either "outline button" OR "subtle background color".
+
+**Chakra UI Variants → Token Mappings:**
+
+| Variant | Visual Pattern | Color Tokens | Interaction Tokens | Use Case | Emphasis |
+|---------|---------------|--------------|-------------------|----------|----------|
+| `solid` | Filled background | `primary` / `on-primary` | `primary-hover`, `primary-active` | Primary actions | Highest |
+| `outline` (primary) | Transparent + primary border | `button-outline-primary` | Direct opacity: `/8`, `/12` | Branded actions in outline style | High |
+| `outline` (neutral) | Transparent + gray border | `button-outline` / `on-button-outline` | `tertiary/8`, `borderColor: tertiary` on hover | Utility/navigation (DEFAULT) | Medium |
+| `subtle` | Subtle filled background | `button-subtle` / `on-button-subtle` | `secondary-hover`, `secondary-active` | Embedded/in-context actions | Medium-Low |
+| `ghost` | No background/border | `tertiary` or `foreground` | `tertiary-hover`, `tertiary-active` | Dismissive actions | Lowest |
+
+**Implementation Examples:**
 
 ```tsx
-// Hover state
-<Box
-  bg="card"
-  _hover={{ bg: "accent/8" }}
->
-  Hover me
-</Box>
-
-// Active state (button press)
+// Solid button (highest emphasis) - primary actions
 <Button
+  variant="solid"
   bg="primary"
-  _active={{ bg: "primary/12" }}
+  color="on-primary"
+  _hover={{ bg: "primary-hover" }}
+  _active={{ bg: "primary-active" }}
 >
-  Press me
+  Save Changes
 </Button>
 
-// Focus state
-<Input
-  _focus={{
-    borderColor: "ring",
-    boxShadow: "0 0 0 2px",
-    boxShadowColor: "ring/50"
-  }}
-/>
+// Primary outline (high emphasis) - branded actions in outline style
+<Button
+  variant="outline"
+  borderColor="button-outline-primary"
+  color="on-button-outline-primary"
+  _hover={{ bg: "primary/8" }}
+  _active={{ bg: "primary/12" }}
+>
+  Learn More
+</Button>
+
+// Neutral outline (medium emphasis) - DEFAULT for utility/navigation
+<Button
+  variant="outline"
+  borderColor="button-outline"
+  color="on-button-outline"
+  _hover={{ bg: "tertiary/8", borderColor: "tertiary" }}
+  _active={{ bg: "tertiary/12", borderColor: "tertiary" }}
+>
+  Cancel
+</Button>
+
+// Subtle button (medium-low emphasis) - embedded/in-context actions
+<Button
+  variant="subtle"
+  bg="button-subtle"
+  color="on-button-subtle"
+  _hover={{ bg: "secondary-hover" }}
+  _active={{ bg: "secondary-active" }}
+>
+  Options
+</Button>
+
+// Subtle button with selected state - toggle-style buttons (e.g., theme selector)
+<Button
+  variant="subtle"
+  bg={isSelected ? "button-subtle-selected" : "button-subtle"}
+  color={isSelected ? "on-button-subtle-selected" : "on-button-subtle"}
+  _hover={{ bg: isSelected ? "button-subtle-selected" : "secondary-hover" }}
+>
+  Theme Option
+</Button>
+
+// Ghost button (lowest emphasis) - dismissive actions
+<Button
+  variant="ghost"
+  color="tertiary"
+  _hover={{ color: "tertiary-hover" }}
+  _active={{ color: "tertiary-active" }}
+>
+  Skip
+</Button>
+```
+
+**Why This Approach:**
+
+- ✅ Clear separation of visual pattern (solid/outline/subtle/ghost) from color meaning (primary/secondary)
+- ✅ `button-outline` (neutral), `button-outline-primary` (branded), and `button-subtle` provide self-documenting API
+- ✅ Works consistently across all themes (no Carbon vs Primer differences)
+- ✅ Aligns with Chakra v3's variant system
+- ✅ Two outline variants match real-world usage (most outlines are neutral utility, not branded)
+- ✅ Default name (`button-outline`) is most common use case (neutral)
+
+**Common Mistakes to Avoid:**
+
+```tsx
+// ❌ Wrong - using primary color for utility actions
+<Button variant="outline" borderColor="primary">Cancel</Button>
+
+// ✅ Correct - neutral outline for utility actions
+<Button variant="outline" borderColor="button-outline" color="on-button-outline">
+  Cancel
+</Button>
+
+// ❌ Wrong - "secondary" doesn't mean "outline button"
+<Button variant="outline" bg="secondary">Options</Button>
+
+// ✅ Correct - secondary is for subtle FILLED buttons
+<Button variant="subtle" bg="button-subtle" color="on-button-subtle">
+  Options
+</Button>
+
+// ❌ Wrong - using neutral outline when you want brand color
+<Button variant="outline" borderColor="button-outline">Learn More</Button>  // gray border
+
+// ✅ Correct - primary outline for branded actions
+<Button variant="outline" borderColor="button-outline-primary" color="on-button-outline-primary">
+  Learn More
+</Button>  // brand color border
+```
+
+**When to use which outline:**
+
+- **Neutral outline** (`button-outline`): OAuth buttons, navigation ("Back"), filters, "Cancel" in neutral contexts
+- **Primary outline** (`button-outline-primary`): Branded CTAs in outline style, "Learn More" on landing pages
+- **Subtle filled** (`button-subtle`): Theme selectors, embedded controls, in-panel actions
+
+### Choosing the Right Interaction Token
+
+Different UI elements need different interaction state tokens. Use this guide to choose correctly:
+
+**For surfaces (cards, list items, menu items):**
+
+- **Default:** `bg="layer-01"`
+- **Hover:** `_hover={{ bg: "layer-hover-01" }}`
+- **Selected:** `bg="layer-selected-01"`
+- **Why:** Surfaces use layer backgrounds, so layer interaction tokens match
+
+**For solid buttons (filled backgrounds):**
+
+- **Default:** `bg="primary"` + `color="on-primary"`
+- **Hover:** `_hover={{ bg: "primary-hover" }}`
+- **Active:** `_active={{ bg: "primary-active" }}`
+- **Why:** Buttons use color backgrounds, so color interaction tokens match
+
+**For outline buttons (transparent backgrounds):**
+
+- **Default:** `borderColor="button-outline"` + `color="button-outline"`
+- **Hover:** `_hover={{ bg: "button-outline/8" }}`
+- **Active:** `_active={{ bg: "button-outline/12" }}`
+- **Why:** Simple opacity overlay on transparent, no pre-calculated token needed
+
+**For subtle buttons (subtle backgrounds):**
+
+- **Default:** `bg="button-subtle"` + `color="on-button-subtle"`
+- **Hover:** `_hover={{ bg: "secondary-hover" }}`
+- **Active:** `_active={{ bg: "secondary-active" }}`
+- **Why:** Subtle buttons use secondary color, so secondary interaction tokens match
+
+**For interactive text/links:**
+
+- **Default:** `color="tertiary"`
+- **Hover:** `_hover={{ color: "tertiary-hover" }}`
+- **Active:** `_active={{ color: "tertiary-active" }}`
+- **Why:** Links use tertiary color, so tertiary interaction tokens match
+
+**Decision Tree:**
+
+```
+What am I styling?
+├─ Surface (card, list item, menu item) → Use layer-* tokens
+├─ Solid button → Use primary-* tokens
+├─ Outline button → Use button-outline with /8 opacity
+├─ Subtle button → Use button-subtle + secondary-* tokens
+└─ Link/interactive text → Use tertiary-* tokens
 ```
 
 ### Common Patterns
 
-**Card hover state:**
+**Surface hover (cards, list items, menu items):**
+
+```tsx
+// Use dedicated tokens
+<Box
+  bg="layer-01"
+  _hover={{ bg: "layer-hover-01" }}
+  _active={{ bg: "layer-selected-01" }}
+  cursor="pointer"
+>
+  Hoverable surface
+</Box>
+```
+
+**Selected state (list items, tabs):**
+
+```tsx
+<Box
+  bg={isSelected ? "layer-selected-01" : "layer-01"}
+  _hover={{ bg: isSelected ? "layer-selected-01" : "layer-hover-01" }}
+>
+  {isSelected ? "Selected" : "Not selected"}
+</Box>
+```
+
+**Card with elevation change on hover:**
 
 ```tsx
 <Card
-  bg="card"
+  bg="layer-01"
   _hover={{
-    bg: "card",
-    shadow: "lg",
-    // Subtle accent overlay
-    "&::after": {
-      content: '""',
-      position: "absolute",
-      inset: 0,
-      bg: "accent/8",
-      borderRadius: "inherit"
-    }
+    bg: "layer-hover-01",
+    boxShadow: "shadow-md"  // Add elevation
   }}
 >
   Movie Card
 </Card>
 ```
 
-**Button states:**
+**Button states (use dedicated interaction tokens):**
 
 ```tsx
+// Solid button - uses primary-hover/active tokens
 <Button
   bg="primary"
-  color="primary-foreground"
-  _hover={{ bg: "primary", opacity: 0.92 }}  // 8% lighter
-  _active={{ bg: "primary", opacity: 0.88 }} // 12% lighter
+  color="on-primary"
+  _hover={{ bg: "primary-hover" }}
+  _active={{ bg: "primary-active" }}
   _disabled={{ opacity: 0.38, cursor: "not-allowed" }}
 >
   Submit
+</Button>
+
+// Outline button - uses direct opacity on transparent
+<Button
+  variant="outline"
+  borderColor="button-outline"
+  color="button-outline"
+  _hover={{ bg: "button-outline/8" }}
+  _active={{ bg: "button-outline/12" }}
+>
+  Cancel
 </Button>
 ```
 
@@ -822,27 +1134,27 @@ whether theme interprets it as gold, orange, or yellow.
 
 ### Most Common Patterns
 
-**Status indicators:**
+**Status indicators (ADR-011 canonical naming):**
 
 ```tsx
 // Success
 <Alert bg="success/10" borderColor="success">
-  <Text color="success-foreground">Action completed</Text>
+  <Text color="on-success">Action completed</Text>
 </Alert>
 
 // Warning
 <Alert bg="warning/10" borderColor="warning">
-  <Text color="warning-foreground">Please verify</Text>
+  <Text color="on-warning">Please verify</Text>
 </Alert>
 
 // Info
 <Alert bg="info/10" borderColor="info">
-  <Text color="info-foreground">Helpful tip</Text>
+  <Text color="on-info">Helpful tip</Text>
 </Alert>
 
 // Error
 <Alert bg="destructive/10" borderColor="destructive">
-  <Text color="destructive-foreground">Error occurred</Text>
+  <Text color="on-destructive">Error occurred</Text>
 </Alert>
 ```
 
@@ -926,12 +1238,12 @@ whether theme interprets it as gold, orange, or yellow.
     <Box bg="#F5C518">Rating</Box>
 ```
 
-**Always use semantic tokens:**
+**Always use semantic tokens (ADR-011 canonical naming):**
 
 ```tsx
-✅ <Text color="destructive-foreground">Error</Text>
+✅ <Text color="on-destructive">Error</Text>
 ✅ <Box bg="muted">Container</Box>
-✅ <Badge bg="info" color="info-foreground">Info</Badge>
+✅ <Badge bg="info" color="on-info">Info</Badge>
 ✅ <Box bg="rating" color="rating-foreground">8.5</Box>
 ```
 
@@ -951,10 +1263,11 @@ whether theme interprets it as gold, orange, or yellow.
 
 ---
 
-**Document Version:** 1.1 (2025-11-03)
+**Document Version:** 1.2 (2025-11-07)
 
 **Version History:**
 
+- 1.2 (2025-11-07): Updated for ADR-011 on-* naming convention, marked -foreground tokens as deprecated
 - 1.1 (2025-11-03): Verified accuracy, added ADR-004 reference for implementation architecture
 - 1.0 (2025-11-02): Initial comprehensive guide
 

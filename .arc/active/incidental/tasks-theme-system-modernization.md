@@ -2134,7 +2134,7 @@ prevents discovering token issues after cleanup, when fixing them is harder.
 
 ### **Phase 8:** Cleanup & Documentation
 
-**Goal:** Remove deprecated systems and consolidate knowledge before declaring theme work complete.
+**Goal:** Remove deprecated systems, clean temporal commentary, and consolidate knowledge before declaring theme work complete.
 
 **Context:** Merged from original Phase 5-6 and theme-definition-semantic-corrections.md Phase 3.6.
 This cleanup is REQUIRED - parallel systems allowed during migration, but must be removed before merge.
@@ -2167,7 +2167,7 @@ This cleanup is REQUIRED - parallel systems allowed during migration, but must b
 
     **Scope:** UnifiedTheme interface + all 4 theme adapters (GitHub, IBM Carbon, GitLab, Material Design 3)
 
-    - [ ] Verify zero usage of deprecated tokens in components
+    - [ ] **8.3.a Verify zero usage of deprecated tokens in components**
         - `grep -r "accent-foreground" frontend/src/components/ frontend/src/pages/` → 0 matches
         - `grep -r "primary-foreground" frontend/src/components/ frontend/src/pages/` → 0 matches
         - `grep -r "secondary-foreground" frontend/src/components/ frontend/src/pages/` → 0 matches
@@ -2179,23 +2179,236 @@ This cleanup is REQUIRED - parallel systems allowed during migration, but must b
         - `grep -r "info-foreground" frontend/src/components/ frontend/src/pages/` → 0 matches
         - Deprecated tokens OK in theme adapters (they're the source), but NOT in components
 
-    - [ ] Remove deprecated aliases from type system
+    - [ ] **8.3.b Remove deprecated aliases from type system**
         - Edit `frontend/src/theme/color/types.ts`
         - Remove all `*-foreground` aliases (keep `on-*` canonical forms)
         - Update comments to reflect removal
 
-    - [ ] Remove deprecated aliases from all adapters
-        - Edit all 4 adapter files
-        - Remove deprecated alias mappings
+    - [ ] **8.3.c Remove deprecated aliases from all adapters**
+        - Edit all 4 adapter files (github-primer, ibm-carbon, gitlab-pajamas, material-design-3)
+        - Remove deprecated alias mappings (e.g., `primaryForeground = onPrimary`)
         - Keep only canonical `on-*` forms
         - Update inline comments
 
-    - [ ] Verify type checking still passes
+    - [ ] **8.3.d Verify type checking still passes**
         - Run TypeScript type checking
         - Should show NO errors (all components using canonical forms)
         - Quality gate: 0 type errors
 
-- [ ] **8.4 Extract and consolidate knowledge from notes/research docs**
+- [ ] **8.4 Remove temporal commentary and verify docstring accuracy**
+
+    **Goal:** Clean all meta-project commentary from theme code and ensure inline documentation reflects final system state.
+
+    **Rationale:** Comments/docstrings serve as implementation scaffolding during development but become noise/confusion
+    in final state. Code should document "what" and "why" (architecture), not "when" and "how we got here" (history).
+    References to phases, tasks, corrections, and temporal markers should be removed. Replace with architecture rationale
+    where applicable (ADR and/or strategy doc references), or remove entirely.
+
+    **Scope:** All theme system files (`frontend/src/theme/**/*.ts`)
+
+    - [ ] **8.4.a Verify no `@deprecated` tags remain in theme system**
+
+        **Pre-check:** Tasks 8.1-8.3 should have removed all deprecated code/aliases.
+
+        - `grep -r "@deprecated" frontend/src/theme/` → 0 matches
+        - If matches found: Indicates incomplete cleanup from 8.1-8.3 (fix before proceeding)
+        - Quality gate: Zero `@deprecated` tags in theme system
+
+    - [ ] **8.4.b Clean file headers (remove temporal creation dates)**
+
+        **Target pattern:** Remove `Created: YYYY-MM-DD (Task X.Y.Z ...)` markers
+
+        **Files to update:** All adapter files, definition files, type files
+
+        **Before:**
+
+        ```typescript
+        /**
+         * Material Design 3 Theme Adapter (Baseline Static)
+         *
+         * Created: 2025-11-07 (Task 3.5.5.7 - ADR-010 validation)
+         */
+        ```
+
+        **After:**
+
+        ```typescript
+        /**
+         * Material Design 3 Theme Adapter (Baseline Static)
+         *
+         * Maps official Material Design 3 baseline tokens to CineXplorer's unified
+         * theme vocabulary.
+         */
+        ```
+
+        **Keep:** Package versions, documentation URLs, ADR references
+
+        **Remove:** Creation dates, task references, temporal markers
+
+    - [ ] **8.4.c Clean section headers (remove correction parentheticals)**
+
+        **Target patterns:**
+        - "SECTION 1: OFFICIAL MAPPINGS (With Corrections)" → "SECTION 1: OFFICIAL MAPPINGS"
+        - "Corrections from Phase X:" → Remove entire line
+
+        **Files to update:** All 4 adapter files (github-primer, ibm-carbon, gitlab-pajamas, material-design-3)
+
+        **Before:**
+
+        ```typescript
+        // SECTION 1: OFFICIAL MAPPINGS (With Corrections)
+        // These mappings use official Primer tokens. Corrections from Phase 1:
+        // - Light mode: card uses bg_muted (was incorrectly bg_default)
+        ```
+
+        **After:**
+
+        ```typescript
+        // SECTION 1: OFFICIAL MAPPINGS
+        // Maps official Primer tokens to unified vocabulary.
+        // - Light mode: card uses bg_muted for visual distinction
+        ```
+
+        **Replace "corrections" with architecture rationale (ADR references when applicable)**
+
+    - [ ] **8.4.d Clean inline comments (remove temporal/correction markers)**
+
+        **Target patterns to remove:**
+        - "CORRECTED from X" → Replace with ADR-based rationale or remove
+        - "FIXED: was incorrectly X" → Replace with "Why" not "what changed"
+        - "Phase X integration" → Remove
+        - "with corrections" → Remove
+        - "Key Corrections (from Phase X.Y):" → Replace with architecture rationale
+
+        **Files to scan:** All adapter files, types.ts, extensions.ts, utils.ts
+
+        **Before:**
+
+        ```typescript
+        const border = palette.border_strong_01; // CORRECTED from border_default
+        ```
+
+        **After:**
+
+        ```typescript
+        const border = palette.border_strong_01; // Use strong border for visibility (ADR-006)
+        ```
+
+        **Grep patterns for verification:**
+        - `grep -r "CORRECTED" frontend/src/theme/` → 0 matches
+        - `grep -r "FIXED:" frontend/src/theme/` → 0 matches
+        - `grep -r "Phase [0-9]" frontend/src/theme/` → 0 matches (excluding this task list reference)
+        - `grep -r "with corrections" frontend/src/theme/` → 0 matches
+        - `grep -r "Task [0-9]" frontend/src/theme/` → 0 matches
+
+    - [ ] **8.4.e Update deprecation comments in types (remove phase references)**
+
+        **File:** `frontend/src/theme/color/types.ts`, `frontend/src/theme/types.ts`
+
+        **Target:** Comments referencing "Phase 3 migration", "Phase 4 removal", etc.
+
+        **Before:**
+
+        ```typescript
+        /**
+         * @deprecated Use lightUnified instead. Will be removed after Phase 3 migration.
+         */
+        light?: ThemeColors;
+        ```
+
+        **After:** Should be REMOVED entirely (no deprecated code remains after 8.1-8.3)
+
+        **If any remain:** Indicates incomplete 8.1-8.3 cleanup
+
+    - [ ] **8.4.f Verify DERIVED markers are appropriate (keep architectural, not historical)**
+
+        **Purpose:** "DERIVED" describes token nature (official vs derived), NOT implementation history
+
+        **Acceptable:**
+
+        ```typescript
+        // DERIVED: Alternating pattern (ADR-008) - Carbon-inspired for consistency
+        const layer02 = mode === "light" ? bg_default : adjustColor(bg_muted, 7);
+        ```
+
+        **Unacceptable:** None found (DERIVED markers are architectural)
+
+        **Action:** Scan all adapter files, confirm DERIVED markers have ADR references or clear rationale
+
+    - [ ] **8.4.g Audit all inline documentation for accuracy to final system**
+
+        **Goal:** Ensure comments reflect reality of final implementation, not intermediate states.
+
+        **Strategy:** Systematic pass through each theme file:
+
+        **Files to audit:**
+        - `frontend/src/theme/index.ts` (transitional state comments)
+        - `frontend/src/theme/types.ts` (migration comments)
+        - `frontend/src/theme/color/types.ts` (deprecation markers)
+        - All 4 adapter files (implementation comments)
+        - All 4 definition files (integration comments)
+        - `frontend/src/theme/color/palettes/cinexplorer-original.ts` (reference comments)
+
+        **Check for:**
+        - Comments describing "parallel systems" (should be removed - single system now)
+        - Comments about "during migration" (should be removed - migration complete)
+        - Comments with "TODO" or "FIXME" (resolve or create separate tasks)
+        - Contradictory comments (e.g., describing behavior that changed)
+        - Outdated examples (e.g., showing old token names)
+
+        **Quality gate:** All inline documentation accurate to current implementation
+
+    - [ ] **8.4.h Clean definition file integration comments**
+
+        **Files:** `frontend/src/theme/definitions/*.ts`
+
+        **Target:** "Phase 3 integration" comments
+
+        **Before:**
+
+        ```typescript
+        // Phase 3 integration: Unified adapter instances
+        lightUnified: createGithubAdapter('light'),
+        darkUnified: createGithubAdapter('dark'),
+        ```
+
+        **After:**
+
+        ```typescript
+        // Unified adapter instances
+        lightUnified: createGithubAdapter('light'),
+        darkUnified: createGithubAdapter('dark'),
+        ```
+
+    - [ ] **8.4.i Final verification (grep-based quality gates)**
+
+        **Run all grep patterns to verify zero matches:**
+
+        ```bash
+        # Temporal markers
+        grep -r "Phase [0-9]" frontend/src/theme/ | grep -v "strategy-task"
+        grep -r "Task [0-9]" frontend/src/theme/
+        grep -r "Created:" frontend/src/theme/
+
+        # Correction markers
+        grep -r "CORRECTED" frontend/src/theme/
+        grep -r "FIXED:" frontend/src/theme/
+        grep -r "with corrections" frontend/src/theme/
+
+        # Deprecation (should be zero after 8.1-8.3)
+        grep -r "@deprecated" frontend/src/theme/
+
+        # Migration state markers
+        grep -r "during migration" frontend/src/theme/
+        grep -r "parallel systems" frontend/src/theme/
+        grep -r "transitional" frontend/src/theme/
+        ```
+
+        **Expected:** All patterns return 0 matches (or matches are false positives in strings/ADR references)
+
+        **Quality gate:** Clean codebase with architectural documentation only
+
+- [ ] **8.5 Extract and consolidate knowledge from notes/research docs**
 
     **Purpose:** Extract relevant knowledge from working notes into permanent strategy documentation.
 
@@ -2208,85 +2421,99 @@ This cleanup is REQUIRED - parallel systems allowed during migration, but must b
 
     **Target location:** `.arc/reference/strategies/project/style/`
 
-    - [ ] **8.4.1 Audit notes file for undocumented knowledge**
+    - [ ] **8.5.a Audit notes file for undocumented knowledge**
         - Review `notes-theme-system-modernization.md` comprehensively
         - Identify patterns, decisions, insights not yet captured in strategy docs
         - Tag sections: "already documented", "needs extraction", "temporary/discard"
 
-    - [ ] **8.4.2 Audit research docs for CineXplorer-relevant knowledge**
+    - [ ] **8.5.b Audit research docs for CineXplorer-relevant knowledge**
         - Review all 4 research-*.md files
         - Identify findings applicable to CineXplorer (vs generic research)
         - Extract design system patterns relevant to movie discovery apps
         - Document sources and rationale
 
-    - [ ] **8.4.3 Create additional strategy docs as needed**
+    - [ ] **8.5.c Create additional strategy docs as needed**
         - **Evaluate need for:** `strategy-typography-system.md`, `strategy-spacing-system.md`, `strategy-motion-system.md`
         - **Criteria:** Create new doc if >200 lines of extracted content on cohesive topic
         - **Alternative:** Add as sections to existing strategy docs if <200 lines
 
-    - [ ] **8.4.4 Update existing strategy docs with extracted knowledge**
+    - [ ] **8.5.d Update existing strategy docs with extracted knowledge**
         - Add relevant sections to `strategy-semantic-tokens.md`
         - Add relevant sections to `strategy-border-system.md`
         - Ensure no duplication across docs
         - Cross-reference related sections
 
-    - [ ] **8.4.5 Enable research doc deletion**
+    - [ ] **8.5.e Enable research doc deletion**
         - Verify all CineXplorer-relevant knowledge extracted
         - Document what was preserved vs discarded (and why)
         - Quality gate: Safe to delete research-*.md files after completion
 
-    - [ ] **8.4.6 Prepare notes file for cleanup**
+    - [ ] **8.5.f Prepare notes file for cleanup**
         - Tag all sections as "extracted" or "temporary"
         - Identify sections for historical context
         - Create summary of knowledge preservation
         - Quality gate: Notes file ready for archival cleanup
 
-- [ ] **8.5 Update project documentation**
-    - [ ] **8.5.1 Update AGENTS.md**
+- [ ] **8.6 Update project documentation**
+
+    - [ ] **8.6.a Update AGENTS.md**
         - Add reference to semantic token system (brief mention in tech stack)
         - No in-depth documentation (lives in strategy docs)
 
-    - [ ] **8.5.2 Update DEVELOPMENT-RULES.md**
+    - [ ] **8.6.b Update DEVELOPMENT-RULES.md**
         - Add rule about always using semantic token system
         - Emphasize consistent theme styling
         - No direct color/style values in components
         - Reference strategy-semantic-tokens.md for patterns
 
-    - [ ] **8.5.3 Update TECHNICAL-OVERVIEW.md**
+    - [ ] **8.6.c Update TECHNICAL-OVERVIEW.md**
         - Add overview of theme system structure
         - Mention semantic token convention (shadcn/ui adapted for Chakra UI v3)
         - Note comprehensive migration complete
         - Keep high-level (details in strategy docs)
 
-    - [ ] **8.5.4 Update PROJECT-STATUS.md**
+    - [ ] **8.6.d Update PROJECT-STATUS.md**
         - Document theme system modernization complete
         - Note all components migrated to semantic tokens
         - Update technical accomplishments section
 
-- [ ] **8.6 Run final quality gates**
+- [ ] **8.7 Run final quality gates**
 
-    - [ ] **8.6.1 Verify extended tokens meet WCAG AA contrast in all themes**
-        - Test all tokens in all 8 theme combinations
+    - [ ] **8.7.a Verify extended tokens meet WCAG AA contrast in all themes**
+
+        **Automated approach (preferred):**
+        - Implement Node/TypeScript script: `frontend/scripts/verify-theme-contrast.ts`
+        - Use contrast library (`wcag-contrast` or `color-contrast-checker`)
+        - Iterate all theme token combinations (8 themes × all fg/bg pairs)
+        - Validate each pair against WCAG AA thresholds:
+            - Normal text: 4.5:1 contrast ratio
+            - Large text: 3:1 contrast ratio
+            - UI components: 3:1 contrast ratio
+        - Emit report of failing pairs (with specific token names + contrast ratios)
+        - Fail CI job on any violations
+        - Wire into `package.json` scripts (e.g., `npm run verify-contrast`)
+        - Add CI pipeline step to run across all themes and store artifacts
+
+        **Manual fallback:**
         - Use WebAIM Contrast Checker or browser DevTools
-        - **Minimum requirements:**
-            - Normal text: 4.5:1 contrast ratio (WCAG AA)
-            - Large text: 3:1 contrast ratio (WCAG AA)
-            - UI components: 3:1 contrast ratio (WCAG AA)
+        - Test all tokens in all 8 theme combinations
         - Document any failing combinations
-        - Adjust token values if needed
-        - Quality gate: All tokens meet or exceed WCAG AA
 
-    - [ ] **8.6.2 Run automated test suites**
+        **Resolution:**
+        - Adjust token values if needed to meet requirements
+        - Quality gate: All tokens meet or exceed WCAG AA in all themes
+
+    - [ ] **8.7.b Run automated test suites**
         - Backend tests (ensure no breakage)
         - Frontend tests (all pass)
         - Quality gate: 100% test pass rate
 
-    - [ ] **8.6.3 Run linting and type checking**
+    - [ ] **8.7.c Run linting and type checking**
         - Frontend linting (0 errors)
         - TypeScript checking (0 errors)
         - Quality gate: Zero violations
 
-    - [ ] **8.6.4 Run markdown linting**
+    - [ ] **8.7.d Run markdown linting**
         - Markdown linting on all updated .arc docs
         - Verify all ADRs pass linting
         - Verify all strategy docs pass linting

@@ -168,7 +168,8 @@ These definitions ensure cross-theme consistency while respecting official desig
     - `button-outline` (neutral DEFAULT) maps to `border` for utility actions
     - `button-outline-primary` (explicit) maps to `primary` for branded outline actions
     - `button-subtle` maps to `secondary` for embedded/in-context actions
-- **Neutral vs Primary Outline:** Neutral outline (default) for utility/navigation, primary outline (explicit) for branded actions in outline style
+- **Neutral vs Primary Outline:** Neutral outline (default) for utility/navigation, primary outline (explicit) for
+branded actions in outline style
 
 **Token Type Architecture:**
 

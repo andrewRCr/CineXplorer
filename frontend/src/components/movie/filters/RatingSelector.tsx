@@ -51,8 +51,8 @@ const RatingSelector = ({
     if (!rating) return rating; // Keep empty values
     const num = parseFloat(rating);
     if (isNaN(num)) {
-      // For non-numeric values, clamp to 0
-      return "0";
+      // For non-numeric values, clear the field instead of setting to 0
+      return "";
     }
     // Clamp numeric values to valid range (0-10 scale)
     if (num < 0) return "0";
@@ -119,7 +119,9 @@ const RatingSelector = ({
       setLocalMinRating(clampedValue);
       // Cancel any pending debounced update and send the clamped value immediately
       debouncedMinRatingUpdate.cancel();
-      if (clampedValue && isValidRating(clampedValue)) {
+      // Always update parent state, even if clamped to empty string
+      // This ensures visual state matches filter state
+      if (clampedValue === "" || (clampedValue && isValidRating(clampedValue))) {
         onMinRatingChange(clampedValue);
       }
     }
@@ -131,7 +133,9 @@ const RatingSelector = ({
       setLocalMaxRating(clampedValue);
       // Cancel any pending debounced update and send the clamped value immediately
       debouncedMaxRatingUpdate.cancel();
-      if (clampedValue && isValidRating(clampedValue)) {
+      // Always update parent state, even if clamped to empty string
+      // This ensures visual state matches filter state
+      if (clampedValue === "" || (clampedValue && isValidRating(clampedValue))) {
         onMaxRatingChange(clampedValue);
       }
     }

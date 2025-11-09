@@ -83,13 +83,13 @@ const MovieCard = ({ movie, currentPage, source, query }: MovieCardProps) => {
     };
 
     // Initial check with small delay
-    const initialTimer: ReturnType<typeof setTimeout> | null = setTimeout(checkTruncation, 50);
+    const initialTimer: ReturnType<typeof setTimeout> = setTimeout(checkTruncation, 50);
 
     // Add resize listener with debouncing
     window.addEventListener("resize", debouncedCheck);
 
     return () => {
-      if (initialTimer) clearTimeout(initialTimer);
+      clearTimeout(initialTimer);
       if (resizeTimer) clearTimeout(resizeTimer);
       window.removeEventListener("resize", debouncedCheck);
     };

@@ -31,6 +31,10 @@ export async function login(
     await ensureCsrfTokenCookie(BASE_URL);
     const csrfToken = getCsrfToken();
 
+    if (!csrfToken) {
+        console.warn("CSRF token not available for login request");
+    }
+
     const payload: TokenObtainInput = {
         login: username, // Backend accepts username or email
         password,
@@ -71,6 +75,10 @@ export async function register(
     await ensureCsrfTokenCookie(BASE_URL);
     const csrfToken = getCsrfToken();
 
+    if (!csrfToken) {
+        console.warn("CSRF token not available for register request");
+    }
+
     const payload: RegisterInput = {
         username,
         email,
@@ -100,7 +108,12 @@ export async function register(
  * @returns Logout confirmation message
  */
 export async function logout(): Promise<LogoutResponse> {
+    await ensureCsrfTokenCookie(BASE_URL);
     const csrfToken = getCsrfToken();
+
+    if (!csrfToken) {
+        console.warn("CSRF token not available for logout request");
+    }
 
     const response = await apiClient.post<LogoutResponse>(
         `/logout/`,
@@ -138,11 +151,16 @@ export async function verifyEmail(token: string): Promise<{ message: string }> {
     await ensureCsrfTokenCookie(BASE_URL);
     const csrfToken = getCsrfToken();
 
+    if (!csrfToken) {
+        console.warn("CSRF token not available for verify-email request");
+    }
+
     const response = await apiClient.post<{ message: string }>(
         `/verify-email/`,
         { key: token },
         {
             headers: {
+                "Content-Type": "application/json",
                 "X-CSRFToken": csrfToken || "",
             },
         }
@@ -163,6 +181,10 @@ export async function resendVerificationEmail(
 ): Promise<{ message: string }> {
     await ensureCsrfTokenCookie(BASE_URL);
     const csrfToken = getCsrfToken();
+
+    if (!csrfToken) {
+        console.warn("CSRF token not available for resend-verification request");
+    }
 
     const response = await apiClient.post<{ message: string }>(
         `/resend-verification/`,

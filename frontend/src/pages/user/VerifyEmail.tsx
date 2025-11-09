@@ -13,6 +13,7 @@ const VerifyEmail = () => {
   const [message, setMessage] = useState("");
   const [countdown, setCountdown] = useState(3);
   const hasVerifiedRef = useRef(false);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     // Prevent duplicate verification calls (React Strict Mode can cause double mounting)
@@ -37,11 +38,14 @@ const VerifyEmail = () => {
         // Auto-redirect to login after 3 seconds on success
         let count = 3;
         setCountdown(count);
-        const timer = setInterval(() => {
+        timerRef.current = setInterval(() => {
           count--;
           setCountdown(count);
           if (count <= 0) {
-            clearInterval(timer);
+            if (timerRef.current) {
+              clearInterval(timerRef.current);
+              timerRef.current = null;
+            }
             navigate(ROUTES.LOGIN, {
               state: { emailVerified: true, message: response.message },
             });
@@ -67,6 +71,14 @@ const VerifyEmail = () => {
     };
 
     verifyEmail();
+
+    // Cleanup timer on unmount to prevent memory leak
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    };
   }, [token, navigate]);
 
   const handleContinue = () => {

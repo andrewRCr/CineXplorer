@@ -18,7 +18,7 @@ const useCRUD = <T>(initialData: T[], endpointURL: string): IuseCRUD<T> => {
     const fetchData = async () => {
         setIsLoading(true);
         try {
-            const response = await axiosInstance.get(endpointURL, {});
+            const response = await axiosInstance.get(endpointURL);
             setDataCRUD(response.data);
             setError(null); // reset error state on successful fetch
             setIsLoading(false);
@@ -35,7 +35,7 @@ const useCRUD = <T>(initialData: T[], endpointURL: string): IuseCRUD<T> => {
         }
     };
 
-    return { fetchData, dataCRUD, error, isLoading };
+    return { dataCRUD, fetchData, error, isLoading };
 };
 
 export default useCRUD;

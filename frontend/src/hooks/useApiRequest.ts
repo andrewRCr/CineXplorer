@@ -1,4 +1,4 @@
-import { useEffect, useState, type SetStateAction } from "react";
+import { useEffect, useState } from "react";
 import { CanceledError } from "../services/apiClient";
 
 interface ApiRequestResult<T> {
@@ -55,9 +55,15 @@ export function useApiRequest<T>(
                 setData(res.data);
                 setIsLoading(false);
             })
-            .catch((err: { message: SetStateAction<string> }) => {
+            .catch((err: unknown) => {
                 if (err instanceof CanceledError) return;
-                setError(err.message);
+
+                // Safely extract error message
+                const message = err instanceof Error
+                    ? err.message
+                    : String(err);
+
+                setError(message);
                 setIsLoading(false); // Also set loading to false on error
             });
 

@@ -18,6 +18,23 @@ interface SidebarContentProps {
   onNavigate?: () => void; // Optional callback for when navigation occurs (useful for closing drawer)
 }
 
+// Shared styling props for all Listbox.Item components
+const listItemProps = {
+  px: 3,
+  py: 2,
+  fontSize: "sm" as const,
+  fontWeight: "normal" as const,
+  color: "foreground" as const,
+  _hover: { bg: "layer-hover-01" as const },
+  _selected: {
+    bg: "layer-selected-01" as const,
+    color: "on-tertiary" as const,
+    fontWeight: "medium" as const,
+  },
+  cursor: "pointer" as const,
+  borderRadius: "md" as const,
+} as const;
+
 export const SidebarContent: React.FC<SidebarContentProps> = ({
   onNavigate,
 }) => {
@@ -145,19 +162,7 @@ export const SidebarContent: React.FC<SidebarContentProps> = ({
                 <Listbox.Item
                   key={item.value}
                   item={{ label: item.label, value: item.value }}
-                  px={3}
-                  py={2}
-                  fontSize="sm"
-                  fontWeight="normal"
-                  color="foreground"
-                  _hover={{ bg: "layer-hover-01" }}
-                  _selected={{
-                    bg: "layer-selected-01",
-                    color: "on-tertiary",
-                    fontWeight: "medium",
-                  }}
-                  cursor="pointer"
-                  borderRadius="md"
+                  {...listItemProps}
                 >
                   <Listbox.ItemText>{item.label}</Listbox.ItemText>
                 </Listbox.Item>
@@ -186,19 +191,7 @@ export const SidebarContent: React.FC<SidebarContentProps> = ({
               <Listbox.Item
                 key={item.value}
                 item={{ label: item.label, value: item.value }}
-                px={3}
-                py={2}
-                fontSize="sm"
-                fontWeight="normal"
-                color="foreground"
-                _hover={{ bg: "layer-hover-01" }}
-                _selected={{
-                  bg: "layer-selected-01",
-                  color: "on-tertiary",
-                  fontWeight: "medium",
-                }}
-                cursor="pointer"
-                borderRadius="md"
+                {...listItemProps}
               >
                 <Listbox.ItemText>{item.label}</Listbox.ItemText>
               </Listbox.Item>

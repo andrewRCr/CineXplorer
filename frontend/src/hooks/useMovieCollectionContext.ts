@@ -2,55 +2,40 @@ import { useMemo } from "react";
 import { useOutletContext } from "react-router-dom";
 import type { PaginatedMoviesResponse } from "@/types/movie";
 
+// Reusable fetcher function type
+type MovieFetcher = (page: number, tmdb_page_start?: number) => {
+    request: Promise<{ data: PaginatedMoviesResponse }>;
+    cancel: () => void;
+};
+
 // Define the context type that matches what MovieCollectionLayout passes
 interface MovieCollectionContext {
-    fetcher: (page: number, tmdb_page_start?: number) => {
-        request: Promise<{ data: PaginatedMoviesResponse }>;
-        cancel: () => void;
-    };
+    fetcher: MovieFetcher;
     source?: string;
     query?: string;
     initialCurrentPage?: number;
     onPageChange: (page: number) => void;
-    enhancedFetcher: (page: number, tmdb_page_start?: number) => {
-        request: Promise<{ data: PaginatedMoviesResponse }>;
-        cancel: () => void;
-    };
+    enhancedFetcher: MovieFetcher;
 }
 
 // Props interface for when used without Outlet context
 interface MovieCollectionGridProps {
-    fetcher?: (page: number, tmdb_page_start?: number) => {
-        request: Promise<{ data: PaginatedMoviesResponse }>;
-        cancel: () => void;
-    };
+    fetcher?: MovieFetcher;
     source?: string;
     query?: string;
     initialCurrentPage?: number;
     onPageChange?: (page: number) => void;
-    enhancedFetcher?: (page: number, tmdb_page_start?: number) => {
-        request: Promise<{ data: PaginatedMoviesResponse }>;
-        cancel: () => void;
-    };
+    enhancedFetcher?: MovieFetcher;
 }
 
 interface ResolvedContext {
-    fetcher: ((page: number, tmdb_page_start?: number) => {
-        request: Promise<{ data: PaginatedMoviesResponse }>;
-        cancel: () => void;
-    }) | undefined;
+    fetcher: MovieFetcher | undefined;
     source: string | undefined;
     query: string | undefined;
     currentPage: number;
     onPageChange: ((page: number) => void) | undefined;
-    enhancedFetcher: ((page: number, tmdb_page_start?: number) => {
-        request: Promise<{ data: PaginatedMoviesResponse }>;
-        cancel: () => void;
-    }) | undefined;
-    finalFetcher: ((page: number, tmdb_page_start?: number) => {
-        request: Promise<{ data: PaginatedMoviesResponse }>;
-        cancel: () => void;
-    }) | undefined;
+    enhancedFetcher: MovieFetcher | undefined;
+    finalFetcher: MovieFetcher | undefined;
 }
 
 /**

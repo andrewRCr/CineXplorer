@@ -25,90 +25,105 @@ import type { MovieFilters as MovieFiltersType } from "@/components/movie/filter
  * // }
  * ```
  */
+
+// Helper: Add genres filter if present
+function addGenres(params: Record<string, string | number | number[]>, filters: MovieFiltersType) {
+    if (filters.genres.length > 0) {
+        params.genres = filters.genres.join(",");
+    }
+}
+
+// Helper: Add query filter if present
+function addQuery(params: Record<string, string | number | number[]>, filters: MovieFiltersType) {
+    if (filters.query) {
+        params.query = filters.query;
+    }
+}
+
+// Helper: Add rating filters
+function addRatings(params: Record<string, string | number | number[]>, filters: MovieFiltersType) {
+    if (filters.minRating) {
+        params.vote_average_gte = filters.minRating;
+    }
+    if (filters.maxRating) {
+        params.vote_average_lte = filters.maxRating;
+    }
+}
+
+// Helper: Add release date range with NaN validation
+function addReleaseDateRange(
+    params: Record<string, string | number | number[]>,
+    filters: MovieFiltersType,
+    filterStyle: "expanded" | "minimal"
+) {
+    if (!filters.minYear) {
+        // Handle edge case: expanded mode with only maxYear
+        if (filterStyle === "expanded" && filters.maxYear) {
+            const maxYear = parseInt(filters.maxYear, 10);
+            if (!isNaN(maxYear)) {
+                params.release_date_lte = `${maxYear}-12-31`;
+            }
+        }
+        return;
+    }
+
+    // Handle decade ranges in minimal mode (e.g., "2020s")
+    if (filterStyle === "minimal" && filters.minYear.includes("s")) {
+        const decade = filters.minYear.replace("s", "");
+        const startYear = parseInt(decade, 10);
+        // NaN check: Skip invalid decades (upstream validation expected, but defensive)
+        if (isNaN(startYear)) return;
+
+        const endYear = startYear + 9;
+        params.release_date_gte = `${startYear}-01-01`;
+        params.release_date_lte = `${endYear}-12-31`;
+        return;
+    }
+
+    // Standard year range handling
+    const startYear = parseInt(filters.minYear, 10);
+    // NaN check: Skip invalid years (upstream validation expected, but defensive)
+    if (isNaN(startYear)) return;
+
+    const effectiveMaxYear = filters.maxYear
+        ? parseInt(filters.maxYear, 10)
+        : new Date().getFullYear();
+
+    // NaN check for maxYear (fallback to current year if invalid)
+    const endYear = isNaN(effectiveMaxYear) ? new Date().getFullYear() : effectiveMaxYear;
+
+    params.release_date_gte = `${startYear}-01-01`;
+    params.release_date_lte = `${endYear}-12-31`;
+}
+
+// Sort mapping configuration
+const SORT_MAP: Record<string, Record<string, string>> = {
+    runtime_90: { with_runtime_lte: "90", sort_by: "popularity.desc" },
+    runtime_120: { with_runtime_lte: "120", sort_by: "popularity.desc" },
+    rating_desc: { sort_by: "vote_average.desc" },
+    rating_asc: { sort_by: "vote_average.asc" },
+};
 export function mapFiltersToApiParams(
     filters: MovieFiltersType,
     filterStyle: "expanded" | "minimal"
 ): Record<string, string | number | number[]> {
     const filterParams: Record<string, string | number | number[]> = {};
 
-    if (filterStyle === "minimal") {
-        // Handle minimal filters
-        if (filters.genres.length > 0) {
-            filterParams.genres = filters.genres.join(",");
-        }
+    // Apply shared filters (work for both minimal and expanded)
+    addGenres(filterParams, filters);
+    addQuery(filterParams, filters);
+    addRatings(filterParams, filters);
+    addReleaseDateRange(filterParams, filters, filterStyle);
 
-        if (filters.minYear) {
-            if (filters.minYear.includes("s")) {
-                // Handle decade ranges like "2020s"
-                const decade = filters.minYear.replace("s", "");
-                const startYear = parseInt(decade);
-                const endYear = startYear + 9;
-                filterParams.release_date_gte = `${startYear}-01-01`;
-                filterParams.release_date_lte = `${endYear}-12-31`;
-            } else {
-                // Handle single year or a custom range from URL params
-                const startYear = parseInt(filters.minYear);
-                // If no maxYear specified, default to current year for "from X onward" behavior
-                const endYear = filters.maxYear
-                    ? parseInt(filters.maxYear)
-                    : new Date().getFullYear();
-
-                filterParams.release_date_gte = `${startYear}-01-01`;
-                filterParams.release_date_lte = `${endYear}-12-31`;
-            }
+    // Handle sort mapping
+    if (filters.sortBy) {
+        // Minimal mode: Use sort map for special cases, otherwise pass through
+        if (filterStyle === "minimal" && filters.sortBy in SORT_MAP) {
+            Object.assign(filterParams, SORT_MAP[filters.sortBy]);
+        } else {
+            // Expanded mode or unrecognized sort: Pass through as-is
+            filterParams.sort_by = filters.sortBy;
         }
-
-        if (filters.minRating) {
-            filterParams.vote_average_gte = filters.minRating;
-        }
-
-        if (filters.query) {
-            filterParams.query = filters.query;
-        }
-
-        if (filters.sortBy) {
-            const sortBy = filters.sortBy as string;
-            if (sortBy === "runtime_90") {
-                filterParams.with_runtime_lte = "90";
-                filterParams.sort_by = "popularity.desc";
-            } else if (sortBy === "runtime_120") {
-                filterParams.with_runtime_lte = "120";
-                filterParams.sort_by = "popularity.desc";
-            } else if (sortBy === "rating_desc") {
-                filterParams.sort_by = "vote_average.desc";
-            } else if (sortBy === "rating_asc") {
-                filterParams.sort_by = "vote_average.asc";
-            } else {
-                filterParams.sort_by = sortBy;
-            }
-        }
-    } else {
-        // Handle expanded filters
-        if (filters.query) filterParams.query = filters.query;
-        if (filters.genres.length > 0)
-            filterParams.genres = filters.genres.join(",");
-
-        if (filters.minYear) {
-            filterParams.release_date_gte = `${filters.minYear}-01-01`;
-
-            // If no maxYear is specified, implicitly use current year ("from X onward" behavior)
-            const effectiveMaxYear =
-                filters.maxYear || new Date().getFullYear().toString();
-            filterParams.release_date_lte = `${effectiveMaxYear}-12-31`;
-        }
-
-        if (filters.maxYear && !filters.minYear) {
-            // Handle case where only maxYear is specified ("up to X" behavior)
-            filterParams.release_date_lte = `${filters.maxYear}-12-31`;
-        }
-
-        if (filters.minRating) {
-            filterParams.vote_average_gte = filters.minRating;
-        }
-        if (filters.maxRating) {
-            filterParams.vote_average_lte = filters.maxRating;
-        }
-        if (filters.sortBy) filterParams.sort_by = filters.sortBy;
     }
 
     return filterParams;

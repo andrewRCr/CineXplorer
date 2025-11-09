@@ -26,9 +26,9 @@ const Upcoming = lazy(() => import("./pages/movie/Upcoming"));
 const Popular = lazy(() => import("./pages/movie/Popular"));
 const TopRated = lazy(() => import("./pages/movie/TopRated"));
 const SearchResults = lazy(() => import("./pages/movie/SearchResults"));
-const TypographyTest = lazy(() => import("./pages/TypographyTest"));
-const ThemeDebug = lazy(() => import("./pages/ThemeDebug"));
-const LayoutDebug = lazy(() => import("./pages/LayoutDebug"));
+const TypographyDebug = lazy(() => import("./pages/dev/TypographyDebug"));
+const ThemeDebug = lazy(() => import("./pages/dev/theme-debug/ThemeDebug"));
+const LayoutDebug = lazy(() => import("./pages/dev/LayoutDebug"));
 
 const App: React.FC = () => {
   return (
@@ -99,9 +99,9 @@ const App: React.FC = () => {
                 <Route index element={<SearchResults />} />
               </Route>
               <Route path={ROUTES.MOVIE_DETAIL} element={<MovieDetail />} />
-              <Route path={ROUTES.TYPOGRAPHY_TEST} element={<TypographyTest />} />
-              <Route path="/theme-debug" element={<ThemeDebug />} />
-              <Route path="/layout-debug" element={<LayoutDebug />} />
+              <Route path={ROUTES.TYPOGRAPHY_TEST} element={<TypographyDebug />} />
+              <Route path="/dev/theme-debug" element={<ThemeDebug />} />
+              <Route path="/dev/layout-debug" element={<LayoutDebug />} />
               {/* ...other content routes... */}
             </Route>
 

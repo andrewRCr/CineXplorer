@@ -29,12 +29,15 @@ const Footer = () => {
         {import.meta.env.DEV && (
           <HStack gap={3} fontSize="xs" color="on-muted">
             <Text fontWeight="medium">Debug:</Text>
-            <Link to="/theme-debug" style={{ textDecoration: "underline" }}>
-              Theme
-            </Link>
-            <Link to="/layout-debug" style={{ textDecoration: "underline" }}>
-              Layout
-            </Link>
+            <Box asChild textDecoration="underline">
+              <Link to="/dev/theme-debug">Theme</Link>
+            </Box>
+            <Box asChild textDecoration="underline">
+              <Link to="/dev/layout-debug">Layout</Link>
+            </Box>
+            <Box asChild textDecoration="underline">
+              <Link to="/dev/typography-debug">Typography</Link>
+            </Box>
           </HStack>
         )}
 

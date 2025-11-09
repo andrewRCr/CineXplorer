@@ -1,6 +1,4 @@
-import { Box, Text, VStack, HStack, Grid } from "@chakra-ui/react";
-import { useToken } from "@chakra-ui/react";
-import { useBreakpointValue } from "@chakra-ui/react";
+import { Box, Text, VStack, HStack, Grid, useToken, useBreakpointValue } from "@chakra-ui/react";
 import { useState, useEffect } from "react";
 
 /**

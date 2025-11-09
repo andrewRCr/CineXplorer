@@ -1,6 +1,11 @@
 import { Box, Heading, Text, VStack } from "@chakra-ui/react";
 
-const TypographyTest = () => {
+/**
+ * Typography Debug Page
+ *
+ * Displays all text styles in the design system for visual verification.
+ */
+const TypographyDebug = () => {
   return (
     <Box p={8}>
       <VStack gap={8} align="stretch">
@@ -320,4 +325,4 @@ const TypographyTest = () => {
   );
 };
 
-export default TypographyTest;
+export default TypographyDebug;

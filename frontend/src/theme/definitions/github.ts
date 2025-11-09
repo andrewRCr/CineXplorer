@@ -115,6 +115,6 @@ export const githubTheme: Theme = {
         ring: pDark.fg_accent,
     },
     // Phase 3 integration: Unified adapter instances
-    lightUnified: createUnifiedTheme("github", "light"),
-    darkUnified: createUnifiedTheme("github", "dark"),
+    lightUnified: createUnifiedTheme("github-primer", "light"),
+    darkUnified: createUnifiedTheme("github-primer", "dark"),
 } as const;

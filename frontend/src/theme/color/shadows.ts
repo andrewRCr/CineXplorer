@@ -118,20 +118,36 @@ export const pajamasShadows = {
 /**
  * Get shadow values for a specific design system.
  *
- * @param designSystem - Design system identifier
+ * @param designSystem - Design system identifier (uses ThemeName from index.ts)
  * @param mode - Color mode (light or dark)
  * @returns Shadow values for the specified system and mode
+ * @throws Error if designSystem is not recognized (exhaustiveness check)
+ *
+ * **Note:** Material Design 3 shadows not yet implemented - falls back to GitHub Primer.
  */
 export function getShadowValues(
-    designSystem: "github" | "ibm-carbon" | "gitlab-pajamas",
+    designSystem:
+        | "github-primer"
+        | "ibm-carbon"
+        | "gitlab-pajamas"
+        | "material-design-3",
     mode: "light" | "dark"
 ): ShadowValues {
     switch (designSystem) {
-        case "github":
+        case "github-primer":
             return primerShadows[mode];
         case "ibm-carbon":
             return carbonShadows[mode];
         case "gitlab-pajamas":
             return pajamasShadows[mode];
+        case "material-design-3":
+            // TODO: Implement Material Design 3 elevation system
+            // Fallback to GitHub Primer shadows for now
+            return primerShadows[mode];
+        default: {
+            // Exhaustiveness check: TypeScript will error if a case is missing
+            const _exhaustiveCheck: never = designSystem;
+            throw new Error(`Unhandled design system: ${_exhaustiveCheck}`);
+        }
     }
 }

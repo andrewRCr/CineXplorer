@@ -239,31 +239,23 @@ const Register = () => {
               </Button>
               <Text mt="16px" textAlign="center" w="100%" fontSize="16px">
                 Already have an account?{" "}
-                <Link
-                  to={ROUTES.LOGIN}
-                  style={{
-                    color: "var(--chakra-colors-tertiary)",
-                    textDecoration: "underline",
-                    textDecorationThickness: "2px",
-                    textUnderlineOffset: "2px",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.color = "var(--chakra-colors-tertiary-hover)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.color = "var(--chakra-colors-tertiary)";
-                  }}
-                  onFocus={(e) => {
-                    e.currentTarget.style.outline = "2px solid";
-                    e.currentTarget.style.outlineColor = "var(--chakra-colors-ring)";
-                    e.currentTarget.style.outlineOffset = "2px";
-                  }}
-                  onBlur={(e) => {
-                    e.currentTarget.style.outline = "none";
+                <Box
+                  asChild
+                  color="tertiary"
+                  textDecoration="underline"
+                  textDecorationThickness="2px"
+                  textUnderlineOffset="2px"
+                  _hover={{ color: "tertiary-hover" }}
+                  _focus={{
+                    outline: "2px solid",
+                    outlineColor: "ring",
+                    outlineOffset: "2px",
                   }}
                 >
-                  Sign In
-                </Link>
+                  <Link to={ROUTES.LOGIN}>
+                    Sign In
+                  </Link>
+                </Box>
               </Text>
             </VStack>
           </form>

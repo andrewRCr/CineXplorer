@@ -1,8 +1,11 @@
 /**
  * CineXplorer Original Color Palette (Dark Mode Only)
  *
- * REFERENCE ONLY - This palette will NOT be used in the application.
- * Preserved for reference during future custom theme development.
+ * @deprecated REFERENCE ONLY - DO NOT IMPORT OR USE IN APPLICATION CODE.
+ *
+ * This palette is preserved for historical reference during future custom theme development.
+ * The application now uses design system palettes (GitHub Primer, IBM Carbon, GitLab Pajamas,
+ * Material Design 3) mapped to semantic tokens.
  *
  * This palette documents the colors that were actually in use in the original
  * theme system before migration to semantic tokens. Unused colors (gradients,
@@ -15,6 +18,8 @@
 /**
  * Original CineXplorer color palette - dark mode only.
  * Colors organized by usage category for easy reference.
+ *
+ * @deprecated DO NOT USE - Reference only. Import from design system palettes instead.
  */
 export const cinexplorerOriginalPalette = {
     // ===================================================================
@@ -110,6 +115,8 @@ export const cinexplorerOriginalPalette = {
 /**
  * Type-safe palette color names.
  * Use for referencing palette colors with TypeScript autocomplete.
+ *
+ * @deprecated DO NOT USE - Reference only. Use design system token types instead.
  */
 export type CinexplorerOriginalColor = keyof typeof cinexplorerOriginalPalette;
 

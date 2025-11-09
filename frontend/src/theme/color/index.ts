@@ -20,24 +20,13 @@
  * // Use in Chakra system creation
  * const system = createThemeSystem(unifiedTheme);
  * ```
- *
- * **Implementation Phases:**
- * - Phase 1 (Task 1.2): Architecture and types ✅
- * - Phase 2: Per-theme adapter implementations
- *   - 2.1: GitHub Primer adapter
- *   - 2.2: IBM Carbon adapter
- *   - 2.3: GitLab Pajamas adapter
- * - Phase 3: Component migration to canonical names
- * - Phase 4: Remove old ThemeColors, comprehensive testing
- *
- * Related: ADR-005 (Unified Theme Adapter Layer)
  */
 
 // Type exports
 export type { UnifiedTheme } from "./types";
 import type { UnifiedTheme } from "./types";
 
-// Adapter function exports (Phase 2)
+// Adapter function exports
 export { createGithubAdapter } from "./adapters/github-primer";
 export { createCarbonAdapter } from "./adapters/ibm-carbon";
 export { createPajamasAdapter } from "./adapters/gitlab-pajamas";
@@ -65,14 +54,18 @@ export { getShadowValues } from "./shadows";
 export { createExtensions, createCustomRatingColors } from "./extensions";
 
 /**
+ * Supported design system theme names.
+ */
+export type ThemeName =
+    | "github-primer"
+    | "ibm-carbon"
+    | "gitlab-pajamas"
+    | "material-design-3";
+
+/**
  * Factory function to create a UnifiedTheme from design system identifier.
  *
- * **IMPLEMENTATION STATUS:** Skeleton only - Phase 2 will implement adapters.
- *
- * This function routes to the appropriate adapter based on theme name and mode.
- * Once Phase 2 is complete, it will return fully-mapped UnifiedTheme instances.
- *
- * @param themeName - Design system identifier (github, ibm-carbon, gitlab-pajamas)
+ * @param themeName - Design system identifier (github-primer, ibm-carbon, gitlab-pajamas, material-design-3)
  * @param mode - Color mode (light or dark)
  * @returns UnifiedTheme with ~47 tokens adapted to design system
  *
@@ -81,18 +74,18 @@ export { createExtensions, createCustomRatingColors } from "./extensions";
  * @example
  * ```typescript
  * // Create GitHub Primer light mode theme
- * const githubLight = createUnifiedTheme("github", "light");
+ * const githubLight = createUnifiedTheme("github-primer", "light");
  *
  * // Create IBM Carbon dark mode theme
  * const carbonDark = createUnifiedTheme("ibm-carbon", "dark");
  * ```
  */
 export function createUnifiedTheme(
-    themeName: "github" | "ibm-carbon" | "gitlab-pajamas" | "material-design-3",
-    mode: "light" | "dark",
+    themeName: ThemeName,
+    mode: "light" | "dark"
 ): UnifiedTheme {
     switch (themeName) {
-        case "github":
+        case "github-primer":
             return createGithubAdapter(mode);
         case "ibm-carbon":
             return createCarbonAdapter(mode);

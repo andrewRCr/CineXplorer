@@ -241,7 +241,7 @@ export interface ThemeColors {
  * UnifiedTheme tokens. After migration complete, ThemeColors will be removed.
  */
 export interface Theme {
-    /** Unique theme identifier (kebab-case, e.g., "github", "cinexplorer-custom") */
+    /** Unique theme identifier (kebab-case, e.g., "github-primer", "cinexplorer-custom") */
     readonly name: string;
 
     /** Human-readable theme name for display (e.g., "GitHub", "CineXplorer Custom") */

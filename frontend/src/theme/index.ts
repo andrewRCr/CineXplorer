@@ -9,6 +9,13 @@
  * - Semantic tokens: References to base tokens (e.g., {colors.light.background})
  * - Light/dark mode: Handled by `base` and `_dark` properties
  * - Theme switching: Provider recreates system when theme changes
+ *
+ * **TRANSITIONAL STATE (Phase 3-7 parallel systems migration):**
+ * - Theme registry, exports, and createThemeSystem() are active core infrastructure
+ * - createBaseTokens()/createSemanticTokens() use legacy theme.light/theme.dark structure
+ * - Supports both old ThemeColors tokens (~39) and new UnifiedTheme tokens (~47)
+ * - Phase 8.2 cleanup will remove legacy dual-palette code and ThemeColors interface
+ * - See tasks-theme-system-modernization.md Phase 8.2 for scheduled refactoring
  */
 
 import { createSystem, defaultConfig, defineConfig } from "@chakra-ui/react";

@@ -168,8 +168,16 @@ export function createMaterialAdapter(mode: "light" | "dark"): UnifiedTheme {
         ? adjustColor(palette.tertiary, -15) // More pronounced darkening
         : adjustColor(palette.tertiary, 5); // Subtle lightening
 
-    // Shadows: Material baseline doesn't define shadows (relies on surface elevation)
-    // Derive minimal conservative shadows for cross-theme consistency
+    // SHADOWS: Material baseline doesn't define shadows (relies on surface tonal elevation)
+    // Rationale for derived shadows:
+    //   - MD3's primary elevation: Tonal surface progression (lighter = higher)
+    //     Already implemented via our 4-tier layer system (background → layer-01/02/03)
+    //   - Our shadows: Optional enhancement for cross-theme consistency (ADR-006)
+    //   - NOT required for elevation visibility (layers handle that per ADR-006)
+    //   - Philosophical alignment: Both MD3 and our system prioritize surface color over shadows
+    //   - Conservative opacity ensures shadows supplement rather than conflict with tonal elevation
+    // Note: CineXplorer's unified theme system prioritizes consistent vocabulary across themes
+    //       over perfect fidelity to any single design system (ADR-006)
     const shadowSm = mode === "light"
         ? "0 1px 2px 0 rgba(0, 0, 0, 0.05)"
         : "0 1px 2px 0 rgba(0, 0, 0, 0.3)";

@@ -38,7 +38,9 @@ import {
 /**
  * GitHub Primer palette type (light or dark mode).
  */
-export type GitHubPalette = typeof githubPaletteLight | typeof githubPaletteDark;
+export type GitHubPalette =
+    | typeof githubPaletteLight
+    | typeof githubPaletteDark;
 
 /**
  * Create GitHub Primer adapter mapping to unified theme vocabulary.
@@ -71,10 +73,15 @@ export function createGithubAdapter(mode: "light" | "dark"): UnifiedTheme {
 
     // DERIVED: Alternating pattern (ADR-008) - Carbon-inspired for consistency
     // Dark mode: Progressive lightening (7% adjustment from layer-01)
+    //   - Rationale: Adopts Carbon's dark mode layer progression formula (ADR-006)
+    //   - Carbon Dark uses ~6-7% brightness increase per layer (#161616 → #262626 → #393939)
+    //   - 7% value standardized across all non-Carbon themes for consistency
     // Light mode: Alternating (bg_default ↔ bg_muted pattern)
-    const layer02 = mode === "light"
-        ? palette.bg_default // Alternates back to background (white)
-        : adjustColor(palette.bg_muted, 7); // Progressive for dark mode
+    //   - Rationale: ADR-008 adopts Carbon's alternating pattern for light mode
+    const layer02 =
+        mode === "light"
+            ? palette.bg_default // Alternates back to background (white)
+            : adjustColor(palette.bg_muted, 7); // Progressive for dark mode
 
     // Popover (typically layer-02 context)
     const popover = palette.bg_default;
@@ -104,9 +111,10 @@ export function createGithubAdapter(mode: "light" | "dark"): UnifiedTheme {
     // Token type: BACKGROUND + BORDER
     // Uses derived medium gray for distinction from muted
     const secondary = palette.bg_button_secondary;
-    const onSecondary = mode === "light"
-        ? palette.fg_onEmphasis  // Light mode: white text on medium gray (#8c929d)
-        : palette.fg_default;     // Dark mode: light text on dark gray
+    const onSecondary =
+        mode === "light"
+            ? palette.fg_onEmphasis // Light mode: white text on medium gray (#8c929d)
+            : palette.fg_default; // Dark mode: light text on dark gray
     const secondaryForeground = onSecondary; // @deprecated: Use on-secondary instead (ADR-011)
 
     // MUTED: Deemphasized, non-interactive
@@ -151,9 +159,10 @@ export function createGithubAdapter(mode: "light" | "dark"): UnifiedTheme {
     // DERIVED: layer-03 alternates again (ADR-008)
     // Dark mode: Progressive lightening continues from layer-02
     // Light mode: Alternates back to gray (same as layer-01)
-    const layer03 = mode === "light"
-        ? palette.bg_muted // Alternates back to gray (matches layer-01)
-        : adjustColor(layer02, 7); // Progressive for dark mode
+    const layer03 =
+        mode === "light"
+            ? palette.bg_muted // Alternates back to gray (matches layer-01)
+            : adjustColor(layer02, 7); // Progressive for dark mode
 
     // Border hierarchy: Primer provides two border colors (default + emphasis)
     // Derivation: Generate per-layer borders following Carbon's architectural pattern
@@ -162,7 +171,7 @@ export function createGithubAdapter(mode: "light" | "dark"): UnifiedTheme {
     const borderHierarchy = deriveBorderHierarchy(
         palette.border_default, // Subtle base
         palette.border_emphasis, // Strong base (FIXED: was deriving from default)
-        mode === "light" ? "alternating" : "progressive", // Pattern selection per ADR-008
+        mode === "light" ? "alternating" : "progressive" // Pattern selection per ADR-008
     );
     const borderSubtle02 = borderHierarchy.subtle02; // Same as subtle00 (light) or +12.6% (dark)
     const borderStrong02 = borderHierarchy.strong02; // Same as strong01 (light) or +20.8% (dark)
@@ -189,7 +198,8 @@ export function createGithubAdapter(mode: "light" | "dark"): UnifiedTheme {
 
     // WARNING: Derive from palette (Primer lacks official warning token)
     const warning = mode === "light" ? "#bf8700" : "#d29922";
-    const onWarning = mode === "light" ? palette.fg_default : palette.fg_onEmphasis; // ADR-011: Canonical on-* naming
+    const onWarning =
+        mode === "light" ? palette.fg_default : palette.fg_onEmphasis; // ADR-011: Canonical on-* naming
     const warningForeground = onWarning; // @deprecated: Use on-warning instead (ADR-011)
 
     // INFO: Use accent blue (Primer intentionally uses accent for info per docs)
@@ -209,7 +219,7 @@ export function createGithubAdapter(mode: "light" | "dark"): UnifiedTheme {
             accentEmphasis: palette.bg_emphasis,
             secondaryHover: palette.bg_button_secondary_hover,
         },
-        mode,
+        mode
     );
 
     // ===================================================================

@@ -14,6 +14,7 @@ const Sidebar: React.FC = () => {
       borderColor="border"
       boxShadow="sm"
       position="sticky"
+      // Sticky offset: navbar height + container padding (3rem) - visual alignment adjustment (28px)
       top="calc(var(--chakra-sizes-layout-navbar) + 3rem - 28px)"
       alignSelf="flex-start"
       maxH="calc(100vh - var(--chakra-sizes-layout-navbar))"

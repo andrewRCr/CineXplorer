@@ -16,7 +16,7 @@
  * IBM Carbon color palette - Light Mode (White Theme)
  *
  * Organized by semantic function following Carbon's token structure.
- * Values are official hex colors from IBM Carbon Design System v10.
+ * Values are official hex colors from IBM Carbon Design System v11.0.0.
  */
 export const ibmCarbonPaletteLight = {
     // Base colors - Layer System

@@ -4,8 +4,7 @@
 
 ## Overview
 
-This workflow documents the **two-pass defense-in-depth strategy** for AI agent code reviews before merging work
-to main:
+This workflow documents the **two-pass defense-in-depth strategy** for AI agent code reviews before merging work:
 
 1. **Local Mode (Pass 1)**: Run agent review locally before creating PR → catch 80-90% of issues
 2. **PR Mode (Pass 2)**: Address agent comments on actual PR → catch remaining 10-20% of issues
@@ -13,9 +12,23 @@ to main:
 This two-pass approach ensures **clean initial PRs** with focused, high-value PR reviews, similar to running
 linters locally before CI.
 
+**Applies to all merges** (as of ADR-013, 2025-11-10):
+
+- Merging to main (planned work complete)
+- Merging to parent branch (stacked branch workflow - incidental work merging to feature/technical parent)
+- Any PR where code review is warranted
+
+See [ADR-013](../../adr/adr-013-adopt-stacked-branch-workflow.md) for stacked branch workflow context.
+
 ## When to Use This Workflow
 
-**Timing**: After feature work is complete and archived, before integration to main
+**Timing**: After work is complete, before creating PR (regardless of PR base branch)
+
+**Applies to**:
+
+- Planned work (feature/technical) merging to main
+- Incidental work merging to parent branch (stacked workflow)
+- Any logical work unit ready for review and merge
 
 **Choose your mode**:
 
@@ -114,12 +127,19 @@ critical bugs vs improvements)
 #### 5. Create Pull Request
 
 ```bash
-# Now create PR with cleaner code
-gh pr create --title "[Title]" --body "[Description]"
+# Create PR with cleaner code
+# For stacked branches, specify parent as base:
+gh pr create --base parent-branch --head child-branch --title "[Title]" --body "[Description]"
+
+# For main branch:
+gh pr create --base main --title "[Title]" --body "[Description]"
 
 # Agent will run PR review (Pass 2)
 # Expect fewer findings than if you'd skipped local review
 ```
+
+**Note on stacked branches**: If your work is on a child branch (e.g., `incidental/filter-testing` branched from
+`technical/service-layer`), create PR against the parent branch, not main. The parent branch becomes the PR base.
 
 **Local Mode Complete** - Proceed to PR Mode when agent comments appear on PR
 
@@ -132,6 +152,9 @@ gh pr create --title "[Title]" --body "[Description]"
 **When**: After PR created, agent has posted review comments
 
 **Context**: This is Pass 2 - most issues were caught in local review, this catches the remaining 10-20%
+
+**Applies to all PR base branches**: Whether merging to main or to a parent branch in stacked workflow, the PR Mode
+process is identical. Agent reviews the diff regardless of base branch.
 
 ### Core Principles
 
@@ -593,6 +616,15 @@ Fixed in commit [hash].
 
 ---
 
-**Workflow Version**: v3.0 (two-pass strategy with local + PR modes)
+---
 
-**Last Updated**: 2025-10-21
+**Workflow Version**: v3.1 (two-pass strategy with stacked branch support)
+
+**Last Updated**: 2025-11-10
+
+**Changelog**:
+
+- v3.1 (2025-11-10): Added stacked branch guidance (ADR-013) - review process applies to all merges (main or
+  parent branch), updated PR creation examples to show base branch specification
+- v3.0 (2025-10-21): Introduced two-pass strategy with local + PR modes
+- Previous versions: Initial workflow documentation

@@ -18,7 +18,7 @@ infrastructure improvements. Work PRDs build upon the broader product vision est
 - **Feature PRDs** - User-facing capabilities (e.g., movie ratings, user profiles, search functionality)
 - **Technical PRDs** - Infrastructure work (e.g., API modernization, type safety improvements, testing infrastructure)
 
-See [Work Categorization Strategy](../strategies/arc/strategy-work-categorization.md) for the complete decision tree.
+See [Work Organization Strategy](../strategies/arc/strategy-work-organization.md) for the complete decision tree.
 
 **Note**: This workflow is for creating **work-level PRDs**, not the project-wide META-PRD. For establishing
 or updating constitutional documents (META-PRD, PROJECT-STATUS, TECHNICAL-OVERVIEW, DEVELOPMENT-RULES),
@@ -85,7 +85,7 @@ Before detailed discovery, determine whether this is **feature** or **technical*
 1. **Does it add user-visible capability from the product vision?** → Feature work
 2. **Is it infrastructure/architecture improvement?** → Technical work
 
-See [Work Categorization Strategy](../strategies/arc/strategy-work-categorization.md) for complete decision tree and examples.
+See [Work Organization Strategy](../strategies/arc/strategy-work-organization.md) for complete decision tree and examples.
 
 ### Step 3: Conduct Discovery Session
 
@@ -119,7 +119,7 @@ the structure outlined below.
 - **Feature work** (user-facing): `.arc/backlog/feature/prd-{{FEATURE_NAME}}.md`
 - **Technical work** (infrastructure): `.arc/backlog/technical/prd-{{FEATURE_NAME}}.md`
 
-See [Work Categorization Strategy](../strategies/arc/strategy-work-categorization.md) for guidance on feature vs. technical.
+See [Work Organization Strategy](../strategies/arc/strategy-work-organization.md) for guidance on feature vs. technical.
 
 ## Clarifying Questions (Examples)
 

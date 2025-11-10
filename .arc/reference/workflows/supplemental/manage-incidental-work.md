@@ -135,6 +135,56 @@ Related to: .arc/active/technical/tasks-service-layer-modernization.md
 
 ---
 
+## Git Branch Creation for Incidental Work
+
+**As of 2025-11-10 (ADR-013)**, incidental work that meets task list criteria gets its own git branch
+using a stacked branch workflow. See [ADR-013](../../adr/adr-013-adopt-stacked-branch-workflow.md) and
+[Work Organization Strategy](../../strategies/arc/strategy-work-organization.md) for complete rationale.
+
+### When to Create a Branch
+
+**Create separate branch when incidental work:**
+
+- ✅ Requires dedicated task list (>30min effort, multiple subtasks)
+- ✅ Is semantically distinct from current branch's work
+- ✅ Benefits from independent merge/review capability
+
+**Stay on current branch when:**
+
+- ❌ Trivial fixes (<30min, single action)
+- ❌ Work directly continues current branch's theme
+- ❌ No separate task list justified
+
+### Branch Naming and Lifecycle
+
+**Branch naming**: `incidental/<name>` (matches task list name without `tasks-` prefix)
+
+Example:
+
+- Task list: `.arc/active/incidental/tasks-pagination-buffer-tracking.md`
+- Branch: `incidental/pagination-buffer-tracking`
+
+**Branch lifecycle**:
+
+1. Discover work needing task list (>30min, multiple subtasks)
+2. Create branch off current: `git checkout -b incidental/<name>`
+3. Create task list: `.arc/active/incidental/tasks-<name>.md`
+4. Work on branch, commit with task references
+5. Complete work (all tasks done, quality gates pass)
+6. Run code review (local or two-pass)
+7. Create PR against parent branch: `gh pr create --base parent-branch`
+8. Merge PR (child → parent)
+9. Delete merged branch: `git branch -d incidental/<name>`
+10. Archive task list immediately: `mv` to `.arc/reference/archive/incidental/`
+11. Return to parent branch and continue work
+
+**Key rule**: Task list in `.arc/active/` ↔ Git branch exists
+
+See [Work Organization Strategy](../../strategies/arc/strategy-work-organization.md) for complete stacked
+branch workflow details, merge strategy (depth-first), and handling branch updates.
+
+---
+
 ## Executing Incidental Work
 
 **Follow standard workflows** - incidental work has no special execution procedures:
@@ -150,12 +200,28 @@ Related to: .arc/active/technical/tasks-service-layer-modernization.md
 
 3. **Quality gates**: Same zero-tolerance standards as feature/technical work
 
-**Only unique aspect**: Commit messages should reference both the incidental task list AND the paused
-feature/technical work for traceability.
+4. **Branch context**: If incidental work has its own branch, commits stay on that branch until merge
 
 ---
 
 ## Completing Incidental Work
+
+### Branch Cleanup and Archiving
+
+**If incidental work has its own branch:**
+
+1. Complete all tasks (quality gates pass)
+2. Run code review (local or two-pass as appropriate)
+3. Create PR against parent branch
+4. Merge PR (child → parent)
+5. Delete merged branch: `git branch -d incidental/<name>`
+6. Archive task list **immediately** after branch deletion
+7. Return to parent branch and continue work
+
+**If incidental work was on parent branch** (no separate branch):
+
+1. Complete all tasks (quality gates pass)
+2. Archive when all work complete (standard timing)
 
 ### Add Completion Notes
 
@@ -184,6 +250,7 @@ feature/technical work for traceability.
 Follow [archive-completed.md](archive-completed.md) for archival procedure:
 
 - Archive to `.arc/reference/archive/incidental/`
+- **Archive timing**: Immediately when branch deleted (after merge) if work had separate branch
 - Update PROJECT-STATUS.md if applicable
 - Update CURRENT-SESSION.md to resume paused work
 - Commit with summary of completed incidental work
@@ -215,4 +282,13 @@ Example hierarchy:
 
 ---
 
-**Version**: 2.0 (2025-10-24) - Streamlined to focus on unique aspects of incidental work
+---
+
+**Version**: 3.0 (2025-11-10) - Added stacked branch workflow for incidental work (ADR-013)
+
+**Changelog**:
+
+- v3.0 (2025-11-10): Added git branch creation guidance, stacked branch workflow, updated completion/archival
+  to reflect branch lifecycle (ADR-013)
+- v2.0 (2025-10-24): Streamlined to focus on unique aspects of incidental work
+- v1.0 (previous): Initial version

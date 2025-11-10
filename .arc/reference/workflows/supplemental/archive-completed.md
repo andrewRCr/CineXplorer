@@ -3,9 +3,20 @@
 Move completed planned and incidental documentation to structured archive to keep the active workspace clean
 while preserving history and context.
 
+**Archive Timing (As of ADR-013, 2025-11-10):**
+
+Task lists are archived **immediately when their corresponding git branch is deleted** (which occurs after merge
+completion). This creates conceptual coherence:
+
+- Branch exists ↔ Task list in `.arc/active/`
+- Branch deleted → Task list archived to `.arc/reference/archive/`
+
+See [ADR-013](../../adr/adr-013-adopt-stacked-branch-workflow.md) and
+[Work Organization Strategy](../../strategies/arc/strategy-work-organization.md) for complete rationale.
+
 ## Before You Start: Verify Work Category
 
-**This work is** (check the [Work Categorization Strategy](../../strategies/arc/strategy-work-categorization.md) if unsure):
+**This work is** (check the [Work Organization Strategy](../../strategies/arc/strategy-work-organization.md) if unsure):
 
 - [ ] **Feature** (planned user-facing capability) → Use Planned Work Archiving, `feature/` directories
 - [ ] **Technical** (planned infrastructure work) → Use Planned Work Archiving, `technical/` directories
@@ -16,7 +27,7 @@ while preserving history and context.
 1. Was this planned (has PRD)? → Yes: Continue to step 2 | No: Incidental
 2. Does it add user-visible capability from product vision? → Yes: Feature | No: Technical
 
-See [Work Categorization Strategy](../../strategies/arc/strategy-work-categorization.md) for complete decision tree.
+See [Work Organization Strategy](../../strategies/arc/strategy-work-organization.md) for complete decision tree.
 
 ---
 
@@ -32,13 +43,16 @@ For planned work with PRDs, formal task lists, and git branches. Applies to both
 - Feature work → `archive/feature/{work-name}/` (all docs together)
 - Technical work → `archive/technical/{work-name}/` (all docs together)
 
-### 1) Verify Completion
+**Archive timing**: Immediately after branch is deleted (which occurs after PR merge and deletion of merged branch).
+
+### 1) Verify Completion and Merge
 
 - Confirm task list status (all subtasks and parent tasks marked [x])
 - Confirm PROJECT-STATUS reflects completion (if applicable)
-- Confirm all related code is merged to main
+- Confirm all related code is merged to parent/main
 - Confirm all quality gates are passing (tests, linting, type checking)
 - Confirm implementation functions as expected in development environment
+- Confirm PR merged and branch deleted: `git branch -d {branch-name}`
 
 ### 2) Clean Up Documentation (MANDATORY)
 
@@ -150,7 +164,7 @@ completion metadata:
 categorization standards, this would be categorized as `technical/` work (infrastructure improvements,
 not user-facing features). Branch name preserved for historical accuracy. All future infrastructure
 work uses `technical/` category per
-[Work Categorization Strategy](../../strategies/arc/strategy-work-categorization.md).
+[Work Organization Strategy](../../strategies/arc/strategy-work-organization.md).
 ```
 
 ### 5) Update PROJECT-STATUS
@@ -162,6 +176,8 @@ work uses `technical/` category per
 
 ### 6) Commit Archive Changes
 
+**Timing**: Commit archive changes immediately after branch deletion (maintains branch ↔ task list coupling).
+
 **For feature work:**
 
 ```bash
@@ -172,7 +188,7 @@ git commit -m "docs(archive): archive feature/{name} documentation
 - Move all work docs to archive/feature/{name}/ (PRD, tasks, notes, completion)
 - Add completion metadata with metrics and summary
 - Update PROJECT-STATUS references
-- Maintain clean active workspace"
+- Branch deleted after merge, task list archived immediately (ADR-013)"
 ```
 
 **For technical work:**
@@ -185,21 +201,24 @@ git commit -m "docs(archive): archive technical/{name} documentation
 - Move all work docs to archive/technical/{name}/ (PRD, tasks, notes, completion)
 - Add completion metadata with metrics and summary
 - Update PROJECT-STATUS references
-- Maintain clean active workspace"
+- Branch deleted after merge, task list archived immediately (ADR-013)"
 ```
 
 ---
 
 ## Incidental Work Archiving
 
-For unplanned reactive work (no PRD, no separate git branch, discovered during development).
+For unplanned reactive work discovered during development.
 
 **Characteristics:**
 
 - No PRD document
 - Task list only (with optional notes file)
 - Completion summary appended to task list itself (NOT separate completion metadata)
-- Committed to feature/technical branch with conventional commit prefixes
+- May have separate branch (if >30min, multiple subtasks) or committed to parent branch
+
+**Archive timing**: Immediately after branch deletion if incidental work had its own branch. If no separate
+branch (work committed directly to parent), archive when all work complete (standard timing).
 
 ### 1) Verify Incidental Completion
 
@@ -207,6 +226,7 @@ For unplanned reactive work (no PRD, no separate git branch, discovered during d
 - Confirm all related code is merged and quality gates passing
 - Confirm completion summary appended to task list (see maintain-task-notes.md)
 - Confirm `maintain-task-notes.md` workflow was executed (Mode 2: Archival Preparation)
+- **If separate branch**: Confirm PR merged and branch deleted: `git branch -d incidental/{name}`
 
 ### 2) Move Files to Archive
 
@@ -231,14 +251,16 @@ mv .arc/active/incidental/tasks-incidental-{name}.md .arc/reference/archive/inci
 
 ### 3) Commit Archive Changes
 
+**Timing**: Commit archive changes immediately after branch deletion (if work had separate branch).
+
 ```bash
 git add .arc/reference/archive/ .arc/active/incidental/
 
-git commit -m "docs(archive): archive incidental/{type}-{name} documentation
+git commit -m "docs(archive): archive incidental/{name} documentation
 
 - Move tasks and notes to structured archive (incidental/)
 - {Brief 1-line summary of what was accomplished}
-- Maintain clean active workspace"
+- Branch deleted after merge, task list archived immediately (ADR-013)"
 ```
 
 **Note**: Incidental work does not require:
@@ -322,7 +344,7 @@ git commit -m "docs(archive): archive incidental/{type}-{name} documentation
     - Archive to: `incidental/` subdirectories
 
 **When uncertain**, consult
-[Work Categorization Strategy](../../strategies/arc/strategy-work-categorization.md) for complete decision tree.
+[Work Organization Strategy](../../strategies/arc/strategy-work-organization.md) for complete decision tree.
 
 ---
 
@@ -358,7 +380,7 @@ git commit -m "docs(archive): archive incidental/{type}-{name} documentation
    → **Fix**: This is a MANDATORY step - do not skip
 
 ❌ **Wrong category**: Feature work archived to technical/, or vice versa
-   → **Fix**: Check [Work Categorization Strategy](../../strategies/arc/strategy-work-categorization.md) decision rules
+   → **Fix**: Check [Work Organization Strategy](../../strategies/arc/strategy-work-organization.md) decision rules
 
 ❌ **Creating completion metadata for incidental work**: Unnecessary overhead
    → **Fix**: Incidental work uses completion summary in task list, not separate metadata file
@@ -384,9 +406,12 @@ git commit -m "docs(archive): archive incidental/{type}-{name} documentation
 
 ---
 
-**Version**: 2.1 | **Updated**: 2025-10-21
+**Version**: 3.0 | **Updated**: 2025-11-10
+
 **Changelog**:
 
+- v3.0 (2025-11-10): Updated archive timing to reflect branch lifecycle (ADR-013) - archive immediately when
+  branch deleted (after merge). Added guidance for incidental work with separate branches vs. work on parent branch.
 - v2.1 (2025-10-21): Reorganized archives into work-package subdirectories - all docs for a piece of work
   live together (no more nested prds/, tasks/, notes/, completion-metadata/ subdirectories)
 - v2.0 (2025-10-20): Added three-way categorization (feature/technical/incidental), integrated

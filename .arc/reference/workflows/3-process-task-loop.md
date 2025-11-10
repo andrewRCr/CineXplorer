@@ -8,6 +8,9 @@ It ensures consistent execution, quality control, and documentation of work.
 ## Task Implementation
 
 - **One sub-task at a time:** Do **NOT** start the next sub‑task without user approval
+- **Branch/task list coupling:** Task lists in `.arc/active/` correspond to git branches (branch exists ↔ task list
+  active). Archive task list immediately when branch deleted after merge. See
+  [Work Organization Strategy](../strategies/arc/strategy-work-organization.md) for details.
 - **Completion protocol:**
 
   1. When you finish a **single sub‑task**:

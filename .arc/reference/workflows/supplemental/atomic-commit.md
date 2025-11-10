@@ -293,7 +293,7 @@ notes: |
 - Mark parent tasks [x] when all subtasks complete, in same commit as final subtask
 - Verify task status in files matches actual implementation
 - Follow [Task Processing Workflow](../3-process-task-loop.md) completion protocol
-- See [Work Categorization Strategy](../../strategies/arc/strategy-work-categorization.md) for branch naming
+- See [Work Organization Strategy](../../strategies/arc/strategy-work-organization.md) for branch naming
 
 ---
 

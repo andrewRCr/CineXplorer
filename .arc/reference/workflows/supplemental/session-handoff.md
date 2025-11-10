@@ -59,6 +59,13 @@ update the "Session Startup Protocol" section in CURRENT-SESSION.md:
 - Runtime environment expectations (container/service counts if applicable)
 - Reference version checks (DEVELOPMENT-RULES, QUICK-REFERENCE)
 
+**Protected (special handling - marked with warnings)**:
+
+- Sections marked "DO NOT REMOVE UNTIL..." or similar warnings
+- Transition period notes explaining temporary non-conformance
+- Example: Transition period note in CURRENT-SESSION (technical/service-layer-modernization branch)
+- **Never remove during routine handoffs** - only when condition specified in warning is met
+
 **Dynamic (update when context changes - see CRITICAL warning above)**:
 
 - **"Session Startup Protocol" working directory paths** - update EVERY TIME you switch between:
@@ -78,9 +85,10 @@ update the "Session Startup Protocol" section in CURRENT-SESSION.md:
 
 Update `.arc/active/CURRENT-SESSION.md` before ending session:
 
-1. **First**: Check if working directory context changed (see CRITICAL warning above) and update Session Startup
+1. **First**: Check for protected sections (marked "DO NOT REMOVE UNTIL...") and preserve them
+2. **Second**: Check if working directory context changed (see CRITICAL warning above) and update Session Startup
    Protocol paths if needed
-2. **Then**: Update "Session Information" section and below with work progress:
+3. **Then**: Update "Session Information" section and below with work progress:
 
 ```markdown
 ## Session Information

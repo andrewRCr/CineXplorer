@@ -23,7 +23,7 @@ architectural decisions.
 - **Filename:** `tasks-[name].md` (e.g., `tasks-user-profile-editing.md`, `tasks-api-modernization.md`)
 
 **Note:** Task lists typically start in `.arc/backlog/` during planning, then move to `.arc/active/` when
-work begins. See [Project Structure](../strategies/arc/strategy-work-categorization.md) for complete lifecycle.
+work begins. See [Project Structure](../strategies/arc/strategy-work-organization.md) for complete lifecycle.
 
 ## Process
 

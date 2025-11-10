@@ -97,7 +97,7 @@ Incidental work (unplanned reactive fixes/improvements):
 ### Archive Workflow
 
 - **Archival Process**: [`workflows/supplemental/archive-completed.md`](../workflows/supplemental/archive-completed.md)
-- **Work Categorization**: [`strategies/arc/strategy-work-categorization.md`](../strategies/arc/strategy-work-categorization.md)
+- **Work Organization**: [`strategies/arc/strategy-work-organization.md`](../strategies/arc/strategy-work-organization.md)
 
 ## Purpose
 

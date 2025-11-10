@@ -1094,12 +1094,12 @@ Update `2-generate-tasks.md` to reflect:
 backlog/
   TASK-INBOX.md              # Zero-friction capture (flat bullets, lean)
   feature/
-    FEATURE-BACKLOG.md       # Feature ideas (sections, non-atomic work only)
-    notes-*.md               # Work units under analysis
+    BACKLOG-FEATURE.md       # Feature ideas (sections, non-atomic work only)
+    plan-*.md                # Work units under planning/analysis
     prd-*.md                 # Work units ready for tasks
   technical/
-    TECHNICAL-BACKLOG.md     # Technical ideas (sections, non-atomic work only)
-    notes-*.md               # Work units under analysis
+    BACKLOG-TECHNICAL.md     # Technical ideas (sections, non-atomic work only)
+    plan-*.md                # Work units under planning/analysis
     prd-*.md                 # Work units ready for tasks
 
 active/
@@ -1123,17 +1123,17 @@ active/
 - Checkbox format: "Active" and "Completed (This Week)" sections
 - Completed items deleted during weekly review
 
-**FEATURE-BACKLOG.md / TECHNICAL-BACKLOG.md**:
+**BACKLOG-FEATURE.md / BACKLOG-TECHNICAL.md**:
 
 - Section-based organization (e.g., "User Auth", "API Integration")
 - Plain bullets (no checkboxes)
 - Non-atomic work only (atomic tasks go to ATOMIC-TASKS.md)
-- Graduate to notes/PRD files when scope defined, then delete from bucket
+- Graduate to plan/PRD files when scope defined, then delete from bucket
 
-**notes-*.md and prd-*.md**:
+**plan-*.md and prd-*.md**:
 
 - Individual files for scoped work units
-- notes: Under analysis, research
+- plan: Planning/analysis phase, research (backlog only, deleted after PRD)
 - prd: Ready for task generation
 
 ### Processing Flow
@@ -1143,11 +1143,11 @@ Capture → TASK-INBOX.md
   ↓ Weekly Review
   ├─ Atomic & ready? → active/ATOMIC-TASKS.md
   ├─ Quick (<5min)? → Do immediately
-  ├─ Feature idea? → FEATURE-BACKLOG.md
-  ├─ Technical idea? → TECHNICAL-BACKLOG.md
+  ├─ Feature idea? → BACKLOG-FEATURE.md
+  ├─ Technical idea? → BACKLOG-TECHNICAL.md
   └─ Uncertain? → Leave in inbox
 
-Bucket files → notes-*.md (when scope clear) → prd-*.md (when ready)
+Bucket files → plan-*.md (when scope clear) → prd-*.md (when ready, delete plan)
 ```
 
 ### Commit Context for Atomic Tasks
@@ -1171,8 +1171,8 @@ Commit message IS the record.
 "Have we thought about X?" → Check 3 places:
 
 1. TASK-INBOX.md (unsorted captures)
-2. FEATURE-BACKLOG.md or TECHNICAL-BACKLOG.md (sections)
-3. notes-*.md or prd-*.md files (scoped work units)
+2. BACKLOG-FEATURE.md or BACKLOG-TECHNICAL.md (sections)
+3. plan-*.md or prd-*.md files (scoped work units)
 
 No separate index needed.
 

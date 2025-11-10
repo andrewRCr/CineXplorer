@@ -6,8 +6,8 @@
 
 - Quick actions (<5 min) → Do immediately
 - Atomic tasks → Move to `active/ATOMIC-TASKS.md`
-- Feature ideas → Move to `feature/FEATURE-BACKLOG.md`
-- Technical ideas → Move to `technical/TECHNICAL-BACKLOG.md`
+- Feature ideas → Move to `feature/BACKLOG-FEATURE.md`
+- Technical ideas → Move to `technical/BACKLOG-TECHNICAL.md`
 - Uncertain → Leave for next week's review
 
 ---

@@ -1,9 +1,9 @@
-# Frontend Modernization
+# Plan: Frontend Modernization
 
 Corrective architectural improvements - "things that should have been there from the beginning."
 
 This document tracks technical debt and architectural decisions that need to be revisited.
-When planning modernization work, this serves as the starting point for PRD creation.
+When planning frontend modernization work, this serves as the starting point for PRD creation.
 
 ---
 
@@ -171,5 +171,4 @@ Auth State → AuthContext (existing pattern)
 
 ---
 
-**Note:** When creating the frontend-modernization PRD, use this document as the foundation.
-Estimated effort: 2-3 weeks depending on scope.
+**Note:** When creating the frontend-modernization PRD(s), use this document as the foundation.

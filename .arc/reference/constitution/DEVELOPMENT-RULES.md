@@ -180,6 +180,13 @@ logic likely belongs in Service layer.
   belongs only in `.arc/` documentation. Code should explain "what" and "why" independently of
   project management context.
 
+- **Task references in `.arc/` documentation**: When referencing tasks in `.arc/` documentation,
+  always include both the task/phase identifier AND the task list filename in backticks. Format:
+  "Task X.Y - `tasks-name.md`" or "Phase X - `tasks-name.md`". Use only the filename (no path),
+  as task lists move between active/, backlog/, and archive/ directories. This ensures references
+  are searchable and provide clear context about which work the task belongs to.
+  Examples: "Task 8.3 - `tasks-oauth-headless-migration.md`", "Phase 3 - `tasks-service-layer-modernization.md`"
+
 ## Architecture Documentation
 
 ### Architecture Decision Records (ADRs)

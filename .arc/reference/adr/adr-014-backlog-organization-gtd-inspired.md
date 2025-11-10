@@ -99,12 +99,12 @@ capture/processing (Tier 1) and defined work units (Tier 2).
 backlog/
   TASK-INBOX.md              # Tier 1: Unsorted captures (flat bullets, lean)
   feature/
-    FEATURE-BACKLOG.md       # Tier 1: Feature ideas (sections, plain bullets)
-    notes-*.md               # Tier 2: Work units under analysis
+    BACKLOG-FEATURE.md       # Tier 1: Feature ideas (sections, plain bullets)
+    plan-*.md                # Tier 2: Work units under planning/analysis
     prd-*.md                 # Tier 2: Work units ready for tasks
   technical/
-    TECHNICAL-BACKLOG.md     # Tier 1: Technical ideas (sections, plain bullets)
-    notes-*.md               # Tier 2: Work units under analysis
+    BACKLOG-TECHNICAL.md     # Tier 1: Technical ideas (sections, plain bullets)
+    plan-*.md                # Tier 2: Work units under planning/analysis
     prd-*.md                 # Tier 2: Work units ready for tasks
 
 active/
@@ -133,20 +133,21 @@ active/
 - No task numbers (not part of formal task lists)
 - Completed items provide weekly accomplishment visibility
 
-**FEATURE-BACKLOG.md / TECHNICAL-BACKLOG.md** (bucket files):
+**BACKLOG-FEATURE.md / BACKLOG-TECHNICAL.md** (bucket files):
 
 - Section-based organization by domain (e.g., "User Authentication", "API Integration")
 - Plain bullets (no checkboxes)
 - Contains ONLY non-atomic work unit ideas
-- When scope defined → graduate to notes-{name}.md or prd-{name}.md file
+- When scope defined → graduate to plan-{name}.md or prd-{name}.md file
 - Delete graduated items (no strikethrough clutter)
 
-**notes-*.md and prd-*.md** (individual files):
+**plan-*.md and prd-*.md** (individual files):
 
 - Scoped work units with defined boundaries
-- notes-*.md: Under analysis, requirements gathering, research
+- plan-*.md: Planning/analysis phase, requirements gathering, research (backlog only)
 - prd-*.md: Ready for task generation and implementation
 - Each gets unique canonical name when scope defined
+- plan-*.md deleted once PRD created (planning complete)
 
 ### Processing Flow
 
@@ -157,13 +158,13 @@ active/
 2. Weekly Review (process inbox)
    ├─ Atomic & ready now? → active/ATOMIC-TASKS.md
    ├─ Quick action (<5min)? → Do immediately, delete from inbox
-   ├─ Feature idea? → FEATURE-BACKLOG.md (section)
-   ├─ Technical idea? → TECHNICAL-BACKLOG.md (section)
+   ├─ Feature idea? → BACKLOG-FEATURE.md (section)
+   ├─ Technical idea? → BACKLOG-TECHNICAL.md (section)
    └─ Uncertain? → Leave in inbox, decide next week
 
 3. Bucket file review (promote when scope clear)
-   ├─ Ready for analysis? → Create notes-{name}.md, delete from bucket
-   └─ Ready for PRD? → Create prd-{name}.md, delete from bucket
+   ├─ Ready for planning? → Create plan-{name}.md, delete from bucket
+   └─ Ready for PRD? → Create prd-{name}.md, delete plan-{name}.md (if exists)
 
 4. Atomic task completion
    ├─ Do work, mark [x] in ATOMIC-TASKS.md
@@ -226,8 +227,8 @@ accurately describes all non-task-list work.
 **4. Discovery mechanism: File structure + bucket files**
 
 - Check TASK-INBOX.md (unsorted)
-- Check FEATURE-BACKLOG.md or TECHNICAL-BACKLOG.md (sections)
-- Check for notes-*.md or prd-*.md files (scoped work units)
+- Check BACKLOG-FEATURE.md or BACKLOG-TECHNICAL.md (sections)
+- Check for plan-*.md or prd-*.md files (scoped work units)
 - No separate index (avoid staleness, keep overhead low)
 
 ### Weekly Review Workflow
@@ -277,7 +278,7 @@ Detailed workflow to be documented in `weekly-review.md`.
 
 - TASK-INBOX.md requires weekly discipline to stay lean
 - ATOMIC-TASKS.md needs completion tracking and cleanup
-- Bucket files (FEATURE-BACKLOG.md, TECHNICAL-BACKLOG.md) need organization
+- Bucket files (BACKLOG-FEATURE.md, BACKLOG-TECHNICAL.md) need organization
 
 **Processing overhead:**
 
@@ -320,8 +321,8 @@ Detailed workflow to be documented in `weekly-review.md`.
 - [x] Draft ADR-014 (this document)
 - [x] Create `backlog/TASK-INBOX.md` with header/instructions
 - [x] Create `active/ATOMIC-TASKS.md` with header/sections
-- [x] Create `backlog/feature/FEATURE-BACKLOG.md` template with section examples
-- [x] Create `backlog/technical/TECHNICAL-BACKLOG.md` template with section examples
+- [x] Create `backlog/feature/BACKLOG-FEATURE.md` template with section examples
+- [x] Create `backlog/technical/BACKLOG-TECHNICAL.md` template with section examples
 - [x] Create `reference/workflows/supplemental/weekly-review.md` workflow
 
 **2. Update commit infrastructure:**
@@ -338,10 +339,10 @@ Detailed workflow to be documented in `weekly-review.md`.
 **4. Migrate existing backlog:**
 
 - [ ] Audit current `backlog/feature/` and `backlog/technical/` contents
-- [ ] Create initial FEATURE-BACKLOG.md with current feature ideas as sections
-- [ ] Create initial TECHNICAL-BACKLOG.md with current technical ideas as sections
-- [ ] Identify work units ready for notes-*.md or prd-*.md promotion
-- [ ] Delete deprecated bucket files (notes-feature-backlog.md, notes-backend-modernization.md, etc.)
+- [ ] Create initial BACKLOG-FEATURE.md with current feature ideas as sections
+- [ ] Create initial BACKLOG-TECHNICAL.md with current technical ideas as sections
+- [ ] Identify work units ready for plan-*.md or prd-*.md promotion
+- [ ] Delete deprecated bucket files (notes-feature-backlog.md, notes-potential-future-modernization.md)
 - [ ] Remove `backlog/incidental/` directory (no longer used per ADR-013)
 
 **5. Test and refine:**

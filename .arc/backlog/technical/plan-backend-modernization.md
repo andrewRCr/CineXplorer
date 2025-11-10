@@ -1,4 +1,4 @@
-# Backend Modernization - Technical Notes
+# Plan: Backend Modernization
 
 **Document Purpose:** Track technical debt and improvement opportunities identified during development
 that should be addressed in a comprehensive backend modernization effort.

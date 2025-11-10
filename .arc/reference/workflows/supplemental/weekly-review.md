@@ -29,8 +29,8 @@ Weekly review is the cornerstone of backlog organization (per ADR-014). It ensur
 
 - **Quick action (<5 min)?** → Do immediately, delete from inbox
 - **Atomic task (ready now)?** → Move to `active/ATOMIC-TASKS.md` (Active section)
-- **Feature idea?** → Move to `feature/FEATURE-BACKLOG.md` (appropriate section)
-- **Technical idea?** → Move to `technical/TECHNICAL-BACKLOG.md` (appropriate section)
+- **Feature idea?** → Move to `feature/BACKLOG-FEATURE.md` (appropriate section)
+- **Technical idea?** → Move to `technical/BACKLOG-TECHNICAL.md` (appropriate section)
 - **Uncertain/not ready?** → Leave in inbox for next week
 
 **Goal:** Empty or nearly-empty inbox at end of review.
@@ -66,15 +66,15 @@ Weekly review is the cornerstone of backlog organization (per ADR-014). It ensur
 
 **Files:**
 
-- `.arc/backlog/feature/FEATURE-BACKLOG.md`
-- `.arc/backlog/technical/TECHNICAL-BACKLOG.md`
+- `.arc/backlog/feature/BACKLOG-FEATURE.md`
+- `.arc/backlog/technical/BACKLOG-TECHNICAL.md`
 
 **For each section:**
 
 1. **Sort "Unsorted" items** into appropriate sections
 
 2. **Assess maturity:**
-   - Ready for analysis? → Create `notes-{name}.md`, delete from bucket
+   - Ready for planning? → Create `plan-{name}.md`, delete from bucket
    - Ready for PRD? → Create `prd-{name}.md`, delete from bucket
    - Still exploring? → Leave in bucket
 
@@ -110,7 +110,7 @@ If time permits or quarterly:
 
 **Files in:** `.arc/backlog/feature/` and `.arc/backlog/technical/`
 
-- **notes-*.md files:** Still being analyzed? Or ready for PRD?
+- **plan-*.md files:** Still in planning? Or ready for PRD?
 - **prd-*.md files:** Ready to move to active and generate tasks?
 
 ### 6. Audit Active Work

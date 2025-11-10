@@ -1,4 +1,4 @@
-# User Movie Lists/Collections - Feature Notes
+# Plan: User Movie Lists/Collections
 
 **Document Purpose:** Track planning for custom movie lists/collections feature.
 This captures the concept and key decisions for future reference when work becomes active.

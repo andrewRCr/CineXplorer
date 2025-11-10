@@ -1,4 +1,4 @@
-# UserMovieData Features - Planning Notes
+# Plan: UserMovieData Features
 
 **Document Purpose:** Track user-facing feature work for the UserMovieData domain. These features have complete backend
 APIs but need frontend implementation or enhancement.

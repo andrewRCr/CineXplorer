@@ -68,8 +68,10 @@ if ! echo "$commit_msg" | grep -qE '^Context: '; then
     echo "   Context: tasks-theme-modernization.md (Tasks 2.3.c-e)"
     echo "   Context: tasks-filter-testing.md (incidental - discovered during Task 3.6)"
     echo "   Context: tasks-pagination-buffer-tracking.md (planning)"
-    echo "   Context: planning (no associated task list)"
+    echo "   Context: maintenance (atomic / no associated task list)"
     echo "   Context: refactor (no associated task list)"
+    echo "   Context: documentation (atomic / no associated task list)"
+    echo "   Context: planning (atomic / no associated task list)"
     errors=$((errors + 1))
 else
     # Extract Context line for further validation
@@ -134,9 +136,9 @@ else
             errors=$((errors + 1))
         fi
 
-    # Check for no-task-list categories
-    elif echo "$context_line" | grep -qE '^Context: (planning|documentation|maintenance|refactor|archival prep|archival) \(no associated task list\)$'; then
-        # No task list category - valid
+    # Check for no-task-list categories (both old and new atomic pattern)
+    elif echo "$context_line" | grep -qE '^Context: (planning|documentation|maintenance|refactor) \((atomic / )?no associated task list\)$'; then
+        # No task list category - valid (supports both "no associated task list" and "atomic / no associated task list")
         :
     else
         echo -e "${RED}❌ Error: Invalid Context: format${NC}"
@@ -145,9 +147,11 @@ else
         echo "   - Context: tasks-[name].md (Tasks X.Y-X.Z)"
         echo "   - Context: tasks-[name].md (incidental - discovered during Task X.Y)"
         echo "   - Context: tasks-[name].md (planning)"
-        echo "   - Context: [planning|documentation|maintenance|refactor|archival prep|archival] (no associated task list)"
+        echo "   - Context: [planning|documentation|maintenance|refactor] (no associated task list)"
+        echo "   - Context: [planning|documentation|maintenance|refactor] (atomic / no associated task list)"
         echo ""
         echo "   Note: Parenthetical is REQUIRED for all commits"
+        echo "   Note: Use 'atomic / no associated task list' for work from ATOMIC-TASKS.md or emergent atomic work"
         echo ""
         echo "   Your Context line: $context_line"
         errors=$((errors + 1))

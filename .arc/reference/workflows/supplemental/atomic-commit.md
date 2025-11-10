@@ -59,8 +59,10 @@ steps:
         - (Task X.Y) for specific task work
         - (incidental - discovered during Task X.Y) for incidental during task
         - (planning) for task list maintenance
-    - Non-task-list work: MUST use boundary category WITH (no associated task list):
-        - planning, documentation, maintenance, refactor, archival prep, archival
+    - Non-task-list work: MUST use boundary category WITH parenthetical:
+        - (no associated task list) - for emergent work, quick fixes
+        - (atomic / no associated task list) - for work from ATOMIC-TASKS.md or atomic emergent work
+        - Boundary categories: planning, documentation, maintenance, refactor
 
 - name: Plan Commits
   description: |
@@ -124,13 +126,23 @@ steps:
   **No associated task list (boundary scenarios):**
 
   ```bash
+  # Standard pattern (emergent work, not pre-documented)
   Context: planning (no associated task list)        # PRD creation, NEW task list generation
-  Context: documentation (no associated task list)   # PROJECT-STATUS, README
+  Context: documentation (no associated task list)   # PROJECT-STATUS, README, ARC framework updates
   Context: maintenance (no associated task list)     # Dependencies, tooling, configuration
   Context: refactor (no associated task list)        # Quality improvements, cleanup discovered during reviews
-  Context: archival prep (no associated task list)   # Pre-archival documentation
-  Context: archival (no associated task list)        # Archival workflow execution
+
+  # Atomic pattern (from ATOMIC-TASKS.md or atomic emergent work)
+  Context: maintenance (atomic / no associated task list)     # Quick fixes, chores, routine upkeep
+  Context: refactor (atomic / no associated task list)        # Small code restructuring, helper extraction
+  Context: documentation (atomic / no associated task list)   # Quick doc updates
+  Context: planning (atomic / no associated task list)        # Small planning/strategy updates
   ```
+
+  **Note:** Both patterns valid. Use "atomic / no associated task list" for:
+    - Work from `active/ATOMIC-TASKS.md`
+    - Emergent atomic work (small, one-off tasks)
+    - Emphasizes atomic nature vs complex task list work
 
   **Parent task completion:**
   Add single line before Context: footer:
@@ -233,7 +245,7 @@ steps:
   Context: tasks-pagination-buffer-tracking.md (planning)
   ```
 
-  ### Repository Maintenance
+  ### Repository Maintenance (Atomic)
 
   ```
   chore(deps): update Django to 5.2.8 security patch
@@ -242,7 +254,19 @@ steps:
   - Addresses CVE-2024-XXXXX
   - All tests passing post-update
 
-  Context: maintenance (no associated task list)
+  Context: maintenance (atomic / no associated task list)
+  ```
+
+  ### Quick Documentation Update (Atomic)
+
+  ```
+  docs(arc): update AGENTS.md with backlog structure
+
+  - Added backlog organization section
+  - Clarified TASK-INBOX.md and ATOMIC-TASKS.md purpose
+  - Updated discovery mechanism description
+
+  Context: documentation (atomic / no associated task list)
   ```
 
   ## Commit Message Guidelines

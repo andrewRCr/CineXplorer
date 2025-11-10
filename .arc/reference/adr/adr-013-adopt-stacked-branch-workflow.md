@@ -371,10 +371,10 @@ start fresh with new model
 ### Follow-Up Work
 
 1. **Complete ADR-013** (this document) ✅
-2. **Rename strategy document** (work-categorization → work-organization)
-3. **Update 6 workflow documents** (as listed above)
-4. **Update CURRENT-SESSION.md** (add transition note with protection)
-5. **Update CodeRabbit config** (review any branch, not just main)
+2. **Rename strategy document** (work-categorization → work-organization) ✅
+3. **Update 6 workflow documents** (as listed above) ✅
+4. **Update CURRENT-SESSION.md** (add transition note with protection) ✅
+5. **Update CodeRabbit config** (review any branch, not just main) ✅
 6. **Complete current branch** (service-layer-modernization, <3 weeks)
 7. **Remove transition note** (when service-layer branch merges to main)
 8. **First clean implementation** (next planned work uses stacked model from start)

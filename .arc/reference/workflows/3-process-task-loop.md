@@ -159,3 +159,80 @@ the completion report. The TodoWrite item serves as a checklist reminder.
 2. **Track file changes via git:**
    - Git status and diffs provide the most accurate record of changes.
    - No need to manually maintain file lists - tools like `git status` and `git diff` are always current.
+
+---
+
+## Atomic Task Completion Protocol
+
+**For tasks tracked in:** `active/ATOMIC-TASKS.md`
+
+Atomic tasks are small, one-off work items (fixes, chores, quick refactors) that don't require formal task lists with
+phases and subtasks. They follow a simplified completion protocol.
+
+### Completion Workflow
+
+**1. Complete the work**
+
+- Do the task (fix, update, refactor, etc.)
+- Run appropriate quality checks (linting if code change, etc.)
+
+**2. Mark complete in ATOMIC-TASKS.md**
+
+- Change `[ ]` to `[x]`
+- Move item from "Active" section to "Completed (This Week)" section
+
+**3. Commit with atomic context footer**
+
+- Use boundary category + atomic pattern:
+
+     ```
+     Context: maintenance (atomic / no associated task list)
+     Context: refactor (atomic / no associated task list)
+     Context: documentation (atomic / no associated task list)
+     Context: planning (atomic / no associated task list)
+     ```
+
+- See [Atomic Commit Workflow](supplemental/atomic-commit.md) for full format
+
+**4. Weekly cleanup**
+
+- During weekly review, delete all items in "Completed (This Week)" section
+- See [Weekly Review Workflow](supplemental/weekly-review.md) for full process
+
+### Example
+
+```markdown
+# Atomic Tasks
+
+## Active
+- [ ] Add type hint to calculateTotal() helper
+- [ ] Fix typo in README line 47
+
+## Completed (This Week)
+- [x] Update Django 5.2 → 5.3
+```
+
+After commit:
+
+```bash
+git commit -m "chore(deps): update Django to 5.3
+
+- Updated from 5.2.7 to 5.3.0
+- Security patch for CVE-2024-XXXXX
+- All tests passing
+
+Context: maintenance (atomic / no associated task list)"
+```
+
+During weekly review: Delete the completed Django update line from ATOMIC-TASKS.md.
+
+### When Atomic Tasks Grow
+
+If an atomic task becomes more complex than expected:
+
+1. **Stop** - Don't continue as atomic work
+2. **Create incidental task list** - Use incidental workflow for proper tracking
+3. **Remove from ATOMIC-TASKS.md** - Delete the atomic task entry
+4. **Continue in task list** - Follow normal task completion protocol
+
+See [Incidental Work Management](#incidental-work-management) above for creating task lists.

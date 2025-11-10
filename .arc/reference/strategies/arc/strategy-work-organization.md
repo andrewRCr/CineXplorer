@@ -1084,6 +1084,119 @@ Update `2-generate-tasks.md` to reflect:
 
 ---
 
+## Backlog Organization
+
+**Context:** Per ADR-014, backlog uses GTD-inspired two-tier structure for work that hasn't started yet.
+
+### Structure
+
+```
+backlog/
+  TASK-INBOX.md              # Zero-friction capture (flat bullets, lean)
+  feature/
+    FEATURE-BACKLOG.md       # Feature ideas (sections, non-atomic work only)
+    notes-*.md               # Work units under analysis
+    prd-*.md                 # Work units ready for tasks
+  technical/
+    TECHNICAL-BACKLOG.md     # Technical ideas (sections, non-atomic work only)
+    notes-*.md               # Work units under analysis
+    prd-*.md                 # Work units ready for tasks
+
+active/
+  ATOMIC-TASKS.md            # Committed atomic tasks (checkboxes, ready to execute)
+  CURRENT-SESSION.md         # Session state
+  feature/
+  technical/
+  incidental/
+```
+
+### File Purposes
+
+**TASK-INBOX.md** (backlog root):
+
+- Unsorted captures, processed weekly → buckets/atomic/action
+- Flat bullets (no checkboxes), kept lean
+
+**ATOMIC-TASKS.md** (active root):
+
+- GTD "Next Actions" - small, one-off tasks ready to execute
+- Checkbox format: "Active" and "Completed (This Week)" sections
+- Completed items deleted during weekly review
+
+**FEATURE-BACKLOG.md / TECHNICAL-BACKLOG.md**:
+
+- Section-based organization (e.g., "User Auth", "API Integration")
+- Plain bullets (no checkboxes)
+- Non-atomic work only (atomic tasks go to ATOMIC-TASKS.md)
+- Graduate to notes/PRD files when scope defined, then delete from bucket
+
+**notes-*.md and prd-*.md**:
+
+- Individual files for scoped work units
+- notes: Under analysis, research
+- prd: Ready for task generation
+
+### Processing Flow
+
+```
+Capture → TASK-INBOX.md
+  ↓ Weekly Review
+  ├─ Atomic & ready? → active/ATOMIC-TASKS.md
+  ├─ Quick (<5min)? → Do immediately
+  ├─ Feature idea? → FEATURE-BACKLOG.md
+  ├─ Technical idea? → TECHNICAL-BACKLOG.md
+  └─ Uncertain? → Leave in inbox
+
+Bucket files → notes-*.md (when scope clear) → prd-*.md (when ready)
+```
+
+### Commit Context for Atomic Tasks
+
+Work from ATOMIC-TASKS.md or emergent atomic work uses:
+
+```
+Context: maintenance (atomic / no associated task list)
+Context: refactor (atomic / no associated task list)
+Context: documentation (atomic / no associated task list)
+Context: planning (atomic / no associated task list)
+```
+
+Boundary categories: maintenance, refactor, documentation, planning
+
+**Rationale:** Atomic tasks aren't archived (deleted after completion), so no long-term traceability.
+Commit message IS the record.
+
+### Discovery Mechanism
+
+"Have we thought about X?" → Check 3 places:
+
+1. TASK-INBOX.md (unsorted captures)
+2. FEATURE-BACKLOG.md or TECHNICAL-BACKLOG.md (sections)
+3. notes-*.md or prd-*.md files (scoped work units)
+
+No separate index needed.
+
+### Weekly Review
+
+Core workflow (15-30 minutes):
+
+1. Process TASK-INBOX.md
+2. Review ATOMIC-TASKS.md (delete completed, reprioritize)
+3. Review bucket files (promote to notes/PRD when ready)
+4. Update PROJECT-STATUS.md
+
+See [weekly-review.md](../workflows/supplemental/weekly-review.md) for full workflow.
+
+### Design Decisions
+
+- **No frontend/backend split** - Only feature/ and technical/
+- **No incidental/ in backlog** - Stacked workflow (ADR-013) means incidental stays active
+- **Maturity markers TBD** - Optional tags like `[Exploring]`, `[Ready]` evaluated in practice
+
+See ADR-014 for complete rationale and alternatives considered.
+
+---
+
 ## Related Documentation
 
 - [DEVELOPMENT-RULES](../constitution/DEVELOPMENT-RULES.md) - Development standards and git workflow
@@ -1091,6 +1204,8 @@ Update `2-generate-tasks.md` to reflect:
 - [3-process-task-loop.md](../workflows/3-process-task-loop.md) - Task execution workflow
 - [atomic-commit.md](../workflows/supplemental/atomic-commit.md) - Commit creation and review
 - [manage-incidental-work.md](../workflows/supplemental/manage-incidental-work.md) - Incidental work workflow
+- [weekly-review.md](../workflows/supplemental/weekly-review.md) - Weekly backlog review process
+- [ADR-014](../adr/adr-014-backlog-organization-gtd-inspired.md) - Backlog organization decision record
 
 ---
 

@@ -2132,17 +2132,46 @@ This phase combines component-specific polish with systematic theme validation.
         - **Quality gates:** TypeScript 0 errors, ESLint 0 violations
         - **Note:** GitLab Pajamas neutral outline border contrast issue added to ATOMIC-TASKS.md
 
-    - [ ] **6.1.c AdvancedMovieFilters elevation**
-        - Add visual elevation to filter panel (`card` or `boxShadow="shadow-sm"`)
-        - Currently uses same background as page (no visual distinction)
+    - [x] **6.1.c AdvancedMovieFilters elevation**
+        - ✅ Fixed layer-02 → layer-01 (proper elevation on background surface)
+        - ✅ Fixed border-strong-02 → border-strong-01 (matches layer)
+        - **Root cause:** ADR-008 alternating pattern - layer-02 alternates back to background in light mode
+        - **Solution:** layer-01 provides consistent elevation in both light/dark modes
+        - **Quality gates:** TypeScript 0 errors, ESLint 0 violations
+
+    - [ ] **6.1.d AdvancedMovieFilters internal controls consistency**
+        - **Goal:** Align all form controls with strategy doc token usage and ThemeDebug patterns
+        - **Components to evaluate:**
+            - Genre checkboxes (GenreSelector)
+            - Year range fields (YearSelector - min/max year inputs)
+            - Rating range fields (RatingSelector - min/max rating inputs)
+            - Runtime range fields (if present)
+            - Sort dropdown (SortSelector)
+            - Clear filters button
+            - Collapse/expand button
+        - Verify proper semantic tokens (input borders, focus states, button styles)
+        - Ensure consistent interaction states across all controls
         - Test across 4 themes × 2 modes
 
-    - [ ] **6.1.d Form placeholder precision**
+    - [ ] **6.1.e Minimal filters consistency (MovieCollection pages)**
+        - **Context:** Letterboxd-style minimal filters on Popular, Upcoming, Now Playing pages
+        - **Issue:** Toggle advanced panel icon button has too strong/inconsistent hover style
+        - **Components to evaluate (all shared across movie collection pages):**
+            - Connected dropdowns: Two filter dropdowns (genre, year, etc.)
+            - Sort by dropdown (standalone)
+            - Toggle advanced panel button (icon button, rightmost in connected dropdowns)
+            - Search bar toggle button (icon button, expands to search bar)
+            - Expanded search bar component
+        - Align all components with strategy doc token usage and ThemeDebug patterns
+        - Ensure consistent interaction states across all filter controls
+        - Test across 4 themes × 2 modes
+
+    - [ ] **6.1.f Form placeholder precision**
         - Change max rating placeholder from `10.0` to `10`
         - AdvancedMovieFilters component only
         - Simple string change, no theme implications
 
-    - [ ] **6.1.e Footer theme select control popover background**
+    - [ ] **6.1.g Footer theme select control popover background**
         - Investigate incorrect popover background (flat black/white, not theme-consistent)
         - Should use `popover` token for dropdown menu surface
         - Verify theme selector dropdown uses proper elevation and colors

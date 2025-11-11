@@ -25,6 +25,20 @@ steps:
     - Examine changes that might not be immediately obvious (config files, documentation, etc.)
     - Look for task documentation files that may have been updated
 
+  **Step 1.5: Check for Multi-Session Uncommitted Work**
+    - Read CURRENT-SESSION.md for "Uncommitted Work" or similar section
+    - If present, this indicates changes spanning multiple sessions
+    - Identify which uncommitted changes are from:
+        - Previous session (documented in CURRENT-SESSION)
+        - Current session (not yet documented)
+    - **GOAL:** Separate commits for different work contexts (different sessions, tasks, or features)
+    - **PRAGMATIC EXCEPTION:** If changes are truly intermingled in same file/function:
+        - Using `git add -p` (interactive patch mode) may be overkill for minor overlap
+        - Can commit together but document the overlap in commit body
+        - Example: "Note: Also includes X from previous session (same file modified)"
+    - **Don't combine:** Work from different tasks/contexts just because it's easier
+    - Plan commits to respect original work boundaries and temporal context
+
   **Step 2: Find Relevant Task Documentation**
     - Check [active tasks](.arc/active/) for active task lists related to current work
         - Feature work: `.arc/active/feature/`

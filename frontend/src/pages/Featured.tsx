@@ -51,9 +51,10 @@ const Featured = () => {
           <VStack gap={4}>
             <Button
               onClick={() => navigate(ROUTES.POPULAR)}
-              bg="primary"
-              color="on-primary"
-              _hover={{ bg: "primary-hover" }}
+              bg="button-subtle"
+              color="on-button-subtle"
+              _hover={{ bg: "secondary-hover" }}
+              _active={{ bg: "secondary-active" }}
               size="lg"
               width="100%"
             >
@@ -62,12 +63,10 @@ const Featured = () => {
 
             <Button
               onClick={() => navigate(ROUTES.NOW_PLAYING)}
-              variant="outline"
-              borderWidth="1px"
-              borderColor="button-outline-primary"
-              color="on-button-outline-primary"
-              _hover={{ bg: "primary/8" }}
-              _active={{ bg: "primary/12" }}
+              bg="button-subtle"
+              color="on-button-subtle"
+              _hover={{ bg: "secondary-hover" }}
+              _active={{ bg: "secondary-active" }}
               size="lg"
               width="100%"
             >
@@ -76,12 +75,10 @@ const Featured = () => {
 
             <Button
               onClick={() => navigate(ROUTES.UPCOMING)}
-              variant="outline"
-              borderWidth="1px"
-              borderColor="button-outline-primary"
-              color="on-button-outline-primary"
-              _hover={{ bg: "primary/8" }}
-              _active={{ bg: "primary/12" }}
+              bg="button-subtle"
+              color="on-button-subtle"
+              _hover={{ bg: "secondary-hover" }}
+              _active={{ bg: "secondary-active" }}
               size="lg"
               width="100%"
             >

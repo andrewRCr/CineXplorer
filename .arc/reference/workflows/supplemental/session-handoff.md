@@ -98,13 +98,17 @@ Update `.arc/active/CURRENT-SESSION.md` before ending session:
   [OR: [none associated] for planning/boundary work between task lists]
 **Following Task List**: Yes
   [OR: No - [brief context, e.g., "debugging TypeError in UserProfile (will return to Task 4.5)"]]
+**Current Task**: Task 3.3 (line 247) - Write unit tests
+  [REQUIRED when following task list - enables direct jump to task during session init]
+  [Omit only if no task list or transitioning between task lists]
 **Last Completed**: Task 3.2 - Add validation logic
   [OR for off-task-list: brief description, e.g., "Fixed TypeError in UserProfile component"]
   [OR if work complete: "Backend Type Safety (Tasks 1-14, archived)"]
-**Next Action**: Task 3.3 - Write unit tests (line 247 in tasks-user-authentication.md)
-  [OR for off-task-list: specific action description]
+**Next Action**: Start Task 3.3 - Write unit tests for validation logic
+  [OR for off-task-list/preparatory: specific action description]
+  [Can be preparatory work (strategy doc review, planning) even when Current Task shows task number]
 
-_Note: Line numbers REQUIRED from Read tool output to enable direct navigation during session init._
+_Note: Current Task shows WHICH task you're on (stable). Next Action shows WHAT to do next (can be preparatory work before starting task, or specific subtask if already in progress)._
 
 ---
 
@@ -154,12 +158,20 @@ _(Only for off-task-list work, only if path is known. Otherwise state "Path uncl
 
 **What to include:**
 
+- **Current Task** - REQUIRED when following task list
+    - Format: "Task X.Y (line NNN) - Brief title"
+    - Line number from Read tool output (enables direct jump during session init)
+    - Remains stable even when Next Action is preparatory work
+    - Only update when moving to a different task
+    - Omit only if no task list or transitioning between task lists
 - **Next Action** - ALWAYS document, even if it's "proceed to next task in task list"
-    - On-task-list: Include task number + description + line number
+    - Can be preparatory work (strategy review, planning) even when Current Task shows task number
+    - On-task-list: Task number + specific subtask description (Current Task has line number)
     - Off-task-list: Specific action description
+    - Examples: "Review strategy docs before starting Task 5.5", "Continue Task 3.3 subtask 2"
 - **Remaining Work** - Only for off-task-list work when path back is known
     - List ALL steps if known, not just immediate next
-    - Critical: Captures full path back to task list
+    - Critical: Captures full path back to task list (INCLUDING task number + line number - essential)
 - **Additional Context** - Supplemental info not in task list
     - Debugging: What tried, what ruled out, what suspected
     - Decisions: Choices made that inform approach
@@ -183,8 +195,9 @@ _(Only for off-task-list work, only if path is known. Otherwise state "Path uncl
 **Branch**: feature/user-authentication
 **Task List**: .arc/active/feature/tasks-user-authentication.md
 **Following Task List**: Yes
+**Current Task**: Task 3.3 (line 247) - Write unit tests
 **Last Completed**: Task 3.2 - Add validation logic
-**Next Action**: Task 3.3 - Write unit tests (line 247 in tasks-user-authentication.md)
+**Next Action**: Start Task 3.3 - Write unit tests for validation logic
 
 ---
 
@@ -212,6 +225,7 @@ _(Only for off-task-list work, only if path is known. Otherwise state "Path uncl
 **Branch**: feature/user-authentication
 **Task List**: .arc/active/feature/tasks-user-authentication.md
 **Following Task List**: No - debugging TypeError in UserProfile (will return to Task 3.3)
+**Current Task**: Task 3.3 (line 247) - Write unit tests
 **Last Completed**: Task 3.2 - Add validation logic
 **Next Action**: Fix TypeError in UserProfile component (src/pages/user/UserProfile.tsx:45)
 
@@ -243,7 +257,42 @@ _(Only for off-task-list work, only if path is known. Otherwise state "Path uncl
 - Best fix: handle at component mount, show "No email" placeholder
 ```
 
-**Example 3: Off-task-list with unclear path**
+**Example 3: Preparatory work before starting task**
+
+```markdown
+## Session Information
+
+**Branch**: technical/service-layer-modernization
+**Task List**: .arc/active/incidental/tasks-theme-system-modernization.md
+**Following Task List**: Yes
+**Current Task**: Task 5.5 (line 1903) - Enhance Section 5: Surfaces & Containers
+**Last Completed**: Tasks 5.3-5.4 (Navigation Patterns, Feedback & Status sections)
+**Next Action**: Review strategy docs for updates before Task 5.5 - check if link underline
+standardization and alert text color patterns need documentation
+
+---
+
+## Session Context & Status
+
+### Completed This Session
+
+- ✅ Task 5.3: Navigation Patterns Section (committed 7c96a1a)
+- ✅ Task 5.4: Feedback & Status Section (committed 7c96a1a)
+- ✅ Standardized link underline: 2px → 1px browser default
+- ✅ Standardized alert text colors: Title uses semantic, description uses foreground
+
+### Blockers
+
+[none]
+
+### Additional Context for Next Session
+
+**Standardizations requiring strategy doc review:**
+1. Link underlines: Changed to browser default 1px (removed 2px thickness, kept 2px offset)
+2. Alert text colors: Title uses semantic color, description uses foreground (not on-* for 10% opacity)
+```
+
+**Example 4: Off-task-list with unclear path**
 
 ```markdown
 ## Session Information
@@ -251,6 +300,7 @@ _(Only for off-task-list work, only if path is known. Otherwise state "Path uncl
 **Branch**: feature/user-authentication
 **Task List**: .arc/active/feature/tasks-user-authentication.md
 **Following Task List**: No - debugging intermittent theme flash (will return to Task 3.3)
+**Current Task**: Task 3.3 (line 247) - Write unit tests
 **Last Completed**: Task 3.2 - Add validation logic
 **Next Action**: Continue debugging intermittent theme flash on page load
 
@@ -323,77 +373,6 @@ Path unclear - exploratory debugging. Will return to Task 3.3 (line 247) when re
    ```
 
 2. **Verify the file is readable** - CURRENT-SESSION.md is gitignored but should stay clean
-
-### Starting New Session from Handoff
-
-1. User says: "Resume from CURRENT-SESSION.md"
-2. AI reads the document and confirms understanding
-3. AI verifies git state matches documented state
-4. AI asks: "Confirmed. Continue with [next action]?"
-5. Only proceed after explicit user approval
-
-## Context Recovery
-
-### Detecting Stale Session State
-
-**Warning signs CURRENT-SESSION.md is out of date:**
-
-- Documents uncommitted files, but `git status` shows clean working tree
-- References "Next Action: Task X" but that task is already marked `[x]` complete
-- Describes work as "in progress" but commits show it's complete
-- Contains mixed state (some work complete, some pending, unclear which is current)
-- File references from previous work sessions still listed
-- Git commit hashes don't match recent `git log` output
-
-**When stale state is detected:**
-
-1. **Stop immediately** - don't trust the documented state
-2. **Gather ground truth**:
-   - Run `git status` for working tree state
-   - Run `git log --oneline -10` for recent commits
-   - Read actual task list file for completion checkboxes
-3. **Reconstruct accurate state** from git history and task files
-4. **Update CURRENT-SESSION.md** to match reality using verification protocol above
-5. **Run mdlint auto-fix**: `npx markdownlint-cli2 --fix ".arc/active/CURRENT-SESSION.md"`
-
-### If Context Seems Lost
-
-1. **Stop immediately** - don't continue current action
-2. **Acknowledge**: "I may have lost context"
-3. **Re-read**: DEVELOPMENT-RULES.md and current task list
-4. **Ask user**: Confirm current state and expectations
-5. **Resume only after** explicit user approval
-
-### Signs You Need Recovery
-
-- Forgetting incremental quality checks
-- Bundling multiple sub-tasks together
-- Initiating commits without approval
-- Skipping task documentation updates
-
-## User Instructions
-
-### How to Use for Session Handoffs
-
-**Approaching context limits:**
-
-1. Ask AI to update CURRENT-SESSION.md with current state
-2. Review and save the updated file
-3. Start new conversation with: "Resume from CURRENT-SESSION.md"
-
-**Between work sessions:**
-
-1. Clear CURRENT-SESSION.md or let AI fill fresh template
-2. For high-level tracking, check PROJECT-STATUS.md
-3. For objective state, rely on git status and branch
-
-**Emergency compact handoff:**
-If tokens are critically low, request: "Create emergency handoff"
-AI will generate minimal state summary using single-line format:
-
-```
-Branch: [name] | PRD: [prd-file] | Tasks: [task-file] | Work: [structured/incidental] | Last: [task] | Next: [task] | Blockers: [none/description]
-```
 
 ---
 

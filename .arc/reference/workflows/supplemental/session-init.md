@@ -46,12 +46,13 @@ more value in having complete context upfront than discovering missing rules mid
    - **Why full read needed**: Short, maintained to be lean, provides essential project context
 
 2. `.arc/active/CURRENT-SESSION.md` - **MUST READ IN FULL**
-   - Session Startup Protocol (working directory, Docker status, path context)
-   - Session Information (branch, feature docs, work type)
-   - Last completed work and next action
-   - Blockers and Outstanding Questions
+   - Session Startup Protocol (environment expectations: working directory, Docker, venv, paths)
+   - Session Information (branch, task list, current task with line number, next action)
+   - Last completed work and blockers
    - Session Context (detailed implementation notes)
    - **Why full read needed**: Critical for understanding current state, recent work, and avoiding conflicts
+   - **VERIFY**: If following task list, "Current Task" field must include line number (e.g., "Task 5.5 (line 1903)")
+   - **If missing line number**: Stop and ask user to provide it before proceeding
 
 3. **Active task list** - **STRATEGIC PARTIAL READ** (often 500+ lines)
    - Path referenced in CURRENT-SESSION.md
@@ -59,13 +60,13 @@ more value in having complete context upfront than discovering missing rules mid
    - **Reading strategy**:
      - **ALWAYS read**: Overview section + current phase summary (first ~100 lines)
      - **ALWAYS read**: Current task section identified in CURRENT-SESSION.md (the specific task being worked on)
-       - **Line number hint**: If CURRENT-SESSION "Next Action" includes a line number (e.g., "Task 3.3 (line 247)"),
-         use Read tool with offset to jump directly to that task
-       - **Without hint**: Read overview first, then search/scan for the task mentioned in "Next Action"
+       - **Use line number**: CURRENT-SESSION "Current Task" field includes line number (e.g., "Task 5.5 (line 1903)")
+       - **Direct jump**: Use Read tool with offset parameter to jump directly to that task
+       - **No scanning needed**: Line number enables precise navigation
      - **Read on-demand**: Other phases and tasks as needed during work
    - **Why partial read OK**: This is the ONLY exception - it's reference material, often 500+ lines, and too
      large to internalize upfront. But you MUST read the overview + current task context.
-   - **What to extract**: Current phase, next task, overall completion status, key patterns, current task details
+   - **What to extract**: Current phase, task details, acceptance criteria, implementation notes
 
 4. `.arc/reference/workflows/3-process-task-loop.md` - **MUST READ IN FULL**
    - One-subtask-at-a-time workflow
@@ -113,7 +114,24 @@ With context loaded:
 2. Check for blockers that need resolution
 3. Await user instruction - do not start work until user provides direction
 
+### 5. If Context Seems Mismatched
+
+If documented state (CURRENT-SESSION.md) doesn't match reality (git status, task list checkboxes, file state):
+
+1. **Stop immediately** - do not proceed with work
+2. **Report the mismatch** to user with specific details
+3. **Ask for guidance** on how to resolve the discrepancy
+4. **Wait for explicit direction** before taking any corrective action
+
+**Examples of mismatches:**
+
+- CURRENT-SESSION says "uncommitted files" but `git status` shows clean tree
+- CURRENT-SESSION references "Task 3.3" but task list shows it's already marked `[x]` complete
+- CURRENT-SESSION describes work in progress but git log shows it's been committed
+
+**Do not attempt to "fix" state on your own** - always involve the user when state is unclear.
+
 ---
 
-**Version**: 2025-10-20.2 (Refined reading strategy: ALL docs read in full except task list; task list requires
-overview + current task section + on-demand details. Emphasizes docs are maintained lean by design.)
+**Version**: 2025-11-11 (Added Current Task line number verification. Added context mismatch guidance. Streamlined
+CURRENT-SESSION references to focus on state not procedure.)

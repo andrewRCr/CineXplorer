@@ -3,7 +3,6 @@
 **Created:** 2025-11-02
 **Branch:** `technical/service-layer-modernization`
 **Status:** Active (consolidated from theme-definition-semantic-corrections.md)
-**Current Task:** Phase 4.4.5 (Watchlist page conversion - final component migration step)
 
 **Consolidation Note:** Theme work spawned from quick review branch into deep semantic refinement work over 3+ days.
 Remaining work from both task lists now consolidated here. See Phase 5+ for new consolidated tasks.
@@ -1655,40 +1654,45 @@ and ongoing migration overhead in future tasks.
     - NowPlaying, Popular, TopRated, Upcoming, SearchResults - Thin wrappers around MovieCollectionGrid (already converted)
     - Profile, Settings, PersonDetail, UserProfile - Placeholder stubs with no styling
 
-- [ ] **4.5 Convert ErrorBoundary** (60% of all hardcoded colors - 15+ instances)
+- [x] **4.5 Convert ErrorBoundary** (60% of all hardcoded colors - 15+ instances)
 
     **Goal:** Complete final component migration, eliminate all hardcoded colors from production code.
 
     **Note:** ErrorBoundary scheduled for end of Phase 4 due to complexity (15+ color instances).
     Handle simpler components first to build confidence with token patterns.
 
-    - [ ] **4.5.a Replace error state colors in `components/ErrorBoundary.tsx`**
-        - **Source:** Phase 3.3 hardcoded color catalog
-        - `red.600`, `red.700`, `red.800` → `destructive` / `on-destructive`
+    - [x] **4.5.a Replace error state colors in `components/ErrorBoundary.tsx`**
+        - **Completed:** All red.* colors replaced with semantic tokens
+        - `red.600`, `red.700`, `red.800` → `on-destructive` (ADR-011 canonical naming)
         - `red.50` → `destructive/8` (8% opacity for subtle error backgrounds)
-        - `red.200` → `destructive` (border styling)
-        - File location: Multiple instances throughout component
-        - Quality gate: All red.* colors replaced
+        - `red.200` → `destructive/30` (border opacity)
+        - Replaced `colorScheme="red"` buttons with explicit bg/color props
+        - Quality gate: ✅ All red.* colors replaced
 
-    - [ ] **4.5.b Replace neutral/muted colors**
-        - `gray.50`, `gray.100`, `gray.200`, `gray.300`, `gray.400`, `gray.500`,
-          `gray.600`, `gray.700` → appropriate semantic tokens:
-            - Backgrounds: `muted` / `background`
-            - Text: `muted-foreground` / `foreground`
-            - Borders: `border`
-        - Reference Phase 3.3 mapping guide for specific instances
-        - Quality gate: All gray.* colors replaced
+    - [x] **4.5.b Replace neutral/muted colors**
+        - **Completed:** All gray.* colors replaced with semantic tokens
+        - `gray.600` → `on-muted` (deemphasized text, ADR-011 canonical)
+        - `gray.50` → `muted` (subtle backgrounds)
+        - `gray.800` → `foreground` (normal text)
+        - `gray.200` → `border` (borders)
+        - Replaced `colorScheme="gray"` Code with explicit props
+        - Quality gate: ✅ All gray.* colors replaced
 
-    - [ ] **4.5.c Replace informational message colors**
-        - `blue.50`, `blue.100`, `blue.500`, `blue.700` → `info` / `on-info`
-        - Use for helpful hints, debugging information, non-error messages
-        - Quality gate: All blue.* colors replaced with info tokens
+    - [x] **4.5.c Replace informational message colors**
+        - **Completed:** All blue.* colors replaced with info tokens
+        - `blue.50` → `info/10` (10% opacity for subtle info backgrounds)
+        - `blue.800` → `on-info` (text on info backgrounds, ADR-011 canonical)
+        - `blue.200` → `info/30` (border opacity)
+        - Quality gate: ✅ All blue.* colors replaced with info tokens
 
-    - [ ] **4.5.d Review token usage against checklist**
-        - Verify against Task 4.1.5e checklist (line ~1007)
-        - Ensure proper token pairing (on-destructive, on-info)
-        - Validate interactive states if applicable
-        - Quality gate: All tokens follow strategy patterns
+    - [x] **4.5.d Review token usage against checklist**
+        - Verified proper token pairing (on-destructive, on-info, on-muted)
+        - All tokens use ADR-011 canonical naming (on-* not -foreground)
+        - Interactive states added to buttons (_hover with opacity modifiers)
+        - Fixed `background.main` → `background` (correct semantic token)
+        - Quality gate: ✅ All tokens follow strategy patterns
+
+        **Quality gates:** ✅ Frontend linting PASSED, TypeScript type checking PASSED, All hardcoded colors eliminated
 
 ### **Phase 5:** ThemeDebug Enhancement - Comprehensive Component Showcase
 

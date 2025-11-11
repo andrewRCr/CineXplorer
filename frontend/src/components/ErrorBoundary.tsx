@@ -77,7 +77,7 @@ const ErrorDisplay: React.FC<{
       display="flex"
       alignItems="center"
       justifyContent="center"
-      bg="background.main"
+      bg="background"
       px={4}
     >
       <Container maxW="lg">
@@ -99,26 +99,30 @@ const ErrorDisplay: React.FC<{
                 <MdWarning size="40px" />
               </Box>
             </Alert.Indicator>
-            <Heading as="h2" size="lg" mb={2} color="red.600">
+            <Heading as="h2" size="lg" mb={2} color="on-destructive">
               Oops! Something went wrong
             </Heading>
-            <Text color="red.700" mb={4}>
+            <Text color="on-destructive" mb={4}>
               We've encountered an unexpected error. Our team has been notified and
               is working on a fix.
             </Text>
             
             <HStack gap={4}>
-              <Button 
-                colorScheme="red" 
+              <Button
+                bg="destructive"
+                color="on-destructive"
+                _hover={{ bg: "destructive/92" }}
                 variant="solid"
                 onClick={onReset}
                 size="md"
               >
                 Try Again
               </Button>
-              <Button 
-                variant="outline" 
-                colorScheme="red"
+              <Button
+                variant="outline"
+                borderColor="destructive"
+                color="destructive"
+                _hover={{ bg: "destructive/8" }}
                 onClick={onReportError}
                 size="md"
               >
@@ -129,16 +133,17 @@ const ErrorDisplay: React.FC<{
 
           {/* Error ID Display */}
           <Box textAlign="center">
-            <Text fontSize="sm" color="gray.600" mb={2}>
+            <Text fontSize="sm" color="on-muted" mb={2}>
               Error ID for support:
             </Text>
           <HStack justify="center" gap={2}>
-              <Code 
-                px={3} 
-                py={1} 
-                borderRadius="md" 
+              <Code
+                px={3}
+                py={1}
+                borderRadius="md"
                 fontSize="sm"
-                colorScheme="gray"
+                bg="muted"
+                color="foreground"
               >
                 {errorId}
               </Code>
@@ -187,10 +192,10 @@ const ErrorDisplay: React.FC<{
                       borderRadius="md"
                       fontSize="sm"
                       whiteSpace="pre-wrap"
-                      bg="red.50"
-                      color="red.800"
+                      bg="destructive/8"
+                      color="on-destructive"
                       border="1px solid"
-                      borderColor="red.200"
+                      borderColor="destructive/30"
                     >
                       {error.message}
                     </Code>
@@ -222,10 +227,10 @@ const ErrorDisplay: React.FC<{
                       borderRadius="md"
                       fontSize="xs"
                       whiteSpace="pre-wrap"
-                      bg="gray.50"
-                      color="gray.800"
+                      bg="muted"
+                      color="foreground"
                       border="1px solid"
-                      borderColor="gray.200"
+                      borderColor="border"
                       maxH="200px"
                       overflowY="auto"
                     >
@@ -245,10 +250,10 @@ const ErrorDisplay: React.FC<{
                         borderRadius="md"
                         fontSize="xs"
                         whiteSpace="pre-wrap"
-                        bg="blue.50"
-                        color="blue.800"
+                        bg="info/10"
+                        color="on-info"
                         border="1px solid"
-                        borderColor="blue.200"
+                        borderColor="info/30"
                         maxH="150px"
                         overflowY="auto"
                       >
@@ -263,7 +268,7 @@ const ErrorDisplay: React.FC<{
           )}
 
           {/* Help Text */}
-          <Text fontSize="sm" color="gray.600" textAlign="center">
+          <Text fontSize="sm" color="on-muted" textAlign="center">
             If this problem persists, please contact support with the error ID above.
           </Text>
         </VStack>

@@ -11,6 +11,7 @@ import { BorderHierarchySection } from "./sections/BorderHierarchySection";
 import { ShadowSystemSection } from "./sections/ShadowSystemSection";
 import { InteractionStatesSection } from "./sections/InteractionStatesSection";
 import { UIElementTokensSection } from "./sections/UIElementTokensSection";
+import { FormControlsSection } from "./sections/FormControlsSection";
 
 /**
  * Theme display name mappings
@@ -118,6 +119,7 @@ export default function ThemeDebug() {
                 { id: 'borders', label: 'Borders' },
                 { id: 'shadows', label: 'Shadows' },
                 { id: 'interaction-states', label: 'States' },
+                { id: 'form-controls', label: 'Forms' },
                 { id: 'ui-elements', label: 'UI' },
                 { id: 'opacity-modifiers', label: 'Opacity' },
               ].map(({ id, label }) => (
@@ -157,6 +159,9 @@ export default function ThemeDebug() {
 
         {/* Interaction States */}
         <InteractionStatesSection />
+
+        {/* Form Controls */}
+        <FormControlsSection />
 
         {/* UI Element Tokens */}
         <UIElementTokensSection />

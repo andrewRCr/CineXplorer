@@ -1570,7 +1570,7 @@ and ongoing migration overhead in future tasks.
 
         **Quality gates:** ✅ TypeScript type checking PASSED, Frontend linting PASSED
 
-- [ ] **4.4 Convert remaining components**
+- [x] **4.4 Convert remaining components**
 
     **Status:** 4/5 subtasks complete. Only Watchlist page remains (minimal - one error text token).
 
@@ -1718,6 +1718,13 @@ and provide living style guide.
         - Show button with spinner replacing content
         - Maintain button size during loading state
 
+    - [ ] **5.1.d Add subtle button selected state (ADR-012)**
+        - Demonstrate `button-subtle` vs `button-subtle-selected`
+        - Show `on-button-subtle` vs `on-button-subtle-selected` text pairing
+        - Use case: Toggle buttons, option selectors (e.g., theme picker in sticky header)
+        - Verify contrast shift works across all 4 themes × 2 modes
+        - Label with "Default (subtle)" and "Selected (subtle-selected)"
+
 - [ ] **5.2 Create Section 2: Form Controls**
 
     **Goal:** Define and validate token patterns for all form inputs across themes.
@@ -1772,7 +1779,7 @@ and provide living style guide.
 
     - [ ] **5.4.b Add badge status variants**
         - Success, warning, info, destructive badges
-        - Neutral badge with `badge`/`badge-foreground` tokens
+        - Neutral badge with `badge`/`on-badge` tokens (ADR-011 canonical naming)
 
     - [ ] **5.4.c Add progress indicators**
         - Determinate progress bar (with percentage)
@@ -1780,62 +1787,104 @@ and provide living style guide.
 
     - [ ] **5.4.d Add tooltip examples**
         - Show popover positioning
-        - Verify `popover`/`popover-foreground` tokens
+        - Verify `popover`/`on-popover` tokens (ADR-011 canonical naming)
 
 - [ ] **5.5 Enhance Section 5: Surfaces & Containers**
 
-    - [ ] **5.5.a Verify existing layer hierarchy**
-        - Background → card → surface-elevated already shown
-        - Check visual distinction across themes
+    - [ ] **5.5.a Enhance layer hierarchy with light mode alternating demonstration**
+        - Verify existing basic hierarchy (background → layer-01 → layer-02 → layer-03)
+        - **CRITICAL:** Add explicit nested example demonstrating light mode alternating pattern (ADR-008)
+        - Show nested surfaces: `background` contains `layer-01` (gray) contains `layer-02` (white) contains `layer-03` (gray)
+        - Label example with "Light Mode Alternating: Creates visual 'popup' effect"
+        - Dark mode: Verify consistent darkening progression (no alternation)
+        - Check visual distinction across all 4 themes × 2 modes
+        - Note in implementation: "Per ADR-008, light mode alternates to create depth perception"
 
     - [ ] **5.5.b Add card with hover state**
         - Interactive card example
-        - Show `accent/8` hover pattern
+        - Show `tertiary/8` hover pattern (per strategy doc opacity modifiers)
+        - Demonstrate transition from default to hover
 
     - [ ] **5.5.c Add modal/dialog example**
-        - Show backdrop overlay
-        - Verify dialog surface token
+        - Show backdrop overlay using appropriate opacity
+        - Verify dialog surface token (layer-02 or layer-03 depending on context)
+        - Demonstrate close button and focus trap pattern
 
     - [ ] **5.5.d Add popover/menu dropdown**
-        - Demonstrates `popover` surface (layer-03 equivalent)
+        - Demonstrates `popover` surface (contextual layer-02 or layer-03)
         - Test menu item hover states
+        - Show positioning (top, bottom, left, right examples)
 
 - [ ] **5.6 Create Section 6: Interactive Lists**
 
-    - [ ] **5.6.a Add list item states**
-        - Hover, selected, disabled states
-        - Show proper state layering (8%, 12%)
+    - [ ] **5.6.a Add list item states with explicit token labels**
+        - Hover state: Show `layer-hover-01` background (8% foreground overlay)
+        - Selected state: Show `layer-selected-01` background (12% foreground overlay)
+        - Disabled state: Show `muted`/`on-muted` styling
+        - Label each state with token name used
+        - Demonstrate on layer-01 surface context
+        - Optional: Show layer-02 variants (`layer-hover-02`, `layer-selected-02`)
 
     - [ ] **5.6.b Add menu item examples**
-        - Demonstrates popover pattern with items
-        - Test hover highlighting
+        - Demonstrates popover pattern with interactive items
+        - Test hover highlighting (item hover on popover surface)
+        - Show keyboard navigation focus states
 
     - [ ] **5.6.c Add accordion examples**
         - Collapsed and expanded states
-        - Show header interactive states
+        - Show header interactive states (hover, active)
+        - Demonstrate content reveal transition
 
 - [ ] **5.7 Reorganize Section 7: UI Element Tokens**
 
-    - [ ] **5.7.a Verify existing border/input/ring examples**
+    - [ ] **5.7.a Verify existing border/input/ring/shadow examples**
         - Check comprehensiveness of current examples
+        - **Shadow system:** Add usage notes if not present:
+            - `shadow-sm`: Cards, subtle elevation
+            - `shadow-md`: Popovers, dropdowns
+            - `shadow-lg`: Modals, high elevation
+        - Note: Carbon uses minimal shadows (prefers layer colors per ADR-006)
+        - Note: Primer/Pajamas use shadows heavily for elevation
 
     - [ ] **5.7.b Add separator/divider examples**
         - Horizontal and vertical dividers
         - Show `border` token usage
+        - Demonstrate in different contexts (between list items, sections)
 
     - [ ] **5.7.c Add icon color context examples**
-        - Icons in buttons (using `on-*` tokens)
-        - Icons in text (using `foreground` variants)
-        - Icons as standalone (using `muted-foreground`)
+        - Icons in buttons: Use `on-button-outline`, `on-primary`, etc. (paired with button bg)
+        - Icons in text: Use `foreground` or `tertiary` for links
+        - Icons as standalone: Use `on-muted` for deemphasized icons
+        - Label each context clearly
+
+    - [ ] **5.7.d Validate per-layer border visibility**
+        - Show `border-strong-01` on `background` and `layer-01` surfaces
+        - Show `border-strong-02` on `layer-02` surface (modal/dialog context)
+        - Show `border-strong-03` on `layer-03` surface (dropdown over modal context)
+        - Verify borders meet WCAG 3:1 contrast on their intended surfaces
+        - Label with surface context: "Border on layer-01", "Border on layer-02", etc.
 
 - [ ] **5.8 Run incremental quality gates**
 
     **Note:** Checkpoint after ThemeDebug enhancements complete.
 
-    - [ ] TypeScript: 0 errors
-    - [ ] Linting: 0 violations
-    - [ ] Visual validation: All 4 themes × 2 modes (8 combinations) render correctly
-    - [ ] All new components demonstrate correct token usage per strategy docs
+    - [ ] **5.8.a Run code quality checks**
+        - TypeScript: 0 errors
+        - Linting: 0 violations
+        - All imports resolve correctly
+
+    - [ ] **5.8.b Validate against strategy doc and ADRs**
+        - Every token in `UnifiedTheme` interface has visual example in ThemeDebug
+        - All ADR-012 button helper tokens demonstrated (`button-subtle-selected`, etc.)
+        - All ADR-011 canonical `on-*` naming used (no deprecated `-foreground` aliases)
+        - Light mode alternating pattern (ADR-008) clearly shown with nested example
+        - Opacity modifier patterns documented (8% hover, 12% selected, 10%/30% status)
+
+    - [ ] **5.8.c Visual validation across all themes**
+        - All 4 themes × 2 modes (8 combinations) render correctly
+        - All new sections demonstrate correct token usage
+        - Interactive states work (hover, focus, active, disabled)
+        - No visual regressions in existing sections
 
 ### **Phase 6:** Visual Validation & Component Polish
 

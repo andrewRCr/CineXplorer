@@ -1,5 +1,4 @@
-import { Box, Text, VStack, HStack, Button, Code, Link } from "@chakra-ui/react";
-import { LuSettings, LuPlus } from "react-icons/lu";
+import { Box, Text, VStack, HStack, Button, Link, Code } from "@chakra-ui/react";
 import { useThemeSelect } from "@/hooks/useThemeSelect";
 
 /**
@@ -196,281 +195,64 @@ export function SemanticColorsSection() {
           </Box>
         </Box>
 
-        {/* Core Actions - Button patterns per ADR-012 */}
+        {/* Core Actions - Color demonstration (not comprehensive patterns) */}
         <Box>
           <Text fontSize="lg" fontWeight="bold" mb={2}>Core Actions</Text>
+          <Text fontSize="sm" color="on-muted" mb={3}>
+            Demonstrates core semantic colors in their primary use cases.
+            See strategy-semantic-tokens.md for comprehensive button patterns.
+          </Text>
           <Box bg="background" p={4} borderRadius="md" borderWidth="1px" borderColor="border-subtle-00">
             <VStack gap={4}>
-              {/* Buttons */}
-              <VStack gap={2}>
-                <Text fontSize="sm" fontWeight="medium">Buttons:</Text>
-                <HStack gap={3} wrap="wrap" justify="center">
-                {/* Solid button - highest emphasis */}
-                <VStack gap={1}>
-                  <Button
-                    variant="solid"
-                    bg="primary"
-                    color="on-primary"
-                    _hover={{ bg: "primary-hover" }}
-                    _active={{ bg: "primary-active" }}
-                  >
-                    Save
-                  </Button>
-                  <Text fontSize="xs" color="foreground/60">solid</Text>
-                </VStack>
-
-                {/* Primary outline button - high emphasis */}
-                <VStack gap={1}>
-                  <Button
-                    variant="outline"
-                    borderColor="button-outline-primary"
-                    color="on-button-outline-primary"
-                    _hover={{ bg: "primary/8" }}
-                    _active={{ bg: "primary/12" }}
-                  >
-                    Learn More
-                  </Button>
-                  <Text fontSize="xs" color="foreground/60">outline-primary</Text>
-                </VStack>
-
-                {/* Neutral outline button - medium emphasis */}
-                <VStack gap={1}>
-                  <Button
-                    variant="outline"
-                    borderColor="button-outline"
-                    color="on-button-outline"
-                    _hover={{ bg: "tertiary/8", borderColor: "tertiary" }}
-                    _active={{ bg: "tertiary/12", borderColor: "tertiary" }}
-                  >
-                    Cancel
-                  </Button>
-                  <Text fontSize="xs" color="foreground/60">outline-neutral</Text>
-                </VStack>
-
-                {/* Subtle button - medium-low emphasis */}
-                <VStack gap={1}>
-                  <Button
-                    variant="subtle"
-                    bg="button-subtle"
-                    color="on-button-subtle"
-                    _hover={{ bg: "secondary-hover" }}
-                    _active={{ bg: "secondary-active" }}
-                  >
-                    Options
-                  </Button>
-                  <Text fontSize="xs" color="foreground/60">subtle</Text>
-                </VStack>
-
-                {/* Ghost button - lowest emphasis */}
-                <VStack gap={1}>
-                  <Button
-                    variant="ghost"
-                    color="tertiary"
-                    _hover={{ color: "tertiary-hover" }}
-                    _active={{ color: "tertiary-active" }}
-                  >
-                    Skip
-                  </Button>
-                  <Text fontSize="xs" color="foreground/60">ghost</Text>
-                </VStack>
-                </HStack>
-              </VStack>
-
-              {/* Interactive text/links */}
-              <VStack gap={2} mt={3}>
-                <Text fontSize="sm" fontWeight="medium">Interactive Text & Links:</Text>
-                <Link
-                  color="tertiary"
-                  textDecoration="underline"
-                  textDecorationThickness="2px"
-                  textUnderlineOffset="2px"
-                  _hover={{ color: "tertiary-hover" }}
-                  _focus={{
-                    outline: "2px solid",
-                    outlineColor: "ring",
-                    outlineOffset: "2px",
-                  }}
+              {/* Three core action colors */}
+              <HStack gap={3} wrap="wrap" justify="center">
+                <Button
+                  bg="primary"
+                  color="on-primary"
+                  _hover={{ bg: "primary-hover" }}
+                  _active={{ bg: "primary-active" }}
                 >
-                  Learn more about this feature
-                </Link>
-                <Text fontSize="xs" color="foreground/60">(uses tertiary + tertiary-hover)</Text>
-              </VStack>
+                  primary
+                </Button>
+                <Button
+                  bg="button-subtle"
+                  color="on-button-subtle"
+                  _hover={{ bg: "secondary-hover" }}
+                  _active={{ bg: "secondary-active" }}
+                >
+                  secondary (subtle)
+                </Button>
+                <Button
+                  variant="ghost"
+                  color="tertiary"
+                  _hover={{ color: "tertiary-hover" }}
+                  _active={{ color: "tertiary-active" }}
+                >
+                  tertiary (ghost)
+                </Button>
+              </HStack>
 
-              <Text fontSize="xs" color="foreground/60" textAlign="center" maxW="800px" lineHeight="1.5">
-                Per ADR-012: Button patterns are separate from color semantics.
-                Neutral outline <Code fontSize="xs">button-outline</Code> (gray) for utility actions is DEFAULT.
-                Primary outline <Code fontSize="xs">button-outline-primary</Code> (brand color) for branded actions is EXPLICIT.
-                Subtle <Code fontSize="xs">button-subtle</Code> (filled gray) for embedded controls.
-                Links use <Code fontSize="xs">tertiary</Code> color.
+              {/* Interactive link example */}
+              <Link
+                color="tertiary"
+                textDecoration="underline"
+                textDecorationThickness="1px"
+                textUnderlineOffset="2px"
+                _hover={{ color: "tertiary-hover" }}
+                _focus={{
+                  outline: "2px solid",
+                  outlineColor: "ring",
+                  outlineOffset: "2px",
+                }}
+              >
+                Interactive link (tertiary)
+              </Link>
+
+              <Text fontSize="xs" color="on-muted" textAlign="center" maxW="700px" lineHeight="1.5">
+                Per ADR-010/ADR-012: Primary (action buttons), Secondary (subtle backgrounds),
+                Tertiary (links/interactive text). See strategy-semantic-tokens.md "Building Buttons"
+                section for full button patterns (5 variants, disabled states, loading, icons, etc.).
               </Text>
-
-              {/* Disabled States */}
-              <VStack gap={2} mt={3}>
-                <Text fontSize="sm" fontWeight="medium">Disabled States:</Text>
-                <HStack gap={3} wrap="wrap" justify="center">
-                  {/* Solid disabled */}
-                  <VStack gap={1}>
-                    <Button
-                      variant="solid"
-                      bg="primary"
-                      color="on-primary"
-                      disabled
-                    >
-                      Save
-                    </Button>
-                    <Text fontSize="xs" color="foreground/60">solid</Text>
-                  </VStack>
-
-                  {/* Primary outline disabled */}
-                  <VStack gap={1}>
-                    <Button
-                      variant="outline"
-                      borderColor="button-outline-primary"
-                      color="on-button-outline-primary"
-                      disabled
-                    >
-                      Learn More
-                    </Button>
-                    <Text fontSize="xs" color="foreground/60">outline-primary</Text>
-                  </VStack>
-
-                  {/* Neutral outline disabled */}
-                  <VStack gap={1}>
-                    <Button
-                      variant="outline"
-                      borderColor="button-outline"
-                      color="on-button-outline"
-                      disabled
-                    >
-                      Cancel
-                    </Button>
-                    <Text fontSize="xs" color="foreground/60">outline-neutral</Text>
-                  </VStack>
-
-                  {/* Subtle disabled */}
-                  <VStack gap={1}>
-                    <Button
-                      variant="subtle"
-                      bg="button-subtle"
-                      color="on-button-subtle"
-                      disabled
-                    >
-                      Options
-                    </Button>
-                    <Text fontSize="xs" color="foreground/60">subtle</Text>
-                  </VStack>
-
-                  {/* Ghost disabled */}
-                  <VStack gap={1}>
-                    <Button
-                      variant="ghost"
-                      color="tertiary"
-                      disabled
-                    >
-                      Skip
-                    </Button>
-                    <Text fontSize="xs" color="foreground/60">ghost</Text>
-                  </VStack>
-                </HStack>
-                <Text fontSize="xs" color="foreground/60" textAlign="center">
-                  Disabled state: <Code fontSize="xs">cursor: not-allowed</Code> and 38% opacity (Chakra UI defaults)
-                </Text>
-              </VStack>
-
-              {/* Buttons with Icons */}
-              <VStack gap={2} mt={3}>
-                <Text fontSize="sm" fontWeight="medium">Buttons with Icons:</Text>
-                <HStack gap={3} wrap="wrap" justify="center">
-                  {/* Neutral outline with icon */}
-                  <VStack gap={1}>
-                    <Button
-                      variant="outline"
-                      borderColor="button-outline"
-                      color="on-button-outline"
-                      _hover={{ bg: "tertiary/8", borderColor: "tertiary" }}
-                      _active={{ bg: "tertiary/12", borderColor: "tertiary" }}
-                    >
-                      <LuSettings />
-                      Settings
-                    </Button>
-                    <Text fontSize="xs" color="foreground/60">outline-neutral</Text>
-                  </VStack>
-
-                  {/* Primary outline with icon */}
-                  <VStack gap={1}>
-                    <Button
-                      variant="outline"
-                      borderColor="button-outline-primary"
-                      color="on-button-outline-primary"
-                      _hover={{ bg: "primary/8" }}
-                      _active={{ bg: "primary/12" }}
-                    >
-                      <LuPlus />
-                      Add Movie
-                    </Button>
-                    <Text fontSize="xs" color="foreground/60">outline-primary</Text>
-                  </VStack>
-                </HStack>
-                <Text fontSize="xs" color="foreground/60" textAlign="center" maxW="600px" lineHeight="1.5">
-                  Icons inherit text color via <Code fontSize="xs">on-button-outline</Code> / <Code fontSize="xs">on-button-outline-primary</Code>.
-                  Never use background tokens for icon colors.
-                </Text>
-              </VStack>
-
-              {/* Loading State */}
-              <VStack gap={2} mt={3}>
-                <Text fontSize="sm" fontWeight="medium">Loading State:</Text>
-                <VStack gap={1}>
-                  <Button
-                    variant="solid"
-                    bg="primary"
-                    color="on-primary"
-                    loading
-                    loadingText="Saving"
-                  >
-                    Save Changes
-                  </Button>
-                  <Text fontSize="xs" color="foreground/60">Button maintains size during loading</Text>
-                </VStack>
-              </VStack>
-
-              {/* Subtle Selected State (ADR-012) */}
-              <VStack gap={2} mt={3}>
-                <Text fontSize="sm" fontWeight="medium">Subtle Button Selected State (ADR-012):</Text>
-                <HStack gap={3} wrap="wrap" justify="center">
-                  {/* Default subtle */}
-                  <VStack gap={1}>
-                    <Button
-                      variant="subtle"
-                      bg="button-subtle"
-                      color="on-button-subtle"
-                      _hover={{ bg: "secondary-hover" }}
-                      _active={{ bg: "secondary-active" }}
-                    >
-                      Option 1
-                    </Button>
-                    <Text fontSize="xs" color="foreground/60">subtle (default)</Text>
-                  </VStack>
-
-                  {/* Selected subtle */}
-                  <VStack gap={1}>
-                    <Button
-                      variant="subtle"
-                      bg="button-subtle-selected"
-                      color="on-button-subtle-selected"
-                      _hover={{ bg: "button-subtle-selected" }}
-                    >
-                      Option 2
-                    </Button>
-                    <Text fontSize="xs" color="foreground/60">subtle-selected</Text>
-                  </VStack>
-                </HStack>
-                <Text fontSize="xs" color="foreground/60" textAlign="center" maxW="700px" lineHeight="1.5">
-                  Toggle buttons use <Code fontSize="xs">button-subtle</Code> (default) vs <Code fontSize="xs">button-subtle-selected</Code> (selected).
-                  Selected state shifts from button semantics (secondary + on-secondary) to surface semantics (layer-selected-02 + foreground) for proper contrast.
-                  See sticky header theme selector for live example.
-                </Text>
-              </VStack>
             </VStack>
           </Box>
         </Box>

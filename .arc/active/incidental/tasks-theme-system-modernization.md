@@ -1841,37 +1841,64 @@ and provide living style guide.
     **Quality gates:** ✅ Frontend linting PASSED, TypeScript PASSED, All 7 subtasks complete, Strategy doc updated,
     Post-completion fixes applied
 
-- [ ] **5.3 Create Section 3: Navigation Patterns**
+- [x] **5.3 Create Section 3: Navigation Patterns**
 
-    - [ ] **5.3.a Verify inline text links**
-        - Check existing implementation comprehensiveness
-        - Ensure underline + hover + focus patterns shown
+    **Completed:** Created NavigationPatternsSection.tsx demonstrating inline links, tabs, and breadcrumbs.
 
-    - [ ] **5.3.b Add tab pattern examples**
-        - States: default, hover, active/selected, disabled
-        - Test border/underline active indicators
+    - [x] **5.3.a Verify inline text links**
+        - Inline links didn't exist yet, created single example matching Register.tsx usage
+        - "Already have an account? Sign in" pattern (text + inline link)
+        - Standard 1px underline (WCAG accessibility requirement) with 2px offset
+        - Originally used 2px thick underline, removed for cleaner appearance
+        - Uses tertiary/tertiary-hover colors per semantic token strategy
+        - Focus ring with ring token (2px solid outline)
 
-    - [ ] **5.3.c Add breadcrumb examples**
-        - Show separator styling
-        - Test current page emphasis
+    - [x] **5.3.b Add tab pattern examples**
+        - Full tab demo with 4 tabs (3 active + 1 disabled)
+        - Content panels for each tab
+        - Variant demonstrations (line, enclosed, outline)
+        - Disabled state shown with cursor: not-allowed
+        - Uses Chakra v3 default styling
 
-- [ ] **5.4 Enhance Section 4: Feedback & Status**
+    - [x] **5.3.c Add breadcrumb examples**
+        - Standard breadcrumb with LuHouse icon and LuChevronRight separators
+        - Separator variation with text "/" separator
+        - Links use tertiary color, current page uses foreground color
+        - Current page emphasized with medium font weight
+        - Separators use border-strong-01 token
 
-    - [ ] **5.4.a Verify existing alerts**
-        - Success, warning, error, info variants already present
-        - Ensure all show proper icon + color + contrast
+- [x] **5.4 Enhance Section 4: Feedback & Status**
 
-    - [ ] **5.4.b Add badge status variants**
-        - Success, warning, info, destructive badges
-        - Neutral badge with `badge`/`on-badge` tokens (ADR-011 canonical naming)
+    **Completed:** Created FeedbackStatusSection.tsx with alerts, badges, progress, and tooltips.
 
-    - [ ] **5.4.c Add progress indicators**
-        - Determinate progress bar (with percentage)
-        - Indeterminate progress/spinner
+    - [x] **5.4.a Verify existing alerts**
+        - Alerts didn't exist, created new implementations
+        - All 4 status types: success, warning, error (destructive), info
+        - 10% opacity backgrounds (success/10, warning/10, etc.)
+        - Alert.Title uses semantic color (success, warning, destructive, info)
+        - Alert.Description uses foreground for readability
+        - Note: on-* tokens are for FULL opacity backgrounds (badges), not subtle tints
+        - Icons use Chakra default Alert.Indicator (no custom icons needed)
+        - Border uses full opacity status colors
 
-    - [ ] **5.4.d Add tooltip examples**
-        - Show popover positioning
-        - Verify `popover`/`on-popover` tokens (ADR-011 canonical naming)
+    - [x] **5.4.b Add badge status variants**
+        - Status badges: success, warning, info, destructive with on-* tokens
+        - Neutral badge section with badge/on-badge tokens per ADR-011
+        - Examples: genre tags (Action, Sci-Fi), ratings (PG-13), years (2024)
+        - Documentation clarifies difference between status and neutral badges
+
+    - [x] **5.4.c Add progress indicators**
+        - Determinate progress: Progress.Root with value={65}, label, and ValueText showing percentage
+        - Indeterminate progress: Progress.Root with value={null} and animated range
+        - Spinner demos: sm, md, lg sizes
+        - Uses Chakra v3 defaults throughout
+
+    - [x] **5.4.d Add tooltip examples**
+        - Positioning examples: top, bottom, left, right placements
+        - Tooltip with arrow demonstration
+        - Documentation: Uses popover/on-popover tokens per ADR-011
+        - Notes that popover maps to layer-02 or layer-03 depending on z-index context
+        - Uses Tooltip component from @/components/chakra/tooltip
 
 - [ ] **5.5 Enhance Section 5: Surfaces & Containers**
 

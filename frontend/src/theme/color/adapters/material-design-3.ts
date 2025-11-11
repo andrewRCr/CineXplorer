@@ -243,7 +243,8 @@ export function createMaterialAdapter(mode: "light" | "dark"): UnifiedTheme {
         "layer-02": layer02,
         "layer-03": layer03,
         popover,
-        "popover-foreground": popoverForeground,
+        "on-popover": popoverForeground,
+        "popover-foreground": popoverForeground, // @deprecated - alias for on-popover (ADR-011)
 
         // Border hierarchy
         "border-subtle-00": borderSubtle00,

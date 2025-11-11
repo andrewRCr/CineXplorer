@@ -25,12 +25,16 @@
 export interface ExtensionTokens {
     /** Rating background (TMDB scores, IMDb gold standard) */
     rating: string;
-    /** Text color on rating backgrounds */
+    /** Text color on rating backgrounds (ADR-011 canonical naming) */
+    "on-rating": string;
+    /** @deprecated Use on-rating instead (ADR-011) */
     "rating-foreground": string;
 
     /** Badge background (genre tags, neutral labels) */
     badge: string;
-    /** Text color on badge backgrounds */
+    /** Text color on badge backgrounds (ADR-011 canonical naming) */
+    "on-badge": string;
+    /** @deprecated Use on-badge instead (ADR-011) */
     "badge-foreground": string;
 
     /** Active drag state (item being dragged) */
@@ -109,14 +113,19 @@ export function createExtensions(
     },
     mode: "light" | "dark",
 ): ExtensionTokens {
+    const ratingFg = standardRatingColors[mode]["rating-foreground"];
+    const badgeFg = themeBase.mutedForeground;
+
     return {
         // Rating tokens: Use standard IMDb gold across all themes
         rating: standardRatingColors[mode].rating,
-        "rating-foreground": standardRatingColors[mode]["rating-foreground"],
+        "on-rating": ratingFg, // ADR-011: Canonical naming
+        "rating-foreground": ratingFg, // @deprecated - alias for on-rating
 
         // Badge tokens: Adapt to theme's neutral palette
         badge: themeBase.muted,
-        "badge-foreground": themeBase.mutedForeground,
+        "on-badge": badgeFg, // ADR-011: Canonical naming
+        "badge-foreground": badgeFg, // @deprecated - alias for on-badge
 
         // Drag-and-drop: Adapt to theme's interactive colors
         "drag-active": themeBase.secondaryHover,
@@ -149,10 +158,11 @@ export function createExtensions(
 export function createCustomRatingColors(
     background: string,
     foreground: string,
-): Pick<ExtensionTokens, "rating" | "rating-foreground"> {
+): Pick<ExtensionTokens, "rating" | "on-rating" | "rating-foreground"> {
     // TODO: Add contrast validation in development mode
     return {
         rating: background,
-        "rating-foreground": foreground,
+        "on-rating": foreground, // ADR-011: Canonical naming
+        "rating-foreground": foreground, // @deprecated - alias for on-rating
     };
 }

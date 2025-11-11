@@ -246,7 +246,8 @@ export function createPajamasAdapter(mode: "light" | "dark"): UnifiedTheme {
         "layer-02": layer02,
         "layer-03": layer03,
         popover,
-        "popover-foreground": popoverForeground,
+        "on-popover": popoverForeground,
+        "popover-foreground": popoverForeground, // @deprecated - alias for on-popover (ADR-011)
 
         // Border hierarchy (derived for consistency)
         "border-subtle-00": borderSubtle00,
@@ -322,9 +323,11 @@ export function createPajamasAdapter(mode: "light" | "dark"): UnifiedTheme {
 
         // CineXplorer extensions
         rating: extensions.rating,
-        "rating-foreground": extensions["rating-foreground"],
+        "on-rating": extensions["rating-foreground"],
+        "rating-foreground": extensions["rating-foreground"], // @deprecated - alias for on-rating (ADR-011)
         badge: extensions.badge,
-        "badge-foreground": extensions["badge-foreground"],
+        "on-badge": extensions["badge-foreground"],
+        "badge-foreground": extensions["badge-foreground"], // @deprecated - alias for on-badge (ADR-011)
         "drag-active": extensions["drag-active"],
         "drop-zone": extensions["drop-zone"],
 

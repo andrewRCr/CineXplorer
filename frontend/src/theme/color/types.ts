@@ -135,12 +135,41 @@ export interface UnifiedTheme {
      * Popovers over base content use layer-02; popovers over modals use layer-03.
      *
      * **Usage:** Tooltips, dropdown menus, popovers, context menus
-     * **Text color:** Use `popover-foreground`
+     * **Text color:** Use `on-popover`
      */
     popover: string;
 
     /**
-     * Text color on popover backgrounds.
+     * Text color on popover backgrounds (ADR-011 canonical naming).
+     *
+     * **Naming Convention:** Uses industry-standard `on-*` prefix for consistency.
+     *
+     * **Usage:**
+     * - Text in tooltips, dropdown menus, popovers
+     * - Any content overlaid on `popover` background
+     *
+     * **Example:**
+     * ```tsx
+     * <Tooltip>
+     *   <Tooltip.Content bg="popover">
+     *     <Text color="on-popover">Tooltip text</Text>
+     *   </Tooltip.Content>
+     * </Tooltip>
+     * ```
+     *
+     * @see ADR-011 for on-* naming convention rationale
+     */
+    "on-popover": string;
+
+    /**
+     * @deprecated Use `on-popover` instead. This alias is maintained for backward
+     * compatibility during component migration (ADR-011).
+     *
+     * **Migration:** Replace all `popover-foreground` usage with `on-popover`.
+     * This alias will be removed in a future version.
+     *
+     * @see on-popover for current token documentation
+     * @see ADR-011 for migration rationale
      */
     "popover-foreground": string;
 
@@ -1130,11 +1159,37 @@ export interface UnifiedTheme {
      *
      * **Standard:** IMDb gold (#F5C518) in light mode, adjusted for dark mode
      * **Usage:** Score badges, rating indicators, quality displays
+     * **Text color:** Use `on-rating`
      */
     rating: string;
 
     /**
-     * Text color on rating backgrounds.
+     * Text color on rating backgrounds (ADR-011 canonical naming).
+     *
+     * **Naming Convention:** Uses industry-standard `on-*` prefix for consistency.
+     *
+     * **Usage:**
+     * - Text in rating badges (TMDB scores, user ratings)
+     * - Any content overlaid on `rating` background
+     *
+     * **Example:**
+     * ```tsx
+     * <Badge bg="rating" color="on-rating">8.5</Badge>
+     * ```
+     *
+     * @see ADR-011 for on-* naming convention rationale
+     */
+    "on-rating": string;
+
+    /**
+     * @deprecated Use `on-rating` instead. This alias is maintained for backward
+     * compatibility during component migration (ADR-011).
+     *
+     * **Migration:** Replace all `rating-foreground` usage with `on-rating`.
+     * This alias will be removed in a future version.
+     *
+     * @see on-rating for current token documentation
+     * @see ADR-011 for migration rationale
      */
     "rating-foreground": string;
 
@@ -1142,11 +1197,38 @@ export interface UnifiedTheme {
      * Badge background (genre tags, neutral labels).
      *
      * **Usage:** Genre tags, content ratings, non-semantic badges
+     * **Text color:** Use `on-badge`
      */
     badge: string;
 
     /**
-     * Text color on badge backgrounds.
+     * Text color on badge backgrounds (ADR-011 canonical naming).
+     *
+     * **Naming Convention:** Uses industry-standard `on-*` prefix for consistency.
+     *
+     * **Usage:**
+     * - Text in genre tags, content rating badges
+     * - Any content overlaid on `badge` background
+     *
+     * **Example:**
+     * ```tsx
+     * <Badge bg="badge" color="on-badge">Action</Badge>
+     * <Badge bg="badge" color="on-badge">PG-13</Badge>
+     * ```
+     *
+     * @see ADR-011 for on-* naming convention rationale
+     */
+    "on-badge": string;
+
+    /**
+     * @deprecated Use `on-badge` instead. This alias is maintained for backward
+     * compatibility during component migration (ADR-011).
+     *
+     * **Migration:** Replace all `badge-foreground` usage with `on-badge`.
+     * This alias will be removed in a future version.
+     *
+     * @see on-badge for current token documentation
+     * @see ADR-011 for migration rationale
      */
     "badge-foreground": string;
 

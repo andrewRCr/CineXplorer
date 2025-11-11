@@ -151,7 +151,7 @@ const NavBarUserMenu = () => {
                     <HStack gap={2} ml={2}>
                       <BsFillPlusCircleFill size={14} />
                       <Text
-                        color="popover-foreground"
+                        color="on-popover"
                         _hover={{ color: "tertiary" }}
                         transition="color 0.2s ease-in-out"
                       >
@@ -198,7 +198,7 @@ const NavBarUserMenu = () => {
                             borderBottomRadius={0}
                           />
                           <Text
-                            color="popover-foreground"
+                            color="on-popover"
                             _hover={{ color: "tertiary" }}
                             transition="color 0.2s ease-in-out"
                             ml={2}
@@ -247,7 +247,7 @@ const NavBarUserMenu = () => {
                     borderBottomRadius={0}
                   />
                   <Text
-                    color="popover-foreground"
+                    color="on-popover"
                     _hover={{ color: "tertiary" }}
                     transition="color 0.2s ease-in-out"
                     ml={2}
@@ -286,7 +286,7 @@ const NavBarUserMenu = () => {
                     transition="opacity 0.2s ease-in-out"
                   />
                   <Text
-                    color="popover-foreground"
+                    color="on-popover"
                     _hover={{ color: "tertiary" }}
                     transition="color 0.2s ease-in-out"
                     ml={2}
@@ -330,7 +330,7 @@ const NavBarUserMenu = () => {
                   borderTopRadius={0}
                 />
                 <Text
-                  color="popover-foreground"
+                  color="on-popover"
                   _hover={{ color: "tertiary" }}
                   transition="color 0.2s ease-in-out"
                   ml={2}

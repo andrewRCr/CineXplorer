@@ -190,7 +190,7 @@ const MovieDetail = () => {
           {/* Header: Genres */}
           <Flex gap={2} wrap="wrap" justify="center" align="center">
           {movie.genres?.map((genre: Genre) => (
-              <Tag key={genre.id} bg="badge" color="badge-foreground">
+              <Tag key={genre.id} bg="badge" color="on-badge">
                 {genre.name}
               </Tag>
             ))}
@@ -336,7 +336,7 @@ const MovieDetail = () => {
         </Heading>
         <Flex gap={2} wrap="wrap" justify="center">
         {movie.production_companies?.map((company: ProductionCompany, idx: number) => (
-            <Tag key={company.id || idx} bg="badge" color="badge-foreground">
+            <Tag key={company.id || idx} bg="badge" color="on-badge">
               {company.name}
             </Tag>
           ))}

@@ -47,10 +47,10 @@ export function CineXplorerExtensionsSection() {
           <Box>
             <Text fontSize="sm" fontWeight="bold" mb={2} textAlign="center">Genre Badges</Text>
             <HStack gap={2} justify="center">
-              <Box bg="badge" color="badge-foreground" px={3} py={1} borderRadius="full" fontSize="sm">
+              <Box bg="badge" color="on-badge" px={3} py={1} borderRadius="full" fontSize="sm">
                 Action
               </Box>
-              <Box bg="badge" color="badge-foreground" px={3} py={1} borderRadius="full" fontSize="sm">
+              <Box bg="badge" color="on-badge" px={3} py={1} borderRadius="full" fontSize="sm">
                 Sci-Fi
               </Box>
             </HStack>

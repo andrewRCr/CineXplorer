@@ -272,7 +272,7 @@ const MovieCard = ({ movie, currentPage, source, query }: MovieCardProps) => {
                       fontSize="sm"
                       fontWeight="medium"
                       fontFamily="sourcesans"
-                      color="popover-foreground"
+                      color="on-popover"
                       lineHeight="1.2"
                     >
                       {movie.title}

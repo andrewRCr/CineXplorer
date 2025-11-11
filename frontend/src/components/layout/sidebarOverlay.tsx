@@ -42,12 +42,13 @@ export const sidebarDrawer = createOverlay<SidebarDrawerProps>((props) => {
         <Drawer.Backdrop />
         <Drawer.Positioner>
           <Drawer.Content
-            bg="layer-01"
+            bg="background"
             borderRight="1px solid"
             borderColor="border"
             width="sidebar-width"
           >
             <Drawer.Header
+              bg="layer-01"
               borderBottom="1px solid"
               borderColor="border"
               p={0}
@@ -127,7 +128,12 @@ export const sidebarDrawer = createOverlay<SidebarDrawerProps>((props) => {
             </Drawer.Header>
 
             <Drawer.Body p={0}>
-              <SidebarContent onNavigate={handleNavigationCallback} />
+              <SidebarContent
+                layer="01"
+                listboxBg="layer-01"
+                listboxProps={{ mb: 4 }}
+                onNavigate={handleNavigationCallback}
+              />
             </Drawer.Body>
           </Drawer.Content>
         </Drawer.Positioner>

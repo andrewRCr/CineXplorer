@@ -22,7 +22,7 @@ const Sidebar: React.FC = () => {
       zIndex="sidebar"
       style={{ willChange: 'transform' }}
     >
-      <SidebarContent />
+      <SidebarContent layer="02" listboxBg="layer-02" listboxProps={{ borderRadius: "md", my: 3 }} />
     </Box>
   );
 };

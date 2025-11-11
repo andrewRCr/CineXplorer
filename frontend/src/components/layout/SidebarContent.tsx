@@ -1,5 +1,6 @@
 import {
   Box,
+  type BoxProps,
   IconButton,
   Listbox,
   Separator,
@@ -16,9 +17,13 @@ import React from "react";
 
 interface SidebarContentProps {
   onNavigate?: () => void; // Optional callback for when navigation occurs (useful for closing drawer)
+  layer?: "01" | "02"; // Which layer interaction states to use (default: "01" for mobile)
+  listboxBg?: string; // Background color for listbox container (e.g., "layer-02" for elevation)
+  listboxProps?: Partial<BoxProps>; // Additional props for listbox container (borderRadius, margin, etc.)
 }
 
 // Shared styling props for all Listbox.Item components
+// NOTE: These use layer-01 states. Desktop sidebar will override with layer-02 states.
 const listItemProps = {
   px: 3,
   py: 2,
@@ -28,7 +33,7 @@ const listItemProps = {
   _hover: { bg: "layer-hover-01" as const },
   _selected: {
     bg: "layer-selected-01" as const,
-    color: "on-tertiary" as const,
+    color: "foreground" as const,
     fontWeight: "medium" as const,
   },
   cursor: "pointer" as const,
@@ -37,7 +42,20 @@ const listItemProps = {
 
 export const SidebarContent: React.FC<SidebarContentProps> = ({
   onNavigate,
+  layer = "01",
+  listboxBg,
+  listboxProps = {},
 }) => {
+  // Build layer-specific interaction state props
+  const layerItemProps = {
+    ...listItemProps,
+    _hover: { bg: `layer-hover-${layer}` as const },
+    _selected: {
+      bg: `layer-selected-${layer}` as const,
+      color: "foreground" as const,
+      fontWeight: "medium" as const,
+    },
+  };
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -98,7 +116,7 @@ export const SidebarContent: React.FC<SidebarContentProps> = ({
     <VStack align="stretch" gap={0} pt={7} pb={6} px={4}>
       {/* Mobile Search - Only show on mobile */}
       {isMobile && (
-        <Box mb={5} px={0}>
+        <Box mb={5}>
           <NavBarSearch onSearch={onNavigate} />
         </Box>
       )}
@@ -131,7 +149,8 @@ export const SidebarContent: React.FC<SidebarContentProps> = ({
 
       {/* Combined Navigation Section - Single Listbox */}
       {userSection && browseSection && (
-        <Listbox.Root
+        <Box bg={listboxBg} {...listboxProps}>
+          <Listbox.Root
           collection={createListCollection({
             items: [
               // User items (excluding Log action)
@@ -162,7 +181,7 @@ export const SidebarContent: React.FC<SidebarContentProps> = ({
                 <Listbox.Item
                   key={item.value}
                   item={{ label: item.label, value: item.value }}
-                  {...listItemProps}
+                  {...layerItemProps}
                 >
                   <Listbox.ItemText>{item.label}</Listbox.ItemText>
                 </Listbox.Item>
@@ -191,13 +210,14 @@ export const SidebarContent: React.FC<SidebarContentProps> = ({
               <Listbox.Item
                 key={item.value}
                 item={{ label: item.label, value: item.value }}
-                {...listItemProps}
+                {...layerItemProps}
               >
                 <Listbox.ItemText>{item.label}</Listbox.ItemText>
               </Listbox.Item>
             ))}
           </Listbox.Content>
         </Listbox.Root>
+        </Box>
       )}
     </VStack>
   );

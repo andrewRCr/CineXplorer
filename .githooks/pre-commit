@@ -132,6 +132,33 @@ if [ -n "$modified_task_lists" ] && [ -z "$staged_task_lists" ]; then
 fi
 
 # ============================================================================
+# CHECK 7: No meta-project references in production code
+# ============================================================================
+# Per DEVELOPMENT-RULES.md: Never reference task IDs, phase numbers, or .arc/
+# documentation in production code (comments, docstrings, variable names)
+meta_project_refs=$(git diff --cached --name-only --diff-filter=ACMR | \
+    grep -v "^\.arc/" | \
+    grep -v "^README\.md" | \
+    grep -E "\.(ts|tsx|py|js|jsx)$" | \
+    while read file; do
+        # Check for "Task X.Y" or "Phase X" patterns (case insensitive)
+        refs=$(grep -nE "[Tt]ask [0-9]+\.[0-9]+|[Pp]hase [0-9]+|\.arc/" "$file" 2>/dev/null || true)
+        if [ -n "$refs" ]; then
+            echo "$file:"
+            echo "$refs" | sed 's/^/     /'
+        fi
+    done)
+
+if [ -n "$meta_project_refs" ]; then
+    echo -e "${RED}❌ Error: Meta-project references found in production code:${NC}"
+    echo "$meta_project_refs"
+    echo ""
+    echo "   Per DEVELOPMENT-RULES.md: Code must be self-documenting without task/phase references"
+    echo "   Replace with descriptive comments explaining 'what' and 'why' independently"
+    errors=$((errors + 1))
+fi
+
+# ============================================================================
 # Summary
 # ============================================================================
 echo ""

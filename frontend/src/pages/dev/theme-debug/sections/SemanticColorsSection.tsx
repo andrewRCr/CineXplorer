@@ -204,8 +204,9 @@ export function SemanticColorsSection() {
           </Text>
           <Box bg="background" p={4} borderRadius="md" borderWidth="1px" borderColor="border-subtle-00">
             <VStack gap={4}>
-              {/* Three core action colors */}
-              <HStack gap={3} wrap="wrap" justify="center">
+              {/* Solid button */}
+              <VStack gap={2} align="center">
+                <Text fontSize="xs" fontWeight="semibold" color="foreground/80">Solid (highest emphasis)</Text>
                 <Button
                   bg="primary"
                   color="on-primary"
@@ -214,23 +215,55 @@ export function SemanticColorsSection() {
                 >
                   primary
                 </Button>
-                <Button
-                  bg="button-subtle"
-                  color="on-button-subtle"
-                  _hover={{ bg: "secondary-hover" }}
-                  _active={{ bg: "secondary-active" }}
-                >
-                  secondary (subtle)
-                </Button>
-                <Button
-                  variant="ghost"
-                  color="tertiary"
-                  _hover={{ color: "tertiary-hover" }}
-                  _active={{ color: "tertiary-active" }}
-                >
-                  tertiary (ghost)
-                </Button>
-              </HStack>
+              </VStack>
+
+              {/* Outline buttons - ADR-012 */}
+              <VStack gap={2} align="center">
+                <Text fontSize="xs" fontWeight="semibold" color="foreground/80">Outline (high emphasis)</Text>
+                <HStack gap={3} wrap="wrap" justify="center">
+                  <Button
+                    variant="outline"
+                    borderColor="button-outline-primary"
+                    color="on-button-outline-primary"
+                    _hover={{ bg: "primary/8" }}
+                    _active={{ bg: "primary/12" }}
+                  >
+                    primary outline
+                  </Button>
+                  <Button
+                    variant="outline"
+                    borderColor="button-outline"
+                    color="on-button-outline"
+                    _hover={{ bg: "tertiary/8", borderColor: "tertiary" }}
+                    _active={{ bg: "tertiary/12", borderColor: "tertiary" }}
+                  >
+                    neutral outline
+                  </Button>
+                </HStack>
+              </VStack>
+
+              {/* Subtle and Ghost buttons */}
+              <VStack gap={2} align="center">
+                <Text fontSize="xs" fontWeight="semibold" color="foreground/80">Subtle & Ghost (lower emphasis)</Text>
+                <HStack gap={3} wrap="wrap" justify="center">
+                  <Button
+                    bg="button-subtle"
+                    color="on-button-subtle"
+                    _hover={{ bg: "secondary-hover" }}
+                    _active={{ bg: "secondary-active" }}
+                  >
+                    secondary (subtle)
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    color="tertiary"
+                    _hover={{ color: "tertiary-hover" }}
+                    _active={{ color: "tertiary-active" }}
+                  >
+                    tertiary (ghost)
+                  </Button>
+                </HStack>
+              </VStack>
 
               {/* Interactive link example */}
               <Link
@@ -249,9 +282,10 @@ export function SemanticColorsSection() {
               </Link>
 
               <Text fontSize="xs" color="on-muted" textAlign="center" maxW="700px" lineHeight="1.5">
-                Per ADR-010/ADR-012: Primary (action buttons), Secondary (subtle backgrounds),
-                Tertiary (links/interactive text). See strategy-semantic-tokens.md "Building Buttons"
-                section for full button patterns (5 variants, disabled states, loading, icons, etc.).
+                Per ADR-010/ADR-012: Primary (action color), Secondary (subtle backgrounds),
+                Tertiary (links/interactive text). ADR-012 button helpers shown: primary outline (branded),
+                neutral outline (utility), subtle (embedded). See strategy-semantic-tokens.md "Building Buttons"
+                for comprehensive patterns (disabled states, loading, icons, etc.).
               </Text>
             </VStack>
           </Box>

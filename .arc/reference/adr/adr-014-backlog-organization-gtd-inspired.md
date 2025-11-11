@@ -338,12 +338,12 @@ Detailed workflow to be documented in `weekly-review.md`.
 
 **4. Migrate existing backlog:**
 
-- [ ] Audit current `backlog/feature/` and `backlog/technical/` contents
-- [ ] Create initial BACKLOG-FEATURE.md with current feature ideas as sections
-- [ ] Create initial BACKLOG-TECHNICAL.md with current technical ideas as sections
-- [ ] Identify work units ready for plan-*.md or prd-*.md promotion
-- [ ] Delete deprecated bucket files (notes-feature-backlog.md, notes-potential-future-modernization.md)
-- [ ] Remove `backlog/incidental/` directory (no longer used per ADR-013)
+- [x] Audit current `backlog/feature/` and `backlog/technical/` contents
+- [x] Create initial BACKLOG-FEATURE.md with current feature ideas as sections
+- [x] Create initial BACKLOG-TECHNICAL.md with current technical ideas as sections
+- [x] Identify work units ready for plan-*.md or prd-*.md promotion
+- [x] Delete deprecated bucket files (notes-feature-backlog.md, notes-potential-future-modernization.md)
+- [x] Remove `backlog/incidental/` directory (no longer used per ADR-013)
 
 **5. Test and refine:**
 

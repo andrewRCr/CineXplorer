@@ -93,26 +93,172 @@ Update `.arc/active/CURRENT-SESSION.md` before ending session:
 ```markdown
 ## Session Information
 
-**Branch**: [current branch name, e.g., {{FEATURE_BRANCH_PREFIX}}/{{FEATURE_NAME}}]
-**Feature Documents**:
-
-- PRD: [path to PRD, e.g., .arc/active/feature/prd-{{FEATURE_NAME}}.md]
-- Tasks: [path to task list, e.g., .arc/active/feature/tasks-{{FEATURE_NAME}}.md]
-- Notes: [path to notes file if applicable, e.g., .arc/backlog/notes/notes-{{FEATURE_NAME}}.md]
-  **Work Type**: [structured | incidental: brief description]
-  **Last Completed**: [specific task reference, e.g., "Task 3.2: Add validation logic"]
+**Branch**: [current branch name, e.g., feature/user-authentication]
+**Task List**: [path to task list, e.g., .arc/active/feature/tasks-user-authentication.md]
+  [OR: [none associated] for planning/boundary work between task lists]
+**Following Task List**: Yes
+  [OR: No - [brief context, e.g., "debugging TypeError in UserProfile (will return to Task 4.5)"]]
+**Last Completed**: Task 3.2 - Add validation logic
+  [OR for off-task-list: brief description, e.g., "Fixed TypeError in UserProfile component"]
   [OR if work complete: "Backend Type Safety (Tasks 1-14, archived)"]
-  **Next Action**: [what should happen next, e.g., "Task 3.3: Write unit tests (line 247)"]
-  [OR if transitioning: "Begin tasks-next-work-work.md Task 1"]
+**Next Action**: Task 3.3 - Write unit tests (line 247 in tasks-user-authentication.md)
+  [OR for off-task-list: specific action description]
 
-  _Note: Include line number from Read tool output (e.g., "line 247") to help AI jump directly to task during session init._
+_Note: Line numbers REQUIRED from Read tool output to enable direct navigation during session init._
+
+---
 
 ## Session Context & Status
 
-**Blockers**: [none | describe any blockers or pending decisions]
-**Key Decisions** _(only if relevant to incomplete work)_: [decisions affecting ongoing tasks]
-**Outstanding Questions**: [anything awaiting user clarification]
-**Notes for Next Session**: [context that would be lost otherwise]
+### Completed This Session
+
+[What was accomplished, with commits if applicable]
+
+### Remaining Work Before Returning to Task List
+
+_(Only for off-task-list work, only if path is known. Otherwise state "Path unclear - will return to Task X.Y when resolved.")_
+
+1. [Step 1]
+2. [Step 2]
+3. Return to Task X.Y (line ~XXX in tasks-file.md)
+
+### Blockers
+
+[none]
+[OR: Describe blockers, pending decisions, waiting on user clarification]
+
+### Additional Context for Next Session
+
+[Supplemental information not in task list: debugging insights, decisions made, things tried/ruled out, constraints discovered]
+
+[OR: [none] if task list has all needed context]
+```
+
+**What to include:**
+
+- **Next Action** - ALWAYS document, even if it's "proceed to next task in task list"
+    - On-task-list: Include task number + description + line number
+    - Off-task-list: Specific action description
+- **Remaining Work** - Only for off-task-list work when path back is known
+    - List ALL steps if known, not just immediate next
+    - Critical: Captures full path back to task list
+- **Additional Context** - Supplemental info not in task list
+    - Debugging: What tried, what ruled out, what suspected
+    - Decisions: Choices made that inform approach
+    - Constraints: User preferences, technical limitations
+    - Goal: Don't repeat work, don't lose insights
+
+**What NOT to include:**
+
+- ❌ Summaries of entire task list (that's in the task list file)
+- ❌ Future work beyond path back to task list
+- ❌ Project status updates (that's in git commits)
+- ❌ Task descriptions already in task list (redundant)
+
+### Handoff Examples
+
+**Example 1: Clean on-task-list handoff**
+
+```markdown
+## Session Information
+
+**Branch**: feature/user-authentication
+**Task List**: .arc/active/feature/tasks-user-authentication.md
+**Following Task List**: Yes
+**Last Completed**: Task 3.2 - Add validation logic
+**Next Action**: Task 3.3 - Write unit tests (line 247 in tasks-user-authentication.md)
+
+---
+
+## Session Context & Status
+
+### Completed This Session
+
+- ✅ Task 3.2: Added email validation logic with regex pattern
+- ✅ Quality gates: TypeScript passed, linting passed
+
+### Blockers
+
+[none]
+
+### Additional Context for Next Session
+
+[none]
+```
+
+**Example 2: Off-task-list with known path back**
+
+```markdown
+## Session Information
+
+**Branch**: feature/user-authentication
+**Task List**: .arc/active/feature/tasks-user-authentication.md
+**Following Task List**: No - debugging TypeError in UserProfile (will return to Task 3.3)
+**Last Completed**: Task 3.2 - Add validation logic
+**Next Action**: Fix TypeError in UserProfile component (src/pages/user/UserProfile.tsx:45)
+
+---
+
+## Session Context & Status
+
+### Completed This Session
+
+- ✅ Task 3.2: Added validation logic
+- ⚠️ Discovered TypeError during integration testing
+
+### Remaining Work Before Returning to Task List
+
+1. Fix TypeError in UserProfile (null email edge case)
+2. Add integration test for OAuth users with null email
+3. Run full test suite to verify no regressions
+4. Return to Task 3.3 - Write unit tests (line 247 in tasks-user-authentication.md)
+
+### Blockers
+
+[none]
+
+### Additional Context for Next Session
+
+- TypeError happens when user.email is null (valid for OAuth users)
+- Tried null check at line 45, but cascades to profile display logic (line 89)
+- User wants to keep nullable email for OAuth flow
+- Best fix: handle at component mount, show "No email" placeholder
+```
+
+**Example 3: Off-task-list with unclear path**
+
+```markdown
+## Session Information
+
+**Branch**: feature/user-authentication
+**Task List**: .arc/active/feature/tasks-user-authentication.md
+**Following Task List**: No - debugging intermittent theme flash (will return to Task 3.3)
+**Last Completed**: Task 3.2 - Add validation logic
+**Next Action**: Continue debugging intermittent theme flash on page load
+
+---
+
+## Session Context & Status
+
+### Completed This Session
+
+- ✅ Task 3.2: Added validation logic
+- ⚠️ Investigating theme flash issue (intermittent, ~20% occurrence rate)
+
+### Remaining Work Before Returning to Task List
+
+Path unclear - exploratory debugging. Will return to Task 3.3 (line 247) when resolved.
+
+### Blockers
+
+[none]
+
+### Additional Context for Next Session
+
+- Flash occurs ~20% of time on fresh browser load
+- Ruled out: SSR mismatch (client-only SPA), localStorage timing, CSS-in-JS hydration
+- Suspect: Race condition between theme provider init and first render
+- Next: Add useLayoutEffect to force synchronous theme application
 ```
 
 ### Task List Completion & Transition Format

@@ -110,9 +110,9 @@ const AdvancedMovieFilters = ({
       ml={4}
       p={6}
       border="1px solid"
-      borderColor="border-strong-02"
+      borderColor="border-strong-01"
       borderRadius="md"
-      bg="layer-02"
+      bg="layer-01"
       boxShadow="shadow-sm"
     >
       <HStack justify="space-between" mb={4}>

@@ -139,23 +139,24 @@ const SortDropdownMinimal = ({
               w={SORT_WIDTH}
               bg="muted"
               borderColor="border"
+              color="foreground"
             >
               {sortCollection.items.map((item) => (
                 <Select.Item
                   key={item.value}
                   item={item}
-                  style={{
-                    color:
-                      "disabled" in item && item.disabled
-                        ? "on-muted"
-                        : "foreground",
-                    fontStyle:
-                      "disabled" in item && item.disabled ? "italic" : "normal",
-                  }}
+                  color={
+                    "disabled" in item && item.disabled
+                      ? "on-muted"
+                      : "foreground"
+                  }
+                  fontStyle={
+                    "disabled" in item && item.disabled ? "italic" : "normal"
+                  }
                   _hover={
                     "disabled" in item && item.disabled
                       ? {}
-                      : { bg: "tertiary" }
+                      : { bg: "tertiary", color: "on-tertiary" }
                   }
                 >
                   {item.label}

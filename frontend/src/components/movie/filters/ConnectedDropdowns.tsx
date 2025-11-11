@@ -270,12 +270,13 @@ const ConnectedDropdowns = ({
               w={GENRE_WIDTH}
               bg="muted"
               borderColor="border"
+              color="foreground"
             >
               {genreCollection.items.map((item) => (
                 <Select.Item
                   key={item.value}
                   item={item}
-                  _hover={{ bg: "tertiary" }}
+                  _hover={{ bg: "tertiary", color: "on-tertiary" }}
                 >
                   {item.label}
                 </Select.Item>
@@ -359,12 +360,13 @@ const ConnectedDropdowns = ({
               w={yearWidth}
               bg="muted"
               borderColor="border"
+              color="foreground"
             >
               {yearCollection.items.map((item) => (
                 <Select.Item
                   key={item.value}
                   item={item}
-                  _hover={{ bg: "tertiary" }}
+                  _hover={{ bg: "tertiary", color: "on-tertiary" }}
                 >
                   {item.label}
                 </Select.Item>

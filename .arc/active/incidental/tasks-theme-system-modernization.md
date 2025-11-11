@@ -2113,18 +2113,24 @@ This phase combines component-specific polish with systematic theme validation.
 
     **Note:** All items are cosmetic (not broken). Address after ThemeDebug patterns established.
 
-    - [ ] **6.1.a Sidebar visual hierarchy**
-        - Fix header background to match navbar (`card` consistency)
-        - Update LOG button to use primary colors (`bg="primary"`, `color="on-primary"`)
-        - Add elevation to link container (`card` background or stronger border)
-        - Fix active/selected navlinks text color (difficult to read, likely using wrong tokens)
-        - Test across all 4 themes × 2 modes
+    - [x] **6.1.a Sidebar visual hierarchy**
+        - ✅ Fixed selected navlink text color: `on-tertiary` → `foreground` (proper contrast on selected backgrounds)
+        - ✅ Added visual elevation to navigation list:
+            - **Desktop**: Listbox on `layer-02` within `layer-01` sidebar card (layer-hover-02/selected-02 states)
+            - **Mobile**: Drawer body uses `background`, listbox on `layer-01` (layer-hover-01/selected-01 states)
+        - ✅ Fixed horizontal alignment (LOG button, search, listbox all align at VStack px edge)
+        - ✅ LOG button already uses primary outline (per strategy doc - kept as-is)
+        - ✅ Header backgrounds already consistent (layer-01)
+        - **Quality gates:** TypeScript 0 errors, ESLint 0 violations
+        - **Note:** Layout/design refinement deferred to future design phase (sufficient for theme system validation)
 
-    - [ ] **6.1.b Featured page button visibility**
-        - Investigate why 2/3 buttons appear invisible (same color as background)
-        - Apply appropriate button styling (outline style with border, or filled secondary style)
-        - Verify button hierarchy matches design intent (primary vs secondary distinction)
-        - Test across all 4 themes × 2 modes
+    - [x] **6.1.b Featured page button visibility**
+        - ✅ Changed all 3 buttons to use `button-subtle` (equal emphasis, no unintended hierarchy)
+        - ✅ Removed solid primary from first button (was unintentionally higher priority)
+        - ✅ All buttons now consistent: `bg="button-subtle"`, `color="on-button-subtle"`
+        - ✅ Good visibility across all themes
+        - **Quality gates:** TypeScript 0 errors, ESLint 0 violations
+        - **Note:** GitLab Pajamas neutral outline border contrast issue added to ATOMIC-TASKS.md
 
     - [ ] **6.1.c AdvancedMovieFilters elevation**
         - Add visual elevation to filter panel (`card` or `boxShadow="shadow-sm"`)

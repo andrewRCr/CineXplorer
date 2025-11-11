@@ -13,15 +13,14 @@
 ---
 
 ## Active
-
 <!-- Add tasks here with checkboxes -->
-<!-- Examples: -->
-<!-- - [ ] Update Django 5.2 → 5.3 -->
-<!-- - [ ] Add type hint to calculateTotal() helper -->
-<!-- - [ ] Fix typo in README line 47 -->
-<!-- - [ ] Clean up old console.log statements -->
+
+- [ ] Investigate GitLab Pajamas neutral outline border contrast
+    - Current: border-strong-01 = #bfbfc3 (2.1:1 on white, below WCAG 3:1)
+    - All 3 border-strong levels same in light mode (alternating pattern)
+    - Consider theme-specific foreground border override for button-outline
+    - Maintain consistency (don't use tertiary color)
 
 ## Completed (This Week)
 
-<!-- Move completed tasks here (marked [x]) -->
-<!-- Delete all during weekly review -->
+<!-- Move completed tasks here (marked [x]); delete all during weekly review  -->

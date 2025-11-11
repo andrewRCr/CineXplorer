@@ -1900,75 +1900,172 @@ and provide living style guide.
         - Notes that popover maps to layer-02 or layer-03 depending on z-index context
         - Uses Tooltip component from @/components/chakra/tooltip
 
-- [ ] **5.5 Enhance Section 5: Surfaces & Containers**
+- [x] **5.5 Enhance Section 5: Surfaces & Containers**
 
-    - [ ] **5.5.a Enhance layer hierarchy with light mode alternating demonstration**
-        - Verify existing basic hierarchy (background → layer-01 → layer-02 → layer-03)
-        - **CRITICAL:** Add explicit nested example demonstrating light mode alternating pattern (ADR-008)
-        - Show nested surfaces: `background` contains `layer-01` (gray) contains `layer-02` (white) contains `layer-03` (gray)
-        - Label example with "Light Mode Alternating: Creates visual 'popup' effect"
-        - Dark mode: Verify consistent darkening progression (no alternation)
-        - Check visual distinction across all 4 themes × 2 modes
-        - Note in implementation: "Per ADR-008, light mode alternates to create depth perception"
+    **Completed:** Added comprehensive demonstrations of layer system patterns, interactive surfaces, and ADR-008 compliance.
 
-    - [ ] **5.5.b Add card with hover state**
-        - Interactive card example
-        - Show `tertiary/8` hover pattern (per strategy doc opacity modifiers)
-        - Demonstrate transition from default to hover
+    - [x] **5.5.a Enhance layer hierarchy with light mode alternating demonstration**
+        - Added ADR-008 explanatory callout box describing alternating vs progressive patterns
+        - Created nested example showing all 4 layers (background → layer-01 → layer-02 → layer-03)
+        - Added dynamic text explaining pattern based on current color mode
+        - Updated section title to "Section 5: Surfaces & Containers"
+        - **Material adapter fix:** Corrected light mode to use alternating pattern per ADR-008
+            - Light: surface (#FEF7FF) → high (#ECE6F0) → surface → high [ALTERNATING]
+            - Dark: surface (#141218) → container → high → highest [PROGRESSIVE]
+            - Preserved official progressive pattern in comments for reference
+            - Updated border hierarchy derivation to use alternating mode in light
 
-    - [ ] **5.5.c Add modal/dialog example**
-        - Show backdrop overlay using appropriate opacity
-        - Verify dialog surface token (layer-02 or layer-03 depending on context)
-        - Demonstrate close button and focus trap pattern
+    - [x] **5.5.b Add card with hover state**
+        - Added two interactive card examples side-by-side
+        - Demonstrates `layer-hover-01` pattern (Material opacity overlay)
+        - Demonstrates `tertiary/8` alternative hover pattern
+        - Uses smooth transitions for hover state changes
 
-    - [ ] **5.5.d Add popover/menu dropdown**
-        - Demonstrates `popover` surface (contextual layer-02 or layer-03)
-        - Test menu item hover states
-        - Show positioning (top, bottom, left, right examples)
+    - [x] **5.5.c Add modal/dialog example**
+        - Added simulated modal with backdrop overlay
+        - Shows `foreground/30` backdrop pattern
+        - Modal uses `layer-02` surface with `shadow-lg`
+        - Includes interactive close button and action buttons (Cancel/Confirm)
+        - Demonstrates proper z-index layering
 
-- [ ] **5.6 Create Section 6: Interactive Lists**
+    - [x] **5.5.d Add popover/menu dropdown**
+        - Added trigger button with dropdown menu
+        - Menu uses `popover` surface token
+        - Shows 4 menu items with hover states (`layer-hover-02`)
+        - Demonstrates destructive action styling (Delete item)
+        - Includes proper border separators between items
 
-    - [ ] **5.6.a Add list item states with explicit token labels**
-        - Hover state: Show `layer-hover-01` background (8% foreground overlay)
-        - Selected state: Show `layer-selected-01` background (12% foreground overlay)
-        - Disabled state: Show `muted`/`on-muted` styling
-        - Label each state with token name used
-        - Demonstrate on layer-01 surface context
-        - Optional: Show layer-02 variants (`layer-hover-02`, `layer-selected-02`)
+- [x] **5.6 Create Section 6: Interactive Lists**
 
-    - [ ] **5.6.b Add menu item examples**
-        - Demonstrates popover pattern with interactive items
-        - Test hover highlighting (item hover on popover surface)
-        - Show keyboard navigation focus states
+    **Completed:** Created comprehensive InteractiveListsSection demonstrating all list interaction patterns.
 
-    - [ ] **5.6.c Add accordion examples**
-        - Collapsed and expanded states
-        - Show header interactive states (hover, active)
-        - Demonstrate content reveal transition
+    - [x] **5.6.a Add list item states with explicit token labels**
+        - Created list on layer-01 showing all 4 states with labeled tokens
+        - Hover: layer-hover-01 (8% overlay) with smooth transition
+        - Selected: layer-selected-01 (12% overlay) with visual indicator
+        - Active: layer-active-01 (12% overlay) visible on click
+        - Disabled: opacity 0.6 with on-muted color and not-allowed cursor
+        - Added layer-02 variant section showing layer-hover-02 and layer-selected-02
+        - Each item labeled with token name in monospace for reference
 
-- [ ] **5.7 Enhance Section 7: UI Element Tokens**
+    - [x] **5.6.b Add menu item examples**
+        - Created menu on popover surface with 6 items (Open, Save, Save As, Export, Share, Delete)
+        - Icons added for visual interest and real-world feel
+        - Hover states using layer-hover-02 on popover surface
+        - Keyboard navigation enabled with tabIndex and focus states (ring outline)
+        - Disabled state demonstrated on "Export" item (opacity + cursor)
+        - Destructive styling on "Delete" item using destructive color
+        - Proper ARIA attributes (role="menuitem", aria-disabled)
 
-    **Goal:** Add separator/divider demonstrations to complete foundational UI token coverage.
+    - [x] **5.6.c Add accordion examples**
+        - Created 3 collapsible accordions using Chakra Collapsible component
+        - Topics: "What are semantic tokens?", "How does layer system work?", "What is ADR-008?"
+        - Header states: hover (layer-hover-01), active (layer-active-01)
+        - Animated chevron rotation on expand/collapse
+        - Content area uses background color with border separator
+        - Smooth expand/collapse transitions
+        - Multiple accordions can be open simultaneously
 
-    **Context:** Section streamlined 2025-11-11. Input border demo removed (covered in Form Controls).
-    Focus ring demo retained as dedicated accessibility demonstration. Icon color guidance belongs in
-    strategy doc, not as standalone demos. Per-layer border visibility belongs in Border Hierarchy section.
+    **Additional:** Created interactive selectable movie list demonstrating:
+        - Click-to-select behavior with state management
+        - Selected items prevent hover state (proper precedence)
+        - Visual checkmark indicator on selected items
+        - Bold text treatment for selected state
+        - 4 movie examples (Shawshank, Godfather, Dark Knight, Pulp Fiction)
 
-    - [ ] **5.7.a Add separator/divider examples**
-        - Horizontal divider: Show `border` token with standard 1px height
-        - Vertical divider: Show `border` token with standard 1px width
-        - Demonstrate in different contexts:
-            - Between list items (subtle separation)
-            - Between sections (visual grouping)
-            - In toolbar/button groups (logical separation)
-        - Show semantic usage: when to use dividers vs spacing alone
-        - Note: Uses `border` token (not border-strong hierarchy - dividers are subtle by design)
+- [x] **5.7 Enhance Section 7: UI Element Tokens**
 
-    - [ ] **5.7.b Verify focus ring comprehensiveness**
-        - Ensure current demo clearly explains keyboard-only visibility (_focusVisible behavior)
-        - Verify Tab key instruction is prominent
-        - Add note referencing WCAG 2.4.7 (focus visible) and 2.4.13 (contrast requirements)
-        - Ensure `ring` token usage pattern is documented
+    **Completed:** Enhanced UIElementTokensSection with comprehensive separator/divider examples and improved focus
+    ring documentation.
+
+    - [x] **5.7.a Add separator/divider examples**
+        - Added horizontal dividers in 2 contexts:
+            - Between list items: 3-item list with 1px dividers for subtle separation
+            - Between sections: 2 content sections with divider for visual grouping
+        - Added vertical dividers in toolbar context:
+            - 5-button toolbar (Cut/Copy/Paste | Undo/Redo) with 1px vertical separator
+            - Demonstrates logical grouping in button groups
+        - Added semantic usage callout box:
+            - "When to Use Dividers vs Spacing" guide
+            - Use dividers: Closely related items needing visual separation
+            - Use spacing: Distinct sections with different purposes
+        - All dividers use `border` token (1px height/width)
+        - Note included: Dividers intentionally subtle (not border-strong hierarchy)
+
+    - [x] **5.7.b Verify focus ring comprehensiveness**
+        - Added prominent "Press Tab to Test" callout box with keyboard emoji
+        - Clearly explains `_focusVisible` behavior (keyboard-only, not mouse)
+        - Expanded from 1 to 3 interactive examples:
+            - Button with focus ring (primary button)
+            - Input field with focus ring (with border color change)
+            - Link-styled button with focus ring
+        - Added code snippet showing standard focus ring pattern
+        - Added WCAG references callout box:
+            - WCAG 2.4.7 (Focus Visible): Must be clearly visible
+            - WCAG 2.4.13 (Focus Appearance): ≥3:1 contrast ratio required
+            - Pattern guidance: Use `_focusVisible` not `_focus`
+            - Token guidance: Always use `ring` token for consistency
+        - Updated section description with WCAG references in header
+
+- [x] **5.7.5 ThemeDebug Structure & Navigation Improvements (Meta)**
+
+    **Completed:** Comprehensive refactoring of ThemeDebug page structure, naming, and navigation.
+
+    **a) Section Naming Consistency:**
+    - Renamed "Surfaces & Containers" → "Layers: Surfaces & Containers"
+    - Rationale: Maintains searchable term "Layers" consistent with token naming (layer-01, layer-02, layer-03)
+    - Pattern: Similar to "Focus Ring (Keyboard Navigation)" - primary term + semantic context
+
+    **b) Section Structure:**
+    - **b1) Boundaries:** Evaluated all section boundaries - determined current boundaries appropriate (no merging)
+    - **b2) Grouping:** Implemented visual grouping with pipe separators in jump links
+        - Foundation: Colors · Extensions · Layers · Shadows · Borders · Opacity
+        - Interaction: States · UI
+        - Components: Forms · Navigation · Feedback · Lists
+    - **b3) Section Reordering:**
+        - Moved Opacity System from #12 → #6 (foundational, not appendix)
+        - Moved UI Element Tokens from #11 → #8 (foundational interaction utilities)
+        - New order creates logical flow: Foundation → Interaction → Components
+
+    **c) Opacity Section Transformation:**
+    - Renamed "Opacity Modifier Tests" → "Opacity System"
+    - Created dedicated OpacitySystemSection component (was inline code)
+    - Added intro explaining `/opacity` syntax and ADR-009 reference
+    - Added "Standard Interaction Values" callout:
+        - 8% hover, 12% selected/active/focus, 16% drag, 30% backdrop, 38% disabled
+    - Added "Common Background Opacities" callout:
+        - 10%/20%/30% alert backgrounds, 50%/80% overlays
+    - Labeled demonstration values vs semantic interaction values
+    - Added references: ADR-009, strategy-semantic-tokens.md "Opacity Modifier Reference"
+
+    **Files Modified:**
+    - LayerSystemSection.tsx: Title renamed
+    - OpacitySystemSection.tsx: Created new component
+    - ThemeDebug.tsx: Reordered imports, sections, and jump links with pipe separators
+
+- [x] **5.7.6 Semantic Colors Section Simplification**
+
+    **Completed:** Simplified "Core Actions" subsection to focus on color demonstration rather than comprehensive
+    pattern documentation.
+
+    **Changes:**
+    - Reduced from ~280 lines to ~60 lines (~220 line reduction)
+    - Removed comprehensive button pattern demonstrations:
+        - All 5 button variants with disabled states (removed)
+        - Buttons with icons (removed)
+        - Loading state (removed)
+        - Subtle selected state with ADR-012 explanation (removed)
+    - Kept essential color demonstrations:
+        - Three core action colors: primary, secondary (via button-subtle), tertiary (ghost)
+        - One interactive link example showing tertiary color
+    - **Fixed:** Link underline thickness corrected from 2px → 1px (per strategy doc)
+    - Added clear reference to strategy-semantic-tokens.md for comprehensive button patterns
+    - Rationale: ThemeDebug validates tokens work across themes, not comprehensive pattern library
+    - Strategy doc already has complete "Building Buttons" section (source of truth)
+    - Removed unused icon imports (LuSettings, LuPlus)
+
+    **Files Modified:**
+    - SemanticColorsSection.tsx: Simplified Core Actions, fixed link underline
 
 - [ ] **5.8 Run incremental quality gates**
 

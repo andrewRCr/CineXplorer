@@ -61,21 +61,33 @@ export function createMaterialAdapter(mode: "light" | "dark"): UnifiedTheme {
     // SECTION 1: OFFICIAL MAPPINGS (Material Baseline)
     // ===================================================================
     // Material Design 3 provides a 6-tier surface elevation system.
-    // We select 4 tiers that provide optimal contrast progression:
-    // - background: surface (base page color)
-    // - layer-01: surface-container (cards, sheets, menus)
-    // - layer-02: surface-container-high (elevated dialogs)
-    // - layer-03: surface-container-highest (highest elevation)
+    //
+    // OFFICIAL PROGRESSIVE PATTERN (Material Design 3 specification):
+    // Light: #FFFFFF → #FEF7FF → #F3EDF7 → #ECE6F0 → #E6E0E9 → #E6E0E9 (progressive darkening)
+    // Dark:  #0F0D13 → #141218 → #211F26 → #2B2930 → #36343B → #36343B (progressive lightening)
     //
     // Note: We skip surfaceContainerLowest (pure white/black) for better contrast.
     // Material's "surface" token is semantically the page background, not elevated content.
+    //
+    // CINEXPLORER PATTERN (ADR-008 - Light mode alternating for visual nesting):
+    // Light: surface (#FEF7FF) → high (#ECE6F0) → surface (#FEF7FF) → high (#ECE6F0) [ALTERNATING]
+    // Dark:  surface (#141218) → container (#211F26) → high (#2B2930) → highest (#36343B) [PROGRESSIVE]
+    //
+    // Rationale: Progressive darkening on white backgrounds becomes indistinguishable in light mode.
+    // Alternating creates clear visual "nesting" - you can see when elements are inside others.
 
-    // Core structure (4-tier mapping from 6-tier Material system)
+    // Core structure (ADR-008 compliant mapping)
     const background = palette.surface; // #FEF7FF light, #141218 dark (page background)
     const foreground = palette.onSurface; // #1D1B20 light, #E6E0E9 dark
-    const layer01 = palette.surfaceContainer; // #F3EDF7 light, #211F26 dark (cards, sheets, menus)
-    const layer02 = palette.surfaceContainerHigh; // #ECE6F0 light, #2B2930 dark (elevated)
-    const layer03 = palette.surfaceContainerHighest; // #E6E0E9 light, #36343B dark (highest)
+    const layer01 = mode === "light"
+        ? palette.surfaceContainerHigh // #ECE6F0 light (gray - alternates from white)
+        : palette.surfaceContainer; // #211F26 dark (progressive)
+    const layer02 = mode === "light"
+        ? palette.surface // #FEF7FF light (white - alternates back!)
+        : palette.surfaceContainerHigh; // #2B2930 dark (progressive)
+    const layer03 = mode === "light"
+        ? palette.surfaceContainerHigh // #ECE6F0 light (gray - alternates back!)
+        : palette.surfaceContainerHighest; // #36343B dark (progressive)
 
     // Popover (typically layer-02 or layer-03 context)
     const popover = layer02;
@@ -118,8 +130,8 @@ export function createMaterialAdapter(mode: "light" | "dark"): UnifiedTheme {
     const onTertiary = palette.onTertiary; // ADR-011: Material native on-* token (#FFFFFF light, #492532 dark)
     const tertiaryForeground = onTertiary; // @deprecated: Use on-tertiary instead (ADR-011)
 
-    // ACCENT: @deprecated - Use tertiary instead (ADR-010 Phase 4 migration)
-    // Maintained as alias during component migration period
+    // ACCENT: @deprecated - Use tertiary instead (replaced by standard tertiary naming per ADR-010)
+    // Maintained as alias for backward compatibility
     const accent = palette.tertiary; // Same as tertiary
     const accentForeground = palette.onTertiary;
 
@@ -145,7 +157,7 @@ export function createMaterialAdapter(mode: "light" | "dark"): UnifiedTheme {
     const borderHierarchy = deriveBorderHierarchy(
         palette.outlineVariant, // Subtle base
         palette.outline, // Strong base
-        "progressive", // Material uses progressive elevation in both modes
+        mode === "light" ? "alternating" : "progressive", // ADR-008: alternating in light, progressive in dark
     );
     const borderSubtle02 = borderHierarchy.subtle02;
     const borderStrong02 = borderHierarchy.strong02;

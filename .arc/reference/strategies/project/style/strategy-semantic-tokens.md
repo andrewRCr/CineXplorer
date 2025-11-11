@@ -642,6 +642,74 @@ Interactive elements include links, form fields, focus states, and highlighted c
 - Focus border: `tertiary` (signals active state)
 - Focus ring: `ring` (accessibility indicator)
 
+### Select/Dropdown (Custom Chakra Select)
+
+**Use Chakra's custom Select component** (not NativeSelect) for consistent styling across browsers.
+
+```tsx
+<Select.Root
+  collection={selectCollection}
+  value={value}
+  onValueChange={(details) => setValue(details.value)}
+  positioning={{ placement: "bottom-start", gutter: 2 }}
+>
+  <Select.Trigger
+    borderColor="input"
+    bg="background"
+    color="foreground"
+    _hover={{ borderColor: "border-strong-01", bg: "tertiary/8" }}
+    _focus={{
+      borderColor: "tertiary",
+      outline: "2px solid",
+      outlineColor: "ring",
+      outlineOffset: "2px",
+    }}
+  >
+    <Select.ValueText placeholder="Select option" />
+    <Select.Indicator />
+  </Select.Trigger>
+  <Select.Positioner>
+    <Select.Content
+      bg="muted"
+      borderColor="border"
+      color="foreground"
+    >
+      {collection.items.map((item) => (
+        <Select.Item
+          key={item.value}
+          item={item}
+          _hover={{ bg: "tertiary", color: "on-tertiary" }}
+        >
+          {item.label}
+        </Select.Item>
+      ))}
+    </Select.Content>
+  </Select.Positioner>
+</Select.Root>
+```
+
+**Tokens:**
+
+- **Trigger (the button):**
+    - Border: `input` (default) → `border-strong-01` (hover) → `tertiary` (focus)
+    - Background: `background` (default) → `tertiary/8` (hover)
+    - Focus ring: `ring`
+- **Content (dropdown menu):**
+    - Background: `muted` (provides subtle contrast from page background)
+    - Border: `border`
+    - Text: `foreground`
+- **Items (options):**
+    - Hover background: `tertiary` + text: `on-tertiary` (proper contrast pair)
+
+**Why not NativeSelect?**
+
+- Browser `<select>` elements have limited styling capabilities
+- Option hover colors can't be customized (browser defaults)
+- Inconsistent appearance across browsers/OS
+- Chakra's custom Select provides full token control and consistent UX
+
+**Examples:** Sort dropdowns, filter selectors, genre pickers, year selectors
+
 ### Muted/Deemphasized Text
 
 **For secondary information:**

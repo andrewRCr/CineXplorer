@@ -1637,12 +1637,19 @@ and ongoing migration overhead in future tasks.
 
         **Quality gates:** ✅ Frontend linting (0 errors), TypeScript type checking (0 errors)
 
-    - [ ] **4.4.5 Convert Watchlist page**
-        - **File:** `pages/user/Watchlist.tsx`
-        - **Old tokens to replace:**
-            - `red.500` → `destructive-foreground` (error text, line 61)
-        - **Note:** Minimal implementation page
-        - **Quality gate:** Frontend linting + TypeScript type checking
+    - [x] **4.4.5 Convert Watchlist page**
+
+        **Completed:** Converted error text color from hardcoded `red.500` to semantic token.
+
+        **File:** `pages/user/Watchlist.tsx`
+
+        **Token conversion:**
+        - `red.500` → `on-destructive` (error text, line 61)
+
+        **Note:** Used ADR-011 canonical naming (`on-destructive`) instead of deprecated alias (`destructive-foreground`).
+        Minimal stub page with only one token to convert.
+
+        **Quality gates:** ✅ Frontend linting PASSED, TypeScript type checking PASSED
 
     **Components verified as NOT needing conversion:**
     - NowPlaying, Popular, TopRated, Upcoming, SearchResults - Thin wrappers around MovieCollectionGrid (already converted)

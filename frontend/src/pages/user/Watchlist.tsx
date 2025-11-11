@@ -58,7 +58,7 @@ const Watchlist = () => {
   if (error) {
     return (
       <Box p={8}>
-        <Text color="red.500">Error: {error}</Text>
+        <Text color="on-destructive">Error: {error}</Text>
       </Box>
     );
   }

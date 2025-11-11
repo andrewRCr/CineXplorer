@@ -12,6 +12,8 @@ import { ShadowSystemSection } from "./sections/ShadowSystemSection";
 import { InteractionStatesSection } from "./sections/InteractionStatesSection";
 import { UIElementTokensSection } from "./sections/UIElementTokensSection";
 import { FormControlsSection } from "./sections/FormControlsSection";
+import { NavigationPatternsSection } from "./sections/NavigationPatternsSection";
+import { FeedbackStatusSection } from "./sections/FeedbackStatusSection";
 
 /**
  * Theme display name mappings
@@ -120,6 +122,8 @@ export default function ThemeDebug() {
                 { id: 'shadows', label: 'Shadows' },
                 { id: 'interaction-states', label: 'States' },
                 { id: 'form-controls', label: 'Forms' },
+                { id: 'navigation-patterns', label: 'Navigation' },
+                { id: 'feedback-status', label: 'Feedback' },
                 { id: 'ui-elements', label: 'UI' },
                 { id: 'opacity-modifiers', label: 'Opacity' },
               ].map(({ id, label }) => (
@@ -162,6 +166,12 @@ export default function ThemeDebug() {
 
         {/* Form Controls */}
         <FormControlsSection />
+
+        {/* Navigation Patterns */}
+        <NavigationPatternsSection />
+
+        {/* Feedback & Status */}
+        <FeedbackStatusSection />
 
         {/* UI Element Tokens */}
         <UIElementTokensSection />

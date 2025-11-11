@@ -139,7 +139,8 @@ CineXplorer uses IBM Carbon's layer-based elevation philosophy (see ADR-006). Al
 </Tooltip>
 ```
 
-**Note:** `popover` is a distinct token with semantic meaning "overlay content". Theme adapters typically implement it by mapping to `layer-02` (popovers over base content) or `layer-03` (popovers over modals) depending on z-index context.
+**Note:** `popover` is a distinct token with semantic meaning "overlay content". Theme adapters typically implement it by
+mapping to `layer-02` (popovers over base content) or `layer-03` (popovers over modals) depending on z-index context.
 
 ### Light Mode Alternating Pattern
 

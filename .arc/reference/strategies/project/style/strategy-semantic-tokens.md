@@ -1,6 +1,6 @@
 # Semantic Token Strategy
 
-**Version:** 2.0 | **Updated:** 2025-11-11 | **Status:** Active
+**Version:** 2.1 | **Updated:** 2025-11-11 | **Status:** Active
 
 ## Purpose
 
@@ -432,10 +432,13 @@ Status indicators communicate feedback, outcomes, and semantic states using stan
 ### Success (Positive Outcomes)
 
 ```tsx
-// Success alert
+// Success alert (10% opacity background)
 <Alert bg="success/10" borderColor="success" borderWidth="1px">
-  <Icon name="check" color="on-success" />
-  <Text color="on-success">Changes saved successfully</Text>
+  <Icon name="check" color="success" />
+  <Alert.Title color="success">Success</Alert.Title>
+  <Alert.Description color="foreground">
+    Changes saved successfully
+  </Alert.Description>
 </Alert>
 
 // Success badge (solid fill)
@@ -447,20 +450,25 @@ Status indicators communicate feedback, outcomes, and semantic states using stan
 **Tokens:**
 
 - Background: `success` (green in all themes)
-- Text: `on-success` (text on success backgrounds)
+- Alert title: `success` (emphasis on subtle background)
+- Alert description: `foreground` (maximum readability on subtle background)
+- Badge text: `on-success` (high contrast on solid background)
 
 **Use cases:** Confirmations, positive feedback, high ratings, "active" status
 
 ### Warning (Caution States)
 
 ```tsx
-// Warning alert
+// Warning alert (10% opacity background)
 <Alert bg="warning/10" borderColor="warning" borderWidth="1px">
-  <Icon name="warning" color="on-warning" />
-  <Text color="on-warning">Please verify your email address</Text>
+  <Icon name="warning" color="warning" />
+  <Alert.Title color="warning">Warning</Alert.Title>
+  <Alert.Description color="foreground">
+    Please verify your email address
+  </Alert.Description>
 </Alert>
 
-// Warning badge
+// Warning badge (solid fill)
 <Badge bg="warning" color="on-warning">
   Pending
 </Badge>
@@ -469,20 +477,25 @@ Status indicators communicate feedback, outcomes, and semantic states using stan
 **Tokens:**
 
 - Background: `warning` (yellow/amber/gold in all themes)
-- Text: `on-warning`
+- Alert title: `warning` (emphasis on subtle background)
+- Alert description: `foreground` (maximum readability on subtle background)
+- Badge text: `on-warning` (high contrast on solid background)
 
 **Use cases:** Validation warnings, caution states, medium-priority alerts
 
 ### Destructive/Error (Danger States)
 
 ```tsx
-// Error alert
+// Error alert (10% opacity background)
 <Alert bg="destructive/10" borderColor="destructive" borderWidth="1px">
-  <Icon name="error" color="on-destructive" />
-  <Text color="on-destructive">Failed to save changes</Text>
+  <Icon name="error" color="destructive" />
+  <Alert.Title color="destructive">Error</Alert.Title>
+  <Alert.Description color="foreground">
+    Failed to save changes
+  </Alert.Description>
 </Alert>
 
-// Delete button
+// Delete button (solid fill)
 <Button bg="destructive" color="on-destructive">
   Delete Account
 </Button>
@@ -491,20 +504,25 @@ Status indicators communicate feedback, outcomes, and semantic states using stan
 **Tokens:**
 
 - Background: `destructive` (red in all themes)
-- Text: `on-destructive`
+- Alert title: `destructive` (emphasis on subtle background)
+- Alert description: `foreground` (maximum readability on subtle background)
+- Button text: `on-destructive` (high contrast on solid background)
 
 **Use cases:** Errors, delete actions, destructive operations, critical alerts
 
 ### Info (Informational Messages)
 
 ```tsx
-// Info alert
+// Info alert (10% opacity background)
 <Alert bg="info/10" borderColor="info" borderWidth="1px">
-  <Icon name="info" color="on-info" />
-  <Text color="on-info">New features available</Text>
+  <Icon name="info" color="info" />
+  <Alert.Title color="info">Info</Alert.Title>
+  <Alert.Description color="foreground">
+    New features available
+  </Alert.Description>
 </Alert>
 
-// Info badge
+// Info badge (solid fill)
 <Badge bg="info" color="on-info">
   New
 </Badge>
@@ -513,30 +531,57 @@ Status indicators communicate feedback, outcomes, and semantic states using stan
 **Tokens:**
 
 - Background: `info` (blue in all themes)
-- Text: `on-info`
+- Alert title: `info` (emphasis on subtle background)
+- Alert description: `foreground` (maximum readability on subtle background)
+- Badge text: `on-info` (high contrast on solid background)
 
 **Use cases:** Informational messages, help text, tips, neutral status
 
-### Opacity Modifier Pattern
+### Alert Text on Opacity Backgrounds
 
-**For subtle backgrounds** (alerts, info boxes):
+**Important distinction:** Alert patterns differ based on background opacity.
+
+**10-30% opacity backgrounds (subtle alerts):**
 
 ```tsx
-// 10% opacity background (subtle tint)
-<Alert bg="success/10">
-  <Text color="on-success">Subtle success message</Text>
-</Alert>
+<Alert bg="success/10" borderColor="success" borderWidth="1px">
+  {/* Icon: Use semantic color for visual emphasis */}
+  <Icon name="check" color="success" />
 
-// Full opacity background (solid badge)
+  {/* Title: Use semantic color for emphasis */}
+  <Alert.Title color="success">Success</Alert.Title>
+
+  {/* Description: Use foreground for maximum readability */}
+  <Alert.Description color="foreground">
+    Changes saved successfully
+  </Alert.Description>
+</Alert>
+```
+
+**Solid backgrounds (prominent badges/buttons):**
+
+```tsx
 <Badge bg="success" color="on-success">
   Active
 </Badge>
+
+<Button bg="destructive" color="on-destructive">
+  Delete Account
+</Button>
 ```
+
+**Why the difference?**
+
+- `on-*` tokens are optimized for **full opacity** colored backgrounds (badges, solid buttons)
+- On subtle tints (10-30%), semantic color provides visual emphasis while `foreground` maintains readability
+- This pattern works consistently across all themes without requiring additional specialized tokens
+- Key insight: Using `on-success` on 10% opacity backgrounds creates insufficient contrast in some themes
 
 **Common opacity values:**
 
-- `/10` - Very subtle background tint (10% opacity)
+- `/10` - Very subtle background tint (10% opacity) - most common for alerts
 - `/20` - Subtle background (20% opacity)
+- `/30` - Medium-subtle (30% opacity) - still uses foreground for description text
 - `/50` - Medium transparency
 - `/80` - Strong but not fully opaque
 
@@ -568,7 +613,7 @@ Interactive elements include links, form fields, focus states, and highlighted c
 <Link
   color="tertiary"
   textDecoration="underline"
-  textDecorationThickness="2px"
+  textDecorationThickness="1px"  // Browser default, explicit for consistency
   textUnderlineOffset="2px"
   _hover={{ color: "tertiary-hover" }}
   _active={{ color: "tertiary-active" }}
@@ -590,6 +635,7 @@ Interactive elements include links, form fields, focus states, and highlighted c
 - Focus: `ring` (keyboard navigation indicator)
 
 **Why underline?** Accessibility best practice - color alone is insufficient for color-blind users (WCAG guideline).
+Uses browser default 1px thickness for clean appearance.
 
 ### Focus Indicators
 
@@ -1261,6 +1307,8 @@ Fast lookup cheat sheet for common token choices.
 
 **Version History:**
 
+- v2.1 (2025-11-11): Alert text color pattern documented (Title: semantic color, Description: foreground on
+  10-30% opacity backgrounds). Link underline thickness corrected to 1px browser default.
 - v2.0 (2025-11-11): Complete rewrite - use case-driven organization, ~67 tokens, ADRs 005-012 integrated, migration
 content removed
 - v1.2 (2025-11-07): Added ADR-011 on-* naming convention

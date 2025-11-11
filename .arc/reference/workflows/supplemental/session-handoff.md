@@ -112,7 +112,25 @@ _Note: Line numbers REQUIRED from Read tool output to enable direct navigation d
 
 ### Completed This Session
 
-[What was accomplished, with commits if applicable]
+**CRITICAL: When documenting UNCOMMITTED work, use commit-level granularity.**
+
+Next session needs enough detail to recreate proper atomic commits from `git diff`:
+- Map accomplishments to logical commits (what changed, which files/components)
+- Include task numbers/references for `Context:` footer
+- Note any incidental work separate from task list work
+- Provide specificity: component names, file paths, what was changed
+
+**Good examples (uncommitted work):**
+- ✅ Task 3.2.1: Added email validation to User model (models.py, validators.py) - regex pattern for RFC 5322
+- ✅ Task 3.2.2: Updated UserProfile component email display (UserProfile.tsx:45-67) - added null safety check
+- ✅ Incidental: Fixed button contrast in ThemeDebug (ThemeDebugSection.tsx) - changed primary-foreground → on-primary
+
+**Bad examples (too vague for commit reconstruction):**
+- ❌ "Worked on user authentication" (no file mapping, no commit grouping)
+- ❌ "Updated several components" (which? for what commits?)
+- ❌ "Fixed bugs" (what bugs? which files? separate commits?)
+
+**For committed work:** Simple list with commit hashes is sufficient (atomic-commit workflow already documented details).
 
 ### Remaining Work Before Returning to Task List
 

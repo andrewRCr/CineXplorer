@@ -7,19 +7,20 @@ import {
   Button,
   IconButton,
 } from "@chakra-ui/react";
-import { Link, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { BsFillPlusCircleFill } from "react-icons/bs";
 import logo from "../../assets/icons8-movie-64.webp";
 
 import { ROUTES } from "@/constants/routes";
 import { USER_NAVIGATION_ITEMS } from "@/constants/navigation";
+import { AppLink } from "@/components/common/AppLink";
 import NavBarUserMenu from "./NavBarUserMenu";
 import NavBarSearch from "./NavBarSearch";
 import MobileMenuButton from "./MobileMenuButton";
 
 // Reusable Logo and Title Component
 const LogoAndTitle = () => (
-  <Link to={ROUTES.HOME} style={{ textDecoration: "none" }}>
+  <AppLink to={ROUTES.HOME} textDecoration="none">
     <HStack
       gap={3}
       alignItems="center"
@@ -64,7 +65,7 @@ const LogoAndTitle = () => (
         CineXplorer
       </Heading>
     </HStack>
-  </Link>
+  </AppLink>
 );
 
 const NavBar = () => {
@@ -159,10 +160,10 @@ const NavBar = () => {
             {/* User Navigation Tabs */}
             {USER_NAVIGATION_ITEMS.filter((item) => !item.isAction).map(
               (item) => (
-                <Link
+                <AppLink
                   key={item.value}
                   to={item.path}
-                  style={{ textDecoration: "none" }}
+                  textDecoration="none"
                 >
                   <Button
                     size="sm"
@@ -181,7 +182,7 @@ const NavBar = () => {
                   >
                     {item.label}
                   </Button>
-                </Link>
+                </AppLink>
               )
             )}
           </HStack>

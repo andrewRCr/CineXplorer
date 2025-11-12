@@ -1,6 +1,6 @@
 import tmdbLogo from "../../assets/tmdb_logo_alt_short.svg";
 import { Box, HStack, Text, VStack } from "@chakra-ui/react";
-import { Link } from "react-router-dom";
+import { AppLink } from "@/components/common/AppLink";
 import { ColorModeButton } from "../chakra/color-mode";
 import { ThemeSelector } from "../ThemeSelector";
 
@@ -29,15 +29,9 @@ const Footer = () => {
         {import.meta.env.DEV && (
           <HStack gap={3} fontSize="xs" color="on-muted">
             <Text fontWeight="medium">Debug:</Text>
-            <Box asChild textDecoration="underline">
-              <Link to="/dev/theme-debug">Theme</Link>
-            </Box>
-            <Box asChild textDecoration="underline">
-              <Link to="/dev/layout-debug">Layout</Link>
-            </Box>
-            <Box asChild textDecoration="underline">
-              <Link to="/dev/typography-debug">Typography</Link>
-            </Box>
+            <AppLink to="/dev/theme-debug" fontSize="xs">Theme</AppLink>
+            <AppLink to="/dev/layout-debug" fontSize="xs">Layout</AppLink>
+            <AppLink to="/dev/typography-debug" fontSize="xs">Typography</AppLink>
           </HStack>
         )}
 
@@ -59,6 +53,7 @@ const Footer = () => {
             <img
               src={tmdbLogo}
               alt="TMDB Logo"
+              // EXCEPTION: External TMDB logo requires fixed height for brand compliance
               style={{ height: "18px", opacity: 0.7 }}
             />
           </a>

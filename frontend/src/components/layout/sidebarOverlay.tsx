@@ -58,6 +58,7 @@ export const sidebarDrawer = createOverlay<SidebarDrawerProps>((props) => {
                 pt={2}
                 pb={2}
                 px={4}
+                // Fixed height for visual consistency with mobile navbar (65px - 1px for visual balance)
                 h="64px"
                 display="flex"
                 alignItems="center"

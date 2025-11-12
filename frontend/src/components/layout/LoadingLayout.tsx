@@ -24,7 +24,8 @@ const LoadingLayout = () => {
         {/* Match AuthLayout's container structure */}
         <Box
           position="relative"
-          minH="calc(100vh - 144px)" // Same as AuthLayout
+          // Matches AuthLayout container height to prevent OAuth spinner jump
+          minH="calc(100vh - 144px)"
           w="100%"
         >
           <LoadingContent

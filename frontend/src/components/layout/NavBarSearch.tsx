@@ -40,13 +40,14 @@ const NavBarSearch = ({ onSearch }: NavBarSearchProps = {}) => {
       onMouseLeave={() => setIsHovered(false)}
       borderRadius="md"
       border="1px solid"
-      borderColor="border"
+      borderColor="input"
       backgroundColor={isHovered ? "tertiary/8" : "transparent"}
       transition="all 0.2s ease"
       _focusWithin={{
-        borderColor: "ring",
-        boxShadow: "0 0 0 1px",
-        boxShadowColor: "ring/50",
+        borderColor: "tertiary",
+        outline: "2px solid",
+        outlineColor: "ring",
+        outlineOffset: "2px",
         backgroundColor: "transparent",
       }}
     >

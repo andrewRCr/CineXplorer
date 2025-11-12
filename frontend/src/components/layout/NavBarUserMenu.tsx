@@ -8,11 +8,12 @@ import {
   Portal,
   useBreakpointValue,
 } from "@chakra-ui/react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
 import { BsFillPlusCircleFill } from "react-icons/bs";
 import { ROUTES } from "@/constants/routes";
 import { USER_NAVIGATION_ITEMS } from "@/constants/navigation";
+import { AppLink } from "@/components/common/AppLink";
 import useAuthContext from "@/hooks/useAuthContext";
 
 const NavBarUserMenu = () => {
@@ -65,11 +66,11 @@ const NavBarUserMenu = () => {
 
   if (!isAuthenticated) {
     return (
-      <Link to={ROUTES.LOGIN} style={{ textDecoration: "none" }}>
+      <AppLink to={ROUTES.LOGIN} textDecoration="none">
         <Button
           size="sm"
           variant="outline"
-          color="button-outline-primary"
+          color="on-button-outline-primary"
           borderColor="button-outline-primary"
           _hover={{
             bg: "primary/8",
@@ -77,7 +78,7 @@ const NavBarUserMenu = () => {
         >
           Login
         </Button>
-      </Link>
+      </AppLink>
     );
   }
 
@@ -163,10 +164,11 @@ const NavBarUserMenu = () => {
                   {/* User Navigation Items */}
                   {USER_NAVIGATION_ITEMS.filter((item) => !item.isAction).map(
                     (item) => (
-                      <Link
+                      <AppLink
                         key={item.value}
                         to={item.path}
-                        style={{ textDecoration: "none", width: "100%" }}
+                        textDecoration="none"
+                        width="100%"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleMenuItemClick();
@@ -206,16 +208,17 @@ const NavBarUserMenu = () => {
                             {item.label}
                           </Text>
                         </Box>
-                      </Link>
+                      </AppLink>
                     )
                   )}
                 </>
               )}
 
               {/* Existing Profile, Settings, Logout */}
-              <Link
+              <AppLink
                 to={ROUTES.PROFILE}
-                style={{ textDecoration: "none", width: "100%" }}
+                textDecoration="none"
+                width="100%"
                 onClick={(e) => {
                   e.stopPropagation();
                   handleMenuItemClick();
@@ -255,10 +258,11 @@ const NavBarUserMenu = () => {
                     Profile
                   </Text>
                 </Box>
-              </Link>
-              <Link
+              </AppLink>
+              <AppLink
                 to={ROUTES.SETTINGS}
-                style={{ textDecoration: "none", width: "100%" }}
+                textDecoration="none"
+                width="100%"
                 onClick={(e) => {
                   e.stopPropagation();
                   handleMenuItemClick();
@@ -294,7 +298,7 @@ const NavBarUserMenu = () => {
                     Settings
                   </Text>
                 </Box>
-              </Link>
+              </AppLink>
               <Box
                 position="relative"
                 px={4}

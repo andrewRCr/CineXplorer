@@ -124,13 +124,13 @@ const PaginationCtrl = (props: iPaginationCtrlProps) => {
             <IconButton
               key={page}
               variant="ghost"
-              bg={isCurrentPage ? "layer-selected-01" : undefined}
-              color={isCurrentPage ? "tertiary" : "foreground"}
+              bg={isCurrentPage ? "button-subtle-selected" : undefined}
+              color={isCurrentPage ? "on-button-subtle-selected" : "foreground"}
               borderColor={isCurrentPage ? "tertiary" : "border"}
               fontWeight={isCurrentPage ? "semibold" : "normal"}
               aria-current={isCurrentPage ? "page" : undefined}
               px={getDynamicPadding(formattedPage)}
-              _hover={isCurrentPage ? undefined : { bg: "muted/70" }}
+              _hover={isCurrentPage ? undefined : { bg: "tertiary/12" }}
               onClick={createPageClickHandler(page)}
             >
               {formattedPage}
@@ -254,15 +254,15 @@ const PaginationCtrl = (props: iPaginationCtrlProps) => {
         <IconButton
           key={page}
           variant="ghost"
-          bg={isCurrentPage ? "layer-selected-01" : undefined}
-          color={isCurrentPage ? "tertiary" : "foreground"}
+          bg={isCurrentPage ? "button-subtle-selected" : undefined}
+          color={isCurrentPage ? "on-button-subtle-selected" : "foreground"}
           borderColor={isCurrentPage ? "tertiary" : "border"}
           fontWeight={isCurrentPage ? "semibold" : "normal"}
           aria-current={isCurrentPage ? "page" : undefined}
           px={getDynamicPadding(formattedPage)}
           disabled={false} // Explicitly set disabled to false
           cursor="pointer" // Explicitly set cursor
-          _hover={isCurrentPage ? undefined : { bg: "muted/70" }}
+          _hover={isCurrentPage ? undefined : { bg: "tertiary/12" }}
           onClick={createPageClickHandler(page)}
         >
           {formattedPage}

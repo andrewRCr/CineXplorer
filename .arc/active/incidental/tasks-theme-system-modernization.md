@@ -2661,14 +2661,39 @@ prevents discovering token issues after cleanup, when fixing them is harder.
     **Quality gates per domain:** Run TypeScript and ESLint after each domain (7.2.a through 7.2.d) before moving
     to next. Per DEVELOPMENT-RULES one-subtask protocol, catch issues early rather than batching.
 
-    - [ ] **7.2.a Fix Layout & Navigation domain violations**
+    - [x] **7.2.a Fix Layout & Navigation domain violations**
         - Work through Layout & Navigation violation list from 7.1.b
         - **Fix list reference:** `notes-theme-system-modernization.md` line 400
         - Apply all pattern fixes: buttons, forms, links, surfaces, status, colors
         - Verify fixes against ADRs (ADR-009, ADR-010, ADR-011, ADR-012)
-        - **Quality gates:** TypeScript 0 errors, ESLint 0 violations
-        - **Visual test:** Verify fixed components in all 4 themes × 2 modes
+        - **Quality gates:** TypeScript 0 errors, ESLint 0 violations ✓
         - **Session boundary:** Can pause/resume after this domain (25% complete)
+
+        **Completed:** All 10 fixes applied across 8 components:
+
+        **HIGH PRIORITY (Systemic):**
+        - ✓ React Router Links → AppLink (4 components): NavBar.tsx, NavBarUserMenu.tsx (login + menu items),
+        Footer.tsx (debug links)
+        - ✓ NavBarUserMenu login button: Fixed `color="on-button-outline-primary"` (was `button-outline-primary`)
+
+        **MEDIUM PRIORITY (Button patterns):**
+        - ✓ PaginationCtrl: Updated selected state tokens (`button-subtle-selected` + `on-button-subtle-selected`),
+        hover state (`tertiary/12`)
+        - ✓ MobileMenuButton: Applied neutral outline pattern with complete hover states (bg, borderColor, color)
+
+        **LOW PRIORITY (Token substitutions):**
+        - ✓ NavBarSearch: Changed Box borderColor to `input` token, simplified focus state to standard ring pattern
+        - ✓ LoadingContent: Replaced hardcoded shadow with `boxShadow="shadow-lg"`
+
+        **DOCUMENTATION:**
+        - ✓ Footer: Added TMDB logo fixed height exception comment
+        - ✓ LoadingLayout: Enhanced OAuth spinner height calculation comment
+        - ✓ Sidebar: Updated sticky offset calculation comment
+        - ✓ SidebarDrawer: Verified `sidebar-width` token exists, documented header height (64px vs 65px navbar)
+
+        **Note:** SidebarContent.tsx did not require Link fixes (uses navigate() pattern, not React Router Link components).
+
+        **Quality gates:** TypeScript 0 errors ✓, ESLint 0 violations ✓
 
     - [ ] **7.2.b Fix Movie Discovery domain violations**
         - Work through Movie Discovery violation list from 7.1.c

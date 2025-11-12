@@ -53,8 +53,8 @@ const Featured = () => {
               onClick={() => navigate(ROUTES.POPULAR)}
               bg="button-subtle"
               color="on-button-subtle"
-              _hover={{ bg: "secondary-hover" }}
-              _active={{ bg: "secondary-active" }}
+              _hover={{ bg: "button-subtle/90" }}
+              _active={{ bg: "button-subtle/80" }}
               size="lg"
               width="100%"
             >
@@ -65,8 +65,8 @@ const Featured = () => {
               onClick={() => navigate(ROUTES.NOW_PLAYING)}
               bg="button-subtle"
               color="on-button-subtle"
-              _hover={{ bg: "secondary-hover" }}
-              _active={{ bg: "secondary-active" }}
+              _hover={{ bg: "button-subtle/90" }}
+              _active={{ bg: "button-subtle/80" }}
               size="lg"
               width="100%"
             >
@@ -77,8 +77,8 @@ const Featured = () => {
               onClick={() => navigate(ROUTES.UPCOMING)}
               bg="button-subtle"
               color="on-button-subtle"
-              _hover={{ bg: "secondary-hover" }}
-              _active={{ bg: "secondary-active" }}
+              _hover={{ bg: "button-subtle/90" }}
+              _active={{ bg: "button-subtle/80" }}
               size="lg"
               width="100%"
             >

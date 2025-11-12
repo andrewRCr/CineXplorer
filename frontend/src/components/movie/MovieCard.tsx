@@ -184,10 +184,7 @@ const MovieCard = ({ movie, currentPage, source, query }: MovieCardProps) => {
         transition="all 0.3s ease-in-out"
         _hover={{ bg: "layer-hover-01" }}
       >
-        <Link
-          to={`/movie/${movie.tmdb_id}${queryString}`}
-          style={{ display: "block" }}
-        >
+        <Link to={`/movie/${movie.tmdb_id}${queryString}`} style={{ display: "block", textDecoration: "none" }}>
           <Box position="relative" paddingBottom="150%" overflow="hidden">
             <Image
               position="absolute"
@@ -226,10 +223,7 @@ const MovieCard = ({ movie, currentPage, source, query }: MovieCardProps) => {
                 }
                 onMouseLeave={() => setIsTitleTooltipOpen(false)}
               >
-                <Link
-                  to={`/movie/${movie.tmdb_id}${queryString}`}
-                  style={{ textDecoration: "none", color: "inherit" }}
-                >
+                <Link to={`/movie/${movie.tmdb_id}${queryString}`} style={{ textDecoration: "none", color: "inherit" }}>
                   {movie.title}
                 </Link>
               </Text>
@@ -240,7 +234,7 @@ const MovieCard = ({ movie, currentPage, source, query }: MovieCardProps) => {
                   position="absolute"
                   top="-40px"
                   left="0"
-                  zIndex="9999"
+                  zIndex="tooltip"
                   pointerEvents="none"
                 >
                   <Box

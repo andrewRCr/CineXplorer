@@ -76,7 +76,7 @@ const MovieDetail = () => {
 
     return (
       <Box mb={4}>
-        <Link to={backUrl}>
+        <Link to={backUrl} style={{ textDecoration: "none" }}>
           <Button
             variant="outline"
             borderWidth="1px"

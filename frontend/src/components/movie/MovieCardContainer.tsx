@@ -9,7 +9,7 @@ const MovieCardContainer = ({ children }: MovieCardContainerProps) => {
   return (
     <Box
       borderRadius={10}
-      boxShadow="0 2px 8px rgba(0, 0, 0, 0.1)"
+      boxShadow="shadow-sm"
       border="1px solid"
       borderColor="border"
       overflow="hidden"

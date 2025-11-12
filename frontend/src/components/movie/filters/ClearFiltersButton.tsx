@@ -36,7 +36,7 @@ const ClearFiltersButton = ({
         size="xs"
         variant="ghost"
         color="destructive"
-        _hover={{ color: "destructive" }}
+        _hover={{ bg: "tertiary/8", color: "destructive" }}
         fontSize="xs"
         visibility={
           hasActiveFilters && !showAdvanced ? "visible" : "hidden"

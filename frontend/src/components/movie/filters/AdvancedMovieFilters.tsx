@@ -126,7 +126,7 @@ const AdvancedMovieFilters = ({
               size="sm"
               variant="ghost"
               color="destructive"
-              _hover={{ color: "destructive" }}
+              _hover={{ bg: "tertiary/8", color: "destructive" }}
             >
               <FiX style={{ marginRight: "6px" }} />
               Clear Filters
@@ -138,7 +138,7 @@ const AdvancedMovieFilters = ({
               size="sm"
               variant="ghost"
               color="tertiary"
-              _hover={{ color: "tertiary-hover" }}
+              _hover={{ bg: "tertiary/8", color: "tertiary-hover" }}
             >
               <FiFilter style={{ marginRight: "6px" }} />
               Collapse

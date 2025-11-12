@@ -2695,14 +2695,54 @@ prevents discovering token issues after cleanup, when fixing them is harder.
 
         **Quality gates:** TypeScript 0 errors ✓, ESLint 0 violations ✓
 
-    - [ ] **7.2.b Fix Movie Discovery domain violations**
-        - Work through Movie Discovery violation list from 7.1.c
-        - **Fix list reference:** `notes-theme-system-modernization.md` line 600
-        - Apply all pattern fixes: buttons, forms, links, surfaces, status, colors
-        - Verify fixes against ADRs (ADR-009, ADR-010, ADR-011, ADR-012)
-        - **Quality gates:** TypeScript 0 errors, ESLint 0 violations
-        - **Visual test:** Verify fixed components in all 4 themes × 2 modes
-        - **Session boundary:** Can pause/resume after this domain (50% complete)
+    - [x] **7.2.b Fix Movie Discovery domain violations**
+
+        **Completed:** Fixed all 4 violations across 4 Movie Discovery components. Session also included
+        critical AppLink→TextLink refactor with documentation updates after discovering inappropriate usage patterns.
+
+        **Movie Discovery fixes:**
+
+        1. **Featured.tsx button hover states** (button pattern fix)
+           - Fixed 3 navigation buttons using wrong hover/active tokens
+           - Changed from `_hover={{ bg: "secondary-hover" }}`, `_active={{ bg: "secondary-active" }}`
+           - To opacity-based subtle pattern: `_hover={{ bg: "button-subtle/90" }}`, `_active={{ bg: "button-subtle/80" }}`
+           - Base tokens (`bg="button-subtle"`, `color="on-button-subtle"`) were correct
+
+        2. **MovieCard.tsx z-index** (minor token substitution)
+           - Line 238: Replaced `zIndex="9999"` with semantic `zIndex="tooltip"` on title tooltip
+
+        3. **MovieCardContainer.tsx shadow** (minor token substitution)
+           - Line 12: Replaced `boxShadow="0 2px 8px rgba(0, 0, 0, 0.1)"` with `boxShadow="shadow-sm"`
+
+        4. **React Router Link patterns** (2 components - corrected during session)
+           - Initial work incorrectly applied TextLink (opinionated inline link component)
+           - Discovered TextLink inappropriate for: buttons, block layouts, inherited text, logos
+           - **MovieCard.tsx:** Poster link uses `Link` + `display: "block"`, title link uses `Link` + `color: "inherit"`
+           - **MovieDetail.tsx:** BackButton uses `Link` + `textDecoration: "none"` (wrapping Button)
+           - Pattern: Use plain Link with explicit styles for non-text navigation (see strategy doc)
+
+        **AppLink→TextLink component refactor:**
+
+        During Movie Discovery fixes, identified that "AppLink" name was misleading (sounded universal but
+        only appropriate for inline text links). Performed comprehensive rename to "TextLink" with enhanced
+        documentation to prevent future misapplication:
+
+        - Renamed component: `AppLink.tsx` → `TextLink.tsx` with updated docstring
+        - Updated 7 component usages (NavBar, NavBarUserMenu, Footer, plus Movie Discovery)
+        - Corrected inappropriate TextLink usages back to plain `Link` with inline styles
+        - Updated `strategy-semantic-tokens.md` with expanded decision tree (when to use TextLink vs Link)
+        - Updated all fix lists in `notes-theme-system-modernization.md` (changed 24 AppLink references)
+        - Fix lists now self-contained with specific guidance per pattern (no strategy doc lookup needed)
+
+        **Additional fixes from Task 7.2.a issues:**
+
+        - **Filter border consistency:** Updated 4 components (ConnectedDropdowns Genre/Year, SortDropdownMinimal,
+          CollapsibleSearchBox) to use `borderColor="button-outline"` for visual consistency
+        - Added DESIGN comments explaining intentional deviation from `input` token
+
+        **Quality gates:** TypeScript 0 errors ✓, ESLint 0 violations ✓
+
+        **Files changed:** 11 total (4 Movie Discovery + TextLink refactor + strategy doc + notes + filters)
 
     - [ ] **7.2.c Fix Movie Filters domain violations**
         - Work through Movie Filters violation list from 7.1.d

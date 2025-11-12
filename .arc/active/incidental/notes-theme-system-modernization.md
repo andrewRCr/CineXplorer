@@ -403,16 +403,33 @@ are straightforward token substitutions.
 
 **HIGH PRIORITY (Systemic patterns):**
 
-1. **React Router Links → AppLink component (5 components)**
-   - NavBar.tsx (lines 22-67, 162-184)
-   - NavBarUserMenu.tsx (lines 164-210, 216-258, 259-297)
-   - SidebarContent.tsx (lines 162-184, 209-217)
-   - Footer.tsx (lines 32-40)
-   - **Pattern:** Replace `<Link to={path} style={{ textDecoration: "none" }}>` with `<AppLink to={path}>`
-   - **Import:** `import { AppLink } from "@/components/common/AppLink"`
-   - **Remove:** React Router `Link` import (no longer needed)
-   - **Reference:** `components/common/AppLink.tsx`, ADR-010, strategy-semantic-tokens.md
-     "React Router Integration"
+1. **React Router Link styling patterns (4 components - different patterns needed)**
+
+   **a) Footer.tsx debug links (lines 32-34) - Use TextLink ✓**
+   - These are inline text links, appropriate for TextLink
+   - **Pattern:** Replace `<Link to={path}>` with `<TextLink to={path}>`
+   - **Import:** `import { TextLink } from "@/components/common/TextLink"`
+   - Example: `<TextLink to="/dev/theme-debug">Theme</TextLink>`
+
+   **b) NavBar.tsx logo (lines 22-68) - Use Link, NOT TextLink**
+   - Logo/brand element should not have underline or focus ring
+   - **Pattern:** Keep `<Link to={path} style={{ textDecoration: "none", color: "inherit" }}>`
+   - **Import:** `import { Link } from "react-router-dom"`
+   - Reason: TextLink adds underline + focus ring (wrong for logos)
+
+   **c) NavBar.tsx nav tabs (lines 163-185) - Use Link, NOT TextLink**
+   - Wrapping styled buttons, don't want link styling
+   - **Pattern:** Keep `<Link to={path} style={{ textDecoration: "none" }}>`
+   - **Import:** `import { Link } from "react-router-dom"`
+   - Reason: TextLink conflicts with button's own styling
+
+   **d) NavBarUserMenu.tsx menu items (lines 167-211, 218-260, 262-300) - Use Link, NOT TextLink**
+   - Wrapping Box components with custom hover states
+   - **Pattern:** Keep `<Link to={path} style={{ textDecoration: "none" }}>`
+   - **Import:** `import { Link } from "react-router-dom"`
+   - Reason: TextLink interferes with Box hover styling
+
+   **Note:** SidebarContent.tsx already uses navigate() correctly (no Link needed)
 
 **MEDIUM PRIORITY (Button patterns):**
 
@@ -604,14 +621,25 @@ organization (it's a movie-focused landing page).
 
 **HIGH PRIORITY (Systemic patterns):**
 
-1. **React Router Links → AppLink component (2 components)**
-   - MovieCard.tsx (lines 187-206, 229-234)
-   - MovieDetail.tsx (lines 79-98)
-   - **Pattern:** Replace `<Link to={path} style={{ textDecoration: "none" }}>` with `<AppLink to={path}>`
-   - **Import:** `import { AppLink } from "@/components/common/AppLink"`
-   - **Remove:** React Router `Link` import (no longer needed)
-   - **Reference:** `components/common/AppLink.tsx`, ADR-010, strategy-semantic-tokens.md
-     "React Router Integration"
+1. **React Router Link styling patterns (2 components - different patterns needed, NONE use TextLink)**
+
+   **a) MovieCard.tsx poster link (lines 187-206) - Use Link with display: block**
+   - Wraps Image/Box for block navigation
+   - **Pattern:** Keep `<Link to={path} style={{ display: "block", textDecoration: "none" }}>`
+   - **Import:** `import { Link } from "react-router-dom"`
+   - Reason: TextLink is inline, breaks layout for block elements
+
+   **b) MovieCard.tsx title link (lines 227-232) - Use Link with color: inherit**
+   - Title text inside truncated Text component, should inherit parent color
+   - **Pattern:** Keep `<Link to={path} style={{ textDecoration: "none", color: "inherit" }}>`
+   - **Import:** `import { Link } from "react-router-dom"`
+   - Reason: TextLink forces tertiary color, breaks Text component styling
+
+   **c) MovieDetail.tsx BackButton (lines 79-99) - Use Link without decoration**
+   - Wraps a styled Button component
+   - **Pattern:** Keep `<Link to={backUrl} style={{ textDecoration: "none" }}>`
+   - **Import:** `import { Link } from "react-router-dom"`
+   - Reason: TextLink adds underline, conflicts with button styling
 
 **MEDIUM PRIORITY (Button token issues):**
 
@@ -1140,24 +1168,24 @@ effort, and evaluate token system coverage.
 <Link to={path} style={{ textDecoration: "none", color: "inherit" }}>
 ```
 
-**Expected pattern (AppLink component):**
+**Expected pattern (TextLink component):**
 
 ```tsx
-import { AppLink } from "@/components/common";
+import { TextLink } from "@/components/common";
 
-<AppLink to={path}>Click here</AppLink>
+<TextLink to={path}>Click here</TextLink>
 ```
 
-**Component:** `frontend/src/components/common/AppLink.tsx` (wraps Chakra Link + React Router Link with semantic tokens)
+**Component:** `frontend/src/components/common/TextLink.tsx` (wraps Chakra Link + React Router Link with semantic tokens)
 
 **Why systemic:** React Router Link is natural first choice for routing, developers bypass semantic token system for
-perceived simplicity. AppLink component provides clean integration with automatic semantic token application.
+perceived simplicity. TextLink component provides clean integration with automatic semantic token application.
 
 **Fix effort:** ~2 hours total (~30 min per domain, 7 components affected)
 
 **Priority:** HIGH - Most widespread violation, affects user-facing navigation across 2 major domains
 
-**Note:** AppLink created during Task 7.1.f strategy documentation updates (2025-11-12)
+**Note:** TextLink created during Task 7.1.f strategy documentation updates (2025-11-12)
 
 ---
 
@@ -1863,15 +1891,15 @@ Quick reference for violations found during comprehensive audit (Phase 7.1).
 <Link to="/path" style={{ textDecoration: "none", color: "inherit" }}>
 ```
 
-**✅ Correct: Use AppLink component**
+**✅ Correct: Use TextLink component**
 
 ```tsx
-import { AppLink } from "@/components/common";
+import { TextLink } from "@/components/common";
 
-<AppLink to="/path">Click here</AppLink>
+<TextLink to="/path">Click here</TextLink>
 ```
 
-**Component location:** `frontend/src/components/common/AppLink.tsx`
+**Component location:** `frontend/src/components/common/TextLink.tsx`
 
 ### Custom Focus States
 

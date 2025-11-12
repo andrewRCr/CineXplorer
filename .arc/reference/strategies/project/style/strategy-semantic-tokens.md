@@ -694,27 +694,27 @@ Uses browser default 1px thickness for clean appearance.
 
 ### React Router Integration
 
-**For navigation links in React Router applications**, use the `AppLink` component that wraps React Router's `Link` with
+**For navigation links in React Router applications**, use the `TextLink` component that wraps React Router's `Link` with
 Chakra semantic tokens:
 
 ```tsx
-import { AppLink } from "@/components/common";
+import { TextLink } from "@/components/common";
 
 // Basic navigation link
-<AppLink to="/movies">Browse Movies</AppLink>
+<TextLink to="/movies">Browse Movies</TextLink>
 
 // With custom color override
-<AppLink to="/profile" color="primary">My Profile</AppLink>
+<TextLink to="/profile" color="primary">My Profile</TextLink>
 
 // With additional Chakra props
-<AppLink to="/settings" fontSize="lg" fontWeight="bold">
+<TextLink to="/settings" fontSize="lg" fontWeight="bold">
   Settings
-</AppLink>
+</TextLink>
 ```
 
-**Component location:** `frontend/src/components/common/AppLink.tsx`
+**Component location:** `frontend/src/components/common/TextLink.tsx`
 
-**Why use AppLink instead of raw React Router Link?**
+**Why use TextLink instead of raw React Router Link?**
 
 - ✅ Automatic semantic token integration (`tertiary`, `tertiary-hover`)
 - ✅ Consistent underline patterns across the application
@@ -725,17 +725,107 @@ import { AppLink } from "@/components/common";
 **Pattern implementation:**
 
 ```tsx
-// AppLink uses Chakra's asChild composition pattern
+// TextLink uses Chakra's asChild composition pattern
 <ChakraLink asChild color="tertiary" _hover={{ color: "tertiary-hover" }} ...>
   <RouterLink to={path}>{children}</RouterLink>
 </ChakraLink>
 ```
 
-**When NOT to use AppLink:**
+**When to use TextLink:**
 
-- External links (use Chakra `<Link href="https://..." isExternal>`)
-- Non-navigation styled text (use `<Text color="tertiary">`)
-- Custom link behavior (create specialized component extending AppLink pattern)
+✅ **Inline text links** - Navigation links that should look like hyperlinks:
+```tsx
+// Navbar menu items
+<TextLink to="/movies">Movies</TextLink>
+
+// Footer links
+<TextLink to="/about">About</TextLink>
+
+// Content body links
+<Text>Read more in our <TextLink to="/guide">user guide</TextLink>.</Text>
+```
+
+✅ **Standalone navigation text** - When you want full link styling (underline, color, focus):
+```tsx
+<TextLink to="/settings" fontSize="lg" fontWeight="bold">
+  Account Settings
+</TextLink>
+```
+
+**When NOT to use TextLink:**
+
+❌ **Wrapping buttons** - Buttons have their own styles, don't need link styling:
+```tsx
+// ❌ Wrong: TextLink conflicts with button styles
+<TextLink to="/movies"><Button>Browse</Button></TextLink>
+
+// ✅ Correct: Use Link directly without decoration
+import { Link } from "react-router-dom";
+<Link to="/movies" style={{ textDecoration: "none" }}>
+  <Button>Browse</Button>
+</Link>
+```
+
+❌ **Block navigation** - Cards, posters, complex layouts need block display:
+```tsx
+// ❌ Wrong: TextLink is inline, breaks layout
+<TextLink to={`/movie/${id}`}>
+  <Card>
+    <Image src={poster} />
+    <Text>{title}</Text>
+  </Card>
+</TextLink>
+
+// ✅ Correct: Use Link with display: block
+import { Link } from "react-router-dom";
+<Link to={`/movie/${id}`} style={{ display: "block", textDecoration: "none" }}>
+  <Card>
+    <Image src={poster} />
+    <Text>{title}</Text>
+  </Card>
+</Link>
+```
+
+❌ **Inheriting parent styles** - Text that should match container:
+```tsx
+// ❌ Wrong: TextLink forces tertiary color, breaks inheritance
+<Text color="foreground" fontWeight="bold">
+  <TextLink to={`/movie/${id}`}>{title}</TextLink>
+</Text>
+
+// ✅ Correct: Use Link with color: inherit
+import { Link } from "react-router-dom";
+<Text color="foreground" fontWeight="bold">
+  <Link to={`/movie/${id}`} style={{ textDecoration: "none", color: "inherit" }}>
+    {title}
+  </Link>
+</Text>
+```
+
+❌ **Logo/brand elements** - Don't want underlines or focus rings:
+```tsx
+// ❌ Wrong: TextLink adds underline and focus ring to logo
+<TextLink to="/"><Heading>CineXplorer</Heading></TextLink>
+
+// ✅ Correct: Use Link without decoration
+import { Link } from "react-router-dom";
+<Link to="/" style={{ textDecoration: "none", color: "inherit" }}>
+  <Heading>CineXplorer</Heading>
+</Link>
+```
+
+❌ **External links** - Use Chakra Link for external URLs:
+```tsx
+<Link href="https://example.com" isExternal>External Site</Link>
+```
+
+**Decision tree:**
+
+1. Is it an inline text link that should look like a hyperlink? → **Use TextLink**
+2. Does it wrap a button? → **Use Link with `textDecoration: "none"`**
+3. Does it need block display? → **Use Link with `display: "block", textDecoration: "none"`**
+4. Should it inherit parent styles? → **Use Link with `textDecoration: "none", color: "inherit"`**
+5. Is it external? → **Use Chakra `<Link href isExternal>`**
 
 ### Focus Indicators
 
@@ -1719,18 +1809,18 @@ import { Link } from "react-router-dom";
 </Link>
 ```
 
-**✅ Correct: Use AppLink component**
+**✅ Correct: Use TextLink component**
 
 ```tsx
-import { AppLink } from "@/components/common";
+import { TextLink } from "@/components/common";
 
-<AppLink to="/movies">Browse Movies</AppLink>
+<TextLink to="/movies">Browse Movies</TextLink>
 ```
 
 **Why it matters:** Inline styles bypass the semantic token system entirely, creating theme inconsistencies and breaking
 accessibility patterns (proper underlines, focus states).
 
-**See also:** [React Router Integration](#react-router-integration) section for full AppLink documentation.
+**See also:** [React Router Integration](#react-router-integration) section for full TextLink documentation.
 
 ### Custom Focus States
 
@@ -1850,7 +1940,7 @@ structural containers use `border-strong-*` hierarchy, decorative elements use `
 
 **Version History:**
 
-- v2.3 (2025-11-12): Added Common Mistakes section from Phase 7.1 audit findings. Added AppLink component documentation
+- v2.3 (2025-11-12): Added Common Mistakes section from Phase 7.1 audit findings. Added TextLink component documentation
   for React Router integration. Enhanced ghost button hover pattern with explicit bg change requirement. Enhanced outline
   button hover pattern with all three property changes. Added border token decision tree. Updated based on 59-component
   audit (69 violations identified, zero token gaps).

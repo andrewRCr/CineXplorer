@@ -423,8 +423,7 @@ accent: palette.fg_accent,  // Alias during migration
 
 **Related Strategies:**
 
-- strategy-semantic-tokens.md (comprehensive token usage guide)
-- strategy-border-system.md (border patterns, outline styling)
+- strategy-semantic-tokens.md (comprehensive token usage guide, includes border patterns and focus states)
 
 ---
 

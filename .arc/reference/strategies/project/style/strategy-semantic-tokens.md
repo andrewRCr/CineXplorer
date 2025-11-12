@@ -1,6 +1,6 @@
 # Semantic Token Strategy
 
-**Version:** 2.1 | **Updated:** 2025-11-11 | **Status:** Active
+**Version:** 2.2 | **Updated:** 2025-11-12 | **Status:** Active
 
 ## Purpose
 
@@ -16,7 +16,6 @@ Organized by use case ("what are you building?") rather than token category.
 
 **For deep dives:**
 
-- **Border hierarchy**: See [Border System Strategy](./strategy-border-system.md)
 - **Layout dimensions**: See [Layout Token Strategy](./strategy-layout-tokens.md)
 - **Architectural decisions**: See ADRs 005-012 in `.arc/reference/adr/`
 
@@ -179,8 +178,45 @@ visual "nesting" - you can see when elements are inside others.
 </Box>
 ```
 
-**For deep dive:** See [Border System Strategy](./strategy-border-system.md) for complete border hierarchy
-(5 tokens: border-subtle-00/02, border-strong-01/02/03).
+**Border Color Hierarchy: 2-Tier vs 5-Tier Pattern (ADR-008)**
+
+CineXplorer provides 5 border tokens in the API (`border-subtle-00`, `border-subtle-02`, `border-strong-01/02/03`)
+but their implementation differs by mode:
+
+| Mode | Border Tiers | Rationale |
+|------|--------------|-----------|
+| **Light** | **2 distinct values** | Alternating layers (white ↔ gray ↔ white) - same border works on both |
+| **Dark** | **5 distinct values** | Progressive layers (darker → lighter → lightest) - each layer needs adjusted border |
+
+**Light Mode Implementation:**
+
+- `border-subtle-00` and `border-subtle-02` → same value
+- `border-strong-01`, `border-strong-02`, `border-strong-03` → same value
+- Why: Layers alternate (white ↔ gray), same border visible on both backgrounds
+
+**Dark Mode Implementation:**
+
+- Each token has distinct value, progressively lightening
+- Why: Layers progressively lighten, borders must adjust per layer for visibility
+- Deltas match IBM Carbon's official progression (~13% subtle, ~21%/24% strong)
+
+**Component usage stays clean:**
+
+```tsx
+// Use semantic per-layer tokens - implementation handles mode differences
+<Card bg="layer-01" borderColor="border-strong-01">Card</Card>
+<Modal bg="layer-02" borderColor="border-strong-02">Modal</Modal>
+<Menu bg="layer-03" borderColor="border-strong-03">Menu</Menu>
+```
+
+**Why this architecture:**
+
+- Semantic clarity: Token name indicates intent (`border-strong-02` on modals)
+- No mode-specific logic needed in components
+- Can differentiate per-layer in future without API changes
+- Industry-aligned with IBM Carbon and Shopify Polaris patterns
+
+**Implementation:** See `frontend/src/theme/color/utils.ts` (`deriveBorderHierarchy` function) for derivation logic.
 
 ### Shadows on Surfaces
 
@@ -664,6 +700,78 @@ Uses browser default 1px thickness for clean appearance.
 - Minimum 2px outline width
 - 2px offset for clear separation
 
+**Focus Pattern Comparison:**
+
+**Recommended: Outline Ring with Offset** (CineXplorer standard)
+
+```tsx
+<Input
+  borderWidth="1px"
+  borderColor="input"
+  _focus={{
+    borderColor: "tertiary",        // Optional: change border color
+    outline: "2px solid",
+    outlineColor: "ring",
+    outlineOffset: "2px",
+  }}
+/>
+```
+
+**Pros:**
+
+- ✅ No layout shift on focus (outline is outside element boundary)
+- ✅ Meets WCAG 2.4.13 (2px minimum thickness)
+- ✅ Clear visual separation from border
+- ✅ Works consistently across all component types
+- ✅ Industry standard (Ant Design, Bootstrap, US Web Design System)
+
+**Alternative: Border Width Increase** (not recommended)
+
+```tsx
+<Input
+  borderWidth="1px"
+  _focus={{
+    borderWidth: "2px",
+    borderColor: "ring",
+  }}
+/>
+```
+
+**Pros/Cons:**
+
+- ✅ Simpler CSS
+- ❌ Causes layout shift (element grows by 1px on all sides)
+- ❌ Requires careful spacing adjustments to prevent content jumps
+- ⚠️ Used by Material UI and Polaris, but less common overall
+
+**Recommendation:** Use outline ring pattern for consistent, shift-free focus indication.
+
+**Specifications (WCAG 2.4.13):**
+
+- **Ring width:** 2-3px (2px minimum, 3px better visibility)
+- **Ring offset:** 2px (creates clear separation from border)
+- **Ring color:** High contrast accent (`ring` token, typically maps to `primary`)
+- **Contrast:** ≥3:1 change between focused and unfocused states
+- **Border behavior:** Keep at 1px (does NOT increase)
+
+**Focus-Visible for Touch Devices:**
+
+Use `_focusVisible` to show focus rings only on keyboard navigation, not touch/click:
+
+```tsx
+<Button
+  _focusVisible={{
+    outline: "2px solid",
+    outlineColor: "ring",
+    outlineOffset: "2px",
+  }}
+>
+  Submit
+</Button>
+```
+
+This improves mobile UX by hiding focus rings on touch interactions while maintaining keyboard accessibility.
+
 ### Form Inputs
 
 **Input field borders:**
@@ -777,6 +885,7 @@ Uses browser default 1px thickness for clean appearance.
 >
   <Checkbox.HiddenInput />
   <Checkbox.Control
+    borderWidth="2px"
     borderColor="input"
     _checked={{ bg: "primary", borderColor: "primary" }}
   >
@@ -801,6 +910,37 @@ Uses browser default 1px thickness for clean appearance.
 
 **Examples:** Genre filters, multi-select forms, preference toggles
 
+### Form Control Border Width Standards
+
+**Industry standard border widths** (consistent across Material Design 3, IBM Carbon, GitHub Primer, and other modern
+design systems):
+
+| Component Type | Border Width | Notes |
+|---------------|--------------|-------|
+| **Text inputs** | 1px | Standard across all states |
+| **Select** | 1px | Same as text inputs |
+| **Textarea** | 1px | Same as text inputs |
+| **Checkboxes** | **2px** | Thicker to differentiate from text inputs |
+| **Radio buttons** | **2px** | Thicker to differentiate from text inputs |
+| **Switches** | N/A | Uses background colors, no visible border |
+
+**Why 2px for checkboxes/radios?**
+
+- Visual differentiation from text inputs (different interaction model)
+- Common pattern across design systems
+- Aligns with 2px stroke width in icon sets
+- Better visibility for small touch targets
+
+**Border width by state:**
+
+- **Default**: Use widths from table above
+- **Hover**: Keep same width, may change color
+- **Focus**: Keep same width, add 2px outline ring with offset (see Focus Indicators section)
+- **Active/Pressed**: Keep same width
+- **Disabled**: Keep same width, reduce opacity
+
+**Critical rule:** Never increase border width on state change (causes layout shift). Use outline rings for focus instead.
+
 ### Radio Buttons
 
 **Standard radio button pattern:**
@@ -811,6 +951,7 @@ Uses browser default 1px thickness for clean appearance.
     <RadioGroup.Item value="option1">
       <RadioGroup.ItemHiddenInput />
       <RadioGroup.ItemControl
+        borderWidth="2px"
         borderColor="input"
         _checked={{ bg: "primary", borderColor: "primary" }}
       />
@@ -819,6 +960,7 @@ Uses browser default 1px thickness for clean appearance.
     <RadioGroup.Item value="option2">
       <RadioGroup.ItemHiddenInput />
       <RadioGroup.ItemControl
+        borderWidth="2px"
         borderColor="input"
         _checked={{ bg: "primary", borderColor: "primary" }}
       />
@@ -1129,6 +1271,39 @@ All semantic tokens must meet WCAG accessibility guidelines for contrast and vis
 - `info` backgrounds with white text in light mode
 - `warning` with dark text in dark mode
 
+### Border Contrast Requirements (WCAG SC 1.4.11)
+
+**All border colors must meet minimum contrast:**
+
+- **Interactive element borders:** 3:1 minimum contrast ratio with adjacent backgrounds
+- **Recommended:** 4.5:1 for better visibility across all conditions
+- **Applies to:** Input fields, buttons, checkboxes, radio buttons, cards with borders
+
+**Testing Example:**
+
+```typescript
+// Light mode - checking border on white background
+background: '#FFFFFF' (luminance = 1.0)
+border: '#D4D4D4' (luminance ≈ 0.75)
+contrast = (1.0 + 0.05) / (0.75 + 0.05) = 1.31:1 ❌ FAIL
+
+// Need darker border for compliance
+border: '#767676' (luminance ≈ 0.27)
+contrast = (1.0 + 0.05) / (0.27 + 0.05) = 3.28:1 ✅ PASS
+```
+
+**Tool:** Use [WebAIM Contrast Checker](https://webaim.org/resources/contrastchecker/) for validation
+
+**Important:** Border width does NOT compensate for poor contrast. A 1px border with 4.5:1 contrast is more
+accessible than a 2px border with 2:1 contrast. WCAG has no trade-off mechanism - always prioritize contrast
+ratio over thickness.
+
+**Non-interactive boundaries (cards, dividers):**
+
+- 3:1 contrast recommended but not strictly required
+- Can be more subtle since not interactive
+- Use shadow as alternative if border doesn't meet contrast
+
 ### Color Alone Is Not Enough
 
 **Never rely on color as the only means of conveying information.** Always pair color with icons, text labels, patterns,
@@ -1405,7 +1580,6 @@ Fast lookup cheat sheet for common token choices.
 
 **For deep dives:**
 
-- [Border System Strategy](./strategy-border-system.md) - Per-layer border hierarchy
 - [Layout Token Strategy](./strategy-layout-tokens.md) - Structural dimensions, z-index
 
 **For architectural context:**
@@ -1429,10 +1603,13 @@ Fast lookup cheat sheet for common token choices.
 
 **Version History:**
 
+- v2.2 (2025-11-12): Consolidated border system content from strategy-border-system.md (now deleted). Added: border
+  width standards table, 2-tier/5-tier hierarchy explanation (ADR-008), border contrast WCAG requirements, focus
+  pattern comparison (outline ring vs border width). Updated checkbox/radio examples with borderWidth="2px".
 - v2.1 (2025-11-11): Alert text color pattern documented (Title: semantic color, Description: foreground on
   10-30% opacity backgrounds). Link underline thickness corrected to 1px browser default.
 - v2.0 (2025-11-11): Complete rewrite - use case-driven organization, ~67 tokens, ADRs 005-012 integrated, migration
-content removed
+  content removed
 - v1.2 (2025-11-07): Added ADR-011 on-* naming convention
 - v1.1 (2025-11-03): Verified accuracy, added ADR-004 reference
 - v1.0 (2025-11-02): Initial comprehensive guide

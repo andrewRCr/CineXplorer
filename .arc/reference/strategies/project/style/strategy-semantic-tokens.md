@@ -348,8 +348,16 @@ Buttons follow a visual pattern hierarchy (solid/outline/subtle/ghost) that's **
   variant="outline"
   borderColor="button-outline"
   color="on-button-outline"
-  _hover={{ bg: "tertiary/8", borderColor: "tertiary" }}
-  _active={{ bg: "tertiary/12", borderColor: "tertiary" }}
+  _hover={{
+    bg: "tertiary/8",           // Background tint
+    borderColor: "tertiary",    // Border color shift
+    color: "tertiary"           // Text color shift
+  }}
+  _active={{
+    bg: "tertiary/12",
+    borderColor: "tertiary",
+    color: "tertiary"
+  }}
 >
   Cancel
 </Button>
@@ -367,6 +375,9 @@ Buttons follow a visual pattern hierarchy (solid/outline/subtle/ghost) that's **
 **Why two outline variants?** Real-world usage revealed most outline buttons are neutral utility actions (navigation,
 OAuth, Cancel), not branded primary actions. The default name (`button-outline`) is the more common neutral variant.
 Explicit name (`button-outline-primary`) signals special branded case.
+
+**Critical:** Outline button hover requires ALL THREE property changes (bg, borderColor, color). Missing any property
+results in incomplete visual feedback. Common mistake: only adding background change without border/color shifts.
 
 ### Pattern 4: Subtle Button (Medium-Low Emphasis)
 
@@ -425,7 +436,10 @@ shift requires different foreground colors for proper contrast across themes.
 <Button
   variant="ghost"
   color="tertiary"
-  _hover={{ color: "tertiary-hover" }}
+  _hover={{
+    bg: "tertiary/8",        // ⚠️ REQUIRED: Background change for visual feedback
+    color: "tertiary-hover"
+  }}
   _active={{ color: "tertiary-active" }}
 >
   Skip
@@ -435,10 +449,15 @@ shift requires different foreground colors for proper contrast across themes.
 **Tokens:**
 
 - Text: `tertiary` (interactive text color)
-- Hover: `tertiary-hover`
+- Hover background: `tertiary/8` (8% opacity overlay - Material Design 3 standard)
+- Hover text: `tertiary-hover`
 - Active: `tertiary-active`
 
 **Examples:** "Skip", "Close", "Dismiss", low-priority actions
+
+**Important:** Ghost buttons MUST include background change on hover (`bg: "tertiary/8"`) in addition to color change.
+This provides essential visual feedback for interactive states. Common mistake: only changing text color without
+background, resulting in insufficient hover indication.
 
 ### Decision Tree: Which Button Pattern?
 
@@ -672,6 +691,51 @@ Interactive elements include links, form fields, focus states, and highlighted c
 
 **Why underline?** Accessibility best practice - color alone is insufficient for color-blind users (WCAG guideline).
 Uses browser default 1px thickness for clean appearance.
+
+### React Router Integration
+
+**For navigation links in React Router applications**, use the `AppLink` component that wraps React Router's `Link` with
+Chakra semantic tokens:
+
+```tsx
+import { AppLink } from "@/components/common";
+
+// Basic navigation link
+<AppLink to="/movies">Browse Movies</AppLink>
+
+// With custom color override
+<AppLink to="/profile" color="primary">My Profile</AppLink>
+
+// With additional Chakra props
+<AppLink to="/settings" fontSize="lg" fontWeight="bold">
+  Settings
+</AppLink>
+```
+
+**Component location:** `frontend/src/components/common/AppLink.tsx`
+
+**Why use AppLink instead of raw React Router Link?**
+
+- ✅ Automatic semantic token integration (`tertiary`, `tertiary-hover`)
+- ✅ Consistent underline patterns across the application
+- ✅ Proper focus states for keyboard navigation (`ring` token)
+- ✅ Theme-aware styling (adapts to all themes automatically)
+- ✅ Cleaner syntax than manual Chakra Link wrapper
+
+**Pattern implementation:**
+
+```tsx
+// AppLink uses Chakra's asChild composition pattern
+<ChakraLink asChild color="tertiary" _hover={{ color: "tertiary-hover" }} ...>
+  <RouterLink to={path}>{children}</RouterLink>
+</ChakraLink>
+```
+
+**When NOT to use AppLink:**
+
+- External links (use Chakra `<Link href="https://..." isExternal>`)
+- Non-navigation styled text (use `<Text color="tertiary">`)
+- Custom link behavior (create specialized component extending AppLink pattern)
 
 ### Focus Indicators
 
@@ -1576,6 +1640,189 @@ Fast lookup cheat sheet for common token choices.
 
 ---
 
+## Common Mistakes and Anti-Patterns
+
+Quick reference for violations found during comprehensive audit (Phase 7.1 - Nov 2025). These represent the most
+common mistakes made when implementing semantic tokens.
+
+### Incomplete Hover States
+
+**❌ Wrong: Ghost button missing bg change**
+
+```tsx
+<Button variant="ghost" color="tertiary" _hover={{ color: "tertiary-hover" }}>
+  Skip
+</Button>
+```
+
+**✅ Correct: Both color AND bg change**
+
+```tsx
+<Button
+  variant="ghost"
+  color="tertiary"
+  _hover={{
+    bg: "tertiary/8",        // REQUIRED
+    color: "tertiary-hover"
+  }}
+>
+  Skip
+</Button>
+```
+
+**Why it matters:** Background change provides visual feedback that the element is interactive. Text color change alone
+is too subtle, especially for users with reduced contrast sensitivity.
+
+---
+
+**❌ Wrong: Outline button missing border/color changes**
+
+```tsx
+<Button
+  variant="outline"
+  borderColor="button-outline"
+  _hover={{ bg: "tertiary/8" }}
+>
+  Cancel
+</Button>
+```
+
+**✅ Correct: All three properties change**
+
+```tsx
+<Button
+  variant="outline"
+  borderColor="button-outline"
+  color="on-button-outline"
+  _hover={{
+    bg: "tertiary/8",           // Background
+    borderColor: "tertiary",    // Border
+    color: "tertiary"           // Text
+  }}
+>
+  Cancel
+</Button>
+```
+
+**Why it matters:** The complete pattern creates a cohesive hover state where all visual elements shift to the accent
+color, providing clear feedback that the button is interactive.
+
+### React Router Link Integration
+
+**❌ Wrong: React Router Link with inline styles**
+
+```tsx
+import { Link } from "react-router-dom";
+
+<Link to="/movies" style={{ textDecoration: "none", color: "inherit" }}>
+  Browse Movies
+</Link>
+```
+
+**✅ Correct: Use AppLink component**
+
+```tsx
+import { AppLink } from "@/components/common";
+
+<AppLink to="/movies">Browse Movies</AppLink>
+```
+
+**Why it matters:** Inline styles bypass the semantic token system entirely, creating theme inconsistencies and breaking
+accessibility patterns (proper underlines, focus states).
+
+**See also:** [React Router Integration](#react-router-integration) section for full AppLink documentation.
+
+### Custom Focus States
+
+**❌ Wrong: Custom boxShadow focus**
+
+```tsx
+<Input
+  _focus={{
+    boxShadow: "0 0 0 1px var(--chakra-colors-ring)",
+    boxShadowColor: "tertiary.primary"
+  }}
+/>
+```
+
+**✅ Correct: Standard outline ring pattern**
+
+```tsx
+<Input
+  borderColor="input"
+  _focus={{
+    borderColor: "tertiary",
+    outline: "2px solid",
+    outlineColor: "ring",
+    outlineOffset: "2px"
+  }}
+/>
+```
+
+**Why it matters:** The standard outline ring pattern meets WCAG 2.4.13 requirements for focus indicators, provides
+proper keyboard navigation feedback, and avoids layout shift (outline is outside element boundary). Custom focus
+implementations often miss these requirements.
+
+### Deprecated Token Aliases
+
+**❌ Wrong: Old dotted aliases**
+
+```tsx
+<Text color="text.secondary">Secondary text</Text>
+<Input borderColor="border.subtle" />
+<Box bg="background.subItem">Hover state</Box>
+```
+
+**✅ Correct: Canonical semantic tokens**
+
+```tsx
+<Text color="on-muted">Secondary text</Text>
+<Input borderColor="input" />
+<Box bg="layer-hover-01">Hover state</Box>  {/* or tertiary/8 for hover */}
+```
+
+**Why it matters:** Deprecated aliases were part of ADR-011 migration (2025-11). They're maintained for backward
+compatibility but represent old naming conventions. Using canonical tokens ensures code clarity and aligns with current
+documentation.
+
+**Deprecated → Canonical mappings:**
+
+- `text.secondary` → `on-muted`
+- `border.subtle` → `input` (for form controls) or `border` (for dividers)
+- `background.subItem` → `layer-hover-01` (surface hover) or `tertiary/8` (opacity hover)
+- `tertiary.primary` → `tertiary` (color) or `ring` (focus indicator)
+
+### Border Token Confusion
+
+**❌ Wrong: Using generic border for form controls**
+
+```tsx
+<Input borderColor="border" />
+<Box borderColor="border">
+  <Input />  {/* Form wrapper */}
+</Box>
+```
+
+**✅ Correct: Use input token for form-related borders**
+
+```tsx
+<Input borderColor="input" />
+<Box borderColor="input">  {/* Form wrapper */}
+  <Input />
+</Box>
+```
+
+**Why it matters:** Semantic distinction helps maintain consistency. Form controls and their wrappers use `input` token,
+structural containers use `border-strong-*` hierarchy, decorative elements use `border`.
+
+**Decision tree:**
+
+- Form controls/wrappers → `input`
+- Structural containers (cards, panels) → `border-strong-01/02/03` (per layer)
+- Decorative/dividers → `border`
+
+---
+
 ## Related Documentation
 
 **For deep dives:**
@@ -1603,6 +1850,10 @@ Fast lookup cheat sheet for common token choices.
 
 **Version History:**
 
+- v2.3 (2025-11-12): Added Common Mistakes section from Phase 7.1 audit findings. Added AppLink component documentation
+  for React Router integration. Enhanced ghost button hover pattern with explicit bg change requirement. Enhanced outline
+  button hover pattern with all three property changes. Added border token decision tree. Updated based on 59-component
+  audit (69 violations identified, zero token gaps).
 - v2.2 (2025-11-12): Consolidated border system content from strategy-border-system.md (now deleted). Added: border
   width standards table, 2-tier/5-tier hierarchy explanation (ADR-008), border contrast WCAG requirements, focus
   pattern comparison (outline ring vs border width). Updated checkbox/radio examples with borderWidth="2px".

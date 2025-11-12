@@ -397,12 +397,46 @@ dropdown (50)    ← Dropdowns, tooltips, modals (above everything)
 <Menu.Content zIndex="dropdown">...</Menu.Content>
 ```
 
-### Rules
+### Z-Index Usage Rules
 
-1. **Never use numeric z-index values directly** - always use semantic tokens
-2. **Add new levels sparingly** - use existing levels first
-3. **Document new levels** - add to `z-index.ts` with clear semantic name
-4. **Test stacking** - use LayoutDebug page to verify hierarchy
+**Structural layers (cross-component stacking):**
+
+- **MUST use semantic tokens:** navbar, sidebar, footer, dropdown
+- Affects multiple components, creates stacking order for app layout
+- Values typically 10+
+- Examples: NavBar above Footer, Modal above content, Tooltip above everything
+
+```tsx
+// ✅ Structural stacking uses semantic tokens
+<Box zIndex="navbar">NavBar</Box>
+<Menu.Content zIndex="dropdown">Dropdown</Menu.Content>
+```
+
+**Element-level positioning (within component boundaries):**
+
+- **MAY use numeric values 0-10** for local element stacking
+- Should NOT interact with structural layers outside component
+- Examples: IconButton overlay on input, search icon positioning, icon stacking within alerts
+- Document intent with inline comment if non-obvious
+
+```tsx
+// ✅ Element-level stacking can use numeric values
+// Icon positioned above input field for show/hide toggle
+<IconButton position="absolute" right={2} zIndex={1} />
+
+// Search icon overlay within input container
+<Icon position="absolute" left={3} zIndex={1} />
+```
+
+**When in doubt:** Use semantic token (safer, more searchable, better for structural stacking)
+
+### Adding New Semantic Tokens
+
+1. **Evaluate scope:** Does this z-index affect multiple components? (Yes → semantic token)
+2. **Check for cross-component stacking:** Does it need to stack above/below structural layers? (Yes → semantic token)
+3. **Consider element-level:** Is it local positioning within component? (Maybe numeric acceptable)
+4. **Document new levels** - add to `z-index.ts` with clear semantic name
+5. **Test stacking** - use LayoutDebug page to verify hierarchy
 
 ---
 
@@ -619,4 +653,7 @@ zIndex="dropdown"  // 50 - Menus, tooltips, modals
 
 **Version History:**
 
+- v1.1 (2025-11-12): Updated z-index guidance with pragmatic hybrid approach (element-level numeric 0-10 acceptable,
+  structural 10+ requires semantic tokens). Based on Phase 7.1 audit findings showing numeric z-index usage for icon
+  positioning within components (non-structural use cases).
 - v1.0 (2025-11-06): Initial version documenting layout token system

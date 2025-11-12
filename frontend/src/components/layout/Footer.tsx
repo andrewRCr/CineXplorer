@@ -1,6 +1,6 @@
 import tmdbLogo from "../../assets/tmdb_logo_alt_short.svg";
 import { Box, HStack, Text, VStack } from "@chakra-ui/react";
-import { AppLink } from "@/components/common/AppLink";
+import { TextLink } from "@/components/common/TextLink";
 import { ColorModeButton } from "../chakra/color-mode";
 import { ThemeSelector } from "../ThemeSelector";
 
@@ -29,9 +29,9 @@ const Footer = () => {
         {import.meta.env.DEV && (
           <HStack gap={3} fontSize="xs" color="on-muted">
             <Text fontWeight="medium">Debug:</Text>
-            <AppLink to="/dev/theme-debug" fontSize="xs">Theme</AppLink>
-            <AppLink to="/dev/layout-debug" fontSize="xs">Layout</AppLink>
-            <AppLink to="/dev/typography-debug" fontSize="xs">Typography</AppLink>
+            <TextLink to="/dev/theme-debug" fontSize="xs">Theme</TextLink>
+            <TextLink to="/dev/layout-debug" fontSize="xs">Layout</TextLink>
+            <TextLink to="/dev/typography-debug" fontSize="xs">Typography</TextLink>
           </HStack>
         )}
 

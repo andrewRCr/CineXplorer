@@ -1,1 +1,1 @@
-export { AppLink } from "./AppLink";
+export { TextLink } from "./TextLink";

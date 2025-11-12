@@ -152,12 +152,12 @@ steps:
   ```
 
   **When to use qualifiers:**
-  - **planning**: Completing tasks AND adding NEW tasks/subtasks that weren't there before
-  - **maintenance**: Completing tasks AND restructuring/enhancing/removing existing task content
+    - **planning**: Completing tasks AND adding NEW tasks/subtasks that weren't there before
+    - **maintenance**: Completing tasks AND restructuring/enhancing/removing existing task content
 
   **When NOT to use qualifiers:**
-  - Just marking completed tasks `[x]` - that's implicit in task completion (no qualifier needed)
-  - Code changes beyond the listed tasks - commit those separately (atomic commits principle)
+    - Just marking completed tasks `[x]` - that's implicit in task completion (no qualifier needed)
+    - Code changes beyond the listed tasks - commit those separately (atomic commits principle)
 
   **IMPORTANT:** If using a qualifier, the commit body MUST describe what the extra planning/maintenance work was.
   The qualifier is a flag that says "there's more here," but the body provides the details.
@@ -215,7 +215,8 @@ steps:
   **Prohibited:**
 
     - ❌ PRD references (use task list instead)
-    - ❌ Display names (use exact filenames)
+    - ❌ Display names (use exact filenames: "tasks-pagination.md" NOT "pagination feature")
+    - ❌ Generic descriptions when referencing task lists ("theme system" → "tasks-theme-system-modernization.md")
     - ❌ Checkbox lists in body
     - ❌ Implementation details (code shows what, commits show why)
     - ❌ "Phase X.Y" when referring to tasks
@@ -357,6 +358,14 @@ steps:
     - One idea per bullet
     - 1-2 lines max per bullet
     - Active voice
+
+  **Use exact filenames everywhere:**
+
+    - ✅ "Discovered during Phase 7.1.c audit (tasks-theme-system-modernization.md)"
+    - ❌ "Discovered during theme system audit" (too vague)
+    - ✅ "Implements pattern from tasks-api-layer-modernization.md (Task 3.2)"
+    - ❌ "Implements API layer pattern" (missing filename)
+    - **Why:** Enables easy `git log --grep` searches and unambiguous traceability
 
   **Remember:** Commit messages should accurately reflect WHERE the project stands after the commit.
   All commits should be independently understandable without extensive archaeology.

@@ -2744,23 +2744,162 @@ prevents discovering token issues after cleanup, when fixing them is harder.
 
         **Files changed:** 11 total (4 Movie Discovery + TextLink refactor + strategy doc + notes + filters)
 
-    - [ ] **7.2.c Fix Movie Filters domain violations**
-        - Work through Movie Filters violation list from 7.1.d
-        - **Fix list reference:** `notes-theme-system-modernization.md` line 796
-        - Apply all pattern fixes: buttons, forms, links, surfaces, status, colors
-        - Verify fixes against ADRs (ADR-009, ADR-010, ADR-011, ADR-012)
-        - **Quality gates:** TypeScript 0 errors, ESLint 0 violations
-        - **Visual test:** Verify fixed components in all 4 themes × 2 modes
-        - **Session boundary:** Can pause/resume after this domain (75% complete)
+    - [x] **7.2.c Fix Movie Filters domain violations**
+
+        **Completed:** Fixed 10 violations across 4 components (CollapsibleSearchBox already had DESIGN comment).
+
+        **Components fixed:**
+
+        1. **SearchBar.tsx** (6 violations):
+           - Replaced deprecated `color="text.secondary"` → `color="on-muted"`
+           - Replaced deprecated `borderColor="border.subtle"` → `borderColor="input"`
+           - Replaced deprecated `backgroundColor` → `bg` with `tertiary/8` token
+           - Replaced custom focus state with standard 2px outline + 2px offset pattern
+           - Added comment documenting acceptable zIndex usage for icon stacking
+
+        2. **AdvancedMovieFilters.tsx** (2 violations):
+           - Added `bg: "tertiary/8"` to ghost button hover states (Clear Filters, Collapse)
+
+        3. **ClearFiltersButton.tsx** (1 violation):
+           - Added `bg: "tertiary/8"` to ghost button hover state
+
+        4. **ConnectedDropdowns.tsx** (1 intentional deviation preserved):
+           - Advanced filters toggle button has DESIGN comment explaining intentional hover behavior
+           - Uses subtle hover (background only) for visual cohesion with connected dropdowns
+           - Comment preserved per project standards
+
+        5. **CollapsibleSearchBox.tsx** (0 violations):
+           - Already has DESIGN comment at line 100-101 explaining button-outline usage
+
+        **Quality gates:** TypeScript 0 errors ✓, ESLint 0 violations ✓
 
     - [ ] **7.2.d Fix Shared/Common domain violations**
-        - Work through Shared/Common violation list from 7.1.e
-        - **Fix list reference:** `notes-theme-system-modernization.md` line 1032
-        - Apply all pattern fixes: buttons, forms, links, surfaces, status, colors
-        - Verify fixes against ADRs (ADR-009, ADR-010, ADR-011, ADR-012)
-        - **Quality gates:** TypeScript 0 errors, ESLint 0 violations
-        - **Visual test:** Verify fixed components in all 4 themes × 2 modes
-        - **Session boundary:** All fixes complete (100%)
+
+        **Context:** Original fix list (notes line 1032) marked outdated after session investigation revealed incorrect
+        form control border guidance. Task restructured with corrected subtasks based on actual requirements.
+
+        **Critical discovery:** Strategy doc incorrectly specified "input" token for all form controls. Forms on layer-01
+        backgrounds need layer-appropriate borders (border-strong-01), not generic "input" token. This affects Register/Login
+        forms and requires strategy doc corrections (deferred to Task 7.2.e for comprehensive token cleanup).
+
+        - [ ] **7.2.d.1 Fix Register.tsx form controls**
+            - **Form controls (3 inputs):** Fix borders + hover + focus states
+                - Current: `borderColor="input"` (incorrect - generic token)
+                - Should be: `borderColor="border-strong-01"` (layer-01 specific)
+                - Add hover: `_hover={{ borderColor: "border-strong-02" }}` (step up one level)
+                - Fix focus: Add `borderColor: "tertiary"` alongside `_focusVisible` outline ring
+                - Pattern: Border changes to tertiary on focus, plus 2px outline ring for keyboard (ring token)
+            - **Primary button hover:** Already fixed in 7.2.c session (opacity → primary-hover)
+            - **Link underline:** Fix "Already have an account?" link
+                - Current: `textDecorationThickness="2px"` (line 252)
+                - Should be: `1px` (TextLink standard)
+                - Alternative: Replace with TextLink component for consistency
+
+        - [ ] **7.2.d.2 Fix Login.tsx form controls**
+            - **Email/Password inputs:** Same border/hover/focus fixes as Register (2 inputs)
+                - borderColor: "input" → "border-strong-01"
+                - Add hover: `_hover={{ borderColor: "border-strong-02" }}`
+                - Add borderColor: "tertiary" to focus state
+            - **Checkbox control:**
+                - Current: `borderColor="border"` (line 545) - generic token
+                - Should be: `borderColor="border-strong-01"` (layer-01 specific)
+                - Fix focus: Replace custom boxShadow (lines 549-552) with `_focusVisible` outline pattern
+            - **Link underline:** Fix "Don't have an account?" link
+                - Current: `textDecorationThickness="2px"` (line 650)
+                - Should be: `1px` (TextLink standard)
+            - **Z-index evaluation:** Lines 694, 722, 765 - `zIndex={1}` for IconButton positioning
+                - Evaluate if acceptable for element-level stacking or needs semantic token
+                - Document decision (likely acceptable - non-structural z-index)
+
+        - [ ] **7.2.d.3 Fix ErrorBoundary.tsx**
+            - **Outline button hover:** Line 125 - Add missing border/color changes
+                - Current: `_hover={{ bg: "destructive/8" }}`
+                - Should be: `_hover={{ bg: "destructive/8", borderColor: "destructive", color: "destructive" }}`
+            - **Code block border:** Line 233 - Evaluate `borderColor="border"` for stack trace
+                - Determine if generic "border" appropriate or needs border-strong-01
+                - ErrorBoundary renders on layer-01, likely needs border-strong-01
+            - **Z-index evaluation:** Lines 694, 722, 765 - Same as Login.tsx
+                - Document as acceptable for IconButton element stacking
+
+        - [ ] **7.2.d.4 Fix ColorModeButton.tsx (color-mode.tsx)**
+            - **Border token:** Line 64 - `borderColor="border"` → `borderColor="button-outline"`
+            - **Color prop:** Lines 58-66 - Add `color="on-button-outline"` for consistency
+            - **Hover state:** Lines 58-66 - Add complete hover
+                - Should be: `_hover={{ bg: "tertiary/8", borderColor: "tertiary", color: "tertiary" }}`
+            - **Impact:** Automatically fixes Footer usage, simplifies ThemeDebug overrides
+
+        - [ ] **7.2.d.5 Fix ThemeSelector.tsx**
+            - **Hover state:** Lines 66-72 - Add missing hover to outline button
+                - Current: No hover defined
+                - Should be: `_hover={{ bg: "tertiary/8", borderColor: "tertiary", color: "tertiary" }}`
+
+        - [ ] **7.2.d.6 Quality gates and visual validation**
+            - **Quality gates:** TypeScript 0 errors, ESLint 0 violations
+            - **Visual test:** Verify all fixed components in all 4 themes × 2 modes
+            - **Focus on:** Form borders visible in light mode, hover states work correctly
+            - **Session boundary:** All Shared/Common fixes complete (100%)
+
+    - [ ] **7.2.e Deprecate and migrate obsolete border tokens**
+
+        **Context:** Session investigation (2025-11-12) revealed "input" and "border" tokens are redundant/misleading:
+        - **"input" token:** Aliased to same value as "border" in ALL themes - serves no purpose
+        - **"border" token:** 70 usages across components, but guidance says use layer-specific tokens instead
+        - Both tokens create confusion and violate our layer-aware border hierarchy principle
+
+        **Goal:** Deprecate both tokens, migrate all components to layer-appropriate borders, document for Phase 8 cleanup.
+
+        **Strategy decision:** Lean towards Option A (full deprecation + migration) for clarity, but needs investigation.
+
+        - [ ] **7.2.e.1 Investigate "border" token usage patterns**
+            - Grep all 70 usages: `grep -r 'borderColor="border"' frontend/src/ --include="*.tsx"`
+            - Categorize by purpose:
+                - Structural borders (cards, panels) → should use border-strong-XX
+                - Decorative dividers (separators) → should use border-subtle-XX or border
+                - Form wrappers → should match form layer (border-strong-XX)
+            - Document findings in notes file
+            - Determine if any legitimate use cases remain for generic "border"
+
+        - [ ] **7.2.e.2 Investigate "input" token usage patterns**
+            - Grep all usages: `grep -r 'borderColor="input"' frontend/src/ --include="*.tsx"`
+            - All should be form controls on specific layers
+            - Should use layer-appropriate border-strong-XX tokens instead
+            - Document findings in notes file
+
+        - [ ] **7.2.e.3 Create migration plan**
+            - Document replacement rules:
+                - Forms on layer-01 → border-strong-01
+                - Forms on layer-02 → border-strong-02
+                - Structural borders → border-strong-XX (match layer)
+                - Decorative dividers → border-subtle-XX or evaluate if "border" acceptable
+            - Estimate effort per component type
+            - Create prioritized migration task list
+
+        - [ ] **7.2.e.4 Update strategy document**
+            - **Remove:** Incorrect "input" token guidance (lines ~938-948, 1017, 1061, 1888, 1903-1913)
+            - **Add:** Layer-aware form control border guidance
+                - "Forms match their background layer" principle
+                - Border hierarchy: default → hover → focus progression
+                - Example: layer-01 form uses border-strong-01 → border-strong-02 (hover) → tertiary (focus)
+            - **Clarify:** "border" token purpose (if retained) or mark for deprecation
+            - **Update:** Form control examples with correct border tokens
+
+        - [ ] **7.2.e.5 Mark tokens as @deprecated**
+            - Add `@deprecated` JSDoc tags to type definitions
+            - `input`: "Use layer-appropriate border-strong-XX tokens instead"
+            - `border`: "Use border-strong-XX (structural) or border-subtle-XX (decorative) instead"
+            - Prevents new usage while allowing existing code to work
+
+        - [ ] **7.2.e.6 Add to Phase 8 cleanup schedule**
+            - Update Phase 8.3 to include border token removal
+            - Add grep verification steps:
+                - `grep -r 'borderColor="input"'` → 0 matches
+                - `grep -r 'borderColor="border"'` → 0 matches (or approved exceptions only)
+            - Document migration completion as prerequisite for Phase 8.3 execution
+            - Removal blocked until all component migrations complete
+
+        **Estimated effort:** 3-4 hours investigation + 4-6 hours migration (depending on 70 "border" usages)
+        **Priority:** Medium - doesn't block other work, but creates clarity for future development
+        **Session boundary:** Can pause after any subtask
 
 - [ ] **7.3 Component organization restructure**
 

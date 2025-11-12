@@ -872,6 +872,10 @@ be `tertiary/8` or `layer-hover-01`
 
 #### Shared/Common Domain Audit (Task 7.1.e)
 
+**STATUS: FIX LIST OUTDATED (2025-11-12)** - Session investigation revealed form control border guidance is incorrect.
+Strategy doc incorrectly specified "input" token for all form controls, but forms on layer-01 need border-strong-01.
+See Task 7.2.d restructured with corrected subtasks. Task 7.2.e created for comprehensive border/input token cleanup.
+
 **Scope:** 17 Shared/Common components audited against 13 patterns
 
 **Components audited:**

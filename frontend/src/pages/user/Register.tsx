@@ -1,9 +1,10 @@
 import { ROUTES } from "@/constants/routes";
 import { Box, Button, Field, Input, VStack, Text } from "@chakra-ui/react";
 import { useFormik } from "formik";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import useAuthContext from "@/hooks/useAuthContext";
+import { TextLink } from "@/components/common";
 
 const Register = () => {
   const authContext = useAuthContext();
@@ -107,13 +108,21 @@ const Register = () => {
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
                     borderWidth="1px"
-                    borderColor="input"
+                    borderColor="border-strong-01"
                     _hover={{
                       bg: "tertiary/5",
+                      borderColor: "border-strong-02",
                     }}
-                    _focus={{
-                      borderColor: "ring",
-                      boxShadow: "0 0 0 1px var(--chakra-colors-ring)",
+                    css={{
+                      "&:focus": {
+                        borderColor: "var(--chakra-colors-tertiary)",
+                        outline: "none !important",
+                        boxShadow: "none !important",
+                      },
+                      "&:focus-visible": {
+                        outline: "2px solid var(--chakra-colors-ring)",
+                        outlineOffset: "2px",
+                      },
                     }}
                   />
                   <Field.ErrorText
@@ -151,13 +160,21 @@ const Register = () => {
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
                     borderWidth="1px"
-                    borderColor="input"
+                    borderColor="border-strong-01"
                     _hover={{
                       bg: "tertiary/5",
+                      borderColor: "border-strong-02",
                     }}
-                    _focus={{
-                      borderColor: "ring",
-                      boxShadow: "0 0 0 1px var(--chakra-colors-ring)",
+                    css={{
+                      "&:focus": {
+                        borderColor: "var(--chakra-colors-tertiary)",
+                        outline: "none !important",
+                        boxShadow: "none !important",
+                      },
+                      "&:focus-visible": {
+                        outline: "2px solid var(--chakra-colors-ring)",
+                        outlineOffset: "2px",
+                      },
                     }}
                   />
                   <Field.ErrorText
@@ -195,13 +212,21 @@ const Register = () => {
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
                     borderWidth="1px"
-                    borderColor="input"
+                    borderColor="border-strong-01"
                     _hover={{
                       bg: "tertiary/5",
+                      borderColor: "border-strong-02",
                     }}
-                    _focus={{
-                      borderColor: "ring",
-                      boxShadow: "0 0 0 1px var(--chakra-colors-ring)",
+                    css={{
+                      "&:focus": {
+                        borderColor: "var(--chakra-colors-tertiary)",
+                        outline: "none !important",
+                        boxShadow: "none !important",
+                      },
+                      "&:focus-visible": {
+                        outline: "2px solid var(--chakra-colors-ring)",
+                        outlineOffset: "2px",
+                      },
                     }}
                   />
                   <Field.ErrorText
@@ -232,30 +257,14 @@ const Register = () => {
                 bg="primary"
                 color="on-primary"
                 _hover={{
-                  opacity: 0.92,
+                  bg: "primary-hover",
                 }}
               >
                 Register
               </Button>
               <Text mt="16px" textAlign="center" w="100%" fontSize="16px">
                 Already have an account?{" "}
-                <Box
-                  asChild
-                  color="tertiary"
-                  textDecoration="underline"
-                  textDecorationThickness="2px"
-                  textUnderlineOffset="2px"
-                  _hover={{ color: "tertiary-hover" }}
-                  _focus={{
-                    outline: "2px solid",
-                    outlineColor: "ring",
-                    outlineOffset: "2px",
-                  }}
-                >
-                  <Link to={ROUTES.LOGIN}>
-                    Sign In
-                  </Link>
-                </Box>
+                <TextLink to={ROUTES.LOGIN}>Sign In</TextLink>
               </Text>
             </VStack>
           </form>

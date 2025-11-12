@@ -15,6 +15,14 @@
 ## Active
 <!-- Add tasks here with checkboxes -->
 
+- [ ] Research accessibility guidelines for input field focus rings
+    - WCAG 2.1/2.2 requirements for focus indicators on form controls
+    - Best practices: keyboard-only vs always-visible focus rings
+    - Chakra UI v3 default focus behavior and accessibility considerations
+    - Validate our current approach: border color change (all focus) + outline ring (keyboard-only via :focus-visible)
+    - Document findings and confirm our implementation meets standards
+    - **Context:** Currently using `!important` CSS to disable Chakra defaults - ensure this doesn't break accessibility
+
 - [ ] Investigate GitLab Pajamas neutral outline border contrast
     - Current: border-strong-01 = #bfbfc3 (2.1:1 on white, below WCAG 3:1)
     - All 3 border-strong levels same in light mode (alternating pattern)

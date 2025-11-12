@@ -2782,18 +2782,15 @@ prevents discovering token issues after cleanup, when fixing them is harder.
         backgrounds need layer-appropriate borders (border-strong-01), not generic "input" token. This affects Register/Login
         forms and requires strategy doc corrections (deferred to Task 7.2.e for comprehensive token cleanup).
 
-        - [ ] **7.2.d.1 Fix Register.tsx form controls**
-            - **Form controls (3 inputs):** Fix borders + hover + focus states
-                - Current: `borderColor="input"` (incorrect - generic token)
-                - Should be: `borderColor="border-strong-01"` (layer-01 specific)
-                - Add hover: `_hover={{ borderColor: "border-strong-02" }}` (step up one level)
-                - Fix focus: Add `borderColor: "tertiary"` alongside `_focusVisible` outline ring
-                - Pattern: Border changes to tertiary on focus, plus 2px outline ring for keyboard (ring token)
-            - **Primary button hover:** Already fixed in 7.2.c session (opacity → primary-hover)
-            - **Link underline:** Fix "Already have an account?" link
-                - Current: `textDecorationThickness="2px"` (line 252)
-                - Should be: `1px` (TextLink standard)
-                - Alternative: Replace with TextLink component for consistency
+        - [x] **7.2.d.1 Fix Register.tsx form controls**
+            - **Form controls (3 inputs):** Fixed borders + hover + focus states ✓
+                - Changed: `borderColor="input"` → `borderColor="border-strong-01"` (layer-01 specific)
+                - Added hover: `borderColor: "border-strong-02"` (step up one level for visibility)
+                - Fixed focus: Added `borderColor: "tertiary"` + disabled Chakra defaults (boxShadow/outline)
+                - Pattern: Border changes tertiary on focus, `_focusVisible` adds 2px outline ring for keyboard only
+            - **Primary button hover:** Already fixed in 7.2.c session ✓ (opacity → primary-hover)
+            - **Link:** Replaced Box/Link pattern with TextLink component ✓
+                - Now uses proper 1px underline with correct focus/hover states automatically
 
         - [ ] **7.2.d.2 Fix Login.tsx form controls**
             - **Email/Password inputs:** Same border/hover/focus fixes as Register (2 inputs)
@@ -2806,7 +2803,7 @@ prevents discovering token issues after cleanup, when fixing them is harder.
                 - Fix focus: Replace custom boxShadow (lines 549-552) with `_focusVisible` outline pattern
             - **Link underline:** Fix "Don't have an account?" link
                 - Current: `textDecorationThickness="2px"` (line 650)
-                - Should be: `1px` (TextLink standard)
+                - Should be: `1px` (TextLink standard) - Replace Box/Link pattern with TextLink component
             - **Z-index evaluation:** Lines 694, 722, 765 - `zIndex={1}` for IconButton positioning
                 - Evaluate if acceptable for element-level stacking or needs semantic token
                 - Document decision (likely acceptable - non-structural z-index)

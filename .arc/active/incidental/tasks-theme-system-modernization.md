@@ -2459,20 +2459,79 @@ prevents discovering token issues after cleanup, when fixing them is harder.
 
         **Quality gates:** ✅ Audit documented in notes, fix list created, ready for Task 7.2.b
 
-    - [ ] **7.1.d Audit Movie Filters domain**
-        - **Scope:** AdvancedMovieFilters, ConnectedDropdowns, SearchBar, SortSelector, GenreSelector, YearSelector,
-          RatingSelector, ClearFiltersButton, all filter-related components
-        - **Check all 8 patterns** (buttons, forms, links, surfaces, status, colors, aliases, gaps)
-        - Document violations in notes under "Movie Filters Domain Audit"
-        - Create fix list for this domain
-        - **Session boundary:** Can pause/resume after this domain (75% complete)
+    - [x] **7.1.d Audit Movie Filters domain**
 
-    - [ ] **7.1.e Audit Shared/Common domain**
-        - **Scope:** ErrorBoundary, ThemeSelector, utility components, shared UI elements
-        - **Check all 8 patterns** (buttons, forms, links, surfaces, status, colors, aliases, gaps)
-        - Document violations in notes under "Shared/Common Domain Audit"
-        - Create fix list for this domain
-        - **Session boundary:** Audit complete (100%)
+        **Completed:** Comprehensive audit of 11 Movie Filters components against 13 patterns.
+
+        **Components audited:** AdvancedMovieFilters, ClearFiltersButton, ConnectedDropdowns, SearchBar, GenreSelector,
+        YearSelector, RatingSelector, SortSelector, SortDropdownMinimal, LetterboxdStyleFilters, CollapsibleSearchBox
+
+        **Note:** MinimalFilterContainer (mentioned in original scope) does not exist in codebase. CollapsibleSearchBox
+        exists but wasn't in original list - audited for completeness.
+
+        **Results:**
+        - Total violations: 12
+        - Components with violations: 4/11 (36%)
+        - Clean components: 7/11 (64% clean rate)
+
+        **Key findings:**
+        - SearchBar.tsx: 6 violations (deprecated aliases, custom focus pattern) - needs comprehensive refactor
+        - Ghost button hover pattern incomplete in 3 components (missing bg change)
+        - Outline button hover pattern incomplete in 1 component (missing border/color changes)
+        - Form controls mostly excellent: 6/11 components using correct patterns (GenreSelector, YearSelector,
+          RatingSelector, SortSelector, SortDropdownMinimal perfectly aligned)
+
+        **Prioritized fix list created:** 7 items prioritized by criticality
+        (deprecated aliases → systemic patterns → minor fixes)
+
+        **Estimated effort for fixes (Task 7.2.c):** ~45 minutes
+
+        **Quality gates:** ✅ Audit documented in notes, fix list created, ready for Task 7.2.c
+
+    - [x] **7.1.e Audit Shared/Common domain**
+
+        **Completed:** Comprehensive audit of 17 Shared/Common components against 13 patterns.
+
+        **Components audited:** ErrorBoundary, ThemeSelector, ColorModeButton (color-mode.tsx), ProtectedRoute,
+        AuthContextProvider, UserProfile, Login, Register, Profile, Settings, VerifyEmail, TestLogin, Watchlist,
+        LayoutDebug, TypographyDebug, GoogleLogo, GitHubLogo
+
+        **Note:** Task mentioned 18 components, actual count 17 (UserProfile is empty stub). ColorModeButton added after
+        user identified same violations as ThemeSelector.
+
+        **Breakdown:**
+        - Production UI: 10 components
+        - Logic-only: 2 components (ProtectedRoute, AuthContextProvider)
+        - Empty/placeholder: 3 components (UserProfile, Profile, Settings)
+        - Dev/test: 2 components (LayoutDebug, TestLogin)
+
+        **Results:**
+        - Total violations: 25 (19 production, 6 dev tool)
+        - Production components with violations: 7/10 (70%)
+        - Clean production components: 3/10 (30% - VerifyEmail, Watchlist, GitHubLogo)
+
+        **Key findings:**
+        - **CRITICAL:** TypographyDebug.tsx (demo page) shows deprecated aliases - teaches wrong patterns to developers
+        - **SYSTEMIC:** Outline button hover incomplete in 3 components (ErrorBoundary, ThemeSelector, ColorModeButton)
+        - Custom focus implementations: 4 instances (Login checkbox + Register 3 inputs) - systemic pattern issue
+        - ColorModeButton using wrong border token + missing color prop (affects Footer and ThemeDebug)
+        - Register using opacity for primary hover instead of primary-hover token
+        - Z-index numeric values in 6 instances (ErrorBoundary, Login) - needs policy decision
+        - Login checkbox using wrong border token
+
+        **Components by severity:**
+        - Register.tsx: 4 violations (primary hover, 3 custom focus)
+        - ErrorBoundary.tsx: 4 violations (outline hover, borders, z-index)
+        - ColorModeButton.tsx: 3 violations (border token, missing color, missing hover)
+        - Login.tsx: 3 violations (checkbox border/focus, z-index)
+        - TypographyDebug.tsx: 3 violations (deprecated aliases - CRITICAL for demo accuracy)
+        - ThemeSelector.tsx: 1 violation (missing hover)
+
+        **Prioritized fix list created:** 9 items with critical/systemic/evaluation priorities
+
+        **Estimated effort for fixes (Task 7.2.d):** ~1.75 hours
+
+        **Quality gates:** ✅ Audit documented in notes, fix list created, ready for Task 7.2.d
 
     - [ ] **7.1.f Cross-domain gap analysis synthesis**
         - Review gap findings from all 4 domains

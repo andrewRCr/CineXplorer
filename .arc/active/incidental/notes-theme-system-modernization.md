@@ -642,11 +642,457 @@ organization (it's a movie-focused landing page).
 
 #### Movie Filters Domain Audit (Task 7.1.d)
 
-{ Violations and notes will be added here }
+**Scope:** 11 Movie Filters components audited against 13 patterns
+
+**Components audited:**
+
+1. AdvancedMovieFilters.tsx
+2. ClearFiltersButton.tsx
+3. ConnectedDropdowns.tsx
+4. SearchBar.tsx
+5. GenreSelector.tsx
+6. YearSelector.tsx
+7. RatingSelector.tsx
+8. SortSelector.tsx
+9. SortDropdownMinimal.tsx
+10. LetterboxdStyleFilters.tsx
+11. CollapsibleSearchBox.tsx
+
+**Note:** MinimalFilterContainer mentioned in task list does not exist in codebase. CollapsibleSearchBox exists but
+wasn't in original list.
+
+---
+
+**Violations by Component:**
+
+**1. AdvancedMovieFilters.tsx** - 1 violation
+
+- ❌ **Buttons (Ghost):** Lines 129, 141 - Ghost buttons missing bg change on hover
+    - Clear Filters button: `_hover={{ color: "destructive" }}` - missing `bg: "tertiary/8"`
+    - Collapse button: `_hover={{ color: "tertiary-hover" }}` - missing `bg: "tertiary/8"`
+    - Pattern: Ghost buttons need both color AND bg changes on hover
+
+**2. ClearFiltersButton.tsx** - 2 violations
+
+- ❌ **Buttons (Ghost):** Line 39 - Ghost button missing bg change on hover
+    - `_hover={{ color: "destructive" }}` - missing `bg: "tertiary/8"`
+- ❌ **Layout:** Line 26 - Using hardcoded pixels for positioning
+    - `bottom="-28px"` - should use layout tokens or spacing tokens
+
+**3. ConnectedDropdowns.tsx** - 2 violations (excluding commented code)
+
+- ❌ **Buttons (Outline):** Lines 508-512 - Advanced toggle button missing border color change on hover
+    - Uses `borderColor="button-outline"` + `color="on-button-outline"`
+    - Hover only changes `bg: "tertiary/8"`
+    - Missing: `borderColor: "tertiary"` and `color: "tertiary"` in hover state
+- ⚠️ **Deprecated aliases in COMMENTED CODE:** Lines 446-485 (runtime selector)
+    - Uses `background.subItem`, `border.separator`, `tertiary.primary`
+    - Note: Commented code doesn't affect production, but should clean up eventually
+
+**4. SearchBar.tsx** - 6 violations (MOST VIOLATIONS)
+
+- ❌ **Deprecated aliases:** Line 29 - `color="text.secondary"` → should be `on-muted`
+- ❌ **Deprecated aliases:** Line 39 - `borderColor="border.subtle"` → should be `input`
+- ❌ **Deprecated aliases:** Line 40 - `backgroundColor={isHovered ? "background.subItem" : "transparent"}` → should
+be `tertiary/8` or `layer-hover-01`
+- ❌ **Deprecated aliases:** Line 44 - `borderColor="tertiary.primary"` → should be `ring` for focus
+- ❌ **Focus states:** Lines 43-47 - Custom focus implementation instead of standard pattern
+    - Using `boxShadow: "0 0 0 1px"` + `boxShadowColor="tertiary.primary"`
+    - Should use: `outlineWidth="2px"` + `outlineOffset="2px"` + `outlineColor="ring"`
+- ❌ **Z-index:** Line 30 - Numeric `zIndex={1}` for icon positioning
+    - Could be acceptable for icon stacking, but should use semantic token if available
+
+**5. GenreSelector.tsx** - CLEAN ✅
+
+- ✅ Checkboxes using 2px borderWidth correctly
+- ✅ borderColor="input" correct
+- ✅ _checked using bg="primary" + borderColor="primary" correct
+- ✅ _hover using layer-hover-01 correct
+- ✅ Text using foreground correctly
+
+**6. YearSelector.tsx** - CLEAN ✅
+
+- ✅ Inputs using borderColor="input" correctly (1px default)
+- ✅ Error states using borderColor="destructive" correctly
+- ✅ _hover using tertiary/8 correctly
+- ✅ Text using foreground and on-muted correctly
+
+**7. RatingSelector.tsx** - CLEAN ✅
+
+- ✅ Inputs using borderColor="input" correctly (1px default)
+- ✅ Error states using borderColor="destructive" correctly
+- ✅ _hover using tertiary/8 correctly
+- ✅ Text using foreground and on-muted correctly
+
+**8. SortSelector.tsx** - CLEAN ✅
+
+- ✅ Select using borderColor="input" in CSS correctly
+- ✅ Dropdown content using bg="muted" correctly
+- ✅ Select items using tertiary/on-tertiary for selected correctly
+- ✅ _hover using tertiary/12 for non-selected correctly
+
+**9. SortDropdownMinimal.tsx** - CLEAN ✅
+
+- ✅ Select using borderColor="input" correctly
+- ✅ Dropdown content using bg="muted" correctly
+- ✅ Select items using tertiary/on-tertiary for selected correctly
+- ✅ _hover using tertiary/12 for non-selected correctly
+- ✅ Text using on-muted and foreground correctly
+
+**10. LetterboxdStyleFilters.tsx** - CLEAN ✅
+
+- ✅ Composition component coordinating child filters
+- ✅ Using bg="background" correctly
+- ✅ Text using on-muted correctly
+
+**11. CollapsibleSearchBox.tsx** - 1 violation
+
+- ❌ **Borders:** Line 100 - Using `borderColor="border"` for search container
+    - Should use `borderColor="input"` since this is a form-related border
+    - The container wraps an Input component, so should follow form control border pattern
+
+---
+
+**Summary Statistics:**
+
+- **Total components audited:** 11
+- **Components with violations:** 4 (36%)
+- **Clean components:** 7 (64%)
+- **Total violations:** 12
+
+**Violations by pattern:**
+
+1. Buttons (Ghost hover): 3 violations (AdvancedMovieFilters, ClearFiltersButton)
+2. Buttons (Outline hover): 1 violation (ConnectedDropdowns)
+3. Deprecated aliases: 4 violations (SearchBar)
+4. Focus states: 1 violation (SearchBar)
+5. Z-index: 1 violation (SearchBar)
+6. Borders: 1 violation (CollapsibleSearchBox)
+7. Layout: 1 violation (ClearFiltersButton)
+
+**Components ranked by violation count:**
+
+1. SearchBar.tsx - 6 violations (needs comprehensive refactor)
+2. ClearFiltersButton.tsx - 2 violations
+3. ConnectedDropdowns.tsx - 2 violations (excluding commented code)
+4. AdvancedMovieFilters.tsx - 1 violation
+5. CollapsibleSearchBox.tsx - 1 violation
+6. 6 components CLEAN ✅
+
+**Systemic patterns (appearing in multiple components):**
+
+- Ghost button hover pattern incomplete (3 components: AdvancedMovieFilters, ClearFiltersButton)
+- Deprecated aliases still in use (1 component heavily: SearchBar)
+
+**Estimated effort for fixes (Task 7.2.c):** ~45 minutes
+
+- SearchBar.tsx: 20 minutes (6 violations, comprehensive refactor)
+- Other 4 components: 25 minutes (simple pattern fixes)
+
+---
+
+**Prioritized Fix List for Task 7.2.c:**
+
+**Priority 1 - Critical (Deprecated Aliases):**
+
+1. **SearchBar.tsx** - Replace all deprecated aliases (4 aliases + custom focus)
+   - Line 29: `color="text.secondary"` → `color="on-muted"`
+   - Line 39: `borderColor="border.subtle"` → `borderColor="input"`
+   - Line 40: `backgroundColor={isHovered ? "background.subItem" : "transparent"}` → `bg={isHovered ? "tertiary/8" : "transparent"}`
+   - Line 44: `borderColor="tertiary.primary"` → `outlineColor="ring"` (with 2px outline focus pattern)
+   - Lines 43-47: Replace custom focus with standard 2px outline + 2px offset pattern
+   - Line 30: `zIndex={1}` → Consider semantic token or document as acceptable for icon stacking
+
+**Priority 2 - Systemic Pattern Fixes (Button Hovers):**
+2. **AdvancedMovieFilters.tsx** - Add bg to ghost button hovers
+
+- Line 129: `_hover={{ color: "destructive" }}` → `_hover={{ bg: "tertiary/8", color: "destructive" }}`
+- Line 141: `_hover={{ color: "tertiary-hover" }}` → `_hover={{ bg: "tertiary/8", color: "tertiary-hover" }}`
+
+3. **ClearFiltersButton.tsx** - Add bg to ghost button hover
+   - Line 39: `_hover={{ color: "destructive" }}` → `_hover={{ bg: "tertiary/8", color: "destructive" }}`
+
+4. **ConnectedDropdowns.tsx** - Fix outline button hover
+   - Lines 510-512: Add border and color changes to hover state
+   - Current: `_hover={{ bg: "tertiary/8" }}`
+   - Should be: `_hover={{ bg: "tertiary/8", borderColor: "tertiary", color: "tertiary" }}`
+
+**Priority 3 - Minor Fixes:**
+5. **CollapsibleSearchBox.tsx** - Fix border token
+
+- Line 100: `borderColor="border"` → `borderColor="input"` (form-related border)
+
+6. **ClearFiltersButton.tsx** - Consider layout token
+   - Line 26: `bottom="-28px"` - Evaluate if spacing token available or if hardcoded acceptable for this absolute
+   positioning case
+
+**Optional Cleanup:**
+7. **ConnectedDropdowns.tsx** - Clean up commented runtime selector code (lines 446-485)
+
+- Contains deprecated aliases: `background.subItem`, `border.separator`, `tertiary.primary`
+- Not affecting production, but good housekeeping
+
+**Quality gates after fixes:**
+
+- TypeScript: 0 errors
+- ESLint: 0 violations
+- Visual test: Verify all 4 themes × 2 modes
 
 #### Shared/Common Domain Audit (Task 7.1.e)
 
-{ Violations and notes will be added here }
+**Scope:** 17 Shared/Common components audited against 13 patterns
+
+**Components audited:**
+
+1. ErrorBoundary.tsx
+2. ThemeSelector.tsx
+3. ColorModeButton.tsx (color-mode.tsx)
+4. ProtectedRoute.tsx
+5. AuthContextProvider.tsx
+6. UserProfile.tsx
+7. Login.tsx
+8. Register.tsx
+9. Profile.tsx
+10. Settings.tsx
+11. VerifyEmail.tsx
+12. TestLogin.tsx
+13. Watchlist.tsx
+14. LayoutDebug.tsx
+15. TypographyDebug.tsx
+16. GoogleLogo.tsx
+17. GitHubLogo.tsx
+
+**Note:** Task list mentioned 18 components, actual count is 17 (UserProfile is empty stub). ColorModeButton added
+after identifying it has same violations as ThemeSelector.
+
+---
+
+**Violations by Component:**
+
+**1. ErrorBoundary.tsx** - 4 violations
+
+- ❌ **Buttons (Outline hover):** Line 125 - Outline button missing border/color changes on hover
+    - `_hover={{ bg: "destructive/8" }}` - missing `borderColor: "destructive"` and `color: "destructive"`
+- ❌ **Borders:** Line 233 - Using generic `borderColor="border"` for stack trace Code block
+    - Should use border hierarchy (border-strong-01?) or keep generic if contextually appropriate
+- ❌ **Z-index:** Lines 694, 722, 765 - Numeric `zIndex={1}` for IconButton positioning
+    - Should use semantic token if available, or document as acceptable for element stacking
+- ⚠️ **Status colors on low-opacity backgrounds:** Lines 102, 105 - Alert uses `color="on-destructive"` on
+`destructive/subtle` background
+    - Current implementation looks correct (Alert.Root status="error" with destructive colors)
+    - Verify contrast meets WCAG on 10-30% opacity backgrounds
+
+**2. ThemeSelector.tsx** - 1 violation
+
+- ❌ **Buttons (Outline hover):** Lines 66-72 - Button missing hover state entirely
+    - Has `borderColor="button-outline"` + `color="on-button-outline"`
+    - No `_hover` defined - should add `_hover={{ bg: "tertiary/8", borderColor: "tertiary", color: "tertiary" }}`
+
+**3. ColorModeButton.tsx** (color-mode.tsx) - 3 violations
+
+- ❌ **Buttons (Outline border):** Line 64 - Using generic `borderColor="border"` instead of `borderColor="button-outline"`
+    - Should use `borderColor="button-outline"` for outline button variant
+- ❌ **Buttons (Outline color):** Lines 58-66 - Missing `color="on-button-outline"` prop
+    - Outline buttons need explicit color for consistency
+- ❌ **Buttons (Outline hover):** Lines 58-66 - Button missing hover state entirely
+    - No `_hover` defined - should add `_hover={{ bg: "tertiary/8", borderColor: "tertiary", color: "tertiary" }}`
+- **Impact:** Used in Footer and ThemeDebug - violations appear in both locations
+- **Note:** ThemeDebug overrides some violations with correct props, but hover still incomplete (missing `color: "tertiary"`)
+
+**4. ProtectedRoute.tsx** - CLEAN ✅ (logic only, no UI)
+
+**5. AuthContextProvider.tsx** - CLEAN ✅ (logic only, no UI)
+
+**6. UserProfile.tsx** - N/A (empty stub file, 1 line)
+
+**7. Login.tsx** - 3 violations
+
+- ❌ **Form controls (Checkbox):** Line 545 - Checkbox using `borderColor="border"` instead of `borderColor="input"`
+    - Should be `borderColor="input"` for form controls
+- ❌ **Focus states (Checkbox):** Lines 549-552 - Custom focus implementation instead of standard pattern
+    - Using `boxShadow: "0 0 0 1px var(--chakra-colors-ring)"`
+    - Should use: `outlineWidth="2px"` + `outlineOffset="2px"` + `outlineColor="ring"`
+- ❌ **Z-index:** Lines 694, 722, 765 - Numeric `zIndex={1}` for IconButton positioning in alerts
+    - Should use semantic token if available
+
+**8. Register.tsx** - 4 violations
+
+- ❌ **Buttons (Primary hover):** Line 234-236 - Primary button using opacity for hover instead of semantic token
+    - Current: `_hover={{ opacity: 0.92 }}`
+    - Should be: `_hover={{ bg: "primary-hover" }}`
+- ❌ **Focus states (Inputs):** Lines 114-117, 158-161, 202-205 - Custom focus implementation (3 inputs)
+    - Using `boxShadow: "0 0 0 1px var(--chakra-colors-ring)"`
+    - Should use: `outlineWidth="2px"` + `outlineOffset="2px"` + `outlineColor="ring"`
+
+**9. Profile.tsx** - N/A (placeholder only)
+
+**10. Settings.tsx** - N/A (placeholder only)
+
+**11. VerifyEmail.tsx** - CLEAN ✅
+
+- ✅ Buttons using correct hover patterns (primary-hover, outline with border/color changes)
+- ✅ Alerts using correct status color patterns
+- ✅ Spinner using semantic color
+
+**12. TestLogin.tsx** - 1 violation (ACCEPTABLE - test/dev component)
+
+- ⚠️ **Buttons:** Lines 32-33 - Buttons using default styling, no semantic tokens
+    - Acceptable for test/dev component, not production code
+
+**13. Watchlist.tsx** - CLEAN ✅
+
+- ✅ Minimal UI using correct text tokens (foreground, on-destructive for errors)
+
+**14. LayoutDebug.tsx** - 6 violations (ACCEPTABLE - dev tool)
+
+- ⚠️ **Text hierarchy:** Line 80 - `color="foreground/80"` → should be `on-muted` for secondary text
+- ⚠️ **Text hierarchy:** Lines 95, 100, 105, etc. - Multiple instances of `color="foreground/60"` → should be `on-muted`
+- ⚠️ **Z-index:** Line 246 - Numeric `zIndex={1}` for sticky positioning
+- Note: Dev tool violations are ACCEPTABLE (not production UI)
+
+**15. TypographyDebug.tsx** - 3 violations (SHOULD FIX - demonstrates wrong patterns)
+
+- ❌ **Deprecated aliases:** Line 181 - `color="text.secondary"` → should be `on-muted`
+- ❌ **Deprecated aliases:** Line 225 - `color="text.secondary"` → should be `on-muted`
+- ❌ **Deprecated aliases:** Line 316 - `color="text.secondary"` → should be `on-muted`
+- **Critical:** This is a typography DEMO page - should demonstrate CORRECT patterns, not deprecated aliases
+
+**16. GoogleLogo.tsx** - CLEAN ✅ (hardcoded colors are LEGITIMATE)
+
+- ✅ Hardcoded brand colors (`fill="#EA4335"` etc.) are correct for brand logos
+- Pattern 10 exception: Brand logos should use exact brand colors
+
+**17. GitHubLogo.tsx** - CLEAN ✅
+
+- ✅ Using `fill="currentColor"` - correct pattern for themeable icons
+
+---
+
+**Summary Statistics:**
+
+- **Total components audited:** 17
+- **Logic-only components:** 2 (ProtectedRoute, AuthContextProvider)
+- **Empty/placeholder components:** 3 (UserProfile, Profile, Settings)
+- **Dev/test components:** 2 (LayoutDebug, TestLogin)
+- **Production UI components:** 10
+- **Components with violations:** 7 production + 2 dev (70% of production components)
+- **Clean production components:** 3 (VerifyEmail, Watchlist, GitHubLogo)
+- **Total violations:** 25 (19 production, 6 dev tool)
+
+**Violations by pattern (production only):**
+
+1. Buttons (Outline hover): 3 violations (ErrorBoundary, ThemeSelector, ColorModeButton)
+2. Buttons (Outline border): 1 violation (ColorModeButton using "border" instead of "button-outline")
+3. Buttons (Outline color): 1 violation (ColorModeButton missing "on-button-outline")
+4. Buttons (Primary hover): 1 violation (Register)
+5. Form controls (Checkbox borders): 1 violation (Login)
+6. Focus states (Custom implementations): 4 violations (Login checkbox, Register 3 inputs)
+7. Borders: 1 violation (ErrorBoundary)
+8. Z-index: 4 violations (ErrorBoundary, Login - IconButton positioning)
+9. Deprecated aliases: 3 violations (TypographyDebug - critical since it's a demo)
+
+**Components ranked by violation count (production only):**
+
+1. Register.tsx - 4 violations (primary hover, 3 custom focus states)
+2. ErrorBoundary.tsx - 4 violations (outline hover, borders, z-index)
+3. ColorModeButton.tsx - 3 violations (border token, missing color, missing hover)
+4. Login.tsx - 3 violations (checkbox border, checkbox focus, z-index)
+5. TypographyDebug.tsx - 3 violations (deprecated aliases in DEMO page)
+6. ThemeSelector.tsx - 1 violation (missing hover)
+7. 3 components CLEAN ✅
+
+**Systemic patterns (appearing in multiple components):**
+
+- **Custom focus implementations:** 4 instances across Login + Register (checkbox + 3 inputs)
+- **Outline button hover incomplete:** 3 components (ErrorBoundary, ThemeSelector, ColorModeButton) - **SYSTEMIC ISSUE**
+- **Outline button border/color tokens:** ColorModeButton using generic "border" + missing color prop
+- **Z-index numeric values:** 2 components (ErrorBoundary, Login) for IconButton positioning
+- **Deprecated aliases:** Isolated to TypographyDebug (demo page showing wrong patterns)
+
+**Critical finding - TypographyDebug needs immediate attention:**
+
+TypographyDebug.tsx is a DEMONSTRATION page showing typography examples to developers/designers. It currently
+demonstrates DEPRECATED patterns (`text.secondary` instead of `on-muted`). This teaches wrong patterns and should be
+fixed immediately.
+
+**Estimated effort for fixes (Task 7.2.d):** ~1.75 hours
+
+- Register.tsx: 20 minutes (primary hover + 3 custom focus fixes)
+- Login.tsx: 20 minutes (checkbox border + focus + z-index evaluation)
+- ErrorBoundary.tsx: 20 minutes (outline hover + border evaluation + z-index evaluation)
+- ColorModeButton.tsx: 15 minutes (border token + color prop + hover state) - **NEW**
+- TypographyDebug.tsx: 15 minutes (3 deprecated aliases - CRITICAL for demo accuracy)
+- ThemeSelector.tsx: 10 minutes (add hover state)
+- Z-index evaluation: 15 minutes (determine if numeric values acceptable for IconButton positioning or need tokens)
+
+---
+
+**Prioritized Fix List for Task 7.2.d:**
+
+**Priority 1 - CRITICAL (Demonstrates wrong patterns):**
+
+1. **TypographyDebug.tsx** - Fix deprecated aliases in DEMO page (3 violations)
+   - Line 181: `color="text.secondary"` → `color="on-muted"`
+   - Line 225: `color="text.secondary"` → `color="on-muted"`
+   - Line 316: `color="text.secondary"` → `color="on-muted"`
+   - **Why critical:** This is a demo/reference page that teaches patterns to developers - must show correct patterns
+
+**Priority 2 - Systemic Pattern Fixes:**
+
+2. **Register.tsx** - Fix primary button hover + custom focus states (4 violations)
+   - Line 234-236: `_hover={{ opacity: 0.92 }}` → `_hover={{ bg: "primary-hover" }}`
+   - Lines 114-117: Email input - Replace custom boxShadow focus with standard outline pattern
+   - Lines 158-161: Username input - Replace custom boxShadow focus with standard outline pattern
+   - Lines 202-205: Password input - Replace custom boxShadow focus with standard outline pattern
+   - Standard pattern: `outlineWidth="2px"` + `outlineOffset="2px"` + `outlineColor="ring"`
+
+3. **Login.tsx** - Fix checkbox border + custom focus + z-index (3 violations)
+   - Line 545: `borderColor="border"` → `borderColor="input"` (checkbox control)
+   - Lines 549-552: Replace custom boxShadow focus with standard outline pattern on checkbox
+   - Lines 694, 722, 765: Evaluate if `zIndex={1}` acceptable for IconButton positioning or needs semantic token
+
+4. **ErrorBoundary.tsx** - Fix outline button hover + borders + z-index (4 violations)
+   - Line 125: Add missing hover states to outline button
+     - Current: `_hover={{ bg: "destructive/8" }}`
+     - Should be: `_hover={{ bg: "destructive/8", borderColor: "destructive", color: "destructive" }}`
+   - Line 233: Evaluate if `borderColor="border"` appropriate for Code block or needs border-strong-01
+   - Lines 694, 722, 765: Evaluate if `zIndex={1}` acceptable for IconButton positioning
+
+5. **ColorModeButton.tsx** (color-mode.tsx) - Fix border token + color + hover (3 violations)
+   - Line 64: `borderColor="border"` → `borderColor="button-outline"`
+   - Lines 58-66: Add `color="on-button-outline"` prop
+   - Lines 58-66: Add complete hover state
+     - Add: `_hover={{ bg: "tertiary/8", borderColor: "tertiary", color: "tertiary" }}`
+   - **Impact:** Automatically fixes Footer usage, simplifies ThemeDebug overrides
+
+6. **ThemeSelector.tsx** - Add missing hover state (1 violation)
+   - Lines 66-72: Add complete hover state to outline button
+     - Add: `_hover={{ bg: "tertiary/8", borderColor: "tertiary", color: "tertiary" }}`
+
+**Priority 3 - Evaluation/Decision Items:**
+
+7. **Z-index pattern decision** - Determine policy for IconButton positioning
+   - Current: Using numeric `zIndex={1}` for IconButton positioning in alerts (ErrorBoundary, Login)
+   - Options:
+     a. Create semantic z-index token for icon-overlay or alert-icon-button
+     b. Document numeric z-index as acceptable for element-level stacking (non-structural)
+     c. Use existing semantic tokens if appropriate
+   - Affects: ErrorBoundary.tsx (3 instances), Login.tsx (3 instances)
+
+8. **Border token specificity** - Verify border usage in ErrorBoundary
+   - Line 233: Code block using `borderColor="border"` - evaluate if generic is appropriate or needs border-strong hierarchy
+
+**Optional - Dev Tool Cleanup:**
+
+9. **LayoutDebug.tsx** - Replace foreground/60 with on-muted (6 violations)
+   - Lines 80, 95, 100, 105, etc.: `color="foreground/60"` → `color="on-muted"`
+   - Low priority: Dev tool, not production UI, violations don't affect user-facing application
+
+**Quality gates after fixes:**
+
+- TypeScript: 0 errors
+- ESLint: 0 violations
+- Visual test: Verify Login, Register, ErrorBoundary, ThemeSelector in all 4 themes × 2 modes
 
 #### Cross-Domain Gap Analysis (Task 7.1.f)
 

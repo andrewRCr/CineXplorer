@@ -125,14 +125,21 @@ const AdvancedMovieFilters = ({
               onClick={clearFilters}
               size="sm"
               variant="ghost"
-              colorScheme="red"
+              color="destructive"
+              _hover={{ color: "destructive" }}
             >
               <FiX style={{ marginRight: "6px" }} />
               Clear Filters
             </Button>
           )}
           {onToggleCollapse && (
-            <Button onClick={onToggleCollapse} size="sm" variant="ghost">
+            <Button
+              onClick={onToggleCollapse}
+              size="sm"
+              variant="ghost"
+              color="tertiary"
+              _hover={{ color: "tertiary-hover" }}
+            >
               <FiFilter style={{ marginRight: "6px" }} />
               Collapse
             </Button>

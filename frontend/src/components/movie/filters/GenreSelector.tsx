@@ -34,11 +34,12 @@ const GenreSelector = ({ selectedGenres, onChange }: GenreSelectorProps) => {
                 <Checkbox.HiddenInput />
               <Checkbox.Control
                 borderWidth="2px"
-                borderColor="border"
+                borderColor="input"
                 borderRadius="4px"
                 _hover={{
                   bg: "layer-hover-01",
                 }}
+                _checked={{ bg: "primary", borderColor: "primary" }}
                 >
                   {checked && <Checkbox.Indicator />}
                 </Checkbox.Control>

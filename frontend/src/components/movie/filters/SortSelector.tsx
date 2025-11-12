@@ -50,7 +50,7 @@ const SortSelector = ({ value, onChange }: SortSelectorProps) => {
             alignItems: "center",
             justifyContent: "space-between",
             border: "1px solid",
-            borderColor: "border",
+            borderColor: "input",
             backgroundColor: "transparent",
             "& [data-part='indicator']": {
               width: "16px",
@@ -71,7 +71,7 @@ const SortSelector = ({ value, onChange }: SortSelectorProps) => {
               <Select.Item
                 key={item.value}
                 item={item}
-                _hover={{ bg: "tertiary" }}
+                _hover={{ bg: "tertiary", color: "on-tertiary" }}
               >
                 {item.label}
               </Select.Item>

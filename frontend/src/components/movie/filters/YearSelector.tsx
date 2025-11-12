@@ -224,7 +224,7 @@ const YearSelector = ({
           borderColor={
             localMinYear && !isValidYear(localMinYear)
               ? "destructive"
-              : "border"
+              : "input"
           }
           bg="transparent"
           _hover={{
@@ -232,7 +232,7 @@ const YearSelector = ({
           }}
           _invalid={{
             borderColor: "destructive",
-            boxShadow: "0 0 0 1px red.300",
+            boxShadow: "0 0 0 1px var(--chakra-colors-destructive)",
           }}
           disabled={isRouteConstrained}
           cursor={isRouteConstrained ? "not-allowed" : "text"}
@@ -256,7 +256,7 @@ const YearSelector = ({
           borderColor={
             localMaxYear && !isValidYear(localMaxYear)
               ? "destructive"
-              : "border"
+              : "input"
           }
           bg="transparent"
           _hover={{
@@ -264,7 +264,7 @@ const YearSelector = ({
           }}
           _invalid={{
             borderColor: "destructive",
-            boxShadow: "0 0 0 1px red.300",
+            boxShadow: "0 0 0 1px var(--chakra-colors-destructive)",
           }}
           disabled={isRouteConstrained}
           cursor={isRouteConstrained ? "not-allowed" : "text"}

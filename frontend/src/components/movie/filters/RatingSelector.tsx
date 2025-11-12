@@ -27,7 +27,7 @@ const RatingSelector = ({
   useEffect(() => {
     setLocalMaxRating(maxRating);
   }, [maxRating]);
-  
+
   // Validate rating input (0-10 TMDB scale with decimals)
   const isValidRating = (rating: string): boolean => {
     if (!rating) return true; // Empty is valid (clears filter)
@@ -37,7 +37,7 @@ const RatingSelector = ({
     if (rating.length > 3) return false;
     return !isNaN(num) && num >= 0 && num <= 10;
   };
-  
+
   // Check if min/max relationship is logical
   const hasLogicalRange = (): boolean => {
     if (!localMinRating || !localMaxRating) return true;
@@ -60,7 +60,7 @@ const RatingSelector = ({
     // Round to 1 decimal place for cleaner UX
     return (Math.round(num * 10) / 10).toString();
   };
-  
+
   // Debounced update functions with validation (no conversion needed)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const debouncedMinRatingUpdate = useCallback(
@@ -81,7 +81,7 @@ const RatingSelector = ({
     }, 500),
     [onMaxRatingChange] // debounce function dependencies cannot be analyzed by ESLint
   );
-  
+
   // Handle input changes
   const handleMinRatingChange = (value: string) => {
     // Prevent input beyond 3 characters
@@ -171,7 +171,7 @@ const RatingSelector = ({
         borderColor={
           (localMinRating && !isValidRating(localMinRating)) || !hasLogicalRange()
             ? "destructive"
-            : "border"
+            : "input"
         }
         bg="transparent"
         _hover={{
@@ -179,14 +179,14 @@ const RatingSelector = ({
         }}
           _invalid={{
             borderColor: "destructive",
-            boxShadow: "0 0 0 1px red.300",
+            boxShadow: "0 0 0 1px var(--chakra-colors-destructive)",
           }}
         />
       <Text fontSize="sm" color="on-muted">
         to
       </Text>
         <Input
-          placeholder="10.0"
+          placeholder="10"
           value={localMaxRating}
           onChange={(e) => handleMaxRatingChange(e.target.value)}
           onBlur={handleMaxRatingBlur}
@@ -202,7 +202,7 @@ const RatingSelector = ({
         borderColor={
           (localMaxRating && !isValidRating(localMaxRating)) || !hasLogicalRange()
             ? "destructive"
-            : "border"
+            : "input"
         }
         bg="transparent"
         _hover={{
@@ -210,7 +210,7 @@ const RatingSelector = ({
         }}
           _invalid={{
             borderColor: "destructive",
-            boxShadow: "0 0 0 1px red.300",
+            boxShadow: "0 0 0 1px var(--chakra-colors-destructive)",
           }}
         />
       </HStack>

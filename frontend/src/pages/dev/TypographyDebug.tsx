@@ -177,8 +177,8 @@ const TypographyDebug = () => {
                 </Box>
 
                 <Box>
-                  <Text fontSize="xs" color="on-muted" mb={1}>Small utility text (fontFamily="inter", fontSize="sm", color="text.secondary")</Text>
-                  <Text fontFamily="inter" fontSize="sm" color="text.secondary">
+                  <Text fontSize="xs" color="on-muted" mb={1}>Small utility text (fontFamily="inter", fontSize="sm", color="on-muted")</Text>
+                  <Text fontFamily="inter" fontSize="sm" color="on-muted">
                     Browse by • Sort by • Filter options
                   </Text>
                 </Box>
@@ -222,8 +222,8 @@ const TypographyDebug = () => {
                 </Box>
 
                 <Box>
-                  <Text fontSize="xs" color="on-muted" mb={1}>Small utility text (fontFamily="sourcesans", fontSize="sm", color="text.secondary")</Text>
-                  <Text fontFamily="sourcesans" fontSize="sm" color="text.secondary">
+                  <Text fontSize="xs" color="on-muted" mb={1}>Small utility text (fontFamily="sourcesans", fontSize="sm", color="on-muted")</Text>
+                  <Text fontFamily="sourcesans" fontSize="sm" color="on-muted">
                     Advanced filters • Search options • Results
                   </Text>
                 </Box>
@@ -312,7 +312,7 @@ const TypographyDebug = () => {
 
                 <Box>
                   <Text fontSize="xs" color="on-muted" mb={1}>Utility Labels → System Fonts</Text>
-                  <Text fontSize="sm" fontFamily="system" color="text.secondary">
+                  <Text fontSize="sm" fontFamily="system" color="on-muted">
                     Browse by • Sort by • Filter options
                   </Text>
                 </Box>

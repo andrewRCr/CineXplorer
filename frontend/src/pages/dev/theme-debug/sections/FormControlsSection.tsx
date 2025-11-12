@@ -161,15 +161,23 @@ export function FormControlsSection() {
                         borderColor="border"
                         color="foreground"
                       >
-                        {selectCollection.items.map((item) => (
-                          <Select.Item
-                            key={item.value}
-                            item={item}
-                            _hover={{ bg: "tertiary", color: "on-tertiary" }}
-                          >
-                            {item.label}
-                          </Select.Item>
-                        ))}
+                        {selectCollection.items.map((item) => {
+                          const isSelected = selectValue.includes(item.value);
+                          return (
+                            <Select.Item
+                              key={item.value}
+                              item={item}
+                              bg={isSelected ? "tertiary" : undefined}
+                              color={isSelected ? "on-tertiary" : undefined}
+                              _hover={{
+                                bg: isSelected ? "tertiary" : "tertiary/12",
+                                color: isSelected ? "on-tertiary" : undefined,
+                              }}
+                            >
+                              {item.label}
+                            </Select.Item>
+                          );
+                        })}
                       </Select.Content>
                     </Select.Positioner>
                   </Select.Root>
@@ -206,7 +214,7 @@ export function FormControlsSection() {
               </HStack>
 
               <Text fontSize="xs" color="foreground/60">
-                Tokens: Trigger uses <Code fontSize="xs">input</Code> border + <Code fontSize="xs">tertiary/8</Code> hover. Content uses <Code fontSize="xs">muted</Code> bg. Items use <Code fontSize="xs">tertiary</Code> + <Code fontSize="xs">on-tertiary</Code> on hover.
+                Tokens: Trigger uses <Code fontSize="xs">input</Code> border + <Code fontSize="xs">tertiary/8</Code> hover. Content uses <Code fontSize="xs">muted</Code> bg. Items: selected state uses <Code fontSize="xs">tertiary</Code> + <Code fontSize="xs">on-tertiary</Code>, hover (non-selected) uses <Code fontSize="xs">tertiary/12</Code>.
               </Text>
             </VStack>
           </Box>

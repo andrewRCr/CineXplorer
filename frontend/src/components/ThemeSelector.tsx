@@ -67,14 +67,19 @@ export function ThemeSelector() {
             variant="outline"
             size="sm"
             borderWidth="1px"
-            borderColor="border"
+            borderColor="button-outline"
+            color="on-button-outline"
           >
             {displayLabel}
           </Button>
         </Menu.Trigger>
         <Portal>
           <Menu.Positioner>
-            <Menu.Content>
+            <Menu.Content
+              bg="popover"
+              borderColor="border"
+              color="on-popover"
+            >
               {THEME_OPTIONS.map((option) => (
                 <Menu.Item
                   key={option.value}
@@ -83,8 +88,8 @@ export function ThemeSelector() {
                   bg={theme === option.value ? "tertiary" : undefined}
                   color={theme === option.value ? "on-tertiary" : undefined}
                   _hover={{
-                    bg: theme === option.value ? "tertiary" : "tertiary/8",
-                    opacity: theme === option.value ? 0.92 : 1,
+                    bg: theme === option.value ? "tertiary" : "tertiary/12",
+                    color: theme === option.value ? "on-tertiary" : undefined,
                   }}
                 >
                   {option.label}

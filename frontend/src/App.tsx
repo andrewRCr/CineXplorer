@@ -12,7 +12,7 @@ import ProtectedRoute from "./components/auth/ProtectedRoute";
 import ErrorBoundary from "./components/ErrorBoundary";
 
 // Lazy load page components
-const Featured = lazy(() => import("./pages/Featured"));
+const Featured = lazy(() => import("./pages/movie/Featured"));
 const NowPlaying = lazy(() => import("./pages/movie/NowPlaying"));
 const Login = lazy(() => import("./pages/user/Login"));
 const TestLogin = lazy(() => import("./pages/user/TestLogin"));

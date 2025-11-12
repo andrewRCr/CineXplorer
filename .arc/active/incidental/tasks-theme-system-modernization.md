@@ -2139,43 +2139,91 @@ This phase combines component-specific polish with systematic theme validation.
         - **Solution:** layer-01 provides consistent elevation in both light/dark modes
         - **Quality gates:** TypeScript 0 errors, ESLint 0 violations
 
-    - [ ] **6.1.d AdvancedMovieFilters internal controls consistency**
-        - **Goal:** Align all form controls with strategy doc token usage and ThemeDebug patterns
-        - **Components to evaluate:**
-            - Genre checkboxes (GenreSelector)
-            - Year range fields (YearSelector - min/max year inputs)
-            - Rating range fields (RatingSelector - min/max rating inputs)
-            - Runtime range fields (if present)
-            - Sort dropdown (SortSelector)
-            - Clear filters button
-            - Collapse/expand button
-        - Verify proper semantic tokens (input borders, focus states, button styles)
-        - Ensure consistent interaction states across all controls
-        - Test across 4 themes × 2 modes
+    - [x] **6.1.d AdvancedMovieFilters internal controls consistency**
+        - **Completed:** Aligned all form controls with strategy doc and ThemeDebug patterns
+        - **Corrections made:**
+            - **Input borders:** Changed all form inputs from `border` → `input` token (YearSelector,
+            RatingSelector, SortSelector trigger, GenreSelector checkboxes)
+            - **Invalid states:** Replaced hardcoded `red.300` → `var(--chakra-colors-destructive)` in box-shadow
+            - **Clear Filters button:** Changed `colorScheme="red"` → ghost pattern with `color="destructive"`,
+            `_hover={{ color: "destructive" }}`
+            - **Collapse button:** Added semantic `color="tertiary"`, `_hover={{ color: "tertiary-hover" }}`
+            - **Select item hover:** Added `color: "on-tertiary"` for proper contrast on `bg: "tertiary"` hover
+            - **Checkbox checked state:** Added `_checked={{ bg: "primary", borderColor: "primary" }}` to match
+            ThemeDebug pattern
+        - **Quality gates:** TypeScript 0 errors, ESLint 0 violations
+        - **Strategy doc updated:** Added Checkboxes, Radio Buttons, and Switches subsections to
+        `strategy-semantic-tokens.md` (Building Interactive Elements section) documenting patterns from ThemeDebug
+        FormControlsSection.
 
-    - [ ] **6.1.e Minimal filters consistency (MovieCollection pages)**
-        - **Context:** Letterboxd-style minimal filters on Popular, Upcoming, Now Playing pages
-        - **Issue:** Toggle advanced panel icon button has too strong/inconsistent hover style
-        - **Components to evaluate (all shared across movie collection pages):**
-            - Connected dropdowns: Two filter dropdowns (genre, year, etc.)
-            - Sort by dropdown (standalone)
-            - Toggle advanced panel button (icon button, rightmost in connected dropdowns)
-            - Search bar toggle button (icon button, expands to search bar)
-            - Expanded search bar component
-        - Align all components with strategy doc token usage and ThemeDebug patterns
-        - Ensure consistent interaction states across all filter controls
-        - Test across 4 themes × 2 modes
+    - [x] **6.1.e Minimal filters consistency (MovieCollection pages)**
+        - **Completed:** Aligned all minimal filter controls with semantic token patterns and connected control group behavior
+        - **Corrections made:**
+            - **Select dropdowns:** Changed all dropdown triggers from `border` → `input` token (ConnectedDropdowns
+            genre/year, SortDropdownMinimal)
+            - **ClearFiltersButton:** Changed `colorScheme="red"` → semantic `color="destructive"`,
+            `_hover={{ color: "destructive" }}`, added FiX icon for consistency with AdvancedMovieFilters
+            - **Toggle advanced panel button:** Simplified hover to `bg: "tertiary/8"` only (removed border/text color
+            changes) to match connected dropdown controls. Added comment explaining connected control group rationale.
+            - **CollapsibleSearchBox buttons:** Added `border="none"` to both search and close buttons to prevent HStack
+            parent border from showing through on hover
+        - **Design pattern note:** Connected control groups (genre/year/toggle) use subtle hover (background tint only)
+        for visual cohesion, unlike standalone buttons which use border/text color changes per strategy doc
+        - **Quality gates:** TypeScript 0 errors, ESLint 0 violations
 
-    - [ ] **6.1.f Form placeholder precision**
-        - Change max rating placeholder from `10.0` to `10`
-        - AdvancedMovieFilters component only
+    - [x] **6.1.f Form placeholder precision**
+        - **Completed:** Changed max rating placeholder from `10.0` to `10` in RatingSelector
+        - File: `frontend/src/components/movie/filters/RatingSelector.tsx:189`
         - Simple string change, no theme implications
 
-    - [ ] **6.1.g Footer theme select control popover background**
-        - Investigate incorrect popover background (flat black/white, not theme-consistent)
-        - Should use `popover` token for dropdown menu surface
-        - Verify theme selector dropdown uses proper elevation and colors
-        - Test across all 4 themes × 2 modes
+    - [x] **6.1.g Footer theme select control popover background**
+        - **Completed:** Fixed ThemeSelector popover theming and established new dropdown selected state pattern
+        - **ThemeSelector corrections:**
+            - **Menu.Content:** Added `bg="popover"`, `borderColor="border"`, `color="on-popover"` (was using
+            hardcoded Chakra defaults causing black/white issue)
+            - **Menu.Item hover:** Changed from `tertiary/8` → `tertiary/12` for non-selected items (more visible)
+            - **Trigger button:** Changed `borderColor="border"` → `button-outline`, added `color="on-button-outline"`
+        - **New dropdown pattern established (selected state visibility):**
+            - Selected items: `bg="tertiary"` + `color="on-tertiary"` (clearly marked)
+            - Hovered non-selected: `bg="tertiary/12"` (12% opacity, visible but not as strong as selected)
+            - Hovered selected: Maintains full `tertiary` + `on-tertiary` (no visual change)
+        - **Documentation updated:**
+            - Strategy doc: Updated Select/Dropdown section with selected state pattern and 12% hover opacity
+            - ThemeDebug: Updated FormControlsSection select example to demonstrate selected state pattern
+        - **Quality gates:** TypeScript 0 errors, ESLint 0 violations, Markdown 0 errors
+
+    - [ ] **6.1.h Migrate all dropdowns to new selected state pattern**
+        - **Context:** Task 6.1.g established new dropdown pattern with visible selected state (tertiary/on-tertiary)
+        and improved hover contrast (tertiary/12 vs tertiary/8)
+        - **Goal:** Update all existing Select/Menu dropdowns in the application to match ThemeDebug and strategy doc
+        pattern
+        - **Components to update:**
+            - **ConnectedDropdowns** (genre, year dropdowns):
+                - Current: `_hover={{ bg: "tertiary", color: "on-tertiary" }}` (no selected state)
+                - Update: Add selected state logic, change hover to `tertiary/12` for non-selected
+            - **SortDropdownMinimal** (minimal filters sort):
+                - Current: `_hover={{ bg: "tertiary", color: "on-tertiary" }}` with disabled item handling
+                - Update: Add selected state logic, change hover to `tertiary/12` for non-selected, preserve
+                disabled logic
+            - **SortSelector** (AdvancedMovieFilters sort):
+                - Current: `_hover={{ bg: "tertiary", color: "on-tertiary" }}` (no selected state)
+                - Update: Add selected state logic, change hover to `tertiary/12` for non-selected
+        - **Pattern to implement:**
+
+            ```tsx
+            const isSelected = value.includes(item.value);
+            <Select.Item
+              bg={isSelected ? "tertiary" : undefined}
+              color={isSelected ? "on-tertiary" : undefined}
+              _hover={{
+                bg: isSelected ? "tertiary" : "tertiary/12",
+                color: isSelected ? "on-tertiary" : undefined,
+              }}
+            >
+            ```
+
+        - **Quality gates:** TypeScript 0 errors, ESLint 0 violations
+        - **Test:** Verify selected items are clearly visible across 4 themes × 2 modes
 
 - [ ] **6.2 Systematic baseline visual validation**
 

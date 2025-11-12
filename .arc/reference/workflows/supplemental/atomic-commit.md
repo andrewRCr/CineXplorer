@@ -91,6 +91,23 @@ steps:
   7. Dependencies (package.json, requirements)
   8. Cleanup (removals, refactoring)
 
+  **Important: Documentation Overlap Scenario**
+
+  When working on multiple numbered tasks (e.g., 6.1.d, 6.1.e, 6.1.f), the task list
+  markdown will ALWAYS be updated by all tasks. Strategy docs and other documentation
+  MAY also be updated by multiple tasks.
+
+  In these cases, commit documentation LAST as a separate commit after all code commits:
+
+  Example with tasks 6.1.d, 6.1.e, 6.1.g:
+    - Commit 1: Task 6.1.d code changes only
+    - Commit 2: Task 6.1.e code changes only
+    - Commit 3: Task 6.1.g code changes only
+    - Commit 4: docs(arc): update task list and strategy doc for tasks 6.1.d-g
+
+  This avoids artificial coupling of unrelated code changes and maintains true atomicity.
+  The documentation commit should reference all tasks it documents (Tasks X.Y-X.Z format).
+
 - name: Create Atomic Commits
   description: |
 

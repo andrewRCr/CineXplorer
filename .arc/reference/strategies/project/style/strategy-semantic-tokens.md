@@ -720,15 +720,23 @@ Uses browser default 1px thickness for clean appearance.
       borderColor="border"
       color="foreground"
     >
-      {collection.items.map((item) => (
-        <Select.Item
-          key={item.value}
-          item={item}
-          _hover={{ bg: "tertiary", color: "on-tertiary" }}
-        >
-          {item.label}
-        </Select.Item>
-      ))}
+      {collection.items.map((item) => {
+        const isSelected = value.includes(item.value);
+        return (
+          <Select.Item
+            key={item.value}
+            item={item}
+            bg={isSelected ? "tertiary" : undefined}
+            color={isSelected ? "on-tertiary" : undefined}
+            _hover={{
+              bg: isSelected ? "tertiary" : "tertiary/12",
+              color: isSelected ? "on-tertiary" : undefined,
+            }}
+          >
+            {item.label}
+          </Select.Item>
+        );
+      })}
     </Select.Content>
   </Select.Positioner>
 </Select.Root>
@@ -745,7 +753,9 @@ Uses browser default 1px thickness for clean appearance.
     - Border: `border`
     - Text: `foreground`
 - **Items (options):**
-    - Hover background: `tertiary` + text: `on-tertiary` (proper contrast pair)
+    - Selected state: `bg: "tertiary"`, `color: "on-tertiary"` (clearly marked)
+    - Hover (non-selected): `bg: "tertiary/12"` (12% opacity, more visible than 8%)
+    - Hover (selected): Maintains `tertiary` + `on-tertiary` (no visual change)
 
 **Why not NativeSelect?**
 
@@ -755,6 +765,118 @@ Uses browser default 1px thickness for clean appearance.
 - Chakra's custom Select provides full token control and consistent UX
 
 **Examples:** Sort dropdowns, filter selectors, genre pickers, year selectors
+
+### Checkboxes
+
+**Standard checkbox pattern:**
+
+```tsx
+<Checkbox.Root
+  checked={checked}
+  onCheckedChange={(details) => setChecked(!!details.checked)}
+>
+  <Checkbox.HiddenInput />
+  <Checkbox.Control
+    borderColor="input"
+    _checked={{ bg: "primary", borderColor: "primary" }}
+  >
+    <Checkbox.Indicator />
+  </Checkbox.Control>
+  <Checkbox.Label>Accept terms</Checkbox.Label>
+</Checkbox.Root>
+```
+
+**Tokens:**
+
+- Default border: `input`
+- Checked state: `bg: "primary"`, `borderColor: "primary"`
+- Indicator (checkmark): Inherits `on-primary` color from Chakra UI theme
+
+**States:**
+
+- **Unchecked**: Border only (`input` token)
+- **Checked**: Filled background (`primary`) with checkmark (`on-primary`)
+- **Hover**: Optional `_hover={{ bg: "layer-hover-01" }}` for subtle interaction feedback
+- **Disabled**: Applied via `disabled` prop (opacity handled by Chakra)
+
+**Examples:** Genre filters, multi-select forms, preference toggles
+
+### Radio Buttons
+
+**Standard radio button pattern:**
+
+```tsx
+<RadioGroup.Root value={value} onValueChange={(e) => setValue(e.value)}>
+  <VStack align="start" gap={2}>
+    <RadioGroup.Item value="option1">
+      <RadioGroup.ItemHiddenInput />
+      <RadioGroup.ItemControl
+        borderColor="input"
+        _checked={{ bg: "primary", borderColor: "primary" }}
+      />
+      <RadioGroup.ItemText>Option 1</RadioGroup.ItemText>
+    </RadioGroup.Item>
+    <RadioGroup.Item value="option2">
+      <RadioGroup.ItemHiddenInput />
+      <RadioGroup.ItemControl
+        borderColor="input"
+        _checked={{ bg: "primary", borderColor: "primary" }}
+      />
+      <RadioGroup.ItemText>Option 2</RadioGroup.ItemText>
+    </RadioGroup.Item>
+  </VStack>
+</RadioGroup.Root>
+```
+
+**Tokens:**
+
+- Default border: `input`
+- Selected state: `bg: "primary"`, `borderColor: "primary"`
+- Indicator (dot): Inherits `on-primary` color from Chakra UI theme
+
+**Pattern identical to checkboxes** - same token usage, different visual shape (circle vs square).
+
+**Examples:** Single-choice options, filter modes, settings selections
+
+### Switches/Toggles
+
+**Standard switch pattern:**
+
+```tsx
+<Switch.Root
+  checked={enabled}
+  onCheckedChange={(e) => setEnabled(!!e.checked)}
+>
+  <Switch.HiddenInput />
+  <Switch.Control
+    bg="muted"
+    _checked={{ bg: "primary" }}
+  >
+    <Switch.Thumb bg="background" />
+  </Switch.Control>
+  <Text fontSize="sm">Enable feature</Text>
+</Switch.Root>
+```
+
+**Tokens:**
+
+- **Track (off state):** `bg: "muted"` (neutral gray)
+- **Track (on state):** `bg: "primary"` (brand color)
+- **Thumb (slider):** `bg: "background"` (contrasts against track in both states)
+
+**States:**
+
+- **Off**: Track uses `muted`, thumb on left
+- **On**: Track uses `primary`, thumb on right
+- **Disabled**: Applied via `disabled` prop (opacity handled by Chakra)
+
+**Visual feedback:**
+
+- Track color change (`muted` → `primary`) signals state
+- Thumb position (left/right) reinforces on/off
+- Thumb always uses `background` for consistent contrast
+
+**Examples:** Feature toggles, boolean settings, enable/disable controls
 
 ### Muted/Deemphasized Text
 

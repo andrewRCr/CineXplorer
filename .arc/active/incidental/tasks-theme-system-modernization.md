@@ -2387,20 +2387,21 @@ prevents discovering token issues after cleanup, when fixing them is harder.
 
     13. **Gap analysis:** Identify UI patterns not covered by current token system, propose additions if justified
 
-    - [ ] **7.1.a Catalog components by domain**
-        - Generate list of all `.tsx` files in `frontend/src/`
-        - Exclude ThemeDebug (already verified compliant as reference implementation)
-        - **Categorize into 4 domains:**
-            - **Layout & Navigation:** Header, Footer, Sidebar, BaseLayout, LoadingContent, PaginationCtrl,
-              navigation components (~8-12 components)
-            - **Movie Discovery:** MovieCard, MovieDetail, MovieGrid, collection components, detail pages (~10-15
-              components)
-            - **Movie Filters:** All filter components (AdvancedMovieFilters, ConnectedDropdowns, SearchBar,
-              SortSelector, GenreSelector, YearSelector, RatingSelector, etc.) (~10-15 components)
-            - **Shared/Common:** ErrorBoundary, ThemeSelector, utility components, shared UI elements (~5-10
-              components)
-        - Document component inventory in notes file with domain headers
-        - Create per-domain audit checklist (8 patterns × 4 domains = 32 checks total)
+    - [x] **7.1.a Catalog components by domain**
+
+        **Completed:** Component inventory documented in `notes-theme-system-modernization.md`.
+
+        **Results:**
+        - **Total Components:** 60 auditable components identified
+        - **Domain 1 - Layout & Navigation:** 15 components (NavBar, Footer, Sidebar, layouts, pagination)
+        - **Domain 2 - Movie Discovery:** 16 components (MovieCard, collection views, detail pages, person pages)
+        - **Domain 3 - Movie Filters:** 11 components (AdvancedMovieFilters, all selector components, search)
+        - **Domain 4 - Shared/Common:** 18 components (ErrorBoundary, ThemeSelector, auth, user pages, dev tools)
+        - **Excluded:** 29 test files, 10 ThemeDebug sections, 2 hooks, 2 entry points, 4 Chakra wrappers
+
+        **Audit Checklist Created:** 13 patterns × 4 domains = 52 total pattern checks
+
+        **Quality gates:** ✅ Documentation complete
 
     - [ ] **7.1.b Audit Layout & Navigation domain**
         - **Scope:** Header, Footer, Sidebar, BaseLayout, LoadingContent, PaginationCtrl, navigation components

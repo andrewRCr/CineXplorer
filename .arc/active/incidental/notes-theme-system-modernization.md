@@ -403,14 +403,16 @@ are straightforward token substitutions.
 
 **HIGH PRIORITY (Systemic patterns):**
 
-1. **React Router Links → Chakra Links (5 components)**
+1. **React Router Links → AppLink component (5 components)**
    - NavBar.tsx (lines 22-67, 162-184)
    - NavBarUserMenu.tsx (lines 164-210, 216-258, 259-297)
    - SidebarContent.tsx (lines 162-184, 209-217)
    - Footer.tsx (lines 32-40)
-   - **Pattern:** Replace `<Link to={path} style={{ textDecoration: "none" }}>` with Chakra `<Link asChild>` wrapper
-   - **Tokens:** `color="tertiary"`, `_hover={{ color: "tertiary-hover" }}`, `textDecoration="underline"`, `textUnderlineOffset="2px"`
-   - **Reference:** ADR-010 link patterns
+   - **Pattern:** Replace `<Link to={path} style={{ textDecoration: "none" }}>` with `<AppLink to={path}>`
+   - **Import:** `import { AppLink } from "@/components/common/AppLink"`
+   - **Remove:** React Router `Link` import (no longer needed)
+   - **Reference:** `components/common/AppLink.tsx`, ADR-010, strategy-semantic-tokens.md
+     "React Router Integration"
 
 **MEDIUM PRIORITY (Button patterns):**
 
@@ -602,12 +604,14 @@ organization (it's a movie-focused landing page).
 
 **HIGH PRIORITY (Systemic patterns):**
 
-1. **React Router Links → Chakra Links (2 components)**
+1. **React Router Links → AppLink component (2 components)**
    - MovieCard.tsx (lines 187-206, 229-234)
    - MovieDetail.tsx (lines 79-98)
-   - **Pattern:** Same as Layout domain - replace with Chakra `<Link asChild>` wrapper
-   - **Tokens:** `color="tertiary"`, `_hover={{ color: "tertiary-hover" }}`, underline patterns
-   - **Reference:** ADR-010 link patterns
+   - **Pattern:** Replace `<Link to={path} style={{ textDecoration: "none" }}>` with `<AppLink to={path}>`
+   - **Import:** `import { AppLink } from "@/components/common/AppLink"`
+   - **Remove:** React Router `Link` import (no longer needed)
+   - **Reference:** `components/common/AppLink.tsx`, ADR-010, strategy-semantic-tokens.md
+     "React Router Integration"
 
 **MEDIUM PRIORITY (Button token issues):**
 

@@ -2663,6 +2663,7 @@ prevents discovering token issues after cleanup, when fixing them is harder.
 
     - [ ] **7.2.a Fix Layout & Navigation domain violations**
         - Work through Layout & Navigation violation list from 7.1.b
+        - **Fix list reference:** `notes-theme-system-modernization.md` line 400
         - Apply all pattern fixes: buttons, forms, links, surfaces, status, colors
         - Verify fixes against ADRs (ADR-009, ADR-010, ADR-011, ADR-012)
         - **Quality gates:** TypeScript 0 errors, ESLint 0 violations
@@ -2671,6 +2672,7 @@ prevents discovering token issues after cleanup, when fixing them is harder.
 
     - [ ] **7.2.b Fix Movie Discovery domain violations**
         - Work through Movie Discovery violation list from 7.1.c
+        - **Fix list reference:** `notes-theme-system-modernization.md` line 600
         - Apply all pattern fixes: buttons, forms, links, surfaces, status, colors
         - Verify fixes against ADRs (ADR-009, ADR-010, ADR-011, ADR-012)
         - **Quality gates:** TypeScript 0 errors, ESLint 0 violations
@@ -2679,6 +2681,7 @@ prevents discovering token issues after cleanup, when fixing them is harder.
 
     - [ ] **7.2.c Fix Movie Filters domain violations**
         - Work through Movie Filters violation list from 7.1.d
+        - **Fix list reference:** `notes-theme-system-modernization.md` line 796
         - Apply all pattern fixes: buttons, forms, links, surfaces, status, colors
         - Verify fixes against ADRs (ADR-009, ADR-010, ADR-011, ADR-012)
         - **Quality gates:** TypeScript 0 errors, ESLint 0 violations
@@ -2687,30 +2690,169 @@ prevents discovering token issues after cleanup, when fixing them is harder.
 
     - [ ] **7.2.d Fix Shared/Common domain violations**
         - Work through Shared/Common violation list from 7.1.e
+        - **Fix list reference:** `notes-theme-system-modernization.md` line 1032
         - Apply all pattern fixes: buttons, forms, links, surfaces, status, colors
         - Verify fixes against ADRs (ADR-009, ADR-010, ADR-011, ADR-012)
         - **Quality gates:** TypeScript 0 errors, ESLint 0 violations
         - **Visual test:** Verify fixed components in all 4 themes × 2 modes
         - **Session boundary:** All fixes complete (100%)
 
-- [ ] **7.3 Cross-theme validation after fixes**
+- [ ] **7.3 Component organization restructure**
+
+    **Goal:** Reorganize `frontend/src/components/` directory structure for better clarity and maintainability.
+
+    **Context:** Current structure has loose files at root (ErrorBoundary, ThemeSelector), empty `ui/` directory,
+    and unclear separation between app infrastructure (Chakra providers) and domain components. Restructure before
+    cross-theme validation (Task 7.4) to avoid updating stale paths in documentation.
+
+    **Strategy:** Option B + D combined approach:
+    - Create `core/` directory for app infrastructure (ErrorBoundary, Chakra providers)
+    - Move reusable UI to `common/` directory (ThemeSelector, AppLink)
+    - Move domain-specific component to correct domain (`movie/collection/`)
+    - Organize large `layout/` directory with subdirectories for component families
+    - Delete empty `ui/` directory
+
+    **Final structure:**
+
+    ```
+    components/
+    ├── auth/              # Authentication domain (unchanged)
+    ├── common/            # Shared/reusable components
+    │   ├── AppLink.tsx
+    │   ├── ThemeSelector.tsx
+    │   └── index.ts
+    ├── core/              # App infrastructure (NEW)
+    │   ├── chakra/        # Chakra UI providers (moved from root)
+    │   │   ├── color-mode.tsx
+    │   │   ├── provider.tsx
+    │   │   ├── theme-provider.tsx
+    │   │   ├── toaster.tsx
+    │   │   └── tooltip.tsx
+    │   ├── ErrorBoundary.tsx  # Moved from root
+    │   └── __tests__/         # ErrorBoundary tests (moved from root)
+    │       └── ErrorBoundaryIntegration.test.tsx
+    ├── layout/            # Layout/navigation (organized with subdirs)
+    │   ├── navbar/        # NavBar family (NEW subdir)
+    │   │   ├── NavBar.tsx
+    │   │   ├── NavBarSearch.tsx
+    │   │   ├── NavBarUserMenu.tsx
+    │   │   └── MobileMenuButton.tsx
+    │   ├── sidebar/       # Sidebar family (NEW subdir)
+    │   │   ├── Sidebar.tsx
+    │   │   ├── SidebarContent.tsx
+    │   │   ├── SidebarDrawer.tsx
+    │   │   └── sidebarOverlay.tsx
+    │   ├── __tests__/     # Layout tests (unchanged)
+    │   ├── AppLayout.tsx
+    │   ├── AuthLayout.tsx
+    │   ├── BaseLayout.tsx
+    │   ├── LoadingLayout.tsx
+    │   ├── LoadingContent.tsx
+    │   └── Footer.tsx
+    ├── movie/             # Movie domain (mostly unchanged)
+    │   ├── collection/    # Collection views
+    │   │   ├── MoviePaginationCtrl.tsx  # Renamed + moved from layout/PaginationCtrl.tsx
+    │   │   ├── FilterSection.tsx
+    │   │   ├── MovieCollectionGrid.tsx
+    │   │   ├── MovieCollectionLayout.tsx
+    │   │   ├── MovieGrid.tsx
+    │   │   ├── PageHeader.tsx
+    │   │   ├── useMovieCollectionState.tsx
+    │   │   ├── useMovieCollectionUrl.tsx
+    │   │   └── __tests__/
+    │   ├── filters/       # Movie filters (unchanged)
+    │   ├── __tests__/     # Movie component tests (unchanged)
+    │   ├── MovieCard.tsx
+    │   ├── MovieCardContainer.tsx
+    │   └── MovieUserScore.tsx
+    └── user/              # User domain (unchanged)
+    ```
+
+    **Subtasks:**
+
+    - [ ] **7.3.a Create new directory structure**
+        - Create `components/core/` directory
+        - Create `components/core/chakra/` subdirectory
+        - Create `components/layout/navbar/` subdirectory
+        - Create `components/layout/sidebar/` subdirectory
+        - Verify directories created successfully
+
+    - [ ] **7.3.b Move infrastructure components to core/**
+        - Move `components/ErrorBoundary.tsx` → `components/core/ErrorBoundary.tsx`
+        - Move `components/__tests__/` → `components/core/__tests__/`
+        - Move all files from `components/chakra/*` → `components/core/chakra/*`
+        - Delete empty `components/chakra/` directory
+        - Verify all files moved successfully
+
+    - [ ] **7.3.c Move shared UI to common/**
+        - Move `components/ThemeSelector.tsx` → `components/common/ThemeSelector.tsx`
+        - Update `components/common/index.ts` to export ThemeSelector
+        - Verify ThemeSelector moved successfully
+
+    - [ ] **7.3.d Reorganize layout/ with subdirectories**
+        - Move `components/layout/NavBar.tsx` → `components/layout/navbar/NavBar.tsx`
+        - Move `components/layout/NavBarSearch.tsx` → `components/layout/navbar/NavBarSearch.tsx`
+        - Move `components/layout/NavBarUserMenu.tsx` → `components/layout/navbar/NavBarUserMenu.tsx`
+        - Move `components/layout/MobileMenuButton.tsx` → `components/layout/navbar/MobileMenuButton.tsx`
+        - Move `components/layout/Sidebar.tsx` → `components/layout/sidebar/Sidebar.tsx`
+        - Move `components/layout/SidebarContent.tsx` → `components/layout/sidebar/SidebarContent.tsx`
+        - Move `components/layout/SidebarDrawer.tsx` → `components/layout/sidebar/SidebarDrawer.tsx`
+        - Move `components/layout/sidebarOverlay.tsx` → `components/layout/sidebar/sidebarOverlay.tsx`
+        - Verify all layout subdirectory moves successful
+
+    - [ ] **7.3.e Move and rename domain-specific component**
+        - Move `components/layout/PaginationCtrl.tsx` → `components/movie/collection/MoviePaginationCtrl.tsx`
+        - Rename component internally: `PaginationCtrl` → `MoviePaginationCtrl`
+        - Rename interface: `iPaginationCtrlProps` → `iMoviePaginationCtrlProps`
+        - Rename test file: `layout/__tests__/PaginationCtrl.test.tsx` → `movie/collection/__tests__/MoviePaginationCtrl.test.tsx`
+        - Update test imports and component references
+        - **Rationale:** Component is movie-collection-specific (props: `totalMovieCount`, comment: "TMDB API 500 page limit")
+        - **Naming:** `MoviePaginationCtrl` follows Movie* pattern (MovieCard, MovieGrid) and keeps "Ctrl" suffix
+
+    - [ ] **7.3.f Delete empty ui/ directory**
+        - Delete `components/ui/` directory (empty, no longer needed)
+        - Verify deletion successful
+
+    - [ ] **7.3.g Update all imports across codebase**
+        - Update imports for `ErrorBoundary` (root → core/)
+        - Update imports for `ThemeSelector` (root → common/)
+        - Update imports for all Chakra providers (`chakra/*` → `core/chakra/*`)
+        - Update imports for navbar components (`layout/*` → `layout/navbar/*`)
+        - Update imports for sidebar components (`layout/*` → `layout/sidebar/*`)
+        - Update imports for `PaginationCtrl` → `MoviePaginationCtrl` (layout/ → movie/collection/)
+        - Search codebase for any missed imports
+        - **Files likely affected:**
+            - `App.tsx` (ErrorBoundary)
+            - `layout/Footer.tsx` (ThemeSelector)
+            - `components/core/provider.tsx` (Chakra providers)
+            - `layout/AppLayout.tsx`, `layout/BaseLayout.tsx` (navbar/sidebar components)
+            - `movie/collection/MovieCollectionGrid.tsx`, `movie/collection/MovieGrid.tsx` (MoviePaginationCtrl)
+
+    - [ ] **7.3.h Run quality gates**
+        - TypeScript: 0 errors (verify all imports resolved)
+        - ESLint: 0 violations
+        - Frontend tests: 100% pass rate
+        - Visual verification: App renders correctly with new paths
+        - **Critical:** All imports must resolve - broken imports = incomplete restructure
+
+- [ ] **7.4 Cross-theme validation after fixes**
 
     **Goal:** Verify all audit fixes work correctly across theme combinations.
 
-    - [ ] **7.3.a Test all 8 theme combinations**
+    - [ ] **7.4.a Test all 8 theme combinations**
         - GitHub Primer (light/dark)
         - IBM Carbon (light/dark)
         - GitLab Pajamas (light/dark)
         - Material Design 3 (light/dark)
 
-    - [ ] **7.3.b Verify component consistency**
+    - [ ] **7.4.b Verify component consistency**
         - Buttons: Primary (filled), Neutral outline, Primary outline, Subtle, Ghost
         - Links: All using `accent` + `accent-hover` with underlines
         - Alerts: Success (green), Warning (yellow/orange), Info (blue), Destructive (red)
         - Badges: Neutral (`badge`/`on-badge`) + status variants
         - Forms: Input borders visible, focus states clear
 
-    - [ ] **7.3.c Verify no deprecated alias usage in components**
+    - [ ] **7.4.c Verify no deprecated alias usage in components**
         - Quick grep check: `*-foreground` tokens should have minimal/zero usage after Phase 7.2 fixes
         - Prepares for Phase 8.1 comprehensive grep verification before alias removal
         - **Patterns to check:**
@@ -2726,28 +2868,28 @@ prevents discovering token issues after cleanup, when fixing them is harder.
             - `grep -r "info-foreground" frontend/src/components/ frontend/src/pages/` → expect 0
         - **Note:** Deprecated aliases OK in theme definition files (`frontend/src/theme/`), NOT in components
 
-- [ ] **7.4 Documentation updates**
+- [ ] **7.5 Documentation updates**
 
     **Goal:** Document audit findings and update strategy docs with learnings.
 
-    - [ ] **7.4.a Update strategy-semantic-tokens.md**
+    - [ ] **7.5.a Update strategy-semantic-tokens.md**
         - Add any new patterns discovered during audit
         - Document exceptions found with rationale
         - Update examples if patterns evolved
 
-    - [ ] **7.4.b Verify ADR accuracy**
+    - [ ] **7.5.b Verify ADR accuracy**
         - ADR-009: Material Design opacity overlays - still accurate?
         - ADR-010: Primary/Secondary/Tertiary hierarchy - still accurate?
         - ADR-011: On-color naming standardization - still accurate?
         - ADR-012: Button pattern semantics - still accurate?
         - Update ADRs if implementation deviated from decisions
 
-    - [ ] **7.4.c Document audit results**
+    - [ ] **7.5.c Document audit results**
         - Summary: Violations found and fixed by category
         - Technical debt: Any remaining issues deferred
         - Recommendations: Patterns for future component development
 
-- [ ] **7.5 Comprehensive audit quality gates**
+- [ ] **7.6 Comprehensive audit quality gates**
 
     **Checkpoint:** All components audited, violations fixed, ready for cleanup.
 

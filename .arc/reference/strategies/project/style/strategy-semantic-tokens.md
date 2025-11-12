@@ -734,6 +734,7 @@ import { TextLink } from "@/components/common";
 **When to use TextLink:**
 
 ✅ **Inline text links** - Navigation links that should look like hyperlinks:
+
 ```tsx
 // Navbar menu items
 <TextLink to="/movies">Movies</TextLink>
@@ -746,6 +747,7 @@ import { TextLink } from "@/components/common";
 ```
 
 ✅ **Standalone navigation text** - When you want full link styling (underline, color, focus):
+
 ```tsx
 <TextLink to="/settings" fontSize="lg" fontWeight="bold">
   Account Settings
@@ -755,6 +757,7 @@ import { TextLink } from "@/components/common";
 **When NOT to use TextLink:**
 
 ❌ **Wrapping buttons** - Buttons have their own styles, don't need link styling:
+
 ```tsx
 // ❌ Wrong: TextLink conflicts with button styles
 <TextLink to="/movies"><Button>Browse</Button></TextLink>
@@ -767,6 +770,7 @@ import { Link } from "react-router-dom";
 ```
 
 ❌ **Block navigation** - Cards, posters, complex layouts need block display:
+
 ```tsx
 // ❌ Wrong: TextLink is inline, breaks layout
 <TextLink to={`/movie/${id}`}>
@@ -787,6 +791,7 @@ import { Link } from "react-router-dom";
 ```
 
 ❌ **Inheriting parent styles** - Text that should match container:
+
 ```tsx
 // ❌ Wrong: TextLink forces tertiary color, breaks inheritance
 <Text color="foreground" fontWeight="bold">
@@ -803,6 +808,7 @@ import { Link } from "react-router-dom";
 ```
 
 ❌ **Logo/brand elements** - Don't want underlines or focus rings:
+
 ```tsx
 // ❌ Wrong: TextLink adds underline and focus ring to logo
 <TextLink to="/"><Heading>CineXplorer</Heading></TextLink>
@@ -815,6 +821,7 @@ import { Link } from "react-router-dom";
 ```
 
 ❌ **External links** - Use Chakra Link for external URLs:
+
 ```tsx
 <Link href="https://example.com" isExternal>External Site</Link>
 ```

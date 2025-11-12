@@ -40,15 +40,20 @@ const NavBarSearch = ({ onSearch }: NavBarSearchProps = {}) => {
       onMouseLeave={() => setIsHovered(false)}
       borderRadius="md"
       border="1px solid"
-      borderColor="input"
+      borderColor="border-strong-01"
       backgroundColor={isHovered ? "tertiary/8" : "transparent"}
       transition="all 0.2s ease"
-      _focusWithin={{
-        borderColor: "tertiary",
-        outline: "2px solid",
-        outlineColor: "ring",
-        outlineOffset: "2px",
-        backgroundColor: "transparent",
+      css={{
+        "&:focus-within": {
+          borderColor: "var(--chakra-colors-tertiary)",
+          backgroundColor: "transparent",
+          outline: "none !important",
+          boxShadow: "none !important",
+        },
+        "&:has(*:focus-visible)": {
+          outline: "2px solid var(--chakra-colors-ring)",
+          outlineOffset: "2px",
+        },
       }}
     >
       <Input
@@ -65,6 +70,9 @@ const NavBarSearch = ({ onSearch }: NavBarSearchProps = {}) => {
           border: "none",
           boxShadow: "none",
           outline: "none",
+        }}
+        _focusVisible={{
+          // This forces the parent's :has selector to work
         }}
         _hover={{}}
       />

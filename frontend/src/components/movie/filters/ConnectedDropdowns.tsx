@@ -272,15 +272,23 @@ const ConnectedDropdowns = ({
               borderColor="border"
               color="foreground"
             >
-              {genreCollection.items.map((item) => (
-                <Select.Item
-                  key={item.value}
-                  item={item}
-                  _hover={{ bg: "tertiary", color: "on-tertiary" }}
-                >
-                  {item.label}
-                </Select.Item>
-              ))}
+              {genreCollection.items.map((item) => {
+                const isSelected = filters.genres.map(String).includes(item.value);
+                return (
+                  <Select.Item
+                    key={item.value}
+                    item={item}
+                    bg={isSelected ? "tertiary" : undefined}
+                    color={isSelected ? "on-tertiary" : undefined}
+                    _hover={{
+                      bg: isSelected ? "tertiary" : "tertiary/12",
+                      color: isSelected ? "on-tertiary" : undefined,
+                    }}
+                  >
+                    {item.label}
+                  </Select.Item>
+                );
+              })}
             </Select.Content>
           </Select.Positioner>
         </Select.Root>
@@ -362,15 +370,23 @@ const ConnectedDropdowns = ({
               borderColor="border"
               color="foreground"
             >
-              {yearCollection.items.map((item) => (
-                <Select.Item
-                  key={item.value}
-                  item={item}
-                  _hover={{ bg: "tertiary", color: "on-tertiary" }}
-                >
-                  {item.label}
-                </Select.Item>
-              ))}
+              {yearCollection.items.map((item) => {
+                const isSelected = yearDisplayData.yearDisplayValue === item.value;
+                return (
+                  <Select.Item
+                    key={item.value}
+                    item={item}
+                    bg={isSelected ? "tertiary" : undefined}
+                    color={isSelected ? "on-tertiary" : undefined}
+                    _hover={{
+                      bg: isSelected ? "tertiary" : "tertiary/12",
+                      color: isSelected ? "on-tertiary" : undefined,
+                    }}
+                  >
+                    {item.label}
+                  </Select.Item>
+                );
+              })}
             </Select.Content>
           </Select.Positioner>
         </Select.Root>

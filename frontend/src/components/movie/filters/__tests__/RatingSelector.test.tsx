@@ -60,7 +60,7 @@ describe('RatingSelector Component', () => {
       render(<RatingSelector {...defaultProps} />);
 
       const minInput = screen.getByPlaceholderText('0.0');
-      const maxInput = screen.getByPlaceholderText('10.0');
+      const maxInput = screen.getByPlaceholderText('10');
 
       expect(minInput).toBeInTheDocument();
       expect(maxInput).toBeInTheDocument();
@@ -78,7 +78,7 @@ describe('RatingSelector Component', () => {
       render(<RatingSelector {...defaultProps} />);
 
       const minInput = screen.getByPlaceholderText('0.0') as HTMLInputElement;
-      const maxInput = screen.getByPlaceholderText('10.0') as HTMLInputElement;
+      const maxInput = screen.getByPlaceholderText('10') as HTMLInputElement;
 
       expect(minInput.value).toBe('');
       expect(maxInput.value).toBe('');
@@ -98,7 +98,7 @@ describe('RatingSelector Component', () => {
       // Uses TMDB 0-10 scale directly (no conversion)
       render(<RatingSelector {...defaultProps} maxRating="8.5" />);
 
-      const maxInput = screen.getByPlaceholderText('10.0') as HTMLInputElement;
+      const maxInput = screen.getByPlaceholderText('10') as HTMLInputElement;
       expect(maxInput.value).toBe('8.5');
     });
 
@@ -106,7 +106,7 @@ describe('RatingSelector Component', () => {
       render(<RatingSelector {...defaultProps} minRating="6.7" maxRating="8.3" />);
 
       const minInput = screen.getByPlaceholderText('0.0') as HTMLInputElement;
-      const maxInput = screen.getByPlaceholderText('10.0') as HTMLInputElement;
+      const maxInput = screen.getByPlaceholderText('10') as HTMLInputElement;
 
       expect(minInput.value).toBe('6.7');
       expect(maxInput.value).toBe('8.3');
@@ -116,7 +116,7 @@ describe('RatingSelector Component', () => {
       render(<RatingSelector {...defaultProps} minRating="0" maxRating="10" />);
 
       const minInput = screen.getByPlaceholderText('0.0') as HTMLInputElement;
-      const maxInput = screen.getByPlaceholderText('10.0') as HTMLInputElement;
+      const maxInput = screen.getByPlaceholderText('10') as HTMLInputElement;
 
       expect(minInput.value).toBe('0');
       expect(maxInput.value).toBe('10');
@@ -141,7 +141,7 @@ describe('RatingSelector Component', () => {
       render(<RatingSelector {...defaultProps} />);
 
       const minInput = screen.getByPlaceholderText('0.0');
-      const maxInput = screen.getByPlaceholderText('10.0');
+      const maxInput = screen.getByPlaceholderText('10');
 
       expect(minInput).toHaveAttribute('min', '0');
       expect(minInput).toHaveAttribute('max', '10');
@@ -155,7 +155,7 @@ describe('RatingSelector Component', () => {
       render(<RatingSelector {...defaultProps} />);
 
       const minInput = screen.getByPlaceholderText('0.0');
-      const maxInput = screen.getByPlaceholderText('10.0');
+      const maxInput = screen.getByPlaceholderText('10');
 
       // Both inputs should be relatively narrow (70px as per component)
       expect(minInput).toBeInTheDocument();
@@ -166,7 +166,7 @@ describe('RatingSelector Component', () => {
       render(<RatingSelector {...defaultProps} minRating="8.0" maxRating="6.0" />);
 
       const minInput = screen.getByPlaceholderText('0.0');
-      const maxInput = screen.getByPlaceholderText('10.0');
+      const maxInput = screen.getByPlaceholderText('10');
 
       // Component should apply red border when min > max
       expect(minInput).toBeInTheDocument();
@@ -179,7 +179,7 @@ describe('RatingSelector Component', () => {
       render(<RatingSelector {...defaultProps} minRating="6.0" maxRating="8.0" />);
 
       const minInput = screen.getByPlaceholderText('0.0') as HTMLInputElement;
-      const maxInput = screen.getByPlaceholderText('10.0') as HTMLInputElement;
+      const maxInput = screen.getByPlaceholderText('10') as HTMLInputElement;
 
       expect(minInput.value).toBe('6.0');
       expect(maxInput.value).toBe('8.0');
@@ -189,7 +189,7 @@ describe('RatingSelector Component', () => {
       render(<RatingSelector {...defaultProps} minRating="8.0" maxRating="6.0" />);
 
       const minInput = screen.getByPlaceholderText('0.0') as HTMLInputElement;
-      const maxInput = screen.getByPlaceholderText('10.0') as HTMLInputElement;
+      const maxInput = screen.getByPlaceholderText('10') as HTMLInputElement;
 
       // Should still display values but apply visual validation feedback
       expect(minInput.value).toBe('8.0');
@@ -200,7 +200,7 @@ describe('RatingSelector Component', () => {
       render(<RatingSelector {...defaultProps} minRating="7.5" maxRating="7.5" />);
 
       const minInput = screen.getByPlaceholderText('0.0') as HTMLInputElement;
-      const maxInput = screen.getByPlaceholderText('10.0') as HTMLInputElement;
+      const maxInput = screen.getByPlaceholderText('10') as HTMLInputElement;
 
       expect(minInput.value).toBe('7.5');
       expect(maxInput.value).toBe('7.5');
@@ -210,7 +210,7 @@ describe('RatingSelector Component', () => {
       render(<RatingSelector {...defaultProps} minRating="" maxRating="8.0" />);
 
       const minInput = screen.getByPlaceholderText('0.0') as HTMLInputElement;
-      const maxInput = screen.getByPlaceholderText('10.0') as HTMLInputElement;
+      const maxInput = screen.getByPlaceholderText('10') as HTMLInputElement;
 
       expect(minInput.value).toBe('');
       expect(maxInput.value).toBe('8.0');
@@ -222,7 +222,7 @@ describe('RatingSelector Component', () => {
       render(<RatingSelector {...defaultProps} minRating="7.0" maxRating="8.5" />);
 
       const minInput = screen.getByPlaceholderText('0.0') as HTMLInputElement;
-      const maxInput = screen.getByPlaceholderText('10.0') as HTMLInputElement;
+      const maxInput = screen.getByPlaceholderText('10') as HTMLInputElement;
 
       expect(minInput.value).toBe('7.0');
       expect(maxInput.value).toBe('8.5');
@@ -242,7 +242,7 @@ describe('RatingSelector Component', () => {
       const { rerender } = render(<RatingSelector {...defaultProps} minRating="6.0" maxRating="8.0" />);
 
       const minInput = screen.getByPlaceholderText('0.0') as HTMLInputElement;
-      const maxInput = screen.getByPlaceholderText('10.0') as HTMLInputElement;
+      const maxInput = screen.getByPlaceholderText('10') as HTMLInputElement;
 
       // Update only min rating
       rerender(<RatingSelector {...defaultProps} minRating="7.0" maxRating="8.0" />);
@@ -303,7 +303,7 @@ describe('RatingSelector Component', () => {
       render(<RatingSelector {...defaultProps} />);
 
       const minInput = screen.getByPlaceholderText('0.0');
-      const maxInput = screen.getByPlaceholderText('10.0');
+      const maxInput = screen.getByPlaceholderText('10');
 
       await act(async () => {
         await user.type(minInput, '6.0');
@@ -389,7 +389,7 @@ describe('RatingSelector Component', () => {
       );
 
       const minInput = screen.getByPlaceholderText('0.0') as HTMLInputElement;
-      const maxInput = screen.getByPlaceholderText('10.0') as HTMLInputElement;
+      const maxInput = screen.getByPlaceholderText('10') as HTMLInputElement;
 
       expect(minInput.value).toBe('6.0');
       expect(maxInput.value).toBe('8.0');
@@ -407,7 +407,7 @@ describe('RatingSelector Component', () => {
       render(<RatingSelector {...defaultProps} minRating="6.0" maxRating="8.0" />);
 
       const minInput = screen.getByPlaceholderText('0.0');
-      const maxInput = screen.getByPlaceholderText('10.0');
+      const maxInput = screen.getByPlaceholderText('10');
 
       expect(minInput).toBeInTheDocument();
       expect(maxInput).toBeInTheDocument();
@@ -417,7 +417,7 @@ describe('RatingSelector Component', () => {
       render(<RatingSelector {...defaultProps} minRating="8.0" maxRating="6.0" />);
 
       const minInput = screen.getByPlaceholderText('0.0');
-      const maxInput = screen.getByPlaceholderText('10.0');
+      const maxInput = screen.getByPlaceholderText('10');
 
       // Both inputs should have error styling when range is invalid
       expect(minInput).toBeInTheDocument();
@@ -438,7 +438,7 @@ describe('RatingSelector Component', () => {
       render(<RatingSelector {...defaultProps} />);
 
       const minInput = screen.getByPlaceholderText('0.0');
-      const maxInput = screen.getByPlaceholderText('10.0');
+      const maxInput = screen.getByPlaceholderText('10');
 
       expect(minInput).toHaveAttribute('type', 'number');
       expect(maxInput).toHaveAttribute('type', 'number');
@@ -449,14 +449,14 @@ describe('RatingSelector Component', () => {
 
       expect(screen.getByText('Rating')).toBeInTheDocument();
       expect(screen.getByPlaceholderText('0.0')).toBeInTheDocument();
-      expect(screen.getByPlaceholderText('10.0')).toBeInTheDocument();
+      expect(screen.getByPlaceholderText('10')).toBeInTheDocument();
     });
 
     it('supports keyboard navigation', () => {
       render(<RatingSelector {...defaultProps} />);
 
       const minInput = screen.getByPlaceholderText('0.0');
-      const maxInput = screen.getByPlaceholderText('10.0');
+      const maxInput = screen.getByPlaceholderText('10');
 
       minInput.focus();
       expect(minInput).toHaveFocus();
@@ -469,7 +469,7 @@ describe('RatingSelector Component', () => {
       render(<RatingSelector {...defaultProps} minRating="8.0" maxRating="6.0" />);
 
       const minInput = screen.getByPlaceholderText('0.0');
-      const maxInput = screen.getByPlaceholderText('10.0');
+      const maxInput = screen.getByPlaceholderText('10');
 
       // Visual feedback should be provided for invalid range
       expect(minInput).toBeInTheDocument();
@@ -490,7 +490,7 @@ describe('RatingSelector Component', () => {
       render(<RatingSelector {...defaultProps} minRating="15.0" maxRating="-2.0" />);
 
       const minInput = screen.getByPlaceholderText('0.0') as HTMLInputElement;
-      const maxInput = screen.getByPlaceholderText('10.0') as HTMLInputElement;
+      const maxInput = screen.getByPlaceholderText('10') as HTMLInputElement;
 
       // Component should render values even if out of normal range
       expect(minInput).toBeInTheDocument();
@@ -535,7 +535,7 @@ describe('RatingSelector Component', () => {
       render(<RatingSelector {...defaultProps} />);
 
       const minInput = screen.getByPlaceholderText('0.0');
-      const maxInput = screen.getByPlaceholderText('10.0');
+      const maxInput = screen.getByPlaceholderText('10');
 
       await act(async () => {
         await user.type(minInput, '0');
@@ -567,7 +567,7 @@ describe('RatingSelector Component', () => {
       rerender(<RatingSelector {...defaultProps} minRating="7.0" maxRating="9.5" />);
 
       const minInput = screen.getByPlaceholderText('0.0') as HTMLInputElement;
-      const maxInput = screen.getByPlaceholderText('10.0') as HTMLInputElement;
+      const maxInput = screen.getByPlaceholderText('10') as HTMLInputElement;
 
       expect(minInput.value).toBe('7.0');
       expect(maxInput.value).toBe('9.5');
@@ -610,7 +610,7 @@ describe('RatingSelector Component', () => {
       render(<RatingSelector {...defaultProps} minRating="7.5" maxRating="9.0" />);
 
       const minInput = screen.getByPlaceholderText('0.0') as HTMLInputElement;
-      const maxInput = screen.getByPlaceholderText('10.0') as HTMLInputElement;
+      const maxInput = screen.getByPlaceholderText('10') as HTMLInputElement;
 
       // Values should be accessible for form submission in native 0-10 format
       expect(minInput.value).toBe('7.5');
@@ -644,7 +644,7 @@ describe('RatingSelector Component', () => {
         );
 
         const minInput = screen.getByPlaceholderText('0.0') as HTMLInputElement;
-        const maxInput = screen.getByPlaceholderText('10.0') as HTMLInputElement;
+        const maxInput = screen.getByPlaceholderText('10') as HTMLInputElement;
 
         expect(minInput.value).toBe(expectedMinDisplay);
         expect(maxInput.value).toBe(expectedMaxDisplay);
@@ -657,7 +657,7 @@ describe('RatingSelector Component', () => {
       render(<RatingSelector {...defaultProps} />);
 
       const minInput = screen.getByPlaceholderText('0.0') as HTMLInputElement;
-      const maxInput = screen.getByPlaceholderText('10.0') as HTMLInputElement;
+      const maxInput = screen.getByPlaceholderText('10') as HTMLInputElement;
 
       // Simulate having invalid values using fireEvent
       act(() => {

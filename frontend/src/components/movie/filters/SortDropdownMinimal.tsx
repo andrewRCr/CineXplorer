@@ -141,27 +141,35 @@ const SortDropdownMinimal = ({
               borderColor="border"
               color="foreground"
             >
-              {sortCollection.items.map((item) => (
-                <Select.Item
-                  key={item.value}
-                  item={item}
-                  color={
-                    "disabled" in item && item.disabled
-                      ? "on-muted"
-                      : "foreground"
-                  }
-                  fontStyle={
-                    "disabled" in item && item.disabled ? "italic" : "normal"
-                  }
-                  _hover={
-                    "disabled" in item && item.disabled
-                      ? {}
-                      : { bg: "tertiary", color: "on-tertiary" }
-                  }
-                >
-                  {item.label}
-                </Select.Item>
-              ))}
+              {sortCollection.items.map((item) => {
+                const isDisabled = "disabled" in item && item.disabled;
+                const isSelected = currentSortValue === item.value;
+                return (
+                  <Select.Item
+                    key={item.value}
+                    item={item}
+                    bg={isSelected && !isDisabled ? "tertiary" : undefined}
+                    color={
+                      isDisabled
+                        ? "on-muted"
+                        : isSelected
+                          ? "on-tertiary"
+                          : "foreground"
+                    }
+                    fontStyle={isDisabled ? "italic" : "normal"}
+                    _hover={
+                      isDisabled
+                        ? {}
+                        : {
+                            bg: isSelected ? "tertiary" : "tertiary/12",
+                            color: isSelected ? "on-tertiary" : undefined,
+                          }
+                    }
+                  >
+                    {item.label}
+                  </Select.Item>
+                );
+              })}
             </Select.Content>
           </Select.Positioner>
         </Select.Root>

@@ -67,15 +67,23 @@ const SortSelector = ({ value, onChange }: SortSelectorProps) => {
             bg="muted"
             borderColor="border"
           >
-            {sortCollection.items.map((item) => (
-              <Select.Item
-                key={item.value}
-                item={item}
-                _hover={{ bg: "tertiary", color: "on-tertiary" }}
-              >
-                {item.label}
-              </Select.Item>
-            ))}
+            {sortCollection.items.map((item) => {
+              const isSelected = value === item.value;
+              return (
+                <Select.Item
+                  key={item.value}
+                  item={item}
+                  bg={isSelected ? "tertiary" : undefined}
+                  color={isSelected ? "on-tertiary" : undefined}
+                  _hover={{
+                    bg: isSelected ? "tertiary" : "tertiary/12",
+                    color: isSelected ? "on-tertiary" : undefined,
+                  }}
+                >
+                  {item.label}
+                </Select.Item>
+              );
+            })}
           </Select.Content>
         </Select.Positioner>
       </Select.Root>

@@ -107,7 +107,8 @@ const SortDropdownMinimal = ({
             lineHeight="1.2"
             borderRadius="4px"
             border="1px solid"
-            borderColor="input"
+            // DESIGN: Uses button-outline (not input) for visual consistency with adjacent filter dropdowns
+            borderColor="button-outline"
             backgroundColor="transparent"
             _hover={{
               bg: "tertiary/8",

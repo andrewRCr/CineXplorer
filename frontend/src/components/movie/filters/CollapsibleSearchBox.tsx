@@ -97,7 +97,8 @@ const CollapsibleSearchBox = ({
       gap={0}
       align="stretch"
       border="1px solid"
-      borderColor="border"
+      // DESIGN: Uses button-outline (not input) for visual consistency with adjacent filter dropdowns
+      borderColor="button-outline"
       borderRadius="4px"
       width={isSearchExpanded ? "260px" : "32px"}
       height="32px"

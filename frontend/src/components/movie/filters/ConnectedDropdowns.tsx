@@ -236,7 +236,8 @@ const ConnectedDropdowns = ({
             lineHeight="1.2"
         borderRadius="4px 0 0 4px"
             border="1px solid"
-            borderColor="input"
+            // DESIGN: Uses button-outline (not input) for visual consistency with adjacent toggle button
+            borderColor="button-outline"
             backgroundColor="transparent"
             _hover={{
               bg: "tertiary/8",
@@ -334,7 +335,8 @@ const ConnectedDropdowns = ({
             lineHeight="1.2"
       borderRadius="0"
             border="1px solid"
-            borderColor="input"
+            // DESIGN: Uses button-outline (not input) for visual consistency with adjacent toggle button
+            borderColor="button-outline"
             backgroundColor="transparent"
             _hover={{
               bg: "tertiary/8",

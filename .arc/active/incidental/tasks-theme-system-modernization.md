@@ -2317,7 +2317,10 @@ This phase combines component-specific polish with systematic theme validation.
 **Context:** Consolidated from theme-definition-semantic-corrections.md Task 3.5.7. This comprehensive audit
 prevents discovering token issues after cleanup, when fixing them is harder.
 
-- [ ] **7.1 Systematic component audit (domain-focused)**
+- [x] **7.1 Systematic component audit (domain-focused)**
+
+    **Completed:** 2025-11-12 - All 7 subtasks complete (component catalog, 4 domain audits, cross-domain gap analysis,
+    strategy documentation updates)
 
     **Goal:** Review all components for token usage consistency, organized by domain for multi-session compatibility.
 
@@ -2533,12 +2536,120 @@ prevents discovering token issues after cleanup, when fixing them is harder.
 
         **Quality gates:** ✅ Audit documented in notes, fix list created, ready for Task 7.2.d
 
-    - [ ] **7.1.f Cross-domain gap analysis synthesis**
-        - Review gap findings from all 4 domains
-        - Identify patterns appearing in multiple domains (systemic gaps)
-        - Propose token additions if justified (rare - most patterns should be covered)
-        - Document in notes under "Cross-Domain Gap Analysis"
-        - Update strategy documentation if new patterns discovered
+    - [x] **7.1.f Cross-domain gap analysis synthesis**
+
+        **Completed:** 2025-11-12
+
+        **Analysis scope:** Synthesized findings from all 4 domain audits (59 production components, 767 checks, 69 violations)
+
+        **Key findings:**
+
+        1. **Token System Health:** ✅ EXCELLENT - Zero token gaps identified. All 69 violations map to existing tokens
+        (~67 in UnifiedTheme). Issues stem from pattern application errors, not token insufficiency.
+
+        2. **Systemic Patterns Identified (6 cross-domain issues):**
+           - React Router Link usage: 7 components, 2 domains (~2 hours fix) - HIGH PRIORITY
+           - Outline button hover incomplete: 5 components, 3 domains (~1.25 hours) - MEDIUM-HIGH
+           - Ghost button hover incomplete: 3 components, 1 domain (~30 min) - MEDIUM
+           - Custom focus implementations: 4 instances, 1 domain (~30 min) - MEDIUM
+           - Deprecated token aliases: 7 violations, 2 domains (~30 min) - HIGH (TypographyDebug teaches wrong patterns)
+           - Z-index numeric values: 4+ components, 3 domains (~30 min) - LOW-MEDIUM (requires policy decision)
+
+        3. **Domain-Specific Issues:** ~1.5 hours total effort across all domains (isolated violations)
+
+        4. **Fix Effort Quantification:**
+           - Total systemic fixes: ~5 hours
+           - Total isolated fixes: ~1.5 hours
+           - **GRAND TOTAL: ~6.5 hours for all 69 violations**
+           - By priority: Critical (TypographyDebug 10 min) → High (3.25 hours) → Medium (2 hours) → Low (45 min)
+
+        5. **Policy Decisions Required (2):**
+           - Z-index: Recommend pragmatic hybrid (numeric OK for element-level 0-10, semantic required for structural 10+)
+           - Borders: Recommend semantic-by-function (form-related→input, structural→border-strong-*, decorative→border)
+
+        6. **Token Additions Proposed:** NONE - Existing system comprehensive
+
+        7. **Strategy Documentation Enhancements Recommended:**
+           - strategy-semantic-tokens.md: Add "Common Mistakes" section, enhance ghost/outline button examples, add
+           border selection decision tree
+           - strategy-layout-tokens.md: Update z-index guidance to allow numeric for element-level positioning
+
+        8. **Quality Trends by Domain:**
+           - Highest: Movie Discovery (75% clean) - recent development, good patterns
+           - Good: Movie Filters (64% clean)
+           - Moderate: Layout & Navigation (47% clean) - systemic link issue
+           - Needs attention: Shared/Common (30% clean production) - legacy auth patterns
+
+        9. **Architectural Insights:**
+           - React Router integration biggest pain point (developers bypass semantic system)
+           - Multi-property hover patterns commonly incomplete (remember visible, miss subtle)
+           - Deprecated aliases persist in older components
+           - Custom focus implementations in auth flow (pre-standard patterns)
+
+        10. **Phase 7.2 Recommendations:**
+            - Lead with TypographyDebug fix (demo page, highest leverage)
+            - Fix ColorModeButton early (base component, multiplier effect)
+            - Batch React Router Link fixes by domain (efficiency)
+            - Document policy decisions before low-priority fixes
+
+        **Deliverables:**
+        - ✅ Comprehensive analysis documented in notes (lines 1097-1938)
+        - ✅ All systemic patterns identified and quantified
+        - ✅ Token gap analysis complete (zero gaps)
+        - ✅ Policy decision proposals documented
+        - ✅ Strategy enhancement recommendations prepared
+        - ✅ Ready for Phase 7.2 implementation
+
+        **Quality gates:** ✅ Analysis complete, findings documented, no actions required (read-only task)
+
+    - [x] **7.1.g Update strategy documentation with policy decisions and AppLink component**
+
+        **Completed:** 2025-11-12
+
+        **Scope:** Implement policy decisions from Task 7.1.f analysis and enhance strategy documentation with
+        Common Mistakes section.
+
+        **Deliverables:**
+
+        1. **AppLink Component Created** (`frontend/src/components/common/AppLink.tsx`)
+           - Wraps React Router Link with Chakra semantic tokens
+           - Provides clean API: `<AppLink to="/path">Text</AppLink>`
+           - Automatic semantic token integration (tertiary, tertiary-hover, ring focus)
+           - Documented in strategy-semantic-tokens.md React Router Integration section
+           - Addresses systemic React Router Link issue (7 components, 2 domains)
+
+        2. **strategy-semantic-tokens.md v2.3 Updates:**
+           - Added React Router Integration section with AppLink documentation
+           - Added Common Mistakes section with 5 anti-pattern examples
+           - Enhanced ghost button pattern with explicit bg change requirement
+           - Enhanced outline button pattern with all three property changes emphasized
+           - Added border token decision tree (form/structural/decorative)
+           - Based on 59-component audit findings
+
+        3. **strategy-layout-tokens.md v1.1 Updates:**
+           - Updated z-index guidance to pragmatic hybrid approach
+           - Element-level numeric (0-10) acceptable for icon positioning
+           - Structural (10+) requires semantic tokens
+           - Added clear examples of both use cases
+
+        4. **Policy Decisions Documented:**
+           - Z-index: Pragmatic hybrid approach adopted
+           - Borders: Semantic-by-function approach documented
+           - Both policies based on real-world audit findings
+
+        **Files modified:**
+        - Created: `frontend/src/components/common/AppLink.tsx` (59 lines)
+        - Created: `frontend/src/components/common/index.ts` (barrel export)
+        - Updated: `.arc/reference/strategies/project/style/strategy-semantic-tokens.md` (+180 lines)
+        - Updated: `.arc/reference/strategies/project/style/strategy-layout-tokens.md` (+40 lines)
+        - Updated: `.arc/active/incidental/notes-theme-system-modernization.md` (AppLink pattern references)
+
+        **Impact on Phase 7.2 fixes:**
+        - React Router Link fixes now use AppLink component (cleaner than manual Chakra wrapper)
+        - Strategy docs provide clear anti-pattern examples for developers
+        - Z-index policy clarifies which violations need fixing (MovieCard tooltip) vs documentation (IconButtons)
+
+        **Quality gates:** ✅ Strategy docs updated, AppLink component created, ready for Phase 7.2 fixes
 
 - [ ] **7.2 Apply fixes from audit (domain-focused)**
 

@@ -1096,4 +1096,919 @@ fixed immediately.
 
 #### Cross-Domain Gap Analysis (Task 7.1.f)
 
-{ Systemic gaps and token addition proposals will be added here }
+**Analysis Complete:** 2025-11-12
+
+**Scope:** Synthesis of findings from all 4 domain audits (Tasks 7.1.b-e) to identify systemic patterns, quantify fix
+effort, and evaluate token system coverage.
+
+**Aggregate Statistics:**
+
+- **Total components audited:** 59 production UI components
+- **Total checks performed:** 767 (59 components × 13 patterns)
+- **Components with violations:** 23 (39%)
+- **Clean components:** 36 (61%)
+- **Total violations identified:** 69 production violations (excludes dev/test tools)
+
+---
+
+### Systemic Patterns (Cross-Domain Issues)
+
+**Definition:** Patterns appearing in 2+ domains, indicating architectural gaps or widespread misunderstanding of token usage.
+
+#### 1. React Router Link Usage (7 components, 2 domains) ⚠️ HIGH IMPACT
+
+**Pattern:** Components use React Router `<Link>` with inline styles instead of Chakra `<Link>` with semantic tokens.
+
+**Affected components:**
+
+- **Domain 1 (Layout) - 5 components:**
+    - NavBar.tsx (2 instances)
+    - NavBarUserMenu.tsx (3 instances)
+    - SidebarContent.tsx (2 instances)
+    - Footer.tsx (1 instance)
+- **Domain 2 (Discovery) - 2 components:**
+    - MovieCard.tsx (2 instances)
+    - MovieDetail.tsx (1 instance)
+
+**Current pattern (wrong):**
+
+```tsx
+<Link to={path} style={{ textDecoration: "none", color: "inherit" }}>
+```
+
+**Expected pattern (AppLink component):**
+
+```tsx
+import { AppLink } from "@/components/common";
+
+<AppLink to={path}>Click here</AppLink>
+```
+
+**Component:** `frontend/src/components/common/AppLink.tsx` (wraps Chakra Link + React Router Link with semantic tokens)
+
+**Why systemic:** React Router Link is natural first choice for routing, developers bypass semantic token system for
+perceived simplicity. AppLink component provides clean integration with automatic semantic token application.
+
+**Fix effort:** ~2 hours total (~30 min per domain, 7 components affected)
+
+**Priority:** HIGH - Most widespread violation, affects user-facing navigation across 2 major domains
+
+**Note:** AppLink created during Task 7.1.f strategy documentation updates (2025-11-12)
+
+---
+
+#### 2. Outline Button Hover Pattern Incomplete (5 components, 3 domains) ⚠️ SYSTEMIC
+
+**Pattern:** Outline buttons implement hover background change but missing border color and text color changes.
+
+**Affected components:**
+
+- **Domain 1 (Layout) - 1 component:** MobileMenuButton.tsx (uses different baseline tokens, needs full pattern)
+- **Domain 3 (Filters) - 1 component:** ConnectedDropdowns.tsx (Advanced toggle button)
+- **Domain 4 (Shared) - 3 components:**
+    - ErrorBoundary.tsx (retry button)
+    - ThemeSelector.tsx (theme button)
+    - ColorModeButton.tsx (color mode toggle) - **BASE COMPONENT** used in Footer + ThemeDebug
+
+**Current pattern (incomplete):**
+
+```tsx
+<Button variant="outline" borderColor="button-outline" _hover={{ bg: "tertiary/8" }} />
+```
+
+**Expected pattern (complete):**
+
+```tsx
+<Button
+  variant="outline"
+  borderColor="button-outline"
+  color="on-button-outline"
+  _hover={{ bg: "tertiary/8", borderColor: "tertiary", color: "tertiary" }}
+/>
+```
+
+**Why systemic:** Developers remember bg change (most visible) but miss border/color changes (subtle but important for
+visual feedback).
+
+**Fix effort:** ~1.25 hours total (~15 min per component)
+
+**Priority:** MEDIUM-HIGH - Affects interaction feedback across 3 domains, ColorModeButton fix has multiplier effect
+(Footer + ThemeDebug automatically fixed)
+
+**Note:** Strategy document IS correct (shows full pattern), violations are implementation errors not documentation gaps.
+
+---
+
+#### 3. Ghost Button Hover Pattern Incomplete (3 components, 1 domain) ⚠️ ISOLATED SYSTEMIC
+
+**Pattern:** Ghost buttons implement hover color change but missing background change.
+
+**Affected components:**
+
+- **Domain 3 (Filters) - 3 components:**
+    - AdvancedMovieFilters.tsx (2 ghost buttons)
+    - ClearFiltersButton.tsx (1 ghost button)
+
+**Current pattern (incomplete):**
+
+```tsx
+<Button variant="ghost" color="tertiary" _hover={{ color: "tertiary-hover" }} />
+```
+
+**Expected pattern (complete):**
+
+```tsx
+<Button variant="ghost" color="tertiary" _hover={{ bg: "tertiary/8", color: "tertiary-hover" }} />
+```
+
+**Why isolated systemic:** All 3 violations in same domain (Filters), suggests copy-paste from common source or same
+developer misunderstanding.
+
+**Fix effort:** ~30 min total (~10 min per component, all in same domain)
+
+**Priority:** MEDIUM - Isolated to one domain but represents pattern gap in developer understanding
+
+**Documentation gap:** strategy-semantic-tokens.md Ghost Button section (lines 420-442) shows color change but doesn't
+explicitly emphasize bg change requirement. Pattern IS covered in Material Design 3 opacity overlays section, but not in
+ghost button example itself.
+
+---
+
+#### 4. Custom Focus Implementations (4 instances, 1 domain) ⚠️ ISOLATED SYSTEMIC
+
+**Pattern:** Components implement custom boxShadow focus states instead of standard outline ring pattern.
+
+**Affected components:**
+
+- **Domain 4 (Shared) - 4 instances across 2 components:**
+    - Login.tsx (checkbox focus - 1 instance)
+    - Register.tsx (input focus - 3 instances: email, username, password)
+
+**Current pattern (custom):**
+
+```tsx
+<Input
+  _focus={{
+    boxShadow: "0 0 0 1px var(--chakra-colors-ring)",
+    boxShadowColor: "tertiary.primary"
+  }}
+/>
+```
+
+**Expected pattern (standard):**
+
+```tsx
+<Input
+  _focus={{
+    borderColor: "tertiary",
+    outline: "2px solid",
+    outlineColor: "ring",
+    outlineOffset: "2px"
+  }}
+/>
+```
+
+**Why isolated systemic:** All violations in auth flow components (Login/Register), likely copied from original
+implementation before standard pattern established.
+
+**Fix effort:** ~30 min total (~7-8 min per instance, all in same domain/context)
+
+**Priority:** MEDIUM - Isolated to auth domain but affects accessibility (focus indicators)
+
+**Note:** Strategy document already includes anti-pattern warnings for custom focus (strategy-semantic-tokens.md lines 676-773).
+
+---
+
+#### 5. Deprecated Token Aliases (7 violations, 2 domains) ⚠️ MODERATE
+
+**Pattern:** Components use old dotted token names instead of canonical semantic tokens.
+
+**Affected components:**
+
+- **Domain 3 (Filters) - 4 violations in 1 component:**
+    - SearchBar.tsx: `text.secondary`, `border.subtle`, `background.subItem`, `tertiary.primary`
+- **Domain 4 (Shared) - 3 violations in 1 component:**
+    - TypographyDebug.tsx: `text.secondary` (3 instances) - **CRITICAL: Demo page**
+
+**Deprecated → Canonical mappings:**
+
+- `text.secondary` → `on-muted`
+- `border.subtle` → `input`
+- `background.subItem` → `layer-hover-01` (or `tertiary/8` for hover)
+- `tertiary.primary` → `tertiary` or `ring` (context-dependent)
+
+**Why systemic:** Aliases exist for backward compatibility (ADR-011 migration), developers using older examples or documentation.
+
+**Fix effort:** ~30 min total (~20 min for SearchBar comprehensive refactor, ~10 min for TypographyDebug)
+
+**Priority:** HIGH for TypographyDebug (demo page teaches wrong patterns), MEDIUM for SearchBar (production component)
+
+**Critical finding:** TypographyDebug.tsx is a DEMONSTRATION page for developers/designers - showing deprecated patterns
+is actively harmful (teaches wrong approach).
+
+---
+
+#### 6. Z-Index Numeric Values (4+ components, 3 domains) 🔍 POLICY DECISION REQUIRED
+
+**Pattern:** Components use numeric z-index values instead of semantic tokens.
+
+**Affected components:**
+
+- **Domain 2 (Discovery) - 1 component:** MovieCard.tsx (tooltip `zIndex="9999"`)
+- **Domain 3 (Filters) - 1 component:** SearchBar.tsx (icon `zIndex={1}`)
+- **Domain 4 (Shared) - 2 components:**
+    - ErrorBoundary.tsx (IconButton positioning `zIndex={1}` - 3 instances)
+    - Login.tsx (IconButton positioning `zIndex={1}` - 3 instances)
+
+**Two distinct use cases:**
+
+**A. High z-index for overlays (MovieCard tooltip: 9999)**
+
+- **Assessment:** Should use semantic token (`zIndex="tooltip"` or `zIndex="dropdown"`)
+- **Rationale:** Structural stacking, benefits from semantic hierarchy
+- **Action:** Migrate to semantic token
+
+**B. Low z-index for element positioning (icon overlays: 1)**
+
+- **Assessment:** May be acceptable as element-level stacking (non-structural)
+- **Rationale:** Icon positioning within component boundaries, not cross-component stacking
+- **Question:** Should we create `zIndex="icon-overlay"` semantic token, or allow numeric for element-level?
+- **Action:** Policy decision needed
+
+**Current strategy guidance (strategy-layout-tokens.md lines 370-406):**
+
+- Rule: "Never use numeric z-index values directly"
+- Problem: May be too strict for element-level positioning within components
+
+**Policy options:**
+
+1. **Strict:** Create semantic tokens for all use cases (e.g., `zIndex="icon-overlay"`)
+2. **Pragmatic:** Allow numeric values for element-level stacking, semantic tokens only for structural layers
+3. **Hybrid:** Allow numeric 0-10 for elements, require semantic for 10+
+
+**Recommendation:** Option 2 (Pragmatic) - Document that numeric z-index is acceptable for element-level stacking within
+component boundaries (non-structural), semantic tokens required for cross-component stacking (navbar, sidebar, modals, tooltips).
+
+**Fix effort:** ~30 min (policy decision + documentation + MovieCard tooltip fix)
+
+**Priority:** LOW-MEDIUM - Requires policy decision before fixes can be applied consistently
+
+---
+
+### Domain-Specific Patterns (Isolated Issues)
+
+**Definition:** Patterns appearing in only 1 domain, indicating localized misunderstanding or unique requirements.
+
+#### Domain 1: Layout & Navigation (3 unique patterns)
+
+1. **Button pattern misuse - PaginationCtrl:**
+   - Uses `layer-selected-01` for selected pagination button instead of `button-subtle-selected`
+   - Mixing surface tokens with button semantics
+   - Fix: ~15 min
+
+2. **Hardcoded layout calculations:**
+   - Sidebar sticky positioning: Complex calc with magic numbers
+   - LoadingLayout height: Hardcoded `calc(100vh - 144px)`
+   - SidebarDrawer: Hardcoded heights
+   - May indicate layout token gaps for specific use cases
+   - Fix: ~20 min documentation + evaluation
+
+3. **Hardcoded shadow:**
+   - LoadingContent: `boxShadow="0 8px 32px rgba(0, 0, 0, 0.3)"`
+   - Should use `shadow-lg` or appropriate semantic token
+   - Fix: ~5 min
+
+**Total unique effort:** ~40 min
+
+---
+
+#### Domain 2: Movie Discovery (2 unique patterns)
+
+1. **Button hover using wrong tokens - Featured.tsx:**
+   - Subtle buttons using `secondary-hover`/`secondary-active` (for solid buttons)
+   - Should use subtle button hover pattern or opacity overlay
+   - Pattern confusion: when does `secondary-hover` apply?
+   - Fix: ~15 min
+
+2. **Hardcoded shadow - MovieCardContainer:**
+   - `boxShadow="0 2px 8px rgba(0, 0, 0, 0.1)"`
+   - Should use `shadow-sm` or appropriate semantic token
+   - Fix: ~5 min
+
+**Total unique effort:** ~20 min
+
+---
+
+#### Domain 3: Movie Filters (3 unique patterns)
+
+1. **Ghost button hover incomplete** (covered in systemic section)
+
+2. **Border token misuse - CollapsibleSearchBox:**
+   - Using `borderColor="border"` for form-related container
+   - Should use `borderColor="input"` since wraps Input component
+   - Indicates unclear guidance on border token selection
+   - Fix: ~5 min
+
+3. **Deprecated aliases concentrated in SearchBar:**
+   - 4 deprecated aliases in single component
+   - Suggests component created from old template/example
+   - Fix: ~20 min (covered in systemic section)
+
+**Total unique effort:** ~5 min (excluding systemic)
+
+---
+
+#### Domain 4: Shared/Common (4 unique patterns)
+
+1. **Custom focus implementations** (covered in systemic section)
+
+2. **Outline button base token issues - ColorModeButton:**
+   - Uses `borderColor="border"` instead of `borderColor="button-outline"`
+   - Missing `color="on-button-outline"` prop
+   - Missing hover state entirely
+   - **Impact:** Base component used in Footer + ThemeDebug, violations propagate
+   - Fix: ~15 min (fixes 3+ locations)
+
+3. **Primary button hover using opacity - Register.tsx:**
+   - `_hover={{ opacity: 0.92 }}` instead of `_hover={{ bg: "primary-hover" }}`
+   - Missing semantic hover token usage
+   - Fix: ~5 min
+
+4. **Checkbox border token - Login.tsx:**
+   - Using `borderColor="border"` instead of `borderColor="input"`
+   - Inconsistent with other form controls
+   - Fix: ~5 min
+
+5. **TypographyDebug showing deprecated patterns:**
+   - Demo page using `text.secondary` instead of `on-muted`
+   - **CRITICAL:** Teaches wrong patterns to developers
+   - Fix: ~10 min (covered in systemic section)
+
+**Total unique effort:** ~25 min (excluding systemic)
+
+---
+
+### Violation Quantification by Fix Type
+
+#### By Pattern Type
+
+**Systemic fixes (coordinated across domains):**
+
+1. React Router Links: 7 components → ~2 hours
+2. Outline button hover: 5 components → ~1.25 hours
+3. Ghost button hover: 3 components → ~30 min
+4. Custom focus: 4 instances → ~30 min
+5. Deprecated aliases: 7 violations → ~30 min
+6. Z-index policy + fixes: 4+ components → ~30 min decision + implementation
+
+**Isolated fixes (domain-specific):**
+
+- Domain 1 unique: ~40 min
+- Domain 2 unique: ~20 min
+- Domain 3 unique: ~5 min
+- Domain 4 unique: ~25 min
+
+**Total systemic effort:** ~5 hours
+**Total isolated effort:** ~1.5 hours
+**GRAND TOTAL:** ~6.5 hours for all 69 violations
+
+#### By Domain (from Task 7.1 audits)
+
+- **Domain 1 (Layout):** ~2-3 hours (10 fixes, 8 components)
+- **Domain 2 (Discovery):** ~1 hour (4 fixes, 4 components)
+- **Domain 3 (Filters):** ~45 minutes (7 fixes, 5 components)
+- **Domain 4 (Shared):** ~1.75 hours (9 fixes, 7 components)
+
+**TOTAL BY DOMAIN:** ~5.5-6.5 hours (matches quantification by fix type)
+
+#### By Priority
+
+**Critical (demo page issues):**
+
+- TypographyDebug deprecated aliases: ~10 min
+- **Must fix first:** Teaches wrong patterns to developers
+
+**High Priority (systemic patterns):**
+
+- React Router Links: ~2 hours (7 components, 2 domains)
+- Outline button hover: ~1.25 hours (5 components, 3 domains)
+- **Fix early:** Widespread impact, pattern clarity
+
+**Medium Priority (isolated systemic or moderate impact):**
+
+- Ghost button hover: ~30 min (3 components, 1 domain)
+- Custom focus: ~30 min (4 instances, 1 domain)
+- Deprecated aliases (SearchBar): ~20 min
+- Domain-specific issues: ~1.5 hours
+- **Fix mid-phase:** Moderate impact, localized
+
+**Low Priority (minor issues, evaluation needed):**
+
+- Z-index policy + fixes: ~30 min
+- Documentation/comments: ~15 min
+- **Fix late:** Requires decisions, low user impact
+
+---
+
+### Token System Gap Analysis
+
+**Methodology:** Compare all 69 violations against existing token system (~67 tokens in UnifiedTheme interface) to
+identify missing tokens or architectural gaps.
+
+#### Token Coverage Assessment
+
+**Examined token categories:**
+
+- Core structure: 7 tokens (background, foreground, layers, popover)
+- Border hierarchy: 5 tokens (border-subtle-00/02, border-strong-01/02/03)
+- Shadows: 3 tokens (shadow-sm/md/lg)
+- Layer interactions: 6 tokens (hover/selected/active × 2 layers)
+- Semantic colors: 8 tokens (primary/secondary/tertiary/muted pairs)
+- Button patterns: 8 tokens (outline/outline-primary/subtle/subtle-selected pairs)
+- Status colors: 8 tokens (success/warning/destructive/info pairs)
+- Brand colors: 6 optional tokens (brand/brandSecondary/brandTertiary pairs)
+- Color interactions: 6 tokens (primary/secondary/tertiary hover/active)
+- Movie-specific: 6 tokens (rating, badge, drag-active, drop-zone pairs)
+- UI elements: 3 tokens (border, input, ring)
+
+**Findings:**
+
+✅ **NO TOKEN GAPS IDENTIFIED**
+
+All 69 violations map to existing tokens or patterns documented in strategy-semantic-tokens.md:
+
+- React Router Links → `tertiary`, `tertiary-hover` (documented in Interactive Elements section)
+- Outline button hover → `button-outline`, `on-button-outline`, `tertiary/8` (documented in Building Buttons section)
+- Ghost button hover → `tertiary`, `tertiary-hover`, `tertiary/8` (documented in Building Buttons + Common Patterns sections)
+- Custom focus → `ring`, standard outline pattern (documented in Focus Indicators section)
+- Deprecated aliases → All have canonical replacements in current token system
+- Button pattern issues → Existing tokens used incorrectly (not missing)
+- Hardcoded shadows → `shadow-sm`, `shadow-md`, `shadow-lg` exist
+- Border issues → `input`, `border`, `border-strong-*` hierarchy exists
+- Z-index → Semantic tokens exist (`navbar`, `sidebar`, `dropdown`, etc.)
+
+**Conclusion:** All violations stem from **pattern application errors** or **missing documentation clarity**,
+NOT missing tokens.
+
+---
+
+#### Potential Token Additions Considered
+
+**1. `button-subtle-hover` / `button-subtle-active` tokens?**
+
+- **Assessment:** NOT NEEDED
+- **Rationale:** `button-subtle` maps to `secondary`, so `secondary-hover`/`secondary-active` should apply
+- **Issue in Featured.tsx:** Misapplication - using hover tokens on wrong variant, not missing token
+- **Decision:** REJECT - Document that subtle button hover uses `secondary-hover` (already correct in strategy)
+
+**2. `zIndex="icon-overlay"` or similar element-level z-index tokens?**
+
+- **Assessment:** CONSIDER but probably NOT NEEDED
+- **Rationale:** Element-level stacking (icons within components) is different from structural stacking
+- **Alternative:** Document that numeric z-index acceptable for element-level positioning
+- **Decision:** DEFER - Pending policy decision (see Patterns Requiring Policy Decisions section)
+
+**3. Border usage matrix (form vs structural vs divider)?**
+
+- **Assessment:** NOT A TOKEN GAP - Documentation gap
+- **Rationale:** Tokens exist (`input`, `border`, `border-strong-*`), unclear when to use each
+- **Solution:** Add border selection decision tree to strategy-semantic-tokens.md
+- **Decision:** REJECT token addition, ADD documentation enhancement
+
+**4. Additional hover state tokens for ghost/outline patterns?**
+
+- **Assessment:** NOT NEEDED
+- **Rationale:** Tokens exist (opacity overlays `tertiary/8`, color changes `tertiary-hover`)
+- **Issue:** Developers missing parts of multi-property hover pattern
+- **Solution:** Enhance examples in strategy document to show COMPLETE patterns
+- **Decision:** REJECT token addition, ENHANCE documentation with complete examples
+
+---
+
+### Patterns Requiring Policy Decisions
+
+#### 1. Z-Index Numeric Values for Element-Level Stacking 🔍
+
+**Question:** Are numeric z-index values acceptable for element-level stacking within component boundaries (non-structural)?
+
+**Context:**
+
+- **Current rule:** "Never use numeric z-index values directly" (strategy-layout-tokens.md line 403)
+- **Violations:** 4+ components using numeric values for icon positioning within components
+- **Use cases:** IconButton positioning over form inputs, search icon overlay, tooltip positioning
+
+**Semantic z-index tokens (structural layers):**
+
+```typescript
+base: 0,       // Page content
+sidebar: 5,    // Sidebar drawer
+footer: 8,     // Footer
+navbar: 10,    // NavBar
+dropdown: 50   // Dropdowns, tooltips, modals
+```
+
+**Element-level stacking (within components):**
+
+- Search icon over input field: `zIndex={1}`
+- IconButton to show/hide password: `zIndex={1}`
+- Alert icon positioning: `zIndex={1}`
+
+**Options:**
+
+**A. Strict Semantic Tokens (Expand z-index scale)**
+
+- Create additional semantic tokens: `icon-overlay`, `input-addon`, `tooltip-local`
+- **Pros:** Complete semantic coverage, searchable in codebase
+- **Cons:** Token proliferation, ambiguous boundaries (when is zIndex structural vs element-level?)
+
+**B. Pragmatic Hybrid (Recommended)**
+
+- **Rule:** Numeric z-index acceptable for element-level stacking within component boundaries (values 0-10)
+- **Rule:** Semantic tokens REQUIRED for cross-component structural layers (values 10+)
+- **Rationale:** IconButton at zIndex={1} doesn't interact with navbar/footer/modals - it's local positioning
+- **Pros:** Pragmatic, prevents token proliferation, clear boundary (component-local vs cross-component)
+- **Cons:** Requires judgment on "component boundary"
+
+**C. Strict Numeric Ban (Status Quo)**
+
+- Maintain "Never use numeric" rule, create semantic tokens as needed
+- **Pros:** Consistency, all z-index values searchable
+- **Cons:** Unclear how many tokens needed, ambiguous naming for element-level cases
+
+**Recommendation:** **Option B (Pragmatic Hybrid)**
+
+**Proposed guidance update (strategy-layout-tokens.md):**
+
+```markdown
+### Z-Index Usage Rules
+
+**Structural layers (cross-component stacking):**
+- MUST use semantic tokens: navbar, sidebar, footer, dropdown
+- Values typically 10+
+- Examples: NavBar above Footer, Modal above content, Tooltip above everything
+
+**Element-level positioning (within component boundaries):**
+- MAY use numeric values 0-10 for local stacking (icon overlays, input addons)
+- Should NOT interact with structural layers
+- Document intent with inline comment if non-obvious
+
+**When in doubt:** Use semantic token (safer, more searchable)
+```
+
+**Impact on current violations:**
+
+- MovieCard tooltip `zIndex="9999"` → Change to `zIndex="tooltip"` (structural)
+- IconButton/icon positioning `zIndex={1}` → Accept as-is with documentation (element-level)
+
+---
+
+#### 2. Border Token Selection for Non-Form Elements 🔍
+
+**Question:** When should components use `border` vs `border-strong-01` vs `input` for non-form-control borders?
+
+**Context:**
+
+- **Clear guidance exists:** Form controls use `input`
+- **Unclear guidance:** Structural containers, code blocks, dividers - which token?
+- **Violations:** ErrorBoundary Code block using `border`, CollapsibleSearchBox using `border` (should be `input`)
+
+**Current token semantics:**
+
+- `input` - Form control borders (inputs, textareas, select triggers)
+- `border` - Generic borders, dividers
+- `border-strong-01/02/03` - Per-layer hierarchy for emphasized borders
+
+**Unclear cases:**
+
+1. **Code block inside alert (ErrorBoundary):** Currently `borderColor="border"` - should it use `border-strong-01` for emphasis?
+2. **Container wrapping form input (CollapsibleSearchBox):** Currently `borderColor="border"` - should it use `input`
+for semantic consistency?
+3. **Card/panel borders:** When to use `border` vs `border-strong-01`?
+
+**Options:**
+
+**A. Semantic By Function**
+
+- `input` - ANY element related to form interaction (wrappers, containers, controls)
+- `border` - Generic dividers, decorative borders
+- `border-strong-*` - Structural containers (cards, panels) on specific layers
+- **Pros:** Clear semantic meaning
+- **Cons:** May conflict with visual needs (form wrapper might need stronger border)
+
+**B. Visual By Emphasis**
+
+- `input` - Form controls only (strict)
+- `border` - Subtle borders (decorative, dividers)
+- `border-strong-*` - Emphasized borders (structural, importance)
+- **Pros:** Visual flexibility
+- **Cons:** Less semantic, harder to apply consistently
+
+**C. Contextual (Status Quo)**
+
+- No explicit guidance, developers choose based on visual needs
+- **Pros:** Flexibility
+- **Cons:** Inconsistency, unclear patterns
+
+**Recommendation:** **Option A (Semantic By Function)** with refinement
+
+**Proposed guidance (add to strategy-semantic-tokens.md):**
+
+```markdown
+### Border Token Selection Decision Tree
+
+**Form-related elements:**
+- Form controls (Input, Textarea, Select trigger): `borderColor="input"`
+- Form control containers/wrappers: `borderColor="input"`
+- Examples: Search box wrapper, input addon container
+
+**Structural containers (cards, panels, modals):**
+- Use per-layer border hierarchy: `border-strong-01/02/03`
+- Match border to surface layer (Card on layer-01 uses border-strong-01)
+- See Border Color Hierarchy section for details
+
+**Decorative/dividers:**
+- Generic dividers: `borderColor="border"`
+- Code blocks: `borderColor="border-strong-01"` (emphasis) or `border` (subtle)
+- Contextual - choose based on desired prominence
+
+**When in doubt:** Use `border` for subtle, `border-strong-01` for prominent
+```
+
+**Impact on current violations:**
+
+- CollapsibleSearchBox `border` → Change to `input` (form-related wrapper)
+- ErrorBoundary Code block `border` → Accept as-is or document (decorative/contextual)
+
+---
+
+### Strategy Documentation Enhancement Recommendations
+
+#### strategy-semantic-tokens.md Updates
+
+**1. Ghost Button Section (lines 420-442)**
+
+**Issue:** Shows color change but doesn't explicitly emphasize bg change requirement.
+
+**Current example:**
+
+```tsx
+<Button variant="ghost" color="tertiary" _hover={{ color: "tertiary-hover" }}>
+  Skip
+</Button>
+```
+
+**Enhanced example:**
+
+```tsx
+<Button
+  variant="ghost"
+  color="tertiary"
+  _hover={{
+    bg: "tertiary/8",        // ⚠️ REQUIRED: Always add bg on ghost hover
+    color: "tertiary-hover"
+  }}
+  _active={{ color: "tertiary-active" }}
+>
+  Skip
+</Button>
+```
+
+**Add note:**
+
+```markdown
+**Important:** Ghost buttons MUST include background change on hover (`bg: "tertiary/8"`) in addition
+to color change. This provides essential visual feedback for interactive states (Material Design 3 standard).
+```
+
+---
+
+**2. Outline Button Section (lines 342-369)**
+
+**Issue:** Neutral outline pattern is correct but developers missing parts.
+
+**Verify completeness of example (currently shows all three properties - no change needed):**
+
+```tsx
+<Button
+  variant="outline"
+  borderColor="button-outline"
+  color="on-button-outline"
+  _hover={{
+    bg: "tertiary/8",           // ✓ Background
+    borderColor: "tertiary",    // ✓ Border
+    color: "tertiary"           // ✓ Text color
+  }}
+>
+  Cancel
+</Button>
+```
+
+**Add emphasis note:**
+
+```markdown
+**Critical:** Outline button hover requires ALL THREE property changes (bg, borderColor, color).
+Missing any property results in incomplete visual feedback. Common mistake: only adding bg change.
+```
+
+---
+
+**3. Add "Common Mistakes" Section**
+
+**New section after Developer Quick Reference:**
+
+```markdown
+## Common Mistakes and Anti-Patterns
+
+Quick reference for violations found during comprehensive audit (Phase 7.1).
+
+### Incomplete Hover States
+
+**❌ Wrong: Ghost button missing bg change**
+```tsx
+<Button variant="ghost" color="tertiary" _hover={{ color: "tertiary-hover" }}>
+```
+
+**✅ Correct: Both color AND bg change**
+
+```tsx
+<Button variant="ghost" color="tertiary" _hover={{ bg: "tertiary/8", color: "tertiary-hover" }}>
+```
+
+**❌ Wrong: Outline button missing border/color changes**
+
+```tsx
+<Button variant="outline" borderColor="button-outline" _hover={{ bg: "tertiary/8" }}>
+```
+
+**✅ Correct: All three properties change**
+
+```tsx
+<Button
+  variant="outline"
+  borderColor="button-outline"
+  color="on-button-outline"
+  _hover={{ bg: "tertiary/8", borderColor: "tertiary", color: "tertiary" }}
+>
+```
+
+### React Router Link Integration
+
+**❌ Wrong: React Router Link with inline styles**
+
+```tsx
+<Link to="/path" style={{ textDecoration: "none", color: "inherit" }}>
+```
+
+**✅ Correct: Use AppLink component**
+
+```tsx
+import { AppLink } from "@/components/common";
+
+<AppLink to="/path">Click here</AppLink>
+```
+
+**Component location:** `frontend/src/components/common/AppLink.tsx`
+
+### Custom Focus States
+
+**❌ Wrong: Custom boxShadow focus**
+
+```tsx
+<Input _focus={{ boxShadow: "0 0 0 1px var(--chakra-colors-ring)" }} />
+```
+
+**✅ Correct: Standard outline ring pattern**
+
+```tsx
+<Input
+  _focus={{
+    borderColor: "tertiary",
+    outline: "2px solid",
+    outlineColor: "ring",
+    outlineOffset: "2px"
+  }}
+/>
+```
+
+### Deprecated Token Aliases
+
+**❌ Wrong: Old dotted aliases**
+
+```tsx
+<Text color="text.secondary">
+<Box borderColor="border.subtle">
+<Box bg="background.subItem">
+```
+
+**✅ Correct: Canonical semantic tokens**
+
+```tsx
+<Text color="on-muted">
+<Box borderColor="input">
+<Box bg="layer-hover-01">  {/* or tertiary/8 for hover */}
+```
+
+```
+
+---
+
+#### strategy-layout-tokens.md Updates
+
+**1. Z-Index Section (lines 370-406)**
+
+**Current rule (line 403):**
+```markdown
+1. **Never use numeric z-index values directly** - always use semantic tokens
+```
+
+**Updated guidance:**
+
+```markdown
+### Z-Index Usage Rules
+
+**Structural layers (cross-component stacking):**
+- **MUST use semantic tokens:** navbar, sidebar, footer, dropdown
+- Affects multiple components, creates stacking order for app layout
+- Values typically 10+
+- Examples: NavBar above Footer, Modal above content, Tooltip above everything
+
+**Element-level positioning (within component boundaries):**
+- **MAY use numeric values 0-10** for local element stacking
+- Should NOT interact with structural layers outside component
+- Examples: IconButton overlay on input, search icon positioning
+- Document intent with inline comment if non-obvious:
+  ```tsx
+  // Icon positioned above input field for show/hide toggle
+  <IconButton zIndex={1} />
+  ```
+
+**When in doubt:** Use semantic token (safer, more searchable, better for structural stacking)
+
+### Adding New Semantic Tokens
+
+1. **Evaluate scope:** Does this z-index affect multiple components? (Yes → semantic token)
+2. **Check for cross-component stacking:** Does it need to stack above/below structural layers? (Yes → semantic token)
+3. **Consider element-level:** Is it local positioning within component? (Maybe numeric acceptable)
+4. **Document new levels** - add to `z-index.ts` with clear semantic name
+
+```
+
+---
+
+### Summary: Token Additions vs Documentation Enhancements
+
+#### Token Additions Required
+
+**NONE** - Existing token system (~67 tokens) covers all discovered patterns.
+
+#### Documentation Enhancements Required
+
+**strategy-semantic-tokens.md:**
+1. ✅ Ghost button section - Add explicit note about bg change requirement
+2. ✅ Outline button section - Add emphasis note about all three properties
+3. ✅ New "Common Mistakes" section - Show anti-patterns with corrections
+4. ✅ Border selection decision tree - Add guidance on form vs structural vs decorative
+
+**strategy-layout-tokens.md:**
+1. ✅ Z-index guidance - Update to allow numeric values for element-level positioning
+2. ✅ Z-index examples - Show structural vs element-level distinction
+
+#### Policy Decisions Required
+
+1. ✅ Z-index: Adopt pragmatic hybrid approach (numeric OK for element-level, semantic required for structural)
+2. ✅ Borders: Adopt semantic-by-function approach (form-related → input, structural → border-strong-*, decorative → border)
+
+---
+
+### Architectural Assessment
+
+**Overall token system health:** ✅ EXCELLENT
+
+**Findings:**
+- All 69 violations map to existing tokens
+- No architectural gaps identified
+- Issues stem from pattern application errors, not token insufficiency
+- Strategy documentation is comprehensive but could add anti-pattern examples
+- Token naming is clear and follows industry standards (Material Design 3, IBM Carbon, ADRs 005-012)
+
+**Quality trends by domain:**
+- **Highest quality:** Movie Discovery (75% clean) - Recent development, good pattern adherence
+- **Good quality:** Movie Filters (64% clean) - Concentrated violations in fewer components
+- **Moderate quality:** Layout & Navigation (47% clean) - Systemic link issue affects many components
+- **Needs attention:** Shared/Common (30% clean production) - Auth components have legacy patterns
+
+**Systemic pattern insights:**
+1. **React Router integration** is biggest pain point - developers bypass semantic system
+2. **Multi-property hover patterns** are commonly incomplete - developers remember most visible change, miss subtle parts
+3. **Deprecated aliases** persist in older components - need migration sweep
+4. **Custom implementations** (focus states) in auth flow - likely pre-standard patterns
+
+**Recommendations for Phase 7.2 (fixes):**
+1. **Lead with TypographyDebug fix** - Demo page must show correct patterns (highest leverage)
+2. **Fix ColorModeButton early** - Base component fix propagates to Footer + ThemeDebug (multiplier effect)
+3. **Batch React Router Link fixes by domain** - Same pattern, efficient to fix together
+4. **Document policy decisions before low-priority fixes** - Z-index and border guidance needed for consistent application
+
+---
+
+**Analysis completion:** Task 7.1.f complete, ready for Phase 7.2 implementation

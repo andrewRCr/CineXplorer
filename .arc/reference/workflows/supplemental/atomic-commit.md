@@ -139,8 +139,28 @@ steps:
   Context: tasks-[exact-filename].md (Task X.Y)              # Single task
   Context: tasks-[exact-filename].md (Tasks X.Y-X.Z)         # Sequential range
   Context: tasks-[exact-filename].md (Tasks X.Y, A.B, C.D)   # Non-contiguous
-  Context: tasks-[exact-filename].md (planning)              # Task list maintenance
+  Context: tasks-[exact-filename].md (planning)              # Task list maintenance only
   ```
+
+  **Task completion with extra task list work:**
+
+  Use when completing tasks AND doing additional planning/maintenance work on the task list itself:
+
+  ```bash
+  Context: tasks-[exact-filename].md (Tasks X.Y, A.B; planning)      # Task completion + added new subtasks
+  Context: tasks-[exact-filename].md (Tasks X.Y-X.Z; maintenance)    # Task completion + restructured phases
+  ```
+
+  **When to use qualifiers:**
+  - **planning**: Completing tasks AND adding NEW tasks/subtasks that weren't there before
+  - **maintenance**: Completing tasks AND restructuring/enhancing/removing existing task content
+
+  **When NOT to use qualifiers:**
+  - Just marking completed tasks `[x]` - that's implicit in task completion (no qualifier needed)
+  - Code changes beyond the listed tasks - commit those separately (atomic commits principle)
+
+  **IMPORTANT:** If using a qualifier, the commit body MUST describe what the extra planning/maintenance work was.
+  The qualifier is a flag that says "there's more here," but the body provides the details.
 
   **Incidental without dedicated task list:**
 
@@ -274,6 +294,24 @@ steps:
   - Follows TDD structure
 
   Context: tasks-pagination-buffer-tracking.md (planning)
+  ```
+
+  ### Task Completion with Extra Task List Work
+
+  ```
+  docs(arc): complete Phase 6 and enhance Phase 7 structure
+
+  - Marked Task 6.1.h complete (dropdown selected state pattern)
+  - Marked parent Tasks 6.1, 6.2, and Phase 6 complete
+  - Removed unnecessary Task 6.2.e (Phase 8 grep check sufficient)
+  - Restructured Phase 7.1: pattern-focused → domain-focused audits
+  - Expanded pattern checklist from 8 to 13 comprehensive patterns
+  - Added border width standards, form control details, focus specs
+
+  Rationale: Domain-focused structure enables natural session boundaries
+  with manageable context budgets (10-15 components per domain vs 50+).
+
+  Context: tasks-theme-system-modernization.md (Tasks 6.1.h, 6.2.a-d; maintenance)
   ```
 
   ### Repository Maintenance (Atomic)

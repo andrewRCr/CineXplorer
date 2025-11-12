@@ -66,6 +66,7 @@ if ! echo "$commit_msg" | grep -qE '^Context: '; then
     echo "   Context: tasks-api-layer-modernization.md (Tasks 1.4-1.7)"
     echo "   Context: tasks-theme-modernization.md (Task 2.3.a)"
     echo "   Context: tasks-theme-modernization.md (Tasks 2.3.c-e)"
+    echo "   Context: tasks-theme-modernization.md (Tasks 6.1.h, 6.2.a-d; maintenance)"
     echo "   Context: tasks-filter-testing.md (incidental - discovered during Task 3.6)"
     echo "   Context: tasks-pagination-buffer-tracking.md (planning)"
     echo "   Context: maintenance (atomic / no associated task list)"
@@ -112,6 +113,10 @@ else
         elif echo "$context_line" | grep -qE '\(Tasks [0-9]+(\.[0-9A-Za-z]+)+(, [0-9]+(\.[0-9A-Za-z]+)+)+\)$'; then
             # Multiple non-contiguous tasks - valid
             :
+        elif echo "$context_line" | grep -qE '\(Tasks .+; (planning|maintenance)\)$'; then
+            # Task completion + planning/maintenance qualifier - valid
+            # Examples: (Tasks 6.1.h, 6.2.a-d; maintenance), (Tasks 2.3.a; planning)
+            :
         elif echo "$context_line" | grep -qE '\(incidental - discovered during Task [0-9]+(\.[0-9A-Za-z]+)+\)$'; then
             # Incidental without task list - valid
             :
@@ -127,6 +132,8 @@ else
             echo "   - (Tasks X.Y-X.Z) or (Tasks X.Y.a-X.Y.d) - task range"
             echo "   - (Tasks X.Y.c-e) or (Tasks 2.3.c-e) - abbreviated range"
             echo "   - (Tasks X.Y, A.B, C.D) - non-contiguous tasks"
+            echo "   - (Tasks X.Y, A.B; planning) - with extra task list work"
+            echo "   - (Tasks X.Y, A.B; maintenance) - with extra task list work"
             echo "   - (incidental - discovered during Task X.Y)"
             echo "   - (planning) - task list planning/maintenance"
             echo ""

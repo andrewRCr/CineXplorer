@@ -107,7 +107,7 @@ const SortDropdownMinimal = ({
             lineHeight="1.2"
             borderRadius="4px"
             border="1px solid"
-            borderColor="border"
+            borderColor="input"
             backgroundColor="transparent"
             _hover={{
               bg: "tertiary/8",

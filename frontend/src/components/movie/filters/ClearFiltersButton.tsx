@@ -1,4 +1,5 @@
 import { Box, Button } from "@chakra-ui/react";
+import { FiX } from "react-icons/fi";
 import type { MovieFilters as UnifiedMovieFilters } from "./AdvancedMovieFilters";
 
 interface ClearFiltersButtonProps {
@@ -34,7 +35,8 @@ const ClearFiltersButton = ({
         onClick={onClearFilters}
         size="xs"
         variant="ghost"
-        colorScheme="red"
+        color="destructive"
+        _hover={{ color: "destructive" }}
         fontSize="xs"
         visibility={
           hasActiveFilters && !showAdvanced ? "visible" : "hidden"
@@ -43,6 +45,7 @@ const ClearFiltersButton = ({
         transition="visibility 0s, opacity 0.2s ease-in-out"
         mt={4} // Nudge the button down further
       >
+        <FiX style={{ marginRight: "4px" }} />
         Clear filters
       </Button>
     </Box>

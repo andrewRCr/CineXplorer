@@ -236,7 +236,7 @@ const ConnectedDropdowns = ({
             lineHeight="1.2"
         borderRadius="4px 0 0 4px"
             border="1px solid"
-            borderColor="border"
+            borderColor="input"
             backgroundColor="transparent"
             _hover={{
               bg: "tertiary/8",
@@ -326,7 +326,7 @@ const ConnectedDropdowns = ({
             lineHeight="1.2"
       borderRadius="0"
             border="1px solid"
-            borderColor="border"
+            borderColor="input"
             backgroundColor="transparent"
             _hover={{
               bg: "tertiary/8",
@@ -477,7 +477,12 @@ const ConnectedDropdowns = ({
         </Box>
       */}
 
-      {/* Advanced filters toggle */}
+      {/* Advanced filters toggle
+          NOTE: This button is visually connected to the genre/year dropdowns (forms one continuous control group).
+          Unlike standalone buttons, it uses subtle hover styling (background tint only) to match the connected
+          dropdowns' hover behavior. This creates visual cohesion across the connected control group.
+          Strategy doc pattern (border/text color changes on hover) applies to standalone buttons, not connected groups.
+      */}
       {onToggleAdvanced && (
         <Button
           onClick={onToggleAdvanced}
@@ -488,8 +493,6 @@ const ConnectedDropdowns = ({
           color="on-button-outline"
           _hover={{
             bg: "tertiary/8",
-            borderColor: "tertiary",
-            color: "tertiary",
           }}
           minW="auto"
           px={3}

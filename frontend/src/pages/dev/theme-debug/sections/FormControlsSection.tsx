@@ -5,7 +5,7 @@ import { useState } from "react";
  * Form Controls Section - Comprehensive Form Input Patterns
  *
  * Demonstrates all form control types with their various states (default, hover, focus, disabled, error).
- * Per strategy doc: Uses `input` token for borders, `tertiary` for focus/active states, `primary` for checked states.
+ * Per layer-aware border hierarchy: Uses `border-strong-01` (default), `border-strong-02` (hover), `tertiary` (focus/active), `primary` for checked states.
  */
 export function FormControlsSection() {
   const [textValue, setTextValue] = useState("");
@@ -32,7 +32,7 @@ export function FormControlsSection() {
   });
 
   return (
-    <Box id="form-controls" bg="layer-01" p={6} borderRadius="md" borderWidth="1px" borderColor="border">
+    <Box id="form-controls" bg="layer-01" p={6} borderRadius="md" borderWidth="1px" borderColor="border-strong-01">
       <Text fontSize="xl" fontWeight="bold" mb={4}>Form Controls</Text>
       <VStack align="stretch" gap={4}>
         {/* Text Input States (5.2.a) */}
@@ -46,11 +46,21 @@ export function FormControlsSection() {
                   <Text fontSize="sm" fontWeight="medium">Default:</Text>
                   <Input
                     placeholder="Enter text"
-                    borderColor="input"
+                    borderColor="border-strong-01"
                     bg="background"
                     color="foreground"
-                    _hover={{ borderColor: "border-strong-01" }}
-                    _focus={{ borderColor: "tertiary" }}
+                    _hover={{ borderColor: "border-strong-02" }}
+                    css={{
+                      "&:focus": {
+                        borderColor: "var(--chakra-colors-tertiary)",
+                        outline: "none !important",
+                        boxShadow: "none !important",
+                      },
+                      "&:focus-visible": {
+                        outline: "2px solid var(--chakra-colors-ring)",
+                        outlineOffset: "2px",
+                      },
+                    }}
                     value={textValue}
                     onChange={(e) => setTextValue(e.target.value)}
                   />
@@ -61,7 +71,7 @@ export function FormControlsSection() {
                   <Text fontSize="sm" fontWeight="medium">Disabled:</Text>
                   <Input
                     placeholder="Disabled input"
-                    borderColor="input"
+                    borderColor="border-strong-01"
                     bg="background"
                     color="foreground"
                     disabled
@@ -83,7 +93,7 @@ export function FormControlsSection() {
               </HStack>
 
               <Text fontSize="xs" color="foreground/60">
-                Tokens: <Code fontSize="xs">input</Code> (border), <Code fontSize="xs">border-strong-01</Code> (hover), <Code fontSize="xs">tertiary</Code> (focus border)
+                Tokens: <Code fontSize="xs">border-strong-01</Code> (default border), <Code fontSize="xs">border-strong-02</Code> (hover), <Code fontSize="xs">tertiary</Code> (focus border)
               </Text>
             </VStack>
           </Box>
@@ -99,12 +109,22 @@ export function FormControlsSection() {
                 <Text fontSize="sm" fontWeight="medium">Default:</Text>
                 <Textarea
                   placeholder="Enter multiline text"
-                  borderColor="input"
+                  borderColor="border-strong-01"
                   bg="background"
                   color="foreground"
                   rows={3}
-                  _hover={{ borderColor: "border-strong-01" }}
-                  _focus={{ borderColor: "tertiary" }}
+                  _hover={{ borderColor: "border-strong-02" }}
+                  css={{
+                    "&:focus": {
+                      borderColor: "var(--chakra-colors-tertiary)",
+                      outline: "none !important",
+                      boxShadow: "none !important",
+                    },
+                    "&:focus-visible": {
+                      outline: "2px solid var(--chakra-colors-ring)",
+                      outlineOffset: "2px",
+                    },
+                  }}
                   value={textareaValue}
                   onChange={(e) => setTextareaValue(e.target.value)}
                 />
@@ -115,7 +135,7 @@ export function FormControlsSection() {
                 <Text fontSize="sm" fontWeight="medium">Disabled:</Text>
                 <Textarea
                   placeholder="Disabled textarea"
-                  borderColor="input"
+                  borderColor="border-strong-01"
                   bg="background"
                   color="foreground"
                   rows={3}
@@ -146,11 +166,20 @@ export function FormControlsSection() {
                     positioning={{ placement: "bottom-start", gutter: 2 }}
                   >
                     <Select.Trigger
-                      borderColor="input"
+                      borderColor="border-strong-01"
                       bg="background"
                       color="foreground"
-                      _hover={{ borderColor: "border-strong-01", bg: "tertiary/8" }}
-                      _focus={{ borderColor: "tertiary" }}
+                      _hover={{ borderColor: "border-strong-02", bg: "tertiary/8" }}
+                      css={{
+                        "&:focus": {
+                          outline: "none !important",
+                          boxShadow: "none !important",
+                        },
+                        "&:focus-visible": {
+                          outline: "2px solid var(--chakra-colors-ring)",
+                          outlineOffset: "2px",
+                        },
+                      }}
                     >
                       <Select.ValueText placeholder="Select option" />
                       <Select.Indicator />
@@ -158,7 +187,7 @@ export function FormControlsSection() {
                     <Select.Positioner>
                       <Select.Content
                         bg="muted"
-                        borderColor="border"
+                        borderColor="border-subtle-02"
                         color="foreground"
                       >
                         {selectCollection.items.map((item) => {
@@ -193,7 +222,7 @@ export function FormControlsSection() {
                     positioning={{ placement: "bottom-start", gutter: 2 }}
                   >
                     <Select.Trigger
-                      borderColor="input"
+                      borderColor="border-strong-01"
                       bg="background"
                       color="foreground"
                     >
@@ -201,7 +230,7 @@ export function FormControlsSection() {
                       <Select.Indicator />
                     </Select.Trigger>
                     <Select.Positioner>
-                      <Select.Content bg="muted" borderColor="border">
+                      <Select.Content bg="muted" borderColor="border-subtle-02">
                         {disabledSelectCollection.items.map((item) => (
                           <Select.Item key={item.value} item={item}>
                             {item.label}
@@ -214,7 +243,7 @@ export function FormControlsSection() {
               </HStack>
 
               <Text fontSize="xs" color="foreground/60">
-                Tokens: Trigger uses <Code fontSize="xs">input</Code> border + <Code fontSize="xs">tertiary/8</Code> hover. Content uses <Code fontSize="xs">muted</Code> bg. Items: selected state uses <Code fontSize="xs">tertiary</Code> + <Code fontSize="xs">on-tertiary</Code>, hover (non-selected) uses <Code fontSize="xs">tertiary/12</Code>.
+                Tokens: Trigger uses <Code fontSize="xs">border-strong-01</Code> border (default), <Code fontSize="xs">border-strong-02</Code> + <Code fontSize="xs">tertiary/8</Code> (hover), <Code fontSize="xs">ring</Code> focus outline (keyboard only). Content uses <Code fontSize="xs">muted</Code> bg. Items: selected state uses <Code fontSize="xs">tertiary</Code> + <Code fontSize="xs">on-tertiary</Code>, hover (non-selected) uses <Code fontSize="xs">tertiary/12</Code>.
               </Text>
             </VStack>
           </Box>
@@ -230,7 +259,7 @@ export function FormControlsSection() {
                 <Checkbox.Root>
                   <Checkbox.HiddenInput />
                   <Checkbox.Control
-                    borderColor="input"
+                    borderColor="border-strong-01"
                     _checked={{ bg: "primary", borderColor: "primary" }}
                   >
                     <Checkbox.Indicator />
@@ -245,7 +274,7 @@ export function FormControlsSection() {
                 >
                   <Checkbox.HiddenInput />
                   <Checkbox.Control
-                    borderColor="input"
+                    borderColor="border-strong-01"
                     _checked={{ bg: "primary", borderColor: "primary" }}
                   >
                     <Checkbox.Indicator />
@@ -256,7 +285,7 @@ export function FormControlsSection() {
                 {/* Disabled */}
                 <Checkbox.Root disabled>
                   <Checkbox.HiddenInput />
-                  <Checkbox.Control borderColor="input">
+                  <Checkbox.Control borderColor="border-strong-01">
                     <Checkbox.Indicator />
                   </Checkbox.Control>
                   <Checkbox.Label>Disabled</Checkbox.Label>
@@ -280,7 +309,7 @@ export function FormControlsSection() {
                   <RadioGroup.Item value="option1">
                     <RadioGroup.ItemHiddenInput />
                     <RadioGroup.ItemControl
-                      borderColor="input"
+                      borderColor="border-strong-01"
                       _checked={{ bg: "primary", borderColor: "primary" }}
                     />
                     <RadioGroup.ItemText>Option 1</RadioGroup.ItemText>
@@ -288,14 +317,14 @@ export function FormControlsSection() {
                   <RadioGroup.Item value="option2">
                     <RadioGroup.ItemHiddenInput />
                     <RadioGroup.ItemControl
-                      borderColor="input"
+                      borderColor="border-strong-01"
                       _checked={{ bg: "primary", borderColor: "primary" }}
                     />
                     <RadioGroup.ItemText>Option 2</RadioGroup.ItemText>
                   </RadioGroup.Item>
                   <RadioGroup.Item value="option3" disabled>
                     <RadioGroup.ItemHiddenInput />
-                    <RadioGroup.ItemControl borderColor="input" />
+                    <RadioGroup.ItemControl borderColor="border-strong-01" />
                     <RadioGroup.ItemText>Disabled</RadioGroup.ItemText>
                   </RadioGroup.Item>
                 </VStack>
@@ -375,12 +404,22 @@ export function FormControlsSection() {
                   type="number"
                   value={numberValue}
                   onChange={(e) => setNumberValue(Number(e.target.value))}
-                  borderColor="input"
+                  borderColor="border-strong-01"
                   bg="background"
                   color="foreground"
                   maxW="200px"
-                  _hover={{ borderColor: "border-strong-01" }}
-                  _focus={{ borderColor: "tertiary" }}
+                  _hover={{ borderColor: "border-strong-02" }}
+                  css={{
+                    "&:focus": {
+                      borderColor: "var(--chakra-colors-tertiary)",
+                      outline: "none !important",
+                      boxShadow: "none !important",
+                    },
+                    "&:focus-visible": {
+                      outline: "2px solid var(--chakra-colors-ring)",
+                      outlineOffset: "2px",
+                    },
+                  }}
                 />
               </VStack>
 
@@ -394,8 +433,8 @@ export function FormControlsSection() {
         {/* Implementation Note */}
         <Box p={4}>
           <Text fontSize="sm" color="foreground/80" fontStyle="italic" lineHeight="1.7">
-            <strong>Implementation:</strong> All form controls follow consistent pattern: <Code fontSize="xs">input</Code> for default borders,
-            <Code fontSize="xs">border-strong-01</Code> for hover, <Code fontSize="xs">tertiary</Code> for focus border.
+            <strong>Implementation:</strong> All form controls follow layer-aware border hierarchy: <Code fontSize="xs">border-strong-01</Code> (default),
+            <Code fontSize="xs">border-strong-02</Code> (hover), <Code fontSize="xs">tertiary</Code> (focus border).
             Checked/selected states use <Code fontSize="xs">primary</Code> with <Code fontSize="xs">on-primary</Code> for contrast.
           </Text>
         </Box>

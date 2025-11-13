@@ -15,7 +15,7 @@ export function InteractiveListsSection() {
   };
 
   return (
-    <Box id="interactive-lists" bg="layer-01" p={6} borderRadius="md" borderWidth="1px" borderColor="border">
+    <Box id="interactive-lists" bg="layer-01" p={6} borderRadius="md" borderWidth="1px" borderColor="border-strong-01">
       <Text fontSize="xl" fontWeight="bold" mb={4}>Interactive Lists</Text>
       <VStack align="stretch" gap={6}>
 

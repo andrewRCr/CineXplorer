@@ -1,4 +1,5 @@
-import { Box, Text, VStack, HStack, Link, Tabs, Breadcrumb, Code } from "@chakra-ui/react";
+import { Box, Text, VStack, HStack, Tabs, Breadcrumb, Code } from "@chakra-ui/react";
+import { TextLink } from "@/components/common/TextLink";
 import { LuHouse, LuChevronRight } from "react-icons/lu";
 
 /**
@@ -9,7 +10,7 @@ import { LuHouse, LuChevronRight } from "react-icons/lu";
  */
 export function NavigationPatternsSection() {
   return (
-    <Box id="navigation-patterns" bg="layer-01" p={6} borderRadius="md" borderWidth="1px" borderColor="border">
+    <Box id="navigation-patterns" bg="layer-01" p={6} borderRadius="md" borderWidth="1px" borderColor="border-strong-01">
       <Text fontSize="xl" fontWeight="bold" mb={4}>Navigation Patterns</Text>
       <VStack align="stretch" gap={4}>
         {/* Inline Text Links */}
@@ -19,22 +20,7 @@ export function NavigationPatternsSection() {
             <VStack gap={4} align="center">
               {/* Link in context (matches Register.tsx usage) */}
               <Text color="foreground">
-                Already have an account?{" "}
-                <Link
-                  href="#"
-                  color="tertiary"
-                  textDecoration="underline"
-                  textUnderlineOffset="2px"
-                  _hover={{ color: "tertiary-hover" }}
-                  _active={{ color: "tertiary-active" }}
-                  _focus={{
-                    outline: "2px solid",
-                    outlineColor: "ring",
-                    outlineOffset: "2px",
-                  }}
-                >
-                  Sign in
-                </Link>
+                Already have an account? <TextLink to="/">Sign in</TextLink>
               </Text>
 
               <Text fontSize="xs" color="foreground/60" maxW="700px" textAlign="center" lineHeight="1.5">

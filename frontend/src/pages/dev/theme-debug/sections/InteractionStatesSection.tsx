@@ -12,7 +12,7 @@ export function InteractionStatesSection() {
   const [selectedLayer02, setSelectedLayer02] = useState(false);
 
   return (
-    <Box id="interaction-states" bg="layer-01" p={6} borderRadius="md" borderWidth="1px" borderColor="border">
+    <Box id="interaction-states" bg="layer-01" p={6} borderRadius="md" borderWidth="1px" borderColor="border-strong-01">
       <Text fontSize="xl" fontWeight="bold" mb={4}>Interaction States</Text>
       <VStack align="stretch" gap={6}>
         {/* Layer-01 States (Interactive Cards/List Items) */}
@@ -31,7 +31,7 @@ export function InteractionStatesSection() {
                 p={4}
                 borderRadius="md"
                 borderWidth="1px"
-                borderColor="border"
+                borderColor="border-strong-01"
                 cursor="pointer"
                 minW="160px"
                 onClick={() => setSelectedLayer01(!selectedLayer01)}
@@ -45,16 +45,16 @@ export function InteractionStatesSection() {
 
             {/* Static Reference Swatches */}
             <HStack gap={2} mt={4} justify="center" wrap="wrap">
-              <Box bg="layer-01" p={3} borderRadius="md" borderWidth="1px" borderColor="border" minW="110px">
+              <Box bg="layer-01" p={3} borderRadius="md" borderWidth="1px" borderColor="border-strong-01" minW="110px">
                 <Text fontSize="xs" textAlign="center" color="foreground/60">Default (layer-01)</Text>
               </Box>
-              <Box bg="layer-hover-01" p={3} borderRadius="md" borderWidth="1px" borderColor="border" minW="110px">
+              <Box bg="layer-hover-01" p={3} borderRadius="md" borderWidth="1px" borderColor="border-strong-01" minW="110px">
                 <Text fontSize="xs" textAlign="center" color="foreground/60">Hover (+8% fg)</Text>
               </Box>
-              <Box bg="layer-selected-01" p={3} borderRadius="md" borderWidth="1px" borderColor="border" minW="110px">
+              <Box bg="layer-selected-01" p={3} borderRadius="md" borderWidth="1px" borderColor="border-strong-01" minW="110px">
                 <Text fontSize="xs" textAlign="center" color="foreground/60">Selected (+12% fg)</Text>
               </Box>
-              <Box bg="layer-active-01" p={3} borderRadius="md" borderWidth="1px" borderColor="border" minW="110px">
+              <Box bg="layer-active-01" p={3} borderRadius="md" borderWidth="1px" borderColor="border-strong-01" minW="110px">
                 <Text fontSize="xs" textAlign="center" color="foreground/60">Active (+12% fg)</Text>
               </Box>
             </HStack>
@@ -69,7 +69,7 @@ export function InteractionStatesSection() {
           </Text>
 
           {/* Container showing layer-02 context */}
-          <Box bg="layer-01" p={4} borderRadius="md" borderWidth="1px" borderColor="border">
+          <Box bg="layer-01" p={4} borderRadius="md" borderWidth="1px" borderColor="border-strong-01">
             <Text fontSize="xs" color="foreground/60" mb={3}>On layer-01 (layer-02 elevated element):</Text>
             <Box display="flex" justifyContent="center">
               <Box
@@ -77,7 +77,7 @@ export function InteractionStatesSection() {
                 p={4}
                 borderRadius="md"
                 borderWidth="1px"
-                borderColor="border"
+                borderColor="border-strong-02"
                 cursor="pointer"
                 minW="160px"
                 onClick={() => setSelectedLayer02(!selectedLayer02)}
@@ -91,16 +91,16 @@ export function InteractionStatesSection() {
 
             {/* Static Reference Swatches */}
             <HStack gap={2} mt={4} justify="center" wrap="wrap">
-              <Box bg="layer-02" p={3} borderRadius="md" borderWidth="1px" borderColor="border" minW="110px">
+              <Box bg="layer-02" p={3} borderRadius="md" borderWidth="1px" borderColor="border-strong-02" minW="110px">
                 <Text fontSize="xs" textAlign="center" color="foreground/60">Default (layer-02)</Text>
               </Box>
-              <Box bg="layer-hover-02" p={3} borderRadius="md" borderWidth="1px" borderColor="border" minW="110px">
+              <Box bg="layer-hover-02" p={3} borderRadius="md" borderWidth="1px" borderColor="border-strong-02" minW="110px">
                 <Text fontSize="xs" textAlign="center" color="foreground/60">Hover (+8% fg)</Text>
               </Box>
-              <Box bg="layer-selected-02" p={3} borderRadius="md" borderWidth="1px" borderColor="border" minW="110px">
+              <Box bg="layer-selected-02" p={3} borderRadius="md" borderWidth="1px" borderColor="border-strong-02" minW="110px">
                 <Text fontSize="xs" textAlign="center" color="foreground/60">Selected (+12% fg)</Text>
               </Box>
-              <Box bg="layer-active-02" p={3} borderRadius="md" borderWidth="1px" borderColor="border" minW="110px">
+              <Box bg="layer-active-02" p={3} borderRadius="md" borderWidth="1px" borderColor="border-strong-02" minW="110px">
                 <Text fontSize="xs" textAlign="center" color="foreground/60">Active (+12% fg)</Text>
               </Box>
             </HStack>

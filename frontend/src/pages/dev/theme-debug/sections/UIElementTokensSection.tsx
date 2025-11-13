@@ -1,5 +1,6 @@
 import { Box, Text, VStack, HStack, Button, Input } from "@chakra-ui/react";
 import { useState } from "react";
+import { TextLink } from "@/components/common/TextLink";
 
 /**
  * UI Element Tokens Section - Foundational Structural Tokens
@@ -12,7 +13,7 @@ export function UIElementTokensSection() {
   const [focusedElement, setFocusedElement] = useState<string | null>(null);
 
   return (
-    <Box id="ui-elements" bg="layer-01" p={6} borderRadius="md" borderWidth="1px" borderColor="border">
+    <Box id="ui-elements" bg="layer-01" p={6} borderRadius="md" borderWidth="1px" borderColor="border-strong-01">
       <Text fontSize="xl" fontWeight="bold" mb={4}>UI Element Tokens</Text>
       <VStack align="stretch" gap={6}>
 
@@ -156,7 +157,7 @@ export function UIElementTokensSection() {
                   placeholder="Tab to focus this input"
                   onFocus={() => setFocusedElement('input')}
                   onBlur={() => setFocusedElement(null)}
-                  borderColor="input"
+                  borderColor="border-strong-01"
                   _focusVisible={{
                     borderColor: "tertiary",
                     outline: "2px solid",
@@ -169,25 +170,13 @@ export function UIElementTokensSection() {
               {/* Link Example */}
               <Box>
                 <Text fontSize="xs" fontWeight="semibold" mb={2} color="on-muted">Link with focus ring:</Text>
-                <Box
-                  as="button"
-                  color="tertiary"
-                  textDecoration="underline"
-                  bg="transparent"
-                  border="none"
-                  cursor="pointer"
-                  fontSize="md"
+                <TextLink
+                  to="/"
                   onFocus={() => setFocusedElement('link')}
                   onBlur={() => setFocusedElement(null)}
-                  _focusVisible={{
-                    outline: "2px solid",
-                    outlineColor: "ring",
-                    outlineOffset: "2px",
-                  }}
-                  _hover={{ color: "tertiary-hover" }}
                 >
                   {focusedElement === 'link' ? 'Focused link (ring visible)' : 'Tab to focus this link'}
-                </Box>
+                </TextLink>
               </Box>
 
               {/* Usage Pattern */}

@@ -11,7 +11,7 @@ import { Box, Text, VStack, HStack } from "@chakra-ui/react";
  */
 export function OpacitySystemSection() {
   return (
-    <Box id="opacity-system" bg="layer-01" p={6} borderRadius="md" borderWidth="1px" borderColor="border">
+    <Box id="opacity-system" bg="layer-01" p={6} borderRadius="md" borderWidth="1px" borderColor="border-strong-01">
       <Text fontSize="xl" fontWeight="bold" mb={4}>Opacity System</Text>
       <VStack align="stretch" gap={6}>
 
@@ -92,7 +92,7 @@ export function OpacitySystemSection() {
                     bg={`primary/${opacity}`}
                     p={4}
                     borderWidth="1px"
-                    borderColor="border"
+                    borderColor="border-subtle-02"
                     minW="150px"
                   >
                     <Text color="foreground" fontSize="sm">primary/{opacity}</Text>
@@ -111,7 +111,7 @@ export function OpacitySystemSection() {
                     bg={`destructive/${opacity}`}
                     p={4}
                     borderWidth="1px"
-                    borderColor="border"
+                    borderColor="border-subtle-02"
                     minW="150px"
                   >
                     <Text color="foreground" fontSize="sm">destructive/{opacity}</Text>
@@ -130,7 +130,7 @@ export function OpacitySystemSection() {
                     bg={`tertiary/${opacity}`}
                     p={4}
                     borderWidth="1px"
-                    borderColor="border"
+                    borderColor="border-subtle-02"
                     minW="150px"
                   >
                     <Text color="foreground" fontSize="sm">tertiary/{opacity}</Text>
@@ -149,7 +149,7 @@ export function OpacitySystemSection() {
                     bg={`muted/${opacity}`}
                     p={4}
                     borderWidth="1px"
-                    borderColor="border"
+                    borderColor="border-subtle-02"
                     minW="150px"
                   >
                     <Text color="foreground" fontSize="sm">muted/{opacity}</Text>
@@ -161,7 +161,7 @@ export function OpacitySystemSection() {
             {/* Text colors with opacity */}
             <Box>
               <Text fontSize="sm" fontWeight="bold" mb={2}>Text Colors with Opacity</Text>
-              <Box bg="background" p={4} borderWidth="1px" borderColor="border">
+              <Box bg="background" p={4} borderWidth="1px" borderColor="border-strong-01">
                 <VStack align="start" gap={2}>
                   {[100, 80, 60, 40, 20].map((opacity) => (
                     <Text key={opacity} color={`foreground/${opacity}`}>

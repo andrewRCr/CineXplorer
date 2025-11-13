@@ -7,7 +7,7 @@ import { Box, Text, VStack, HStack } from "@chakra-ui/react";
  */
 export function CineXplorerExtensionsSection() {
   return (
-    <Box id="cinexplorer-extensions" bg="layer-01" p={6} borderRadius="md" borderWidth="1px" borderColor="border">
+    <Box id="cinexplorer-extensions" bg="layer-01" p={6} borderRadius="md" borderWidth="1px" borderColor="border-strong-01">
       <Text fontSize="xl" fontWeight="bold" mb={4}>CineXplorer Extensions</Text>
       <Box bg="background" p={4} borderRadius="md" borderWidth="1px" borderColor="border-subtle-00">
         <VStack align="stretch" gap={4}>
@@ -63,10 +63,10 @@ export function CineXplorerExtensionsSection() {
           <Box>
             <Text fontSize="sm" fontWeight="bold" mb={2} textAlign="center">Drag & Drop States</Text>
             <HStack gap={2} justify="center">
-              <Box bg="drag-active" p={2} px={3} borderRadius="md" borderWidth="2px" borderColor="border" borderStyle="dashed">
+              <Box bg="drag-active" p={2} px={3} borderRadius="md" borderWidth="2px" borderColor="border-subtle-02" borderStyle="dashed">
                 <Text fontSize="xs" color="foreground">drag-active</Text>
               </Box>
-              <Box bg="drop-zone" p={2} px={3} borderRadius="md" borderWidth="2px" borderColor="border" borderStyle="dashed">
+              <Box bg="drop-zone" p={2} px={3} borderRadius="md" borderWidth="2px" borderColor="border-subtle-02" borderStyle="dashed">
                 <Text fontSize="xs" color="foreground">drop-zone</Text>
               </Box>
             </HStack>

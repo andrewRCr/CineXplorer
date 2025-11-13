@@ -8,26 +8,26 @@ export function LayerSystemSection() {
   const { colorMode } = useColorMode();
 
   return (
-    <Box id="layers" bg="layer-01" p={6} borderRadius="md" borderWidth="1px" borderColor="border">
+    <Box id="layers" bg="layer-01" p={6} borderRadius="md" borderWidth="1px" borderColor="border-strong-01">
       <Text fontSize="xl" fontWeight="bold" mb={4}>Layers: Surfaces & Containers</Text>
       <VStack align="stretch" gap={6}>
         {/* Basic Hierarchy */}
         <Box>
           <Text fontSize="md" fontWeight="semibold" mb={3}>Basic Layer Hierarchy</Text>
           <VStack align="stretch" gap={2}>
-            <Box bg="background" p={4} borderWidth="1px" borderColor="border">
+            <Box bg="background" p={4} borderWidth="1px" borderColor="border-strong-01">
               <Text color="foreground" fontWeight="bold">background</Text>
               <Text color="foreground/60" fontSize="sm">Base page background (lowest)</Text>
             </Box>
-            <Box bg="layer-01" p={4} borderWidth="1px" borderColor="border">
+            <Box bg="layer-01" p={4} borderWidth="1px" borderColor="border-strong-01">
               <Text color="foreground" fontWeight="bold">layer-01</Text>
               <Text color="foreground/60" fontSize="sm">Cards, panels (first elevation)</Text>
             </Box>
-            <Box bg="layer-02" p={4} borderWidth="1px" borderColor="border">
+            <Box bg="layer-02" p={4} borderWidth="1px" borderColor="border-strong-02">
               <Text color="foreground" fontWeight="bold">layer-02</Text>
               <Text color="foreground/60" fontSize="sm">Elevated panels, popovers (second elevation)</Text>
             </Box>
-            <Box bg="layer-03" p={4} borderWidth="1px" borderColor="border">
+            <Box bg="layer-03" p={4} borderWidth="1px" borderColor="border-strong-03">
               <Text color="foreground" fontWeight="bold">layer-03</Text>
               <Text color="foreground/60" fontSize="sm">Highest elevation (dropdowns, modals)</Text>
             </Box>
@@ -121,7 +121,7 @@ export function LayerSystemSection() {
             Shows backdrop overlay and <code>layer-02</code> surface
           </Text>
           {/* Simulated backdrop */}
-          <Box position="relative" bg="background" p={8} borderRadius="md" borderWidth="1px" borderColor="border">
+          <Box position="relative" bg="background" p={8} borderRadius="md" borderWidth="1px" borderColor="border-strong-01">
             {/* Backdrop overlay */}
             <Box
               position="absolute"

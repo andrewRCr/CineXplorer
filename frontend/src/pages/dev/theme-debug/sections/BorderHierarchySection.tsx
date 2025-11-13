@@ -5,7 +5,7 @@ import { Box, Text, VStack, Code } from "@chakra-ui/react";
  */
 export function BorderHierarchySection() {
   return (
-    <Box id="borders" bg="layer-01" p={6} borderRadius="md" borderWidth="1px" borderColor="border">
+    <Box id="borders" bg="layer-01" p={6} borderRadius="md" borderWidth="1px" borderColor="border-strong-01">
       <Text fontSize="xl" fontWeight="bold" mb={4}>Border Hierarchy</Text>
       <VStack align="stretch" gap={3}>
         <Box p={4} borderWidth="2px" borderColor="border-subtle-00" bg="layer-01">

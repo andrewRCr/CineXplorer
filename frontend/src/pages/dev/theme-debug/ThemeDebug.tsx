@@ -68,7 +68,7 @@ export default function ThemeDebug() {
         top="var(--chakra-sizes-layout-navbar)"
         bg="layer-02"
         borderBottomWidth="1px"
-        borderColor="border"
+        borderColor="border-strong-02"
         px={6}
         py={3}
         zIndex={5}

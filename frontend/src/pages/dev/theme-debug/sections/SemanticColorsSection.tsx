@@ -1,5 +1,6 @@
-import { Box, Text, VStack, HStack, Button, Link, Code } from "@chakra-ui/react";
+import { Box, Text, VStack, HStack, Button, Code } from "@chakra-ui/react";
 import { useThemeSelect } from "@/hooks/useThemeSelect";
+import { TextLink } from "@/components/common/TextLink";
 
 /**
  * Semantic Colors Section - Brand, Core Actions, and Status Colors
@@ -11,7 +12,7 @@ export function SemanticColorsSection() {
   const { theme } = useThemeSelect();
 
   return (
-    <Box id="semantic-colors" bg="layer-01" p={6} borderRadius="md" borderWidth="1px" borderColor="border">
+    <Box id="semantic-colors" bg="layer-01" p={6} borderRadius="md" borderWidth="1px" borderColor="border-strong-01">
       <Text fontSize="xl" fontWeight="bold" mb={4}>Semantic Colors</Text>
       <VStack align="stretch" gap={4}>
         {/* Brand Identity (Optional) - Always shown, with note for themes without brand colors */}
@@ -266,20 +267,9 @@ export function SemanticColorsSection() {
               </VStack>
 
               {/* Interactive link example */}
-              <Link
-                color="tertiary"
-                textDecoration="underline"
-                textDecorationThickness="1px"
-                textUnderlineOffset="2px"
-                _hover={{ color: "tertiary-hover" }}
-                _focus={{
-                  outline: "2px solid",
-                  outlineColor: "ring",
-                  outlineOffset: "2px",
-                }}
-              >
+              <TextLink to="/">
                 Interactive link (tertiary)
-              </Link>
+              </TextLink>
 
               <Text fontSize="xs" color="on-muted" textAlign="center" maxW="700px" lineHeight="1.5">
                 Per ADR-010/ADR-012: Primary (action color), Secondary (subtle backgrounds),

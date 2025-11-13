@@ -10,7 +10,7 @@ import { Tooltip } from "@/components/chakra/tooltip";
  */
 export function FeedbackStatusSection() {
   return (
-    <Box id="feedback-status" bg="layer-01" p={6} borderRadius="md" borderWidth="1px" borderColor="border">
+    <Box id="feedback-status" bg="layer-01" p={6} borderRadius="md" borderWidth="1px" borderColor="border-strong-01">
       <Text fontSize="xl" fontWeight="bold" mb={4}>Feedback & Status</Text>
       <VStack align="stretch" gap={4}>
         {/* Alerts */}

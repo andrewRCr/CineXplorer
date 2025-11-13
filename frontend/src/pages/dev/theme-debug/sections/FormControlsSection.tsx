@@ -49,17 +49,13 @@ export function FormControlsSection() {
                     borderColor="border-strong-01"
                     bg="background"
                     color="foreground"
-                    _hover={{ borderColor: "border-strong-02" }}
                     css={{
+                      "&:hover:not(:focus)": {
+                        borderColor: "var(--chakra-colors-border-strong-02)"
+                      },
                       "&:focus": {
-                        borderColor: "var(--chakra-colors-tertiary)",
-                        outline: "none !important",
-                        boxShadow: "none !important",
-                      },
-                      "&:focus-visible": {
-                        outline: "2px solid var(--chakra-colors-ring)",
-                        outlineOffset: "2px",
-                      },
+                        borderColor: "var(--chakra-colors-tertiary)"
+                      }
                     }}
                     value={textValue}
                     onChange={(e) => setTextValue(e.target.value)}
@@ -93,7 +89,7 @@ export function FormControlsSection() {
               </HStack>
 
               <Text fontSize="xs" color="foreground/60">
-                Tokens: <Code fontSize="xs">border-strong-01</Code> (default border), <Code fontSize="xs">border-strong-02</Code> (hover), <Code fontSize="xs">tertiary</Code> (focus border)
+                Tokens: <Code fontSize="xs">border-strong-01</Code> (default border), <Code fontSize="xs">border-strong-02</Code> (hover), <Code fontSize="xs">tertiary</Code> (focus border via --focus-color)
               </Text>
             </VStack>
           </Box>
@@ -113,17 +109,13 @@ export function FormControlsSection() {
                   bg="background"
                   color="foreground"
                   rows={3}
-                  _hover={{ borderColor: "border-strong-02" }}
                   css={{
+                    "&:hover:not(:focus)": {
+                      borderColor: "var(--chakra-colors-border-strong-02)"
+                    },
                     "&:focus": {
-                      borderColor: "var(--chakra-colors-tertiary)",
-                      outline: "none !important",
-                      boxShadow: "none !important",
-                    },
-                    "&:focus-visible": {
-                      outline: "2px solid var(--chakra-colors-ring)",
-                      outlineOffset: "2px",
-                    },
+                      borderColor: "var(--chakra-colors-tertiary)"
+                    }
                   }}
                   value={textareaValue}
                   onChange={(e) => setTextareaValue(e.target.value)}
@@ -171,10 +163,6 @@ export function FormControlsSection() {
                       color="foreground"
                       _hover={{ borderColor: "border-strong-02", bg: "tertiary/8" }}
                       css={{
-                        "&:focus": {
-                          outline: "none !important",
-                          boxShadow: "none !important",
-                        },
                         "&:focus-visible": {
                           outline: "2px solid var(--chakra-colors-ring)",
                           outlineOffset: "2px",
@@ -408,17 +396,13 @@ export function FormControlsSection() {
                   bg="background"
                   color="foreground"
                   maxW="200px"
-                  _hover={{ borderColor: "border-strong-02" }}
                   css={{
+                    "&:hover:not(:focus)": {
+                      borderColor: "var(--chakra-colors-border-strong-02)"
+                    },
                     "&:focus": {
-                      borderColor: "var(--chakra-colors-tertiary)",
-                      outline: "none !important",
-                      boxShadow: "none !important",
-                    },
-                    "&:focus-visible": {
-                      outline: "2px solid var(--chakra-colors-ring)",
-                      outlineOffset: "2px",
-                    },
+                      borderColor: "var(--chakra-colors-tertiary)"
+                    }
                   }}
                 />
               </VStack>
@@ -434,7 +418,8 @@ export function FormControlsSection() {
         <Box p={4}>
           <Text fontSize="sm" color="foreground/80" fontStyle="italic" lineHeight="1.7">
             <strong>Implementation:</strong> All form controls follow layer-aware border hierarchy: <Code fontSize="xs">border-strong-01</Code> (default),
-            <Code fontSize="xs">border-strong-02</Code> (hover), <Code fontSize="xs">tertiary</Code> (focus border).
+            <Code fontSize="xs">border-strong-02</Code> (hover), <Code fontSize="xs">tertiary</Code> (focus border via <Code fontSize="xs">--focus-color</Code>).
+            Focus rings use <Code fontSize="xs">--focus-ring-color</Code> with <Code fontSize="xs">ring</Code> token + <Code fontSize="xs">focusVisibleRing="outside"</Code> for keyboard-only visibility (WCAG compliant).
             Checked/selected states use <Code fontSize="xs">primary</Code> with <Code fontSize="xs">on-primary</Code> for contrast.
           </Text>
         </Box>

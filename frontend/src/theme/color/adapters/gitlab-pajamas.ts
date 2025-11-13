@@ -24,7 +24,7 @@
  * Uses subtle borders aesthetically, provides stronger variants for clarity.
  *
  * **Token Organization:**
- * - Section 1: Official mappings (with corrections from Phase 2.3.1)
+ * - Section 1: Official mappings (with contrast corrections)
  * - Section 2: Derived tokens (border hierarchy, interaction states, layer-03)
  * - Section 3: CineXplorer extensions (app-specific semantic colors)
  *
@@ -76,7 +76,7 @@ export function createPajamasAdapter(mode: "light" | "dark"): UnifiedTheme {
     // ===================================================================
     // Pajamas provides semantic section tokens and shadow-based elevation.
     //
-    // KEY CORRECTIONS (from Phase 2.3.1):
+    // KEY CORRECTIONS for contrast compliance:
     // - card: bg_section (neutral-50) NOT bg_muted (neutral-10, 1.02:1 contrast)
     // - border: border_strong (neutral-200/600) NOT border_default (1.17:1 contrast)
 
@@ -145,7 +145,7 @@ export function createPajamasAdapter(mode: "light" | "dark"): UnifiedTheme {
     const onTertiary = palette.fg_onEmphasis; // ADR-011: Canonical on-* naming (rarely used)
     const tertiaryForeground = onTertiary; // @deprecated: Use on-tertiary instead (ADR-011)
 
-    // ACCENT: @deprecated - Use tertiary instead (ADR-010 Phase 4 migration)
+    // ACCENT: @deprecated - Use tertiary instead (per ADR-010)
     // Maintained as alias during component migration period
     const accent = palette.fg_link_purple; // Same as tertiary
     const accentForeground = palette.fg_onEmphasis;
@@ -215,8 +215,10 @@ export function createPajamasAdapter(mode: "light" | "dark"): UnifiedTheme {
     // Input border: Use subtle border for form fields
     const input = palette.border_subtle;
 
-    // Focus ring: Use accent color for consistency
-    const ring = palette.fg_accent;
+    // Focus ring: Use tertiary (link purple) for thematic consistency (ADR-015)
+    // Per ADR-015: ring token maps to tertiary to maintain visual consistency
+    // across all focus indicators within each theme
+    const ring = palette.fg_link_purple;
 
     // ===================================================================
     // SECTION 3: CINEXPLORER EXTENSIONS (App-Specific)

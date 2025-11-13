@@ -836,7 +836,29 @@ import { Link } from "react-router-dom";
 
 ### Focus Indicators
 
-**Required for keyboard navigation:**
+**Focus indicators vary by component type** (per ADR-015):
+
+**Text Inputs (Input, Textarea, NumberInput): Border-only**
+
+```tsx
+<Input
+  borderColor="border-strong-01"
+  css={{
+    "&:hover:not(:focus)": {
+      borderColor: "var(--chakra-colors-border-strong-02)"
+    },
+    "&:focus": {
+      borderColor: "var(--chakra-colors-tertiary)"
+    }
+  }}
+/>
+```
+
+- **No outline ring** - Border color change to `tertiary` is sufficient
+- Matches industry patterns (GitHub, Google, Linear)
+- Meets WCAG 2.4.7 and 2.4.13 requirements
+
+**Buttons, Links, Select Dropdowns: Keyboard-only rings**
 
 ```tsx
 <Button
@@ -849,109 +871,64 @@ import { Link } from "react-router-dom";
   Submit
 </Button>
 ```
+
+- **Outline ring appears only for keyboard focus** (Tab key), not mouse clicks
+- CSS `:focus-visible` handles this automatically for button-like components
 
 **Token:**
 
-- `ring` - High-contrast focus indicator (meets WCAG 2.4.13 contrast requirements)
+- `ring` - Focus ring color (maps to `tertiary` in all themes for visual consistency)
 
 **Rules:**
 
-- Never remove focus indicators (`outline: none` is prohibited)
-- Always use `ring` token (not custom colors)
-- Minimum 2px outline width
-- 2px offset for clear separation
+- **Text inputs:** Use border color change only (no outline ring)
+- **Interactive elements:** Use `_focusVisible` for keyboard-only rings
+- Always use `ring` token (not custom colors) for outline rings
+- Minimum 2px outline width with 2px offset
+- Never add `_focus={{ outline: "none" }}` to Select.Trigger (creates specificity conflicts)
 
-**Focus Pattern Comparison:**
+**WCAG Compliance:**
 
-**Recommended: Outline Ring with Offset** (CineXplorer standard)
+- **WCAG 2.4.7 (Focus Visible - Level AA):** All components have visible focus indicators
+- **WCAG 2.4.13 (Focus Appearance - Level AAA):** Focus changes have ≥3:1 contrast, 2px minimum thickness
 
-```tsx
-<Input
-  borderWidth="1px"
-  borderColor="input"
-  _focus={{
-    borderColor: "tertiary",        // Optional: change border color
-    outline: "2px solid",
-    outlineColor: "ring",
-    outlineOffset: "2px",
-  }}
-/>
-```
-
-**Pros:**
-
-- ✅ No layout shift on focus (outline is outside element boundary)
-- ✅ Meets WCAG 2.4.13 (2px minimum thickness)
-- ✅ Clear visual separation from border
-- ✅ Works consistently across all component types
-- ✅ Industry standard (Ant Design, Bootstrap, US Web Design System)
-
-**Alternative: Border Width Increase** (not recommended)
-
-```tsx
-<Input
-  borderWidth="1px"
-  _focus={{
-    borderWidth: "2px",
-    borderColor: "ring",
-  }}
-/>
-```
-
-**Pros/Cons:**
-
-- ✅ Simpler CSS
-- ❌ Causes layout shift (element grows by 1px on all sides)
-- ❌ Requires careful spacing adjustments to prevent content jumps
-- ⚠️ Used by Material UI and Polaris, but less common overall
-
-**Recommendation:** Use outline ring pattern for consistent, shift-free focus indication.
-
-**Specifications (WCAG 2.4.13):**
-
-- **Ring width:** 2-3px (2px minimum, 3px better visibility)
-- **Ring offset:** 2px (creates clear separation from border)
-- **Ring color:** High contrast accent (`ring` token, typically maps to `primary`)
-- **Contrast:** ≥3:1 change between focused and unfocused states
-- **Border behavior:** Keep at 1px (does NOT increase)
-
-**Focus-Visible for Touch Devices:**
-
-Use `_focusVisible` to show focus rings only on keyboard navigation, not touch/click:
-
-```tsx
-<Button
-  _focusVisible={{
-    outline: "2px solid",
-    outlineColor: "ring",
-    outlineOffset: "2px",
-  }}
->
-  Submit
-</Button>
-```
-
-This improves mobile UX by hiding focus rings on touch interactions while maintaining keyboard accessibility.
+**See also:** ADR-015 (Use Border-Only Focus Indicators for Text Inputs)
 
 ### Form Inputs
 
-**Input field borders follow layer-aware hierarchy:**
+**Input fields use border-only focus indicators** (per ADR-015):
 
 ```tsx
 <Input
-  borderColor="border-strong-01"  // Match background layer
-  _hover={{ borderColor: "border-strong-02" }}
-  // Focus pattern under research - see ATOMIC-TASKS.md
+  borderColor="border-strong-01"
+  css={{
+    "&:hover:not(:focus)": {
+      borderColor: "var(--chakra-colors-border-strong-02)"
+    },
+    "&:focus": {
+      borderColor: "var(--chakra-colors-tertiary)"
+    }
+  }}
 />
 ```
+
+**Rationale:** Border color change provides sufficient focus indication for text inputs. Separate outline rings are
+unnecessary and visually redundant. This matches industry patterns (GitHub, Google, Linear) and meets WCAG 2.4.7 (Focus
+Visible) and 2.4.13 (Focus Appearance) requirements.
 
 **Tokens:**
 
 - Default border: `border-strong-01` (forms on background/layer-01), `border-strong-02` (forms on layer-02)
-- Hover border: Steps up one level (e.g., `border-strong-01` → `border-strong-02`)
-- Focus pattern: **Under research** - Current implementation uses CSS `:focus-visible` with `!important` to override Chakra defaults, but behavior needs validation against WCAG 2.1/2.2 standards
+- Hover border: `border-strong-02` (only applies when NOT focused - see `&:hover:not(:focus)` selector)
+- **Focus border:** `tertiary` (highly visible color change indicating focused state)
+- **No outline ring** needed for text inputs (Input, Textarea, NumberInput)
+
+**Note:** The `&:hover:not(:focus)` selector prevents hover styling from overriding focus styling when the cursor is
+inside a focused input field.
 
 **Deprecated:** `input` token (aliases to same value as `border`, provides no semantic value)
+
+**See also:** ADR-015 (Use Border-Only Focus Indicators for Text Inputs)
 
 ### Select/Dropdown (Custom Chakra Select)
 
@@ -970,10 +947,6 @@ This improves mobile UX by hiding focus rings on touch interactions while mainta
     color="foreground"
     _hover={{ borderColor: "border-strong-02", bg: "tertiary/8" }}
     css={{
-      "&:focus": {
-        outline: "none !important",
-        boxShadow: "none !important",
-      },
       "&:focus-visible": {
         outline: "2px solid var(--chakra-colors-ring)",
         outlineOffset: "2px",
@@ -1016,7 +989,7 @@ This improves mobile UX by hiding focus rings on touch interactions while mainta
 - **Trigger (the button):**
     - Border: `border-strong-01` (default) → `border-strong-02` (hover), no change on focus
     - Background: `background` (default) → `tertiary/8` (hover)
-    - Focus ring: `ring` (keyboard-only via CSS `:focus-visible`)
+    - **Focus ring:** `ring` (keyboard-only via CSS `:focus-visible`)
 - **Content (dropdown menu):**
     - Background: `muted` (provides subtle contrast from page background)
     - Border: `border-subtle-02` (subtle border for elevated muted surfaces)
@@ -1025,6 +998,15 @@ This improves mobile UX by hiding focus rings on touch interactions while mainta
     - Selected state: `bg: "tertiary"`, `color: "on-tertiary"` (clearly marked)
     - Hover (non-selected): `bg: "tertiary/12"` (12% opacity, more visible than 8%)
     - Hover (selected): Maintains `tertiary` + `on-tertiary` (no visual change)
+
+**Why Select uses keyboard-only rings (unlike text inputs):**
+
+Select.Trigger is button-like (not an editable text field), so CSS `:focus-visible` correctly matches only keyboard
+focus (Tab key), not mouse clicks. This is the desired behavior - no need for JavaScript workarounds. The `ring` token
+is mapped to `tertiary` in all themes for visual consistency with other focus indicators.
+
+**Note:** Do NOT add `_focus={{ outline: "none" }}` to Select.Trigger - this creates a CSS specificity conflict that
+prevents the keyboard ring from appearing.
 
 **Why not NativeSelect?**
 

@@ -1,5 +1,5 @@
 import { Box, Text, VStack, HStack, Button, Input } from "@chakra-ui/react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { TextLink } from "@/components/common/TextLink";
 
 /**
@@ -11,6 +11,26 @@ import { TextLink } from "@/components/common/TextLink";
  */
 export function UIElementTokensSection() {
   const [focusedElement, setFocusedElement] = useState<string | null>(null);
+  const [isKeyboardUser, setIsKeyboardUser] = useState(false);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Tab') {
+        setIsKeyboardUser(true);
+      }
+    };
+    const handleMouseDown = () => {
+      setIsKeyboardUser(false);
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('mousedown', handleMouseDown);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('mousedown', handleMouseDown);
+    };
+  }, []);
 
   return (
     <Box id="ui-elements" bg="layer-01" p={6} borderRadius="md" borderWidth="1px" borderColor="border-strong-01">
@@ -158,11 +178,13 @@ export function UIElementTokensSection() {
                   onFocus={() => setFocusedElement('input')}
                   onBlur={() => setFocusedElement(null)}
                   borderColor="border-strong-01"
-                  _focusVisible={{
-                    borderColor: "tertiary",
-                    outline: "2px solid",
-                    outlineColor: "ring",
-                    outlineOffset: "2px",
+                  css={{
+                    "&:hover:not(:focus)": {
+                      borderColor: "var(--chakra-colors-border-strong-02)"
+                    },
+                    "&:focus": {
+                      borderColor: "var(--chakra-colors-tertiary)"
+                    }
                   }}
                 />
               </Box>
@@ -179,26 +201,57 @@ export function UIElementTokensSection() {
                 </TextLink>
               </Box>
 
-              {/* Usage Pattern */}
-              <Box bg="layer-01" p={3} borderRadius="md" borderWidth="1px" borderColor="border-subtle-02">
-                <Text fontSize="xs" fontWeight="semibold" mb={2} color="foreground">
-                  Standard Focus Ring Pattern:
-                </Text>
-                <Box
-                  as="pre"
-                  fontSize="xs"
-                  color="on-muted"
-                  fontFamily="mono"
-                  whiteSpace="pre-wrap"
-                  overflowX="auto"
-                >
+              {/* Usage Patterns */}
+              <VStack align="stretch" gap={2}>
+                <Box bg="layer-01" p={3} borderRadius="md" borderWidth="1px" borderColor="border-subtle-02">
+                  <Text fontSize="xs" fontWeight="semibold" mb={2} color="foreground">
+                    Text Inputs (Input, Textarea):
+                  </Text>
+                  <Box
+                    as="pre"
+                    fontSize="xs"
+                    color="on-muted"
+                    fontFamily="mono"
+                    whiteSpace="pre-wrap"
+                    overflowX="auto"
+                  >
+{`css={{
+  "&:hover:not(:focus)": {
+    borderColor: "var(--chakra-colors-border-strong-02)"
+  },
+  "&:focus": {
+    borderColor: "var(--chakra-colors-tertiary)"
+  }
+}}`}
+                  </Box>
+                  <Text fontSize="xs" color="on-muted" mt={2}>
+                    Border change is sufficient focus indicator. No outline ring needed.
+                  </Text>
+                </Box>
+
+                <Box bg="layer-01" p={3} borderRadius="md" borderWidth="1px" borderColor="border-subtle-02">
+                  <Text fontSize="xs" fontWeight="semibold" mb={2} color="foreground">
+                    Buttons & Links (keyboard-only ring):
+                  </Text>
+                  <Box
+                    as="pre"
+                    fontSize="xs"
+                    color="on-muted"
+                    fontFamily="mono"
+                    whiteSpace="pre-wrap"
+                    overflowX="auto"
+                  >
 {`_focusVisible={{
   outline: "2px solid",
   outlineColor: "ring",
   outlineOffset: "2px",
 }}`}
+                  </Box>
+                  <Text fontSize="xs" color="on-muted" mt={2}>
+                    Ring appears only for keyboard navigation (Tab key), not mouse clicks.
+                  </Text>
                 </Box>
-              </Box>
+              </VStack>
             </VStack>
           </Box>
 

@@ -12,7 +12,7 @@ import {
   Button,
 } from "@chakra-ui/react";
 import { useFormik } from "formik";
-import { useNavigate, useLocation, Link } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import useAuthContext from "@/hooks/useAuthContext";
 import { useState, useEffect } from "react";
 import { FiMail, FiX } from "react-icons/fi";
@@ -22,6 +22,7 @@ import * as authService from "@/services/authService";
 import GoogleLogo from "@/assets/GoogleLogo";
 import GitHubLogo from "@/assets/GitHubLogo";
 import LoadingContent from "@/components/layout/LoadingContent";
+import { TextLink } from "@/components/common";
 
 const Login = () => {
   const authContext = useAuthContext();
@@ -464,9 +465,19 @@ const Login = () => {
                     }}
                     onBlur={formik.handleBlur}
                     borderWidth="1px"
-                  borderColor="input"
-                    _hover={{
-                      bg: "tertiary/5",
+                    borderColor="border-strong-01"
+                    bg="transparent"
+                    color="foreground"
+                    css={{
+                      "&:hover:not(:focus)": {
+                        borderColor: "var(--chakra-colors-border-strong-02)",
+                        backgroundColor: "color-mix(in srgb, var(--chakra-colors-tertiary) 8%, transparent)",
+                      },
+                      "&:focus": {
+                        borderColor: "var(--chakra-colors-tertiary)",
+                        backgroundColor: "transparent",
+                        outline: "none",
+                      },
                     }}
                   />
                   <Field.ErrorText
@@ -508,9 +519,19 @@ const Login = () => {
                     }}
                     onBlur={formik.handleBlur}
                     borderWidth="1px"
-                  borderColor="input"
-                    _hover={{
-                      bg: "tertiary/5",
+                    borderColor="border-strong-01"
+                    bg="transparent"
+                    color="foreground"
+                    css={{
+                      "&:hover:not(:focus)": {
+                        borderColor: "var(--chakra-colors-border-strong-02)",
+                        backgroundColor: "color-mix(in srgb, var(--chakra-colors-tertiary) 8%, transparent)",
+                      },
+                      "&:focus": {
+                        borderColor: "var(--chakra-colors-tertiary)",
+                        backgroundColor: "transparent",
+                        outline: "none",
+                      },
                     }}
                   />
                   <Field.ErrorText
@@ -542,15 +563,15 @@ const Login = () => {
                 <Checkbox.HiddenInput />
                 <Checkbox.Control
                   borderWidth="2px"
-                  borderColor="border"
-                  _hover={{
-                    bg: "tertiary/5",
+                  borderColor="border-strong-01"
+                  _hover={{ bg: "layer-hover-01" }}
+                  _checked={{
+                    bg: "primary",
+                    borderColor: "primary"
                   }}
-                  _focus={{
-                    borderColor: "ring",
-                    boxShadow: "0 0 0 1px var(--chakra-colors-ring)",
-                  }}
-                />
+                >
+                  <Checkbox.Indicator />
+                </Checkbox.Control>
                 <Checkbox.Label fontSize="16px">Remember Me</Checkbox.Label>
               </Checkbox.Root>
               <Button
@@ -606,9 +627,12 @@ const Login = () => {
                   _hover={{
                     bg: "tertiary/8",
                     borderColor: "tertiary",
-                    color: "tertiary",
                   }}
-                  _focus={{
+                  _active={{
+                    bg: "tertiary/12",
+                    borderColor: "tertiary",
+                  }}
+                  _focusVisible={{
                     outline: "2px solid",
                     outlineColor: "ring",
                     outlineOffset: "2px",
@@ -628,9 +652,12 @@ const Login = () => {
                   _hover={{
                     bg: "tertiary/8",
                     borderColor: "tertiary",
-                    color: "tertiary",
                   }}
-                  _focus={{
+                  _active={{
+                    bg: "tertiary/12",
+                    borderColor: "tertiary",
+                  }}
+                  _focusVisible={{
                     outline: "2px solid",
                     outlineColor: "ring",
                     outlineOffset: "2px",
@@ -643,23 +670,7 @@ const Login = () => {
 
               <Text mt="4px" textAlign="center" w="100%" fontSize="16px" color="foreground">
                 Don't have an account?{" "}
-                <Box
-                  asChild
-                  color="tertiary"
-                  textDecoration="underline"
-                  textDecorationThickness="2px"
-                  textUnderlineOffset="2px"
-                  _hover={{ color: "tertiary-hover" }}
-                  _focus={{
-                    outline: "2px solid",
-                    outlineColor: "ring",
-                    outlineOffset: "2px",
-                  }}
-                >
-                  <Link to={ROUTES.REGISTER}>
-                    Register
-                  </Link>
-                </Box>
+                <TextLink to={ROUTES.REGISTER}>Register</TextLink>
               </Text>
             </VStack>
           </form>

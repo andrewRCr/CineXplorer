@@ -2782,31 +2782,45 @@ prevents discovering token issues after cleanup, when fixing them is harder.
         backgrounds need layer-appropriate borders (border-strong-01), not generic "input" token. This affects Register/Login
         forms and requires strategy doc corrections (deferred to Task 7.2.e for comprehensive token cleanup).
 
-        - [x] **7.2.d.1 Fix Register.tsx form controls**
-            - **Form controls (3 inputs):** Fixed borders + hover + focus states ✓
-                - Changed: `borderColor="input"` → `borderColor="border-strong-01"` (layer-01 specific)
-                - Added hover: `borderColor: "border-strong-02"` (step up one level for visibility)
-                - Fixed focus: Added `borderColor: "tertiary"` + disabled Chakra defaults (boxShadow/outline)
-                - Pattern: Border changes tertiary on focus, `_focusVisible` adds 2px outline ring for keyboard only
+        - [x] **7.2.d.1 Fix Register.tsx form controls (updated per ADR-015)**
+            - **Form controls (3 inputs):** Updated to ADR-015 border-only focus pattern ✓
+                - Border: `borderColor="border-strong-01"` (layer-01 specific)
+                - Hover: `&:hover:not(:focus)` → `borderColor: "border-strong-02"` (prevents hover overriding focus)
+                - Focus: `borderColor: "tertiary"` (border-only, no outline rings per ADR-015)
+                - **Removed:** `_focusVisible` outline rings (text inputs use border-only indicators per ADR-015)
+                - **Removed:** `bg: "tertiary/5"` from hover (non-standard, not in strategy guide)
             - **Primary button hover:** Already fixed in 7.2.c session ✓ (opacity → primary-hover)
             - **Link:** Replaced Box/Link pattern with TextLink component ✓
                 - Now uses proper 1px underline with correct focus/hover states automatically
+            - **Bonus cleanup:** Fixed UIElementTokensSection.tsx unused variable (Leave It Cleaner protocol)
 
-        - [ ] **7.2.d.2 Fix Login.tsx form controls**
-            - **Email/Password inputs:** Same border/hover/focus fixes as Register (2 inputs)
-                - borderColor: "input" → "border-strong-01"
-                - Add hover: `_hover={{ borderColor: "border-strong-02" }}`
-                - Add borderColor: "tertiary" to focus state
-            - **Checkbox control:**
-                - Current: `borderColor="border"` (line 545) - generic token
-                - Should be: `borderColor="border-strong-01"` (layer-01 specific)
-                - Fix focus: Replace custom boxShadow (lines 549-552) with `_focusVisible` outline pattern
-            - **Link underline:** Fix "Don't have an account?" link
-                - Current: `textDecorationThickness="2px"` (line 650)
-                - Should be: `1px` (TextLink standard) - Replace Box/Link pattern with TextLink component
-            - **Z-index evaluation:** Lines 694, 722, 765 - `zIndex={1}` for IconButton positioning
-                - Evaluate if acceptable for element-level stacking or needs semantic token
-                - Document decision (likely acceptable - non-structural z-index)
+        - [x] **7.2.d.2 Fix Login.tsx form controls**
+            - **Email/Password inputs (username + password):** Updated to full modern pattern ✓
+                - Border: `borderColor="border-strong-01"` (was `"input"`)
+                - Hover: Border → `border-strong-02`, Background → `tertiary/8` (full pattern, beyond task scope)
+                - Focus: Border → `tertiary`, Background → `transparent`, `outline: "none"`
+                - Added explicit `bg="transparent"` and `color="foreground"` props
+            - **Checkbox control:** Fully modernized ✓
+                - Border: `borderColor="border-strong-01"` (was `"border"`)
+                - Removed custom `_hover` and `_focus` with boxShadow
+                - Added `_checked={{ bg: "primary", borderColor: "primary" }}`
+                - Added `_hover={{ bg: "layer-hover-01" }}` per strategy doc
+                - Added missing `<Checkbox.Indicator />` component
+            - **Link underline:** Fixed with TextLink component ✓
+                - Replaced Box/Link pattern with `<TextLink to={ROUTES.REGISTER}>Register</TextLink>`
+                - Now uses standard 1px underline (was 2px)
+                - Added TextLink import, removed unused Link import
+            - **Z-index evaluation:** Reviewed and documented ✓
+                - Lines 429, 705, 733, 776 - `zIndex={1}` on IconButtons and container Box
+                - **Decision:** Acceptable - element-level micro-stacking for alert close buttons
+                - Not structural z-index (navigation/modals) - inline values appropriate
+            - **Bonus fixes (discovered during review):**
+                - OAuth buttons (Google/GitHub): Fixed neutral outline button hover pattern
+                    - Removed incorrect `color: "tertiary"` from hover (should maintain foreground)
+                    - Added `_active={{ bg: "tertiary/12", borderColor: "tertiary" }}`
+                    - Changed `_focus` → `_focusVisible` (keyboard-only rings)
+                    - Pattern now matches ThemeDebug SemanticColorsSection reference
+                - Strategy doc: Updated Pattern 3 (Neutral Outline) to document correct hover behavior
 
         - [ ] **7.2.d.3 Fix ErrorBoundary.tsx**
             - **Outline button hover:** Line 125 - Add missing border/color changes

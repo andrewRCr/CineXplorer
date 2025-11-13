@@ -351,12 +351,15 @@ Buttons follow a visual pattern hierarchy (solid/outline/subtle/ghost) that's **
   _hover={{
     bg: "tertiary/8",           // Background tint
     borderColor: "tertiary",    // Border color shift
-    color: "tertiary"           // Text color shift
   }}
   _active={{
     bg: "tertiary/12",
     borderColor: "tertiary",
-    color: "tertiary"
+  }}
+  _focusVisible={{
+    outline: "2px solid",
+    outlineColor: "ring",
+    outlineOffset: "2px",
   }}
 >
   Cancel
@@ -365,10 +368,11 @@ Buttons follow a visual pattern hierarchy (solid/outline/subtle/ghost) that's **
 
 **Tokens:**
 
-- Border: `button-outline` (maps to neutral `border`, NOT primary)
+- Border: `button-outline` (maps to neutral `border-strong-01`, NOT primary)
 - Text: `on-button-outline` (maps to `foreground`)
-- Hover: Shifts to tertiary color (signals interactivity)
-- Active: Tertiary with stronger opacity
+- Hover: Background tint + border shifts to tertiary (signals interactivity)
+- Active: Stronger background opacity + tertiary border
+- **Text/icons do NOT change color** - maintains foreground for consistency
 
 **Examples:** "Cancel", "Back to Results", OAuth buttons (Google/GitHub), filter toggles
 
@@ -376,8 +380,8 @@ Buttons follow a visual pattern hierarchy (solid/outline/subtle/ghost) that's **
 OAuth, Cancel), not branded primary actions. The default name (`button-outline`) is the more common neutral variant.
 Explicit name (`button-outline-primary`) signals special branded case.
 
-**Critical:** Outline button hover requires ALL THREE property changes (bg, borderColor, color). Missing any property
-results in incomplete visual feedback. Common mistake: only adding background change without border/color shifts.
+**Critical:** Outline button hover requires border AND background changes. Text/icons stay the same color (foreground).
+Common mistake: changing text color to tertiary on hover - this creates visual inconsistency with button content.
 
 ### Pattern 4: Subtle Button (Medium-Low Emphasis)
 
@@ -901,12 +905,17 @@ import { Link } from "react-router-dom";
 ```tsx
 <Input
   borderColor="border-strong-01"
+  bg="transparent"  // For inputs on layer-01; use "background" for inputs on page background
+  color="foreground"
   css={{
     "&:hover:not(:focus)": {
-      borderColor: "var(--chakra-colors-border-strong-02)"
+      borderColor: "var(--chakra-colors-border-strong-02)",
+      backgroundColor: "color-mix(in srgb, var(--chakra-colors-tertiary) 8%, transparent)",
     },
     "&:focus": {
-      borderColor: "var(--chakra-colors-tertiary)"
+      borderColor: "var(--chakra-colors-tertiary)",
+      backgroundColor: "transparent",  // Or "var(--chakra-colors-background)" to maintain background
+      outline: "none",
     }
   }}
 />
@@ -919,9 +928,36 @@ Visible) and 2.4.13 (Focus Appearance) requirements.
 **Tokens:**
 
 - Default border: `border-strong-01` (forms on background/layer-01), `border-strong-02` (forms on layer-02)
-- Hover border: `border-strong-02` (only applies when NOT focused - see `&:hover:not(:focus)` selector)
+- Hover border: `border-strong-02` (stepped up one level for visibility)
+- Hover background: `tertiary` at 8% opacity (signals interactivity)
 - **Focus border:** `tertiary` (highly visible color change indicating focused state)
+- **Focus background:** Transparent or original background (removes hover noise while typing)
 - **No outline ring** needed for text inputs (Input, Textarea, NumberInput)
+
+**Interaction States:**
+
+- **Default:** Transparent background, border-strong-01
+- **Hover (not focused):** Background tint (tertiary/8%), border-strong-02 (button-like feedback)
+- **Focus (typing):** Border changes to tertiary, background clears (minimal noise for typing)
+- **Focus + hover:** Focus state takes precedence (`:hover:not(:focus)` prevents override)
+
+**Why background change on hover?**
+Consistent with Material Design 3 interaction patterns. Signals "this is interactive" like buttons. Background clears
+on focus to reduce visual noise while typing. Balances interactivity feedback with typing cleanliness.
+
+**CSS Variable Syntax:**
+
+The `css` prop requires explicit CSS variable syntax because it passes raw CSS-in-JS to emotion/styled-system:
+
+- Use `var(--chakra-colors-tertiary)` (not `"tertiary"`)
+- Use `color-mix(in srgb, var(--chakra-colors-tertiary) 8%, transparent)` for opacity overlays
+- Chakra style props (`_hover`, `bg`, `color`) auto-convert tokens - no `var()` needed
+
+**Chakra Default Outline:**
+
+Chakra inputs have a default focus outline. We disable it with `outline: "none"` for border-only indicators per ADR-015.
+**Alternative approach:** To match Chakra's default outline with our semantic color, use
+`outline: "2px solid var(--chakra-colors-tertiary)"` (without `outlineOffset`). We chose border-only for cleaner appearance.
 
 **Note:** The `&:hover:not(:focus)` selector prevents hover styling from overriding focus styling when the cursor is
 inside a focused input field.

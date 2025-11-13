@@ -109,19 +109,17 @@ const Register = () => {
                     onBlur={formik.handleBlur}
                     borderWidth="1px"
                     borderColor="border-strong-01"
-                    _hover={{
-                      bg: "tertiary/5",
-                      borderColor: "border-strong-02",
-                    }}
+                    bg="transparent"
+                    color="foreground"
                     css={{
+                      "&:hover:not(:focus)": {
+                        borderColor: "var(--chakra-colors-border-strong-02)",
+                        backgroundColor: "color-mix(in srgb, var(--chakra-colors-tertiary) 8%, transparent)",
+                      },
                       "&:focus": {
                         borderColor: "var(--chakra-colors-tertiary)",
-                        outline: "none !important",
-                        boxShadow: "none !important",
-                      },
-                      "&:focus-visible": {
-                        outline: "2px solid var(--chakra-colors-ring)",
-                        outlineOffset: "2px",
+                        backgroundColor: "transparent",
+                        outline: "none",
                       },
                     }}
                   />
@@ -161,19 +159,17 @@ const Register = () => {
                     onBlur={formik.handleBlur}
                     borderWidth="1px"
                     borderColor="border-strong-01"
-                    _hover={{
-                      bg: "tertiary/5",
-                      borderColor: "border-strong-02",
-                    }}
+                    bg="transparent"
+                    color="foreground"
                     css={{
+                      "&:hover:not(:focus)": {
+                        borderColor: "var(--chakra-colors-border-strong-02)",
+                        backgroundColor: "color-mix(in srgb, var(--chakra-colors-tertiary) 8%, transparent)",
+                      },
                       "&:focus": {
                         borderColor: "var(--chakra-colors-tertiary)",
-                        outline: "none !important",
-                        boxShadow: "none !important",
-                      },
-                      "&:focus-visible": {
-                        outline: "2px solid var(--chakra-colors-ring)",
-                        outlineOffset: "2px",
+                        backgroundColor: "transparent",
+                        outline: "none",
                       },
                     }}
                   />
@@ -213,19 +209,17 @@ const Register = () => {
                     onBlur={formik.handleBlur}
                     borderWidth="1px"
                     borderColor="border-strong-01"
-                    _hover={{
-                      bg: "tertiary/5",
-                      borderColor: "border-strong-02",
-                    }}
+                    bg="transparent"
+                    color="foreground"
                     css={{
+                      "&:hover:not(:focus)": {
+                        borderColor: "var(--chakra-colors-border-strong-02)",
+                        backgroundColor: "color-mix(in srgb, var(--chakra-colors-tertiary) 8%, transparent)",
+                      },
                       "&:focus": {
                         borderColor: "var(--chakra-colors-tertiary)",
-                        outline: "none !important",
-                        boxShadow: "none !important",
-                      },
-                      "&:focus-visible": {
-                        outline: "2px solid var(--chakra-colors-ring)",
-                        outlineOffset: "2px",
+                        backgroundColor: "transparent",
+                        outline: "none",
                       },
                     }}
                   />

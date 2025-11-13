@@ -10,7 +10,6 @@ interface NavBarSearchProps {
 
 const NavBarSearch = ({ onSearch }: NavBarSearchProps = {}) => {
   const [query, setQuery] = useState("");
-  const [isHovered, setIsHovered] = useState(false);
   const navigate = useNavigate();
 
   const handleSearch = () => {
@@ -36,23 +35,19 @@ const NavBarSearch = ({ onSearch }: NavBarSearchProps = {}) => {
       alignItems="center"
       maxW="300px"
       w="100%"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
       borderRadius="md"
       border="1px solid"
       borderColor="border-strong-01"
-      backgroundColor={isHovered ? "tertiary/8" : "transparent"}
+      backgroundColor="transparent"
       transition="all 0.2s ease"
       css={{
+        "&:hover:not(:focus-within)": {
+          borderColor: "var(--chakra-colors-border-strong-02)",
+          backgroundColor: "color-mix(in srgb, var(--chakra-colors-tertiary) 8%, transparent)",
+        },
         "&:focus-within": {
           borderColor: "var(--chakra-colors-tertiary)",
           backgroundColor: "transparent",
-          outline: "none !important",
-          boxShadow: "none !important",
-        },
-        "&:has(*:focus-visible)": {
-          outline: "2px solid var(--chakra-colors-ring)",
-          outlineOffset: "2px",
         },
       }}
     >
@@ -71,9 +66,6 @@ const NavBarSearch = ({ onSearch }: NavBarSearchProps = {}) => {
           boxShadow: "none",
           outline: "none",
         }}
-        _focusVisible={{
-          // This forces the parent's :has selector to work
-        }}
         _hover={{}}
       />
       <IconButton
@@ -86,6 +78,7 @@ const NavBarSearch = ({ onSearch }: NavBarSearchProps = {}) => {
         border="none"
         _hover={{
           backgroundColor: "transparent",
+          color: query.trim() ? "tertiary" : undefined,
         }}
         _active={{
           backgroundColor: "transparent",

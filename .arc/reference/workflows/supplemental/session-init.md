@@ -75,15 +75,23 @@ more value in having complete context upfront than discovering missing rules mid
    - Documentation update protocol
    - **Why full read needed**: Defines workflow that governs ALL task execution - can't avoid violations if rules unknown
 
-5. `.arc/reference/constitution/DEVELOPMENT-RULES.md` - **MUST READ IN FULL**
+5. `.arc/reference/strategies/STRATEGY-INDEX.md` - **MUST READ IN FULL**
+   - Index of available strategy documents by domain
+   - Quick reference for where codified guidance exists
+   - Protocol for checking strategies before implementation
+   - **Why full read needed**: Establishes what guidance exists before reading rules about using it
+
+6. `.arc/reference/constitution/DEVELOPMENT-RULES.md` - **MUST READ IN FULL**
    - Quality gate requirements (zero tolerance policies)
    - Commit standards and protocols
    - AI collaboration rules (CURRENT-SESSION control, manual commit control)
+   - Verification Protocol (never assume, always verify)
+   - Strategy Document Protocol (consult guidance before implementing)
    - Leave It Cleaner protocol
    - Test-first protocol
    - **Why full read needed**: Behavioral constraints - can't avoid violating rules you haven't read
 
-6. `.arc/reference/QUICK-REFERENCE.md` - **MUST READ IN FULL**
+7. `.arc/reference/QUICK-REFERENCE.md` - **MUST READ IN FULL**
    - Environment-specific command patterns
    - Quality gate commands
    - Path context and common workflows
@@ -101,9 +109,9 @@ State your understanding to confirm successful initialization:
 - **Runtime status**: Docker containers (5 running: backend, frontend, redis, caddy, postgres)
 - **Tool availability**: venv tools available at `.venv-backend/bin/` (ruff, pytest)
 - **Quality policy**: Zero-tolerance for linting violations, 100% test pass rate
-- **Reference versions**: DEVELOPMENT-RULES v2.7 (hash: h3n5p8r2), QUICK-REFERENCE v1.1
-- **Documents read in full**: Confirm that AGENTS, CURRENT-SESSION, DEVELOPMENT-RULES, 3-process-task-loop, and
-  QUICK-REFERENCE were read completely (not skimmed)
+- **Reference versions**: DEVELOPMENT-RULES v2.13 (hash: k7m3p9w2), QUICK-REFERENCE v1.1
+- **Documents read in full**: Confirm that AGENTS, CURRENT-SESSION, 3-process-task-loop, STRATEGY-INDEX,
+  DEVELOPMENT-RULES, and QUICK-REFERENCE were read completely (not skimmed)
 - **Task list context loaded**: Confirm that task list overview + current task section were read (from CURRENT-SESSION)
 
 ### 4. Ready to Proceed

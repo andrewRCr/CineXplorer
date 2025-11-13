@@ -1,6 +1,6 @@
 # Development Rules - CineXplorer
 
-**Version:** 2.11 | **Updated:** 2025-10-31 | **Hash:** `k7m3p9w2`
+**Version:** 2.13 | **Updated:** 2025-11-13 | **Hash:** `k7m3p9w2`
 
 Core development rules and quality standards for CineXplorer. These rules are **non-negotiable** and must be followed
 by all contributors, including AI assistants.
@@ -101,6 +101,84 @@ Quality issues discovered during work should be addressed, not ignored.
 - **AI NEVER updates CURRENT-SESSION.md** without explicit user instruction
 - CURRENT-SESSION.md is a handoff document only updated at session end when instructed
 - AI should report changes and progress, but user decides when/how session docs are updated
+
+## Verification Protocol
+
+**Principle:** Wrong information is worse than no information - it wastes time and breaks trust.
+
+**When uncertain about implementation details, file locations, or existing content:**
+
+1. **Search first:** Use Grep/Glob/Read to verify from source
+2. **Ask clarifying questions:** When you understand the request but design decisions need input
+3. **Stop and ask:** If still unclear after searching
+
+**Never generate or assume:**
+
+- File paths or directory structure (use Glob)
+- What code "probably does" (read the actual implementation)
+- Task phase content or summaries (read the task list)
+- Implementation approaches without understanding requirements
+
+**On clarifying questions:**
+When you mostly understand a request but see ambiguities, edge cases, or design alternatives that need decisions - ask.
+Examples: "Should this handle empty states?" "Do we want this cached?" "Which takes precedence if both conditions are
+true?" These questions improve outcomes for both code and documentation work.
+
+**Why this matters:** Made-up content in documentation misleads future work. Assumed behavior in code wastes debugging
+time. Verification takes seconds; fixing wrong assumptions takes hours.
+
+## Strategy Document Protocol
+
+**Before implementing work in codified domains, consult the relevant strategy document.**
+
+See [STRATEGY-INDEX.md](../strategies/STRATEGY-INDEX.md) for complete list of available strategies (read every session
+during initialization).
+
+**Process:**
+
+1. Identify if your work touches a domain with codified guidance (theming, auth, testing, layout, etc.)
+2. Grep the strategy doc for your specific topic (e.g., `grep -i "form controls" strategy-semantic-tokens.md`)
+3. Read relevant section(s) before implementing
+4. Follow documented patterns and token usage
+
+**When uncertain if strategy applies:** Ask. "Does this work touch [domain] where we have strategy guidance?"
+
+**For large multi-topic strategies** (e.g., semantic-tokens): Search for specific component/pattern rather than reading
+entire document.
+
+**Why this matters:** Strategy docs codify decisions, patterns, and token systems. Following them ensures consistency and
+prevents rework when non-standard approaches are caught in review.
+
+## Session Context Management
+
+**Principle:** Work quality must never be compromised due to token usage concerns. Session handoffs are managed by the user.
+
+**Protocol:**
+
+- Work at full specification until **~140,000 tokens used** (start monitoring context)
+- At ~150k tokens, assess situation:
+  1. Complete current work item (don't stop mid-edit)
+  2. Evaluate remaining work scope
+  3. **Stop and ask user** how to proceed: "We're at ~150k tokens. [Summary of completed work]. [Remaining work
+  description with estimated token cost]. How should we proceed?"
+  4. User decides: continue, commit completed work then continue, or begin handoff
+- **Never** degrade work quality or change approach due to token pressure
+- **Never** make "efficiency" tradeoffs based on context window size
+
+**Ideal end-of-session workflow:**
+
+1. Use atomic-commit workflow to commit all **complete** work
+2. Leave any **partial** work uncommitted
+3. Perform session handoff documenting partial work state
+
+**Backup workflow** (when insufficient tokens remain for commits):
+
+- Session handoff captures commit-message-level notes
+- Next session executes commits from documented state
+- Less ideal but functional fallback
+
+**Why this matters:** Incomplete work done properly with good handoff is better than complete work done sloppily.
+Token management is user responsibility - AI focuses on maintaining work quality standards.
 
 ## Task Management Protocol
 

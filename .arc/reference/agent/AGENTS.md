@@ -52,6 +52,10 @@ demonstrating disciplined software engineering practices, comprehensive testing,
 - **Limit scope** - Avoid global mutations or widespread changes without explicit approval
 - **One subtask at a time** - Complete tasks incrementally, await approval between subtasks
 - **Manual commit control** - AI NEVER initiates commits without explicit user approval or instruction
+- **Verify before asserting** - Never guess file paths, implementation details, or content. Use Grep/Glob/Read
+  to verify, or ask clarifying questions when uncertain. See DEVELOPMENT-RULES Verification Protocol.
+- **Check strategy guidance** - Before implementing in codified domains (theming, auth, testing, layout), grep
+  the relevant strategy doc. See STRATEGY-INDEX.md for available guidance.
 - **Respect layered architecture** - Backend: business logic belongs in Service layer (presets, filtering,
   calculations), NOT in API routes (HTTP concerns only). See DEVELOPMENT-RULES.md for details.
 

@@ -1,5 +1,5 @@
 import { Box, Text, VStack, HStack, Button, Input } from "@chakra-ui/react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { TextLink } from "@/components/common/TextLink";
 
 /**
@@ -11,26 +11,6 @@ import { TextLink } from "@/components/common/TextLink";
  */
 export function UIElementTokensSection() {
   const [focusedElement, setFocusedElement] = useState<string | null>(null);
-  const [isKeyboardUser, setIsKeyboardUser] = useState(false);
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Tab') {
-        setIsKeyboardUser(true);
-      }
-    };
-    const handleMouseDown = () => {
-      setIsKeyboardUser(false);
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('mousedown', handleMouseDown);
-
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('mousedown', handleMouseDown);
-    };
-  }, []);
 
   return (
     <Box id="ui-elements" bg="layer-01" p={6} borderRadius="md" borderWidth="1px" borderColor="border-strong-01">

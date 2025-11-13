@@ -51,10 +51,13 @@ export function FormControlsSection() {
                     color="foreground"
                     css={{
                       "&:hover:not(:focus)": {
-                        borderColor: "var(--chakra-colors-border-strong-02)"
+                        borderColor: "var(--chakra-colors-border-strong-02)",
+                        backgroundColor: "color-mix(in srgb, var(--chakra-colors-tertiary) 8%, transparent)",
                       },
                       "&:focus": {
-                        borderColor: "var(--chakra-colors-tertiary)"
+                        borderColor: "var(--chakra-colors-tertiary)",
+                        backgroundColor: "var(--chakra-colors-background)",
+                        outline: "none",
                       }
                     }}
                     value={textValue}
@@ -111,10 +114,13 @@ export function FormControlsSection() {
                   rows={3}
                   css={{
                     "&:hover:not(:focus)": {
-                      borderColor: "var(--chakra-colors-border-strong-02)"
+                      borderColor: "var(--chakra-colors-border-strong-02)",
+                      backgroundColor: "color-mix(in srgb, var(--chakra-colors-tertiary) 8%, transparent)",
                     },
                     "&:focus": {
-                      borderColor: "var(--chakra-colors-tertiary)"
+                      borderColor: "var(--chakra-colors-tertiary)",
+                      backgroundColor: "var(--chakra-colors-background)",
+                      outline: "none",
                     }
                   }}
                   value={textareaValue}

@@ -22,6 +22,12 @@
     - Validate our current approach: border color change (all focus) + outline ring (keyboard-only via :focus-visible)
     - Document findings and confirm our implementation meets standards
     - **Context:** Currently using `!important` CSS to disable Chakra defaults - ensure this doesn't break accessibility
+    - **IMPORTANT:** If research findings require pattern changes, must update:
+        - `frontend/src/pages/user/Register.tsx` (3 inputs use current pattern)
+        - `frontend/src/pages/user/Login.tsx` (2 inputs + checkbox)
+        - `frontend/src/pages/dev/theme-debug/sections/FormControlsSection.tsx` (Input, Textarea, NumberInput, Select)
+        - `.arc/reference/strategies/project/style/strategy-semantic-tokens.md` (Form Inputs + Select sections)
+        - Any other form controls discovered via grep
 
 - [ ] Investigate GitLab Pajamas neutral outline border contrast
     - Current: border-strong-01 = #bfbfc3 (2.1:1 on white, below WCAG 3:1)

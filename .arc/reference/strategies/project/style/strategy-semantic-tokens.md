@@ -935,27 +935,23 @@ This improves mobile UX by hiding focus rings on touch interactions while mainta
 
 ### Form Inputs
 
-**Input field borders:**
+**Input field borders follow layer-aware hierarchy:**
 
 ```tsx
 <Input
-  borderColor="input"
-  _hover={{ borderColor: "border-strong-01" }}
-  _focus={{
-    borderColor: "tertiary",
-    outline: "2px solid",
-    outlineColor: "ring",
-    outlineOffset: "2px",
-  }}
+  borderColor="border-strong-01"  // Match background layer
+  _hover={{ borderColor: "border-strong-02" }}
+  // Focus pattern under research - see ATOMIC-TASKS.md
 />
 ```
 
 **Tokens:**
 
-- Default border: `input`
-- Hover border: `border-strong-01` (or stay with `input`)
-- Focus border: `tertiary` (signals active state)
-- Focus ring: `ring` (accessibility indicator)
+- Default border: `border-strong-01` (forms on background/layer-01), `border-strong-02` (forms on layer-02)
+- Hover border: Steps up one level (e.g., `border-strong-01` → `border-strong-02`)
+- Focus pattern: **Under research** - Current implementation uses CSS `:focus-visible` with `!important` to override Chakra defaults, but behavior needs validation against WCAG 2.1/2.2 standards
+
+**Deprecated:** `input` token (aliases to same value as `border`, provides no semantic value)
 
 ### Select/Dropdown (Custom Chakra Select)
 
@@ -969,15 +965,19 @@ This improves mobile UX by hiding focus rings on touch interactions while mainta
   positioning={{ placement: "bottom-start", gutter: 2 }}
 >
   <Select.Trigger
-    borderColor="input"
+    borderColor="border-strong-01"
     bg="background"
     color="foreground"
-    _hover={{ borderColor: "border-strong-01", bg: "tertiary/8" }}
-    _focus={{
-      borderColor: "tertiary",
-      outline: "2px solid",
-      outlineColor: "ring",
-      outlineOffset: "2px",
+    _hover={{ borderColor: "border-strong-02", bg: "tertiary/8" }}
+    css={{
+      "&:focus": {
+        outline: "none !important",
+        boxShadow: "none !important",
+      },
+      "&:focus-visible": {
+        outline: "2px solid var(--chakra-colors-ring)",
+        outlineOffset: "2px",
+      },
     }}
   >
     <Select.ValueText placeholder="Select option" />
@@ -986,7 +986,7 @@ This improves mobile UX by hiding focus rings on touch interactions while mainta
   <Select.Positioner>
     <Select.Content
       bg="muted"
-      borderColor="border"
+      borderColor="border-subtle-02"
       color="foreground"
     >
       {collection.items.map((item) => {
@@ -1014,12 +1014,12 @@ This improves mobile UX by hiding focus rings on touch interactions while mainta
 **Tokens:**
 
 - **Trigger (the button):**
-    - Border: `input` (default) → `border-strong-01` (hover) → `tertiary` (focus)
+    - Border: `border-strong-01` (default) → `border-strong-02` (hover), no change on focus
     - Background: `background` (default) → `tertiary/8` (hover)
-    - Focus ring: `ring`
+    - Focus ring: `ring` (keyboard-only via CSS `:focus-visible`)
 - **Content (dropdown menu):**
     - Background: `muted` (provides subtle contrast from page background)
-    - Border: `border`
+    - Border: `border-subtle-02` (subtle border for elevated muted surfaces)
     - Text: `foreground`
 - **Items (options):**
     - Selected state: `bg: "tertiary"`, `color: "on-tertiary"` (clearly marked)

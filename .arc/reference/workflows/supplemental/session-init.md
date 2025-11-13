@@ -109,7 +109,7 @@ State your understanding to confirm successful initialization:
 - **Runtime status**: Docker containers (5 running: backend, frontend, redis, caddy, postgres)
 - **Tool availability**: venv tools available at `.venv-backend/bin/` (ruff, pytest)
 - **Quality policy**: Zero-tolerance for linting violations, 100% test pass rate
-- **Reference versions**: DEVELOPMENT-RULES v2.13 (hash: k7m3p9w2), QUICK-REFERENCE v1.1
+- **Reference versions**: DEVELOPMENT-RULES v2.14 (hash: k7m3p9w2), QUICK-REFERENCE v1.1
 - **Documents read in full**: Confirm that AGENTS, CURRENT-SESSION, 3-process-task-loop, STRATEGY-INDEX,
   DEVELOPMENT-RULES, and QUICK-REFERENCE were read completely (not skimmed)
 - **Task list context loaded**: Confirm that task list overview + current task section were read (from CURRENT-SESSION)

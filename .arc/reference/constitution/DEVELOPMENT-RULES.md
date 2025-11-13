@@ -1,6 +1,6 @@
 # Development Rules - CineXplorer
 
-**Version:** 2.13 | **Updated:** 2025-11-13 | **Hash:** `k7m3p9w2`
+**Version:** 2.14 | **Updated:** 2025-11-13 | **Hash:** `k7m3p9w2`
 
 Core development rules and quality standards for CineXplorer. These rules are **non-negotiable** and must be followed
 by all contributors, including AI assistants.
@@ -179,6 +179,29 @@ prevents rework when non-standard approaches are caught in review.
 
 **Why this matters:** Incomplete work done properly with good handoff is better than complete work done sloppily.
 Token management is user responsibility - AI focuses on maintaining work quality standards.
+
+## Core Document Reference Protocol
+
+Core documents (QUICK-REFERENCE, DEVELOPMENT-RULES) are read each session but should be re-checked when triggered.
+
+**QUICK-REFERENCE - Re-check when:**
+
+- Bash command fails with path/environment errors (ENOENT, "no such file or directory", "config not found")
+- About to run quality gate commands and uncertain which tool/path to use (Docker vs host? Which flags?)
+- Working directory context feels uncertain or commands aren't working as expected
+
+**DEVELOPMENT-RULES - Re-check when:**
+
+- Uncertainty about quality standards (what's the zero-tolerance policy? which gates are required?)
+- Token usage approaching 150k (verify Session Context Management protocol)
+- Confusion about verification, strategy, or task management protocols
+
+**Don't re-check for:**
+
+- Operations with dedicated workflow docs (commit operations, session handoffs, etc; workflows are authoritative, not DEVELOPMENT-RULES)
+
+**Why this matters:** Session-start reading establishes baseline context. Trigger-based re-checking ensures accuracy
+when specific patterns/commands are needed. Active verification beats passive recall, especially later in long sessions.
 
 ## Task Management Protocol
 

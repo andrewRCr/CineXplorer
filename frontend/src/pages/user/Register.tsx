@@ -1,5 +1,6 @@
 import { ROUTES } from "@/constants/routes";
-import { Box, Button, Field, Input, VStack, Text } from "@chakra-ui/react";
+import { Box, Button, Field, VStack, Text } from "@chakra-ui/react";
+import { StyledInput } from "@/components/common";
 import { useFormik } from "formik";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
@@ -99,7 +100,7 @@ const Register = () => {
                   >
                     Email Address
                   </Field.Label>
-                  <Input
+                  <StyledInput
                     autoFocus
                     id="email"
                     name="email"
@@ -107,21 +108,6 @@ const Register = () => {
                     value={formik.values.email}
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
-                    borderWidth="1px"
-                    borderColor="border-strong-01"
-                    bg="transparent"
-                    color="foreground"
-                    css={{
-                      "&:hover:not(:focus)": {
-                        borderColor: "var(--chakra-colors-border-strong-02)",
-                        backgroundColor: "color-mix(in srgb, var(--chakra-colors-tertiary) 8%, transparent)",
-                      },
-                      "&:focus": {
-                        borderColor: "var(--chakra-colors-tertiary)",
-                        backgroundColor: "transparent",
-                        outline: "none",
-                      },
-                    }}
                   />
                   <Field.ErrorText
                     fontSize="14px"
@@ -151,28 +137,13 @@ const Register = () => {
                   >
                     CineXplorer Username
                   </Field.Label>
-                  <Input
+                  <StyledInput
                     id="username"
                     name="username"
                     type="text"
                     value={formik.values.username}
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
-                    borderWidth="1px"
-                    borderColor="border-strong-01"
-                    bg="transparent"
-                    color="foreground"
-                    css={{
-                      "&:hover:not(:focus)": {
-                        borderColor: "var(--chakra-colors-border-strong-02)",
-                        backgroundColor: "color-mix(in srgb, var(--chakra-colors-tertiary) 8%, transparent)",
-                      },
-                      "&:focus": {
-                        borderColor: "var(--chakra-colors-tertiary)",
-                        backgroundColor: "transparent",
-                        outline: "none",
-                      },
-                    }}
                   />
                   <Field.ErrorText
                     fontSize="14px"
@@ -202,28 +173,13 @@ const Register = () => {
                   >
                     Password
                   </Field.Label>
-                  <Input
+                  <StyledInput
                     id="password"
                     name="password"
                     type="password"
                     value={formik.values.password}
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
-                    borderWidth="1px"
-                    borderColor="border-strong-01"
-                    bg="transparent"
-                    color="foreground"
-                    css={{
-                      "&:hover:not(:focus)": {
-                        borderColor: "var(--chakra-colors-border-strong-02)",
-                        backgroundColor: "color-mix(in srgb, var(--chakra-colors-tertiary) 8%, transparent)",
-                      },
-                      "&:focus": {
-                        borderColor: "var(--chakra-colors-tertiary)",
-                        backgroundColor: "transparent",
-                        outline: "none",
-                      },
-                    }}
                   />
                   <Field.ErrorText
                     fontSize="14px"

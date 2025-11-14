@@ -1,6 +1,6 @@
-import { Box, Text, VStack, HStack, Button, Input } from "@chakra-ui/react";
+import { Box, Text, VStack, HStack, Button } from "@chakra-ui/react";
 import { useState } from "react";
-import { TextLink } from "@/components/common/TextLink";
+import { TextLink, StyledInput } from "@/components/common";
 
 /**
  * UI Element Tokens Section - Foundational Structural Tokens
@@ -153,19 +153,10 @@ export function UIElementTokensSection() {
               {/* Input Example */}
               <Box>
                 <Text fontSize="xs" fontWeight="semibold" mb={2} color="on-muted">Input field with focus ring:</Text>
-                <Input
+                <StyledInput
                   placeholder="Tab to focus this input"
                   onFocus={() => setFocusedElement('input')}
                   onBlur={() => setFocusedElement(null)}
-                  borderColor="border-strong-01"
-                  css={{
-                    "&:hover:not(:focus)": {
-                      borderColor: "var(--chakra-colors-border-strong-02)"
-                    },
-                    "&:focus": {
-                      borderColor: "var(--chakra-colors-tertiary)"
-                    }
-                  }}
                 />
               </Box>
 

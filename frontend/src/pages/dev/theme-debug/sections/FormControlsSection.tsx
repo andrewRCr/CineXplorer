@@ -1,5 +1,6 @@
-import { Box, Text, VStack, HStack, Input, Textarea, Code, Checkbox, RadioGroup, Switch, Select, createListCollection } from "@chakra-ui/react";
+import { Box, Text, VStack, HStack, Input, Code, Checkbox, RadioGroup, Switch, Select, createListCollection } from "@chakra-ui/react";
 import { useState } from "react";
+import { StyledInput, StyledTextarea } from "@/components/common";
 
 /**
  * Form Controls Section - Comprehensive Form Input Patterns
@@ -44,22 +45,8 @@ export function FormControlsSection() {
                 {/* Default */}
                 <VStack align="start" gap={1} flex="1" minW="200px">
                   <Text fontSize="sm" fontWeight="medium">Default:</Text>
-                  <Input
+                  <StyledInput
                     placeholder="Enter text"
-                    borderColor="border-strong-01"
-                    bg="background"
-                    color="foreground"
-                    css={{
-                      "&:hover:not(:focus)": {
-                        borderColor: "var(--chakra-colors-border-strong-02)",
-                        backgroundColor: "color-mix(in srgb, var(--chakra-colors-tertiary) 8%, transparent)",
-                      },
-                      "&:focus": {
-                        borderColor: "var(--chakra-colors-tertiary)",
-                        backgroundColor: "var(--chakra-colors-background)",
-                        outline: "none",
-                      }
-                    }}
                     value={textValue}
                     onChange={(e) => setTextValue(e.target.value)}
                   />
@@ -68,11 +55,8 @@ export function FormControlsSection() {
                 {/* Disabled */}
                 <VStack align="start" gap={1} flex="1" minW="200px">
                   <Text fontSize="sm" fontWeight="medium">Disabled:</Text>
-                  <Input
+                  <StyledInput
                     placeholder="Disabled input"
-                    borderColor="border-strong-01"
-                    bg="background"
-                    color="foreground"
                     disabled
                   />
                 </VStack>
@@ -106,23 +90,9 @@ export function FormControlsSection() {
               {/* Default */}
               <VStack align="start" gap={1}>
                 <Text fontSize="sm" fontWeight="medium">Default:</Text>
-                <Textarea
+                <StyledTextarea
                   placeholder="Enter multiline text"
-                  borderColor="border-strong-01"
-                  bg="background"
-                  color="foreground"
                   rows={3}
-                  css={{
-                    "&:hover:not(:focus)": {
-                      borderColor: "var(--chakra-colors-border-strong-02)",
-                      backgroundColor: "color-mix(in srgb, var(--chakra-colors-tertiary) 8%, transparent)",
-                    },
-                    "&:focus": {
-                      borderColor: "var(--chakra-colors-tertiary)",
-                      backgroundColor: "var(--chakra-colors-background)",
-                      outline: "none",
-                    }
-                  }}
                   value={textareaValue}
                   onChange={(e) => setTextareaValue(e.target.value)}
                 />
@@ -131,11 +101,8 @@ export function FormControlsSection() {
               {/* Disabled */}
               <VStack align="start" gap={1}>
                 <Text fontSize="sm" fontWeight="medium">Disabled:</Text>
-                <Textarea
+                <StyledTextarea
                   placeholder="Disabled textarea"
-                  borderColor="border-strong-01"
-                  bg="background"
-                  color="foreground"
                   rows={3}
                   disabled
                 />

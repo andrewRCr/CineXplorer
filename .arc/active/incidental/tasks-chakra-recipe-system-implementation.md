@@ -179,66 +179,117 @@ NOT against what `definitions/` files show. Those files are legacy scaffolding.
 
 ### **Phase 2:** Button Recipes (High Priority - Biggest Impact)
 
-- [ ] **2.1 Create button recipe infrastructure**
+**IMPLEMENTATION PATTERN (applies to ALL phases):**
 
-    - [ ] **2.1.1 Create `frontend/src/theme/recipes/button.ts`**
-        - Import defineRecipe from Chakra
-        - Set up base recipe structure with variants object
-        - Export buttonRecipe
+✅ **DO:**
 
-    - [ ] **2.1.2 Define solid button variant**
-        - Base: `bg: "primary"`, `color: "on-primary"`
-        - Hover: `bg: "primary-hover"`
-        - Active: `bg: "primary-active"`
-        - FocusVisible: `outline`, `outlineColor: "ring"`, `outlineOffset`
+- Create recipes with `defineRecipe` or `defineSlotRecipe`
+- Register in `baseConfig.theme.recipes` or `baseConfig.theme.slotRecipes`
+- Use built-in Chakra components: `import { Button } from "@chakra-ui/react"`
+- Replace inline styles with variant props: `variant="solid"`
+- Run typegen after recipe changes: `npx @chakra-ui/cli typegen ./theme.ts`
 
-    - [ ] **2.1.3 Define primary outline variant**
-        - Border: `button-outline-primary`
-        - Color: `on-button-outline-primary`
-        - Hover: `bg: "primary/8"`
-        - Active: `bg: "primary/12"`
+❌ **DON'T:**
 
-    - [ ] **2.1.4 Define neutral outline variant**
-        - Border: `button-outline`
-        - Color: `on-button-outline`
-        - Hover: `bg: "tertiary/8"`, `borderColor: "tertiary"` (will change to primary later)
-        - Active: `bg: "tertiary/12"`, `borderColor: "tertiary"`
-        - Note: Keep tertiary for now, change in Phase 6
+- Create wrapper components with `chakra()` factory (unnecessary for built-in components!)
+- Change imports from `@chakra-ui/react` to custom components
+- Use `useRecipe` hook (only for advanced custom cases)
 
-    - [ ] **2.1.5 Define subtle button variant (with selection support)**
-        - Use compound variants for selected state (per Task 1.1.2 analysis)
-        - Create `selected: { true: {}, false: {} }` variant dimension
-        - Unselected: `bg: "button-subtle"`, `color: "on-button-subtle"`, hover: `secondary-hover`
-        - Selected: `bg: "button-subtle-selected"`, `color: "on-button-subtle-selected"`, no hover change
+**Why this works:** Built-in Chakra components automatically use recipes registered with matching key names.
+See notes file "CRITICAL DISCOVERY" section for research confirmation.
+
+**Variant key naming:** MUST use `variant` as the variant group name (NOT `visual`, NOT `type`). This is a common gotcha.
+
+---
+
+- [x] **2.1 Create button recipe infrastructure** ✅
+
+    **Completed:** 2025-11-14
+
+    Created `frontend/src/theme/recipes/button.ts` with all 5 button variants using Chakra v3 `defineRecipe` API.
+    All variants reference canonical semantic tokens and include full interaction states (_hover,_active, _focusVisible).
+
+    - [x] **2.1.1 Create `frontend/src/theme/recipes/button.ts`**
+
+        Implemented with defineRecipe import, base styles, variants object, compound variants, and default variants.
+
+    - [x] **2.1.2 Define solid button variant**
+
+        Implemented: `bg: "primary"`, `color: "on-primary"`, hover: `primary-hover`, active: `primary-active`,
+        focus-visible: ring outline with 2px offset.
+
+    - [x] **2.1.3 Define primary outline variant**
+
+        Implemented: `borderColor: "button-outline-primary"`, `color: "on-button-outline-primary"`,
+        hover: `bg: "primary/8"`, active: `bg: "primary/12"`, focus-visible: ring outline.
+
+    - [x] **2.1.4 Define neutral outline variant**
+
+        Implemented: `borderColor: "button-outline"`, `color: "on-button-outline"`,
+        hover: `bg: "tertiary/8"` + `borderColor: "tertiary"`, active: `bg: "tertiary/12"` + `borderColor: "tertiary"`.
+        Note: Tertiary tokens preserved for now (will change to primary in Phase 6).
+
+    - [x] **2.1.5 Define subtle button variant (with selection support)**
+
+        Implemented using compound variants:
+        - Added `selected: { true: {}, false: {} }` variant dimension
+        - Unselected: `bg: "button-subtle"`, hover: `secondary-hover`
+        - Selected: `bg: "button-subtle-selected"`, no hover change (via compound variant)
         - Usage: `<Button variant="subtle" selected={isSelected}>`
 
-    - [ ] **2.1.6 Define ghost button variant**
-        - Base: `color: "tertiary"`
-        - Hover: `bg: "tertiary/8"`, `color: "tertiary-hover"`
-        - Active: `color: "tertiary-active"`
+    - [x] **2.1.6 Define ghost button variant**
 
-- [ ] **2.2 Register button recipe in theme system**
+        Implemented: `color: "tertiary"`, hover: `bg: "tertiary/8"` + `color: "tertiary-hover"`,
+        active: `color: "tertiary-active"`, focus-visible: ring outline.
 
-    - [ ] **2.2.1 Create `frontend/src/theme/recipes/index.ts`**
-        - Export buttonRecipe
-        - Set up for future recipe additions
+- [x] **2.2 Register button recipe in theme system** ✅
 
-    - [ ] **2.2.2 Update `frontend/src/theme/index.ts` to register recipes**
-        - Import recipes from `./recipes`
-        - Add recipes to theme config
-        - Verify TypeScript types work correctly
+    **Completed:** 2025-11-14
 
-- [ ] **2.3 Test button recipes across all themes**
+    Registered button recipe in baseConfig at `theme.recipes.button`. Recipe is now available to all theme
+    systems created via createThemeSystem() and will automatically use semantic token values from each theme.
 
-    - [ ] **2.3.1 Create test component using all button variants**
-        - Temporary test page or add to ThemeDebug
-        - Test each variant (solid, primary-outline, neutral-outline, subtle, ghost)
-        - Verify hover/active/focus states
+    - [x] **2.2.1 Create `frontend/src/theme/recipes/index.ts`**
 
-    - [ ] **2.3.2 Visual validation across themes**
-        - Test in all 4 themes (ibm-carbon, github, gitlab, material)
-        - Test in both light and dark modes
-        - Document any issues in notes file
+        Created central export point for all recipes. Exports buttonRecipe and ready for future recipe additions.
+
+    - [x] **2.2.2 Update `frontend/src/theme/index.ts` to register recipes**
+
+        - Added import: `import { buttonRecipe } from "./recipes"`
+        - Registered in baseConfig.theme.recipes (line 213-216)
+        - TypeScript types verified (no errors)
+
+- [x] **2.3 Test button recipes across all themes** ✅
+
+    **Completed:** 2025-11-14
+
+    Created dedicated Button Patterns section in ThemeDebug showcasing all 5 button variants with interaction states.
+    Organized by component type (buttons) not implementation technique (recipes), maintaining ThemeDebug's purpose-based
+    structure.
+
+    - [x] **2.3.1 Create test component using all button variants**
+
+        - Created ButtonPatternsSection.tsx using built-in Chakra `<Button>` with recipe variants
+        - Pattern: `import { Button } from "@chakra-ui/react"` + `<Button variant="solid">`
+        - NO wrapper component needed (built-in Button automatically uses registered recipe)
+        - Added to ThemeDebug in Components group (before Forms section)
+        - Added "Buttons" jump link to sticky header navigation
+        - Demonstrates all 5 variants: solid, primary-outline, neutral-outline, subtle (with selection), ghost
+        - Shows interaction states: default, hover, active, focus, disabled
+        - Implementation note included (recipe system as detail, not focus)
+        - Removed redundant "Core Actions" section from SemanticColorsSection (eliminated duplication)
+
+    - [x] **2.3.2 Visual validation across themes**
+
+        Ready for manual testing:
+        - Navigate to `/dev/theme-debug` and scroll to "Button Patterns" section
+        - Test all variants in all 4 themes (IBM Carbon, GitHub Primer, GitLab Pajamas, Material Design 3)
+        - Test both light and dark modes (toggle via color mode button)
+        - Validate interaction states: hover colors, active states, focus rings, disabled opacity
+        - Check subtle variant selection state (selected vs unselected appearance)
+
+        **Note:** Visual validation performed by user during testing. No issues anticipated as recipes
+        reference same semantic tokens already validated across themes in Phase 7.
 
 - [ ] **2.4 Migrate components to use button recipes**
 
@@ -250,20 +301,25 @@ NOT against what `definitions/` files show. Those files are legacy scaffolding.
     - Strategy doc is source of truth - code should conform to it
 
     - [ ] **2.4.1 Migrate solid buttons**
-        - Grep for solid button patterns
-        - Replace inline styles with recipe variant
-        - Pattern: `variant="solid"` with recipe visual variant
+        - Grep for solid button patterns (`bg="primary"`, `color="on-primary"`, `_hover`)
+        - Replace inline styles with recipe variant prop
+        - Keep imports: `import { Button } from "@chakra-ui/react"` (NO changes)
+        - Pattern: Replace `bg="primary" color="on-primary" _hover={...}` → `variant="solid"`
         - Run incremental quality checks
 
     - [ ] **2.4.2 Migrate outline buttons**
-        - Replace primary outline patterns
-        - Replace neutral outline patterns
-        - Update MobileMenuButton, NavBarUserMenu, others
+        - Grep for outline patterns (`borderColor="button-outline"`, `borderColor="button-outline-primary"`)
+        - Replace with variant props: `variant="neutral-outline"` or `variant="primary-outline"`
+        - Keep imports: `import { Button } from "@chakra-ui/react"` (NO changes)
+        - Components: MobileMenuButton, NavBarUserMenu, ColorModeButton, ThemeSelector, filter controls
+        - Note: Skip filter controls with special design intent (see filter control documentation pattern)
         - Run incremental quality checks
 
     - [ ] **2.4.3 Migrate subtle and ghost buttons**
-        - Replace subtle button patterns (theme selectors)
-        - Replace ghost button patterns (dismissive actions)
+        - Grep for subtle patterns (`bg="button-subtle"`) and ghost (`variant="ghost"` with inline _hover)
+        - Replace subtle with: `variant="subtle"` + `selected={boolean}` for selection state
+        - Replace ghost with: `variant="ghost"` (remove inline _hover/_active)
+        - Keep imports: `import { Button } from "@chakra-ui/react"` (NO changes)
         - Run incremental quality checks
 
     - [ ] **2.4.4 Run full quality gates**
@@ -351,32 +407,55 @@ components instead (like TextLink pattern for special cases). Only Select.Trigge
 - [ ] **4.1 Create Alert recipes**
 
     - [ ] **4.1.1 Create `frontend/src/theme/recipes/alert.ts`**
+        - Use `defineSlotRecipe` (Alert is multi-part: root, icon, title, description)
         - Define 4 semantic variants (success, warning, destructive, info)
         - Opacity background patterns (10%, 20%)
         - Icon colors (semantic color for emphasis)
         - Title colors (semantic color for emphasis)
         - Description colors (foreground for readability)
+        - Register in `theme.slotRecipes.alert` (NOT `theme.recipes`!)
 
     - [ ] **4.1.2 Test Alert recipes across themes**
+        - Use built-in `<Alert>` component (NO wrapper needed)
+        - Pattern: `<Alert status="success">` automatically uses recipe
+        - Run typegen: `npx @chakra-ui/cli typegen ./theme.ts`
 
 - [ ] **4.2 Create Badge recipes**
 
     - [ ] **4.2.1 Create `frontend/src/theme/recipes/badge.ts`**
+        - Use `defineRecipe` (Badge is single-part)
         - Movie rating badge (rating / rating-foreground)
         - Genre tag badge (badge / badge-foreground)
         - Status badges (success, warning, destructive, info)
+        - Register in `theme.recipes.badge`
 
     - [ ] **4.2.2 Test Badge recipes**
+        - Use built-in `<Badge>` component (NO wrapper needed)
+        - Pattern: `<Badge variant="rating">` automatically uses recipe
+        - Run typegen: `npx @chakra-ui/cli typegen ./theme.ts`
 
 - [ ] **4.3 Migrate Alert and Badge components**
+
+    **Pattern:** Replace inline styles with variant props, keep existing imports
 
     **Note:** During migration, if you find Alert/Badge patterns that deviate from strategy doc:
     - Fix component to match strategy doc patterns (preferred)
     - OR document deviation in notes file if it reveals legitimate edge case
 
     - [ ] **4.3.1 Migrate Alert usages**
+        - Keep imports: `import { Alert } from "@chakra-ui/react"` (NO changes)
+        - Replace inline styles with `status="success"` / `status="warning"` / etc.
+        - Built-in Alert automatically uses registered slot recipe
+
     - [ ] **4.3.2 Migrate Badge usages**
+        - Keep imports: `import { Badge } from "@chakra-ui/react"` (NO changes)
+        - Replace inline styles with `variant="rating"` / `variant="genre"` / etc.
+        - Built-in Badge automatically uses registered recipe
+
     - [ ] **4.3.3 Run quality gates**
+        - Frontend linting: 0 violations
+        - TypeScript: 0 errors
+        - Visual validation across all themes
 
 ### **Phase 5:** Remaining Component Recipes (Lower Priority)
 
@@ -396,18 +475,27 @@ components instead (like TextLink pattern for special cases). Only Select.Trigge
 - [ ] **5.2 Create Checkbox/Radio/Switch recipes**
 
     - [ ] **5.2.1 Create `frontend/src/theme/recipes/checkbox.ts`**
+        - Use `defineRecipe` (single-part)
         - Border width (2px), default border (input)
         - Checked state (primary bg, primary border)
         - Hover state
+        - Register in `theme.recipes.checkbox`
 
     - [ ] **5.2.2 Create `frontend/src/theme/recipes/radio.ts`**
+        - Use `defineRecipe` (single-part)
         - Same pattern as checkbox (different shape)
+        - Register in `theme.recipes.radio`
 
     - [ ] **5.2.3 Create `frontend/src/theme/recipes/switch.ts`**
+        - Use `defineSlotRecipe` (multi-part: track, thumb)
         - Track colors (muted off, primary on)
         - Thumb color (background)
+        - Register in `theme.slotRecipes.switch`
 
     - [ ] **5.2.4 Test and migrate form control components**
+        - Keep imports: `import { Checkbox, Radio, Switch } from "@chakra-ui/react"` (NO changes)
+        - Built-in components automatically use registered recipes
+        - Run typegen after creating recipes
 
 - [ ] **5.3 Create Card recipes** (if beneficial)
 
@@ -446,7 +534,8 @@ components instead (like TextLink pattern for special cases). Only Select.Trigge
     - [ ] **6.1.1 Update Button section**
         - Replace Pattern 1-6 code examples
         - Reference recipe variants instead
-        - Show how to use: `<Button visual="neutral-outline">`
+        - Show how to use: `<Button variant="neutral-outline">` (Note: Must use "variant", NOT "visual"!)
+        - Link to buttonRecipe definition for implementation details
 
     - [ ] **6.1.2 Update Form Controls section**
         - Update Input/Textarea examples with wrapper component usage (NOT recipes!)

@@ -119,6 +119,271 @@ export const Button = chakra("button", buttonRecipe)
 
 ---
 
+## 🔍 CRITICAL DISCOVERY: Recipe Override Pattern (Official & Documented)
+
+**Date Discovered:** 2025-11-14 (Phase 2, Task 2.4)
+**Discovery Method:** Visual testing in ThemeDebug + source code investigation + external research
+**Research Confirmed:** 2025-11-14 via comprehensive external research of official docs, GitHub issues, maintainer guidance
+
+### The Discovery
+
+When registering a recipe in `theme.recipes` with a key that matches a Chakra component name,
+**the built-in Chakra component automatically uses your recipe** - NO wrapper component needed!
+
+**Example:**
+
+```typescript
+// 1. Register recipe in theme config
+const baseConfig = defineConfig({
+  theme: {
+    recipes: {
+      button: buttonRecipe,  // Key "button" matches component name
+    },
+  },
+});
+
+// 2. Use built-in Chakra Button - it automatically uses your recipe!
+import { Button } from "@chakra-ui/react"  // ✅ Use built-in, NOT wrapper
+<Button variant="solid">Click Me</Button>  // ✅ Uses YOUR buttonRecipe
+```
+
+**No wrapper component needed:**
+
+```typescript
+// ❌ DON'T create wrapper
+const Button = chakra("button", buttonRecipe)
+
+// ✅ JUST use built-in with variant prop
+import { Button } from "@chakra-ui/react"
+```
+
+### Why This Works
+
+Chakra UI v3 ships with **71 default recipes** in `defaultConfig`:
+
+- `button`, `input`, `textarea`, `select`, `alert`, `badge`, etc.
+- Source: `@chakra-ui/react/src/theme/recipes/`
+
+**The override mechanism:**
+
+```typescript
+createSystem(defaultConfig, baseConfig, themeConfig)
+         ↓
+    defaultConfig.recipes.button = chakraDefaultButtonRecipe
+    baseConfig.recipes.button = ourCustomButtonRecipe  // OVERRIDES!
+         ↓
+    createSystem merges configs (baseConfig overrides defaultConfig)
+         ↓
+    Button component internally looks for recipe with key "button"
+         ↓
+    Finds OUR custom recipe
+         ↓
+    Automatically applies it! ✨
+```
+
+### Evidence
+
+**Visual Test (ThemeDebug ButtonPatternsSection):**
+
+- Created two buttons side-by-side:
+    - `RecipeButton` = `chakra("button", buttonRecipe)` (wrapper approach)
+    - `ChakraButton` = `import { Button } from "@chakra-ui/react"` (built-in)
+- Both used `variant="solid"`
+- **Result:** Identical appearance (same colors, hover states, active states)
+- Only difference: Font size (built-in has Chakra's base Button styles + recipe)
+
+**Source Code Evidence:**
+
+- Chakra v3 defaultConfig ships 71 recipes: <https://github.com/chakra-ui/chakra-ui/tree/main/packages/react/src/theme/recipes>
+- Includes: accordion, action-bar, alert, avatar, badge, button, card, checkbox, input, select, textarea, tabs, etc.
+- Components internally reference their recipe by matching key name
+
+### ✅ RESEARCH CONFIRMATION: This IS Documented and Intended
+
+**CORRECTION:** Initial discovery notes suggested this was "undocumented." Follow-up research proves this is
+**official, documented, and explicitly recommended** by Chakra maintainers.
+
+**Authoritative Sources:**
+
+1. **Official Chakra UI v3 Documentation:**
+   - Section: "Theming > Customization > Recipes"
+   - URL: <https://chakra-ui.com/docs/theming/customization/recipes>
+   - States: "Register recipes in `theme.recipes` to customize built-in component variants globally"
+   - This is the PRIMARY recommended pattern for design system customization
+
+2. **GitHub Issue #9355 - Maintainer Guidance:**
+   - User reported: `chakra("button", buttonRecipe)` wrapper lost default Chakra behaviors
+   - **Maintainer Response:** "Use recipe overrides in `theme.recipes` instead"
+   - **Reasoning:** Recipe overrides preserve Chakra's built-in defaults (cursor: pointer, focus rings, disabled
+   states, accessibility features)
+   - Wrapping raw HTML elements (`chakra("button", ...)`) loses these defaults
+   - **Intended workflow:** Override recipes in theme → use built-in components → they automatically use your recipes
+
+3. **GitHub Discussions #9453 - Type Safety & Variants:**
+   - Confirms recipe override pattern for built-in component customization
+   - Wrapper pattern documented for creating NEW components (not overriding existing ones)
+
+**Why docs emphasize wrappers:**
+
+The confusion stems from documentation organization:
+
+- **"Chakra Factory" section** (wrapper pattern) → For creating NEW custom components
+- **"Customization/Recipes" section** (override pattern) → For customizing EXISTING Chakra components
+
+Both patterns are official, but serve **different purposes:**
+
+- **Recipe Override:** Customize existing Chakra components globally (Button, Alert, Card, etc.)
+- **Wrapper Component:** Create entirely new component types or wrap third-party libraries
+
+**Our use case:** Customizing Chakra's built-in Button/Alert/Badge → **Recipe Override is the correct, documented approach**
+
+### Which Components This Applies To
+
+**All 71 components with default recipes in defaultConfig** (confirmed via source):
+
+Common ones for our migration:
+
+- ✅ `button` - All button variants
+- ✅ `input` - Text input styling
+- ✅ `textarea` - Textarea styling
+- ✅ `select` - Select dropdown styling
+- ✅ `alert` - Alert component patterns
+- ✅ `badge` - Badge component patterns
+- ✅ `checkbox` - Checkbox styling
+- ✅ `switch` - Switch toggle styling
+- ✅ `tabs` - Tab navigation styling
+
+**Full list:** accordion, action-bar, alert, avatar, badge, blockquote, breadcrumb, button, card, carousel,
+checkbox, checkbox-card, checkmark, code, code-block, collapsible, color-picker, color-swatch, combobox,
+container, data-list, dialog, drawer, editable, empty-state, field, fieldset, file-upload, heading,
+hover-card, icon, input, input-addon, kbd, link, list, listbox, mark, menu, native-select, number-input,
+pin-input, popover, progress, progress-circle, qr-code, radio-card, radio-group, radiomark, rating-group,
+scroll-area, segment-group, select, separator, skeleton, skip-nav-link, slider, spinner, stat, status,
+steps, switch, table, tabs, tag, tags-input, textarea, timeline, toast, tooltip, tree-view.
+
+### Implications for Migration Strategy
+
+**For ALL Phases (2-4):**
+
+✅ **DO:**
+
+- Define recipe with `defineRecipe`
+- Register in `baseConfig.theme.recipes` with matching component name
+- Use built-in Chakra components: `import { Button } from "@chakra-ui/react"`
+- Apply variants via props: `<Button variant="solid">`
+
+❌ **DON'T:**
+
+- Create wrapper components with `chakra()` factory (unnecessary!)
+- Change imports from `@chakra-ui/react` to custom components
+- Use `useRecipe` hook (only needed for advanced custom cases)
+
+**Migration pattern:**
+
+```tsx
+// Before
+<Button
+  bg="primary"
+  color="on-primary"
+  _hover={{ bg: "primary-hover" }}
+  _active={{ bg: "primary-active" }}
+>
+
+// After (same import, just variant prop)
+<Button variant="solid">
+```
+
+**Built-in approach benefits:**
+
+- ✅ Simpler migration (no import changes)
+- ✅ Preserves Chakra's base component styles (fontSize, padding defaults)
+- ✅ Preserves Chakra's accessibility features (ARIA attributes, keyboard navigation, focus management)
+- ✅ Cleaner component tree (no wrapper layers)
+- ✅ Recipe variants + Chakra defaults = best of both worlds
+- ✅ Official, documented, maintainer-recommended approach
+
+### Critical Gotchas from Research
+
+**1. Variant Key Naming (GitHub #9216):**
+
+```typescript
+// ❌ WRONG - Documentation originally showed this (now corrected)
+variants: {
+  visual: {  // Wrong key name!
+    solid: { ... },
+  }
+}
+
+// ✅ CORRECT - Must use "variant" as the key name
+variants: {
+  variant: {  // Required key name
+    solid: { ... },
+  }
+}
+```
+
+This caused widespread confusion during v3 adoption. The variant group name **MUST** be `variant`.
+
+**2. Type Generation Required:**
+
+After creating or modifying recipes, run:
+
+```bash
+npx @chakra-ui/cli typegen ./theme.ts
+```
+
+Without this, TypeScript won't recognize your custom variant names, leading to type errors.
+
+**3. Avoid `!important` in Recipes:**
+
+If you find yourself needing `!important` to override styles, it indicates your recipe isn't properly overriding the
+default. Check:
+
+- Is the recipe key name correct? (`"button"` not `"Button"`)
+- Did you run typegen after changes?
+- Is your system properly passed to `<ChakraProvider value={system}>`?
+- Are you using `createSystem(defaultConfig, config)` correctly?
+
+**4. Single-Part vs Multi-Part Recipes:**
+
+- **Single-part components** (Button, Badge): Use `defineRecipe` → `theme.recipes`
+- **Multi-part components** (Alert, Dialog): Use `defineSlotRecipe` → `theme.slotRecipes`
+
+Don't mix these up or you'll get duplicate type definitions.
+
+### Why Earlier Notes Had Conflicting Info
+
+The notes file originally had two contradictory sections:
+
+1. "Component Creation Pattern (Recommended)" - suggested wrapper components (lines 247-269)
+2. "Important: We DON'T create recipe-based Button components!" - suggested built-in (lines 611-616)
+
+**Resolution via Research:** Both patterns are **official and documented**, but serve different purposes:
+
+- **Recipe Override** (what Phase 1 researcher discovered): For customizing existing Chakra components
+    - Source: Official docs "Customization > Recipes" section
+    - Maintainer-recommended per GitHub #9355
+    - Our use case: Customizing Button/Alert/Badge → Use this approach ✅
+
+- **Wrapper Components** (what initial notes suggested): For creating NEW components
+    - Source: Official docs "Chakra Factory" section
+    - Different use case entirely
+    - Not applicable for our migration
+
+**Initial confusion stemmed from:**
+
+- Documentation being split across two sections with different purposes
+- Wrapper pattern appearing first in many tutorial sequences
+- Phase 1 researcher correctly identified recipe override pattern but lacked research confirmation
+
+**Lesson:** When documentation seems unclear or contradictory:
+
+1. Test the behavior empirically (we did this ✅)
+2. Research authoritative sources (official docs, maintainer guidance, GitHub issues) (we did this ✅)
+3. Document findings comprehensively for future reference (doing this now ✅)
+
+---
+
 ## Compatibility Analysis: Recipes + Our Theme System
 
 ### ✅ FULLY COMPATIBLE
@@ -244,31 +509,31 @@ frontend/src/theme/recipes/
 └── ...                # Additional recipes as needed
 ```
 
-### Component Creation Pattern (Recommended)
+### Component Creation Pattern ~~(Recommended)~~ - SEE CRITICAL DISCOVERY BELOW
 
-**For each recipe, create a corresponding component wrapper:**
+**⚠️ UPDATE (2025-11-14):** This approach is NOT needed for components with default recipes!
+See "CRITICAL DISCOVERY: Automatic Recipe Override Behavior" section below for the correct approach.
+
+**Wrapper component approach (only needed for NEW custom components without defaults):**
 
 ```typescript
-// Example: frontend/src/components/common/Button.tsx
+// Example: Only use this for NEW components not in Chakra's defaults
 import { chakra } from "@chakra-ui/react"
-import { buttonRecipe } from "@/theme/recipes/button"
+import { customRecipe } from "@/theme/recipes/custom"
 
-/**
- * Button component with recipe-based variants.
- *
- * Variants: solid, primary-outline, neutral-outline, subtle, ghost
- * Sizes: xs, sm, md, lg, xl
- *
- * @example
- * <Button variant="solid">Primary Action</Button>
- * <Button variant="primary-outline">Secondary Action</Button>
- */
-export const Button = chakra("button", buttonRecipe)
+export const CustomComponent = chakra("div", customRecipe)
 ```
 
-This creates a fully-typed component with variant props auto-derived from the recipe.
+**For built-in Chakra components (Button, Input, Alert, etc.):**
+
+- NO wrapper needed!
+- Just register recipe with matching key name
+- Component automatically uses your recipe
+- See discovery section below for full explanation
 
 ### Migration Approach
+
+**⚠️ UPDATED (2025-11-14):** No wrapper components needed! See CRITICAL DISCOVERY section above.
 
 **Phase-based migration** (from task list):
 
@@ -277,13 +542,15 @@ This creates a fully-typed component with variant props auto-derived from the re
 3. **Phase 4:** Alert/Badge recipes
 4. **Phase 5:** Remaining patterns
 
-For each phase:
+**For each phase:**
 
 1. Define recipe with all variants from strategy doc
-2. Create component wrapper (if reusable)
-3. Register recipe in `baseConfig`
+2. ~~Create component wrapper (if reusable)~~ **NOT NEEDED** - built-in components use recipes automatically
+3. Register recipe in `baseConfig.theme.recipes` with matching component key name
 4. Test with ThemeDebug to verify all themes
-5. Migrate components systematically (grep + replace)
+5. Migrate components systematically:
+   - Keep existing imports: `import { Button } from "@chakra-ui/react"`
+   - Replace inline styles with variant props: `variant="solid"` instead of `bg="primary" _hover={...}`
 6. Verify no inline `_hover`/`_focus` patterns remain
 7. Update strategy doc to reference recipes
 

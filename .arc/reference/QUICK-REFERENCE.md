@@ -152,9 +152,20 @@ docker compose -f infrastructure/docker-compose.yml exec frontend npm run lint -
 
 ### Type Checking (Frontend)
 
+**CRITICAL: NEVER use `npx tsc` directly on individual files** - This bypasses project references and uses incorrect
+module resolution.
+
 ```bash
+# CORRECT: Use npm script (runs tsc -b with project references)
 docker compose -f infrastructure/docker-compose.yml exec frontend npm run type-check
+
+# WRONG: Direct tsc invocation - DO NOT USE
+# npx tsc --noEmit src/some-file.tsx  ❌ INCORRECT
+# npx tsc <file>                       ❌ INCORRECT
 ```
+
+**Why:** Project uses TypeScript project references (`tsconfig.json` → `tsconfig.app.json`). Direct `tsc` calls bypass
+this and produce false errors.
 
 ### Markdown Linting
 

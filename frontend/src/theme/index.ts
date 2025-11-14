@@ -32,6 +32,9 @@ import { layoutFoundations } from "./layout/foundations";
 import { layoutSemanticTokens } from "./layout/semantic-tokens";
 import { zIndexSemanticTokens } from "./layout/z-index";
 
+// Import recipes
+import { buttonRecipe } from "./recipes";
+
 /**
  * Theme Registry
  *
@@ -206,6 +209,10 @@ const baseConfig = defineConfig({
         semanticTokens: {
             // Layout semantic tokens (responsive sizing)
             ...layoutSemanticTokens,
+        },
+        recipes: {
+            // Button recipe (all variants: solid, primary-outline, neutral-outline, subtle, ghost)
+            button: buttonRecipe,
         },
     },
     globalCss: {

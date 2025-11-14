@@ -30,7 +30,6 @@ const MobileMenuButton: React.FC<MobileMenuButtonProps> = ({ size = "md" }) => {
       _hover={{
         bg: "tertiary/8",
         borderColor: "tertiary",
-        color: "tertiary",
       }}
     >
       <LuMenu />

@@ -21,15 +21,15 @@ The frontend maintains filter state in `MovieFilters` interface (`AdvancedMovieF
 
 ```typescript
 interface MovieFilters {
-  query: string;           // Search query
-  genres: number[];        // Genre IDs (e.g., [28, 12])
-  minYear: string;         // e.g., "2020" or "2020s" for decade
-  maxYear: string;         // e.g., "2023"
-  minRating: string;       // e.g., "7.0"
-  maxRating: string;       // e.g., "9.0"
-  minRuntime: string;      // Currently unused (TMDB API broken)
-  maxRuntime: string;      // Currently unused (TMDB API broken)
-  sortBy: SortOptionValue; // e.g., "popularity.desc"
+    query: string; // Search query
+    genres: number[]; // Genre IDs (e.g., [28, 12])
+    minYear: string; // e.g., "2020" or "2020s" for decade
+    maxYear: string; // e.g., "2023"
+    minRating: string; // e.g., "7.0"
+    maxRating: string; // e.g., "9.0"
+    minRuntime: string; // Currently unused (TMDB API broken)
+    maxRuntime: string; // Currently unused (TMDB API broken)
+    sortBy: SortOptionValue; // e.g., "popularity.desc"
 }
 ```
 
@@ -407,33 +407,38 @@ even when TMDB API returns bad data.
 **What's Tested**:
 
 1. **Year Filtering** (Tests 98-289):
-   - `test_discover_movies_filters_incorrect_release_years()` - Verifies 2010s movies filtered from 2020s request
-   - `test_search_movies_filters_incorrect_release_years()` - Same for search endpoint
-   - `test_year_filtering_handles_single_year()` - Single year (not just ranges)
-   - `test_year_filtering_handles_missing_release_dates()` - TMDB data quality (None/empty dates)
+
+    - `test_discover_movies_filters_incorrect_release_years()` - Verifies 2010s movies filtered from 2020s request
+    - `test_search_movies_filters_incorrect_release_years()` - Same for search endpoint
+    - `test_year_filtering_handles_single_year()` - Single year (not just ranges)
+    - `test_year_filtering_handles_missing_release_dates()` - TMDB data quality (None/empty dates)
 
 2. **Rating Filtering** (Tests 295-427):
-   - `test_discover_movies_filters_incorrect_ratings()` - Placeholder 0.0 ratings filtered
-   - `test_rating_filtering_handles_range()` - Min + max rating ranges
-   - `test_rating_filtering_handles_missing_ratings()` - TMDB data quality (None ratings)
+
+    - `test_discover_movies_filters_incorrect_ratings()` - Placeholder 0.0 ratings filtered
+    - `test_rating_filtering_handles_range()` - Min + max rating ranges
+    - `test_rating_filtering_handles_missing_ratings()` - TMDB data quality (None ratings)
 
 3. **Combined Filtering** (Test 434-475):
-   - `test_combined_year_and_rating_filtering()` - Both filters applied simultaneously
+
+    - `test_combined_year_and_rating_filtering()` - Both filters applied simultaneously
 
 4. **Buffer Mechanism** (Tests 482-743):
-   - `test_buffer_mechanism_fetches_page_n_plus_1_when_under_threshold()` - Backfills when < 20 results
-   - `test_buffer_mechanism_does_not_fetch_when_full_page_achieved()` - No buffer when >= 20 results
-   - `test_buffer_mechanism_respects_minimum_threshold()` - No buffer when < 10 (filter too restrictive)
-   - `test_buffer_mechanism_does_not_fetch_on_last_page()` - No buffer on final page
-   - `test_buffer_movies_also_pass_filters_no_leakage()` - **Critical**: Buffer movies must pass filters
+
+    - `test_buffer_mechanism_fetches_page_n_plus_1_when_under_threshold()` - Backfills when < 20 results
+    - `test_buffer_mechanism_does_not_fetch_when_full_page_achieved()` - No buffer when >= 20 results
+    - `test_buffer_mechanism_respects_minimum_threshold()` - No buffer when < 10 (filter too restrictive)
+    - `test_buffer_mechanism_does_not_fetch_on_last_page()` - No buffer on final page
+    - `test_buffer_movies_also_pass_filters_no_leakage()` - **Critical**: Buffer movies must pass filters
 
 5. **Endpoint Coverage** (Tests 750-814):
-   - `test_filtering_applies_to_now_playing_endpoint()` - Confirms now_playing uses filtering
-   - `test_filtering_applies_to_upcoming_endpoint()` - Confirms upcoming uses filtering
+
+    - `test_filtering_applies_to_now_playing_endpoint()` - Confirms now_playing uses filtering
+    - `test_filtering_applies_to_upcoming_endpoint()` - Confirms upcoming uses filtering
 
 6. **No-Filter Behavior** (Tests 821-877):
-   - `test_no_filters_returns_all_results_unchanged()` - Passthrough when no filters
-   - `test_no_buffer_fetch_when_no_filters_applied()` - Buffer disabled when no filters
+    - `test_no_filters_returns_all_results_unchanged()` - Passthrough when no filters
+    - `test_no_buffer_fetch_when_no_filters_applied()` - Buffer disabled when no filters
 
 **Testing Approach**:
 
@@ -458,12 +463,13 @@ works when parameters are provided.
 **What's Tested**:
 
 1. **Filter Parameter Mapping** (Test 168-240):
-   - `test_discover_with_filters()` - Validates filter parameters passed to TMDB client
-   - Checks: `sort_by`, `genres`, `year`, `vote_average_gte/lte`, `release_date_gte/lte`, `certification`, `region`
-   - **What it validates**: Schema correctly maps API params → TMDB params (e.g., `genres` → `with_genres`)
+
+    - `test_discover_with_filters()` - Validates filter parameters passed to TMDB client
+    - Checks: `sort_by`, `genres`, `year`, `vote_average_gte/lte`, `release_date_gte/lte`, `certification`, `region`
+    - **What it validates**: Schema correctly maps API params → TMDB params (e.g., `genres` → `with_genres`)
 
 2. **Parameter Validation** (Tests 242-266):
-   - `test_discover_invalid_parameters()` - Pydantic validation (422 errors for invalid types)
+    - `test_discover_invalid_parameters()` - Pydantic validation (422 errors for invalid types)
 
 **Testing Approach**:
 
@@ -474,17 +480,19 @@ works when parameters are provided.
 **Critical Gaps**:
 
 1. ❌ **No tests validate filtered results**:
-   - Test checks TMDB params sent, but doesn't validate actual filtering behavior
-   - Doesn't send filter params and assert filtered data returned
-   - Doesn't verify bad data is removed
+
+    - Test checks TMDB params sent, but doesn't validate actual filtering behavior
+    - Doesn't send filter params and assert filtered data returned
+    - Doesn't verify bad data is removed
 
 2. ❌ **No tests validate schema → service parameter extraction**:
-   - Test doesn't check if `year_min/max` or `rating_min/max` are extracted from date/rating params
-   - Doesn't verify backend filtering parameters are populated
+
+    - Test doesn't check if `year_min/max` or `rating_min/max` are extracted from date/rating params
+    - Doesn't verify backend filtering parameters are populated
 
 3. ❌ **No integration tests for filter data flow**:
-   - Doesn't validate: API params → Schema → Service params → Filtered results
-   - Missing end-to-end validation of the complete filter pipeline
+    - Doesn't validate: API params → Schema → Service params → Filtered results
+    - Missing end-to-end validation of the complete filter pipeline
 
 **What This Means**: API tests validate the **request structure** but not the **filtering behavior**.
 
@@ -502,11 +510,11 @@ works when parameters are provided.
 **What's Tested**:
 
 1. **Individual Filter Components**:
-   - `ClearFiltersButton.test.tsx` - Clear button UI behavior
-   - `GenreSelector.test.tsx` - Genre selection UI
-   - `RatingSelector.test.tsx` - Rating input UI
-   - `YearSelector.test.tsx` - Year selection UI
-   - `SortSelector.test.tsx` - Sort dropdown UI
+    - `ClearFiltersButton.test.tsx` - Clear button UI behavior
+    - `GenreSelector.test.tsx` - Genre selection UI
+    - `RatingSelector.test.tsx` - Rating input UI
+    - `YearSelector.test.tsx` - Year selection UI
+    - `SortSelector.test.tsx` - Sort dropdown UI
 
 **Testing Approach**:
 
@@ -517,21 +525,24 @@ works when parameters are provided.
 **Critical Gaps**:
 
 1. ❌ **No tests for `movieFilterMapper.ts`**:
-   - Mapper logic has zero test coverage
-   - No validation of filter state → API parameter conversion
-   - Mapping bugs (like previous `min_rating` → `vote_average_gte` issue) would not be caught
+
+    - Mapper logic has zero test coverage
+    - No validation of filter state → API parameter conversion
+    - Mapping bugs (like previous `min_rating` → `vote_average_gte` issue) would not be caught
 
 2. ❌ **No tests for `useMovieFetchRouter`**:
-   - Hook that routes between search/discover has no tests
-   - Filter parameter passthrough not validated
+
+    - Hook that routes between search/discover has no tests
+    - Filter parameter passthrough not validated
 
 3. ❌ **No integration tests**:
-   - No tests validate: Filter UI → Mapper → API call → Response handling
-   - Missing end-to-end validation of filter workflow
+
+    - No tests validate: Filter UI → Mapper → API call → Response handling
+    - Missing end-to-end validation of filter workflow
 
 4. ❌ **No tests validate actual API parameters sent**:
-   - Component tests don't mock HTTP layer to verify params
-   - Can't catch parameter naming mismatches (the bug we found)
+    - Component tests don't mock HTTP layer to verify params
+    - Can't catch parameter naming mismatches (the bug we found)
 
 **What This Means**: Frontend has good UI coverage but **zero filter logic coverage**.
 
@@ -595,22 +606,22 @@ def test_discover_api_extracts_backend_filter_params():
 **Proposed Test**:
 
 ```typescript
-describe('movieFilterMapper integration', () => {
-  it('generates parameters matching backend schema', () => {
-    const filters: MovieFilters = {
-      minYear: "2020",
-      maxYear: "2023",
-      minRating: "7.5",
-      // ...
-    };
+describe("movieFilterMapper integration", () => {
+    it("generates parameters matching backend schema", () => {
+        const filters: MovieFilters = {
+            minYear: "2020",
+            maxYear: "2023",
+            minRating: "7.5",
+            // ...
+        };
 
-    const params = mapFiltersToApiParams(filters, 'expanded');
+        const params = mapFiltersToApiParams(filters, "expanded");
 
-    // Validate exact parameter names backend expects
-    expect(params.release_date_gte).toBe('2020-01-01');
-    expect(params.release_date_lte).toBe('2023-12-31');
-    expect(params.vote_average_gte).toBe('7.5');
-  });
+        // Validate exact parameter names backend expects
+        expect(params.release_date_gte).toBe("2020-01-01");
+        expect(params.release_date_lte).toBe("2023-12-31");
+        expect(params.vote_average_gte).toBe("7.5");
+    });
 });
 ```
 
@@ -671,13 +682,13 @@ def test_discover_filters_remove_bad_tmdb_data_e2e():
 
 ### Test Coverage Summary
 
-| Layer | Unit Tests | Integration Tests | E2E Tests | Status |
-|-------|------------|-------------------|-----------|--------|
-| **Service** (Backend filtering) | ✅ Excellent (877 lines) | ❌ None | ❌ None | **Good in isolation** |
-| **API** (Parameter mapping) | ⚠️ Structure only | ❌ No filter validation | ❌ None | **Critical gap** |
-| **Schema** (Param extraction) | ❌ None | ❌ None | ❌ None | **Critical gap** |
-| **Frontend Mapper** | ❌ None | ❌ None | ❌ None | **Critical gap** |
-| **Frontend Components** | ✅ Good UI coverage | ❌ None | ❌ None | **UI only** |
+| Layer                           | Unit Tests               | Integration Tests        | E2E Tests | Status                |
+| ------------------------------- | ------------------------ | ------------------------ | --------- | --------------------- |
+| **API** (Parameter mapping)     | ⚠️ Structure only        | ❌ No filter validation | ❌ None   | **Critical gap**      |
+| **Frontend Components**         | ✅ Good UI coverage      | ❌ None                 | ❌ None   | **UI only**           |
+| **Frontend Mapper**             | ❌ None                  | ❌ None                 | ❌ None   | **Critical gap**      |
+| **Schema** (Param extraction)   | ❌ None                  | ❌ None                 | ❌ None   | **Critical gap**      |
+| **Service** (Backend filtering) | ✅ Excellent (877 lines) | ❌ None                 | ❌ None   | **Good in isolation** |
 
 **Overall Assessment**: Excellent service-layer unit tests, but **zero integration test coverage** for the
 complete filter pipeline. This is why the bug exists - each layer works in isolation but the integration
@@ -690,25 +701,28 @@ is broken.
 ### What We Learned
 
 1. **Service layer filtering is well-tested and works** ✅
-   - 17 comprehensive unit tests
-   - Covers year/rating filtering, buffer mechanism, all endpoints
-   - Would catch any regression in filtering logic
+
+    - 17 comprehensive unit tests
+    - Covers year/rating filtering, buffer mechanism, all endpoints
+    - Would catch any regression in filtering logic
 
 2. **Integration layer has zero test coverage** ❌
-   - No tests validate API → Schema → Service parameter flow
-   - No tests validate actual filtered results via API
-   - No tests validate frontend → backend parameter contracts
+
+    - No tests validate API → Schema → Service parameter flow
+    - No tests validate actual filtered results via API
+    - No tests validate frontend → backend parameter contracts
 
 3. **Why the bug exists**:
-   - Service tests call methods directly with `year_min/max/rating_min/max`
-   - API tests only check TMDB param mapping, not backend filtering
-   - Schema `to_service_params()` has no tests
-   - No integration tests would catch "params never extracted" bug
+
+    - Service tests call methods directly with `year_min/max/rating_min/max`
+    - API tests only check TMDB param mapping, not backend filtering
+    - Schema `to_service_params()` has no tests
+    - No integration tests would catch "params never extracted" bug
 
 4. **Test-driven approach needed**:
-   - Phase 2 must write integration tests **before** fixing the bug
-   - Tests should fail initially (demonstrating current broken state)
-   - Tests pass after fix (validating solution)
+    - Phase 2 must write integration tests **before** fixing the bug
+    - Tests should fail initially (demonstrating current broken state)
+    - Tests pass after fix (validating solution)
 
 ### Recommended Test Additions (Phase 2)
 
@@ -734,9 +748,9 @@ test_discover_api_removes_tmdb_bad_data()
 
 ```typescript
 // Test: frontend/src/utilities/__tests__/movieFilterMapper.test.ts (new file)
-test_mapper_generates_backend_compatible_params()
-test_mapper_handles_minimal_vs_expanded_styles()
-test_mapper_date_formatting_matches_backend()
+test_mapper_generates_backend_compatible_params();
+test_mapper_handles_minimal_vs_expanded_styles();
+test_mapper_date_formatting_matches_backend();
 ```
 
 **Priority 4: End-to-End** (Medium)

@@ -369,7 +369,7 @@ Path unclear - exploratory debugging. Will return to Task 3.3 (line 247) when re
 1. **Run markdown linting with auto-fix**:
 
    ```bash
-   npx markdownlint-cli2 --fix ".arc/active/CURRENT-SESSION.md"
+   npx markdownlint-cli2 --fix --no-globs ".arc/active/CURRENT-SESSION.md"
    ```
 
 2. **Verify the file is readable** - CURRENT-SESSION.md is gitignored but should stay clean

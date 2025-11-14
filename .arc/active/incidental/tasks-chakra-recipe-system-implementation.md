@@ -1,8 +1,9 @@
 # Incidental: Chakra UI v3 Recipe System Implementation
 
 **Created:** 2025-11-14
-**Branch:** `technical/service-layer-modernization`
-**Status:** Pending
+**Base branch:** `technical/service-layer-modernization`
+**Branch:** `incidental/chakra-recipe-system-implementation`
+**Status:** Active
 
 ## Context
 

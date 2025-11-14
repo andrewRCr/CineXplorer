@@ -2,7 +2,9 @@
 
 **Created:** 2025-11-02
 **Branch:** `technical/service-layer-modernization`
-**Status:** Active (consolidated from theme-definition-semantic-corrections.md)
+**Status:** Paused (2025-11-14) - Switching to recipe system implementation
+**Interrupted by:** `.arc/active/incidental/tasks-chakra-recipe-system-implementation.md`
+**Resume at:** Phase 7.2.e when recipe work complete
 
 **Consolidation Note:** Theme work spawned from quick review branch into deep semantic refinement work over 3+ days.
 Remaining work from both task lists now consolidated here. See Phase 5+ for new consolidated tasks.
@@ -2773,7 +2775,11 @@ prevents discovering token issues after cleanup, when fixing them is harder.
 
         **Quality gates:** TypeScript 0 errors ✓, ESLint 0 violations ✓
 
-    - [ ] **7.2.d Fix Shared/Common domain violations**
+    - [x] **7.2.d Fix Shared/Common domain violations**
+
+        **Completed:** All Shared/Common component fixes complete. 6 components fixed (ErrorBoundary, ColorModeButton,
+        ThemeSelector, Login, Register, ThemeDebug), 25 total corrections addressing outline/ghost button hovers,
+        Alert text on opacity backgrounds, form validation colors, and border tokens.
 
         **Context:** Original fix list (notes line 1032) marked outdated after session investigation revealed incorrect
         form control border guidance. Task restructured with corrected subtasks based on actual requirements.
@@ -2822,33 +2828,94 @@ prevents discovering token issues after cleanup, when fixing them is harder.
                     - Pattern now matches ThemeDebug SemanticColorsSection reference
                 - Strategy doc: Updated Pattern 3 (Neutral Outline) to document correct hover behavior
 
-        - [ ] **7.2.d.3 Fix ErrorBoundary.tsx**
-            - **Outline button hover:** Line 125 - Add missing border/color changes
-                - Current: `_hover={{ bg: "destructive/8" }}`
-                - Should be: `_hover={{ bg: "destructive/8", borderColor: "destructive", color: "destructive" }}`
-            - **Code block border:** Line 233 - Evaluate `borderColor="border"` for stack trace
-                - Determine if generic "border" appropriate or needs border-strong-01
-                - ErrorBoundary renders on layer-01, likely needs border-strong-01
-            - **Z-index evaluation:** Lines 694, 722, 765 - Same as Login.tsx
-                - Document as acceptable for IconButton element stacking
+        - [x] **7.2.d.3 Fix ErrorBoundary.tsx**
 
-        - [ ] **7.2.d.4 Fix ColorModeButton.tsx (color-mode.tsx)**
-            - **Border token:** Line 64 - `borderColor="border"` → `borderColor="button-outline"`
-            - **Color prop:** Lines 58-66 - Add `color="on-button-outline"` for consistency
-            - **Hover state:** Lines 58-66 - Add complete hover
-                - Should be: `_hover={{ bg: "tertiary/8", borderColor: "tertiary", color: "tertiary" }}`
-            - **Impact:** Automatically fixes Footer usage, simplifies ThemeDebug overrides
+            **Completed:** Fixed destructive outline button hover, code block border, ghost button hover, and Alert text
+            colors on opacity backgrounds.
 
-        - [ ] **7.2.d.5 Fix ThemeSelector.tsx**
-            - **Hover state:** Lines 66-72 - Add missing hover to outline button
-                - Current: No hover defined
-                - Should be: `_hover={{ bg: "tertiary/8", borderColor: "tertiary", color: "tertiary" }}`
+            **Primary fixes (from task requirements):**
+            - ✅ Outline button hover (line 125): Added complete hover pattern with `borderColor: "destructive"` and
+            `color: "destructive"`
+            - ✅ Code block border (line 237): Changed from generic `"border"` to `"border-strong-01"` (renders on background)
+            - ⚠️ Z-index evaluation: Task referenced lines 694, 722, 765 but file is only 471 lines - no z-index found
+            in ErrorBoundary.tsx
 
-        - [ ] **7.2.d.6 Quality gates and visual validation**
-            - **Quality gates:** TypeScript 0 errors, ESLint 0 violations
-            - **Visual test:** Verify all fixed components in all 4 themes × 2 modes
-            - **Focus on:** Form borders visible in light mode, hover states work correctly
-            - **Session boundary:** All Shared/Common fixes complete (100%)
+            **Additional violations fixed (comprehensive review per user request):**
+            - ✅ Ghost button (line 175): Added missing hover state with `color: "tertiary"`, `bg: "tertiary/8"`,
+            `color: "tertiary-hover"`
+            - ✅ Alert icon (line 99): Added explicit `color="destructive"` to MdWarning icon
+            - ✅ Alert heading (line 102): Changed from `"on-destructive"` to `"destructive"` (correct for 10% opacity
+            backgrounds per strategy)
+            - ✅ Alert text (line 105): Changed from `"on-destructive"` to `"foreground"` (body text on opacity backgrounds)
+            - ✅ Error message Code block (line 205): Changed from `"on-destructive"` to `"foreground"` (body text on
+            destructive/8 background)
+            - ✅ Component stack Code block (line 263): Changed from `"on-info"` to `"foreground"` (body text on info/10 background)
+
+            **Rationale:** Per semantic token strategy, text on 10-30% opacity backgrounds uses semantic color for
+            titles/emphasis and `foreground` for body text/descriptions.
+            The `on-*` tokens are optimized for solid backgrounds only.
+
+            **Quality gates:** ✅ TypeScript (0 errors), ESLint (0 violations)
+
+        - [x] **7.2.d.4 Fix ColorModeButton.tsx (color-mode.tsx)**
+
+            **Completed:** Fixed border token, added color prop, and implemented complete hover state for neutral
+            outline button pattern.
+
+            **Fixes applied:**
+            - ✅ Border token (line 64): Changed `borderColor="border"` → `borderColor="button-outline"`
+            - ✅ Color prop (line 65): Added `color="on-button-outline"` for consistency
+            - ✅ Hover state (lines 66-68): Added complete hover pattern with `bg: "tertiary/8"`, `borderColor: "tertiary"`
+                - **Critical:** Text/icons do NOT change color on hover (stay `on-button-outline`/`foreground`)
+                - Per strategy: "Text/icons stay the same color (foreground) for consistency"
+
+            **Pattern:** Neutral outline button - most common type for utility actions (color mode toggle, navigation, OAuth)
+
+            **Impact:** Automatically fixes Footer usage, simplifies ThemeDebug overrides (button now self-contained
+            with correct tokens)
+
+            **Quality gates:** ✅ TypeScript (0 errors), ESLint (0 violations)
+
+        - [x] **7.2.d.5 Fix ThemeSelector.tsx**
+
+            **Completed:** Added missing hover state to outline button + fixed Menu.Content border token.
+
+            **Primary fix (from task requirements):**
+            - ✅ Outline button hover (lines 72-74): Added complete hover pattern with `bg: "tertiary/8"`, `borderColor: "tertiary"`
+                - **Critical:** Text/icons do NOT change color on hover (stay `on-button-outline`/`foreground`)
+                - Per strategy: "Text/icons stay the same color (foreground) for consistency"
+
+            **Additional violation fixed (comprehensive review per user request):**
+            - ✅ Menu.Content border (line 85): Changed `borderColor="border"` → `borderColor="border-subtle-02"`
+            - **Rationale:** Menu.Content is elevated dropdown surface (like Select.Content), should
+            use `border-subtle-02` per strategy pattern
+
+            **Quality gates:** ✅ TypeScript (0 errors), ESLint (0 violations)
+
+        - [x] **7.2.d.6 Quality gates and visual validation**
+
+            **Completed:** All quality gates passed, visual validation completed across all themes and modes.
+
+            **Quality gates:** ✅ TypeScript (0 errors), ESLint (0 violations)
+
+            **Visual validation:** ✅ Completed by user across all 4 themes × 2 modes (8 combinations)
+            - Form borders visible in light mode ✓
+            - Hover states working correctly ✓
+            - All semantic token corrections rendering properly ✓
+
+            **Session summary - Phase 7.2.d complete (Shared/Common components):**
+            - **Total components fixed:** 6 (ErrorBoundary, ColorModeButton, ThemeSelector, Login, Register, ThemeDebug)
+            - **Total corrections:** 25 across 6 files
+            - **Task compliance:** 8/8 primary requirements + 17 additional violations
+            - **Patterns addressed:**
+                - Outline button hover states (missing bg/border/color changes)
+                - Ghost button hover states (missing bg change)
+                - Alert text on opacity backgrounds (on-* → foreground for body text)
+                - Form validation error colors (default red → destructive token)
+                - Border tokens (border → border-strong-01/border-subtle-02)
+                - Menu.Content border semantics
+
+            **Phase 7.2.d status:** 100% complete - All Shared/Common fixes done
 
     - [ ] **7.2.e Deprecate and migrate obsolete border tokens**
 

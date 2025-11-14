@@ -242,6 +242,10 @@ const ConnectedDropdowns = ({
             _hover={{
               bg: "tertiary/8",
             }}
+            _focusVisible={{
+              borderColor: "tertiary",
+              outline: "none",
+            }}
             _disabled={{
               opacity: 1,
               cursor: "not-allowed",
@@ -270,20 +274,24 @@ const ConnectedDropdowns = ({
             <Select.Content
               w={GENRE_WIDTH}
               bg="muted"
-              borderColor="border"
+              borderColor="border-subtle-02"
               color="foreground"
             >
               {genreCollection.items.map((item) => {
-                const isSelected = filters.genres.map(String).includes(item.value);
+                // "Any Genre" should show as selected when genres array is empty
+                const isAnyGenre = item.value === "" || item.label === "Any Genre";
+                const isSelected = isAnyGenre
+                  ? filters.genres.length === 0
+                  : filters.genres.map(String).includes(item.value);
                 return (
                   <Select.Item
                     key={item.value}
                     item={item}
                     bg={isSelected ? "tertiary" : undefined}
-                    color={isSelected ? "on-tertiary" : undefined}
+                    color={isSelected ? "on-tertiary" : "foreground"}
                     _hover={{
                       bg: isSelected ? "tertiary" : "tertiary/12",
-                      color: isSelected ? "on-tertiary" : undefined,
+                      color: isSelected ? "on-tertiary" : "foreground",
                     }}
                   >
                     {item.label}
@@ -341,6 +349,10 @@ const ConnectedDropdowns = ({
             _hover={{
               bg: "tertiary/8",
             }}
+            _focusVisible={{
+              borderColor: "tertiary",
+              outline: "none",
+            }}
             _disabled={{
               opacity: 1,
               cursor: "not-allowed",
@@ -369,7 +381,7 @@ const ConnectedDropdowns = ({
             <Select.Content
               w={yearWidth}
               bg="muted"
-              borderColor="border"
+              borderColor="border-subtle-02"
               color="foreground"
             >
               {yearCollection.items.map((item) => {
@@ -379,10 +391,10 @@ const ConnectedDropdowns = ({
                     key={item.value}
                     item={item}
                     bg={isSelected ? "tertiary" : undefined}
-                    color={isSelected ? "on-tertiary" : undefined}
+                    color={isSelected ? "on-tertiary" : "foreground"}
                     _hover={{
                       bg: isSelected ? "tertiary" : "tertiary/12",
-                      color: isSelected ? "on-tertiary" : undefined,
+                      color: isSelected ? "on-tertiary" : "foreground",
                     }}
                   >
                     {item.label}
@@ -511,6 +523,10 @@ const ConnectedDropdowns = ({
           color="on-button-outline"
           _hover={{
             bg: "tertiary/8",
+          }}
+          _focusVisible={{
+            borderColor: "tertiary",
+            outline: "none",
           }}
           minW="auto"
           px={3}

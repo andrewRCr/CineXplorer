@@ -113,6 +113,10 @@ const SortDropdownMinimal = ({
             _hover={{
               bg: "tertiary/8",
             }}
+            _focusVisible={{
+              borderColor: "tertiary",
+              outline: "none",
+            }}
             _disabled={{
               opacity: 1,
               cursor: "not-allowed",
@@ -139,7 +143,7 @@ const SortDropdownMinimal = ({
             <Select.Content
               w={SORT_WIDTH}
               bg="muted"
-              borderColor="border"
+              borderColor="border-subtle-02"
               color="foreground"
             >
               {sortCollection.items.map((item) => {
@@ -163,7 +167,7 @@ const SortDropdownMinimal = ({
                         ? {}
                         : {
                             bg: isSelected ? "tertiary" : "tertiary/12",
-                            color: isSelected ? "on-tertiary" : undefined,
+                            color: isSelected ? "on-tertiary" : "foreground",
                           }
                     }
                   >

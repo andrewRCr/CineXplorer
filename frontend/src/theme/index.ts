@@ -10,12 +10,12 @@
  * - Light/dark mode: Handled by `base` and `_dark` properties
  * - Theme switching: Provider recreates system when theme changes
  *
- * **TRANSITIONAL STATE (Phase 3-7 parallel systems migration):**
+ * **TRANSITIONAL STATE:**
  * - Theme registry, exports, and createThemeSystem() are active core infrastructure
  * - createBaseTokens()/createSemanticTokens() use legacy theme.light/theme.dark structure
  * - Supports both old ThemeColors tokens (~39) and new UnifiedTheme tokens (~47)
- * - Phase 8.2 cleanup will remove legacy dual-palette code and ThemeColors interface
- * - See tasks-theme-system-modernization.md Phase 8.2 for scheduled refactoring
+ * - Planned cleanup will remove legacy dual-palette code and ThemeColors interface
+ * - See tasks-theme-system-modernization.md for scheduled refactoring
  */
 
 import { createSystem, defaultConfig, defineConfig } from "@chakra-ui/react";
@@ -42,7 +42,7 @@ import { buttonRecipe } from "./recipes";
  * IBM Carbon is the default - its layer-based elevation philosophy guides
  * CineXplorer's unified theme system architecture.
  *
- * Material Design 3 added for ADR-010 validation (Task 3.5.5.7).
+ * Material Design 3 added to validate unified adapter pattern across multiple design systems.
  */
 export const themeRegistry = {
     "ibm-carbon": ibmCarbonTheme,
@@ -64,7 +64,7 @@ export function getTheme(name: string): Theme {
  * Base tokens are the foundation layer containing raw hex color values and shadow definitions.
  * Semantic tokens reference these to create meaningful, mode-aware color and shadow names.
  *
- * **Phase 3 Update:** During parallel systems migration, this includes both
+ * During parallel systems migration, this includes both
  * old ThemeColors tokens (~39) and new UnifiedTheme tokens (~47) when available.
  * Result: ~86 tokens available during migration, enabling gradual component updates.
  *
@@ -76,7 +76,7 @@ function createBaseTokens(theme: Theme) {
     const tokenKeys = Object.keys(theme.light) as Array<keyof ThemeColors>;
 
     // Shadow token names (extracted separately)
-    const shadowTokens = ['shadow-sm', 'shadow-md', 'shadow-lg'] as const;
+    const shadowTokens = ["shadow-sm", "shadow-md", "shadow-lg"] as const;
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const lightColors: Record<string, any> = {};
@@ -93,14 +93,20 @@ function createBaseTokens(theme: Theme) {
         darkColors[tokenKey] = { value: theme.dark[tokenKey] };
     }
 
-    // Phase 3: Add unified adapter tokens if available (parallel systems)
+    // Add unified adapter tokens if available (parallel systems; intermediate state for now, see header comment)
     if (theme.lightUnified && theme.darkUnified) {
-        const unifiedKeys = Object.keys(theme.lightUnified) as Array<keyof typeof theme.lightUnified>;
+        const unifiedKeys = Object.keys(theme.lightUnified) as Array<
+            keyof typeof theme.lightUnified
+        >;
 
         for (const tokenKey of unifiedKeys) {
             // Extract shadow tokens separately
-            if (shadowTokens.includes(tokenKey as typeof shadowTokens[number])) {
-                lightShadows[tokenKey] = { value: theme.lightUnified[tokenKey] };
+            if (
+                shadowTokens.includes(tokenKey as (typeof shadowTokens)[number])
+            ) {
+                lightShadows[tokenKey] = {
+                    value: theme.lightUnified[tokenKey],
+                };
                 darkShadows[tokenKey] = { value: theme.darkUnified[tokenKey] };
             } else {
                 // All other tokens go to colors
@@ -123,7 +129,7 @@ function createBaseTokens(theme: Theme) {
  * that automatically switch between light and dark values based on color mode.
  * Uses Chakra's token reference syntax: {colors.light.tokenName} or {shadows.light.tokenName}
  *
- * **Phase 3 Update:** Includes unified adapter token references when available.
+ * Includes unified adapter token references when available during transitional state.
  *
  * **Shadow Tokens:** Shadows are created as semantic tokens referencing base shadow values,
  * enabling automatic light/dark mode switching. Example: shadow-sm references
@@ -133,7 +139,7 @@ function createSemanticTokens(theme: Theme) {
     const tokenKeys = Object.keys(theme.light) as Array<keyof ThemeColors>;
 
     // Shadow token names (for semantic shadow creation)
-    const shadowTokens = ['shadow-sm', 'shadow-md', 'shadow-lg'] as const;
+    const shadowTokens = ["shadow-sm", "shadow-md", "shadow-lg"] as const;
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const colors: Record<string, any> = {};
@@ -144,19 +150,23 @@ function createSemanticTokens(theme: Theme) {
     for (const tokenKey of tokenKeys) {
         colors[tokenKey] = {
             value: {
-                base: `{colors.light.${tokenKey}}`,   // Light mode reference
-                _dark: `{colors.dark.${tokenKey}}`,    // Dark mode reference
+                base: `{colors.light.${tokenKey}}`, // Light mode reference
+                _dark: `{colors.dark.${tokenKey}}`, // Dark mode reference
             },
         };
     }
 
-    // Phase 3: Add unified adapter semantic tokens if available
+    // Add unified adapter semantic tokens if available
     if (theme.lightUnified && theme.darkUnified) {
-        const unifiedKeys = Object.keys(theme.lightUnified) as Array<keyof typeof theme.lightUnified>;
+        const unifiedKeys = Object.keys(theme.lightUnified) as Array<
+            keyof typeof theme.lightUnified
+        >;
 
         for (const tokenKey of unifiedKeys) {
             // Create semantic shadow tokens
-            if (shadowTokens.includes(tokenKey as typeof shadowTokens[number])) {
+            if (
+                shadowTokens.includes(tokenKey as (typeof shadowTokens)[number])
+            ) {
                 shadows[tokenKey] = {
                     value: {
                         base: `{shadows.light.${tokenKey}}`,

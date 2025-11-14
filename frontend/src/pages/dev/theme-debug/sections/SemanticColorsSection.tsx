@@ -258,7 +258,10 @@ export function SemanticColorsSection() {
                   <Button
                     variant="ghost"
                     color="tertiary"
-                    _hover={{ color: "tertiary-hover" }}
+                    _hover={{
+                      bg: "tertiary/8",
+                      color: "tertiary-hover"
+                    }}
                     _active={{ color: "tertiary-active" }}
                   >
                     tertiary (ghost)

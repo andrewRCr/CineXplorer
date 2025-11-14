@@ -69,6 +69,10 @@ export function ThemeSelector() {
             borderWidth="1px"
             borderColor="button-outline"
             color="on-button-outline"
+            _hover={{
+              bg: "tertiary/8",
+              borderColor: "tertiary"
+            }}
           >
             {displayLabel}
           </Button>
@@ -77,7 +81,7 @@ export function ThemeSelector() {
           <Menu.Positioner>
             <Menu.Content
               bg="popover"
-              borderColor="border"
+              borderColor="border-subtle-02"
               color="on-popover"
             >
               {THEME_OPTIONS.map((option) => (

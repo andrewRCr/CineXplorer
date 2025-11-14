@@ -487,6 +487,7 @@ const Login = () => {
                     left="0"
                     right="0"
                     mt="4px"
+                    color="destructive"
                   >
                     {formik.errors.username}
                   </Field.ErrorText>
@@ -541,6 +542,7 @@ const Login = () => {
                     left="0"
                     right="0"
                     mt="4px"
+                    color="destructive"
                   >
                     {formik.errors.password}
                   </Field.ErrorText>

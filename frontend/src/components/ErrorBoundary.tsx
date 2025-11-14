@@ -96,13 +96,13 @@ const ErrorDisplay: React.FC<{
           >
             <Alert.Indicator asChild>
               <Box mb={4}>
-                <MdWarning size="40px" />
+                <MdWarning size="40px" color="destructive" />
               </Box>
             </Alert.Indicator>
-            <Heading as="h2" size="lg" mb={2} color="on-destructive">
+            <Heading as="h2" size="lg" mb={2} color="destructive">
               Oops! Something went wrong
             </Heading>
-            <Text color="on-destructive" mb={4}>
+            <Text color="foreground" mb={4}>
               We've encountered an unexpected error. Our team has been notified and
               is working on a fix.
             </Text>
@@ -122,7 +122,11 @@ const ErrorDisplay: React.FC<{
                 variant="outline"
                 borderColor="destructive"
                 color="destructive"
-                _hover={{ bg: "destructive/8" }}
+                _hover={{
+                  bg: "destructive/8",
+                  borderColor: "destructive",
+                  color: "destructive"
+                }}
                 onClick={onReportError}
                 size="md"
               >
@@ -171,6 +175,11 @@ const ErrorDisplay: React.FC<{
             <Button
               variant="ghost"
               size="sm"
+              color="tertiary"
+              _hover={{
+                bg: "tertiary/8",
+                color: "tertiary-hover"
+              }}
               onClick={onToggle}
               mb={4}
             >
@@ -193,7 +202,7 @@ const ErrorDisplay: React.FC<{
                       fontSize="sm"
                       whiteSpace="pre-wrap"
                       bg="destructive/8"
-                      color="on-destructive"
+                      color="foreground"
                       border="1px solid"
                       borderColor="destructive/30"
                     >
@@ -230,7 +239,7 @@ const ErrorDisplay: React.FC<{
                       bg="muted"
                       color="foreground"
                       border="1px solid"
-                      borderColor="border"
+                      borderColor="border-strong-01"
                       maxH="200px"
                       overflowY="auto"
                     >
@@ -251,7 +260,7 @@ const ErrorDisplay: React.FC<{
                         fontSize="xs"
                         whiteSpace="pre-wrap"
                         bg="info/10"
-                        color="on-info"
+                        color="foreground"
                         border="1px solid"
                         borderColor="info/30"
                         maxH="150px"

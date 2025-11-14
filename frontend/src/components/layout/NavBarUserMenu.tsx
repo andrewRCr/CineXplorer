@@ -68,13 +68,7 @@ const NavBarUserMenu = () => {
       <Link to={ROUTES.LOGIN} style={{ textDecoration: "none" }}>
         <Button
           size="sm"
-          variant="outline"
-          color="on-button-outline"
-          borderColor="button-outline"
-          _hover={{
-            bg: "tertiary/8",
-            borderColor: "tertiary",
-          }}
+          variant="neutral-outline"
         >
           Login
         </Button>

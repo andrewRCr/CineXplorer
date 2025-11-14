@@ -64,15 +64,8 @@ export function ThemeSelector() {
       <Menu.Root positioning={{ placement: "top-start", gutter: 8 }}>
         <Menu.Trigger asChild>
           <Button
-            variant="outline"
+            variant="neutral-outline"
             size="sm"
-            borderWidth="1px"
-            borderColor="button-outline"
-            color="on-button-outline"
-            _hover={{
-              bg: "tertiary/8",
-              borderColor: "tertiary"
-            }}
           >
             {displayLabel}
           </Button>

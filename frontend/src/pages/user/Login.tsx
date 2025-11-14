@@ -620,50 +620,18 @@ const Login = () => {
               <HStack gap={3} w="100%" mt={4}>
                 <Button
                   flex="1"
-                  variant="outline"
-                  borderWidth="1px"
-                  borderColor="button-outline"
-                  color="on-button-outline"
+                  variant="neutral-outline"
                   fontSize="16px"
                   onClick={handleGoogleLogin}
-                  _hover={{
-                    bg: "tertiary/8",
-                    borderColor: "tertiary",
-                  }}
-                  _active={{
-                    bg: "tertiary/12",
-                    borderColor: "tertiary",
-                  }}
-                  _focusVisible={{
-                    outline: "2px solid",
-                    outlineColor: "ring",
-                    outlineOffset: "2px",
-                  }}
                 >
                   <FaGoogle size={18} style={{ marginRight: "8px" }} />
                   Google
                 </Button>
                 <Button
                   flex="1"
-                  variant="outline"
-                  borderWidth="1px"
-                  borderColor="button-outline"
-                  color="on-button-outline"
+                  variant="neutral-outline"
                   fontSize="16px"
                   onClick={handleGithubLogin}
-                  _hover={{
-                    bg: "tertiary/8",
-                    borderColor: "tertiary",
-                  }}
-                  _active={{
-                    bg: "tertiary/12",
-                    borderColor: "tertiary",
-                  }}
-                  _focusVisible={{
-                    outline: "2px solid",
-                    outlineColor: "ring",
-                    outlineOffset: "2px",
-                  }}
                 >
                   <FaGithub size={18} style={{ marginRight: "8px" }} />
                   GitHub

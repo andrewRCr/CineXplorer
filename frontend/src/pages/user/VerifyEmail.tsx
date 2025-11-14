@@ -131,11 +131,9 @@ const VerifyEmail = () => {
               </Box>
             </Alert.Root>
             <Button
+              variant="solid"
               size="lg"
               onClick={handleContinue}
-              bg="primary"
-              color="on-primary"
-              _hover={{ bg: "primary-hover" }}
             >
               Continue to Login Now
             </Button>
@@ -161,28 +159,20 @@ const VerifyEmail = () => {
             </Alert.Root>
             <VStack gap={3}>
               <Button
-                variant="outline"
+                variant="neutral-outline"
                 onClick={() => navigate(ROUTES.LOGIN)}
                 size="lg"
                 w="full"
                 maxW="200px"
-                borderWidth="1px"
-                borderColor="button-outline"
-                color="on-button-outline"
-                _hover={{ bg: "tertiary/8", borderColor: "tertiary", color: "tertiary" }}
               >
                 Back to Login
               </Button>
               <Button
-                variant="outline"
+                variant="neutral-outline"
                 onClick={() => window.location.reload()}
                 size="lg"
                 w="full"
                 maxW="200px"
-                borderWidth="1px"
-                borderColor="button-outline"
-                color="on-button-outline"
-                _hover={{ bg: "tertiary/8", borderColor: "tertiary", color: "tertiary" }}
               >
                 Try Again
               </Button>

@@ -291,42 +291,43 @@ See notes file "CRITICAL DISCOVERY" section for research confirmation.
         **Note:** Visual validation performed by user during testing. No issues anticipated as recipes
         reference same semantic tokens already validated across themes in Phase 7.
 
-- [ ] **2.4 Migrate components to use button recipes**
+- [x] **2.4 Migrate components to use button recipes**
 
-    **Goal:** Systematically replace inline patterns with recipe usage.
+    **Completed:** Systematically migrated all button patterns to recipe usage.
 
-    **Note:** During migration, if you find button patterns that deviate from strategy doc:
-    - Fix component to match strategy doc patterns (preferred)
-    - OR document deviation in notes file if it reveals legitimate edge case
-    - Strategy doc is source of truth - code should conform to it
+    **Migration summary:**
+    - Solid buttons (3): MovieDetail.tsx (2), VerifyEmail.tsx (1)
+    - Primary-outline buttons (1): SidebarContent.tsx
+    - Neutral-outline buttons (10): Login.tsx (2), ThemeSelector, NavBarUserMenu, MobileMenuButton, ColorModeButton,
+    MovieDetail, VerifyEmail (2)
+    - Subtle buttons (3): Featured.tsx
+    - Skipped: Filter controls (AdvancedFilterToggle, CollapsibleSearchBox) per documented design intent
 
-    - [ ] **2.4.1 Migrate solid buttons**
-        - Grep for solid button patterns (`bg="primary"`, `color="on-primary"`, `_hover`)
-        - Replace inline styles with recipe variant prop
-        - Keep imports: `import { Button } from "@chakra-ui/react"` (NO changes)
-        - Pattern: Replace `bg="primary" color="on-primary" _hover={...}` → `variant="solid"`
-        - Run incremental quality checks
+    **Pattern deviations found and fixed:**
+    - MovieDetail.tsx and VerifyEmail.tsx had `color: "tertiary"` in `_hover` state (not in recipe)
+    - Migrated to standard recipe pattern (text color stays constant on hover)
+    - One conditional button (watchlist toggle) kept inline styles (runtime conditional between primary/secondary)
 
-    - [ ] **2.4.2 Migrate outline buttons**
-        - Grep for outline patterns (`borderColor="button-outline"`, `borderColor="button-outline-primary"`)
-        - Replace with variant props: `variant="neutral-outline"` or `variant="primary-outline"`
-        - Keep imports: `import { Button } from "@chakra-ui/react"` (NO changes)
-        - Components: MobileMenuButton, NavBarUserMenu, ColorModeButton, ThemeSelector, filter controls
-        - Note: Skip filter controls with special design intent (see filter control documentation pattern)
-        - Run incremental quality checks
+    - [x] **2.4.1 Migrate solid buttons**
+        - Migrated 3 solid buttons across 2 files
+        - All imports unchanged (kept `import { Button } from "@chakra-ui/react"`)
+        - Replaced inline styles with `variant="solid"`
 
-    - [ ] **2.4.3 Migrate subtle and ghost buttons**
-        - Grep for subtle patterns (`bg="button-subtle"`) and ghost (`variant="ghost"` with inline _hover)
-        - Replace subtle with: `variant="subtle"` + `selected={boolean}` for selection state
-        - Replace ghost with: `variant="ghost"` (remove inline _hover/_active)
-        - Keep imports: `import { Button } from "@chakra-ui/react"` (NO changes)
-        - Run incremental quality checks
+    - [x] **2.4.2 Migrate outline buttons**
+        - Migrated 11 outline buttons (1 primary-outline, 10 neutral-outline)
+        - Skipped filter controls per special case documentation
+        - All imports unchanged
 
-    - [ ] **2.4.4 Run full quality gates**
-        - Frontend linting: 0 violations
-        - TypeScript: 0 errors
-        - Frontend tests: 100% pass rate
-        - Visual validation in all themes
+    - [x] **2.4.3 Migrate subtle and ghost buttons**
+        - Migrated 3 subtle buttons in Featured.tsx
+        - No ghost buttons found with inline hover states
+        - All imports unchanged
+
+    - [x] **2.4.4 Run full quality gates**
+        - ✅ Frontend linting: 0 violations
+        - ✅ TypeScript: 0 errors (after container restart cleared TS server cache)
+        - ✅ Frontend tests: 453 passed (25 test files)
+        - ✅ Visual validation: passed
 
 ### **Phase 3:** Form Control Recipes (Mixed Priority - Select only)
 
@@ -419,6 +420,9 @@ components instead (like TextLink pattern for special cases). Only Select.Trigge
         - Use built-in `<Alert>` component (NO wrapper needed)
         - Pattern: `<Alert status="success">` automatically uses recipe
         - Run typegen: `npx @chakra-ui/cli typegen ./theme.ts`
+        - **Restart frontend container** to clear TS server cache:
+        `docker compose -f infrastructure/docker-compose.yml restart frontend`
+        - Verify types recognized (create test component with custom variants)
 
 - [ ] **4.2 Create Badge recipes**
 
@@ -433,6 +437,9 @@ components instead (like TextLink pattern for special cases). Only Select.Trigge
         - Use built-in `<Badge>` component (NO wrapper needed)
         - Pattern: `<Badge variant="rating">` automatically uses recipe
         - Run typegen: `npx @chakra-ui/cli typegen ./theme.ts`
+        - **Restart frontend container** to clear TS server cache:
+        `docker compose -f infrastructure/docker-compose.yml restart frontend`
+        - Verify types recognized (custom variants should show in IDE autocomplete)
 
 - [ ] **4.3 Migrate Alert and Badge components**
 
@@ -495,7 +502,10 @@ components instead (like TextLink pattern for special cases). Only Select.Trigge
     - [ ] **5.2.4 Test and migrate form control components**
         - Keep imports: `import { Checkbox, Radio, Switch } from "@chakra-ui/react"` (NO changes)
         - Built-in components automatically use registered recipes
-        - Run typegen after creating recipes
+        - Run typegen after creating recipes: `npx @chakra-ui/cli typegen ./theme.ts`
+        - **Restart frontend container** to clear TS server cache:
+        `docker compose -f infrastructure/docker-compose.yml restart frontend`
+        - Verify types recognized (custom variants in IDE autocomplete)
 
 - [ ] **5.3 Create Card recipes** (if beneficial)
 

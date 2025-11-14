@@ -24,6 +24,52 @@ components, causing maintenance burden, pattern drift, and lost benefits of Chak
 - Better to establish recipe infrastructure before touching more components
 - Current theme modernization work (Phase 7) is ideal context
 
+---
+
+## ⚠️ CRITICAL CONTEXT: Codebase in Intermediate State
+
+**READ THIS FIRST IN EVERY SESSION:**
+
+The codebase is approximately **90% through** `tasks-theme-system-modernization.md`.
+This means the theme system is in a **transitional state** with legacy code that will be removed.
+
+### What Phase 8 Will Remove (Line 3186)
+
+When Phase 8 cleanup executes, these will be **DELETED**:
+
+- ❌ **`frontend/src/theme/definitions/*.ts` files** - Entire directory removed
+- ❌ **`ThemeColors` interface** - Completely removed from types
+- ❌ **Old `light`/`dark` dual palette system** - Removed from `createBaseTokens()`
+- ❌ **`-foreground` suffix aliases** - All removed (e.g., `primary-foreground`, `accent-foreground`)
+- ❌ **Temporal commentary** - All "Phase X", "Task Y", "CORRECTED", "FIXED" comments stripped
+- ❌ **Parallel system references** - All "during migration", "transitional", "parallel systems" comments
+
+### What Remains (TARGET Architecture)
+
+The **current architecture minus the above** is the target state for recipe implementation:
+
+- ✅ **`createThemeSystem(theme: Theme)`** - Core function creating Chakra system from unified theme
+- ✅ **Unified adapter layer** - `frontend/src/theme/color/adapters/*.ts` (GitHub, Carbon, GitLab, Material)
+- ✅ **`UnifiedTheme` interface** - ~47 canonical tokens
+  (`layer-01`, `on-primary`, `tertiary`, etc.)
+- ✅ **Semantic token structure** - Already in Chakra-compatible format (base + `_dark` references)
+- ✅ **All components migrated** - Already using canonical token names
+- ✅ **Dynamic theme switching** - Provider-based system fully functional
+
+### What's NOT Migrated Yet
+
+- ⚠️ **`input` and `border` tokens** - Still in use (~70 usages of "border"),
+  pending Phase 7.2.e deprecation
+    - These will be migrated to layer-appropriate border tokens before Phase 8
+    - NOT blocked for recipe work - recipes will use layer-appropriate tokens from day 1
+
+### Implications for Recipe Implementation
+
+**✅ SAFE TO PROCEED** - The target architecture is stable and recipe-compatible.
+
+**Key principle:** Design recipes against the CURRENT system (minus deprecated parts),
+NOT against what `definitions/` files show. Those files are legacy scaffolding.
+
 ## Scope
 
 ### Will Do
@@ -47,40 +93,89 @@ components, causing maintenance burden, pattern drift, and lost benefits of Chak
 
 ### **Phase 1:** Research and Planning
 
-- [ ] **1.1 Research Chakra UI v3 recipe API**
+- [x] **1.1 Research Chakra UI v3 recipe API** ✅
 
     **Goal:** Understand recipe syntax, variants, compound variants, and registration.
 
-    - [ ] **1.1.1 Review Chakra UI v3 recipe documentation**
-        - Read official defineRecipe API docs
-        - Understand variant system (base styles, variants, compound variants)
-        - Review recipe registration in theme config
-        - Document key patterns in notes file
+    **Completed:** 2025-11-14 (both subtasks complete)
 
-    - [ ] **1.1.2 Identify gaps between strategy doc and recipe capabilities**
-        - Check if all codified patterns can be expressed as recipes
-        - Document any patterns requiring component-level implementation
-        - Note limitations or workarounds needed
+    - [x] **1.1.1 Review Chakra UI v3 recipe documentation**
 
-- [ ] **1.2 Audit current inline pattern usage**
+        **Completed:** 2025-11-14
 
-    **Goal:** Quantify migration scope and identify pattern variations.
+        **Key findings:**
+        - Recipe structure: `defineRecipe` with base, variants, compoundVariants, defaultVariants
+        - Registration: `defineConfig({ theme: { recipes: { button: buttonRecipe } } })`
+        - Token references: Recipes reference semantic tokens by name (e.g., `bg: "primary"`)
+        - Two usage patterns: `useRecipe` hook (complex cases) vs `chakra()` factory (RECOMMENDED)
+        - `chakra()` factory creates fully-typed components with cleaner API
 
-    - [ ] **1.2.1 Catalog inline button patterns**
-        - Grep for all button `_hover` patterns
-        - Count variants: solid, primary-outline, neutral-outline, subtle, ghost
-        - Document pattern variations (deviations from strategy)
-        - Note files: frontend/src/components/**/*.tsx
+        **Compatibility verified:**
+        - ✅ Our semantic token structure matches Chakra's expected format exactly
+        - ✅ Dynamic theme switching fully compatible (recipes registered in baseConfig)
+        - ✅ Token references work automatically across theme switches
+        - ✅ No architecture changes needed
 
-    - [ ] **1.2.2 Catalog inline form control patterns**
-        - Grep for Input/Textarea/Select hover/focus patterns
-        - Document CSS variable usage (color-mix patterns)
-        - Identify any ADR-015 violations
+        **Critical decisions:**
+        - Recipes MUST use canonical token names (`on-primary`, NOT `primary-foreground`)
+        - Register recipes in `baseConfig.theme.recipes` (line ~181 of theme/index.ts)
+        - Use "creating a component" pattern for better DX and performance
 
-    - [ ] **1.2.3 Catalog inline Alert/Badge patterns**
-        - Grep for semantic color usage (success/warning/destructive/info)
-        - Document opacity background patterns
-        - Note any custom implementations
+        **Documented in:** `notes-chakra-recipe-system-implementation.md`
+
+    - [x] **1.1.2 Identify gaps between strategy doc and recipe capabilities**
+
+        **Completed:** 2025-11-14
+
+        **Analysis completed:**
+        - ✅ Reviewed all codified patterns from strategy-semantic-tokens.md
+        - ✅ Created comprehensive expressibility matrix (13 pattern categories analyzed)
+        - ✅ Identified recipe-compatible vs component-level-only patterns
+        - ✅ Documented workarounds for edge cases (compound variants, utility functions)
+
+        **Key findings:**
+
+        **✅ Fully recipe-compatible (90% of patterns):**
+        - All 5 button variants (solid, primary-outline, neutral-outline, subtle, ghost)
+        - Alert patterns (via slot recipes)
+        - Badge patterns (via compound variants)
+        - Select.Trigger pattern (button-like)
+
+        **⚠️ Partial (recipes + component logic):**
+        - Subtle button with selection (use compound variants: `selected: true/false`)
+        - Select.Item with dynamic selection (runtime conditionals stay in components)
+        - Checkbox (recipe for base, Chakra handles checked state)
+
+        **❌ Not expressible in recipes:**
+        - Input/Textarea patterns - Complex CSS (`:hover:not(:focus)`, `color-mix()`)
+        - Requires explicit CSS variable syntax (`var(--chakra-colors-*)`)
+        - Solution: Keep as component utilities or wrapper components
+
+        **Architectural decision:** Hybrid approach maximizes recipe benefits
+        (centralized styling, theme-aware variants) while acknowledging boundaries
+        (complex pseudo-selectors, runtime conditionals).
+
+        **Recommendations:**
+        - Phase 2 (Buttons): ✅ Full recipe implementation
+        - Phase 3 (Forms): ⚠️ Mixed (Select.Trigger recipe, Input/Textarea utilities)
+        - Phase 4 (Alert/Badge): ✅ Full recipe implementation (slot recipes, compound variants)
+
+        **Documented in:** `notes-chakra-recipe-system-implementation.md` (Task 1.1.2 section)
+
+- [x] **1.2 SKIP - Inline pattern audit not needed** ✅
+
+    **Decision:** Strategy doc is source of truth. Task 1.1.2 already analyzed all patterns.
+
+    **Rationale:**
+    - Strategy doc defines what patterns SHOULD be (source of truth)
+    - Auditing code for "variations" treats messy reality as the target
+    - Better approach: Implement recipes from strategy doc, fix deviations during migration
+
+    **Migration note:** When migrating components (Phases 2-5), if you find patterns that
+    DON'T match strategy doc, either:
+    - A) Fix component to match strategy (most cases)
+    - B) Update strategy doc if legitimate new pattern discovered (rare)
+    - Document any deviations found in notes file for resolution
 
 ### **Phase 2:** Button Recipes (High Priority - Biggest Impact)
 
@@ -110,10 +205,12 @@ components, causing maintenance burden, pattern drift, and lost benefits of Chak
         - Active: `bg: "tertiary/12"`, `borderColor: "tertiary"`
         - Note: Keep tertiary for now, change in Phase 6
 
-    - [ ] **2.1.5 Define subtle button variant**
-        - Base: `bg: "button-subtle"`, `color: "on-button-subtle"`
-        - Hover: `bg: "secondary-hover"`
-        - Selected: `bg: "button-subtle-selected"`, `color: "on-button-subtle-selected"`
+    - [ ] **2.1.5 Define subtle button variant (with selection support)**
+        - Use compound variants for selected state (per Task 1.1.2 analysis)
+        - Create `selected: { true: {}, false: {} }` variant dimension
+        - Unselected: `bg: "button-subtle"`, `color: "on-button-subtle"`, hover: `secondary-hover`
+        - Selected: `bg: "button-subtle-selected"`, `color: "on-button-subtle-selected"`, no hover change
+        - Usage: `<Button variant="subtle" selected={isSelected}>`
 
     - [ ] **2.1.6 Define ghost button variant**
         - Base: `color: "tertiary"`
@@ -147,6 +244,11 @@ components, causing maintenance burden, pattern drift, and lost benefits of Chak
 
     **Goal:** Systematically replace inline patterns with recipe usage.
 
+    **Note:** During migration, if you find button patterns that deviate from strategy doc:
+    - Fix component to match strategy doc patterns (preferred)
+    - OR document deviation in notes file if it reveals legitimate edge case
+    - Strategy doc is source of truth - code should conform to it
+
     - [ ] **2.4.1 Migrate solid buttons**
         - Grep for solid button patterns
         - Replace inline styles with recipe variant
@@ -170,24 +272,40 @@ components, causing maintenance burden, pattern drift, and lost benefits of Chak
         - Frontend tests: 100% pass rate
         - Visual validation in all themes
 
-### **Phase 3:** Form Control Recipes (High Priority - Consistency)
+### **Phase 3:** Form Control Recipes (Mixed Priority - Select only)
 
-- [ ] **3.1 Create Input/Textarea recipes**
+**IMPORTANT:** Input/Textarea patterns CANNOT be expressed as recipes due to complex
+`:hover:not(:focus)` pseudo-selectors and `color-mix()` CSS functions. Create wrapper
+components instead (like TextLink pattern for special cases). Only Select.Trigger is recipe-compatible.
 
-    - [ ] **3.1.1 Create `frontend/src/theme/recipes/input.ts`**
-        - Define base input recipe with ADR-015 border-only focus
-        - Base: `borderColor: "border-strong-01"`, `bg: "transparent"`
-        - Hover: CSS variable syntax for border-strong-02 + tertiary/8 bg
-        - Focus: CSS variable syntax for tertiary border + transparent bg
+- [ ] **3.1 Create Input/Textarea wrapper components** ⚠️ NOT RECIPES
 
-    - [ ] **3.1.2 Create textarea recipe** (if different from input)
-        - Same pattern as input
-        - Adjust for textarea-specific needs if any
+    **Approach:** Create wrapper components that encapsulate ADR-015 styling (like TextLink does
+    for React Router integration). Styling logic lives INSIDE the components - no separate utility file needed.
 
-    - [ ] **3.1.3 Test input recipes across themes**
-        - Verify border-only focus works
-        - Test hover → focus transitions
+    - [ ] **3.1.1 Create `frontend/src/components/common/StyledInput.tsx`**
+        - Wrapper around Chakra Input with ADR-015 border-only focus
+        - Accept `layer?: "01" | "02"` prop for context-appropriate borders
+        - Base: `borderColor: "border-strong-{layer}"`, `bg: layer === "01" ? "transparent" : "background"`
+        - Hover (via css prop): `&:hover:not(:focus)` → border-strong-02/03 + tertiary/8 bg
+        - Focus (via css prop): tertiary border + transparent/background bg
+        - Uses CSS variable syntax for color-mix in css prop
+        - Forward all other props to Chakra Input (`{...props}`)
+        - **Pattern:** Similar to TextLink.tsx (encapsulated wrapper, no external utility)
+        - **Location:** `common/` for reusable UI (per theme task 7.3 structure)
+
+    - [ ] **3.1.2 Create `frontend/src/components/common/StyledTextarea.tsx`**
+        - Same pattern as StyledInput (wrapper around Chakra Textarea)
+        - Accept same `layer?: "01" | "02"` prop
+        - Duplicate ADR-015 styling logic (~20 lines) for encapsulation
+        - Forward all other props to Chakra Textarea
+
+    - [ ] **3.1.3 Test wrapper components across themes**
+        - Verify border-only focus works (no outline ring)
+        - Test hover → focus transitions (`:not(:focus)` prevents hover override)
         - Validate in all 4 themes × 2 modes
+        - Test layer prop (01 vs 02 border hierarchy)
+        - Ensure color-mix() works correctly across browsers
 
 - [ ] **3.2 Create Select recipes**
 
@@ -203,9 +321,19 @@ components, causing maintenance burden, pattern drift, and lost benefits of Chak
 
 - [ ] **3.3 Migrate form control components**
 
-    - [ ] **3.3.1 Migrate Input/Textarea components**
-        - Replace inline CSS patterns
-        - Update strategy doc examples
+    **Note:** During migration, if you find form control patterns that deviate from strategy doc:
+    - Fix component to match strategy doc patterns (preferred)
+    - OR document deviation in notes file if it reveals legitimate edge case
+    - ADR-015 compliance (border-only focus) is non-negotiable
+
+    - [ ] **3.3.1 Migrate Input/Textarea components to wrapper components**
+        - Replace inline CSS patterns with StyledInput/StyledTextarea components (from `common/`)
+        - Import: `import { StyledInput, StyledTextarea } from "@/components/common"`
+        - Replace `<Input />` → `<StyledInput />` (or `<StyledInput layer="02" />` if on layer-02)
+        - Replace `<Textarea />` → `<StyledTextarea />`
+        - Update component comments to reference wrapper pattern
+        - Verify ADR-015 compliance (`:hover:not(:focus)` behavior)
+        - **Edge cases:** For highly custom inputs, continue using Chakra `<Input />` directly
         - Run quality checks
 
     - [ ] **3.3.2 Migrate Select components**
@@ -242,21 +370,28 @@ components, causing maintenance burden, pattern drift, and lost benefits of Chak
 
 - [ ] **4.3 Migrate Alert and Badge components**
 
+    **Note:** During migration, if you find Alert/Badge patterns that deviate from strategy doc:
+    - Fix component to match strategy doc patterns (preferred)
+    - OR document deviation in notes file if it reveals legitimate edge case
+
     - [ ] **4.3.1 Migrate Alert usages**
     - [ ] **4.3.2 Migrate Badge usages**
     - [ ] **4.3.3 Run quality gates**
 
 ### **Phase 5:** Remaining Component Recipes (Lower Priority)
 
-- [ ] **5.1 Create Link recipes**
+- [x] **5.1 SKIP - Link recipes not needed** ✅
 
-    - [ ] **5.1.1 Create `frontend/src/theme/recipes/link.ts`**
-        - TextLink pattern (tertiary, underline, hover/focus states)
-        - Test across themes
+    **Decision:** TextLink component stays as-is. Recipes add no value here.
 
-    - [ ] **5.1.2 Evaluate if TextLink component needs updates**
-        - Check if recipe usage simplifies component
-        - Update if beneficial
+    **Rationale** (from Task 1.1.2 + TextLink analysis):
+    - Single pattern (no variants to manage like buttons have 5)
+    - Requires React Router integration (`asChild` + `RouterLink`) - can't express in recipe
+    - Already well-encapsulated as 73-line component
+    - Recipe would just duplicate 4-5 style props, component still needed for Router logic
+    - Links (`<a>`) are semantically different from buttons - not part of button pattern system
+
+    **Action:** No work needed. Skip to Phase 5.2 (Checkbox/Radio/Switch).
 
 - [ ] **5.2 Create Checkbox/Radio/Switch recipes**
 
@@ -290,7 +425,23 @@ components, causing maintenance burden, pattern drift, and lost benefits of Chak
 
 - [ ] **6.1 Update strategy-semantic-tokens.md**
 
-    **Goal:** Replace inline code examples with recipe references.
+    **Goal:** Transform strategy doc to use recipe-focused guidance (leaner, more semantic).
+
+    **When:** After all recipes implemented (Phases 2-5 complete). Do all-at-once to maintain consistency.
+
+    **What changes:**
+    - Replace verbose inline examples (10+ lines) with clean recipe usage (1 line)
+    - Keep decision trees, semantic guidance, when/why rationale (core value!)
+    - Add recipe variant reference tables (quick lookup)
+    - Link to recipe files for implementation deep dives
+    - Document edge cases requiring component-level styling (Input/Textarea utilities)
+
+    **What stays:**
+    - Decision trees ("Which button pattern?")
+    - Semantic guidance ("When to use solid vs outline")
+    - Pattern hierarchy explanations
+    - WCAG compliance notes
+    - Token meanings (but lighter touch - recipes abstract details)
 
     - [ ] **6.1.1 Update Button section**
         - Replace Pattern 1-6 code examples
@@ -298,8 +449,10 @@ components, causing maintenance burden, pattern drift, and lost benefits of Chak
         - Show how to use: `<Button visual="neutral-outline">`
 
     - [ ] **6.1.2 Update Form Controls section**
-        - Update Input/Textarea examples with recipe usage
-        - Update Select examples
+        - Update Input/Textarea examples with wrapper component usage (NOT recipes!)
+        - Show StyledInput/StyledTextarea pattern (similar to TextLink pattern)
+        - Document layer prop usage for context-appropriate borders
+        - Update Select examples with recipe usage
 
     - [ ] **6.1.3 Update Alert/Badge sections**
         - Update with recipe variant usage
@@ -312,7 +465,8 @@ components, causing maintenance burden, pattern drift, and lost benefits of Chak
         - Show hover/focus/active states
 
     - [ ] **6.2.2 Update FormControlsSection**
-        - Demonstrate input/textarea recipes with ADR-015 patterns
+        - Demonstrate StyledInput/StyledTextarea wrapper components with ADR-015 patterns (NOT recipes!)
+        - Show layer prop usage for different contexts
         - Show Select recipe usage
 
     - [ ] **6.2.3 Update other sections as needed**

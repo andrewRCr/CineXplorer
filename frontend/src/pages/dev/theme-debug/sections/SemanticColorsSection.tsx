@@ -1,9 +1,8 @@
-import { Box, Text, VStack, HStack, Button, Code } from "@chakra-ui/react";
+import { Box, Text, VStack, HStack, Code } from "@chakra-ui/react";
 import { useThemeSelect } from "@/hooks/useThemeSelect";
-import { TextLink } from "@/components/common/TextLink";
 
 /**
- * Semantic Colors Section - Brand, Core Actions, and Status Colors
+ * Semantic Colors Section - Brand and Status Colors
  *
  * Shows all semantic color tokens with their foreground pairs and usage examples.
  * Per ADR-010: Primary/Secondary/Tertiary hierarchy with optional brand separation.
@@ -191,94 +190,6 @@ export function SemanticColorsSection() {
 
               <Text fontSize="xs" color="foreground/60" textAlign="center" maxW="600px" mx="auto" lineHeight="1.5">
                 Per ADR-010: Color tokens for the semantic hierarchy. Primary (action color), Secondary (subtle backgrounds), Tertiary (interactive text/links), Muted (disabled/deemphasized).
-              </Text>
-            </VStack>
-          </Box>
-        </Box>
-
-        {/* Core Actions - Color demonstration (not comprehensive patterns) */}
-        <Box>
-          <Text fontSize="lg" fontWeight="bold" mb={2}>Core Actions</Text>
-          <Text fontSize="sm" color="on-muted" mb={3}>
-            Demonstrates core semantic colors in their primary use cases.
-            See strategy-semantic-tokens.md for comprehensive button patterns.
-          </Text>
-          <Box bg="background" p={4} borderRadius="md" borderWidth="1px" borderColor="border-subtle-00">
-            <VStack gap={4}>
-              {/* Solid button */}
-              <VStack gap={2} align="center">
-                <Text fontSize="xs" fontWeight="semibold" color="foreground/80">Solid (highest emphasis)</Text>
-                <Button
-                  bg="primary"
-                  color="on-primary"
-                  _hover={{ bg: "primary-hover" }}
-                  _active={{ bg: "primary-active" }}
-                >
-                  primary
-                </Button>
-              </VStack>
-
-              {/* Outline buttons - ADR-012 */}
-              <VStack gap={2} align="center">
-                <Text fontSize="xs" fontWeight="semibold" color="foreground/80">Outline (high emphasis)</Text>
-                <HStack gap={3} wrap="wrap" justify="center">
-                  <Button
-                    variant="outline"
-                    borderColor="button-outline-primary"
-                    color="on-button-outline-primary"
-                    _hover={{ bg: "primary/8" }}
-                    _active={{ bg: "primary/12" }}
-                  >
-                    primary outline
-                  </Button>
-                  <Button
-                    variant="outline"
-                    borderColor="button-outline"
-                    color="on-button-outline"
-                    _hover={{ bg: "tertiary/8", borderColor: "tertiary" }}
-                    _active={{ bg: "tertiary/12", borderColor: "tertiary" }}
-                  >
-                    neutral outline
-                  </Button>
-                </HStack>
-              </VStack>
-
-              {/* Subtle and Ghost buttons */}
-              <VStack gap={2} align="center">
-                <Text fontSize="xs" fontWeight="semibold" color="foreground/80">Subtle & Ghost (lower emphasis)</Text>
-                <HStack gap={3} wrap="wrap" justify="center">
-                  <Button
-                    bg="button-subtle"
-                    color="on-button-subtle"
-                    _hover={{ bg: "secondary-hover" }}
-                    _active={{ bg: "secondary-active" }}
-                  >
-                    secondary (subtle)
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    color="tertiary"
-                    _hover={{
-                      bg: "tertiary/8",
-                      color: "tertiary-hover"
-                    }}
-                    _active={{ color: "tertiary-active" }}
-                  >
-                    tertiary (ghost)
-                  </Button>
-                </HStack>
-              </VStack>
-
-              {/* Interactive link example */}
-              <TextLink to="/">
-                Interactive link (tertiary)
-              </TextLink>
-
-              <Text fontSize="xs" color="on-muted" textAlign="center" maxW="700px" lineHeight="1.5">
-                Per ADR-010/ADR-012: Primary (action color), Secondary (subtle backgrounds),
-                Tertiary (links/interactive text). ADR-012 button helpers shown: primary outline (branded),
-                neutral outline (utility), subtle (embedded). See strategy-semantic-tokens.md "Building Buttons"
-                for comprehensive patterns (disabled states, loading, icons, etc.).
               </Text>
             </VStack>
           </Box>

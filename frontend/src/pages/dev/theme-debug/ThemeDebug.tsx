@@ -12,6 +12,7 @@ import { BorderHierarchySection } from "./sections/BorderHierarchySection";
 import { OpacitySystemSection } from "./sections/OpacitySystemSection";
 import { InteractionStatesSection } from "./sections/InteractionStatesSection";
 import { UIElementTokensSection } from "./sections/UIElementTokensSection";
+import { ButtonPatternsSection } from "./sections/ButtonPatternsSection";
 import { FormControlsSection } from "./sections/FormControlsSection";
 import { NavigationPatternsSection } from "./sections/NavigationPatternsSection";
 import { FeedbackStatusSection } from "./sections/FeedbackStatusSection";
@@ -164,6 +165,7 @@ export default function ThemeDebug() {
 
               {/* Components group */}
               {[
+                { id: 'button-patterns', label: 'Buttons' },
                 { id: 'form-controls', label: 'Forms' },
                 { id: 'navigation-patterns', label: 'Navigation' },
                 { id: 'feedback-status', label: 'Feedback' },
@@ -201,6 +203,7 @@ export default function ThemeDebug() {
         <UIElementTokensSection />
 
         {/* Components */}
+        <ButtonPatternsSection />
         <FormControlsSection />
         <NavigationPatternsSection />
         <FeedbackStatusSection />

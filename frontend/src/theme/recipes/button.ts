@@ -3,10 +3,12 @@ import { defineRecipe } from "@chakra-ui/react";
 /**
  * Button recipe implementing all codified button patterns
  *
+ * 5 finalized variants optimized for cross-theme consistency and semantic clarity:
+ *
  * Variants:
- * - solid: Primary action button (primary background)
- * - primary-outline: Secondary action with primary color scheme
- * - neutral-outline: Secondary action with neutral color scheme
+ * - solid: Primary action button (12% hover for improved visibility)
+ * - secondary: Form pair secondary action (primary text + grey border)
+ * - outline: Standalone utility action (grey text + primary hover)
  * - subtle: Low-emphasis button with optional selection state
  * - ghost: Minimal button for tertiary actions
  */
@@ -34,9 +36,8 @@ export const buttonRecipe = defineRecipe({
             /**
              * Solid variant: Primary action button
              * - Primary background with on-primary text
-             * - Hover darkens to primary-hover
-             * - Active further darkens to primary-active
-             * - Focus ring with ring color
+             * - Hover: primary-hover (12% foreground overlay)
+             * - Active: primary-active (16% foreground overlay)
              */
             solid: {
                 bg: "primary",
@@ -58,24 +59,32 @@ export const buttonRecipe = defineRecipe({
             },
 
             /**
-             * Primary outline variant: Secondary action with primary emphasis
-             * - Primary color border and text
-             * - Hover adds subtle primary background (8% opacity)
-             * - Active increases background opacity to 12%
+             * Secondary variant: Secondary action when paired with primary
+             * - Neutral border (button-outline) with PRIMARY text color
+             * - Hover uses primary/8 background + stronger grey border (NOT primary border)
+             * - Active uses primary/12 background
+             *
+             * Use when button is PAIRED with a primary action (e.g., Save + Cancel forms)
+             * For standalone utility buttons, use 'outline' variant instead
+             *
+             * Key difference from 'outline': Primary TEXT creates visual tie to primary button
              */
-            "primary-outline": {
+            secondary: {
                 borderWidth: "1px",
-                borderColor: "button-outline-primary",
-                color: "on-button-outline-primary",
+                borderColor: "button-outline",
+                color: "primary", // Primary text creates visual tie to primary button
                 bg: "transparent",
                 _hover: {
-                    bg: "primary/8",
+                    bg: "primary/8", // Same hover bg as neutral-outline-alt
+                    borderColor: "border-strong-01", // Stronger grey border (NOT primary)
                     _disabled: {
                         bg: "transparent",
+                        borderColor: "button-outline",
                     },
                 },
                 _active: {
                     bg: "primary/12",
+                    borderColor: "border-strong-01",
                 },
                 _focusVisible: {
                     outline: "2px solid",
@@ -85,30 +94,30 @@ export const buttonRecipe = defineRecipe({
             },
 
             /**
-             * Neutral outline variant: Secondary action with neutral emphasis
-             * - Neutral border and text
-             * - Hover adds tertiary background and border (8% opacity)
-             * - Active increases background opacity to 12%
+             * Outline variant: Default outline button for standalone utility actions
+             * - Neutral border and text (button-outline, on-button-outline)
+             * - Hover adds primary background (primary/8) and border
+             * - Active increases primary background opacity (primary/12)
              *
-             * NOTE: Currently uses tertiary tokens for hover/active.
-             * Future: Will change to primary tokens (planned design system update).
+             * Use for: Standalone utility actions (Back, Cancel, OAuth, filters)
+             * For form pairs: Use 'secondary' variant instead
              */
-            "neutral-outline": {
+            outline: {
                 borderWidth: "1px",
                 borderColor: "button-outline",
                 color: "on-button-outline",
                 bg: "transparent",
                 _hover: {
-                    bg: "tertiary/8",
-                    borderColor: "tertiary",
+                    bg: "primary/8",
+                    borderColor: "primary",
                     _disabled: {
                         bg: "transparent",
                         borderColor: "button-outline",
                     },
                 },
                 _active: {
-                    bg: "tertiary/12",
-                    borderColor: "tertiary",
+                    bg: "primary/12",
+                    borderColor: "primary",
                 },
                 _focusVisible: {
                     outline: "2px solid",
@@ -120,7 +129,7 @@ export const buttonRecipe = defineRecipe({
             /**
              * Subtle variant: Low-emphasis button with optional selection state
              * - Uses button-subtle background (layer-appropriate)
-             * - Hover darkens to secondary-hover (when not selected)
+             * - Hover: secondary-hover (12% foreground overlay)
              * - Selected state uses button-subtle-selected tokens
              * - Compound variants handle selection state
              */

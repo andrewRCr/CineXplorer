@@ -221,7 +221,7 @@ const baseConfig = defineConfig({
             ...layoutSemanticTokens,
         },
         recipes: {
-            // Button recipe (all variants: solid, primary-outline, neutral-outline, subtle, ghost)
+            // Button recipe (5 finalized variants: solid, secondary, outline, subtle, ghost)
             button: buttonRecipe,
             // Badge recipe (status: success, warning, error, info, neutral)
             badge: badgeRecipe,

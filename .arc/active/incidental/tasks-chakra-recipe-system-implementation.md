@@ -624,45 +624,140 @@ components instead (like TextLink pattern for special cases). Only Select.Trigge
 
     **Action:** No work needed. Skip to Phase 5.2 (Checkbox/Radio/Switch).
 
-- [ ] **5.2 Create Checkbox/Radio/Switch recipes**
+- [x] **5.2 Create Checkbox/Radio/Switch recipes** ✅
 
-    - [ ] **5.2.1 Create `frontend/src/theme/recipes/checkbox.ts`**
-        - Use `defineRecipe` (single-part)
-        - Border width (2px), default border (input)
-        - Checked state (primary bg, primary border)
-        - Hover state
-        - Register in `theme.recipes.checkbox`
+    **Completed:** 2025-11-15
 
-    - [ ] **5.2.2 Create `frontend/src/theme/recipes/radio.ts`**
-        - Use `defineRecipe` (single-part)
-        - Same pattern as checkbox (different shape)
-        - Register in `theme.recipes.radio`
+    **Summary:** Successfully implemented slot recipes for all three form control types. Key learning: Checkbox,
+    Radio, and Switch are all multi-part components requiring `defineSlotRecipe`, not single-part `defineRecipe`.
+    Recipes must match Chakra's slot structure exactly (e.g., `itemIndicator` for RadioGroup, not just `indicator`).
 
-    - [ ] **5.2.3 Create `frontend/src/theme/recipes/switch.ts`**
-        - Use `defineSlotRecipe` (multi-part: track, thumb)
-        - Track colors (muted off, primary on)
-        - Thumb color (background)
-        - Register in `theme.slotRecipes.switch`
+    - [x] **5.2.1 Create `frontend/src/theme/recipes/checkbox.ts`** ✅
 
-    - [ ] **5.2.4 Test and migrate form control components**
-        - Keep imports: `import { Checkbox, Radio, Switch } from "@chakra-ui/react"` (NO changes)
-        - Built-in components automatically use registered recipes
-        - Run typegen after creating recipes: `npx @chakra-ui/cli typegen ./theme.ts`
-        - **Restart frontend container** to clear TS server cache:
-        `docker compose -f infrastructure/docker-compose.yml restart frontend`
-        - Verify types recognized (custom variants in IDE autocomplete)
+        **Completed:** 2025-11-15
 
-- [ ] **5.3 Create Card recipes** (if beneficial)
+        **Created:** `frontend/src/theme/recipes/checkbox.ts` - Checkbox slot recipe with form control patterns
 
-    - [ ] **5.3.1 Evaluate if Card needs recipes**
-        - Most styling is token-based (layers, borders, shadows)
-        - May not benefit from recipes
-        - Document decision
+        **Implementation details:**
+        - ✅ Used `defineSlotRecipe` (Checkbox is multi-part: root, control, indicator, label)
+        - ✅ Slots: `["root", "control", "indicator", "label"]`
+        - ✅ Control slot: 2px border `border-strong-01` (default), `primary` bg + border when checked
+        - ✅ Indicator slot: `on-primary` color when checked (checkmark icon)
+        - ✅ Hover states: Unchecked (`border-strong-02` + `tertiary/8` bg), Checked (`primary-hover`)
+        - ✅ Focus state: 2px `ring` outline with 2px offset
+        - ✅ Variants: solid (default), outline, subtle
+        - ✅ Registered in `baseConfig.theme.slotRecipes.checkbox`
+        - ✅ Exported from `theme/recipes/index.ts`
+        - ✅ Imported and registered in `theme/index.ts`
+        - ✅ Ran typegen: `npx @chakra-ui/cli typegen ./src/theme/index.ts`
 
-    - [ ] **5.3.2 Create recipe if needed**
-        - Layer variants (layer-01, layer-02, layer-03)
-        - Border variants (border-strong-01, etc.)
-        - Shadow variants (shadow-sm, shadow-md, shadow-lg)
+        **Pattern alignment:**
+        - 2px borders differentiate checkboxes from text inputs (1px)
+        - Matches strategy doc form control patterns
+        - Hover states follow button patterns (subtle background tint)
+
+    - [x] **5.2.2 Create `frontend/src/theme/recipes/radio.ts`** ✅
+
+        **Completed:** 2025-11-15
+
+        **Created:** `frontend/src/theme/recipes/radio.ts` - RadioGroup slot recipe with form control patterns
+
+        **Implementation details:**
+        - ✅ Used `defineSlotRecipe` (RadioGroup is multi-part: root, item, itemControl, itemIndicator, label, itemText)
+        - ✅ Slots: `["root", "item", "itemControl", "itemIndicator", "label", "itemText"]`
+        - ✅ ItemControl slot: 2px border `border-strong-01` (default), `primary` bg + border when checked
+        - ✅ ItemIndicator slot: `on-primary` bg when checked (inner dot), sized at 50% width/height for visibility
+        - ✅ Hover states: Unchecked (`border-strong-02` + `tertiary/8` bg), Checked (`primary-hover`)
+        - ✅ Focus state: 2px `ring` outline with 2px offset
+        - ✅ Variants: solid (default), outline, subtle
+        - ✅ Registered in `baseConfig.theme.slotRecipes.radioGroup` (camelCase for TypeScript compatibility)
+        - ✅ Exported from `theme/recipes/index.ts`
+        - ✅ Imported and registered in `theme/index.ts`
+        - ✅ Ran typegen: `npx @chakra-ui/cli typegen ./src/theme/index.ts`
+
+        **Pattern alignment:**
+        - Identical to checkbox - same token usage, different visual shape (circle vs square)
+        - 50% sizing on indicator ensures visible dot (critical for UX)
+        - Matches strategy doc: "Pattern identical to checkboxes"
+
+    - [x] **5.2.3 Create `frontend/src/theme/recipes/switch.ts`** ✅
+
+        **Completed:** 2025-11-15
+
+        **Created:** `frontend/src/theme/recipes/switch.ts` - Switch slot recipe with toggle patterns
+
+        **Implementation details:**
+        - ✅ Used `defineSlotRecipe` (Switch is multi-part: control + thumb)
+        - ✅ Control (track) slots:
+            - Default (off): `muted` background
+            - Checked (on): `primary` background
+        - ✅ Thumb slot: `background` (consistent in all states)
+        - ✅ Focus state: 2px `ring` outline with 2px offset
+        - ✅ Registered in `baseConfig.theme.slotRecipes.switch`
+        - ✅ Exported from `theme/recipes/index.ts`
+        - ✅ Imported and registered in `theme/index.ts`
+        - ✅ Ran typegen: `npx @chakra-ui/cli typegen ./src/theme/index.ts`
+
+        **Pattern alignment:**
+        - No visible borders - relies on background color contrast
+        - Track provides visual state feedback (muted → primary)
+        - Matches strategy doc switch patterns
+        - Consistent with ThemeDebug Switch demonstration
+
+    - [x] **5.2.4 Test and migrate form control components** ✅
+
+        **Completed:** 2025-11-15
+
+        **ThemeDebug updates:**
+        - ✅ Checkbox demos: Removed all inline `borderColor`, `_checked` props
+        - ✅ Radio demos: Removed all inline `borderColor`, `_checked` props, **added `<RadioGroup.ItemIndicator />`**
+        - ✅ Switch demos: Removed all inline `bg`, `_checked` props
+        - ✅ **Fixed Switch "On" state:** Changed `switchChecked` initial state from `false` to `true`
+        - ✅ Components now use recipes automatically
+
+        **Critical fix - Radio ItemIndicator:**
+        - **Issue:** Radio selected state showed primary background but no visible dot
+        - **Root cause:** `ItemControl` was self-closing, missing `ItemIndicator` child component
+        - **Fix:** Changed from `<RadioGroup.ItemControl />` to nested structure with `<RadioGroup.ItemIndicator />` child
+        - **Result:** Dot now renders correctly (50% size, `on-primary` background when checked)
+
+        **In-app components:**
+        - ✅ Login.tsx: Already uses correct inline patterns (no recipe migration needed per notes)
+        - ✅ GenreSelector.tsx: Already uses correct inline patterns (no recipe migration needed per notes)
+
+        **Quality gates:**
+        - ✅ Frontend linting: 0 violations
+        - ✅ TypeScript: 0 errors
+        - ✅ Types regenerated successfully
+
+        **Visual validation:**
+        - ✅ Checkboxes: Primary background when checked, hover states working
+        - ✅ Radio buttons: Primary background + visible white dot when selected, hover states working
+        - ✅ Switch: Correct colors and states (muted → primary)
+
+- [x] **5.3 Create Card recipes** ✅ **SKIPPED - Not needed**
+
+    **Completed:** 2025-11-15
+
+    **Decision:** No Card recipe needed
+
+    **Rationale:**
+
+    - **No Card usage in ThemeDebug:** Zero card pattern demonstrations
+    - **No documented pattern:** Strategy doc only uses cards as token examples, not codified patterns
+    - **MovieCard is specialized:** One-off design with custom hover effects, image transforms, specific aspect
+      ratios - too specialized to benefit from recipe abstraction
+    - **No repetition:** MovieCard is the only Card usage in the entire app
+    - **Future cards would be simple:** Generic cards would just use `<Card.Root bg="layer-01">` (tokens handle
+      styling, no recipe needed)
+
+    **Recipe value requires:**
+
+    1. Multiple variants (cards have none - just layer surface)
+    2. Repeated usage across components (only 1 card exists)
+    3. Codified patterns needing centralization (cards are token examples only)
+
+    **Conclusion:** Cards don't meet criteria for recipe system. Token-based styling is sufficient.
 
 ### **Phase 6:** Documentation and Neutral Outline Fix
 

@@ -33,7 +33,7 @@ import { layoutSemanticTokens } from "./layout/semantic-tokens";
 import { zIndexSemanticTokens } from "./layout/z-index";
 
 // Import recipes
-import { buttonRecipe, selectRecipe, alertRecipe, badgeRecipe } from "./recipes";
+import { buttonRecipe, selectRecipe, alertRecipe, badgeRecipe, checkboxRecipe, radioRecipe, switchRecipe } from "./recipes";
 
 /**
  * Theme Registry
@@ -227,10 +227,16 @@ const baseConfig = defineConfig({
             badge: badgeRecipe,
         },
         slotRecipes: {
+            // Checkbox slot recipe (root, control, indicator, label slots)
+            checkbox: checkboxRecipe,
+            // Radio Group slot recipe (root, item, itemControl, indicator, label, itemText slots)
+            radioGroup: radioRecipe,
             // Select recipe (trigger, content, item slots)
             select: selectRecipe,
             // Alert recipe (root, icon, title, description slots)
             alert: alertRecipe,
+            // Switch recipe (control, thumb slots)
+            switch: switchRecipe,
         },
     },
     globalCss: {

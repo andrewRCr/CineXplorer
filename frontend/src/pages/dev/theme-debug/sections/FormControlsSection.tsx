@@ -14,7 +14,7 @@ export function FormControlsSection() {
   const [selectValue, setSelectValue] = useState(["option1"]);
   const [checkboxChecked, setCheckboxChecked] = useState(true);
   const [radioValue, setRadioValue] = useState("option1");
-  const [switchChecked, setSwitchChecked] = useState(false);
+  const [switchChecked, setSwitchChecked] = useState(true);
   const [numberValue, setNumberValue] = useState(5);
 
   const selectCollection = createListCollection({
@@ -219,10 +219,7 @@ export function FormControlsSection() {
                 {/* Unchecked */}
                 <Checkbox.Root>
                   <Checkbox.HiddenInput />
-                  <Checkbox.Control
-                    borderColor="border-strong-01"
-                    _checked={{ bg: "primary", borderColor: "primary" }}
-                  >
+                  <Checkbox.Control>
                     <Checkbox.Indicator />
                   </Checkbox.Control>
                   <Checkbox.Label>Unchecked</Checkbox.Label>
@@ -234,10 +231,7 @@ export function FormControlsSection() {
                   onCheckedChange={(e) => setCheckboxChecked(!!e.checked)}
                 >
                   <Checkbox.HiddenInput />
-                  <Checkbox.Control
-                    borderColor="border-strong-01"
-                    _checked={{ bg: "primary", borderColor: "primary" }}
-                  >
+                  <Checkbox.Control>
                     <Checkbox.Indicator />
                   </Checkbox.Control>
                   <Checkbox.Label>Checked</Checkbox.Label>
@@ -246,7 +240,7 @@ export function FormControlsSection() {
                 {/* Disabled */}
                 <Checkbox.Root disabled>
                   <Checkbox.HiddenInput />
-                  <Checkbox.Control borderColor="border-strong-01">
+                  <Checkbox.Control>
                     <Checkbox.Indicator />
                   </Checkbox.Control>
                   <Checkbox.Label>Disabled</Checkbox.Label>
@@ -269,23 +263,23 @@ export function FormControlsSection() {
                 <VStack align="start" gap={2}>
                   <RadioGroup.Item value="option1">
                     <RadioGroup.ItemHiddenInput />
-                    <RadioGroup.ItemControl
-                      borderColor="border-strong-01"
-                      _checked={{ bg: "primary", borderColor: "primary" }}
-                    />
+                    <RadioGroup.ItemControl>
+                      <RadioGroup.ItemIndicator />
+                    </RadioGroup.ItemControl>
                     <RadioGroup.ItemText>Option 1</RadioGroup.ItemText>
                   </RadioGroup.Item>
                   <RadioGroup.Item value="option2">
                     <RadioGroup.ItemHiddenInput />
-                    <RadioGroup.ItemControl
-                      borderColor="border-strong-01"
-                      _checked={{ bg: "primary", borderColor: "primary" }}
-                    />
+                    <RadioGroup.ItemControl>
+                      <RadioGroup.ItemIndicator />
+                    </RadioGroup.ItemControl>
                     <RadioGroup.ItemText>Option 2</RadioGroup.ItemText>
                   </RadioGroup.Item>
                   <RadioGroup.Item value="option3" disabled>
                     <RadioGroup.ItemHiddenInput />
-                    <RadioGroup.ItemControl borderColor="border-strong-01" />
+                    <RadioGroup.ItemControl>
+                      <RadioGroup.ItemIndicator />
+                    </RadioGroup.ItemControl>
                     <RadioGroup.ItemText>Disabled</RadioGroup.ItemText>
                   </RadioGroup.Item>
                 </VStack>
@@ -308,11 +302,8 @@ export function FormControlsSection() {
                 <HStack>
                   <Switch.Root>
                     <Switch.HiddenInput />
-                    <Switch.Control
-                      bg="muted"
-                      _checked={{ bg: "primary" }}
-                    >
-                      <Switch.Thumb bg="background" />
+                    <Switch.Control>
+                      <Switch.Thumb />
                     </Switch.Control>
                   </Switch.Root>
                   <Text fontSize="sm">Off</Text>
@@ -325,11 +316,8 @@ export function FormControlsSection() {
                     onCheckedChange={(e) => setSwitchChecked(!!e.checked)}
                   >
                     <Switch.HiddenInput />
-                    <Switch.Control
-                      bg="muted"
-                      _checked={{ bg: "primary" }}
-                    >
-                      <Switch.Thumb bg="background" />
+                    <Switch.Control>
+                      <Switch.Thumb />
                     </Switch.Control>
                   </Switch.Root>
                   <Text fontSize="sm">On</Text>
@@ -339,8 +327,8 @@ export function FormControlsSection() {
                 <HStack>
                   <Switch.Root disabled>
                     <Switch.HiddenInput />
-                    <Switch.Control bg="muted">
-                      <Switch.Thumb bg="background" />
+                    <Switch.Control>
+                      <Switch.Thumb />
                     </Switch.Control>
                   </Switch.Root>
                   <Text fontSize="sm">Disabled</Text>

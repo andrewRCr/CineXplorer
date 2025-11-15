@@ -640,14 +640,14 @@ zIndex="dropdown"  // 50 - Menus, tooltips, modals
 
 ### When to Use What
 
-| Scenario | Solution |
-|----------|----------|
-| Major layout dimension | Layout token: `height="layout.navbar"` |
-| Component spacing | Chakra scale: `p={4}` |
-| Show/hide by breakpoint | CSS display: `display={{ base: 'none', lg: 'block' }}` |
-| Sticky offset | CSS variable: `top="var(--chakra-sizes-layout-navbar)"` |
-| Z-index stacking | Semantic token: `zIndex="navbar"` |
-| Behavioral logic | `useBreakpointValue` with `{ ssr: false }` |
+| Scenario                | Solution                                                |
+|-------------------------|---------------------------------------------------------|
+| Major layout dimension  | Layout token: `height="layout.navbar"`                  |
+| Component spacing       | Chakra scale: `p={4}`                                   |
+| Show/hide by breakpoint | CSS display: `display={{ base: 'none', lg: 'block' }}`  |
+| Sticky offset           | CSS variable: `top="var(--chakra-sizes-layout-navbar)"` |
+| Z-index stacking        | Semantic token: `zIndex="navbar"`                       |
+| Behavioral logic        | `useBreakpointValue` with `{ ssr: false }`              |
 
 ---
 

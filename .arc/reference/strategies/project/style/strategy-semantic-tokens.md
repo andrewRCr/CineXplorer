@@ -184,10 +184,10 @@ visual "nesting" - you can see when elements are inside others.
 CineXplorer provides 5 border tokens in the API (`border-subtle-00`, `border-subtle-02`, `border-strong-01/02/03`)
 but their implementation differs by mode:
 
-| Mode | Border Tiers | Rationale |
-|------|--------------|-----------|
-| **Light** | **2 distinct values** | Alternating layers (white ↔ gray ↔ white) - same border works on both |
-| **Dark** | **5 distinct values** | Progressive layers (darker → lighter → lightest) - each layer needs adjusted border |
+| Mode      | Border Tiers          | Rationale                                                                           |
+|-----------|-----------------------|-------------------------------------------------------------------------------------|
+| **Light** | **2 distinct values** | Alternating layers (white ↔ gray ↔ white) - same border works on both               |
+| **Dark**  | **5 distinct values** | Progressive layers (darker → lighter → lightest) - each layer needs adjusted border |
 
 **Light Mode Implementation:**
 
@@ -284,13 +284,13 @@ Buttons follow a visual pattern hierarchy (solid/outline/subtle/ghost) that's **
 
 ### Button Emphasis Hierarchy
 
-| Pattern | Emphasis | Visual | Use Cases |
-|---------|----------|--------|-----------|
-| **Solid** | Highest | Filled background | Primary actions: "Save", "Submit", "Browse Movies" |
-| **Primary Outline** | High | Brand color border | Branded actions in outline style (rare) |
-| **Neutral Outline** | Medium | Gray border | Utility actions: "Cancel", "Back", OAuth, filters |
-| **Subtle** | Medium-Low | Muted fill | Embedded controls: theme selectors, in-panel actions |
-| **Ghost** | Lowest | Text only | Dismissive actions: "Skip", "Close", "Dismiss" |
+| Pattern             | Emphasis   | Visual             | Use Cases                                            |
+|---------------------|------------|--------------------|------------------------------------------------------|
+| **Solid**           | Highest    | Filled background  | Primary actions: "Save", "Submit", "Browse Movies"   |
+| **Primary Outline** | High       | Brand color border | Branded actions in outline style (rare)              |
+| **Neutral Outline** | Medium     | Gray border        | Utility actions: "Cancel", "Back", OAuth, filters    |
+| **Subtle**          | Medium-Low | Muted fill         | Embedded controls: theme selectors, in-panel actions |
+| **Ghost**           | Lowest     | Text only          | Dismissive actions: "Skip", "Close", "Dismiss"       |
 
 ### Pattern 1: Solid Button (Highest Emphasis)
 
@@ -1095,14 +1095,14 @@ prevents the keyboard ring from appearing.
 **Industry standard border widths** (consistent across Material Design 3, IBM Carbon, GitHub Primer, and other modern
 design systems):
 
-| Component Type | Border Width | Notes |
-|---------------|--------------|-------|
-| **Text inputs** | 1px | Standard across all states |
-| **Select** | 1px | Same as text inputs |
-| **Textarea** | 1px | Same as text inputs |
-| **Checkboxes** | **2px** | Thicker to differentiate from text inputs |
-| **Radio buttons** | **2px** | Thicker to differentiate from text inputs |
-| **Switches** | N/A | Uses background colors, no visible border |
+| Component Type    | Border Width | Notes                                     |
+|-------------------|--------------|-------------------------------------------|
+| **Text inputs**   | 1px          | Standard across all states                |
+| **Select**        | 1px          | Same as text inputs                       |
+| **Textarea**      | 1px          | Same as text inputs                       |
+| **Checkboxes**    | **2px**      | Thicker to differentiate from text inputs |
+| **Radio buttons** | **2px**      | Thicker to differentiate from text inputs |
+| **Switches**      | N/A          | Uses background colors, no visible border |
 
 **Why 2px for checkboxes/radios?**
 
@@ -1407,12 +1407,12 @@ All three tokens have the same visual appearance but different semantic purposes
 
 ### Theme-Specific Availability
 
-| Theme | brand | brandSecondary | brandTertiary |
-|-------|-------|----------------|---------------|
-| **GitHub Primer** | undefined | undefined | undefined |
-| **IBM Carbon** | Blue | undefined | undefined |
-| **GitLab Pajamas** | Purple | Orange | Orange (darker) |
-| **Material Design 3** | Purple | undefined | undefined |
+| Theme                 | brand     | brandSecondary | brandTertiary   |
+|-----------------------|-----------|----------------|-----------------|
+| **GitHub Primer**     | undefined | undefined      | undefined       |
+| **IBM Carbon**        | Blue      | undefined      | undefined       |
+| **GitLab Pajamas**    | Purple    | Orange         | Orange (darker) |
+| **Material Design 3** | Purple    | undefined      | undefined       |
 
 **Note:** Brand tokens are optional - not all themes have brand identity colors separate from UI colors.
 
@@ -1629,14 +1629,14 @@ CineXplorer uses **Material Design 3's opacity overlay approach** for all intera
 
 **Standard values from Material Design 3:**
 
-| State | Opacity | Token Usage | Manual Overlay |
-|-------|---------|-------------|----------------|
-| Hover | 8% | `layer-hover-01`, `primary-hover` | `bg="primary/8"` |
-| Focus | 12% | N/A (use ring) | `bg="foreground/12"` |
-| Pressed/Active | 12% | `layer-active-01`, `primary-active` | `bg="primary/12"` |
-| Selected | 12% | `layer-selected-01` | `bg="foreground/12"` |
-| Drag | 16% | `drag-active` | `bg="foreground/16"` |
-| Disabled | 38% | N/A | `opacity={0.38}` |
+| State          | Opacity | Token Usage                         | Manual Overlay       |
+|----------------|---------|-------------------------------------|----------------------|
+| Hover          | 8%      | `layer-hover-01`, `primary-hover`   | `bg="primary/8"`     |
+| Focus          | 12%     | N/A (use ring)                      | `bg="foreground/12"` |
+| Pressed/Active | 12%     | `layer-active-01`, `primary-active` | `bg="primary/12"`    |
+| Selected       | 12%     | `layer-selected-01`                 | `bg="foreground/12"` |
+| Drag           | 16%     | `drag-active`                       | `bg="foreground/16"` |
+| Disabled       | 38%     | N/A                                 | `opacity={0.38}`     |
 
 **Prefer dedicated tokens over manual overlays** for consistency.
 
@@ -1669,31 +1669,31 @@ Fast lookup cheat sheet for common token choices.
 
 ### By Use Case
 
-| What are you building? | Token(s) | Example |
-|------------------------|----------|---------|
-| Page background | `background` / `foreground` | `<Box bg="background">` |
-| Card/panel | `layer-01` + `foreground` | `<Card bg="layer-01">` |
-| Modal | `layer-02` + `foreground` | `<Modal.Content bg="layer-02">` |
-| Dropdown over modal | `layer-03` + `foreground` | `<Menu.Content bg="layer-03">` |
-| Primary button | `primary` / `on-primary` | `<Button bg="primary" color="on-primary">` |
-| Neutral outline button | `button-outline` / `on-button-outline` | `<Button borderColor="button-outline">` |
-| Branded outline button | `button-outline-primary` / `on-button-outline-primary` | `<Button borderColor="button-outline-primary">` |
-| Subtle button | `button-subtle` / `on-button-subtle` | `<Button bg="button-subtle">` |
-| Ghost button | `tertiary` | `<Button color="tertiary">` |
-| Link/interactive text | `tertiary` / `tertiary-hover` | `<Link color="tertiary" _hover={{ color: "tertiary-hover" }}>` |
-| Success alert | `success` / `on-success` | `<Alert bg="success/10"><Text color="on-success">` |
-| Warning alert | `warning` / `on-warning` | `<Alert bg="warning/10"><Text color="on-warning">` |
-| Error alert | `destructive` / `on-destructive` | `<Alert bg="destructive/10"><Text color="on-destructive">` |
-| Info alert | `info` / `on-info` | `<Alert bg="info/10"><Text color="on-info">` |
-| TMDB score (high) | `success` / `on-success` | `<Badge variant="success">8.2</Badge>` (≥7.5) |
-| TMDB score (medium) | `info` / `on-info` | `<Badge variant="info">6.5</Badge>` (5.0-7.4) |
-| TMDB score (low) | `warning` / `on-warning` | `<Badge variant="warning">4.1</Badge>` (<5.0) |
-| User rating stars | `imdb-gold` | `<Text color="imdb-gold">★★★★☆</Text>` |
-| Genre tag | `badge` / `on-badge` | `<Badge variant="neutral">Action</Badge>` |
-| Secondary text | `on-muted` | `<Text color="on-muted">` |
-| Border | `border-strong-01` | `<Card borderColor="border-strong-01">` |
-| Input field | `input` | `<Input borderColor="input">` |
-| Focus ring | `ring` | `outlineColor="ring"` |
+| What are you building? | Token(s)                                               | Example                                                        |
+|------------------------|--------------------------------------------------------|----------------------------------------------------------------|
+| Page background        | `background` / `foreground`                            | `<Box bg="background">`                                        |
+| Card/panel             | `layer-01` + `foreground`                              | `<Card bg="layer-01">`                                         |
+| Modal                  | `layer-02` + `foreground`                              | `<Modal.Content bg="layer-02">`                                |
+| Dropdown over modal    | `layer-03` + `foreground`                              | `<Menu.Content bg="layer-03">`                                 |
+| Primary button         | `primary` / `on-primary`                               | `<Button bg="primary" color="on-primary">`                     |
+| Neutral outline button | `button-outline` / `on-button-outline`                 | `<Button borderColor="button-outline">`                        |
+| Branded outline button | `button-outline-primary` / `on-button-outline-primary` | `<Button borderColor="button-outline-primary">`                |
+| Subtle button          | `button-subtle` / `on-button-subtle`                   | `<Button bg="button-subtle">`                                  |
+| Ghost button           | `tertiary`                                             | `<Button color="tertiary">`                                    |
+| Link/interactive text  | `tertiary` / `tertiary-hover`                          | `<Link color="tertiary" _hover={{ color: "tertiary-hover" }}>` |
+| Success alert          | `success` / `on-success`                               | `<Alert bg="success/10"><Text color="on-success">`             |
+| Warning alert          | `warning` / `on-warning`                               | `<Alert bg="warning/10"><Text color="on-warning">`             |
+| Error alert            | `destructive` / `on-destructive`                       | `<Alert bg="destructive/10"><Text color="on-destructive">`     |
+| Info alert             | `info` / `on-info`                                     | `<Alert bg="info/10"><Text color="on-info">`                   |
+| TMDB score (high)      | `success` / `on-success`                               | `<Badge variant="success">8.2</Badge>` (≥7.5)                  |
+| TMDB score (medium)    | `info` / `on-info`                                     | `<Badge variant="info">6.5</Badge>` (5.0-7.4)                  |
+| TMDB score (low)       | `warning` / `on-warning`                               | `<Badge variant="warning">4.1</Badge>` (<5.0)                  |
+| User rating stars      | `imdb-gold`                                            | `<Text color="imdb-gold">★★★★☆</Text>`                         |
+| Genre tag              | `badge` / `on-badge`                                   | `<Badge variant="neutral">Action</Badge>`                      |
+| Secondary text         | `on-muted`                                             | `<Text color="on-muted">`                                      |
+| Border                 | `border-strong-01`                                     | `<Card borderColor="border-strong-01">`                        |
+| Input field            | `input`                                                | `<Input borderColor="input">`                                  |
+| Focus ring             | `ring`                                                 | `outlineColor="ring"`                                          |
 
 ### Token Count by Category
 

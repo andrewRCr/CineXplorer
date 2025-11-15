@@ -19,11 +19,11 @@ GitLab Pajamas) have fundamentally different color architectures that don't alig
 
 **Actual Reality (Discovered via comprehensive research):**
 
-| System | Brand Color | Primary Action Buttons | Interactive Links | Architecture |
-|--------|-------------|----------------------|-------------------|--------------|
-| **GitHub Primer** | None (black/white logo) | GREEN (#1f883d) | BLUE (#0969da) | 2-tier: Actions ≠ Links |
-| **IBM Carbon** | BLUE (#0f62fe) | BLUE (#0f62fe, same) | BLUE (#0f62fe, same) | 1-tier: Unified blue |
-| **GitLab Pajamas** | PURPLE (#554488) + ORANGE (#e24329) | BLUE (#1f75cb) | PURPLE (#7759c2) | 3-tier: Brand ≠ Actions ≠ Links |
+| System             | Brand Color                         | Primary Action Buttons | Interactive Links    | Architecture                    |
+|--------------------|-------------------------------------|------------------------|----------------------|---------------------------------|
+| **GitHub Primer**  | None (black/white logo)             | GREEN (#1f883d)        | BLUE (#0969da)       | 2-tier: Actions ≠ Links         |
+| **IBM Carbon**     | BLUE (#0f62fe)                      | BLUE (#0f62fe, same)   | BLUE (#0f62fe, same) | 1-tier: Unified blue            |
+| **GitLab Pajamas** | PURPLE (#554488) + ORANGE (#e24329) | BLUE (#1f75cb)         | PURPLE (#7759c2)     | 3-tier: Brand ≠ Actions ≠ Links |
 
 **Key Insight:** These systems have different color philosophies:
 
@@ -129,14 +129,14 @@ interface UnifiedTheme {
 
 **Semantic Definitions:**
 
-| Token | Meaning | Visual | Usage | Token Type |
-|-------|---------|--------|-------|------------|
-| **primary** | Primary action buttons | Filled buttons, often blue or green | "Submit", "Save", "Continue" | **Background** token |
-| **secondary** | Secondary actions | Outline buttons (1px border mandatory) | "Cancel", "Back", "Skip" | Background + Border |
-| **tertiary** | Interactive text, links, accents | Blue or brand color, foreground | Hyperlinks, focus, highlights | **Foreground** token |
-| **muted** | Deemphasized, non-interactive | Subtle gray backgrounds | Disabled states, subtle surfaces | Background token |
-| **brand** | Brand identity (optional) | Logo color, brand moments | Logo, special brand sections | Either type |
-| **brandSecondary** | Secondary brand (optional) | Secondary brand color | Additional brand accents | Either type |
+| Token              | Meaning                          | Visual                                 | Usage                            | Token Type           |
+|--------------------|----------------------------------|----------------------------------------|----------------------------------|----------------------|
+| **primary**        | Primary action buttons           | Filled buttons, often blue or green    | "Submit", "Save", "Continue"     | **Background** token |
+| **secondary**      | Secondary actions                | Outline buttons (1px border mandatory) | "Cancel", "Back", "Skip"         | Background + Border  |
+| **tertiary**       | Interactive text, links, accents | Blue or brand color, foreground        | Hyperlinks, focus, highlights    | **Foreground** token |
+| **muted**          | Deemphasized, non-interactive    | Subtle gray backgrounds                | Disabled states, subtle surfaces | Background token     |
+| **brand**          | Brand identity (optional)        | Logo color, brand moments              | Logo, special brand sections     | Either type          |
+| **brandSecondary** | Secondary brand (optional)       | Secondary brand color                  | Additional brand accents         | Either type          |
 
 **Key Distinctions:**
 

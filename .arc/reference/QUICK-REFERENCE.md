@@ -28,13 +28,13 @@
 
 ### Critical Path Reference
 
-| Resource | Location from Repo Root | Why It Matters |
-|----------|-------------------------|----------------|
+| Resource       | Location from Repo Root             | Why It Matters                     |
+| -------------- | ----------------------------------- | ---------------------------------- |
+| .arc docs      | `.arc/`                             | Documentation                      |
+| Backend code   | `backend/apps/`, `backend/config/`  | Type checking, linting targets     |
+| Backend venv   | `.venv-backend/bin/`                | Host tools (ruff, pytest)          |
 | Docker Compose | `infrastructure/docker-compose.yml` | Required for all Docker operations |
-| Backend venv | `.venv-backend/bin/` | Host tools (ruff, pytest) |
-| Backend code | `backend/apps/`, `backend/config/` | Type checking, linting targets |
-| Frontend code | `frontend/src/` | Frontend operations |
-| .arc docs | `.arc/` | Documentation |
+| Frontend code  | `frontend/src/`                     | Frontend operations                |
 
 **Working Directory Note**: Your actual working directory may vary (backend/, frontend/, or root).
 CURRENT-SESSION.md contains context-specific paths adjusted for your current location.
@@ -183,6 +183,10 @@ npx markdownlint-cli2 --no-globs "path/to/file.md"
 
 # Auto-fix single file only
 npx markdownlint-cli2 --fix --no-globs "path/to/file.md"
+
+# Fix table formatting (MD060 violations)
+npx --yes markdown-table-prettify < input.md > output.md
+# Or use VS Code extension: "Markdown Table Prettifier" (Ctrl+Shift+P → "Prettify tables")
 ```
 
 **Important:**
@@ -190,6 +194,7 @@ npx markdownlint-cli2 --fix --no-globs "path/to/file.md"
 - Without `--no-globs`, markdownlint-cli2 processes config globs **in addition to** specified files
 - Use `--no-globs` when checking/fixing individual files to avoid processing entire workspace
 - VS Code extension uses separate config (`.markdownlint.jsonc`)
+- `markdownlint-cli2 --fix` does NOT fix MD060 (table alignment) - use `markdown-table-prettify` instead
 
 ---
 

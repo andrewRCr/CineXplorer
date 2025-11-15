@@ -166,12 +166,12 @@ e2e/
 
 **When to split test files:**
 
-| File Size | Action | Rationale |
-|-----------|--------|-----------|
-| < 200 lines | Keep together | Manageable, easy to navigate |
-| 200-400 lines | Consider splitting | If testing multiple features/endpoints |
-| 400-800 lines | Should split | Hard to navigate, split into 2-3 files |
-| 800+ lines | **Must split** | Unmaintainable, aim for 200-400 per file |
+| File Size     | Action             | Rationale                                |
+|---------------|--------------------|------------------------------------------|
+| < 200 lines   | Keep together      | Manageable, easy to navigate             |
+| 200-400 lines | Consider splitting | If testing multiple features/endpoints   |
+| 400-800 lines | Should split       | Hard to navigate, split into 2-3 files   |
+| 800+ lines    | **Must split**     | Unmaintainable, aim for 200-400 per file |
 
 **How to split:**
 

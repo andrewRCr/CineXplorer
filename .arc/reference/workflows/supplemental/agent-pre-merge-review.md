@@ -603,10 +603,10 @@ Fixed in commit [hash].
 
 **Historical Data (CineXplorer project):**
 
-| Branch | Local Review Findings | PR Review Findings | Reduction | Time Saved |
-|--------|----------------------|-------------------|-----------|------------|
-| Authentication Modernization | N/A (no local review) | 5 | N/A | N/A |
-| API Layer P2 | 15 (estimated) | 3 (estimated) | 80% | ~30 min |
+| Branch                       | Local Review Findings | PR Review Findings | Reduction | Time Saved |
+|------------------------------|-----------------------|--------------------|-----------|------------|
+| Authentication Modernization | N/A (no local review) | 5                  | N/A       | N/A        |
+| API Layer P2                 | 15 (estimated)        | 3 (estimated)      | 80%       | ~30 min    |
 
 **Expected Pattern:**
 

@@ -682,13 +682,13 @@ def test_discover_filters_remove_bad_tmdb_data_e2e():
 
 ### Test Coverage Summary
 
-| Layer                           | Unit Tests               | Integration Tests        | E2E Tests | Status                |
-| ------------------------------- | ------------------------ | ------------------------ | --------- | --------------------- |
-| **API** (Parameter mapping)     | ⚠️ Structure only        | ❌ No filter validation | ❌ None   | **Critical gap**      |
-| **Frontend Components**         | ✅ Good UI coverage      | ❌ None                 | ❌ None   | **UI only**           |
-| **Frontend Mapper**             | ❌ None                  | ❌ None                 | ❌ None   | **Critical gap**      |
-| **Schema** (Param extraction)   | ❌ None                  | ❌ None                 | ❌ None   | **Critical gap**      |
-| **Service** (Backend filtering) | ✅ Excellent (877 lines) | ❌ None                 | ❌ None   | **Good in isolation** |
+| Layer                           | Unit Tests              | Integration Tests      | E2E Tests | Status                |
+|---------------------------------|-------------------------|------------------------|-----------|-----------------------|
+| **API** (Parameter mapping)     | ⚠️ Structure only       | ❌ No filter validation | ❌ None    | **Critical gap**      |
+| **Frontend Components**         | ✅ Good UI coverage      | ❌ None                 | ❌ None    | **UI only**           |
+| **Frontend Mapper**             | ❌ None                  | ❌ None                 | ❌ None    | **Critical gap**      |
+| **Schema** (Param extraction)   | ❌ None                  | ❌ None                 | ❌ None    | **Critical gap**      |
+| **Service** (Backend filtering) | ✅ Excellent (877 lines) | ❌ None                 | ❌ None    | **Good in isolation** |
 
 **Overall Assessment**: Excellent service-layer unit tests, but **zero integration test coverage** for the
 complete filter pipeline. This is why the bug exists - each layer works in isolation but the integration

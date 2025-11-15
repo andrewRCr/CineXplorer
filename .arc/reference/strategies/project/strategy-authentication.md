@@ -103,12 +103,12 @@ going against its design and making upgrades difficult.
 
 **Token Storage Strategy**:
 
-| Token Type | Storage Location | Lifetime | Access | Purpose |
-|------------|------------------|----------|--------|---------|
-| **Access Token** | sessionStorage | 5 minutes | JavaScript can read | API authorization, instant auth checks |
-| **Refresh Token** (copy) | sessionStorage | 14 days | JavaScript can read | Reference only (duplicate of cookie) |
-| **Refresh Token** (actual) | HTTP-only cookie | 14 days | JavaScript CANNOT read | Automatic token refresh, XSS-proof |
-| **CSRF Token** | Cookie (readable) | Session | JavaScript can read | CSRF protection for unsafe methods |
+| Token Type                 | Storage Location  | Lifetime  | Access                 | Purpose                                |
+|----------------------------|-------------------|-----------|------------------------|----------------------------------------|
+| **Access Token**           | sessionStorage    | 5 minutes | JavaScript can read    | API authorization, instant auth checks |
+| **Refresh Token** (copy)   | sessionStorage    | 14 days   | JavaScript can read    | Reference only (duplicate of cookie)   |
+| **Refresh Token** (actual) | HTTP-only cookie  | 14 days   | JavaScript CANNOT read | Automatic token refresh, XSS-proof     |
+| **CSRF Token**             | Cookie (readable) | Session   | JavaScript can read    | CSRF protection for unsafe methods     |
 
 **Why Hybrid Storage?**
 
@@ -588,13 +588,13 @@ apiClient.interceptors.response.use(
 
 ### JWT Authentication Endpoints (Django Ninja)
 
-| Endpoint | Method | Auth Required | Purpose | Request Body | Response |
-|----------|--------|---------------|---------|--------------|----------|
-| `/api/token/` | POST | No | Email/password login | `{username, password}` | `{access_token, refresh_token, user_id}` + Set-Cookie |
-| `/api/auth/refresh` | POST | Yes (cookie) | Refresh access token | (empty) | `{access_token}` |
-| `/api/logout/` | POST | Yes (JWT) | Logout JWT user | (empty) | `{message}` + Clear cookies |
-| `/api/auth/register/` | POST | No | User registration | `{username, email, password, first_name, last_name}` | `201 Created` |
-| `/api/auth/user/` | GET | Yes (JWT) | Get user profile | N/A | `{id, username, email, ...}` |
+| Endpoint              | Method | Auth Required | Purpose              | Request Body                                         | Response                                              |
+|-----------------------|--------|---------------|----------------------|------------------------------------------------------|-------------------------------------------------------|
+| `/api/token/`         | POST   | No            | Email/password login | `{username, password}`                               | `{access_token, refresh_token, user_id}` + Set-Cookie |
+| `/api/auth/refresh`   | POST   | Yes (cookie)  | Refresh access token | (empty)                                              | `{access_token}`                                      |
+| `/api/logout/`        | POST   | Yes (JWT)     | Logout JWT user      | (empty)                                              | `{message}` + Clear cookies                           |
+| `/api/auth/register/` | POST   | No            | User registration    | `{username, email, password, first_name, last_name}` | `201 Created`                                         |
+| `/api/auth/user/`     | GET    | Yes (JWT)     | Get user profile     | N/A                                                  | `{id, username, email, ...}`                          |
 
 **Example: Login**:
 
@@ -615,12 +615,12 @@ curl -X POST https://localhost:8000/api/token/ \
 
 ### OAuth Endpoints (django-allauth)
 
-| Endpoint | Method | Auth Required | Purpose | Request Body | Response |
-|----------|--------|---------------|---------|--------------|----------|
-| `/_allauth/browser/v1/auth/provider/redirect` | POST | No | Initiate OAuth flow | `{provider, callback_url, process, csrfmiddlewaretoken}` | 302 redirect to provider |
-| `/_allauth/browser/v1/auth/session` | GET | Yes (cookie) | Check authentication | N/A | `{data: {user, methods}, meta: {is_authenticated}}` |
-| `/_allauth/browser/v1/auth/session` | DELETE | Yes (cookie) | Logout OAuth user | N/A | `200 OK` + Clear session cookie |
-| `/accounts/{provider}/login/callback/` | GET | No | OAuth callback (internal) | N/A | 302 redirect to callback_url |
+| Endpoint                                      | Method | Auth Required | Purpose                   | Request Body                                             | Response                                            |
+|-----------------------------------------------|--------|---------------|---------------------------|----------------------------------------------------------|-----------------------------------------------------|
+| `/_allauth/browser/v1/auth/provider/redirect` | POST   | No            | Initiate OAuth flow       | `{provider, callback_url, process, csrfmiddlewaretoken}` | 302 redirect to provider                            |
+| `/_allauth/browser/v1/auth/session`           | GET    | Yes (cookie)  | Check authentication      | N/A                                                      | `{data: {user, methods}, meta: {is_authenticated}}` |
+| `/_allauth/browser/v1/auth/session`           | DELETE | Yes (cookie)  | Logout OAuth user         | N/A                                                      | `200 OK` + Clear session cookie                     |
+| `/accounts/{provider}/login/callback/`        | GET    | No            | OAuth callback (internal) | N/A                                                      | 302 redirect to callback_url                        |
 
 **Example: Initiate Google OAuth**:
 
@@ -681,11 +681,11 @@ curl -X GET https://localhost:8444/_allauth/browser/v1/auth/session \
 
 All endpoints with `auth=[JWTAuth(), SessionAuth()]` support both authentication patterns:
 
-| Endpoint | Auth Pattern | How It Works |
-|----------|--------------|--------------|
-| `/api/user-movie-data/` | JWT or Session | JWT: `Authorization: Bearer {token}` header<br>Session: `Cookie: sessionid=...` |
-| `/api/user-movie-data/{id}` | JWT or Session | Same as above |
-| `/api/user-movie-data/movies` | JWT or Session | Same as above |
+| Endpoint                      | Auth Pattern   | How It Works                                                                    |
+|-------------------------------|----------------|---------------------------------------------------------------------------------|
+| `/api/user-movie-data/`       | JWT or Session | JWT: `Authorization: Bearer {token}` header<br>Session: `Cookie: sessionid=...` |
+| `/api/user-movie-data/{id}`   | JWT or Session | Same as above                                                                   |
+| `/api/user-movie-data/movies` | JWT or Session | Same as above                                                                   |
 
 Django Ninja tries JWTAuth first, then SessionAuth if JWT fails. Whichever succeeds sets `request.user`.
 

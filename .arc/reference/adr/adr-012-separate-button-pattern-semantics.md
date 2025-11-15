@@ -227,13 +227,13 @@ a unified token system.
 
 **When to use which button pattern:**
 
-| Pattern | Emphasis | Use Cases | Examples |
-|---------|----------|-----------|----------|
-| **Solid** | Highest | Primary actions, most important CTA | "Save", "Submit", "Browse Movies" |
-| **Primary Outline** | High | Branded actions in outline style (rare) | "Learn More" on landing page |
-| **Neutral Outline** | Medium | Utility actions, navigation, OAuth | "Cancel", "Back", OAuth buttons, filters |
-| **Subtle** | Medium-Low | In-context actions, embedded controls | "Options", "Sort", "Filter", theme selectors |
-| **Ghost** | Lowest | Dismissive actions, tertiary actions | "Skip", "Close", "Dismiss" |
+| Pattern             | Emphasis   | Use Cases                               | Examples                                     |
+|---------------------|------------|-----------------------------------------|----------------------------------------------|
+| **Solid**           | Highest    | Primary actions, most important CTA     | "Save", "Submit", "Browse Movies"            |
+| **Primary Outline** | High       | Branded actions in outline style (rare) | "Learn More" on landing page                 |
+| **Neutral Outline** | Medium     | Utility actions, navigation, OAuth      | "Cancel", "Back", OAuth buttons, filters     |
+| **Subtle**          | Medium-Low | In-context actions, embedded controls   | "Options", "Sort", "Filter", theme selectors |
+| **Ghost**           | Lowest     | Dismissive actions, tertiary actions    | "Skip", "Close", "Dismiss"                   |
 
 **Decision tree:**
 

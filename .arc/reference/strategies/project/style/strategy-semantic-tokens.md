@@ -71,8 +71,9 @@ What am I styling?
 │  └─ Links/focus/highlights: tertiary / tertiary-hover
 │
 ├─ Movie rating/badge? → [Movie UI](#building-movie-specific-ui)
-│  ├─ Rating display: rating / rating-foreground
-│  └─ Genre tags: badge / badge-foreground
+│  ├─ TMDB scores: success/info/warning (threshold-based)
+│  ├─ User rating stars: imdb-gold (icon color)
+│  └─ Genre tags: badge / on-badge
 │
 ├─ Border/input/focus? → [UI Elements](#ui-element-tokens)
 │  ├─ Borders: border-strong-01 (or see Border Strategy for hierarchy)
@@ -1245,31 +1246,36 @@ CineXplorer extends the base semantic token system with movie app-specific token
 
 ### Movie Ratings
 
-**Rating display (TMDB scores, user ratings):**
+**TMDB Community Scores (threshold-based status colors):**
 
 ```tsx
-// Rating badge with IMDb gold aesthetic
-<Badge bg="rating" color="rating-foreground">
-  8.5
-</Badge>
+// TMDB scores use status colors based on thresholds (0-10 scale)
+// ≥7.5: success (green), 5.0-7.4: info (blue), <5.0: warning (yellow)
 
-// Rating with context indicator
-<HStack>
-  <Badge bg="rating" color="rating-foreground">8.5</Badge>
-  <Badge bg={score >= 8 ? "success" : "warning"} color="on-success">
-    High rated
-  </Badge>
-</HStack>
+// High rating (≥7.5)
+<Badge variant="success">8.2</Badge>
+
+// Medium rating (5.0-7.4)
+<Badge variant="info">6.5</Badge>
+
+// Low rating (<5.0)
+<Badge variant="warning">4.1</Badge>
 ```
 
-**Tokens:**
+**Tokens:** Uses status color pairs (`success`/`on-success`, `info`/`on-info`, `warning`/`on-warning`)
 
-- Background: `rating` (IMDb gold #F5C518 in light mode, adjusted for dark)
-- Text: `rating-foreground`
+**Use cases:** TMDB community scores, aggregated ratings from external sources
 
-**Use cases:** TMDB scores, user ratings, quality indicators
+**User Personal Ratings (5-star system with IMDb gold):**
 
-**Note:** `rating` is distinct from `warning` - ratings have different semantic meaning (quality indicator vs caution state).
+```tsx
+// User ratings use star icons (★) colored with imdb-gold token
+<Text color="imdb-gold" fontSize="xl">★★★★☆</Text>
+```
+
+**Tokens:** `imdb-gold` (icon color only, not a background token)
+
+**Use cases:** User's personal 5-star ratings on movie cards
 
 ### Genre Tags and Badges
 
@@ -1679,8 +1685,11 @@ Fast lookup cheat sheet for common token choices.
 | Warning alert | `warning` / `on-warning` | `<Alert bg="warning/10"><Text color="on-warning">` |
 | Error alert | `destructive` / `on-destructive` | `<Alert bg="destructive/10"><Text color="on-destructive">` |
 | Info alert | `info` / `on-info` | `<Alert bg="info/10"><Text color="on-info">` |
-| Movie rating | `rating` / `rating-foreground` | `<Badge bg="rating" color="rating-foreground">` |
-| Genre tag | `badge` / `badge-foreground` | `<Badge bg="badge" color="badge-foreground">` |
+| TMDB score (high) | `success` / `on-success` | `<Badge variant="success">8.2</Badge>` (≥7.5) |
+| TMDB score (medium) | `info` / `on-info` | `<Badge variant="info">6.5</Badge>` (5.0-7.4) |
+| TMDB score (low) | `warning` / `on-warning` | `<Badge variant="warning">4.1</Badge>` (<5.0) |
+| User rating stars | `imdb-gold` | `<Text color="imdb-gold">★★★★☆</Text>` |
+| Genre tag | `badge` / `on-badge` | `<Badge variant="neutral">Action</Badge>` |
 | Secondary text | `on-muted` | `<Text color="on-muted">` |
 | Border | `border-strong-01` | `<Card borderColor="border-strong-01">` |
 | Input field | `input` | `<Input borderColor="input">` |
@@ -1736,8 +1745,9 @@ Fast lookup cheat sheet for common token choices.
 ```tsx
 ✅ <Text color="on-destructive">Error</Text>
 ✅ <Box bg="muted">Container</Box>
-✅ <Badge bg="info" color="on-info">Info</Badge>
-✅ <Box bg="rating" color="rating-foreground">8.5</Box>
+✅ <Badge variant="info">New</Badge>
+✅ <Badge variant="success">8.2</Badge> {/* TMDB high score */}
+✅ <Text color="imdb-gold">★★★★☆</Text> {/* User rating stars */}
 ```
 
 ### Quick Decision Flowchart
@@ -1747,10 +1757,11 @@ Fast lookup cheat sheet for common token choices.
 2. Button? → Check emphasis hierarchy (solid/outline/subtle/ghost)
 3. Surface? → background/layer-01/layer-02/layer-03
 4. Interactive text? → tertiary + tertiary-hover
-5. Movie rating? → rating + rating-foreground
-6. Neutral badge? → badge + badge-foreground
-7. Border? → border-strong-01 (or see Border Strategy)
-8. Focus? → ring
+5. TMDB score? → Badge variant based on threshold (success/info/warning)
+6. User rating stars? → imdb-gold (icon color)
+7. Neutral badge? → badge + on-badge
+8. Border? → border-strong-01 (or see Border Strategy)
+9. Focus? → ring
 ```
 
 ---

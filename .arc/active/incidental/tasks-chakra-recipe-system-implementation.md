@@ -445,41 +445,139 @@ components instead (like TextLink pattern for special cases). Only Select.Trigge
 
 ### **Phase 4:** Alert and Badge Recipes (Medium Priority)
 
-- [ ] **4.1 Create Alert recipes**
+- [x] **4.1 Create Alert recipes** ✅
 
-    - [ ] **4.1.1 Create `frontend/src/theme/recipes/alert.ts`**
-        - Use `defineSlotRecipe` (Alert is multi-part: root, icon, title, description)
-        - Define 4 semantic variants (success, warning, destructive, info)
-        - Opacity background patterns (10%, 20%)
-        - Icon colors (semantic color for emphasis)
-        - Title colors (semantic color for emphasis)
-        - Description colors (foreground for readability)
-        - Register in `theme.slotRecipes.alert` (NOT `theme.recipes`!)
+    - [x] **4.1.1 Create `frontend/src/theme/recipes/alert.ts`** ✅
 
-    - [ ] **4.1.2 Test Alert recipes across themes**
-        - Use built-in `<Alert>` component (NO wrapper needed)
-        - Pattern: `<Alert status="success">` automatically uses recipe
-        - Run typegen: `npx @chakra-ui/cli typegen ./theme.ts`
-        - **Restart frontend container** to clear TS server cache:
-        `docker compose -f infrastructure/docker-compose.yml restart frontend`
-        - Verify types recognized (create test component with custom variants)
+        **Completed:** 2025-11-15
 
-- [ ] **4.2 Create Badge recipes**
+        **Created:** `frontend/src/theme/recipes/alert.ts` - Alert slot recipe with 4 semantic status variants
 
-    - [ ] **4.2.1 Create `frontend/src/theme/recipes/badge.ts`**
-        - Use `defineRecipe` (Badge is single-part)
-        - Movie rating badge (rating / rating-foreground)
-        - Genre tag badge (badge / badge-foreground)
-        - Status badges (success, warning, destructive, info)
-        - Register in `theme.recipes.badge`
+        **Implementation details:**
+        - ✅ Used `defineSlotRecipe` with slots: `root`, `indicator`, `title`, `description`
+        - ✅ Defined 4 status variants: `success`, `warning`, `error` (maps to destructive token), `info`
+        - ✅ 10% opacity backgrounds (`success/10`, `warning/10`, etc.)
+        - ✅ Semantic color borders (matches background semantic color)
+        - ✅ Indicator/icon colors: semantic color for visual emphasis
+        - ✅ Title colors: semantic color for emphasis on subtle backgrounds
+        - ✅ Description colors: foreground for maximum readability
+        - ✅ Registered in `baseConfig.theme.slotRecipes.alert`
+        - ✅ Exported from `theme/recipes/index.ts`
+        - ✅ Imported and registered in `theme/index.ts`
 
-    - [ ] **4.2.2 Test Badge recipes**
-        - Use built-in `<Badge>` component (NO wrapper needed)
-        - Pattern: `<Badge variant="rating">` automatically uses recipe
-        - Run typegen: `npx @chakra-ui/cli typegen ./theme.ts`
-        - **Restart frontend container** to clear TS server cache:
-        `docker compose -f infrastructure/docker-compose.yml restart frontend`
-        - Verify types recognized (custom variants should show in IDE autocomplete)
+        **Critical fix:** Slot name corrected from "icon" → "indicator" to match Chakra v3's `Alert.Indicator` component
+
+        **Strategy alignment:** Recipe matches strategy-semantic-tokens.md patterns exactly (lines 495-582):
+        - Alert containers: 10% opacity backgrounds + semantic borders
+        - Title/icon: Semantic color emphasis
+        - Description: Foreground for readability on subtle backgrounds
+
+    - [x] **4.1.2 Test Alert recipes across themes** ✅
+
+        **Completed:** 2025-11-15
+
+        **Testing approach:**
+        - ✅ Updated ThemeDebug FeedbackStatusSection to use Alert recipe
+        - ✅ Removed inline style overrides (bg, borderColor, borderWidth, color props)
+        - ✅ Alerts now use `status="success|warning|error|info"` prop only
+        - ✅ Built-in `<Alert.Root>` component automatically applies recipe styles
+        - ✅ Ran typegen: `npx @chakra-ui/cli typegen ./src/theme/index.ts`
+        - ✅ Restarted frontend container to clear TS server cache
+
+        **Visual validation:**
+        - Icons now display with correct semantic colors (via indicator slot)
+        - Backgrounds: 10% opacity tints (success/10, warning/10, etc.)
+        - Borders: Semantic colors matching status
+        - Title: Semantic color emphasis
+        - Description: Foreground for readability
+
+        **Comparison with original:**
+        - Original: Inline props (`bg="success/10"`, `borderColor="success"`, `color="success"`)
+        - Recipe: Same visual output, centralized definition, no inline overrides needed
+        - Both implementations follow strategy doc patterns - recipe just eliminates repetition
+
+- [x] **4.2 Create Badge recipes** ✅
+
+    - [x] **4.2.1 Create `frontend/src/theme/recipes/badge.ts`** ✅
+
+        **Completed:** 2025-11-15
+
+        **Created:** `frontend/src/theme/recipes/badge.ts` - Badge recipe with 6 semantic variants
+
+        **Implementation details:**
+        - ✅ Used `defineRecipe` (Badge is single-part component)
+        - ✅ Defined 5 variants: `success`, `warning`, `error`, `info`, `neutral`
+        - ✅ Status badges: Solid fills with `on-*` color pairs (success/on-success, etc.)
+        - ✅ Neutral badge: Uses `badge`/`on-badge` tokens for genres, content ratings
+        - ✅ **Fixed legacy naming:** Used canonical `on-badge` (ADR-011) instead of deprecated `-foreground` suffix
+        - ✅ Registered in `baseConfig.theme.recipes.badge`
+        - ✅ Exported from `theme/recipes/index.ts`
+        - ✅ Imported and registered in `theme/index.ts`
+
+        **Critical fix:** Updated to use canonical `on-*` naming for CineXplorer extensions:
+        - `badge` + `on-badge` (not `badge-foreground`)
+
+        **Strategy alignment:** Recipe matches strategy patterns and UnifiedTheme canonical tokens
+
+    - [x] **4.2.2 Test Badge recipes** ✅
+
+        **Completed:** 2025-11-15
+
+        **Testing approach:**
+        - ✅ Updated ThemeDebug FeedbackStatusSection to use Badge recipe
+        - ✅ Removed inline style overrides (bg, color props)
+        - ✅ Badges now use single `variant="success|warning|error|info|neutral|rating"` prop
+        - ✅ Built-in `<Badge>` component automatically applies recipe styles
+        - ✅ Ran typegen: `npx @chakra-ui/cli typegen ./src/theme/index.ts`
+        - ✅ Restarted frontend container to clear TS server cache
+        - ✅ Added rating badge example to demonstrate IMDb gold aesthetic
+
+        **Visual validation:**
+        - Status badges: Solid fills with semantic colors
+        - Neutral badges: Gray background for categorization
+        - Rating badge: Gold background (IMDb-style) for scores
+        - All badges use canonical on-* foreground tokens
+
+        **Comparison with original:**
+        - Original: Inline props (`bg="success"`, `color="on-success"`)
+        - Recipe: Same visual output, centralized definition, no inline overrides needed
+        - Both implementations follow ADR-011 canonical naming
+
+    **CRITICAL CLEANUP (2025-11-15):** Discovered incorrect pattern in ThemeDebug
+
+    **Issue found:**
+    - FeedbackStatusSection showed "Rating Badge (TMDB scores)" using `variant="rating"`
+    - This was INCORRECT - TMDB scores actually use status colors (success/info/warning) based on thresholds
+    - `rating` token was only used for IMDb gold star icons (★), not badge backgrounds
+    - `on-rating` token was unnecessary - stars are just colored icons, no text on rating background
+
+    **Cleanup performed:**
+    - ✅ Removed `rating` variant from Badge recipe (reduced from 6 to 5 variants)
+    - ✅ Renamed `rating` token → `imdb-gold` in UnifiedTheme (more accurate naming)
+    - ✅ Removed `on-rating` and `rating-foreground` tokens entirely (not needed)
+    - ✅ Updated all 4 theme definitions (github, ibm-carbon, gitlab-pajamas, material-design-3)
+    - ✅ Updated CineXplorerExtensionsSection to use `color="imdb-gold"` for star icons
+    - ✅ Removed rating badge example from FeedbackStatusSection
+    - ✅ Added note explaining TMDB scores use status variants, not rating variant
+
+    **Actual usage patterns (confirmed):**
+    - **TMDB community scores:** Use Badge with status variants based on thresholds
+        - ≥7.5: `variant="success"` (green)
+        - 5.0-7.4: `variant="info"` (blue)
+        - <5.0: `variant="warning"` (yellow)
+    - **User personal ratings:** Use star icons (★) with `color="imdb-gold"`
+    - **Genre badges:** Use `variant="neutral"`
+
+    **Final Badge recipe variants:** success, warning, error, info, neutral (5 total)
+
+    **Strategy doc updated (2025-11-15):**
+    - ✅ Fixed "Movie Ratings" section (lines 1248-1277) to show correct TMDB score pattern
+    - ✅ Updated token reference table (line 1687-1691) with threshold-based variants
+    - ✅ Fixed navigation tree (lines 73-76) to show actual patterns
+    - ✅ Updated examples section (lines 1746-1750) to use correct tokens
+    - ✅ Fixed decision flowchart (lines 1756-1764) to guide correct usage
+    - ✅ Removed all `rating-foreground` and `on-rating` references
+    - ✅ Documented `imdb-gold` as icon color only (not background)
 
 - [ ] **4.3 Migrate Alert and Badge components**
 

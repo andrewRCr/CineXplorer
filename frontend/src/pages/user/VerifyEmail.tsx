@@ -105,13 +105,7 @@ const VerifyEmail = () => {
 
         {status === "success" && (
           <VStack gap={6}>
-            <Alert.Root
-              status="success"
-              borderRadius="lg"
-              border="1px solid"
-              borderColor="success"
-              boxShadow="sm"
-            >
+            <Alert.Root status="success">
               <Alert.Indicator />
               <Box>
                 <Alert.Title fontSize="lg" fontWeight="semibold" mb={2}>
@@ -142,13 +136,7 @@ const VerifyEmail = () => {
 
         {status === "error" && (
           <VStack gap={6}>
-            <Alert.Root
-              status="error"
-              borderRadius="lg"
-              border="1px solid"
-              borderColor="destructive"
-              boxShadow="sm"
-            >
+            <Alert.Root status="error">
               <Alert.Indicator />
               <Box>
                 <Alert.Title fontSize="lg" fontWeight="semibold" mb={2}>

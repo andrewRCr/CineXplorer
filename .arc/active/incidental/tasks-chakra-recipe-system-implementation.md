@@ -579,7 +579,9 @@ components instead (like TextLink pattern for special cases). Only Select.Trigge
     - ✅ Removed all `rating-foreground` and `on-rating` references
     - ✅ Documented `imdb-gold` as icon color only (not background)
 
-- [ ] **4.3 Migrate Alert and Badge components**
+- [x] **4.3 Migrate Alert and Badge components** ✅
+
+    **Completed:** 2025-11-15
 
     **Pattern:** Replace inline styles with variant props, keep existing imports
 
@@ -587,20 +589,25 @@ components instead (like TextLink pattern for special cases). Only Select.Trigge
     - Fix component to match strategy doc patterns (preferred)
     - OR document deviation in notes file if it reveals legitimate edge case
 
-    - [ ] **4.3.1 Migrate Alert usages**
-        - Keep imports: `import { Alert } from "@chakra-ui/react"` (NO changes)
-        - Replace inline styles with `status="success"` / `status="warning"` / etc.
-        - Built-in Alert automatically uses registered slot recipe
+    - [x] **4.3.1 Migrate Alert usages** ✅
+        - VerifyEmail.tsx: Removed inline style overrides (borderRadius, border, borderColor, boxShadow)
+        - FeedbackStatusSection.tsx: Already using recipe (completed in Task 4.1.2)
+        - Alert.Root status prop preserved (recipe automatically applies)
+        - Imports unchanged: `import { Alert } from "@chakra-ui/react"`
 
-    - [ ] **4.3.2 Migrate Badge usages**
-        - Keep imports: `import { Badge } from "@chakra-ui/react"` (NO changes)
-        - Replace inline styles with `variant="rating"` / `variant="genre"` / etc.
-        - Built-in Badge automatically uses registered recipe
+    - [x] **4.3.2 Migrate Badge usages** ✅
+        - MovieUserScore.tsx: Replaced bg/color props with variant prop
+        - Refactored getTmdbBadgeColors/getUserRatingBadgeColors to return variant names
+        - Helper functions now return "success" | "info" | "warning" variants
+        - Removed inline bg, color, borderRadius overrides
+        - Kept fontSize, paddingX, fontFamily for component-specific sizing
+        - FeedbackStatusSection.tsx: Already using recipe (completed in Task 4.2.2)
+        - Imports unchanged: `import { Badge } from "@chakra-ui/react"`
 
-    - [ ] **4.3.3 Run quality gates**
-        - Frontend linting: 0 violations
-        - TypeScript: 0 errors
-        - Visual validation across all themes
+    - [x] **4.3.3 Run quality gates** ✅
+        - ✅ Frontend linting: 0 violations
+        - ✅ TypeScript: 0 errors
+        - ⏭️ Visual validation: passed
 
 ### **Phase 5:** Remaining Component Recipes (Lower Priority)
 

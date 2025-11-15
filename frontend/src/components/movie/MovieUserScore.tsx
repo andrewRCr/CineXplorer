@@ -15,36 +15,32 @@ const MovieUserScore: React.FC<MovieUserScoreProps> = ({
   userRating,
   userRatingOnly = false,
 }) => {
-  // Helper to get TMDB badge colors (0-10 scale)
-  // Color mapping: High (green) → Medium (blue) → Low (yellow)
-  // Uses theme-specific "on-*" tokens for text on solid colored backgrounds
-  const getTmdbBadgeColors = (tmdbScore: number) => {
-    if (tmdbScore >= 7.5) return { bg: "success", color: "on-success" };      // High: Green
-    if (tmdbScore < 5.0) return { bg: "warning", color: "on-warning" };        // Low: Yellow
-    return { bg: "info", color: "on-info" };                                    // Medium: Blue
+  // Helper to get TMDB badge variant (0-10 scale)
+  // Variant mapping: High (success) → Medium (info) → Low (warning)
+  // Badge recipe provides solid backgrounds with on-* color pairs
+  const getTmdbBadgeVariant = (tmdbScore: number): "success" | "info" | "warning" => {
+    if (tmdbScore >= 7.5) return "success";  // High: Green
+    if (tmdbScore < 5.0) return "warning";   // Low: Yellow
+    return "info";                            // Medium: Blue
   };
 
-  // Helper to get user rating badge colors (1-10 scale)
-  // NOTE: Future enhancement will use `rating` token for personal ratings
-  // For now, using threshold-based semantic tokens consistent with TMDB
-  // Color mapping: High (green) → Medium (blue) → Low (yellow)
-  const getUserRatingBadgeColors = (rating: number) => {
-    if (rating >= 8) return { bg: "success", color: "on-success" };
-    if (rating < 5) return { bg: "warning", color: "on-warning" };
-    return { bg: "info", color: "on-info" };
+  // Helper to get user rating badge variant (1-10 scale)
+  // Uses same threshold-based semantic variants as TMDB scores
+  // Variant mapping: High (success) → Medium (info) → Low (warning)
+  const getUserRatingBadgeVariant = (rating: number): "success" | "info" | "warning" => {
+    if (rating >= 8) return "success";
+    if (rating < 5) return "warning";
+    return "info";
   };
 
   // Show only user rating
   if (userRatingOnly && userRating) {
-    const colors = getUserRatingBadgeColors(userRating);
+    const variant = getUserRatingBadgeVariant(userRating);
     return (
       <Badge
-        variant="surface"
-        bg={colors.bg}
-        color={colors.color}
+        variant={variant}
         fontSize="12px"
         paddingX={1}
-        borderRadius={4}
         title="Your Rating"
       >
         ★ {userRating}/10
@@ -54,28 +50,22 @@ const MovieUserScore: React.FC<MovieUserScoreProps> = ({
 
   // Show both TMDB and user rating
   if (userRating) {
-    const tmdbColors = getTmdbBadgeColors(score);
-    const userColors = getUserRatingBadgeColors(userRating);
+    const tmdbVariant = getTmdbBadgeVariant(score);
+    const userVariant = getUserRatingBadgeVariant(userRating);
     return (
       <HStack gap={1}>
         <Badge
-          variant="surface"
-          bg={tmdbColors.bg}
-          color={tmdbColors.color}
+          variant={tmdbVariant}
           fontSize="12px"
           paddingX={1}
-          borderRadius={4}
           title="TMDB Rating"
         >
           {score.toFixed(1)}
         </Badge>
         <Badge
-          variant="surface"
-          bg={userColors.bg}
-          color={userColors.color}
+          variant={userVariant}
           fontSize="12px"
           paddingX={1}
-          borderRadius={4}
           title="Your Rating"
         >
           ★ {userRating}
@@ -85,16 +75,13 @@ const MovieUserScore: React.FC<MovieUserScoreProps> = ({
   }
 
   // Show only TMDB rating (current behavior)
-  const tmdbColors = getTmdbBadgeColors(score);
+  const tmdbVariant = getTmdbBadgeVariant(score);
   return (
     <Badge
-      variant="surface"
-      bg={tmdbColors.bg}
-      color={tmdbColors.color}
+      variant={tmdbVariant}
       fontSize="12px"
       fontFamily="sourcesans"
       paddingX={1}
-      borderRadius={4}
       title="TMDB Rating"
     >
       {score.toFixed(1)}

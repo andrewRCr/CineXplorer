@@ -2,7 +2,10 @@
  * IBM Carbon Theme Definition
  */
 
-import { ibmCarbonPaletteLight as pLight, ibmCarbonPaletteDark as pDark } from "../color/palettes/ibm-carbon";
+import {
+    ibmCarbonPaletteLight as pLight,
+    ibmCarbonPaletteDark as pDark,
+} from "../color/palettes/ibm-carbon";
 import type { Theme } from "../types";
 import { createUnifiedTheme } from "../color";
 
@@ -11,7 +14,7 @@ export const ibmCarbonTheme: Theme = {
     label: "IBM Carbon",
 
     light: {
-// Base colors - DIRECT HEX (no conversion)
+        // Base colors - DIRECT HEX (no conversion)
         background: pLight.bg_default,
         foreground: pLight.fg_default,
         // Card colors
@@ -51,7 +54,7 @@ export const ibmCarbonTheme: Theme = {
         "on-destructive": pLight.fg_onEmphasis, // White text on dark red
         "on-info": pLight.fg_onEmphasis, // White text on dark blue
         // Rating colors (IMDb gold standard - was pLight.fg_rating before extraction)
-        rating: "#d4a518",
+        "imdb-gold": "#d4a518",
         "rating-foreground": "#000000",
         // Surface elevation
         "surface-elevated": pLight.bg_emphasis,
@@ -68,7 +71,7 @@ export const ibmCarbonTheme: Theme = {
     },
 
     dark: {
-background: pDark.bg_default,
+        background: pDark.bg_default,
         foreground: pDark.fg_default,
         card: pDark.bg_muted,
         "card-foreground": pDark.fg_default,
@@ -95,7 +98,7 @@ background: pDark.bg_default,
         "on-warning": pDark.fg_onEmphasis, // Dark text on light yellow (IBM uses lighter yellow)
         "on-destructive": pDark.fg_default, // White text on dark red
         "on-info": pDark.fg_default, // White text on dark blue
-        rating: "#f1c21b", // TEMP: hardcoded after palette extraction
+        "imdb-gold": "#f1c21b", // TEMP: hardcoded after palette extraction
         "rating-foreground": "#000000",
         "surface-elevated": pDark.bg_emphasis,
         badge: pDark.bg_button_secondary,
@@ -106,7 +109,7 @@ background: pDark.bg_default,
         input: pDark.border_default,
         ring: pDark.fg_accent,
     },
-    // Phase 3 integration: Unified adapter instances
+
     lightUnified: createUnifiedTheme("ibm-carbon", "light"),
     darkUnified: createUnifiedTheme("ibm-carbon", "dark"),
 } as const;

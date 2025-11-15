@@ -35,11 +35,11 @@ export function CineXplorerExtensionsSection() {
             <Text fontSize="sm" fontWeight="bold" mb={2} textAlign="center">User Personal Rating (future 5-star)</Text>
             <Box textAlign="center">
               <Box bg="layer-01" px={3} py={2} borderRadius="md" display="inline-block">
-                <Text color="rating" fontWeight="bold" fontSize="xl">★★★★☆</Text>
+                <Text color="imdb-gold" fontWeight="bold" fontSize="xl">★★★★☆</Text>
               </Box>
             </Box>
             <Text fontSize="xs" color="foreground/60" mt={1} textAlign="center">
-              Stars use rating token color (IMDb gold) on layer-01 (movie cards)
+              Stars use imdb-gold token color (IMDb gold #F5C518) on layer-01 (movie cards)
             </Text>
           </Box>
 

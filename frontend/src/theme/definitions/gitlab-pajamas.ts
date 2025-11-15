@@ -2,7 +2,10 @@
  * GitLab Pajamas Theme Definition
  */
 
-import { gitlabPajamasPaletteLight as pLight, gitlabPajamasPaletteDark as pDark } from "../color/palettes/gitlab-pajamas";
+import {
+    gitlabPajamasPaletteLight as pLight,
+    gitlabPajamasPaletteDark as pDark,
+} from "../color/palettes/gitlab-pajamas";
 import type { Theme } from "../types";
 import { createUnifiedTheme } from "../color";
 
@@ -11,7 +14,7 @@ export const gitlabPajamasTheme: Theme = {
     label: "GitLab Pajamas",
 
     light: {
-// Base colors
+        // Base colors
         background: pLight.bg_default, // Pure white
         foreground: pLight.fg_default, // Dark gray text
         // Card colors (elevated surfaces)
@@ -52,7 +55,7 @@ export const gitlabPajamasTheme: Theme = {
         "on-destructive": pLight.fg_onEmphasis,
         "on-info": pLight.fg_onEmphasis, // White on red
         // Rating colors (movie-specific) - TEMP: hardcoded after palette extraction
-        rating: "#c17d10", // Gold adapted for GitLab's clean aesthetic
+        "imdb-gold": "#c17d10", // Gold adapted for GitLab's clean aesthetic
         "rating-foreground": "#000000", // Dark text
         // Surface elevation (featured sections, modals)
         "surface-elevated": pLight.bg_emphasis, // Neutral-50 (3rd layer)
@@ -69,7 +72,7 @@ export const gitlabPajamasTheme: Theme = {
     },
 
     dark: {
-background: pDark.bg_default, // Near black (neutral-950)
+        background: pDark.bg_default, // Near black (neutral-950)
         foreground: pDark.fg_default, // Light gray text
         card: pDark.bg_muted, // Neutral-900 (lighter than background)
         "card-foreground": pDark.fg_default,
@@ -96,7 +99,7 @@ background: pDark.bg_default, // Near black (neutral-950)
         "on-warning": pDark.fg_onEmphasis, // Dark text on light orange
         "on-destructive": pDark.fg_onEmphasis,
         "on-info": pDark.fg_onEmphasis, // Dark text on light red
-        rating: "#f5c518", // TEMP: hardcoded after palette extraction (IMDb gold for dark mode)
+        "imdb-gold": "#f5c518", // TEMP: hardcoded after palette extraction (IMDb gold for dark mode)
         "rating-foreground": "#000000", // Black text
         "surface-elevated": pDark.bg_emphasis, // Neutral-800 (3rd layer, lighter than card)
         badge: pDark.bg_button_secondary, // Neutral-900
@@ -107,7 +110,7 @@ background: pDark.bg_default, // Near black (neutral-950)
         input: pDark.border_default, // Input border
         ring: pDark.fg_accent, // Light blue focus ring
     },
-    // Phase 3 integration: Unified adapter instances
+
     lightUnified: createUnifiedTheme("gitlab-pajamas", "light"),
     darkUnified: createUnifiedTheme("gitlab-pajamas", "dark"),
 } as const;

@@ -4,14 +4,11 @@
  * Maps Material Design 3 baseline palette colors to semantic token roles.
  * Provides modern, vibrant aesthetic following Google's M3 design system.
  * Source: Material Design 3 baseline (https://m3.material.io/styles/color/static/baseline)
- * Research: .arc/active/incidental/notes-theme-definition-semantic-corrections.md
  *
  * **Architecture:** 3-tier color system (similar to GitLab)
  * - Brand: Purple (Material's signature primary color)
  * - Primary: Purple (action buttons, same as brand)
  * - Tertiary: Maroon (contrasting accent for links/interactive text)
- *
- * Created: 2025-11-07 (Task 3.5.5.7 - ADR-010 validation)
  */
 
 import {
@@ -68,7 +65,7 @@ export const materialDesign3Theme: Theme = {
         "on-destructive": pLight.onError,
         "on-info": "#FFFFFF",
         // Rating colors (IMDb gold standard)
-        rating: "#F5C518",
+        "imdb-gold": "#F5C518",
         "rating-foreground": "#000000",
         // Surface elevation (high-elevation container)
         "surface-elevated": pLight.surfaceContainerHigh, // #ECE6F0
@@ -122,7 +119,7 @@ export const materialDesign3Theme: Theme = {
         "on-destructive": pDark.onError,
         "on-info": "#000000",
         // Rating colors
-        rating: "#F5C518",
+        "imdb-gold": "#F5C518",
         "rating-foreground": "#000000",
         // Surface elevation
         "surface-elevated": pDark.surfaceContainerHigh, // #2B2930
@@ -137,7 +134,7 @@ export const materialDesign3Theme: Theme = {
         input: pDark.outline,
         ring: pDark.tertiary, // #EFB8C8
     },
-    // Phase 3 integration: Unified adapter instances
+
     lightUnified: createUnifiedTheme("material-design-3", "light"),
     darkUnified: createUnifiedTheme("material-design-3", "dark"),
 } as const;

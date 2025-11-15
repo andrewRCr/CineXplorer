@@ -33,7 +33,7 @@ import { layoutSemanticTokens } from "./layout/semantic-tokens";
 import { zIndexSemanticTokens } from "./layout/z-index";
 
 // Import recipes
-import { buttonRecipe, selectRecipe } from "./recipes";
+import { buttonRecipe, selectRecipe, alertRecipe, badgeRecipe } from "./recipes";
 
 /**
  * Theme Registry
@@ -223,10 +223,14 @@ const baseConfig = defineConfig({
         recipes: {
             // Button recipe (all variants: solid, primary-outline, neutral-outline, subtle, ghost)
             button: buttonRecipe,
+            // Badge recipe (status: success, warning, error, info, neutral, rating)
+            badge: badgeRecipe,
         },
         slotRecipes: {
             // Select recipe (trigger, content, item slots)
             select: selectRecipe,
+            // Alert recipe (root, icon, title, description slots)
+            alert: alertRecipe,
         },
     },
     globalCss: {

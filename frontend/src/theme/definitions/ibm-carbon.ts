@@ -55,7 +55,6 @@ export const ibmCarbonTheme: Theme = {
         "on-info": pLight.fg_onEmphasis, // White text on dark blue
         // Rating colors (IMDb gold standard - was pLight.fg_rating before extraction)
         "imdb-gold": "#d4a518",
-        "rating-foreground": "#000000",
         // Surface elevation
         "surface-elevated": pLight.bg_emphasis,
         // Badge colors
@@ -99,7 +98,6 @@ export const ibmCarbonTheme: Theme = {
         "on-destructive": pDark.fg_default, // White text on dark red
         "on-info": pDark.fg_default, // White text on dark blue
         "imdb-gold": "#f1c21b", // TEMP: hardcoded after palette extraction
-        "rating-foreground": "#000000",
         "surface-elevated": pDark.bg_emphasis,
         badge: pDark.bg_button_secondary,
         "badge-foreground": pDark.fg_muted,

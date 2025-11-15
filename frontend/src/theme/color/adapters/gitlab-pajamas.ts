@@ -324,9 +324,7 @@ export function createPajamasAdapter(mode: "light" | "dark"): UnifiedTheme {
         "info-foreground": infoForeground, // @deprecated
 
         // CineXplorer extensions
-        rating: extensions.rating,
-        "on-rating": extensions["rating-foreground"],
-        "rating-foreground": extensions["rating-foreground"], // @deprecated - alias for on-rating (ADR-011)
+        "imdb-gold": extensions["imdb-gold"],
         badge: extensions.badge,
         "on-badge": extensions["badge-foreground"],
         "badge-foreground": extensions["badge-foreground"], // @deprecated - alias for on-badge (ADR-011)

@@ -66,7 +66,6 @@ export const materialDesign3Theme: Theme = {
         "on-info": "#FFFFFF",
         // Rating colors (IMDb gold standard)
         "imdb-gold": "#F5C518",
-        "rating-foreground": "#000000",
         // Surface elevation (high-elevation container)
         "surface-elevated": pLight.surfaceContainerHigh, // #ECE6F0
         // Badge colors
@@ -120,7 +119,6 @@ export const materialDesign3Theme: Theme = {
         "on-info": "#000000",
         // Rating colors
         "imdb-gold": "#F5C518",
-        "rating-foreground": "#000000",
         // Surface elevation
         "surface-elevated": pDark.surfaceContainerHigh, // #2B2930
         // Badge colors

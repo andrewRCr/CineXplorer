@@ -223,7 +223,7 @@ const baseConfig = defineConfig({
         recipes: {
             // Button recipe (all variants: solid, primary-outline, neutral-outline, subtle, ghost)
             button: buttonRecipe,
-            // Badge recipe (status: success, warning, error, info, neutral, rating)
+            // Badge recipe (status: success, warning, error, info, neutral)
             badge: badgeRecipe,
         },
         slotRecipes: {

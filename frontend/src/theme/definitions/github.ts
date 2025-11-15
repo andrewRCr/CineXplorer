@@ -63,7 +63,6 @@ export const githubTheme: Theme = {
         "on-info": pLight.fg_onEmphasis, // White on red
         // Rating colors (TEMP: hardcoded after palette extraction)
         "imdb-gold": "#bf8700",
-        "rating-foreground": pLight.fg_onEmphasis,
         // Surface elevation
         "surface-elevated": pLight.bg_emphasis,
         // Badge colors
@@ -106,7 +105,6 @@ export const githubTheme: Theme = {
         "on-destructive": pDark.fg_default, // White text on dark red
         "on-info": pDark.fg_default, // White text on dark blue
         "imdb-gold": "#ffc107", // TEMP: hardcoded after palette extraction
-        "rating-foreground": pDark.fg_onEmphasis,
         "surface-elevated": pDark.bg_muted,
         badge: pDark.bg_button_secondary,
         "badge-foreground": pDark.fg_muted,

@@ -23,12 +23,8 @@
  * CineXplorer-specific token values for a single mode (light or dark).
  */
 export interface ExtensionTokens {
-    /** Rating background (TMDB scores, IMDb gold standard) */
-    rating: string;
-    /** Text color on rating backgrounds (ADR-011 canonical naming) */
-    "on-rating": string;
-    /** @deprecated Use on-rating instead (ADR-011) */
-    "rating-foreground": string;
+    /** Star system icon color (local user [NOT TMDB] scores; IMDb gold standard) */
+    "imdb-gold": string;
 
     /** Badge background (genre tags, neutral labels) */
     badge: string;
@@ -65,12 +61,10 @@ export interface ExtensionTokens {
  */
 export const standardRatingColors = {
     light: {
-        rating: "#F5C518",
-        "rating-foreground": "#000000",
+        "imdb-gold": "#F5C518",
     },
     dark: {
-        rating: "#D4A017",
-        "rating-foreground": "#000000",
+        "imdb-gold": "#D4A017",
     },
 } as const;
 
@@ -111,16 +105,13 @@ export function createExtensions(
         /** Secondary hover state (for drag active) */
         secondaryHover: string;
     },
-    mode: "light" | "dark",
+    mode: "light" | "dark"
 ): ExtensionTokens {
-    const ratingFg = standardRatingColors[mode]["rating-foreground"];
     const badgeFg = themeBase.mutedForeground;
 
     return {
-        // Rating tokens: Use standard IMDb gold across all themes
-        rating: standardRatingColors[mode].rating,
-        "on-rating": ratingFg, // ADR-011: Canonical naming
-        "rating-foreground": ratingFg, // @deprecated - alias for on-rating
+        // imdb-gold tokens: Use standard IMDb gold across all themes
+        "imdb-gold": standardRatingColors[mode]["imdb-gold"],
 
         // Badge tokens: Adapt to theme's neutral palette
         badge: themeBase.muted,
@@ -130,39 +121,5 @@ export function createExtensions(
         // Drag-and-drop: Adapt to theme's interactive colors
         "drag-active": themeBase.secondaryHover,
         "drop-zone": themeBase.accentEmphasis,
-    };
-}
-
-/**
- * Alternative: Theme-specific rating color overrides.
- *
- * If a theme needs rating colors that deviate from the IMDb gold standard,
- * use this function to provide custom values while maintaining contrast requirements.
- *
- * **Use cases:**
- * - Brand-specific color requirements
- * - Accessibility improvements for specific theme palettes
- * - Cultural/regional color preferences
- *
- * **Important:** Any custom rating colors MUST maintain WCAG AA contrast (4.5:1 minimum)
- * for text readability.
- *
- * @example
- * ```typescript
- * const customRating = createCustomRatingColors(
- *   "#FFD700", // Custom gold
- *   "#1A1A1A"  // Dark text
- * );
- * ```
- */
-export function createCustomRatingColors(
-    background: string,
-    foreground: string,
-): Pick<ExtensionTokens, "rating" | "on-rating" | "rating-foreground"> {
-    // TODO: Add contrast validation in development mode
-    return {
-        rating: background,
-        "on-rating": foreground, // ADR-011: Canonical naming
-        "rating-foreground": foreground, // @deprecated - alias for on-rating
     };
 }

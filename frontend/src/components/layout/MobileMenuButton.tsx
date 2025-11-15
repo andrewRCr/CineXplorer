@@ -22,7 +22,7 @@ const MobileMenuButton: React.FC<MobileMenuButtonProps> = ({ size = "md" }) => {
       aria-label="Open navigation menu"
       onClick={handleOpen}
       size={size}
-      variant="neutral-outline"
+      variant="outline"
     >
       <LuMenu />
     </IconButton>

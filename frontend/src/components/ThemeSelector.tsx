@@ -64,7 +64,7 @@ export function ThemeSelector() {
       <Menu.Root positioning={{ placement: "top-start", gutter: 8 }}>
         <Menu.Trigger asChild>
           <Button
-            variant="neutral-outline"
+            variant="outline"
             size="sm"
           >
             {displayLabel}

@@ -590,7 +590,7 @@ const Login = () => {
               <HStack gap={3} w="100%" mt={4}>
                 <Button
                   flex="1"
-                  variant="neutral-outline"
+                  variant="outline"
                   fontSize="16px"
                   onClick={handleGoogleLogin}
                 >
@@ -599,7 +599,7 @@ const Login = () => {
                 </Button>
                 <Button
                   flex="1"
-                  variant="neutral-outline"
+                  variant="outline"
                   fontSize="16px"
                   onClick={handleGithubLogin}
                 >

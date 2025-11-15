@@ -68,7 +68,7 @@ const NavBarUserMenu = () => {
       <Link to={ROUTES.LOGIN} style={{ textDecoration: "none" }}>
         <Button
           size="sm"
-          variant="neutral-outline"
+          variant="outline"
         >
           Login
         </Button>

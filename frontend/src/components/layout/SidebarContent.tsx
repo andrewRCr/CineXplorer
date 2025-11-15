@@ -127,7 +127,7 @@ export const SidebarContent: React.FC<SidebarContentProps> = ({
           <IconButton
             p={2}
             mb={1}
-            variant="primary-outline"
+            variant="outline"
             aria-label="Log activity"
             size="sm"
             onClick={() => {

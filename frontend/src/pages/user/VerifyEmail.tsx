@@ -147,7 +147,7 @@ const VerifyEmail = () => {
             </Alert.Root>
             <VStack gap={3}>
               <Button
-                variant="neutral-outline"
+                variant="outline"
                 onClick={() => navigate(ROUTES.LOGIN)}
                 size="lg"
                 w="full"
@@ -156,7 +156,7 @@ const VerifyEmail = () => {
                 Back to Login
               </Button>
               <Button
-                variant="neutral-outline"
+                variant="outline"
                 onClick={() => window.location.reload()}
                 size="lg"
                 w="full"

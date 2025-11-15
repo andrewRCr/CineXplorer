@@ -2,7 +2,10 @@
 
 ## Status
 
-Accepted
+Accepted (Partially superseded by ADR-016)
+
+**Note:** Core decision (opacity overlay approach) remains valid. Specific percentages improved from 8%/12% to 12%/16%
+per ADR-016 based on empirical testing across theme combinations.
 
 ## Context
 

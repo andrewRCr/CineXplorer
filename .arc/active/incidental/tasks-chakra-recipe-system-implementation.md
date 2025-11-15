@@ -759,9 +759,82 @@ components instead (like TextLink pattern for special cases). Only Select.Trigge
 
     **Conclusion:** Cards don't meet criteria for recipe system. Token-based styling is sufficient.
 
-### **Phase 6:** Documentation and Neutral Outline Fix
+### **Phase 6:** Button Pattern Consolidation and Final Documentation Updates
 
-- [ ] **6.1 Update strategy-semantic-tokens.md**
+- [x] **6.1 Audit and consolidate button patterns** ✅ **COMPLETED 2025-01-15**
+
+    **Goal:** Analyze experimental button patterns, validate semantic use cases, and consolidate to final 5 variants.
+
+    **Context:** Phase 2-5 implementation added 7 button variants for testing (solid, solid-alt, primary-outline,
+    secondary, neutral-outline, neutral-outline-alt, subtle, ghost). Need to evaluate which patterns are truly needed
+    based on real semantic use cases.
+
+    **Decisions made:**
+
+    1. **Interaction state tokens strengthened globally**
+        - Original Material Design 3 defaults (8% hover, 12% active) too subtle across theme combinations
+        - Tested 12% hover and 16% active - noticeable improvement in visibility
+        - Updated `deriveInteractionStates()` to use improved percentages globally
+        - **Decision:** Update all interaction state tokens (primary-hover, secondary-hover, layer-hover-*, etc.)
+        - Affects: Solid buttons, subtle buttons, interactive surfaces, theme selector, watchlist buttons
+        - Result: Consistent 12%/16% overlay across entire application
+
+    2. **Secondary vs Outline distinction validated**
+        - Identified legitimate semantic difference:
+            - **Secondary**: For form pairs (Save + Cancel) - primary text creates visual tie
+            - **Outline**: For standalone utility (Back, OAuth, filters) - neutral text
+        - Both use same hover effect (primary/8 bg) but differ in default text color
+        - This makes "secondary" literally mean "the secondary button in a primary/secondary pair"
+        - **Decision:** Keep both variants with distinct use cases
+
+    3. **Border color on secondary hover**
+        - Initial implementation used primary border on hover (too much color with primary text)
+        - **Decision:** Use border-strong-01 (stronger grey) instead - more balanced
+
+    4. **Eliminate redundant outline variants**
+        - primary-outline: Rarely used, redundant with secondary for branded actions
+        - neutral-outline (with tertiary hover): Being replaced by neutral-outline-alt (primary hover)
+        - **Decision:** Delete both, consolidate to single "outline" pattern
+
+    **Final 5-variant lineup:**
+
+    1. **solid** - Primary actions (12% hover, improved visibility)
+    2. **secondary** - Form pair secondary action (primary text + grey border + primary/8 hover)
+    3. **outline** - Standalone utility action (grey text + grey border + primary/8 hover + primary border on hover)
+    4. **subtle** - Embedded in panels (unchanged)
+    5. **ghost** - Dismissive/tertiary (unchanged)
+
+    **Implementation changes:**
+
+    - `frontend/src/theme/color/utils.ts` - Updated `deriveInteractionStates()` to 12%/16% (from 8%/12%)
+    - `frontend/src/theme/recipes/button.ts` - Consolidated to 5 variants, removed inline color-mix overrides
+    - `frontend/src/theme/index.ts` - Updated recipe comment
+    - `frontend/src/pages/dev/theme-debug/sections/ButtonPatternsSection.tsx` - Updated to show 5 final variants with
+    token names
+    - Component migrations: `neutral-outline` → `outline`, `primary-outline` → `outline` (10 files)
+
+    **Rationale:**
+
+    - **Semantic clarity:** Each variant has distinct use case (not just visual preference)
+    - **Context-aware:** Secondary vs outline distinction based on whether paired with primary action
+    - **Simplified:** Down from 7 experimental to 5 production variants
+    - **Improved UX:** Global interaction state improvement (12%/16% vs MD3's 8%/12%) - more visible across all themes
+    - **Token alignment:** Semantic tokens now match actual usage (no misleading names)
+    - **Eliminated confusion:** No more choosing between primary/neutral/neutral-alt outline variants
+
+    **Quality gates:** ✅ All passed
+    - TypeScript type generation: ✅ Success
+    - Frontend linting: ✅ 0 violations
+    - Type checking: ✅ 0 errors
+    - Visual testing: ✅ All variants work across all themes/modes
+
+    **Architecture decision record:**
+    - **ADR-016** created: "Improve Interaction State Contrast from Material Design 3 Defaults"
+    - Documents decision to improve from 8%/12% to 12%/16% globally
+    - Partially supersedes ADR-009 (methodology preserved, percentages improved)
+    - Based on empirical A/B testing across 8 theme/mode combinations
+
+- [ ] **6.2 Update strategy-semantic-tokens.md**
 
     **Goal:** Transform strategy doc to use recipe-focused guidance (leaner, more semantic).
 
@@ -781,55 +854,28 @@ components instead (like TextLink pattern for special cases). Only Select.Trigge
     - WCAG compliance notes
     - Token meanings (but lighter touch - recipes abstract details)
 
-    - [ ] **6.1.1 Update Button section**
-        - Replace Pattern 1-6 code examples
-        - Reference recipe variants instead
-        - Show how to use: `<Button variant="neutral-outline">` (Note: Must use "variant", NOT "visual"!)
+    - [ ] **6.2.1 Update Button section**
+        - Replace Pattern 1-6 code examples with 5 finalized variants
+        - Reference recipe variants: solid, secondary, outline, subtle, ghost
+        - Show usage: `<Button variant="outline">` (Note: Must use "variant", NOT "visual"!)
+        - Document secondary vs outline distinction (paired vs standalone)
         - Link to buttonRecipe definition for implementation details
 
-    - [ ] **6.1.2 Update Form Controls section**
+    - [ ] **6.2.2 Update Form Controls section**
         - Update Input/Textarea examples with wrapper component usage (NOT recipes!)
         - Show StyledInput/StyledTextarea pattern (similar to TextLink pattern)
         - Document layer prop usage for context-appropriate borders
         - Update Select examples with recipe usage
 
-    - [ ] **6.1.3 Update Alert/Badge sections**
+    - [ ] **6.2.3 Update Alert/Badge sections**
         - Update with recipe variant usage
         - Maintain guidance on when to use which variant
 
-- [ ] **6.2 Update ThemeDebug.tsx**
+- [ ] **6.3 Update ThemeDebug.tsx** (Note: ButtonPatternsSection already updated in 6.1)
 
-    - [ ] **6.2.1 Update CoreActionsSection to use recipes**
-        - Demonstrate all button recipe variants
-        - Show hover/focus/active states
-
-    - [ ] **6.2.2 Update FormControlsSection**
-        - Demonstrate StyledInput/StyledTextarea wrapper components with ADR-015 patterns (NOT recipes!)
-        - Show layer prop usage for different contexts
-        - Show Select recipe usage
-
-    - [ ] **6.2.3 Update other sections as needed**
-
-- [ ] **6.3 Fix neutral outline button hover (tertiary → primary)**
-
-    **Goal:** One-line change now that recipes are implemented!
-
-    - [ ] **6.3.1 Update button recipe neutral outline variant**
-        - Change hover: `bg: "tertiary/8"` → `bg: "primary/8"`
-        - Change hover: `borderColor: "tertiary"` → `borderColor: "primary"`
-        - Change active: `bg: "tertiary/12"` → `bg: "primary/12"`
-        - Change active: `borderColor: "tertiary"` → `borderColor: "primary"`
-        - File: `frontend/src/theme/recipes/button.ts`
-
-    - [ ] **6.3.2 Visual validation across all themes**
-        - Test all 4 themes × 2 modes
-        - Verify neutral outline buttons look correct
-        - Verify no regressions in other button types
-
-    - [ ] **6.3.3 Update strategy doc Pattern 3 description**
-        - Update "Neutral Outline Button" section
-        - Document that hover uses primary (not tertiary)
-        - Update rationale explaining button-level vs link-level hierarchy
+    - [ ] **6.3.1 Update other sections as needed**
+        - FormControlsSection - demonstrate wrapper components
+        - Other sections using button patterns
 
 - [ ] **6.4 Final quality gates**
 

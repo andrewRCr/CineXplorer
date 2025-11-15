@@ -45,7 +45,7 @@
  * **DEPRECATION PATH:**
  * - Old ThemeColors interface (39 tokens) → UnifiedTheme (~47 tokens)
  * - Removed tokens: `card`, `card-foreground`, `surface-elevated` (replaced by layer system)
- * - Phase 3 migration will update all components to use canonical names
+ * - Migration will update all components to use canonical names
  * - After migration, old ThemeColors interface will be removed
  */
 export interface UnifiedTheme {
@@ -551,7 +551,7 @@ export interface UnifiedTheme {
 
     /**
      * @deprecated Use `tertiary` instead. This is a legacy alias maintained for
-     * backward compatibility during component migration (ADR-010 Phase 4).
+     * backward compatibility during component migration (ADR-010).
      *
      * **Migration:** Replace all `accent` usage with `tertiary` in components.
      * This alias will be removed after global accent → tertiary migration completes.
@@ -1258,7 +1258,7 @@ export interface UnifiedTheme {
 /**
  * DEPRECATED - Legacy theme interface from pre-adapter architecture.
  *
- * This type is kept temporarily as a deprecation marker during Phase 3 component
+ * This type is kept temporarily as a deprecation marker during component
  * migration. The actual ThemeColors interface is still defined in ../types.ts
  * until migration is complete.
  *
@@ -1268,11 +1268,6 @@ export interface UnifiedTheme {
  * - `surface-elevated` → `layer-02`
  * - All other tokens: No changes (keep same names)
  *
- * **Timeline:**
- * - Phase 2: Adapters created using UnifiedTheme
- * - Phase 3: Components migrated to canonical names
- * - Phase 4: This type and ../types.ts ThemeColors removed
- *
- * @deprecated Use UnifiedTheme instead. Remove after Phase 3 migration complete.
+ * @deprecated Use UnifiedTheme instead. Remove after migration complete.
  */
 export type ThemeColors = Record<string, never>;

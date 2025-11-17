@@ -7,7 +7,7 @@ import { defineSlotRecipe } from "@chakra-ui/react";
  * - root: Container element
  * - item: Individual radio item container
  * - itemControl: The radio circle itself (border, background)
- * - indicator: The dot inside the circle
+ * - itemIndicator: The dot inside the circle
  * - label: Group label
  * - itemText: Individual item text
  *

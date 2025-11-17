@@ -108,6 +108,7 @@ const Register = () => {
                     value={formik.values.email}
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
+                    layer="01"
                   />
                   <Field.ErrorText
                     fontSize="14px"
@@ -144,6 +145,7 @@ const Register = () => {
                     value={formik.values.username}
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
+                    layer="01"
                   />
                   <Field.ErrorText
                     fontSize="14px"
@@ -180,6 +182,7 @@ const Register = () => {
                     value={formik.values.password}
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
+                    layer="01"
                   />
                   <Field.ErrorText
                     fontSize="14px"

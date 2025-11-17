@@ -229,6 +229,9 @@ const MovieDetail = () => {
         </Heading>
         <Flex gap={4} justify="center">
           {/* <Button bg="primary" color="on-primary">Add to Watchlist</Button> */}
+          {/* TODO: Refactor to variant-based styling when MovieDetail page styling is finalized.
+               Replace inline bg/color/_hover with conditional variant="solid"/"outline" (or custom recipe).
+               This is deferred until comprehensive MovieDetail redesign. */}
           <Button
             bg={userMovieData?.user_on_watchlist ? "secondary" : "primary"}
             color={userMovieData?.user_on_watchlist ? "on-secondary" : "on-primary"}

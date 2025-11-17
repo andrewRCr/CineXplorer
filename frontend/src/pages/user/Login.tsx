@@ -464,6 +464,7 @@ const Login = () => {
                       setRegistrationSuccess(null); // Clear registration success when user types
                     }}
                     onBlur={formik.handleBlur}
+                    layer="01"
                   />
                   <Field.ErrorText
                     fontSize="14px"
@@ -504,6 +505,7 @@ const Login = () => {
                       setRegistrationSuccess(null); // Clear registration success when user types
                     }}
                     onBlur={formik.handleBlur}
+                    layer="01"
                   />
                   <Field.ErrorText
                     fontSize="14px"

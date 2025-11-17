@@ -69,6 +69,7 @@ if ! echo "$commit_msg" | grep -qE '^Context: '; then
     echo "   Context: tasks-theme-modernization.md (Tasks 6.1.h, 6.2.a-d; maintenance)"
     echo "   Context: tasks-filter-testing.md (incidental - discovered during Task 3.6)"
     echo "   Context: tasks-pagination-buffer-tracking.md (planning)"
+    echo "   Context: tasks-theme-modernization.md (maintenance)"
     echo "   Context: maintenance (atomic / no associated task list)"
     echo "   Context: refactor (no associated task list)"
     echo "   Context: documentation (atomic / no associated task list)"
@@ -124,7 +125,7 @@ else
         elif echo "$context_line" | grep -qE '\(incidental - discovered during Task [0-9]+(\.[0-9A-Za-z]+)+\)$'; then
             # Incidental without task list - valid
             :
-        elif echo "$context_line" | grep -qE '\(planning\)$'; then
+        elif echo "$context_line" | grep -qE '\((planning|maintenance)\)$'; then
             # Task list planning/maintenance - valid
             :
         else
@@ -139,7 +140,7 @@ else
             echo "   - (Task X.Y; planning) or (Task X.Y; maintenance) - single task with extra work"
             echo "   - (Tasks X.Y, A.B; planning) or (Tasks X.Y, A.B; maintenance) - multiple tasks with extra work"
             echo "   - (incidental - discovered during Task X.Y)"
-            echo "   - (planning) - task list planning/maintenance"
+            echo "   - (planning) or (maintenance) - task list planning/maintenance"
             echo ""
             echo "   Note: Parenthetical is REQUIRED for all commits"
             echo ""
@@ -157,7 +158,7 @@ else
         echo "   - Context: tasks-[name].md (Task X.Y)"
         echo "   - Context: tasks-[name].md (Tasks X.Y-X.Z)"
         echo "   - Context: tasks-[name].md (incidental - discovered during Task X.Y)"
-        echo "   - Context: tasks-[name].md (planning)"
+        echo "   - Context: tasks-[name].md (planning) or (maintenance)"
         echo "   - Context: [planning|documentation|maintenance|refactor] (no associated task list)"
         echo "   - Context: [planning|documentation|maintenance|refactor] (atomic / no associated task list)"
         echo ""

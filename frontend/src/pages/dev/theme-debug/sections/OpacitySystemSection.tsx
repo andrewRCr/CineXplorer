@@ -121,7 +121,7 @@ export function OpacitySystemSection() {
                     borderColor="border-subtle-02"
                     minW="130px"
                   >
-                    <Text color="foreground" fontSize="sm">primary/{opacity}</Text>
+                    <Text color={opacity === 100 ? "on-primary" : "foreground"} fontSize="sm">primary/{opacity}</Text>
                   </Box>
                 ))}
               </HStack>
@@ -143,7 +143,7 @@ export function OpacitySystemSection() {
                     borderColor="border-subtle-02"
                     minW="130px"
                   >
-                    <Text color="foreground" fontSize="sm">tertiary/{opacity}</Text>
+                    <Text color={opacity === 100 ? "on-tertiary" : "foreground"} fontSize="sm">tertiary/{opacity}</Text>
                   </Box>
                 ))}
               </HStack>

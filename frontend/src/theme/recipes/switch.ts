@@ -14,9 +14,10 @@ import { defineSlotRecipe } from "@chakra-ui/react";
  * - raised: Elevated appearance variant
  *
  * Pattern: No visible borders, relies on background color contrast
- * - Track (control): muted → primary on checked
+ * - Track (control): secondary → primary on checked
  * - Thumb: background (consistent across states)
  * - Focus state: 2px ring outline with 2px offset
+ * - Note: Uses `secondary` for off state (not `muted`) for better visibility when disabled
  */
 export const switchRecipe = defineSlotRecipe({
     className: "switch",
@@ -25,14 +26,14 @@ export const switchRecipe = defineSlotRecipe({
 
     base: {
         root: {
-            // Container styling
+            // Container styling (includes control + label)
             display: "inline-flex",
             alignItems: "center",
             gap: "2",
             cursor: "pointer",
             _disabled: {
                 cursor: "not-allowed",
-                opacity: 0.4,
+                opacity: 0.6, // Increased from 0.38 for better readability (matching radio appearance)
             },
         },
         control: {
@@ -55,13 +56,13 @@ export const switchRecipe = defineSlotRecipe({
         variant: {
             /**
              * Solid variant (default): Standard color fills
-             * - Track off: muted background
+             * - Track off: secondary background (better disabled visibility than muted)
              * - Track on: primary background
              * - Thumb: background (light surface)
              */
             solid: {
                 control: {
-                    bg: "muted",
+                    bg: "secondary",
                     _checked: {
                         bg: "primary",
                     },
@@ -82,7 +83,7 @@ export const switchRecipe = defineSlotRecipe({
              */
             raised: {
                 control: {
-                    bg: "muted",
+                    bg: "secondary",
                     boxShadow: "inset 0 2px 4px rgba(0,0,0,0.1)",
                     _checked: {
                         bg: "primary",

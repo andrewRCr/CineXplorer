@@ -143,8 +143,8 @@ export function ButtonPatternsSection() {
 				<Box bg="layer-02" p={3} borderRadius="md" borderWidth="1px" borderColor="border-subtle-01">
 					<Text fontSize="xs" color="foreground/70">
 						<strong>Implementation:</strong> Reduced from 7 experimental variants to 5 finalized patterns.
-						Interaction state tokens improved from Material Design 3 defaults (8%/12%) to (12%/16%) for
-						better contrast. Secondary/Outline distinction based on usage context (paired vs standalone).
+						Interaction state tokens for <em>solid surfaces</em> (solid/subtle variants) improved from Material Design 3 defaults (8%/12%) to (12%/16%) for
+						better contrast (ADR-016). Outline/ghost/secondary variants use MD3 baseline (8%/12%). Secondary/Outline distinction based on usage context (paired vs standalone).
 					</Text>
 				</Box>
 			</VStack>

@@ -35,14 +35,14 @@ export const radioRecipe = defineSlotRecipe({
             gap: "2",
         },
         item: {
-            // Individual radio item
+            // Individual radio item (includes control + label)
             display: "inline-flex",
             alignItems: "center",
             gap: "2",
             cursor: "pointer",
             _disabled: {
                 cursor: "not-allowed",
-                opacity: 0.4,
+                opacity: 0.38, // Per strategy doc opacity reference (ADR-009)
             },
         },
         itemControl: {

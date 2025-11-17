@@ -299,44 +299,38 @@ export function FormControlsSection() {
             <VStack align="stretch" gap={3}>
               <HStack gap={6} wrap="wrap">
                 {/* Off */}
-                <HStack>
-                  <Switch.Root>
-                    <Switch.HiddenInput />
-                    <Switch.Control>
-                      <Switch.Thumb />
-                    </Switch.Control>
-                  </Switch.Root>
-                  <Text fontSize="sm">Off</Text>
-                </HStack>
+                <Switch.Root>
+                  <Switch.HiddenInput />
+                  <Switch.Control>
+                    <Switch.Thumb />
+                  </Switch.Control>
+                  <Switch.Label>Off</Switch.Label>
+                </Switch.Root>
 
                 {/* On */}
-                <HStack>
-                  <Switch.Root
-                    checked={switchChecked}
-                    onCheckedChange={(e) => setSwitchChecked(!!e.checked)}
-                  >
-                    <Switch.HiddenInput />
-                    <Switch.Control>
-                      <Switch.Thumb />
-                    </Switch.Control>
-                  </Switch.Root>
-                  <Text fontSize="sm">On</Text>
-                </HStack>
+                <Switch.Root
+                  checked={switchChecked}
+                  onCheckedChange={(e) => setSwitchChecked(!!e.checked)}
+                >
+                  <Switch.HiddenInput />
+                  <Switch.Control>
+                    <Switch.Thumb />
+                  </Switch.Control>
+                  <Switch.Label>On</Switch.Label>
+                </Switch.Root>
 
                 {/* Disabled */}
-                <HStack>
-                  <Switch.Root disabled>
-                    <Switch.HiddenInput />
-                    <Switch.Control>
-                      <Switch.Thumb />
-                    </Switch.Control>
-                  </Switch.Root>
-                  <Text fontSize="sm">Disabled</Text>
-                </HStack>
+                <Switch.Root disabled>
+                  <Switch.HiddenInput />
+                  <Switch.Control>
+                    <Switch.Thumb />
+                  </Switch.Control>
+                  <Switch.Label>Disabled</Switch.Label>
+                </Switch.Root>
               </HStack>
 
               <Text fontSize="xs" color="foreground/60">
-                Track uses <Code fontSize="xs">muted</Code> (off), <Code fontSize="xs">primary</Code> (on). Thumb uses <Code fontSize="xs">background</Code>
+                Track uses <Code fontSize="xs">secondary</Code> (off), <Code fontSize="xs">primary</Code> (on). Thumb uses <Code fontSize="xs">background</Code>. Note: Uses secondary instead of muted for better visibility when disabled.
               </Text>
             </VStack>
           </Box>

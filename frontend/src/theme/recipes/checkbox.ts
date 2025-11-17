@@ -27,14 +27,14 @@ export const checkboxRecipe = defineSlotRecipe({
 
     base: {
         root: {
-            // Container/label styling
+            // Container/label styling (includes control + label)
             display: "inline-flex",
             alignItems: "center",
             gap: "2",
             cursor: "pointer",
             _disabled: {
                 cursor: "not-allowed",
-                opacity: 0.4,
+                opacity: 0.6, // Increased from 0.38 for better readability (matching radio appearance)
             },
         },
         control: {

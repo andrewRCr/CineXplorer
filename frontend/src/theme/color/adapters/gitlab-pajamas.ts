@@ -230,7 +230,6 @@ export function createPajamasAdapter(mode: "light" | "dark"): UnifiedTheme {
         {
             muted: palette.bg_section,
             mutedForeground: palette.fg_muted,
-            accentEmphasis: palette.bg_accent_hover,
             secondaryHover: palette.bg_button_secondary_hover,
         },
         mode,

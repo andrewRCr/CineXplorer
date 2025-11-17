@@ -216,7 +216,6 @@ export function createGithubAdapter(mode: "light" | "dark"): UnifiedTheme {
         {
             muted: palette.bg_muted,
             mutedForeground: palette.fg_muted,
-            accentEmphasis: palette.bg_emphasis,
             secondaryHover: palette.bg_button_secondary_hover,
         },
         mode

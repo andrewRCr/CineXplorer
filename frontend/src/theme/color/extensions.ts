@@ -77,7 +77,7 @@ export const standardRatingColors = {
  * **Adaptation Strategy:**
  * - **Rating tokens:** Use standard IMDb gold (consistent across themes)
  * - **Badge tokens:** Adapt to theme's neutral color palette
- * - **Drag-and-drop:** Adapt to theme's interactive state colors
+ * - **Drag-and-drop:** Use neutral colors (muted for drop-zone, secondaryHover for drag-active)
  *
  * @param themeBase - Base theme colors to adapt extensions to
  * @param mode - Color mode (light or dark)
@@ -89,19 +89,16 @@ export const standardRatingColors = {
  * const extensions = createExtensions({
  *   muted: primerLight.bg_muted,
  *   mutedForeground: primerLight.fg_muted,
- *   accentEmphasis: primerLight.bg_accent_emphasis,
  *   secondaryHover: primerLight.bg_button_secondary_hover,
  * }, "light");
  * ```
  */
 export function createExtensions(
     themeBase: {
-        /** Muted/subtle background (for badges) */
+        /** Muted/subtle background (for badges and drop zones) */
         muted: string;
         /** Muted text color (for badge text) */
         mutedForeground: string;
-        /** Accent emphasis color (for drop zones) */
-        accentEmphasis: string;
         /** Secondary hover state (for drag active) */
         secondaryHover: string;
     },
@@ -118,8 +115,8 @@ export function createExtensions(
         "on-badge": badgeFg, // ADR-011: Canonical naming
         "badge-foreground": badgeFg, // @deprecated - alias for on-badge
 
-        // Drag-and-drop: Adapt to theme's interactive colors
+        // Drag-and-drop: Use neutral backgrounds for both states
         "drag-active": themeBase.secondaryHover,
-        "drop-zone": themeBase.accentEmphasis,
+        "drop-zone": themeBase.muted, // Neutral background for valid drop targets
     };
 }

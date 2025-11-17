@@ -280,384 +280,227 @@ opacity values for consistency.
 
 ## Building Buttons
 
-Buttons follow a visual pattern hierarchy (solid/outline/subtle/ghost) that's **separate from color semantics** (see ADR-012).
+Buttons use Chakra UI v3 recipes with 5 variants, each serving distinct semantic purposes.
+All interaction states (hover, active, focus) are handled automatically by the recipe system.
 
-### Button Emphasis Hierarchy
+**Recipe reference:** `frontend/src/theme/recipes/button.ts`
 
-| Pattern             | Emphasis   | Visual             | Use Cases                                            |
-|---------------------|------------|--------------------|------------------------------------------------------|
-| **Solid**           | Highest    | Filled background  | Primary actions: "Save", "Submit", "Browse Movies"   |
-| **Primary Outline** | High       | Brand color border | Branded actions in outline style (rare)              |
-| **Neutral Outline** | Medium     | Gray border        | Utility actions: "Cancel", "Back", OAuth, filters    |
-| **Subtle**          | Medium-Low | Muted fill         | Embedded controls: theme selectors, in-panel actions |
-| **Ghost**           | Lowest     | Text only          | Dismissive actions: "Skip", "Close", "Dismiss"       |
+### Button Variants Quick Reference
 
-### Pattern 1: Solid Button (Highest Emphasis)
+| Variant      | Emphasis   | Visual            | Use Cases                                          |
+|--------------|------------|-------------------|----------------------------------------------------|
+| **solid**    | Highest    | Filled background | Primary actions: "Save", "Submit", "Browse Movies" |
+| **secondary**| High       | Primary text      | Secondary action in form pairs with primary        |
+| **outline**  | Medium     | Grey border/text  | Standalone utility: "Back", OAuth, filters         |
+| **subtle**   | Medium-Low | Muted fill        | Embedded in panels: theme selectors, sort controls |
+| **ghost**    | Lowest     | Text only         | Dismissive: "Skip", "Close", "Dismiss"             |
 
-**Use for:** Primary actions, most important CTA
+### Solid Variant (Primary Actions)
 
-```tsx
-<Button
-  variant="solid"
-  bg="primary"
-  color="on-primary"
-  _hover={{ bg: "primary-hover" }}
-  _active={{ bg: "primary-active" }}
->
-  Save Changes
-</Button>
-```
-
-**Tokens:**
-
-- Background: `primary`
-- Text: `on-primary` (pairs with primary background)
-- Hover: `primary-hover` (8% opacity overlay)
-- Active: `primary-active` (12% opacity overlay)
-
-### Pattern 2: Primary Outline Button (High Emphasis)
-
-**Use for:** Branded actions in outline style (less common than neutral outline)
+**Use for:** The most important action on the page
 
 ```tsx
-<Button
-  variant="outline"
-  borderColor="button-outline-primary"
-  color="on-button-outline-primary"
-  _hover={{ bg: "primary/8" }}
-  _active={{ bg: "primary/12" }}
->
-  Learn More
-</Button>
+<Button variant="solid">Save Changes</Button>
 ```
 
-**Tokens:**
+Uses primary semantic tokens with improved interaction states for better visibility across themes (see ADR-016).
 
-- Border: `button-outline-primary` (maps to `primary`)
-- Text: `on-button-outline-primary` (maps to `on-primary`)
-- Hover: Direct opacity on primary color (8%)
-- Active: Direct opacity on primary color (12%)
+**Examples:** "Save", "Submit", "Browse Movies", "Add to Watchlist"
 
-**Examples:** "Learn More" on landing pages, branded CTAs that need less weight than solid
+### Secondary Variant (Form Pairs)
 
-### Pattern 3: Neutral Outline Button (Medium Emphasis) - DEFAULT
-
-**Use for:** Utility actions, navigation, OAuth, filters - **most common outline button type**
+**Use for:** Secondary action paired with a primary solid button
 
 ```tsx
-<Button
-  variant="outline"
-  borderColor="button-outline"
-  color="on-button-outline"
-  _hover={{
-    bg: "tertiary/8",           // Background tint
-    borderColor: "tertiary",    // Border color shift
-  }}
-  _active={{
-    bg: "tertiary/12",
-    borderColor: "tertiary",
-  }}
-  _focusVisible={{
-    outline: "2px solid",
-    outlineColor: "ring",
-    outlineOffset: "2px",
-  }}
->
-  Cancel
-</Button>
+<Button variant="secondary">Cancel</Button>
 ```
 
-**Tokens:**
+**Key distinction:** Uses **primary text color** to create visual relationship with paired primary button.
+Hover uses stronger grey border (not primary border) to avoid too much color while maintaining the visual tie.
 
-- Border: `button-outline` (maps to neutral `border-strong-01`, NOT primary)
-- Text: `on-button-outline` (maps to `foreground`)
-- Hover: Background tint + border shifts to tertiary (signals interactivity)
-- Active: Stronger background opacity + tertiary border
-- **Text/icons do NOT change color** - maintains foreground for consistency
+**Examples:** "Cancel" next to "Save", "Back" next to "Continue"
 
-**Examples:** "Cancel", "Back to Results", OAuth buttons (Google/GitHub), filter toggles
+**Common mistake:** Using secondary for standalone utility actions. Use outline variant instead.
 
-**Why two outline variants?** Real-world usage revealed most outline buttons are neutral utility actions (navigation,
-OAuth, Cancel), not branded primary actions. The default name (`button-outline`) is the more common neutral variant.
-Explicit name (`button-outline-primary`) signals special branded case.
+### Outline Variant (Standalone Utility)
 
-**Critical:** Outline button hover requires border AND background changes. Text/icons stay the same color (foreground).
-Common mistake: changing text color to tertiary on hover - this creates visual inconsistency with button content.
-
-### Pattern 4: Subtle Button (Medium-Low Emphasis)
-
-**Use for:** Embedded actions within panels/cards
+**Use for:** Standalone utility actions, navigation, OAuth, filters
 
 ```tsx
-<Button
-  variant="subtle"
-  bg="button-subtle"
-  color="on-button-subtle"
-  _hover={{ bg: "secondary-hover" }}
-  _active={{ bg: "secondary-active" }}
->
-  Options
-</Button>
+<Button variant="outline">Back to Results</Button>
 ```
 
-**Tokens:**
+**Key distinction:** Uses **grey/neutral text color** for standalone actions not paired with primary button.
+Hover adds primary-colored border to signal interactivity.
 
-- Background: `button-subtle` (maps to `secondary`)
-- Text: `on-button-subtle` (maps to `on-secondary`)
-- Hover: `secondary-hover`
-- Active: `secondary-active`
+**Examples:** "Back to Results" (standalone), OAuth buttons (Google/GitHub), filter toggles, "Cancel" when used alone
 
-**Examples:** Theme selector buttons, sort dropdowns, in-panel controls
+**Critical:** Text/icons do NOT change color on hover - only background and border change. This maintains visual consistency.
 
-### Pattern 5: Subtle Button with Selected State
+### Subtle Variant (Embedded Controls)
 
-**Use for:** Toggle-style subtle buttons (e.g., theme selector)
+**Use for:** Actions embedded within panels or cards
 
 ```tsx
-<Button
-  variant="subtle"
-  bg={isSelected ? "button-subtle-selected" : "button-subtle"}
-  color={isSelected ? "on-button-subtle-selected" : "on-button-subtle"}
-  _hover={{ bg: isSelected ? "button-subtle-selected" : "secondary-hover" }}
->
-  Theme Option
-</Button>
+<Button variant="subtle">Options</Button>
+<Button variant="subtle" selected={isActive}>Theme</Button>
 ```
 
-**Tokens:**
+**Selected state:** Supports `selected` prop for toggle-style buttons. Selected buttons don't change appearance on hover.
 
-- Selected background: `button-subtle-selected` (maps to `layer-selected-02`)
-- Selected text: `on-button-subtle-selected` (maps to `foreground`)
+**Examples:** Theme selector buttons, sort dropdowns, in-panel controls, active filter indicators
 
-**Why dedicated tokens?** When a subtle button is selected, it transitions from "button semantics" (secondary color,
-paired with on-secondary) to "interactive surface semantics" (layer-selected-02, paired with foreground). This semantic
-shift requires different foreground colors for proper contrast across themes.
+**Why dedicated selection tokens?** Selected state transitions from "button semantics" to "interactive surface semantics"
+(layer-selected). This semantic shift requires different foreground pairing for WCAG compliance across themes.
 
-### Pattern 6: Ghost Button (Lowest Emphasis)
+### Ghost Variant (Dismissive Actions)
 
-**Use for:** Dismissive actions, tertiary actions
+**Use for:** Low-priority or dismissive actions
 
 ```tsx
-<Button
-  variant="ghost"
-  color="tertiary"
-  _hover={{
-    bg: "tertiary/8",        // ⚠️ REQUIRED: Background change for visual feedback
-    color: "tertiary-hover"
-  }}
-  _active={{ color: "tertiary-active" }}
->
-  Skip
-</Button>
+<Button variant="ghost">Skip</Button>
 ```
 
-**Tokens:**
+**Important:** Hover includes BOTH background change and text color change for sufficient visual feedback.
 
-- Text: `tertiary` (interactive text color)
-- Hover background: `tertiary/8` (8% opacity overlay - Material Design 3 standard)
-- Hover text: `tertiary-hover`
-- Active: `tertiary-active`
+**Examples:** "Skip", "Close", "Dismiss", "Maybe Later", low-priority navigation
 
-**Examples:** "Skip", "Close", "Dismiss", low-priority actions
-
-**Important:** Ghost buttons MUST include background change on hover (`bg: "tertiary/8"`) in addition to color change.
-This provides essential visual feedback for interactive states. Common mistake: only changing text color without
-background, resulting in insufficient hover indication.
-
-### Decision Tree: Which Button Pattern?
+### Decision Tree: Which Button Variant?
 
 ```
 1. Is this the main action on the page?
-   └─ Yes → Solid (primary/on-primary)
+   └─ Yes → solid
 
-2. Is this a branded action but needs less weight than solid?
-   └─ Yes → Primary Outline (button-outline-primary)
+2. Is this paired with a primary button in a form/dialog?
+   └─ Yes → secondary (primary text creates visual tie)
 
-3. Is this a utility/navigation action?
-   └─ Yes → Neutral Outline (button-outline) - MOST COMMON
+3. Is this a standalone utility/navigation action?
+   └─ Yes → outline (grey text for standalone context)
 
 4. Is this embedded within a panel/card?
-   └─ Yes → Subtle (button-subtle)
+   └─ Yes → subtle (optionally with selected prop)
 
-5. Is this a dismissive/tertiary action?
-   └─ Yes → Ghost (tertiary)
+5. Is this a dismissive/low-priority action?
+   └─ Yes → ghost
 ```
+
+### Secondary vs Outline: Critical Distinction
+
+The difference between `secondary` and `outline` is **context-based**, not just visual preference:
+
+- **Use secondary when:** Button appears next to a primary solid button (Save + Cancel, Submit + Back)
+    - Primary text color creates visual relationship between the pair
+    - Signals "these two buttons are related choices"
+
+- **Use outline when:** Button appears standalone or in groups of similar actions (Back, OAuth, filters)
+    - Grey text signals independent utility action
+    - No implied relationship to a primary action
+
+**Real-world example:**
+
+- Dialog with "Save" + "Cancel" → Use `solid` + `secondary` (paired)
+- Movie detail "Back to Results" → Use `outline` (standalone)
+- OAuth buttons (Google, GitHub) → Use `outline` (standalone utility group)
+
+### Implementation Notes
+
+All button variants use Chakra UI v3's recipe system. The recipe automatically applies interaction states
+(`_hover`, `_active`, `_focusVisible`) based on variant selection - no inline styles needed.
+
+**Recipe location:** `frontend/src/theme/recipes/button.ts`
+**WCAG compliance:** Meets 2.4.7 (Focus Visible) via keyboard-only focus rings
+**Interaction states:** See ADR-016 for improved contrast rationale
+
+For implementation details and compound variant logic (selection state), see the recipe file.
 
 ---
 
 ## Building Status Indicators
 
-Status indicators communicate feedback, outcomes, and semantic states using standardized color pairs.
+Status indicators use Chakra UI v3 recipes with semantic status variants. Alerts and Badges provide visual feedback
+for outcomes, states, and categorization.
 
-### Success (Positive Outcomes)
+### Alerts
 
-```tsx
-// Success alert (10% opacity background)
-<Alert bg="success/10" borderColor="success" borderWidth="1px">
-  <Icon name="check" color="success" />
-  <Alert.Title color="success">Success</Alert.Title>
-  <Alert.Description color="foreground">
-    Changes saved successfully
-  </Alert.Description>
-</Alert>
-
-// Success badge (solid fill)
-<Badge bg="success" color="on-success">
-  Active
-</Badge>
-```
-
-**Tokens:**
-
-- Background: `success` (green in all themes)
-- Alert title: `success` (emphasis on subtle background)
-- Alert description: `foreground` (maximum readability on subtle background)
-- Badge text: `on-success` (high contrast on solid background)
-
-**Use cases:** Confirmations, positive feedback, high ratings, "active" status
-
-### Warning (Caution States)
+Alerts use slot recipes with 4 status variants. The recipe handles all styling automatically.
 
 ```tsx
-// Warning alert (10% opacity background)
-<Alert bg="warning/10" borderColor="warning" borderWidth="1px">
-  <Icon name="warning" color="warning" />
-  <Alert.Title color="warning">Warning</Alert.Title>
-  <Alert.Description color="foreground">
-    Please verify your email address
-  </Alert.Description>
-</Alert>
-
-// Warning badge (solid fill)
-<Badge bg="warning" color="on-warning">
-  Pending
-</Badge>
+<Alert.Root status="success">
+  <Alert.Indicator />
+  <Alert.Title>Success</Alert.Title>
+  <Alert.Description>Changes saved successfully</Alert.Description>
+</Alert.Root>
 ```
 
-**Tokens:**
+**Available status variants:**
 
-- Background: `warning` (yellow/amber/gold in all themes)
-- Alert title: `warning` (emphasis on subtle background)
-- Alert description: `foreground` (maximum readability on subtle background)
-- Badge text: `on-warning` (high contrast on solid background)
+| Status    | Use Cases                                      | Color  |
+|-----------|------------------------------------------------|--------|
+| `success` | Confirmations, positive feedback               | Green  |
+| `warning` | Validation warnings, caution states            | Amber  |
+| `error`   | Errors, critical alerts                        | Red    |
+| `info`    | Informational messages, tips, neutral status   | Blue   |
 
-**Use cases:** Validation warnings, caution states, medium-priority alerts
+**What the recipe provides:**
 
-### Destructive/Error (Danger States)
+- Subtle opacity backgrounds (10%) with semantic borders
+- Icon and title with semantic color for emphasis
+- Description with foreground color for readability on subtle backgrounds
+- Consistent spacing and layout
+
+**Recipe reference:** `frontend/src/theme/recipes/alert.ts`
+
+### Badges
+
+Badges use recipes with 5 variants for status and categorization.
 
 ```tsx
-// Error alert (10% opacity background)
-<Alert bg="destructive/10" borderColor="destructive" borderWidth="1px">
-  <Icon name="error" color="destructive" />
-  <Alert.Title color="destructive">Error</Alert.Title>
-  <Alert.Description color="foreground">
-    Failed to save changes
-  </Alert.Description>
-</Alert>
-
-// Delete button (solid fill)
-<Button bg="destructive" color="on-destructive">
-  Delete Account
-</Button>
+<Badge variant="success">Active</Badge>
+<Badge variant="neutral">Genre: Action</Badge>
 ```
 
-**Tokens:**
+**Available variants:**
 
-- Background: `destructive` (red in all themes)
-- Alert title: `destructive` (emphasis on subtle background)
-- Alert description: `foreground` (maximum readability on subtle background)
-- Button text: `on-destructive` (high contrast on solid background)
+| Variant   | Use Cases                                        | Color  |
+|-----------|--------------------------------------------------|--------|
+| `success` | Positive status, active states                   | Green  |
+| `warning` | Caution states, pending status                   | Amber  |
+| `error`   | Danger, deleted, error states                    | Red    |
+| `info`    | Informational, new items, neutral status         | Blue   |
+| `neutral` | Genre tags, content ratings, non-semantic labels | Grey   |
 
-**Use cases:** Errors, delete actions, destructive operations, critical alerts
+**What the recipe provides:**
 
-### Info (Informational Messages)
+- Solid backgrounds with high-contrast text (uses `on-*` color pairs)
+- Consistent sizing and padding
+- Semantic color mappings
 
-```tsx
-// Info alert (10% opacity background)
-<Alert bg="info/10" borderColor="info" borderWidth="1px">
-  <Icon name="info" color="info" />
-  <Alert.Title color="info">Info</Alert.Title>
-  <Alert.Description color="foreground">
-    New features available
-  </Alert.Description>
-</Alert>
+**Recipe reference:** `frontend/src/theme/recipes/badge.ts`
 
-// Info badge (solid fill)
-<Badge bg="info" color="on-info">
-  New
-</Badge>
-```
+### Key Distinction: Alert vs Badge Text Colors
 
-**Tokens:**
+**Alerts (subtle backgrounds):** Description uses `foreground` color for maximum readability on 10% opacity backgrounds.
+The recipe handles this automatically.
 
-- Background: `info` (blue in all themes)
-- Alert title: `info` (emphasis on subtle background)
-- Alert description: `foreground` (maximum readability on subtle background)
-- Badge text: `on-info` (high contrast on solid background)
+**Badges (solid backgrounds):** Text uses `on-*` color pairs (e.g., `on-success`) optimized for full opacity backgrounds.
+The recipe handles this automatically.
 
-**Use cases:** Informational messages, help text, tips, neutral status
-
-### Alert Text on Opacity Backgrounds
-
-**Important distinction:** Alert patterns differ based on background opacity.
-
-**10-30% opacity backgrounds (subtle alerts):**
-
-```tsx
-<Alert bg="success/10" borderColor="success" borderWidth="1px">
-  {/* Icon: Use semantic color for visual emphasis */}
-  <Icon name="check" color="success" />
-
-  {/* Title: Use semantic color for emphasis */}
-  <Alert.Title color="success">Success</Alert.Title>
-
-  {/* Description: Use foreground for maximum readability */}
-  <Alert.Description color="foreground">
-    Changes saved successfully
-  </Alert.Description>
-</Alert>
-```
-
-**Solid backgrounds (prominent badges/buttons):**
-
-```tsx
-<Badge bg="success" color="on-success">
-  Active
-</Badge>
-
-<Button bg="destructive" color="on-destructive">
-  Delete Account
-</Button>
-```
-
-**Why the difference?**
-
-- `on-*` tokens are optimized for **full opacity** colored backgrounds (badges, solid buttons)
-- On subtle tints (10-30%), semantic color provides visual emphasis while `foreground` maintains readability
-- This pattern works consistently across all themes without requiring additional specialized tokens
-- Key insight: Using `on-success` on 10% opacity backgrounds creates insufficient contrast in some themes
-
-**Common opacity values:**
-
-- `/10` - Very subtle background tint (10% opacity) - most common for alerts
-- `/20` - Subtle background (20% opacity)
-- `/30` - Medium-subtle (30% opacity) - still uses foreground for description text
-- `/50` - Medium transparency
-- `/80` - Strong but not fully opaque
+**Why the difference?** `on-*` tokens are designed for solid fills. On subtle tints, semantic color provides emphasis
+while foreground maintains readability across all themes.
 
 ### Token Naming Convention (ADR-011)
 
-**All foreground tokens use `on-*` prefix:**
+All foreground tokens use `on-*` prefix (Material Design 3 convention):
 
 ```tsx
 // ✅ Correct (canonical naming)
 <Badge bg="success" color="on-success">Active</Badge>
 
-// ❌ Deprecated (old naming - still works but avoid in new code)
+// ❌ Deprecated (old naming - avoid in new code)
 <Badge bg="success" color="success-foreground">Active</Badge>
 ```
 
-**Pattern:** `on-{color}` clearly indicates "text that goes ON a colored background" (Material Design 3 convention).
+**Pattern:** `on-{color}` clearly indicates "text that goes ON a colored background".
 
 ---
 
@@ -901,194 +744,126 @@ import { Link } from "react-router-dom";
 
 ### Form Inputs
 
-**Input fields use border-only focus indicators** (per ADR-015):
+Use `StyledInput` and `StyledTextarea` wrapper components for text inputs with automatic border-only focus indicators.
 
 ```tsx
-<Input
-  borderColor="border-strong-01"
-  bg="transparent"  // For inputs on layer-01; use "background" for inputs on page background
-  color="foreground"
-  css={{
-    "&:hover:not(:focus)": {
-      borderColor: "var(--chakra-colors-border-strong-02)",
-      backgroundColor: "color-mix(in srgb, var(--chakra-colors-tertiary) 8%, transparent)",
-    },
-    "&:focus": {
-      borderColor: "var(--chakra-colors-tertiary)",
-      backgroundColor: "transparent",  // Or "var(--chakra-colors-background)" to maintain background
-      outline: "none",
-    }
-  }}
-/>
+import { StyledInput, StyledTextarea } from "@/components/common";
+
+<StyledInput placeholder="Email address" />
+<StyledTextarea placeholder="Enter description..." />
 ```
 
-**Rationale:** Border color change provides sufficient focus indication for text inputs. Separate outline rings are
-unnecessary and visually redundant. This matches industry patterns (GitHub, Google, Linear) and meets WCAG 2.4.7 (Focus
-Visible) and 2.4.13 (Focus Appearance) requirements.
-
-**Tokens:**
-
-- Default border: `border-strong-01` (forms on background/layer-01), `border-strong-02` (forms on layer-02)
-- Hover border: `border-strong-02` (stepped up one level for visibility)
-- Hover background: `tertiary` at 8% opacity (signals interactivity)
-- **Focus border:** `tertiary` (highly visible color change indicating focused state)
-- **Focus background:** Transparent or original background (removes hover noise while typing)
-- **No outline ring** needed for text inputs (Input, Textarea, NumberInput)
-
-**Interaction States:**
-
-- **Default:** Transparent background, border-strong-01
-- **Hover (not focused):** Background tint (tertiary/8%), border-strong-02 (button-like feedback)
-- **Focus (typing):** Border changes to tertiary, background clears (minimal noise for typing)
-- **Focus + hover:** Focus state takes precedence (`:hover:not(:focus)` prevents override)
-
-**Why background change on hover?**
-Consistent with Material Design 3 interaction patterns. Signals "this is interactive" like buttons. Background clears
-on focus to reduce visual noise while typing. Balances interactivity feedback with typing cleanliness.
-
-**CSS Variable Syntax:**
-
-The `css` prop requires explicit CSS variable syntax because it passes raw CSS-in-JS to emotion/styled-system:
-
-- Use `var(--chakra-colors-tertiary)` (not `"tertiary"`)
-- Use `color-mix(in srgb, var(--chakra-colors-tertiary) 8%, transparent)` for opacity overlays
-- Chakra style props (`_hover`, `bg`, `color`) auto-convert tokens - no `var()` needed
-
-**Chakra Default Outline:**
-
-Chakra inputs have a default focus outline. We disable it with `outline: "none"` for border-only indicators per ADR-015.
-**Alternative approach:** To match Chakra's default outline with our semantic color, use
-`outline: "2px solid var(--chakra-colors-tertiary)"` (without `outlineOffset`). We chose border-only for cleaner appearance.
-
-**Note:** The `&:hover:not(:focus)` selector prevents hover styling from overriding focus styling when the cursor is
-inside a focused input field.
-
-**Deprecated:** `input` token (aliases to same value as `border`, provides no semantic value)
-
-**See also:** ADR-015 (Use Border-Only Focus Indicators for Text Inputs)
-
-### Select/Dropdown (Custom Chakra Select)
-
-**Use Chakra's custom Select component** (not NativeSelect) for consistent styling across browsers.
+**Layer prop for context-appropriate borders:**
 
 ```tsx
-<Select.Root
-  collection={selectCollection}
-  value={value}
-  onValueChange={(details) => setValue(details.value)}
-  positioning={{ placement: "bottom-start", gutter: 2 }}
->
-  <Select.Trigger
-    borderColor="border-strong-01"
-    bg="background"
-    color="foreground"
-    _hover={{ borderColor: "border-strong-02", bg: "tertiary/8" }}
-    css={{
-      "&:focus-visible": {
-        outline: "2px solid var(--chakra-colors-ring)",
-        outlineOffset: "2px",
-      },
-    }}
-  >
+// Forms on layer-01 or background (default)
+<StyledInput layer="01" />
+
+// Forms on layer-02 (darker cards/panels)
+<StyledInput layer="02" />
+```
+
+The `layer` prop adjusts border strength to maintain visibility against different background layers.
+
+**What the wrapper provides:**
+
+- Border-only focus indicators (no outline rings)
+- Hover state with background tint (consistent with button patterns)
+- Layer-aware border hierarchy (01/02 for lighter backgrounds, 02/03 for darker)
+- All interaction states handled automatically
+
+**Why wrappers instead of recipes?** Text input patterns require `:hover:not(:focus)` pseudo-selectors that Chakra UI v3
+recipes cannot express.
+
+**WCAG compliance:** Meets 2.4.7 (Focus Visible) and 2.4.13 (Focus Appearance) via border color change (see ADR-015)
+**See also:** `.arc/reference/adr/adr-015-use-border-only-focus-indicators-for-text-inputs.md`
+
+### Select/Dropdown
+
+Select components use Chakra UI v3 recipes. The recipe handles all styling automatically - just use the standard
+Chakra Select component structure.
+
+```tsx
+<Select.Root collection={selectCollection} value={value} onValueChange={onChange}>
+  <Select.Trigger>
     <Select.ValueText placeholder="Select option" />
     <Select.Indicator />
   </Select.Trigger>
   <Select.Positioner>
-    <Select.Content
-      bg="muted"
-      borderColor="border-subtle-02"
-      color="foreground"
-    >
-      {collection.items.map((item) => {
-        const isSelected = value.includes(item.value);
-        return (
-          <Select.Item
-            key={item.value}
-            item={item}
-            bg={isSelected ? "tertiary" : undefined}
-            color={isSelected ? "on-tertiary" : undefined}
-            _hover={{
-              bg: isSelected ? "tertiary" : "tertiary/12",
-              color: isSelected ? "on-tertiary" : undefined,
-            }}
-          >
-            {item.label}
-          </Select.Item>
-        );
-      })}
+    <Select.Content>
+      {collection.items.map((item) => (
+        <Select.Item key={item.value} item={item}>
+          {item.label}
+        </Select.Item>
+      ))}
     </Select.Content>
   </Select.Positioner>
 </Select.Root>
 ```
 
-**Tokens:**
+**What the recipe provides:**
 
-- **Trigger (the button):**
-    - Border: `border-strong-01` (default) → `border-strong-02` (hover), no change on focus
-    - Background: `background` (default) → `tertiary/8` (hover)
-    - **Focus ring:** `ring` (keyboard-only via CSS `:focus-visible`)
-- **Content (dropdown menu):**
-    - Background: `muted` (provides subtle contrast from page background)
-    - Border: `border-subtle-02` (subtle border for elevated muted surfaces)
-    - Text: `foreground`
-- **Items (options):**
-    - Selected state: `bg: "tertiary"`, `color: "on-tertiary"` (clearly marked)
-    - Hover (non-selected): `bg: "tertiary/12"` (12% opacity, more visible than 8%)
-    - Hover (selected): Maintains `tertiary` + `on-tertiary` (no visual change)
+- Trigger hover/focus states (border upgrade, background tint, keyboard-only focus ring)
+- Content styling (muted background, elevated with subtle border)
+- Item hover states (background tint for non-selected items)
 
-**Why Select uses keyboard-only rings (unlike text inputs):**
+**Selected item state (recipe limitation):**
 
-Select.Trigger is button-like (not an editable text field), so CSS `:focus-visible` correctly matches only keyboard
-focus (Tab key), not mouse clicks. This is the desired behavior - no need for JavaScript workarounds. The `ring` token
-is mapped to `tertiary` in all themes for visual consistency with other focus indicators.
+The recipe cannot determine which item is currently selected, so you must add runtime conditionals:
 
-**Note:** Do NOT add `_focus={{ outline: "none" }}` to Select.Trigger - this creates a CSS specificity conflict that
-prevents the keyboard ring from appearing.
+```tsx
+<Select.Item
+  key={item.value}
+  item={item}
+  bg={isSelected ? "tertiary" : undefined}
+  color={isSelected ? "on-tertiary" : "foreground"}
+  _hover={{
+    bg: isSelected ? "tertiary" : "tertiary/12",
+    color: isSelected ? "on-tertiary" : "foreground",
+  }}
+>
+  {item.label}
+</Select.Item>
+```
 
-**Why not NativeSelect?**
+**Focus indicator pattern:** Select.Trigger uses **keyboard-only outline rings** (not border-only like text inputs)
+because Select.Trigger is button-like, not editable text. CSS `:focus-visible` correctly matches only keyboard focus
+(Tab key), not mouse clicks - no JavaScript workarounds needed.
 
-- Browser `<select>` elements have limited styling capabilities
-- Option hover colors can't be customized (browser defaults)
-- Inconsistent appearance across browsers/OS
-- Chakra's custom Select provides full token control and consistent UX
+**Why custom Select (not NativeSelect)?** Browser `<select>` elements have limited styling - option colors can't be
+customized and appearance varies across browsers.
 
-**Examples:** Sort dropdowns, filter selectors, genre pickers, year selectors
+**WCAG compliance:** Meets 2.4.7 (Focus Visible) via keyboard-only focus rings (see ADR-015)
+**Recipe reference:** `frontend/src/theme/recipes/select.ts`
 
 ### Checkboxes
 
-**Standard checkbox pattern:**
+Checkboxes use Chakra UI v3 recipes. The recipe handles all styling automatically.
 
 ```tsx
-<Checkbox.Root
-  checked={checked}
-  onCheckedChange={(details) => setChecked(!!details.checked)}
->
+<Checkbox.Root checked={checked} onCheckedChange={(details) => setChecked(!!details.checked)}>
   <Checkbox.HiddenInput />
-  <Checkbox.Control
-    borderWidth="2px"
-    borderColor="input"
-    _checked={{ bg: "primary", borderColor: "primary" }}
-  >
+  <Checkbox.Control>
     <Checkbox.Indicator />
   </Checkbox.Control>
   <Checkbox.Label>Accept terms</Checkbox.Label>
 </Checkbox.Root>
 ```
 
-**Tokens:**
+**What the recipe provides:**
 
-- Default border: `input`
-- Checked state: `bg: "primary"`, `borderColor: "primary"`
-- Indicator (checkmark): Inherits `on-primary` color from Chakra UI theme
+- 2px borders (differentiates from text inputs which use 1px)
+- Primary background and border when checked
+- Checkmark indicator with high-contrast color
+- Hover states (border upgrade + subtle background tint)
+- Focus ring (keyboard-only, 2px outline)
 
-**States:**
-
-- **Unchecked**: Border only (`input` token)
-- **Checked**: Filled background (`primary`) with checkmark (`on-primary`)
-- **Hover**: Optional `_hover={{ bg: "layer-hover-01" }}` for subtle interaction feedback
-- **Disabled**: Applied via `disabled` prop (opacity handled by Chakra)
+**Why 2px borders?** Visual differentiation from text inputs (different interaction model), common pattern across
+design systems, better visibility for small touch targets.
 
 **Examples:** Genre filters, multi-select forms, preference toggles
+
+**Recipe reference:** `frontend/src/theme/recipes/checkbox.ts`
 
 ### Form Control Border Width Standards
 
@@ -1123,82 +898,70 @@ design systems):
 
 ### Radio Buttons
 
-**Standard radio button pattern:**
+Radio buttons use Chakra UI v3 recipes. The recipe handles all styling automatically.
 
 ```tsx
 <RadioGroup.Root value={value} onValueChange={(e) => setValue(e.value)}>
   <VStack align="start" gap={2}>
     <RadioGroup.Item value="option1">
       <RadioGroup.ItemHiddenInput />
-      <RadioGroup.ItemControl
-        borderWidth="2px"
-        borderColor="input"
-        _checked={{ bg: "primary", borderColor: "primary" }}
-      />
+      <RadioGroup.ItemControl>
+        <RadioGroup.ItemIndicator />
+      </RadioGroup.ItemControl>
       <RadioGroup.ItemText>Option 1</RadioGroup.ItemText>
     </RadioGroup.Item>
     <RadioGroup.Item value="option2">
       <RadioGroup.ItemHiddenInput />
-      <RadioGroup.ItemControl
-        borderWidth="2px"
-        borderColor="input"
-        _checked={{ bg: "primary", borderColor: "primary" }}
-      />
+      <RadioGroup.ItemControl>
+        <RadioGroup.ItemIndicator />
+      </RadioGroup.ItemControl>
       <RadioGroup.ItemText>Option 2</RadioGroup.ItemText>
     </RadioGroup.Item>
   </VStack>
 </RadioGroup.Root>
 ```
 
-**Tokens:**
+**What the recipe provides:**
 
-- Default border: `input`
-- Selected state: `bg: "primary"`, `borderColor: "primary"`
-- Indicator (dot): Inherits `on-primary` color from Chakra UI theme
+- 2px borders (identical to checkboxes - differentiates from text inputs)
+- Primary background and border when selected
+- Inner dot indicator with high-contrast color (50% sizing for visibility)
+- Hover states (border upgrade + subtle background tint)
+- Focus ring (keyboard-only, 2px outline)
 
-**Pattern identical to checkboxes** - same token usage, different visual shape (circle vs square).
+**Critical:** Must include `<RadioGroup.ItemIndicator />` as child of `ItemControl` for the dot to render when selected.
 
 **Examples:** Single-choice options, filter modes, settings selections
 
+**Recipe reference:** `frontend/src/theme/recipes/radio.ts`
+
 ### Switches/Toggles
 
-**Standard switch pattern:**
+Switches use Chakra UI v3 recipes. The recipe handles all styling automatically.
 
 ```tsx
-<Switch.Root
-  checked={enabled}
-  onCheckedChange={(e) => setEnabled(!!e.checked)}
->
+<Switch.Root checked={enabled} onCheckedChange={(e) => setEnabled(!!e.checked)}>
   <Switch.HiddenInput />
-  <Switch.Control
-    bg="muted"
-    _checked={{ bg: "primary" }}
-  >
-    <Switch.Thumb bg="background" />
+  <Switch.Control>
+    <Switch.Thumb />
   </Switch.Control>
   <Text fontSize="sm">Enable feature</Text>
 </Switch.Root>
 ```
 
-**Tokens:**
+**What the recipe provides:**
 
-- **Track (off state):** `bg: "muted"` (neutral gray)
-- **Track (on state):** `bg: "primary"` (brand color)
-- **Thumb (slider):** `bg: "background"` (contrasts against track in both states)
+- Track (control) background: Muted when off, primary when on
+- Thumb background: Consistent background color (contrasts with track in both states)
+- Thumb position animation (left/right reinforces on/off state)
+- Focus ring (keyboard-only, 2px outline)
+- No visible borders (relies on background color contrast)
 
-**States:**
-
-- **Off**: Track uses `muted`, thumb on left
-- **On**: Track uses `primary`, thumb on right
-- **Disabled**: Applied via `disabled` prop (opacity handled by Chakra)
-
-**Visual feedback:**
-
-- Track color change (`muted` → `primary`) signals state
-- Thumb position (left/right) reinforces on/off
-- Thumb always uses `background` for consistent contrast
+**Visual feedback:** Track color change (muted → primary) signals state transition, thumb position reinforces the change.
 
 **Examples:** Feature toggles, boolean settings, enable/disable controls
+
+**Recipe reference:** `frontend/src/theme/recipes/switch.ts`
 
 ### Muted/Deemphasized Text
 

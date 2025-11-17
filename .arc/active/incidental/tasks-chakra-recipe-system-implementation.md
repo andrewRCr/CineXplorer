@@ -854,43 +854,465 @@ components instead (like TextLink pattern for special cases). Only Select.Trigge
     - WCAG compliance notes
     - Token meanings (but lighter touch - recipes abstract details)
 
-    - [ ] **6.2.1 Update Button section**
-        - Replace Pattern 1-6 code examples with 5 finalized variants
-        - Reference recipe variants: solid, secondary, outline, subtle, ghost
-        - Show usage: `<Button variant="outline">` (Note: Must use "variant", NOT "visual"!)
-        - Document secondary vs outline distinction (paired vs standalone)
-        - Link to buttonRecipe definition for implementation details
+    - [x] **6.2.a Update Button section** ✅
 
-    - [ ] **6.2.2 Update Form Controls section**
-        - Update Input/Textarea examples with wrapper component usage (NOT recipes!)
-        - Show StyledInput/StyledTextarea pattern (similar to TextLink pattern)
-        - Document layer prop usage for context-appropriate borders
-        - Update Select examples with recipe usage
+        **Completed:** Replaced verbose Pattern 1-6 examples with lean, recipe-focused guidance for 5 finalized variants.
 
-    - [ ] **6.2.3 Update Alert/Badge sections**
-        - Update with recipe variant usage
-        - Maintain guidance on when to use which variant
+        **Changes made:**
+
+        - Replaced 6 verbose patterns with 5 lean variant sections (solid, secondary, outline, subtle, ghost)
+        - Added Button Variants Quick Reference table for at-a-glance lookup
+        - Replaced verbose inline code examples with clean recipe usage: `<Button variant="solid">`
+        - **Documented secondary vs outline distinction** with dedicated subsection:
+            - Secondary: For form pairs (primary text creates visual tie)
+            - Outline: For standalone utility (grey text)
+            - Real-world examples showing when to use each
+        - Updated decision tree to reflect 5 variants and context-based secondary/outline choice
+        - Added Implementation Notes section linking to recipe file for implementation details
+        - Converted long semantic token lines to bulleted lists for readability
+        - **Document is now ~40% shorter** while retaining all decision-making guidance
+        - All markdown linting violations fixed (line length, formatting)
+
+        **What was kept (core value):**
+
+        - Decision trees ("Which button variant?")
+        - Semantic guidance on when/why to use each variant
+        - WCAG compliance notes (selection tokens rationale)
+        - Critical distinctions (secondary vs outline, text color behavior on hover)
+
+        **What was removed (implementation detail):**
+
+        - Verbose inline style objects with `_hover`, `_active`, `_focusVisible`
+        - Redundant token explanations now abstracted by recipes
+        - Pattern 2 (primary-outline) - eliminated in Phase 6.1 consolidation
+
+    - [x] **6.2.b Update Form Controls section** ✅
+
+        **Completed:** Replaced verbose examples with minimal usage patterns - show WHAT to write, not what happens internally.
+
+        **Changes made:**
+
+        **Form Inputs section (lines 856-889):**
+        - **Reduced from ~65 lines to ~34 lines** (48% reduction)
+        - Minimal usage example: `<StyledInput />` with optional `layer` prop
+        - Removed: All CSS syntax details, token listings, interaction state explanations
+        - Kept: Layer prop decision guidance, "What the wrapper provides" bullet list, ADR-015 reference
+        - Focus: Clean API, not internal implementation
+
+        **Select section (lines 891-942):**
+        - **Reduced from ~83 lines to ~52 lines** (37% reduction)
+        - Minimal usage: Standard Chakra Select structure (recipe handles styling automatically)
+        - Shows selected state conditionals as edge case (recipe limitation), not main pattern
+        - Removed: All token listings, focus indicator details, redundant WCAG explanations
+        - Kept: "What the recipe provides" bullet list, selected state requirement, recipe reference
+        - Focus: Clean usage pattern with edge case callout
+
+        **Key principle applied (per user feedback):**
+        Show what developers WRITE, not what happens under the hood. Recipes/wrappers abstract the implementation -
+        strategy doc should reflect that abstraction, not explain it in detail.
+
+        **Refinement pass (post-user feedback):**
+        - Removed ALL token listings (button variants) - not needed for building
+        - Removed percentage details (12%/16%) - delegate to ADR-016
+        - Kept relationship guidance ("visual tie", "stronger grey not primary border")
+        - Added WCAG assertions with ADR cross-references
+        - Added critical distinction (Select keyboard-only rings vs Input border-only)
+        - **Final result:** Show usage + rationale for choices, delegate implementation to ADRs/recipes
+
+        **All markdown linting violations fixed**
+
+    - [x] **6.2.c Update Alert/Badge sections** ✅
+
+        **Completed:** Replaced verbose Status Indicators section with lean recipe-focused guidance.
+
+        **Changes made:**
+
+        **Status Indicators section (lines 418-503):**
+        - **Reduced from ~175 lines to ~87 lines** (50% reduction)
+        - Replaced 4 verbose status examples (Success/Warning/Error/Info) with single clean Alert usage
+        - Replaced verbose Badge examples with single usage + variant table
+        - Removed: All token listings, opacity value details, redundant explanations
+        - Kept: Decision tables (when to use which variant), critical distinction (Alert vs Badge text colors),
+          token naming convention (ADR-011)
+        - Added: "What the recipe provides" bullet lists for both Alerts and Badges
+        - Recipe references: `alert.ts` and `badge.ts`
+
+        **Key distinction preserved:**
+        Alert descriptions use `foreground` (readability on subtle 10% backgrounds) vs Badge text uses `on-*` pairs
+        (high contrast on solid backgrounds). Rationale included but implementation delegated to recipes.
+
+        **All markdown linting violations fixed** (table alignment)
+
+    - [x] **6.2.d Update Checkbox/Radio/Switch sections** ✅ (Oversight - Phase 5 recipes exist but doc not updated)
+
+        **Completed:** Replaced verbose form control examples with lean recipe-focused guidance.
+
+        **Changes made:**
+
+        **Checkbox section (lines 839-866):**
+        - **Reduced from ~35 lines to ~28 lines** (20% reduction)
+        - Removed: `borderWidth="2px"`, `borderColor="input"`, `_checked` inline props
+        - Removed: Token listings, verbose state explanations
+        - Kept: 2px border rationale, "What the recipe provides" bullet list
+        - Recipe reference: `checkbox.ts`
+
+        **Radio section (lines 899-936):**
+        - **Reduced from ~37 lines to ~38 lines** (minimal change, but cleaner structure)
+        - Removed: `borderWidth="2px"`, `borderColor="input"`, `_checked` inline props
+        - Removed: Token listings, verbose state explanations
+        - Kept: 2px border note (identical to checkboxes), "What the recipe provides" bullet list
+        - Added: Critical note about `ItemIndicator` requirement (common mistake)
+        - Recipe reference: `radio.ts`
+
+        **Switch section (lines 938-964):**
+        - **Reduced from ~45 lines to ~27 lines** (40% reduction)
+        - Removed: `bg="muted"`, `_checked={{ bg: "primary" }}`, `bg="background"` inline props
+        - Removed: Token listings, verbose state explanations
+        - Kept: Visual feedback rationale (track color + thumb position), "What the recipe provides" bullet list
+        - Recipe reference: `switch.ts`
+
+        **Form Control Border Width Standards table preserved** (lines 868-897) - Important decision guidance
+        for understanding 1px vs 2px borders across form control types.
+
+        **All markdown linting violations fixed**
+
+    - [x] **6.2.e Evaluate non-component sections and overall doc structure** ✅
+
+        **Completed:** Systematic evaluation of remaining content (lines 966-1757, ~790 lines) to determine
+        recipe-era relevance and optimal document structure.
+
+        **Key findings:**
+
+        **Current doc is actually a hybrid:**
+        - First 49%: Component building patterns (buttons, forms, alerts, badges)
+        - Last 42%: Token system reference (naming, accessibility, quick ref, brand identity)
+        - Name "strategy-semantic-tokens.md" doesn't capture the dual nature
+
+        **Content taxonomy:**
+        - ✅ **No changes needed (5 sections):** Muted/Deemphasized Text, Tertiary vs Accent Naming,
+          Brand Identity, Drag and Drop, Related Documentation
+        - ⚠️ **Minor updates (2 sections):** Accessibility Standards (remove inline button example),
+          Developer Quick Reference (update table to show recipe usage)
+        - ⚠️ **Major updates (4 sections):** Movie Ratings (update badge usage), Genre Tags (update badge usage),
+          Common Patterns (remove button pattern, update percentages to ADR-016), Common Mistakes (remove
+          recipe-obsolete examples)
+
+        **Recommended restructure:**
+        Split into 2 docs with clear domains:
+        - `strategy-component-styling.md` (~900 lines) - How to build components (recipes/wrappers)
+        - `strategy-color-token-system.md` (~600 lines) - Token reference, naming, accessibility, quick ref
+
+        **Detailed breakdown documented in task 6.2.f below**
+
+    - [ ] **6.2.f Update non-component sections and split into two strategy docs**
+
+        **Goal:** Apply recipe-era updates to remaining sections, then split into two focused docs with clear boundaries.
+
+        **Prerequisites:**
+        - Read evaluation findings in 6.2.e completion notes above
+        - Current doc: `.arc/reference/strategies/project/style/strategy-semantic-tokens.md` (1757 lines)
+
+        - [ ] **6.2.f.1 Apply content updates (do BEFORE split)**
+
+            - [ ] **6.2.f.1.a Update Movie Ratings section (lines 1010-1042)**
+
+                **Location:** "Building Movie-Specific UI" → "Movie Ratings"
+
+                **Current (INCORRECT):**
+
+                ```tsx
+                <Badge bg="badge" color="badge-foreground">Action</Badge>
+                ```
+
+                **Change to:**
+
+                ```tsx
+                <Badge variant="neutral">Action</Badge>
+                ```
+
+                **Rationale:** Badge recipe exists (Phase 4), `badge-foreground` is deprecated naming
+                (use `on-badge` per ADR-011)
+
+            - [ ] **6.2.f.1.b Update Genre Tags section (lines 1043-1066)**
+
+                **Location:** "Building Movie-Specific UI" → "Genre Tags and Badges"
+
+                **Current examples:**
+
+                ```tsx
+                <Badge bg="badge" color="badge-foreground">Action</Badge>
+                <Badge bg="badge" color="badge-foreground">Sci-Fi</Badge>
+                ```
+
+                **Change to:**
+
+                ```tsx
+                <Badge variant="neutral">Action</Badge>
+                <Badge variant="neutral">Sci-Fi</Badge>
+                ```
+
+                **Also update tokens list:**
+                - OLD: `badge` / `badge-foreground`
+                - NEW: Uses `badge` / `on-badge` (recipe handles automatically)
+
+            - [ ] **6.2.f.1.c Update Common Patterns section (lines 1311-1427)**
+
+                **Changes needed:**
+
+                **A. Update Interaction State Philosophy (lines 1315-1327)**
+                - OLD: "8%/12% opacity works everywhere"
+                - NEW: "12%/16% opacity works everywhere"
+                - Add cross-ref: "(see ADR-009, improved in ADR-016)"
+
+                **B. Remove Button Hover Pattern subsection (lines 1349-1374)**
+                - DELETE entire subsection
+                - Rationale: Now redundant with button recipe
+
+                **C. Update Opacity Modifier Reference table (lines 1391-1404)**
+                - OLD: Hover = 8%, Pressed/Active = 12%
+                - NEW: Hover = 12%, Pressed/Active = 16%
+                - Update tokens: `primary-hover` (12%), `primary-active` (16%)
+                - Add note: "Improved from MD3 8%/12% for better visibility (ADR-016)"
+
+                **D. Keep as-is:**
+                - Surface Hover Pattern (generic, no recipe)
+                - Selected State Pattern (generic pattern)
+                - Card Elevation Pattern (app-specific)
+
+            - [ ] **6.2.f.1.d Update Accessibility Standards section (lines 1184-1309)**
+
+                **Location:** "Accessibility Standards" → "Focus Indicators" subsection (lines 1275-1296)
+
+                **Current has inline Button example (lines 1284-1293):**
+
+                ```tsx
+                <Button
+                  _focusVisible={{
+                    outline: "2px solid",
+                    outlineColor: "ring",
+                    outlineOffset: "2px",
+                  }}
+                >
+                  Submit
+                </Button>
+                ```
+
+                **Options:**
+                1. Remove example entirely (focus guidance is timeless, example may confuse since recipes handle it)
+                2. Update to: "All interactive components use keyboard-only focus rings (see button/form recipes for implementation)"
+
+                **Recommended:** Option 2 - brief note instead of code example
+
+            - [ ] **6.2.f.1.e Update Developer Quick Reference section (lines 1429-1530)**
+
+                **Location:** "Developer Quick Reference" → "By Use Case" table (lines 1433-1459)
+
+                **Update these rows to show recipe usage:**
+
+                | What are you building? | OLD Example                                        | NEW Example                               |
+                |------------------------|----------------------------------------------------|-------------------------------------------|
+                | Primary button         | `<Button bg="primary" color="on-primary">`         | `<Button variant="solid">`                |
+                | Neutral outline button | `<Button borderColor="button-outline">`            | `<Button variant="outline">`              |
+                | Subtle button          | `<Button bg="button-subtle">`                      | `<Button variant="subtle">`               |
+                | Ghost button           | `<Button color="tertiary">`                        | `<Button variant="ghost">`                |
+                | Success alert          | `<Alert bg="success/10"><Text color="on-success">` | `<Alert.Root status="success">`           |
+                | Genre tag              | `<Badge bg="badge" color="on-badge">`              | `<Badge variant="neutral">Action</Badge>` |
+
+                **Also update "Token Count by Category" (lines 1461-1478):**
+                - Add note: "Recipes centralize many tokens - consult recipe files for implementation details"
+
+            - [ ] **6.2.f.1.f Update Common Mistakes section (lines 1532-1714)**
+
+                **Changes needed:**
+
+                **A. Remove "Incomplete Hover States" - Ghost button (lines 1537-1564)**
+                - DELETE entire subsection
+                - Rationale: Button recipe handles this automatically
+
+                **B. Remove "Incomplete Hover States" - Outline button (lines 1567-1597)**
+                - DELETE entire subsection
+                - Rationale: Button recipe handles this automatically
+
+                **C. Update "Custom Focus States" (lines 1624-1651)**
+                - Current shows inline Input example
+                - Change to reference StyledInput wrapper:
+
+                ```tsx
+                // ❌ Wrong: Inline focus styling
+                <Input _focus={{ borderColor: "tertiary", outline: ... }} />
+
+                // ✅ Correct: Use StyledInput wrapper
+                import { StyledInput } from "@/components/common";
+                <StyledInput placeholder="Email" />
+                ```
+
+                - Add note: "StyledInput encapsulates ADR-015 border-only focus pattern"
+
+                **D. Keep as-is:**
+                - React Router Link Integration (TextLink wrapper still relevant)
+                - Deprecated Token Aliases (naming guidance)
+                - Border Token Confusion (still relevant)
+
+        - [ ] **6.2.f.2 Execute document split**
+
+            - [ ] **6.2.f.2.a Create `strategy-component-styling.md`**
+
+                **Content to include (in order):**
+
+                1. **New front matter:**
+                   - Purpose: "Guide for building UI components using recipes, wrappers, and semantic tokens"
+                   - Scope: Component patterns, app-specific UI, interaction patterns
+
+                2. **From current doc (lines 91-964):**
+                   - Building Surfaces
+                   - Building Buttons ✅
+                   - Building Status Indicators ✅
+                   - Building Interactive Elements ✅
+                   - All subsections (form inputs, select, checkboxes, radio, switch)
+
+                3. **From current doc (lines 1006-1098):**
+                   - Building Movie-Specific UI (WITH UPDATES from 6.2.f.1)
+                     - Movie Ratings ⚠️
+                     - Genre Tags ⚠️
+                     - Drag and Drop ✅
+
+                4. **From current doc (lines 1311-1427):**
+                   - Common Patterns (WITH UPDATES from 6.2.f.1)
+                     - Interaction State Philosophy ⚠️
+                     - Surface Hover Pattern ✅
+                     - Selected State Pattern ✅
+                     - Opacity Modifier Reference ⚠️
+                     - Card Elevation Pattern ✅
+                     - (Button Hover Pattern REMOVED)
+
+                5. **From current doc (lines 1532-1714):**
+                   - Common Mistakes (WITH UPDATES from 6.2.f.1)
+                     - React Router Link Integration ✅
+                     - Custom Focus States ⚠️
+                     - Deprecated Token Aliases ✅
+                     - Border Token Confusion ✅
+                     - (Incomplete Hover States REMOVED)
+
+                6. **New Related Documentation section:**
+                   - Cross-ref to `strategy-color-token-system.md`
+                   - Recipe file locations
+                   - ADR-015 (border-only focus)
+                   - ADR-016 (improved interaction states)
+
+                **Estimated size:** ~900 lines
+
+            - [ ] **6.2.f.2.b Create `strategy-color-token-system.md`**
+
+                **Content to include (in order):**
+
+                1. **New front matter:**
+                   - Purpose: "Reference for CineXplorer's color token system: naming conventions,
+                     accessibility standards, and quick lookup"
+                   - Scope: Token semantics, naming, WCAG compliance, token architecture
+
+                2. **From current doc (lines 966-1003):**
+                   - Muted/Deemphasized Text ✅
+                   - Tertiary vs Accent Naming ✅
+
+                3. **From current doc (lines 1101-1182):**
+                   - Brand Identity ✅
+                     - When to Use Brand Tokens
+                     - Brand Token System
+                     - Brand vs Primary Distinction
+                     - Theme-Specific Availability
+
+                4. **From current doc (lines 1184-1309):**
+                   - Accessibility Standards (WITH UPDATES from 6.2.f.1)
+                     - Contrast Requirements ✅
+                     - Testing Contrast ✅
+                     - Border Contrast Requirements ✅
+                     - Color Alone Is Not Enough ✅
+                     - Focus Indicators ⚠️ (remove inline example)
+                     - Interactive Element Sizing ✅
+
+                5. **From current doc (lines 1429-1530):**
+                   - Developer Quick Reference (WITH UPDATES from 6.2.f.1)
+                     - By Use Case ⚠️ (update table)
+                     - Token Count by Category ⚠️ (add note about recipes)
+                     - Anti-Patterns to Avoid ✅
+                     - Quick Decision Flowchart ✅
+
+                6. **New sections to add:**
+                   - Token Naming Conventions (synthesize from ADR-011, existing content)
+                   - UnifiedTheme Interface Reference (point to source of truth)
+
+                7. **Related Documentation:**
+                   - Cross-ref to `strategy-component-styling.md`
+                   - Cross-ref to `strategy-layout-tokens.md`
+                   - ADR index (005-012, 015, 016)
+                   - UnifiedTheme interface location
+
+                **Estimated size:** ~600 lines
+
+            - [ ] **6.2.f.2.c Update cross-references**
+
+                **In `strategy-component-styling.md`:**
+                - Add note at top: "For token naming and accessibility standards, see strategy-color-token-system.md"
+                - Update "Building Buttons" Implementation Notes to reference token system doc
+                - Update any "See also" links to point to new doc names
+
+                **In `strategy-color-token-system.md`:**
+                - Add note at top: "For component building patterns, see strategy-component-styling.md"
+                - Update Quick Reference table intro to mention component guide
+
+                **In `strategy-layout-tokens.md`:**
+                - Add cross-ref to new `strategy-color-token-system.md` in Related Documentation
+
+                **In any ADRs that reference the old doc:**
+                - Search for "strategy-semantic-tokens.md" across `.arc/reference/adr/`
+                - Update to point to appropriate new doc (component-styling or color-token-system)
+
+            - [ ] **6.2.f.2.d Delete old file**
+
+                Once both new files are created and validated:
+
+                ```bash
+                rm .arc/reference/strategies/project/style/strategy-semantic-tokens.md
+                ```
+
+            - [ ] **6.2.f.2.e Run quality gates**
+
+                ```bash
+                # Markdown linting
+                npx --yes markdownlint-cli2 --no-globs ".arc/reference/strategies/project/style/strategy-component-styling.md"
+                npx --yes markdownlint-cli2 --no-globs ".arc/reference/strategies/project/style/strategy-color-token-system.md"
+
+                # Verify cross-references work
+                grep -r "strategy-semantic-tokens" .arc/reference/
+                # Should return 0 results (all updated)
+                ```
+
+                **Success criteria:**
+                - [ ] Both new files pass markdown linting (0 violations)
+                - [ ] No orphaned references to old filename
+                - [ ] Cross-references work between new docs
+                - [ ] ADR cross-references updated
 
 - [ ] **6.3 Update ThemeDebug.tsx** (Note: ButtonPatternsSection already updated in 6.1)
 
-    - [ ] **6.3.1 Update other sections as needed**
+    - [ ] **6.3.a Update other sections as needed**
         - FormControlsSection - demonstrate wrapper components
         - Other sections using button patterns
 
 - [ ] **6.4 Final quality gates**
 
-    - [ ] **6.4.1 Run complete test suite**
+    - [ ] **6.4.a Run complete test suite**
         - Backend tests: 100% pass
         - Frontend tests: 100% pass
 
-    - [ ] **6.4.2 Run all linting and type checking**
+    - [ ] **6.4.b Run all linting and type checking**
         - Backend linting: 0 violations
         - Frontend linting: 0 violations
         - TypeScript: 0 errors
         - Pyright: 0 errors
         - Markdown: 0 violations
 
-    - [ ] **6.4.3 Visual regression check**
+    - [ ] **6.4.c Visual regression check**
         - Test all pages in all 4 themes
         - Test light and dark modes
         - Verify no unintended changes

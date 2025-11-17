@@ -170,27 +170,24 @@ git commit -m "docs: prepare documentation for archival
 
 ### 5) Code Review
 
-Run appropriate code review for scope:
+**Two-pass review (per ADR-013 stacked branch workflow):**
 
-**Lightweight (local review only):**
-
-```bash
-# Suitable for: Small changes (<300 lines), low risk, incidental work
-coderabbit review local
-# Fix findings, commit fixes
-```
-
-**Thorough (two-pass review):**
+With the stacked branch workflow, ALL task list work gets branches and PRs, which means PR review is
+always triggered. The local review is a pre-flight check before creating the PR.
 
 ```bash
-# Pass 1: Local pre-PR review
+# Pass 1: Local pre-PR review (recommended - catch issues before PR)
 coderabbit review local
 # Fix findings, commit fixes
 
 # Pass 2: Create PR (CodeRabbit reviews PR automatically)
 gh pr create --base parent-branch --head child-branch
-# Address PR review findings
+# Address PR review findings if any
 ```
+
+**Note:** While the local review is technically optional (the PR review will happen regardless), it's
+strongly recommended to catch and fix issues before the PR review. This creates a better review experience
+and maintains high code quality standards.
 
 **Use completion doc as PR description template:** Copy/adapt sections from `completion-{name}.md`
 for the PR body. This ensures consistency and avoids duplicate writing.

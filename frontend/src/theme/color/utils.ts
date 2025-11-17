@@ -203,11 +203,12 @@ export function blendColors(
 /**
  * Derive interaction state colors using improved opacity overlay approach.
  *
- * Per ADR-009, all themes use universal opacity overlay calculation for consistency
+ * Per ADR-009 and ADR-016, all themes use universal opacity overlay calculation for consistency
  * across themes and compatibility with ADR-008's alternating layer pattern.
  *
- * Overlay percentages improved from Material Design 3 defaults (8%/12%) to (12%/16%)
- * for better contrast and visibility across theme combinations.
+ * Overlay percentages improved from Material Design 3 defaults (8%/10%/10%) to (12%/16%/16%)
+ * for better contrast and visibility across theme combinations. Selected = active maintains
+ * MD3's semantic equivalence (focus = press).
  *
  * @param layerColor - Base layer color (e.g., "#f4f4f4" for layer-01)
  * @param foregroundColor - Theme foreground color (e.g., "#161616" in light mode)
@@ -220,8 +221,8 @@ export function blendColors(
  * // Returns:
  * // {
  * //   hover: "#dbdbdb",    // 12% foreground overlay (improved from MD3's 8%)
- * //   selected: "#d6d6d6", // 12% foreground overlay
- * //   active: "#cecece"    // 16% foreground overlay (improved from MD3's 12%)
+ * //   selected: "#cecece", // 16% foreground overlay (improved from MD3's 10%, equals active)
+ * //   active: "#cecece"    // 16% foreground overlay (improved from MD3's 10%, equals selected)
  * // }
  * ```
  */
@@ -234,9 +235,9 @@ export function deriveInteractionStates(
     active: string;
 } {
     return {
-        hover: blendColors(layerColor, foregroundColor, 0.12),      // 12% overlay (improved from Material Design 3's 8% for better contrast)
-        selected: blendColors(layerColor, foregroundColor, 0.12),   // 12% overlay
-        active: blendColors(layerColor, foregroundColor, 0.16),     // 16% overlay (improved from Material Design 3's 12% for better contrast)
+        hover: blendColors(layerColor, foregroundColor, 0.12),      // 12% overlay (improved from MD3's 8% for better contrast)
+        selected: blendColors(layerColor, foregroundColor, 0.16),   // 16% overlay (improved from MD3's 10%, aligns with active per ADR-016)
+        active: blendColors(layerColor, foregroundColor, 0.16),     // 16% overlay (improved from MD3's 10%, aligns with selected per ADR-016)
     };
 }
 

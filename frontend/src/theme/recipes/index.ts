@@ -4,8 +4,8 @@
  * Central export point for all theme recipes. Recipes define reusable
  * multi-variant component styles that reference semantic tokens.
  *
- * - Single-part recipes (defineRecipe): button, badge, checkbox, radio
- * - Multi-part recipes (defineSlotRecipe): select, alert, switch
+ * - Single-part recipes (defineRecipe): button, badge
+ * - Multi-part recipes (defineSlotRecipe): select, alert, checkbox, radio, switch
  */
 
 export { buttonRecipe } from "./button";

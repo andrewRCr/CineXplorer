@@ -120,13 +120,16 @@ const CollapsibleSearchBox = ({
         borderRadius="0"
       backgroundColor="background"
       color="foreground"
-      _focus={{
-        boxShadow: "none",
-        border: "none",
-        outline: "none",
-      }}
-      _hover={{
-        bg: "tertiary/8",
+      css={{
+        "&:hover:not(:focus)": {
+          backgroundColor: "color-mix(in srgb, var(--chakra-colors-tertiary) 8%, transparent)",
+        },
+        "&:focus": {
+          backgroundColor: "var(--chakra-colors-background)",
+          boxShadow: "none",
+          border: "none",
+          outline: "none",
+        },
       }}
         fontSize="14px"
         height="30px"
@@ -151,10 +154,6 @@ const CollapsibleSearchBox = ({
         bg: "tertiary/8",
       }}
       _focus={{
-        outline: "none",
-        boxShadow: "none",
-      }}
-      _focusVisible={{
         outline: "none",
         boxShadow: "none",
       }}

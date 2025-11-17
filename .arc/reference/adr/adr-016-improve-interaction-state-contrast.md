@@ -44,7 +44,7 @@ Tested side-by-side with improved percentages across 8 theme/mode combinations (
 
 **Root cause:**
 
-Material Design 3's 8%/12% defaults are optimized for Material's specific color palette and elevation system. Our
+Material Design 3's 8%/10%/10% defaults are optimized for Material's specific color palette and elevation system. Our
 unified theme adapter supports four distinct design systems (IBM Carbon, GitHub Primer, GitLab Pajamas, Material Design)
 with varying base colors and contrast profiles. The MD3 defaults work adequately but aren't optimal across this diversity.
 

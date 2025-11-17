@@ -939,13 +939,13 @@ Switches use Chakra UI v3 recipes. The recipe handles all styling automatically.
 
 **What the recipe provides:**
 
-- Track (control) background: Muted when off, primary when on
+- Track (control) background: Secondary when off, primary when on (uses secondary instead of muted for better disabled visibility)
 - Thumb background: Consistent background color (contrasts with track in both states)
 - Thumb position animation (left/right reinforces on/off state)
 - Focus ring (keyboard-only, 2px outline)
 - No visible borders (relies on background color contrast)
 
-**Visual feedback:** Track color change (muted → primary) signals state transition, thumb position reinforces the change.
+**Visual feedback:** Track color change (secondary → primary) signals state transition, thumb position reinforces the change.
 
 **Examples:** Feature toggles, boolean settings, enable/disable controls
 
@@ -1117,9 +1117,10 @@ use 16%.
 | Pressed/Active | 16%     | `layer-active-01`, `primary-active` | `bg="primary/12"`         |
 | Focus          | N/A     | N/A (use ring token for outlines)   | -                         |
 | Drag           | TBD     | `drag-active` (uses secondaryHover) | `bg="foreground/16"`      |
-| Disabled       | 38%     | N/A                                 | `opacity={0.38}`          |
+| Disabled       | 60%     | N/A                                 | `opacity={0.6}`           |
 
 **Note:** Solid surfaces (semantic tokens) use improved 12% hover / 16% selected/active for better contrast (ADR-016).
+Disabled opacity is 60% for most form controls (checkbox, switch); radio uses 0.38 for subtle visual reasons.
 Selected = active maintains MD3's semantic equivalence (focus and press are identical). Manual overlays use MD3 baseline
 8%/12% (secondary/outline/ghost button variants). Drag state may be implemented as dedicated 20% overlay in future when
 building actual drag-drop features (currently reuses secondaryHover mapping).

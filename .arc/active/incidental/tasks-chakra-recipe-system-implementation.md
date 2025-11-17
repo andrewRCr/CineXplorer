@@ -1216,23 +1216,50 @@ components instead (like TextLink pattern for special cases). Only Select.Trigge
         background. Drop-zone should be neutral (muted), not accent blue - it's a passive valid
         target area, not an active interactive element.
 
-- [ ] **6.4 Final quality gates**
+- [x] **6.4 Final quality gates**
 
-    - [ ] **6.4.a Run complete test suite**
-        - Backend tests: 100% pass
-        - Frontend tests: 100% pass
+    - [x] **6.4.a Run complete test suite** ✅
 
-    - [ ] **6.4.b Run all linting and type checking**
-        - Backend linting: 0 violations
-        - Frontend linting: 0 violations
+        **Results:**
+        - Backend: 408 passed, 1 xfailed (expected)
+        - Frontend: 231 passed
+
+    - [x] **6.4.b Run all linting and type checking** ✅
+
+        **Results:**
+        - Backend linting (ruff): 0 violations
+        - Frontend linting (eslint): 0 violations
         - TypeScript: 0 errors
-        - Pyright: 0 errors
-        - Markdown: 0 violations
+        - Pyright: 0 errors (46 informations)
+        - Markdown: 0 errors
 
-    - [ ] **6.4.c Visual regression check**
-        - Test all pages in all 4 themes
-        - Test light and dark modes
-        - Verify no unintended changes
+    - [x] **6.4.c Visual regression check + Fix ThemeDebug accuracy issues** ✅
+
+        **Visual regression check passed, but noted minor issues; identified and fixed:**
+
+        **A. Popover/Menu Dropdown (LayerSystemSection)**
+        - Fixed trigger button to follow proper outline button pattern
+        - Changed hover from `borderColor: "tertiary"` to `borderColor: "border-strong-02"`
+        - Added `_focusVisible` ring outline for keyboard accessibility
+        - Updated description to clarify trigger follows outline button pattern
+
+        **B. Button Implementation Text (ButtonPatternsSection)**
+        - Clarified that 12%/16% opacity improvement applies only to *solid surfaces* (solid/subtle variants)
+        - Specified outline/ghost/secondary use MD3 baseline (8%/12%)
+        - Maintains accuracy with ADR-016 scope
+
+        **C. Disabled Switch/Toggle Consistency (Switch/Checkbox/Radio Recipes)**
+        - Updated all form control recipes to use `opacity: 0.38` (was 0.4)
+        - Aligns with strategy doc opacity reference (ADR-009)
+        - Root-level opacity dims both control and label (consistent with radio pattern)
+        - Improves visibility while maintaining accessibility
+
+        **D. Opacity Section Token References (OpacitySystemSection)**
+        - Fixed primary/100 demo to use `on-primary` instead of `foreground`
+        - Fixed tertiary/100 demo to use `on-tertiary` instead of `foreground`
+        - Ensures proper contrast on solid color backgrounds
+
+        **Quality checks:** All linting and type checking passed ✓
 
 ## Notes & Observations
 

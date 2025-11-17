@@ -271,11 +271,12 @@ but their implementation differs by mode:
 **Available interaction tokens per layer:**
 
 - `layer-hover-01` / `layer-hover-02` - Hover states (12% opacity overlay)
-- `layer-selected-01` / `layer-selected-02` - Selected states (12% opacity overlay)
+- `layer-selected-01` / `layer-selected-02` - Selected states (16% opacity overlay)
 - `layer-active-01` / `layer-active-02` - Active/pressed states (16% opacity overlay)
 
-**Implementation:** Uses improved opacity overlay approach (see ADR-016). Solid surfaces use 12% hover / 16% active
-for better visibility compared to Material Design 3's baseline 8%/12%.
+**Implementation:** Uses improved opacity overlay approach (see ADR-016). Solid surfaces use 12% hover / 16% selected/active
+for better visibility compared to Material Design 3's baseline 8% hover / 10% focus-press. Selected = active maintains MD3's
+semantic equivalence (focus and press are identical in Material Design 3).
 
 ---
 
@@ -1056,8 +1057,11 @@ CineXplorer uses **Material Design 3's opacity overlay approach** for all intera
 
 **Opacity values:**
 
-- **MD3 baseline**: 8% hover / 12% active (still used for secondary, outline, ghost buttons)
-- **Improved for solids**: 12% hover / 16% active (solid buttons, layer surfaces - better UX per ADR-016)
+- **MD3 baseline**: 8% hover / 10% focus / 10% press (still used for secondary, outline, ghost buttons as 8%/12%)
+- **Improved for solids**: 12% hover / 16% selected / 16% active (solid buttons, layer surfaces - better UX per ADR-016)
+
+**Note:** MD3 treats focus and press identically (both 10%). We maintain this equivalence - selected and active both
+use 16%.
 
 **Benefits:**
 
@@ -1109,14 +1113,16 @@ CineXplorer uses **Material Design 3's opacity overlay approach** for all intera
 | State          | Opacity | Token Usage (Solid Surfaces)        | Manual Overlay (Baseline) |
 |----------------|---------|-------------------------------------|---------------------------|
 | Hover          | 12%     | `layer-hover-01`, `primary-hover`   | `bg="primary/8"`          |
+| Selected       | 16%     | `layer-selected-01`                 | `bg="foreground/16"`      |
 | Pressed/Active | 16%     | `layer-active-01`, `primary-active` | `bg="primary/12"`         |
-| Selected       | 12%     | `layer-selected-01`                 | `bg="foreground/12"`      |
-| Focus          | 12%     | N/A (use ring)                      | `bg="foreground/12"`      |
-| Drag           | 16%     | `drag-active`                       | `bg="foreground/16"`      |
+| Focus          | N/A     | N/A (use ring token for outlines)   | -                         |
+| Drag           | TBD     | `drag-active` (uses secondaryHover) | `bg="foreground/16"`      |
 | Disabled       | 38%     | N/A                                 | `opacity={0.38}`          |
 
-**Note:** Solid surfaces (semantic tokens) use improved 12%/16% for better contrast (ADR-016).
-Manual overlays use MD3 baseline 8%/12% (secondary/outline/ghost button variants).
+**Note:** Solid surfaces (semantic tokens) use improved 12% hover / 16% selected/active for better contrast (ADR-016).
+Selected = active maintains MD3's semantic equivalence (focus and press are identical). Manual overlays use MD3 baseline
+8%/12% (secondary/outline/ghost button variants). Drag state may be implemented as dedicated 20% overlay in future when
+building actual drag-drop features (currently reuses secondaryHover mapping).
 
 **Prefer dedicated tokens over manual overlays** for consistency.
 

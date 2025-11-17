@@ -1154,11 +1154,67 @@ components instead (like TextLink pattern for special cases). Only Select.Trigge
                 - ✅ Cross-references work between new docs
                 - ✅ ADR cross-references updated (5 ADRs, 10 total references)
 
-- [ ] **6.3 Update ThemeDebug.tsx** (Note: ButtonPatternsSection already updated in 6.1)
+- [x] **6.3 Audit and Update ThemeDebug.tsx for Strategy Doc Compliance** ✅
 
-    - [ ] **6.3.a Update other sections as needed**
-        - FormControlsSection - demonstrate wrapper components
-        - Other sections using button patterns
+    **Comprehensive audit completed. Found 4 sections with compliance issues, 9 sections fully compliant. All fixes applied.**
+
+    - [x] **6.3.a Fix OpacitySystemSection - ADR-016 updates** ✅
+
+        **Completed:** All changes applied successfully:
+        - ✅ Updated intro text (lines 9-10, 22-28) to reference both ADR-009 and ADR-016
+        - ✅ Rewrote "Standard Interaction Values" section (lines 34-83) to explain dual opacity system with three subsections:
+            - MD3 Baseline (8% hover, 12% active): outline/ghost/secondary buttons
+            - Improved (12% hover, 16% active): solid buttons, layer surfaces (per ADR-016)
+            - Other values: backdrop overlays (30%), disabled states (38%)
+        - ✅ Reduced "Syntax Demonstrations" (lines 103-193) from 5 examples to 4 per token
+        - ✅ Changed demonstration values to actual interaction values (8, 12, 16, 30) with explanatory text
+        - ✅ Added reference to strategy-component-styling.md "Opacity Modifier Reference" (line 200)
+
+    - [x] **6.3.b Fix InteractionStatesSection - Correct opacity values** ✅
+
+        **Completed:** All opacity values corrected:
+        - ✅ Line 7-9: Updated comment to reference ADR-016 improvement
+        - ✅ Line 53: Changed "Hover (+8% fg)" to "Hover (+12% fg)"
+        - ✅ Line 56: Selected (+12% fg) - already correct
+        - ✅ Line 59: Changed "Active (+12% fg)" to "Active (+16% fg)"
+        - ✅ Line 99: Changed "Hover (+8% fg)" to "Hover (+12% fg)"
+        - ✅ Line 105: Changed "Active (+12% fg)" to "Active (+16% fg)"
+        - ✅ Lines 118-121: Updated implementation text to reference ADR-016 improvements
+
+    - [x] **6.3.c Fix InteractiveListsSection - Correct opacity values in comments** ✅
+
+        **Completed:** Simple text corrections applied:
+        - ✅ Line 42: Changed "layer-hover-01 (8% overlay)" to "layer-hover-01 (12% overlay)"
+        - ✅ Line 80: Changed "layer-active-01 (12% overlay)" to "layer-active-01 (16% overlay)"
+
+    - [x] **6.3.d Fix CineXplorerExtensionsSection - Drag-active readability** ✅
+
+        **Token mapping evaluation completed:**
+        - drag-active maps to `secondaryHover` via extensions.ts (line 119)
+        - IBM Carbon: #4c4c4c (light), #606060 (dark) - medium gray colors
+        - drop-zone was incorrectly mapped to `accentEmphasis` (BLUE in GitHub/GitLab!)
+        - No `on-drag-active` or `on-drop-zone` tokens exist in UnifiedTheme
+
+        **Root cause fixes in extensions.ts:**
+        - ✅ Changed drop-zone from `accentEmphasis` → `muted` (neutral, not blue)
+        - ✅ Updated function signature to remove `accentEmphasis` parameter
+        - ✅ Updated all 4 theme adapters to remove `accentEmphasis` argument:
+            - github-primer.ts (line 219)
+            - ibm-carbon.ts (line 221)
+            - gitlab-pajamas.ts (line 233)
+            - material-design-3.ts (line 240)
+
+        **ThemeDebug visual fixes (CineXplorerExtensionsSection.tsx lines 66-97):**
+        - ✅ **drag-active**: Changed text from `foreground` → `on-secondary` (proper contrast flip)
+        - ✅ **drag-active**: Kept tertiary border + shadow for active state emphasis
+        - ✅ **drop-zone**: Changed from blue to neutral `muted` background (via extensions fix)
+        - ✅ **drop-zone**: Changed border from success → `border-strong-01`, solid style
+        - ✅ **drop-zone**: Kept `foreground` text (works on neutral muted bg)
+        - ✅ Updated explanation text to reflect actual token mappings
+
+        **Rationale:** `on-secondary` provides proper contrast flip against secondaryHover's gray
+        background. Drop-zone should be neutral (muted), not accent blue - it's a passive valid
+        target area, not an active interactive element.
 
 - [ ] **6.4 Final quality gates**
 

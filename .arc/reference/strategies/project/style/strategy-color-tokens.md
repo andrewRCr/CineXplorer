@@ -580,7 +580,7 @@ Fast lookup cheat sheet for common token choices.
 - ADR-011: Standardize on "on-color" Foreground Naming (on-* prefix)
 - ADR-012: Separate Button Pattern Semantics (button helper tokens)
 - ADR-015: Use Border-Only Focus Indicators for Text Inputs
-- ADR-016: Improve Interaction State Contrast (12%/16% opacity values)
+- ADR-016: Improve Interaction State Contrast (12% hover / 16% selected-active opacity values)
 
 **For implementation:**
 

@@ -4,8 +4,9 @@ import { useState } from "react";
 /**
  * Interaction States Section - Material Design Opacity Overlay Implementation
  *
- * Shows the current implementation per ADR-009: Material Design 3 opacity overlays
- * (8% hover, 12% selected/active) for consistent cross-theme behavior.
+ * Shows the current implementation per ADR-009 and ADR-016: Improved opacity overlays
+ * (12% hover, 16% selected/active) for solid buttons and layer surfaces, providing better
+ * visibility across themes while maintaining MD3 baseline for outline/ghost buttons.
  */
 export function InteractionStatesSection() {
   const [selectedLayer01, setSelectedLayer01] = useState(false);
@@ -49,13 +50,13 @@ export function InteractionStatesSection() {
                 <Text fontSize="xs" textAlign="center" color="foreground/60">Default (layer-01)</Text>
               </Box>
               <Box bg="layer-hover-01" p={3} borderRadius="md" borderWidth="1px" borderColor="border-strong-01" minW="110px">
-                <Text fontSize="xs" textAlign="center" color="foreground/60">Hover (+8% fg)</Text>
+                <Text fontSize="xs" textAlign="center" color="foreground/60">Hover (+12% fg)</Text>
               </Box>
               <Box bg="layer-selected-01" p={3} borderRadius="md" borderWidth="1px" borderColor="border-strong-01" minW="110px">
-                <Text fontSize="xs" textAlign="center" color="foreground/60">Selected (+12% fg)</Text>
+                <Text fontSize="xs" textAlign="center" color="foreground/60">Selected (+16% fg)</Text>
               </Box>
               <Box bg="layer-active-01" p={3} borderRadius="md" borderWidth="1px" borderColor="border-strong-01" minW="110px">
-                <Text fontSize="xs" textAlign="center" color="foreground/60">Active (+12% fg)</Text>
+                <Text fontSize="xs" textAlign="center" color="foreground/60">Active (+16% fg)</Text>
               </Box>
             </HStack>
           </Box>
@@ -95,13 +96,13 @@ export function InteractionStatesSection() {
                 <Text fontSize="xs" textAlign="center" color="foreground/60">Default (layer-02)</Text>
               </Box>
               <Box bg="layer-hover-02" p={3} borderRadius="md" borderWidth="1px" borderColor="border-strong-02" minW="110px">
-                <Text fontSize="xs" textAlign="center" color="foreground/60">Hover (+8% fg)</Text>
+                <Text fontSize="xs" textAlign="center" color="foreground/60">Hover (+12% fg)</Text>
               </Box>
               <Box bg="layer-selected-02" p={3} borderRadius="md" borderWidth="1px" borderColor="border-strong-02" minW="110px">
-                <Text fontSize="xs" textAlign="center" color="foreground/60">Selected (+12% fg)</Text>
+                <Text fontSize="xs" textAlign="center" color="foreground/60">Selected (+16% fg)</Text>
               </Box>
               <Box bg="layer-active-02" p={3} borderRadius="md" borderWidth="1px" borderColor="border-strong-02" minW="110px">
-                <Text fontSize="xs" textAlign="center" color="foreground/60">Active (+12% fg)</Text>
+                <Text fontSize="xs" textAlign="center" color="foreground/60">Active (+16% fg)</Text>
               </Box>
             </HStack>
           </Box>
@@ -114,9 +115,11 @@ export function InteractionStatesSection() {
             across all 6 theme combinations. Universal opacity approach ensures consistent feel across themes.
             <br />
             <br />
-            <strong>Implementation:</strong> Per ADR-009, all interaction states use Material Design 3's
-            opacity overlay approach for consistency. Formula: base layer color + foreground color @ opacity
-            (8% hover, 12% selected/active).
+            <strong>Implementation:</strong> Per ADR-009 and ADR-016, layer interaction states use improved
+            opacity values for better visibility. Formula: base layer color + foreground color @ opacity
+            (12% hover, 16% selected/active). Selected = active maintains MD3's semantic equivalence (focus and press
+            are identical in Material Design 3). These improved values provide better contrast than the original
+            MD3 baseline (8% hover / 10% focus-press) while maintaining the universal opacity overlay approach.
           </Text>
         </Box>
       </VStack>

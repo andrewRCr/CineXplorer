@@ -39,7 +39,7 @@ export function InteractiveListsSection() {
               <HStack justify="space-between">
                 <VStack align="start" gap={0}>
                   <Text fontWeight="medium">List Item (Hover)</Text>
-                  <Text fontSize="xs" color="on-muted">Hover to see layer-hover-01 (8% overlay)</Text>
+                  <Text fontSize="xs" color="on-muted">Hover to see layer-hover-01 (12% overlay)</Text>
                 </VStack>
                 <Text fontSize="xs" color="foreground/60" fontFamily="mono">layer-hover-01</Text>
               </HStack>
@@ -57,7 +57,7 @@ export function InteractiveListsSection() {
               <HStack justify="space-between">
                 <VStack align="start" gap={0}>
                   <Text fontWeight="medium">List Item (Selected)</Text>
-                  <Text fontSize="xs" color="on-muted">Selected state with 12% overlay</Text>
+                  <Text fontSize="xs" color="on-muted">Selected state with 16% overlay</Text>
                 </VStack>
                 <Text fontSize="xs" color="foreground/60" fontFamily="mono">layer-selected-01</Text>
               </HStack>
@@ -77,7 +77,7 @@ export function InteractiveListsSection() {
               <HStack justify="space-between">
                 <VStack align="start" gap={0}>
                   <Text fontWeight="medium">List Item (Active)</Text>
-                  <Text fontSize="xs" color="on-muted">Click to see layer-active-01 (12% overlay)</Text>
+                  <Text fontSize="xs" color="on-muted">Click to see layer-active-01 (16% overlay)</Text>
                 </VStack>
                 <Text fontSize="xs" color="foreground/60" fontFamily="mono">layer-active-01</Text>
               </HStack>

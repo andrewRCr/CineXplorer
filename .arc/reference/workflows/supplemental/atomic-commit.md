@@ -162,11 +162,19 @@ steps:
   **IMPORTANT:** If using a qualifier, the commit body MUST describe what the extra planning/maintenance work was.
   The qualifier is a flag that says "there's more here," but the body provides the details.
 
-  **Incidental without dedicated task list:**
+  **Incidental - discovered during task work:**
 
   ```bash
   Context: tasks-[parent-filename].md (incidental - discovered during Task X.Y)
   ```
+
+  **Incidental - discovered during code review:**
+
+  ```bash
+  Context: tasks-[exact-filename].md (incidental - discovered during code review)
+  ```
+
+  Use for fixes/improvements discovered during local or PR code review (pre-merge refinements).
 
   **Task list planning/maintenance:**
 
@@ -261,7 +269,7 @@ steps:
   Context: tasks-filter-integration-testing.md (Task 3.6)
   ```
 
-  ### Incidental Without Task List
+  ### Incidental - Discovered During Task
 
   ```
   style(types): fix variable naming convention
@@ -270,6 +278,18 @@ steps:
   - Resolves ruff N806 violation
 
   Context: tasks-pagination-buffer-tracking.md (incidental - discovered during Task 2.1)
+  ```
+
+  ### Incidental - Discovered During Code Review
+
+  ```
+  fix(recipes): correct radio slot documentation
+
+  - Fixed itemIndicator slot comment (was "indicator")
+  - Added explicit layer="01" props to auth form inputs
+  - Added TODO for MovieDetail button variant refactoring
+
+  Context: tasks-chakra-recipe-system-implementation.md (incidental - discovered during code review)
   ```
 
   ### Planning Work - New Task List

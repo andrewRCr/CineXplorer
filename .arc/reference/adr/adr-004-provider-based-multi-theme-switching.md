@@ -283,4 +283,4 @@ We will implement multi-theme switching using provider-based system recreation:
 
 - Implementation: `frontend/src/theme/index.ts`
 - Investigation Notes: `notes-theme-system-modernization.md` (2400+ lines, Task 4.1.5a-4.1.5b)
-- Strategy: `../strategies/project/style/strategy-semantic-tokens.md` (token usage guide)
+- Strategy: `../strategies/project/style/strategy-color-tokens.md` (token reference and naming)

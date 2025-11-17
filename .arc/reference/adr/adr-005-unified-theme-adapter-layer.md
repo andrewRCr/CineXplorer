@@ -327,7 +327,7 @@ Estimated effort: 15-21 hours over 2-3 sessions
 
 - Monitor token usage in components (are all ~40 tokens valuable?)
 - Deprecate consistently unused tokens after 6 months
-- Update strategy-semantic-tokens.md with adapter pattern guidance
+- Update strategy-color-tokens.md with adapter pattern guidance
 - Create "Adding a new theme" guide using adapter pattern
 
 ### Lessons for Future
@@ -363,4 +363,4 @@ Estimated effort: 15-21 hours over 2-3 sessions
 - Task List: `.arc/active/incidental/tasks-theme-definition-semantic-corrections.md`
 - Research Notes: `.arc/active/incidental/notes-theme-definition-semantic-corrections.md`
 - Original Research: `.arc/active/incidental/notes-theme-system-modernization.md` (Phase 4.4.4)
-- Strategy (will update): `.arc/reference/strategies/project/style/strategy-semantic-tokens.md`
+- Strategy: `.arc/reference/strategies/project/style/strategy-color-tokens.md` (token architecture and naming)

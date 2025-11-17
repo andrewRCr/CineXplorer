@@ -9,7 +9,8 @@ work in these domains.
 
 **Style & Design:**
 
-- `project/style/strategy-semantic-tokens.md` - Color theme tokens, button patterns, form controls, interaction states
+- `project/style/strategy-component-styling.md` - Component building patterns, recipes, wrappers, interaction states
+- `project/style/strategy-color-tokens.md` - Color token reference, naming conventions, accessibility standards
 - `project/style/strategy-layout-tokens.md` - Layout system, spacing, breakpoints, structural tokens
 
 **Engineering:**

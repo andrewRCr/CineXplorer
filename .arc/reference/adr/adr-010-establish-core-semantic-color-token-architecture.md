@@ -321,7 +321,7 @@ accent: palette.fg_accent,  // Alias during migration
 **3. Documentation Debt**
 
 - ADR-010 needs complete rewrite ✅
-- strategy-semantic-tokens.md needs major updates
+- strategy-color-tokens.md needs major updates
 - All adapter files need comprehensive inline documentation
 - Task list needs restructuring
 
@@ -352,8 +352,8 @@ accent: palette.fg_accent,  // Alias during migration
 
 1. ✅ Rename ADR-010 to reflect full scope
 2. ✅ Completely rewrite ADR-010 with correct architecture
-3. ⏳ Update strategy-semantic-tokens.md with new hierarchy
-4. ⏳ Update task list with structured implementation tasks
+3. ✅ Update strategy-color-tokens.md with new hierarchy
+4. ✅ Update task list with structured implementation tasks
 
 ### Phase 2: Revert Incorrect Changes
 
@@ -423,7 +423,8 @@ accent: palette.fg_accent,  // Alias during migration
 
 **Related Strategies:**
 
-- strategy-semantic-tokens.md (comprehensive token usage guide, includes border patterns and focus states)
+- strategy-color-tokens.md (comprehensive token reference, naming conventions, accessibility standards)
+- strategy-component-styling.md (component building patterns, recipes, wrappers)
 
 ---
 

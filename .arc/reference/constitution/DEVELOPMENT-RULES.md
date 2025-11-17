@@ -137,7 +137,7 @@ during initialization).
 **Process:**
 
 1. Identify if your work touches a domain with codified guidance (theming, auth, testing, layout, etc.)
-2. Grep the strategy doc for your specific topic (e.g., `grep -i "form controls" strategy-semantic-tokens.md`)
+2. Grep the strategy doc for your specific topic (e.g., `grep -i "button patterns" strategy-component-styling.md`)
 3. Read relevant section(s) before implementing
 4. Follow documented patterns and token usage
 

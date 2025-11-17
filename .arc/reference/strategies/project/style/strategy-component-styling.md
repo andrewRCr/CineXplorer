@@ -1,29 +1,31 @@
-# Semantic Token Strategy
+# Component Styling Strategy
 
-**Version:** 2.2 | **Updated:** 2025-11-12 | **Status:** Active
+**Version:** 1.0 | **Updated:** 2025-11-17 | **Status:** Active
 
 ## Purpose
 
-Quick reference guide for choosing the correct semantic token when building UI components in CineXplorer.
-Organized by use case ("what are you building?") rather than token category.
+Guide for building UI components in CineXplorer using Chakra UI v3 recipes, wrapper components, and semantic tokens.
+Organized by component type ("what are you building?") rather than token category.
 
 **Use this when:**
 
-- Building a new component and need to choose colors
-- Converting hardcoded colors to semantic tokens
+- Building a new component and need to choose correct patterns
 - Implementing buttons, forms, status indicators, or interactive elements
-- Understanding which token provides the right semantic meaning
+- Understanding which recipe variant or wrapper to use
+- Converting hardcoded styles to semantic patterns
 
-**For deep dives:**
+**For color token reference:**
 
+- **Color tokens**: See [Color Token System](./strategy-color-tokens.md)
 - **Layout dimensions**: See [Layout Token Strategy](./strategy-layout-tokens.md)
-- **Architectural decisions**: See ADRs 005-012 in `.arc/reference/adr/`
+- **Architectural decisions**: See ADRs 005-016 in `.arc/reference/adr/`
 
 **Not covered here:**
 
+- Token naming conventions (see Color Token System)
+- Accessibility contrast requirements (see Color Token System)
 - Theme implementation (see ADR-005: Unified Theme Adapter Layer)
 - Adding new themes (see theme adapter files in `frontend/src/theme/color/adapters/`)
-- Migration guides (historical - see ADRs for context if needed)
 
 ---
 
@@ -35,10 +37,9 @@ Organized by use case ("what are you building?") rather than token category.
 4. [Building Status Indicators](#building-status-indicators)
 5. [Building Interactive Elements](#building-interactive-elements)
 6. [Building Movie-Specific UI](#building-movie-specific-ui)
-7. [Brand Identity](#brand-identity)
-8. [Accessibility Standards](#accessibility-standards)
-9. [Common Patterns](#common-patterns)
-10. [Developer Quick Reference](#developer-quick-reference)
+7. [Common Patterns](#common-patterns)
+8. [Common Mistakes and Anti-Patterns](#common-mistakes-and-anti-patterns)
+9. [Related Documentation](#related-documentation)
 
 ---
 
@@ -49,42 +50,42 @@ Organized by use case ("what are you building?") rather than token category.
 ```
 What am I styling?
 ├─ Status/feedback indicator? → [Status Indicators](#building-status-indicators)
-│  ├─ Success: success / on-success
-│  ├─ Warning: warning / on-warning
-│  ├─ Error: destructive / on-destructive
-│  └─ Info: info / on-info
+│  ├─ Success: Alert/Badge with status="success"
+│  ├─ Warning: Alert/Badge with status="warning"
+│  ├─ Error: Alert/Badge with status="error"
+│  └─ Info: Alert/Badge with status="info"
 │
 ├─ Button or action? → [Building Buttons](#building-buttons)
-│  ├─ Primary action (highest emphasis): primary / on-primary + solid variant
-│  ├─ Branded outline action: button-outline-primary / on-button-outline-primary
-│  ├─ Utility/navigation: button-outline / on-button-outline
-│  ├─ Embedded control: button-subtle / on-button-subtle
-│  └─ Dismissive action: tertiary (ghost variant)
+│  ├─ Primary action (highest emphasis): variant="solid"
+│  ├─ Paired secondary action: variant="secondary"
+│  ├─ Standalone utility/navigation: variant="outline"
+│  ├─ Embedded control: variant="subtle"
+│  └─ Dismissive action: variant="ghost"
 │
 ├─ Surface/container? → [Building Surfaces](#building-surfaces)
-│  ├─ Page background: background / foreground
-│  ├─ Card/panel (1st elevation): layer-01
-│  ├─ Modal/dialog (2nd elevation): layer-02
-│  └─ Dropdown over modal (3rd elevation): layer-03
+│  ├─ Page background: bg="background"
+│  ├─ Card/panel (1st elevation): bg="layer-01"
+│  ├─ Modal/dialog (2nd elevation): bg="layer-02"
+│  └─ Dropdown over modal (3rd elevation): bg="layer-03"
 │
 ├─ Interactive text/link? → [Interactive Elements](#building-interactive-elements)
-│  └─ Links/focus/highlights: tertiary / tertiary-hover
+│  └─ Use TextLink component or tertiary tokens
 │
-├─ Movie rating/badge? → [Movie UI](#building-movie-specific-ui)
-│  ├─ TMDB scores: success/info/warning (threshold-based)
-│  ├─ User rating stars: imdb-gold (icon color)
-│  └─ Genre tags: badge / on-badge
+├─ Form input? → [Interactive Elements](#building-interactive-elements)
+│  ├─ Text input: StyledInput wrapper
+│  ├─ Textarea: StyledTextarea wrapper
+│  ├─ Select: Chakra Select with recipe
+│  ├─ Checkbox: Chakra Checkbox with recipe
+│  ├─ Radio: Chakra RadioGroup with recipe
+│  └─ Switch: Chakra Switch with recipe
 │
-├─ Border/input/focus? → [UI Elements](#ui-element-tokens)
-│  ├─ Borders: border-strong-01 (or see Border Strategy for hierarchy)
-│  ├─ Input fields: input
-│  └─ Focus indicators: ring
-│
-└─ Brand/logo? → [Brand Identity](#brand-identity)
-   └─ Use brand tokens sparingly (logo, special moments only)
+└─ Movie rating/badge? → [Movie UI](#building-movie-specific-ui)
+   ├─ TMDB scores: Badge variants (success/info/warning)
+   ├─ User rating stars: imdb-gold token
+   └─ Genre tags: Badge variant="neutral"
 ```
 
-**Still unsure?** Check the [Developer Quick Reference](#developer-quick-reference) at the end.
+**Still unsure?** Check the [Color Token System](./strategy-color-tokens.md) for detailed token reference.
 
 ---
 
@@ -269,12 +270,12 @@ but their implementation differs by mode:
 
 **Available interaction tokens per layer:**
 
-- `layer-hover-01` / `layer-hover-02` - Hover states (8% opacity overlay)
+- `layer-hover-01` / `layer-hover-02` - Hover states (12% opacity overlay)
 - `layer-selected-01` / `layer-selected-02` - Selected states (12% opacity overlay)
-- `layer-active-01` / `layer-active-02` - Active/pressed states (12% opacity overlay)
+- `layer-active-01` / `layer-active-02` - Active/pressed states (16% opacity overlay)
 
-**Implementation:** Uses Material Design 3's opacity overlay approach (see ADR-009). All themes use identical 8%/12%
-opacity values for consistency.
+**Implementation:** Uses improved opacity overlay approach (see ADR-016). Solid surfaces use 12% hover / 16% active
+for better visibility compared to Material Design 3's baseline 8%/12%.
 
 ---
 
@@ -487,20 +488,6 @@ The recipe handles this automatically.
 
 **Why the difference?** `on-*` tokens are designed for solid fills. On subtle tints, semantic color provides emphasis
 while foreground maintains readability across all themes.
-
-### Token Naming Convention (ADR-011)
-
-All foreground tokens use `on-*` prefix (Material Design 3 convention):
-
-```tsx
-// ✅ Correct (canonical naming)
-<Badge bg="success" color="on-success">Active</Badge>
-
-// ❌ Deprecated (old naming - avoid in new code)
-<Badge bg="success" color="success-foreground">Active</Badge>
-```
-
-**Pattern:** `on-{color}` clearly indicates "text that goes ON a colored background".
 
 ---
 
@@ -963,44 +950,6 @@ Switches use Chakra UI v3 recipes. The recipe handles all styling automatically.
 
 **Recipe reference:** `frontend/src/theme/recipes/switch.ts`
 
-### Muted/Deemphasized Text
-
-**For secondary information:**
-
-```tsx
-<VStack align="start">
-  <Text color="foreground">Primary heading</Text>
-  <Text color="on-muted" fontSize="sm">
-    Last updated 2 hours ago
-  </Text>
-</VStack>
-```
-
-**Token:**
-
-- `on-muted` - Secondary text, labels, captions, timestamps
-
-**Distinction:**
-
-- `foreground` - Primary text on backgrounds
-- `on-muted` - Deemphasized, secondary text (not disabled - use opacity for disabled)
-
-### Tertiary vs Accent Naming
-
-**Canonical:** Use `tertiary` for new code (Material Design 3-aligned)
-**Deprecated:** `accent` is an alias maintained for backward compatibility
-
-```tsx
-// ✅ Preferred (canonical naming)
-<Link color="tertiary">Learn more</Link>
-
-// ⚠️ Works but deprecated (old naming)
-<Link color="accent">Learn more</Link>
-```
-
-**Rationale:** "Tertiary" indicates position in hierarchy (Primary > Secondary > Tertiary), while "accent" is ambiguous.
-Industry trend is toward Material's naming.
-
 ---
 
 ## Building Movie-Specific UI
@@ -1025,7 +974,7 @@ CineXplorer extends the base semantic token system with movie app-specific token
 <Badge variant="warning">4.1</Badge>
 ```
 
-**Tokens:** Uses status color pairs (`success`/`on-success`, `info`/`on-info`, `warning`/`on-warning`)
+**Tokens:** Uses Badge recipe with status variants (`success`, `info`, `warning`)
 
 **Use cases:** TMDB community scores, aggregated ratings from external sources
 
@@ -1052,14 +1001,14 @@ CineXplorer extends the base semantic token system with movie app-specific token
 </HStack>
 ```
 
-**Tokens:** Uses `badge` / `on-badge` (recipe handles automatically)
+**Tokens:** Uses Badge recipe with `neutral` variant (recipe handles `badge` / `on-badge` tokens automatically)
 
 **Use cases:** Genre tags, content ratings, non-semantic labels
 
 **Distinction:**
 
-- `badge` - Neutral categorization (genre, rating)
-- Status colors - Semantic feedback (success, warning, error)
+- `neutral` variant - Neutral categorization (genre, rating)
+- Status variants - Semantic feedback (success, warning, error)
 
 ### Drag and Drop Interactions
 
@@ -1092,206 +1041,6 @@ CineXplorer extends the base semantic token system with movie app-specific token
 - `drop-zone` - Valid drop target (subtle success/accent tint)
 
 **Use cases:** Watchlist reordering, favorites organization, drag-and-drop interactions
-
----
-
-## Brand Identity
-
-Brand tokens represent logo/brand identity colors, separate from UI functional colors (see ADR-010).
-
-### When to Use Brand Tokens
-
-**Use brand tokens for:**
-
-- Logo sections (tanuki logo, brand marks)
-- Special brand moments (hero sections, marketing pages)
-- Company-specific UI elements
-
-**Do NOT use brand tokens for:**
-
-- General component styling (use `primary`/`secondary`/`tertiary`)
-- Action buttons (use `primary`)
-- Interactive text (use `tertiary`)
-
-### Brand Token System
-
-**Available tokens (all optional):**
-
-```tsx
-// Primary brand color (logo, brand identity)
-<Box bg="brand" color="on-brand">
-  GitLab Logo Section
-</Box>
-
-// Secondary brand color (additional brand accents)
-<Box bg="brandSecondary" color="on-brandSecondary">
-  Secondary Brand Element
-</Box>
-
-// Tertiary brand color (for complex multi-color identities like GitLab tanuki)
-<Box bg="brandTertiary" color="on-brandTertiary">
-  Tertiary Brand Element
-</Box>
-```
-
-**Tokens:**
-
-- `brand` / `on-brand` - Primary brand identity color
-- `brandSecondary` / `on-brandSecondary` - Secondary brand color
-- `brandTertiary` / `on-brandTertiary` - Tertiary brand color (rare)
-
-### Brand vs Primary Distinction
-
-**Key principle:** Brand = identity, Primary = UI actions (may be same color)
-
-**Example: IBM Carbon**
-
-- `brand`: Blue (#0f62fe) - IBM identity color
-- `primary`: Blue (#0f62fe) - Same color, but semantic meaning differs
-- `tertiary`: Blue (#0f62fe) - Same color, used for links
-
-All three tokens have the same visual appearance but different semantic purposes.
-
-**Example: GitLab Pajamas**
-
-- `brand`: Purple (#554488) - GitLab identity
-- `brandSecondary`: Orange (#e24329) - Tanuki logo accent
-- `primary`: Blue (#1f75cb) - UI action buttons (NOT brand color)
-- `tertiary`: Purple (#7759c2) - Links (happens to be brand-aligned but semantically different)
-
-**Example: GitHub Primer**
-
-- `brand`: undefined - No brand color (black/white logo)
-- `primary`: Green (#1f883d) - UI actions
-- `tertiary`: Blue (#0969da) - Links
-
-### Theme-Specific Availability
-
-| Theme                 | brand     | brandSecondary | brandTertiary   |
-|-----------------------|-----------|----------------|-----------------|
-| **GitHub Primer**     | undefined | undefined      | undefined       |
-| **IBM Carbon**        | Blue      | undefined      | undefined       |
-| **GitLab Pajamas**    | Purple    | Orange         | Orange (darker) |
-| **Material Design 3** | Purple    | undefined      | undefined       |
-
-**Note:** Brand tokens are optional - not all themes have brand identity colors separate from UI colors.
-
----
-
-## Accessibility Standards
-
-All semantic tokens must meet WCAG accessibility guidelines for contrast and visibility.
-
-### Contrast Requirements
-
-**WCAG AA (Required for CineXplorer):**
-
-- **Normal text:** 4.5:1 contrast ratio minimum
-    - Body text, labels, descriptions
-    - Most common use case
-
-- **Large text & UI components:** 3:1 contrast ratio minimum
-    - Text 18pt+ (or 14pt+ bold)
-    - Borders, focus indicators, interactive element boundaries
-    - Icons and graphical elements
-
-**WCAG AAA (Aspirational):**
-
-- **Normal text:** 7:1 contrast ratio
-- **Large text:** 4.5:1 contrast ratio
-- Provides better readability for users with low vision
-
-### Testing Contrast
-
-**Before using token combinations:**
-
-1. Test foreground/background pairs with WebAIM Contrast Checker
-2. Verify both light and dark mode variants
-3. Document any tokens requiring adjustment
-4. Prioritize text tokens (foreground, on-muted, `on-*` pairs)
-
-**Common failures:**
-
-- `on-muted` often fails in light mode (insufficient contrast)
-- `info` backgrounds with white text in light mode
-- `warning` with dark text in dark mode
-
-### Border Contrast Requirements (WCAG SC 1.4.11)
-
-**All border colors must meet minimum contrast:**
-
-- **Interactive element borders:** 3:1 minimum contrast ratio with adjacent backgrounds
-- **Recommended:** 4.5:1 for better visibility across all conditions
-- **Applies to:** Input fields, buttons, checkboxes, radio buttons, cards with borders
-
-**Testing Example:**
-
-```typescript
-// Light mode - checking border on white background
-background: '#FFFFFF' (luminance = 1.0)
-border: '#D4D4D4' (luminance ≈ 0.75)
-contrast = (1.0 + 0.05) / (0.75 + 0.05) = 1.31:1 ❌ FAIL
-
-// Need darker border for compliance
-border: '#767676' (luminance ≈ 0.27)
-contrast = (1.0 + 0.05) / (0.27 + 0.05) = 3.28:1 ✅ PASS
-```
-
-**Tool:** Use [WebAIM Contrast Checker](https://webaim.org/resources/contrastchecker/) for validation
-
-**Important:** Border width does NOT compensate for poor contrast. A 1px border with 4.5:1 contrast is more
-accessible than a 2px border with 2:1 contrast. WCAG has no trade-off mechanism - always prioritize contrast
-ratio over thickness.
-
-**Non-interactive boundaries (cards, dividers):**
-
-- 3:1 contrast recommended but not strictly required
-- Can be more subtle since not interactive
-- Use shadow as alternative if border doesn't meet contrast
-
-### Color Alone Is Not Enough
-
-**Never rely on color as the only means of conveying information.** Always pair color with icons, text labels, patterns,
-or layout cues.
-
-**Bad:**
-
-```tsx
-❌ <Text color="on-destructive">Error occurred</Text>
-```
-
-**Good:**
-
-```tsx
-✅ <HStack>
-     <Icon name="warning" color="on-destructive" />
-     <Text color="on-destructive">Error occurred</Text>
-   </HStack>
-```
-
-### Focus Indicators
-
-**Required for keyboard navigation:**
-
-- Always visible (never `outline: none`)
-- High contrast (use `ring` token)
-- Sufficient size (2px minimum, 2px offset)
-
-All interactive components use keyboard-only focus rings (see button/form recipes for implementation).
-
-**WCAG 2.4.13:** Focus indicators must have ≥3:1 contrast change from unfocused state.
-
-### Interactive Element Sizing
-
-**Minimum touch target:** 48×48 pixels (WCAG guideline)
-
-```tsx
-// ❌ Too small (24×24px)
-<Button size="xs">Click</Button>
-
-// ✅ Minimum size (48×48px)
-<Button size="sm">Click</Button>
-```
 
 ---
 
@@ -1391,111 +1140,6 @@ Manual overlays use MD3 baseline 8%/12% (secondary/outline/ghost button variants
 ```
 
 **Combines:** Background change + shadow increase + subtle lift
-
----
-
-## Developer Quick Reference
-
-Fast lookup cheat sheet for common token choices.
-
-### By Use Case
-
-| What are you building? | Token(s)                                               | Example                                                        |
-|------------------------|--------------------------------------------------------|----------------------------------------------------------------|
-| Page background        | `background` / `foreground`                            | `<Box bg="background">`                                        |
-| Card/panel             | `layer-01` + `foreground`                              | `<Card bg="layer-01">`                                         |
-| Modal                  | `layer-02` + `foreground`                              | `<Modal.Content bg="layer-02">`                                |
-| Dropdown over modal    | `layer-03` + `foreground`                              | `<Menu.Content bg="layer-03">`                                 |
-| Primary button         | `primary` / `on-primary`                               | `<Button variant="solid">`                                     |
-| Neutral outline button | `button-outline` / `on-button-outline`                 | `<Button variant="outline">`                                   |
-| Branded outline button | `button-outline-primary` / `on-button-outline-primary` | `<Button borderColor="button-outline-primary">`                |
-| Subtle button          | `button-subtle` / `on-button-subtle`                   | `<Button variant="subtle">`                                    |
-| Ghost button           | `tertiary`                                             | `<Button variant="ghost">`                                     |
-| Link/interactive text  | `tertiary` / `tertiary-hover`                          | `<Link color="tertiary" _hover={{ color: "tertiary-hover" }}>` |
-| Success alert          | `success` / `on-success`                               | `<Alert.Root status="success">`                                |
-| Warning alert          | `warning` / `on-warning`                               | `<Alert.Root status="warning">`                                |
-| Error alert            | `destructive` / `on-destructive`                       | `<Alert.Root status="error">`                                  |
-| Info alert             | `info` / `on-info`                                     | `<Alert.Root status="info">`                                   |
-| TMDB score (high)      | `success` / `on-success`                               | `<Badge variant="success">8.2</Badge>` (≥7.5)                  |
-| TMDB score (medium)    | `info` / `on-info`                                     | `<Badge variant="info">6.5</Badge>` (5.0-7.4)                  |
-| TMDB score (low)       | `warning` / `on-warning`                               | `<Badge variant="warning">4.1</Badge>` (<5.0)                  |
-| User rating stars      | `imdb-gold`                                            | `<Text color="imdb-gold">★★★★☆</Text>`                         |
-| Genre tag              | `badge` / `on-badge`                                   | `<Badge variant="neutral">Action</Badge>`                      |
-| Secondary text         | `on-muted`                                             | `<Text color="on-muted">`                                      |
-| Border                 | `border-strong-01`                                     | `<Card borderColor="border-strong-01">`                        |
-| Input field            | `input`                                                | `<Input borderColor="input">`                                  |
-| Focus ring             | `ring`                                                 | `outlineColor="ring"`                                          |
-
-### Token Count by Category
-
-**Total canonical tokens:** ~67 (across UnifiedTheme interface)
-
-**Breakdown:**
-
-- **Core structure:** 7 (background, foreground, layer-01/02/03, popover pair)
-- **Border hierarchy:** 5 (border-subtle-00/02, border-strong-01/02/03)
-- **Shadows:** 3 (shadow-sm/md/lg)
-- **Layer interactions:** 6 (layer-hover/selected/active × 2 layers)
-- **Semantic colors:** 8 (primary, secondary, tertiary, muted with `on-*` pairs)
-- **Button patterns:** 8 (outline/outline-primary/subtle/subtle-selected with `on-*` pairs)
-- **Status colors:** 8 (success, warning, destructive, info with `on-*` pairs)
-- **Brand colors:** 6 optional (brand/brandSecondary/brandTertiary with `on-*` pairs)
-- **Color interactions:** 6 (primary/secondary/tertiary hover/active)
-- **Movie-specific:** 6 (rating, badge, drag-active, drop-zone pairs)
-- **UI elements:** 3 (border, input, ring)
-- **Deprecated aliases:** 8 (during ADR-011 migration)
-
-**Note:** Recipes centralize many tokens - consult recipe files for implementation details.
-
-### Anti-Patterns to Avoid
-
-**Never hardcode colors:**
-
-```tsx
-❌ color="red.600"
-❌ bg="#4299e1"
-❌ borderColor="blue.200"
-❌ style={{ color: "#FF0000" }}
-```
-
-**Never use Chakra raw color tokens:**
-
-```tsx
-❌ <Text color="red.600">Error</Text>
-❌ <Box bg="gray.100">Container</Box>
-❌ <Badge colorScheme="blue">Info</Badge>
-```
-
-**Never bypass semantic system silently:**
-
-```tsx
-❌ // No comment explaining why
-    <Box bg="#F5C518">Rating</Box>
-```
-
-**Always use semantic tokens:**
-
-```tsx
-✅ <Text color="on-destructive">Error</Text>
-✅ <Box bg="muted">Container</Box>
-✅ <Badge variant="info">New</Badge>
-✅ <Badge variant="success">8.2</Badge> {/* TMDB high score */}
-✅ <Text color="imdb-gold">★★★★☆</Text> {/* User rating stars */}
-```
-
-### Quick Decision Flowchart
-
-```
-1. Status/alert? → success/warning/destructive/info + on-*
-2. Button? → Check emphasis hierarchy (solid/outline/subtle/ghost)
-3. Surface? → background/layer-01/layer-02/layer-03
-4. Interactive text? → tertiary + tertiary-hover
-5. TMDB score? → Badge variant based on threshold (success/info/warning)
-6. User rating stars? → imdb-gold (icon color)
-7. Neutral badge? → badge + on-badge
-8. Border? → border-strong-01 (or see Border Strategy)
-9. Focus? → ring
-```
 
 ---
 
@@ -1617,20 +1261,36 @@ structural containers use `border-strong-*` hierarchy, decorative elements use `
 
 ## Related Documentation
 
-**For deep dives:**
+**For color token reference:**
 
+- [Color Token System](./strategy-color-tokens.md) - Token naming, accessibility standards, token architecture
 - [Layout Token Strategy](./strategy-layout-tokens.md) - Structural dimensions, z-index
+
+**For recipe implementation:**
+
+- `frontend/src/theme/recipes/button.ts` - Button variants and interaction states
+- `frontend/src/theme/recipes/alert.ts` - Alert status indicators
+- `frontend/src/theme/recipes/badge.ts` - Badge variants
+- `frontend/src/theme/recipes/select.ts` - Select dropdown styling
+- `frontend/src/theme/recipes/checkbox.ts` - Checkbox styling
+- `frontend/src/theme/recipes/radio.ts` - Radio button styling
+- `frontend/src/theme/recipes/switch.ts` - Switch/toggle styling
+
+**For wrapper components:**
+
+- `frontend/src/components/common/StyledInput.tsx` - Text input wrapper
+- `frontend/src/components/common/StyledTextarea.tsx` - Textarea wrapper
+- `frontend/src/components/common/TextLink.tsx` - React Router link wrapper
 
 **For architectural context:**
 
 - ADR-005: Unified Theme Adapter Layer (adapter architecture)
 - ADR-006: Adopt Carbon Layer Elevation Standard (layer system)
-- ADR-007: Use Chakra Theme Tokens for Layout Constants (layout tokens)
 - ADR-008: Adopt Carbon Light Alternating Layers (light mode pattern)
 - ADR-009: Use Material Design Opacity Overlays (interaction states)
-- ADR-010: Establish Core Semantic Color Token Architecture (primary/secondary/tertiary hierarchy)
-- ADR-011: Standardize on "on-color" Foreground Naming (on-* prefix)
 - ADR-012: Separate Button Pattern Semantics (button helper tokens)
+- ADR-015: Use Border-Only Focus Indicators for Text Inputs
+- ADR-016: Improve Interaction State Contrast (12%/16% opacity values)
 
 **For implementation:**
 
@@ -1642,19 +1302,6 @@ structural containers use `border-strong-*` hierarchy, decorative elements use `
 
 **Version History:**
 
-- v2.3 (2025-11-12): Added Common Mistakes section from Phase 7.1 audit findings. Added TextLink component documentation
-  for React Router integration. Enhanced ghost button hover pattern with explicit bg change requirement. Enhanced outline
-  button hover pattern with all three property changes. Added border token decision tree. Updated based on 59-component
-  audit (69 violations identified, zero token gaps).
-- v2.2 (2025-11-12): Consolidated border system content from strategy-border-system.md (now deleted). Added: border
-  width standards table, 2-tier/5-tier hierarchy explanation (ADR-008), border contrast WCAG requirements, focus
-  pattern comparison (outline ring vs border width). Updated checkbox/radio examples with borderWidth="2px".
-- v2.1 (2025-11-11): Alert text color pattern documented (Title: semantic color, Description: foreground on
-  10-30% opacity backgrounds). Link underline thickness corrected to 1px browser default.
-- v2.0 (2025-11-11): Complete rewrite - use case-driven organization, ~67 tokens, ADRs 005-012 integrated, migration
-  content removed
-- v1.2 (2025-11-07): Added ADR-011 on-* naming convention
-- v1.1 (2025-11-03): Verified accuracy, added ADR-004 reference
-- v1.0 (2025-11-02): Initial comprehensive guide
-
-**Document Status:** Active - Post-migration reference guide (temporal migration content removed)
+- v1.0 (2025-11-17): Initial split from strategy-semantic-tokens.md v2.2. Focused on component building patterns,
+  recipes, and wrappers. Color token reference, accessibility standards, and developer quick reference moved to
+  strategy-color-tokens.md.

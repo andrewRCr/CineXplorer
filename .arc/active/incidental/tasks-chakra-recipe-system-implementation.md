@@ -834,7 +834,9 @@ components instead (like TextLink pattern for special cases). Only Select.Trigge
     - Partially supersedes ADR-009 (methodology preserved, percentages improved)
     - Based on empirical A/B testing across 8 theme/mode combinations
 
-- [ ] **6.2 Update strategy-semantic-tokens.md**
+- [x] **6.2 Update strategy-semantic-tokens.md**
+
+    **Completed:** Strategy doc updated and split into two focused documents (strategy-component-styling.md and strategy-color-tokens.md)
 
     **Goal:** Transform strategy doc to use recipe-focused guidance (leaner, more semantic).
 
@@ -1004,7 +1006,9 @@ components instead (like TextLink pattern for special cases). Only Select.Trigge
 
         **Detailed breakdown documented in task 6.2.f below**
 
-    - [ ] **6.2.f Update non-component sections and split into two strategy docs**
+    - [x] **6.2.f Update non-component sections and split into two strategy docs**
+
+        **Completed:** All content updates applied and document successfully split into two focused strategy docs
 
         **Goal:** Apply recipe-era updates to remaining sections, then split into two focused docs with clear boundaries.
 
@@ -1012,7 +1016,9 @@ components instead (like TextLink pattern for special cases). Only Select.Trigge
         - Read evaluation findings in 6.2.e completion notes above
         - Current doc: `.arc/reference/strategies/project/style/strategy-semantic-tokens.md` (1757 lines)
 
-        - [ ] **6.2.f.1 Apply content updates (do BEFORE split)**
+        - [x] **6.2.f.1 Apply content updates (do BEFORE split)**
+
+            **Completed:** All 6 subtasks (a-f) completed and committed (commit 0394300)
 
             - [x] **6.2.f.1.a Update Movie Ratings section (lines 1010-1042)** ✅
 
@@ -1077,145 +1083,76 @@ components instead (like TextLink pattern for special cases). Only Select.Trigge
                 **C. Kept as-is** - React Router Link Integration, Deprecated Token Aliases, Border Token
                 Confusion (still relevant)
 
-        - [ ] **6.2.f.2 Execute document split**
+        - [x] **6.2.f.2 Execute document split**
 
-            - [ ] **6.2.f.2.a Create `strategy-component-styling.md`**
+            **Completed:** Successfully split strategy-semantic-tokens.md into two focused documents
 
-                **Content to include (in order):**
+            - [x] **6.2.f.2.a Create `strategy-component-styling.md`**
 
-                1. **New front matter:**
-                   - Purpose: "Guide for building UI components using recipes, wrappers, and semantic tokens"
-                   - Scope: Component patterns, app-specific UI, interaction patterns
+                **Completed:** Created comprehensive component styling guide (962 lines) with:
+                - Component-focused front matter and quick decision tree
+                - Building Surfaces, Buttons, Status Indicators, Interactive Elements (all with recipe references)
+                - Building Movie-Specific UI (TMDB ratings, genre badges, drag/drop)
+                - Common Patterns (interaction states, opacity overlays, card elevation)
+                - Common Mistakes (React Router, focus states, deprecated tokens, border confusion)
+                - Related Documentation with cross-refs to color token system and recipes
 
-                2. **From current doc (lines 91-964):**
-                   - Building Surfaces
-                   - Building Buttons ✅
-                   - Building Status Indicators ✅
-                   - Building Interactive Elements ✅
-                   - All subsections (form inputs, select, checkboxes, radio, switch)
+            - [x] **6.2.f.2.b Create `strategy-color-tokens.md`**
 
-                3. **From current doc (lines 1006-1098):**
-                   - Building Movie-Specific UI (WITH UPDATES from 6.2.f.1)
-                     - Movie Ratings ⚠️
-                     - Genre Tags ⚠️
-                     - Drag and Drop ✅
+                **Completed:** Created comprehensive color token reference guide (546 lines) with:
+                - Token-focused front matter emphasizing naming and accessibility
+                - Token Naming Conventions (synthesized from ADR-011, on-* prefix pattern, deprecated aliases)
+                - UnifiedTheme Interface Reference (~67 tokens organized by category)
+                - Text Color Semantics (muted text, tertiary vs accent)
+                - Brand Identity (when to use, brand vs primary distinction, theme-specific availability)
+                - Accessibility Standards (contrast requirements, border contrast, WCAG compliance)
+                - Developer Quick Reference (by use case table, token count, anti-patterns, flowchart)
+                - Related Documentation with cross-refs to component styling and ADRs
 
-                4. **From current doc (lines 1311-1427):**
-                   - Common Patterns (WITH UPDATES from 6.2.f.1)
-                     - Interaction State Philosophy ⚠️
-                     - Surface Hover Pattern ✅
-                     - Selected State Pattern ✅
-                     - Opacity Modifier Reference ⚠️
-                     - Card Elevation Pattern ✅
-                     - (Button Hover Pattern REMOVED)
+            - [x] **6.2.f.2.c Update cross-references**
 
-                5. **From current doc (lines 1532-1714):**
-                   - Common Mistakes (WITH UPDATES from 6.2.f.1)
-                     - React Router Link Integration ✅
-                     - Custom Focus States ⚠️
-                     - Deprecated Token Aliases ✅
-                     - Border Token Confusion ✅
-                     - (Incomplete Hover States REMOVED)
+                **Completed:** Updated all cross-references across documentation:
 
-                6. **New Related Documentation section:**
-                   - Cross-ref to `strategy-color-token-system.md`
-                   - Recipe file locations
-                   - ADR-015 (border-only focus)
-                   - ADR-016 (improved interaction states)
+                **New strategy files (created with cross-refs built-in):**
+                - ✅ strategy-component-styling.md → points to strategy-color-tokens.md
+                - ✅ strategy-color-tokens.md → points to strategy-component-styling.md
 
-                **Estimated size:** ~900 lines
+                **Updated strategy-layout-tokens.md:**
+                - ✅ Line 17: Updated to reference both new docs
+                - ✅ Added Related Documentation section with cross-refs
 
-            - [ ] **6.2.f.2.b Create `strategy-color-token-system.md`**
+                **Updated 5 ADR files (10 references total):**
+                - ✅ adr-005-unified-theme-adapter-layer.md (2 refs → strategy-color-tokens.md)
+                - ✅ adr-009-use-material-design-opacity-overlays.md (3 refs → strategy-component-styling.md)
+                - ✅ adr-004-provider-based-multi-theme-switching.md (1 ref → strategy-color-tokens.md)
+                - ✅ adr-012-separate-button-pattern-semantics.md (1 ref → strategy-component-styling.md)
+                - ✅ adr-010-establish-core-semantic-color-token-architecture.md (3 refs → both new docs)
 
-                **Content to include (in order):**
+                **Updated project documentation:**
+                - ✅ STRATEGY-INDEX.md: Replaced single entry with two new entries
+                - ✅ DEVELOPMENT-RULES.md: Updated grep example to use new filename
 
-                1. **New front matter:**
-                   - Purpose: "Reference for CineXplorer's color token system: naming conventions,
-                     accessibility standards, and quick lookup"
-                   - Scope: Token semantics, naming, WCAG compliance, token architecture
+                **Verification:** No orphaned references remain (archive references intentionally preserved as historical)
 
-                2. **From current doc (lines 966-1003):**
-                   - Muted/Deemphasized Text ✅
-                   - Tertiary vs Accent Naming ✅
+            - [x] **6.2.f.2.d Delete old file**
 
-                3. **From current doc (lines 1101-1182):**
-                   - Brand Identity ✅
-                     - When to Use Brand Tokens
-                     - Brand Token System
-                     - Brand vs Primary Distinction
-                     - Theme-Specific Availability
+                **Completed:** Deleted `strategy-semantic-tokens.md` successfully
+                - ✅ File removed from `.arc/reference/strategies/project/style/`
+                - ✅ Verified deletion (ls command shows only 2 new files + layout-tokens)
 
-                4. **From current doc (lines 1184-1309):**
-                   - Accessibility Standards (WITH UPDATES from 6.2.f.1)
-                     - Contrast Requirements ✅
-                     - Testing Contrast ✅
-                     - Border Contrast Requirements ✅
-                     - Color Alone Is Not Enough ✅
-                     - Focus Indicators ⚠️ (remove inline example)
-                     - Interactive Element Sizing ✅
+            - [x] **6.2.f.2.e Run quality gates**
 
-                5. **From current doc (lines 1429-1530):**
-                   - Developer Quick Reference (WITH UPDATES from 6.2.f.1)
-                     - By Use Case ⚠️ (update table)
-                     - Token Count by Category ⚠️ (add note about recipes)
-                     - Anti-Patterns to Avoid ✅
-                     - Quick Decision Flowchart ✅
+                **Completed:** All quality gates passed
 
-                6. **New sections to add:**
-                   - Token Naming Conventions (synthesize from ADR-011, existing content)
-                   - UnifiedTheme Interface Reference (point to source of truth)
+                **Markdown linting:**
+                - ✅ strategy-component-styling.md: 0 errors
+                - ✅ strategy-color-tokens.md: 0 errors
 
-                7. **Related Documentation:**
-                   - Cross-ref to `strategy-component-styling.md`
-                   - Cross-ref to `strategy-layout-tokens.md`
-                   - ADR index (005-012, 015, 016)
-                   - UnifiedTheme interface location
-
-                **Estimated size:** ~600 lines
-
-            - [ ] **6.2.f.2.c Update cross-references**
-
-                **In `strategy-component-styling.md`:**
-                - Add note at top: "For token naming and accessibility standards, see strategy-color-token-system.md"
-                - Update "Building Buttons" Implementation Notes to reference token system doc
-                - Update any "See also" links to point to new doc names
-
-                **In `strategy-color-token-system.md`:**
-                - Add note at top: "For component building patterns, see strategy-component-styling.md"
-                - Update Quick Reference table intro to mention component guide
-
-                **In `strategy-layout-tokens.md`:**
-                - Add cross-ref to new `strategy-color-token-system.md` in Related Documentation
-
-                **In any ADRs that reference the old doc:**
-                - Search for "strategy-semantic-tokens.md" across `.arc/reference/adr/`
-                - Update to point to appropriate new doc (component-styling or color-token-system)
-
-            - [ ] **6.2.f.2.d Delete old file**
-
-                Once both new files are created and validated:
-
-                ```bash
-                rm .arc/reference/strategies/project/style/strategy-semantic-tokens.md
-                ```
-
-            - [ ] **6.2.f.2.e Run quality gates**
-
-                ```bash
-                # Markdown linting
-                npx --yes markdownlint-cli2 --no-globs ".arc/reference/strategies/project/style/strategy-component-styling.md"
-                npx --yes markdownlint-cli2 --no-globs ".arc/reference/strategies/project/style/strategy-color-token-system.md"
-
-                # Verify cross-references work
-                grep -r "strategy-semantic-tokens" .arc/reference/
-                # Should return 0 results (all updated)
-                ```
-
-                **Success criteria:**
-                - [ ] Both new files pass markdown linting (0 violations)
-                - [ ] No orphaned references to old filename
-                - [ ] Cross-references work between new docs
-                - [ ] ADR cross-references updated
+                **Cross-reference verification:**
+                - ✅ Only 2 non-archive references remain (version history in new files - intentional)
+                - ✅ All 13 archive references preserved as historical records
+                - ✅ Cross-references work between new docs
+                - ✅ ADR cross-references updated (5 ADRs, 10 total references)
 
 - [ ] **6.3 Update ThemeDebug.tsx** (Note: ButtonPatternsSection already updated in 6.1)
 

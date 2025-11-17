@@ -1014,144 +1014,68 @@ components instead (like TextLink pattern for special cases). Only Select.Trigge
 
         - [ ] **6.2.f.1 Apply content updates (do BEFORE split)**
 
-            - [ ] **6.2.f.1.a Update Movie Ratings section (lines 1010-1042)**
+            - [x] **6.2.f.1.a Update Movie Ratings section (lines 1010-1042)** ✅
 
-                **Location:** "Building Movie-Specific UI" → "Movie Ratings"
+                **Completed:** Section already correct - uses recipe variants (`variant="success"`,
+                `variant="info"`, `variant="warning"`). No `badge-foreground` instances found.
+                Token documentation uses proper naming (`success`/`on-success` pairs).
 
-                **Current (INCORRECT):**
+            - [x] **6.2.f.1.b Update Genre Tags section (lines 1043-1066)** ✅
 
-                ```tsx
-                <Badge bg="badge" color="badge-foreground">Action</Badge>
-                ```
+                **Completed:** Updated Badge examples to use `variant="neutral"` and simplified
+                tokens documentation to reference recipe pattern. Changed from verbose token
+                listing to "Uses `badge` / `on-badge` (recipe handles automatically)".
 
-                **Change to:**
+            - [x] **6.2.f.1.c Update Common Patterns section (lines 1311-1427)** ✅
 
-                ```tsx
-                <Badge variant="neutral">Action</Badge>
-                ```
+                **Completed:** Updated opacity philosophy and reference table with accurate ADR-016 framing:
 
-                **Rationale:** Badge recipe exists (Phase 4), `badge-foreground` is deprecated naming
-                (use `on-badge` per ADR-011)
+                **A. Interaction State Philosophy** - Reframed from "8%/12% works everywhere" to accurate
+                two-tier system: MD3 baseline (8%/12% for secondary/outline/ghost) + ADR-016 improvements
+                (12%/16% for solid surfaces - better UX)
 
-            - [ ] **6.2.f.1.b Update Genre Tags section (lines 1043-1066)**
+                **B. Button Hover Pattern** - Removed entire subsection (redundant with button recipe)
 
-                **Location:** "Building Movie-Specific UI" → "Genre Tags and Badges"
+                **C. Opacity Modifier Reference table** - Updated to show semantic tokens (12%/16%) vs
+                manual overlays (8%/12% baseline), with note explaining ADR-016 improvements for solid surfaces
 
-                **Current examples:**
+                **D. Surface Hover Pattern** - Updated token opacity values (12%/16%) to match actual implementation
 
-                ```tsx
-                <Badge bg="badge" color="badge-foreground">Action</Badge>
-                <Badge bg="badge" color="badge-foreground">Sci-Fi</Badge>
-                ```
+            - [x] **6.2.f.1.d Update Accessibility Standards section (lines 1184-1309)** ✅
 
-                **Change to:**
+                **Completed:** Replaced inline Button focus example with brief reference note:
+                "All interactive components use keyboard-only focus rings (see button/form recipes for implementation)".
+                Maintains accessibility guidance while avoiding redundancy with recipe implementations.
 
-                ```tsx
-                <Badge variant="neutral">Action</Badge>
-                <Badge variant="neutral">Sci-Fi</Badge>
-                ```
+            - [x] **6.2.f.1.e Update Developer Quick Reference section (lines 1429-1530)** ✅
 
-                **Also update tokens list:**
-                - OLD: `badge` / `badge-foreground`
-                - NEW: Uses `badge` / `on-badge` (recipe handles automatically)
+                **Completed:** Updated "By Use Case" table to show recipe usage instead of inline props:
 
-            - [ ] **6.2.f.1.c Update Common Patterns section (lines 1311-1427)**
+                - Primary button: `<Button variant="solid">`
+                - Neutral outline button: `<Button variant="outline">`
+                - Subtle button: `<Button variant="subtle">`
+                - Ghost button: `<Button variant="ghost">`
+                - Success/Warning/Error/Info alerts: `<Alert.Root status="...">`
+                - Genre tag: Already correct (`<Badge variant="neutral">`)
 
-                **Changes needed:**
+                Added note to "Token Count by Category": "Recipes centralize many tokens -
+                consult recipe files for implementation details"
 
-                **A. Update Interaction State Philosophy (lines 1315-1327)**
-                - OLD: "8%/12% opacity works everywhere"
-                - NEW: "12%/16% opacity works everywhere"
-                - Add cross-ref: "(see ADR-009, improved in ADR-016)"
+            - [x] **6.2.f.1.f Update Common Mistakes section (lines 1532-1714)** ✅
 
-                **B. Remove Button Hover Pattern subsection (lines 1349-1374)**
-                - DELETE entire subsection
-                - Rationale: Now redundant with button recipe
+                **Completed:** Removed entire "Incomplete Hover States" section (Ghost + Outline button
+                examples now redundant with button recipe) and updated "Custom Focus States" to reference
+                StyledInput wrapper instead of inline focus styling.
 
-                **C. Update Opacity Modifier Reference table (lines 1391-1404)**
-                - OLD: Hover = 8%, Pressed/Active = 12%
-                - NEW: Hover = 12%, Pressed/Active = 16%
-                - Update tokens: `primary-hover` (12%), `primary-active` (16%)
-                - Add note: "Improved from MD3 8%/12% for better visibility (ADR-016)"
+                **A. Removed "Incomplete Hover States" section** - Entire section deleted (60 lines) including
+                Ghost and Outline button hover examples - button recipe handles automatically
 
-                **D. Keep as-is:**
-                - Surface Hover Pattern (generic, no recipe)
-                - Selected State Pattern (generic pattern)
-                - Card Elevation Pattern (app-specific)
+                **B. Updated "Custom Focus States"** - Changed from inline Input focus example to StyledInput
+                wrapper reference. New note: "StyledInput encapsulates ADR-015 border-only focus pattern and
+                ensures consistent focus behavior across all form inputs"
 
-            - [ ] **6.2.f.1.d Update Accessibility Standards section (lines 1184-1309)**
-
-                **Location:** "Accessibility Standards" → "Focus Indicators" subsection (lines 1275-1296)
-
-                **Current has inline Button example (lines 1284-1293):**
-
-                ```tsx
-                <Button
-                  _focusVisible={{
-                    outline: "2px solid",
-                    outlineColor: "ring",
-                    outlineOffset: "2px",
-                  }}
-                >
-                  Submit
-                </Button>
-                ```
-
-                **Options:**
-                1. Remove example entirely (focus guidance is timeless, example may confuse since recipes handle it)
-                2. Update to: "All interactive components use keyboard-only focus rings (see button/form recipes for implementation)"
-
-                **Recommended:** Option 2 - brief note instead of code example
-
-            - [ ] **6.2.f.1.e Update Developer Quick Reference section (lines 1429-1530)**
-
-                **Location:** "Developer Quick Reference" → "By Use Case" table (lines 1433-1459)
-
-                **Update these rows to show recipe usage:**
-
-                | What are you building? | OLD Example                                        | NEW Example                               |
-                |------------------------|----------------------------------------------------|-------------------------------------------|
-                | Primary button         | `<Button bg="primary" color="on-primary">`         | `<Button variant="solid">`                |
-                | Neutral outline button | `<Button borderColor="button-outline">`            | `<Button variant="outline">`              |
-                | Subtle button          | `<Button bg="button-subtle">`                      | `<Button variant="subtle">`               |
-                | Ghost button           | `<Button color="tertiary">`                        | `<Button variant="ghost">`                |
-                | Success alert          | `<Alert bg="success/10"><Text color="on-success">` | `<Alert.Root status="success">`           |
-                | Genre tag              | `<Badge bg="badge" color="on-badge">`              | `<Badge variant="neutral">Action</Badge>` |
-
-                **Also update "Token Count by Category" (lines 1461-1478):**
-                - Add note: "Recipes centralize many tokens - consult recipe files for implementation details"
-
-            - [ ] **6.2.f.1.f Update Common Mistakes section (lines 1532-1714)**
-
-                **Changes needed:**
-
-                **A. Remove "Incomplete Hover States" - Ghost button (lines 1537-1564)**
-                - DELETE entire subsection
-                - Rationale: Button recipe handles this automatically
-
-                **B. Remove "Incomplete Hover States" - Outline button (lines 1567-1597)**
-                - DELETE entire subsection
-                - Rationale: Button recipe handles this automatically
-
-                **C. Update "Custom Focus States" (lines 1624-1651)**
-                - Current shows inline Input example
-                - Change to reference StyledInput wrapper:
-
-                ```tsx
-                // ❌ Wrong: Inline focus styling
-                <Input _focus={{ borderColor: "tertiary", outline: ... }} />
-
-                // ✅ Correct: Use StyledInput wrapper
-                import { StyledInput } from "@/components/common";
-                <StyledInput placeholder="Email" />
-                ```
-
-                - Add note: "StyledInput encapsulates ADR-015 border-only focus pattern"
-
-                **D. Keep as-is:**
-                - React Router Link Integration (TextLink wrapper still relevant)
-                - Deprecated Token Aliases (naming guidance)
-                - Border Token Confusion (still relevant)
+                **C. Kept as-is** - React Router Link Integration, Deprecated Token Aliases, Border Token
+                Confusion (still relevant)
 
         - [ ] **6.2.f.2 Execute document split**
 

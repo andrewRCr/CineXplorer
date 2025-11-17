@@ -1046,16 +1046,13 @@ CineXplorer extends the base semantic token system with movie app-specific token
 
 ```tsx
 <HStack>
-  <Badge bg="badge" color="badge-foreground">Action</Badge>
-  <Badge bg="badge" color="badge-foreground">Sci-Fi</Badge>
-  <Badge bg="badge" color="badge-foreground">PG-13</Badge>
+  <Badge variant="neutral">Action</Badge>
+  <Badge variant="neutral">Sci-Fi</Badge>
+  <Badge variant="neutral">PG-13</Badge>
 </HStack>
 ```
 
-**Tokens:**
-
-- Background: `badge` (neutral gray)
-- Text: `badge-foreground`
+**Tokens:** Uses `badge` / `on-badge` (recipe handles automatically)
 
 **Use cases:** Genre tags, content ratings, non-semantic labels
 
@@ -1280,17 +1277,7 @@ or layout cues.
 - High contrast (use `ring` token)
 - Sufficient size (2px minimum, 2px offset)
 
-```tsx
-<Button
-  _focusVisible={{
-    outline: "2px solid",
-    outlineColor: "ring",
-    outlineOffset: "2px",
-  }}
->
-  Submit
-</Button>
-```
+All interactive components use keyboard-only focus rings (see button/form recipes for implementation).
 
 **WCAG 2.4.13:** Focus indicators must have ≥3:1 contrast change from unfocused state.
 
@@ -1314,13 +1301,18 @@ Reusable patterns for interaction states, opacity overlays, and responsive desig
 
 ### Interaction State Philosophy
 
-CineXplorer uses **Material Design 3's opacity overlay approach** for all interaction states (see ADR-009).
+CineXplorer uses **Material Design 3's opacity overlay approach** for all interaction states (ADR-009, improved in ADR-016).
 
 **Key principle:** Use opacity overlays, not color changes.
 
+**Opacity values:**
+
+- **MD3 baseline**: 8% hover / 12% active (still used for secondary, outline, ghost buttons)
+- **Improved for solids**: 12% hover / 16% active (solid buttons, layer surfaces - better UX per ADR-016)
+
 **Benefits:**
 
-- Consistent across themes (8%/12% opacity works everywhere)
+- Consistent across themes
 - Maintains contrast ratios
 - Simpler than color calculations
 - Works with alternating layer pattern (ADR-008)
@@ -1343,35 +1335,8 @@ CineXplorer uses **Material Design 3's opacity overlay approach** for all intera
 **Tokens:**
 
 - Base: `layer-01` (or `layer-02`)
-- Hover: `layer-hover-01` (8% foreground opacity overlay)
-- Active: `layer-active-01` (12% foreground opacity overlay)
-
-### Button Hover Pattern
-
-**For solid buttons:**
-
-```tsx
-<Button
-  bg="primary"
-  color="on-primary"
-  _hover={{ bg: "primary-hover" }}
-  _active={{ bg: "primary-active" }}
->
-  Save
-</Button>
-```
-
-**Tokens:**
-
-- Base: `primary`
-- Hover: `primary-hover` (8% foreground opacity overlay)
-- Active: `primary-active` (12% foreground opacity overlay)
-
-**Available for:**
-
-- Primary: `primary-hover`, `primary-active`
-- Secondary: `secondary-hover`, `secondary-active`
-- Tertiary: `tertiary-hover`, `tertiary-active`
+- Hover: `layer-hover-01` (12% foreground opacity overlay)
+- Active: `layer-active-01` (16% foreground opacity overlay)
 
 ### Selected State Pattern
 
@@ -1390,16 +1355,19 @@ CineXplorer uses **Material Design 3's opacity overlay approach** for all intera
 
 ### Opacity Modifier Reference
 
-**Standard values from Material Design 3:**
+**Opacity values (MD3 baseline + ADR-016 improvements):**
 
-| State          | Opacity | Token Usage                         | Manual Overlay       |
-|----------------|---------|-------------------------------------|----------------------|
-| Hover          | 8%      | `layer-hover-01`, `primary-hover`   | `bg="primary/8"`     |
-| Focus          | 12%     | N/A (use ring)                      | `bg="foreground/12"` |
-| Pressed/Active | 12%     | `layer-active-01`, `primary-active` | `bg="primary/12"`    |
-| Selected       | 12%     | `layer-selected-01`                 | `bg="foreground/12"` |
-| Drag           | 16%     | `drag-active`                       | `bg="foreground/16"` |
-| Disabled       | 38%     | N/A                                 | `opacity={0.38}`     |
+| State          | Opacity | Token Usage (Solid Surfaces)        | Manual Overlay (Baseline) |
+|----------------|---------|-------------------------------------|---------------------------|
+| Hover          | 12%     | `layer-hover-01`, `primary-hover`   | `bg="primary/8"`          |
+| Pressed/Active | 16%     | `layer-active-01`, `primary-active` | `bg="primary/12"`         |
+| Selected       | 12%     | `layer-selected-01`                 | `bg="foreground/12"`      |
+| Focus          | 12%     | N/A (use ring)                      | `bg="foreground/12"`      |
+| Drag           | 16%     | `drag-active`                       | `bg="foreground/16"`      |
+| Disabled       | 38%     | N/A                                 | `opacity={0.38}`          |
+
+**Note:** Solid surfaces (semantic tokens) use improved 12%/16% for better contrast (ADR-016).
+Manual overlays use MD3 baseline 8%/12% (secondary/outline/ghost button variants).
 
 **Prefer dedicated tokens over manual overlays** for consistency.
 
@@ -1438,16 +1406,16 @@ Fast lookup cheat sheet for common token choices.
 | Card/panel             | `layer-01` + `foreground`                              | `<Card bg="layer-01">`                                         |
 | Modal                  | `layer-02` + `foreground`                              | `<Modal.Content bg="layer-02">`                                |
 | Dropdown over modal    | `layer-03` + `foreground`                              | `<Menu.Content bg="layer-03">`                                 |
-| Primary button         | `primary` / `on-primary`                               | `<Button bg="primary" color="on-primary">`                     |
-| Neutral outline button | `button-outline` / `on-button-outline`                 | `<Button borderColor="button-outline">`                        |
+| Primary button         | `primary` / `on-primary`                               | `<Button variant="solid">`                                     |
+| Neutral outline button | `button-outline` / `on-button-outline`                 | `<Button variant="outline">`                                   |
 | Branded outline button | `button-outline-primary` / `on-button-outline-primary` | `<Button borderColor="button-outline-primary">`                |
-| Subtle button          | `button-subtle` / `on-button-subtle`                   | `<Button bg="button-subtle">`                                  |
-| Ghost button           | `tertiary`                                             | `<Button color="tertiary">`                                    |
+| Subtle button          | `button-subtle` / `on-button-subtle`                   | `<Button variant="subtle">`                                    |
+| Ghost button           | `tertiary`                                             | `<Button variant="ghost">`                                     |
 | Link/interactive text  | `tertiary` / `tertiary-hover`                          | `<Link color="tertiary" _hover={{ color: "tertiary-hover" }}>` |
-| Success alert          | `success` / `on-success`                               | `<Alert bg="success/10"><Text color="on-success">`             |
-| Warning alert          | `warning` / `on-warning`                               | `<Alert bg="warning/10"><Text color="on-warning">`             |
-| Error alert            | `destructive` / `on-destructive`                       | `<Alert bg="destructive/10"><Text color="on-destructive">`     |
-| Info alert             | `info` / `on-info`                                     | `<Alert bg="info/10"><Text color="on-info">`                   |
+| Success alert          | `success` / `on-success`                               | `<Alert.Root status="success">`                                |
+| Warning alert          | `warning` / `on-warning`                               | `<Alert.Root status="warning">`                                |
+| Error alert            | `destructive` / `on-destructive`                       | `<Alert.Root status="error">`                                  |
+| Info alert             | `info` / `on-info`                                     | `<Alert.Root status="info">`                                   |
 | TMDB score (high)      | `success` / `on-success`                               | `<Badge variant="success">8.2</Badge>` (≥7.5)                  |
 | TMDB score (medium)    | `info` / `on-info`                                     | `<Badge variant="info">6.5</Badge>` (5.0-7.4)                  |
 | TMDB score (low)       | `warning` / `on-warning`                               | `<Badge variant="warning">4.1</Badge>` (<5.0)                  |
@@ -1476,6 +1444,8 @@ Fast lookup cheat sheet for common token choices.
 - **Movie-specific:** 6 (rating, badge, drag-active, drop-zone pairs)
 - **UI elements:** 3 (border, input, ring)
 - **Deprecated aliases:** 8 (during ADR-011 migration)
+
+**Note:** Recipes centralize many tokens - consult recipe files for implementation details.
 
 ### Anti-Patterns to Avoid
 
@@ -1534,68 +1504,6 @@ Fast lookup cheat sheet for common token choices.
 Quick reference for violations found during comprehensive audit (Phase 7.1 - Nov 2025). These represent the most
 common mistakes made when implementing semantic tokens.
 
-### Incomplete Hover States
-
-**❌ Wrong: Ghost button missing bg change**
-
-```tsx
-<Button variant="ghost" color="tertiary" _hover={{ color: "tertiary-hover" }}>
-  Skip
-</Button>
-```
-
-**✅ Correct: Both color AND bg change**
-
-```tsx
-<Button
-  variant="ghost"
-  color="tertiary"
-  _hover={{
-    bg: "tertiary/8",        // REQUIRED
-    color: "tertiary-hover"
-  }}
->
-  Skip
-</Button>
-```
-
-**Why it matters:** Background change provides visual feedback that the element is interactive. Text color change alone
-is too subtle, especially for users with reduced contrast sensitivity.
-
----
-
-**❌ Wrong: Outline button missing border/color changes**
-
-```tsx
-<Button
-  variant="outline"
-  borderColor="button-outline"
-  _hover={{ bg: "tertiary/8" }}
->
-  Cancel
-</Button>
-```
-
-**✅ Correct: All three properties change**
-
-```tsx
-<Button
-  variant="outline"
-  borderColor="button-outline"
-  color="on-button-outline"
-  _hover={{
-    bg: "tertiary/8",           // Background
-    borderColor: "tertiary",    // Border
-    color: "tertiary"           // Text
-  }}
->
-  Cancel
-</Button>
-```
-
-**Why it matters:** The complete pattern creates a cohesive hover state where all visual elements shift to the accent
-color, providing clear feedback that the button is interactive.
-
 ### React Router Link Integration
 
 **❌ Wrong: React Router Link with inline styles**
@@ -1623,22 +1531,10 @@ accessibility patterns (proper underlines, focus states).
 
 ### Custom Focus States
 
-**❌ Wrong: Custom boxShadow focus**
+**❌ Wrong: Inline focus styling**
 
 ```tsx
 <Input
-  _focus={{
-    boxShadow: "0 0 0 1px var(--chakra-colors-ring)",
-    boxShadowColor: "tertiary.primary"
-  }}
-/>
-```
-
-**✅ Correct: Standard outline ring pattern**
-
-```tsx
-<Input
-  borderColor="input"
   _focus={{
     borderColor: "tertiary",
     outline: "2px solid",
@@ -1648,9 +1544,16 @@ accessibility patterns (proper underlines, focus states).
 />
 ```
 
-**Why it matters:** The standard outline ring pattern meets WCAG 2.4.13 requirements for focus indicators, provides
-proper keyboard navigation feedback, and avoids layout shift (outline is outside element boundary). Custom focus
-implementations often miss these requirements.
+**✅ Correct: Use StyledInput wrapper**
+
+```tsx
+import { StyledInput } from "@/components/common";
+
+<StyledInput placeholder="Email" />
+```
+
+**Why it matters:** StyledInput encapsulates ADR-015 border-only focus pattern and ensures consistent focus behavior
+across all form inputs. Inline focus styling bypasses centralized implementation and risks inconsistency.
 
 ### Deprecated Token Aliases
 

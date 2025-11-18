@@ -275,6 +275,23 @@ business logic (filtering, calculations, presets, orchestration).
 **Rule of thumb:** If an API route does more than extract params → call service → return response, the extra
 logic likely belongs in Service layer.
 
+### Component Styling Standards (Frontend)
+
+Frontend uses semantic token system for all styling. Components MUST use semantic tokens, never hardcoded colors or
+direct style values.
+
+**Required practices:**
+
+- Always use semantic tokens (e.g., `color="tertiary"`, `bg="layer-01"`)
+- Never hardcode colors (`color="#4299e1"`, `bg="blue.500"`)
+- Never use Chakra raw color tokens (`color="red.600"`, `colorScheme="blue"`)
+- Use recipes and wrapper components for consistent patterns
+- Reference strategy docs before implementing: [Color Token System](../strategies/project/style/strategy-color-tokens.md),
+  [Component Styling Strategy](../strategies/project/style/strategy-component-styling.md)
+
+**Rule of thumb:** If you're writing inline color/style values instead of semantic tokens, check the strategy
+docs for the correct pattern.
+
 ### Code Documentation Standards
 
 - **No meta-project references in codebase**: Never reference task IDs, phase numbers, or `.arc/`

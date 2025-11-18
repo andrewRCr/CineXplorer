@@ -68,6 +68,13 @@ The frontend is a single-page application (SPA) built with React.
 - **Framework**: React `19` with Vite for the build tooling.
 - **Language**: TypeScript `5.x`.
 - **UI Components**: The UI is built using **Chakra UI v3**. This provides a rich set of accessible and composable components.
+- **Theme System**: CineXplorer uses a complete theme system combining unified semantic tokens and Chakra UI v3 recipes.
+  The adapter layer (ADR-005) integrates 4 major design systems (GitHub Primer, GitLab Pajamas, IBM Carbon,
+  Material Design 3) through ~67 unified tokens (layer elevation, border hierarchy, interaction states, status colors,
+  button patterns). Recipes codify component patterns (buttons, alerts, badges, forms) with automatic state handling
+  and WCAG compliance. Extensible for future CineXplorer-specific theming. All components use semantic tokens exclusively
+  (no hardcoded colors). See [Color Token System](../strategies/project/style/strategy-color-tokens.md) and
+  [Component Styling Strategy](../strategies/project/style/strategy-component-styling.md) for implementation patterns.
 - **Routing**: `react-router-dom v7` is used for all client-side routing.
 - **State Management**: Global state, such as the user's authentication status, is managed using React's built-in
   Context API (`AuthContext`). Component-level state is managed with standard React hooks (`useState`, `useReducer`).

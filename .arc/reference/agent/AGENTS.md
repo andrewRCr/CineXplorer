@@ -15,7 +15,7 @@ demonstrating disciplined software engineering practices, comprehensive testing,
 **Technology Stack:**
 
 - **Backend**: Django 5.2 + Django Ninja (API framework), Python 3.13
-- **Frontend**: React 19 + TypeScript, Vite dev server, Chakra UI v3 (component library)
+- **Frontend**: React 19 + TypeScript, Vite dev server, Chakra UI v3 (component library with semantic token system)
 - **Database**: PostgreSQL 17
 - **Infrastructure**: Docker Compose + Caddy reverse proxy
 - **External Services**: TMDB API (movie data), ZeptoMail (transactional emails), OAuth (Google/GitHub)

@@ -694,7 +694,7 @@ import { Link } from "react-router-dom";
 - Matches industry patterns (GitHub, Google, Linear)
 - Meets WCAG 2.4.7 and 2.4.13 requirements
 
-**Buttons, Links, Select Dropdowns: Keyboard-only rings**
+**Buttons, Links: Keyboard-only outline rings**
 
 ```tsx
 <Button
@@ -709,7 +709,7 @@ import { Link } from "react-router-dom";
 ```
 
 - **Outline ring appears only for keyboard focus** (Tab key), not mouse clicks
-- CSS `:focus-visible` handles this automatically for button-like components
+- CSS `:focus-visible` handles this automatically for action/button-like components
 
 **Token:**
 
@@ -717,11 +717,10 @@ import { Link } from "react-router-dom";
 
 **Rules:**
 
-- **Text inputs:** Use border color change only (no outline ring)
-- **Interactive elements:** Use `_focusVisible` for keyboard-only rings
+- **Text inputs and Select.Trigger:** Use border color change only (no outline ring)
+- **Buttons and action elements:** Use `_focusVisible` for keyboard-only outline rings
 - Always use `ring` token (not custom colors) for outline rings
 - Minimum 2px outline width with 2px offset
-- Never add `_focus={{ outline: "none" }}` to Select.Trigger (creates specificity conflicts)
 
 **WCAG Compliance:**
 
@@ -814,14 +813,15 @@ The recipe cannot determine which item is currently selected, so you must add ru
 </Select.Item>
 ```
 
-**Focus indicator pattern:** Select.Trigger uses **keyboard-only outline rings** (not border-only like text inputs)
-because Select.Trigger is button-like, not editable text. CSS `:focus-visible` correctly matches only keyboard focus
-(Tab key), not mouse clicks - no JavaScript workarounds needed.
+**Focus indicator pattern:** Select.Trigger uses **border-only focus** (like text inputs, not outline rings like buttons)
+because Select.Trigger is semantically a form control (choose a value) not an action button. CSS `:focus-visible` correctly
+matches only keyboard focus (Tab key), not mouse clicks - no JavaScript workarounds needed. The recipe suppresses outline
+rings and uses border color change to `tertiary` for focus indication.
 
 **Why custom Select (not NativeSelect)?** Browser `<select>` elements have limited styling - option colors can't be
 customized and appearance varies across browsers.
 
-**WCAG compliance:** Meets 2.4.7 (Focus Visible) via keyboard-only focus rings (see ADR-015)
+**WCAG compliance:** Meets 2.4.7 (Focus Visible) via border-only focus (see ADR-015)
 **Recipe reference:** `frontend/src/theme/recipes/select.ts`
 
 ### Checkboxes

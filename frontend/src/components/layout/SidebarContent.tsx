@@ -184,7 +184,7 @@ export const SidebarContent: React.FC<SidebarContentProps> = ({
 
             {/* Separator inside the listbox */}
             <Box px={3} py={2}>
-              <Separator borderColor="border" opacity={0.6} />
+              <Separator borderColor="border-subtle-01" />
             </Box>
 
             {/* Browse section header inside listbox */}

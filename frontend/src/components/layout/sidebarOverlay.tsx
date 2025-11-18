@@ -44,13 +44,13 @@ export const sidebarDrawer = createOverlay<SidebarDrawerProps>((props) => {
           <Drawer.Content
             bg="background"
             borderRight="1px solid"
-            borderColor="border"
+            borderColor="border-strong-01"
             width="sidebar-width"
           >
             <Drawer.Header
               bg="layer-01"
               borderBottom="1px solid"
-              borderColor="border"
+              borderColor="border-strong-01"
               p={0}
               m={0}
             >

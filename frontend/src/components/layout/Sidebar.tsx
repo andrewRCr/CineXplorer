@@ -11,7 +11,7 @@ const Sidebar: React.FC = () => {
       bg="layer-01"
       borderRadius="md"
       borderWidth="1px"
-      borderColor="border"
+      borderColor="border-strong-01"
       boxShadow="sm"
       position="sticky"
       // Sticky offset accounts for navbar height + container padding - visual alignment

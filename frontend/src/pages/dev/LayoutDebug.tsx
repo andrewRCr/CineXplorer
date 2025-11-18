@@ -67,7 +67,7 @@ export default function LayoutDebug() {
         top="var(--chakra-sizes-layout-navbar)"
         bg="layer-02"
         borderBottomWidth="1px"
-        borderColor="border"
+        borderColor="border-strong-01"
         px={6}
         py={3}
         zIndex={5}
@@ -86,7 +86,7 @@ export default function LayoutDebug() {
       {/* Content */}
       <VStack align="stretch" gap={6} maxW="1200px" mx="auto" p={8}>
         {/* Layout Token Values */}
-        <Box bg="layer-01" p={6} borderRadius="md" borderWidth="1px" borderColor="border">
+        <Box bg="layer-01" p={6} borderRadius="md" borderWidth="1px" borderColor="border-strong-01">
           <Text fontSize="xl" fontWeight="bold" mb={4}>Layout Foundation Tokens</Text>
           <Grid templateColumns="repeat(auto-fit, minmax(250px, 1fr))" gap={4}>
             <Box bg="layer-02" p={4} borderRadius="sm">
@@ -108,7 +108,7 @@ export default function LayoutDebug() {
         </Box>
 
         {/* Z-Index Scale */}
-        <Box bg="layer-01" p={6} borderRadius="md" borderWidth="1px" borderColor="border">
+        <Box bg="layer-01" p={6} borderRadius="md" borderWidth="1px" borderColor="border-strong-01">
           <Text fontSize="xl" fontWeight="bold" mb={4}>Z-Index Hierarchy</Text>
           <VStack align="stretch" gap={2}>
             <HStack justify="space-between" p={3} bg="layer-02" borderRadius="sm">
@@ -135,7 +135,7 @@ export default function LayoutDebug() {
         </Box>
 
         {/* Responsive Layout Visualization */}
-        <Box bg="layer-01" p={6} borderRadius="md" borderWidth="1px" borderColor="border">
+        <Box bg="layer-01" p={6} borderRadius="md" borderWidth="1px" borderColor="border-strong-01">
           <Text fontSize="xl" fontWeight="bold" mb={4}>Layout Structure</Text>
           <Text fontSize="sm" color="foreground/60" mb={4}>
             Visual representation of layout hierarchy with responsive sidebar
@@ -189,7 +189,7 @@ export default function LayoutDebug() {
                 flex="1"
                 bg="layer-02"
                 borderWidth="1px"
-                borderColor="border"
+                borderColor="border-strong-01"
                 p={4}
                 borderRadius="sm"
                 minH="200px"
@@ -222,7 +222,7 @@ export default function LayoutDebug() {
         </Box>
 
         {/* Sticky Positioning Test */}
-        <Box bg="layer-01" p={6} borderRadius="md" borderWidth="1px" borderColor="border">
+        <Box bg="layer-01" p={6} borderRadius="md" borderWidth="1px" borderColor="border-strong-01">
           <Text fontSize="xl" fontWeight="bold" mb={4}>Sticky Positioning Test</Text>
           <Text fontSize="sm" color="foreground/60" mb={4}>
             Scroll this section to verify sticky header remains flush with navbar (no jump)
@@ -231,7 +231,7 @@ export default function LayoutDebug() {
             maxH="400px"
             overflowY="auto"
             borderWidth="1px"
-            borderColor="border"
+            borderColor="border-strong-01"
             borderRadius="sm"
             position="relative"
           >
@@ -260,7 +260,7 @@ export default function LayoutDebug() {
         </Box>
 
         {/* Breakpoint Thresholds */}
-        <Box bg="layer-01" p={6} borderRadius="md" borderWidth="1px" borderColor="border">
+        <Box bg="layer-01" p={6} borderRadius="md" borderWidth="1px" borderColor="border-strong-01">
           <Text fontSize="xl" fontWeight="bold" mb={4}>Chakra Breakpoint Thresholds</Text>
           <Text fontSize="sm" color="foreground/60" mb={4}>
             Viewport width breakpoints used by Chakra's responsive system
@@ -290,7 +290,7 @@ export default function LayoutDebug() {
         </Box>
 
         {/* Responsive Patterns */}
-        <Box bg="layer-01" p={6} borderRadius="md" borderWidth="1px" borderColor="border">
+        <Box bg="layer-01" p={6} borderRadius="md" borderWidth="1px" borderColor="border-strong-01">
           <Text fontSize="xl" fontWeight="bold" mb={4}>CSS Display Prop Patterns</Text>
           <Text fontSize="sm" color="foreground/60" mb={4}>
             Flash-free responsive patterns (migrated from useBreakpointValue)
@@ -336,7 +336,7 @@ export default function LayoutDebug() {
         </Box>
 
         {/* CSS Variable Reference */}
-        <Box bg="layer-01" p={6} borderRadius="md" borderWidth="1px" borderColor="border">
+        <Box bg="layer-01" p={6} borderRadius="md" borderWidth="1px" borderColor="border-strong-01">
           <Text fontSize="xl" fontWeight="bold" mb={4}>CSS Variable Reference</Text>
           <Text fontSize="sm" color="foreground/60" mb={4}>
             How to access layout tokens in component styles

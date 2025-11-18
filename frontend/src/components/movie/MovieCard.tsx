@@ -239,7 +239,7 @@ const MovieCard = ({ movie, currentPage, source, query }: MovieCardProps) => {
                 >
                   <Box
                     bg="popover"
-                    borderColor="border"
+                    borderColor="border-strong-02"
                     borderWidth="1px"
                     borderRadius="md"
                     shadow="lg"

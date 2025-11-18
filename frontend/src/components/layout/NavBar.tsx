@@ -88,7 +88,7 @@ const NavBar = () => {
       zIndex="navbar"
       boxShadow="base"
       borderBottom="1px solid"
-      borderColor="border"
+      borderColor="border-strong-01"
     >
       <Container maxW="container.xl" px={{ base: 2, md: 6, lg: 8 }} w="100%">
         <HStack

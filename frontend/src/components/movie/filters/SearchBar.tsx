@@ -36,7 +36,7 @@ const SearchBar = ({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        borderColor="input"
+        borderColor="border-strong-01"
         bg={isHovered ? "tertiary/8" : "transparent"}
         pl="40px"
         transition="all 0.2s ease"

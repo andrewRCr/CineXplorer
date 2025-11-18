@@ -13,7 +13,7 @@ const Footer = () => {
       py={2}
       textAlign="center"
       borderTop="1px solid"
-      borderColor="border"
+      borderColor="border-strong-01"
       aria-label="Application footer with TMDB attribution and theme controls"
       position="relative"
       zIndex="footer"

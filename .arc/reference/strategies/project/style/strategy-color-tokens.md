@@ -86,7 +86,7 @@ During ADR-011 migration (2025-11), old naming conventions were replaced but ali
 | `primary-foreground`   | `on-primary`             | on-* prefix pattern                |
 | `success-foreground`   | `on-success`             | on-* prefix pattern                |
 | `text.secondary`       | `on-muted`               | Semantic clarity                   |
-| `border.subtle`        | `input` or `border`      | Context-specific distinction       |
+| `border.subtle`        | `border-strong-01` or `border` | Layer-aware or generic      |
 | `background.subItem`   | `layer-hover-01`         | Explicit interaction state naming  |
 | `tertiary.primary`     | `tertiary` or `ring`     | Simplified naming                  |
 
@@ -189,8 +189,8 @@ as the contract between themes and components.
     - `drag-active`, `drop-zone`
     - `imdb-gold`
 
-11. **UI Elements** (~3 tokens)
-    - `border`, `input`, `ring`
+11. **UI Elements** (~2 tokens)
+    - `border`, `ring`
 
 12. **Deprecated Aliases** (~8 tokens)
     - Maintained for backward compatibility
@@ -486,7 +486,8 @@ Fast lookup cheat sheet for common token choices.
 | Genre tag              | `badge` / `on-badge`                                   | `<Badge variant="neutral">Action</Badge>`                      |
 | Secondary text         | `on-muted`                                             | `<Text color="on-muted">`                                      |
 | Border                 | `border-strong-01`                                     | `<Card borderColor="border-strong-01">`                        |
-| Input field            | `input`                                                | `<Input borderColor="input">`                                  |
+| Input field (layer-01) | `border-strong-01`                                     | `<Input borderColor="border-strong-01">`                       |
+| Input field (layer-02) | `border-strong-02`                                     | `<Input borderColor="border-strong-02">`                       |
 | Focus ring             | `ring`                                                 | `outlineColor="ring"`                                          |
 
 ### Token Count by Category
@@ -505,8 +506,8 @@ Fast lookup cheat sheet for common token choices.
 - **Brand colors:** 6 optional (brand/brandSecondary/brandTertiary with `on-*` pairs)
 - **Color interactions:** 6 (primary/secondary/tertiary hover/active)
 - **Movie-specific:** 6 (rating, badge, drag-active, drop-zone pairs)
-- **UI elements:** 3 (border, input, ring)
-- **Deprecated aliases:** 8 (during ADR-011 migration)
+- **UI elements:** 2 (border, ring)
+- **Deprecated aliases:** 9 (during ADR-011 migration, including legacy `input` token)
 
 **Note:** Recipes centralize many tokens - consult recipe files for implementation details.
 

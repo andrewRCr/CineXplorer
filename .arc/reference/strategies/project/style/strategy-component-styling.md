@@ -1220,7 +1220,7 @@ across all form inputs. Inline focus styling bypasses centralized implementation
 
 ```tsx
 <Text color="on-muted">Secondary text</Text>
-<Input borderColor="input" />
+<Input borderColor="border-strong-01" />  {/* On layer-01 */}
 <Box bg="layer-hover-01">Hover state</Box>  {/* or tertiary/8 for hover */}
 ```
 
@@ -1231,38 +1231,56 @@ documentation.
 **Deprecated → Canonical mappings:**
 
 - `text.secondary` → `on-muted`
-- `border.subtle` → `input` (for form controls) or `border` (for dividers)
+- `border.subtle` → `border-strong-01` (for form controls on layer-01) or `border` (for decorative dividers)
 - `background.subItem` → `layer-hover-01` (surface hover) or `tertiary/8` (opacity hover)
 - `tertiary.primary` → `tertiary` (color) or `ring` (focus indicator)
 
-### Border Token Confusion
+### Layer-Aware Border Tokens
 
-**❌ Wrong: Using generic border for form controls**
+**Principle:** Forms and structural borders match their background layer for proper visual hierarchy.
 
-```tsx
-<Input borderColor="border" />
-<Box borderColor="border">
-  <Input />  {/* Form wrapper */}
-</Box>
-```
-
-**✅ Correct: Use input token for form-related borders**
+**❌ Wrong: Using generic "input" or "border" tokens**
 
 ```tsx
-<Input borderColor="input" />
-<Box borderColor="input">  {/* Form wrapper */}
-  <Input />
-</Box>
+<Input borderColor="input" />  {/* Generic, no layer context */}
+<Input borderColor="border" />  {/* Generic, no layer context */}
 ```
 
-**Why it matters:** Semantic distinction helps maintain consistency. Form controls and their wrappers use `input` token,
-structural containers use `border-strong-*` hierarchy, decorative elements use `border`.
+**✅ Correct: Use layer-appropriate border-strong tokens**
 
-**Decision tree:**
+```tsx
+{/* Forms on layer-01 background */}
+<Box bg="layer-01">
+  <Input borderColor="border-strong-01" />
+  <Checkbox borderColor="border-strong-01" />
+</Box>
 
-- Form controls/wrappers → `input`
-- Structural containers (cards, panels) → `border-strong-01/02/03` (per layer)
-- Decorative/dividers → `border`
+{/* Forms on layer-02 background */}
+<Box bg="layer-02">
+  <Input borderColor="border-strong-02" />
+  <Select.Trigger borderColor="border-strong-02" />
+</Box>
+
+{/* Interactive controls (buttons) */}
+<Button variant="outline" borderColor="button-outline" />
+```
+
+**Why it matters:** Layer-aware borders create visual cohesion. Forms visually belong to their background surface, with
+borders that provide appropriate contrast for their specific layer. Generic "input" and "border" tokens don't account for
+layer context and should be avoided.
+
+**Border Token Decision Tree:**
+
+- **Form controls** (Input, Checkbox, Select, etc.) → `border-strong-01` (on layer-01) or `border-strong-02` (on layer-02)
+- **Structural containers** (cards, panels, sidebars) → `border-strong-01/02/03` (match surface layer)
+- **Interactive controls** (outline buttons) → `button-outline`
+- **Decorative dividers** (separators, horizontal rules) → `border-subtle-01` or `border` (if truly generic)
+
+**Border hierarchy for forms on layer-01:**
+
+- **Default:** `border-strong-01` (base form border)
+- **Hover:** `border-strong-02` (increased emphasis)
+- **Focus:** `tertiary` (accent color for active state)
 
 ---
 

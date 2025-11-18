@@ -3125,39 +3125,75 @@ This cleanup is REQUIRED - parallel systems allowed during migration, but must b
     - Confirms no residual dependencies on old ThemeColors system
     - Confirms consolidated definitions structure works correctly
 
-- [ ] **8.3 Remove all deprecated token aliases (ADR-010 + ADR-011 cleanup)**
+- [x] **8.3 Remove all deprecated token aliases (ADR-010 + ADR-011 cleanup)**
 
     **Goal:** Remove `-foreground` aliases after verifying zero component usage (enforce canonical `on-*` forms).
 
     **Scope:** UnifiedTheme interface + all 4 theme adapters (GitHub, IBM Carbon, GitLab, Material Design 3)
 
-    - [ ] **8.3.a Verify zero usage of deprecated tokens in components**
-        - `grep -r "accent-foreground" frontend/src/components/ frontend/src/pages/` → 0 matches
-        - `grep -r "primary-foreground" frontend/src/components/ frontend/src/pages/` → 0 matches
-        - `grep -r "secondary-foreground" frontend/src/components/ frontend/src/pages/` → 0 matches
-        - `grep -r "tertiary-foreground" frontend/src/components/ frontend/src/pages/` → 0 matches
-        - `grep -r "muted-foreground" frontend/src/components/ frontend/src/pages/` → 0 matches
-        - `grep -r "success-foreground" frontend/src/components/ frontend/src/pages/` → 0 matches
-        - `grep -r "destructive-foreground" frontend/src/components/ frontend/src/pages/` → 0 matches
-        - `grep -r "warning-foreground" frontend/src/components/ frontend/src/pages/` → 0 matches
-        - `grep -r "info-foreground" frontend/src/components/ frontend/src/pages/` → 0 matches
-        - Deprecated tokens OK in theme adapters (they're the source), but NOT in components
+    - [x] **8.3.a Verify zero usage of deprecated tokens in components**
 
-    - [ ] **8.3.b Remove deprecated aliases from type system**
-        - Edit `frontend/src/theme/color/types.ts`
-        - Remove all `*-foreground` aliases (keep `on-*` canonical forms)
-        - Update comments to reflect removal
+        **Verification Results:** ✅ All checks passed - zero deprecated token usage found.
 
-    - [ ] **8.3.c Remove deprecated aliases from all adapters**
-        - Edit all 4 adapter files (github-primer, ibm-carbon, gitlab-pajamas, material-design-3)
-        - Remove deprecated alias mappings (e.g., `primaryForeground = onPrimary`)
-        - Keep only canonical `on-*` forms
-        - Update inline comments
+        - `accent-foreground` → **0 matches** (components/, pages/) ✅
+        - `primary-foreground` → **0 matches** (components/, pages/) ✅
+        - `secondary-foreground` → **0 matches** (components/, pages/) ✅
+        - `tertiary-foreground` → **0 matches** (components/, pages/) ✅
+        - `muted-foreground` → **0 matches** (components/, pages/) ✅
+        - `success-foreground` → **0 matches** (components/, pages/) ✅
+        - `destructive-foreground` → **0 matches** (components/, pages/) ✅
+        - `warning-foreground` → **0 matches** (components/, pages/) ✅
+        - `info-foreground` → **0 matches** (components/, pages/) ✅
 
-    - [ ] **8.3.d Verify type checking still passes**
-        - Run TypeScript type checking
-        - Should show NO errors (all components using canonical forms)
-        - Quality gate: 0 type errors
+        **Conclusion:** Phase 7 migration successful. All components now use canonical `on-*` forms.
+        Safe to remove deprecated aliases from type system and adapters.
+
+    - [x] **8.3.b Remove deprecated aliases from type system**
+
+        **Completed:** Removed all 11 deprecated `-foreground` aliases from UnifiedTheme interface.
+
+        **Removed Aliases:**
+        - `popover-foreground` (kept `on-popover`) ✅
+        - `primary-foreground` (kept `on-primary`) ✅
+        - `secondary-foreground` (kept `on-secondary`) ✅
+        - `muted-foreground` (kept `on-muted`) ✅
+        - `tertiary-foreground` (kept `on-tertiary`) ✅
+        - `accent-foreground` (legacy alias for tertiary-foreground) ✅
+        - `destructive-foreground` (kept `on-destructive`) ✅
+        - `success-foreground` (kept `on-success`) ✅
+        - `warning-foreground` (kept `on-warning`) ✅
+        - `info-foreground` (kept `on-info`) ✅
+        - `badge-foreground` (kept `on-badge`) ✅
+
+        **Type Checking:** Expected errors in adapters (still have deprecated mappings).
+        This is correct "fail fast" behavior - Task 8.3.c will fix adapters.
+
+    - [x] **8.3.c Remove deprecated aliases from all adapters**
+
+        **Completed:** Removed all deprecated `-foreground` alias mappings from all 4 theme adapters.
+
+        **Files Modified:**
+        - `frontend/src/theme/color/adapters/github-primer.ts`
+        - `frontend/src/theme/color/adapters/ibm-carbon.ts`
+        - `frontend/src/theme/color/adapters/gitlab-pajamas.ts`
+        - `frontend/src/theme/color/adapters/material-design-3.ts`
+
+        **Changes:**
+        - Removed 11 deprecated alias variable declarations (primaryForeground, secondaryForeground, mutedForeground
+        tertiaryForeground, accentForeground, destructiveForeground, successForeground, warningForeground, infoForeground,
+        popover-foreground property, badge-foreground property)
+        - Removed all deprecated aliases from return statements
+        - Consolidated repetitive inline comments:
+            - Added single section-level comment explaining ADR-011 canonical naming
+            - Grouped status colors with single comment
+            - Removed ~40+ repetitive per-token inline comments across all adapters
+            - Kept unique comments where they add value (e.g., "rarely used", "Material native", "derived")
+
+    - [x] **8.3.d Verify type checking still passes**
+
+        **Result:** ✅ TypeScript type checking passed with 0 errors
+
+        **Quality gate:** 0 type errors confirmed
 
 - [ ] **8.4 Remove temporal commentary and verify docstring accuracy**
 

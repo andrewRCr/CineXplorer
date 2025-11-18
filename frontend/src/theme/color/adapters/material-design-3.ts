@@ -98,6 +98,9 @@ export function createMaterialAdapter(mode: "light" | "dark"): UnifiedTheme {
     // - Brand: Purple (Material's signature primary color)
     // - Primary: Purple (action buttons, same as brand for Material)
     // - Tertiary: Maroon (contrasting accent per Material baseline)
+    //
+    // NOTE: Material provides native `on-*` tokens (onPrimary, onSecondary, etc.) that we use directly
+    // All follow ADR-011 canonical naming convention
 
     // BRAND: Purple (Material's signature brand color)
     // Token type: BRAND (logo, brand identity)
@@ -108,37 +111,32 @@ export function createMaterialAdapter(mode: "light" | "dark"): UnifiedTheme {
     // Rationale: Material uses primary purple for prominent actions
     // Note: Same value as brand (Material unifies brand + primary unlike GitLab)
     const primary = palette.primary; // PURPLE (#6750A4 light, #D0BCFF dark)
-    const onPrimary = palette.onPrimary; // ADR-011: Material native on-* token (#FFFFFF light, #381E72 dark)
-    const primaryForeground = onPrimary; // @deprecated: Use on-primary instead (ADR-011)
+    const onPrimary = palette.onPrimary; // Material native on-* token
 
     // SECONDARY: Gray-purple background + mandatory 1px border (ADR-010)
     // Token type: BACKGROUND + BORDER
     const secondary = palette.secondary; // #625B71 light, #CCC2DC dark
-    const onSecondary = palette.onSecondary; // ADR-011: Material native on-* token (#FFFFFF light, #332D41 dark)
-    const secondaryForeground = onSecondary; // @deprecated: Use on-secondary instead (ADR-011)
+    const onSecondary = palette.onSecondary; // Material native on-* token
 
     // MUTED: Deemphasized, non-interactive (using surface-variant per Material)
     const muted = palette.surfaceVariant; // #E7E0EC light, #49454F dark
-    const onMuted = palette.onSurfaceVariant; // ADR-011: Material native on-* token (#49454F light, #CAC4D0 dark)
-    const mutedForeground = onMuted; // @deprecated: Use on-muted instead (ADR-011)
+    const onMuted = palette.onSurfaceVariant; // Material native on-* token
 
     // TERTIARY: Maroon foreground token for links/interactive text (ADR-010)
     // Token type: FOREGROUND (for text, links, icons)
     // Rationale: Material baseline specifies tertiary as contrasting accent
     // Distinction: tertiary is FOREGROUND (links), primary is BACKGROUND (buttons)
     const tertiary = palette.tertiary; // MAROON (#7D5260 light, #EFB8C8 dark)
-    const onTertiary = palette.onTertiary; // ADR-011: Material native on-* token (#FFFFFF light, #492532 dark)
-    const tertiaryForeground = onTertiary; // @deprecated: Use on-tertiary instead (ADR-011)
+    const onTertiary = palette.onTertiary; // Material native on-* token
 
     // ACCENT: @deprecated - Use tertiary instead (replaced by standard tertiary naming per ADR-010)
     // Maintained as alias for backward compatibility
     const accent = palette.tertiary; // Same as tertiary
-    const accentForeground = palette.onTertiary;
 
-    // DESTRUCTIVE: Red for errors/delete actions (Material baseline error color)
-    const destructive = palette.error; // #B3261E light, #F2B8B5 dark
-    const onDestructive = palette.onError; // ADR-011: Material native on-* token (#FFFFFF light, #601410 dark)
-    const destructiveForeground = onDestructive; // @deprecated: Use on-destructive instead (ADR-011)
+    // Status colors
+    // NOTE: Material baseline only provides error (destructive). Success/warning/info are derived.
+    const destructive = palette.error; // Material baseline error color
+    const onDestructive = palette.onError; // Material native on-* token
 
     // ===================================================================
     // SECTION 2: DERIVED TOKENS (Unofficial - For Consistency)
@@ -206,24 +204,14 @@ export function createMaterialAdapter(mode: "light" | "dark"): UnifiedTheme {
     // Focus ring: Use tertiary accent for consistency
     const ring = palette.tertiary;
 
-    // Status colors: Material baseline doesn't include success/warning/info (only error)
-    // Derive from Material color roles (onPrimaryContainer, etc.) for consistency
-    // Per ADR-011: Material lacks official on-success/on-warning/on-info in static baseline
-
-    // SUCCESS: Green (standard positive feedback - Material green 700/400)
-    const success = mode === "light" ? "#2E7D32" : "#66BB6A";
-    const onSuccess = "#FFFFFF"; // ADR-011: Derived on-* token (Material baseline lacks official)
-    const successForeground = onSuccess; // @deprecated: Use on-success instead (ADR-011)
-
-    // WARNING: Amber/Orange (standard caution/alert - Material orange 700/400)
-    const warning = mode === "light" ? "#F57C00" : "#FFA726";
-    const onWarning = mode === "light" ? "#FFFFFF" : "#000000"; // ADR-011: Derived on-* token
-    const warningForeground = onWarning; // @deprecated: Use on-warning instead (ADR-011)
-
-    // INFO: Blue (standard informational - Material blue 700/400)
-    const info = mode === "light" ? "#1976D2" : "#42A5F5";
-    const onInfo = "#FFFFFF"; // ADR-011: Derived on-* token
-    const infoForeground = onInfo; // @deprecated: Use on-info instead (ADR-011)
+    // Additional status colors (derived - Material baseline lacks official tokens)
+    // Derived from Material color roles for consistency
+    const success = mode === "light" ? "#2E7D32" : "#66BB6A"; // Material green 700/400
+    const onSuccess = "#FFFFFF"; // Derived
+    const warning = mode === "light" ? "#F57C00" : "#FFA726"; // Material orange 700/400
+    const onWarning = mode === "light" ? "#FFFFFF" : "#000000"; // Derived
+    const info = mode === "light" ? "#1976D2" : "#42A5F5"; // Material blue 700/400
+    const onInfo = "#FFFFFF"; // Derived
 
     // Accent hover state (deprecated - aliased to tertiaryHover)
     const accentHover = tertiaryHover;
@@ -255,7 +243,6 @@ export function createMaterialAdapter(mode: "light" | "dark"): UnifiedTheme {
         "layer-03": layer03,
         popover,
         "on-popover": popoverForeground,
-        "popover-foreground": popoverForeground, // @deprecated - alias for on-popover (ADR-011)
 
         // Border hierarchy
         "border-subtle-00": borderSubtle00,
@@ -292,18 +279,13 @@ export function createMaterialAdapter(mode: "light" | "dark"): UnifiedTheme {
         "on-button-subtle-selected": foreground, // ADR-012: Text on selected subtle buttons
         primary,
         "on-primary": onPrimary, // ADR-011: Material native on-* token
-        "primary-foreground": primaryForeground, // @deprecated
         secondary,
         "on-secondary": onSecondary, // ADR-011: Material native on-* token
-        "secondary-foreground": secondaryForeground, // @deprecated
         muted,
         "on-muted": onMuted, // ADR-011: Material native on-* token
-        "muted-foreground": mutedForeground, // @deprecated
         tertiary,
         "on-tertiary": onTertiary, // ADR-011: Material native on-* token
-        "tertiary-foreground": tertiaryForeground, // @deprecated
         accent, // @deprecated alias (ADR-010)
-        "accent-foreground": accentForeground, // @deprecated
         "accent-hover": accentHover,
 
         // Interaction state tokens (ADR-009)
@@ -316,16 +298,12 @@ export function createMaterialAdapter(mode: "light" | "dark"): UnifiedTheme {
 
         destructive,
         "on-destructive": onDestructive, // ADR-011: Material native on-* token
-        "destructive-foreground": destructiveForeground, // @deprecated
         success,
         "on-success": onSuccess, // ADR-011: Derived on-* token (Material baseline lacks)
-        "success-foreground": successForeground, // @deprecated
         warning,
         "on-warning": onWarning, // ADR-011: Derived on-* token (Material baseline lacks)
-        "warning-foreground": warningForeground, // @deprecated
         info,
         "on-info": onInfo, // ADR-011: Derived on-* token (Material baseline lacks)
-        "info-foreground": infoForeground, // @deprecated
 
         // UI elements
         border,

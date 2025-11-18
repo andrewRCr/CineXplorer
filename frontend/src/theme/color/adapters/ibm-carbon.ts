@@ -120,6 +120,8 @@ export function createCarbonAdapter(mode: "light" | "dark"): UnifiedTheme {
     // - Actions (buttons): BLUE (same as brand)
     // - Interactive text (links): BLUE (same as brand)
     // Note: Same color value, semantically distinct tokens
+    //
+    // NOTE: All `on-*` tokens follow ADR-011 canonical naming (on-primary, on-secondary, etc.)
 
     // BRAND: IBM Blue (brand identity color) - ADR-010
     const brand = palette.fg_accent; // IBM Blue (#0f62fe light, #78a9ff dark)
@@ -129,19 +131,16 @@ export function createCarbonAdapter(mode: "light" | "dark"): UnifiedTheme {
     // Rationale: IBM uses unified blue for everything (brand = actions = links)
     // Note: Same value as brand and tertiary, but semantically distinct
     const primary = palette.fg_accent; // BLUE (#0f62fe light, #78a9ff dark)
-    const onPrimary = palette.fg_onEmphasis; // ADR-011: Canonical on-* naming
-    const primaryForeground = onPrimary; // @deprecated: Use on-primary instead (ADR-011)
+    const onPrimary = palette.fg_onEmphasis;
 
     // SECONDARY: Gray background + mandatory 1px border (ADR-010)
     // Token type: BACKGROUND + BORDER
     const secondary = palette.bg_button_secondary;
-    const onSecondary = mode === "light" ? palette.fg_onEmphasis : palette.fg_default; // ADR-011: Canonical on-* naming
-    const secondaryForeground = onSecondary; // @deprecated: Use on-secondary instead (ADR-011)
+    const onSecondary = mode === "light" ? palette.fg_onEmphasis : palette.fg_default;
 
     // MUTED: Deemphasized, non-interactive
     const muted = palette.bg_layer_01; // Use layer-01 for muted
-    const onMuted = palette.fg_muted; // ADR-011: Canonical on-* naming
-    const mutedForeground = onMuted; // @deprecated: Use on-muted instead (ADR-011)
+    const onMuted = palette.fg_muted;
 
     // TERTIARY: Blue foreground token for links/interactive text (ADR-010)
     // Token type: FOREGROUND (for text, links, icons)
@@ -149,35 +148,22 @@ export function createCarbonAdapter(mode: "light" | "dark"): UnifiedTheme {
     // Note: Same value as primary and brand, but semantically distinct
     // Distinction: tertiary is FOREGROUND (links), primary is BACKGROUND (buttons)
     const tertiary = palette.fg_accent; // BLUE (#0f62fe light, #78a9ff dark)
-    const onTertiary = palette.fg_onEmphasis; // ADR-011: Canonical on-* naming (rarely used)
-    const tertiaryForeground = onTertiary; // @deprecated: Use on-tertiary instead (ADR-011)
+    const onTertiary = palette.fg_onEmphasis; // Rarely used
 
     // ACCENT: @deprecated - Use tertiary instead (ADR-010 consolidation)
     // Maintained as alias during component migration period
     const accent = palette.fg_accent; // Same as tertiary
-    const accentForeground = palette.fg_onEmphasis;
     const accentHover = palette.fg_accent_hover;
 
-    // DESTRUCTIVE: Red for errors/delete actions
+    // Status colors: destructive, success, warning, info (all official Carbon tokens)
     const destructive = palette.bg_danger;
-    const onDestructive = palette.fg_onEmphasis; // ADR-011: Canonical on-* naming
-    const destructiveForeground = onDestructive; // @deprecated: Use on-destructive instead (ADR-011)
-
-    // SUCCESS: Green for positive feedback (distinct from primary per ADR-010)
-    // Primary = blue (actions), Success = green (feedback state)
+    const onDestructive = palette.fg_onEmphasis;
     const success = palette.bg_success;
-    const onSuccess = palette.fg_onEmphasis; // ADR-011: Canonical on-* naming
-    const successForeground = onSuccess; // @deprecated: Use on-success instead (ADR-011)
-
-    // WARNING: Yellow/amber for caution states
+    const onSuccess = palette.fg_onEmphasis;
     const warning = palette.fg_warning;
-    const onWarning = mode === "light" ? palette.fg_default : palette.fg_onEmphasis; // ADR-011: Canonical on-* naming
-    const warningForeground = onWarning; // @deprecated: Use on-warning instead (ADR-011)
-
-    // INFO: Blue for informational messages
+    const onWarning = mode === "light" ? palette.fg_default : palette.fg_onEmphasis;
     const info = palette.fg_info;
-    const onInfo = palette.fg_onEmphasis; // ADR-011: Canonical on-* naming
-    const infoForeground = onInfo; // @deprecated: Use on-info instead (ADR-011)
+    const onInfo = palette.fg_onEmphasis;
 
     // Shadows (minimal for Carbon - layer colors indicate elevation)
     const shadows = carbonShadows[mode];
@@ -236,7 +222,6 @@ export function createCarbonAdapter(mode: "light" | "dark"): UnifiedTheme {
         "layer-03": layer03,
         popover,
         "on-popover": popoverForeground,
-        "popover-foreground": popoverForeground, // @deprecated - alias for on-popover (ADR-011)
 
         // Border hierarchy (mostly official Carbon)
         "border-subtle-00": borderSubtle00,
@@ -271,18 +256,13 @@ export function createCarbonAdapter(mode: "light" | "dark"): UnifiedTheme {
         "on-button-subtle-selected": foreground, // ADR-012: Text on selected subtle buttons
         primary,
         "on-primary": onPrimary, // ADR-011: Canonical naming
-        "primary-foreground": primaryForeground, // @deprecated
         secondary,
         "on-secondary": onSecondary, // ADR-011: Canonical naming
-        "secondary-foreground": secondaryForeground, // @deprecated
         muted,
         "on-muted": onMuted, // ADR-011: Canonical naming
-        "muted-foreground": mutedForeground, // @deprecated
         tertiary,
         "on-tertiary": onTertiary, // ADR-011: Canonical naming
-        "tertiary-foreground": tertiaryForeground, // @deprecated
         accent, // @deprecated alias (ADR-010)
-        "accent-foreground": accentForeground, // @deprecated
         "accent-hover": accentHover,
 
         // Interaction state tokens (ADR-009)
@@ -295,22 +275,17 @@ export function createCarbonAdapter(mode: "light" | "dark"): UnifiedTheme {
 
         destructive,
         "on-destructive": onDestructive, // ADR-011: Canonical naming
-        "destructive-foreground": destructiveForeground, // @deprecated
         success,
         "on-success": onSuccess, // ADR-011: Canonical naming
-        "success-foreground": successForeground, // @deprecated
         warning,
         "on-warning": onWarning, // ADR-011: Canonical naming
-        "warning-foreground": warningForeground, // @deprecated
         info,
         "on-info": onInfo, // ADR-011: Canonical naming
-        "info-foreground": infoForeground, // @deprecated
 
         // CineXplorer extensions
         "imdb-gold": extensions["imdb-gold"],
         badge: extensions.badge,
         "on-badge": extensions["badge-foreground"],
-        "badge-foreground": extensions["badge-foreground"], // @deprecated - alias for on-badge (ADR-011)
         "drag-active": extensions["drag-active"],
         "drop-zone": extensions["drop-zone"],
 

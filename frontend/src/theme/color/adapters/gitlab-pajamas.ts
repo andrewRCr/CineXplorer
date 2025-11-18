@@ -106,6 +106,8 @@ export function createPajamasAdapter(mode: "light" | "dark"): UnifiedTheme {
     // - Brand: 3 ORANGES from tanuki logo (Orange 01p/02p/03p)
     // - Actions (buttons): ORANGE 01p (#fca326 brightest orange, matches brand)
     // - Interactive text (links): PURPLE (#7759c2 Purple 02p light, #a989f5 Purple 01p dark) - UI accent, NOT brand
+    //
+    // NOTE: All `on-*` tokens follow ADR-011 canonical naming (on-primary, on-secondary, etc.)
 
     // BRAND: GitLab brand orange (primary brand color from logo) - ADR-010
     const brand = palette.brand_orange; // ORANGE 01p (#fca326, brightest in logo gradient)
@@ -119,8 +121,7 @@ export function createPajamasAdapter(mode: "light" | "dark"): UnifiedTheme {
     const primary = mode === "light"
         ? palette.brand_orange_medium  // Light: Orange 02p (#fc6d26, better contrast on white)
         : palette.brand_orange;        // Dark: Orange 01p (#fca326, brightest for impact)
-    const onPrimary = palette.fg_onEmphasis; // ADR-011: Canonical on-* naming
-    const primaryForeground = onPrimary; // @deprecated: Use on-primary instead (ADR-011)
+    const onPrimary = palette.fg_onEmphasis;
 
     // SECONDARY: Gray background + mandatory 1px border (ADR-010)
     // Token type: BACKGROUND + BORDER
@@ -129,12 +130,10 @@ export function createPajamasAdapter(mode: "light" | "dark"): UnifiedTheme {
     const onSecondary = mode === "light"
         ? palette.fg_onEmphasis  // Light mode: white text on medium gray
         : palette.fg_default;     // Dark mode: light gray text on dark gray
-    const secondaryForeground = onSecondary; // @deprecated: Use on-secondary instead (ADR-011)
 
     // MUTED: Deemphasized, non-interactive
     const muted = palette.bg_section; // Use section token for muted
-    const onMuted = palette.fg_muted; // ADR-011: Canonical on-* naming
-    const mutedForeground = onMuted; // @deprecated: Use on-muted instead (ADR-011)
+    const onMuted = palette.fg_muted;
 
     // TERTIARY: Purple foreground token for links/interactive text (ADR-010)
     // Token type: FOREGROUND (for text, links, icons)
@@ -142,34 +141,22 @@ export function createPajamasAdapter(mode: "light" | "dark"): UnifiedTheme {
     // Brand-aligned but semantically distinct from brand token
     // Distinction: tertiary is FOREGROUND (links), primary is BACKGROUND (buttons)
     const tertiary = palette.fg_link_purple; // PURPLE (#7759c2 light, #a989f5 dark)
-    const onTertiary = palette.fg_onEmphasis; // ADR-011: Canonical on-* naming (rarely used)
-    const tertiaryForeground = onTertiary; // @deprecated: Use on-tertiary instead (ADR-011)
+    const onTertiary = palette.fg_onEmphasis; // Rarely used
 
     // ACCENT: @deprecated - Use tertiary instead (per ADR-010)
     // Maintained as alias during component migration period
     const accent = palette.fg_link_purple; // Same as tertiary
-    const accentForeground = palette.fg_onEmphasis;
     const accentHover = palette.fg_accent_hover;
 
-    // DESTRUCTIVE: Red for errors/delete actions
+    // Status colors: destructive, success, warning, info (official GitLab tokens)
     const destructive = palette.bg_danger;
-    const onDestructive = palette.fg_onEmphasis; // ADR-011: Canonical on-* naming
-    const destructiveForeground = onDestructive; // @deprecated: Use on-destructive instead (ADR-011)
-
-    // SUCCESS: Green for positive feedback (distinct from primary per ADR-010)
-    // Primary = orange (actions), Success = green (feedback state)
+    const onDestructive = palette.fg_onEmphasis;
     const success = palette.bg_success;
-    const onSuccess = palette.fg_onEmphasis; // ADR-011: Canonical on-* naming
-    const successForeground = onSuccess; // @deprecated: Use on-success instead (ADR-011)
-
-    // WARNING/INFO: Official GitLab status colors
+    const onSuccess = palette.fg_onEmphasis;
     const warning = palette.fg_warning;
-    const onWarning = palette.fg_onEmphasis; // ADR-011: Canonical on-* naming
-    const warningForeground = onWarning; // @deprecated: Use on-warning instead (ADR-011)
-
+    const onWarning = palette.fg_onEmphasis;
     const info = palette.fg_info;
-    const onInfo = palette.fg_onEmphasis; // ADR-011: Canonical on-* naming
-    const infoForeground = onInfo; // @deprecated: Use on-info instead (ADR-011)
+    const onInfo = palette.fg_onEmphasis;
 
     // Shadows (official Pajamas gl-shadow values)
     const shadows = pajamasShadows[mode];
@@ -248,7 +235,6 @@ export function createPajamasAdapter(mode: "light" | "dark"): UnifiedTheme {
         "layer-03": layer03,
         popover,
         "on-popover": popoverForeground,
-        "popover-foreground": popoverForeground, // @deprecated - alias for on-popover (ADR-011)
 
         // Border hierarchy (derived for consistency)
         "border-subtle-00": borderSubtle00,
@@ -287,18 +273,13 @@ export function createPajamasAdapter(mode: "light" | "dark"): UnifiedTheme {
         "on-button-subtle-selected": foreground, // ADR-012: Text on selected subtle buttons
         primary,
         "on-primary": onPrimary, // ADR-011: Canonical naming
-        "primary-foreground": primaryForeground, // @deprecated
         secondary,
         "on-secondary": onSecondary, // ADR-011: Canonical naming
-        "secondary-foreground": secondaryForeground, // @deprecated
         muted,
         "on-muted": onMuted, // ADR-011: Canonical naming
-        "muted-foreground": mutedForeground, // @deprecated
         tertiary,
         "on-tertiary": onTertiary, // ADR-011: Canonical naming
-        "tertiary-foreground": tertiaryForeground, // @deprecated
         accent, // @deprecated alias (ADR-010)
-        "accent-foreground": accentForeground, // @deprecated
         "accent-hover": accentHover,
 
         // Interaction state tokens (ADR-009)
@@ -311,22 +292,17 @@ export function createPajamasAdapter(mode: "light" | "dark"): UnifiedTheme {
 
         destructive,
         "on-destructive": onDestructive, // ADR-011: Canonical naming
-        "destructive-foreground": destructiveForeground, // @deprecated
         success,
         "on-success": onSuccess, // ADR-011: Canonical naming
-        "success-foreground": successForeground, // @deprecated
         warning,
         "on-warning": onWarning, // ADR-011: Canonical naming
-        "warning-foreground": warningForeground, // @deprecated
         info,
         "on-info": onInfo, // ADR-011: Canonical naming
-        "info-foreground": infoForeground, // @deprecated
 
         // CineXplorer extensions
         "imdb-gold": extensions["imdb-gold"],
         badge: extensions.badge,
         "on-badge": extensions["badge-foreground"],
-        "badge-foreground": extensions["badge-foreground"], // @deprecated - alias for on-badge (ADR-011)
         "drag-active": extensions["drag-active"],
         "drop-zone": extensions["drop-zone"],
 

@@ -161,18 +161,6 @@ export interface UnifiedTheme {
      */
     "on-popover": string;
 
-    /**
-     * @deprecated Use `on-popover` instead. This alias is maintained for backward
-     * compatibility during component migration (ADR-011).
-     *
-     * **Migration:** Replace all `popover-foreground` usage with `on-popover`.
-     * This alias will be removed in a future version.
-     *
-     * @see on-popover for current token documentation
-     * @see ADR-011 for migration rationale
-     */
-    "popover-foreground": string;
-
     // ===================================================================
     // BORDER HIERARCHY (Per-Layer Border System)
     // ===================================================================
@@ -370,18 +358,6 @@ export interface UnifiedTheme {
     "on-primary": string;
 
     /**
-     * @deprecated Use `on-primary` instead. This alias is maintained for backward
-     * compatibility during component migration (ADR-011).
-     *
-     * **Migration:** Replace all `primary-foreground` usage with `on-primary`.
-     * This alias will be removed in a future version.
-     *
-     * @see on-primary for current token documentation
-     * @see ADR-011 for migration rationale
-     */
-    "primary-foreground": string;
-
-    /**
      * Secondary action button background color.
      *
      * **Token Type:** BACKGROUND + BORDER (outline pattern mandatory)
@@ -431,18 +407,6 @@ export interface UnifiedTheme {
     "on-secondary": string;
 
     /**
-     * @deprecated Use `on-secondary` instead. This alias is maintained for backward
-     * compatibility during component migration (ADR-011).
-     *
-     * **Migration:** Replace all `secondary-foreground` usage with `on-secondary`.
-     * This alias will be removed in a future version.
-     *
-     * @see on-secondary for current token documentation
-     * @see ADR-011 for migration rationale
-     */
-    "secondary-foreground": string;
-
-    /**
      * Deemphasized, non-interactive background color.
      *
      * **Token Type:** BACKGROUND (non-interactive)
@@ -482,18 +446,6 @@ export interface UnifiedTheme {
      * @see ADR-011 for on-* naming convention rationale
      */
     "on-muted": string;
-
-    /**
-     * @deprecated Use `on-muted` instead. This alias is maintained for backward
-     * compatibility during component migration (ADR-011).
-     *
-     * **Migration:** Replace all `muted-foreground` usage with `on-muted`.
-     * This alias will be removed in a future version.
-     *
-     * @see on-muted for current token documentation
-     * @see ADR-011 for migration rationale
-     */
-    "muted-foreground": string;
 
     /**
      * Interactive text, links, and accent highlights.
@@ -538,18 +490,6 @@ export interface UnifiedTheme {
     "on-tertiary"?: string;
 
     /**
-     * @deprecated Use `on-tertiary` instead. This alias is maintained for backward
-     * compatibility during component migration (ADR-011).
-     *
-     * **Migration:** Replace all `tertiary-foreground` usage with `on-tertiary`.
-     * This alias will be removed in a future version.
-     *
-     * @see on-tertiary for current token documentation
-     * @see ADR-011 for migration rationale
-     */
-    "tertiary-foreground"?: string;
-
-    /**
      * @deprecated Use `tertiary` instead. This is a legacy alias maintained for
      * backward compatibility during component migration (ADR-010).
      *
@@ -560,12 +500,6 @@ export interface UnifiedTheme {
      */
     accent: string;
 
-    /**
-     * @deprecated Use `tertiary-foreground` instead. Legacy alias for compatibility.
-     *
-     * @see tertiary-foreground for current token documentation
-     */
-    "accent-foreground": string;
 
     /**
      * Hover state for accent/tertiary interactive elements.
@@ -1021,18 +955,6 @@ export interface UnifiedTheme {
     "on-destructive": string;
 
     /**
-     * @deprecated Use `on-destructive` instead. This alias is maintained for backward
-     * compatibility during component migration (ADR-011).
-     *
-     * **Migration:** Replace all `destructive-foreground` usage with `on-destructive`.
-     * This alias will be removed in a future version.
-     *
-     * @see on-destructive for current token documentation
-     * @see ADR-011 for migration rationale
-     */
-    "destructive-foreground": string;
-
-    /**
      * Success, confirmation, and positive feedback background color.
      *
      * **Usage:** Success alerts, confirmation messages, high ratings
@@ -1058,18 +980,6 @@ export interface UnifiedTheme {
      * @see ADR-011 for on-* naming convention rationale
      */
     "on-success": string;
-
-    /**
-     * @deprecated Use `on-success` instead. This alias is maintained for backward
-     * compatibility during component migration (ADR-011).
-     *
-     * **Migration:** Replace all `success-foreground` usage with `on-success`.
-     * This alias will be removed in a future version.
-     *
-     * @see on-success for current token documentation
-     * @see ADR-011 for migration rationale
-     */
-    "success-foreground": string;
 
     /**
      * Warning, caution, and validation warning background color.
@@ -1099,18 +1009,6 @@ export interface UnifiedTheme {
     "on-warning": string;
 
     /**
-     * @deprecated Use `on-warning` instead. This alias is maintained for backward
-     * compatibility during component migration (ADR-011).
-     *
-     * **Migration:** Replace all `warning-foreground` usage with `on-warning`.
-     * This alias will be removed in a future version.
-     *
-     * @see on-warning for current token documentation
-     * @see ADR-011 for migration rationale
-     */
-    "warning-foreground": string;
-
-    /**
      * Informational message background color.
      *
      * **Usage:** Info alerts, help text, neutral information
@@ -1136,18 +1034,6 @@ export interface UnifiedTheme {
      * @see ADR-011 for on-* naming convention rationale
      */
     "on-info": string;
-
-    /**
-     * @deprecated Use `on-info` instead. This alias is maintained for backward
-     * compatibility during component migration (ADR-011).
-     *
-     * **Migration:** Replace all `info-foreground` usage with `on-info`.
-     * This alias will be removed in a future version.
-     *
-     * @see on-info for current token documentation
-     * @see ADR-011 for migration rationale
-     */
-    "info-foreground": string;
 
     // ===================================================================
     // CINEXPLORER EXTENSIONS (App-Specific Semantic Tokens)
@@ -1198,18 +1084,6 @@ export interface UnifiedTheme {
      * @see ADR-011 for on-* naming convention rationale
      */
     "on-badge": string;
-
-    /**
-     * @deprecated Use `on-badge` instead. This alias is maintained for backward
-     * compatibility during component migration (ADR-011).
-     *
-     * **Migration:** Replace all `badge-foreground` usage with `on-badge`.
-     * This alias will be removed in a future version.
-     *
-     * @see on-badge for current token documentation
-     * @see ADR-011 for migration rationale
-     */
-    "badge-foreground": string;
 
     /**
      * Active drag state background (item being dragged).

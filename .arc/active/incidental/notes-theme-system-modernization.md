@@ -2048,3 +2048,680 @@ import { TextLink } from "@/components/common";
 ---
 
 **Analysis completion:** Task 7.1.f complete, ready for Phase 7.2 implementation
+
+---
+
+## Phase 7.2.e Border Token Investigation (Task 7.2.e.1)
+
+**Investigation Date:** 2025-11-18
+**Context:** Session investigation revealed Task 7.2.e estimate was outdated (70 usages → 23 actual). Recipe system implementation significantly reduced border token violations.
+
+### Recipe System Impact
+
+**Original estimate:** ~70 `borderColor="border"` usages
+**Current count:** 23 usages
+
+**Reduction cause:** Chakra UI v3 Recipe System Implementation (archived task list) migrated 7 components and 50+ instances to centralized recipes:
+- Button, Select, Checkbox, Radio, Switch, Badge, Alert recipes
+- Recipes internalized border styling, eliminating inline `borderColor` usage
+- Recipe-based components no longer appear in grep results
+
+**Remaining 23 usages** are structural/layout borders NOT covered by recipes (correct - recipes focused on interactive form controls and feedback components).
+
+---
+
+### "border" Token Usage Categorization
+
+**Grep command:** `grep -r 'borderColor="border"' frontend/src/ --include="*.tsx"`
+
+#### Category 1: Dev Tools (10 usages) - NOT PRODUCTION
+
+**File:** `pages/dev/LayoutDebug.tsx` (10 instances)
+- Purpose: Dev/debug page for testing layout tokens
+- Usage: Structural containers with `bg="layer-01" borderColor="border"`
+- **Assessment:** Acceptable for dev tools, not production code
+- **Action:** No fix needed (dev-only context)
+
+---
+
+#### Category 2: Structural Borders - Navigation (2 usages)
+
+**1. NavBar.tsx** (line 91)
+```tsx
+<Box
+  w="100%"
+  bg="layer-01"
+  borderBottom="1px solid"
+  borderColor="border"
+>
+```
+
+- **Purpose:** NavBar bottom border separator
+- **Current:** Generic `border` token
+- **Assessment:** Structural divider between navbar and content
+- **Recommendation:** Should use `border-strong-01` (matches layer-01 background, emphasizes structural boundary)
+
+**2. Footer.tsx** (line 16)
+
+```tsx
+<Box
+  w="100%"
+  bg="layer-01"
+  borderTop="1px solid"
+  borderColor="border"
+>
+```
+
+- **Purpose:** Footer top border separator
+- **Current:** Generic `border` token
+- **Assessment:** Structural divider between content and footer
+- **Recommendation:** Should use `border-strong-01` (matches layer-01 background, structural boundary)
+
+---
+
+#### Category 3: Structural Borders - Sidebar (2 usages)
+
+**1. Sidebar.tsx** (line 14)
+
+```tsx
+<Box
+  bg="layer-01"
+  borderRadius="md"
+  borderWidth="1px"
+  borderColor="border"
+  boxShadow="sm"
+>
+```
+
+- **Purpose:** Sidebar container border
+- **Current:** Generic `border` token
+- **Assessment:** Structural container on layer-01
+- **Recommendation:** Should use `border-strong-01` (structural panel border on layer-01)
+
+**2. SidebarContent.tsx** (line 187)
+
+```tsx
+<Separator borderColor="border" opacity={0.6} />
+```
+
+- **Purpose:** Visual divider between sidebar sections
+- **Current:** Generic `border` with opacity adjustment
+- **Assessment:** Decorative separator, not structural
+- **Recommendation:** Consider `border-subtle-01` instead, OR keep `border` as-is (decorative dividers are valid use
+case for generic border)
+
+---
+
+#### Category 4: Structural Borders - Sidebar Overlays (2 usages)
+
+**1. sidebarOverlay.tsx** (line 48)
+
+```tsx
+<Box
+  bg="layer-01"
+  borderRadius="md"
+  borderWidth="1px"
+  borderColor="border"
+>
+```
+
+- **Purpose:** Sidebar mobile overlay container
+- **Current:** Generic `border` token
+- **Assessment:** Structural container (same as Sidebar.tsx)
+- **Recommendation:** Should use `border-strong-01` (structural panel border)
+
+**2. sidebarOverlay.tsx** (line 90)
+
+```tsx
+<Box
+  bg="layer-01"
+  borderRadius="md"
+  borderWidth="1px"
+  borderColor="border"
+>
+```
+
+- **Purpose:** Another sidebar overlay variant
+- **Current:** Generic `border` token
+- **Assessment:** Structural container
+- **Recommendation:** Should use `border-strong-01` (structural panel border)
+
+---
+
+#### Category 5: Interactive Controls - Pagination (5 usages)
+
+**PaginationCtrl.tsx** (lines 111, 129, 144, 218, 236)
+
+```tsx
+<IconButton
+  variant="ghost"
+  color="foreground"
+  borderColor="border"
+  disabled={currentPage === 1}
+>
+```
+
+- **Purpose:** Pagination navigation buttons (Previous/Next)
+- **Current:** Generic `border` token
+- **Assessment:** IconButtons using ghost variant with explicit border
+- **Context:** These are ghost variant buttons with custom border color override
+- **Recommendation:** Should use `button-outline` border token OR rely on recipe system if IconButton has ghost recipe
+(needs verification)
+- **Note:** Page number buttons (lines 127-137, 254-269) also use `borderColor="border"` - all pagination buttons should
+use consistent pattern
+
+---
+
+#### Category 6: Card Borders (2 usages)
+
+**1. MovieCard.tsx** (line 242)
+
+```tsx
+<Box
+  bg="popover"
+  borderColor="border"
+  borderWidth="1px"
+  borderRadius="md"
+>
+```
+
+- **Purpose:** Movie card title tooltip container
+- **Current:** Generic `border` token
+- **Assessment:** Popover/tooltip border on `bg="popover"` surface
+- **Recommendation:** Should use `border-strong-02` (popover is elevated surface, likely layer-02 equivalent)
+
+**2. MovieCardContainer.tsx** (line 14)
+
+```tsx
+<Card
+  borderColor="border"
+  overflow="hidden"
+  bg="layer-01"
+>
+```
+
+- **Purpose:** Movie card container border
+- **Current:** Generic `border` token
+- **Assessment:** Structural card border on layer-01
+- **Recommendation:** Should use `border-strong-01` (card is structural container on layer-01)
+
+---
+
+### Usage Summary
+
+**Total:** 23 usages
+
+- **Dev tools (exclude from fixes):** 10 usages (LayoutDebug.tsx)
+- **Production usages:** 13 usages
+
+**Production breakdown by category:**
+
+1. **Navigation dividers:** 2 usages (NavBar, Footer) → `border-strong-01`
+2. **Sidebar structural:** 2 usages (Sidebar, sidebarOverlay) → `border-strong-01`
+3. **Sidebar decorative:** 1 usage (SidebarContent Separator) → Consider `border-subtle-01` OR keep `border`
+(decorative acceptable)
+4. **Sidebar overlay:** 2 usages (sidebarOverlay containers) → `border-strong-01`
+5. **Pagination controls:** 5 usages (PaginationCtrl buttons) → `button-outline` (interactive controls)
+6. **Card borders:** 2 usages (MovieCard tooltip, MovieCardContainer) → `border-strong-01/02` (structural containers)
+
+---
+
+### Migration Recommendations
+
+**Clear migrations (11 usages):**
+
+- Structural borders on layer-01 → `border-strong-01` (9 usages: NavBar, Footer, Sidebar, sidebarOverlay×2, MovieCardContainer)
+- Elevated surface borders → `border-strong-02` (1 usage: MovieCard tooltip on popover)
+- Interactive controls → `button-outline` (5 usages: PaginationCtrl buttons) - OR verify recipe coverage
+
+**Evaluate/discuss (2 usages):**
+
+- Decorative separator → `border-subtle-01` vs keep `border` (1 usage: SidebarContent Separator with opacity)
+- Pagination button pattern → Verify if IconButton ghost recipe should handle borders automatically
+
+---
+
+### Legitimate "border" Token Use Cases
+
+**Question:** Should generic `border` token be retained for any use cases?
+
+**Assessment:**
+
+- **Decorative dividers/separators:** Valid use case (e.g., SidebarContent Separator)
+- **Context-agnostic borders:** Components that need border but don't know their layer context
+
+**Decision needed:** If all structural borders should use layer-hierarchy (`border-strong-XX`), then generic `border`
+becomes "decorative/fallback only" token. Document this in strategy.
+
+**Alternative:** Deprecate `border` entirely, require all borders to be either:
+
+- Layer-aware structural (`border-strong-XX`)
+- Form controls (`input`)
+- Decorative (`border-subtle-XX`)
+
+---
+
+### "input" Token Investigation (Task 7.2.e.2 - Quick Check)
+
+**Grep command:** `grep -r 'borderColor="input"' frontend/src/ --include="*.tsx"`
+
+**Result:** 0 usages found
+
+**Analysis:**
+
+- Recipe system completely eliminated inline `borderColor="input"` usage
+- All form controls (Input, Select, Checkbox, Radio) now use recipes
+- Recipes handle border styling internally
+
+**Action for Task 7.2.e.2:** Verify this finding, document that recipe system resolved "input" token misuse.
+
+---
+
+### Task 7.2.e.1 Completion Status
+
+**Investigation complete:** ✅
+
+- Counted actual usages: 23 (not 70 as estimated)
+- Categorized by purpose: structural, decorative, interactive
+- Identified recipe system impact: 50+ usages eliminated
+- Documented findings in notes file
+
+**Ready for Task 7.2.e.2:** Quick verification of "input" token (0 usages found, verify and document)
+
+**Estimated effort revised:**
+
+- Original: 3-4 hours investigation + 4-6 hours migration
+- Revised: 1 hour investigation (complete) + 1-2 hours migration (13 production usages, straightforward token substitutions)
+
+---
+
+## Phase 7.2.e "input" Token Investigation (Task 7.2.e.2)
+
+**Investigation Date:** 2025-11-18
+**Context:** Verify whether recipe system eliminated "input" token misuse and identify remaining usages.
+
+### "input" Token Usage Count
+
+**Grep command:** `grep -r 'borderColor="input"' frontend/src/ --include="*.tsx"`
+
+**Result:** 2 usages found (not 0 as initially thought)
+
+---
+
+### Usage Analysis
+
+#### 1. SearchBar.tsx (line 39)
+
+```tsx
+<Input
+  value={value}
+  onChange={(e) => onChange(e.target.value)}
+  placeholder={placeholder}
+  borderColor="input"
+  bg={isHovered ? "tertiary/8" : "transparent"}
+  pl="40px"
+  _focus={{ bg: "transparent" }}
+  _focusVisible={{
+    outlineColor: "ring",
+    outlineWidth: "2px",
+    outlineStyle: "solid",
+    outlineOffset: "2px",
+  }}
+/>
+```
+
+**Context:**
+
+- Component: Search input field in movie filters
+- Background layer: Rendered in `AdvancedMovieFilters` on `bg="layer-01"`
+- Current token: `borderColor="input"`
+
+**Assessment:**
+
+- **VIOLATION:** Forms on layer-01 should use `border-strong-01` (not generic "input")
+- Principle: "Forms match their background layer" (Task 7.2.e context)
+- The generic "input" token doesn't account for layer context
+
+**Recommendation:** Replace with `borderColor="border-strong-01"`
+
+---
+
+#### 2. GenreSelector.tsx (line 37)
+
+```tsx
+<Checkbox.Control
+  borderWidth="2px"
+  borderColor="input"
+  borderRadius="4px"
+  _hover={{ bg: "layer-hover-01" }}
+  _checked={{ bg: "primary", borderColor: "primary" }}
+>
+```
+
+**Context:**
+
+- Component: Checkbox controls for genre selection
+- Background layer: Rendered in `AdvancedMovieFilters` on `bg="layer-01"`
+- Current token: `borderColor="input"`
+- Note: Using recipe-based Checkbox component with border override
+
+**Assessment:**
+
+- **VIOLATION:** Checkbox on layer-01 should use `border-strong-01` (not generic "input")
+- Already using Chakra v3 recipe (`Checkbox.Control`), but overriding border color
+- Override breaks layer-aware border hierarchy
+
+**Recommendation:** Replace with `borderColor="border-strong-01"`
+
+**Additional note:** Checkbox already has `borderWidth="2px"` which is correct per recipe system (emphasized form
+controls use 2px borders).
+
+---
+
+### Recipe System Impact
+
+**Why only 2 usages remain:**
+
+The Chakra Recipe System implementation eliminated most inline `borderColor="input"` usage:
+
+- Input, Select, Checkbox, Radio components now use recipes
+- Recipes handle border styling internally based on variants
+- **However:** These 2 instances have explicit overrides that bypass recipe defaults
+
+**SearchBar.tsx:** Uses bare `Input` component with explicit style overrides (custom search styling)
+**GenreSelector.tsx:** Uses recipe-based `Checkbox.Control` but explicitly overrides `borderColor`
+
+---
+
+### Layer-Aware Border Principle
+
+**From Task 7.2.e context:**
+> "Forms on layer-01 → border-strong-01"
+> "Forms on layer-02 → border-strong-02"
+> "Forms match their background layer" principle
+
+**Current violations:**
+
+- Both components use generic `borderColor="input"` on layer-01
+- Should use `borderColor="border-strong-01"` to match layer context
+- Provides proper visual hierarchy (forms visually tied to their background layer)
+
+**Border hierarchy for forms on layer-01:**
+
+- **Default:** `border-strong-01` (base form border)
+- **Hover:** `border-strong-02` (increased emphasis)
+- **Focus:** `tertiary` (accent color for active state)
+
+---
+
+### Migration Summary
+
+**Total "input" token usages:** 2
+
+- **SearchBar.tsx:** 1 usage → Replace with `border-strong-01`
+- **GenreSelector.tsx:** 1 usage → Replace with `border-strong-01`
+
+**Effort:** ~5 minutes (2 simple token substitutions)
+
+**Impact:** Both components are in movie filters domain, rendered on same background layer (layer-01), so consistent
+replacement pattern applies.
+
+---
+
+### "input" Token Deprecation Assessment
+
+**Question:** Should the "input" token be deprecated entirely?
+
+**Analysis:**
+
+- Recipe system handles most form control borders automatically
+- Remaining usages (2) are explicit overrides that violate layer-aware principle
+- Generic "input" token doesn't account for layer context (architectural flaw)
+
+**Recommendation:**
+
+- Deprecate "input" token in favor of layer-aware border tokens
+- Update strategy document to remove "input" guidance
+- Replace with: "Forms use border-strong-XX matching their background layer"
+
+**Alternative consideration:**
+
+- Could retain "input" as fallback for context-agnostic form wrappers
+- But this conflicts with "forms match their layer" principle
+- Better to require explicit layer-aware token selection
+
+---
+
+### Task 7.2.e.2 Completion Status
+
+**Investigation complete:** ✅
+
+- Found 2 usages (not 0)
+- Both on layer-01, both should use `border-strong-01`
+- Recipe system eliminated most usages (as expected)
+- Remaining usages are explicit overrides that violate layer-aware principle
+
+**Ready for Task 7.2.e.3:** Create migration plan for both "border" (13 usages) and "input" (2 usages) tokens.
+
+---
+
+## Phase 7.2.e Border Token Migration Plan (Task 7.2.e.3)
+
+**Migration Date:** 2025-11-18
+**Scope:** Migrate all obsolete border tokens ("border" and "input") to layer-aware hierarchy tokens
+
+---
+
+### Replacement Rules
+
+#### Rule 1: Structural Containers on Layer-01
+
+**Pattern:** Cards, panels, sidebars, navigation on `bg="layer-01"`
+**Current:** `borderColor="border"`
+**Replace with:** `borderColor="border-strong-01"`
+**Rationale:** Structural borders should match their background layer for visual hierarchy
+
+#### Rule 2: Structural Containers on Layer-02/Elevated Surfaces
+
+**Pattern:** Popovers, tooltips, elevated containers on `bg="popover"` or `bg="layer-02"`
+**Current:** `borderColor="border"`
+**Replace with:** `borderColor="border-strong-02"`
+**Rationale:** Elevated surfaces use stronger borders from layer-02
+
+#### Rule 3: Form Controls on Layer-01
+
+**Pattern:** Inputs, checkboxes, selects rendered on `bg="layer-01"`
+**Current:** `borderColor="input"`
+**Replace with:** `borderColor="border-strong-01"`
+**Rationale:** Forms match their background layer (not generic "input" token)
+
+#### Rule 4: Interactive Controls (Buttons)
+
+**Pattern:** IconButtons, ghost buttons with explicit borders
+**Current:** `borderColor="border"`
+**Replace with:** `borderColor="button-outline"`
+**Rationale:** Interactive controls use button-specific border tokens
+
+#### Rule 5: Decorative Separators (Evaluate)
+
+**Pattern:** Horizontal rules, decorative dividers with opacity
+**Current:** `borderColor="border"` (with opacity adjustment)
+**Replace with:** Consider `borderColor="border-subtle-01"` OR keep `border` if truly decorative
+**Rationale:** Subtle borders for visual separation without structural emphasis
+
+---
+
+### Migration List by Category
+
+#### Category 1: Navigation Structural Dividers (2 components)
+
+**1. NavBar.tsx** (line 91)
+
+- File: `frontend/src/components/layout/NavBar.tsx`
+- Context: NavBar bottom border on `bg="layer-01"`
+- Current: `borderColor="border"`
+- Replace: `borderColor="border-strong-01"`
+
+**2. Footer.tsx** (line 16)
+
+- File: `frontend/src/components/layout/Footer.tsx`
+- Context: Footer top border on `bg="layer-01"`
+- Current: `borderColor="border"`
+- Replace: `borderColor="border-strong-01"`
+
+---
+
+#### Category 2: Sidebar Structural Containers (4 components)
+
+**3. Sidebar.tsx** (line 14)
+
+- File: `frontend/src/components/layout/Sidebar.tsx`
+- Context: Sidebar container border on `bg="layer-01"`
+- Current: `borderColor="border"`
+- Replace: `borderColor="border-strong-01"`
+
+**4. sidebarOverlay.tsx #1** (line 48)
+
+- File: `frontend/src/components/layout/sidebarOverlay.tsx`
+- Context: Mobile overlay container on `bg="layer-01"`
+- Current: `borderColor="border"`
+- Replace: `borderColor="border-strong-01"`
+
+**5. sidebarOverlay.tsx #2** (line 90)
+
+- File: `frontend/src/components/layout/sidebarOverlay.tsx`
+- Context: Another overlay variant on `bg="layer-01"`
+- Current: `borderColor="border"`
+- Replace: `borderColor="border-strong-01"`
+
+**6. SidebarContent.tsx** (line 187)
+
+- File: `frontend/src/components/layout/SidebarContent.tsx`
+- Context: Decorative separator between sidebar sections
+- Current: `<Separator borderColor="border" opacity={0.6} />`
+- Replace: Consider `borderColor="border-subtle-01"` (remove opacity) OR keep `border` as-is
+- Note: Decorative divider, may be legitimate use case for generic border
+
+---
+
+#### Category 3: Pagination Interactive Controls (5 components)
+
+**7-11. PaginationCtrl.tsx** (lines 111, 129, 144, 218, 236)
+
+- File: `frontend/src/components/layout/PaginationCtrl.tsx`
+- Context: IconButton ghost variant with explicit borders
+- Current: `borderColor="border"` (appears on Previous, Next, and page number buttons)
+- Replace: `borderColor="button-outline"`
+- Note: All 5 instances are pagination buttons, apply consistent pattern
+
+---
+
+#### Category 4: Movie Card Structural Borders (2 components)
+
+**12. MovieCardContainer.tsx** (line 14)
+
+- File: `frontend/src/components/movie/MovieCardContainer.tsx`
+- Context: Card container border on `bg="layer-01"`
+- Current: `borderColor="border"`
+- Replace: `borderColor="border-strong-01"`
+
+**13. MovieCard.tsx** (line 242)
+
+- File: `frontend/src/components/movie/MovieCard.tsx`
+- Context: Tooltip/popover container border on `bg="popover"`
+- Current: `borderColor="border"`
+- Replace: `borderColor="border-strong-02"` (elevated surface)
+
+---
+
+#### Category 5: Form Controls on Layer-01 (2 components)
+
+**14. SearchBar.tsx** (line 39)
+
+- File: `frontend/src/components/movie/filters/SearchBar.tsx`
+- Context: Search input on layer-01 (rendered in AdvancedMovieFilters)
+- Current: `borderColor="input"`
+- Replace: `borderColor="border-strong-01"`
+
+**15. GenreSelector.tsx** (line 37)
+
+- File: `frontend/src/components/movie/filters/GenreSelector.tsx`
+- Context: Checkbox control on layer-01 (rendered in AdvancedMovieFilters)
+- Current: `borderColor="input"` (override on recipe-based Checkbox.Control)
+- Replace: `borderColor="border-strong-01"`
+
+---
+
+### Migration Summary
+
+**Total migrations:** 15 production usages
+
+- **"border" token:** 13 usages
+- **"input" token:** 2 usages
+
+**By replacement token:**
+
+- `border-strong-01`: 11 usages (most common - layer-01 structural)
+- `border-strong-02`: 1 usage (elevated surface)
+- `button-outline`: 5 usages (interactive controls)
+- `border-subtle-01`: 1 usage (evaluate - decorative separator)
+
+**Files affected:** 9 unique files
+
+- Layout domain: 5 files (NavBar, Footer, Sidebar, sidebarOverlay, SidebarContent, PaginationCtrl)
+- Movie domain: 4 files (MovieCard, MovieCardContainer, SearchBar, GenreSelector)
+
+---
+
+### Special Cases
+
+#### SidebarContent.tsx Separator (Component #6)
+
+**Current implementation:**
+
+```tsx
+<Separator borderColor="border" opacity={0.6} />
+```
+
+**Options:**
+
+1. Use `border-subtle-01` and remove opacity (semantic token already provides subtle emphasis)
+2. Keep `borderColor="border"` as legitimate decorative separator use case
+
+**Recommendation:** Replace with `border-subtle-01` and remove opacity for semantic consistency.
+
+**Rationale:** Using semantic subtle token is clearer than generic border + opacity override.
+
+---
+
+### Verification Strategy
+
+After migration, verify:
+
+1. All 4 themes × 2 color modes (8 combinations)
+2. Visual hierarchy maintained (borders match layer context)
+3. Interactive states preserved (button borders respond correctly on hover/focus)
+4. No accessibility regressions (contrast ratios maintained)
+
+**Grep verification:**
+
+```bash
+# Should return 10 matches (all in LayoutDebug.tsx - dev tool only)
+grep -r 'borderColor="border"' frontend/src/ --include="*.tsx" | wc -l
+
+# Should return 0 matches
+grep -r 'borderColor="input"' frontend/src/ --include="*.tsx" | wc -l
+```
+
+---
+
+### Task 7.2.e.3 Completion Status
+
+**Migration plan complete:** ✅
+
+- Documented replacement rules (5 clear patterns)
+- Created comprehensive migration list (15 usages across 9 files)
+- Organized by category for efficient batch migration
+- Identified special cases requiring evaluation
+
+**Ready for Task 7.2.e.4:** Update strategy document with layer-aware form control border guidance.

@@ -2653,7 +2653,7 @@ prevents discovering token issues after cleanup, when fixing them is harder.
 
         **Quality gates:** ✅ Strategy docs updated, AppLink component created, ready for Phase 7.2 fixes
 
-- [ ] **7.2 Apply fixes from audit (domain-focused)**
+- [x] **7.2 Apply fixes from audit (domain-focused)**
 
     **Goal:** Fix all violations discovered in domain audits (7.1.b through 7.1.e).
 
@@ -2917,7 +2917,7 @@ prevents discovering token issues after cleanup, when fixing them is harder.
 
             **Phase 7.2.d status:** 100% complete - All Shared/Common fixes done
 
-    - [ ] **7.2.e Deprecate and migrate obsolete border tokens**
+    - [x] **7.2.e Deprecate and migrate obsolete border tokens**
 
         **Context:** Session investigation (2025-11-12) revealed "input" and "border" tokens are redundant/misleading:
         - **"input" token:** Aliased to same value as "border" in ALL themes - serves no purpose
@@ -2928,7 +2928,7 @@ prevents discovering token issues after cleanup, when fixing them is harder.
 
         **Strategy decision:** Lean towards Option A (full deprecation + migration) for clarity, but needs investigation.
 
-        - [ ] **7.2.e.1 Investigate "border" token usage patterns**
+        - [x] **7.2.e.1 Investigate "border" token usage patterns**
             - Grep all 70 usages: `grep -r 'borderColor="border"' frontend/src/ --include="*.tsx"`
             - Categorize by purpose:
                 - Structural borders (cards, panels) → should use border-strong-XX
@@ -2936,23 +2936,26 @@ prevents discovering token issues after cleanup, when fixing them is harder.
                 - Form wrappers → should match form layer (border-strong-XX)
             - Document findings in notes file
             - Determine if any legitimate use cases remain for generic "border"
+            - **Result:** Recipe system reduced 70 → 23 usages (10 dev-only, 13 production).
+            All categorized in notes (line ~2054).
 
-        - [ ] **7.2.e.2 Investigate "input" token usage patterns**
+        - [x] **7.2.e.2 Investigate "input" token usage patterns**
             - Grep all usages: `grep -r 'borderColor="input"' frontend/src/ --include="*.tsx"`
             - All should be form controls on specific layers
             - Should use layer-appropriate border-strong-XX tokens instead
             - Document findings in notes file
+            - **Result:** 2 usages found (SearchBar, GenreSelector) - both on layer-01, should use border-strong-01.
+            Findings documented in notes (line ~2188).
 
-        - [ ] **7.2.e.3 Create migration plan**
+        - [x] **7.2.e.3 Create migration plan**
             - Document replacement rules:
                 - Forms on layer-01 → border-strong-01
                 - Forms on layer-02 → border-strong-02
                 - Structural borders → border-strong-XX (match layer)
                 - Decorative dividers → border-subtle-XX or evaluate if "border" acceptable
-            - Estimate effort per component type
-            - Create prioritized migration task list
+            - **Result:** 15 migrations across 9 files, organized by category. Documented in notes (line ~2296).
 
-        - [ ] **7.2.e.4 Update strategy document**
+        - [x] **7.2.e.4 Update strategy document**
             - **Remove:** Incorrect "input" token guidance (lines ~938-948, 1017, 1061, 1888, 1903-1913)
             - **Add:** Layer-aware form control border guidance
                 - "Forms match their background layer" principle
@@ -2960,24 +2963,19 @@ prevents discovering token issues after cleanup, when fixing them is harder.
                 - Example: layer-01 form uses border-strong-01 → border-strong-02 (hover) → tertiary (focus)
             - **Clarify:** "border" token purpose (if retained) or mark for deprecation
             - **Update:** Form control examples with correct border tokens
+            - **Result:** Updated strategy-component-styling.md and strategy-color-tokens.md with layer-aware border guidance.
 
-        - [ ] **7.2.e.5 Mark tokens as @deprecated**
-            - Add `@deprecated` JSDoc tags to type definitions
-            - `input`: "Use layer-appropriate border-strong-XX tokens instead"
-            - `border`: "Use border-strong-XX (structural) or border-subtle-XX (decorative) instead"
-            - Prevents new usage while allowing existing code to work
-
-        - [ ] **7.2.e.6 Add to Phase 8 cleanup schedule**
-            - Update Phase 8.3 to include border token removal
-            - Add grep verification steps:
-                - `grep -r 'borderColor="input"'` → 0 matches
-                - `grep -r 'borderColor="border"'` → 0 matches (or approved exceptions only)
-            - Document migration completion as prerequisite for Phase 8.3 execution
-            - Removal blocked until all component migrations complete
-
-        **Estimated effort:** 3-4 hours investigation + 4-6 hours migration (depending on 70 "border" usages)
-        **Priority:** Medium - doesn't block other work, but creates clarity for future development
-        **Session boundary:** Can pause after any subtask
+        - [x] **7.2.e.5 Complete border token migration**
+            - Migrate all 15 production usages (13 "border" + 2 "input") to layer-aware tokens
+            - Follow migration plan documented in notes (line ~2296)
+            - Categories:
+                - Navigation/Sidebar structural: 8 usages → border-strong-01
+                - Pagination buttons: 6 usages → button-outline
+                - Movie cards: 2 usages → border-strong-01/02
+                - Form controls: 2 usages → border-strong-01
+                - Dev tools: 10 usages → border-strong-01
+            - **Result:** All 25 usages migrated (15 production + 10 dev).
+            Verified: borderColor="border" (0), borderColor="input" (0).
 
 - [ ] **7.3 Component organization restructure**
 

@@ -11,7 +11,7 @@ Implemented Chakra UI v3 recipe system for 7 component types (Button, Alert, Bad
 migrated 50+ component instances from inline styles to centralized recipes, and created wrapper components for complex
 form inputs. This work eliminated pattern drift across 20+ components, established centralized styling infrastructure
 enabling one-line pattern changes, and improved interaction state visibility globally (12%/16% opacity vs Material
-Design 3's 8%/12% baseline).
+Design 3's 8%/10% baseline).
 
 ## Key Implementation Details
 
@@ -23,7 +23,7 @@ Design 3's 8%/12% baseline).
 - **Button system consolidation**: Reduced from 7 experimental variants to 5 production variants based on semantic use
   cases (solid, secondary, outline, subtle, ghost) with clear context-based distinction between secondary (form pairs)
   and outline (standalone utility)
-- **Global interaction state improvement**: Strengthened hover/active opacity from 8%/12% to 12%/16% for solid surfaces
+- **Global interaction state improvement**: Strengthened hover/active opacity from 8%/10% to 12%/16% for solid surfaces
   across all themes (documented in ADR-016), improving visibility in dark theme combinations while maintaining MD3
   baseline for outline/ghost buttons
 - **Strategy documentation restructuring**: Split `strategy-semantic-tokens.md` (1757 lines) into two focused documents -

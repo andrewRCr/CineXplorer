@@ -244,7 +244,6 @@ const ConnectedDropdowns = ({
             }}
             _focusVisible={{
               borderColor: "tertiary",
-              outline: "none",
             }}
             _disabled={{
               opacity: 1,
@@ -351,7 +350,6 @@ const ConnectedDropdowns = ({
             }}
             _focusVisible={{
               borderColor: "tertiary",
-              outline: "none",
             }}
             _disabled={{
               opacity: 1,

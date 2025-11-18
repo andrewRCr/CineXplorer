@@ -115,7 +115,6 @@ const SortDropdownMinimal = ({
             }}
             _focusVisible={{
               borderColor: "tertiary",
-              outline: "none",
             }}
             _disabled={{
               opacity: 1,

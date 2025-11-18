@@ -42,10 +42,6 @@ const SortSelector = ({ value, onChange }: SortSelectorProps) => {
           lineHeight="1.3"
           css={{
             padding: "6px 12px",
-            "&:focus-visible": {
-              outline: "2px solid var(--chakra-colors-ring)",
-              outlineOffset: "2px",
-            },
             "& [data-part='indicator']": {
               width: "16px",
               height: "16px",

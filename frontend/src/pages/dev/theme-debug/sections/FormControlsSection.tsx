@@ -130,18 +130,7 @@ export function FormControlsSection() {
                     onValueChange={(details) => setSelectValue(details.value)}
                     positioning={{ placement: "bottom-start", gutter: 2 }}
                   >
-                    <Select.Trigger
-                      borderColor="border-strong-01"
-                      bg="background"
-                      color="foreground"
-                      _hover={{ borderColor: "border-strong-02", bg: "tertiary/8" }}
-                      css={{
-                        "&:focus-visible": {
-                          outline: "2px solid var(--chakra-colors-ring)",
-                          outlineOffset: "2px",
-                        },
-                      }}
-                    >
+                    <Select.Trigger>
                       <Select.ValueText placeholder="Select option" />
                       <Select.Indicator />
                     </Select.Trigger>
@@ -204,7 +193,7 @@ export function FormControlsSection() {
               </HStack>
 
               <Text fontSize="xs" color="foreground/60">
-                Tokens: Trigger uses <Code fontSize="xs">border-strong-01</Code> border (default), <Code fontSize="xs">border-strong-02</Code> + <Code fontSize="xs">tertiary/8</Code> (hover), <Code fontSize="xs">ring</Code> focus outline (keyboard only). Content uses <Code fontSize="xs">muted</Code> bg. Items: selected state uses <Code fontSize="xs">tertiary</Code> + <Code fontSize="xs">on-tertiary</Code>, hover (non-selected) uses <Code fontSize="xs">tertiary/12</Code>.
+                Tokens: Trigger uses <Code fontSize="xs">border-strong-01</Code> border (default), <Code fontSize="xs">border-strong-02</Code> + <Code fontSize="xs">tertiary/8</Code> (hover), <Code fontSize="xs">tertiary</Code> border-only focus (keyboard only, matches StyledInput pattern). Content uses <Code fontSize="xs">muted</Code> bg. Items: selected state uses <Code fontSize="xs">tertiary</Code> + <Code fontSize="xs">on-tertiary</Code>, hover (non-selected) uses <Code fontSize="xs">tertiary/12</Code>.
               </Text>
             </VStack>
           </Box>

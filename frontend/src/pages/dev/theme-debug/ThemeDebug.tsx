@@ -1,7 +1,7 @@
 import { Box, Text, VStack, HStack, Button } from "@chakra-ui/react";
 import { useThemeSelect } from "@/hooks/useThemeSelect";
 import { type ThemeName } from "@/theme";
-import { ColorModeButton, useColorMode } from "@/components/chakra/color-mode";
+import { ColorModeButton, useColorMode } from "@/components/core/chakra/color-mode";
 
 // Section components
 import { SemanticColorsSection } from "./sections/SemanticColorsSection";

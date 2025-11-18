@@ -14,7 +14,7 @@ import { LuX } from "react-icons/lu";
 import { useNavigate } from "react-router-dom";
 import SidebarContent from "./SidebarContent";
 import type { Drawer as DrawerType } from "@chakra-ui/react";
-import logo from "../../assets/icons8-movie-64.webp";
+import logo from "../../../assets/icons8-movie-64.webp";
 
 interface SidebarDrawerProps {
   placement?: DrawerType.RootProps["placement"];

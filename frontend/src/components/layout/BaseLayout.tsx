@@ -1,6 +1,6 @@
-import NavBar from "./NavBar";
+import NavBar from "./navbar/NavBar";
 import Footer from "./Footer";
-import { SidebarDrawerViewport } from "./SidebarDrawer";
+import { SidebarDrawerViewport } from "./sidebar/SidebarDrawer";
 import { Box } from "@chakra-ui/react";
 import { type ReactNode } from "react";
 

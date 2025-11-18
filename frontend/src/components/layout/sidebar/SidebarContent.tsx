@@ -12,7 +12,7 @@ import {
 import { NAVIGATION_SECTIONS } from "@/constants/navigation";
 import { BsFillPlusCircleFill } from "react-icons/bs";
 import { useLocation, useNavigate } from "react-router-dom";
-import NavBarSearch from "./NavBarSearch";
+import NavBarSearch from "../navbar/NavBarSearch";
 import React from "react";
 
 interface SidebarContentProps {

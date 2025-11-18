@@ -2,7 +2,7 @@ import { forwardRef, useImperativeHandle, useMemo, useRef, useEffect } from "rea
 import { Text, Button, Box, Skeleton } from "@chakra-ui/react";
 import MovieCard from "../MovieCard";
 import MovieCardContainer from "../MovieCardContainer";
-import { PaginationCtrl } from "../../layout/PaginationCtrl";
+import { MoviePaginationCtrl } from "./MoviePaginationCtrl";
 import { usePaginatedMovies } from "@/hooks/usePaginatedMovies";
 import { useMovieCollectionContext } from "@/hooks/useMovieCollectionContext";
 import { usePageChangeHandler } from "@/hooks/usePageChangeHandler";
@@ -175,7 +175,7 @@ const MovieCollectionGrid = forwardRef<MovieGridRef, MovieCollectionGridProps>(
           </Box>
           <Box minWidth="200px" display="flex" justifyContent="flex-end">
             {shouldShowPagination && (
-              <PaginationCtrl
+              <MoviePaginationCtrl
                 currentPage={currentPage}
                 onGoToPage={handlePageChange}
                 totalMovieCount={total_results}
@@ -253,7 +253,7 @@ const MovieCollectionGrid = forwardRef<MovieGridRef, MovieCollectionGridProps>(
         >
           <Box minWidth="200px" display="flex" justifyContent="flex-end">
             {shouldShowPagination && (
-              <PaginationCtrl
+              <MoviePaginationCtrl
                 currentPage={currentPage}
                 onGoToPage={handlePageChange}
                 totalMovieCount={total_results}

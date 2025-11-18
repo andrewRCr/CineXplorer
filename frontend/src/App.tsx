@@ -9,7 +9,7 @@ import AuthLayout from "./components/layout/AuthLayout";
 import LoadingLayout from "./components/layout/LoadingLayout";
 import AuthContextProvider from "./components/auth/AuthContextProvider";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
-import ErrorBoundary from "./components/ErrorBoundary";
+import ErrorBoundary from "./components/core/ErrorBoundary";
 
 // Lazy load page components
 const Featured = lazy(() => import("./pages/movie/Featured"));

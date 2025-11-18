@@ -20,11 +20,12 @@ vi.mock('../../../assets/tmdb_logo_alt_short.svg', () => ({
 
 // Mock components that require context providers
 // Note: Using inline factories to avoid hoisting issues with imported helpers
-vi.mock('@/components/ThemeSelector', () => ({
+vi.mock('@/components/common', () => ({
+  TextLink: ({ to, children }: { to: string; children: React.ReactNode }) => <a href={to}>{children}</a>,
   ThemeSelector: () => <div data-testid="theme-selector">Theme Selector</div>
 }));
 
-vi.mock('@/components/chakra/color-mode', () => ({
+vi.mock('@/components/core/chakra/color-mode', () => ({
   ColorModeButton: () => <button data-testid="color-mode-button">Color Mode</button>
 }));
 

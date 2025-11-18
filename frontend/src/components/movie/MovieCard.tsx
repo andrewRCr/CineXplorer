@@ -10,7 +10,7 @@ import {
 import { useState, useRef, useEffect, memo, useMemo, useCallback } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { type Movie } from "@/types/movie";
-import { Tooltip } from "../chakra/tooltip";
+import { Tooltip } from "../core/chakra/tooltip";
 import { LuEye, LuHeart } from "react-icons/lu";
 import { RiPlayListAddLine, RiPlayListFill } from "react-icons/ri";
 import MovieUserScore from "./MovieUserScore";

@@ -9,7 +9,7 @@ import {
 } from "@chakra-ui/react";
 import { useLocation, Link } from "react-router-dom";
 import { BsFillPlusCircleFill } from "react-icons/bs";
-import logo from "../../assets/icons8-movie-64.webp";
+import logo from "../../../assets/icons8-movie-64.webp";
 
 import { ROUTES } from "@/constants/routes";
 import { USER_NAVIGATION_ITEMS } from "@/constants/navigation";

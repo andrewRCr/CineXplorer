@@ -14,7 +14,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { BrowserRouter } from 'react-router-dom';
-import { Provider as ChakraProvider } from '../../../components/chakra/provider';
+import { Provider as ChakraProvider } from '../../../components/core/chakra/provider';
 import Watchlist from '../Watchlist';
 import * as userMovieService from '../../../services/userMovieService';
 import type { components } from '../../../types/api';

@@ -9,7 +9,7 @@
  *
  * **Use inline mocks for vi.mock():**
  * ```ts
- * vi.mock('@/components/ThemeSelector', () => ({
+ * vi.mock('@/components/common', () => ({
  *   ThemeSelector: () => <div data-testid="theme-selector">Theme Selector</div>
  * }));
  * ```

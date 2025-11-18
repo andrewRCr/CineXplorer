@@ -33,14 +33,14 @@ const getDynamicPadding = (formattedText: string): string => {
   return padding;
 };
 
-interface iPaginationCtrlProps {
+interface iMoviePaginationCtrlProps {
   totalMovieCount: number;
   onGoToPage: (pageNumber: number) => void;
   currentPage: number;
   totalPages?: number; // Optional: override total pages calculation
 }
 
-const PaginationCtrl = (props: iPaginationCtrlProps) => {
+const MoviePaginationCtrl = (props: iMoviePaginationCtrlProps) => {
   // Destructure props for useCallback dependencies
   const { currentPage, onGoToPage, totalMovieCount, totalPages } = props;
   
@@ -304,7 +304,7 @@ const PaginationCtrl = (props: iPaginationCtrlProps) => {
 };
 
 // Memoize the component to prevent unnecessary re-renders
-const MemoizedPaginationCtrl = memo(PaginationCtrl, (prevProps, nextProps) => {
+const MemoizedMoviePaginationCtrl = memo(MoviePaginationCtrl, (prevProps, nextProps) => {
   // Custom comparison function for optimal performance
   return (
     prevProps.currentPage === nextProps.currentPage &&
@@ -314,7 +314,7 @@ const MemoizedPaginationCtrl = memo(PaginationCtrl, (prevProps, nextProps) => {
   );
 });
 
-MemoizedPaginationCtrl.displayName = "PaginationCtrl";
+MemoizedMoviePaginationCtrl.displayName = "MoviePaginationCtrl";
 
-export default MemoizedPaginationCtrl;
-export { MemoizedPaginationCtrl as PaginationCtrl };
+export default MemoizedMoviePaginationCtrl;
+export { MemoizedMoviePaginationCtrl as MoviePaginationCtrl };

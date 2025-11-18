@@ -1,8 +1,7 @@
 import tmdbLogo from "../../assets/tmdb_logo_alt_short.svg";
 import { Box, HStack, Text, VStack } from "@chakra-ui/react";
-import { TextLink } from "@/components/common/TextLink";
-import { ColorModeButton } from "../chakra/color-mode";
-import { ThemeSelector } from "../ThemeSelector";
+import { TextLink, ThemeSelector } from "@/components/common";
+import { ColorModeButton } from "../core/chakra/color-mode";
 
 const Footer = () => {
   return (

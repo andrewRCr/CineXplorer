@@ -1,5 +1,5 @@
 import { Box, Text, VStack, HStack, Alert, Badge, Progress, Spinner, Button, Code } from "@chakra-ui/react";
-import { Tooltip } from "@/components/chakra/tooltip";
+import { Tooltip } from "@/components/core/chakra/tooltip";
 
 /**
  * Feedback & Status Section

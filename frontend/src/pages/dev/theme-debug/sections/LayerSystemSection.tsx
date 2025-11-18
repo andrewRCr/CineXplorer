@@ -1,5 +1,5 @@
 import { Box, Text, VStack, HStack } from "@chakra-ui/react";
-import { useColorMode } from "@/components/chakra/color-mode";
+import { useColorMode } from "@/components/core/chakra/color-mode";
 
 /**
  * Layer System Section - Elevation Hierarchy

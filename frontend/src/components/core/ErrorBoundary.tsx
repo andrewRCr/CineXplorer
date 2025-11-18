@@ -17,7 +17,7 @@ import {
 } from '@chakra-ui/react';
 import { LuChevronDown, LuChevronUp, LuCopy } from 'react-icons/lu';
 import { MdWarning } from 'react-icons/md';
-import logger from '../services/logger';
+import logger from '../../services/logger';
 
 interface ErrorBoundaryState {
   hasError: boolean;

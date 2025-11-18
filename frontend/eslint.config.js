@@ -6,7 +6,15 @@ import tseslint from "typescript-eslint";
 
 export default tseslint.config([
     {
-        ignores: ["dist", "src/components/chakra/**"],
+        ignores: [
+            "dist",
+            // Chakra UI v3 "snippet" system: CLI-installed utility files that intentionally
+            // export both components and hooks in single files for cohesion. This violates
+            // react-refresh/only-export-components but aligns with Chakra's documented
+            // snippet architecture.
+            // See: https://www.chakra-ui.com/docs/components/concepts/color-mode
+            "src/components/core/chakra/**"
+        ],
     },
     {
         files: ["**/*.{ts,tsx}"],

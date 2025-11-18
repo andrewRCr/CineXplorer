@@ -1,5 +1,5 @@
 import BaseLayout from "./BaseLayout";
-import Sidebar from "./Sidebar";
+import Sidebar from "./sidebar/Sidebar";
 import {
   Box,
   Container,

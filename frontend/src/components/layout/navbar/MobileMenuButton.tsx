@@ -1,6 +1,6 @@
 import { IconButton } from "@chakra-ui/react";
 import { LuMenu } from "react-icons/lu";
-import { sidebarDrawer } from "./sidebarOverlay";
+import { sidebarDrawer } from "../sidebar/SidebarOverlay";
 
 interface MobileMenuButtonProps {
   size?: "sm" | "md" | "lg";

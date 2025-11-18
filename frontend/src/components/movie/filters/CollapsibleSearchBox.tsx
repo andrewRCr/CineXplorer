@@ -16,7 +16,7 @@ const CollapsibleSearchBox = ({
   const [localQuery, setLocalQuery] = useState(query);
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
-  
+
   // Track focus timeout for cleanup
   const focusTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -33,7 +33,7 @@ const CollapsibleSearchBox = ({
       focusTimeoutRef.current = null;
     }
   }, [pageSource]);
-  
+
   // Cleanup timeout on unmount to prevent memory leaks
   useEffect(() => {
     return () => {
@@ -52,13 +52,13 @@ const CollapsibleSearchBox = ({
   const toggleSearch = useCallback(() => {
     const wasExpanded = isSearchExpanded;
     setIsSearchExpanded(!wasExpanded);
-    
+
     // Clear any existing focus timeout
     if (focusTimeoutRef.current) {
       clearTimeout(focusTimeoutRef.current);
       focusTimeoutRef.current = null;
     }
-    
+
     // Focus the input when expanding
     if (!wasExpanded) {
       focusTimeoutRef.current = setTimeout(() => {
@@ -85,7 +85,7 @@ const CollapsibleSearchBox = ({
       closeSearch();
     }
   }, [handleSearchSubmit, closeSearch]);
-  
+
   // Memoize input change handler
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setLocalQuery(e.target.value);
@@ -99,10 +99,14 @@ const CollapsibleSearchBox = ({
       border="1px solid"
       // DESIGN: Uses button-outline (not input) for visual consistency with adjacent filter dropdowns
       borderColor="button-outline"
+      // ACCESSIBILITY: Text inputs get tertiary focus border (WCAG 2.4.7 Focus Visible)
+      _focusWithin={{
+        borderColor: "tertiary",
+      }}
       borderRadius="4px"
       width={isSearchExpanded ? "260px" : "32px"}
       height="32px"
-      transition="width 0.3s ease-in-out"
+      transition="width 0.3s ease-in-out, border-color 0.2s ease"
       overflow="hidden" // Prevents content from spilling during animation
     >
       <Input
@@ -116,9 +120,16 @@ const CollapsibleSearchBox = ({
         borderRadius="0"
       backgroundColor="background"
       color="foreground"
-      _focus={{ boxShadow: "none" }}
-      _hover={{
-        bg: "tertiary/8",
+      css={{
+        "&:hover:not(:focus)": {
+          backgroundColor: "color-mix(in srgb, var(--chakra-colors-tertiary) 8%, transparent)",
+        },
+        "&:focus": {
+          backgroundColor: "var(--chakra-colors-background)",
+          boxShadow: "none",
+          border: "none",
+          outline: "none",
+        },
       }}
         fontSize="14px"
         height="30px"
@@ -141,6 +152,10 @@ const CollapsibleSearchBox = ({
       color="foreground"
       _hover={{
         bg: "tertiary/8",
+      }}
+      _focus={{
+        outline: "none",
+        boxShadow: "none",
       }}
         height="30px"
         minW="30px"

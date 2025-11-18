@@ -678,11 +678,11 @@ Different systems use fundamentally different approaches to elevation:
 
 **Dark Mode Example:**
 
-| Layer Context | Subtle Border | Strong Border |
-|---------------|---------------|---------------|
-| background/layer-01 | `#393939` | `#6f6f6f` (3.67:1 contrast) |
-| layer-02 | `#525252` | `#8d8d8d` |
-| layer-03 | `#6f6f6f` | `#a8a8a8` |
+| Layer Context       | Subtle Border | Strong Border               |
+|---------------------|---------------|-----------------------------|
+| background/layer-01 | `#393939`     | `#6f6f6f` (3.67:1 contrast) |
+| layer-02            | `#525252`     | `#8d8d8d`                   |
+| layer-03            | `#6f6f6f`     | `#a8a8a8`                   |
 
 **Rationale:** Border must have sufficient contrast against both current layer and adjacent layers.
 

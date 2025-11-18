@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
-import { Box, Text, HStack, Input } from "@chakra-ui/react";
+import { Box, Text, HStack } from "@chakra-ui/react";
+import { StyledInput } from "@/components/common";
 import { debounce } from "lodash";
 
 interface RatingSelectorProps {
@@ -154,7 +155,8 @@ const RatingSelector = ({
         Rating
       </Text>
       <HStack gap={2} align="center">
-        <Input
+        <StyledInput
+          layer="01"
           placeholder="0.0"
           value={localMinRating}
           onChange={(e) => handleMinRatingChange(e.target.value)}
@@ -168,15 +170,11 @@ const RatingSelector = ({
           minH="32px"
           fontSize="14px"
           borderRadius="4px"
-        borderColor={
-          (localMinRating && !isValidRating(localMinRating)) || !hasLogicalRange()
-            ? "destructive"
-            : "input"
-        }
-        bg="transparent"
-        _hover={{
-          bg: "tertiary/8",
-        }}
+          borderColor={
+            (localMinRating && !isValidRating(localMinRating)) || !hasLogicalRange()
+              ? "destructive"
+              : undefined
+          }
           _invalid={{
             borderColor: "destructive",
             boxShadow: "0 0 0 1px var(--chakra-colors-destructive)",
@@ -185,7 +183,8 @@ const RatingSelector = ({
       <Text fontSize="sm" color="on-muted">
         to
       </Text>
-        <Input
+        <StyledInput
+          layer="01"
           placeholder="10"
           value={localMaxRating}
           onChange={(e) => handleMaxRatingChange(e.target.value)}
@@ -199,15 +198,11 @@ const RatingSelector = ({
           minH="32px"
           fontSize="14px"
           borderRadius="4px"
-        borderColor={
-          (localMaxRating && !isValidRating(localMaxRating)) || !hasLogicalRange()
-            ? "destructive"
-            : "input"
-        }
-        bg="transparent"
-        _hover={{
-          bg: "tertiary/8",
-        }}
+          borderColor={
+            (localMaxRating && !isValidRating(localMaxRating)) || !hasLogicalRange()
+              ? "destructive"
+              : undefined
+          }
           _invalid={{
             borderColor: "destructive",
             boxShadow: "0 0 0 1px var(--chakra-colors-destructive)",

@@ -37,8 +37,11 @@ reference-ready.
 **Use when:**
 
 - Task list is 100% complete (all checkboxes marked)
-- Ready to archive incidental work
+- Ready to prepare work for PR and archival
 - Preparing documentation for future reference
+
+**Timing:** After all work complete, BEFORE creating PR. Documentation cleanup commits to child branch
+and becomes part of the work deliverable.
 
 **What happens:**
 
@@ -75,8 +78,8 @@ reference-ready.
     - Remove any temporal notes (e.g., "~90% complete, ~5-8 hours remaining")
     - Update to reflect final state
 - Add/update `**Completed**:` date in both files (YYYY-MM-DD format)
-- Note: Incidental work uses "Completion Summary" section in task file; planned work uses separate
-  completion-metadata.md (created later in archive-completed workflow)
+- Note: All work (feature/technical/incidental) uses separate `completion-{name}.md` document
+  (created in archive-completed workflow Phase 1, Step 3)
 
 ### 2. Inventory Open Work
 
@@ -195,9 +198,9 @@ This includes:
 
 - **Goal**: Transform task file into quick-reference skeleton
 - **Decision Criteria**: "Is this part of the quick reference or the deep dive?"
-- **Task file becomes**: Top-matter + Task list + Completion Summary ONLY
+- **Task file becomes**: Top-matter + Task list ONLY (completion metadata now in separate completion-{name}.md)
 - **Everything else migrates**: ALL bottom-matter sections (Implementation Notes, Task List Coordination,
-  Decision Logs, etc.) → Notes file
+  Decision Logs, Completion Summary, etc.) → Notes file
 
 **Archival Task File Structure (Mode 2 only):**
 
@@ -213,15 +216,8 @@ This includes:
 - [x] All task checkboxes with inline outcomes
 - Preserves what was actually done
 
-## Completion Summary (KEEP for incidental work only)
-- **Incidental work**: Completion Summary section stays in task file
-- **Planned work** (features/PRDs): NO Completion Summary in task file - uses separate completion-metadata.md instead (created in archive-completed workflow)
-- Work Accomplished
-- Major Deliverables
-- Key Architectural Decisions
-- Metrics
-
 ## EVERYTHING ELSE MIGRATES TO NOTES FILE:
+❌ Completion Summary section → Eliminated (all work uses completion-{name}.md)
 ❌ Implementation Notes section → Notes file
 ❌ Task List Coordination section → Notes file
 ❌ Decision Logs section → Notes file
@@ -230,8 +226,9 @@ This includes:
 
 **Why This Structure?**
 
-- **Quick reference** (2-3 min scan): "What was done, what files changed, what was achieved?"
-- **Deep dive** (notes file): "How was it done, why these decisions, what was the journey?"
+- **Quick reference** (task file, 2-3 min scan): "What work was done?" (task checklist showing completed work)
+- **Executive summary** (completion-{name}.md, 2-3 min read): "What was achieved?" (outcomes and metrics)
+- **Deep dive** (notes file, as needed): "How was it done, why these decisions, what was the journey?"
 
 ---
 
@@ -288,7 +285,6 @@ Before migrating any content during mid-work cleanup, ask these questions:
 
 - ✅ **All task lines exactly as written** (checkboxes, descriptions, inline outcome notes)
 - ✅ Task structure and hierarchy (parent tasks, subtasks, indentation)
-- ✅ "Completion Summary" section (for completed work)
 - ✅ **Context needed by remaining uncompleted tasks** (even if verbose)
 - ✅ **Implementation patterns/constraints guiding future work** (critical reference)
 - ✅ **Active decisions affecting ongoing tasks** (keep until those tasks complete)
@@ -348,9 +344,9 @@ Before migrating any content during mid-work cleanup, ask these questions:
 
 **Scan Bottom-Matter** (below task list):
 
-- ✅ **Keep**: Completion Summary section (archival summary of what was achieved)
-- ❌ **Migrate ALL to notes file**: Implementation Notes, Task List Coordination, Decision Logs,
-  Investigation Details, Architecture Decisions, Any other explanatory sections
+- ❌ **Migrate ALL to notes file**: Completion Summary (now separate completion-{name}.md),
+  Implementation Notes, Task List Coordination, Decision Logs, Investigation Details,
+  Architecture Decisions, Any other explanatory sections
 
 **Result**: Task file becomes 200-400 line quick reference skeleton showing WHAT was done. Notes file becomes
 comprehensive deep-dive showing HOW and WHY.
@@ -380,7 +376,7 @@ comprehensive deep-dive showing HOW and WHY.
 ## Completion Summary
 [100 lines of metrics and achievements]
 
-<!-- TASK FILE AFTER ARCHIVAL CLEANUP (350 lines) -->
+<!-- TASK FILE AFTER ARCHIVAL CLEANUP (350 lines → 250 lines) -->
 
 ## Context
 [50 lines of background - kept concise]
@@ -388,13 +384,18 @@ comprehensive deep-dive showing HOW and WHY.
 ## Tasks
 [300 lines of task checklist - unchanged]
 
-## Completion Summary
-[100 lines of metrics - unchanged]
+<!-- That's it! Task file is just context + tasks now -->
+
+<!-- SEPARATE completion-{name}.md CREATED (100 lines) -->
+[Completion metadata with summary, metrics, outcomes]
 
 <!-- NOTES FILE GAINS -->
 
 ## Task List Coordination (Migrated from Task File)
 [100 lines explaining scope boundaries]
+
+## Completion Summary (Migrated from Task File)
+[100 lines of metrics and achievements - now moved to notes for archival reference]
 
 ## Implementation Notes (Migrated from Task File)
 
@@ -598,8 +599,8 @@ After content consolidation, format for navigation and long-term reference:
 1. **Relevance Over Length**: Don't migrate based on line count alone. A 20-line implementation guide needed
    by Tasks 7-10 should stay. A 2-line note about completed Task 3 with no future dependencies should migrate.
 
-2. **Task List Question**: "Can I understand what was accomplished AND what context remaining work needs by
-   scanning this file in <3 minutes?" If no, it needs cleanup.
+2. **Task List Question**: "Can I understand what work was done by scanning this file in <3 minutes?"
+   If no, it needs cleanup. (Outcomes are now in completion-{name}.md, not task file)
 
 3. **Migration Decision**: Ask "Will someone working on the next task need this context?" not
    "Is this verbose?"
@@ -610,8 +611,11 @@ After content consolidation, format for navigation and long-term reference:
 5. **Migration Pattern**: Don't delete anything - migrate historical content to "Historical Implementation
    Details" section in notes file. Storage is cheap, context loss is expensive.
 
-6. **Archival Prep ROI**: 20 minutes of cleanup dramatically increases likelihood of actually using these docs
+6. **Archival Prep ROI**: 20-30 minutes of cleanup dramatically increases likelihood of actually using these docs
    6 months later.
+
+7. **Unified Completion Docs** (as of 2025-11-17): All work (feature/technical/incidental) gets separate
+   `completion-{name}.md`. No more completion summaries in task files - cleaner separation of concerns.
 
 ## Common Pitfalls
 
@@ -622,8 +626,9 @@ After content consolidation, format for navigation and long-term reference:
 ❌ **Leaving content out of order**: Task 8 notes appearing before Task 7 notes after restructuring -
    reorder sections to match current numbering
 ❌ **Cleaning notes file mid-work**: Notes file cleanup is ONLY for archival prep (Mode 2), not mid-work cleanup (Mode 1)
-❌ **Leaving bottom-matter in archived task files**: When all work complete, Implementation Notes/Coordination
-   sections must migrate to notes file - task file is quick reference only
+❌ **Leaving bottom-matter in archived task files**: When all work complete, ALL bottom-matter sections
+   (Implementation Notes, Coordination, Completion Summary) must migrate - task file is just context + tasks
+❌ **Keeping completion summary in task file**: Completion summary now goes in separate completion-{name}.md (unified strategy)
 ❌ **Leaving temporal markers in archived work**: "Pending approval", "To be filled" confuses future readers
 ❌ **Skipping TOC for archival**: 1500-line notes file without navigation is effectively unusable
 ❌ **Over-editing notes**: Don't remove the exploration journey - that's valuable context

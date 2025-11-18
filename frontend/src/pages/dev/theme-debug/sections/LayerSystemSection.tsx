@@ -191,10 +191,10 @@ export function LayerSystemSection() {
         <Box>
           <Text fontSize="md" fontWeight="semibold" mb={3}>Popover/Menu Dropdown</Text>
           <Text fontSize="sm" color="on-muted" mb={3}>
-            Uses <code>popover</code> surface (contextual layer-02 or layer-03)
+            Uses <code>popover</code> surface (contextual layer-02 or layer-03). Trigger follows outline button pattern.
           </Text>
           <Box position="relative">
-            {/* Trigger button */}
+            {/* Trigger button - uses outline button pattern */}
             <Box
               as="button"
               px={4}
@@ -204,13 +204,18 @@ export function LayerSystemSection() {
               borderColor="button-outline"
               color="on-button-outline"
               bg="background"
-              _hover={{ bg: "tertiary/8", borderColor: "tertiary" }}
+              _hover={{ bg: "tertiary/8", borderColor: "border-strong-02" }}
+              _focusVisible={{
+                outline: "2px solid",
+                outlineColor: "ring",
+                outlineOffset: "2px",
+              }}
               fontSize="sm"
               mb={2}
             >
               Options ▼
             </Box>
-            {/* Dropdown menu */}
+            {/* Dropdown menu (popover surface) */}
             <Box
               bg="popover"
               borderRadius="md"

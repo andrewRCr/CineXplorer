@@ -15,7 +15,7 @@ z-index hierarchy, and responsive patterns.
 - Understanding z-index hierarchy and preventing conflicts
 - Debugging layout issues using LayoutDebug page
 
-**For color tokens**, see [Semantic Token Strategy](./strategy-semantic-tokens.md).
+**For color tokens**, see [Color Token System](./strategy-color-tokens.md) and [Component Styling Strategy](./strategy-component-styling.md).
 
 **For architectural decision context**, see [ADR-007: Use Chakra Theme Tokens for Layout Constants](../../adr/adr-007-use-chakra-theme-tokens-for-layout.md).
 
@@ -640,14 +640,33 @@ zIndex="dropdown"  // 50 - Menus, tooltips, modals
 
 ### When to Use What
 
-| Scenario | Solution |
-|----------|----------|
-| Major layout dimension | Layout token: `height="layout.navbar"` |
-| Component spacing | Chakra scale: `p={4}` |
-| Show/hide by breakpoint | CSS display: `display={{ base: 'none', lg: 'block' }}` |
-| Sticky offset | CSS variable: `top="var(--chakra-sizes-layout-navbar)"` |
-| Z-index stacking | Semantic token: `zIndex="navbar"` |
-| Behavioral logic | `useBreakpointValue` with `{ ssr: false }` |
+| Scenario                | Solution                                                |
+|-------------------------|---------------------------------------------------------|
+| Major layout dimension  | Layout token: `height="layout.navbar"`                  |
+| Component spacing       | Chakra scale: `p={4}`                                   |
+| Show/hide by breakpoint | CSS display: `display={{ base: 'none', lg: 'block' }}`  |
+| Sticky offset           | CSS variable: `top="var(--chakra-sizes-layout-navbar)"` |
+| Z-index stacking        | Semantic token: `zIndex="navbar"`                       |
+| Behavioral logic        | `useBreakpointValue` with `{ ssr: false }`              |
+
+---
+
+## Related Documentation
+
+**For color and styling:**
+
+- [Color Token System](./strategy-color-tokens.md) - Token naming, accessibility standards, token architecture
+- [Component Styling Strategy](./strategy-component-styling.md) - Component building patterns, recipes, wrappers
+
+**For architectural context:**
+
+- ADR-007: Use Chakra Theme Tokens for Layout Constants (layout token rationale)
+
+**For implementation:**
+
+- `frontend/src/theme/layout/foundations.ts` - Foundation token definitions
+- `frontend/src/theme/layout/semanticTokens.ts` - Responsive semantic tokens
+- `/layout-debug` page - Visual validation of all layout tokens and breakpoints
 
 ---
 

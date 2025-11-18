@@ -237,7 +237,6 @@ export function createMaterialAdapter(mode: "light" | "dark"): UnifiedTheme {
         {
             muted: palette.surfaceVariant,
             mutedForeground: palette.onSurfaceVariant,
-            accentEmphasis: layer02, // Use elevated surface for emphasis
             secondaryHover: adjustColor(palette.secondary, mode === "light" ? -5 : 5),
         },
         mode,

@@ -164,14 +164,10 @@ export interface ThemeColors {
     // ===================================================================
 
     /**
-     * Rating/score displays (movie ratings, user scores, quality indicators).
-     * Distinct from warning token - ratings have different semantic meaning.
+     * IMDb gold color for rating star icons.
      * Light mode: #F5C518 (IMDb gold standard), Dark mode: adjusted for contrast.
      */
-    rating: string;
-
-    /** Text/icon color on rating backgrounds */
-    "rating-foreground": string;
+    "imdb-gold": string;
 
     // ===================================================================
     // SURFACE ELEVATION (Additional Elevation Layer)
@@ -231,12 +227,12 @@ export interface ThemeColors {
  * - Unique identifier and display name
  * - Light mode color palette (ThemeColors)
  * - Dark mode color palette (ThemeColors)
- * - Optional unified adapter instances (Phase 3 integration)
+ * - Optional unified adapter instances (migration support)
  *
  * Themes are immutable once defined. To change colors, create a new theme.
  *
- * **Parallel Systems Approach:**
- * During Phase 3 migration, both old (light/dark) and new (lightUnified/darkUnified)
+ * **Migration:**
+ * During migration, both old (light/dark) and new (lightUnified/darkUnified)
  * token systems coexist. Components gradually migrate from ThemeColors tokens to
  * UnifiedTheme tokens. After migration complete, ThemeColors will be removed.
  */
@@ -249,33 +245,33 @@ export interface Theme {
 
     /**
      * Light mode color palette (legacy - deprecated).
-     * @deprecated Use lightUnified instead. Will be removed after Phase 3 migration.
+     * @deprecated Use lightUnified instead. Will be removed after migration.
      */
     readonly light: ThemeColors;
 
     /**
      * Dark mode color palette (legacy - deprecated).
-     * @deprecated Use darkUnified instead. Will be removed after Phase 3 migration.
+     * @deprecated Use darkUnified instead. Will be removed after migration.
      */
     readonly dark: ThemeColors;
 
     /**
-     * Light mode unified adapter tokens (Phase 3+).
+     * Light mode unified adapter tokens.
      *
      * Provides ~47 tokens including layer system, border hierarchy, shadows,
      * and interaction states. Replaces deprecated ThemeColors tokens.
      *
-     * **Optional during migration:** Present after Phase 3.1 integration complete.
+     * **Optional during migration:** Present after unified adapter integration.
      */
     readonly lightUnified?: UnifiedTheme;
 
     /**
-     * Dark mode unified adapter tokens (Phase 3+).
+     * Dark mode unified adapter tokens.
      *
      * Provides ~47 tokens including layer system, border hierarchy, shadows,
      * and interaction states. Replaces deprecated ThemeColors tokens.
      *
-     * **Optional during migration:** Present after Phase 3.1 integration complete.
+     * **Optional during migration:** Present after unified adapter integration.
      */
     readonly darkUnified?: UnifiedTheme;
 }

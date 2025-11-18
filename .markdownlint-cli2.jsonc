@@ -20,7 +20,8 @@
     "MD033": false,
     "MD036": false,
     "MD040": false,
-    "MD041": false
+    "MD041": false,
+    "MD060": true
   },
 
   "gitignore": false,
@@ -37,11 +38,6 @@
     "**/frontend/.next/**",
     "**/backend/staticfiles/**",
     ".arc/reference/archive/**",
-    ".arc/upcoming/prds/prd-backend-modernization.md",
-    ".arc/upcoming/technical/prd-backend-modernization.md",
     "README.md"
-  ],
-
-  "customRules": [],
-  "overrides": []
+  ]
 }

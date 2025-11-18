@@ -2,7 +2,6 @@ import { ROUTES } from "@/constants/routes";
 import {
   Box,
   Field,
-  Input,
   VStack,
   Text,
   Alert,
@@ -11,6 +10,7 @@ import {
   Checkbox,
   Button,
 } from "@chakra-ui/react";
+import { StyledInput } from "@/components/common";
 import { useFormik } from "formik";
 import { useNavigate, useLocation } from "react-router-dom";
 import useAuthContext from "@/hooks/useAuthContext";
@@ -452,7 +452,7 @@ const Login = () => {
                   >
                     Username or Email Address
                   </Field.Label>
-                  <Input
+                  <StyledInput
                     autoFocus
                     id="username"
                     name="username"
@@ -464,21 +464,7 @@ const Login = () => {
                       setRegistrationSuccess(null); // Clear registration success when user types
                     }}
                     onBlur={formik.handleBlur}
-                    borderWidth="1px"
-                    borderColor="border-strong-01"
-                    bg="transparent"
-                    color="foreground"
-                    css={{
-                      "&:hover:not(:focus)": {
-                        borderColor: "var(--chakra-colors-border-strong-02)",
-                        backgroundColor: "color-mix(in srgb, var(--chakra-colors-tertiary) 8%, transparent)",
-                      },
-                      "&:focus": {
-                        borderColor: "var(--chakra-colors-tertiary)",
-                        backgroundColor: "transparent",
-                        outline: "none",
-                      },
-                    }}
+                    layer="01"
                   />
                   <Field.ErrorText
                     fontSize="14px"
@@ -508,7 +494,7 @@ const Login = () => {
                   >
                     Password
                   </Field.Label>
-                  <Input
+                  <StyledInput
                     id="password"
                     name="password"
                     type="password"
@@ -519,21 +505,7 @@ const Login = () => {
                       setRegistrationSuccess(null); // Clear registration success when user types
                     }}
                     onBlur={formik.handleBlur}
-                    borderWidth="1px"
-                    borderColor="border-strong-01"
-                    bg="transparent"
-                    color="foreground"
-                    css={{
-                      "&:hover:not(:focus)": {
-                        borderColor: "var(--chakra-colors-border-strong-02)",
-                        backgroundColor: "color-mix(in srgb, var(--chakra-colors-tertiary) 8%, transparent)",
-                      },
-                      "&:focus": {
-                        borderColor: "var(--chakra-colors-tertiary)",
-                        backgroundColor: "transparent",
-                        outline: "none",
-                      },
-                    }}
+                    layer="01"
                   />
                   <Field.ErrorText
                     fontSize="14px"
@@ -621,24 +593,8 @@ const Login = () => {
                 <Button
                   flex="1"
                   variant="outline"
-                  borderWidth="1px"
-                  borderColor="button-outline"
-                  color="on-button-outline"
                   fontSize="16px"
                   onClick={handleGoogleLogin}
-                  _hover={{
-                    bg: "tertiary/8",
-                    borderColor: "tertiary",
-                  }}
-                  _active={{
-                    bg: "tertiary/12",
-                    borderColor: "tertiary",
-                  }}
-                  _focusVisible={{
-                    outline: "2px solid",
-                    outlineColor: "ring",
-                    outlineOffset: "2px",
-                  }}
                 >
                   <FaGoogle size={18} style={{ marginRight: "8px" }} />
                   Google
@@ -646,24 +602,8 @@ const Login = () => {
                 <Button
                   flex="1"
                   variant="outline"
-                  borderWidth="1px"
-                  borderColor="button-outline"
-                  color="on-button-outline"
                   fontSize="16px"
                   onClick={handleGithubLogin}
-                  _hover={{
-                    bg: "tertiary/8",
-                    borderColor: "tertiary",
-                  }}
-                  _active={{
-                    bg: "tertiary/12",
-                    borderColor: "tertiary",
-                  }}
-                  _focusVisible={{
-                    outline: "2px solid",
-                    outlineColor: "ring",
-                    outlineOffset: "2px",
-                  }}
                 >
                   <FaGithub size={18} style={{ marginRight: "8px" }} />
                   GitHub

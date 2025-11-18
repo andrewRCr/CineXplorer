@@ -1,5 +1,6 @@
-import { Box, Text, VStack, HStack, Input, Textarea, Code, Checkbox, RadioGroup, Switch, Select, createListCollection } from "@chakra-ui/react";
+import { Box, Text, VStack, HStack, Input, Code, Checkbox, RadioGroup, Switch, Select, createListCollection } from "@chakra-ui/react";
 import { useState } from "react";
+import { StyledInput, StyledTextarea } from "@/components/common";
 
 /**
  * Form Controls Section - Comprehensive Form Input Patterns
@@ -13,7 +14,7 @@ export function FormControlsSection() {
   const [selectValue, setSelectValue] = useState(["option1"]);
   const [checkboxChecked, setCheckboxChecked] = useState(true);
   const [radioValue, setRadioValue] = useState("option1");
-  const [switchChecked, setSwitchChecked] = useState(false);
+  const [switchChecked, setSwitchChecked] = useState(true);
   const [numberValue, setNumberValue] = useState(5);
 
   const selectCollection = createListCollection({
@@ -44,22 +45,8 @@ export function FormControlsSection() {
                 {/* Default */}
                 <VStack align="start" gap={1} flex="1" minW="200px">
                   <Text fontSize="sm" fontWeight="medium">Default:</Text>
-                  <Input
+                  <StyledInput
                     placeholder="Enter text"
-                    borderColor="border-strong-01"
-                    bg="background"
-                    color="foreground"
-                    css={{
-                      "&:hover:not(:focus)": {
-                        borderColor: "var(--chakra-colors-border-strong-02)",
-                        backgroundColor: "color-mix(in srgb, var(--chakra-colors-tertiary) 8%, transparent)",
-                      },
-                      "&:focus": {
-                        borderColor: "var(--chakra-colors-tertiary)",
-                        backgroundColor: "var(--chakra-colors-background)",
-                        outline: "none",
-                      }
-                    }}
                     value={textValue}
                     onChange={(e) => setTextValue(e.target.value)}
                   />
@@ -68,11 +55,8 @@ export function FormControlsSection() {
                 {/* Disabled */}
                 <VStack align="start" gap={1} flex="1" minW="200px">
                   <Text fontSize="sm" fontWeight="medium">Disabled:</Text>
-                  <Input
+                  <StyledInput
                     placeholder="Disabled input"
-                    borderColor="border-strong-01"
-                    bg="background"
-                    color="foreground"
                     disabled
                   />
                 </VStack>
@@ -106,23 +90,9 @@ export function FormControlsSection() {
               {/* Default */}
               <VStack align="start" gap={1}>
                 <Text fontSize="sm" fontWeight="medium">Default:</Text>
-                <Textarea
+                <StyledTextarea
                   placeholder="Enter multiline text"
-                  borderColor="border-strong-01"
-                  bg="background"
-                  color="foreground"
                   rows={3}
-                  css={{
-                    "&:hover:not(:focus)": {
-                      borderColor: "var(--chakra-colors-border-strong-02)",
-                      backgroundColor: "color-mix(in srgb, var(--chakra-colors-tertiary) 8%, transparent)",
-                    },
-                    "&:focus": {
-                      borderColor: "var(--chakra-colors-tertiary)",
-                      backgroundColor: "var(--chakra-colors-background)",
-                      outline: "none",
-                    }
-                  }}
                   value={textareaValue}
                   onChange={(e) => setTextareaValue(e.target.value)}
                 />
@@ -131,11 +101,8 @@ export function FormControlsSection() {
               {/* Disabled */}
               <VStack align="start" gap={1}>
                 <Text fontSize="sm" fontWeight="medium">Disabled:</Text>
-                <Textarea
+                <StyledTextarea
                   placeholder="Disabled textarea"
-                  borderColor="border-strong-01"
-                  bg="background"
-                  color="foreground"
                   rows={3}
                   disabled
                 />
@@ -163,18 +130,7 @@ export function FormControlsSection() {
                     onValueChange={(details) => setSelectValue(details.value)}
                     positioning={{ placement: "bottom-start", gutter: 2 }}
                   >
-                    <Select.Trigger
-                      borderColor="border-strong-01"
-                      bg="background"
-                      color="foreground"
-                      _hover={{ borderColor: "border-strong-02", bg: "tertiary/8" }}
-                      css={{
-                        "&:focus-visible": {
-                          outline: "2px solid var(--chakra-colors-ring)",
-                          outlineOffset: "2px",
-                        },
-                      }}
-                    >
+                    <Select.Trigger>
                       <Select.ValueText placeholder="Select option" />
                       <Select.Indicator />
                     </Select.Trigger>
@@ -237,7 +193,7 @@ export function FormControlsSection() {
               </HStack>
 
               <Text fontSize="xs" color="foreground/60">
-                Tokens: Trigger uses <Code fontSize="xs">border-strong-01</Code> border (default), <Code fontSize="xs">border-strong-02</Code> + <Code fontSize="xs">tertiary/8</Code> (hover), <Code fontSize="xs">ring</Code> focus outline (keyboard only). Content uses <Code fontSize="xs">muted</Code> bg. Items: selected state uses <Code fontSize="xs">tertiary</Code> + <Code fontSize="xs">on-tertiary</Code>, hover (non-selected) uses <Code fontSize="xs">tertiary/12</Code>.
+                Tokens: Trigger uses <Code fontSize="xs">border-strong-01</Code> border (default), <Code fontSize="xs">border-strong-02</Code> + <Code fontSize="xs">tertiary/8</Code> (hover), <Code fontSize="xs">tertiary</Code> border-only focus (keyboard only, matches StyledInput pattern). Content uses <Code fontSize="xs">muted</Code> bg. Items: selected state uses <Code fontSize="xs">tertiary</Code> + <Code fontSize="xs">on-tertiary</Code>, hover (non-selected) uses <Code fontSize="xs">tertiary/12</Code>.
               </Text>
             </VStack>
           </Box>
@@ -252,10 +208,7 @@ export function FormControlsSection() {
                 {/* Unchecked */}
                 <Checkbox.Root>
                   <Checkbox.HiddenInput />
-                  <Checkbox.Control
-                    borderColor="border-strong-01"
-                    _checked={{ bg: "primary", borderColor: "primary" }}
-                  >
+                  <Checkbox.Control>
                     <Checkbox.Indicator />
                   </Checkbox.Control>
                   <Checkbox.Label>Unchecked</Checkbox.Label>
@@ -267,10 +220,7 @@ export function FormControlsSection() {
                   onCheckedChange={(e) => setCheckboxChecked(!!e.checked)}
                 >
                   <Checkbox.HiddenInput />
-                  <Checkbox.Control
-                    borderColor="border-strong-01"
-                    _checked={{ bg: "primary", borderColor: "primary" }}
-                  >
+                  <Checkbox.Control>
                     <Checkbox.Indicator />
                   </Checkbox.Control>
                   <Checkbox.Label>Checked</Checkbox.Label>
@@ -279,7 +229,7 @@ export function FormControlsSection() {
                 {/* Disabled */}
                 <Checkbox.Root disabled>
                   <Checkbox.HiddenInput />
-                  <Checkbox.Control borderColor="border-strong-01">
+                  <Checkbox.Control>
                     <Checkbox.Indicator />
                   </Checkbox.Control>
                   <Checkbox.Label>Disabled</Checkbox.Label>
@@ -302,23 +252,23 @@ export function FormControlsSection() {
                 <VStack align="start" gap={2}>
                   <RadioGroup.Item value="option1">
                     <RadioGroup.ItemHiddenInput />
-                    <RadioGroup.ItemControl
-                      borderColor="border-strong-01"
-                      _checked={{ bg: "primary", borderColor: "primary" }}
-                    />
+                    <RadioGroup.ItemControl>
+                      <RadioGroup.ItemIndicator />
+                    </RadioGroup.ItemControl>
                     <RadioGroup.ItemText>Option 1</RadioGroup.ItemText>
                   </RadioGroup.Item>
                   <RadioGroup.Item value="option2">
                     <RadioGroup.ItemHiddenInput />
-                    <RadioGroup.ItemControl
-                      borderColor="border-strong-01"
-                      _checked={{ bg: "primary", borderColor: "primary" }}
-                    />
+                    <RadioGroup.ItemControl>
+                      <RadioGroup.ItemIndicator />
+                    </RadioGroup.ItemControl>
                     <RadioGroup.ItemText>Option 2</RadioGroup.ItemText>
                   </RadioGroup.Item>
                   <RadioGroup.Item value="option3" disabled>
                     <RadioGroup.ItemHiddenInput />
-                    <RadioGroup.ItemControl borderColor="border-strong-01" />
+                    <RadioGroup.ItemControl>
+                      <RadioGroup.ItemIndicator />
+                    </RadioGroup.ItemControl>
                     <RadioGroup.ItemText>Disabled</RadioGroup.ItemText>
                   </RadioGroup.Item>
                 </VStack>
@@ -338,50 +288,38 @@ export function FormControlsSection() {
             <VStack align="stretch" gap={3}>
               <HStack gap={6} wrap="wrap">
                 {/* Off */}
-                <HStack>
-                  <Switch.Root>
-                    <Switch.HiddenInput />
-                    <Switch.Control
-                      bg="muted"
-                      _checked={{ bg: "primary" }}
-                    >
-                      <Switch.Thumb bg="background" />
-                    </Switch.Control>
-                  </Switch.Root>
-                  <Text fontSize="sm">Off</Text>
-                </HStack>
+                <Switch.Root>
+                  <Switch.HiddenInput />
+                  <Switch.Control>
+                    <Switch.Thumb />
+                  </Switch.Control>
+                  <Switch.Label>Off</Switch.Label>
+                </Switch.Root>
 
                 {/* On */}
-                <HStack>
-                  <Switch.Root
-                    checked={switchChecked}
-                    onCheckedChange={(e) => setSwitchChecked(!!e.checked)}
-                  >
-                    <Switch.HiddenInput />
-                    <Switch.Control
-                      bg="muted"
-                      _checked={{ bg: "primary" }}
-                    >
-                      <Switch.Thumb bg="background" />
-                    </Switch.Control>
-                  </Switch.Root>
-                  <Text fontSize="sm">On</Text>
-                </HStack>
+                <Switch.Root
+                  checked={switchChecked}
+                  onCheckedChange={(e) => setSwitchChecked(!!e.checked)}
+                >
+                  <Switch.HiddenInput />
+                  <Switch.Control>
+                    <Switch.Thumb />
+                  </Switch.Control>
+                  <Switch.Label>On</Switch.Label>
+                </Switch.Root>
 
                 {/* Disabled */}
-                <HStack>
-                  <Switch.Root disabled>
-                    <Switch.HiddenInput />
-                    <Switch.Control bg="muted">
-                      <Switch.Thumb bg="background" />
-                    </Switch.Control>
-                  </Switch.Root>
-                  <Text fontSize="sm">Disabled</Text>
-                </HStack>
+                <Switch.Root disabled>
+                  <Switch.HiddenInput />
+                  <Switch.Control>
+                    <Switch.Thumb />
+                  </Switch.Control>
+                  <Switch.Label>Disabled</Switch.Label>
+                </Switch.Root>
               </HStack>
 
               <Text fontSize="xs" color="foreground/60">
-                Track uses <Code fontSize="xs">muted</Code> (off), <Code fontSize="xs">primary</Code> (on). Thumb uses <Code fontSize="xs">background</Code>
+                Track uses <Code fontSize="xs">secondary</Code> (off), <Code fontSize="xs">primary</Code> (on). Thumb uses <Code fontSize="xs">background</Code>. Note: Uses secondary instead of muted for better visibility when disabled.
               </Text>
             </VStack>
           </Box>

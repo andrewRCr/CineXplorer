@@ -19,11 +19,11 @@ GitLab Pajamas) have fundamentally different color architectures that don't alig
 
 **Actual Reality (Discovered via comprehensive research):**
 
-| System | Brand Color | Primary Action Buttons | Interactive Links | Architecture |
-|--------|-------------|----------------------|-------------------|--------------|
-| **GitHub Primer** | None (black/white logo) | GREEN (#1f883d) | BLUE (#0969da) | 2-tier: Actions ≠ Links |
-| **IBM Carbon** | BLUE (#0f62fe) | BLUE (#0f62fe, same) | BLUE (#0f62fe, same) | 1-tier: Unified blue |
-| **GitLab Pajamas** | PURPLE (#554488) + ORANGE (#e24329) | BLUE (#1f75cb) | PURPLE (#7759c2) | 3-tier: Brand ≠ Actions ≠ Links |
+| System             | Brand Color                         | Primary Action Buttons | Interactive Links    | Architecture                    |
+|--------------------|-------------------------------------|------------------------|----------------------|---------------------------------|
+| **GitHub Primer**  | None (black/white logo)             | GREEN (#1f883d)        | BLUE (#0969da)       | 2-tier: Actions ≠ Links         |
+| **IBM Carbon**     | BLUE (#0f62fe)                      | BLUE (#0f62fe, same)   | BLUE (#0f62fe, same) | 1-tier: Unified blue            |
+| **GitLab Pajamas** | PURPLE (#554488) + ORANGE (#e24329) | BLUE (#1f75cb)         | PURPLE (#7759c2)     | 3-tier: Brand ≠ Actions ≠ Links |
 
 **Key Insight:** These systems have different color philosophies:
 
@@ -129,14 +129,14 @@ interface UnifiedTheme {
 
 **Semantic Definitions:**
 
-| Token | Meaning | Visual | Usage | Token Type |
-|-------|---------|--------|-------|------------|
-| **primary** | Primary action buttons | Filled buttons, often blue or green | "Submit", "Save", "Continue" | **Background** token |
-| **secondary** | Secondary actions | Outline buttons (1px border mandatory) | "Cancel", "Back", "Skip" | Background + Border |
-| **tertiary** | Interactive text, links, accents | Blue or brand color, foreground | Hyperlinks, focus, highlights | **Foreground** token |
-| **muted** | Deemphasized, non-interactive | Subtle gray backgrounds | Disabled states, subtle surfaces | Background token |
-| **brand** | Brand identity (optional) | Logo color, brand moments | Logo, special brand sections | Either type |
-| **brandSecondary** | Secondary brand (optional) | Secondary brand color | Additional brand accents | Either type |
+| Token              | Meaning                          | Visual                                 | Usage                            | Token Type           |
+|--------------------|----------------------------------|----------------------------------------|----------------------------------|----------------------|
+| **primary**        | Primary action buttons           | Filled buttons, often blue or green    | "Submit", "Save", "Continue"     | **Background** token |
+| **secondary**      | Secondary actions                | Outline buttons (1px border mandatory) | "Cancel", "Back", "Skip"         | Background + Border  |
+| **tertiary**       | Interactive text, links, accents | Blue or brand color, foreground        | Hyperlinks, focus, highlights    | **Foreground** token |
+| **muted**          | Deemphasized, non-interactive    | Subtle gray backgrounds                | Disabled states, subtle surfaces | Background token     |
+| **brand**          | Brand identity (optional)        | Logo color, brand moments              | Logo, special brand sections     | Either type          |
+| **brandSecondary** | Secondary brand (optional)       | Secondary brand color                  | Additional brand accents         | Either type          |
 
 **Key Distinctions:**
 
@@ -321,7 +321,7 @@ accent: palette.fg_accent,  // Alias during migration
 **3. Documentation Debt**
 
 - ADR-010 needs complete rewrite ✅
-- strategy-semantic-tokens.md needs major updates
+- strategy-color-tokens.md needs major updates
 - All adapter files need comprehensive inline documentation
 - Task list needs restructuring
 
@@ -352,8 +352,8 @@ accent: palette.fg_accent,  // Alias during migration
 
 1. ✅ Rename ADR-010 to reflect full scope
 2. ✅ Completely rewrite ADR-010 with correct architecture
-3. ⏳ Update strategy-semantic-tokens.md with new hierarchy
-4. ⏳ Update task list with structured implementation tasks
+3. ✅ Update strategy-color-tokens.md with new hierarchy
+4. ✅ Update task list with structured implementation tasks
 
 ### Phase 2: Revert Incorrect Changes
 
@@ -423,7 +423,8 @@ accent: palette.fg_accent,  // Alias during migration
 
 **Related Strategies:**
 
-- strategy-semantic-tokens.md (comprehensive token usage guide, includes border patterns and focus states)
+- strategy-color-tokens.md (comprehensive token reference, naming conventions, accessibility standards)
+- strategy-component-styling.md (component building patterns, recipes, wrappers)
 
 ---
 

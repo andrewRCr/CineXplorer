@@ -45,7 +45,7 @@
  * **DEPRECATION PATH:**
  * - Old ThemeColors interface (39 tokens) → UnifiedTheme (~47 tokens)
  * - Removed tokens: `card`, `card-foreground`, `surface-elevated` (replaced by layer system)
- * - Phase 3 migration will update all components to use canonical names
+ * - Migration will update all components to use canonical names
  * - After migration, old ThemeColors interface will be removed
  */
 export interface UnifiedTheme {
@@ -551,7 +551,7 @@ export interface UnifiedTheme {
 
     /**
      * @deprecated Use `tertiary` instead. This is a legacy alias maintained for
-     * backward compatibility during component migration (ADR-010 Phase 4).
+     * backward compatibility during component migration (ADR-010).
      *
      * **Migration:** Replace all `accent` usage with `tertiary` in components.
      * This alias will be removed after global accent → tertiary migration completes.
@@ -1155,43 +1155,22 @@ export interface UnifiedTheme {
     // Movie app-specific tokens centralized from palette files.
 
     /**
-     * Rating display background (TMDB scores, user ratings).
+     * IMDb gold color for rating star icons.
      *
      * **Standard:** IMDb gold (#F5C518) in light mode, adjusted for dark mode
-     * **Usage:** Score badges, rating indicators, quality displays
-     * **Text color:** Use `on-rating`
-     */
-    rating: string;
-
-    /**
-     * Text color on rating backgrounds (ADR-011 canonical naming).
+     * **Usage:** Star icons (★) for user personal ratings (5-star system)
      *
-     * **Naming Convention:** Uses industry-standard `on-*` prefix for consistency.
-     *
-     * **Usage:**
-     * - Text in rating badges (TMDB scores, user ratings)
-     * - Any content overlaid on `rating` background
-     *
-     * **Example:**
+     * **Pattern:**
      * ```tsx
-     * <Badge bg="rating" color="on-rating">8.5</Badge>
+     * <Text color="imdb-gold" fontSize="xl">★★★★☆</Text>
      * ```
      *
-     * @see ADR-011 for on-* naming convention rationale
+     * **NOT for badge backgrounds:**
+     * - TMDB community scores use status colors (success/info/warning) based on thresholds
+     * - See CineXplorerExtensionsSection for reference implementation
+     * - ≥7.5: success (green), 5.0-7.4: info (blue), <5.0: warning (yellow)
      */
-    "on-rating": string;
-
-    /**
-     * @deprecated Use `on-rating` instead. This alias is maintained for backward
-     * compatibility during component migration (ADR-011).
-     *
-     * **Migration:** Replace all `rating-foreground` usage with `on-rating`.
-     * This alias will be removed in a future version.
-     *
-     * @see on-rating for current token documentation
-     * @see ADR-011 for migration rationale
-     */
-    "rating-foreground": string;
+    "imdb-gold": string;
 
     /**
      * Badge background (genre tags, neutral labels).
@@ -1279,7 +1258,7 @@ export interface UnifiedTheme {
 /**
  * DEPRECATED - Legacy theme interface from pre-adapter architecture.
  *
- * This type is kept temporarily as a deprecation marker during Phase 3 component
+ * This type is kept temporarily as a deprecation marker during component
  * migration. The actual ThemeColors interface is still defined in ../types.ts
  * until migration is complete.
  *
@@ -1289,11 +1268,6 @@ export interface UnifiedTheme {
  * - `surface-elevated` → `layer-02`
  * - All other tokens: No changes (keep same names)
  *
- * **Timeline:**
- * - Phase 2: Adapters created using UnifiedTheme
- * - Phase 3: Components migrated to canonical names
- * - Phase 4: This type and ../types.ts ThemeColors removed
- *
- * @deprecated Use UnifiedTheme instead. Remove after Phase 3 migration complete.
+ * @deprecated Use UnifiedTheme instead. Remove after migration complete.
  */
 export type ThemeColors = Record<string, never>;

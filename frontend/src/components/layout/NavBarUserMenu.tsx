@@ -69,12 +69,6 @@ const NavBarUserMenu = () => {
         <Button
           size="sm"
           variant="outline"
-          color="on-button-outline"
-          borderColor="button-outline"
-          _hover={{
-            bg: "tertiary/8",
-            borderColor: "tertiary",
-          }}
         >
           Login
         </Button>

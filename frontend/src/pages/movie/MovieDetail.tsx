@@ -77,13 +77,7 @@ const MovieDetail = () => {
     return (
       <Box mb={4}>
         <Link to={backUrl} style={{ textDecoration: "none" }}>
-          <Button
-            variant="outline"
-            borderWidth="1px"
-            borderColor="button-outline"
-            color="on-button-outline"
-            _hover={{ bg: "tertiary/8", borderColor: "tertiary", color: "tertiary" }}
-          >
+          <Button variant="outline">
             <span
               style={{
                 display: "inline-block",
@@ -235,6 +229,9 @@ const MovieDetail = () => {
         </Heading>
         <Flex gap={4} justify="center">
           {/* <Button bg="primary" color="on-primary">Add to Watchlist</Button> */}
+          {/* TODO: Refactor to variant-based styling when MovieDetail page styling is finalized.
+               Replace inline bg/color/_hover with conditional variant="solid"/"outline" (or custom recipe).
+               This is deferred until comprehensive MovieDetail redesign. */}
           <Button
             bg={userMovieData?.user_on_watchlist ? "secondary" : "primary"}
             color={userMovieData?.user_on_watchlist ? "on-secondary" : "on-primary"}
@@ -251,10 +248,10 @@ const MovieDetail = () => {
               ? "Remove from Watchlist"
               : "Add to Watchlist"}
           </Button>
-          <Button bg="primary" color="on-primary" _hover={{ bg: "primary-hover" }} disabled={!isAuthenticated}>
+          <Button variant="solid" disabled={!isAuthenticated}>
             Mark as Watched
           </Button>
-          <Button bg="primary" color="on-primary" _hover={{ bg: "primary-hover" }} disabled={!isAuthenticated}>
+          <Button variant="solid" disabled={!isAuthenticated}>
             Rate Movie
           </Button>
         </Flex>

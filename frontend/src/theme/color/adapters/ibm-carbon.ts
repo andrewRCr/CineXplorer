@@ -31,7 +31,7 @@
  * - Added per-layer border hierarchy (border-strong-01/02/03, border-subtle-00/02)
  *
  * **Token Organization:**
- * - Section 1: Official mappings (with corrections from Phase 2.2.1)
+ * - Section 1: Official mappings (with research-driven corrections)
  * - Section 2: Derived tokens (minimal - only interaction states and shadows)
  * - Section 3: CineXplorer extensions (app-specific semantic colors)
  *
@@ -152,7 +152,7 @@ export function createCarbonAdapter(mode: "light" | "dark"): UnifiedTheme {
     const onTertiary = palette.fg_onEmphasis; // ADR-011: Canonical on-* naming (rarely used)
     const tertiaryForeground = onTertiary; // @deprecated: Use on-tertiary instead (ADR-011)
 
-    // ACCENT: @deprecated - Use tertiary instead (ADR-010 Phase 4 migration)
+    // ACCENT: @deprecated - Use tertiary instead (ADR-010 consolidation)
     // Maintained as alias during component migration period
     const accent = palette.fg_accent; // Same as tertiary
     const accentForeground = palette.fg_onEmphasis;
@@ -218,7 +218,6 @@ export function createCarbonAdapter(mode: "light" | "dark"): UnifiedTheme {
         {
             muted: palette.bg_layer_01,
             mutedForeground: palette.fg_muted,
-            accentEmphasis: palette.bg_emphasis,
             secondaryHover: palette.bg_button_secondary_hover,
         },
         mode,
@@ -308,9 +307,7 @@ export function createCarbonAdapter(mode: "light" | "dark"): UnifiedTheme {
         "info-foreground": infoForeground, // @deprecated
 
         // CineXplorer extensions
-        rating: extensions.rating,
-        "on-rating": extensions["rating-foreground"],
-        "rating-foreground": extensions["rating-foreground"], // @deprecated - alias for on-rating (ADR-011)
+        "imdb-gold": extensions["imdb-gold"],
         badge: extensions.badge,
         "on-badge": extensions["badge-foreground"],
         "badge-foreground": extensions["badge-foreground"], // @deprecated - alias for on-badge (ADR-011)

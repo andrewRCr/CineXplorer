@@ -433,18 +433,28 @@ main
 ### Branch Lifecycle
 
 ```
+On Child Branch (Before PR):
 1. Discover work that needs task list (>30min, multiple subtasks)
 2. Create branch off current: git checkout -b incidental/<name>
 3. Create task list: .arc/active/incidental/tasks-<name>.md
 4. Work on branch, commit with task references
 5. Complete work (all tasks done, quality gates pass)
-6. Run local code review (coderabbit review local)
-7. Create PR against parent branch: gh pr create --base parent-branch --head child-branch
-8. Address PR review findings
-9. Merge PR (child → parent)
-10. Delete merged branch: git branch -d incidental/<name>
-11. Archive task list immediately: mv to .arc/reference/archive/incidental/
-12. Return to parent branch and continue work
+6. Run maintain-task-notes.md Mode 2 (clean task list and notes files)
+7. Create completion-{name}.md (executive summary, PR description draft)
+8. Commit documentation changes to child branch
+
+Code Review & Merge:
+9. Run local code review (coderabbit review local)
+10. Create PR against parent: gh pr create --base parent-branch --head child-branch
+    (use completion doc as PR description template)
+11. Address PR review findings (update completion doc if outcomes changed)
+12. Merge PR (child → parent)
+
+On Parent Branch (After Merge):
+13. Delete merged branch: git branch -d incidental/<name>
+14. Archive files: git mv to .arc/reference/archive/incidental/{name}/
+15. Commit archive changes on parent branch
+16. Return to parent branch and continue work
 ```
 
 **Key rule:** Task list in `.arc/active/` ↔ Git branch exists
@@ -688,9 +698,12 @@ in their CURRENT-SESSION.md context. All new work uses v2.0 stacked model.
 .arc/active/
   incidental/
     tasks-chore-type-safety.md
-    tasks-refactor-auth-service.md
-    tasks-fix-csrf-middleware.md
     notes-chore-type-safety.md (optional)
+    completion-chore-type-safety.md (created before PR)
+    tasks-refactor-auth-service.md
+    completion-refactor-auth-service.md (created before PR)
+    tasks-fix-csrf-middleware.md
+    completion-fix-csrf-middleware.md (created before PR)
 ```
 
 ### Archive Organization
@@ -699,17 +712,26 @@ in their CURRENT-SESSION.md context. All new work uses v2.0 stacked model.
 
 ```
 .arc/archive/
-  2025-Q1/
-    feature/
+  feature/
+    user-authentication/
       prd-user-authentication.md
       tasks-user-authentication.md
       notes-user-authentication.md
-    technical/
+      completion-user-authentication.md
+  technical/
+    backend-modernization/
       prd-backend-modernization.md
       tasks-backend-modernization.md
-    incidental/
+      notes-backend-modernization.md
+      completion-backend-modernization.md
+  incidental/
+    chore-type-safety/
       tasks-chore-type-safety.md
+      notes-chore-type-safety.md
+      completion-chore-type-safety.md
+    refactor-auth-service/
       tasks-refactor-auth-service.md
+      completion-refactor-auth-service.md
 ```
 
 ### Directory Alignment
@@ -721,12 +743,13 @@ in their CURRENT-SESSION.md context. All new work uses v2.0 stacked model.
 - Tasks: `.arc/active/technical/tasks-backend-modernization.md`
 - Notes: `.arc/active/technical/notes-backend-modernization.md`
 
-**Incidental work - Task-based alignment:**
+**Incidental work - Task-based alignment (with branches post-ADR-013):**
 
-- Branch: None (commits to `feature/user-authentication`)
+- Branch: `incidental/chore-type-safety` (if >30min, multiple subtasks)
 - Tasks: `.arc/active/incidental/tasks-chore-type-safety.md`
 - Notes: `.arc/active/incidental/notes-chore-type-safety.md` (optional)
-- Archive: `.arc/archive/2025-Q1/incidental/tasks-chore-type-safety.md`
+- Completion: `.arc/active/incidental/completion-chore-type-safety.md` (created before PR)
+- Archive: `.arc/archive/incidental/chore-type-safety/` (all files together)
 
 ---
 

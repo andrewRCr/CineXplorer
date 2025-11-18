@@ -148,18 +148,27 @@ incidental/<name>  # Matches task list name (minus tasks- prefix)
 **2. Branch Lifecycle**
 
 ```
+On Child Branch (Before PR):
 1. Discover work that needs task list
 2. Create branch: git checkout -b incidental/<name>
 3. Create task list: .arc/active/incidental/tasks-<name>.md
 4. Work on branch, commit with task references
 5. Complete work (all tasks done, quality gates pass)
-6. Run local code review (coderabbit review local)
-7. Create PR against parent branch (not main)
-8. Address PR review findings
-9. Merge PR (child → parent)
-10. Delete merged branch: git branch -d incidental/<name>
-11. Archive task list immediately: mv to .arc/reference/archive/incidental/
-12. Return to parent branch and continue work
+6. Run maintain-task-notes.md Mode 2 (clean task list and notes files)
+7. Create completion-{name}.md (executive summary, serves as PR description draft)
+8. Commit documentation changes to child branch
+
+Code Review & Merge:
+9. Run local code review (coderabbit review local)
+10. Create PR against parent branch (use completion doc as PR description template)
+11. Address PR review findings (update completion doc if outcomes changed)
+12. Merge PR (child → parent)
+
+On Parent Branch (After Merge):
+13. Delete merged branch: git branch -d incidental/<name>
+14. Archive files: git mv .arc/active/incidental/... to .arc/reference/archive/incidental/{name}/
+15. Commit archive changes on parent branch
+16. Return to parent branch and continue work
 ```
 
 **3. Archive Timing**
@@ -230,7 +239,8 @@ start fresh with new model
 **3. Update workflow documents:**
 
 - `manage-incidental-work.md` - Add branch creation section, update workflow examples
-- `archive-completed.md` - Update archive timing (after branch deletion, not before PR)
+- `archive-completed.md` - Update archive timing (after branch deletion, not before PR), unify completion docs
+- `maintain-task-notes.md` - Add timing guidance (before PR), remove completion summary from task files
 - `agent-pre-merge-review.md` - Add stacked branch review examples
 - `3-process-task-loop.md` - Note branch/task list lifecycle coupling
 - `atomic-commit.md` - Minor updates (if any)
@@ -372,12 +382,20 @@ start fresh with new model
 
 1. **Complete ADR-013** (this document) ✅
 2. **Rename strategy document** (work-categorization → work-organization) ✅
-3. **Update 6 workflow documents** (as listed above) ✅
+3. **Update 6 workflow documents** (as listed above) ✅ (partially - completion docs unified 2025-11-17)
 4. **Update CURRENT-SESSION.md** (add transition note with protection) ✅
 5. **Update CodeRabbit config** (review any branch, not just main) ✅
 6. **Complete current branch** (service-layer-modernization, <3 weeks)
 7. **Remove transition note** (when service-layer branch merges to main)
 8. **First clean implementation** (next planned work uses stacked model from start)
+
+**Follow-up (2025-11-17): Completion Metadata Unification**
+
+- Unified completion metadata strategy - ALL work gets `completion-{name}.md` (not just planned)
+- Updated `archive-completed.md` to show child/parent branch phases
+- Updated `maintain-task-notes.md` to remove completion summary from task files
+- Updated this ADR's branch lifecycle to include maintain-task-notes and completion doc steps
+- Rationale: Stacked branch workflow means all work gets branches/PRs → should have consistent documentation
 
 ---
 

@@ -60,13 +60,6 @@ export const ColorModeButton = React.forwardRef<
         variant="outline"
         aria-label="Toggle color mode"
         size="sm"
-        borderWidth="1px"
-        borderColor="button-outline"
-        color="on-button-outline"
-        _hover={{
-          bg: "tertiary/8",
-          borderColor: "tertiary"
-        }}
         ref={ref}
         {...props}
         css={{

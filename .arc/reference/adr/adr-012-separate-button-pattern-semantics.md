@@ -227,13 +227,13 @@ a unified token system.
 
 **When to use which button pattern:**
 
-| Pattern | Emphasis | Use Cases | Examples |
-|---------|----------|-----------|----------|
-| **Solid** | Highest | Primary actions, most important CTA | "Save", "Submit", "Browse Movies" |
-| **Primary Outline** | High | Branded actions in outline style (rare) | "Learn More" on landing page |
-| **Neutral Outline** | Medium | Utility actions, navigation, OAuth | "Cancel", "Back", OAuth buttons, filters |
-| **Subtle** | Medium-Low | In-context actions, embedded controls | "Options", "Sort", "Filter", theme selectors |
-| **Ghost** | Lowest | Dismissive actions, tertiary actions | "Skip", "Close", "Dismiss" |
+| Pattern             | Emphasis   | Use Cases                               | Examples                                     |
+|---------------------|------------|-----------------------------------------|----------------------------------------------|
+| **Solid**           | Highest    | Primary actions, most important CTA     | "Save", "Submit", "Browse Movies"            |
+| **Primary Outline** | High       | Branded actions in outline style (rare) | "Learn More" on landing page                 |
+| **Neutral Outline** | Medium     | Utility actions, navigation, OAuth      | "Cancel", "Back", OAuth buttons, filters     |
+| **Subtle**          | Medium-Low | In-context actions, embedded controls   | "Options", "Sort", "Filter", theme selectors |
+| **Ghost**           | Lowest     | Dismissive actions, tertiary actions    | "Skip", "Close", "Dismiss"                   |
 
 **Decision tree:**
 
@@ -330,7 +330,7 @@ ThemeDebug.tsx will be updated to separate:
 - `frontend/src/theme/color/types.ts` - Add 8 new tokens (2 outline variants + subtle + subtle-selected)
 - `frontend/src/theme/color/adapters/*.ts` - Map tokens in all 4 adapters
 - `frontend/src/pages/ThemeDebug.tsx` - Update demonstrations (show both outline variants, use selected tokens)
-- `.arc/reference/strategies/project/style/strategy-semantic-tokens.md` - Update button pattern guidance
+- `.arc/reference/strategies/project/style/strategy-component-styling.md` - Button pattern guidance and recipes
 
 **Date**: 2025-11-08
 **Author**: CineXplorer Development Team

@@ -2,7 +2,10 @@
 
 ## Status
 
-Accepted
+Accepted (Partially superseded by ADR-016)
+
+**Note:** Core decision (opacity overlay approach) remains valid. Specific percentages improved from 8%/12% to 12%/16%
+per ADR-016 based on empirical testing across theme combinations.
 
 ## Context
 
@@ -14,8 +17,8 @@ interaction state token implementation (`layer-hover-01`, `layer-selected-01`, `
 
 **Problem 1: Implementation contradicts documentation**
 
-Our implementation used `adjustColor()` (8%/12%/16% lightening/darkening), but `strategy-semantic-tokens.md`
-(lines 652-669) documented Material Design 3's opacity overlay approach. This inconsistency created confusion
+Our implementation used `adjustColor()` (8%/12%/16% lightening/darkening), but `strategy-component-styling.md`
+documented Material Design 3's opacity overlay approach. This inconsistency created confusion
 and wasn't actually following either approach correctly.
 
 **Problem 2: "Next Layer Up" approach breaks with alternating pattern**
@@ -207,7 +210,7 @@ Material Design 3's opacity overlay approach:
 - **ADR-005:** Unified Theme Adapter Layer (defines interaction state tokens)
 - **ADR-006:** Adopt Carbon Layer-Based Elevation Standard (layer system architecture)
 - **ADR-008:** Adopt Carbon Light Mode Alternating Pattern (why "next layer up" breaks)
-- **strategy-semantic-tokens.md:** Documents opacity overlay approach (now aligned with implementation)
+- **strategy-component-styling.md:** Documents opacity overlay approach (now aligned with implementation)
 - **External research:** `.arc/active/incidental/research-interaction-state-analysis.md` (2025-11-07)
 - **A/B testing:** ThemeDebug page `/theme-debug` (InteractionStateComparison component)
 
@@ -239,7 +242,7 @@ Where `blendColors()` computes: `(1 - opacity) * layerRGB + opacity * fgRGB`
 **Update all three adapters** (`ibm-carbon.ts`, `github-primer.ts`, `gitlab-pajamas.ts`) to pass foreground color to
 derivation function.
 
-**Document in strategy-semantic-tokens.md:**
+**Document in strategy-component-styling.md:**
 
 - Update examples to show token usage (not manual overlays)
 - Clarify that `layer-hover-01` internally uses opacity calculation

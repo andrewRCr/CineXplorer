@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted
+Accepted (partially superseded by ADR-017 for Select.Trigger components only; text input guidance remains valid)
 
 ## Context
 

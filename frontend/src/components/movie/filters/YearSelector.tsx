@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
-import { Box, Text, HStack, Input } from "@chakra-ui/react";
+import { Box, Text, HStack } from "@chakra-ui/react";
+import { StyledInput } from "@/components/common";
 import { debounce } from "lodash";
 
 interface YearSelectorProps {
@@ -208,7 +209,8 @@ const YearSelector = ({
         )}
       </Text>
       <HStack gap={2} align="center">
-        <Input
+        <StyledInput
+          layer="01"
           placeholder={dateRangeInfo.startPlaceholder}
           value={isRouteConstrained ? "" : localMinYear}
           onChange={(e) => handleMinYearChange(e.target.value)}
@@ -224,12 +226,8 @@ const YearSelector = ({
           borderColor={
             localMinYear && !isValidYear(localMinYear)
               ? "destructive"
-              : "input"
+              : undefined
           }
-          bg="transparent"
-          _hover={{
-            bg: "tertiary/8",
-          }}
           _invalid={{
             borderColor: "destructive",
             boxShadow: "0 0 0 1px var(--chakra-colors-destructive)",
@@ -240,7 +238,8 @@ const YearSelector = ({
         <Text fontSize="sm" color="on-muted">
           to
         </Text>
-        <Input
+        <StyledInput
+          layer="01"
           placeholder={dateRangeInfo.endPlaceholder}
           value={isRouteConstrained ? "" : localMaxYear}
           onChange={(e) => handleMaxYearChange(e.target.value)}
@@ -256,12 +255,8 @@ const YearSelector = ({
           borderColor={
             localMaxYear && !isValidYear(localMaxYear)
               ? "destructive"
-              : "input"
+              : undefined
           }
-          bg="transparent"
-          _hover={{
-            bg: "tertiary/8",
-          }}
           _invalid={{
             borderColor: "destructive",
             boxShadow: "0 0 0 1px var(--chakra-colors-destructive)",

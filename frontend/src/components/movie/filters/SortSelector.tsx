@@ -40,18 +40,8 @@ const SortSelector = ({ value, onChange }: SortSelectorProps) => {
           h="32px"
           fontSize="14px"
           lineHeight="1.3"
-          borderRadius="4px"
-          _hover={{
-            bg: "tertiary/8",
-          }}
           css={{
             padding: "6px 12px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            border: "1px solid",
-            borderColor: "input",
-            backgroundColor: "transparent",
             "& [data-part='indicator']": {
               width: "16px",
               height: "16px",
@@ -62,11 +52,7 @@ const SortSelector = ({ value, onChange }: SortSelectorProps) => {
           <Select.Indicator />
         </Select.Trigger>
         <Select.Positioner>
-          <Select.Content
-            w={SORT_WIDTH}
-            bg="muted"
-            borderColor="border"
-          >
+          <Select.Content w={SORT_WIDTH}>
             {sortCollection.items.map((item) => {
               const isSelected = value === item.value;
               return (
@@ -74,10 +60,10 @@ const SortSelector = ({ value, onChange }: SortSelectorProps) => {
                   key={item.value}
                   item={item}
                   bg={isSelected ? "tertiary" : undefined}
-                  color={isSelected ? "on-tertiary" : undefined}
+                  color={isSelected ? "on-tertiary" : "foreground"}
                   _hover={{
                     bg: isSelected ? "tertiary" : "tertiary/12",
-                    color: isSelected ? "on-tertiary" : undefined,
+                    color: isSelected ? "on-tertiary" : "foreground",
                   }}
                 >
                   {item.label}

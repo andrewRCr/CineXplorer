@@ -66,13 +66,6 @@ export function ThemeSelector() {
           <Button
             variant="outline"
             size="sm"
-            borderWidth="1px"
-            borderColor="button-outline"
-            color="on-button-outline"
-            _hover={{
-              bg: "tertiary/8",
-              borderColor: "tertiary"
-            }}
           >
             {displayLabel}
           </Button>

@@ -137,7 +137,7 @@ during initialization).
 **Process:**
 
 1. Identify if your work touches a domain with codified guidance (theming, auth, testing, layout, etc.)
-2. Grep the strategy doc for your specific topic (e.g., `grep -i "form controls" strategy-semantic-tokens.md`)
+2. Grep the strategy doc for your specific topic (e.g., `grep -i "button patterns" strategy-component-styling.md`)
 3. Read relevant section(s) before implementing
 4. Follow documented patterns and token usage
 
@@ -188,6 +188,7 @@ Core documents (QUICK-REFERENCE, DEVELOPMENT-RULES) are read each session but sh
 
 - Bash command fails with path/environment errors (ENOENT, "no such file or directory", "config not found")
 - About to run quality gate commands and uncertain which tool/path to use (Docker vs host? Which flags?)
+- **About to run TypeScript type checks** - Verify exact command (NEVER use `npx tsc` directly, ALWAYS use `npm run type-check`)
 - Working directory context feels uncertain or commands aren't working as expected
 
 **DEVELOPMENT-RULES - Re-check when:**

@@ -105,13 +105,7 @@ const VerifyEmail = () => {
 
         {status === "success" && (
           <VStack gap={6}>
-            <Alert.Root
-              status="success"
-              borderRadius="lg"
-              border="1px solid"
-              borderColor="success"
-              boxShadow="sm"
-            >
+            <Alert.Root status="success">
               <Alert.Indicator />
               <Box>
                 <Alert.Title fontSize="lg" fontWeight="semibold" mb={2}>
@@ -131,11 +125,9 @@ const VerifyEmail = () => {
               </Box>
             </Alert.Root>
             <Button
+              variant="solid"
               size="lg"
               onClick={handleContinue}
-              bg="primary"
-              color="on-primary"
-              _hover={{ bg: "primary-hover" }}
             >
               Continue to Login Now
             </Button>
@@ -144,13 +136,7 @@ const VerifyEmail = () => {
 
         {status === "error" && (
           <VStack gap={6}>
-            <Alert.Root
-              status="error"
-              borderRadius="lg"
-              border="1px solid"
-              borderColor="destructive"
-              boxShadow="sm"
-            >
+            <Alert.Root status="error">
               <Alert.Indicator />
               <Box>
                 <Alert.Title fontSize="lg" fontWeight="semibold" mb={2}>
@@ -166,10 +152,6 @@ const VerifyEmail = () => {
                 size="lg"
                 w="full"
                 maxW="200px"
-                borderWidth="1px"
-                borderColor="button-outline"
-                color="on-button-outline"
-                _hover={{ bg: "tertiary/8", borderColor: "tertiary", color: "tertiary" }}
               >
                 Back to Login
               </Button>
@@ -179,10 +161,6 @@ const VerifyEmail = () => {
                 size="lg"
                 w="full"
                 maxW="200px"
-                borderWidth="1px"
-                borderColor="button-outline"
-                color="on-button-outline"
-                _hover={{ bg: "tertiary/8", borderColor: "tertiary", color: "tertiary" }}
               >
                 Try Again
               </Button>

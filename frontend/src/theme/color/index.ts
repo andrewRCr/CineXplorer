@@ -51,7 +51,7 @@ export {
 export { getShadowValues } from "./shadows";
 
 // Extension exports
-export { createExtensions, createCustomRatingColors } from "./extensions";
+export { createExtensions } from "./extensions";
 
 /**
  * Supported design system theme names.

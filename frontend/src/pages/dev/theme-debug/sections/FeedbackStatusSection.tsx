@@ -13,60 +13,58 @@ export function FeedbackStatusSection() {
     <Box id="feedback-status" bg="layer-01" p={6} borderRadius="md" borderWidth="1px" borderColor="border-strong-01">
       <Text fontSize="xl" fontWeight="bold" mb={4}>Feedback & Status</Text>
       <VStack align="stretch" gap={4}>
-        {/* Alerts */}
+        {/* Alerts - all use alert recipe (theme/recipes/alert.ts) */}
         <Box>
           <Text fontSize="lg" fontWeight="bold" mb={2}>Alerts</Text>
           <Box bg="background" p={4} borderRadius="md" borderWidth="1px" borderColor="border-subtle-00">
             <VStack gap={3} align="center">
               {/* Success alert */}
-              <Alert.Root status="success" bg="success/10" borderWidth="1px" borderColor="success" maxW="600px">
+              <Alert.Root status="success" maxW="600px">
                 <Alert.Indicator />
                 <Alert.Content>
-                  <Alert.Title color="success">Success</Alert.Title>
-                  <Alert.Description color="foreground">
+                  <Alert.Title>Success</Alert.Title>
+                  <Alert.Description>
                     Changes saved successfully
                   </Alert.Description>
                 </Alert.Content>
               </Alert.Root>
-
               {/* Warning alert */}
-              <Alert.Root status="warning" bg="warning/10" borderWidth="1px" borderColor="warning" maxW="600px">
+              <Alert.Root status="warning" maxW="600px">
                 <Alert.Indicator />
                 <Alert.Content>
-                  <Alert.Title color="warning">Warning</Alert.Title>
-                  <Alert.Description color="foreground">
+                  <Alert.Title>Warning</Alert.Title>
+                  <Alert.Description>
                     Please verify your email address
                   </Alert.Description>
                 </Alert.Content>
               </Alert.Root>
 
-              {/* Error alert */}
-              <Alert.Root status="error" bg="destructive/10" borderWidth="1px" borderColor="destructive" maxW="600px">
+              {/* Error alert - maps "error" status to "destructive" recipe variant */}
+              <Alert.Root status="error" maxW="600px">
                 <Alert.Indicator />
                 <Alert.Content>
-                  <Alert.Title color="destructive">Error</Alert.Title>
-                  <Alert.Description color="foreground">
+                  <Alert.Title>Error</Alert.Title>
+                  <Alert.Description>
                     Failed to save changes
                   </Alert.Description>
                 </Alert.Content>
               </Alert.Root>
 
               {/* Info alert */}
-              <Alert.Root status="info" bg="info/10" borderWidth="1px" borderColor="info" maxW="600px">
+              <Alert.Root status="info" maxW="600px">
                 <Alert.Indicator />
                 <Alert.Content>
-                  <Alert.Title color="info">Info</Alert.Title>
-                  <Alert.Description color="foreground">
+                  <Alert.Title>Info</Alert.Title>
+                  <Alert.Description>
                     New features available
                   </Alert.Description>
                 </Alert.Content>
               </Alert.Root>
 
               <Text fontSize="xs" color="foreground/60" maxW="700px" textAlign="center" lineHeight="1.5">
-                Alerts use status color tokens with 10% opacity backgrounds for subtle tint.
-                Title uses semantic color (<Code fontSize="xs">success</Code>, <Code fontSize="xs">warning</Code>, etc.),
-                description uses <Code fontSize="xs">foreground</Code> for readability.
-                Note: <Code fontSize="xs">on-*</Code> tokens are for FULL opacity backgrounds (like badges), not subtle tints.
+                Alerts now use slot recipe (theme/recipes/alert.ts) registered in baseConfig.
+                Recipe provides: 10% opacity backgrounds, semantic borders, title emphasis (semantic color),
+                description readability (foreground). Status prop automatically applies variant styles.
               </Text>
             </VStack>
           </Box>
@@ -77,36 +75,37 @@ export function FeedbackStatusSection() {
           <Text fontSize="lg" fontWeight="bold" mb={2}>Badge Status Variants</Text>
           <Box bg="background" p={4} borderRadius="md" borderWidth="1px" borderColor="border-subtle-00">
             <VStack gap={4} align="center">
-              {/* Status badges */}
+              {/* Status badges - Uses badge recipe (theme/recipes/badge.ts) */}
               <VStack gap={2} align="center">
                 <Text fontSize="sm" fontWeight="medium">Status Badges:</Text>
                 <HStack gap={3} wrap="wrap">
-                  <Badge bg="success" color="on-success">Active</Badge>
-                  <Badge bg="warning" color="on-warning">Pending</Badge>
-                  <Badge bg="info" color="on-info">New</Badge>
-                  <Badge bg="destructive" color="on-destructive">Deleted</Badge>
+                  <Badge variant="success">Active</Badge>
+                  <Badge variant="warning">Pending</Badge>
+                  <Badge variant="info">New</Badge>
+                  <Badge variant="error">Deleted</Badge>
                 </HStack>
               </VStack>
 
-              {/* Neutral badge (per ADR-011 canonical naming) */}
+              {/* Neutral badges - Uses badge recipe (theme/recipes/badge.ts) */}
               <VStack gap={2} align="center">
-                <Text fontSize="sm" fontWeight="medium">Neutral Badge (non-semantic labels):</Text>
+                <Text fontSize="sm" fontWeight="medium">Neutral Badges (genres, non-semantic):</Text>
                 <HStack gap={3} wrap="wrap" justify="center">
-                  <Badge bg="badge" color="on-badge">Action</Badge>
-                  <Badge bg="badge" color="on-badge">Sci-Fi</Badge>
-                  <Badge bg="badge" color="on-badge">PG-13</Badge>
-                  <Badge bg="badge" color="on-badge">2024</Badge>
+                  <Badge variant="neutral">Action</Badge>
+                  <Badge variant="neutral">Sci-Fi</Badge>
+                  <Badge variant="neutral">PG-13</Badge>
+                  <Badge variant="neutral">2024</Badge>
                 </HStack>
-                <Text fontSize="xs" color="foreground/60" maxW="600px" textAlign="center">
-                  Neutral <Code fontSize="xs">badge</Code> token for categorization (genres, ratings, non-semantic labels).
-                  Distinct from status colors which convey semantic meaning.
-                </Text>
               </VStack>
 
               <Text fontSize="xs" color="foreground/60" maxW="700px" textAlign="center" lineHeight="1.5">
-                Per ADR-011: All foreground tokens use <Code fontSize="xs">on-*</Code> prefix for clarity
-                (e.g., <Code fontSize="xs">on-success</Code>, <Code fontSize="xs">on-badge</Code>).
-                Status badges use semantic colors, neutral badges use <Code fontSize="xs">badge</Code> token.
+                Badges now use badge recipe (theme/recipes/badge.ts) registered in baseConfig.
+                Recipe provides 5 variants: success, warning, error, info, neutral.
+                All use canonical <Code fontSize="xs">on-*</Code> naming (ADR-011).
+              </Text>
+
+              <Text fontSize="xs" color="foreground/60" maxW="700px" textAlign="center" lineHeight="1.5" mt={2}>
+                Note: TMDB community scores are CineXplorer extensions that use status badge variants
+                based on thresholds (see Extensions section). User rating stars use <Code fontSize="xs">imdb-gold</Code> token color.
               </Text>
             </VStack>
           </Box>

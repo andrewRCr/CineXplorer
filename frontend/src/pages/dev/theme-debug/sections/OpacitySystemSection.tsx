@@ -6,8 +6,9 @@ import { Box, Text, VStack, HStack } from "@chakra-ui/react";
  * Demonstrates the opacity modifier system that allows any semantic token
  * to use transparency with `/opacity` syntax (e.g., `primary/80` = 80% opacity).
  *
- * Per ADR-009, interaction states use Material Design 3's standard opacity
- * values for consistency across themes.
+ * Per ADR-009 and ADR-016, interaction states use a dual opacity system:
+ * - MD3 baseline (8%/12%): outline/ghost/secondary buttons
+ * - Improved (12%/16%): solid buttons, layer surfaces for better visibility
  */
 export function OpacitySystemSection() {
   return (
@@ -19,40 +20,65 @@ export function OpacitySystemSection() {
         <Box>
           <Text fontSize="sm" color="on-muted" mb={3}>
             The opacity system allows any semantic token to use transparency with <code>/opacity</code> syntax
-            (e.g., <code>primary/80</code> = 80% opacity). Per <strong>ADR-009</strong>, interaction states use
-            Material Design 3's standard opacity values for consistency across themes.
+            (e.g., <code>primary/80</code> = 80% opacity). Per <strong>ADR-009</strong> and <strong>ADR-016</strong>,
+            interaction states use a dual opacity system: MD3 baseline (8%/12%) for outline/ghost/secondary buttons,
+            and improved (12%/16%) for solid buttons and layer surfaces to ensure better visibility across themes.
           </Text>
           <Text fontSize="sm" color="on-muted">
-            See <strong>strategy-semantic-tokens.md</strong> "Opacity Modifier Reference" section for complete patterns.
+            See <strong>strategy-component-styling.md</strong> "Opacity Modifier Reference" section (lines 1105-1121) for complete patterns.
           </Text>
         </Box>
 
         {/* Standard Interaction Values */}
         <Box bg="muted" p={4} borderRadius="md" borderWidth="1px" borderColor="border-subtle-02">
           <Text fontSize="sm" fontWeight="semibold" mb={3} color="foreground">
-            Standard Interaction Values (ADR-009)
+            Interaction Opacity Values (ADR-009 + ADR-016)
           </Text>
-          <VStack align="stretch" gap={2}>
-            <HStack justify="space-between">
-              <Text fontSize="xs" color="on-muted"><strong>8%</strong> - Hover states</Text>
-              <Text fontSize="xs" color="on-muted" fontFamily="mono">layer-hover-01, primary/8</Text>
-            </HStack>
-            <HStack justify="space-between">
-              <Text fontSize="xs" color="on-muted"><strong>12%</strong> - Selected/Active/Focus</Text>
-              <Text fontSize="xs" color="on-muted" fontFamily="mono">layer-selected-01, primary/12</Text>
-            </HStack>
-            <HStack justify="space-between">
-              <Text fontSize="xs" color="on-muted"><strong>16%</strong> - Drag active</Text>
-              <Text fontSize="xs" color="on-muted" fontFamily="mono">drag-active</Text>
-            </HStack>
-            <HStack justify="space-between">
-              <Text fontSize="xs" color="on-muted"><strong>30%</strong> - Backdrop overlays</Text>
-              <Text fontSize="xs" color="on-muted" fontFamily="mono">foreground/30</Text>
-            </HStack>
-            <HStack justify="space-between">
-              <Text fontSize="xs" color="on-muted"><strong>38%</strong> - Disabled states</Text>
-              <Text fontSize="xs" color="on-muted" fontFamily="mono">opacity: 0.38</Text>
-            </HStack>
+          <VStack align="stretch" gap={3}>
+            {/* MD3 Baseline (outline/ghost/secondary buttons) */}
+            <Box>
+              <Text fontSize="xs" fontWeight="bold" color="foreground" mb={1}>MD3 Baseline (outline/ghost/secondary):</Text>
+              <VStack align="stretch" gap={1} pl={2}>
+                <HStack justify="space-between">
+                  <Text fontSize="xs" color="on-muted"><strong>8%</strong> - Hover</Text>
+                  <Text fontSize="xs" color="on-muted" fontFamily="mono">tertiary/8</Text>
+                </HStack>
+                <HStack justify="space-between">
+                  <Text fontSize="xs" color="on-muted"><strong>12%</strong> - Active/pressed</Text>
+                  <Text fontSize="xs" color="on-muted" fontFamily="mono">tertiary/12</Text>
+                </HStack>
+              </VStack>
+            </Box>
+
+            {/* Improved for Solids (ADR-016) */}
+            <Box>
+              <Text fontSize="xs" fontWeight="bold" color="foreground" mb={1}>Improved (solid buttons/layer surfaces):</Text>
+              <VStack align="stretch" gap={1} pl={2}>
+                <HStack justify="space-between">
+                  <Text fontSize="xs" color="on-muted"><strong>12%</strong> - Hover/selected</Text>
+                  <Text fontSize="xs" color="on-muted" fontFamily="mono">layer-hover-01, layer-selected-01</Text>
+                </HStack>
+                <HStack justify="space-between">
+                  <Text fontSize="xs" color="on-muted"><strong>16%</strong> - Active/drag</Text>
+                  <Text fontSize="xs" color="on-muted" fontFamily="mono">layer-active-01, drag-active</Text>
+                </HStack>
+              </VStack>
+            </Box>
+
+            {/* Other Values */}
+            <Box>
+              <Text fontSize="xs" fontWeight="bold" color="foreground" mb={1}>Other values:</Text>
+              <VStack align="stretch" gap={1} pl={2}>
+                <HStack justify="space-between">
+                  <Text fontSize="xs" color="on-muted"><strong>30%</strong> - Backdrop overlays</Text>
+                  <Text fontSize="xs" color="on-muted" fontFamily="mono">foreground/30</Text>
+                </HStack>
+                <HStack justify="space-between">
+                  <Text fontSize="xs" color="on-muted"><strong>38%</strong> - Disabled states</Text>
+                  <Text fontSize="xs" color="on-muted" fontFamily="mono">opacity: 0.38</Text>
+                </HStack>
+              </VStack>
+            </Box>
           </VStack>
         </Box>
 
@@ -77,117 +103,91 @@ export function OpacitySystemSection() {
         <Box>
           <Text fontSize="md" fontWeight="semibold" mb={3}>Syntax Demonstrations</Text>
           <Text fontSize="sm" color="on-muted" mb={4}>
-            Examples showing the gradient of opacity values. These are demonstration values - prefer the
-            standard interaction values above for actual component usage.
+            Examples using actual interaction opacity values. Prefer dedicated semantic tokens
+            (layer-hover-01, primary-hover) over manual opacity syntax for consistency.
           </Text>
 
           <VStack align="stretch" gap={4}>
-            {/* Semantic tokens */}
+            {/* Primary token with interaction values */}
             <Box>
-              <Text fontSize="sm" fontWeight="bold" mb={2}>Semantic Tokens with Opacity</Text>
+              <Text fontSize="sm" fontWeight="bold" mb={2}>Primary Token (Interaction Values)</Text>
               <HStack gap={2} wrap="wrap">
-                {[100, 80, 60, 40, 20].map((opacity) => (
+                {[100, 16, 12, 8].map((opacity) => (
                   <Box
                     key={opacity}
                     bg={`primary/${opacity}`}
                     p={4}
                     borderWidth="1px"
                     borderColor="border-subtle-02"
-                    minW="150px"
+                    minW="130px"
                   >
-                    <Text color="foreground" fontSize="sm">primary/{opacity}</Text>
+                    <Text color={opacity === 100 ? "on-primary" : "foreground"} fontSize="sm">primary/{opacity}</Text>
                   </Box>
                 ))}
               </HStack>
+              <Text fontSize="xs" color="foreground/60" mt={2}>
+                100: solid, 16: active, 12: hover/selected, 8: baseline hover
+              </Text>
             </Box>
 
-            {/* Destructive token */}
+            {/* Tertiary token with interaction values */}
             <Box>
-              <Text fontSize="sm" fontWeight="bold" mb={2}>Destructive Token with Opacity</Text>
+              <Text fontSize="sm" fontWeight="bold" mb={2}>Tertiary Token (Interaction Values)</Text>
               <HStack gap={2} wrap="wrap">
-                {[100, 60, 20].map((opacity) => (
-                  <Box
-                    key={opacity}
-                    bg={`destructive/${opacity}`}
-                    p={4}
-                    borderWidth="1px"
-                    borderColor="border-subtle-02"
-                    minW="150px"
-                  >
-                    <Text color="foreground" fontSize="sm">destructive/{opacity}</Text>
-                  </Box>
-                ))}
-              </HStack>
-            </Box>
-
-            {/* Tertiary token */}
-            <Box>
-              <Text fontSize="sm" fontWeight="bold" mb={2}>Tertiary Token with Opacity</Text>
-              <HStack gap={2} wrap="wrap">
-                {[100, 60, 20].map((opacity) => (
+                {[100, 12, 8].map((opacity) => (
                   <Box
                     key={opacity}
                     bg={`tertiary/${opacity}`}
                     p={4}
                     borderWidth="1px"
                     borderColor="border-subtle-02"
-                    minW="150px"
+                    minW="130px"
                   >
-                    <Text color="foreground" fontSize="sm">tertiary/{opacity}</Text>
+                    <Text color={opacity === 100 ? "on-tertiary" : "foreground"} fontSize="sm">tertiary/{opacity}</Text>
                   </Box>
                 ))}
               </HStack>
+              <Text fontSize="xs" color="foreground/60" mt={2}>
+                100: solid, 12: active, 8: hover (MD3 baseline for outline/ghost buttons)
+              </Text>
             </Box>
 
-            {/* Muted token */}
+            {/* Foreground with overlay values */}
             <Box>
-              <Text fontSize="sm" fontWeight="bold" mb={2}>Muted Token with Opacity</Text>
-              <HStack gap={2} wrap="wrap">
-                {[100, 60, 20].map((opacity) => (
-                  <Box
-                    key={opacity}
-                    bg={`muted/${opacity}`}
-                    p={4}
-                    borderWidth="1px"
-                    borderColor="border-subtle-02"
-                    minW="150px"
-                  >
-                    <Text color="foreground" fontSize="sm">muted/{opacity}</Text>
-                  </Box>
-                ))}
-              </HStack>
-            </Box>
-
-            {/* Text colors with opacity */}
-            <Box>
-              <Text fontSize="sm" fontWeight="bold" mb={2}>Text Colors with Opacity</Text>
+              <Text fontSize="sm" fontWeight="bold" mb={2}>Foreground Token (Overlays & Text)</Text>
               <Box bg="background" p={4} borderWidth="1px" borderColor="border-strong-01">
                 <VStack align="start" gap={2}>
-                  {[100, 80, 60, 40, 20].map((opacity) => (
+                  {[100, 80, 30, 16, 12].map((opacity) => (
                     <Text key={opacity} color={`foreground/${opacity}`}>
-                      foreground/{opacity} - {opacity}% opacity text
+                      foreground/{opacity} - {opacity === 30 ? 'backdrop overlay' : opacity === 16 || opacity === 12 ? 'layer interaction' : opacity === 80 ? 'secondary text' : 'primary text'}
                     </Text>
                   ))}
                 </VStack>
               </Box>
+              <Text fontSize="xs" color="foreground/60" mt={2}>
+                100/80: text, 30: backdrop, 16: layer active, 12: layer hover/selected
+              </Text>
             </Box>
 
             {/* Border colors with opacity */}
             <Box>
               <Text fontSize="sm" fontWeight="bold" mb={2}>Border Colors with Opacity</Text>
               <HStack gap={2} wrap="wrap">
-                {[100, 60, 20].map((opacity) => (
+                {[100, 60, 30].map((opacity) => (
                   <Box
                     key={opacity}
                     p={4}
                     borderWidth="2px"
                     borderColor={`border/${opacity}`}
-                    minW="150px"
+                    minW="130px"
                   >
                     <Text fontSize="sm">border/{opacity}</Text>
                   </Box>
                 ))}
               </HStack>
+              <Text fontSize="xs" color="foreground/60" mt={2}>
+                Demonstration of border opacity - use border-strong-* hierarchy in practice
+              </Text>
             </Box>
           </VStack>
         </Box>
@@ -196,7 +196,8 @@ export function OpacitySystemSection() {
         <Box p={3} borderTopWidth="1px" borderColor="border-subtle-02">
           <Text fontSize="xs" color="foreground/70" fontStyle="italic">
             <strong>References:</strong> ADR-009 (Material Design 3 Opacity Overlays),
-            strategy-semantic-tokens.md "Opacity Modifier Reference" section
+            ADR-016 (Improve Interaction State Contrast),
+            strategy-component-styling.md "Opacity Modifier Reference" section (lines 1105-1121)
           </Text>
         </Box>
 

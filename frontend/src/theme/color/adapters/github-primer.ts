@@ -2,8 +2,8 @@
  * GitHub Primer Theme Adapter
  *
  * Maps official GitHub Primer design system tokens to CineXplorer's unified
- * theme vocabulary. This adapter applies corrections discovered during Phase 1
- * research and generates derived tokens for consistency across themes.
+ * theme vocabulary. This adapter applies research-driven corrections to
+ * misaligned official tokens and generates derived tokens for consistency.
  *
  * **Design System Source:**
  * - Package: @primer/primitives v8.x
@@ -15,7 +15,7 @@
  * - layer-03: Derived from layer-02 (shadows provide differentiation)
  *
  * **Token Organization:**
- * - Section 1: Official mappings (with corrections from Phase 1 research)
+ * - Section 1: Official mappings (with research-driven corrections)
  * - Section 2: Derived tokens (unofficial, for cross-theme consistency)
  * - Section 3: CineXplorer extensions (app-specific semantic colors)
  *
@@ -61,7 +61,7 @@ export function createGithubAdapter(mode: "light" | "dark"): UnifiedTheme {
     // ===================================================================
     // SECTION 1: OFFICIAL MAPPINGS (With Corrections)
     // ===================================================================
-    // These mappings use official Primer tokens. Corrections from Phase 1:
+    // These mappings use official Primer tokens with research-driven corrections:
     // - Light mode: card uses bg_muted (was incorrectly bg_default - indistinguishable)
     // - Both modes: surface-elevated uses bg_default + shadow (was bg_emphasis - blue tint)
     // - Both modes: Added border_emphasis for accessible borders
@@ -130,7 +130,7 @@ export function createGithubAdapter(mode: "light" | "dark"): UnifiedTheme {
     const onTertiary = palette.fg_onEmphasis; // ADR-011: Canonical on-* naming (rarely used)
     const tertiaryForeground = onTertiary; // @deprecated: Use on-tertiary instead (ADR-011)
 
-    // ACCENT: @deprecated - Use tertiary instead (ADR-010 Phase 4 migration)
+    // ACCENT: @deprecated - Use tertiary instead (ADR-010 consolidation)
     // Maintained as alias during component migration period
     const accent = palette.fg_accent; // Same as tertiary
     const accentForeground = palette.fg_onEmphasis;
@@ -216,7 +216,6 @@ export function createGithubAdapter(mode: "light" | "dark"): UnifiedTheme {
         {
             muted: palette.bg_muted,
             mutedForeground: palette.fg_muted,
-            accentEmphasis: palette.bg_emphasis,
             secondaryHover: palette.bg_button_secondary_hover,
         },
         mode
@@ -305,9 +304,7 @@ export function createGithubAdapter(mode: "light" | "dark"): UnifiedTheme {
         "info-foreground": infoForeground, // @deprecated
 
         // CineXplorer extensions
-        rating: extensions.rating,
-        "on-rating": extensions["rating-foreground"],
-        "rating-foreground": extensions["rating-foreground"], // @deprecated - alias for on-rating (ADR-011)
+        "imdb-gold": extensions["imdb-gold"],
         badge: extensions.badge,
         "on-badge": extensions["badge-foreground"],
         "badge-foreground": extensions["badge-foreground"], // @deprecated - alias for on-badge (ADR-011)

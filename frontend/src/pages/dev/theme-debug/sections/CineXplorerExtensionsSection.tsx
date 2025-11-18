@@ -35,11 +35,11 @@ export function CineXplorerExtensionsSection() {
             <Text fontSize="sm" fontWeight="bold" mb={2} textAlign="center">User Personal Rating (future 5-star)</Text>
             <Box textAlign="center">
               <Box bg="layer-01" px={3} py={2} borderRadius="md" display="inline-block">
-                <Text color="rating" fontWeight="bold" fontSize="xl">★★★★☆</Text>
+                <Text color="imdb-gold" fontWeight="bold" fontSize="xl">★★★★☆</Text>
               </Box>
             </Box>
             <Text fontSize="xs" color="foreground/60" mt={1} textAlign="center">
-              Stars use rating token color (IMDb gold) on layer-01 (movie cards)
+              Stars use imdb-gold token color (IMDb gold #F5C518) on layer-01 (movie cards)
             </Text>
           </Box>
 
@@ -63,13 +63,37 @@ export function CineXplorerExtensionsSection() {
           <Box>
             <Text fontSize="sm" fontWeight="bold" mb={2} textAlign="center">Drag & Drop States</Text>
             <HStack gap={2} justify="center">
-              <Box bg="drag-active" p={2} px={3} borderRadius="md" borderWidth="2px" borderColor="border-subtle-02" borderStyle="dashed">
-                <Text fontSize="xs" color="foreground">drag-active</Text>
+              <Box
+                bg="drag-active"
+                p={2}
+                px={3}
+                borderRadius="md"
+                borderWidth="2px"
+                borderColor="info"
+                borderStyle="dashed"
+                boxShadow="shadow-sm"
+              >
+                <Text fontSize="xs" fontWeight="medium" color="on-secondary">
+                  drag-active
+                </Text>
               </Box>
-              <Box bg="drop-zone" p={2} px={3} borderRadius="md" borderWidth="2px" borderColor="border-subtle-02" borderStyle="dashed">
-                <Text fontSize="xs" color="foreground">drop-zone</Text>
+              <Box
+                bg="drop-zone"
+                p={2}
+                px={3}
+                borderRadius="md"
+                borderWidth="2px"
+                borderColor="success"
+                borderStyle="dashed"
+              >
+                <Text fontSize="xs" fontWeight="medium" color="foreground">
+                  drop-zone
+                </Text>
               </Box>
             </HStack>
+            <Text fontSize="xs" color="foreground/60" mt={2} textAlign="center">
+              drag-active: secondaryHover bg, on-secondary text, info dashed border | drop-zone: muted bg, foreground text, success dashed border
+            </Text>
           </Box>
         </VStack>
       </Box>

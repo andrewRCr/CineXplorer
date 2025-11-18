@@ -4,10 +4,12 @@
  * Maps GitHub Primer palette colors to semantic token roles.
  * Provides neutral, professional aesthetic proven at massive scale.
  * Source: GitHub Primer design system (https://primer.style)
- * Research: .arc/active/incidental/notes-theme-system-modernization.md
  */
 
-import { githubPaletteLight as pLight, githubPaletteDark as pDark } from "../color/palettes/github-primer";
+import {
+    githubPaletteLight as pLight,
+    githubPaletteDark as pDark,
+} from "../color/palettes/github-primer";
 import type { Theme } from "../types";
 import { createUnifiedTheme } from "../color";
 
@@ -60,8 +62,7 @@ export const githubTheme: Theme = {
         "on-destructive": pLight.fg_onEmphasis,
         "on-info": pLight.fg_onEmphasis, // White on red
         // Rating colors (TEMP: hardcoded after palette extraction)
-        rating: "#bf8700",
-        "rating-foreground": pLight.fg_onEmphasis,
+        "imdb-gold": "#bf8700",
         // Surface elevation
         "surface-elevated": pLight.bg_emphasis,
         // Badge colors
@@ -103,8 +104,7 @@ export const githubTheme: Theme = {
         "on-warning": pDark.fg_default, // White text on dark yellow
         "on-destructive": pDark.fg_default, // White text on dark red
         "on-info": pDark.fg_default, // White text on dark blue
-        rating: "#ffc107", // TEMP: hardcoded after palette extraction
-        "rating-foreground": pDark.fg_onEmphasis,
+        "imdb-gold": "#ffc107", // TEMP: hardcoded after palette extraction
         "surface-elevated": pDark.bg_muted,
         badge: pDark.bg_button_secondary,
         "badge-foreground": pDark.fg_muted,
@@ -114,7 +114,7 @@ export const githubTheme: Theme = {
         input: pDark.border_default,
         ring: pDark.fg_accent,
     },
-    // Phase 3 integration: Unified adapter instances
+
     lightUnified: createUnifiedTheme("github-primer", "light"),
     darkUnified: createUnifiedTheme("github-primer", "dark"),
 } as const;

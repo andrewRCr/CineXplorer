@@ -30,8 +30,6 @@ export interface ExtensionTokens {
     badge: string;
     /** Text color on badge backgrounds (ADR-011 canonical naming) */
     "on-badge": string;
-    /** @deprecated Use on-badge instead (ADR-011) */
-    "badge-foreground": string;
 
     /** Active drag state (item being dragged) */
     "drag-active": string;
@@ -113,7 +111,6 @@ export function createExtensions(
         // Badge tokens: Adapt to theme's neutral palette
         badge: themeBase.muted,
         "on-badge": badgeFg, // ADR-011: Canonical naming
-        "badge-foreground": badgeFg, // @deprecated - alias for on-badge
 
         // Drag-and-drop: Use neutral backgrounds for both states
         "drag-active": themeBase.secondaryHover,

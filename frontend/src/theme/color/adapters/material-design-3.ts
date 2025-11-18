@@ -129,10 +129,6 @@ export function createMaterialAdapter(mode: "light" | "dark"): UnifiedTheme {
     const tertiary = palette.tertiary; // MAROON (#7D5260 light, #EFB8C8 dark)
     const onTertiary = palette.onTertiary; // Material native on-* token
 
-    // ACCENT: @deprecated - Use tertiary instead (replaced by standard tertiary naming per ADR-010)
-    // Maintained as alias for backward compatibility
-    const accent = palette.tertiary; // Same as tertiary
-
     // Status colors
     // NOTE: Material baseline only provides error (destructive). Success/warning/info are derived.
     const destructive = palette.error; // Material baseline error color
@@ -171,9 +167,12 @@ export function createMaterialAdapter(mode: "light" | "dark"): UnifiedTheme {
     const secondaryStates = deriveInteractionStates(secondary, onSecondary);
 
     // Tertiary interaction states: For links/interactive text (foreground token)
+    // Note: Material's tertiary colors require stronger adjustments for visibility:
+    // - Light mode: -20% (vs -10% in other themes) for better contrast with maroon base
+    // - Dark mode: +30% (vs +10% in other themes) because base is already very light (#EFB8C8)
     const tertiaryHover = mode === "light"
-        ? adjustColor(palette.tertiary, -10) // Darken for light mode
-        : adjustColor(palette.tertiary, 10); // Lighten for dark mode
+        ? adjustColor(palette.tertiary, -20) // Darken for light mode (increased for visibility)
+        : adjustColor(palette.tertiary, 30); // Lighten for dark mode (increased for visibility)
     const tertiaryActive = mode === "light"
         ? adjustColor(palette.tertiary, -15) // More pronounced darkening
         : adjustColor(palette.tertiary, 5); // Subtle lightening
@@ -212,9 +211,6 @@ export function createMaterialAdapter(mode: "light" | "dark"): UnifiedTheme {
     const onWarning = mode === "light" ? "#FFFFFF" : "#000000"; // Derived
     const info = mode === "light" ? "#1976D2" : "#42A5F5"; // Material blue 700/400
     const onInfo = "#FFFFFF"; // Derived
-
-    // Accent hover state (deprecated - aliased to tertiaryHover)
-    const accentHover = tertiaryHover;
 
     // ===================================================================
     // SECTION 3: CINEXPLORER EXTENSIONS (App-Specific)
@@ -285,8 +281,6 @@ export function createMaterialAdapter(mode: "light" | "dark"): UnifiedTheme {
         "on-muted": onMuted, // ADR-011: Material native on-* token
         tertiary,
         "on-tertiary": onTertiary, // ADR-011: Material native on-* token
-        accent, // @deprecated alias (ADR-010)
-        "accent-hover": accentHover,
 
         // Interaction state tokens (ADR-009)
         "primary-hover": primaryStates.hover,

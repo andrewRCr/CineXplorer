@@ -150,11 +150,6 @@ export function createCarbonAdapter(mode: "light" | "dark"): UnifiedTheme {
     const tertiary = palette.fg_accent; // BLUE (#0f62fe light, #78a9ff dark)
     const onTertiary = palette.fg_onEmphasis; // Rarely used
 
-    // ACCENT: @deprecated - Use tertiary instead (ADR-010 consolidation)
-    // Maintained as alias during component migration period
-    const accent = palette.fg_accent; // Same as tertiary
-    const accentHover = palette.fg_accent_hover;
-
     // Status colors: destructive, success, warning, info (all official Carbon tokens)
     const destructive = palette.bg_danger;
     const onDestructive = palette.fg_onEmphasis;
@@ -262,8 +257,6 @@ export function createCarbonAdapter(mode: "light" | "dark"): UnifiedTheme {
         "on-muted": onMuted, // ADR-011: Canonical naming
         tertiary,
         "on-tertiary": onTertiary, // ADR-011: Canonical naming
-        accent, // @deprecated alias (ADR-010)
-        "accent-hover": accentHover,
 
         // Interaction state tokens (ADR-009)
         "primary-hover": primaryStates.hover,
@@ -285,7 +278,7 @@ export function createCarbonAdapter(mode: "light" | "dark"): UnifiedTheme {
         // CineXplorer extensions
         "imdb-gold": extensions["imdb-gold"],
         badge: extensions.badge,
-        "on-badge": extensions["badge-foreground"],
+        "on-badge": extensions["on-badge"],
         "drag-active": extensions["drag-active"],
         "drop-zone": extensions["drop-zone"],
 

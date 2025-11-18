@@ -37,16 +37,10 @@
  * ```
  *
  * **SEMANTIC MEANINGS (Documentation Only):**
- * - `layer-01`: Card surfaces, first elevation level (formerly "card")
- * - `layer-02`: Elevated surfaces, modals (formerly "surface-elevated")
- * - `layer-03`: Highest elevation, dropdowns over modals (formerly "surface-highest")
+ * - `layer-01`: Card surfaces, first elevation level
+ * - `layer-02`: Elevated surfaces, modals
+ * - `layer-03`: Highest elevation, dropdowns over modals
  * - `popover`: Overlay surfaces (tooltips, popovers) - uses layer-02 or layer-03 depending on context
- *
- * **DEPRECATION PATH:**
- * - Old ThemeColors interface (39 tokens) → UnifiedTheme (~47 tokens)
- * - Removed tokens: `card`, `card-foreground`, `surface-elevated` (replaced by layer system)
- * - Migration will update all components to use canonical names
- * - After migration, old ThemeColors interface will be removed
  */
 export interface UnifiedTheme {
     // ===================================================================
@@ -112,7 +106,6 @@ export interface UnifiedTheme {
      * Third elevation level (highest elevation - dropdowns over modals).
      *
      * **Semantic meaning:** Dropdowns appearing over modals, highest z-index surfaces.
-     * This is NEW - no equivalent in old ThemeColors.
      *
      * **Usage:**
      * - Dropdown menus over modal dialogs
@@ -488,26 +481,6 @@ export interface UnifiedTheme {
      * @see ADR-011 for on-* naming convention rationale
      */
     "on-tertiary"?: string;
-
-    /**
-     * @deprecated Use `tertiary` instead. This is a legacy alias maintained for
-     * backward compatibility during component migration (ADR-010).
-     *
-     * **Migration:** Replace all `accent` usage with `tertiary` in components.
-     * This alias will be removed after global accent → tertiary migration completes.
-     *
-     * @see tertiary for current token documentation
-     */
-    accent: string;
-
-
-    /**
-     * Hover state for accent/tertiary interactive elements.
-     *
-     * **Usage:** Link hover states, focus state brightening
-     * **Note:** Will be renamed to `tertiary-hover` after accent deprecation complete
-     */
-    "accent-hover": string;
 
     // ===================================================================
     // INTERACTION STATE TOKENS (Color-Based)
@@ -1129,19 +1102,3 @@ export interface UnifiedTheme {
     ring: string;
 }
 
-/**
- * DEPRECATED - Legacy theme interface from pre-adapter architecture.
- *
- * This type is kept temporarily as a deprecation marker during component
- * migration. The actual ThemeColors interface is still defined in ../types.ts
- * until migration is complete.
- *
- * **Migration Guide:**
- * - `card` → `layer-01` (+ use `foreground` for text)
- * - `card-foreground` → `foreground` (layer-01 doesn't have separate foreground)
- * - `surface-elevated` → `layer-02`
- * - All other tokens: No changes (keep same names)
- *
- * @deprecated Use UnifiedTheme instead. Remove after migration complete.
- */
-export type ThemeColors = Record<string, never>;

@@ -39,7 +39,7 @@ export function NavigationPatternsSection() {
           <Box bg="background" p={4} borderRadius="md" borderWidth="1px" borderColor="border-subtle-00">
             <VStack gap={4} align="center">
               {/* Basic tabs with states */}
-              <VStack gap={2} align="start">
+              <VStack gap={2} align="center">
                 <Text fontSize="sm" fontWeight="medium">Tab States (default, hover, active/selected):</Text>
                 <Tabs.Root defaultValue="overview" maxW="600px">
                   <Tabs.List>
@@ -116,7 +116,7 @@ export function NavigationPatternsSection() {
           <Box bg="background" p={4} borderRadius="md" borderWidth="1px" borderColor="border-subtle-00">
             <VStack gap={4} align="center">
               {/* Basic breadcrumb */}
-              <VStack gap={2} align="start">
+              <VStack gap={2} align="center">
                 <Text fontSize="sm" fontWeight="medium">Standard Breadcrumb:</Text>
                 <Breadcrumb.Root>
                   <Breadcrumb.List>
@@ -155,16 +155,16 @@ export function NavigationPatternsSection() {
               </VStack>
 
               {/* Separator variations */}
-              <VStack gap={2} align="start">
+              <VStack gap={2} align="center">
                 <Text fontSize="sm" fontWeight="medium">Separator Styling:</Text>
                 <Breadcrumb.Root>
                   <Breadcrumb.List>
                     <Breadcrumb.Item>
-                      <Breadcrumb.Link href="#" color="tertiary">Browse</Breadcrumb.Link>
+                      <Breadcrumb.Link href="#" color="tertiary" _hover={{ color: "tertiary-hover" }}>Browse</Breadcrumb.Link>
                     </Breadcrumb.Item>
                     <Breadcrumb.Separator color="border-strong-01">/</Breadcrumb.Separator>
                     <Breadcrumb.Item>
-                      <Breadcrumb.Link href="#" color="tertiary">Discover</Breadcrumb.Link>
+                      <Breadcrumb.Link href="#" color="tertiary" _hover={{ color: "tertiary-hover" }}>Discover</Breadcrumb.Link>
                     </Breadcrumb.Item>
                     <Breadcrumb.Separator color="border-strong-01">/</Breadcrumb.Separator>
                     <Breadcrumb.Item>

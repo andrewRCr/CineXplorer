@@ -59,12 +59,12 @@ export function createGithubAdapter(mode: "light" | "dark"): UnifiedTheme {
     const palette = mode === "light" ? githubPaletteLight : githubPaletteDark;
 
     // ===================================================================
-    // SECTION 1: OFFICIAL MAPPINGS (With Corrections)
+    // SECTION 1: OFFICIAL MAPPINGS
     // ===================================================================
-    // These mappings use official Primer tokens with research-driven corrections:
-    // - Light mode: card uses bg_muted (was incorrectly bg_default - indistinguishable)
-    // - Both modes: surface-elevated uses bg_default + shadow (was bg_emphasis - blue tint)
-    // - Both modes: Added border_emphasis for accessible borders
+    // These mappings use official Primer tokens with visual hierarchy adjustments:
+    // - Light mode: card uses bg_muted for distinction from page background (bg_default)
+    // - Both modes: surface-elevated uses bg_default + shadow (bg_emphasis adds blue tint)
+    // - Both modes: border_emphasis provides accessible contrast for UI components
 
     // Core structure
     const background = palette.bg_default;
@@ -157,7 +157,7 @@ export function createGithubAdapter(mode: "light" | "dark"): UnifiedTheme {
     // - Dark mode (progressive layers): 5 distinct values (progressive lightening)
     const borderHierarchy = deriveBorderHierarchy(
         palette.border_default, // Subtle base
-        palette.border_emphasis, // Strong base (FIXED: was deriving from default)
+        palette.border_emphasis, // Strong base for accessible UI component borders
         mode === "light" ? "alternating" : "progressive" // Pattern selection per ADR-008
     );
     const borderSubtle02 = borderHierarchy.subtle02; // Same as subtle00 (light) or +12.6% (dark)

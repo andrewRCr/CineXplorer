@@ -9,7 +9,6 @@
  * Package: @primer/primitives v8.x
  *
  * All values verified from official Primer primitives documentation.
- * Last updated: 2025-11-04 (Task 2.1.1 - palette corrections)
  */
 
 /**

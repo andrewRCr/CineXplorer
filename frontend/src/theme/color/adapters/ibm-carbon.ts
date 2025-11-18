@@ -75,7 +75,7 @@ export function createCarbonAdapter(mode: "light" | "dark"): UnifiedTheme {
         mode === "light" ? ibmCarbonPaletteLight : ibmCarbonPaletteDark;
 
     // ===================================================================
-    // SECTION 1: OFFICIAL MAPPINGS (With Corrections)
+    // SECTION 1: OFFICIAL MAPPINGS
     // ===================================================================
     // Carbon provides the most complete official vocabulary. Most tokens map
     // directly from Carbon's layer system and border hierarchy.
@@ -107,7 +107,7 @@ export function createCarbonAdapter(mode: "light" | "dark"): UnifiedTheme {
 
     // Border hierarchy (Carbon's official per-layer borders)
     // CRITICAL: Use border_strong_01 for default border (visible on all layers)
-    const border = palette.border_strong_01; // CORRECTED from border_default
+    const border = palette.border_strong_01; // Required for visibility (border_default matches layer-02)
     const borderSubtle00 = palette.border_subtle_00; // Low-contrast dividers on background/layer-01
     const borderSubtle02 = palette.border_subtle_02; // Low-contrast dividers on layer-02
     const borderStrong01 = palette.border_strong_01; // Accessible borders on layer-01

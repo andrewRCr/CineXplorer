@@ -141,8 +141,8 @@ export function getShadowValues(
         case "gitlab-pajamas":
             return pajamasShadows[mode];
         case "material-design-3":
-            // TODO: Implement Material Design 3 elevation system
-            // Fallback to GitHub Primer shadows for now
+            // Material Design 3 uses Primer shadows (design system preference)
+            // Material's native elevation system intentionally not implemented
             return primerShadows[mode];
         default: {
             // Exhaustiveness check: TypeScript will error if a case is missing

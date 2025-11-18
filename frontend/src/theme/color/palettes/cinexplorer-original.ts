@@ -10,9 +10,6 @@
  * This palette documents the colors that were actually in use in the original
  * theme system before migration to semantic tokens. Unused colors (gradients,
  * nearBlack, customGrayBorder) have been excluded.
- *
- * Source: Audit performed 2025-11-02 (Phase 1.1)
- * See: .arc/active/incidental/notes-theme-system-modernization.md
  */
 
 /**

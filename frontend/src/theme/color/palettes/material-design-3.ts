@@ -8,7 +8,6 @@
  * Package: Material Design 3 (baseline static palette)
  *
  * All values verified from official Material Design 3 documentation.
- * Created: 2025-11-07 (Task 3.5.5.7 - Material theme validation)
  *
  * Note: Material Design 3 baseline does not include success/warning/info colors.
  * These will be derived in the adapter using industry-standard conventions.

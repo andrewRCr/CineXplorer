@@ -16,7 +16,7 @@
  * - TypeScript enforces canonical names - non-canonical names produce compile errors
  *
  * **TOKEN CATEGORIES:**
- * 1. **Official Mappings**: Direct mappings from design system tokens (with corrections)
+ * 1. **Official Mappings**: Direct mappings from design system tokens
  * 2. **Derived Tokens**: Unofficial tokens generated for cross-theme consistency
  * 3. **CineXplorer Extensions**: App-specific tokens (ratings, custom semantic colors)
  *
@@ -562,7 +562,7 @@ export interface UnifiedTheme {
      * <Link color="tertiary" _hover={{ color: "tertiary-hover" }}>Learn more</Link>
      * ```
      *
-     * **Note:** Currently aliased as `accent-hover` during migration
+     * **Note:** Deprecated alias `accent-hover` maintained for backward compatibility
      *
      * @see ADR-009 for interaction state approach
      */

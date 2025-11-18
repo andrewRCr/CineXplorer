@@ -72,13 +72,13 @@ export function createPajamasAdapter(mode: "light" | "dark"): UnifiedTheme {
         mode === "light" ? gitlabPajamasPaletteLight : gitlabPajamasPaletteDark;
 
     // ===================================================================
-    // SECTION 1: OFFICIAL MAPPINGS (With Corrections)
+    // SECTION 1: OFFICIAL MAPPINGS
     // ===================================================================
     // Pajamas provides semantic section tokens and shadow-based elevation.
     //
-    // KEY CORRECTIONS for contrast compliance:
-    // - card: bg_section (neutral-50) NOT bg_muted (neutral-10, 1.02:1 contrast)
-    // - border: border_strong (neutral-200/600) NOT border_default (1.17:1 contrast)
+    // Contrast compliance requirements:
+    // - card: bg_section (neutral-50) provides sufficient contrast against bg_default
+    // - border: border_strong (neutral-200/600) meets WCAG 3:1 minimum for UI components
 
     // Core structure (Pajamas semantic + shadow-based)
     const background = palette.bg_default;
@@ -96,8 +96,8 @@ export function createPajamasAdapter(mode: "light" | "dark"): UnifiedTheme {
     const popover = palette.bg_elevated;
     const popoverForeground = palette.fg_default;
 
-    // Border (use improved contrast tokens)
-    const border = palette.border_strong; // CORRECTED: From border_default (insufficient contrast)
+    // Border (accessible contrast)
+    const border = palette.border_strong; // Ensures WCAG 3:1 contrast for UI components
     const borderSubtle00 = palette.border_subtle; // Subtle dividers
     const borderStrong01 = palette.border_strong; // Accessible borders
 
@@ -125,7 +125,7 @@ export function createPajamasAdapter(mode: "light" | "dark"): UnifiedTheme {
 
     // SECONDARY: Gray background + mandatory 1px border (ADR-010)
     // Token type: BACKGROUND + BORDER
-    // Fixed: Now uses neutral gray for visibility on white backgrounds
+    // Uses neutral gray for visibility on light backgrounds
     const secondary = palette.bg_button_secondary;
     const onSecondary = mode === "light"
         ? palette.fg_onEmphasis  // Light mode: white text on medium gray
@@ -174,7 +174,7 @@ export function createPajamasAdapter(mode: "light" | "dark"): UnifiedTheme {
     // - Light mode (alternating layers): 2 distinct values (subtle + strong)
     // - Dark mode (progressive layers): 5 distinct values (progressive lightening)
     const borderHierarchy = deriveBorderHierarchy(
-        palette.border_subtle, // Subtle base (FIXED: was incorrectly passing border_strong!)
+        palette.border_subtle, // Subtle base for hierarchy derivation
         palette.border_strong, // Strong base
         mode === "light" ? "alternating" : "progressive", // Pattern selection per ADR-008
     );

@@ -24,10 +24,14 @@ export const selectRecipe = defineSlotRecipe({
 
     base: {
         /**
-         * Trigger: Button-like control that opens dropdown
-         * - Border hierarchy: border-strong-01 (default) → border-strong-02 (hover)
+         * Trigger: Select control that opens dropdown
+         * - Border hierarchy: border-strong-01 (default) → border-strong-02 (hover) → tertiary (focus)
          * - Hover adds tertiary/8 background tint
-         * - Keyboard-only focus ring (ring token)
+         * - Border-only focus (matches StyledInput pattern, not outline rings like buttons)
+         *
+         * Note: Select.Trigger uses border-only focus (like text inputs) because it's
+         * semantically a form control (choose a value) not an action button.
+         * This matches StyledInput, Textarea, and aligns with ADR-015.
          */
         trigger: {
             display: "inline-flex",
@@ -53,9 +57,8 @@ export const selectRecipe = defineSlotRecipe({
                 cursor: "not-allowed",
             },
             _focusVisible: {
-                outline: "2px solid",
-                outlineColor: "ring",
-                outlineOffset: "2px",
+                borderColor: "tertiary",
+                outline: "none",
             },
         },
 

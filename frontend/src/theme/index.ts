@@ -5,27 +5,26 @@
  * Uses Chakra UI v3 token reference system with hex color values.
  *
  * Theme system architecture:
- * - Base tokens: Hex color values from theme palettes
+ * - Base tokens: Hex color values from UnifiedTheme adapters
  * - Semantic tokens: References to base tokens (e.g., {colors.light.background})
  * - Light/dark mode: Handled by `base` and `_dark` properties
  * - Theme switching: Provider recreates system when theme changes
  *
- * **TRANSITIONAL STATE:**
- * - Theme registry, exports, and createThemeSystem() are active core infrastructure
- * - createBaseTokens()/createSemanticTokens() use legacy theme.light/theme.dark structure
- * - Supports both old ThemeColors tokens (~39) and new UnifiedTheme tokens (~47)
- * - Planned cleanup will remove legacy dual-palette code and ThemeColors interface
- * - See tasks-theme-system-modernization.md for scheduled refactoring
+ * All themes use the UnifiedTheme interface (~67 tokens) providing consistent
+ * cross-theme vocabulary for layer system, border hierarchy, shadows, and
+ * interaction states.
  */
 
 import { createSystem, defaultConfig, defineConfig } from "@chakra-ui/react";
 
 // Import all theme definitions
-import { githubTheme } from "./definitions/github";
-import { ibmCarbonTheme } from "./definitions/ibm-carbon";
-import { gitlabPajamasTheme } from "./definitions/gitlab-pajamas";
-import { materialDesign3Theme } from "./definitions/material-design-3";
-import type { Theme, ThemeColors } from "./types";
+import {
+    githubTheme,
+    ibmCarbonTheme,
+    gitlabPajamasTheme,
+    materialDesign3Theme,
+} from "./color/definitions";
+import type { Theme } from "./types";
 
 // Import layout tokens
 import { layoutFoundations } from "./layout/foundations";
@@ -64,17 +63,11 @@ export function getTheme(name: string): Theme {
  * Base tokens are the foundation layer containing raw hex color values and shadow definitions.
  * Semantic tokens reference these to create meaningful, mode-aware color and shadow names.
  *
- * During parallel systems migration, this includes both
- * old ThemeColors tokens (~39) and new UnifiedTheme tokens (~47) when available.
- * Result: ~86 tokens available during migration, enabling gradual component updates.
- *
  * **Shadow Tokens:** Shadow tokens (shadow-sm, shadow-md, shadow-lg) are extracted
  * separately and returned in their own category to align with Chakra UI's token system
  * architecture (colors vs shadows are distinct token types).
  */
 function createBaseTokens(theme: Theme) {
-    const tokenKeys = Object.keys(theme.light) as Array<keyof ThemeColors>;
-
     // Shadow token names (extracted separately)
     const shadowTokens = ["shadow-sm", "shadow-md", "shadow-lg"] as const;
 
@@ -87,32 +80,24 @@ function createBaseTokens(theme: Theme) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const darkShadows: Record<string, any> = {};
 
-    // Add legacy ThemeColors tokens
-    for (const tokenKey of tokenKeys) {
-        lightColors[tokenKey] = { value: theme.light[tokenKey] };
-        darkColors[tokenKey] = { value: theme.dark[tokenKey] };
-    }
+    // Add unified adapter tokens
+    const unifiedKeys = Object.keys(theme.lightUnified) as Array<
+        keyof typeof theme.lightUnified
+    >;
 
-    // Add unified adapter tokens if available (parallel systems; intermediate state for now, see header comment)
-    if (theme.lightUnified && theme.darkUnified) {
-        const unifiedKeys = Object.keys(theme.lightUnified) as Array<
-            keyof typeof theme.lightUnified
-        >;
-
-        for (const tokenKey of unifiedKeys) {
-            // Extract shadow tokens separately
-            if (
-                shadowTokens.includes(tokenKey as (typeof shadowTokens)[number])
-            ) {
-                lightShadows[tokenKey] = {
-                    value: theme.lightUnified[tokenKey],
-                };
-                darkShadows[tokenKey] = { value: theme.darkUnified[tokenKey] };
-            } else {
-                // All other tokens go to colors
-                lightColors[tokenKey] = { value: theme.lightUnified[tokenKey] };
-                darkColors[tokenKey] = { value: theme.darkUnified[tokenKey] };
-            }
+    for (const tokenKey of unifiedKeys) {
+        // Extract shadow tokens separately
+        if (
+            shadowTokens.includes(tokenKey as (typeof shadowTokens)[number])
+        ) {
+            lightShadows[tokenKey] = {
+                value: theme.lightUnified[tokenKey],
+            };
+            darkShadows[tokenKey] = { value: theme.darkUnified[tokenKey] };
+        } else {
+            // All other tokens go to colors
+            lightColors[tokenKey] = { value: theme.lightUnified[tokenKey] };
+            darkColors[tokenKey] = { value: theme.darkUnified[tokenKey] };
         }
     }
 
@@ -129,15 +114,11 @@ function createBaseTokens(theme: Theme) {
  * that automatically switch between light and dark values based on color mode.
  * Uses Chakra's token reference syntax: {colors.light.tokenName} or {shadows.light.tokenName}
  *
- * Includes unified adapter token references when available during transitional state.
- *
  * **Shadow Tokens:** Shadows are created as semantic tokens referencing base shadow values,
  * enabling automatic light/dark mode switching. Example: shadow-sm references
  * {shadows.light.shadow-sm} in light mode, {shadows.dark.shadow-sm} in dark mode.
  */
 function createSemanticTokens(theme: Theme) {
-    const tokenKeys = Object.keys(theme.light) as Array<keyof ThemeColors>;
-
     // Shadow token names (for semantic shadow creation)
     const shadowTokens = ["shadow-sm", "shadow-md", "shadow-lg"] as const;
 
@@ -146,42 +127,30 @@ function createSemanticTokens(theme: Theme) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const shadows: Record<string, any> = {};
 
-    // Add legacy ThemeColors semantic tokens
-    for (const tokenKey of tokenKeys) {
-        colors[tokenKey] = {
-            value: {
-                base: `{colors.light.${tokenKey}}`, // Light mode reference
-                _dark: `{colors.dark.${tokenKey}}`, // Dark mode reference
-            },
-        };
-    }
+    // Add unified adapter semantic tokens
+    const unifiedKeys = Object.keys(theme.lightUnified) as Array<
+        keyof typeof theme.lightUnified
+    >;
 
-    // Add unified adapter semantic tokens if available
-    if (theme.lightUnified && theme.darkUnified) {
-        const unifiedKeys = Object.keys(theme.lightUnified) as Array<
-            keyof typeof theme.lightUnified
-        >;
-
-        for (const tokenKey of unifiedKeys) {
-            // Create semantic shadow tokens
-            if (
-                shadowTokens.includes(tokenKey as (typeof shadowTokens)[number])
-            ) {
-                shadows[tokenKey] = {
-                    value: {
-                        base: `{shadows.light.${tokenKey}}`,
-                        _dark: `{shadows.dark.${tokenKey}}`,
-                    },
-                };
-            } else {
-                // Create semantic color tokens
-                colors[tokenKey] = {
-                    value: {
-                        base: `{colors.light.${tokenKey}}`,
-                        _dark: `{colors.dark.${tokenKey}}`,
-                    },
-                };
-            }
+    for (const tokenKey of unifiedKeys) {
+        // Create semantic shadow tokens
+        if (
+            shadowTokens.includes(tokenKey as (typeof shadowTokens)[number])
+        ) {
+            shadows[tokenKey] = {
+                value: {
+                    base: `{shadows.light.${tokenKey}}`,
+                    _dark: `{shadows.dark.${tokenKey}}`,
+                },
+            };
+        } else {
+            // Create semantic color tokens
+            colors[tokenKey] = {
+                value: {
+                    base: `{colors.light.${tokenKey}}`,
+                    _dark: `{colors.dark.${tokenKey}}`,
+                },
+            };
         }
     }
 
@@ -297,4 +266,4 @@ export const defaultSystem = createThemeSystem(themeRegistry[defaultThemeName]);
 export default defaultSystem;
 
 // Re-export types for external use
-export type { Theme, ThemeColors } from "./types";
+export type { Theme } from "./types";

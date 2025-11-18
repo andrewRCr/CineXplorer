@@ -1,7 +1,6 @@
 # Completion: Chakra UI v3 Recipe System Implementation
 
-**Completed**: 2025-11-17
-**Final Commit**: 75d7bab (before doc PR/archival prep commit)
+**Completed**: 2025-11-18
 **Branch**: `incidental/chakra-recipe-system-implementation`
 **Category**: Incidental
 **Context**: Discovered during theme modernization Phase 7.2.d (neutral outline button hover pattern discussion)
@@ -33,15 +32,15 @@ Design 3's 8%/12% baseline).
 
 ## Metrics
 
-- **Files Changed**: 77 files (themes, recipes, components, docs, tests)
+- **Files Changed**: 84 files (themes, recipes, components, docs, tests, ADRs)
 - **Recipe Files Created**: 7 files (`button.ts`, `alert.ts`, `badge.ts`, `select.ts`, `checkbox.ts`, `radio.ts`,
   `switch.ts`)
 - **Wrapper Components Created**: 2 files (`StyledInput.tsx`, `StyledTextarea.tsx`)
 - **Components Migrated**: 17 solid buttons, 11 outline buttons, 3 subtle buttons, 1 Alert, 1 Badge usage, 5 Input
   components, 3 Select components, plus form controls in ThemeDebug
-- **Commits**: 36 commits (includes recipe implementation, component migrations, ThemeDebug updates, strategy doc
-  restructuring, and quality fixes)
-- **Lines Changed**: +7097 -3462
+- **Commits**: 45 commits (includes recipe implementation, component migrations, ThemeDebug updates, strategy doc
+  restructuring, quality fixes, and Select focus pattern resolution)
+- **Lines Changed**: +5984 -3555
 - **Tests**: All existing tests passing (408 backend, 231 frontend) - no new tests added (refactoring work)
 - **Quality Gates**: 0 linting violations, 0 type errors, 0 markdown errors
 
@@ -50,7 +49,8 @@ Design 3's 8%/12% baseline).
 - **Tasks**: `tasks-chakra-recipe-system-implementation.md`
 - **Notes**: `notes-chakra-recipe-system-implementation.md`
 - **Completion**: `completion-chakra-recipe-system-implementation.md` (this file)
-- **ADRs Created**: ADR-016 "Improve Interaction State Contrast from Material Design 3 Defaults"
+- **ADRs Created**: ADR-016 "Improve Interaction State Contrast from Material Design 3 Defaults",
+  ADR-017 "Extend Border-Only Focus Pattern to Select.Trigger"
 - **Strategy Docs Updated**: Split into `strategy-component-styling.md` and `strategy-color-tokens.md`
 - **Recipe Implementation**: `frontend/src/theme/recipes/` (7 recipe files + 2 wrapper components)
 

@@ -270,7 +270,7 @@ export function createPajamasAdapter(mode: "light" | "dark"): UnifiedTheme {
         "on-brand": onPrimary, // ADR-011: White text on orange background
         brandSecondary, // GitLab medium orange (Orange 02p, middle gradient)
         "on-brandSecondary": onPrimary, // ADR-011: White text on orange background
-        brandTertiary: palette.brand_tanuki_red, // GitLab tanuki red (Orange 03p, darkest in logo)
+        brandTertiary, // GitLab tanuki red (Orange 03p, darkest in logo)
         "on-brandTertiary": onPrimary, // ADR-011: White text on tanuki red background
         "button-outline": borderStrong01, // ADR-012: Neutral outline (DEFAULT) uses border
         "on-button-outline": foreground, // ADR-012: Neutral outline text

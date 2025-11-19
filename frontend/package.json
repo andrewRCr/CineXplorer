@@ -19,7 +19,9 @@
 		"generate-types": "npm run fetch-schema && npm run generate-types:local",
 		"generate-types:ci": "test -f openapi.json || (echo '❌ ERROR: openapi.json not found. Run generate-types first.' && exit 1); npm run generate-types:local",
 		"update-types": "npm run generate-types",
-		"validate-generated-types": "tsc --noEmit src/types/api.ts"
+		"validate-generated-types": "tsc --noEmit src/types/api.ts",
+		"verify-contrast": "tsx scripts/verify-theme-contrast.ts",
+		"verify-contrast:ci": "tsx scripts/verify-theme-contrast.ts"
 	},
 	"dependencies": {
 		"@chakra-ui/react": "^3.28.0",
@@ -54,6 +56,7 @@
 		"jsdom": "^27.0.0",
 		"msw": "^2.11.2",
 		"openapi-typescript": "7.4.1",
+		"tsx": "^4.20.6",
 		"typescript": "~5.8.3",
 		"typescript-eslint": "^8.34.1",
 		"vite": "^7.0.0",

@@ -9,6 +9,14 @@
  * too subtle to serve their visual hierarchy purpose.
  *
  * **Scope:** ~80 token pairs across 8 categories
+ *
+ * **Usage:**
+ * - Development: `npm run verify-contrast`
+ * - CI Pipeline: `npm run verify-contrast:ci` (included in frontend quality gates)
+ *
+ * **Exit codes:**
+ * - 0: All contrast requirements met
+ * - 1: One or more contrast violations detected
  */
 
 import { hex as getContrast } from "wcag-contrast";

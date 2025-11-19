@@ -97,7 +97,6 @@ export function createPajamasAdapter(mode: "light" | "dark"): UnifiedTheme {
     const popoverForeground = palette.fg_default;
 
     // Border (accessible contrast)
-    const border = palette.border_strong; // Ensures WCAG 3:1 contrast for UI components
     const borderSubtle00 = palette.border_subtle; // Subtle dividers
     const borderStrong01 = palette.border_strong; // Accessible borders
 
@@ -193,9 +192,6 @@ export function createPajamasAdapter(mode: "light" | "dark"): UnifiedTheme {
     // Tertiary interaction states: For links/interactive text (foreground token)
     const tertiaryHover = adjustColor(tertiary, mode === "light" ? -10 : 15); // Slightly darker/lighter
     const tertiaryActive = adjustColor(tertiary, mode === "light" ? -15 : 10); // More pronounced
-
-    // Input border: Use subtle border for form fields
-    const input = palette.border_subtle;
 
     // Focus ring: Use tertiary (link purple) for thematic consistency (ADR-015)
     // Per ADR-015: ring token maps to tertiary to maintain visual consistency
@@ -300,8 +296,6 @@ export function createPajamasAdapter(mode: "light" | "dark"): UnifiedTheme {
         "drop-zone": extensions["drop-zone"],
 
         // UI elements
-        border,
-        input,
         ring,
     };
 }

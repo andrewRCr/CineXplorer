@@ -106,8 +106,6 @@ export function createCarbonAdapter(mode: "light" | "dark"): UnifiedTheme {
     const popoverForeground = palette.fg_default;
 
     // Border hierarchy (Carbon's official per-layer borders)
-    // CRITICAL: Use border_strong_01 for default border (visible on all layers)
-    const border = palette.border_strong_01; // Required for visibility (border_default matches layer-02)
     const borderSubtle00 = palette.border_subtle_00; // Low-contrast dividers on background/layer-01
     const borderSubtle02 = palette.border_subtle_02; // Low-contrast dividers on layer-02
     const borderStrong01 = palette.border_strong_01; // Accessible borders on layer-01
@@ -182,9 +180,6 @@ export function createCarbonAdapter(mode: "light" | "dark"): UnifiedTheme {
     // Uses color adjustments instead of opacity overlays since tertiary is a text color
     const tertiaryHover = palette.fg_accent_hover; // Carbon provides official hover
     const tertiaryActive = adjustColor(tertiary, mode === "light" ? -10 : 10); // Slightly darker/lighter
-
-    // Input border: Use subtle border for form fields
-    const input = palette.border_subtle_00;
 
     // Focus ring: Use accent color for consistency
     const ring = palette.fg_accent;
@@ -283,8 +278,6 @@ export function createCarbonAdapter(mode: "light" | "dark"): UnifiedTheme {
         "drop-zone": extensions["drop-zone"],
 
         // UI elements
-        border,
-        input,
         ring,
     };
 }

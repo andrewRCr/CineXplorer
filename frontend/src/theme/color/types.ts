@@ -1077,23 +1077,6 @@ export interface UnifiedTheme {
     // ===================================================================
 
     /**
-     * Standard border color (dividers, separators).
-     *
-     * **Note:** In unified adapter, this typically maps to border-subtle-00
-     * or border-strong-01 depending on theme philosophy. Kept for compatibility.
-     *
-     * **Usage:** General borders, dividers, card outlines
-     */
-    border: string;
-
-    /**
-     * Input field border color.
-     *
-     * **Usage:** Text inputs, select boxes, textareas
-     */
-    input: string;
-
-    /**
      * Focus ring color (keyboard navigation indicator).
      *
      * **Accessibility:** Must meet WCAG contrast requirements

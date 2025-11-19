@@ -143,7 +143,6 @@ export function createMaterialAdapter(mode: "light" | "dark"): UnifiedTheme {
     // Border hierarchy: Material provides outline + outline-variant
     // - outline: Standard borders (#79747E light, #938F99 dark)
     // - outline-variant: Lower contrast borders (#CAC4D0 light, #49454F dark)
-    const border = palette.outline; // Standard border (for legacy token)
     const borderSubtle00 = palette.outlineVariant; // Lower contrast
     const borderStrong01 = palette.outline; // Standard/strong borders
 
@@ -196,9 +195,6 @@ export function createMaterialAdapter(mode: "light" | "dark"): UnifiedTheme {
     const shadowLg = mode === "light"
         ? "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)"
         : "0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3)";
-
-    // Input border: Use standard outline
-    const input = palette.outline;
 
     // Focus ring: Use tertiary accent for consistency
     const ring = palette.tertiary;
@@ -300,8 +296,6 @@ export function createMaterialAdapter(mode: "light" | "dark"): UnifiedTheme {
         "on-info": onInfo, // ADR-011: Derived on-* token (Material baseline lacks)
 
         // UI elements
-        border,
-        input,
         ring,
 
         // CineXplorer extensions

@@ -88,7 +88,6 @@ export function createGithubAdapter(mode: "light" | "dark"): UnifiedTheme {
     const popoverForeground = palette.fg_default;
 
     // Border (official Primer tokens)
-    const border = palette.border_default;
     const borderSubtle00 = palette.border_default; // Base subtle border
     const borderStrong01 = palette.border_emphasis; // Accessible/emphasis border
 
@@ -176,9 +175,6 @@ export function createGithubAdapter(mode: "light" | "dark"): UnifiedTheme {
     // Tertiary interaction states: For links/interactive text (foreground token)
     const tertiaryHover = palette.fg_accent_hover; // Primer provides official hover
     const tertiaryActive = adjustColor(tertiary, mode === "light" ? -10 : 10); // Slightly darker/lighter
-
-    // Input border: Use standard border
-    const input = palette.border_default;
 
     // Focus ring: Use accent color for consistency
     const ring = palette.fg_accent;
@@ -281,8 +277,6 @@ export function createGithubAdapter(mode: "light" | "dark"): UnifiedTheme {
         "drop-zone": extensions["drop-zone"],
 
         // UI elements
-        border,
-        input,
         ring,
     };
 }

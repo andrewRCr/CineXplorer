@@ -109,10 +109,10 @@ Create `completion-{name}.md` in the same directory as the task list:
 
 ## Metrics
 
-- **Files Changed**: X files
-- **Tests Added**: Y tests (Z backend, W frontend)
-- **Commits**: N commits
-- **Lines Changed**: +A -B
+- **Phases Completed**: N phases
+- **Key Deliverables**: [Components, files, features - whatever makes sense for this work]
+- **Tests Added**: Y tests (if applicable)
+- **Quality Gates**: [What was validated - WCAG, type safety, etc.]
 
 ## Related Documentation
 
@@ -129,8 +129,40 @@ Create `completion-{name}.md` in the same directory as the task list:
 
 ## Follow-Up Work
 
-{Any deferred items or future considerations}
+{Any deferred items or future considerations - ONLY items still deferred at task end}
 ```
+
+---
+
+**Required Reading Before Drafting**
+
+The completion doc must be accurate because it's used for PRs. Before writing:
+
+1. **Task list overview** (first ~100 lines) - Scope, context, what was planned
+2. **Final phase(s)** of task list - Actual completion state, follow-up work status
+3. **CLEANUP-PROGRESS data** (for large files) - Metrics collected during cleanup
+4. **Git log** for final commit hash - `git log -1 --oneline`
+
+---
+
+**Verification Checklist (MANDATORY)**
+
+Before considering the completion doc done, verify EVERY claim:
+
+- [ ] **Final commit**: Verified via `git log` (not guessed from memory)
+- [ ] **Phase count**: Matches actual phases in task file - `grep -c "^###.*Phase" tasks-*.md`
+- [ ] **Quantitative claims**: Each number verified in task file
+      - Where does "7 themes" come from? → Phase X, line Y
+      - Where does "50+ components" come from? → Phase X, line Y
+- [ ] **Follow-up work**: Reflects FINAL phase state
+      - Check: Did any "deferred" items get completed in later phases?
+      - Only list what's ACTUALLY still deferred at task end
+- [ ] **No stale references**: No mentions of deleted notes file (if deleted), etc
+- [ ] **All major phases represented**: Check CLEANUP-PROGRESS data includes all phases
+
+**Evidence format:** For each claim, note where verified. This catches stale data from early phases.
+
+---
 
 **Purpose of completion doc:**
 

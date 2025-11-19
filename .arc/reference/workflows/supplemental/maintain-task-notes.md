@@ -3,8 +3,9 @@
 Use this workflow when an active task list has accumulated historical notes or when the companion notes document
 needs pruning. **Execute this workflow before archiving completed work** to ensure files are reference-ready.
 
-**Goal:** Clean task file for archival (remove temporal junk, excessive repetition) while preserving detailed
-sub-task granularity. Evaluate notes file for archival worthiness.
+**Goal:** Remove unambiguous temporal noise from task file while preserving the detailed historical record.
+Evaluate notes file for archival worthiness. The task list's value is showing the journey - substantive content
+stays even if verbose; the completion doc provides the scannable summary.
 
 ## When to Use This Workflow
 
@@ -45,10 +46,11 @@ and becomes part of the work deliverable.
 
 **What happens:**
 
-- ✅ Clean up task file (migrate verbose blocks)
-- ✅ Add migrated content to notes file
-- ✅ **Clean up notes file** (TOC, headers, remove temporal markers)
-- ✅ Prepare both files for archival
+- ✅ Remove temporal noise from task file (grep-based, not content judgment)
+- ✅ Evaluate notes file (keep for archival or delete if scratchpad)
+- ✅ **If keeping notes:** Clean up notes file (TOC, headers, remove temporal markers)
+- ✅ Collect completion doc data during cleanup (for large files)
+- ✅ Prepare files for archival
 
 ## Inputs
 
@@ -75,8 +77,9 @@ and becomes part of the work deliverable.
 
 - Update `**Status**:` field in task file header:
     - Change from "IN PROGRESS" to "COMPLETE"
-    - Remove any temporal notes (e.g., "~90% complete, ~5-8 hours remaining", "Paused", "Interrupted by", "Resume at")
+    - Remove any temporal notes (e.g., "~90% complete, ~5-8 hours remaining", "Paused", "Resume at")
     - Update to reflect final state
+    - Note: Task list pointers ("Interrupts:", "Spawned:") are evaluated separately per pointer directionality guidance
 - Add/update `**Completed**:` date in both files (YYYY-MM-DD format)
 - Note: All work (feature/technical/incidental) uses separate `completion-{name}.md` document
   (created in archive-completed workflow Phase 1, Step 3)
@@ -117,13 +120,80 @@ Before deciding to keep notes, check if content is already captured elsewhere:
 
 **If deleting notes file:**
 
-- Remove "Interrupted by" and forward pointers from task file header (completed spawned task lists)
-- Keep backward pointers (where work resumes after this task list - use backticks with filename only)
+- Check pointer directionality per guidance above (remove forward pointers to archived task lists)
+- Keep backward pointers (active task lists where work will resume - use backticks with filename only)
 - Delete notes file reference from task file header in Step 6
 - Archival subdirectory still created (tasks + completion = 2 files minimum with unified completion docs)
 - Proceed directly to creating completion-{name}.md in archive-completed workflow
 
 **Rule of thumb:** Ask "Would I reference this 6 months from now, and is it not already in ADRs/strategies?" If no → delete.
+
+**Understanding Pointer Directionality:**
+
+Task file headers may contain pointers to other task lists. Understanding which to keep vs remove:
+
+- **Backward pointer (KEEP):** Where work resumes AFTER completing this task list
+    - Example: `**Interrupts:** tasks-discover-endpoint-consolidation.md` = "Resume that work when done here"
+    - Pattern: Shows what was paused/interrupted to do this work
+    - Keep if: Referenced task list still exists in `.arc/active/` (work will resume there)
+
+- **Forward pointer (REMOVE at archival):** Child task lists spawned FROM this work
+    - Example: `**Spawned:** tasks-csrf-fixes.md` = "Created this as subtask during our work"
+    - Pattern: Shows work that branched off from this task list
+    - Remove if: Spawned task list is archived in `.arc/reference/archive/` (already complete)
+
+**Simple decision criteria:** Check file location
+
+- Task list in `.arc/active/` → **KEEP pointer** (work ongoing or will resume)
+- Task list in `.arc/reference/archive/` → **REMOVE pointer** (work complete, historical)
+
+**Common pointer labels:**
+
+- Backward: `Interrupts:`, `Paused:`, `Resumes at:`, `Returns to:`
+- Forward: `Spawned:`, `Created:`, `Branched to:`
+
+**Step 1e: Assess File Size & Select Strategy (Mode 2 Only)**
+
+**Check file size:**
+
+```bash
+wc -l tasks-*.md
+```
+
+**Strategy selection:**
+
+- **Small (<1000 lines):** Single-pass review - Steps 2-7 proceed normally
+- **Large (≥1000 lines):** Phase-by-phase review with progress tracking
+
+**For large files, create progress tracking file:**
+
+Create: `.arc/active/{category}/CLEANUP-PROGRESS-{name}.md`
+
+```markdown
+# Cleanup Progress: {name}
+
+## Phase Checklist
+
+- [ ] Phase 1 (lines X-Y): {Brief description}
+- [ ] Phase 2 (lines Y-Z): {Brief description}
+[...for each phase...]
+
+## Completion Doc Data (Collected During Cleanup)
+
+### Phase 1
+- Key deliverables: [Note as you process]
+- Metrics: [Files created, components migrated, etc.]
+
+### Phase 2
+[...etc...]
+
+## Issues Found & Fixed
+
+- Phase X, line Y: [Issue description] → [Fix applied]
+```
+
+**Why progress tracking:** Large task lists may require multiple sessions. CLEANUP-PROGRESS tracks which
+phases are done, collects completion doc metrics incrementally, and provides clear resume points.
 
 ### 2. Inventory Open Work
 
@@ -377,44 +447,97 @@ Before migrating any content during mid-work cleanup, ask these questions:
 
 **Archival Mode Cleanup (Mode 2 Only)**
 
-**⚠️ When all tasks are complete, clean task file for archival:**
+**⚠️ When all tasks are complete, remove temporal noise while preserving the historical record.**
 
-**Scan Top-Matter** (above task list):
+**What this is NOT:**
 
-- ✅ **Keep**: Metadata, context (1-3 paragraphs), scope boundaries
-- ✅ **Keep backward pointers ONLY**: Where work resumes after this task list (use backticks with filename only)
-- ❌ **Remove forward pointers**: "Interrupted by", spawned task lists (they're complete), dates
-- ❌ **Remove temporal status**: "Paused 2025-11-14", "Resume at Phase X", status annotations
-- ❌ **Remove**: Overly verbose background explanations better suited for notes file (if keeping notes)
+- Not a content reduction exercise
+- Not making the task list "scannable" (completion doc does that)
+- Not removing "verbose" completion notes or research summaries
+- Not requiring judgment on "is this too detailed?"
 
-**Scan Task List**:
+**What this IS:**
 
-- ✅ **Keep verbatim**: All task lines exactly as written (never modify)
-- ✅ **Keep detailed sub-task granularity**: Length is fine - 500-3000+ line task lists are normal
-- ❌ **Remove from inline notes**: Temporal markers ("pending approval", "blocked on", status annotations)
-- ❌ **Remove**: Excessive repetition in inline task details
-- ❌ **Remove**: Context blocks only relevant during implementation
+- Removing markers that only made sense during active work
+- Fixing references to deleted files
+- Cleaning up forward-looking language in completed tasks
 
-**Modern task files do NOT have bottom-matter sections:**
+**For large files (≥1000 lines):** Process phase-by-phase, updating CLEANUP-PROGRESS as you go.
+
+---
+
+**Grep-Based Temporal Noise Removal**
+
+Run these patterns to find temporal noise. For each match, verify it's noise (not substantive), then remove:
+
+```bash
+# 1. Next Steps references (meaningless after completion)
+grep -in "next step\|next:\|**next" tasks-*.md
+
+# 2. Temporal status markers
+grep -in "status:.*complete\|status:.*pending\|status:.*blocked\|status:.*[0-9]/[0-9]" tasks-*.md
+
+# 3. Resume/Continue markers
+grep -in "resume at\|continue with\|pick up at\|blocked on" tasks-*.md
+
+# 4. References to deleted notes file (if notes file was deleted)
+grep -in "notes-.*\.md" tasks-*.md
+
+# 5. Inline completion dates (not header metadata - check line numbers)
+grep -n "completed:.*202[0-9]" tasks-*.md | grep -v "^[1-6]:"
+
+# 6. Forward pointers to archived task lists
+grep -in "spawned:\|created:.*tasks-\|interrupted by:" tasks-*.md
+# Then check if referenced files are in archive/ - if so, remove pointer
+```
+
+**For each match:**
+
+1. Read context around the match
+2. Verify it's temporal noise, not substantive content
+3. Remove the specific marker/line
+4. Note in CLEANUP-PROGRESS (for large files): "Phase X, line Y: removed [description]"
+
+---
+
+**What to KEEP (even if long):**
+
+- ✅ **All task lines verbatim** (checkbox + description + outcome)
+- ✅ **Research summaries** - That's what the task accomplished
+- ✅ **Detailed completion notes** - Historical record of work done
+- ✅ **Decision rationale** - Why choices were made
+- ✅ **Implementation findings** - What was discovered
+- ✅ **Quality gate results** - Proof work was done
+- ✅ **Backward pointers** - Active task lists where work will resume
+
+**Rationale:** The task list's value is showing the journey. A 60-line research summary IS the record of what
+that task accomplished. Don't try to make the task list scannable - that's the completion doc's job.
+
+---
+
+**Collect Completion Doc Data (Large Files)**
+
+While processing each phase, note in CLEANUP-PROGRESS:
+
+- Key deliverables (files created, components migrated, features implemented)
+- Quantitative metrics (counts of things)
+- Follow-up work mentioned (check if completed in later phases)
+
+This data feeds completion doc creation and prevents needing to re-read the entire file.
+
+---
+
+**Old-Pattern Bottom-Matter Sections**
 
 If you find these sections, they're from old pattern before unified completion docs:
 
-- ❌ "Implementation Notes" section - old pattern (detailed task list handles this now)
-- ❌ "Completion Summary" section - old pattern (now in completion-{name}.md)
-- ❌ "Task List Coordination" section - old pattern (not used with completion docs)
-- ❌ "Decision Logs" section - old pattern (should be in ADRs or notes file if archival-worthy)
+- ❌ "Implementation Notes" section
+- ❌ "Completion Summary" section
+- ❌ "Task List Coordination" section
+- ❌ "Decision Logs" section
 
 **What to do if found**: Evaluate if content should move to notes file (if keeping notes) or be deleted entirely.
-
-**Cleanup Criteria:**
-
-- ✅ Cleanly documents work completed at sub-task granular level
-- ✅ Detailed inline outcomes preserved
-- ❌ Remove temporal junk ("pending", "to be filled", "status: blocked", dates in status notes)
-- ❌ Remove clear repetition
-- ❌ Remove excessive inline context blocks only relevant during implementation
-- ❌ Remove forward pointers to completed spawned task lists
-- **Length is NOT a concern** - task files are detailed records, can be very long
+These sections are no longer used in modern task files.
 
 ### 4. Migrate Content to Notes File
 
@@ -572,21 +695,60 @@ After content consolidation, format for navigation and long-term reference:
 
 ### 7. Quality Checks
 
+**Markdown linting:**
+
 - Run `npx markdownlint-cli2 --fix <task-file> <notes-file>`
 - Review diff to ensure no accidental task-checkbox edits
+
+**Verify temporal noise removed:**
+
+Run the same grep patterns from Step 3 - should return minimal/no matches:
+
+```bash
+# Should return 0-2 matches (header only, not inline)
+grep -in "status:\|completed:.*202" tasks-*.md
+
+# Should return 0 matches
+grep -in "next step\|resume at\|blocked on" tasks-*.md
+
+# Should return 0 matches (if notes deleted)
+grep -in "notes-.*\.md" tasks-*.md
+```
+
+If matches remain, return to Step 3 and fix.
+
+**For large files:** Mark all phases complete in CLEANUP-PROGRESS and review collected data.
+
+**Notes file (if kept):**
+
 - Verify TOC anchor links work (spot check 2-3 links)
-- Confirm task file is now lean and scannable (can grasp structure in <2 minutes)
-- Confirm notes file has clear navigation (can find specific topic in <1 minute)
+- Confirm can find specific topic in <1 minute
+
+---
+
+**Context Check for Completion Doc Creation**
+
+**Check remaining context:** If less than ~120k tokens remaining, stop here:
+
+1. Commit cleanup work: `git add .arc/active/ && git commit -m "docs: archival cleanup for {name}"`
+2. Update CURRENT-SESSION.md: "Next action: Create completion doc (requires fresh context)"
+3. Completion doc creation happens next session
+
+**If sufficient context remains:** Proceed to archive-completed Step 3 (Create Completion Metadata).
+The completion doc requires reading overview + final phases + CLEANUP-PROGRESS to be accurate.
+
+**Delete CLEANUP-PROGRESS after completion doc created** - it's temporary tracking only.
 
 ## Output
 
 **Task File:**
 
 - Detailed sub-task level record showing what was accomplished
-- Inline notes documenting outcomes at granular level
+- Inline notes documenting outcomes at granular level (kept even if verbose)
+- Research summaries, decision rationale, implementation findings preserved
 - NO completion summary (now in separate completion-{name}.md)
 - Length is fine - can be 500-3000+ lines for complex work
-- **Target:** Cleanly documents work without temporal junk or repetition
+- **Target:** Historical record without temporal noise (not a scannable summary - that's the completion doc)
 
 **Notes File:**
 
@@ -637,8 +799,9 @@ After content consolidation, format for navigation and long-term reference:
 ❌ **Leaving content out of order**: Task 8 notes appearing before Task 7 notes after restructuring -
    reorder sections to match current numbering
 ❌ **Cleaning notes file mid-work**: Notes file cleanup is ONLY for archival prep (Mode 2), not mid-work cleanup (Mode 1)
-❌ **Leaving forward pointers in archived task files**: Remove "Interrupted by", spawned task lists, temporal dates
-❌ **Removing backward pointers**: Keep pointers to where work resumes (use backticks with filename only, no dates)
+❌ **Leaving forward pointers in archived task files**: Remove pointers to archived spawned task lists (check `.arc/reference/archive/`)
+❌ **Removing backward pointers**: Keep pointers to active task lists where work resumes (check `.arc/active/`)
+❌ **Confusing pointer directionality**: See "Understanding Pointer Directionality" in Step 1d for clear criteria
 ❌ **Expecting bottom-matter sections**: Modern task files don't have these - if found, it's old pattern
 ❌ **Keeping completion summary in task file**: Completion summary now goes in separate completion-{name}.md (unified strategy)
 ❌ **Leaving temporal markers in archived work**: "Pending approval", "To be filled" confuses future readers

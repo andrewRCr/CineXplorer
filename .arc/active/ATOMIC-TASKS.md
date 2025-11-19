@@ -15,11 +15,12 @@
 ## Active
 <!-- Add tasks here with checkboxes -->
 
-- [ ] Investigate GitLab Pajamas neutral outline border contrast
-    - Current: border-strong-01 = #bfbfc3 (2.1:1 on white, below WCAG 3:1)
-    - All 3 border-strong levels same in light mode (alternating pattern)
-    - Consider theme-specific foreground border override for button-outline
-    - Maintain consistency (don't use tertiary color)
+- [ ] Investigate login session loss during testing
+    - Context: ession appeared lost during theme system visual testing (no explicit logout)
+    - Test session persistence during normal navigation
+    - Test session across browser refreshes
+    - Test session timeout behavior
+    - Document reproduction steps if found, or close as testing artifact
 
 ## Completed (This Week)
 

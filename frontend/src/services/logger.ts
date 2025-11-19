@@ -351,7 +351,9 @@ class Logger {
         const logLine = `[${timestamp}] ${level}: ${message}${dataStr}\n`;
 
         // Send to Django backend endpoint (fire-and-forget)
-        fetch('https://localhost:8000/api/dev-logs/write/', {
+        // Use configured API base URL to route through proxy (avoid CORS issues)
+        const baseUrl = import.meta.env.VITE_BASE_API_URL || 'https://localhost:8444/api';
+        fetch(`${baseUrl}/dev-logs/write/`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

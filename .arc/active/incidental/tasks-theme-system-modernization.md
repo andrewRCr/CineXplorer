@@ -3536,29 +3536,79 @@ This cleanup is REQUIRED - parallel systems allowed during migration, but must b
             implementation. Fixed: drag-active uses on-secondary (not foreground), verified from
             CineXplorerExtensionsSection. Updated `strategy-component-styling.md` with correct pattern.
 
-        - [ ] **8.7.a.2 Install contrast calculation library**
-            - Install `wcag-contrast` npm package (recommended for simplicity)
-            - Alternative: `color-contrast-checker` if more features needed
-            - Add to `devDependencies` in `frontend/package.json`
+        - [x] **8.7.a.2 Install contrast calculation library**
 
-        - [ ] **8.7.a.3 Implement validation script**
-            - Create `frontend/scripts/verify-theme-contrast.ts`
-            - Load theme definitions from `frontend/src/theme/color/definitions.ts`
-            - Implement whitelist data structure (7 categories from notes)
-            - Resolve token values for each theme variant (light/dark)
-            - Handle special cases:
-                - Optional tokens (brand colors - skip if undefined)
-                - Opacity tokens (alert backgrounds - compute blend)
-            - Calculate contrast ratios using library
-            - Apply WCAG AA thresholds:
-                - Text tokens: 4.5:1 minimum
-                - Border/UI component tokens: 3:1 minimum
-            - Generate detailed report with failures
+            **Completed:** Installed wcag-contrast v3.0.0 as devDependency in frontend/package.json.
 
-        - [ ] **8.7.a.4 Run initial validation**
-            - Execute script against all 4 themes × 2 modes (8 variants)
-            - Review failure report (if any)
-            - Document findings in notes file
+            **Package selected:** wcag-contrast (simple, lightweight, sufficient for WCAG AA/AAA validation)
+
+        - [x] **8.7.a.3 Implement validation script**
+
+            **Completed:** Created comprehensive validation script with 8 token categories, special case handling, and
+            detailed reporting.
+
+            **Script created:** `frontend/scripts/verify-theme-contrast.ts`
+
+            **Key features:**
+            - Loads all 4 theme definitions (GitHub, IBM Carbon, GitLab, Material Design 3)
+            - Validates 66 token pairs per theme × 2 modes = 528 total tests
+            - Implements whitelist with 8 categories:
+                1. Semantic Pairs (on-* convention)
+                2. Text on Structural Surfaces
+                3. Interactive Text on Surfaces (including outline buttons)
+                4. Borders on Surfaces
+                5. Interaction States (hover/selected/active)
+                6. Focus Indicators
+                7. Alert/Status Descriptions (with opacity blend handling)
+                8. Movie-Specific UI (imdb-gold, drag-drop)
+            - Handles special cases: optional tokens (brand), opacity tokens (alert backgrounds)
+            - Calculates contrast ratios using wcag-contrast library
+            - Applies WCAG AA thresholds: 4.5:1 text / 3:1 UI components
+            - Generates detailed failure report with actual ratios
+
+            **Type safety:**
+            - Zero `any` types (follows strategy-type-safety.md)
+            - Custom type declarations at `frontend/src/@types/wcag-contrast.d.ts`
+            - Uses TypeScript's recommended pattern for dynamic property access
+
+            **Script bugs fixed during implementation:**
+            - Fixed outline button validation (was checking text on border color instead of surface)
+            - Removed deprecated rating tokens (replaced by Badge status variants)
+
+        - [x] **8.7.a.4 Run initial validation**
+
+            **Completed:** Executed validation script and analyzed all 69 failures across three categories.
+
+            **Execution:** `docker compose -f infrastructure/docker-compose.yml exec frontend npx tsx scripts/verify-theme-contrast.ts`
+
+            **Results:**
+            - Total tests: 528 (4 themes × 2 modes × 66 token pairs)
+            - Passed: 445 (84%)
+            - Failed: 69 (13%)
+            - Skipped: 14 (3% - optional brand tokens)
+
+            **Analysis documented in notes file:**
+
+            **Category 1: Invalid whitelist items (16 violations)** - RESOLVED
+            - Outline button patterns checking text on border color (fixed)
+            - Non-existent rating tokens (removed from whitelist)
+
+            **Category 2: Intentional design choices (~20 violations)** - ACCEPTABLE
+            - Subtle border tokens on backgrounds (decorative, non-interactive)
+            - Per strategy-color-tokens.md: "Non-interactive boundaries can be more subtle"
+            - Action: Document as expected behavior
+
+            **Category 3: Legitimate WCAG issues (~49 violations)** - REQUIRES EVALUATION
+            - HIGH: IMDb gold on light backgrounds (12 violations, all themes)
+            - MEDIUM: Status color pairs below threshold (GitLab, Material, IBM Carbon)
+            - LOW: Near-miss violations (4.02-4.24 vs 4.5 threshold)
+            - Transient states: Hover/drag interactions slightly below threshold
+
+            **Recommendations for Phase 8.7.a.5:**
+            - Address IMDb gold contrast (high priority)
+            - Evaluate per-theme status color adjustments
+            - Consider near-miss violations acceptable (transient states, close to threshold)
+            - Document intentional design choices in script comments
 
         - [ ] **8.7.a.5 Address any contrast violations**
             - If failures found: Adjust token values in theme adapters

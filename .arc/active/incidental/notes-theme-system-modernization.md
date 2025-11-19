@@ -235,4 +235,229 @@ Recommend `wcag-contrast` npm package:
 
 **Alternative:** `color-contrast-checker` (more features but larger)
 
+## WCAG Contrast Validation Results (Task 8.7.a.4)
+
+**Script executed:** 2025-11-19
+**Command:** `npx tsx scripts/verify-theme-contrast.ts`
+**Total tests:** 528 (4 themes × 2 modes × 66 token pairs)
+
+### Summary
+
+- ✅ **Passed:** 445 (84%)
+- ❌ **Failed:** 69 (13%)
+- ⊘ **Skipped:** 14 (3% - optional brand tokens)
+
+### Category 1: Invalid Whitelist Items (RESOLVED)
+
+**Fixed in script:**
+
+1. **Outline button patterns** - Were checking text color against border color (both `primary`), which always
+equals 1.00 ratio
+   - **Problem:** `on-button-outline-primary` on `button-outline-primary` (border color, not background)
+   - **Reality:** Outline buttons have transparent backgrounds
+   - **Fixed:** Now checking text on actual surfaces (`background`, `layer-01`)
+   - **Result:** 8 invalid violations removed
+
+2. **Non-existent rating tokens** - Were checking deprecated `rating` / `on-rating` tokens
+   - **Problem:** Tokens were removed during rating system refactor
+   - **Reality:** Rating system uses Badge with status variants (success/info/warning) based on numeric thresholds
+   - **Fixed:** Removed from whitelist entirely
+   - **Source:** strategy-component-styling.md:962-976
+   - **Result:** 8 violations removed (undefined tokens)
+
+**Total resolved:** 16 violations (reduced from 82 → 69)
+
+### Category 2: Intentional Design Choices (~20 violations)
+
+**Verdict:** Not violations - design system intentionally uses subtle borders for decorative elements.
+
+**Pattern:** Subtle border tokens on backgrounds
+
+```
+border-subtle-00 on background     (1.32-1.55:1 vs 3:1 threshold)
+border-subtle-02 on layer-02       (1.32-1.73:1 vs 3:1 threshold)
+border on background               (1.43-1.55:1 vs 3:1 threshold)
+border on layer-01                 (1.34-1.42:1 vs 3:1 threshold)
+```
+
+**Affected themes:** All themes (GitHub, IBM Carbon, GitLab, Material)
+
+**Justification:**
+
+- **Per strategy-color-tokens.md:406-410:** "Non-interactive boundaries (cards, dividers): 3:1 contrast recommended but
+not strictly required. Can be more subtle since not interactive. Use shadow as alternative"
+- These borders are decorative, not interactive UI components
+- Design systems intentionally use subtle borders for visual hierarchy without distraction
+- IBM Carbon's layer system relies on color changes, not borders, for primary elevation cues
+
+**Action:** No changes needed - update WCAG validation script documentation to clarify these are expected.
+
+### Category 3: Legitimate WCAG Issues (~49 violations)
+
+**Verdict:** Require theme adapter adjustments or acceptable risk documentation.
+
+#### 3a. IMDb Gold on Light Backgrounds (HIGH PRIORITY)
+
+**Pattern:** `imdb-gold` (#F5C518) on white/light backgrounds
+
+```
+imdb-gold on background      (1.55-1.63:1 vs 4.5:1 threshold)
+imdb-gold on layer-01         (1.33-1.53:1 vs 4.5:1 threshold)
+imdb-gold on layer-02         (1.55-1.63:1 vs 4.5:1 threshold)
+```
+
+**Affected:** ALL themes in light mode (12 violations total)
+
+**Usage:** User rating stars (text/icon color) - strategy-component-styling.md:989
+
+**Issue:** IMDb brand yellow (#F5C518) has poor contrast on white backgrounds
+
+**Options:**
+
+1. **Darken imdb-gold in light modes** (breaks brand color fidelity)
+2. **Add background to star containers** (add muted background behind stars)
+3. **Document as acceptable risk** (brand color more important than contrast)
+4. **Use outlined stars instead** (stroke instead of fill for better visibility)
+
+**Recommendation:** Option 2 or 4 - maintain brand color but improve visibility through design pattern.
+
+#### 3b. Status Color Pairs (MEDIUM PRIORITY)
+
+**GitHub Primer (dark mode):**
+
+```
+on-primary on primary           (4.09:1 vs 4.5:1) - slightly below threshold
+on-success on success           (4.09:1 vs 4.5:1) - slightly below threshold
+on-destructive on destructive   (4.11:1 vs 4.5:1) - slightly below threshold
+```
+
+**IBM Carbon (light mode):**
+
+```
+on-success on success           (3.35:1 vs 4.5:1) - below threshold
+```
+
+**GitLab Pajamas (light mode):**
+
+```
+on-primary on primary           (2.86:1 vs 4.5:1) - significantly below threshold
+on-brandTertiary on brandTertiary (4.14:1 vs 4.5:1) - slightly below threshold
+```
+
+**Material Design 3 (light mode):**
+
+```
+on-warning on warning           (2.70:1 vs 4.5:1) - below threshold
+```
+
+**Material Design 3 (dark mode):**
+
+```
+on-success on success           (2.36:1 vs 4.5:1) - below threshold
+on-info on info                 (2.65:1 vs 4.5:1) - below threshold
+on-button-outline on button-outline (2.44:1 vs 4.5:1) - below threshold
+```
+
+**Issue:** Design system official colors don't always meet WCAG AA for text
+
+**Options:**
+
+1. **Adjust theme adapter colors** (diverge slightly from official design systems)
+2. **Document as acceptable** (design system fidelity prioritized)
+3. **Use larger font sizes** (WCAG AA large text = 3:1, which many pass)
+
+**Recommendation:** Evaluate per-theme - some are very close (4.09 vs 4.5), others significantly fail (2.36).
+
+#### 3c. Secondary/Subtle Button Colors
+
+**GitHub Primer + GitLab Pajamas (light mode):**
+
+```
+on-secondary on secondary       (3.13:1 vs 4.5:1)
+on-button-subtle on button-subtle (3.13:1 vs 4.5:1)
+```
+
+**Issue:** White text on mid-gray backgrounds below threshold
+
+**Options:**
+
+1. **Darken secondary/subtle backgrounds** in light mode
+2. **Use darker text color** (but breaks visual pattern)
+3. **Document as acceptable** (medium emphasis buttons)
+
+**Recommendation:** Consider Option 1 - subtle adjustment to gray backgrounds.
+
+#### 3d. Outline Button Primary on Surfaces
+
+**GitHub Primer:**
+
+```
+on-button-outline-primary on layer-01 (4.24:1 light / 3.74:1 dark vs 4.5:1)
+on-button-outline-primary on background (4.09:1 dark vs 4.5:1)
+```
+
+**Issue:** Primary-colored text on surfaces slightly below threshold
+
+**Note:** These are close (4.09-4.24 vs 4.5 threshold) - might be acceptable given hover states add background.
+
+#### 3e. Interaction State Near-Misses
+
+**GitHub Primer (dark):**
+
+```
+on-muted on layer-hover-01      (4.02:1 vs 4.5:1)
+```
+
+**GitLab Pajamas (light):**
+
+```
+on-muted on layer-hover-01      (4.23:1 vs 4.5:1)
+tertiary on layer-01            (4.46:1 vs 4.5:1) - just barely passes
+```
+
+**Material Design 3 (light):**
+
+```
+on-button-outline on button-outline (3.75:1 vs 4.5:1)
+```
+
+**Issue:** Hover/interaction states with subtle overlays create near-threshold contrasts
+
+**Note:** Transient states (hover) have different UX implications than static text.
+
+#### 3f. Drag-Drop States
+
+**GitHub Primer + GitLab Pajamas (light):**
+
+```
+on-secondary on drag-active     (3.97:1 vs 4.5:1)
+```
+
+**Issue:** Drag state uses secondaryHover background, slightly below threshold
+
+**Note:** Transient interaction state - may be acceptable given temporary nature.
+
+### Recommendations Summary
+
+**High Priority (fix before Phase 8 completion):**
+
+1. **IMDb gold on light backgrounds** - Add background containers or use outlined stars
+
+**Medium Priority (evaluate per theme):**
+
+2. **GitLab primary/brand colors** - Significantly below threshold (2.86:1, 2.02:1)
+3. **Material warning/success/info** - Below threshold in multiple modes
+4. **IBM Carbon success** - Below threshold in light mode
+
+**Low Priority (near-miss, consider acceptable):**
+
+5. **GitHub status colors** - Just below threshold (4.09-4.11 vs 4.5)
+6. **Secondary/subtle buttons** - Medium emphasis, slight adjustment possible
+7. **Interaction states** - Transient states, near threshold
+8. **Outline buttons on surfaces** - Close to threshold, hover states help
+
+**Acceptable (document only):**
+
+9. **Subtle borders** - Intentionally decorative, non-interactive
+
 ---

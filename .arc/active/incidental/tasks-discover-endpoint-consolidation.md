@@ -2,9 +2,7 @@
 
 **Created:** 2025-10-31
 **Branch:** `technical/service-layer-modernization`
-**Status:** PAUSED (at Phase 3.1 complete)
-**Paused for:** `.arc/active/incidental/tasks-theme-system-modernization.md` - Theme system must be
-established before continuing frontend component work
+**Status:** Active (resuming at Phase 3.2)
 
 ## Context
 

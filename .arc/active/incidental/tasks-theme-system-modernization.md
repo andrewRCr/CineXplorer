@@ -1,20 +1,9 @@
 # Incidental: Theme System Modernization
 
 **Created:** 2025-11-02
+**Completed:** 2025-11-19
 **Branch:** `technical/service-layer-modernization`
-**Status:** Paused (2025-11-14) - Switching to recipe system implementation
-**Interrupted by:** `.arc/active/incidental/tasks-chakra-recipe-system-implementation.md`
-**Resume at:** Phase 7.2.e when recipe work complete
-
-**Consolidation Note:** Theme work spawned from quick review branch into deep semantic refinement work over 3+ days.
-Remaining work from both task lists now consolidated here. See Phase 5+ for new consolidated tasks.
-
-**Original Pause Context:**
-
-- Paused at Task 4.4.5 due to theme definition bugs
-- Created theme-definition-semantic-corrections.md for deep dive
-- Completed semantic token refinement, button patterns, interaction states
-- Now merged back for completion
+**Status:** Complete
 
 ## Context
 
@@ -71,8 +60,6 @@ color decisions difficult and prevents proper light mode implementation.
 - [x] **1.1 Audit color usage in codebase**
 
     **Completed:** Comprehensive audit of all color usage across components and pages.
-
-    **Findings documented in:** `notes-theme-system-modernization.md` (Phase 1.1 section)
 
     **Key discoveries:**
     - Most semantic tokens actively used and well-structured
@@ -303,10 +290,6 @@ comprehensive component migration.
 
 - [x] **3.1 Research semantic token best practices**
 
-    **Completed:** 2025-11-02
-
-    **Comprehensive synthesis documented in:** `notes-theme-system-modernization.md` (Phase 3.1 section, ~640 lines)
-
     **Research Conducted:**
     - ✅ Material Design 3 (20KB) - Google's design system, tone-based surfaces
     - ✅ IBM Carbon Design System (22KB) - Enterprise patterns, layer system
@@ -363,10 +346,6 @@ comprehensive component migration.
 
 - [x] **3.2 Analyze movie application UI patterns**
 
-    **Completed:** 2025-11-02
-
-    **Comprehensive analysis documented in:** `notes-theme-system-modernization.md` (Phase 3.2 section)
-
     **Work Completed:**
     1. ✅ Inventoried 10 UI pattern categories in CineXplorer codebase:
        - Movie cards, score displays, hero sections, forms, navigation, filters, pagination,
@@ -396,17 +375,7 @@ comprehensive component migration.
     - Recommended extension: 13 tokens (adds surface-elevated, badge pair, 2 badge variants)
     - Comprehensive extension: 18 tokens (adds rating thresholds, watch status)
 
-    **Next Steps (Task 3.3):**
-    - Map ALL 20 shadcn/ui tokens with use cases
-    - Create comprehensive migration guide (old tokens → new tokens)
-    - Identify every instance of hardcoded colors for migration
-    - Prioritize gaps (critical vs nice-to-have)
-
 - [x] **3.3 Audit current token coverage**
-
-    **Completed:** 2025-11-02
-
-    **Comprehensive audit documented in:** `notes-theme-system-modernization.md` (Phase 3.3 section)
 
     **Work Completed:**
     1. ✅ Listed all 20 shadcn/ui tokens with semantic purposes and use cases
@@ -450,12 +419,6 @@ comprehensive component migration.
     - ErrorBoundary: High complexity (15+ colors)
     - MovieUserScore: Medium complexity (rating logic)
     - Login/Featured/MovieCard/PaginationCtrl: Low complexity (simple replacements)
-
-    **Next Steps (Task 3.4):**
-    - Implement 13-token extension in TypeScript types
-    - Document rationale for each token in notes
-    - Create ADR for token extension decision
-    - Run TypeScript validation
 
 - [x] **3.4 Implement validated 13-token extension**
 
@@ -935,8 +898,6 @@ and ongoing migration overhead in future tasks.
         - Backups created: `*.backup-rgb-pattern` and `*.backup-rgb`
 
         **Documentation:** Complete analysis in notes file (Task 4.1.5b section, 400+ lines)
-
-        **Next Step:** Task 4.1.5c - Update strategy doc with refined approach
 
     - [x] **4.1.5c Document theme system implementation architecture**
 
@@ -2314,8 +2275,8 @@ This phase combines component-specific polish with systematic theme validation.
 
 ### **Phase 7:** Comprehensive Frontend Token Audit ✅
 
-**Completed:** 2025-11-18 - All components audited and migrated to canonical token forms. Zero deprecated
-alias usage (0/10 patterns). All quality gates passing. Ready for Phase 8 cleanup.
+All components audited and migrated to canonical token forms. Zero deprecated alias usage (0/10 patterns).
+All quality gates passing.
 
 **Goal:** Ensure every component uses tokens consistently before cleanup (catch all gaps and deviations).
 
@@ -2324,16 +2285,12 @@ prevents discovering token issues after cleanup, when fixing them is harder.
 
 - [x] **7.1 Systematic component audit (domain-focused)**
 
-    **Completed:** 2025-11-12 - All 7 subtasks complete (component catalog, 4 domain audits, cross-domain gap analysis,
-    strategy documentation updates)
+    All 7 subtasks complete (component catalog, 4 domain audits, cross-domain gap analysis, strategy documentation updates).
 
     **Goal:** Review all components for token usage consistency, organized by domain for multi-session compatibility.
 
     **Approach:** Domain-focused chunking (vs pattern-focused) enables natural session boundaries and manageable
     context budgets. Each domain audit checks all 8 pattern categories within that domain's components.
-
-    **Documentation:** All audit findings, violation lists, and notes go to `notes-theme-system-modernization.md`
-    with domain-specific section headers (Layout Domain, Movie Discovery Domain, etc.).
 
     **Reference:** ThemeDebug page verified compliant (reference implementation matching strategy-semantic-tokens.md).
     Audit focuses on application components (pages, layout, features).
@@ -2397,7 +2354,7 @@ prevents discovering token issues after cleanup, when fixing them is harder.
 
     - [x] **7.1.a Catalog components by domain**
 
-        **Completed:** Component inventory documented in `notes-theme-system-modernization.md`.
+        **Completed:** Component inventory across 4 domains.
 
         **Results:**
         - **Total Components:** 60 auditable components identified
@@ -2543,8 +2500,6 @@ prevents discovering token issues after cleanup, when fixing them is harder.
 
     - [x] **7.1.f Cross-domain gap analysis synthesis**
 
-        **Completed:** 2025-11-12
-
         **Analysis scope:** Synthesized findings from all 4 domain audits (59 production components, 767 checks, 69 violations)
 
         **Key findings:**
@@ -2609,8 +2564,6 @@ prevents discovering token issues after cleanup, when fixing them is harder.
 
     - [x] **7.1.g Update strategy documentation with policy decisions and AppLink component**
 
-        **Completed:** 2025-11-12
-
         **Scope:** Implement policy decisions from Task 7.1.f analysis and enhance strategy documentation with
         Common Mistakes section.
 
@@ -2647,7 +2600,6 @@ prevents discovering token issues after cleanup, when fixing them is harder.
         - Created: `frontend/src/components/common/index.ts` (barrel export)
         - Updated: `.arc/reference/strategies/project/style/strategy-semantic-tokens.md` (+180 lines)
         - Updated: `.arc/reference/strategies/project/style/strategy-layout-tokens.md` (+40 lines)
-        - Updated: `.arc/active/incidental/notes-theme-system-modernization.md` (AppLink pattern references)
 
         **Impact on Phase 7.2 fixes:**
         - React Router Link fixes now use AppLink component (cleaner than manual Chakra wrapper)
@@ -2668,7 +2620,6 @@ prevents discovering token issues after cleanup, when fixing them is harder.
 
     - [x] **7.2.a Fix Layout & Navigation domain violations**
         - Work through Layout & Navigation violation list from 7.1.b
-        - **Fix list reference:** `notes-theme-system-modernization.md` line 400
         - Apply all pattern fixes: buttons, forms, links, surfaces, status, colors
         - Verify fixes against ADRs (ADR-009, ADR-010, ADR-011, ADR-012)
         - **Quality gates:** TypeScript 0 errors, ESLint 0 violations ✓
@@ -2736,8 +2687,6 @@ prevents discovering token issues after cleanup, when fixing them is harder.
         - Updated 7 component usages (NavBar, NavBarUserMenu, Footer, plus Movie Discovery)
         - Corrected inappropriate TextLink usages back to plain `Link` with inline styles
         - Updated `strategy-semantic-tokens.md` with expanded decision tree (when to use TextLink vs Link)
-        - Updated all fix lists in `notes-theme-system-modernization.md` (changed 24 AppLink references)
-        - Fix lists now self-contained with specific guidance per pattern (no strategy doc lookup needed)
 
         **Additional fixes from Task 7.2.a issues:**
 
@@ -3521,8 +3470,7 @@ This cleanup is REQUIRED - parallel systems allowed during migration, but must b
 
         - [x] **8.7.a.1 Finalize whitelist from notes file**
 
-            **Completed:** Whitelist finalized with 8 categories (~80 token pairs) documented in
-            `notes-theme-system-modernization.md`:
+            **Completed:** Whitelist finalized with 8 categories (~80 token pairs):
             1. Semantic Pairs (14 pairs) - on-* convention
             2. Text on Surfaces (8 pairs) - foreground/on-muted on layers
             3. Interactive Text (9 pairs) - tertiary states on surfaces

@@ -151,18 +151,18 @@ prevents rework when non-standard approaches are caught in review.
 
 ## Session Context Management
 
-**Principle:** Work quality must never be compromised due to token usage concerns. Session handoffs are managed by the user.
+**Principle:** Work quality must never be compromised due to context/resource limitations. Session handoffs are
+managed by the user.
 
-**Protocol:**
+**Core Protocol:**
 
-- Work at full specification until **~140,000 tokens used** (start monitoring context)
-- At ~150k tokens, assess situation:
+- Work at full specification throughout the session
+- When approaching context limits (agent-specific thresholds in agent files like CLAUDE.md):
   1. Complete current work item (don't stop mid-edit)
   2. Evaluate remaining work scope
-  3. **Stop and ask user** how to proceed: "We're at ~150k tokens. [Summary of completed work]. [Remaining work
-  description with estimated token cost]. How should we proceed?"
+  3. **Stop and ask user** how to proceed with summary of completed/remaining work
   4. User decides: continue, commit completed work then continue, or begin handoff
-- **Never** degrade work quality or change approach due to token pressure
+- **Never** degrade work quality or change approach due to context/resource pressure
 - **Never** make "efficiency" tradeoffs based on context window size
 
 **Ideal end-of-session workflow:**
@@ -171,14 +171,17 @@ prevents rework when non-standard approaches are caught in review.
 2. Leave any **partial** work uncommitted
 3. Perform session handoff documenting partial work state
 
-**Backup workflow** (when insufficient tokens remain for commits):
+**Backup workflow** (when insufficient resources remain for commits):
 
 - Session handoff captures commit-message-level notes
 - Next session executes commits from documented state
 - Less ideal but functional fallback
 
 **Why this matters:** Incomplete work done properly with good handoff is better than complete work done sloppily.
-Token management is user responsibility - AI focuses on maintaining work quality standards.
+Context management is user responsibility - AI focuses on maintaining work quality standards.
+
+**Agent-specific details:** See agent-specific files (CLAUDE.md, GEMINI.md, etc.) for context window thresholds
+and monitoring protocols.
 
 ## Core Document Reference Protocol
 
@@ -194,7 +197,7 @@ Core documents (QUICK-REFERENCE, DEVELOPMENT-RULES) are read each session but sh
 **DEVELOPMENT-RULES - Re-check when:**
 
 - Uncertainty about quality standards (what's the zero-tolerance policy? which gates are required?)
-- Token usage approaching 150k (verify Session Context Management protocol)
+- Approaching context limits (verify Session Context Management protocol and agent-specific guidance)
 - Confusion about verification, strategy, or task management protocols
 
 **Don't re-check for:**

@@ -97,6 +97,13 @@ more value in having complete context upfront than discovering missing rules mid
    - Path context and common workflows
    - **Why full read needed**: Incorrect command patterns = broken operations, wrong paths = failures
 
+8. **Agent-specific file** - **MUST READ IN FULL**
+   - Path: `.arc/reference/agent/[AGENT].md` (e.g., CLAUDE.md, GEMINI.md, etc.)
+   - Agent-specific operational guidance (context window management, capabilities, limitations)
+   - Contains details extracted from shared docs to maintain agent-agnostic framework
+   - **Why full read needed**: Agent-specific thresholds, protocols, and optimizations vary significantly
+   - **If no agent-specific file exists**: Skip this step (framework is agent-agnostic by default)
+
 **Rationale**: These docs are actively maintained to stay lean and avoid overlap. Reading all of them upfront
 (except task list details) ensures complete context without wasted effort. The task list is the only document
 large enough to warrant partial reading - but you must still read the overview and current task sections.
@@ -111,7 +118,7 @@ State your understanding to confirm successful initialization:
 - **Quality policy**: Zero-tolerance for linting violations, 100% test pass rate
 - **Reference versions**: DEVELOPMENT-RULES v2.14 (hash: k7m3p9w2), QUICK-REFERENCE v1.1
 - **Documents read in full**: Confirm that AGENTS, CURRENT-SESSION, 3-process-task-loop, STRATEGY-INDEX,
-  DEVELOPMENT-RULES, and QUICK-REFERENCE were read completely (not skimmed)
+  DEVELOPMENT-RULES, QUICK-REFERENCE, and agent-specific file were read completely (not skimmed)
 - **Task list context loaded**: Confirm that task list overview + current task section were read (from CURRENT-SESSION)
 
 ### 4. Ready to Proceed

@@ -18,3 +18,73 @@ Guidance for Claude when working in this repository. For shared rules and archit
 - **Large diffs:** If a change won't fit in context, propose a chunking strategy and wait for approval
 - **Tooling awareness:** Docker and venv are available - check QUICK-REFERENCE for command patterns
 - **Session handoffs:** Explicitly state whether CURRENT-SESSION.md was updated or left unchanged
+- **Console logs:** Browser console logs automatically captured to `backend/logs/frontend/.console-logs.txt`.
+  Check proactively when debugging frontend issues - no MCP or copy/paste needed. See QUICK-REFERENCE for commands.
+
+## Context Window Management
+
+**Claude-specific token thresholds and monitoring protocol.**
+
+**Context Window:** Claude Code provides ~200,000 token context window. Monitor usage throughout session.
+
+**Monitoring Protocol:**
+
+- Work at full specification until **~140,000 tokens used** (start monitoring context)
+- At **~150,000 tokens**, assess situation:
+  1. Complete current work item (don't stop mid-edit)
+  2. Evaluate remaining work scope
+  3. **Stop and ask user** how to proceed: "We're at ~150k tokens. [Summary of completed work]. [Remaining work
+     description with estimated token cost]. How should we proceed?"
+  4. User decides: continue, commit completed work then continue, or begin handoff
+- Token usage displayed in function results - check periodically during long sessions
+- **Never** degrade work quality or change approach due to token pressure
+- **Never** make "efficiency" tradeoffs based on context window size
+
+**Why these thresholds:**
+
+- 140k: Start monitoring, but continue normal work
+- 150k: Proactive check-in with user before hitting limits
+- Leaves buffer for commit workflows, quality gates, and session handoff if needed
+
+**See also:** Session Context Management section in DEVELOPMENT-RULES.md for agent-agnostic principles.
+
+## MCP Server Availability
+
+**Project-enabled MCPs (always available):**
+
+- **Chakra UI** (`mcp__chakra-ui__*`) - ALWAYS enabled for this project
+    - Use for: Component examples, props, theme queries, v2→v3 migration guidance
+    - Prefer over: WebFetch/WebSearch for Chakra documentation
+    - Available tools: `get_component_example`, `get_component_props`, `get_theme`, `customize_theme`,
+      `list_components`, `v2_to_v3_code_review`
+    - When to use: Any Chakra-related questions (component usage, styling, theming, migration)
+
+**Available but disabled by default (request if needed):**
+
+- **Firefox Developer Tools** - Browser automation and debugging
+- **Playwright** - Browser automation and testing
+
+These MCPs consume significant tokens when enabled, so they're disabled by default. If you have a legitimate need
+(debugging UI issues, testing browser interactions, etc.), ask the user to enable them. Don't assume availability.
+
+## Sub-Agent Availability
+
+**External Research Analyst** - Available for web research and external documentation synthesis.
+
+**When to use:**
+
+- ✅ Researching third-party libraries or best practices
+- ✅ Investigating security advisories or error messages from external sources
+- ✅ Any web research expected to require 3+ WebFetch calls
+- ✅ Tasks requiring synthesis across multiple external sources
+- ✅ Gathering context about external APIs, frameworks, or tools
+
+**When NOT to use:**
+
+- ❌ Simple 1-2 WebFetch queries with clear targets (use WebFetch directly)
+- ❌ Checking a single documentation page
+- ❌ Quick lookups of known information
+
+**Why this matters:** The external-research-analyst agent can autonomously perform multiple fetches, synthesize
+information, and handle expanding research scope. Using it for broader research tasks is more efficient than
+sequential WebFetch calls in the main conversation.

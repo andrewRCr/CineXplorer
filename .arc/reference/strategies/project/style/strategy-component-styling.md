@@ -1019,7 +1019,11 @@ CineXplorer extends the base semantic token system with movie app-specific token
 // Item being actively dragged
 <Card
   bg={isDragging ? "drag-active" : "layer-01"}
-  opacity={isDragging ? 0.5 : 1}
+  color={isDragging ? "on-secondary" : "foreground"}
+  borderWidth="2px"
+  borderStyle="dashed"
+  borderColor={isDragging ? "info" : "border"}
+  opacity={isDragging ? 0.9 : 1}
   cursor="move"
 >
   Draggable movie card
@@ -1028,6 +1032,7 @@ CineXplorer extends the base semantic token system with movie app-specific token
 // Valid drop target
 <Box
   bg={isValidDropTarget ? "drop-zone" : "layer-01"}
+  color="foreground"
   borderWidth="2px"
   borderStyle="dashed"
   borderColor={isValidDropTarget ? "success" : "border"}
@@ -1038,10 +1043,16 @@ CineXplorer extends the base semantic token system with movie app-specific token
 
 **Tokens:**
 
-- `drag-active` - Item being dragged (darker/emphasized appearance)
-- `drop-zone` - Valid drop target (subtle success/accent tint)
+- **drag-active** (background: secondaryHover) + **on-secondary** (text)
+    - Item being actively dragged - uses secondaryHover background with on-secondary text
+    - Paired with info dashed border for visual distinction
+- **drop-zone** (background: muted) + **foreground** (text)
+    - Valid drop target - uses muted background with foreground text
+    - Paired with success dashed border to indicate valid drop zone
 
 **Use cases:** Watchlist reordering, favorites organization, drag-and-drop interactions
+
+**Pattern verified:** ThemeDebug CineXplorerExtensionsSection
 
 ---
 

@@ -3517,27 +3517,63 @@ This cleanup is REQUIRED - parallel systems allowed during migration, but must b
 
     - [ ] **8.7.a Verify extended tokens meet WCAG AA contrast in all themes**
 
-        **Automated approach (preferred):**
-        - Implement Node/TypeScript script: `frontend/scripts/verify-theme-contrast.ts`
-        - Use contrast library (`wcag-contrast` or `color-contrast-checker`)
-        - Iterate all theme token combinations (8 themes × all fg/bg pairs)
-        - Validate each pair against WCAG AA thresholds:
-            - Normal text: 4.5:1 contrast ratio
-            - Large text: 3:1 contrast ratio
-            - UI components: 3:1 contrast ratio
-        - Emit report of failing pairs (with specific token names + contrast ratios)
-        - Fail CI job on any violations
-        - Wire into `package.json` scripts (e.g., `npm run verify-contrast`)
-        - Add CI pipeline step to run across all themes and store artifacts
+        **Approach:** Automated verification script with whitelist-based validation
 
-        **Manual fallback:**
-        - Use WebAIM Contrast Checker or browser DevTools
-        - Test all tokens in all 8 theme combinations
-        - Document any failing combinations
+        - [x] **8.7.a.1 Finalize whitelist from notes file**
 
-        **Resolution:**
-        - Adjust token values if needed to meet requirements
-        - Quality gate: All tokens meet or exceed WCAG AA in all themes
+            **Completed:** Whitelist finalized with 8 categories (~80 token pairs) documented in
+            `notes-theme-system-modernization.md`:
+            1. Semantic Pairs (14 pairs) - on-* convention
+            2. Text on Surfaces (8 pairs) - foreground/on-muted on layers
+            3. Interactive Text (9 pairs) - tertiary states on surfaces
+            4. Borders on Surfaces (7 pairs) - layer-aware borders
+            5. Interaction States (8 pairs) - hover/selected/active overlays
+            6. Focus Indicators (6 pairs) - rings and focused borders
+            7. Alert Descriptions (4 pairs) - foreground on 10% opacity tints
+            8. Movie-Specific (5 pairs) - imdb-gold, drag-active, drop-zone
+
+            **Documentation gap discovered:** Drag-drop pattern in strategy docs didn't match ThemeDebug
+            implementation. Fixed: drag-active uses on-secondary (not foreground), verified from
+            CineXplorerExtensionsSection. Updated `strategy-component-styling.md` with correct pattern.
+
+        - [ ] **8.7.a.2 Install contrast calculation library**
+            - Install `wcag-contrast` npm package (recommended for simplicity)
+            - Alternative: `color-contrast-checker` if more features needed
+            - Add to `devDependencies` in `frontend/package.json`
+
+        - [ ] **8.7.a.3 Implement validation script**
+            - Create `frontend/scripts/verify-theme-contrast.ts`
+            - Load theme definitions from `frontend/src/theme/color/definitions.ts`
+            - Implement whitelist data structure (7 categories from notes)
+            - Resolve token values for each theme variant (light/dark)
+            - Handle special cases:
+                - Optional tokens (brand colors - skip if undefined)
+                - Opacity tokens (alert backgrounds - compute blend)
+            - Calculate contrast ratios using library
+            - Apply WCAG AA thresholds:
+                - Text tokens: 4.5:1 minimum
+                - Border/UI component tokens: 3:1 minimum
+            - Generate detailed report with failures
+
+        - [ ] **8.7.a.4 Run initial validation**
+            - Execute script against all 4 themes × 2 modes (8 variants)
+            - Review failure report (if any)
+            - Document findings in notes file
+
+        - [ ] **8.7.a.5 Address any contrast violations**
+            - If failures found: Adjust token values in theme adapters
+            - Prioritize violations by severity (text > borders)
+            - Re-run validation after adjustments
+            - Quality gate: Zero violations
+
+        - [ ] **8.7.a.6 Wire into development workflow**
+            - Add `verify-contrast` script to `frontend/package.json`
+            - Add `verify-contrast:ci` variant for CI with error exit codes
+            - Document usage in README or contributing guide
+            - Optional: Add pre-commit hook or CI pipeline step
+
+        **Expected outcome:** All semantic token combinations meet WCAG AA standards across
+        all theme variants, with automated tooling to prevent regressions.
 
     - [ ] **8.7.b Run automated test suites**
         - Backend tests (ensure no breakage)

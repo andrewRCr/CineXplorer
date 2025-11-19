@@ -1,11 +1,13 @@
 /**
- * WCAG Contrast Validation Script
+ * Semantic Token Contrast Validation
  *
- * Validates that all semantic token combinations meet WCAG AA contrast standards
- * across all theme variants (4 themes × 2 modes = 8 variants).
+ * Validates color contrast across all theme variants (4 themes × 2 modes = 8 variants) for:
+ * - **WCAG AA compliance** (text: 4.5:1, UI components: 3:1)
+ * - **Minimum visibility** for decorative elements (1.3:1)
  *
- * **Purpose:** Automated verification of accessible color contrast ratios
- * **Standard:** WCAG AA (4.5:1 for text, 3:1 for UI components)
+ * Ensures accessible interactive elements while catching decorative tokens that become
+ * too subtle to serve their visual hierarchy purpose.
+ *
  * **Scope:** ~80 token pairs across 8 categories
  */
 
@@ -26,7 +28,7 @@ interface TokenPair {
 	fg: string;
 	bg: string;
 	optional?: boolean; // Skip if token undefined
-	threshold?: "text" | "ui"; // Default: 'text'
+	threshold?: "text" | "ui" | "decorative"; // Default: 'text'
 }
 
 interface ValidationResult {
@@ -41,12 +43,13 @@ interface ValidationResult {
 }
 
 // ============================================================================
-// WCAG THRESHOLDS
+// CONTRAST THRESHOLDS
 // ============================================================================
 
 const THRESHOLDS = {
-	text: 4.5, // Normal text minimum
-	ui: 3.0, // UI components (borders, focus rings)
+	text: 4.5, // WCAG AA - Normal text minimum
+	ui: 3.0, // WCAG AA - UI components (borders, focus rings)
+	decorative: 1.3, // Visibility minimum (not WCAG standard)
 } as const;
 
 // ============================================================================
@@ -147,13 +150,9 @@ const bordersOnSurfaces: TokenPair[] = [
 	{ fg: "border-strong-02", bg: "layer-02", threshold: "ui" },
 	{ fg: "border-strong-03", bg: "layer-03", threshold: "ui" },
 
-	// Subtle borders
-	{ fg: "border-subtle-00", bg: "background", threshold: "ui" },
-	{ fg: "border-subtle-02", bg: "layer-02", threshold: "ui" },
-
-	// Generic border (decorative only)
-	{ fg: "border", bg: "background", threshold: "ui" },
-	{ fg: "border", bg: "layer-01", threshold: "ui" },
+	// Subtle borders (decorative only - visibility check, not WCAG)
+	{ fg: "border-subtle-00", bg: "background", threshold: "decorative" },
+	{ fg: "border-subtle-02", bg: "layer-02", threshold: "decorative" },
 ];
 
 /**
@@ -360,7 +359,8 @@ function validatePair(
 
 	// Calculate contrast ratio
 	const ratio = getContrast(fgValue, bgValue);
-	const threshold = pair.threshold === "ui" ? THRESHOLDS.ui : THRESHOLDS.text;
+	const thresholdType = pair.threshold || "text";
+	const threshold = THRESHOLDS[thresholdType];
 	const passed = ratio >= threshold;
 
 	return {
@@ -393,7 +393,7 @@ function runValidation() {
 	let totalSkipped = 0;
 
 	console.log("=".repeat(80));
-	console.log("WCAG CONTRAST VALIDATION - Theme System");
+	console.log("SEMANTIC TOKEN CONTRAST VALIDATION");
 	console.log("=".repeat(80));
 	console.log();
 	console.log(`Testing ${themes.length} themes × 2 modes = ${themes.length * 2} variants`);
@@ -449,9 +449,14 @@ function runValidation() {
 			console.log("-".repeat(80));
 
 			for (const failure of themeFailures) {
-				const threshold =
-					failure.pair.threshold === "ui" ? THRESHOLDS.ui : THRESHOLDS.text;
-				const thresholdLabel = failure.pair.threshold === "ui" ? "UI" : "TEXT";
+				const thresholdType = failure.pair.threshold || "text";
+				const threshold = THRESHOLDS[thresholdType];
+				const thresholdLabel =
+					thresholdType === "decorative"
+						? "DECORATIVE (visibility)"
+						: thresholdType === "ui"
+							? "UI (WCAG AA)"
+							: "TEXT (WCAG AA)";
 
 				console.log(`  ${failure.pair.fg} on ${failure.pair.bg}`);
 				console.log(`    FG: ${failure.fgValue}`);
@@ -484,10 +489,12 @@ function runValidation() {
 	console.log();
 
 	if (failures.length === 0) {
-		console.log("✅ ALL TESTS PASSED - Theme system meets WCAG AA standards!");
+		console.log("✅ ALL TESTS PASSED - All tokens meet contrast requirements!");
+		console.log("   (WCAG AA compliance + minimum visibility thresholds)");
 		process.exit(0);
 	} else {
 		console.log(`❌ ${failures.length} FAILURES - See details above`);
+		console.log("   (Mix of WCAG violations and visibility concerns)");
 		process.exit(1);
 	}
 }

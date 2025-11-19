@@ -39,7 +39,7 @@ export function CineXplorerExtensionsSection() {
               </Box>
             </Box>
             <Text fontSize="xs" color="foreground/60" mt={1} textAlign="center">
-              Stars use imdb-gold token color (IMDb gold #F5C518) on layer-01 (movie cards)
+              Stars use imdb-gold token: #785F05 (light mode, WCAG AA) / #F5C518 (dark mode, authentic IMDb)
             </Text>
           </Box>
 

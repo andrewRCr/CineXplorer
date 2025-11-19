@@ -290,9 +290,39 @@ not strictly required. Can be more subtle since not interactive. Use shadow as a
 - Design systems intentionally use subtle borders for visual hierarchy without distraction
 - IBM Carbon's layer system relies on color changes, not borders, for primary elevation cues
 
-**Action:** No changes needed - update WCAG validation script documentation to clarify these are expected.
+**Actions Taken (2025-11-19):**
 
-### Category 3: Legitimate WCAG Issues (~49 violations)
+1. **`border-subtle` tokens**: No changes needed - these are intentional decorative borders per strategy-color-tokens.md
+2. **`border` token (DEPRECATED)**: Fully removed from theme system
+   - Removed from `types.ts` UnifiedTheme interface (line 1087)
+   - Removed from all 4 theme adapters (github-primer, ibm-carbon, gitlab-pajamas, material-design-3)
+   - Removed test pairs from WCAG validation script (verify-theme-contrast.ts lines 155-156)
+   - Context: Token deprecated in Task 7.2.e, all component usages migrated, definitions remained
+3. **`input` token (DEPRECATED)**: Fully removed from theme system
+   - Removed from `types.ts` UnifiedTheme interface (line 1094)
+   - Removed from all 4 theme adapters
+   - Context: Token deprecated in Task 7.2.e, all component usages migrated, definitions remained
+4. **Quality gates**: TypeScript type checking ✅, ESLint ✅
+
+**Result:** Eliminated ~8 false violations from Category 2 (2 border tokens × 4 themes). Category 2 now contains
+only legitimate decorative border tokens (border-subtle-00, border-subtle-02) which are acceptable per strategy.
+
+**Script Reframing (2025-11-19):**
+
+Validation script evolved from pure WCAG compliance checker to comprehensive theme quality tool:
+
+1. **Added `decorative` threshold** (1.3:1) - Catches decorative elements becoming invisible without requiring WCAG standards
+2. **Updated script purpose** - Now validates both WCAG AA compliance AND minimum visibility for decorative tokens
+3. **Enhanced output messaging** - Distinguishes "WCAG violations" from "visibility concerns" in failure reports
+4. **Fixed validation logic** - Threshold selection now properly handles all three types (text, ui, decorative)
+5. **Test results** - border-subtle tokens now correctly pass at 1.3:1+ ratios (eliminated 14 false failures)
+6. **New baseline** - 47 legitimate WCAG violations (down from 61 mixed WCAG + decorative failures)
+
+**Rationale:** Decorative borders serve visual hierarchy purposes, not interactive UI. Testing them against 3:1 UI
+component standards was semantically incorrect. New 1.3:1 visibility threshold catches regressions (tokens becoming
+too subtle) while allowing intentional design choices per strategy-color-tokens.md.
+
+### Category 3: Legitimate WCAG Issues (47 violations)
 
 **Verdict:** Require theme adapter adjustments or acceptable risk documentation.
 
@@ -320,6 +350,37 @@ imdb-gold on layer-02         (1.55-1.63:1 vs 4.5:1 threshold)
 4. **Use outlined stars instead** (stroke instead of fill for better visibility)
 
 **Recommendation:** Option 2 or 4 - maintain brand color but improve visibility through design pattern.
+
+**Actions Taken (2025-11-19):**
+
+Implemented **Option 1** (darken light mode shade) with mode-conditional values:
+
+1. **Calculated compliant shade**: Tested progressively darker gold shades for 4.5:1 contrast
+   - Tested against white (#ffffff) and all layer-01 values across themes
+   - Selected #785F05: 6.11:1 on white, 4.99-5.74:1 on layer-01 (universal compliance)
+   - Alternative #876B06 considered but had 2 near-miss violations on darker layer-01s (4.15, 4.31)
+
+2. **Updated extensions.ts**: Changed `standardRatingColors.light["imdb-gold"]` from #F5C518 → #785F05
+   - Dark mode unchanged: Kept authentic IMDb gold #F5C518 (sufficient contrast on dark backgrounds)
+   - Updated documentation with WCAG compliance metrics
+
+3. **Updated ThemeDebug**: CineXplorerExtensionsSection now shows both light/dark values
+   - Line 42: "#785F05 (light mode, WCAG AA) / #F5C518 (dark mode, authentic IMDb)"
+
+4. **Strategy docs**: No changes needed - reference semantic token `imdb-gold`, not hex values
+
+5. **Quality gates**: Validation script ✅ (0 IMDb violations remaining)
+
+**Result:** Eliminated all 12 IMDb gold violations (3 backgrounds × 4 themes). Light mode uses darkened gold (#785F05)
+for compliance while maintaining recognizable gold appearance. Dark mode preserves authentic IMDb brand color.
+
+**Validation results:**
+
+- Before: 47 violations (including 12 IMDb gold)
+- After: 35 violations (IMDb gold eliminated)
+
+**Note on semantic usage:** IMDb gold is a text/icon color (star ratings), not a background. Similar to how `warning`
+token is a background with `on-warning` text on it - usage pattern determines which contrast tests apply.
 
 #### 3b. Status Color Pairs (MEDIUM PRIORITY)
 

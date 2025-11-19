@@ -483,12 +483,15 @@ grep -in "resume at\|continue with\|pick up at\|blocked on" tasks-*.md
 # 4. References to deleted notes file (if notes file was deleted)
 grep -in "notes-.*\.md" tasks-*.md
 
-# 5. Inline completion dates (not header metadata - check line numbers)
-grep -n "completed:.*202[0-9]" tasks-*.md | grep -v "^[1-6]:"
+# 5. Inline subtask completion dates (header date is fine, subtask dates are noise)
+grep -in "\*\*completed:\*\*.*202[0-9]" tasks-*.md
 
 # 6. Forward pointers to archived task lists
 grep -in "spawned:\|created:.*tasks-\|interrupted by:" tasks-*.md
-# Then check if referenced files are in archive/ - if so, remove pointer
+# Check if referenced file is in archive (use find, not ls with globs)
+find .arc/reference/archive -name "tasks-<filename>.md"
+# If found in archive → remove pointer (completed work)
+# If not found → check .arc/active/ (keep pointer if work ongoing)
 ```
 
 **For each match:**

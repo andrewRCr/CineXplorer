@@ -19,7 +19,9 @@ It ensures consistent execution, quality control, and documentation of work.
        - When task list explicitly calls for quality gates, they are mandatory
      - **Second**: Mark subtask as `[x]` in task list file (task list reflects completed work when reporting)
        - Update task description to reflect actual work done (not just original plan)
-       - Add "Completed" section with key findings/changes if work deviated from plan
+       - Add completion notes with key findings/changes if work deviated from plan
+       - **No inline dates**: Don't add completion dates to subtasks (e.g., "Completed: 2025-11-02"). Only the
+         task list header `**Completed:**` field should have a date. Inline dates become temporal noise during archival.
        - **Streamline verbose planning details**: Task descriptions serve different purposes before vs. after completion.
          During planning, verbose details help guide execution. After completion, they become historical records.
          When marking a task complete, retain information useful for understanding what was done and why,

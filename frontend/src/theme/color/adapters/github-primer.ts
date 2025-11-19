@@ -104,16 +104,20 @@ export function createGithubAdapter(mode: "light" | "dark"): UnifiedTheme {
     // PRIMARY: Green background token for action buttons (ADR-010)
     // Token type: BACKGROUND (for filled buttons)
     // Rationale: GitHub uses green for positive actions ("merge", "create", primary CTAs)
-    const primary = palette.bg_success; // GREEN (#1f883d light, #238636 dark)
+    const primary = mode === "light"
+        ? palette.bg_success_hover // Tweaked for WCAG: slightly darker green (official #1f883d had 4.24:1 on layer-01)
+        : palette.bg_success_hover; // Tweaked for WCAG: lighter background in dark mode (official #238636 had 4.09:1 contrast)
     const onPrimary = palette.fg_onEmphasis;
 
     // SECONDARY: Gray background + mandatory 1px border (ADR-010)
     // Token type: BACKGROUND + BORDER
     // Uses derived medium gray for distinction from muted
-    const secondary = palette.bg_button_secondary;
+    const secondary = mode === "light"
+        ? "#5f656f" // Tweaked for WCAG: darker neutral gray (official #8c929d had 3.13:1 contrast)
+        : palette.bg_button_secondary;
     const onSecondary =
         mode === "light"
-            ? palette.fg_onEmphasis // Light mode: white text on medium gray (#8c929d)
+            ? palette.fg_onEmphasis // Light mode: white text on dark gray
             : palette.fg_default; // Dark mode: light text on dark gray
 
     // MUTED: Deemphasized, non-interactive
@@ -128,9 +132,13 @@ export function createGithubAdapter(mode: "light" | "dark"): UnifiedTheme {
     const onTertiary = palette.fg_onEmphasis; // Rarely used
 
     // Status colors: destructive + success
-    const destructive = palette.bg_danger;
+    const destructive = mode === "light"
+        ? palette.bg_danger
+        : palette.bg_danger_hover; // Tweaked for WCAG: lighter background in dark mode (official #da3633 had 4.11:1 contrast)
     const onDestructive = palette.fg_onEmphasis;
-    const success = palette.bg_success;
+    const success = mode === "light"
+        ? palette.bg_success
+        : palette.bg_success_hover; // Tweaked for WCAG: lighter background in dark mode (official #238636 had 4.09:1 contrast)
     const onSuccess = palette.fg_onEmphasis;
 
     // Shadows (official Primer shadow tokens)
@@ -168,6 +176,11 @@ export function createGithubAdapter(mode: "light" | "dark"): UnifiedTheme {
     const layer01States = deriveInteractionStates(layer01, foreground);
     const layer02States = deriveInteractionStates(layer02, foreground);
 
+    // Override layer-hover-01 for dark mode to meet WCAG with muted text
+    if (mode === "dark") {
+        layer01States.hover = "#282c32"; // Tweaked for WCAG: slightly darker for better contrast (derived #30353c had 4.02:1 with on-muted)
+    }
+
     // Color-based interaction states (ADR-009): For buttons and semantic colors
     const primaryStates = deriveInteractionStates(primary, onPrimary);
     const secondaryStates = deriveInteractionStates(secondary, onSecondary);
@@ -194,7 +207,9 @@ export function createGithubAdapter(mode: "light" | "dark"): UnifiedTheme {
         {
             muted: palette.bg_muted,
             mutedForeground: palette.fg_muted,
-            secondaryHover: palette.bg_button_secondary_hover,
+            secondaryHover: mode === "light"
+                ? "#6f757d" // Tweaked for WCAG: darker gray for drag-active (official #7a808b had 3.97:1 contrast)
+                : palette.bg_button_secondary_hover,
         },
         mode
     );

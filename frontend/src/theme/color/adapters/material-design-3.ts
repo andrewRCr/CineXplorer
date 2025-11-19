@@ -202,11 +202,11 @@ export function createMaterialAdapter(mode: "light" | "dark"): UnifiedTheme {
     // Additional status colors (derived - Material baseline lacks official tokens)
     // Derived from Material color roles for consistency
     const success = mode === "light" ? "#2E7D32" : "#66BB6A"; // Material green 700/400
-    const onSuccess = "#FFFFFF"; // Derived
+    const onSuccess = mode === "light" ? "#FFFFFF" : "#000000"; // Derived
     const warning = mode === "light" ? "#F57C00" : "#FFA726"; // Material orange 700/400
-    const onWarning = mode === "light" ? "#FFFFFF" : "#000000"; // Derived
+    const onWarning = "#000000"; // Derived - dark text on orange in both modes
     const info = mode === "light" ? "#1976D2" : "#42A5F5"; // Material blue 700/400
-    const onInfo = "#FFFFFF"; // Derived
+    const onInfo = mode === "light" ? "#FFFFFF" : "#000000"; // Derived
 
     // ===================================================================
     // SECTION 3: CINEXPLORER EXTENSIONS (App-Specific)

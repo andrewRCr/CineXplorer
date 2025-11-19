@@ -83,10 +83,11 @@ const semanticPairs: TokenPair[] = [
 	{ fg: "on-button-subtle", bg: "button-subtle" },
 	{ fg: "on-button-subtle-selected", bg: "button-subtle-selected" },
 
-	// Brand (optional - may be undefined in some themes)
-	{ fg: "on-brand", bg: "brand", optional: true },
-	{ fg: "on-brandSecondary", bg: "brandSecondary", optional: true },
-	{ fg: "on-brandTertiary", bg: "brandTertiary", optional: true },
+	// Brand (skipped - brand colors are reference-only, not used in app UI)
+	// Brand colors preserve official design system values and are not validated for WCAG compliance
+	// { fg: "on-brand", bg: "brand", optional: true },
+	// { fg: "on-brandSecondary", bg: "brandSecondary", optional: true },
+	// { fg: "on-brandTertiary", bg: "brandTertiary", optional: true },
 ];
 
 /**

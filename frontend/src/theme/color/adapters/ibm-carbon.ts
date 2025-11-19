@@ -151,7 +151,9 @@ export function createCarbonAdapter(mode: "light" | "dark"): UnifiedTheme {
     // Status colors: destructive, success, warning, info (all official Carbon tokens)
     const destructive = palette.bg_danger;
     const onDestructive = palette.fg_onEmphasis;
-    const success = palette.bg_success;
+    const success = mode === "light"
+        ? palette.bg_success_hover // Tweaked for WCAG: use darker hover value (official #24a148 had 3.35:1 contrast)
+        : palette.bg_success;
     const onSuccess = palette.fg_onEmphasis;
     const warning = palette.fg_warning;
     const onWarning = mode === "light" ? palette.fg_default : palette.fg_onEmphasis;

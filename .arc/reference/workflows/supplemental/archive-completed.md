@@ -45,16 +45,22 @@ If all tasks are marked complete, quality gates have passed. No separate verific
 
 **Run [maintain-task-notes.md](maintain-task-notes.md) workflow in Mode 2 (Archival Preparation):**
 
-This step prepares both task file and notes file for long-term reference:
+This step prepares task file and evaluates notes file for archival:
 
-- **Task file cleanup**: Migrate verbose implementation details to notes file, leaving lean quick-reference skeleton
-- **Notes file preparation**: Add table of contents, clean section headers, remove temporal markers,
-  consolidate exploratory sections
-- **Cross-reference updates**: Update status metadata, add completion dates
+- **Task file cleanup**: Remove temporal junk, excessive repetition, forward pointers while preserving detailed
+  sub-task record
+- **Notes file evaluation**: Determine if notes are archival-worthy or disposable scratchpad work
+- **Notes file preparation** (if keeping): Add table of contents, clean section headers, remove temporal markers, consolidate
+- **Cross-reference updates**: Update status metadata, add completion dates, clean pointers
 - **Quality checks**: Run markdown linting, verify no accidental task edits
 
-**Expected outcome:** Task file becomes 200-400 line quick-reference showing WHAT was done. Notes file
-becomes comprehensive deep-dive showing HOW and WHY.
+**Expected outcome:** Task file is clean detailed record (temporal markers removed, repetition eliminated, detailed
+granularity preserved). Notes file is evaluated for archival worthiness (may be deleted if just scratchpad work).
+Completion doc will contain executive summary.
+
+**Note on notes files:** Not all work has archival-worthy notes. The maintain-task-notes workflow (Step 1d) includes
+evaluation criteria. If notes are just implementation scratchpad work with no future reference value, delete the
+notes file entirely rather than archiving it.
 
 **Time estimate:** 20-40 minutes
 
@@ -256,16 +262,13 @@ git mv .arc/active/{category}/completion-{name}.md .arc/reference/archive/{categ
 **For incidental work:**
 
 ```bash
-# If notes file exists (create work package subdirectory)
+# Subdirectory ALWAYS created (tasks + completion = 2 files minimum)
 mkdir -p .arc/reference/archive/incidental/{name}
 git mv .arc/active/incidental/tasks-{name}.md .arc/reference/archive/incidental/{name}/
-git mv .arc/active/incidental/notes-{name}.md .arc/reference/archive/incidental/{name}/
 git mv .arc/active/incidental/completion-{name}.md .arc/reference/archive/incidental/{name}/
+git mv .arc/active/incidental/notes-{name}.md .arc/reference/archive/incidental/{name}/  # if exists
 
-# If no notes file (move to incidental root - NO subdirectory)
-# Note: With unified completion docs, most incidental work will have 2+ files → subdirectory
-git mv .arc/active/incidental/tasks-{name}.md .arc/reference/archive/incidental/
-git mv .arc/active/incidental/completion-{name}.md .arc/reference/archive/incidental/
+# Note: With unified completion docs (mandatory for ALL work), subdirectory is always required
 ```
 
 **Why git mv:** Preserves file history. Future developers can use `git log --follow` to see the file's
@@ -275,9 +278,10 @@ full evolution even after it moved to archive.
 
 Update `.arc/reference/constitution/PROJECT-STATUS.md` if applicable:
 
-- Move work from "Work in Progress" to "Completed Work" section
-- Add archive reference if appropriate
-- Update project metrics (tests, coverage, new capabilities)
+- Update "Last Completed" section to add newly completed work with archive link
+- Remove from "Currently Active" section
+- If significant work, add to "Completed Major Work" section with description
+- Update project metrics (tests, coverage, new capabilities) as appropriate
 
 **When to update PROJECT-STATUS:**
 
@@ -377,11 +381,11 @@ With unified completion metadata, all work packages have consistent structure:
 
 **Organization principles:**
 
-- **All work gets completion metadata** - Consistent across feature/technical/incidental
-- **Work packages group by subdirectory** - All files for a work item live together
+- **All work gets completion metadata** - Consistent across feature/technical/incidental (completion-{name}.md mandatory)
+- **Work packages group by subdirectory** - All files for a work item live together (ALWAYS - tasks + completion minimum)
 - **Completion doc = executive summary** - One place to look for "what was achieved?"
-- **Subdirectory creation**: If 2+ files (tasks + completion, or tasks + notes), create subdirectory.
-  Single file only (rare) can stay in category root.
+- **Subdirectory always created**: With unified completion docs, every work unit has at least 2 files
+  (tasks + completion), so subdirectory is always required
 
 ---
 

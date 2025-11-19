@@ -92,7 +92,6 @@ Create `completion-{name}.md` in the same directory as the task list:
 # Completion: {Work Name}
 
 **Completed**: YYYY-MM-DD
-**Final Commit**: {commit-hash from last work commit}
 **Branch**: {branch-name}
 **Category**: {Feature | Technical | Incidental}
 **Context**: {One-liner: "Discovered during X" or "Part of roadmap initiative Y"}
@@ -149,7 +148,7 @@ The completion doc must be accurate because it's used for PRs. Before writing:
 
 Before considering the completion doc done, verify EVERY claim:
 
-- [ ] **Final commit**: Verified via `git log` (not guessed from memory)
+- [ ] **Completed date**: Verified (matches task list header)
 - [ ] **Phase count**: Matches actual phases in task file - `grep -c "^###.*Phase" tasks-*.md`
 - [ ] **Quantitative claims**: Each number verified in task file
       - Where does "7 themes" come from? → Phase X, line Y

@@ -7,6 +7,11 @@ parameters, including parameter name mapping and type preservation logic.
 
 from __future__ import annotations
 
+# Minimum vote count for rating-based sorts to ensure statistically meaningful results
+# Higher than MIN_VOTE_COUNT (10) because rating sorts surface obscure 10/10 films otherwise
+# 200 matches TMDB's own threshold for their /movie/top_rated endpoint
+MIN_VOTES_FOR_RATING_SORT = 200
+
 # Filter mapping: service parameter names → TMDB API parameter names
 # Supports both underscore (direct service calls) and dot (API layer) parameter names
 FILTER_MAPPING: dict[str, str] = {
@@ -17,6 +22,10 @@ FILTER_MAPPING: dict[str, str] = {
     'vote_average.gte': 'vote_average.gte',  # API sends with dot
     'vote_average_lte': 'vote_average.lte',  # Direct service calls with underscore
     'vote_average.lte': 'vote_average.lte',  # API sends with dot
+    'vote_count_gte': 'vote_count.gte',  # Min vote count for quality filtering
+    'vote_count.gte': 'vote_count.gte',  # API sends with dot
+    'vote_count_lte': 'vote_count.lte',  # Max vote count
+    'vote_count.lte': 'vote_count.lte',  # API sends with dot
     'keywords': 'with_keywords',
     'people': 'with_people',
     'release_date_gte': 'primary_release_date.gte',  # Direct service calls with underscore
@@ -129,5 +138,16 @@ def build_tmdb_params(
         params['vote_average.gte'] = rating_min
     if rating_max is not None:
         params['vote_average.lte'] = rating_max
+
+    # Auto-add vote_count.gte for rating-based sorts to ensure quality results
+    # Without this, rating sorts return obscure 10/10 movies with only 1-2 votes
+    # that get filtered out by backend min_vote_count, resulting in 0 results
+    sort_by = params.get('sort_by', '')
+    if (
+        isinstance(sort_by, str)
+        and 'vote_average' in sort_by
+        and 'vote_count.gte' not in params
+    ):
+        params['vote_count.gte'] = MIN_VOTES_FOR_RATING_SORT
 
     return params

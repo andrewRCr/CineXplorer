@@ -390,6 +390,8 @@ class MovieDiscoverFilterSchema(Schema):
             'year': 'year',
             'vote_average_gte': 'vote_average.gte',
             'vote_average_lte': 'vote_average.lte',
+            'vote_count_gte': 'vote_count.gte',
+            'vote_count_lte': 'vote_count.lte',
             'release_date_gte': 'release_date.gte',
             'release_date_lte': 'release_date.lte',
             'certification': 'certification',

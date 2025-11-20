@@ -167,6 +167,18 @@ docker compose -f infrastructure/docker-compose.yml exec frontend npm run type-c
 **Why:** Project uses TypeScript project references (`tsconfig.json` → `tsconfig.app.json`). Direct `tsc` calls bypass
 this and produce false errors.
 
+### Chakra UI Type Generation
+
+**Run after modifying theme recipes** (variants, sizes, etc.) to regenerate component types:
+
+```bash
+# From frontend directory
+npx @chakra-ui/cli typegen ./src/theme/index.ts
+```
+
+**Why:** Custom recipe variants (e.g., Badge "success", Button "secondary") need type generation to be recognized by
+TypeScript. Without this, you'll get errors like `Type '"success"' is not assignable to type...`
+
 ### Markdown Linting
 
 **⚠️ Run from repo root** - Config file (`.markdownlint-cli2.jsonc`) must be discoverable

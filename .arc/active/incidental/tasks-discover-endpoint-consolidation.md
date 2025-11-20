@@ -762,45 +762,65 @@ Popular/Top-Rated code.
     - Frontend linting: 0 errors (eslint)
     - TypeScript checking: 0 errors (tsc)
 
-- [ ] **3.2 Create or update Browse page component**
-        - Location: `frontend/src/pages/Browse.tsx` or update existing Popular component
-        - Functionality: General movie browsing with full filter control
-        - Default sort: `popularity.desc` (but user can change)
-        - All filters enabled: genre, rating, year, sort, keywords, people (no protected keys)
-        - Reuses existing MovieCollectionLayout and filter components
-        - Calls `/api/movies/browse` endpoint
+- [x] **3.2 Create or update Browse page component**
+        - Created `frontend/src/pages/movie/Browse.tsx` component
+        - Added `fetchBrowseMoviesService` to movieService.ts (calls `/api/movies/browse`)
+        - Added `BROWSE` to `PAGINATED_SOURCES` in routes.ts
+        - Added browse route config to routeConfigHelper.ts (exact match for `/browse` path)
+        - No hardcoded sort_by - allows full user control (no protected keys)
 
-- [ ] **3.3 Update routing configuration**
-        - Update: `/` route → Redirect to `/featured`
-        - Add: `/featured` route → Featured component
-        - Update: `/browse` route → Browse page (general movie browsing)
-        - Update: `/browse/now-playing` route → Now Playing page (previously `/movies/now-playing`)
-        - Update: `/browse/upcoming` route → Upcoming page (previously `/movies/upcoming`)
-        - Remove or redirect: Old `/movies/*` routes
-        - Location: Router configuration file (`frontend/src/App.tsx` or routes file)
+- [x] **3.3 Update routing configuration**
+        - Updated `App.tsx` with new route structure:
+            - `/` renders Featured component (canonical URL for fresh visits)
+            - `/featured` redirects to `/` (alias for explicit nav reference)
+            - `/browse` parent with MovieCollectionLayout
+            - `/browse` index renders Browse component
+            - `/browse/now-playing` and `/browse/upcoming` as children
+        - Removed Popular and TopRated imports and routes
+        - Added lazy import for Browse component
 
-- [ ] **3.4 Update route constants**
-        - Location: `frontend/src/constants/routes.ts`
-        - Update all route paths from `/movies/*` to `/browse/*`
-        - Add `/featured` constant
-        - Update ROUTE_NAMES to include "Featured" and "Browse"
+- [x] **3.4 Update route constants**
+        - Updated `frontend/src/constants/routes.ts`:
+            - Added FEATURED: `/featured` and BROWSE: `/browse`
+            - Changed NOW_PLAYING: `/browse/now-playing`, UPCOMING: `/browse/upcoming`
+            - Removed MOVIES, POPULAR, TOP_RATED
+            - Updated ROUTE_NAMES with Featured and Browse
+            - Updated PAGINATED_SOURCES to match
 
-- [ ] **3.5 Update navigation components**
-        - Update sidebar/nav menu with Featured, Browse, Now Playing, Upcoming
-        - Update all navigation links to use new `/browse/*` paths
-        - Ensure Featured shows as active when on `/featured`
-        - Update any breadcrumbs or active route indicators
-        - Location: Navigation component files
+- [x] **3.5 Update navigation components**
+        - Updated `navigation.ts` MOVIE_VIEW_NAVIGATION_ITEMS:
+            - Featured → `/featured`
+            - Browse → `/browse`
+            - Now Playing → `/browse/now-playing`
+            - Upcoming → `/browse/upcoming`
+        - Updated `Featured.tsx` buttons to use ROUTES.BROWSE
+        - Updated `routeConfigHelper.ts`:
+            - Removed popular/top-rated route configs
+            - Updated default fallback to use browse endpoint
 
-- [ ] **3.6 Clean up old frontend code (per ADR-002)**
-        - Remove any API client calls to `/api/movies/popular` (if they exist)
-        - Remove any API client calls to `/api/movies/top-rated` (if they exist)
-        - Delete old Popular page component (if separate from Browse page)
-        - Delete old Top-Rated page component (if exists)
-        - Remove or update tests for old Popular/Top-Rated pages
-        - Search codebase for any hardcoded `/movies/popular` or `/movies/top-rated` references
+        **Quality Gates:** ✅ All passed
+        - Frontend linting: 0 errors
+        - TypeScript checking: 0 errors
 
-- [ ] **3.7 Regenerate API types**
+- [x] **3.6 Clean up old frontend code (per ADR-002)**
+        - Deleted `Popular.tsx` and `TopRated.tsx` page components
+        - Removed `fetchTopRatedMoviesService`, `fetchDiscoverMoviesService`, `discoverMovies` from movieService.ts
+        - Rewrote `routeConfigHelper.metadata.test.ts` for new `/browse` architecture
+        - Simplified `SortDropdownMinimal.tsx`:
+            - Removed `pageSource` prop (no longer needed for sort disabling)
+            - Fixed `onValueChange` handler (was checking for removed `disabled` property)
+            - Cleaned up item rendering (removed disabled styling logic)
+        - Updated `LetterboxdStyleFilters.tsx` to not pass pageSource
+        - Updated comment in `routeConfigHelper.ts`
+
+        **Note:** Many component tests still use "popular"/"top-rated" as source values for navigation context.
+        These will be evaluated in Phase 5.1.3 - the tests still run, just with outdated source names.
+
+        **Quality Gates:** ✅ All passed
+        - Frontend linting: 0 errors
+        - TypeScript checking: 0 errors
+
+- [x] **3.7 Regenerate API types**
         - Command: `DEV_SKIP_TLS=true NODE_ENV=development npm run generate-types` (from frontend/)
         - Verify FilterParams now available for all 3 endpoints (browse, now-playing, upcoming)
         - Verify popular/top-rated routes removed from generated types
@@ -808,16 +828,19 @@ Popular/Top-Rated code.
         - Check for type conflicts or errors
         - Review generated types and commit if correct
 
-- [ ] **3.8 Run basic frontend tests**
+- [x] **3.8 Run basic frontend tests**
         - Command: `docker compose -f infrastructure/docker-compose.yml exec frontend npm test Featured`
         - Command: `docker compose -f infrastructure/docker-compose.yml exec frontend npm test Browse`
         - All Featured/Browse tests should pass
         - Routing tests should pass
+        - **Result:** All 236 frontend tests pass
 
-- [ ] **3.9 Run frontend quality gates**
+- [x] **3.9 Run frontend quality gates**
         - Frontend linting: `docker compose -f infrastructure/docker-compose.yml exec frontend npm run lint`
         - TypeScript type checking: `docker compose -f infrastructure/docker-compose.yml exec frontend npm run type-check`
         - Verify 0 violations/errors
+        - **Note:** Required Chakra typegen (`npx @chakra-ui/cli typegen ./src/theme/index.ts`) to resolve recipe variant
+        types
 
 ---
 

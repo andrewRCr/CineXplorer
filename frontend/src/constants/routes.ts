@@ -1,18 +1,17 @@
 // constants/routes.ts
 
 export const ROUTES = {
-    HOME: "/", // Redirects to Popular movies
+    HOME: "/", // Featured content (canonical URL)
+    FEATURED: "/featured", // Alias that redirects to HOME
     PROFILE: "/profile",
     WATCHLIST: "/watchlist",
     LIBRARY: "/library",
     JOURNAL: "/journal",
     LOG: "/log",
     SETTINGS: "/settings",
-    MOVIES: "/movies",
-    NOW_PLAYING: "/movies/now-playing",
-    UPCOMING: "/movies/upcoming",
-    POPULAR: "/movies/popular",
-    TOP_RATED: "/movies/top-rated",
+    BROWSE: "/browse",
+    NOW_PLAYING: "/browse/now-playing",
+    UPCOMING: "/browse/upcoming",
     SEARCH_RESULTS: "/search",
     MOVIE_DETAIL: "/movie/:id",
     LOGIN: "/login",
@@ -24,17 +23,17 @@ export const ROUTES = {
 };
 
 export const ROUTE_NAMES = {
-    HOME: "Home", // Now serves Popular content
+    HOME: "Home",
+    FEATURED: "Featured",
     PROFILE: "Profile",
     WATCHLIST: "Watchlist",
     LIBRARY: "Library",
     JOURNAL: "Journal",
     LOG: "Log",
     SETTINGS: "Settings",
+    BROWSE: "Browse",
     NOW_PLAYING: "Now Playing",
     UPCOMING: "Upcoming",
-    POPULAR: "Popular",
-    TOP_RATED: "Top Rated",
     SEARCH_RESULTS: "Search Results",
     MOVIE_DETAIL: "Movie Detail",
     LOGIN: "Login",
@@ -47,10 +46,10 @@ export const ROUTE_NAMES = {
 
 // Paginated sources - for nav back from detail results
 export const PAGINATED_SOURCES = {
+    FEATURED: "featured",
+    BROWSE: "browse",
     NOW_PLAYING: "now-playing",
     UPCOMING: "upcoming",
-    POPULAR: "popular",
-    TOP_RATED: "top-rated",
     SEARCH: "search",
-    // more to be added as needed (search, etc)
+    // more to be added as needed
 };

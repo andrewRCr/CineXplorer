@@ -1,5 +1,5 @@
 import { ROUTES } from "@/constants/routes";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import "./App.css";
 
@@ -13,7 +13,9 @@ import ErrorBoundary from "./components/core/ErrorBoundary";
 
 // Lazy load page components
 const Featured = lazy(() => import("./pages/movie/Featured"));
+const Browse = lazy(() => import("./pages/movie/Browse"));
 const NowPlaying = lazy(() => import("./pages/movie/NowPlaying"));
+const Upcoming = lazy(() => import("./pages/movie/Upcoming"));
 const Login = lazy(() => import("./pages/user/Login"));
 const TestLogin = lazy(() => import("./pages/user/TestLogin"));
 const Register = lazy(() => import("./pages/user/Register"));
@@ -22,9 +24,6 @@ const Profile = lazy(() => import("./pages/user/Profile"));
 const Watchlist = lazy(() => import("./pages/user/Watchlist"));
 const Settings = lazy(() => import("./pages/user/Settings"));
 const MovieDetail = lazy(() => import("./pages/movie/MovieDetail"));
-const Upcoming = lazy(() => import("./pages/movie/Upcoming"));
-const Popular = lazy(() => import("./pages/movie/Popular"));
-const TopRated = lazy(() => import("./pages/movie/TopRated"));
 const SearchResults = lazy(() => import("./pages/movie/SearchResults"));
 const TypographyDebug = lazy(() => import("./pages/dev/TypographyDebug"));
 const ThemeDebug = lazy(() => import("./pages/dev/theme-debug/ThemeDebug"));
@@ -65,15 +64,17 @@ const App: React.FC = () => {
 
             {/* Content routes - full app layout */}
             <Route element={<AppLayout />}>
-              {/* Home page - Featured landing */}
+              {/* Home IS the Featured landing page */}
               <Route path={ROUTES.HOME} element={<Featured />} />
+              {/* /featured redirects to home (alias for explicit nav reference) */}
+              <Route path={ROUTES.FEATURED} element={<Navigate to={ROUTES.HOME} replace />} />
               <Route path={ROUTES.PROFILE} element={<Profile />} />
               <Route path={ROUTES.WATCHLIST} element={<Watchlist />} />
               <Route path={ROUTES.SETTINGS} element={<Settings />} />
 
-              {/* Movie collection routes with shared layout */}
+              {/* Browse routes with shared layout */}
               <Route
-                path={ROUTES.MOVIES}
+                path={ROUTES.BROWSE}
                 element={
                   <MovieCollectionLayout
                     showFilters={true}
@@ -81,10 +82,9 @@ const App: React.FC = () => {
                   />
                 }
               >
+                <Route index element={<Browse />} />
                 <Route path="now-playing" element={<NowPlaying />} />
                 <Route path="upcoming" element={<Upcoming />} />
-                <Route path="popular" element={<Popular />} />
-                <Route path="top-rated" element={<TopRated />} />
               </Route>
 
               {/* Search results with shared layout */}

@@ -1,9 +1,8 @@
 import {
     fetchNowPlayingMoviesService,
     fetchUpcomingMovies,
-    fetchTopRatedMoviesService,
     fetchSearchMoviesService,
-    fetchDiscoverMoviesService,
+    fetchBrowseMoviesService,
     type PaginatedMoviesResponse,
 } from "@/services/movieService";
 import { PAGINATED_SOURCES } from "@/constants/routes";
@@ -62,38 +61,22 @@ export const getFetcherAndSource = (pathname: string): RouteConfig => {
             title: "Upcoming",
         };
     }
-    if (pathname.includes("/popular")) {
+    // Browse route - exact match for /browse path
+    // (not /browse/now-playing or /browse/upcoming which are handled above)
+    if (pathname === "/browse" || pathname.endsWith("/browse")) {
         return {
             fetcher: (
                 page: number,
                 filters?: Record<string, string | number | number[]>,
                 tmdb_page_start?: number
             ) =>
-                fetchDiscoverMoviesService.getPaginated<PaginatedMoviesResponse>({
+                fetchBrowseMoviesService.getPaginated<PaginatedMoviesResponse>({
                     page,
-                    sort_by: "popularity.desc",
                     ...filters,
                     ...(tmdb_page_start !== undefined && { tmdb_page_start }),
                 }),
-            source: PAGINATED_SOURCES.POPULAR,
-            title: "Popular",
-        };
-    }
-    if (pathname.includes("/top-rated")) {
-        return {
-            fetcher: (
-                page: number,
-                filters?: Record<string, string | number | number[]>,
-                tmdb_page_start?: number
-            ) =>
-                fetchTopRatedMoviesService.getPaginated<PaginatedMoviesResponse>({
-                    page,
-                    sort_by: "vote_average.desc",
-                    ...filters,
-                    ...(tmdb_page_start !== undefined && { tmdb_page_start }),
-                }),
-            source: PAGINATED_SOURCES.TOP_RATED,
-            title: "Top Rated",
+            source: PAGINATED_SOURCES.BROWSE,
+            title: "Browse",
         };
     }
     if (pathname.includes("/search")) {
@@ -117,19 +100,19 @@ export const getFetcherAndSource = (pathname: string): RouteConfig => {
             },
         };
     }
-    // Default fallback
+    // Default fallback - use browse endpoint
     return {
         fetcher: (
             page: number,
             filters?: Record<string, string | number | number[]>,
             tmdb_page_start?: number
         ) =>
-            fetchDiscoverMoviesService.getPaginated<PaginatedMoviesResponse>({
+            fetchBrowseMoviesService.getPaginated<PaginatedMoviesResponse>({
                 page,
                 ...filters,
                 ...(tmdb_page_start !== undefined && { tmdb_page_start }),
             }),
-        source: PAGINATED_SOURCES.POPULAR,
-        title: "Movies",
+        source: PAGINATED_SOURCES.BROWSE,
+        title: "Browse",
     };
 };

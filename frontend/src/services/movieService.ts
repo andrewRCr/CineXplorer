@@ -50,12 +50,9 @@ export type { PaginatedMoviesResponse, Movie, Keyword, Person };
 export const fetchNowPlayingMoviesService = create("/movies/now-playing");
 export const fetchUpcomingMovies = () => create("/movies/upcoming");
 export const fetchMovieDetail = () => create("/movies");
-export const fetchDiscoverMoviesService = create("/movies/discover");
+export const fetchBrowseMoviesService = create("/movies/browse");
 export const fetchMovieGenresService = create("/genres");
 export const fetchSearchMoviesService = create("/movies/search");
-
-// Legacy endpoint mapping - use discover with sort_by for top-rated
-export const fetchTopRatedMoviesService = create("/movies/discover");
 
 // Supporting data endpoints from Django Ninja API
 export const fetchKeywordsService = create("/keywords");
@@ -138,10 +135,10 @@ export const getMovieDetail = (tmdb_id: string | number) => {
 };
 
 /**
- * Discover movies with advanced filtering
+ * Browse movies with full filter control (no protected keys)
  */
-export const discoverMovies = (params?: MovieQueryParams) => {
-    return fetchPaginatedMovies(fetchDiscoverMoviesService, params);
+export const browseMovies = (params?: MovieQueryParams) => {
+    return fetchPaginatedMovies(fetchBrowseMoviesService, params);
 };
 
 /**

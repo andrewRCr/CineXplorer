@@ -7,13 +7,11 @@ const SORT_WIDTH = "170px";
 interface SortDropdownMinimalProps {
   filters: UnifiedMovieFilters;
   onSortChange: (sortBy: string) => void;
-  pageSource?: string;
 }
 
 const SortDropdownMinimal = ({
   filters,
   onSortChange,
-  pageSource,
 }: SortDropdownMinimalProps) => {
   const getCurrentSortValue = () => {
     // This function maps the API sort value (from filters.sortBy)
@@ -48,16 +46,10 @@ const SortDropdownMinimal = ({
   const sortCollection = createListCollection({
     items: [
       ...(isSortCustom ? [{ label: "Custom", value: "custom" }] : []),
-      ...minimalSortOptions.map((option) => {
-        const isDisabled =
-          (pageSource === "popular" && option.value === "popularity.desc") ||
-          (pageSource === "top-rated" && option.value === "vote_average.desc");
-        return {
-          label: option.label + (isDisabled ? " (current)" : ""),
-          value: option.value,
-          disabled: isDisabled,
-        };
-      }),
+      ...minimalSortOptions.map((option) => ({
+        label: option.label,
+        value: option.value,
+      })),
     ],
   });
 
@@ -85,14 +77,7 @@ const SortDropdownMinimal = ({
           collection={sortCollection}
           value={[sortDisplayValue()]}
           onValueChange={(details) => {
-            const selectedItem = sortCollection.items.find(
-              (item) => item.value === details.value[0]
-            );
-            if (
-              selectedItem &&
-              "disabled" in selectedItem &&
-              !selectedItem.disabled
-            ) {
+            if (details.value[0]) {
               onSortChange(details.value[0]);
             }
           }}
@@ -146,29 +131,17 @@ const SortDropdownMinimal = ({
               color="foreground"
             >
               {sortCollection.items.map((item) => {
-                const isDisabled = "disabled" in item && item.disabled;
                 const isSelected = currentSortValue === item.value;
                 return (
                   <Select.Item
                     key={item.value}
                     item={item}
-                    bg={isSelected && !isDisabled ? "tertiary" : undefined}
-                    color={
-                      isDisabled
-                        ? "on-muted"
-                        : isSelected
-                          ? "on-tertiary"
-                          : "foreground"
-                    }
-                    fontStyle={isDisabled ? "italic" : "normal"}
-                    _hover={
-                      isDisabled
-                        ? {}
-                        : {
-                            bg: isSelected ? "tertiary" : "tertiary/12",
-                            color: isSelected ? "on-tertiary" : "foreground",
-                          }
-                    }
+                    bg={isSelected ? "tertiary" : undefined}
+                    color={isSelected ? "on-tertiary" : "foreground"}
+                    _hover={{
+                      bg: isSelected ? "tertiary" : "tertiary/12",
+                      color: isSelected ? "on-tertiary" : "foreground",
+                    }}
                   >
                     {item.label}
                   </Select.Item>

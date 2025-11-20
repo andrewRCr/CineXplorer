@@ -43,14 +43,14 @@ export const USER_NAVIGATION_ITEMS: NavigationItem[] = [
 
 export const MOVIE_VIEW_NAVIGATION_ITEMS: NavigationItem[] = [
     {
-        label: ROUTE_NAMES.POPULAR,
-        value: "popular",
-        path: ROUTES.POPULAR,
+        label: ROUTE_NAMES.FEATURED,
+        value: "featured",
+        path: ROUTES.FEATURED,
     },
     {
-        label: ROUTE_NAMES.TOP_RATED,
-        value: "top-rated",
-        path: ROUTES.TOP_RATED,
+        label: ROUTE_NAMES.BROWSE,
+        value: "browse",
+        path: ROUTES.BROWSE,
     },
     {
         label: ROUTE_NAMES.NOW_PLAYING,

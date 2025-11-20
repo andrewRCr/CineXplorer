@@ -39,20 +39,20 @@ describe('routeConfigHelper - pagination metadata support', () => {
     });
 
     /**
-     * Test: Discover endpoint fetchers accept tmdb_page_start parameter
+     * Test: Browse endpoint fetcher accepts tmdb_page_start parameter
      *
-     * Scenario: Popular, top-rated routes using discover endpoint
+     * Scenario: General browse route (replaced popular/top-rated per ADR-002)
      * Expected: Fetcher signature accepts optional third parameter
      */
-    describe('discover endpoint fetchers', () => {
-        it('should accept tmdb_page_start parameter for popular route', () => {
+    describe('browse endpoint fetcher', () => {
+        it('should accept tmdb_page_start parameter for browse route', () => {
             // Arrange
             const mockService = createMockService();
-            vi.spyOn(movieService, 'fetchDiscoverMoviesService', 'get').mockReturnValue(
-                mockService as unknown as typeof movieService.fetchDiscoverMoviesService
+            vi.spyOn(movieService, 'fetchBrowseMoviesService', 'get').mockReturnValue(
+                mockService as unknown as typeof movieService.fetchBrowseMoviesService
             );
 
-            const config = getFetcherAndSource('/movies/popular');
+            const config = getFetcherAndSource('/browse');
 
             // Act: Call fetcher with tmdb_page_start
             config.fetcher(2, { with_genres: '28' }, 5);
@@ -61,31 +61,8 @@ describe('routeConfigHelper - pagination metadata support', () => {
             expect(mockService.getPaginated).toHaveBeenCalledWith(
                 expect.objectContaining({
                     page: 2,
-                    sort_by: 'popularity.desc',
                     with_genres: '28',
                     tmdb_page_start: 5,
-                })
-            );
-        });
-
-        it('should accept tmdb_page_start parameter for top-rated route', () => {
-            // Arrange
-            const mockService = createMockService();
-            vi.spyOn(movieService, 'fetchTopRatedMoviesService', 'get').mockReturnValue(
-                mockService as unknown as typeof movieService.fetchTopRatedMoviesService
-            );
-
-            const config = getFetcherAndSource('/movies/top-rated');
-
-            // Act: Call fetcher with metadata
-            config.fetcher(3, {}, 7);
-
-            // Assert: Service receives parameter
-            expect(mockService.getPaginated).toHaveBeenCalledWith(
-                expect.objectContaining({
-                    page: 3,
-                    sort_by: 'vote_average.desc',
-                    tmdb_page_start: 7,
                 })
             );
         });
@@ -93,11 +70,11 @@ describe('routeConfigHelper - pagination metadata support', () => {
         it('should omit tmdb_page_start when undefined', () => {
             // Arrange
             const mockService = createMockService();
-            vi.spyOn(movieService, 'fetchDiscoverMoviesService', 'get').mockReturnValue(
-                mockService as unknown as typeof movieService.fetchDiscoverMoviesService
+            vi.spyOn(movieService, 'fetchBrowseMoviesService', 'get').mockReturnValue(
+                mockService as unknown as typeof movieService.fetchBrowseMoviesService
             );
 
-            const config = getFetcherAndSource('/movies/popular');
+            const config = getFetcherAndSource('/browse');
 
             // Act: Call fetcher without tmdb_page_start
             config.fetcher(1, {});
@@ -114,10 +91,10 @@ describe('routeConfigHelper - pagination metadata support', () => {
     /**
      * Test: Now Playing and Upcoming endpoints accept tmdb_page_start
      *
-     * Scenario: Curated list endpoints
+     * Scenario: Date-constrained list endpoints
      * Expected: Parameter passes through to service
      */
-    describe('curated list endpoints', () => {
+    describe('date-constrained endpoints', () => {
         it('should accept tmdb_page_start parameter for now-playing route', () => {
             // Arrange
             const mockService = createMockService();
@@ -125,7 +102,7 @@ describe('routeConfigHelper - pagination metadata support', () => {
                 mockService as unknown as typeof movieService.fetchNowPlayingMoviesService
             );
 
-            const config = getFetcherAndSource('/movies/now-playing');
+            const config = getFetcherAndSource('/browse/now-playing');
 
             // Act
             config.fetcher(2, { vote_average_gte: 7.0 }, 4);
@@ -147,7 +124,7 @@ describe('routeConfigHelper - pagination metadata support', () => {
                 mockUpcomingService as unknown as ReturnType<typeof movieService.fetchUpcomingMovies>
             );
 
-            const config = getFetcherAndSource('/movies/upcoming');
+            const config = getFetcherAndSource('/browse/upcoming');
 
             // Act
             config.fetcher(1, {}, 3);
@@ -184,7 +161,7 @@ describe('routeConfigHelper - pagination metadata support', () => {
                 writable: true,
             });
 
-            const config = getFetcherAndSource('/movies/search');
+            const config = getFetcherAndSource('/search');
 
             // Act
             config.fetcher(2, { with_genres: '28' }, 6);
@@ -204,18 +181,18 @@ describe('routeConfigHelper - pagination metadata support', () => {
     /**
      * Test: Default route (fallback) accepts tmdb_page_start
      *
-     * Scenario: Unknown route falls back to discover
+     * Scenario: Unknown route falls back to browse
      * Expected: Parameter passes through
      */
     describe('default route (fallback)', () => {
         it('should accept tmdb_page_start parameter for default route', () => {
             // Arrange
             const mockService = createMockService();
-            vi.spyOn(movieService, 'fetchDiscoverMoviesService', 'get').mockReturnValue(
-                mockService as unknown as typeof movieService.fetchDiscoverMoviesService
+            vi.spyOn(movieService, 'fetchBrowseMoviesService', 'get').mockReturnValue(
+                mockService as unknown as typeof movieService.fetchBrowseMoviesService
             );
 
-            const config = getFetcherAndSource('/movies/unknown');
+            const config = getFetcherAndSource('/unknown-route');
 
             // Act
             config.fetcher(1, {}, 2);
@@ -240,11 +217,11 @@ describe('routeConfigHelper - pagination metadata support', () => {
         it('should work without tmdb_page_start parameter', () => {
             // Arrange
             const mockService = createMockService();
-            vi.spyOn(movieService, 'fetchDiscoverMoviesService', 'get').mockReturnValue(
-                mockService as unknown as typeof movieService.fetchDiscoverMoviesService
+            vi.spyOn(movieService, 'fetchBrowseMoviesService', 'get').mockReturnValue(
+                mockService as unknown as typeof movieService.fetchBrowseMoviesService
             );
 
-            const config = getFetcherAndSource('/movies/popular');
+            const config = getFetcherAndSource('/browse');
 
             // Act: Call with old signature (page, filters)
             config.fetcher(1, { vote_average_gte: 8.0 });
@@ -253,7 +230,6 @@ describe('routeConfigHelper - pagination metadata support', () => {
             expect(mockService.getPaginated).toHaveBeenCalledWith(
                 expect.objectContaining({
                     page: 1,
-                    sort_by: 'popularity.desc',
                     vote_average_gte: 8.0,
                 })
             );

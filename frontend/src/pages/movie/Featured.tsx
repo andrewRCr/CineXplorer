@@ -50,12 +50,12 @@ const Featured = () => {
 
           <VStack gap={4}>
             <Button
-              onClick={() => navigate(ROUTES.POPULAR)}
+              onClick={() => navigate(ROUTES.BROWSE)}
               variant="subtle"
               size="lg"
               width="100%"
             >
-              Browse Popular Movies
+              Browse Movies
             </Button>
 
             <Button

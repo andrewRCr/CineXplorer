@@ -1,7 +1,7 @@
 import MovieCollectionGrid from "@/components/movie/collection/MovieCollectionGrid";
 
-const Popular = () => {
+const Browse = () => {
   return <MovieCollectionGrid />;
 };
 
-export default Popular;
+export default Browse;

@@ -1021,6 +1021,7 @@ This phase addresses a complex test migration challenge. Tests were written when
         - All 3 endpoints should support buffer mechanism
         - All 3 endpoints should respect user authentication for enrichment
         - **NEW:** Now-playing and upcoming should enforce protected keys (date range)
+        - **NEW:** All sort options should return non-zero results (discovered issue during Phase 3.6)
 
     - [ ] **5.2.2 Design parametrized test pattern**
         - Pattern for testing all 3 endpoints with same behavior (browse, now-playing, upcoming)
@@ -1097,6 +1098,16 @@ This phase addresses a complex test migration challenge. Tests were written when
         - Test: Browse page supports all filters (genre, rating, year, keywords, people)
         - **Migrate intent from old popular/top-rated tests** (per 5.1.3 evaluation)
         - Tests for existing browse functionality should PASS
+        - **NEW - Sort behavior tests (discovered during Phase 3.6):**
+            - Test: All sort options return >0 results (parametrized)
+            - Test: `vote_average.desc` returns 20 results with vote_count >= MIN_VOTE_COUNT
+            - Test: `vote_average.asc` returns 20 results with vote_count >= MIN_VOTE_COUNT
+            - Test: `release_date.desc` returns results (bypasses min_vote_count)
+            - Test: `original_title.asc/desc` returns results (bypasses min_vote_count)
+            - Test: `popularity.asc` returns results (genre filter may reduce count)
+            - Test: Parameter passthrough - all schema fields reach TMDB params
+            - Test: Sort + filter combinations work together
+            - Rationale: Prevent silent regression where sort options return 0 results
 
     - [ ] **5.4.4 Update existing endpoint tests**
         - **Update existing upcoming endpoint tests:**

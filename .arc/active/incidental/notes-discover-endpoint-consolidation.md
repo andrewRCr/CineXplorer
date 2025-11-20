@@ -1238,11 +1238,24 @@ to these issues and any changes made here:
 
 **1. Rating sort auto-threshold (`filtering.py`)**
 
-Added `MIN_VOTES_FOR_RATING_SORT = 200` constant and auto-application in `build_tmdb_params()`:
+Added auto-application of `vote_count.gte` in `build_tmdb_params()` for rating-based sorts:
 
-- When `sort_by` contains `vote_average`, automatically adds `vote_count.gte = 200`
-- Matches TMDB's own threshold for `/movie/top_rated` endpoint
-- Prevents obscure 10/10 movies with 1-2 votes from dominating results
+- When `sort_by` contains `vote_average`, automatically adds `vote_count.gte = MIN_VOTE_COUNT` (10)
+- Uses data quality threshold, NOT curation threshold (200)
+- Ensures movies pass backend filter without inadvertently curating results
+
+**Rationale for MIN_VOTE_COUNT (10) vs TMDB's 200:**
+
+The initial fix used 200 (matching TMDB's `/movie/top_rated` endpoint), but this conflates sorting with curation:
+
+- **TMDB top_rated endpoint**: Curated "all-time greats" → 200+ votes appropriate
+- **Browse sort control**: "Sort these results by rating" → should be true sorting
+
+With 200 threshold, the sort control becomes a de facto "Top Rated" view, losing its utility as an actual
+sorting mechanism. Users selecting "Rating" sort expect to sort their current results, not see classics.
+
+**Decision:** Curated "top rated" content belongs in the upcoming Collections feature (IMDB Top 250, AFI Top 100,
+etc.), not in sort controls. The rating sort uses MIN_VOTE_COUNT (10) for data quality only.
 
 **2. Conditional min_vote_count bypass (`api.py`)**
 
@@ -1316,7 +1329,7 @@ Each layer has its own mapping logic. Could simplify to schema just validates, s
 | Item | Status |
 |------|--------|
 | Parameter mapping fixes | ✅ Applied (both files) |
-| Auto vote_count for rating sorts | ✅ Implemented (MIN_VOTES_FOR_RATING_SORT = 200) |
+| Auto vote_count for rating sorts | ✅ Implemented (MIN_VOTE_COUNT = 10, not 200) |
 | Conditional min_vote_count bypass | ✅ Implemented (api.py browse_movies) |
 | All sort options verified | ✅ Tested and documented |
 | Backend tests pass | ✅ Verified (408 passed, 1 xfailed) |

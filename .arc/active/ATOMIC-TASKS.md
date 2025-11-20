@@ -15,6 +15,43 @@
 ## Active
 <!-- Add tasks here with checkboxes -->
 
+- [ ] Simplify sort options UI
+    - Add "Release Date (Oldest)" to minimal sort dropdown
+    - Increase minimal dropdown width to fit longest label
+    - Remove advanced sort dropdown entirely (confusing/meaningless results for reverse sorts)
+    - Center release year and rating inputs in advanced filters row to visually balance
+    - Rationale: Reverse sorts (popularity.asc, vote_average.asc, title Z-A) produce meaningless data (untracked/unrated
+    movies, Unicode sorting issues)
+
+- [ ] Consolidate redundant parameter mappings
+    - **Problem:** Two places define mappings that must stay in sync - `schemas.py to_service_params` and `filtering.py FILTER_MAPPING`
+    - **Risk:** Gaps like `vote_count_gte` missing from one causes silent failures
+    - **Fix:** Create single source of truth in `filtering.py`, have schema reference it
+    - **Files:** `backend/apps/movie/schemas.py`, `backend/apps/movie/services/filtering.py`
+    - **Estimate:** ~1-2 hours
+
+- [ ] Rename FILTER_MAPPING to PARAM_MAPPING
+    - **Problem:** `FILTER_MAPPING` contains `sort_by` which isn't a filter - confusing when searching for sort logic
+    - **Fix:** Rename to `PARAM_MAPPING` in `filtering.py`, update frontend `movieFilterMapper.ts` to `paramMapper`
+    - **Files:** `backend/apps/movie/services/filtering.py`, `frontend/src/utilities/movieFilterMapper.ts`
+    - **Estimate:** ~30 min
+
+- [ ] Add TypedDict for service params
+    - **Problem:** `to_service_params()` returns generic dict, `discover_movies()` expects typed params - requires
+    `type: ignore`
+    - **Fix:** Create `ServiceParams` TypedDict with proper types, use in return annotation
+    - **Alternative:** Extract known params (year_min, rating_min, etc.) explicitly before `**kwargs`
+    - **Files:** `backend/apps/movie/schemas.py`, `backend/apps/movie/api.py`
+    - **Estimate:** ~1 hour
+
+- [ ] Simplify schema/service mapping flow
+    - **Problem:** Multiple mapping layers: HTTP → Schema → Service → filtering.py → TMDB
+    - **Fix:** Schema just validates/extracts, single authoritative mapping in service layer
+    - **Approach:** Move all TMDB param name knowledge to `filtering.py`, schema passes through field names unchanged
+    - **Files:** `backend/apps/movie/schemas.py`, `backend/apps/movie/services/filtering.py`, `backend/apps/movie/services/movie_service.py`
+    - **Estimate:** ~2-3 hours
+    - **Note:** Consider doing after "Consolidate redundant parameter mappings" task
+
 - [ ] Investigate login session loss during testing
     - Context: ession appeared lost during theme system visual testing (no explicit logout)
     - Test session persistence during normal navigation

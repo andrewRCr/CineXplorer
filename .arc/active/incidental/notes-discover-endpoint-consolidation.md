@@ -1039,3 +1039,291 @@ incidental work formatting standards. Key phases:
 1. Resume `tasks-test-organization-standardization.md` at Phase 4
 2. Use correct endpoint naming in test splits
 3. Continue with comprehensive test coverage
+
+---
+
+## Phase 3 Frontend Migration: Sort/Filter Parameter Issue Discovery
+
+**Date Discovered:** 2025-11-20
+**Context:** During Task 3.6 cleanup, user reported sorting functionality broken in the Browse UI
+
+### Issue Discovery
+
+During Task 3.6 (Clean up old frontend code), after completing SortDropdownMinimal cleanup, the user reported:
+
+> "the minimal sort dropdown no longer appears to function - it doesn't seem to apply any sort options"
+
+Further testing revealed this was NOT caused by the SortDropdownMinimal changes, but was a **pre-existing issue** now
+exposed by the routing changes.
+
+### Symptom Inventory by Sort Option
+
+| Sort Option | UI Label | sort_by Value | Results | Behavior |
+|-------------|----------|---------------|---------|----------|
+| Popularity (desc) | "Popularity" | `popularity.desc` | 20/page | ✅ Works correctly |
+| Popularity (asc) | "Popularity (Low to High)" | `popularity.asc` | 0 | ❌ No results |
+| Rating (desc) | "Rating" | `vote_average.desc` | 0 | ❌ No results |
+| Rating (asc) | N/A | `vote_average.asc` | 0 | ❌ No results |
+| Release Date (desc) | "Release Date" | `release_date.desc` | Unknown | ❌ No results |
+| Title (A-Z) | "A-Z" | `original_title.asc` | 2 | ❌ Only 2 results despite 10k+ total |
+
+### Root Cause Analysis
+
+**Discovery path:**
+
+1. Backend logs showed requests were correctly sending `sort_by` parameter
+2. Backend returned 200 OK with valid response structure
+3. But results array was empty or nearly empty
+4. Added `vote_count_gte=200` to request - still 0 results
+5. Checked logs - `vote_count.gte` NOT appearing in TMDB API params
+6. Found parameter defined in schema (`schemas.py:281`) but not extracted
+
+**Root causes identified:**
+
+1. **Schema `to_service_params` missing mapping** (`schemas.py:388-398`)
+   - `vote_count_gte` field exists in schema but NOT in `field_mappings` dict
+   - Parameter never extracted from incoming request
+
+2. **`FILTER_MAPPING` missing entry** (`filtering.py:12-28`)
+   - Even if extracted, wouldn't be mapped to TMDB parameter name
+   - `vote_count.gte` → `vote_count.gte` mapping absent
+
+3. **Backend min_vote_count filter** (`result_filtering.py`)
+   - Default MIN_VOTE_COUNT = 10 votes
+   - When sorting by rating without TMDB-side vote_count filter, TMDB returns obscure 10/10 movies with 1-2 votes
+   - Backend filter removes them all → 0 results
+
+### Fixes Applied
+
+**1. Added to `filtering.py` FILTER_MAPPING:**
+
+```python
+'vote_count_gte': 'vote_count.gte',
+'vote_count.gte': 'vote_count.gte',
+'vote_count_lte': 'vote_count.lte',
+'vote_count.lte': 'vote_count.lte',
+```
+
+**2. Added to `schemas.py` to_service_params field_mappings:**
+
+```python
+'vote_count_gte': 'vote_count.gte',
+'vote_count_lte': 'vote_count.lte',
+```
+
+**Verification:** After fixes, `vote_count.gte` now appears in TMDB API params and returns 20 results.
+
+### What Remains To Be Fixed
+
+**1. Automatic vote_count_gte for rating sorts (CRITICAL)**
+
+The frontend doesn't send `vote_count_gte` when user selects rating sort. Need to automatically add it.
+
+**Recommended approach:** Backend adds default `vote_count.gte` when `sort_by` is `vote_average.*`
+
+- Location: `filtering.py build_tmdb_params()`
+- Similar to how `sort_by` defaults to `popularity.desc`
+- Keeps TMDB-specific logic in backend
+
+**2. Verify all sort options work correctly**
+
+After auto-vote_count fix, need to test:
+
+- vote_average.desc with auto vote_count
+- vote_average.asc with auto vote_count
+- original_title.asc (why only 2 results?)
+- original_title.desc
+- release_date.desc
+- popularity.asc
+
+**3. Determine appropriate vote_count threshold**
+
+Current test used 200. Need to decide:
+
+- What's the right default? 50? 100? 200?
+- Should it vary by sort type?
+- TMDB's top-rated uses 200+ historically
+
+### Architectural Concerns Identified
+
+#### 1. Redundant Parameter Mapping
+
+Two places define parameter mappings:
+
+- `schemas.py to_service_params field_mappings` - schema → service params
+- `filtering.py FILTER_MAPPING` - service params → TMDB params
+
+This creates maintenance burden and allows gaps like we discovered. Should consolidate.
+
+#### 2. Sort/Filter Logic Conflation
+
+Sort and filter are different concerns but conflated in naming:
+
+- `FILTER_MAPPING` contains sort_by
+- `movieFilterMapper.ts` handles both sorts and filters
+- Looking for sort logic in "filter" files is confusing
+
+**Recommendation:** Consider separation or at least rename to `PARAM_MAPPING` / `paramMapper`
+
+#### 3. Schema Extraction vs Service Mapping
+
+The flow is:
+
+```
+HTTP Request → Schema (to_service_params) → Service → filtering.py → TMDB
+```
+
+Each layer has its own mapping. Could simplify to:
+
+- Schema just validates and extracts
+- Single authoritative mapping in service layer
+
+### Test Coverage Gaps
+
+**Why wasn't this caught?**
+
+1. Tests for Popular page always used `popularity.desc` (works)
+2. Top Rated tests existed but may have expected the broken behavior
+3. No integration tests verifying "sort by X returns non-zero results"
+4. Filter parameter mapping not tested end-to-end
+
+**Phase 5 Implications:**
+
+Phase 5.1.3 says "Evaluate popular/top-rated test intent" - this must now include:
+
+- Verify all sort options return results
+- Test parameter passthrough end-to-end (schema → TMDB)
+- Test with representative thresholds (vote_count, etc.)
+
+**Suggested Phase 5 additions:**
+
+1. **Parametrized sort option tests** - All sort_by values return non-zero results
+2. **Parameter passthrough verification** - All schema fields reach TMDB params
+3. **Filter interaction tests** - Sort + filter combinations work together
+4. **Threshold boundary tests** - Verify min_vote_count doesn't over-filter
+
+### Task List Considerations
+
+**Does this warrant its own task list?**
+
+Factors for:
+
+- Multiple interconnected issues
+- Architectural concerns beyond just "fix the bug"
+- Need to audit all sort options systematically
+
+Factors against:
+
+- Closely related to current endpoint consolidation work
+- Phase 5 will cover testing comprehensively
+- Core fix is small (2 mapping additions + 1 default)
+
+**Recommendation:** Keep in current task list but:
+
+1. Add explicit subtask for the backend auto-vote_count fix
+2. Expand Phase 5 scope as noted above
+3. Document architectural concerns for future refactoring
+
+**Other active task lists to consider:**
+There are in various states of completion, and should be carefully considered as far as how they potentailly relate
+to these issues and any changes made here:
+
+- `tasks-test-organization-standardization.md` - May have relevant test structure decisions
+- `tasks-filter-integration-testing.md`
+- `tasks-navigation-filter-state-preservation.md`
+- `tasks-pagination-buffer-tracking.md`
+- `tasks-buffer-deduplication-data-quality.md`
+
+### Fixes Implemented (2025-11-20)
+
+**1. Rating sort auto-threshold (`filtering.py`)**
+
+Added `MIN_VOTES_FOR_RATING_SORT = 200` constant and auto-application in `build_tmdb_params()`:
+
+- When `sort_by` contains `vote_average`, automatically adds `vote_count.gte = 200`
+- Matches TMDB's own threshold for `/movie/top_rated` endpoint
+- Prevents obscure 10/10 movies with 1-2 votes from dominating results
+
+**2. Conditional min_vote_count bypass (`api.py`)**
+
+Added logic in `browse_movies()` to bypass backend `min_vote_count` filter for certain sorts:
+
+- `release_date.desc/asc` → bypass (new movies have few votes)
+- `original_title.asc/desc` → bypass (alphabetical ≠ quality)
+- `popularity.asc` → bypass (least popular by definition)
+
+This mirrors how `now-playing` and `upcoming` endpoints use `min_vote_count=None`.
+
+**3. Sort behavior analysis**
+
+Tested all sort options and documented findings:
+
+- `vote_average.desc/asc`: ✅ Works with 200-vote threshold
+- `popularity.desc`: ✅ Works (default behavior)
+- `popularity.asc`: ⚠️ 17 results (genre completeness filter removes most)
+- `release_date.desc`: ✅ Works (e.g., "Avatar 5" for 2031)
+- `original_title.asc`: ✅ Works (starts with "!")
+- `original_title.desc`: ⚠️ Unicode sorting issues (mathematical bold chars sort after Z)
+
+**4. UX decision: Simplify sort options**
+
+Created atomic task to remove advanced sort dropdown - reverse sorts produce meaningless data (untracked movies, not
+"worst movies"). Keep release_date (oldest) as only reverse option in minimal dropdown.
+
+### Architectural Concerns for Future Cleanup
+
+#### 1. Redundant Parameter Mapping
+
+Two places define parameter mappings that must stay in sync:
+
+- `schemas.py to_service_params field_mappings` - schema → service params
+- `filtering.py FILTER_MAPPING` - service params → TMDB params
+
+**Risk:** Gaps like `vote_count_gte` missing from one but not the other.
+**Fix complexity:** Medium (~1-2 hours) - Consolidate to single source of truth, possibly in filtering.py with schema
+referencing it.
+
+#### 2. Sort/Filter Logic Conflation
+
+- `FILTER_MAPPING` contains `sort_by` (not a filter)
+- `movieFilterMapper.ts` handles both sorts and filters
+- Confusing when searching for sort-related code
+
+**Fix complexity:** Low (~30 min) - Rename to `PARAM_MAPPING` / `paramMapper` for accuracy.
+
+#### 3. Type Safety Gap in API Layer
+
+`to_service_params()` returns `dict[str, str | int | float | bool]` but `discover_movies()` expects typed parameters.
+Currently using `type: ignore` comments.
+
+**Fix complexity:** Medium (~1 hour) - Create TypedDict for service params return type, or extract known params
+explicitly before `**kwargs`.
+
+#### 4. Schema Extraction vs Service Mapping Flow
+
+Current flow has multiple mapping layers:
+
+```
+HTTP Request → Schema (to_service_params) → Service → filtering.py → TMDB
+```
+
+Each layer has its own mapping logic. Could simplify to schema just validates, single authoritative mapping in service layer.
+
+**Fix complexity:** High (~2-3 hours) - Architectural change affecting multiple files.
+
+### Summary: Current State
+
+| Item | Status |
+|------|--------|
+| Parameter mapping fixes | ✅ Applied (both files) |
+| Auto vote_count for rating sorts | ✅ Implemented (MIN_VOTES_FOR_RATING_SORT = 200) |
+| Conditional min_vote_count bypass | ✅ Implemented (api.py browse_movies) |
+| All sort options verified | ✅ Tested and documented |
+| Backend tests pass | ✅ Verified (408 passed, 1 xfailed) |
+| UX simplification | 📋 Atomic task created |
+| Architectural concerns | 📋 Documented above for future cleanup |
+
+### Remaining Before Phase 3.7
+
+- Decide: Fix architectural concerns now or defer to atomic tasks?
+- Update CURRENT-SESSION.md with progress

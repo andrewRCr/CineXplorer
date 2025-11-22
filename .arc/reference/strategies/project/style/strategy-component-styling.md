@@ -1022,7 +1022,7 @@ CineXplorer extends the base semantic token system with movie app-specific token
   color={isDragging ? "on-secondary" : "foreground"}
   borderWidth="2px"
   borderStyle="dashed"
-  borderColor={isDragging ? "info" : "border"}
+  borderColor={isDragging ? "info" : "border-strong-01"}
   opacity={isDragging ? 0.9 : 1}
   cursor="move"
 >
@@ -1035,7 +1035,7 @@ CineXplorer extends the base semantic token system with movie app-specific token
   color="foreground"
   borderWidth="2px"
   borderStyle="dashed"
-  borderColor={isValidDropTarget ? "success" : "border"}
+  borderColor={isValidDropTarget ? "success" : "border-strong-01"}
 >
   Drop movies here
 </Box>
@@ -1242,19 +1242,75 @@ documentation.
 **Deprecated → Canonical mappings:**
 
 - `text.secondary` → `on-muted`
-- `border.subtle` → `border-strong-01` (for form controls on layer-01) or `border` (for decorative dividers)
+- `border.subtle` → `border-strong-01` (for form controls on layer-01) or `border-subtle-01` (for decorative dividers)
 - `background.subItem` → `layer-hover-01` (surface hover) or `tertiary/8` (opacity hover)
 - `tertiary.primary` → `tertiary` (color) or `ring` (focus indicator)
+
+### Recipe Override Behavior (Chakra v3)
+
+**Principle:** In Chakra v3, adding inline style props to slot components overrides recipe pseudo-selectors.
+
+**❌ Wrong: Inline props without pseudo-selectors**
+
+```tsx
+// Recipe provides _focusVisible, but inline props block it
+<Select.Trigger
+  w="200px"
+  fontSize="14px"
+  borderColor="border-strong-01"
+>
+  <Select.ValueText />
+</Select.Trigger>
+// Result: No focus indicator on keyboard focus!
+```
+
+**✅ Correct: Include pseudo-selectors when using inline props**
+
+```tsx
+<Select.Trigger
+  w="200px"
+  fontSize="14px"
+  borderColor="border-strong-01"
+  _hover={{ borderColor: "border-strong-02", bg: "tertiary/8" }}
+  _focusVisible={{ borderColor: "tertiary", outline: "none" }}
+>
+  <Select.ValueText />
+</Select.Trigger>
+```
+
+**Or: Use no inline props to get full recipe styling**
+
+```tsx
+// Recipe provides all states automatically
+<Select.Trigger>
+  <Select.ValueText />
+</Select.Trigger>
+```
+
+**Why this happens:** Chakra v3's slot recipe system applies base styles and pseudo-selectors as a unit. When you add
+inline style props, they take precedence and the recipe's pseudo-selectors (`_hover`, `_focusVisible`, `_active`, etc.)
+are not inherited.
+
+**Affected components:** Any slot-based component using recipes:
+
+- `Select.Trigger`, `Select.Content`, `Select.Item`
+- `Checkbox.Control`
+- `RadioGroup.ItemControl`
+- `Switch.Control`
+- Other slot components
+
+**Rule of thumb:** If you add ANY inline style props to a slot component, you must also add all pseudo-selectors you
+need. Check the recipe file for the states you need to replicate.
 
 ### Layer-Aware Border Tokens
 
 **Principle:** Forms and structural borders match their background layer for proper visual hierarchy.
 
-**❌ Wrong: Using generic "input" or "border" tokens**
+**❌ Wrong: Using generic tokens without layer context**
 
 ```tsx
-<Input borderColor="input" />  {/* Generic, no layer context */}
-<Input borderColor="border" />  {/* Generic, no layer context */}
+<Input borderColor="input" />  {/* Generic, doesn't exist */}
+<Input />  {/* No explicit border, relies on default which may not be visible */}
 ```
 
 **✅ Correct: Use layer-appropriate border-strong tokens**
@@ -1277,15 +1333,15 @@ documentation.
 ```
 
 **Why it matters:** Layer-aware borders create visual cohesion. Forms visually belong to their background surface, with
-borders that provide appropriate contrast for their specific layer. Generic "input" and "border" tokens don't account for
-layer context and should be avoided.
+borders that provide appropriate contrast for their specific layer. Generic tokens without layer context don't exist in the
+UnifiedTheme interface and should be avoided.
 
 **Border Token Decision Tree:**
 
 - **Form controls** (Input, Checkbox, Select, etc.) → `border-strong-01` (on layer-01) or `border-strong-02` (on layer-02)
 - **Structural containers** (cards, panels, sidebars) → `border-strong-01/02/03` (match surface layer)
 - **Interactive controls** (outline buttons) → `button-outline`
-- **Decorative dividers** (separators, horizontal rules) → `border-subtle-01` or `border` (if truly generic)
+- **Decorative dividers** (separators, horizontal rules) → `border-subtle-01` (layer-01) or `border-subtle-02` (layer-02)
 
 **Border hierarchy for forms on layer-01:**
 

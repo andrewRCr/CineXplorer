@@ -86,7 +86,7 @@ During ADR-011 migration (2025-11), old naming conventions were replaced but ali
 | `primary-foreground`   | `on-primary`             | on-* prefix pattern                |
 | `success-foreground`   | `on-success`             | on-* prefix pattern                |
 | `text.secondary`       | `on-muted`               | Semantic clarity                   |
-| `border.subtle`        | `border-strong-01` or `border` | Layer-aware or generic      |
+| `border.subtle`        | `border-strong-01` or `border-subtle-01` | Layer-aware (strong for forms, subtle for dividers) |
 | `background.subItem`   | `layer-hover-01`         | Explicit interaction state naming  |
 | `tertiary.primary`     | `tertiary` or `ring`     | Simplified naming                  |
 
@@ -189,8 +189,8 @@ as the contract between themes and components.
     - `drag-active`, `drop-zone`
     - `imdb-gold`
 
-11. **UI Elements** (~2 tokens)
-    - `border`, `ring`
+11. **UI Elements** (~1 token)
+    - `ring`
 
 12. **Deprecated Aliases** (~8 tokens)
     - Maintained for backward compatibility

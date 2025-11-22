@@ -28,6 +28,8 @@ const SearchResults = lazy(() => import("./pages/movie/SearchResults"));
 const TypographyDebug = lazy(() => import("./pages/dev/TypographyDebug"));
 const ThemeDebug = lazy(() => import("./pages/dev/theme-debug/ThemeDebug"));
 const LayoutDebug = lazy(() => import("./pages/dev/LayoutDebug"));
+const NotFound = lazy(() => import("./pages/core/NotFound"));
+const Forbidden = lazy(() => import("./pages/core/Forbidden"));
 
 const App: React.FC = () => {
   return (
@@ -102,7 +104,10 @@ const App: React.FC = () => {
               <Route path={ROUTES.TYPOGRAPHY_TEST} element={<TypographyDebug />} />
               <Route path="/dev/theme-debug" element={<ThemeDebug />} />
               <Route path="/dev/layout-debug" element={<LayoutDebug />} />
-              {/* ...other content routes... */}
+              {/* System pages */}
+              <Route path="/forbidden" element={<Forbidden />} />
+              {/* Catch-all 404 route - must be last */}
+              <Route path="*" element={<NotFound />} />
             </Route>
 
             {/* temp/dev routes... */}

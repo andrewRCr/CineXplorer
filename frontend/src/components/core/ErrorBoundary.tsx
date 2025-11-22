@@ -79,6 +79,7 @@ const ErrorDisplay: React.FC<{
       justifyContent="center"
       bg="background"
       px={4}
+      pt={12}
     >
       <Container maxW="lg">
       <VStack gap={6} textAlign="center">

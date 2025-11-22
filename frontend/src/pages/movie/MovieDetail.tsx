@@ -141,19 +141,52 @@ const MovieDetail = () => {
     );
   }
 
-  if (error) {
+  // Check for non-404 errors first (actual errors)
+  const is404 = error && (error.includes('404') || error.includes('not found'));
+
+  if (error && !is404) {
     return (
       <Box maxW="6xl" mx="auto" p={4}>
         {BackButton}
-        <Box p={8}>
-          <Text color="on-destructive">{error}</Text>
+        <Box
+          minH="40vh"
+          display="flex"
+          flexDirection="column"
+          alignItems="center"
+          justifyContent="center"
+        >
+          <Heading as="h2" size="xl" mb={4}>
+            Error Loading Movie
+          </Heading>
+          <Text color="on-muted">
+            {error}
+          </Text>
         </Box>
       </Box>
     );
   }
 
+  // 404 or no movie data - show not found
   if (!movie) {
-    return null;
+    return (
+      <Box maxW="6xl" mx="auto" p={4}>
+        {BackButton}
+        <Box
+          minH="40vh"
+          display="flex"
+          flexDirection="column"
+          alignItems="center"
+          justifyContent="center"
+        >
+          <Heading as="h2" size="xl" mb={4}>
+            Movie Not Found
+          </Heading>
+          <Text color="on-muted">
+            The movie you're looking for doesn't exist or has been removed.
+          </Text>
+        </Box>
+      </Box>
+    );
   }
 
   /* ============================================================

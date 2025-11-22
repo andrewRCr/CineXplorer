@@ -814,7 +814,7 @@ Popular/Top-Rated code.
         - Updated comment in `routeConfigHelper.ts`
 
         **Note:** Many component tests still use "popular"/"top-rated" as source values for navigation context.
-        These will be evaluated in Phase 5.1.3 - the tests still run, just with outdated source names.
+        These will be evaluated in Phase 5.1.c - the tests still run, just with outdated source names.
 
         **Quality Gates:** ✅ All passed
         - Frontend linting: 0 errors
@@ -850,83 +850,41 @@ Popular/Top-Rated code.
 
 **Approach:** End-to-end manual testing before comprehensive automated test coverage (Phase 5).
 
-- [ ] **4.1 Manual testing in browser**
+- [x] **4.1 Manual testing in browser**
 
     **Goal:** Verify all pages work with filtering, pagination, routing, and user experience is smooth.
 
-    - [ ] **4.1.0 Test Featured stub page**
-        - Navigate to home: `https://localhost:8444/`
-        - Verify redirects to `https://localhost:8444/featured`
-        - Verify welcome message displays: "Welcome to CineXplorer"
-        - Verify browse navigation section displays
-        - Verify 3 browse links present and labeled correctly
-        - Click Browse link → verify navigates to `/browse`
-        - Return to Featured, click Now Playing → verify navigates to `/browse/now-playing`
-        - Return to Featured, click Upcoming → verify navigates to `/browse/upcoming`
-        - Verify no console errors on Featured page
+    **Completed:** All pages verified working. Testing revealed missing 404 handling which was implemented.
 
-    - [ ] **4.1.1 Test Browse page (general browsing)**
-        - Navigate to Browse page: `https://localhost:8444/browse`
-        - Verify movies load
-        - Verify default sort is popularity (check UI state)
-        - Change sort to "Top Rated" → verify results update, movies are highly rated
-        - Change sort back to "Popular" → verify returns to popular movies
-        - Apply genre filter → verify results update
-        - Apply rating filter → verify results update
-        - Combine filters → verify both apply
-        - Test pagination with filters → verify filters preserved
-        - Clear filters → verify reset works
-        - Verify all filter controls are enabled (no protected keys)
+    - [x] **4.1.a Test Featured stub page** - All checks passed
+    - [x] **4.1.b Test Browse page (general browsing)** - All filtering/sorting/pagination working
+    - [x] **4.1.c Test Now Playing page** - Movies load, filters work, dates protected
+    - [x] **4.1.d Test Upcoming page** - Movies load (fixed!), filters work, dates protected
+    - [x] **4.1.e Test navigation and routing** - Navigation works; old URLs now show proper 404
+    - [x] **4.1.f Check browser console for errors** - No errors
 
-    - [ ] **4.1.2 Test Now Playing page**
-        - Navigate to Now Playing page: `https://localhost:8444/browse/now-playing`
-        - Verify movies load (not empty!)
-        - Verify movies have current/recent release dates
-        - Apply genre filter → verify results update
-        - Apply rating filter → verify results update
-        - Test pagination → verify filters preserved
-        - Verify date range cannot be changed (protected)
+    **Enhancements implemented during testing:**
 
-    - [ ] **4.1.3 Test Upcoming page**
-        - Navigate to Upcoming page: `https://localhost:8444/browse/upcoming`
-        - Verify movies load (NOT empty - this was broken!)
-        - Verify movies have future release dates
-        - Apply genre filter → verify results update
-        - Apply rating filter → verify results update
-        - Test pagination → verify filters preserved
-        - Verify date range cannot be changed (protected)
+    - Created `pages/core/` directory for system pages (parallels `components/core/`)
+    - Added `NotFound.tsx` (404) with catch-all route in App.tsx
+    - Added `Forbidden.tsx` (403) for future permission errors
+    - Fixed `MovieDetail.tsx` to show "Movie Not Found" for invalid IDs (was blank page)
+    - Improved error handling: 404s show informational message, other errors show error message
+    - Updated `ErrorBoundary` with `pt={12}` for top breathing room
 
-    - [ ] **4.1.4 Test navigation and routing**
-        - From Featured, navigate to each browse option
-        - From Browse/Now Playing/Upcoming, navigate back to Featured via nav
-        - Verify active nav indicators update correctly
-        - Test browser back/forward buttons
-        - Verify old `/movies/*` URLs redirect or 404 appropriately
+- [x] **4.2 Update documentation**
 
-    - [ ] **4.1.5 Check browser console for errors**
-        - Open developer console
-        - Navigate through all pages (Featured, Browse, Now Playing, Upcoming)
-        - Verify no console errors
-        - Verify no network errors (check Network tab)
+    **Completed:** Documentation was done during implementation phases (best practice).
 
-- [ ] **4.2 Update documentation**
+    - [x] **4.2.a Update API route docstrings** - Already comprehensive. All three endpoints have full docstrings
+      in `api.py` explaining thin wrapper pattern, presets, and filtering behavior.
 
-    - [ ] **4.2.1 Update API route docstrings**
-        - Document that all three endpoints (browse, now-playing, upcoming) are thin wrappers around TMDB discover
-        - List preset parameters for each endpoint (browse has zero presets, date-constrained have date+release_type)
-        - Document protected_keys and merge behavior for date-constrained endpoints
-        - Document that popular/top-rated are accessed via Browse page sort options (not separate endpoints)
+    - [x] **4.2.b Add code comments for merge logic** - Already complete. `merge_with_preset` helper (helpers.py:162-225)
+      has full docstring with merge rules, protected key behavior, and examples. Protected key constants defined.
 
-    - [ ] **4.2.2 Add code comments for merge logic**
-        - Explain why protected_keys exist (preserve date-constrained context)
-        - Document merge rules (preset wins for protected keys)
-        - Add examples in comments
-
-    - [ ] **4.2.3 Update architecture documentation**
-        - Update TECHNICAL-OVERVIEW with routing structure (if applicable)
-        - Document Featured page + Browse architecture
-        - Reference ADR-002 for decision rationale
-        - Document 3-endpoint simplified structure
+    - [x] **4.2.c Update architecture documentation** - ADR-002 comprehensively covers Featured page + Browse
+      architecture, protected keys UX, routing rationale, and 3-endpoint structure. TECHNICAL-OVERVIEW appropriately
+      high-level.
 
 ---
 
@@ -977,7 +935,7 @@ This phase addresses a complex test migration challenge. Tests were written when
     - Tests for upcoming: Do they expect 0 results (old bug)? Need updates?
     - Tests for discover/browse: Endpoint renamed, tests need updating for new name
 
-    - [ ] **5.1.1 Catalog existing tests per endpoint**
+    - [ ] **5.1.a Catalog existing tests per endpoint**
         - List all tests touching browse/discover, now-playing, upcoming (3 endpoints per ADR-002)
         - Note: discover endpoint renamed to browse - tests will reference old name
         - List all tests for popular/top-rated - mark for evaluation (endpoints eliminated)
@@ -986,7 +944,7 @@ This phase addresses a complex test migration challenge. Tests were written when
         - Note: Test organization is mid-migration, tests in intermediate state
         - **Create audit spreadsheet or matrix in notes file**
 
-    - [ ] **5.1.2 Create coverage matrix**
+    - [ ] **5.1.b Create coverage matrix**
         - Matrix format: Endpoint (rows) × Feature (columns)
         - Endpoints: Browse, Now-Playing, Upcoming (3 only)
         - Features: Genre filtering, rating filtering, year filtering, pagination, buffer mechanism, error handling, user
@@ -995,14 +953,14 @@ This phase addresses a complex test migration challenge. Tests were written when
         - **Add column:** "Was endpoint tested before refactor?" (old tests may need updates)
         - Document in notes file under "Coverage Matrix" section
 
-    - [ ] **5.1.3 Evaluate popular/top-rated test intent**
+    - [ ] **5.1.c Evaluate popular/top-rated test intent**
         - Review all tests written for `/api/movies/popular` endpoint
         - Review all tests written for `/api/movies/top-rated` endpoint
         - For each test, answer: "What was this testing? Does Browse page need similar coverage?"
         - **Decision matrix:** Delete (no longer relevant) vs Migrate (adapt for Browse page)
         - Document decisions in notes file
 
-    - [ ] **5.1.4 Calculate actual test gap**
+    - [ ] **5.1.d Calculate actual test gap**
         - Count missing endpoint × feature combinations
         - Count tests that need updates (written for old broken behavior)
         - Estimate realistic test count needed (not speculation)
@@ -1013,7 +971,7 @@ This phase addresses a complex test migration challenge. Tests were written when
 
     **Goal:** Minimize test duplication through parametrized patterns and shared fixtures.
 
-    - [ ] **5.2.1 Identify common behaviors across endpoints**
+    - [ ] **5.2.a Identify common behaviors across endpoints**
         - All 3 endpoints should handle genre filters
         - All 3 endpoints should handle rating filters
         - All 3 endpoints should handle pagination correctly
@@ -1023,21 +981,21 @@ This phase addresses a complex test migration challenge. Tests were written when
         - **NEW:** Now-playing and upcoming should enforce protected keys (date range)
         - **NEW:** All sort options should return non-zero results (discovered issue during Phase 3.6)
 
-    - [ ] **5.2.2 Design parametrized test pattern**
+    - [ ] **5.2.b Design parametrized test pattern**
         - Pattern for testing all 3 endpoints with same behavior (browse, now-playing, upcoming)
         - Use `@pytest.mark.parametrize('endpoint,preset_params', [...])` approach
         - Define endpoint configurations (URL, expected preset keys)
         - Note: Browse has no protected keys; now-playing/upcoming have date + release_type protected
         - Document pattern in notes file with code example
 
-    - [ ] **5.2.3 Design shared fixtures for test data**
+    - [ ] **5.2.c Design shared fixtures for test data**
         - Reusable TMDB mock responses
         - Common filter parameter sets
         - Expected response structures
         - Forward-compatible with test organization (place in integration/conftest.py)
         - Follow type safety strategy (properly typed fixtures, no `Any`)
 
-    - [ ] **5.2.4 Plan test file organization**
+    - [ ] **5.2.d Plan test file organization**
         - Where new tests should live: `backend/apps/movie/tests/integration/api/`
         - File naming: Follow test organization Phase 3 decisions
         - Anticipated files: `test_date_constrained_endpoints.py` for now-playing/upcoming wrapper tests
@@ -1050,7 +1008,7 @@ This phase addresses a complex test migration challenge. Tests were written when
 
     **Note:** Basic smoke tests written in Phase 2.1.3. This is comprehensive coverage.
 
-    - [ ] **5.3.1 Create comprehensive test file for merge logic in `test_endpoint_preset_merge.py`**
+    - [ ] **5.3.a Create comprehensive test file for merge logic in `test_endpoint_preset_merge.py`**
         - Location: `backend/apps/movie/tests/unit/helpers/` (forward-compatible)
         - Test: User filters + preset (additive merge)
         - Test: User conflicts with protected key (preset wins)
@@ -1060,7 +1018,7 @@ This phase addresses a complex test migration challenge. Tests were written when
         - Test: Multiple protected keys
         - Test: Edge cases (None values, empty strings)
 
-    - [ ] **5.3.2 Run merge logic tests and verify all pass**
+    - [ ] **5.3.b Run merge logic tests and verify all pass**
         - Command: `docker compose -f infrastructure/docker-compose.yml exec backend pytest apps/movie/tests/unit/helpers/test_endpoint_preset_merge.py`
         - All tests should PASS (helper implemented in Phase 2.1)
 
@@ -1070,9 +1028,9 @@ This phase addresses a complex test migration challenge. Tests were written when
 
     **CRITICAL:** These tests verify the FIXED endpoints. Old tests may have assumed broken behavior.
 
-    - [ ] **5.4.1 Create parametrized test file in `test_date_constrained_endpoints.py`**
+    - [ ] **5.4.a Create parametrized test file in `test_date_constrained_endpoints.py`**
         - Location: `backend/apps/movie/tests/integration/api/` (forward-compatible)
-        - Use parametrized pattern from Phase 5.2.2 for now-playing and upcoming
+        - Use parametrized pattern from Phase 5.2.b for now-playing and upcoming
         - Test: Genre filter works on both endpoints
         - Test: Rating filter works on both endpoints
         - Test: Multiple filters work together on both endpoints
@@ -1082,7 +1040,7 @@ This phase addresses a complex test migration challenge. Tests were written when
         - Follow type safety strategy: Properly typed fixtures, use ModelSchema patterns
         - All tests should PASS (endpoints fixed in Phase 2)
 
-    - [ ] **5.4.2 Write preset-specific tests for date-constrained endpoints**
+    - [ ] **5.4.b Write preset-specific tests for date-constrained endpoints**
         - Test: Now-playing preset includes correct date range (today-30 to today+5) and release_type
         - Test: Upcoming preset includes correct future date range (today+5 to today+60) and release_type
         - Test: Protected keys (date range, release_type) cannot be overridden by user filters
@@ -1090,13 +1048,13 @@ This phase addresses a complex test migration challenge. Tests were written when
         - Test: Date range verification - now-playing movies have recent dates, upcoming have future dates
         - All tests should PASS
 
-    - [ ] **5.4.3 Write tests for Browse page endpoint usage**
+    - [ ] **5.4.c Write tests for Browse page endpoint usage**
         - Location: Add to existing browse test files or new `test_browse_page.py`
         - Test: Browse page calls browse endpoint (`/api/movies/browse`)
         - Test: Browse page defaults to `sort_by=popularity.desc`
         - Test: Browse page allows user to change sort (no protected keys)
         - Test: Browse page supports all filters (genre, rating, year, keywords, people)
-        - **Migrate intent from old popular/top-rated tests** (per 5.1.3 evaluation)
+        - **Migrate intent from old popular/top-rated tests** (per 5.1.c evaluation)
         - Tests for existing browse functionality should PASS
         - **NEW - Sort behavior tests (discovered during Phase 3.6):**
             - Test: All sort options return >0 results (parametrized)
@@ -1109,7 +1067,7 @@ This phase addresses a complex test migration challenge. Tests were written when
             - Test: Sort + filter combinations work together
             - Rationale: Prevent silent regression where sort options return 0 results
 
-    - [ ] **5.4.4 Update existing endpoint tests**
+    - [ ] **5.4.d Update existing endpoint tests**
         - **Update existing upcoming endpoint tests:**
             - Update upcoming date range in test fixtures (now uses today+5 to today+60)
             - Update mock TMDB responses to match new window
@@ -1123,7 +1081,7 @@ This phase addresses a complex test migration challenge. Tests were written when
             - Update endpoint name from discover to browse
             - Verify all test references updated
 
-    - [ ] **5.4.5 Implement DRY test patterns and shared fixtures**
+    - [ ] **5.4.e Implement DRY test patterns and shared fixtures**
         - Create shared fixtures in integration conftest
         - Location: `backend/apps/movie/tests/integration/conftest.py`
         - Fixture: `date_constrained_endpoint_configs` (parametrize helper for now-playing/upcoming)
@@ -1131,7 +1089,7 @@ This phase addresses a complex test migration challenge. Tests were written when
         - Fixture: `common_filter_params` (genre, rating, year test cases)
         - Follow type safety strategy: Properly typed return values
 
-    - [ ] **5.4.6 Run endpoint tests and verify all pass**
+    - [ ] **5.4.f Run endpoint tests and verify all pass**
         - Command: `docker compose -f infrastructure/docker-compose.yml exec backend pytest apps/movie/tests/integration/api/test_date_constrained_endpoints.py`
         - All endpoint tests should PASS (endpoints are fixed)
         - Document test count: X test functions, Y total executions with parametrization
@@ -1142,7 +1100,7 @@ This phase addresses a complex test migration challenge. Tests were written when
 
     **Note:** Basic frontend tests may have been written in Phase 3.8. This is comprehensive coverage.
 
-    - [ ] **5.5.1 Create comprehensive frontend test file for Featured page**
+    - [ ] **5.5.a Create comprehensive frontend test file for Featured page**
         - Location: `frontend/src/pages/__tests__/Featured.test.tsx` (or similar based on structure)
         - Test: Featured page component renders without errors
         - Test: Displays welcome message "Welcome to CineXplorer"
@@ -1151,7 +1109,7 @@ This phase addresses a complex test migration challenge. Tests were written when
         - Verify link destinations: /browse, /browse/now-playing, /browse/upcoming
         - Test: Navigation links work correctly
 
-    - [ ] **5.5.2 Create comprehensive routing tests for new `/browse/*` structure**
+    - [ ] **5.5.b Create comprehensive routing tests for new `/browse/*` structure**
         - Test: `/` route redirects to `/featured`
         - Test: `/featured` route renders Featured component
         - Test: `/browse` route renders Browse page (general movie browsing)
@@ -1160,7 +1118,7 @@ This phase addresses a complex test migration challenge. Tests were written when
         - Test: Old `/movies/*` routes redirect to `/browse/*` or return 404
         - Verify redirect logic for legacy URLs
 
-    - [ ] **5.5.3 Create comprehensive tests for Browse page component**
+    - [ ] **5.5.c Create comprehensive tests for Browse page component**
         - Test: Browse page renders with browse endpoint integration
         - Test: Browse page shows filters (genre, rating, year, sort, etc.)
         - Test: Sort defaults to popularity but can be changed
@@ -1168,9 +1126,9 @@ This phase addresses a complex test migration challenge. Tests were written when
         - Test: Genre filter updates results
         - Test: Rating filter updates results
         - Test: Sort change updates results
-        - **Migrate relevant test intent from old Popular/Top-Rated page tests** (per 5.1.3)
+        - **Migrate relevant test intent from old Popular/Top-Rated page tests** (per 5.1.c)
 
-    - [ ] **5.5.4 Run Featured/routing tests and verify all pass**
+    - [ ] **5.5.d Run Featured/routing tests and verify all pass**
         - Command: `docker compose -f infrastructure/docker-compose.yml exec frontend npm test Featured`
         - Command: `docker compose -f infrastructure/docker-compose.yml exec frontend npm test Browse`
         - All tests should PASS (components implemented in Phase 3)
@@ -1181,39 +1139,39 @@ This phase addresses a complex test migration challenge. Tests were written when
 
     **Note:** This is future planning work, not implementation. Can be done at end of Phase 5.
 
-    - [ ] **5.6.1 Create notes file for future Featured page design work**
+    - [ ] **5.6.a Create notes file for future Featured page design work**
         - Create: `.arc/active/incidental/notes-featured-page-design.md`
         - Document decision context (ADR-002 reference)
         - Create placeholder sections for research findings
 
-    - [ ] **5.6.2 Research TMDB trending/popular endpoints**
+    - [ ] **5.6.b Research TMDB trending/popular endpoints**
         - Identify available TMDB endpoints: `/trending/*`, `/movie/popular`, others
         - Document parameters, response formats, update frequency
         - Determine what content can be used for Featured page
         - Document findings in notes file
 
-    - [ ] **5.6.3 Research industry patterns for hero landing pages**
+    - [ ] **5.6.c Research industry patterns for hero landing pages**
         - TMDB website: Analyze home page structure, content types, layout
         - Letterboxd: Analyze featured content strategy, collections approach
         - Netflix: Analyze hero sections, horizontal scrolling patterns
         - Other movie discovery services (IMDb, Trakt, etc.)
         - Document findings in notes file
 
-    - [ ] **5.6.4 Analyze content strategy options for Featured page**
+    - [ ] **5.6.d Analyze content strategy options for Featured page**
         - What content types: Trending, popular this week, featured collections, new releases
         - Update frequency: How to keep content fresh with TMDB APIs
         - Layout patterns: Hero sections, horizontal scrolls, grid layouts
         - Relationship to Browse/Now Playing/Upcoming: How Featured complements browse tools
         - Document options and trade-offs in notes file
 
-    - [ ] **5.6.5 Scope future Featured page hero implementation**
+    - [ ] **5.6.e Scope future Featured page hero implementation**
         - Required components (hero section, collections, navigation)
-        - Data requirements (TMDB API endpoints identified in 5.6.2)
+        - Data requirements (TMDB API endpoints identified in 5.6.b)
         - Frontend work estimate
         - Testing approach
         - Document in notes file for future task list creation
 
-    - [ ] **5.6.6 Update notes file with implementation timeline**
+    - [ ] **5.6.f Update notes file with implementation timeline**
         - Recommendation: After all active task lists complete
         - Rationale: This is feature work, not technical debt
         - Interim: Stub Featured page provides functional navigation
@@ -1226,23 +1184,23 @@ This phase addresses a complex test migration challenge. Tests were written when
 
 - [ ] **6.1 Run full quality gates**
 
-    - [ ] **6.1.1 Run backend test suite**
+    - [ ] **6.1.a Run backend test suite**
         - Command: `docker compose -f infrastructure/docker-compose.yml exec backend pytest apps/`
         - Verify 100% pass rate
         - Verify test count increased by expected amount
 
-    - [ ] **6.1.2 Run backend test suite with coverage**
+    - [ ] **6.1.b Run backend test suite with coverage**
         - Command: `docker compose -f infrastructure/docker-compose.yml exec backend pytest --cov=apps.movie
           --cov-report=term-missing apps/movie/tests/`
         - Verify coverage maintained or improved
         - Check that new wrapper code is covered
 
-    - [ ] **6.1.3 Run frontend tests**
+    - [ ] **6.1.c Run frontend tests**
         - Command: `docker compose -f infrastructure/docker-compose.yml exec frontend npm test`
         - Should be unchanged (backend-only changes)
         - Verify 100% pass rate
 
-    - [ ] **6.1.4 Run all linting and type checking**
+    - [ ] **6.1.d Run all linting and type checking**
         - Backend linting: `.venv-backend/bin/ruff check backend/apps/ backend/config/`
         - Python type checking: `npx pyright backend/apps/ backend/config/ --project backend`
         - Frontend linting: `docker compose -f infrastructure/docker-compose.yml exec frontend npm run lint`
@@ -1251,14 +1209,14 @@ This phase addresses a complex test migration challenge. Tests were written when
 
 - [ ] **6.2 Code review and cleanup**
 
-    - [ ] **6.2.1 Review all changed files**
+    - [ ] **6.2.a Review all changed files**
         - Check for commented-out code → remove
         - Check for unused imports → remove
         - Check for consistent naming patterns
         - Check for consistent code style
         - Verify all tests follow type safety strategy
 
-    - [ ] **6.2.2 Verify no dead code remains**
+    - [ ] **6.2.b Verify no dead code remains**
         - Confirm old service methods removed
         - Confirm no duplicate helper functions
         - Check for orphaned test fixtures

@@ -153,7 +153,7 @@ const AdvancedMovieFilters = ({
           onChange={(genres) => updateFilter("genres", genres)}
         />
 
-        <Separator />
+        <Separator borderColor="border-subtle-01" />
 
         <HStack justify="space-between" align="start">
           <Box>

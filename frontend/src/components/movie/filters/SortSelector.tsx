@@ -40,6 +40,9 @@ const SortSelector = ({ value, onChange }: SortSelectorProps) => {
           h="32px"
           fontSize="14px"
           lineHeight="1.3"
+          borderColor="border-strong-01"
+          _hover={{ borderColor: "border-strong-02", bg: "tertiary/8" }}
+          _focusVisible={{ borderColor: "tertiary", outline: "none" }}
           css={{
             padding: "6px 12px",
             "& [data-part='indicator']": {

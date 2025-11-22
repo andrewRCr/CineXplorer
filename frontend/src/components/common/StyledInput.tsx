@@ -46,21 +46,21 @@ interface StyledInputProps extends InputProps {
 }
 
 export const StyledInput = ({ layer = "01", ...props }: StyledInputProps) => {
-  const borderHover = layer === "01" ? "border-strong-02" : "border-strong-03";
+  const layerNum = parseInt(layer);
 
   return (
     <Input
-      borderColor={`border-strong-${layer}`}
-      bg={layer === "01" ? "transparent" : "background"}
+      bg={layerNum === 1 ? "transparent" : "background"}
       color="foreground"
       css={{
+        "border-color": `var(--chakra-colors-border-strong-0${layerNum})`,
         "&:hover:not(:focus)": {
-          borderColor: `var(--chakra-colors-${borderHover})`,
+          borderColor: `var(--chakra-colors-border-strong-0${layerNum + 1})`,
           backgroundColor: "color-mix(in srgb, var(--chakra-colors-tertiary) 8%, transparent)",
         },
         "&:focus": {
           borderColor: "var(--chakra-colors-tertiary)",
-          backgroundColor: layer === "01" ? "transparent" : "var(--chakra-colors-background)",
+          backgroundColor: layerNum === 1 ? "transparent" : "var(--chakra-colors-background)",
           outline: "none",
         },
       }}

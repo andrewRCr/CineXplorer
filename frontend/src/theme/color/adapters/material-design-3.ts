@@ -152,6 +152,7 @@ export function createMaterialAdapter(mode: "light" | "dark"): UnifiedTheme {
         palette.outline, // Strong base
         mode === "light" ? "alternating" : "progressive", // ADR-008: alternating in light, progressive in dark
     );
+    const borderSubtle01 = borderHierarchy.subtle01; // Same as subtle00 (light) or +6.3% (dark)
     const borderSubtle02 = borderHierarchy.subtle02;
     const borderStrong02 = borderHierarchy.strong02;
     const borderStrong03 = borderHierarchy.strong03;
@@ -238,6 +239,7 @@ export function createMaterialAdapter(mode: "light" | "dark"): UnifiedTheme {
 
         // Border hierarchy
         "border-subtle-00": borderSubtle00,
+        "border-subtle-01": borderSubtle01,
         "border-subtle-02": borderSubtle02,
         "border-strong-01": borderStrong01,
         "border-strong-02": borderStrong02,

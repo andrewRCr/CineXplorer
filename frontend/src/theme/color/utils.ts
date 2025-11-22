@@ -121,6 +121,7 @@ export function deriveBorderHierarchy(
     pattern: "alternating" | "progressive",
 ): {
     subtle00: string;
+    subtle01: string;
     subtle02: string;
     strong01: string;
     strong02: string;
@@ -132,6 +133,7 @@ export function deriveBorderHierarchy(
         // same border is visible on both backgrounds
         return {
             subtle00: baseSubtle,
+            subtle01: baseSubtle, // Same as 00
             subtle02: baseSubtle, // Same as 00
             strong01: baseStrong,
             strong02: baseStrong, // Same as 01
@@ -139,12 +141,13 @@ export function deriveBorderHierarchy(
         };
     }
 
-    // 5-tier system: Progressive lightening per layer
+    // 6-tier system: Progressive lightening per layer
     // Each layer is lighter than previous, borders must lighten too
     // to maintain visibility. Uses Carbon's official deltas (compound).
     const strong02 = adjustColor(baseStrong, 20.8);
     return {
         subtle00: baseSubtle,
+        subtle01: adjustColor(baseSubtle, 6.3),  // Midpoint between 00 and 02
         subtle02: adjustColor(baseSubtle, 12.6), // Carbon delta
         strong01: baseStrong,
         strong02: strong02, // Carbon delta

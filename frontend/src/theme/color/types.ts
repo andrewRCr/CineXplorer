@@ -175,6 +175,15 @@ export interface UnifiedTheme {
     "border-subtle-00": string;
 
     /**
+     * Subtle border on layer-01 surfaces.
+     *
+     * **Purpose:** Decorative borders for cards and panels on layer-01
+     * **Usage:** Separators, dividers within cards on layer-01
+     * **Note:** Derived as midpoint between subtle-00 and subtle-02
+     */
+    "border-subtle-01": string;
+
+    /**
      * Subtle border on layer-02 surfaces.
      *
      * **Purpose:** Maintains consistent subtle aesthetic on elevated surfaces

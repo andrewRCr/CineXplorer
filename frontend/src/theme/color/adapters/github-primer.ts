@@ -167,6 +167,7 @@ export function createGithubAdapter(mode: "light" | "dark"): UnifiedTheme {
         palette.border_emphasis, // Strong base for accessible UI component borders
         mode === "light" ? "alternating" : "progressive" // Pattern selection per ADR-008
     );
+    const borderSubtle01 = borderHierarchy.subtle01; // Same as subtle00 (light) or +6.3% (dark)
     const borderSubtle02 = borderHierarchy.subtle02; // Same as subtle00 (light) or +12.6% (dark)
     const borderStrong02 = borderHierarchy.strong02; // Same as strong01 (light) or +20.8% (dark)
     const borderStrong03 = borderHierarchy.strong03; // Same as strong01 (light) or +23.7% compound (dark)
@@ -230,6 +231,7 @@ export function createGithubAdapter(mode: "light" | "dark"): UnifiedTheme {
 
         // Border hierarchy
         "border-subtle-00": borderSubtle00,
+        "border-subtle-01": borderSubtle01,
         "border-subtle-02": borderSubtle02,
         "border-strong-01": borderStrong01,
         "border-strong-02": borderStrong02,

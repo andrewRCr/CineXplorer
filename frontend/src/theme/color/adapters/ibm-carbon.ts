@@ -107,6 +107,12 @@ export function createCarbonAdapter(mode: "light" | "dark"): UnifiedTheme {
 
     // Border hierarchy (Carbon's official per-layer borders)
     const borderSubtle00 = palette.border_subtle_00; // Low-contrast dividers on background/layer-01
+    // Derive borderSubtle01 as midpoint between subtle00 and subtle02
+    // In light mode (alternating): same as subtle00/02
+    // In dark mode (progressive): +6.3% from subtle00
+    const borderSubtle01 = mode === "light"
+        ? palette.border_subtle_00
+        : adjustColor(palette.border_subtle_00, 6.3);
     const borderSubtle02 = palette.border_subtle_02; // Low-contrast dividers on layer-02
     const borderStrong01 = palette.border_strong_01; // Accessible borders on layer-01
     const borderStrong02 = palette.border_strong_02; // Accessible borders on layer-02
@@ -215,8 +221,9 @@ export function createCarbonAdapter(mode: "light" | "dark"): UnifiedTheme {
         popover,
         "on-popover": popoverForeground,
 
-        // Border hierarchy (mostly official Carbon)
+        // Border hierarchy (mostly official Carbon, subtle01 derived)
         "border-subtle-00": borderSubtle00,
+        "border-subtle-01": borderSubtle01,
         "border-subtle-02": borderSubtle02,
         "border-strong-01": borderStrong01,
         "border-strong-02": borderStrong02,

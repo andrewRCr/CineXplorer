@@ -7,7 +7,8 @@ parameters, including parameter name mapping and type preservation logic.
 
 from __future__ import annotations
 
-from typing import TypedDict
+from collections.abc import Callable
+from typing import TypedDict, cast
 
 from .result_filtering import MIN_VOTE_COUNT
 
@@ -87,6 +88,18 @@ HTTP_TO_SERVICE_MAPPING: dict[str, str] = {
     'certification': 'certification',
     'region': 'region',
     'tmdb_page_start': 'tmdb_page_start',
+}
+
+# Derived parameter transforms: source HTTP field → (target service param, transform function)
+# Used for backend filtering parameters that are derived from HTTP inputs
+# Transform functions: object → int | float (typed at transform boundary)
+DERIVED_PARAM_TRANSFORMS: dict[str, tuple[str, Callable[[object], int | float]]] = {
+    # Year extraction from ISO date strings (e.g., '2020-01-01' → 2020)
+    'release_date_gte': ('year_min', lambda v: int(str(v)[:4])),
+    'release_date_lte': ('year_max', lambda v: int(str(v)[:4])),
+    # Rating passthrough (Pydantic validates as float, cast tells type checker)
+    'vote_average_gte': ('rating_min', lambda v: cast(float, v)),
+    'vote_average_lte': ('rating_max', lambda v: cast(float, v)),
 }
 
 # Numeric parameters that should preserve type (not convert to string)

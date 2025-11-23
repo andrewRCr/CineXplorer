@@ -2,14 +2,14 @@
 from __future__ import annotations
 
 from datetime import date
-from typing import Annotated
+from typing import Annotated, cast
 
 from core.models import Movie
 from ninja import Schema
 from ninja.orm import ModelSchema
 from pydantic import Field, field_validator
 
-from .services.filtering import HTTP_TO_SERVICE_MAPPING
+from .services.filtering import DERIVED_PARAM_TRANSFORMS, HTTP_TO_SERVICE_MAPPING
 
 
 class MovieSearchParamsSchema(Schema):
@@ -325,33 +325,22 @@ class MovieDiscoverFilterSchema(Schema):
             return None
         return v
 
-    def _extract_year_from_date(self, date_str: str) -> int:
-        """Extract year as integer from ISO date string (e.g., '2020-01-01' → 2020)."""
-        return int(date_str[:4])
-
     def _apply_derived_params(
         self,
         data: dict[str, object],
         params: dict[str, str | int | float | bool]
     ) -> None:
         """Apply derived parameters (backend filtering, aliases, transformations)."""
-        # Backend filtering: Extract year boundaries from date strings
-        if 'release_date_gte' in data:
-            params['year_min'] = self._extract_year_from_date(str(data['release_date_gte']))  # type: ignore[assignment]
-        if 'release_date_lte' in data:
-            params['year_max'] = self._extract_year_from_date(str(data['release_date_lte']))  # type: ignore[assignment]
-
-        # Backend filtering: Extract rating boundaries
-        if 'vote_average_gte' in data:
-            params['rating_min'] = data['vote_average_gte']  # type: ignore[assignment]
-        if 'vote_average_lte' in data:
-            params['rating_max'] = data['vote_average_lte']  # type: ignore[assignment]
+        # Apply declarative transforms from mapping (year extraction, rating passthrough)
+        for source_key, (target_key, transform) in DERIVED_PARAM_TRANSFORMS.items():
+            if source_key in data:
+                params[target_key] = transform(data[source_key])
 
         # Alias handling: 'genres' or 'with_genres' → 'genres'
         if 'genres' in data:
-            params['genres'] = data['genres']  # type: ignore[assignment]
+            params['genres'] = cast(str, data['genres'])
         elif 'with_genres' in data:
-            params['genres'] = data['with_genres']  # type: ignore[assignment]
+            params['genres'] = cast(str, data['with_genres'])
 
         # Decade conversion: "1990s" → date range
         if 'decade' in data:

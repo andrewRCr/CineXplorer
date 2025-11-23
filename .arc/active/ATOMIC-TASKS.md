@@ -17,13 +17,6 @@
 
 <!-- Type safety & DRY cleanup tasks - ordered by dependencies -->
 
-- [ ] Declarative derived params extraction in schemas.py
-    - **Problem:** `_apply_derived_params()` has repetitive if/assign pattern with `type: ignore` on every line
-    - **Fix:** Create `DERIVED_PARAM_TRANSFORMS` mapping in filtering.py with (target_key, transform_fn) tuples
-    - **Benefits:** DRY, single type assertion at transform boundary, easier to extend
-    - **Files:** `backend/apps/movie/schemas.py`, `backend/apps/movie/services/filtering.py`
-    - **Estimate:** ~30 min
-
 - [ ] Extract service error handling helper
     - **Problem:** Same 10-line error handling pattern repeated in every service method
     - **Pattern:** `if not response.is_success()` → `handle_error` → `get_json_data()` → `if not result` → `raise`
@@ -78,6 +71,13 @@
 ## Completed (This Week)
 
 <!-- Move completed tasks here (marked [x]); delete all during weekly review  -->
+
+- [x] Declarative derived params extraction in schemas.py
+    - **Outcome:** Created `DERIVED_PARAM_TRANSFORMS` mapping in filtering.py with `cast` for type safety
+    - **Changes:** Reduced `_apply_derived_params()` from 10 repetitive lines to 3-line loop over mapping
+    - **Removed type ignores:** Used `cast()` instead of `type: ignore` per type safety strategy
+    - **Files:** `backend/apps/movie/schemas.py`, `backend/apps/movie/services/filtering.py`
+    - **Tests:** All 159 movie tests pass
 
 - [x] Consolidate redundant parameter mappings + Rename FILTER_MAPPING + Add TypedDict + Simplify mapping flow
     - **Outcome:** Single source of truth in `filtering.py` with `PARAM_MAPPING`, `HTTP_TO_SERVICE_MAPPING`,

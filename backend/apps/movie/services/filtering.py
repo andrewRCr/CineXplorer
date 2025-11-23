@@ -8,49 +8,87 @@ parameters, including parameter name mapping and type preservation logic.
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import TypedDict, cast
+from typing import cast
 
-from .result_filtering import MIN_VOTE_COUNT
+from pydantic import BaseModel, ConfigDict
 
-# Type definition for service layer parameters
-# All fields are optional since filters are user-provided
-# Uses functional syntax to support dot notation keys (e.g., 'vote_average.gte')
-ServiceParams = TypedDict('ServiceParams', {
-    # Sorting
-    'sort_by': str,
+# Minimum vote threshold for data quality filtering
+# Movies with fewer votes have unreliable ratings
+MIN_VOTE_COUNT = 10
 
-    # Genre/keyword filters
-    'genres': str,
-    'keywords': str,
-    'people': str,
 
-    # Year filter
-    'year': int,
+class ServiceParams(BaseModel):
+    """Service layer parameters for movie discovery.
 
-    # Vote filters (dot notation for TMDB compatibility)
-    'vote_average.gte': float,
-    'vote_average.lte': float,
-    'vote_count.gte': int,
-    'vote_count.lte': int,
+    This Pydantic model provides:
+    - Runtime validation
+    - Attribute access (params.year_min) with IDE type awareness
+    - extra="forbid" to catch typos at runtime
+    - Consistent pattern with Django Ninja schemas
 
-    # Release date filters (dot notation)
-    'release_date.gte': str,
-    'release_date.lte': str,
+    TMDB API params use underscore notation (Pythonic), converted to dot notation
+    in get_tmdb_params() for TMDB API compatibility.
+    """
 
-    # Certification
-    'certification': str,
-    'region': str,
-    'with_release_type': str,
+    # TMDB API params
+    sort_by: str | None = None
+    genres: str | None = None
+    keywords: str | None = None
+    people: str | None = None
+    year: int | None = None
+    vote_average_gte: float | None = None
+    vote_average_lte: float | None = None
+    vote_count_gte: int | None = None
+    vote_count_lte: int | None = None
+    release_date_gte: str | None = None
+    release_date_lte: str | None = None
+    certification: str | None = None
+    region: str | None = None
+    with_release_type: str | None = None
+    tmdb_page_start: int | None = None
 
-    # Pagination
-    'tmdb_page_start': int,
+    # Backend filtering params (not sent to TMDB API)
+    year_min: int | None = None
+    year_max: int | None = None
+    rating_min: float | None = None
+    rating_max: float | None = None
+    min_vote_count: int | None = None
 
-    # Backend filtering (derived from date params for second-pass filtering)
-    'year_min': int,
-    'year_max': int,
-    'rating_min': float,
-    'rating_max': float,
-}, total=False)
+    model_config = ConfigDict(extra="forbid")
+
+    def get_tmdb_params(self) -> dict[str, str | int | float | bool]:
+        """Get TMDB API params with dot notation, excluding backend-only fields.
+
+        Converts underscore notation (Pythonic) to dot notation (TMDB API format)
+        and excludes backend-only filtering parameters.
+
+        Returns:
+            Dictionary ready for build_tmdb_params() with dot notation keys
+        """
+        # Backend-only fields that shouldn't go to TMDB API
+        backend_only = {
+            'year_min', 'year_max', 'rating_min', 'rating_max', 'min_vote_count'
+        }
+
+        # Map underscore to dot notation for TMDB API
+        underscore_to_dot = {
+            'vote_average_gte': 'vote_average.gte',
+            'vote_average_lte': 'vote_average.lte',
+            'vote_count_gte': 'vote_count.gte',
+            'vote_count_lte': 'vote_count.lte',
+            'release_date_gte': 'release_date.gte',
+            'release_date_lte': 'release_date.lte',
+        }
+
+        result: dict[str, str | int | float | bool] = {}
+        for key, value in self.model_dump(exclude_none=True).items():
+            if key in backend_only:
+                continue
+            # Convert to dot notation if needed
+            output_key = underscore_to_dot.get(key, key)
+            result[output_key] = value
+
+        return result
 
 # Parameter mapping: service parameter names (dot notation) → TMDB API parameter names
 # This is the single source of truth for all parameter name transformations.
@@ -73,16 +111,16 @@ PARAM_MAPPING: dict[str, str] = {
     'tmdb_page_start': 'tmdb_page_start',
 }
 
-# HTTP param name → service param name (dot notation)
-# Used by schema layer to normalize incoming HTTP parameters
+# HTTP param name → ServiceParams field name (underscore notation)
+# Used by schema layer to map HTTP parameters to ServiceParams fields
+# Most are identity mappings since HTTP uses underscores, ServiceParams uses underscores
 HTTP_TO_SERVICE_MAPPING: dict[str, str] = {
-    'vote_average_gte': 'vote_average.gte',
-    'vote_average_lte': 'vote_average.lte',
-    'vote_count_gte': 'vote_count.gte',
-    'vote_count_lte': 'vote_count.lte',
-    'release_date_gte': 'release_date.gte',
-    'release_date_lte': 'release_date.lte',
-    # Passthrough params (same name)
+    'vote_average_gte': 'vote_average_gte',
+    'vote_average_lte': 'vote_average_lte',
+    'vote_count_gte': 'vote_count_gte',
+    'vote_count_lte': 'vote_count_lte',
+    'release_date_gte': 'release_date_gte',
+    'release_date_lte': 'release_date_lte',
     'sort_by': 'sort_by',
     'year': 'year',
     'certification': 'certification',

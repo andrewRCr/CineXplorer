@@ -9,7 +9,11 @@ from ninja import Schema
 from ninja.orm import ModelSchema
 from pydantic import Field, field_validator
 
-from .services.filtering import DERIVED_PARAM_TRANSFORMS, HTTP_TO_SERVICE_MAPPING
+from .services.filtering import (
+    DERIVED_PARAM_TRANSFORMS,
+    HTTP_TO_SERVICE_MAPPING,
+    ServiceParams,
+)
 
 
 class MovieSearchParamsSchema(Schema):
@@ -349,18 +353,14 @@ class MovieDiscoverFilterSchema(Schema):
                 year = int(decade_str[:4])
                 start_year = year if decade_str.endswith('s') else (year // 10) * 10
                 end_year = start_year + 9
-                params['release_date.gte'] = f"{start_year}-01-01"
-                params['release_date.lte'] = f"{end_year}-12-31"
+                params['release_date_gte'] = f"{start_year}-01-01"
+                params['release_date_lte'] = f"{end_year}-12-31"
             except (ValueError, TypeError):
                 pass
 
-    def to_service_params(self) -> dict[str, str | int | float | bool]:
+    def to_service_params(self) -> ServiceParams:
         """
-        Convert filter schema to service layer parameter format.
-
-        The service layer (movie_service.discover_movies) expects parameter names
-        in dot notation (e.g., 'genres', 'vote_average.gte') which it then maps
-        to TMDB API format internally.
+        Convert filter schema to ServiceParams Pydantic model.
 
         This method extracts parameters for both:
         1. TMDB API filtering (primary filter - reduces millions to thousands)
@@ -369,7 +369,7 @@ class MovieDiscoverFilterSchema(Schema):
         Uses HTTP_TO_SERVICE_MAPPING from filtering.py as single source of truth.
 
         Returns:
-            Dictionary with service layer parameters (None values excluded)
+            ServiceParams model with validated parameters
         """
         # Get all non-None values from schema using Pydantic's model_dump
         data = self.model_dump(exclude_none=True)
@@ -383,7 +383,8 @@ class MovieDiscoverFilterSchema(Schema):
         # Apply derived parameters (backend filtering, aliases, transformations)
         self._apply_derived_params(data, params)
 
-        return params
+        # Use model_validate for type coercion from mixed dict types
+        return ServiceParams.model_validate(params)
 
 
 __all__ = [

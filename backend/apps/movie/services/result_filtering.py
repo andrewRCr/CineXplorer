@@ -25,8 +25,18 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from .filtering import MIN_VOTE_COUNT
+
 if TYPE_CHECKING:
     from movie.schemas import MovieBaseSchema
+
+# Re-export for backwards compatibility
+__all__ = [
+    'MIN_VOTE_COUNT',
+    'filter_movies_by_completeness',
+    'filter_movies_by_rating',
+    'filter_movies_by_year',
+]
 
 
 # ============================================================================
@@ -114,16 +124,8 @@ def filter_movies_by_year(
 # Rating Filtering
 # ============================================================================
 
-# Vote count quality threshold for filtering movies by engagement level
-#
-# MIN_VOTE_COUNT (10 votes):
-#   Applied universally across all browsing and filtering scenarios.
-#   Removes statistical noise and low-quality content from movies with 1-9 votes
-#   while maintaining broad catalog access to legitimate films.
-#   Filters ~15% of results on popular pages, primarily affecting unreleased titles,
-#   limited releases, and adult-oriented content that slips through genre filtering.
-#   Works with genre completeness filtering for dual quality assurance.
-MIN_VOTE_COUNT = 10
+# Vote count quality threshold imported from filtering.py
+# MIN_VOTE_COUNT (10 votes): Applied universally to filter statistical noise
 
 
 def filter_movies_by_rating(
@@ -309,8 +311,5 @@ def filter_movies_by_completeness(
 # - Pre-populating local database with TMDB movie catalog (including runtime)
 # - Background sync jobs to keep data fresh
 # - Query local DB for runtime filtering, then fetch fresh data from TMDB for display
-# - This is a major architectural change warranting its own PRD; likely not feasible
-#
-# See: .arc/active/technical/prd-service-layer-modernization.md section 6.5
-#      for detailed analysis of runtime filtering feasibility
+# - This is a major architectural change; likely not feasible for current scope
 # ============================================================================

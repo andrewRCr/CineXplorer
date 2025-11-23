@@ -138,7 +138,7 @@ def get_now_playing_movies(
     # Extract filters and delegate to service layer (business logic handled there)
     response = _movie_service.get_now_playing_movies(
         page=filters.page or 1,
-        **filters.to_service_params()
+        params=filters.to_service_params()
     )
 
     # Enrich with user data if authenticated
@@ -169,7 +169,7 @@ def get_upcoming_movies(
     # Extract filters and delegate to service layer (business logic handled there)
     response = _movie_service.get_upcoming_movies(
         page=filters.page or 1,
-        **filters.to_service_params()
+        params=filters.to_service_params()
     )
 
     # Enrich with user data if authenticated
@@ -243,7 +243,6 @@ def browse_movies(
         HttpError: 400 for invalid parameters, 500 for TMDB API errors
     """
     # Convert filter schema to service layer parameters
-    # This extracts both TMDB API params and backend filtering params
     params = filters.to_service_params()
 
     # Determine min_vote_count based on sort type
@@ -251,28 +250,21 @@ def browse_movies(
     # - release_date: New releases haven't accumulated votes yet
     # - original_title: Alphabetical order doesn't imply quality
     # - popularity.asc: Least popular movies by definition have few interactions
-    sort_by = params.get('sort_by', 'popularity.desc')
-    sort_by_str = str(sort_by) if sort_by else 'popularity.desc'
+    sort_by = params.sort_by or 'popularity.desc'
 
     # Sorts that should bypass min_vote_count filter
     bypass_vote_filter = (
-        'release_date' in sort_by_str
-        or 'original_title' in sort_by_str
-        or sort_by_str == 'popularity.asc'
+        'release_date' in sort_by
+        or 'original_title' in sort_by
+        or sort_by == 'popularity.asc'
     )
 
-    # Fetch movies from TMDB with two-pass filtering
-    # The params dict includes: TMDB params (release_date.gte, vote_average.gte, etc.)
-    # and backend filtering params (year_min, year_max, rating_min, rating_max)
-    # Type ignore needed for **kwargs unpacking with typed parameters
+    # Disable min_vote_count for sorts that naturally return low-vote movies
     if bypass_vote_filter:
-        response = _movie_service.discover_movies(
-            page=filters.page or 1,
-            min_vote_count=None,
-            **params  # type: ignore[arg-type]
-        )
-    else:
-        response = _movie_service.discover_movies(page=filters.page or 1, **params)  # type: ignore[arg-type]
+        params.min_vote_count = None
+
+    # Fetch movies from TMDB with two-pass filtering
+    response = _movie_service.discover_movies(page=filters.page or 1, params=params)
 
     # Enrich with user data if authenticated
     return enrich_response_with_user_movie_data(request, response)

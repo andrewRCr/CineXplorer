@@ -15,7 +15,7 @@ Related Issue: Filter integration bug - backend filtering never activates becaus
 schema.to_service_params() never extracts year_min/max/rating_min/max parameters.
 
 Test Strategy: These tests validate the schema → service parameter extraction
-layer that was missing test coverage in Phase 1 analysis.
+layer to ensure both TMDB and backend filtering parameters are correctly extracted.
 """
 from __future__ import annotations
 
@@ -31,7 +31,7 @@ class TestMovieDiscoverFilterSchemaParameterExtraction:
     2. Backend filtering parameters (for second-pass data hygiene)
 
     Example: release_date_gte="2020-01-01" should produce:
-    - release_date.gte: "2020-01-01" (TMDB API param)
+    - release_date_gte: "2020-01-01" (TMDB API param)
     - year_min: 2020 (backend filtering param)
     """
 
@@ -56,15 +56,14 @@ class TestMovieDiscoverFilterSchemaParameterExtraction:
 
         # Assert: Both TMDB and backend parameters extracted
         # TMDB API parameters (primary filter)
-        assert params['release_date.gte'] == "2020-01-01"
-        assert params['release_date.lte'] == "2029-12-31"
+        assert params.release_date_gte == "2020-01-01"
+        assert params.release_date_lte == "2029-12-31"
 
         # Backend filtering parameters (second-pass data hygiene)
-        # CRITICAL: These are currently missing - test will FAIL
-        assert 'year_min' in params, "Schema must extract year_min for backend filtering"
-        assert 'year_max' in params, "Schema must extract year_max for backend filtering"
-        assert params['year_min'] == 2020
-        assert params['year_max'] == 2029
+        assert params.year_min is not None, "Schema must extract year_min for backend filtering"
+        assert params.year_max is not None, "Schema must extract year_max for backend filtering"
+        assert params.year_min == 2020
+        assert params.year_max == 2029
 
     def test_extracts_year_min_only_from_release_date_gte(self) -> None:
         """Test schema extracts year_min when only release_date_gte provided.
@@ -81,10 +80,10 @@ class TestMovieDiscoverFilterSchemaParameterExtraction:
         params = schema.to_service_params()
 
         # Assert: Extract year_min, year_max not present
-        assert params['release_date.gte'] == "2020-01-01"
-        assert 'year_min' in params
-        assert params['year_min'] == 2020
-        assert 'year_max' not in params  # Only min provided
+        assert params.release_date_gte == "2020-01-01"
+        assert params.year_min is not None
+        assert params.year_min == 2020
+        assert params.year_max is None  # Only min provided
 
     def test_extracts_year_max_only_from_release_date_lte(self) -> None:
         """Test schema extracts year_max when only release_date_lte provided.
@@ -101,10 +100,10 @@ class TestMovieDiscoverFilterSchemaParameterExtraction:
         params = schema.to_service_params()
 
         # Assert: Extract year_max, year_min not present
-        assert params['release_date.lte'] == "2023-12-31"
-        assert 'year_max' in params
-        assert params['year_max'] == 2023
-        assert 'year_min' not in params  # Only max provided
+        assert params.release_date_lte == "2023-12-31"
+        assert params.year_max is not None
+        assert params.year_max == 2023
+        assert params.year_min is None  # Only max provided
 
     def test_extracts_rating_range_from_vote_average_both_bounds(self) -> None:
         """Test schema extracts rating_min and rating_max from vote_average_gte/lte.
@@ -127,15 +126,14 @@ class TestMovieDiscoverFilterSchemaParameterExtraction:
 
         # Assert: Both TMDB and backend parameters extracted
         # TMDB API parameters (primary filter)
-        assert params['vote_average.gte'] == 7.0
-        assert params['vote_average.lte'] == 9.0
+        assert params.vote_average_gte == 7.0
+        assert params.vote_average_lte == 9.0
 
         # Backend filtering parameters (second-pass data hygiene)
-        # CRITICAL: These are currently missing - test will FAIL
-        assert 'rating_min' in params, "Schema must extract rating_min for backend filtering"
-        assert 'rating_max' in params, "Schema must extract rating_max for backend filtering"
-        assert params['rating_min'] == 7.0
-        assert params['rating_max'] == 9.0
+        assert params.rating_min is not None, "Schema must extract rating_min for backend filtering"
+        assert params.rating_max is not None, "Schema must extract rating_max for backend filtering"
+        assert params.rating_min == 7.0
+        assert params.rating_max == 9.0
 
     def test_extracts_rating_min_only_from_vote_average_gte(self) -> None:
         """Test schema extracts rating_min when only vote_average_gte provided.
@@ -152,10 +150,10 @@ class TestMovieDiscoverFilterSchemaParameterExtraction:
         params = schema.to_service_params()
 
         # Assert: Extract rating_min, rating_max not present
-        assert params['vote_average.gte'] == 7.5
-        assert 'rating_min' in params
-        assert params['rating_min'] == 7.5
-        assert 'rating_max' not in params  # Only min provided
+        assert params.vote_average_gte == 7.5
+        assert params.rating_min is not None
+        assert params.rating_min == 7.5
+        assert params.rating_max is None  # Only min provided
 
     def test_extracts_rating_max_only_from_vote_average_lte(self) -> None:
         """Test schema extracts rating_max when only vote_average_lte provided.
@@ -172,10 +170,10 @@ class TestMovieDiscoverFilterSchemaParameterExtraction:
         params = schema.to_service_params()
 
         # Assert: Extract rating_max, rating_min not present
-        assert params['vote_average.lte'] == 8.0
-        assert 'rating_max' in params
-        assert params['rating_max'] == 8.0
-        assert 'rating_min' not in params  # Only max provided
+        assert params.vote_average_lte == 8.0
+        assert params.rating_max is not None
+        assert params.rating_max == 8.0
+        assert params.rating_min is None  # Only max provided
 
     def test_extracts_combined_year_and_rating_filters(self) -> None:
         """Test schema extracts both year and rating filters simultaneously.
@@ -194,15 +192,15 @@ class TestMovieDiscoverFilterSchemaParameterExtraction:
         params = schema.to_service_params()
 
         # Assert: All TMDB and backend parameters extracted
-        assert params['release_date.gte'] == "2020-01-01"
-        assert params['release_date.lte'] == "2023-12-31"
-        assert params['vote_average.gte'] == 7.5
+        assert params.release_date_gte == "2020-01-01"
+        assert params.release_date_lte == "2023-12-31"
+        assert params.vote_average_gte == 7.5
 
         # Backend filtering parameters - all four should be present
-        assert params['year_min'] == 2020
-        assert params['year_max'] == 2023
-        assert params['rating_min'] == 7.5
-        assert 'rating_max' not in params  # Only min provided for rating
+        assert params.year_min == 2020
+        assert params.year_max == 2023
+        assert params.rating_min == 7.5
+        assert params.rating_max is None  # Only min provided for rating
 
     def test_no_backend_params_when_no_filters_provided(self) -> None:
         """Test schema doesn't add backend filter params when no filters provided.
@@ -217,10 +215,10 @@ class TestMovieDiscoverFilterSchemaParameterExtraction:
         params = schema.to_service_params()
 
         # Assert: No backend filtering parameters
-        assert 'year_min' not in params
-        assert 'year_max' not in params
-        assert 'rating_min' not in params
-        assert 'rating_max' not in params
+        assert params.year_min is None
+        assert params.year_max is None
+        assert params.rating_min is None
+        assert params.rating_max is None
 
     def test_handles_edge_case_year_extraction_from_dates(self) -> None:
         """Test year extraction handles various date formats correctly.
@@ -240,8 +238,8 @@ class TestMovieDiscoverFilterSchemaParameterExtraction:
         params = schema.to_service_params()
 
         # Assert: Years extracted correctly regardless of month/day
-        assert params['year_min'] == 2020
-        assert params['year_max'] == 2023
+        assert params.year_min == 2020
+        assert params.year_max == 2023
 
     def test_maintains_existing_tmdb_parameter_mappings(self) -> None:
         """Test that new backend param extraction doesn't break existing TMDB mappings.
@@ -264,11 +262,11 @@ class TestMovieDiscoverFilterSchemaParameterExtraction:
         params = schema.to_service_params()
 
         # Assert: All existing TMDB mappings still work
-        assert params['sort_by'] == "popularity.desc"
-        assert params['genres'] == "28,12"
-        assert params['year'] == 2023
-        assert params['certification'] == "PG-13"
+        assert params.sort_by == "popularity.desc"
+        assert params.genres == "28,12"
+        assert params.year == 2023
+        assert params.certification == "PG-13"
 
         # AND new backend filtering params also present
-        assert params['year_min'] == 2023
-        assert params['rating_min'] == 7.0
+        assert params.year_min == 2023
+        assert params.rating_min == 7.0

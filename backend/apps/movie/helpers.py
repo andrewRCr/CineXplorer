@@ -22,8 +22,8 @@ _enrichment_service = MovieEnrichmentService()
 
 NOW_PLAYING_PROTECTED_KEYS: Sequence[str] = [
     "with_release_type",
-    "release_date.gte",
-    "release_date.lte",
+    "release_date_gte",
+    "release_date_lte",
     "year",
     "primary_release_year",
 ]
@@ -40,14 +40,14 @@ Protected parameters:
 
 Users can still filter by genre, rating, keywords, cast, and change sort order.
 
-Note: Uses schema parameter names (release_date.gte) which the service layer
-maps to TMDB format (primary_release_date.gte).
+Note: Uses ServiceParams field names (release_date_gte) which get_tmdb_params()
+converts to TMDB dot notation format (release_date.gte).
 """
 
 UPCOMING_PROTECTED_KEYS: Sequence[str] = [
     "with_release_type",
-    "release_date.gte",
-    "release_date.lte",
+    "release_date_gte",
+    "release_date_lte",
     "year",
     "primary_release_year",
 ]
@@ -65,8 +65,8 @@ Protected parameters:
 Users can still apply genre filters, rating filters, keyword searches, cast filters,
 and change sort order.
 
-Note: Uses schema parameter names (release_date.gte) which the service layer
-maps to TMDB format (primary_release_date.gte).
+Note: Uses ServiceParams field names (release_date_gte) which get_tmdb_params()
+converts to TMDB dot notation format (release_date.gte).
 """
 
 BROWSE_PROTECTED_KEYS: Sequence[str] = []

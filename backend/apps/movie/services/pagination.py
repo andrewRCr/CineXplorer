@@ -13,8 +13,8 @@ from typing import TYPE_CHECKING
 from core.tmdb_models.tmdb_responses import TMDBMovieBase, TMDBMovieSearchResponse
 
 from ..schemas import MovieBaseSchema, PaginatedMovieResponseSchema
+from .filtering import MIN_VOTE_COUNT
 from .result_filtering import (
-    MIN_VOTE_COUNT,
     filter_movies_by_completeness,
     filter_movies_by_rating,
     filter_movies_by_year,

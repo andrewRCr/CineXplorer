@@ -27,11 +27,8 @@ from ..schemas import (
     MovieDetailSchema,
     PaginatedMovieResponseSchema,
 )
-from .filtering import build_tmdb_params
+from .filtering import MIN_VOTE_COUNT, ServiceParams, build_tmdb_params
 from .pagination import fetch_with_filters_and_buffer
-from .result_filtering import (
-    MIN_VOTE_COUNT,
-)
 from .schema_factories import (
     create_genre_list_from_tmdb,
     create_movie_detail_from_tmdb,
@@ -100,12 +97,7 @@ class MovieService:
     def discover_movies(
         self,
         page: int = 1,
-        year_min: int | None = None,
-        year_max: int | None = None,
-        rating_min: float | None = None,
-        rating_max: float | None = None,
-        tmdb_page_start: int | None = None,
-        **filters: str | int | float | bool | None
+        params: ServiceParams | None = None,
     ) -> PaginatedMovieResponseSchema:
         """
         Core TMDB discover wrapper with full filtering capabilities.
@@ -121,23 +113,23 @@ class MovieService:
 
         Args:
             page: Page number for pagination
-            year_min: Minimum release year (inclusive), backend filtered (second-pass data hygiene)
-            year_max: Maximum release year (inclusive), backend filtered (second-pass data hygiene)
-            rating_min: Minimum rating (inclusive), backend filtered (second-pass data hygiene)
-            rating_max: Maximum rating (inclusive), backend filtered (second-pass data hygiene)
-            tmdb_page_start: Starting TMDB page for smart buffer continuation
-                (enables metadata-driven pagination to prevent duplicates)
-            **filters: Discovery filters including:
+            params: ServiceParams model containing:
+                Backend filtering (second-pass data hygiene):
+                - year_min/year_max: Release year range (inclusive)
+                - rating_min/rating_max: Rating range (inclusive)
+                - tmdb_page_start: Starting TMDB page for smart buffer continuation
+                - min_vote_count: Minimum vote count filter (None to disable)
+
+                TMDB API filters:
                 - sort_by: Sort order (popularity.desc, release_date.desc, etc.)
                 - genres: Comma-separated genre IDs
                 - year: Release year
                 - vote_average_gte/lte: Rating range
                 - keywords: Comma-separated keyword IDs
                 - people: Comma-separated person IDs
-                - release_date_gte/lte: Release date range (mapped to primary_release_date)
+                - release_date_gte/lte: Release date range
                 - with_release_type: Release type (2|3 for theatrical)
                 - certification: Certification rating
-                - region: Country code for regional release dates
 
         Returns:
             PaginatedMovieResponseSchema with discovered movies, including
@@ -154,23 +146,39 @@ class MovieService:
         import logging
         logger = logging.getLogger('cinexplorer.movie')
 
+        # Use empty params if none provided
+        if params is None:
+            params = ServiceParams()
+
+        # Extract backend filtering params
+        year_min = params.year_min
+        year_max = params.year_max
+        rating_min = params.rating_min
+        rating_max = params.rating_max
+        tmdb_page_start = params.tmdb_page_start
+        if params.min_vote_count is not None:
+            min_vote_count = params.min_vote_count
+        else:
+            min_vote_count = MIN_VOTE_COUNT
+
         logger.debug(
             f"Discover movies request: page={page}, year_min={year_min}, year_max={year_max}, "
-            f"rating_min={rating_min}, rating_max={rating_max}, filters={filters}"
+            f"rating_min={rating_min}, rating_max={rating_max}, params={params}"
         )
 
         # Build TMDB API parameters using filtering module
-        params = build_tmdb_params(page, rating_min, rating_max, **filters)
+        tmdb_filters = params.get_tmdb_params()
+        api_params = build_tmdb_params(page, rating_min, rating_max, **tmdb_filters)
 
         # Log TMDB params at DEBUG level for diagnostics
         logger.debug(
             f"TMDB discover params: rating_min={rating_min}, "
-            f"rating_max={rating_max}, full_params={params}"
+            f"rating_max={rating_max}, full_params={api_params}"
         )
 
         def fetch_discover_page(page_num: int) -> TMDBMovieSearchResponse:
             """Fetch a specific discover page with current filters."""
-            page_params = params.copy()
+            page_params = api_params.copy()
             page_params['page'] = page_num
             page_response = self._tmdb_client.get(
                 "discover/movie",
@@ -181,9 +189,6 @@ class MovieService:
                 TMDBMovieSearchResponse
             )
 
-        # Extract min_vote_count from filters if provided (for vote filtering control)
-        min_vote_count = filters.get('min_vote_count', MIN_VOTE_COUNT)  # type: ignore[arg-type]
-
         return fetch_with_filters_and_buffer(
             fetch_discover_page,
             page,
@@ -192,13 +197,13 @@ class MovieService:
             rating_min,
             rating_max,
             tmdb_page_start=tmdb_page_start,
-            min_vote_count=min_vote_count  # type: ignore[arg-type]
+            min_vote_count=min_vote_count,
         )
 
     def get_now_playing_movies(
         self,
         page: int = 1,
-        **filters: str | int | float | bool | None,
+        params: ServiceParams | None = None,
     ) -> PaginatedMovieResponseSchema:
         """
         Retrieves movies currently playing in theaters with filtering.
@@ -214,15 +219,15 @@ class MovieService:
         - Year/primary_release_year: Redundant with date range (prevented)
 
         Users can apply additional filters:
-        - Genres (with_genres): Filter by genre IDs
+        - Genres: Filter by genre IDs
         - Ratings (vote_average_gte/lte): Filter by rating range
-        - Keywords (with_keywords): Filter by keyword IDs
-        - People (with_cast/with_people): Filter by cast/crew
+        - Keywords: Filter by keyword IDs
+        - People: Filter by cast/crew
         - Sort (sort_by): Change sort order (default: popularity.desc)
 
         Args:
             page: Page number for pagination
-            **filters: User-provided filter parameters from API layer
+            params: ServiceParams model with user-provided filters
 
         Returns:
             PaginatedMovieResponseSchema with now playing movies
@@ -234,25 +239,27 @@ class MovieService:
             Business logic (preset building, filter merging) handled in Service layer.
             API layer is thin - only extracts parameters and delegates to this method.
         """
+        if params is None:
+            params = ServiceParams()
+
         # Build date range preset (today - 30 days to today + 5 days)
         preset = self._build_date_constrained_preset(-30, 5)
 
         # Merge user filters with preset (protected keys override user values)
-        merged_filters = merge_with_preset(
-            dict(filters), preset, NOW_PLAYING_PROTECTED_KEYS
-        )
+        user_filters = params.model_dump(exclude_none=True)
+        merged_filters = merge_with_preset(user_filters, preset, NOW_PLAYING_PROTECTED_KEYS)
+
+        # Create merged params with min_vote_count disabled for now-playing window
+        merged_filters['min_vote_count'] = None
+        merged_params = ServiceParams.model_validate(merged_filters)
 
         # Call discover endpoint with merged filters (thin wrapper pattern)
-        return self.discover_movies(
-            page=page,
-            min_vote_count=None,  # Disabled for now-playing window
-            **merged_filters  # type: ignore[arg-type]
-        )
+        return self.discover_movies(page=page, params=merged_params)
 
     def get_upcoming_movies(
         self,
         page: int = 1,
-        **filters: str | int | float | bool | None,
+        params: ServiceParams | None = None,
     ) -> PaginatedMovieResponseSchema:
         """
         Retrieves upcoming movies releasing soon in theaters with filtering.
@@ -268,15 +275,15 @@ class MovieService:
         - Year/primary_release_year: Redundant with date range (prevented)
 
         Users can apply additional filters:
-        - Genres (with_genres): Filter by genre IDs
+        - Genres: Filter by genre IDs
         - Ratings (vote_average_gte/lte): Filter by rating range
-        - Keywords (with_keywords): Filter by keyword IDs
-        - People (with_cast/with_people): Filter by cast/crew
+        - Keywords: Filter by keyword IDs
+        - People: Filter by cast/crew
         - Sort (sort_by): Change sort order (default: popularity.desc)
 
         Args:
             page: Page number for pagination
-            **filters: User-provided filter parameters from API layer
+            params: ServiceParams model with user-provided filters
 
         Returns:
             PaginatedMovieResponseSchema with upcoming movies
@@ -291,20 +298,22 @@ class MovieService:
             Region parameter intentionally omitted - incompatible with primary_release_date
             filters per TMDB API research (see research-tmdb-api-date-filtering.md).
         """
+        if params is None:
+            params = ServiceParams()
+
         # Build date range preset (today + 5 days to today + 65 days)
         preset = self._build_date_constrained_preset(5, 65)
 
         # Merge user filters with preset (protected keys override user values)
-        merged_filters = merge_with_preset(
-            dict(filters), preset, UPCOMING_PROTECTED_KEYS
-        )
+        user_filters = params.model_dump(exclude_none=True)
+        merged_filters = merge_with_preset(user_filters, preset, UPCOMING_PROTECTED_KEYS)
+
+        # Create merged params with min_vote_count disabled (unreleased movies have 0 votes)
+        merged_filters['min_vote_count'] = None
+        merged_params = ServiceParams.model_validate(merged_filters)
 
         # Call discover endpoint with merged filters (thin wrapper pattern)
-        return self.discover_movies(
-            page=page,
-            min_vote_count=None,  # Disabled - unreleased movies have 0 votes
-            **merged_filters  # type: ignore[arg-type]
-        )
+        return self.discover_movies(page=page, params=merged_params)
 
     # ========================================================================
     # Search Methods
@@ -526,8 +535,8 @@ class MovieService:
         end_date = (today + timedelta(days=end_days_offset)).strftime("%Y-%m-%d")
 
         return {
-            "release_date.gte": start_date,
-            "release_date.lte": end_date,
+            "release_date_gte": start_date,
+            "release_date_lte": end_date,
             "with_release_type": "2|3",  # Theatrical releases only
         }
 

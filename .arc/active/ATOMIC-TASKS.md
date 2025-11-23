@@ -10,6 +10,7 @@
    - Categories: maintenance, refactor, documentation, planning
 
 **Referencing completed work:** "see {task name} in `completed-atomic-2025-q4.md`"
+    - Quick access: [Completed Atomic Tasks - 2025 Q4](../reference/archive/2025-q4/completed-atomic-2025-q4.md)
 
 ---
 
@@ -18,15 +19,14 @@
 
 <!-- Type safety & DRY cleanup tasks - ordered by dependencies -->
 
-- [ ] Refactor service methods to use Unpack[ServiceParams]
-    - **Problem:** `discover_movies()` has untyped `**filters` kwargs - loses type info, requires `type: ignore` at
-    call sites
-    - **Fix:** Change signature to `**kwargs: Unpack[ServiceParams]` for full type safety
-    - **Benefits:** IDE autocomplete, type checking at call sites, no `type: ignore`, self-documenting
-    - **Trade-off:** Method body accesses params via `kwargs.get()` instead of explicit args
-    - **Files:** `backend/apps/movie/services/movie_service.py`, `backend/apps/movie/api.py`
-    - **Estimate:** ~30-45 min
-    - **Note:** Do before base class task
+- [ ] Update tests for ServiceParams Pydantic refactor
+    - **Problem:** 19 tests fail after ServiceParams refactor - using old signature
+    - **Tests to fix:**
+        - `test_result_filtering.py` (17 tests) - update `discover_movies()` calls to use `ServiceParams`
+        - `test_endpoint_preset_merge.py` (2 tests) - update assertions for underscore notation
+    - **Pattern:** `discover_movies(rating_min=7.5)` → `discover_movies(params=ServiceParams(rating_min=7.5))`
+    - **Estimate:** ~20 min
+    - **Note:** Production code complete and working (see completed-atomic-2025-q4.md)
 
 - [ ] Extract BaseTMDBService for all service classes
     - **Problem:** MovieService, KeywordService, PeopleService duplicate DI pattern, error handling, logging
@@ -35,15 +35,7 @@
     - **Benefits:** DRY foundation, consistent patterns across all services, MovieService shares base
     - **Files:** All files in `backend/apps/movie/services/`
     - **Estimate:** ~45 min
-    - **Depends on:** Error handling helper, Unpack refactor
-
-- [ ] Add Unpack typing to TMDBApiClient methods
-    - **Problem:** Multiple methods use `**kwargs: object` losing all type info
-    - **Fix:** Create TypedDict for TMDB API params, use Unpack for type-safe kwargs
-    - **Methods:** `discover_movies`, `search_movies`, `get_popular_movies`, etc.
-    - **Files:** `backend/apps/core/services/tmdb_api_client.py`
-    - **Estimate:** ~45 min
-    - **Priority:** Lower - internal infrastructure
+    - **Depends on:** Error handling helper (complete)
 
 <!-- Miscellaneous -->
 

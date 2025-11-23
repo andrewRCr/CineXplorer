@@ -6,6 +6,23 @@ Reference format: "see `completed-atomic-2025-q4.md`" or "see {task name} in `co
 
 ---
 
+- [x] Refactor ServiceParams to Pydantic BaseModel
+    - **Outcome:** ServiceParams is now a validated Pydantic model with attribute access
+    - **Benefits achieved:**
+        - Real runtime validation (extra="forbid" catches typos)
+        - Attribute access (`params.year_min`) with IDE type awareness
+        - Consistent with Django Ninja patterns
+        - No more cast() lies or theatrical type safety
+    - **Changes:**
+        - Created `ServiceParams(BaseModel)` in filtering.py with `get_tmdb_params()` method
+        - Updated `to_service_params()` to return validated model
+        - Service methods now take `params: ServiceParams | None`
+        - API layer passes model directly (no unpacking)
+        - Protected keys and presets use underscore notation
+        - Moved `MIN_VOTE_COUNT` to filtering.py (broke import cycle)
+    - **Files:** `filtering.py`, `schemas.py`, `movie_service.py`, `api.py`, `helpers.py`, `result_filtering.py`, `pagination.py`
+    - **Tests:** 140 pass, 19 need signature updates (separate task)
+
 - [x] Extract service error handling helper
     - **Outcome:** Created `get_validated_response()` helper in schema_factories.py
     - **Changes:** Refactored keyword_service.py and people_service.py to use helper

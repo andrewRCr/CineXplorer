@@ -6,6 +6,17 @@ Reference format: "see `completed-atomic-2025-q4.md`" or "see {task name} in `co
 
 ---
 
+- [x] Extract BaseTMDBService for all service classes
+    - **Outcome:** Created shared base class with DI pattern and error handling helper
+    - **Changes:**
+        - Created `BaseTMDBService` in `base_service.py` with common `__init__` and `_get_validated_response()` method
+        - MovieService, KeywordService, PeopleService now inherit from base
+        - KeywordService/PeopleService use `self._get_validated_response()` instead of importing
+        - Documented why MovieService uses typed validators (needs Pydantic models directly)
+    - **Benefits:** DRY foundation, discoverable error handling, consistent patterns across services
+    - **Files:** `backend/apps/movie/services/base_service.py`, `movie_service.py`, `keyword_service.py`, `people_service.py`
+    - **Quality gates:** Ruff ✅, Pyright ✅, Tests 159/159 ✅
+
 - [x] Update tests for ServiceParams Pydantic refactor
     - **Outcome:** All 159 movie tests pass after signature updates
     - **Changes:**

@@ -13,24 +13,20 @@ from __future__ import annotations
 
 from typing import cast
 
-from core.services.tmdb_api_client import TMDBApiClient
 from core.types.api_types import TMDBParams
 from movie.schemas import PaginatedKeywordResponseSchema
-from movie.services.schema_factories import (
-    create_paginated_keyword_response_from_tmdb,
-    get_validated_response,
-)
+from movie.services.base_service import BaseTMDBService
+from movie.services.schema_factories import create_paginated_keyword_response_from_tmdb
 
 
-class KeywordService:
+class KeywordService(BaseTMDBService):
     """
     Service for TMDB keyword operations with dependency injection.
 
     This service handles keyword-related TMDB API interactions, providing
     methods for discovering popular keywords and searching for keywords by query.
 
-    Attributes:
-        _tmdb_client: Injected TMDB API client for making requests
+    Inherits from BaseTMDBService for common DI pattern and logging.
 
     Example:
         # Production usage with factory
@@ -43,24 +39,6 @@ class KeywordService:
         service = KeywordService(tmdb_client=mock_client)
         keywords = service.search_keywords("action")
     """
-
-    def __init__(self, tmdb_client: TMDBApiClient | None = None) -> None:
-        """
-        Initialize KeywordService with optional TMDB client injection.
-
-        Args:
-            tmdb_client: Optional TMDBApiClient instance. If None, creates default client.
-                        Injecting a mock client enables testing without external API calls.
-
-        Example:
-            # With default client (production)
-            service = KeywordService()
-
-            # With injected client (testing)
-            mock_client = Mock(spec=TMDBApiClient)
-            service = KeywordService(tmdb_client=mock_client)
-        """
-        self._tmdb_client = tmdb_client if tmdb_client is not None else TMDBApiClient()
 
     def get_popular_keywords(self, page: int = 1) -> PaginatedKeywordResponseSchema:
         """
@@ -83,7 +61,9 @@ class KeywordService:
         """
         params: TMDBParams = {"page": page}
         response = self._tmdb_client.get("keyword/popular", cast(dict[str, object], params))
-        result = get_validated_response(response, operation='get_popular_keywords', page=page)
+        result = self._get_validated_response(
+            response, operation='get_popular_keywords', page=page
+        )
         return create_paginated_keyword_response_from_tmdb(result)
 
     def search_keywords(self, query: str) -> PaginatedKeywordResponseSchema:
@@ -123,7 +103,7 @@ class KeywordService:
             )
 
         response = self._tmdb_client.get("search/keyword", {"query": query})
-        result = get_validated_response(response, operation='search_keywords', query=query)
+        result = self._get_validated_response(response, operation='search_keywords', query=query)
 
         # Ensure we have results key for proper processing
         if 'results' not in result:

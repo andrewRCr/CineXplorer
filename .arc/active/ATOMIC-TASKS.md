@@ -17,17 +17,6 @@
 ## Active
 <!-- Add tasks here with checkboxes -->
 
-<!-- Type safety & DRY cleanup tasks - ordered by dependencies -->
-
-- [ ] Extract BaseTMDBService for all service classes
-    - **Problem:** MovieService, KeywordService, PeopleService duplicate DI pattern, error handling, logging
-    - **Fix:** Create `BaseTMDBService` with shared `__init__`, error handling helper, logging setup
-    - **Approach:** All three services extend base; Keyword/People are simple, Movie has complex methods
-    - **Benefits:** DRY foundation, consistent patterns across all services, MovieService shares base
-    - **Files:** All files in `backend/apps/movie/services/`
-    - **Estimate:** ~45 min
-    - **Depends on:** Error handling helper (complete)
-
 <!-- Miscellaneous -->
 
 - [ ] Investigate login session loss during testing

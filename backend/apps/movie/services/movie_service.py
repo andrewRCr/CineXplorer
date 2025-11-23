@@ -27,6 +27,7 @@ from ..schemas import (
     MovieDetailSchema,
     PaginatedMovieResponseSchema,
 )
+from .base_service import BaseTMDBService
 from .filtering import MIN_VOTE_COUNT, ServiceParams, build_tmdb_params
 from .pagination import fetch_with_filters_and_buffer
 from .schema_factories import (
@@ -42,20 +43,16 @@ logger = logging.getLogger('cinexplorer.tmdb')
 tmdb_client = TMDBApiClient()
 
 
-class MovieService:
+class MovieService(BaseTMDBService):
     """
-    Class-based movie service with dependency injection for TMDB integration.
+    Movie service with dependency injection for TMDB integration.
 
     This service encapsulates all TMDB API interactions with constructor-based
     dependency injection, enabling testability and maintaining separation of
     concerns. All business logic for movie discovery, search, and retrieval
     is centralized in this service layer.
 
-    Architecture Pattern:
-        - Dependency injection with TMDBApiClient
-        - Class-based for state management and testability
-        - Type-safe with full annotations
-        - Single responsibility (TMDB integration)
+    Inherits from BaseTMDBService for common DI pattern and logging.
 
     Usage:
         # Production usage (default client)
@@ -67,28 +64,6 @@ class MovieService:
         service = MovieService(tmdb_client=mock_client)
         movies = service.search_movies("test")
     """
-
-    def __init__(self, tmdb_client: TMDBApiClient | None = None) -> None:
-        """
-        Initialize the movie service with optional TMDB client injection.
-
-        Args:
-            tmdb_client: Optional TMDBApiClient instance. If None, creates
-                default client. Inject mock clients for testing.
-
-        Example:
-            # Production usage (default client)
-            service = MovieService()
-
-            # Testing with mock client
-            mock_client = MockTMDBApiClient()
-            service = MovieService(tmdb_client=mock_client)
-        """
-        # Use injected client or create default
-        if tmdb_client is not None:
-            self._tmdb_client = tmdb_client
-        else:
-            self._tmdb_client = TMDBApiClient()
 
     # ========================================================================
     # Core Discovery Methods

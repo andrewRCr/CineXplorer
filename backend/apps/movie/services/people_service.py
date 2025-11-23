@@ -14,16 +14,13 @@ from __future__ import annotations
 
 from typing import cast
 
-from core.services.tmdb_api_client import TMDBApiClient
 from core.types.api_types import TMDBParams
 from movie.schemas import PaginatedPersonResponseSchema
-from movie.services.schema_factories import (
-    create_paginated_person_response_from_tmdb,
-    get_validated_response,
-)
+from movie.services.base_service import BaseTMDBService
+from movie.services.schema_factories import create_paginated_person_response_from_tmdb
 
 
-class PeopleService:
+class PeopleService(BaseTMDBService):
     """
     Service for TMDB people operations with dependency injection.
 
@@ -31,8 +28,7 @@ class PeopleService:
     methods for discovering popular people and searching for actors, directors,
     and other film industry professionals by name.
 
-    Attributes:
-        _tmdb_client: Injected TMDB API client for making requests
+    Inherits from BaseTMDBService for common DI pattern and logging.
 
     Example:
         # Production usage with factory
@@ -45,24 +41,6 @@ class PeopleService:
         service = PeopleService(tmdb_client=mock_client)
         people = service.search_people("Tom Hanks")
     """
-
-    def __init__(self, tmdb_client: TMDBApiClient | None = None) -> None:
-        """
-        Initialize PeopleService with optional TMDB client injection.
-
-        Args:
-            tmdb_client: Optional TMDBApiClient instance. If None, creates default client.
-                        Injecting a mock client enables testing without external API calls.
-
-        Example:
-            # With default client (production)
-            service = PeopleService()
-
-            # With injected client (testing)
-            mock_client = Mock(spec=TMDBApiClient)
-            service = PeopleService(tmdb_client=mock_client)
-        """
-        self._tmdb_client = tmdb_client if tmdb_client is not None else TMDBApiClient()
 
     def get_popular_people(self, page: int = 1) -> PaginatedPersonResponseSchema:
         """
@@ -85,7 +63,7 @@ class PeopleService:
         """
         params: TMDBParams = {"page": page}
         response = self._tmdb_client.get("person/popular", cast(dict[str, object], params))
-        result = get_validated_response(response, operation='get_popular_people', page=page)
+        result = self._get_validated_response(response, operation='get_popular_people', page=page)
         return create_paginated_person_response_from_tmdb(result)
 
     def search_people(self, query: str) -> PaginatedPersonResponseSchema:
@@ -125,7 +103,7 @@ class PeopleService:
             )
 
         response = self._tmdb_client.get("search/person", {"query": query})
-        result = get_validated_response(response, operation='search_people', query=query)
+        result = self._get_validated_response(response, operation='search_people', query=query)
 
         # Ensure we have results key for proper processing
         if 'results' not in result:

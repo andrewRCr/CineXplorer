@@ -21,6 +21,7 @@ from unittest.mock import Mock
 
 from core.services.api_response import ApiResponse
 from movie.schemas import PaginatedMovieResponseSchema
+from movie.services.filtering import ServiceParams
 from movie.services.movie_service import MovieService
 from movie.tests.test_fixtures_tmdb import (
     TMDBMovieBaseRawDict,
@@ -95,8 +96,7 @@ def test_discover_movies_filters_incorrect_release_years() -> None:
     # Act: Request 2020s movies with discover endpoint
     result = service.discover_movies(
         page=1,
-        year_min=2020,
-        year_max=2029
+        params=ServiceParams(year_min=2020, year_max=2029)
     )
 
     # Assert: Only 2020s movies returned (15 correct movies)
@@ -192,7 +192,7 @@ def test_year_filtering_handles_single_year() -> None:
     service = MovieService(tmdb_client=mock_client)
 
     # Act: Request only 2022 movies
-    result = service.discover_movies(page=1, year_min=2022, year_max=2022)
+    result = service.discover_movies(page=1, params=ServiceParams(year_min=2022, year_max=2022))
 
     # Assert: Only 2022 movies returned
     assert len(result.results) == 3
@@ -232,7 +232,7 @@ def test_year_filtering_handles_missing_release_dates() -> None:
     service = MovieService(tmdb_client=mock_client)
 
     # Act: Request 2022 movies
-    result = service.discover_movies(page=1, year_min=2022, year_max=2022)
+    result = service.discover_movies(page=1, params=ServiceParams(year_min=2022, year_max=2022))
 
     # Assert: Only movies with valid release dates returned
     assert len(result.results) == 2
@@ -289,7 +289,7 @@ def test_discover_movies_filters_incorrect_ratings() -> None:
     service = MovieService(tmdb_client=mock_client)
 
     # Act: Request movies rated 7.5+
-    result = service.discover_movies(page=1, rating_min=7.5)
+    result = service.discover_movies(page=1, params=ServiceParams(rating_min=7.5))
 
     # Assert: Only movies with rating >= 7.5 returned (15 correct movies)
     assert isinstance(result, PaginatedMovieResponseSchema)
@@ -336,7 +336,7 @@ def test_rating_filtering_handles_range() -> None:
     service = MovieService(tmdb_client=mock_client)
 
     # Act: Request movies rated 7.0-8.0
-    result = service.discover_movies(page=1, rating_min=7.0, rating_max=8.0)
+    result = service.discover_movies(page=1, params=ServiceParams(rating_min=7.0, rating_max=8.0))
 
     # Assert: Only movies in range returned
     assert len(result.results) == 5
@@ -371,7 +371,7 @@ def test_rating_filtering_handles_missing_ratings() -> None:
     service = MovieService(tmdb_client=mock_client)
 
     # Act: Request movies rated 7.5+
-    result = service.discover_movies(page=1, rating_min=7.5)
+    result = service.discover_movies(page=1, params=ServiceParams(rating_min=7.5))
 
     # Assert: Only movies with valid ratings returned
     assert len(result.results) == 2
@@ -415,7 +415,7 @@ def test_rating_filter_excludes_low_vote_count_movies() -> None:
     service = MovieService(tmdb_client=mock_client)
 
     # Act: Request movies rated 7.5+ (universal 10-vote threshold applies)
-    result = service.discover_movies(page=1, rating_min=7.5)
+    result = service.discover_movies(page=1, params=ServiceParams(rating_min=7.5))
 
     # Assert: Only movies with 10+ votes returned (noise entries excluded)
     assert len(result.results) == 2, "Expected 2 movies with 10+ votes"
@@ -490,7 +490,7 @@ def test_vote_count_filter_excludes_movies_without_vote_count() -> None:
     service = MovieService(tmdb_client=mock_client)
 
     # Act: Request movies rated 7.5+
-    result = service.discover_movies(page=1, rating_min=7.5)
+    result = service.discover_movies(page=1, params=ServiceParams(rating_min=7.5))
 
     # Assert: Only movie with vote_count field returned
     assert len(result.results) == 1
@@ -531,9 +531,7 @@ def test_combined_year_and_rating_filtering() -> None:
     # Act: Request 2022 movies rated 7.5+
     result = service.discover_movies(
         page=1,
-        year_min=2022,
-        year_max=2022,
-        rating_min=7.5
+        params=ServiceParams(year_min=2022, year_max=2022, rating_min=7.5)
     )
 
     # Assert: Only movies matching both criteria returned
@@ -620,9 +618,7 @@ def test_buffer_mechanism_fetches_page_n_plus_1_when_under_threshold() -> None:
     # Act: Request page 1 with filters
     result = service.discover_movies(
         page=1,
-        year_min=2022,
-        year_max=2022,
-        rating_min=7.5
+        params=ServiceParams(year_min=2022, year_max=2022, rating_min=7.5)
     )
 
     # Assert: Service fetched page 2 as buffer
@@ -661,9 +657,7 @@ def test_buffer_mechanism_does_not_fetch_when_full_page_achieved() -> None:
     # Act: Request page 1 with filters
     result = service.discover_movies(
         page=1,
-        year_min=2022,
-        year_max=2022,
-        rating_min=7.5
+        params=ServiceParams(year_min=2022, year_max=2022, rating_min=7.5)
     )
 
     # Assert: Service only fetched page 1 (no buffer needed)
@@ -735,9 +729,7 @@ def test_buffer_mechanism_fills_page_even_with_few_initial_results() -> None:
     # Act: Request page 1 with restrictive filters (rating 8.5+)
     result = service.discover_movies(
         page=1,
-        year_min=2022,
-        year_max=2022,
-        rating_min=8.5
+        params=ServiceParams(year_min=2022, year_max=2022, rating_min=8.5)
     )
 
     # Assert: Service fetched pages 1 and 2 to fill to 20
@@ -769,7 +761,7 @@ def test_buffer_mechanism_does_not_fetch_on_last_page() -> None:
     service = MovieService(tmdb_client=mock_client)
 
     # Act: Request page 10 (last page)
-    result = service.discover_movies(page=10, year_min=2022, year_max=2022)
+    result = service.discover_movies(page=10, params=ServiceParams(year_min=2022, year_max=2022))
 
     # Assert: Service only fetched page 10 (no page 11 exists)
     assert mock_client.get.call_count == 1
@@ -818,9 +810,7 @@ def test_buffer_movies_also_pass_filters_no_leakage() -> None:
     # Act: Request page 1 with filters
     result = service.discover_movies(
         page=1,
-        year_min=2022,
-        year_max=2022,
-        rating_min=7.5
+        params=ServiceParams(year_min=2022, year_max=2022, rating_min=7.5)
     )
 
     # Assert: Result contains 20 movies (15 from page 1 + 5 from page 2)
@@ -1126,9 +1116,7 @@ def test_completeness_filter_applies_with_other_filters() -> None:
     # Act: Request with year and rating filters
     result = service.discover_movies(
         page=1,
-        year_min=2022,
-        year_max=2022,
-        rating_min=7.5
+        params=ServiceParams(year_min=2022, year_max=2022, rating_min=7.5)
     )
 
     # Assert: Only complete movies matching all filters returned
@@ -1458,8 +1446,7 @@ def test_historical_validation_with_year_filters() -> None:
     # Act: Request 1900-1920 range
     result = service.discover_movies(
         page=1,
-        year_min=1900,
-        year_max=1920
+        params=ServiceParams(year_min=1900, year_max=1920)
     )
 
     # Assert: Only valid movies in range returned, invalid dates excluded
@@ -1475,7 +1462,7 @@ def test_historical_validation_with_year_filters() -> None:
 
 
 # ============================================================================
-# Genre Quality Filtering Tests (Phase 3.6)
+# Genre Quality Filtering Tests
 # ============================================================================
 
 
@@ -1572,9 +1559,9 @@ def test_genre_filter_works_with_completeness_checks() -> None:
 def test_combined_genre_and_vote_filters_with_rating_filter() -> None:
     """Test that completeness (genre) and vote count filters both apply with rating filter.
 
-    Phase 3.6 dual quality approach:
+    Dual quality approach:
     - Genre completeness filter: ALWAYS applies (like poster/title checks)
-    - Vote count threshold: Changes from 50 to 5 when rating filter active
+    - Vote count threshold: Universal 10-vote minimum for data quality
 
     When rating filter is active, both should apply together.
     """
@@ -1602,7 +1589,7 @@ def test_combined_genre_and_vote_filters_with_rating_filter() -> None:
     service = MovieService(tmdb_client=mock_client)
 
     # Act: Request with rating filter (triggers 5-vote threshold + completeness check)
-    result = service.discover_movies(page=1, rating_min=1.0, rating_max=3.5)
+    result = service.discover_movies(page=1, params=ServiceParams(rating_min=1.0, rating_max=3.5))
 
     # Assert: Only movies passing BOTH filters returned
     assert len(result.results) == 2, "Expected 2 movies passing both filters"

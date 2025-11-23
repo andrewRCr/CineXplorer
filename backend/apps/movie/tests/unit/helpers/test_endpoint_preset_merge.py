@@ -149,8 +149,8 @@ class TestMergeWithPreset:
     def test_now_playing_protected_keys_constant(self) -> None:
         """Verify NOW_PLAYING_PROTECTED_KEYS contains expected keys."""
         assert "with_release_type" in NOW_PLAYING_PROTECTED_KEYS
-        assert "release_date.gte" in NOW_PLAYING_PROTECTED_KEYS
-        assert "release_date.lte" in NOW_PLAYING_PROTECTED_KEYS
+        assert "release_date_gte" in NOW_PLAYING_PROTECTED_KEYS
+        assert "release_date_lte" in NOW_PLAYING_PROTECTED_KEYS
         assert "year" in NOW_PLAYING_PROTECTED_KEYS
         assert "primary_release_year" in NOW_PLAYING_PROTECTED_KEYS
         assert len(NOW_PLAYING_PROTECTED_KEYS) == 5
@@ -158,8 +158,8 @@ class TestMergeWithPreset:
     def test_upcoming_protected_keys_constant(self) -> None:
         """Verify UPCOMING_PROTECTED_KEYS contains expected keys."""
         assert "with_release_type" in UPCOMING_PROTECTED_KEYS
-        assert "release_date.gte" in UPCOMING_PROTECTED_KEYS
-        assert "release_date.lte" in UPCOMING_PROTECTED_KEYS
+        assert "release_date_gte" in UPCOMING_PROTECTED_KEYS
+        assert "release_date_lte" in UPCOMING_PROTECTED_KEYS
         assert "year" in UPCOMING_PROTECTED_KEYS
         assert "primary_release_year" in UPCOMING_PROTECTED_KEYS
         assert len(UPCOMING_PROTECTED_KEYS) == 5

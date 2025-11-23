@@ -6,6 +6,14 @@ Reference format: "see `completed-atomic-2025-q4.md`" or "see {task name} in `co
 
 ---
 
+- [x] Update tests for ServiceParams Pydantic refactor
+    - **Outcome:** All 159 movie tests pass after signature updates
+    - **Changes:**
+        - `test_result_filtering.py`: Updated 17 `discover_movies()` calls to use `params=ServiceParams(...)`
+        - `test_endpoint_preset_merge.py`: Updated 2 assertions for underscore notation (`release_date_gte` instead of `release_date.gte`)
+    - **Files:** `backend/apps/movie/tests/test_result_filtering.py`, `backend/apps/movie/tests/unit/helpers/test_endpoint_preset_merge.py`
+    - **Quality gates:** Ruff ✅, Pyright ✅, Tests 159/159 ✅
+
 - [x] Refactor ServiceParams to Pydantic BaseModel
     - **Outcome:** ServiceParams is now a validated Pydantic model with attribute access
     - **Benefits achieved:**

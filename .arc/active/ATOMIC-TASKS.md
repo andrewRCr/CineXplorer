@@ -19,15 +19,6 @@
 
 <!-- Type safety & DRY cleanup tasks - ordered by dependencies -->
 
-- [ ] Update tests for ServiceParams Pydantic refactor
-    - **Problem:** 19 tests fail after ServiceParams refactor - using old signature
-    - **Tests to fix:**
-        - `test_result_filtering.py` (17 tests) - update `discover_movies()` calls to use `ServiceParams`
-        - `test_endpoint_preset_merge.py` (2 tests) - update assertions for underscore notation
-    - **Pattern:** `discover_movies(rating_min=7.5)` → `discover_movies(params=ServiceParams(rating_min=7.5))`
-    - **Estimate:** ~20 min
-    - **Note:** Production code complete and working (see completed-atomic-2025-q4.md)
-
 - [ ] Extract BaseTMDBService for all service classes
     - **Problem:** MovieService, KeywordService, PeopleService duplicate DI pattern, error handling, logging
     - **Fix:** Create `BaseTMDBService` with shared `__init__`, error handling helper, logging setup

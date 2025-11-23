@@ -28,7 +28,7 @@ from ..schemas import (
     PaginatedMovieResponseSchema,
 )
 from .base_service import BaseTMDBService
-from .filtering import MIN_VOTE_COUNT, ServiceParams, build_tmdb_params
+from .filtering import ServiceParams, build_tmdb_params
 from .pagination import fetch_with_filters_and_buffer
 from .schema_factories import (
     create_genre_list_from_tmdb,
@@ -131,10 +131,7 @@ class MovieService(BaseTMDBService):
         rating_min = params.rating_min
         rating_max = params.rating_max
         tmdb_page_start = params.tmdb_page_start
-        if params.min_vote_count is not None:
-            min_vote_count = params.min_vote_count
-        else:
-            min_vote_count = MIN_VOTE_COUNT
+        min_vote_count = params.min_vote_count  # None = disabled, int = threshold
 
         logger.debug(
             f"Discover movies request: page={page}, year_min={year_min}, year_max={year_max}, "

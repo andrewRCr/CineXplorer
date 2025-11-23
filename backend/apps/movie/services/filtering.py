@@ -52,7 +52,7 @@ class ServiceParams(BaseModel):
     year_max: int | None = None
     rating_min: float | None = None
     rating_max: float | None = None
-    min_vote_count: int | None = None
+    min_vote_count: int | None = MIN_VOTE_COUNT  # None = disabled, int = threshold
 
     model_config = ConfigDict(extra="forbid")
 

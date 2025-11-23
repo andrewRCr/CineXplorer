@@ -45,18 +45,17 @@ Weekly review is the cornerstone of backlog organization (per ADR-014). It ensur
 
 **Actions:**
 
-1. **Delete all completed items**
-   - Items in "Completed (This Week)" section
-   - These are already committed, no longer needed
-
-2. **Review active tasks**
+1. **Review active tasks**
    - Still relevant? Keep
    - No longer needed? Delete
    - Too complex (needs task list)? Create incidental task list, delete from atomic
 
-3. **Reprioritize if needed**
+2. **Reprioritize if needed**
    - Move high-priority items to top
    - Consider effort vs value
+
+**Note:** Completed items are immediately archived to `completed-atomic-{quarter}.md` at completion time,
+so no cleanup of completed items is needed during weekly review.
 
 **Goal:** Clean active list with only relevant, actionable items.
 

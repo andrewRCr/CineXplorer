@@ -11,7 +11,6 @@ Architecture:
 """
 from __future__ import annotations
 
-import logging
 from typing import cast
 
 from core.services.tmdb_api_client import TMDBApiClient
@@ -19,12 +18,8 @@ from core.types.api_types import TMDBParams
 from movie.schemas import PaginatedKeywordResponseSchema
 from movie.services.schema_factories import (
     create_paginated_keyword_response_from_tmdb,
-    handle_tmdb_api_error,
+    get_validated_response,
 )
-from ninja.errors import HttpError
-
-# Use TMDB-specific logger for better log organization
-logger = logging.getLogger('cinexplorer.tmdb')
 
 
 class KeywordService:
@@ -88,26 +83,7 @@ class KeywordService:
         """
         params: TMDBParams = {"page": page}
         response = self._tmdb_client.get("keyword/popular", cast(dict[str, object], params))
-
-        if not response.is_success():
-            handle_tmdb_api_error(
-                response,
-                operation='get_popular_keywords',
-                page=page
-            )
-
-        result = response.get_json_data()
-        if not result:
-            logger.error(
-                "Failed to get valid response data from TMDB",
-                extra={
-                    'correlation_id': response.correlation_id,
-                    'operation': 'get_popular_keywords',
-                    'page': page
-                }
-            )
-            raise HttpError(500, "Failed to get valid response data from TMDB")
-
+        result = get_validated_response(response, operation='get_popular_keywords', page=page)
         return create_paginated_keyword_response_from_tmdb(result)
 
     def search_keywords(self, query: str) -> PaginatedKeywordResponseSchema:
@@ -147,25 +123,7 @@ class KeywordService:
             )
 
         response = self._tmdb_client.get("search/keyword", {"query": query})
-
-        if not response.is_success():
-            handle_tmdb_api_error(
-                response,
-                operation='search_keywords',
-                query=query
-            )
-
-        result = response.get_json_data()
-        if not result:
-            logger.error(
-                "Failed to get valid response data from TMDB",
-                extra={
-                    'correlation_id': response.correlation_id,
-                    'operation': 'search_keywords',
-                    'query': query
-                }
-            )
-            raise HttpError(500, "Failed to get valid response data from TMDB")
+        result = get_validated_response(response, operation='search_keywords', query=query)
 
         # Ensure we have results key for proper processing
         if 'results' not in result:

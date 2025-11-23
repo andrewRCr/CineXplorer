@@ -12,7 +12,6 @@ Architecture:
 """
 from __future__ import annotations
 
-import logging
 from typing import cast
 
 from core.services.tmdb_api_client import TMDBApiClient
@@ -20,12 +19,8 @@ from core.types.api_types import TMDBParams
 from movie.schemas import PaginatedPersonResponseSchema
 from movie.services.schema_factories import (
     create_paginated_person_response_from_tmdb,
-    handle_tmdb_api_error,
+    get_validated_response,
 )
-from ninja.errors import HttpError
-
-# Use TMDB-specific logger for better log organization
-logger = logging.getLogger('cinexplorer.tmdb')
 
 
 class PeopleService:
@@ -90,26 +85,7 @@ class PeopleService:
         """
         params: TMDBParams = {"page": page}
         response = self._tmdb_client.get("person/popular", cast(dict[str, object], params))
-
-        if not response.is_success():
-            handle_tmdb_api_error(
-                response,
-                operation='get_popular_people',
-                page=page
-            )
-
-        result = response.get_json_data()
-        if not result:
-            logger.error(
-                "Failed to get valid response data from TMDB",
-                extra={
-                    'correlation_id': response.correlation_id,
-                    'operation': 'get_popular_people',
-                    'page': page
-                }
-            )
-            raise HttpError(500, "Failed to get valid response data from TMDB")
-
+        result = get_validated_response(response, operation='get_popular_people', page=page)
         return create_paginated_person_response_from_tmdb(result)
 
     def search_people(self, query: str) -> PaginatedPersonResponseSchema:
@@ -149,25 +125,7 @@ class PeopleService:
             )
 
         response = self._tmdb_client.get("search/person", {"query": query})
-
-        if not response.is_success():
-            handle_tmdb_api_error(
-                response,
-                operation='search_people',
-                query=query
-            )
-
-        result = response.get_json_data()
-        if not result:
-            logger.error(
-                "Failed to get valid response data from TMDB",
-                extra={
-                    'correlation_id': response.correlation_id,
-                    'operation': 'search_people',
-                    'query': query
-                }
-            )
-            raise HttpError(500, "Failed to get valid response data from TMDB")
+        result = get_validated_response(response, operation='search_people', query=query)
 
         # Ensure we have results key for proper processing
         if 'results' not in result:

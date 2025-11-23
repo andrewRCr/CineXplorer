@@ -496,7 +496,7 @@ patterns across movie, UserMovieData, and authentication domains.
             - Validate all filters work correctly with no data leakage
             - See incidental task list for full scope (Phase 1: Discovery, Phase 2: Fix)
 
-            **Type Ignore Resolution**: Will be addressed in incidental work Phase 2.2.2
+            **Type Ignore Resolution**: ✅ See "Declarative derived params extraction" in `completed-atomic-2025-q4.md`
 
 - [ ] **3.6 Phase 3 Quality Gate**
     - [ ] 3.6.1 Run full backend test suite

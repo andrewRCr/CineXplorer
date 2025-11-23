@@ -102,6 +102,46 @@ def handle_tmdb_api_error(api_response: ApiResponse, operation: str, **context: 
         raise HttpError(500, "External API error")
 
 
+def get_validated_response(
+    api_response: ApiResponse,
+    operation: str,
+    **context: object
+) -> dict[str, object]:
+    """
+    Validate API response and return JSON data.
+
+    Combines success check, error handling, and data extraction into a single call.
+    Replaces the repeated pattern of is_success() → handle_error → get_json_data() → validate.
+
+    Args:
+        api_response: ApiResponse object from TMDB client
+        operation: Name of the operation for error context
+        **context: Additional context for logging (e.g., page=1, query="term")
+
+    Returns:
+        Validated JSON data dictionary
+
+    Raises:
+        HttpError: If API error or invalid/empty data
+    """
+    if not api_response.is_success():
+        handle_tmdb_api_error(api_response, operation=operation, **context)
+
+    result = api_response.get_json_data()
+    if not result:
+        logger.error(
+            "Failed to get valid response data from TMDB",
+            extra={
+                'correlation_id': api_response.correlation_id,
+                'operation': operation,
+                **context
+            }
+        )
+        raise HttpError(500, "Failed to get valid response data from TMDB")
+
+    return result
+
+
 # =========================
 # Movie Schema Factories
 # =========================

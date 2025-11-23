@@ -227,12 +227,12 @@ def test_discover_movies_uses_injected_client() -> None:
 
     service = MovieService(tmdb_client=mock_client)
 
-    # Act: Call discover with friendly parameter names
+    # Act: Call discover with service layer parameter names (dot notation)
     service.discover_movies(
         page=2,
         genres='28,12',  # Should map to with_genres
         year=2023,
-        vote_average_gte=7.5
+        **{'vote_average.gte': 7.5}  # Dot notation for TMDB-style params
     )
 
     # Assert: Client called with TMDB parameter names

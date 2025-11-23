@@ -15,6 +15,58 @@
 ## Active
 <!-- Add tasks here with checkboxes -->
 
+<!-- Type safety & DRY cleanup tasks - ordered by dependencies -->
+
+- [ ] Declarative derived params extraction in schemas.py
+    - **Problem:** `_apply_derived_params()` has repetitive if/assign pattern with `type: ignore` on every line
+    - **Fix:** Create `DERIVED_PARAM_TRANSFORMS` mapping in filtering.py with (target_key, transform_fn) tuples
+    - **Benefits:** DRY, single type assertion at transform boundary, easier to extend
+    - **Files:** `backend/apps/movie/schemas.py`, `backend/apps/movie/services/filtering.py`
+    - **Estimate:** ~30 min
+
+- [ ] Extract service error handling helper
+    - **Problem:** Same 10-line error handling pattern repeated in every service method
+    - **Pattern:** `if not response.is_success()` → `handle_error` → `get_json_data()` → `if not result` → `raise`
+    - **Fix:** Create `get_validated_response()` helper that wraps the pattern
+    - **Benefits:** DRY, consistent error handling, easier to modify logging
+    - **Files:** `backend/apps/movie/services/` (all service files)
+    - **Estimate:** ~30 min
+    - **Note:** Do before base class task
+
+- [ ] Refactor service methods to use Unpack[ServiceParams]
+    - **Problem:** `discover_movies()` has untyped `**filters` kwargs - loses type info, requires `type: ignore` at
+    call sites
+    - **Fix:** Change signature to `**kwargs: Unpack[ServiceParams]` for full type safety
+    - **Benefits:** IDE autocomplete, type checking at call sites, no `type: ignore`, self-documenting
+    - **Trade-off:** Method body accesses params via `kwargs.get()` instead of explicit args
+    - **Files:** `backend/apps/movie/services/movie_service.py`, `backend/apps/movie/api.py`
+    - **Estimate:** ~30-45 min
+    - **Note:** Do before base class task
+
+- [ ] Extract BaseTMDBService for all service classes
+    - **Problem:** MovieService, KeywordService, PeopleService duplicate DI pattern, error handling, logging
+    - **Fix:** Create `BaseTMDBService` with shared `__init__`, error handling helper, logging setup
+    - **Approach:** All three services extend base; Keyword/People are simple, Movie has complex methods
+    - **Benefits:** DRY foundation, consistent patterns across all services, MovieService shares base
+    - **Files:** All files in `backend/apps/movie/services/`
+    - **Estimate:** ~45 min
+    - **Depends on:** Error handling helper, Unpack refactor
+
+- [ ] Add Unpack typing to TMDBApiClient methods
+    - **Problem:** Multiple methods use `**kwargs: object` losing all type info
+    - **Fix:** Create TypedDict for TMDB API params, use Unpack for type-safe kwargs
+    - **Methods:** `discover_movies`, `search_movies`, `get_popular_movies`, etc.
+    - **Files:** `backend/apps/core/services/tmdb_api_client.py`
+    - **Estimate:** ~45 min
+    - **Priority:** Lower - internal infrastructure
+
+- [ ] Investigate login session loss during testing
+    - Context: session appeared lost during theme system visual testing (no explicit logout)
+    - Test session persistence during normal navigation
+    - Test session across browser refreshes
+    - Test session timeout behavior
+    - Document reproduction steps if found, or close as testing artifact
+
 - [ ] Simplify sort options UI
     - Add "Release Date (Oldest)" to minimal sort dropdown
     - Increase minimal dropdown width to fit longest label
@@ -23,45 +75,17 @@
     - Rationale: Reverse sorts (popularity.asc, vote_average.asc, title Z-A) produce meaningless data (untracked/unrated
     movies, Unicode sorting issues)
 
-- [ ] Consolidate redundant parameter mappings
-    - **Problem:** Two places define mappings that must stay in sync - `schemas.py to_service_params` and `filtering.py FILTER_MAPPING`
-    - **Risk:** Gaps like `vote_count_gte` missing from one causes silent failures
-    - **Fix:** Create single source of truth in `filtering.py`, have schema reference it
-    - **Files:** `backend/apps/movie/schemas.py`, `backend/apps/movie/services/filtering.py`
-    - **Estimate:** ~1-2 hours
-
-- [ ] Rename FILTER_MAPPING to PARAM_MAPPING
-    - **Problem:** `FILTER_MAPPING` contains `sort_by` which isn't a filter - confusing when searching for sort logic
-    - **Fix:** Rename to `PARAM_MAPPING` in `filtering.py`, update frontend `movieFilterMapper.ts` to `paramMapper`
-    - **Files:** `backend/apps/movie/services/filtering.py`, `frontend/src/utilities/movieFilterMapper.ts`
-    - **Estimate:** ~30 min
-
-- [ ] Add TypedDict for service params
-    - **Problem:** `to_service_params()` returns generic dict, `discover_movies()` expects typed params - requires
-    `type: ignore`
-    - **Fix:** Create `ServiceParams` TypedDict with proper types, use in return annotation
-    - **Alternative:** Extract known params (year_min, rating_min, etc.) explicitly before `**kwargs`
-    - **Files:** `backend/apps/movie/schemas.py`, `backend/apps/movie/api.py`
-    - **Estimate:** ~1 hour
-
-- [ ] Simplify schema/service mapping flow
-    - **Problem:** Multiple mapping layers: HTTP → Schema → Service → filtering.py → TMDB
-    - **Fix:** Schema just validates/extracts, single authoritative mapping in service layer
-    - **Approach:** Move all TMDB param name knowledge to `filtering.py`, schema passes through field names unchanged
-    - **Files:** `backend/apps/movie/schemas.py`, `backend/apps/movie/services/filtering.py`, `backend/apps/movie/services/movie_service.py`
-    - **Estimate:** ~2-3 hours
-    - **Note:** Consider doing after "Consolidate redundant parameter mappings" task
-
-- [ ] Investigate login session loss during testing
-    - Context: ession appeared lost during theme system visual testing (no explicit logout)
-    - Test session persistence during normal navigation
-    - Test session across browser refreshes
-    - Test session timeout behavior
-    - Document reproduction steps if found, or close as testing artifact
-
 ## Completed (This Week)
 
 <!-- Move completed tasks here (marked [x]); delete all during weekly review  -->
+
+- [x] Consolidate redundant parameter mappings + Rename FILTER_MAPPING + Add TypedDict + Simplify mapping flow
+    - **Outcome:** Single source of truth in `filtering.py` with `PARAM_MAPPING`, `HTTP_TO_SERVICE_MAPPING`,
+    and `ServiceParams` TypedDict
+    - **Changes:** Schema imports and uses mappings from filtering.py, removed underscore/dot duplication, standardized
+    on dot notation (e.g. `release_year.gte`) for TMDB consistency
+    - **Files:** `backend/apps/movie/schemas.py`, `backend/apps/movie/services/filtering.py`, `backend/apps/movie/tests/test_movie_service.py`
+    - **Note:** `type: ignore[arg-type]` remains for kwargs unpacking - follow-up task created for Unpack refactor
 
 - [x] Research accessibility guidelines for input field focus rings
     - **Outcome:** CSS `:focus-visible` spec always matches on text inputs (by design), not browser bug

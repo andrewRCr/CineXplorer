@@ -7,50 +7,99 @@ parameters, including parameter name mapping and type preservation logic.
 
 from __future__ import annotations
 
+from typing import TypedDict
+
 from .result_filtering import MIN_VOTE_COUNT
 
-# Filter mapping: service parameter names → TMDB API parameter names
-# Supports both underscore (direct service calls) and dot (API layer) parameter names
-FILTER_MAPPING: dict[str, str] = {
+# Type definition for service layer parameters
+# All fields are optional since filters are user-provided
+# Uses functional syntax to support dot notation keys (e.g., 'vote_average.gte')
+ServiceParams = TypedDict('ServiceParams', {
+    # Sorting
+    'sort_by': str,
+
+    # Genre/keyword filters
+    'genres': str,
+    'keywords': str,
+    'people': str,
+
+    # Year filter
+    'year': int,
+
+    # Vote filters (dot notation for TMDB compatibility)
+    'vote_average.gte': float,
+    'vote_average.lte': float,
+    'vote_count.gte': int,
+    'vote_count.lte': int,
+
+    # Release date filters (dot notation)
+    'release_date.gte': str,
+    'release_date.lte': str,
+
+    # Certification
+    'certification': str,
+    'region': str,
+    'with_release_type': str,
+
+    # Pagination
+    'tmdb_page_start': int,
+
+    # Backend filtering (derived from date params for second-pass filtering)
+    'year_min': int,
+    'year_max': int,
+    'rating_min': float,
+    'rating_max': float,
+}, total=False)
+
+# Parameter mapping: service parameter names (dot notation) → TMDB API parameter names
+# This is the single source of truth for all parameter name transformations.
+# Schema layer uses this for HTTP → service conversion, build_tmdb_params uses it for API calls.
+PARAM_MAPPING: dict[str, str] = {
     'sort_by': 'sort_by',
     'genres': 'with_genres',
     'year': 'year',
-    'vote_average_gte': 'vote_average.gte',  # Direct service calls with underscore
-    'vote_average.gte': 'vote_average.gte',  # API sends with dot
-    'vote_average_lte': 'vote_average.lte',  # Direct service calls with underscore
-    'vote_average.lte': 'vote_average.lte',  # API sends with dot
-    'vote_count_gte': 'vote_count.gte',  # Min vote count for quality filtering
-    'vote_count.gte': 'vote_count.gte',  # API sends with dot
-    'vote_count_lte': 'vote_count.lte',  # Max vote count
-    'vote_count.lte': 'vote_count.lte',  # API sends with dot
+    'vote_average.gte': 'vote_average.gte',
+    'vote_average.lte': 'vote_average.lte',
+    'vote_count.gte': 'vote_count.gte',
+    'vote_count.lte': 'vote_count.lte',
     'keywords': 'with_keywords',
     'people': 'with_people',
-    'release_date_gte': 'primary_release_date.gte',  # Direct service calls with underscore
-    'release_date.gte': 'primary_release_date.gte',  # API sends with dot
-    'release_date_lte': 'primary_release_date.lte',  # Direct service calls with underscore
-    'release_date.lte': 'primary_release_date.lte',  # API sends with dot
+    'release_date.gte': 'primary_release_date.gte',
+    'release_date.lte': 'primary_release_date.lte',
     'certification': 'certification',
-    'with_release_type': 'with_release_type',  # Theatrical release type filtering
+    'with_release_type': 'with_release_type',
+    'region': 'region',
+    'tmdb_page_start': 'tmdb_page_start',
+}
+
+# HTTP param name → service param name (dot notation)
+# Used by schema layer to normalize incoming HTTP parameters
+HTTP_TO_SERVICE_MAPPING: dict[str, str] = {
+    'vote_average_gte': 'vote_average.gte',
+    'vote_average_lte': 'vote_average.lte',
+    'vote_count_gte': 'vote_count.gte',
+    'vote_count_lte': 'vote_count.lte',
+    'release_date_gte': 'release_date.gte',
+    'release_date_lte': 'release_date.lte',
+    # Passthrough params (same name)
+    'sort_by': 'sort_by',
+    'year': 'year',
+    'certification': 'certification',
+    'region': 'region',
+    'tmdb_page_start': 'tmdb_page_start',
 }
 
 # Numeric parameters that should preserve type (not convert to string)
 # Used during filter mapping to TMDB API parameters
-NUMERIC_FILTER_PARAMS: frozenset[str] = frozenset([
+# Only dot notation needed since service layer uses dot notation exclusively
+NUMERIC_PARAMS: frozenset[str] = frozenset([
     'year',
     'primary_release_year',
-    'vote_average_gte',
     'vote_average.gte',
-    'vote_average_lte',
     'vote_average.lte',
-    'vote_count',
-    'vote_count_gte',
     'vote_count.gte',
-    'vote_count_lte',
     'vote_count.lte',
-    'runtime',
-    'runtime_gte',
     'runtime.gte',
-    'runtime_lte',
     'runtime.lte',
 ])
 
@@ -117,13 +166,13 @@ def build_tmdb_params(
     }
 
     # Apply filters using module-level mapping constants
-    for filter_name, tmdb_param in FILTER_MAPPING.items():
-        if filter_name in filters and filters[filter_name] is not None:
+    for param_name, tmdb_param in PARAM_MAPPING.items():
+        if param_name in filters and filters[param_name] is not None:
             # Preserve data types for numeric parameters, convert others to string
-            if filter_name in NUMERIC_FILTER_PARAMS:
-                params[tmdb_param] = filters[filter_name]
+            if param_name in NUMERIC_PARAMS:
+                params[tmdb_param] = filters[param_name]
             else:
-                params[tmdb_param] = str(filters[filter_name])
+                params[tmdb_param] = str(filters[param_name])
 
     # Set default sort if not specified
     if 'sort_by' not in params:

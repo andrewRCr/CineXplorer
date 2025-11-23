@@ -9,6 +9,8 @@ from ninja import Schema
 from ninja.orm import ModelSchema
 from pydantic import Field, field_validator
 
+from .services.filtering import HTTP_TO_SERVICE_MAPPING
+
 
 class MovieSearchParamsSchema(Schema):
     """Schema for movie search parameters with empty string handling.
@@ -368,14 +370,14 @@ class MovieDiscoverFilterSchema(Schema):
         Convert filter schema to service layer parameter format.
 
         The service layer (movie_service.discover_movies) expects parameter names
-        in its own format (e.g., 'genres', 'vote_average.gte') which it then maps
+        in dot notation (e.g., 'genres', 'vote_average.gte') which it then maps
         to TMDB API format internally.
 
         This method extracts parameters for both:
         1. TMDB API filtering (primary filter - reduces millions to thousands)
         2. Backend filtering (second-pass data hygiene - catches TMDB quality issues)
 
-        Uses declarative field mappings for maintainability and extensibility.
+        Uses HTTP_TO_SERVICE_MAPPING from filtering.py as single source of truth.
 
         Returns:
             Dictionary with service layer parameters (None values excluded)
@@ -384,25 +386,10 @@ class MovieDiscoverFilterSchema(Schema):
         data = self.model_dump(exclude_none=True)
         params: dict[str, str | int | float | bool] = {}
 
-        # Declarative field mappings: schema_field → service_parameter_name
-        field_mappings: dict[str, str] = {
-            'sort_by': 'sort_by',
-            'year': 'year',
-            'vote_average_gte': 'vote_average.gte',
-            'vote_average_lte': 'vote_average.lte',
-            'vote_count_gte': 'vote_count.gte',
-            'vote_count_lte': 'vote_count.lte',
-            'release_date_gte': 'release_date.gte',
-            'release_date_lte': 'release_date.lte',
-            'certification': 'certification',
-            'region': 'region',
-            'tmdb_page_start': 'tmdb_page_start',
-        }
-
-        # Apply simple field mappings (passthrough and renames)
-        for schema_field, param_name in field_mappings.items():
-            if schema_field in data:
-                params[param_name] = data[schema_field]  # type: ignore[assignment]
+        # Apply field mappings using single source of truth from filtering.py
+        for http_field, service_param in HTTP_TO_SERVICE_MAPPING.items():
+            if http_field in data:
+                params[service_param] = data[http_field]  # type: ignore[assignment]
 
         # Apply derived parameters (backend filtering, aliases, transformations)
         self._apply_derived_params(data, params)

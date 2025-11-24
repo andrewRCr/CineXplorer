@@ -6,6 +6,26 @@ Reference format: "see `completed-atomic-2025-q4.md`" or "see {task name} in `co
 
 ---
 
+- [x] Validate test data with Pydantic models (eliminate cast() properly)
+    - **Outcome:** Test builders return validated Pydantic models, tests use `.model_dump()` for ApiResponse
+    - **Changes:**
+        - Updated `tmdb_test_builders.py` functions to return Pydantic models (TMDBMovieBase, TMDBMovieDetail, TMDBMovieSearchResponse)
+        - Functions renamed for accuracy: `create_raw_tmdb_movie` → `create_tmdb_movie`, `create_movie_detail_dict` → `create_tmdb_movie_detail`
+        - All 10 test files updated to call `.model_dump()` when passing to ApiResponse
+        - Removed duplicate TMDBMovieDetail TypedDict (already imported from core)
+        - Updated integration conftest fixture to use validated models
+    - **Architecture validated:** Tests build validated models → dump to dict for ApiResponse → service validates (follows validation boundary pattern from strategy-type-safety.md)
+    - **Benefits:**
+        - Invalid test data caught at construction (early failure)
+        - No cast() needed (data genuinely validated, not type-asserted)
+        - Tests use same validation as production code
+        - Clearer validation boundaries
+    - **Files modified:** 10 test files total
+        - Core: `tmdb_test_builders.py`, `integration/conftest.py`
+        - Tests: `test_endpoint_enrichment_integration.py`, `test_movie_api.py`, `test_movie_service.py`, `test_batch_operations.py`, `test_movie_service_buffer_deduplication.py`, `test_result_filtering.py`, `integration/api/test_date_constrained_endpoints.py`
+    - **Quality gates:** Tests 159/159 ✅, Ruff ✅, Pyright 25 errors (Pydantic `.model_dump()` returns `dict[str, Any]` - acceptable per strategy as external API boundary)
+    - **Follow-up task created:** Centralize test mock creation with DRY helpers (in ATOMIC-TASKS.md)
+
 - [x] Extract BaseTMDBService for all service classes
     - **Outcome:** Created shared base class with DI pattern and error handling helper
     - **Changes:**

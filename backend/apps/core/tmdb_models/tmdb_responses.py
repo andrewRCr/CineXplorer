@@ -108,8 +108,8 @@ class TMDBPaginatedResponse(BaseModel):
     total_results: int
 
 
-class TMDBMovieSearchResponse(TMDBPaginatedResponse):
-    """TMDB movie search/discover response structure."""
+class TMDBPaginatedMovieResponse(TMDBPaginatedResponse):
+    """TMDB paginated movie response for search, discover, and browse endpoints."""
     results: list[TMDBMovieBase] = []
 
 
@@ -119,8 +119,8 @@ class TMDBKeyword(BaseModel):
     name: str
 
 
-class TMDBKeywordSearchResponse(TMDBPaginatedResponse):
-    """TMDB keyword search response structure."""
+class TMDBPaginatedKeywordResponse(TMDBPaginatedResponse):
+    """TMDB paginated keyword response for search endpoints."""
     results: list[TMDBKeyword] = []
 
 
@@ -138,8 +138,8 @@ class TMDBPerson(BaseModel):
     known_for: list[dict[str, Any]] = []
 
 
-class TMDBPersonSearchResponse(TMDBPaginatedResponse):
-    """TMDB person search response structure."""
+class TMDBPaginatedPersonResponse(TMDBPaginatedResponse):
+    """TMDB paginated person response for search endpoints."""
     results: list[TMDBPerson] = []
 
 

@@ -13,7 +13,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from unittest.mock import Mock
 
-from core.tmdb_models.tmdb_responses import TMDBMovieSearchResponse
+from core.tmdb_models.tmdb_responses import TMDBPaginatedMovieResponse
 from movie.schemas import MovieBaseSchema
 from movie.services.pagination import apply_buffer_if_needed
 from movie.tests.tmdb_test_builders import (
@@ -56,18 +56,18 @@ def convert_tmdb_dict_to_schema(tmdb_movie: TMDBMovieBaseRawDict) -> MovieBaseSc
 def create_mock_fetch_func(
     page_responses: dict[int, TMDBMovieResponse]
 ) -> Mock:
-    """Create mock fetch function that returns TMDBMovieSearchResponse for each page.
+    """Create mock fetch function that returns TMDBPaginatedMovieResponse for each page.
 
-    The buffer method expects fetch_func to return a TMDBMovieSearchResponse
+    The buffer method expects fetch_func to return a TMDBPaginatedMovieResponse
     (Pydantic BaseModel with 'results', 'page', etc. attributes).
 
     Args:
         page_responses: Mapping of page number to TMDB response (TypedDict)
 
     Returns:
-        Mock function that returns TMDBMovieSearchResponse (Pydantic) for given page number
+        Mock function that returns TMDBPaginatedMovieResponse (Pydantic) for given page number
     """
-    def fetch_page(page: int) -> TMDBMovieSearchResponse:
+    def fetch_page(page: int) -> TMDBPaginatedMovieResponse:
         if page not in page_responses:
             # Return empty response for pages beyond what we defined
             tmdb_dict = create_paginated_tmdb_response(
@@ -75,11 +75,11 @@ def create_mock_fetch_func(
                 page=page,
                 total_pages=max(page_responses.keys()) if page_responses else 1
             )
-            return TMDBMovieSearchResponse.model_validate(tmdb_dict)
+            return TMDBPaginatedMovieResponse.model_validate(tmdb_dict)
 
         # Convert TypedDict to Pydantic model
         tmdb_dict = page_responses[page]
-        return TMDBMovieSearchResponse.model_validate(tmdb_dict)
+        return TMDBPaginatedMovieResponse.model_validate(tmdb_dict)
 
     mock_func = Mock(side_effect=fetch_page)
     return mock_func

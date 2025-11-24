@@ -15,7 +15,7 @@ from typing import NotRequired, TypedDict
 from core.tmdb_models.tmdb_responses import (
     TMDBMovieBase,
     TMDBMovieDetail,
-    TMDBMovieSearchResponse,
+    TMDBPaginatedMovieResponse,
 )
 
 # ============================================================================
@@ -232,7 +232,7 @@ def create_paginated_tmdb_response(
     page: int = 1,
     total_pages: int = 1,
     total_results: int | None = None,
-) -> TMDBMovieSearchResponse:
+) -> TMDBPaginatedMovieResponse:
     """Create a validated TMDB paginated response for testing.
 
     Returns a Pydantic model instance with validated pagination structure.
@@ -245,7 +245,7 @@ def create_paginated_tmdb_response(
         total_results: Total number of results (defaults to len(movies))
 
     Returns:
-        Validated TMDBMovieSearchResponse Pydantic model
+        Validated TMDBPaginatedMovieResponse Pydantic model
 
     Example:
         >>> movies = [
@@ -257,7 +257,7 @@ def create_paginated_tmdb_response(
     if total_results is None:
         total_results = len(movies)
 
-    return TMDBMovieSearchResponse(
+    return TMDBPaginatedMovieResponse(
         page=page,
         total_pages=total_pages,
         total_results=total_results,

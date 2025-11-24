@@ -10,7 +10,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from core.tmdb_models.tmdb_responses import TMDBMovieBase, TMDBMovieSearchResponse
+from core.tmdb_models.tmdb_responses import TMDBMovieBase, TMDBPaginatedMovieResponse
 
 from ..schemas import MovieBaseSchema, PaginatedMovieResponseSchema
 from .filtering import MIN_VOTE_COUNT
@@ -76,7 +76,7 @@ def build_filtered_response(
     Note:
         This function encapsulates the common pattern of:
         1. Converting MovieBaseSchema → TMDBMovieBase
-        2. Creating TMDBMovieSearchResponse
+        2. Creating TMDBPaginatedMovieResponse
         3. Converting to PaginatedMovieResponseSchema
 
         The total_results preserves the original TMDB count, even though
@@ -87,7 +87,7 @@ def build_filtered_response(
     tmdb_movies = [convert_schema_to_tmdb_movie(m) for m in movies]
 
     # Create TMDB response structure
-    filtered_response = TMDBMovieSearchResponse(
+    filtered_response = TMDBPaginatedMovieResponse(
         page=page,
         total_pages=total_pages,
         total_results=total_results,
@@ -178,7 +178,7 @@ def apply_buffer_if_needed(
     year_max: int | None,
     rating_min: float | None,
     rating_max: float | None,
-    fetch_next_page_func: Callable[[int], TMDBMovieSearchResponse],
+    fetch_next_page_func: Callable[[int], TMDBPaginatedMovieResponse],
     min_vote_count: int | None = MIN_VOTE_COUNT,
 ) -> tuple[list[MovieBaseSchema], int]:
     """Apply smart buffer mechanism to maintain consistent page sizes.
@@ -261,7 +261,7 @@ def apply_buffer_if_needed(
 
 
 def fetch_with_filters_and_buffer(
-    fetch_page_func: Callable[[int], TMDBMovieSearchResponse],
+    fetch_page_func: Callable[[int], TMDBPaginatedMovieResponse],
     page: int,
     year_min: int | None,
     year_max: int | None,
@@ -286,7 +286,7 @@ def fetch_with_filters_and_buffer(
 
     Args:
         fetch_page_func: Function to fetch a specific page (takes page_num: int)
-            Returns TMDBMovieSearchResponse
+            Returns TMDBPaginatedMovieResponse
         page: Current page number
         year_min: Minimum release year (inclusive), backend filtered (second-pass data hygiene)
         year_max: Maximum release year (inclusive), backend filtered (second-pass data hygiene)
@@ -342,11 +342,11 @@ def fetch_with_filters_and_buffer(
     # Step 5: Apply buffer mechanism if needed
     # If pre-filter exists, wrap fetch function to apply it to buffer too
     if pre_filter_func is not None:
-        def fetch_with_pre_filter(page_num: int) -> TMDBMovieSearchResponse:
+        def fetch_with_pre_filter(page_num: int) -> TMDBPaginatedMovieResponse:
             """Fetch buffer page and apply pre-filter."""
             buffer_response = fetch_page_func(page_num)
             buffer_filtered = pre_filter_func(buffer_response.results)
-            return TMDBMovieSearchResponse(
+            return TMDBPaginatedMovieResponse(
                 page=buffer_response.page,
                 total_pages=buffer_response.total_pages,
                 total_results=buffer_response.total_results,

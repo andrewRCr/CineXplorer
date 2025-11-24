@@ -6,6 +6,16 @@ Reference format: "see `completed-atomic-2025-q4.md`" or "see {task name} in `co
 
 ---
 
+- [x] Standardize TMDB paginated response class naming
+    - **Outcome:** Renamed misleading "SearchResponse" classes to "PaginatedResponse" pattern for consistency
+    - **Renames performed:**
+        - `TMDBMovieSearchResponse` → `TMDBPaginatedMovieResponse` (used for discover, search, browse, now-playing, upcoming)
+        - `TMDBKeywordSearchResponse` → `TMDBPaginatedKeywordResponse`
+        - `TMDBPersonSearchResponse` → `TMDBPaginatedPersonResponse`
+    - **Cleanup:** Deleted unused `backend/shared/api_types.py` (deprecated file with no imports)
+    - **Files modified:** 8 code files (definition, exports, imports across service layer and tests)
+    - **Quality gates:** 408 tests passing, 0 Ruff violations, 0 Pyright errors in modified files
+
 - [x] Centralize test mock creation with DRY helpers
     - **Outcome:** Eliminated test mock duplication across 8 files (97 `.model_dump()` occurrences)
     - **Changes:**

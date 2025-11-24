@@ -35,10 +35,10 @@ from core.services.api_response import ApiResponse
 from core.tmdb_models.tmdb_responses import (
     TMDBCreditsResponse,
     TMDBGenreListResponse,
-    TMDBKeywordSearchResponse,
     TMDBMovieDetail,
-    TMDBMovieSearchResponse,
-    TMDBPersonSearchResponse,
+    TMDBPaginatedKeywordResponse,
+    TMDBPaginatedMovieResponse,
+    TMDBPaginatedPersonResponse,
 )
 from ninja.errors import HttpError
 
@@ -329,7 +329,7 @@ def create_paginated_movie_response_from_tmdb(
     """
     try:
         # First, validate against TMDB response structure for type safety
-        tmdb_search = TMDBMovieSearchResponse.model_validate(tmdb_response, strict=False)
+        tmdb_search = TMDBPaginatedMovieResponse.model_validate(tmdb_response, strict=False)
 
         # Convert to application schema
         pagination_data: dict[str, object] = {
@@ -384,7 +384,7 @@ def create_paginated_keyword_response_from_tmdb(
     """
     try:
         # First, validate against TMDB response structure for type safety
-        tmdb_keywords = TMDBKeywordSearchResponse.model_validate(tmdb_response, strict=False)
+        tmdb_keywords = TMDBPaginatedKeywordResponse.model_validate(tmdb_response, strict=False)
 
         # Convert to application schema
         pagination_data: dict[str, object] = {
@@ -437,7 +437,7 @@ def create_paginated_person_response_from_tmdb(
     """
     try:
         # First, validate against TMDB response structure for type safety
-        tmdb_people = TMDBPersonSearchResponse.model_validate(tmdb_response, strict=False)
+        tmdb_people = TMDBPaginatedPersonResponse.model_validate(tmdb_response, strict=False)
 
         # Convert to application schema
         pagination_data: dict[str, object] = {

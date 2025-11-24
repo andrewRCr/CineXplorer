@@ -17,18 +17,6 @@
 ## Active
 <!-- Add tasks here with checkboxes -->
 
-<!-- Type Safety -->
-
-- [ ] Rename TMDBMovieSearchResponse to TMDBPaginatedMovieResponse
-    - **Context**: Current name is misleading - used for ALL paginated movie endpoints (discover, search,
-      now-playing, upcoming, browse), not just search
-    - **Files to update**:
-        - `backend/apps/core/tmdb_models/tmdb_responses.py` - Rename class definition
-        - All imports across service layer, pagination, schema factories
-        - Update docstring to reflect generic paginated movie response nature
-    - **Why now**: Discovered during test validation work - naming confusion could cause future bugs
-    - **Estimated scope**: ~15 files, mostly import changes
-
 <!-- Miscellaneous -->
 
 - [ ] Investigate login session loss during testing

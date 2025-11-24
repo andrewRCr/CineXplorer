@@ -12,7 +12,7 @@ from core.services.validators import (
 from core.tmdb_models.tmdb_responses import (
     TMDBGenreListResponse,
     TMDBMovieBase,
-    TMDBMovieSearchResponse,
+    TMDBPaginatedMovieResponse,
 )
 from core.types.api_types import TMDBParams
 from ninja.errors import HttpError
@@ -148,7 +148,7 @@ class MovieService(BaseTMDBService):
             f"rating_max={rating_max}, full_params={api_params}"
         )
 
-        def fetch_discover_page(page_num: int) -> TMDBMovieSearchResponse:
+        def fetch_discover_page(page_num: int) -> TMDBPaginatedMovieResponse:
             """Fetch a specific discover page with current filters."""
             page_params = api_params.copy()
             page_params['page'] = page_num
@@ -158,7 +158,7 @@ class MovieService(BaseTMDBService):
             )
             return validate_tmdb_paginated_response(
                 page_response,
-                TMDBMovieSearchResponse
+                TMDBPaginatedMovieResponse
             )
 
         return fetch_with_filters_and_buffer(
@@ -322,7 +322,7 @@ class MovieService(BaseTMDBService):
             + backend filtering (catches data quality issues).
             Non-visual content (soundtracks, scores, etc.) is filtered out.
         """
-        def fetch_search_page(page_num: int) -> TMDBMovieSearchResponse:
+        def fetch_search_page(page_num: int) -> TMDBPaginatedMovieResponse:
             """Fetch a specific search page with current query."""
             page_response = self._tmdb_client.search_movies(
                 query=query,
@@ -331,7 +331,7 @@ class MovieService(BaseTMDBService):
                 language="en-US",
                 region="US"
             )
-            return validate_tmdb_paginated_response(page_response, TMDBMovieSearchResponse)
+            return validate_tmdb_paginated_response(page_response, TMDBPaginatedMovieResponse)
 
         return fetch_with_filters_and_buffer(
             fetch_search_page,

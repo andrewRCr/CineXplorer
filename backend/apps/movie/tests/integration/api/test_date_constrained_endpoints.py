@@ -3,18 +3,12 @@
 Tests the thin wrapper pattern for now-playing and upcoming endpoints,
 verifying filter support and preset enforcement per ADR-002.
 
-**Test Organization Note:**
-This file is forward-compatible with the test organization standardization
-plan (tasks-test-organization-standardization.md). When Phase 4 file splits
-execute, these tests are already in their target location.
-
 **Testing Strategy:**
 - Basic smoke tests to verify endpoints return results
 - Filter parameter support (genres, ratings, etc.)
 - Protected key enforcement (date ranges cannot be overridden)
 - Browse endpoint remains unchanged after rename
 
-See: `.arc/reference/strategies/strategy-testing-methodology.md` for patterns
 """
 
 from __future__ import annotations
@@ -26,7 +20,7 @@ import pytest
 from core.services.api_response import ApiResponse
 from core.tests.test_helpers import HTTPStatus
 from core.types.api_types import TMDBResponseData
-from movie.tests.test_fixtures_tmdb import create_paginated_tmdb_response, create_raw_tmdb_movie
+from movie.tests.tmdb_test_builders import create_paginated_tmdb_response, create_raw_tmdb_movie
 
 if TYPE_CHECKING:
     from django.test import Client

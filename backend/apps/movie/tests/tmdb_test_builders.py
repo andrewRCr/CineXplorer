@@ -9,7 +9,6 @@ TypedDicts for external API response structures.
 Uses NotRequired (Python 3.11+) to explicitly mark optional fields, making
 TMDB API behavior clearer than total=False approach.
 
-Related: .arc/reference/strategies/strategy-type-safety.md
 """
 from __future__ import annotations
 

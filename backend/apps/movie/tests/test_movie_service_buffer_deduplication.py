@@ -7,11 +7,6 @@ Tests the apply_buffer_if_needed function to verify:
 - Deduplication preserves first occurrence order
 - Empty results after deduplication handled correctly
 
-These tests use TDD approach - written BEFORE implementing deduplication.
-Expected: All tests FAIL initially (red phase), PASS after implementation (green phase).
-
-Related task: .arc/active/incidental/tasks-buffer-deduplication-data-quality.md
-Root cause: TMDB API returns duplicates across pagination boundaries (eventually-consistent DB)
 """
 from __future__ import annotations
 
@@ -21,7 +16,7 @@ from unittest.mock import Mock
 from core.tmdb_models.tmdb_responses import TMDBMovieSearchResponse
 from movie.schemas import MovieBaseSchema
 from movie.services.pagination import apply_buffer_if_needed
-from movie.tests.test_fixtures_tmdb import (
+from movie.tests.tmdb_test_builders import (
     TMDBMovieBaseRawDict,
     TMDBMovieResponse,
     create_paginated_tmdb_response,

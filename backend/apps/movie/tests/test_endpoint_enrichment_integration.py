@@ -25,7 +25,7 @@ from core.tests.test_helpers import HTTPStatus
 from core.types.api_types import TMDBResponseData
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.test import Client
-from movie.tests.test_fixtures_tmdb import create_paginated_tmdb_response, create_raw_tmdb_movie
+from movie.tests.tmdb_test_builders import create_paginated_tmdb_response, create_raw_tmdb_movie
 from user_movie_data.models import UserMovieData
 
 if TYPE_CHECKING:

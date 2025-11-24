@@ -1022,18 +1022,13 @@ This phase addresses a complex test migration challenge. Tests were written when
 
     **CRITICAL:** Tier 1 tests catch fundamental breaks. Write and verify these FIRST.
 
-    - [ ] **5.4.a Create test infrastructure (endpoint configs + fixtures)**
-        - Rename `test_fixtures_tmdb.py` → `tmdb_test_builders.py` (clarifies it's builders/types, not fixtures)
-            - Update all imports across test files
-        - Create `backend/apps/movie/tests/integration/api/endpoint_configs.py`:
-            - `EndpointConfig` NamedTuple (name, url, has_date_preset, min_vote_count_applied, protected_keys)
-            - `BROWSE_CONFIG`, `NOW_PLAYING_CONFIG`, `UPCOMING_CONFIG`
-            - `ALL_ENDPOINTS`, `DATE_CONSTRAINED_ENDPOINTS` lists
-        - Add fixtures to `backend/apps/movie/tests/integration/conftest.py`:
-            - `mock_tmdb_response_factory` - wraps response creation + ApiResponse casting
-            - `expected_date_ranges` - centralized date calculation for date correctness tests
-        - Follow type safety strategy: Properly typed (NamedTuple, Protocol for factory)
-        - Existing helpers (`create_raw_tmdb_movie`, etc.) stay in renamed `tmdb_test_builders.py`
+    - [x] **5.4.a Create test infrastructure (endpoint configs + fixtures)**
+        - Renamed `test_fixtures_tmdb.py` → `tmdb_test_builders.py` (9 files updated)
+        - Created `endpoint_configs.py` with `EndpointConfig` NamedTuple and 3 endpoint configs
+        - Added fixtures to `tests/integration/conftest.py`:
+            - `mock_tmdb_response_factory` (Protocol-typed factory)
+            - `expected_date_ranges` (timezone-aware date calculation)
+        - All 159 movie tests pass, linting and type checking clean
 
     - [ ] **5.4.b Write Tier 1 sanity tests (HIGHEST PRIORITY)**
         - Location: `backend/apps/movie/tests/integration/api/test_endpoint_sanity.py`

@@ -17,6 +17,18 @@
 ## Active
 <!-- Add tasks here with checkboxes -->
 
+<!-- Type Safety -->
+
+- [ ] Make ApiResponse generic for better type safety
+    - Location: `backend/apps/core/services/api_response.py`
+    - Change `class ApiResponse:` to `class ApiResponse(Generic[T]):`
+    - Update `data: Mapping[str, object] | ...` to `data: T | None`
+    - Add `from typing import Generic, TypeVar` and `T = TypeVar('T')`
+    - Update TMDB client methods to return typed responses (e.g., `ApiResponse[TMDBMovieResponse]`)
+    - Eliminates need for `cast()` in tests and production code
+    - Run full test suite + type checking after changes
+    - Rationale: Improves type safety, IDE autocomplete, catches type mismatches at static analysis
+
 <!-- Miscellaneous -->
 
 - [ ] Investigate login session loss during testing

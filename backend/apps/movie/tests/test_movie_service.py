@@ -22,7 +22,7 @@ from movie.schemas import (
     MovieDetailSchema,
     PaginatedMovieResponseSchema,
 )
-from movie.tests.test_fixtures_tmdb import (
+from movie.tests.tmdb_test_builders import (
     TMDBCreditsResponse,
     TMDBGenreListResponse,
     TMDBMovieResponse,

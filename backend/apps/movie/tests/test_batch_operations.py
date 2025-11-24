@@ -12,7 +12,7 @@ from unittest.mock import MagicMock, patch
 from core.services.api_response import ApiResponse
 from movie.schemas import MovieBaseSchema
 from movie.services.batch_operations import fetch_movies_batch
-from movie.tests.test_fixtures_tmdb import create_movie_detail_dict
+from movie.tests.tmdb_test_builders import create_movie_detail_dict
 
 # ============================================================================
 # Successful Batch Fetch Tests

@@ -18,7 +18,7 @@ from unittest.mock import Mock
 import pytest
 from core.services.api_response import ApiResponse
 from movie.schemas import PaginatedKeywordResponseSchema
-from movie.tests.test_fixtures_tmdb import TMDBKeywordResponse
+from movie.tests.tmdb_test_builders import TMDBKeywordResponse
 from ninja.errors import HttpError
 
 # ============================================================================

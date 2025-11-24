@@ -17,7 +17,7 @@ from core.tests.test_helpers import HTTPStatus
 from core.types.api_types import TMDBResponseData
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.test import Client
-from movie.tests.test_fixtures_tmdb import create_paginated_tmdb_response, create_raw_tmdb_movie
+from movie.tests.tmdb_test_builders import create_paginated_tmdb_response, create_raw_tmdb_movie
 from user_movie_data.models import UserMovieData
 
 # HTTP status codes for Django Ninja endpoints
@@ -1031,7 +1031,7 @@ def test_browse_fallback_when_tmdb_page_start_omitted(
 
 
 # =========================
-# Buffer Deduplication Integration Tests (TDD)
+# Buffer Deduplication Integration Tests
 # =========================
 
 
@@ -1046,12 +1046,11 @@ def test_browse_deduplicates_when_tmdb_returns_duplicate_across_pages(
     Real-world bug scenario: TMDB eventually-consistent DB returns Spirited Away (ID 129)
     on both page 1 position 19 AND page 2 position 1 (multi-genre filter: Animation + Family).
 
-    Expected behavior (after Phase 2 implementation):
+    Expected behavior:
     - Buffer deduplicates by tmdb_id
     - Continues fetching page 2 to reach 20 unique movies
     - Returns 20 unique movies (no duplicate tmdb_id values)
 
-    TDD: Expect this test to FAIL before Phase 2 implementation.
     """
     # Arrange: Page 1 has 19 movies (IDs 1-18, then Spirited Away 129)
     page_1_movies = [
@@ -1123,7 +1122,6 @@ def test_browse_deduplicates_multiple_duplicates_across_pages(
     Scenario: Heavy duplication from TMDB requires fetching multiple buffer pages
     to accumulate 20 unique movies.
 
-    TDD: Expect this test to FAIL before Phase 2 implementation.
     """
     # Arrange: Page 1 has 17 movies (IDs 1-17)
     page_1_movies = [
@@ -1200,7 +1198,6 @@ def test_browse_deduplication_works_with_backend_filters(
     Scenario: Year filter active (2020-2024), TMDB returns duplicates,
     buffer must apply filters AND deduplicate.
 
-    TDD: Expect this test to FAIL before Phase 2 implementation.
     """
     # Arrange: Page 1 has 17 movies
     page_1_movies = [
@@ -1288,7 +1285,6 @@ def test_browse_respects_max_buffer_pages_with_heavy_duplication(
     Scenario: Pathological case where TMDB returns mostly duplicates,
     buffer should stop at 5 additional pages even if < 20 unique movies collected.
 
-    TDD: Expect this test to FAIL before Phase 2 implementation.
     """
     # Arrange: Page 1 has 10 movies
     page_1_movies = [

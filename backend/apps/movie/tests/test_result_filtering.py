@@ -23,7 +23,7 @@ from core.services.api_response import ApiResponse
 from movie.schemas import PaginatedMovieResponseSchema
 from movie.services.filtering import ServiceParams
 from movie.services.movie_service import MovieService
-from movie.tests.test_fixtures_tmdb import (
+from movie.tests.tmdb_test_builders import (
     TMDBMovieBaseRawDict,
     create_paginated_tmdb_response,
     create_raw_tmdb_movie,
@@ -36,7 +36,7 @@ if TYPE_CHECKING:
 # ============================================================================
 # Test Fixtures and Helpers
 # ============================================================================
-# Helpers imported from test_fixtures_tmdb.py:
+# Helpers imported from tmdb_test_builders.py:
 # - create_raw_tmdb_movie(): Create mock TMDB movie dictionaries
 # - create_paginated_tmdb_response(): Create mock paginated responses
 # ============================================================================

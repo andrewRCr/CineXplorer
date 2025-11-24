@@ -12,7 +12,10 @@ from unittest.mock import MagicMock, patch
 from core.services.api_response import ApiResponse
 from movie.schemas import MovieBaseSchema
 from movie.services.batch_operations import fetch_movies_batch
-from movie.tests.tmdb_test_builders import create_tmdb_movie_detail
+from movie.tests.test_helpers import (
+    create_mock_movie_detail_response,
+    create_mock_tmdb_error_response,
+)
 
 # ============================================================================
 # Successful Batch Fetch Tests
@@ -24,15 +27,14 @@ def test_fetch_movies_batch_all_successful(mock_get_movie_details: MagicMock) ->
     """Test successful batch fetch when all movie IDs are valid."""
     # Arrange: Mock TMDB responses for multiple movies
     def mock_tmdb_response(movie_id: int) -> ApiResponse:
-        tmdb_data = create_tmdb_movie_detail(
-            movie_id,
-            f'Movie {movie_id}',
-            '2023-01-01',
-            8.0,
+        return create_mock_movie_detail_response(
+            tmdb_id=movie_id,
+            title=f'Movie {movie_id}',
+            release_date='2023-01-01',
+            vote_average=8.0,
             runtime=120,
             poster_path=f'/poster_{movie_id}.jpg'
         )
-        return ApiResponse(status_code=200, data=tmdb_data.model_dump())
 
     mock_get_movie_details.side_effect = mock_tmdb_response
 
@@ -56,12 +58,14 @@ def test_fetch_movies_batch_all_successful(mock_get_movie_details: MagicMock) ->
 def test_fetch_movies_batch_single_movie(mock_get_movie_details: MagicMock) -> None:
     """Test batch fetch with a single movie ID."""
     # Arrange
-    tmdb_data = create_tmdb_movie_detail(
-        42, 'Single Movie', '2023-06-15', 7.5,
+    mock_get_movie_details.return_value = create_mock_movie_detail_response(
+        tmdb_id=42,
+        title='Single Movie',
+        release_date='2023-06-15',
+        vote_average=7.5,
         runtime=90,
         poster_path='/single.jpg'
     )
-    mock_get_movie_details.return_value = ApiResponse(status_code=200, data=tmdb_data.model_dump())
 
     # Act
     result = fetch_movies_batch([42])
@@ -84,20 +88,16 @@ def test_fetch_movies_batch_partial_failures(mock_get_movie_details: MagicMock) 
     def mock_tmdb_response(movie_id: int) -> ApiResponse:
         if movie_id == 2:
             # Simulate 404 for movie ID 2
-            return ApiResponse(
-                status_code=404,
-                data={'status_message': 'Movie not found', 'status_code': 34}
-            )
+            return create_mock_tmdb_error_response(404)
 
-        tmdb_data = create_tmdb_movie_detail(
-            movie_id,
-            f'Movie {movie_id}',
-            '2023-01-01',
-            8.0,
+        return create_mock_movie_detail_response(
+            tmdb_id=movie_id,
+            title=f'Movie {movie_id}',
+            release_date='2023-01-01',
+            vote_average=8.0,
             runtime=120,
             poster_path=f'/poster_{movie_id}.jpg'
         )
-        return ApiResponse(status_code=200, data=tmdb_data.model_dump())
 
     mock_get_movie_details.side_effect = mock_tmdb_response
 
@@ -119,20 +119,16 @@ def test_fetch_movies_batch_multiple_failures(mock_get_movie_details: MagicMock)
     def mock_tmdb_response(movie_id: int) -> ApiResponse:
         if movie_id in [2, 4, 5]:
             # Simulate various failure types
-            return ApiResponse(
-                status_code=404,
-                data={'status_message': 'Not found', 'status_code': 34}
-            )
+            return create_mock_tmdb_error_response(404)
 
-        tmdb_data = create_tmdb_movie_detail(
-            movie_id,
-            f'Movie {movie_id}',
-            '2023-01-01',
-            8.0,
+        return create_mock_movie_detail_response(
+            tmdb_id=movie_id,
+            title=f'Movie {movie_id}',
+            release_date='2023-01-01',
+            vote_average=8.0,
             runtime=120,
             poster_path=f'/poster_{movie_id}.jpg'
         )
-        return ApiResponse(status_code=200, data=tmdb_data.model_dump())
 
     mock_get_movie_details.side_effect = mock_tmdb_response
 
@@ -154,10 +150,7 @@ def test_fetch_movies_batch_multiple_failures(mock_get_movie_details: MagicMock)
 def test_fetch_movies_batch_all_failures(mock_get_movie_details: MagicMock) -> None:
     """Test batch fetch when all movie IDs fail."""
     # Arrange: All requests return 404
-    mock_get_movie_details.return_value = ApiResponse(
-        status_code=404,
-        data={'status_message': 'Not found', 'status_code': 34}
-    )
+    mock_get_movie_details.return_value = create_mock_tmdb_error_response(404)
 
     # Act
     result = fetch_movies_batch([1, 2, 3])
@@ -173,20 +166,16 @@ def test_fetch_movies_batch_rate_limit_error(mock_get_movie_details: MagicMock) 
     # Arrange: Mock 429 rate limit response
     def mock_tmdb_response(movie_id: int) -> ApiResponse:
         if movie_id == 2:
-            return ApiResponse(
-                status_code=429,
-                data={'status_message': 'Rate limit exceeded', 'status_code': 25}
-            )
+            return create_mock_tmdb_error_response(429)
 
-        tmdb_data = create_tmdb_movie_detail(
-            movie_id,
-            f'Movie {movie_id}',
-            '2023-01-01',
-            8.0,
+        return create_mock_movie_detail_response(
+            tmdb_id=movie_id,
+            title=f'Movie {movie_id}',
+            release_date='2023-01-01',
+            vote_average=8.0,
             runtime=120,
             poster_path=f'/poster_{movie_id}.jpg'
         )
-        return ApiResponse(status_code=200, data=tmdb_data.model_dump())
 
     mock_get_movie_details.side_effect = mock_tmdb_response
 
@@ -218,12 +207,14 @@ def test_fetch_movies_batch_empty_input() -> None:
 def test_fetch_movies_batch_duplicate_ids(mock_get_movie_details: MagicMock) -> None:
     """Test batch fetch with duplicate movie IDs (should fetch each once)."""
     # Arrange
-    tmdb_data = create_tmdb_movie_detail(
-        1, 'Movie 1', '2023-01-01', 8.0,
+    mock_get_movie_details.return_value = create_mock_movie_detail_response(
+        tmdb_id=1,
+        title='Movie 1',
+        release_date='2023-01-01',
+        vote_average=8.0,
         runtime=120,
         poster_path='/poster.jpg'
     )
-    mock_get_movie_details.return_value = ApiResponse(status_code=200, data=tmdb_data.model_dump())
 
     # Act: Pass duplicate IDs
     result = fetch_movies_batch([1, 1, 1])
@@ -276,12 +267,14 @@ def test_fetch_movies_batch_logs_operation_start(
 ) -> None:
     """Test that batch fetch logs operation start with movie count."""
     # Arrange
-    tmdb_data = create_tmdb_movie_detail(
-        1, 'Movie 1', '2023-01-01', 8.0,
+    mock_get_movie_details.return_value = create_mock_movie_detail_response(
+        tmdb_id=1,
+        title='Movie 1',
+        release_date='2023-01-01',
+        vote_average=8.0,
         runtime=120,
         poster_path='/poster.jpg'
     )
-    mock_get_movie_details.return_value = ApiResponse(status_code=200, data=tmdb_data.model_dump())
 
     # Act
     fetch_movies_batch([1, 2, 3])
@@ -305,10 +298,7 @@ def test_fetch_movies_batch_logs_failures(
 ) -> None:
     """Test that batch fetch logs individual failures."""
     # Arrange: Mock failure
-    mock_get_movie_details.return_value = ApiResponse(
-        status_code=404,
-        data={'status_message': 'Not found', 'status_code': 34}
-    )
+    mock_get_movie_details.return_value = create_mock_tmdb_error_response(404)
 
     # Act
     fetch_movies_batch([999])
@@ -329,20 +319,16 @@ def test_fetch_movies_batch_logs_completion(
     # Arrange: Mock mixed results
     def mock_tmdb_response(movie_id: int) -> ApiResponse:
         if movie_id == 2:
-            return ApiResponse(
-                status_code=404,
-                data={'status_message': 'Not found', 'status_code': 34}
-            )
+            return create_mock_tmdb_error_response(404)
 
-        tmdb_data = create_tmdb_movie_detail(
-            movie_id,
-            f'Movie {movie_id}',
-            '2023-01-01',
-            8.0,
+        return create_mock_movie_detail_response(
+            tmdb_id=movie_id,
+            title=f'Movie {movie_id}',
+            release_date='2023-01-01',
+            vote_average=8.0,
             runtime=120,
             poster_path=f'/poster_{movie_id}.jpg'
         )
-        return ApiResponse(status_code=200, data=tmdb_data.model_dump())
 
     mock_get_movie_details.side_effect = mock_tmdb_response
 

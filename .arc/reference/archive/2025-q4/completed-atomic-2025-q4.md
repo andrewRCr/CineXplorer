@@ -6,6 +6,27 @@ Reference format: "see `completed-atomic-2025-q4.md`" or "see {task name} in `co
 
 ---
 
+- [x] Centralize test mock creation with DRY helpers
+    - **Outcome:** Eliminated test mock duplication across 8 files (97 `.model_dump()` occurrences)
+    - **Changes:**
+        - Created `apps/movie/tests/test_helpers.py` with 4 core helpers:
+            - `create_mock_paginated_response()` - paginated movie lists
+            - `create_mock_movie_detail_response()` - movie detail responses
+            - `create_mock_error_response()` - HTTP error scenarios with headers
+            - `create_mock_tmdb_error_response()` - TMDB-specific error format (discovered during migration)
+        - Migrated 8 test files (97 occurrences total):
+            - `test_movie_service.py` (7), `test_batch_operations.py` (15 - 8 movie + 7 TMDB errors)
+            - `test_movie_api.py` (35), `test_result_filtering.py` (36 - mixed patterns)
+            - `test_endpoint_enrichment_integration.py` (4), `integration/api/test_date_constrained_endpoints.py` (6)
+        - Removed duplicate 51-line `mock_tmdb_response_factory` fixture from `integration/conftest.py`
+    - **Architecture patterns documented:**
+        - **Pattern 1** (89 tests): Use helper for valid data (abstracts `.model_dump()`)
+        - **Pattern 2** (8 tests): Use raw builder for data quality tests (bypass Pydantic validation for intentionally invalid data)
+        - Module docstrings explain when/why to use each pattern
+    - **Type safety:** Pydantic `.model_dump()` boundary documented in helper docstrings with `# type: ignore[arg-type]` per strategy-type-safety.md
+    - **Benefits:** DRY (single source of truth), eliminates scattered type ignores, documents type boundaries, distinguishes TMDB vs app errors
+    - **Quality gates:** 159 tests passing ✅, 0 Ruff violations ✅, 0 Pyright errors ✅
+
 - [x] Validate test data with Pydantic models (eliminate cast() properly)
     - **Outcome:** Test builders return validated Pydantic models, tests use `.model_dump()` for ApiResponse
     - **Changes:**

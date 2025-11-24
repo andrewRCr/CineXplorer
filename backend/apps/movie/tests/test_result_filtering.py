@@ -13,6 +13,46 @@ Test Coverage Target: 90% (critical UX path)
 Related Frontend Code Being Replaced:
 - frontend/src/hooks/useEnhancedFetcher.ts (lines 126-272)
 - frontend/src/utilities/movieFilterUtils.ts (filterMoviesByYear, filterMoviesByRating)
+
+---
+
+MOCK CREATION PATTERNS
+-----------------------
+
+This file uses TWO different patterns for creating mock responses. The pattern choice
+is architectural, not an oversight:
+
+**Pattern 1: Helper Function (23 tests - valid data)**
+Use `create_mock_paginated_response()` for tests with valid, complete movie data:
+
+    >>> mock_response = create_mock_paginated_response(movies, page=1, total_pages=1)
+
+Benefits: DRY, enforces Pydantic validation at construction, eliminates .model_dump() calls.
+When to use: Testing filtering logic, buffer mechanism, pagination - data passes validation.
+
+**Pattern 2: Raw Builder (10 tests - intentionally invalid data)**
+Use `create_paginated_tmdb_response()` + `ApiResponse()` for data quality tests:
+
+    >>> tmdb_response = create_paginated_tmdb_response(tmdb_movies)
+    >>> mock_response = ApiResponse(200, data=tmdb_response.model_dump())  # type: ignore[arg-type]
+
+Why needed: Tests TMDB data quality issues (missing release_date, None vote_average,
+empty overview, etc.). Invalid data CANNOT pass through helper's Pydantic validation
+- that would defeat the test's purpose. These tests verify service layer filters catch
+invalid data that slips through TMDB's API.
+
+Tests using Pattern 2 (intentionally invalid data):
+- test_year_filtering_handles_missing_release_dates
+- test_rating_filtering_handles_missing_ratings
+- test_vote_count_filter_excludes_movies_without_vote_count
+- test_filter_movies_excludes_empty_title
+- test_filter_movies_excludes_empty_overview
+- test_filter_movies_excludes_placeholder_overview
+- test_completeness_filter_applies_with_other_filters
+- test_overview_filter_works_with_other_completeness_checks
+
+This is NOT a DRY violation - the pattern difference is semantically meaningful.
+Pattern 1 = "test valid data processing", Pattern 2 = "test invalid data rejection".
 """
 from __future__ import annotations
 
@@ -23,6 +63,7 @@ from core.services.api_response import ApiResponse
 from movie.schemas import PaginatedMovieResponseSchema
 from movie.services.filtering import ServiceParams
 from movie.services.movie_service import MovieService
+from movie.tests.test_helpers import create_mock_paginated_response
 from movie.tests.tmdb_test_builders import (
     TMDBMovieBaseRawDict,
     create_paginated_tmdb_response,
@@ -85,10 +126,7 @@ def test_discover_movies_filters_incorrect_release_years() -> None:
         create_tmdb_movie(105, "Wrong 2019", "2019-01-01", 8.5),
     ]
 
-    mock_response = ApiResponse(
-        status_code=200,
-        data=create_paginated_tmdb_response(tmdb_movies, page=1, total_pages=1).model_dump()
-    )
+    mock_response = create_mock_paginated_response(tmdb_movies, page=1, total_pages=1)
     mock_client.get.return_value = mock_response
 
     service = MovieService(tmdb_client=mock_client)
@@ -141,10 +179,7 @@ def test_search_movies_filters_incorrect_release_years() -> None:
         create_tmdb_movie(103, "Batman (1989)", "1989-06-23", 7.5),
     ]
 
-    mock_response = ApiResponse(
-        status_code=200,
-        data=create_paginated_tmdb_response(tmdb_movies, page=1, total_pages=1).model_dump()
-    )
+    mock_response = create_mock_paginated_response(tmdb_movies, page=1, total_pages=1)
     mock_client.search_movies.return_value = mock_response
 
     service = MovieService(tmdb_client=mock_client)
@@ -183,10 +218,7 @@ def test_year_filtering_handles_single_year() -> None:
         create_tmdb_movie(102, "2023 Movie", "2023-01-01", 8.5),
     ]
 
-    mock_response = ApiResponse(
-        status_code=200,
-        data=create_paginated_tmdb_response(tmdb_movies, page=1, total_pages=1).model_dump()
-    )
+    mock_response = create_mock_paginated_response(tmdb_movies, page=1, total_pages=1)
     mock_client.get.return_value = mock_response
 
     service = MovieService(tmdb_client=mock_client)
@@ -216,17 +248,16 @@ def test_year_filtering_handles_missing_release_dates() -> None:
         'vote_average': 8.0, 'release_date': ""  # TMDB data quality issue
     }
 
-    tmdb_movies: list[TMDBMovieBaseRawDict] = [
-        create_tmdb_movie(1, "Movie with date", "2022-01-01", 8.0),
+    tmdb_movies: list[TMDBMovieBaseRawDict] = [  # type: ignore[assignment]
+        create_tmdb_movie(1, "Movie with date", "2022-01-01", 8.0).model_dump(),
         movie_without_date,
         movie_empty_date,
-        create_tmdb_movie(4, "Another with date", "2022-06-15", 7.8),
+        create_tmdb_movie(4, "Another with date", "2022-06-15", 7.8).model_dump(),
     ]
 
-    mock_response = ApiResponse(
-        status_code=200,
-        data=create_paginated_tmdb_response(tmdb_movies, page=1, total_pages=1).model_dump()
-    )
+    # Pattern 2: Testing intentionally invalid data (see module docstring "MOCK CREATION PATTERNS")
+    tmdb_response = create_paginated_tmdb_response(tmdb_movies, page=1, total_pages=1)  # type: ignore[arg-type]
+    mock_response = ApiResponse(200, data=tmdb_response.model_dump())  # type: ignore[arg-type]
     mock_client.get.return_value = mock_response
 
     service = MovieService(tmdb_client=mock_client)
@@ -280,10 +311,7 @@ def test_discover_movies_filters_incorrect_ratings() -> None:
         create_tmdb_movie(105, "Low Rating C", "2022-01-01", 7.0),
     ]
 
-    mock_response = ApiResponse(
-        status_code=200,
-        data=create_paginated_tmdb_response(tmdb_movies, page=1, total_pages=1).model_dump()
-    )
+    mock_response = create_mock_paginated_response(tmdb_movies, page=1, total_pages=1)
     mock_client.get.return_value = mock_response
 
     service = MovieService(tmdb_client=mock_client)
@@ -327,10 +355,7 @@ def test_rating_filtering_handles_range() -> None:
         create_tmdb_movie(104, "Too High B", "2022-01-01", 9.0),
     ]
 
-    mock_response = ApiResponse(
-        status_code=200,
-        data=create_paginated_tmdb_response(tmdb_movies, page=1, total_pages=1).model_dump()
-    )
+    mock_response = create_mock_paginated_response(tmdb_movies, page=1, total_pages=1)
     mock_client.get.return_value = mock_response
 
     service = MovieService(tmdb_client=mock_client)
@@ -356,16 +381,15 @@ def test_rating_filtering_handles_missing_ratings() -> None:
         'release_date': "2022-01-01", 'vote_average': None  # TMDB data quality issue
     }
 
-    tmdb_movies: list[TMDBMovieBaseRawDict] = [
-        create_tmdb_movie(1, "Movie with rating", "2022-01-01", 8.0),
+    tmdb_movies: list[TMDBMovieBaseRawDict] = [  # type: ignore[assignment]
+        create_tmdb_movie(1, "Movie with rating", "2022-01-01", 8.0).model_dump(),
         movie_without_rating,
-        create_tmdb_movie(3, "Another with rating", "2022-01-01", 7.5),
+        create_tmdb_movie(3, "Another with rating", "2022-01-01", 7.5).model_dump(),
     ]
 
-    mock_response = ApiResponse(
-        status_code=200,
-        data=create_paginated_tmdb_response(tmdb_movies, page=1, total_pages=1).model_dump()
-    )
+    # Pattern 2: Testing intentionally invalid data
+    tmdb_response = create_paginated_tmdb_response(tmdb_movies, page=1, total_pages=1)  # type: ignore[arg-type]
+    mock_response = ApiResponse(200, data=tmdb_response.model_dump())  # type: ignore[arg-type]
     mock_client.get.return_value = mock_response
 
     service = MovieService(tmdb_client=mock_client)
@@ -406,10 +430,7 @@ def test_rating_filter_excludes_low_vote_count_movies() -> None:
         create_tmdb_movie(103, "Noise Entry 3", "2022-06-01", 9.0, vote_count=1),
     ]
 
-    mock_response = ApiResponse(
-        status_code=200,
-        data=create_paginated_tmdb_response(tmdb_movies, page=1, total_pages=1).model_dump()
-    )
+    mock_response = create_mock_paginated_response(tmdb_movies, page=1, total_pages=1)
     mock_client.get.return_value = mock_response
 
     service = MovieService(tmdb_client=mock_client)
@@ -443,10 +464,7 @@ def test_general_browsing_applies_higher_vote_threshold() -> None:
         create_tmdb_movie(102, "Very Low", "2022-04-01", 7.5, vote_count=5),
     ]
 
-    mock_response = ApiResponse(
-        status_code=200,
-        data=create_paginated_tmdb_response(tmdb_movies, page=1, total_pages=1).model_dump()
-    )
+    mock_response = create_mock_paginated_response(tmdb_movies, page=1, total_pages=1)
     mock_client.get.return_value = mock_response
 
     service = MovieService(tmdb_client=mock_client)
@@ -479,12 +497,14 @@ def test_vote_count_filter_excludes_movies_without_vote_count() -> None:
         # vote_count field missing (TMDB data quality issue)
     }
 
-    tmdb_movies: list[TMDBMovieBaseRawDict] = [movie_with_votes, movie_without_votes]
+    tmdb_movies: list[TMDBMovieBaseRawDict] = [
+        movie_with_votes,
+        movie_without_votes,
+    ]
 
-    mock_response = ApiResponse(
-        status_code=200,
-        data=create_paginated_tmdb_response(tmdb_movies, page=1, total_pages=1).model_dump()
-    )
+    # Pattern 2: Testing intentionally invalid data
+    tmdb_response = create_paginated_tmdb_response(tmdb_movies, page=1, total_pages=1)  # type: ignore[arg-type]
+    mock_response = ApiResponse(200, data=tmdb_response.model_dump())  # type: ignore[arg-type]
     mock_client.get.return_value = mock_response
 
     service = MovieService(tmdb_client=mock_client)
@@ -520,10 +540,7 @@ def test_combined_year_and_rating_filtering() -> None:
         create_tmdb_movie(103, "2019 Low Rating", "2019-01-01", 5.0),
     ]
 
-    mock_response = ApiResponse(
-        status_code=200,
-        data=create_paginated_tmdb_response(tmdb_movies, page=1, total_pages=1).model_dump()
-    )
+    mock_response = create_mock_paginated_response(tmdb_movies, page=1, total_pages=1)
     mock_client.get.return_value = mock_response
 
     service = MovieService(tmdb_client=mock_client)
@@ -601,14 +618,8 @@ def test_buffer_mechanism_fetches_page_n_plus_1_when_under_threshold() -> None:
           for i in range(10)],
     ]
 
-    page_1_response = ApiResponse(
-        status_code=200,
-        data=create_paginated_tmdb_response(page_1_movies, page=1, total_pages=10).model_dump()
-    )
-    page_2_response = ApiResponse(
-        status_code=200,
-        data=create_paginated_tmdb_response(page_2_movies, page=2, total_pages=10).model_dump()
-    )
+    page_1_response = create_mock_paginated_response(page_1_movies, page=1, total_pages=10)
+    page_2_response = create_mock_paginated_response(page_2_movies, page=2, total_pages=10)
 
     # Mock client returns page 1 on first call, page 2 on second call
     mock_client.get.side_effect = [page_1_response, page_2_response]
@@ -646,10 +657,7 @@ def test_buffer_mechanism_does_not_fetch_when_full_page_achieved() -> None:
         for i in range(1, 21)
     ]
 
-    page_1_response = ApiResponse(
-        status_code=200,
-        data=create_paginated_tmdb_response(page_1_movies, page=1, total_pages=10).model_dump()
-    )
+    page_1_response = create_mock_paginated_response(page_1_movies, page=1, total_pages=10)
     mock_client.get.return_value = page_1_response
 
     service = MovieService(tmdb_client=mock_client)
@@ -707,20 +715,17 @@ def test_buffer_mechanism_fills_page_even_with_few_initial_results() -> None:
         page_num = params.get('page', 1)
 
         if page_num == 1:
-            tmdb_response = create_paginated_tmdb_response(
+            return create_mock_paginated_response(
                 page_1_movies, page=1, total_pages=10
             )
-            return ApiResponse(status_code=200, data=tmdb_response.model_dump())
         elif page_num == 2:
-            tmdb_response = create_paginated_tmdb_response(
+            return create_mock_paginated_response(
                 page_2_movies, page=2, total_pages=10
             )
-            return ApiResponse(status_code=200, data=tmdb_response.model_dump())
         else:
             # Fallback for unexpected page numbers
-            return ApiResponse(
-                status_code=200,
-                data=create_paginated_tmdb_response([], page=page_num, total_pages=10)  # type: ignore[arg-type]
+            return create_mock_paginated_response(
+                [], page=page_num, total_pages=10  # type: ignore[arg-type]
             )
 
     mock_client.get.side_effect = mock_get_side_effect
@@ -752,10 +757,7 @@ def test_buffer_mechanism_does_not_fetch_on_last_page() -> None:
         for i in range(1, 16)
     ]
 
-    page_10_response = ApiResponse(
-        status_code=200,
-        data=create_paginated_tmdb_response(page_10_movies, page=10, total_pages=10).model_dump()
-    )
+    page_10_response = create_mock_paginated_response(page_10_movies, page=10, total_pages=10)
     mock_client.get.return_value = page_10_response
 
     service = MovieService(tmdb_client=mock_client)
@@ -794,14 +796,8 @@ def test_buffer_movies_also_pass_filters_no_leakage() -> None:
           for i in range(1, 11)],
     ]
 
-    page_1_response = ApiResponse(
-        status_code=200,
-        data=create_paginated_tmdb_response(page_1_movies, page=1, total_pages=10).model_dump()
-    )
-    page_2_response = ApiResponse(
-        status_code=200,
-        data=create_paginated_tmdb_response(page_2_movies, page=2, total_pages=10).model_dump()
-    )
+    page_1_response = create_mock_paginated_response(page_1_movies, page=1, total_pages=10)
+    page_2_response = create_mock_paginated_response(page_2_movies, page=2, total_pages=10)
 
     mock_client.get.side_effect = [page_1_response, page_2_response]
 
@@ -849,10 +845,7 @@ def test_filtering_applies_to_now_playing_endpoint() -> None:
         create_tmdb_movie(101, "Extended Run", "2021-01-01", 8.5),
     ]
 
-    mock_response = ApiResponse(
-        status_code=200,
-        data=create_paginated_tmdb_response(tmdb_movies, page=1, total_pages=1).model_dump()
-    )
+    mock_response = create_mock_paginated_response(tmdb_movies, page=1, total_pages=1)
     mock_client.get.return_value = mock_response
 
     service = MovieService(tmdb_client=mock_client)
@@ -883,10 +876,7 @@ def test_filtering_applies_to_upcoming_endpoint() -> None:
         create_tmdb_movie(102, "Also No Rating", "2024-09-01", 0.0),
     ]
 
-    mock_response = ApiResponse(
-        status_code=200,
-        data=create_paginated_tmdb_response(tmdb_movies, page=1, total_pages=1).model_dump()
-    )
+    mock_response = create_mock_paginated_response(tmdb_movies, page=1, total_pages=1)
     mock_client.get.return_value = mock_response
 
     service = MovieService(tmdb_client=mock_client)
@@ -917,10 +907,7 @@ def test_no_filters_returns_all_results_unchanged() -> None:
         for i in range(1, 21)
     ]
 
-    mock_response = ApiResponse(
-        status_code=200,
-        data=create_paginated_tmdb_response(tmdb_movies, page=1, total_pages=5).model_dump()
-    )
+    mock_response = create_mock_paginated_response(tmdb_movies, page=1, total_pages=5)
     mock_client.get.return_value = mock_response
 
     service = MovieService(tmdb_client=mock_client)
@@ -949,10 +936,7 @@ def test_no_buffer_fetch_when_no_filters_applied() -> None:
         for i in range(1, 21)
     ]
 
-    mock_response = ApiResponse(
-        status_code=200,
-        data=create_paginated_tmdb_response(tmdb_movies, page=1, total_pages=5).model_dump()
-    )
+    mock_response = create_mock_paginated_response(tmdb_movies, page=1, total_pages=5)
     mock_client.get.return_value = mock_response
 
     service = MovieService(tmdb_client=mock_client)
@@ -981,10 +965,7 @@ def test_filter_movies_excludes_missing_poster() -> None:
     ]
 
     mock_client = Mock(spec=['get'])
-    mock_response = ApiResponse(
-        status_code=200,
-        data=create_paginated_tmdb_response(movies_with_data, page=1, total_pages=1).model_dump()
-    )
+    mock_response = create_mock_paginated_response(movies_with_data, page=1, total_pages=1)
     mock_client.get.return_value = mock_response
 
     service = MovieService(tmdb_client=mock_client)
@@ -1009,7 +990,7 @@ def test_filter_movies_excludes_empty_title() -> None:
     # Note: We need to override TypedDict validation, so create dicts directly
 
     tmdb_movies: list[TMDBMovieBaseRawDict] = [
-        create_tmdb_movie(1, "Valid Title", "2022-01-01", 7.5),
+        create_tmdb_movie(1, "Valid Title", "2022-01-01", 7.5).model_dump(),
         {  # Empty title
             'id': 2,
             'title': '',
@@ -1019,7 +1000,7 @@ def test_filter_movies_excludes_empty_title() -> None:
             'vote_count': 100,
             'runtime': None,
         },  # type: ignore
-        create_tmdb_movie(3, "Another Valid", "2022-01-01", 7.8),
+        create_tmdb_movie(3, "Another Valid", "2022-01-01", 7.8).model_dump(),
         {  # Whitespace-only title
             'id': 4,
             'title': '   ',
@@ -1031,11 +1012,10 @@ def test_filter_movies_excludes_empty_title() -> None:
         },  # type: ignore
     ]
 
+    # Pattern 2: Testing intentionally invalid data
+    tmdb_response = create_paginated_tmdb_response(tmdb_movies, page=1, total_pages=1)  # type: ignore[arg-type]
+    mock_response = ApiResponse(200, data=tmdb_response.model_dump())  # type: ignore[arg-type]
     mock_client = Mock(spec=['get'])
-    mock_response = ApiResponse(
-        status_code=200,
-        data=create_paginated_tmdb_response(tmdb_movies, page=1, total_pages=1).model_dump()
-    )
     mock_client.get.return_value = mock_response
 
     service = MovieService(tmdb_client=mock_client)
@@ -1063,10 +1043,7 @@ def test_filter_movies_completeness_with_all_valid() -> None:
     ]
 
     mock_client = Mock(spec=['get'])
-    mock_response = ApiResponse(
-        status_code=200,
-        data=create_paginated_tmdb_response(movies_with_data, page=1, total_pages=1).model_dump()
-    )
+    mock_response = create_mock_paginated_response(movies_with_data, page=1, total_pages=1)
     mock_client.get.return_value = mock_response
 
     service = MovieService(tmdb_client=mock_client)
@@ -1083,15 +1060,15 @@ def test_completeness_filter_applies_with_other_filters() -> None:
     # Arrange: Mix of complete/incomplete movies with year/rating variations
     tmdb_movies: list[TMDBMovieBaseRawDict] = [
         # Complete, matching all filters
-        create_tmdb_movie(1, "Perfect Movie", "2022-01-01", 8.0),
+        create_tmdb_movie(1, "Perfect Movie", "2022-01-01", 8.0).model_dump(),
         # Missing poster, matches year/rating (should be excluded)
-        create_tmdb_movie(2, "No Poster", "2022-01-01", 8.0, poster_path=''),
+        create_tmdb_movie(2, "No Poster", "2022-01-01", 8.0, poster_path='').model_dump(),
         # Complete, wrong year (should be excluded)
-        create_tmdb_movie(3, "Wrong Year", "2019-01-01", 8.0),
+        create_tmdb_movie(3, "Wrong Year", "2019-01-01", 8.0).model_dump(),
         # Complete, low rating (should be excluded)
-        create_tmdb_movie(4, "Low Rating", "2022-01-01", 6.0),
+        create_tmdb_movie(4, "Low Rating", "2022-01-01", 6.0).model_dump(),
         # Complete, matching all filters
-        create_tmdb_movie(5, "Another Perfect", "2022-01-01", 8.5),
+        create_tmdb_movie(5, "Another Perfect", "2022-01-01", 8.5).model_dump(),
         # Empty title, matches year/rating (should be excluded)
         {
             'id': 6,
@@ -1104,11 +1081,10 @@ def test_completeness_filter_applies_with_other_filters() -> None:
         },  # type: ignore
     ]
 
+    # Pattern 2: Testing intentionally invalid data
+    tmdb_response = create_paginated_tmdb_response(tmdb_movies, page=1, total_pages=1)  # type: ignore[arg-type]
+    mock_response = ApiResponse(200, data=tmdb_response.model_dump())  # type: ignore[arg-type]
     mock_client = Mock(spec=['get'])
-    mock_response = ApiResponse(
-        status_code=200,
-        data=create_paginated_tmdb_response(tmdb_movies, page=1, total_pages=1).model_dump()
-    )
     mock_client.get.return_value = mock_response
 
     service = MovieService(tmdb_client=mock_client)
@@ -1144,7 +1120,7 @@ def test_filter_movies_excludes_empty_overview() -> None:
     # Arrange: Mock movies with various overview states
     tmdb_movies: list[TMDBMovieBaseRawDict] = [
         # Valid overview - should pass
-        create_tmdb_movie(1, "Valid Overview", "2022-01-01", 7.5),
+        create_tmdb_movie(1, "Valid Overview", "2022-01-01", 7.5).model_dump(),
         # Empty overview - should be filtered
         {
             'id': 2,
@@ -1168,14 +1144,13 @@ def test_filter_movies_excludes_empty_overview() -> None:
             'genre_ids': [18, 28],
         },  # type: ignore
         # Another valid overview - should pass
-        create_tmdb_movie(4, "Another Valid", "2022-01-01", 8.2),
+        create_tmdb_movie(4, "Another Valid", "2022-01-01", 8.2).model_dump(),
     ]
 
+    # Pattern 2: Testing intentionally invalid data
+    tmdb_response = create_paginated_tmdb_response(tmdb_movies, page=1, total_pages=1)  # type: ignore[arg-type]
+    mock_response = ApiResponse(200, data=tmdb_response.model_dump())  # type: ignore[arg-type]
     mock_client = Mock(spec=['get'])
-    mock_response = ApiResponse(
-        status_code=200,
-        data=create_paginated_tmdb_response(tmdb_movies, page=1, total_pages=1).model_dump()
-    )
     mock_client.get.return_value = mock_response
 
     service = MovieService(tmdb_client=mock_client)
@@ -1205,7 +1180,7 @@ def test_filter_movies_excludes_placeholder_overview() -> None:
     # Arrange: Mock movies with placeholder and valid overviews
     tmdb_movies: list[TMDBMovieBaseRawDict] = [
         # Valid overview - should pass
-        create_tmdb_movie(1, "Valid Overview", "2022-01-01", 7.5),
+        create_tmdb_movie(1, "Valid Overview", "2022-01-01", 7.5).model_dump(),
         # Placeholder "Details Here" - should be filtered
         {
             'id': 2,
@@ -1240,14 +1215,13 @@ def test_filter_movies_excludes_placeholder_overview() -> None:
             'genre_ids': [28],
         },  # type: ignore
         # Another valid overview - should pass
-        create_tmdb_movie(5, "Another Valid", "2022-01-01", 8.2),
+        create_tmdb_movie(5, "Another Valid", "2022-01-01", 8.2).model_dump(),
     ]
 
+    # Pattern 2: Testing intentionally invalid data
+    tmdb_response = create_paginated_tmdb_response(tmdb_movies, page=1, total_pages=1)  # type: ignore[arg-type]
+    mock_response = ApiResponse(200, data=tmdb_response.model_dump())  # type: ignore[arg-type]
     mock_client = Mock(spec=['get'])
-    mock_response = ApiResponse(
-        status_code=200,
-        data=create_paginated_tmdb_response(tmdb_movies, page=1, total_pages=1).model_dump()
-    )
     mock_client.get.return_value = mock_response
 
     service = MovieService(tmdb_client=mock_client)
@@ -1277,9 +1251,11 @@ def test_overview_filter_works_with_other_completeness_checks() -> None:
 
     tmdb_movies: list[TMDBMovieBaseRawDict] = [
         # Complete movie (has poster, title, genres, overview) - should pass
-        create_tmdb_movie(1, "Complete Movie", "2022-01-01", 7.5, vote_count=100),
+        create_tmdb_movie(1, "Complete Movie", "2022-01-01", 7.5, vote_count=100).model_dump(),
         # Missing poster - should be filtered
-        create_tmdb_movie(2, "No Poster", "2022-01-01", 8.0, vote_count=150, poster_path=''),
+        create_tmdb_movie(
+            2, "No Poster", "2022-01-01", 8.0, vote_count=150, poster_path=''
+        ).model_dump(),
         # Empty overview - should be filtered
         {
             'id': 3,
@@ -1303,15 +1279,16 @@ def test_overview_filter_works_with_other_completeness_checks() -> None:
             'genre_ids': [18],
         },  # type: ignore
         # Missing genres - should be filtered
-        create_tmdb_movie(5, "No Genres", "2022-01-01", 8.0, vote_count=100, genre_ids=[]),
+        create_tmdb_movie(
+            5, "No Genres", "2022-01-01", 8.0, vote_count=100, genre_ids=[]
+        ).model_dump(),
         # Another complete movie - should pass
-        create_tmdb_movie(6, "Another Complete", "2022-01-01", 7.8, vote_count=120),
+        create_tmdb_movie(6, "Another Complete", "2022-01-01", 7.8, vote_count=120).model_dump(),
     ]
 
-    mock_response = ApiResponse(
-        status_code=200,
-        data=create_paginated_tmdb_response(tmdb_movies, page=1, total_pages=1).model_dump()
-    )
+    # Pattern 2: Testing intentionally invalid data
+    tmdb_response = create_paginated_tmdb_response(tmdb_movies, page=1, total_pages=1)  # type: ignore[arg-type]
+    mock_response = ApiResponse(200, data=tmdb_response.model_dump())  # type: ignore[arg-type]
     mock_client.get.return_value = mock_response
 
     service = MovieService(tmdb_client=mock_client)
@@ -1362,10 +1339,7 @@ def test_filter_movies_excludes_pre_cinema_dates() -> None:
         create_tmdb_movie(104, "Invalid Year 1", "0001-01-01", 7.0),
     ]
 
-    mock_response = ApiResponse(
-        status_code=200,
-        data=create_paginated_tmdb_response(tmdb_movies, page=1, total_pages=1).model_dump()
-    )
+    mock_response = create_mock_paginated_response(tmdb_movies, page=1, total_pages=1)
     mock_client.get.return_value = mock_response
 
     service = MovieService(tmdb_client=mock_client)
@@ -1397,10 +1371,7 @@ def test_filter_movies_includes_first_film_year() -> None:
         create_tmdb_movie(2, "Another 1888 Film", "1888-12-31", 6.5),
     ]
 
-    mock_response = ApiResponse(
-        status_code=200,
-        data=create_paginated_tmdb_response(tmdb_movies, page=1, total_pages=1).model_dump()
-    )
+    mock_response = create_mock_paginated_response(tmdb_movies, page=1, total_pages=1)
     mock_client.get.return_value = mock_response
 
     service = MovieService(tmdb_client=mock_client)
@@ -1435,10 +1406,7 @@ def test_historical_validation_with_year_filters() -> None:
         create_tmdb_movie(102, "Invalid 1700", "1700-01-01", 7.0),
     ]
 
-    mock_response = ApiResponse(
-        status_code=200,
-        data=create_paginated_tmdb_response(tmdb_movies, page=1, total_pages=1).model_dump()
-    )
+    mock_response = create_mock_paginated_response(tmdb_movies, page=1, total_pages=1)
     mock_client.get.return_value = mock_response
 
     service = MovieService(tmdb_client=mock_client)
@@ -1494,10 +1462,7 @@ def test_genre_filter_excludes_movies_with_empty_genres() -> None:
         ),
     ]
 
-    mock_response = ApiResponse(
-        status_code=200,
-        data=create_paginated_tmdb_response(tmdb_movies, page=1, total_pages=1).model_dump()
-    )
+    mock_response = create_mock_paginated_response(tmdb_movies, page=1, total_pages=1)
     mock_client.get.return_value = mock_response
 
     service = MovieService(tmdb_client=mock_client)
@@ -1539,10 +1504,7 @@ def test_genre_filter_works_with_completeness_checks() -> None:
         create_tmdb_movie(4, "Another Complete", "2022-01-01", 7.0, vote_count=200),
     ]
 
-    mock_response = ApiResponse(
-        status_code=200,
-        data=create_paginated_tmdb_response(tmdb_movies, page=1, total_pages=1).model_dump()
-    )
+    mock_response = create_mock_paginated_response(tmdb_movies, page=1, total_pages=1)
     mock_client.get.return_value = mock_response
 
     service = MovieService(tmdb_client=mock_client)
@@ -1580,10 +1542,7 @@ def test_combined_genre_and_vote_filters_with_rating_filter() -> None:
         create_tmdb_movie(103, "Fail Both", "2022-01-01", 2.2, vote_count=1, genre_ids=[]),
     ]
 
-    mock_response = ApiResponse(
-        status_code=200,
-        data=create_paginated_tmdb_response(tmdb_movies, page=1, total_pages=1).model_dump()
-    )
+    mock_response = create_mock_paginated_response(tmdb_movies, page=1, total_pages=1)
     mock_client.get.return_value = mock_response
 
     service = MovieService(tmdb_client=mock_client)

@@ -17,9 +17,8 @@ from typing import TYPE_CHECKING
 from unittest.mock import Mock, patch
 
 import pytest
-from core.services.api_response import ApiResponse
 from core.tests.test_helpers import HTTPStatus
-from movie.tests.tmdb_test_builders import create_paginated_tmdb_response, create_tmdb_movie
+from movie.tests.test_helpers import create_mock_paginated_response, create_tmdb_movie
 
 if TYPE_CHECKING:
     from django.test import Client
@@ -42,8 +41,12 @@ def test_now_playing_returns_results_with_genre_filter(
             551, "Action Movie", "2025-10-20", 7.5, vote_count=3000, genre_ids=[28]
         ),
     ]
-    tmdb_response = create_paginated_tmdb_response(movies, page=1, total_pages=1, total_results=2)
-    mock_tmdb_get.return_value = ApiResponse(200, tmdb_response.model_dump())
+    mock_tmdb_get.return_value = create_mock_paginated_response(
+        movies=movies,
+        page=1,
+        total_pages=1,
+        total_results=2
+    )
 
     # Test now-playing with genre filter
     response = api_client.get("/api/movies/now-playing?page=1&with_genres=28")
@@ -83,8 +86,12 @@ def test_upcoming_returns_results_with_rating_filter(
             601, "Future Hit", "2025-11-20", 7.8, vote_count=50, genre_ids=[878]
         ),
     ]
-    tmdb_response = create_paginated_tmdb_response(movies, page=1, total_pages=1, total_results=2)
-    mock_tmdb_get.return_value = ApiResponse(200, tmdb_response.model_dump())
+    mock_tmdb_get.return_value = create_mock_paginated_response(
+        movies=movies,
+        page=1,
+        total_pages=1,
+        total_results=2
+    )
 
     # Test upcoming with rating filter
     response = api_client.get("/api/movies/upcoming?page=1&vote_average_gte=7.5")
@@ -121,8 +128,12 @@ def test_browse_still_works_after_rename(
             700, "Classic Movie", "1999-03-31", 8.8, vote_count=25000, genre_ids=[18]
         ),
     ]
-    tmdb_response = create_paginated_tmdb_response(movies, page=1, total_pages=1, total_results=1)
-    mock_tmdb_get.return_value = ApiResponse(200, tmdb_response.model_dump())
+    mock_tmdb_get.return_value = create_mock_paginated_response(
+        movies=movies,
+        page=1,
+        total_pages=1,
+        total_results=1
+    )
 
     # Test browse with genre and sort filters
     response = api_client.get(
@@ -160,8 +171,12 @@ def test_now_playing_date_preset_cannot_be_overridden(
             800, "Protected Movie", "2025-10-25", 7.0, vote_count=1000, genre_ids=[28]
         ),
     ]
-    tmdb_response = create_paginated_tmdb_response(movies, page=1, total_pages=1, total_results=1)
-    mock_tmdb_get.return_value = ApiResponse(200, tmdb_response.model_dump())
+    mock_tmdb_get.return_value = create_mock_paginated_response(
+        movies=movies,
+        page=1,
+        total_pages=1,
+        total_results=1
+    )
 
     # Try to override date range (should be ignored)
     response = api_client.get(
@@ -195,8 +210,12 @@ def test_upcoming_date_preset_cannot_be_overridden(
             900, "Future Protected", "2025-11-30", 6.5, vote_count=50, genre_ids=[878]
         ),
     ]
-    tmdb_response = create_paginated_tmdb_response(movies, page=1, total_pages=1, total_results=1)
-    mock_tmdb_get.return_value = ApiResponse(200, tmdb_response.model_dump())
+    mock_tmdb_get.return_value = create_mock_paginated_response(
+        movies=movies,
+        page=1,
+        total_pages=1,
+        total_results=1
+    )
 
     # Try to override date range (should be ignored)
     response = api_client.get(
@@ -230,8 +249,12 @@ def test_browse_allows_full_date_control(
             1000, "2020 Movie", "2020-06-15", 7.5, vote_count=5000, genre_ids=[18]
         ),
     ]
-    tmdb_response = create_paginated_tmdb_response(movies, page=1, total_pages=1, total_results=1)
-    mock_tmdb_get.return_value = ApiResponse(200, tmdb_response.model_dump())
+    mock_tmdb_get.return_value = create_mock_paginated_response(
+        movies=movies,
+        page=1,
+        total_pages=1,
+        total_results=1
+    )
 
     # User provides date range - should be respected (no presets)
     response = api_client.get(

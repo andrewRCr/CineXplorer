@@ -17,7 +17,11 @@ from core.tests.test_helpers import HTTPStatus
 from core.types.api_types import TMDBResponseData
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.test import Client
-from movie.tests.tmdb_test_builders import create_paginated_tmdb_response, create_tmdb_movie
+from movie.tests.test_helpers import (
+    create_mock_movie_detail_response,
+    create_mock_paginated_response,
+)
+from movie.tests.tmdb_test_builders import create_tmdb_movie
 from user_movie_data.models import UserMovieData
 
 # HTTP status codes for Django Ninja endpoints
@@ -116,11 +120,7 @@ def test_paginated_endpoint_contract(
     """
     # Arrange: Define a standard mock TMDB API response
     movies = [create_tmdb_movie(101, 'Test Movie', '2023-01-01', 8.0, poster_path='/test.jpg')]
-    tmdb_response = create_paginated_tmdb_response(movies, page=1, total_pages=1)
-    mock_api_response = ApiResponse(
-        status_code=200,
-        data=tmdb_response.model_dump()
-    )
+    mock_api_response = create_mock_paginated_response(movies, page=1, total_pages=1)
 
     # Act: Mock TMDB method and call the API endpoint
     with patch(mock_path, return_value=mock_api_response):
@@ -160,11 +160,7 @@ def test_browse_with_filters(mock_tmdb_get: Mock, api_client: Client) -> None:
     """Test the browse endpoint with various filter parameters."""
     # Arrange: Define a standard mock TMDB API response
     movies = [create_tmdb_movie(101, 'Test Movie', '2023-01-01', 8.0)]
-    tmdb_response = create_paginated_tmdb_response(movies, page=1, total_pages=1)
-    mock_api_response = ApiResponse(
-        status_code=200,
-        data=tmdb_response.model_dump()
-    )
+    mock_api_response = create_mock_paginated_response(movies, page=1, total_pages=1)
     mock_tmdb_get.return_value = mock_api_response
 
     # Act: Call the browse endpoint with filters
@@ -415,13 +411,10 @@ def test_get_movie_detail_authenticated(
     )
 
     # Arrange: Mock the TMDB client API responses for movie info and credits
-    mock_info_response = ApiResponse(
-        status_code=200,
-        data={
-            'id': 78, 'title': 'Blade Runner', 'overview': 'A classic.',
-            'poster_path': '/br.jpg', 'release_date': '1982-06-25',
-            'vote_average': 8.1, 'genres': [], 'production_companies': [], 'vote_count': 100
-        }
+    mock_info_response = create_mock_movie_detail_response(
+        tmdb_id=78, title='Blade Runner', overview='A classic.',
+        poster_path='/br.jpg', release_date='1982-06-25',
+        vote_average=8.1, vote_count=100
     )
 
     mock_credits_response = ApiResponse(
@@ -467,13 +460,10 @@ def test_get_movie_detail_unauthenticated(
     tmdb_id = 78
     create_movie_stub(tmdb_id, title='Blade Runner')
 
-    mock_info_response = ApiResponse(
-        status_code=200,
-        data={
-            'id': tmdb_id, 'title': 'Blade Runner', 'overview': 'A classic.',
-            'poster_path': '/br.jpg', 'release_date': '1982-06-25',
-            'vote_average': 8.1, 'genres': [], 'production_companies': [], 'vote_count': 100
-        }
+    mock_info_response = create_mock_movie_detail_response(
+        tmdb_id=tmdb_id, title='Blade Runner', overview='A classic.',
+        poster_path='/br.jpg', release_date='1982-06-25',
+        vote_average=8.1, vote_count=100
     )
     mock_credits_response = ApiResponse(
         status_code=200,
@@ -523,11 +513,7 @@ def test_browse_api_extracts_backend_filter_params(
         # Should be filtered out by backend filtering
         create_tmdb_movie(2, '2019 Movie (Bad - Outside Range)', '2019-01-01', 8.0),
     ]
-    tmdb_response = create_paginated_tmdb_response(movies, page=1, total_pages=1)
-    mock_api_response = ApiResponse(
-        status_code=200,
-        data=tmdb_response.model_dump()
-    )
+    mock_api_response = create_mock_paginated_response(movies, page=1, total_pages=1)
     mock_tmdb_get.return_value = mock_api_response
 
     # Act: Call API with year range filter
@@ -578,11 +564,7 @@ def test_browse_api_filters_bad_ratings_from_tmdb(
         # Bad - below threshold
         create_tmdb_movie(3, 'Low Rating Movie', '2022-01-01', 6.5),
     ]
-    tmdb_response = create_paginated_tmdb_response(movies, page=1, total_pages=1)
-    mock_api_response = ApiResponse(
-        status_code=200,
-        data=tmdb_response.model_dump()
-    )
+    mock_api_response = create_mock_paginated_response(movies, page=1, total_pages=1)
     mock_tmdb_get.return_value = mock_api_response
 
     # Act: Request movies rated 7.5+
@@ -807,18 +789,18 @@ def test_browse_returns_next_tmdb_page_start_after_buffer(
 
     # Mock TMDB responses
     mock_tmdb_get.side_effect = [
-        ApiResponse(200, create_paginated_tmdb_response(
+        create_mock_paginated_response(
             page_1_movies, page=1, total_pages=10, total_results=200
-        ).model_dump()),
-        ApiResponse(200, create_paginated_tmdb_response(
+        ),
+        create_mock_paginated_response(
             page_2_movies, page=2, total_pages=10, total_results=200
-        ).model_dump()),
-        ApiResponse(200, create_paginated_tmdb_response(
+        ),
+        create_mock_paginated_response(
             page_3_movies, page=3, total_pages=10, total_results=200
-        ).model_dump()),
-        ApiResponse(200, create_paginated_tmdb_response(
+        ),
+        create_mock_paginated_response(
             page_4_movies, page=4, total_pages=10, total_results=200
-        ).model_dump()),
+        ),
     ]
 
     # Act: Request browse with filters that trigger sparse results
@@ -866,11 +848,8 @@ def test_browse_continues_from_tmdb_page_start_parameter(
         for i in range(21, 41)  # 20 movies, IDs 21-40
     ]
 
-    mock_tmdb_get.return_value = ApiResponse(
-        200,
-        create_paginated_tmdb_response(
-            page_5_movies, page=5, total_pages=10, total_results=200
-        ).model_dump()
+    mock_tmdb_get.return_value = create_mock_paginated_response(
+        page_5_movies, page=5, total_pages=10, total_results=200
     )
 
     # Act: Request with tmdb_page_start=5 (from previous next_tmdb_page_start)
@@ -930,22 +909,22 @@ def test_browse_no_duplicates_across_sequential_pages(
     # Mock responses for both requests
     mock_tmdb_get.side_effect = [
         # First request: pages 1-4
-        ApiResponse(200, create_paginated_tmdb_response(
+        create_mock_paginated_response(
             page_1_movies, page=1, total_pages=10
-        ).model_dump()),
-        ApiResponse(200, create_paginated_tmdb_response(
+        ),
+        create_mock_paginated_response(
             page_2_movies, page=2, total_pages=10
-        ).model_dump()),
-        ApiResponse(200, create_paginated_tmdb_response(
+        ),
+        create_mock_paginated_response(
             page_3_movies, page=3, total_pages=10
-        ).model_dump()),
-        ApiResponse(200, create_paginated_tmdb_response(
+        ),
+        create_mock_paginated_response(
             page_4_movies, page=4, total_pages=10
-        ).model_dump()),
+        ),
         # Second request: page 5
-        ApiResponse(200, create_paginated_tmdb_response(
+        create_mock_paginated_response(
             page_5_movies, page=5, total_pages=10
-        ).model_dump()),
+        ),
     ]
 
     # Act 1: Request API page 1
@@ -995,11 +974,8 @@ def test_browse_fallback_when_tmdb_page_start_omitted(
         for i in range(21, 41)
     ]
 
-    mock_tmdb_get.return_value = ApiResponse(
-        200,
-        create_paginated_tmdb_response(
-            page_2_movies, page=2, total_pages=10
-        ).model_dump()
+    mock_tmdb_get.return_value = create_mock_paginated_response(
+        page_2_movies, page=2, total_pages=10
     )
 
     # Act: Request API page 2 WITHOUT tmdb_page_start
@@ -1057,12 +1033,12 @@ def test_browse_deduplicates_when_tmdb_returns_duplicate_across_pages(
     ]
 
     mock_tmdb_get.side_effect = [
-        ApiResponse(200, create_paginated_tmdb_response(
+        create_mock_paginated_response(
             page_1_movies, page=1, total_pages=5
-        ).model_dump()),
-        ApiResponse(200, create_paginated_tmdb_response(
+        ),
+        create_mock_paginated_response(
             page_2_movies, page=2, total_pages=5
-        ).model_dump()),
+        ),
     ]
 
     # Act: Request browse API page 1 with multi-genre filter
@@ -1137,15 +1113,15 @@ def test_browse_deduplicates_multiple_duplicates_across_pages(
     ]
 
     mock_tmdb_get.side_effect = [
-        ApiResponse(200, create_paginated_tmdb_response(
+        create_mock_paginated_response(
             page_1_movies, page=1, total_pages=5
-        ).model_dump()),
-        ApiResponse(200, create_paginated_tmdb_response(
+        ),
+        create_mock_paginated_response(
             page_2_movies, page=2, total_pages=5
-        ).model_dump()),
-        ApiResponse(200, create_paginated_tmdb_response(
+        ),
+        create_mock_paginated_response(
             page_3_movies, page=3, total_pages=5
-        ).model_dump()),
+        ),
     ]
 
     # Act: Request browse API
@@ -1217,15 +1193,15 @@ def test_browse_deduplication_works_with_backend_filters(
     ]
 
     mock_tmdb_get.side_effect = [
-        ApiResponse(200, create_paginated_tmdb_response(
+        create_mock_paginated_response(
             page_1_movies, page=1, total_pages=5
-        ).model_dump()),
-        ApiResponse(200, create_paginated_tmdb_response(
+        ),
+        create_mock_paginated_response(
             page_2_movies, page=2, total_pages=5
-        ).model_dump()),
-        ApiResponse(200, create_paginated_tmdb_response(
+        ),
+        create_mock_paginated_response(
             page_3_movies, page=3, total_pages=5
-        ).model_dump()),
+        ),
     ]
 
     # Act: Request with rating filter
@@ -1282,9 +1258,9 @@ def test_browse_respects_max_buffer_pages_with_heavy_duplication(
 
     # Pages 2-6: Each has 9 duplicates + 1 new movie (heavy duplication)
     page_responses = [
-        ApiResponse(200, create_paginated_tmdb_response(
+        create_mock_paginated_response(
             page_1_movies, page=1, total_pages=10
-        ).model_dump())
+        )
     ]
 
     for page_num in range(2, 7):  # Pages 2-6 (5 buffer pages)
@@ -1300,9 +1276,9 @@ def test_browse_respects_max_buffer_pages_with_heavy_duplication(
             )  # One new movie per page
         ]
         page_responses.append(
-            ApiResponse(200, create_paginated_tmdb_response(
+            create_mock_paginated_response(
                 page_movies, page=page_num, total_pages=10
-            ).model_dump())
+            )
         )
 
     mock_tmdb_get.side_effect = page_responses
@@ -1389,19 +1365,19 @@ def test_browse_no_cross_page_duplicates(
 
     mock_tmdb_get.side_effect = [
         # Page 1 request: TMDB pages 1-2
-        ApiResponse(200, create_paginated_tmdb_response(
+        create_mock_paginated_response(
             tmdb_page_1, page=1, total_pages=10
-        ).model_dump()),
-        ApiResponse(200, create_paginated_tmdb_response(
+        ),
+        create_mock_paginated_response(
             tmdb_page_2, page=2, total_pages=10
-        ).model_dump()),
+        ),
         # Page 2 request: TMDB pages 3-4 (starting from next_tmdb_page_start=3)
-        ApiResponse(200, create_paginated_tmdb_response(
+        create_mock_paginated_response(
             tmdb_page_3, page=3, total_pages=10
-        ).model_dump()),
-        ApiResponse(200, create_paginated_tmdb_response(
+        ),
+        create_mock_paginated_response(
             tmdb_page_4, page=4, total_pages=10
-        ).model_dump()),
+        ),
     ]
 
     # Act: Fetch page 1
@@ -1470,26 +1446,26 @@ def test_browse_backward_navigation_consistency(
     # page 2 fetch (TMDB 3, 4), page 1 again (TMDB 1, 2)
     mock_tmdb_get.side_effect = [
         # First page 1 request
-        ApiResponse(200, create_paginated_tmdb_response(
+        create_mock_paginated_response(
             tmdb_page_1, page=1, total_pages=10
-        ).model_dump()),
-        ApiResponse(200, create_paginated_tmdb_response(
+        ),
+        create_mock_paginated_response(
             tmdb_page_2, page=2, total_pages=10
-        ).model_dump()),
+        ),
         # Page 2 request
-        ApiResponse(200, create_paginated_tmdb_response(
+        create_mock_paginated_response(
             tmdb_page_3, page=3, total_pages=10
-        ).model_dump()),
-        ApiResponse(200, create_paginated_tmdb_response(
+        ),
+        create_mock_paginated_response(
             tmdb_page_4, page=4, total_pages=10
-        ).model_dump()),
+        ),
         # Second page 1 request (backward navigation)
-        ApiResponse(200, create_paginated_tmdb_response(
+        create_mock_paginated_response(
             tmdb_page_1, page=1, total_pages=10
-        ).model_dump()),
-        ApiResponse(200, create_paginated_tmdb_response(
+        ),
+        create_mock_paginated_response(
             tmdb_page_2, page=2, total_pages=10
-        ).model_dump()),
+        ),
     ]
 
     # Act: Fetch page 1 (first time)

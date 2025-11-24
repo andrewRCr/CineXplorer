@@ -24,7 +24,11 @@ from core.services.api_response import ApiResponse
 from core.tests.test_helpers import HTTPStatus
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.test import Client
-from movie.tests.tmdb_test_builders import create_paginated_tmdb_response, create_tmdb_movie
+from movie.tests.test_helpers import (
+    create_mock_movie_detail_response,
+    create_mock_paginated_response,
+    create_tmdb_movie,
+)
 from user_movie_data.models import UserMovieData
 
 if TYPE_CHECKING:
@@ -100,10 +104,10 @@ def test_discovery_endpoint_enriches_user_movie_data_for_authenticated_user(
     movies = [
         create_tmdb_movie(101, 'Blade Runner', '1982-06-25', 8.1, poster_path='/test.jpg')
     ]
-    tmdb_response = create_paginated_tmdb_response(movies, page=1, total_pages=1)
-    mock_api_response = ApiResponse(
-        status_code=200,
-        data=tmdb_response.model_dump()
+    mock_api_response = create_mock_paginated_response(
+        movies=movies,
+        page=1,
+        total_pages=1
     )
 
     # Act: Call endpoint as authenticated user
@@ -162,10 +166,10 @@ def test_discovery_endpoint_works_for_unauthenticated_user(
     movies = [
         create_tmdb_movie(101, 'Blade Runner', '1982-06-25', 8.1, poster_path='/test.jpg')
     ]
-    tmdb_response = create_paginated_tmdb_response(movies, page=1, total_pages=1)
-    mock_api_response = ApiResponse(
-        status_code=200,
-        data=tmdb_response.model_dump()
+    mock_api_response = create_mock_paginated_response(
+        movies=movies,
+        page=1,
+        total_pages=1
     )
 
     # Act: Call endpoint without authentication
@@ -219,10 +223,10 @@ def test_discovery_endpoint_returns_none_for_movies_without_user_data(
     movies = [
         create_tmdb_movie(101, 'Blade Runner', '1982-06-25', 8.1, poster_path='/test.jpg')
     ]
-    tmdb_response = create_paginated_tmdb_response(movies, page=1, total_pages=1)
-    mock_api_response = ApiResponse(
-        status_code=200,
-        data=tmdb_response.model_dump()
+    mock_api_response = create_mock_paginated_response(
+        movies=movies,
+        page=1,
+        total_pages=1
     )
 
     # Act: Call endpoint as authenticated user
@@ -270,18 +274,15 @@ def test_movie_detail_endpoint_enriches_user_movie_data_for_authenticated_user(
     )
 
     # Arrange: Mock TMDB API responses
-    mock_info_response = ApiResponse(
-        status_code=200,
-        data={
-            'id': 78,
-            'title': 'Blade Runner',
-            'overview': 'A blade runner must pursue and terminate four replicants.',
-            'poster_path': '/blade_runner.jpg',
-            'release_date': '1982-06-25',
-            'vote_average': 8.1,
-            'genres': [],
-            'production_companies': []
-        }
+    mock_info_response = create_mock_movie_detail_response(
+        tmdb_id=78,
+        title='Blade Runner',
+        release_date='1982-06-25',
+        vote_average=8.1,
+        overview='A blade runner must pursue and terminate four replicants.',
+        poster_path='/blade_runner.jpg',
+        genres=[],
+        production_companies=[]
     )
     mock_credits_response = ApiResponse(
         status_code=200,
@@ -328,18 +329,15 @@ def test_movie_detail_endpoint_works_for_unauthenticated_user(
     create_movie_stub(tmdb_id=tmdb_id, title='Blade Runner')
 
     # Arrange: Mock TMDB API responses
-    mock_info_response = ApiResponse(
-        status_code=200,
-        data={
-            'id': tmdb_id,
-            'title': 'Blade Runner',
-            'overview': 'A blade runner must pursue and terminate four replicants.',
-            'poster_path': '/blade_runner.jpg',
-            'release_date': '1982-06-25',
-            'vote_average': 8.1,
-            'genres': [],
-            'production_companies': []
-        }
+    mock_info_response = create_mock_movie_detail_response(
+        tmdb_id=tmdb_id,
+        title='Blade Runner',
+        release_date='1982-06-25',
+        vote_average=8.1,
+        overview='A blade runner must pursue and terminate four replicants.',
+        poster_path='/blade_runner.jpg',
+        genres=[],
+        production_companies=[]
     )
     mock_credits_response = ApiResponse(
         status_code=200,
@@ -405,10 +403,10 @@ def test_enrichment_handles_multiple_movies_efficiently(
         create_tmdb_movie(102, 'Chinatown', '1974-06-20', 8.2, poster_path='/test2.jpg'),
         create_tmdb_movie(103, 'The Matrix', '1999-03-31', 8.7, poster_path='/test3.jpg')
     ]
-    tmdb_response = create_paginated_tmdb_response(movies, page=1, total_pages=1)
-    mock_api_response = ApiResponse(
-        status_code=200,
-        data=tmdb_response.model_dump()
+    mock_api_response = create_mock_paginated_response(
+        movies=movies,
+        page=1,
+        total_pages=1
     )
 
     # Act: Call endpoint as authenticated user

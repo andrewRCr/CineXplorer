@@ -130,8 +130,12 @@ class TestMovieDiscoverFilterSchemaParameterExtraction:
         assert params.vote_average_lte == 9.0
 
         # Backend filtering parameters (second-pass data hygiene)
-        assert params.rating_min is not None, "Schema must extract rating_min for backend filtering"
-        assert params.rating_max is not None, "Schema must extract rating_max for backend filtering"
+        assert params.rating_min is not None, (
+            "Schema must extract rating_min for backend filtering"
+        )
+        assert params.rating_max is not None, (
+            "Schema must extract rating_max for backend filtering"
+        )
         assert params.rating_min == 7.0
         assert params.rating_max == 9.0
 

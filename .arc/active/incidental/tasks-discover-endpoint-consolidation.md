@@ -964,48 +964,36 @@ This phase addresses a complex test migration challenge. Tests were written when
         - **Key insight**: Tests must catch real breakable things (0 results, wrong dates, etc.)
         - **Gap calculation in notes file under "Test Gap Calculation" section**
 
-- [ ] **5.2 Design DRY test structure**
+- [x] **5.2 Design DRY test structure**
 
     **Goal:** Minimize test duplication through parametrized patterns and shared fixtures.
 
-    - [ ] **5.2.a Identify common behaviors across endpoints**
-        - **Tier 1 (Sanity - test first):**
-            - All 3 endpoints should return 200 + results
-            - All 3 endpoints should fill buffer to 20 results (if available)
-            - Now-playing/upcoming should have correct date ranges
-            - min_vote_count should be applied correctly per endpoint
-        - **Tier 2 (Universal behaviors):**
-            - All 3 endpoints should handle genre/rating/year filters
-            - All 3 endpoints should handle pagination correctly
-            - All 3 endpoints should handle invalid parameters gracefully
-            - All 3 endpoints should support buffer mechanism
-            - All 3 endpoints should support deduplication
-            - All 3 endpoints should have completeness filtering (poster, title, overview)
-            - All 3 endpoints should respect user authentication for enrichment
-        - **Tier 3 (Endpoint-specific):**
-            - Now-playing/upcoming should enforce protected keys (date range)
-            - All sort options should return non-zero results (Browse)
+    **Completed:** Full design documented in notes file under "Phase 5.2: DRY Test Design" section.
 
-    - [ ] **5.2.b Design parametrized test pattern**
-        - Pattern for testing all 3 endpoints with same behavior (browse, now-playing, upcoming)
-        - Use `@pytest.mark.parametrize('endpoint,preset_params', [...])` approach
-        - Define endpoint configurations (URL, expected preset keys)
-        - Note: Browse has no protected keys; now-playing/upcoming have date + release_type protected
-        - Document pattern in notes file with code example
+    - [x] **5.2.a Identify common behaviors across endpoints**
+        - Behaviors identified in Task 5.1 audit (coverage matrix in notes)
+        - 3 tiers: Sanity (highest priority), Universal, Endpoint-specific
 
-    - [ ] **5.2.c Design shared fixtures for test data**
-        - Reusable TMDB mock responses
-        - Common filter parameter sets
-        - Expected response structures
-        - Forward-compatible with test organization (place in integration/conftest.py)
-        - Follow type safety strategy (properly typed fixtures, no `Any`)
+    - [x] **5.2.b Design parametrized test pattern**
+        - Created `EndpointConfig` NamedTuple pattern with name, url, has_date_preset, min_vote_count_applied, protected_keys
+        - `ALL_ENDPOINTS` and `DATE_CONSTRAINED_ENDPOINTS` lists for parametrization
+        - Example tests showing `@pytest.mark.parametrize` with endpoint-specific assertions
+        - **Pattern documented in notes file with full code examples**
 
-    - [ ] **5.2.d Plan test file organization**
-        - Where new tests should live: `backend/apps/movie/tests/integration/api/`
-        - File naming: Follow test organization Phase 3 decisions
-        - Anticipated files: `test_date_constrained_endpoints.py` for now-playing/upcoming wrapper tests
-        - Shared behavior tests may extend existing discover test files
-        - Document strategy for forward compatibility
+    - [x] **5.2.c Design shared fixtures for test data**
+        - `mock_tmdb_movies`: Standard movie set for basic tests
+        - `mock_tmdb_response_factory`: Factory for custom responses (Protocol-typed)
+        - `expected_date_ranges`: Centralized date range expectations
+        - `filter_test_cases`: Common filter parameter sets
+        - Location: `tests/integration/conftest.py`
+        - **Fixture designs documented in notes file**
+
+    - [x] **5.2.d Plan test file organization**
+        - Forward-compatible location: `backend/apps/movie/tests/integration/api/`
+        - New files: `test_endpoint_sanity.py`, `test_endpoint_behaviors.py`, `test_browse_sort_options.py`
+        - Extend existing: `test_date_constrained_endpoints.py` for date correctness tests
+        - Naming: `test_{scope}_{feature}.py`, parametrized IDs use endpoint names
+        - **File organization documented in notes file with line estimates**
 
 - [x] **5.3 Verify merge logic test coverage**
 
@@ -1023,10 +1011,10 @@ This phase addresses a complex test migration challenge. Tests were written when
         - ✅ Year filter blocking for date-constrained endpoints
         - **14 tests total - comprehensive coverage confirmed in audit**
 
-    - [ ] **5.3.b Run merge logic tests and verify all pass**
+    - [x] **5.3.b Run merge logic tests and verify all pass**
         - Command: `docker compose -f infrastructure/docker-compose.yml exec backend pytest
         apps/movie/tests/unit/helpers/test_endpoint_preset_merge.py -v`
-        - All tests should PASS
+        - Result: 13 tests passed in 0.26s
 
 - [ ] **5.4 Write parametrized endpoint behavior tests**
 
@@ -1034,7 +1022,20 @@ This phase addresses a complex test migration challenge. Tests were written when
 
     **CRITICAL:** Tier 1 tests catch fundamental breaks. Write and verify these FIRST.
 
-    - [ ] **5.4.a Write Tier 1 sanity tests (HIGHEST PRIORITY)**
+    - [ ] **5.4.a Create test infrastructure (endpoint configs + fixtures)**
+        - Rename `test_fixtures_tmdb.py` → `tmdb_test_builders.py` (clarifies it's builders/types, not fixtures)
+            - Update all imports across test files
+        - Create `backend/apps/movie/tests/integration/api/endpoint_configs.py`:
+            - `EndpointConfig` NamedTuple (name, url, has_date_preset, min_vote_count_applied, protected_keys)
+            - `BROWSE_CONFIG`, `NOW_PLAYING_CONFIG`, `UPCOMING_CONFIG`
+            - `ALL_ENDPOINTS`, `DATE_CONSTRAINED_ENDPOINTS` lists
+        - Add fixtures to `backend/apps/movie/tests/integration/conftest.py`:
+            - `mock_tmdb_response_factory` - wraps response creation + ApiResponse casting
+            - `expected_date_ranges` - centralized date calculation for date correctness tests
+        - Follow type safety strategy: Properly typed (NamedTuple, Protocol for factory)
+        - Existing helpers (`create_raw_tmdb_movie`, etc.) stay in renamed `tmdb_test_builders.py`
+
+    - [ ] **5.4.b Write Tier 1 sanity tests (HIGHEST PRIORITY)**
         - Location: `backend/apps/movie/tests/integration/api/test_endpoint_sanity.py`
         - `test_endpoint_returns_results` - parametrized × 3 endpoints
             - Each endpoint returns 200 status
@@ -1053,7 +1054,7 @@ This phase addresses a complex test migration challenge. Tests were written when
         - Follow type safety strategy: Properly typed fixtures
         - All tests should PASS - these catch the bugs we recently found
 
-    - [ ] **5.4.b Write Tier 2 parametrized behavior tests**
+    - [ ] **5.4.c Write Tier 2 parametrized behavior tests**
         - Location: `backend/apps/movie/tests/integration/api/test_endpoint_behaviors.py`
         - Use parametrized pattern from Phase 5.2.b for all 3 endpoints
         - `test_completeness_filtering` - parametrized × 3
@@ -1072,7 +1073,7 @@ This phase addresses a complex test migration challenge. Tests were written when
         - Follow type safety strategy: Properly typed fixtures, use ModelSchema patterns
         - All tests should PASS
 
-    - [ ] **5.4.c Write preset-specific tests for date-constrained endpoints**
+    - [ ] **5.4.d Write preset-specific tests for date-constrained endpoints**
         - Location: Extend `test_date_constrained_endpoints.py`
         - Test: Now-playing preset includes correct date range and release_type
         - Test: Upcoming preset includes correct future date range and release_type
@@ -1080,7 +1081,7 @@ This phase addresses a complex test migration challenge. Tests were written when
         - Test: Non-protected filters can be applied alongside presets
         - All tests should PASS
 
-    - [ ] **5.4.d Write sort options tests for Browse endpoint**
+    - [ ] **5.4.e Write sort options tests for Browse endpoint**
         - Location: `backend/apps/movie/tests/integration/api/test_browse_sort_options.py`
         - `test_sort_options_return_results` - parametrized × all user-exposed sort options
             - popularity.desc/asc
@@ -1093,15 +1094,6 @@ This phase addresses a complex test migration challenge. Tests were written when
             - Sort + genre filter works
             - Sort + rating filter works
         - Rationale: Prevent silent regression where sort options return 0 results
-
-    - [ ] **5.4.e Implement DRY test patterns and shared fixtures**
-        - Create shared fixtures in integration conftest
-        - Location: `backend/apps/movie/tests/integration/conftest.py`
-        - Fixture: `endpoint_configs` (parametrize helper for all 3 endpoints)
-        - Fixture: `date_constrained_configs` (now-playing/upcoming with expected ranges)
-        - Fixture: `mock_tmdb_response_factory` (reusable TMDB response builder)
-        - Fixture: `common_filter_params` (genre, rating, year test cases)
-        - Follow type safety strategy: Properly typed return values
 
     - [ ] **5.4.f Run all endpoint tests and verify pass**
         - Run Tier 1: `docker compose -f infrastructure/docker-compose.yml exec backend pytest

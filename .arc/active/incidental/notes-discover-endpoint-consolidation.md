@@ -294,3 +294,284 @@ Tests should catch:
 - DRY but thorough enough to trust "green = working"
 
 ---
+
+## Phase 5.2: DRY Test Design
+
+### 5.2.b: Parametrized Test Pattern
+
+**Goal:** Single test function runs against multiple endpoints with endpoint-specific expectations.
+
+**Pattern: Endpoint Configuration Tuples**
+
+```python
+from datetime import date, timedelta
+from typing import NamedTuple
+
+class EndpointConfig(NamedTuple):
+    """Configuration for parametrized endpoint tests."""
+    name: str                    # Display name for test output
+    url: str                     # API endpoint path
+    has_date_preset: bool        # Whether endpoint has date constraints
+    min_vote_count_applied: bool # Whether MIN_VOTE_COUNT is enforced
+    protected_keys: list[str]    # Keys user cannot override
+
+# Endpoint configurations
+BROWSE_CONFIG = EndpointConfig(
+    name="browse",
+    url="/api/movies/browse",
+    has_date_preset=False,
+    min_vote_count_applied=True,
+    protected_keys=[],
+)
+
+NOW_PLAYING_CONFIG = EndpointConfig(
+    name="now-playing",
+    url="/api/movies/now-playing",
+    has_date_preset=True,
+    min_vote_count_applied=True,
+    protected_keys=["primary_release_date.gte", "primary_release_date.lte", "with_release_type"],
+)
+
+UPCOMING_CONFIG = EndpointConfig(
+    name="upcoming",
+    url="/api/movies/upcoming",
+    has_date_preset=True,
+    min_vote_count_applied=False,  # Unreleased movies have 0 votes
+    protected_keys=["primary_release_date.gte", "primary_release_date.lte", "with_release_type"],
+)
+
+ALL_ENDPOINTS = [BROWSE_CONFIG, NOW_PLAYING_CONFIG, UPCOMING_CONFIG]
+DATE_CONSTRAINED_ENDPOINTS = [NOW_PLAYING_CONFIG, UPCOMING_CONFIG]
+```
+
+**Example: Parametrized Sanity Test**
+
+```python
+import pytest
+from unittest.mock import Mock, patch
+
+@pytest.mark.parametrize("config", ALL_ENDPOINTS, ids=lambda c: c.name)
+@patch("core.services.tmdb_api_client.TMDBApiClient.get")
+def test_endpoint_returns_results(
+    mock_tmdb_get: Mock,
+    api_client: Client,
+    config: EndpointConfig,
+    mock_tmdb_movies: list[TMDBMovieBaseRawDict],
+) -> None:
+    """Sanity: Each endpoint returns 200 with results."""
+    tmdb_response = create_paginated_tmdb_response(mock_tmdb_movies)
+    mock_tmdb_get.return_value = ApiResponse(200, cast(TMDBResponseData, tmdb_response))
+
+    response = api_client.get(f"{config.url}?page=1")
+
+    assert response.status_code == HTTPStatus.OK
+    data = response.json()
+    assert "results" in data
+    assert len(data["results"]) > 0
+    assert data["page"] == 1
+```
+
+**Example: Endpoint-Specific Expectations**
+
+```python
+@pytest.mark.parametrize("config", ALL_ENDPOINTS, ids=lambda c: c.name)
+@patch("core.services.tmdb_api_client.TMDBApiClient.get")
+def test_min_vote_count_behavior(
+    mock_tmdb_get: Mock,
+    api_client: Client,
+    config: EndpointConfig,
+) -> None:
+    """Each endpoint applies min_vote_count correctly per its configuration."""
+    # Create movies with varying vote counts
+    movies = [
+        create_raw_tmdb_movie(1, "High Votes", "2025-10-15", 7.5, vote_count=5000),
+        create_raw_tmdb_movie(2, "Low Votes", "2025-10-15", 7.5, vote_count=10),
+        create_raw_tmdb_movie(3, "Zero Votes", "2025-10-15", 7.5, vote_count=0),
+    ]
+    tmdb_response = create_paginated_tmdb_response(movies)
+    mock_tmdb_get.return_value = ApiResponse(200, cast(TMDBResponseData, tmdb_response))
+
+    response = api_client.get(f"{config.url}?page=1")
+    data = response.json()
+
+    if config.min_vote_count_applied:
+        # Browse and now-playing: low/zero vote movies filtered out
+        assert all(m["vote_count"] >= MIN_VOTE_COUNT for m in data["results"])
+    else:
+        # Upcoming: all movies returned (unreleased have 0 votes)
+        assert len(data["results"]) == 3
+```
+
+**Pattern Benefits:**
+
+- Single test function covers all endpoints
+- `ids=lambda c: c.name` gives readable test output: `test_endpoint_returns_results[browse]`
+- Endpoint-specific logic via config attributes, not code duplication
+- Easy to add new endpoints - just add config to list
+
+---
+
+### 5.2.c: Shared Fixtures Design
+
+**Location:** `backend/apps/movie/tests/integration/conftest.py`
+
+**Existing Infrastructure (keep using directly):**
+
+- `create_raw_tmdb_movie()` - Builder for individual movies
+- `create_paginated_tmdb_response()` - Builder for paginated responses
+- These are in `test_fixtures_tmdb.py` and work well as explicit calls
+
+**New Fixtures to Create:**
+
+**Fixture 1: Mock TMDB Response Factory**
+
+```python
+from typing import Protocol
+
+class TMDBResponseFactory(Protocol):
+    def __call__(
+        self,
+        movies: list[TMDBMovieBaseRawDict] | None = None,
+        page: int = 1,
+        total_pages: int = 1,
+        total_results: int | None = None,
+    ) -> ApiResponse: ...
+
+@pytest.fixture
+def mock_tmdb_response_factory() -> TMDBResponseFactory:
+    """Factory for creating mock TMDB API responses with various configurations."""
+    def factory(
+        movies: list[TMDBMovieBaseRawDict] | None = None,
+        page: int = 1,
+        total_pages: int = 1,
+        total_results: int | None = None,
+    ) -> ApiResponse:
+        if movies is None:
+            movies = [
+                create_raw_tmdb_movie(1, "Default Movie", "2025-10-15", 7.5, vote_count=1000),
+            ]
+        tmdb_response = create_paginated_tmdb_response(movies, page, total_pages, total_results)
+        return ApiResponse(200, cast(TMDBResponseData, tmdb_response))
+
+    return factory
+```
+
+**Fixture 3: Date Range Expectations**
+
+```python
+from datetime import date, timedelta
+
+@pytest.fixture
+def expected_date_ranges() -> dict[str, tuple[date, date]]:
+    """Expected date ranges for date-constrained endpoints."""
+    today = date.today()
+    return {
+        "now-playing": (today - timedelta(days=30), today + timedelta(days=5)),
+        "upcoming": (today + timedelta(days=5), today + timedelta(days=60)),
+    }
+```
+
+**Why These Fixtures:**
+
+- `mock_tmdb_response_factory`: Wraps both response creation AND `ApiResponse(200, cast(...))` boilerplate
+- `expected_date_ranges`: Centralizes date calculation logic for date correctness tests
+- Filter test cases: Inline in tests (simple enough, no fixture needed)
+
+**Why NOT a `mock_tmdb_movies` fixture:**
+
+- Most tests need specific movie configurations (vote counts, dates, genres)
+- Generic fixture isn't useful - the builder functions are already clean
+- Explicit `create_raw_tmdb_movie()` calls show exactly what's being tested
+
+**Fixture Placement:**
+
+- New fixtures: `tests/integration/conftest.py`
+- Endpoint configs (NamedTuple): `tests/integration/api/endpoint_configs.py` module (shared across test files)
+- Existing helpers: Stay in `test_fixtures_tmdb.py` (continue calling directly)
+
+---
+
+### 5.2.d: Test File Organization
+
+**Forward-Compatible Location:** `backend/apps/movie/tests/integration/api/`
+
+This matches the test-organization-standardization plan (Phase 4). Tests placed here now won't need moving.
+
+**Proposed Files:**
+
+| File | Purpose | Tests |
+|------|---------|-------|
+| `test_endpoint_sanity.py` | Tier 1 sanity checks | ~4 functions, 10-12 test cases |
+| `test_endpoint_behaviors.py` | Tier 2 universal behaviors | ~5 functions, 15+ test cases |
+| `test_browse_sort_options.py` | Sort options (Browse only) | ~3 functions, 8-10 test cases |
+| `test_date_constrained_endpoints.py` | Already exists - extend | Add date range correctness tests |
+
+**File Details:**
+
+**`test_endpoint_sanity.py`** (~150-200 lines)
+
+```
+- test_endpoint_returns_results (×3 endpoints)
+- test_buffer_fills_to_20_results (×3 endpoints)
+- test_date_range_correctness (×2 date-constrained)
+- test_min_vote_count_behavior (×3 endpoints)
+```
+
+Critical tests that catch fundamental breaks. If these fail, endpoint is broken.
+
+**`test_endpoint_behaviors.py`** (~250-300 lines)
+
+```
+- test_completeness_filtering (×3 endpoints)
+- test_pagination_metadata (×3 endpoints)
+- test_filter_passthrough (×3 endpoints × N filter types)
+- test_error_handling (×3 endpoints)
+- test_deduplication_smoke (×3 endpoints)
+```
+
+Universal behaviors that should work identically across all endpoints.
+
+**`test_browse_sort_options.py`** (~150-200 lines)
+
+```
+- test_sort_options_return_results (×8 sort options)
+- test_vote_average_sort_respects_min_vote_count
+- test_sort_with_filters_combination
+```
+
+Browse-specific - now-playing/upcoming have fixed sort (release_date).
+
+**Naming Conventions:**
+
+- `test_{scope}_{feature}.py` - e.g., `test_endpoint_sanity.py`
+- Functions: `test_{what}_{detail}` - e.g., `test_date_range_correctness`
+- Parametrized IDs: Use endpoint name - `[browse]`, `[now-playing]`, `[upcoming]`
+
+**What NOT to Create:**
+
+- No separate files per endpoint (defeats DRY purpose)
+- No `test_now_playing_*.py` or `test_upcoming_*.py` (use parametrization)
+- No duplication of existing `test_date_constrained_endpoints.py` tests
+
+**Existing File Extensions:**
+
+- `test_date_constrained_endpoints.py`: Add `test_date_range_correctness` tests (date validation)
+- `test_endpoint_preset_merge.py`: Already complete (14 tests) - no changes needed
+
+---
+
+### Implementation Order for 5.4
+
+Task list restructured to implement infrastructure first:
+
+1. **5.4.a**: Create test infrastructure (endpoint configs + fixtures)
+2. **5.4.b**: Write Tier 1 sanity tests (highest priority, catches real bugs)
+3. **5.4.c**: Write Tier 2 behavior tests
+4. **5.4.d**: Extend date-constrained tests with preset-specific tests
+5. **5.4.e**: Write sort options tests (Browse-specific)
+6. **5.4.f**: Run all tests and verify pass
+
+**Rationale:** Fixtures are infrastructure that tests depend on. Creating them first (5.4.a)
+allows all subsequent tests to be written cleanly without boilerplate.
+
+---

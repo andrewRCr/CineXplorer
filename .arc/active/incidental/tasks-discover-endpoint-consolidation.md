@@ -925,61 +925,66 @@ This phase addresses a complex test migration challenge. Tests were written when
 
 **Approach:** Systematic audit → design → implement → verify
 
-- [ ] **5.1 Audit current test coverage**
+- [x] **5.1 Audit current test coverage**
 
     **Goal:** Create endpoint × feature matrix showing actual coverage NOW (endpoints work, can test accurately).
 
-    **CRITICAL:** Evaluate tests written for 4-5 endpoints, now we have 3. Identify:
-    - Tests for popular/top-rated: Delete or migrate intent to Browse page tests?
-    - Tests for now-playing: Do they assume broken behavior (no filters)? Need updates?
-    - Tests for upcoming: Do they expect 0 results (old bug)? Need updates?
-    - Tests for discover/browse: Endpoint renamed, tests need updating for new name
+    **Completed:** Full audit with 3-tier coverage matrix (sanity → universal → specific). Found 26 raw gaps, ~12-13
+    test functions needed with DRY patterns. Critical finding: 0% Tier 1 coverage for now-playing/upcoming explains
+    missed bugs (recently found/fixed in unrelated work).
 
-    - [ ] **5.1.a Catalog existing tests per endpoint**
-        - List all tests touching browse/discover, now-playing, upcoming (3 endpoints per ADR-002)
-        - Note: discover endpoint renamed to browse - tests will reference old name
-        - List all tests for popular/top-rated - mark for evaluation (endpoints eliminated)
-        - Identify which features each endpoint tests (filtering, pagination, buffer, errors)
-        - Document test file locations and organization state
-        - Note: Test organization is mid-migration, tests in intermediate state
-        - **Create audit spreadsheet or matrix in notes file**
+    - [x] **5.1.a Catalog existing tests per endpoint**
+        - Cataloged 81 tests across 5 test files
+        - Browse: 22 tests (well-covered: filtering, pagination, buffer, dedup)
+        - Now-playing: 3 tests (genre filter, protected keys, filter application)
+        - Upcoming: 3 tests (rating filter, protected keys, filter application)
+        - Popular/top-rated: 0 tests (endpoints eliminated per ADR-002)
+        - Merge logic: 14 unit tests (comprehensive coverage)
+        - 20 tests already in forward-compatible locations
+        - **Full audit in notes file under "Phase 5 Test Audit"**
 
-    - [ ] **5.1.b Create coverage matrix**
-        - Matrix format: Endpoint (rows) × Feature (columns)
-        - Endpoints: Browse, Now-Playing, Upcoming (3 only)
-        - Features: Genre filtering, rating filtering, year filtering, pagination, buffer mechanism, error handling, user
-          enrichment, protected keys, preset merge logic
-        - Mark tested (✅) vs gaps (❌) for each combination
-        - **Add column:** "Was endpoint tested before refactor?" (old tests may need updates)
-        - Document in notes file under "Coverage Matrix" section
+    - [x] **5.1.b Create coverage matrix**
+        - Created 3-tier matrix: Basic Correctness → Universal Behaviors → Endpoint-Specific Features
+        - **Tier 1 (Basic Correctness)**: Now-playing 0%, Upcoming 0% - explains why bugs weren't caught
+        - **Tier 2 (Universal Behaviors)**: Design question for 5.2 - parametrize vs test once
+        - **Tier 3 (Endpoint-Specific)**: Protected keys well-tested, filtering gaps remain
+        - Overall: Browse 63%, Now-Playing 25%, Upcoming 25%
+        - **Critical finding**: No sanity checks for date range or min_vote_count correctness
+        - **Matrix in notes file under "Coverage Matrix" section**
 
-    - [ ] **5.1.c Evaluate popular/top-rated test intent**
-        - Review all tests written for `/api/movies/popular` endpoint
-        - Review all tests written for `/api/movies/top-rated` endpoint
-        - For each test, answer: "What was this testing? Does Browse page need similar coverage?"
-        - **Decision matrix:** Delete (no longer relevant) vs Migrate (adapt for Browse page)
-        - Document decisions in notes file
+    - [x] ~~**5.1.c Evaluate popular/top-rated test intent**~~ - N/A, no tests exist for these eliminated endpoints
 
-    - [ ] **5.1.d Calculate actual test gap**
-        - Count missing endpoint × feature combinations
-        - Count tests that need updates (written for old broken behavior)
-        - Estimate realistic test count needed (not speculation)
-        - Consider DRY patterns will reduce test function count
-        - Update notes file with validated estimate
+    - [x] **5.1.c Calculate actual test gap**
+        - Raw gaps: 26 total (9 Tier 1, 11 Tier 2, 6 Tier 3)
+        - Browse: 4 gaps, Now-Playing: 11 gaps, Upcoming: 11 gaps
+        - With DRY patterns: ~12-13 new test functions (parametrized)
+        - Tier 1 (sanity): 3-4 functions covering basic correctness
+        - Tier 2 (universal): 5 functions extending existing tests to parametrize
+        - Tier 3 (specific): 4 functions for sort options, year filtering, filter additions
+        - **Key insight**: Tests must catch real breakable things (0 results, wrong dates, etc.)
+        - **Gap calculation in notes file under "Test Gap Calculation" section**
 
 - [ ] **5.2 Design DRY test structure**
 
     **Goal:** Minimize test duplication through parametrized patterns and shared fixtures.
 
     - [ ] **5.2.a Identify common behaviors across endpoints**
-        - All 3 endpoints should handle genre filters
-        - All 3 endpoints should handle rating filters
-        - All 3 endpoints should handle pagination correctly
-        - All 3 endpoints should handle invalid parameters gracefully
-        - All 3 endpoints should support buffer mechanism
-        - All 3 endpoints should respect user authentication for enrichment
-        - **NEW:** Now-playing and upcoming should enforce protected keys (date range)
-        - **NEW:** All sort options should return non-zero results (discovered issue during Phase 3.6)
+        - **Tier 1 (Sanity - test first):**
+            - All 3 endpoints should return 200 + results
+            - All 3 endpoints should fill buffer to 20 results (if available)
+            - Now-playing/upcoming should have correct date ranges
+            - min_vote_count should be applied correctly per endpoint
+        - **Tier 2 (Universal behaviors):**
+            - All 3 endpoints should handle genre/rating/year filters
+            - All 3 endpoints should handle pagination correctly
+            - All 3 endpoints should handle invalid parameters gracefully
+            - All 3 endpoints should support buffer mechanism
+            - All 3 endpoints should support deduplication
+            - All 3 endpoints should have completeness filtering (poster, title, overview)
+            - All 3 endpoints should respect user authentication for enrichment
+        - **Tier 3 (Endpoint-specific):**
+            - Now-playing/upcoming should enforce protected keys (date range)
+            - All sort options should return non-zero results (Browse)
 
     - [ ] **5.2.b Design parametrized test pattern**
         - Pattern for testing all 3 endpoints with same behavior (browse, now-playing, upcoming)
@@ -1002,96 +1007,110 @@ This phase addresses a complex test migration challenge. Tests were written when
         - Shared behavior tests may extend existing discover test files
         - Document strategy for forward compatibility
 
-- [ ] **5.3 Write tests for merge logic behavior**
+- [x] **5.3 Verify merge logic test coverage**
 
-    **Goal:** Comprehensive tests for preset + user filter merging with protected keys.
+    **Goal:** Confirm existing merge logic tests are comprehensive.
 
-    **Note:** Basic smoke tests written in Phase 2.1.3. This is comprehensive coverage.
+    **Status:** Audit found 14 tests already exist in `test_endpoint_preset_merge.py` covering all scenarios.
 
-    - [ ] **5.3.a Create comprehensive test file for merge logic in `test_endpoint_preset_merge.py`**
-        - Location: `backend/apps/movie/tests/unit/helpers/` (forward-compatible)
-        - Test: User filters + preset (additive merge)
-        - Test: User conflicts with protected key (preset wins)
-        - Test: User conflicts with non-protected key (user wins)
-        - Test: Empty user filters (preset only)
-        - Test: Empty preset (user only)
-        - Test: Multiple protected keys
-        - Test: Edge cases (None values, empty strings)
+    - [x] **5.3.a Verify existing test coverage**
+        - Location: `backend/apps/movie/tests/unit/helpers/test_endpoint_preset_merge.py`
+        - ✅ Protected keys override user values
+        - ✅ Non-protected keys merge correctly
+        - ✅ User-only keys preserved
+        - ✅ Empty user/preset handling
+        - ✅ Realistic scenarios for all 3 endpoints
+        - ✅ Year filter blocking for date-constrained endpoints
+        - **14 tests total - comprehensive coverage confirmed in audit**
 
     - [ ] **5.3.b Run merge logic tests and verify all pass**
-        - Command: `docker compose -f infrastructure/docker-compose.yml exec backend pytest apps/movie/tests/unit/helpers/test_endpoint_preset_merge.py`
-        - All tests should PASS (helper implemented in Phase 2.1)
+        - Command: `docker compose -f infrastructure/docker-compose.yml exec backend pytest
+        apps/movie/tests/unit/helpers/test_endpoint_preset_merge.py -v`
+        - All tests should PASS
 
 - [ ] **5.4 Write parametrized endpoint behavior tests**
 
-    **Goal:** Test that all 3 endpoints support common filtering behaviors with correct preset handling.
+    **Goal:** Test all 3 endpoints with tiered approach: sanity checks first, then behaviors, then features.
 
-    **CRITICAL:** These tests verify the FIXED endpoints. Old tests may have assumed broken behavior.
+    **CRITICAL:** Tier 1 tests catch fundamental breaks. Write and verify these FIRST.
 
-    - [ ] **5.4.a Create parametrized test file in `test_date_constrained_endpoints.py`**
-        - Location: `backend/apps/movie/tests/integration/api/` (forward-compatible)
-        - Use parametrized pattern from Phase 5.2.b for now-playing and upcoming
-        - Test: Genre filter works on both endpoints
-        - Test: Rating filter works on both endpoints
-        - Test: Multiple filters work together on both endpoints
-        - Test: Invalid filter parameters return clear errors on both endpoints
-        - Test: Pagination works with filters on both endpoints
-        - Test: Buffer mechanism works on both endpoints
+    - [ ] **5.4.a Write Tier 1 sanity tests (HIGHEST PRIORITY)**
+        - Location: `backend/apps/movie/tests/integration/api/test_endpoint_sanity.py`
+        - `test_endpoint_returns_results` - parametrized × 3 endpoints
+            - Each endpoint returns 200 status
+            - Response has expected structure (results, total_results, page)
+        - `test_buffer_fills_to_20_results` - parametrized × 3 endpoints
+            - Each endpoint returns 20 results per page (if available)
+            - Tests buffer fill logic works through each code path
+        - `test_date_range_correctness` - parametrized × 2 (now-playing, upcoming)
+            - Now-playing: All movies within today-30 to today+5
+            - Upcoming: All movies within today+5 to today+60
+            - No movies outside expected ranges
+        - `test_min_vote_count_behavior` - parametrized × 3 with different expectations
+            - Browse: Applied (movies have vote_count >= MIN_VOTE_COUNT)
+            - Now-playing: Applied (released movies have votes)
+            - Upcoming: NOT applied (unreleased movies can have 0 votes)
+        - Follow type safety strategy: Properly typed fixtures
+        - All tests should PASS - these catch the bugs we recently found
+
+    - [ ] **5.4.b Write Tier 2 parametrized behavior tests**
+        - Location: `backend/apps/movie/tests/integration/api/test_endpoint_behaviors.py`
+        - Use parametrized pattern from Phase 5.2.b for all 3 endpoints
+        - `test_completeness_filtering` - parametrized × 3
+            - All returned movies have poster, title, overview
+        - `test_pagination_metadata` - parametrized × 3
+            - Correct page numbers, total_results, has_more
+        - `test_filter_passthrough` - parametrized × 3
+            - Genre filter works on all endpoints
+            - Rating filter works on all endpoints
+            - Year filter works on all endpoints
+            - Multiple filters work together
+        - `test_error_handling` - parametrized × 3
+            - Invalid filter parameters return clear errors
+        - `test_deduplication_smoke` - parametrized × 3
+            - No duplicate movies in results
         - Follow type safety strategy: Properly typed fixtures, use ModelSchema patterns
-        - All tests should PASS (endpoints fixed in Phase 2)
-
-    - [ ] **5.4.b Write preset-specific tests for date-constrained endpoints**
-        - Test: Now-playing preset includes correct date range (today-30 to today+5) and release_type
-        - Test: Upcoming preset includes correct future date range (today+5 to today+60) and release_type
-        - Test: Protected keys (date range, release_type) cannot be overridden by user filters
-        - Test: Non-protected filters (genre, rating) can be applied alongside presets
-        - Test: Date range verification - now-playing movies have recent dates, upcoming have future dates
         - All tests should PASS
 
-    - [ ] **5.4.c Write tests for Browse page endpoint usage**
-        - Location: Add to existing browse test files or new `test_browse_page.py`
-        - Test: Browse page calls browse endpoint (`/api/movies/browse`)
-        - Test: Browse page defaults to `sort_by=popularity.desc`
-        - Test: Browse page allows user to change sort (no protected keys)
-        - Test: Browse page supports all filters (genre, rating, year, keywords, people)
-        - **Migrate intent from old popular/top-rated tests** (per 5.1.c evaluation)
-        - Tests for existing browse functionality should PASS
-        - **NEW - Sort behavior tests (discovered during Phase 3.6):**
-            - Test: All sort options return >0 results (parametrized)
-            - Test: `vote_average.desc` returns 20 results with vote_count >= MIN_VOTE_COUNT
-            - Test: `vote_average.asc` returns 20 results with vote_count >= MIN_VOTE_COUNT
-            - Test: `release_date.desc` returns results (bypasses min_vote_count)
-            - Test: `original_title.asc/desc` returns results (bypasses min_vote_count)
-            - Test: `popularity.asc` returns results (genre filter may reduce count)
-            - Test: Parameter passthrough - all schema fields reach TMDB params
-            - Test: Sort + filter combinations work together
-            - Rationale: Prevent silent regression where sort options return 0 results
+    - [ ] **5.4.c Write preset-specific tests for date-constrained endpoints**
+        - Location: Extend `test_date_constrained_endpoints.py`
+        - Test: Now-playing preset includes correct date range and release_type
+        - Test: Upcoming preset includes correct future date range and release_type
+        - Test: Protected keys cannot be overridden by user filters
+        - Test: Non-protected filters can be applied alongside presets
+        - All tests should PASS
 
-    - [ ] **5.4.d Update existing endpoint tests**
-        - **Update existing upcoming endpoint tests:**
-            - Update upcoming date range in test fixtures (now uses today+5 to today+60)
-            - Update mock TMDB responses to match new window
-            - Remove expectations of 0 results (that was the bug!)
-            - Location: Existing `test_movie_api.py` or migrated location
-        - **Update now-playing tests:**
-            - Update to expect FilterParams acceptance (old tests may assume PaginationParams only)
-            - Update date range expectations (now uses today-30 to today+5)
-            - Update to test filter functionality (old tests couldn't test this)
-        - **Update browse/discover tests:**
-            - Update endpoint name from discover to browse
-            - Verify all test references updated
+    - [ ] **5.4.d Write sort options tests for Browse endpoint**
+        - Location: `backend/apps/movie/tests/integration/api/test_browse_sort_options.py`
+        - `test_sort_options_return_results` - parametrized × all user-exposed sort options
+            - popularity.desc/asc
+            - vote_average.desc/asc
+            - release_date.desc/asc
+            - original_title.asc/desc
+        - `test_vote_average_sort_respects_min_vote_count`
+            - vote_average.desc returns movies with vote_count >= MIN_VOTE_COUNT
+        - `test_sort_with_filters_combination`
+            - Sort + genre filter works
+            - Sort + rating filter works
+        - Rationale: Prevent silent regression where sort options return 0 results
 
     - [ ] **5.4.e Implement DRY test patterns and shared fixtures**
         - Create shared fixtures in integration conftest
         - Location: `backend/apps/movie/tests/integration/conftest.py`
-        - Fixture: `date_constrained_endpoint_configs` (parametrize helper for now-playing/upcoming)
-        - Fixture: `mock_tmdb_discover_response` (reusable TMDB response)
+        - Fixture: `endpoint_configs` (parametrize helper for all 3 endpoints)
+        - Fixture: `date_constrained_configs` (now-playing/upcoming with expected ranges)
+        - Fixture: `mock_tmdb_response_factory` (reusable TMDB response builder)
         - Fixture: `common_filter_params` (genre, rating, year test cases)
         - Follow type safety strategy: Properly typed return values
 
-    - [ ] **5.4.f Run endpoint tests and verify all pass**
-        - Command: `docker compose -f infrastructure/docker-compose.yml exec backend pytest apps/movie/tests/integration/api/test_date_constrained_endpoints.py`
-        - All endpoint tests should PASS (endpoints are fixed)
+    - [ ] **5.4.f Run all endpoint tests and verify pass**
+        - Run Tier 1: `docker compose -f infrastructure/docker-compose.yml exec backend pytest
+        apps/movie/tests/integration/api/test_endpoint_sanity.py -v`
+        - Run Tier 2: `docker compose -f infrastructure/docker-compose.yml exec backend pytest
+        apps/movie/tests/integration/api/test_endpoint_behaviors.py -v`
+        - Run all: `docker compose -f infrastructure/docker-compose.yml exec backend pytest
+        apps/movie/tests/integration/api/ -v`
+        - All tests should PASS
         - Document test count: X test functions, Y total executions with parametrization
 
 - [ ] **5.5 Write tests for Featured stub page and routing**
@@ -1126,55 +1145,16 @@ This phase addresses a complex test migration challenge. Tests were written when
         - Test: Genre filter updates results
         - Test: Rating filter updates results
         - Test: Sort change updates results
-        - **Migrate relevant test intent from old Popular/Top-Rated page tests** (per 5.1.c)
 
     - [ ] **5.5.d Run Featured/routing tests and verify all pass**
         - Command: `docker compose -f infrastructure/docker-compose.yml exec frontend npm test Featured`
         - Command: `docker compose -f infrastructure/docker-compose.yml exec frontend npm test Browse`
         - All tests should PASS (components implemented in Phase 3)
 
-- [ ] **5.6 Featured page architecture research and planning**
+- [x] ~~**5.6 Featured page architecture research and planning**~~ - MOVED to BACKLOG-FEATURE.md
 
-    **Goal:** Research hero-style Featured page patterns and document future implementation approach.
-
-    **Note:** This is future planning work, not implementation. Can be done at end of Phase 5.
-
-    - [ ] **5.6.a Create notes file for future Featured page design work**
-        - Create: `.arc/active/incidental/notes-featured-page-design.md`
-        - Document decision context (ADR-002 reference)
-        - Create placeholder sections for research findings
-
-    - [ ] **5.6.b Research TMDB trending/popular endpoints**
-        - Identify available TMDB endpoints: `/trending/*`, `/movie/popular`, others
-        - Document parameters, response formats, update frequency
-        - Determine what content can be used for Featured page
-        - Document findings in notes file
-
-    - [ ] **5.6.c Research industry patterns for hero landing pages**
-        - TMDB website: Analyze home page structure, content types, layout
-        - Letterboxd: Analyze featured content strategy, collections approach
-        - Netflix: Analyze hero sections, horizontal scrolling patterns
-        - Other movie discovery services (IMDb, Trakt, etc.)
-        - Document findings in notes file
-
-    - [ ] **5.6.d Analyze content strategy options for Featured page**
-        - What content types: Trending, popular this week, featured collections, new releases
-        - Update frequency: How to keep content fresh with TMDB APIs
-        - Layout patterns: Hero sections, horizontal scrolls, grid layouts
-        - Relationship to Browse/Now Playing/Upcoming: How Featured complements browse tools
-        - Document options and trade-offs in notes file
-
-    - [ ] **5.6.e Scope future Featured page hero implementation**
-        - Required components (hero section, collections, navigation)
-        - Data requirements (TMDB API endpoints identified in 5.6.b)
-        - Frontend work estimate
-        - Testing approach
-        - Document in notes file for future task list creation
-
-    - [ ] **5.6.f Update notes file with implementation timeline**
-        - Recommendation: After all active task lists complete
-        - Rationale: This is feature work, not technical debt
-        - Interim: Stub Featured page provides functional navigation
+    **Rationale:** This is future feature work unrelated to test coverage gaps. Added to Discovery & Search backlog as
+    "Featured Page Hero Implementation".
 
 ---
 

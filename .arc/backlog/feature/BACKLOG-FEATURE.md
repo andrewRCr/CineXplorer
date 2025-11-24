@@ -19,6 +19,13 @@ Then **delete** the item from this file (no strikethrough clutter).
 
 ## Discovery & Search
 
+- **Featured Page Hero Implementation** - Rich hero-style Featured page at `/featured` replacing current stub. Research
+needed: TMDB trending/popular endpoints (`/trending/*`, `/movie/popular`), industry patterns (TMDB, Letterboxd, Netflix
+hero sections, horizontal scrolling). Content strategy: trending movies, popular this week, featured collections, new
+releases. Layout patterns: hero sections, horizontal scrolls, grid layouts. Should complement Browse/Now Playing/Upcoming
+pages. Currently has functional stub with navigation links. See ADR-002 for architectural context. Priority: MEDIUM
+(enhances landing experience, but stub is functional)
+
 - **Person Detail Pages (Actors/Crew)** - Actor and key crew profile pages with biography, filmography, and wiki-style
 interlinking between movies and people. TMDB API supports this. URL pattern: `/person/{tmdb_person_id}`.
 Mirror MovieDetail page structure. Priority: MEDIUM (enhances discovery)

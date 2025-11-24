@@ -13,9 +13,11 @@ from __future__ import annotations
 from typing import NotRequired, TypedDict
 
 from core.tmdb_models.tmdb_responses import (
+    TMDBGenre,
     TMDBMovieBase,
     TMDBMovieDetail,
     TMDBPaginatedMovieResponse,
+    TMDBProductionCompany,
 )
 
 # ============================================================================
@@ -74,15 +76,15 @@ class TMDBPersonResponse(TMDBPaginatedResponse):
 # ============================================================================
 
 
-class TMDBGenre(TypedDict):
-    """Genre item from TMDB movie responses."""
+class TMDBGenreDict(TypedDict):
+    """Genre item from TMDB movie responses (TypedDict for raw API data)."""
 
     id: int
     name: str
 
 
-class TMDBProductionCompany(TypedDict):
-    """Production company item from TMDB movie details."""
+class TMDBProductionCompanyDict(TypedDict):
+    """Production company item from TMDB movie details (TypedDict for raw API data)."""
 
     id: int
     name: str
@@ -135,9 +137,9 @@ class TMDBCreditsResponse(TypedDict):
 
 
 class TMDBGenreListResponse(TypedDict):
-    """TMDB genre list response from genre/movie/list endpoint."""
+    """TMDB genre list response from genre/movie/list endpoint (TypedDict for raw API data)."""
 
-    genres: list[TMDBGenre]
+    genres: list[TMDBGenreDict]
 
 
 # ============================================================================

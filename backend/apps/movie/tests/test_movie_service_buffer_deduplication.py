@@ -10,41 +10,33 @@ Tests the apply_buffer_if_needed function to verify:
 """
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
 from unittest.mock import Mock
 
-from core.tmdb_models.tmdb_responses import TMDBPaginatedMovieResponse
+from core.tmdb_models.tmdb_responses import TMDBMovieBase, TMDBPaginatedMovieResponse
 from movie.schemas import MovieBaseSchema
 from movie.services.pagination import apply_buffer_if_needed
 from movie.tests.tmdb_test_builders import (
-    TMDBMovieBaseRawDict,
-    TMDBMovieResponse,
     create_paginated_tmdb_response,
     create_tmdb_movie,
 )
-
-if TYPE_CHECKING:
-    pass
-
 
 # ============================================================================
 # Test Fixtures and Helpers
 # ============================================================================
 
 
-def convert_tmdb_dict_to_schema(tmdb_movie: TMDBMovieBaseRawDict) -> MovieBaseSchema:
-    """Convert raw TMDB movie dict (with 'id' field) to MovieBaseSchema (with 'tmdb_id' field).
+def convert_to_schema(tmdb_movie: TMDBMovieBase) -> MovieBaseSchema:
+    """Convert TMDBMovieBase Pydantic model to MovieBaseSchema.
 
-    Mirrors the transformation done in pagination module.
+    Mirrors the transformation done in pagination module (id → tmdb_id mapping).
 
     Args:
-        tmdb_movie: Raw TMDB API response dict with 'id' field
+        tmdb_movie: Validated TMDBMovieBase Pydantic model
 
     Returns:
-        MovieBaseSchema with 'tmdb_id' field
+        MovieBaseSchema with tmdb_id field
     """
-    # TypedDict is a dict at runtime, so we can copy it directly
-    movie_dict = dict(tmdb_movie)
+    movie_dict = tmdb_movie.model_dump()
     # Rename id to tmdb_id for MovieBaseSchema
     movie_dict['tmdb_id'] = movie_dict.pop('id')
     # Normalize empty string dates to None (TMDB API quirk)
@@ -54,7 +46,7 @@ def convert_tmdb_dict_to_schema(tmdb_movie: TMDBMovieBaseRawDict) -> MovieBaseSc
 
 
 def create_mock_fetch_func(
-    page_responses: dict[int, TMDBMovieResponse]
+    page_responses: dict[int, TMDBPaginatedMovieResponse]
 ) -> Mock:
     """Create mock fetch function that returns TMDBPaginatedMovieResponse for each page.
 
@@ -62,24 +54,20 @@ def create_mock_fetch_func(
     (Pydantic BaseModel with 'results', 'page', etc. attributes).
 
     Args:
-        page_responses: Mapping of page number to TMDB response (TypedDict)
+        page_responses: Mapping of page number to TMDBPaginatedMovieResponse Pydantic model
 
     Returns:
-        Mock function that returns TMDBPaginatedMovieResponse (Pydantic) for given page number
+        Mock function that returns TMDBPaginatedMovieResponse for given page number
     """
     def fetch_page(page: int) -> TMDBPaginatedMovieResponse:
         if page not in page_responses:
             # Return empty response for pages beyond what we defined
-            tmdb_dict = create_paginated_tmdb_response(
+            return create_paginated_tmdb_response(
                 movies=[],
                 page=page,
                 total_pages=max(page_responses.keys()) if page_responses else 1
             )
-            return TMDBPaginatedMovieResponse.model_validate(tmdb_dict)
-
-        # Convert TypedDict to Pydantic model
-        tmdb_dict = page_responses[page]
-        return TMDBPaginatedMovieResponse.model_validate(tmdb_dict)
+        return page_responses[page]
 
     mock_func = Mock(side_effect=fetch_page)
     return mock_func
@@ -106,7 +94,7 @@ def test_buffer_no_duplicates_returns_first_20() -> None:
         )
         for i in range(1, 21)
     ]
-    filtered_movies = [convert_tmdb_dict_to_schema(movie.model_dump()) for movie in page1_movies]
+    filtered_movies = [convert_to_schema(movie) for movie in page1_movies]
 
     # Create mock fetch function (should not be called)
     mock_fetch = Mock()
@@ -168,12 +156,12 @@ def test_buffer_with_one_duplicate_fetches_additional_page() -> None:
 
     # Setup page responses
     page_responses = {
-        2: create_paginated_tmdb_response(page2_movies, page=2, total_pages=5).model_dump()
+        2: create_paginated_tmdb_response(page2_movies, page=2, total_pages=5)
     }
     mock_fetch = create_mock_fetch_func(page_responses)
 
     # Convert page 1 to schemas
-    filtered_movies = [convert_tmdb_dict_to_schema(movie.model_dump()) for movie in page1_movies]
+    filtered_movies = [convert_to_schema(movie) for movie in page1_movies]
 
     # Act: Call buffer method
     result_movies, pages_consumed = apply_buffer_if_needed(
@@ -262,7 +250,7 @@ def test_buffer_with_multiple_duplicates_continues_until_20_unique() -> None:
     mock_fetch = create_mock_fetch_func(page_responses)
 
     # Convert page 1 to schemas
-    filtered_movies = [convert_tmdb_dict_to_schema(movie.model_dump()) for movie in page1_movies]
+    filtered_movies = [convert_to_schema(movie) for movie in page1_movies]
 
     # Act: Call buffer method
     result_movies, pages_consumed = apply_buffer_if_needed(
@@ -311,7 +299,7 @@ def test_buffer_respects_max_buffer_pages_limit() -> None:
     ]
 
     # Create pages 2-6 each with heavy duplication (only 1 new movie per page)
-    page_responses: dict[int, TMDBMovieResponse] = {}
+    page_responses: dict[int, TMDBPaginatedMovieResponse] = {}
     for page_num in range(2, 7):  # Pages 2-6 (5 buffer pages)
         # Each page has 9 duplicates + 1 new movie
         page_movies = [
@@ -332,12 +320,12 @@ def test_buffer_respects_max_buffer_pages_limit() -> None:
         ]
         page_responses[page_num] = create_paginated_tmdb_response(
             page_movies, page=page_num, total_pages=10
-        ).model_dump()
+        )
 
     mock_fetch = create_mock_fetch_func(page_responses)
 
     # Convert page 1 to schemas
-    filtered_movies = [convert_tmdb_dict_to_schema(movie.model_dump()) for movie in page1_movies]
+    filtered_movies = [convert_to_schema(movie) for movie in page1_movies]
 
     # Act: Call buffer method
     result_movies, pages_consumed = apply_buffer_if_needed(
@@ -410,12 +398,12 @@ def test_buffer_deduplication_preserves_first_occurrence_order() -> None:
 
     # Setup page responses
     page_responses = {
-        2: create_paginated_tmdb_response(page2_movies, page=2, total_pages=5).model_dump()
+        2: create_paginated_tmdb_response(page2_movies, page=2, total_pages=5)
     }
     mock_fetch = create_mock_fetch_func(page_responses)
 
     # Convert page 1 to schemas
-    filtered_movies = [convert_tmdb_dict_to_schema(movie.model_dump()) for movie in page1_movies]
+    filtered_movies = [convert_to_schema(movie) for movie in page1_movies]
 
     # Act: Call buffer method
     result_movies, _pages_consumed = apply_buffer_if_needed(
@@ -491,7 +479,7 @@ def test_buffer_empty_results_after_deduplication() -> None:
     mock_fetch = create_mock_fetch_func(page_responses)
 
     # Convert page 1 to schemas
-    filtered_movies = [convert_tmdb_dict_to_schema(movie.model_dump()) for movie in page1_movies]
+    filtered_movies = [convert_to_schema(movie) for movie in page1_movies]
 
     # Act: Call buffer method
     result_movies, pages_consumed = apply_buffer_if_needed(
@@ -561,12 +549,12 @@ def test_buffer_deduplication_with_filters_applied_to_buffer_pages() -> None:
 
     # Setup page responses
     page_responses = {
-        2: create_paginated_tmdb_response(page2_movies, page=2, total_pages=5).model_dump()
+        2: create_paginated_tmdb_response(page2_movies, page=2, total_pages=5)
     }
     mock_fetch = create_mock_fetch_func(page_responses)
 
     # Convert page 1 to schemas
-    filtered_movies = [convert_tmdb_dict_to_schema(movie.model_dump()) for movie in page1_movies]
+    filtered_movies = [convert_to_schema(movie) for movie in page1_movies]
 
     # Act: Call buffer method with year filter
     result_movies, pages_consumed = apply_buffer_if_needed(

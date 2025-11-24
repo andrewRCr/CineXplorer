@@ -13,6 +13,7 @@ by all contributors, including AI assistants.
 - **AI NEVER initiates commits** without explicit user approval or instruction
 - **AI CAN execute commits** when user explicitly approves/instructs it
 - **User approval required** for all git operations
+- **NEVER use `--no-verify`** to bypass commit hooks - hooks exist to catch errors
 - **MANDATORY:** Comprehensive task context analysis before any commit consideration (see atomic-commit workflow)
 - **Task list accuracy required**: Before commit consideration, verify task documentation reflects completed work
   (parent task marked `[x]` if all subtasks complete)

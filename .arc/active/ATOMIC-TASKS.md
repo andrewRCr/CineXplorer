@@ -19,15 +19,25 @@
 
 <!-- Type Safety -->
 
-- [ ] Make ApiResponse generic for better type safety
-    - Location: `backend/apps/core/services/api_response.py`
-    - Change `class ApiResponse:` to `class ApiResponse(Generic[T]):`
-    - Update `data: Mapping[str, object] | ...` to `data: T | None`
-    - Add `from typing import Generic, TypeVar` and `T = TypeVar('T')`
-    - Update TMDB client methods to return typed responses (e.g., `ApiResponse[TMDBMovieResponse]`)
-    - Eliminates need for `cast()` in tests and production code
-    - Run full test suite + type checking after changes
-    - Rationale: Improves type safety, IDE autocomplete, catches type mismatches at static analysis
+- [ ] Validate test data with Pydantic models (eliminate cast() properly)
+    - **Context**: Originally attempted generic ApiResponse[T], but deep analysis revealed this violated
+      the validation boundary pattern from strategy-type-safety.md. ApiResponse should hold unvalidated
+      data; type safety comes from Pydantic validation, not generic parameters.
+    - **Real Problem**: Test fixtures use `cast(TMDBResponseData, dict)` because test builders return
+      raw dicts instead of validated Pydantic models.
+    - **Proper Solution**: Update test builders to return Pydantic models, then dump to dict for ApiResponse.
+      This validates test data at construction (catches invalid test data early) and follows the strategy's
+      validation boundary pattern.
+    - **Files to modify**:
+        - `backend/apps/movie/tests/tmdb_test_builders.py` - Return Pydantic models, not dicts
+        - `backend/apps/movie/tests/integration/conftest.py` - Use .model_dump() on validated models
+        - Related test files that construct mock TMDB data
+    - **Benefits**:
+        - ✅ No cast() needed (data is actually validated)
+        - ✅ Tests use same validation as production
+        - ✅ Invalid test data caught at construction, not runtime
+        - ✅ Clearer validation boundaries (follows strategy pattern)
+        - ✅ ApiResponse stays honest (holds unvalidated dicts, not lying via generics)
 
 <!-- Miscellaneous -->
 

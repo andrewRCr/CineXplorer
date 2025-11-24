@@ -8,15 +8,14 @@ These fixtures wrap common setup patterns to reduce boilerplate in tests.
 from __future__ import annotations
 
 from datetime import UTC, date, timedelta
-from typing import TYPE_CHECKING, Protocol, cast
+from typing import TYPE_CHECKING, Protocol
 
 import pytest
 from core.services.api_response import ApiResponse
-from core.types.api_types import TMDBResponseData
+from core.tmdb_models.tmdb_responses import TMDBMovieBase
 from movie.tests.tmdb_test_builders import (
-    TMDBMovieBaseRawDict,
     create_paginated_tmdb_response,
-    create_raw_tmdb_movie,
+    create_tmdb_movie,
 )
 
 if TYPE_CHECKING:
@@ -28,7 +27,7 @@ class TMDBResponseFactory(Protocol):
 
     def __call__(
         self,
-        movies: list[TMDBMovieBaseRawDict] | None = None,
+        movies: list[TMDBMovieBase] | None = None,
         page: int = 1,
         total_pages: int = 1,
         total_results: int | None = None,
@@ -39,35 +38,38 @@ class TMDBResponseFactory(Protocol):
 def mock_tmdb_response_factory() -> TMDBResponseFactory:
     """Factory for creating mock TMDB API responses.
 
-    Wraps both response creation AND ApiResponse casting to reduce boilerplate.
+    Creates validated Pydantic models and converts to dict for ApiResponse.
+    No cast() needed - test data is validated at construction.
 
     Usage:
         @patch("core.services.tmdb_api_client.TMDBApiClient.get")
         def test_something(mock_tmdb_get, mock_tmdb_response_factory):
-            movies = [create_raw_tmdb_movie(1, "Movie", "2025-01-01", 7.5)]
+            movies = [create_tmdb_movie(1, "Movie", "2025-01-01", 7.5)]
             mock_tmdb_get.return_value = mock_tmdb_response_factory(movies)
             ...
 
     Returns:
-        Factory function that creates ApiResponse with TMDB data
+        Factory function that creates ApiResponse with validated TMDB data
     """
 
     def factory(
-        movies: list[TMDBMovieBaseRawDict] | None = None,
+        movies: list[TMDBMovieBase] | None = None,
         page: int = 1,
         total_pages: int = 1,
         total_results: int | None = None,
     ) -> ApiResponse:
         if movies is None:
             movies = [
-                create_raw_tmdb_movie(
+                create_tmdb_movie(
                     1, "Default Movie", "2025-10-15", 7.5, vote_count=1000
                 ),
             ]
+        # Create validated Pydantic model
         tmdb_response = create_paginated_tmdb_response(
             movies, page, total_pages, total_results
         )
-        return ApiResponse(200, cast(TMDBResponseData, tmdb_response))
+        # Convert to dict for ApiResponse (which holds unvalidated data)
+        return ApiResponse(200, tmdb_response.model_dump())
 
     return factory
 

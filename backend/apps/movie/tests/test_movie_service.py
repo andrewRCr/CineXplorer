@@ -26,9 +26,9 @@ from movie.tests.tmdb_test_builders import (
     TMDBCreditsResponse,
     TMDBGenreListResponse,
     TMDBMovieResponse,
-    create_movie_detail_dict,
     create_paginated_tmdb_response,
-    create_raw_tmdb_movie,
+    create_tmdb_movie,
+    create_tmdb_movie_detail,
 )
 from ninja.errors import HttpError
 
@@ -83,14 +83,14 @@ def test_get_movie_by_id_uses_injected_client() -> None:
     mock_client = Mock(spec=['get', 'get_movie_details'])
 
     # Mock movie details response
-    movie_data = create_movie_detail_dict(
+    movie_data = create_tmdb_movie_detail(
         123, 'Test Movie', '2023-01-01', 8.0,
         runtime=120,
         overview='Test overview',
         genres=[{'id': 1, 'name': 'Action'}],
         poster_path='/test.jpg'
     )
-    mock_details_response = ApiResponse(status_code=200, data=movie_data)
+    mock_details_response = ApiResponse(status_code=200, data=movie_data.model_dump())
     mock_client.get_movie_details.return_value = mock_details_response
 
     # Mock credits response
@@ -148,11 +148,11 @@ def test_search_movies_uses_injected_client() -> None:
     # Arrange: Mock client
     mock_client = Mock(spec=['search_movies'])
 
-    movie = create_raw_tmdb_movie(1, 'Test Movie', '2023-01-01', 8.0, poster_path='/test.jpg')
-    search_response: TMDBMovieResponse = create_paginated_tmdb_response(
+    movie = create_tmdb_movie(1, 'Test Movie', '2023-01-01', 8.0, poster_path='/test.jpg')
+    search_response = create_paginated_tmdb_response(
         [movie], page=1, total_pages=1
     )
-    mock_api_response = ApiResponse(status_code=200, data=search_response)
+    mock_api_response = ApiResponse(status_code=200, data=search_response.model_dump())
     mock_client.search_movies.return_value = mock_api_response
 
     service = MovieService(tmdb_client=mock_client)
@@ -180,18 +180,18 @@ def test_search_movies_filters_soundtrack_results() -> None:
     mock_client = Mock(spec=['search_movies'])
 
     movies = [
-        create_raw_tmdb_movie(1, 'Real Movie', '2023-01-01', 8.0, poster_path='/real.jpg'),
-        create_raw_tmdb_movie(
+        create_tmdb_movie(1, 'Real Movie', '2023-01-01', 8.0, poster_path='/real.jpg'),
+        create_tmdb_movie(
             2, 'Movie Soundtrack', '2023-01-01', 7.0, poster_path='/soundtrack.jpg'
         ),
-        create_raw_tmdb_movie(
+        create_tmdb_movie(
             3, 'Original Motion Picture Score', '2023-01-01', 6.0, poster_path='/score.jpg'
         )
     ]
-    search_response: TMDBMovieResponse = create_paginated_tmdb_response(
+    search_response = create_paginated_tmdb_response(
         movies, page=1, total_pages=1
     )
-    mock_api_response = ApiResponse(status_code=200, data=search_response)
+    mock_api_response = ApiResponse(status_code=200, data=search_response.model_dump())
     mock_client.search_movies.return_value = mock_api_response
 
     service = MovieService(tmdb_client=mock_client)
@@ -288,11 +288,11 @@ def test_get_now_playing_movies_uses_injected_client() -> None:
     # Arrange
     mock_client = Mock(spec=['get'])
 
-    movie = create_raw_tmdb_movie(1, 'Now Playing', '2023-01-01', 8.0, poster_path='/now.jpg')
-    now_playing_response: TMDBMovieResponse = create_paginated_tmdb_response(
+    movie = create_tmdb_movie(1, 'Now Playing', '2023-01-01', 8.0, poster_path='/now.jpg')
+    now_playing_response = create_paginated_tmdb_response(
         [movie], page=1, total_pages=1
     )
-    mock_api_response = ApiResponse(status_code=200, data=now_playing_response)
+    mock_api_response = ApiResponse(status_code=200, data=now_playing_response.model_dump())
     mock_client.get.return_value = mock_api_response
 
     service = MovieService(tmdb_client=mock_client)
@@ -329,11 +329,11 @@ def test_get_upcoming_movies_uses_injected_client() -> None:
     # Arrange
     mock_client = Mock(spec=['get'])
 
-    movie = create_raw_tmdb_movie(1, 'Upcoming', '2024-01-01', 8.0, poster_path='/upcoming.jpg')
-    upcoming_response: TMDBMovieResponse = create_paginated_tmdb_response(
+    movie = create_tmdb_movie(1, 'Upcoming', '2024-01-01', 8.0, poster_path='/upcoming.jpg')
+    upcoming_response = create_paginated_tmdb_response(
         [movie], page=1, total_pages=1
     )
-    mock_api_response = ApiResponse(status_code=200, data=upcoming_response)
+    mock_api_response = ApiResponse(status_code=200, data=upcoming_response.model_dump())
     mock_client.get.return_value = mock_api_response
 
     service = MovieService(tmdb_client=mock_client)
@@ -423,13 +423,13 @@ def test_fetch_movie_runtimes_uses_injected_client() -> None:
     mock_client = Mock(spec=['get_movie_details', 'get'])
 
     # Mock movie details responses
-    movie_data_1 = create_movie_detail_dict(
+    movie_data_1 = create_tmdb_movie_detail(
         1, 'Movie 1', '2023-01-01', 8.0,
         runtime=120,
         overview='Test',
         poster_path='/test1.jpg'
     )
-    movie_data_2 = create_movie_detail_dict(
+    movie_data_2 = create_tmdb_movie_detail(
         2, 'Movie 2', '2023-01-02', 7.5,
         runtime=90,
         overview='Test',
@@ -440,8 +440,8 @@ def test_fetch_movie_runtimes_uses_injected_client() -> None:
 
     # Mock responses for both movies
     mock_client.get_movie_details.side_effect = [
-        ApiResponse(status_code=200, data=movie_data_1),
-        ApiResponse(status_code=200, data=movie_data_2),
+        ApiResponse(status_code=200, data=movie_data_1.model_dump()),
+        ApiResponse(status_code=200, data=movie_data_2.model_dump()),
     ]
     mock_client.get.return_value = ApiResponse(status_code=200, data=credits_data)
 

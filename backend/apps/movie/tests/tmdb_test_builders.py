@@ -1,18 +1,22 @@
-"""TypedDict fixtures for TMDB API response mocking.
+"""Pydantic model builders for TMDB API response mocking.
 
-These TypedDicts represent the structure of raw TMDB API responses,
-used across service layer tests for consistent mock data.
+These builders create validated Pydantic model instances representing TMDB API responses,
+used across service layer tests for consistent and type-safe mock data.
 
-Following type safety strategy: No typing.Any in test code - use precise
-TypedDicts for external API response structures.
-
-Uses NotRequired (Python 3.11+) to explicitly mark optional fields, making
-TMDB API behavior clearer than total=False approach.
+Following type safety strategy validation boundary pattern: Test data is validated
+at construction using the same Pydantic models as production code, eliminating
+the need for cast() and ensuring tests use realistic, validated data.
 
 """
 from __future__ import annotations
 
 from typing import NotRequired, TypedDict
+
+from core.tmdb_models.tmdb_responses import (
+    TMDBMovieBase,
+    TMDBMovieDetail,
+    TMDBMovieSearchResponse,
+)
 
 # ============================================================================
 # Base Paginated Response Structure
@@ -117,23 +121,6 @@ class TMDBMovieBaseRawDict(TypedDict):
     overview: NotRequired[str | None]  # May be missing, null, empty, or placeholder text
 
 
-class TMDBMovieDetail(TypedDict):
-    """Movie details response from TMDB movie/{id} endpoint.
-
-    Complete movie details including genres, runtime, production info.
-    """
-
-    id: int
-    title: str
-    poster_path: str | None
-    release_date: str
-    vote_average: float
-    runtime: int | None
-    overview: str
-    genres: list[TMDBGenre]
-    production_companies: list[TMDBProductionCompany]
-
-
 class TMDBMovieResponse(TMDBPaginatedResponse):
     """TMDB movie list response (search/movie, discover/movie, movie/now_playing, etc)."""
 
@@ -158,7 +145,7 @@ class TMDBGenreListResponse(TypedDict):
 # ============================================================================
 
 
-def create_raw_tmdb_movie(
+def create_tmdb_movie(
     tmdb_id: int,
     title: str,
     release_date: str,
@@ -168,11 +155,12 @@ def create_raw_tmdb_movie(
     poster_path: str | None = None,
     genre_ids: list[int] | None = None,
     overview: str | None = None,
-) -> TMDBMovieBaseRawDict:
-    """Create a mock raw TMDB movie dict (unvalidated API response) for testing.
+) -> TMDBMovieBase:
+    """Create a validated TMDB movie model for testing.
 
-    This helper provides consistent TMDB API response structure across all tests,
-    ensuring test data stays synchronized when TMDB API fields change.
+    Returns a Pydantic model instance with validated TMDB API response structure.
+    This ensures test data undergoes the same validation as production data,
+    catching invalid test data at construction time.
 
     Args:
         tmdb_id: TMDB movie ID
@@ -189,20 +177,20 @@ def create_raw_tmdb_movie(
             pass empty string '' for missing overview)
 
     Returns:
-        Dictionary matching TMDB API movie response structure
+        Validated TMDBMovieBase Pydantic model
 
     Example:
         >>> # Standard valid movie
-        >>> movie = create_raw_tmdb_movie(1, "Test Movie", "2022-01-01", 8.0)
+        >>> movie = create_tmdb_movie(1, "Test Movie", "2022-01-01", 8.0)
 
         >>> # Movie without poster (for completeness filter tests)
-        >>> no_poster = create_raw_tmdb_movie(2, "No Poster", "2022-01-01", 7.5, poster_path='')
+        >>> no_poster = create_tmdb_movie(2, "No Poster", "2022-01-01", 7.5, poster_path='')
 
         >>> # Movie without genres (for data quality filter tests)
-        >>> no_genres = create_raw_tmdb_movie(3, "Garbage", "2022-01-01", 2.0, genre_ids=[])
+        >>> no_genres = create_tmdb_movie(3, "Garbage", "2022-01-01", 2.0, genre_ids=[])
 
         >>> # Movie without overview (for completeness filter tests)
-        >>> no_overview = create_raw_tmdb_movie(4, "No Overview", "2022-01-01", 7.0, overview='')
+        >>> no_overview = create_tmdb_movie(4, "No Overview", "2022-01-01", 7.0, overview='')
     """
     # Default vote_count to 100 (well above 50 threshold) for reliable ratings
     # Tests specifically testing vote count behavior can override this
@@ -227,58 +215,57 @@ def create_raw_tmdb_movie(
             f'This film explores themes of drama and action.'
         )
 
-    return {
-        'id': tmdb_id,
-        'title': title,
-        'poster_path': poster_path,
-        'release_date': release_date,
-        'vote_average': vote_average,
-        'vote_count': vote_count,
-        'runtime': runtime,
-        'genre_ids': genre_ids,
-        'overview': overview,
-    }
+    return TMDBMovieBase(
+        id=tmdb_id,
+        title=title,
+        poster_path=poster_path,
+        release_date=release_date,
+        vote_average=vote_average,
+        vote_count=vote_count,
+        genre_ids=genre_ids,
+        overview=overview,
+    )
 
 
 def create_paginated_tmdb_response(
-    movies: list[TMDBMovieBaseRawDict],
+    movies: list[TMDBMovieBase],
     page: int = 1,
     total_pages: int = 1,
     total_results: int | None = None,
-) -> TMDBMovieResponse:
-    """Create a mock TMDB paginated response for testing.
+) -> TMDBMovieSearchResponse:
+    """Create a validated TMDB paginated response for testing.
 
-    This helper ensures consistent pagination structure across all tests,
-    matching TMDB API's actual response format.
+    Returns a Pydantic model instance with validated pagination structure.
+    This ensures test data undergoes the same validation as production data.
 
     Args:
-        movies: List of movie dictionaries (use create_raw_tmdb_movie() to create)
+        movies: List of TMDBMovieBase models (use create_tmdb_movie() to create)
         page: Current page number
         total_pages: Total number of pages
         total_results: Total number of results (defaults to len(movies))
 
     Returns:
-        Dictionary matching TMDB API paginated response structure
+        Validated TMDBMovieSearchResponse Pydantic model
 
     Example:
         >>> movies = [
-        ...     create_raw_tmdb_movie(1, "Movie 1", "2022-01-01", 8.0),
-        ...     create_raw_tmdb_movie(2, "Movie 2", "2022-02-01", 7.5),
+        ...     create_tmdb_movie(1, "Movie 1", "2022-01-01", 8.0),
+        ...     create_tmdb_movie(2, "Movie 2", "2022-02-01", 7.5),
         ... ]
         >>> response = create_paginated_tmdb_response(movies, page=1, total_pages=5)
     """
     if total_results is None:
         total_results = len(movies)
 
-    return {
-        'page': page,
-        'total_pages': total_pages,
-        'total_results': total_results,
-        'results': movies,
-    }
+    return TMDBMovieSearchResponse(
+        page=page,
+        total_pages=total_pages,
+        total_results=total_results,
+        results=movies,
+    )
 
 
-def create_movie_detail_dict(
+def create_tmdb_movie_detail(
     tmdb_id: int,
     title: str,
     release_date: str,
@@ -291,11 +278,10 @@ def create_movie_detail_dict(
     vote_count: int | None = None,
     genre_ids: list[int] | None = None
 ) -> TMDBMovieDetail:
-    """Create a mock TMDB movie detail dictionary for testing.
+    """Create a validated TMDB movie detail model for testing.
 
-    This helper builds on create_raw_tmdb_movie() and adds detail-specific fields
-    (runtime, overview, genres, production_companies), ensuring consistent and
-    complete movie detail data across all tests.
+    Returns a Pydantic model instance with validated movie detail structure.
+    This ensures test data undergoes the same validation as production data.
 
     Args:
         tmdb_id: TMDB movie ID
@@ -306,45 +292,45 @@ def create_movie_detail_dict(
         overview: Movie overview/synopsis (defaults to "Test movie overview")
         genres: List of genre objects (defaults to [])
         production_companies: List of production company objects (defaults to [])
-        poster_path: Poster path (passed to create_raw_tmdb_movie())
-        vote_count: Number of votes (passed to create_raw_tmdb_movie())
-        genre_ids: Genre IDs (passed to create_raw_tmdb_movie())
+        poster_path: Poster path (defaults to generated path)
+        vote_count: Number of votes (defaults to 100)
+        genre_ids: Genre IDs (defaults to [18, 28])
 
     Returns:
-        Dictionary matching TMDB API movie detail response structure
+        Validated TMDBMovieDetail Pydantic model
 
     Example:
         >>> # Standard movie detail
-        >>> detail = create_movie_detail_dict(
+        >>> detail = create_tmdb_movie_detail(
         ...     1, "Test Movie", "2022-01-01", 8.0,
         ...     runtime=150,
         ...     genres=[{'id': 28, 'name': 'Action'}]
         ... )
 
         >>> # With custom poster and overview
-        >>> detail = create_movie_detail_dict(
+        >>> detail = create_tmdb_movie_detail(
         ...     2, "Drama", "2023-01-01", 7.5,
         ...     overview="A compelling drama",
         ...     poster_path="/custom.jpg"
         ... )
     """
-    # Build base movie dict with all common fields
-    base_movie = create_raw_tmdb_movie(
+    # Get base movie model for common fields
+    base_movie = create_tmdb_movie(
         tmdb_id,
         title,
         release_date,
         vote_average,
-        runtime=None,  # Not used in detail response
+        runtime=None,  # Not used in base model
         vote_count=vote_count,
         poster_path=poster_path,
-        genre_ids=genre_ids
+        genre_ids=genre_ids,
+        overview=overview
     )
 
-    # Add detail-specific fields
-    return {
-        **base_movie,  # type: ignore[typeddict-item]
-        'runtime': runtime,
-        'overview': overview,
-        'genres': genres or [],
-        'production_companies': production_companies or []
-    }
+    # Create detail model with base fields + detail-specific fields
+    return TMDBMovieDetail(
+        **base_movie.model_dump(),
+        runtime=runtime,
+        genres=genres or [],
+        production_companies=production_companies or []
+    )

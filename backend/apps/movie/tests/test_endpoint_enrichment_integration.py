@@ -22,10 +22,9 @@ import pytest
 from core.models import Movie
 from core.services.api_response import ApiResponse
 from core.tests.test_helpers import HTTPStatus
-from core.types.api_types import TMDBResponseData
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.test import Client
-from movie.tests.tmdb_test_builders import create_paginated_tmdb_response, create_raw_tmdb_movie
+from movie.tests.tmdb_test_builders import create_paginated_tmdb_response, create_tmdb_movie
 from user_movie_data.models import UserMovieData
 
 if TYPE_CHECKING:
@@ -99,15 +98,12 @@ def test_discovery_endpoint_enriches_user_movie_data_for_authenticated_user(
 
     # Arrange: Mock TMDB API response using test helper
     movies = [
-        create_raw_tmdb_movie(101, 'Blade Runner', '1982-06-25', 8.1, poster_path='/test.jpg')
+        create_tmdb_movie(101, 'Blade Runner', '1982-06-25', 8.1, poster_path='/test.jpg')
     ]
-    tmdb_payload: TMDBResponseData = cast(
-        TMDBResponseData,
-        create_paginated_tmdb_response(movies, page=1, total_pages=1)
-    )
+    tmdb_response = create_paginated_tmdb_response(movies, page=1, total_pages=1)
     mock_api_response = ApiResponse(
         status_code=200,
-        data=tmdb_payload  # type: ignore[arg-type]
+        data=tmdb_response.model_dump()
     )
 
     # Act: Call endpoint as authenticated user
@@ -164,15 +160,12 @@ def test_discovery_endpoint_works_for_unauthenticated_user(
 
     # Arrange: Mock TMDB API response using test helper
     movies = [
-        create_raw_tmdb_movie(101, 'Blade Runner', '1982-06-25', 8.1, poster_path='/test.jpg')
+        create_tmdb_movie(101, 'Blade Runner', '1982-06-25', 8.1, poster_path='/test.jpg')
     ]
-    tmdb_payload: TMDBResponseData = cast(
-        TMDBResponseData,
-        create_paginated_tmdb_response(movies, page=1, total_pages=1)
-    )
+    tmdb_response = create_paginated_tmdb_response(movies, page=1, total_pages=1)
     mock_api_response = ApiResponse(
         status_code=200,
-        data=tmdb_payload  # type: ignore[arg-type]
+        data=tmdb_response.model_dump()
     )
 
     # Act: Call endpoint without authentication
@@ -224,15 +217,12 @@ def test_discovery_endpoint_returns_none_for_movies_without_user_data(
 
     # Arrange: Mock TMDB API response using test helper
     movies = [
-        create_raw_tmdb_movie(101, 'Blade Runner', '1982-06-25', 8.1, poster_path='/test.jpg')
+        create_tmdb_movie(101, 'Blade Runner', '1982-06-25', 8.1, poster_path='/test.jpg')
     ]
-    tmdb_payload: TMDBResponseData = cast(
-        TMDBResponseData,
-        create_paginated_tmdb_response(movies, page=1, total_pages=1)
-    )
+    tmdb_response = create_paginated_tmdb_response(movies, page=1, total_pages=1)
     mock_api_response = ApiResponse(
         status_code=200,
-        data=tmdb_payload  # type: ignore[arg-type]
+        data=tmdb_response.model_dump()
     )
 
     # Act: Call endpoint as authenticated user
@@ -411,17 +401,14 @@ def test_enrichment_handles_multiple_movies_efficiently(
 
     # Arrange: Mock TMDB API response with 3 movies using test helper
     movies = [
-        create_raw_tmdb_movie(101, 'Blade Runner', '1982-06-25', 8.1, poster_path='/test1.jpg'),
-        create_raw_tmdb_movie(102, 'Chinatown', '1974-06-20', 8.2, poster_path='/test2.jpg'),
-        create_raw_tmdb_movie(103, 'The Matrix', '1999-03-31', 8.7, poster_path='/test3.jpg')
+        create_tmdb_movie(101, 'Blade Runner', '1982-06-25', 8.1, poster_path='/test1.jpg'),
+        create_tmdb_movie(102, 'Chinatown', '1974-06-20', 8.2, poster_path='/test2.jpg'),
+        create_tmdb_movie(103, 'The Matrix', '1999-03-31', 8.7, poster_path='/test3.jpg')
     ]
-    tmdb_payload: TMDBResponseData = cast(
-        TMDBResponseData,
-        create_paginated_tmdb_response(movies, page=1, total_pages=1)
-    )
+    tmdb_response = create_paginated_tmdb_response(movies, page=1, total_pages=1)
     mock_api_response = ApiResponse(
         status_code=200,
-        data=tmdb_payload  # type: ignore[arg-type]
+        data=tmdb_response.model_dump()
     )
 
     # Act: Call endpoint as authenticated user

@@ -30,5 +30,5 @@ def expected_date_ranges() -> dict[str, tuple[date, date]]:
     today = datetime.now(tz=UTC).date()
     return {
         "now-playing": (today - timedelta(days=30), today + timedelta(days=5)),
-        "upcoming": (today + timedelta(days=5), today + timedelta(days=60)),
+        "upcoming": (today + timedelta(days=5), today + timedelta(days=65)),
     }

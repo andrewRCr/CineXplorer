@@ -1018,9 +1018,9 @@ This phase addresses a complex test migration challenge. Tests were written when
 
 - [ ] **5.4 Write parametrized endpoint behavior tests**
 
-    **Goal:** Test all 3 endpoints with tiered approach: sanity checks first, then behaviors, then features.
+    **Goal:** Test all 3 browse endpoints with parametrized tests organized by concern.
 
-    **CRITICAL:** Tier 1 tests catch fundamental breaks. Write and verify these FIRST.
+    **File:** `test_browse_endpoints.py` - single file with test classes by concern (DRY via parametrization)
 
     - [x] **5.4.a Create test infrastructure (endpoint configs + fixtures)**
         - Renamed `test_fixtures_tmdb.py` → `tmdb_test_builders.py` (9 files updated)
@@ -1030,45 +1030,39 @@ This phase addresses a complex test migration challenge. Tests were written when
             - `expected_date_ranges` (timezone-aware date calculation)
         - All 159 movie tests pass, linting and type checking clean
 
-    - [ ] **5.4.b Write Tier 1 sanity tests (HIGHEST PRIORITY)**
-        - Location: `backend/apps/movie/tests/integration/api/test_endpoint_sanity.py`
-        - `test_endpoint_returns_results` - parametrized × 3 endpoints
-            - Each endpoint returns 200 status
-            - Response has expected structure (results, total_results, page)
-        - `test_buffer_fills_to_20_results` - parametrized × 3 endpoints
-            - Each endpoint returns 20 results per page (if available)
-            - Tests buffer fill logic works through each code path
-        - `test_date_range_correctness` - parametrized × 2 (now-playing, upcoming)
-            - Now-playing: All movies within today-30 to today+5
-            - Upcoming: All movies within today+5 to today+60
-            - No movies outside expected ranges
-        - `test_min_vote_count_behavior` - parametrized × 3 with different expectations
-            - Browse: Applied (movies have vote_count >= MIN_VOTE_COUNT)
-            - Now-playing: Applied (released movies have votes)
-            - Upcoming: NOT applied (unreleased movies can have 0 votes)
-        - Follow type safety strategy: Properly typed fixtures
-        - All tests should PASS - these catch the bugs we recently found
+    - [x] **5.4.b Create test_browse_endpoints.py with TestResponseContract**
+        - Created `test_browse_endpoints.py` with `TestResponseContract` class
+        - 4 test functions × 3 endpoints = 12 test cases:
+            - `test_returns_200_with_results` - verifies 200 status, response structure
+            - `test_buffer_fills_to_20_results` - verifies buffer fills to target page size
+            - `test_pagination_metadata_correct` - verifies page, total_results, total_pages
+            - `test_error_handling_invalid_page` - verifies 422 for invalid params
+        - All 12 tests pass, linting and type checking clean
 
-    - [ ] **5.4.c Write Tier 2 parametrized behavior tests**
-        - Location: `backend/apps/movie/tests/integration/api/test_endpoint_behaviors.py`
-        - Use parametrized pattern from Phase 5.2.b for all 3 endpoints
-        - `test_completeness_filtering` - parametrized × 3
+    - [x] **5.4.c Add TestBusinessConstraints class**
+        - Added `TestBusinessConstraints` class with 2 test functions (5 test cases total):
+            - `test_date_range_params_sent_to_tmdb` × 2 (now-playing, upcoming)
+                - Verifies correct TMDB params (date filtering done by TMDB, not service)
+            - `test_min_vote_count_behavior` × 3 endpoints
+        - **Bug fix discovered**: EndpointConfig had `min_vote_count_applied=True` for
+          now-playing, but implementation disables it (new releases may have low votes)
+        - **Date range fix**: Upcoming uses 65-day window (not 60) per implementation
+        - Updated `endpoint_configs.py` and `conftest.py` to match actual implementation
+        - All 23 integration/api tests pass, linting and type checking clean
+
+    - [ ] **5.4.d Add TestDataQuality class**
+        - Class `TestDataQuality`: Filtering and deduplication
+        - `test_completeness_filtering` - parametrized × 3 endpoints
             - All returned movies have poster, title, overview
-        - `test_pagination_metadata` - parametrized × 3
-            - Correct page numbers, total_results, has_more
-        - `test_filter_passthrough` - parametrized × 3
+        - `test_filter_passthrough` - parametrized × 3 endpoints
             - Genre filter works on all endpoints
             - Rating filter works on all endpoints
-            - Year filter works on all endpoints
+            - Year filter works on all endpoints (where not protected)
             - Multiple filters work together
-        - `test_error_handling` - parametrized × 3
-            - Invalid filter parameters return clear errors
-        - `test_deduplication_smoke` - parametrized × 3
+        - `test_deduplication` - parametrized × 3 endpoints
             - No duplicate movies in results
-        - Follow type safety strategy: Properly typed fixtures, use ModelSchema patterns
-        - All tests should PASS
 
-    - [ ] **5.4.d Write preset-specific tests for date-constrained endpoints**
+    - [ ] **5.4.e Write preset-specific tests for date-constrained endpoints**
         - Location: Extend `test_date_constrained_endpoints.py`
         - Test: Now-playing preset includes correct date range and release_type
         - Test: Upcoming preset includes correct future date range and release_type
@@ -1091,12 +1085,15 @@ This phase addresses a complex test migration challenge. Tests were written when
         - Rationale: Prevent silent regression where sort options return 0 results
 
     - [ ] **5.4.f Run all endpoint tests and verify pass**
-        - Run Tier 1: `docker compose -f infrastructure/docker-compose.yml exec backend pytest
-        apps/movie/tests/integration/api/test_endpoint_sanity.py -v`
-        - Run Tier 2: `docker compose -f infrastructure/docker-compose.yml exec backend pytest
-        apps/movie/tests/integration/api/test_endpoint_behaviors.py -v`
-        - Run all: `docker compose -f infrastructure/docker-compose.yml exec backend pytest
-        apps/movie/tests/integration/api/ -v`
+        - Run browse endpoint tests:
+          `docker compose -f infrastructure/docker-compose.yml exec backend pytest \
+          apps/movie/tests/integration/api/test_browse_endpoints.py -v`
+        - Run sort options tests:
+          `docker compose -f infrastructure/docker-compose.yml exec backend pytest \
+          apps/movie/tests/integration/api/test_browse_sort_options.py -v`
+        - Run all integration/api:
+          `docker compose -f infrastructure/docker-compose.yml exec backend pytest \
+          apps/movie/tests/integration/api/ -v`
         - All tests should PASS
         - Document test count: X test functions, Y total executions with parametrization
 

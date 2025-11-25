@@ -48,7 +48,7 @@ NOW_PLAYING_CONFIG = EndpointConfig(
     name="now-playing",
     url="/api/movies/now-playing",
     has_date_preset=True,
-    min_vote_count_applied=True,
+    min_vote_count_applied=False,  # Disabled: new releases may have low vote counts
     protected_keys=[
         "primary_release_date.gte",
         "primary_release_date.lte",

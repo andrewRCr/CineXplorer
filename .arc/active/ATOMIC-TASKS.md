@@ -33,3 +33,13 @@
     - Center release year and rating inputs in advanced filters row to visually balance
     - Rationale: Reverse sorts (popularity.asc, vote_average.asc, title Z-A) produce meaningless data (untracked/unrated
     movies, Unicode sorting issues)
+
+- [ ] Investigate pytest-cov coverage measurement issue (external research)
+    - Observed: `CoverageWarning: Module apps.movie was previously imported, but not measured`
+    - Symptom: Some modules show 0% coverage (helpers.py, schemas.py) while others show 100% (api.py)
+      despite tests clearly exercising all modules
+    - Likely cause: Module import timing - modules imported during test collection/fixture setup
+      before coverage measurement starts
+    - Research: pytest-cov documentation, Django-specific coverage patterns, potential fixes
+    - Goal: Either fix configuration or document as known limitation with workaround
+    - Context: Discovered during endpoint consolidation quality gates (Phase 6.1.b)

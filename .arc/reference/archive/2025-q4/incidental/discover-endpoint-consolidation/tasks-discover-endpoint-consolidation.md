@@ -1,27 +1,19 @@
 # Incidental: Discover Endpoint Consolidation
 
 **Created:** 2025-10-31
+**Completed:** 2025-11-25
 **Branch:** `technical/service-layer-modernization`
-**Status:** Active (resuming at Phase 3.2)
+**Status:** Complete
 
 ## Context
 
 **Discovered:** Test organization Phase 3 analysis (2025-10-30) - testing in browser revealed broken endpoint architecture
 
-**Interrupts:** `.arc/active/incidental/tasks-test-organization-standardization.md` at Phase 3 complete (paused
-before Phase 4 file splits)
+**Interrupts:** `tasks-test-organization-standardization.md` at Phase 3 complete (paused before Phase 4 file splits)
 
 **Problem:** Frontend sends filter parameters to now-playing/upcoming endpoints, but backend silently drops them.
 Upcoming endpoint returns NO results. Architecture is inconsistent - discover supports filtering, but list endpoints
 don't.
-
-**Why Now:**
-
-- About to split tests by endpoint in test organization Phase 4
-- Can't name tests correctly if endpoint names/structure will change
-- Can't reliably test broken functionality
-- Testing gaps allowed these issues to go unnoticed (we only tested "Popular")
-- ~4-5 days to fix properly, blocks test organization completion
 
 ## Scope
 
@@ -1165,79 +1157,6 @@ This phase addresses a complex test migration challenge. Tests were written when
         - Files: `test_{scope}_{feature}.py` ✅
         - Classes: `Test{Feature}` ✅
         - Functions: `test_{subject}_{behavior}` ✅
-
----
-
-## Implementation Notes
-
-### Test Organization Forward Compatibility
-
-**Current state:** Test organization is mid-migration (Phase 3 complete, Phase 4+ pending)
-
-**Strategy for new tests:**
-
-- Place in final locations: `backend/apps/movie/tests/integration/api/` or `backend/apps/movie/tests/unit/helpers/`
-- Use final naming: `test_curated_endpoints.py`, `test_endpoint_preset_merge.py`
-- Follow test organization Phase 3 decisions for file splits
-- After this work completes, test organization can proceed with Phase 4 using correct endpoint names
-
-**Files we'll create:**
-
-1. `backend/apps/movie/tests/unit/helpers/test_endpoint_preset_merge.py` - Merge logic tests
-2. `backend/apps/movie/tests/integration/api/test_date_constrained_endpoints.py` - Now-playing/upcoming tests
-3. Updates to `backend/apps/movie/tests/integration/conftest.py` - Shared fixtures
-4. `frontend/src/pages/Featured.tsx` - Featured page stub component
-5. `frontend/src/pages/Browse.tsx` - General browse page
-6. `.arc/active/incidental/notes-featured-page-design.md` - Future hero implementation research
-
-**DRY emphasis:** Use parametrized tests to test both date-constrained endpoints with same logic, minimizing test
-function count while maximizing coverage.
-
-### Type Safety Adherence
-
-**Follow strategy-type-safety.md patterns:**
-
-- Properly typed test fixtures (no `Any` usage)
-- Use ModelSchema for response validation in tests
-- Type mock responses correctly
-- Follow Pydantic patterns for test data models
-
-### Architecture Decisions Made
-
-1. **Featured page + simplified browse architecture** (ADR-002)
-   - Featured page at `/featured` (navigable landing page)
-   - Browse page at `/browse` (general discover, NO protected keys)
-   - Date-constrained endpoints: `/browse/now-playing`, `/browse/upcoming`
-   - Popular/top-rated accessed via Browse page sort options (not separate endpoints)
-
-2. **Routing structure:** `/browse/*` instead of `/movies/*`
-   - Action-oriented routing parallel with `/search`
-   - Healthy separation: frontend (actions) vs backend (domain)
-
-3. **Filter merge strategy:** Accept all user filters, preset wins for protected_keys on date-constrained endpoints
-
-### Critical Questions from Investigation
-
-1. **Why does upcoming fail?** Phase 1.1 diagnosed (date window, region, TMDB data quality) ✅
-2. **Actual test gap size?** Phase 5.1 will validate with coverage matrix
-3. **Best DRY patterns?** Phase 5.2 will design parametrized approach to minimize duplication
-4. **TMDB trending endpoints?** Phase 5.6 will research available endpoints for Featured page
-5. **Endpoint naming consistency?** Resolved - all three are thin wrappers (browse, now-playing, upcoming) ✅
-
-### Success Criteria
-
-- ✅ Date-constrained endpoints (now-playing, upcoming) accept filter parameters with date presets
-- ✅ Both endpoints support genre, rating, year, keyword, people filters (dates protected)
-- ✅ Upcoming endpoint returns results reliably
-- ✅ Browse page provides full browsing functionality with NO protected keys
-- ✅ Featured page provides functional navigation (stub for interim, hero design future)
-- ✅ Comprehensive test coverage prevents future regressions
-- ✅ Architecture is DRY (all three endpoints are thin wrappers around TMDB discover with varying presets)
-- ✅ Frontend routing updated to `/browse/*` structure
-- ✅ Frontend types updated, all pages work in browser
-- ✅ All quality gates pass (100% test pass rate, 0 linting/type errors)
-- ✅ Test organization can proceed with Phase 4 using correct endpoint names
-- ✅ Featured page research documented for future hero implementation
 
 ---
 

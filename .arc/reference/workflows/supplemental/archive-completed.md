@@ -174,23 +174,23 @@ anyway for the PR - creating it as a persistent document ensures it's searchable
 
 ### 4) Commit Documentation Changes
 
-Commit all documentation updates to the child branch:
+Commit all documentation updates to the child branch.
+
+**Stage changes:**
 
 ```bash
-# Stage documentation changes
 git add .arc/active/{category}/tasks-{name}.md
 git add .arc/active/{category}/notes-{name}.md  # if exists
 git add .arc/active/{category}/completion-{name}.md
 git add .arc/active/{category}/prd-{name}.md  # if planned work with PRD updates
-
-# Commit with descriptive message
-git commit -m "docs: prepare documentation for archival
-
-- Clean task list and notes file (maintain-task-notes Mode 2)
-- Add completion metadata with summary and metrics
-- Update cross-references and status metadata
-- All files ready for code review and archival"
 ```
+
+**Commit message format:** Follow [atomic-commit.md](atomic-commit.md) for full commit message standards.
+
+Documentation prep commits use:
+
+- **Type/scope:** `docs(arc)` or `docs({category})`
+- **Context footer:** Reference the task list being archived
 
 **Why commit on child branch:**
 
@@ -280,24 +280,26 @@ move from `.arc/active/` to `.arc/reference/archive/`.
 **For planned work (feature/technical):**
 
 ```bash
-# Create work package directory
-mkdir -p .arc/reference/archive/{category}/{name}
+# Create work package directory (quarterly structure)
+# {quarter} = current quarter, e.g., 2025-q4
+mkdir -p .arc/reference/archive/{quarter}/{category}/{name}
 
 # Move all files with git mv (preserves history)
-git mv .arc/active/{category}/prd-{name}.md .arc/reference/archive/{category}/{name}/
-git mv .arc/active/{category}/tasks-{name}.md .arc/reference/archive/{category}/{name}/
-git mv .arc/active/{category}/notes-{name}.md .arc/reference/archive/{category}/{name}/  # if exists
-git mv .arc/active/{category}/completion-{name}.md .arc/reference/archive/{category}/{name}/
+git mv .arc/active/{category}/prd-{name}.md .arc/reference/archive/{quarter}/{category}/{name}/
+git mv .arc/active/{category}/tasks-{name}.md .arc/reference/archive/{quarter}/{category}/{name}/
+git mv .arc/active/{category}/notes-{name}.md .arc/reference/archive/{quarter}/{category}/{name}/  # if exists
+git mv .arc/active/{category}/completion-{name}.md .arc/reference/archive/{quarter}/{category}/{name}/
 ```
 
 **For incidental work:**
 
 ```bash
 # Subdirectory ALWAYS created (tasks + completion = 2 files minimum)
-mkdir -p .arc/reference/archive/incidental/{name}
-git mv .arc/active/incidental/tasks-{name}.md .arc/reference/archive/incidental/{name}/
-git mv .arc/active/incidental/completion-{name}.md .arc/reference/archive/incidental/{name}/
-git mv .arc/active/incidental/notes-{name}.md .arc/reference/archive/incidental/{name}/  # if exists
+# {quarter} = current quarter, e.g., 2025-q4
+mkdir -p .arc/reference/archive/{quarter}/incidental/{name}
+git mv .arc/active/incidental/tasks-{name}.md .arc/reference/archive/{quarter}/incidental/{name}/
+git mv .arc/active/incidental/completion-{name}.md .arc/reference/archive/{quarter}/incidental/{name}/
+git mv .arc/active/incidental/notes-{name}.md .arc/reference/archive/{quarter}/incidental/{name}/  # if exists
 
 # Note: With unified completion docs (mandatory for ALL work), subdirectory is always required
 ```
@@ -322,92 +324,65 @@ Update `.arc/reference/constitution/PROJECT-STATUS.md` if applicable:
 
 ### 11) Commit Archive Changes
 
+**Stage changes:**
+
 ```bash
-git add .arc/reference/archive/
+git add .arc/reference/archive/{quarter}/{category}/{name}/
 git add .arc/active/{category}/  # captures file deletions
 git add .arc/reference/constitution/PROJECT-STATUS.md  # if updated
-
-git commit -m "docs(archive): archive {category}/{name} documentation
-
-- Move all work docs to archive/{category}/{name}/ ({list file types})
-- {One-line summary of what was accomplished}
-- Branch deleted after merge, task list archived immediately (ADR-013)"
 ```
 
-**Examples:**
+**Commit message format:** Follow [atomic-commit.md](atomic-commit.md) for full commit message standards.
+
+Archival commits use:
+
+- **Type/scope:** `docs(archive)`
+- **Context footer:** `Context: documentation (no associated task list)`
+
+**Example:**
 
 ```bash
-# Feature work
-git commit -m "docs(archive): archive feature/user-authentication documentation
+git commit -m "docs(archive): archive discover-endpoint-consolidation to 2025-q4
 
-- Move all work docs to archive/feature/user-authentication/ (PRD, tasks, notes, completion)
-- Implemented JWT authentication with OAuth providers (Google, GitHub)
-- Update PROJECT-STATUS with authentication capability
-- Branch deleted after merge, task list archived immediately (ADR-013)"
+Archival of completed incidental work:
+- Consolidated endpoints to thin wrapper architecture
+- Fixed now-playing/upcoming date ranges and filter support
+- 73 tests added, all quality gates passed
 
-# Technical work
-git commit -m "docs(archive): archive technical/service-layer-modernization documentation
-
-- Move all work docs to archive/technical/service-layer-modernization/ (PRD, tasks, notes, completion)
-- Extracted business logic to service layer across 12 API endpoints
-- Update PROJECT-STATUS with architecture improvements
-- Branch deleted after merge, task list archived immediately (ADR-013)"
-
-# Incidental work
-git commit -m "docs(archive): archive incidental/chakra-recipe-system documentation
-
-- Move all work docs to archive/incidental/chakra-recipe-system/ (tasks, notes, completion)
-- Implemented Chakra UI v3 recipe system for 7 components, migrated 50+ component instances
-- Branch deleted after merge, task list archived immediately (ADR-013)"
+Context: documentation (no associated task list)"
 ```
 
 ---
 
 ## Archive Structure
 
-With unified completion metadata, all work packages have consistent structure:
+Archives use **quarterly directories** containing work organized by category:
 
 ```
 .arc/reference/archive/
 ├── README.md                                     # Archive overview and navigation
-├── feature/                                      # User-facing planned work (work packages)
-│   ├── user-authentication/                      # All docs for one feature together
-│   │   ├── prd-user-authentication.md
-│   │   ├── tasks-user-authentication.md
-│   │   ├── notes-user-authentication.md          # optional
-│   │   └── completion-user-authentication.md     # executive summary
-│   └── movie-ratings/
-│       ├── prd-movie-ratings.md
-│       ├── tasks-movie-ratings.md
-│       ├── notes-movie-ratings.md                # optional
-│       └── completion-movie-ratings.md           # executive summary
-├── technical/                                    # Infrastructure planned work (work packages)
-│   ├── api-layer-modernization-p1/               # All docs for one technical work together
-│   │   ├── prd-api-layer-modernization-p1.md
-│   │   ├── tasks-api-layer-modernization-p1.md
-│   │   ├── notes-api-layer-modernization-p1.md   # optional
-│   │   └── completion-api-layer-modernization-p1.md  # executive summary
-│   └── service-layer-modernization/
-│       ├── prd-service-layer-modernization.md
-│       ├── tasks-service-layer-modernization.md
-│       ├── notes-service-layer-modernization.md
-│       └── completion-service-layer-modernization.md  # executive summary
-└── incidental/                                   # Unplanned reactive work
-    ├── chakra-recipe-system/                     # Work package (has notes + completion)
-    │   ├── tasks-chakra-recipe-system.md
-    │   ├── notes-chakra-recipe-system.md
-    │   └── completion-chakra-recipe-system.md    # NEW: unified approach
-    ├── oauth-headless-migration/                 # Work package (has notes + completion)
-    │   ├── tasks-oauth-headless-migration.md
-    │   ├── notes-oauth-headless-migration.md
-    │   ├── research-django-allauth-headless-oauth.md
-    │   └── completion-oauth-headless-migration.md  # executive summary
-    ├── pagination-fixes/                         # Work package (minimal, just tasks + completion)
-    │   ├── tasks-pagination-fixes.md
-    │   └── completion-pagination-fixes.md        # NEW: even small incidental work
-    └── csrf-middleware-fix/                      # Work package (tasks + completion, no notes)
-        ├── tasks-csrf-middleware-fix.md
-        └── completion-csrf-middleware-fix.md     # NEW: unified approach
+├── 2025-q4/                                      # Quarterly archive
+│   ├── completed-atomic-2025-q4.md               # Atomic tasks completed this quarter
+│   ├── feature/                                  # User-facing planned work
+│   │   └── movie-ratings/
+│   │       ├── prd-movie-ratings.md
+│   │       ├── tasks-movie-ratings.md
+│   │       └── completion-movie-ratings.md
+│   ├── technical/                                # Infrastructure planned work
+│   │   └── api-layer-modernization-p1/
+│   │       ├── prd-api-layer-modernization-p1.md
+│   │       ├── tasks-api-layer-modernization-p1.md
+│   │       └── completion-api-layer-modernization-p1.md
+│   └── incidental/                               # Unplanned reactive work
+│       ├── chakra-recipe-system/
+│       │   ├── tasks-chakra-recipe-system.md
+│       │   ├── notes-chakra-recipe-system.md     # optional
+│       │   └── completion-chakra-recipe-system.md
+│       └── csrf-middleware-fix/
+│           ├── tasks-csrf-middleware-fix.md
+│           └── completion-csrf-middleware-fix.md
+└── 2025-q3/                                      # Previous quarter (example)
+    └── ...
 ```
 
 **Organization principles:**
@@ -426,18 +401,18 @@ With unified completion metadata, all work packages have consistent structure:
 
 - **Feature** - Adds user-visible capability from product vision
     - Examples: User authentication, movie ratings UI, search functionality
-    - Archive to: `archive/feature/{name}/`
+    - Archive to: `archive/{quarter}/feature/{name}/`
 
 - **Technical** - Improves infrastructure, architecture, or developer experience
     - Examples: API modernization, type safety improvements, testing infrastructure
-    - Archive to: `archive/technical/{name}/`
+    - Archive to: `archive/{quarter}/technical/{name}/`
 
 **Incidental work** (gets task list + completion, no PRD):
 
 - **Unplanned reactive work** discovered during development
     - Examples: Recipe system implementation, type safety fixes, CSRF middleware bug
     - Uses conventional commit type prefixes in branch: `incidental/{name}`
-    - Archive to: `archive/incidental/{name}/`
+    - Archive to: `archive/{quarter}/incidental/{name}/`
 
 **When uncertain**, consult
 [Work Organization Strategy](../../strategies/arc/strategy-work-organization.md) for complete decision tree.

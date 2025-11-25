@@ -503,6 +503,21 @@ find .arc/reference/archive -name "tasks-<filename>.md"
 
 ---
 
+**Section-Level Temporal Noise**
+
+Grep patterns catch inline markers but miss entire sections that are temporal scaffolding. Manually check for and
+remove these sections:
+
+- **"Why Now" sections** - Urgency rationale irrelevant after completion
+- **"Implementation Notes" sections** - Planning scaffolding (covered by old-pattern guidance below)
+- **"Success Criteria" with all items checked** - Completion doc covers outcomes
+- **"Critical Questions" with all items answered** - Historical scaffolding
+
+These sections served their purpose during planning/execution but add no archival value. The actual work is
+documented in task completions; decisions are in ADRs; outcomes are in completion docs.
+
+---
+
 **What to KEEP (even if long):**
 
 - ✅ **All task lines verbatim** (checkbox + description + outcome)

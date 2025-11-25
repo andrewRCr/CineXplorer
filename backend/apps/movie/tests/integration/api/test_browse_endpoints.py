@@ -350,3 +350,305 @@ class TestBusinessConstraints:
             assert len(data["results"]) == 3
             titles = {movie["title"] for movie in data["results"]}
             assert titles == {"High Votes", "Low Votes", "Zero Votes"}
+
+
+class TestDataQuality:
+    """Data quality tests: completeness, filtering, and deduplication.
+
+    These tests verify that all endpoints maintain data quality standards:
+    - Completeness filtering: Movies without required fields (poster, overview) filtered out
+    - Filter passthrough: User filters (genre, rating, year) work on all endpoints
+    - Deduplication: No duplicate movies appear in results
+    """
+
+    @pytest.mark.parametrize("config", ALL_ENDPOINTS, ids=lambda c: c.name)
+    @patch("core.services.tmdb_api_client.TMDBApiClient.get")
+    def test_completeness_filtering(
+        self,
+        mock_tmdb_get: Mock,
+        api_client: Client,
+        config: EndpointConfig,
+    ) -> None:
+        """All endpoints filter out movies missing required fields.
+
+        Movies must have poster_path, title, and overview to be included.
+        This ensures UI can render movie cards without placeholder handling.
+        """
+        movies = [
+            create_tmdb_movie(
+                tmdb_id=1,
+                title="Complete Movie",
+                release_date="2025-10-15",
+                vote_average=7.5,
+                vote_count=1000,
+                poster_path="/poster_1.jpg",
+                overview="A complete movie with all required fields.",
+            ),
+            create_tmdb_movie(
+                tmdb_id=2,
+                title="No Poster",
+                release_date="2025-10-15",
+                vote_average=7.5,
+                vote_count=1000,
+                poster_path="",  # Empty string = missing poster
+                overview="Movie missing poster path.",
+            ),
+            create_tmdb_movie(
+                tmdb_id=3,
+                title="No Overview",
+                release_date="2025-10-15",
+                vote_average=7.5,
+                vote_count=1000,
+                poster_path="/poster_3.jpg",
+                overview="",  # Empty string = missing overview
+            ),
+        ]
+        mock_tmdb_get.return_value = create_mock_paginated_response(
+            movies=movies,
+            page=1,
+            total_pages=1,
+            total_results=3,
+        )
+
+        response = api_client.get(f"{config.url}?page=1")
+
+        assert response.status_code == HTTPStatus.OK
+        data = response.json()
+
+        # Only complete movie should pass through
+        assert len(data["results"]) == 1
+        assert data["results"][0]["title"] == "Complete Movie"
+        assert data["results"][0]["poster_path"] == "/poster_1.jpg"
+        assert data["results"][0]["overview"] == "A complete movie with all required fields."
+
+    @pytest.mark.parametrize("config", ALL_ENDPOINTS, ids=lambda c: c.name)
+    @patch("core.services.tmdb_api_client.TMDBApiClient.get")
+    def test_filter_passthrough_genre(
+        self,
+        mock_tmdb_get: Mock,
+        api_client: Client,
+        config: EndpointConfig,
+    ) -> None:
+        """Genre filter param is passed through to TMDB API.
+
+        Verifies with_genres parameter reaches TMDB (filtering done by TMDB).
+        """
+        movies = [
+            create_tmdb_movie(
+                tmdb_id=1,
+                title="Action Movie",
+                release_date="2025-10-15",
+                vote_average=7.5,
+                vote_count=1000,
+                genre_ids=[28],  # Action
+            ),
+        ]
+        mock_tmdb_get.return_value = create_mock_paginated_response(
+            movies=movies,
+            page=1,
+            total_pages=1,
+            total_results=1,
+        )
+
+        # Genre ID 28 = Action
+        response = api_client.get(f"{config.url}?page=1&genres=28")
+
+        assert response.status_code == HTTPStatus.OK
+
+        # Verify TMDB received genre filter
+        assert mock_tmdb_get.call_count >= 1
+        call_args = mock_tmdb_get.call_args_list[0]
+        params = call_args[0][1] if len(call_args[0]) > 1 else call_args[1].get("params", {})
+
+        assert "with_genres" in params
+        assert params["with_genres"] == "28"
+
+    @pytest.mark.parametrize("config", ALL_ENDPOINTS, ids=lambda c: c.name)
+    @patch("core.services.tmdb_api_client.TMDBApiClient.get")
+    def test_filter_passthrough_rating(
+        self,
+        mock_tmdb_get: Mock,
+        api_client: Client,
+        config: EndpointConfig,
+    ) -> None:
+        """Rating filter params are passed through to TMDB API.
+
+        Verifies vote_average.gte/lte parameters reach TMDB.
+        API uses vote_average_gte/lte (HTTP params), service converts to TMDB format.
+        """
+        movies = [
+            create_tmdb_movie(
+                tmdb_id=1,
+                title="High Rated Movie",
+                release_date="2025-10-15",
+                vote_average=8.5,
+                vote_count=1000,
+            ),
+        ]
+        mock_tmdb_get.return_value = create_mock_paginated_response(
+            movies=movies,
+            page=1,
+            total_pages=1,
+            total_results=1,
+        )
+
+        # API uses vote_average_gte/lte as HTTP query params
+        response = api_client.get(f"{config.url}?page=1&vote_average_gte=7.0&vote_average_lte=9.0")
+
+        assert response.status_code == HTTPStatus.OK
+
+        # Verify TMDB received rating filters (converted to dot notation)
+        assert mock_tmdb_get.call_count >= 1
+        call_args = mock_tmdb_get.call_args_list[0]
+        params = call_args[0][1] if len(call_args[0]) > 1 else call_args[1].get("params", {})
+
+        assert "vote_average.gte" in params
+        assert "vote_average.lte" in params
+        assert params["vote_average.gte"] == 7.0
+        assert params["vote_average.lte"] == 9.0
+
+    @pytest.mark.parametrize("config", ALL_ENDPOINTS, ids=lambda c: c.name)
+    @patch("core.services.tmdb_api_client.TMDBApiClient.get")
+    def test_filter_passthrough_multiple(
+        self,
+        mock_tmdb_get: Mock,
+        api_client: Client,
+        config: EndpointConfig,
+    ) -> None:
+        """Multiple filters can be combined on all endpoints.
+
+        Verifies that genre + rating filters work together.
+        """
+        movies = [
+            create_tmdb_movie(
+                tmdb_id=1,
+                title="Action Thriller",
+                release_date="2025-10-15",
+                vote_average=8.0,
+                vote_count=1000,
+                genre_ids=[28, 53],  # Action, Thriller
+            ),
+        ]
+        mock_tmdb_get.return_value = create_mock_paginated_response(
+            movies=movies,
+            page=1,
+            total_pages=1,
+            total_results=1,
+        )
+
+        # Combine genre and rating filters (use vote_average_gte for HTTP param)
+        response = api_client.get(f"{config.url}?page=1&genres=28&vote_average_gte=7.0")
+
+        assert response.status_code == HTTPStatus.OK
+
+        # Verify TMDB received both filters
+        assert mock_tmdb_get.call_count >= 1
+        call_args = mock_tmdb_get.call_args_list[0]
+        params = call_args[0][1] if len(call_args[0]) > 1 else call_args[1].get("params", {})
+
+        assert "with_genres" in params
+        assert params["with_genres"] == "28"
+        assert "vote_average.gte" in params
+        assert params["vote_average.gte"] == 7.0
+
+    @pytest.mark.parametrize("config", ALL_ENDPOINTS, ids=lambda c: c.name)
+    @patch("core.services.tmdb_api_client.TMDBApiClient.get")
+    def test_deduplication_across_pages(
+        self,
+        mock_tmdb_get: Mock,
+        api_client: Client,
+        config: EndpointConfig,
+    ) -> None:
+        """No duplicate movies appear in results when buffer fetches multiple pages.
+
+        The buffer mechanism fetches additional TMDB pages to fill page size.
+        When TMDB returns the same movie ID across page boundaries (a known
+        TMDB quirk), duplicates must be filtered out.
+
+        Scenario: TMDB page 1 has 18 movies, page 2 has 5 movies including
+        a duplicate (ID 18). Buffer should deduplicate and return 20 unique.
+        """
+        # Page 1: 18 unique movies (not enough to fill 20-movie target)
+        page1_movies = [
+            create_tmdb_movie(
+                tmdb_id=i,
+                title=f"Movie {i}",
+                release_date="2025-10-15",
+                vote_average=7.5,
+                vote_count=1000,
+            )
+            for i in range(1, 19)  # IDs 1-18
+        ]
+
+        # Page 2: 5 movies including duplicate of ID 18
+        page2_movies = [
+            create_tmdb_movie(
+                tmdb_id=18,  # Duplicate from page 1
+                title="Movie 18 (Duplicate)",
+                release_date="2025-10-15",
+                vote_average=7.5,
+                vote_count=1000,
+            ),
+            create_tmdb_movie(
+                tmdb_id=19,
+                title="Movie 19",
+                release_date="2025-10-15",
+                vote_average=7.5,
+                vote_count=1000,
+            ),
+            create_tmdb_movie(
+                tmdb_id=20,
+                title="Movie 20",
+                release_date="2025-10-15",
+                vote_average=7.5,
+                vote_count=1000,
+            ),
+            create_tmdb_movie(
+                tmdb_id=21,
+                title="Movie 21",
+                release_date="2025-10-15",
+                vote_average=7.5,
+                vote_count=1000,
+            ),
+            create_tmdb_movie(
+                tmdb_id=22,
+                title="Movie 22",
+                release_date="2025-10-15",
+                vote_average=7.5,
+                vote_count=1000,
+            ),
+        ]
+
+        # Mock TMDB returning page 1, then page 2
+        mock_tmdb_get.side_effect = [
+            create_mock_paginated_response(
+                movies=page1_movies,
+                page=1,
+                total_pages=3,
+                total_results=60,
+            ),
+            create_mock_paginated_response(
+                movies=page2_movies,
+                page=2,
+                total_pages=3,
+                total_results=60,
+            ),
+        ]
+
+        response = api_client.get(f"{config.url}?page=1")
+
+        assert response.status_code == HTTPStatus.OK
+        data = response.json()
+
+        # Extract tmdb_id from results
+        result_ids = [movie["tmdb_id"] for movie in data["results"]]
+
+        # Verify no duplicates
+        assert len(result_ids) == len(set(result_ids)), "Duplicate movie IDs found in results"
+
+        # Buffer should return exactly 20 unique movies (target page size)
+        # Page 1 had 18, page 2 added 4 new (19, 20, 21, 22) with 1 duplicate (18)
+        assert len(data["results"]) == 20
+
+        # ID 18 should appear exactly once (first occurrence kept)
+        assert result_ids.count(18) == 1

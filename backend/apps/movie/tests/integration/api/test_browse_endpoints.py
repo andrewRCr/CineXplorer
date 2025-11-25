@@ -16,7 +16,6 @@ drive endpoint-specific assertions without code duplication.
 
 from __future__ import annotations
 
-from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING
 from unittest.mock import Mock, patch
 
@@ -31,6 +30,8 @@ from movie.tests.integration.api.endpoint_configs import (
 from movie.tests.test_helpers import create_mock_paginated_response, create_tmdb_movie
 
 if TYPE_CHECKING:
+    from datetime import date
+
     from django.test import Client
 
 
@@ -234,24 +235,17 @@ class TestBusinessConstraints:
         mock_tmdb_get: Mock,
         api_client: Client,
         config: EndpointConfig,
+        expected_date_ranges: dict[str, tuple[date, date]],
     ) -> None:
         """Date-constrained endpoints send correct date params to TMDB.
 
         Verifies that the endpoint presets are applied:
         - Now-playing: today-30 to today+5 (currently in theaters)
-        - Upcoming: today+5 to today+60 (future releases)
+        - Upcoming: today+5 to today+65 (future releases)
 
         Date filtering is done by TMDB, so we verify the params sent.
         """
-        today = datetime.now(tz=UTC).date()
-
-        # Calculate expected date range based on endpoint
-        if config.name == "now-playing":
-            expected_min = today - timedelta(days=30)
-            expected_max = today + timedelta(days=5)
-        else:  # upcoming
-            expected_min = today + timedelta(days=5)
-            expected_max = today + timedelta(days=65)
+        expected_min, expected_max = expected_date_ranges[config.name]
 
         movies = [
             create_tmdb_movie(

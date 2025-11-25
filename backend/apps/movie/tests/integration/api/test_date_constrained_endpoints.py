@@ -13,7 +13,6 @@ verifying filter support and preset enforcement per ADR-002.
 
 from __future__ import annotations
 
-from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING
 from unittest.mock import Mock, patch
 
@@ -22,6 +21,8 @@ from core.tests.test_helpers import HTTPStatus
 from movie.tests.test_helpers import create_mock_paginated_response, create_tmdb_movie
 
 if TYPE_CHECKING:
+    from datetime import date
+
     from django.test import Client
 
 
@@ -113,7 +114,9 @@ def test_upcoming_preset_includes_release_type(
 
 @patch("core.services.tmdb_api_client.TMDBApiClient.get")
 def test_now_playing_preset_date_range_correct(
-    mock_tmdb_get: Mock, api_client: Client
+    mock_tmdb_get: Mock,
+    api_client: Client,
+    expected_date_ranges: dict[str, tuple[date, date]],
 ) -> None:
     """Now-playing preset uses correct date range (today-30 to today+5).
 
@@ -141,10 +144,8 @@ def test_now_playing_preset_date_range_correct(
 
     assert response.status_code == HTTPStatus.OK
 
-    # Calculate expected date range
-    today = datetime.now(tz=UTC).date()
-    expected_min = today - timedelta(days=30)
-    expected_max = today + timedelta(days=5)
+    # Get expected date range from centralized fixture
+    expected_min, expected_max = expected_date_ranges["now-playing"]
 
     # Verify TMDB received correct date range
     assert mock_tmdb_get.call_count >= 1
@@ -157,7 +158,9 @@ def test_now_playing_preset_date_range_correct(
 
 @patch("core.services.tmdb_api_client.TMDBApiClient.get")
 def test_upcoming_preset_date_range_correct(
-    mock_tmdb_get: Mock, api_client: Client
+    mock_tmdb_get: Mock,
+    api_client: Client,
+    expected_date_ranges: dict[str, tuple[date, date]],
 ) -> None:
     """Upcoming preset uses correct date range (today+5 to today+65).
 
@@ -185,10 +188,8 @@ def test_upcoming_preset_date_range_correct(
 
     assert response.status_code == HTTPStatus.OK
 
-    # Calculate expected date range
-    today = datetime.now(tz=UTC).date()
-    expected_min = today + timedelta(days=5)
-    expected_max = today + timedelta(days=65)
+    # Get expected date range from centralized fixture
+    expected_min, expected_max = expected_date_ranges["upcoming"]
 
     # Verify TMDB received correct date range
     assert mock_tmdb_get.call_count >= 1

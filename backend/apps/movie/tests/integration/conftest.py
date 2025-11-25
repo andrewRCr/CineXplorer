@@ -10,9 +10,13 @@ Note:
 
 from __future__ import annotations
 
-from datetime import UTC, date, timedelta
+from datetime import UTC, datetime, timedelta
+from typing import TYPE_CHECKING
 
 import pytest
+
+if TYPE_CHECKING:
+    from datetime import date
 
 
 @pytest.fixture
@@ -22,11 +26,13 @@ def expected_date_ranges() -> dict[str, tuple[date, date]]:
     Centralizes date calculation logic for date correctness tests.
     Keys match endpoint names in EndpointConfig.
 
+    Date windows:
+        - now-playing: today-30 to today+5 (currently in theaters)
+        - upcoming: today+5 to today+65 (future releases)
+
     Returns:
         Dict mapping endpoint name to (min_date, max_date) tuple
     """
-    from datetime import datetime
-
     today = datetime.now(tz=UTC).date()
     return {
         "now-playing": (today - timedelta(days=30), today + timedelta(days=5)),

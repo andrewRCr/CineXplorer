@@ -236,9 +236,15 @@ See updated `notes-test-organization-standardization.md` for detailed analysis.
 
 ---
 
-### **Phase 4:** Execute File Splits and Migration (Revised)
+### **Phase 4:** Execute File Splits and Migration (Revised) ✅
 
 **Purpose:** Consolidate redundant tests, migrate unique tests to new structure, split service layer tests.
+
+**Phase 4 Complete:** All 6 tasks (4.1-4.6) finished. Key findings:
+
+- Pre-categorizations in 4.5 and 4.6 were incorrect (tests marked as "unit" used real DB)
+- Bonus: Refactored user_movie_data service tests to true unit tests with Mock pattern
+- auth and core apps have no true unit tests (all integration due to cross-cutting nature)
 
 - [x] **4.1 Consolidate test_movie_api.py into existing structure** ✅
 
@@ -371,13 +377,16 @@ See updated `notes-test-organization-standardization.md` for detailed analysis.
           and `integration/test_movie_enrichment_query_optimization.py` (2 tests, query count verification)
         - Total: 64 user_movie_data tests passing
 
-- [ ] **4.6 Migrate core app tests**
+- [x] **4.6 Migrate core app tests**
 
-    - [ ] **4.6.1 Move tests to appropriate directories**
-        - Unit: `test_models.py`, `test_pagination.py`
-        - Integration: `test_logging_api.py`, `test_admin.py`
-        - Keep in root: `test_helpers.py` (test utilities)
-        - Keep in place: management command tests
+    - [x] **4.6.1 Move tests to appropriate directories**
+        - Pre-categorization was incorrect: `test_models.py` and `test_pagination.py` listed as unit
+          but both use `@pytest.mark.django_db` (same pattern as auth app)
+        - Corrected categorization - ALL test files use database:
+            - **Integration:** `test_models.py`, `test_pagination.py`, `test_logging_api.py`, `test_admin.py`
+            - **Keep in root:** `test_helpers.py` (utility module), `test_commands.py` (management commands)
+        - Removed empty `unit/` directory (no true unit tests exist)
+        - 53 core tests passing
 
 ### **Phase 5:** Update pytest Configuration
 

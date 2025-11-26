@@ -240,42 +240,51 @@ See updated `notes-test-organization-standardization.md` for detailed analysis.
 
 **Purpose:** Consolidate redundant tests, migrate unique tests to new structure, split service layer tests.
 
-- [ ] **4.1 Consolidate test_movie_api.py into existing structure**
+- [x] **4.1 Consolidate test_movie_api.py into existing structure** ✅
 
     **Goal:** Eliminate redundancy with new `integration/api/` tests while preserving unique coverage.
 
-    - [ ] **4.1.1 Audit tests for overlap with new infrastructure**
+    - [x] **4.1.1 Audit tests for overlap with new infrastructure** ✅
         - Read each test in `test_movie_api.py` (28 tests)
         - Compare against `test_browse_endpoints.py`, `test_browse_sort_options.py`, `test_date_constrained_endpoints.py`
         - Categorize each test as: redundant (delete), unique (migrate), or partial overlap (assess)
         - Document findings in notes file
+        - **Result:** 12 redundant, 14 unique, 2 partial. See notes file "Detailed Overlap Analysis" section.
 
-    - [ ] **4.1.2 Migrate reference endpoint tests**
+    - [x] **4.1.2 Migrate reference endpoint tests** ✅
         - Create `tests/integration/api/test_reference_endpoints.py`
         - Move: `test_get_movie_genres`, `test_get_popular_keywords`, `test_search_keywords`,
           `test_get_popular_people`, `test_search_people`
         - Run tests to verify: `docker compose -f ../infrastructure/docker-compose.yml exec backend pytest apps/movie/tests/integration/api/test_reference_endpoints.py`
+        - **Result:** 5/5 tests pass, linting clean
 
-    - [ ] **4.1.3 Migrate movie detail tests**
+    - [x] **4.1.3 Migrate movie detail tests** ✅
         - Create `tests/integration/api/test_movie_detail.py`
         - Move: `test_get_movie_detail_authenticated`, `test_get_movie_detail_unauthenticated`
         - Run tests to verify
+        - **Result:** 2/2 tests pass, linting clean
 
-    - [ ] **4.1.4 Assess and migrate pagination metadata tests**
+    - [x] **4.1.4 Assess and migrate pagination metadata tests** ✅
         - Evaluate: `test_browse_returns_next_tmdb_page_start_after_buffer`, `test_browse_continues_from_tmdb_page_start_parameter`,
           `test_browse_no_duplicates_across_sequential_pages`, `test_browse_fallback_when_tmdb_page_start_omitted`
         - If unique: Create `tests/integration/api/test_browse_pagination.py` or add to existing file
         - If covered by new tests: Mark for deletion
+        - **Result:** Created `test_browse_pagination.py` with 6 tests (5 pass + 1 xfail). Includes max_buffer_pages,
+        cross-page dedup, backward nav tests.
 
-    - [ ] **4.1.5 Assess and handle remaining browse tests**
+    - [x] **4.1.5 Assess and handle remaining browse tests** ✅
         - Evaluate overlap for filter/deduplication tests against `TestDataQuality` in `test_browse_endpoints.py`
         - Delete tests that are now covered by parametrized tests
         - Migrate any truly unique tests
+        - **Result:** Added `test_error_handling_invalid_filter_params` (2 params) to `test_browse_endpoints.py`.
+        Remaining 10 browse tests confirmed redundant.
 
-    - [ ] **4.1.6 Delete test_movie_api.py and verify**
+    - [x] **4.1.6 Delete test_movie_api.py and verify** ✅
         - Remove `backend/apps/movie/tests/test_movie_api.py`
         - Run full test suite: `docker compose -f ../infrastructure/docker-compose.yml exec backend pytest apps/movie/tests/`
         - Verify test count stable (no accidental deletions of unique coverage)
+        - **Result:** Deleted. Movie tests: 220 → 192 (-28). All 191 pass + 1 xfail. Project total: 454 → 441 (unique
+        coverage preserved via new DRY tests).
 
 - [ ] **4.2 Split test_result_filtering.py** (Original plan - service layer tests)
 

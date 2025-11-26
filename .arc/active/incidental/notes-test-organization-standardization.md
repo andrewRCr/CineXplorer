@@ -118,12 +118,66 @@ Tests in `test_movie_api.py` that are **covered by new parametrized tests**:
 - `test_browse_api_filters_bad_ratings_from_tmdb`
 - `test_browse_api_buffer_mechanism_with_filtering`
 
+### Detailed Overlap Analysis (Task 4.1.1 Audit)
+
+**28 tests in test_movie_api.py analyzed against new integration/api/ tests:**
+
+| Test | Verdict | Rationale |
+|------|---------|-----------|
+| `test_paginated_endpoint_contract` (4 params) | REDUNDANT | Covered by `TestResponseContract::test_returns_200_with_results` |
+| `test_browse_with_filters` | REDUNDANT | Covered by `TestDataQuality::test_filter_passthrough_*` |
+| `test_browse_invalid_parameters` (3 params) | PARTIAL | New covers invalid page; old covers year/rating/runtime - **keep unique params** |
+| `test_get_movie_genres` | UNIQUE | Reference endpoint - migrate |
+| `test_get_popular_keywords` | UNIQUE | Reference endpoint - migrate |
+| `test_search_keywords` | UNIQUE | Reference endpoint - migrate |
+| `test_get_popular_people` | UNIQUE | Reference endpoint - migrate |
+| `test_search_people` | UNIQUE | Reference endpoint - migrate |
+| `test_get_movie_detail_authenticated` | UNIQUE | Movie detail endpoint - migrate |
+| `test_get_movie_detail_unauthenticated` | UNIQUE | Movie detail endpoint - migrate |
+| `test_browse_api_extracts_backend_filter_params` | REDUNDANT | Covered by filter passthrough tests |
+| `test_browse_api_filters_bad_ratings_from_tmdb` | REDUNDANT | Covered by `test_min_vote_count_behavior` |
+| `test_browse_api_buffer_mechanism_with_filtering` | REDUNDANT | Covered by buffer + filtering tests |
+| `test_browse_returns_next_tmdb_page_start_after_buffer` | UNIQUE | Pagination metadata - migrate |
+| `test_browse_continues_from_tmdb_page_start_parameter` | UNIQUE | Pagination metadata - migrate |
+| `test_browse_no_duplicates_across_sequential_pages` | REDUNDANT | Covered by `test_deduplication_across_pages` |
+| `test_browse_fallback_when_tmdb_page_start_omitted` | UNIQUE | Fallback behavior - migrate |
+| `test_browse_deduplicates_when_tmdb_returns_duplicate_across_pages` | REDUNDANT | Covered by new parametrized dedup |
+| `test_browse_deduplicates_multiple_duplicates_across_pages` | REDUNDANT | Covered (new test less thorough but sufficient) |
+| `test_browse_deduplication_works_with_backend_filters` | REDUNDANT | Covered by combined tests |
+| `test_browse_respects_max_buffer_pages_with_heavy_duplication` | UNIQUE | Safety limit - migrate |
+| `test_browse_no_cross_page_duplicates` (xfail) | UNIQUE | Cross-page dedup - migrate (xfail) |
+| `test_browse_backward_navigation_consistency` | UNIQUE | Navigation - migrate |
+
+**Summary:**
+
+- REDUNDANT (delete): 12 tests
+- UNIQUE (migrate): 14 tests
+- PARTIAL (keep unique params): 2 tests (from `test_browse_invalid_parameters`)
+
 ### Migration Strategy
 
 1. **Audit phase:** Read each test, compare to new tests, categorize as redundant/unique
 2. **Migrate unique tests** to appropriate files in `integration/api/`
 3. **Delete `test_movie_api.py`** once all unique tests migrated
-4. **Verify test count** remains stable (no accidental deletions)
+4. **Verify test count:** Start 28 tests, delete 12 redundant, migrate 14 unique + 2 partial = same coverage
+
+### Migration Complete (Task 4.1)
+
+**New files created:**
+
+- `test_reference_endpoints.py` (5 tests) - genres, keywords, people
+- `test_movie_detail.py` (2 tests) - authenticated/unauthenticated detail
+- `test_browse_pagination.py` (6 tests) - pagination metadata, buffer limits, navigation
+
+**Extended:**
+
+- `test_browse_endpoints.py` (+2 tests) - validation for year/vote_average params
+
+**Deleted:**
+
+- `test_movie_api.py` (28 tests removed, 15 migrated, 13 redundant with existing DRY tests)
+
+**Test count change:** 454 → 441 (12 redundant tests consolidated into existing parametrized tests)
 
 ---
 

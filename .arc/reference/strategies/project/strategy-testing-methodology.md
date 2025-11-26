@@ -275,21 +275,19 @@ pytest apps/*/tests/unit/
 pytest apps/*/tests/integration/
 ```
 
-**Marker-based execution** (after adding markers to pyproject.toml):
+**Marker-based execution** (behavioral markers only - organizational markers replaced by directory structure):
 
 ```bash
-# Run tests marked as unit
-pytest -m unit
-
-# Run tests marked as integration
-pytest -m integration
-
-# Run all except slow tests
+# Run all except slow tests (behavioral marker)
 pytest -m "not slow"
 
-# Run API-specific tests
-pytest -m api
+# Skip tests that need throttling enabled
+pytest -m "not enable_throttling"
 ```
+
+**Note:** Organizational markers (`unit`, `integration`, `api`) are intentionally not used.
+Directory structure (`tests/unit/`, `tests/integration/`) provides organization.
+Markers are reserved for behavioral flags (`slow`, `enable_throttling`).
 
 **Docker Execution** (required for tests that need database/Redis):
 
@@ -561,23 +559,37 @@ __all__ = ["HTTPStatus", "create_user", "json_post", "json_patch", "json_put"]
 
 ### Current State
 
-**pytest Migration Complete (2025-10-13):**
+**Test Organization Standardization Complete (2025-11):**
 
-- ✅ 103/103 tests converted to pytest (100% migration)
-- ✅ 0 unittest TestCase classes remaining
-- ✅ Parallel execution: 3.7x speedup (36.25s → 9.75s with 24 workers)
-- ✅ CI/CD updated to pytest with coverage artifacts
-- ✅ Full fixture hierarchy established
+- ✅ 441 tests across 48 test files
+- ✅ Unit/integration directory structure standardized across all apps
+- ✅ Parallel execution supported
+- ✅ CI/CD runs all tests via `pytest apps/`
+
+**Test Counts by App:**
+
+| App | Test Files | Directory Structure |
+| --- | ---------- | ------------------- |
+| movie | 23 | `unit/services/`, `unit/helpers/`, `integration/api/` |
+| authentication | 13 | `integration/` (all integration tests) |
+| user_movie_data | 6 | `unit/`, `integration/` |
+| core | 6 | `integration/` |
 
 **Test Infrastructure:**
 
 - ✅ `apps/conftest.py` - Root fixtures (api_client, user, auth_client)
-- ✅ `core/tests/test_helpers.py` - HTTP helpers, CSRF helper, `create_user`, `create_user_and_auth_payload`, HTTPStatus
+- ✅ `core/tests/test_helpers.py` - HTTP helpers, CSRF, `create_user`, `HTTPStatus`
 - ✅ `authentication/tests/conftest.py` - OAuth, throttling, verified_user fixtures
 - ✅ `authentication/tests/fixtures.py` - Factory functions for test data
-- ✅ All tests use function-based patterns with typed fixtures
+- ✅ `movie/tests/test_helpers.py` - TMDB response mock helpers
+- ✅ `movie/tests/tmdb_test_builders.py` - Pydantic model builders for TMDB data
+- ✅ `movie/tests/integration/api/endpoint_configs.py` - Parametrized endpoint configs
 
-**Phase 6 (Future):** Additional domain fixtures, test helper consolidation as needed.
+**Design Decisions:**
+
+- Directory structure (`tests/unit/`, `tests/integration/`) for organization
+- Behavioral markers (`slow`, `enable_throttling`) only - no organizational markers
+- Empty `conftest.py` files kept as placeholders for future app-specific fixtures
 
 ### Anti-Patterns
 

@@ -123,7 +123,7 @@ Tests in `test_movie_api.py` that are **covered by new parametrized tests**:
 **28 tests in test_movie_api.py analyzed against new integration/api/ tests:**
 
 | Test | Verdict | Rationale |
-|------|---------|-----------|
+| ---- | ------- | --------- |
 | `test_paginated_endpoint_contract` (4 params) | REDUNDANT | Covered by `TestResponseContract::test_returns_200_with_results` |
 | `test_browse_with_filters` | REDUNDANT | Covered by `TestDataQuality::test_filter_passthrough_*` |
 | `test_browse_invalid_parameters` (3 params) | PARTIAL | New covers invalid page; old covers year/rating/runtime - **keep unique params** |

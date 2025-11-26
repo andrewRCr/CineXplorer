@@ -218,6 +218,35 @@ class TestResponseContract:
         # Should contain error details
         assert "detail" in data
 
+    @pytest.mark.parametrize(
+        "invalid_param,invalid_value",
+        [
+            ("year", "invalid"),
+            ("vote_average_gte", "invalid"),
+        ],
+        ids=["invalid_year", "invalid_vote_average"],
+    )
+    def test_error_handling_invalid_filter_params(
+        self,
+        api_client: Client,
+        invalid_param: str,
+        invalid_value: str,
+    ) -> None:
+        """Invalid filter parameters return appropriate error response.
+
+        Tests that Pydantic validation errors are properly returned for
+        malformed filter values (year, vote_average, etc.).
+        """
+        # Use browse endpoint as it accepts all filter params
+        response = api_client.get(f"/api/movies/browse?{invalid_param}={invalid_value}")
+
+        # Django Ninja returns 422 for validation errors
+        assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+        data = response.json()
+
+        # Should contain error details
+        assert "detail" in data
+
 
 class TestBusinessConstraints:
     """Endpoint-specific rules that must be enforced.

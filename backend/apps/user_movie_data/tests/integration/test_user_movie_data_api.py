@@ -25,16 +25,6 @@ if TYPE_CHECKING:
     from django.contrib.auth.models import User
     from django.test import Client
 
-# HTTP status codes for Django Ninja endpoints
-HTTP_200_OK = HTTPStatus.OK
-HTTP_201_CREATED = HTTPStatus.CREATED
-HTTP_204_NO_CONTENT = HTTPStatus.NO_CONTENT
-HTTP_400_BAD_REQUEST = HTTPStatus.BAD_REQUEST
-HTTP_401_UNAUTHORIZED = HTTPStatus.UNAUTHORIZED
-HTTP_403_FORBIDDEN = HTTPStatus.FORBIDDEN
-HTTP_404_NOT_FOUND = HTTPStatus.NOT_FOUND
-HTTP_422_UNPROCESSABLE_ENTITY = HTTPStatus.UNPROCESSABLE_ENTITY
-
 # =========================
 # Django Ninja API URLs
 # =========================
@@ -141,7 +131,7 @@ def test_unauthenticated_get_by_tmdb_id_denied(api_client: Client) -> None:
     """
     url = user_movie_data_by_tmdb_url(12345)
     res = api_client.get(url)
-    assert res.status_code == HTTP_401_UNAUTHORIZED
+    assert res.status_code == HTTPStatus.UNAUTHORIZED
 
 
 @pytest.mark.django_db
@@ -157,7 +147,7 @@ def test_unauthenticated_create_denied(api_client: Client, movie: Movie) -> None
         data=payload,
         content_type='application/json'
     )
-    assert res.status_code == HTTP_401_UNAUTHORIZED
+    assert res.status_code == HTTPStatus.UNAUTHORIZED
 
 
 @pytest.mark.django_db
@@ -178,7 +168,7 @@ def test_unauthenticated_update_denied(
         data=payload,
         content_type='application/json'
     )
-    assert res.status_code == HTTP_403_FORBIDDEN
+    assert res.status_code == HTTPStatus.FORBIDDEN
 
 
 @pytest.mark.django_db
@@ -194,7 +184,7 @@ def test_unauthenticated_delete_denied(
     """
     url = user_movie_data_detail_url(user_movie_data.id)
     res = api_client.delete(url)
-    assert res.status_code == HTTP_403_FORBIDDEN
+    assert res.status_code == HTTPStatus.FORBIDDEN
 
 
 # =========================
@@ -226,7 +216,7 @@ def test_get_user_movie_data_by_tmdb_id_success(
     res = client.get(url)
 
     # Assert: Status and basic structure
-    assert res.status_code == HTTP_200_OK
+    assert res.status_code == HTTPStatus.OK
     data = res.json()
 
     # Assert: UserMovieData fields
@@ -253,7 +243,7 @@ def test_get_user_movie_data_by_tmdb_id_not_found(
     url = user_movie_data_by_tmdb_url(movie.tmdb_id)
     res = client.get(url)
 
-    assert res.status_code == HTTP_404_NOT_FOUND
+    assert res.status_code == HTTPStatus.NOT_FOUND
     data = res.json()
     assert 'detail' in data
     assert 'not found' in data['detail'].lower()
@@ -279,7 +269,7 @@ def test_get_user_movie_data_by_tmdb_id_user_isolation(
     res = client.get(url)
 
     # Assert: Should return 404 (data exists but not for this user)
-    assert res.status_code == HTTP_404_NOT_FOUND
+    assert res.status_code == HTTPStatus.NOT_FOUND
 
 
 # =========================
@@ -314,7 +304,7 @@ def test_create_user_movie_data_success(
     )
 
     # Assert: Response
-    assert res.status_code == HTTP_200_OK
+    assert res.status_code == HTTPStatus.OK
     data = res.json()
     assert data['user_watched'] is True
     assert data['user_on_watchlist'] is False
@@ -353,7 +343,7 @@ def test_create_user_movie_data_with_defaults(
     )
 
     # Assert
-    assert res.status_code == HTTP_200_OK
+    assert res.status_code == HTTPStatus.OK
     data = res.json()
     # Verify defaults per UserMovieDataCreateSchema
     assert data['user_watched'] is False
@@ -386,7 +376,7 @@ def test_create_user_movie_data_duplicate_returns_400(
     )
 
     # Assert
-    assert res.status_code == HTTP_400_BAD_REQUEST
+    assert res.status_code == HTTPStatus.BAD_REQUEST
     data = res.json()
     assert 'detail' in data
     assert 'already exists' in data['detail'].lower()
@@ -416,7 +406,7 @@ def test_create_user_movie_data_invalid_movie_id_returns_404(
         HTTP_X_CSRFTOKEN=csrf_token
     )
 
-    assert res.status_code == HTTP_404_NOT_FOUND
+    assert res.status_code == HTTPStatus.NOT_FOUND
 
 
 @pytest.mark.django_db
@@ -445,7 +435,7 @@ def test_create_user_movie_data_invalid_rating_returns_422(
         HTTP_X_CSRFTOKEN=csrf_token
     )
 
-    assert res.status_code == HTTP_422_UNPROCESSABLE_ENTITY
+    assert res.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
     data = res.json()
     assert 'detail' in data
 
@@ -479,7 +469,7 @@ def test_update_user_movie_data_partial_success(
     )
 
     # Assert: Response
-    assert res.status_code == HTTP_200_OK
+    assert res.status_code == HTTPStatus.OK
     data = res.json()
     assert data['user_rating'] == 10
     assert data['user_review'] == 'Updated review - even better on rewatch!'
@@ -512,7 +502,7 @@ def test_update_user_movie_data_single_field(
         HTTP_X_CSRFTOKEN=csrf_token
     )
 
-    assert res.status_code == HTTP_200_OK
+    assert res.status_code == HTTPStatus.OK
     user_movie_data.refresh_from_db()
     assert user_movie_data.user_on_watchlist is True
     # Original values preserved
@@ -537,7 +527,7 @@ def test_update_user_movie_data_not_found(
         HTTP_X_CSRFTOKEN=csrf_token
     )
 
-    assert res.status_code == HTTP_404_NOT_FOUND
+    assert res.status_code == HTTPStatus.NOT_FOUND
 
 
 @pytest.mark.django_db
@@ -568,7 +558,7 @@ def test_update_user_movie_data_wrong_user_returns_404(
     )
 
     # Assert: Should return 404 (object exists but doesn't belong to user)
-    assert res.status_code == HTTP_404_NOT_FOUND
+    assert res.status_code == HTTPStatus.NOT_FOUND
 
     # Assert: Data remains unchanged
     other_user_data.refresh_from_db()
@@ -595,7 +585,7 @@ def test_update_user_movie_data_invalid_rating_returns_422(
         HTTP_X_CSRFTOKEN=csrf_token
     )
 
-    assert res.status_code == HTTP_422_UNPROCESSABLE_ENTITY
+    assert res.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
 
 
 # =========================
@@ -619,7 +609,7 @@ def test_delete_user_movie_data_success(
     res = client.delete(url, HTTP_X_CSRFTOKEN=csrf_token)
 
     # Assert: Response
-    assert res.status_code == HTTP_204_NO_CONTENT
+    assert res.status_code == HTTPStatus.NO_CONTENT
 
     # Assert: Object removed from database
     assert not UserMovieData.objects.filter(id=data_id).exists()
@@ -635,7 +625,7 @@ def test_delete_user_movie_data_not_found(
     url = user_movie_data_detail_url(99999)
     res = client.delete(url, HTTP_X_CSRFTOKEN=csrf_token)
 
-    assert res.status_code == HTTP_404_NOT_FOUND
+    assert res.status_code == HTTPStatus.NOT_FOUND
 
 
 @pytest.mark.django_db
@@ -660,7 +650,7 @@ def test_delete_user_movie_data_wrong_user_returns_404(
     res = client.delete(url, HTTP_X_CSRFTOKEN=csrf_token)
 
     # Assert: Should return 404
-    assert res.status_code == HTTP_404_NOT_FOUND
+    assert res.status_code == HTTPStatus.NOT_FOUND
 
     # Assert: Data still exists
     assert UserMovieData.objects.filter(id=data_id).exists()

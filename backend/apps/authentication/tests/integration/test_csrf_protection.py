@@ -15,16 +15,11 @@ import json
 from typing import TYPE_CHECKING, cast
 
 import pytest
-from core.tests.test_helpers import create_user, get_csrf_token, json_post
+from core.tests.test_helpers import HTTPStatus, create_user, get_csrf_token, json_post
 from django.test import Client
 
 if TYPE_CHECKING:
     from django.contrib.auth.models import User
-
-HTTP_200_OK = 200
-HTTP_201_CREATED = 201
-HTTP_401_UNAUTHORIZED = 401
-HTTP_403_FORBIDDEN = 403
 
 # Endpoints
 REGISTER_URL = '/api/register/'
@@ -82,7 +77,7 @@ def test_csrf_blocks_patch_without_token(csrf_client: tuple[Client, "User"]) -> 
     )
 
     # Should be blocked by CSRF middleware
-    assert res.status_code == HTTP_403_FORBIDDEN, \
+    assert res.status_code == HTTPStatus.FORBIDDEN, \
         f"CSRF should block PATCH without token. Got {res.status_code}: {res.content.decode()}"
 
 
@@ -107,7 +102,7 @@ def test_csrf_accepts_patch_with_valid_token(csrf_client: tuple[Client, "User"],
         HTTP_X_CSRFTOKEN=csrf_token
     )
 
-    assert res.status_code == HTTP_200_OK, \
+    assert res.status_code == HTTPStatus.OK, \
         f"CSRF should accept valid token. Got {res.status_code}: {res.content.decode()}"
 
     # Verify update was applied
@@ -126,7 +121,7 @@ def test_csrf_exempts_get_requests(csrf_client: tuple[Client, "User"]) -> None:
     # GET without CSRF token should succeed
     res = client.get(PROFILE_URL)
 
-    assert res.status_code == HTTP_200_OK, \
+    assert res.status_code == HTTPStatus.OK, \
         f"GET should not require CSRF. Got {res.status_code}"
 
 
@@ -151,7 +146,7 @@ def test_csrf_exempts_login_endpoint(api_client: Client, db: None) -> None:
     }
     res = json_post(api_client, TOKEN_URL, cast(dict[str, object], auth_payload))
 
-    assert res.status_code == HTTP_200_OK, \
+    assert res.status_code == HTTPStatus.OK, \
         f"Login should not require CSRF. Got {res.status_code}"
 
 
@@ -172,7 +167,7 @@ def test_csrf_exempts_register_endpoint(api_client: Client, db: None) -> None:
     }
     res = json_post(api_client, REGISTER_URL, cast(dict[str, object], payload))
 
-    assert res.status_code == HTTP_201_CREATED, \
+    assert res.status_code == HTTPStatus.CREATED, \
         f"Register should not require CSRF. Got {res.status_code}"
 
 
@@ -185,7 +180,7 @@ def test_csrf_token_endpoint_generates_valid_token(api_client: Client, db: None)
     """
     res = api_client.get(CSRF_URL)
 
-    assert res.status_code == HTTP_200_OK
+    assert res.status_code == HTTPStatus.OK
 
     # Check response contains token
     body = json.loads(res.content.decode())
@@ -225,7 +220,7 @@ def test_csrf_token_from_endpoint_works_for_requests(
         HTTP_X_CSRFTOKEN=csrf_token
     )
 
-    assert res.status_code == HTTP_200_OK, \
+    assert res.status_code == HTTPStatus.OK, \
         f"Token from /api/csrf/ should work. Got {res.status_code}: {res.content.decode()}"
 
 
@@ -247,7 +242,7 @@ def test_csrf_rejects_invalid_token(csrf_client: tuple[Client, "User"]) -> None:
         HTTP_X_CSRFTOKEN=fake_token
     )
 
-    assert res.status_code == HTTP_403_FORBIDDEN, \
+    assert res.status_code == HTTPStatus.FORBIDDEN, \
         f"CSRF should reject fake tokens. Got {res.status_code}"
 
 
@@ -270,7 +265,7 @@ def test_unauthenticated_patch_fails_with_401_not_403(api_client: Client, db: No
     )
 
     # Should fail authentication (401) before CSRF check (403)
-    assert res.status_code == HTTP_401_UNAUTHORIZED, \
+    assert res.status_code == HTTPStatus.UNAUTHORIZED, \
         f"Unauthenticated request should fail auth. Got {res.status_code}"
 
 
@@ -304,7 +299,7 @@ def test_csrf_enforced_before_jwt_validation(
     )
 
     # CSRF failure should happen before JWT validation
-    assert res.status_code == HTTP_403_FORBIDDEN, \
+    assert res.status_code == HTTPStatus.FORBIDDEN, \
         "CSRF middleware runs before endpoint auth, so 403 returned before 401"
 
 
@@ -334,7 +329,7 @@ def test_csrf_token_valid_for_multiple_requests(
             HTTP_X_CSRFTOKEN=csrf_token
         )
 
-        assert res.status_code == HTTP_200_OK, \
+        assert res.status_code == HTTPStatus.OK, \
             f"Same CSRF token should work for multiple requests. Failed on '{name}'"
 
         # Verify update applied
@@ -363,7 +358,7 @@ def test_refresh_endpoint_requires_csrf(csrf_client: tuple[Client, "User"]) -> N
     )
 
     # Should be blocked by CSRF middleware
-    assert res.status_code == HTTP_403_FORBIDDEN, \
+    assert res.status_code == HTTPStatus.FORBIDDEN, \
         f"Refresh endpoint should require CSRF. Got {res.status_code}: {res.content.decode()}"
 
     # Verify with valid CSRF token it works
@@ -375,5 +370,5 @@ def test_refresh_endpoint_requires_csrf(csrf_client: tuple[Client, "User"]) -> N
         HTTP_X_CSRFTOKEN=csrf_token
     )
 
-    assert res_with_csrf.status_code == HTTP_200_OK, \
+    assert res_with_csrf.status_code == HTTPStatus.OK, \
         f"Refresh with CSRF should succeed. Got {res_with_csrf.status_code}"

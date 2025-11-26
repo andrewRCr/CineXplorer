@@ -33,26 +33,14 @@ from typing import TYPE_CHECKING, cast
 import pytest
 from allauth.account.models import EmailAddress
 from authentication.schemas import PASSWORD_MIN_LENGTH
-from core.tests.test_helpers import create_user, json_post
+from authentication.tests.fixtures import create_register_payload
+from core.tests.test_helpers import HTTPStatus, create_user, json_post
 from django.contrib.auth import get_user_model
 
 if TYPE_CHECKING:
     from django.contrib.auth.models import User
     from django.http import HttpResponse
     from django.test import Client
-
-# Django Ninja uses standard HTTP status codes
-# We use Django's test Client (not DRF's APIClient) for all API testing
-from core.tests.test_helpers import HTTPStatus
-
-HTTP_200_OK = HTTPStatus.OK
-HTTP_201_CREATED = HTTPStatus.CREATED
-HTTP_204_NO_CONTENT = HTTPStatus.NO_CONTENT
-HTTP_400_BAD_REQUEST = HTTPStatus.BAD_REQUEST
-HTTP_401_UNAUTHORIZED = HTTPStatus.UNAUTHORIZED
-HTTP_403_FORBIDDEN = HTTPStatus.FORBIDDEN
-HTTP_409_CONFLICT = HTTPStatus.CONFLICT
-HTTP_422_UNPROCESSABLE_ENTITY = HTTPStatus.UNPROCESSABLE_ENTITY
 
 # Django Ninja endpoints (use direct paths, not reverse() for Django Ninja)
 CREATE_USER_URL: str = "/api/register/"
@@ -61,23 +49,8 @@ ME_URL: str = "/api/profile/"
 
 
 # =========================
-# Helper Functions / Fixtures
+# Fixtures
 # =========================
-
-
-def create_payload(
-    username: str = "testUser",
-    email: str = "test@example.com",
-    password: str = "testPass123",
-) -> dict[str, str]:
-    """Creates and returns a dictionary of values for test user creation."""
-    return {
-        "username": username,
-        "email": email,
-        "password": password,
-        "first_name": "Test",
-        "last_name": "User",
-    }
 
 
 @pytest.fixture
@@ -143,10 +116,10 @@ def registered_user(api_client: Client) -> tuple[Client, dict[str, str]]:
 @pytest.mark.django_db
 def test_create_user_success(api_client: Client) -> None:
     """Tests creating a user; case: successful."""
-    payload = create_payload()
+    payload = create_register_payload()
     res = json_post(api_client, CREATE_USER_URL, cast(dict[str, object], payload))
 
-    assert res.status_code == HTTP_201_CREATED
+    assert res.status_code == HTTPStatus.CREATED
     user: User = get_user_model().objects.get(username=payload["username"])  # type: ignore[assignment]
     assert user.check_password(payload["password"])  # type: ignore[no-untyped-call]
     content_str: str = res.content.decode(res.charset or "utf-8")
@@ -156,13 +129,13 @@ def test_create_user_success(api_client: Client) -> None:
 @pytest.mark.django_db
 def test_user_with_username_exists_error(api_client: Client) -> None:
     """Tests that an error is returned if user with same username already exists."""
-    control_payload = create_payload()
-    test_payload = create_payload(email="differentEmail@example.com")
+    control_payload = create_register_payload()
+    test_payload = create_register_payload(email="differentEmail@example.com")
 
     create_user(**control_payload)  # type: ignore[arg-type]
     res = json_post(api_client, CREATE_USER_URL, cast(dict[str, object], test_payload))
 
-    assert res.status_code == HTTP_409_CONFLICT
+    assert res.status_code == HTTPStatus.CONFLICT
     user_exists = get_user_model().objects.filter(email=test_payload["email"]).exists()
     assert not user_exists
 
@@ -170,13 +143,13 @@ def test_user_with_username_exists_error(api_client: Client) -> None:
 @pytest.mark.django_db
 def test_user_with_same_email_exists_error(api_client: Client) -> None:
     """Tests that an error is returned if user with same email already exists."""
-    control_payload = create_payload()
-    test_payload = create_payload(username="differentUsername")
+    control_payload = create_register_payload()
+    test_payload = create_register_payload(username="differentUsername")
 
     create_user(**control_payload)  # type: ignore[arg-type]
     res = json_post(api_client, CREATE_USER_URL, cast(dict[str, object], test_payload))
 
-    assert res.status_code == HTTP_409_CONFLICT
+    assert res.status_code == HTTPStatus.CONFLICT
     user_exists = get_user_model().objects.filter(username=test_payload["username"]).exists()
     assert not user_exists
 
@@ -186,10 +159,10 @@ def test_password_too_short_error(api_client: Client) -> None:
     """Tests an error is returned if password < PASSWORD_MIN_LENGTH."""
     # Use password shorter than minimum (currently 8 characters)
     short_password = "x" * (PASSWORD_MIN_LENGTH - 1)
-    payload = create_payload(password=short_password)
+    payload = create_register_payload(password=short_password)
     res = json_post(api_client, CREATE_USER_URL, cast(dict[str, object], payload))
 
-    assert res.status_code == HTTP_422_UNPROCESSABLE_ENTITY
+    assert res.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
     user_exists = get_user_model().objects.filter(username=payload["username"]).exists()
     assert not user_exists
 
@@ -197,34 +170,34 @@ def test_password_too_short_error(api_client: Client) -> None:
 @pytest.mark.django_db
 def test_create_token_for_user_via_username(api_client: Client) -> None:
     """Tests generating a token via username/pw for user authentication."""
-    user_details = create_payload()
+    user_details = create_register_payload()
     create_user(**user_details)  # type: ignore[arg-type]
 
     auth_payload = {"login": user_details["username"], "password": user_details["password"]}
     res = json_post(api_client, TOKEN_URL, cast(dict[str, object], auth_payload))
-    assert res.status_code == HTTP_200_OK
+    assert res.status_code == HTTPStatus.OK
 
 
 @pytest.mark.django_db
 def test_create_token_for_user_via_email(api_client: Client) -> None:
     """Tests generating a token via email/pw for user authentication."""
-    user_details = create_payload()
+    user_details = create_register_payload()
     create_user(**user_details)  # type: ignore[arg-type]
 
     auth_payload = {"login": user_details["email"], "password": user_details["password"]}
     res = json_post(api_client, TOKEN_URL, cast(dict[str, object], auth_payload))
-    assert res.status_code == HTTP_200_OK
+    assert res.status_code == HTTPStatus.OK
 
 
 @pytest.mark.django_db
 def test_create_token_bad_password(api_client: Client) -> None:
     """Tests that an error is returned if user password is invalid."""
-    user_details = create_payload(password="goodPassword")
+    user_details = create_register_payload(password="goodPassword")
     create_user(**user_details)  # type: ignore[arg-type]
 
     auth_payload = {"login": user_details["username"], "password": "badPassword"}
     res = json_post(api_client, TOKEN_URL, cast(dict[str, object], auth_payload))
-    assert res.status_code == HTTP_401_UNAUTHORIZED
+    assert res.status_code == HTTPStatus.UNAUTHORIZED
 
 
 @pytest.mark.django_db
@@ -232,7 +205,7 @@ def test_create_token_blank_username(api_client: Client) -> None:
     """Tests that an error is returned if username is blank and no email provided."""
     auth_payload = {"login": "", "password": "testPassword"}
     res = json_post(api_client, TOKEN_URL, cast(dict[str, object], auth_payload))
-    assert res.status_code == HTTP_400_BAD_REQUEST
+    assert res.status_code == HTTPStatus.BAD_REQUEST
 
 
 @pytest.mark.django_db
@@ -240,7 +213,7 @@ def test_create_token_blank_email(api_client: Client) -> None:
     """Tests that an error is returned if email is blank and no username provided."""
     auth_payload = {"login": "", "password": "testPassword"}
     res = json_post(api_client, TOKEN_URL, cast(dict[str, object], auth_payload))
-    assert res.status_code == HTTP_400_BAD_REQUEST
+    assert res.status_code == HTTPStatus.BAD_REQUEST
 
 
 @pytest.mark.django_db
@@ -248,14 +221,14 @@ def test_create_token_blank_password(api_client: Client) -> None:
     """Tests that posting a blank password returns an error."""
     auth_payload = {"login": "testUser", "password": ""}
     res = json_post(api_client, TOKEN_URL, cast(dict[str, object], auth_payload))
-    assert res.status_code == HTTP_400_BAD_REQUEST
+    assert res.status_code == HTTPStatus.BAD_REQUEST
 
 
 @pytest.mark.django_db
 def test_retrieve_profile_unauthorized(api_client: Client) -> None:
     """Tests that authentication is required to manage a user profile."""
     res: HttpResponse = api_client.get(ME_URL)  # type: ignore[assignment]
-    assert res.status_code == HTTP_401_UNAUTHORIZED
+    assert res.status_code == HTTPStatus.UNAUTHORIZED
 
 
 # =========================
@@ -272,7 +245,7 @@ def test_retrieve_profile_success(authenticated_user: tuple[Client, User]) -> No
     client, user = authenticated_user
 
     res = client.get(ME_URL)
-    assert res.status_code == HTTP_200_OK
+    assert res.status_code == HTTPStatus.OK
     data = json.loads(res.content.decode(res.charset or "utf-8"))
     assert data["username"] == user.username
     assert data["email"] == user.email
@@ -311,7 +284,7 @@ def test_update_profile_no_csrf_authenticated(db: None) -> None:
     # Note: CSRF would normally block this, but this test uses Django's test client
     # which automatically handles CSRF for session-authenticated requests
     res = client.patch(ME_URL, json.dumps(payload), content_type="application/json")
-    assert res.status_code == HTTP_200_OK
+    assert res.status_code == HTTPStatus.OK
     user.refresh_from_db()
     assert user.first_name == payload["first_name"]
     assert user.last_name == payload["last_name"]
@@ -360,7 +333,7 @@ def test_update_profile_with_csrf_authenticated(db: None) -> None:
         content_type="application/json",
         HTTP_X_CSRFTOKEN=csrf_token,
     )
-    assert res.status_code == HTTP_200_OK
+    assert res.status_code == HTTPStatus.OK
     user.refresh_from_db()
     assert user.first_name == payload["first_name"]
     assert user.last_name == payload["last_name"]
@@ -374,7 +347,7 @@ def test_unauthenticated_profile_access(api_client: Client) -> None:
     Expect 401 Unauthorized.
     """
     res = api_client.get(ME_URL)
-    assert res.status_code == HTTP_401_UNAUTHORIZED
+    assert res.status_code == HTTPStatus.UNAUTHORIZED
 
 
 @pytest.mark.django_db
@@ -385,7 +358,7 @@ def test_unauthenticated_profile_update(api_client: Client) -> None:
     """
     payload = {"first_name": "Hacker"}
     res = api_client.patch(ME_URL, json.dumps(payload), content_type="application/json")
-    assert res.status_code == HTTP_401_UNAUTHORIZED
+    assert res.status_code == HTTPStatus.UNAUTHORIZED
 
 
 # =========================
@@ -529,7 +502,7 @@ def test_throttling_bypassed_by_default(api_client: Client) -> None:
     # All should succeed because throttling is bypassed
     for i in range(10):
         response = json_post(api_client, TOKEN_URL, cast(dict[str, object], login_data))
-        assert response.status_code == HTTP_200_OK, (
+        assert response.status_code == HTTPStatus.OK, (
             f"Request {i+1} failed with status {response.status_code}. "
             "Expected all requests to succeed (throttling should be bypassed)."
         )

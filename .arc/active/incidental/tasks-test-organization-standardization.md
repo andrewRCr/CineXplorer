@@ -310,21 +310,24 @@ See updated `notes-test-organization-standardization.md` for detailed analysis.
         - Movie tests: 192 (191 pass + 1 xfail) - count stable
         - All quality checks passing
 
-- [ ] **4.3 Migrate remaining movie app tests**
+- [x] **4.3 Migrate remaining movie app tests**
 
-    - [ ] **4.3.1 Categorize remaining test files**
-        - Review files still in `backend/apps/movie/tests/` root
-        - Categorize as unit (mocked dependencies) or integration (real DB/API)
-        - Document categorization
+    - [x] **4.3.1 Categorize remaining test files**
+        - Unit (Mock): `test_movie_service.py`, `test_keyword_service.py`, `test_people_service.py`,
+          `test_movie_service_buffer_deduplication.py`, `test_schemas.py`, `test_batch_operations.py`
+        - Integration (DB/Client): `test_endpoint_enrichment_integration.py`
+        - Keep in root (utilities): `test_helpers.py`, `tmdb_test_builders.py`
 
-    - [ ] **4.3.2 Move unit tests to tests/unit/**
-        - Move service tests: `test_movie_service.py`, `test_keyword_service.py`, `test_people_service.py`
-        - Move: `test_movie_service_buffer_deduplication.py`, `test_schemas.py`
-        - Run tests after each move
+    - [x] **4.3.2 Move unit tests to tests/unit/**
+        - Moved to `unit/services/`: `test_movie_service.py`, `test_keyword_service.py`, `test_people_service.py`,
+          `test_movie_service_buffer_deduplication.py`, `test_batch_operations.py`
+        - Moved to `unit/`: `test_schemas.py`
+        - 110 unit tests passing
 
-    - [ ] **4.3.3 Move integration tests to tests/integration/**
-        - Move: `test_endpoint_enrichment_integration.py`, `test_batch_operations.py`
-        - Run tests after each move
+    - [x] **4.3.3 Move integration tests to tests/integration/**
+        - Moved: `test_endpoint_enrichment_integration.py`
+        - Note: `test_batch_operations.py` uses Mock, moved to unit/ instead
+        - 82 integration tests (81 pass + 1 xfail)
 
 - [ ] **4.4 Migrate authentication app tests**
 

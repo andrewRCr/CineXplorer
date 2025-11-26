@@ -89,8 +89,8 @@ from django.core.cache import cache
 if TYPE_CHECKING:
     from django.test import Client
 
-# Import OAuth mock classes from test_oauth_mocks module
-from authentication.tests.test_oauth_mocks import (
+# Import OAuth mock classes from oauth_mocks module
+from authentication.tests.oauth_mocks import (
     MockGitHubOAuth,
     MockGoogleOAuth,
 )

@@ -233,9 +233,8 @@ def test_blacklist_table_contains_revoked_token(
     verified_user: User,
 ) -> None:
     """Test that database blacklist table contains entry for revoked token."""
-    # Clear any existing blacklist entries for clean test
-    BlacklistedToken.objects.all().delete()
-    OutstandingToken.objects.all().delete()
+    # Clear any existing entries for THIS USER only (avoid affecting other tests)
+    OutstandingToken.objects.filter(user=verified_user).delete()  # type: ignore[misc]
 
     # Login to get initial tokens
     login_data = {
@@ -249,11 +248,16 @@ def test_blacklist_table_contains_revoked_token(
     )
     assert login_response.status_code == HTTPStatus.OK
 
+    # Verify refresh token cookie was set
+    assert "refresh_token" in api_client.cookies, "Login should set refresh_token cookie"
+
     # Get CSRF token
     csrf_token = get_csrf_token(api_client)
 
-    # Verify no blacklist entries initially (login doesn't create them)
-    initial_blacklist_count = BlacklistedToken.objects.count()
+    # Count blacklist entries for THIS USER before refresh
+    initial_user_blacklist = BlacklistedToken.objects.filter(
+        token__user=verified_user  # type: ignore[misc]
+    ).count()
 
     # Refresh token - this should blacklist the old one
     refresh_response = api_client.post(
@@ -263,19 +267,13 @@ def test_blacklist_table_contains_revoked_token(
     )
     assert refresh_response.status_code == HTTPStatus.OK
 
-    # Verify blacklist entry was created
-    final_blacklist_count = BlacklistedToken.objects.count()
-    assert final_blacklist_count > initial_blacklist_count, (
+    # Verify blacklist entry was created for THIS USER
+    final_user_blacklist = BlacklistedToken.objects.filter(
+        token__user=verified_user  # type: ignore[misc]
+    ).count()
+    assert final_user_blacklist > initial_user_blacklist, (
         "Blacklist table should contain entry for revoked token"
     )
-
-    # Verify the blacklisted token belongs to our user
-    blacklisted_tokens = BlacklistedToken.objects.all()
-    user_tokens = [
-        bt for bt in blacklisted_tokens
-        if bt.token.user_id == verified_user.id  # type: ignore[union-attr]
-    ]
-    assert len(user_tokens) > 0, "Should have blacklisted token for test user"
 
 
 @pytest.mark.django_db

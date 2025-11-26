@@ -329,15 +329,25 @@ See updated `notes-test-organization-standardization.md` for detailed analysis.
         - Note: `test_batch_operations.py` uses Mock, moved to unit/ instead
         - 82 integration tests (81 pass + 1 xfail)
 
-- [ ] **4.4 Migrate authentication app tests**
+- [x] **4.4 Migrate authentication app tests**
 
-    - [ ] **4.4.1 Move tests to appropriate directories**
-        - Most auth tests are integration (API tests) - move to `tests/integration/`
-        - Run tests after move
+    - [x] **4.4.1 Move tests to appropriate directories**
+        - All 13 test files moved to `tests/integration/` (all use django_db + Client)
+        - Renamed `test_oauth_mocks.py` → `oauth_mocks.py` (utility file, not tests)
+        - Updated conftest.py import to reflect renamed module
+        - Fixed flaky test: `test_blacklist_table_contains_revoked_token` now filters by user
+        - 132 tests collected, all passing
 
-    - [ ] **4.4.2 Keep oversized files intact per Phase 3 decisions**
-        - `test_token_refresh_scenarios.py` (519 lines) - cohesive, keep intact
-        - `test_error_recovery.py` (500 lines) - cohesive, keep intact
+    - [x] **4.4.2 Keep oversized files intact per Phase 3 decisions**
+        - `test_token_refresh_scenarios.py` (519 lines) - cohesive, kept intact
+        - `test_error_recovery.py` (500 lines) - cohesive, kept intact
+
+    - [x] **4.4.3 Evaluate unit test needs**
+        - Evaluated all auth modules (utils, throttles, schemas, adapters, auth_ninja, middleware)
+        - Conclusion: Integration tests are the appropriate strategy for auth code
+        - Auth is inherently cross-cutting (HTTP, cookies, sessions, DB, middleware)
+        - 132 integration tests provide comprehensive coverage
+        - Removed empty `tests/unit/` directory (no unit tests needed)
 
 - [ ] **4.5 Migrate user_movie_data app tests**
 

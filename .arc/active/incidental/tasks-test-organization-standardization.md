@@ -2,7 +2,7 @@
 
 **Created:** 2025-10-30
 **Branch:** `technical/service-layer-modernization`
-**Status:** Paused
+**Status:** Active
 
 ## Context
 
@@ -11,18 +11,16 @@ inconsistencies and file size issues that would compound when adding 15+ new tes
 
 **Interrupts:** `.arc/active/incidental/tasks-buffer-deduplication-data-quality.md` at Task 3.1 (before writing new tests)
 
-**Paused At:** Phase 3 complete (test file analysis and split decisions made, before Phase 4 file splits)
-
-**Paused To:** `.arc/active/incidental/tasks-discover-endpoint-consolidation.md` - Critical endpoint architecture
-issues discovered during Phase 3 browser testing must be fixed before continuing with endpoint-specific test file splits
+**Paused At:** Phase 3 complete (2025-10-30)
+**Resumed:** 2025-11-26 (after endpoint consolidation work)
 
 **Problem:** Test organization is inconsistent and some files have grown beyond maintainable size:
 
 1. **Backend inconsistency:** Tests live in flat `apps/{app}/tests/` directories without unit/integration separation
 2. **Massive test files:**
-   - `test_movie_api.py`: 1,512 lines (3-7x over recommended 200-400 line threshold)
-   - `test_result_filtering.py`: 1,412 lines (3-5x over threshold)
-   - Several files at 500-670 lines (borderline)
+   - `test_movie_api.py`: 1,503 lines (significant overlap with new DRY tests created during endpoint consolidation)
+   - `test_result_filtering.py`: 1,561 lines (service layer tests, split plan unchanged)
+   - Several files at 500-670 lines (borderline, per Phase 3 decisions some kept intact)
 3. **Frontend inconsistency:** Mix of patterns (`.integration.test.tsx` vs `Integration.test.tsx`)
 4. **No pytest markers:** Missing unit/integration/e2e markers for selective execution
 
@@ -206,100 +204,148 @@ Framework, FastAPI, pytest documentation, and React ecosystem. Key findings:
         - Split criteria: Multiple concerns, multiple endpoints, 2x+ over threshold
         - Keep criteria: Single cohesive focus, borderline threshold, artificial boundaries
 
-### **Phase 4:** Execute File Splits and Migration
+---
 
-**Purpose:** Move tests to new directories and split oversized files.
+### Re-evaluation Note (2025-11-26)
 
-- [ ] **4.1 Split and migrate test_movie_api.py**
+**Context:** Task list paused at Phase 3 complete for `tasks-discover-endpoint-consolidation.md` work. Returning
+after significant codebase changes require reassessment of Phase 4+ tasks.
 
-    - [ ] **4.1.1 Implement approved split strategy**
-        - Create new test files in `tests/integration/api/` or `tests/integration/api/movies/`
-        - Move tests to new files (copy-paste initially, delete later)
-        - Ensure imports work correctly
-        - Run tests after each file creation: `docker compose -f infrastructure/docker-compose.yml exec backend pytest apps/movie/tests/integration/`
+**Key changes since Phase 3:**
 
-    - [ ] **4.1.2 Update fixtures for new files**
-        - Move shared fixtures to `tests/integration/conftest.py` if needed
-        - Ensure all new files can access required fixtures
-        - Verify no duplicate fixture definitions
+- Test count grew from 374 → 454 tests (+80 tests, ~51 in new DRY infrastructure)
+- New DRY test infrastructure created in `tests/integration/api/`:
+    - `EndpointConfig` pattern for parametrized multi-endpoint tests
+    - `tmdb_test_builders.py` for validated mock data
+    - 3 new test files (51 tests) using DRY parametrized patterns
+- `test_movie_api.py` now has significant overlap with new tests
+- `test_result_filtering.py` grew by 149 lines (3 new tests)
 
-    - [ ] **4.1.3 Delete original file and verify**
+**Strategy revision for test_movie_api.py:**
+
+- Original plan: Split into 7 new files
+- Revised plan: Consolidate unique tests into existing `integration/api/` structure, delete redundant tests
+- Rationale: New infrastructure is more DRY; creating separate files would duplicate coverage
+
+**test_result_filtering.py unchanged:** Original split plan still valid (different layer - service vs API)
+
+**Line threshold flexibility:** Hard limit 800 lines, soft target 400 lines. DRY parametrized files (like
+`test_browse_endpoints.py` at 648 lines for 90 logical tests) are acceptable.
+
+See updated `notes-test-organization-standardization.md` for detailed analysis.
+
+---
+
+### **Phase 4:** Execute File Splits and Migration (Revised)
+
+**Purpose:** Consolidate redundant tests, migrate unique tests to new structure, split service layer tests.
+
+- [ ] **4.1 Consolidate test_movie_api.py into existing structure**
+
+    **Goal:** Eliminate redundancy with new `integration/api/` tests while preserving unique coverage.
+
+    - [ ] **4.1.1 Audit tests for overlap with new infrastructure**
+        - Read each test in `test_movie_api.py` (28 tests)
+        - Compare against `test_browse_endpoints.py`, `test_browse_sort_options.py`, `test_date_constrained_endpoints.py`
+        - Categorize each test as: redundant (delete), unique (migrate), or partial overlap (assess)
+        - Document findings in notes file
+
+    - [ ] **4.1.2 Migrate reference endpoint tests**
+        - Create `tests/integration/api/test_reference_endpoints.py`
+        - Move: `test_get_movie_genres`, `test_get_popular_keywords`, `test_search_keywords`,
+          `test_get_popular_people`, `test_search_people`
+        - Run tests to verify: `docker compose -f ../infrastructure/docker-compose.yml exec backend pytest apps/movie/tests/integration/api/test_reference_endpoints.py`
+
+    - [ ] **4.1.3 Migrate movie detail tests**
+        - Create `tests/integration/api/test_movie_detail.py`
+        - Move: `test_get_movie_detail_authenticated`, `test_get_movie_detail_unauthenticated`
+        - Run tests to verify
+
+    - [ ] **4.1.4 Assess and migrate pagination metadata tests**
+        - Evaluate: `test_browse_returns_next_tmdb_page_start_after_buffer`, `test_browse_continues_from_tmdb_page_start_parameter`,
+          `test_browse_no_duplicates_across_sequential_pages`, `test_browse_fallback_when_tmdb_page_start_omitted`
+        - If unique: Create `tests/integration/api/test_browse_pagination.py` or add to existing file
+        - If covered by new tests: Mark for deletion
+
+    - [ ] **4.1.5 Assess and handle remaining browse tests**
+        - Evaluate overlap for filter/deduplication tests against `TestDataQuality` in `test_browse_endpoints.py`
+        - Delete tests that are now covered by parametrized tests
+        - Migrate any truly unique tests
+
+    - [ ] **4.1.6 Delete test_movie_api.py and verify**
         - Remove `backend/apps/movie/tests/test_movie_api.py`
-        - Run full movie test suite: `docker compose -f infrastructure/docker-compose.yml exec backend pytest apps/movie/tests/`
-        - Verify all tests still pass, same count as before split
+        - Run full test suite: `docker compose -f ../infrastructure/docker-compose.yml exec backend pytest apps/movie/tests/`
+        - Verify test count stable (no accidental deletions of unique coverage)
 
-- [ ] **4.2 Split and migrate test_result_filtering.py**
+- [ ] **4.2 Split test_result_filtering.py** (Original plan - service layer tests)
 
-    - [ ] **4.2.1 Implement approved split strategy**
-        - Create new test files in `tests/unit/services/movie_filters/` or similar
-        - Move tests to new files incrementally
-        - Run tests after each file creation
+    **Goal:** Split 1561-line file into 8 focused files in `tests/unit/services/filtering/`.
 
-    - [ ] **4.2.2 Update fixtures for new files**
-        - Move shared fixtures to appropriate conftest.py
-        - Ensure all new files have fixture access
+    - [ ] **4.2.1 Create filtering subdirectory**
+        - Create `backend/apps/movie/tests/unit/services/filtering/`
+        - Create `__init__.py` and `conftest.py` if needed
+
+    - [ ] **4.2.2 Split by filter domain**
+        - Create files per notes analysis:
+            - `test_year_filtering.py` (~200 lines, 4 tests)
+            - `test_rating_filtering.py` (~140 lines, 3 tests)
+            - `test_vote_count_filtering.py` (~120 lines, 3 tests)
+            - `test_completeness_filtering.py` (~180 lines, 4+ tests including new overview tests)
+            - `test_historical_validation.py` (~120 lines, 3 tests)
+            - `test_genre_quality_filtering.py` (~144 lines, 3 tests)
+            - `test_buffer_mechanism.py` (~294 lines, 5 tests)
+            - `test_endpoint_filtering_context.py` (~180 lines, 4 tests)
+        - Run tests after each file: `docker compose -f ../infrastructure/docker-compose.yml exec backend pytest apps/movie/tests/unit/services/filtering/`
 
     - [ ] **4.2.3 Delete original file and verify**
         - Remove `backend/apps/movie/tests/test_result_filtering.py`
-        - Run full movie test suite
-        - Verify all tests pass
+        - Run full unit tests: `docker compose -f ../infrastructure/docker-compose.yml exec backend pytest apps/movie/tests/unit/`
+        - Verify 33 tests pass (same count as original file)
 
 - [ ] **4.3 Migrate remaining movie app tests**
 
     - [ ] **4.3.1 Categorize remaining test files**
-        - Review each test file in `backend/apps/movie/tests/`
-        - Determine if unit or integration test
-        - Document categorization decisions
+        - Review files still in `backend/apps/movie/tests/` root
+        - Categorize as unit (mocked dependencies) or integration (real DB/API)
+        - Document categorization
 
     - [ ] **4.3.2 Move unit tests to tests/unit/**
-        - Move files testing isolated services/models/utils
-        - Examples: `test_movie_service.py` (unit parts), `test_keyword_service.py`, `test_people_service.py`
+        - Move service tests: `test_movie_service.py`, `test_keyword_service.py`, `test_people_service.py`
+        - Move: `test_movie_service_buffer_deduplication.py`, `test_schemas.py`
         - Run tests after each move
 
     - [ ] **4.3.3 Move integration tests to tests/integration/**
-        - Move files testing API endpoints or database interactions
-        - Examples: `test_endpoint_enrichment_integration.py`, `test_batch_operations.py`
+        - Move: `test_endpoint_enrichment_integration.py`, `test_batch_operations.py`
         - Run tests after each move
-
-    - [ ] **4.3.4 Handle mixed-type test files**
-        - For files containing both unit and integration tests, split into two files
-        - Name clearly: `test_movie_service.py` (unit), `test_movie_service_integration.py`
-        - Run tests to verify split
 
 - [ ] **4.4 Migrate authentication app tests**
 
-    - [ ] **4.4.1 Categorize and move authentication tests**
-        - Review: `test_user_api.py`, `test_token_refresh_scenarios.py`, `test_error_recovery.py`, `test_logging.py`
-        - Move to `tests/integration/` (all are API tests)
-        - Run tests after move: `docker compose -f infrastructure/docker-compose.yml exec backend pytest apps/authentication/tests/`
+    - [ ] **4.4.1 Move tests to appropriate directories**
+        - Most auth tests are integration (API tests) - move to `tests/integration/`
+        - Run tests after move
 
-    - [ ] **4.4.2 Split oversized auth files if needed**
-        - Check if any auth files exceed 500 lines
-        - Split if beneficial (e.g., separate token refresh tests)
-        - Run tests after split
+    - [ ] **4.4.2 Keep oversized files intact per Phase 3 decisions**
+        - `test_token_refresh_scenarios.py` (519 lines) - cohesive, keep intact
+        - `test_error_recovery.py` (500 lines) - cohesive, keep intact
 
 - [ ] **4.5 Migrate user_movie_data app tests**
 
-    - [ ] **4.5.1 Categorize and move user_movie_data tests**
-        - Review: `test_user_movie_data_api.py`, `test_watchlist_endpoint.py`, `test_movie_enrichment_service.py`, `test_response_builder.py`
-        - Separate unit (service/builder) from integration (API) tests
+    - [ ] **4.5.1 Categorize and move tests**
+        - Unit: `test_response_builder.py`, `test_service_factory.py`, `test_movie_enrichment_service.py`
+        - Integration: `test_user_movie_data_api.py`, `test_watchlist_endpoint.py`
         - Move to appropriate directories
 
-    - [ ] **4.5.2 Split oversized files if needed**
-        - Check line counts (several files at 500-670 lines)
-        - Split if logical boundaries exist
-        - Run tests after changes
+    - [ ] **4.5.2 Keep oversized files intact per Phase 3 decisions**
+        - `test_movie_enrichment_service.py` (672 lines) - single service focus
+        - `test_response_builder.py` (563 lines) - 2 parametrized tests
 
 - [ ] **4.6 Migrate core app tests**
 
-    - [ ] **4.6.1 Categorize and move core tests**
-        - Review: `test_models.py`, `test_helpers.py`, `test_logging_api.py`
-        - Helpers are test utilities (can stay in tests/ root)
-        - Move models to unit/, API tests to integration/
-
-    - [ ] **4.6.2 Handle management command tests**
-        - `test_tmdb_logging.py`, `test_logging.py` in management/commands/
-        - These can stay where they are (testing commands in place)
+    - [ ] **4.6.1 Move tests to appropriate directories**
+        - Unit: `test_models.py`, `test_pagination.py`
+        - Integration: `test_logging_api.py`, `test_admin.py`
+        - Keep in root: `test_helpers.py` (test utilities)
+        - Keep in place: management command tests
 
 ### **Phase 5:** Update pytest Configuration
 
@@ -470,6 +516,17 @@ Framework, FastAPI, pytest documentation, and React ecosystem. Key findings:
         - **Document changes:** Update `notes-test-organization-standardization.md` under
           "Post-Migration Refactoring Opportunities" section with summary of changes made
 
+    - [ ] **7.3.7 Compile meaningfulness concerns observed during migration**
+        - Review notes captured during Phase 4 for tests that appear:
+            - Unable to fail (assertions always pass regardless of logic)
+            - Over-mocked (mock bypasses what should be tested)
+            - Testing implementation rather than behavior
+        - **Document findings:** Update `notes-test-organization-standardization.md` under
+          "Meaningfulness Concerns for Follow-up" section
+        - If significant concerns found: Create atomic task or incidental task list for dedicated audit
+        - Note: Comprehensive meaningfulness audit (mutation testing, break-verify cycles) deferred to
+          future dedicated task list
+
 - [ ] **7.4 Update test count baseline**
 
     - [ ] **7.4.1 Count total tests after migration**
@@ -535,22 +592,15 @@ Framework, FastAPI, pytest documentation, and React ecosystem. Key findings:
 
 ## Notes
 
-### Pre-Migration Test Counts
+### Test Counts (Updated 2025-11-26)
 
-**Backend:**
+**Current state:**
 
-- Total test files: ~20
-- Movie app: 10 test files
-- Authentication app: 5+ test files
-- Total test count: 103 tests (from pytest migration notes)
+- Total project tests: 454
+- Movie app tests: 205
+- Test files requiring action: `test_movie_api.py` (1,503 lines), `test_result_filtering.py` (1,561 lines)
 
-**Largest Files:**
-
-- `test_movie_api.py`: 1,512 lines
-- `test_result_filtering.py`: 1,412 lines
-- `test_movie_enrichment_service.py`: 672 lines
-- `test_user_movie_data_api.py`: 666 lines
-- `test_watchlist_endpoint.py`: 660 lines
+**Growth since Phase 3:** 374 → 454 tests (+80). Original "103 tests" was stale from pytest migration (2025-10-13).
 
 ### Research References
 
@@ -563,17 +613,19 @@ Framework, FastAPI, pytest documentation, and React ecosystem. Key findings:
 
 1. **All apps migrated together**: Establishes consistent patterns project-wide
 2. **Directory-based separation**: Industry standard, tool-agnostic
-3. **File splitting thresholds**: 200-400 lines per file target
+3. **File splitting thresholds**: 400 lines soft target, 800 lines hard limit (DRY parametrized files can exceed 400)
 4. **Fixture organization**: Keep at app-level conftest.py (pytest_plugins deferred)
 5. **Frontend unchanged**: Current `__tests__/` pattern already idiomatic
 6. **Markers as supplement**: Directory structure is primary organization
+7. **Consolidate over split**: When DRY infrastructure exists, consolidate into it rather than creating parallel structure
 
 ### Post-Migration Success Criteria
 
-- ✅ All tests pass with same count as before (103 tests)
-- ✅ No test file exceeds 400 lines (unless intentionally documented)
-- ✅ Clear unit/integration separation in all apps
+- ✅ All 454 tests pass (no regression)
+- ✅ No test file exceeds 800 lines (400 preferred, DRY exceptions documented)
+- ✅ Clear unit/integration separation in all apps (no mixing)
 - ✅ CI/CD pipeline runs successfully
 - ✅ Documentation updated with new standards
 - ✅ Can run unit tests separately from integration tests
 - ✅ All quality gates pass (linting, type checking, coverage)
+- ✅ DRY patterns adopted where applicable (`EndpointConfig`, test builders)

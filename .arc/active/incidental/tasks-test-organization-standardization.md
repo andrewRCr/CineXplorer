@@ -286,30 +286,29 @@ See updated `notes-test-organization-standardization.md` for detailed analysis.
         - **Result:** Deleted. Movie tests: 220 → 192 (-28). All 191 pass + 1 xfail. Project total: 454 → 441 (unique
         coverage preserved via new DRY tests).
 
-- [ ] **4.2 Split test_result_filtering.py** (Original plan - service layer tests)
+- [x] **4.2 Split test_result_filtering.py** (Original plan - service layer tests)
 
     **Goal:** Split 1561-line file into 8 focused files in `tests/unit/services/filtering/`.
 
-    - [ ] **4.2.1 Create filtering subdirectory**
-        - Create `backend/apps/movie/tests/unit/services/filtering/`
-        - Create `__init__.py` and `conftest.py` if needed
+    - [x] **4.2.1 Create filtering subdirectory**
+        - Created `backend/apps/movie/tests/unit/services/filtering/` with `__init__.py` and `conftest.py`
 
-    - [ ] **4.2.2 Split by filter domain**
-        - Create files per notes analysis:
-            - `test_year_filtering.py` (~200 lines, 4 tests)
-            - `test_rating_filtering.py` (~140 lines, 3 tests)
-            - `test_vote_count_filtering.py` (~120 lines, 3 tests)
-            - `test_completeness_filtering.py` (~180 lines, 4+ tests including new overview tests)
-            - `test_historical_validation.py` (~120 lines, 3 tests)
-            - `test_genre_quality_filtering.py` (~144 lines, 3 tests)
-            - `test_buffer_mechanism.py` (~294 lines, 5 tests)
-            - `test_endpoint_filtering_context.py` (~180 lines, 4 tests)
-        - Run tests after each file: `docker compose -f ../infrastructure/docker-compose.yml exec backend pytest apps/movie/tests/unit/services/filtering/`
+    - [x] **4.2.2 Split by filter domain**
+        - Created 8 focused test files:
+            - `test_year_filtering.py` (4 tests)
+            - `test_rating_filtering.py` (3 tests)
+            - `test_vote_count_filtering.py` (3 tests)
+            - `test_completeness_filtering.py` (7 tests)
+            - `test_historical_validation.py` (3 tests)
+            - `test_genre_quality_filtering.py` (3 tests)
+            - `test_buffer_mechanism.py` (5 tests)
+            - `test_endpoint_filtering_context.py` (5 tests)
+        - All 33 tests passing in new structure
 
-    - [ ] **4.2.3 Delete original file and verify**
-        - Remove `backend/apps/movie/tests/test_result_filtering.py`
-        - Run full unit tests: `docker compose -f ../infrastructure/docker-compose.yml exec backend pytest apps/movie/tests/unit/`
-        - Verify 33 tests pass (same count as original file)
+    - [x] **4.2.3 Delete original file and verify**
+        - Removed `backend/apps/movie/tests/test_result_filtering.py`
+        - Movie tests: 192 (191 pass + 1 xfail) - count stable
+        - All quality checks passing
 
 - [ ] **4.3 Migrate remaining movie app tests**
 

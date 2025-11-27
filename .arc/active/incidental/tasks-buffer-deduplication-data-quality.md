@@ -144,7 +144,7 @@ analysis and solution options.
         - Test: Different filters generate different session keys
         - Test: Session TTL set correctly (1 hour default)
         - Test: Graceful degradation when Redis unavailable
-        - File: `backend/apps/movie/tests/test_pagination_session_manager.py`
+        - File: `backend/apps/movie/tests/unit/services/test_pagination_session_manager.py`
         - Expect tests to FAIL initially (class not implemented)
 
     - [ ] **3.1.2 Run unit tests and verify failure messages**
@@ -155,19 +155,25 @@ analysis and solution options.
 
     **Goal:** Verify session tracking prevents duplicates across paginated requests.
 
-    - [ ] **3.2.1 Add cross-page deduplication tests to `test_movie_api.py`**
-        - Test: Movie appearing on TMDB pages 2 and 4 only returned once across our pages 1-2
-        - Test: Page 1 request stores returned IDs in session
-        - Test: Page 2 request excludes IDs already returned on page 1
-        - Test: Session cleared on page=1 (fresh start for backward navigation)
-        - Test: Different filter combinations use different sessions
-        - Test: Session expires after TTL (1 hour)
-        - Test: System works with Redis unavailable (degrades to within-page only)
-        - Expect tests to FAIL initially (session integration not implemented)
+    **Note:** `test_movie_api.py` was consolidated during test organization. Cross-page tests go in
+    `integration/api/test_browse_pagination.py`. One xfail test (`test_browse_no_cross_page_duplicates`)
+    already exists - it will pass once Phase 4 implementation is complete.
+
+    - [ ] **3.2.1 Add cross-page deduplication tests to `test_browse_pagination.py`**
+        - Existing xfail: `test_browse_no_cross_page_duplicates` (basic cross-page scenario)
+        - Add: Test page 1 request stores returned IDs in session
+        - Add: Test page 2 request excludes IDs already returned on page 1
+        - Add: Test session cleared on page=1 (fresh start for backward navigation)
+        - Add: Test different filter combinations use different sessions
+        - Add: Test session expires after TTL (1 hour)
+        - Add: Test graceful degradation when Redis unavailable (within-page only)
+        - File: `backend/apps/movie/tests/integration/api/test_browse_pagination.py`
+        - Expect new tests to FAIL initially (session integration not implemented)
 
     - [ ] **3.2.2 Run integration tests and verify failures**
         - Document expected failure patterns
         - Verify within-page deduplication still works (Phase 2)
+        - Verify existing xfail test still fails as expected
 
 ### **Phase 4:** Implement Session-Based Cross-Page Deduplication (TDD Green Phase)
 
@@ -362,9 +368,9 @@ which depends on our cross-page deduplication being complete.
 
 - `backend/apps/movie/services/movie_service.py` - Buffer deduplication implementation (within-page + cross-page)
 - `backend/apps/movie/services/pagination_session_manager.py` - Session tracking helper (new file, Phase 4)
-- `backend/apps/movie/tests/test_movie_service_buffer_deduplication.py` - Within-page dedup tests
-- `backend/apps/movie/tests/test_pagination_session_manager.py` - Session manager tests (new file, Phase 3)
-- `backend/apps/movie/tests/test_movie_api.py` - Integration tests (within-page + cross-page)
+- `backend/apps/movie/tests/unit/services/test_movie_service_buffer_deduplication.py` - Within-page dedup tests
+- `backend/apps/movie/tests/unit/services/test_pagination_session_manager.py` - Session manager tests (new file, Phase 3)
+- `backend/apps/movie/tests/integration/api/test_browse_pagination.py` - Cross-page integration tests (includes xfail)
 
 ### Frontend
 

@@ -1,18 +1,16 @@
 # Incidental: Test Organization Standardization
 
 **Created:** 2025-10-30
+**Completed:** 2025-11-27
 **Branch:** `technical/service-layer-modernization`
-**Status:** Active
+**Status:** Complete
 
 ## Context
 
 **Discovered:** During Phase 3 planning for buffer deduplication work, identified test organization
 inconsistencies and file size issues that would compound when adding 15+ new tests.
 
-**Interrupts:** `.arc/active/incidental/tasks-buffer-deduplication-data-quality.md` at Task 3.1 (before writing new tests)
-
-**Paused At:** Phase 3 complete (2025-10-30)
-**Resumed:** 2025-11-26 (after endpoint consolidation work)
+**Interrupts:** `tasks-buffer-deduplication-data-quality.md` at Task 3.1
 
 **Problem:** Test organization is inconsistent and some files have grown beyond maintainable size:
 
@@ -21,55 +19,10 @@ inconsistencies and file size issues that would compound when adding 15+ new tes
    - `test_movie_api.py`: 1,503 lines (significant overlap with new DRY tests created during endpoint consolidation)
    - `test_result_filtering.py`: 1,561 lines (service layer tests, split plan unchanged)
    - Several files at 500-670 lines (borderline, per Phase 3 decisions some kept intact)
-3. **Frontend inconsistency:** Mix of patterns (`.integration.test.tsx` vs `Integration.test.tsx`)
+3. **Frontend inconsistency:** Mix of patterns (`.integration.test.tsx` vs `Integration.test.tsx`) - Fixed: renamed 1 file
 4. **No pytest markers:** Missing unit/integration/e2e markers for selective execution
 
-**Why Now:**
-
-- About to add ~15 new tests for Phase 3-6 deduplication work
-- Establishing clean patterns BEFORE adding tests prevents future rework
-- Navigation difficulty in 1500-line test files harms productivity
-- Leave It Cleaner principle: Fix organization issues when touching test code
-- One-time migration cost provides permanent benefits
-
-**Research Completed:** External research agent analyzed pytest/Vitest best practices from Django REST
-Framework, FastAPI, pytest documentation, and React ecosystem. Key findings:
-
-- **pytest standard:** Directory-based separation (`tests/unit/`, `tests/integration/`) not file suffixes
-- **File splitting:** 200-400 lines per file recommended, organize by feature/endpoint for APIs
-- **Frontend:** Co-location is idiomatic, `.integration.test.tsx` suffix acceptable
-- **Fixtures:** Keep at app-level conftest.py (pytest_plugins premature at 14 fixtures)
-
-## Root Cause Analysis
-
-**Why tests grew large:**
-
-1. **No organizational framework:** Flat directory structure encouraged "just add to existing file"
-2. **No size guidelines:** Strategy doc didn't specify file size limits
-3. **Feature accretion:** API endpoints and filter types added over time without refactoring
-
-**Impact:**
-
-- Hard to find specific tests (searching 1500 lines)
-- Difficult to run subset of tests (no unit/integration separation)
-- Merge conflicts when multiple features touch same file
-- Slower test discovery and execution
-
-## Scope
-
-### Will Do
-
-- ✅ Update `.arc/reference/strategies/strategy-testing-methodology.md` with standardized patterns
-- ✅ Create `tests/unit/` and `tests/integration/` directories for all backend apps
-- ✅ Analyze and split `test_movie_api.py` (1512 lines) into logical files
-- ✅ Analyze and split `test_result_filtering.py` (1412 lines) into logical files
-- ✅ Move all existing backend tests to appropriate directories
-- ✅ Update pytest configuration with unit/integration/e2e markers
-- ✅ Verify CI/CD pipeline still works after migration
-- ✅ Post-migration audit: Check for remaining oversized files
-- ✅ Run full quality gates to verify all tests still pass
-
-### Won't Do
+## Scope (Won't Do)
 
 - ❌ Frontend test restructuring (current `__tests__/` pattern is fine, minimal changes only)
 - ❌ pytest_plugins modularization (premature at 14 fixtures, revisit at 50+)
@@ -150,7 +103,6 @@ Framework, FastAPI, pytest documentation, and React ecosystem. Key findings:
         - Cataloged all 23 test functions with purposes
         - Identified 7 natural groupings by endpoint + aspect
         - Documented shared fixtures: api_client, user, TMDB mocks, test helpers
-        - **Findings documented** in notes file under "test_movie_api.py Analysis" section
 
     - [x] **3.1.2 Propose split strategy**
         - **Strategy:** Endpoint + aspect split (7 files, 80-500 lines each)
@@ -163,7 +115,6 @@ Framework, FastAPI, pytest documentation, and React ecosystem. Key findings:
           6. test_genres_keywords_people.py (~140 lines) - Genres/keywords/people endpoints
           7. test_movie_detail.py (~100 lines) - Movie detail with auth variations
         - **Rationale:** Discover endpoint dominates (71% of file), splitting by aspect creates maintainable files
-        - **Complete strategy documented** in notes file for approval
 
 - [x] **3.2 Analyze test_result_filtering.py (1412 lines)**
 
@@ -171,7 +122,6 @@ Framework, FastAPI, pytest documentation, and React ecosystem. Key findings:
         - Cataloged all 30 test functions organized into 10 categories
         - Identified test types: filter validation, buffer mechanism, endpoint integration, data quality checks
         - Documented fixtures: None (unit tests use direct MovieService instantiation with mocked TMDB client)
-        - **Findings documented** in notes file under "test_result_filtering.py Analysis" section
 
     - [x] **3.2.2 Propose split strategy**
         - **Strategy:** Filter domain split (8 files, 80-294 lines each)
@@ -185,7 +135,6 @@ Framework, FastAPI, pytest documentation, and React ecosystem. Key findings:
           7. test_buffer_mechanism.py (~294 lines) - Buffer mechanism tests
           8. test_endpoint_filtering_integration.py (~180 lines) - Cross-cutting concerns
         - **Rationale:** Filter types are independent with clear boundaries, buffer is shared concern
-        - **Complete strategy documented** in notes file for approval
 
 - [x] **3.3 Identify other oversized files (500+ lines)**
 
@@ -193,48 +142,14 @@ Framework, FastAPI, pytest documentation, and React ecosystem. Key findings:
         - Generated comprehensive line count report for all test files
         - Identified 11 files over 500 lines (including already analyzed test_movie_api.py and
           test_result_filtering.py)
-        - **Candidates documented** in notes file under "Other Oversized Files" section
 
     - [x] **3.3.2 Assess split necessity**
         - Assessed 9 additional files (500-672 lines)
         - **Split recommended:** 3 files (test_user_movie_data_api.py, test_watchlist_endpoint.py,
           test_user_api.py)
         - **Keep intact:** 6 files (single focus, borderline threshold, parametrized tests, TDD features)
-        - **Decisions documented** with rationale in notes file under "Other Oversized Files" section
         - Split criteria: Multiple concerns, multiple endpoints, 2x+ over threshold
         - Keep criteria: Single cohesive focus, borderline threshold, artificial boundaries
-
----
-
-### Re-evaluation Note (2025-11-26)
-
-**Context:** Task list paused at Phase 3 complete for `tasks-discover-endpoint-consolidation.md` work. Returning
-after significant codebase changes require reassessment of Phase 4+ tasks.
-
-**Key changes since Phase 3:**
-
-- Test count grew from 374 → 454 tests (+80 tests, ~51 in new DRY infrastructure)
-- New DRY test infrastructure created in `tests/integration/api/`:
-    - `EndpointConfig` pattern for parametrized multi-endpoint tests
-    - `tmdb_test_builders.py` for validated mock data
-    - 3 new test files (51 tests) using DRY parametrized patterns
-- `test_movie_api.py` now has significant overlap with new tests
-- `test_result_filtering.py` grew by 149 lines (3 new tests)
-
-**Strategy revision for test_movie_api.py:**
-
-- Original plan: Split into 7 new files
-- Revised plan: Consolidate unique tests into existing `integration/api/` structure, delete redundant tests
-- Rationale: New infrastructure is more DRY; creating separate files would duplicate coverage
-
-**test_result_filtering.py unchanged:** Original split plan still valid (different layer - service vs API)
-
-**Line threshold flexibility:** Hard limit 800 lines, soft target 400 lines. DRY parametrized files (like
-`test_browse_endpoints.py` at 648 lines for 90 logical tests) are acceptable.
-
-See updated `notes-test-organization-standardization.md` for detailed analysis.
-
----
 
 ### **Phase 4:** Execute File Splits and Migration (Revised) ✅
 
@@ -254,8 +169,7 @@ See updated `notes-test-organization-standardization.md` for detailed analysis.
         - Read each test in `test_movie_api.py` (28 tests)
         - Compare against `test_browse_endpoints.py`, `test_browse_sort_options.py`, `test_date_constrained_endpoints.py`
         - Categorize each test as: redundant (delete), unique (migrate), or partial overlap (assess)
-        - Document findings in notes file
-        - **Result:** 12 redundant, 14 unique, 2 partial. See notes file "Detailed Overlap Analysis" section.
+        - **Result:** 12 redundant, 14 unique, 2 partial overlap
 
     - [x] **4.1.2 Migrate reference endpoint tests** ✅
         - Create `tests/integration/api/test_reference_endpoints.py`
@@ -537,43 +451,3 @@ See updated `notes-test-organization-standardization.md` for detailed analysis.
         - 2 pre-existing errors in unrelated file (strategy-color-tokens.md) - not introduced here
 
 ---
-
-## Notes
-
-### Test Counts (Updated 2025-11-26)
-
-**Current state:**
-
-- Total project tests: 454
-- Movie app tests: 205
-- Test files requiring action: `test_movie_api.py` (1,503 lines), `test_result_filtering.py` (1,561 lines)
-
-**Growth since Phase 3:** 374 → 454 tests (+80). Original "103 tests" was stale from pytest migration (2025-10-13).
-
-### Research References
-
-- **External research agent report** (2025-10-30): Comprehensive analysis of pytest and Vitest best practices
-- **Django REST Framework test structure**: <https://github.com/encode/django-rest-framework/tree/master/tests>
-- **pytest official docs**: <https://docs.pytest.org/en/stable/how-to/fixtures.html>
-- **Testing Pyramid**: Unit (80%) → Integration (15%) → E2E (5%)
-
-### Migration Strategy Decisions
-
-1. **All apps migrated together**: Establishes consistent patterns project-wide
-2. **Directory-based separation**: Industry standard, tool-agnostic
-3. **File splitting thresholds**: 400 lines soft target, 800 lines hard limit (DRY parametrized files can exceed 400)
-4. **Fixture organization**: Keep at app-level conftest.py (pytest_plugins deferred)
-5. **Frontend unchanged**: Current `__tests__/` pattern already idiomatic
-6. **Markers as supplement**: Directory structure is primary organization
-7. **Consolidate over split**: When DRY infrastructure exists, consolidate into it rather than creating parallel structure
-
-### Post-Migration Success Criteria
-
-- ✅ All 454 tests pass (no regression)
-- ✅ No test file exceeds 800 lines (400 preferred, DRY exceptions documented)
-- ✅ Clear unit/integration separation in all apps (no mixing)
-- ✅ CI/CD pipeline runs successfully
-- ✅ Documentation updated with new standards
-- ✅ Can run unit tests separately from integration tests
-- ✅ All quality gates pass (linting, type checking, coverage)
-- ✅ DRY patterns adopted where applicable (`EndpointConfig`, test builders)

@@ -2,19 +2,16 @@
 
 **Created:** 2025-10-30
 **Branch:** `technical/service-layer-modernization`
-**Status:** Paused
+**Status:** Active
 
 ## Context
 
 **Discovered:** Manual testing revealed multi-genre filter duplicates
 (Animation + Family filters showing Spirited Away twice on page 1)
 
-**Interrupts:** `.arc/active/incidental/tasks-navigation-filter-state-preservation.md` at Task 3.3 (manual browser verification)
+**Interrupts:** `tasks-navigation-filter-state-preservation.md` at Task 3.3
 
-**Paused At:** Task 3.1 (before writing tests for PaginationSessionManager)
-
-**Paused To:** `.arc/active/incidental/tasks-test-organization-standardization.md` - Establish test
-organization patterns before adding 15+ new tests
+**Resume At:** Task 3.1 (write tests for PaginationSessionManager)
 
 **Problem:** TMDB API returns duplicate movies across pagination boundaries (e.g., Spirited Away on page 1 position 19
 AND page 2 position 1), backend buffer concatenates without deduplication, causing React key collisions and incomplete pages.

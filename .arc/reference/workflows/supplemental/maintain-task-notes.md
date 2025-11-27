@@ -503,18 +503,49 @@ find .arc/reference/archive -name "tasks-<filename>.md"
 
 ---
 
-**Section-Level Temporal Noise**
+**Section-Level Evaluation Checklist (MANDATORY)**
 
-Grep patterns catch inline markers but miss entire sections that are temporal scaffolding. Manually check for and
-remove these sections:
+Grep patterns catch inline markers but miss entire sections that are temporal scaffolding. After grep-based
+cleanup, **manually scan top-matter and bottom-matter** using these checklists:
 
-- **"Why Now" sections** - Urgency rationale irrelevant after completion
-- **"Implementation Notes" sections** - Planning scaffolding (covered by old-pattern guidance below)
-- **"Success Criteria" with all items checked** - Completion doc covers outcomes
-- **"Critical Questions" with all items answered** - Historical scaffolding
+**Top-Matter Sections to REMOVE:**
 
-These sections served their purpose during planning/execution but add no archival value. The actual work is
-documented in task completions; decisions are in ADRs; outcomes are in completion docs.
+- [ ] **"Why Now"** - Urgency rationale irrelevant after completion
+- [ ] **"Root Cause Analysis"** - Temporal analysis explaining why work started (not what was done)
+- [ ] **"Will Do" with checkmarks** - Redundant with actual task completions (scope without checkmarks OK)
+- [ ] **"Research Completed" summaries** - **VERIFY** content exists in strategy doc before removing
+- [ ] **"Critical Questions"** - Historical scaffolding once all answered
+
+**Bottom-Matter Sections to REMOVE:**
+
+- [ ] **"Notes" section** - Often contains stale snapshots, test counts, temporal state
+- [ ] **"Success Criteria" with all items checked** - Completion doc covers outcomes
+- [ ] **"Research References"** - **VERIFY** in strategy docs before removing, or confirm not reusable
+- [ ] **"Implementation Notes"** - Old pattern, now captured in task completions
+- [ ] **"Completion Summary"** - Now in separate completion-{name}.md
+- [ ] **"Task List Coordination"** - Old pattern
+- [ ] **"Decision Logs"** - **VERIFY** captured in ADRs or strategy docs before removing
+
+**Top-Matter Sections to KEEP:**
+
+- Header metadata (Created, Completed, Branch, Status)
+- Brief context (Discovered, Interrupts pointer)
+- Problem statement (what was fixed - brief historical context)
+- "Won't Do" scope exclusions (useful record of deliberate decisions)
+
+**Research/Decision Content - Verification Required:**
+
+Before removing any research summaries, decision logs, or reference sections:
+
+1. **Identify the target location** - Which strategy doc or ADR should contain this?
+2. **Grep to verify** - `grep -i "key-term" path/to/strategy.md`
+3. **If not found**: Either migrate content to appropriate doc, or keep in task file
+4. **If found**: Safe to remove from task file
+
+Never assume content is captured elsewhere - verify before removal.
+
+**Evaluation criteria:** For each section ask: "Is this temporal scaffolding, OR have I verified this content
+exists elsewhere?" Only remove if yes to either.
 
 ---
 
@@ -542,20 +573,6 @@ While processing each phase, note in CLEANUP-PROGRESS:
 - Follow-up work mentioned (check if completed in later phases)
 
 This data feeds completion doc creation and prevents needing to re-read the entire file.
-
----
-
-**Old-Pattern Bottom-Matter Sections**
-
-If you find these sections, they're from old pattern before unified completion docs:
-
-- ❌ "Implementation Notes" section
-- ❌ "Completion Summary" section
-- ❌ "Task List Coordination" section
-- ❌ "Decision Logs" section
-
-**What to do if found**: Evaluate if content should move to notes file (if keeping notes) or be deleted entirely.
-These sections are no longer used in modern task files.
 
 ### 4. Migrate Content to Notes File
 
@@ -710,6 +727,8 @@ After content consolidation, format for navigation and long-term reference:
     - Task file: `**Status**: Completed`, `**Actual Effort**: ...`
     - Notes file: `**Status**: Complete`, `**Completed**: YYYY-MM-DD`
 - Add completion date to both files
+- **Add termination indicator**: If bottom-matter was removed, add `---` after the final task to visually
+  indicate intentional end (prevents appearance of truncated file)
 
 ### 7. Quality Checks
 

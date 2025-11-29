@@ -15,7 +15,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 from core.tests.test_helpers import HTTPStatus
-from movie.services.filtering import MIN_VOTE_COUNT
+from movie.services.tmdb_query_params import MIN_VOTE_COUNT
 from movie.tests.test_helpers import create_mock_paginated_response, create_tmdb_movie
 
 if TYPE_CHECKING:

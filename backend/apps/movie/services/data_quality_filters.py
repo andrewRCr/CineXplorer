@@ -1,12 +1,9 @@
 """
-Result filtering helpers for TMDB API responses.
+Data quality filters for TMDB API responses.
 
-This module provides client-side filtering functions to handle TMDB API quirks:
-- TMDB returns movies with incorrect release years despite API filters
-- TMDB returns movies with placeholder ratings (0.0) despite rating filters
-
-These functions are used by MovieService to filter results after fetching from TMDB,
-ensuring users only see movies that match their filter criteria.
+This module provides client-side filtering functions to handle TMDB API quirks
+and enforce data quality standards. These are "second pass" filters applied to
+TMDB responses, distinct from TMDB query parameters (first pass) in tmdb_query_params.py.
 
 TMDB API Quirks (Data Hygiene Issues):
 - Year filtering: TMDB sometimes returns movies from wrong decades, likely due to
@@ -17,26 +14,99 @@ TMDB API Quirks (Data Hygiene Issues):
 - Runtime filtering: NOT SUPPORTED - TMDB API doesn't provide runtime filtering
   capability, would require fetching movie details for every result (expensive)
 
-Related Frontend Code Being Replaced:
-- frontend/src/utilities/movieFilterUtils.ts (filterMoviesByYear, filterMoviesByRating)
-- frontend/src/hooks/useEnhancedFetcher.ts (client-side filtering logic)
+Filter Pipeline:
+1. Completeness filter (always enabled - basic quality requirement)
+2. Year filtering (always enabled for historical validation)
+3. Rating filtering with vote threshold
+4. Blacklist filtering (content policy - coming soon)
 """
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from core.tmdb_models.tmdb_responses import TMDBMovieBase
+from movie.schemas import MovieBaseSchema
 
-from .filtering import MIN_VOTE_COUNT
+from .tmdb_query_params import MIN_VOTE_COUNT
 
-if TYPE_CHECKING:
-    from movie.schemas import MovieBaseSchema
-
-# Re-export for backwards compatibility
 __all__ = [
-    'MIN_VOTE_COUNT',
+    'apply_data_quality_filters',
     'filter_movies_by_completeness',
     'filter_movies_by_rating',
     'filter_movies_by_year',
 ]
+
+
+# ============================================================================
+# Orchestration Function
+# ============================================================================
+
+
+def apply_data_quality_filters(
+    movies: list[TMDBMovieBase],
+    year_min: int | None = None,
+    year_max: int | None = None,
+    rating_min: float | None = None,
+    rating_max: float | None = None,
+    min_vote_count: int | None = MIN_VOTE_COUNT,
+) -> list[MovieBaseSchema]:
+    """Apply all data quality filters to TMDB movie list.
+
+    This is the main orchestration function for second-pass filtering. It converts
+    TMDB response models to application schemas and applies the full filter pipeline.
+
+    Vote count threshold: MIN_VOTE_COUNT (10 votes) by default.
+    Filters statistical noise and low-quality content while maintaining
+    broad catalog access to legitimate films.
+
+    Args:
+        movies: List of TMDBMovieBase objects from API response
+        year_min: Minimum release year (inclusive), None for no lower bound
+        year_max: Maximum release year (inclusive), None for no upper bound
+        rating_min: Minimum rating (inclusive), None for no lower bound
+        rating_max: Maximum rating (inclusive), None for no upper bound
+        min_vote_count: Minimum vote count threshold. None to skip vote filtering
+            (useful for unreleased movies). Default: MIN_VOTE_COUNT (10)
+
+    Returns:
+        Filtered list of MovieBaseSchema objects matching all criteria
+
+    Note:
+        Applies three-stage filtering pipeline:
+        1. Completeness filter (always enabled - basic quality requirement)
+        2. Year filtering (always enabled for historical validation)
+        3. Rating filtering with vote threshold
+    """
+    # Convert TMDB models to schemas first
+    # Map id → tmdb_id for MovieBaseSchema compatibility
+    movie_schemas: list[MovieBaseSchema] = []
+    for m in movies:
+        movie_dict = m.model_dump()
+        # Rename id to tmdb_id for MovieBaseSchema
+        movie_dict['tmdb_id'] = movie_dict.pop('id')
+        # Normalize empty string dates to None (TMDB API quirk)
+        if movie_dict.get('release_date') == '':
+            movie_dict['release_date'] = None
+        movie_schemas.append(MovieBaseSchema.model_validate(movie_dict))
+
+    # Apply completeness filter first (always enabled - basic quality requirement)
+    # Exclude movies without posters or titles for better UI display quality
+    movie_schemas = filter_movies_by_completeness(movie_schemas)
+
+    # Apply year filtering (always enabled for historical validation)
+    # Even without user filters, this excludes pre-1888 dates (data quality)
+    movie_schemas = filter_movies_by_year(movie_schemas, year_min, year_max)
+
+    # Apply rating filtering with vote threshold (see docstring)
+    # Vote count filters statistical noise and low-quality content
+    # Works with genre completeness filtering for dual quality assurance
+    # Can be disabled (min_vote_count=None) for unreleased movies
+    movie_schemas = filter_movies_by_rating(
+        movie_schemas,
+        rating_min,
+        rating_max,
+        min_vote_count=min_vote_count
+    )
+
+    return movie_schemas
 
 
 # ============================================================================

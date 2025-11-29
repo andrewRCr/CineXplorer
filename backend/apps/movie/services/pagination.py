@@ -14,13 +14,9 @@ from core.tmdb_models.tmdb_responses import TMDBMovieBase, TMDBPaginatedMovieRes
 from django.core.cache import cache
 
 from ..schemas import MovieBaseSchema, PaginatedMovieResponseSchema
-from .filtering import MIN_VOTE_COUNT
-from .result_filtering import (
-    filter_movies_by_completeness,
-    filter_movies_by_rating,
-    filter_movies_by_year,
-)
+from .data_quality_filters import apply_data_quality_filters
 from .schema_factories import create_paginated_movie_response_from_tmdb
+from .tmdb_query_params import MIN_VOTE_COUNT
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -138,72 +134,6 @@ def build_filtered_response(
     return response
 
 
-def apply_filters(
-    movies: list[TMDBMovieBase],
-    year_min: int | None = None,
-    year_max: int | None = None,
-    rating_min: float | None = None,
-    rating_max: float | None = None,
-    min_vote_count: int | None = MIN_VOTE_COUNT,
-) -> list[MovieBaseSchema]:
-    """Apply completeness, year, and rating filters to movie list.
-
-    Vote count threshold: MIN_VOTE_COUNT (10 votes) by default.
-    Filters statistical noise and low-quality content while maintaining
-    broad catalog access to legitimate films.
-
-    Args:
-        movies: List of TMDBMovieBase objects from API response
-        year_min: Minimum release year (inclusive), None for no lower bound
-        year_max: Maximum release year (inclusive), None for no upper bound
-        rating_min: Minimum rating (inclusive), None for no lower bound
-        rating_max: Maximum rating (inclusive), None for no upper bound
-        min_vote_count: Minimum vote count threshold. None to skip vote filtering
-            (useful for unreleased movies). Default: MIN_VOTE_COUNT (10)
-
-    Returns:
-        Filtered list of MovieBaseSchema objects matching all criteria
-
-    Note:
-        Applies three-stage filtering pipeline:
-        1. Completeness filter (always enabled - basic quality requirement)
-        2. Year filtering (always enabled for historical validation)
-        3. Rating filtering with vote threshold
-    """
-    # Convert TMDB models to schemas first
-    # Map id → tmdb_id for MovieBaseSchema compatibility
-    movie_schemas: list[MovieBaseSchema] = []
-    for m in movies:
-        movie_dict = m.model_dump()
-        # Rename id to tmdb_id for MovieBaseSchema
-        movie_dict['tmdb_id'] = movie_dict.pop('id')
-        # Normalize empty string dates to None (TMDB API quirk)
-        if movie_dict.get('release_date') == '':
-            movie_dict['release_date'] = None
-        movie_schemas.append(MovieBaseSchema.model_validate(movie_dict))
-
-    # Apply completeness filter first (always enabled - basic quality requirement)
-    # Exclude movies without posters or titles for better UI display quality
-    movie_schemas = filter_movies_by_completeness(movie_schemas)
-
-    # Apply year filtering (always enabled for historical validation)
-    # Even without user filters, this excludes pre-1888 dates (data quality)
-    movie_schemas = filter_movies_by_year(movie_schemas, year_min, year_max)
-
-    # Apply rating filtering with vote threshold (see docstring)
-    # Vote count filters statistical noise and low-quality content
-    # Works with genre completeness filtering for dual quality assurance
-    # Can be disabled (min_vote_count=None) for unreleased movies
-    movie_schemas = filter_movies_by_rating(
-        movie_schemas,
-        rating_min,
-        rating_max,
-        min_vote_count=min_vote_count
-    )
-
-    return movie_schemas
-
-
 def apply_buffer_if_needed(
     filtered_movies: list[MovieBaseSchema],
     current_page: int,
@@ -277,7 +207,7 @@ def apply_buffer_if_needed(
     ):
         # Fetch next page and apply same filters
         buffer_response = fetch_next_page_func(next_page)
-        buffer_movies = apply_filters(
+        buffer_movies = apply_data_quality_filters(
             buffer_response.results,
             year_min,
             year_max,
@@ -366,7 +296,7 @@ def fetch_with_filters_and_buffer(
     # Step 3: Apply completeness and year/rating filters (completeness always applied)
     # Note: Completeness filter is ALWAYS applied for UI quality, even without other filters
     original_count = len(movies)
-    filtered_movies = apply_filters(
+    filtered_movies = apply_data_quality_filters(
         movies,
         year_min,
         year_max,

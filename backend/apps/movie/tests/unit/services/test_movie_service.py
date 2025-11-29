@@ -234,7 +234,7 @@ def test_discover_movies_uses_injected_client() -> None:
     service = MovieService(tmdb_client=mock_client)
 
     # Act: Call discover with ServiceParams
-    from movie.services.filtering import ServiceParams
+    from movie.services.tmdb_query_params import ServiceParams
     params = ServiceParams(
         genres='28,12',  # Should map to with_genres
         year=2023,

@@ -10,8 +10,8 @@ from __future__ import annotations
 from unittest.mock import Mock
 
 from core.services.api_response import ApiResponse
-from movie.services.filtering import ServiceParams
 from movie.services.movie_service import MovieService
+from movie.services.tmdb_query_params import ServiceParams
 from movie.tests.test_helpers import create_mock_paginated_response
 from movie.tests.tmdb_test_builders import (
     TMDBMovieBaseRawDict,

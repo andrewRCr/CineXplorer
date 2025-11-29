@@ -9,7 +9,7 @@ from ninja import Schema
 from ninja.orm import ModelSchema
 from pydantic import Field, field_validator
 
-from .services.filtering import (
+from .services.tmdb_query_params import (
     DERIVED_PARAM_TRANSFORMS,
     HTTP_TO_SERVICE_MAPPING,
     ServiceParams,

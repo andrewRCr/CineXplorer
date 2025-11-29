@@ -17,10 +17,17 @@ characters cluster these titles together.
 **Why Now:** Affects user experience and app perception. Movie blacklist infrastructure now exists;
 extending to production companies and centralizing filter rules completes the data quality toolkit.
 
+**Architecture Improvement:** During planning, identified naming confusion between TMDB query parameters
+(first pass) and our data quality filters (second pass). Refactoring naming and moving blacklist logic
+to the correct layer before adding production company blacklist.
+
 ## Scope
 
 ### Will Do
 
+- Clarify architecture: rename files/functions to distinguish TMDB params from data quality filters
+- Move movie blacklist from pagination layer to data quality filter layer
+- Add test coverage for blacklist functionality (TDD for production company)
 - Create production company blacklist model (parallel to movie blacklist)
 - Research and document problematic production companies (pink film studios, etc.)
 - Populate both movie and production company blacklists with verified entries
@@ -37,51 +44,140 @@ extending to production companies and centralizing filter rules completes the da
 
 ## Tasks
 
-### **Phase 1:** Production Company Blacklist Infrastructure
+### **Phase 1:** Architecture Clarification (Naming Refactor)
 
-**Purpose:** Create Django model for blacklisting production companies, mirroring movie blacklist pattern.
+**Purpose:** Establish clear naming distinction between TMDB API query parameters (first pass)
+and our data quality post-processing filters (second pass).
 
-- [x] **1.1 Create movie blacklist model** *(completed prior to task list creation)*
+- [x] **1.1 Rename filter-related files**
 
-    - [x] **1.1.1 Create `BlacklistedMovie` model in `movie/models.py`**
-        - Fields: `tmdb_id` (unique, indexed), `reason`, `added_at`
-        - Registered in admin for easy management
+    - [x] **1.1.1 Rename `filtering.py` → `tmdb_query_params.py`**
+        - Updated 16 import statements across codebase
+        - Files: schemas.py, pagination.py, movie_service.py, data_quality_filters.py,
+          10 test files, test_tmdb_logging.py management command
 
-    - [x] **1.1.2 Create and run migration**
-        - Migration: `0001_add_blacklisted_movie.py`
+    - [x] **1.1.2 Rename `result_filtering.py` → `data_quality_filters.py`**
+        - Updated 1 import in pagination.py
+        - Updated module docstring to clarify purpose
 
-    - [x] **1.1.3 Integrate into `apply_buffer_if_needed` in `pagination.py`**
-        - `get_blacklisted_ids()` function with 5-minute cache
-        - Blacklisted IDs filtered from initial results and seeded into `seen_ids`
+    - [x] **1.1.3 Run quality gates**
+        - 440 tests pass, linting clean, type checking 0 errors
 
-- [ ] **1.2 Create production company blacklist model**
+- [x] **1.2 Move and rename orchestration function**
+
+    - [x] **1.2.1 Move `apply_filters()` from `pagination.py` to `data_quality_filters.py`**
+        - Renamed to `apply_data_quality_filters()`
+        - Function now lives alongside the individual filters it orchestrates
+        - `pagination.py` imports and calls it (separation of concerns)
+
+    - [x] **1.2.2 Run quality gates**
+        - 440 tests pass, linting clean, type checking 0 errors
+
+### **Phase 2:** Movie Blacklist Architecture Fix
+
+**Purpose:** Move blacklist filtering from pagination/deduplication layer to data quality filter layer.
+Blacklist is a content policy (like vote count, completeness) not a pagination concern.
+
+**Current (incorrect):** Blacklist in `apply_buffer_if_needed()` mixed with deduplication logic
+**Target (correct):** Blacklist in `apply_data_quality_filters()` with other content policies
+
+- [ ] **2.1 Move blacklist logic to data quality layer**
+
+    - [ ] **2.1.1 Add `filter_movies_by_blacklist()` to `data_quality_filters.py`**
+        - Move `get_blacklisted_ids()` function from `pagination.py`
+        - Create `filter_movies_by_blacklist()` function mirroring other filter functions
+        - Keep 5-minute cache, same behavior
+
+    - [ ] **2.1.2 Integrate into `apply_data_quality_filters()`**
+        - Add blacklist filtering to the pipeline (after completeness, before/after year)
+        - Decide ordering: blacklist early (efficiency) or late (consistency with other filters)
+
+    - [ ] **2.1.3 Remove blacklist logic from `pagination.py`**
+        - Remove `get_blacklisted_ids()` function
+        - Remove blacklist filtering from `apply_buffer_if_needed()`
+        - Remove `seen_ids` seeding with blacklist (no longer needed)
+        - `apply_buffer_if_needed()` now purely handles deduplication
+
+    - [ ] **2.1.4 Run quality gates**
+        - All tests pass
+        - Linting: 0 violations
+        - Type checking: 0 errors
+
+### **Phase 3:** Blacklist Test Coverage
+
+**Purpose:** Add test coverage for blacklist functionality. Retroactive for movie blacklist,
+TDD for production company blacklist.
+
+- [ ] **3.1 Write tests for movie blacklist (retroactive)**
+
+    **Goal:** Cover the now-correctly-placed blacklist filtering logic.
+
+    - [ ] **3.1.1 Create `test_blacklist_filtering.py` in `tests/unit/services/filtering/`**
+        - Test `get_blacklisted_ids()` returns correct set from database
+        - Test `get_blacklisted_ids()` caching behavior (returns cached within TTL)
+        - Test `filter_movies_by_blacklist()` excludes blacklisted IDs
+        - Test `filter_movies_by_blacklist()` with empty blacklist (no filtering)
+
+    - [ ] **3.1.2 Add integration test for blacklist in data quality pipeline**
+        - Test blacklisted movies excluded from `apply_data_quality_filters()` output
+        - Verify ordering doesn't affect blacklist effectiveness
+
+    - [ ] **3.1.3 Run quality gates**
+        - All new tests pass
+        - Linting: 0 violations
+
+- [ ] **3.2 Write tests for production company blacklist (TDD)**
+
+    **Goal:** Tests first, implementation follows in Phase 4.
+
+    - [ ] **3.2.1 Write model tests for `BlacklistedProductionCompany`**
+        - Test model creation with required fields
+        - Test unique constraint on `tmdb_company_id`
+
+    - [ ] **3.2.2 Write tests for `get_blacklisted_company_ids()`**
+        - Test returns correct set from database
+        - Test caching behavior
+        - (Tests will fail until Phase 4 implementation)
+
+    - [ ] **3.2.3 Write tests for `filter_movies_by_production_company()`**
+        - Test excludes movies from blacklisted companies
+        - Test handles movies with multiple production companies (exclude if ANY blacklisted)
+        - Test handles movies with no production company data
+        - (Tests will fail until Phase 6 implementation)
+
+### **Phase 4:** Production Company Blacklist Model
+
+**Purpose:** Create Django model for blacklisting production companies. Tests written in Phase 3.2.
+
+- [ ] **4.1 Create production company blacklist model**
 
     **Goal:** Enable filtering by production company for studios that exclusively produce problematic content.
 
-    - [ ] **1.2.1 Create `BlacklistedProductionCompany` model in `movie/models.py`**
+    - [ ] **4.1.1 Create `BlacklistedProductionCompany` model in `movie/models.py`**
         - Fields: `tmdb_company_id` (unique, indexed), `name`, `reason`, `added_at`
         - `name` field for human readability (TMDB IDs aren't meaningful)
         - Register in admin with list display and search
 
-    - [ ] **1.2.2 Create and run migration**
+    - [ ] **4.1.2 Create and run migration**
         - Verify migration applies cleanly
 
-    - [ ] **1.2.3 Run quality gates**
+    - [ ] **4.1.3 Run quality gates**
+        - Model tests from 3.2.1 now pass
         - Linting: 0 violations
         - Type checking: 0 errors
 
-### **Phase 2:** Research Problematic Production Companies
+### **Phase 5:** Research Problematic Production Companies
 
 **Purpose:** Identify studios that exclusively produce adult/exploitation content mislabeled in TMDB.
 
 **Note:** Not limited to Japanese studios - sample data skewed Japanese due to Z-A sort unicode clustering.
 Any country may have studios producing mislabeled adult content.
 
-- [ ] **2.1 Research studios from sample data and patterns**
+- [ ] **5.1 Research studios from sample data and patterns**
 
     **Goal:** Build verified list of companies to blacklist, with documentation.
 
-    - [ ] **2.1.1 Research Japanese studios from initial sample**
+    - [ ] **5.1.1 Research Japanese studios from initial sample**
         - Nikkatsu Corporation (known for "Roman Porno" division 1971-1988)
         - Pink Pineapple
         - Osu Production
@@ -90,118 +186,137 @@ Any country may have studios producing mislabeled adult content.
         - Determine: Does each company ALSO produce legitimate content?
         - Document: Exclusive adult studio vs mixed catalog
 
-    - [ ] **2.1.2 Search for additional studios (any country)**
+    - [ ] **5.1.2 Search for additional studios (any country)**
         - Query TMDB for movies with similar patterns (low vote, short runtime, Romance/Drama)
         - Extract production company names from results
         - Research each for content exclusivity
         - Document country of origin for reference
 
-- [ ] **2.2 Document research findings**
+- [ ] **5.2 Document research findings**
 
-    - [ ] **2.2.1 Update notes file with research results**
+    - [ ] **5.2.1 Update notes file with research results**
         - Company name, TMDB ID, verdict (blacklist/skip), rationale
         - Distinguish exclusive adult studios from mixed catalogs
 
-### **Phase 3:** Integrate Production Company Filtering
+### **Phase 6:** Production Company Filter Integration
 
-- [ ] **3.1 Add production company filtering to buffer logic**
+**Purpose:** Implement production company filtering in data quality layer.
+
+- [ ] **6.1 Add production company filtering to data quality pipeline**
 
     **Goal:** Exclude movies from blacklisted production companies during result processing.
 
-    - [ ] **3.1.1 Create `get_blacklisted_company_ids()` function in `pagination.py`**
+    - [ ] **6.1.1 Create `get_blacklisted_company_ids()` in `data_quality_filters.py`**
         - Mirror `get_blacklisted_ids()` pattern
         - 5-minute cache TTL
         - Return set of TMDB company IDs
 
-    - [ ] **3.1.2 Determine filtering approach**
-        - Option A: Filter in `apply_buffer_if_needed` (requires company data in response)
-        - Option B: Filter in `apply_filters` before buffer
-        - Document decision based on TMDB response structure
+    - [ ] **6.1.2 Create `filter_movies_by_production_company()` in `data_quality_filters.py`**
+        - Check movie's production_companies against blacklist
+        - Exclude if ANY production company is blacklisted
+        - Handle missing production_companies gracefully
 
-    - [ ] **3.1.3 Implement filtering**
-        - Add filtering logic per decision
-        - Handle movies with multiple production companies (exclude if ANY is blacklisted)
+    - [ ] **6.1.3 Integrate into `apply_data_quality_filters()`**
+        - Add production company filtering to pipeline
+        - Document ordering rationale
 
-    - [ ] **3.1.4 Run quality gates**
-        - All tests pass
+    - [ ] **6.1.4 Run quality gates**
+        - All tests from 3.2.2 and 3.2.3 now pass
+        - All existing tests still pass
         - Linting: 0 violations
         - Type checking: 0 errors
 
-### **Phase 4:** Centralize Filter Policy (DRY Refactor)
+### **Phase 7:** Centralize Filter Policy (DRY Refactor)
 
 **Purpose:** Single source of truth for vote count filtering rules across all views/sorts.
 
-- [ ] **4.1 Create centralized filter policy configuration**
+- [ ] **7.1 Create centralized filter policy configuration**
 
-    - [ ] **4.1.1 Create filter policy in `filtering.py`**
+    - [ ] **7.1.1 Create filter policy in `tmdb_query_params.py`**
         - Define policy dict/dataclass for each view type
         - Include: `default_min_vote_count`, sort-specific overrides
         - Document rationale for each rule
 
-    - [ ] **4.1.2 Refactor `api.py` to use centralized policy**
+    - [ ] **7.1.2 Refactor `api.py` to use centralized policy**
         - Remove inline bypass logic (lines 256-264)
-        - Import and apply policy from `filtering.py`
+        - Import and apply policy from `tmdb_query_params.py`
         - Verify identical behavior
 
-    - [ ] **4.1.3 Refactor `movie_service.py` to use centralized policy**
+    - [ ] **7.1.3 Refactor `movie_service.py` to use centralized policy**
         - Update `get_now_playing_movies` and `get_upcoming_movies`
         - Reference policy instead of hardcoded `min_vote_count = None`
 
-    - [ ] **4.1.4 Update test configs to reference same policy**
-        - `endpoint_configs.py` should import from `filtering.py`
+    - [ ] **7.1.4 Update test configs to reference same policy**
+        - `endpoint_configs.py` should import from `tmdb_query_params.py`
         - Single source of truth for test expectations
 
-- [ ] **4.2 Revisit `original_title` sort vote threshold**
+- [ ] **7.2 Revisit `original_title` sort vote threshold**
 
     **Goal:** Determine if alphabetical sorts should have reduced (not zero) vote threshold.
 
-    - [ ] **4.2.1 Analyze tradeoffs**
+    - [ ] **7.2.1 Analyze tradeoffs**
         - Current: `None` (no threshold) - lets low-quality content through
         - Option: Lower threshold (5?) - filters worst noise, keeps legitimate obscure films
         - Document decision and rationale
 
-    - [ ] **4.2.2 Implement decision**
+    - [ ] **7.2.2 Implement decision**
         - Update centralized policy with chosen threshold
         - If changed, verify no unintended filtering of legitimate content
 
-    - [ ] **4.2.3 Run quality gates**
+    - [ ] **7.2.3 Run quality gates**
         - All tests pass (update test expectations if threshold changed)
         - Linting: 0 violations
 
-### **Phase 5:** Populate Blacklists
+### **Phase 8:** Populate Blacklists
 
-- [ ] **5.1 Populate production company blacklist**
+- [ ] **8.1 Populate production company blacklist**
 
-    - [ ] **5.1.1 Add verified exclusive adult studios to blacklist**
+    - [ ] **8.1.1 Add verified exclusive adult studios to blacklist**
         - Use Django admin or migration
         - Include reason for each entry
 
-- [ ] **5.2 Populate movie blacklist with known problematic titles**
+- [ ] **8.2 Populate movie blacklist with known problematic titles**
 
-    - [ ] **5.2.1 Add sample problematic movies identified during research**
+    - [ ] **8.2.1 Add sample problematic movies identified during research**
         - TMDB IDs: 405342, 634220, 969777, 153726, 202438, 1263190 (if not caught by company filter)
         - Only add movies that slip through company filter
 
-### **Phase 6:** Verification and Quality Gates
+### **Phase 9:** Verification and Quality Gates
 
-- [ ] **6.1 Manual verification**
+- [ ] **9.1 Manual verification**
 
-    - [ ] **6.1.1 Test Z-A sort for problematic content**
+    - [ ] **9.1.1 Test Z-A sort for problematic content**
         - Browse with `original_title.desc` sort
         - Verify blacklisted companies/movies excluded
         - Document any remaining issues
 
-    - [ ] **6.1.2 Test other views for regressions**
+    - [ ] **9.1.2 Test other views for regressions**
         - Popular, Top Rated, Now Playing, Upcoming
         - Verify legitimate content not filtered
 
-- [ ] **6.2 Final quality gates**
+- [ ] **9.2 Final quality gates**
 
-    - [ ] **6.2.1 Run full backend test suite**
+    - [ ] **9.2.1 Run full backend test suite**
         - All tests pass
 
-    - [ ] **6.2.2 Run linting and type checking**
+    - [ ] **9.2.2 Run linting and type checking**
         - 0 violations, 0 errors
+
+---
+
+## Completed Work
+
+### Movie Blacklist (completed prior to task list reorganization)
+
+- [x] **Created `BlacklistedMovie` model in `movie/models.py`**
+    - Fields: `tmdb_id` (unique, indexed), `reason`, `added_at`
+    - Registered in admin for easy management
+
+- [x] **Created migration `0001_add_blacklisted_movie.py`**
+
+- [x] **Initial integration into `apply_buffer_if_needed` in `pagination.py`**
+    - `get_blacklisted_ids()` function with 5-minute cache
+    - **Note:** Will be moved to data quality layer in Phase 2
 
 ---
 

@@ -103,63 +103,61 @@ Blacklist is a content policy (like vote count, completeness) not a pagination c
 **Purpose:** Add test coverage for blacklist functionality. Retroactive for movie blacklist,
 TDD for production company blacklist.
 
-- [ ] **3.1 Write tests for movie blacklist (retroactive)**
+- [x] **3.1 Write tests for movie blacklist (retroactive)**
 
-    **Goal:** Cover the now-correctly-placed blacklist filtering logic.
+    Created `test_blacklist_filtering.py` with 12 tests covering `get_blacklisted_ids()`,
+    `filter_movies_by_blacklist()`, and pipeline integration. Added DRY `create_movie_schema()`
+    helper reusable for Phase 3.2 production company tests.
 
-    - [ ] **3.1.1 Create `test_blacklist_filtering.py` in `tests/unit/services/filtering/`**
-        - Test `get_blacklisted_ids()` returns correct set from database
-        - Test `get_blacklisted_ids()` caching behavior (returns cached within TTL)
-        - Test `filter_movies_by_blacklist()` excludes blacklisted IDs
-        - Test `filter_movies_by_blacklist()` with empty blacklist (no filtering)
+    - [x] **3.1.1 Create `test_blacklist_filtering.py` in `tests/unit/services/filtering/`**
+        - 4 tests for `get_blacklisted_ids()`: empty DB, correct IDs, cache hit, cache timeout
+        - 5 tests for `filter_movies_by_blacklist()`: excludes blacklisted, empty blacklist,
+          all blacklisted, empty input, preserves order
 
-    - [ ] **3.1.2 Add integration test for blacklist in data quality pipeline**
-        - Test blacklisted movies excluded from `apply_data_quality_filters()` output
-        - Verify ordering doesn't affect blacklist effectiveness
+    - [x] **3.1.2 Add integration test for blacklist in data quality pipeline**
+        - 3 tests for `apply_data_quality_filters()`: blacklist applied, runs first,
+          combined with year/rating filters
 
-    - [ ] **3.1.3 Run quality gates**
-        - All new tests pass
-        - Linting: 0 violations
+    - [x] **3.1.3 Run quality gates**
+        - 452 tests pass (12 new), linting clean, type checking 0 errors
 
-- [ ] **3.2 Write tests for production company blacklist (TDD)**
+- [x] **3.2 Write tests for production company blacklist (TDD)**
 
-    **Goal:** Tests first, implementation follows in Phase 4.
+    Created `test_production_company_blacklist.py` with 14 TDD tests (all skipped until
+    implementation). Added `MovieWithCompanies` helper and pyright suppressions for
+    non-existent code pattern.
 
-    - [ ] **3.2.1 Write model tests for `BlacklistedProductionCompany`**
-        - Test model creation with required fields
-        - Test unique constraint on `tmdb_company_id`
+    - [x] **3.2.1 Write model tests for `BlacklistedProductionCompany`**
+        - 3 tests: model creation, unique constraint, str representation
+        - Skipped until Phase 4 implementation
 
-    - [ ] **3.2.2 Write tests for `get_blacklisted_company_ids()`**
-        - Test returns correct set from database
-        - Test caching behavior
-        - (Tests will fail until Phase 4 implementation)
+    - [x] **3.2.2 Write tests for `get_blacklisted_company_ids()`**
+        - 4 tests: empty DB, correct IDs, cache hit, cache timeout
+        - Skipped until Phase 6 implementation
 
-    - [ ] **3.2.3 Write tests for `filter_movies_by_production_company()`**
-        - Test excludes movies from blacklisted companies
-        - Test handles movies with multiple production companies (exclude if ANY blacklisted)
-        - Test handles movies with no production company data
-        - (Tests will fail until Phase 6 implementation)
+    - [x] **3.2.3 Write tests for `filter_movies_by_blacklisted_company()`**
+        - 7 tests: excludes blacklisted, ANY company match, no company data,
+          empty blacklist, all blacklisted, empty input, preserves order
+        - Skipped until Phase 6 implementation
 
 ### **Phase 4:** Production Company Blacklist Model
 
 **Purpose:** Create Django model for blacklisting production companies. Tests written in Phase 3.2.
 
-- [ ] **4.1 Create production company blacklist model**
+- [x] **4.1 Create production company blacklist model**
 
-    **Goal:** Enable filtering by production company for studios that exclusively produce problematic content.
+    Created `BlacklistedProductionCompany` model with admin interface. TDD model tests now pass.
 
-    - [ ] **4.1.1 Create `BlacklistedProductionCompany` model in `movie/models.py`**
+    - [x] **4.1.1 Create `BlacklistedProductionCompany` model in `movie/models.py`**
         - Fields: `tmdb_company_id` (unique, indexed), `name`, `reason`, `added_at`
-        - `name` field for human readability (TMDB IDs aren't meaningful)
-        - Register in admin with list display and search
+        - Registered in admin with list display (name, ID, reason, date) and search
 
-    - [ ] **4.1.2 Create and run migration**
-        - Verify migration applies cleanly
+    - [x] **4.1.2 Create and run migration**
+        - Migration: `0002_blacklisted_production_company.py`
 
-    - [ ] **4.1.3 Run quality gates**
-        - Model tests from 3.2.1 now pass
-        - Linting: 0 violations
-        - Type checking: 0 errors
+    - [x] **4.1.3 Run quality gates**
+        - 455 tests pass (3 model tests now active), 11 skipped (Phase 6)
+        - Linting: clean, Type checking: 0 errors
 
 ### **Phase 5:** Research Problematic Production Companies
 

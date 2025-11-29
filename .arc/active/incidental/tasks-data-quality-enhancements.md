@@ -15,11 +15,15 @@ results despite `adult: false` flag, particularly visible in alphabetical sorts 
 characters cluster these titles together.
 
 **Why Now:** Affects user experience and app perception. Movie blacklist infrastructure now exists;
-extending to production companies and centralizing filter rules completes the data quality toolkit.
+centralizing filter rules completes the data quality toolkit.
 
 **Architecture Improvement:** During planning, identified naming confusion between TMDB query parameters
 (first pass) and our data quality filters (second pass). Refactoring naming and moving blacklist logic
-to the correct layer before adding production company blacklist.
+to the correct layer.
+
+**Pivot (Phase 6):** Originally planned production company blacklist filtering, but discovered TMDB
+discover/search endpoints don't return production company data (only available in detail endpoints).
+Pivoted to using company research to bulk-populate the movie blacklist instead.
 
 ## Scope
 
@@ -27,18 +31,19 @@ to the correct layer before adding production company blacklist.
 
 - Clarify architecture: rename files/functions to distinguish TMDB params from data quality filters
 - Move movie blacklist from pagination layer to data quality filter layer
-- Add test coverage for blacklist functionality (TDD for production company)
-- Create production company blacklist model (parallel to movie blacklist)
-- Research and document problematic production companies (pink film studios, etc.)
-- Populate both movie and production company blacklists with verified entries
+- Add test coverage for movie blacklist functionality
+- Research problematic production companies (pink film studios, etc.)
+- Populate movie blacklist with movies from researched problematic studios
 - Centralize vote count filter policy (DRY refactor)
 - Revisit `original_title` sort vote threshold
 
 ### Won't Do
 
+- Production company runtime filtering (data not in list endpoints - see Pivot note above)
 - Deep link pre-population (documented in buffer-deduplication Won't Do)
 - Automated content classification (manual curation only)
 - TMDB reporting (their tagging, our responsibility to filter)
+- Search result filtering (if user searches for it, they can find it)
 
 ---
 
@@ -100,14 +105,13 @@ Blacklist is a content policy (like vote count, completeness) not a pagination c
 
 ### **Phase 3:** Blacklist Test Coverage
 
-**Purpose:** Add test coverage for blacklist functionality. Retroactive for movie blacklist,
-TDD for production company blacklist.
+**Purpose:** Add test coverage for movie blacklist functionality.
 
 - [x] **3.1 Write tests for movie blacklist (retroactive)**
 
     Created `test_blacklist_filtering.py` with 12 tests covering `get_blacklisted_ids()`,
     `filter_movies_by_blacklist()`, and pipeline integration. Added DRY `create_movie_schema()`
-    helper reusable for Phase 3.2 production company tests.
+    helper.
 
     - [x] **3.1.1 Create `test_blacklist_filtering.py` in `tests/unit/services/filtering/`**
         - 4 tests for `get_blacklisted_ids()`: empty DB, correct IDs, cache hit, cache timeout
@@ -121,103 +125,115 @@ TDD for production company blacklist.
     - [x] **3.1.3 Run quality gates**
         - 452 tests pass (12 new), linting clean, type checking 0 errors
 
-- [x] **3.2 Write tests for production company blacklist (TDD)**
+- [x] ~~**3.2 Write tests for production company blacklist (TDD)**~~ **PIVOTED**
 
-    Created `test_production_company_blacklist.py` with 14 TDD tests (all skipped until
-    implementation). Added `MovieWithCompanies` helper and pyright suppressions for
-    non-existent code pattern.
+    **Removed:** Production company blacklist not feasible - TMDB discover/search endpoints
+    don't return production company data. Tests and model removed. Research findings preserved
+    for use in Phase 6 (populating movie blacklist).
 
-    - [x] **3.2.1 Write model tests for `BlacklistedProductionCompany`**
-        - 3 tests: model creation, unique constraint, str representation
-        - Skipped until Phase 4 implementation
+### **Phase 4:** ~~Production Company Blacklist Model~~ **PIVOTED**
 
-    - [x] **3.2.2 Write tests for `get_blacklisted_company_ids()`**
-        - 4 tests: empty DB, correct IDs, cache hit, cache timeout
-        - Skipped until Phase 6 implementation
-
-    - [x] **3.2.3 Write tests for `filter_movies_by_blacklisted_company()`**
-        - 7 tests: excludes blacklisted, ANY company match, no company data,
-          empty blacklist, all blacklisted, empty input, preserves order
-        - Skipped until Phase 6 implementation
-
-### **Phase 4:** Production Company Blacklist Model
-
-**Purpose:** Create Django model for blacklisting production companies. Tests written in Phase 3.2.
-
-- [x] **4.1 Create production company blacklist model**
-
-    Created `BlacklistedProductionCompany` model with admin interface. TDD model tests now pass.
-
-    - [x] **4.1.1 Create `BlacklistedProductionCompany` model in `movie/models.py`**
-        - Fields: `tmdb_company_id` (unique, indexed), `name`, `reason`, `added_at`
-        - Registered in admin with list display (name, ID, reason, date) and search
-
-    - [x] **4.1.2 Create and run migration**
-        - Migration: `0002_blacklisted_production_company.py`
-
-    - [x] **4.1.3 Run quality gates**
-        - 455 tests pass (3 model tests now active), 11 skipped (Phase 6)
-        - Linting: clean, Type checking: 0 errors
+**Removed:** See Phase 3.2 note. Model, migration, admin, and tests removed.
 
 ### **Phase 5:** Research Problematic Production Companies
 
 **Purpose:** Identify studios that exclusively produce adult/exploitation content mislabeled in TMDB.
+Research findings used to populate movie blacklist in Phase 6.
 
 **Note:** Not limited to Japanese studios - sample data skewed Japanese due to Z-A sort unicode clustering.
 Any country may have studios producing mislabeled adult content.
 
-- [ ] **5.1 Research studios from sample data and patterns**
+- [x] **5.1 Research studios from sample data and patterns**
 
-    **Goal:** Build verified list of companies to blacklist, with documentation.
+    Researched all five studios from initial sample. Three confirmed for blacklisting,
+    two skipped due to mixed catalogs with legitimate mainstream content.
 
-    - [ ] **5.1.1 Research Japanese studios from initial sample**
-        - Nikkatsu Corporation (known for "Roman Porno" division 1971-1988)
-        - Pink Pineapple
-        - Osu Production
-        - Okura Pictures
-        - Sekine Production
-        - Determine: Does each company ALSO produce legitimate content?
-        - Document: Exclusive adult studio vs mixed catalog
+    - [x] **5.1.1 Research Japanese studios from initial sample**
 
-    - [ ] **5.1.2 Search for additional studios (any country)**
-        - Query TMDB for movies with similar patterns (low vote, short runtime, Romance/Drama)
-        - Extract production company names from results
-        - Research each for content exclusivity
-        - Document country of origin for reference
+        **BLACKLIST (exclusively adult content):**
 
-- [ ] **5.2 Document research findings**
+        | Company           | TMDB ID | Content                 | Notes                                        |
+        | ----------------- | ------- | ----------------------- | -------------------------------------------- |
+        | Pink Pineapple    | 80856   | 100% hentai/adult anime | Note: TMDB has duplicate at 267239 (unused)  |
+        | Osu Production    | 174515  | Adult/pink films        | 1986-era pink films                          |
+        | Sekine Production | 142460  | Adult/pink films        | 30 titles, all adult                         |
 
-    - [ ] **5.2.1 Update notes file with research results**
-        - Company name, TMDB ID, verdict (blacklist/skip), rationale
-        - Distinguish exclusive adult studios from mixed catalogs
+        **SKIP (mixed catalog - has legitimate mainstream):**
 
-### **Phase 6:** Production Company Filter Integration
+        | Company              | Content | Notes                                                                                                                        |
+        | -------------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------- |
+        | Nikkatsu Corporation | Mixed   | Major studio (1912-present). Roman Porno 1971-88, but also acclaimed directors (Suzuki, Imamura), modern mainstream output   |
+        | Okura Pictures       | Mixed   | OP Pictures Plus division produces R-15 mainstream. 90% pink film market but has legitimate arm                              |
 
-**Purpose:** Implement production company filtering in data quality layer.
+    - [x] **5.1.2 Search for additional studios (any country)**
+        Searched Wikipedia pink film article for known studios, verified in TMDB.
 
-- [ ] **6.1 Add production company filtering to data quality pipeline**
+        **Additional BLACKLIST studios found:**
 
-    **Goal:** Exclude movies from blacklisted production companies during result processing.
+        | Company           | TMDB ID | Movies | Content         |
+        | ----------------- | ------- | ------ | --------------- |
+        | Kokuei            | 9301    | 185    | 100% pink films |
+        | Shintoho Pictures | 73435   | 452    | 100% adult      |
+        | Million Film      | 120194  | 95     | 100% pink films |
 
-    - [ ] **6.1.1 Create `get_blacklisted_company_ids()` in `data_quality_filters.py`**
-        - Mirror `get_blacklisted_ids()` pattern
-        - 5-minute cache TTL
-        - Return set of TMDB company IDs
+        **Total: 6 studios, ~762 movies covered by blacklist**
 
-    - [ ] **6.1.2 Create `filter_movies_by_production_company()` in `data_quality_filters.py`**
-        - Check movie's production_companies against blacklist
-        - Exclude if ANY production company is blacklisted
-        - Handle missing production_companies gracefully
+- [x] **5.2 Document research findings**
 
-    - [ ] **6.1.3 Integrate into `apply_data_quality_filters()`**
-        - Add production company filtering to pipeline
-        - Document ordering rationale
+    - [x] **5.2.1 Update task list with research results**
+        - Documented in 5.1.1 above with TMDB IDs and rationale
 
-    - [ ] **6.1.4 Run quality gates**
-        - All tests from 3.2.2 and 3.2.3 now pass
-        - All existing tests still pass
+### **Phase 6:** Populate Movie Blacklist from Company Research
+
+**Purpose:** Use Phase 5 research to bulk-populate movie blacklist with titles from problematic studios.
+
+- [x] **6.1 Query TMDB for movies from blacklisted companies**
+
+    Created `populate_blacklist` management command in `movie/management/commands/`.
+
+    - [x] **6.1.1 Query each company's filmography via TMDB API**
+        - Command uses discover endpoint with `with_companies` parameter
+        - Paginates through all results (respecting TMDB 500 page limit)
+        - Rate limiting: 0.3s delay between requests
+
+    - [x] **6.1.2 Filter to movies that would appear in browse results**
+        - Uses `include_adult=False` to find mislabeled content
+        - Skips movies properly marked `adult: true` in TMDB
+
+- [x] **6.2 Populate movie blacklist**
+
+    - [x] **6.2.1 Create management command**
+        - `python manage.py populate_blacklist` (dry run by default)
+        - `--commit` flag to actually add entries
+        - `--company <ID>` to process single company
+        - Reason field includes company name and TMDB ID for traceability
+
+    - [x] **6.2.2 Run and verify**
+        - **1,123 movies blacklisted** (final count after pattern analysis)
+        - Initial: 733 from 6 studios
+        - Pattern analysis added 4 more studios: Xces Film (311), Cement Match (58),
+          Office Burrows (8), Shin Nihon Eizo (2)
+        - Manual additions: 11 movies (Nikkatsu Roman Porno, no-company titles)
+        - Fixed Pink Pineapple ID: 80856 (267239 was duplicate with all adult=true)
+
+    - [x] **6.2.3 Run quality gates**
+        - All tests pass
         - Linting: 0 violations
-        - Type checking: 0 errors
+
+**Studios in blacklist (10 total):**
+
+| Company           | TMDB ID | Movies | Source           |
+| ----------------- | ------- | ------ | ---------------- |
+| Shintoho Pictures | 73435   | ~403   | Phase 5          |
+| Xces Film         | 213979  | ~311   | Pattern analysis |
+| Kokuei            | 9301    | ~177   | Phase 5          |
+| Million Film      | 120194  | ~87    | Phase 5          |
+| Cement Match      | 84362   | ~58    | Pattern analysis |
+| Pink Pineapple    | 80856   | ~33    | Phase 5          |
+| Sekine Production | 142460  | ~30    | Phase 5          |
+| Office Burrows    | 219019  | ~8     | Pattern analysis |
+| Osu Production    | 174515  | ~3     | Phase 5          |
+| Shin Nihon Eizo   | 127883  | ~2     | Pattern analysis |
 
 ### **Phase 7:** Centralize Filter Policy (DRY Refactor)
 
@@ -260,39 +276,25 @@ Any country may have studios producing mislabeled adult content.
         - All tests pass (update test expectations if threshold changed)
         - Linting: 0 violations
 
-### **Phase 8:** Populate Blacklists
+### **Phase 8:** Verification and Quality Gates
 
-- [ ] **8.1 Populate production company blacklist**
+- [ ] **8.1 Manual verification**
 
-    - [ ] **8.1.1 Add verified exclusive adult studios to blacklist**
-        - Use Django admin or migration
-        - Include reason for each entry
-
-- [ ] **8.2 Populate movie blacklist with known problematic titles**
-
-    - [ ] **8.2.1 Add sample problematic movies identified during research**
-        - TMDB IDs: 405342, 634220, 969777, 153726, 202438, 1263190 (if not caught by company filter)
-        - Only add movies that slip through company filter
-
-### **Phase 9:** Verification and Quality Gates
-
-- [ ] **9.1 Manual verification**
-
-    - [ ] **9.1.1 Test Z-A sort for problematic content**
+    - [ ] **8.1.1 Test Z-A sort for problematic content**
         - Browse with `original_title.desc` sort
-        - Verify blacklisted companies/movies excluded
+        - Verify blacklisted movies excluded
         - Document any remaining issues
 
-    - [ ] **9.1.2 Test other views for regressions**
+    - [ ] **8.1.2 Test other views for regressions**
         - Popular, Top Rated, Now Playing, Upcoming
         - Verify legitimate content not filtered
 
-- [ ] **9.2 Final quality gates**
+- [ ] **8.2 Final quality gates**
 
-    - [ ] **9.2.1 Run full backend test suite**
+    - [ ] **8.2.1 Run full backend test suite**
         - All tests pass
 
-    - [ ] **9.2.2 Run linting and type checking**
+    - [ ] **8.2.2 Run linting and type checking**
         - 0 violations, 0 errors
 
 ---
@@ -309,7 +311,7 @@ Any country may have studios producing mislabeled adult content.
 
 - [x] **Initial integration into `apply_buffer_if_needed` in `pagination.py`**
     - `get_blacklisted_ids()` function with 5-minute cache
-    - **Note:** Will be moved to data quality layer in Phase 2
+    - **Note:** Moved to data quality layer in Phase 2
 
 ---
 

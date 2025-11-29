@@ -11,6 +11,7 @@ import logging
 from typing import TYPE_CHECKING
 
 from core.tmdb_models.tmdb_responses import TMDBMovieBase, TMDBPaginatedMovieResponse
+from django.core.cache import cache
 
 from ..schemas import MovieBaseSchema, PaginatedMovieResponseSchema
 from .filtering import MIN_VOTE_COUNT
@@ -26,6 +27,39 @@ if TYPE_CHECKING:
 
 # Use TMDB-specific logger for consistency
 logger = logging.getLogger('cinexplorer.tmdb')
+
+# Cache key for blacklisted movie IDs
+BLACKLIST_CACHE_KEY = "movie_blacklist_ids"
+BLACKLIST_CACHE_TIMEOUT = 300  # 5 minutes
+
+
+def get_blacklisted_ids() -> set[int]:
+    """Get set of blacklisted TMDB movie IDs.
+
+    Results are cached in Django cache (Redis) for 5 minutes to avoid
+    repeated database queries. The blacklist is typically small (<100 IDs)
+    and rarely changes.
+
+    Returns:
+        Set of TMDB IDs to exclude from all results.
+    """
+    # Try cache first
+    cached = cache.get(BLACKLIST_CACHE_KEY)
+    if cached is not None:
+        return cached
+
+    # Import here to avoid circular imports
+    from ..models import BlacklistedMovie
+
+    # Query database and cache result
+    blacklist_ids = set(
+        BlacklistedMovie.objects.values_list("tmdb_id", flat=True)
+    )
+
+    cache.set(BLACKLIST_CACHE_KEY, blacklist_ids, BLACKLIST_CACHE_TIMEOUT)
+    logger.debug(f"Loaded {len(blacklist_ids)} blacklisted movie IDs from database")
+
+    return blacklist_ids
 
 
 def convert_schema_to_tmdb_movie(schema: MovieBaseSchema) -> TMDBMovieBase:
@@ -211,7 +245,17 @@ def apply_buffer_if_needed(
 
     Note:
         Deduplication by tmdb_id ensures no duplicates across page boundaries.
+        Blacklisted movies (from BlacklistedMovie model) are excluded from results.
     """
+    # Get blacklisted movie IDs (cached for performance)
+    blacklist_ids = get_blacklisted_ids()
+
+    # Filter out blacklisted movies from initial results
+    if blacklist_ids:
+        filtered_movies = [
+            m for m in filtered_movies if m.tmdb_id not in blacklist_ids
+        ]
+
     # Full page achieved - return first 20 with page count = 1
     if len(filtered_movies) >= 20:
         return (filtered_movies[:20], 1)
@@ -247,7 +291,8 @@ def apply_buffer_if_needed(
         pages_fetched += 1
 
         # Deduplicate by tmdb_id, preserving first occurrence order
-        seen_ids: set[int] = set()
+        # Seed seen_ids with blacklist to also exclude blacklisted movies from buffer
+        seen_ids: set[int] = set(blacklist_ids)
         deduplicated: list[MovieBaseSchema] = []
         for movie in combined_movies:
             if movie.tmdb_id not in seen_ids:

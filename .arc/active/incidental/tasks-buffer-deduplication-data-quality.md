@@ -67,6 +67,10 @@ analysis and solution options.
 - Refactor buffer mechanism beyond deduplication (working as designed)
 - Cursor-based pagination (different approach, out of scope)
 - Frontend exclude lists (ugly URLs, complex state management)
+- Deep link pre-population (if user bookmarks page 3, we don't pre-fetch pages 1-2 to populate session)
+    - **Rationale:** High effort, minimal UX impact. User landing on page 3 never saw pages 1-2, so if a movie
+      from those pages reappears on page 4+, they won't perceive it as a duplicate. Only visible if they navigate
+      backward after deep linking, which is rare. Accepted as known limitation.
 
 ---
 
@@ -136,14 +140,31 @@ analysis and solution options.
     **Goal:** Test session state management (store/retrieve/clear returned movie IDs).
 
     - [ ] **3.1.1 Create test file `test_pagination_session_manager.py`**
+        **Core functionality tests:**
         - Test: `get_returned_ids()` returns empty set for new session
         - Test: `add_returned_ids()` stores movie IDs in Redis cache
         - Test: `get_returned_ids()` retrieves stored IDs correctly
         - Test: `clear_session()` removes all IDs for filter combination
-        - Test: Filter hash generation consistent for same filters (order-independent)
-        - Test: Different filters generate different session keys
         - Test: Session TTL set correctly (1 hour default)
         - Test: Graceful degradation when Redis unavailable
+
+        **Session scoping tests (Issue #1 fix):**
+        - Test: Different session IDs generate different cache keys (user isolation)
+        - Test: Same session ID + same filters = same session state
+        - Test: Same session ID + different filters = different session state
+
+        **Context ID tests (Issue #2 fix - multi-tab isolation):**
+        - Test: Different context IDs generate different cache keys (tab isolation)
+        - Test: Same session + same context + same filters = same session state
+        - Test: Same session + different context + same filters = different session state
+        - Test: Context ID is optional (backwards compatibility, defaults to empty string)
+
+        **Filter hash tests (Issue #3 fix - search included):**
+        - Test: Filter hash generation consistent for same filters (order-independent)
+        - Test: Different filters generate different session keys
+        - Test: Search query (`q`) included in filter hash
+        - Test: Empty search query vs no search query handled correctly
+
         - File: `backend/apps/movie/tests/unit/services/test_pagination_session_manager.py`
         - Expect tests to FAIL initially (class not implemented)
 
@@ -160,6 +181,7 @@ analysis and solution options.
     already exists - it will pass once Phase 4 implementation is complete.
 
     - [ ] **3.2.1 Add cross-page deduplication tests to `test_browse_pagination.py`**
+        **Core cross-page tests:**
         - Existing xfail: `test_browse_no_cross_page_duplicates` (basic cross-page scenario)
         - Add: Test page 1 request stores returned IDs in session
         - Add: Test page 2 request excludes IDs already returned on page 1
@@ -167,6 +189,15 @@ analysis and solution options.
         - Add: Test different filter combinations use different sessions
         - Add: Test session expires after TTL (1 hour)
         - Add: Test graceful degradation when Redis unavailable (within-page only)
+
+        **Context ID integration tests (Issue #2 fix):**
+        - Add: Test requests with different `X-Pagination-Context` headers use separate sessions
+        - Add: Test requests without context header work (backwards compatibility)
+
+        **Search integration tests (Issue #3 fix):**
+        - Add: Test search results use separate session from browse results
+        - Add: Test same search query across pages deduplicates correctly
+
         - File: `backend/apps/movie/tests/integration/api/test_browse_pagination.py`
         - Expect new tests to FAIL initially (session integration not implemented)
 
@@ -182,59 +213,106 @@ analysis and solution options.
     **Location:** `backend/apps/movie/services/pagination_session_manager.py` (new file)
 
     - [ ] **4.1.1 Implement session manager class**
-        - Method: `get_returned_ids(filters: dict) -> set[int]` - Retrieve session state
-        - Method: `add_returned_ids(filters: dict, ids: list[int]) -> None` - Update session
-        - Method: `clear_session(filters: dict) -> None` - Reset on page 1 or filter change
-        - Method: `_generate_filter_hash(filters: dict) -> str` - Normalize and hash filters
+        **Constructor:**
+        - `__init__(session_id: str, context_id: str = "")` - Initialize with session and optional context
+        - `session_id`: Django session key (from `request.session.session_key`)
+        - `context_id`: Optional tab isolation ID (from `X-Pagination-Context` header)
+
+        **Methods:**
+        - `get_returned_ids(filters: dict) -> set[int]` - Retrieve session state
+        - `add_returned_ids(filters: dict, ids: list[int]) -> None` - Update session
+        - `clear_session(filters: dict) -> None` - Reset on page 1 or filter change
+        - `_generate_cache_key(filters: dict) -> str` - Build key from session_id + context_id + filter_hash
+        - `_generate_filter_hash(filters: dict) -> str` - Normalize and hash filters (order-independent)
+
+        **Cache key format:** `pagination_session:{session_id}:{context_id}:{filter_hash}`
+
+        **Filter hash must include:**
+        - All browse filters (genres, sort_by, year_min, year_max, rating_min, rating_max)
+        - Search query (`q`) when present
+        - View type (popular, top_rated, etc.) if applicable
+
+        **Infrastructure:**
         - Use Django cache framework (Redis backend)
         - Set 1-hour TTL on all cache operations
         - Graceful degradation if cache unavailable (log warning, return empty set)
-        - ~100 lines estimated
+        - ~120 lines estimated
 
     - [ ] **4.1.2 Run unit tests - should now PASS**
-        - All `PaginationSessionManager` tests pass (8 tests)
+        - All `PaginationSessionManager` tests pass (~16 tests: core + scoping + context + filter hash)
 
 - [ ] **4.2 Integrate session tracking into buffer logic**
 
     **Location:** `backend/apps/movie/services/movie_service.py`
 
-    - [ ] **4.2.1 Import and instantiate session manager**
-        - Add import: `from .pagination_session_manager import PaginationSessionManager`
-        - Instantiate in `MovieService.__init__()` or as module-level singleton
+    - [ ] **4.2.1 Extract session ID and context ID from request**
+        - Get session ID: `request.session.session_key` (Django auto-creates for anonymous users)
+        - Get context ID: `request.headers.get("X-Pagination-Context", "")` (optional header)
+        - Pass both to `PaginationSessionManager` constructor
+        - **Note:** May need to ensure session is created for anonymous users (`request.session.create()`)
+        - ~10 lines in API layer
 
-    - [ ] **4.2.2 Update `_apply_buffer_if_needed` to use session tracking**
-        - Accept `filters` parameter (dict with all filter values)
+    - [ ] **4.2.2 Import and instantiate session manager per request**
+        - Add import: `from .pagination_session_manager import PaginationSessionManager`
+        - Create instance with session_id and context_id in endpoint methods
+        - Pass to service layer methods that need it
+        - ~15 lines modified
+
+    - [ ] **4.2.3 Update `_apply_buffer_if_needed` to use session tracking**
+        - Accept `session_manager` and `filters` parameters
         - Call `session_manager.get_returned_ids(filters)` at start
         - Add session IDs to `seen_ids` set (combine with within-page dedup)
         - After building results, call `session_manager.add_returned_ids(filters, returned_ids)`
         - ~20 lines modified
 
-    - [ ] **4.2.3 Thread filter context through endpoint methods**
+    - [ ] **4.2.4 Thread filter context through endpoint methods**
         - Update `discover_movies()`, `search_movies()`, etc. to build filter dict
-        - Pass filter dict to `_apply_buffer_if_needed()` calls
+        - Include search query (`q`) in filter dict for search endpoints
+        - Pass session_manager and filter dict to `_apply_buffer_if_needed()` calls
         - ~30 lines modified across multiple methods
 
-    - [ ] **4.2.4 Implement page=1 session clearing**
+    - [ ] **4.2.5 Implement page=1 session clearing**
         - In endpoint methods, check if `page == 1`
         - If page=1, call `session_manager.clear_session(filters)` before buffer
         - Ensures backward navigation gets fresh results
         - ~10 lines added
 
-    - [ ] **4.2.5 Run integration tests - should now PASS**
-        - All cross-page deduplication tests pass (7 tests)
-        - All existing within-page tests still pass (11 tests)
+    - [ ] **4.2.6 Run backend integration tests - should now PASS**
+        - All cross-page deduplication tests pass
+        - All existing within-page tests still pass
 
-- [ ] **4.3 Run backend quality gates**
+- [ ] **4.3 Add frontend context ID generation (Issue #2 fix)**
 
-    - [ ] **4.3.1 Run all backend tests**
+    **Purpose:** Generate unique ID per page load for multi-tab isolation.
+
+    **Location:** `frontend/src/hooks/` or API service layer
+
+    - [ ] **4.3.1 Generate pagination context ID on page load**
+        - Create UUID on initial render (use `useRef` to persist across re-renders)
+        - Store in ref, not state (doesn't need to trigger re-renders)
+        - Generate once per page load, stable across navigation within same tab
+        - ~10 lines
+
+    - [ ] **4.3.2 Add context ID to API requests**
+        - Add `X-Pagination-Context` header to movie API calls
+        - Update `apiClient` or individual fetch calls in movie hooks
+        - ~15 lines modified
+
+    - [ ] **4.3.3 Run frontend tests - should still PASS**
+        - No behavioral change expected (context ID is additive)
+        - Verify no regressions in existing functionality
+
+- [ ] **4.4 Run backend quality gates**
+
+    - [ ] **4.4.1 Run all backend tests**
         - Command: `docker compose -f infrastructure/docker-compose.yml exec backend pytest apps/`
-        - Expect: All tests pass (40+ tests now)
+        - Expect: All tests pass (50+ tests now with new dedup tests)
 
-    - [ ] **4.3.2 Run backend linting with auto-fix**
+    - [ ] **4.4.2 Run backend linting with auto-fix**
         - Command: `.venv-backend/bin/ruff check backend/apps/ backend/config/ --fix`
         - Expect: 0 violations
 
-    - [ ] **4.3.3 Run Python type checking**
+    - [ ] **4.4.3 Run Python type checking**
         - Command: `npx pyright backend/apps/ backend/config/ --project backend`
         - Expect: 0 errors
 

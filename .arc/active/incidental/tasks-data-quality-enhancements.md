@@ -78,30 +78,25 @@ and our data quality post-processing filters (second pass).
 **Purpose:** Move blacklist filtering from pagination/deduplication layer to data quality filter layer.
 Blacklist is a content policy (like vote count, completeness) not a pagination concern.
 
-**Current (incorrect):** Blacklist in `apply_buffer_if_needed()` mixed with deduplication logic
-**Target (correct):** Blacklist in `apply_data_quality_filters()` with other content policies
+- [x] **2.1 Move blacklist logic to data quality layer**
 
-- [ ] **2.1 Move blacklist logic to data quality layer**
+    - [x] **2.1.1 Add `filter_movies_by_blacklist()` to `data_quality_filters.py`**
+        - Moved `get_blacklisted_ids()` function from `pagination.py`
+        - Created `filter_movies_by_blacklist()` function mirroring other filter functions
+        - Kept 5-minute cache, same behavior
 
-    - [ ] **2.1.1 Add `filter_movies_by_blacklist()` to `data_quality_filters.py`**
-        - Move `get_blacklisted_ids()` function from `pagination.py`
-        - Create `filter_movies_by_blacklist()` function mirroring other filter functions
-        - Keep 5-minute cache, same behavior
+    - [x] **2.1.2 Integrate into `apply_data_quality_filters()`**
+        - Added blacklist filtering as FIRST filter in pipeline (efficiency - exclude early)
+        - Updated docstring to document 4-stage pipeline
 
-    - [ ] **2.1.2 Integrate into `apply_data_quality_filters()`**
-        - Add blacklist filtering to the pipeline (after completeness, before/after year)
-        - Decide ordering: blacklist early (efficiency) or late (consistency with other filters)
-
-    - [ ] **2.1.3 Remove blacklist logic from `pagination.py`**
-        - Remove `get_blacklisted_ids()` function
-        - Remove blacklist filtering from `apply_buffer_if_needed()`
-        - Remove `seen_ids` seeding with blacklist (no longer needed)
+    - [x] **2.1.3 Remove blacklist logic from `pagination.py`**
+        - Removed `get_blacklisted_ids()` function and cache constants
+        - Removed blacklist filtering from `apply_buffer_if_needed()`
+        - Removed `seen_ids` seeding with blacklist (no longer needed)
         - `apply_buffer_if_needed()` now purely handles deduplication
 
-    - [ ] **2.1.4 Run quality gates**
-        - All tests pass
-        - Linting: 0 violations
-        - Type checking: 0 errors
+    - [x] **2.1.4 Run quality gates**
+        - 440 tests pass, linting clean, type checking 0 errors
 
 ### **Phase 3:** Blacklist Test Coverage
 

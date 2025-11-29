@@ -15,24 +15,93 @@ TMDB API Quirks (Data Hygiene Issues):
   capability, would require fetching movie details for every result (expensive)
 
 Filter Pipeline:
-1. Completeness filter (always enabled - basic quality requirement)
-2. Year filtering (always enabled for historical validation)
-3. Rating filtering with vote threshold
-4. Blacklist filtering (content policy - coming soon)
+1. Blacklist filtering (content policy - exclude specific TMDB IDs)
+2. Completeness filter (always enabled - basic quality requirement)
+3. Year filtering (always enabled for historical validation)
+4. Rating filtering with vote threshold
 """
 from __future__ import annotations
 
+import logging
+
 from core.tmdb_models.tmdb_responses import TMDBMovieBase
+from django.core.cache import cache
 from movie.schemas import MovieBaseSchema
 
 from .tmdb_query_params import MIN_VOTE_COUNT
 
+logger = logging.getLogger('cinexplorer.tmdb')
+
+# Cache settings for blacklisted movie IDs
+BLACKLIST_CACHE_KEY = "movie_blacklist_ids"
+BLACKLIST_CACHE_TIMEOUT = 300  # 5 minutes
+
 __all__ = [
     'apply_data_quality_filters',
+    'filter_movies_by_blacklist',
     'filter_movies_by_completeness',
     'filter_movies_by_rating',
     'filter_movies_by_year',
+    'get_blacklisted_ids',
 ]
+
+
+# ============================================================================
+# Blacklist Filtering
+# ============================================================================
+
+
+def get_blacklisted_ids() -> set[int]:
+    """Get set of blacklisted TMDB movie IDs.
+
+    Results are cached in Django cache (Redis) for 5 minutes to avoid
+    repeated database queries. The blacklist is typically small (<100 IDs)
+    and rarely changes.
+
+    Returns:
+        Set of TMDB IDs to exclude from all results.
+    """
+    cached = cache.get(BLACKLIST_CACHE_KEY)
+    if cached is not None:
+        return cached
+
+    from movie.models import BlacklistedMovie
+
+    blacklist_ids = set(
+        BlacklistedMovie.objects.values_list("tmdb_id", flat=True)
+    )
+
+    cache.set(BLACKLIST_CACHE_KEY, blacklist_ids, BLACKLIST_CACHE_TIMEOUT)
+    logger.debug(f"Loaded {len(blacklist_ids)} blacklisted movie IDs from database")
+
+    return blacklist_ids
+
+
+def filter_movies_by_blacklist(
+    movies: list[MovieBaseSchema],
+) -> list[MovieBaseSchema]:
+    """Filter out movies that are on the blacklist.
+
+    Excludes movies whose TMDB IDs are in the BlacklistedMovie table.
+    This is a content policy filter for problematic TMDB content that
+    slips through other filters (mislabeled adult content, etc.).
+
+    Args:
+        movies: List of MovieBaseSchema objects to filter
+
+    Returns:
+        Filtered list with blacklisted movies removed.
+
+    Note:
+        Blacklist IDs are cached for 5 minutes. Changes to the blacklist
+        take effect within the cache TTL without requiring restart.
+    """
+    blacklist_ids = get_blacklisted_ids()
+
+    if not blacklist_ids:
+        return movies
+
+    return [m for m in movies if m.tmdb_id not in blacklist_ids]
 
 
 # ============================================================================
@@ -70,10 +139,11 @@ def apply_data_quality_filters(
         Filtered list of MovieBaseSchema objects matching all criteria
 
     Note:
-        Applies three-stage filtering pipeline:
-        1. Completeness filter (always enabled - basic quality requirement)
-        2. Year filtering (always enabled for historical validation)
-        3. Rating filtering with vote threshold
+        Applies four-stage filtering pipeline:
+        1. Blacklist filter (content policy - exclude specific TMDB IDs)
+        2. Completeness filter (always enabled - basic quality requirement)
+        3. Year filtering (always enabled for historical validation)
+        4. Rating filtering with vote threshold
     """
     # Convert TMDB models to schemas first
     # Map id → tmdb_id for MovieBaseSchema compatibility
@@ -87,7 +157,11 @@ def apply_data_quality_filters(
             movie_dict['release_date'] = None
         movie_schemas.append(MovieBaseSchema.model_validate(movie_dict))
 
-    # Apply completeness filter first (always enabled - basic quality requirement)
+    # Apply blacklist filter first (content policy - exclude problematic TMDB content)
+    # Runs early to avoid processing movies we know we'll exclude
+    movie_schemas = filter_movies_by_blacklist(movie_schemas)
+
+    # Apply completeness filter (always enabled - basic quality requirement)
     # Exclude movies without posters or titles for better UI display quality
     movie_schemas = filter_movies_by_completeness(movie_schemas)
 

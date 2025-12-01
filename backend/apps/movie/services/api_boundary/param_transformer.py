@@ -6,6 +6,7 @@ into ServiceParams for the service layer. It extracts parameters for both:
 2. Backend filtering (second-pass) - Catches TMDB data quality issues
 
 The transformation is the boundary between HTTP/API concerns and service layer logic.
+This includes computing context-aware vote count thresholds via VoteCountPolicy.
 """
 
 from __future__ import annotations
@@ -13,6 +14,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import TYPE_CHECKING, cast
 
+from ..data_quality.policy import VoteCountPolicy
 from .service_params import ServiceParams
 
 if TYPE_CHECKING:
@@ -51,7 +53,7 @@ DERIVED_PARAM_TRANSFORMS: dict[str, tuple[str, Callable[[object], int | float]]]
 
 def _apply_derived_params(
     data: dict[str, object],
-    params: dict[str, str | int | float | bool]
+    params: dict[str, str | int | float | bool | None]
 ) -> None:
     """Apply derived parameters (backend filtering, aliases, transformations).
 
@@ -89,6 +91,7 @@ def transform_to_service_params(schema: MovieDiscoverFilterSchema) -> ServicePar
     This function extracts parameters for both:
     1. TMDB API filtering (primary filter - reduces millions to thousands)
     2. Backend filtering (second-pass data hygiene - catches TMDB quality issues)
+    3. Vote count threshold (computed via VoteCountPolicy based on context)
 
     Args:
         schema: MovieDiscoverFilterSchema from HTTP request
@@ -98,7 +101,7 @@ def transform_to_service_params(schema: MovieDiscoverFilterSchema) -> ServicePar
     """
     # Get all non-None values from schema using Pydantic's model_dump
     data = schema.model_dump(exclude_none=True)
-    params: dict[str, str | int | float | bool] = {}
+    params: dict[str, str | int | float | bool | None] = {}
 
     # Apply field mappings
     for http_field, service_param in HTTP_TO_SERVICE_MAPPING.items():
@@ -107,6 +110,16 @@ def transform_to_service_params(schema: MovieDiscoverFilterSchema) -> ServicePar
 
     # Apply derived parameters (backend filtering, aliases, transformations)
     _apply_derived_params(data, params)
+
+    # Compute vote count threshold based on context (sort_by, year_max)
+    # VoteCountPolicy determines appropriate tier: STRICT, MODERATE, or BYPASS
+    sort_by = cast(str | None, params.get('sort_by'))
+    year_max = cast(int | None, params.get('year_max'))
+    params['min_vote_count'] = VoteCountPolicy.get_threshold(
+        endpoint="browse",
+        sort_by=sort_by,
+        year_max=year_max,
+    )
 
     # Use model_validate for type coercion from mixed dict types
     return ServiceParams.model_validate(params)

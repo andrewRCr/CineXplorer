@@ -1,8 +1,14 @@
 """
 Unit tests for VoteCountPolicy - direct policy decision testing.
 
-Tests the vote count threshold decision logic in isolation, verifying when
-thresholds are applied vs bypassed based on endpoint, sort type, and date context.
+Tests the tiered vote count threshold decision logic in isolation, verifying when
+thresholds are applied at different levels (STRICT, MODERATE, BYPASS) based on
+endpoint, sort type, and date context.
+
+Threshold Tiers:
+    STRICT (10):   Rating-dependent sorts where statistical validity matters
+    MODERATE (3):  General browsing - light spam filter, allows niche content
+    BYPASS (None): User expects comprehensive results (search, alphabetical)
 
 This complements the integration tests in test_vote_count_filtering.py which test
 the filtering EFFECT through MovieService. These tests verify the policy DECISIONS.
@@ -11,16 +17,25 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
-from movie.services.data_quality.policy import VOTE_COUNT_THRESHOLD, VoteCountPolicy
+from movie.services.data_quality.policy import (
+    MODERATE_VOTE_THRESHOLD,
+    STRICT_VOTE_THRESHOLD,
+    VoteCountPolicy,
+)
 
 
 class TestVoteCountPolicyEndpointBehavior:
     """Test endpoint-based threshold decisions."""
 
-    def test_browse_endpoint_applies_threshold(self) -> None:
-        """Browse endpoint should apply vote count threshold by default."""
+    def test_browse_endpoint_applies_moderate_threshold(self) -> None:
+        """Browse endpoint should apply moderate threshold by default (no sort)."""
         threshold = VoteCountPolicy.get_threshold(endpoint="browse")
-        assert threshold == VOTE_COUNT_THRESHOLD
+        assert threshold == MODERATE_VOTE_THRESHOLD
+
+    def test_search_endpoint_bypasses_threshold(self) -> None:
+        """Search endpoint should bypass threshold (user searched for it, show it)."""
+        threshold = VoteCountPolicy.get_threshold(endpoint="search")
+        assert threshold is None
 
     def test_now_playing_endpoint_bypasses_threshold(self) -> None:
         """Now-playing endpoint should bypass threshold (recent theatrical releases)."""
@@ -34,10 +49,10 @@ class TestVoteCountPolicyEndpointBehavior:
 
     def test_endpoint_bypass_takes_precedence_over_sort(self) -> None:
         """Endpoint bypass should take precedence even with sort that would apply threshold."""
-        # popularity.desc would normally apply threshold, but upcoming bypasses
+        # vote_average.desc would normally apply STRICT threshold, but search bypasses
         threshold = VoteCountPolicy.get_threshold(
-            endpoint="upcoming",
-            sort_by="popularity.desc"
+            endpoint="search",
+            sort_by="vote_average.desc"
         )
         assert threshold is None
 
@@ -45,60 +60,60 @@ class TestVoteCountPolicyEndpointBehavior:
 class TestVoteCountPolicySortBehavior:
     """Test sort-based threshold decisions for browse endpoint."""
 
-    def test_popularity_desc_applies_threshold(self) -> None:
-        """popularity.desc (default sort) should apply threshold."""
+    def test_popularity_desc_applies_moderate_threshold(self) -> None:
+        """popularity.desc (default sort) should apply moderate threshold."""
         threshold = VoteCountPolicy.get_threshold(
             endpoint="browse",
             sort_by="popularity.desc"
         )
-        assert threshold == VOTE_COUNT_THRESHOLD
+        assert threshold == MODERATE_VOTE_THRESHOLD
 
     def test_popularity_asc_bypasses_threshold(self) -> None:
-        """popularity.asc (impractical edge case) should bypass threshold."""
+        """popularity.asc (user wants obscure content) should bypass threshold."""
         threshold = VoteCountPolicy.get_threshold(
             endpoint="browse",
             sort_by="popularity.asc"
         )
         assert threshold is None
 
-    def test_vote_average_desc_applies_threshold(self) -> None:
-        """vote_average.desc should apply threshold."""
+    def test_vote_average_desc_applies_strict_threshold(self) -> None:
+        """vote_average.desc should apply STRICT threshold (ratings need statistical validity)."""
         threshold = VoteCountPolicy.get_threshold(
             endpoint="browse",
             sort_by="vote_average.desc"
         )
-        assert threshold == VOTE_COUNT_THRESHOLD
+        assert threshold == STRICT_VOTE_THRESHOLD
 
-    def test_vote_average_asc_applies_threshold(self) -> None:
-        """vote_average.asc should apply threshold."""
+    def test_vote_average_asc_applies_strict_threshold(self) -> None:
+        """vote_average.asc should apply STRICT threshold (ratings need statistical validity)."""
         threshold = VoteCountPolicy.get_threshold(
             endpoint="browse",
             sort_by="vote_average.asc"
         )
-        assert threshold == VOTE_COUNT_THRESHOLD
+        assert threshold == STRICT_VOTE_THRESHOLD
 
-    def test_original_title_asc_applies_threshold(self) -> None:
-        """original_title.asc (A-Z) should apply threshold."""
+    def test_original_title_asc_bypasses_threshold(self) -> None:
+        """original_title.asc (A-Z) should bypass threshold for systematic browsing."""
         threshold = VoteCountPolicy.get_threshold(
             endpoint="browse",
             sort_by="original_title.asc"
         )
-        assert threshold == VOTE_COUNT_THRESHOLD
+        assert threshold is None
 
-    def test_original_title_desc_applies_threshold(self) -> None:
-        """original_title.desc (Z-A) should apply threshold."""
+    def test_original_title_desc_bypasses_threshold(self) -> None:
+        """original_title.desc (Z-A) should bypass threshold for systematic browsing."""
         threshold = VoteCountPolicy.get_threshold(
             endpoint="browse",
             sort_by="original_title.desc"
         )
-        assert threshold == VOTE_COUNT_THRESHOLD
+        assert threshold is None
 
 
 class TestVoteCountPolicyReleaseDateSort:
     """Test release_date sort behavior with date context awareness."""
 
-    def test_release_date_asc_always_applies_threshold(self) -> None:
-        """release_date.asc (oldest first) should always apply threshold.
+    def test_release_date_asc_applies_moderate_threshold(self) -> None:
+        """release_date.asc (oldest first) should apply moderate threshold.
 
         Oldest-first means movies have had decades to accumulate votes.
         """
@@ -106,10 +121,10 @@ class TestVoteCountPolicyReleaseDateSort:
             endpoint="browse",
             sort_by="release_date.asc"
         )
-        assert threshold == VOTE_COUNT_THRESHOLD
+        assert threshold == MODERATE_VOTE_THRESHOLD
 
-    def test_release_date_asc_applies_threshold_even_with_recent_filter(self) -> None:
-        """release_date.asc should apply threshold even with recent year filter.
+    def test_release_date_asc_applies_moderate_even_with_recent_filter(self) -> None:
+        """release_date.asc should apply moderate threshold even with recent year filter.
 
         The sort direction matters more than the filter - oldest first means
         we're looking at old movies that should have votes.
@@ -120,7 +135,7 @@ class TestVoteCountPolicyReleaseDateSort:
             sort_by="release_date.asc",
             year_max=current_year,
         )
-        assert threshold == VOTE_COUNT_THRESHOLD
+        assert threshold == MODERATE_VOTE_THRESHOLD
 
     def test_release_date_desc_without_filter_bypasses_threshold(self) -> None:
         """release_date.desc without date filter should bypass threshold.
@@ -158,8 +173,8 @@ class TestVoteCountPolicyReleaseDateSort:
         )
         assert threshold is None
 
-    def test_release_date_desc_with_historical_filter_applies_threshold(self) -> None:
-        """release_date.desc with historical year filter should apply threshold.
+    def test_release_date_desc_with_historical_filter_applies_moderate(self) -> None:
+        """release_date.desc with historical year filter should apply moderate threshold.
 
         Filtering to 2 or more years ago means movies have had time for votes.
         """
@@ -169,10 +184,10 @@ class TestVoteCountPolicyReleaseDateSort:
             sort_by="release_date.desc",
             year_max=historical_year,
         )
-        assert threshold == VOTE_COUNT_THRESHOLD
+        assert threshold == MODERATE_VOTE_THRESHOLD
 
-    def test_release_date_desc_1990s_filter_applies_threshold(self) -> None:
-        """release_date.desc with 1990s filter should apply threshold.
+    def test_release_date_desc_1990s_filter_applies_moderate(self) -> None:
+        """release_date.desc with 1990s filter should apply moderate threshold.
 
         Movies from 30+ years ago have definitely had time for votes.
         """
@@ -181,40 +196,57 @@ class TestVoteCountPolicyReleaseDateSort:
             sort_by="release_date.desc",
             year_max=1999,
         )
-        assert threshold == VOTE_COUNT_THRESHOLD
+        assert threshold == MODERATE_VOTE_THRESHOLD
 
 
-class TestVoteCountPolicyHelperMethods:
-    """Test public helper methods."""
+class TestVoteCountPolicyTieredThresholds:
+    """Test that the correct threshold tier is returned."""
 
-    def test_should_bypass_for_endpoint_browse(self) -> None:
-        """Browse should not bypass."""
-        assert VoteCountPolicy.should_bypass_for_endpoint("browse") is False
+    def test_strict_threshold_is_10(self) -> None:
+        """STRICT threshold should be 10 (for statistical validity)."""
+        assert STRICT_VOTE_THRESHOLD == 10
+        assert VoteCountPolicy.STRICT_THRESHOLD == 10
 
-    def test_should_bypass_for_endpoint_now_playing(self) -> None:
-        """Now-playing should bypass."""
-        assert VoteCountPolicy.should_bypass_for_endpoint("now_playing") is True
+    def test_moderate_threshold_is_3(self) -> None:
+        """MODERATE threshold should be 3 (spam filter, allows niche content)."""
+        assert MODERATE_VOTE_THRESHOLD == 3
+        assert VoteCountPolicy.MODERATE_THRESHOLD == 3
 
-    def test_should_bypass_for_endpoint_upcoming(self) -> None:
-        """Upcoming should bypass."""
-        assert VoteCountPolicy.should_bypass_for_endpoint("upcoming") is True
+    def test_vote_average_uses_strict(self) -> None:
+        """Rating sorts should use STRICT threshold."""
+        for sort in ["vote_average.desc", "vote_average.asc"]:
+            threshold = VoteCountPolicy.get_threshold(endpoint="browse", sort_by=sort)
+            assert threshold == VoteCountPolicy.STRICT_THRESHOLD, f"Failed for {sort}"
+
+    def test_popularity_desc_uses_moderate(self) -> None:
+        """popularity.desc should use MODERATE threshold."""
+        threshold = VoteCountPolicy.get_threshold(
+            endpoint="browse", sort_by="popularity.desc"
+        )
+        assert threshold == VoteCountPolicy.MODERATE_THRESHOLD
+
+    def test_alphabetical_uses_bypass(self) -> None:
+        """Alphabetical sorts should use BYPASS (None)."""
+        for sort in ["original_title.asc", "original_title.desc"]:
+            threshold = VoteCountPolicy.get_threshold(endpoint="browse", sort_by=sort)
+            assert threshold is None, f"Failed for {sort}"
 
 
 class TestVoteCountPolicyEdgeCases:
     """Test edge cases and boundary conditions."""
 
-    def test_no_sort_applies_default_threshold(self) -> None:
-        """No sort parameter should apply default threshold."""
+    def test_no_sort_applies_moderate_threshold(self) -> None:
+        """No sort parameter should apply moderate threshold."""
         threshold = VoteCountPolicy.get_threshold(endpoint="browse", sort_by=None)
-        assert threshold == VOTE_COUNT_THRESHOLD
+        assert threshold == MODERATE_VOTE_THRESHOLD
 
-    def test_unknown_sort_applies_threshold(self) -> None:
-        """Unknown/future sort types should apply threshold (safe default)."""
+    def test_unknown_sort_applies_moderate_threshold(self) -> None:
+        """Unknown/future sort types should apply moderate threshold (safe default)."""
         threshold = VoteCountPolicy.get_threshold(
             endpoint="browse",
             sort_by="some_future_sort.desc"
         )
-        assert threshold == VOTE_COUNT_THRESHOLD
+        assert threshold == MODERATE_VOTE_THRESHOLD
 
     def test_year_max_boundary_at_buffer_edge(self) -> None:
         """Test exact boundary at RECENT_YEAR_BUFFER edge.
@@ -239,4 +271,4 @@ class TestVoteCountPolicyEdgeCases:
             sort_by="release_date.desc",
             year_max=boundary_year - 1,
         )
-        assert threshold_before_boundary == VOTE_COUNT_THRESHOLD  # Historical = apply
+        assert threshold_before_boundary == MODERATE_VOTE_THRESHOLD  # Historical = moderate

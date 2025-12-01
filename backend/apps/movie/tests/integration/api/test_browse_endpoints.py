@@ -337,7 +337,7 @@ class TestBusinessConstraints:
                 title="Low Votes",
                 release_date="2025-10-15",
                 vote_average=7.5,
-                vote_count=5,  # Below VOTE_COUNT_THRESHOLD (10)
+                vote_count=2,  # Below MODERATE_VOTE_THRESHOLD (3) for browse
             ),
             create_tmdb_movie(
                 tmdb_id=3,

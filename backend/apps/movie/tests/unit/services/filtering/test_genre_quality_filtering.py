@@ -103,7 +103,7 @@ def test_combined_genre_and_vote_filters_with_rating_filter() -> None:
 
     Dual quality approach:
     - Genre completeness filter: ALWAYS applies (like poster/title checks)
-    - Vote count threshold: Universal 10-vote minimum for data quality
+    - Vote count threshold: Moderate 3-vote minimum (spam filter)
 
     When rating filter is active, both should apply together.
     """
@@ -111,14 +111,14 @@ def test_combined_genre_and_vote_filters_with_rating_filter() -> None:
     mock_client = Mock(spec=['get'])
 
     tmdb_movies = [
-        # Pass both filters (has genres + 5+ votes)
+        # Pass both filters (has genres + 3+ votes)
         create_tmdb_movie(1, "Good Quality A", "2020-01-01", 2.0, vote_count=10),
         create_tmdb_movie(2, "Good Quality B", "2021-01-01", 1.5, vote_count=62),
         # Fail completeness filter (no genres) - filtered by completeness check
         create_tmdb_movie(101, "No Genres", "2020-01-01", 2.5, vote_count=50, genre_ids=[]),
-        # Fail vote filter (has genres but < 5 votes) - filtered by vote threshold
-        create_tmdb_movie(102, "Low Votes", "2021-01-01", 1.8, vote_count=3),
-        # Fail both (no genres + < 5 votes)
+        # Fail vote filter (has genres but < 3 votes) - filtered by vote threshold
+        create_tmdb_movie(102, "Low Votes", "2021-01-01", 1.8, vote_count=2),
+        # Fail both (no genres + < 3 votes)
         create_tmdb_movie(103, "Fail Both", "2022-01-01", 2.2, vote_count=1, genre_ids=[]),
     ]
 
@@ -127,7 +127,7 @@ def test_combined_genre_and_vote_filters_with_rating_filter() -> None:
 
     service = MovieService(tmdb_client=mock_client)
 
-    # Act: Request with rating filter (triggers 5-vote threshold + completeness check)
+    # Act: Request with rating filter (triggers moderate 3-vote threshold + completeness check)
     result = service.discover_movies(page=1, params=ServiceParams(rating_min=1.0, rating_max=3.5))
 
     # Assert: Only movies passing BOTH filters returned
@@ -138,4 +138,4 @@ def test_combined_genre_and_vote_filters_with_rating_filter() -> None:
     # Verify all returned movies pass both filters
     for movie in result.results:
         assert hasattr(movie, 'genre_ids') and len(movie.genre_ids) > 0
-        assert movie.vote_count is not None and movie.vote_count >= 5
+        assert movie.vote_count is not None and movie.vote_count >= 3

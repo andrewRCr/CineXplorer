@@ -157,7 +157,7 @@ class TestVoteAverageSortMinVoteCount:
                 title="Low Vote Movie",
                 release_date="2025-02-20",
                 vote_average=9.5,
-                vote_count=5,  # Below VOTE_COUNT_THRESHOLD (10)
+                vote_count=5,  # Below STRICT_VOTE_THRESHOLD (10) for vote_average sorts
             ),
             create_tmdb_movie(
                 tmdb_id=3,

@@ -334,6 +334,8 @@ class MovieService(BaseTMDBService):
             )
             return validate_tmdb_paginated_response(page_response, TMDBPaginatedMovieResponse)
 
+        # Search bypasses vote count filter - user searched for it, show it
+        # (VoteCountPolicy: search endpoint always bypasses)
         return fetch_with_filters_and_buffer(
             fetch_search_page,
             page,
@@ -341,7 +343,8 @@ class MovieService(BaseTMDBService):
             year_max,
             rating_min,
             rating_max,
-            pre_filter_func=self._filter_non_visual_content
+            pre_filter_func=self._filter_non_visual_content,
+            min_vote_count=None,  # Bypass for search
         )
 
     # ========================================================================

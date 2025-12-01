@@ -75,7 +75,7 @@ def apply_data_quality_filters(
         rating_min: Minimum rating (inclusive), None for no lower bound
         rating_max: Maximum rating (inclusive), None for no upper bound
         min_vote_count: Minimum vote count threshold. None to skip vote filtering.
-            Default: VOTE_COUNT_THRESHOLD (10)
+            Default: VOTE_COUNT_THRESHOLD (3 - moderate tier)
 
     Returns:
         Filtered list of MovieBaseSchema objects matching all criteria

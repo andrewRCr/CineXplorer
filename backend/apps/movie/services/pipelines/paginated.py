@@ -132,7 +132,7 @@ def apply_buffer_if_needed(
         rating_max: Rating filter (passed to buffer page)
         fetch_next_page_func: Function to fetch next page (takes page number)
         min_vote_count: Minimum vote count threshold (passed to buffer page).
-            Default: VOTE_COUNT_THRESHOLD (10)
+            Default: VOTE_COUNT_THRESHOLD (3 - moderate tier)
 
     Returns:
         Tuple of (movies, pages_consumed) where:
@@ -230,7 +230,7 @@ def fetch_with_filters_and_buffer(
             If provided, overrides `page` for TMDB fetching
             (enables metadata-driven pagination)
         min_vote_count: Minimum vote count threshold. None to skip vote filtering.
-            Default: VOTE_COUNT_THRESHOLD (10)
+            Default: VOTE_COUNT_THRESHOLD (3 - moderate tier)
 
     Returns:
         PaginatedMovieResponseSchema with filtered and buffered results, including

@@ -5,11 +5,13 @@ Each policy class defines the "what" and "why" of filtering rules; the filters m
 implements the "how" by applying these policies to movie lists.
 
 Policy Classes:
-    VoteCountPolicy: When to apply/bypass vote count thresholds
+    VoteCountPolicy: Tiered vote count thresholds based on user intent
     CompletenessPolicy: What constitutes "complete" movie data for display
 
 Constants:
-    VOTE_COUNT_THRESHOLD: Default minimum votes for data quality
+    STRICT_VOTE_THRESHOLD: High threshold for rating-dependent contexts (10 votes)
+    MODERATE_VOTE_THRESHOLD: Light spam filter for general browsing (3 votes)
+    VOTE_COUNT_THRESHOLD: Default threshold (alias for MODERATE for compatibility)
     EARLIEST_VALID_RELEASE_YEAR: Historical validation cutoff (1888)
     OVERVIEW_PLACEHOLDER_PATTERNS: Known TMDB placeholder text to exclude
 """
@@ -35,45 +37,95 @@ class MovieDataProtocol(Protocol):
 # ============================================================================
 
 # Endpoint identifiers for policy decisions
-EndpointType = Literal["browse", "now_playing", "upcoming"]
+EndpointType = Literal["browse", "search", "now_playing", "upcoming"]
 
-# Default threshold for vote count filtering
-# Movies with fewer votes are excluded from results (data quality measure)
-VOTE_COUNT_THRESHOLD = 10
+# Tiered vote count thresholds
+#
+# The vote count filter serves two purposes:
+#   1. Data quality - Movies with 0-2 votes often have bad metadata, spam, test entries
+#   2. Content curation - Filtering out obscure/niche content
+#
+# Purpose 1 is almost always helpful. Purpose 2 depends on user intent.
+# We use tiered thresholds to balance these concerns:
+#
+# STRICT (10 votes): For contexts where statistical validity matters
+#   - vote_average.* sorts need enough votes for meaningful ratings
+#   - Without this, a single 10/10 vote would top "highest rated"
+#
+# MODERATE (3 votes): Light spam filter that doesn't block legitimate content
+#   - Filters test entries, metadata garbage, and spam
+#   - Allows niche/obscure content that real users have watched
+#   - 3 votes = "at least a few people have seen this"
+#
+# BYPASS (None): For contexts where users expect comprehensive results
+#   - Search: User explicitly asked for something, show it if it exists
+#   - Alphabetical sorts: Systematic browsing, users want full catalog
+#   - Upcoming/Now Playing: Movies literally can't have votes yet
+#
+# CRITICAL UX PRINCIPLE: Less than 20 results per page looks like a broken app.
+# Filtering must never be so aggressive that pages appear sparse. When in doubt,
+# use the blacklist for spot-cleaning specific problematic content rather than
+# broad vote-based filtering.
+
+STRICT_VOTE_THRESHOLD = 10
+MODERATE_VOTE_THRESHOLD = 3
+
+# Default threshold - moderate for general use
+# (kept for backward compatibility with existing code)
+VOTE_COUNT_THRESHOLD = MODERATE_VOTE_THRESHOLD
 
 
 class VoteCountPolicy:
-    """Centralized policy for vote count threshold decisions.
+    """Tiered vote count threshold policy based on user intent.
 
-    Determines when min_vote_count filtering should be applied vs bypassed
-    based on endpoint type, sort parameters, and date filter context.
+    Determines the appropriate vote count threshold based on context:
+    endpoint type, sort parameters, and whether it's a search query.
 
-    Guiding Principle:
-        Apply the threshold by default unless bypassing is truly necessary.
-        The threshold (10 votes) drastically reduces garbage results (niche,
-        quasi-adult, straight-to-video content) and should be used everywhere
-        it doesn't fundamentally break functionality.
+    Guiding Principles:
+        1. We are NOT content police - use blacklist for specific bad content
+        2. Less than 20 results per page = broken UX, never acceptable
+        3. Minimal filtering - only filter what's truly necessary
+        4. Match user intent - curation vs completeness expectations
 
-    Bypass Rules (minimal - only when necessary):
-        - Upcoming endpoint: Unreleased movies have zero votes (fundamental)
-        - Now-playing endpoint: Recent theatrical releases may have low initial votes
-        - release_date.desc with recent filter: New releases haven't accumulated votes
-        - popularity.asc: Impractical edge case sort (may be removed from UX)
+    Threshold Tiers:
+        STRICT (10):   Rating-dependent sorts where statistical validity matters
+        MODERATE (3):  General browsing - light spam filter, allows niche content
+        BYPASS (None): User expects comprehensive results (search, alphabetical)
 
-    Apply Threshold (default behavior):
-        - All other sorts including original_title.*, vote_average.*, popularity.desc
-        - release_date.asc (oldest first - movies have had decades for votes)
-        - release_date.desc with historical filter (old movies have had time for votes)
+    Threshold Matrix by Context:
+        +------------------------+------------+----------------------------------+
+        | Context                | Threshold  | Rationale                        |
+        +------------------------+------------+----------------------------------+
+        | vote_average.* sorts   | STRICT(10) | Ratings need statistical validity|
+        | popularity.desc        | MODERATE(3)| Curation helps, don't over-filter|
+        | popularity.asc         | BYPASS     | User wants obscure content       |
+        | release_date.desc new  | BYPASS     | New releases can't have votes    |
+        | release_date.* other   | MODERATE(3)| Light filter for historical      |
+        | original_title.*       | BYPASS     | Systematic browsing, show all    |
+        | Search                 | BYPASS     | User searched for it, show it    |
+        | Now Playing            | BYPASS     | New theatrical releases          |
+        | Upcoming               | BYPASS     | Unreleased = 0 votes by def      |
+        +------------------------+------------+----------------------------------+
 
     Usage:
+        # Browse with rating sort - needs strict threshold
         threshold = VoteCountPolicy.get_threshold(
             endpoint="browse",
-            sort_by="release_date.desc",
-            year_max=1995  # Historical filter - apply threshold
-        )
+            sort_by="vote_average.desc"
+        )  # Returns 10
+
+        # Alphabetical browsing - bypass for comprehensive results
+        threshold = VoteCountPolicy.get_threshold(
+            endpoint="browse",
+            sort_by="original_title.desc"
+        )  # Returns None
+
+        # Search - always bypass, user wants what they searched for
+        threshold = VoteCountPolicy.get_threshold(endpoint="search")  # Returns None
     """
 
-    DEFAULT_THRESHOLD = VOTE_COUNT_THRESHOLD
+    STRICT_THRESHOLD = STRICT_VOTE_THRESHOLD
+    MODERATE_THRESHOLD = MODERATE_VOTE_THRESHOLD
 
     # Year boundary for "recent" vs "historical" content
     # Movies from current year or last year are considered "recent"
@@ -100,47 +152,43 @@ class VoteCountPolicy:
         return year_max >= current_year - cls.RECENT_YEAR_BUFFER
 
     @classmethod
-    def should_bypass_for_sort(
+    def _get_sort_threshold(
         cls,
         sort_by: str,
         year_max: int | None = None,
-    ) -> bool:
-        """Determine if vote count filter should be bypassed based on sort type.
+    ) -> int | None:
+        """Get threshold based on sort type.
 
         Args:
             sort_by: TMDB sort parameter (e.g., "popularity.desc", "original_title.asc")
             year_max: Upper bound of year filter for context-aware decisions
 
         Returns:
-            True if filtering should be bypassed, False if threshold should apply
+            STRICT_THRESHOLD, MODERATE_THRESHOLD, or None (bypass)
         """
-        # popularity.asc: Impractical edge case, bypass
+        # vote_average sorts: STRICT - ratings need statistical validity
+        if "vote_average" in sort_by:
+            return cls.STRICT_THRESHOLD
+
+        # original_title sorts: BYPASS - systematic alphabetical browsing
+        # Users browsing A-Z expect to see everything, not just popular content
+        if "original_title" in sort_by:
+            return None
+
+        # popularity.asc: BYPASS - user explicitly wants obscure content
         if sort_by == "popularity.asc":
-            return True
+            return None
 
         # release_date sorts: Context-aware based on direction and date filter
         if "release_date" in sort_by:
-            if sort_by.endswith(".asc"):
-                # Oldest first - movies have had decades to accumulate votes
-                return False
-            elif sort_by.endswith(".desc"):
-                # Newest first - bypass only for recent content
-                return cls._is_recent_content(year_max)
+            if sort_by.endswith(".desc") and cls._is_recent_content(year_max):
+                # Newest first with recent content - bypass (new releases lack votes)
+                return None
+            # Historical content or oldest-first: moderate filter
+            return cls.MODERATE_THRESHOLD
 
-        # All other sorts (original_title, vote_average, popularity.desc): Apply threshold
-        return False
-
-    @classmethod
-    def should_bypass_for_endpoint(cls, endpoint: EndpointType) -> bool:
-        """Determine if vote count filter should be bypassed based on endpoint.
-
-        Args:
-            endpoint: The API endpoint type
-
-        Returns:
-            True if filtering should be bypassed, False if threshold should apply
-        """
-        return endpoint in ("now_playing", "upcoming")
+        # popularity.desc and any other sorts: MODERATE
+        return cls.MODERATE_THRESHOLD
 
     @classmethod
     def get_threshold(
@@ -159,15 +207,19 @@ class VoteCountPolicy:
         Returns:
             Vote count threshold (int) or None if filtering should be bypassed
         """
-        # Endpoint bypass takes precedence (fundamental constraints)
-        if cls.should_bypass_for_endpoint(endpoint):
+        # Endpoint-based bypass takes precedence (fundamental constraints)
+        # Search: User explicitly asked for something - show it if it exists
+        # Now Playing: New theatrical releases may have low initial votes
+        # Upcoming: Unreleased movies have zero votes by definition
+        if endpoint in ("search", "now_playing", "upcoming"):
             return None
 
-        # Sort-based bypass with date context
-        if sort_by and cls.should_bypass_for_sort(sort_by, year_max):
-            return None
+        # Sort-based threshold with date context
+        if sort_by:
+            return cls._get_sort_threshold(sort_by, year_max)
 
-        return cls.DEFAULT_THRESHOLD
+        # Default: moderate threshold for general browsing
+        return cls.MODERATE_THRESHOLD
 
 
 # ============================================================================

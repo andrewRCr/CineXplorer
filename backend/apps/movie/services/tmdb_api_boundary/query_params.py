@@ -54,6 +54,7 @@ def build_tmdb_params(
     page: int,
     rating_min: float | None = None,
     rating_max: float | None = None,
+    min_vote_count: int | None = None,
     **filters: str | int | float | bool | None
 ) -> dict[str, str | int | float | bool | None]:
     """
@@ -66,6 +67,9 @@ def build_tmdb_params(
         page: Page number for pagination
         rating_min: Minimum rating (inclusive), added to TMDB params for first-pass filtering
         rating_max: Maximum rating (inclusive), added to TMDB params for first-pass filtering
+        min_vote_count: Minimum vote count threshold for TMDB first-pass filtering.
+            Should match the backend filter threshold from VoteCountPolicy.
+            If None, a fallback is used for rating sorts (VOTE_COUNT_THRESHOLD).
         **filters: Discovery filters using service parameter names:
             - sort_by: Sort order (popularity.desc, release_date.desc, etc.)
             - genres: Comma-separated genre IDs
@@ -131,16 +135,18 @@ def build_tmdb_params(
     if rating_max is not None:
         params['vote_average.lte'] = rating_max
 
-    # Auto-add vote_count.gte for rating-based sorts to ensure results pass backend filter
-    # Without this, rating sorts return movies with <10 votes that get filtered out
-    # Uses VOTE_COUNT_THRESHOLD for data quality, not curation - true sorting behavior
-    # (Curated "top rated" content belongs in Collections feature, not sort controls)
-    sort_by = params.get('sort_by', '')
-    if (
-        isinstance(sort_by, str)
-        and 'vote_average' in sort_by
+    # Set vote_count.gte to match backend filter threshold for consistency
+    # This ensures TMDB sends movies that will pass our backend vote count filter,
+    # preventing excessive filtering that causes page underfill.
+    # Priority: explicit min_vote_count > fallback for rating sorts
+    if min_vote_count is not None and 'vote_count.gte' not in params:
+        params['vote_count.gte'] = min_vote_count
+    elif (
+        isinstance(params.get('sort_by', ''), str)
+        and 'vote_average' in str(params.get('sort_by', ''))
         and 'vote_count.gte' not in params
     ):
+        # Fallback: rating sorts need some threshold even if min_vote_count not provided
         params['vote_count.gte'] = VOTE_COUNT_THRESHOLD
 
     return params

@@ -140,8 +140,11 @@ class MovieService(BaseTMDBService):
         )
 
         # Build TMDB API parameters using filtering module
+        # Pass min_vote_count to ensure TMDB first-pass filtering matches backend filter
         tmdb_filters = params.get_tmdb_params()
-        api_params = build_tmdb_params(page, rating_min, rating_max, **tmdb_filters)
+        api_params = build_tmdb_params(
+            page, rating_min, rating_max, min_vote_count, **tmdb_filters
+        )
 
         # Log TMDB params at DEBUG level for diagnostics
         logger.debug(

@@ -234,11 +234,16 @@ def create_movie_detail_from_tmdb(
             tmdb_credits = TMDBCreditsResponse.model_validate(credits_data, strict=False)
 
         # Convert TMDB movie to application schema
+        # Normalize empty string release_date to None (TMDB API quirk)
+        release_date = tmdb_movie.release_date
+        if release_date == '':
+            release_date = None
+
         detail_data: dict[str, object] = {
             'tmdb_id': tmdb_movie.id,
             'title': tmdb_movie.title,
             'poster_path': tmdb_movie.poster_path,
-            'release_date': tmdb_movie.release_date,
+            'release_date': release_date,
             'vote_average': tmdb_movie.vote_average,
             'runtime': tmdb_movie.runtime or 0,
             'overview': tmdb_movie.overview or '',

@@ -338,22 +338,26 @@ the vote count policy lands in the right place and establishes clear architectur
     - [x] **7.4.5 Update tests** - `test_schemas.py` updated to use `transform_to_service_params()`
     - [x] **7.4.6 Run quality gates** - 452 backend tests, 460 frontend tests, 0 lint/type errors
 
-- [ ] **7.5 Revisit `original_title` sort vote threshold**
+- [x] **7.5 Refine VoteCountPolicy bypass logic**
 
-    **Goal:** Determine if alphabetical sorts should have reduced (not zero) vote threshold.
+    **Completed:** Refined vote count threshold policy to apply by default, with
+    smart context-aware bypassing only where truly necessary.
 
-    - [ ] **7.5.1 Analyze tradeoffs**
-        - Current: `None` (no threshold) - lets low-quality content through
-        - Option: Lower threshold (5?) - filters worst noise, keeps legitimate obscure films
-        - Document decision and rationale
+    **Key changes implemented:**
+    1. `original_title.*` sorts: Now apply threshold (was bypassed)
+    2. `release_date.asc`: Now apply threshold (was bypassed)
+    3. `release_date.desc`: Context-aware via `year_max` parameter:
+       - Recent content (no filter, this year, last year): Bypass
+       - Historical content (year_max < current_year - 1): Apply threshold
 
-    - [ ] **7.5.2 Implement decision**
-        - Update `VoteCountPolicy` with chosen threshold
-        - If changed, verify no unintended filtering of legitimate content
+    **New test coverage:** 23 direct unit tests for VoteCountPolicy in
+    `tests/unit/services/data_quality/test_vote_count_policy.py`
 
-    - [ ] **7.5.3 Run quality gates**
-        - All tests pass (update test expectations if threshold changed)
-        - Linting: 0 violations
+    - [x] **7.5.1 Update `VoteCountPolicy.get_threshold()` signature**
+    - [x] **7.5.2 Implement refined bypass logic**
+    - [x] **7.5.3 Update call site in `api.py`** - passes `year_max=params.year_max`
+    - [x] **7.5.4 Add direct unit tests for VoteCountPolicy** - 23 tests
+    - [x] **7.5.5 Run quality gates** - 475 backend tests, 460 frontend, 0 lint/type errors
 
 ### **Phase 8:** Verification and Quality Gates
 

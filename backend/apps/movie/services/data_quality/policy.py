@@ -16,6 +16,7 @@ Constants:
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from typing import Literal, Protocol
 
 
@@ -45,37 +46,89 @@ class VoteCountPolicy:
     """Centralized policy for vote count threshold decisions.
 
     Determines when min_vote_count filtering should be applied vs bypassed
-    based on endpoint type and sort parameters.
+    based on endpoint type, sort parameters, and date filter context.
 
-    Bypass Rules:
-        Certain contexts naturally include low-vote movies and should bypass filtering:
-        - Date-based sorts: New releases haven't accumulated votes yet
-        - Alphabetical sorts: Ordering doesn't imply quality threshold
-        - Ascending popularity: Least popular movies by definition have few interactions
+    Guiding Principle:
+        Apply the threshold by default unless bypassing is truly necessary.
+        The threshold (10 votes) drastically reduces garbage results (niche,
+        quasi-adult, straight-to-video content) and should be used everywhere
+        it doesn't fundamentally break functionality.
+
+    Bypass Rules (minimal - only when necessary):
+        - Upcoming endpoint: Unreleased movies have zero votes (fundamental)
         - Now-playing endpoint: Recent theatrical releases may have low initial votes
-        - Upcoming endpoint: Unreleased movies have zero votes
+        - release_date.desc with recent filter: New releases haven't accumulated votes
+        - popularity.asc: Impractical edge case sort (may be removed from UX)
+
+    Apply Threshold (default behavior):
+        - All other sorts including original_title.*, vote_average.*, popularity.desc
+        - release_date.asc (oldest first - movies have had decades for votes)
+        - release_date.desc with historical filter (old movies have had time for votes)
 
     Usage:
-        threshold = VoteCountPolicy.get_threshold(endpoint="browse", sort_by="popularity.desc")
+        threshold = VoteCountPolicy.get_threshold(
+            endpoint="browse",
+            sort_by="release_date.desc",
+            year_max=1995  # Historical filter - apply threshold
+        )
     """
 
     DEFAULT_THRESHOLD = VOTE_COUNT_THRESHOLD
 
+    # Year boundary for "recent" vs "historical" content
+    # Movies from current year or last year are considered "recent"
+    # (haven't had time to accumulate votes)
+    RECENT_YEAR_BUFFER = 1
+
     @classmethod
-    def should_bypass_for_sort(cls, sort_by: str) -> bool:
+    def _is_recent_content(cls, year_max: int | None) -> bool:
+        """Check if the date filter indicates recent content.
+
+        Args:
+            year_max: Upper bound of year filter, or None if no filter
+
+        Returns:
+            True if content is recent (no filter or recent years),
+            False if filtering to historical content
+        """
+        if year_max is None:
+            # No date filter = could include recent content
+            return True
+
+        current_year = datetime.now(UTC).year
+        # Recent = this year or last year
+        return year_max >= current_year - cls.RECENT_YEAR_BUFFER
+
+    @classmethod
+    def should_bypass_for_sort(
+        cls,
+        sort_by: str,
+        year_max: int | None = None,
+    ) -> bool:
         """Determine if vote count filter should be bypassed based on sort type.
 
         Args:
             sort_by: TMDB sort parameter (e.g., "popularity.desc", "original_title.asc")
+            year_max: Upper bound of year filter for context-aware decisions
 
         Returns:
             True if filtering should be bypassed, False if threshold should apply
         """
-        return (
-            "release_date" in sort_by
-            or "original_title" in sort_by
-            or sort_by == "popularity.asc"
-        )
+        # popularity.asc: Impractical edge case, bypass
+        if sort_by == "popularity.asc":
+            return True
+
+        # release_date sorts: Context-aware based on direction and date filter
+        if "release_date" in sort_by:
+            if sort_by.endswith(".asc"):
+                # Oldest first - movies have had decades to accumulate votes
+                return False
+            elif sort_by.endswith(".desc"):
+                # Newest first - bypass only for recent content
+                return cls._is_recent_content(year_max)
+
+        # All other sorts (original_title, vote_average, popularity.desc): Apply threshold
+        return False
 
     @classmethod
     def should_bypass_for_endpoint(cls, endpoint: EndpointType) -> bool:
@@ -94,20 +147,24 @@ class VoteCountPolicy:
         cls,
         endpoint: EndpointType = "browse",
         sort_by: str | None = None,
+        year_max: int | None = None,
     ) -> int | None:
         """Get the appropriate vote count threshold for given context.
 
         Args:
             endpoint: The API endpoint type (default: "browse")
             sort_by: Optional TMDB sort parameter
+            year_max: Optional upper bound of year filter (for context-aware decisions)
 
         Returns:
             Vote count threshold (int) or None if filtering should be bypassed
         """
+        # Endpoint bypass takes precedence (fundamental constraints)
         if cls.should_bypass_for_endpoint(endpoint):
             return None
 
-        if sort_by and cls.should_bypass_for_sort(sort_by):
+        # Sort-based bypass with date context
+        if sort_by and cls.should_bypass_for_sort(sort_by, year_max):
             return None
 
         return cls.DEFAULT_THRESHOLD

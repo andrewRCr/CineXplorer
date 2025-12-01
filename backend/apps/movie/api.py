@@ -251,9 +251,13 @@ def browse_movies(
     # Transform HTTP params to service layer parameters
     params = transform_to_service_params(filters)
 
-    # Apply vote count policy based on sort type (centralized in data_quality/policy.py)
+    # Apply vote count policy based on sort type and date context (centralized in policy.py)
     sort_by = params.sort_by or "popularity.desc"
-    params.min_vote_count = VoteCountPolicy.get_threshold(endpoint="browse", sort_by=sort_by)
+    params.min_vote_count = VoteCountPolicy.get_threshold(
+        endpoint="browse",
+        sort_by=sort_by,
+        year_max=params.year_max,
+    )
 
     # Fetch movies from TMDB with two-pass filtering
     response = _movie_service.discover_movies(page=filters.page or 1, params=params)

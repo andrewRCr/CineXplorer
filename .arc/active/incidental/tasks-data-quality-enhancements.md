@@ -372,6 +372,38 @@ the vote count policy lands in the right place and establishes clear architectur
         - Popular, Top Rated, Now Playing, Upcoming
         - Verify legitimate content not filtered
 
+    - [x] **8.1.3 Investigate test gap - why Z-A underfill wasn't caught**
+        - Root cause: No integration test for `original_title.desc` sort
+        - Policy unit tests existed but no end-to-end verification
+        - Added `TestAlphabeticalSortBypassesVoteFilter` class to `test_browse_sort_options.py`
+        - Tests verify: low-vote movies returned, no `vote_count.gte` sent to TMDB
+        - Documented additional test gaps in Notes section (deferred: smoke tests, error scenarios)
+
+    - [x] **8.1.4 Add additional blacklist entries from manual verification**
+        - Researched production companies for user-identified problematic movies
+        - Found patterns: Nikkatsu (1971-1988), Kato Eizo Kobo, Watanabe Production
+        - Bulk blacklisted: Nikkatsu 1971-1988 (979), Kato Eizo Kobo (38), Watanabe Production (92)
+        - Individual blacklists: 72 additional movies (Korean content, misc)
+        - Final blacklist: 2,281 movies (was 1,123, +1,158 this session)
+
+    - [x] **8.1.5 Fix bugs discovered during other-view testing**
+        - **Bug 1: Rating sort (vote_average.desc) returning only 3 results**
+            - Root cause: TMDB API received `vote_count.gte=3` (MODERATE) while backend
+              filter used `10` (STRICT), causing 70% of results filtered out
+            - Fix: Pass `min_vote_count` from VoteCountPolicy to `build_tmdb_params()`
+            - Files: `query_params.py`, `movie_service.py`, `test_browse_sort_options.py`
+        - **Bug 2: 500 error on movie detail page for TMDB ID 1591004**
+            - Root cause: TMDB returns `release_date: ""` (empty string) for some entries,
+              Pydantic validation fails parsing empty string as date
+            - Fix: Normalize empty string release_date to None before schema validation
+            - File: `response_factories.py`
+
+    - [ ] **8.1.6 Remaining verification items**
+        - [ ] Blacklist True Detective: Season One (ID 1591004) - TV show incorrectly
+              in TMDB movie database, TMDB data inconsistency between endpoints
+        - [ ] Investigate pagination display mismatch - "showing 1-16 of 10,000+"
+              but page has 20 items (popularity.asc sort)
+
 - [ ] **8.2 Final quality gates**
 
     - [ ] **8.2.1 Run full backend test suite**
@@ -413,3 +445,50 @@ the vote count policy lands in the right place and establishes clear architectur
 
 **Z-A clustering explanation:** Original titles use full-width Unicode characters (Ａ-Ｚ instead of A-Z)
 which sort after standard ASCII, causing these to cluster in alphabetical sorts.
+
+---
+
+**Test Gap Investigation (Phase 8.1b):**
+
+During investigation of why tests didn't catch the Z-A underfill issue, identified broader test coverage gaps:
+
+| Gap | Severity | Status |
+| --- | -------- | ------ |
+| No integration test for `original_title.desc` | High | **Fixed** - Added to `test_browse_sort_options.py` |
+| No test verifying alphabetical sorts bypass vote filter | High | **Fixed** - `TestAlphabeticalSortBypassesVoteFilter` class added |
+| No smoke tests with real TMDB data | Medium | Defer - fragile dependency on external API |
+| No TMDB error scenario tests (timeout, rate limit, 5xx) | Medium | Defer - separate resilience testing effort |
+| No tests with realistic data volumes (100+ movies) | Low | Defer - current tests adequate for logic verification |
+| Cross-page deduplication test marked xfail | Low | Known issue, tracked separately |
+| No filter combination tests (genre + year + rating) | Low | Defer - edge case coverage |
+
+**Root cause:** Policy unit tests verified threshold decisions existed, but no integration test verified
+the policy was correctly applied end-to-end for alphabetical sorts. Added tests now verify both:
+
+1. Low-vote movies are returned (not filtered) for A-Z/Z-A sorts
+2. No `vote_count.gte` parameter sent to TMDB for alphabetical sorts
+
+---
+
+**Nikkatsu Bulk Blacklist (Phase 8.1a):**
+
+During manual verification, discovered recurring Nikkatsu Corporation content in Z-A results.
+Investigation revealed Nikkatsu's "Roman Porno" era (1971-1988) contains ~983 pink films
+incorrectly marked `adult: false` in TMDB. TMDB lacks certification data for these films,
+preventing automated filtering.
+
+**Decision:** Bulk blacklist all Nikkatsu films from 1971-1988.
+
+- Portfolio showcase context: adult content leaking is more harmful than missing niche legitimate content
+- Modern Nikkatsu (2000+) preserved: Attack on Titan, Death Note, Cold Fish, etc.
+- Classic pre-1971 preserved: Youth of the Beast, The Insect Woman, etc.
+
+**Blacklist additions:**
+
+| Category | Count | Reason |
+| -------- | ----- | ------ |
+| Nikkatsu 1971-1988 | 979 | `Nikkatsu Roman Porno era (1971-1988) bulk blacklist` |
+| Non-Nikkatsu (user-identified) | 8 | `Problematic content (manual verification Phase 8)` |
+| **Total added** | **987** | |
+
+**Final blacklist count:** 2,110 movies (was 1,123)

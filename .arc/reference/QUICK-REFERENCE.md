@@ -268,6 +268,43 @@ docker compose -f infrastructure/docker-compose.yml down
 
 ---
 
+## Movie Blacklist Operations
+
+**IMPORTANT:** App is registered as `movie` not `apps.movie` - use correct import path.
+
+```bash
+# Add single movie to blacklist
+docker compose -f infrastructure/docker-compose.yml exec -T backend python manage.py shell <<'EOF'
+from movie.models import BlacklistedMovie
+movie, created = BlacklistedMovie.objects.get_or_create(
+    tmdb_id=123456,
+    defaults={'reason': 'Description of why blacklisted'}
+)
+print(f'{"Added" if created else "Already exists"}: {movie.tmdb_id}')
+print(f'Total blacklisted: {BlacklistedMovie.objects.count()}')
+EOF
+
+# Bulk blacklist (example: list of IDs)
+docker compose -f infrastructure/docker-compose.yml exec -T backend python manage.py shell <<'EOF'
+from movie.models import BlacklistedMovie
+ids_to_blacklist = [111, 222, 333]
+for tmdb_id in ids_to_blacklist:
+    movie, created = BlacklistedMovie.objects.get_or_create(
+        tmdb_id=tmdb_id,
+        defaults={'reason': 'Bulk blacklist: [category]'}
+    )
+print(f'Total blacklisted: {BlacklistedMovie.objects.count()}')
+EOF
+
+# Check current blacklist count
+docker compose -f infrastructure/docker-compose.yml exec -T backend python manage.py shell <<'EOF'
+from movie.models import BlacklistedMovie
+print(f'Total blacklisted: {BlacklistedMovie.objects.count()}')
+EOF
+```
+
+---
+
 ## Anti-Patterns
 
 ### Path Confusion

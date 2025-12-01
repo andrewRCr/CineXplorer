@@ -398,11 +398,23 @@ the vote count policy lands in the right place and establishes clear architectur
             - Fix: Normalize empty string release_date to None before schema validation
             - File: `response_factories.py`
 
-    - [ ] **8.1.6 Remaining verification items**
-        - [ ] Blacklist True Detective: Season One (ID 1591004) - TV show incorrectly
-              in TMDB movie database, TMDB data inconsistency between endpoints
-        - [ ] Investigate pagination display mismatch - "showing 1-16 of 10,000+"
-              but page has 20 items (popularity.asc sort)
+    - [x] **8.1.6 Remaining verification items**
+        - [x] Blacklisted True Detective: Season One (ID 1591004) - TV show in TMDB movie DB
+        - [x] Investigated pagination display mismatch:
+            - Display text now accurate (was timing/state issue, self-resolved)
+            - `popularity.asc` causes short pages (17 vs 20) due to heavy filtering
+            - Root cause: 5-page buffer limit + 2,282 blacklisted movies + completeness filter
+        - Added blacklist command patterns to QUICK-REFERENCE.md for future sessions
+
+    - [x] **8.1.7 Remove problematic sort options from UI**
+        - Removed `popularity.asc` and `vote_average.asc` - produce garbage results
+        - Rationale: Only title and release date are meaningful bidirectionally;
+          popularity/rating "low to high" returns untracked/unrated content
+        - Consolidated to single dropdown with 6 coherent options:
+          Most Popular, Highest Rated, Newest, Oldest, Title A-Z, Title Z-A
+        - Deleted `SortSelector.tsx` (advanced dropdown), renamed `SortDropdownMinimal` → `SortDropdown`
+        - Centered Year+Rating inputs in AdvancedMovieFilters (removed sort from that row)
+        - Quality gates: 438 frontend tests, 485 backend tests, 0 lint/type errors
 
 - [ ] **8.2 Final quality gates**
 

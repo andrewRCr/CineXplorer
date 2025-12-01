@@ -43,14 +43,6 @@
     - Test session timeout behavior
     - Document reproduction steps if found, or close as testing artifact
 
-- [ ] Simplify sort options UI (? maybe - consider)
-    - Add "Release Date (Oldest)" to minimal sort dropdown
-    - Increase minimal dropdown width to fit longest label
-    - Remove advanced sort dropdown entirely (confusing/meaningless results for reverse sorts)
-    - Center release year and rating inputs in advanced filters row to visually balance
-    - Rationale: Reverse sorts (popularity.asc, vote_average.asc, title Z-A) produce meaningless data (untracked/unrated
-    movies, Unicode sorting issues)
-
 - [ ] Investigate pytest-cov coverage measurement issue (external research)
     - Observed: `CoverageWarning: Module apps.movie was previously imported, but not measured`
     - Symptom: Some modules show 0% coverage (helpers.py, schemas.py) while others show 100% (api.py)

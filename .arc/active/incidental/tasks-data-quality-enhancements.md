@@ -267,56 +267,72 @@ the vote count policy lands in the right place and establishes clear architectur
     - [x] **7.1.3 Create `pipelines/` package**
     - [x] **7.1.4 Run quality gates** - 203 tests pass, linting clean, type checking 0 errors
 
-- [ ] **7.2 Create centralized vote count policy**
+- [x] **7.2 Create centralized vote count policy**
 
-    **Purpose:** Single source of truth for when min_vote_count filtering is applied vs bypassed.
+    Created `data_quality/policy.py` as single source of truth for vote count filtering rules.
 
-    - [ ] **7.2.1 Create `data_quality/policy.py`**
-        - Define `VOTE_COUNT_THRESHOLD = 10` constant (moved from query_params)
-        - Create `VoteCountPolicy` class with:
-            - `DEFAULT_THRESHOLD` class attribute
-            - `should_bypass_for_sort(sort_by)` - sort-based bypass logic
-            - `get_threshold(endpoint, sort_by)` - get appropriate threshold
-        - Document rationale for each bypass rule inline
+    **VoteCountPolicy class provides:**
 
-    - [ ] **7.2.2 Refactor `api.py` to use centralized policy**
-        - Remove inline bypass logic (lines 256-264)
-        - Import and call `VoteCountPolicy.get_threshold(sort_by=...)`
-        - Verify identical behavior
+    - `VOTE_COUNT_THRESHOLD = 10` constant (moved from query_params)
+    - `should_bypass_for_sort(sort_by)` - bypass for release_date, original_title, popularity.asc
+    - `should_bypass_for_endpoint(endpoint)` - bypass for now_playing, upcoming
+    - `get_threshold(endpoint, sort_by)` - combined logic returning threshold or None
 
-    - [ ] **7.2.3 Refactor `movie_service.py` to use centralized policy**
-        - Update `get_now_playing_movies`: use policy instead of hardcoded `None`
-        - Update `get_upcoming_movies`: use policy instead of hardcoded `None`
-        - Import threshold from `data_quality/policy.py`
+    **Consumers refactored:**
 
-    - [ ] **7.2.4 Update `tmdb_api_boundary/query_params.py`**
-        - Remove `MIN_VOTE_COUNT` constant (now in data_quality/policy.py)
-        - Import `VOTE_COUNT_THRESHOLD` from `data_quality/policy.py`
-        - Update `build_tmdb_params()` to use imported constant
+    - `api.py`: Replaced inline bypass logic with `VoteCountPolicy.get_threshold()`
+    - `movie_service.py`: Now-playing/upcoming use policy instead of hardcoded None
+    - `query_params.py`: Imports `VOTE_COUNT_THRESHOLD` from policy
+    - `filters.py`, `paginated.py`: Import from policy (renamed MIN_VOTE_COUNT → VOTE_COUNT_THRESHOLD)
+    - `endpoint_configs.py`: Derives `min_vote_count_applied` from policy at runtime
 
-    - [ ] **7.2.5 Update test configs to reference same policy**
-        - `endpoint_configs.py` should derive `min_vote_count_applied` from policy
-        - Single source of truth for test expectations
+    - [x] **7.2.1 Create `data_quality/policy.py`**
+    - [x] **7.2.2 Refactor `api.py` to use centralized policy**
+    - [x] **7.2.3 Refactor `movie_service.py` to use centralized policy**
+    - [x] **7.2.4 Update `tmdb_api_boundary/query_params.py`**
+    - [x] **7.2.5 Update test configs to reference same policy**
+    - [x] **7.2.6 Run quality gates** - 203 tests pass, linting clean, type checking 0 errors
 
-    - [ ] **7.2.6 Run quality gates**
-        - All tests pass
-        - Linting: 0 violations
-        - Type checking: 0 errors
+- [x] **7.3 Expand policy.py and refactor filters.py**
 
-- [ ] **7.3 Revisit `original_title` sort vote threshold**
+    Clean separation achieved - policy defines "what/why", filters implement "how".
+
+    **policy.py now contains:**
+
+    - `VoteCountPolicy` - vote count threshold bypass rules
+    - `CompletenessPolicy` - movie data completeness validation with methods:
+        - `has_valid_poster()`, `has_valid_title()`, `has_valid_genres()`, `has_valid_overview()`
+        - `is_complete()` combining all checks
+    - `EARLIEST_VALID_RELEASE_YEAR = 1888` - historical validation cutoff
+    - `OVERVIEW_PLACEHOLDER_PATTERNS` - known TMDB placeholder text
+    - `MovieDataProtocol` - Protocol to avoid circular imports
+
+    **filters.py refactored:**
+
+    - Orchestration function (`apply_data_quality_filters`) moved to TOP
+    - `filter_movies_by_completeness` now one-liner using `CompletenessPolicy.is_complete()`
+    - `filter_movies_by_year` uses `EARLIEST_VALID_RELEASE_YEAR` from policy
+    - Docstrings trimmed (rationale lives in policy)
+    - Stale comments fixed
+
+    - [x] **7.3.1 Expand `policy.py` module**
+    - [x] **7.3.2 Refactor `filters.py` to use policy**
+    - [x] **7.3.3 Run quality gates** - 203 tests pass, linting clean, type checking 0 errors
+
+- [ ] **7.4 Revisit `original_title` sort vote threshold**
 
     **Goal:** Determine if alphabetical sorts should have reduced (not zero) vote threshold.
 
-    - [ ] **7.3.1 Analyze tradeoffs**
+    - [ ] **7.4.1 Analyze tradeoffs**
         - Current: `None` (no threshold) - lets low-quality content through
         - Option: Lower threshold (5?) - filters worst noise, keeps legitimate obscure films
         - Document decision and rationale
 
-    - [ ] **7.3.2 Implement decision**
+    - [ ] **7.4.2 Implement decision**
         - Update `VoteCountPolicy` with chosen threshold
         - If changed, verify no unintended filtering of legitimate content
 
-    - [ ] **7.3.3 Run quality gates**
+    - [ ] **7.4.3 Run quality gates**
         - All tests pass (update test expectations if threshold changed)
         - Linting: 0 violations
 

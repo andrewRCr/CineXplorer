@@ -1,11 +1,11 @@
 """Integration tests for Browse endpoint sort options.
 
 Tests that sort options flow through the full stack correctly and that
-vote_average sorting respects MIN_VOTE_COUNT for data quality.
+vote_average sorting respects VOTE_COUNT_THRESHOLD for data quality.
 
 **Test Organization:**
 - TestSortOptionsReturnResults: Each sort option returns 200 with results
-- TestVoteAverageSortMinVoteCount: vote_average sort enforces MIN_VOTE_COUNT
+- TestVoteAverageSortMinVoteCount: vote_average sort enforces VOTE_COUNT_THRESHOLD
 """
 
 from __future__ import annotations
@@ -15,7 +15,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 from core.tests.test_helpers import HTTPStatus
-from movie.services.tmdb_api_boundary.query_params import MIN_VOTE_COUNT
+from movie.services.data_quality.policy import VOTE_COUNT_THRESHOLD
 from movie.tests.test_helpers import create_mock_paginated_response, create_tmdb_movie
 
 if TYPE_CHECKING:
@@ -93,11 +93,11 @@ class TestSortOptionsReturnResults:
 
 
 class TestVoteAverageSortMinVoteCount:
-    """vote_average sort enforces MIN_VOTE_COUNT for data quality.
+    """vote_average sort enforces VOTE_COUNT_THRESHOLD for data quality.
 
     When sorting by vote_average, the endpoint should:
     1. Send vote_count.gte=10 to TMDB (upstream filtering)
-    2. Return only movies with vote_count >= MIN_VOTE_COUNT
+    2. Return only movies with vote_count >= VOTE_COUNT_THRESHOLD
 
     This prevents low-vote movies (often low-quality content) from
     appearing at the top of rating-sorted results.
@@ -134,7 +134,7 @@ class TestVoteAverageSortMinVoteCount:
         mock_tmdb_get.assert_called()
         call_args = mock_tmdb_get.call_args_list[0]
         params = call_args[0][1] if len(call_args[0]) > 1 else call_args[1].get("params", {})
-        assert params.get("vote_count.gte") == MIN_VOTE_COUNT
+        assert params.get("vote_count.gte") == VOTE_COUNT_THRESHOLD
 
     @patch("core.services.tmdb_api_client.TMDBApiClient.get")
     def test_vote_average_sort_filters_low_vote_movies(
@@ -142,7 +142,7 @@ class TestVoteAverageSortMinVoteCount:
         mock_tmdb_get: Mock,
         api_client: Client,
     ) -> None:
-        """vote_average sort filters out movies below MIN_VOTE_COUNT."""
+        """vote_average sort filters out movies below VOTE_COUNT_THRESHOLD."""
         # Mock returns mix of high and low vote count movies
         movies = [
             create_tmdb_movie(
@@ -157,7 +157,7 @@ class TestVoteAverageSortMinVoteCount:
                 title="Low Vote Movie",
                 release_date="2025-02-20",
                 vote_average=9.5,
-                vote_count=5,  # Below MIN_VOTE_COUNT (10)
+                vote_count=5,  # Below VOTE_COUNT_THRESHOLD (10)
             ),
             create_tmdb_movie(
                 tmdb_id=3,
@@ -186,6 +186,6 @@ class TestVoteAverageSortMinVoteCount:
         assert 2 not in returned_ids  # Low Vote Movie (5 votes) - filtered
         assert 3 in returned_ids  # Another Good Movie (500 votes)
 
-        # All returned movies should have vote_count >= MIN_VOTE_COUNT
+        # All returned movies should have vote_count >= VOTE_COUNT_THRESHOLD
         for movie in data["results"]:
-            assert movie["vote_count"] >= MIN_VOTE_COUNT
+            assert movie["vote_count"] >= VOTE_COUNT_THRESHOLD

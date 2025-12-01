@@ -16,6 +16,8 @@ from __future__ import annotations
 
 from typing import NamedTuple
 
+from movie.services.data_quality.policy import VoteCountPolicy
+
 
 class EndpointConfig(NamedTuple):
     """Configuration for parametrized endpoint tests.
@@ -24,7 +26,7 @@ class EndpointConfig(NamedTuple):
         name: Display name for test output (used in parametrize ids)
         url: API endpoint path
         has_date_preset: Whether endpoint has date constraints
-        min_vote_count_applied: Whether MIN_VOTE_COUNT filtering is enforced
+        min_vote_count_applied: Whether vote count filtering is enforced (from VoteCountPolicy)
         protected_keys: TMDB parameter keys that user cannot override
     """
 
@@ -35,12 +37,12 @@ class EndpointConfig(NamedTuple):
     protected_keys: list[str]
 
 
-# Endpoint configurations
+# Endpoint configurations - min_vote_count_applied derived from VoteCountPolicy
 BROWSE_CONFIG = EndpointConfig(
     name="browse",
     url="/api/movies/browse",
     has_date_preset=False,
-    min_vote_count_applied=True,
+    min_vote_count_applied=VoteCountPolicy.get_threshold(endpoint="browse") is not None,
     protected_keys=[],
 )
 
@@ -48,7 +50,7 @@ NOW_PLAYING_CONFIG = EndpointConfig(
     name="now-playing",
     url="/api/movies/now-playing",
     has_date_preset=True,
-    min_vote_count_applied=False,  # Disabled: new releases may have low vote counts
+    min_vote_count_applied=VoteCountPolicy.get_threshold(endpoint="now_playing") is not None,
     protected_keys=[
         "primary_release_date.gte",
         "primary_release_date.lte",
@@ -60,7 +62,7 @@ UPCOMING_CONFIG = EndpointConfig(
     name="upcoming",
     url="/api/movies/upcoming",
     has_date_preset=True,
-    min_vote_count_applied=False,  # Unreleased movies have 0 votes
+    min_vote_count_applied=VoteCountPolicy.get_threshold(endpoint="upcoming") is not None,
     protected_keys=[
         "primary_release_date.gte",
         "primary_release_date.lte",

@@ -1,26 +1,25 @@
+"""Data quality filters for TMDB API responses.
+
+This module provides the filter implementations that apply policies defined in
+policy.py. These are "second pass" filters applied to TMDB responses, distinct
+from TMDB query parameters (first pass) in tmdb_api_boundary/query_params.py.
+
+Architecture:
+    policy.py - Defines "what" and "why" (rules, thresholds, rationale)
+    filters.py - Implements "how" (list filtering operations)
+
+TMDB API Quirks Addressed:
+    - Year filtering: TMDB sometimes returns movies from wrong decades
+    - Rating filtering: TMDB returns movies with 0.0 ratings despite filters
+    - Runtime filtering: NOT SUPPORTED (requires individual movie detail fetches)
+
+Filter Pipeline (applied in apply_data_quality_filters):
+    1. Blacklist filtering (content policy - exclude specific TMDB IDs)
+    2. Completeness filter (always enabled - basic quality requirement)
+    3. Year filtering (always enabled for historical validation)
+    4. Rating filtering with vote threshold
 """
-Data quality filters for TMDB API responses.
 
-This module provides client-side filtering functions to handle TMDB API quirks
-and enforce data quality standards. These are "second pass" filters applied to
-TMDB responses, distinct from TMDB query parameters (first pass) in
-tmdb_api_boundary/query_params.py.
-
-TMDB API Quirks (Data Hygiene Issues):
-- Year filtering: TMDB sometimes returns movies from wrong decades, likely due to
-  re-releases, international releases, or data entry errors
-- Rating filtering: TMDB returns movies with 0.0 ratings (placeholders) despite
-  rating filters being applied
-- Genre filtering: Works correctly (TMDB handles this properly server-side)
-- Runtime filtering: NOT SUPPORTED - TMDB API doesn't provide runtime filtering
-  capability, would require fetching movie details for every result (expensive)
-
-Filter Pipeline:
-1. Blacklist filtering (content policy - exclude specific TMDB IDs)
-2. Completeness filter (always enabled - basic quality requirement)
-3. Year filtering (always enabled for historical validation)
-4. Rating filtering with vote threshold
-"""
 from __future__ import annotations
 
 import logging
@@ -29,7 +28,11 @@ from core.tmdb_models.tmdb_responses import TMDBMovieBase
 from django.core.cache import cache
 from movie.schemas import MovieBaseSchema
 
-from ..tmdb_api_boundary.query_params import MIN_VOTE_COUNT
+from .policy import (
+    EARLIEST_VALID_RELEASE_YEAR,
+    VOTE_COUNT_THRESHOLD,
+    CompletenessPolicy,
+)
 
 logger = logging.getLogger('cinexplorer.tmdb')
 
@@ -48,19 +51,71 @@ __all__ = [
 
 
 # ============================================================================
+# Orchestration Function (Main Entry Point)
+# ============================================================================
+
+
+def apply_data_quality_filters(
+    movies: list[TMDBMovieBase],
+    year_min: int | None = None,
+    year_max: int | None = None,
+    rating_min: float | None = None,
+    rating_max: float | None = None,
+    min_vote_count: int | None = VOTE_COUNT_THRESHOLD,
+) -> list[MovieBaseSchema]:
+    """Apply all data quality filters to TMDB movie list.
+
+    This is the main orchestration function for second-pass filtering. It converts
+    TMDB response models to application schemas and applies the full filter pipeline.
+
+    Args:
+        movies: List of TMDBMovieBase objects from API response
+        year_min: Minimum release year (inclusive), None for no lower bound
+        year_max: Maximum release year (inclusive), None for no upper bound
+        rating_min: Minimum rating (inclusive), None for no lower bound
+        rating_max: Maximum rating (inclusive), None for no upper bound
+        min_vote_count: Minimum vote count threshold. None to skip vote filtering.
+            Default: VOTE_COUNT_THRESHOLD (10)
+
+    Returns:
+        Filtered list of MovieBaseSchema objects matching all criteria
+
+    Pipeline Order:
+        1. Blacklist filter - exclude problematic TMDB IDs (runs first for efficiency)
+        2. Completeness filter - require poster, title, genres, overview
+        3. Year filter - validate release year (includes 1888 historical check)
+        4. Rating filter - apply rating range and vote count threshold
+    """
+    # Convert TMDB models to schemas (map id → tmdb_id for compatibility)
+    movie_schemas: list[MovieBaseSchema] = []
+    for m in movies:
+        movie_dict = m.model_dump()
+        movie_dict['tmdb_id'] = movie_dict.pop('id')
+        # Normalize empty string dates to None (TMDB API quirk)
+        if movie_dict.get('release_date') == '':
+            movie_dict['release_date'] = None
+        movie_schemas.append(MovieBaseSchema.model_validate(movie_dict))
+
+    # Apply filter pipeline
+    movie_schemas = filter_movies_by_blacklist(movie_schemas)
+    movie_schemas = filter_movies_by_completeness(movie_schemas)
+    movie_schemas = filter_movies_by_year(movie_schemas, year_min, year_max)
+    movie_schemas = filter_movies_by_rating(
+        movie_schemas, rating_min, rating_max, min_vote_count=min_vote_count
+    )
+
+    return movie_schemas
+
+
+# ============================================================================
 # Blacklist Filtering
 # ============================================================================
 
 
 def get_blacklisted_ids() -> set[int]:
-    """Get set of blacklisted TMDB movie IDs.
+    """Get set of blacklisted TMDB movie IDs from cache or database.
 
-    Results are cached in Django cache (Redis) for 5 minutes to avoid
-    repeated database queries. The blacklist is typically small (<100 IDs)
-    and rarely changes.
-
-    Returns:
-        Set of TMDB IDs to exclude from all results.
+    Results are cached for 5 minutes to avoid repeated database queries.
     """
     cached = cache.get(BLACKLIST_CACHE_KEY)
     if cached is not None:
@@ -81,21 +136,10 @@ def get_blacklisted_ids() -> set[int]:
 def filter_movies_by_blacklist(
     movies: list[MovieBaseSchema],
 ) -> list[MovieBaseSchema]:
-    """Filter out movies that are on the blacklist.
+    """Filter out movies on the blacklist.
 
     Excludes movies whose TMDB IDs are in the BlacklistedMovie table.
-    This is a content policy filter for problematic TMDB content that
-    slips through other filters (mislabeled adult content, etc.).
-
-    Args:
-        movies: List of MovieBaseSchema objects to filter
-
-    Returns:
-        Filtered list with blacklisted movies removed.
-
-    Note:
-        Blacklist IDs are cached for 5 minutes. Changes to the blacklist
-        take effect within the cache TTL without requiring restart.
+    This is a content policy filter for problematic TMDB content.
     """
     blacklist_ids = get_blacklisted_ids()
 
@@ -106,91 +150,24 @@ def filter_movies_by_blacklist(
 
 
 # ============================================================================
-# Orchestration Function
+# Completeness Filtering
 # ============================================================================
 
 
-def apply_data_quality_filters(
-    movies: list[TMDBMovieBase],
-    year_min: int | None = None,
-    year_max: int | None = None,
-    rating_min: float | None = None,
-    rating_max: float | None = None,
-    min_vote_count: int | None = MIN_VOTE_COUNT,
+def filter_movies_by_completeness(
+    movies: list[MovieBaseSchema],
 ) -> list[MovieBaseSchema]:
-    """Apply all data quality filters to TMDB movie list.
+    """Filter to movies meeting completeness requirements.
 
-    This is the main orchestration function for second-pass filtering. It converts
-    TMDB response models to application schemas and applies the full filter pipeline.
-
-    Vote count threshold: MIN_VOTE_COUNT (10 votes) by default.
-    Filters statistical noise and low-quality content while maintaining
-    broad catalog access to legitimate films.
-
-    Args:
-        movies: List of TMDBMovieBase objects from API response
-        year_min: Minimum release year (inclusive), None for no lower bound
-        year_max: Maximum release year (inclusive), None for no upper bound
-        rating_min: Minimum rating (inclusive), None for no lower bound
-        rating_max: Maximum rating (inclusive), None for no upper bound
-        min_vote_count: Minimum vote count threshold. None to skip vote filtering
-            (useful for unreleased movies). Default: MIN_VOTE_COUNT (10)
-
-    Returns:
-        Filtered list of MovieBaseSchema objects matching all criteria
-
-    Note:
-        Applies four-stage filtering pipeline:
-        1. Blacklist filter (content policy - exclude specific TMDB IDs)
-        2. Completeness filter (always enabled - basic quality requirement)
-        3. Year filtering (always enabled for historical validation)
-        4. Rating filtering with vote threshold
+    Uses CompletenessPolicy to validate each movie has required display data.
+    See policy.py CompletenessPolicy for validation rules and rationale.
     """
-    # Convert TMDB models to schemas first
-    # Map id → tmdb_id for MovieBaseSchema compatibility
-    movie_schemas: list[MovieBaseSchema] = []
-    for m in movies:
-        movie_dict = m.model_dump()
-        # Rename id to tmdb_id for MovieBaseSchema
-        movie_dict['tmdb_id'] = movie_dict.pop('id')
-        # Normalize empty string dates to None (TMDB API quirk)
-        if movie_dict.get('release_date') == '':
-            movie_dict['release_date'] = None
-        movie_schemas.append(MovieBaseSchema.model_validate(movie_dict))
-
-    # Apply blacklist filter first (content policy - exclude problematic TMDB content)
-    # Runs early to avoid processing movies we know we'll exclude
-    movie_schemas = filter_movies_by_blacklist(movie_schemas)
-
-    # Apply completeness filter (always enabled - basic quality requirement)
-    # Exclude movies without posters or titles for better UI display quality
-    movie_schemas = filter_movies_by_completeness(movie_schemas)
-
-    # Apply year filtering (always enabled for historical validation)
-    # Even without user filters, this excludes pre-1888 dates (data quality)
-    movie_schemas = filter_movies_by_year(movie_schemas, year_min, year_max)
-
-    # Apply rating filtering with vote threshold (see docstring)
-    # Vote count filters statistical noise and low-quality content
-    # Works with genre completeness filtering for dual quality assurance
-    # Can be disabled (min_vote_count=None) for unreleased movies
-    movie_schemas = filter_movies_by_rating(
-        movie_schemas,
-        rating_min,
-        rating_max,
-        min_vote_count=min_vote_count
-    )
-
-    return movie_schemas
+    return [m for m in movies if CompletenessPolicy.is_complete(m)]
 
 
 # ============================================================================
 # Year Filtering
 # ============================================================================
-
-# First film ever made: Roundhay Garden Scene (1888)
-# Any movies with earlier release dates are TMDB data quality issues
-FIRST_FILM_YEAR = 1888
 
 
 def filter_movies_by_year(
@@ -200,15 +177,8 @@ def filter_movies_by_year(
 ) -> list[MovieBaseSchema]:
     """Filter movies by release year range with historical validation.
 
-    Filters out movies with release dates outside the specified year range.
-    This is necessary because TMDB API sometimes returns movies from incorrect
-    years despite API filters being applied (likely due to re-releases,
-    international releases, or data hygiene issues).
-
-    Historical Validation:
-        Always excludes movies with release dates before 1888 (first film ever made).
-        Any dates before 1888 are TMDB data quality issues and cannot represent
-        actual films. This validation applies regardless of user-specified filters.
+    Always excludes movies before EARLIEST_VALID_RELEASE_YEAR (1888) regardless
+    of user-specified filters. See policy.py for historical validation rationale.
 
     Args:
         movies: List of MovieBaseSchema objects to filter
@@ -216,50 +186,26 @@ def filter_movies_by_year(
         year_max: Maximum year (inclusive). None means no upper bound.
 
     Returns:
-        Filtered list containing only movies within the year range and after 1888.
-        Movies without release_date are excluded.
-
-    Examples:
-        >>> # Filter to 2020s movies (automatically excludes pre-1888)
-        >>> filtered = filter_movies_by_year(movies, year_min=2020, year_max=2029)
-
-        >>> # Filter to movies from 2020 onward
-        >>> filtered = filter_movies_by_year(movies, year_min=2020)
-
-        >>> # Filter to movies up to 2020
-        >>> filtered = filter_movies_by_year(movies, year_max=2020)
-
-        >>> # Single year (2022 only)
-        >>> filtered = filter_movies_by_year(movies, year_min=2022, year_max=2022)
-
-        >>> # No filters specified - still validates historical dates
-        >>> filtered = filter_movies_by_year(movies)  # Excludes pre-1888
-
-    Note:
-        Movies with missing release_date (None) are automatically filtered out,
-        as we cannot determine if they match the year criteria.
+        Filtered list. Movies without release_date are excluded.
     """
     filtered: list[MovieBaseSchema] = []
 
     for movie in movies:
-        # Skip movies without release date
         if movie.release_date is None:
             continue
 
         movie_year = movie.release_date.year
 
-        # Historical validation: Exclude movies before first film (1888)
-        # This is ALWAYS applied, regardless of user filters
-        if movie_year < FIRST_FILM_YEAR:
+        # Historical validation (always applied)
+        if movie_year < EARLIEST_VALID_RELEASE_YEAR:
             continue
 
-        # Apply user-specified year range filters
+        # User-specified year range
         if year_min is not None and movie_year < year_min:
             continue
         if year_max is not None and movie_year > year_max:
             continue
 
-        # Movie passes all year filters
         filtered.append(movie)
 
     return filtered
@@ -269,174 +215,51 @@ def filter_movies_by_year(
 # Rating Filtering
 # ============================================================================
 
-# Vote count quality threshold imported from filtering.py
-# MIN_VOTE_COUNT (10 votes): Applied universally to filter statistical noise
-
 
 def filter_movies_by_rating(
     movies: list[MovieBaseSchema],
     rating_min: float | None = None,
     rating_max: float | None = None,
-    min_vote_count: int | None = MIN_VOTE_COUNT,
+    min_vote_count: int | None = VOTE_COUNT_THRESHOLD,
 ) -> list[MovieBaseSchema]:
-    """Filter movies by vote average (rating) range with vote count quality check.
+    """Filter movies by rating range with vote count quality check.
 
-    Filters out movies with ratings outside the specified range and/or with
-    insufficient vote counts. Vote count filtering can be applied independently
-    of rating filtering for general browsing quality.
+    Vote count filtering can be applied independently of rating filtering
+    for general browsing quality. See policy.py VoteCountPolicy for threshold
+    bypass rules.
 
     Args:
         movies: List of MovieBaseSchema objects to filter
-        rating_min: Minimum rating (inclusive, 0.0-10.0 scale). None means no lower bound.
-        rating_max: Maximum rating (inclusive, 0.0-10.0 scale). None means no upper bound.
-        min_vote_count: Minimum number of votes required. Can be applied with or without
-                       rating filters. None means no vote threshold.
-                       Default: MIN_VOTE_COUNT (10 votes).
+        rating_min: Minimum rating (inclusive, 0.0-10.0). None for no lower bound.
+        rating_max: Maximum rating (inclusive, 0.0-10.0). None for no upper bound.
+        min_vote_count: Minimum votes required. None to skip. Default: VOTE_COUNT_THRESHOLD.
 
     Returns:
-        Filtered list containing only movies matching criteria.
-        - With rating filters: Movies within range and meeting vote threshold
-        - Without rating filters but with vote threshold: Movies meeting vote threshold
-        - Neither filter: All movies returned
-
-    Examples:
-        >>> # Filter by rating with vote threshold
-        >>> filtered = filter_movies_by_rating(movies, rating_min=7.5, min_vote_count=50)
-
-        >>> # General browsing quality filter (vote threshold only, no rating filter)
-        >>> filtered = filter_movies_by_rating(movies, min_vote_count=10)
-
-        >>> # Rating filter with lower vote threshold
-        >>> filtered = filter_movies_by_rating(
-        ...     movies, rating_min=1.0, rating_max=3.5, min_vote_count=5
-        ... )
-
-        >>> # No filters at all
-        >>> all_movies = filter_movies_by_rating(movies, min_vote_count=None)
-
-    Note:
-        Vote count filtering works independently of rating filters, allowing general
-        browsing quality filtering (10 votes) while still supporting lower thresholds
-        (5 votes) when rating filters are active.
-
-        TMDB ratings are on a 0.0-10.0 scale (e.g., 7.5 = 75%).
-
-    Quality Rationale:
-        Movies with few votes have unreliable ratings or represent statistical noise
-        (unreleased films, data entry errors, etc.). Vote thresholds improve catalog
-        quality during both general browsing and filtered searches.
+        Filtered list matching all specified criteria.
     """
-    # Fast path: no filters at all
+    # Fast path: no filters
     if rating_min is None and rating_max is None and min_vote_count is None:
         return movies
 
     filtered: list[MovieBaseSchema] = []
 
     for movie in movies:
-        # Vote count quality check (can apply independently of rating filters)
+        # Vote count check (independent of rating filters)
         if min_vote_count is not None and (
             movie.vote_count is None or movie.vote_count < min_vote_count
         ):
             continue
 
-        # Rating filter checks (only if rating filters specified)
+        # Rating range checks (only if filters specified)
         if rating_min is not None or rating_max is not None:
-            # Skip movies without rating when rating filter active
             if movie.vote_average is None:
                 continue
 
-            movie_rating = movie.vote_average
-
-            # Apply rating range filters
-            if rating_min is not None and movie_rating < rating_min:
+            if rating_min is not None and movie.vote_average < rating_min:
                 continue
-            if rating_max is not None and movie_rating > rating_max:
+            if rating_max is not None and movie.vote_average > rating_max:
                 continue
 
-        # Movie passes all applicable filters
-        filtered.append(movie)
-
-    return filtered
-
-
-# ============================================================================
-# Completeness Filtering
-# ============================================================================
-
-
-def filter_movies_by_completeness(
-    movies: list[MovieBaseSchema],
-) -> list[MovieBaseSchema]:
-    """Filter movies to ensure display quality by excluding incomplete records.
-
-    Excludes movies that are missing critical display fields. This ensures
-    the UI can properly render movie cards without broken images or missing data.
-
-    Exclusion criteria:
-    - Missing poster_path (empty string or None): No broken image placeholders in grid
-    - Empty or whitespace-only title: No blank movie cards
-    - Empty genre_ids list: Strong TMDB data quality signal (often correlates with
-      inappropriate content, data entry errors, or unreleased/placeholder entries)
-    - Missing or placeholder overview: No description means poor UX, placeholder text
-      like "Details Here" indicates incomplete TMDB data
-
-    Args:
-        movies: List of MovieBaseSchema objects to filter
-
-    Returns:
-        Filtered list containing only movies with complete display data.
-
-    Examples:
-        >>> # Filter out movies without posters, titles, genres, or overviews
-        >>> complete = filter_movies_by_completeness(movies)
-
-    Note:
-        This filter is ALWAYS applied (not configurable) as it's a basic quality
-        requirement for proper UI display. Movies without posters create broken
-        image placeholders; movies without titles create confusing blank cards;
-        movies without genres indicate poor data quality; movies without overviews
-        provide no description to users.
-
-    Quality Rationale:
-        TMDB sometimes returns movies with missing posters (especially older or
-        unreleased films), placeholder/empty titles, empty genre lists, or placeholder
-        overviews. These create poor UX and should be filtered out before display.
-
-        Based on analysis of 100 upcoming movies:
-        - 11% had placeholder overviews (9 empty, 2 with "Details Here" text)
-        - "Details Here" (case-insensitive) is the only text placeholder TMDB uses
-        - Empty strings are the majority of placeholder patterns (82%)
-
-        This filter ensures users only see movies with meaningful descriptions.
-    """
-    filtered: list[MovieBaseSchema] = []
-
-    for movie in movies:
-        # Exclude movies without poster (broken images in grid)
-        if not movie.poster_path or movie.poster_path.strip() == '':
-            continue
-
-        # Exclude movies with empty or whitespace-only titles (blank cards)
-        if not movie.title or movie.title.strip() == '':
-            continue
-
-        # Exclude movies with empty genre list (data quality signal)
-        # Empty genres correlate with inappropriate/incomplete content
-        if not movie.genre_ids or len(movie.genre_ids) == 0:
-            continue
-
-        # Exclude movies with missing or placeholder overview
-        # Empty overviews provide no value to users
-        if not movie.overview or movie.overview.strip() == '':
-            continue
-
-        # Exclude movies with TMDB's placeholder text (case-insensitive)
-        # Based on data analysis, "Details Here" is the only text placeholder used
-        overview_lower = movie.overview.strip().lower()
-        if overview_lower == 'details here':
-            continue
-
-        # Movie has complete display data
         filtered.append(movie)
 
     return filtered
@@ -445,16 +268,8 @@ def filter_movies_by_completeness(
 # ============================================================================
 # Runtime Filtering (NOT IMPLEMENTED)
 # ============================================================================
-# Runtime filtering is NOT implemented because:
-# 1. TMDB discover/search endpoints do NOT return runtime data in results
-# 2. Runtime is only available via movie details endpoint (individual fetch)
-# 3. Would require N separate API calls (one per movie) to get runtime data
-# 4. For 20-result page with buffer, could require 40+ API calls per request
-# 5. TMDB API rate limits (40 requests/10 seconds) make this impractical
-#
-# Future solution would require:
-# - Pre-populating local database with TMDB movie catalog (including runtime)
-# - Background sync jobs to keep data fresh
-# - Query local DB for runtime filtering, then fetch fresh data from TMDB for display
-# - This is a major architectural change; likely not feasible for current scope
+# Runtime filtering is NOT implemented because TMDB discover/search endpoints
+# do not return runtime data. Would require N separate API calls to movie
+# details endpoint, which is impractical given rate limits (40 req/10 sec).
+# See module docstring for more details.
 # ============================================================================

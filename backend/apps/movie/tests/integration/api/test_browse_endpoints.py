@@ -21,7 +21,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 from core.tests.test_helpers import HTTPStatus
-from movie.services.tmdb_api_boundary.query_params import MIN_VOTE_COUNT
+from movie.services.data_quality.policy import VOTE_COUNT_THRESHOLD
 from movie.tests.integration.api.endpoint_configs import (
     ALL_ENDPOINTS,
     DATE_CONSTRAINED_ENDPOINTS,
@@ -319,7 +319,7 @@ class TestBusinessConstraints:
     ) -> None:
         """Each endpoint applies min_vote_count correctly per its configuration.
 
-        - Browse: Applied (filters movies with < MIN_VOTE_COUNT votes)
+        - Browse: Applied (filters movies with < VOTE_COUNT_THRESHOLD votes)
         - Now-playing: NOT applied (new releases may have low vote counts)
         - Upcoming: NOT applied (unreleased movies have 0 votes)
         """
@@ -337,7 +337,7 @@ class TestBusinessConstraints:
                 title="Low Votes",
                 release_date="2025-10-15",
                 vote_average=7.5,
-                vote_count=5,  # Below MIN_VOTE_COUNT (10)
+                vote_count=5,  # Below VOTE_COUNT_THRESHOLD (10)
             ),
             create_tmdb_movie(
                 tmdb_id=3,
@@ -365,7 +365,7 @@ class TestBusinessConstraints:
             assert data["results"][0]["title"] == "High Votes"
             # Verify the threshold behavior
             assert all(
-                movie["vote_count"] >= MIN_VOTE_COUNT for movie in data["results"]
+                movie["vote_count"] >= VOTE_COUNT_THRESHOLD for movie in data["results"]
             )
         else:
             # Now-playing and upcoming: all movies returned

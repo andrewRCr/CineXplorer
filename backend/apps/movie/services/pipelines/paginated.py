@@ -14,7 +14,7 @@ from core.tmdb_models.tmdb_responses import TMDBMovieBase, TMDBPaginatedMovieRes
 
 from ...schemas import MovieBaseSchema, PaginatedMovieResponseSchema
 from ..data_quality.filters import apply_data_quality_filters
-from ..tmdb_api_boundary.query_params import MIN_VOTE_COUNT
+from ..data_quality.policy import VOTE_COUNT_THRESHOLD
 from ..tmdb_api_boundary.response_factories import create_paginated_movie_response_from_tmdb
 
 if TYPE_CHECKING:
@@ -109,7 +109,7 @@ def apply_buffer_if_needed(
     rating_min: float | None,
     rating_max: float | None,
     fetch_next_page_func: Callable[[int], TMDBPaginatedMovieResponse],
-    min_vote_count: int | None = MIN_VOTE_COUNT,
+    min_vote_count: int | None = VOTE_COUNT_THRESHOLD,
 ) -> tuple[list[MovieBaseSchema], int]:
     """Apply smart buffer mechanism to maintain consistent page sizes.
 
@@ -132,7 +132,7 @@ def apply_buffer_if_needed(
         rating_max: Rating filter (passed to buffer page)
         fetch_next_page_func: Function to fetch next page (takes page number)
         min_vote_count: Minimum vote count threshold (passed to buffer page).
-            Default: MIN_VOTE_COUNT (10)
+            Default: VOTE_COUNT_THRESHOLD (10)
 
     Returns:
         Tuple of (movies, pages_consumed) where:
@@ -200,7 +200,7 @@ def fetch_with_filters_and_buffer(
     rating_max: float | None,
     pre_filter_func: Callable[[list[TMDBMovieBase]], list[TMDBMovieBase]] | None = None,
     tmdb_page_start: int | None = None,
-    min_vote_count: int | None = MIN_VOTE_COUNT,
+    min_vote_count: int | None = VOTE_COUNT_THRESHOLD,
 ) -> PaginatedMovieResponseSchema:
     """Template function for paginated fetch-filter-buffer workflow.
 
@@ -230,7 +230,7 @@ def fetch_with_filters_and_buffer(
             If provided, overrides `page` for TMDB fetching
             (enables metadata-driven pagination)
         min_vote_count: Minimum vote count threshold. None to skip vote filtering.
-            Default: MIN_VOTE_COUNT (10)
+            Default: VOTE_COUNT_THRESHOLD (10)
 
     Returns:
         PaginatedMovieResponseSchema with filtered and buffered results, including

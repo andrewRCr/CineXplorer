@@ -28,6 +28,7 @@ from ..schemas import (
     PaginatedMovieResponseSchema,
 )
 from .base_service import BaseTMDBService
+from .data_quality.policy import VoteCountPolicy
 from .pipelines.paginated import fetch_with_filters_and_buffer
 from .tmdb_api_boundary.query_params import ServiceParams, build_tmdb_params
 from .tmdb_api_boundary.response_factories import (
@@ -221,8 +222,8 @@ class MovieService(BaseTMDBService):
         user_filters = params.model_dump(exclude_none=True)
         merged_filters = merge_with_preset(user_filters, preset, NOW_PLAYING_PROTECTED_KEYS)
 
-        # Create merged params with min_vote_count disabled for now-playing window
-        merged_filters['min_vote_count'] = None
+        # Apply vote count policy (now-playing bypasses threshold - new releases have low votes)
+        merged_filters['min_vote_count'] = VoteCountPolicy.get_threshold(endpoint="now_playing")
         merged_params = ServiceParams.model_validate(merged_filters)
 
         # Call discover endpoint with merged filters (thin wrapper pattern)
@@ -280,8 +281,8 @@ class MovieService(BaseTMDBService):
         user_filters = params.model_dump(exclude_none=True)
         merged_filters = merge_with_preset(user_filters, preset, UPCOMING_PROTECTED_KEYS)
 
-        # Create merged params with min_vote_count disabled (unreleased movies have 0 votes)
-        merged_filters['min_vote_count'] = None
+        # Apply vote count policy (upcoming bypasses threshold - unreleased movies have 0 votes)
+        merged_filters['min_vote_count'] = VoteCountPolicy.get_threshold(endpoint="upcoming")
         merged_params = ServiceParams.model_validate(merged_filters)
 
         # Call discover endpoint with merged filters (thin wrapper pattern)

@@ -12,9 +12,7 @@ from typing import cast
 
 from pydantic import BaseModel, ConfigDict
 
-# Minimum vote threshold for data quality filtering
-# Movies with fewer votes have unreliable ratings
-MIN_VOTE_COUNT = 10
+from ..data_quality.policy import VOTE_COUNT_THRESHOLD
 
 
 class ServiceParams(BaseModel):
@@ -52,7 +50,7 @@ class ServiceParams(BaseModel):
     year_max: int | None = None
     rating_min: float | None = None
     rating_max: float | None = None
-    min_vote_count: int | None = MIN_VOTE_COUNT  # None = disabled, int = threshold
+    min_vote_count: int | None = VOTE_COUNT_THRESHOLD  # None = disabled, int = threshold
 
     model_config = ConfigDict(extra="forbid")
 
@@ -238,7 +236,7 @@ def build_tmdb_params(
 
     # Auto-add vote_count.gte for rating-based sorts to ensure results pass backend filter
     # Without this, rating sorts return movies with <10 votes that get filtered out
-    # Uses MIN_VOTE_COUNT (10) for data quality, not curation - true sorting behavior
+    # Uses VOTE_COUNT_THRESHOLD for data quality, not curation - true sorting behavior
     # (Curated "top rated" content belongs in Collections feature, not sort controls)
     sort_by = params.get('sort_by', '')
     if (
@@ -246,6 +244,6 @@ def build_tmdb_params(
         and 'vote_average' in sort_by
         and 'vote_count.gte' not in params
     ):
-        params['vote_count.gte'] = MIN_VOTE_COUNT
+        params['vote_count.gte'] = VOTE_COUNT_THRESHOLD
 
     return params

@@ -30,6 +30,9 @@ from .schemas import (
     PaginationParamsSchema,
 )
 
+# Import data quality policy
+from .services.data_quality.policy import VoteCountPolicy
+
 # Import service factories
 from .services.service_factory import (
     get_keyword_service,
@@ -245,23 +248,9 @@ def browse_movies(
     # Convert filter schema to service layer parameters
     params = filters.to_service_params()
 
-    # Determine min_vote_count based on sort type
-    # Certain sorts naturally return movies with few/no votes and should bypass the filter:
-    # - release_date: New releases haven't accumulated votes yet
-    # - original_title: Alphabetical order doesn't imply quality
-    # - popularity.asc: Least popular movies by definition have few interactions
-    sort_by = params.sort_by or 'popularity.desc'
-
-    # Sorts that should bypass min_vote_count filter
-    bypass_vote_filter = (
-        'release_date' in sort_by
-        or 'original_title' in sort_by
-        or sort_by == 'popularity.asc'
-    )
-
-    # Disable min_vote_count for sorts that naturally return low-vote movies
-    if bypass_vote_filter:
-        params.min_vote_count = None
+    # Apply vote count policy based on sort type (centralized in data_quality/policy.py)
+    sort_by = params.sort_by or "popularity.desc"
+    params.min_vote_count = VoteCountPolicy.get_threshold(endpoint="browse", sort_by=sort_by)
 
     # Fetch movies from TMDB with two-pass filtering
     response = _movie_service.discover_movies(page=filters.page or 1, params=params)

@@ -19,7 +19,7 @@ from typing import ClassVar
 from core.services.api_response import ApiResponse
 from core.services.tmdb_api_client import TMDBApiClient
 
-from .schema_factories import get_validated_response
+from .tmdb_api_boundary.response_factories import get_validated_response
 
 
 class BaseTMDBService:

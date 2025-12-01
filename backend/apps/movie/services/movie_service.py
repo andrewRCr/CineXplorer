@@ -28,13 +28,13 @@ from ..schemas import (
     PaginatedMovieResponseSchema,
 )
 from .base_service import BaseTMDBService
-from .pagination import fetch_with_filters_and_buffer
-from .schema_factories import (
+from .pipelines.paginated import fetch_with_filters_and_buffer
+from .tmdb_api_boundary.query_params import ServiceParams, build_tmdb_params
+from .tmdb_api_boundary.response_factories import (
     create_genre_list_from_tmdb,
     create_movie_detail_from_tmdb,
     handle_tmdb_api_error,
 )
-from .tmdb_query_params import ServiceParams, build_tmdb_params
 
 # Use TMDB-specific logger for better log organization
 logger = logging.getLogger('cinexplorer.tmdb')

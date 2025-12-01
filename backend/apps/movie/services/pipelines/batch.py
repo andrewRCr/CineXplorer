@@ -12,7 +12,7 @@ from collections.abc import Mapping
 
 from core.services.tmdb_api_client import TMDBApiClient
 
-from ..schemas import MovieBaseSchema
+from ...schemas import MovieBaseSchema
 
 # Use TMDB-specific logger for consistency with movie_service.py
 logger = logging.getLogger('cinexplorer.tmdb')

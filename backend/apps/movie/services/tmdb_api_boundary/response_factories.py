@@ -42,7 +42,7 @@ from core.tmdb_models.tmdb_responses import (
 )
 from ninja.errors import HttpError
 
-from ..schemas import (
+from ...schemas import (
     CastMemberSchema,
     CrewMemberSchema,
     GenreSchema,

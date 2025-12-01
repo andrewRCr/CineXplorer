@@ -11,7 +11,7 @@ from unittest.mock import MagicMock, patch
 
 from core.services.api_response import ApiResponse
 from movie.schemas import MovieBaseSchema
-from movie.services.batch_operations import fetch_movies_batch
+from movie.services.pipelines.batch import fetch_movies_batch
 from movie.tests.test_helpers import (
     create_mock_movie_detail_response,
     create_mock_tmdb_error_response,
@@ -22,7 +22,7 @@ from movie.tests.test_helpers import (
 # ============================================================================
 
 
-@patch('movie.services.batch_operations.tmdb_client.get_movie_details')
+@patch('movie.services.pipelines.batch.tmdb_client.get_movie_details')
 def test_fetch_movies_batch_all_successful(mock_get_movie_details: MagicMock) -> None:
     """Test successful batch fetch when all movie IDs are valid."""
     # Arrange: Mock TMDB responses for multiple movies
@@ -54,7 +54,7 @@ def test_fetch_movies_batch_all_successful(mock_get_movie_details: MagicMock) ->
     assert mock_get_movie_details.call_count == 3
 
 
-@patch('movie.services.batch_operations.tmdb_client.get_movie_details')
+@patch('movie.services.pipelines.batch.tmdb_client.get_movie_details')
 def test_fetch_movies_batch_single_movie(mock_get_movie_details: MagicMock) -> None:
     """Test batch fetch with a single movie ID."""
     # Arrange
@@ -81,7 +81,7 @@ def test_fetch_movies_batch_single_movie(mock_get_movie_details: MagicMock) -> N
 # ============================================================================
 
 
-@patch('movie.services.batch_operations.tmdb_client.get_movie_details')
+@patch('movie.services.pipelines.batch.tmdb_client.get_movie_details')
 def test_fetch_movies_batch_partial_failures(mock_get_movie_details: MagicMock) -> None:
     """Test batch fetch when some movie IDs return 404 (graceful degradation)."""
     # Arrange: Mock mixed success and 404 responses
@@ -112,7 +112,7 @@ def test_fetch_movies_batch_partial_failures(mock_get_movie_details: MagicMock) 
     assert all(movie.tmdb_id != 2 for movie in result)
 
 
-@patch('movie.services.batch_operations.tmdb_client.get_movie_details')
+@patch('movie.services.pipelines.batch.tmdb_client.get_movie_details')
 def test_fetch_movies_batch_multiple_failures(mock_get_movie_details: MagicMock) -> None:
     """Test batch fetch when multiple movie IDs fail."""
     # Arrange: Mock multiple failures
@@ -146,7 +146,7 @@ def test_fetch_movies_batch_multiple_failures(mock_get_movie_details: MagicMock)
 # ============================================================================
 
 
-@patch('movie.services.batch_operations.tmdb_client.get_movie_details')
+@patch('movie.services.pipelines.batch.tmdb_client.get_movie_details')
 def test_fetch_movies_batch_all_failures(mock_get_movie_details: MagicMock) -> None:
     """Test batch fetch when all movie IDs fail."""
     # Arrange: All requests return 404
@@ -160,7 +160,7 @@ def test_fetch_movies_batch_all_failures(mock_get_movie_details: MagicMock) -> N
     assert isinstance(result, list)
 
 
-@patch('movie.services.batch_operations.tmdb_client.get_movie_details')
+@patch('movie.services.pipelines.batch.tmdb_client.get_movie_details')
 def test_fetch_movies_batch_rate_limit_error(mock_get_movie_details: MagicMock) -> None:
     """Test batch fetch when rate limit is hit (should skip movie)."""
     # Arrange: Mock 429 rate limit response
@@ -203,7 +203,7 @@ def test_fetch_movies_batch_empty_input() -> None:
     assert isinstance(result, list)
 
 
-@patch('movie.services.batch_operations.tmdb_client.get_movie_details')
+@patch('movie.services.pipelines.batch.tmdb_client.get_movie_details')
 def test_fetch_movies_batch_duplicate_ids(mock_get_movie_details: MagicMock) -> None:
     """Test batch fetch with duplicate movie IDs (should fetch each once)."""
     # Arrange
@@ -225,7 +225,7 @@ def test_fetch_movies_batch_duplicate_ids(mock_get_movie_details: MagicMock) -> 
     assert result[0].tmdb_id == 1
 
 
-@patch('movie.services.batch_operations.tmdb_client.get_movie_details')
+@patch('movie.services.pipelines.batch.tmdb_client.get_movie_details')
 def test_fetch_movies_batch_invalid_data_format(mock_get_movie_details: MagicMock) -> None:
     """Test batch fetch when TMDB returns malformed data."""
     # Arrange: Mock invalid/incomplete data
@@ -241,7 +241,7 @@ def test_fetch_movies_batch_invalid_data_format(mock_get_movie_details: MagicMoc
     assert len(result) == 0
 
 
-@patch('movie.services.batch_operations.tmdb_client.get_movie_details')
+@patch('movie.services.pipelines.batch.tmdb_client.get_movie_details')
 def test_fetch_movies_batch_null_response_data(mock_get_movie_details: MagicMock) -> None:
     """Test batch fetch when TMDB returns null/None data."""
     # Arrange
@@ -259,8 +259,8 @@ def test_fetch_movies_batch_null_response_data(mock_get_movie_details: MagicMock
 # ============================================================================
 
 
-@patch('movie.services.batch_operations.logger')
-@patch('movie.services.batch_operations.tmdb_client.get_movie_details')
+@patch('movie.services.pipelines.batch.logger')
+@patch('movie.services.pipelines.batch.tmdb_client.get_movie_details')
 def test_fetch_movies_batch_logs_operation_start(
     mock_get_movie_details: MagicMock,
     mock_logger: MagicMock
@@ -290,8 +290,8 @@ def test_fetch_movies_batch_logs_operation_start(
     assert first_call.kwargs['extra']['operation'] == 'fetch_movies_batch'
 
 
-@patch('movie.services.batch_operations.logger')
-@patch('movie.services.batch_operations.tmdb_client.get_movie_details')
+@patch('movie.services.pipelines.batch.logger')
+@patch('movie.services.pipelines.batch.tmdb_client.get_movie_details')
 def test_fetch_movies_batch_logs_failures(
     mock_get_movie_details: MagicMock,
     mock_logger: MagicMock
@@ -309,8 +309,8 @@ def test_fetch_movies_batch_logs_failures(
     assert len(warning_calls) > 0
 
 
-@patch('movie.services.batch_operations.logger')
-@patch('movie.services.batch_operations.tmdb_client.get_movie_details')
+@patch('movie.services.pipelines.batch.logger')
+@patch('movie.services.pipelines.batch.tmdb_client.get_movie_details')
 def test_fetch_movies_batch_logs_completion(
     mock_get_movie_details: MagicMock,
     mock_logger: MagicMock

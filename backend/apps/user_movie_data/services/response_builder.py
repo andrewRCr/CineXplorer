@@ -39,7 +39,7 @@ from typing import TYPE_CHECKING
 
 from core.pagination import paginate_queryset
 from movie.schemas import PaginatedMovieResponseSchema
-from movie.services.batch_operations import fetch_movies_batch
+from movie.services.pipelines.batch import fetch_movies_batch
 from user_movie_data.services.movie_enrichment_service import MovieEnrichmentService
 
 if TYPE_CHECKING:

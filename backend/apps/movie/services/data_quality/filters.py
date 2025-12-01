@@ -3,7 +3,8 @@ Data quality filters for TMDB API responses.
 
 This module provides client-side filtering functions to handle TMDB API quirks
 and enforce data quality standards. These are "second pass" filters applied to
-TMDB responses, distinct from TMDB query parameters (first pass) in tmdb_query_params.py.
+TMDB responses, distinct from TMDB query parameters (first pass) in
+tmdb_api_boundary/query_params.py.
 
 TMDB API Quirks (Data Hygiene Issues):
 - Year filtering: TMDB sometimes returns movies from wrong decades, likely due to
@@ -28,7 +29,7 @@ from core.tmdb_models.tmdb_responses import TMDBMovieBase
 from django.core.cache import cache
 from movie.schemas import MovieBaseSchema
 
-from .tmdb_query_params import MIN_VOTE_COUNT
+from ..tmdb_api_boundary.query_params import MIN_VOTE_COUNT
 
 logger = logging.getLogger('cinexplorer.tmdb')
 

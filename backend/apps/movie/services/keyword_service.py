@@ -16,7 +16,9 @@ from typing import cast
 from core.types.api_types import TMDBParams
 from movie.schemas import PaginatedKeywordResponseSchema
 from movie.services.base_service import BaseTMDBService
-from movie.services.schema_factories import create_paginated_keyword_response_from_tmdb
+from movie.services.tmdb_api_boundary.response_factories import (
+    create_paginated_keyword_response_from_tmdb,
+)
 
 
 class KeywordService(BaseTMDBService):

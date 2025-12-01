@@ -10,7 +10,7 @@ from unittest.mock import Mock
 
 from movie.schemas import PaginatedMovieResponseSchema
 from movie.services.movie_service import MovieService
-from movie.services.tmdb_query_params import ServiceParams
+from movie.services.tmdb_api_boundary.query_params import ServiceParams
 from movie.tests.test_helpers import create_mock_paginated_response
 from movie.tests.tmdb_test_builders import create_tmdb_movie
 

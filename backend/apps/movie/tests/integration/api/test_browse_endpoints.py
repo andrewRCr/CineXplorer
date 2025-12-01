@@ -21,7 +21,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 from core.tests.test_helpers import HTTPStatus
-from movie.services.tmdb_query_params import MIN_VOTE_COUNT
+from movie.services.tmdb_api_boundary.query_params import MIN_VOTE_COUNT
 from movie.tests.integration.api.endpoint_configs import (
     ALL_ENDPOINTS,
     DATE_CONSTRAINED_ENDPOINTS,

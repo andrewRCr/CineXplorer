@@ -235,44 +235,88 @@ Any country may have studios producing mislabeled adult content.
 | Osu Production    | 174515  | ~3     | Phase 5          |
 | Shin Nihon Eizo   | 127883  | ~2     | Pattern analysis |
 
-### **Phase 7:** Centralize Filter Policy (DRY Refactor)
+### **Phase 7:** Services Directory Reorganization & Filter Policy (DRY Refactor)
 
-**Purpose:** Single source of truth for vote count filtering rules across all views/sorts.
+**Purpose:** Clean separation of concerns in `movie/services/` and single source of truth for
+vote count filtering rules.
 
-- [ ] **7.1 Create centralized filter policy configuration**
+**Context:** During Phase 7 planning, identified that `movie/services/` had grown cluttered with
+mixed concerns (services, TMDB boundary, data quality, pipelines). Reorganizing first ensures
+the vote count policy lands in the right place and establishes clear architecture for future work.
 
-    - [ ] **7.1.1 Create filter policy in `tmdb_query_params.py`**
-        - Define policy dict/dataclass for each view type
-        - Include: `default_min_vote_count`, sort-specific overrides
-        - Document rationale for each rule
+- [x] **7.1 Reorganize `movie/services/` directory structure**
 
-    - [ ] **7.1.2 Refactor `api.py` to use centralized policy**
+    Created three packages for separation of concerns:
+
+    - `tmdb_api_boundary/`: TMDB API transformation (query_params.py, response_factories.py)
+    - `data_quality/`: Second-pass data quality filtering (filters.py)
+    - `pipelines/`: Multi-stage processing workflows (paginated.py, batch.py)
+
+    File moves (via git mv for history preservation):
+
+    - `tmdb_query_params.py` → `tmdb_api_boundary/query_params.py`
+    - `schema_factories.py` → `tmdb_api_boundary/response_factories.py`
+    - `data_quality_filters.py` → `data_quality/filters.py`
+    - `pagination.py` → `pipelines/paginated.py`
+    - `batch_operations.py` → `pipelines/batch.py`
+
+    Updated 25+ import statements and test patch paths across codebase.
+
+    - [x] **7.1.1 Create `tmdb_api_boundary/` package**
+    - [x] **7.1.2 Create `data_quality/` package**
+    - [x] **7.1.3 Create `pipelines/` package**
+    - [x] **7.1.4 Run quality gates** - 203 tests pass, linting clean, type checking 0 errors
+
+- [ ] **7.2 Create centralized vote count policy**
+
+    **Purpose:** Single source of truth for when min_vote_count filtering is applied vs bypassed.
+
+    - [ ] **7.2.1 Create `data_quality/policy.py`**
+        - Define `VOTE_COUNT_THRESHOLD = 10` constant (moved from query_params)
+        - Create `VoteCountPolicy` class with:
+            - `DEFAULT_THRESHOLD` class attribute
+            - `should_bypass_for_sort(sort_by)` - sort-based bypass logic
+            - `get_threshold(endpoint, sort_by)` - get appropriate threshold
+        - Document rationale for each bypass rule inline
+
+    - [ ] **7.2.2 Refactor `api.py` to use centralized policy**
         - Remove inline bypass logic (lines 256-264)
-        - Import and apply policy from `tmdb_query_params.py`
+        - Import and call `VoteCountPolicy.get_threshold(sort_by=...)`
         - Verify identical behavior
 
-    - [ ] **7.1.3 Refactor `movie_service.py` to use centralized policy**
-        - Update `get_now_playing_movies` and `get_upcoming_movies`
-        - Reference policy instead of hardcoded `min_vote_count = None`
+    - [ ] **7.2.3 Refactor `movie_service.py` to use centralized policy**
+        - Update `get_now_playing_movies`: use policy instead of hardcoded `None`
+        - Update `get_upcoming_movies`: use policy instead of hardcoded `None`
+        - Import threshold from `data_quality/policy.py`
 
-    - [ ] **7.1.4 Update test configs to reference same policy**
-        - `endpoint_configs.py` should import from `tmdb_query_params.py`
+    - [ ] **7.2.4 Update `tmdb_api_boundary/query_params.py`**
+        - Remove `MIN_VOTE_COUNT` constant (now in data_quality/policy.py)
+        - Import `VOTE_COUNT_THRESHOLD` from `data_quality/policy.py`
+        - Update `build_tmdb_params()` to use imported constant
+
+    - [ ] **7.2.5 Update test configs to reference same policy**
+        - `endpoint_configs.py` should derive `min_vote_count_applied` from policy
         - Single source of truth for test expectations
 
-- [ ] **7.2 Revisit `original_title` sort vote threshold**
+    - [ ] **7.2.6 Run quality gates**
+        - All tests pass
+        - Linting: 0 violations
+        - Type checking: 0 errors
+
+- [ ] **7.3 Revisit `original_title` sort vote threshold**
 
     **Goal:** Determine if alphabetical sorts should have reduced (not zero) vote threshold.
 
-    - [ ] **7.2.1 Analyze tradeoffs**
+    - [ ] **7.3.1 Analyze tradeoffs**
         - Current: `None` (no threshold) - lets low-quality content through
         - Option: Lower threshold (5?) - filters worst noise, keeps legitimate obscure films
         - Document decision and rationale
 
-    - [ ] **7.2.2 Implement decision**
-        - Update centralized policy with chosen threshold
+    - [ ] **7.3.2 Implement decision**
+        - Update `VoteCountPolicy` with chosen threshold
         - If changed, verify no unintended filtering of legitimate content
 
-    - [ ] **7.2.3 Run quality gates**
+    - [ ] **7.3.3 Run quality gates**
         - All tests pass (update test expectations if threshold changed)
         - Linting: 0 violations
 

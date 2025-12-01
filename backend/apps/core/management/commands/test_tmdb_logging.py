@@ -11,7 +11,7 @@ from typing import cast
 
 from django.core.management.base import BaseCommand
 from movie.services.service_factory import get_movie_service
-from movie.services.tmdb_query_params import ServiceParams
+from movie.services.tmdb_api_boundary.query_params import ServiceParams
 from ninja.errors import HttpError
 
 

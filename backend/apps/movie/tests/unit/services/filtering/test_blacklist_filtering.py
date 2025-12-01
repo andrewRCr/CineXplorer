@@ -12,7 +12,7 @@ Test Organization:
 - apply_data_quality_filters(): Integration with full pipeline
 
 DRY Note: The create_movie_schema() helper is designed to be reusable
-for future production company blacklist tests (Phase 3.2).
+for other filter tests that need MovieBaseSchema instances.
 """
 from __future__ import annotations
 
@@ -22,7 +22,7 @@ from unittest.mock import patch
 import pytest
 from movie.models import BlacklistedMovie
 from movie.schemas import MovieBaseSchema
-from movie.services.data_quality_filters import (
+from movie.services.data_quality.filters import (
     BLACKLIST_CACHE_KEY,
     BLACKLIST_CACHE_TIMEOUT,
     apply_data_quality_filters,
@@ -102,7 +102,7 @@ class TestGetBlacklistedIds:
     def test_returns_empty_set_when_no_blacklist_entries(self) -> None:
         """Returns empty set when BlacklistedMovie table is empty."""
         # Clear cache to ensure fresh lookup
-        with patch("movie.services.data_quality_filters.cache") as mock_cache:
+        with patch("movie.services.data_quality.filters.cache") as mock_cache:
             mock_cache.get.return_value = None
 
             result = get_blacklisted_ids()
@@ -122,7 +122,7 @@ class TestGetBlacklistedIds:
         BlacklistedMovie.objects.create(tmdb_id=11111, reason="Non-movie entry")
 
         # Clear cache to force database lookup
-        with patch("movie.services.data_quality_filters.cache") as mock_cache:
+        with patch("movie.services.data_quality.filters.cache") as mock_cache:
             mock_cache.get.return_value = None
 
             result = get_blacklisted_ids()
@@ -133,7 +133,7 @@ class TestGetBlacklistedIds:
         """Returns cached set without database query when cache hit."""
         cached_ids = {99999, 88888}
 
-        with patch("movie.services.data_quality_filters.cache") as mock_cache:
+        with patch("movie.services.data_quality.filters.cache") as mock_cache:
             mock_cache.get.return_value = cached_ids
 
             result = get_blacklisted_ids()
@@ -147,7 +147,7 @@ class TestGetBlacklistedIds:
         """Caches database result with 5-minute TTL."""
         BlacklistedMovie.objects.create(tmdb_id=55555, reason="Test entry")
 
-        with patch("movie.services.data_quality_filters.cache") as mock_cache:
+        with patch("movie.services.data_quality.filters.cache") as mock_cache:
             mock_cache.get.return_value = None
 
             get_blacklisted_ids()
@@ -178,7 +178,7 @@ class TestFilterMoviesByBlacklist:
         ]
 
         with patch(
-            "movie.services.data_quality_filters.get_blacklisted_ids"
+            "movie.services.data_quality.filters.get_blacklisted_ids"
         ) as mock_get_ids:
             mock_get_ids.return_value = {12345, 67890}
 
@@ -197,7 +197,7 @@ class TestFilterMoviesByBlacklist:
         ]
 
         with patch(
-            "movie.services.data_quality_filters.get_blacklisted_ids"
+            "movie.services.data_quality.filters.get_blacklisted_ids"
         ) as mock_get_ids:
             mock_get_ids.return_value = set()
 
@@ -214,7 +214,7 @@ class TestFilterMoviesByBlacklist:
         ]
 
         with patch(
-            "movie.services.data_quality_filters.get_blacklisted_ids"
+            "movie.services.data_quality.filters.get_blacklisted_ids"
         ) as mock_get_ids:
             mock_get_ids.return_value = {100, 200, 300}
 
@@ -225,7 +225,7 @@ class TestFilterMoviesByBlacklist:
     def test_handles_empty_input_list(self) -> None:
         """Handles empty input list gracefully."""
         with patch(
-            "movie.services.data_quality_filters.get_blacklisted_ids"
+            "movie.services.data_quality.filters.get_blacklisted_ids"
         ) as mock_get_ids:
             mock_get_ids.return_value = {12345}
 
@@ -243,7 +243,7 @@ class TestFilterMoviesByBlacklist:
         ]
 
         with patch(
-            "movie.services.data_quality_filters.get_blacklisted_ids"
+            "movie.services.data_quality.filters.get_blacklisted_ids"
         ) as mock_get_ids:
             mock_get_ids.return_value = {999}
 
@@ -270,7 +270,7 @@ class TestBlacklistInPipeline:
         ]
 
         with patch(
-            "movie.services.data_quality_filters.get_blacklisted_ids"
+            "movie.services.data_quality.filters.get_blacklisted_ids"
         ) as mock_get_ids:
             mock_get_ids.return_value = {12345}
 
@@ -299,7 +299,7 @@ class TestBlacklistInPipeline:
         ]
 
         with patch(
-            "movie.services.data_quality_filters.get_blacklisted_ids"
+            "movie.services.data_quality.filters.get_blacklisted_ids"
         ) as mock_get_ids:
             mock_get_ids.return_value = {12345}
 
@@ -325,7 +325,7 @@ class TestBlacklistInPipeline:
         ]
 
         with patch(
-            "movie.services.data_quality_filters.get_blacklisted_ids"
+            "movie.services.data_quality.filters.get_blacklisted_ids"
         ) as mock_get_ids:
             mock_get_ids.return_value = {12345}
 

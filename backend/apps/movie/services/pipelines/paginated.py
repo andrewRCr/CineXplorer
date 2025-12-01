@@ -12,10 +12,10 @@ from typing import TYPE_CHECKING
 
 from core.tmdb_models.tmdb_responses import TMDBMovieBase, TMDBPaginatedMovieResponse
 
-from ..schemas import MovieBaseSchema, PaginatedMovieResponseSchema
-from .data_quality_filters import apply_data_quality_filters
-from .schema_factories import create_paginated_movie_response_from_tmdb
-from .tmdb_query_params import MIN_VOTE_COUNT
+from ...schemas import MovieBaseSchema, PaginatedMovieResponseSchema
+from ..data_quality.filters import apply_data_quality_filters
+from ..tmdb_api_boundary.query_params import MIN_VOTE_COUNT
+from ..tmdb_api_boundary.response_factories import create_paginated_movie_response_from_tmdb
 
 if TYPE_CHECKING:
     from collections.abc import Callable

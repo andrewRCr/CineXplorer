@@ -4,7 +4,6 @@ import { FiFilter, FiX } from "react-icons/fi";
 import GenreSelector from "./GenreSelector";
 import YearSelector from "./YearSelector";
 import RatingSelector from "./RatingSelector";
-import SortSelector from "./SortSelector";
 import type { SortOptionValue } from "@/constants/movieFilterOptions";
 import type { MinimalMovieFilters } from "./LetterboxdStyleFilters";
 
@@ -155,14 +154,14 @@ const AdvancedMovieFilters = ({
 
         <Separator borderColor="border-subtle-01" />
 
-        <HStack justify="space-between" align="start">
+        <HStack justify="center" align="start" gap={8}>
           <Box>
             <YearSelector
               minYear={filters.minYear}
               maxYear={filters.maxYear}
               onMinYearChange={(year) => updateFilter("minYear", year)}
               onMaxYearChange={(year) => updateFilter("maxYear", year)}
-          pageSource={pageSource}
+              pageSource={pageSource}
             />
           </Box>
           <Box>
@@ -171,12 +170,6 @@ const AdvancedMovieFilters = ({
               maxRating={filters.maxRating}
               onMinRatingChange={(rating) => updateFilter("minRating", rating)}
               onMaxRatingChange={(rating) => updateFilter("maxRating", rating)}
-            />
-          </Box>
-          <Box>
-            <SortSelector
-              value={filters.sortBy}
-              onChange={(sort) => updateFilter("sortBy", sort)}
             />
           </Box>
         </HStack>

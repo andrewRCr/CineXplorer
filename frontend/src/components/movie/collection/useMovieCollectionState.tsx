@@ -72,11 +72,14 @@ const CORE_GENRE_IDS = [
   "53", // Thriller
 ];
 
-const MINIMAL_SORT_OPTIONS = [
+// All valid sort options (consolidated - no advanced/minimal split)
+const SORT_OPTIONS = [
   "popularity.desc",
-  "release_date.desc",
-  "original_title.asc",
   "vote_average.desc",
+  "release_date.desc",
+  "release_date.asc",
+  "original_title.asc",
+  "original_title.desc",
 ];
 
 // Helper: Check if filters contain advanced filter values
@@ -101,8 +104,8 @@ export const hasAdvancedFilterValues = (filters: MovieFiltersType): boolean => {
     }
   }
 
-  // Advanced sort options (minimal only has 4: popularity desc, release date desc, title asc, rating desc)
-  if (filters.sortBy && !MINIMAL_SORT_OPTIONS.includes(filters.sortBy)) {
+  // Check for invalid sort options (all 6 valid options are in SORT_OPTIONS)
+  if (filters.sortBy && !SORT_OPTIONS.includes(filters.sortBy)) {
     return true;
   }
 

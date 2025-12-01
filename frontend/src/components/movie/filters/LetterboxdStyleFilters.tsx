@@ -2,7 +2,7 @@ import { Box, Text, HStack, VStack } from "@chakra-ui/react";
 import type { MovieFilters as UnifiedMovieFilters } from "./AdvancedMovieFilters";
 import ConnectedDropdowns from "./ConnectedDropdowns";
 import CollapsibleSearchBox from "./CollapsibleSearchBox";
-import SortDropdownMinimal from "./SortDropdownMinimal";
+import SortDropdown from "./SortDropdown";
 import ClearFiltersButton from "./ClearFiltersButton";
 
 export interface MinimalMovieFilters {
@@ -116,7 +116,7 @@ const LetterboxdStyleFilters = ({
               />
             </Box>
 
-            <SortDropdownMinimal
+            <SortDropdown
               filters={filters}
               onSortChange={handleSortChange}
             />

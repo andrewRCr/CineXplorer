@@ -96,12 +96,11 @@ function addReleaseDateRange(
     params.release_date_lte = `${endYear}-12-31`;
 }
 
-// Sort mapping configuration
+// Sort mapping configuration (for special combined filter+sort cases)
+// Note: Standard sorts (popularity.desc, vote_average.desc, etc.) pass through directly
 const SORT_MAP: Record<string, Record<string, string>> = {
     runtime_90: { with_runtime_lte: "90", sort_by: "popularity.desc" },
     runtime_120: { with_runtime_lte: "120", sort_by: "popularity.desc" },
-    rating_desc: { sort_by: "vote_average.desc" },
-    rating_asc: { sort_by: "vote_average.asc" },
 };
 export function mapFiltersToApiParams(
     filters: MovieFiltersType,

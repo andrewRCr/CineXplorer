@@ -319,20 +319,39 @@ the vote count policy lands in the right place and establishes clear architectur
     - [x] **7.3.2 Refactor `filters.py` to use policy**
     - [x] **7.3.3 Run quality gates** - 203 tests pass, linting clean, type checking 0 errors
 
-- [ ] **7.4 Revisit `original_title` sort vote threshold**
+- [x] **7.4 Extract API boundary layer (param_transformer refactor)**
+
+    **Completed:** Created `services/api_boundary/` package mirroring `tmdb_api_boundary/`:
+    - `service_params.py` - ServiceParams model (data contract between API and service layers)
+    - `param_transformer.py` - HTTP→ServiceParams transformation logic + mappings
+
+    **Architecture achieved:**
+    - `schemas.py` now defines HTTP shapes only (no transformation logic)
+    - `api_boundary/` handles inbound transformation (HTTP → ServiceParams)
+    - `tmdb_api_boundary/` handles outbound transformation (ServiceParams → TMDB API)
+    - Clean dependency flow: api.py → schemas + api_boundary → services
+
+    - [x] **7.4.1 Create `api_boundary/` package structure**
+    - [x] **7.4.2 Move code from `query_params.py`**
+    - [x] **7.4.3 Update `schemas.py`** - removed `to_service_params()` and `_apply_derived_params()`
+    - [x] **7.4.4 Update call sites in `api.py`** - 3 call sites updated
+    - [x] **7.4.5 Update tests** - `test_schemas.py` updated to use `transform_to_service_params()`
+    - [x] **7.4.6 Run quality gates** - 452 backend tests, 460 frontend tests, 0 lint/type errors
+
+- [ ] **7.5 Revisit `original_title` sort vote threshold**
 
     **Goal:** Determine if alphabetical sorts should have reduced (not zero) vote threshold.
 
-    - [ ] **7.4.1 Analyze tradeoffs**
+    - [ ] **7.5.1 Analyze tradeoffs**
         - Current: `None` (no threshold) - lets low-quality content through
         - Option: Lower threshold (5?) - filters worst noise, keeps legitimate obscure films
         - Document decision and rationale
 
-    - [ ] **7.4.2 Implement decision**
+    - [ ] **7.5.2 Implement decision**
         - Update `VoteCountPolicy` with chosen threshold
         - If changed, verify no unintended filtering of legitimate content
 
-    - [ ] **7.4.3 Run quality gates**
+    - [ ] **7.5.3 Run quality gates**
         - All tests pass (update test expectations if threshold changed)
         - Linting: 0 violations
 

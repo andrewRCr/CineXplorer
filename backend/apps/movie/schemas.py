@@ -1,19 +1,17 @@
-"""Pydantic schemas for the movie API."""
+"""Pydantic schemas for the movie API.
+
+These schemas define the shape of HTTP request/response data only.
+For parameter transformation logic, see services.api_boundary.param_transformer.
+"""
 from __future__ import annotations
 
 from datetime import date
-from typing import Annotated, cast
+from typing import Annotated
 
 from core.models import Movie
 from ninja import Schema
 from ninja.orm import ModelSchema
 from pydantic import Field, field_validator
-
-from .services.tmdb_api_boundary.query_params import (
-    DERIVED_PARAM_TRANSFORMS,
-    HTTP_TO_SERVICE_MAPPING,
-    ServiceParams,
-)
 
 
 class MovieSearchParamsSchema(Schema):
@@ -328,63 +326,6 @@ class MovieDiscoverFilterSchema(Schema):
         if isinstance(v, str) and v.strip() == "":
             return None
         return v
-
-    def _apply_derived_params(
-        self,
-        data: dict[str, object],
-        params: dict[str, str | int | float | bool]
-    ) -> None:
-        """Apply derived parameters (backend filtering, aliases, transformations)."""
-        # Apply declarative transforms from mapping (year extraction, rating passthrough)
-        for source_key, (target_key, transform) in DERIVED_PARAM_TRANSFORMS.items():
-            if source_key in data:
-                params[target_key] = transform(data[source_key])
-
-        # Alias handling: 'genres' or 'with_genres' → 'genres'
-        if 'genres' in data:
-            params['genres'] = cast(str, data['genres'])
-        elif 'with_genres' in data:
-            params['genres'] = cast(str, data['with_genres'])
-
-        # Decade conversion: "1990s" → date range
-        if 'decade' in data:
-            try:
-                decade_str = str(data['decade'])
-                year = int(decade_str[:4])
-                start_year = year if decade_str.endswith('s') else (year // 10) * 10
-                end_year = start_year + 9
-                params['release_date_gte'] = f"{start_year}-01-01"
-                params['release_date_lte'] = f"{end_year}-12-31"
-            except (ValueError, TypeError):
-                pass
-
-    def to_service_params(self) -> ServiceParams:
-        """
-        Convert filter schema to ServiceParams Pydantic model.
-
-        This method extracts parameters for both:
-        1. TMDB API filtering (primary filter - reduces millions to thousands)
-        2. Backend filtering (second-pass data hygiene - catches TMDB quality issues)
-
-        Uses HTTP_TO_SERVICE_MAPPING from filtering.py as single source of truth.
-
-        Returns:
-            ServiceParams model with validated parameters
-        """
-        # Get all non-None values from schema using Pydantic's model_dump
-        data = self.model_dump(exclude_none=True)
-        params: dict[str, str | int | float | bool] = {}
-
-        # Apply field mappings using single source of truth from filtering.py
-        for http_field, service_param in HTTP_TO_SERVICE_MAPPING.items():
-            if http_field in data:
-                params[service_param] = data[http_field]  # type: ignore[assignment]
-
-        # Apply derived parameters (backend filtering, aliases, transformations)
-        self._apply_derived_params(data, params)
-
-        # Use model_validate for type coercion from mixed dict types
-        return ServiceParams.model_validate(params)
 
 
 __all__ = [

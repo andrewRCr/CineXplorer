@@ -30,6 +30,9 @@ from .schemas import (
     PaginationParamsSchema,
 )
 
+# Import API boundary transformer
+from .services.api_boundary import transform_to_service_params
+
 # Import data quality policy
 from .services.data_quality.policy import VoteCountPolicy
 
@@ -138,10 +141,10 @@ def get_now_playing_movies(
     Raises:
         HttpError: 400 for invalid parameters, 500 for TMDB API errors
     """
-    # Extract filters and delegate to service layer (business logic handled there)
+    # Transform HTTP params to service params and delegate to service layer
     response = _movie_service.get_now_playing_movies(
         page=filters.page or 1,
-        params=filters.to_service_params()
+        params=transform_to_service_params(filters)
     )
 
     # Enrich with user data if authenticated
@@ -169,10 +172,10 @@ def get_upcoming_movies(
     Raises:
         HttpError: 400 for invalid parameters, 500 for TMDB API errors
     """
-    # Extract filters and delegate to service layer (business logic handled there)
+    # Transform HTTP params to service params and delegate to service layer
     response = _movie_service.get_upcoming_movies(
         page=filters.page or 1,
-        params=filters.to_service_params()
+        params=transform_to_service_params(filters)
     )
 
     # Enrich with user data if authenticated
@@ -245,8 +248,8 @@ def browse_movies(
     Raises:
         HttpError: 400 for invalid parameters, 500 for TMDB API errors
     """
-    # Convert filter schema to service layer parameters
-    params = filters.to_service_params()
+    # Transform HTTP params to service layer parameters
+    params = transform_to_service_params(filters)
 
     # Apply vote count policy based on sort type (centralized in data_quality/policy.py)
     sort_by = params.sort_by or "popularity.desc"

@@ -1,32 +1,29 @@
 """
-Integration tests for movie API schemas.
+Integration tests for HTTP → ServiceParams transformation.
 
-Tests the MovieDiscoverFilterSchema parameter extraction logic that bridges
-API requests to service method calls. This is critical for the two-pass
-filtering architecture where:
+Tests the transform_to_service_params() function that bridges API requests to
+service method calls. This is critical for the two-pass filtering architecture where:
 1. TMDB API params filter millions → thousands (primary filter)
 2. Backend filter params catch bad data (second-pass data hygiene)
 
-The schema must extract both types of parameters from the same input fields:
+The transformer must extract both types of parameters from the same input fields:
 - release_date_gte/lte → Both TMDB params AND year_min/max for backend filtering
 - vote_average_gte/lte → Both TMDB params AND rating_min/max for backend filtering
 
-Related Issue: Filter integration bug - backend filtering never activates because
-schema.to_service_params() never extracts year_min/max/rating_min/max parameters.
-
-Test Strategy: These tests validate the schema → service parameter extraction
-layer to ensure both TMDB and backend filtering parameters are correctly extracted.
+Test Strategy: These tests validate the HTTP schema → ServiceParams transformation
+to ensure both TMDB and backend filtering parameters are correctly extracted.
 """
 from __future__ import annotations
 
 from movie.schemas import MovieDiscoverFilterSchema
+from movie.services.api_boundary import transform_to_service_params
 
 
 class TestMovieDiscoverFilterSchemaParameterExtraction:
-    """Test schema extracts both TMDB and backend filtering parameters.
+    """Test transformer extracts both TMDB and backend filtering parameters.
 
-    The schema receives filter parameters from the API and must produce two
-    sets of parameters:
+    The transformer receives filter schema from the API and must produce two
+    sets of parameters in ServiceParams:
     1. TMDB API parameters (for primary filtering)
     2. Backend filtering parameters (for second-pass data hygiene)
 
@@ -52,7 +49,7 @@ class TestMovieDiscoverFilterSchemaParameterExtraction:
         )
 
         # Act: Extract service parameters
-        params = schema.to_service_params()
+        params = transform_to_service_params(schema)
 
         # Assert: Both TMDB and backend parameters extracted
         # TMDB API parameters (primary filter)
@@ -77,7 +74,7 @@ class TestMovieDiscoverFilterSchemaParameterExtraction:
         )
 
         # Act
-        params = schema.to_service_params()
+        params = transform_to_service_params(schema)
 
         # Assert: Extract year_min, year_max not present
         assert params.release_date_gte == "2020-01-01"
@@ -97,7 +94,7 @@ class TestMovieDiscoverFilterSchemaParameterExtraction:
         )
 
         # Act
-        params = schema.to_service_params()
+        params = transform_to_service_params(schema)
 
         # Assert: Extract year_max, year_min not present
         assert params.release_date_lte == "2023-12-31"
@@ -122,7 +119,7 @@ class TestMovieDiscoverFilterSchemaParameterExtraction:
         )
 
         # Act
-        params = schema.to_service_params()
+        params = transform_to_service_params(schema)
 
         # Assert: Both TMDB and backend parameters extracted
         # TMDB API parameters (primary filter)
@@ -151,7 +148,7 @@ class TestMovieDiscoverFilterSchemaParameterExtraction:
         )
 
         # Act
-        params = schema.to_service_params()
+        params = transform_to_service_params(schema)
 
         # Assert: Extract rating_min, rating_max not present
         assert params.vote_average_gte == 7.5
@@ -171,7 +168,7 @@ class TestMovieDiscoverFilterSchemaParameterExtraction:
         )
 
         # Act
-        params = schema.to_service_params()
+        params = transform_to_service_params(schema)
 
         # Assert: Extract rating_max, rating_min not present
         assert params.vote_average_lte == 8.0
@@ -193,7 +190,7 @@ class TestMovieDiscoverFilterSchemaParameterExtraction:
         )
 
         # Act
-        params = schema.to_service_params()
+        params = transform_to_service_params(schema)
 
         # Assert: All TMDB and backend parameters extracted
         assert params.release_date_gte == "2020-01-01"
@@ -216,7 +213,7 @@ class TestMovieDiscoverFilterSchemaParameterExtraction:
         schema = MovieDiscoverFilterSchema()
 
         # Act
-        params = schema.to_service_params()
+        params = transform_to_service_params(schema)
 
         # Assert: No backend filtering parameters
         assert params.year_min is None
@@ -239,7 +236,7 @@ class TestMovieDiscoverFilterSchemaParameterExtraction:
         )
 
         # Act
-        params = schema.to_service_params()
+        params = transform_to_service_params(schema)
 
         # Assert: Years extracted correctly regardless of month/day
         assert params.year_min == 2020
@@ -263,7 +260,7 @@ class TestMovieDiscoverFilterSchemaParameterExtraction:
         )
 
         # Act
-        params = schema.to_service_params()
+        params = transform_to_service_params(schema)
 
         # Assert: All existing TMDB mappings still work
         assert params.sort_by == "popularity.desc"

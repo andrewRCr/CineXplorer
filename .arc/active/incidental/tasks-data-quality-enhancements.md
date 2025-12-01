@@ -363,10 +363,9 @@ the vote count policy lands in the right place and establishes clear architectur
 
 - [ ] **8.1 Manual verification**
 
-    - [ ] **8.1.1 Test Z-A sort for problematic content**
-        - Browse with `original_title.desc` sort
-        - Verify blacklisted movies excluded
-        - Document any remaining issues
+    - [x] **8.1.1 Test Z-A sort for problematic content**
+        - Verified blacklisted movies excluded from Z-A sort results
+        - No problematic content observed in testing
 
     - [ ] **8.1.2 Test other views for regressions**
         - Popular, Top Rated, Now Playing, Upcoming

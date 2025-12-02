@@ -128,6 +128,15 @@ def build_tmdb_params(
     if 'sort_by' not in params:
         params['sort_by'] = 'popularity.desc'
 
+    # Fix TMDB API bug: release_date sort doesn't work correctly with date range filters.
+    # TMDB sorts by earliest regional release date globally, not the displayed release_date.
+    # Using primary_release_date sort instead produces correct, consistent ordering.
+    # See: https://www.themoviedb.org/talk/59d3f79ec3a3684561005cd5
+    if params.get('sort_by') == 'release_date.asc':
+        params['sort_by'] = 'primary_release_date.asc'
+    elif params.get('sort_by') == 'release_date.desc':
+        params['sort_by'] = 'primary_release_date.desc'
+
     # Add rating filters to TMDB params for first-pass filtering
     # This prevents excessive backend filtering and buffer page fetching
     if rating_min is not None:

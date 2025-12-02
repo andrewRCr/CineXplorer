@@ -88,10 +88,13 @@ class TestSortOptionsReturnResults:
         assert len(data["results"]) == 2
 
         # Verify sort_by was passed to TMDB
+        # Note: release_date sorts are mapped to primary_release_date to fix TMDB API bug
+        # where release_date.asc sorts by earliest regional date, not displayed date
         mock_tmdb_get.assert_called()
         call_args = mock_tmdb_get.call_args_list[0]
         params = call_args[0][1] if len(call_args[0]) > 1 else call_args[1].get("params", {})
-        assert params.get("sort_by") == sort_option
+        expected_sort = sort_option.replace("release_date.", "primary_release_date.")
+        assert params.get("sort_by") == expected_sort
 
 
 class TestVoteAverageSortMinVoteCount:

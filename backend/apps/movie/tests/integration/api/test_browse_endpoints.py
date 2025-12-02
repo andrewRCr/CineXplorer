@@ -675,3 +675,87 @@ class TestDataQuality:
 
         # ID 18 should appear exactly once (first occurrence kept)
         assert result_ids.count(18) == 1
+
+    @pytest.mark.parametrize("config", ALL_ENDPOINTS, ids=lambda c: c.name)
+    @patch("core.services.tmdb_api_client.TMDBApiClient.get")
+    def test_filter_passthrough_language(
+        self,
+        mock_tmdb_get: Mock,
+        api_client: Client,
+        config: EndpointConfig,
+    ) -> None:
+        """Language filter param is passed through to TMDB API.
+
+        Verifies with_original_language parameter reaches TMDB when a specific
+        language is selected (filtering done by TMDB).
+        """
+        movies = [
+            create_tmdb_movie(
+                tmdb_id=1,
+                title="English Movie",
+                release_date="2025-10-15",
+                vote_average=7.5,
+                vote_count=1000,
+            ),
+        ]
+        mock_tmdb_get.return_value = create_mock_paginated_response(
+            movies=movies,
+            page=1,
+            total_pages=1,
+            total_results=1,
+        )
+
+        # Language code "en" = English
+        response = api_client.get(f"{config.url}?page=1&language=en")
+
+        assert response.status_code == HTTPStatus.OK
+
+        # Verify TMDB received language filter
+        assert mock_tmdb_get.call_count >= 1
+        call_args = mock_tmdb_get.call_args_list[0]
+        params = call_args[0][1] if len(call_args[0]) > 1 else call_args[1].get("params", {})
+
+        assert "with_original_language" in params
+        assert params["with_original_language"] == "en"
+
+    @pytest.mark.parametrize("config", ALL_ENDPOINTS, ids=lambda c: c.name)
+    @patch("core.services.tmdb_api_client.TMDBApiClient.get")
+    def test_filter_no_language_when_all_selected(
+        self,
+        mock_tmdb_get: Mock,
+        api_client: Client,
+        config: EndpointConfig,
+    ) -> None:
+        """No language param sent to TMDB when 'All Languages' is selected.
+
+        When user selects "All Languages" (empty/None), the with_original_language
+        parameter should NOT be included in TMDB request. This matches TMDB's
+        default behavior of returning movies in all languages.
+        """
+        movies = [
+            create_tmdb_movie(
+                tmdb_id=1,
+                title="Any Language Movie",
+                release_date="2025-10-15",
+                vote_average=7.5,
+                vote_count=1000,
+            ),
+        ]
+        mock_tmdb_get.return_value = create_mock_paginated_response(
+            movies=movies,
+            page=1,
+            total_pages=1,
+            total_results=1,
+        )
+
+        # No language param = all languages (default)
+        response = api_client.get(f"{config.url}?page=1")
+
+        assert response.status_code == HTTPStatus.OK
+
+        # Verify TMDB did NOT receive language filter
+        assert mock_tmdb_get.call_count >= 1
+        call_args = mock_tmdb_get.call_args_list[0]
+        params = call_args[0][1] if len(call_args[0]) > 1 else call_args[1].get("params", {})
+
+        assert "with_original_language" not in params

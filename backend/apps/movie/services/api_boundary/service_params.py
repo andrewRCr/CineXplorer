@@ -36,6 +36,7 @@ class ServiceParams(BaseModel):
     keywords: str | None = None
     people: str | None = None
     year: int | None = None
+    language: str | None = None  # Original language filter (maps to with_original_language)
     vote_average_gte: float | None = None
     vote_average_lte: float | None = None
     vote_count_gte: int | None = None

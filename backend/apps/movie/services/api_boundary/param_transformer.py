@@ -36,6 +36,7 @@ HTTP_TO_SERVICE_MAPPING: dict[str, str] = {
     'certification': 'certification',
     'region': 'region',
     'tmdb_page_start': 'tmdb_page_start',
+    'language': 'language',  # Original language filter
 }
 
 # Derived parameter transforms: source HTTP field → (target service param, transform function)

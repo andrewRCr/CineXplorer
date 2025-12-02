@@ -33,6 +33,7 @@ PARAM_MAPPING: dict[str, str] = {
     'with_release_type': 'with_release_type',
     'region': 'region',
     'tmdb_page_start': 'tmdb_page_start',
+    'language': 'with_original_language',  # Filter by movie's original language
 }
 
 # Numeric parameters that should preserve type (not convert to string)

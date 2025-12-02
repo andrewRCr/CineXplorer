@@ -686,6 +686,210 @@ Adding the `language` field required updates in 4+ locations for defaults, 3+ lo
         - Verify "Clear filters" button works from all UI locations
         - Verify filter count badge accurate in all states
 
+### **Phase 11:** Certification Filter & MovieDetail Enhancements
+
+**Purpose:** Add content rating filter (MPAA ratings) to browse filtering, with MovieDetail display
+enhancements to enable visual verification of filter results.
+
+**Dependencies:** Phase 10 creates centralized `DEFAULT_FILTERS` and `filterStateUtils.ts`. Phase 11
+adds certification fields to these rather than duplicating logic.
+
+**Scope decisions:**
+
+- US-only (certification_country hardcoded to "US") - simplest UX, can add country selection later
+- Multi-select UI using CheckboxGroup + CheckboxCard (users may want G+PG, or PG-13+R)
+- MovieDetail enhancements FIRST to enable browser testing of filter results
+- Ratings: NR (Not Rated), G, PG, PG-13, R, NC-17
+- Color-coded rating badges using existing Badge recipe variants (WCAG compliant across themes)
+
+**Rating Badge Design Specs:**
+
+| Rating | Badge Variant   | Background Token | Text Token        | Rationale                    |
+| ------ | --------------- | ---------------- | ----------------- | ---------------------------- |
+| G      | `success`       | `success`        | `on-success`      | Green = safe for all ages    |
+| PG     | `info`          | `info`           | `on-info`         | Blue = informational/neutral |
+| PG-13  | `warning`       | `warning`        | `on-warning`      | Orange = parental caution    |
+| R      | `error`         | `destructive`    | `on-destructive`  | Red = restricted             |
+| NC-17  | `error`         | `destructive`    | `on-destructive`  | Red = adults only            |
+| NR     | `neutral`       | `badge`          | `on-badge`        | Gray = no rating info        |
+
+**Implementation pattern:**
+
+```tsx
+// Using Badge recipe - handles bg/text automatically
+<Badge variant="warning">PG-13</Badge>
+
+// Or manual if needed (recipe preferred)
+<Box bg="warning" color="on-warning" px={3} py={1} borderRadius="md">
+  PG-13
+</Box>
+```
+
+**Why status variants:** Reuses existing infrastructure, ensures WCAG contrast compliance across
+all themes, and color associations are intuitive (green=safe, red=restricted).
+
+#### Backend: MovieDetail Data Extraction
+
+- [ ] **11.1 Extract certification from TMDB release_dates**
+
+    TMDB nests certifications in `release_dates` (per-release, per-country). Need extraction logic.
+
+    - [ ] **11.1.a Update TMDB API call to include release_dates**
+        - Add `append_to_response=release_dates` to movie detail fetch
+        - File: Identify where detail API call is made
+
+    - [ ] **11.1.b Create certification extraction helper**
+        - Function: `extract_us_certification(release_dates: dict) -> str | None`
+        - Logic: Find US entry → find theatrical release (type 3) or first available → return certification
+        - Handle missing data gracefully (return None)
+
+    - [ ] **11.1.c Add us_certification field to MovieDetailSchema**
+        - Add `us_certification: str | None = None` to response schema
+        - Named explicitly since we're extracting US MPAA rating specifically
+        - Populate from extraction helper (None when no US rating exists)
+
+    - [ ] **11.1.d Run backend tests and linting**
+
+- [ ] **11.2 Add spoken_languages to MovieDetail response**
+
+    TMDB returns `spoken_languages` as array of objects at top level - simpler extraction.
+
+    - [ ] **11.2.a Create SpokenLanguageSchema**
+        - Fields: `iso_639_1: str`, `english_name: str`
+        - Skip `name` field (inconsistently populated per TMDB docs)
+
+    - [ ] **11.2.b Add spoken_languages to MovieDetailSchema**
+        - Add `spoken_languages: list[SpokenLanguageSchema]`
+        - Extract from TMDB response
+
+    - [ ] **11.2.c Run backend tests and linting**
+
+#### Frontend: MovieDetail Display
+
+- [ ] **11.3 Display certification and spoken_languages in MovieDetail**
+
+    - [ ] **11.3.a Add certification badge to header**
+        - Display next to runtime (e.g., "PG-13 · 2h 15m")
+        - When `us_certification` is None: simply omit the badge (no placeholder text)
+        - Layout should not break or look awkward when badge is absent
+        - **Styling:** Use Badge recipe with status variants per Rating Badge Design Specs
+        - Create `RatingBadge` component or helper that maps rating → Badge variant
+        - Example: `G` → `<Badge variant="success">G</Badge>`
+        - Recipe handles bg/text token pairing automatically (WCAG compliant)
+
+    - [ ] **11.3.b Add spoken languages to metadata area**
+        - Display as comma-separated list (e.g., "English, Japanese")
+        - Place in appropriate location (near genres or below tagline)
+
+    - [ ] **11.3.c Update TypeScript types for new fields**
+        - Add `us_certification?: string` and `spoken_languages?: SpokenLanguage[]` to MovieDetail type
+        - Types auto-generated from OpenAPI schema, so may just need `npm run generate-types`
+
+    - [ ] **11.3.d Run frontend tests and type checking**
+
+#### Frontend: Certification Filter UI
+
+- [ ] **11.4 Add certifications to filter types and defaults**
+
+    - [ ] **11.4.a Update MovieFilters interface**
+        - Add `certifications: string[]` field (array for multi-select)
+        - Default: `[]` (empty = no filter applied)
+
+    - [ ] **11.4.b Add to DEFAULT_FILTERS (Phase 10 constant)**
+        - Add `certifications: []` to filterDefaults.ts
+
+    - [ ] **11.4.c Define certification options**
+        - Add `certificationOptions` to movieFilterOptions.ts
+        - Values: `["NR", "G", "PG", "PG-13", "R", "NC-17"]`
+        - Labels match values for clarity
+
+- [ ] **11.5 Add CheckboxGroup + CheckboxCard UI to Advanced Filters**
+
+    - [ ] **11.5.a Add certification CheckboxGroup component**
+        - Use `CheckboxGroup` wrapper with `CheckboxCard.Root` for each rating
+        - Horizontal layout with `HStack` or `Flex wrap`
+        - Compact pill-style cards (no indicator, just label)
+        - Example pattern from Chakra docs: `checkbox-card-with-group`
+        - **Styling:** Use same status variant colors as MovieDetail badges
+        - Each card uses its rating's semantic tokens (G=success, PG=info, etc.)
+        - Unselected: muted/outline appearance
+        - Selected: solid background with status color + `on-*` text token
+        - Reuse `RatingBadge` helper or shared `RATING_VARIANT_MAP` config
+
+    - [ ] **11.5.b Wire to filter state**
+        - On change: update `certifications` array in filter state
+        - Selected cards show visual checked state
+
+    - [ ] **11.5.c Update clearFilters() to reset certifications**
+        - Already handled by DEFAULT_FILTERS if Phase 10 complete (resets to `[]`)
+
+    - [ ] **11.5.d Run frontend linting and tests**
+
+#### Frontend: Wire Filter to API
+
+- [ ] **11.6 Update API param mapping**
+
+    - [ ] **11.6.a Update movieFilterMapper.ts**
+        - Add certification mapping in `mapFiltersToApiParams()`
+        - If `certifications.length > 0`: join with `|` (OR logic) for TMDB
+        - Always include `certification_country: "US"` when certifications present
+        - Example: `certifications: ["G", "PG"]` → `certification=G|PG&certification_country=US`
+
+    - [ ] **11.6.b Update MovieQueryParams interface**
+        - Add `certification?: string` and `certification_country?: string` to movieService.ts
+
+    - [ ] **11.6.c Update URL sync for array field**
+        - Ensure certifications array serializes/deserializes properly in URL
+        - Pattern: `?certifications=G,PG,PG-13` or similar
+
+    - [ ] **11.6.d Run frontend type checking**
+
+#### Backend: Complete Param Pipeline
+
+- [ ] **11.7 Wire certification_country through backend**
+
+    - [ ] **11.7.a Add certification_country to HTTP_TO_SERVICE_MAPPING**
+        - File: param_transformer.py
+        - Add: `'certification_country': 'certification_country'`
+        - Note: `certification` already mapped
+
+    - [ ] **11.7.b Add certification_country to ServiceParams**
+        - File: service_params.py
+        - Add: `certification_country: str | None = None`
+
+    - [ ] **11.7.c Add certification_country to PARAM_MAPPING**
+        - File: query_params.py
+        - Add: `'certification_country': 'certification_country'`
+        - Note: `certification` already mapped
+
+    - [ ] **11.7.d Run backend linting and type checking**
+
+#### Testing & Verification
+
+- [ ] **11.8 Integration testing**
+
+    - [ ] **11.8.a Write backend integration test for certification param**
+        - Test that `/api/movies/browse?certification=PG-13&certification_country=US` works
+        - Test multi-value: `certification=G|PG`
+        - Verify params pass through to TMDB API call
+
+    - [ ] **11.8.b Manual browser testing**
+        - Navigate to movie detail (US film) → verify certification badge displays
+        - Navigate to movie detail (non-US film) → verify no badge, layout still clean
+        - Navigate to movie detail → verify spoken languages display
+        - Select "PG-13" from certification filter → verify results change
+        - Click through to movie detail → verify it shows "PG-13" certification
+        - Select multiple ratings (G + PG) → verify both appear in results
+        - Verify URL includes certifications param
+        - Verify Clear Filters resets certifications
+        - Verify filter count badge includes certifications when active
+
+    - [ ] **11.8.c Run full quality gates**
+        - All backend tests
+        - All frontend tests
+        - Linting (backend + frontend + markdown)
+        - Type checking (Python + TypeScript)
+
 ---
 
 ## Completed Work

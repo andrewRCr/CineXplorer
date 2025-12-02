@@ -19,17 +19,6 @@ Then **delete** the item from this file (no strikethrough clutter).
 
 ## Discovery & Search
 
-- **Language Filter** - Filter movies by original language. TMDB returns `original_language` in list responses (no extra
-API calls needed). Implementation: Add to AdvancedMovieFilters dropdown. Options: "Any Language" (default), "English",
-"Non-English", or full language selector (ISO 639-1 codes). Simple win - data already available in responses. Could
-combine with existing genre/year/rating filters. Priority: HIGH (low effort, high value)
-
-- **Certification/Rating Filter (Consider)** - Filter by content rating (G, PG, PG-13, R, etc.). TMDB supports filtering
-via `certification_country` + `certification` params. Caveat: Certification NOT returned in list responses (can filter
-but can't display without N+1 API calls). UX consideration: Must specify country (US=MPAA, GB=BBFC, etc.) - either
-default to US or let user select their region's system. Movies without certification data in selected country would
-be excluded. Priority: MEDIUM (adds parental control value, but country selection adds UX complexity)
-
 - **Featured Page Hero Implementation** - Rich hero-style Featured page at `/featured` replacing current stub. Research
 needed: TMDB trending/popular endpoints (`/trending/*`, `/movie/popular`), industry patterns (TMDB, Letterboxd, Netflix
 hero sections, horizontal scrolling). Content strategy: trending movies, popular this week, featured collections, new

@@ -9,7 +9,6 @@ from __future__ import annotations
 
 from unittest.mock import Mock
 
-import pytest
 from core.services.api_response import ApiResponse
 from movie.services.movie_service import MovieService
 from movie.services.tmdb_api_boundary.query_params import ServiceParams
@@ -236,7 +235,6 @@ def test_filter_movies_excludes_empty_overview() -> None:
         assert movie.overview.strip() != ''
 
 
-@pytest.mark.django_db
 def test_filter_movies_excludes_placeholder_overview() -> None:
     """Test that movies with placeholder overview 'details here' are excluded.
 

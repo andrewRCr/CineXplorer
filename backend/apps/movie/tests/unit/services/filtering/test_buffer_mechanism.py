@@ -9,7 +9,6 @@ from __future__ import annotations
 
 from unittest.mock import Mock
 
-import pytest
 from core.services.api_response import ApiResponse
 from movie.services.movie_service import MovieService
 from movie.services.tmdb_api_boundary.query_params import ServiceParams
@@ -17,7 +16,6 @@ from movie.tests.test_helpers import create_mock_paginated_response
 from movie.tests.tmdb_test_builders import create_tmdb_movie
 
 
-@pytest.mark.django_db
 def test_buffer_mechanism_fetches_page_n_plus_1_when_under_threshold() -> None:
     """Test that service fetches page N+1 when filtered results fall below 20.
 
@@ -99,7 +97,6 @@ def test_buffer_mechanism_fetches_page_n_plus_1_when_under_threshold() -> None:
         assert movie.vote_average >= 7.5
 
 
-@pytest.mark.django_db
 def test_buffer_mechanism_does_not_fetch_when_full_page_achieved() -> None:
     """Test that service does NOT fetch page N+1 when filtered results >= 20."""
     # Arrange: Page 1 has exactly 20 valid movies after filtering
@@ -129,7 +126,6 @@ def test_buffer_mechanism_does_not_fetch_when_full_page_achieved() -> None:
     assert len(result.results) == 20
 
 
-@pytest.mark.django_db
 def test_buffer_mechanism_fills_page_even_with_few_initial_results() -> None:
     """Test that service keeps fetching pages to fill to 20 even with restrictive filters.
 
@@ -199,7 +195,6 @@ def test_buffer_mechanism_fills_page_even_with_few_initial_results() -> None:
     assert len(result.results) == 20
 
 
-@pytest.mark.django_db
 def test_buffer_mechanism_does_not_fetch_on_last_page() -> None:
     """Test that service does NOT fetch page N+1 when on last page.
 

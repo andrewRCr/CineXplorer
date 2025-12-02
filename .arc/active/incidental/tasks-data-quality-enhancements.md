@@ -467,25 +467,26 @@ the vote count policy lands in the right place and establishes clear architectur
 **Purpose:** Add language filter to enable meaningful alphabetic sorting. Title A-Z/Z-A
 only works correctly with single Latin-script languages due to TMDB Unicode sorting limitations.
 
-- [ ] **9.1 Backend: Write tests and wire language filter parameter**
+- [x] **9.1 Backend: Write tests and wire language filter parameter**
 
-    - [ ] **9.1.a Write integration test for language filter**
-        - File: `test_browse_endpoints.py` or new `test_language_filter.py`
-        - Test: `with_original_language` param passed to TMDB when language filter set
-        - Test: No language param sent when "All Languages" (empty/None)
-        - Expect tests to FAIL initially
+    - [x] **9.1.a Write integration test for language filter**
+        - Added to `test_browse_endpoints.py` in TestDataQuality class
+        - `test_filter_passthrough_language`: Verifies `with_original_language` sent to TMDB
+        - `test_filter_no_language_when_all_selected`: Verifies no param when omitted
+        - Both tests parametrized across all 3 endpoints (browse, now-playing, upcoming)
 
-    - [ ] **9.1.b Add `with_original_language` to `PARAM_MAPPING`**
-        - File: `query_params.py`
-        - Map service param to TMDB param
+    - [x] **9.1.b-c Wire language filter through backend layers**
+        - Added `language: str | None` to `ServiceParams` (`service_params.py`)
+        - Added `'language': 'language'` to `HTTP_TO_SERVICE_MAPPING` (`param_transformer.py`)
+        - Added `'language': 'with_original_language'` to `PARAM_MAPPING` (`query_params.py`)
 
-    - [ ] **9.1.c Pass language through `param_transformer`**
-        - Add to ServiceParams if needed
-        - Wire through transform functions
+    - [x] **9.1.d-e Tests pass + quality gates**
+        - 6/6 language filter tests pass (3 passthrough + 3 no-language)
+        - 497 backend tests pass, 0 lint/type errors
 
-    - [ ] **9.1.d Run tests - should now PASS**
-
-    - [ ] **9.1.e Run backend quality gates**
+    **Incidental fix**: Added `conftest.py` with autouse fixture to mock blacklist DB query
+    for all unit tests in `unit/services/`. Removed 5 unnecessary `@pytest.mark.django_db`
+    markers that were added reactively when blacklist was moved to data quality layer.
 
 - [ ] **9.2 Frontend: Write tests and add language filter dropdown**
 

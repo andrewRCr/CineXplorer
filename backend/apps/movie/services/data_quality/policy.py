@@ -105,7 +105,7 @@ class VoteCountPolicy:
         | popularity.asc                   | BYPASS      | User wants obscure content       |
         | release_date.desc new            | BYPASS      | New releases can't have votes    |
         | release_date.* other             | MODERATE(3) | Light filter for historical      |
-        | original_title.*                 | BYPASS      | Systematic browsing, show all    |
+        | original_title.*                 | MODERATE(3) | Light filter, 0-vote = garbage   |
         | Search                           | BYPASS      | User searched for it, show it    |
         | Now Playing                      | BYPASS      | New theatrical releases          |
         | Upcoming                         | BYPASS      | Unreleased = 0 votes by def      |
@@ -125,11 +125,11 @@ class VoteCountPolicy:
             rating_min=7.0
         )  # Returns 3
 
-        # Alphabetical browsing - bypass for comprehensive results
+        # Alphabetical browsing - moderate filter (spam protection)
         threshold = VoteCountPolicy.get_threshold(
             endpoint="browse",
             sort_by="original_title.desc"
-        )  # Returns None
+        )  # Returns 3
 
         # Search - always bypass, user wants what they searched for
         threshold = VoteCountPolicy.get_threshold(endpoint="search")  # Returns None
@@ -191,10 +191,12 @@ class VoteCountPolicy:
             # Users expect famous, universally loved films - not obscure niche content
             return cls.STRICT_THRESHOLD
 
-        # original_title sorts: BYPASS - systematic alphabetical browsing
-        # Users browsing A-Z expect to see everything, not just popular content
+        # original_title sorts: MODERATE - light spam filter for alphabetical browsing
+        # Previously bypassed with rationale "systematic browsing should show all",
+        # but 0-vote entries are garbage, not legitimate obscure films. 3-vote
+        # threshold still allows niche content while filtering data quality issues.
         if "original_title" in sort_by:
-            return None
+            return cls.MODERATE_THRESHOLD
 
         # popularity.asc: BYPASS - user explicitly wants obscure content
         if sort_by == "popularity.asc":

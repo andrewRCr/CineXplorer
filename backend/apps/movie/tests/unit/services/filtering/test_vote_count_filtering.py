@@ -105,13 +105,14 @@ def test_vote_average_sort_applies_strict_threshold() -> None:
     )
 
 
-def test_alphabetical_sort_bypasses_threshold() -> None:
-    """Test that alphabetical sorts bypass vote threshold completely.
+def test_vote_count_bypass_allows_all_movies() -> None:
+    """Test that bypassing vote threshold (None) allows all movies through.
 
-    Users browsing A-Z expect comprehensive results, not just popular content.
-    Vote filtering is disabled for systematic browsing.
+    When min_vote_count=None is passed, no vote filtering should occur.
+    This is used for endpoints like search, now_playing, upcoming where
+    movies may not have accumulated votes yet.
 
-    Note: min_vote_count is computed by param_transformer in production.
+    Note: min_vote_count is computed by VoteCountPolicy in production.
     Here we test the filtering behavior directly with explicit bypass (None).
     """
     # Arrange: Mock client returns movies with various vote counts including very low
@@ -130,13 +131,13 @@ def test_alphabetical_sort_bypasses_threshold() -> None:
 
     service = MovieService(tmdb_client=mock_client)
 
-    # Act: Request with bypassed threshold (alphabetical sorts bypass vote filtering)
+    # Act: Request with bypassed threshold (explicit None)
     result = service.discover_movies(
         page=1,
-        params=ServiceParams(sort_by="original_title.asc", min_vote_count=None)
+        params=ServiceParams(sort_by="popularity.desc", min_vote_count=None)
     )
 
-    # Assert: ALL movies returned (no vote filtering for alphabetical)
+    # Assert: ALL movies returned when threshold is bypassed
     assert len(result.results) == 3, "All movies should pass when threshold bypassed"
 
 

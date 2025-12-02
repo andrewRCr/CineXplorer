@@ -32,7 +32,8 @@ MINIMAL_UI_SORT_OPTIONS = [
     pytest.param("release_date.desc", id="release-date-desc"),
     pytest.param("release_date.asc", id="release-date-asc"),
     pytest.param("original_title.asc", id="title-asc"),
-    pytest.param("original_title.desc", id="title-desc"),
+    # Note: original_title.desc (Z-A) removed from UI due to TMDB data quality issues
+    # Unicode ordering causes non-Latin mislabeled movies to cluster at front of Z-A results
 ]
 
 
@@ -197,69 +198,78 @@ class TestVoteAverageSortMinVoteCount:
             assert movie["vote_count"] >= VOTE_COUNT_THRESHOLD
 
 
-# Sort options that should bypass vote count filtering
+# Alphabetical sort option - only A-Z remains in UI
+# Note: Z-A removed due to TMDB data quality issues (Unicode ordering causes
+# non-Latin mislabeled movies to cluster at front of Z-A results)
 ALPHABETICAL_SORT_OPTIONS = [
-    pytest.param("original_title.asc", id="title-asc-AZ"),
-    pytest.param("original_title.desc", id="title-desc-ZA"),
+    pytest.param("original_title.asc", id="title-asc"),
 ]
 
 
-class TestAlphabeticalSortBypassesVoteFilter:
-    """Alphabetical sorts should NOT filter low-vote movies.
+class TestAlphabeticalSortUsesModerateFilter:
+    """Alphabetical sort uses MODERATE (3 votes) threshold as spam filter.
 
-    When sorting by original_title (A-Z or Z-A), users expect comprehensive
-    alphabetical browsing. Low-vote movies should NOT be filtered because:
-    - User is browsing systematically, not by quality metrics
-    - Many legitimate movies have low vote counts
-    - Z-A sort particularly clusters niche content (full-width Unicode titles)
+    When sorting by original_title (A-Z), we apply a light spam filter:
+    - 0-2 vote movies are filtered (often garbage metadata, test entries, spam)
+    - 3+ vote movies are kept (legitimate content that real users have watched)
 
-    This test class was added after discovering that Z-A sort returned only
-    3 results on page 1 (instead of 20) due to over-aggressive vote filtering.
+    This balances data quality with comprehensive browsing. The 3-vote threshold
+    is low enough to include niche/obscure content while filtering obvious junk.
+
+    Note: Z-A sort was removed from UI due to TMDB data quality issues. Unicode
+    ordering causes non-Latin mislabeled movies to cluster at the front of Z-A
+    results, making it unusable for Latin languages.
     """
 
     @pytest.mark.parametrize("sort_option", ALPHABETICAL_SORT_OPTIONS)
     @patch("core.services.tmdb_api_client.TMDBApiClient.get")
-    def test_alphabetical_sort_returns_low_vote_movies(
+    def test_alphabetical_sort_filters_low_vote_spam(
         self,
         mock_tmdb_get: Mock,
         api_client: Client,
         sort_option: str,
     ) -> None:
-        """Alphabetical sorts should include movies regardless of vote count.
+        """Alphabetical sorts apply MODERATE threshold (3 votes) as spam filter.
 
-        This test verifies the BYPASS behavior works end-to-end: movies with
-        very low vote counts (1-2 votes) should NOT be filtered out when
-        sorting alphabetically.
+        Movies with <3 votes are filtered as likely garbage/spam.
+        Movies with 3+ votes are kept as legitimate content.
         """
-        # Movies with very low vote counts - would be filtered by STRICT (10) or MODERATE (3)
+        # Mix of movies: some below threshold (filtered), some above (kept)
         movies = [
             create_tmdb_movie(
                 tmdb_id=1,
                 title="Zebra Movie",
                 release_date="2025-01-15",
                 vote_average=6.0,
-                vote_count=1,  # Very low - would fail STRICT and MODERATE thresholds
+                vote_count=0,  # Filtered: 0 votes = likely garbage
             ),
             create_tmdb_movie(
                 tmdb_id=2,
                 title="Alpha Movie",
                 release_date="2025-02-20",
                 vote_average=7.0,
-                vote_count=2,  # Low - would fail STRICT threshold
+                vote_count=2,  # Filtered: below MODERATE threshold
             ),
             create_tmdb_movie(
                 tmdb_id=3,
                 title="Beta Movie",
                 release_date="2025-03-10",
                 vote_average=8.0,
-                vote_count=0,  # Zero votes - would fail any threshold
+                vote_count=3,  # Kept: exactly at MODERATE threshold
+            ),
+            create_tmdb_movie(
+                tmdb_id=4,
+                title="Gamma Movie",
+                release_date="2025-04-01",
+                vote_average=7.5,
+                vote_count=10,  # Kept: above MODERATE threshold
             ),
         ]
         mock_tmdb_get.return_value = create_mock_paginated_response(
             movies=movies,
             page=1,
             total_pages=1,
-            total_results=3,
+            total_results=4,
         )
 
         response = api_client.get(f"/api/movies/browse?page=1&sort_by={sort_option}")
@@ -267,26 +277,26 @@ class TestAlphabeticalSortBypassesVoteFilter:
         assert response.status_code == HTTPStatus.OK
         data = response.json()
 
-        # CRITICAL: All movies should be returned regardless of vote count
-        assert len(data["results"]) == 3
+        # Only movies with 3+ votes should be returned
+        assert len(data["results"]) == 2
         returned_ids = [movie["tmdb_id"] for movie in data["results"]]
-        assert 1 in returned_ids  # 1 vote - should NOT be filtered
-        assert 2 in returned_ids  # 2 votes - should NOT be filtered
-        assert 3 in returned_ids  # 0 votes - should NOT be filtered
+        assert 1 not in returned_ids  # 0 votes - filtered
+        assert 2 not in returned_ids  # 2 votes - filtered
+        assert 3 in returned_ids  # 3 votes - kept
+        assert 4 in returned_ids  # 10 votes - kept
 
     @pytest.mark.parametrize("sort_option", ALPHABETICAL_SORT_OPTIONS)
     @patch("core.services.tmdb_api_client.TMDBApiClient.get")
-    def test_alphabetical_sort_does_not_send_vote_count_to_tmdb(
+    def test_alphabetical_sort_sends_moderate_vote_count_to_tmdb(
         self,
         mock_tmdb_get: Mock,
         api_client: Client,
         sort_option: str,
     ) -> None:
-        """Alphabetical sorts should not request vote_count.gte from TMDB.
+        """Alphabetical sorts request vote_count.gte=3 from TMDB.
 
-        Unlike vote_average sorts which send vote_count.gte to TMDB for
-        upstream filtering, alphabetical sorts should not include this
-        parameter since we want ALL movies regardless of vote count.
+        MODERATE threshold (3 votes) is sent to TMDB for upstream filtering,
+        reducing the amount of garbage data we need to filter client-side.
         """
         movies = [
             create_tmdb_movie(
@@ -308,10 +318,10 @@ class TestAlphabeticalSortBypassesVoteFilter:
 
         assert response.status_code == HTTPStatus.OK
 
-        # Verify vote_count.gte was NOT sent to TMDB
+        # Verify vote_count.gte=3 (MODERATE) was sent to TMDB
         mock_tmdb_get.assert_called()
         call_args = mock_tmdb_get.call_args_list[0]
         params = call_args[0][1] if len(call_args[0]) > 1 else call_args[1].get("params", {})
-        assert "vote_count.gte" not in params, (
-            f"Alphabetical sort {sort_option} should not send vote_count.gte to TMDB"
+        assert params.get("vote_count.gte") == 3, (
+            f"Alphabetical sort {sort_option} should send vote_count.gte=3 to TMDB"
         )

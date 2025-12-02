@@ -174,6 +174,7 @@ class MovieService(BaseTMDBService):
             rating_max,
             tmdb_page_start=tmdb_page_start,
             min_vote_count=min_vote_count,
+            language_filter=params.language,
         )
 
     def get_now_playing_movies(

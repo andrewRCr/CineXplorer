@@ -6,9 +6,9 @@ thresholds are applied at different levels (STRICT, MODERATE, BYPASS) based on
 endpoint, sort type, rating filters, and date context.
 
 Threshold Tiers:
-    STRICT (200):  Rating-dependent sorts without filters where statistical validity matters
-    MODERATE (3):  General browsing - light spam filter, allows niche content
-    BYPASS (None): User expects comprehensive results (search, alphabetical)
+    STRICT (200):  Rating-dependent sorts without filters (statistical validity)
+    MODERATE (3):  General browsing, alphabetical (light spam filter)
+    BYPASS (None): Endpoints where votes don't exist yet (search, upcoming, recent)
 
 This complements the integration tests in test_vote_count_filtering.py which test
 the filtering EFFECT through MovieService. These tests verify the policy DECISIONS.
@@ -96,21 +96,28 @@ class TestVoteCountPolicySortBehavior:
         )
         assert threshold == STRICT_VOTE_THRESHOLD
 
-    def test_original_title_asc_bypasses_threshold(self) -> None:
-        """original_title.asc (A-Z) should bypass threshold for systematic browsing."""
+    def test_original_title_asc_applies_moderate_threshold(self) -> None:
+        """original_title.asc (A-Z) should apply moderate threshold.
+
+        Changed from BYPASS: 0-vote entries are garbage, not legitimate obscure films.
+        3-vote threshold still allows niche content while filtering data quality issues.
+        """
         threshold = VoteCountPolicy.get_threshold(
             endpoint="browse",
             sort_by="original_title.asc"
         )
-        assert threshold is None
+        assert threshold == MODERATE_VOTE_THRESHOLD
 
-    def test_original_title_desc_bypasses_threshold(self) -> None:
-        """original_title.desc (Z-A) should bypass threshold for systematic browsing."""
+    def test_original_title_desc_applies_moderate_threshold(self) -> None:
+        """original_title.desc (Z-A) should apply moderate threshold.
+
+        Changed from BYPASS: 0-vote entries are garbage, not legitimate obscure films.
+        """
         threshold = VoteCountPolicy.get_threshold(
             endpoint="browse",
             sort_by="original_title.desc"
         )
-        assert threshold is None
+        assert threshold == MODERATE_VOTE_THRESHOLD
 
 
 class TestVoteCountPolicyRatingContext:
@@ -170,13 +177,13 @@ class TestVoteCountPolicyRatingContext:
         )
         assert threshold == MODERATE_VOTE_THRESHOLD
 
-        # original_title with rating filter still BYPASSes
+        # original_title with rating filter still uses MODERATE
         threshold = VoteCountPolicy.get_threshold(
             endpoint="browse",
             sort_by="original_title.asc",
             rating_min=7.0,
         )
-        assert threshold is None
+        assert threshold == MODERATE_VOTE_THRESHOLD
 
 
 class TestVoteCountPolicyReleaseDateSort:
@@ -303,11 +310,14 @@ class TestVoteCountPolicyTieredThresholds:
         )
         assert threshold == VoteCountPolicy.MODERATE_THRESHOLD
 
-    def test_alphabetical_uses_bypass(self) -> None:
-        """Alphabetical sorts should use BYPASS (None)."""
+    def test_alphabetical_uses_moderate(self) -> None:
+        """Alphabetical sorts should use MODERATE threshold.
+
+        Changed from BYPASS: 0-vote entries are garbage, not legitimate obscure films.
+        """
         for sort in ["original_title.asc", "original_title.desc"]:
             threshold = VoteCountPolicy.get_threshold(endpoint="browse", sort_by=sort)
-            assert threshold is None, f"Failed for {sort}"
+            assert threshold == MODERATE_VOTE_THRESHOLD, f"Failed for {sort}"
 
 
 class TestVoteCountPolicyEdgeCases:

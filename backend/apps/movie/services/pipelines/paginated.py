@@ -110,6 +110,7 @@ def apply_buffer_if_needed(
     rating_max: float | None,
     fetch_next_page_func: Callable[[int], TMDBPaginatedMovieResponse],
     min_vote_count: int | None = VOTE_COUNT_THRESHOLD,
+    language_filter: str | None = None,
 ) -> tuple[list[MovieBaseSchema], int]:
     """Apply smart buffer mechanism to maintain consistent page sizes.
 
@@ -133,6 +134,8 @@ def apply_buffer_if_needed(
         fetch_next_page_func: Function to fetch next page (takes page number)
         min_vote_count: Minimum vote count threshold (passed to buffer page).
             Default: VOTE_COUNT_THRESHOLD (3 - moderate tier)
+        language_filter: Language code user filtered by (e.g., "en"). Used to detect
+            mislabeled content where original_title script doesn't match language.
 
     Returns:
         Tuple of (movies, pages_consumed) where:
@@ -170,7 +173,8 @@ def apply_buffer_if_needed(
             year_max,
             rating_min,
             rating_max,
-            min_vote_count
+            min_vote_count,
+            language_filter
         )
 
         combined_movies = combined_movies + buffer_movies
@@ -201,6 +205,7 @@ def fetch_with_filters_and_buffer(
     pre_filter_func: Callable[[list[TMDBMovieBase]], list[TMDBMovieBase]] | None = None,
     tmdb_page_start: int | None = None,
     min_vote_count: int | None = VOTE_COUNT_THRESHOLD,
+    language_filter: str | None = None,
 ) -> PaginatedMovieResponseSchema:
     """Template function for paginated fetch-filter-buffer workflow.
 
@@ -231,6 +236,8 @@ def fetch_with_filters_and_buffer(
             (enables metadata-driven pagination)
         min_vote_count: Minimum vote count threshold. None to skip vote filtering.
             Default: VOTE_COUNT_THRESHOLD (3 - moderate tier)
+        language_filter: Language code user filtered by (e.g., "en"). Used to detect
+            mislabeled content where original_title script doesn't match language.
 
     Returns:
         PaginatedMovieResponseSchema with filtered and buffered results, including
@@ -258,7 +265,8 @@ def fetch_with_filters_and_buffer(
         year_max,
         rating_min,
         rating_max,
-        min_vote_count
+        min_vote_count,
+        language_filter
     )
     filtered_count = len(filtered_movies)
 
@@ -296,7 +304,8 @@ def fetch_with_filters_and_buffer(
         rating_min,
         rating_max,
         buffer_fetch_func,
-        min_vote_count
+        min_vote_count,
+        language_filter
     )
 
     # Step 6: Calculate next TMDB page start for pagination continuation

@@ -443,6 +443,23 @@ the vote count policy lands in the right place and establishes clear architectur
           Without rating filter → min_vote_count=200 (STRICT)
         - Quality gates: 491 backend tests, 0 lint/type errors
 
+    - [x] **8.1.10 Disable "Highest Rated" sort option in Upcoming view**
+        - Issue: Upcoming movies have 0 votes, so STRICT threshold (200) filters everything
+        - Fix: Pass `pageSource` to `SortDropdown` component; conditionally add `disabled: true`
+          to "Highest Rated" option when `pageSource === "upcoming"`
+        - Files: `SortDropdown.tsx`, `LetterboxdStyleFilters.tsx`
+        - Quality gates: 438 frontend tests, 0 lint/type errors
+
+    - [x] **8.1.11 Fix "Oldest" sort returning scrambled dates in date-constrained views**
+        - Issue: Upcoming/Now-Playing "Oldest" (release_date.asc) showed dates out of order
+        - Root cause: TMDB API bug - `release_date.asc` sorts by earliest regional release date
+          globally, not the displayed `release_date` field. Known issue since 2019.
+        - Fix: Map `release_date.asc/desc` → `primary_release_date.asc/desc` in `build_tmdb_params()`
+        - Verification: Dates now correctly sorted ascending/descending
+        - Files: `query_params.py`, `test_browse_sort_options.py`
+        - Reference: <https://www.themoviedb.org/talk/59d3f79ec3a3684561005cd5>
+        - Quality gates: 491 backend tests, 0 lint/type errors
+
 - [ ] **8.2 Final quality gates**
 
     - [ ] **8.2.1 Run full backend test suite**

@@ -361,15 +361,17 @@ the vote count policy lands in the right place and establishes clear architectur
 
 ### **Phase 8:** Verification and Quality Gates
 
-- [ ] **8.1 Manual verification**
+- [x] **8.1 Manual verification**
 
     - [x] **8.1.1 Test Z-A sort for problematic content**
         - Verified blacklisted movies excluded from Z-A sort results
         - No problematic content observed in testing
 
-    - [ ] **8.1.2 Test other views for regressions**
-        - Browse, Now Playing, Upcoming
-        - Verify legitimate content not filtered
+    - [x] **8.1.2 Test other views for regressions**
+        - Browse, Now Playing, Upcoming verified working
+        - Discovered Title A-Z/Z-A Unicode sorting limitation (non-Latin titles sort incorrectly)
+        - Root cause: TMDB API limitation - `original_title` sort uses Unicode code-point ordering
+        - Resolution: Phase 9 adds language filter; title sorts only available when Latin-script language selected
 
     - [x] **8.1.3 Investigate test gap - why Z-A underfill wasn't caught**
         - Root cause: No integration test for `original_title.desc` sort
@@ -460,13 +462,87 @@ the vote count policy lands in the right place and establishes clear architectur
         - Reference: <https://www.themoviedb.org/talk/59d3f79ec3a3684561005cd5>
         - Quality gates: 491 backend tests, 0 lint/type errors
 
-- [ ] **8.2 Final quality gates**
+### **Phase 9:** Language Filter & Conditional Alphabetic Sort
 
-    - [ ] **8.2.1 Run full backend test suite**
-        - All tests pass
+**Purpose:** Add language filter to enable meaningful alphabetic sorting. Title A-Z/Z-A
+only works correctly with single Latin-script languages due to TMDB Unicode sorting limitations.
 
-    - [ ] **8.2.2 Run linting and type checking**
-        - 0 violations, 0 errors
+- [ ] **9.1 Backend: Write tests and wire language filter parameter**
+
+    - [ ] **9.1.a Write integration test for language filter**
+        - File: `test_browse_endpoints.py` or new `test_language_filter.py`
+        - Test: `with_original_language` param passed to TMDB when language filter set
+        - Test: No language param sent when "All Languages" (empty/None)
+        - Expect tests to FAIL initially
+
+    - [ ] **9.1.b Add `with_original_language` to `PARAM_MAPPING`**
+        - File: `query_params.py`
+        - Map service param to TMDB param
+
+    - [ ] **9.1.c Pass language through `param_transformer`**
+        - Add to ServiceParams if needed
+        - Wire through transform functions
+
+    - [ ] **9.1.d Run tests - should now PASS**
+
+    - [ ] **9.1.e Run backend quality gates**
+
+- [ ] **9.2 Frontend: Write tests and add language filter dropdown**
+
+    - [ ] **9.2.a Write tests for language filter state and URL persistence**
+        - File: `useMovieCollectionState.test.tsx`
+        - Test: Language filter included in state
+        - Test: Language persisted to/from URL
+        - Test: Default is empty (all languages)
+        - Expect tests to FAIL initially
+
+    - [ ] **9.2.b Create language options constant**
+        - File: `movieFilterOptions.ts`
+        - Top 15-20 languages ordered by film count
+        - "All Languages" as default (empty value)
+
+    - [ ] **9.2.c Add language to MovieFilters type and state**
+        - Update type definition
+        - Add to default filter state
+        - Update `useMovieCollectionState` and `useMovieCollectionUrl`
+
+    - [ ] **9.2.d Add dropdown to AdvancedMovieFilters**
+        - Place logically with other filters
+        - Use existing dropdown patterns
+
+    - [ ] **9.2.e Run tests - should now PASS**
+
+    - [ ] **9.2.f Run frontend quality gates**
+
+- [ ] **9.3 Conditional alphabetic sort**
+
+    - [ ] **9.3.a Write tests for conditional sort options**
+        - Test: Title sorts hidden when language is "All" or non-Latin
+        - Test: Title sorts shown when language is Latin-script (English, Spanish, etc.)
+        - Test: Sort auto-resets to default when current sort becomes invalid
+        - Expect tests to FAIL initially
+
+    - [ ] **9.3.b Update SortDropdown to conditionally show title sorts**
+        - Show Title A-Z/Z-A only when language filter is single Latin-script language
+        - Hide (not disable) when "All Languages" or non-Latin language selected
+
+    - [ ] **9.3.c Update SORT_OPTIONS to be dynamic**
+        - Modify `useMovieCollectionState` or create derived sort options
+        - 4 options (no title) vs 6 options (with title)
+
+    - [ ] **9.3.d Handle edge case: user has title sort selected, then changes language**
+        - Auto-reset to default sort (popularity.desc) if current sort becomes invalid
+
+    - [ ] **9.3.e Run tests - should now PASS**
+
+- [ ] **9.4 Quality gates and manual verification**
+
+    - [ ] **9.4.a Run full test suite (backend + frontend)**
+    - [ ] **9.4.b Run linting and type checking**
+    - [ ] **9.4.c Manual browser testing**
+        - Verify language filter works
+        - Verify title sorts appear/disappear correctly
+        - Verify A-Z sort works correctly with English filter
 
 ---
 

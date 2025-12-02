@@ -57,7 +57,6 @@ const MovieCollectionGrid = forwardRef<MovieGridRef, MovieCollectionGridProps>(
 
     // Reset metadata synchronously when fetcher changes (filter/route change)
     if (prevFetcherRef.current !== finalFetcher) {
-      console.log('[MovieCollectionGrid] Buffer reset triggered - fetcher changed');
       nextTmdbPageStartRef.current = undefined;
       prevNextTmdbPageStartRef.current = undefined;
       prevFetcherRef.current = finalFetcher;
@@ -81,13 +80,7 @@ const MovieCollectionGrid = forwardRef<MovieGridRef, MovieCollectionGridProps>(
           cancel: () => {},
         });
       }
-      return () => {
-        console.log('[MovieCollectionGrid] Fetcher executing with:', {
-          page: currentPage,
-          tmdb_page_start: nextTmdbPageStartRef.current
-        });
-        return finalFetcher(currentPage, nextTmdbPageStartRef.current);
-      };
+      return () => finalFetcher(currentPage, nextTmdbPageStartRef.current);
     }, [finalFetcher, currentPage]);
 
     const { total_pages, total_results, movies, error, setError, isLoading, next_tmdb_page_start } =
@@ -98,15 +91,8 @@ const MovieCollectionGrid = forwardRef<MovieGridRef, MovieCollectionGridProps>(
     useEffect(() => {
       const newValue = next_tmdb_page_start ?? undefined;
       if (prevNextTmdbPageStartRef.current !== newValue) {
-        console.log('[MovieCollectionGrid] Updating buffer metadata:', {
-          prev: prevNextTmdbPageStartRef.current,
-          new: newValue,
-          currentRefValue: nextTmdbPageStartRef.current
-        });
         nextTmdbPageStartRef.current = newValue;
         prevNextTmdbPageStartRef.current = newValue;
-      } else {
-        console.log('[MovieCollectionGrid] Skipping stale buffer update:', newValue);
       }
     }, [next_tmdb_page_start]);
 
@@ -207,7 +193,7 @@ const MovieCollectionGrid = forwardRef<MovieGridRef, MovieCollectionGridProps>(
               gridTemplateColumns="repeat(auto-fit, 194px)"
               gap="16px"
               mb={6}
-              justifyContent="start"
+              justifyContent="center"
             >
               {isLoading
                 ? // Show skeletons whenever loading (initial, pagination, filtering)

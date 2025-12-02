@@ -111,14 +111,18 @@ def transform_to_service_params(schema: MovieDiscoverFilterSchema) -> ServicePar
     # Apply derived parameters (backend filtering, aliases, transformations)
     _apply_derived_params(data, params)
 
-    # Compute vote count threshold based on context (sort_by, year_max)
+    # Compute vote count threshold based on context (sort_by, year_max, rating filters)
     # VoteCountPolicy determines appropriate tier: STRICT, MODERATE, or BYPASS
     sort_by = cast(str | None, params.get('sort_by'))
     year_max = cast(int | None, params.get('year_max'))
+    rating_min = cast(float | None, params.get('rating_min'))
+    rating_max = cast(float | None, params.get('rating_max'))
     params['min_vote_count'] = VoteCountPolicy.get_threshold(
         endpoint="browse",
         sort_by=sort_by,
         year_max=year_max,
+        rating_min=rating_min,
+        rating_max=rating_max,
     )
 
     # Use model_validate for type coercion from mixed dict types

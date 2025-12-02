@@ -3,10 +3,10 @@ Unit tests for VoteCountPolicy - direct policy decision testing.
 
 Tests the tiered vote count threshold decision logic in isolation, verifying when
 thresholds are applied at different levels (STRICT, MODERATE, BYPASS) based on
-endpoint, sort type, and date context.
+endpoint, sort type, rating filters, and date context.
 
 Threshold Tiers:
-    STRICT (10):   Rating-dependent sorts where statistical validity matters
+    STRICT (200):  Rating-dependent sorts without filters where statistical validity matters
     MODERATE (3):  General browsing - light spam filter, allows niche content
     BYPASS (None): User expects comprehensive results (search, alphabetical)
 
@@ -76,16 +76,20 @@ class TestVoteCountPolicySortBehavior:
         )
         assert threshold is None
 
-    def test_vote_average_desc_applies_strict_threshold(self) -> None:
-        """vote_average.desc should apply STRICT threshold (ratings need statistical validity)."""
+    def test_vote_average_desc_no_filter_applies_strict_threshold(self) -> None:
+        """vote_average.desc without rating filter should apply STRICT threshold.
+
+        "Highest Rated" without filters = user expects famous, universally loved films.
+        Need high vote count (200) for statistical validity.
+        """
         threshold = VoteCountPolicy.get_threshold(
             endpoint="browse",
             sort_by="vote_average.desc"
         )
         assert threshold == STRICT_VOTE_THRESHOLD
 
-    def test_vote_average_asc_applies_strict_threshold(self) -> None:
-        """vote_average.asc should apply STRICT threshold (ratings need statistical validity)."""
+    def test_vote_average_asc_no_filter_applies_strict_threshold(self) -> None:
+        """vote_average.asc without rating filter should apply STRICT threshold."""
         threshold = VoteCountPolicy.get_threshold(
             endpoint="browse",
             sort_by="vote_average.asc"
@@ -105,6 +109,72 @@ class TestVoteCountPolicySortBehavior:
         threshold = VoteCountPolicy.get_threshold(
             endpoint="browse",
             sort_by="original_title.desc"
+        )
+        assert threshold is None
+
+
+class TestVoteCountPolicyRatingContext:
+    """Test rating filter context for vote_average sorts."""
+
+    def test_vote_average_with_rating_min_uses_moderate(self) -> None:
+        """vote_average sort with rating_min filter should use MODERATE threshold.
+
+        User is browsing within a rating band - they're not looking for "top rated
+        of all time", just ordering within their specified criteria.
+        """
+        threshold = VoteCountPolicy.get_threshold(
+            endpoint="browse",
+            sort_by="vote_average.desc",
+            rating_min=7.0,
+        )
+        assert threshold == MODERATE_VOTE_THRESHOLD
+
+    def test_vote_average_with_rating_max_uses_moderate(self) -> None:
+        """vote_average sort with rating_max filter should use MODERATE threshold."""
+        threshold = VoteCountPolicy.get_threshold(
+            endpoint="browse",
+            sort_by="vote_average.desc",
+            rating_max=8.0,
+        )
+        assert threshold == MODERATE_VOTE_THRESHOLD
+
+    def test_vote_average_with_both_rating_filters_uses_moderate(self) -> None:
+        """vote_average sort with both rating filters should use MODERATE threshold."""
+        threshold = VoteCountPolicy.get_threshold(
+            endpoint="browse",
+            sort_by="vote_average.desc",
+            rating_min=6.0,
+            rating_max=8.0,
+        )
+        assert threshold == MODERATE_VOTE_THRESHOLD
+
+    def test_vote_average_asc_with_rating_filter_uses_moderate(self) -> None:
+        """vote_average.asc with rating filter should also use MODERATE."""
+        threshold = VoteCountPolicy.get_threshold(
+            endpoint="browse",
+            sort_by="vote_average.asc",
+            rating_min=5.0,
+        )
+        assert threshold == MODERATE_VOTE_THRESHOLD
+
+    def test_rating_filter_only_affects_vote_average_sorts(self) -> None:
+        """Rating filter context should only affect vote_average sorts.
+
+        Other sorts should ignore rating context and follow normal rules.
+        """
+        # popularity.desc with rating filter still uses MODERATE (its normal behavior)
+        threshold = VoteCountPolicy.get_threshold(
+            endpoint="browse",
+            sort_by="popularity.desc",
+            rating_min=7.0,
+        )
+        assert threshold == MODERATE_VOTE_THRESHOLD
+
+        # original_title with rating filter still BYPASSes
+        threshold = VoteCountPolicy.get_threshold(
+            endpoint="browse",
+            sort_by="original_title.asc",
+            rating_min=7.0,
         )
         assert threshold is None
 
@@ -202,21 +272,29 @@ class TestVoteCountPolicyReleaseDateSort:
 class TestVoteCountPolicyTieredThresholds:
     """Test that the correct threshold tier is returned."""
 
-    def test_strict_threshold_is_10(self) -> None:
-        """STRICT threshold should be 10 (for statistical validity)."""
-        assert STRICT_VOTE_THRESHOLD == 10
-        assert VoteCountPolicy.STRICT_THRESHOLD == 10
+    def test_strict_threshold_is_200(self) -> None:
+        """STRICT threshold should be 200 (matches TMDB Top Rated minimum)."""
+        assert STRICT_VOTE_THRESHOLD == 200
+        assert VoteCountPolicy.STRICT_THRESHOLD == 200
 
     def test_moderate_threshold_is_3(self) -> None:
         """MODERATE threshold should be 3 (spam filter, allows niche content)."""
         assert MODERATE_VOTE_THRESHOLD == 3
         assert VoteCountPolicy.MODERATE_THRESHOLD == 3
 
-    def test_vote_average_uses_strict(self) -> None:
-        """Rating sorts should use STRICT threshold."""
+    def test_vote_average_without_filter_uses_strict(self) -> None:
+        """Rating sorts without rating filter should use STRICT threshold."""
         for sort in ["vote_average.desc", "vote_average.asc"]:
             threshold = VoteCountPolicy.get_threshold(endpoint="browse", sort_by=sort)
             assert threshold == VoteCountPolicy.STRICT_THRESHOLD, f"Failed for {sort}"
+
+    def test_vote_average_with_filter_uses_moderate(self) -> None:
+        """Rating sorts with rating filter should use MODERATE threshold."""
+        for sort in ["vote_average.desc", "vote_average.asc"]:
+            threshold = VoteCountPolicy.get_threshold(
+                endpoint="browse", sort_by=sort, rating_min=7.0
+            )
+            assert threshold == VoteCountPolicy.MODERATE_THRESHOLD, f"Failed for {sort}"
 
     def test_popularity_desc_uses_moderate(self) -> None:
         """popularity.desc should use MODERATE threshold."""

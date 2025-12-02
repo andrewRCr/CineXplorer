@@ -9,7 +9,7 @@ Policy Classes:
     CompletenessPolicy: What constitutes "complete" movie data for display
 
 Constants:
-    STRICT_VOTE_THRESHOLD: High threshold for rating-dependent contexts (10 votes)
+    STRICT_VOTE_THRESHOLD: High threshold for rating-dependent contexts (200 votes)
     MODERATE_VOTE_THRESHOLD: Light spam filter for general browsing (3 votes)
     VOTE_COUNT_THRESHOLD: Default threshold (alias for MODERATE for compatibility)
     EARLIEST_VALID_RELEASE_YEAR: Historical validation cutoff (1888)
@@ -48,14 +48,17 @@ EndpointType = Literal["browse", "search", "now_playing", "upcoming"]
 # Purpose 1 is almost always helpful. Purpose 2 depends on user intent.
 # We use tiered thresholds to balance these concerns:
 #
-# STRICT (10 votes): For contexts where statistical validity matters
-#   - vote_average.* sorts need enough votes for meaningful ratings
-#   - Without this, a single 10/10 vote would top "highest rated"
+# STRICT (200 votes): For contexts where statistical validity matters
+#   - vote_average.* sorts WITHOUT rating filters need enough votes for meaningful ratings
+#   - 200 votes matches TMDB's own "Top Rated" list minimum requirement
+#   - Without this, obscure films with 15 devoted fans rating 9.5 outrank universally loved films
+#   - "Highest Rated" has a connotation - users expect famous films, not niche content
 #
 # MODERATE (3 votes): Light spam filter that doesn't block legitimate content
 #   - Filters test entries, metadata garbage, and spam
 #   - Allows niche/obscure content that real users have watched
 #   - 3 votes = "at least a few people have seen this"
+#   - Also used for vote_average sorts WITH rating filters (user browsing within a band)
 #
 # BYPASS (None): For contexts where users expect comprehensive results
 #   - Search: User explicitly asked for something, show it if it exists
@@ -67,7 +70,7 @@ EndpointType = Literal["browse", "search", "now_playing", "upcoming"]
 # use the blacklist for spot-cleaning specific problematic content rather than
 # broad vote-based filtering.
 
-STRICT_VOTE_THRESHOLD = 10
+STRICT_VOTE_THRESHOLD = 200
 MODERATE_VOTE_THRESHOLD = 3
 
 # Default threshold - moderate for general use
@@ -79,7 +82,7 @@ class VoteCountPolicy:
     """Tiered vote count threshold policy based on user intent.
 
     Determines the appropriate vote count threshold based on context:
-    endpoint type, sort parameters, and whether it's a search query.
+    endpoint type, sort parameters, rating filters, and whether it's a search query.
 
     Guiding Principles:
         1. We are NOT content police - use blacklist for specific bad content
@@ -88,31 +91,39 @@ class VoteCountPolicy:
         4. Match user intent - curation vs completeness expectations
 
     Threshold Tiers:
-        STRICT (10):   Rating-dependent sorts where statistical validity matters
-        MODERATE (3):  General browsing - light spam filter, allows niche content
+        STRICT (200): Rating sorts without filters where statistical validity matters
+        MODERATE (3): General browsing - light spam filter, allows niche content
         BYPASS (None): User expects comprehensive results (search, alphabetical)
 
     Threshold Matrix by Context:
-        +------------------------+------------+----------------------------------+
-        | Context                | Threshold  | Rationale                        |
-        +------------------------+------------+----------------------------------+
-        | vote_average.* sorts   | STRICT(10) | Ratings need statistical validity|
-        | popularity.desc        | MODERATE(3)| Curation helps, don't over-filter|
-        | popularity.asc         | BYPASS     | User wants obscure content       |
-        | release_date.desc new  | BYPASS     | New releases can't have votes    |
-        | release_date.* other   | MODERATE(3)| Light filter for historical      |
-        | original_title.*       | BYPASS     | Systematic browsing, show all    |
-        | Search                 | BYPASS     | User searched for it, show it    |
-        | Now Playing            | BYPASS     | New theatrical releases          |
-        | Upcoming               | BYPASS     | Unreleased = 0 votes by def      |
-        +------------------------+------------+----------------------------------+
+        +----------------------------------+-------------+----------------------------------+
+        | Context                          | Threshold   | Rationale                        |
+        +----------------------------------+-------------+----------------------------------+
+        | vote_average.* (no rating filter)| STRICT(200) | "Top rated" = expect famous films|
+        | vote_average.* (with rating fltr)| MODERATE(3) | Browsing within a band, not top  |
+        | popularity.desc                  | MODERATE(3) | Curation helps, don't over-filter|
+        | popularity.asc                   | BYPASS      | User wants obscure content       |
+        | release_date.desc new            | BYPASS      | New releases can't have votes    |
+        | release_date.* other             | MODERATE(3) | Light filter for historical      |
+        | original_title.*                 | BYPASS      | Systematic browsing, show all    |
+        | Search                           | BYPASS      | User searched for it, show it    |
+        | Now Playing                      | BYPASS      | New theatrical releases          |
+        | Upcoming                         | BYPASS      | Unreleased = 0 votes by def      |
+        +----------------------------------+-------------+----------------------------------+
 
     Usage:
-        # Browse with rating sort - needs strict threshold
+        # Browse with rating sort (no filters) - needs strict threshold
         threshold = VoteCountPolicy.get_threshold(
             endpoint="browse",
             sort_by="vote_average.desc"
-        )  # Returns 10
+        )  # Returns 200
+
+        # Browse with rating sort AND rating filter - moderate (browsing within band)
+        threshold = VoteCountPolicy.get_threshold(
+            endpoint="browse",
+            sort_by="vote_average.desc",
+            rating_min=7.0
+        )  # Returns 3
 
         # Alphabetical browsing - bypass for comprehensive results
         threshold = VoteCountPolicy.get_threshold(
@@ -156,18 +167,28 @@ class VoteCountPolicy:
         cls,
         sort_by: str,
         year_max: int | None = None,
+        rating_min: float | None = None,
+        rating_max: float | None = None,
     ) -> int | None:
-        """Get threshold based on sort type.
+        """Get threshold based on sort type and filter context.
 
         Args:
             sort_by: TMDB sort parameter (e.g., "popularity.desc", "original_title.asc")
             year_max: Upper bound of year filter for context-aware decisions
+            rating_min: Lower bound of rating filter (if user specified rating range)
+            rating_max: Upper bound of rating filter (if user specified rating range)
 
         Returns:
             STRICT_THRESHOLD, MODERATE_THRESHOLD, or None (bypass)
         """
-        # vote_average sorts: STRICT - ratings need statistical validity
+        # vote_average sorts: Context-aware based on rating filter presence
         if "vote_average" in sort_by:
+            # If user specified a rating range, they're browsing within a band
+            # Sort just orders within their criteria - use MODERATE
+            if rating_min is not None or rating_max is not None:
+                return cls.MODERATE_THRESHOLD
+            # No rating filter = "top rated" expectation → need statistical validity
+            # Users expect famous, universally loved films - not obscure niche content
             return cls.STRICT_THRESHOLD
 
         # original_title sorts: BYPASS - systematic alphabetical browsing
@@ -196,6 +217,8 @@ class VoteCountPolicy:
         endpoint: EndpointType = "browse",
         sort_by: str | None = None,
         year_max: int | None = None,
+        rating_min: float | None = None,
+        rating_max: float | None = None,
     ) -> int | None:
         """Get the appropriate vote count threshold for given context.
 
@@ -203,6 +226,8 @@ class VoteCountPolicy:
             endpoint: The API endpoint type (default: "browse")
             sort_by: Optional TMDB sort parameter
             year_max: Optional upper bound of year filter (for context-aware decisions)
+            rating_min: Optional lower bound of rating filter (for vote_average context)
+            rating_max: Optional upper bound of rating filter (for vote_average context)
 
         Returns:
             Vote count threshold (int) or None if filtering should be bypassed
@@ -214,9 +239,9 @@ class VoteCountPolicy:
         if endpoint in ("search", "now_playing", "upcoming"):
             return None
 
-        # Sort-based threshold with date context
+        # Sort-based threshold with date and rating context
         if sort_by:
-            return cls._get_sort_threshold(sort_by, year_max)
+            return cls._get_sort_threshold(sort_by, year_max, rating_min, rating_max)
 
         # Default: moderate threshold for general browsing
         return cls.MODERATE_THRESHOLD

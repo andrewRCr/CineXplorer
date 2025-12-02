@@ -30,11 +30,8 @@ from .schemas import (
     PaginationParamsSchema,
 )
 
-# Import API boundary transformer
+# Import API boundary transformer (handles vote count policy internally)
 from .services.api_boundary import transform_to_service_params
-
-# Import data quality policy
-from .services.data_quality.policy import VoteCountPolicy
 
 # Import service factories
 from .services.service_factory import (
@@ -249,15 +246,9 @@ def browse_movies(
         HttpError: 400 for invalid parameters, 500 for TMDB API errors
     """
     # Transform HTTP params to service layer parameters
+    # Note: min_vote_count is computed by transform_to_service_params via VoteCountPolicy
+    # with full context (sort_by, year_max, rating_min, rating_max)
     params = transform_to_service_params(filters)
-
-    # Apply vote count policy based on sort type and date context (centralized in policy.py)
-    sort_by = params.sort_by or "popularity.desc"
-    params.min_vote_count = VoteCountPolicy.get_threshold(
-        endpoint="browse",
-        sort_by=sort_by,
-        year_max=params.year_max,
-    )
 
     # Fetch movies from TMDB with two-pass filtering
     response = _movie_service.discover_movies(page=filters.page or 1, params=params)

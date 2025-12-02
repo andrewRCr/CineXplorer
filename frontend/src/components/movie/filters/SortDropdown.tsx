@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { Box, Text, Select, createListCollection } from "@chakra-ui/react";
 import { sortOptions } from "@/constants/movieFilterOptions";
 import type { MovieFilters as UnifiedMovieFilters } from "./AdvancedMovieFilters";
@@ -7,20 +8,30 @@ const SORT_WIDTH = "170px";
 interface SortDropdownProps {
   filters: UnifiedMovieFilters;
   onSortChange: (sortBy: string) => void;
+  pageSource?: string;
 }
 
 const SortDropdown = ({
   filters,
   onSortChange,
+  pageSource,
 }: SortDropdownProps) => {
   const currentSortValue = filters.sortBy;
 
-  const sortCollection = createListCollection({
-    items: sortOptions.map((option) => ({
-      label: option.label,
-      value: option.value,
-    })),
-  });
+  // Disable "Highest Rated" in Upcoming view - upcoming movies have few/no votes,
+  // so the STRICT vote threshold (200) filters out everything
+  const sortCollection = useMemo(
+    () =>
+      createListCollection({
+        items: sortOptions.map((option) => ({
+          label: option.label,
+          value: option.value,
+          disabled:
+            option.value === "vote_average.desc" && pageSource === "upcoming",
+        })),
+      }),
+    [pageSource]
+  );
 
   return (
     <>
@@ -92,12 +103,14 @@ const SortDropdown = ({
             >
               {sortCollection.items.map((item) => {
                 const isSelected = currentSortValue === item.value;
+                const isDisabled = item.disabled === true;
                 return (
                   <Select.Item
                     key={item.value}
                     item={item}
                     bg={isSelected ? "tertiary" : undefined}
                     color={isSelected ? "on-tertiary" : "foreground"}
+                    fontStyle={isDisabled ? "italic" : "normal"}
                     _hover={{
                       bg: isSelected ? "tertiary" : "tertiary/12",
                       color: isSelected ? "on-tertiary" : "foreground",

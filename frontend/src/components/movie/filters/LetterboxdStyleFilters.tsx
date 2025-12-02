@@ -119,6 +119,7 @@ const LetterboxdStyleFilters = ({
             <SortDropdown
               filters={filters}
               onSortChange={handleSortChange}
+              pageSource={pageSource}
             />
 
             {/* Spacer before search */}

@@ -149,19 +149,20 @@ const MovieCollectionGrid = forwardRef<MovieGridRef, MovieCollectionGridProps>(
         <Box
           display="flex"
           justifyContent="space-between"
-          alignItems="center"
-          mb={4}
+          alignItems="flex-end"
+          mt={1}
+          mb={6}
           flexWrap="wrap"
           gap={2}
           minHeight="40px" // Prevent layout shift
-          paddingBottom={2}
+          paddingBottom={4}
           borderBottom="1px solid"
-          borderBottomColor="border"
+          borderBottomColor="border-subtle-00"
           opacity={shouldShowPagination ? 1 : 0}
           pointerEvents={shouldShowPagination ? "auto" : "none"}
           transition="opacity 0.2s ease"
         >
-          <Box minWidth="150px" display="flex" alignItems="center">
+          <Box minWidth="150px" display="flex" alignItems="flex-end">
             <Text
               fontSize="sm"
               fontFamily={"inter"}
@@ -242,11 +243,11 @@ const MovieCollectionGrid = forwardRef<MovieGridRef, MovieCollectionGridProps>(
           display="flex"
           justifyContent="flex-end"
           mb={1}
-          mt={1}
+          mt={0}
           borderTop="1px solid"
-          borderTopColor="border"
+          borderTopColor="border-subtle-00"
           minHeight="50px" // Prevent layout shift
-          paddingTop={2}
+          paddingTop={4}
           opacity={shouldShowPagination ? 1 : 0}
           pointerEvents={shouldShowPagination ? "auto" : "none"}
           transition="opacity 0.2s ease"

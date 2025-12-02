@@ -99,28 +99,27 @@ export const runtimeOptions = [
 
 // Sort option values - only meaningful sort directions included
 // Removed: popularity.asc, vote_average.asc (produce garbage results - untracked/unrated movies)
-// Rationale: Only title and release date are meaningful bidirectionally
+// Removed: original_title.desc (Z-A sort is broken for Latin languages - Unicode ordering
+//          causes all non-Latin mislabeled movies to cluster at the front, making it unusable)
 export type SortOptionValue =
     | "popularity.desc"
     | "vote_average.desc"
     | "release_date.desc"
     | "release_date.asc"
-    | "original_title.asc"
-    | "original_title.desc";
+    | "original_title.asc";
 
 export interface SortOption {
     value: SortOptionValue;
     label: string;
 }
 
-// Consolidated sort options (6 total) - single dropdown, no advanced/minimal split
+// Consolidated sort options (5 total) - single dropdown, no advanced/minimal split
 export const sortOptions: SortOption[] = [
     { value: "popularity.desc", label: "Most Popular" },
     { value: "vote_average.desc", label: "Highest Rated" },
     { value: "release_date.desc", label: "Newest" },
     { value: "release_date.asc", label: "Oldest" },
-    { value: "original_title.asc", label: "Title A-Z" },
-    { value: "original_title.desc", label: "Title Z-A" },
+    { value: "original_title.asc", label: "Alphabetical" },
 ];
 
 // Language options - ordered by TMDB film count (as of 2024)

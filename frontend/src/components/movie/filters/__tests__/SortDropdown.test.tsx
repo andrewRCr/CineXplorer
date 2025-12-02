@@ -102,13 +102,12 @@ describe("SortDropdown", () => {
       const trigger = screen.getByRole("combobox");
       await user.click(trigger);
 
-      // Should have all 6 options (use getAllByRole to count option elements)
+      // Should have all 5 options (use getAllByRole to count option elements)
       const options = screen.getAllByRole("option");
-      expect(options).toHaveLength(6);
+      expect(options).toHaveLength(5);
 
-      // Verify specific options exist
-      expect(screen.getByRole("option", { name: "Title A-Z" })).toBeInTheDocument();
-      expect(screen.getByRole("option", { name: "Title Z-A" })).toBeInTheDocument();
+      // Verify alphabetical sort exists
+      expect(screen.getByRole("option", { name: "Alphabetical" })).toBeInTheDocument();
     });
   });
 
@@ -173,9 +172,8 @@ describe("SortDropdown", () => {
       const options = screen.getAllByRole("option");
       expect(options).toHaveLength(4);
 
-      // Title sorts should NOT be present
-      expect(screen.queryByRole("option", { name: "Title A-Z" })).not.toBeInTheDocument();
-      expect(screen.queryByRole("option", { name: "Title Z-A" })).not.toBeInTheDocument();
+      // Title sort should NOT be present
+      expect(screen.queryByRole("option", { name: "Alphabetical" })).not.toBeInTheDocument();
     });
 
     it("hides title sorts for non-Latin languages (Japanese)", async () => {
@@ -192,12 +190,11 @@ describe("SortDropdown", () => {
       const trigger = screen.getByRole("combobox");
       await user.click(trigger);
 
-      // Title sorts should NOT be present
-      expect(screen.queryByText("Title A-Z")).not.toBeInTheDocument();
-      expect(screen.queryByText("Title Z-A")).not.toBeInTheDocument();
+      // Title sort should NOT be present
+      expect(screen.queryByText("Alphabetical")).not.toBeInTheDocument();
     });
 
-    it("hides title sorts for non-Latin languages (Korean)", async () => {
+    it("hides title sort for non-Latin languages (Korean)", async () => {
       const user = userEvent.setup();
 
       render(
@@ -211,12 +208,11 @@ describe("SortDropdown", () => {
       const trigger = screen.getByRole("combobox");
       await user.click(trigger);
 
-      // Title sorts should NOT be present
-      expect(screen.queryByText("Title A-Z")).not.toBeInTheDocument();
-      expect(screen.queryByText("Title Z-A")).not.toBeInTheDocument();
+      // Title sort should NOT be present
+      expect(screen.queryByText("Alphabetical")).not.toBeInTheDocument();
     });
 
-    it("shows title sorts for Latin languages (English)", async () => {
+    it("shows title sort for Latin languages (English)", async () => {
       const user = userEvent.setup();
 
       render(
@@ -230,12 +226,11 @@ describe("SortDropdown", () => {
       const trigger = screen.getByRole("combobox");
       await user.click(trigger);
 
-      // Title sorts SHOULD be present
-      expect(screen.getByText("Title A-Z")).toBeInTheDocument();
-      expect(screen.getByText("Title Z-A")).toBeInTheDocument();
+      // Title sort SHOULD be present
+      expect(screen.getByText("Alphabetical")).toBeInTheDocument();
     });
 
-    it("shows title sorts for Latin languages (French)", async () => {
+    it("shows title sort for Latin languages (French)", async () => {
       const user = userEvent.setup();
 
       render(
@@ -249,12 +244,11 @@ describe("SortDropdown", () => {
       const trigger = screen.getByRole("combobox");
       await user.click(trigger);
 
-      // Title sorts SHOULD be present
-      expect(screen.getByText("Title A-Z")).toBeInTheDocument();
-      expect(screen.getByText("Title Z-A")).toBeInTheDocument();
+      // Title sort SHOULD be present
+      expect(screen.getByText("Alphabetical")).toBeInTheDocument();
     });
 
-    it("shows title sorts for Latin languages (Spanish)", async () => {
+    it("shows title sort for Latin languages (Spanish)", async () => {
       const user = userEvent.setup();
 
       render(
@@ -268,9 +262,8 @@ describe("SortDropdown", () => {
       const trigger = screen.getByRole("combobox");
       await user.click(trigger);
 
-      // Title sorts SHOULD be present
-      expect(screen.getByText("Title A-Z")).toBeInTheDocument();
-      expect(screen.getByText("Title Z-A")).toBeInTheDocument();
+      // Title sort SHOULD be present
+      expect(screen.getByText("Alphabetical")).toBeInTheDocument();
     });
   });
 });

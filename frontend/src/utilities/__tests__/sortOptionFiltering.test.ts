@@ -1,10 +1,10 @@
 /**
  * Tests for conditional sort option filtering based on language selection.
  *
- * Title sorts (A-Z, Z-A) only make sense for Latin-script languages.
- * When "All Languages" or non-Latin languages are selected, title sorts should be hidden.
+ * Alphabetical title sort only makes sense for Latin-script languages.
+ * When "All Languages" or non-Latin languages are selected, title sort should be hidden.
  *
- * Test-first approach: These tests should FAIL initially until implementation is complete.
+ * Note: Z-A sort was removed entirely due to TMDB data quality issues.
  */
 
 import { describe, it, expect } from "vitest";
@@ -57,7 +57,7 @@ describe("sortOptionFiltering", () => {
   });
 
   describe("getAvailableSortOptions", () => {
-    it("returns 4 options (no title sorts) when language is empty", () => {
+    it("returns 4 options (no title sort) when language is empty", () => {
       const options = getAvailableSortOptions("");
 
       expect(options).toHaveLength(4);
@@ -69,40 +69,31 @@ describe("sortOptionFiltering", () => {
       ]);
     });
 
-    it("returns 6 options (with title sorts) for Latin-script languages", () => {
+    it("returns 5 options (with title sort) for Latin-script languages", () => {
       const options = getAvailableSortOptions("en");
 
-      expect(options).toHaveLength(6);
+      expect(options).toHaveLength(5);
       expect(options.map((o) => o.value)).toContain("original_title.asc");
-      expect(options.map((o) => o.value)).toContain("original_title.desc");
     });
 
-    it("returns 4 options (no title sorts) for non-Latin languages", () => {
+    it("returns 4 options (no title sort) for non-Latin languages", () => {
       const options = getAvailableSortOptions("ja");
 
       expect(options).toHaveLength(4);
       expect(options.map((o) => o.value)).not.toContain("original_title.asc");
-      expect(options.map((o) => o.value)).not.toContain("original_title.desc");
     });
 
     it("preserves option labels", () => {
       const options = getAvailableSortOptions("en");
 
-      const titleAsc = options.find((o) => o.value === "original_title.asc");
-      expect(titleAsc?.label).toBe("Title A-Z");
-
-      const titleDesc = options.find((o) => o.value === "original_title.desc");
-      expect(titleDesc?.label).toBe("Title Z-A");
+      const titleSort = options.find((o) => o.value === "original_title.asc");
+      expect(titleSort?.label).toBe("Alphabetical");
     });
   });
 
   describe("isTitleSort", () => {
     it("returns true for original_title.asc", () => {
       expect(isTitleSort("original_title.asc")).toBe(true);
-    });
-
-    it("returns true for original_title.desc", () => {
-      expect(isTitleSort("original_title.desc")).toBe(true);
     });
 
     it("returns false for popularity.desc", () => {

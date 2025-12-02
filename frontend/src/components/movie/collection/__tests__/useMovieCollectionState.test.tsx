@@ -672,7 +672,7 @@ describe("useMovieCollectionState", () => {
           maxRating: "",
           minRuntime: "",
           maxRuntime: "",
-          sortBy: "original_title.desc",
+          sortBy: "original_title.asc",
           language: "en",
         },
         handleUnifiedFiltersChange: mockHandleFiltersChange,
@@ -695,7 +695,7 @@ describe("useMovieCollectionState", () => {
           maxRating: "",
           minRuntime: "",
           maxRuntime: "",
-          sortBy: "original_title.desc",
+          sortBy: "original_title.asc",
           language: "", // Changed to All Languages
         },
         handleUnifiedFiltersChange: mockHandleFiltersChange,

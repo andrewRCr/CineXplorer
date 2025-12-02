@@ -78,13 +78,13 @@ const CORE_GENRE_IDS = [
 ];
 
 // All valid sort options (consolidated - no advanced/minimal split)
+// Note: original_title.desc (Z-A) removed due to TMDB data quality issues
 const SORT_OPTIONS = [
   "popularity.desc",
   "vote_average.desc",
   "release_date.desc",
   "release_date.asc",
   "original_title.asc",
-  "original_title.desc",
 ];
 
 // Helper: Check if filters contain advanced filter values

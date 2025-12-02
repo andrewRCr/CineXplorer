@@ -132,7 +132,34 @@ if [ -n "$modified_task_lists" ] && [ -z "$staged_task_lists" ]; then
 fi
 
 # ============================================================================
-# CHECK 7: No meta-project references in production code
+# CHECK 7: Task numbering format (numeric.numeric.alpha)
+# ============================================================================
+# Per strategy-task-list-formatting.md: Third level uses letters (1.1.a not 1.1.1)
+# Format: X.Y (parent) → X.Y.a (subtask) → X.Y.a.1 (fourth level, rare)
+task_numbering_violations=$(git diff --cached --name-only --diff-filter=ACMR | \
+    grep -E '^\.arc/(active|backlog)/.*/tasks-.*\.md$' | \
+    while read file; do
+        # Look for task lines with numeric third level (wrong: 1.1.1, correct: 1.1.a)
+        # Pattern: checkbox followed by optional bold, then three numeric segments
+        violations=$(grep -nE '^\s*- \[[x ]\] \*?\*?[0-9]+\.[0-9]+\.[0-9]+' "$file" 2>/dev/null || true)
+        if [ -n "$violations" ]; then
+            echo "$file:"
+            echo "$violations" | sed 's/^/     /'
+        fi
+    done)
+
+if [ -n "$task_numbering_violations" ]; then
+    echo -e "${RED}❌ Error: Invalid task numbering format in task lists:${NC}"
+    echo "$task_numbering_violations"
+    echo ""
+    echo "   Per strategy-task-list-formatting.md:"
+    echo "   - Third level uses letters: 1.1.a, 1.1.b (not 1.1.1, 1.1.2)"
+    echo "   - Fourth level (if needed): 1.1.a.1, 1.1.a.2"
+    errors=$((errors + 1))
+fi
+
+# ============================================================================
+# CHECK 8: No meta-project references in production code
 # ============================================================================
 # Per DEVELOPMENT-RULES.md: Never reference task IDs, phase numbers, or .arc/
 # documentation in production code (comments, docstrings, variable names)

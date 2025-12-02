@@ -488,53 +488,31 @@ only works correctly with single Latin-script languages due to TMDB Unicode sort
     for all unit tests in `unit/services/`. Removed 5 unnecessary `@pytest.mark.django_db`
     markers that were added reactively when blacklist was moved to data quality layer.
 
-- [ ] **9.2 Frontend: Write tests and add language filter dropdown**
+- [x] **9.2 Frontend: Write tests and add language filter dropdown**
 
-    - [ ] **9.2.a Write tests for language filter state and URL persistence**
-        - File: `useMovieCollectionState.test.tsx`
-        - Test: Language filter included in state
-        - Test: Language persisted to/from URL
-        - Test: Default is empty (all languages)
-        - Expect tests to FAIL initially
+    - [x] **9.2.a Write tests for language filter state and URL persistence**
+        - Added 5 tests in "Language filter" describe block
+        - Tests: default empty, update via onFiltersChange, filterCount, URL persistence
 
-    - [ ] **9.2.b Create language options constant**
-        - File: `movieFilterOptions.ts`
-        - Top 15-20 languages ordered by film count
-        - "All Languages" as default (empty value)
+    - [x] **9.2.b-f Implementation and quality gates**
+        - Added `languageOptions` constant (19 languages + "All Languages")
+        - Added `language: string` to `MovieFilters` interface
+        - Wired through state hooks, URL sync, filterCount, hasActiveFilters
+        - Added language dropdown to AdvancedMovieFilters (alongside Year/Rating)
+        - Updated test files to use DRY helper functions
+        - 443 frontend tests passing, 0 lint/type errors
 
-    - [ ] **9.2.c Add language to MovieFilters type and state**
-        - Update type definition
-        - Add to default filter state
-        - Update `useMovieCollectionState` and `useMovieCollectionUrl`
+- [x] **9.3 Conditional alphabetic sort**
 
-    - [ ] **9.2.d Add dropdown to AdvancedMovieFilters**
-        - Place logically with other filters
-        - Use existing dropdown patterns
-
-    - [ ] **9.2.e Run tests - should now PASS**
-
-    - [ ] **9.2.f Run frontend quality gates**
-
-- [ ] **9.3 Conditional alphabetic sort**
-
-    - [ ] **9.3.a Write tests for conditional sort options**
-        - Test: Title sorts hidden when language is "All" or non-Latin
-        - Test: Title sorts shown when language is Latin-script (English, Spanish, etc.)
-        - Test: Sort auto-resets to default when current sort becomes invalid
-        - Expect tests to FAIL initially
-
-    - [ ] **9.3.b Update SortDropdown to conditionally show title sorts**
-        - Show Title A-Z/Z-A only when language filter is single Latin-script language
-        - Hide (not disable) when "All Languages" or non-Latin language selected
-
-    - [ ] **9.3.c Update SORT_OPTIONS to be dynamic**
-        - Modify `useMovieCollectionState` or create derived sort options
-        - 4 options (no title) vs 6 options (with title)
-
-    - [ ] **9.3.d Handle edge case: user has title sort selected, then changes language**
-        - Auto-reset to default sort (popularity.desc) if current sort becomes invalid
-
-    - [ ] **9.3.e Run tests - should now PASS**
+    - [x] **9.3.a-e Implementation complete**
+        - Created `sortOptionFiltering.ts` utility with `isLatinScriptLanguage`, `getAvailableSortOptions`, `isTitleSort`
+        - Created comprehensive `SortDropdown.test.tsx` (13 tests) - covers basic rendering, selection, upcoming
+        disable, and conditional title sorts
+        - Created `sortOptionFiltering.test.ts` (12 tests) - covers utility functions
+        - Added 4 auto-reset tests to `useMovieCollectionState.test.tsx`
+        - Updated SortDropdown to filter options based on language
+        - Added auto-reset effect in useMovieCollectionState for title→non-Latin transitions
+        - 472 frontend tests passing, 0 lint/type errors
 
 - [ ] **9.4 Quality gates and manual verification**
 

@@ -368,7 +368,7 @@ the vote count policy lands in the right place and establishes clear architectur
         - No problematic content observed in testing
 
     - [ ] **8.1.2 Test other views for regressions**
-        - Popular, Top Rated, Now Playing, Upcoming
+        - Browse, Now Playing, Upcoming
         - Verify legitimate content not filtered
 
     - [x] **8.1.3 Investigate test gap - why Z-A underfill wasn't caught**
@@ -414,6 +414,34 @@ the vote count policy lands in the right place and establishes clear architectur
         - Deleted `SortSelector.tsx` (advanced dropdown), renamed `SortDropdownMinimal` → `SortDropdown`
         - Centered Year+Rating inputs in AdvancedMovieFilters (removed sort from that row)
         - Quality gates: 438 frontend tests, 485 backend tests, 0 lint/type errors
+
+    - [x] **8.1.8 Fix Highest Rated vote count threshold**
+        - Issue: "Highest Rated" sort showed obscure films with 15 fans rating 9.5 instead of
+          universally loved films. STRICT threshold (10 votes) was insufficient for statistical validity.
+        - Root cause: 10 votes too low - niche films with devoted fanbases dominate results
+        - Fix: Context-aware threshold for `vote_average` sorts:
+            - **No rating filter**: STRICT (200 votes) - "Top rated" expectation needs famous films
+            - **With rating filter**: MODERATE (3 votes) - user browsing within a band
+        - Implementation:
+            - Updated `STRICT_VOTE_THRESHOLD` from 10 to 200 (matches TMDB Top Rated minimum)
+            - Added `rating_min`/`rating_max` params to `VoteCountPolicy.get_threshold()`
+            - Updated `param_transformer.py` to pass rating context
+            - Added `TestVoteCountPolicyRatingContext` test class (6 new tests)
+        - Also fixed: Pre-existing test issues (missing `@pytest.mark.django_db` decorators)
+          in buffer mechanism and completeness filtering tests
+        - Quality gates: 491 backend tests, 438 frontend tests, 0 lint/type errors
+
+    - [x] **8.1.9 Fix rating filter not affecting vote threshold in browse endpoint**
+        - Issue: Browser testing showed "Highest Rated + rating filter" produced same results as
+          without filter - context-aware threshold from 8.1.8 wasn't being applied
+        - Root cause: `api.py` browse endpoint had redundant `VoteCountPolicy.get_threshold()` call
+          that OVERWROTE the correctly computed `min_vote_count` from `transform_to_service_params()`
+            - The duplicate call was missing `rating_min`/`rating_max` params
+        - Fix: Removed redundant code (lines 254-260) and unused `VoteCountPolicy` import from `api.py`
+            - `transform_to_service_params()` now solely responsible for vote count threshold
+        - Verification: With rating filter (0.0-10.0) → min_vote_count=3 (MODERATE);
+          Without rating filter → min_vote_count=200 (STRICT)
+        - Quality gates: 491 backend tests, 0 lint/type errors
 
 - [ ] **8.2 Final quality gates**
 

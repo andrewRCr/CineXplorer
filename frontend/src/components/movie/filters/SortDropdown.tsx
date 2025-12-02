@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { Box, Text, Select, createListCollection } from "@chakra-ui/react";
-import { sortOptions } from "@/constants/movieFilterOptions";
+import { getAvailableSortOptions } from "@/utilities/sortOptionFiltering";
 import type { MovieFilters as UnifiedMovieFilters } from "./AdvancedMovieFilters";
 
 const SORT_WIDTH = "170px";
@@ -18,19 +18,25 @@ const SortDropdown = ({
 }: SortDropdownProps) => {
   const currentSortValue = filters.sortBy;
 
+  // Get available sort options based on language (hides title sorts for non-Latin)
+  const availableSortOptions = useMemo(
+    () => getAvailableSortOptions(filters.language),
+    [filters.language]
+  );
+
   // Disable "Highest Rated" in Upcoming view - upcoming movies have few/no votes,
   // so the STRICT vote threshold (200) filters out everything
   const sortCollection = useMemo(
     () =>
       createListCollection({
-        items: sortOptions.map((option) => ({
+        items: availableSortOptions.map((option) => ({
           label: option.label,
           value: option.value,
           disabled:
             option.value === "vote_average.desc" && pageSource === "upcoming",
         })),
       }),
-    [pageSource]
+    [availableSortOptions, pageSource]
   );
 
   return (

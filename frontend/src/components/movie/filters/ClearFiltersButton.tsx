@@ -18,7 +18,8 @@ const ClearFiltersButton = ({
     filters.minYear !== "" ||
     filters.maxYear !== "" ||
     filters.minRuntime !== "" ||
-    filters.maxRuntime !== "";
+    filters.maxRuntime !== "" ||
+    filters.language !== "";
 
   return (
     <Box

@@ -1,6 +1,10 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import { type MovieFilters as MovieFiltersType } from "@/components/movie/filters/AdvancedMovieFilters";
 import { useMovieCollectionUrl } from "./useMovieCollectionUrl";
+import {
+  isLatinScriptLanguage,
+  isTitleSort,
+} from "@/utilities/sortOptionFiltering";
 
 // Cached constants to prevent recreation
 const DEFAULT_FILTERS: MovieFiltersType = {
@@ -13,6 +17,7 @@ const DEFAULT_FILTERS: MovieFiltersType = {
   minRuntime: "",
   maxRuntime: "",
   sortBy: "popularity.desc",
+  language: "",
 };
 
 // Pre-computed values for performance
@@ -162,6 +167,14 @@ export const useMovieCollectionState = ({
     }
   }, [filters, enableAdvancedFilters]);
 
+  // Auto-reset title sort when language changes to non-Latin or "All Languages"
+  // Title sorts (A-Z, Z-A) only make sense for Latin-script languages
+  useEffect(() => {
+    if (isTitleSort(filters.sortBy) && !isLatinScriptLanguage(filters.language)) {
+      urlHandleFiltersChange({ sortBy: DEFAULT_SORT });
+    }
+  }, [filters.language, filters.sortBy, urlHandleFiltersChange]);
+
   // Optimize onFiltersChange with stable references
   const onFiltersChange = useCallback((newFilters: Partial<MovieFiltersType> | ((prev: MovieFiltersType) => MovieFiltersType)) => {
     if (enableUrlSync) {
@@ -213,6 +226,7 @@ export const useMovieCollectionState = ({
       filters.maxRating ||
       filters.minRuntime ||
       filters.maxRuntime ||
+      filters.language ||
       (filters.sortBy && filters.sortBy !== DEFAULT_SORT)
     );
   }, [
@@ -224,6 +238,7 @@ export const useMovieCollectionState = ({
     filters.maxRating,
     filters.minRuntime,
     filters.maxRuntime,
+    filters.language,
     filters.sortBy,
   ]);
   
@@ -254,14 +269,15 @@ export const useMovieCollectionState = ({
   
   const filterCount = useMemo(() => {
     let count = 0;
-    
+
     if (filters.query) count++;
     if (filters.genres.length > 0) count += filters.genres.length;
     if (filters.minYear || filters.maxYear) count++;
     if (filters.minRating || filters.maxRating) count++;
     if (filters.minRuntime || filters.maxRuntime) count++;
+    if (filters.language) count++;
     if (filters.sortBy !== DEFAULT_SORT) count++;
-    
+
     return count;
   }, [
     filters.query,
@@ -272,6 +288,7 @@ export const useMovieCollectionState = ({
     filters.maxRating,
     filters.minRuntime,
     filters.maxRuntime,
+    filters.language,
     filters.sortBy,
   ]);
   

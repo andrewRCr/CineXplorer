@@ -71,6 +71,7 @@ function createEmptyFilters(): MovieFilters {
         minRuntime: '',
         maxRuntime: '',
         sortBy: 'popularity.desc',
+        language: '',
     };
 }
 

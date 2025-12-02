@@ -16,21 +16,26 @@ import { describe, it, expect } from 'vitest';
 import { mapFiltersToApiParams } from '../movieFilterMapper';
 import type { MovieFilters } from '../../components/movie/filters/AdvancedMovieFilters';
 
+// Helper to create MovieFilters with defaults, reducing repetition
+const createFilters = (overrides: Partial<MovieFilters> = {}): MovieFilters => ({
+  query: '',
+  genres: [],
+  minYear: '',
+  maxYear: '',
+  minRating: '',
+  maxRating: '',
+  minRuntime: '',
+  maxRuntime: '',
+  sortBy: 'popularity.desc',
+  language: '',
+  ...overrides,
+});
+
 describe('movieFilterMapper - Backend Schema Compatibility', () => {
   describe('Year Filter Parameter Generation', () => {
     it('generates release_date_gte/lte for year range (expanded style)', () => {
       // Arrange: User selects year range 2020-2023
-      const filters: MovieFilters = {
-        query: '',
-        genres: [],
-        minYear: '2020',
-        maxYear: '2023',
-        minRating: '',
-        maxRating: '',
-        minRuntime: '',
-        maxRuntime: '',
-        sortBy: 'popularity.desc'
-      };
+      const filters = createFilters({ minYear: '2020', maxYear: '2023' });
 
       // Act: Map to API parameters
       const params = mapFiltersToApiParams(filters, 'expanded');
@@ -46,17 +51,7 @@ describe('movieFilterMapper - Backend Schema Compatibility', () => {
 
     it('generates release_date_gte only when only minYear provided', () => {
       // Arrange: User selects "From 2020" (no end year)
-      const filters: MovieFilters = {
-        query: '',
-        genres: [],
-        minYear: '2020',
-        maxYear: '',
-        minRating: '',
-        maxRating: '',
-        minRuntime: '',
-        maxRuntime: '',
-        sortBy: 'popularity.desc'
-      };
+      const filters = createFilters({ minYear: '2020' });
 
       // Act
       const params = mapFiltersToApiParams(filters, 'expanded');
@@ -69,17 +64,7 @@ describe('movieFilterMapper - Backend Schema Compatibility', () => {
 
     it('generates release_date_lte only when only maxYear provided', () => {
       // Arrange: User selects "Up to 2023"
-      const filters: MovieFilters = {
-        query: '',
-        genres: [],
-        minYear: '',
-        maxYear: '2023',
-        minRating: '',
-        maxRating: '',
-        minRuntime: '',
-        maxRuntime: '',
-        sortBy: 'popularity.desc'
-      };
+      const filters = createFilters({ maxYear: '2023' });
 
       // Act
       const params = mapFiltersToApiParams(filters, 'expanded');
@@ -91,17 +76,7 @@ describe('movieFilterMapper - Backend Schema Compatibility', () => {
 
     it('converts decade filter to release_date range (minimal style)', () => {
       // Arrange: User selects "2020s" decade
-      const filters: MovieFilters = {
-        query: '',
-        genres: [],
-        minYear: '2020s',
-        maxYear: '',
-        minRating: '',
-        maxRating: '',
-        minRuntime: '',
-        maxRuntime: '',
-        sortBy: 'popularity.desc'
-      };
+      const filters = createFilters({ minYear: '2020s' });
 
       // Act
       const params = mapFiltersToApiParams(filters, 'minimal');
@@ -115,17 +90,7 @@ describe('movieFilterMapper - Backend Schema Compatibility', () => {
   describe('Rating Filter Parameter Generation', () => {
     it('generates vote_average_gte for minimum rating (expanded style)', () => {
       // Arrange: User selects "7.5+ rating"
-      const filters: MovieFilters = {
-        query: '',
-        genres: [],
-        minYear: '',
-        maxYear: '',
-        minRating: '7.5',
-        maxRating: '',
-        minRuntime: '',
-        maxRuntime: '',
-        sortBy: 'popularity.desc'
-      };
+      const filters = createFilters({ minRating: '7.5' });
 
       // Act
       const params = mapFiltersToApiParams(filters, 'expanded');
@@ -138,17 +103,7 @@ describe('movieFilterMapper - Backend Schema Compatibility', () => {
 
     it('generates vote_average_lte for maximum rating when no minimum (expanded style)', () => {
       // Arrange: User selects "Up to 8.0 rating"
-      const filters: MovieFilters = {
-        query: '',
-        genres: [],
-        minYear: '',
-        maxYear: '',
-        minRating: '',
-        maxRating: '8.0',
-        minRuntime: '',
-        maxRuntime: '',
-        sortBy: 'popularity.desc'
-      };
+      const filters = createFilters({ maxRating: '8.0' });
 
       // Act
       const params = mapFiltersToApiParams(filters, 'expanded');
@@ -160,17 +115,7 @@ describe('movieFilterMapper - Backend Schema Compatibility', () => {
 
     it('generates vote_average_gte for minimal style rating filter', () => {
       // Arrange: User selects quick "7.0+" rating filter
-      const filters: MovieFilters = {
-        query: '',
-        genres: [],
-        minYear: '',
-        maxYear: '',
-        minRating: '7.0',
-        maxRating: '',
-        minRuntime: '',
-        maxRuntime: '',
-        sortBy: 'popularity.desc'
-      };
+      const filters = createFilters({ minRating: '7.0' });
 
       // Act
       const params = mapFiltersToApiParams(filters, 'minimal');
@@ -183,17 +128,14 @@ describe('movieFilterMapper - Backend Schema Compatibility', () => {
   describe('Combined Filter Parameter Generation', () => {
     it('generates all parameters for combined year + rating filters', () => {
       // Arrange: User applies both year and rating filters
-      const filters: MovieFilters = {
-        query: '',
+      const filters = createFilters({
         genres: [28, 12], // Action, Adventure
         minYear: '2020',
         maxYear: '2023',
         minRating: '7.5',
         maxRating: '9.0',
-        minRuntime: '',
-        maxRuntime: '',
-        sortBy: 'vote_average.desc'
-      };
+        sortBy: 'vote_average.desc',
+      });
 
       // Act
       const params = mapFiltersToApiParams(filters, 'expanded');
@@ -209,17 +151,11 @@ describe('movieFilterMapper - Backend Schema Compatibility', () => {
 
     it('handles partial filters correctly', () => {
       // Arrange: User applies only some filters
-      const filters: MovieFilters = {
-        query: '',
+      const filters = createFilters({
         genres: [28],
         minYear: '2020',
-        maxYear: '', // No max year
         minRating: '7.0',
-        maxRating: '', // No max rating
-        minRuntime: '',
-        maxRuntime: '',
-        sortBy: 'popularity.desc'
-      };
+      });
 
       // Act
       const params = mapFiltersToApiParams(filters, 'expanded');
@@ -238,17 +174,11 @@ describe('movieFilterMapper - Backend Schema Compatibility', () => {
   describe('Minimal vs Expanded Style Parameter Differences', () => {
     it('minimal style generates simpler parameter set', () => {
       // Arrange: Minimal style filter (Letterboxd-style quick filters)
-      const filters: MovieFilters = {
-        query: '',
+      const filters = createFilters({
         genres: [28],
         minYear: '2020s',
-        maxYear: '',
         minRating: '7.0',
-        maxRating: '',
-        minRuntime: '',
-        maxRuntime: '',
-        sortBy: 'popularity.desc'
-      };
+      });
 
       // Act
       const params = mapFiltersToApiParams(filters, 'minimal');
@@ -262,17 +192,14 @@ describe('movieFilterMapper - Backend Schema Compatibility', () => {
 
     it('expanded style allows range filters', () => {
       // Arrange: Expanded style with range filters
-      const filters: MovieFilters = {
-        query: '',
+      const filters = createFilters({
         genres: [28, 12],
         minYear: '2020',
         maxYear: '2023',
         minRating: '7.0',
         maxRating: '9.0',
-        minRuntime: '',
-        maxRuntime: '',
-        sortBy: 'vote_average.desc'
-      };
+        sortBy: 'vote_average.desc',
+      });
 
       // Act
       const params = mapFiltersToApiParams(filters, 'expanded');
@@ -288,17 +215,7 @@ describe('movieFilterMapper - Backend Schema Compatibility', () => {
   describe('Parameter Format Validation', () => {
     it('formats dates as YYYY-MM-DD (backend schema requirement)', () => {
       // Arrange
-      const filters: MovieFilters = {
-        query: '',
-        genres: [],
-        minYear: '2022',
-        maxYear: '2022',
-        minRating: '',
-        maxRating: '',
-        minRuntime: '',
-        maxRuntime: '',
-        sortBy: 'popularity.desc'
-      };
+      const filters = createFilters({ minYear: '2022', maxYear: '2022' });
 
       // Act
       const params = mapFiltersToApiParams(filters, 'expanded');
@@ -312,17 +229,7 @@ describe('movieFilterMapper - Backend Schema Compatibility', () => {
 
     it('formats ratings as strings (API query param requirement)', () => {
       // Arrange
-      const filters: MovieFilters = {
-        query: '',
-        genres: [],
-        minYear: '',
-        maxYear: '',
-        minRating: '7.5',
-        maxRating: '9.0',
-        minRuntime: '',
-        maxRuntime: '',
-        sortBy: 'popularity.desc'
-      };
+      const filters = createFilters({ minRating: '7.5', maxRating: '9.0' });
 
       // Act
       const params = mapFiltersToApiParams(filters, 'expanded');
@@ -336,17 +243,7 @@ describe('movieFilterMapper - Backend Schema Compatibility', () => {
 
     it('formats genre IDs as comma-separated string', () => {
       // Arrange
-      const filters: MovieFilters = {
-        query: '',
-        genres: [28, 12, 878], // Action, Adventure, Sci-Fi
-        minYear: '',
-        maxYear: '',
-        minRating: '',
-        maxRating: '',
-        minRuntime: '',
-        maxRuntime: '',
-        sortBy: 'popularity.desc'
-      };
+      const filters = createFilters({ genres: [28, 12, 878] }); // Action, Adventure, Sci-Fi
 
       // Act
       const params = mapFiltersToApiParams(filters, 'expanded');
@@ -359,17 +256,7 @@ describe('movieFilterMapper - Backend Schema Compatibility', () => {
   describe('Empty/Default Filter Handling', () => {
     it('does not include parameters for empty filters', () => {
       // Arrange: All filters empty
-      const filters: MovieFilters = {
-        query: '',
-        genres: [],
-        minYear: '',
-        maxYear: '',
-        minRating: '',
-        maxRating: '',
-        minRuntime: '',
-        maxRuntime: '',
-        sortBy: 'popularity.desc'
-      };
+      const filters = createFilters();
 
       // Act
       const params = mapFiltersToApiParams(filters, 'expanded');

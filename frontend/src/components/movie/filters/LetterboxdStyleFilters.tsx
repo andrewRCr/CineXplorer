@@ -56,6 +56,7 @@ const LetterboxdStyleFilters = ({
       // maxRuntime: "",
       query: "",
       sortBy: "popularity.desc",
+      language: "",
     });
   };
 

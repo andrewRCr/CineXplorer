@@ -40,6 +40,13 @@ function addQuery(params: Record<string, string | number | number[]>, filters: M
     }
 }
 
+// Helper: Add language filter if present
+function addLanguage(params: Record<string, string | number | number[]>, filters: MovieFiltersType) {
+    if (filters.language) {
+        params.language = filters.language;
+    }
+}
+
 // Helper: Add rating filters
 function addRatings(params: Record<string, string | number | number[]>, filters: MovieFiltersType) {
     if (filters.minRating) {
@@ -111,6 +118,7 @@ export function mapFiltersToApiParams(
     // Apply shared filters (work for both minimal and expanded)
     addGenres(filterParams, filters);
     addQuery(filterParams, filters);
+    addLanguage(filterParams, filters);
     addRatings(filterParams, filters);
     addReleaseDateRange(filterParams, filters, filterStyle);
 

@@ -32,6 +32,7 @@ export function initializeFiltersFromUrl(search: string): {
     const maxRating = params.get("maxRating") || "";
     const minRuntime = params.get("minRuntime") || "";
     const maxRuntime = params.get("maxRuntime") || "";
+    const language = params.get("language") || "";
 
     // Populate both filter objects from the parsed URL params.
     const filters: MovieFiltersType = {
@@ -44,6 +45,7 @@ export function initializeFiltersFromUrl(search: string): {
         minRuntime,
         maxRuntime,
         sortBy,
+        language,
     };
 
     const minimalFilters: MinimalMovieFilters = {

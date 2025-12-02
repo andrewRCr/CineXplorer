@@ -122,3 +122,33 @@ export const sortOptions: SortOption[] = [
     { value: "original_title.asc", label: "Title A-Z" },
     { value: "original_title.desc", label: "Title Z-A" },
 ];
+
+// Language options - ordered by TMDB film count (as of 2024)
+// ISO 639-1 codes used by TMDB's with_original_language parameter
+// Source: https://www.themoviedb.org/movie (discovery page language filter)
+export const languageOptions = [
+    { value: "", label: "All Languages" },
+    { value: "en", label: "English" },
+    { value: "fr", label: "French" },
+    { value: "es", label: "Spanish" },
+    { value: "ja", label: "Japanese" },
+    { value: "de", label: "German" },
+    { value: "pt", label: "Portuguese" },
+    { value: "zh", label: "Chinese" },
+    { value: "it", label: "Italian" },
+    { value: "ru", label: "Russian" },
+    { value: "ko", label: "Korean" },
+    { value: "cs", label: "Czech" },
+    { value: "ar", label: "Arabic" },
+    { value: "nl", label: "Dutch" },
+    { value: "sv", label: "Swedish" },
+    { value: "hi", label: "Hindi" },
+    { value: "tr", label: "Turkish" },
+    { value: "pl", label: "Polish" },
+    { value: "tl", label: "Tagalog" },
+    { value: "yue", label: "Cantonese" },
+    { value: "id", label: "Indonesian" },
+    { value: "da", label: "Danish" },
+    { value: "el", label: "Greek" },
+    { value: "fa", label: "Persian" },
+];

@@ -37,6 +37,7 @@ describe("useMovieCollectionState", () => {
         minRuntime: "",
         maxRuntime: "",
         sortBy: "popularity.desc",
+        language: "",
       },
       handleUnifiedFiltersChange: vi.fn(),
       currentPageFromUrl: 1,
@@ -62,6 +63,7 @@ describe("useMovieCollectionState", () => {
           minRuntime: "",
           maxRuntime: "",
           sortBy: "popularity.desc",
+          language: "",
         },
         handleUnifiedFiltersChange: vi.fn(),
         currentPageFromUrl: 1,
@@ -92,6 +94,7 @@ describe("useMovieCollectionState", () => {
           minRuntime: "",
           maxRuntime: "",
           sortBy: "popularity.desc",
+          language: "",
         },
         handleUnifiedFiltersChange: vi.fn(),
         currentPageFromUrl: 1,
@@ -122,6 +125,7 @@ describe("useMovieCollectionState", () => {
           minRuntime: "",
           maxRuntime: "",
           sortBy: "popularity.desc",
+          language: "",
         },
         handleUnifiedFiltersChange: vi.fn(),
         currentPageFromUrl: 1,
@@ -181,6 +185,7 @@ describe("useMovieCollectionState", () => {
           minRuntime: "",
           maxRuntime: "",
           sortBy: "popularity.desc",
+          language: "",
         },
         handleUnifiedFiltersChange: vi.fn(),
         currentPageFromUrl: 1,
@@ -353,6 +358,7 @@ describe("useMovieCollectionState", () => {
           minRuntime: "",
           maxRuntime: "",
           sortBy: "popularity.desc",
+          language: "",
         },
         handleUnifiedFiltersChange: vi.fn(),
         currentPageFromUrl: 1,
@@ -469,6 +475,292 @@ describe("useMovieCollectionState", () => {
       await waitFor(() => {
         expect(result.current.showAdvanced).toBe(true);
       });
+    });
+  });
+
+  describe("Language filter", () => {
+    it("should default language to empty string (all languages)", () => {
+      const { result } = renderHook(
+        () => useMovieCollectionState({ enableUrlSync: false }),
+        { wrapper }
+      );
+
+      expect(result.current.filters.language).toBe("");
+    });
+
+    it("should update language when onFiltersChange called", () => {
+      const { result } = renderHook(
+        () => useMovieCollectionState({ enableUrlSync: false }),
+        { wrapper }
+      );
+
+      act(() => {
+        result.current.onFiltersChange({ language: "en" });
+      });
+
+      expect(result.current.filters.language).toBe("en");
+    });
+
+    it("should include language in filterCount when set", () => {
+      const { result } = renderHook(
+        () => useMovieCollectionState({ enableUrlSync: false }),
+        { wrapper }
+      );
+
+      act(() => {
+        result.current.onFiltersChange({ language: "es" });
+      });
+
+      expect(result.current.filterCount).toBe(1);
+    });
+
+    it("should NOT include language in filterCount when empty", () => {
+      const { result } = renderHook(
+        () => useMovieCollectionState({ enableUrlSync: false }),
+        { wrapper }
+      );
+
+      // Default state - language is ""
+      expect(result.current.filterCount).toBe(0);
+    });
+
+    it("should persist language from URL", async () => {
+      // Arrange: Mock URL hook to return language filter
+      mockUseMovieCollectionUrl.mockReturnValue({
+        unifiedFilters: {
+          query: "",
+          genres: [],
+          minYear: "",
+          maxYear: "",
+          minRating: "",
+          maxRating: "",
+          minRuntime: "",
+          maxRuntime: "",
+          sortBy: "popularity.desc",
+          language: "fr",
+        },
+        handleUnifiedFiltersChange: vi.fn(),
+        currentPageFromUrl: 1,
+        handlePageChange: vi.fn(),
+      });
+
+      const { result } = renderHook(() => useMovieCollectionState(), {
+        wrapper,
+      });
+
+      await waitFor(() => {
+        expect(result.current.filters.language).toBe("fr");
+      });
+    });
+  });
+
+  describe("Sort auto-reset when language changes", () => {
+    it("should reset title sort to default when language changes to non-Latin", () => {
+      const mockHandleFiltersChange = vi.fn();
+      mockUseMovieCollectionUrl.mockReturnValue({
+        unifiedFilters: {
+          query: "",
+          genres: [],
+          minYear: "",
+          maxYear: "",
+          minRating: "",
+          maxRating: "",
+          minRuntime: "",
+          maxRuntime: "",
+          sortBy: "original_title.asc",
+          language: "en",
+        },
+        handleUnifiedFiltersChange: mockHandleFiltersChange,
+        currentPageFromUrl: 1,
+        handlePageChange: vi.fn(),
+      });
+
+      const { rerender } = renderHook(() => useMovieCollectionState(), {
+        wrapper,
+      });
+
+      // Simulate language change to non-Latin (Japanese)
+      mockUseMovieCollectionUrl.mockReturnValue({
+        unifiedFilters: {
+          query: "",
+          genres: [],
+          minYear: "",
+          maxYear: "",
+          minRating: "",
+          maxRating: "",
+          minRuntime: "",
+          maxRuntime: "",
+          sortBy: "original_title.asc", // Still title sort
+          language: "ja", // Changed to Japanese
+        },
+        handleUnifiedFiltersChange: mockHandleFiltersChange,
+        currentPageFromUrl: 1,
+        handlePageChange: vi.fn(),
+      });
+
+      rerender();
+
+      // Should have auto-reset sort to default
+      expect(mockHandleFiltersChange).toHaveBeenCalledWith(
+        expect.objectContaining({ sortBy: "popularity.desc" })
+      );
+    });
+
+    it("should NOT reset sort when language changes to another Latin language", () => {
+      const mockHandleFiltersChange = vi.fn();
+      mockUseMovieCollectionUrl.mockReturnValue({
+        unifiedFilters: {
+          query: "",
+          genres: [],
+          minYear: "",
+          maxYear: "",
+          minRating: "",
+          maxRating: "",
+          minRuntime: "",
+          maxRuntime: "",
+          sortBy: "original_title.asc",
+          language: "en",
+        },
+        handleUnifiedFiltersChange: mockHandleFiltersChange,
+        currentPageFromUrl: 1,
+        handlePageChange: vi.fn(),
+      });
+
+      const { rerender } = renderHook(() => useMovieCollectionState(), {
+        wrapper,
+      });
+
+      // Clear any initial calls
+      mockHandleFiltersChange.mockClear();
+
+      // Simulate language change to another Latin language (French)
+      mockUseMovieCollectionUrl.mockReturnValue({
+        unifiedFilters: {
+          query: "",
+          genres: [],
+          minYear: "",
+          maxYear: "",
+          minRating: "",
+          maxRating: "",
+          minRuntime: "",
+          maxRuntime: "",
+          sortBy: "original_title.asc",
+          language: "fr", // Changed to French (still Latin)
+        },
+        handleUnifiedFiltersChange: mockHandleFiltersChange,
+        currentPageFromUrl: 1,
+        handlePageChange: vi.fn(),
+      });
+
+      rerender();
+
+      // Should NOT have reset sort - both are Latin languages
+      expect(mockHandleFiltersChange).not.toHaveBeenCalledWith(
+        expect.objectContaining({ sortBy: "popularity.desc" })
+      );
+    });
+
+    it("should reset title sort when language changes to All Languages", () => {
+      const mockHandleFiltersChange = vi.fn();
+      mockUseMovieCollectionUrl.mockReturnValue({
+        unifiedFilters: {
+          query: "",
+          genres: [],
+          minYear: "",
+          maxYear: "",
+          minRating: "",
+          maxRating: "",
+          minRuntime: "",
+          maxRuntime: "",
+          sortBy: "original_title.desc",
+          language: "en",
+        },
+        handleUnifiedFiltersChange: mockHandleFiltersChange,
+        currentPageFromUrl: 1,
+        handlePageChange: vi.fn(),
+      });
+
+      const { rerender } = renderHook(() => useMovieCollectionState(), {
+        wrapper,
+      });
+
+      // Simulate language change to "All Languages" (empty string)
+      mockUseMovieCollectionUrl.mockReturnValue({
+        unifiedFilters: {
+          query: "",
+          genres: [],
+          minYear: "",
+          maxYear: "",
+          minRating: "",
+          maxRating: "",
+          minRuntime: "",
+          maxRuntime: "",
+          sortBy: "original_title.desc",
+          language: "", // Changed to All Languages
+        },
+        handleUnifiedFiltersChange: mockHandleFiltersChange,
+        currentPageFromUrl: 1,
+        handlePageChange: vi.fn(),
+      });
+
+      rerender();
+
+      // Should have auto-reset sort to default
+      expect(mockHandleFiltersChange).toHaveBeenCalledWith(
+        expect.objectContaining({ sortBy: "popularity.desc" })
+      );
+    });
+
+    it("should NOT reset non-title sorts when language changes", () => {
+      const mockHandleFiltersChange = vi.fn();
+      mockUseMovieCollectionUrl.mockReturnValue({
+        unifiedFilters: {
+          query: "",
+          genres: [],
+          minYear: "",
+          maxYear: "",
+          minRating: "",
+          maxRating: "",
+          minRuntime: "",
+          maxRuntime: "",
+          sortBy: "vote_average.desc", // Not a title sort
+          language: "en",
+        },
+        handleUnifiedFiltersChange: mockHandleFiltersChange,
+        currentPageFromUrl: 1,
+        handlePageChange: vi.fn(),
+      });
+
+      const { rerender } = renderHook(() => useMovieCollectionState(), {
+        wrapper,
+      });
+
+      // Clear any initial calls
+      mockHandleFiltersChange.mockClear();
+
+      // Simulate language change to non-Latin
+      mockUseMovieCollectionUrl.mockReturnValue({
+        unifiedFilters: {
+          query: "",
+          genres: [],
+          minYear: "",
+          maxYear: "",
+          minRating: "",
+          maxRating: "",
+          minRuntime: "",
+          maxRuntime: "",
+          sortBy: "vote_average.desc",
+          language: "ja",
+        },
+        handleUnifiedFiltersChange: mockHandleFiltersChange,
+        currentPageFromUrl: 1,
+        handlePageChange: vi.fn(),
+      });
+
+      rerender();
+
+      // Should NOT reset - vote_average.desc is valid for all languages
+      expect(mockHandleFiltersChange).not.toHaveBeenCalled();
     });
   });
 });

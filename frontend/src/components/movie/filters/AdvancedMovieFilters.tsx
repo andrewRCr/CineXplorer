@@ -1,10 +1,19 @@
-import { useCallback } from "react";
-import { Box, VStack, Button, HStack, Text, Separator } from "@chakra-ui/react";
+import { useCallback, useMemo } from "react";
+import {
+  Box,
+  VStack,
+  Button,
+  HStack,
+  Text,
+  Separator,
+  Select,
+  createListCollection,
+} from "@chakra-ui/react";
 import { FiFilter, FiX } from "react-icons/fi";
 import GenreSelector from "./GenreSelector";
 import YearSelector from "./YearSelector";
 import RatingSelector from "./RatingSelector";
-import type { SortOptionValue } from "@/constants/movieFilterOptions";
+import { languageOptions, type SortOptionValue } from "@/constants/movieFilterOptions";
 import type { MinimalMovieFilters } from "./LetterboxdStyleFilters";
 
 export interface MovieFilters {
@@ -17,6 +26,7 @@ export interface MovieFilters {
   minRuntime: string;
   maxRuntime: string;
   sortBy: SortOptionValue;
+  language: string;
 }
 
 interface MovieFiltersProps {
@@ -32,6 +42,8 @@ interface MovieFiltersProps {
   pageSource?: string;
 }
 
+const LANGUAGE_WIDTH = "160px";
+
 const AdvancedMovieFilters = ({
   filters,
   minimalFilters,
@@ -40,6 +52,17 @@ const AdvancedMovieFilters = ({
   onToggleCollapse,
   pageSource,
 }: MovieFiltersProps) => {
+  const languageCollection = useMemo(
+    () =>
+      createListCollection({
+        items: languageOptions.map((option) => ({
+          label: option.label,
+          value: option.value,
+        })),
+      }),
+    []
+  );
+
   const updateFilter = useCallback(
     <K extends keyof MovieFilters>(key: K, value: MovieFilters[K]) => {
       onFiltersChange((prevFilters) => ({
@@ -61,6 +84,7 @@ const AdvancedMovieFilters = ({
       minRuntime: "",
       maxRuntime: "",
       sortBy: "popularity.desc",
+      language: "",
     });
   }, [onFiltersChange]);
 
@@ -73,6 +97,7 @@ const AdvancedMovieFilters = ({
     filters.maxRating ||
     filters.minRuntime ||
     filters.maxRuntime ||
+    filters.language ||
     filters.sortBy !== "popularity.desc";
 
   const hasMinimalActiveFilters = minimalFilters
@@ -171,6 +196,74 @@ const AdvancedMovieFilters = ({
               onMinRatingChange={(rating) => updateFilter("minRating", rating)}
               onMaxRatingChange={(rating) => updateFilter("maxRating", rating)}
             />
+          </Box>
+          <Box>
+            <Text fontSize="sm" fontWeight="medium" mb={2} color="foreground">
+              Language
+            </Text>
+            <Select.Root
+              collection={languageCollection}
+              value={filters.language ? [filters.language] : [""]}
+              onValueChange={(details) => {
+                updateFilter("language", details.value[0] ?? "");
+              }}
+              positioning={{ placement: "bottom-start", gutter: 2 }}
+            >
+              <Select.Trigger
+                w={LANGUAGE_WIDTH}
+                minH="32px"
+                h="32px"
+                fontSize="14px"
+                lineHeight="1.2"
+                borderRadius="4px"
+                border="1px solid"
+                borderColor="button-outline"
+                backgroundColor="transparent"
+                _hover={{ bg: "tertiary/8" }}
+                _focusVisible={{ borderColor: "tertiary" }}
+                css={{
+                  padding: "6px 12px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  "& [data-part='indicator']": {
+                    width: "16px",
+                    height: "16px",
+                  },
+                }}
+              >
+                <Select.ValueText placeholder="All Languages" />
+                <Select.Indicator />
+              </Select.Trigger>
+              <Select.Positioner>
+                <Select.Content
+                  w={LANGUAGE_WIDTH}
+                  bg="muted"
+                  borderColor="border-subtle-02"
+                  color="foreground"
+                  maxH="300px"
+                  overflowY="auto"
+                >
+                  {languageCollection.items.map((item) => {
+                    const isSelected = filters.language === item.value;
+                    return (
+                      <Select.Item
+                        key={item.value}
+                        item={item}
+                        bg={isSelected ? "tertiary" : undefined}
+                        color={isSelected ? "on-tertiary" : "foreground"}
+                        _hover={{
+                          bg: isSelected ? "tertiary" : "tertiary/12",
+                          color: isSelected ? "on-tertiary" : "foreground",
+                        }}
+                      >
+                        {item.label}
+                      </Select.Item>
+                    );
+                  })}
+                </Select.Content>
+              </Select.Positioner>
+            </Select.Root>
           </Box>
         </HStack>
       </VStack>

@@ -14,6 +14,7 @@ const createMockFilters = (overrides: Partial<MovieFilters> = {}): MovieFilters 
   minRuntime: '',
   maxRuntime: '',
   sortBy: 'popularity.desc',
+  language: '',
   ...overrides,
 });
 

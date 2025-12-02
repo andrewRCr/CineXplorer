@@ -47,6 +47,7 @@ export const useMovieCollectionUrl = (
     minRuntime: "",
     maxRuntime: "",
     sortBy: "popularity.desc",
+    language: "",
     ...defaultFilters,
   });
 

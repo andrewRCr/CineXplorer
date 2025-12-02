@@ -36,6 +36,7 @@ Pivoted to using company research to bulk-populate the movie blacklist instead.
 - Populate movie blacklist with movies from researched problematic studios
 - Centralize vote count filter policy (DRY refactor)
 - Revisit `original_title` sort vote threshold
+- DRY refactor: centralize filter defaults, state utilities, and sort constants (Phase 10)
 
 ### Won't Do
 
@@ -462,7 +463,7 @@ the vote count policy lands in the right place and establishes clear architectur
         - Reference: <https://www.themoviedb.org/talk/59d3f79ec3a3684561005cd5>
         - Quality gates: 491 backend tests, 0 lint/type errors
 
-### **Phase 9:** Language Filter & Conditional Alphabetic Sort
+### **Phase 9:** Language Filter & Conditional Alphabetic Sort ✓
 
 **Purpose:** Add language filter to enable meaningful alphabetic sorting. Title A-Z/Z-A
 only works correctly with single Latin-script languages due to TMDB Unicode sorting limitations.
@@ -514,14 +515,176 @@ only works correctly with single Latin-script languages due to TMDB Unicode sort
         - Added auto-reset effect in useMovieCollectionState for title→non-Latin transitions
         - 472 frontend tests passing, 0 lint/type errors
 
-- [ ] **9.4 Quality gates and manual verification**
+- [x] **9.4 Expanded script detection + Z-A sort removal**
 
-    - [ ] **9.4.a Run full test suite (backend + frontend)**
-    - [ ] **9.4.b Run linting and type checking**
-    - [ ] **9.4.c Manual browser testing**
-        - Verify language filter works
+    **Context:** Browser testing revealed Phase 9.1-9.3 language filter only caught CJK mislabeled
+    movies. Further investigation found Thai, Devanagari, Sinhalese, Cyrillic, Tamil, Malayalam,
+    and many other scripts slipping through. More critically, Z-A sort with English language
+    filter returned only 8 movies on page 1 due to TMDB data quality issues.
+
+    **Root cause:** Unicode ordering causes non-Latin script characters (U+0370+) to sort
+    BEFORE Latin 'Z' (U+005A). When sorting Z-A (descending), ALL mislabeled movies with
+    non-Latin original_titles cluster at the front of results. No amount of filtering can
+    fix this - the data quality problem is too pervasive.
+
+    **Solution:**
+
+    - [x] **9.4.a Remove Z-A sort from UI** - Fundamentally broken for Latin languages
+        - Removed `original_title.desc` from `SortOptionValue` type and `sortOptions` array
+        - Updated `SORT_OPTIONS` in `useMovieCollectionState.tsx`
+        - Updated `TITLE_SORT_VALUES` → `TITLE_SORT_VALUE` (singular) in `sortOptionFiltering.ts`
+
+    - [x] **9.4.b Rename "Title A-Z" to "Alphabetical"** - No longer needs direction indicator
+        - Updated label in `movieFilterOptions.ts`
+        - Updated all test assertions
+
+    - [x] **9.4.c Expand non-Latin script detection** - One-time cost for other views
+        - Renamed `contains_cjk_characters` → `contains_non_latin_script`
+        - Renamed `_CJK_PATTERN` → `_NON_LATIN_SCRIPT_PATTERN`
+        - Added 16 new script ranges:
+            - South Asian: Bengali, Gujarati, Oriya, Tamil, Telugu, Kannada, Malayalam
+            - Southeast Asian: Lao, Myanmar
+            - Middle Eastern: (already had Arabic, Hebrew)
+            - European non-Latin: Greek, Cyrillic, Armenian, Georgian
+        - Added 8 new test cases for script detection
+
+    - [x] **9.4.d Update backend integration tests**
+        - Removed `original_title.desc` from `MINIMAL_UI_SORT_OPTIONS`
+        - Updated `ALPHABETICAL_SORT_OPTIONS` to only include A-Z
+        - Updated class docstrings to document Z-A removal
+
+    - [x] **9.4.e Quality gates**
+        - 531 backend tests pass, 471 frontend tests pass
+        - 0 lint/type errors
+
+### **Phase 10:** Filter/Sort DRY Refactor
+
+**Purpose:** Eliminate duplicated filter logic discovered during Phase 9 language filter implementation.
+Adding the `language` field required updates in 4+ locations for defaults, 3+ locations for
+`hasActiveFilters`, and exposed inconsistencies in filter detection logic.
+
+**Audit findings (pre-phase):**
+
+- Default filter values duplicated in 4 files
+- `hasActiveFilters` logic duplicated in 3 files with inconsistencies
+- Default sort "popularity.desc" hardcoded in 6+ locations
+- Sort options duplicated in 2 files
+- ClearFiltersButton only checks 6 of 10 filter fields
+- Backend param mapping split across 2 files without unified documentation
+- 100+ lines of commented runtime filter code (technical debt)
+
+#### Frontend: Single Source of Truth
+
+- [ ] **10.1 Create filter defaults constant**
+
+    - [ ] **10.1.a Create `frontend/src/constants/filterDefaults.ts`**
+        - Export `DEFAULT_FILTERS` object with all 10 fields
+        - Export `DEFAULT_SORT` constant ("popularity.desc")
+        - Derive `MovieFilters` type from the constant using `typeof`
+
+    - [ ] **10.1.b Update consumers to use DEFAULT_FILTERS**
+        - `AdvancedMovieFilters.tsx` - import and use in clearFilters()
+        - `LetterboxdStyleFilters.tsx` - import and use in clearFilters()
+        - `useMovieCollectionUrl.tsx` - import for initial state
+        - `useMovieCollectionState.tsx` - import for initial state and clearFilters
+
+    - [ ] **10.1.c Update DEFAULT_SORT consumers**
+        - Replace hardcoded "popularity.desc" strings with DEFAULT_SORT constant
+        - Files: AdvancedMovieFilters, LetterboxdStyleFilters, urlSync, useMovieCollectionUrl,
+          useMovieCollectionState
+
+    - [ ] **10.1.d Run frontend tests and linting**
+
+#### Frontend: Centralize Filter State Utilities
+
+- [ ] **10.2 Create filter state utilities**
+
+    - [ ] **10.2.a Create `frontend/src/utilities/filterStateUtils.ts`**
+        - `hasActiveFilters(filters: MovieFilters): boolean` - checks all 10 fields consistently
+        - `countActiveFilters(filters: MovieFilters): number` - consistent count logic
+        - `isDefaultSort(sortBy: string): boolean` - uses DEFAULT_SORT
+        - Document: what counts as "active" for each field type
+
+    - [ ] **10.2.b Write tests for filter state utilities**
+        - Create `filterStateUtils.test.ts`
+        - Test hasActiveFilters with various combinations
+        - Test countActiveFilters accuracy
+        - Test edge cases (empty strings, empty arrays, default sort)
+
+    - [ ] **10.2.c Update consumers to use utilities**
+        - `ClearFiltersButton.tsx` - use hasActiveFilters (fix: currently missing query, ratings, sortBy)
+        - `AdvancedMovieFilters.tsx` - use hasActiveFilters for panel state
+        - `useMovieCollectionState.tsx` - use hasActiveFilters and countActiveFilters
+        - `useMovieCollectionUrl.tsx` - use isDefaultSort for URL omission logic
+
+    - [ ] **10.2.d Run frontend tests and verify consistency**
+
+#### Frontend: Consolidate Sort Constants
+
+- [ ] **10.3 Remove duplicate sort options**
+
+    - [ ] **10.3.a Audit sort option usage**
+        - `movieFilterOptions.ts` has `sortOptions` array
+        - `useMovieCollectionState.tsx` has duplicate `SORT_OPTIONS` array
+        - Identify which is canonical and which should be removed
+
+    - [ ] **10.3.b Consolidate to single source**
+        - Keep `sortOptions` in `movieFilterOptions.ts` as canonical
+        - Update `useMovieCollectionState.tsx` to import from movieFilterOptions
+        - Verify `SortDropdown` and `sortOptionFiltering.ts` use the same source
+
+    - [ ] **10.3.c Run frontend tests**
+
+#### Frontend: Clean Up Technical Debt
+
+- [ ] **10.4 Remove dead runtime filter code**
+
+    - [ ] **10.4.a Remove commented runtime code from ConnectedDropdowns.tsx**
+        - Delete 100+ lines of commented-out runtime filter code
+        - Add brief comment noting runtime filtering disabled due to TMDB API issues
+        - Reference `runtimeOptions` in movieFilterOptions.ts for future re-enablement
+
+    - [ ] **10.4.b Verify no runtime references remain active**
+        - Ensure minRuntime/maxRuntime fields exist in types but UI is disabled
+        - Confirm no broken imports or references
+
+#### Backend: Unify Parameter Documentation
+
+- [ ] **10.5 Document parameter transformation pipeline**
+
+    - [ ] **10.5.a Add docstrings to param mapping files**
+        - `param_transformer.py` - document HTTP → ServiceParams transformation
+        - `query_params.py` - document ServiceParams → TMDB API transformation
+        - Add cross-references between files explaining the two-step pipeline
+
+    - [ ] **10.5.b Create inline mapping reference**
+        - In `query_params.py`, add comment block showing full pipeline:
+          `HTTP param → ServiceParams field → TMDB API param`
+        - Example: `language → language → with_original_language`
+
+    - [ ] **10.5.c Run backend linting**
+
+#### Quality Gates & Verification
+
+- [ ] **10.6 Full quality gates and manual verification**
+
+    - [ ] **10.6.a Run full test suite**
+        - Backend: `docker compose -f infrastructure/docker-compose.yml exec backend pytest apps/`
+        - Frontend: `docker compose -f infrastructure/docker-compose.yml exec frontend npm test`
+
+    - [ ] **10.6.b Run all linting and type checking**
+        - Backend lint: `.venv-backend/bin/ruff check backend/apps/ backend/config/ --fix`
+        - Frontend lint: `docker compose ... exec frontend npm run lint`
+        - TypeScript: `docker compose ... exec frontend npm run type-check`
+        - Python types: `npx pyright backend/apps/ backend/config/ --project backend`
+        - Markdown: `npx markdownlint-cli2 --fix "README.md" ".arc/**/*.md"`
+
+    - [ ] **10.6.c Manual browser testing**
+        - Verify language filter works (Phase 9 feature)
         - Verify title sorts appear/disappear correctly
         - Verify A-Z sort works correctly with English filter
+        - Verify "Clear filters" button works from all UI locations
+        - Verify filter count badge accurate in all states
 
 ---
 

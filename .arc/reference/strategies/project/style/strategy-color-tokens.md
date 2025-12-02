@@ -79,16 +79,16 @@ CineXplorer uses Material Design 3's `on-*` naming convention for foreground tok
 
 During ADR-011 migration (2025-11), old naming conventions were replaced but aliases maintained for compatibility:
 
-| Deprecated (Old)       | Canonical (Current)      | Notes                              |
-|------------------------|--------------------------|------------------------------------|
-| `accent`               | `tertiary`               | Hierarchy naming preferred         |
-| `accent-foreground`    | `on-tertiary`            | on-* prefix pattern                |
-| `primary-foreground`   | `on-primary`             | on-* prefix pattern                |
-| `success-foreground`   | `on-success`             | on-* prefix pattern                |
-| `text.secondary`       | `on-muted`               | Semantic clarity                   |
-| `border.subtle`        | `border-strong-01` or `border-subtle-01` | Layer-aware (strong for forms, subtle for dividers) |
-| `background.subItem`   | `layer-hover-01`         | Explicit interaction state naming  |
-| `tertiary.primary`     | `tertiary` or `ring`     | Simplified naming                  |
+| Deprecated (Old)     | Canonical (Current)                      | Notes                                               |
+|----------------------|------------------------------------------|-----------------------------------------------------|
+| `accent`             | `tertiary`                               | Hierarchy naming preferred                          |
+| `accent-foreground`  | `on-tertiary`                            | on-* prefix pattern                                 |
+| `primary-foreground` | `on-primary`                             | on-* prefix pattern                                 |
+| `success-foreground` | `on-success`                             | on-* prefix pattern                                 |
+| `text.secondary`     | `on-muted`                               | Semantic clarity                                    |
+| `border.subtle`      | `border-strong-01` or `border-subtle-01` | Layer-aware (strong for forms, subtle for dividers) |
+| `background.subItem` | `layer-hover-01`                         | Explicit interaction state naming                   |
+| `tertiary.primary`   | `tertiary` or `ring`                     | Simplified naming                                   |
 
 **Guidance:** Use canonical tokens in all new code. Deprecated aliases will be maintained but may be removed in future
 major versions.

@@ -718,47 +718,43 @@ language filter implementation and conceptual clarity issues in the filter/sort 
 
 - [ ] **10.5 Rename and reorganize browse components**
 
-    - [ ] **10.5.a Create `components/movie/browse/` directory**
-        - `mkdir frontend/src/components/movie/browse`
-        - `mkdir frontend/src/components/movie/browse/__tests__`
+    - [x] **10.5.a Create `components/movie/browse/` directory**
+        - Created `browse/` and `browse/__tests__/` directories
+        - Created `components/common/` for reusable components
 
-    - [ ] **10.5.b Move and rename QuickBrowseBar**
-        - `git mv frontend/src/components/movie/filters/LetterboxdStyleFilters.tsx frontend/src/components/movie/browse/QuickBrowseBar.tsx`
-        - Rename component: `LetterboxdStyleFilters` → `QuickBrowseBar`
-        - Rename props interface: `LetterboxdStyleFiltersProps` → `QuickBrowseBarProps`
-        - Update internal variable names: `filters` → `browseParams`, etc.
-        - Remove MinimalMovieFilters export (deleted in 10.2.b)
+    - [x] **10.5.b Move and rename QuickBrowseBar**
+        - Moved `LetterboxdStyleFilters.tsx` → `browse/QuickBrowseBar.tsx`
+        - Renamed component, props interface (`QuickBrowseBarProps`)
+        - Updated internal names: `browseParams`, `onBrowseParamsChange`, `isAdvancedOpen`
+        - Updated FilterSection.tsx consumer with new imports and prop mapping
 
-    - [ ] **10.5.c Move and rename AdvancedFiltersPanel**
-        - `git mv frontend/src/components/movie/filters/AdvancedMovieFilters.tsx frontend/src/components/movie/browse/AdvancedFiltersPanel.tsx`
-        - Rename component: `AdvancedMovieFilters` → `AdvancedFiltersPanel`
-        - Rename props interface: `MovieFiltersProps` → `AdvancedFiltersPanelProps`
-        - Remove type re-export (types now in browseTypes.ts)
-        - Update internal variable names
+    - [x] **10.5.c Move and rename AdvancedFiltersPanel**
+        - Moved `AdvancedMovieFilters.tsx` → `browse/AdvancedFiltersPanel.tsx`
+        - Renamed component, props interface (`AdvancedFiltersPanelProps`)
+        - Updated internal names: `browseParams`, `onBrowseParamsChange`, `hasActiveParams`
 
-    - [ ] **10.5.d Move and rename ClearBrowseButton**
-        - `git mv frontend/src/components/movie/filters/ClearFiltersButton.tsx frontend/src/components/movie/browse/ClearBrowseButton.tsx`
-        - Rename component: `ClearFiltersButton` → `ClearBrowseButton`
-        - Update props interface name
-        - Update to use `hasActiveBrowseParams` from browseParamUtils
+    - [x] **10.5.d Move and rename ClearBrowseParamsButton**
+        - Moved `ClearFiltersButton.tsx` → `browse/ClearBrowseParamsButton.tsx`
+        - Renamed to `ClearBrowseParamsButton` (explicit about what it clears)
+        - Updated props: `browseParams`, `onClear`, `isAdvancedOpen`
+        - Updated test file with new component name and prop interface
 
-    - [ ] **10.5.e Preserve CollapsibleSearchBox as reusable component**
-        - `mkdir -p frontend/src/components/common`
-        - `git mv frontend/src/components/movie/filters/CollapsibleSearchBox.tsx frontend/src/components/common/ExpandableSearchInput.tsx`
-        - Rename component: `CollapsibleSearchBox` → `ExpandableSearchInput`
-        - Rename props interface accordingly
-        - Good expandable input pattern worth preserving for future use
+    - [x] **10.5.e Preserve CollapsibleSearchBox as reusable component**
+        - Moved to `components/common/ExpandableSearchInput.tsx`
+        - Renamed component and props interface (`ExpandableSearchInputProps`)
+        - Updated internal names: `isExpanded`, `toggleExpanded`, `collapse`
 
-    - [ ] **10.5.f Remove search from QuickBrowseBar**
-        - Remove CollapsibleSearchBox import and usage from QuickBrowseBar
-        - Adjust layout to close the gap
+    - [x] **10.5.f Remove search from QuickBrowseBar**
+        - Removed ExpandableSearchInput import and usage
+        - Removed flex="1" from HStack, bar now horizontally centered
         - Search functionality will use navbar global search only
 
-    - [ ] **10.5.g Clean up query handling from browse flow**
-        - Update `useMovieFetchRouter.ts` to remove query-based search routing
-        - Browse should always use base fetcher, never switch to search endpoint
-        - Consider: Remove `query` field from BrowseParams if unused elsewhere
-        - Update `browseParamUtils.ts` if query removed from BrowseParams
+    - [x] **10.5.g Clean up query handling from browse flow**
+        - Removed search endpoint routing from `useMovieFetchRouter.ts`
+        - Browse always uses base fetcher now (discover, top-rated, etc.)
+        - **Kept `query` field in BrowseParams** as dormant infrastructure
+          (reserved for potential future use - see backlog-feature.md)
+        - Updated useMovieFetchRouter tests to reflect new behavior
 
     - [ ] **10.5.h Move remaining components (no rename needed)**
         - `git mv frontend/src/components/movie/filters/ConnectedDropdowns.tsx frontend/src/components/movie/browse/`
@@ -771,10 +767,10 @@ language filter implementation and conceptual clarity issues in the filter/sort 
     - [ ] **10.5.i Move and update test files**
         - Move all test files from `filters/__tests__/` to `browse/__tests__/`
         - Rename test files where component names changed:
-            - `ClearFiltersButton.test.tsx` → `ClearBrowseButton.test.tsx`
+            - `ClearFiltersButton.test.tsx` → `ClearBrowseParamsButton.test.tsx`
             - `SortDropdown.test.tsx` stays
             - etc.
-        - Update imports in all test files
+        - Update imports in all test files (already done for ClearBrowseParamsButton)
         - Update component references in tests
 
     - [ ] **10.5.j Delete old filters/ directory**

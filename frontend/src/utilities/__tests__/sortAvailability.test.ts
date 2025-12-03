@@ -12,9 +12,9 @@ import {
   isLatinScriptLanguage,
   getAvailableSortOptions,
   isTitleSort,
-} from "../sortOptionFiltering";
+} from "../sortAvailability";
 
-describe("sortOptionFiltering", () => {
+describe("sortAvailability", () => {
   describe("isLatinScriptLanguage", () => {
     it("returns false for empty string (All Languages)", () => {
       expect(isLatinScriptLanguage("")).toBe(false);

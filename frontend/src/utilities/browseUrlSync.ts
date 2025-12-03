@@ -4,10 +4,13 @@ import { DEFAULT_SORT } from "@/constants/browseDefaults";
 /**
  * Parses browse parameters from URL search string
  *
+ * Extracts all browse state from URL query parameters, returning a complete
+ * BrowseParams object. Missing parameters receive their default values.
+ *
  * @param search - The URL search string (e.g., location.search)
- * @returns Populated BrowseParams from URL parameters
+ * @returns Complete BrowseParams object populated from URL (or defaults for missing params)
  */
-export function initializeFiltersFromUrl(search: string): BrowseParams {
+export function parseBrowseParamsFromUrl(search: string): BrowseParams {
   const params = new URLSearchParams(search);
 
   const query = params.get("query") || "";

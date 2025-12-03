@@ -1,7 +1,7 @@
 import { useCallback, useRef } from "react";
 import type { PaginatedMoviesResponse } from "@/services/movieService";
 import type { BrowseParams } from "@/types/browseTypes";
-import { mapFiltersToApiParams } from "@/utilities/movieFilterMapper";
+import { mapBrowseParamsToApi } from "@/utilities/browseParamMapper";
 import { fetchSearchMoviesService } from "@/services/movieService";
 
 /**
@@ -12,7 +12,7 @@ import { fetchSearchMoviesService } from "@/services/movieService";
  *
  * **Responsibilities:**
  * - Detects search queries and routes to search endpoint automatically
- * - Maps UI filter state to API parameters via mapFiltersToApiParams
+ * - Maps UI browse state to API parameters via mapBrowseParamsToApi
  * - Manages stable references to prevent unnecessary re-renders
  * - Returns a fetcher function compatible with the pagination hooks
  *
@@ -83,8 +83,8 @@ export function useMovieFetchRouter({
             // Check if there's a search query - if so, use search endpoint instead of base fetcher
             const hasSearchQuery = !!currentFilters.query?.trim();
 
-            // Map UI filters to API parameters
-            const filterParams = mapFiltersToApiParams(
+            // Map browse params to API parameters
+            const apiParams = mapBrowseParamsToApi(
                 currentFilters,
                 currentFilterStyle
             );
@@ -93,15 +93,15 @@ export function useMovieFetchRouter({
                 // Route to search endpoint
                 const query = currentFilters.query;
 
-                // Remove query from filterParams since it's handled separately by search endpoint
-                const otherFilters = Object.fromEntries(
-                    Object.entries(filterParams).filter(([key]) => key !== "query")
+                // Remove query from apiParams since it's handled separately by search endpoint
+                const otherParams = Object.fromEntries(
+                    Object.entries(apiParams).filter(([key]) => key !== "query")
                 );
 
                 const searchParams = {
                     page,
                     query,
-                    ...otherFilters,
+                    ...otherParams,
                     ...(tmdb_page_start !== undefined && { tmdb_page_start }),
                 };
 
@@ -110,7 +110,7 @@ export function useMovieFetchRouter({
                 );
             } else {
                 // Route to base fetcher (discover, top-rated, etc.)
-                return currentBaseFetcher(page, filterParams, tmdb_page_start);
+                return currentBaseFetcher(page, apiParams, tmdb_page_start);
             }
         },
         // eslint-disable-next-line react-hooks/exhaustive-deps

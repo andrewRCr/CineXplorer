@@ -6,7 +6,7 @@ import { useMovieCollectionUrl } from "./useMovieCollectionUrl";
 import {
   isLatinScriptLanguage,
   isTitleSort,
-} from "@/utilities/sortOptionFiltering";
+} from "@/utilities/sortAvailability";
 
 // Pre-computed values for performance
 const STANDARD_RUNTIME_RANGES = new Set(["0-90", "90-120", "120-150"]);

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import type { BrowseParams } from "@/types/browseTypes";
 import { DEFAULT_BROWSE_PARAMS, DEFAULT_SORT } from "@/constants/browseDefaults";
-import { initializeFiltersFromUrl } from "@/utilities/urlSync";
+import { parseBrowseParamsFromUrl } from "@/utilities/browseUrlSync";
 
 // Deep comparison function for filters to prevent unnecessary re-renders
 // Added fix to prevent continuous API requests - updated with navigation loop fix
@@ -62,7 +62,7 @@ export const useMovieCollectionUrl = (
     const newPage = getCurrentPageFromUrl();
     setCurrentPageFromUrl(newPage);
 
-    const urlFilters = initializeFiltersFromUrl(location.search);
+    const urlFilters = parseBrowseParamsFromUrl(location.search);
 
     // Only update state if the filters have actually changed to prevent unnecessary re-renders
     if (!deepEqual(unifiedFilters, urlFilters)) {

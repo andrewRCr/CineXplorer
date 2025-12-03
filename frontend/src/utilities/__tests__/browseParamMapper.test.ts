@@ -1,7 +1,7 @@
 /**
- * Integration tests for movieFilterMapper parameter generation.
+ * Integration tests for browseParamMapper API parameter generation.
  *
- * These tests validate that the frontend filter mapper generates API parameters
+ * These tests validate that the browse param mapper generates API parameters
  * that match the backend schema expectations. This is critical for ensuring the
  * frontend → backend parameter contract remains stable.
  *
@@ -9,15 +9,15 @@
  * MovieDiscoverFilterSchema expects. This would have caught the previous
  * min_rating → vote_average_gte parameter naming bug.
  *
- * Related: Filter integration testing - ensuring frontend params match backend schema
+ * Related: Browse parameter integration testing - ensuring frontend params match backend schema
  */
 
 import { describe, it, expect } from 'vitest';
-import { mapFiltersToApiParams } from '../movieFilterMapper';
+import { mapBrowseParamsToApi } from '../browseParamMapper';
 import type { BrowseParams } from '@/types/browseTypes';
 
 // Helper to create BrowseParams with defaults, reducing repetition
-const createFilters = (overrides: Partial<BrowseParams> = {}): BrowseParams => ({
+const createBrowseParams = (overrides: Partial<BrowseParams> = {}): BrowseParams => ({
   query: '',
   genres: [],
   minYear: '',
@@ -31,14 +31,14 @@ const createFilters = (overrides: Partial<BrowseParams> = {}): BrowseParams => (
   ...overrides,
 });
 
-describe('movieFilterMapper - Backend Schema Compatibility', () => {
+describe('browseParamMapper - Backend Schema Compatibility', () => {
   describe('Year Filter Parameter Generation', () => {
     it('generates release_date_gte/lte for year range (expanded style)', () => {
       // Arrange: User selects year range 2020-2023
-      const filters = createFilters({ minYear: '2020', maxYear: '2023' });
+      const filters = createBrowseParams({ minYear: '2020', maxYear: '2023' });
 
       // Act: Map to API parameters
-      const params = mapFiltersToApiParams(filters, 'expanded');
+      const params = mapBrowseParamsToApi(filters, 'expanded');
 
       // Assert: Parameters match backend schema expectations
       expect(params.release_date_gte).toBe('2020-01-01');
@@ -51,10 +51,10 @@ describe('movieFilterMapper - Backend Schema Compatibility', () => {
 
     it('generates release_date_gte only when only minYear provided', () => {
       // Arrange: User selects "From 2020" (no end year)
-      const filters = createFilters({ minYear: '2020' });
+      const filters = createBrowseParams({ minYear: '2020' });
 
       // Act
-      const params = mapFiltersToApiParams(filters, 'expanded');
+      const params = mapBrowseParamsToApi(filters, 'expanded');
 
       // Assert: Only gte parameter present
       expect(params.release_date_gte).toBe('2020-01-01');
@@ -64,10 +64,10 @@ describe('movieFilterMapper - Backend Schema Compatibility', () => {
 
     it('generates release_date_lte only when only maxYear provided', () => {
       // Arrange: User selects "Up to 2023"
-      const filters = createFilters({ maxYear: '2023' });
+      const filters = createBrowseParams({ maxYear: '2023' });
 
       // Act
-      const params = mapFiltersToApiParams(filters, 'expanded');
+      const params = mapBrowseParamsToApi(filters, 'expanded');
 
       // Assert: Only lte parameter present
       expect(params.release_date_lte).toBe('2023-12-31');
@@ -76,10 +76,10 @@ describe('movieFilterMapper - Backend Schema Compatibility', () => {
 
     it('converts decade filter to release_date range (minimal style)', () => {
       // Arrange: User selects "2020s" decade
-      const filters = createFilters({ minYear: '2020s' });
+      const filters = createBrowseParams({ minYear: '2020s' });
 
       // Act
-      const params = mapFiltersToApiParams(filters, 'minimal');
+      const params = mapBrowseParamsToApi(filters, 'minimal');
 
       // Assert: Decade converted to date range
       expect(params.release_date_gte).toBe('2020-01-01');
@@ -90,10 +90,10 @@ describe('movieFilterMapper - Backend Schema Compatibility', () => {
   describe('Rating Filter Parameter Generation', () => {
     it('generates vote_average_gte for minimum rating (expanded style)', () => {
       // Arrange: User selects "7.5+ rating"
-      const filters = createFilters({ minRating: '7.5' });
+      const filters = createBrowseParams({ minRating: '7.5' });
 
       // Act
-      const params = mapFiltersToApiParams(filters, 'expanded');
+      const params = mapBrowseParamsToApi(filters, 'expanded');
 
       // Assert: Parameter name matches backend schema
       expect(params.vote_average_gte).toBe('7.5');
@@ -103,10 +103,10 @@ describe('movieFilterMapper - Backend Schema Compatibility', () => {
 
     it('generates vote_average_lte for maximum rating when no minimum (expanded style)', () => {
       // Arrange: User selects "Up to 8.0 rating"
-      const filters = createFilters({ maxRating: '8.0' });
+      const filters = createBrowseParams({ maxRating: '8.0' });
 
       // Act
-      const params = mapFiltersToApiParams(filters, 'expanded');
+      const params = mapBrowseParamsToApi(filters, 'expanded');
 
       // Assert: Only lte parameter when no min provided
       expect(params.vote_average_lte).toBe('8.0');
@@ -115,10 +115,10 @@ describe('movieFilterMapper - Backend Schema Compatibility', () => {
 
     it('generates vote_average_gte for minimal style rating filter', () => {
       // Arrange: User selects quick "7.0+" rating filter
-      const filters = createFilters({ minRating: '7.0' });
+      const filters = createBrowseParams({ minRating: '7.0' });
 
       // Act
-      const params = mapFiltersToApiParams(filters, 'minimal');
+      const params = mapBrowseParamsToApi(filters, 'minimal');
 
       // Assert: Minimal style also uses vote_average_gte
       expect(params.vote_average_gte).toBe('7.0');
@@ -128,7 +128,7 @@ describe('movieFilterMapper - Backend Schema Compatibility', () => {
   describe('Combined Filter Parameter Generation', () => {
     it('generates all parameters for combined year + rating filters', () => {
       // Arrange: User applies both year and rating filters
-      const filters = createFilters({
+      const filters = createBrowseParams({
         genres: [28, 12], // Action, Adventure
         minYear: '2020',
         maxYear: '2023',
@@ -138,7 +138,7 @@ describe('movieFilterMapper - Backend Schema Compatibility', () => {
       });
 
       // Act
-      const params = mapFiltersToApiParams(filters, 'expanded');
+      const params = mapBrowseParamsToApi(filters, 'expanded');
 
       // Assert: All filter types present
       expect(params.release_date_gte).toBe('2020-01-01');
@@ -151,14 +151,14 @@ describe('movieFilterMapper - Backend Schema Compatibility', () => {
 
     it('handles partial filters correctly', () => {
       // Arrange: User applies only some filters
-      const filters = createFilters({
+      const filters = createBrowseParams({
         genres: [28],
         minYear: '2020',
         minRating: '7.0',
       });
 
       // Act
-      const params = mapFiltersToApiParams(filters, 'expanded');
+      const params = mapBrowseParamsToApi(filters, 'expanded');
 
       // Assert: Only provided filters generate parameters
       expect(params.release_date_gte).toBe('2020-01-01');
@@ -174,14 +174,14 @@ describe('movieFilterMapper - Backend Schema Compatibility', () => {
   describe('Minimal vs Expanded Style Parameter Differences', () => {
     it('minimal style generates simpler parameter set', () => {
       // Arrange: Minimal style filter (Letterboxd-style quick filters)
-      const filters = createFilters({
+      const filters = createBrowseParams({
         genres: [28],
         minYear: '2020s',
         minRating: '7.0',
       });
 
       // Act
-      const params = mapFiltersToApiParams(filters, 'minimal');
+      const params = mapBrowseParamsToApi(filters, 'minimal');
 
       // Assert: Minimal style processes decade, single rating
       expect(params.release_date_gte).toBe('2020-01-01');
@@ -192,7 +192,7 @@ describe('movieFilterMapper - Backend Schema Compatibility', () => {
 
     it('expanded style allows range filters', () => {
       // Arrange: Expanded style with range filters
-      const filters = createFilters({
+      const filters = createBrowseParams({
         genres: [28, 12],
         minYear: '2020',
         maxYear: '2023',
@@ -202,7 +202,7 @@ describe('movieFilterMapper - Backend Schema Compatibility', () => {
       });
 
       // Act
-      const params = mapFiltersToApiParams(filters, 'expanded');
+      const params = mapBrowseParamsToApi(filters, 'expanded');
 
       // Assert: Expanded style allows precise ranges
       expect(params.release_date_gte).toBe('2020-01-01');
@@ -215,10 +215,10 @@ describe('movieFilterMapper - Backend Schema Compatibility', () => {
   describe('Parameter Format Validation', () => {
     it('formats dates as YYYY-MM-DD (backend schema requirement)', () => {
       // Arrange
-      const filters = createFilters({ minYear: '2022', maxYear: '2022' });
+      const filters = createBrowseParams({ minYear: '2022', maxYear: '2022' });
 
       // Act
-      const params = mapFiltersToApiParams(filters, 'expanded');
+      const params = mapBrowseParamsToApi(filters, 'expanded');
 
       // Assert: Date format matches backend expectations
       expect(params.release_date_gte).toMatch(/^\d{4}-\d{2}-\d{2}$/);
@@ -229,10 +229,10 @@ describe('movieFilterMapper - Backend Schema Compatibility', () => {
 
     it('formats ratings as strings (API query param requirement)', () => {
       // Arrange
-      const filters = createFilters({ minRating: '7.5', maxRating: '9.0' });
+      const filters = createBrowseParams({ minRating: '7.5', maxRating: '9.0' });
 
       // Act
-      const params = mapFiltersToApiParams(filters, 'expanded');
+      const params = mapBrowseParamsToApi(filters, 'expanded');
 
       // Assert: Ratings sent as strings (query params)
       expect(typeof params.vote_average_gte).toBe('string');
@@ -243,10 +243,10 @@ describe('movieFilterMapper - Backend Schema Compatibility', () => {
 
     it('formats genre IDs as comma-separated string', () => {
       // Arrange
-      const filters = createFilters({ genres: [28, 12, 878] }); // Action, Adventure, Sci-Fi
+      const filters = createBrowseParams({ genres: [28, 12, 878] }); // Action, Adventure, Sci-Fi
 
       // Act
-      const params = mapFiltersToApiParams(filters, 'expanded');
+      const params = mapBrowseParamsToApi(filters, 'expanded');
 
       // Assert: Genre array converted to comma-separated string
       expect(params.genres).toBe('28,12,878');
@@ -256,10 +256,10 @@ describe('movieFilterMapper - Backend Schema Compatibility', () => {
   describe('Empty/Default Filter Handling', () => {
     it('does not include parameters for empty filters', () => {
       // Arrange: All filters empty
-      const filters = createFilters();
+      const filters = createBrowseParams();
 
       // Act
-      const params = mapFiltersToApiParams(filters, 'expanded');
+      const params = mapBrowseParamsToApi(filters, 'expanded');
 
       // Assert: Only sort_by present (default behavior)
       expect(params.sort_by).toBe('popularity.desc');

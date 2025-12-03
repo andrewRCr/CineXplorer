@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { Box, Text, Select, createListCollection } from "@chakra-ui/react";
-import { getAvailableSortOptions } from "@/utilities/sortOptionFiltering";
+import { getAvailableSortOptions } from "@/utilities/sortAvailability";
 import type { BrowseParams } from "@/types/browseTypes";
 
 const SORT_WIDTH = "170px";

@@ -1,6 +1,6 @@
 import { Box, Text, HStack, VStack } from "@chakra-ui/react";
 import type { BrowseParams } from "@/types/browseTypes";
-import { DEFAULT_FILTERS } from "@/constants/filterDefaults";
+import { DEFAULT_BROWSE_PARAMS } from "@/constants/browseDefaults";
 import ConnectedDropdowns from "./ConnectedDropdowns";
 import CollapsibleSearchBox from "./CollapsibleSearchBox";
 import SortDropdown from "./SortDropdown";
@@ -36,7 +36,7 @@ const LetterboxdStyleFilters = ({
   };
 
   const clearFilters = () => {
-    onFiltersChange({ ...DEFAULT_FILTERS });
+    onFiltersChange({ ...DEFAULT_BROWSE_PARAMS });
   };
 
   const handleQueryChange = (query: string) => {

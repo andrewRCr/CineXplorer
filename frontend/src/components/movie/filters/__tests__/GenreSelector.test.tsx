@@ -17,7 +17,7 @@ vi.mock("@/constants/theme", () => ({
 }));
 
 // Mock the genre options to have a predictable test set
-vi.mock("@/constants/movieFilterOptions", () => ({
+vi.mock("@/constants/browseOptions", () => ({
   genreOptions: [
     { value: "", label: "Any Genre" },
     { value: "28", label: "Action" },

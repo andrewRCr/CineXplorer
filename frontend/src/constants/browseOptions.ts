@@ -1,4 +1,4 @@
-import type { SortOption, SortOptionValue } from "@/types/browseTypes";
+import type { SortOption } from "@/types/browseTypes";
 
 // Master genre map for DRYness
 const GENRE_MAP = {
@@ -98,10 +98,6 @@ export const runtimeOptions = [
     { value: "120-150", label: "120-150 min" },
     { value: "150-400", label: "Over 150 min" }, // Fixed from 999 to realistic upper bound
 ];
-
-// Re-export types for backward compatibility during migration
-// Import these from @/types/browseTypes.ts in new code
-export type { SortOption, SortOptionValue };
 
 // Consolidated sort options (5 total) - single dropdown, no advanced/minimal split
 // Only meaningful sort directions included:

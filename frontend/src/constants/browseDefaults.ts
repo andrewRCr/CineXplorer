@@ -1,7 +1,7 @@
 /**
- * Centralized filter defaults - Single source of truth for filter state
+ * Centralized browse defaults - Single source of truth for browse parameter state
  *
- * These constants define the default/empty state for movie filters used throughout
+ * These constants define the default/empty state for browse parameters used throughout
  * the application. Import from here rather than hardcoding defaults in components.
  *
  * For type definitions, see @/types/browseTypes.ts
@@ -14,14 +14,14 @@ import type { SortOptionValue, BrowseParams } from "@/types/browseTypes";
 export const DEFAULT_SORT: SortOptionValue = "popularity.desc";
 
 /**
- * Default filter state - all filters inactive
+ * Default browse parameter state - all parameters inactive
  *
  * Used for:
- * - Initial state in filter hooks
+ * - Initial state in browse hooks
  * - clearFilters() reset target
- * - Comparing against to detect "has active filters"
+ * - Comparing against to detect "has active browse params"
  */
-export const DEFAULT_FILTERS: BrowseParams = {
+export const DEFAULT_BROWSE_PARAMS: BrowseParams = {
   query: "",
   genres: [],
   minYear: "",

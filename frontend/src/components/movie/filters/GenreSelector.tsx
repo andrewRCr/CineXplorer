@@ -1,5 +1,5 @@
 import { Box, Text, SimpleGrid, Checkbox } from "@chakra-ui/react";
-import { genreOptions } from "@/constants/movieFilterOptions";
+import { genreOptions } from "@/constants/browseOptions";
 
 interface GenreSelectorProps {
   selectedGenres: number[];

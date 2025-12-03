@@ -6,7 +6,7 @@ import {
   genreOptions,
   yearOptions,
   // runtimeOptions, // TODO: Remove if runtime selector not implemented
-} from "@/constants/movieFilterOptions";
+} from "@/constants/browseOptions";
 import type { BrowseParams } from "@/types/browseTypes";
 
 const GENRE_WIDTH = "140px";

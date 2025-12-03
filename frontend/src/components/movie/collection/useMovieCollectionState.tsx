@@ -1,6 +1,7 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import type { BrowseParams } from "@/types/browseTypes";
-import { DEFAULT_FILTERS, DEFAULT_SORT } from "@/constants/filterDefaults";
+import { DEFAULT_BROWSE_PARAMS, DEFAULT_SORT } from "@/constants/browseDefaults";
+import { sortOptions } from "@/constants/browseOptions";
 import { useMovieCollectionUrl } from "./useMovieCollectionUrl";
 import {
   isLatinScriptLanguage,
@@ -63,16 +64,6 @@ const CORE_GENRE_IDS = [
   "53", // Thriller
 ];
 
-// All valid sort options (consolidated - no advanced/minimal split)
-// Note: original_title.desc (Z-A) removed due to TMDB data quality issues
-const SORT_OPTIONS = [
-  "popularity.desc",
-  "vote_average.desc",
-  "release_date.desc",
-  "release_date.asc",
-  "original_title.asc",
-];
-
 // Helper: Check if filters contain advanced filter values
 // Exported for use in parent components to determine API filter style
 export const hasAdvancedFilterValues = (filters: BrowseParams): boolean => {
@@ -95,8 +86,8 @@ export const hasAdvancedFilterValues = (filters: BrowseParams): boolean => {
     }
   }
 
-  // Check for invalid sort options (all 6 valid options are in SORT_OPTIONS)
-  if (filters.sortBy && !SORT_OPTIONS.includes(filters.sortBy)) {
+  // Check for invalid sort options (uses sortOptions from browseOptions.ts)
+  if (filters.sortBy && !sortOptions.some(opt => opt.value === filters.sortBy)) {
     return true;
   }
 
@@ -128,7 +119,7 @@ export const useMovieCollectionState = ({
 
   // Memoize initial local filter state to prevent recreation
   const initialLocalFilters = useMemo(() => ({
-    ...DEFAULT_FILTERS,
+    ...DEFAULT_BROWSE_PARAMS,
     ...defaultFilters,
   }), [defaultFilters]);
 
@@ -286,7 +277,7 @@ export const useMovieCollectionState = ({
   }), [hasActiveFilters, hasAdvancedFilters, filterCount]);
   
   // Memoize cleared filters object to prevent recreation
-  const clearedFiltersRef = useRef<BrowseParams>(DEFAULT_FILTERS);
+  const clearedFiltersRef = useRef<BrowseParams>(DEFAULT_BROWSE_PARAMS);
 
   // Actions with optimized object references
   const clearFilters = useCallback(() => {

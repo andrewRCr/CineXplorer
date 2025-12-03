@@ -13,8 +13,8 @@ import { FiFilter, FiX } from "react-icons/fi";
 import GenreSelector from "./GenreSelector";
 import YearSelector from "./YearSelector";
 import RatingSelector from "./RatingSelector";
-import { languageOptions } from "@/constants/movieFilterOptions";
-import { DEFAULT_FILTERS, DEFAULT_SORT } from "@/constants/filterDefaults";
+import { languageOptions } from "@/constants/browseOptions";
+import { DEFAULT_BROWSE_PARAMS, DEFAULT_SORT } from "@/constants/browseDefaults";
 import type { BrowseParams } from "@/types/browseTypes";
 
 interface AdvancedMovieFiltersProps {
@@ -60,7 +60,7 @@ const AdvancedMovieFilters = ({
   );
 
   const clearFilters = useCallback(() => {
-    onFiltersChange({ ...DEFAULT_FILTERS });
+    onFiltersChange({ ...DEFAULT_BROWSE_PARAMS });
   }, [onFiltersChange]);
 
   const hasActiveFilters =

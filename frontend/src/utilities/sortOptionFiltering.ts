@@ -9,7 +9,8 @@
  * results, making the sort unusable for Latin languages.
  */
 
-import { sortOptions, type SortOption } from "@/constants/movieFilterOptions";
+import type { SortOption } from "@/types/browseTypes";
+import { sortOptions } from "@/constants/browseOptions";
 
 /**
  * ISO 639-1 codes for languages that use Latin script.

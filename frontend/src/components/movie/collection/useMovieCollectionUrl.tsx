@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import type { BrowseParams } from "@/types/browseTypes";
-import { DEFAULT_FILTERS, DEFAULT_SORT } from "@/constants/filterDefaults";
+import { DEFAULT_BROWSE_PARAMS, DEFAULT_SORT } from "@/constants/browseDefaults";
 import { initializeFiltersFromUrl } from "@/utilities/urlSync";
 
 // Deep comparison function for filters to prevent unnecessary re-renders
@@ -39,7 +39,7 @@ export const useMovieCollectionUrl = (
 
   // This is now the single source of truth for all filters.
   const [unifiedFilters, setUnifiedFilters] = useState<BrowseParams>({
-    ...DEFAULT_FILTERS,
+    ...DEFAULT_BROWSE_PARAMS,
     ...defaultFilters,
   });
 

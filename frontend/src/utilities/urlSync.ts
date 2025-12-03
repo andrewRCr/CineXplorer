@@ -1,5 +1,5 @@
 import type { BrowseParams, SortOptionValue } from "@/types/browseTypes";
-import { DEFAULT_SORT } from "@/constants/filterDefaults";
+import { DEFAULT_SORT } from "@/constants/browseDefaults";
 
 /**
  * Parses browse parameters from URL search string

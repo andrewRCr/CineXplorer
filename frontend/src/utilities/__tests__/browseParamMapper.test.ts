@@ -79,7 +79,7 @@ describe('browseParamMapper - Backend Schema Compatibility', () => {
       const filters = createBrowseParams({ minYear: '2020s' });
 
       // Act
-      const params = mapBrowseParamsToApi(filters, 'minimal');
+      const params = mapBrowseParamsToApi(filters, 'compact');
 
       // Assert: Decade converted to date range
       expect(params.release_date_gte).toBe('2020-01-01');
@@ -118,7 +118,7 @@ describe('browseParamMapper - Backend Schema Compatibility', () => {
       const filters = createBrowseParams({ minRating: '7.0' });
 
       // Act
-      const params = mapBrowseParamsToApi(filters, 'minimal');
+      const params = mapBrowseParamsToApi(filters, 'compact');
 
       // Assert: Minimal style also uses vote_average_gte
       expect(params.vote_average_gte).toBe('7.0');
@@ -181,7 +181,7 @@ describe('browseParamMapper - Backend Schema Compatibility', () => {
       });
 
       // Act
-      const params = mapBrowseParamsToApi(filters, 'minimal');
+      const params = mapBrowseParamsToApi(filters, 'compact');
 
       // Assert: Minimal style processes decade, single rating
       expect(params.release_date_gte).toBe('2020-01-01');

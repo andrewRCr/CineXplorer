@@ -97,8 +97,8 @@ describe('useMovieFetchRouter - pagination metadata passing', () => {
             const { result } = renderHook(() =>
                 useMovieFetchRouter({
                     fetcher: mockBaseFetcher,
-                    filters: mockFilters,
-                    filterStyle: 'expanded',
+                    browseParams: mockFilters,
+                    browseLayout: 'expanded',
                 })
             );
 
@@ -118,8 +118,8 @@ describe('useMovieFetchRouter - pagination metadata passing', () => {
             const { result } = renderHook(() =>
                 useMovieFetchRouter({
                     fetcher: mockBaseFetcher,
-                    filters: mockFilters,
-                    filterStyle: 'expanded',
+                    browseParams: mockFilters,
+                    browseLayout: 'expanded',
                 })
             );
 
@@ -152,8 +152,8 @@ describe('useMovieFetchRouter - pagination metadata passing', () => {
             const { result } = renderHook(() =>
                 useMovieFetchRouter({
                     fetcher: mockBaseFetcher,
-                    filters: mockFilters,
-                    filterStyle: 'expanded',
+                    browseParams: mockFilters,
+                    browseLayout: 'expanded',
                 })
             );
 
@@ -180,8 +180,8 @@ describe('useMovieFetchRouter - pagination metadata passing', () => {
             const { result } = renderHook(() =>
                 useMovieFetchRouter({
                     fetcher: mockBaseFetcher,
-                    filters: mockFilters,
-                    filterStyle: 'expanded',
+                    browseParams: mockFilters,
+                    browseLayout: 'expanded',
                 })
             );
 
@@ -217,8 +217,8 @@ describe('useMovieFetchRouter - pagination metadata passing', () => {
             const { result } = renderHook(() =>
                 useMovieFetchRouter({
                     fetcher: mockBaseFetcher,
-                    filters: mockFilters,
-                    filterStyle: 'expanded',
+                    browseParams: mockFilters,
+                    browseLayout: 'expanded',
                 })
             );
 
@@ -256,8 +256,8 @@ describe('useMovieFetchRouter - pagination metadata passing', () => {
             const { result } = renderHook(() =>
                 useMovieFetchRouter({
                     fetcher: mockBaseFetcher,
-                    filters: mockFilters,
-                    filterStyle: 'expanded',
+                    browseParams: mockFilters,
+                    browseLayout: 'expanded',
                 })
             );
 

@@ -31,16 +31,16 @@ function deepEqual(obj1: BrowseParams, obj2: BrowseParams): boolean {
 }
 
 export const useMovieCollectionUrl = (
-  defaultFilters?: Partial<BrowseParams>,
+  defaultBrowseParams?: Partial<BrowseParams>,
   actualSource?: string
 ) => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // This is now the single source of truth for all filters.
-  const [unifiedFilters, setUnifiedFilters] = useState<BrowseParams>({
+  // This is now the single source of truth for all browse params.
+  const [browseParams, setBrowseParams] = useState<BrowseParams>({
     ...DEFAULT_BROWSE_PARAMS,
-    ...defaultFilters,
+    ...defaultBrowseParams,
   });
 
   // Parse current page from URL - using useCallback to memoize the function and reduce recreations
@@ -56,20 +56,20 @@ export const useMovieCollectionUrl = (
     number | undefined
   >(getCurrentPageFromUrl());
 
-  // This effect is the SINGLE SOURCE OF TRUTH for filters and page number.
+  // This effect is the SINGLE SOURCE OF TRUTH for browse params and page number.
   // It runs whenever the URL's search parameters change.
   useEffect(() => {
     const newPage = getCurrentPageFromUrl();
     setCurrentPageFromUrl(newPage);
 
-    const urlFilters = parseBrowseParamsFromUrl(location.search);
+    const urlBrowseParams = parseBrowseParamsFromUrl(location.search);
 
-    // Only update state if the filters have actually changed to prevent unnecessary re-renders
-    if (!deepEqual(unifiedFilters, urlFilters)) {
-      setUnifiedFilters(urlFilters);
+    // Only update state if the params have actually changed to prevent unnecessary re-renders
+    if (!deepEqual(browseParams, urlBrowseParams)) {
+      setBrowseParams(urlBrowseParams);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.search, getCurrentPageFromUrl]); // unifiedFilters intentionally omitted to prevent infinite loop
+  }, [location.search, getCurrentPageFromUrl]); // browseParams intentionally omitted to prevent infinite loop
 
   // This callback is passed to the grid to handle page changes
   // The callback includes location.pathname and location.search in deps to avoid stale closures,
@@ -89,23 +89,23 @@ export const useMovieCollectionUrl = (
     [location.pathname, location.search, navigate]
   );
 
-  // This callback is passed to ALL filter components.
+  // This callback is passed to ALL browse param components.
   // It constructs a new URL and uses navigate() to update it.
-  const handleUnifiedFiltersChange = useCallback(
+  const handleBrowseParamsChange = useCallback(
     (
-      newFiltersOrUpdater:
+      newParamsOrUpdater:
         | Partial<BrowseParams>
         | ((prev: BrowseParams) => BrowseParams)
     ) => {
-      const newFilters =
-        typeof newFiltersOrUpdater === "function"
-          ? newFiltersOrUpdater(unifiedFilters)
-          : { ...unifiedFilters, ...newFiltersOrUpdater };
+      const newParams =
+        typeof newParamsOrUpdater === "function"
+          ? newParamsOrUpdater(browseParams)
+          : { ...browseParams, ...newParamsOrUpdater };
 
       const searchParams = new URLSearchParams(location.search);
       searchParams.delete("page");
 
-      Object.entries(newFilters).forEach(([key, value]) => {
+      Object.entries(newParams).forEach(([key, value]) => {
         if (
           value === "" ||
           (Array.isArray(value) && value.length === 0) ||
@@ -123,7 +123,7 @@ export const useMovieCollectionUrl = (
         replace: true,
       });
     },
-    [unifiedFilters, location.pathname, location.search, navigate]
+    [browseParams, location.pathname, location.search, navigate]
   );
 
   // Reset pagination state when route/source changes (but not on browser back/forward)
@@ -171,9 +171,9 @@ export const useMovieCollectionUrl = (
   }, [actualSource, location.pathname, location.search, navigate]);
 
   return {
-    unifiedFilters,
+    browseParams,
     currentPageFromUrl,
     handlePageChange,
-    handleUnifiedFiltersChange,
+    handleBrowseParamsChange,
   };
 };

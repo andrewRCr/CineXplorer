@@ -7,13 +7,17 @@ import {
   isLatinScriptLanguage,
   isTitleSort,
 } from "@/utilities/sortAvailability";
+import {
+  hasActiveBrowseParams as checkHasActiveBrowseParams,
+  countActiveParams,
+} from "@/utilities/browseParamUtils";
 
 // Pre-computed values for performance
 const STANDARD_RUNTIME_RANGES = new Set(["0-90", "90-120", "120-150"]);
 
 // Better hook composition with multiple related concerns
 interface UseMovieCollectionStateConfig {
-  defaultFilters?: Partial<BrowseParams>;
+  defaultBrowseParams?: Partial<BrowseParams>;
   source?: string;
   // Hook configuration
   enableUrlSync?: boolean;
@@ -22,34 +26,34 @@ interface UseMovieCollectionStateConfig {
 }
 
 interface MovieCollectionState {
-  // Filter state
-  filters: BrowseParams;
-  onFiltersChange: (
-    filters:
+  // Browse params state
+  browseParams: BrowseParams;
+  onBrowseParamsChange: (
+    params:
       | Partial<BrowseParams>
       | ((prev: BrowseParams) => BrowseParams)
   ) => void;
-  
+
   // UI state
-  showAdvanced: boolean;
-  setShowAdvanced: (show: boolean) => void;
-  toggleAdvanced: () => void;
-  
+  isAdvancedPanelOpen: boolean;
+  setIsAdvancedPanelOpen: (open: boolean) => void;
+  toggleAdvancedPanel: () => void;
+
   isFiltersCollapsed: boolean;
   setIsFiltersCollapsed: (collapsed: boolean) => void;
   toggleFiltersCollapsed: () => void;
-  
+
   // Pagination state
   currentPage: number | undefined;
   onPageChange: (page: number) => void;
-  
+
   // Derived state
-  hasActiveFilters: boolean;
+  hasActiveBrowseParams: boolean;
   hasAdvancedFilters: boolean;
-  filterCount: number;
+  activeParamCount: number;
 
   // Actions
-  clearFilters: () => void;
+  resetBrowseParams: () => void;
 }
 
 // Minimal filter capabilities (Letterboxd-style UI)
@@ -96,7 +100,7 @@ export const hasAdvancedFilterValues = (filters: BrowseParams): boolean => {
 
 // Custom hook with better composition and TypeScript
 export const useMovieCollectionState = ({
-  defaultFilters,
+  defaultBrowseParams,
   source,
   enableUrlSync = true,
   enableAdvancedFilters = true,
@@ -105,80 +109,80 @@ export const useMovieCollectionState = ({
 
   // URL management (only if enabled)
   const urlState = useMovieCollectionUrl(
-    enableUrlSync ? defaultFilters : undefined,
+    enableUrlSync ? defaultBrowseParams : undefined,
     enableUrlSync ? source : undefined
   );
 
   // Extract specific functions for stable dependencies
   const {
-    unifiedFilters: urlFilters,
-    handleUnifiedFiltersChange: urlHandleFiltersChange,
+    browseParams: urlBrowseParams,
+    handleBrowseParamsChange: urlHandleBrowseParamsChange,
     currentPageFromUrl: urlCurrentPage,
     handlePageChange: urlHandlePageChange
   } = urlState;
 
-  // Memoize initial local filter state to prevent recreation
-  const initialLocalFilters = useMemo(() => ({
+  // Memoize initial local browse params to prevent recreation
+  const initialLocalBrowseParams = useMemo(() => ({
     ...DEFAULT_BROWSE_PARAMS,
-    ...defaultFilters,
-  }), [defaultFilters]);
+    ...defaultBrowseParams,
+  }), [defaultBrowseParams]);
 
   // Local UI state for non-URL-synced features
-  const [localShowAdvanced, setLocalShowAdvanced] = useState(false);
+  const [localIsAdvancedPanelOpen, setLocalIsAdvancedPanelOpen] = useState(false);
   const [localIsFiltersCollapsed, setLocalIsFiltersCollapsed] = useState(false);
 
-  // For non-URL-synced mode, maintain local filter state
-  const [localFilters, setLocalFilters] = useState<BrowseParams>(initialLocalFilters);
-  
+  // For non-URL-synced mode, maintain local browse params
+  const [localBrowseParams, setLocalBrowseParams] = useState<BrowseParams>(initialLocalBrowseParams);
+
   // Local pagination state for non-URL-synced mode
   const [localCurrentPage, setLocalCurrentPage] = useState<number | undefined>(1);
-  
+
   // Choose between URL-synced or local state
-  const filters = enableUrlSync ? urlFilters : localFilters;
+  const browseParams = enableUrlSync ? urlBrowseParams : localBrowseParams;
 
   // Auto-expand advanced panel when advanced filters become active (from URL or user input)
-  // This ensures panel stays expanded after navigation (remount reads filters from URL → effect detects → expands)
+  // This ensures panel stays expanded after navigation (remount reads params from URL → effect detects → expands)
   useEffect(() => {
-    if (enableAdvancedFilters && hasAdvancedFilterValues(filters)) {
-      setLocalShowAdvanced(true);
+    if (enableAdvancedFilters && hasAdvancedFilterValues(browseParams)) {
+      setLocalIsAdvancedPanelOpen(true);
     }
-  }, [filters, enableAdvancedFilters]);
+  }, [browseParams, enableAdvancedFilters]);
 
   // Auto-reset title sort when language changes to non-Latin or "All Languages"
   // Title sorts (A-Z, Z-A) only make sense for Latin-script languages
   useEffect(() => {
-    if (isTitleSort(filters.sortBy) && !isLatinScriptLanguage(filters.language)) {
-      urlHandleFiltersChange({ sortBy: DEFAULT_SORT });
+    if (isTitleSort(browseParams.sortBy) && !isLatinScriptLanguage(browseParams.language)) {
+      urlHandleBrowseParamsChange({ sortBy: DEFAULT_SORT });
     }
-  }, [filters.language, filters.sortBy, urlHandleFiltersChange]);
+  }, [browseParams.language, browseParams.sortBy, urlHandleBrowseParamsChange]);
 
-  // Optimize onFiltersChange with stable references
-  const onFiltersChange = useCallback((newFilters: Partial<BrowseParams> | ((prev: BrowseParams) => BrowseParams)) => {
+  // Optimize onBrowseParamsChange with stable references
+  const onBrowseParamsChange = useCallback((newParams: Partial<BrowseParams> | ((prev: BrowseParams) => BrowseParams)) => {
     if (enableUrlSync) {
-      urlHandleFiltersChange(newFilters);
+      urlHandleBrowseParamsChange(newParams);
     } else {
-      if (typeof newFilters === 'function') {
-        setLocalFilters(newFilters);
+      if (typeof newParams === 'function') {
+        setLocalBrowseParams(newParams);
       } else {
-        setLocalFilters(prev => ({ ...prev, ...newFilters }));
+        setLocalBrowseParams(prev => ({ ...prev, ...newParams }));
       }
     }
-  }, [enableUrlSync, urlHandleFiltersChange]);
-  
+  }, [enableUrlSync, urlHandleBrowseParamsChange]);
+
   const currentPage = enableUrlSync ? urlCurrentPage : localCurrentPage;
   const onPageChange = enableUrlSync ? urlHandlePageChange : setLocalCurrentPage;
-  
-  // Advanced filters toggle with better UX
-  const showAdvanced = enableAdvancedFilters ? localShowAdvanced : false;
-  const setShowAdvanced = useCallback((show: boolean) => {
+
+  // Advanced panel toggle with better UX
+  const isAdvancedPanelOpen = enableAdvancedFilters ? localIsAdvancedPanelOpen : false;
+  const setIsAdvancedPanelOpen = useCallback((open: boolean) => {
     if (enableAdvancedFilters) {
-      setLocalShowAdvanced(show);
+      setLocalIsAdvancedPanelOpen(open);
     }
   }, [enableAdvancedFilters]);
-  
-  const toggleAdvanced = useCallback(() => {
-    setShowAdvanced(!showAdvanced);
-  }, [showAdvanced, setShowAdvanced]);
+
+  const toggleAdvancedPanel = useCallback(() => {
+    setIsAdvancedPanelOpen(!isAdvancedPanelOpen);
+  }, [isAdvancedPanelOpen, setIsAdvancedPanelOpen]);
   
   // Collapsible filters with better UX
   const isFiltersCollapsed = enableCollapsibleFilters ? localIsFiltersCollapsed : false;
@@ -192,106 +196,63 @@ export const useMovieCollectionState = ({
     setIsFiltersCollapsed(!isFiltersCollapsed);
   }, [isFiltersCollapsed, setIsFiltersCollapsed]);
   
-  // Optimize derived state with granular memoization
-  const hasActiveFilters = useMemo(() => {
-    return Boolean(
-      filters.query ||
-      filters.genres.length > 0 ||
-      filters.minYear ||
-      filters.maxYear ||
-      filters.minRating ||
-      filters.maxRating ||
-      filters.minRuntime ||
-      filters.maxRuntime ||
-      filters.language ||
-      (filters.sortBy && filters.sortBy !== DEFAULT_SORT)
-    );
-  }, [
-    filters.query,
-    filters.genres.length,
-    filters.minYear,
-    filters.maxYear,
-    filters.minRating,
-    filters.maxRating,
-    filters.minRuntime,
-    filters.maxRuntime,
-    filters.language,
-    filters.sortBy,
-  ]);
-  
+  // Derived state using centralized utilities
+  const hasActiveBrowseParams = useMemo(() => {
+    return checkHasActiveBrowseParams(browseParams);
+  }, [browseParams]);
+
   const hasAdvancedFilters = useMemo(() => {
     // Check rating filters
-    if (filters.minRating || filters.maxRating) return true;
-    
+    if (browseParams.minRating || browseParams.maxRating) return true;
+
     // Check custom year range (not single year)
-    if (filters.minYear && filters.maxYear && filters.minYear !== filters.maxYear) {
+    if (browseParams.minYear && browseParams.maxYear && browseParams.minYear !== browseParams.maxYear) {
       return true;
     }
-    
+
     // Check custom runtime (not standard ranges)
-    if (filters.minRuntime && filters.maxRuntime && filters.maxRuntime !== "999") {
-      const runtimeRange = `${filters.minRuntime}-${filters.maxRuntime}`;
+    if (browseParams.minRuntime && browseParams.maxRuntime && browseParams.maxRuntime !== "999") {
+      const runtimeRange = `${browseParams.minRuntime}-${browseParams.maxRuntime}`;
       return !STANDARD_RUNTIME_RANGES.has(runtimeRange);
     }
-    
+
     return false;
   }, [
-    filters.minRating,
-    filters.maxRating,
-    filters.minYear,
-    filters.maxYear,
-    filters.minRuntime,
-    filters.maxRuntime,
+    browseParams.minRating,
+    browseParams.maxRating,
+    browseParams.minYear,
+    browseParams.maxYear,
+    browseParams.minRuntime,
+    browseParams.maxRuntime,
   ]);
-  
-  const filterCount = useMemo(() => {
-    let count = 0;
 
-    if (filters.query) count++;
-    if (filters.genres.length > 0) count += filters.genres.length;
-    if (filters.minYear || filters.maxYear) count++;
-    if (filters.minRating || filters.maxRating) count++;
-    if (filters.minRuntime || filters.maxRuntime) count++;
-    if (filters.language) count++;
-    if (filters.sortBy !== DEFAULT_SORT) count++;
+  const activeParamCount = useMemo(() => {
+    return countActiveParams(browseParams);
+  }, [browseParams]);
 
-    return count;
-  }, [
-    filters.query,
-    filters.genres.length,
-    filters.minYear,
-    filters.maxYear,
-    filters.minRating,
-    filters.maxRating,
-    filters.minRuntime,
-    filters.maxRuntime,
-    filters.language,
-    filters.sortBy,
-  ]);
-  
   // Combined derived state for compatibility
   const derivedState = useMemo(() => ({
-    hasActiveFilters,
+    hasActiveBrowseParams,
     hasAdvancedFilters,
-    filterCount,
-  }), [hasActiveFilters, hasAdvancedFilters, filterCount]);
+    activeParamCount,
+  }), [hasActiveBrowseParams, hasAdvancedFilters, activeParamCount]);
   
-  // Memoize cleared filters object to prevent recreation
-  const clearedFiltersRef = useRef<BrowseParams>(DEFAULT_BROWSE_PARAMS);
+  // Memoize default params object to prevent recreation
+  const defaultParamsRef = useRef<BrowseParams>(DEFAULT_BROWSE_PARAMS);
 
   // Actions with optimized object references
-  const clearFilters = useCallback(() => {
-    onFiltersChange(clearedFiltersRef.current);
-    setShowAdvanced(false);
-  }, [onFiltersChange, setShowAdvanced]);
-  
+  const resetBrowseParams = useCallback(() => {
+    onBrowseParamsChange(defaultParamsRef.current);
+    setIsAdvancedPanelOpen(false);
+  }, [onBrowseParamsChange, setIsAdvancedPanelOpen]);
+
   return {
     // State
-    filters,
-    onFiltersChange,
-    showAdvanced,
-    setShowAdvanced,
-    toggleAdvanced,
+    browseParams,
+    onBrowseParamsChange,
+    isAdvancedPanelOpen,
+    setIsAdvancedPanelOpen,
+    toggleAdvancedPanel,
     isFiltersCollapsed,
     setIsFiltersCollapsed,
     toggleFiltersCollapsed,
@@ -302,6 +263,6 @@ export const useMovieCollectionState = ({
     ...derivedState,
 
     // Actions
-    clearFilters,
+    resetBrowseParams,
   };
 };

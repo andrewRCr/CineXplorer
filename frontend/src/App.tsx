@@ -79,8 +79,8 @@ const App: React.FC = () => {
                 path={ROUTES.BROWSE}
                 element={
                   <MovieCollectionLayout
-                    showFilters={true}
-                    filterStyle="minimal"
+                    showBrowseControls={true}
+                    browseLayout="compact"
                   />
                 }
               >
@@ -94,7 +94,7 @@ const App: React.FC = () => {
                 path={ROUTES.SEARCH_RESULTS}
                 element={
                   <MovieCollectionLayout
-                    showFilters={false}
+                    showBrowseControls={false}
                   />
                 }
               >

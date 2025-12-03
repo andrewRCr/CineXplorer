@@ -4,11 +4,11 @@ import type { BrowseParams } from "@/types/browseTypes";
  * Converts browse parameter state to API parameters for TMDB discover/search endpoints.
  *
  * This function handles two browse layouts:
- * - **compact**: Simplified browse UI (e.g., quick browse bar)
+ * - **compact**: Simplified browse UI (e.g., quick browse bar) - decade presets, limited sorts
  * - **expanded**: Full advanced filters panel with all options
  *
  * @param browseParams - Current browse state (genres, year range, rating, sort, etc.)
- * @param browseLayout - UI layout mode affecting parameter mapping
+ * @param browseLayout - UI layout mode affecting parameter mapping ("expanded" | "compact")
  * @returns API parameters object ready to pass to TMDB endpoints
  *
  * @example
@@ -61,7 +61,7 @@ function addRatings(params: Record<string, string | number | number[]>, browsePa
 function addReleaseDateRange(
     params: Record<string, string | number | number[]>,
     browseParams: BrowseParams,
-    browseLayout: "expanded" | "minimal"
+    browseLayout: "expanded" | "compact"
 ) {
     if (!browseParams.minYear) {
         // Handle edge case: expanded mode with only maxYear
@@ -74,8 +74,8 @@ function addReleaseDateRange(
         return;
     }
 
-    // Handle decade ranges in minimal mode (e.g., "2020s")
-    if (browseLayout === "minimal" && browseParams.minYear.includes("s")) {
+    // Handle decade ranges in compact mode (e.g., "2020s")
+    if (browseLayout === "compact" && browseParams.minYear.includes("s")) {
         const decade = browseParams.minYear.replace("s", "");
         const startYear = parseInt(decade, 10);
         // NaN check: Skip invalid decades (upstream validation expected, but defensive)
@@ -112,11 +112,11 @@ const SORT_MAP: Record<string, Record<string, string>> = {
 
 export function mapBrowseParamsToApi(
     browseParams: BrowseParams,
-    browseLayout: "expanded" | "minimal"
+    browseLayout: "expanded" | "compact"
 ): Record<string, string | number | number[]> {
     const apiParams: Record<string, string | number | number[]> = {};
 
-    // Apply shared params (work for both minimal and expanded layouts)
+    // Apply shared params (work for both compact and expanded layouts)
     addGenres(apiParams, browseParams);
     addQuery(apiParams, browseParams);
     addLanguage(apiParams, browseParams);
@@ -125,8 +125,8 @@ export function mapBrowseParamsToApi(
 
     // Handle sort mapping
     if (browseParams.sortBy) {
-        // Minimal layout: Use sort map for special cases, otherwise pass through
-        if (browseLayout === "minimal" && browseParams.sortBy in SORT_MAP) {
+        // Compact layout: Use sort map for special cases, otherwise pass through
+        if (browseLayout === "compact" && browseParams.sortBy in SORT_MAP) {
             Object.assign(apiParams, SORT_MAP[browseParams.sortBy]);
         } else {
             // Expanded layout or unrecognized sort: Pass through as-is

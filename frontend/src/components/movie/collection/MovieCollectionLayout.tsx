@@ -8,19 +8,19 @@ import {
   type RouteConfig,
 } from "@/utilities/routeConfigHelper";
 import PageHeader from "@/components/movie/collection/PageHeader";
-import FilterSection from "@/components/movie/collection/FilterSection";
+import BrowseControlsSection from "@/components/movie/collection/BrowseControlsSection";
 import {
   useMovieCollectionState,
   hasAdvancedFilterValues,
 } from "@/components/movie/collection/useMovieCollectionState";
 
 // Better prop patterns with discriminated unions and required/optional groups
-type FilterConfig =
-  | { showFilters?: false; filterStyle?: never; defaultFilters?: never }
+type BrowseControlsConfig =
+  | { showBrowseControls?: false; browseLayout?: never; defaultBrowseParams?: never }
   | {
-      showFilters: true;
-      filterStyle?: "expanded" | "minimal";
-      defaultFilters?: Partial<BrowseParams>;
+      showBrowseControls: true;
+      browseLayout?: "expanded" | "compact";
+      defaultBrowseParams?: Partial<BrowseParams>;
     };
 
 type MovieCollectionLayoutProps = {
@@ -44,15 +44,15 @@ type MovieCollectionLayoutProps = {
     pt?: number | string;
     pb?: number | string;
   };
-} & FilterConfig;
+} & BrowseControlsConfig;
 
 const MovieCollectionLayout = ({
   title,
   fetcher,
   source,
-  showFilters = false,
-  defaultFilters,
-  filterStyle = "expanded",
+  showBrowseControls = false,
+  defaultBrowseParams,
+  browseLayout = "expanded",
   currentPage,
   size = "xl",
   headerProps,
@@ -74,56 +74,56 @@ const MovieCollectionLayout = ({
 
   // Use custom hook for state management with auto-expand
   const {
-    filters: unifiedFilters,
-    onFiltersChange: handleUnifiedFiltersChange,
+    browseParams,
+    onBrowseParamsChange,
     currentPage: currentPageFromUrl,
     onPageChange: handlePageChange,
-    showAdvanced,
-    toggleAdvanced,
+    isAdvancedPanelOpen,
+    toggleAdvancedPanel,
     isFiltersCollapsed,
     toggleFiltersCollapsed,
   } = useMovieCollectionState({
-    defaultFilters,
+    defaultBrowseParams,
     source: actualSource,
   });
 
   /**
-   * Filter Style Split: API vs UI Rendering
+   * Browse Layout Split: API vs UI Rendering
    *
    * CONTEXT: The backend has two filter parameter modes:
-   * - "minimal": Only sends basic params (year, genres, sortBy) - simpler query strings
+   * - "compact": Only sends basic params (year, genres, sortBy) - simpler query strings
    * - "expanded": Sends all params including rating ranges - needed for advanced filters
    *
-   * PROBLEM: We want to keep the minimal filter UI visible even when advanced filters
+   * PROBLEM: We want to keep the compact browse UI visible even when advanced filters
    * are expanded (Letterboxd-style UX), but API needs "expanded" mode to receive rating params.
    *
-   * SOLUTION: Split the filterStyle concept into two separate concerns:
+   * SOLUTION: Split the browseLayout concept into two separate concerns:
    *
-   * 1. API Filter Style (apiFilterStyle):
+   * 1. API Browse Layout (apiBrowseLayout):
    *    - Determines which params are sent to backend
    *    - Based on ACTUAL FILTER VALUES, not UI visibility state
    *    - "expanded" when rating filters or custom year ranges are active
-   *    - "minimal" otherwise
+   *    - "compact" otherwise
    *    - Used by: useMovieFetchRouter hook for API calls
    *
-   * 2. UI Filter Style (filterStyle prop):
+   * 2. UI Browse Layout (browseLayout prop):
    *    - Determines which UI components are rendered
-   *    - Based on page configuration (discover pages use "minimal" by default)
+   *    - Based on page configuration (discover pages use "compact" by default)
    *    - Stays constant regardless of advanced panel visibility
-   *    - Used by: FilterSection component for rendering logic
+   *    - Used by: BrowseControlsSection component for rendering logic
    *
    * WHY THIS MATTERS:
    * - Prevents unnecessary re-renders when toggling advanced panel with no filters applied
    * - Ensures API receives correct params when advanced filters ARE applied
-   * - Preserves minimal filter visibility (UX requirement)
+   * - Preserves compact browse visibility (UX requirement)
    */
-  const apiFilterStyle = hasAdvancedFilterValues(unifiedFilters) ? "expanded" : filterStyle;
+  const apiBrowseLayout = hasAdvancedFilterValues(browseParams) ? "expanded" : browseLayout;
 
   // Use the movie fetch router hook to route between search/discover endpoints
   const enhancedFetcher = useMovieFetchRouter({
     fetcher: actualFetcher,
-    filters: unifiedFilters,
-    filterStyle: apiFilterStyle,
+    browseParams,
+    browseLayout: apiBrowseLayout,
   });
 
   // Memoized container configuration for better performance
@@ -143,7 +143,7 @@ const MovieCollectionLayout = ({
       return {
         fetcher: actualFetcher,
         source: actualSource,
-        query: defaultFilters?.query,
+        query: defaultBrowseParams?.query,
         initialCurrentPage: currentPage || currentPageFromUrl,
         onPageChange: handlePageChange,
         enhancedFetcher,
@@ -152,7 +152,7 @@ const MovieCollectionLayout = ({
     [
       actualFetcher,
       actualSource,
-      defaultFilters?.query,
+      defaultBrowseParams?.query,
       currentPage,
       currentPageFromUrl,
       handlePageChange,
@@ -179,15 +179,15 @@ const MovieCollectionLayout = ({
         {headerProps?.children}
       </PageHeader>
 
-      {/* Conditionally rendered Filter Section */}
-      {showFilters && (
-        <FilterSection
-          showFilters={showFilters}
-          filterStyle={filterStyle}
-          showAdvanced={showAdvanced}
-          filters={unifiedFilters}
-          onFiltersChange={handleUnifiedFiltersChange}
-          onToggleAdvanced={toggleAdvanced}
+      {/* Conditionally rendered Browse Controls Section */}
+      {showBrowseControls && (
+        <BrowseControlsSection
+          showControls={showBrowseControls}
+          browseLayout={browseLayout}
+          isAdvancedPanelOpen={isAdvancedPanelOpen}
+          browseParams={browseParams}
+          onBrowseParamsChange={onBrowseParamsChange}
+          onToggleAdvancedPanel={toggleAdvancedPanel}
           isFiltersCollapsed={isFiltersCollapsed}
           onToggleCollapse={toggleFiltersCollapsed}
           source={actualSource}

@@ -716,7 +716,7 @@ language filter implementation and conceptual clarity issues in the filter/sort 
 
 #### 10.5: Component Directory Restructure
 
-- [ ] **10.5 Rename and reorganize browse components**
+- [x] **10.5 Rename and reorganize browse components**
 
     - [x] **10.5.a Create `components/movie/browse/` directory**
         - Created `browse/` and `browse/__tests__/` directories
@@ -756,31 +756,20 @@ language filter implementation and conceptual clarity issues in the filter/sort 
           (reserved for potential future use - see backlog-feature.md)
         - Updated useMovieFetchRouter tests to reflect new behavior
 
-    - [ ] **10.5.h Move remaining components (no rename needed)**
-        - `git mv frontend/src/components/movie/filters/ConnectedDropdowns.tsx frontend/src/components/movie/browse/`
-        - `git mv frontend/src/components/movie/filters/SortDropdown.tsx frontend/src/components/movie/browse/`
-        - `git mv frontend/src/components/movie/filters/GenreSelector.tsx frontend/src/components/movie/browse/`
-        - `git mv frontend/src/components/movie/filters/YearSelector.tsx frontend/src/components/movie/browse/`
-        - `git mv frontend/src/components/movie/filters/RatingSelector.tsx frontend/src/components/movie/browse/`
-        - `git mv frontend/src/components/movie/filters/SearchBar.tsx frontend/src/components/movie/browse/`
+    - [x] **10.5.h Move remaining components (no rename needed)**
+        - Moved 6 components: ConnectedDropdowns, SortDropdown, GenreSelector, YearSelector, RatingSelector, SearchBar
+        - Updated imports in QuickBrowseBar and AdvancedFiltersPanel to use `./` paths
 
-    - [ ] **10.5.i Move and update test files**
-        - Move all test files from `filters/__tests__/` to `browse/__tests__/`
-        - Rename test files where component names changed:
-            - `ClearFiltersButton.test.tsx` → `ClearBrowseParamsButton.test.tsx`
-            - `SortDropdown.test.tsx` stays
-            - etc.
-        - Update imports in all test files (already done for ClearBrowseParamsButton)
-        - Update component references in tests
+    - [x] **10.5.i Move and update test files**
+        - Moved all test files from `filters/__tests__/` to `browse/__tests__/`
+        - Renamed `ClearFiltersButton.test.tsx` → `ClearBrowseParamsButton.test.tsx`
+        - Fixed import path in ClearBrowseParamsButton test
 
-    - [ ] **10.5.j Delete old filters/ directory**
-        - Verify all files moved successfully
-        - `rm -r frontend/src/components/movie/filters/`
+    - [x] **10.5.j Delete old filters/ directory**
+        - Verified all files moved, deleted empty `filters/` directory
 
-    - [ ] **10.5.k Update all component imports across codebase**
-        - Search for `from "@/components/movie/filters/`
-        - Update to `from "@/components/movie/browse/`
-        - Update component names in JSX
+    - [x] **10.5.k Update all component imports across codebase**
+        - Verified no remaining `@/components/movie/filters/` imports in source
 
 ---
 

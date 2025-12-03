@@ -629,39 +629,35 @@ language filter implementation and conceptual clarity issues in the filter/sort 
 
 ---
 
-#### 10.2: Type System Foundation
+#### 10.2: Type System Foundation ✓
 
-- [ ] **10.2 Establish type single source of truth**
+- [x] **10.2 Establish type single source of truth**
 
-    - [ ] **10.2.a Create `frontend/src/types/browseTypes.ts`**
-        - Define `BrowseParams` type (10 fields: query, genres, minYear, maxYear, minRating,
-          maxRating, minRuntime, maxRuntime, sortBy, language)
-        - Move `SortOptionValue` type from movieFilterOptions.ts
-        - Move `SortOption` interface from movieFilterOptions.ts
-        - Add clear documentation on type purpose and field meanings
+    - [x] **10.2.a Create `frontend/src/types/browseTypes.ts`**
+        - Created with `BrowseParams` (10 fields), `SortOptionValue` union type, `SortOption` interface
+        - Comprehensive documentation on field meanings and "not set" conventions
 
-    - [ ] **10.2.b Simplify `urlSync.ts` and eliminate MinimalMovieFilters**
-        - Remove support for legacy single-value params (`year`, `rating`)
-        - Return only `BrowseParams` type (remove dual return)
-        - Update `useMovieCollectionUrl.tsx` to use simplified return
-        - Delete `MinimalMovieFilters` interface from LetterboxdStyleFilters.tsx
-        - Update `AdvancedMovieFilters.tsx` to remove minimalFilters prop
+    - [x] **10.2.b Simplify `urlSync.ts` and eliminate MinimalMovieFilters**
+        - Simplified to return only `BrowseParams` type
+        - Deleted `MinimalMovieFilters` from LetterboxdStyleFilters.tsx
+        - Updated useMovieCollectionUrl.tsx to use simplified return
 
-    - [ ] **10.2.c Remove duplicate type definitions**
-        - Delete `MovieFilters` interface from `@types/movie.d.ts` (outdated, 9 fields)
-        - Update `filterDefaults.ts` to import type from browseTypes.ts (remove local definition)
-        - Update `AdvancedMovieFilters.tsx` to import from browseTypes.ts (remove definition)
+    - [x] **10.2.c Remove duplicate type definitions**
+        - Removed `MovieFilters` interface from `@types/movie.d.ts`
+        - Updated `filterDefaults.ts` to import types from browseTypes.ts
+        - Updated `AdvancedMovieFilters.tsx` to import from browseTypes.ts
+        - Added backward-compat re-exports in movieFilterOptions.ts
 
-    - [ ] **10.2.d Update all type imports across codebase**
-        - Change all `import { MovieFilters }` → `import { BrowseParams }`
-        - Update type aliases (`MovieFiltersType`, `UnifiedMovieFilters`) → `BrowseParams`
-        - Files: hooks, utilities, components (grep for `MovieFilters`)
+    - [x] **10.2.d Update all type imports across codebase**
+        - Updated 13 files to use `BrowseParams` from `@/types/browseTypes`
+        - Removed all `MovieFiltersType` and `UnifiedMovieFilters` aliases
 
-    - [ ] **10.2.e Run type check and fix any errors**
+    - [x] **10.2.e Run type check and fix any errors**
+        - Type check passes (tsc -b clean)
 
-    - [ ] **10.2.f Update affected tests**
-        - Update type references in test files
-        - Update mock data structures
+    - [x] **10.2.f Update affected tests**
+        - Updated 4 test files to use BrowseParams
+        - All 471 tests pass
 
 ---
 
@@ -677,7 +673,7 @@ language filter implementation and conceptual clarity issues in the filter/sort 
 
     - [ ] **10.3.b Rename `movieFilterOptions.ts` → `browseOptions.ts`**
         - Use `git mv frontend/src/constants/movieFilterOptions.ts frontend/src/constants/browseOptions.ts`
-        - Remove type exports (moved to browseTypes.ts)
+        - **Remove backward-compat re-exports** added in 10.2: `export type { SortOption, SortOptionValue }`
         - Update file documentation to reflect new naming
 
     - [ ] **10.3.c Remove duplicate SORT_OPTIONS from useMovieCollectionState.tsx**
@@ -859,6 +855,7 @@ language filter implementation and conceptual clarity issues in the filter/sort 
         - Grep for: `hasActiveFilters`, `filterCount`, `clearFilters` (old names)
         - Grep for: `LetterboxdStyle`, `MinimalMovieFilters`
         - Grep for: `@/components/movie/filters/`
+        - Grep for: `backward.compat`, `re-export` (verify no temp shims remain)
 
 ---
 

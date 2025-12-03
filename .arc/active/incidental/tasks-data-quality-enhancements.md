@@ -663,29 +663,25 @@ language filter implementation and conceptual clarity issues in the filter/sort 
 
 #### 10.3: Constants Consolidation
 
-- [ ] **10.3 Rename and consolidate constants**
+- [x] **10.3 Rename and consolidate constants**
 
-    - [ ] **10.3.a Rename `filterDefaults.ts` → `browseDefaults.ts`**
-        - Use `git mv frontend/src/constants/filterDefaults.ts frontend/src/constants/browseDefaults.ts`
-        - Rename `DEFAULT_FILTERS` → `DEFAULT_BROWSE_PARAMS`
-        - Keep `DEFAULT_SORT` (name is accurate)
-        - Remove type definition (now in browseTypes.ts), add import
+    - [x] **10.3.a Rename `filterDefaults.ts` → `browseDefaults.ts`**
+        - Renamed file, constant `DEFAULT_FILTERS` → `DEFAULT_BROWSE_PARAMS`
+        - Updated 5 files with imports
 
-    - [ ] **10.3.b Rename `movieFilterOptions.ts` → `browseOptions.ts`**
-        - Use `git mv frontend/src/constants/movieFilterOptions.ts frontend/src/constants/browseOptions.ts`
-        - **Remove backward-compat re-exports** added in 10.2: `export type { SortOption, SortOptionValue }`
-        - Update file documentation to reflect new naming
+    - [x] **10.3.b Rename `movieFilterOptions.ts` → `browseOptions.ts`**
+        - Removed backward-compat re-exports `SortOption, SortOptionValue`
+        - Updated 5 source files + 1 test file with imports
 
-    - [ ] **10.3.c Remove duplicate SORT_OPTIONS from useMovieCollectionState.tsx**
-        - Import `sortOptions` from browseOptions.ts
-        - Delete local `SORT_OPTIONS` array
+    - [x] **10.3.c Remove duplicate SORT_OPTIONS from useMovieCollectionState.tsx**
+        - Imported `sortOptions` from browseOptions.ts
+        - Deleted local `SORT_OPTIONS` array, updated check to use `.some()`
 
-    - [ ] **10.3.d Update all constant imports**
-        - `filterDefaults` → `browseDefaults`
-        - `movieFilterOptions` → `browseOptions`
-        - `DEFAULT_FILTERS` → `DEFAULT_BROWSE_PARAMS`
+    - [x] **10.3.d Update all constant imports** (completed in 10.3.a, 10.3.b)
 
-    - [ ] **10.3.e Run tests and fix broken imports**
+    - [x] **10.3.e Run tests and fix broken imports**
+        - Fixed unused `SortOptionValue` import in browseOptions.ts
+        - Type check clean, 471 tests pass, lint clean
 
 ---
 

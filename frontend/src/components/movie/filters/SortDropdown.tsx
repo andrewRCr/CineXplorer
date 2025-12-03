@@ -1,12 +1,12 @@
 import { useMemo } from "react";
 import { Box, Text, Select, createListCollection } from "@chakra-ui/react";
 import { getAvailableSortOptions } from "@/utilities/sortOptionFiltering";
-import type { MovieFilters as UnifiedMovieFilters } from "./AdvancedMovieFilters";
+import type { BrowseParams } from "@/types/browseTypes";
 
 const SORT_WIDTH = "170px";
 
 interface SortDropdownProps {
-  filters: UnifiedMovieFilters;
+  filters: BrowseParams;
   onSortChange: (sortBy: string) => void;
   pageSource?: string;
 }

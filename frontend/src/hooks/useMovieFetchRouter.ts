@@ -1,6 +1,6 @@
 import { useCallback, useRef } from "react";
 import type { PaginatedMoviesResponse } from "@/services/movieService";
-import type { MovieFilters as MovieFiltersType } from "@/components/movie/filters/AdvancedMovieFilters";
+import type { BrowseParams } from "@/types/browseTypes";
 import { mapFiltersToApiParams } from "@/utilities/movieFilterMapper";
 import { fetchSearchMoviesService } from "@/services/movieService";
 
@@ -51,7 +51,7 @@ type FetcherFn = (
 
 interface UseMovieFetchRouterOptions {
     fetcher: FetcherFn;
-    filters: MovieFiltersType;
+    filters: BrowseParams;
     filterStyle: "expanded" | "minimal";
 }
 

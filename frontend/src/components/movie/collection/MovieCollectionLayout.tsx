@@ -1,7 +1,7 @@
 import { useMemo, type ReactNode } from "react";
 import { useLocation, Outlet } from "react-router-dom";
 import { Box } from "@chakra-ui/react";
-import { type MovieFilters as MovieFiltersType } from "@/components/movie/filters/AdvancedMovieFilters";
+import type { BrowseParams } from "@/types/browseTypes";
 import { useMovieFetchRouter } from "@/hooks/useMovieFetchRouter";
 import {
   getFetcherAndSource,
@@ -20,7 +20,7 @@ type FilterConfig =
   | {
       showFilters: true;
       filterStyle?: "expanded" | "minimal";
-      defaultFilters?: Partial<MovieFiltersType>;
+      defaultFilters?: Partial<BrowseParams>;
     };
 
 type MovieCollectionLayoutProps = {

@@ -1,3 +1,5 @@
+import type { SortOption, SortOptionValue } from "@/types/browseTypes";
+
 // Master genre map for DRYness
 const GENRE_MAP = {
     "28": "Action",
@@ -70,7 +72,7 @@ export const yearOptions = [
 ];
 
 // DISABLED: Runtime filtering options
-// 
+//
 // TMDB's runtime filtering API is fundamentally broken and returns incorrect results.
 // The issue is caused by data contamination from user-submitted translations where
 // runtime data is often wrong or omitted entirely. TMDB has acknowledged this issue
@@ -97,23 +99,16 @@ export const runtimeOptions = [
     { value: "150-400", label: "Over 150 min" }, // Fixed from 999 to realistic upper bound
 ];
 
-// Sort option values - only meaningful sort directions included
-// Removed: popularity.asc, vote_average.asc (produce garbage results - untracked/unrated movies)
-// Removed: original_title.desc (Z-A sort is broken for Latin languages - Unicode ordering
-//          causes all non-Latin mislabeled movies to cluster at the front, making it unusable)
-export type SortOptionValue =
-    | "popularity.desc"
-    | "vote_average.desc"
-    | "release_date.desc"
-    | "release_date.asc"
-    | "original_title.asc";
-
-export interface SortOption {
-    value: SortOptionValue;
-    label: string;
-}
+// Re-export types for backward compatibility during migration
+// Import these from @/types/browseTypes.ts in new code
+export type { SortOption, SortOptionValue };
 
 // Consolidated sort options (5 total) - single dropdown, no advanced/minimal split
+// Only meaningful sort directions included:
+// - popularity.asc removed (produces garbage results - untracked movies)
+// - vote_average.asc removed (produces garbage results - unrated movies)
+// - original_title.desc removed (Z-A broken for Latin languages - Unicode ordering
+//   causes all non-Latin mislabeled movies to cluster at the front)
 export const sortOptions: SortOption[] = [
     { value: "popularity.desc", label: "Most Popular" },
     { value: "vote_average.desc", label: "Highest Rated" },

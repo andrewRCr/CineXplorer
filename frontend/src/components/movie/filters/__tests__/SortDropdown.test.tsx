@@ -2,12 +2,12 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@tests/helpers/test-renderer";
 import userEvent from "@testing-library/user-event";
 import SortDropdown from "../SortDropdown";
-import type { MovieFilters } from "../AdvancedMovieFilters";
+import type { BrowseParams } from "@/types/browseTypes";
 
 // Helper to create mock filters
 const createMockFilters = (
-  overrides: Partial<MovieFilters> = {}
-): MovieFilters => ({
+  overrides: Partial<BrowseParams> = {}
+): BrowseParams => ({
   query: "",
   genres: [],
   minYear: "",

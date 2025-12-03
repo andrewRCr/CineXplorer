@@ -1,9 +1,9 @@
 import { Box, Button } from "@chakra-ui/react";
 import { FiX } from "react-icons/fi";
-import type { MovieFilters as UnifiedMovieFilters } from "./AdvancedMovieFilters";
+import type { BrowseParams } from "@/types/browseTypes";
 
 interface ClearFiltersButtonProps {
-  filters: UnifiedMovieFilters;
+  filters: BrowseParams;
   onClearFilters: () => void;
   showAdvanced: boolean;
 }

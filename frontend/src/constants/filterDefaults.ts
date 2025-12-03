@@ -3,8 +3,10 @@
  *
  * These constants define the default/empty state for movie filters used throughout
  * the application. Import from here rather than hardcoding defaults in components.
+ *
+ * For type definitions, see @/types/browseTypes.ts
  */
-import type { SortOptionValue } from "./movieFilterOptions";
+import type { SortOptionValue, BrowseParams } from "@/types/browseTypes";
 
 /**
  * Default sort order for movie browsing
@@ -19,9 +21,9 @@ export const DEFAULT_SORT: SortOptionValue = "popularity.desc";
  * - clearFilters() reset target
  * - Comparing against to detect "has active filters"
  */
-export const DEFAULT_FILTERS = {
+export const DEFAULT_FILTERS: BrowseParams = {
   query: "",
-  genres: [] as number[],
+  genres: [],
   minYear: "",
   maxYear: "",
   minRating: "",
@@ -30,23 +32,4 @@ export const DEFAULT_FILTERS = {
   maxRuntime: "",
   sortBy: DEFAULT_SORT,
   language: "",
-} as const;
-
-/**
- * MovieFilters type derived from the default constant
- *
- * This ensures the type stays in sync with the actual defaults.
- * Use this type for filter state throughout the application.
- */
-export type MovieFilters = {
-  query: string;
-  genres: number[];
-  minYear: string;
-  maxYear: string;
-  minRating: string;
-  maxRating: string;
-  minRuntime: string;
-  maxRuntime: string;
-  sortBy: SortOptionValue;
-  language: string;
 };

@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent } from '@tests/helpers/test-renderer';
 import ClearFiltersButton from '../ClearFiltersButton';
-import type { MovieFilters } from '../AdvancedMovieFilters';
+import type { BrowseParams } from '@/types/browseTypes';
 
 // Create mock filters helper functions
-const createMockFilters = (overrides: Partial<MovieFilters> = {}): MovieFilters => ({
+const createMockFilters = (overrides: Partial<BrowseParams> = {}): BrowseParams => ({
   query: '',
   genres: [],
   minYear: '',

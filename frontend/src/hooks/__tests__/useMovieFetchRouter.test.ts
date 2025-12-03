@@ -15,7 +15,7 @@ import { renderHook } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useMovieFetchRouter } from '../useMovieFetchRouter';
 import type { PaginatedMoviesResponse } from '@/types/movie';
-import type { MovieFilters } from '@/components/movie/filters/AdvancedMovieFilters';
+import type { BrowseParams } from '@/types/browseTypes';
 import * as movieService from '@/services/movieService';
 
 /**
@@ -58,9 +58,9 @@ function createMockBaseFetcher() {
 }
 
 /**
- * Helper to create empty MovieFilters object for tests
+ * Helper to create empty BrowseParams object for tests
  */
-function createEmptyFilters(): MovieFilters {
+function createEmptyFilters(): BrowseParams {
     return {
         query: '',
         genres: [],
@@ -140,7 +140,7 @@ describe('useMovieFetchRouter - pagination metadata passing', () => {
         it('should pass tmdb_page_start to base fetcher when provided', () => {
             // Arrange
             const mockBaseFetcher = createMockBaseFetcher();
-            const mockFilters: MovieFilters = {
+            const mockFilters: BrowseParams = {
                 ...createEmptyFilters(),
                 genres: [28],
                 minRating: '7.0',
@@ -213,7 +213,7 @@ describe('useMovieFetchRouter - pagination metadata passing', () => {
             );
 
             const mockBaseFetcher = createMockBaseFetcher();
-            const mockFilters: MovieFilters = {
+            const mockFilters: BrowseParams = {
                 ...createEmptyFilters(),
                 query: 'avatar',
                 genres: [28],
@@ -255,7 +255,7 @@ describe('useMovieFetchRouter - pagination metadata passing', () => {
             );
 
             const mockBaseFetcher = createMockBaseFetcher();
-            const mockFilters: MovieFilters = {
+            const mockFilters: BrowseParams = {
                 ...createEmptyFilters(),
                 query: 'avatar',
             };
@@ -290,7 +290,7 @@ describe('useMovieFetchRouter - pagination metadata passing', () => {
         it('should maintain existing behavior when tmdb_page_start not used', () => {
             // Arrange
             const mockBaseFetcher = createMockBaseFetcher();
-            const mockFilters: MovieFilters = {
+            const mockFilters: BrowseParams = {
                 ...createEmptyFilters(),
                 genres: [28, 12],
             };

@@ -1,27 +1,17 @@
 import { Box, Text, HStack, VStack } from "@chakra-ui/react";
-import type { MovieFilters as UnifiedMovieFilters } from "./AdvancedMovieFilters";
+import type { BrowseParams } from "@/types/browseTypes";
 import { DEFAULT_FILTERS } from "@/constants/filterDefaults";
 import ConnectedDropdowns from "./ConnectedDropdowns";
 import CollapsibleSearchBox from "./CollapsibleSearchBox";
 import SortDropdown from "./SortDropdown";
 import ClearFiltersButton from "./ClearFiltersButton";
 
-export interface MinimalMovieFilters {
-  genres: number[];
-  year: string;
-  rating: string;
-  // DISABLED: Runtime filtering - TMDB API returns incorrect results
-  // runtime: string;
-  query: string;
-  sortBy: string;
-}
-
 interface LetterboxdStyleFiltersProps {
-  filters: UnifiedMovieFilters;
+  filters: BrowseParams;
   onFiltersChange: (
     filters:
-      | Partial<UnifiedMovieFilters>
-      | ((prev: UnifiedMovieFilters) => UnifiedMovieFilters)
+      | Partial<BrowseParams>
+      | ((prev: BrowseParams) => BrowseParams)
   ) => void;
   showAdvanced?: boolean;
   onToggleAdvanced?: () => void;
@@ -35,9 +25,9 @@ const LetterboxdStyleFilters = ({
   onToggleAdvanced,
   pageSource,
 }: LetterboxdStyleFiltersProps) => {
-  const updateFilter = <K extends keyof UnifiedMovieFilters>(
+  const updateFilter = <K extends keyof BrowseParams>(
     key: K,
-    value: UnifiedMovieFilters[K]
+    value: BrowseParams[K]
   ) => {
     onFiltersChange((prevFilters) => {
       const newFilters = { ...prevFilters, [key]: value };
@@ -54,7 +44,7 @@ const LetterboxdStyleFilters = ({
   };
 
   const handleSortChange = (sortBy: string) => {
-    updateFilter("sortBy", sortBy as UnifiedMovieFilters["sortBy"]);
+    updateFilter("sortBy", sortBy as BrowseParams["sortBy"]);
   };
 
   return (

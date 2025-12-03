@@ -7,7 +7,7 @@ import {
   yearOptions,
   // runtimeOptions, // TODO: Remove if runtime selector not implemented
 } from "@/constants/movieFilterOptions";
-import type { MovieFilters as UnifiedMovieFilters } from "./AdvancedMovieFilters";
+import type { BrowseParams } from "@/types/browseTypes";
 
 const GENRE_WIDTH = "140px";
 const YEAR_WIDTH = "110px";
@@ -15,11 +15,11 @@ const YEAR_SPAN_WIDTH = YEAR_WIDTH +"10px";
 // const RUNTIME_WIDTH = "130px"; // TODO: Remove if not needed
 
 interface ConnectedDropdownsProps {
-  filters: UnifiedMovieFilters;
+  filters: BrowseParams;
   onFiltersChange: (
     filters:
-      | Partial<UnifiedMovieFilters>
-      | ((prev: UnifiedMovieFilters) => UnifiedMovieFilters)
+      | Partial<BrowseParams>
+      | ((prev: BrowseParams) => BrowseParams)
   ) => void;
   onToggleAdvanced?: () => void;
   pageSource?: string;
@@ -32,9 +32,9 @@ const ConnectedDropdowns = ({
   pageSource,
 }: ConnectedDropdownsProps) => {
   // Memoize the filter update function to prevent recreation
-  const updateFilter = useCallback(<K extends keyof UnifiedMovieFilters>(
+  const updateFilter = useCallback(<K extends keyof BrowseParams>(
     key: K,
-    value: UnifiedMovieFilters[K]
+    value: BrowseParams[K]
   ) => {
     onFiltersChange((prevFilters) => {
       const newFilters = { ...prevFilters, [key]: value };

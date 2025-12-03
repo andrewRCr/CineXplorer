@@ -1,23 +1,23 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { type MovieFilters as MovieFiltersType } from "@/components/movie/filters/AdvancedMovieFilters";
+import type { BrowseParams } from "@/types/browseTypes";
 import { DEFAULT_FILTERS, DEFAULT_SORT } from "@/constants/filterDefaults";
 import { initializeFiltersFromUrl } from "@/utilities/urlSync";
 
 // Deep comparison function for filters to prevent unnecessary re-renders
 // Added fix to prevent continuous API requests - updated with navigation loop fix
-function deepEqual(obj1: MovieFiltersType, obj2: MovieFiltersType): boolean {
-  const keys1 = Object.keys(obj1) as (keyof MovieFiltersType)[];
-  const keys2 = Object.keys(obj2) as (keyof MovieFiltersType)[];
-  
+function deepEqual(obj1: BrowseParams, obj2: BrowseParams): boolean {
+  const keys1 = Object.keys(obj1) as (keyof BrowseParams)[];
+  const keys2 = Object.keys(obj2) as (keyof BrowseParams)[];
+
   if (keys1.length !== keys2.length) {
     return false;
   }
-  
+
   for (const key of keys1) {
     const val1 = obj1[key];
     const val2 = obj2[key];
-    
+
     if (Array.isArray(val1) && Array.isArray(val2)) {
       if (val1.length !== val2.length || !val1.every((item, index) => item === val2[index])) {
         return false;
@@ -26,19 +26,19 @@ function deepEqual(obj1: MovieFiltersType, obj2: MovieFiltersType): boolean {
       return false;
     }
   }
-  
+
   return true;
 }
 
 export const useMovieCollectionUrl = (
-  defaultFilters?: Partial<MovieFiltersType>,
+  defaultFilters?: Partial<BrowseParams>,
   actualSource?: string
 ) => {
   const location = useLocation();
   const navigate = useNavigate();
 
   // This is now the single source of truth for all filters.
-  const [unifiedFilters, setUnifiedFilters] = useState<MovieFiltersType>({
+  const [unifiedFilters, setUnifiedFilters] = useState<BrowseParams>({
     ...DEFAULT_FILTERS,
     ...defaultFilters,
   });
@@ -62,24 +62,11 @@ export const useMovieCollectionUrl = (
     const newPage = getCurrentPageFromUrl();
     setCurrentPageFromUrl(newPage);
 
-    const { filters: urlFilters, minimalFilters: urlMinimalFilters } =
-      initializeFiltersFromUrl(location.search);
-
-    // Combine the filters. Note: This is a shallow merge.
-    // You might need a more sophisticated merge strategy if there are overlapping fields
-    // that need to be handled in a specific way (e.g., `year` vs `minYear`/`maxYear`).
-    const newUnifiedFilters = {
-      ...unifiedFilters, // Start with existing state to not lose anything
-      ...urlFilters,
-      ...urlMinimalFilters,
-      // Explicitly handle sortBy to ensure it's correctly typed and prioritized.
-      sortBy: (urlMinimalFilters.sortBy ||
-        urlFilters.sortBy) as MovieFiltersType["sortBy"],
-    };
+    const urlFilters = initializeFiltersFromUrl(location.search);
 
     // Only update state if the filters have actually changed to prevent unnecessary re-renders
-    if (!deepEqual(unifiedFilters, newUnifiedFilters)) {
-      setUnifiedFilters(newUnifiedFilters);
+    if (!deepEqual(unifiedFilters, urlFilters)) {
+      setUnifiedFilters(urlFilters);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.search, getCurrentPageFromUrl]); // unifiedFilters intentionally omitted to prevent infinite loop
@@ -107,8 +94,8 @@ export const useMovieCollectionUrl = (
   const handleUnifiedFiltersChange = useCallback(
     (
       newFiltersOrUpdater:
-        | Partial<MovieFiltersType>
-        | ((prev: MovieFiltersType) => MovieFiltersType)
+        | Partial<BrowseParams>
+        | ((prev: BrowseParams) => BrowseParams)
     ) => {
       const newFilters =
         typeof newFiltersOrUpdater === "function"
@@ -143,22 +130,22 @@ export const useMovieCollectionUrl = (
   // We use a ref to track the previous route to distinguish between programmatic navigation
   // and browser back/forward navigation
   const previousRouteRef = useRef<string | null>(null);
-  
+
   useEffect(() => {
     const currentRouteKey = `${location.pathname}:${actualSource}`;
-    
+
     // If this is the first visit to this component, just store the route
     if (previousRouteRef.current === null) {
       previousRouteRef.current = currentRouteKey;
       return;
     }
-    
+
     // If the route/source has changed, this might be a forward navigation
     if (previousRouteRef.current !== currentRouteKey) {
       // Check if this looks like browser back/forward navigation
       // Browser navigation typically preserves the full URL including query params
       const hasPageParam = new URLSearchParams(location.search).has("page");
-      
+
       // If we have page param, this is likely browser back/forward navigation
       // If no page param, this is likely a fresh navigation that should reset to page 1
       if (!hasPageParam) {
@@ -166,11 +153,11 @@ export const useMovieCollectionUrl = (
         // Reset pagination state
         const searchParams = new URLSearchParams(location.search);
         searchParams.delete("page");
-        
+
         // Only navigate if the URL would actually change
         const newSearch = searchParams.toString();
         const currentSearch = location.search.startsWith('?') ? location.search.slice(1) : location.search;
-        
+
         if (currentSearch !== newSearch) {
           navigate(`${location.pathname}?${newSearch}`, {
             replace: true,
@@ -179,7 +166,7 @@ export const useMovieCollectionUrl = (
       }
       // If hasPageParam is true, we preserve it (likely browser navigation)
     }
-    
+
     previousRouteRef.current = currentRouteKey;
   }, [actualSource, location.pathname, location.search, navigate]);
 

@@ -14,10 +14,10 @@
 
 import { describe, it, expect } from 'vitest';
 import { mapFiltersToApiParams } from '../movieFilterMapper';
-import type { MovieFilters } from '../../components/movie/filters/AdvancedMovieFilters';
+import type { BrowseParams } from '@/types/browseTypes';
 
-// Helper to create MovieFilters with defaults, reducing repetition
-const createFilters = (overrides: Partial<MovieFilters> = {}): MovieFilters => ({
+// Helper to create BrowseParams with defaults, reducing repetition
+const createFilters = (overrides: Partial<BrowseParams> = {}): BrowseParams => ({
   query: '',
   genres: [],
   minYear: '',

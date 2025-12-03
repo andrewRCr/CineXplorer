@@ -1,16 +1,17 @@
 import { Box } from "@chakra-ui/react";
-import MovieFilters, { type MovieFilters as MovieFiltersType } from "@/components/movie/filters/AdvancedMovieFilters";
+import AdvancedMovieFilters from "@/components/movie/filters/AdvancedMovieFilters";
 import LetterboxdStyleFilters from "@/components/movie/filters/LetterboxdStyleFilters";
+import type { BrowseParams } from "@/types/browseTypes";
 
 interface FilterSectionProps {
   showFilters: boolean;
   filterStyle: "expanded" | "minimal";
   showAdvanced: boolean;
-  filters: MovieFiltersType;
+  filters: BrowseParams;
   onFiltersChange: (
     filters:
-      | Partial<MovieFiltersType>
-      | ((prev: MovieFiltersType) => MovieFiltersType)
+      | Partial<BrowseParams>
+      | ((prev: BrowseParams) => BrowseParams)
   ) => void;
   onToggleAdvanced: () => void;
   isFiltersCollapsed: boolean;
@@ -49,7 +50,7 @@ const FilterSection = ({
       {/* Expanded filter style */}
       {filterStyle === "expanded" && (
         <Box flexShrink={0} mb={6} minHeight="200px">
-          <MovieFilters
+          <AdvancedMovieFilters
             filters={filters}
             onFiltersChange={onFiltersChange}
             isCollapsed={isFiltersCollapsed}
@@ -62,7 +63,7 @@ const FilterSection = ({
       {/* Advanced filters overlay for minimal style */}
       {showAdvanced && filterStyle === "minimal" && (
         <Box flexShrink={0} mb={6}>
-          <MovieFilters
+          <AdvancedMovieFilters
             filters={filters}
             onFiltersChange={onFiltersChange}
             isCollapsed={false}

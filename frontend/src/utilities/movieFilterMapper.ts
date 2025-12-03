@@ -1,4 +1,4 @@
-import type { MovieFilters as MovieFiltersType } from "@/components/movie/filters/AdvancedMovieFilters";
+import type { BrowseParams } from "@/types/browseTypes";
 
 /**
  * Converts UI filter state to API parameters for TMDB discover/search endpoints.
@@ -27,28 +27,28 @@ import type { MovieFilters as MovieFiltersType } from "@/components/movie/filter
  */
 
 // Helper: Add genres filter if present
-function addGenres(params: Record<string, string | number | number[]>, filters: MovieFiltersType) {
+function addGenres(params: Record<string, string | number | number[]>, filters: BrowseParams) {
     if (filters.genres.length > 0) {
         params.genres = filters.genres.join(",");
     }
 }
 
 // Helper: Add query filter if present
-function addQuery(params: Record<string, string | number | number[]>, filters: MovieFiltersType) {
+function addQuery(params: Record<string, string | number | number[]>, filters: BrowseParams) {
     if (filters.query) {
         params.query = filters.query;
     }
 }
 
 // Helper: Add language filter if present
-function addLanguage(params: Record<string, string | number | number[]>, filters: MovieFiltersType) {
+function addLanguage(params: Record<string, string | number | number[]>, filters: BrowseParams) {
     if (filters.language) {
         params.language = filters.language;
     }
 }
 
 // Helper: Add rating filters
-function addRatings(params: Record<string, string | number | number[]>, filters: MovieFiltersType) {
+function addRatings(params: Record<string, string | number | number[]>, filters: BrowseParams) {
     if (filters.minRating) {
         params.vote_average_gte = filters.minRating;
     }
@@ -60,7 +60,7 @@ function addRatings(params: Record<string, string | number | number[]>, filters:
 // Helper: Add release date range with NaN validation
 function addReleaseDateRange(
     params: Record<string, string | number | number[]>,
-    filters: MovieFiltersType,
+    filters: BrowseParams,
     filterStyle: "expanded" | "minimal"
 ) {
     if (!filters.minYear) {
@@ -110,7 +110,7 @@ const SORT_MAP: Record<string, Record<string, string>> = {
     runtime_120: { with_runtime_lte: "120", sort_by: "popularity.desc" },
 };
 export function mapFiltersToApiParams(
-    filters: MovieFiltersType,
+    filters: BrowseParams,
     filterStyle: "expanded" | "minimal"
 ): Record<string, string | number | number[]> {
     const filterParams: Record<string, string | number | number[]> = {};

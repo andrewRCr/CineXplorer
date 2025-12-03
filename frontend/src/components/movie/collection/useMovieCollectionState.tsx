@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from "react";
-import { type MovieFilters as MovieFiltersType } from "@/components/movie/filters/AdvancedMovieFilters";
+import type { BrowseParams } from "@/types/browseTypes";
 import { DEFAULT_FILTERS, DEFAULT_SORT } from "@/constants/filterDefaults";
 import { useMovieCollectionUrl } from "./useMovieCollectionUrl";
 import {
@@ -12,7 +12,7 @@ const STANDARD_RUNTIME_RANGES = new Set(["0-90", "90-120", "120-150"]);
 
 // Better hook composition with multiple related concerns
 interface UseMovieCollectionStateConfig {
-  defaultFilters?: Partial<MovieFiltersType>;
+  defaultFilters?: Partial<BrowseParams>;
   source?: string;
   // Hook configuration
   enableUrlSync?: boolean;
@@ -22,11 +22,11 @@ interface UseMovieCollectionStateConfig {
 
 interface MovieCollectionState {
   // Filter state
-  filters: MovieFiltersType;
+  filters: BrowseParams;
   onFiltersChange: (
     filters:
-      | Partial<MovieFiltersType>
-      | ((prev: MovieFiltersType) => MovieFiltersType)
+      | Partial<BrowseParams>
+      | ((prev: BrowseParams) => BrowseParams)
   ) => void;
   
   // UI state
@@ -75,7 +75,7 @@ const SORT_OPTIONS = [
 
 // Helper: Check if filters contain advanced filter values
 // Exported for use in parent components to determine API filter style
-export const hasAdvancedFilterValues = (filters: MovieFiltersType): boolean => {
+export const hasAdvancedFilterValues = (filters: BrowseParams): boolean => {
   // Rating filters are advanced-only
   if (filters.minRating || filters.maxRating) return true;
 
@@ -137,7 +137,7 @@ export const useMovieCollectionState = ({
   const [localIsFiltersCollapsed, setLocalIsFiltersCollapsed] = useState(false);
 
   // For non-URL-synced mode, maintain local filter state
-  const [localFilters, setLocalFilters] = useState<MovieFiltersType>(initialLocalFilters);
+  const [localFilters, setLocalFilters] = useState<BrowseParams>(initialLocalFilters);
   
   // Local pagination state for non-URL-synced mode
   const [localCurrentPage, setLocalCurrentPage] = useState<number | undefined>(1);
@@ -162,7 +162,7 @@ export const useMovieCollectionState = ({
   }, [filters.language, filters.sortBy, urlHandleFiltersChange]);
 
   // Optimize onFiltersChange with stable references
-  const onFiltersChange = useCallback((newFilters: Partial<MovieFiltersType> | ((prev: MovieFiltersType) => MovieFiltersType)) => {
+  const onFiltersChange = useCallback((newFilters: Partial<BrowseParams> | ((prev: BrowseParams) => BrowseParams)) => {
     if (enableUrlSync) {
       urlHandleFiltersChange(newFilters);
     } else {
@@ -286,7 +286,7 @@ export const useMovieCollectionState = ({
   }), [hasActiveFilters, hasAdvancedFilters, filterCount]);
   
   // Memoize cleared filters object to prevent recreation
-  const clearedFiltersRef = useRef<MovieFiltersType>(DEFAULT_FILTERS);
+  const clearedFiltersRef = useRef<BrowseParams>(DEFAULT_FILTERS);
 
   // Actions with optimized object references
   const clearFilters = useCallback(() => {

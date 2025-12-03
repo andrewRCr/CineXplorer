@@ -14,23 +14,15 @@ import GenreSelector from "./GenreSelector";
 import YearSelector from "./YearSelector";
 import RatingSelector from "./RatingSelector";
 import { languageOptions } from "@/constants/movieFilterOptions";
-import {
-  DEFAULT_FILTERS,
-  DEFAULT_SORT,
-  type MovieFilters,
-} from "@/constants/filterDefaults";
-import type { MinimalMovieFilters } from "./LetterboxdStyleFilters";
+import { DEFAULT_FILTERS, DEFAULT_SORT } from "@/constants/filterDefaults";
+import type { BrowseParams } from "@/types/browseTypes";
 
-// Re-export for consumers that import from here
-export type { MovieFilters };
-
-interface MovieFiltersProps {
-  filters: MovieFilters;
-  minimalFilters?: MinimalMovieFilters;
+interface AdvancedMovieFiltersProps {
+  filters: BrowseParams;
   onFiltersChange: (
     filtersOrUpdater:
-      | Partial<MovieFilters>
-      | ((prevFilters: MovieFilters) => MovieFilters)
+      | Partial<BrowseParams>
+      | ((prevFilters: BrowseParams) => BrowseParams)
   ) => void;
   isCollapsed?: boolean;
   onToggleCollapse?: () => void;
@@ -41,12 +33,11 @@ const LANGUAGE_WIDTH = "160px";
 
 const AdvancedMovieFilters = ({
   filters,
-  minimalFilters,
   onFiltersChange,
   isCollapsed = false,
   onToggleCollapse,
   pageSource,
-}: MovieFiltersProps) => {
+}: AdvancedMovieFiltersProps) => {
   const languageCollection = useMemo(
     () =>
       createListCollection({
@@ -59,7 +50,7 @@ const AdvancedMovieFilters = ({
   );
 
   const updateFilter = useCallback(
-    <K extends keyof MovieFilters>(key: K, value: MovieFilters[K]) => {
+    <K extends keyof BrowseParams>(key: K, value: BrowseParams[K]) => {
       onFiltersChange((prevFilters) => ({
         ...prevFilters,
         [key]: value,
@@ -72,7 +63,7 @@ const AdvancedMovieFilters = ({
     onFiltersChange({ ...DEFAULT_FILTERS });
   }, [onFiltersChange]);
 
-  const hasAdvancedActiveFilters =
+  const hasActiveFilters =
     filters.query ||
     filters.genres.length > 0 ||
     filters.minYear ||
@@ -83,12 +74,6 @@ const AdvancedMovieFilters = ({
     filters.maxRuntime ||
     filters.language ||
     filters.sortBy !== DEFAULT_SORT;
-
-  const hasMinimalActiveFilters = minimalFilters
-    ? minimalFilters.genres.length > 0 || minimalFilters.year !== ""
-    : false;
-
-  const hasActiveFilters = hasAdvancedActiveFilters || hasMinimalActiveFilters;
 
   if (isCollapsed) {
     return (

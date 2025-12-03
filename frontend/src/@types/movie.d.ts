@@ -75,24 +75,8 @@ export interface Credits {
 // Frontend-Specific Types
 // ============================================================================
 
-/**
- * Frontend-specific filter types for UI state management
- * (Different from backend API parameters)
- */
-export interface MovieFilters {
-  query: string;
-  genres: number[];
-  minYear: string;
-  maxYear: string;
-  minRating: string;
-  maxRating: string;
-  minRuntime: string;
-  maxRuntime: string;
-  sortBy: string;
-}
-
-// Note: For API parameter types, use MovieQueryParams from services/movieService.ts
-// which provides proper typing for all API filter parameters
+// Note: For browse/filter state types, use BrowseParams from @/types/browseTypes.ts
+// For API parameter types, use MovieQueryParams from services/movieService.ts
 
 // ============================================================================
 // Backward Compatibility Notes

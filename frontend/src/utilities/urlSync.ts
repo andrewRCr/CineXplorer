@@ -1,6 +1,7 @@
 import type { MovieFilters as MovieFiltersType } from "@/components/movie/filters/AdvancedMovieFilters";
 import type { MinimalMovieFilters } from "@/components/movie/filters/LetterboxdStyleFilters";
 import type { SortOptionValue } from "@/constants/movieFilterOptions";
+import { DEFAULT_SORT } from "@/constants/filterDefaults";
 
 /**
  * Initializes filter state from a URL search string.
@@ -23,7 +24,7 @@ export function initializeFiltersFromUrl(search: string): {
             .filter(Boolean)
             .map((g) => parseInt(g))
             .filter((g) => !isNaN(g)) || [];
-    const sortBy = (params.get("sortBy") as SortOptionValue) || "popularity.desc";
+    const sortBy = (params.get("sortBy") as SortOptionValue) || DEFAULT_SORT;
     const year = params.get("year") || "";
     const rating = params.get("rating") || "";
     const minYear = params.get("minYear") || "";

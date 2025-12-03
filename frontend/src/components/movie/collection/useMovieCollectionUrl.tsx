@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { type MovieFilters as MovieFiltersType } from "@/components/movie/filters/AdvancedMovieFilters";
+import { DEFAULT_FILTERS, DEFAULT_SORT } from "@/constants/filterDefaults";
 import { initializeFiltersFromUrl } from "@/utilities/urlSync";
 
 // Deep comparison function for filters to prevent unnecessary re-renders
@@ -38,16 +39,7 @@ export const useMovieCollectionUrl = (
 
   // This is now the single source of truth for all filters.
   const [unifiedFilters, setUnifiedFilters] = useState<MovieFiltersType>({
-    query: "",
-    genres: [],
-    minYear: "",
-    maxYear: "",
-    minRating: "",
-    maxRating: "",
-    minRuntime: "",
-    maxRuntime: "",
-    sortBy: "popularity.desc",
-    language: "",
+    ...DEFAULT_FILTERS,
     ...defaultFilters,
   });
 
@@ -130,7 +122,7 @@ export const useMovieCollectionUrl = (
         if (
           value === "" ||
           (Array.isArray(value) && value.length === 0) ||
-          (key === "sortBy" && value === "popularity.desc")
+          (key === "sortBy" && value === DEFAULT_SORT)
         ) {
           searchParams.delete(key);
         } else if (Array.isArray(value)) {

@@ -13,21 +13,16 @@ import { FiFilter, FiX } from "react-icons/fi";
 import GenreSelector from "./GenreSelector";
 import YearSelector from "./YearSelector";
 import RatingSelector from "./RatingSelector";
-import { languageOptions, type SortOptionValue } from "@/constants/movieFilterOptions";
+import { languageOptions } from "@/constants/movieFilterOptions";
+import {
+  DEFAULT_FILTERS,
+  DEFAULT_SORT,
+  type MovieFilters,
+} from "@/constants/filterDefaults";
 import type { MinimalMovieFilters } from "./LetterboxdStyleFilters";
 
-export interface MovieFilters {
-  query: string;
-  genres: number[];
-  minYear: string;
-  maxYear: string;
-  minRating: string;
-  maxRating: string;
-  minRuntime: string;
-  maxRuntime: string;
-  sortBy: SortOptionValue;
-  language: string;
-}
+// Re-export for consumers that import from here
+export type { MovieFilters };
 
 interface MovieFiltersProps {
   filters: MovieFilters;
@@ -74,18 +69,7 @@ const AdvancedMovieFilters = ({
   );
 
   const clearFilters = useCallback(() => {
-    onFiltersChange({
-      query: "",
-      genres: [],
-      minYear: "",
-      maxYear: "",
-      minRating: "",
-      maxRating: "",
-      minRuntime: "",
-      maxRuntime: "",
-      sortBy: "popularity.desc",
-      language: "",
-    });
+    onFiltersChange({ ...DEFAULT_FILTERS });
   }, [onFiltersChange]);
 
   const hasAdvancedActiveFilters =
@@ -98,7 +82,7 @@ const AdvancedMovieFilters = ({
     filters.minRuntime ||
     filters.maxRuntime ||
     filters.language ||
-    filters.sortBy !== "popularity.desc";
+    filters.sortBy !== DEFAULT_SORT;
 
   const hasMinimalActiveFilters = minimalFilters
     ? minimalFilters.genres.length > 0 || minimalFilters.year !== ""

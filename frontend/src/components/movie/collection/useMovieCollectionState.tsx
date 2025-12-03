@@ -1,28 +1,14 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import { type MovieFilters as MovieFiltersType } from "@/components/movie/filters/AdvancedMovieFilters";
+import { DEFAULT_FILTERS, DEFAULT_SORT } from "@/constants/filterDefaults";
 import { useMovieCollectionUrl } from "./useMovieCollectionUrl";
 import {
   isLatinScriptLanguage,
   isTitleSort,
 } from "@/utilities/sortOptionFiltering";
 
-// Cached constants to prevent recreation
-const DEFAULT_FILTERS: MovieFiltersType = {
-  query: "",
-  genres: [],
-  minYear: "",
-  maxYear: "",
-  minRating: "",
-  maxRating: "",
-  minRuntime: "",
-  maxRuntime: "",
-  sortBy: "popularity.desc",
-  language: "",
-};
-
 // Pre-computed values for performance
 const STANDARD_RUNTIME_RANGES = new Set(["0-90", "90-120", "120-150"]);
-const DEFAULT_SORT = "popularity.desc";
 
 // Better hook composition with multiple related concerns
 interface UseMovieCollectionStateConfig {

@@ -1,5 +1,6 @@
 import { Box, Text, HStack, VStack } from "@chakra-ui/react";
 import type { MovieFilters as UnifiedMovieFilters } from "./AdvancedMovieFilters";
+import { DEFAULT_FILTERS } from "@/constants/filterDefaults";
 import ConnectedDropdowns from "./ConnectedDropdowns";
 import CollapsibleSearchBox from "./CollapsibleSearchBox";
 import SortDropdown from "./SortDropdown";
@@ -45,19 +46,7 @@ const LetterboxdStyleFilters = ({
   };
 
   const clearFilters = () => {
-    onFiltersChange({
-      genres: [],
-      minYear: "",
-      maxYear: "",
-      minRating: "",
-      maxRating: "",
-      // DISABLED: Runtime filtering - TMDB API returns incorrect results
-      // minRuntime: "",
-      // maxRuntime: "",
-      query: "",
-      sortBy: "popularity.desc",
-      language: "",
-    });
+    onFiltersChange({ ...DEFAULT_FILTERS });
   };
 
   const handleQueryChange = (query: string) => {

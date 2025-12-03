@@ -687,40 +687,30 @@ language filter implementation and conceptual clarity issues in the filter/sort 
 
 #### 10.4: Utilities Refactor
 
-- [ ] **10.4 Create and rename utilities**
+- [x] **10.4 Create and rename utilities**
 
-    - [ ] **10.4.a Create `frontend/src/utilities/browseParamUtils.ts`**
-        - `hasActiveBrowseParams(params: BrowseParams): boolean` - checks all 10 fields
-        - `countActiveParams(params: BrowseParams): number` - consistent count logic
-        - `isDefaultSort(sortBy: string): boolean` - uses DEFAULT_SORT
-        - Document what counts as "active" for each field type
+    - [x] **10.4.a Create `browseParamUtils.ts`** - Created with 3 utilities:
+        - `hasActiveBrowseParams()` - comprehensive check of all 10 BrowseParams fields
+        - `countActiveParams()` - counts active param groups (max 7, pairs counted as 1)
+        - `isDefaultSort()` - checks if sort matches DEFAULT_SORT
 
-    - [ ] **10.4.b Write tests for browseParamUtils**
-        - Create `browseParamUtils.test.ts`
-        - Test hasActiveBrowseParams with various combinations
-        - Test countActiveParams accuracy
-        - Test edge cases (empty strings, empty arrays, default sort)
+    - [x] **10.4.b Write tests for browseParamUtils** - 34 tests covering all utilities
 
-    - [ ] **10.4.c Rename `sortOptionFiltering.ts` → `sortAvailability.ts`**
-        - Use `git mv frontend/src/utilities/sortOptionFiltering.ts frontend/src/utilities/sortAvailability.ts`
-        - Update imports in browseOptions.ts
-        - Function names are fine (isLatinScriptLanguage, getAvailableSortOptions, isTitleSort)
-        - Move test file: `git mv sortOptionFiltering.test.ts sortAvailability.test.ts`
+    - [x] **10.4.c Rename `sortOptionFiltering.ts` → `sortAvailability.ts`**
+        - Updated imports in useMovieCollectionState.tsx, SortDropdown.tsx
+        - Renamed test file and updated describe block
 
-    - [ ] **10.4.d Rename `movieFilterMapper.ts` → `browseParamMapper.ts`**
-        - Use `git mv frontend/src/utilities/movieFilterMapper.ts frontend/src/utilities/browseParamMapper.ts`
-        - Rename function: `mapFiltersToApiParams` → `mapBrowseParamsToApi`
-        - Update parameter name: `filters` → `browseParams`
-        - Update `filterStyle` param → `browseLayout`
-        - Move test file: `git mv movieFilterMapper.test.ts browseParamMapper.test.ts`
-        - Update test file content (function names, variable names)
+    - [x] **10.4.d Rename `movieFilterMapper.ts` → `browseParamMapper.ts`**
+        - Renamed function: `mapFiltersToApiParams` → `mapBrowseParamsToApi`
+        - Updated param names: `filters` → `browseParams`, `filterStyle` → `browseLayout`
+        - Updated test file with new function/variable names
 
-    - [ ] **10.4.e Rename `urlSync.ts` → `browseUrlSync.ts`**
-        - Use `git mv frontend/src/utilities/urlSync.ts frontend/src/utilities/browseUrlSync.ts`
-        - Rename function: `initializeFiltersFromUrl` → `parseBrowseParamsFromUrl`
-        - Update return type documentation
+    - [x] **10.4.e Rename `urlSync.ts` → `browseUrlSync.ts`**
+        - Renamed function: `initializeFiltersFromUrl` → `parseBrowseParamsFromUrl`
 
-    - [ ] **10.4.f Update all utility imports across codebase**
+    - [x] **10.4.f Update all utility imports**
+        - useMovieFetchRouter.ts: updated to browseParamMapper/mapBrowseParamsToApi
+        - useMovieCollectionUrl.tsx: updated to browseUrlSync/parseBrowseParamsFromUrl
 
 ---
 

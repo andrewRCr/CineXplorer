@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent } from '@tests/helpers/test-renderer';
-import ClearFiltersButton from '../ClearFiltersButton';
+import ClearBrowseParamsButton from '../../browse/ClearBrowseParamsButton';
 import type { BrowseParams } from '@/types/browseTypes';
 
-// Create mock filters helper functions
-const createMockFilters = (overrides: Partial<BrowseParams> = {}): BrowseParams => ({
+// Create mock browse params helper functions
+const createMockBrowseParams = (overrides: Partial<BrowseParams> = {}): BrowseParams => ({
   query: '',
   genres: [],
   minYear: '',
@@ -18,13 +18,13 @@ const createMockFilters = (overrides: Partial<BrowseParams> = {}): BrowseParams 
   ...overrides,
 });
 
-describe('ClearFiltersButton Component', () => {
-  const mockOnClearFilters = vi.fn();
-  
+describe('ClearBrowseParamsButton Component', () => {
+  const mockOnClear = vi.fn();
+
   const defaultProps = {
-    filters: createMockFilters(),
-    onClearFilters: mockOnClearFilters,
-    showAdvanced: false,
+    browseParams: createMockBrowseParams(),
+    onClear: mockOnClear,
+    isAdvancedOpen: false,
   };
 
   beforeEach(() => {
@@ -32,250 +32,250 @@ describe('ClearFiltersButton Component', () => {
   });
 
   describe('Conditional Visibility Logic', () => {
-    it('hides button when no filters are active', () => {
-      render(<ClearFiltersButton {...defaultProps} />);
-      
+    it('hides button when no params are active', () => {
+      render(<ClearBrowseParamsButton {...defaultProps} />);
+
       const button = screen.getByText('Clear filters');
-      
+
       // Button should be hidden (visibility: hidden, opacity: 0)
       expect(button).not.toBeVisible();
     });
 
-    it('shows button when genres filter is active', () => {
-      const filtersWithGenres = createMockFilters({
+    it('shows button when genres param is active', () => {
+      const paramsWithGenres = createMockBrowseParams({
         genres: [28, 12] // Action and Adventure
       });
-      
-      render(<ClearFiltersButton {...defaultProps} filters={filtersWithGenres} />);
-      
+
+      render(<ClearBrowseParamsButton {...defaultProps} browseParams={paramsWithGenres} />);
+
       const button = screen.getByText('Clear filters');
       expect(button).toBeVisible();
     });
 
-    it('shows button when year filters are active', () => {
-      const filtersWithYears = createMockFilters({
+    it('shows button when year params are active', () => {
+      const paramsWithYears = createMockBrowseParams({
         minYear: '2000',
         maxYear: '2023'
       });
-      
-      render(<ClearFiltersButton {...defaultProps} filters={filtersWithYears} />);
-      
+
+      render(<ClearBrowseParamsButton {...defaultProps} browseParams={paramsWithYears} />);
+
       const button = screen.getByText('Clear filters');
       expect(button).toBeVisible();
     });
 
     it('shows button when only minYear is set', () => {
-      const filtersWithMinYear = createMockFilters({
+      const paramsWithMinYear = createMockBrowseParams({
         minYear: '2020'
       });
-      
-      render(<ClearFiltersButton {...defaultProps} filters={filtersWithMinYear} />);
-      
+
+      render(<ClearBrowseParamsButton {...defaultProps} browseParams={paramsWithMinYear} />);
+
       const button = screen.getByText('Clear filters');
       expect(button).toBeVisible();
     });
 
     it('shows button when only maxYear is set', () => {
-      const filtersWithMaxYear = createMockFilters({
+      const paramsWithMaxYear = createMockBrowseParams({
         maxYear: '2023'
       });
-      
-      render(<ClearFiltersButton {...defaultProps} filters={filtersWithMaxYear} />);
-      
+
+      render(<ClearBrowseParamsButton {...defaultProps} browseParams={paramsWithMaxYear} />);
+
       const button = screen.getByText('Clear filters');
       expect(button).toBeVisible();
     });
 
-    it('shows button when runtime filters are active', () => {
-      const filtersWithRuntime = createMockFilters({
+    it('shows button when runtime params are active', () => {
+      const paramsWithRuntime = createMockBrowseParams({
         minRuntime: '90',
         maxRuntime: '180'
       });
-      
-      render(<ClearFiltersButton {...defaultProps} filters={filtersWithRuntime} />);
-      
+
+      render(<ClearBrowseParamsButton {...defaultProps} browseParams={paramsWithRuntime} />);
+
       const button = screen.getByText('Clear filters');
       expect(button).toBeVisible();
     });
 
-    it('shows button when multiple filter types are active', () => {
-      const filtersWithMultiple = createMockFilters({
+    it('shows button when multiple param types are active', () => {
+      const paramsWithMultiple = createMockBrowseParams({
         genres: [35], // Comedy
         minYear: '2010',
         minRuntime: '120'
       });
-      
-      render(<ClearFiltersButton {...defaultProps} filters={filtersWithMultiple} />);
-      
+
+      render(<ClearBrowseParamsButton {...defaultProps} browseParams={paramsWithMultiple} />);
+
       const button = screen.getByText('Clear filters');
       expect(button).toBeVisible();
     });
 
-    it('hides button when showAdvanced is true, even with active filters', () => {
-      const filtersWithGenres = createMockFilters({
+    it('hides button when isAdvancedOpen is true, even with active params', () => {
+      const paramsWithGenres = createMockBrowseParams({
         genres: [28] // Action
       });
-      
+
       render(
-        <ClearFiltersButton 
-          {...defaultProps} 
-          filters={filtersWithGenres} 
-          showAdvanced={true}
+        <ClearBrowseParamsButton
+          {...defaultProps}
+          browseParams={paramsWithGenres}
+          isAdvancedOpen={true}
         />
       );
-      
+
       const button = screen.getByText('Clear filters');
       expect(button).not.toBeVisible();
     });
   });
 
-  describe('hasActiveFilters Computation', () => {
-    it('correctly identifies no active filters', () => {
-      const emptyFilters = createMockFilters();
-      render(<ClearFiltersButton {...defaultProps} filters={emptyFilters} />);
-      
+  describe('hasActiveParams Computation', () => {
+    it('correctly identifies no active params', () => {
+      const emptyParams = createMockBrowseParams();
+      render(<ClearBrowseParamsButton {...defaultProps} browseParams={emptyParams} />);
+
       const button = screen.getByText('Clear filters');
       expect(button).not.toBeVisible();
     });
 
-    it('correctly identifies active filters with empty arrays', () => {
-      const filtersWithEmptyGenres = createMockFilters({
+    it('correctly identifies active params with empty arrays', () => {
+      const paramsWithEmptyGenres = createMockBrowseParams({
         genres: [] // Empty array should not count as active
       });
-      render(<ClearFiltersButton {...defaultProps} filters={filtersWithEmptyGenres} />);
-      
+      render(<ClearBrowseParamsButton {...defaultProps} browseParams={paramsWithEmptyGenres} />);
+
       const button = screen.getByText('Clear filters');
       expect(button).not.toBeVisible();
     });
 
-    it('correctly identifies active filters with empty strings', () => {
-      const filtersWithEmptyStrings = createMockFilters({
+    it('correctly identifies active params with empty strings', () => {
+      const paramsWithEmptyStrings = createMockBrowseParams({
         minYear: '', // Empty string should not count as active
         maxYear: '',
         minRuntime: '',
         maxRuntime: ''
       });
-      render(<ClearFiltersButton {...defaultProps} filters={filtersWithEmptyStrings} />);
-      
+      render(<ClearBrowseParamsButton {...defaultProps} browseParams={paramsWithEmptyStrings} />);
+
       const button = screen.getByText('Clear filters');
       expect(button).not.toBeVisible();
     });
 
-    it('ignores query field in hasActiveFilters calculation', () => {
-      // The component logic only checks specific filter fields, not query
-      const filtersWithQuery = createMockFilters({
+    it('ignores query field in hasActiveParams calculation', () => {
+      // The component logic only checks specific param fields, not query
+      const paramsWithQuery = createMockBrowseParams({
         query: 'batman' // Query should not affect visibility
       });
-      render(<ClearFiltersButton {...defaultProps} filters={filtersWithQuery} />);
-      
+      render(<ClearBrowseParamsButton {...defaultProps} browseParams={paramsWithQuery} />);
+
       const button = screen.getByText('Clear filters');
       expect(button).not.toBeVisible();
     });
 
-    it('ignores sortBy field in hasActiveFilters calculation', () => {
-      const filtersWithSort = createMockFilters({
+    it('ignores sortBy field in hasActiveParams calculation', () => {
+      const paramsWithSort = createMockBrowseParams({
         sortBy: 'vote_average.desc'
       });
-      render(<ClearFiltersButton {...defaultProps} filters={filtersWithSort} />);
-      
+      render(<ClearBrowseParamsButton {...defaultProps} browseParams={paramsWithSort} />);
+
       const button = screen.getByText('Clear filters');
       expect(button).not.toBeVisible();
     });
   });
 
   describe('User Interactions', () => {
-    it('calls onClearFilters when button is clicked', () => {
-      const filtersWithGenres = createMockFilters({
+    it('calls onClear when button is clicked', () => {
+      const paramsWithGenres = createMockBrowseParams({
         genres: [28] // Action
       });
-      
-      render(<ClearFiltersButton {...defaultProps} filters={filtersWithGenres} />);
-      
+
+      render(<ClearBrowseParamsButton {...defaultProps} browseParams={paramsWithGenres} />);
+
       const button = screen.getByText('Clear filters');
       fireEvent.click(button);
-      
-      expect(mockOnClearFilters).toHaveBeenCalledTimes(1);
+
+      expect(mockOnClear).toHaveBeenCalledTimes(1);
     });
 
     it('button is clickable when visible', () => {
-      const filtersWithGenres = createMockFilters({
+      const paramsWithGenres = createMockBrowseParams({
         genres: [28]
       });
-      
-      render(<ClearFiltersButton {...defaultProps} filters={filtersWithGenres} />);
-      
+
+      render(<ClearBrowseParamsButton {...defaultProps} browseParams={paramsWithGenres} />);
+
       const button = screen.getByText('Clear filters');
       expect(button).toBeEnabled();
       expect(button).toBeVisible();
     });
 
     it('handles multiple clicks correctly', () => {
-      const filtersWithGenres = createMockFilters({
+      const paramsWithGenres = createMockBrowseParams({
         genres: [28, 35] // Action and Comedy
       });
-      
-      render(<ClearFiltersButton {...defaultProps} filters={filtersWithGenres} />);
-      
+
+      render(<ClearBrowseParamsButton {...defaultProps} browseParams={paramsWithGenres} />);
+
       const button = screen.getByText('Clear filters');
       fireEvent.click(button);
       fireEvent.click(button);
       fireEvent.click(button);
-      
-      expect(mockOnClearFilters).toHaveBeenCalledTimes(3);
+
+      expect(mockOnClear).toHaveBeenCalledTimes(3);
     });
   });
 
   describe('Component Structure and Styling', () => {
     it('renders with correct button styling classes', () => {
-      const filtersWithGenres = createMockFilters({
+      const paramsWithGenres = createMockBrowseParams({
         genres: [28]
       });
-      
-      render(<ClearFiltersButton {...defaultProps} filters={filtersWithGenres} />);
-      
+
+      render(<ClearBrowseParamsButton {...defaultProps} browseParams={paramsWithGenres} />);
+
       const button = screen.getByText('Clear filters');
-      
+
       // Button should be rendered with expected text
       expect(button).toBeInTheDocument();
       expect(button.tagName).toBe('BUTTON');
     });
 
     it('applies correct container positioning', () => {
-      const filtersWithGenres = createMockFilters({
+      const paramsWithGenres = createMockBrowseParams({
         genres: [28]
       });
-      
-      render(<ClearFiltersButton {...defaultProps} filters={filtersWithGenres} />);
-      
+
+      render(<ClearBrowseParamsButton {...defaultProps} browseParams={paramsWithGenres} />);
+
       const button = screen.getByText('Clear filters');
       const container = button.closest('div');
-      
+
       expect(container).toBeInTheDocument();
       // Container should exist and contain the button
     });
 
-    it('renders consistently across different filter combinations', () => {
-      // Test with different filter combinations to ensure consistent rendering
+    it('renders consistently across different param combinations', () => {
+      // Test with different param combinations to ensure consistent rendering
       const testCases = [
         { genres: [28] },
         { minYear: '2020' },
         { minRuntime: '90', maxRuntime: '120' },
         { genres: [35, 18], minYear: '2010', maxYear: '2023' }
       ];
-      
-      testCases.forEach((filterOverrides) => {
-        const filters = createMockFilters(filterOverrides);
+
+      testCases.forEach((paramOverrides) => {
+        const browseParams = createMockBrowseParams(paramOverrides);
         const { unmount } = render(
-          <ClearFiltersButton 
-            {...defaultProps} 
-            filters={filters} 
+          <ClearBrowseParamsButton
+            {...defaultProps}
+            browseParams={browseParams}
           />
         );
-        
+
         const button = screen.getByText('Clear filters');
         expect(button).toBeVisible();
         expect(button).toBeEnabled();
-        
+
         unmount(); // Clean up for next iteration
       });
     });
@@ -283,19 +283,19 @@ describe('ClearFiltersButton Component', () => {
 
   describe('Accessibility', () => {
     it('provides accessible button element', () => {
-      const filtersWithGenres = createMockFilters({
+      const paramsWithGenres = createMockBrowseParams({
         genres: [28]
       });
-      
-      render(<ClearFiltersButton {...defaultProps} filters={filtersWithGenres} />);
-      
+
+      render(<ClearBrowseParamsButton {...defaultProps} browseParams={paramsWithGenres} />);
+
       const button = screen.getByRole('button', { name: /clear filters/i });
       expect(button).toBeInTheDocument();
     });
 
     it('maintains proper button semantics when hidden', () => {
-      render(<ClearFiltersButton {...defaultProps} />);
-      
+      render(<ClearBrowseParamsButton {...defaultProps} />);
+
       // For hidden elements, use getByText since getByRole might not find hidden elements
       const button = screen.getByText('Clear filters');
       expect(button).toBeInTheDocument();
@@ -304,131 +304,131 @@ describe('ClearFiltersButton Component', () => {
     });
 
     it('supports keyboard interaction when visible', () => {
-      const filtersWithGenres = createMockFilters({
+      const paramsWithGenres = createMockBrowseParams({
         genres: [28]
       });
-      
-      render(<ClearFiltersButton {...defaultProps} filters={filtersWithGenres} />);
-      
+
+      render(<ClearBrowseParamsButton {...defaultProps} browseParams={paramsWithGenres} />);
+
       const button = screen.getByRole('button', { name: /clear filters/i });
-      
+
       // Should be focusable
       button.focus();
       expect(button).toHaveFocus();
-      
+
       // For Chakra UI buttons, test the actual click rather than keydown
       // since the framework handles the keyboard to click conversion
       fireEvent.click(button);
-      expect(mockOnClearFilters).toHaveBeenCalledTimes(1);
+      expect(mockOnClear).toHaveBeenCalledTimes(1);
     });
 
     it('supports standard button interaction patterns', () => {
-      const filtersWithGenres = createMockFilters({
+      const paramsWithGenres = createMockBrowseParams({
         genres: [28]
       });
-      
-      render(<ClearFiltersButton {...defaultProps} filters={filtersWithGenres} />);
-      
+
+      render(<ClearBrowseParamsButton {...defaultProps} browseParams={paramsWithGenres} />);
+
       const button = screen.getByRole('button', { name: /clear filters/i });
-      
+
       // Test focus and click pattern (standard interaction)
       button.focus();
       expect(button).toHaveFocus();
-      
+
       fireEvent.click(button);
-      expect(mockOnClearFilters).toHaveBeenCalledTimes(1);
+      expect(mockOnClear).toHaveBeenCalledTimes(1);
     });
   });
 
   describe('Edge Cases', () => {
-    it('handles undefined or null filter values gracefully', () => {
+    it('handles undefined or null param values gracefully', () => {
       // Test with potentially undefined values that might come from form state
       // Note: Component logic uses !== '', so undefined and null are truthy
-      const edgeCaseFilters = createMockFilters({
+      const edgeCaseParams = createMockBrowseParams({
         genres: [], // Empty array - falsy
         minYear: '', // Empty string - falsy
         maxYear: undefined as string | undefined, // undefined !== '' is true - will show button
-      minRuntime: null as unknown as string | undefined, // null !== '' is true - will show button
+        minRuntime: null as unknown as string | undefined, // null !== '' is true - will show button
         maxRuntime: ''
       });
-      
-      render(<ClearFiltersButton {...defaultProps} filters={edgeCaseFilters} />);
-      
+
+      render(<ClearBrowseParamsButton {...defaultProps} browseParams={edgeCaseParams} />);
+
       const button = screen.getByText('Clear filters');
       // Button should be visible because undefined !== '' and null !== ''
       expect(button).toBeVisible();
     });
 
     it('handles rapid state changes', () => {
-      const { rerender } = render(<ClearFiltersButton {...defaultProps} />);
-      
-      // Initially no filters
+      const { rerender } = render(<ClearBrowseParamsButton {...defaultProps} />);
+
+      // Initially no params
       let button = screen.getByText('Clear filters');
       expect(button).not.toBeVisible();
-      
-      // Add filters
-      const filtersWithGenres = createMockFilters({ genres: [28] });
-      rerender(<ClearFiltersButton {...defaultProps} filters={filtersWithGenres} />);
-      
+
+      // Add params
+      const paramsWithGenres = createMockBrowseParams({ genres: [28] });
+      rerender(<ClearBrowseParamsButton {...defaultProps} browseParams={paramsWithGenres} />);
+
       button = screen.getByText('Clear filters');
       expect(button).toBeVisible();
-      
-      // Remove filters
-      rerender(<ClearFiltersButton {...defaultProps} />);
-      
+
+      // Remove params
+      rerender(<ClearBrowseParamsButton {...defaultProps} />);
+
       button = screen.getByText('Clear filters');
       expect(button).not.toBeVisible();
     });
 
-    it('handles showAdvanced state changes', () => {
-      const filtersWithGenres = createMockFilters({ genres: [28] });
-      
+    it('handles isAdvancedOpen state changes', () => {
+      const paramsWithGenres = createMockBrowseParams({ genres: [28] });
+
       const { rerender } = render(
-        <ClearFiltersButton 
-          {...defaultProps} 
-          filters={filtersWithGenres}
-          showAdvanced={false}
+        <ClearBrowseParamsButton
+          {...defaultProps}
+          browseParams={paramsWithGenres}
+          isAdvancedOpen={false}
         />
       );
-      
+
       // Initially visible
       let button = screen.getByText('Clear filters');
       expect(button).toBeVisible();
-      
-      // Hide when showAdvanced becomes true
+
+      // Hide when isAdvancedOpen becomes true
       rerender(
-        <ClearFiltersButton 
-          {...defaultProps} 
-          filters={filtersWithGenres}
-          showAdvanced={true}
+        <ClearBrowseParamsButton
+          {...defaultProps}
+          browseParams={paramsWithGenres}
+          isAdvancedOpen={true}
         />
       );
-      
+
       button = screen.getByText('Clear filters');
       expect(button).not.toBeVisible();
     });
 
     it('maintains functionality after prop updates', () => {
-      const initialFilters = createMockFilters({ genres: [28] });
-      
+      const initialParams = createMockBrowseParams({ genres: [28] });
+
       const { rerender } = render(
-        <ClearFiltersButton {...defaultProps} filters={initialFilters} />
+        <ClearBrowseParamsButton {...defaultProps} browseParams={initialParams} />
       );
-      
+
       // Click initial button
       let button = screen.getByText('Clear filters');
       fireEvent.click(button);
-      expect(mockOnClearFilters).toHaveBeenCalledTimes(1);
-      
-      // Update filters and click again
-      const updatedFilters = createMockFilters({ minYear: '2020' });
+      expect(mockOnClear).toHaveBeenCalledTimes(1);
+
+      // Update params and click again
+      const updatedParams = createMockBrowseParams({ minYear: '2020' });
       rerender(
-        <ClearFiltersButton {...defaultProps} filters={updatedFilters} />
+        <ClearBrowseParamsButton {...defaultProps} browseParams={updatedParams} />
       );
-      
+
       button = screen.getByText('Clear filters');
       fireEvent.click(button);
-      expect(mockOnClearFilters).toHaveBeenCalledTimes(2);
+      expect(mockOnClear).toHaveBeenCalledTimes(2);
     });
   });
 });

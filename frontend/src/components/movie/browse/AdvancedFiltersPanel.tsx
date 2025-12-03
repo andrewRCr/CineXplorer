@@ -10,19 +10,19 @@ import {
   createListCollection,
 } from "@chakra-ui/react";
 import { FiFilter, FiX } from "react-icons/fi";
-import GenreSelector from "./GenreSelector";
-import YearSelector from "./YearSelector";
-import RatingSelector from "./RatingSelector";
+import GenreSelector from "../filters/GenreSelector";
+import YearSelector from "../filters/YearSelector";
+import RatingSelector from "../filters/RatingSelector";
 import { languageOptions } from "@/constants/browseOptions";
 import { DEFAULT_BROWSE_PARAMS, DEFAULT_SORT } from "@/constants/browseDefaults";
 import type { BrowseParams } from "@/types/browseTypes";
 
-interface AdvancedMovieFiltersProps {
-  filters: BrowseParams;
-  onFiltersChange: (
-    filtersOrUpdater:
+interface AdvancedFiltersPanelProps {
+  browseParams: BrowseParams;
+  onBrowseParamsChange: (
+    paramsOrUpdater:
       | Partial<BrowseParams>
-      | ((prevFilters: BrowseParams) => BrowseParams)
+      | ((prev: BrowseParams) => BrowseParams)
   ) => void;
   isCollapsed?: boolean;
   onToggleCollapse?: () => void;
@@ -31,13 +31,13 @@ interface AdvancedMovieFiltersProps {
 
 const LANGUAGE_WIDTH = "160px";
 
-const AdvancedMovieFilters = ({
-  filters,
-  onFiltersChange,
+const AdvancedFiltersPanel = ({
+  browseParams,
+  onBrowseParamsChange,
   isCollapsed = false,
   onToggleCollapse,
   pageSource,
-}: AdvancedMovieFiltersProps) => {
+}: AdvancedFiltersPanelProps) => {
   const languageCollection = useMemo(
     () =>
       createListCollection({
@@ -49,31 +49,31 @@ const AdvancedMovieFilters = ({
     []
   );
 
-  const updateFilter = useCallback(
+  const updateParam = useCallback(
     <K extends keyof BrowseParams>(key: K, value: BrowseParams[K]) => {
-      onFiltersChange((prevFilters) => ({
-        ...prevFilters,
+      onBrowseParamsChange((prev) => ({
+        ...prev,
         [key]: value,
       }));
     },
-    [onFiltersChange]
+    [onBrowseParamsChange]
   );
 
-  const clearFilters = useCallback(() => {
-    onFiltersChange({ ...DEFAULT_BROWSE_PARAMS });
-  }, [onFiltersChange]);
+  const clearBrowseParams = useCallback(() => {
+    onBrowseParamsChange({ ...DEFAULT_BROWSE_PARAMS });
+  }, [onBrowseParamsChange]);
 
-  const hasActiveFilters =
-    filters.query ||
-    filters.genres.length > 0 ||
-    filters.minYear ||
-    filters.maxYear ||
-    filters.minRating ||
-    filters.maxRating ||
-    filters.minRuntime ||
-    filters.maxRuntime ||
-    filters.language ||
-    filters.sortBy !== DEFAULT_SORT;
+  const hasActiveParams =
+    browseParams.query ||
+    browseParams.genres.length > 0 ||
+    browseParams.minYear ||
+    browseParams.maxYear ||
+    browseParams.minRating ||
+    browseParams.maxRating ||
+    browseParams.minRuntime ||
+    browseParams.maxRuntime ||
+    browseParams.language ||
+    browseParams.sortBy !== DEFAULT_SORT;
 
   if (isCollapsed) {
     return (
@@ -91,7 +91,7 @@ const AdvancedMovieFilters = ({
           }}
         >
           <FiFilter style={{ marginRight: "6px" }} />
-          {hasActiveFilters ? "Filters (Active)" : "Filters"}
+          {hasActiveParams ? "Filters (Active)" : "Filters"}
         </Button>
       </Box>
     );
@@ -113,9 +113,9 @@ const AdvancedMovieFilters = ({
           Advanced Filters
         </Text>
         <HStack>
-          {hasActiveFilters && (
+          {hasActiveParams && (
             <Button
-              onClick={clearFilters}
+              onClick={clearBrowseParams}
               size="sm"
               variant="ghost"
               color="destructive"
@@ -142,8 +142,8 @@ const AdvancedMovieFilters = ({
 
       <VStack gap={4} align="stretch">
         <GenreSelector
-          selectedGenres={filters.genres}
-          onChange={(genres) => updateFilter("genres", genres)}
+          selectedGenres={browseParams.genres}
+          onChange={(genres) => updateParam("genres", genres)}
         />
 
         <Separator borderColor="border-subtle-01" />
@@ -151,19 +151,19 @@ const AdvancedMovieFilters = ({
         <HStack justify="center" align="start" gap={8}>
           <Box>
             <YearSelector
-              minYear={filters.minYear}
-              maxYear={filters.maxYear}
-              onMinYearChange={(year) => updateFilter("minYear", year)}
-              onMaxYearChange={(year) => updateFilter("maxYear", year)}
+              minYear={browseParams.minYear}
+              maxYear={browseParams.maxYear}
+              onMinYearChange={(year) => updateParam("minYear", year)}
+              onMaxYearChange={(year) => updateParam("maxYear", year)}
               pageSource={pageSource}
             />
           </Box>
           <Box>
             <RatingSelector
-              minRating={filters.minRating}
-              maxRating={filters.maxRating}
-              onMinRatingChange={(rating) => updateFilter("minRating", rating)}
-              onMaxRatingChange={(rating) => updateFilter("maxRating", rating)}
+              minRating={browseParams.minRating}
+              maxRating={browseParams.maxRating}
+              onMinRatingChange={(rating) => updateParam("minRating", rating)}
+              onMaxRatingChange={(rating) => updateParam("maxRating", rating)}
             />
           </Box>
           <Box>
@@ -172,9 +172,9 @@ const AdvancedMovieFilters = ({
             </Text>
             <Select.Root
               collection={languageCollection}
-              value={filters.language ? [filters.language] : [""]}
+              value={browseParams.language ? [browseParams.language] : [""]}
               onValueChange={(details) => {
-                updateFilter("language", details.value[0] ?? "");
+                updateParam("language", details.value[0] ?? "");
               }}
               positioning={{ placement: "bottom-start", gutter: 2 }}
             >
@@ -214,7 +214,7 @@ const AdvancedMovieFilters = ({
                   overflowY="auto"
                 >
                   {languageCollection.items.map((item) => {
-                    const isSelected = filters.language === item.value;
+                    const isSelected = browseParams.language === item.value;
                     return (
                       <Select.Item
                         key={item.value}
@@ -240,4 +240,4 @@ const AdvancedMovieFilters = ({
   );
 };
 
-export default AdvancedMovieFilters;
+export default AdvancedFiltersPanel;

@@ -1,14 +1,17 @@
 /**
  * Tests for useMovieFetchRouter hook
  *
- * This hook routes movie fetch requests to the appropriate endpoint based on filter state,
- * including smart buffer pagination metadata tracking.
+ * This hook wraps movie fetchers with browse parameter mapping and pagination
+ * metadata support. It always uses the provided base fetcher (discover, top-rated, etc.)
+ *
+ * Note: Search endpoint routing was removed - browse always uses base fetcher.
+ * Query field in BrowseParams is reserved for potential future use.
  *
  * Test coverage:
  * - Accepts tmdb_page_start parameter in routed fetcher
  * - Passes tmdb_page_start to base fetcher (discover/top-rated/etc)
- * - Passes tmdb_page_start to search endpoint
  * - Backward compatibility when parameter omitted
+ * - Always uses base fetcher (even when query is present)
  */
 
 import { renderHook } from '@testing-library/react';
@@ -16,7 +19,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useMovieFetchRouter } from '../useMovieFetchRouter';
 import type { PaginatedMoviesResponse } from '@/types/movie';
 import type { BrowseParams } from '@/types/browseTypes';
-import * as movieService from '@/services/movieService';
 
 /**
  * Helper to create mock paginated response
@@ -193,29 +195,22 @@ describe('useMovieFetchRouter - pagination metadata passing', () => {
     });
 
     /**
-     * Test: tmdb_page_start passes through to search endpoint
+     * Test: Always uses base fetcher (search routing removed)
      *
-     * Scenario: User has active search query
-     * Expected: Parameter included in search endpoint params
+     * Scenario: Query field is present in browse params
+     * Expected: Still uses base fetcher, not search endpoint
+     *
+     * Note: Search routing was intentionally removed. Query field
+     * is reserved for potential future use but doesn't trigger
+     * search endpoint switching in the current implementation.
      */
-    describe('search endpoint - tmdb_page_start passing', () => {
-        it('should include tmdb_page_start in search params when provided', () => {
-            // Arrange: Mock search service
-            const mockSearchService = {
-                getPaginated: vi.fn(() => ({
-                    request: Promise.resolve({ data: createMockPaginatedResponse() }),
-                    cancel: vi.fn(),
-                })),
-            };
-
-            vi.spyOn(movieService, 'fetchSearchMoviesService', 'get').mockReturnValue(
-                mockSearchService as unknown as typeof movieService.fetchSearchMoviesService
-            );
-
+    describe('query handling - always uses base fetcher', () => {
+        it('should use base fetcher even when query is present', () => {
+            // Arrange
             const mockBaseFetcher = createMockBaseFetcher();
             const mockFilters: BrowseParams = {
                 ...createEmptyFilters(),
-                query: 'avatar',
+                query: 'avatar', // Query is present but should be ignored for routing
                 genres: [28],
             };
 
@@ -227,55 +222,18 @@ describe('useMovieFetchRouter - pagination metadata passing', () => {
                 })
             );
 
-            // Act: Search with pagination metadata
+            // Act: Request with query in filters
             result.current(2, 7);
 
-            // Assert: Search service receives tmdb_page_start
-            expect(mockSearchService.getPaginated).toHaveBeenCalledWith(
+            // Assert: Base fetcher is called (not search endpoint)
+            // Query gets passed through via mapBrowseParamsToApi
+            expect(mockBaseFetcher).toHaveBeenCalledWith(
+                2,
                 expect.objectContaining({
-                    page: 2,
-                    query: 'avatar',
                     genres: '28',
-                    tmdb_page_start: 7,
-                })
-            );
-        });
-
-        it('should omit tmdb_page_start from search params when undefined', () => {
-            // Arrange: Mock search service
-            const mockSearchService = {
-                getPaginated: vi.fn(() => ({
-                    request: Promise.resolve({ data: createMockPaginatedResponse() }),
-                    cancel: vi.fn(),
-                })),
-            };
-
-            vi.spyOn(movieService, 'fetchSearchMoviesService', 'get').mockReturnValue(
-                mockSearchService as unknown as typeof movieService.fetchSearchMoviesService
-            );
-
-            const mockBaseFetcher = createMockBaseFetcher();
-            const mockFilters: BrowseParams = {
-                ...createEmptyFilters(),
-                query: 'avatar',
-            };
-
-            const { result } = renderHook(() =>
-                useMovieFetchRouter({
-                    fetcher: mockBaseFetcher,
-                    filters: mockFilters,
-                    filterStyle: 'expanded',
-                })
-            );
-
-            // Act: First search request without metadata
-            result.current(1);
-
-            // Assert: tmdb_page_start not in params object
-            expect(mockSearchService.getPaginated).toHaveBeenCalledWith(
-                expect.not.objectContaining({
-                    tmdb_page_start: expect.anything(),
-                })
+                    query: 'avatar',
+                }),
+                7
             );
         });
     });

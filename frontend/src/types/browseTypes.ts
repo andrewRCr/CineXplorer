@@ -39,7 +39,7 @@ export interface SortOption {
  * Browse parameters - complete state for movie browsing UI
  *
  * Fields:
- * - query: Search text (empty string = no search, uses discover endpoint)
+ * - query: Search text (reserved for future use - currently unused in browse flow)
  * - genres: Array of TMDB genre IDs (empty = all genres)
  * - minYear/maxYear: Year range filter (empty string = no constraint)
  * - minRating/maxRating: Rating range filter (empty string = no constraint)

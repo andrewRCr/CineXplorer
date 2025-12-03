@@ -21,7 +21,7 @@ import { DEFAULT_SORT } from "@/constants/browseDefaults";
  * Checks if any browse parameters are active (non-default).
  *
  * This is the comprehensive check covering all 10 BrowseParams fields:
- * - query: search text
+ * - query: search text (reserved for future use)
  * - genres: genre filter array
  * - minYear/maxYear: year range
  * - minRating/maxRating: rating range

@@ -1,50 +1,44 @@
 import { Box, Text, HStack, VStack } from "@chakra-ui/react";
 import type { BrowseParams } from "@/types/browseTypes";
 import { DEFAULT_BROWSE_PARAMS } from "@/constants/browseDefaults";
-import ConnectedDropdowns from "./ConnectedDropdowns";
-import CollapsibleSearchBox from "./CollapsibleSearchBox";
-import SortDropdown from "./SortDropdown";
-import ClearFiltersButton from "./ClearFiltersButton";
+import ConnectedDropdowns from "../filters/ConnectedDropdowns";
+import SortDropdown from "../filters/SortDropdown";
+import ClearBrowseParamsButton from "./ClearBrowseParamsButton";
 
-interface LetterboxdStyleFiltersProps {
-  filters: BrowseParams;
-  onFiltersChange: (
-    filters:
+interface QuickBrowseBarProps {
+  browseParams: BrowseParams;
+  onBrowseParamsChange: (
+    params:
       | Partial<BrowseParams>
       | ((prev: BrowseParams) => BrowseParams)
   ) => void;
-  showAdvanced?: boolean;
+  isAdvancedOpen?: boolean;
   onToggleAdvanced?: () => void;
-  pageSource?: string; // Add page context for smart disabling
+  pageSource?: string;
 }
 
-const LetterboxdStyleFilters = ({
-  filters,
-  onFiltersChange,
-  showAdvanced = false,
+const QuickBrowseBar = ({
+  browseParams,
+  onBrowseParamsChange,
+  isAdvancedOpen = false,
   onToggleAdvanced,
   pageSource,
-}: LetterboxdStyleFiltersProps) => {
-  const updateFilter = <K extends keyof BrowseParams>(
+}: QuickBrowseBarProps) => {
+  const updateParam = <K extends keyof BrowseParams>(
     key: K,
     value: BrowseParams[K]
   ) => {
-    onFiltersChange((prevFilters) => {
-      const newFilters = { ...prevFilters, [key]: value };
-      return newFilters;
+    onBrowseParamsChange((prev) => {
+      return { ...prev, [key]: value };
     });
   };
 
-  const clearFilters = () => {
-    onFiltersChange({ ...DEFAULT_BROWSE_PARAMS });
-  };
-
-  const handleQueryChange = (query: string) => {
-    updateFilter("query", query);
+  const clearBrowseParams = () => {
+    onBrowseParamsChange({ ...DEFAULT_BROWSE_PARAMS });
   };
 
   const handleSortChange = (sortBy: string) => {
-    updateFilter("sortBy", sortBy as BrowseParams["sortBy"]);
+    updateParam("sortBy", sortBy as BrowseParams["sortBy"]);
   };
 
   return (
@@ -79,35 +73,26 @@ const LetterboxdStyleFilters = ({
             Browse by
           </Text>
 
-          {/* Connected dropdowns and search */}
-          <HStack gap={1} align="center" flex="1" maxW="1000px">
+          {/* Browse controls */}
+          <HStack gap={1} align="center">
             {/* Wrapper for dropdowns and clear button */}
             <Box position="relative">
               <ConnectedDropdowns
-                filters={filters}
-                onFiltersChange={onFiltersChange}
+                filters={browseParams}
+                onFiltersChange={onBrowseParamsChange}
                 onToggleAdvanced={onToggleAdvanced}
                 pageSource={pageSource}
               />
-              <ClearFiltersButton
-                filters={filters}
-                onClearFilters={clearFilters}
-                showAdvanced={showAdvanced}
+              <ClearBrowseParamsButton
+                browseParams={browseParams}
+                onClear={clearBrowseParams}
+                isAdvancedOpen={isAdvancedOpen}
               />
             </Box>
 
             <SortDropdown
-              filters={filters}
+              filters={browseParams}
               onSortChange={handleSortChange}
-              pageSource={pageSource}
-            />
-
-            {/* Spacer before search */}
-            <Box width="20px" flexShrink={0} />
-
-            <CollapsibleSearchBox
-              query={filters.query}
-              onQueryChange={handleQueryChange}
               pageSource={pageSource}
             />
           </HStack>
@@ -117,4 +102,4 @@ const LetterboxdStyleFilters = ({
   );
 };
 
-export default LetterboxdStyleFilters;
+export default QuickBrowseBar;

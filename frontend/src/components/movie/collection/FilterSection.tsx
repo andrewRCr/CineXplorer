@@ -1,6 +1,6 @@
 import { Box } from "@chakra-ui/react";
-import AdvancedMovieFilters from "@/components/movie/filters/AdvancedMovieFilters";
-import LetterboxdStyleFilters from "@/components/movie/filters/LetterboxdStyleFilters";
+import AdvancedFiltersPanel from "@/components/movie/browse/AdvancedFiltersPanel";
+import QuickBrowseBar from "@/components/movie/browse/QuickBrowseBar";
 import type { BrowseParams } from "@/types/browseTypes";
 
 interface FilterSectionProps {
@@ -37,10 +37,10 @@ const FilterSection = ({
       {/* Minimal filter style */}
       {filterStyle === "minimal" && (
         <Box flexShrink={0} mb={2} minHeight="40px">
-          <LetterboxdStyleFilters
-            filters={filters}
-            onFiltersChange={onFiltersChange}
-            showAdvanced={showAdvanced}
+          <QuickBrowseBar
+            browseParams={filters}
+            onBrowseParamsChange={onFiltersChange}
+            isAdvancedOpen={showAdvanced}
             onToggleAdvanced={onToggleAdvanced}
             pageSource={source}
           />
@@ -50,9 +50,9 @@ const FilterSection = ({
       {/* Expanded filter style */}
       {filterStyle === "expanded" && (
         <Box flexShrink={0} mb={6} minHeight="200px">
-          <AdvancedMovieFilters
-            filters={filters}
-            onFiltersChange={onFiltersChange}
+          <AdvancedFiltersPanel
+            browseParams={filters}
+            onBrowseParamsChange={onFiltersChange}
             isCollapsed={isFiltersCollapsed}
             onToggleCollapse={onToggleCollapse}
             pageSource={source}
@@ -63,9 +63,9 @@ const FilterSection = ({
       {/* Advanced filters overlay for minimal style */}
       {showAdvanced && filterStyle === "minimal" && (
         <Box flexShrink={0} mb={6}>
-          <AdvancedMovieFilters
-            filters={filters}
-            onFiltersChange={onFiltersChange}
+          <AdvancedFiltersPanel
+            browseParams={filters}
+            onBrowseParamsChange={onFiltersChange}
             isCollapsed={false}
             onToggleCollapse={() => onToggleAdvanced()}
             pageSource={source}

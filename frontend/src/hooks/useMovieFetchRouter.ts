@@ -2,16 +2,14 @@ import { useCallback, useRef } from "react";
 import type { PaginatedMoviesResponse } from "@/services/movieService";
 import type { BrowseParams } from "@/types/browseTypes";
 import { mapBrowseParamsToApi } from "@/utilities/browseParamMapper";
-import { fetchSearchMoviesService } from "@/services/movieService";
 
 /**
  * Movie Fetch Router Hook
  *
- * **Purpose:** Routes movie fetch requests to the appropriate endpoint based on filter state,
- * automatically switching between search and discover/browse endpoints.
+ * **Purpose:** Wraps movie fetchers with browse parameter mapping, providing a
+ * consistent interface for the pagination hooks.
  *
  * **Responsibilities:**
- * - Detects search queries and routes to search endpoint automatically
  * - Maps UI browse state to API parameters via mapBrowseParamsToApi
  * - Manages stable references to prevent unnecessary re-renders
  * - Returns a fetcher function compatible with the pagination hooks
@@ -25,18 +23,15 @@ import { fetchSearchMoviesService } from "@/services/movieService";
  * ```typescript
  * const routedFetcher = useMovieFetchRouter({
  *   fetcher: discoverMoviesFetcher,  // Base fetcher from routeConfigHelper
- *   filters: { query: 'avatar', genres: [28] },  // UI filter state
- *   filterStyle: 'expanded'
+ *   browseParams: { genres: [28], sortBy: 'popularity.desc' },
+ *   browseLayout: 'expanded'
  * });
- *
- * // When filters.query exists → automatically routes to search endpoint
- * // When filters.query is empty → uses provided base fetcher (discover/browse)
  * ```
  *
  * @param options.fetcher - Base fetcher from routeConfigHelper (discover, top-rated, etc.)
- * @param options.filters - Current UI filter state including optional search query
- * @param options.filterStyle - UI filter layout mode (affects parameter mapping)
- * @returns Routed fetcher function that accepts a page number
+ * @param options.filters - Current UI browse state
+ * @param options.filterStyle - UI browse layout mode (affects parameter mapping)
+ * @returns Fetcher function that accepts a page number
  */
 
 // Type for fetcher function signature
@@ -76,45 +71,21 @@ export function useMovieFetchRouter({
     const routedFetcher = useCallback(
         (page: number, tmdb_page_start?: number) => {
             // Get current values from refs
-            const currentFilters = filtersRef.current;
-            const currentFilterStyle = filterStyleRef.current;
+            const currentBrowseParams = filtersRef.current;
+            const currentBrowseLayout = filterStyleRef.current;
             const currentBaseFetcher = baseFetcherRef.current;
-
-            // Check if there's a search query - if so, use search endpoint instead of base fetcher
-            const hasSearchQuery = !!currentFilters.query?.trim();
 
             // Map browse params to API parameters
             const apiParams = mapBrowseParamsToApi(
-                currentFilters,
-                currentFilterStyle
+                currentBrowseParams,
+                currentBrowseLayout
             );
 
-            if (hasSearchQuery) {
-                // Route to search endpoint
-                const query = currentFilters.query;
-
-                // Remove query from apiParams since it's handled separately by search endpoint
-                const otherParams = Object.fromEntries(
-                    Object.entries(apiParams).filter(([key]) => key !== "query")
-                );
-
-                const searchParams = {
-                    page,
-                    query,
-                    ...otherParams,
-                    ...(tmdb_page_start !== undefined && { tmdb_page_start }),
-                };
-
-                return fetchSearchMoviesService.getPaginated<PaginatedMoviesResponse>(
-                    searchParams
-                );
-            } else {
-                // Route to base fetcher (discover, top-rated, etc.)
-                return currentBaseFetcher(page, apiParams, tmdb_page_start);
-            }
+            // Always use the base fetcher (discover, top-rated, etc.)
+            return currentBaseFetcher(page, apiParams, tmdb_page_start);
         },
         // eslint-disable-next-line react-hooks/exhaustive-deps
-        [filters, filterStyle] // Recreate fetcher when filters change
+        [filters, filterStyle] // Recreate fetcher when browse params change
     );
 
     return routedFetcher;

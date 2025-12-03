@@ -1022,21 +1022,22 @@ all themes, and color associations are intuitive (green=safe, red=restricted).
 
 #### Frontend: Certification Filter UI
 
-- [ ] **11.4 Add certifications to filter types and defaults**
+- [ ] **11.4 Add certifications to browse params and defaults**
 
-    - [ ] **11.4.a Update MovieFilters interface**
+    - [ ] **11.4.a Update BrowseParams type**
         - Add `certifications: string[]` field (array for multi-select)
+        - File: `types/browseTypes.ts`
         - Default: `[]` (empty = no filter applied)
 
-    - [ ] **11.4.b Add to DEFAULT_FILTERS (Phase 10 constant)**
-        - Add `certifications: []` to filterDefaults.ts
+    - [ ] **11.4.b Add to DEFAULT_BROWSE_PARAMS (Phase 10 constant)**
+        - Add `certifications: []` to `browseDefaults.ts`
 
     - [ ] **11.4.c Define certification options**
-        - Add `certificationOptions` to movieFilterOptions.ts
+        - Add `certificationOptions` to `browseOptions.ts`
         - Values: `["NR", "G", "PG", "PG-13", "R", "NC-17"]`
         - Labels match values for clarity
 
-- [ ] **11.5 Add CheckboxGroup + CheckboxCard UI to Advanced Filters**
+- [ ] **11.5 Add CheckboxGroup + CheckboxCard UI to AdvancedFiltersPanel**
 
     - [ ] **11.5.a Add certification CheckboxGroup component**
         - Use `CheckboxGroup` wrapper with `CheckboxCard.Root` for each rating
@@ -1049,12 +1050,12 @@ all themes, and color associations are intuitive (green=safe, red=restricted).
         - Selected: solid background with status color + `on-*` text token
         - Reuse `RatingBadge` helper or shared `RATING_VARIANT_MAP` config
 
-    - [ ] **11.5.b Wire to filter state**
-        - On change: update `certifications` array in filter state
+    - [ ] **11.5.b Wire to browse params state**
+        - On change: update `certifications` array in browseParams
         - Selected cards show visual checked state
 
-    - [ ] **11.5.c Update clearFilters() to reset certifications**
-        - Already handled by DEFAULT_FILTERS if Phase 10 complete (resets to `[]`)
+    - [ ] **11.5.c Update resetBrowseParams() to reset certifications**
+        - Already handled by DEFAULT_BROWSE_PARAMS if Phase 10 complete (resets to `[]`)
 
     - [ ] **11.5.d Run frontend linting and tests**
 
@@ -1062,8 +1063,8 @@ all themes, and color associations are intuitive (green=safe, red=restricted).
 
 - [ ] **11.6 Update API param mapping**
 
-    - [ ] **11.6.a Update movieFilterMapper.ts**
-        - Add certification mapping in `mapFiltersToApiParams()`
+    - [ ] **11.6.a Update browseParamMapper.ts**
+        - Add certification mapping in `mapBrowseParamsToApi()`
         - If `certifications.length > 0`: join with `|` (OR logic) for TMDB
         - Always include `certification_country: "US"` when certifications present
         - Example: `certifications: ["G", "PG"]` → `certification=G|PG&certification_country=US`
@@ -1071,7 +1072,7 @@ all themes, and color associations are intuitive (green=safe, red=restricted).
     - [ ] **11.6.b Update MovieQueryParams interface**
         - Add `certification?: string` and `certification_country?: string` to movieService.ts
 
-    - [ ] **11.6.c Update URL sync for array field**
+    - [ ] **11.6.c Update browseUrlSync for array field**
         - Ensure certifications array serializes/deserializes properly in URL
         - Pattern: `?certifications=G,PG,PG-13` or similar
 
@@ -1114,8 +1115,8 @@ all themes, and color associations are intuitive (green=safe, red=restricted).
         - Click through to movie detail → verify it shows "PG-13" certification
         - Select multiple ratings (G + PG) → verify both appear in results
         - Verify URL includes certifications param
-        - Verify Clear Filters resets certifications
-        - Verify filter count badge includes certifications when active
+        - Verify Clear button resets certifications
+        - Verify active param count badge includes certifications when active
 
     - [ ] **11.8.c Run full quality gates**
         - All backend tests

@@ -48,6 +48,63 @@ Guidance for Claude when working in this repository. For shared rules and archit
 
 **See also:** Session Context Management section in DEVELOPMENT-RULES.md for agent-agnostic principles.
 
+## Autonomous Work Mode
+
+**Special case:** This protocol activates ONLY when the user explicitly uses the word "autonomous" in their request.
+This is typically invoked via slash command when the user needs to step away briefly.
+
+**Example trigger:**
+
+> "I'm stepping away briefly; please work *autonomously* through tasks as documented in the task list."
+
+**Protocol:**
+
+1. **Work through tasks sequentially** as documented in the active task list
+2. **After each task completion:**
+   - **Update task list immediately** - mark task `[x]`, add inline completion notes (same as normal flow)
+   - Run incremental quality gates (affected files only):
+     - Type check on modified files/directories
+     - Lint on modified files/directories
+     - Run related tests (not full suite)
+     - Exception: If the task itself specifies "run full quality gates," do so
+   - Assess remaining context capacity:
+     - Estimate tokens needed for: potential review edits (~15-20k), atomic commit workflow (~5-10k),
+       session handoff (~3-5k)
+     - **Target buffer: ~30k tokens remaining**
+     - If uncertain whether buffer is sufficient, **pause**
+3. **Do NOT start a new task** if uncertain about completing it with buffer intact
+4. **When pausing:**
+   - Task list should already be updated (per step 2)
+   - State: "Paused for review. Completed Tasks X.Y-X.Z. Ready for your review before committing."
+
+**When user returns:**
+
+- Review completed work together
+- Make any requested changes
+- Run atomic commit workflow (at user's direction)
+- Run session handoff workflow (at user's direction)
+- **Resume normal workflow** ([3-process-task-loop.md](../workflows/3-process-task-loop.md)) - one subtask at a time
+  with check-ins
+
+**Appropriate for:**
+
+- Well-defined task list work with clear subtasks
+- Refactoring phases with predictable scope
+- Sequential file updates (renames, import updates, etc.)
+
+**NOT appropriate for:**
+
+- Exploratory debugging
+- Tasks requiring design decisions
+- Work with uncertain scope
+- Anything where user input might change direction
+
+**Limitations (be honest):**
+
+- Token estimation is imprecise - err on the side of pausing early
+- Complex tasks may consume more tokens than expected
+- This is experimental - feedback welcome on tuning the buffer threshold
+
 ## MCP Server Availability
 
 **Project-enabled MCPs (always available):**

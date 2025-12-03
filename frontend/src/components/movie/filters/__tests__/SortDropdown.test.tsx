@@ -1,3 +1,16 @@
+/**
+ * SortDropdown Component Tests
+ *
+ * KNOWN ISSUE: Tests produce "act() warning" noise from Chakra UI v3's Select component.
+ * This is a known limitation of Chakra UI v3's Ark UI state machine architecture.
+ * The warnings do NOT indicate test failures or bugs - tests correctly verify behavior.
+ *
+ * Research conducted Dec 2025 confirmed:
+ * - Issue is internal to Chakra/Ark UI state machines, not our test code
+ * - No clean fix exists; CSS animation disabling doesn't help (it's JS state, not CSS)
+ * - Kent C. Dodds recommends accepting warnings over suppressing them
+ * - See: https://kentcdodds.com/blog/fix-the-not-wrapped-in-act-warning
+ */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@tests/helpers/test-renderer";
 import userEvent from "@testing-library/user-event";
@@ -77,13 +90,10 @@ describe("SortDropdown", () => {
         />
       );
 
-      // Open dropdown
+      // Open dropdown and select option
       const trigger = screen.getByRole("combobox");
       await user.click(trigger);
-
-      // Select "Newest"
-      const newestOption = screen.getByText("Newest");
-      await user.click(newestOption);
+      await user.click(screen.getByText("Newest"));
 
       expect(mockOnSortChange).toHaveBeenCalledWith("release_date.desc");
     });
@@ -98,7 +108,6 @@ describe("SortDropdown", () => {
         />
       );
 
-      // Open dropdown
       const trigger = screen.getByRole("combobox");
       await user.click(trigger);
 
@@ -123,7 +132,6 @@ describe("SortDropdown", () => {
         />
       );
 
-      // Open dropdown
       const trigger = screen.getByRole("combobox");
       await user.click(trigger);
 
@@ -143,7 +151,6 @@ describe("SortDropdown", () => {
         />
       );
 
-      // Open dropdown
       const trigger = screen.getByRole("combobox");
       await user.click(trigger);
 
@@ -164,7 +171,6 @@ describe("SortDropdown", () => {
         />
       );
 
-      // Open dropdown
       const trigger = screen.getByRole("combobox");
       await user.click(trigger);
 
@@ -186,7 +192,6 @@ describe("SortDropdown", () => {
         />
       );
 
-      // Open dropdown
       const trigger = screen.getByRole("combobox");
       await user.click(trigger);
 
@@ -204,7 +209,6 @@ describe("SortDropdown", () => {
         />
       );
 
-      // Open dropdown
       const trigger = screen.getByRole("combobox");
       await user.click(trigger);
 
@@ -222,7 +226,6 @@ describe("SortDropdown", () => {
         />
       );
 
-      // Open dropdown
       const trigger = screen.getByRole("combobox");
       await user.click(trigger);
 
@@ -240,7 +243,6 @@ describe("SortDropdown", () => {
         />
       );
 
-      // Open dropdown
       const trigger = screen.getByRole("combobox");
       await user.click(trigger);
 
@@ -258,7 +260,6 @@ describe("SortDropdown", () => {
         />
       );
 
-      // Open dropdown
       const trigger = screen.getByRole("combobox");
       await user.click(trigger);
 

@@ -742,12 +742,25 @@ language filter implementation and conceptual clarity issues in the filter/sort 
         - Update props interface name
         - Update to use `hasActiveBrowseParams` from browseParamUtils
 
-    - [ ] **10.5.e Move and rename SearchBox**
-        - `git mv frontend/src/components/movie/filters/CollapsibleSearchBox.tsx frontend/src/components/movie/browse/SearchBox.tsx`
-        - Rename component: `CollapsibleSearchBox` → `SearchBox`
-        - "Collapsible" is implementation detail, not needed in name
+    - [ ] **10.5.e Preserve CollapsibleSearchBox as reusable component**
+        - `mkdir -p frontend/src/components/common`
+        - `git mv frontend/src/components/movie/filters/CollapsibleSearchBox.tsx frontend/src/components/common/ExpandableSearchInput.tsx`
+        - Rename component: `CollapsibleSearchBox` → `ExpandableSearchInput`
+        - Rename props interface accordingly
+        - Good expandable input pattern worth preserving for future use
 
-    - [ ] **10.5.f Move remaining components (no rename needed)**
+    - [ ] **10.5.f Remove search from QuickBrowseBar**
+        - Remove CollapsibleSearchBox import and usage from QuickBrowseBar
+        - Adjust layout to close the gap
+        - Search functionality will use navbar global search only
+
+    - [ ] **10.5.g Clean up query handling from browse flow**
+        - Update `useMovieFetchRouter.ts` to remove query-based search routing
+        - Browse should always use base fetcher, never switch to search endpoint
+        - Consider: Remove `query` field from BrowseParams if unused elsewhere
+        - Update `browseParamUtils.ts` if query removed from BrowseParams
+
+    - [ ] **10.5.h Move remaining components (no rename needed)**
         - `git mv frontend/src/components/movie/filters/ConnectedDropdowns.tsx frontend/src/components/movie/browse/`
         - `git mv frontend/src/components/movie/filters/SortDropdown.tsx frontend/src/components/movie/browse/`
         - `git mv frontend/src/components/movie/filters/GenreSelector.tsx frontend/src/components/movie/browse/`
@@ -755,7 +768,7 @@ language filter implementation and conceptual clarity issues in the filter/sort 
         - `git mv frontend/src/components/movie/filters/RatingSelector.tsx frontend/src/components/movie/browse/`
         - `git mv frontend/src/components/movie/filters/SearchBar.tsx frontend/src/components/movie/browse/`
 
-    - [ ] **10.5.g Move and update test files**
+    - [ ] **10.5.i Move and update test files**
         - Move all test files from `filters/__tests__/` to `browse/__tests__/`
         - Rename test files where component names changed:
             - `ClearFiltersButton.test.tsx` → `ClearBrowseButton.test.tsx`
@@ -764,11 +777,11 @@ language filter implementation and conceptual clarity issues in the filter/sort 
         - Update imports in all test files
         - Update component references in tests
 
-    - [ ] **10.5.h Delete old filters/ directory**
+    - [ ] **10.5.j Delete old filters/ directory**
         - Verify all files moved successfully
         - `rm -r frontend/src/components/movie/filters/`
 
-    - [ ] **10.5.i Update all component imports across codebase**
+    - [ ] **10.5.k Update all component imports across codebase**
         - Search for `from "@/components/movie/filters/`
         - Update to `from "@/components/movie/browse/`
         - Update component names in JSX
@@ -900,6 +913,8 @@ language filter implementation and conceptual clarity issues in the filter/sort 
         - Verify "Clear" button works from all UI locations
         - Verify active param count badge accurate in all states
         - Test URL persistence (bookmarks, refresh, back/forward navigation)
+
+---
 
 ### **Phase 11:** Certification Filter & MovieDetail Enhancements
 

@@ -19,6 +19,18 @@ Then **delete** the item from this file (no strikethrough clutter).
 
 ## Discovery & Search
 
+- **Global Search Expansion** - When people/keywords features are more fully implemented, revisit navbar search to
+support multiple entity types. Consider: movie/people toggle (radio, movie default), keyword search inclusion, or
+keeping it simple with just movie/people. Letterboxd's global search is bloated (podcasts?); we should be more
+focused. Evaluate when people/keyword implementations clarify how we want these features to work. Priority: LOW
+(dependent on other features being implemented first)
+
+- **Browse-Level Quick Movie Finder** - Consider re-adding a movie-specific search/finder to the browse bar IF global
+search becomes multi-entity. Letterboxd has "Find a film" (typeahead → direct to detail) alongside their global
+search. Only makes sense if global search serves different purpose (multi-entity). If global search stays movie-only,
+this would be redundant. The `ExpandableSearchInput` component (preserved in components/common/) could be reused.
+Evaluate alongside Global Search Expansion decision. Priority: LOW (dependent on Global Search direction)
+
 - **Featured Page Hero Implementation** - Rich hero-style Featured page at `/featured` replacing current stub. Research
 needed: TMDB trending/popular endpoints (`/trending/*`, `/movie/popular`), industry patterns (TMDB, Letterboxd, Netflix
 hero sections, horizontal scrolling). Content strategy: trending movies, popular this week, featured collections, new

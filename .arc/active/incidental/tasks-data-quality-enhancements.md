@@ -153,18 +153,18 @@ Any country may have studios producing mislabeled adult content.
 
         **BLACKLIST (exclusively adult content):**
 
-        | Company           | TMDB ID | Content                 | Notes                                        |
-        | ----------------- | ------- | ----------------------- | -------------------------------------------- |
-        | Pink Pineapple    | 80856   | 100% hentai/adult anime | Note: TMDB has duplicate at 267239 (unused)  |
-        | Osu Production    | 174515  | Adult/pink films        | 1986-era pink films                          |
-        | Sekine Production | 142460  | Adult/pink films        | 30 titles, all adult                         |
+        | Company           | TMDB ID | Content                 | Notes                                       |
+        |-------------------|---------|-------------------------|---------------------------------------------|
+        | Pink Pineapple    | 80856   | 100% hentai/adult anime | Note: TMDB has duplicate at 267239 (unused) |
+        | Osu Production    | 174515  | Adult/pink films        | 1986-era pink films                         |
+        | Sekine Production | 142460  | Adult/pink films        | 30 titles, all adult                        |
 
         **SKIP (mixed catalog - has legitimate mainstream):**
 
-        | Company              | Content | Notes                                                                                                                        |
-        | -------------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------- |
-        | Nikkatsu Corporation | Mixed   | Major studio (1912-present). Roman Porno 1971-88, but also acclaimed directors (Suzuki, Imamura), modern mainstream output   |
-        | Okura Pictures       | Mixed   | OP Pictures Plus division produces R-15 mainstream. 90% pink film market but has legitimate arm                              |
+        | Company              | Content | Notes                                                                                                                      |
+        |----------------------|---------|----------------------------------------------------------------------------------------------------------------------------|
+        | Nikkatsu Corporation | Mixed   | Major studio (1912-present). Roman Porno 1971-88, but also acclaimed directors (Suzuki, Imamura), modern mainstream output |
+        | Okura Pictures       | Mixed   | OP Pictures Plus division produces R-15 mainstream. 90% pink film market but has legitimate arm                            |
 
     - [x] **5.1.2 Search for additional studios (any country)**
         Searched Wikipedia pink film article for known studios, verified in TMDB.
@@ -172,7 +172,7 @@ Any country may have studios producing mislabeled adult content.
         **Additional BLACKLIST studios found:**
 
         | Company           | TMDB ID | Movies | Content         |
-        | ----------------- | ------- | ------ | --------------- |
+        |-------------------|---------|--------|-----------------|
         | Kokuei            | 9301    | 185    | 100% pink films |
         | Shintoho Pictures | 73435   | 452    | 100% adult      |
         | Million Film      | 120194  | 95     | 100% pink films |
@@ -224,7 +224,7 @@ Any country may have studios producing mislabeled adult content.
 **Studios in blacklist (10 total):**
 
 | Company           | TMDB ID | Movies | Source           |
-| ----------------- | ------- | ------ | ---------------- |
+|-------------------|---------|--------|------------------|
 | Shintoho Pictures | 73435   | ~403   | Phase 5          |
 | Xces Film         | 213979  | ~311   | Pattern analysis |
 | Kokuei            | 9301    | ~177   | Phase 5          |
@@ -557,142 +557,375 @@ only works correctly with single Latin-script languages due to TMDB Unicode sort
         - 531 backend tests pass, 471 frontend tests pass
         - 0 lint/type errors
 
-### **Phase 10:** Filter/Sort DRY Refactor
+### **Phase 10:** Browse Domain Refactor (DRY + Naming Clarity)
 
-**Purpose:** Eliminate duplicated filter logic discovered during Phase 9 language filter implementation.
-Adding the `language` field required updates in 4+ locations for defaults, 3+ locations for
-`hasActiveFilters`, and exposed inconsistencies in filter detection logic.
+**Purpose:** Consolidate duplicated filter/sort logic AND establish clear, consistent naming
+across the browse domain. This phase addresses both DRY violations discovered during Phase 9
+language filter implementation and conceptual clarity issues in the filter/sort domain.
 
-**Audit findings (pre-phase):**
+**Problems Addressed:**
 
-- Default filter values duplicated in 4 files
+- Default values duplicated in 4+ files
 - `hasActiveFilters` logic duplicated in 3 files with inconsistencies
-- Default sort "popularity.desc" hardcoded in 6+ locations
+- Default sort hardcoded in 6+ locations
 - Sort options duplicated in 2 files
-- ClearFiltersButton only checks 6 of 10 filter fields
-- Backend param mapping split across 2 files without unified documentation
+- ClearFiltersButton only checks 6 of 10 fields
+- `MovieFilters` type conflates filters and sort without clear naming
+- "Letterboxd" terminology meaningless to developers unfamiliar with the site
+- "Minimal" vs "Advanced" naming inconsistent across files
+- `MinimalMovieFilters` type is vestigial legacy complexity
+- Types exported from component files instead of dedicated type files
+- Backend param mapping lacks unified documentation
 - 100+ lines of commented runtime filter code (technical debt)
 
-#### Frontend: Single Source of Truth
+**Key Terminology Changes:**
 
-- [ ] **10.1 Create filter defaults constant**
+| Old                       | New                        | Rationale                                     |
+|---------------------------|----------------------------|-----------------------------------------------|
+| `MovieFilters`            | `BrowseParams`             | Umbrella type includes sort, not just filters |
+| `filterDefaults.ts`       | `browseDefaults.ts`        | Matches umbrella naming                       |
+| `movieFilterOptions.ts`   | `browseOptions.ts`         | Consistency                                   |
+| `DEFAULT_FILTERS`         | `DEFAULT_BROWSE_PARAMS`    | Matches type name                             |
+| `LetterboxdStyleFilters`  | `QuickBrowseBar`           | Describes what it is                          |
+| `AdvancedMovieFilters`    | `AdvancedFiltersPanel`     | Clearer purpose                               |
+| `filterStyle: "minimal"`  | `browseLayout: "compact"`  | Describes form factor                         |
+| `filterStyle: "expanded"` | `browseLayout: "expanded"` | Consistent pairing                            |
+| `showAdvanced`            | `isAdvancedPanelOpen`      | Clearer intent                                |
+| `hasActiveFilters`        | `hasActiveBrowseParams`    | Includes sort                                 |
+| `filterCount`             | `activeParamCount`         | More accurate                                 |
+| `clearFilters()`          | `resetBrowseParams()`      | More accurate                                 |
+| `filters/` directory      | `browse/` directory        | Matches domain                                |
+| `MinimalMovieFilters`     | (deleted)                  | Legacy complexity                             |
 
-    - [ ] **10.1.a Create `frontend/src/constants/filterDefaults.ts`**
-        - Export `DEFAULT_FILTERS` object with all 10 fields
-        - Export `DEFAULT_SORT` constant ("popularity.desc")
-        - Derive `MovieFilters` type from the constant using `typeof`
+**Phase Strategy:**
 
-    - [ ] **10.1.b Update consumers to use DEFAULT_FILTERS**
-        - `AdvancedMovieFilters.tsx` - import and use in clearFilters()
-        - `LetterboxdStyleFilters.tsx` - import and use in clearFilters()
-        - `useMovieCollectionUrl.tsx` - import for initial state
-        - `useMovieCollectionState.tsx` - import for initial state and clearFilters
+1. Create new files with correct names, migrate content
+2. Update imports across codebase (use `git mv` for renames)
+3. Delete old files
+4. Update tests throughout (not as separate phase)
 
-    - [ ] **10.1.c Update DEFAULT_SORT consumers**
-        - Replace hardcoded "popularity.desc" strings with DEFAULT_SORT constant
-        - Files: AdvancedMovieFilters, LetterboxdStyleFilters, urlSync, useMovieCollectionUrl,
+---
+
+#### 10.1: Initial Constants (COMPLETED)
+
+- [x] **10.1 Create filter defaults constant** (now `browseDefaults.ts`)
+
+    - [x] **10.1.a Create `frontend/src/constants/filterDefaults.ts`**
+        - Created with `DEFAULT_FILTERS` (10 fields), `DEFAULT_SORT`, and `MovieFilters` type
+        - NOTE: Will be renamed to `browseDefaults.ts` with updated naming in 10.3
+
+    - [x] **10.1.b Update consumers to use DEFAULT_FILTERS**
+        - Updated 4 files: AdvancedMovieFilters, LetterboxdStyleFilters, useMovieCollectionUrl,
           useMovieCollectionState
+        - Removed local DEFAULT_FILTERS from useMovieCollectionState.tsx (was duplicate)
+        - AdvancedMovieFilters re-exports MovieFilters type for existing consumers
 
-    - [ ] **10.1.d Run frontend tests and linting**
+    - [x] **10.1.c Update DEFAULT_SORT consumers**
+        - Updated 4 files: AdvancedMovieFilters, urlSync, useMovieCollectionUrl, useMovieCollectionState
+        - LetterboxdStyleFilters uses DEFAULT_FILTERS spread (includes sortBy)
 
-#### Frontend: Centralize Filter State Utilities
+    - [x] **10.1.d Run frontend tests and linting**
+        - 471 tests pass, type check clean, lint clean
 
-- [ ] **10.2 Create filter state utilities**
+---
 
-    - [ ] **10.2.a Create `frontend/src/utilities/filterStateUtils.ts`**
-        - `hasActiveFilters(filters: MovieFilters): boolean` - checks all 10 fields consistently
-        - `countActiveFilters(filters: MovieFilters): number` - consistent count logic
+#### 10.2: Type System Foundation
+
+- [ ] **10.2 Establish type single source of truth**
+
+    - [ ] **10.2.a Create `frontend/src/types/browseTypes.ts`**
+        - Define `BrowseParams` type (10 fields: query, genres, minYear, maxYear, minRating,
+          maxRating, minRuntime, maxRuntime, sortBy, language)
+        - Move `SortOptionValue` type from movieFilterOptions.ts
+        - Move `SortOption` interface from movieFilterOptions.ts
+        - Add clear documentation on type purpose and field meanings
+
+    - [ ] **10.2.b Simplify `urlSync.ts` and eliminate MinimalMovieFilters**
+        - Remove support for legacy single-value params (`year`, `rating`)
+        - Return only `BrowseParams` type (remove dual return)
+        - Update `useMovieCollectionUrl.tsx` to use simplified return
+        - Delete `MinimalMovieFilters` interface from LetterboxdStyleFilters.tsx
+        - Update `AdvancedMovieFilters.tsx` to remove minimalFilters prop
+
+    - [ ] **10.2.c Remove duplicate type definitions**
+        - Delete `MovieFilters` interface from `@types/movie.d.ts` (outdated, 9 fields)
+        - Update `filterDefaults.ts` to import type from browseTypes.ts (remove local definition)
+        - Update `AdvancedMovieFilters.tsx` to import from browseTypes.ts (remove definition)
+
+    - [ ] **10.2.d Update all type imports across codebase**
+        - Change all `import { MovieFilters }` → `import { BrowseParams }`
+        - Update type aliases (`MovieFiltersType`, `UnifiedMovieFilters`) → `BrowseParams`
+        - Files: hooks, utilities, components (grep for `MovieFilters`)
+
+    - [ ] **10.2.e Run type check and fix any errors**
+
+    - [ ] **10.2.f Update affected tests**
+        - Update type references in test files
+        - Update mock data structures
+
+---
+
+#### 10.3: Constants Consolidation
+
+- [ ] **10.3 Rename and consolidate constants**
+
+    - [ ] **10.3.a Rename `filterDefaults.ts` → `browseDefaults.ts`**
+        - Use `git mv frontend/src/constants/filterDefaults.ts frontend/src/constants/browseDefaults.ts`
+        - Rename `DEFAULT_FILTERS` → `DEFAULT_BROWSE_PARAMS`
+        - Keep `DEFAULT_SORT` (name is accurate)
+        - Remove type definition (now in browseTypes.ts), add import
+
+    - [ ] **10.3.b Rename `movieFilterOptions.ts` → `browseOptions.ts`**
+        - Use `git mv frontend/src/constants/movieFilterOptions.ts frontend/src/constants/browseOptions.ts`
+        - Remove type exports (moved to browseTypes.ts)
+        - Update file documentation to reflect new naming
+
+    - [ ] **10.3.c Remove duplicate SORT_OPTIONS from useMovieCollectionState.tsx**
+        - Import `sortOptions` from browseOptions.ts
+        - Delete local `SORT_OPTIONS` array
+
+    - [ ] **10.3.d Update all constant imports**
+        - `filterDefaults` → `browseDefaults`
+        - `movieFilterOptions` → `browseOptions`
+        - `DEFAULT_FILTERS` → `DEFAULT_BROWSE_PARAMS`
+
+    - [ ] **10.3.e Run tests and fix broken imports**
+
+---
+
+#### 10.4: Utilities Refactor
+
+- [ ] **10.4 Create and rename utilities**
+
+    - [ ] **10.4.a Create `frontend/src/utilities/browseParamUtils.ts`**
+        - `hasActiveBrowseParams(params: BrowseParams): boolean` - checks all 10 fields
+        - `countActiveParams(params: BrowseParams): number` - consistent count logic
         - `isDefaultSort(sortBy: string): boolean` - uses DEFAULT_SORT
-        - Document: what counts as "active" for each field type
+        - Document what counts as "active" for each field type
 
-    - [ ] **10.2.b Write tests for filter state utilities**
-        - Create `filterStateUtils.test.ts`
-        - Test hasActiveFilters with various combinations
-        - Test countActiveFilters accuracy
+    - [ ] **10.4.b Write tests for browseParamUtils**
+        - Create `browseParamUtils.test.ts`
+        - Test hasActiveBrowseParams with various combinations
+        - Test countActiveParams accuracy
         - Test edge cases (empty strings, empty arrays, default sort)
 
-    - [ ] **10.2.c Update consumers to use utilities**
-        - `ClearFiltersButton.tsx` - use hasActiveFilters (fix: currently missing query, ratings, sortBy)
-        - `AdvancedMovieFilters.tsx` - use hasActiveFilters for panel state
-        - `useMovieCollectionState.tsx` - use hasActiveFilters and countActiveFilters
-        - `useMovieCollectionUrl.tsx` - use isDefaultSort for URL omission logic
+    - [ ] **10.4.c Rename `sortOptionFiltering.ts` → `sortAvailability.ts`**
+        - Use `git mv frontend/src/utilities/sortOptionFiltering.ts frontend/src/utilities/sortAvailability.ts`
+        - Update imports in browseOptions.ts
+        - Function names are fine (isLatinScriptLanguage, getAvailableSortOptions, isTitleSort)
+        - Move test file: `git mv sortOptionFiltering.test.ts sortAvailability.test.ts`
 
-    - [ ] **10.2.d Run frontend tests and verify consistency**
+    - [ ] **10.4.d Rename `movieFilterMapper.ts` → `browseParamMapper.ts`**
+        - Use `git mv frontend/src/utilities/movieFilterMapper.ts frontend/src/utilities/browseParamMapper.ts`
+        - Rename function: `mapFiltersToApiParams` → `mapBrowseParamsToApi`
+        - Update parameter name: `filters` → `browseParams`
+        - Update `filterStyle` param → `browseLayout`
+        - Move test file: `git mv movieFilterMapper.test.ts browseParamMapper.test.ts`
+        - Update test file content (function names, variable names)
 
-#### Frontend: Consolidate Sort Constants
+    - [ ] **10.4.e Rename `urlSync.ts` → `browseUrlSync.ts`**
+        - Use `git mv frontend/src/utilities/urlSync.ts frontend/src/utilities/browseUrlSync.ts`
+        - Rename function: `initializeFiltersFromUrl` → `parseBrowseParamsFromUrl`
+        - Update return type documentation
 
-- [ ] **10.3 Remove duplicate sort options**
+    - [ ] **10.4.f Update all utility imports across codebase**
 
-    - [ ] **10.3.a Audit sort option usage**
-        - `movieFilterOptions.ts` has `sortOptions` array
-        - `useMovieCollectionState.tsx` has duplicate `SORT_OPTIONS` array
-        - Identify which is canonical and which should be removed
+---
 
-    - [ ] **10.3.b Consolidate to single source**
-        - Keep `sortOptions` in `movieFilterOptions.ts` as canonical
-        - Update `useMovieCollectionState.tsx` to import from movieFilterOptions
-        - Verify `SortDropdown` and `sortOptionFiltering.ts` use the same source
+#### 10.5: Component Directory Restructure
 
-    - [ ] **10.3.c Run frontend tests**
+- [ ] **10.5 Rename and reorganize browse components**
 
-#### Frontend: Clean Up Technical Debt
+    - [ ] **10.5.a Create `components/movie/browse/` directory**
+        - `mkdir frontend/src/components/movie/browse`
+        - `mkdir frontend/src/components/movie/browse/__tests__`
 
-- [ ] **10.4 Remove dead runtime filter code**
+    - [ ] **10.5.b Move and rename QuickBrowseBar**
+        - `git mv frontend/src/components/movie/filters/LetterboxdStyleFilters.tsx frontend/src/components/movie/browse/QuickBrowseBar.tsx`
+        - Rename component: `LetterboxdStyleFilters` → `QuickBrowseBar`
+        - Rename props interface: `LetterboxdStyleFiltersProps` → `QuickBrowseBarProps`
+        - Update internal variable names: `filters` → `browseParams`, etc.
+        - Remove MinimalMovieFilters export (deleted in 10.2.b)
 
-    - [ ] **10.4.a Remove commented runtime code from ConnectedDropdowns.tsx**
+    - [ ] **10.5.c Move and rename AdvancedFiltersPanel**
+        - `git mv frontend/src/components/movie/filters/AdvancedMovieFilters.tsx frontend/src/components/movie/browse/AdvancedFiltersPanel.tsx`
+        - Rename component: `AdvancedMovieFilters` → `AdvancedFiltersPanel`
+        - Rename props interface: `MovieFiltersProps` → `AdvancedFiltersPanelProps`
+        - Remove type re-export (types now in browseTypes.ts)
+        - Update internal variable names
+
+    - [ ] **10.5.d Move and rename ClearBrowseButton**
+        - `git mv frontend/src/components/movie/filters/ClearFiltersButton.tsx frontend/src/components/movie/browse/ClearBrowseButton.tsx`
+        - Rename component: `ClearFiltersButton` → `ClearBrowseButton`
+        - Update props interface name
+        - Update to use `hasActiveBrowseParams` from browseParamUtils
+
+    - [ ] **10.5.e Move and rename SearchBox**
+        - `git mv frontend/src/components/movie/filters/CollapsibleSearchBox.tsx frontend/src/components/movie/browse/SearchBox.tsx`
+        - Rename component: `CollapsibleSearchBox` → `SearchBox`
+        - "Collapsible" is implementation detail, not needed in name
+
+    - [ ] **10.5.f Move remaining components (no rename needed)**
+        - `git mv frontend/src/components/movie/filters/ConnectedDropdowns.tsx frontend/src/components/movie/browse/`
+        - `git mv frontend/src/components/movie/filters/SortDropdown.tsx frontend/src/components/movie/browse/`
+        - `git mv frontend/src/components/movie/filters/GenreSelector.tsx frontend/src/components/movie/browse/`
+        - `git mv frontend/src/components/movie/filters/YearSelector.tsx frontend/src/components/movie/browse/`
+        - `git mv frontend/src/components/movie/filters/RatingSelector.tsx frontend/src/components/movie/browse/`
+        - `git mv frontend/src/components/movie/filters/SearchBar.tsx frontend/src/components/movie/browse/`
+
+    - [ ] **10.5.g Move and update test files**
+        - Move all test files from `filters/__tests__/` to `browse/__tests__/`
+        - Rename test files where component names changed:
+            - `ClearFiltersButton.test.tsx` → `ClearBrowseButton.test.tsx`
+            - `SortDropdown.test.tsx` stays
+            - etc.
+        - Update imports in all test files
+        - Update component references in tests
+
+    - [ ] **10.5.h Delete old filters/ directory**
+        - Verify all files moved successfully
+        - `rm -r frontend/src/components/movie/filters/`
+
+    - [ ] **10.5.i Update all component imports across codebase**
+        - Search for `from "@/components/movie/filters/`
+        - Update to `from "@/components/movie/browse/`
+        - Update component names in JSX
+
+---
+
+#### 10.6: State & Props Naming Updates
+
+- [ ] **10.6 Update state management naming**
+
+    - [ ] **10.6.a Update `useMovieCollectionState.tsx`**
+        - Rename state: `filters` → `browseParams`
+        - Rename handler: `onFiltersChange` → `onBrowseParamsChange`
+        - Rename derived: `hasActiveFilters` → `hasActiveBrowseParams`
+        - Rename derived: `filterCount` → `activeParamCount`
+        - Rename action: `clearFilters` → `resetBrowseParams`
+        - Rename state: `showAdvanced` → `isAdvancedPanelOpen`
+        - Keep `hasAdvancedFilters` (accurate - refers to detailed filter values)
+        - Update to use utilities from browseParamUtils.ts
+
+    - [ ] **10.6.b Update `useMovieCollectionUrl.tsx`**
+        - Rename state: `unifiedFilters` → `browseParams`
+        - Rename handler: `handleUnifiedFiltersChange` → `handleBrowseParamsChange`
+        - Rename param: `defaultFilters` → `defaultBrowseParams`
+        - Update to use `parseBrowseParamsFromUrl` from browseUrlSync
+
+    - [ ] **10.6.c Rename and update FilterSection → BrowseControlsSection**
+        - `git mv frontend/src/components/movie/collection/FilterSection.tsx frontend/src/components/movie/collection/BrowseControlsSection.tsx`
+        - Rename component and props interface
+        - Rename prop: `filterStyle` → `browseLayout`
+        - Update values: `"minimal"` → `"compact"`, keep `"expanded"`
+        - Rename prop: `showAdvanced` → `isAdvancedPanelOpen`
+        - Update child component references
+
+    - [ ] **10.6.d Update `MovieCollectionLayout.tsx`**
+        - Update prop types and names to match new conventions
+        - Update `filterStyle` → `browseLayout` in props and JSX
+        - Update state variable names passed to children
+        - Update comments referencing old names
+
+    - [ ] **10.6.e Update all consumer components**
+        - Search for old prop/variable names across codebase
+        - Update consistently (grep for: `filterStyle`, `showAdvanced`, `onFiltersChange`,
+          `hasActiveFilters`, `filterCount`, `clearFilters`)
+
+    - [ ] **10.6.f Update hook tests**
+        - `useMovieCollectionState.test.tsx` - update all variable names and assertions
+        - Update any other affected test files
+
+---
+
+#### 10.7: Utility Consumer Updates
+
+- [ ] **10.7 Wire up new utilities**
+
+    - [ ] **10.7.a Update components to use browseParamUtils**
+        - `ClearBrowseButton.tsx` - use `hasActiveBrowseParams` (fixes missing fields bug)
+        - `AdvancedFiltersPanel.tsx` - use `hasActiveBrowseParams` for panel state
+        - `useMovieCollectionState.tsx` - use utilities instead of inline logic
+        - `useMovieCollectionUrl.tsx` - use `isDefaultSort` for URL omission
+
+    - [ ] **10.7.b Update browseParamMapper consumers**
+        - Update function call: `mapFiltersToApiParams` → `mapBrowseParamsToApi`
+        - Update param: `filterStyle` → `browseLayout`
+        - Files: useMovieFetchRouter.ts, any direct consumers
+
+    - [ ] **10.7.c Verify no old names remain**
+        - Grep for: `MovieFilters` (should only be in browseTypes.ts comment if anywhere)
+        - Grep for: `filterDefaults`, `movieFilterOptions`
+        - Grep for: `hasActiveFilters`, `filterCount`, `clearFilters` (old names)
+        - Grep for: `LetterboxdStyle`, `MinimalMovieFilters`
+        - Grep for: `@/components/movie/filters/`
+
+---
+
+#### 10.8: Dead Code Cleanup
+
+- [ ] **10.8 Remove technical debt**
+
+    - [ ] **10.8.a Remove commented runtime filter code from ConnectedDropdowns.tsx**
         - Delete 100+ lines of commented-out runtime filter code
-        - Add brief comment noting runtime filtering disabled due to TMDB API issues
-        - Reference `runtimeOptions` in movieFilterOptions.ts for future re-enablement
+        - Add brief comment: "Runtime filtering disabled due to TMDB API data quality issues.
+          See runtimeOptions in browseOptions.ts for future re-enablement."
 
-    - [ ] **10.4.b Verify no runtime references remain active**
-        - Ensure minRuntime/maxRuntime fields exist in types but UI is disabled
-        - Confirm no broken imports or references
+    - [ ] **10.8.b Verify no active runtime references**
+        - Ensure minRuntime/maxRuntime fields exist in BrowseParams but UI is disabled
+        - Confirm no broken imports or references to runtime UI
 
-#### Backend: Unify Parameter Documentation
+---
 
-- [ ] **10.5 Document parameter transformation pipeline**
+#### 10.9: Backend Documentation
 
-    - [ ] **10.5.a Add docstrings to param mapping files**
+- [ ] **10.9 Document parameter transformation pipeline**
+
+    - [ ] **10.9.a Add docstrings to param mapping files**
         - `param_transformer.py` - document HTTP → ServiceParams transformation
         - `query_params.py` - document ServiceParams → TMDB API transformation
         - Add cross-references between files explaining the two-step pipeline
 
-    - [ ] **10.5.b Create inline mapping reference**
+    - [ ] **10.9.b Create inline mapping reference**
         - In `query_params.py`, add comment block showing full pipeline:
           `HTTP param → ServiceParams field → TMDB API param`
         - Example: `language → language → with_original_language`
 
-    - [ ] **10.5.c Run backend linting**
+    - [ ] **10.9.c Run backend linting**
 
-#### Quality Gates & Verification
+---
 
-- [ ] **10.6 Full quality gates and manual verification**
+#### 10.10: Quality Gates & Verification
 
-    - [ ] **10.6.a Run full test suite**
+- [ ] **10.10 Full quality gates and manual verification**
+
+    - [ ] **10.10.a Run full test suite**
         - Backend: `docker compose -f infrastructure/docker-compose.yml exec backend pytest apps/`
         - Frontend: `docker compose -f infrastructure/docker-compose.yml exec frontend npm test`
 
-    - [ ] **10.6.b Run all linting and type checking**
+    - [ ] **10.10.b Run all linting and type checking**
         - Backend lint: `.venv-backend/bin/ruff check backend/apps/ backend/config/ --fix`
         - Frontend lint: `docker compose ... exec frontend npm run lint`
         - TypeScript: `docker compose ... exec frontend npm run type-check`
         - Python types: `npx pyright backend/apps/ backend/config/ --project backend`
         - Markdown: `npx markdownlint-cli2 --fix "README.md" ".arc/**/*.md"`
 
-    - [ ] **10.6.c Manual browser testing**
+    - [ ] **10.10.c Manual browser testing**
         - Verify language filter works (Phase 9 feature)
         - Verify title sorts appear/disappear correctly
         - Verify A-Z sort works correctly with English filter
-        - Verify "Clear filters" button works from all UI locations
-        - Verify filter count badge accurate in all states
+        - Verify "Clear" button works from all UI locations
+        - Verify active param count badge accurate in all states
+        - Test URL persistence (bookmarks, refresh, back/forward navigation)
 
 ### **Phase 11:** Certification Filter & MovieDetail Enhancements
 
 **Purpose:** Add content rating filter (MPAA ratings) to browse filtering, with MovieDetail display
 enhancements to enable visual verification of filter results.
 
-**Dependencies:** Phase 10 creates centralized `DEFAULT_FILTERS` and `filterStateUtils.ts`. Phase 11
-adds certification fields to these rather than duplicating logic.
+**Dependencies:** Phase 10 creates centralized `DEFAULT_BROWSE_PARAMS` (in `browseDefaults.ts`) and
+`browseParamUtils.ts`. Phase 11 adds certification fields to `BrowseParams` type and these utilities
+rather than duplicating logic.
 
 **Scope decisions:**
 
@@ -704,14 +937,14 @@ adds certification fields to these rather than duplicating logic.
 
 **Rating Badge Design Specs:**
 
-| Rating | Badge Variant   | Background Token | Text Token        | Rationale                    |
-| ------ | --------------- | ---------------- | ----------------- | ---------------------------- |
-| G      | `success`       | `success`        | `on-success`      | Green = safe for all ages    |
-| PG     | `info`          | `info`           | `on-info`         | Blue = informational/neutral |
-| PG-13  | `warning`       | `warning`        | `on-warning`      | Orange = parental caution    |
-| R      | `error`         | `destructive`    | `on-destructive`  | Red = restricted             |
-| NC-17  | `error`         | `destructive`    | `on-destructive`  | Red = adults only            |
-| NR     | `neutral`       | `badge`          | `on-badge`        | Gray = no rating info        |
+| Rating | Badge Variant | Background Token | Text Token       | Rationale                    |
+|--------|---------------|------------------|------------------|------------------------------|
+| G      | `success`     | `success`        | `on-success`     | Green = safe for all ages    |
+| PG     | `info`        | `info`           | `on-info`        | Blue = informational/neutral |
+| PG-13  | `warning`     | `warning`        | `on-warning`     | Orange = parental caution    |
+| R      | `error`       | `destructive`    | `on-destructive` | Red = restricted             |
+| NC-17  | `error`       | `destructive`    | `on-destructive` | Red = adults only            |
+| NR     | `neutral`     | `badge`          | `on-badge`       | Gray = no rating info        |
 
 **Implementation pattern:**
 
@@ -930,15 +1163,15 @@ which sort after standard ASCII, causing these to cluster in alphabetical sorts.
 
 During investigation of why tests didn't catch the Z-A underfill issue, identified broader test coverage gaps:
 
-| Gap | Severity | Status |
-| --- | -------- | ------ |
-| No integration test for `original_title.desc` | High | **Fixed** - Added to `test_browse_sort_options.py` |
-| No test verifying alphabetical sorts bypass vote filter | High | **Fixed** - `TestAlphabeticalSortBypassesVoteFilter` class added |
-| No smoke tests with real TMDB data | Medium | Defer - fragile dependency on external API |
-| No TMDB error scenario tests (timeout, rate limit, 5xx) | Medium | Defer - separate resilience testing effort |
-| No tests with realistic data volumes (100+ movies) | Low | Defer - current tests adequate for logic verification |
-| Cross-page deduplication test marked xfail | Low | Known issue, tracked separately |
-| No filter combination tests (genre + year + rating) | Low | Defer - edge case coverage |
+| Gap                                                     | Severity | Status                                                           |
+|---------------------------------------------------------|----------|------------------------------------------------------------------|
+| No integration test for `original_title.desc`           | High     | **Fixed** - Added to `test_browse_sort_options.py`               |
+| No test verifying alphabetical sorts bypass vote filter | High     | **Fixed** - `TestAlphabeticalSortBypassesVoteFilter` class added |
+| No smoke tests with real TMDB data                      | Medium   | Defer - fragile dependency on external API                       |
+| No TMDB error scenario tests (timeout, rate limit, 5xx) | Medium   | Defer - separate resilience testing effort                       |
+| No tests with realistic data volumes (100+ movies)      | Low      | Defer - current tests adequate for logic verification            |
+| Cross-page deduplication test marked xfail              | Low      | Known issue, tracked separately                                  |
+| No filter combination tests (genre + year + rating)     | Low      | Defer - edge case coverage                                       |
 
 **Root cause:** Policy unit tests verified threshold decisions existed, but no integration test verified
 the policy was correctly applied end-to-end for alphabetical sorts. Added tests now verify both:
@@ -963,10 +1196,10 @@ preventing automated filtering.
 
 **Blacklist additions:**
 
-| Category | Count | Reason |
-| -------- | ----- | ------ |
-| Nikkatsu 1971-1988 | 979 | `Nikkatsu Roman Porno era (1971-1988) bulk blacklist` |
-| Non-Nikkatsu (user-identified) | 8 | `Problematic content (manual verification Phase 8)` |
-| **Total added** | **987** | |
+| Category                       | Count   | Reason                                                |
+|--------------------------------|---------|-------------------------------------------------------|
+| Nikkatsu 1971-1988             | 979     | `Nikkatsu Roman Porno era (1971-1988) bulk blacklist` |
+| Non-Nikkatsu (user-identified) | 8       | `Problematic content (manual verification Phase 8)`   |
+| **Total added**                | **987** |                                                       |
 
 **Final blacklist count:** 2,110 movies (was 1,123)

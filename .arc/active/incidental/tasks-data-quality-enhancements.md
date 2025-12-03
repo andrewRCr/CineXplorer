@@ -775,46 +775,36 @@ language filter implementation and conceptual clarity issues in the filter/sort 
 
 #### 10.6: State & Props Naming Updates
 
-- [ ] **10.6 Update state management naming**
+- [x] **10.6 Update state management naming**
 
-    - [ ] **10.6.a Update `useMovieCollectionState.tsx`**
-        - Rename state: `filters` → `browseParams`
-        - Rename handler: `onFiltersChange` → `onBrowseParamsChange`
-        - Rename derived: `hasActiveFilters` → `hasActiveBrowseParams`
-        - Rename derived: `filterCount` → `activeParamCount`
-        - Rename action: `clearFilters` → `resetBrowseParams`
-        - Rename state: `showAdvanced` → `isAdvancedPanelOpen`
-        - Keep `hasAdvancedFilters` (accurate - refers to detailed filter values)
-        - Update to use utilities from browseParamUtils.ts
+    - [x] **10.6.a Update `useMovieCollectionState.tsx`**
+        - Renamed state/handlers: `filters`→`browseParams`, `onFiltersChange`→`onBrowseParamsChange`
+        - Renamed derived: `hasActiveFilters`→`hasActiveBrowseParams`, `filterCount`→`activeParamCount`
+        - Renamed action: `clearFilters`→`resetBrowseParams`, `showAdvanced`→`isAdvancedPanelOpen`
+        - Updated to use `hasActiveBrowseParams` and `countActiveParams` from browseParamUtils.ts
 
-    - [ ] **10.6.b Update `useMovieCollectionUrl.tsx`**
-        - Rename state: `unifiedFilters` → `browseParams`
-        - Rename handler: `handleUnifiedFiltersChange` → `handleBrowseParamsChange`
-        - Rename param: `defaultFilters` → `defaultBrowseParams`
-        - Update to use `parseBrowseParamsFromUrl` from browseUrlSync
+    - [x] **10.6.b Update `useMovieCollectionUrl.tsx`**
+        - Renamed: `unifiedFilters`→`browseParams`, `handleUnifiedFiltersChange`→`handleBrowseParamsChange`
+        - Renamed param: `defaultFilters`→`defaultBrowseParams`
 
-    - [ ] **10.6.c Rename and update FilterSection → BrowseControlsSection**
-        - `git mv frontend/src/components/movie/collection/FilterSection.tsx frontend/src/components/movie/collection/BrowseControlsSection.tsx`
-        - Rename component and props interface
-        - Rename prop: `filterStyle` → `browseLayout`
-        - Update values: `"minimal"` → `"compact"`, keep `"expanded"`
-        - Rename prop: `showAdvanced` → `isAdvancedPanelOpen`
-        - Update child component references
+    - [x] **10.6.c Rename and update FilterSection → BrowseControlsSection**
+        - Moved file, renamed component and props interface
+        - Renamed props: `filterStyle`→`browseLayout`, `showAdvanced`→`isAdvancedPanelOpen`
+        - Updated values: `"minimal"`→`"compact"`
 
-    - [ ] **10.6.d Update `MovieCollectionLayout.tsx`**
-        - Update prop types and names to match new conventions
-        - Update `filterStyle` → `browseLayout` in props and JSX
-        - Update state variable names passed to children
-        - Update comments referencing old names
+    - [x] **10.6.d Update `MovieCollectionLayout.tsx`**
+        - Updated prop types: `FilterConfig`→`BrowseControlsConfig`
+        - Updated props: `showFilters`→`showBrowseControls`, `filterStyle`→`browseLayout`
+        - Updated comments and internal variable names
 
-    - [ ] **10.6.e Update all consumer components**
-        - Search for old prop/variable names across codebase
-        - Update consistently (grep for: `filterStyle`, `showAdvanced`, `onFiltersChange`,
-          `hasActiveFilters`, `filterCount`, `clearFilters`)
+    - [x] **10.6.e Update all consumer components**
+        - Updated App.tsx route definitions
+        - Updated useMovieFetchRouter.ts: `filters`→`browseParams`, `filterStyle`→`browseLayout`
+        - Updated browseParamMapper.ts: `"minimal"`→`"compact"` throughout
 
-    - [ ] **10.6.f Update hook tests**
-        - `useMovieCollectionState.test.tsx` - update all variable names and assertions
-        - Update any other affected test files
+    - [x] **10.6.f Update hook tests**
+        - Rewrote useMovieCollectionState.test.tsx with all new naming
+        - Updated useMovieFetchRouter.test.ts and browseParamMapper.test.ts
 
 ---
 

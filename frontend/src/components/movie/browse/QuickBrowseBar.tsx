@@ -1,8 +1,8 @@
 import { Box, Text, HStack, VStack } from "@chakra-ui/react";
 import type { BrowseParams } from "@/types/browseTypes";
 import { DEFAULT_BROWSE_PARAMS } from "@/constants/browseDefaults";
-import ConnectedDropdowns from "../filters/ConnectedDropdowns";
-import SortDropdown from "../filters/SortDropdown";
+import ConnectedDropdowns from "./ConnectedDropdowns";
+import SortDropdown from "./SortDropdown";
 import ClearBrowseParamsButton from "./ClearBrowseParamsButton";
 
 interface QuickBrowseBarProps {

@@ -10,9 +10,9 @@ import {
   createListCollection,
 } from "@chakra-ui/react";
 import { FiFilter, FiX } from "react-icons/fi";
-import GenreSelector from "../filters/GenreSelector";
-import YearSelector from "../filters/YearSelector";
-import RatingSelector from "../filters/RatingSelector";
+import GenreSelector from "./GenreSelector";
+import YearSelector from "./YearSelector";
+import RatingSelector from "./RatingSelector";
 import { languageOptions } from "@/constants/browseOptions";
 import { DEFAULT_BROWSE_PARAMS, DEFAULT_SORT } from "@/constants/browseDefaults";
 import type { BrowseParams } from "@/types/browseTypes";

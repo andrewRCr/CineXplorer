@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent } from '@tests/helpers/test-renderer';
-import ClearBrowseParamsButton from '../../browse/ClearBrowseParamsButton';
+import ClearBrowseParamsButton from '../ClearBrowseParamsButton';
 import type { BrowseParams } from '@/types/browseTypes';
 
 // Create mock browse params helper functions

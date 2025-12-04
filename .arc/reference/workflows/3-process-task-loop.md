@@ -88,18 +88,17 @@ immediately. **Quick decision tree**:
 
 **Create incidental task list when:**
 
-- ✅ Multiple subtasks needed (>1 subtask)
-- ✅ Non-trivial effort (>30 minutes estimated)
-- ✅ Cross-cutting concern (affects multiple domains/files)
-- ✅ Quality improvement discovered during feature work
-- ✅ Worth documenting for handoffs
+- ✅ Multiple distinct phases with different goals (not just sequential steps)
+- ✅ Scope likely to expand via discovery (investigation-heavy)
+- ✅ Estimated 2+ hours OR requires research → design → implement cycle
 
-**Fix inline (no task list) when:**
+**Keep as atomic task (or fix inline) when:**
 
-- ❌ Simple fixes (<30 min, 1 subtask)
-- ❌ Typos, formatting, trivial refactors
-- ❌ Work already in main task list - add subtasks there
-- ❌ Exploratory work - use notes files instead
+- ❌ Single coherent concern, even if complex (multiple files, 30-90 min)
+- ❌ Sequential steps all serving one goal
+- ❌ Scope is known/bounded after initial analysis
+
+**Key distinction:** "Sequential steps toward one goal" = atomic. "Distinct phases with different objectives" = task list.
 
 ### Complete Workflow
 

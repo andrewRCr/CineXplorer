@@ -21,20 +21,41 @@ archival follows standard archive workflow.
 
 ## When to Create Incidental Task Lists
 
-### Create When
+### The Key Distinction
 
-- ✅ Multiple subtasks needed (>1 subtask)
-- ✅ Non-trivial effort (>30 minutes estimated)
-- ✅ Cross-cutting concern (affects multiple domains/files)
-- ✅ Blocks or significantly impacts current feature/technical work
-- ✅ Worth documenting for future reference
+**Task lists are for work with distinct phases**, not just complex work.
 
-### Fix Inline When
+- **"Sequential steps toward one goal"** → Atomic task (even if 60-90 min, multiple files)
+- **"Distinct phases with different objectives"** → Task list
 
-- ❌ Simple fixes (<30 min, 1 subtask)
-- ❌ Typos, formatting, trivial refactors
-- ❌ Work already in main task list (add subtasks there instead)
-- ❌ Exploratory work (use notes files instead)
+Example: "Clean up auth tech debt" with 5 ordered steps touching 7 files is **one coherent concern** - stays atomic.
+
+Example: "Investigate performance issue" requiring profiling → analysis → design → implementation is
+**multiple phases** - needs task list.
+
+### Create Task List When
+
+- ✅ Multiple distinct phases with different goals (research, design, implement are separate stages)
+- ✅ Scope likely to expand via discovery (investigation-heavy, unknown boundaries)
+- ✅ Estimated 2+ hours of work
+- ✅ Requires research → design → implement cycle (each phase produces different artifacts)
+- ✅ Would benefit from independent commits/reviews per phase
+
+### Keep as Atomic Task When
+
+- ❌ Single coherent concern, even if complex (multiple files, 30-90 min)
+- ❌ Sequential steps all serving one goal (ordered execution, not distinct phases)
+- ❌ Scope is known/bounded after initial analysis
+- ❌ Could be described as "do X" rather than "figure out X, then design Y, then implement Z"
+
+### Why This Matters
+
+Task lists add overhead: file creation, phase structure, branch lifecycle, archival process. This overhead pays off
+when work genuinely has distinct phases that benefit from independent tracking. It's wasted ceremony for focused
+refactors that happen to touch multiple files.
+
+**Session duration is not a factor**: Well-structured atomic tasks with subtask checkboxes track progress across
+sessions just as effectively as task lists. Don't escalate to task list just because work might span sessions.
 
 ---
 
@@ -44,12 +65,14 @@ archival follows standard archive workflow.
 
 Before creating:
 
-- **Confirm urgency**: Why fix now vs defer?
-- **Estimate effort**: Is this >30 minutes with multiple subtasks?
-- **Assess impact**: Does this block current work?
-- **Check scope**: Is this truly incidental or should it be planned feature/technical work?
+- **Confirm distinct phases**: Does this work have research/design/implement stages, or just sequential steps?
+- **Assess scope certainty**: Is scope bounded, or likely to expand during investigation?
+- **Estimate effort**: Is this 2+ hours, or <2 hours of focused execution?
+- **Check urgency**: Why fix now vs defer?
 
-If uncertain, ask for guidance on whether to address now or defer.
+**If work is <2 hours with known scope and sequential steps** → Use atomic task instead (see criteria above).
+
+If uncertain, ask for guidance on whether task list overhead is justified.
 
 ### 2. Create Task File
 
@@ -145,13 +168,13 @@ using a stacked branch workflow. See [ADR-013](../../adr/adr-013-adopt-stacked-b
 
 **Create separate branch when incidental work:**
 
-- ✅ Requires dedicated task list (>30min effort, multiple subtasks)
+- ✅ Requires dedicated task list (meets criteria in "When to Create" section above)
 - ✅ Is semantically distinct from current branch's work
 - ✅ Benefits from independent merge/review capability
 
 **Stay on current branch when:**
 
-- ❌ Trivial fixes (<30min, single action)
+- ❌ Atomic task or inline fix (single coherent concern, <2 hours)
 - ❌ Work directly continues current branch's theme
 - ❌ No separate task list justified
 
@@ -166,7 +189,7 @@ Example:
 
 **Branch lifecycle**:
 
-1. Discover work needing task list (>30min, multiple subtasks)
+1. Discover work needing task list (distinct phases, 2+ hours, or scope uncertainty)
 2. Create branch off current: `git checkout -b incidental/<name>`
 3. Create task list: `.arc/active/incidental/tasks-<name>.md`
 4. Work on branch, commit with task references
@@ -284,10 +307,13 @@ Example hierarchy:
 
 ---
 
-**Version**: 3.0 (2025-11-10) - Added stacked branch workflow for incidental work (ADR-013)
+**Version**: 3.1 (2025-12-04) - Refined task list vs atomic task criteria
 
 **Changelog**:
 
+- v3.1 (2025-12-04): Revised "When to Create" criteria - focus on distinct phases vs sequential steps,
+  raised time threshold from 30min to 2hrs, emphasized scope certainty as key factor. Removed overly
+  trigger-happy criteria (">1 subtask", ">30min") that caused unnecessary task list overhead.
 - v3.0 (2025-11-10): Added git branch creation guidance, stacked branch workflow, updated completion/archival
   to reflect branch lifecycle (ADR-013)
 - v2.0 (2025-10-24): Streamlined to focus on unique aspects of incidental work

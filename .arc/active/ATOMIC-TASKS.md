@@ -36,15 +36,54 @@
 
 <!-- Auth Refactoring -->
 
-- [ ] Refactor useAuth.ts technical debt
-    - Context: File accumulated piecemeal fixes during auth development
-    - Subtasks:
-        - [ ] Migrate 19 console.log/warn/error calls to logger service
-        - [ ] Standardize return types (login returns complex union, register returns simpler one)
-        - [ ] Evaluate eslint-disable comments (4 instances citing "circular dependency")
-    - Files: `frontend/src/hooks/useAuth.ts`, potentially `frontend/src/@types/auth-state.ts`
-    - Rationale: Improve maintainability and align with project logging standards
-    - Estimate: 30-45 min for logging migration, return types may require more analysis
+- [ ] Refactor auth domain technical debt
+    - Context: Auth code accumulated during early development before logging system existed.
+      Circular dependencies suppressed with eslint-disable, inconsistent return types, direct
+      hook imports bypassing context pattern.
+
+    - Subtasks (execute in order):
+        - [ ] **1. Fix circular dependencies in useAuth.ts** (Option A: useRef pattern)
+            - Wrap `logout` callback in `useRef` to break dependency chain
+            - Wrap `getUserDetails` callback in `useRef` to break dependency chain
+            - Update effects at lines 150 and 170 to call via `ref.current()`
+            - Remove 2 eslint-disable comments (lines 150, 170) - deps now correct
+            - Keep 2 intentional eslint-disable comments (lines 137, 243) with clear "why" comments
+            - Run type-check to verify
+
+        - [ ] **2. Fix architecture violation in MovieDetail.tsx**
+            - Change `import { useAuth }` to `import useAuthContext`
+            - Update usage from `useAuth()` to `useAuthContext()`
+            - This was creating duplicate hook instance with separate state/effects
+
+        - [ ] **3. Define AuthResult type and standardize return types**
+            - Create `AuthResult<T>` type in `@types/auth-state.d.ts`:
+              `{ success: true; data: T } | { success: false; error: AuthError }`
+            - Define `AuthError` type with `status`, `message`, `code?` fields
+            - Update `login()` return type from 4-variant union to `Promise<AuthResult<void>>`
+            - Update `register()` return type from 2-variant union to `Promise<AuthResult<void>>`
+            - Update `AuthStateProps` interface to match
+            - Update consumers (Login.tsx, Register.tsx) to use new pattern
+
+        - [ ] **4. Migrate console statements to logger service**
+            - `useAuth.ts`: 19 calls → logger (debug for flow, warn for warnings, error for errors)
+            - `authService.ts`: 5 CSRF warnings → logger.warn()
+            - `apiClient.ts`: 1 BASE_URL debug → logger.debug()
+            - Ensure logger import added to each file
+
+        - [ ] **5. Run quality gates**
+            - Frontend type-check, lint, tests
+            - Verify no regressions in auth flows
+
+    - Files:
+        - `frontend/src/hooks/useAuth.ts` (primary)
+        - `frontend/src/@types/auth-state.d.ts` (types)
+        - `frontend/src/pages/movie/MovieDetail.tsx` (fix direct import)
+        - `frontend/src/pages/user/Login.tsx` (consumer update)
+        - `frontend/src/pages/user/Register.tsx` (consumer update)
+        - `frontend/src/services/authService.ts` (logging)
+        - `frontend/src/services/apiClient.ts` (logging)
+
+    - Estimate: 60-90 min total
 
 <!-- Miscellaneous -->
 

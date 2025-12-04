@@ -352,8 +352,8 @@ class Logger {
 
         // Send to Django backend endpoint (fire-and-forget)
         // Use configured API base URL to route through proxy (avoid CORS issues)
-        const baseUrl = import.meta.env.VITE_BASE_API_URL || 'https://localhost:8444/api';
-        fetch(`${baseUrl}/dev-logs/write/`, {
+        const apiUrl = import.meta.env.VITE_BASE_API_URL || 'https://localhost:8444/api';
+        fetch(`${apiUrl}/dev-logs/write/`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

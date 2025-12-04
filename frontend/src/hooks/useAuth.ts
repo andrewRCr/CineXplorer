@@ -15,9 +15,10 @@
  * - Components access state using useAuthContext.
  */
 import { ROUTES } from "@/constants/routes";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import type { AuthStateProps } from "@/@types/auth-state";
+import type { AuthStateProps, AuthResult, AuthError } from "@/@types/auth-state";
+import logger from "@/services/logger";
 import {
     getInitialAuthenticatedValue,
     getAuthTokens,
@@ -33,7 +34,7 @@ import * as authService from "@/services/authService";
 type UserProfile = components["schemas"]["UserProfileSchema"];
 
 // Derive base URL for allauth endpoints (not under /api/)
-const BASE_URL = import.meta.env.VITE_BASE_API_URL?.replace(/\/api$/, '') || 'https://localhost:8444';
+const BASE_URL = import.meta.env.VITE_BASE_URL || 'https://localhost:8444';
 const ALLAUTH_SESSION_URL = `${BASE_URL}/_allauth/browser/v1/auth/session`;
 
 // Helper type for allauth session response
@@ -74,7 +75,7 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
         const isExpired = areTokensExpired();
         const hasAuthFlag = getInitialAuthenticatedValue();
 
-        console.log('[useAuth] Initial state calculation:', {
+        logger.debug('[useAuth] Initial state calculation', {
             has_access_token: access_token !== null,
             is_expired: isExpired,
             has_auth_flag: hasAuthFlag,
@@ -91,6 +92,11 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
     const navigate = useNavigate();
     const location = useLocation();
 
+    // Refs to hold latest callback versions - breaks circular dependency in effects
+    // Effects can call ref.current() without needing the callback in dependency array
+    const logoutRef = useRef<() => Promise<void>>(() => Promise.resolve());
+    const getUserDetailsRef = useRef<() => Promise<unknown>>(() => Promise.resolve());
+
     // On initial mount, check for existing authentication (JWT or session)
     // This runs ONCE on mount to detect existing sessions
     useEffect(() => {
@@ -100,7 +106,7 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
                 const { access_token } = getAuthTokens();
                 // Only call getUserDetails if user has JWT tokens (email/password flow)
                 if (access_token) {
-                    getUserDetails();
+                    getUserDetailsRef.current?.();
                 }
                 return;
             }
@@ -108,7 +114,7 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
             // Check for JWT tokens in cookie/localStorage (email/password flow)
             const { access_token, storage } = getAuthTokens();
             if (access_token && !areTokensExpired()) {
-                console.log(`[useAuth] Initial mount: JWT session detected in ${storage}`);
+                logger.debug(`[useAuth] Initial mount: JWT session detected in ${storage}`);
 
                 // If token came from cookie, store it in localStorage for future use
                 if (storage === "cookie") {
@@ -122,20 +128,22 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
 
             // No JWT tokens found - check for OAuth session cookie
             // This handles page refreshes for OAuth users (Google/GitHub login)
-            console.log('[useAuth] No JWT tokens found, checking for OAuth session...');
+            logger.debug('[useAuth] No JWT tokens found, checking for OAuth session...');
             const oauthUser = await checkOAuthSession();
             if (oauthUser) {
-                console.log('[useAuth] OAuth session detected, user authenticated');
+                logger.debug('[useAuth] OAuth session detected, user authenticated');
                 setUser(oauthUser);
                 setIsAuthenticated(true);
             } else {
-                console.log('[useAuth] No active session found');
+                logger.debug('[useAuth] No active session found');
             }
         };
 
         checkExistingAuth();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []); // Run ONCE on mount
+        // Intentional: must run exactly once on mount to check for existing session.
+        // Adding isAuthenticated would cause infinite loops.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     // When authentication state changes, fetch user details (JWT users only)
     useEffect(() => {
@@ -144,11 +152,10 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
             // Only call getUserDetails if user has JWT tokens (email/password flow)
             // OAuth users have session cookies only, user data already set from session endpoint
             if (access_token) {
-                getUserDetails();
+                getUserDetailsRef.current?.();
             }
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isAuthenticated]); // getUserDetails is stable but creates circular dependency
+    }, [isAuthenticated]);
 
     // Check for token expiration every minute (JWT-only)
     // Note: Token refresh is handled automatically by axios interceptor (apiClient.ts)
@@ -160,15 +167,14 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
             // Only check expiration for JWT users (email/password flow)
             // OAuth users have session cookies only, no JWT tokens
             if (isAuthenticated && access_token && areTokensExpired()) {
-                console.log("Tokens expired during session, logging out...");
-                logout();
+                logger.debug("Tokens expired during session, logging out...");
+                logoutRef.current?.();
             }
         };
 
         const interval = setInterval(checkTokenExpiration, 60000); // Check every minute
         return () => clearInterval(interval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isAuthenticated]); // logout is stable but creates circular dependency
+    }, [isAuthenticated]);
 
     // Handle OAuth callback (when redirected back from Google/GitHub)
     // Supports two authentication patterns:
@@ -186,7 +192,7 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
 
             // OAuth error handling (check first)
             if (oauthError) {
-                console.error("OAuth authentication failed:", oauthError);
+                logger.error("OAuth authentication failed", { error: oauthError });
                 navigate(ROUTES.LOGIN, {
                     state: {
                         oauthError: true,
@@ -212,7 +218,7 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
                 return; // Skip callback handling for normal navigation
             }
 
-            console.log('[useAuth] Callback handler running', {
+            logger.debug('[useAuth] Callback handler running', {
                 pathname: location.pathname,
                 search: location.search,
                 isFromOAuthRedirect,
@@ -222,26 +228,28 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
             // Check if we're on the OAuth callback path (e.g., /login after OAuth redirect)
             // OAuth authentication uses session cookies (NO tokens in URL)
             if (location.pathname === ROUTES.LOGIN && isFromOAuthRedirect) {
-                console.log('[useAuth] OAuth redirect detected, checking session...');
+                logger.debug('[useAuth] OAuth redirect detected, checking session...');
                 // Clear the OAuth in-progress flag
                 sessionStorage.removeItem('oauth_in_progress');
 
                 const oauthUser = await checkOAuthSession();
                 if (oauthUser) {
-                    console.log('[useAuth] OAuth callback - authenticated via session cookie');
+                    logger.debug('[useAuth] OAuth callback - authenticated via session cookie');
                     setUser(oauthUser);
                     setIsAuthenticated(true);
                     navigate(ROUTES.HOME);
                     return;
                 } else {
-                    console.log('[useAuth] Session response shows not authenticated');
+                    logger.debug('[useAuth] Session response shows not authenticated');
                 }
             }
         };
 
         handleOAuthCallback();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [location.pathname, location.search]); // Only re-run when URL changes, not when isAuthenticated changes
+        // Intentional: only re-run when URL changes, not when auth state changes.
+        // Adding isAuthenticated/navigate would cause loops during OAuth redirect handling.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [location.pathname, location.search]);
 
     const logout = useCallback(async () => {
         // Check authentication pattern BEFORE clearing tokens
@@ -257,11 +265,11 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
         try {
             if (isJWTUser) {
                 // JWT user - logout via custom endpoint
-                console.log('[useAuth] Logging out JWT user via /api/logout/');
+                logger.debug('[useAuth] Logging out JWT user via /api/logout/');
                 await authService.logout();
             } else {
                 // OAuth user - logout via session endpoint
-                console.log('[useAuth] Logging out OAuth user via session endpoint');
+                logger.debug('[useAuth] Logging out OAuth user via session endpoint');
                 const response = await fetch(ALLAUTH_SESSION_URL, {
                     method: 'DELETE',
                     credentials: 'include', // Send session cookie
@@ -273,11 +281,11 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
                 // 401 is acceptable - means session already expired/cleared
                 // We've already cleared local state, so logout succeeded from UX perspective
                 if (!response.ok && response.status !== 401) {
-                    console.warn(`[useAuth] Session DELETE returned ${response.status}, but local state already cleared`);
+                    logger.warn(`[useAuth] Session DELETE returned ${response.status}, but local state already cleared`);
                 }
             }
         } catch (error) {
-            console.error("Logout failed:", error);
+            logger.error("Logout failed", { error });
             // Don't reject - we've already cleared local state, user is logged out from UX perspective
         }
     }, [navigate]);
@@ -288,7 +296,7 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
             // OAuth users have session cookies only, skip JWT expiration check
             const { access_token } = getAuthTokens();
             if (access_token && areTokensExpired()) {
-                console.log("Tokens expired, logging out...");
+                logger.debug("Tokens expired, logging out...");
                 await logout();
                 return;
             }
@@ -298,7 +306,7 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
             // Ensure isAuthenticated is true when user details are successfully fetched
             setIsAuthenticated(true);
         } catch (error) {
-            console.error("Error fetching user details:", error);
+            logger.error("Error fetching user details", { error });
             setUser(null);
             setIsAuthenticated(false);
             clearAuthTokens();
@@ -306,15 +314,18 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
         }
     }, [logout]);
 
+    // Update refs to latest callback versions - enables effects to use stable refs
+    // while still calling the latest callback implementation
+    logoutRef.current = logout;
+    getUserDetailsRef.current = getUserDetails;
+
     const login = async (
         username: string,
         password: string,
         rememberMe: boolean = false
-    ): Promise<
-    void | number | Error | { status: number; data: unknown; message: string }
-    > => {
+    ): Promise<AuthResult<void>> => {
         try {
-            console.log('[useAuth] login() called, attempting authentication...');
+            logger.debug('[useAuth] login() called, attempting authentication...');
             const response = await authService.login(username, password);
 
             const user_id = response.user_id;
@@ -331,26 +342,34 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
                 setAuthTokens(accessToken, refreshToken, storage);
                 setIsAuthenticated(true);
                 await getUserDetails();
-                return;
+                return { success: true, data: undefined };
             }
             await getUserDetails();
-            return;
+            return { success: true, data: undefined };
         } catch (error: unknown) {
-            console.error('[useAuth] login() error:', error);
+            logger.error('[useAuth] login() error', { error });
+            const authError: AuthError = {
+                status: 500,
+                message: 'Login failed',
+            };
+
             if (error && typeof error === 'object' && 'response' in error) {
-                const axiosError = error as { response?: { status?: number; data?: { detail?: string; error?: string }; message?: string } };
+                const axiosError = error as { response?: { status?: number; data?: { detail?: string; error?: string; code?: string } } };
                 if (axiosError.response) {
-                    return {
-                        status: axiosError.response.status || 500,
-                        data: axiosError.response.data || {},
-                        message:
-                            axiosError.response.data?.detail ||
-                            axiosError.response.data?.error ||
-                            'Login failed',
-                    };
+                    authError.status = axiosError.response.status || 500;
+                    authError.message =
+                        axiosError.response.data?.detail ||
+                        axiosError.response.data?.error ||
+                        'Login failed';
+                    if (axiosError.response.data?.code) {
+                        authError.code = axiosError.response.data.code;
+                    }
                 }
+            } else if (error instanceof Error) {
+                authError.message = error.message;
             }
-            return error as Error;
+
+            return { success: false, error: authError };
         }
     };
 
@@ -359,18 +378,33 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
         username: string,
         email: string,
         password: string
-    ): Promise<number | Error> => {
+    ): Promise<AuthResult<void>> => {
         try {
             await authService.register(username, email, password);
-            return 201; // Registration successful
+            return { success: true, data: undefined };
         } catch (error: unknown) {
+            const authError: AuthError = {
+                status: 500,
+                message: 'Registration failed',
+            };
+
             if (error && typeof error === 'object' && 'response' in error) {
-                const axiosError = error as { response?: { status?: number } };
-                if (axiosError.response?.status) {
-                    return axiosError.response.status;
+                const axiosError = error as { response?: { status?: number; data?: { detail?: string; error?: string; code?: string } } };
+                if (axiosError.response) {
+                    authError.status = axiosError.response.status || 500;
+                    authError.message =
+                        axiosError.response.data?.detail ||
+                        axiosError.response.data?.error ||
+                        'Registration failed';
+                    if (axiosError.response.data?.code) {
+                        authError.code = axiosError.response.data.code;
+                    }
                 }
+            } else if (error instanceof Error) {
+                authError.message = error.message;
             }
-            return error as Error;
+
+            return { success: false, error: authError };
         }
     };
 

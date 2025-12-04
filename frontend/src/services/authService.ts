@@ -1,6 +1,7 @@
 import apiClient from "./apiClient";
 import type { components } from "../types/api";
 import { getCsrfToken, ensureCsrfTokenCookie } from "@/utilities/csrf";
+import logger from "./logger";
 
 const BASE_URL = import.meta.env.VITE_BASE_API_URL;
 
@@ -32,7 +33,7 @@ export async function login(
     const csrfToken = getCsrfToken();
 
     if (!csrfToken) {
-        console.warn("CSRF token not available for login request");
+        logger.warn("CSRF token not available for login request");
     }
 
     const payload: TokenObtainInput = {
@@ -76,7 +77,7 @@ export async function register(
     const csrfToken = getCsrfToken();
 
     if (!csrfToken) {
-        console.warn("CSRF token not available for register request");
+        logger.warn("CSRF token not available for register request");
     }
 
     const payload: RegisterInput = {
@@ -112,7 +113,7 @@ export async function logout(): Promise<LogoutResponse> {
     const csrfToken = getCsrfToken();
 
     if (!csrfToken) {
-        console.warn("CSRF token not available for logout request");
+        logger.warn("CSRF token not available for logout request");
     }
 
     const response = await apiClient.post<LogoutResponse>(
@@ -152,7 +153,7 @@ export async function verifyEmail(token: string): Promise<{ message: string }> {
     const csrfToken = getCsrfToken();
 
     if (!csrfToken) {
-        console.warn("CSRF token not available for verify-email request");
+        logger.warn("CSRF token not available for verify-email request");
     }
 
     const response = await apiClient.post<{ message: string }>(
@@ -183,7 +184,7 @@ export async function resendVerificationEmail(
     const csrfToken = getCsrfToken();
 
     if (!csrfToken) {
-        console.warn("CSRF token not available for resend-verification request");
+        logger.warn("CSRF token not available for resend-verification request");
     }
 
     const response = await apiClient.post<{ message: string }>(

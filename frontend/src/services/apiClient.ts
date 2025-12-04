@@ -4,11 +4,12 @@ import {
     getAuthTokens,
     setAuthTokens,
 } from "@/utilities/token";
+import logger from "./logger";
 
 const BASE_URL = import.meta.env.VITE_BASE_API_URL;
 
 // Debug: Log the base URL being used
-console.log('[apiClient] BASE_URL configured as:', BASE_URL);
+logger.debug('[apiClient] BASE_URL configured', { BASE_URL });
 
 /**
  * Axios client configured for two-pattern authentication.

@@ -36,20 +36,8 @@ const Register = () => {
       if (register) {
         setErrorMessage("");
         const response = await register(username, email, password);
-        if (response instanceof Error) {
-          setErrorMessage(
-            "Network error. Please check your connection and try again."
-          );
-        } else if (response === 409) {
-          formik.setErrors({
-            username: "Username invalid or already taken.",
-            email: "Email invalid or already taken.",
-          });
-        } else if (response === 400) {
-          formik.setErrors({
-            password: "Password invalid.",
-          });
-        } else if (response === 201) {
+
+        if (response.success) {
           navigate(ROUTES.LOGIN, {
             state: {
               registrationSuccess: true,
@@ -58,7 +46,21 @@ const Register = () => {
             },
           });
         } else {
-          setErrorMessage("Registration failed. Please try again.");
+          // Error case - use structured AuthError
+          const { status, message } = response.error;
+
+          if (status === 409) {
+            formik.setErrors({
+              username: "Username invalid or already taken.",
+              email: "Email invalid or already taken.",
+            });
+          } else if (status === 400) {
+            formik.setErrors({
+              password: message || "Password invalid.",
+            });
+          } else {
+            setErrorMessage(message || "Registration failed. Please try again.");
+          }
         }
       }
     },

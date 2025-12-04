@@ -149,61 +149,30 @@ const Login = () => {
           formik.values.rememberMe
         );
         setIsLoggingIn(false);
-        if (response === 401) {
-          formik.setErrors({
-            username: "Invalid username or password",
-            password: "Invalid username or password",
-          });
-        } else if (
-          typeof response === "object" &&
-          response !== null &&
-          "status" in response
-        ) {
-          if (response.status === 400) {
+
+        if (response.success) {
+          // Success case
+          setGeneralError(""); // Clear any previous errors
+          setEmailVerificationNeeded(false); // Clear verification alert
+          setEmailVerifiedSuccess(null); // Clear email verified success
+          setRegistrationSuccess(null); // Clear registration success
+          navigate(ROUTES.HOME);
+        } else {
+          // Error case - use structured AuthError
+          const { status, message, code } = response.error;
+
+          if (status === 401) {
+            formik.setErrors({
+              username: "Invalid username or password",
+              password: "Invalid username or password",
+            });
+          } else if (status === 400) {
             // Check if this is an email verification error
-            // Type the error data properly to avoid TypeScript errors
-            interface ErrorResponse {
-              non_field_errors?: string[];
-              code?: string;
-              [key: string]: unknown;
-            }
-            const errorData: ErrorResponse = (response.data as ErrorResponse) || {};
-
-            // Check for non_field_errors array (Django REST Framework standard)
-            let isEmailVerificationError = false;
-            if (
-              errorData.non_field_errors &&
-              Array.isArray(errorData.non_field_errors)
-            ) {
-              isEmailVerificationError = errorData.non_field_errors.some(
-                (error: string) =>
-                  error.toLowerCase().includes("verify your email") ||
-                  error.toLowerCase().includes("email verification") ||
-                  error.toLowerCase().includes("verify email")
-              );
-            }
-
-            // Also check for specific error codes in the response (fallback)
-            if (!isEmailVerificationError) {
-              // Check for Django REST Framework error codes
-              if (errorData.code === ERROR_CODES.EMAIL_NOT_VERIFIED) {
-                isEmailVerificationError = true;
-              }
-              // Check arrays for error codes
-              for (const key in errorData) {
-                const value = errorData[key];
-                if (Array.isArray(value)) {
-                  isEmailVerificationError = value.some(
-                    (item) =>
-                      typeof item === "object" &&
-                      item !== null &&
-                      'code' in item &&
-                      item.code === ERROR_CODES.EMAIL_NOT_VERIFIED
-                  );
-                  if (isEmailVerificationError) break;
-                }
-              }
-            }
+            const isEmailVerificationError =
+              code === ERROR_CODES.EMAIL_NOT_VERIFIED ||
+              message.toLowerCase().includes("verify your email") ||
+              message.toLowerCase().includes("email verification") ||
+              message.toLowerCase().includes("verify email");
 
             if (isEmailVerificationError) {
               setEmailVerificationNeeded(true);
@@ -221,23 +190,11 @@ const Login = () => {
               });
             } else {
               // Handle other 400 errors
-              setGeneralError("Login failed. Please try again.");
+              setGeneralError(message || "Login failed. Please try again.");
             }
           } else {
-            setGeneralError(
-              `Login failed with status ${response.status || "unknown"}`
-            );
+            setGeneralError(message || `Login failed with status ${status}`);
           }
-        } else if (response instanceof Error) {
-          // Handle other errors
-          setGeneralError("An error occurred during login. Please try again.");
-        } else {
-          // Success case
-          setGeneralError(""); // Clear any previous errors
-          setEmailVerificationNeeded(false); // Clear verification alert
-          setEmailVerifiedSuccess(null); // Clear email verified success
-          setRegistrationSuccess(null); // Clear registration success
-          navigate(ROUTES.HOME);
         }
       }
     },
@@ -357,16 +314,17 @@ const Login = () => {
 
       // Step 2: Create form and submit through Caddy proxy
       // Use absolute URL with protocol to force full page navigation (bypass React Router)
+      const baseUrl = import.meta.env.VITE_BASE_URL || 'https://localhost:8444';
       const form = document.createElement("form");
       form.method = "POST";
-      form.action = "https://localhost:8444/_allauth/browser/v1/auth/provider/redirect";
+      form.action = `${baseUrl}/_allauth/browser/v1/auth/provider/redirect`;
       // CRITICAL: Force full page reload, prevent React Router interception
       form.target = "_self";
 
       // Add form fields
       const fields = {
         provider: provider,
-        callback_url: "https://localhost:8444/login", // Use full URL with correct port
+        callback_url: `${baseUrl}/login`,
         process: "login",
         ...(csrfToken ? { csrfmiddlewaretoken: csrfToken } : {}),
       };

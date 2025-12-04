@@ -177,12 +177,29 @@ phases and subtasks. They follow a simplified completion protocol.
 - Do the task (fix, update, refactor, etc.)
 - Run appropriate quality checks (linting if code change, etc.)
 
-**2. Mark complete in ATOMIC-TASKS.md**
+**2. Mark complete and add completion notes**
 
 - Change `[ ]` to `[x]`
-- Move item from "Active" section to "Completed (This Week)" section
+- Add completion notes describing what was done (can be multi-line for complex work)
 
-**3. Commit with atomic context footer**
+**3. Archive to quarterly file**
+
+- Move the completed entry from `active/ATOMIC-TASKS.md` to
+  `reference/archive/{year}-{quarter}/completed-atomic-{quarter}.md`
+- Insert at **top** of archive file (reverse chronological order)
+- Add branch line after completion notes (with empty line separator):
+
+  ```markdown
+  - [x] Refactor auth domain technical debt
+      - **Outcome:** Fixed circular deps, standardized AuthResult types, migrated to logger
+      - **Files:** useAuth.ts, auth-state.d.ts, MovieDetail.tsx, Login.tsx, etc.
+
+      - **Branch:** `technical/service-layer-modernization`
+  ```
+
+- This keeps ATOMIC-TASKS.md focused on actionable work
+
+**4. Commit with atomic context footer**
 
 - Use boundary category + atomic pattern:
 
@@ -194,38 +211,6 @@ phases and subtasks. They follow a simplified completion protocol.
      ```
 
 - See [Atomic Commit Workflow](supplemental/atomic-commit.md) for full format
-
-**4. Weekly cleanup**
-
-- During weekly review, delete all items in "Completed (This Week)" section
-- See [Weekly Review Workflow](supplemental/weekly-review.md) for full process
-
-### Example
-
-```markdown
-# Atomic Tasks
-
-## Active
-- [ ] Add type hint to calculateTotal() helper
-- [ ] Fix typo in README line 47
-
-## Completed (This Week)
-- [x] Update Django 5.2 → 5.3
-```
-
-After commit:
-
-```bash
-git commit -m "chore(deps): update Django to 5.3
-
-- Updated from 5.2.7 to 5.3.0
-- Security patch for CVE-2024-XXXXX
-- All tests passing
-
-Context: maintenance (atomic / no associated task list)"
-```
-
-During weekly review: Delete the completed Django update line from ATOMIC-TASKS.md.
 
 ### When Atomic Tasks Grow
 

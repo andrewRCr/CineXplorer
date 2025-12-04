@@ -6,6 +6,16 @@ Reference format: "see `completed-atomic-2025-q4.md`" or "see {task name} in `co
 
 ---
 
+- [x] Refactor auth domain technical debt
+    - **Outcome:** Fixed circular dependencies using useRef pattern, standardized auth return types
+      with AuthResult<T> discriminated union, migrated 25 console statements to logger service,
+      fixed MovieDetail.tsx architecture violation (direct useAuth import → useAuthContext).
+    - **Files:** useAuth.ts, auth-state.d.ts, MovieDetail.tsx, Login.tsx, Register.tsx,
+      authService.ts, apiClient.ts
+    - **Quality gates:** All passed
+
+    - **Branch:** `technical/service-layer-modernization`
+
 - [x] Standardize TMDB paginated response class naming
     - **Outcome:** Renamed misleading "SearchResponse" classes to "PaginatedResponse" pattern for consistency
     - **Renames performed:**

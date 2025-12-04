@@ -6,6 +6,30 @@ Reference format: "see `completed-atomic-2025-q4.md`" or "see {task name} in `co
 
 ---
 
+- [x] Add visual indication for active browse filters + fix sort/filter conflation
+    - **Outcome:** Sort no longer triggers "Clear Filters" button (sort is user preference). Active filters show
+      `color="primary"` on text/icon. TDD with 89 tests for new behavior.
+    - **Key changes:**
+        - New `hasActiveFilters()` function (excludes sort) for button visibility
+        - `clearFilters()` preserves sort when clearing (in QuickBrowseBar, AdvancedFiltersPanel, hook)
+        - `countActiveParams()` now excludes sort from count
+        - ConnectedDropdowns: genre/year text shows primary when selected, toggle icon shows primary when panel open
+        - AdvancedFiltersPanel: language dropdown, year inputs, rating inputs show primary when active
+    - **Files modified:**
+        - `frontend/src/utilities/browseParamUtils.ts` (new `hasActiveFilters`, updated `countActiveParams`)
+        - `frontend/src/utilities/__tests__/browseParamUtils.test.ts` (33 tests)
+        - `frontend/src/components/movie/collection/useMovieCollectionState.tsx` (exposes `hasActiveFilters`, preserves sort)
+        - `frontend/src/components/movie/collection/__tests__/useMovieCollectionState.test.tsx` (new tests)
+        - `frontend/src/components/movie/browse/ClearBrowseParamsButton.tsx` (uses `hasActiveFilters`)
+        - `frontend/src/components/movie/browse/__tests__/ClearBrowseParamsButton.test.tsx` (28 tests)
+        - `frontend/src/components/movie/browse/QuickBrowseBar.tsx` (clearFilters preserves sort)
+        - `frontend/src/components/movie/browse/AdvancedFiltersPanel.tsx` (clearFilters, language color)
+        - `frontend/src/components/movie/browse/ConnectedDropdowns.tsx` (genre/year/toggle color indication)
+        - `frontend/src/components/movie/browse/YearSelector.tsx` (input color indication)
+        - `frontend/src/components/movie/browse/RatingSelector.tsx` (input color indication)
+
+    - **Branch:** `technical/service-layer-modernization`
+
 - [x] Fix naming consistency: filters→browseParams where sort is included
     - **Outcome:** Renamed variables/props that were called "filters" but actually held BrowseParams (includes sort)
     - **Changes:**

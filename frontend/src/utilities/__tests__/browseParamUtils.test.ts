@@ -61,18 +61,6 @@ describe("browseParamUtils", () => {
       expect(hasActiveBrowseParams(createParams({ maxRating: "9" }))).toBe(true);
     });
 
-    it("returns true when minRuntime is set", () => {
-      expect(hasActiveBrowseParams(createParams({ minRuntime: "90" }))).toBe(
-        true
-      );
-    });
-
-    it("returns true when maxRuntime is set", () => {
-      expect(hasActiveBrowseParams(createParams({ maxRuntime: "120" }))).toBe(
-        true
-      );
-    });
-
     it("returns true when language is set", () => {
       expect(hasActiveBrowseParams(createParams({ language: "en" }))).toBe(true);
     });
@@ -154,20 +142,6 @@ describe("browseParamUtils", () => {
       ).toBe(1);
     });
 
-    it("counts runtime range as 1 when minRuntime set", () => {
-      expect(countActiveParams(createParams({ minRuntime: "90" }))).toBe(1);
-    });
-
-    it("counts runtime range as 1 when maxRuntime set", () => {
-      expect(countActiveParams(createParams({ maxRuntime: "120" }))).toBe(1);
-    });
-
-    it("counts runtime range as 1 when both set", () => {
-      expect(
-        countActiveParams(createParams({ minRuntime: "90", maxRuntime: "120" }))
-      ).toBe(1);
-    });
-
     it("counts non-default sort as 1", () => {
       expect(
         countActiveParams(createParams({ sortBy: "vote_average.desc" }))
@@ -179,7 +153,7 @@ describe("browseParamUtils", () => {
     });
 
     it("correctly counts multiple distinct param groups", () => {
-      // All 7 possible groups active
+      // All 6 possible groups active
       expect(
         countActiveParams(
           createParams({
@@ -187,12 +161,11 @@ describe("browseParamUtils", () => {
             genres: [28],
             minYear: "2020",
             minRating: "7",
-            minRuntime: "90",
             sortBy: "vote_average.desc",
             language: "en",
           })
         )
-      ).toBe(7);
+      ).toBe(6);
     });
 
     it("correctly counts mix of active params", () => {

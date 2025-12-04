@@ -103,13 +103,6 @@ function addReleaseDateRange(
     params.release_date_lte = `${endYear}-12-31`;
 }
 
-// Sort mapping configuration (for special combined filter+sort cases)
-// Note: Standard sorts (popularity.desc, vote_average.desc, etc.) pass through directly
-const SORT_MAP: Record<string, Record<string, string>> = {
-    runtime_90: { with_runtime_lte: "90", sort_by: "popularity.desc" },
-    runtime_120: { with_runtime_lte: "120", sort_by: "popularity.desc" },
-};
-
 export function mapBrowseParamsToApi(
     browseParams: BrowseParams,
     browseLayout: "expanded" | "compact"
@@ -123,15 +116,9 @@ export function mapBrowseParamsToApi(
     addRatings(apiParams, browseParams);
     addReleaseDateRange(apiParams, browseParams, browseLayout);
 
-    // Handle sort mapping
+    // Handle sort - pass through directly
     if (browseParams.sortBy) {
-        // Compact layout: Use sort map for special cases, otherwise pass through
-        if (browseLayout === "compact" && browseParams.sortBy in SORT_MAP) {
-            Object.assign(apiParams, SORT_MAP[browseParams.sortBy]);
-        } else {
-            // Expanded layout or unrecognized sort: Pass through as-is
-            apiParams.sort_by = browseParams.sortBy;
-        }
+        apiParams.sort_by = browseParams.sortBy;
     }
 
     return apiParams;

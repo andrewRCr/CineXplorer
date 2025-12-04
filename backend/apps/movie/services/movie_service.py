@@ -408,55 +408,6 @@ class MovieService(BaseTMDBService):
         # Use factory function to create properly typed MovieDetailSchema
         return create_movie_detail_from_tmdb(info_result, credits_result)
 
-    def fetch_movie_runtimes(self, movie_ids: list[int]) -> dict[int, int]:
-        """
-        Fetch runtime data for multiple movies using typed API responses.
-
-        Args:
-            movie_ids: List of TMDB movie IDs
-
-        Returns:
-            Dictionary mapping movie IDs to runtime in minutes
-        """
-        runtimes: dict[int, int] = {}
-
-        logger.info(
-            f"Fetching runtimes for {len(movie_ids)} movies", extra={
-                'operation': 'fetch_runtimes',
-                'movie_count': len(movie_ids)
-            }
-        )
-
-        for movie_id in movie_ids:
-            try:
-                # Use the typed get_movie_by_id method
-                movie_detail = self.get_movie_by_id(movie_id)
-                runtimes[movie_id] = movie_detail.runtime or 0
-
-            except HttpError as e:
-                logger.warning(
-                    f"Failed to fetch runtime for movie {movie_id}", extra={
-                        'operation': 'fetch_runtime',
-                        'movie_id': movie_id,
-                        'error_status': getattr(e, 'status_code', None),
-                        'error_message': getattr(e, 'message', str(e))
-                    },
-                    exc_info=True
-                )
-                runtimes[movie_id] = 0
-            except Exception as e:
-                logger.error(
-                    f"Unexpected error fetching runtime for movie {movie_id}", extra={
-                        'operation': 'fetch_runtime',
-                        'movie_id': movie_id,
-                        'error_type': type(e).__name__,
-                        'error': str(e)
-                    }
-                )
-                runtimes[movie_id] = 0
-
-        return runtimes
-
     # ========================================================================
     # Resource Methods
     # ========================================================================

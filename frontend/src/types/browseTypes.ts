@@ -43,8 +43,6 @@ export interface SortOption {
  * - genres: Array of TMDB genre IDs (empty = all genres)
  * - minYear/maxYear: Year range filter (empty string = no constraint)
  * - minRating/maxRating: Rating range filter (empty string = no constraint)
- * - minRuntime/maxRuntime: Runtime range filter (empty string = no constraint)
- *   Note: Runtime filtering disabled due to TMDB API data quality issues
  * - sortBy: Sort order for results
  * - language: ISO 639-1 language code (empty string = all languages)
  *
@@ -58,8 +56,6 @@ export interface BrowseParams {
   maxYear: string;
   minRating: string;
   maxRating: string;
-  minRuntime: string;
-  maxRuntime: string;
   sortBy: SortOptionValue;
   language: string;
 }

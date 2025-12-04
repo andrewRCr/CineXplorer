@@ -831,18 +831,47 @@ language filter implementation and conceptual clarity issues in the filter/sort 
 
 ---
 
-#### 10.8: Dead Code Cleanup
+#### 10.8: Runtime Parameter Removal
 
-- [ ] **10.8 Remove technical debt**
+**Context:** TMDB's runtime filtering is fundamentally broken due to data contamination from user-submitted
+translations (e.g., Dutch entry shows Avatar at 90 min instead of 192 min). TMDB has explicitly stated
+a `local_runtime.lte/gte` parameter is "not planned". No viable workarounds exist - all require N+1 API
+calls with 10+ second latency per page. Full removal is the correct engineering decision for a portfolio app.
 
-    - [ ] **10.8.a Remove commented runtime filter code from ConnectedDropdowns.tsx**
-        - Delete 100+ lines of commented-out runtime filter code
-        - Add brief comment: "Runtime filtering disabled due to TMDB API data quality issues.
-          See runtimeOptions in browseOptions.ts for future re-enablement."
+- [x] **10.8 Remove runtime as a browse parameter**
 
-    - [ ] **10.8.b Verify no active runtime references**
-        - Ensure minRuntime/maxRuntime fields exist in BrowseParams but UI is disabled
-        - Confirm no broken imports or references to runtime UI
+    - [x] **10.8.a Remove runtime from frontend types and defaults**
+        - Removed `minRuntime`/`maxRuntime` from `BrowseParams` and `DEFAULT_BROWSE_PARAMS`
+
+    - [x] **10.8.b Clean up ConnectedDropdowns.tsx**
+        - Deleted ~100 lines commented runtime UI, memo comparison, unused constant
+
+    - [x] **10.8.c Clean up browseOptions.ts**
+        - Removed `runtimeOptions` export entirely (no comments for absent features)
+
+    - [x] **10.8.d Clean up browseParamMapper.ts**
+        - Removed dead `SORT_MAP` entries and simplified sort handling
+
+    - [x] **10.8.e Update browseParamUtils.ts and browseUrlSync.ts**
+        - Removed all runtime logic, updated docstrings (max count 7→6)
+
+    - [x] **10.8.f Update frontend tests**
+        - Updated 7 test files: browseParamMapper, browseParamUtils, ClearBrowseParamsButton,
+          SortDropdown, useMovieFetchRouter, useMovieCollectionState, MovieDetail,
+          MovieCollectionGrid.integration
+
+    - [x] **10.8.g Backend cleanup**
+        - Removed unused `fetch_movie_runtimes()` method and its test
+        - Removed runtime mention from api.py docstring
+        - Kept `with_runtime_gte/lte` in schema (valid TMDB passthrough, harmless)
+
+    - [x] **10.8.h Run quality gates**
+        - Frontend: type check ✓, lint ✓, 497 tests pass ✓
+        - Backend: lint ✓ (2 pre-existing stub issues unrelated)
+
+    - [x] **10.8.i Create ADR documenting this decision**
+        - Created ADR-018: Remove Runtime Filtering Parameter
+        - Documents TMDB API constraint, alternatives researched, decision rationale
 
 ---
 

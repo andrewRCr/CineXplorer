@@ -71,34 +71,6 @@ export const yearOptions = [
     ...decadeRanges,
 ];
 
-// DISABLED: Runtime filtering options
-//
-// TMDB's runtime filtering API is fundamentally broken and returns incorrect results.
-// The issue is caused by data contamination from user-submitted translations where
-// runtime data is often wrong or omitted entirely. TMDB has acknowledged this issue
-// but states they don't intend to fix it.
-//
-// Evidence of the problem:
-// - "Under 90 min" filter returns MORE results than no filter at all (725,797 vs 19,676)
-// - "Over 150 min" filter barely reduces results (19,146 vs 19,676)
-// - Testing with TMDB's official API test forms shows the same incorrect behavior
-// - Only TMDB's client-facing website has working runtime filtering (likely client-side)
-//
-// To re-enable runtime filtering in the future, you would need to:
-// 1. Fetch runtime data individually for each movie using /movie/{id} endpoint
-// 2. Implement client-side filtering based on actual runtime values
-// 3. Add caching layer to avoid 20+ API calls per page load
-// 4. Accept 2-5 second page load delays when runtime filters are active
-//
-// Preserved for future implementation:
-export const runtimeOptions = [
-    { value: "", label: "Any Runtime" },
-    { value: "0-90", label: "Under 90 min" },
-    { value: "90-120", label: "90-120 min" },
-    { value: "120-150", label: "120-150 min" },
-    { value: "150-400", label: "Over 150 min" }, // Fixed from 999 to realistic upper bound
-];
-
 // Consolidated sort options (5 total) - single dropdown, no advanced/minimal split
 // Only meaningful sort directions included:
 // - popularity.asc removed (produces garbage results - untracked movies)

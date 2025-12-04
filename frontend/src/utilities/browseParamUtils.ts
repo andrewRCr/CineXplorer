@@ -20,12 +20,11 @@ import { DEFAULT_SORT } from "@/constants/browseDefaults";
 /**
  * Checks if any browse parameters are active (non-default).
  *
- * This is the comprehensive check covering all 10 BrowseParams fields:
+ * This is the comprehensive check covering all 8 BrowseParams fields:
  * - query: search text (reserved for future use)
  * - genres: genre filter array
  * - minYear/maxYear: year range
  * - minRating/maxRating: rating range
- * - minRuntime/maxRuntime: runtime range
  * - sortBy: sort order (active if not DEFAULT_SORT)
  * - language: language filter
  *
@@ -40,8 +39,6 @@ export function hasActiveBrowseParams(params: BrowseParams): boolean {
     params.maxYear !== "" ||
     params.minRating !== "" ||
     params.maxRating !== "" ||
-    params.minRuntime !== "" ||
-    params.maxRuntime !== "" ||
     params.sortBy !== DEFAULT_SORT ||
     params.language !== ""
   );
@@ -55,15 +52,14 @@ export function hasActiveBrowseParams(params: BrowseParams): boolean {
  * - genres: counts as 1 if any selected (not per-genre)
  * - year range: counts as 1 if either min or max is set
  * - rating range: counts as 1 if either min or max is set
- * - runtime range: counts as 1 if either min or max is set
  * - sortBy: counts as 1 if not DEFAULT_SORT
  * - language: counts as 1 if set
  *
  * This groups related fields (min/max pairs) to provide a user-friendly count.
- * Maximum possible count: 7 (query, genres, year, rating, runtime, sort, language)
+ * Maximum possible count: 6 (query, genres, year, rating, sort, language)
  *
  * @param params - The browse parameters to count
- * @returns Number of active parameter groups (0-7)
+ * @returns Number of active parameter groups (0-6)
  */
 export function countActiveParams(params: BrowseParams): number {
   let count = 0;
@@ -72,7 +68,6 @@ export function countActiveParams(params: BrowseParams): number {
   if (params.genres.length > 0) count++;
   if (params.minYear !== "" || params.maxYear !== "") count++;
   if (params.minRating !== "" || params.maxRating !== "") count++;
-  if (params.minRuntime !== "" || params.maxRuntime !== "") count++;
   if (params.sortBy !== DEFAULT_SORT) count++;
   if (params.language !== "") count++;
 

@@ -235,7 +235,6 @@ def browse_movies(
             - sort_by: Sort criteria (popularity.desc, vote_average.desc, etc.)
             - vote_average_gte/lte: Rating range filtering (both TMDB + backend)
             - release_date_gte/lte: Date range filtering (both TMDB + backend)
-            - with_runtime_gte/lte: Runtime range filtering
             - primary_release_year: Filter by release year
             - [... many other TMDB discover parameters]
 

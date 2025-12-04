@@ -24,8 +24,6 @@ const createBrowseParams = (overrides: Partial<BrowseParams> = {}): BrowseParams
   maxYear: '',
   minRating: '',
   maxRating: '',
-  minRuntime: '',
-  maxRuntime: '',
   sortBy: 'popularity.desc',
   language: '',
   ...overrides,

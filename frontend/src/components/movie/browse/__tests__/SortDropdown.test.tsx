@@ -27,8 +27,6 @@ const createMockFilters = (
   maxYear: "",
   minRating: "",
   maxRating: "",
-  minRuntime: "",
-  maxRuntime: "",
   sortBy: "popularity.desc",
   language: "",
   ...overrides,

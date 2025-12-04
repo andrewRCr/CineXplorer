@@ -360,7 +360,7 @@ describe('MovieCollectionGrid - Navigation Integration', () => {
       const mockFetcher = createMockFetcher();
 
       const complexURL =
-        '/popular?page=5&minYear=1990&maxYear=2000&genres=28,12,35&minRating=7.0&maxRating=9.0&minRuntime=90&maxRuntime=150&sortBy=vote_count.desc';
+        '/popular?page=5&minYear=1990&maxYear=2000&genres=28,12,35&minRating=7.0&maxRating=9.0&sortBy=vote_count.desc';
 
       renderWithRoutes(
         [
@@ -393,8 +393,6 @@ describe('MovieCollectionGrid - Navigation Integration', () => {
       expect(href).toContain('genres=28%2C12%2C35');
       expect(href).toContain('minRating=7.0');
       expect(href).toContain('maxRating=9.0');
-      expect(href).toContain('minRuntime=90');
-      expect(href).toContain('maxRuntime=150');
       expect(href).toContain('sortBy=vote_count.desc');
     });
 

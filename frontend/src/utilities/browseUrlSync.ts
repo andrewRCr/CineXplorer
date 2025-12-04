@@ -26,8 +26,6 @@ export function parseBrowseParamsFromUrl(search: string): BrowseParams {
   const maxYear = params.get("maxYear") || "";
   const minRating = params.get("minRating") || "";
   const maxRating = params.get("maxRating") || "";
-  const minRuntime = params.get("minRuntime") || "";
-  const maxRuntime = params.get("maxRuntime") || "";
   const language = params.get("language") || "";
 
   return {
@@ -37,8 +35,6 @@ export function parseBrowseParamsFromUrl(search: string): BrowseParams {
     maxYear,
     minRating,
     maxRating,
-    minRuntime,
-    maxRuntime,
     sortBy,
     language,
   };

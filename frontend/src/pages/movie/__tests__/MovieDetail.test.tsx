@@ -243,24 +243,10 @@ describe('MovieDetail - Back Button URL Construction', () => {
       });
     });
 
-    it('handles runtime filters', async () => {
-      const searchParams = '?page=1&from=popular&minRuntime=90&maxRuntime=120';
-
-      renderMovieDetailWithRoute('550', searchParams);
-
-      await waitFor(() => {
-        const backLink = screen.getByText('Back to Results').closest('a');
-        const href = backLink?.getAttribute('href') || '';
-
-        expect(href).toContain('minRuntime=90');
-        expect(href).toContain('maxRuntime=120');
-      });
-    });
-
     it('handles combined filters', async () => {
       // All filters applied at once
       const searchParams =
-        '?page=2&from=popular&minYear=1990&maxYear=2000&genres=28,12&minRating=8.0&maxRating=10.0&minRuntime=90&maxRuntime=150&sortBy=vote_count.desc';
+        '?page=2&from=popular&minYear=1990&maxYear=2000&genres=28,12&minRating=8.0&maxRating=10.0&sortBy=vote_count.desc';
 
       renderMovieDetailWithRoute('550', searchParams);
 
@@ -276,8 +262,6 @@ describe('MovieDetail - Back Button URL Construction', () => {
         expect(href).toContain('genres=28%2C12');
         expect(href).toContain('minRating=8.0');
         expect(href).toContain('maxRating=10.0');
-        expect(href).toContain('minRuntime=90');
-        expect(href).toContain('maxRuntime=150');
         expect(href).toContain('sortBy=vote_count.desc');
       });
     });

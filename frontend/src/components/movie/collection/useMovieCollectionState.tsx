@@ -12,9 +12,6 @@ import {
   countActiveParams,
 } from "@/utilities/browseParamUtils";
 
-// Pre-computed values for performance
-const STANDARD_RUNTIME_RANGES = new Set(["0-90", "90-120", "120-150"]);
-
 // Better hook composition with multiple related concerns
 interface UseMovieCollectionStateConfig {
   defaultBrowseParams?: Partial<BrowseParams>;
@@ -210,20 +207,12 @@ export const useMovieCollectionState = ({
       return true;
     }
 
-    // Check custom runtime (not standard ranges)
-    if (browseParams.minRuntime && browseParams.maxRuntime && browseParams.maxRuntime !== "999") {
-      const runtimeRange = `${browseParams.minRuntime}-${browseParams.maxRuntime}`;
-      return !STANDARD_RUNTIME_RANGES.has(runtimeRange);
-    }
-
     return false;
   }, [
     browseParams.minRating,
     browseParams.maxRating,
     browseParams.minYear,
     browseParams.maxYear,
-    browseParams.minRuntime,
-    browseParams.maxRuntime,
   ]);
 
   const activeParamCount = useMemo(() => {

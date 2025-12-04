@@ -11,8 +11,6 @@ const createMockBrowseParams = (overrides: Partial<BrowseParams> = {}): BrowsePa
   maxYear: '',
   minRating: '',
   maxRating: '',
-  minRuntime: '',
-  maxRuntime: '',
   sortBy: 'popularity.desc',
   language: '',
   ...overrides,
@@ -86,23 +84,11 @@ describe('ClearBrowseParamsButton Component', () => {
       expect(button).toBeVisible();
     });
 
-    it('shows button when runtime params are active', () => {
-      const paramsWithRuntime = createMockBrowseParams({
-        minRuntime: '90',
-        maxRuntime: '180'
-      });
-
-      render(<ClearBrowseParamsButton {...defaultProps} browseParams={paramsWithRuntime} />);
-
-      const button = screen.getByText('Clear filters');
-      expect(button).toBeVisible();
-    });
-
     it('shows button when multiple param types are active', () => {
       const paramsWithMultiple = createMockBrowseParams({
         genres: [35], // Comedy
         minYear: '2010',
-        minRuntime: '120'
+        minRating: '7.0'
       });
 
       render(<ClearBrowseParamsButton {...defaultProps} browseParams={paramsWithMultiple} />);
@@ -151,9 +137,7 @@ describe('ClearBrowseParamsButton Component', () => {
     it('correctly identifies active params with empty strings', () => {
       const paramsWithEmptyStrings = createMockBrowseParams({
         minYear: '', // Empty string should not count as active
-        maxYear: '',
-        minRuntime: '',
-        maxRuntime: ''
+        maxYear: ''
       });
       render(<ClearBrowseParamsButton {...defaultProps} browseParams={paramsWithEmptyStrings} />);
 
@@ -260,7 +244,7 @@ describe('ClearBrowseParamsButton Component', () => {
       const testCases = [
         { genres: [28] },
         { minYear: '2020' },
-        { minRuntime: '90', maxRuntime: '120' },
+        { minRating: '7.0', maxRating: '9.0' },
         { genres: [35, 18], minYear: '2010', maxYear: '2023' }
       ];
 
@@ -349,8 +333,7 @@ describe('ClearBrowseParamsButton Component', () => {
         genres: [], // Empty array - falsy
         minYear: '', // Empty string - falsy
         maxYear: undefined as string | undefined, // undefined !== '' is true - will show button
-        minRuntime: null as unknown as string | undefined, // null !== '' is true - will show button
-        maxRuntime: ''
+        minRating: null as unknown as string | undefined // null !== '' is true - will show button
       });
 
       render(<ClearBrowseParamsButton {...defaultProps} browseParams={edgeCaseParams} />);

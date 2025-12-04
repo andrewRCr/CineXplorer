@@ -28,8 +28,6 @@ export const DEFAULT_BROWSE_PARAMS: BrowseParams = {
   maxYear: "",
   minRating: "",
   maxRating: "",
-  minRuntime: "",
-  maxRuntime: "",
   sortBy: DEFAULT_SORT,
   language: "",
 };

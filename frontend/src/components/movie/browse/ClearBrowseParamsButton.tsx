@@ -1,6 +1,7 @@
 import { Box, Button } from "@chakra-ui/react";
 import { FiX } from "react-icons/fi";
 import type { BrowseParams } from "@/types/browseTypes";
+import { hasActiveBrowseParams } from "@/utilities/browseParamUtils";
 
 interface ClearBrowseParamsButtonProps {
   browseParams: BrowseParams;
@@ -13,13 +14,7 @@ const ClearBrowseParamsButton = ({
   onClear,
   isAdvancedOpen,
 }: ClearBrowseParamsButtonProps) => {
-  const hasActiveParams =
-    browseParams.genres.length > 0 ||
-    browseParams.minYear !== "" ||
-    browseParams.maxYear !== "" ||
-    browseParams.minRuntime !== "" ||
-    browseParams.maxRuntime !== "" ||
-    browseParams.language !== "";
+  const hasActiveParams = hasActiveBrowseParams(browseParams);
 
   return (
     <Box

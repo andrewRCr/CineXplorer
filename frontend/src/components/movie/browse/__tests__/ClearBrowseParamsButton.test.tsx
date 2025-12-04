@@ -161,25 +161,26 @@ describe('ClearBrowseParamsButton Component', () => {
       expect(button).not.toBeVisible();
     });
 
-    it('ignores query field in hasActiveParams calculation', () => {
-      // The component logic only checks specific param fields, not query
+    it('shows button when query field is active', () => {
+      // Uses hasActiveBrowseParams which correctly includes query field
       const paramsWithQuery = createMockBrowseParams({
-        query: 'batman' // Query should not affect visibility
+        query: 'batman'
       });
       render(<ClearBrowseParamsButton {...defaultProps} browseParams={paramsWithQuery} />);
 
       const button = screen.getByText('Clear filters');
-      expect(button).not.toBeVisible();
+      expect(button).toBeVisible();
     });
 
-    it('ignores sortBy field in hasActiveParams calculation', () => {
+    it('shows button when sortBy is non-default', () => {
+      // Uses hasActiveBrowseParams which correctly includes non-default sortBy
       const paramsWithSort = createMockBrowseParams({
         sortBy: 'vote_average.desc'
       });
       render(<ClearBrowseParamsButton {...defaultProps} browseParams={paramsWithSort} />);
 
       const button = screen.getByText('Clear filters');
-      expect(button).not.toBeVisible();
+      expect(button).toBeVisible();
     });
   });
 

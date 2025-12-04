@@ -18,7 +18,7 @@ export const DEFAULT_SORT: SortOptionValue = "popularity.desc";
  *
  * Used for:
  * - Initial state in browse hooks
- * - clearFilters() reset target
+ * - resetBrowseParams() reset target
  * - Comparing against to detect "has active browse params"
  */
 export const DEFAULT_BROWSE_PARAMS: BrowseParams = {

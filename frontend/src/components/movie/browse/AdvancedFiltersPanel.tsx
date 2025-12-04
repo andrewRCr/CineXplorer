@@ -14,8 +14,9 @@ import GenreSelector from "./GenreSelector";
 import YearSelector from "./YearSelector";
 import RatingSelector from "./RatingSelector";
 import { languageOptions } from "@/constants/browseOptions";
-import { DEFAULT_BROWSE_PARAMS, DEFAULT_SORT } from "@/constants/browseDefaults";
+import { DEFAULT_BROWSE_PARAMS } from "@/constants/browseDefaults";
 import type { BrowseParams } from "@/types/browseTypes";
+import { hasActiveBrowseParams } from "@/utilities/browseParamUtils";
 
 interface AdvancedFiltersPanelProps {
   browseParams: BrowseParams;
@@ -63,17 +64,7 @@ const AdvancedFiltersPanel = ({
     onBrowseParamsChange({ ...DEFAULT_BROWSE_PARAMS });
   }, [onBrowseParamsChange]);
 
-  const hasActiveParams =
-    browseParams.query ||
-    browseParams.genres.length > 0 ||
-    browseParams.minYear ||
-    browseParams.maxYear ||
-    browseParams.minRating ||
-    browseParams.maxRating ||
-    browseParams.minRuntime ||
-    browseParams.maxRuntime ||
-    browseParams.language ||
-    browseParams.sortBy !== DEFAULT_SORT;
+  const hasActiveParams = hasActiveBrowseParams(browseParams);
 
   if (isCollapsed) {
     return (

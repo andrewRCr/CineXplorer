@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import type { BrowseParams } from "@/types/browseTypes";
-import { DEFAULT_BROWSE_PARAMS, DEFAULT_SORT } from "@/constants/browseDefaults";
+import { DEFAULT_BROWSE_PARAMS } from "@/constants/browseDefaults";
 import { parseBrowseParamsFromUrl } from "@/utilities/browseUrlSync";
+import { isDefaultSort } from "@/utilities/browseParamUtils";
 
 // Deep comparison function for filters to prevent unnecessary re-renders
 // Added fix to prevent continuous API requests - updated with navigation loop fix
@@ -109,7 +110,7 @@ export const useMovieCollectionUrl = (
         if (
           value === "" ||
           (Array.isArray(value) && value.length === 0) ||
-          (key === "sortBy" && value === DEFAULT_SORT)
+          (key === "sortBy" && isDefaultSort(String(value)))
         ) {
           searchParams.delete(key);
         } else if (Array.isArray(value)) {

@@ -7,6 +7,13 @@ into ServiceParams for the service layer. It extracts parameters for both:
 
 The transformation is the boundary between HTTP/API concerns and service layer logic.
 This includes computing context-aware vote count thresholds via VoteCountPolicy.
+
+Pipeline Position:
+    HTTP Request → [param_transformer] → ServiceParams → [query_params] → TMDB API
+                   ^^^^^^^^^^^^^^^^^^^
+                   This module (step 1 of 2)
+
+For ServiceParams → TMDB API transformation, see tmdb_api_boundary.query_params.
 """
 
 from __future__ import annotations

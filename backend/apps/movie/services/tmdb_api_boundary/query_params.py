@@ -4,7 +4,39 @@ TMDB API parameter building.
 This module handles the conversion of ServiceParams to TMDB API parameters,
 including parameter name mapping and type preservation logic.
 
+Pipeline Position:
+    HTTP Request → [param_transformer] → ServiceParams → [query_params] → TMDB API
+                                                         ^^^^^^^^^^^^^^^
+                                                         This module (step 2 of 2)
+
 For HTTP → ServiceParams transformation, see api_boundary.param_transformer.
+
+Parameter Flow Reference (HTTP → ServiceParams → TMDB API):
+    ┌─────────────────────────────────────────────────────────────────────────────┐
+    │ HTTP Param           │ ServiceParams Field    │ TMDB API Param              │
+    ├─────────────────────────────────────────────────────────────────────────────┤
+    │ sort_by              │ sort_by                │ sort_by                     │
+    │ genres / with_genres │ genres                 │ with_genres                 │
+    │ release_date_gte     │ release_date_gte       │ primary_release_date.gte    │
+    │ release_date_lte     │ release_date_lte       │ primary_release_date.lte    │
+    │ vote_average_gte     │ vote_average_gte       │ vote_average.gte            │
+    │ vote_average_lte     │ vote_average_lte       │ vote_average.lte            │
+    │ vote_count_gte       │ vote_count_gte         │ vote_count.gte              │
+    │ language             │ language               │ with_original_language      │
+    │ certification        │ certification          │ certification               │
+    │ year                 │ year                   │ year                        │
+    └─────────────────────────────────────────────────────────────────────────────┘
+
+    Derived Parameters (computed in param_transformer):
+    ┌─────────────────────────────────────────────────────────────────────────────┐
+    │ Source HTTP          │ Derived ServiceParam   │ Purpose                     │
+    ├─────────────────────────────────────────────────────────────────────────────┤
+    │ release_date_gte     │ year_min               │ Backend year filtering      │
+    │ release_date_lte     │ year_max               │ Backend year filtering      │
+    │ vote_average_gte     │ rating_min             │ Backend rating filtering    │
+    │ vote_average_lte     │ rating_max             │ Backend rating filtering    │
+    │ (computed)           │ min_vote_count         │ VoteCountPolicy threshold   │
+    └─────────────────────────────────────────────────────────────────────────────┘
 """
 
 from __future__ import annotations

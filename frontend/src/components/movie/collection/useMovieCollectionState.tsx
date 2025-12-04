@@ -92,6 +92,9 @@ export const hasAdvancedFilterValues = (filters: BrowseParams): boolean => {
     return true;
   }
 
+  // Language filter is advanced-only (only visible in expanded panel)
+  if (filters.language) return true;
+
   return false;
 };
 

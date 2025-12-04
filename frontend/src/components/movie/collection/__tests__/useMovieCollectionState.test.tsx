@@ -136,6 +136,35 @@ describe("useMovieCollectionState", () => {
       });
     });
 
+    it("should initialize isAdvancedPanelOpen to true when language filter is in URL", async () => {
+      // Arrange: Mock URL parsing to return language filter (advanced-only)
+      mockUseMovieCollectionUrl.mockReturnValue({
+        browseParams: {
+          query: "",
+          genres: [],
+          minYear: "",
+          maxYear: "",
+          minRating: "",
+          maxRating: "",
+          sortBy: "popularity.desc",
+          language: "en",
+        },
+        handleBrowseParamsChange: vi.fn(),
+        currentPageFromUrl: 1,
+        handlePageChange: vi.fn(),
+      });
+
+      // Act: Render hook
+      const { result } = renderHook(() => useMovieCollectionState(), {
+        wrapper,
+      });
+
+      // Assert: Advanced panel should be expanded (after effect runs)
+      await waitFor(() => {
+        expect(result.current.isAdvancedPanelOpen).toBe(true);
+      });
+    });
+
     it("should initialize isAdvancedPanelOpen to false when only genres are in URL", () => {
       // Arrange: Set URL with only genres (compact filter)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

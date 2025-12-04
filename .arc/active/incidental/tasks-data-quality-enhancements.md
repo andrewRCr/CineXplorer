@@ -810,26 +810,24 @@ language filter implementation and conceptual clarity issues in the filter/sort 
 
 #### 10.7: Utility Consumer Updates
 
-- [ ] **10.7 Wire up new utilities**
+- [x] **10.7 Wire up new utilities**
 
-    - [ ] **10.7.a Update components to use browseParamUtils**
-        - `ClearBrowseButton.tsx` - use `hasActiveBrowseParams` (fixes missing fields bug)
-        - `AdvancedFiltersPanel.tsx` - use `hasActiveBrowseParams` for panel state
-        - `useMovieCollectionState.tsx` - use utilities instead of inline logic
-        - `useMovieCollectionUrl.tsx` - use `isDefaultSort` for URL omission
+    - [x] **10.7.a Update components to use browseParamUtils**
+        - `ClearBrowseParamsButton.tsx` - now uses `hasActiveBrowseParams` (fixes missing fields bug)
+        - `AdvancedFiltersPanel.tsx` - now uses `hasActiveBrowseParams` for panel state
+        - `useMovieCollectionState.tsx` - already done in Task 10.6
+        - `useMovieCollectionUrl.tsx` - now uses `isDefaultSort` for URL omission
+        - Updated ClearBrowseParamsButton tests to reflect correct behavior (query/sortBy now included)
 
-    - [ ] **10.7.b Update browseParamMapper consumers**
-        - Update function call: `mapFiltersToApiParams` → `mapBrowseParamsToApi`
-        - Update param: `filterStyle` → `browseLayout`
-        - Files: useMovieFetchRouter.ts, any direct consumers
+    - [x] **10.7.b Update browseParamMapper consumers**
+        - Already completed in Task 10.6 (mapBrowseParamsToApi, browseLayout naming)
 
-    - [ ] **10.7.c Verify no old names remain**
-        - Grep for: `MovieFilters` (should only be in browseTypes.ts comment if anywhere)
-        - Grep for: `filterDefaults`, `movieFilterOptions`
-        - Grep for: `hasActiveFilters`, `filterCount`, `clearFilters` (old names)
-        - Grep for: `LetterboxdStyle`, `MinimalMovieFilters`
-        - Grep for: `@/components/movie/filters/`
-        - Grep for: `backward.compat`, `re-export` (verify no temp shims remain)
+    - [x] **10.7.c Verify no old names remain**
+        - All patterns verified clean: `MovieFilters`, `filterDefaults`, `movieFilterOptions`,
+          `hasActiveFilters`, `filterCount`, `LetterboxdStyle`, `MinimalMovieFilters`,
+          `@/components/movie/filters/`
+        - Fixed one stale comment: `clearFilters()` → `resetBrowseParams()` in browseDefaults.ts
+        - `backward.compat`/`re-export` matches verified as unrelated (auth, pagination, tokens)
 
 ---
 

@@ -6,6 +6,30 @@ Reference format: "see `completed-atomic-2025-q4.md`" or "see {task name} in `co
 
 ---
 
+- [x] Fix naming consistency: filters→browseParams where sort is included
+    - **Outcome:** Renamed variables/props that were called "filters" but actually held BrowseParams (includes sort)
+    - **Changes:**
+        - `SortDropdown.tsx`: prop `filters` → `browseParams` (component uses sortBy AND language)
+        - `QuickBrowseBar.tsx`: updated prop usage
+        - `SortDropdown.test.tsx`: `createMockFilters()` → `createMockBrowseParams()`, prop updates
+        - `useMovieFetchRouter.test.ts`: `createEmptyFilters()` → `createEmptyBrowseParams()`, `mockFilters` → `mockBrowseParams`
+        - `browseParamMapper.test.ts`: `const filters` → `const browseParams` variable names
+    - **Not changed (correctly named):**
+        - `ConnectedDropdowns.tsx`: only uses actual filters (genre, year) - `filters` prop appropriate
+        - `hasAdvancedFilterValues()`: only checks filter values - `filters` param appropriate
+    - **Quality gates:** Type check ✅, Lint ✅, 34 affected tests pass ✅
+
+    - **Branch:** `technical/service-layer-modernization`
+
+- [x] Fix pre-existing linting issues in freezegun stub
+    - **Outcome:** Fixed 2 ruff violations in `backend/stubs/freezegun/__init__.pyi`
+    - **Changes:**
+        - UP035: `typing.ContextManager` → `contextlib.AbstractContextManager`
+        - PIE790: Removed unnecessary `...` after docstring
+    - **Quality gates:** Ruff ✅, Pyright ✅, 7 token refresh tests pass ✅
+
+    - **Branch:** `technical/service-layer-modernization`
+
 - [x] Refactor auth domain technical debt
     - **Outcome:** Fixed circular dependencies using useRef pattern, standardized auth return types
       with AuthResult<T> discriminated union, migrated 25 console statements to logger service,

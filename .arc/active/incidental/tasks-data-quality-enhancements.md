@@ -877,44 +877,51 @@ calls with 10+ second latency per page. Full removal is the correct engineering 
 
 #### 10.9: Backend Documentation
 
-- [ ] **10.9 Document parameter transformation pipeline**
+- [x] **10.9 Document parameter transformation pipeline**
+    - Added pipeline position diagrams showing two-step flow
+    - Added comprehensive inline mapping reference table
+    - Cross-references between modules for navigation
 
-    - [ ] **10.9.a Add docstrings to param mapping files**
-        - `param_transformer.py` - document HTTP → ServiceParams transformation
-        - `query_params.py` - document ServiceParams → TMDB API transformation
-        - Add cross-references between files explaining the two-step pipeline
+    - [x] **10.9.a Add docstrings to param mapping files**
+        - Files already had good docstrings; added pipeline position diagrams
+        - `param_transformer.py`: Added cross-reference to query_params.py
+        - `query_params.py`: Already referenced param_transformer.py
 
-    - [ ] **10.9.b Create inline mapping reference**
-        - In `query_params.py`, add comment block showing full pipeline:
-          `HTTP param → ServiceParams field → TMDB API param`
-        - Example: `language → language → with_original_language`
+    - [x] **10.9.b Create inline mapping reference**
+        - Added parameter flow table in query_params.py docstring
+        - Shows HTTP → ServiceParams → TMDB API for all params
+        - Separate table for derived params (year_min, rating_min, etc.)
 
-    - [ ] **10.9.c Run backend linting**
+    - [x] **10.9.c Run backend linting**
+        - Ruff: All checks passed
+        - Pyright: 0 errors, 0 warnings
 
 ---
 
 #### 10.10: Quality Gates & Verification
 
-- [ ] **10.10 Full quality gates and manual verification**
+- [x] **10.10 Full quality gates and manual verification**
+    - Fixed: Language filter not triggering panel auto-expand (added to `hasAdvancedFilterValues`)
+    - Added test for language auto-expand behavior
+    - Added Phase 11 task for certification auto-expand (11.5.d)
 
-    - [ ] **10.10.a Run full test suite**
-        - Backend: `docker compose -f infrastructure/docker-compose.yml exec backend pytest apps/`
-        - Frontend: `docker compose -f infrastructure/docker-compose.yml exec frontend npm test`
+    - [x] **10.10.a Run full test suite**
+        - Backend: 530 passed, 1 xfailed ✅
+        - Frontend: 498 passed (29 files) ✅
 
-    - [ ] **10.10.b Run all linting and type checking**
-        - Backend lint: `.venv-backend/bin/ruff check backend/apps/ backend/config/ --fix`
-        - Frontend lint: `docker compose ... exec frontend npm run lint`
-        - TypeScript: `docker compose ... exec frontend npm run type-check`
-        - Python types: `npx pyright backend/apps/ backend/config/ --project backend`
-        - Markdown: `npx markdownlint-cli2 --fix "README.md" ".arc/**/*.md"`
+    - [x] **10.10.b Run all linting and type checking**
+        - Backend ruff: All checks passed ✅
+        - Frontend lint: Passed ✅
+        - TypeScript: Passed ✅
+        - Pyright: 0 errors, 0 warnings ✅
 
-    - [ ] **10.10.c Manual browser testing**
-        - Verify language filter works (Phase 9 feature)
-        - Verify title sorts appear/disappear correctly
-        - Verify A-Z sort works correctly with English filter
-        - Verify "Clear" button works from all UI locations
-        - Verify active param count badge accurate in all states
-        - Test URL persistence (bookmarks, refresh, back/forward navigation)
+    - [x] **10.10.c Manual browser testing** (user-verified)
+        - Language filter works ✅
+        - Title sorts appear/disappear correctly ✅
+        - A-Z sort works with English filter ✅
+        - "Clear" button works from all UI locations ✅
+        - URL persistence (bookmarks, refresh, back/forward) ✅
+        - Note: "active param count badge" item removed - feature doesn't exist (unnecessary UI noise)
 
 ---
 
@@ -1057,7 +1064,12 @@ all themes, and color associations are intuitive (green=safe, red=restricted).
     - [ ] **11.5.c Update resetBrowseParams() to reset certifications**
         - Already handled by DEFAULT_BROWSE_PARAMS if Phase 10 complete (resets to `[]`)
 
-    - [ ] **11.5.d Run frontend linting and tests**
+    - [ ] **11.5.d Update hasAdvancedFilterValues() for auto-expand**
+        - Add `if (filters.certifications?.length) return true;`
+        - File: `useMovieCollectionState.tsx`
+        - Required so panel auto-expands when URL has certification filters
+
+    - [ ] **11.5.e Run frontend linting and tests**
 
 #### Frontend: Wire Filter to API
 

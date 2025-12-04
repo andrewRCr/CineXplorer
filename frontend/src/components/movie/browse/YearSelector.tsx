@@ -223,6 +223,8 @@ const YearSelector = ({
           minH="32px"
           fontSize="14px"
           borderRadius="4px"
+          // Active filter indication: primary color when year has value
+          color={localMinYear && !isRouteConstrained ? "primary" : "foreground"}
           borderColor={
             localMinYear && !isValidYear(localMinYear)
               ? "destructive"
@@ -252,6 +254,8 @@ const YearSelector = ({
           minH="32px"
           fontSize="14px"
           borderRadius="4px"
+          // Active filter indication: primary color when year has value
+          color={localMaxYear && !isRouteConstrained ? "primary" : "foreground"}
           borderColor={
             localMaxYear && !isValidYear(localMaxYear)
               ? "destructive"

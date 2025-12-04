@@ -170,6 +170,8 @@ const RatingSelector = ({
           minH="32px"
           fontSize="14px"
           borderRadius="4px"
+          // Active filter indication: primary color when rating has value
+          color={localMinRating ? "primary" : "foreground"}
           borderColor={
             (localMinRating && !isValidRating(localMinRating)) || !hasLogicalRange()
               ? "destructive"
@@ -198,6 +200,8 @@ const RatingSelector = ({
           minH="32px"
           fontSize="14px"
           borderRadius="4px"
+          // Active filter indication: primary color when rating has value
+          color={localMaxRating ? "primary" : "foreground"}
           borderColor={
             (localMaxRating && !isValidRating(localMaxRating)) || !hasLogicalRange()
               ? "destructive"

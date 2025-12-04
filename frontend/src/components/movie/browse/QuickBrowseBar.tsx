@@ -33,8 +33,12 @@ const QuickBrowseBar = ({
     });
   };
 
-  const clearBrowseParams = () => {
-    onBrowseParamsChange({ ...DEFAULT_BROWSE_PARAMS });
+  // Clear filters but preserve sort (sort is user preference, not a filter)
+  const clearFilters = () => {
+    onBrowseParamsChange({
+      ...DEFAULT_BROWSE_PARAMS,
+      sortBy: browseParams.sortBy, // Preserve current sort preference
+    });
   };
 
   const handleSortChange = (sortBy: string) => {
@@ -81,11 +85,12 @@ const QuickBrowseBar = ({
                 filters={browseParams}
                 onFiltersChange={onBrowseParamsChange}
                 onToggleAdvanced={onToggleAdvanced}
+                isAdvancedOpen={isAdvancedOpen}
                 pageSource={pageSource}
               />
               <ClearBrowseParamsButton
                 browseParams={browseParams}
-                onClear={clearBrowseParams}
+                onClear={clearFilters}
                 isAdvancedOpen={isAdvancedOpen}
               />
             </Box>

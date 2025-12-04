@@ -1,7 +1,7 @@
 import { Box, Button } from "@chakra-ui/react";
 import { FiX } from "react-icons/fi";
 import type { BrowseParams } from "@/types/browseTypes";
-import { hasActiveBrowseParams } from "@/utilities/browseParamUtils";
+import { hasActiveFilters } from "@/utilities/browseParamUtils";
 
 interface ClearBrowseParamsButtonProps {
   browseParams: BrowseParams;
@@ -14,7 +14,8 @@ const ClearBrowseParamsButton = ({
   onClear,
   isAdvancedOpen,
 }: ClearBrowseParamsButtonProps) => {
-  const hasActiveParams = hasActiveBrowseParams(browseParams);
+  // Use hasActiveFilters (excludes sort) - sort is user preference, not a filter
+  const hasActiveParams = hasActiveFilters(browseParams);
 
   return (
     <Box

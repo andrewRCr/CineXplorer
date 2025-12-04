@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useRef, useEffect } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import type { BrowseParams } from "@/types/browseTypes";
 import { DEFAULT_BROWSE_PARAMS, DEFAULT_SORT } from "@/constants/browseDefaults";
 import { sortOptions } from "@/constants/browseOptions";
@@ -8,6 +8,7 @@ import {
   isTitleSort,
 } from "@/utilities/sortAvailability";
 import {
+  hasActiveFilters as checkHasActiveFilters,
   hasActiveBrowseParams as checkHasActiveBrowseParams,
   countActiveParams,
 } from "@/utilities/browseParamUtils";
@@ -45,12 +46,13 @@ interface MovieCollectionState {
   onPageChange: (page: number) => void;
 
   // Derived state
-  hasActiveBrowseParams: boolean;
+  hasActiveFilters: boolean; // Excludes sort (for "Clear Filters" button visibility)
+  hasActiveBrowseParams: boolean; // Includes sort (for full param detection)
   hasAdvancedFilters: boolean;
   activeParamCount: number;
 
   // Actions
-  resetBrowseParams: () => void;
+  resetBrowseParams: () => void; // Clears filters but preserves sort
 }
 
 // Minimal filter capabilities (Letterboxd-style UI)
@@ -197,6 +199,12 @@ export const useMovieCollectionState = ({
   }, [isFiltersCollapsed, setIsFiltersCollapsed]);
   
   // Derived state using centralized utilities
+  // hasActiveFilters excludes sort (for "Clear Filters" button visibility)
+  const hasActiveFilters = useMemo(() => {
+    return checkHasActiveFilters(browseParams);
+  }, [browseParams]);
+
+  // hasActiveBrowseParams includes sort (for full param detection)
   const hasActiveBrowseParams = useMemo(() => {
     return checkHasActiveBrowseParams(browseParams);
   }, [browseParams]);
@@ -224,19 +232,20 @@ export const useMovieCollectionState = ({
 
   // Combined derived state for compatibility
   const derivedState = useMemo(() => ({
+    hasActiveFilters,
     hasActiveBrowseParams,
     hasAdvancedFilters,
     activeParamCount,
-  }), [hasActiveBrowseParams, hasAdvancedFilters, activeParamCount]);
-  
-  // Memoize default params object to prevent recreation
-  const defaultParamsRef = useRef<BrowseParams>(DEFAULT_BROWSE_PARAMS);
+  }), [hasActiveFilters, hasActiveBrowseParams, hasAdvancedFilters, activeParamCount]);
 
-  // Actions with optimized object references
+  // Actions: Clear filters but preserve sort (sort is user preference, not a filter)
   const resetBrowseParams = useCallback(() => {
-    onBrowseParamsChange(defaultParamsRef.current);
+    onBrowseParamsChange({
+      ...DEFAULT_BROWSE_PARAMS,
+      sortBy: browseParams.sortBy, // Preserve current sort preference
+    });
     setIsAdvancedPanelOpen(false);
-  }, [onBrowseParamsChange, setIsAdvancedPanelOpen]);
+  }, [onBrowseParamsChange, browseParams.sortBy, setIsAdvancedPanelOpen]);
 
   return {
     // State

@@ -5,6 +5,12 @@
  * provide consistent logic for determining if params are active, counting
  * active params, and checking default states.
  *
+ * Key Design Decision: Sort vs Filters
+ * - Sort is a user PREFERENCE, not a filter
+ * - "Clear Filters" should NOT reset sort (user expects sort to persist)
+ * - hasActiveFilters() excludes sort (for button visibility)
+ * - hasActiveBrowseParams() includes sort (for full param detection)
+ *
  * Active vs Inactive States:
  * - String fields: empty string ("") = inactive, any other value = active
  * - Array fields: empty array ([]) = inactive, non-empty = active
@@ -18,20 +24,22 @@ import type { BrowseParams } from "@/types/browseTypes";
 import { DEFAULT_SORT } from "@/constants/browseDefaults";
 
 /**
- * Checks if any browse parameters are active (non-default).
+ * Checks if any FILTER parameters are active (excludes sort).
  *
- * This is the comprehensive check covering all 8 BrowseParams fields:
- * - query: search text (reserved for future use)
+ * This is the base filter check used by "Clear Filters" button visibility.
+ * Sort is intentionally excluded because it's a user preference, not a filter.
+ *
+ * Covers 7 filter fields:
+ * - query: search text
  * - genres: genre filter array
  * - minYear/maxYear: year range
  * - minRating/maxRating: rating range
- * - sortBy: sort order (active if not DEFAULT_SORT)
  * - language: language filter
  *
  * @param params - The browse parameters to check
- * @returns true if any parameter is active (non-default)
+ * @returns true if any FILTER is active (non-default)
  */
-export function hasActiveBrowseParams(params: BrowseParams): boolean {
+export function hasActiveFilters(params: BrowseParams): boolean {
   return (
     params.query !== "" ||
     params.genres.length > 0 ||
@@ -39,27 +47,41 @@ export function hasActiveBrowseParams(params: BrowseParams): boolean {
     params.maxYear !== "" ||
     params.minRating !== "" ||
     params.maxRating !== "" ||
-    params.sortBy !== DEFAULT_SORT ||
     params.language !== ""
   );
 }
 
 /**
- * Counts the number of active browse parameters.
+ * Checks if any browse parameters are active (non-default), INCLUDING sort.
+ *
+ * Builds on hasActiveFilters() and adds sort check.
+ * Use this when you need to know if ANY param differs from default.
+ *
+ * @param params - The browse parameters to check
+ * @returns true if any parameter is active (non-default)
+ */
+export function hasActiveBrowseParams(params: BrowseParams): boolean {
+  return hasActiveFilters(params) || params.sortBy !== DEFAULT_SORT;
+}
+
+/**
+ * Counts the number of active FILTER parameters (excludes sort).
+ *
+ * Sort is intentionally excluded because it's a user preference, not a filter.
+ * This count is used for UI indicators like "X filters active".
  *
  * Counting logic:
  * - query: counts as 1 if non-empty
  * - genres: counts as 1 if any selected (not per-genre)
  * - year range: counts as 1 if either min or max is set
  * - rating range: counts as 1 if either min or max is set
- * - sortBy: counts as 1 if not DEFAULT_SORT
  * - language: counts as 1 if set
  *
  * This groups related fields (min/max pairs) to provide a user-friendly count.
- * Maximum possible count: 6 (query, genres, year, rating, sort, language)
+ * Maximum possible count: 5 (query, genres, year, rating, language)
  *
  * @param params - The browse parameters to count
- * @returns Number of active parameter groups (0-6)
+ * @returns Number of active filter groups (0-5)
  */
 export function countActiveParams(params: BrowseParams): number {
   let count = 0;
@@ -68,7 +90,7 @@ export function countActiveParams(params: BrowseParams): number {
   if (params.genres.length > 0) count++;
   if (params.minYear !== "" || params.maxYear !== "") count++;
   if (params.minRating !== "" || params.maxRating !== "") count++;
-  if (params.sortBy !== DEFAULT_SORT) count++;
+  // Sort intentionally excluded - it's a preference, not a filter
   if (params.language !== "") count++;
 
   return count;

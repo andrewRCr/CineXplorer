@@ -16,7 +16,7 @@ import RatingSelector from "./RatingSelector";
 import { languageOptions } from "@/constants/browseOptions";
 import { DEFAULT_BROWSE_PARAMS } from "@/constants/browseDefaults";
 import type { BrowseParams } from "@/types/browseTypes";
-import { hasActiveBrowseParams } from "@/utilities/browseParamUtils";
+import { hasActiveFilters } from "@/utilities/browseParamUtils";
 
 interface AdvancedFiltersPanelProps {
   browseParams: BrowseParams;
@@ -60,11 +60,16 @@ const AdvancedFiltersPanel = ({
     [onBrowseParamsChange]
   );
 
-  const clearBrowseParams = useCallback(() => {
-    onBrowseParamsChange({ ...DEFAULT_BROWSE_PARAMS });
-  }, [onBrowseParamsChange]);
+  // Clear filters but preserve sort (sort is user preference, not a filter)
+  const clearFilters = useCallback(() => {
+    onBrowseParamsChange({
+      ...DEFAULT_BROWSE_PARAMS,
+      sortBy: browseParams.sortBy, // Preserve current sort preference
+    });
+  }, [onBrowseParamsChange, browseParams.sortBy]);
 
-  const hasActiveParams = hasActiveBrowseParams(browseParams);
+  // Use hasActiveFilters (excludes sort) for button visibility
+  const hasActiveParams = hasActiveFilters(browseParams);
 
   if (isCollapsed) {
     return (
@@ -106,7 +111,7 @@ const AdvancedFiltersPanel = ({
         <HStack>
           {hasActiveParams && (
             <Button
-              onClick={clearBrowseParams}
+              onClick={clearFilters}
               size="sm"
               variant="ghost"
               color="destructive"
@@ -186,6 +191,14 @@ const AdvancedFiltersPanel = ({
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
+                  // Active filter indication: primary color when language selected
+                  // Small delay ensures text updates before color changes
+                  "& > span": {
+                    transition: "color 0.15s ease-out 0.05s",
+                    color: browseParams.language
+                      ? "var(--chakra-colors-primary)"
+                      : "var(--chakra-colors-foreground)",
+                  },
                   "& [data-part='indicator']": {
                     width: "16px",
                     height: "16px",

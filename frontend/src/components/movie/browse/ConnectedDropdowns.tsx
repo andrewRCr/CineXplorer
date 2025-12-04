@@ -20,6 +20,7 @@ interface ConnectedDropdownsProps {
       | ((prev: BrowseParams) => BrowseParams)
   ) => void;
   onToggleAdvanced?: () => void;
+  isAdvancedOpen?: boolean;
   pageSource?: string;
 }
 
@@ -27,6 +28,7 @@ const ConnectedDropdowns = ({
   filters,
   onFiltersChange,
   onToggleAdvanced,
+  isAdvancedOpen = false,
   pageSource,
 }: ConnectedDropdownsProps) => {
   // Memoize the filter update function to prevent recreation
@@ -131,6 +133,12 @@ const ConnectedDropdowns = ({
   // Conditional width for year dropdown - wider when showing year span (e.g., "2024-2025")
   const yearWidth = yearDisplayData.isYearSpan ? YEAR_SPAN_WIDTH : YEAR_WIDTH;
 
+  // Active filter visual indication - show primary color when filter has non-default value
+  // Disabled filters (multiple/advanced/route-constrained) keep their muted style
+  const hasActiveGenre = filters.genres.length > 0 && !genreDisplayData.isGenreDisabled;
+  const hasActiveYear = (filters.minYear !== "" || filters.maxYear !== "") &&
+    !yearDisplayData.isYearCustom && !yearDisplayData.isRouteConstrained;
+
   // Memoize collections to prevent array recreation on every render
   const genreCollection = useMemo(() => createListCollection({
     items: [
@@ -218,9 +226,14 @@ const ConnectedDropdowns = ({
               justifyContent: "space-between",
               "& > span": {
                 fontStyle: genreDisplayData.isGenreDisabled ? "italic" : "normal",
+                // Active filter indication: primary color when genre selected
+                // Small delay ensures text updates before color changes
+                transition: "color 0.15s ease-out 0.05s",
                 color: genreDisplayData.isGenreDisabled
-                  ? "on-muted"
-                  : "foreground",
+                  ? "var(--chakra-colors-on-muted)"
+                  : hasActiveGenre
+                    ? "var(--chakra-colors-primary)"
+                    : "var(--chakra-colors-foreground)",
               },
               "& [data-part='indicator']": {
                 width: "16px",
@@ -324,9 +337,14 @@ const ConnectedDropdowns = ({
               justifyContent: "space-between",
               "& > span": {
                 fontStyle: yearDisplayData.isYearCustom || yearDisplayData.isRouteConstrained ? "italic" : "normal",
+                // Active filter indication: primary color when year selected
+                // Small delay ensures text updates before color changes
+                transition: "color 0.15s ease-out 0.05s",
                 color: yearDisplayData.isYearCustom || yearDisplayData.isRouteConstrained
-                  ? "on-muted"
-                  : "foreground",
+                  ? "var(--chakra-colors-on-muted)"
+                  : hasActiveYear
+                    ? "var(--chakra-colors-primary)"
+                    : "var(--chakra-colors-foreground)",
               },
               "& [data-part='indicator']": {
                 width: "16px",
@@ -371,6 +389,7 @@ const ConnectedDropdowns = ({
           Unlike standalone buttons, it uses subtle hover styling (background tint only) to match the connected
           dropdowns' hover behavior. This creates visual cohesion across the connected control group.
           Strategy doc pattern (border/text color changes on hover) applies to standalone buttons, not connected groups.
+          Active filter indication: primary icon color when panel is open.
       */}
       {onToggleAdvanced && (
         <Button
@@ -379,7 +398,8 @@ const ConnectedDropdowns = ({
           variant="outline"
           borderRadius="0 4px 4px 0"
           borderColor="button-outline"
-          color="on-button-outline"
+          // Active filter indication: primary color when panel is open
+          color={isAdvancedOpen ? "primary" : "on-button-outline"}
           _hover={{
             bg: "tertiary/8",
           }}
@@ -410,6 +430,8 @@ const MemoizedConnectedDropdowns = memo(ConnectedDropdowns, (prevProps, nextProp
     // Compare function references
     prevProps.onFiltersChange === nextProps.onFiltersChange &&
     prevProps.onToggleAdvanced === nextProps.onToggleAdvanced &&
+    // Compare isAdvancedOpen for active filter indication
+    prevProps.isAdvancedOpen === nextProps.isAdvancedOpen &&
     // Compare pageSource for route-based disabling
     prevProps.pageSource === nextProps.pageSource
   );

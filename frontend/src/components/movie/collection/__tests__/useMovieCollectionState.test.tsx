@@ -364,20 +364,21 @@ describe("useMovieCollectionState", () => {
   });
 
   describe("Reset browse params action", () => {
-    it("should reset params and collapse advanced panel when resetBrowseParams called", async () => {
-      // Arrange: Mock URL parsing to return rating filters
+    it("should reset filters, preserve sort, and collapse advanced panel when resetBrowseParams called", async () => {
+      // Arrange: Mock URL parsing to return rating filters + non-default sort
+      const mockHandleBrowseParamsChange = vi.fn();
       mockUseMovieCollectionUrl.mockReturnValue({
         browseParams: {
           query: "",
-          genres: [],
+          genres: [28],
           minYear: "",
           maxYear: "",
           minRating: "1.0",
           maxRating: "3.5",
-          sortBy: "popularity.desc",
-          language: "",
+          sortBy: "vote_average.desc", // Non-default sort
+          language: "en",
         },
-        handleBrowseParamsChange: vi.fn(),
+        handleBrowseParamsChange: mockHandleBrowseParamsChange,
         currentPageFromUrl: 1,
         handlePageChange: vi.fn(),
       });
@@ -398,6 +399,18 @@ describe("useMovieCollectionState", () => {
 
       // Assert: Advanced panel should be collapsed
       expect(result.current.isAdvancedPanelOpen).toBe(false);
+
+      // Assert: Sort should be PRESERVED, filters should be reset
+      expect(mockHandleBrowseParamsChange).toHaveBeenCalledWith({
+        query: "",
+        genres: [],
+        minYear: "",
+        maxYear: "",
+        minRating: "",
+        maxRating: "",
+        sortBy: "vote_average.desc", // Sort preserved!
+        language: "",
+      });
     });
   });
 
@@ -458,6 +471,35 @@ describe("useMovieCollectionState", () => {
 
       // Assert: Should have active params
       expect(result.current.hasActiveBrowseParams).toBe(true);
+    });
+
+    it("should detect hasActiveFilters correctly (excludes sort)", () => {
+      // Arrange: Use non-URL-synced mode to test local state management
+      const { result } = renderHook(
+        () => useMovieCollectionState({ enableUrlSync: false }),
+        { wrapper }
+      );
+
+      // Initial state: no active filters
+      expect(result.current.hasActiveFilters).toBe(false);
+
+      // Act: Change only sort (NOT a filter)
+      act(() => {
+        result.current.onBrowseParamsChange({ sortBy: "vote_average.desc" });
+      });
+
+      // Assert: hasActiveFilters should still be false (sort excluded)
+      expect(result.current.hasActiveFilters).toBe(false);
+      // But hasActiveBrowseParams should include sort
+      expect(result.current.hasActiveBrowseParams).toBe(true);
+
+      // Act: Add an actual filter
+      act(() => {
+        result.current.onBrowseParamsChange({ genres: [28] });
+      });
+
+      // Assert: hasActiveFilters should now be true
+      expect(result.current.hasActiveFilters).toBe(true);
     });
   });
 

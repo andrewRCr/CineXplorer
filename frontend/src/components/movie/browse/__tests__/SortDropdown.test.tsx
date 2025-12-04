@@ -17,8 +17,8 @@ import userEvent from "@testing-library/user-event";
 import SortDropdown from "../SortDropdown";
 import type { BrowseParams } from "@/types/browseTypes";
 
-// Helper to create mock filters
-const createMockFilters = (
+// Helper to create mock browse params (includes sort + filters)
+const createMockBrowseParams = (
   overrides: Partial<BrowseParams> = {}
 ): BrowseParams => ({
   query: "",
@@ -43,7 +43,7 @@ describe("SortDropdown", () => {
     it("renders sort dropdown with label", () => {
       render(
         <SortDropdown
-          filters={createMockFilters()}
+          browseParams={createMockBrowseParams()}
           onSortChange={mockOnSortChange}
         />
       );
@@ -54,7 +54,7 @@ describe("SortDropdown", () => {
     it("displays current sort value in trigger", () => {
       render(
         <SortDropdown
-          filters={createMockFilters({ sortBy: "vote_average.desc" })}
+          browseParams={createMockBrowseParams({ sortBy: "vote_average.desc" })}
           onSortChange={mockOnSortChange}
         />
       );
@@ -67,7 +67,7 @@ describe("SortDropdown", () => {
     it("displays default sort (Most Popular) in trigger", () => {
       render(
         <SortDropdown
-          filters={createMockFilters({ sortBy: "popularity.desc" })}
+          browseParams={createMockBrowseParams({ sortBy: "popularity.desc" })}
           onSortChange={mockOnSortChange}
         />
       );
@@ -83,7 +83,7 @@ describe("SortDropdown", () => {
 
       render(
         <SortDropdown
-          filters={createMockFilters()}
+          browseParams={createMockBrowseParams()}
           onSortChange={mockOnSortChange}
         />
       );
@@ -101,7 +101,7 @@ describe("SortDropdown", () => {
 
       render(
         <SortDropdown
-          filters={createMockFilters({ language: "en" })}
+          browseParams={createMockBrowseParams({ language: "en" })}
           onSortChange={mockOnSortChange}
         />
       );
@@ -124,7 +124,7 @@ describe("SortDropdown", () => {
 
       render(
         <SortDropdown
-          filters={createMockFilters()}
+          browseParams={createMockBrowseParams()}
           onSortChange={mockOnSortChange}
           pageSource="upcoming"
         />
@@ -143,7 +143,7 @@ describe("SortDropdown", () => {
 
       render(
         <SortDropdown
-          filters={createMockFilters()}
+          browseParams={createMockBrowseParams()}
           onSortChange={mockOnSortChange}
           pageSource="popular"
         />
@@ -164,7 +164,7 @@ describe("SortDropdown", () => {
 
       render(
         <SortDropdown
-          filters={createMockFilters({ language: "" })}
+          browseParams={createMockBrowseParams({ language: "" })}
           onSortChange={mockOnSortChange}
         />
       );
@@ -185,7 +185,7 @@ describe("SortDropdown", () => {
 
       render(
         <SortDropdown
-          filters={createMockFilters({ language: "ja" })}
+          browseParams={createMockBrowseParams({ language: "ja" })}
           onSortChange={mockOnSortChange}
         />
       );
@@ -202,7 +202,7 @@ describe("SortDropdown", () => {
 
       render(
         <SortDropdown
-          filters={createMockFilters({ language: "ko" })}
+          browseParams={createMockBrowseParams({ language: "ko" })}
           onSortChange={mockOnSortChange}
         />
       );
@@ -219,7 +219,7 @@ describe("SortDropdown", () => {
 
       render(
         <SortDropdown
-          filters={createMockFilters({ language: "en" })}
+          browseParams={createMockBrowseParams({ language: "en" })}
           onSortChange={mockOnSortChange}
         />
       );
@@ -236,7 +236,7 @@ describe("SortDropdown", () => {
 
       render(
         <SortDropdown
-          filters={createMockFilters({ language: "fr" })}
+          browseParams={createMockBrowseParams({ language: "fr" })}
           onSortChange={mockOnSortChange}
         />
       );
@@ -253,7 +253,7 @@ describe("SortDropdown", () => {
 
       render(
         <SortDropdown
-          filters={createMockFilters({ language: "es" })}
+          browseParams={createMockBrowseParams({ language: "es" })}
           onSortChange={mockOnSortChange}
         />
       );

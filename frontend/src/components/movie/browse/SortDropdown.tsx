@@ -6,22 +6,22 @@ import type { BrowseParams } from "@/types/browseTypes";
 const SORT_WIDTH = "170px";
 
 interface SortDropdownProps {
-  filters: BrowseParams;
+  browseParams: BrowseParams;
   onSortChange: (sortBy: string) => void;
   pageSource?: string;
 }
 
 const SortDropdown = ({
-  filters,
+  browseParams,
   onSortChange,
   pageSource,
 }: SortDropdownProps) => {
-  const currentSortValue = filters.sortBy;
+  const currentSortValue = browseParams.sortBy;
 
   // Get available sort options based on language (hides title sorts for non-Latin)
   const availableSortOptions = useMemo(
-    () => getAvailableSortOptions(filters.language),
-    [filters.language]
+    () => getAvailableSortOptions(browseParams.language),
+    [browseParams.language]
   );
 
   // Disable "Highest Rated" in Upcoming view - upcoming movies have few/no votes,

@@ -91,7 +91,7 @@ const QuickBrowseBar = ({
             </Box>
 
             <SortDropdown
-              filters={browseParams}
+              browseParams={browseParams}
               onSortChange={handleSortChange}
               pageSource={pageSource}
             />

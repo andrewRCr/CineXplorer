@@ -34,6 +34,18 @@
     - Files: `frontend/src/theme/recipes/` (new or existing), `frontend/src/components/movie/MovieCard.tsx`
     - Pattern will be reused in MovieDetail and other locations
 
+<!-- Auth Refactoring -->
+
+- [ ] Refactor useAuth.ts technical debt
+    - Context: File accumulated piecemeal fixes during auth development
+    - Subtasks:
+        - [ ] Migrate 19 console.log/warn/error calls to logger service
+        - [ ] Standardize return types (login returns complex union, register returns simpler one)
+        - [ ] Evaluate eslint-disable comments (4 instances citing "circular dependency")
+    - Files: `frontend/src/hooks/useAuth.ts`, potentially `frontend/src/@types/auth-state.ts`
+    - Rationale: Improve maintainability and align with project logging standards
+    - Estimate: 30-45 min for logging migration, return types may require more analysis
+
 <!-- Miscellaneous -->
 
 - [ ] Investigate login session loss during testing

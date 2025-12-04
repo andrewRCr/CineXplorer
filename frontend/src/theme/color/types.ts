@@ -571,8 +571,6 @@ export interface UnifiedTheme {
      * <Link color="tertiary" _hover={{ color: "tertiary-hover" }}>Learn more</Link>
      * ```
      *
-     * **Note:** Deprecated alias `accent-hover` maintained for backward compatibility
-     *
      * @see ADR-009 for interaction state approach
      */
     "tertiary-hover": string;

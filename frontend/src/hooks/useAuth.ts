@@ -32,6 +32,40 @@ import * as authService from "@/services/authService";
 // Type alias for user profile from generated API types
 type UserProfile = components["schemas"]["UserProfileSchema"];
 
+// Derive base URL for allauth endpoints (not under /api/)
+const BASE_URL = import.meta.env.VITE_BASE_API_URL?.replace(/\/api$/, '') || 'https://localhost:8444';
+const ALLAUTH_SESSION_URL = `${BASE_URL}/_allauth/browser/v1/auth/session`;
+
+// Helper type for allauth session response
+interface AllauthSessionResponse {
+    meta?: { is_authenticated?: boolean };
+    data?: { user?: UserProfile };
+}
+
+/**
+ * Check OAuth session status via allauth session endpoint.
+ * Used for both initial mount detection and OAuth callback handling.
+ * @returns User profile if authenticated, null otherwise
+ */
+async function checkOAuthSession(): Promise<UserProfile | null> {
+    try {
+        const response = await fetch(ALLAUTH_SESSION_URL, {
+            method: 'GET',
+            credentials: 'include',
+        });
+
+        if (response.ok) {
+            const data: AllauthSessionResponse = await response.json();
+            if (data?.meta?.is_authenticated && data?.data?.user) {
+                return data.data.user;
+            }
+        }
+        return null;
+    } catch {
+        return null;
+    }
+}
+
 export function useAuth(): AuthStateProps & { user: UserProfile | null } {
     const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
         // Hybrid auth: Instant authentication detection from localStorage/cookie
@@ -50,7 +84,7 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
         // Three conditions must be met:
         // 1. Access token exists (in cookie, localStorage, or sessionStorage)
         // 2. Token is not expired (checked via JWT exp claim or localStorage timestamp)
-        // 3. isAuthenticated flag is set (for backward compatibility)
+        // 3. isAuthenticated flag is set (fast boolean check without JWT parsing)
         return access_token !== null && !isExpired && hasAuthFlag;
     });
     const [user, setUser] = useState<UserProfile | null>(null);
@@ -88,38 +122,14 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
 
             // No JWT tokens found - check for OAuth session cookie
             // This handles page refreshes for OAuth users (Google/GitHub login)
-            try {
-                console.log('[useAuth] No JWT tokens found, checking for OAuth session...');
-                const response = await fetch(
-                    'https://localhost:8444/_allauth/browser/v1/auth/session',
-                    {
-                        method: 'GET',
-                        credentials: 'include', // Send session cookie if present
-                    }
-                );
-
-                if (response.ok) {
-                    const data = await response.json();
-
-                    // Session endpoint returns: {status: 200, data: {user, methods}, meta: {is_authenticated}}
-                    if (data?.meta?.is_authenticated && data?.data?.user) {
-                        console.log('[useAuth] OAuth session detected, user authenticated');
-                        // Set user data from session response
-                        setUser(data.data.user);
-                        // Set authenticated state (session cookie handles auth automatically)
-                        setIsAuthenticated(true);
-                    } else {
-                        console.log('[useAuth] No active session found');
-                    }
-                } else if (response.status === 401) {
-                    // 401 means no active session - expected when logged out
-                    console.log('[useAuth] No OAuth session (401 - not authenticated)');
-                } else {
-                    console.warn(`[useAuth] Session check returned unexpected status: ${response.status}`);
-                }
-            } catch (error) {
-                console.log('[useAuth] Session check failed (user not logged in):', error);
-                // Silently fail - user is not authenticated, which is fine
+            console.log('[useAuth] No JWT tokens found, checking for OAuth session...');
+            const oauthUser = await checkOAuthSession();
+            if (oauthUser) {
+                console.log('[useAuth] OAuth session detected, user authenticated');
+                setUser(oauthUser);
+                setIsAuthenticated(true);
+            } else {
+                console.log('[useAuth] No active session found');
             }
         };
 
@@ -216,39 +226,15 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
                 // Clear the OAuth in-progress flag
                 sessionStorage.removeItem('oauth_in_progress');
 
-                try {
-                    // Check session endpoint to see if OAuth completed successfully
-                    console.log('[useAuth] Fetching session endpoint...');
-                    const response = await fetch(
-                        'https://localhost:8444/_allauth/browser/v1/auth/session',
-                        {
-                            method: 'GET',
-                            credentials: 'include', // CRITICAL: sends HTTP-only session cookie
-                        }
-                    );
-
-                    console.log('[useAuth] Session response status:', response.status);
-
-                    if (response.ok) {
-                        const data = await response.json();
-
-                        // Session endpoint returns: {status: 200, data: {user, methods}, meta: {is_authenticated}}
-                        if (data?.meta?.is_authenticated && data?.data?.user) {
-                            console.log('OAuth callback detected - authenticated via session cookie');
-
-                            // Set user data from session response (no need to call getUserProfile)
-                            setUser(data.data.user);
-                            // Set authenticated state (session cookie handles auth automatically)
-                            setIsAuthenticated(true);
-                            navigate(ROUTES.HOME);
-                            return;
-                        } else {
-                            console.log('[useAuth] Session response shows not authenticated');
-                        }
-                    }
-                } catch (error) {
-                    console.error('Error checking session endpoint:', error);
-                    // Fall through - user will remain on login page
+                const oauthUser = await checkOAuthSession();
+                if (oauthUser) {
+                    console.log('[useAuth] OAuth callback - authenticated via session cookie');
+                    setUser(oauthUser);
+                    setIsAuthenticated(true);
+                    navigate(ROUTES.HOME);
+                    return;
+                } else {
+                    console.log('[useAuth] Session response shows not authenticated');
                 }
             }
         };
@@ -276,7 +262,7 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
             } else {
                 // OAuth user - logout via session endpoint
                 console.log('[useAuth] Logging out OAuth user via session endpoint');
-                const response = await fetch('https://localhost:8444/_allauth/browser/v1/auth/session', {
+                const response = await fetch(ALLAUTH_SESSION_URL, {
                     method: 'DELETE',
                     credentials: 'include', // Send session cookie
                     headers: {
@@ -375,8 +361,7 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
         password: string
     ): Promise<number | Error> => {
         try {
-            // TODO: Update Register.tsx UI to collect first_name and last_name (Task 5.4-5.5)
-            await authService.register(username, email, password, "", "");
+            await authService.register(username, email, password);
             return 201; // Registration successful
         } catch (error: unknown) {
             if (error && typeof error === 'object' && 'response' in error) {

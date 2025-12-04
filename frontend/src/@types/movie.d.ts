@@ -77,26 +77,3 @@ export interface Credits {
 
 // Note: For browse/filter state types, use BrowseParams from @/types/browseTypes.ts
 // For API parameter types, use MovieQueryParams from services/movieService.ts
-
-// ============================================================================
-// Backward Compatibility Notes
-// ============================================================================
-
-/**
- * Migration Notes:
- *
- * The following changes were made when migrating to auto-generated types:
- *
- * 1. `Movie` extends `MovieDetailSchema` with additional TMDB fields
- * 2. `MovieBase` extends `MovieBaseSchema` for list views
- * 3. All types now use snake_case consistently (e.g., tmdb_id, poster_path)
- * 4. Optional fields are properly marked with `| null` or `| undefined`
- * 5. User movie data is now properly typed as `UserMovieDataSchema`
- *
- * Type differences to be aware of:
- * - `release_date` is now optional (string | null | undefined)
- * - `runtime` is optional (number | null | undefined)
- * - `vote_average` is optional (number | null | undefined)
- * - All path fields (poster_path, backdrop_path) are string | null | undefined
- * - The `Movie` interface extends the backend schema with frontend-specific fields
- */

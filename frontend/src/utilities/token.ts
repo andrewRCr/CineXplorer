@@ -105,7 +105,7 @@ export function getCurrentStorageType(): TokenStorage {
  * - isAuthenticated flag for quick boolean checks
  *
  * @param accessToken - JWT access token
- * @param refreshToken - Optional refresh token (stored for backward compatibility only)
+ * @param refreshToken - Optional refresh token (used by credential login flow)
  * @param storage - Storage type (default: localStorage for hybrid auth)
  */
 export const setAuthTokens = (

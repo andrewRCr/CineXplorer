@@ -970,39 +970,66 @@ all themes, and color associations are intuitive (green=safe, red=restricted).
 
 #### Backend: MovieDetail Data Extraction
 
-- [ ] **11.1 Extract certification from TMDB release_dates**
+- [x] **11.1 Extract certification from TMDB release_dates**
 
-    TMDB nests certifications in `release_dates` (per-release, per-country). Need extraction logic.
+    TMDB nests certifications in `release_dates` (per-release, per-country). Uses Pydantic models
+    for type-safe extraction following established patterns in `tmdb_responses.py`.
 
-    - [ ] **11.1.a Update TMDB API call to include release_dates**
-        - Add `append_to_response=release_dates` to movie detail fetch
-        - File: Identify where detail API call is made
+    - [x] **11.1.a Write unit tests for certification extraction**
+        - 15 unit tests covering edge cases: no release_dates, no US entry, no theatrical (type 3), empty certification
+        - Test priority: theatrical (type 3) preferred over other release types
+        - Test fallback: returns first valid cert when no theatrical exists
+        - Parametrized test for all MPAA ratings (G, PG, PG-13, R, NC-17, NR)
+        - File: `test_response_factories.py`
 
-    - [ ] **11.1.b Create certification extraction helper**
-        - Function: `extract_us_certification(release_dates: dict) -> str | None`
+    - [x] **11.1.b Add Pydantic models for TMDB release_dates structure**
+        - Created `TMDBReleaseDate`, `TMDBCountryReleases`, `TMDBReleaseDatesResponse`
+        - Release types documented: 1=Premiere, 2=Theatrical (limited), 3=Theatrical, 4=Digital, 5=Physical, 6=TV
+        - File: `tmdb_responses.py:156-177`
+
+    - [x] **11.1.c Create typed extraction helper**
+        - Function: `extract_us_certification(release_dates: TMDBReleaseDatesResponse | None) -> str | None`
         - Logic: Find US entry → find theatrical release (type 3) or first available → return certification
-        - Handle missing data gracefully (return None)
+        - Uses typed Pydantic models for clean extraction (no isinstance checks)
+        - File: `response_factories.py:151-187`
 
-    - [ ] **11.1.c Add us_certification field to MovieDetailSchema**
-        - Add `us_certification: str | None = None` to response schema
+    - [x] **11.1.d Update TMDB API call to include release_dates**
+        - Added `append_to_response='release_dates'` to `MovieService.get_movie_by_id()`
+        - File: `movie_service.py:373-376`
+
+    - [x] **11.1.e Add us_certification to MovieDetailSchema and integrate**
+        - Added `us_certification: str | None = None` to `MovieDetailSchema`
         - Named explicitly since we're extracting US MPAA rating specifically
-        - Populate from extraction helper (None when no US rating exists)
+        - Integrated in `create_movie_detail_from_tmdb()` - validates release_dates into Pydantic model, calls helper
+        - Returns None when no US rating exists
 
-    - [ ] **11.1.d Run backend tests and linting**
+    - [x] **11.1.f Run full quality gates**
+        - 545 backend tests pass, 15 new certification extraction tests
+        - Updated test mocks in `test_movie_service.py` and `test_watchlist_endpoint.py` for new API signature
 
 - [ ] **11.2 Add spoken_languages to MovieDetail response**
 
-    TMDB returns `spoken_languages` as array of objects at top level - simpler extraction.
+    TMDB returns `spoken_languages` as array of objects at top level. Currently typed as
+    `list[dict[str, Any]]` in TMDBMovieDetail - needs proper Pydantic model for type safety.
 
-    - [ ] **11.2.a Create SpokenLanguageSchema**
+    - [ ] **11.2.a Write unit tests for spoken_languages extraction**
+        - Test: extracts english_name correctly from array
+        - Test: handles empty array gracefully
+        - Test: handles missing field gracefully
+
+    - [ ] **11.2.b Create TMDBSpokenLanguage Pydantic model**
         - Fields: `iso_639_1: str`, `english_name: str`
         - Skip `name` field (inconsistently populated per TMDB docs)
+        - Update `TMDBMovieDetail.spoken_languages` to use typed model instead of `list[dict[str, Any]]`
+        - File: `tmdb_responses.py`
 
-    - [ ] **11.2.b Add spoken_languages to MovieDetailSchema**
-        - Add `spoken_languages: list[SpokenLanguageSchema]`
-        - Extract from TMDB response
+    - [ ] **11.2.c Add SpokenLanguageSchema and field to MovieDetailSchema**
+        - Create `SpokenLanguageSchema` with fields matching Pydantic model
+        - Add `spoken_languages: list[SpokenLanguageSchema]` to `MovieDetailSchema`
+        - Integrate extraction in `create_movie_detail_from_tmdb()`
+        - File: `schemas.py`, `response_factories.py`
 
-    - [ ] **11.2.c Run backend tests and linting**
+    - [ ] **11.2.d Run quality gates**
 
 #### Frontend: MovieDetail Display
 
@@ -1094,32 +1121,35 @@ all themes, and color associations are intuitive (green=safe, red=restricted).
 
 - [ ] **11.7 Wire certification_country through backend**
 
-    - [ ] **11.7.a Add certification_country to HTTP_TO_SERVICE_MAPPING**
+    TDD: Write integration test first, then implement the param pipeline.
+
+    - [ ] **11.7.a Write backend integration test for certification param**
+        - Test that `/api/movies/browse?certification=PG-13&certification_country=US` works
+        - Test multi-value: `certification=G|PG`
+        - Verify params pass through to TMDB API call
+        - Test will fail initially (TDD red phase)
+
+    - [ ] **11.7.b Add certification_country to HTTP_TO_SERVICE_MAPPING**
         - File: param_transformer.py
         - Add: `'certification_country': 'certification_country'`
         - Note: `certification` already mapped
 
-    - [ ] **11.7.b Add certification_country to ServiceParams**
+    - [ ] **11.7.c Add certification_country to ServiceParams**
         - File: service_params.py
         - Add: `certification_country: str | None = None`
 
-    - [ ] **11.7.c Add certification_country to PARAM_MAPPING**
+    - [ ] **11.7.d Add certification_country to PARAM_MAPPING**
         - File: query_params.py
         - Add: `'certification_country': 'certification_country'`
         - Note: `certification` already mapped
 
-    - [ ] **11.7.d Run backend linting and type checking**
+    - [ ] **11.7.e Run quality gates (tests should pass now)**
 
 #### Testing & Verification
 
-- [ ] **11.8 Integration testing**
+- [ ] **11.8 Final verification**
 
-    - [ ] **11.8.a Write backend integration test for certification param**
-        - Test that `/api/movies/browse?certification=PG-13&certification_country=US` works
-        - Test multi-value: `certification=G|PG`
-        - Verify params pass through to TMDB API call
-
-    - [ ] **11.8.b Manual browser testing**
+    - [ ] **11.8.a Manual browser testing**
         - Navigate to movie detail (US film) → verify certification badge displays
         - Navigate to movie detail (non-US film) → verify no badge, layout still clean
         - Navigate to movie detail → verify spoken languages display
@@ -1128,9 +1158,8 @@ all themes, and color associations are intuitive (green=safe, red=restricted).
         - Select multiple ratings (G + PG) → verify both appear in results
         - Verify URL includes certifications param
         - Verify Clear button resets certifications
-        - Verify active param count badge includes certifications when active
 
-    - [ ] **11.8.c Run full quality gates**
+    - [ ] **11.8.b Run full quality gates**
         - All backend tests
         - All frontend tests
         - Linting (backend + frontend + markdown)

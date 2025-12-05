@@ -39,6 +39,21 @@
     - Rationale: Traffic light is universally understood for ratings; not implying subjective judgment,
       just visual encoding of the community score number
 
+- [ ] Evaluate: Hide or alter MovieUserScore badge for movies with no/insufficient votes
+    - **Problem:** Unreleased movies and movies with few votes display "0.0" or low scores that are
+      misleading - a 0.0 implies a terrible rating when it's actually null/no data
+    - **Considerations:**
+        - Unreleased movies: Should never show a rating badge (no votes possible yet)
+        - Low vote count: TMDB has `vote_count` - should we require a minimum threshold?
+        - Alternative displays: "Not yet rated", "NR", hide badge entirely, or show vote count context
+        - MovieCard vs MovieDetail: May want different thresholds (card = stricter, detail = more lenient)
+    - **Research needed:**
+        - What does TMDB return for `vote_average` when `vote_count` is 0?
+        - What thresholds do other platforms use (Letterboxd, IMDb, Rotten Tomatoes)?
+        - Current MovieUserScore component structure and where rating data comes from
+    - **Status:** Not committed - needs design decision before implementation
+    - **Files:** `frontend/src/components/movie/MovieUserScore.tsx`, `MovieCard.tsx`, `MovieDetail.tsx`
+
 - [ ] Fix UserMovieData icon button coloring on MovieCard
     - Bug: All icon buttons appear same color regardless of state
     - Expected: Neutral when flag=false, tertiary/highlighted when flag=true

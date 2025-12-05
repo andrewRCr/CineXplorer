@@ -1,20 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent } from '@tests/helpers/test-renderer';
 import ClearBrowseParamsButton from '../ClearBrowseParamsButton';
-import type { BrowseParams } from '@/types/browseTypes';
-
-// Create mock browse params helper functions
-const createMockBrowseParams = (overrides: Partial<BrowseParams> = {}): BrowseParams => ({
-  query: '',
-  genres: [],
-  minYear: '',
-  maxYear: '',
-  minRating: '',
-  maxRating: '',
-  sortBy: 'popularity.desc',
-  language: '',
-  ...overrides,
-});
+import { createMockBrowseParams } from '@tests/mocks/browseParams';
 
 describe('ClearBrowseParamsButton Component', () => {
   const mockOnClear = vi.fn();

@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { useMovieCollectionState } from "../useMovieCollectionState";
 import { BrowserRouter } from "react-router-dom";
 import { type ReactNode } from "react";
+import { createMockBrowseParams } from "@tests/mocks/browseParams";
 
 // Import the actual module to get the mock
 import { useMovieCollectionUrl } from "../useMovieCollectionUrl";
@@ -27,16 +28,7 @@ describe("useMovieCollectionState", () => {
 
     // Reset mock to default behavior
     mockUseMovieCollectionUrl.mockReturnValue({
-      browseParams: {
-        query: "",
-        genres: [],
-        minYear: "",
-        maxYear: "",
-        minRating: "",
-        maxRating: "",
-        sortBy: "popularity.desc",
-        language: "",
-      },
+      browseParams: createMockBrowseParams(),
       handleBrowseParamsChange: vi.fn(),
       currentPageFromUrl: 1,
       handlePageChange: vi.fn(),
@@ -51,16 +43,7 @@ describe("useMovieCollectionState", () => {
     it("should initialize isAdvancedPanelOpen to true when rating filters are in URL", async () => {
       // Arrange: Mock URL parsing to return rating filters
       mockUseMovieCollectionUrl.mockReturnValue({
-        browseParams: {
-          query: "",
-          genres: [],
-          minYear: "",
-          maxYear: "",
-          minRating: "1.0",
-          maxRating: "3.5",
-          sortBy: "popularity.desc",
-          language: "",
-        },
+        browseParams: createMockBrowseParams({ minRating: "1.0", maxRating: "3.5" }),
         handleBrowseParamsChange: vi.fn(),
         currentPageFromUrl: 1,
         handlePageChange: vi.fn(),
@@ -80,16 +63,7 @@ describe("useMovieCollectionState", () => {
     it("should initialize isAdvancedPanelOpen to true when custom year range is in URL", async () => {
       // Arrange: Mock URL parsing to return custom year range
       mockUseMovieCollectionUrl.mockReturnValue({
-        browseParams: {
-          query: "",
-          genres: [],
-          minYear: "2000",
-          maxYear: "2010",
-          minRating: "",
-          maxRating: "",
-          sortBy: "popularity.desc",
-          language: "",
-        },
+        browseParams: createMockBrowseParams({ minYear: "2000", maxYear: "2010" }),
         handleBrowseParamsChange: vi.fn(),
         currentPageFromUrl: 1,
         handlePageChange: vi.fn(),
@@ -109,16 +83,7 @@ describe("useMovieCollectionState", () => {
     it("should initialize isAdvancedPanelOpen to false when single year is in URL", async () => {
       // Arrange: Mock URL parsing to return single year (not a range)
       mockUseMovieCollectionUrl.mockReturnValue({
-        browseParams: {
-          query: "",
-          genres: [],
-          minYear: "2020",
-          maxYear: "2020",
-          minRating: "",
-          maxRating: "",
-          sortBy: "popularity.desc",
-          language: "",
-        },
+        browseParams: createMockBrowseParams({ minYear: "2020", maxYear: "2020" }),
         handleBrowseParamsChange: vi.fn(),
         currentPageFromUrl: 1,
         handlePageChange: vi.fn(),
@@ -148,6 +113,7 @@ describe("useMovieCollectionState", () => {
           maxRating: "",
           sortBy: "popularity.desc",
           language: "en",
+          certifications: [],
         },
         handleBrowseParamsChange: vi.fn(),
         currentPageFromUrl: 1,
@@ -196,16 +162,7 @@ describe("useMovieCollectionState", () => {
     it("should preserve isAdvancedPanelOpen state across remounts with same URL", async () => {
       // Arrange: Mock URL parsing to return rating filters
       mockUseMovieCollectionUrl.mockReturnValue({
-        browseParams: {
-          query: "",
-          genres: [],
-          minYear: "",
-          maxYear: "",
-          minRating: "1.0",
-          maxRating: "3.5",
-          sortBy: "popularity.desc",
-          language: "",
-        },
+        browseParams: createMockBrowseParams({ minRating: "1.0", maxRating: "3.5" }),
         handleBrowseParamsChange: vi.fn(),
         currentPageFromUrl: 1,
         handlePageChange: vi.fn(),
@@ -368,16 +325,13 @@ describe("useMovieCollectionState", () => {
       // Arrange: Mock URL parsing to return rating filters + non-default sort
       const mockHandleBrowseParamsChange = vi.fn();
       mockUseMovieCollectionUrl.mockReturnValue({
-        browseParams: {
-          query: "",
+        browseParams: createMockBrowseParams({
           genres: [28],
-          minYear: "",
-          maxYear: "",
           minRating: "1.0",
           maxRating: "3.5",
           sortBy: "vote_average.desc", // Non-default sort
           language: "en",
-        },
+        }),
         handleBrowseParamsChange: mockHandleBrowseParamsChange,
         currentPageFromUrl: 1,
         handlePageChange: vi.fn(),
@@ -410,6 +364,7 @@ describe("useMovieCollectionState", () => {
         maxRating: "",
         sortBy: "vote_average.desc", // Sort preserved!
         language: "",
+          certifications: [],
       });
     });
   });
@@ -587,16 +542,7 @@ describe("useMovieCollectionState", () => {
     it("should persist language from URL", async () => {
       // Arrange: Mock URL hook to return language filter
       mockUseMovieCollectionUrl.mockReturnValue({
-        browseParams: {
-          query: "",
-          genres: [],
-          minYear: "",
-          maxYear: "",
-          minRating: "",
-          maxRating: "",
-          sortBy: "popularity.desc",
-          language: "fr",
-        },
+        browseParams: createMockBrowseParams({ language: "fr" }),
         handleBrowseParamsChange: vi.fn(),
         currentPageFromUrl: 1,
         handlePageChange: vi.fn(),
@@ -616,16 +562,7 @@ describe("useMovieCollectionState", () => {
     it("should reset title sort to default when language changes to non-Latin", () => {
       const mockHandleBrowseParamsChange = vi.fn();
       mockUseMovieCollectionUrl.mockReturnValue({
-        browseParams: {
-          query: "",
-          genres: [],
-          minYear: "",
-          maxYear: "",
-          minRating: "",
-          maxRating: "",
-          sortBy: "original_title.asc",
-          language: "en",
-        },
+        browseParams: createMockBrowseParams({ sortBy: "original_title.asc", language: "en" }),
         handleBrowseParamsChange: mockHandleBrowseParamsChange,
         currentPageFromUrl: 1,
         handlePageChange: vi.fn(),
@@ -637,16 +574,7 @@ describe("useMovieCollectionState", () => {
 
       // Simulate language change to non-Latin (Japanese)
       mockUseMovieCollectionUrl.mockReturnValue({
-        browseParams: {
-          query: "",
-          genres: [],
-          minYear: "",
-          maxYear: "",
-          minRating: "",
-          maxRating: "",
-          sortBy: "original_title.asc", // Still title sort
-          language: "ja", // Changed to Japanese
-        },
+        browseParams: createMockBrowseParams({ sortBy: "original_title.asc", language: "ja" }),
         handleBrowseParamsChange: mockHandleBrowseParamsChange,
         currentPageFromUrl: 1,
         handlePageChange: vi.fn(),
@@ -663,16 +591,7 @@ describe("useMovieCollectionState", () => {
     it("should NOT reset sort when language changes to another Latin language", () => {
       const mockHandleBrowseParamsChange = vi.fn();
       mockUseMovieCollectionUrl.mockReturnValue({
-        browseParams: {
-          query: "",
-          genres: [],
-          minYear: "",
-          maxYear: "",
-          minRating: "",
-          maxRating: "",
-          sortBy: "original_title.asc",
-          language: "en",
-        },
+        browseParams: createMockBrowseParams({ sortBy: "original_title.asc", language: "en" }),
         handleBrowseParamsChange: mockHandleBrowseParamsChange,
         currentPageFromUrl: 1,
         handlePageChange: vi.fn(),
@@ -687,16 +606,7 @@ describe("useMovieCollectionState", () => {
 
       // Simulate language change to another Latin language (French)
       mockUseMovieCollectionUrl.mockReturnValue({
-        browseParams: {
-          query: "",
-          genres: [],
-          minYear: "",
-          maxYear: "",
-          minRating: "",
-          maxRating: "",
-          sortBy: "original_title.asc",
-          language: "fr", // Changed to French (still Latin)
-        },
+        browseParams: createMockBrowseParams({ sortBy: "original_title.asc", language: "fr" }),
         handleBrowseParamsChange: mockHandleBrowseParamsChange,
         currentPageFromUrl: 1,
         handlePageChange: vi.fn(),
@@ -713,16 +623,7 @@ describe("useMovieCollectionState", () => {
     it("should reset title sort when language changes to All Languages", () => {
       const mockHandleBrowseParamsChange = vi.fn();
       mockUseMovieCollectionUrl.mockReturnValue({
-        browseParams: {
-          query: "",
-          genres: [],
-          minYear: "",
-          maxYear: "",
-          minRating: "",
-          maxRating: "",
-          sortBy: "original_title.asc",
-          language: "en",
-        },
+        browseParams: createMockBrowseParams({ sortBy: "original_title.asc", language: "en" }),
         handleBrowseParamsChange: mockHandleBrowseParamsChange,
         currentPageFromUrl: 1,
         handlePageChange: vi.fn(),
@@ -734,16 +635,7 @@ describe("useMovieCollectionState", () => {
 
       // Simulate language change to "All Languages" (empty string)
       mockUseMovieCollectionUrl.mockReturnValue({
-        browseParams: {
-          query: "",
-          genres: [],
-          minYear: "",
-          maxYear: "",
-          minRating: "",
-          maxRating: "",
-          sortBy: "original_title.asc",
-          language: "", // Changed to All Languages
-        },
+        browseParams: createMockBrowseParams({ sortBy: "original_title.asc" }),
         handleBrowseParamsChange: mockHandleBrowseParamsChange,
         currentPageFromUrl: 1,
         handlePageChange: vi.fn(),
@@ -760,16 +652,7 @@ describe("useMovieCollectionState", () => {
     it("should NOT reset non-title sorts when language changes", () => {
       const mockHandleBrowseParamsChange = vi.fn();
       mockUseMovieCollectionUrl.mockReturnValue({
-        browseParams: {
-          query: "",
-          genres: [],
-          minYear: "",
-          maxYear: "",
-          minRating: "",
-          maxRating: "",
-          sortBy: "vote_average.desc", // Not a title sort
-          language: "en",
-        },
+        browseParams: createMockBrowseParams({ sortBy: "vote_average.desc", language: "en" }),
         handleBrowseParamsChange: mockHandleBrowseParamsChange,
         currentPageFromUrl: 1,
         handlePageChange: vi.fn(),
@@ -784,16 +667,7 @@ describe("useMovieCollectionState", () => {
 
       // Simulate language change to non-Latin
       mockUseMovieCollectionUrl.mockReturnValue({
-        browseParams: {
-          query: "",
-          genres: [],
-          minYear: "",
-          maxYear: "",
-          minRating: "",
-          maxRating: "",
-          sortBy: "vote_average.desc",
-          language: "ja",
-        },
+        browseParams: createMockBrowseParams({ sortBy: "vote_average.desc", language: "ja" }),
         handleBrowseParamsChange: mockHandleBrowseParamsChange,
         currentPageFromUrl: 1,
         handlePageChange: vi.fn(),

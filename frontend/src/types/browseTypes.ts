@@ -45,6 +45,7 @@ export interface SortOption {
  * - minRating/maxRating: Rating range filter (empty string = no constraint)
  * - sortBy: Sort order for results
  * - language: ISO 639-1 language code (empty string = all languages)
+ * - certifications: Array of US MPAA ratings to filter by (empty = all ratings)
  *
  * All string fields use empty string ("") as the "not set" value.
  * Array fields use empty array ([]) as the "not set" value.
@@ -58,4 +59,5 @@ export interface BrowseParams {
   maxRating: string;
   sortBy: SortOptionValue;
   language: string;
+  certifications: string[];
 }

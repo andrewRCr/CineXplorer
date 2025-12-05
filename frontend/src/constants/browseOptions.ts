@@ -85,6 +85,18 @@ export const sortOptions: SortOption[] = [
     { value: "original_title.asc", label: "Alphabetical" },
 ];
 
+// US MPAA certification options for content rating filter
+// Ordered from most permissive to most restrictive
+// NR (Not Rated) first since it's the fallback for uncertified content
+export const certificationOptions = [
+    { value: "NR", label: "NR" },
+    { value: "G", label: "G" },
+    { value: "PG", label: "PG" },
+    { value: "PG-13", label: "PG-13" },
+    { value: "R", label: "R" },
+    { value: "NC-17", label: "NC-17" },
+];
+
 // Language options - ordered by TMDB film count (as of 2024)
 // ISO 639-1 codes used by TMDB's with_original_language parameter
 // Source: https://www.themoviedb.org/movie (discovery page language filter)

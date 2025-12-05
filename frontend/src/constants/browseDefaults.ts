@@ -30,4 +30,5 @@ export const DEFAULT_BROWSE_PARAMS: BrowseParams = {
   maxRating: "",
   sortBy: DEFAULT_SORT,
   language: "",
+  certifications: [],
 };

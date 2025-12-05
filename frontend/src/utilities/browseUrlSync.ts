@@ -27,6 +27,8 @@ export function parseBrowseParamsFromUrl(search: string): BrowseParams {
   const minRating = params.get("minRating") || "";
   const maxRating = params.get("maxRating") || "";
   const language = params.get("language") || "";
+  const certifications =
+    params.get("certifications")?.split(",").filter(Boolean) || [];
 
   return {
     query,
@@ -37,5 +39,6 @@ export function parseBrowseParamsFromUrl(search: string): BrowseParams {
     maxRating,
     sortBy,
     language,
+    certifications,
   };
 }

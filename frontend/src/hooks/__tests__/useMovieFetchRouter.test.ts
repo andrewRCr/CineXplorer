@@ -19,6 +19,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useMovieFetchRouter } from '../useMovieFetchRouter';
 import type { PaginatedMoviesResponse } from '@/types/movie';
 import type { BrowseParams } from '@/types/browseTypes';
+import { createMockBrowseParams } from '@tests/mocks/browseParams';
 
 /**
  * Helper to create mock paginated response
@@ -59,21 +60,7 @@ function createMockBaseFetcher() {
     return mockFn;
 }
 
-/**
- * Helper to create empty BrowseParams object for tests (includes sort + filters)
- */
-function createEmptyBrowseParams(): BrowseParams {
-    return {
-        query: '',
-        genres: [],
-        minYear: '',
-        maxYear: '',
-        minRating: '',
-        maxRating: '',
-        sortBy: 'popularity.desc',
-        language: '',
-    };
-}
+// Use shared createMockBrowseParams fixture from @tests/mocks/browseParams
 
 describe('useMovieFetchRouter - pagination metadata passing', () => {
     beforeEach(() => {
@@ -90,7 +77,7 @@ describe('useMovieFetchRouter - pagination metadata passing', () => {
         it('should accept tmdb_page_start as optional third parameter', () => {
             // Arrange
             const mockBaseFetcher = createMockBaseFetcher();
-            const mockBrowseParams = createEmptyBrowseParams();
+            const mockBrowseParams = createMockBrowseParams();
 
             const { result } = renderHook(() =>
                 useMovieFetchRouter({
@@ -111,7 +98,7 @@ describe('useMovieFetchRouter - pagination metadata passing', () => {
         it('should work without tmdb_page_start for backward compatibility', () => {
             // Arrange
             const mockBaseFetcher = createMockBaseFetcher();
-            const mockBrowseParams = createEmptyBrowseParams();
+            const mockBrowseParams = createMockBrowseParams();
 
             const { result } = renderHook(() =>
                 useMovieFetchRouter({
@@ -141,7 +128,7 @@ describe('useMovieFetchRouter - pagination metadata passing', () => {
             // Arrange
             const mockBaseFetcher = createMockBaseFetcher();
             const mockBrowseParams: BrowseParams = {
-                ...createEmptyBrowseParams(),
+                ...createMockBrowseParams(),
                 genres: [28],
                 minRating: '7.0',
                 maxRating: '10.0',
@@ -173,7 +160,7 @@ describe('useMovieFetchRouter - pagination metadata passing', () => {
         it('should pass undefined tmdb_page_start when omitted', () => {
             // Arrange
             const mockBaseFetcher = createMockBaseFetcher();
-            const mockBrowseParams = createEmptyBrowseParams();
+            const mockBrowseParams = createMockBrowseParams();
 
             const { result } = renderHook(() =>
                 useMovieFetchRouter({
@@ -207,7 +194,7 @@ describe('useMovieFetchRouter - pagination metadata passing', () => {
             // Arrange
             const mockBaseFetcher = createMockBaseFetcher();
             const mockBrowseParams: BrowseParams = {
-                ...createEmptyBrowseParams(),
+                ...createMockBrowseParams(),
                 query: 'avatar', // Query is present but should be ignored for routing
                 genres: [28],
             };
@@ -247,7 +234,7 @@ describe('useMovieFetchRouter - pagination metadata passing', () => {
             // Arrange
             const mockBaseFetcher = createMockBaseFetcher();
             const mockBrowseParams: BrowseParams = {
-                ...createEmptyBrowseParams(),
+                ...createMockBrowseParams(),
                 genres: [28, 12],
             };
 

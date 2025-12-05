@@ -15,22 +15,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@tests/helpers/test-renderer";
 import userEvent from "@testing-library/user-event";
 import SortDropdown from "../SortDropdown";
-import type { BrowseParams } from "@/types/browseTypes";
-
-// Helper to create mock browse params (includes sort + filters)
-const createMockBrowseParams = (
-  overrides: Partial<BrowseParams> = {}
-): BrowseParams => ({
-  query: "",
-  genres: [],
-  minYear: "",
-  maxYear: "",
-  minRating: "",
-  maxRating: "",
-  sortBy: "popularity.desc",
-  language: "",
-  ...overrides,
-});
+import { createMockBrowseParams } from "@tests/mocks/browseParams";
 
 describe("SortDropdown", () => {
   const mockOnSortChange = vi.fn();

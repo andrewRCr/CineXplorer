@@ -14,20 +14,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { mapBrowseParamsToApi } from '../browseParamMapper';
-import type { BrowseParams } from '@/types/browseTypes';
-
-// Helper to create BrowseParams with defaults, reducing repetition
-const createBrowseParams = (overrides: Partial<BrowseParams> = {}): BrowseParams => ({
-  query: '',
-  genres: [],
-  minYear: '',
-  maxYear: '',
-  minRating: '',
-  maxRating: '',
-  sortBy: 'popularity.desc',
-  language: '',
-  ...overrides,
-});
+import { createMockBrowseParams as createBrowseParams } from '@tests/mocks/browseParams';
 
 describe('browseParamMapper - Backend Schema Compatibility', () => {
   describe('Year Filter Parameter Generation', () => {

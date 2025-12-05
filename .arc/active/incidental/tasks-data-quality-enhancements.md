@@ -1027,43 +1027,45 @@ all themes, and color associations are intuitive (green=safe, red=restricted).
 
 #### Frontend: MovieDetail Display
 
-- [ ] **11.3 Display certification and spoken_languages in MovieDetail**
+- [x] **11.3 Display certification and spoken_languages in MovieDetail**
 
-    - [ ] **11.3.a Add certification badge to header**
-        - Display next to runtime (e.g., "PG-13 · 2h 15m")
-        - When `us_certification` is None: simply omit the badge (no placeholder text)
-        - Layout should not break or look awkward when badge is absent
-        - **Styling:** Use Badge recipe with status variants per Rating Badge Design Specs
-        - Create `RatingBadge` component or helper that maps rating → Badge variant
-        - Example: `G` → `<Badge variant="success">G</Badge>`
-        - Recipe handles bg/text token pairing automatically (WCAG compliant)
+    - [x] **11.3.a Add certification badge to header**
+        - Created `CertificationBadge` component (named to distinguish from user rating scores)
+        - Uses Badge recipe status variants per design specs (G=success, PG=info, PG-13=warning, R/NC-17=error, NR=neutral)
+        - Extracted constants to `certificationUtils.ts` for reuse in filter UI (Task 11.5)
+        - Badge displays next to runtime with separator ("PG-13 · 2h 15m")
+        - Gracefully omits when certification is null (layout intact)
 
-    - [ ] **11.3.b Add spoken languages to metadata area**
-        - Display as comma-separated list (e.g., "English, Japanese")
-        - Place in appropriate location (near genres or below tagline)
+    - [x] **11.3.b Add spoken languages to metadata area**
+        - Displays as comma-separated list below genres (e.g., "English, Japanese")
+        - Added `SpokenLanguage` type to `@types/movie.d.ts` and `shared/api-types.ts`
 
-    - [ ] **11.3.c Update TypeScript types for new fields**
-        - Add `us_certification?: string` and `spoken_languages?: SpokenLanguage[]` to MovieDetail type
-        - Types auto-generated from OpenAPI schema, so may just need `npm run generate-types`
+    - [x] **11.3.c Update TypeScript types for new fields**
+        - Ran `npm run generate-types` to pull OpenAPI schema
+        - Added `us_certification` and `spoken_languages` fields to `shared/api-types.ts` Movie interface
 
-    - [ ] **11.3.d Run frontend tests and type checking**
+    - [x] **11.3.d Run frontend tests and type checking**
+        - 233 frontend tests pass, linting clean, TypeScript type checking 0 errors
 
 #### Frontend: Certification Filter UI
 
-- [ ] **11.4 Add certifications to browse params and defaults**
+- [x] **11.4 Add certifications to browse params and defaults**
 
-    - [ ] **11.4.a Update BrowseParams type**
-        - Add `certifications: string[]` field (array for multi-select)
-        - File: `types/browseTypes.ts`
-        - Default: `[]` (empty = no filter applied)
+    - [x] **11.4.a Update BrowseParams type**
+        - Added `certifications: string[]` field to `types/browseTypes.ts`
+        - Updated `browseUrlSync.ts` to parse/serialize certifications in URL
 
-    - [ ] **11.4.b Add to DEFAULT_BROWSE_PARAMS (Phase 10 constant)**
-        - Add `certifications: []` to `browseDefaults.ts`
+    - [x] **11.4.b Add to DEFAULT_BROWSE_PARAMS**
+        - Added `certifications: []` to `constants/browseDefaults.ts`
 
-    - [ ] **11.4.c Define certification options**
-        - Add `certificationOptions` to `browseOptions.ts`
-        - Values: `["NR", "G", "PG", "PG-13", "R", "NC-17"]`
-        - Labels match values for clarity
+    - [x] **11.4.c Define certification options**
+        - Added `certificationOptions` to `constants/browseOptions.ts`
+        - Values: NR, G, PG, PG-13, R, NC-17 with matching labels
+
+    - [x] **11.4.d Created shared test fixture (bonus)**
+        - Added `tests/mocks/browseParams.ts` with `createMockBrowseParams()` helper
+        - Refactored 4 test files to use shared fixture (DRY, future-proof)
+        - 504 frontend tests pass, linting clean, TypeScript 0 errors
 
 - [ ] **11.5 Add CheckboxGroup + CheckboxCard UI to AdvancedFiltersPanel**
 
@@ -1076,7 +1078,7 @@ all themes, and color associations are intuitive (green=safe, red=restricted).
         - Each card uses its rating's semantic tokens (G=success, PG=info, etc.)
         - Unselected: muted/outline appearance
         - Selected: solid background with status color + `on-*` text token
-        - Reuse `RatingBadge` helper or shared `RATING_VARIANT_MAP` config
+        - Reuse `certificationUtils.ts` exports: `CERTIFICATION_VARIANT_MAP`, `getCertificationVariant()`
 
     - [ ] **11.5.b Wire to browse params state**
         - On change: update `certifications` array in browseParams

@@ -102,6 +102,7 @@ python_functions = ["test_*"]
 
 # Additional options
 addopts = [
+    "-n", "auto",              # Parallel execution via pytest-xdist (5x speedup)
     "--reuse-db",              # Reuse test database (equivalent to --keepdb in manage.py test)
     "--import-mode=importlib", # Use importlib for module imports (modern approach)
     "--strict-markers",        # Raise error on unregistered markers

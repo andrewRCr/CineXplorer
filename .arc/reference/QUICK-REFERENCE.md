@@ -120,14 +120,14 @@ docker compose -f infrastructure/docker-compose.yml exec backend ruff check apps
 
 **CRITICAL: Tests MUST run via Docker** (require PostgreSQL + Redis)
 
-**Test Runner**: pytest (migration complete 2025-10-13, 100% of tests converted)
+**Test Runner**: pytest with parallel execution enabled by default (~5x faster via pytest-xdist)
 
 ```bash
-# Run all tests (standard)
+# Run all tests (parallel execution is automatic)
 docker compose -f infrastructure/docker-compose.yml exec backend pytest apps/
 
-# Parallel execution (2-4x faster, recommended for development)
-docker compose -f infrastructure/docker-compose.yml exec backend pytest -n auto apps/
+# Sequential execution (for debugging test isolation issues)
+docker compose -f infrastructure/docker-compose.yml exec backend pytest apps/ -n 0
 
 # With coverage (full app)
 docker compose -f infrastructure/docker-compose.yml exec backend pytest --cov=apps --cov-report=term-missing apps/
@@ -215,7 +215,7 @@ npx --yes markdown-table-prettify < input.md > output.md
 Reference for DEVELOPMENT-RULES quality gates. Run these before any commit.
 
 ```bash
-# 1. Backend Tests (pytest - migration complete 2025-10-13)
+# 1. Backend Tests (parallel execution enabled by default)
 docker compose -f infrastructure/docker-compose.yml exec backend pytest apps/
 
 # 2. Frontend Tests

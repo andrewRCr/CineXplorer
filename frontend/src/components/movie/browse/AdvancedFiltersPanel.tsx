@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from "react";
 import {
   Box,
+  Flex,
   VStack,
   Button,
   HStack,
@@ -13,6 +14,7 @@ import { FiFilter, FiX } from "react-icons/fi";
 import GenreSelector from "./GenreSelector";
 import YearSelector from "./YearSelector";
 import RatingSelector from "./RatingSelector";
+import CertificationFilter from "./CertificationFilter";
 import { languageOptions } from "@/constants/browseOptions";
 import { DEFAULT_BROWSE_PARAMS } from "@/constants/browseDefaults";
 import type { BrowseParams } from "@/types/browseTypes";
@@ -239,6 +241,15 @@ const AdvancedFiltersPanel = ({
             </Select.Root>
           </Box>
         </HStack>
+
+        <Flex justify="center">
+          <CertificationFilter
+            selectedCertifications={browseParams.certifications}
+            onChange={(certifications) =>
+              updateParam("certifications", certifications)
+            }
+          />
+        </Flex>
       </VStack>
     </Box>
   );

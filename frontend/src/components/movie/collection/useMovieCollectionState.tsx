@@ -97,6 +97,9 @@ export const hasAdvancedFilterValues = (filters: BrowseParams): boolean => {
   // Language filter is advanced-only (only visible in expanded panel)
   if (filters.language) return true;
 
+  // Certification filter is advanced-only
+  if (filters.certifications?.length) return true;
+
   return false;
 };
 

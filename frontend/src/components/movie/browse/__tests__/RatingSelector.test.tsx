@@ -53,7 +53,7 @@ describe('RatingSelector Component', () => {
     it('renders rating selector with title', () => {
       render(<RatingSelector {...defaultProps} />);
 
-      expect(screen.getByText('Rating')).toBeInTheDocument();
+      expect(screen.getByText('Average Rating')).toBeInTheDocument();
     });
 
     it('renders both min and max inputs', () => {
@@ -365,7 +365,7 @@ describe('RatingSelector Component', () => {
       render(<RatingSelector {...defaultProps} />);
 
       // Component should render without issues (debounce configuration is internal)
-      expect(screen.getByText('Rating')).toBeInTheDocument();
+      expect(screen.getByText('Average Rating')).toBeInTheDocument();
     });
   });
 
@@ -447,7 +447,7 @@ describe('RatingSelector Component', () => {
     it('provides meaningful labels and placeholders', () => {
       render(<RatingSelector {...defaultProps} />);
 
-      expect(screen.getByText('Rating')).toBeInTheDocument();
+      expect(screen.getByText('Average Rating')).toBeInTheDocument();
       expect(screen.getByPlaceholderText('0.0')).toBeInTheDocument();
       expect(screen.getByPlaceholderText('10')).toBeInTheDocument();
     });

@@ -152,7 +152,7 @@ const RatingSelector = ({
   return (
     <Box>
       <Text fontSize="sm" fontWeight="medium" mb={2} color="foreground">
-        Rating
+        Average Rating
       </Text>
       <HStack gap={2} align="center">
         <StyledInput

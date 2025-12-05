@@ -29,12 +29,13 @@ import { DEFAULT_SORT } from "@/constants/browseDefaults";
  * This is the base filter check used by "Clear Filters" button visibility.
  * Sort is intentionally excluded because it's a user preference, not a filter.
  *
- * Covers 7 filter fields:
+ * Covers 8 filter fields:
  * - query: search text
  * - genres: genre filter array
  * - minYear/maxYear: year range
  * - minRating/maxRating: rating range
  * - language: language filter
+ * - certifications: certification filter array
  *
  * @param params - The browse parameters to check
  * @returns true if any FILTER is active (non-default)
@@ -47,7 +48,8 @@ export function hasActiveFilters(params: BrowseParams): boolean {
     params.maxYear !== "" ||
     params.minRating !== "" ||
     params.maxRating !== "" ||
-    params.language !== ""
+    params.language !== "" ||
+    (params.certifications?.length ?? 0) > 0
   );
 }
 
@@ -76,12 +78,13 @@ export function hasActiveBrowseParams(params: BrowseParams): boolean {
  * - year range: counts as 1 if either min or max is set
  * - rating range: counts as 1 if either min or max is set
  * - language: counts as 1 if set
+ * - certifications: counts as 1 if any selected
  *
  * This groups related fields (min/max pairs) to provide a user-friendly count.
- * Maximum possible count: 5 (query, genres, year, rating, language)
+ * Maximum possible count: 6 (query, genres, year, rating, language, certifications)
  *
  * @param params - The browse parameters to count
- * @returns Number of active filter groups (0-5)
+ * @returns Number of active filter groups (0-6)
  */
 export function countActiveParams(params: BrowseParams): number {
   let count = 0;
@@ -92,6 +95,7 @@ export function countActiveParams(params: BrowseParams): number {
   if (params.minRating !== "" || params.maxRating !== "") count++;
   // Sort intentionally excluded - it's a preference, not a filter
   if (params.language !== "") count++;
+  if ((params.certifications?.length ?? 0) > 0) count++;
 
   return count;
 }

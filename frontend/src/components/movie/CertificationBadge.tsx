@@ -1,6 +1,6 @@
 import { Badge } from "@chakra-ui/react";
 import React from "react";
-import { getCertificationVariant } from "./certificationUtils";
+import { getCertificationVariant } from "./utils/certificationUtils";
 
 interface CertificationBadgeProps {
   /** US MPAA certification string from API */

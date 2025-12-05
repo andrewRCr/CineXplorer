@@ -30,6 +30,8 @@ export interface MovieQueryParams {
     with_runtime_lte?: number;
     with_original_language?: string;
     tmdb_page_start?: number;
+    certification?: string;
+    certification_country?: string;
 }
 
 export interface KeywordQueryParams {

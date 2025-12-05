@@ -47,6 +47,16 @@ function addLanguage(params: Record<string, string | number | number[]>, browseP
     }
 }
 
+// Helper: Add certification filter if present
+function addCertifications(params: Record<string, string | number | number[]>, browseParams: BrowseParams) {
+    if (browseParams.certifications && browseParams.certifications.length > 0) {
+        // TMDB uses pipe (|) for OR logic between certifications
+        params.certification = browseParams.certifications.join("|");
+        // Always include US as certification country (MPAA ratings)
+        params.certification_country = "US";
+    }
+}
+
 // Helper: Add rating filters
 function addRatings(params: Record<string, string | number | number[]>, browseParams: BrowseParams) {
     if (browseParams.minRating) {
@@ -113,6 +123,7 @@ export function mapBrowseParamsToApi(
     addGenres(apiParams, browseParams);
     addQuery(apiParams, browseParams);
     addLanguage(apiParams, browseParams);
+    addCertifications(apiParams, browseParams);
     addRatings(apiParams, browseParams);
     addReleaseDateRange(apiParams, browseParams, browseLayout);
 

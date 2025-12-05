@@ -254,4 +254,42 @@ describe('browseParamMapper - Backend Schema Compatibility', () => {
       expect(params).not.toHaveProperty('vote_average_lte');
     });
   });
+
+  describe('Certification Filter Parameter Generation', () => {
+    it('generates certification params for single rating', () => {
+      // Arrange: User selects "PG-13" certification
+      const browseParams = createBrowseParams({ certifications: ['PG-13'] });
+
+      // Act
+      const params = mapBrowseParamsToApi(browseParams, 'expanded');
+
+      // Assert: Single certification and country code
+      expect(params.certification).toBe('PG-13');
+      expect(params.certification_country).toBe('US');
+    });
+
+    it('generates pipe-separated certification for multiple ratings (OR logic)', () => {
+      // Arrange: User selects "G" and "PG" certifications
+      const browseParams = createBrowseParams({ certifications: ['G', 'PG'] });
+
+      // Act
+      const params = mapBrowseParamsToApi(browseParams, 'expanded');
+
+      // Assert: TMDB uses pipe (|) for OR logic between certifications
+      expect(params.certification).toBe('G|PG');
+      expect(params.certification_country).toBe('US');
+    });
+
+    it('does not include certification params when array is empty', () => {
+      // Arrange: No certifications selected
+      const browseParams = createBrowseParams({ certifications: [] });
+
+      // Act
+      const params = mapBrowseParamsToApi(browseParams, 'expanded');
+
+      // Assert: No certification params
+      expect(params).not.toHaveProperty('certification');
+      expect(params).not.toHaveProperty('certification_country');
+    });
+  });
 });

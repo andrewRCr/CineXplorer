@@ -1067,32 +1067,31 @@ all themes, and color associations are intuitive (green=safe, red=restricted).
         - Refactored 4 test files to use shared fixture (DRY, future-proof)
         - 504 frontend tests pass, linting clean, TypeScript 0 errors
 
-- [ ] **11.5 Add CheckboxGroup + CheckboxCard UI to AdvancedFiltersPanel**
+- [x] **11.5 Add CheckboxGroup + CheckboxCard UI to AdvancedFiltersPanel**
 
-    - [ ] **11.5.a Add certification CheckboxGroup component**
-        - Use `CheckboxGroup` wrapper with `CheckboxCard.Root` for each rating
-        - Horizontal layout with `HStack` or `Flex wrap`
-        - Compact pill-style cards (no indicator, just label)
-        - Example pattern from Chakra docs: `checkbox-card-with-group`
-        - **Styling:** Use same status variant colors as MovieDetail badges
-        - Each card uses its rating's semantic tokens (G=success, PG=info, etc.)
-        - Unselected: muted/outline appearance
-        - Selected: solid background with status color + `on-*` text token
-        - Reuse `certificationUtils.ts` exports: `CERTIFICATION_VARIANT_MAP`, `getCertificationVariant()`
+    - [x] **11.5.a Add certification CheckboxGroup component**
+        - Created `CertificationFilter.tsx` in `browse/` directory
+        - Uses `CheckboxGroup` + `CheckboxCard.Root` with no indicator (pill-style)
+        - Horizontal layout with `Flex wrap`
+        - Unselected: outline border + muted text
+        - Selected: solid status color fill (G=success, PG=info, PG-13=warning, R/NC-17=error, NR=badge)
+        - Reuses `getCertificationVariant()` from moved `movie/utils/certificationUtils.ts`
+        - Also moved `certificationUtils.ts` to `movie/utils/` subdirectory
 
-    - [ ] **11.5.b Wire to browse params state**
-        - On change: update `certifications` array in browseParams
-        - Selected cards show visual checked state
+    - [x] **11.5.b Wire to browse params state**
+        - Integrated into AdvancedFiltersPanel on separate row below year/rating/language
+        - Wired to `browseParams.certifications` via `updateParam()`
 
-    - [ ] **11.5.c Update resetBrowseParams() to reset certifications**
-        - Already handled by DEFAULT_BROWSE_PARAMS if Phase 10 complete (resets to `[]`)
+    - [x] **11.5.c Update resetBrowseParams() to reset certifications**
+        - Already handled by DEFAULT_BROWSE_PARAMS (resets to `[]`)
 
-    - [ ] **11.5.d Update hasAdvancedFilterValues() for auto-expand**
-        - Add `if (filters.certifications?.length) return true;`
-        - File: `useMovieCollectionState.tsx`
-        - Required so panel auto-expands when URL has certification filters
+    - [x] **11.5.d Update hasAdvancedFilterValues() for auto-expand**
+        - Added `if (filters.certifications?.length) return true;` in `useMovieCollectionState.tsx`
 
-    - [ ] **11.5.e Run frontend linting and tests**
+    - [x] **11.5.e Run frontend linting and tests**
+        - Also renamed "Rating" → "Average Rating" in RatingSelector (per user guidance)
+        - Updated 3 test assertions to match new label
+        - 504 tests pass, linting clean, TypeScript 0 errors
 
 #### Frontend: Wire Filter to API
 

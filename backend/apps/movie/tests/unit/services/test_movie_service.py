@@ -112,7 +112,10 @@ def test_get_movie_by_id_uses_injected_client() -> None:
     result = service.get_movie_by_id(123)
 
     # Assert: Injected client was called, not global
-    mock_client.get_movie_details.assert_called_once_with(123)
+    # append_to_response='release_dates' fetches certification data for MovieDetail
+    mock_client.get_movie_details.assert_called_once_with(
+        123, append_to_response='release_dates'
+    )
     mock_client.get.assert_called_once_with("movie/123/credits")
     assert isinstance(result, MovieDetailSchema)
     assert result.tmdb_id == 123

@@ -156,7 +156,7 @@ def test_get_user_movies_returns_all_user_movies(
     )
 
     # Arrange: Mock TMDB API responses for both movies
-    def get_movie_details_side_effect(tmdb_id: int) -> ApiResponse:
+    def get_movie_details_side_effect(tmdb_id: int, **kwargs: object) -> ApiResponse:
         """Return different movie data based on tmdb_id."""
         if tmdb_id == 12345:
             return ApiResponse(
@@ -470,7 +470,7 @@ def test_get_user_movies_handles_tmdb_api_errors_gracefully(
     )
 
     # Arrange: Mock TMDB responses - movie1 succeeds, movie2 fails (404)
-    def get_movie_details_side_effect(tmdb_id: int) -> ApiResponse:
+    def get_movie_details_side_effect(tmdb_id: int, **kwargs: object) -> ApiResponse:
         """Return success for movie1, raise error for movie2."""
         from ninja.errors import HttpError
         if tmdb_id == 12345:

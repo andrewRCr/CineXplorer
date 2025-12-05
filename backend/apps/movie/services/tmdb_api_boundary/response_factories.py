@@ -39,6 +39,7 @@ from core.tmdb_models.tmdb_responses import (
     TMDBPaginatedKeywordResponse,
     TMDBPaginatedMovieResponse,
     TMDBPaginatedPersonResponse,
+    TMDBReleaseDatesResponse,
 )
 from ninja.errors import HttpError
 
@@ -143,6 +144,50 @@ def get_validated_response(
 
 
 # =========================
+# TMDB Data Extraction Helpers
+# =========================
+
+
+def extract_us_certification(release_dates: TMDBReleaseDatesResponse | None) -> str | None:
+    """
+    Extract US MPAA certification from TMDB release_dates response.
+
+    Priority: Prefer type 3 (theatrical release), fall back to any with certification.
+    Release types: 1=Premiere, 2=Theatrical (limited), 3=Theatrical, 4=Digital, 5=Physical, 6=TV
+
+    Args:
+        release_dates: Validated TMDB release_dates response model
+
+    Returns:
+        US certification string (e.g., "PG-13", "R") or None if unavailable
+    """
+    if not release_dates:
+        return None
+
+    # Find US entry
+    us_entry = next(
+        (country for country in release_dates.results if country.iso_3166_1 == 'US'),
+        None
+    )
+    if not us_entry:
+        return None
+
+    # Find theatrical (type 3) certification first
+    theatrical = next(
+        (r.certification for r in us_entry.release_dates if r.type == 3 and r.certification),
+        None
+    )
+    if theatrical:
+        return theatrical
+
+    # Fall back to first valid certification
+    return next(
+        (r.certification for r in us_entry.release_dates if r.certification),
+        None
+    )
+
+
+# =========================
 # Movie Schema Factories
 # =========================
 
@@ -239,6 +284,14 @@ def create_movie_detail_from_tmdb(
         if release_date == '':
             release_date = None
 
+        # Extract US certification from release_dates (added via append_to_response)
+        # Validate into typed model for clean extraction
+        release_dates_raw = movie_data.get('release_dates')
+        release_dates = None
+        if isinstance(release_dates_raw, dict):
+            release_dates = TMDBReleaseDatesResponse.model_validate(release_dates_raw)
+        us_certification = extract_us_certification(release_dates)
+
         detail_data: dict[str, object] = {
             'tmdb_id': tmdb_movie.id,
             'title': tmdb_movie.title,
@@ -248,6 +301,7 @@ def create_movie_detail_from_tmdb(
             'runtime': tmdb_movie.runtime or 0,
             'overview': tmdb_movie.overview or '',
             'user_movie_data': None,  # Will be set when user integration is implemented
+            'us_certification': us_certification,
         }
 
         # Process genres from typed TMDB response

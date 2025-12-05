@@ -157,6 +157,7 @@ class MovieDetailSchema(MovieBaseSchema):
     )
     cast: list[CastMemberSchema] = Field(default_factory=_empty_cast_list)
     crew: list[CrewMemberSchema] = Field(default_factory=_empty_crew_list)
+    us_certification: str | None = None
 
 
 class PaginatedMovieResponseSchema(Schema):

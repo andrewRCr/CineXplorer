@@ -369,7 +369,11 @@ class MovieService(BaseTMDBService):
             HttpError: If movie not found, API error, or data processing fails
         """
         # Use injected TMDB client for movie details
-        info_response = self._tmdb_client.get_movie_details(tmdb_id)
+        # Include release_dates for US certification extraction
+        info_response = self._tmdb_client.get_movie_details(
+            tmdb_id,
+            append_to_response='release_dates'
+        )
         if not info_response.is_success():
             handle_tmdb_api_error(
                 info_response,

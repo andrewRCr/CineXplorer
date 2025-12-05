@@ -146,3 +146,32 @@ class TMDBPaginatedPersonResponse(TMDBPaginatedResponse):
 class TMDBGenreListResponse(BaseModel):
     """TMDB genre list response structure."""
     genres: list[TMDBGenre] = []
+
+
+# =========================
+# Release Dates Models (for certification extraction)
+# =========================
+
+
+class TMDBReleaseDate(BaseModel):
+    """Individual release entry within a country's releases.
+
+    TMDB release types:
+    1 = Premiere, 2 = Theatrical (limited), 3 = Theatrical,
+    4 = Digital, 5 = Physical, 6 = TV
+    """
+    certification: str = ''
+    release_date: str = ''
+    type: int = 0
+    note: str = ''
+
+
+class TMDBCountryReleases(BaseModel):
+    """Per-country release information with certification data."""
+    iso_3166_1: str
+    release_dates: list[TMDBReleaseDate] = []
+
+
+class TMDBReleaseDatesResponse(BaseModel):
+    """TMDB release_dates append_to_response structure."""
+    results: list[TMDBCountryReleases] = []

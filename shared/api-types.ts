@@ -127,7 +127,11 @@ export interface Movie {
   cast?: CastMember[];
   crew?: CrewMember[];
   production_companies?: ProductionCompany[];
-  
+  spoken_languages?: SpokenLanguage[];
+
+  // US MPAA certification (e.g., "G", "PG", "PG-13", "R", "NC-17")
+  us_certification?: string | null;
+
   // User-specific data (only present when user is authenticated)
   user_movie_data?: UserMovieData | null;
 }
@@ -161,6 +165,11 @@ export interface ProductionCompany {
   name: string;
   logo_path?: string;
   origin_country: string;
+}
+
+export interface SpokenLanguage {
+  iso_639_1: string;
+  english_name: string;
 }
 
 /**

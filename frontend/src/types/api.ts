@@ -655,7 +655,6 @@ export interface paths {
          *             - sort_by: Sort criteria (popularity.desc, vote_average.desc, etc.)
          *             - vote_average_gte/lte: Rating range filtering (both TMDB + backend)
          *             - release_date_gte/lte: Date range filtering (both TMDB + backend)
-         *             - with_runtime_gte/lte: Runtime range filtering
          *             - primary_release_year: Filter by release year
          *             - [... many other TMDB discover parameters]
          *
@@ -1644,6 +1643,10 @@ export interface components {
             cast?: components["schemas"]["CastMemberSchema"][];
             /** Crew */
             crew?: components["schemas"]["CrewMemberSchema"][];
+            /** Us Certification */
+            us_certification?: string | null;
+            /** Spoken Languages */
+            spoken_languages?: components["schemas"]["SpokenLanguageSchema"][];
         };
         /** ProductionCompanySchema */
         ProductionCompanySchema: {
@@ -1655,6 +1658,16 @@ export interface components {
             logo_path?: string | null;
             /** Origin Country */
             origin_country?: string | null;
+        };
+        /**
+         * SpokenLanguageSchema
+         * @description Spoken language from TMDB movie details.
+         */
+        SpokenLanguageSchema: {
+            /** Iso 639 1 */
+            iso_639_1: string;
+            /** English Name */
+            english_name: string;
         };
         /**
          * PaginationParamsSchema

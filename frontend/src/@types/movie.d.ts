@@ -18,6 +18,7 @@ export type Genre = components['schemas']['GenreSchema'];
 export type CastMember = components['schemas']['CastMemberSchema'];
 export type CrewMember = components['schemas']['CrewMemberSchema'];
 export type ProductionCompany = components['schemas']['ProductionCompanySchema'];
+export type SpokenLanguage = components['schemas']['SpokenLanguageSchema'];
 export type UserMovieData = components['schemas']['UserMovieDataSchema'];
 
 // Pagination types

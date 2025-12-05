@@ -2,7 +2,8 @@ import useMovieDetail from "@/hooks/useMovieDetail";
 import { useParams, useSearchParams, Link } from "react-router-dom";
 import { useMemo } from "react";
 import { fetchMovieDetail } from "@/services/movieService";
-import type { Movie, Genre, CastMember, CrewMember, ProductionCompany } from "@shared/index";
+import type { Movie, Genre, CastMember, CrewMember, ProductionCompany, SpokenLanguage } from "@shared/index";
+import CertificationBadge from "@/components/movie/CertificationBadge";
 import {
   Box,
   Flex,
@@ -39,9 +40,7 @@ const MovieDetail = () => {
   } = useUserMovieData(shouldFetchUserMovieData ? String(movie.tmdb_id) : "");
 
   const [searchParams] = useSearchParams();
-  const page = searchParams.get("page") || "1";
   const from = searchParams.get("from") || "now-playing";
-  const query = searchParams.get("query") || "";
 
   // Preserve all URL parameters for back navigation (filters, etc.)
   const allParams = useMemo(() => {
@@ -51,8 +50,6 @@ const MovieDetail = () => {
     });
     return params;
   }, [searchParams]);
-
-  console.log("MovieDetail: Navigation params", { page, from, query, allParams });
 
   /* ============================================================
        Helper Methods & Derived Data
@@ -74,7 +71,6 @@ const MovieDetail = () => {
         : from === "browse"
         ? `/browse?${queryString}`
         : `/browse/${from}?${queryString}`;
-    console.log("MovieDetail: Back to Results URL", backUrl);
 
     return (
       <Box mb={4}>
@@ -224,11 +220,25 @@ const MovieDetail = () => {
               </Tag>
             ))}
           </Flex>
-          {/* Header: Runtime */}
-          {movie.runtime && (
+          {/* Header: Spoken Languages */}
+          {movie.spoken_languages && movie.spoken_languages.length > 0 && (
             <Text fontSize="sm" color="on-muted">
-              Runtime: {Math.floor(movie.runtime / 60)}h {movie.runtime % 60}m
+              {movie.spoken_languages
+                .map((lang: SpokenLanguage) => lang.english_name)
+                .join(", ")}
             </Text>
+          )}
+          {/* Header: Certification & Runtime */}
+          {(movie.us_certification || movie.runtime) && (
+            <Flex align="center" gap={2} fontSize="sm" color="on-muted">
+              <CertificationBadge certification={movie.us_certification} />
+              {movie.us_certification && movie.runtime && <Text>·</Text>}
+              {movie.runtime && (
+                <Text>
+                  {Math.floor(movie.runtime / 60)}h {movie.runtime % 60}m
+                </Text>
+              )}
+            </Flex>
           )}
           {/* Header: User Score */}
           <Text fontWeight="bold">

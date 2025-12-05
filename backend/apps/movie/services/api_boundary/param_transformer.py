@@ -41,6 +41,7 @@ HTTP_TO_SERVICE_MAPPING: dict[str, str] = {
     'sort_by': 'sort_by',
     'year': 'year',
     'certification': 'certification',
+    'certification_country': 'certification_country',
     'region': 'region',
     'tmdb_page_start': 'tmdb_page_start',
     'language': 'language',  # Original language filter

@@ -44,6 +44,7 @@ class ServiceParams(BaseModel):
     release_date_gte: str | None = None
     release_date_lte: str | None = None
     certification: str | None = None
+    certification_country: str | None = None
     region: str | None = None
     with_release_type: str | None = None
     tmdb_page_start: int | None = None

@@ -759,3 +759,96 @@ class TestDataQuality:
         params = call_args[0][1] if len(call_args[0]) > 1 else call_args[1].get("params", {})
 
         assert "with_original_language" not in params
+
+    @pytest.mark.parametrize("config", ALL_ENDPOINTS, ids=lambda c: c.name)
+    @patch("core.services.tmdb_api_client.TMDBApiClient.get")
+    def test_filter_passthrough_certification(
+        self,
+        mock_tmdb_get: Mock,
+        api_client: Client,
+        config: EndpointConfig,
+    ) -> None:
+        """Certification filter params are passed through to TMDB API.
+
+        Verifies certification and certification_country parameters reach TMDB.
+        TMDB requires certification_country (e.g., 'US') alongside certification
+        (e.g., 'PG-13') to filter by MPAA rating.
+        """
+        movies = [
+            create_tmdb_movie(
+                tmdb_id=1,
+                title="PG-13 Movie",
+                release_date="2025-10-15",
+                vote_average=7.5,
+                vote_count=1000,
+            ),
+        ]
+        mock_tmdb_get.return_value = create_mock_paginated_response(
+            movies=movies,
+            page=1,
+            total_pages=1,
+            total_results=1,
+        )
+
+        # Single certification with country
+        response = api_client.get(
+            f"{config.url}?page=1&certification=PG-13&certification_country=US"
+        )
+
+        assert response.status_code == HTTPStatus.OK
+
+        # Verify TMDB received certification params
+        assert mock_tmdb_get.call_count >= 1
+        call_args = mock_tmdb_get.call_args_list[0]
+        params = call_args[0][1] if len(call_args[0]) > 1 else call_args[1].get("params", {})
+
+        assert "certification" in params
+        assert params["certification"] == "PG-13"
+        assert "certification_country" in params
+        assert params["certification_country"] == "US"
+
+    @pytest.mark.parametrize("config", ALL_ENDPOINTS, ids=lambda c: c.name)
+    @patch("core.services.tmdb_api_client.TMDBApiClient.get")
+    def test_filter_passthrough_certification_multiple(
+        self,
+        mock_tmdb_get: Mock,
+        api_client: Client,
+        config: EndpointConfig,
+    ) -> None:
+        """Multiple certifications passed through with pipe separator (OR logic).
+
+        TMDB accepts pipe-separated values for certification to filter by
+        multiple ratings (e.g., 'G|PG' means G OR PG).
+        """
+        movies = [
+            create_tmdb_movie(
+                tmdb_id=1,
+                title="Family Movie",
+                release_date="2025-10-15",
+                vote_average=7.5,
+                vote_count=1000,
+            ),
+        ]
+        mock_tmdb_get.return_value = create_mock_paginated_response(
+            movies=movies,
+            page=1,
+            total_pages=1,
+            total_results=1,
+        )
+
+        # Multiple certifications with pipe separator
+        response = api_client.get(
+            f"{config.url}?page=1&certification=G|PG&certification_country=US"
+        )
+
+        assert response.status_code == HTTPStatus.OK
+
+        # Verify TMDB received multi-value certification
+        assert mock_tmdb_get.call_count >= 1
+        call_args = mock_tmdb_get.call_args_list[0]
+        params = call_args[0][1] if len(call_args[0]) > 1 else call_args[1].get("params", {})
+
+        assert "certification" in params
+        assert params["certification"] == "G|PG"
+        assert "certification_country" in params
+        assert params["certification_country"] == "US"

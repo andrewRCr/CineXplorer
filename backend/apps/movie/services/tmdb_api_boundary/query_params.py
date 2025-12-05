@@ -24,6 +24,7 @@ Parameter Flow Reference (HTTP → ServiceParams → TMDB API):
     │ vote_count_gte       │ vote_count_gte         │ vote_count.gte              │
     │ language             │ language               │ with_original_language      │
     │ certification        │ certification          │ certification               │
+    │ certification_country│ certification_country  │ certification_country       │
     │ year                 │ year                   │ year                        │
     └─────────────────────────────────────────────────────────────────────────────┘
 
@@ -62,6 +63,7 @@ PARAM_MAPPING: dict[str, str] = {
     'release_date.gte': 'primary_release_date.gte',
     'release_date.lte': 'primary_release_date.lte',
     'certification': 'certification',
+    'certification_country': 'certification_country',
     'with_release_type': 'with_release_type',
     'region': 'region',
     'tmdb_page_start': 'tmdb_page_start',

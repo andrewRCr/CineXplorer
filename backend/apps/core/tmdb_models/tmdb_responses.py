@@ -81,6 +81,17 @@ class TMDBMovieBase(BaseModel):
     genre_ids: list[int] = []
 
 
+class TMDBSpokenLanguage(BaseModel):
+    """TMDB spoken language response structure.
+
+    TMDB returns both 'name' (native) and 'english_name' fields.
+    We use english_name for consistent display. The 'name' field is
+    inconsistently populated per TMDB docs, so we skip it.
+    """
+    iso_639_1: str
+    english_name: str
+
+
 class TMDBMovieDetail(TMDBMovieBase):
     """TMDB movie detail response structure (extends base with detail fields)."""
     runtime: int | None = None
@@ -95,10 +106,10 @@ class TMDBMovieDetail(TMDBMovieBase):
     # Any: TMDB /movie/{id} - collection structure rarely used, fields vary by collection type
     # TODO: Create TMDBCollectionModel if collection features are implemented
     belongs_to_collection: dict[str, Any] | None = None
-    # Any: TMDB /movie/{id} - country/language structures unused in current codebase
-    # TODO: Create TMDBCountryModel and TMDBLanguageModel if needed for internationalization
+    # Any: TMDB /movie/{id} - production_countries structure unused in current codebase
+    # TODO: Create TMDBCountryModel if needed for internationalization
     production_countries: list[dict[str, Any]] = []
-    spoken_languages: list[dict[str, Any]] = []
+    spoken_languages: list[TMDBSpokenLanguage] = []
 
 
 class TMDBPaginatedResponse(BaseModel):

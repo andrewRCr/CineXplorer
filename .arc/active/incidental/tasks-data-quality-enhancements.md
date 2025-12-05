@@ -1007,29 +1007,23 @@ all themes, and color associations are intuitive (green=safe, red=restricted).
         - 545 backend tests pass, 15 new certification extraction tests
         - Updated test mocks in `test_movie_service.py` and `test_watchlist_endpoint.py` for new API signature
 
-- [ ] **11.2 Add spoken_languages to MovieDetail response**
+- [x] **11.2 Add spoken_languages to MovieDetail response**
 
-    TMDB returns `spoken_languages` as array of objects at top level. Currently typed as
-    `list[dict[str, Any]]` in TMDBMovieDetail - needs proper Pydantic model for type safety.
+    - [x] **11.2.a Write unit tests for spoken_languages extraction**
+        - 4 unit tests: extraction from array, empty array, missing field, single language
 
-    - [ ] **11.2.a Write unit tests for spoken_languages extraction**
-        - Test: extracts english_name correctly from array
-        - Test: handles empty array gracefully
-        - Test: handles missing field gracefully
+    - [x] **11.2.b Create TMDBSpokenLanguage Pydantic model**
+        - Added `TMDBSpokenLanguage` model with `iso_639_1`, `english_name` fields
+        - Updated `TMDBMovieDetail.spoken_languages` to use typed model
+        - File: `core/tmdb_models/tmdb_responses.py`
 
-    - [ ] **11.2.b Create TMDBSpokenLanguage Pydantic model**
-        - Fields: `iso_639_1: str`, `english_name: str`
-        - Skip `name` field (inconsistently populated per TMDB docs)
-        - Update `TMDBMovieDetail.spoken_languages` to use typed model instead of `list[dict[str, Any]]`
-        - File: `tmdb_responses.py`
+    - [x] **11.2.c Add SpokenLanguageSchema and field to MovieDetailSchema**
+        - Created `SpokenLanguageSchema` in `schemas.py`
+        - Added `spoken_languages` field to `MovieDetailSchema`
+        - Integrated extraction in `create_movie_detail_from_tmdb()`
 
-    - [ ] **11.2.c Add SpokenLanguageSchema and field to MovieDetailSchema**
-        - Create `SpokenLanguageSchema` with fields matching Pydantic model
-        - Add `spoken_languages: list[SpokenLanguageSchema]` to `MovieDetailSchema`
-        - Integrate extraction in `create_movie_detail_from_tmdb()`
-        - File: `schemas.py`, `response_factories.py`
-
-    - [ ] **11.2.d Run quality gates**
+    - [x] **11.2.d Run quality gates**
+        - 572 backend tests pass, linting clean, type checking 0 errors
 
 #### Frontend: MovieDetail Display
 

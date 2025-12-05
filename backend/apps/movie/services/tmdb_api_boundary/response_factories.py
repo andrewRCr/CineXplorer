@@ -55,6 +55,7 @@ from ...schemas import (
     PaginatedPersonResponseSchema,
     PersonSchema,
     ProductionCompanySchema,
+    SpokenLanguageSchema,
 )
 
 # Use TMDB-specific logger for better log organization
@@ -322,6 +323,15 @@ def create_movie_detail_from_tmdb(
                 'origin_country': company.origin_country
             }, strict=False)
             for company in tmdb_movie.production_companies
+        ]
+
+        # Process spoken languages from typed TMDB response
+        detail_data['spoken_languages'] = [
+            SpokenLanguageSchema.model_validate({
+                'iso_639_1': lang.iso_639_1,
+                'english_name': lang.english_name,
+            }, strict=False)
+            for lang in tmdb_movie.spoken_languages
         ]
 
         # Process credits if provided

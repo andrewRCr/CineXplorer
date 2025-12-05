@@ -619,6 +619,98 @@ class TestCreatePaginatedPersonResponseFromTmdb:
 # ============================================================================
 
 
+# ============================================================================
+# Spoken Languages in MovieDetail Tests
+# ============================================================================
+
+
+class TestMovieDetailSpokenLanguages:
+    """Tests for spoken_languages extraction in MovieDetailSchema."""
+
+    def test_extracts_spoken_languages_from_tmdb_data(self) -> None:
+        """Should extract spoken_languages with english_name from TMDB data."""
+        movie_data: dict[str, object] = {
+            'id': 550,
+            'title': 'Fight Club',
+            'release_date': '1999-10-15',
+            'vote_average': 8.4,
+            'runtime': 139,
+            'overview': 'Test',
+            'genres': [],
+            'production_companies': [],
+            'spoken_languages': [
+                {'iso_639_1': 'en', 'english_name': 'English', 'name': 'English'},
+                {'iso_639_1': 'ja', 'english_name': 'Japanese', 'name': '日本語'},
+            ],
+        }
+
+        result = create_movie_detail_from_tmdb(movie_data)
+
+        assert len(result.spoken_languages) == 2
+        assert result.spoken_languages[0].iso_639_1 == 'en'
+        assert result.spoken_languages[0].english_name == 'English'
+        assert result.spoken_languages[1].iso_639_1 == 'ja'
+        assert result.spoken_languages[1].english_name == 'Japanese'
+
+    def test_handles_empty_spoken_languages_array(self) -> None:
+        """Should return empty list when spoken_languages is empty array."""
+        movie_data: dict[str, object] = {
+            'id': 550,
+            'title': 'Silent Film',
+            'release_date': '1920-01-01',
+            'vote_average': 7.0,
+            'runtime': 60,
+            'overview': 'Test',
+            'genres': [],
+            'production_companies': [],
+            'spoken_languages': [],
+        }
+
+        result = create_movie_detail_from_tmdb(movie_data)
+
+        assert result.spoken_languages == []
+
+    def test_handles_missing_spoken_languages_field(self) -> None:
+        """Should return empty list when spoken_languages field is missing."""
+        movie_data: dict[str, object] = {
+            'id': 550,
+            'title': 'Old Movie',
+            'release_date': '1950-01-01',
+            'vote_average': 6.5,
+            'runtime': 90,
+            'overview': 'Test',
+            'genres': [],
+            'production_companies': [],
+            # No spoken_languages field
+        }
+
+        result = create_movie_detail_from_tmdb(movie_data)
+
+        assert result.spoken_languages == []
+
+    def test_handles_single_spoken_language(self) -> None:
+        """Should correctly handle movies with single spoken language."""
+        movie_data: dict[str, object] = {
+            'id': 100,
+            'title': 'French Film',
+            'release_date': '2020-05-01',
+            'vote_average': 7.5,
+            'runtime': 120,
+            'overview': 'Test',
+            'genres': [],
+            'production_companies': [],
+            'spoken_languages': [
+                {'iso_639_1': 'fr', 'english_name': 'French', 'name': 'Français'},
+            ],
+        }
+
+        result = create_movie_detail_from_tmdb(movie_data)
+
+        assert len(result.spoken_languages) == 1
+        assert result.spoken_languages[0].iso_639_1 == 'fr'
+        assert result.spoken_languages[0].english_name == 'French'
+
+
 class TestCreateGenreListFromTmdb:
     """Tests for genre list creation."""
 

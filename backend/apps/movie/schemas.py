@@ -85,6 +85,10 @@ def _empty_genre_id_list() -> list[int]:
     return []
 
 
+def _empty_spoken_language_list() -> list[SpokenLanguageSchema]:
+    return []
+
+
 class MovieModelSchema(ModelSchema):
     """Mirror of the local `Movie` model for endpoints that touch persisted data."""
 
@@ -133,6 +137,12 @@ class ProductionCompanySchema(Schema):
     origin_country: str | None = None
 
 
+class SpokenLanguageSchema(Schema):
+    """Spoken language from TMDB movie details."""
+    iso_639_1: str
+    english_name: str
+
+
 class CrewMemberSchema(Schema):
     id: int
     name: str
@@ -158,6 +168,9 @@ class MovieDetailSchema(MovieBaseSchema):
     cast: list[CastMemberSchema] = Field(default_factory=_empty_cast_list)
     crew: list[CrewMemberSchema] = Field(default_factory=_empty_crew_list)
     us_certification: str | None = None
+    spoken_languages: list[SpokenLanguageSchema] = Field(
+        default_factory=_empty_spoken_language_list
+    )
 
 
 class PaginatedMovieResponseSchema(Schema):
@@ -346,5 +359,6 @@ __all__ = [
     "PaginationParamsSchema",
     "PersonSchema",
     "ProductionCompanySchema",
+    "SpokenLanguageSchema",
     "UserMovieDataSchema",
 ]

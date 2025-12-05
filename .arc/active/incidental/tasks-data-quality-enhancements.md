@@ -1095,56 +1095,59 @@ all themes, and color associations are intuitive (green=safe, red=restricted).
 
 #### Frontend: Wire Filter to API
 
-- [ ] **11.6 Update API param mapping**
+- [x] **11.6 Update API param mapping**
 
-    - [ ] **11.6.a Update browseParamMapper.ts**
-        - Add certification mapping in `mapBrowseParamsToApi()`
-        - If `certifications.length > 0`: join with `|` (OR logic) for TMDB
-        - Always include `certification_country: "US"` when certifications present
-        - Example: `certifications: ["G", "PG"]` → `certification=G|PG&certification_country=US`
+    - [x] **11.6.a Update browseParamMapper.ts**
+        - Added `addCertifications()` helper function
+        - Joins certifications with `|` (TMDB OR logic)
+        - Always includes `certification_country: "US"` when certifications present
 
-    - [ ] **11.6.b Update MovieQueryParams interface**
-        - Add `certification?: string` and `certification_country?: string` to movieService.ts
+    - [x] **11.6.b Update MovieQueryParams interface**
+        - Added `certification?: string` and `certification_country?: string` to movieService.ts
 
-    - [ ] **11.6.c Update browseUrlSync for array field**
-        - Ensure certifications array serializes/deserializes properly in URL
-        - Pattern: `?certifications=G,PG,PG-13` or similar
+    - [x] **11.6.c Update browseUrlSync for array field**
+        - Already implemented: `useMovieCollectionUrl` handles array serialization generically
+        - `parseBrowseParamsFromUrl()` already parses certifications from URL
 
-    - [ ] **11.6.d Run frontend type checking**
+    - [x] **11.6.d Run frontend type checking**
+        - TypeScript: 0 errors, linting clean
+        - Added 3 certification tests to browseParamMapper.test.ts (18 tests pass)
 
 #### Backend: Complete Param Pipeline
 
-- [ ] **11.7 Wire certification_country through backend**
+- [x] **11.7 Wire certification_country through backend**
 
-    TDD: Write integration test first, then implement the param pipeline.
+    TDD: Wrote integration tests first (red), then implemented param pipeline (green).
 
-    - [ ] **11.7.a Write backend integration test for certification param**
-        - Test that `/api/movies/browse?certification=PG-13&certification_country=US` works
-        - Test multi-value: `certification=G|PG`
-        - Verify params pass through to TMDB API call
-        - Test will fail initially (TDD red phase)
+    - [x] **11.7.a Write backend integration test for certification param**
+        - Added `test_filter_passthrough_certification` and `test_filter_passthrough_certification_multiple`
+        - Tests single certification (`PG-13`) and multi-value (`G|PG`) with `certification_country=US`
+        - Verifies params pass through to TMDB API call (6 parametrized tests across 3 endpoints)
 
-    - [ ] **11.7.b Add certification_country to HTTP_TO_SERVICE_MAPPING**
-        - File: param_transformer.py
-        - Add: `'certification_country': 'certification_country'`
-        - Note: `certification` already mapped
+    - [x] **11.7.b Add certification_country to HTTP_TO_SERVICE_MAPPING**
+        - Added to param_transformer.py
 
-    - [ ] **11.7.c Add certification_country to ServiceParams**
-        - File: service_params.py
-        - Add: `certification_country: str | None = None`
+    - [x] **11.7.c Add certification_country to ServiceParams**
+        - Added to service_params.py
 
-    - [ ] **11.7.d Add certification_country to PARAM_MAPPING**
-        - File: query_params.py
-        - Add: `'certification_country': 'certification_country'`
-        - Note: `certification` already mapped
+    - [x] **11.7.d Add certification_country to PARAM_MAPPING**
+        - Added to query_params.py
+        - Updated parameter flow reference documentation
 
-    - [ ] **11.7.e Run quality gates (tests should pass now)**
+    - [x] **11.7.e Run quality gates**
+        - Backend: 578 tests pass, linting clean, Pyright 0 errors
+        - Frontend: 507 tests pass
 
 #### Testing & Verification
 
-- [ ] **11.8 Final verification**
+- [x] **11.8 Final verification**
 
-    - [ ] **11.8.a Manual browser testing**
+    **Known TMDB Limitation (documented):** Certification filtering matches ANY release type
+    (theatrical, digital, physical), not just theatrical. Movies with NC-17 uncut/digital
+    versions appear even if theatrical release was R (e.g., Saw). Added UI disclaimer when
+    NC-17 is selected. See Notes section for full technical details.
+
+    - [x] **11.8.a Manual browser testing**
         - Navigate to movie detail (US film) → verify certification badge displays
         - Navigate to movie detail (non-US film) → verify no badge, layout still clean
         - Navigate to movie detail → verify spoken languages display
@@ -1153,12 +1156,13 @@ all themes, and color associations are intuitive (green=safe, red=restricted).
         - Select multiple ratings (G + PG) → verify both appear in results
         - Verify URL includes certifications param
         - Verify Clear button resets certifications
+        - **Added:** Verify NC-17 disclaimer appears when NC-17 selected
 
-    - [ ] **11.8.b Run full quality gates**
-        - All backend tests
-        - All frontend tests
-        - Linting (backend + frontend + markdown)
-        - Type checking (Python + TypeScript)
+    - [x] **11.8.b Run full quality gates**
+        - All backend tests: 578 pass
+        - All frontend tests: 507 pass
+        - Linting: clean
+        - Type checking: 0 errors
 
 ---
 
@@ -1193,6 +1197,43 @@ all themes, and color associations are intuitive (green=safe, red=restricted).
 
 **Z-A clustering explanation:** Original titles use full-width Unicode characters (Ａ-Ｚ instead of A-Z)
 which sort after standard ASCII, causing these to cluster in alphabetical sorts.
+
+---
+
+**TMDB Certification Filter Limitation (Phase 11 - documented 2025-12-05):**
+
+TMDB's discover endpoint `certification` filter has an architectural limitation that cannot be
+bypassed through API parameters. The `certification` and `with_release_type` parameters operate
+independently at different filtering layers.
+
+**The Problem:**
+
+- `certification` filter matches movies with that certification in ANY release type (theatrical,
+  digital, physical, limited, etc.)
+- `with_release_type=3` only controls which release date is returned, not which certification
+  is matched
+- No parameter combination exists to filter "theatrical certification only"
+
+**Impact:**
+
+- Movies like Saw (176) appear in NC-17 filter despite theatrical release being R, because they
+  have NC-17 limited re-releases or digital uncut versions
+- A Clockwork Orange (185) shows NC-17 because TMDB conflates historical X rating with NC-17
+  (X rating no longer exists in their system)
+
+**Our Solution:**
+
+- Added UI disclaimer on CertificationFilter when NC-17 is selected: "May include alternate
+  versions (uncut, re-releases) rated NC-17"
+- Movie detail page shows theatrical (Type 3) certification via `extract_us_certification()`,
+  which is accurate for display purposes
+- Accepted as permanent TMDB limitation - no API-level workaround exists
+
+**Research Sources:**
+
+- TMDB Talk forums confirmed this is architectural, not a bug
+- Kometa/Plex Meta Manager team hit same limitation (GitHub Issue #464)
+- Client-side post-filtering would require N+1 API calls (impractical)
 
 ---
 

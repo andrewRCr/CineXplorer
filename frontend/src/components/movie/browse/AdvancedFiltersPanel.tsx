@@ -1,7 +1,6 @@
 import { useCallback, useMemo } from "react";
 import {
   Box,
-  Flex,
   VStack,
   Button,
   HStack,
@@ -148,23 +147,6 @@ const AdvancedFiltersPanel = ({
 
         <HStack justify="center" align="start" gap={8}>
           <Box>
-            <YearSelector
-              minYear={browseParams.minYear}
-              maxYear={browseParams.maxYear}
-              onMinYearChange={(year) => updateParam("minYear", year)}
-              onMaxYearChange={(year) => updateParam("maxYear", year)}
-              pageSource={pageSource}
-            />
-          </Box>
-          <Box>
-            <RatingSelector
-              minRating={browseParams.minRating}
-              maxRating={browseParams.maxRating}
-              onMinRatingChange={(rating) => updateParam("minRating", rating)}
-              onMaxRatingChange={(rating) => updateParam("maxRating", rating)}
-            />
-          </Box>
-          <Box>
             <Text fontSize="sm" fontWeight="medium" mb={2} color="foreground">
               Language
             </Text>
@@ -240,16 +222,33 @@ const AdvancedFiltersPanel = ({
               </Select.Positioner>
             </Select.Root>
           </Box>
+          <Box>
+            <YearSelector
+              minYear={browseParams.minYear}
+              maxYear={browseParams.maxYear}
+              onMinYearChange={(year) => updateParam("minYear", year)}
+              onMaxYearChange={(year) => updateParam("maxYear", year)}
+              pageSource={pageSource}
+            />
+          </Box>
+          <Box>
+            <RatingSelector
+              minRating={browseParams.minRating}
+              maxRating={browseParams.maxRating}
+              onMinRatingChange={(rating) => updateParam("minRating", rating)}
+              onMaxRatingChange={(rating) => updateParam("maxRating", rating)}
+            />
+          </Box>
         </HStack>
 
-        <Flex justify="center">
+        <Box w="100%">
           <CertificationFilter
             selectedCertifications={browseParams.certifications}
             onChange={(certifications) =>
               updateParam("certifications", certifications)
             }
           />
-        </Flex>
+        </Box>
       </VStack>
     </Box>
   );

@@ -466,47 +466,21 @@ Before migrating any content during mid-work cleanup, ask these questions:
 
 ---
 
-**Grep-Based Temporal Noise Removal**
+**⚠️ TWO-STEP CLEANUP: Structure First, Then Fine-Grained**
 
-Run these patterns to find temporal noise. For each match, verify it's noise (not substantive), then remove:
+Archival cleanup has two distinct steps that MUST be done in order:
 
-```bash
-# 1. Next Steps references (meaningless after completion)
-grep -in "next step\|next:\|**next" tasks-*.md
+1. **Structure evaluation** - Identify and handle entire sections (top-matter/bottom-matter)
+2. **Fine-grained cleanup** - Grep for inline temporal markers within kept sections
 
-# 2. Temporal status markers
-grep -in "status:.*complete\|status:.*pending\|status:.*blocked\|status:.*[0-9]/[0-9]" tasks-*.md
-
-# 3. Resume/Continue markers
-grep -in "resume at\|continue with\|pick up at\|blocked on" tasks-*.md
-
-# 4. References to deleted notes file (if notes file was deleted)
-grep -in "notes-.*\.md" tasks-*.md
-
-# 5. Inline subtask completion dates (header date is fine, subtask dates are noise)
-grep -in "\*\*completed:\*\*.*202[0-9]" tasks-*.md
-
-# 6. Forward pointers to archived task lists
-grep -in "spawned:\|created:.*tasks-\|interrupted by:" tasks-*.md
-# Check if referenced file is in archive (use find, not ls with globs)
-find .arc/reference/archive -name "tasks-<filename>.md"
-# If found in archive → remove pointer (completed work)
-# If not found → check .arc/active/ (keep pointer if work ongoing)
-```
-
-**For each match:**
-
-1. Read context around the match
-2. Verify it's temporal noise, not substantive content
-3. Remove the specific marker/line
-4. Note in CLEANUP-PROGRESS (for large files): "Phase X, line Y: removed [description]"
+Do NOT skip to grep patterns - section-level evaluation catches the biggest issues.
 
 ---
 
-**Section-Level Evaluation Checklist (MANDATORY)**
+**STEP 1: Section-Level Evaluation (MANDATORY FIRST)**
 
-Grep patterns catch inline markers but miss entire sections that are temporal scaffolding. After grep-based
-cleanup, **manually scan top-matter and bottom-matter** using these checklists:
+Evaluate entire sections before diving into line-by-line cleanup. Sections are either kept, removed,
+or migrated - this is where the biggest cleanup decisions happen.
 
 **Top-Matter Sections to REMOVE:**
 
@@ -561,6 +535,43 @@ exists elsewhere?" Only remove if yes to either.
 
 **Rationale:** The task list's value is showing the journey. A 60-line research summary IS the record of what
 that task accomplished. Don't try to make the task list scannable - that's the completion doc's job.
+
+---
+
+**STEP 2: Fine-Grained Cleanup (Grep Patterns)**
+
+After section-level evaluation, use grep to find inline temporal markers within kept sections:
+
+```bash
+# 1. Next Steps references (meaningless after completion)
+grep -in "next step\|next:\|**next" tasks-*.md
+
+# 2. Temporal status markers
+grep -in "status:.*complete\|status:.*pending\|status:.*blocked\|status:.*[0-9]/[0-9]" tasks-*.md
+
+# 3. Resume/Continue markers
+grep -in "resume at\|continue with\|pick up at\|blocked on" tasks-*.md
+
+# 4. References to deleted notes file (if notes file was deleted)
+grep -in "notes-.*\.md" tasks-*.md
+
+# 5. Inline subtask completion dates (header date is fine, subtask dates are noise)
+grep -in "\*\*completed:\*\*.*202[0-9]" tasks-*.md
+
+# 6. Forward pointers to archived task lists
+grep -in "spawned:\|created:.*tasks-\|interrupted by:" tasks-*.md
+# Check if referenced file is in archive (use find, not ls with globs)
+find .arc/reference/archive -name "tasks-<filename>.md"
+# If found in archive → remove pointer (completed work)
+# If not found → check .arc/active/ (keep pointer if work ongoing)
+```
+
+**For each match:**
+
+1. Read context around the match
+2. Verify it's temporal noise, not substantive content
+3. Remove the specific marker/line
+4. Note in CLEANUP-PROGRESS (for large files): "Phase X, line Y: removed [description]"
 
 ---
 

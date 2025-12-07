@@ -336,176 +336,72 @@ git add .arc/reference/constitution/PROJECT-STATUS.md  # if updated
 
 Archival commits use:
 
-- **Type/scope:** `docs(archive)`
-- **Context footer:** `Context: documentation (no associated task list)`
+- **Type/scope:** `docs(arc)` or `docs(archive)`
+- **Context footer:** `Context: tasks-{name}.md (maintenance)`
+
+**Why `(maintenance)`:** Archival IS maintenance of that task list. The commit includes all related
+artifacts (cleaned task file, notes file, completion doc, any ADRs discovered during the work) -
+all tied to that specific task list.
 
 **Example:**
 
 ```bash
-git commit -m "docs(archive): archive discover-endpoint-consolidation to 2025-q4
+git commit -m "docs(arc): archive discover-endpoint-consolidation
 
 Archival of completed incidental work:
 - Consolidated endpoints to thin wrapper architecture
 - Fixed now-playing/upcoming date ranges and filter support
 - 73 tests added, all quality gates passed
 
-Context: documentation (no associated task list)"
+Context: tasks-discover-endpoint-consolidation.md (maintenance)"
 ```
 
 ---
 
 ## Archive Structure
 
-Archives use **quarterly directories** containing work organized by category:
+**Path pattern:** `.arc/reference/archive/{quarter}/{category}/{name}/`
 
-```
-.arc/reference/archive/
-├── README.md                                     # Archive overview and navigation
-├── 2025-q4/                                      # Quarterly archive
-│   ├── completed-atomic-2025-q4.md               # Atomic tasks completed this quarter
-│   ├── feature/                                  # User-facing planned work
-│   │   └── movie-ratings/
-│   │       ├── prd-movie-ratings.md
-│   │       ├── tasks-movie-ratings.md
-│   │       └── completion-movie-ratings.md
-│   ├── technical/                                # Infrastructure planned work
-│   │   └── api-layer-modernization-p1/
-│   │       ├── prd-api-layer-modernization-p1.md
-│   │       ├── tasks-api-layer-modernization-p1.md
-│   │       └── completion-api-layer-modernization-p1.md
-│   └── incidental/                               # Unplanned reactive work
-│       ├── chakra-recipe-system/
-│       │   ├── tasks-chakra-recipe-system.md
-│       │   ├── notes-chakra-recipe-system.md     # optional
-│       │   └── completion-chakra-recipe-system.md
-│       └── csrf-middleware-fix/
-│           ├── tasks-csrf-middleware-fix.md
-│           └── completion-csrf-middleware-fix.md
-└── 2025-q3/                                      # Previous quarter (example)
-    └── ...
-```
+- `{quarter}`: `2025-q4`, `2025-q3`, etc.
+- `{category}`: `feature/`, `technical/`, or `incidental/`
+- `{name}`: Work package subdirectory containing all related files
 
-**Organization principles:**
+**Key principles:**
 
-- **All work gets completion metadata** - Consistent across feature/technical/incidental (completion-{name}.md mandatory)
-- **Work packages group by subdirectory** - All files for a work item live together (ALWAYS - tasks + completion minimum)
-- **Completion doc = executive summary** - One place to look for "what was achieved?"
-- **Subdirectory always created**: With unified completion docs, every work unit has at least 2 files
-  (tasks + completion), so subdirectory is always required
+- All work gets `completion-{name}.md` (unified strategy)
+- Work packages group by subdirectory (tasks + completion minimum)
+- Use `git mv` to preserve file history
 
----
-
-## Work Categorization Decision Guide
-
-**Planned work** (gets PRD + task list + completion):
-
-- **Feature** - Adds user-visible capability from product vision
-    - Examples: User authentication, movie ratings UI, search functionality
-    - Archive to: `archive/{quarter}/feature/{name}/`
-
-- **Technical** - Improves infrastructure, architecture, or developer experience
-    - Examples: API modernization, type safety improvements, testing infrastructure
-    - Archive to: `archive/{quarter}/technical/{name}/`
-
-**Incidental work** (gets task list + completion, no PRD):
-
-- **Unplanned reactive work** discovered during development
-    - Examples: Recipe system implementation, type safety fixes, CSRF middleware bug
-    - Uses conventional commit type prefixes in branch: `incidental/{name}`
-    - Archive to: `archive/{quarter}/incidental/{name}/`
-
-**When uncertain**, consult
-[Work Organization Strategy](../../strategies/arc/strategy-work-organization.md) for complete decision tree.
+**Categorization:** See [Work Organization Strategy](../../strategies/arc/strategy-work-organization.md)
+for feature vs technical vs incidental decision rules.
 
 ---
 
 ## Common Pitfalls
 
-❌ **Archiving without doc hygiene**: Task list still has verbose blocks, notes file lacks TOC
-   → **Fix**: Run [maintain-task-notes.md](maintain-task-notes.md) Mode 2 first (mandatory Phase 1, Step 2)
+**Critical errors:**
 
-❌ **Skipping completion metadata**: Assuming only planned work needs completion docs
-   → **Fix**: ALL work gets `completion-{name}.md` (unified strategy as of ADR-013)
+- ❌ Skip doc hygiene → Run [maintain-task-notes.md](maintain-task-notes.md) Mode 2 first
+- ❌ Use `mv` instead of `git mv` → Loses file history
+- ❌ Archive before branch deletion → Delete branch first, then archive
+- ❌ Skip completion doc → ALL work gets `completion-{name}.md`
 
-❌ **Creating completion doc during archive phase**: Waiting until after merge
-   → **Fix**: Create completion doc on child branch (Phase 1, Step 3) as part of work deliverable
+**Best practices:**
 
-❌ **Not using completion doc for PR description**: Writing PR description separately
-   → **Fix**: Use completion doc as PR description template (saves time, ensures consistency)
-
-❌ **Using plain mv instead of git mv**: Loses file history
-   → **Fix**: Always use `git mv` to preserve history (Phase 3, Step 9)
-
-❌ **Archiving before branch deletion**: Moving files while branch still exists
-   → **Fix**: Delete branch first (Phase 3, Step 8), THEN archive files (Phase 3, Step 9)
-
-❌ **Wrong category**: Feature work archived to technical/, or vice versa
-   → **Fix**: Check [Work Organization Strategy](../../strategies/arc/strategy-work-organization.md) decision rules
-
-❌ **Forgetting to update PROJECT-STATUS**: Major work completed but still shows "In Progress"
-   → **Fix**: Update PROJECT-STATUS in Phase 3, Step 10 before committing
-
-❌ **Committing before linting**: Markdown violations in archived docs
-   → **Fix**: Markdown linting is part of maintain-task-notes Mode 2 quality checks (Phase 1, Step 2)
-
-❌ **Not updating completion doc after review**: Review changes work outcomes but doc unchanged
-   → **Fix**: Update completion doc when review findings significantly change deliverables (Phase 2, Step 6)
-
-✅ **Run [maintain-task-notes.md](maintain-task-notes.md) Mode 2 first**: Ensures archive-ready documentation
-✅ **Create completion-{name}.md for ALL work**: Unified strategy, consistent structure
-✅ **Use git mv, never plain mv**: Preserves file history
-✅ **Complete docs on child branch**: PR reviewers see clean, organized documentation
-✅ **Use completion doc as PR template**: Dual-purpose documentation reduces duplicate work
-✅ **Archive on parent after merge**: Branch deleted → files archived (maintains coupling)
-✅ **Consistent structure**: Every work package has predictable file organization
+- ✅ Run maintain-task-notes Mode 2 before archiving
+- ✅ Create completion doc on child branch (before PR)
+- ✅ Use completion doc as PR description template
+- ✅ Use `git mv` to preserve history
 
 ---
 
-## Benefits of Systematic Archival
+## Appendix
 
-- **Consistent workflow** - Same steps for all work types (feature/technical/incidental)
-- **Executive summaries** - One place to look for "what was achieved?" (completion doc)
-- **PR integration** - Completion doc serves as PR description template (dual purpose)
-- **Professional documentation** - Demonstrates systematic approach to development
-- **Discoverability** - Structured archives with consistent organization
-- **Future reference** - Easy to find technical decisions months later
-- **Clean active workspace** - Only in-progress work stays in `.arc/active/`
-- **Git history preservation** - `git mv` allows tracking files through archival
+### Historical Note: Completion Metadata Evolution
+
+**Before ADR-013 (< 2025-11-10):** Incidental work had inline completion summary in task list (no separate doc).
+
+**After ADR-013 (>= 2025-11-10):** ALL work gets separate `completion-{name}.md`. Archives before this date
+may lack completion docs for incidental work - this is expected.
 
 ---
-
-## Historical Note: Completion Metadata Evolution
-
-**Before ADR-013 (< 2025-11-10):**
-
-- Planned work (feature/technical) → Completion metadata document
-- Incidental work → Inline completion summary in task list (no separate doc)
-- Rationale: Different git workflows justified different documentation
-
-**After ADR-013 (>= 2025-11-10):**
-
-- ALL work → Completion metadata document
-- Stacked branch workflow means all work gets branches and PRs
-- Unified approach: Same workflow, same documentation structure
-- Rationale: Identical git workflows should have identical documentation artifacts
-
-**Archives created before 2025-11-10** may have incidental work without completion docs.
-This is expected and historically accurate. All new work uses unified completion metadata.
-
----
-
-**Version**: 4.0 | **Updated**: 2025-11-17
-
-**Changelog**:
-
-- v4.0 (2025-11-17): Unified completion metadata strategy - ALL work gets `completion-{name}.md` (not just planned).
-  Restructured workflow to show clear child/parent branch phases. Moved completion doc creation to child branch
-  (before PR). Changed `mv` to `git mv` (preserves history). Removed quality gates as separate step (coupled to
-  task completion). Added PR description integration guidance.
-- v3.0 (2025-11-10): Updated archive timing to reflect branch lifecycle (ADR-013) - archive immediately when
-  branch deleted (after merge). Added guidance for incidental work with separate branches vs. work on parent branch.
-- v2.1 (2025-10-21): Reorganized archives into work-package subdirectories - all docs for a piece of work
-  live together (no more nested prds/, tasks/, notes/, completion-metadata/ subdirectories)
-- v2.0 (2025-10-20): Added three-way categorization (feature/technical/incidental), integrated
-  maintain-task-notes as mandatory Step 2
-- v1.0 (previous): Initial two-way categorization (feature/incidental) with nested doc-type subdirectories

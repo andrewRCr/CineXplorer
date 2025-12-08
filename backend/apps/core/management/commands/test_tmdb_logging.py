@@ -10,7 +10,7 @@ from argparse import ArgumentParser
 from typing import cast
 
 from django.core.management.base import BaseCommand
-from movie.services.api_boundary import BrowseServiceParams
+from movie.services.api_boundary import BrowseServiceParams, SearchServiceParams
 from movie.services.service_factory import get_movie_service
 from ninja.errors import HttpError
 
@@ -98,7 +98,8 @@ class Command(BaseCommand):
         """Test search movies API call."""
         self.stdout.write("  🔍 Searching for 'Inception'...")
         try:
-            result = self.movie_service.search_movies(query='Inception', page=1)
+            params = SearchServiceParams(query='Inception')
+            result = self.movie_service.search_movies(page=1, params=params)
             self.stdout.write(f"  🎬 Found {len(result.results)} results")
         except HttpError as e:
             self.stdout.write(f"  ❌ Error: {e.message}")

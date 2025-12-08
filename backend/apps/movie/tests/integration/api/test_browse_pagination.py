@@ -12,6 +12,7 @@ Tests the smart buffer pagination mechanism including:
 from unittest.mock import Mock, patch
 
 import pytest
+from core.services.api_response import ApiResponse
 from core.tests.test_helpers import HTTPStatus
 from django.test import Client
 from movie.tests.test_helpers import create_mock_paginated_response
@@ -24,7 +25,7 @@ pytestmark = pytest.mark.django_db
 
 def create_buffer_pages(
     start_id: int, start_page: int, num_pages: int = 5, movies_per_page: int = 20
-) -> list[dict]:
+) -> list[ApiResponse]:
     """Generate mock responses for buffer pages with unique IDs.
 
     When deduplication filters movies, the buffer fetches additional pages.
@@ -37,9 +38,9 @@ def create_buffer_pages(
         movies_per_page: Movies per page (default 20)
 
     Returns:
-        List of mock paginated responses ready for side_effect
+        List of mock ApiResponse objects ready for side_effect
     """
-    pages = []
+    pages: list[ApiResponse] = []
     current_id = start_id
     for page_num in range(start_page, start_page + num_pages):
         movies = [

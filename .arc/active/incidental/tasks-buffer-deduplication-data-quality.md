@@ -204,6 +204,8 @@ analysis and solution options.
 
 ### **Phase 4:** Implement Session-Based Cross-Page Deduplication (TDD Green Phase)
 
+**Status:** ✅ COMPLETE
+
 - [x] **4.1 Create `PaginationSessionManager` helper class**
 
     **Location:** `backend/apps/movie/services/pagination_session_manager.py` (new file)
@@ -360,19 +362,18 @@ analysis and solution options.
         - Files: `backend/apps/movie/services/deduplication_tracker.py`,
           `backend/apps/movie/tests/integration/api/test_browse_pagination.py`
 
-- [ ] **4.4 Run backend quality gates**
+- [x] **4.4 Run backend quality gates**
 
-    - [ ] **4.4.a Run all backend tests**
-        - Command: `docker compose -f infrastructure/docker-compose.yml exec backend pytest apps/`
-        - Expect: All tests pass (50+ tests now with new dedup tests)
+    - [x] **4.4.a Run all backend tests**
+        - 611 tests passed
 
-    - [ ] **4.4.b Run backend linting with auto-fix**
-        - Command: `.venv-backend/bin/ruff check backend/apps/ backend/config/ --fix`
-        - Expect: 0 violations
+    - [x] **4.4.b Run backend linting with auto-fix**
+        - 0 violations
 
-    - [ ] **4.4.c Run Python type checking**
-        - Command: `npx pyright backend/apps/ backend/config/ --project backend`
-        - Expect: 0 errors
+    - [x] **4.4.c Run Python type checking**
+        - 0 errors (fixed 8 pre-existing type errors during gate)
+        - Fixed `test_tmdb_logging.py`: Use `SearchServiceParams` instead of `query=` keyword
+        - Fixed `test_browse_pagination.py`: Add `ApiResponse` import and proper type annotations
 
 ### **Phase 5:** Coordination with pagination-buffer-tracking Phase 3.7
 

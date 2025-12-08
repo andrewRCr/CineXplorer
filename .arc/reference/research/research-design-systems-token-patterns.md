@@ -1,4 +1,4 @@
-# Design Systems Token Patterns - Reference
+# Research: Design Systems Token Patterns
 
 **Purpose**: Consolidated reference of token patterns from major design systems (GitHub Primer, IBM Carbon,
 Material Design 3, Ant Design). This document extracts proven patterns and architectural approaches useful for

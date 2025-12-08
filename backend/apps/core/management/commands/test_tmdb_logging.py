@@ -11,7 +11,7 @@ from typing import cast
 
 from django.core.management.base import BaseCommand
 from movie.services.service_factory import get_movie_service
-from movie.services.tmdb_api_boundary.query_params import ServiceParams
+from movie.services.tmdb_api_boundary.query_params import BrowseServiceParams
 from ninja.errors import HttpError
 
 
@@ -86,7 +86,7 @@ class Command(BaseCommand):
         """Test discover movies API call."""
         self.stdout.write("  📊 Discover popular movies...")
         try:
-            params = ServiceParams(sort_by='popularity.desc')
+            params = BrowseServiceParams(sort_by='popularity.desc')
             result = self.movie_service.discover_movies(page=1, params=params)
             self.stdout.write(f"  🎭 Found {len(result.results)} movies")
         except HttpError as e:
@@ -122,7 +122,7 @@ class Command(BaseCommand):
         """Test popular movies API call."""
         self.stdout.write("  🌟 Getting popular movies...")
         try:
-            params = ServiceParams(sort_by='popularity.desc')
+            params = BrowseServiceParams(sort_by='popularity.desc')
             result = self.movie_service.discover_movies(page=1, params=params)
             self.stdout.write(f"  🏆 Found {len(result.results)} popular movies")
         except HttpError as e:

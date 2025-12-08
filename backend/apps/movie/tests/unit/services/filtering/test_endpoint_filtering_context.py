@@ -10,7 +10,7 @@ from unittest.mock import Mock
 
 from movie.schemas import PaginatedMovieResponseSchema
 from movie.services.movie_service import MovieService
-from movie.services.tmdb_api_boundary.query_params import ServiceParams
+from movie.services.tmdb_api_boundary.query_params import BrowseServiceParams
 from movie.tests.test_helpers import create_mock_paginated_response
 from movie.tests.tmdb_test_builders import create_tmdb_movie
 
@@ -155,7 +155,7 @@ def test_combined_year_and_rating_filtering() -> None:
     # Act: Request 2022 movies rated 7.5+
     result = service.discover_movies(
         page=1,
-        params=ServiceParams(year_min=2022, year_max=2022, rating_min=7.5)
+        params=BrowseServiceParams(year_min=2022, year_max=2022, rating_min=7.5)
     )
 
     # Assert: Only movies matching both criteria returned

@@ -11,7 +11,7 @@ from unittest.mock import Mock
 
 from core.services.api_response import ApiResponse
 from movie.services.movie_service import MovieService
-from movie.services.tmdb_api_boundary.query_params import ServiceParams
+from movie.services.tmdb_api_boundary.query_params import BrowseServiceParams
 from movie.tests.test_helpers import create_mock_paginated_response
 from movie.tests.tmdb_test_builders import create_tmdb_movie
 
@@ -80,7 +80,7 @@ def test_buffer_mechanism_fetches_page_n_plus_1_when_under_threshold() -> None:
     # Act: Request page 1 with filters
     result = service.discover_movies(
         page=1,
-        params=ServiceParams(year_min=2022, year_max=2022, rating_min=7.5)
+        params=BrowseServiceParams(year_min=2022, year_max=2022, rating_min=7.5)
     )
 
     # Assert: Service fetched page 2 as buffer
@@ -116,7 +116,7 @@ def test_buffer_mechanism_does_not_fetch_when_full_page_achieved() -> None:
     # Act: Request page 1 with filters
     result = service.discover_movies(
         page=1,
-        params=ServiceParams(year_min=2022, year_max=2022, rating_min=7.5)
+        params=BrowseServiceParams(year_min=2022, year_max=2022, rating_min=7.5)
     )
 
     # Assert: Service only fetched page 1 (no buffer needed)
@@ -185,7 +185,7 @@ def test_buffer_mechanism_fills_page_even_with_few_initial_results() -> None:
     # Act: Request page 1 with restrictive filters (rating 8.5+)
     result = service.discover_movies(
         page=1,
-        params=ServiceParams(year_min=2022, year_max=2022, rating_min=8.5)
+        params=BrowseServiceParams(year_min=2022, year_max=2022, rating_min=8.5)
     )
 
     # Assert: Service fetched pages 1 and 2 to fill to 20
@@ -214,7 +214,8 @@ def test_buffer_mechanism_does_not_fetch_on_last_page() -> None:
     service = MovieService(tmdb_client=mock_client)
 
     # Act: Request page 10 (last page)
-    result = service.discover_movies(page=10, params=ServiceParams(year_min=2022, year_max=2022))
+    params = BrowseServiceParams(year_min=2022, year_max=2022)
+    result = service.discover_movies(page=10, params=params)
 
     # Assert: Service only fetched page 10 (no page 11 exists)
     assert mock_client.get.call_count == 1
@@ -257,7 +258,7 @@ def test_buffer_movies_also_pass_filters_no_leakage() -> None:
     # Act: Request page 1 with filters
     result = service.discover_movies(
         page=1,
-        params=ServiceParams(year_min=2022, year_max=2022, rating_min=7.5)
+        params=BrowseServiceParams(year_min=2022, year_max=2022, rating_min=7.5)
     )
 
     # Assert: Result contains 20 movies (15 from page 1 + 5 from page 2)

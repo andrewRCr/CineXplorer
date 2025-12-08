@@ -9,7 +9,7 @@ from __future__ import annotations
 from unittest.mock import Mock
 
 from movie.services.movie_service import MovieService
-from movie.services.tmdb_api_boundary.query_params import ServiceParams
+from movie.services.tmdb_api_boundary.query_params import BrowseServiceParams
 from movie.tests.test_helpers import create_mock_paginated_response
 from movie.tests.tmdb_test_builders import create_tmdb_movie
 
@@ -113,7 +113,7 @@ def test_historical_validation_with_year_filters() -> None:
     # Act: Request 1900-1920 range
     result = service.discover_movies(
         page=1,
-        params=ServiceParams(year_min=1900, year_max=1920)
+        params=BrowseServiceParams(year_min=1900, year_max=1920)
     )
 
     # Assert: Only valid movies in range returned, invalid dates excluded

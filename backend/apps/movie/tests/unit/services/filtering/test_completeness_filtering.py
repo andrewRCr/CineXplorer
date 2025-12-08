@@ -11,7 +11,7 @@ from unittest.mock import Mock
 
 from core.services.api_response import ApiResponse
 from movie.services.movie_service import MovieService
-from movie.services.tmdb_api_boundary.query_params import ServiceParams
+from movie.services.tmdb_api_boundary.query_params import BrowseServiceParams
 from movie.tests.test_helpers import create_mock_paginated_response
 from movie.tests.tmdb_test_builders import (
     TMDBMovieBaseRawDict,
@@ -158,7 +158,7 @@ def test_completeness_filter_applies_with_other_filters() -> None:
     # Act: Request with year and rating filters
     result = service.discover_movies(
         page=1,
-        params=ServiceParams(year_min=2022, year_max=2022, rating_min=7.5)
+        params=BrowseServiceParams(year_min=2022, year_max=2022, rating_min=7.5)
     )
 
     # Assert: Only complete movies matching all filters returned

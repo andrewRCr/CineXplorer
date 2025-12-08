@@ -19,7 +19,7 @@ from movie.services.data_quality.policy import (
     STRICT_VOTE_THRESHOLD,
 )
 from movie.services.movie_service import MovieService
-from movie.services.tmdb_api_boundary.query_params import ServiceParams
+from movie.services.tmdb_api_boundary.query_params import BrowseServiceParams
 from movie.tests.test_helpers import create_mock_paginated_response
 from movie.tests.tmdb_test_builders import (
     TMDBMovieBaseRawDict,
@@ -90,10 +90,11 @@ def test_vote_average_sort_applies_strict_threshold() -> None:
     service = MovieService(tmdb_client=mock_client)
 
     # Act: Request with strict threshold (as computed by param_transformer for vote_average sorts)
-    result = service.discover_movies(
-        page=1,
-        params=ServiceParams(sort_by="vote_average.desc", min_vote_count=STRICT_VOTE_THRESHOLD)
+    params = BrowseServiceParams(
+        sort_by="vote_average.desc",
+        min_vote_count=STRICT_VOTE_THRESHOLD
     )
+    result = service.discover_movies(page=1, params=params)
 
     # Assert: Only movies with 200+ votes returned (strict threshold applied)
     assert len(result.results) == 2, f"Expected 2 movies with {STRICT_VOTE_THRESHOLD}+ votes"
@@ -134,7 +135,7 @@ def test_vote_count_bypass_allows_all_movies() -> None:
     # Act: Request with bypassed threshold (explicit None)
     result = service.discover_movies(
         page=1,
-        params=ServiceParams(sort_by="popularity.desc", min_vote_count=None)
+        params=BrowseServiceParams(sort_by="popularity.desc", min_vote_count=None)
     )
 
     # Assert: ALL movies returned when threshold is bypassed
@@ -205,13 +206,14 @@ def test_moderate_threshold_between_strict_and_bypass() -> None:
     # General browsing - should PASS (moderate threshold = 3)
     result_general = service.discover_movies(
         page=1,
-        params=ServiceParams(min_vote_count=MODERATE_VOTE_THRESHOLD)
+        params=BrowseServiceParams(min_vote_count=MODERATE_VOTE_THRESHOLD)
     )
     assert len(result_general.results) == 1, "50 votes should pass moderate threshold"
 
     # Rating sort without filter - should FAIL (strict threshold = 200)
-    result_rating = service.discover_movies(
-        page=1,
-        params=ServiceParams(sort_by="vote_average.desc", min_vote_count=STRICT_VOTE_THRESHOLD)
+    params_rating = BrowseServiceParams(
+        sort_by="vote_average.desc",
+        min_vote_count=STRICT_VOTE_THRESHOLD
     )
+    result_rating = service.discover_movies(page=1, params=params_rating)
     assert len(result_rating.results) == 0, "50 votes should fail strict threshold"

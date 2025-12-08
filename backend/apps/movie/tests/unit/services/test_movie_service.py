@@ -236,9 +236,9 @@ def test_discover_movies_uses_injected_client() -> None:
 
     service = MovieService(tmdb_client=mock_client)
 
-    # Act: Call discover with ServiceParams
-    from movie.services.tmdb_api_boundary.query_params import ServiceParams
-    params = ServiceParams(
+    # Act: Call discover with BrowseServiceParams
+    from movie.services.tmdb_api_boundary.query_params import BrowseServiceParams
+    params = BrowseServiceParams(
         genres='28,12',  # Should map to with_genres
         year=2023,
         vote_average_gte=7.5  # Underscore notation for Pydantic field

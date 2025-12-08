@@ -1,7 +1,7 @@
-"""HTTP to ServiceParams transformation logic.
+"""HTTP to BrowseServiceParams transformation logic.
 
 This module handles the conversion of HTTP request parameters (from Django Ninja schemas)
-into ServiceParams for the service layer. It extracts parameters for both:
+into BrowseServiceParams for the service layer. It extracts parameters for both:
 1. TMDB API filtering (primary) - Reduces millions of movies to thousands
 2. Backend filtering (second-pass) - Catches TMDB data quality issues
 
@@ -9,11 +9,11 @@ The transformation is the boundary between HTTP/API concerns and service layer l
 This includes computing context-aware vote count thresholds via VoteCountPolicy.
 
 Pipeline Position:
-    HTTP Request → [param_transformer] → ServiceParams → [query_params] → TMDB API
-                   ^^^^^^^^^^^^^^^^^^^
+    HTTP Request → [param_transformer] → BrowseServiceParams → [query_params] → TMDB API
+                   ^^^^^^^^^^^^^^^^^^^^
                    This module (step 1 of 2)
 
-For ServiceParams → TMDB API transformation, see tmdb_api_boundary.query_params.
+For BrowseServiceParams → TMDB API transformation, see tmdb_api_boundary.query_params.
 """
 
 from __future__ import annotations
@@ -22,15 +22,15 @@ from collections.abc import Callable
 from typing import TYPE_CHECKING, cast
 
 from ..data_quality.policy import VoteCountPolicy
-from .service_params import ServiceParams
+from .browse_service_params import BrowseServiceParams
 
 if TYPE_CHECKING:
     from movie.schemas import MovieDiscoverFilterSchema
 
 
-# HTTP param name → ServiceParams field name (underscore notation)
-# Used to map HTTP parameters to ServiceParams fields.
-# Most are identity mappings since HTTP uses underscores, ServiceParams uses underscores.
+# HTTP param name → BrowseServiceParams field name (underscore notation)
+# Used to map HTTP parameters to BrowseServiceParams fields.
+# Most are identity mappings since HTTP uses underscores, BrowseServiceParams uses underscores.
 HTTP_TO_SERVICE_MAPPING: dict[str, str] = {
     'vote_average_gte': 'vote_average_gte',
     'vote_average_lte': 'vote_average_lte',
@@ -94,8 +94,8 @@ def _apply_derived_params(
             pass
 
 
-def transform_to_service_params(schema: MovieDiscoverFilterSchema) -> ServiceParams:
-    """Transform HTTP filter schema to ServiceParams.
+def transform_to_service_params(schema: MovieDiscoverFilterSchema) -> BrowseServiceParams:
+    """Transform HTTP filter schema to BrowseServiceParams.
 
     This function extracts parameters for both:
     1. TMDB API filtering (primary filter - reduces millions to thousands)
@@ -106,7 +106,7 @@ def transform_to_service_params(schema: MovieDiscoverFilterSchema) -> ServicePar
         schema: MovieDiscoverFilterSchema from HTTP request
 
     Returns:
-        ServiceParams model with validated parameters
+        BrowseServiceParams model with validated parameters
     """
     # Get all non-None values from schema using Pydantic's model_dump
     data = schema.model_dump(exclude_none=True)
@@ -135,7 +135,7 @@ def transform_to_service_params(schema: MovieDiscoverFilterSchema) -> ServicePar
     )
 
     # Use model_validate for type coercion from mixed dict types
-    return ServiceParams.model_validate(params)
+    return BrowseServiceParams.model_validate(params)
 
 
 __all__ = [

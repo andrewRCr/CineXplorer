@@ -30,7 +30,7 @@ from ..schemas import (
 from .base_service import BaseTMDBService
 from .data_quality.policy import VoteCountPolicy
 from .pipelines.paginated import fetch_with_filters_and_buffer
-from .tmdb_api_boundary.query_params import ServiceParams, build_tmdb_params
+from .tmdb_api_boundary.query_params import BrowseServiceParams, build_tmdb_params
 from .tmdb_api_boundary.response_factories import (
     create_genre_list_from_tmdb,
     create_movie_detail_from_tmdb,
@@ -73,7 +73,7 @@ class MovieService(BaseTMDBService):
     def discover_movies(
         self,
         page: int = 1,
-        params: ServiceParams | None = None,
+        params: BrowseServiceParams | None = None,
     ) -> PaginatedMovieResponseSchema:
         """
         Core TMDB discover wrapper with full filtering capabilities.
@@ -89,7 +89,7 @@ class MovieService(BaseTMDBService):
 
         Args:
             page: Page number for pagination
-            params: ServiceParams model containing:
+            params: BrowseServiceParams model containing:
                 Backend filtering (second-pass data hygiene):
                 - year_min/year_max: Release year range (inclusive)
                 - rating_min/rating_max: Rating range (inclusive)
@@ -124,7 +124,7 @@ class MovieService(BaseTMDBService):
 
         # Use empty params if none provided
         if params is None:
-            params = ServiceParams()
+            params = BrowseServiceParams()
 
         # Extract backend filtering params
         year_min = params.year_min
@@ -180,7 +180,7 @@ class MovieService(BaseTMDBService):
     def get_now_playing_movies(
         self,
         page: int = 1,
-        params: ServiceParams | None = None,
+        params: BrowseServiceParams | None = None,
     ) -> PaginatedMovieResponseSchema:
         """
         Retrieves movies currently playing in theaters with filtering.
@@ -204,7 +204,7 @@ class MovieService(BaseTMDBService):
 
         Args:
             page: Page number for pagination
-            params: ServiceParams model with user-provided filters
+            params: BrowseServiceParams model with user-provided filters
 
         Returns:
             PaginatedMovieResponseSchema with now playing movies
@@ -217,7 +217,7 @@ class MovieService(BaseTMDBService):
             API layer is thin - only extracts parameters and delegates to this method.
         """
         if params is None:
-            params = ServiceParams()
+            params = BrowseServiceParams()
 
         # Build date range preset (today - 30 days to today + 5 days)
         preset = self._build_date_constrained_preset(-30, 5)
@@ -228,7 +228,7 @@ class MovieService(BaseTMDBService):
 
         # Apply vote count policy (now-playing bypasses threshold - new releases have low votes)
         merged_filters['min_vote_count'] = VoteCountPolicy.get_threshold(endpoint="now_playing")
-        merged_params = ServiceParams.model_validate(merged_filters)
+        merged_params = BrowseServiceParams.model_validate(merged_filters)
 
         # Call discover endpoint with merged filters (thin wrapper pattern)
         return self.discover_movies(page=page, params=merged_params)
@@ -236,7 +236,7 @@ class MovieService(BaseTMDBService):
     def get_upcoming_movies(
         self,
         page: int = 1,
-        params: ServiceParams | None = None,
+        params: BrowseServiceParams | None = None,
     ) -> PaginatedMovieResponseSchema:
         """
         Retrieves upcoming movies releasing soon in theaters with filtering.
@@ -260,7 +260,7 @@ class MovieService(BaseTMDBService):
 
         Args:
             page: Page number for pagination
-            params: ServiceParams model with user-provided filters
+            params: BrowseServiceParams model with user-provided filters
 
         Returns:
             PaginatedMovieResponseSchema with upcoming movies
@@ -276,7 +276,7 @@ class MovieService(BaseTMDBService):
             filters per TMDB API research (see research-tmdb-api-date-filtering.md).
         """
         if params is None:
-            params = ServiceParams()
+            params = BrowseServiceParams()
 
         # Build date range preset (today + 5 days to today + 65 days)
         preset = self._build_date_constrained_preset(5, 65)
@@ -287,7 +287,7 @@ class MovieService(BaseTMDBService):
 
         # Apply vote count policy (upcoming bypasses threshold - unreleased movies have 0 votes)
         merged_filters['min_vote_count'] = VoteCountPolicy.get_threshold(endpoint="upcoming")
-        merged_params = ServiceParams.model_validate(merged_filters)
+        merged_params = BrowseServiceParams.model_validate(merged_filters)
 
         # Call discover endpoint with merged filters (thin wrapper pattern)
         return self.discover_movies(page=page, params=merged_params)

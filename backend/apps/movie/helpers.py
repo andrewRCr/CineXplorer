@@ -40,7 +40,7 @@ Protected parameters:
 
 Users can still filter by genre, rating, keywords, cast, and change sort order.
 
-Note: Uses ServiceParams field names (release_date_gte) which get_tmdb_params()
+Note: Uses BrowseServiceParams field names (release_date_gte) which get_tmdb_params()
 converts to TMDB dot notation format (release_date.gte).
 """
 
@@ -65,7 +65,7 @@ Protected parameters:
 Users can still apply genre filters, rating filters, keyword searches, cast filters,
 and change sort order.
 
-Note: Uses ServiceParams field names (release_date_gte) which get_tmdb_params()
+Note: Uses BrowseServiceParams field names (release_date_gte) which get_tmdb_params()
 converts to TMDB dot notation format (release_date.gte).
 """
 

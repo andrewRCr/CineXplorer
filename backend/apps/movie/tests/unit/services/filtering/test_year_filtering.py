@@ -12,7 +12,7 @@ from unittest.mock import Mock
 from core.services.api_response import ApiResponse
 from movie.schemas import PaginatedMovieResponseSchema
 from movie.services.movie_service import MovieService
-from movie.services.tmdb_api_boundary.query_params import ServiceParams
+from movie.services.tmdb_api_boundary.query_params import BrowseServiceParams
 from movie.tests.test_helpers import create_mock_paginated_response
 from movie.tests.tmdb_test_builders import (
     TMDBMovieBaseRawDict,
@@ -67,7 +67,7 @@ def test_discover_movies_filters_incorrect_release_years() -> None:
     # Act: Request 2020s movies with discover endpoint
     result = service.discover_movies(
         page=1,
-        params=ServiceParams(year_min=2020, year_max=2029)
+        params=BrowseServiceParams(year_min=2020, year_max=2029)
     )
 
     # Assert: Only 2020s movies returned (15 correct movies)
@@ -157,7 +157,8 @@ def test_year_filtering_handles_single_year() -> None:
     service = MovieService(tmdb_client=mock_client)
 
     # Act: Request only 2022 movies
-    result = service.discover_movies(page=1, params=ServiceParams(year_min=2022, year_max=2022))
+    params = BrowseServiceParams(year_min=2022, year_max=2022)
+    result = service.discover_movies(page=1, params=params)
 
     # Assert: Only 2022 movies returned
     assert len(result.results) == 3
@@ -196,7 +197,8 @@ def test_year_filtering_handles_missing_release_dates() -> None:
     service = MovieService(tmdb_client=mock_client)
 
     # Act: Request 2022 movies
-    result = service.discover_movies(page=1, params=ServiceParams(year_min=2022, year_max=2022))
+    params = BrowseServiceParams(year_min=2022, year_max=2022)
+    result = service.discover_movies(page=1, params=params)
 
     # Assert: Only movies with valid release dates returned
     assert len(result.results) == 2

@@ -276,15 +276,12 @@ analysis and solution options.
         - Updated imports and module path for patching
         - All 25 tests pass, linting clean, type check clean
 
-    - [ ] **4.2.a2 Rename ServiceParams → BrowseServiceParams**
-        - Rename class: `ServiceParams` → `BrowseServiceParams`
-        - Rename file: `service_params.py` → `browse_service_params.py`
-        - Update all imports (~80+ usages across services, tests, helpers)
-        - Remove old re-export from `tmdb_api_boundary/query_params.py` (clean rename, no compat shim)
-        - **Rationale:** "browse" is our domain term, "discover" is TMDB's term (used only at boundary)
-        - All browse-family endpoints (browse, now-playing, upcoming) use this
-        - Pattern: backend `*ServiceParams`, frontend `*Params` (avoids collision with frontend `BrowseParams`)
-        - ~100 lines changed across ~20 files
+    - [x] **4.2.a2 Rename ServiceParams → BrowseServiceParams**
+        - Renamed class and file (`service_params.py` → `browse_service_params.py`)
+        - Updated ~90 usages across 20 files (services, tests, helpers, management commands)
+        - Removed old re-export from `tmdb_api_boundary/query_params.py` (clean rename)
+        - Updated `HashableParams` docstring to reference `BrowseServiceParams`
+        - All 603 tests pass, linting clean, type check clean (0 errors)
 
     - [ ] **4.2.b Create SearchServiceParams model**
         - Location: `services/api_boundary/search_service_params.py` (new file)

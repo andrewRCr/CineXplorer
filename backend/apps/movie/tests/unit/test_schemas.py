@@ -1,5 +1,5 @@
 """
-Integration tests for HTTP → ServiceParams transformation.
+Integration tests for HTTP → BrowseServiceParams transformation.
 
 Tests the transform_to_service_params() function that bridges API requests to
 service method calls. This is critical for the two-pass filtering architecture where:
@@ -10,7 +10,7 @@ The transformer must extract both types of parameters from the same input fields
 - release_date_gte/lte → Both TMDB params AND year_min/max for backend filtering
 - vote_average_gte/lte → Both TMDB params AND rating_min/max for backend filtering
 
-Test Strategy: These tests validate the HTTP schema → ServiceParams transformation
+Test Strategy: These tests validate the HTTP schema → BrowseServiceParams transformation
 to ensure both TMDB and backend filtering parameters are correctly extracted.
 """
 from __future__ import annotations
@@ -23,7 +23,7 @@ class TestMovieDiscoverFilterSchemaParameterExtraction:
     """Test transformer extracts both TMDB and backend filtering parameters.
 
     The transformer receives filter schema from the API and must produce two
-    sets of parameters in ServiceParams:
+    sets of parameters in BrowseServiceParams:
     1. TMDB API parameters (for primary filtering)
     2. Backend filtering parameters (for second-pass data hygiene)
 

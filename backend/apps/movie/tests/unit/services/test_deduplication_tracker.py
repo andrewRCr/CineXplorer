@@ -4,7 +4,7 @@ Tests session-based cross-page deduplication via Redis cache:
 - Core functionality: get/add/clear returned IDs, TTL, graceful degradation
 - Session scoping: user isolation via different session IDs
 - Context ID: multi-tab isolation via X-Pagination-Context header
-- Params hash: deterministic hashing of ServiceParams
+- Params hash: deterministic hashing of BrowseServiceParams
 - Atomic operations: SADD/SMEMBERS/DEL for thread safety
 
 All tests mock the AtomicSetOperations Protocol interface, not the raw Redis
@@ -15,7 +15,7 @@ from __future__ import annotations
 from unittest.mock import MagicMock, patch
 
 import pytest
-from movie.services.api_boundary.service_params import ServiceParams
+from movie.services.api_boundary.browse_service_params import BrowseServiceParams
 from movie.services.deduplication_tracker import DeduplicationTracker
 
 # Module path for patching get_atomic_set_client
@@ -43,9 +43,9 @@ def mock_client() -> MagicMock:
 
 
 @pytest.fixture
-def sample_params() -> ServiceParams:
+def sample_params() -> BrowseServiceParams:
     """Standard params combination for testing."""
-    return ServiceParams(
+    return BrowseServiceParams(
         genres="16,10751",
         sort_by="popularity.desc",
         year_min=2020,
@@ -54,9 +54,9 @@ def sample_params() -> ServiceParams:
 
 
 @pytest.fixture
-def sample_params_with_search() -> ServiceParams:
+def sample_params_with_search() -> BrowseServiceParams:
     """Params combination including search-like filters."""
-    return ServiceParams(
+    return BrowseServiceParams(
         keywords="spirited,away",
         sort_by="relevance",
     )
@@ -73,7 +73,7 @@ class TestGetReturnedIds:
     def test_returns_empty_set_for_new_session(
         self,
         mock_client: MagicMock,
-        sample_params: ServiceParams,
+        sample_params: BrowseServiceParams,
     ) -> None:
         """Test get_returned_ids() returns empty set for new session.
 
@@ -92,7 +92,7 @@ class TestGetReturnedIds:
     def test_retrieves_stored_ids_correctly(
         self,
         mock_client: MagicMock,
-        sample_params: ServiceParams,
+        sample_params: BrowseServiceParams,
     ) -> None:
         """Test get_returned_ids() retrieves stored IDs correctly.
 
@@ -117,7 +117,7 @@ class TestAddReturnedIds:
     def test_stores_movie_ids_in_cache(
         self,
         mock_client: MagicMock,
-        sample_params: ServiceParams,
+        sample_params: BrowseServiceParams,
     ) -> None:
         """Test add_returned_ids() stores movie IDs via Redis SADD.
 
@@ -140,7 +140,7 @@ class TestAddReturnedIds:
     def test_appends_to_existing_ids(
         self,
         mock_client: MagicMock,
-        sample_params: ServiceParams,
+        sample_params: BrowseServiceParams,
     ) -> None:
         """Test add_returned_ids() appends to existing IDs (page 2 scenario).
 
@@ -165,7 +165,7 @@ class TestAddReturnedIds:
     def test_handles_duplicate_ids_in_input(
         self,
         mock_client: MagicMock,
-        sample_params: ServiceParams,
+        sample_params: BrowseServiceParams,
     ) -> None:
         """Test add_returned_ids() handles duplicate IDs in input gracefully.
 
@@ -188,7 +188,7 @@ class TestClearSession:
     def test_removes_all_ids_for_params_combination(
         self,
         mock_client: MagicMock,
-        sample_params: ServiceParams,
+        sample_params: BrowseServiceParams,
     ) -> None:
         """Test clear_session() removes all IDs for params combination.
 
@@ -208,7 +208,7 @@ class TestSessionTTL:
     def test_session_ttl_set_correctly(
         self,
         mock_client: MagicMock,
-        sample_params: ServiceParams,
+        sample_params: BrowseServiceParams,
     ) -> None:
         """Test session TTL set correctly (1 hour default).
 
@@ -233,7 +233,7 @@ class TestGracefulDegradation:
 
     def test_get_returns_empty_set_when_redis_unavailable(
         self,
-        sample_params: ServiceParams,
+        sample_params: BrowseServiceParams,
     ) -> None:
         """Test graceful degradation when Redis unavailable (get).
 
@@ -248,7 +248,7 @@ class TestGracefulDegradation:
 
     def test_add_silently_fails_when_redis_unavailable(
         self,
-        sample_params: ServiceParams,
+        sample_params: BrowseServiceParams,
     ) -> None:
         """Test graceful degradation when Redis unavailable (add).
 
@@ -262,7 +262,7 @@ class TestGracefulDegradation:
 
     def test_clear_silently_fails_when_redis_unavailable(
         self,
-        sample_params: ServiceParams,
+        sample_params: BrowseServiceParams,
     ) -> None:
         """Test graceful degradation when Redis unavailable (clear).
 
@@ -286,7 +286,7 @@ class TestSessionScoping:
     def test_different_session_ids_generate_different_cache_keys(
         self,
         mock_client: MagicMock,
-        sample_params: ServiceParams,
+        sample_params: BrowseServiceParams,
     ) -> None:
         """Test different session IDs generate different cache keys.
 
@@ -316,7 +316,7 @@ class TestSessionScoping:
     def test_same_session_same_params_same_state(
         self,
         mock_client: MagicMock,
-        sample_params: ServiceParams,
+        sample_params: BrowseServiceParams,
     ) -> None:
         """Test same session ID + same params = same session state.
 
@@ -349,8 +349,8 @@ class TestSessionScoping:
         Scenario: Same user browses with different genre params.
         Expected: Different params combinations have separate session state.
         """
-        params1 = ServiceParams(genres="16", sort_by="popularity.desc")
-        params2 = ServiceParams(genres="28", sort_by="popularity.desc")
+        params1 = BrowseServiceParams(genres="16", sort_by="popularity.desc")
+        params2 = BrowseServiceParams(genres="28", sort_by="popularity.desc")
 
         cache_keys_used: list[str] = []
 
@@ -380,7 +380,7 @@ class TestContextIdIsolation:
     def test_different_context_ids_generate_different_cache_keys(
         self,
         mock_client: MagicMock,
-        sample_params: ServiceParams,
+        sample_params: BrowseServiceParams,
     ) -> None:
         """Test different context IDs generate different cache keys.
 
@@ -414,7 +414,7 @@ class TestContextIdIsolation:
     def test_same_session_same_context_same_params_same_state(
         self,
         mock_client: MagicMock,
-        sample_params: ServiceParams,
+        sample_params: BrowseServiceParams,
     ) -> None:
         """Test same session + same context + same params = same session state.
 
@@ -442,7 +442,7 @@ class TestContextIdIsolation:
     def test_same_session_different_context_same_params_different_state(
         self,
         mock_client: MagicMock,
-        sample_params: ServiceParams,
+        sample_params: BrowseServiceParams,
     ) -> None:
         """Test same session + different context + same params = different state.
 
@@ -473,7 +473,7 @@ class TestContextIdIsolation:
     def test_context_id_optional_backwards_compatibility(
         self,
         mock_client: MagicMock,
-        sample_params: ServiceParams,
+        sample_params: BrowseServiceParams,
     ) -> None:
         """Test context ID is optional (backwards compatibility).
 
@@ -493,7 +493,7 @@ class TestContextIdIsolation:
     def test_explicit_empty_context_id_same_as_default(
         self,
         mock_client: MagicMock,
-        sample_params: ServiceParams,
+        sample_params: BrowseServiceParams,
     ) -> None:
         """Test explicit empty context_id behaves same as default.
 
@@ -534,11 +534,11 @@ class TestParamsHash:
     ) -> None:
         """Test same params generate same cache key.
 
-        Scenario: Identical ServiceParams instances.
+        Scenario: Identical BrowseServiceParams instances.
         Expected: Generate same cache key.
         """
-        params1 = ServiceParams(genres="16,28", sort_by="popularity.desc", year_min=2020)
-        params2 = ServiceParams(genres="16,28", sort_by="popularity.desc", year_min=2020)
+        params1 = BrowseServiceParams(genres="16,28", sort_by="popularity.desc", year_min=2020)
+        params2 = BrowseServiceParams(genres="16,28", sort_by="popularity.desc", year_min=2020)
 
         cache_keys_used: list[str] = []
 
@@ -564,9 +564,9 @@ class TestParamsHash:
         Scenario: Different param values (e.g., different genres).
         Expected: Different cache keys.
         """
-        params1 = ServiceParams(genres="16", sort_by="popularity.desc")
-        params2 = ServiceParams(genres="28", sort_by="popularity.desc")
-        params3 = ServiceParams(genres="16", sort_by="vote_average.desc")
+        params1 = BrowseServiceParams(genres="16", sort_by="popularity.desc")
+        params2 = BrowseServiceParams(genres="28", sort_by="popularity.desc")
+        params3 = BrowseServiceParams(genres="16", sort_by="vote_average.desc")
 
         cache_keys_used: list[str] = []
 
@@ -594,9 +594,9 @@ class TestParamsHash:
         Scenario: Params with explicit None vs params without field.
         Expected: Both hash the same (None values excluded).
         """
-        # ServiceParams has many optional fields that default to None
-        params_minimal = ServiceParams(genres="16")
-        params_explicit_none = ServiceParams(genres="16", sort_by=None, year_min=None)
+        # BrowseServiceParams has many optional fields that default to None
+        params_minimal = BrowseServiceParams(genres="16")
+        params_explicit_none = BrowseServiceParams(genres="16", sort_by=None, year_min=None)
 
         cache_keys_used: list[str] = []
 
@@ -635,7 +635,7 @@ class TestAtomicRedisOperations:
     def test_add_returned_ids_uses_atomic_sadd(
         self,
         mock_client: MagicMock,
-        sample_params: ServiceParams,
+        sample_params: BrowseServiceParams,
     ) -> None:
         """Test add_returned_ids() uses atomic SADD command.
 
@@ -664,7 +664,7 @@ class TestAtomicRedisOperations:
     def test_get_returned_ids_uses_smembers(
         self,
         mock_client: MagicMock,
-        sample_params: ServiceParams,
+        sample_params: BrowseServiceParams,
     ) -> None:
         """Test get_returned_ids() uses SMEMBERS command.
 
@@ -687,7 +687,7 @@ class TestAtomicRedisOperations:
     def test_clear_session_uses_delete(
         self,
         mock_client: MagicMock,
-        sample_params: ServiceParams,
+        sample_params: BrowseServiceParams,
     ) -> None:
         """Test clear_session() uses DELETE command.
 
@@ -706,7 +706,7 @@ class TestAtomicRedisOperations:
     def test_concurrent_adds_preserve_all_ids(
         self,
         mock_client: MagicMock,
-        sample_params: ServiceParams,
+        sample_params: BrowseServiceParams,
     ) -> None:
         """Test concurrent add operations preserve all IDs (SADD is atomic).
 

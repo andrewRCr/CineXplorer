@@ -11,7 +11,7 @@ from unittest.mock import Mock
 from core.services.api_response import ApiResponse
 from movie.schemas import PaginatedMovieResponseSchema
 from movie.services.movie_service import MovieService
-from movie.services.tmdb_api_boundary.query_params import ServiceParams
+from movie.services.tmdb_api_boundary.query_params import BrowseServiceParams
 from movie.tests.test_helpers import create_mock_paginated_response
 from movie.tests.tmdb_test_builders import (
     TMDBMovieBaseRawDict,
@@ -62,7 +62,7 @@ def test_discover_movies_filters_incorrect_ratings() -> None:
     service = MovieService(tmdb_client=mock_client)
 
     # Act: Request movies rated 7.5+
-    result = service.discover_movies(page=1, params=ServiceParams(rating_min=7.5))
+    result = service.discover_movies(page=1, params=BrowseServiceParams(rating_min=7.5))
 
     # Assert: Only movies with rating >= 7.5 returned (15 correct movies)
     assert isinstance(result, PaginatedMovieResponseSchema)
@@ -106,7 +106,8 @@ def test_rating_filtering_handles_range() -> None:
     service = MovieService(tmdb_client=mock_client)
 
     # Act: Request movies rated 7.0-8.0
-    result = service.discover_movies(page=1, params=ServiceParams(rating_min=7.0, rating_max=8.0))
+    params = BrowseServiceParams(rating_min=7.0, rating_max=8.0)
+    result = service.discover_movies(page=1, params=params)
 
     # Assert: Only movies in range returned
     assert len(result.results) == 5
@@ -140,7 +141,7 @@ def test_rating_filtering_handles_missing_ratings() -> None:
     service = MovieService(tmdb_client=mock_client)
 
     # Act: Request movies rated 7.5+
-    result = service.discover_movies(page=1, params=ServiceParams(rating_min=7.5))
+    result = service.discover_movies(page=1, params=BrowseServiceParams(rating_min=7.5))
 
     # Assert: Only movies with valid ratings returned
     assert len(result.results) == 2

@@ -9,7 +9,7 @@ from __future__ import annotations
 from unittest.mock import Mock
 
 from movie.services.movie_service import MovieService
-from movie.services.tmdb_api_boundary.query_params import ServiceParams
+from movie.services.tmdb_api_boundary.query_params import BrowseServiceParams
 from movie.tests.test_helpers import create_mock_paginated_response
 from movie.tests.tmdb_test_builders import create_tmdb_movie
 
@@ -128,7 +128,8 @@ def test_combined_genre_and_vote_filters_with_rating_filter() -> None:
     service = MovieService(tmdb_client=mock_client)
 
     # Act: Request with rating filter (triggers moderate 3-vote threshold + completeness check)
-    result = service.discover_movies(page=1, params=ServiceParams(rating_min=1.0, rating_max=3.5))
+    params = BrowseServiceParams(rating_min=1.0, rating_max=3.5)
+    result = service.discover_movies(page=1, params=params)
 
     # Assert: Only movies passing BOTH filters returned
     assert len(result.results) == 2, "Expected 2 movies passing both filters"

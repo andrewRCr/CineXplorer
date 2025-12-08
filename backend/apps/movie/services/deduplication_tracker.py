@@ -45,8 +45,8 @@ class HashableParams(Protocol):
     """Protocol for params that can be hashed for cache key generation.
 
     Any Pydantic BaseModel satisfies this protocol automatically.
-    This allows DeduplicationTracker to work with ServiceParams,
-    SearchParams, or any future params type.
+    This allows DeduplicationTracker to work with BrowseServiceParams,
+    SearchServiceParams, or any future params type.
     """
 
     def model_dump(self, *, exclude_none: bool = False) -> dict[str, object]:

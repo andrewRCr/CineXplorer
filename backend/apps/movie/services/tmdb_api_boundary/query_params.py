@@ -1,55 +1,54 @@
 """
 TMDB API parameter building.
 
-This module handles the conversion of ServiceParams to TMDB API parameters,
+This module handles the conversion of BrowseServiceParams to TMDB API parameters,
 including parameter name mapping and type preservation logic.
 
 Pipeline Position:
-    HTTP Request → [param_transformer] → ServiceParams → [query_params] → TMDB API
-                                                         ^^^^^^^^^^^^^^^
-                                                         This module (step 2 of 2)
+    HTTP Request → [param_transformer] → BrowseServiceParams → [query_params] → TMDB API
+                                                                ^^^^^^^^^^^^^^^^
+                                                                This module (step 2 of 2)
 
-For HTTP → ServiceParams transformation, see api_boundary.param_transformer.
+For HTTP → BrowseServiceParams transformation, see api_boundary.param_transformer.
 
-Parameter Flow Reference (HTTP → ServiceParams → TMDB API):
-    ┌─────────────────────────────────────────────────────────────────────────────┐
-    │ HTTP Param           │ ServiceParams Field    │ TMDB API Param              │
-    ├─────────────────────────────────────────────────────────────────────────────┤
-    │ sort_by              │ sort_by                │ sort_by                     │
-    │ genres / with_genres │ genres                 │ with_genres                 │
-    │ release_date_gte     │ release_date_gte       │ primary_release_date.gte    │
-    │ release_date_lte     │ release_date_lte       │ primary_release_date.lte    │
-    │ vote_average_gte     │ vote_average_gte       │ vote_average.gte            │
-    │ vote_average_lte     │ vote_average_lte       │ vote_average.lte            │
-    │ vote_count_gte       │ vote_count_gte         │ vote_count.gte              │
-    │ language             │ language               │ with_original_language      │
-    │ certification        │ certification          │ certification               │
-    │ certification_country│ certification_country  │ certification_country       │
-    │ year                 │ year                   │ year                        │
-    └─────────────────────────────────────────────────────────────────────────────┘
+Parameter Flow Reference (HTTP → BrowseServiceParams → TMDB API):
+    ┌──────────────────────────────────────────────────────────────────────────────────┐
+    │ HTTP Param           │ BrowseServiceParams Field │ TMDB API Param              │
+    ├──────────────────────────────────────────────────────────────────────────────────┤
+    │ sort_by              │ sort_by                   │ sort_by                     │
+    │ genres / with_genres │ genres                    │ with_genres                 │
+    │ release_date_gte     │ release_date_gte          │ primary_release_date.gte    │
+    │ release_date_lte     │ release_date_lte          │ primary_release_date.lte    │
+    │ vote_average_gte     │ vote_average_gte          │ vote_average.gte            │
+    │ vote_average_lte     │ vote_average_lte          │ vote_average.lte            │
+    │ vote_count_gte       │ vote_count_gte            │ vote_count.gte              │
+    │ language             │ language                  │ with_original_language      │
+    │ certification        │ certification             │ certification               │
+    │ certification_country│ certification_country     │ certification_country       │
+    │ year                 │ year                      │ year                        │
+    └──────────────────────────────────────────────────────────────────────────────────┘
 
     Derived Parameters (computed in param_transformer):
-    ┌─────────────────────────────────────────────────────────────────────────────┐
-    │ Source HTTP          │ Derived ServiceParam   │ Purpose                     │
-    ├─────────────────────────────────────────────────────────────────────────────┤
-    │ release_date_gte     │ year_min               │ Backend year filtering      │
-    │ release_date_lte     │ year_max               │ Backend year filtering      │
-    │ vote_average_gte     │ rating_min             │ Backend rating filtering    │
-    │ vote_average_lte     │ rating_max             │ Backend rating filtering    │
-    │ (computed)           │ min_vote_count         │ VoteCountPolicy threshold   │
-    └─────────────────────────────────────────────────────────────────────────────┘
+    ┌──────────────────────────────────────────────────────────────────────────────────┐
+    │ Source HTTP          │ Derived BrowseServiceParam │ Purpose                     │
+    ├──────────────────────────────────────────────────────────────────────────────────┤
+    │ release_date_gte     │ year_min                   │ Backend year filtering      │
+    │ release_date_lte     │ year_max                   │ Backend year filtering      │
+    │ vote_average_gte     │ rating_min                 │ Backend rating filtering    │
+    │ vote_average_lte     │ rating_max                 │ Backend rating filtering    │
+    │ (computed)           │ min_vote_count             │ VoteCountPolicy threshold   │
+    └──────────────────────────────────────────────────────────────────────────────────┘
 """
 
 from __future__ import annotations
 
-from ..api_boundary.service_params import ServiceParams
+from ..api_boundary.browse_service_params import BrowseServiceParams
 from ..data_quality.policy import VOTE_COUNT_THRESHOLD
 
-# Re-export ServiceParams for backwards compatibility with existing imports
-__all__ = ["NUMERIC_PARAMS", "PARAM_MAPPING", "ServiceParams", "build_tmdb_params"]
+__all__ = ["NUMERIC_PARAMS", "PARAM_MAPPING", "BrowseServiceParams", "build_tmdb_params"]
 
 # Parameter mapping: service parameter names (dot notation) → TMDB API parameter names
-# This is the single source of truth for ServiceParams → TMDB API parameter name transformations.
+# Single source of truth for BrowseServiceParams → TMDB API param transformations.
 PARAM_MAPPING: dict[str, str] = {
     'sort_by': 'sort_by',
     'genres': 'with_genres',

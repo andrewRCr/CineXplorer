@@ -1,12 +1,18 @@
 """Service layer parameter model - the data contract between API and services.
 
-ServiceParams defines the structured parameters that service layer methods accept.
+BrowseServiceParams defines the structured parameters that browse-family service layer
+methods accept (discover_movies, get_now_playing_movies, get_upcoming_movies).
 This is the canonical representation of filter/query parameters after HTTP parsing
 and before service logic execution.
 
+Naming convention:
+- Backend: *ServiceParams (e.g., BrowseServiceParams, SearchServiceParams)
+- Frontend: *Params (e.g., BrowseParams, SearchParams)
+- "browse" = our domain term, "discover" = TMDB's term (used only at TMDB boundary)
+
 This model is used by:
-- param_transformer: produces ServiceParams from HTTP schemas
-- query_params (tmdb_api_boundary): consumes ServiceParams to build TMDB API params
+- param_transformer: produces BrowseServiceParams from HTTP schemas
+- query_params (tmdb_api_boundary): consumes BrowseServiceParams to build TMDB API params
 - data_quality filters: reads filtering parameters like min_vote_count
 """
 
@@ -17,8 +23,8 @@ from pydantic import BaseModel, ConfigDict
 from ..data_quality.policy import VOTE_COUNT_THRESHOLD
 
 
-class ServiceParams(BaseModel):
-    """Service layer parameters for movie discovery.
+class BrowseServiceParams(BaseModel):
+    """Service layer parameters for browse-family endpoints (discover, now-playing, upcoming).
 
     This Pydantic model provides:
     - Runtime validation
@@ -93,4 +99,4 @@ class ServiceParams(BaseModel):
         return result
 
 
-__all__ = ["ServiceParams"]
+__all__ = ["BrowseServiceParams"]

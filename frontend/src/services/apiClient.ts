@@ -5,6 +5,7 @@ import {
     setAuthTokens,
 } from "@/utilities/token";
 import logger from "./logger";
+import { getPaginationContextId } from "./paginationContext";
 
 const BASE_URL = import.meta.env.VITE_BASE_API_URL;
 
@@ -56,7 +57,7 @@ function onTokenRefreshed(token: string): void {
     refreshSubscribers = [];
 }
 
-// Request interceptor: Attach JWT access token (email/password) and CSRF token
+// Request interceptor: Attach JWT access token (email/password), CSRF token, and pagination context
 apiClient.interceptors.request.use((config) => {
     // Attach JWT access token from storage (email/password authentication only)
     // OAuth users authenticate via session cookie automatically (no Authorization header needed)
@@ -75,6 +76,15 @@ apiClient.interceptors.request.use((config) => {
         if (csrfToken) {
             config.headers["X-CSRFToken"] = csrfToken;
         }
+    }
+
+    // Attach pagination context ID for movie endpoints (multi-tab isolation)
+    // This ID is unique per page load and helps the backend track which movies
+    // have been returned in this tab's pagination session
+    const movieEndpoints = ["/movies/browse", "/movies/now-playing", "/movies/upcoming", "/movies/search"];
+    const url = config.url ?? "";
+    if (movieEndpoints.some(endpoint => url.includes(endpoint))) {
+        config.headers["X-Pagination-Context"] = getPaginationContextId();
     }
 
     return config;

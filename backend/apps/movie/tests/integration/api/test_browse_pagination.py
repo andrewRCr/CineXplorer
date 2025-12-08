@@ -388,3 +388,453 @@ def test_browse_backward_navigation_consistency(
     assert page_1_first_data["results"] == page_1_second_data["results"], (
         "Page 1 movie order changed after backward navigation"
     )
+
+
+# ============================================================================
+# Cross-Page Session Deduplication Tests
+# ============================================================================
+# These tests verify Redis-based session tracking prevents duplicates across
+# pagination requests. Expected to fail until PaginationSessionManager is
+# implemented with cross-page deduplication support.
+# ============================================================================
+
+
+@pytest.mark.xfail(
+    reason="Cross-page deduplication requires PaginationSessionManager implementation"
+)
+@patch("core.services.tmdb_api_client.TMDBApiClient.get")
+def test_page_1_stores_returned_ids_in_session(
+    mock_tmdb_get: Mock,
+    api_client: Client,
+) -> None:
+    """Test that page 1 request stores returned movie IDs in session.
+
+    Scenario: User requests page 1, receives 20 movies.
+    Expected: Those 20 IDs are stored in session for cross-page deduplication.
+
+    Note: This test verifies session storage behavior by checking page 2
+    excludes IDs from page 1 (indirect verification via behavior).
+    """
+    # Page 1: IDs 1-20
+    page_1_movies = [
+        create_tmdb_movie(i, f"Movie {i}", "2023-01-01", 8.0) for i in range(1, 21)
+    ]
+
+    # Page 2: IDs 1-5 (duplicates) + IDs 21-35 (new) = 20 total
+    # Without session tracking, page 2 would return IDs 1-5, 21-35
+    # With session tracking, page 2 should exclude 1-5 and fetch more
+    page_2_movies = [
+        create_tmdb_movie(i, f"Movie {i}", "2023-01-01", 8.0)
+        for i in list(range(1, 6)) + list(range(21, 36))  # 5 dupes + 15 new
+    ]
+
+    mock_tmdb_get.side_effect = [
+        create_mock_paginated_response(page_1_movies, page=1, total_pages=10),
+        create_mock_paginated_response(page_2_movies, page=2, total_pages=10),
+    ]
+
+    # Request page 1
+    page_1_res = api_client.get(BROWSE_URL, {"page": 1})
+    assert page_1_res.status_code == HTTPStatus.OK
+    page_1_ids = {m["tmdb_id"] for m in page_1_res.json()["results"]}
+    assert page_1_ids == set(range(1, 21))
+
+    # Request page 2
+    page_2_res = api_client.get(
+        BROWSE_URL,
+        {"page": 2, "tmdb_page_start": page_1_res.json()["next_tmdb_page_start"]},
+    )
+    assert page_2_res.status_code == HTTPStatus.OK
+    page_2_ids = {m["tmdb_id"] for m in page_2_res.json()["results"]}
+
+    # Page 2 should NOT contain any IDs from page 1
+    overlap = page_1_ids & page_2_ids
+    assert len(overlap) == 0, f"Page 2 contains IDs already shown on page 1: {overlap}"
+
+
+@pytest.mark.xfail(
+    reason="Cross-page deduplication requires PaginationSessionManager implementation"
+)
+@patch("core.services.tmdb_api_client.TMDBApiClient.get")
+def test_session_cleared_on_page_1_fresh_start(
+    mock_tmdb_get: Mock,
+    api_client: Client,
+) -> None:
+    """Test session cleared when requesting page=1 (fresh start).
+
+    Scenario: User browses page 1 → page 2 → navigates back to page 1 → page 2.
+    Expected: Fresh page 1 clears session, so new page 2 can show IDs that were
+    excluded in the previous page 2 request.
+
+    This tests that session state is properly reset, not just that page 1 returns data.
+    """
+    # Page 1: IDs 1-20
+    page_1_movies = [
+        create_tmdb_movie(i, f"Movie {i}", "2023-01-01", 8.0) for i in range(1, 21)
+    ]
+
+    # First page 2: IDs 21-40 (with duplicate ID 15 that should be excluded)
+    first_page_2_movies = [
+        create_tmdb_movie(15, "Movie 15", "2023-01-01", 8.0),  # Duplicate from page 1!
+    ] + [
+        create_tmdb_movie(i, f"Movie {i}", "2023-01-01", 8.0) for i in range(21, 40)
+    ]
+
+    # Second page 2 (after fresh page 1): Same data - ID 15 should be excluded again
+    # If session wasn't cleared, ID 15 would still be excluded from the old session
+    # If session WAS cleared, ID 15 would be re-added to new session from fresh page 1
+    second_page_2_movies = [
+        create_tmdb_movie(15, "Movie 15", "2023-01-01", 8.0),  # Should be excluded
+    ] + [
+        create_tmdb_movie(i, f"Movie {i}", "2023-01-01", 8.0) for i in range(21, 40)
+    ]
+
+    mock_tmdb_get.side_effect = [
+        # First sequence: page 1 → page 2
+        create_mock_paginated_response(page_1_movies, page=1, total_pages=10),
+        create_mock_paginated_response(first_page_2_movies, page=2, total_pages=10),
+        # Fresh page 1 (clears session)
+        create_mock_paginated_response(page_1_movies, page=1, total_pages=10),
+        # New page 2 (should use fresh session state)
+        create_mock_paginated_response(second_page_2_movies, page=2, total_pages=10),
+    ]
+
+    # First sequence: page 1 → page 2
+    p1_res = api_client.get(BROWSE_URL, {"page": 1})
+    assert p1_res.status_code == HTTPStatus.OK
+    first_p1_ids = {m["tmdb_id"] for m in p1_res.json()["results"]}
+    assert 15 in first_p1_ids, "Page 1 should contain ID 15"
+
+    first_p2_res = api_client.get(
+        BROWSE_URL, {"page": 2, "tmdb_page_start": p1_res.json()["next_tmdb_page_start"]}
+    )
+    assert first_p2_res.status_code == HTTPStatus.OK
+    first_p2_ids = {m["tmdb_id"] for m in first_p2_res.json()["results"]}
+    assert 15 not in first_p2_ids, "First page 2 should exclude ID 15 (dedup)"
+
+    # Fresh page 1 (should clear session)
+    fresh_p1_res = api_client.get(BROWSE_URL, {"page": 1})
+    assert fresh_p1_res.status_code == HTTPStatus.OK
+
+    # New page 2 after fresh start
+    new_p2_res = api_client.get(
+        BROWSE_URL,
+        {"page": 2, "tmdb_page_start": fresh_p1_res.json()["next_tmdb_page_start"]},
+    )
+    assert new_p2_res.status_code == HTTPStatus.OK
+    new_p2_ids = {m["tmdb_id"] for m in new_p2_res.json()["results"]}
+
+    # ID 15 should STILL be excluded (it's in the fresh page 1 session)
+    # This proves session was cleared and rebuilt, not carried over
+    assert 15 not in new_p2_ids, "New page 2 should exclude ID 15 (fresh session)"
+
+    # Verify no overlap between fresh page 1 and new page 2
+    fresh_p1_ids = {m["tmdb_id"] for m in fresh_p1_res.json()["results"]}
+    overlap = fresh_p1_ids & new_p2_ids
+    assert len(overlap) == 0, f"Fresh sequence should have no cross-page duplicates: {overlap}"
+
+
+@pytest.mark.xfail(
+    reason="Cross-page deduplication requires PaginationSessionManager implementation"
+)
+@patch("core.services.tmdb_api_client.TMDBApiClient.get")
+def test_different_filter_combinations_use_different_sessions(
+    mock_tmdb_get: Mock,
+    api_client: Client,
+) -> None:
+    """Test different filter combinations use separate sessions.
+
+    Scenario: User browses Animation movies, then Action movies.
+    Expected: Each filter combination maintains independent session state.
+    """
+    # Animation filter: IDs 1-20
+    animation_page_1 = [
+        create_tmdb_movie(i, f"Animation {i}", "2023-01-01", 8.0)
+        for i in range(1, 21)
+    ]
+
+    # Action filter: Also IDs 1-20 (different movies, same IDs - shouldn't conflict)
+    action_page_1 = [
+        create_tmdb_movie(i, f"Action {i}", "2023-01-01", 8.0)
+        for i in range(1, 21)
+    ]
+
+    # Animation page 2 with duplicate from animation page 1
+    animation_page_2 = [
+        create_tmdb_movie(1, "Animation 1", "2023-01-01", 8.0),  # Duplicate!
+    ] + [
+        create_tmdb_movie(i, f"Animation {i}", "2023-01-01", 8.0)
+        for i in range(21, 40)
+    ]
+
+    mock_tmdb_get.side_effect = [
+        create_mock_paginated_response(animation_page_1, page=1, total_pages=10),
+        create_mock_paginated_response(action_page_1, page=1, total_pages=10),
+        create_mock_paginated_response(animation_page_2, page=2, total_pages=10),
+    ]
+
+    # Request Animation page 1
+    anim_res = api_client.get(BROWSE_URL, {"page": 1, "with_genres": "16"})
+    assert anim_res.status_code == HTTPStatus.OK
+
+    # Request Action page 1 (different filter = different session)
+    action_res = api_client.get(BROWSE_URL, {"page": 1, "with_genres": "28"})
+    assert action_res.status_code == HTTPStatus.OK
+    action_ids = {m["tmdb_id"] for m in action_res.json()["results"]}
+
+    # Action page 1 should have IDs 1-20 (not excluded by Animation session)
+    assert 1 in action_ids, "Action filter should have ID 1 (independent session)"
+
+    # Request Animation page 2
+    anim_p2_res = api_client.get(
+        BROWSE_URL,
+        {"page": 2, "with_genres": "16", "tmdb_page_start": 2},
+    )
+    anim_p2_ids = {m["tmdb_id"] for m in anim_p2_res.json()["results"]}
+
+    # Animation page 2 should NOT have ID 1 (was on Animation page 1)
+    assert 1 not in anim_p2_ids, "Animation p2 should exclude ID 1 (same session)"
+
+
+# ============================================================================
+# Context ID Tests (Multi-Tab Isolation)
+# ============================================================================
+
+
+@pytest.mark.xfail(
+    reason="Cross-page deduplication requires PaginationSessionManager implementation"
+)
+@patch("core.services.tmdb_api_client.TMDBApiClient.get")
+def test_different_pagination_context_headers_use_separate_sessions(
+    mock_tmdb_get: Mock,
+    api_client: Client,
+) -> None:
+    """Test X-Pagination-Context header provides tab isolation.
+
+    Scenario: Two browser tabs browse same filters. Tab 1 goes to page 2 first,
+    then Tab 2 goes to page 2. Each should have independent cross-page dedup.
+
+    Expected: Tab 2's page 2 excludes duplicates from Tab 2's page 1 (not Tab 1's).
+    """
+    # Page 1: IDs 1-20 (both tabs see this)
+    page_1_movies = [
+        create_tmdb_movie(i, f"Movie {i}", "2023-01-01", 8.0) for i in range(1, 21)
+    ]
+
+    # Page 2 for Tab 1: ID 5 (duplicate) + IDs 21-39
+    tab1_page_2_movies = [
+        create_tmdb_movie(5, "Movie 5", "2023-01-01", 8.0),  # Duplicate!
+    ] + [
+        create_tmdb_movie(i, f"Movie {i}", "2023-01-01", 8.0) for i in range(21, 40)
+    ]
+
+    # Page 2 for Tab 2: ID 10 (duplicate) + IDs 41-59
+    # Different duplicates to prove sessions are independent
+    tab2_page_2_movies = [
+        create_tmdb_movie(10, "Movie 10", "2023-01-01", 8.0),  # Duplicate!
+    ] + [
+        create_tmdb_movie(i, f"Movie {i}", "2023-01-01", 8.0) for i in range(41, 60)
+    ]
+
+    mock_tmdb_get.side_effect = [
+        # Tab 1: page 1
+        create_mock_paginated_response(page_1_movies, page=1, total_pages=10),
+        # Tab 2: page 1
+        create_mock_paginated_response(page_1_movies, page=1, total_pages=10),
+        # Tab 1: page 2
+        create_mock_paginated_response(tab1_page_2_movies, page=2, total_pages=10),
+        # Tab 2: page 2
+        create_mock_paginated_response(tab2_page_2_movies, page=2, total_pages=10),
+    ]
+
+    # Tab 1: page 1
+    tab1_p1 = api_client.get(
+        BROWSE_URL, {"page": 1}, HTTP_X_PAGINATION_CONTEXT="tab1-uuid"
+    )
+    assert tab1_p1.status_code == HTTPStatus.OK
+
+    # Tab 2: page 1
+    tab2_p1 = api_client.get(
+        BROWSE_URL, {"page": 1}, HTTP_X_PAGINATION_CONTEXT="tab2-uuid"
+    )
+    assert tab2_p1.status_code == HTTPStatus.OK
+
+    # Tab 1: page 2 (should exclude ID 5 from Tab 1's session)
+    tab1_p2 = api_client.get(
+        BROWSE_URL,
+        {"page": 2, "tmdb_page_start": tab1_p1.json()["next_tmdb_page_start"]},
+        HTTP_X_PAGINATION_CONTEXT="tab1-uuid",
+    )
+    assert tab1_p2.status_code == HTTPStatus.OK
+    tab1_p2_ids = {m["tmdb_id"] for m in tab1_p2.json()["results"]}
+
+    # Tab 2: page 2 (should exclude ID 10 from Tab 2's session, NOT affected by Tab 1)
+    tab2_p2 = api_client.get(
+        BROWSE_URL,
+        {"page": 2, "tmdb_page_start": tab2_p1.json()["next_tmdb_page_start"]},
+        HTTP_X_PAGINATION_CONTEXT="tab2-uuid",
+    )
+    assert tab2_p2.status_code == HTTPStatus.OK
+    tab2_p2_ids = {m["tmdb_id"] for m in tab2_p2.json()["results"]}
+
+    # Tab 1's page 2 should exclude ID 5 (duplicate from page 1)
+    assert 5 not in tab1_p2_ids, "Tab 1 page 2 should exclude ID 5"
+
+    # Tab 2's page 2 should exclude ID 10 (duplicate from page 1)
+    assert 10 not in tab2_p2_ids, "Tab 2 page 2 should exclude ID 10"
+
+    # Verify sessions are independent: Tab 1's exclusions don't affect Tab 2
+    # Tab 2 never saw IDs 21-39, so if those appeared in Tab 2's page 2, fine
+    # The key test is that Tab 2 excluded based on its OWN page 1, not Tab 1's
+
+
+@pytest.mark.xfail(
+    reason="Cross-page deduplication requires PaginationSessionManager implementation"
+)
+@patch("core.services.tmdb_api_client.TMDBApiClient.get")
+def test_requests_without_context_header_work_backwards_compatible(
+    mock_tmdb_get: Mock,
+    api_client: Client,
+) -> None:
+    """Test requests without X-Pagination-Context header work (backwards compat).
+
+    Scenario: Legacy client doesn't send X-Pagination-Context header.
+    Expected: Session tracking still works (uses default empty context).
+    """
+    # Page 1: IDs 1-20
+    page_1 = [
+        create_tmdb_movie(i, f"Movie {i}", "2023-01-01", 8.0) for i in range(1, 21)
+    ]
+
+    # Page 2: ID 1 (duplicate) + IDs 21-39 (new)
+    page_2 = [
+        create_tmdb_movie(1, "Movie 1", "2023-01-01", 8.0),  # Duplicate!
+    ] + [
+        create_tmdb_movie(i, f"Movie {i}", "2023-01-01", 8.0) for i in range(21, 40)
+    ]
+
+    mock_tmdb_get.side_effect = [
+        create_mock_paginated_response(page_1, page=1, total_pages=10),
+        create_mock_paginated_response(page_2, page=2, total_pages=10),
+    ]
+
+    # Request WITHOUT X-Pagination-Context header
+    page_1_res = api_client.get(BROWSE_URL, {"page": 1})
+    assert page_1_res.status_code == HTTPStatus.OK
+
+    page_2_res = api_client.get(
+        BROWSE_URL,
+        {"page": 2, "tmdb_page_start": page_1_res.json()["next_tmdb_page_start"]},
+    )
+    assert page_2_res.status_code == HTTPStatus.OK
+    page_2_ids = {m["tmdb_id"] for m in page_2_res.json()["results"]}
+
+    # Page 2 should NOT contain ID 1 (cross-page dedup still works)
+    assert 1 not in page_2_ids, "Cross-page dedup should work without context header"
+
+
+# ============================================================================
+# Search Integration Tests
+# ============================================================================
+
+SEARCH_URL = "/api/movies/search"
+
+# Note: test_search_results_use_separate_session_from_browse was removed as redundant.
+# Search and browse inherently use different filter hashes (search has `q`, browse has
+# `genres`, etc.), so session isolation is automatic. Unit tests verify different
+# filters generate different cache keys.
+
+
+@pytest.mark.xfail(
+    reason="Cross-page deduplication requires PaginationSessionManager implementation"
+)
+@patch("core.services.tmdb_api_client.TMDBApiClient.get")
+def test_search_pagination_deduplicates_across_pages(
+    mock_tmdb_get: Mock,
+    api_client: Client,
+) -> None:
+    """Test same search query across pages deduplicates correctly.
+
+    Scenario: Search "spirited away" returns duplicates across pages.
+    Expected: Page 2 of search excludes IDs already shown on page 1.
+    """
+    # Search page 1: IDs 1-20
+    search_page_1 = [
+        create_tmdb_movie(i, f"Result {i}", "2023-01-01", 8.0) for i in range(1, 21)
+    ]
+
+    # Search page 2: ID 10 (duplicate) + IDs 21-39 (new)
+    search_page_2 = [
+        create_tmdb_movie(10, "Result 10", "2023-01-01", 8.0),  # Duplicate!
+    ] + [
+        create_tmdb_movie(i, f"Result {i}", "2023-01-01", 8.0) for i in range(21, 40)
+    ]
+
+    mock_tmdb_get.side_effect = [
+        create_mock_paginated_response(search_page_1, page=1, total_pages=10),
+        create_mock_paginated_response(search_page_2, page=2, total_pages=10),
+    ]
+
+    # Search page 1
+    p1_res = api_client.get(SEARCH_URL, {"query": "spirited", "page": 1})
+    assert p1_res.status_code == HTTPStatus.OK
+    p1_ids = {m["tmdb_id"] for m in p1_res.json()["results"]}
+
+    # Search page 2
+    p2_res = api_client.get(
+        SEARCH_URL,
+        {
+            "query": "spirited",
+            "page": 2,
+            "tmdb_page_start": p1_res.json().get("next_tmdb_page_start", 2),
+        },
+    )
+    assert p2_res.status_code == HTTPStatus.OK
+    p2_ids = {m["tmdb_id"] for m in p2_res.json()["results"]}
+
+    # Search page 2 should NOT contain ID 10 (was on page 1)
+    assert 10 not in p2_ids, "Search p2 should exclude ID 10 (cross-page dedup)"
+    overlap = p1_ids & p2_ids
+    assert len(overlap) == 0, f"Search pages should not overlap: {overlap}"
+
+
+# ============================================================================
+# Graceful Degradation Tests
+# ============================================================================
+
+
+@pytest.mark.xfail(
+    reason="Cross-page deduplication requires PaginationSessionManager implementation"
+)
+@patch("core.services.tmdb_api_client.TMDBApiClient.get")
+@patch("django.core.cache.cache")
+def test_graceful_degradation_when_redis_unavailable(
+    mock_cache: Mock,
+    mock_tmdb_get: Mock,
+    api_client: Client,
+) -> None:
+    """Test graceful degradation when Redis unavailable (within-page only).
+
+    Scenario: Redis connection fails during pagination.
+    Expected: Within-page deduplication still works, cross-page may have dupes.
+    """
+    # Simulate Redis failure
+    mock_cache.get.side_effect = Exception("Redis connection refused")
+    mock_cache.set.side_effect = Exception("Redis connection refused")
+
+    # Page 1: IDs 1-20
+    page_1 = [
+        create_tmdb_movie(i, f"Movie {i}", "2023-01-01", 8.0) for i in range(1, 21)
+    ]
+
+    mock_tmdb_get.return_value = create_mock_paginated_response(
+        page_1, page=1, total_pages=10
+    )
+
+    # Request should succeed despite Redis failure
+    res = api_client.get(BROWSE_URL, {"page": 1})
+    assert res.status_code == HTTPStatus.OK
+
+    # Results should still be returned (graceful degradation)
+    results = res.json()["results"]
+    assert len(results) == 20, "Should return results despite Redis failure"

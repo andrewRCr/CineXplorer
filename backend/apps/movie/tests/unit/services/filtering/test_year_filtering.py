@@ -118,11 +118,14 @@ def test_search_movies_filters_incorrect_release_years() -> None:
     service = MovieService(tmdb_client=mock_client)
 
     # Act: Search "Batman" filtered to 2020s
+    from movie.services.api_boundary import SearchServiceParams
     result = service.search_movies(
-        query="Batman",
         page=1,
-        year_min=2020,
-        year_max=2029
+        params=SearchServiceParams(
+            query="Batman",
+            year_min=2020,
+            year_max=2029
+        )
     )
 
     # Assert: Only 2020s Batman movies returned (7 correct movies)

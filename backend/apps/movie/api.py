@@ -31,7 +31,8 @@ from .schemas import (
 )
 
 # Import API boundary transformer (handles vote count policy internally)
-from .services.api_boundary import transform_to_service_params
+from .services.api_boundary import SearchServiceParams, transform_to_service_params
+from .services.deduplication_tracker import DeduplicationTracker
 
 # Import service factories
 from .services.service_factory import (
@@ -50,6 +51,22 @@ movies_router = Router(tags=["movies"])
 genres_router = Router(tags=["genres"])
 keywords_router = Router(tags=["keywords"])
 people_router = Router(tags=["people"])
+
+
+def _create_dedup_tracker(request: HttpRequest) -> DeduplicationTracker:
+    """Create DeduplicationTracker from request context.
+
+    Handles anonymous sessions by creating a session if none exists.
+    Extracts context_id from X-Pagination-Context header for multi-tab isolation.
+    """
+    # Ensure session exists for anonymous users
+    if not request.session.session_key:
+        request.session.create()
+
+    session_id = request.session.session_key or ""
+    context_id = request.headers.get("X-Pagination-Context", "")
+
+    return DeduplicationTracker(session_id=session_id, context_id=context_id)
 
 # Reusable type aliases for query parameters (Django Ninja + FastAPI pattern)
 # Note: We use the bracket syntax Query[Schema] rather than Annotated[Schema, Query()]
@@ -138,10 +155,14 @@ def get_now_playing_movies(
     Raises:
         HttpError: 400 for invalid parameters, 500 for TMDB API errors
     """
+    # Create deduplication tracker from request context
+    dedup_tracker = _create_dedup_tracker(request)
+
     # Transform HTTP params to service params and delegate to service layer
     response = _movie_service.get_now_playing_movies(
         page=filters.page or 1,
-        params=transform_to_service_params(filters)
+        params=transform_to_service_params(filters),
+        dedup_tracker=dedup_tracker,
     )
 
     # Enrich with user data if authenticated
@@ -169,10 +190,14 @@ def get_upcoming_movies(
     Raises:
         HttpError: 400 for invalid parameters, 500 for TMDB API errors
     """
+    # Create deduplication tracker from request context
+    dedup_tracker = _create_dedup_tracker(request)
+
     # Transform HTTP params to service params and delegate to service layer
     response = _movie_service.get_upcoming_movies(
         page=filters.page or 1,
-        params=transform_to_service_params(filters)
+        params=transform_to_service_params(filters),
+        dedup_tracker=dedup_tracker,
     )
 
     # Enrich with user data if authenticated
@@ -190,8 +215,18 @@ def search_movies(
     Uses MovieSearchParamsSchema to handle Django Ninja 1.4.3 +
     Pydantic 2.12.0 empty string validation issue with optional parameters.
     """
+    # Create deduplication tracker from request context
+    dedup_tracker = _create_dedup_tracker(request)
+
+    # Create SearchServiceParams from HTTP params
+    search_params = SearchServiceParams(query=params.query)
+
     # Fetch movies from TMDB
-    response = _movie_service.search_movies(query=params.query, page=params.page or 1)
+    response = _movie_service.search_movies(
+        page=params.page or 1,
+        params=search_params,
+        dedup_tracker=dedup_tracker,
+    )
 
     # Enrich with user data if authenticated
     return enrich_response_with_user_movie_data(request, response)
@@ -244,13 +279,20 @@ def browse_movies(
     Raises:
         HttpError: 400 for invalid parameters, 500 for TMDB API errors
     """
+    # Create deduplication tracker from request context
+    dedup_tracker = _create_dedup_tracker(request)
+
     # Transform HTTP params to service layer parameters
     # Note: min_vote_count is computed by transform_to_service_params via VoteCountPolicy
     # with full context (sort_by, year_max, rating_min, rating_max)
     params = transform_to_service_params(filters)
 
     # Fetch movies from TMDB with two-pass filtering
-    response = _movie_service.discover_movies(page=filters.page or 1, params=params)
+    response = _movie_service.discover_movies(
+        page=filters.page or 1,
+        params=params,
+        dedup_tracker=dedup_tracker,
+    )
 
     # Enrich with user data if authenticated
     return enrich_response_with_user_movie_data(request, response)

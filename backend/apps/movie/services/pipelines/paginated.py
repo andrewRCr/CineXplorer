@@ -15,6 +15,7 @@ from core.tmdb_models.tmdb_responses import TMDBMovieBase, TMDBPaginatedMovieRes
 from ...schemas import MovieBaseSchema, PaginatedMovieResponseSchema
 from ..api_boundary import BrowseServiceParams, SearchServiceParams
 from ..data_quality.filters import apply_data_quality_filters
+from ..deduplication_tracker import DeduplicationTracker
 from .response_builder import build_filtered_response
 
 if TYPE_CHECKING:
@@ -30,6 +31,7 @@ def apply_buffer_if_needed(
     total_pages: int,
     params: BrowseServiceParams | SearchServiceParams,
     fetch_next_page_func: Callable[[int], TMDBPaginatedMovieResponse],
+    dedup_tracker: DeduplicationTracker | None = None,
 ) -> tuple[list[MovieBaseSchema], int]:
     """Apply smart buffer mechanism to maintain consistent page sizes.
 
@@ -48,6 +50,7 @@ def apply_buffer_if_needed(
         total_pages: Total pages available
         params: Service params with filter values (BrowseServiceParams or SearchServiceParams)
         fetch_next_page_func: Function to fetch next page (takes page number)
+        dedup_tracker: Optional tracker for cross-page session deduplication
 
     Returns:
         Tuple of (movies, pages_consumed) where:
@@ -56,6 +59,7 @@ def apply_buffer_if_needed(
 
     Note:
         Deduplication by tmdb_id ensures no duplicates across page boundaries.
+        Session-based deduplication prevents duplicates across pagination requests.
         Blacklist filtering is handled by apply_data_quality_filters().
     """
     # Extract filter values from params
@@ -67,16 +71,38 @@ def apply_buffer_if_needed(
     min_vote_count = getattr(params, 'min_vote_count', None)
     language_filter = getattr(params, 'language', None)
 
-    # Full page achieved - return first 20 with page count = 1
-    if len(filtered_movies) >= 20:
-        return (filtered_movies[:20], 1)
+    # Get IDs already returned in this session (cross-page deduplication)
+    session_ids: set[int] = dedup_tracker.get_returned_ids(params) if dedup_tracker else set()
 
-    # If we're on the last page, return what we have with page count = 1
+    # Initialize seen_ids with session IDs to exclude previously returned movies
+    seen_ids: set[int] = set(session_ids)
+
+    # Filter out movies already returned in this session from initial results
+    deduplicated_initial: list[MovieBaseSchema] = []
+    for movie in filtered_movies:
+        if movie.tmdb_id not in seen_ids:
+            seen_ids.add(movie.tmdb_id)
+            deduplicated_initial.append(movie)
+
+    # Full page achieved - return first 20
+    if len(deduplicated_initial) >= 20:
+        final_movies = deduplicated_initial[:20]
+        # Track new IDs returned (exclude session_ids we already had)
+        new_ids = [m.tmdb_id for m in final_movies if m.tmdb_id not in session_ids]
+        if dedup_tracker and new_ids:
+            dedup_tracker.add_returned_ids(params, new_ids)
+        return (final_movies, 1)
+
+    # If we're on the last page, return what we have
     if current_page >= total_pages:
-        return (filtered_movies, 1)
+        # Track new IDs returned
+        new_ids = [m.tmdb_id for m in deduplicated_initial if m.tmdb_id not in session_ids]
+        if dedup_tracker and new_ids:
+            dedup_tracker.add_returned_ids(params, new_ids)
+        return (deduplicated_initial, 1)
 
     # Smart buffering: Keep fetching pages until we have 20 unique results or run out
-    combined_movies = filtered_movies
+    combined_movies = deduplicated_initial
     next_page = current_page + 1
     max_buffer_pages = 5  # Safety limit to prevent excessive API calls
 
@@ -98,22 +124,25 @@ def apply_buffer_if_needed(
             language_filter
         )
 
-        combined_movies = combined_movies + buffer_movies
+        # Add buffer movies, deduplicating against seen_ids (includes session + this request)
+        for movie in buffer_movies:
+            if movie.tmdb_id not in seen_ids:
+                seen_ids.add(movie.tmdb_id)
+                combined_movies.append(movie)
+
         next_page += 1
         pages_fetched += 1
 
-        # Deduplicate by tmdb_id, preserving first occurrence order
-        seen_ids: set[int] = set()
-        deduplicated: list[MovieBaseSchema] = []
-        for movie in combined_movies:
-            if movie.tmdb_id not in seen_ids:
-                seen_ids.add(movie.tmdb_id)
-                deduplicated.append(movie)
-        combined_movies = deduplicated
-
     # Return up to 20 unique movies + total pages consumed (initial + buffered)
+    final_movies = combined_movies[:20]
     total_pages_consumed = 1 + pages_fetched
-    return (combined_movies[:20], total_pages_consumed)
+
+    # Track new IDs returned (exclude session_ids we already had)
+    new_ids = [m.tmdb_id for m in final_movies if m.tmdb_id not in session_ids]
+    if dedup_tracker and new_ids:
+        dedup_tracker.add_returned_ids(params, new_ids)
+
+    return (final_movies, total_pages_consumed)
 
 
 def fetch_with_filters_and_buffer(
@@ -121,6 +150,7 @@ def fetch_with_filters_and_buffer(
     page: int,
     params: BrowseServiceParams | SearchServiceParams,
     pre_filter_func: Callable[[list[TMDBMovieBase]], list[TMDBMovieBase]] | None = None,
+    dedup_tracker: DeduplicationTracker | None = None,
 ) -> PaginatedMovieResponseSchema:
     """Template function for paginated fetch-filter-buffer workflow.
 
@@ -146,6 +176,7 @@ def fetch_with_filters_and_buffer(
         pre_filter_func: Optional pre-filter function (e.g., non-visual filtering)
             Takes list[TMDBMovieBase], returns list[TMDBMovieBase]
             Applied BEFORE year/rating filters
+        dedup_tracker: Optional tracker for cross-page session deduplication
 
     Returns:
         PaginatedMovieResponseSchema with filtered and buffered results, including
@@ -155,6 +186,10 @@ def fetch_with_filters_and_buffer(
         Template method pattern: invariant workflow with variant behavior
         injection via fetch_page_func and pre_filter_func.
     """
+    # Clear session on page 1 for fresh start (handles backward navigation)
+    if page == 1 and dedup_tracker:
+        dedup_tracker.clear_session(params)
+
     # Extract filter values from params
     # BrowseServiceParams has tmdb_page_start, min_vote_count, language; Search doesn't
     year_min = params.year_min
@@ -219,6 +254,7 @@ def fetch_with_filters_and_buffer(
         tmdb_response.total_pages,
         params,
         buffer_fetch_func,
+        dedup_tracker,
     )
 
     # Step 6: Calculate next TMDB page start for pagination continuation

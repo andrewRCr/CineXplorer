@@ -30,6 +30,7 @@ from ..schemas import (
 from .api_boundary import BrowseServiceParams, SearchServiceParams
 from .base_service import BaseTMDBService
 from .data_quality.policy import VoteCountPolicy
+from .deduplication_tracker import DeduplicationTracker
 from .pipelines.paginated import fetch_with_filters_and_buffer
 from .tmdb_api_boundary.query_params import build_tmdb_params
 from .tmdb_api_boundary.response_factories import (
@@ -75,6 +76,7 @@ class MovieService(BaseTMDBService):
         self,
         page: int = 1,
         params: BrowseServiceParams | None = None,
+        dedup_tracker: DeduplicationTracker | None = None,
     ) -> PaginatedMovieResponseSchema:
         """
         Core TMDB discover wrapper with full filtering capabilities.
@@ -169,12 +171,14 @@ class MovieService(BaseTMDBService):
             fetch_discover_page,
             page,
             params,
+            dedup_tracker=dedup_tracker,
         )
 
     def get_now_playing_movies(
         self,
         page: int = 1,
         params: BrowseServiceParams | None = None,
+        dedup_tracker: DeduplicationTracker | None = None,
     ) -> PaginatedMovieResponseSchema:
         """
         Retrieves movies currently playing in theaters with filtering.
@@ -225,12 +229,13 @@ class MovieService(BaseTMDBService):
         merged_params = BrowseServiceParams.model_validate(merged_filters)
 
         # Call discover endpoint with merged filters (thin wrapper pattern)
-        return self.discover_movies(page=page, params=merged_params)
+        return self.discover_movies(page=page, params=merged_params, dedup_tracker=dedup_tracker)
 
     def get_upcoming_movies(
         self,
         page: int = 1,
         params: BrowseServiceParams | None = None,
+        dedup_tracker: DeduplicationTracker | None = None,
     ) -> PaginatedMovieResponseSchema:
         """
         Retrieves upcoming movies releasing soon in theaters with filtering.
@@ -284,7 +289,7 @@ class MovieService(BaseTMDBService):
         merged_params = BrowseServiceParams.model_validate(merged_filters)
 
         # Call discover endpoint with merged filters (thin wrapper pattern)
-        return self.discover_movies(page=page, params=merged_params)
+        return self.discover_movies(page=page, params=merged_params, dedup_tracker=dedup_tracker)
 
     # ========================================================================
     # Search Methods
@@ -292,23 +297,20 @@ class MovieService(BaseTMDBService):
 
     def search_movies(
         self,
-        query: str,
         page: int = 1,
-        year_min: int | None = None,
-        year_max: int | None = None,
-        rating_min: float | None = None,
-        rating_max: float | None = None,
+        params: SearchServiceParams | None = None,
+        dedup_tracker: DeduplicationTracker | None = None,
     ) -> PaginatedMovieResponseSchema:
         """
         Searches for movies by query string using TMDB.
 
         Args:
-            query: Search query string
             page: Page number for pagination
-            year_min: Minimum release year (inclusive), backend filtered (second-pass data hygiene)
-            year_max: Maximum release year (inclusive), backend filtered (second-pass data hygiene)
-            rating_min: Minimum rating (inclusive), backend filtered (second-pass data hygiene)
-            rating_max: Maximum rating (inclusive), backend filtered (second-pass data hygiene)
+            params: SearchServiceParams model containing:
+                - query: Search query string (required)
+                - year_min/year_max: Release year range (backend filtered)
+                - rating_min/rating_max: Rating range (backend filtered)
+            dedup_tracker: Optional tracker for cross-page deduplication
 
         Returns:
             PaginatedMovieResponseSchema with filtered search results
@@ -321,10 +323,13 @@ class MovieService(BaseTMDBService):
             + backend filtering (catches data quality issues).
             Non-visual content (soundtracks, scores, etc.) is filtered out.
         """
+        if params is None:
+            params = SearchServiceParams(query="")
+
         def fetch_search_page(page_num: int) -> TMDBPaginatedMovieResponse:
             """Fetch a specific search page with current query."""
             page_response = self._tmdb_client.search_movies(
-                query=query,
+                query=params.query,
                 page=page_num,
                 include_adult=False,
                 language="en-US",
@@ -332,22 +337,12 @@ class MovieService(BaseTMDBService):
             )
             return validate_tmdb_paginated_response(page_response, TMDBPaginatedMovieResponse)
 
-        # Create SearchServiceParams for pipeline
-        # Search bypasses vote count filter - user searched for it, show it
-        # (VoteCountPolicy: search endpoint always bypasses)
-        params = SearchServiceParams(
-            query=query,
-            year_min=year_min,
-            year_max=year_max,
-            rating_min=rating_min,
-            rating_max=rating_max,
-        )
-
         return fetch_with_filters_and_buffer(
             fetch_search_page,
             page,
             params,
             pre_filter_func=self._filter_non_visual_content,
+            dedup_tracker=dedup_tracker,
         )
 
     # ========================================================================

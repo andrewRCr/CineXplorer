@@ -166,7 +166,8 @@ def test_search_movies_uses_injected_client() -> None:
     service = MovieService(tmdb_client=mock_client)
 
     # Act: Call search_movies
-    result = service.search_movies(query="test", page=2)
+    from movie.services.api_boundary import SearchServiceParams
+    result = service.search_movies(page=2, params=SearchServiceParams(query="test"))
 
     # Assert: Injected client was called with correct params
     mock_client.search_movies.assert_called_once_with(
@@ -206,7 +207,8 @@ def test_search_movies_filters_soundtrack_results() -> None:
     service = MovieService(tmdb_client=mock_client)
 
     # Act: Call search_movies
-    result = service.search_movies(query="test")
+    from movie.services.api_boundary import SearchServiceParams
+    result = service.search_movies(page=1, params=SearchServiceParams(query="test"))
 
     # Assert: Only real movie returned (soundtracks filtered)
     assert len(result.results) == 1

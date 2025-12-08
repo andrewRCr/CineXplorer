@@ -204,22 +204,22 @@ analysis and solution options.
 
 ### **Phase 4:** Implement Session-Based Cross-Page Deduplication (TDD Green Phase)
 
-- [ ] **4.1 Create `PaginationSessionManager` helper class**
+- [x] **4.1 Create `PaginationSessionManager` helper class**
 
     **Location:** `backend/apps/movie/services/pagination_session_manager.py` (new file)
 
-    - [ ] **4.1.a Implement session manager class**
+    - [x] **4.1.a Implement session manager class**
         **Constructor:**
         - `__init__(session_id: str, context_id: str = "")` - Initialize with session and optional context
         - `session_id`: Django session key (from `request.session.session_key`)
         - `context_id`: Optional tab isolation ID (from `X-Pagination-Context` header)
 
-        **Methods:**
-        - `get_returned_ids(filters: dict) -> set[int]` - Retrieve session state
-        - `add_returned_ids(filters: dict, ids: list[int]) -> None` - Update session
-        - `clear_session(filters: dict) -> None` - Reset on page 1 or filter change
-        - `_generate_cache_key(filters: dict) -> str` - Build key from session_id + context_id + filter_hash
-        - `_generate_filter_hash(filters: dict) -> str` - Normalize and hash filters (order-independent)
+        **Methods (UPDATED - uses HashableParams Protocol, not dict):**
+        - `get_returned_ids(params: HashableParams) -> set[int]` - Retrieve session state
+        - `add_returned_ids(params: HashableParams, ids: list[int]) -> None` - Update session
+        - `clear_session(params: HashableParams) -> None` - Reset on page 1 or filter change
+        - `_generate_cache_key(params: HashableParams) -> str` - Build key from session_id + context_id + params_hash
+        - `_generate_params_hash(params: HashableParams) -> str` - Hash via `model_dump(exclude_none=True)`
 
         **Cache key format:** `pagination_session:{session_id}:{context_id}:{filter_hash}`
 
@@ -249,8 +249,20 @@ analysis and solution options.
 
         With `SADD`, both requests atomically add their IDs - no data loss.
 
-    - [ ] **4.1.b Run unit tests - should now PASS**
-        - All `PaginationSessionManager` tests pass (~24 tests: core + scoping + context + filter hash + atomic ops)
+    - [x] **4.1.b Run unit tests - should now PASS**
+        - All 25 `PaginationSessionManager` tests pass (core + scoping + context + params hash + atomic ops + graceful degradation)
+        - **Final architecture uses Protocol-based adapter pattern:**
+            - `AtomicSetOperations` Protocol: Type-safe interface for Redis SET ops (sadd, smembers, delete, expire)
+            - `DjangoRedisAdapter`: Implements Protocol, isolates ALL type ignores (10 total)
+            - `HashableParams` Protocol: Accepts any Pydantic model via `model_dump()` method
+        - **Type safety achieved:**
+            - `redis_client.py` (adapter): 10 type ignores - Django cache internals + redis-py sync/async typing
+            - `pagination_session_manager.py` (business logic): **0 type ignores**
+            - No `Any`, no `cast()` - uses `object` and Protocol-based contracts
+        - **Key design decisions:**
+            - Uses `HashableParams` Protocol (not ServiceParams directly) for future extensibility to search/trending
+            - Leverages Pydantic boundary validation instead of internal TypeGuards
+            - `model_dump(exclude_none=True)` for deterministic hash generation
 
 - [ ] **4.2 Integrate session tracking into buffer logic**
 

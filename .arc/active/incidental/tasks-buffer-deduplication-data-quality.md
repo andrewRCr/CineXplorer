@@ -84,7 +84,7 @@ analysis and solution options.
 
     **Goal:** Verify buffer correctly deduplicates and continues fetching to reach 20 unique movies.
 
-    - [x] **1.1.1 Create test file `test_movie_service_buffer_deduplication.py`**
+    - [x] **1.1.a Create test file `test_movie_service_buffer_deduplication.py`**
         - ✅ Test: Buffer with no duplicates returns first 20 movies
         - ✅ Test: Buffer with 1 duplicate fetches additional page to reach 20 unique
         - ✅ Test: Buffer with multiple duplicates across pages continues until 20 unique
@@ -94,20 +94,20 @@ analysis and solution options.
         - ✅ Test: Buffer applies filters to buffer pages during deduplication
         - File location: `backend/apps/movie/tests/test_movie_service_buffer_deduplication.py` (7 comprehensive tests)
 
-    - [x] **1.1.2 Run unit tests and verify failure messages**
+    - [x] **1.1.b Run unit tests and verify failure messages**
         - ✅ All 7 tests executed successfully (TDD red phase)
         - ✅ 6/7 tests FAILED as expected, 1/7 PASSED (baseline case)
 
 - [x] **1.2 Write integration tests for discover endpoint with duplicates**
 
-    - [x] **1.2.1 Create integration tests in `test_movie_api.py`**
+    - [x] **1.2.a Create integration tests in `test_movie_api.py`**
         - ✅ Test: Multi-genre filter returns 20 unique movies (Spirited Away scenario)
         - ✅ Test: Multiple duplicates across pages handled correctly
         - ✅ Test: Deduplication works with backend filters (year/rating)
         - ✅ Test: Respects `max_buffer_pages` safety limit
         - File location: `backend/apps/movie/tests/test_movie_api.py` (4 integration tests)
 
-    - [x] **1.2.2 Run integration tests and verify failures**
+    - [x] **1.2.b Run integration tests and verify failures**
         - ✅ All 4 integration tests FAILED as expected (TDD red phase)
 
 ### **Phase 2:** Implement Within-Page Backend Buffer Deduplication
@@ -118,93 +118,89 @@ analysis and solution options.
 
     **Location:** `backend/apps/movie/services/movie_service.py:458-494`
 
-    - [x] **2.1.1 Add deduplication logic after buffer concatenation**
+    - [x] **2.1.a Add deduplication logic after buffer concatenation**
         - ✅ Implemented deduplication inside buffer loop (lines 483-490)
         - ✅ Track `seen_ids` with set for O(1) lookup
         - ✅ Build `deduplicated` list preserving first occurrence order
         - ✅ Loop continues after dedup if count < 20
         - ✅ Returns up to 20 unique movies with correct page count
 
-    - [x] **2.1.2 Run unit tests - should now PASS**
+    - [x] **2.1.b Run unit tests - should now PASS**
         - ✅ All 7 unit tests PASS (TDD green phase)
 
-    - [x] **2.1.3 Run integration tests - should now PASS**
+    - [x] **2.1.c Run integration tests - should now PASS**
         - ✅ All 4 integration tests PASS (TDD green phase)
 
 ### **Phase 3:** Write Tests for Session-Based Cross-Page Deduplication (TDD Red Phase)
 
 **Purpose:** Implement Redis-based session tracking to prevent duplicates across pagination requests (Option 1).
 
-- [ ] **3.1 Write unit tests for `PaginationSessionManager` helper class**
+- [x] **3.1 Write unit tests for `PaginationSessionManager` helper class**
 
     **Goal:** Test session state management (store/retrieve/clear returned movie IDs).
 
-    - [ ] **3.1.1 Create test file `test_pagination_session_manager.py`**
-        **Core functionality tests:**
-        - Test: `get_returned_ids()` returns empty set for new session
-        - Test: `add_returned_ids()` stores movie IDs in Redis cache
-        - Test: `get_returned_ids()` retrieves stored IDs correctly
-        - Test: `clear_session()` removes all IDs for filter combination
-        - Test: Session TTL set correctly (1 hour default)
-        - Test: Graceful degradation when Redis unavailable
+    - [x] **3.1.a Create test file `test_pagination_session_manager.py`**
+        Created 24 tests organized into 7 test classes:
+        - `TestGetReturnedIds` (2 tests): empty set for new session, retrieves stored IDs
+        - `TestAddReturnedIds` (3 tests): stores IDs, appends to existing, handles duplicates
+        - `TestClearSession` (1 test): removes all IDs for filter combination
+        - `TestSessionTTL` (1 test): verifies 1-hour TTL passed to cache.set()
+        - `TestGracefulDegradation` (3 tests): get/add/clear silently fail when Redis unavailable
+        - `TestSessionScoping` (3 tests): user isolation via different session IDs
+        - `TestContextIdIsolation` (5 tests): multi-tab isolation via context_id parameter
+        - `TestFilterHash` (6 tests): order-independent hashing, search query inclusion, case normalization
 
-        **Session scoping tests (Issue #1 fix):**
-        - Test: Different session IDs generate different cache keys (user isolation)
-        - Test: Same session ID + same filters = same session state
-        - Test: Same session ID + different filters = different session state
+        File: `backend/apps/movie/tests/unit/services/test_pagination_session_manager.py`
 
-        **Context ID tests (Issue #2 fix - multi-tab isolation):**
-        - Test: Different context IDs generate different cache keys (tab isolation)
-        - Test: Same session + same context + same filters = same session state
-        - Test: Same session + different context + same filters = different session state
-        - Test: Context ID is optional (backwards compatibility, defaults to empty string)
+    - [x] **3.1.b Run unit tests and verify failure messages**
+        - All 24 tests SKIPPED as expected (TDD red phase)
+        - Skip reason: "PaginationSessionManager not yet implemented (TDD red phase)"
+        - Tests use `pytest.mark.skipif(not IMPORT_AVAILABLE)` pattern
+        - Type errors (106) expected due to `PaginationSessionManager = None` fallback; will resolve in Phase 4
 
-        **Filter hash tests (Issue #3 fix - search included):**
-        - Test: Filter hash generation consistent for same filters (order-independent)
-        - Test: Different filters generate different session keys
-        - Test: Search query (`q`) included in filter hash
-        - Test: Empty search query vs no search query handled correctly
+    - [x] **3.1.c Add unit test for atomic Redis operations**
+        Added `TestAtomicRedisOperations` class with 4 tests:
+        - `test_add_returned_ids_uses_atomic_sadd` - Verifies Redis `SADD` command is called
+        - `test_get_returned_ids_uses_smembers` - Verifies Redis `SMEMBERS` command is used
+        - `test_clear_session_uses_delete` - Verifies Redis `DEL` command is used
+        - `test_concurrent_adds_preserve_all_ids` - Simulates concurrent adds, verifies no data loss
 
-        - File: `backend/apps/movie/tests/unit/services/test_pagination_session_manager.py`
-        - Expect tests to FAIL initially (class not implemented)
+        Total unit tests: 28 (24 original + 4 atomic ops)
+        File: `backend/apps/movie/tests/unit/services/test_pagination_session_manager.py`
 
-    - [ ] **3.1.2 Run unit tests and verify failure messages**
-        - Verify import errors or assertion failures
-        - Document baseline behavior
-
-- [ ] **3.2 Write integration tests for cross-page deduplication**
+- [x] **3.2 Write integration tests for cross-page deduplication**
 
     **Goal:** Verify session tracking prevents duplicates across paginated requests.
 
-    **Note:** `test_movie_api.py` was consolidated during test organization. Cross-page tests go in
-    `integration/api/test_browse_pagination.py`. One xfail test (`test_browse_no_cross_page_duplicates`)
-    already exists - it will pass once Phase 4 implementation is complete.
+    - [x] **3.2.a Add cross-page deduplication tests to `test_browse_pagination.py`**
+        Added 8 new tests (all marked `@pytest.mark.xfail`) organized into 4 categories:
 
-    - [ ] **3.2.1 Add cross-page deduplication tests to `test_browse_pagination.py`**
-        **Core cross-page tests:**
-        - Existing xfail: `test_browse_no_cross_page_duplicates` (basic cross-page scenario)
-        - Add: Test page 1 request stores returned IDs in session
-        - Add: Test page 2 request excludes IDs already returned on page 1
-        - Add: Test session cleared on page=1 (fresh start for backward navigation)
-        - Add: Test different filter combinations use different sessions
-        - Add: Test session expires after TTL (1 hour)
-        - Add: Test graceful degradation when Redis unavailable (within-page only)
+        **Core cross-page tests (3 tests):**
+        - `test_page_1_stores_returned_ids_in_session` - XFAIL
+        - `test_session_cleared_on_page_1_fresh_start` - XFAIL (expanded to test actual session reset)
+        - `test_different_filter_combinations_use_different_sessions` - XFAIL
 
-        **Context ID integration tests (Issue #2 fix):**
-        - Add: Test requests with different `X-Pagination-Context` headers use separate sessions
-        - Add: Test requests without context header work (backwards compatibility)
+        **Context ID tests (2 tests):**
+        - `test_different_pagination_context_headers_use_separate_sessions` - XFAIL (expandeded tests tab isolation with
+        page 2)
+        - `test_requests_without_context_header_work_backwards_compatible` - XFAIL
 
-        **Search integration tests (Issue #3 fix):**
-        - Add: Test search results use separate session from browse results
-        - Add: Test same search query across pages deduplicates correctly
+        **Search integration tests (1 test):**
+        - `test_search_pagination_deduplicates_across_pages` - XFAIL
+        - Note: Removed `test_search_results_use_separate_session_from_browse` as redundant
+          (search/browse isolation is inherent via different filter hashes, tested at unit level)
 
-        - File: `backend/apps/movie/tests/integration/api/test_browse_pagination.py`
-        - Expect new tests to FAIL initially (session integration not implemented)
+        **Graceful degradation (1 test):**
+        - `test_graceful_degradation_when_redis_unavailable` - XFAIL
 
-    - [ ] **3.2.2 Run integration tests and verify failures**
-        - Document expected failure patterns
-        - Verify within-page deduplication still works (Phase 2)
-        - Verify existing xfail test still fails as expected
+        File: `backend/apps/movie/tests/integration/api/test_browse_pagination.py`
+
+    - [x] **3.2.b Run integration tests and verify failures**
+        Test results: 5 passed, 8 xfailed
+        - 5 original tests pass (existing pagination behavior)
+        - 8 session-based tests XFAIL as expected (all now meaningful tests)
+        - Existing xfail `test_browse_no_cross_page_duplicates` still XFAIL
+        - Within-page deduplication unaffected (Phase 2 work intact)
 
 ### **Phase 4:** Implement Session-Based Cross-Page Deduplication (TDD Green Phase)
 
@@ -212,7 +208,7 @@ analysis and solution options.
 
     **Location:** `backend/apps/movie/services/pagination_session_manager.py` (new file)
 
-    - [ ] **4.1.1 Implement session manager class**
+    - [ ] **4.1.a Implement session manager class**
         **Constructor:**
         - `__init__(session_id: str, context_id: str = "")` - Initialize with session and optional context
         - `session_id`: Django session key (from `request.session.session_key`)
@@ -233,51 +229,66 @@ analysis and solution options.
         - View type (popular, top_rated, etc.) if applicable
 
         **Infrastructure:**
-        - Use Django cache framework (Redis backend)
-        - Set 1-hour TTL on all cache operations
-        - Graceful degradation if cache unavailable (log warning, return empty set)
+        - **Use Redis SET operations directly** (not Django cache get/set)
+            - `SADD key id1 id2...` for atomic additions (race-condition-free)
+            - `SMEMBERS key` for retrieval
+            - `DEL key` for clearing
+            - Access via django-redis: `django.core.cache.cache.client.get_client()`
+        - Set 1-hour TTL via `EXPIRE key 3600` after modifications
+        - Graceful degradation if Redis unavailable (log warning, return empty set)
         - ~120 lines estimated
 
-    - [ ] **4.1.2 Run unit tests - should now PASS**
-        - All `PaginationSessionManager` tests pass (~16 tests: core + scoping + context + filter hash)
+        **Thread Safety Note:**
+        Using atomic `SADD` prevents race conditions when concurrent requests modify the same
+        session. Without this, read-modify-write (`get()` → union → `set()`) could lose IDs:
+
+        ```
+        Request A reads {1-20}, Request B reads {1-20} (before A writes)
+        A writes {1-40}, B writes {1-20, 41-60} → {21-40} lost!
+        ```
+
+        With `SADD`, both requests atomically add their IDs - no data loss.
+
+    - [ ] **4.1.b Run unit tests - should now PASS**
+        - All `PaginationSessionManager` tests pass (~24 tests: core + scoping + context + filter hash + atomic ops)
 
 - [ ] **4.2 Integrate session tracking into buffer logic**
 
     **Location:** `backend/apps/movie/services/movie_service.py`
 
-    - [ ] **4.2.1 Extract session ID and context ID from request**
+    - [ ] **4.2.a Extract session ID and context ID from request**
         - Get session ID: `request.session.session_key` (Django auto-creates for anonymous users)
         - Get context ID: `request.headers.get("X-Pagination-Context", "")` (optional header)
         - Pass both to `PaginationSessionManager` constructor
         - **Note:** May need to ensure session is created for anonymous users (`request.session.create()`)
         - ~10 lines in API layer
 
-    - [ ] **4.2.2 Import and instantiate session manager per request**
+    - [ ] **4.2.b Import and instantiate session manager per request**
         - Add import: `from .pagination_session_manager import PaginationSessionManager`
         - Create instance with session_id and context_id in endpoint methods
         - Pass to service layer methods that need it
         - ~15 lines modified
 
-    - [ ] **4.2.3 Update `_apply_buffer_if_needed` to use session tracking**
+    - [ ] **4.2.c Update `_apply_buffer_if_needed` to use session tracking**
         - Accept `session_manager` and `filters` parameters
         - Call `session_manager.get_returned_ids(filters)` at start
         - Add session IDs to `seen_ids` set (combine with within-page dedup)
         - After building results, call `session_manager.add_returned_ids(filters, returned_ids)`
         - ~20 lines modified
 
-    - [ ] **4.2.4 Thread filter context through endpoint methods**
+    - [ ] **4.2.d Thread filter context through endpoint methods**
         - Update `discover_movies()`, `search_movies()`, etc. to build filter dict
         - Include search query (`q`) in filter dict for search endpoints
         - Pass session_manager and filter dict to `_apply_buffer_if_needed()` calls
         - ~30 lines modified across multiple methods
 
-    - [ ] **4.2.5 Implement page=1 session clearing**
+    - [ ] **4.2.e Implement page=1 session clearing**
         - In endpoint methods, check if `page == 1`
         - If page=1, call `session_manager.clear_session(filters)` before buffer
         - Ensures backward navigation gets fresh results
         - ~10 lines added
 
-    - [ ] **4.2.6 Run backend integration tests - should now PASS**
+    - [ ] **4.2.f Run backend integration tests - should now PASS**
         - All cross-page deduplication tests pass
         - All existing within-page tests still pass
 
@@ -287,32 +298,32 @@ analysis and solution options.
 
     **Location:** `frontend/src/hooks/` or API service layer
 
-    - [ ] **4.3.1 Generate pagination context ID on page load**
+    - [ ] **4.3.a Generate pagination context ID on page load**
         - Create UUID on initial render (use `useRef` to persist across re-renders)
         - Store in ref, not state (doesn't need to trigger re-renders)
         - Generate once per page load, stable across navigation within same tab
         - ~10 lines
 
-    - [ ] **4.3.2 Add context ID to API requests**
+    - [ ] **4.3.b Add context ID to API requests**
         - Add `X-Pagination-Context` header to movie API calls
         - Update `apiClient` or individual fetch calls in movie hooks
         - ~15 lines modified
 
-    - [ ] **4.3.3 Run frontend tests - should still PASS**
+    - [ ] **4.3.c Run frontend tests - should still PASS**
         - No behavioral change expected (context ID is additive)
         - Verify no regressions in existing functionality
 
 - [ ] **4.4 Run backend quality gates**
 
-    - [ ] **4.4.1 Run all backend tests**
+    - [ ] **4.4.a Run all backend tests**
         - Command: `docker compose -f infrastructure/docker-compose.yml exec backend pytest apps/`
         - Expect: All tests pass (50+ tests now with new dedup tests)
 
-    - [ ] **4.4.2 Run backend linting with auto-fix**
+    - [ ] **4.4.b Run backend linting with auto-fix**
         - Command: `.venv-backend/bin/ruff check backend/apps/ backend/config/ --fix`
         - Expect: 0 violations
 
-    - [ ] **4.4.3 Run Python type checking**
+    - [ ] **4.4.c Run Python type checking**
         - Command: `npx pyright backend/apps/ backend/config/ --project backend`
         - Expect: 0 errors
 
@@ -326,12 +337,12 @@ which depends on our cross-page deduplication being complete.
 
 - [ ] **5.1 Document dependency in pagination-buffer-tracking task list**
 
-    - [ ] **5.1.1 Add note to Phase 3.7 prerequisite section**
+    - [ ] **5.1.a Add note to Phase 3.7 prerequisite section**
         - Document that Phase 3.7 verification assumes cross-page dedup complete
         - Cross-reference: `tasks-buffer-deduplication-data-quality.md` Phase 4 complete
         - File: `.arc/active/incidental/tasks-pagination-buffer-tracking.md`
 
-    - [ ] **5.1.2 Verify no code conflicts**
+    - [ ] **5.1.b Verify no code conflicts**
         - Phase 3.7 handles URL params (`tmdb_page_start`)
         - Our Phase 4 handles session state (returned movie IDs)
         - Confirm independent operation (no overlap)
@@ -342,27 +353,27 @@ which depends on our cross-page deduplication being complete.
 
     **Context:** Frontend buffer reset fix (Phase 2 prerequisite) added console.log statements for debugging.
 
-    - [ ] **6.1.1 Remove debug logging from `MovieCollectionGrid.tsx`**
+    - [ ] **6.1.a Remove debug logging from `MovieCollectionGrid.tsx`**
         - Remove console.log statements (buffer reset events)
         - Keep buffer reset logic intact
         - File: `frontend/src/components/movie/collection/MovieCollectionGrid.tsx`
 
-    - [ ] **6.1.2 Remove debug logging from `MovieGrid.tsx`**
+    - [ ] **6.1.b Remove debug logging from `MovieGrid.tsx`**
         - Remove console.log statements (same pattern)
         - Keep buffer reset logic intact
         - File: `frontend/src/components/movie/collection/MovieGrid.tsx`
 
-    - [ ] **6.1.3 Run frontend tests - should still PASS**
+    - [ ] **6.1.c Run frontend tests - should still PASS**
         - Command: `docker compose -f infrastructure/docker-compose.yml exec frontend npm test`
         - Expect: All 453 tests pass
 
 - [ ] **6.2 Run frontend quality gates**
 
-    - [ ] **6.2.1 Run frontend linting**
+    - [ ] **6.2.a Run frontend linting**
         - Command: `docker compose -f infrastructure/docker-compose.yml exec frontend npm run lint`
         - Expect: 0 violations
 
-    - [ ] **6.2.2 Run TypeScript type checking**
+    - [ ] **6.2.b Run TypeScript type checking**
         - Command: `docker compose -f infrastructure/docker-compose.yml exec frontend npm run type-check`
         - Expect: 0 errors
 
@@ -370,32 +381,32 @@ which depends on our cross-page deduplication being complete.
 
     **Test Case:** Multi-genre filter (Animation + Family) across multiple pages
 
-    - [ ] **6.3.1 Verify within-page duplicate fix**
+    - [ ] **6.3.a Verify within-page duplicate fix**
         - Navigate to Popular page 1
         - Apply Animation (16) + Family (10751) filters
         - Verify: NO duplicate movies on single page
         - Verify: Exactly 20 unique movies displayed
 
-    - [ ] **6.3.2 Verify cross-page duplicate fix**
+    - [ ] **6.3.b Verify cross-page duplicate fix**
         - From page 1, navigate to page 2
         - Verify: NO movies from page 1 appear on page 2
         - Navigate to page 3
         - Verify: NO movies from pages 1-2 appear on page 3
         - Check specific movies (Spirited Away, Mulan, Luca) appear only once
 
-    - [ ] **6.3.3 Verify backward navigation consistency**
+    - [ ] **6.3.c Verify backward navigation consistency**
         - From page 3, click browser back to page 2
         - Verify: Same movies as original page 2 visit
         - Click back to page 1
         - Verify: Same movies as original page 1 visit (session cleared on page 1)
 
-    - [ ] **6.3.4 Verify filter change resets session**
+    - [ ] **6.3.d Verify filter change resets session**
         - On page 2 with Animation+Family
         - Change to Animation only
         - Verify: New set of movies (session cleared)
         - Page numbering restarts at 1
 
-    - [ ] **6.3.5 Verify no regressions**
+    - [ ] **6.3.e Verify no regressions**
         - Test: Popular, Now Playing, Top Rated, Upcoming views
         - Test: Single genre filters work correctly
         - Test: Search with filters works correctly
@@ -403,21 +414,21 @@ which depends on our cross-page deduplication being complete.
 
 - [ ] **6.4 Run comprehensive quality gates**
 
-    - [ ] **6.4.1 Run all backend tests**
+    - [ ] **6.4.a Run all backend tests**
         - Command: `docker compose -f infrastructure/docker-compose.yml exec backend pytest apps/`
         - Expect: All tests pass (40+ tests)
 
-    - [ ] **6.4.2 Run all frontend tests**
+    - [ ] **6.4.b Run all frontend tests**
         - Command: `docker compose -f infrastructure/docker-compose.yml exec frontend npm test`
         - Expect: All 453 tests pass
 
-    - [ ] **6.4.3 Run all linting**
+    - [ ] **6.4.c Run all linting**
         - Backend: `.venv-backend/bin/ruff check backend/apps/ backend/config/`
         - Frontend: `docker compose -f infrastructure/docker-compose.yml exec frontend npm run lint`
         - Markdown: `npx markdownlint-cli2 --fix "README.md" ".arc/**/*.md"`
         - Expect: 0 violations total
 
-    - [ ] **6.4.4 Run all type checking**
+    - [ ] **6.4.d Run all type checking**
         - Python: `npx pyright backend/apps/ backend/config/ --project backend`
         - TypeScript: `docker compose -f infrastructure/docker-compose.yml exec frontend npm run type-check`
         - Expect: 0 errors total
@@ -439,30 +450,3 @@ which depends on our cross-page deduplication being complete.
 - [ ] Ready to resume navigation work at Task 3.3
 
 ---
-
-## Related Files
-
-### Backend
-
-- `backend/apps/movie/services/movie_service.py` - Buffer deduplication implementation (within-page + cross-page)
-- `backend/apps/movie/services/pagination_session_manager.py` - Session tracking helper (new file, Phase 4)
-- `backend/apps/movie/tests/unit/services/test_movie_service_buffer_deduplication.py` - Within-page dedup tests
-- `backend/apps/movie/tests/unit/services/test_pagination_session_manager.py` - Session manager tests (new file, Phase 3)
-- `backend/apps/movie/tests/integration/api/test_browse_pagination.py` - Cross-page integration tests (includes xfail)
-
-### Frontend
-
-- `frontend/src/components/movie/collection/MovieCollectionGrid.tsx` - Buffer reset fix + debug logging (cleanup Phase 6)
-- `frontend/src/components/movie/collection/MovieGrid.tsx` - Buffer reset fix + debug logging (cleanup Phase 6)
-- `frontend/src/components/movie/collection/MovieCollectionLayout.tsx` - Filter style split (completed stash work)
-- `frontend/src/components/movie/collection/useMovieCollectionState.tsx` - Enhanced filter detection (completed stash work)
-
-### Documentation
-
-- `.arc/active/incidental/notes-buffer-deduplication-data-quality.md` - Complete investigation and solution analysis
-- `.arc/active/incidental/tasks-pagination-buffer-tracking.md` - Related Phase 3.7 (URL metadata persistence)
-
-### Configuration
-
-- `backend/config/settings.py` - Verify Redis cache backend configured (CACHES setting)
-- `infrastructure/docker-compose.yml` - Redis container already available

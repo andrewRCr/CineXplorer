@@ -375,25 +375,82 @@ analysis and solution options.
         - Fixed `test_tmdb_logging.py`: Use `SearchServiceParams` instead of `query=` keyword
         - Fixed `test_browse_pagination.py`: Add `ApiResponse` import and proper type annotations
 
-### **Phase 5:** Coordination with pagination-buffer-tracking Phase 3.7
+### **Phase 5:** Cross-Task Coordination & Backward Navigation Fix
 
-**Context:** Phase 3.7 in `tasks-pagination-buffer-tracking.md` handles URL metadata persistence (`tmdb_page_start`).
-Session-based deduplication complements this by ensuring no duplicates when metadata tracking is working correctly.
+**Context:** Audit of related task lists revealed a frontend bug causing backward navigation to page 1 to show
+completely different results. Additionally, coordination with `pagination-buffer-tracking` Phase 3.7 is needed
+for full backward navigation support.
 
-**Integration Point:** Phase 3.7.4.1 manual verification includes "No duplicate movies when navigating forward to page 4"
-which depends on our cross-page deduplication being complete.
+- [x] **5.1 Audit related task lists for coordination**
 
-- [ ] **5.1 Document dependency in pagination-buffer-tracking task list**
+    **Completed:** Comprehensive audit of all 4 related pagination/filter task lists.
 
-    - [ ] **5.1.a Add note to Phase 3.7 prerequisite section**
-        - Document that Phase 3.7 verification assumes cross-page dedup complete
-        - Cross-reference: `tasks-buffer-deduplication-data-quality.md` Phase 4 complete
+    - [x] **5.1.a Analyze task list status and dependencies**
+        - `buffer-deduplication-data-quality`: Phase 4 complete (cross-page dedup)
+        - `navigation-filter-state-preservation`: Paused at Task 3.3, blocked by buffer-dedup
+        - `pagination-buffer-tracking`: Paused at Task 3.6.5, blocked by navigation-filter-state
+        - `filter-integration-testing`: Paused at Task 3.6.2, blocked by pagination-buffer-tracking
+        - **Interrupt chain can now unwind** with Phase 4 complete
+
+    - [x] **5.1.b Verify no code conflicts between task lists**
+        - buffer-deduplication: Cross-page movie ID tracking (Redis session)
+        - pagination-buffer-tracking: TMDB page metadata (`tmdb_page_start` in URL)
+        - navigation-filter-state: Filter state preservation (URL params)
+        - filter-integration-testing: Data quality filtering (backend service)
+        - **Confirmed:** Each addresses different concern, no conflicts
+
+    - [x] **5.1.c Identify backward navigation bug**
+        - **Bug discovered:** Frontend sends stale `tmdb_page_start` on backward navigation
+        - **Symptom:** Page 1 shows completely different movies after page 2 → page 1
+        - **Root cause:** `nextTmdbPageStartRef.current` not cleared on backward navigation
+        - **Example:** After page 2, ref holds `5`. Back to page 1 sends `{page: 1, tmdb_page_start: 5}`
+          causing backend to fetch from TMDB page 5 instead of page 1
+        - **Backend test passes** because it manually sends correct params (no integration test)
+
+- [ ] **5.2 Fix page 1 backward navigation bug**
+
+    **Goal:** Ensure backward navigation clears stale `tmdb_page_start` metadata.
+
+    - [ ] **5.2.a Write frontend test for backward navigation params**
+        - Test: Navigate page 1 → page 2 → page 1, verify `tmdb_page_start` cleared
+        - Test: Track that fetcher receives `undefined` for backward nav to page 1
+        - File: `frontend/src/components/movie/collection/__tests__/MovieGrid.stability.test.tsx`
+
+    - [ ] **5.2.b Implement fix in MovieGrid.tsx**
+        - Add `prevPageRef` to track previous page number
+        - Clear `nextTmdbPageStartRef.current` when `currentPage < prevPageRef.current` or `currentPage === 1`
+        - Update `prevPageRef.current` after comparison
+        - File: `frontend/src/components/movie/collection/MovieGrid.tsx`
+
+    - [ ] **5.2.c Apply same fix to MovieCollectionGrid.tsx**
+        - Same pattern as MovieGrid
+        - File: `frontend/src/components/movie/collection/MovieCollectionGrid.tsx`
+
+    - [ ] **5.2.d Run frontend tests and quality gates**
+        - Tests: All 507+ tests pass
+        - Linting: 0 violations
+        - Type checking: 0 errors
+
+    - [ ] **5.2.e Manual browser verification**
+        - Navigate: page 1 → page 2 → back to page 1
+        - Verify: Page 1 shows same movies as first visit
+        - Test with filters active (Animation + Family)
+
+- [ ] **5.3 Document Phase 3.7 dependency for full backward navigation**
+
+    **Context:** The 5.2 fix handles page 1. For pages 2+ backward navigation to show consistent results,
+    `pagination-buffer-tracking` Phase 3.7 (URL metadata persistence) is required.
+
+    - [ ] **5.3.a Update pagination-buffer-tracking Phase 3.7 context**
+        - Add prerequisite note: Phase 4 of buffer-dedup complete
+        - Document that Phase 3.7 enables backward nav to pages 2+
+        - Cross-reference this bug fix (Phase 5.2)
         - File: `.arc/active/incidental/tasks-pagination-buffer-tracking.md`
 
-    - [ ] **5.1.b Verify no code conflicts**
-        - Phase 3.7 handles URL params (`tmdb_page_start`)
-        - Our Phase 4 handles session state (returned movie IDs)
-        - Confirm independent operation (no overlap)
+    - [ ] **5.3.b Update success criteria in this task list**
+        - Note: Page 1 backward nav fixed by Phase 5.2
+        - Note: Pages 2+ backward nav requires Phase 3.7 in pagination-buffer-tracking
+        - Ensure expectations are correctly scoped
 
 ### **Phase 6:** Final Cleanup, Quality Gates, and Manual Verification
 
@@ -486,14 +543,15 @@ which depends on our cross-page deduplication being complete.
 ## Success Criteria
 
 - [x] Within-page deduplication working (Phase 1-2 complete)
-- [ ] Cross-page deduplication working (no duplicates across pagination sequence)
-- [ ] Backward navigation consistent (page 1 results same after page 2 → page 1)
+- [x] Cross-page deduplication working (Phase 4 complete - no duplicates across forward pagination)
+- [ ] Backward navigation to page 1 consistent (Phase 5.2 - page 1 results same after page 2 → page 1)
+- [ ] Backward navigation to pages 2+ documented as requiring Phase 3.7 (URL metadata persistence)
 - [ ] Filter changes reset session (new filters = new pagination sequence)
 - [ ] All pages consistently show 20 results (no incomplete pages)
 - [ ] Session tracking graceful degradation (works without Redis, logs warning)
-- [ ] 100% test pass rate (backend + frontend, 40+ backend, 453 frontend)
+- [ ] 100% test pass rate (backend 611+, frontend 507+)
 - [ ] Zero linting violations, zero type errors
-- [ ] Coordination documented with pagination-buffer-tracking Phase 3.7
+- [ ] Cross-task coordination documented (Phase 5.1 audit complete)
 - [ ] All quality gates pass
 - [ ] Ready to resume navigation work at Task 3.3
 

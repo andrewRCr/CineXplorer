@@ -266,43 +266,79 @@ analysis and solution options.
 
 - [ ] **4.2 Integrate session tracking into buffer logic**
 
-    **Location:** `backend/apps/movie/services/movie_service.py`
+    **Scope:** Includes preparatory refactoring for clean, maintainable integration.
+    Refactor first (Part 1), then integrate (Part 2), then verify (Part 3).
 
-    - [ ] **4.2.a Extract session ID and context ID from request**
-        - Get session ID: `request.session.session_key` (Django auto-creates for anonymous users)
-        - Get context ID: `request.headers.get("X-Pagination-Context", "")` (optional header)
-        - Pass both to `PaginationSessionManager` constructor
-        - **Note:** May need to ensure session is created for anonymous users (`request.session.create()`)
-        - ~10 lines in API layer
+    **Part 1: Preparatory Refactoring (no behavior change)**
 
-    - [ ] **4.2.b Import and instantiate session manager per request**
-        - Add import: `from .pagination_session_manager import PaginationSessionManager`
-        - Create instance with session_id and context_id in endpoint methods
-        - Pass to service layer methods that need it
+    - [x] **4.2.a Rename PaginationSessionManager → DeduplicationTracker**
+        - Renamed class, file, and test file
+        - Updated imports and module path for patching
+        - All 25 tests pass, linting clean, type check clean
+
+    - [ ] **4.2.b Create SearchParams model**
+        - Location: `services/api_boundary/search_params.py` (new file)
+        - Fields: `query: str`, `year_min`, `year_max`, `rating_min`, `rating_max`
+        - Satisfies `HashableParams` Protocol (Pydantic BaseModel with `model_dump()`)
+        - Export from `api_boundary/__init__.py`
+        - ~30 lines new
+
+    - [ ] **4.2.c Refactor pipeline: separate response building**
+        - Extract from `pipelines/paginated.py` to `pipelines/response_builder.py` (new file):
+            - `convert_schema_to_tmdb_movie()`
+            - `build_filtered_response()`
+        - Update imports in `paginated.py`
+        - No behavior change, just file organization
+        - ~80 lines moved, ~10 lines import changes
+
+    - [ ] **4.2.d Refactor pipeline: accept params objects directly**
+        - Update `apply_buffer_if_needed()` signature:
+            - Remove individual params: `year_min`, `year_max`, `rating_min`, `rating_max`, `min_vote_count`, `language_filter`
+            - Add: `params: ServiceParams | SearchParams`
+            - Extract filter values from params inside function
+        - Update `fetch_with_filters_and_buffer()` similarly
+        - Update callers in `movie_service.py`
+        - ~50 lines modified
+        - **Run tests after this subtask** - behavior must be unchanged
+
+    **Part 2: Session Tracking Integration**
+
+    - [ ] **4.2.e Thread DeduplicationTracker through layers**
+        - **API layer** (`api.py`):
+            - Import `DeduplicationTracker`
+            - Handle anonymous sessions: `if not request.session.session_key: request.session.create()`
+            - Create tracker with `session_id` + `context_id` (from `X-Pagination-Context` header)
+            - Pass tracker to service methods
+        - **Service layer** (`movie_service.py`):
+            - Add `dedup_tracker: DeduplicationTracker | None = None` to: `discover_movies()`,
+              `search_movies()`, `get_now_playing_movies()`, `get_upcoming_movies()`
+            - Pass tracker to `fetch_with_filters_and_buffer()`
+        - **Pipeline layer** (`pipelines/paginated.py`):
+            - Add `dedup_tracker` parameter to `fetch_with_filters_and_buffer()` and `apply_buffer_if_needed()`
+        - ~40 lines across 3 files
+
+    - [ ] **4.2.f Update apply_buffer_if_needed() for session tracking**
+        - At start: `session_ids = dedup_tracker.get_returned_ids(params) if dedup_tracker else set()`
+        - Initialize `seen_ids` with `session_ids` (combines with within-page dedup)
+        - After building results: `dedup_tracker.add_returned_ids(params, new_ids)` for IDs not in session_ids
+        - ~15 lines added
+
+    - [ ] **4.2.g Implement page=1 session clearing**
+        - In `fetch_with_filters_and_buffer()`: if `page == 1`, call `dedup_tracker.clear_session(params)`
+        - Ensures backward navigation gets fresh results
+        - ~5 lines added
+
+    - [ ] **4.2.h Update search_movies() to use SearchParams**
+        - Update `movie_service.py` `search_movies()` signature to accept `SearchParams`
+        - Update `api.py` `search_movies()` to create `SearchParams` and pass to service
         - ~15 lines modified
 
-    - [ ] **4.2.c Update `_apply_buffer_if_needed` to use session tracking**
-        - Accept `session_manager` and `filters` parameters
-        - Call `session_manager.get_returned_ids(filters)` at start
-        - Add session IDs to `seen_ids` set (combine with within-page dedup)
-        - After building results, call `session_manager.add_returned_ids(filters, returned_ids)`
-        - ~20 lines modified
+    **Part 3: Verification**
 
-    - [ ] **4.2.d Thread filter context through endpoint methods**
-        - Update `discover_movies()`, `search_movies()`, etc. to build filter dict
-        - Include search query (`q`) in filter dict for search endpoints
-        - Pass session_manager and filter dict to `_apply_buffer_if_needed()` calls
-        - ~30 lines modified across multiple methods
-
-    - [ ] **4.2.e Implement page=1 session clearing**
-        - In endpoint methods, check if `page == 1`
-        - If page=1, call `session_manager.clear_session(filters)` before buffer
-        - Ensures backward navigation gets fresh results
-        - ~10 lines added
-
-    - [ ] **4.2.f Run backend integration tests - should now PASS**
-        - All cross-page deduplication tests pass
-        - All existing within-page tests still pass
+    - [ ] **4.2.i Run backend tests - verify all pass**
+        - Existing tests pass (refactoring preserved behavior)
+        - Cross-page deduplication tests now PASS (feature complete)
+        - Command: `docker compose -f infrastructure/docker-compose.yml exec backend pytest apps/`
 
 - [ ] **4.3 Add frontend context ID generation (Issue #2 fix)**
 

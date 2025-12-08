@@ -14,6 +14,7 @@ from unittest.mock import Mock
 
 from core.tmdb_models.tmdb_responses import TMDBMovieBase, TMDBPaginatedMovieResponse
 from movie.schemas import MovieBaseSchema
+from movie.services.api_boundary import BrowseServiceParams
 from movie.services.pipelines.paginated import apply_buffer_if_needed
 from movie.tests.tmdb_test_builders import (
     create_paginated_tmdb_response,
@@ -104,10 +105,7 @@ def test_buffer_no_duplicates_returns_first_20() -> None:
         filtered_movies=filtered_movies,
         current_page=1,
         total_pages=5,
-        year_min=None,
-        year_max=None,
-        rating_min=None,
-        rating_max=None,
+        params=BrowseServiceParams(),
         fetch_next_page_func=mock_fetch,
     )
 
@@ -168,10 +166,7 @@ def test_buffer_with_one_duplicate_fetches_additional_page() -> None:
         filtered_movies=filtered_movies,
         current_page=1,
         total_pages=5,
-        year_min=None,
-        year_max=None,
-        rating_min=None,
-        rating_max=None,
+        params=BrowseServiceParams(),
         fetch_next_page_func=mock_fetch,
     )
 
@@ -257,10 +252,7 @@ def test_buffer_with_multiple_duplicates_continues_until_20_unique() -> None:
         filtered_movies=filtered_movies,
         current_page=1,
         total_pages=5,
-        year_min=None,
-        year_max=None,
-        rating_min=None,
-        rating_max=None,
+        params=BrowseServiceParams(),
         fetch_next_page_func=mock_fetch,
     )
 
@@ -332,10 +324,7 @@ def test_buffer_respects_max_buffer_pages_limit() -> None:
         filtered_movies=filtered_movies,
         current_page=1,
         total_pages=10,
-        year_min=None,
-        year_max=None,
-        rating_min=None,
-        rating_max=None,
+        params=BrowseServiceParams(),
         fetch_next_page_func=mock_fetch,
     )
 
@@ -410,10 +399,7 @@ def test_buffer_deduplication_preserves_first_occurrence_order() -> None:
         filtered_movies=filtered_movies,
         current_page=1,
         total_pages=5,
-        year_min=None,
-        year_max=None,
-        rating_min=None,
-        rating_max=None,
+        params=BrowseServiceParams(),
         fetch_next_page_func=mock_fetch,
     )
 
@@ -486,10 +472,7 @@ def test_buffer_empty_results_after_deduplication() -> None:
         filtered_movies=filtered_movies,
         current_page=1,
         total_pages=5,
-        year_min=None,
-        year_max=None,
-        rating_min=None,
-        rating_max=None,
+        params=BrowseServiceParams(),
         fetch_next_page_func=mock_fetch,
     )
 
@@ -561,10 +544,7 @@ def test_buffer_deduplication_with_filters_applied_to_buffer_pages() -> None:
         filtered_movies=filtered_movies,
         current_page=1,
         total_pages=5,
-        year_min=2020,
-        year_max=2024,
-        rating_min=None,
-        rating_max=None,
+        params=BrowseServiceParams(year_min=2020, year_max=2024),
         fetch_next_page_func=mock_fetch,
     )
 

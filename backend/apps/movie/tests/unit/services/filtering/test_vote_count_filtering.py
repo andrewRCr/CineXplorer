@@ -14,12 +14,12 @@ from __future__ import annotations
 from unittest.mock import Mock
 
 from core.services.api_response import ApiResponse
+from movie.services.api_boundary import BrowseServiceParams
 from movie.services.data_quality.policy import (
     MODERATE_VOTE_THRESHOLD,
     STRICT_VOTE_THRESHOLD,
 )
 from movie.services.movie_service import MovieService
-from movie.services.tmdb_api_boundary.query_params import BrowseServiceParams
 from movie.tests.test_helpers import create_mock_paginated_response
 from movie.tests.tmdb_test_builders import (
     TMDBMovieBaseRawDict,

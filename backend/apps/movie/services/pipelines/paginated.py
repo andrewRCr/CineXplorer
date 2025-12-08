@@ -13,9 +13,9 @@ from typing import TYPE_CHECKING
 from core.tmdb_models.tmdb_responses import TMDBMovieBase, TMDBPaginatedMovieResponse
 
 from ...schemas import MovieBaseSchema, PaginatedMovieResponseSchema
+from ..api_boundary import BrowseServiceParams, SearchServiceParams
 from ..data_quality.filters import apply_data_quality_filters
-from ..data_quality.policy import VOTE_COUNT_THRESHOLD
-from ..tmdb_api_boundary.response_factories import create_paginated_movie_response_from_tmdb
+from .response_builder import build_filtered_response
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -24,93 +24,12 @@ if TYPE_CHECKING:
 logger = logging.getLogger('cinexplorer.tmdb')
 
 
-def convert_schema_to_tmdb_movie(schema: MovieBaseSchema) -> TMDBMovieBase:
-    """Convert MovieBaseSchema back to TMDBMovieBase for TMDB response.
-
-    Args:
-        schema: MovieBaseSchema instance to convert
-
-    Returns:
-        TMDBMovieBase instance with properly mapped fields
-
-    Note:
-        Performs bidirectional schema conversion for response building.
-        Maps tmdb_id → id and converts date objects to strings.
-    """
-    movie_dict = schema.model_dump()
-    # Map tmdb_id → id
-    movie_dict['id'] = movie_dict.pop('tmdb_id')
-    # Convert date object to string if present
-    if movie_dict.get('release_date'):
-        movie_dict['release_date'] = movie_dict['release_date'].strftime('%Y-%m-%d')
-    return TMDBMovieBase.model_validate(movie_dict)
-
-
-def build_filtered_response(
-    movies: list[MovieBaseSchema],
-    page: int,
-    total_pages: int,
-    total_results: int,
-    next_tmdb_page_start: int | None = None
-) -> PaginatedMovieResponseSchema:
-    """Build a paginated movie response from filtered MovieBaseSchema list.
-
-    Handles the conversion from MovieBaseSchema back to TMDB format and
-    wraps it in a paginated response structure.
-
-    Args:
-        movies: Filtered list of MovieBaseSchema objects
-        page: Current page number
-        total_pages: Total pages available
-        total_results: Total results available (from original TMDB response)
-        next_tmdb_page_start: Next TMDB page to fetch for pagination continuation
-            (smart buffer tracking to prevent duplicates)
-
-    Returns:
-        PaginatedMovieResponseSchema with converted movie data
-
-    Note:
-        This function encapsulates the common pattern of:
-        1. Converting MovieBaseSchema → TMDBMovieBase
-        2. Creating TMDBPaginatedMovieResponse
-        3. Converting to PaginatedMovieResponseSchema
-
-        The total_results preserves the original TMDB count, even though
-        the results array may be smaller due to backend filtering (completeness,
-        year, rating filters). This maintains accurate pagination display.
-    """
-    # Convert MovieBaseSchema back to TMDBMovieBase
-    tmdb_movies = [convert_schema_to_tmdb_movie(m) for m in movies]
-
-    # Create TMDB response structure
-    filtered_response = TMDBPaginatedMovieResponse(
-        page=page,
-        total_pages=total_pages,
-        total_results=total_results,
-        results=tmdb_movies
-    )
-
-    # Convert to application schema
-    response = create_paginated_movie_response_from_tmdb(filtered_response.model_dump())
-
-    # Include pagination metadata if provided
-    if next_tmdb_page_start is not None:
-        response.next_tmdb_page_start = next_tmdb_page_start
-
-    return response
-
-
 def apply_buffer_if_needed(
     filtered_movies: list[MovieBaseSchema],
     current_page: int,
     total_pages: int,
-    year_min: int | None,
-    year_max: int | None,
-    rating_min: float | None,
-    rating_max: float | None,
+    params: BrowseServiceParams | SearchServiceParams,
     fetch_next_page_func: Callable[[int], TMDBPaginatedMovieResponse],
-    min_vote_count: int | None = VOTE_COUNT_THRESHOLD,
-    language_filter: str | None = None,
 ) -> tuple[list[MovieBaseSchema], int]:
     """Apply smart buffer mechanism to maintain consistent page sizes.
 
@@ -127,15 +46,8 @@ def apply_buffer_if_needed(
         filtered_movies: Movies from current page after filtering
         current_page: Current page number
         total_pages: Total pages available
-        year_min: Year filter (passed to buffer page)
-        year_max: Year filter (passed to buffer page)
-        rating_min: Rating filter (passed to buffer page)
-        rating_max: Rating filter (passed to buffer page)
+        params: Service params with filter values (BrowseServiceParams or SearchServiceParams)
         fetch_next_page_func: Function to fetch next page (takes page number)
-        min_vote_count: Minimum vote count threshold (passed to buffer page).
-            Default: VOTE_COUNT_THRESHOLD (3 - moderate tier)
-        language_filter: Language code user filtered by (e.g., "en"). Used to detect
-            mislabeled content where original_title script doesn't match language.
 
     Returns:
         Tuple of (movies, pages_consumed) where:
@@ -146,6 +58,15 @@ def apply_buffer_if_needed(
         Deduplication by tmdb_id ensures no duplicates across page boundaries.
         Blacklist filtering is handled by apply_data_quality_filters().
     """
+    # Extract filter values from params
+    # BrowseServiceParams has min_vote_count and language; SearchServiceParams doesn't
+    year_min = params.year_min
+    year_max = params.year_max
+    rating_min = params.rating_min
+    rating_max = params.rating_max
+    min_vote_count = getattr(params, 'min_vote_count', None)
+    language_filter = getattr(params, 'language', None)
+
     # Full page achieved - return first 20 with page count = 1
     if len(filtered_movies) >= 20:
         return (filtered_movies[:20], 1)
@@ -198,14 +119,8 @@ def apply_buffer_if_needed(
 def fetch_with_filters_and_buffer(
     fetch_page_func: Callable[[int], TMDBPaginatedMovieResponse],
     page: int,
-    year_min: int | None,
-    year_max: int | None,
-    rating_min: float | None,
-    rating_max: float | None,
+    params: BrowseServiceParams | SearchServiceParams,
     pre_filter_func: Callable[[list[TMDBMovieBase]], list[TMDBMovieBase]] | None = None,
-    tmdb_page_start: int | None = None,
-    min_vote_count: int | None = VOTE_COUNT_THRESHOLD,
-    language_filter: str | None = None,
 ) -> PaginatedMovieResponseSchema:
     """Template function for paginated fetch-filter-buffer workflow.
 
@@ -224,20 +139,13 @@ def fetch_with_filters_and_buffer(
         fetch_page_func: Function to fetch a specific page (takes page_num: int)
             Returns TMDBPaginatedMovieResponse
         page: Current page number
-        year_min: Minimum release year (inclusive), backend filtered (second-pass data hygiene)
-        year_max: Maximum release year (inclusive), backend filtered (second-pass data hygiene)
-        rating_min: Minimum rating (inclusive), backend filtered (second-pass data hygiene)
-        rating_max: Maximum rating (inclusive), backend filtered (second-pass data hygiene)
+        params: Service params with filter values (BrowseServiceParams or SearchServiceParams).
+            Extracts: year_min/max, rating_min/max from both types.
+            BrowseServiceParams also: tmdb_page_start, min_vote_count, language.
+            SearchServiceParams also: query.
         pre_filter_func: Optional pre-filter function (e.g., non-visual filtering)
             Takes list[TMDBMovieBase], returns list[TMDBMovieBase]
             Applied BEFORE year/rating filters
-        tmdb_page_start: Starting TMDB page for smart buffer continuation.
-            If provided, overrides `page` for TMDB fetching
-            (enables metadata-driven pagination)
-        min_vote_count: Minimum vote count threshold. None to skip vote filtering.
-            Default: VOTE_COUNT_THRESHOLD (3 - moderate tier)
-        language_filter: Language code user filtered by (e.g., "en"). Used to detect
-            mislabeled content where original_title script doesn't match language.
 
     Returns:
         PaginatedMovieResponseSchema with filtered and buffered results, including
@@ -247,6 +155,16 @@ def fetch_with_filters_and_buffer(
         Template method pattern: invariant workflow with variant behavior
         injection via fetch_page_func and pre_filter_func.
     """
+    # Extract filter values from params
+    # BrowseServiceParams has tmdb_page_start, min_vote_count, language; Search doesn't
+    year_min = params.year_min
+    year_max = params.year_max
+    rating_min = params.rating_min
+    rating_max = params.rating_max
+    tmdb_page_start = getattr(params, 'tmdb_page_start', None)
+    min_vote_count = getattr(params, 'min_vote_count', None)
+    language_filter = getattr(params, 'language', None)
+
     # Step 1: Fetch initial page (use tmdb_page_start if provided, otherwise use page)
     effective_page = tmdb_page_start if tmdb_page_start is not None else page
     tmdb_response = fetch_page_func(effective_page)
@@ -299,13 +217,8 @@ def fetch_with_filters_and_buffer(
         filtered_movies,
         effective_page,
         tmdb_response.total_pages,
-        year_min,
-        year_max,
-        rating_min,
-        rating_max,
+        params,
         buffer_fetch_func,
-        min_vote_count,
-        language_filter
     )
 
     # Step 6: Calculate next TMDB page start for pagination continuation

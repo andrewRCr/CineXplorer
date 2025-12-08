@@ -27,10 +27,11 @@ from ..schemas import (
     MovieDetailSchema,
     PaginatedMovieResponseSchema,
 )
+from .api_boundary import BrowseServiceParams, SearchServiceParams
 from .base_service import BaseTMDBService
 from .data_quality.policy import VoteCountPolicy
 from .pipelines.paginated import fetch_with_filters_and_buffer
-from .tmdb_api_boundary.query_params import BrowseServiceParams, build_tmdb_params
+from .tmdb_api_boundary.query_params import build_tmdb_params
 from .tmdb_api_boundary.response_factories import (
     create_genre_list_from_tmdb,
     create_movie_detail_from_tmdb,
@@ -126,12 +127,11 @@ class MovieService(BaseTMDBService):
         if params is None:
             params = BrowseServiceParams()
 
-        # Extract backend filtering params
+        # Extract backend filtering params (used for TMDB API first-pass and logging)
         year_min = params.year_min
         year_max = params.year_max
         rating_min = params.rating_min
         rating_max = params.rating_max
-        tmdb_page_start = params.tmdb_page_start
         min_vote_count = params.min_vote_count  # None = disabled, int = threshold
 
         logger.debug(
@@ -168,13 +168,7 @@ class MovieService(BaseTMDBService):
         return fetch_with_filters_and_buffer(
             fetch_discover_page,
             page,
-            year_min,
-            year_max,
-            rating_min,
-            rating_max,
-            tmdb_page_start=tmdb_page_start,
-            min_vote_count=min_vote_count,
-            language_filter=params.language,
+            params,
         )
 
     def get_now_playing_movies(
@@ -338,17 +332,22 @@ class MovieService(BaseTMDBService):
             )
             return validate_tmdb_paginated_response(page_response, TMDBPaginatedMovieResponse)
 
+        # Create SearchServiceParams for pipeline
         # Search bypasses vote count filter - user searched for it, show it
         # (VoteCountPolicy: search endpoint always bypasses)
+        params = SearchServiceParams(
+            query=query,
+            year_min=year_min,
+            year_max=year_max,
+            rating_min=rating_min,
+            rating_max=rating_max,
+        )
+
         return fetch_with_filters_and_buffer(
             fetch_search_page,
             page,
-            year_min,
-            year_max,
-            rating_min,
-            rating_max,
+            params,
             pre_filter_func=self._filter_non_visual_content,
-            min_vote_count=None,  # Bypass for search
         )
 
     # ========================================================================

@@ -42,10 +42,11 @@ Parameter Flow Reference (HTTP → BrowseServiceParams → TMDB API):
 
 from __future__ import annotations
 
-from ..api_boundary.browse_service_params import BrowseServiceParams
 from ..data_quality.policy import VOTE_COUNT_THRESHOLD
 
-__all__ = ["NUMERIC_PARAMS", "PARAM_MAPPING", "BrowseServiceParams", "build_tmdb_params"]
+# Note: BrowseServiceParams imported here for internal use only.
+# External code should import from .api_boundary (canonical source).
+__all__ = ["NUMERIC_PARAMS", "PARAM_MAPPING", "build_tmdb_params"]
 
 # Parameter mapping: service parameter names (dot notation) → TMDB API parameter names
 # Single source of truth for BrowseServiceParams → TMDB API param transformations.

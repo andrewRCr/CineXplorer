@@ -1,4 +1,4 @@
-"""PaginationSessionManager - Session-based cross-page deduplication via Redis.
+"""DeduplicationTracker - Session-based cross-page deduplication via Redis.
 
 This module provides session-scoped tracking of returned movie IDs to prevent
 duplicates across pagination boundaries. Uses atomic Redis SET operations for
@@ -45,7 +45,7 @@ class HashableParams(Protocol):
     """Protocol for params that can be hashed for cache key generation.
 
     Any Pydantic BaseModel satisfies this protocol automatically.
-    This allows PaginationSessionManager to work with ServiceParams,
+    This allows DeduplicationTracker to work with ServiceParams,
     SearchParams, or any future params type.
     """
 
@@ -58,35 +58,35 @@ CACHE_KEY_PREFIX = "pagination_session"
 SESSION_TTL_SECONDS = 3600  # 1 hour
 
 
-class PaginationSessionManager:
-    """Manages session-based pagination state for cross-page deduplication.
+class DeduplicationTracker:
+    """Tracks returned movie IDs for cross-page deduplication.
 
-    Tracks which movie IDs have been returned to a user's session to prevent
-    duplicates when paginating through TMDB results. Uses Redis SET operations
-    for thread-safe concurrent request handling.
+    Manages session-scoped state to prevent duplicate movies when paginating
+    through TMDB results. Uses Redis SET operations for thread-safe concurrent
+    request handling.
 
     Attributes:
         session_id: Django session key for user isolation
         context_id: Optional tab isolation ID from X-Pagination-Context header
 
     Example:
-        manager = PaginationSessionManager(
+        tracker = DeduplicationTracker(
             session_id=request.session.session_key,
             context_id=request.headers.get("X-Pagination-Context", "")
         )
 
         # Get previously returned IDs
-        seen_ids = manager.get_returned_ids(filters)
+        seen_ids = tracker.get_returned_ids(params)
 
         # After returning new movies, track them
-        manager.add_returned_ids(filters, [movie.tmdb_id for movie in results])
+        tracker.add_returned_ids(params, [movie.tmdb_id for movie in results])
 
         # On page 1, clear session for fresh start
-        manager.clear_session(filters)
+        tracker.clear_session(params)
     """
 
     def __init__(self, session_id: str, context_id: str = "") -> None:
-        """Initialize session manager.
+        """Initialize deduplication tracker.
 
         Args:
             session_id: Django session key (from request.session.session_key)

@@ -1,4 +1,4 @@
-"""Unit tests for PaginationSessionManager helper class.
+"""Unit tests for DeduplicationTracker helper class.
 
 Tests session-based cross-page deduplication via Redis cache:
 - Core functionality: get/add/clear returned IDs, TTL, graceful degradation
@@ -15,12 +15,11 @@ from __future__ import annotations
 from unittest.mock import MagicMock, patch
 
 import pytest
-
 from movie.services.api_boundary.service_params import ServiceParams
-from movie.services.pagination_session_manager import PaginationSessionManager
+from movie.services.deduplication_tracker import DeduplicationTracker
 
 # Module path for patching get_atomic_set_client
-GET_CLIENT_PATH = "movie.services.pagination_session_manager.get_atomic_set_client"
+GET_CLIENT_PATH = "movie.services.deduplication_tracker.get_atomic_set_client"
 
 
 # ============================================================================
@@ -84,7 +83,7 @@ class TestGetReturnedIds:
         mock_client.smembers.return_value = set()  # No cached data
 
         with patch(GET_CLIENT_PATH, return_value=mock_client):
-            manager = PaginationSessionManager(session_id="new_session")
+            manager = DeduplicationTracker(session_id="new_session")
             result = manager.get_returned_ids(sample_params)
 
         assert result == set()
@@ -105,7 +104,7 @@ class TestGetReturnedIds:
         mock_client.smembers.return_value = stored_ids
 
         with patch(GET_CLIENT_PATH, return_value=mock_client):
-            manager = PaginationSessionManager(session_id="existing_session")
+            manager = DeduplicationTracker(session_id="existing_session")
             result = manager.get_returned_ids(sample_params)
 
         assert result == stored_ids
@@ -128,7 +127,7 @@ class TestAddReturnedIds:
         new_ids = list(range(1, 21))  # [1, 2, ..., 20]
 
         with patch(GET_CLIENT_PATH, return_value=mock_client):
-            manager = PaginationSessionManager(session_id="test_session")
+            manager = DeduplicationTracker(session_id="test_session")
             manager.add_returned_ids(sample_params, new_ids)
 
         # Verify SADD was called with all IDs
@@ -154,7 +153,7 @@ class TestAddReturnedIds:
         new_ids = list(range(21, 41))  # [21, 22, ..., 40]
 
         with patch(GET_CLIENT_PATH, return_value=mock_client):
-            manager = PaginationSessionManager(session_id="test_session")
+            manager = DeduplicationTracker(session_id="test_session")
             manager.add_returned_ids(sample_params, new_ids)
 
         # Verify SADD was called (atomic add, no read required)
@@ -176,7 +175,7 @@ class TestAddReturnedIds:
         ids_with_dupes = [1, 2, 3, 1, 2, 3, 4, 5]
 
         with patch(GET_CLIENT_PATH, return_value=mock_client):
-            manager = PaginationSessionManager(session_id="test_session")
+            manager = DeduplicationTracker(session_id="test_session")
             manager.add_returned_ids(sample_params, ids_with_dupes)
 
         # SADD called - Redis handles dedup internally
@@ -197,7 +196,7 @@ class TestClearSession:
         Expected: Session state cleared via Redis DELETE.
         """
         with patch(GET_CLIENT_PATH, return_value=mock_client):
-            manager = PaginationSessionManager(session_id="test_session")
+            manager = DeduplicationTracker(session_id="test_session")
             manager.clear_session(sample_params)
 
         mock_client.delete.assert_called_once()
@@ -219,7 +218,7 @@ class TestSessionTTL:
         new_ids = [1, 2, 3]
 
         with patch(GET_CLIENT_PATH, return_value=mock_client):
-            manager = PaginationSessionManager(session_id="test_session")
+            manager = DeduplicationTracker(session_id="test_session")
             manager.add_returned_ids(sample_params, new_ids)
 
         # Verify EXPIRE was called with 3600 seconds
@@ -242,7 +241,7 @@ class TestGracefulDegradation:
         Expected: Return empty set, don't crash (within-page dedup still works).
         """
         with patch(GET_CLIENT_PATH, return_value=None):
-            manager = PaginationSessionManager(session_id="test_session")
+            manager = DeduplicationTracker(session_id="test_session")
             result = manager.get_returned_ids(sample_params)
 
         assert result == set()
@@ -257,7 +256,7 @@ class TestGracefulDegradation:
         Expected: Silently fail, don't crash (pagination continues without cross-page dedup).
         """
         with patch(GET_CLIENT_PATH, return_value=None):
-            manager = PaginationSessionManager(session_id="test_session")
+            manager = DeduplicationTracker(session_id="test_session")
             # Should not raise exception
             manager.add_returned_ids(sample_params, [1, 2, 3])
 
@@ -271,7 +270,7 @@ class TestGracefulDegradation:
         Expected: Silently fail, don't crash.
         """
         with patch(GET_CLIENT_PATH, return_value=None):
-            manager = PaginationSessionManager(session_id="test_session")
+            manager = DeduplicationTracker(session_id="test_session")
             # Should not raise exception
             manager.clear_session(sample_params)
 
@@ -304,11 +303,11 @@ class TestSessionScoping:
 
         with patch(GET_CLIENT_PATH, return_value=mock_client):
             # User 1
-            manager1 = PaginationSessionManager(session_id="user1_session_abc")
+            manager1 = DeduplicationTracker(session_id="user1_session_abc")
             manager1.add_returned_ids(sample_params, [1, 2, 3])
 
             # User 2
-            manager2 = PaginationSessionManager(session_id="user2_session_xyz")
+            manager2 = DeduplicationTracker(session_id="user2_session_xyz")
             manager2.add_returned_ids(sample_params, [4, 5, 6])
 
         assert len(cache_keys_used) == 2
@@ -333,7 +332,7 @@ class TestSessionScoping:
         mock_client.smembers.side_effect = capture_key_smembers
 
         with patch(GET_CLIENT_PATH, return_value=mock_client):
-            manager = PaginationSessionManager(session_id="same_session")
+            manager = DeduplicationTracker(session_id="same_session")
             manager.get_returned_ids(sample_params)
             manager.get_returned_ids(sample_params)
             manager.get_returned_ids(sample_params)
@@ -362,7 +361,7 @@ class TestSessionScoping:
         mock_client.sadd.side_effect = capture_key
 
         with patch(GET_CLIENT_PATH, return_value=mock_client):
-            manager = PaginationSessionManager(session_id="same_session")
+            manager = DeduplicationTracker(session_id="same_session")
             manager.add_returned_ids(params1, [1, 2, 3])
             manager.add_returned_ids(params2, [4, 5, 6])
 
@@ -398,13 +397,13 @@ class TestContextIdIsolation:
 
         with patch(GET_CLIENT_PATH, return_value=mock_client):
             # Tab 1
-            manager1 = PaginationSessionManager(
+            manager1 = DeduplicationTracker(
                 session_id="user_session", context_id="tab1_uuid"
             )
             manager1.add_returned_ids(sample_params, [1, 2, 3])
 
             # Tab 2
-            manager2 = PaginationSessionManager(
+            manager2 = DeduplicationTracker(
                 session_id="user_session", context_id="tab2_uuid"
             )
             manager2.add_returned_ids(sample_params, [4, 5, 6])
@@ -431,7 +430,7 @@ class TestContextIdIsolation:
         mock_client.smembers.side_effect = capture_key_smembers
 
         with patch(GET_CLIENT_PATH, return_value=mock_client):
-            manager = PaginationSessionManager(
+            manager = DeduplicationTracker(
                 session_id="user_session", context_id="tab1"
             )
             manager.get_returned_ids(sample_params)
@@ -459,12 +458,12 @@ class TestContextIdIsolation:
         mock_client.sadd.side_effect = capture_key
 
         with patch(GET_CLIENT_PATH, return_value=mock_client):
-            manager1 = PaginationSessionManager(
+            manager1 = DeduplicationTracker(
                 session_id="same_session", context_id="context_A"
             )
             manager1.add_returned_ids(sample_params, [1, 2, 3])
 
-            manager2 = PaginationSessionManager(
+            manager2 = DeduplicationTracker(
                 session_id="same_session", context_id="context_B"
             )
             manager2.add_returned_ids(sample_params, [4, 5, 6])
@@ -485,7 +484,7 @@ class TestContextIdIsolation:
 
         with patch(GET_CLIENT_PATH, return_value=mock_client):
             # No context_id provided (defaults to empty string)
-            manager = PaginationSessionManager(session_id="test_session")
+            manager = DeduplicationTracker(session_id="test_session")
             result = manager.get_returned_ids(sample_params)
 
         assert result == set()
@@ -511,11 +510,11 @@ class TestContextIdIsolation:
 
         with patch(GET_CLIENT_PATH, return_value=mock_client):
             # Without context_id (default)
-            manager1 = PaginationSessionManager(session_id="test_session")
+            manager1 = DeduplicationTracker(session_id="test_session")
             manager1.get_returned_ids(sample_params)
 
             # With explicit empty context_id
-            manager2 = PaginationSessionManager(session_id="test_session", context_id="")
+            manager2 = DeduplicationTracker(session_id="test_session", context_id="")
             manager2.get_returned_ids(sample_params)
 
         assert cache_keys_used[0] == cache_keys_used[1]
@@ -550,7 +549,7 @@ class TestParamsHash:
         mock_client.smembers.side_effect = capture_key_smembers
 
         with patch(GET_CLIENT_PATH, return_value=mock_client):
-            manager = PaginationSessionManager(session_id="test_session")
+            manager = DeduplicationTracker(session_id="test_session")
             manager.get_returned_ids(params1)
             manager.get_returned_ids(params2)
 
@@ -578,7 +577,7 @@ class TestParamsHash:
         mock_client.smembers.side_effect = capture_key_smembers
 
         with patch(GET_CLIENT_PATH, return_value=mock_client):
-            manager = PaginationSessionManager(session_id="test_session")
+            manager = DeduplicationTracker(session_id="test_session")
             manager.get_returned_ids(params1)
             manager.get_returned_ids(params2)
             manager.get_returned_ids(params3)
@@ -608,7 +607,7 @@ class TestParamsHash:
         mock_client.smembers.side_effect = capture_key_smembers
 
         with patch(GET_CLIENT_PATH, return_value=mock_client):
-            manager = PaginationSessionManager(session_id="test_session")
+            manager = DeduplicationTracker(session_id="test_session")
             manager.get_returned_ids(params_minimal)
             manager.get_returned_ids(params_explicit_none)
 
@@ -647,7 +646,7 @@ class TestAtomicRedisOperations:
         mock_client.expire.return_value = True
 
         with patch(GET_CLIENT_PATH, return_value=mock_client):
-            manager = PaginationSessionManager(session_id="test_session")
+            manager = DeduplicationTracker(session_id="test_session")
             manager.add_returned_ids(sample_params, [1, 2, 3])
 
         # Verify SADD was called (atomic operation)
@@ -676,7 +675,7 @@ class TestAtomicRedisOperations:
         mock_client.smembers.return_value = {1, 2, 3}
 
         with patch(GET_CLIENT_PATH, return_value=mock_client):
-            manager = PaginationSessionManager(session_id="test_session")
+            manager = DeduplicationTracker(session_id="test_session")
             result = manager.get_returned_ids(sample_params)
 
         # Verify SMEMBERS was called
@@ -698,7 +697,7 @@ class TestAtomicRedisOperations:
         mock_client.delete.return_value = True  # Key existed and was deleted
 
         with patch(GET_CLIENT_PATH, return_value=mock_client):
-            manager = PaginationSessionManager(session_id="test_session")
+            manager = DeduplicationTracker(session_id="test_session")
             manager.clear_session(sample_params)
 
         # Verify DELETE was called
@@ -729,7 +728,7 @@ class TestAtomicRedisOperations:
         mock_client.expire.return_value = True
 
         with patch(GET_CLIENT_PATH, return_value=mock_client):
-            manager = PaginationSessionManager(session_id="test_session")
+            manager = DeduplicationTracker(session_id="test_session")
 
             # Simulate two "concurrent" requests adding different IDs
             manager.add_returned_ids(sample_params, [1, 2, 3, 4, 5])

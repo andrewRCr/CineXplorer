@@ -283,31 +283,24 @@ analysis and solution options.
         - Updated `HashableParams` docstring to reference `BrowseServiceParams`
         - All 603 tests pass, linting clean, type check clean (0 errors)
 
-    - [ ] **4.2.b Create SearchServiceParams model**
-        - Location: `services/api_boundary/search_service_params.py` (new file)
+    - [x] **4.2.b Create SearchServiceParams model**
+        - Created `services/api_boundary/search_service_params.py` (40 lines)
         - Fields: `query: str`, `year_min`, `year_max`, `rating_min`, `rating_max`
-        - Satisfies `HashableParams` Protocol (Pydantic BaseModel with `model_dump()`)
-        - Export from `api_boundary/__init__.py`
-        - Pattern parallel to `BrowseServiceParams` (frontend `SearchParams` backlogged separately)
-        - ~30 lines new
+        - Exported from `api_boundary/__init__.py`
 
-    - [ ] **4.2.c Refactor pipeline: separate response building**
-        - Extract from `pipelines/paginated.py` to `pipelines/response_builder.py` (new file):
-            - `convert_schema_to_tmdb_movie()`
-            - `build_filtered_response()`
-        - Update imports in `paginated.py`
-        - No behavior change, just file organization
-        - ~80 lines moved, ~10 lines import changes
+    - [x] **4.2.c Refactor pipeline: separate response building**
+        - Extracted `convert_schema_to_tmdb_movie()` and `build_filtered_response()` to
+          `pipelines/response_builder.py` (new file, 83 lines)
+        - Updated imports in `paginated.py`
 
-    - [ ] **4.2.d Refactor pipeline: accept params objects directly**
-        - Update `apply_buffer_if_needed()` signature:
-            - Remove individual params: `year_min`, `year_max`, `rating_min`, `rating_max`, `min_vote_count`, `language_filter`
-            - Add: `params: BrowseServiceParams | SearchServiceParams`
-            - Extract filter values from params inside function
-        - Update `fetch_with_filters_and_buffer()` similarly
-        - Update callers in `movie_service.py`
-        - ~50 lines modified
-        - **Run tests after this subtask** - behavior must be unchanged
+    - [x] **4.2.d Refactor pipeline: accept params objects directly**
+        - Updated `apply_buffer_if_needed()` and `fetch_with_filters_and_buffer()` signatures
+          to accept `params: BrowseServiceParams | SearchServiceParams` instead of individual args
+        - Uses `getattr()` for BrowseServiceParams-only fields (min_vote_count, language, tmdb_page_start)
+        - Updated callers: `discover_movies()` passes params directly, `search_movies()`
+          creates `SearchServiceParams` inline
+        - Updated 7 unit tests to use `BrowseServiceParams` constructor
+        - All 603 tests pass, linting clean, type check clean (0 errors)
 
     **Part 2: Session Tracking Integration**
 

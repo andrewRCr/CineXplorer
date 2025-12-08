@@ -19,6 +19,12 @@ Then **delete** the item from this file (no strikethrough clutter).
 
 ## Discovery & Search
 
+- **Search Results Filtering** - Add year/rating filters to search results page. Backend `search_movies()` already
+supports `year_min`, `year_max`, `rating_min`, `rating_max` parameters - frontend just doesn't expose them yet.
+Implementation notes: Create frontend `SearchParams` type (parallel to `BrowseParams`) for consistency with
+`SearchServiceParams` backend type. Could reuse existing filter components from browse. Priority: MEDIUM (improves
+search UX, backend support already exists)
+
 - **Global Search Expansion** - When people/keywords features are more fully implemented, revisit navbar search to
 support multiple entity types. Consider: movie/people toggle (radio, movie default), keyword search inclusion, or
 keeping it simple with just movie/people. Letterboxd's global search is bloated (podcasts?); we should be more

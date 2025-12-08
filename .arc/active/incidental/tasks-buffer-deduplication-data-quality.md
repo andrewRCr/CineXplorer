@@ -260,7 +260,7 @@ analysis and solution options.
             - `pagination_session_manager.py` (business logic): **0 type ignores**
             - No `Any`, no `cast()` - uses `object` and Protocol-based contracts
         - **Key design decisions:**
-            - Uses `HashableParams` Protocol (not ServiceParams directly) for future extensibility to search/trending
+            - Uses `HashableParams` Protocol for extensibility (BrowseServiceParams, SearchServiceParams, future types)
             - Leverages Pydantic boundary validation instead of internal TypeGuards
             - `model_dump(exclude_none=True)` for deterministic hash generation
 
@@ -276,11 +276,22 @@ analysis and solution options.
         - Updated imports and module path for patching
         - All 25 tests pass, linting clean, type check clean
 
-    - [ ] **4.2.b Create SearchParams model**
-        - Location: `services/api_boundary/search_params.py` (new file)
+    - [ ] **4.2.a2 Rename ServiceParams → BrowseServiceParams**
+        - Rename class: `ServiceParams` → `BrowseServiceParams`
+        - Rename file: `service_params.py` → `browse_service_params.py`
+        - Update all imports (~80+ usages across services, tests, helpers)
+        - Remove old re-export from `tmdb_api_boundary/query_params.py` (clean rename, no compat shim)
+        - **Rationale:** "browse" is our domain term, "discover" is TMDB's term (used only at boundary)
+        - All browse-family endpoints (browse, now-playing, upcoming) use this
+        - Pattern: backend `*ServiceParams`, frontend `*Params` (avoids collision with frontend `BrowseParams`)
+        - ~100 lines changed across ~20 files
+
+    - [ ] **4.2.b Create SearchServiceParams model**
+        - Location: `services/api_boundary/search_service_params.py` (new file)
         - Fields: `query: str`, `year_min`, `year_max`, `rating_min`, `rating_max`
         - Satisfies `HashableParams` Protocol (Pydantic BaseModel with `model_dump()`)
         - Export from `api_boundary/__init__.py`
+        - Pattern parallel to `BrowseServiceParams` (frontend `SearchParams` backlogged separately)
         - ~30 lines new
 
     - [ ] **4.2.c Refactor pipeline: separate response building**
@@ -294,7 +305,7 @@ analysis and solution options.
     - [ ] **4.2.d Refactor pipeline: accept params objects directly**
         - Update `apply_buffer_if_needed()` signature:
             - Remove individual params: `year_min`, `year_max`, `rating_min`, `rating_max`, `min_vote_count`, `language_filter`
-            - Add: `params: ServiceParams | SearchParams`
+            - Add: `params: BrowseServiceParams | SearchServiceParams`
             - Extract filter values from params inside function
         - Update `fetch_with_filters_and_buffer()` similarly
         - Update callers in `movie_service.py`
@@ -328,9 +339,9 @@ analysis and solution options.
         - Ensures backward navigation gets fresh results
         - ~5 lines added
 
-    - [ ] **4.2.h Update search_movies() to use SearchParams**
-        - Update `movie_service.py` `search_movies()` signature to accept `SearchParams`
-        - Update `api.py` `search_movies()` to create `SearchParams` and pass to service
+    - [ ] **4.2.h Update search_movies() to use SearchServiceParams**
+        - Update `movie_service.py` `search_movies()` signature to accept `SearchServiceParams`
+        - Update `api.py` `search_movies()` to create `SearchServiceParams` and pass to service
         - ~15 lines modified
 
     **Part 3: Verification**

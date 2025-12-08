@@ -62,6 +62,9 @@ def _create_dedup_tracker(request: HttpRequest) -> DeduplicationTracker:
     # Ensure session exists for anonymous users
     if not request.session.session_key:
         request.session.create()
+        # Mark session as modified to ensure it gets saved
+        # Django sessions are lazy - they only save if modified
+        request.session.modified = True
 
     session_id = request.session.session_key or ""
     context_id = request.headers.get("X-Pagination-Context", "")

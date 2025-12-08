@@ -14,12 +14,17 @@ App-specific fixtures should be defined in their respective conftest.py files.
     3. **Domain Fixtures**: `{app}/tests/conftest.py` (app-specific fixtures)
     4. **Domain Factories**: `{app}/tests/fixtures.py` (factory functions for test data)
 
-See: `.arc/reference/strategies/strategy-testing-methodology.md` for full architecture.
-
 Fixtures:
     - api_client: Django test client for API requests
     - user: Test user instance with standard credentials
     - auth_client: Authenticated Django test client
+    - transactional_api_client: Client with transactional DB for session persistence
+
+Note on `client` vs `api_client`:
+    pytest-django provides a built-in `client` fixture that returns `Client()`.
+    Our `api_client` fixture is identical but explicitly defined for clarity.
+    Some fixtures (like `transactional_api_client`) use the built-in `client`
+    to avoid circular dependencies while achieving the same result.
 
 Type Safety:
     All fixtures include full type annotations for Pyright strict mode.
@@ -116,3 +121,36 @@ def auth_client(api_client: Client, user: User) -> Client:
     # Force login with the test user
     api_client.force_login(user)  # type: ignore[arg-type]  # Django test client accepts AbstractBaseUser
     return api_client
+
+
+@pytest.fixture
+def transactional_api_client(client: Client, transactional_db: None) -> Client:
+    """
+    Provide Django test client with transactional database access.
+
+    Use this fixture when tests require session persistence across multiple
+    requests (e.g., cross-page deduplication tests). The transactional_db
+    fixture ensures database writes are committed between requests, allowing
+    SessionMiddleware to load sessions created in previous requests.
+
+    Without this fixture, sessions created via `request.session.create()` in
+    one request won't be visible to subsequent requests because pytest-django
+    wraps tests in transactions that aren't committed until test completion.
+
+    Args:
+        client: Django test client (built-in pytest-django fixture)
+        transactional_db: pytest-django fixture ensuring real transactions
+
+    Returns:
+        Django test client with transactional DB support
+
+    Example:
+        def test_session_persists(transactional_api_client):
+            response1 = transactional_api_client.get('/api/movies/?page=1')
+            # Session created and committed to DB
+
+            response2 = transactional_api_client.get('/api/movies/?page=2')
+            # SessionMiddleware loads session from previous request
+            # Cross-page deduplication now works correctly
+    """
+    return client

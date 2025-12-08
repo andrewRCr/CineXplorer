@@ -198,6 +198,8 @@ class DeduplicationTracker:
 
         Uses Pydantic's model_dump() for consistent serialization.
         Excludes None values to ensure params with same non-None values hash equally.
+        Excludes pagination-related fields (tmdb_page_start) so the same filter
+        combination shares a session across pages.
 
         Args:
             params: Service parameters to hash
@@ -208,6 +210,11 @@ class DeduplicationTracker:
         # model_dump with exclude_none ensures consistent hashing
         # sort_keys in json.dumps ensures key order independence
         params_dict = params.model_dump(exclude_none=True)
+
+        # Exclude pagination-related fields from hash - these don't affect
+        # which movies should be deduplicated, only which page we're on
+        params_dict.pop('tmdb_page_start', None)
+
         sorted_json = json.dumps(params_dict, sort_keys=True, separators=(',', ':'))
 
         # Generate short hash (8 chars is sufficient for uniqueness)

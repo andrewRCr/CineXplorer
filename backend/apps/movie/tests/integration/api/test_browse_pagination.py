@@ -22,6 +22,35 @@ BROWSE_URL = "/api/movies/browse"
 pytestmark = pytest.mark.django_db
 
 
+def create_buffer_pages(
+    start_id: int, start_page: int, num_pages: int = 5, movies_per_page: int = 20
+) -> list[dict]:
+    """Generate mock responses for buffer pages with unique IDs.
+
+    When deduplication filters movies, the buffer fetches additional pages.
+    This helper generates those pages to prevent StopIteration errors.
+
+    Args:
+        start_id: First movie ID to use
+        start_page: First page number
+        num_pages: Number of buffer pages to generate (default 5 = max buffer)
+        movies_per_page: Movies per page (default 20)
+
+    Returns:
+        List of mock paginated responses ready for side_effect
+    """
+    pages = []
+    current_id = start_id
+    for page_num in range(start_page, start_page + num_pages):
+        movies = [
+            create_tmdb_movie(current_id + i, f"Buffer Movie {current_id + i}", "2023-01-01", 8.0)
+            for i in range(movies_per_page)
+        ]
+        pages.append(create_mock_paginated_response(movies, page=page_num, total_pages=20))
+        current_id += movies_per_page
+    return pages
+
+
 @patch("core.services.tmdb_api_client.TMDBApiClient.get")
 def test_browse_returns_next_tmdb_page_start_after_buffer(
     mock_tmdb_get: Mock,
@@ -226,10 +255,6 @@ def test_browse_respects_max_buffer_pages_with_heavy_duplication(
     )
 
 
-@pytest.mark.xfail(
-    reason="Expected to fail until tasks-buffer-deduplication-data-quality complete - "
-    "TMDB API occasionally returns duplicates across page boundaries"
-)
 @patch("core.services.tmdb_api_client.TMDBApiClient.get")
 def test_browse_no_cross_page_duplicates(
     mock_tmdb_get: Mock,
@@ -399,9 +424,6 @@ def test_browse_backward_navigation_consistency(
 # ============================================================================
 
 
-@pytest.mark.xfail(
-    reason="Cross-page deduplication requires PaginationSessionManager implementation"
-)
 @patch("core.services.tmdb_api_client.TMDBApiClient.get")
 def test_page_1_stores_returned_ids_in_session(
     mock_tmdb_get: Mock,
@@ -421,8 +443,8 @@ def test_page_1_stores_returned_ids_in_session(
     ]
 
     # Page 2: IDs 1-5 (duplicates) + IDs 21-35 (new) = 20 total
-    # Without session tracking, page 2 would return IDs 1-5, 21-35
-    # With session tracking, page 2 should exclude 1-5 and fetch more
+    # With session tracking, the 5 duplicates are filtered, leaving 15 movies.
+    # Buffer will fetch page 3+ to reach 20.
     page_2_movies = [
         create_tmdb_movie(i, f"Movie {i}", "2023-01-01", 8.0)
         for i in list(range(1, 6)) + list(range(21, 36))  # 5 dupes + 15 new
@@ -431,6 +453,8 @@ def test_page_1_stores_returned_ids_in_session(
     mock_tmdb_get.side_effect = [
         create_mock_paginated_response(page_1_movies, page=1, total_pages=10),
         create_mock_paginated_response(page_2_movies, page=2, total_pages=10),
+        # Buffer pages for when deduplication removes the 5 duplicates
+        *create_buffer_pages(start_id=100, start_page=3, num_pages=3),
     ]
 
     # Request page 1
@@ -452,9 +476,6 @@ def test_page_1_stores_returned_ids_in_session(
     assert len(overlap) == 0, f"Page 2 contains IDs already shown on page 1: {overlap}"
 
 
-@pytest.mark.xfail(
-    reason="Cross-page deduplication requires PaginationSessionManager implementation"
-)
 @patch("core.services.tmdb_api_client.TMDBApiClient.get")
 def test_session_cleared_on_page_1_fresh_start(
     mock_tmdb_get: Mock,
@@ -493,10 +514,15 @@ def test_session_cleared_on_page_1_fresh_start(
         # First sequence: page 1 → page 2
         create_mock_paginated_response(page_1_movies, page=1, total_pages=10),
         create_mock_paginated_response(first_page_2_movies, page=2, total_pages=10),
+        # Buffer page for first page 2 (1 dup filtered = needs 1 more movie)
+        # Only provide 1 buffer page since that's all it needs
+        *create_buffer_pages(start_id=200, start_page=3, num_pages=1),
         # Fresh page 1 (clears session)
         create_mock_paginated_response(page_1_movies, page=1, total_pages=10),
         # New page 2 (should use fresh session state)
         create_mock_paginated_response(second_page_2_movies, page=2, total_pages=10),
+        # Buffer page for second page 2 (1 dup filtered = needs 1 more movie)
+        *create_buffer_pages(start_id=300, start_page=3, num_pages=1),
     ]
 
     # First sequence: page 1 → page 2
@@ -534,9 +560,6 @@ def test_session_cleared_on_page_1_fresh_start(
     assert len(overlap) == 0, f"Fresh sequence should have no cross-page duplicates: {overlap}"
 
 
-@pytest.mark.xfail(
-    reason="Cross-page deduplication requires PaginationSessionManager implementation"
-)
 @patch("core.services.tmdb_api_client.TMDBApiClient.get")
 def test_different_filter_combinations_use_different_sessions(
     mock_tmdb_get: Mock,
@@ -571,6 +594,8 @@ def test_different_filter_combinations_use_different_sessions(
         create_mock_paginated_response(animation_page_1, page=1, total_pages=10),
         create_mock_paginated_response(action_page_1, page=1, total_pages=10),
         create_mock_paginated_response(animation_page_2, page=2, total_pages=10),
+        # Buffer pages for animation page 2 (1 dup filtered)
+        *create_buffer_pages(start_id=200, start_page=3, num_pages=2),
     ]
 
     # Request Animation page 1
@@ -601,9 +626,6 @@ def test_different_filter_combinations_use_different_sessions(
 # ============================================================================
 
 
-@pytest.mark.xfail(
-    reason="Cross-page deduplication requires PaginationSessionManager implementation"
-)
 @patch("core.services.tmdb_api_client.TMDBApiClient.get")
 def test_different_pagination_context_headers_use_separate_sessions(
     mock_tmdb_get: Mock,
@@ -643,8 +665,12 @@ def test_different_pagination_context_headers_use_separate_sessions(
         create_mock_paginated_response(page_1_movies, page=1, total_pages=10),
         # Tab 1: page 2
         create_mock_paginated_response(tab1_page_2_movies, page=2, total_pages=10),
+        # Buffer pages for Tab 1 page 2 (1 dup filtered)
+        *create_buffer_pages(start_id=200, start_page=3, num_pages=2),
         # Tab 2: page 2
         create_mock_paginated_response(tab2_page_2_movies, page=2, total_pages=10),
+        # Buffer pages for Tab 2 page 2 (1 dup filtered)
+        *create_buffer_pages(start_id=300, start_page=3, num_pages=2),
     ]
 
     # Tab 1: page 1
@@ -688,9 +714,6 @@ def test_different_pagination_context_headers_use_separate_sessions(
     # The key test is that Tab 2 excluded based on its OWN page 1, not Tab 1's
 
 
-@pytest.mark.xfail(
-    reason="Cross-page deduplication requires PaginationSessionManager implementation"
-)
 @patch("core.services.tmdb_api_client.TMDBApiClient.get")
 def test_requests_without_context_header_work_backwards_compatible(
     mock_tmdb_get: Mock,
@@ -716,6 +739,8 @@ def test_requests_without_context_header_work_backwards_compatible(
     mock_tmdb_get.side_effect = [
         create_mock_paginated_response(page_1, page=1, total_pages=10),
         create_mock_paginated_response(page_2, page=2, total_pages=10),
+        # Buffer pages for page 2 (1 dup filtered)
+        *create_buffer_pages(start_id=200, start_page=3, num_pages=2),
     ]
 
     # Request WITHOUT X-Pagination-Context header
@@ -745,9 +770,6 @@ SEARCH_URL = "/api/movies/search"
 # filters generate different cache keys.
 
 
-@pytest.mark.xfail(
-    reason="Cross-page deduplication requires PaginationSessionManager implementation"
-)
 @patch("core.services.tmdb_api_client.TMDBApiClient.get")
 def test_search_pagination_deduplicates_across_pages(
     mock_tmdb_get: Mock,
@@ -773,6 +795,8 @@ def test_search_pagination_deduplicates_across_pages(
     mock_tmdb_get.side_effect = [
         create_mock_paginated_response(search_page_1, page=1, total_pages=10),
         create_mock_paginated_response(search_page_2, page=2, total_pages=10),
+        # Buffer pages for search page 2 (1 dup filtered)
+        *create_buffer_pages(start_id=200, start_page=3, num_pages=2),
     ]
 
     # Search page 1
@@ -803,9 +827,6 @@ def test_search_pagination_deduplicates_across_pages(
 # ============================================================================
 
 
-@pytest.mark.xfail(
-    reason="Cross-page deduplication requires PaginationSessionManager implementation"
-)
 @patch("core.services.tmdb_api_client.TMDBApiClient.get")
 @patch("django.core.cache.cache")
 def test_graceful_degradation_when_redis_unavailable(

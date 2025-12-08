@@ -264,7 +264,7 @@ analysis and solution options.
             - Leverages Pydantic boundary validation instead of internal TypeGuards
             - `model_dump(exclude_none=True)` for deterministic hash generation
 
-- [ ] **4.2 Integrate session tracking into buffer logic**
+- [x] **4.2 Integrate session tracking into buffer logic**
 
     **Scope:** Includes preparatory refactoring for clean, maintainable integration.
     Refactor first (Part 1), then integrate (Part 2), then verify (Part 3).
@@ -304,42 +304,30 @@ analysis and solution options.
 
     **Part 2: Session Tracking Integration**
 
-    - [ ] **4.2.e Thread DeduplicationTracker through layers**
-        - **API layer** (`api.py`):
-            - Import `DeduplicationTracker`
-            - Handle anonymous sessions: `if not request.session.session_key: request.session.create()`
-            - Create tracker with `session_id` + `context_id` (from `X-Pagination-Context` header)
-            - Pass tracker to service methods
-        - **Service layer** (`movie_service.py`):
-            - Add `dedup_tracker: DeduplicationTracker | None = None` to: `discover_movies()`,
-              `search_movies()`, `get_now_playing_movies()`, `get_upcoming_movies()`
-            - Pass tracker to `fetch_with_filters_and_buffer()`
-        - **Pipeline layer** (`pipelines/paginated.py`):
-            - Add `dedup_tracker` parameter to `fetch_with_filters_and_buffer()` and `apply_buffer_if_needed()`
-        - ~40 lines across 3 files
+    - [x] **4.2.e Thread DeduplicationTracker through layers**
+        - API layer (`api.py`): Added `_create_dedup_tracker()` helper, updated 4 endpoints
+        - Service layer (`movie_service.py`): Added `dedup_tracker` param to 4 methods
+        - Pipeline layer (`paginated.py`): Added `dedup_tracker` param to both functions
+        - Also updated 3 tests using old `search_movies()` signature
 
-    - [ ] **4.2.f Update apply_buffer_if_needed() for session tracking**
-        - At start: `session_ids = dedup_tracker.get_returned_ids(params) if dedup_tracker else set()`
-        - Initialize `seen_ids` with `session_ids` (combines with within-page dedup)
-        - After building results: `dedup_tracker.add_returned_ids(params, new_ids)` for IDs not in session_ids
-        - ~15 lines added
+    - [x] **4.2.f Update apply_buffer_if_needed() for session tracking**
+        - Gets session IDs at start, initializes `seen_ids` with session state
+        - Tracks new IDs returned after building final results
+        - Properly excludes session IDs from "new IDs" tracking
 
-    - [ ] **4.2.g Implement page=1 session clearing**
-        - In `fetch_with_filters_and_buffer()`: if `page == 1`, call `dedup_tracker.clear_session(params)`
-        - Ensures backward navigation gets fresh results
-        - ~5 lines added
+    - [x] **4.2.g Implement page=1 session clearing**
+        - Added clear_session() call at start of `fetch_with_filters_and_buffer()` when page==1
 
-    - [ ] **4.2.h Update search_movies() to use SearchServiceParams**
-        - Update `movie_service.py` `search_movies()` signature to accept `SearchServiceParams`
-        - Update `api.py` `search_movies()` to create `SearchServiceParams` and pass to service
-        - ~15 lines modified
+    - [x] **4.2.h Update search_movies() to use SearchServiceParams**
+        - Changed service signature from individual params to `SearchServiceParams`
+        - Updated API layer to create `SearchServiceParams` from HTTP params
 
     **Part 3: Verification**
 
-    - [ ] **4.2.i Run backend tests - verify all pass**
-        - Existing tests pass (refactoring preserved behavior)
-        - Cross-page deduplication tests now PASS (feature complete)
-        - Command: `docker compose -f infrastructure/docker-compose.yml exec backend pytest apps/`
+    - [x] **4.2.i Run backend tests - verify all pass**
+        - All 603 tests pass
+        - `test_graceful_degradation_when_redis_unavailable` now passes (was xfail)
+        - 7 xfails remain (expected - require frontend context ID for full verification)
 
 - [ ] **4.3 Add frontend context ID generation (Issue #2 fix)**
 
@@ -361,6 +349,14 @@ analysis and solution options.
     - [ ] **4.3.c Run frontend tests - should still PASS**
         - No behavioral change expected (context ID is additive)
         - Verify no regressions in existing functionality
+
+    - [ ] **4.3.d Remove xfail decorators from passing cross-page dedup tests**
+        - Run backend tests, identify which xfails now pass (xpassed)
+        - Remove `@pytest.mark.xfail` from passing tests
+        - Update xfail reasons for any that still fail (with clear explanation why)
+        - Verify all formerly-xfail tests now pass without decorator
+        - File: `backend/apps/movie/tests/integration/api/test_browse_pagination.py`
+        - **Known xpassed already:** `test_graceful_degradation_when_redis_unavailable`
 
 - [ ] **4.4 Run backend quality gates**
 

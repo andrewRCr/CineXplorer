@@ -329,34 +329,36 @@ analysis and solution options.
         - `test_graceful_degradation_when_redis_unavailable` now passes (was xfail)
         - 7 xfails remain (expected - require frontend context ID for full verification)
 
-- [ ] **4.3 Add frontend context ID generation (Issue #2 fix)**
+- [x] **4.3 Add frontend context ID generation (Issue #2 fix)**
 
     **Purpose:** Generate unique ID per page load for multi-tab isolation.
 
-    **Location:** `frontend/src/hooks/` or API service layer
+    - [x] **4.3.a Generate pagination context ID on page load**
+        - Created `paginationContext.ts` with `crypto.randomUUID()` at module init
+        - ID generated once per page load, stable for lifetime of page
+        - File: `frontend/src/services/paginationContext.ts`
 
-    - [ ] **4.3.a Generate pagination context ID on page load**
-        - Create UUID on initial render (use `useRef` to persist across re-renders)
-        - Store in ref, not state (doesn't need to trigger re-renders)
-        - Generate once per page load, stable across navigation within same tab
-        - ~10 lines
+    - [x] **4.3.b Add context ID to API requests**
+        - Added `X-Pagination-Context` header in apiClient request interceptor
+        - Header sent for movie endpoints: browse, now-playing, upcoming, search
+        - File: `frontend/src/services/apiClient.ts`
 
-    - [ ] **4.3.b Add context ID to API requests**
-        - Add `X-Pagination-Context` header to movie API calls
-        - Update `apiClient` or individual fetch calls in movie hooks
-        - ~15 lines modified
+    - [x] **4.3.c Run frontend tests - should still PASS**
+        - All 507 frontend tests pass
+        - Linting clean, type checking clean
 
-    - [ ] **4.3.c Run frontend tests - should still PASS**
-        - No behavioral change expected (context ID is additive)
-        - Verify no regressions in existing functionality
+    - [x] **4.3.d Remove xfail decorators from cross-page dedup tests**
+        - Removed all 8 xfail decorators from test_browse_pagination.py
+        - Tests now fail (expected) - need mock updates for buffer behavior
 
-    - [ ] **4.3.d Remove xfail decorators from passing cross-page dedup tests**
-        - Run backend tests, identify which xfails now pass (xpassed)
-        - Remove `@pytest.mark.xfail` from passing tests
-        - Update xfail reasons for any that still fail (with clear explanation why)
-        - Verify all formerly-xfail tests now pass without decorator
-        - File: `backend/apps/movie/tests/integration/api/test_browse_pagination.py`
-        - **Known xpassed already:** `test_graceful_degradation_when_redis_unavailable`
+    - [x] **4.3.e Update cross-page dedup tests for buffer behavior**
+        - Root cause: `tmdb_page_start` included in params hash caused different cache keys per page
+        - Fix: Exclude `tmdb_page_start` from hash in `deduplication_tracker.py:216`
+        - Added `create_buffer_pages` helper for generating mock buffer responses
+        - Updated 8 test mocks with buffer pages where deduplication triggers buffer fetches
+        - All 13 pagination tests now pass
+        - Files: `backend/apps/movie/services/deduplication_tracker.py`,
+          `backend/apps/movie/tests/integration/api/test_browse_pagination.py`
 
 - [ ] **4.4 Run backend quality gates**
 

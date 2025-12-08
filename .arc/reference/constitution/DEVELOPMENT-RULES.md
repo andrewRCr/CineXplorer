@@ -14,6 +14,9 @@ by all contributors, including AI assistants.
 - **AI CAN execute commits** when user explicitly approves/instructs it
 - **User approval required** for all git operations
 - **NEVER use `--no-verify`** to bypass commit hooks - hooks exist to catch errors
+- **Careful with file reverts**: Before running `git checkout -- <file>` or similar destructive operations,
+  check `git diff <file>` to understand ALL uncommitted changes. Your changes may not be the only ones in
+  that file - other tasks may have added uncommitted work that will be lost
 - **MANDATORY:** Comprehensive task context analysis before any commit consideration (see atomic-commit workflow)
 - **Task list accuracy required**: Before commit consideration, verify task documentation reflects completed work
   (parent task marked `[x]` if all subtasks complete)

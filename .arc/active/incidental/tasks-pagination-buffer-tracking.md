@@ -117,19 +117,19 @@ but pagination assumes 1:1 mapping between API pages and TMDB pages.
 ### **Phase 2:** Backend Implementation and Quality Gates
 
 - [x] **2.1 Implement buffer tracking and metadata flow**
-    - ✅ 2.1.1: Updated `_apply_buffer_if_needed` to return `tuple[list[MovieBaseSchema], int]`
+    - [x] 2.1.a: Updated `_apply_buffer_if_needed` to return `tuple[list[MovieBaseSchema], int]`
         - Returns `(movies, pages_consumed)` where pages_consumed includes initial page
         - Early returns: `(movies[:20], 1)` for full page or last page scenarios
         - Buffer loop: `total_pages_consumed = 1 + pages_fetched`
-    - ✅ 2.1.2: Threaded metadata through `_fetch_with_filters_and_buffer`
+    - [x] 2.1.b: Threaded metadata through `_fetch_with_filters_and_buffer`
         - Added `tmdb_page_start: int | None` parameter
         - Uses `effective_page = tmdb_page_start if tmdb_page_start is not None else page`
         - Calculates `next_tmdb_page_start = effective_page + pages_consumed`
         - Passes metadata to `_build_filtered_response`
-    - ✅ 2.1.3: Updated `_build_filtered_response` to include metadata
+    - [x] 2.1.c: Updated `_build_filtered_response` to include metadata
         - Added optional `next_tmdb_page_start: int | None` parameter (default=None)
         - Sets `response.next_tmdb_page_start` if metadata provided
-    - ✅ 2.1.4: Wired through `discover_movies` endpoint
+    - [x] 2.1.d: Wired through `discover_movies` endpoint
         - Added `tmdb_page_start: int | None` parameter to service method
         - Added `tmdb_page_start` to schema `to_service_params()` field mappings
         - Passes through to `_fetch_with_filters_and_buffer`
@@ -146,7 +146,7 @@ but pagination assumes 1:1 mapping between API pages and TMDB pages.
 
 - [x] **3.1 Write frontend tests for pagination metadata** ✅ **COMPLETE**
 
-    - [x] **3.1.1 Hook layer tests (COMPLETE)**
+    - [x] **3.1.a Hook layer tests (COMPLETE)**
         - ✅ Created `frontend/src/hooks/__tests__/usePaginatedMovies.test.ts` with 8 comprehensive tests:
             - **Storing metadata**: Tests for `next_tmdb_page_start` storage (numeric, null, undefined cases)
             - **Continuation flow**: Tests exposing metadata for parent component to use in subsequent requests
@@ -204,7 +204,7 @@ but pagination assumes 1:1 mapping between API pages and TMDB pages.
 
 - [x] **3.2 Implement pagination metadata in state and requests** ✅ **COMPLETE**
 
-    - [x] **3.2.1 Hook layer: Extract and return metadata**
+    - [x] **3.2.a Hook layer: Extract and return metadata**
         - ✅ Updated `usePaginatedMovies` hook to extract and return `next_tmdb_page_start`
         - ✅ Extracts `data?.next_tmdb_page_start` from API response (undefined if not present)
         - ✅ Returns metadata in hook's return value for parent components to use
@@ -271,13 +271,13 @@ but pagination assumes 1:1 mapping between API pages and TMDB pages.
 
 **Discovered during Phase 3 testing** - Rating filters causing excessive buffer usage
 
-- [x] **3.5.1 Investigate excessive buffering with rating filters**
+- [x] **3.5.a Investigate excessive buffering with rating filters**
     - ✅ Observed: Rating 1.0-3.5 only returned 8 results across 6 TMDB pages
     - ✅ Backend logs showed: "Backend filtering removed 19 movies from TMDB response (TMDB sent 20, we're returning 1)"
     - ✅ Root cause identified: `rating_min`/`rating_max` parameters never added to TMDB API params
     - ✅ **Bug**: TMDB returned ALL movies (unfiltered) → backend filtered ~95% per page → buffer needed 6+ pages for 8 results
 
-- [x] **3.5.2 Fix rating filter TMDB parameter passing**
+- [x] **3.5.b Fix rating filter TMDB parameter passing**
     - ✅ Added rating filters to TMDB params in `discover_movies()` (lines 839-844):
 
       ```python
@@ -294,7 +294,7 @@ but pagination assumes 1:1 mapping between API pages and TMDB pages.
     - ✅ Backend tests: 372 passing (no regressions)
     - ✅ File: `backend/apps/movie/services/movie_service.py:839-844`
 
-- [x] **3.5.3 Enable debug logging for development**
+- [x] **3.5.c Enable debug logging for development**
     - ✅ Added `DJANGO_CONSOLE_LOG_LEVEL=DEBUG` to docker-compose.yml
     - ✅ Enables better diagnostics for catching similar issues earlier
     - ✅ File: `infrastructure/docker-compose.yml:24`
@@ -314,13 +314,13 @@ but this also exposed garbage/misclassified TMDB entries.
 
 **Solution**: Dual quality filter approach using available metadata signals.
 
-- [x] **3.6.1 Add genre_ids to MovieBaseSchema and update transformations** ✅
+- [x] **3.6.a Add genre_ids to MovieBaseSchema and update transformations** ✅
     - ✅ Added `genre_ids: list[int]` field to `MovieBaseSchema` (apps/movie/schemas.py:36-38)
     - ✅ Updated TMDB→schema transformation in `schema_factories.py` to extract genre_ids from responses
     - ✅ Field now appears in API responses (validated via test fixtures)
     - **Completed**: Genre data successfully integrated into schema and transformation pipeline
 
-- [x] **3.6.2 Write tests for data quality filtering** ✅
+- [x] **3.6.b Write tests for data quality filtering** ✅
     - ✅ Added 3 genre-specific tests + updated 3 existing vote tests to `backend/apps/movie/tests/test_result_filtering.py`:
         - **New tests (genre filtering)**:
             - `test_genre_filter_excludes_movies_with_empty_genres`: Empty genre_ids filtered (completeness, always applies)
@@ -341,14 +341,14 @@ but this also exposed garbage/misclassified TMDB entries.
     - **Key clarification**: Genre check is part of completeness filter (ALWAYS applies like poster/title),
       vote threshold changes from None→5 only with rating filters (general browsing at 10)
 
-- [x] **3.6.3 Implement genre filtering in result_filtering.py** ✅
+- [x] **3.6.c Implement genre filtering in result_filtering.py** ✅
     - ✅ Updated `filter_movies_by_completeness()` to filter movies with empty genre_ids
     - ✅ Added check: `if not movie.genre_ids or len(movie.genre_ids) == 0: continue`
     - ✅ Updated docstring explaining rationale (TMDB data quality signal correlating with
       inappropriate content, data entry errors, unreleased/placeholder entries)
     - ✅ TDD Green phase: 3 new genre filtering tests now PASS (30/30 tests passing)
 
-- [x] **3.6.4 Update movie_service.py vote threshold** ✅
+- [x] **3.6.d Update movie_service.py vote threshold** ✅
     - ✅ Changed vote threshold for rating filters from `None` → `RATING_FILTER_MIN_VOTE_COUNT` (5)
     - ✅ Imported `RATING_FILTER_MIN_VOTE_COUNT` constant from result_filtering.py
     - ✅ Updated `filter_movies_by_rating()` call when rating filter active: `min_vote_count=RATING_FILTER_MIN_VOTE_COUNT`
@@ -357,7 +357,7 @@ but this also exposed garbage/misclassified TMDB entries.
     - ✅ **Bonus fix**: Refactored `filter_movies_by_rating()` to support vote threshold independently
       of rating filters, fixing general browsing quality filtering (10 vote threshold now works correctly)
 
-- [ ] **3.6.5 Run quality gates and verify filtering** (DEFERRED - see session notes)
+- [ ] **3.6.e Run quality gates and verify filtering** (DEFERRED - see session notes)
     - Backend tests: 30/30 passing ✅ (Phase 3.6 tests)
     - Backend type checking: 0 errors ✅
     - Backend linting: 0 violations ✅
@@ -380,11 +380,20 @@ Without metadata, backend falls back to 1:1 mapping, causing results to shift po
 **Integration Note:** Uses same URL persistence pattern established in navigation-filter-state-preservation
 Phase 2 (filter params in URL). This ensures consistent behavior across all navigation scenarios.
 
-- [ ] **3.7.1 Write tests for URL metadata reading (TDD Red Phase)**
+**Prerequisites Complete:**
+
+- ✅ Phase 4 of `tasks-buffer-deduplication-data-quality.md` (cross-page deduplication)
+- ✅ Phase 5.2 of `tasks-buffer-deduplication-data-quality.md` (backward nav to page 1 fix)
+
+**Scope Clarification:** Phase 5.2 (buffer-dedup) fixed backward navigation to **page 1** by clearing stale
+`tmdb_page_start` metadata. This Phase 3.7 enables backward navigation to **pages 2+** by persisting
+metadata in the URL so it survives navigation away and back.
+
+- [ ] **3.7.a Write tests for URL metadata reading (TDD Red Phase)**
 
     **Test-First Approach:** Write failing tests before implementation.
 
-    - [ ] **3.7.1.1 Add tests to usePaginatedMovies test suite**
+    - [ ] **3.7.a.1 Add tests to usePaginatedMovies test suite**
         - Test: Component mounts with `tmdb_page_start` in URL → sends to API
         - Test: Component mounts without metadata → sends undefined (backward compat)
         - Test: Page change after mount → uses `next_tmdb_page_start` from response (existing behavior)
@@ -392,17 +401,17 @@ Phase 2 (filter params in URL). This ensures consistent behavior across all navi
         - **Expect:** Tests FAIL (TDD Red) - URL reading not implemented yet
         - File: `hooks/__tests__/usePaginatedMovies.test.ts`
 
-    - [ ] **3.7.1.2 Verify URL preservation already works**
+    - [ ] **3.7.a.2 Verify URL preservation already works**
         - Check MovieCard tests: verify unknown params preserved (from Phase 2)
         - Check MovieDetail tests: verify `allParams` pattern preserves all params (from Phase 2)
         - Manual test: Navigate → verify URL contains page/from/filters
         - **Expect:** Existing tests pass - Phase 2 already handles URL preservation
 
-- [ ] **3.7.2 Implement URL metadata reading (TDD Green Phase)**
+- [ ] **3.7.b Implement URL metadata reading (TDD Green Phase)**
 
     **Implementation:** Make tests pass by reading metadata from URL.
 
-    - [ ] **3.7.2.1 Update usePaginatedMovies to read from URL**
+    - [ ] **3.7.b.1 Update usePaginatedMovies to read from URL**
         - Import `useSearchParams` from react-router-dom
         - Read `tmdb_page_start` parameter on mount
         - Parse to number (or undefined if absent)
@@ -410,35 +419,35 @@ Phase 2 (filter params in URL). This ensures consistent behavior across all navi
         - Store response's `next_tmdb_page_start` for subsequent pagination
         - File: `hooks/usePaginatedMovies.ts`
 
-    - [ ] **3.7.2.2 Run tests - should now PASS (TDD Green)**
+    - [ ] **3.7.b.2 Run tests - should now PASS (TDD Green)**
         - usePaginatedMovies tests: All passing (expect 4+ new tests)
         - MovieCard tests: Still passing (no changes needed)
         - MovieDetail tests: Still passing (no changes needed)
         - Full frontend suite: All passing (expect 457+)
         - 0 type errors, 0 lint violations
 
-- [ ] **3.7.3 Update pagination to write metadata to URL**
+- [ ] **3.7.c Update pagination to write metadata to URL**
 
     **Note:** This may already be handled by `useMovieCollectionUrl` if `currentPage` updates URL.
     Verify and implement if needed.
 
-    - [ ] **3.7.3.1 Verify page navigation updates URL**
+    - [ ] **3.7.c.1 Verify page navigation updates URL**
         - Check if `onPageChange` from `useMovieCollectionUrl` updates URL with new page number
         - If yes, metadata flows: API response → state → URL (already works)
         - If no, need to update `useMovieCollectionUrl` to sync `tmdb_page_start` to URL
         - Manual test: Navigate page 1→2 → verify URL updates
 
-    - [ ] **3.7.3.2 Implement URL sync if needed**
-        - Only if 3.7.3.1 reveals gap: Add `tmdb_page_start` to URL state
+    - [ ] **3.7.c.2 Implement URL sync if needed**
+        - Only if 3.7.c.1 reveals gap: Add `tmdb_page_start` to URL state
         - Update `handlePageChange` to include metadata when changing pages
         - Write tests if new code added
         - Run quality gates
 
-- [ ] **3.7.4 End-to-end verification (TDD Integration)**
+- [ ] **3.7.d End-to-end verification (TDD Integration)**
 
     **Critical UX Test:** Ensure results stay in same position on back navigation.
 
-    - [ ] **3.7.4.1 Manual end-to-end test**
+    - [ ] **3.7.d.1 Manual end-to-end test**
         - Apply rating filter 1.0-3.5
         - Navigate to page 3, note first 3 movie titles
         - Click middle movie, go to detail
@@ -447,13 +456,13 @@ Phase 2 (filter params in URL). This ensures consistent behavior across all navi
         - **VERIFY:** URL contains `tmdb_page_start` parameter
         - **VERIFY:** No duplicate movies when navigating forward to page 4
 
-    - [ ] **3.7.4.2 Run quality gates**
+    - [ ] **3.7.d.2 Run quality gates**
         - Frontend tests: All passing (expect 457+)
         - Backend tests: All passing (30/30)
         - Type checking: 0 errors (frontend + backend)
         - Linting: 0 violations (frontend + backend)
 
-    - [ ] **3.7.4.3 Document integration**
+    - [ ] **3.7.d.3 Document integration**
         - Update Phase 3.7 task with test results
         - Note any edge cases discovered
         - Confirm ready for Phase 4 sequential pagination validation
@@ -529,5 +538,5 @@ Example: User on page 3 (last_tmdb_page=15, avg_consumed=5) jumps to page 7
 
 ---
 
-**Priority**: HIGH (blocks Phase 3.6.2, user-facing data integrity bug)
+**Priority**: HIGH (blocks Phase 3.6.b, user-facing data integrity bug)
 **Risk Level**: LOW-MEDIUM (isolated changes, good test coverage, graceful fallback)

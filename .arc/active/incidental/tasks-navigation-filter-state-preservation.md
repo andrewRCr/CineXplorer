@@ -11,8 +11,6 @@ pagination-buffer-tracking.md)
 
 **Interrupts:** `tasks-pagination-buffer-tracking.md` at Phase 3.6, Task 3.6.5 (manual verification)
 
-**Current Task:** Phase 3 complete, ready for Phase 4 (integration testing)
-
 **Problem:** Custom "Back to Results" button loses filter query params (blank screens), and advanced panel
 collapses when navigating back despite active filters.
 
@@ -254,55 +252,43 @@ testing is the only verification method, which is time-consuming and error-prone
     **Note:** Investigation revealed dead code (`isFiltersCollapsed`, `browseLayout` distinction, decade handling
     in browseParamMapper). Created atomic task for cleanup - separate concern from navigation/state preservation.
 
-### **Phase 4:** Integration Testing and Edge Cases
+### **Phase 4:** URL Parsing Robustness Tests ✅
 
-- [ ] **4.1 Write navigation flow integration tests**
+**Scope revision (2025-12-09):** Original tasks (navigation flow, rapid navigation, browser back/forward)
+were either already covered by `MovieCollectionGrid.integration.test.tsx` or untestable in JSDOM.
+Refocused to address the actual gap: `browseUrlSync.ts` has zero tests despite handling URL parsing.
 
-    - [ ] **4.1.a Create comprehensive user journey tests**
-        - Test: Popular → apply filters → detail → back → verify state
-        - Test: Search → apply filters → detail → back → verify state
-        - Test: Top Rated → filters → detail → back → pagination → detail → back
-        - Expect tests to FAIL if implementation gaps exist
+- [x] **4.1 Write tests for `browseUrlSync.ts`** ✅
 
-    - [ ] **4.1.b Create route change tests**
-        - Test: Popular with filters → switch to Top Rated → verify state reset
-        - Test: Search results → navigate to Popular → verify independent state
-        - Expect tests to FAIL if state management has issues
+    **Completed:** Created `frontend/src/utilities/__tests__/browseUrlSync.test.ts` with 37 tests covering
+    `parseBrowseParamsFromUrl()` function. Tests organized into three describe blocks matching subtask structure.
 
-- [ ] **4.2 Write edge case tests**
+    - [x] **4.1.a Valid URL parsing scenarios** (13 tests)
+        - Empty/minimal search strings return defaults
+        - Single params, arrays, all params together
+        - Defaults applied for missing parameters
 
-    - [ ] **4.2.a Create rapid navigation tests**
-        - Test: Quick detail→back→detail→back sequences
-        - Verify no race conditions or state corruption
-        - Expect tests to FAIL if timing issues exist
+    - [x] **4.1.b Invalid/malformed URL handling** (10 tests)
+        - Invalid genre IDs filtered (NaN check)
+        - Non-numeric year/rating passed through as-is (current behavior documented)
+        - Unknown sortBy passed through (type coercion)
+        - Unknown params ignored
 
-    - [ ] **4.2.b Create invalid state tests**
-        - Test: URL with malformed filter params
-        - Test: Missing required params
-        - Verify graceful degradation
-        - Expect tests to FAIL if error handling incomplete
+    - [x] **4.1.c Edge cases** (14 tests)
+        - Empty param values, trailing/leading commas
+        - URL encoding, unicode, whitespace preservation
+        - Stress tests (long values, many genres)
 
-- [ ] **4.3 Write and run regression tests**
-
-    - [ ] **4.3.a Create tests for existing navigation**
-        - Test: Navigation without filters
-        - Test: Pagination without filters
-        - Test: Direct URL access to detail pages
-
-    - [ ] **4.3.b Create browser navigation tests**
-        - Test: Browser back button
-        - Test: Browser forward button
-        - Test: History state correctness
-
-    - [ ] **4.3.c Run all integration tests - should PASS**
+- [x] **4.2 Quality gate** ✅
+    - [x] 4.2.a Full frontend test suite: 546 tests pass (37 new)
 
 ### **Phase 5:** Quality Gates & Manual Verification
 
-- [ ] **5.1 Run automated quality checks**
-    - [ ] 5.1.a Run full frontend test suite (all 416+ tests pass, no warnings)
-    - [ ] 5.1.b Run frontend linting (ESLint 0 violations)
-    - [ ] 5.1.c Run frontend type checking (TypeScript 0 errors)
-    - [ ] 5.1.d Run backend tests sanity check (verify no unintended changes)
+- [x] **5.1 Run automated quality checks** ✅
+    - [x] 5.1.a Frontend tests: 549 pass (37 browseUrlSync + 3 user override bugfix)
+    - [x] 5.1.b Frontend linting: 0 violations
+    - [x] 5.1.c Frontend type checking: 0 errors
+    - [x] 5.1.d Backend tests: 611 pass
 
 - [ ] **5.2 Comprehensive manual testing**
 
@@ -331,6 +317,12 @@ testing is the only verification method, which is time-consuming and error-prone
         - Verify browser back still works
         - Verify browser forward works
         - Verify history state correct
+
+**Bugfix(es) discovered during 5.2 testing:**
+
+- User override for advanced panel wasn't working for genre-based or certification-based advanced filters.
+Root cause: `getAdvancedFilterHash()` only included rating, year range, and language - not genres or certifications.
+Fixed by adding all advanced filter conditions to the hash. Added 3 new tests to prevent regression.
 
 ---
 

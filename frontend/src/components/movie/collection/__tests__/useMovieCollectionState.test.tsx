@@ -768,6 +768,118 @@ describe("useMovieCollectionState", () => {
         expect(result.current.isAdvancedPanelOpen).toBe(false);
       });
     });
+
+    it("should respect user override with multiple genres (advanced filter)", async () => {
+      // Multiple genres = advanced filter (only single core genre is "minimal")
+      // Action (28) + Comedy (35) = advanced
+      mockUseMovieCollectionUrl.mockReturnValue({
+        browseParams: createMockBrowseParams({ genres: [28, 35] }),
+        handleBrowseParamsChange: vi.fn(),
+        currentPageFromUrl: 1,
+        handlePageChange: vi.fn(),
+      });
+
+      const { result: result1, unmount } = renderHook(() => useMovieCollectionState(), {
+        wrapper,
+      });
+
+      // Wait for auto-expand (multiple genres = advanced)
+      await waitFor(() => {
+        expect(result1.current.isAdvancedPanelOpen).toBe(true);
+      });
+
+      // User manually closes the panel
+      act(() => {
+        result1.current.toggleAdvancedPanel();
+      });
+      expect(result1.current.isAdvancedPanelOpen).toBe(false);
+
+      // Unmount and remount with same filters (simulating navigation)
+      unmount();
+
+      const { result: result2 } = renderHook(() => useMovieCollectionState(), {
+        wrapper,
+      });
+
+      // Should stay closed - user override should be respected
+      await waitFor(() => {
+        expect(result2.current.isAdvancedPanelOpen).toBe(false);
+      });
+    });
+
+    it("should respect user override with non-core genre (advanced filter)", async () => {
+      // Romance (10749) is not in CORE_GENRE_IDS, so it's advanced
+      mockUseMovieCollectionUrl.mockReturnValue({
+        browseParams: createMockBrowseParams({ genres: [10749] }),
+        handleBrowseParamsChange: vi.fn(),
+        currentPageFromUrl: 1,
+        handlePageChange: vi.fn(),
+      });
+
+      const { result: result1, unmount } = renderHook(() => useMovieCollectionState(), {
+        wrapper,
+      });
+
+      // Wait for auto-expand (non-core genre = advanced)
+      await waitFor(() => {
+        expect(result1.current.isAdvancedPanelOpen).toBe(true);
+      });
+
+      // User manually closes the panel
+      act(() => {
+        result1.current.toggleAdvancedPanel();
+      });
+      expect(result1.current.isAdvancedPanelOpen).toBe(false);
+
+      // Unmount and remount with same filters
+      unmount();
+
+      const { result: result2 } = renderHook(() => useMovieCollectionState(), {
+        wrapper,
+      });
+
+      // Should stay closed - user override should be respected
+      await waitFor(() => {
+        expect(result2.current.isAdvancedPanelOpen).toBe(false);
+      });
+    });
+
+    it("should respect user override with certifications (advanced filter)", async () => {
+      // Certifications are advanced-only
+      mockUseMovieCollectionUrl.mockReturnValue({
+        browseParams: createMockBrowseParams({ certifications: ["PG-13", "R"] }),
+        handleBrowseParamsChange: vi.fn(),
+        currentPageFromUrl: 1,
+        handlePageChange: vi.fn(),
+      });
+
+      const { result: result1, unmount } = renderHook(() => useMovieCollectionState(), {
+        wrapper,
+      });
+
+      // Wait for auto-expand (certifications = advanced)
+      await waitFor(() => {
+        expect(result1.current.isAdvancedPanelOpen).toBe(true);
+      });
+
+      // User manually closes the panel
+      act(() => {
+        result1.current.toggleAdvancedPanel();
+      });
+      expect(result1.current.isAdvancedPanelOpen).toBe(false);
+
+      // Unmount and remount with same filters
+      unmount();
+
+      const { result: result2 } = renderHook(() => useMovieCollectionState(), {
+        wrapper,
+      });
+
+      // Should stay closed - user override should be respected
+      await waitFor(() => {
+        expect(result2.current.isAdvancedPanelOpen).toBe(false);
+      });
+    });
   });
 
   describe("Sort auto-reset when language changes", () => {

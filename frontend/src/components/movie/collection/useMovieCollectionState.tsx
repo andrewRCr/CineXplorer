@@ -16,14 +16,21 @@ import {
 // SessionStorage key for user panel override
 const PANEL_OVERRIDE_KEY = "advancedPanelUserClosed";
 
+// Core genre IDs - must match CORE_GENRE_IDS defined below (strings for comparison)
+const CORE_GENRE_IDS_SET = new Set([
+  "28", "35", "99", "18", "10751", "27", "878", "53"
+]);
+
 // Generate a hash of the advanced filter values for override tracking
-// Only includes filters that trigger auto-expand (rating, custom year range, language)
-// Excludes decade presets since they're available in QuickBrowseBar
+// Includes all filters that trigger auto-expand (see hasAdvancedFilterValues)
 const getAdvancedFilterHash = (params: BrowseParams): string => {
   const parts: string[] = [];
+
+  // Rating filters
   if (params.minRating) parts.push(`mr:${params.minRating}`);
   if (params.maxRating) parts.push(`xr:${params.maxRating}`);
-  // Only include custom year ranges, not decade presets
+
+  // Custom year ranges (not decade presets)
   if (params.minYear && params.maxYear && params.minYear !== params.maxYear) {
     const isDecadeRange =
       parseInt(params.maxYear) - parseInt(params.minYear) === 9 &&
@@ -32,7 +39,22 @@ const getAdvancedFilterHash = (params: BrowseParams): string => {
       parts.push(`yr:${params.minYear}-${params.maxYear}`);
     }
   }
+
+  // Language filter
   if (params.language) parts.push(`lg:${params.language}`);
+
+  // Genres: multiple genres OR non-core genre (advanced filters)
+  if (params.genres.length > 1) {
+    parts.push(`gn:${[...params.genres].sort((a, b) => a - b).join(",")}`);
+  } else if (params.genres.length === 1 && !CORE_GENRE_IDS_SET.has(String(params.genres[0]))) {
+    parts.push(`gn:${params.genres[0]}`);
+  }
+
+  // Certifications
+  if (params.certifications?.length) {
+    parts.push(`ct:${[...params.certifications].sort().join(",")}`);
+  }
+
   return parts.join("|");
 };
 

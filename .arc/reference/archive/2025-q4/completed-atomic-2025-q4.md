@@ -6,6 +6,19 @@ Reference format: "see `completed-atomic-2025-q4.md`" or "see {task name} in `co
 
 ---
 
+- [x] Remove browseLayout abstraction and related dead code
+    - **Outcome:** Removed `browseLayout` prop from components (only "compact" was ever used),
+      removed dead decade handling from browseParamMapper (UI converts decades before storing),
+      removed unused collapsible filter state, added user override for auto-expand (sessionStorage-based),
+      fixed decade preset auto-expand regression (decade ranges now excluded from "advanced" detection),
+      consolidated duplicate hasAdvancedFilters logic
+    - **Files:** `useMovieCollectionState.tsx`, `BrowseControlsSection.tsx`, `MovieCollectionLayout.tsx`,
+      `browseParamMapper.ts`, `useMovieFetchRouter.ts`, `App.tsx`, `browseParamMapper.test.ts`,
+      `useMovieCollectionState.test.tsx`, `useMovieFetchRouter.test.ts`
+    - **Tests:** 509 frontend tests passing (6 new tests for decade/genre advanced detection)
+
+    - **Branch:** `technical/service-layer-modernization`
+
 - [x] Add visual indication for active browse filters + fix sort/filter conflation
     - **Outcome:** Sort no longer triggers "Clear Filters" button (sort is user preference). Active filters show
       `color="primary"` on text/icon. TDD with 89 tests for new behavior.

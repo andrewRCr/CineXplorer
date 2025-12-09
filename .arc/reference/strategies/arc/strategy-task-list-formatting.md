@@ -1,6 +1,6 @@
 # Task List Formatting Strategy
 
-**Version:** 1.4 | **Updated:** 2025-11-08 | **Status:** Active
+**Version:** 1.5 | **Updated:** 2025-12-09 | **Status:** Active
 
 ## Purpose
 
@@ -19,9 +19,10 @@ documentation throughout the project lifecycle.
 2. [Task List Headers](#task-list-headers)
 3. [Format Elements Reference](#format-elements-reference)
 4. [Test-First Task Structure](#test-first-task-structure)
-5. [Complete Annotated Example](#complete-annotated-example)
-6. [Common Mistakes](#common-mistakes)
-7. [Decision Guidelines](#decision-guidelines)
+5. [Success Criteria Section](#success-criteria-section)
+6. [Complete Annotated Example](#complete-annotated-example)
+7. [Common Mistakes](#common-mistakes)
+8. [Decision Guidelines](#decision-guidelines)
 
 ---
 
@@ -42,6 +43,7 @@ Before finalizing any task list, verify:
 - [ ] No time estimates anywhere (no duration emojis, minute counts)
 - [ ] "Expect tests to FAIL initially" noted in test subtasks
 - [ ] "Tests should now PASS" noted after implementation subtasks
+- [ ] Success Criteria section at bottom with checkboxes (verified before archival)
 
 ---
 
@@ -66,11 +68,15 @@ Task list headers provide essential metadata and context. Format varies by task 
 
 **Purpose:** One-sentence description of what this accomplishes.
 
-**Success Criteria:**
+## Scope
 
-- Key outcome 1
-- Key outcome 2
-- Key outcome 3
+### Will Do
+
+- What's included in this task list
+
+### Won't Do
+
+- What's deferred or out of scope
 
 ---
 
@@ -84,9 +90,11 @@ Task list headers provide essential metadata and context. Format varies by task 
 - Title uses `Task List:` (not "Incidental:")
 - PRD reference is absolute path from repo root
 - Status values: `Pending` (planned), `In Progress` (active), `Complete` (done)
-- Overview section includes Purpose and Success Criteria
+- Overview section includes Purpose
+- Scope section defines boundaries (Will Do / Won't Do)
 - Optional sections (Architecture Patterns, Current State, Testing Strategy, etc.) only when needed
 - Horizontal rule (`---`) separates header from tasks
+- Success Criteria section goes at bottom (see [Success Criteria Section](#success-criteria-section))
 
 **Example:**
 
@@ -101,11 +109,18 @@ Task list headers provide essential metadata and context. Format varies by task 
 
 **Purpose:** Modernize service layer with reusable helpers and class-based architecture.
 
-**Success Criteria:**
+## Scope
 
-- Zero business logic in API endpoints
-- 100% service layer adoption
-- All tests pass, zero violations
+### Will Do
+
+- Extract business logic from API endpoints to service layer
+- Implement class-based service architecture
+- Add comprehensive service layer tests
+
+### Won't Do
+
+- Performance optimization (separate enhancement)
+- API versioning changes (out of scope)
 
 ---
 
@@ -164,6 +179,7 @@ Task list headers provide essential metadata and context. Format varies by task 
 - **When resuming**, update `Status` back to `In Progress` and optionally add resume context
 - Scope section separates included vs deferred work
 - Horizontal rule (`---`) separates header from tasks
+- Success Criteria section goes at bottom (see [Success Criteria Section](#success-criteria-section))
 
 **Example (active work):**
 
@@ -1390,6 +1406,77 @@ If you find this pattern, you have two options:
 
 - Subtasks are simple/single-line
 - Parent has only 1-2 subtasks
+
+---
+
+## Success Criteria Section
+
+**Required for all task lists.** Placed at the bottom after all phases, serves as completion verification checklist.
+
+### Purpose
+
+- **Pre-archival sanity check**: Verify all intended functionality before marking complete
+- **Explicit verification**: Forces review of outcomes vs. just assuming completion
+- **Easy to find**: Bottom placement makes it the natural final step
+
+### Format
+
+```markdown
+---
+
+## Success Criteria
+
+- [ ] [Verifiable outcome derived from Scope "Will Do"]
+- [ ] [Another verifiable outcome]
+- [ ] [Functional requirement that can be tested]
+- [ ] All quality gates pass (tests, linting, type checking)
+- [ ] Ready for [archival | next phase | merge]
+```
+
+### Rules
+
+- **Checkboxes required**: Unlike header prose, these are actionable verification items
+- **Derived from Scope**: Each "Will Do" item should map to verifiable criteria
+- **Include quality gates**: Always include "All quality gates pass" as standard item
+- **Include readiness**: Always include "Ready for X" as final item
+- **Mark before archival**: All items must be `[x]` before running archive workflow
+- **No time estimates**: Same rule as rest of task list
+
+### Examples
+
+**Feature/Technical task list:**
+
+```markdown
+## Success Criteria
+
+- [x] Service layer handles all business logic (API endpoints are thin wrappers)
+- [x] Class-based architecture implemented for all services
+- [x] 100% test coverage for service layer methods
+- [x] All quality gates pass (611 backend tests, 504 frontend tests, 0 violations)
+- [x] Ready for archival
+```
+
+**Incidental task list:**
+
+```markdown
+## Success Criteria
+
+- [x] Within-page deduplication working (no duplicates on single page)
+- [x] Cross-page deduplication working (no duplicates across pagination)
+- [x] Backward navigation to page 1 consistent (same movies on return)
+- [x] Filter changes reset session (new filters = fresh results)
+- [x] All quality gates pass (backend 611, frontend 504, 0 violations)
+- [x] Ready to resume interrupted work at Task 3.3
+```
+
+### Relationship to Scope
+
+| Header Section                   | Bottom Section                         |
+| -------------------------------- | -------------------------------------- |
+| **Scope: Will Do**               | **Success Criteria**                   |
+| Planning: "What we intend to do" | Verification: "Did we actually do it?" |
+| Prose bullets, no checkboxes     | Checkboxes, verifiable items           |
+| Written at task list creation    | Verified at task list completion       |
 
 ---
 

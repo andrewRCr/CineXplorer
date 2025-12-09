@@ -1,6 +1,7 @@
 # Incidental: Navigation & Filter State Preservation
 
 **Created:** 2025-10-29
+**Completed:** 2025-12-09
 **Branch:** `technical/service-layer-modernization`
 **Status:** Complete ✅
 
@@ -13,42 +14,6 @@ pagination-buffer-tracking.md)
 
 **Problem:** Custom "Back to Results" button loses filter query params (blank screens), and advanced panel
 collapses when navigating back despite active filters.
-
-**Why Now:** Blocks manual testing confidence for pagination work, affects UX of newly implemented filtering
-features, and orthogonal navigation domain allows isolated fix without interfering with filter logic.
-
-## Root Cause Analysis
-
-### Issue 1: Back Button Filter Loss
-
-**Affected Files:**
-
-- `frontend/src/components/movie/MovieCard.tsx` (lines 133-139)
-- `frontend/src/pages/movie/MovieDetail.tsx` (lines 116-120)
-- `frontend/src/components/movie/collection/MovieCollectionGrid.tsx` (lines 189-193)
-
-**Problem:** Custom "Back to Results" button only passes `page`, `from`, `query` params, ignoring minYear,
-maxYear, genres, rating filters, etc.
-
-**Workaround:** Browser back button works (uses full history state)
-
-### Issue 2: Advanced Panel Collapse
-
-**Affected Files:**
-
-- `frontend/src/components/movie/collection/useMovieCollectionState.tsx`
-
-**Problem:** `showAdvanced` UI state not preserved when navigating detail→back. User applies advanced filters
-(e.g., rating 1.0-3.5), panel expands, navigates to detail, clicks back, panel collapses even though filters
-still active.
-
-**Current Implementation:** Effect-based auto-expand implemented with 18/18 tests passing, but needs browser
-verification.
-
-### Issue 3: Test Coverage Gaps
-
-**Problem:** Missing comprehensive state management integration tests. Without thorough test coverage, manual
-testing is the only verification method, which is time-consuming and error-prone.
 
 ## Scope
 

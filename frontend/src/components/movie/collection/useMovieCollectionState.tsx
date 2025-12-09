@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import type { BrowseParams } from "@/types/browseTypes";
-import { DEFAULT_BROWSE_PARAMS, DEFAULT_SORT } from "@/constants/browseDefaults";
+import { DEFAULT_BROWSE_PARAMS, DEFAULT_SORT, CORE_GENRE_IDS_SET } from "@/constants/browseDefaults";
 import { sortOptions } from "@/constants/browseOptions";
 import { useMovieCollectionUrl } from "./useMovieCollectionUrl";
 import {
@@ -15,11 +15,6 @@ import {
 
 // SessionStorage key for user panel override
 const PANEL_OVERRIDE_KEY = "advancedPanelUserClosed";
-
-// Core genre IDs - must match CORE_GENRE_IDS defined below (strings for comparison)
-const CORE_GENRE_IDS_SET = new Set([
-  "28", "35", "99", "18", "10751", "27", "878", "53"
-]);
 
 // Generate a hash of the advanced filter values for override tracking
 // Includes all filters that trigger auto-expand (see hasAdvancedFilterValues)
@@ -128,18 +123,6 @@ interface MovieCollectionState {
   resetBrowseParams: () => void; // Clears filters but preserves sort
 }
 
-// Minimal filter capabilities (Letterboxd-style UI)
-const CORE_GENRE_IDS = [
-  "28", // Action
-  "35", // Comedy
-  "99", // Documentary
-  "18", // Drama
-  "10751", // Family
-  "27", // Horror
-  "878", // Science Fiction
-  "53", // Thriller
-];
-
 // Helper: Check if filters contain advanced filter values
 // Exported for use in parent components to determine API filter style
 export const hasAdvancedFilterValues = (filters: BrowseParams): boolean => {
@@ -161,7 +144,7 @@ export const hasAdvancedFilterValues = (filters: BrowseParams): boolean => {
   // Non-core genres are advanced-only
   if (filters.genres.length === 1) {
     const genreId = String(filters.genres[0]);
-    if (!CORE_GENRE_IDS.includes(genreId)) {
+    if (!CORE_GENRE_IDS_SET.has(genreId)) {
       return true;
     }
   }

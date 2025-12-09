@@ -1,4 +1,5 @@
 import type { SortOption } from "@/types/browseTypes";
+import { CORE_GENRE_IDS } from "./browseDefaults";
 
 // Master genre map for DRYness
 const GENRE_MAP = {
@@ -28,17 +29,6 @@ export const genreOptions = [
     ...Object.entries(GENRE_MAP)
         .map(([value, label]) => ({ value, label }))
         .sort((a, b) => a.label.localeCompare(b.label)),
-];
-
-const CORE_GENRE_IDS = [
-    "28", // Action
-    "35", // Comedy
-    "99", // Documentary
-    "18", // Drama
-    "10751", // Family
-    "27", // Horror
-    "878", // Science Fiction
-    "53", // Thriller
 ];
 
 export const coreGenreOptions = [

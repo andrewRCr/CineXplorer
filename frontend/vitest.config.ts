@@ -63,8 +63,8 @@ export default defineConfig({
     
     resolve: {
         alias: {
-            // Match your existing Vite config aliases
-            "@/types": resolve(__dirname, "./src/@types"),
+            // Note: @/types/* is handled by tsconfigPaths() plugin which supports
+            // multiple fallback paths (./src/@types/* and ./src/types/*)
             "@": resolve(__dirname, "./src"),
             "@shared": resolve(__dirname, "../shared"),
             "@tests": resolve(__dirname, "./tests"),

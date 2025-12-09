@@ -56,11 +56,12 @@ const MovieCollectionLayout = ({
   const location = useLocation();
 
   // Get fetcher and source based on current route
+  // Pass location.search to ensure React Router location is the source of truth
   const {
     fetcher: routeFetcher,
     source: routeSource,
     title: routeTitle,
-  } = getFetcherAndSource(location.pathname);
+  } = getFetcherAndSource(location.pathname, location.search);
 
   // Use provided props or route-based defaults
   const actualFetcher = fetcher || routeFetcher;

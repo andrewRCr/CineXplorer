@@ -11,8 +11,8 @@ export default defineConfig({
     plugins: [react(), tsconfigPaths()],
     resolve: {
         alias: {
-            // Order matters: more specific aliases first
-            "@/types": resolve(__dirname, "./src/@types"),
+            // Note: @/types/* is handled by tsconfigPaths() plugin which supports
+            // multiple fallback paths (./src/@types/* and ./src/types/*)
             "@": resolve(__dirname, "./src"),
             shared: resolve(__dirname, "../shared"),
         },

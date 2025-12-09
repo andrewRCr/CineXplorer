@@ -20,10 +20,24 @@ export interface RouteConfig {
     title: string | { main: string; secondary?: string };
 }
 
-// Helper function to get fetcher and source based on route
-export const getFetcherAndSource = (pathname: string): RouteConfig => {
-    // Get query parameter for search
+/**
+ * Get fetcher and source configuration based on route
+ *
+ * @param pathname - The current route pathname (e.g., '/search', '/browse')
+ * @param search - Optional URL search string from React Router location.
+ *                 If provided, used to extract query param for search route.
+ *                 If omitted, falls back to window.location.search (backward compatibility).
+ * @returns RouteConfig with fetcher, source identifier, and title
+ */
+export const getFetcherAndSource = (pathname: string, search?: string): RouteConfig => {
+    // Get query parameter for search - prefer provided search string over window.location
     const getQueryParam = () => {
+        // Use provided search string if available (from React Router)
+        if (search !== undefined) {
+            const params = new URLSearchParams(search);
+            return params.get("query") || "";
+        }
+        // Fallback to window.location for backward compatibility
         if (typeof window === "undefined") return "";
         const params = new URLSearchParams(window.location.search);
         return params.get("query") || "";
@@ -89,8 +103,10 @@ export const getFetcherAndSource = (pathname: string): RouteConfig => {
             ) =>
                 fetchSearchMoviesService.getPaginated<PaginatedMoviesResponse>({
                     page,
-                    query,
                     ...filters,
+                    // Query from search param takes precedence over filters.query
+                    // This ensures the URL is the source of truth for search queries
+                    query,
                     ...(tmdb_page_start !== undefined && { tmdb_page_start }),
                 }),
             source: PAGINATED_SOURCES.SEARCH,

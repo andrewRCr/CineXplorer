@@ -54,6 +54,7 @@ const MovieCollectionGrid = forwardRef<MovieGridRef, MovieCollectionGridProps>(
     const nextTmdbPageStartRef = useRef<number | undefined>(undefined);
     const prevFetcherRef = useRef(finalFetcher);
     const prevNextTmdbPageStartRef = useRef<number | undefined>(undefined);
+    const prevPageRef = useRef(currentPage);
 
     // Reset metadata synchronously when fetcher changes (filter/route change)
     if (prevFetcherRef.current !== finalFetcher) {
@@ -61,6 +62,14 @@ const MovieCollectionGrid = forwardRef<MovieGridRef, MovieCollectionGridProps>(
       prevNextTmdbPageStartRef.current = undefined;
       prevFetcherRef.current = finalFetcher;
     }
+
+    // Reset metadata on backward navigation to prevent stale tmdb_page_start
+    // Bug: Without this, going page 1→2→1 would send stale metadata causing wrong results
+    if (currentPage < prevPageRef.current || currentPage === 1) {
+      nextTmdbPageStartRef.current = undefined;
+      prevNextTmdbPageStartRef.current = undefined;
+    }
+    prevPageRef.current = currentPage;
 
     /**
      * Adapter: Convert page-based fetcher to parameterless fetcher for usePaginatedMovies.

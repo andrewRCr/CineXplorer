@@ -182,6 +182,139 @@ describe('MovieCollectionGrid - Stability Tests', () => {
   });
 
   /**
+   * Test: Backward navigation to page 1 should clear metadata
+   *
+   * Scenario: User navigates page 1 → page 2 → page 1
+   * Expected: Page 1 (on return) should NOT include stale tmdb_page_start
+   *
+   * Bug behavior: After page 2 sets metadata to 5, returning to page 1 still
+   * sends tmdb_page_start=5, causing backend to fetch from TMDB page 5 instead of 1.
+   * Result: Completely different movies shown on page 1 the second time.
+   */
+  it('should clear metadata when navigating backward to page 1', async () => {
+    // Arrange
+    const mockFetcher = vi.fn((page: number, _tmdb_page_start?: number) => ({
+      request: Promise.resolve({
+        data: createMockResponse({
+          page,
+          // Page 1 returns metadata 3, page 2 returns metadata 5
+          next_tmdb_page_start: page === 1 ? 3 : 5,
+        }),
+      }),
+      cancel: vi.fn(),
+    }));
+
+    // Act: Render on page 1
+    const { rerender } = render(
+      <MovieCollectionGrid
+        fetcher={mockFetcher}
+        source="popular"
+        initialCurrentPage={1}
+      />
+    );
+
+    await waitFor(() => expect(mockFetcher).toHaveBeenCalled());
+
+    // Assert: First page 1 call should NOT include tmdb_page_start
+    expect(mockFetcher).toHaveBeenNthCalledWith(1, 1, undefined);
+
+    // Act: Navigate to page 2
+    rerender(
+      <MovieCollectionGrid
+        fetcher={mockFetcher}
+        source="popular"
+        initialCurrentPage={2}
+      />
+    );
+
+    await waitFor(() => expect(mockFetcher).toHaveBeenCalledTimes(2));
+
+    // Assert: Page 2 should use stored metadata from page 1
+    expect(mockFetcher).toHaveBeenNthCalledWith(2, 2, 3);
+
+    // Act: Navigate BACK to page 1 (the bug scenario)
+    rerender(
+      <MovieCollectionGrid
+        fetcher={mockFetcher}
+        source="popular"
+        initialCurrentPage={1}
+      />
+    );
+
+    await waitFor(() => expect(mockFetcher).toHaveBeenCalledTimes(3));
+
+    // Assert: Returning to page 1 should clear metadata (NOT send stale value 5)
+    // BUG: Current implementation sends (1, 5) instead of (1, undefined)
+    expect(mockFetcher).toHaveBeenNthCalledWith(3, 1, undefined);
+  });
+
+  /**
+   * Test: Any backward navigation should clear metadata
+   *
+   * Scenario: User navigates page 1 → page 2 → page 3 → page 2
+   * Expected: Going back from page 3 to page 2 should clear metadata
+   *
+   * Note: This ensures consistency for any backward navigation, not just to page 1
+   */
+  it('should clear metadata on any backward navigation', async () => {
+    // Arrange
+    const mockFetcher = vi.fn((page: number, _tmdb_page_start?: number) => ({
+      request: Promise.resolve({
+        data: createMockResponse({
+          page,
+          // Each page returns incremented metadata
+          next_tmdb_page_start: page * 2 + 1,
+        }),
+      }),
+      cancel: vi.fn(),
+    }));
+
+    // Act: Render on page 1
+    const { rerender } = render(
+      <MovieCollectionGrid
+        fetcher={mockFetcher}
+        source="popular"
+        initialCurrentPage={1}
+      />
+    );
+
+    await waitFor(() => expect(mockFetcher).toHaveBeenCalled());
+
+    // Navigate to page 2
+    rerender(
+      <MovieCollectionGrid
+        fetcher={mockFetcher}
+        source="popular"
+        initialCurrentPage={2}
+      />
+    );
+    await waitFor(() => expect(mockFetcher).toHaveBeenCalledTimes(2));
+
+    // Navigate to page 3
+    rerender(
+      <MovieCollectionGrid
+        fetcher={mockFetcher}
+        source="popular"
+        initialCurrentPage={3}
+      />
+    );
+    await waitFor(() => expect(mockFetcher).toHaveBeenCalledTimes(3));
+
+    // Act: Navigate BACK to page 2
+    rerender(
+      <MovieCollectionGrid
+        fetcher={mockFetcher}
+        source="popular"
+        initialCurrentPage={2}
+      />
+    );
+    await waitFor(() => expect(mockFetcher).toHaveBeenCalledTimes(4));
+
+    // Assert: Going back to page 2 should clear metadata
+    expect(mockFetcher).toHaveBeenNthCalledWith(4, 2, undefined);
+  });
+
+  /**
    * Test: Component should be stable in React StrictMode
    *
    * Scenario: React StrictMode intentionally double-renders components

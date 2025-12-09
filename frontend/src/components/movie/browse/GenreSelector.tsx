@@ -7,7 +7,6 @@ interface GenreSelectorProps {
 }
 
 const GenreSelector = ({ selectedGenres, onChange }: GenreSelectorProps) => {
-  console.log("GenreSelector re-rendered with selectedGenres:", selectedGenres);
   return (
     <Box>
       <Text fontSize="sm" fontWeight="medium" mb={2} color="foreground">

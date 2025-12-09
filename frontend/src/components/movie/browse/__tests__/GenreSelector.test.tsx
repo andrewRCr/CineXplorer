@@ -494,15 +494,5 @@ describe("GenreSelector Component", () => {
       });
     });
 
-    it("logs debug information correctly", () => {
-      const consoleSpy = vi.spyOn(console, "log");
-
-      render(<GenreSelector {...defaultProps} selectedGenres={[28]} />);
-
-      expect(consoleSpy).toHaveBeenCalledWith(
-        "GenreSelector re-rendered with selectedGenres:",
-        [28]
-      );
-    });
   });
 });

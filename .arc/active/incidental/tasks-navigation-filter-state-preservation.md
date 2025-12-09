@@ -123,7 +123,7 @@ testing is the only verification method, which is time-consuming and error-prone
     **Completed:** Modified MovieCard.tsx to read all URL parameters via useSearchParams() and
     preserve them in detail page links.
 
-    - [x] **2.1.1 Modify `MovieCard.tsx` to capture all URL params** ✅
+    - [x] **2.1.a Modify `MovieCard.tsx` to capture all URL params** ✅
         - Added `useSearchParams` import from react-router-dom
         - Refactored `queryString` memoization to read all params from URL
         - Preserves all filter params (minYear, maxYear, genres, ratings, runtime, sortBy)
@@ -132,7 +132,7 @@ testing is the only verification method, which is time-consuming and error-prone
         - All parameters properly URL-encoded
         - File: `components/movie/MovieCard.tsx:28,133-171`
 
-    - [x] **2.1.2 Run MovieCard tests - should now PASS** ✅
+    - [x] **2.1.b Run MovieCard tests - should now PASS** ✅
         - Fixed test setup to use `renderWithRoute` with proper search params
         - Updated test expectation for URL-encoded genres parameter (28%2C12)
         - All 32 MovieCard tests now pass (6/6 URL preservation tests passing)
@@ -144,7 +144,7 @@ testing is the only verification method, which is time-consuming and error-prone
     extracted back button into reusable component, and added back button to loading/error
     states for better UX.
 
-    - [x] **2.2.1 Modify `MovieDetail.tsx` back URL construction** ✅
+    - [x] **2.2.a Modify `MovieDetail.tsx` back URL construction** ✅
         - Created `allParams` memo to capture all URL parameters (lines 47-53)
         - Extracted back button into `BackButton` memoized component (lines 62-93)
         - Filters out empty parameter values to keep URLs clean
@@ -153,7 +153,7 @@ testing is the only verification method, which is time-consuming and error-prone
         - Refactored to eliminate code duplication (DRY principle)
         - File: `pages/movie/MovieDetail.tsx:47-93,131-150,160-163`
 
-    - [x] **2.2.2 Run MovieDetail tests - should now PASS** ✅
+    - [x] **2.2.b Run MovieDetail tests - should now PASS** ✅
         - Fixed test helper to use `renderWithRoute` with proper routing context
         - Updated test assertions for URL-encoded genres parameter
         - All 20 MovieDetail tests now pass (18 URL preservation + 2 loading/error state)
@@ -164,14 +164,14 @@ testing is the only verification method, which is time-consuming and error-prone
     **Completed:** Verified MovieCollectionGrid correctly passes parameters to MovieCard, confirmed dual-source pattern
     works as intended, and validated with integration tests.
 
-    - [x] **2.3.1 Review MovieCollectionGrid integration code** ✅
+    - [x] **2.3.a Review MovieCollectionGrid integration code** ✅
         - Confirmed MovieCollectionGrid passes currentPage, source, query props to MovieCard (lines 204-209)
         - Verified parameter flow: useMovieCollectionContext → MovieCollectionGrid → MovieCard
         - Validated dual-source pattern: URL provides filters, props provide page/source/query
         - Props correctly override URL values (parent controls pagination state)
         - No code changes needed - integration already correct
 
-    - [x] **2.3.2 Run integration tests - should now PASS** ✅
+    - [x] **2.3.b Run integration tests - should now PASS** ✅
         - Updated 3 test assertions for URL-encoded genres parameter
         - All 11 MovieCollectionGrid integration tests now pass
         - Tests verify: filter preservation, navigation cycles, different routes, complex filter combinations
@@ -183,7 +183,7 @@ testing is the only verification method, which is time-consuming and error-prone
 
     **Completed:** Comprehensive review of 18 existing tests confirms excellent coverage.
 
-    - [x] **3.1.1 Review existing test coverage** ✅
+    - [x] **3.1.a Review existing test coverage** ✅
 
         **Analysis Complete:**
 
@@ -207,7 +207,7 @@ testing is the only verification method, which is time-consuming and error-prone
         select preset ranges). Manual override after auto-expand is UX edge case. Integration tests exist
         (Phase 2) for actual navigation.
 
-    - [x] **3.1.2 Determine need for integration tests** ✅
+    - [x] **3.1.b Determine need for integration tests** ✅
 
         **Decision:** No new integration tests needed for showAdvanced.
 
@@ -228,7 +228,7 @@ testing is the only verification method, which is time-consuming and error-prone
 
     **Completed:** Successfully wired up the tested hook to production, enabling auto-expand functionality.
 
-    - [x] **3.2.1 Replace useState pattern in MovieCollectionLayout** ✅
+    - [x] **3.2.a Replace useState pattern in MovieCollectionLayout** ✅
         - Replaced `useMovieCollectionUrl` import with `useMovieCollectionState`
         - Removed manual `useState` for `showAdvanced` and `isFiltersCollapsed`
         - Destructured hook returns:
@@ -238,13 +238,13 @@ testing is the only verification method, which is time-consuming and error-prone
         - All component props and outlet context working correctly
         - File: `components/movie/collection/MovieCollectionLayout.tsx:1,12,72-85,159,161`
 
-    - [x] **3.2.2 Run frontend tests to verify no regressions** ✅
+    - [x] **3.2.b Run frontend tests to verify no regressions** ✅
         - All 453 tests passing (25 test files)
         - Hook's 18 tests passing (included in total)
         - 0 type errors, 0 lint violations
         - Test duration: 8.07s
 
-    - [x] **3.2.3 Remove truly dead code** ✅
+    - [x] **3.2.c Remove truly dead code** ✅
         - Removed `resetToDefaults` action from interface (line 60)
         - Removed `resetFilters` memo and `resetToDefaults` callback (lines 249-265)
         - Removed `resetToDefaults` from return object (line 285)
@@ -267,25 +267,25 @@ testing is the only verification method, which is time-consuming and error-prone
 
 - [ ] **4.1 Write navigation flow integration tests**
 
-    - [ ] **4.1.1 Create comprehensive user journey tests**
+    - [ ] **4.1.a Create comprehensive user journey tests**
         - Test: Popular → apply filters → detail → back → verify state
         - Test: Search → apply filters → detail → back → verify state
         - Test: Top Rated → filters → detail → back → pagination → detail → back
         - Expect tests to FAIL if implementation gaps exist
 
-    - [ ] **4.1.2 Create route change tests**
+    - [ ] **4.1.b Create route change tests**
         - Test: Popular with filters → switch to Top Rated → verify state reset
         - Test: Search results → navigate to Popular → verify independent state
         - Expect tests to FAIL if state management has issues
 
 - [ ] **4.2 Write edge case tests**
 
-    - [ ] **4.2.1 Create rapid navigation tests**
+    - [ ] **4.2.a Create rapid navigation tests**
         - Test: Quick detail→back→detail→back sequences
         - Verify no race conditions or state corruption
         - Expect tests to FAIL if timing issues exist
 
-    - [ ] **4.2.2 Create invalid state tests**
+    - [ ] **4.2.b Create invalid state tests**
         - Test: URL with malformed filter params
         - Test: Missing required params
         - Verify graceful degradation
@@ -293,31 +293,31 @@ testing is the only verification method, which is time-consuming and error-prone
 
 - [ ] **4.3 Write and run regression tests**
 
-    - [ ] **4.3.1 Create tests for existing navigation**
+    - [ ] **4.3.a Create tests for existing navigation**
         - Test: Navigation without filters
         - Test: Pagination without filters
         - Test: Direct URL access to detail pages
 
-    - [ ] **4.3.2 Create browser navigation tests**
+    - [ ] **4.3.b Create browser navigation tests**
         - Test: Browser back button
         - Test: Browser forward button
         - Test: History state correctness
 
-    - [ ] **4.3.3 Run all integration tests - should PASS**
+    - [ ] **4.3.c Run all integration tests - should PASS**
 
 ### **Phase 5:** Quality Gates & Manual Verification
 
 - [ ] **5.1 Run automated quality checks**
-    - [ ] 5.1.1 Run full frontend test suite (all 416+ tests pass, no warnings)
-    - [ ] 5.1.2 Run frontend linting (ESLint 0 violations)
-    - [ ] 5.1.3 Run frontend type checking (TypeScript 0 errors)
-    - [ ] 5.1.4 Run backend tests sanity check (verify no unintended changes)
+    - [ ] 5.1.a Run full frontend test suite (all 416+ tests pass, no warnings)
+    - [ ] 5.1.b Run frontend linting (ESLint 0 violations)
+    - [ ] 5.1.c Run frontend type checking (TypeScript 0 errors)
+    - [ ] 5.1.d Run backend tests sanity check (verify no unintended changes)
 
 - [ ] **5.2 Comprehensive manual testing**
 
     **Goal:** Build confidence through systematic manual verification.
 
-    - [ ] **5.2.1 Test URL param preservation across routes**
+    - [ ] **5.2.a Test URL param preservation across routes**
         - Popular: year 1980-1983 → detail → back → verify filters
         - Popular: genres Action+Comedy → detail → back → verify
         - Popular: rating 7.0-10.0 → detail → back → verify
@@ -327,16 +327,16 @@ testing is the only verification method, which is time-consuming and error-prone
         - Upcoming with filters → detail → back
         - Search with query + filters → detail → back
 
-    - [ ] **5.2.2 Test advanced panel state preservation**
+    - [ ] **5.2.b Test advanced panel state preservation**
         - Rating filter (panel expands) → detail → back → verify expanded
         - Year range (panel expands) → detail → back → verify expanded
         - Single year (collapsed) → detail → back → verify collapsed
 
-    - [ ] **5.2.3 Test pagination + navigation**
+    - [ ] **5.2.c Test pagination + navigation**
         - Filters active → page 2 → detail → back → verify page 2 + filters
         - Filters active → page 3 → detail → back → detail → back → verify state
 
-    - [ ] **5.2.4 Test browser navigation**
+    - [ ] **5.2.d Test browser navigation**
         - Verify browser back still works
         - Verify browser forward works
         - Verify history state correct
@@ -377,9 +377,9 @@ testing is the only verification method, which is time-consuming and error-prone
 ```
 Current cleanup (navigation/state) → Build rock-solid foundation
                                    ↓
-Resume pagination (Phase 3.6.5) → Manual verification now easier
+Resume pagination (Phase 3.6.e) → Manual verification now easier
                                 ↓
-Resume filter-integration (3.6.2+) → Verify with confidence
+Resume filter-integration (3.6.b+) → Verify with confidence
 ```
 
 **Key Lesson:** Manual testing revealed systemic gap in navigation/state testing. Addressing comprehensively

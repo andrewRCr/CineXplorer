@@ -3,17 +3,17 @@
 **Created**: 2025-10-24
 **Branch:** `technical/service-layer-modernization`
 **Status:** Paused
-**Priority**: High (blocking technical/service-layer-modernization Task 3.5.2.3)
+**Priority**: High (blocking technical/service-layer-modernization Task 3.5.b.3)
 **Type**: Quality Improvement + Technical Debt
 **Estimated Effort**: 8-12 hours
 
 ## Context
 
-**Discovery Source**: Task 3.5.2.3 (Re-evaluate discover_movies type safety)
+**Discovery Source**: Task 3.5.b.3 (Re-evaluate discover_movies type safety)
 
-**Interrupts:** `.arc/active/technical/tasks-service-layer-modernization.md` at Task 3.5.2.3
+**Interrupts:** `.arc/active/technical/tasks-service-layer-modernization.md` at Task 3.5.b.3
 
-**Paused At:** Phase 3.6.2 (rating filter manual testing)
+**Paused At:** Phase 3.6.b (rating filter manual testing)
 
 **Paused To:** `.arc/active/incidental/tasks-pagination-buffer-tracking.md` - Fix duplicate movies
 across pages discovered during rating filter testing
@@ -40,16 +40,6 @@ and test coverage:
 Backend client-side filtering should be a **second pass** on TMDB API results to catch data quality issues
 (wrong release dates, missing ratings, etc.). TMDB API filters are primary; backend filtering is data hygiene.
 
-## Success Criteria
-
-- [ ] Complete understanding of filter data flow from UI → backend → response
-- [ ] Comprehensive test coverage at all integration points
-- [ ] All filters work correctly (year, rating, runtime, genre, etc.)
-- [ ] No TMDB bad data leaks through (e.g., 1979 in 1980-1983 results)
-- [ ] Documentation accurately reflects implementation
-- [ ] Zero tolerance quality gates pass (all tests, linting, type checking)
-- [ ] Future filter changes can be made with confidence
-
 ---
 
 ### **Phase 1:** Discovery & Test Coverage Analysis
@@ -57,49 +47,45 @@ Backend client-side filtering should be a **second pass** on TMDB API results to
 **Purpose**: Systematically identify all gaps in filter functionality and test coverage through comprehensive testing.
 
 - [x] **1.1 Map Complete Filter Data Flow**
-    - [x] 1.1.1 Document frontend filter UI → API parameter mapping
+
+    - [x] 1.1.a Document frontend filter UI → API parameter mapping
         - **Completed**: Full mapping of MovieFilters → API params for minimal/expanded styles
         - **Key finding**: Frontend only generates TMDB API params (`release_date_gte/lte`, `vote_average_gte/lte`)
-        - **See notes**: Section 1.1.1
-    - [x] 1.1.2 Document API schema → service parameter mapping
+
+    - [x] 1.1.b Document API schema → service parameter mapping
         - **Completed**: Traced `to_service_params()` and identified critical gap
         - **Key finding**: Schema maps to TMDB params but NEVER populates backend filter params (`year_min/max`, `rating_min/max`)
         - **Root cause identified**: Incomplete feature migration - infrastructure exists but not wired to API layer
-        - **See notes**: Section 1.1.2
-    - [x] 1.1.3 Document service-level filtering mechanisms
+
+    - [x] 1.1.c Document service-level filtering mechanisms
         - **Completed**: Full documentation of two-pass filtering architecture
         - **Key finding**: Backend filtering mechanism works (unit tests pass) but never activates.
           It always receives `None` params.
         - **Architecture clarified**: TMDB API = primary filter, backend = second-pass data hygiene for quality issues
-        - **See notes**: Section 1.1.3
 
 - [x] **1.2 Audit Current Test Coverage**
 
-    - [x] 1.2.1 Analyze backend service unit test coverage
+    - [x] 1.2.a Analyze backend service unit test coverage
         - **Completed**: Reviewed `test_result_filtering.py` (877 lines, 17 comprehensive tests)
         - **Key finding**: Excellent service-layer coverage - year/rating filtering, buffer mechanism, all endpoints
         - **Critical gap**: Tests call service directly with params, don't validate integration path
-        - **See notes**: Section 1.2.1
 
-    - [x] 1.2.2 Analyze backend API integration test coverage
+    - [x] 1.2.b Analyze backend API integration test coverage
         - **Completed**: Reviewed `test_movie_api.py` (515 lines)
         - **Key finding**: Tests validate request structure but NOT filtering behavior
         - **Critical gaps**: No tests for schema → service param extraction, no filtered result validation
-        - **See notes**: Section 1.2.2
 
-    - [x] 1.2.3 Analyze frontend test coverage
+    - [x] 1.2.c Analyze frontend test coverage
         - **Completed**: Analyzed 14 test files
         - **Key finding**: Good UI component coverage, but zero filter logic coverage
         - **Critical gaps**: No tests for `movieFilterMapper.ts`, no tests for `useMovieFetchRouter`, no API param validation
-        - **See notes**: Section 1.2.3
 
-    - [x] 1.2.4 Identify integration test gaps
+    - [x] 1.2.d Identify integration test gaps
         - **Completed**: Comprehensive gap analysis with proposed test implementations
         - **Priority 1**: Schema parameter extraction (the exact bug we have)
         - **Priority 2**: API integration tests for filtered results
         - **Priority 3**: Frontend mapper tests for parameter contracts
         - **Priority 4**: End-to-end filter validation
-        - **See notes**: Section 1.2.4 + Test Coverage Summary table
 
 **Phase 1 Complete**: All discovery findings documented in notes file. Proceeding to Phase 2 implementation.
 
@@ -114,14 +100,14 @@ then implement fixes to make them pass.
 
 - [x] **2.1 Write Failing Integration Tests (Test-First)**
 
-    - [x] 2.1.1 Create schema parameter extraction tests
+    - [x] 2.1.a Create schema parameter extraction tests
         - **File**: `backend/apps/movie/tests/test_schemas.py` (new - 279 lines)
         - **Tests created**: 10 tests validating parameter extraction
         - **Result**: 9 tests FAIL, 1 passes (no filters case)
         - **Failures demonstrate**: Schema doesn't extract `year_min/max`, `rating_min/max`
         - **Error messages**: "Schema must extract year_min for backend filtering"
 
-    - [x] 2.1.2 Create API integration tests for filter flow
+    - [x] 2.1.b Create API integration tests for filter flow
         - **File**: `backend/apps/movie/tests/test_movie_api.py` (additions - 292 lines added)
         - **Tests created**: 3 integration tests
         - Test: `test_discover_api_extracts_backend_filter_params()` - FAILS (2 movies returned, expected 1)
@@ -130,13 +116,13 @@ then implement fixes to make them pass.
         - **Result**: All 3 tests FAIL as expected
         - **Failures demonstrate**: Backend filtering never activates, bad data passes through
 
-    - [x] 2.1.3 Create frontend mapper tests
+    - [x] 2.1.c Create frontend mapper tests
         - **File**: `frontend/src/utilities/__tests__/movieFilterMapper.test.ts` (new - 408 lines)
         - **Tests created**: 15 tests validating parameter generation and backend compatibility
         - **Result**: 12 tests PASS, 3 fail (maxRating handling edge cases)
         - **Note**: Frontend tests mostly pass (frontend already fixed), failures reveal mapper behavior nuances
 
-    - [x] 2.1.4 Run tests to confirm they fail
+    - [x] 2.1.d Run tests to confirm they fail
         - **Backend schema tests**: 9/10 FAIL (demonstrates bug)
         - **Backend API tests**: 3/3 FAIL (demonstrates integration broken)
         - **Frontend tests**: 12/15 PASS (mostly working, some edge cases)
@@ -144,7 +130,7 @@ then implement fixes to make them pass.
 
 - [x] **2.2 Implement Schema → Service Parameter Extraction**
 
-    - [x] 2.2.1 Update `MovieDiscoverFilterSchema.to_service_params()`
+    - [x] 2.2.a Update `MovieDiscoverFilterSchema.to_service_params()`
         - **Completed**: Refactored with declarative mapping pattern + added parameter extraction
         - **Refactoring**: Replaced 8 repetitive if statements with declarative `field_mappings` dict
         - **Pattern**: Uses Pydantic's `model_dump(exclude_none=True)` for cleaner code
@@ -154,14 +140,14 @@ then implement fixes to make them pass.
         - **Test results**: All 10 schema tests PASS (9 previously failing tests now pass)
         - **Code quality**: Linting passes (ruff N806 fix applied)
 
-    - [x] 2.2.2 Update API endpoint to pass extracted parameters
+    - [x] 2.2.b Update API endpoint to pass extracted parameters
         - **Completed**: Updated `backend/apps/movie/api.py` discover_movies endpoint
         - **Implementation**: Parameters flow through `**params` unpacking to service layer
         - **Docstring**: Enhanced to document two-pass filtering architecture with examples
         - **Type ignore**: Kept (needed for **kwargs unpacking with typed parameters)
         - **Key change**: Updated comments to clarify params now include backend filtering params
 
-    - [x] 2.2.3 Run tests - All tests PASS! ✅
+    - [x] 2.2.c Run tests - All tests PASS! ✅
         - **Schema tests**: 10/10 PASS (parameter extraction works correctly)
         - **API integration tests**: 3/3 PASS (integration flow works end-to-end)
         - **Result**: Backend filtering now activates, bad data filtered out
@@ -169,17 +155,17 @@ then implement fixes to make them pass.
 
 - [x] **2.3 Update Documentation**
 
-    - [x] 2.3.1 Update schema docstring
+    - [x] 2.3.a Update schema docstring
         - **Completed**: Updated `MovieDiscoverFilterSchema` class docstring
         - **Added**: Two-pass architecture explanation with concrete example
         - **Example**: "release_date_gte='2020-01-01' generates both release_date.gte + year_min=2020"
 
-    - [x] 2.3.2 Update API endpoint docstring
+    - [x] 2.3.b Update API endpoint docstring
         - **Completed**: Enhanced `discover_movies()` endpoint docstring in `backend/apps/movie/api.py`
         - **Already completed in 2.2.2**: Full two-pass filtering architecture documented
         - **Includes**: Concrete examples of dual-purpose parameters
 
-    - [x] 2.3.3 Update service method docstrings
+    - [x] 2.3.c Update service method docstrings
         - **Completed**: Updated all service methods in `backend/apps/movie/services/movie_service.py`
         - **Changes applied**: 16 references updated
             - "client-side filtered" → "backend filtered (second-pass data hygiene)"
@@ -189,32 +175,32 @@ then implement fixes to make them pass.
 
 - [x] **2.4 Quality Gates & Validation**
 
-    - [x] 2.4.1 Run full backend test suite
+    - [x] 2.4.a Run full backend test suite
         - **Result**: 357 passed, 1 error (15.41s with -n auto)
         - **New tests**: All 13 integration tests PASS (schema + API)
         - **Regressions**: None - all existing tests pass
         - **Error**: 1 teardown error in test_concurrent_token_refresh_requests (database flush issue, not related to changes)
 
-    - [x] 2.4.2 Run full frontend test suite
+    - [x] 2.4.b Run full frontend test suite
         - **Result**: 348/348 passed (100% pass rate) ✅
         - **New tests**: 15 tests added for movieFilterMapper
         - **Bug fixed**: maxRating parameter not included when minRating was set
         - **Fix**: Removed incorrect conditional `&& !filters.minRating` from maxRating logic
         - **File**: `frontend/src/utilities/movieFilterMapper.ts` (line 108-110)
 
-    - [x] 2.4.3 Run linting checks
+    - [x] 2.4.c Run linting checks
         - **Backend**: ✅ All checks passed (2 auto-fixed: unused import + import order)
         - **Frontend**: ✅ All checks passed (eslint clean)
         - **Markdown**: ✅ 0 errors across 56 files
         - **Result**: Zero violations
 
-    - [x] 2.4.4 Run type checking
+    - [x] 2.4.d Run type checking
         - **Backend (Pyright)**: ✅ 0 errors (11 informational notes in test files, acceptable)
         - **Frontend (TypeScript)**: ✅ Passes after fixing test file imports
         - **Fix applied**: Updated movieFilterMapper.test.ts imports to use correct MovieFilters interface
         - **Result**: Zero type errors in production code
 
-    - [x] 2.4.5 Manual validation & TMDB API investigation (COMPLETE)
+    - [x] 2.4.e Manual validation & TMDB API investigation (COMPLETE)
         - **Result**: Our implementation is CORRECT - TMDB has confirmed bugs ✅
         - **Comprehensive External Research Completed**: See `research-tmdb-api-date-filtering.md` for full analysis
         - **Key Findings**:
@@ -266,29 +252,29 @@ then implement fixes to make them pass.
 
     **Goal**: Exclude movies with unreliable ratings (low vote counts) when user filters by rating.
 
-    - [x] 3.1.1 Write unit tests for vote count filtering (TEST-FIRST)
+    - [x] 3.1.a Write unit tests for vote count filtering (TEST-FIRST)
         - **Completed**: 4 comprehensive tests added to `test_result_filtering.py`
         - Tests: Low vote exclusion, no filter bypass, missing vote_count handling, threshold respect
         - All tests follow existing patterns using `create_movie_dict()` helper
         - Used DRY principles with existing fixtures and helpers
 
-    - [x] 3.1.2 Update `filter_movies_by_rating()` in `result_filtering.py`
+    - [x] 3.1.b Update `filter_movies_by_rating()` in `result_filtering.py`
         - **Completed**: Added `min_vote_count` parameter (default: 50)
         - Vote count check only applies when rating filters active (rating_min/rating_max specified)
         - Movies with `vote_count < min_vote_count` or `None` excluded
         - Comprehensive docstring with quality rationale and examples
 
-    - [x] 3.1.3 Add configuration to `settings.py`
+    - [x] 3.1.c Add configuration to `settings.py`
         - **Completed**: `TMDB_MIN_VOTE_COUNT_THRESHOLD` environment variable
         - Default: 50 votes (statistically significant threshold)
         - Configurable via environment for different deployments
 
-    - [x] 3.1.4 Update `_apply_filters()` to use vote count check
+    - [x] 3.1.d Update `_apply_filters()` to use vote count check
         - **Completed**: Passes `settings.TMDB_MIN_VOTE_COUNT_THRESHOLD` to filter function
         - Import added: `from django.conf import settings`
         - Integrated seamlessly with existing filter chain
 
-    - [x] 3.1.5 Verify tests pass
+    - [x] 3.1.e Verify tests pass
         - **Completed**: All 21 tests pass (4 new + 17 existing)
         - Linting passes (ruff clean)
         - Type checking passes (pyright 0 errors on modified files)
@@ -309,7 +295,7 @@ then implement fixes to make them pass.
 
     **Goal**: Always exclude movies without critical display fields (poster, title).
 
-    - [x] 3.2.1 Write unit tests for completeness filtering (TEST-FIRST)
+    - [x] 3.2.a Write unit tests for completeness filtering (TEST-FIRST)
         - **Completed**: Added 4 comprehensive tests (lines 1061-1225 in test_result_filtering.py)
         - Test: `test_filter_movies_excludes_missing_poster()` - excludes movies without poster_path
         - Test: `test_filter_movies_excludes_empty_title()` - excludes movies with empty/whitespace titles
@@ -318,21 +304,21 @@ then implement fixes to make them pass.
         - **Test-first approach**: Tests written first, failed initially, then passed after implementation
         - Enhanced `create_movie_dict()` helper with optional `poster_path` parameter for testing
 
-    - [x] 3.2.2 Create `filter_movies_by_completeness()` in `result_filtering.py`
+    - [x] 3.2.b Create `filter_movies_by_completeness()` in `result_filtering.py`
         - **Completed**: Lines 188-234 in result_filtering.py
         - Excludes movies with missing/empty `poster_path` (prevents broken images)
         - Excludes movies with empty/whitespace-only `title` (prevents blank cards)
         - Comprehensive docstring with quality rationale and examples
         - Always applied (not configurable - basic UI quality requirement)
 
-    - [x] 3.2.3 Update `_apply_filters()` to apply completeness filter
+    - [x] 3.2.c Update `_apply_filters()` to apply completeness filter
         - **Completed**: Integrated at line 370 in movie_service.py
         - Applied FIRST in filter chain (before year/rating filters)
         - Always enabled for all endpoints (discover, search, now_playing, upcoming)
         - Logging inherited from existing filter warning system
         - Removed early-return optimization to ensure completeness filter always runs
 
-    - [x] 3.2.4 Verify tests pass
+    - [x] 3.2.d Verify tests pass
         - **Completed**: All 25 result_filtering tests pass (21 existing + 4 new)
         - Quality gates clean: ruff (0 violations), pyright (0 errors)
         - Fixed test data consistency: Added vote_count to all TMDB test payloads
@@ -386,7 +372,7 @@ then implement fixes to make them pass.
 
     **Goal**: Exclude obviously invalid dates (before 1888 - first film ever made).
 
-    - [x] 3.3.1 Write unit tests for historical validation (TEST-FIRST)
+    - [x] 3.3.a Write unit tests for historical validation (TEST-FIRST)
         - **Completed**: Added 3 comprehensive tests (lines 1168-1289 in test_result_filtering.py)
         - Test: `test_filter_movies_excludes_pre_cinema_dates()` - excludes pre-1888 dates
         - Test: `test_filter_movies_includes_first_film_year()` - includes 1888 (boundary year)
@@ -394,14 +380,14 @@ then implement fixes to make them pass.
         - **Test-first approach**: Tests written first, failed initially, then passed after implementation
         - **Pattern used**: Used existing `create_movie_dict()` helper for consistency
 
-    - [x] 3.3.2 Add historical validation to `filter_movies_by_year()`
+    - [x] 3.3.b Add historical validation to `filter_movies_by_year()`
         - **Completed**: Added `FIRST_FILM_YEAR = 1888` constant (line 38 in result_filtering.py)
         - **Implementation**: Added historical validation check in filter function (lines 96-99)
         - **Always applied**: Validation runs regardless of user filters (data quality requirement)
         - **Integration**: Updated `movie_service.py` to always call year filter (line 354)
         - **Documentation**: Enhanced docstring with historical validation details
 
-    - [x] 3.3.3 Verify tests pass
+    - [x] 3.3.c Verify tests pass
         - **Completed**: All 3 new tests pass, full suite 368/368 pass (1 pre-existing teardown error)
         - **Quality gates**: Ruff (0 violations), Pyright (0 errors)
         - **Implementation verified**: Filter correctly excludes pre-1888 dates, includes 1888+
@@ -418,7 +404,7 @@ then implement fixes to make them pass.
 
     **Goal**: Fix MovieCard date display showing wrong date due to timezone conversion.
 
-    - [x] 3.4.1 Write test for correct date display (TEST-FIRST)
+    - [x] 3.4.a Write test for correct date display (TEST-FIRST)
         - **Completed**: Added 3 comprehensive tests in MovieCard.test.tsx (lines 176-228)
         - Test: `displays ISO date without timezone shifting` - validates exact "January 1, 1980" format
         - Test: `handles year boundary dates correctly` - validates "December 31, 1999" stays correct
@@ -427,18 +413,18 @@ then implement fixes to make them pass.
         even in UTC test environments
         - **Test environment issue addressed**: Container runs in UTC, so generic tests would pass with broken code
 
-    - [x] 3.4.2 Update `MovieCard.tsx` date formatting (lines 102-130)
+    - [x] 3.4.b Update `MovieCard.tsx` date formatting (lines 102-130)
         - **Completed**: Replaced `new Date(movie.release_date)` with timezone-safe parsing
         - **Implementation**: Parse ISO string components → create Date in local timezone
         - **Code**: Split on "-", parseInt year/month/day, create `new Date(year, month-1, day)`
         - **Validation**: Added NaN checks for robustness
         - **Documentation**: Detailed comments explaining the timezone bug and fix
 
-    - [x] 3.4.3 Verify test passes
+    - [x] 3.4.c Verify test passes
         - **Completed**: All 348 frontend tests pass (including 3 new date tests)
         - **Quality gates**: ESLint (0 violations), TypeScript (0 errors)
 
-    - [x] 3.4.4 Search for other date parsing instances
+    - [x] 3.4.d Search for other date parsing instances
         - **Completed**: Grep search found all `new Date()` uses in frontend
         - **Fixed**: MovieDetail.tsx (lines 66-83) - same timezone-safe parsing pattern
         - **Verified safe**: Other uses are correct (current timestamps, Unix timestamps, Date constructor with components)
@@ -454,21 +440,21 @@ then implement fixes to make them pass.
 
 - [x] **3.5 Quality Gate & Testing**
 
-    - [x] 3.5.1 Run all backend tests
+    - [x] 3.5.a Run all backend tests
         - ✅ 368/368 tests passing (100% pass rate)
         - All Phase 3 filtering logic verified (vote count, completeness, historical validation)
         - Test teardown error remains fixed
 
-    - [x] 3.5.2 Run frontend tests
+    - [x] 3.5.b Run frontend tests
         - ✅ 348/348 tests passing
         - Date fix working correctly, all component tests passing
 
-    - [x] 3.5.3 Run linting checks
+    - [x] 3.5.c Run linting checks
         - ✅ Backend: ruff check passes (1 unused import auto-fixed)
         - ✅ Frontend: npm run lint passes
         - ✅ Markdown: markdownlint passes (58 files, 0 errors)
 
-    - [x] 3.5.4 Run type checking
+    - [x] 3.5.d Run type checking
         - ✅ Backend: pyright 0 errors (46 informational messages expected)
         - ✅ Frontend: npm run type-check passes
 
@@ -484,7 +470,7 @@ then implement fixes to make them pass.
     for comprehensive testing during Backend Modernization Phase 1. These bugs may receive quick fixes or
     incidental tasks for the fix, but E2E test infrastructure will be built as dedicated planned work.
 
-    - [x] 3.6.1 Test discover page with year filters
+    - [x] 3.6.a Test discover page with year filters
         - Apply filter: 1980-1983
         - Verify: No pre-1980 or post-1983 movies appear
         - Check: Date display matches backend data (timezone bug fixed)
@@ -494,7 +480,7 @@ then implement fixes to make them pass.
         count bug (fixed immediately - 382a822), back button navigation bug (incidental task + documented
         in backend-modernization notes for E2E testing)
 
-    - [ ] 3.6.2 Test rating filters with vote count threshold
+    - [ ] 3.6.b Test rating filters with vote count threshold
         - Apply filter: 7.5+ rating
         - Verify: No low-vote-count movies with unreliable ratings
         - Check: All displayed ratings based on 50+ votes
@@ -505,13 +491,13 @@ then implement fixes to make them pass.
         - **Action**: Created `.arc/active/incidental/tasks-pagination-buffer-tracking.md` to fix
         - **Will resume**: After pagination fix is complete and verified
 
-    - [ ] 3.6.3 Assess completeness filter effectiveness
+    - [ ] 3.6.c Assess completeness filter effectiveness
         - Browse discover/search results
         - Verify: No broken poster images
         - Verify: No empty titles
         - Visual inspection of grid quality
 
-    - [ ] 3.6.4 Assess overall data quality improvement
+    - [ ] 3.6.d Assess overall data quality improvement
         - **Target**: 90%+ accuracy acceptable
         - Sample 50-100 movies across different filters
         - Document: % of movies with accurate data
@@ -534,9 +520,9 @@ then implement fixes to make them pass.
 
 - [ ] **4.1 Optional: Non-Visual Filtering Enhancement**
 
-    **Question from Phase 1.1.3**: Should non-visual filtering apply to discover/browse?
+    **Question from Phase 1.1.c**: Should non-visual filtering apply to discover/browse?
 
-    - [ ] 4.1.1 Decide: Apply non-visual filter to discover endpoint?
+    - [ ] 4.1.a Decide: Apply non-visual filter to discover endpoint?
         - Currently: Only applied to search
         - Consideration: Soundtracks rarely appear in discover results (genre-filtered)
         - Decision: [User input needed]
@@ -544,18 +530,18 @@ then implement fixes to make them pass.
 
 - [ ] **4.2 Documentation Integration**
 
-    - [ ] 4.2.1 Integrate notes into TECHNICAL-OVERVIEW.md
-        - Add "Filter Architecture" section based on notes Phase 1.1.3
+    - [ ] 4.2.a Integrate notes into TECHNICAL-OVERVIEW.md
+        - Add "Filter Architecture" section based on notes Phase 1.1.c
         - Include: Two-pass filtering design, parameter flow diagram
         - Document: TMDB API quirks, backend data hygiene role
         - Reference research document for TMDB bug details
 
-    - [ ] 4.2.2 Update testing strategy documentation
+    - [ ] 4.2.b Update testing strategy documentation
         - Document: Integration test pattern for cross-layer features
         - Include: Filter testing as example case study
         - Lesson learned: "Unit tests alone missed integration bug"
 
-    - [ ] 4.2.3 Document data quality enhancements
+    - [ ] 4.2.c Document data quality enhancements
         - Update service layer docs with new filtering logic
         - Document vote count threshold, completeness requirements
         - Note frontend timezone fix and safe date parsing pattern
@@ -585,4 +571,12 @@ then implement fixes to make them pass.
 
 ---
 
-**Version**: 2.0 (Phase 1 complete, Phase 2 restructured for test-driven implementation)
+## Success Criteria
+
+- [ ] Complete understanding of filter data flow from UI → backend → response
+- [ ] Comprehensive test coverage at all integration points
+- [ ] All filters work correctly (year, rating, runtime, genre, etc.)
+- [ ] No TMDB bad data leaks through (e.g., 1979 in 1980-1983 results)
+- [ ] Documentation accurately reflects implementation
+- [ ] Zero tolerance quality gates pass (all tests, linting, type checking)
+- [ ] Future filter changes can be made with confidence

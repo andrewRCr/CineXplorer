@@ -2,7 +2,7 @@
 
 **Created:** 2025-10-27
 **Branch:** `technical/service-layer-modernization`
-**Status:** Paused
+**Status:** In Progress
 
 ## Context
 
@@ -27,11 +27,6 @@
 **Trigger**: Phase 3.6.2 rating filter testing (rating 1.0-3.5, rating 0-6.0)
 
 **Interrupts**: `.arc/active/incidental/tasks-filter-integration-testing.md` Phase 3.6 at task 3.6.2
-
-**Paused At:** Phase 3.6, Task 3.6.5 (manual verification)
-
-**Paused To:** `.arc/active/incidental/tasks-navigation-filter-state-preservation.md` - Fix navigation
-state issues discovered during manual testing
 
 ---
 
@@ -357,16 +352,15 @@ but this also exposed garbage/misclassified TMDB entries.
     - ✅ **Bonus fix**: Refactored `filter_movies_by_rating()` to support vote threshold independently
       of rating filters, fixing general browsing quality filtering (10 vote threshold now works correctly)
 
-- [ ] **3.6.e Run quality gates and verify filtering** (DEFERRED - see session notes)
-    - Backend tests: 30/30 passing ✅ (Phase 3.6 tests)
-    - Backend type checking: 0 errors ✅
-    - Backend linting: 0 violations ✅
-    - Frontend tests: 416/416 passing ✅ (includes navigation fix tests)
-    - Frontend type checking: 0 errors ✅
-    - Frontend linting: 0 violations ✅
-    - **Note**: Manual verification and commit intentionally deferred until after navigation/state work complete
-    - **Rationale**: Discovered navigation bugs during manual testing - addressing comprehensively before
-      resuming pagination work
+- [x] **3.6.e Run quality gates and verify filtering** ✅
+    - Backend tests: 611 passing
+    - Backend type checking: 0 errors
+    - Backend linting: 0 violations
+    - Frontend tests: 573 passing
+    - Frontend type checking: 0 errors
+    - Frontend linting: 0 violations
+    - Genre completeness filtering: Implemented via `CompletenessPolicy` in `data_quality/policy.py`
+    - Vote threshold filtering: Implemented via `VoteCountPolicy` (tiered: 200 for rating sorts, 3 for rating filters)
 
 ---
 
@@ -382,8 +376,9 @@ Phase 2 (filter params in URL). This ensures consistent behavior across all navi
 
 **Prerequisites Complete:**
 
-- ✅ Phase 4 of `tasks-buffer-deduplication-data-quality.md` (cross-page deduplication)
-- ✅ Phase 5.2 of `tasks-buffer-deduplication-data-quality.md` (backward nav to page 1 fix)
+- ✅ Phase 4 of `tasks-buffer-deduplication-data-quality.md` (cross-page deduplication) - ARCHIVED
+- ✅ Phase 5.2 of `tasks-buffer-deduplication-data-quality.md` (backward nav to page 1 fix) - ARCHIVED
+- ✅ `tasks-navigation-filter-state-preservation.md` (URL param preservation) - ARCHIVED
 
 **Scope Clarification:** Phase 5.2 (buffer-dedup) fixed backward navigation to **page 1** by clearing stale
 `tmdb_page_start` metadata. This Phase 3.7 enables backward navigation to **pages 2+** by persisting

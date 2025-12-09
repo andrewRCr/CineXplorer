@@ -79,3 +79,21 @@
     - Research: pytest-cov documentation, Django-specific coverage patterns, potential fixes
     - Goal: Either fix configuration or document as known limitation with workaround
     - Context: Discovered during endpoint consolidation quality gates (Phase 6.1.b)
+
+<!-- Navigation/Routing -->
+
+- [ ] Extract `BackToCollectionButton` shared component
+    - **Context:** `MovieDetail.tsx:58-93` has inline BackButton with comment noting extraction
+      opportunity if PersonDetail needs similar functionality
+    - **Current implementation:**
+        - Reads `from` and filter params from URL
+        - Constructs back URL based on source route (search, browse, browse/*)
+        - Preserves all query params for filter state
+    - **Implementation:**
+        1. Create `frontend/src/components/navigation/BackToCollectionButton.tsx`
+        2. Props: `from: string`, `params: Record<string, string>`, optional `label?: string`
+        3. Move URL construction logic from MovieDetail
+        4. Update MovieDetail to use shared component
+        5. (Future) Use in PersonDetail when that page is built
+    - **Files:** New component, `MovieDetail.tsx`
+    - **Defer until:** PersonDetail is being built (avoid premature abstraction)

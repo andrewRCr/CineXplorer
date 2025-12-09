@@ -6,6 +6,35 @@ Reference format: "see `completed-atomic-2025-q4.md`" or "see {task name} in `co
 
 ---
 
+- [x] Search/Browse Architecture Cleanup (3 tasks)
+    - **Outcome:** Fixed search backward navigation bug and cleaned up architecture:
+        1. **Centralized `CORE_GENRE_IDS`** - Moved to `browseDefaults.ts` with JSDoc, exported
+           both array and Set versions, removed duplicates from `browseOptions.ts` and
+           `useMovieCollectionState.tsx`
+        2. **Refactored `getFetcherAndSource`** - Now accepts optional `search` param from React
+           Router (source of truth), falls back to `window.location` for compatibility, fixed
+           spread order so URL query wins over `filters.query`
+        3. **Created `SearchParams` type** - New `searchTypes.ts`, `searchParamMapper.ts`,
+           `searchUrlSync.ts` with 13 tests for URL parsing/generation
+    - **Bonus fix:** Removed `@/types` alias override from `vite.config.ts` and `vitest.config.ts`
+      that was blocking `tsconfigPaths()` multi-path resolution
+    - **Files:**
+        - `frontend/src/constants/browseDefaults.ts` (CORE_GENRE_IDS added)
+        - `frontend/src/constants/browseOptions.ts` (imports from browseDefaults)
+        - `frontend/src/components/movie/collection/useMovieCollectionState.tsx` (uses CORE_GENRE_IDS_SET)
+        - `frontend/src/utilities/routeConfigHelper.ts` (new signature, spread order fix)
+        - `frontend/src/components/movie/collection/MovieCollectionLayout.tsx` (passes location.search)
+        - `frontend/src/types/searchTypes.ts` (new)
+        - `frontend/src/utilities/searchParamMapper.ts` (new)
+        - `frontend/src/utilities/searchUrlSync.ts` (new)
+        - `frontend/src/utilities/__tests__/routeConfigHelper.search.test.ts` (new - 11 tests)
+        - `frontend/src/utilities/__tests__/searchUrlSync.test.ts` (new - 13 tests)
+        - `frontend/vite.config.ts` (removed @/types alias)
+        - `frontend/vitest.config.ts` (removed @/types alias)
+    - **Tests:** 573 frontend + 611 backend passing
+
+    - **Branch:** `technical/service-layer-modernization`
+
 - [x] Blacklist 70s/80s adult films that TMDB mislabels as non-adult
     - **Outcome:** Blacklisted 108 movies total:
         - 18 original reported films

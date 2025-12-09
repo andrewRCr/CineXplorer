@@ -80,7 +80,6 @@ const App: React.FC = () => {
                 element={
                   <MovieCollectionLayout
                     showBrowseControls={true}
-                    browseLayout="compact"
                   />
                 }
               >

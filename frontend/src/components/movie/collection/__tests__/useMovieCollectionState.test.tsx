@@ -26,6 +26,9 @@ describe("useMovieCollectionState", () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (window as any).location = new URL("http://localhost:3000");
 
+    // Clear sessionStorage to prevent test pollution
+    sessionStorage.clear();
+
     // Reset mock to default behavior
     mockUseMovieCollectionUrl.mockReturnValue({
       browseParams: createMockBrowseParams(),
@@ -301,22 +304,82 @@ describe("useMovieCollectionState", () => {
       expect(result.current.hasAdvancedFilters).toBe(false);
     });
 
-    it("should NOT detect genres as advanced", () => {
+    it("should NOT detect decade preset as advanced", () => {
       // Arrange: Use non-URL-synced mode for filter update testing
+      // Decade presets (1990's, 2020's) are available in QuickBrowseBar, so not advanced
       const { result } = renderHook(
         () => useMovieCollectionState({ enableUrlSync: false }),
         { wrapper }
       );
 
-      // Act: Add genres
+      // Act: Add decade preset (e.g., "1990's" → minYear: 1990, maxYear: 1999)
       act(() => {
         result.current.onBrowseParamsChange({
-          genres: [28, 12], // Action, Adventure
+          minYear: "1990",
+          maxYear: "1999",
         });
       });
 
-      // Assert
+      // Assert: Decade range should NOT be detected as advanced
       expect(result.current.hasAdvancedFilters).toBe(false);
+    });
+
+    it("should NOT detect single core genre as advanced", () => {
+      // Arrange: Use non-URL-synced mode for filter update testing
+      // Single core genres are available in QuickBrowseBar dropdown, so not advanced
+      // Core genres: Action, Comedy, Documentary, Drama, Family, Horror, Sci-Fi, Thriller
+      const { result } = renderHook(
+        () => useMovieCollectionState({ enableUrlSync: false }),
+        { wrapper }
+      );
+
+      // Act: Add single core genre (Action = 28)
+      act(() => {
+        result.current.onBrowseParamsChange({
+          genres: [28], // Action - a core genre
+        });
+      });
+
+      // Assert: Single core genre should NOT be advanced
+      expect(result.current.hasAdvancedFilters).toBe(false);
+    });
+
+    it("should detect multiple genres as advanced", () => {
+      // Arrange: Use non-URL-synced mode for filter update testing
+      // Multiple genres require advanced panel's multi-select
+      const { result } = renderHook(
+        () => useMovieCollectionState({ enableUrlSync: false }),
+        { wrapper }
+      );
+
+      // Act: Add multiple genres
+      act(() => {
+        result.current.onBrowseParamsChange({
+          genres: [28, 12], // Action + Adventure
+        });
+      });
+
+      // Assert: Multiple genres should be advanced
+      expect(result.current.hasAdvancedFilters).toBe(true);
+    });
+
+    it("should detect non-core genre as advanced", () => {
+      // Arrange: Use non-URL-synced mode for filter update testing
+      // Non-core genres are only available in advanced panel
+      const { result } = renderHook(
+        () => useMovieCollectionState({ enableUrlSync: false }),
+        { wrapper }
+      );
+
+      // Act: Add non-core genre (Adventure = 12, not in core genre list)
+      act(() => {
+        result.current.onBrowseParamsChange({
+          genres: [12], // Adventure - not a core genre
+        });
+      });
+
+      // Assert: Non-core genre should be advanced
+      expect(result.current.hasAdvancedFilters).toBe(true);
     });
   });
 
@@ -554,6 +617,155 @@ describe("useMovieCollectionState", () => {
 
       await waitFor(() => {
         expect(result.current.browseParams.language).toBe("fr");
+      });
+    });
+  });
+
+  describe("User override for auto-expand", () => {
+    it("should skip auto-expand on remount when user manually closed panel with filters active", async () => {
+      // Arrange: Start with advanced filters (should auto-expand)
+      mockUseMovieCollectionUrl.mockReturnValue({
+        browseParams: createMockBrowseParams({ minRating: "7.0", maxRating: "10.0" }),
+        handleBrowseParamsChange: vi.fn(),
+        currentPageFromUrl: 1,
+        handlePageChange: vi.fn(),
+      });
+
+      const { result: result1, unmount } = renderHook(() => useMovieCollectionState(), {
+        wrapper,
+      });
+
+      // Wait for auto-expand
+      await waitFor(() => {
+        expect(result1.current.isAdvancedPanelOpen).toBe(true);
+      });
+
+      // Act: User manually closes the panel
+      act(() => {
+        result1.current.toggleAdvancedPanel();
+      });
+
+      // Assert: Panel should be closed
+      expect(result1.current.isAdvancedPanelOpen).toBe(false);
+
+      // Unmount (simulating navigation away)
+      unmount();
+
+      // Remount with SAME filters (simulating back navigation)
+      // Current behavior: auto-expand fires again, ignoring user preference
+      // Desired behavior: should respect user's close action
+      const { result: result2 } = renderHook(() => useMovieCollectionState(), {
+        wrapper,
+      });
+
+      // THIS TEST SHOULD FAIL until we implement user override tracking
+      // Currently the panel will auto-expand again on remount
+      await waitFor(() => {
+        expect(result2.current.isAdvancedPanelOpen).toBe(false);
+      });
+    });
+
+    it("should reset user override when filter values change", async () => {
+      // Arrange: Start with rating filters
+      const mockHandleBrowseParamsChange = vi.fn();
+      mockUseMovieCollectionUrl.mockReturnValue({
+        browseParams: createMockBrowseParams({ minRating: "7.0", maxRating: "10.0" }),
+        handleBrowseParamsChange: mockHandleBrowseParamsChange,
+        currentPageFromUrl: 1,
+        handlePageChange: vi.fn(),
+      });
+
+      const { result, rerender } = renderHook(() => useMovieCollectionState(), {
+        wrapper,
+      });
+
+      // Wait for auto-expand
+      await waitFor(() => {
+        expect(result.current.isAdvancedPanelOpen).toBe(true);
+      });
+
+      // User manually closes
+      act(() => {
+        result.current.toggleAdvancedPanel();
+      });
+      expect(result.current.isAdvancedPanelOpen).toBe(false);
+
+      // Now filters change (user applies new filter)
+      mockUseMovieCollectionUrl.mockReturnValue({
+        browseParams: createMockBrowseParams({ minRating: "5.0", maxRating: "8.0" }),
+        handleBrowseParamsChange: mockHandleBrowseParamsChange,
+        currentPageFromUrl: 1,
+        handlePageChange: vi.fn(),
+      });
+
+      rerender();
+
+      // Should auto-expand again because filters changed (override reset)
+      await waitFor(() => {
+        expect(result.current.isAdvancedPanelOpen).toBe(true);
+      });
+    });
+
+    it("should NOT set override when panel is closed on initial mount (no filters)", () => {
+      // Arrange: No advanced filters
+      mockUseMovieCollectionUrl.mockReturnValue({
+        browseParams: createMockBrowseParams(),
+        handleBrowseParamsChange: vi.fn(),
+        currentPageFromUrl: 1,
+        handlePageChange: vi.fn(),
+      });
+
+      const { result } = renderHook(() => useMovieCollectionState(), {
+        wrapper,
+      });
+
+      // Panel should be closed (no filters)
+      expect(result.current.isAdvancedPanelOpen).toBe(false);
+
+      // User opens panel manually
+      act(() => {
+        result.current.toggleAdvancedPanel();
+      });
+      expect(result.current.isAdvancedPanelOpen).toBe(true);
+
+      // User closes panel - this is NOT an override situation (no advanced filters)
+      act(() => {
+        result.current.toggleAdvancedPanel();
+      });
+      expect(result.current.isAdvancedPanelOpen).toBe(false);
+
+      // If filters are later added, should auto-expand (no override active)
+    });
+
+    it("should only set override when closing panel while advanced filters are active", async () => {
+      // Arrange: Start with advanced filters
+      const mockHandleBrowseParamsChange = vi.fn();
+      mockUseMovieCollectionUrl.mockReturnValue({
+        browseParams: createMockBrowseParams({ minRating: "7.0" }),
+        handleBrowseParamsChange: mockHandleBrowseParamsChange,
+        currentPageFromUrl: 1,
+        handlePageChange: vi.fn(),
+      });
+
+      const { result, rerender } = renderHook(() => useMovieCollectionState(), {
+        wrapper,
+      });
+
+      await waitFor(() => {
+        expect(result.current.isAdvancedPanelOpen).toBe(true);
+      });
+
+      // User closes panel while filters active - sets override
+      act(() => {
+        result.current.toggleAdvancedPanel();
+      });
+      expect(result.current.isAdvancedPanelOpen).toBe(false);
+
+      // Simulate remount with same filters - should stay closed (override active)
+      rerender();
+
+      await waitFor(() => {
+        expect(result.current.isAdvancedPanelOpen).toBe(false);
       });
     });
   });

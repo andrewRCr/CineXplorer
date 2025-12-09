@@ -83,7 +83,6 @@ describe('useMovieFetchRouter - pagination metadata passing', () => {
                 useMovieFetchRouter({
                     fetcher: mockBaseFetcher,
                     browseParams: mockBrowseParams,
-                    browseLayout: 'expanded',
                 })
             );
 
@@ -104,7 +103,6 @@ describe('useMovieFetchRouter - pagination metadata passing', () => {
                 useMovieFetchRouter({
                     fetcher: mockBaseFetcher,
                     browseParams: mockBrowseParams,
-                    browseLayout: 'expanded',
                 })
             );
 
@@ -138,7 +136,6 @@ describe('useMovieFetchRouter - pagination metadata passing', () => {
                 useMovieFetchRouter({
                     fetcher: mockBaseFetcher,
                     browseParams: mockBrowseParams,
-                    browseLayout: 'expanded',
                 })
             );
 
@@ -166,7 +163,6 @@ describe('useMovieFetchRouter - pagination metadata passing', () => {
                 useMovieFetchRouter({
                     fetcher: mockBaseFetcher,
                     browseParams: mockBrowseParams,
-                    browseLayout: 'expanded',
                 })
             );
 
@@ -203,7 +199,6 @@ describe('useMovieFetchRouter - pagination metadata passing', () => {
                 useMovieFetchRouter({
                     fetcher: mockBaseFetcher,
                     browseParams: mockBrowseParams,
-                    browseLayout: 'expanded',
                 })
             );
 
@@ -242,7 +237,6 @@ describe('useMovieFetchRouter - pagination metadata passing', () => {
                 useMovieFetchRouter({
                     fetcher: mockBaseFetcher,
                     browseParams: mockBrowseParams,
-                    browseLayout: 'expanded',
                 })
             );
 

@@ -18,12 +18,12 @@ import { createMockBrowseParams as createBrowseParams } from '@tests/mocks/brows
 
 describe('browseParamMapper - Backend Schema Compatibility', () => {
   describe('Year Filter Parameter Generation', () => {
-    it('generates release_date_gte/lte for year range (expanded style)', () => {
+    it('generates release_date_gte/lte for year range', () => {
       // Arrange: User selects year range 2020-2023
       const browseParams = createBrowseParams({ minYear: '2020', maxYear: '2023' });
 
       // Act: Map to API parameters
-      const params = mapBrowseParamsToApi(browseParams, 'expanded');
+      const params = mapBrowseParamsToApi(browseParams);
 
       // Assert: Parameters match backend schema expectations
       expect(params.release_date_gte).toBe('2020-01-01');
@@ -39,7 +39,7 @@ describe('browseParamMapper - Backend Schema Compatibility', () => {
       const browseParams = createBrowseParams({ minYear: '2020' });
 
       // Act
-      const params = mapBrowseParamsToApi(browseParams, 'expanded');
+      const params = mapBrowseParamsToApi(browseParams);
 
       // Assert: Only gte parameter present
       expect(params.release_date_gte).toBe('2020-01-01');
@@ -52,33 +52,25 @@ describe('browseParamMapper - Backend Schema Compatibility', () => {
       const browseParams = createBrowseParams({ maxYear: '2023' });
 
       // Act
-      const params = mapBrowseParamsToApi(browseParams, 'expanded');
+      const params = mapBrowseParamsToApi(browseParams);
 
       // Assert: Only lte parameter present
       expect(params.release_date_lte).toBe('2023-12-31');
       expect(params).not.toHaveProperty('release_date_gte');
     });
 
-    it('converts decade filter to release_date range (minimal style)', () => {
-      // Arrange: User selects "2020s" decade
-      const browseParams = createBrowseParams({ minYear: '2020s' });
-
-      // Act
-      const params = mapBrowseParamsToApi(browseParams, 'compact');
-
-      // Assert: Decade converted to date range
-      expect(params.release_date_gte).toBe('2020-01-01');
-      expect(params.release_date_lte).toBe('2029-12-31');
-    });
+    // Note: Decade handling ("2020s" → 2020-2029) was removed from browseParamMapper
+    // because the UI (ConnectedDropdowns) converts decades to year ranges BEFORE storing.
+    // The mapper now receives minYear: "2020", maxYear: "2029" directly.
   });
 
   describe('Rating Filter Parameter Generation', () => {
-    it('generates vote_average_gte for minimum rating (expanded style)', () => {
+    it('generates vote_average_gte for minimum rating', () => {
       // Arrange: User selects "7.5+ rating"
       const browseParams = createBrowseParams({ minRating: '7.5' });
 
       // Act
-      const params = mapBrowseParamsToApi(browseParams, 'expanded');
+      const params = mapBrowseParamsToApi(browseParams);
 
       // Assert: Parameter name matches backend schema
       expect(params.vote_average_gte).toBe('7.5');
@@ -86,27 +78,16 @@ describe('browseParamMapper - Backend Schema Compatibility', () => {
       expect(params).not.toHaveProperty('rating_min'); // Backend extracts this
     });
 
-    it('generates vote_average_lte for maximum rating when no minimum (expanded style)', () => {
+    it('generates vote_average_lte for maximum rating when no minimum', () => {
       // Arrange: User selects "Up to 8.0 rating"
       const browseParams = createBrowseParams({ maxRating: '8.0' });
 
       // Act
-      const params = mapBrowseParamsToApi(browseParams, 'expanded');
+      const params = mapBrowseParamsToApi(browseParams);
 
       // Assert: Only lte parameter when no min provided
       expect(params.vote_average_lte).toBe('8.0');
       expect(params).not.toHaveProperty('vote_average_gte');
-    });
-
-    it('generates vote_average_gte for minimal style rating filter', () => {
-      // Arrange: User selects quick "7.0+" rating filter
-      const browseParams = createBrowseParams({ minRating: '7.0' });
-
-      // Act
-      const params = mapBrowseParamsToApi(browseParams, 'compact');
-
-      // Assert: Minimal style also uses vote_average_gte
-      expect(params.vote_average_gte).toBe('7.0');
     });
   });
 
@@ -123,7 +104,7 @@ describe('browseParamMapper - Backend Schema Compatibility', () => {
       });
 
       // Act
-      const params = mapBrowseParamsToApi(browseParams, 'expanded');
+      const params = mapBrowseParamsToApi(browseParams);
 
       // Assert: All filter types present
       expect(params.release_date_gte).toBe('2020-01-01');
@@ -143,7 +124,7 @@ describe('browseParamMapper - Backend Schema Compatibility', () => {
       });
 
       // Act
-      const params = mapBrowseParamsToApi(browseParams, 'expanded');
+      const params = mapBrowseParamsToApi(browseParams);
 
       // Assert: Only provided filters generate parameters
       expect(params.release_date_gte).toBe('2020-01-01');
@@ -156,27 +137,29 @@ describe('browseParamMapper - Backend Schema Compatibility', () => {
     });
   });
 
-  describe('Minimal vs Expanded Style Parameter Differences', () => {
-    it('minimal style generates simpler parameter set', () => {
-      // Arrange: Minimal style filter (Letterboxd-style quick filters)
+  describe('Range Filter Parameter Generation', () => {
+    it('generates precise date ranges for year filters', () => {
+      // Arrange: User applies year range via advanced panel or decade preset
+      // Note: Decade presets (2020's) are converted to minYear/maxYear by UI before reaching mapper
       const browseParams = createBrowseParams({
         genres: [28],
-        minYear: '2020s',
+        minYear: '2020',
+        maxYear: '2029',
         minRating: '7.0',
       });
 
       // Act
-      const params = mapBrowseParamsToApi(browseParams, 'compact');
+      const params = mapBrowseParamsToApi(browseParams);
 
-      // Assert: Minimal style processes decade, single rating
+      // Assert: Year range generates date range parameters
       expect(params.release_date_gte).toBe('2020-01-01');
       expect(params.release_date_lte).toBe('2029-12-31');
       expect(params.vote_average_gte).toBe('7.0');
       expect(params.genres).toBe('28');
     });
 
-    it('expanded style allows range filters', () => {
-      // Arrange: Expanded style with range filters
+    it('generates rating range filters', () => {
+      // Arrange: User applies both min and max rating
       const browseParams = createBrowseParams({
         genres: [28, 12],
         minYear: '2020',
@@ -187,13 +170,13 @@ describe('browseParamMapper - Backend Schema Compatibility', () => {
       });
 
       // Act
-      const params = mapBrowseParamsToApi(browseParams, 'expanded');
+      const params = mapBrowseParamsToApi(browseParams);
 
-      // Assert: Expanded style allows precise ranges
+      // Assert: Both min and max rating parameters generated
       expect(params.release_date_gte).toBe('2020-01-01');
       expect(params.release_date_lte).toBe('2023-12-31');
       expect(params.vote_average_gte).toBe('7.0');
-      expect(params.vote_average_lte).toBe('9.0'); // Max rating only in expanded
+      expect(params.vote_average_lte).toBe('9.0');
     });
   });
 
@@ -203,7 +186,7 @@ describe('browseParamMapper - Backend Schema Compatibility', () => {
       const browseParams = createBrowseParams({ minYear: '2022', maxYear: '2022' });
 
       // Act
-      const params = mapBrowseParamsToApi(browseParams, 'expanded');
+      const params = mapBrowseParamsToApi(browseParams);
 
       // Assert: Date format matches backend expectations
       expect(params.release_date_gte).toMatch(/^\d{4}-\d{2}-\d{2}$/);
@@ -217,7 +200,7 @@ describe('browseParamMapper - Backend Schema Compatibility', () => {
       const browseParams = createBrowseParams({ minRating: '7.5', maxRating: '9.0' });
 
       // Act
-      const params = mapBrowseParamsToApi(browseParams, 'expanded');
+      const params = mapBrowseParamsToApi(browseParams);
 
       // Assert: Ratings sent as strings (query params)
       expect(typeof params.vote_average_gte).toBe('string');
@@ -231,7 +214,7 @@ describe('browseParamMapper - Backend Schema Compatibility', () => {
       const browseParams = createBrowseParams({ genres: [28, 12, 878] }); // Action, Adventure, Sci-Fi
 
       // Act
-      const params = mapBrowseParamsToApi(browseParams, 'expanded');
+      const params = mapBrowseParamsToApi(browseParams);
 
       // Assert: Genre array converted to comma-separated string
       expect(params.genres).toBe('28,12,878');
@@ -244,7 +227,7 @@ describe('browseParamMapper - Backend Schema Compatibility', () => {
       const browseParams = createBrowseParams();
 
       // Act
-      const params = mapBrowseParamsToApi(browseParams, 'expanded');
+      const params = mapBrowseParamsToApi(browseParams);
 
       // Assert: Only sort_by present (default behavior)
       expect(params.sort_by).toBe('popularity.desc');
@@ -261,7 +244,7 @@ describe('browseParamMapper - Backend Schema Compatibility', () => {
       const browseParams = createBrowseParams({ certifications: ['PG-13'] });
 
       // Act
-      const params = mapBrowseParamsToApi(browseParams, 'expanded');
+      const params = mapBrowseParamsToApi(browseParams);
 
       // Assert: Single certification and country code
       expect(params.certification).toBe('PG-13');
@@ -273,7 +256,7 @@ describe('browseParamMapper - Backend Schema Compatibility', () => {
       const browseParams = createBrowseParams({ certifications: ['G', 'PG'] });
 
       // Act
-      const params = mapBrowseParamsToApi(browseParams, 'expanded');
+      const params = mapBrowseParamsToApi(browseParams);
 
       // Assert: TMDB uses pipe (|) for OR logic between certifications
       expect(params.certification).toBe('G|PG');
@@ -285,7 +268,7 @@ describe('browseParamMapper - Backend Schema Compatibility', () => {
       const browseParams = createBrowseParams({ certifications: [] });
 
       // Act
-      const params = mapBrowseParamsToApi(browseParams, 'expanded');
+      const params = mapBrowseParamsToApi(browseParams);
 
       // Assert: No certification params
       expect(params).not.toHaveProperty('certification');

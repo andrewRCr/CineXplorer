@@ -2,20 +2,16 @@
 
 **Created:** 2025-10-29
 **Branch:** `technical/service-layer-modernization`
-**Status:** Paused
+**Status:** In Progress
 
 ## Context
 
 **Discovered:** Manual testing during Phase 3.6 (data quality filtering implementation in
 pagination-buffer-tracking.md)
 
-**Interrupts:** `.arc/active/incidental/tasks-pagination-buffer-tracking.md` at Phase 3.6, Task 3.6.5
-(manual verification)
+**Interrupts:** `tasks-pagination-buffer-tracking.md` at Phase 3.6, Task 3.6.5 (manual verification)
 
-**Paused At:** Task 3.3 (manual browser verification)
-
-**Paused To:** `.arc/active/incidental/tasks-buffer-deduplication-data-quality.md` - Fix duplicate
-movie issues discovered during testing
+**Current Task:** Phase 3 complete, ready for Phase 4 (integration testing)
 
 **Problem:** Custom "Back to Results" button loses filter query params (blank screens), and advanced panel
 collapses when navigating back despite active filters.
@@ -251,17 +247,12 @@ testing is the only verification method, which is time-consuming and error-prone
         - Tests still passing: 453/453 ✅
         - File: `components/movie/collection/useMovieCollectionState.tsx:60,249-265,272`
 
-- [ ] **3.3 Manual browser verification of showAdvanced auto-expand**
-    - Apply rating filter → navigate to detail → back → verify expanded
-    - Apply year range → detail → back → verify expanded
-    - Single year filter → detail → back → verify collapsed
-    - Genres only → detail → back → verify collapsed
-    - Test across remounts (detail→back→detail→back)
+- [x] **3.3 Manual browser verification of showAdvanced auto-expand**
 
-- [ ] **3.4 Verify and test isFiltersCollapsed state preservation**
-    - Check if isFiltersCollapsed needs similar treatment
-    - Write tests if needed
-    - Manual test: Expand filters → detail → back → verify expanded
+    **Verified:** Auto-expand works as intended - panel stays expanded when returning with advanced filters.
+
+    **Note:** Investigation revealed dead code (`isFiltersCollapsed`, `browseLayout` distinction, decade handling
+    in browseParamMapper). Created atomic task for cleanup - separate concern from navigation/state preservation.
 
 ### **Phase 4:** Integration Testing and Edge Cases
 

@@ -9,17 +9,13 @@ import {
 } from "@/utilities/routeConfigHelper";
 import PageHeader from "@/components/movie/collection/PageHeader";
 import BrowseControlsSection from "@/components/movie/collection/BrowseControlsSection";
-import {
-  useMovieCollectionState,
-  hasAdvancedFilterValues,
-} from "@/components/movie/collection/useMovieCollectionState";
+import { useMovieCollectionState } from "@/components/movie/collection/useMovieCollectionState";
 
 // Better prop patterns with discriminated unions and required/optional groups
 type BrowseControlsConfig =
-  | { showBrowseControls?: false; browseLayout?: never; defaultBrowseParams?: never }
+  | { showBrowseControls?: false; defaultBrowseParams?: never }
   | {
       showBrowseControls: true;
-      browseLayout?: "expanded" | "compact";
       defaultBrowseParams?: Partial<BrowseParams>;
     };
 
@@ -52,7 +48,6 @@ const MovieCollectionLayout = ({
   source,
   showBrowseControls = false,
   defaultBrowseParams,
-  browseLayout = "expanded",
   currentPage,
   size = "xl",
   headerProps,
@@ -80,50 +75,15 @@ const MovieCollectionLayout = ({
     onPageChange: handlePageChange,
     isAdvancedPanelOpen,
     toggleAdvancedPanel,
-    isFiltersCollapsed,
-    toggleFiltersCollapsed,
   } = useMovieCollectionState({
     defaultBrowseParams,
     source: actualSource,
   });
 
-  /**
-   * Browse Layout Split: API vs UI Rendering
-   *
-   * CONTEXT: The backend has two filter parameter modes:
-   * - "compact": Only sends basic params (year, genres, sortBy) - simpler query strings
-   * - "expanded": Sends all params including rating ranges - needed for advanced filters
-   *
-   * PROBLEM: We want to keep the compact browse UI visible even when advanced filters
-   * are expanded (Letterboxd-style UX), but API needs "expanded" mode to receive rating params.
-   *
-   * SOLUTION: Split the browseLayout concept into two separate concerns:
-   *
-   * 1. API Browse Layout (apiBrowseLayout):
-   *    - Determines which params are sent to backend
-   *    - Based on ACTUAL FILTER VALUES, not UI visibility state
-   *    - "expanded" when rating filters or custom year ranges are active
-   *    - "compact" otherwise
-   *    - Used by: useMovieFetchRouter hook for API calls
-   *
-   * 2. UI Browse Layout (browseLayout prop):
-   *    - Determines which UI components are rendered
-   *    - Based on page configuration (discover pages use "compact" by default)
-   *    - Stays constant regardless of advanced panel visibility
-   *    - Used by: BrowseControlsSection component for rendering logic
-   *
-   * WHY THIS MATTERS:
-   * - Prevents unnecessary re-renders when toggling advanced panel with no filters applied
-   * - Ensures API receives correct params when advanced filters ARE applied
-   * - Preserves compact browse visibility (UX requirement)
-   */
-  const apiBrowseLayout = hasAdvancedFilterValues(browseParams) ? "expanded" : browseLayout;
-
   // Use the movie fetch router hook to route between search/discover endpoints
   const enhancedFetcher = useMovieFetchRouter({
     fetcher: actualFetcher,
     browseParams,
-    browseLayout: apiBrowseLayout,
   });
 
   // Memoized container configuration for better performance
@@ -183,13 +143,10 @@ const MovieCollectionLayout = ({
       {showBrowseControls && (
         <BrowseControlsSection
           showControls={showBrowseControls}
-          browseLayout={browseLayout}
           isAdvancedPanelOpen={isAdvancedPanelOpen}
           browseParams={browseParams}
           onBrowseParamsChange={onBrowseParamsChange}
           onToggleAdvancedPanel={toggleAdvancedPanel}
-          isFiltersCollapsed={isFiltersCollapsed}
-          onToggleCollapse={toggleFiltersCollapsed}
           source={actualSource}
         />
       )}

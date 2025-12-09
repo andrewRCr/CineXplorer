@@ -3,20 +3,18 @@ import type { BrowseParams } from "@/types/browseTypes";
 /**
  * Converts browse parameter state to API parameters for TMDB discover/search endpoints.
  *
- * This function handles two browse layouts:
- * - **compact**: Simplified browse UI (e.g., quick browse bar) - decade presets, limited sorts
- * - **expanded**: Full advanced filters panel with all options
+ * Maps filter values directly to API parameters - no knowledge of UI layout needed.
  *
  * @param browseParams - Current browse state (genres, year range, rating, sort, etc.)
- * @param browseLayout - UI layout mode affecting parameter mapping ("expanded" | "compact")
  * @returns API parameters object ready to pass to TMDB endpoints
  *
  * @example
  * ```typescript
- * const params = mapBrowseParamsToApi(
- *   { genres: [28, 12], minYear: "2020", minRating: "7.0" },
- *   "expanded"
- * );
+ * const params = mapBrowseParamsToApi({
+ *   genres: [28, 12],
+ *   minYear: "2020",
+ *   minRating: "7.0"
+ * });
  * // Returns: {
  * //   genres: "28,12",
  * //   release_date_gte: "2020-01-01",
@@ -70,30 +68,16 @@ function addRatings(params: Record<string, string | number | number[]>, browsePa
 // Helper: Add release date range with NaN validation
 function addReleaseDateRange(
     params: Record<string, string | number | number[]>,
-    browseParams: BrowseParams,
-    browseLayout: "expanded" | "compact"
+    browseParams: BrowseParams
 ) {
+    // Handle maxYear-only case (e.g., "movies before 2000")
     if (!browseParams.minYear) {
-        // Handle edge case: expanded mode with only maxYear
-        if (browseLayout === "expanded" && browseParams.maxYear) {
+        if (browseParams.maxYear) {
             const maxYear = parseInt(browseParams.maxYear, 10);
             if (!isNaN(maxYear)) {
                 params.release_date_lte = `${maxYear}-12-31`;
             }
         }
-        return;
-    }
-
-    // Handle decade ranges in compact mode (e.g., "2020s")
-    if (browseLayout === "compact" && browseParams.minYear.includes("s")) {
-        const decade = browseParams.minYear.replace("s", "");
-        const startYear = parseInt(decade, 10);
-        // NaN check: Skip invalid decades (upstream validation expected, but defensive)
-        if (isNaN(startYear)) return;
-
-        const endYear = startYear + 9;
-        params.release_date_gte = `${startYear}-01-01`;
-        params.release_date_lte = `${endYear}-12-31`;
         return;
     }
 
@@ -114,18 +98,17 @@ function addReleaseDateRange(
 }
 
 export function mapBrowseParamsToApi(
-    browseParams: BrowseParams,
-    browseLayout: "expanded" | "compact"
+    browseParams: BrowseParams
 ): Record<string, string | number | number[]> {
     const apiParams: Record<string, string | number | number[]> = {};
 
-    // Apply shared params (work for both compact and expanded layouts)
+    // Apply all filter params
     addGenres(apiParams, browseParams);
     addQuery(apiParams, browseParams);
     addLanguage(apiParams, browseParams);
     addCertifications(apiParams, browseParams);
     addRatings(apiParams, browseParams);
-    addReleaseDateRange(apiParams, browseParams, browseLayout);
+    addReleaseDateRange(apiParams, browseParams);
 
     // Handle sort - pass through directly
     if (browseParams.sortBy) {

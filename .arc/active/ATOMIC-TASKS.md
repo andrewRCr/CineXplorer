@@ -61,7 +61,24 @@
     - Files: `frontend/src/theme/recipes/` (new or existing), `frontend/src/components/movie/MovieCard.tsx`
     - Pattern will be reused in MovieDetail and other locations
 
+<!-- Refactoring / Dead Code Cleanup -->
+
+- [x] Remove browseLayout abstraction and related dead code
+    - **Outcome:** Removed `browseLayout` prop from all components, removed dead decade handling from mapper,
+      removed unused `isFiltersCollapsed`/`toggleFiltersCollapsed`/`enableCollapsibleFilters` state,
+      added user override for auto-expand (sessionStorage-based), fixed decade preset auto-expand regression
+      (decade presets from QuickBrowseBar now correctly excluded from "advanced" filter detection),
+      consolidated duplicate `hasAdvancedFilters` logic, updated all tests
+    - **Files:** `useMovieCollectionState.tsx`, `BrowseControlsSection.tsx`, `MovieCollectionLayout.tsx`,
+      `browseParamMapper.ts`, `useMovieFetchRouter.ts`, `App.tsx`, `browseParamMapper.test.ts`,
+      `useMovieCollectionState.test.tsx`, `useMovieFetchRouter.test.ts`
+    - **Tests:** 509 frontend tests passing, 36 hook tests (including 6 new tests for decade/genre advanced detection)
+
 <!-- Miscellaneous -->
+
+- [ ] Investigate and blacklist (production company-wide if possible) 70's / 80's adult results that TMDB mislabels
+    - 748881, 292610, 264966, 90779, 405472, 30552, 70616, 505356, 61108, 222517, 283440, 262581, 410119, 56793, 377386,
+    28468, 73134, 329505
 
 - [ ] Investigate login session loss during testing
     - Context: session appeared lost during theme system visual testing (no explicit logout)

@@ -23,14 +23,12 @@ import { mapBrowseParamsToApi } from "@/utilities/browseParamMapper";
  * ```typescript
  * const routedFetcher = useMovieFetchRouter({
  *   fetcher: discoverMoviesFetcher,  // Base fetcher from routeConfigHelper
- *   browseParams: { genres: [28], sortBy: 'popularity.desc' },
- *   browseLayout: 'expanded'
+ *   browseParams: { genres: [28], sortBy: 'popularity.desc' }
  * });
  * ```
  *
  * @param options.fetcher - Base fetcher from routeConfigHelper (discover, top-rated, etc.)
  * @param options.browseParams - Current UI browse state
- * @param options.browseLayout - UI browse layout mode (affects parameter mapping)
  * @returns Fetcher function that accepts a page number
  */
 
@@ -47,45 +45,37 @@ type FetcherFn = (
 interface UseMovieFetchRouterOptions {
     fetcher: FetcherFn;
     browseParams: BrowseParams;
-    browseLayout: "expanded" | "compact";
 }
 
 export function useMovieFetchRouter({
     fetcher,
     browseParams,
-    browseLayout,
 }: UseMovieFetchRouterOptions): (page: number, tmdb_page_start?: number) => {
     request: Promise<{ data: PaginatedMoviesResponse }>;
     cancel: () => void;
 } {
     // Use refs to store the latest values without causing re-renders
     const browseParamsRef = useRef(browseParams);
-    const browseLayoutRef = useRef(browseLayout);
     const baseFetcherRef = useRef(fetcher);
 
     // Update refs when values change
     browseParamsRef.current = browseParams;
-    browseLayoutRef.current = browseLayout;
     baseFetcherRef.current = fetcher;
 
     const routedFetcher = useCallback(
         (page: number, tmdb_page_start?: number) => {
             // Get current values from refs
             const currentBrowseParams = browseParamsRef.current;
-            const currentBrowseLayout = browseLayoutRef.current;
             const currentBaseFetcher = baseFetcherRef.current;
 
             // Map browse params to API parameters
-            const apiParams = mapBrowseParamsToApi(
-                currentBrowseParams,
-                currentBrowseLayout
-            );
+            const apiParams = mapBrowseParamsToApi(currentBrowseParams);
 
             // Always use the base fetcher (discover, top-rated, etc.)
             return currentBaseFetcher(page, apiParams, tmdb_page_start);
         },
         // eslint-disable-next-line react-hooks/exhaustive-deps
-        [browseParams, browseLayout] // Recreate fetcher when browse params change
+        [browseParams] // Recreate fetcher when browse params change
     );
 
     return routedFetcher;

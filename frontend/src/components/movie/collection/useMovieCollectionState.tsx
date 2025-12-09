@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect } from "react";
+import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import type { BrowseParams } from "@/types/browseTypes";
 import { DEFAULT_BROWSE_PARAMS, DEFAULT_SORT } from "@/constants/browseDefaults";
 import { sortOptions } from "@/constants/browseOptions";
@@ -13,6 +13,62 @@ import {
   countActiveParams,
 } from "@/utilities/browseParamUtils";
 
+// SessionStorage key for user panel override
+const PANEL_OVERRIDE_KEY = "advancedPanelUserClosed";
+
+// Generate a hash of the advanced filter values for override tracking
+// Only includes filters that trigger auto-expand (rating, custom year range, language)
+// Excludes decade presets since they're available in QuickBrowseBar
+const getAdvancedFilterHash = (params: BrowseParams): string => {
+  const parts: string[] = [];
+  if (params.minRating) parts.push(`mr:${params.minRating}`);
+  if (params.maxRating) parts.push(`xr:${params.maxRating}`);
+  // Only include custom year ranges, not decade presets
+  if (params.minYear && params.maxYear && params.minYear !== params.maxYear) {
+    const isDecadeRange =
+      parseInt(params.maxYear) - parseInt(params.minYear) === 9 &&
+      params.minYear.endsWith("0");
+    if (!isDecadeRange) {
+      parts.push(`yr:${params.minYear}-${params.maxYear}`);
+    }
+  }
+  if (params.language) parts.push(`lg:${params.language}`);
+  return parts.join("|");
+};
+
+// Check if user has overridden auto-expand for current filter combination
+const hasUserOverride = (params: BrowseParams): boolean => {
+  try {
+    const hash = getAdvancedFilterHash(params);
+    if (!hash) return false; // No advanced filters = no override possible
+    const stored = sessionStorage.getItem(PANEL_OVERRIDE_KEY);
+    return stored === hash;
+  } catch {
+    return false; // SSR or sessionStorage unavailable
+  }
+};
+
+// Set user override for current filter combination
+const setUserOverride = (params: BrowseParams): void => {
+  try {
+    const hash = getAdvancedFilterHash(params);
+    if (hash) {
+      sessionStorage.setItem(PANEL_OVERRIDE_KEY, hash);
+    }
+  } catch {
+    // SSR or sessionStorage unavailable - silently fail
+  }
+};
+
+// Clear user override (when filters change)
+const clearUserOverride = (): void => {
+  try {
+    sessionStorage.removeItem(PANEL_OVERRIDE_KEY);
+  } catch {
+    // SSR or sessionStorage unavailable - silently fail
+  }
+};
+
 // Better hook composition with multiple related concerns
 interface UseMovieCollectionStateConfig {
   defaultBrowseParams?: Partial<BrowseParams>;
@@ -20,7 +76,6 @@ interface UseMovieCollectionStateConfig {
   // Hook configuration
   enableUrlSync?: boolean;
   enableAdvancedFilters?: boolean;
-  enableCollapsibleFilters?: boolean;
 }
 
 interface MovieCollectionState {
@@ -36,10 +91,6 @@ interface MovieCollectionState {
   isAdvancedPanelOpen: boolean;
   setIsAdvancedPanelOpen: (open: boolean) => void;
   toggleAdvancedPanel: () => void;
-
-  isFiltersCollapsed: boolean;
-  setIsFiltersCollapsed: (collapsed: boolean) => void;
-  toggleFiltersCollapsed: () => void;
 
   // Pagination state
   currentPage: number | undefined;
@@ -73,9 +124,13 @@ export const hasAdvancedFilterValues = (filters: BrowseParams): boolean => {
   // Rating filters are advanced-only
   if (filters.minRating || filters.maxRating) return true;
 
-  // Custom year range (not single year) is advanced-only
+  // Custom year range (not single year and not decade preset) is advanced-only
+  // Decade presets (1990's, 2020's, etc.) are available in QuickBrowseBar, so not advanced
   if (filters.minYear && filters.maxYear && filters.minYear !== filters.maxYear) {
-    return true;
+    const isDecadeRange =
+      parseInt(filters.maxYear) - parseInt(filters.minYear) === 9 &&
+      filters.minYear.endsWith("0");
+    if (!isDecadeRange) return true;
   }
 
   // Multiple genres are advanced-only (minimal supports single genre only)
@@ -109,7 +164,6 @@ export const useMovieCollectionState = ({
   source,
   enableUrlSync = true,
   enableAdvancedFilters = true,
-  enableCollapsibleFilters = true,
 }: UseMovieCollectionStateConfig = {}): MovieCollectionState => {
 
   // URL management (only if enabled)
@@ -134,7 +188,6 @@ export const useMovieCollectionState = ({
 
   // Local UI state for non-URL-synced features
   const [localIsAdvancedPanelOpen, setLocalIsAdvancedPanelOpen] = useState(false);
-  const [localIsFiltersCollapsed, setLocalIsFiltersCollapsed] = useState(false);
 
   // For non-URL-synced mode, maintain local browse params
   const [localBrowseParams, setLocalBrowseParams] = useState<BrowseParams>(initialLocalBrowseParams);
@@ -145,11 +198,29 @@ export const useMovieCollectionState = ({
   // Choose between URL-synced or local state
   const browseParams = enableUrlSync ? urlBrowseParams : localBrowseParams;
 
+  // Track previous filter hash to detect filter changes (not initial mount)
+  const prevFilterHashRef = useRef<string | null>(null);
+
   // Auto-expand advanced panel when advanced filters become active (from URL or user input)
-  // This ensures panel stays expanded after navigation (remount reads params from URL → effect detects → expands)
+  // Respects user override: if user manually closed panel with these filters, don't re-expand
   useEffect(() => {
     if (enableAdvancedFilters && hasAdvancedFilterValues(browseParams)) {
-      setLocalIsAdvancedPanelOpen(true);
+      const currentHash = getAdvancedFilterHash(browseParams);
+
+      // Check if filters changed (not initial mount, and different hash)
+      // prevFilterHashRef.current === null means initial mount - don't clear override
+      if (prevFilterHashRef.current !== null && currentHash !== prevFilterHashRef.current) {
+        // Filters actually changed during this session - clear override
+        clearUserOverride();
+      }
+
+      // Update ref for next comparison
+      prevFilterHashRef.current = currentHash;
+
+      // Only auto-expand if user hasn't overridden for this filter combination
+      if (!hasUserOverride(browseParams)) {
+        setLocalIsAdvancedPanelOpen(true);
+      }
     }
   }, [browseParams, enableAdvancedFilters]);
 
@@ -186,21 +257,16 @@ export const useMovieCollectionState = ({
   }, [enableAdvancedFilters]);
 
   const toggleAdvancedPanel = useCallback(() => {
-    setIsAdvancedPanelOpen(!isAdvancedPanelOpen);
-  }, [isAdvancedPanelOpen, setIsAdvancedPanelOpen]);
-  
-  // Collapsible filters with better UX
-  const isFiltersCollapsed = enableCollapsibleFilters ? localIsFiltersCollapsed : false;
-  const setIsFiltersCollapsed = useCallback((collapsed: boolean) => {
-    if (enableCollapsibleFilters) {
-      setLocalIsFiltersCollapsed(collapsed);
+    const newState = !isAdvancedPanelOpen;
+    setIsAdvancedPanelOpen(newState);
+
+    // If user is closing panel while advanced filters are active, set override
+    // This prevents auto-expand from re-opening on remount
+    if (!newState && hasAdvancedFilterValues(browseParams)) {
+      setUserOverride(browseParams);
     }
-  }, [enableCollapsibleFilters]);
-  
-  const toggleFiltersCollapsed = useCallback(() => {
-    setIsFiltersCollapsed(!isFiltersCollapsed);
-  }, [isFiltersCollapsed, setIsFiltersCollapsed]);
-  
+  }, [isAdvancedPanelOpen, setIsAdvancedPanelOpen, browseParams]);
+
   // Derived state using centralized utilities
   // hasActiveFilters excludes sort (for "Clear Filters" button visibility)
   const hasActiveFilters = useMemo(() => {
@@ -212,22 +278,10 @@ export const useMovieCollectionState = ({
     return checkHasActiveBrowseParams(browseParams);
   }, [browseParams]);
 
+  // Use centralized function to avoid duplicate logic
   const hasAdvancedFilters = useMemo(() => {
-    // Check rating filters
-    if (browseParams.minRating || browseParams.maxRating) return true;
-
-    // Check custom year range (not single year)
-    if (browseParams.minYear && browseParams.maxYear && browseParams.minYear !== browseParams.maxYear) {
-      return true;
-    }
-
-    return false;
-  }, [
-    browseParams.minRating,
-    browseParams.maxRating,
-    browseParams.minYear,
-    browseParams.maxYear,
-  ]);
+    return hasAdvancedFilterValues(browseParams);
+  }, [browseParams]);
 
   const activeParamCount = useMemo(() => {
     return countActiveParams(browseParams);
@@ -257,9 +311,6 @@ export const useMovieCollectionState = ({
     isAdvancedPanelOpen,
     setIsAdvancedPanelOpen,
     toggleAdvancedPanel,
-    isFiltersCollapsed,
-    setIsFiltersCollapsed,
-    toggleFiltersCollapsed,
     currentPage,
     onPageChange,
 

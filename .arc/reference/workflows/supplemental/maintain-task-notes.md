@@ -493,7 +493,6 @@ or migrated - this is where the biggest cleanup decisions happen.
 **Bottom-Matter Sections to REMOVE:**
 
 - [ ] **"Notes" section** - Often contains stale snapshots, test counts, temporal state
-- [ ] **"Success Criteria" with all items checked** - Completion doc covers outcomes
 - [ ] **"Research References"** - **VERIFY** in strategy docs before removing, or confirm not reusable
 - [ ] **"Implementation Notes"** - Old pattern, now captured in task completions
 - [ ] **"Completion Summary"** - Now in separate completion-{name}.md
@@ -506,6 +505,10 @@ or migrated - this is where the biggest cleanup decisions happen.
 - Brief context (Discovered, Interrupts pointer)
 - Problem statement (what was fixed - brief historical context)
 - "Won't Do" scope exclusions (useful record of deliberate decisions)
+
+**Bottom-Matter Sections to KEEP:**
+
+- "Success Criteria" - Verification checklist of outcomes (complements completion doc's executive summary)
 
 **Research/Decision Content - Verification Required:**
 

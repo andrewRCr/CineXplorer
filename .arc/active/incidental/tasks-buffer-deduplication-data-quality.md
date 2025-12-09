@@ -12,42 +12,8 @@
 
 **Interrupts:** `tasks-navigation-filter-state-preservation.md` at Task 3.3
 
-**Resume At:** Task 3.1 (write tests for PaginationSessionManager)
-
 **Problem:** TMDB API returns duplicate movies across pagination boundaries (e.g., Spirited Away on page 1 position 19
 AND page 2 position 1), backend buffer concatenates without deduplication, causing React key collisions and incomplete pages.
-
-**Why Now:** Blocks manual testing confidence for navigation work, produces user-visible bugs (duplicates, incomplete pages
-showing 17-19 instead of 20), and represents missing second-pass data quality filter consistent with existing architecture.
-
-## Root Cause Analysis
-
-**Three symptoms, one root cause:**
-
-1. **Duplicates in results** - TMDB pagination instability + no backend deduplication
-2. **Incomplete pages (17-19 vs 20)** - React key collision from duplicate `tmdb_id` values
-3. **Filter state bleeding** - Stale `tmdb_page_start` parameters (ALREADY FIXED by buffer reset work)
-
-**TMDB API Verification (curl):**
-
-- Direct query to TMDB: `genres=16,10751`, `sort_by=popularity.desc`
-- Result: Spirited Away (ID 129) appears on page 1 position 19 AND page 2 position 1
-- This is documented TMDB behavior (eventually-consistent DB, real-time popularity changes)
-
-**Backend Buffer Logic (`movie_service.py:402-485`):**
-
-- Concatenates movies from multiple pages: `combined_movies = combined_movies + buffer_movies`
-- Within-page deduplication implemented (Phase 2) but NO cross-page tracking
-- Result: Same movie can appear on consecutive pages
-
-**Frontend Impact:**
-
-- MovieCard uses `key={movie.tmdb_id}` for React rendering
-- Duplicate keys cause React to skip rendering second occurrence
-- User sees 19 cards when backend sends 20 (with 1 duplicate)
-
-**Complete Investigation:** See `.arc/active/incidental/notes-buffer-deduplication-data-quality.md` for full
-analysis and solution options.
 
 ## Scope
 
@@ -113,7 +79,7 @@ analysis and solution options.
 
 ### **Phase 2:** Implement Within-Page Backend Buffer Deduplication
 
-**Status:** ✅ IMPLEMENTATION COMPLETE, QUALITY GATES PENDING
+**Status:** ✅ COMPLETE
 
 - [x] **2.1 Implement deduplication in `_apply_buffer_if_needed`**
 

@@ -2,14 +2,14 @@
 
 **Created:** 2025-10-29
 **Branch:** `technical/service-layer-modernization`
-**Status:** In Progress
+**Status:** Complete ✅
 
 ## Context
 
 **Discovered:** Manual testing during Phase 3.6 (data quality filtering implementation in
 pagination-buffer-tracking.md)
 
-**Interrupts:** `tasks-pagination-buffer-tracking.md` at Phase 3.6, Task 3.6.5 (manual verification)
+**Interrupts:** `tasks-pagination-buffer-tracking.md` at Phase 3.6, Task 3.6.e (manual verification)
 
 **Problem:** Custom "Back to Results" button loses filter query params (blank screens), and advanced panel
 collapses when navigating back despite active filters.
@@ -282,7 +282,7 @@ Refocused to address the actual gap: `browseUrlSync.ts` has zero tests despite h
 - [x] **4.2 Quality gate** ✅
     - [x] 4.2.a Full frontend test suite: 546 tests pass (37 new)
 
-### **Phase 5:** Quality Gates & Manual Verification
+### **Phase 5:** Quality Gates & Manual Verification ✅
 
 - [x] **5.1 Run automated quality checks** ✅
     - [x] 5.1.a Frontend tests: 549 pass (37 browseUrlSync + 3 user override bugfix)
@@ -290,11 +290,11 @@ Refocused to address the actual gap: `browseUrlSync.ts` has zero tests despite h
     - [x] 5.1.c Frontend type checking: 0 errors
     - [x] 5.1.d Backend tests: 611 pass
 
-- [ ] **5.2 Comprehensive manual testing**
+- [x] **5.2 Comprehensive manual testing** ✅
 
     **Goal:** Build confidence through systematic manual verification.
 
-    - [ ] **5.2.a Test URL param preservation across routes**
+    - [x] **5.2.a Test URL param preservation across routes**
         - Popular: year 1980-1983 → detail → back → verify filters
         - Popular: genres Action+Comedy → detail → back → verify
         - Popular: rating 7.0-10.0 → detail → back → verify
@@ -304,19 +304,22 @@ Refocused to address the actual gap: `browseUrlSync.ts` has zero tests despite h
         - Upcoming with filters → detail → back
         - Search with query + filters → detail → back
 
-    - [ ] **5.2.b Test advanced panel state preservation**
+    - [x] **5.2.b Test advanced panel state preservation**
         - Rating filter (panel expands) → detail → back → verify expanded
         - Year range (panel expands) → detail → back → verify expanded
         - Single year (collapsed) → detail → back → verify collapsed
 
-    - [ ] **5.2.c Test pagination + navigation**
+    - [x] **5.2.c Test pagination + navigation**
         - Filters active → page 2 → detail → back → verify page 2 + filters
         - Filters active → page 3 → detail → back → detail → back → verify state
 
-    - [ ] **5.2.d Test browser navigation**
+    - [x] **5.2.d Test browser navigation**
         - Verify browser back still works
         - Verify browser forward works
         - Verify history state correct
+
+    **Note:** Search backward nav bug discovered and fixed during 5.2 testing.
+    See "Search/Browse Architecture Cleanup" in `completed-atomic-2025-q4.md`.
 
 **Bugfix(es) discovered during 5.2 testing:**
 
@@ -328,42 +331,15 @@ Fixed by adding all advanced filter conditions to the hash. Added 3 new tests to
 
 ## Success Criteria
 
-- [ ] "Back to Results" button preserves ALL active filters
-- [ ] Advanced panel stays expanded when returning to filtered results
-- [ ] Navigation works for all routes: Popular, Now Playing, Top Rated, Upcoming, Search
-- [ ] Filter combinations work: year + genres, rating + year, all together
-- [ ] Browser back button continues to work as expected
-- [ ] Comprehensive test suite gives confidence in navigation/state behavior
-- [ ] Manual testing confirms all flows work in browser
-- [ ] Zero regressions in existing navigation
+- [x] "Back to Results" button preserves ALL active filters
+- [x] Advanced panel stays expanded when returning to filtered results
+- [x] Navigation works for all routes: Popular, Now Playing, Top Rated, Upcoming, Search
+- [x] Filter combinations work: year + genres, rating + year, all together
+- [x] Browser back button continues to work as expected
+- [x] Comprehensive test suite gives confidence in navigation/state behavior
+    - 573 frontend tests (including 37 browseUrlSync, 11 routeConfigHelper.search, 13 searchUrlSync)
+    - 611 backend tests
+- [x] Manual testing confirms all flows work in browser
+- [x] Zero regressions in existing navigation
 
 ---
-
-## Notes & Observations
-
-**Key Insights:**
-
-- Navigation bugs were masked because browser back button works correctly
-- Custom navigation components don't automatically get history state benefits
-- Effect-based UI state solution elegant but needs browser verification
-- Comprehensive tests essential for confidence in state management
-
-**Technical Approach:**
-
-- URL params: Straightforward pass-through, low risk
-- UI state: Effect-based auto-expand using existing filters as signal
-- Testing: Build integration test suite to prevent regressions
-- Risk: Low (isolated changes, clear failure modes, workarounds exist)
-
-**Dependencies:**
-
-```
-Current cleanup (navigation/state) → Build rock-solid foundation
-                                   ↓
-Resume pagination (Phase 3.6.e) → Manual verification now easier
-                                ↓
-Resume filter-integration (3.6.b+) → Verify with confidence
-```
-
-**Key Lesson:** Manual testing revealed systemic gap in navigation/state testing. Addressing comprehensively
-now prevents future rework and builds confidence for ongoing feature development.

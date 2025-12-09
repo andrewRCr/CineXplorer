@@ -6,6 +6,22 @@ Reference format: "see `completed-atomic-2025-q4.md`" or "see {task name} in `co
 
 ---
 
+- [x] Blacklist 70s/80s adult films that TMDB mislabels as non-adult
+    - **Outcome:** Blacklisted 108 movies total:
+        - 18 original reported films
+        - 52 Emmanuelle series films
+        - 1 additional (424140 The Black Peacock)
+        - 37 additional Italian/European exploitation films (70s-80s)
+    - **Production company analysis:** No companies qualified for 95%+ bulk blacklisting:
+        - Rapid Film: ~50% adult (includes "Cross of Iron")
+        - Clesi Cinematografica: ~30% adult (includes "Malicious", legitimate films)
+        - Dania Film: Mixed (includes horror like "Cannibal Ferox")
+    - **Vote threshold analysis:** 76% of flagged films have 10+ votes - raising threshold wouldn't help
+    - **Excluded from Emmanuelle blacklist:** 976576 (2024 remake), 842846/846910 (documentaries),
+      1093502 (unrelated - about actress Emmanuelle Laborit)
+
+    - **Branch:** `technical/service-layer-modernization`
+
 - [x] Remove browseLayout abstraction and related dead code
     - **Outcome:** Removed `browseLayout` prop from components (only "compact" was ever used),
       removed dead decade handling from browseParamMapper (UI converts decades before storing),

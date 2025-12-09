@@ -305,6 +305,65 @@ EOF
 
 ---
 
+## TMDB API Queries (Ad-hoc)
+
+**Use Django shell with TMDBApiClient** - automatic API key injection, error handling, structured responses.
+
+```bash
+# Single movie details
+docker compose -f infrastructure/docker-compose.yml exec -T backend python manage.py shell <<'EOF'
+from core.services.tmdb_api_client import TMDBApiClient
+
+client = TMDBApiClient()
+response = client.get_movie_details(123456)  # TMDB movie ID
+
+if response.is_success:
+    data = response.data
+    print(f"Title: {data.get('title')}")
+    print(f"Release: {data.get('release_date')}")
+    print(f"Adult flag: {data.get('adult')}")
+    print(f"Companies: {[c.get('name') for c in data.get('production_companies', [])]}")
+else:
+    print(f"Error: {response.error_message}")
+EOF
+
+# Batch movie details
+docker compose -f infrastructure/docker-compose.yml exec -T backend python manage.py shell <<'EOF'
+from core.services.tmdb_api_client import TMDBApiClient
+
+client = TMDBApiClient()
+movie_ids = [123, 456, 789]
+
+for movie_id in movie_ids:
+    response = client.get_movie_details(movie_id)
+    if response.is_success:
+        data = response.data
+        print(f"{movie_id}: {data.get('title')} ({data.get('release_date', '')[:4]})")
+EOF
+
+# Discover movies by production company
+docker compose -f infrastructure/docker-compose.yml exec -T backend python manage.py shell <<'EOF'
+from core.services.tmdb_api_client import TMDBApiClient
+
+client = TMDBApiClient()
+response = client.get("discover/movie", params={"with_companies": 12782})  # Company ID
+
+if response.is_success:
+    print(f"Total: {response.data.get('total_results')} movies")
+    for m in response.data.get('results', [])[:10]:
+        print(f"  {m.get('title')} ({m.get('release_date', '')[:4]})")
+EOF
+```
+
+**Available TMDBApiClient methods:**
+
+- `get_movie_details(movie_id)` - Movie details including production companies
+- `search_movies(query, page=1)` - Search by title
+- `discover_movies(**params)` - Discovery endpoint with filters
+- `get(endpoint, params)` - Generic GET for any TMDB endpoint
+
+---
+
 ## Anti-Patterns
 
 ### Path Confusion

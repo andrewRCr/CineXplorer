@@ -63,10 +63,6 @@
 
 <!-- Miscellaneous -->
 
-- [ ] Investigate and blacklist (production company-wide if possible) 70's / 80's adult results that TMDB mislabels
-    - 748881, 292610, 264966, 90779, 405472, 30552, 70616, 505356, 61108, 222517, 283440, 262581, 410119, 56793, 377386,
-    28468, 73134, 329505
-
 - [ ] Investigate login session loss during testing
     - Context: session appeared lost during theme system visual testing (no explicit logout)
     - Test session persistence during normal navigation

@@ -30,24 +30,20 @@ export function parseSearchParamsFromUrl(search: string): SearchParams {
  * Generates URL search string from search parameters
  *
  * Only includes non-default values to keep URLs clean.
+ * Note: Page/pagination params handled separately via paginationUrlSync.ts
  *
  * @param searchParams - Search parameters to serialize
- * @param page - Optional page number to include
  * @returns URL search string (without leading "?")
  *
  * @example
- * generateSearchUrl({ query: "batman" }, 2)
- * // => "query=batman&page=2"
+ * generateSearchUrl({ query: "batman" })
+ * // => "query=batman"
  */
-export function generateSearchUrl(searchParams: SearchParams, page?: number): string {
+export function generateSearchUrl(searchParams: SearchParams): string {
   const params = new URLSearchParams();
 
   if (searchParams.query) {
     params.set("query", searchParams.query);
-  }
-
-  if (page && page > 1) {
-    params.set("page", String(page));
   }
 
   return params.toString();

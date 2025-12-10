@@ -6,6 +6,7 @@ import {
     type PaginatedMoviesResponse,
 } from "@/services/movieService";
 import { PAGINATED_SOURCES } from "@/constants/routes";
+import { parseSearchParamsFromUrl } from "./searchUrlSync";
 
 export interface RouteConfig {
     fetcher: (
@@ -34,13 +35,11 @@ export const getFetcherAndSource = (pathname: string, search?: string): RouteCon
     const getQueryParam = () => {
         // Use provided search string if available (from React Router)
         if (search !== undefined) {
-            const params = new URLSearchParams(search);
-            return params.get("query") || "";
+            return parseSearchParamsFromUrl(search).query;
         }
         // Fallback to window.location for backward compatibility
         if (typeof window === "undefined") return "";
-        const params = new URLSearchParams(window.location.search);
-        return params.get("query") || "";
+        return parseSearchParamsFromUrl(window.location.search).query;
     };
 
     if (pathname.includes("/now-playing")) {

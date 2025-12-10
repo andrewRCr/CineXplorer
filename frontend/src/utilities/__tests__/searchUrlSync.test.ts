@@ -45,16 +45,6 @@ describe("searchUrlSync", () => {
       expect(result).toBe("query=batman");
     });
 
-    it("should include page when greater than 1", () => {
-      const result = generateSearchUrl({ query: "batman" }, 2);
-      expect(result).toBe("query=batman&page=2");
-    });
-
-    it("should omit page when 1", () => {
-      const result = generateSearchUrl({ query: "batman" }, 1);
-      expect(result).toBe("query=batman");
-    });
-
     it("should return empty string for empty query", () => {
       const result = generateSearchUrl({ query: "" });
       expect(result).toBe("");
@@ -64,6 +54,8 @@ describe("searchUrlSync", () => {
       const result = generateSearchUrl({ query: "the dark knight" });
       expect(result).toBe("query=the+dark+knight");
     });
+
+    // Note: page param tests removed - pagination is now handled by paginationUrlSync.ts
   });
 
   describe("hasActiveSearch", () => {

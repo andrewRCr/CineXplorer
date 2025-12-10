@@ -403,46 +403,53 @@ metadata in the URL so it survives navigation away and back.
         - MovieDetail's back button preserves filter state
         - **Incidental fix:** Cleaned up redundant `from` and `page=1` params from back URL
 
-- [ ] **3.7.b Create paginationUrlSync utility and refactor (TDD Green Phase)**
+- [x] **3.7.b Create paginationUrlSync utility and refactor (TDD Green Phase)**
 
     **Architecture Decision:** Create dedicated `paginationUrlSync.ts` for all pagination URL concerns.
     This mirrors `browseUrlSync.ts` (browse endpoint params) and `searchUrlSync.ts` (search endpoint
     params), but handles the orthogonal pagination concerns (`page`, `tmdb_page_start`) that apply
     to BOTH browse and search views.
 
-    - [ ] **3.7.b.1 Create paginationUrlSync.ts with types and parsing**
-        - Create `frontend/src/utilities/paginationUrlSync.ts`
-        - Define `PaginationParams` interface: `{ page: number; tmdb_page_start?: number }`
-        - Implement `parsePaginationFromUrl(search: string): PaginationParams`
-        - Implement `generatePaginationUrl(params: Partial<PaginationParams>): string`
-        - Follow established patterns from `browseUrlSync.ts` and `searchUrlSync.ts`
-        - File: `utilities/paginationUrlSync.ts`
+    **DRY Cleanup:** While creating pagination utility, also integrate the unused `searchUrlSync.ts`
+    and remove `page` param from `generateSearchUrl` (pagination is now `paginationUrlSync`'s domain).
 
-    - [ ] **3.7.b.2 Add unit tests for paginationUrlSync**
-        - Test: Parse page from URL (present, absent, invalid)
-        - Test: Parse tmdb_page_start from URL (present, absent, invalid)
-        - Test: Generate URL with page only (omit page=1)
-        - Test: Generate URL with both params
-        - Test: Generate URL omits undefined tmdb_page_start
+    - [x] **3.7.b.1 Create paginationUrlSync.ts with types and parsing**
+        - Created `frontend/src/utilities/paginationUrlSync.ts`
+        - Defined `PaginationParams` interface: `{ page: number; tmdb_page_start?: number }`
+        - Implemented `parsePaginationFromUrl()`, `generatePaginationUrl()`, `mergePaginationIntoUrl()`
+        - Exported `DEFAULT_PAGINATION_PARAMS` for consistency
+
+    - [x] **3.7.b.2 Add unit tests for paginationUrlSync**
+        - 40 tests covering parse/generate/merge scenarios
+        - All edge cases: invalid values, empty strings, large numbers, coexistence with other params
         - File: `utilities/__tests__/paginationUrlSync.test.ts`
 
-    - [ ] **3.7.b.3 Refactor useMovieCollectionUrl to use paginationUrlSync**
-        - Replace inline `params.get("page")` parsing with `parsePaginationFromUrl()`
-        - Expose `tmdb_page_start` from URL alongside existing `currentPageFromUrl`
-        - Pass through context to MovieCollectionGrid
-        - Verify existing tests still pass
+    - [x] **3.7.b.3 Integrate searchUrlSync.ts (currently unused)**
+        - Wired `parseSearchParamsFromUrl` into `routeConfigHelper.ts` (replaced inline parsing)
+        - Removed `page` param from `generateSearchUrl` signature
+        - Updated tests: removed page-related tests, all passing (11 tests)
 
-    - [ ] **3.7.b.4 Update MovieCollectionGrid to read URL metadata on mount**
-        - Read `tmdb_page_start` from context/props (provided by useMovieCollectionUrl)
-        - Initialize `nextTmdbPageStartRef` from URL value on mount (if page > 1)
-        - Keep existing behavior: page 1 always uses undefined (fresh start)
-        - Keep existing behavior: response metadata updates ref for subsequent pagination
+    - [x] **3.7.b.4 Refactor useMovieCollectionUrl to use paginationUrlSync**
+        - Replaced inline page parsing with `parsePaginationFromUrl()`
+        - Added `tmdbPageStartFromUrl` to return value
+        - Updated `handlePageChange` to accept `tmdb_page_start` param
+        - Updated `handleBrowseParamsChange` to clear `tmdb_page_start` on filter changes
+        - Updated 24 test mocks in `useMovieCollectionState.test.tsx`
 
-    - [ ] **3.7.b.5 Run TDD tests - should now PASS (TDD Green)**
-        - New paginationUrlSync tests: All passing
-        - MovieCollectionGrid stability tests: All passing (including new URL metadata tests)
-        - Full frontend suite: All passing
-        - 0 type errors, 0 lint violations
+    - [x] **3.7.b.5 Update MovieCollectionGrid to read URL metadata on mount**
+        - Added `initialTmdbPageStart` flow: useMovieCollectionUrl → useMovieCollectionState → MovieCollectionLayout →
+        useMovieCollectionContext → MovieCollectionGrid
+        - Initialize `nextTmdbPageStartRef` from URL value on mount when page > 1
+        - Keeps existing behavior: page 1 always starts fresh
+
+    - [x] **3.7.b.6 Run TDD tests - should now PASS (TDD Green)**
+        - paginationUrlSync tests: 40/40 passing
+        - searchUrlSync tests: 11/11 passing
+        - MovieCollectionGrid stability tests: 10/10 passing (including URL metadata tests)
+        - useMovieCollectionState tests: 39/39 passing
+        - All utility tests: 166/166 passing
+        - Type checking: 0 errors
+        - Linting: 0 violations
 
 - [ ] **3.7.c Update pagination to write metadata to URL**
 

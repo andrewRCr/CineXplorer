@@ -80,6 +80,80 @@
     - Goal: Either fix configuration or document as known limitation with workaround
     - Context: Discovered during endpoint consolidation quality gates (Phase 6.1.b)
 
+<!-- Code Quality / Refactoring -->
+
+- [ ] Refactor Movie Collection URL/State Hooks for Clarity and Separation of Concerns
+    - **Context:** Discovered during Task 3.7.b (tasks-pagination-buffer-tracking.md) - hooks are
+      functional but messy, hard to parse, mixed responsibilities
+    - **Goal:** Clean separation, improved readability, proper DRY
+    - **Scope:** 3 hooks + supporting utilities
+
+    - [ ] **R.1 Fix "search" terminology confusion in comments/docs**
+        - Problem: "search" used for both URL query strings (browser API) and movie search feature
+        - Files: `browseUrlSync.ts`, `searchUrlSync.ts`, `useMovieCollectionUrl.tsx`
+        - Change: Use "query string" or "URL params" instead of "search string/params" in comments
+        - Small effort, big clarity win
+
+    - [ ] **R.2 Extract `deepEqual` utility from useMovieCollectionUrl**
+        - Currently: Generic comparison function buried at top of hook file (lines 9-33)
+        - Move to: `utilities/deepEqual.ts` or use `fast-deep-equal` package
+        - Update imports in `useMovieCollectionUrl.tsx`
+
+    - [ ] **R.3 Extract sessionStorage utilities from useMovieCollectionState**
+        - Currently: 4 module-level functions (lines 16-87) for advanced panel override tracking
+        - Extract to: `utilities/advancedPanelOverride.ts`
+        - Functions: `getAdvancedFilterHash`, `hasUserOverride`, `setUserOverride`, `clearUserOverride`
+        - Reduces file length by ~70 lines before hook even starts
+
+    - [ ] **R.4 Move `hasAdvancedFilterValues` to browseParamUtils.ts**
+        - Currently: Exported from `useMovieCollectionState.tsx` (lines 127-165)
+        - Better home: `utilities/browseParamUtils.ts` with other param utilities
+        - Note: Duplicates some decade detection logic with `getAdvancedFilterHash` - consolidate
+        - Update imports in `useMovieCollectionState.tsx`, `BrowseControlsSection.tsx` (if used)
+
+    - [ ] **R.5 Audit and remove `enableUrlSync=false` code path if unused**
+        - Currently: Dual-mode complexity with URL-synced vs local state
+        - Check: Is non-URL-synced mode actually used anywhere?
+        - If unused: Remove `localBrowseParams`, `localCurrentPage`, `localTmdbPageStart`, ternaries
+        - If used: Document where and why
+        - Estimated reduction: ~30 lines + significant complexity
+
+    - [ ] **R.6 Use `generateBrowseUrl()` in handleBrowseParamsChange**
+        - Currently: `handleBrowseParamsChange` (lines 101-136) builds URL inline with URLSearchParams
+        - We have: `browseUrlSync.ts` with `generateBrowseUrl()` for this exact purpose
+        - Benefit: Consistency with URL sync pattern, DRY
+
+    - [ ] **R.7 Fix language sort reset effect bug**
+        - Currently: Effect at line 237-241 calls `urlHandleBrowseParamsChange` directly
+        - Bug: Ignores `enableUrlSync` flag - would try URL update even in local mode
+        - Fix: Use `onBrowseParamsChange` (the unified handler) instead
+
+    - [ ] **R.8 Simplify derived state in useMovieCollectionState**
+        - Currently: Individual useMemos for `hasActiveFilters`, etc., then wrapped in `derivedState` useMemo
+        - The wrapper useMemo (lines 305-310) adds no value
+        - Remove wrapper, spread individual values directly in return
+
+    - [ ] **R.9 (Optional, larger scope) Consider hook decomposition**
+        - If after R.1-R.8 hooks are still complex, consider splitting:
+            - `useBrowseParamsUrl` - browse params ↔ URL sync only
+            - `usePaginationUrl` - pagination ↔ URL sync only
+            - `useRouteChangeReset` - route transition detection
+            - `useMovieCollectionUrl` becomes thin composer
+        - **Defer decision** until R.1-R.8 complete - may not be needed
+
+    - **Files:**
+        - `frontend/src/components/movie/collection/useMovieCollectionUrl.tsx`
+        - `frontend/src/components/movie/collection/useMovieCollectionState.tsx`
+        - `frontend/src/utilities/browseUrlSync.ts`
+        - `frontend/src/utilities/searchUrlSync.ts`
+        - `frontend/src/utilities/browseParamUtils.ts`
+        - New: `frontend/src/utilities/deepEqual.ts` (or package)
+        - New: `frontend/src/utilities/advancedPanelOverride.ts`
+
+    - **Priority:** Low (functional, not blocking)
+    - **Effort:** Medium (R.1-R.8 individually small, R.9 larger if needed)
+    - **Risk:** Low (refactor with existing test coverage)
+
 <!-- Navigation/Routing -->
 
 - [ ] Extract `BackToCollectionButton` shared component

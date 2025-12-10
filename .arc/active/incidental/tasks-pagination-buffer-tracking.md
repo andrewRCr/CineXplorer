@@ -384,59 +384,84 @@ Phase 2 (filter params in URL). This ensures consistent behavior across all navi
 `tmdb_page_start` metadata. This Phase 3.7 enables backward navigation to **pages 2+** by persisting
 metadata in the URL so it survives navigation away and back.
 
-- [ ] **3.7.a Write tests for URL metadata reading (TDD Red Phase)**
+- [x] **3.7.a Write tests for URL metadata reading (TDD Red Phase)**
 
     **Test-First Approach:** Write failing tests before implementation.
 
-    - [ ] **3.7.a.1 Add tests to usePaginatedMovies test suite**
-        - Test: Component mounts with `tmdb_page_start` in URL → sends to API
-        - Test: Component mounts without metadata → sends undefined (backward compat)
-        - Test: Page change after mount → uses `next_tmdb_page_start` from response (existing behavior)
-        - Test: URL metadata takes precedence on initial mount, response metadata on pagination
-        - **Expect:** Tests FAIL (TDD Red) - URL reading not implemented yet
-        - File: `hooks/__tests__/usePaginatedMovies.test.ts`
+    - [x] **3.7.a.1 Add tests to MovieCollectionGrid stability test suite**
+        - Added 4 tests to `MovieCollectionGrid.stability.test.tsx` in new "URL Metadata Persistence" describe block
+        - Test: `should read tmdb_page_start from URL on initial mount` - **FAILS** as expected (receives undefined)
+        - Test: `should pass undefined when tmdb_page_start not in URL` - **PASSES** (backward compat)
+        - Test: `should use URL metadata on mount, then switch to response metadata` - **FAILS** as expected
+        - Test: `should ignore URL tmdb_page_start when on page 1` - **PASSES** (page 1 reset exists)
+        - TDD Red confirmed: 2 failing, 2 passing (exactly as expected)
+        - Note: Tests added to stability file (not usePaginatedMovies) as it has routing context infrastructure
 
-    - [ ] **3.7.a.2 Verify URL preservation already works**
-        - Check MovieCard tests: verify unknown params preserved (from Phase 2)
-        - Check MovieDetail tests: verify `allParams` pattern preserves all params (from Phase 2)
-        - Manual test: Navigate → verify URL contains page/from/filters
-        - **Expect:** Existing tests pass - Phase 2 already handles URL preservation
+    - [x] **3.7.a.2 Verify URL preservation already works**
+        - User confirmed via manual browser testing
+        - MovieCard correctly preserves all URL params in detail links
+        - MovieDetail's back button preserves filter state
+        - **Incidental fix:** Cleaned up redundant `from` and `page=1` params from back URL
 
-- [ ] **3.7.b Implement URL metadata reading (TDD Green Phase)**
+- [ ] **3.7.b Create paginationUrlSync utility and refactor (TDD Green Phase)**
 
-    **Implementation:** Make tests pass by reading metadata from URL.
+    **Architecture Decision:** Create dedicated `paginationUrlSync.ts` for all pagination URL concerns.
+    This mirrors `browseUrlSync.ts` (browse endpoint params) and `searchUrlSync.ts` (search endpoint
+    params), but handles the orthogonal pagination concerns (`page`, `tmdb_page_start`) that apply
+    to BOTH browse and search views.
 
-    - [ ] **3.7.b.1 Update usePaginatedMovies to read from URL**
-        - Import `useSearchParams` from react-router-dom
-        - Read `tmdb_page_start` parameter on mount
-        - Parse to number (or undefined if absent)
-        - Pass to initial fetch call
-        - Store response's `next_tmdb_page_start` for subsequent pagination
-        - File: `hooks/usePaginatedMovies.ts`
+    - [ ] **3.7.b.1 Create paginationUrlSync.ts with types and parsing**
+        - Create `frontend/src/utilities/paginationUrlSync.ts`
+        - Define `PaginationParams` interface: `{ page: number; tmdb_page_start?: number }`
+        - Implement `parsePaginationFromUrl(search: string): PaginationParams`
+        - Implement `generatePaginationUrl(params: Partial<PaginationParams>): string`
+        - Follow established patterns from `browseUrlSync.ts` and `searchUrlSync.ts`
+        - File: `utilities/paginationUrlSync.ts`
 
-    - [ ] **3.7.b.2 Run tests - should now PASS (TDD Green)**
-        - usePaginatedMovies tests: All passing (expect 4+ new tests)
-        - MovieCard tests: Still passing (no changes needed)
-        - MovieDetail tests: Still passing (no changes needed)
-        - Full frontend suite: All passing (expect 457+)
+    - [ ] **3.7.b.2 Add unit tests for paginationUrlSync**
+        - Test: Parse page from URL (present, absent, invalid)
+        - Test: Parse tmdb_page_start from URL (present, absent, invalid)
+        - Test: Generate URL with page only (omit page=1)
+        - Test: Generate URL with both params
+        - Test: Generate URL omits undefined tmdb_page_start
+        - File: `utilities/__tests__/paginationUrlSync.test.ts`
+
+    - [ ] **3.7.b.3 Refactor useMovieCollectionUrl to use paginationUrlSync**
+        - Replace inline `params.get("page")` parsing with `parsePaginationFromUrl()`
+        - Expose `tmdb_page_start` from URL alongside existing `currentPageFromUrl`
+        - Pass through context to MovieCollectionGrid
+        - Verify existing tests still pass
+
+    - [ ] **3.7.b.4 Update MovieCollectionGrid to read URL metadata on mount**
+        - Read `tmdb_page_start` from context/props (provided by useMovieCollectionUrl)
+        - Initialize `nextTmdbPageStartRef` from URL value on mount (if page > 1)
+        - Keep existing behavior: page 1 always uses undefined (fresh start)
+        - Keep existing behavior: response metadata updates ref for subsequent pagination
+
+    - [ ] **3.7.b.5 Run TDD tests - should now PASS (TDD Green)**
+        - New paginationUrlSync tests: All passing
+        - MovieCollectionGrid stability tests: All passing (including new URL metadata tests)
+        - Full frontend suite: All passing
         - 0 type errors, 0 lint violations
 
 - [ ] **3.7.c Update pagination to write metadata to URL**
 
-    **Note:** This may already be handled by `useMovieCollectionUrl` if `currentPage` updates URL.
-    Verify and implement if needed.
+    **Goal:** When navigating pages, persist `tmdb_page_start` to URL so it survives refresh/navigation.
 
-    - [ ] **3.7.c.1 Verify page navigation updates URL**
-        - Check if `onPageChange` from `useMovieCollectionUrl` updates URL with new page number
-        - If yes, metadata flows: API response → state → URL (already works)
-        - If no, need to update `useMovieCollectionUrl` to sync `tmdb_page_start` to URL
-        - Manual test: Navigate page 1→2 → verify URL updates
+    - [ ] **3.7.c.1 Verify current page navigation URL behavior**
+        - Check how `handlePageChange` in `useMovieCollectionUrl` updates URL
+        - Identify where `tmdb_page_start` should be added to URL updates
+        - Manual test: Navigate page 1→2 → check if URL updates
 
-    - [ ] **3.7.c.2 Implement URL sync if needed**
-        - Only if 3.7.c.1 reveals gap: Add `tmdb_page_start` to URL state
-        - Update `handlePageChange` to include metadata when changing pages
-        - Write tests if new code added
-        - Run quality gates
+    - [ ] **3.7.c.2 Update handlePageChange to include tmdb_page_start**
+        - Modify `useMovieCollectionUrl.handlePageChange` to accept optional metadata
+        - Use `generatePaginationUrl()` from new utility for consistency
+        - MovieCollectionGrid passes current `nextTmdbPageStartRef.current` when changing pages
+        - Write/update tests for URL generation with metadata
+
+    - [ ] **3.7.c.3 Run quality gates**
+        - All frontend tests passing
+        - 0 type errors, 0 lint violations
 
 - [ ] **3.7.d End-to-end verification (TDD Integration)**
 
@@ -514,13 +539,6 @@ metadata in the URL so it survives navigation away and back.
 - **Graceful fallback**: Missing metadata → use simple page mapping
 - **Approximated jumps**: Accept ±1 page boundary duplicates as acceptable tradeoff for UX
 - **Rolling average**: Track average pages consumed over last N requests for better approximation
-
-### Key Files
-
-- Backend: `backend/apps/movie/services/movie_service.py`
-- Backend schemas: `backend/apps/movie/schemas.py`
-- Frontend pagination: `frontend/src/hooks/usePaginatedMovies.ts`
-- Frontend display: `frontend/src/hooks/usePaginationDisplay.ts`
 
 ### Approximation Strategy
 

@@ -1,14 +1,14 @@
 # Incidental: Infinite Scroll Migration with TanStack Query
 
 **Created:** 2025-12-10
-**Branch:** `technical/service-layer-modernization`
-**Status:** Pending
+**Branch:** `incidental/infinite-scroll-migration`
+**Status:** Active
 
 ## Context
 
 **Discovered:** During Phase 3.7.d (metadata persistence debugging) of `tasks-pagination-buffer-tracking.md`
 
-**Interrupts:** `.arc/active/incidental/tasks-pagination-buffer-tracking.md` at Phase 3.7, Task 3.7.d
+**Interrupts:** `tasks-service-layer-modernization.md` at Task 3.5.b.3
 
 **Problem:** Path-dependent pagination creates inherent complexity with random-access numbered pages.
 Our buffer mechanism consumes variable TMDB pages per display page, making page N content depend on

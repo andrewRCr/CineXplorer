@@ -451,30 +451,53 @@ metadata in the URL so it survives navigation away and back.
         - Type checking: 0 errors
         - Linting: 0 violations
 
-- [ ] **3.7.c Update pagination to write metadata to URL**
+- [x] **3.7.c Update pagination to write metadata to URL**
 
     **Goal:** When navigating pages, persist `tmdb_page_start` to URL so it survives refresh/navigation.
 
-    - [ ] **3.7.c.1 Verify current page navigation URL behavior**
-        - Check how `handlePageChange` in `useMovieCollectionUrl` updates URL
-        - Identify where `tmdb_page_start` should be added to URL updates
-        - Manual test: Navigate page 1→2 → check if URL updates
+    **Status after 3.7.b:** Hook infrastructure complete. `handlePageChange` already accepts
+    `tmdb_page_start` and uses `mergePaginationIntoUrl()`. Remaining work is wiring the grid
+    to pass metadata when user clicks pagination controls.
 
-    - [ ] **3.7.c.2 Update handlePageChange to include tmdb_page_start**
-        - Modify `useMovieCollectionUrl.handlePageChange` to accept optional metadata
-        - Use `generatePaginationUrl()` from new utility for consistency
-        - MovieCollectionGrid passes current `nextTmdbPageStartRef.current` when changing pages
-        - Write/update tests for URL generation with metadata
+    - [x] **3.7.c.1 Verify current page navigation URL behavior** *(completed in 3.7.b)*
+        - ✓ `handlePageChange` accepts `(page: number, tmdb_page_start?: number)`
+        - ✓ Uses `mergePaginationIntoUrl()` from paginationUrlSync
+        - ✓ URL updates correctly when page changes
 
-    - [ ] **3.7.c.3 Run quality gates**
-        - All frontend tests passing
-        - 0 type errors, 0 lint violations
+    - [x] **3.7.c.2 Wire MovieCollectionGrid to pass metadata on page change**
+        - Updated `usePageChangeHandler` to accept optional `getTmdbPageStart` getter
+        - `MovieCollectionGrid` passes `() => nextTmdbPageStartRef.current` as getter
+        - URL now updates to include `tmdb_page_start` when navigating pages
+        - Files: `usePageChangeHandler.ts`, `MovieCollectionGrid.tsx`
+
+    - [x] **3.7.c.3 Run quality gates**
+        - All 10 stability tests passing
+        - Type checking: 0 errors
+        - Linting: 0 violations
 
 - [ ] **3.7.d End-to-end verification (TDD Integration)**
 
     **Critical UX Test:** Ensure results stay in same position on back navigation.
 
-    - [ ] **3.7.d.1 Manual end-to-end test**
+    **🔴 BUG DISCOVERED:** Manual testing showed different movies after back navigation,
+    despite URL correctly containing `tmdb_page_start=3`. Investigation needed.
+
+    - [ ] **3.7.d.0 Investigate metadata read/use failure** *(BLOCKING)*
+        - URL correctly updates with `tmdb_page_start` on page navigation ✓
+        - URL correctly preserved through detail page ✓
+        - **BUG:** Different movies shown after back navigation
+        - **Suspects:**
+            1. `initialTmdbPageStart` not being read from URL correctly on mount?
+            2. `nextTmdbPageStartRef` not being initialized from `initialTmdbPageStart`?
+            3. API not receiving/using the `tmdb_page_start` parameter?
+            4. Fetcher recreation causing ref reset before API call?
+        - **Debug approach:**
+            - Add console.log in `useMovieCollectionUrl.getPaginationFromUrl()` to verify parsing
+            - Add console.log in `MovieCollectionGrid` to verify `initialTmdbPageStart` value
+            - Check Network tab for actual API request params
+            - Verify `nextTmdbPageStartRef.current` value when fetch happens
+
+    - [ ] **3.7.d.1 Manual end-to-end test** *(after bug fix)*
         - Apply rating filter 1.0-3.5
         - Navigate to page 3, note first 3 movie titles
         - Click middle movie, go to detail

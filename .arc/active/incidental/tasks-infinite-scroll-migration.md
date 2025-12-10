@@ -53,6 +53,24 @@ use this pattern. Continuing to patch numbered pagination fights against our dat
 - Phase 5: Jump-to-page approximation (obsolete - no random access)
 - Phase 6: Final integration testing for numbered pagination (replaced by new tests)
 
+### Pre-existing Test Failures (to be addressed)
+
+5 tests in `MovieDetail.test.tsx` were failing before this branch started. They test `page=` URL param
+preservation in "Back to Results" links - pagination-specific behavior that will be removed/rewritten
+as part of this migration.
+
+**Failing tests:**
+
+- `constructs back URL with all filter params` - expects `page=3` in URL
+- `constructs search back URL correctly` - expects `page=1` in URL
+- `constructs top-rated back URL correctly` - expects `page=1` in URL
+- `constructs upcoming back URL correctly` - expects `page=1` in URL
+- `handles missing optional params gracefully` - expects `page=1` in URL
+
+**Resolution:** These will be addressed when removing pagination-specific code (Phase 3+). The "Back to
+Results" link will remain but without `page=` params. Tests will be updated to reflect infinite scroll
+navigation patterns.
+
 ---
 
 ## Tasks
@@ -61,43 +79,36 @@ use this pattern. Continuing to patch numbered pagination fights against our dat
 
 **Purpose:** Establish TanStack Query in the project with proper configuration.
 
-- [ ] **1.1 Install and configure TanStack Query**
+- [x] **1.1 Install and configure TanStack Query**
 
-    - [ ] **1.1.a Install dependencies**
-        - Install `@tanstack/react-query` and `@tanstack/react-query-devtools`
-        - Verify compatibility with React 19
+    - [x] **1.1.a Install dependencies**
+        - Installed `@tanstack/react-query@5.90.12` and `@tanstack/react-query-devtools@5.91.1`
+        - React 19 compatibility confirmed (v5.39.0+ supports React 19)
 
-    - [ ] **1.1.b Create QueryClient configuration**
-        - Create `src/lib/queryClient.ts` with sensible defaults
-        - Configure stale time, cache time, retry logic
-        - Consider: `staleTime: 5 * 60 * 1000` (5 min for movie data)
+    - [x] **1.1.b Create QueryClient configuration**
+        - Created `src/lib/queryClient.ts` with movie-optimized defaults
+        - staleTime: 5 min, gcTime: 30 min, retry: 2 with exponential backoff
+        - Disabled refetchOnWindowFocus/refetchOnReconnect for browsing UX
 
-    - [ ] **1.1.c Add QueryClientProvider to app root**
-        - Wrap app in `QueryClientProvider`
-        - Add React Query DevTools (dev mode only)
-        - File: `src/App.tsx` or `src/main.tsx`
+    - [x] **1.1.c Add QueryClientProvider to app root**
+        - Added to `src/main.tsx` wrapping Chakra Provider
+        - ReactQueryDevtools added (collapsed by default)
 
-- [ ] **1.2 Create base infinite query hook for movies**
+- [x] **1.2 Create base infinite query hook for movies**
 
-    **Goal:** Reusable hook that wraps `useInfiniteQuery` for our movie fetching pattern.
+    - [x] **1.2.a Write tests for `useInfiniteMovies` hook**
+        - Created `useInfiniteMovies.test.tsx` with 10 tests covering all scenarios
+        - Tests: paginated results, page flattening, fetchNextPage with cursor,
+          hasNextPage states, filter reset, error handling, isFetchingNextPage
 
-    - [ ] **1.2.a Write tests for `useInfiniteMovies` hook**
-        - Test: Returns paginated results correctly
-        - Test: `fetchNextPage` triggers next page load with correct `tmdb_page_start`
-        - Test: `hasNextPage` reflects API response (`next_tmdb_page_start` presence)
-        - Test: Filter changes reset query (new query key)
-        - Test: Error states handled correctly
-        - Expect tests to FAIL initially
+    - [x] **1.2.b Implement `useInfiniteMovies` hook**
+        - Created `src/hooks/useInfiniteMovies.ts` wrapping `useInfiniteQuery`
+        - Uses `next_tmdb_page_start` as cursor via `getNextPageParam`
+        - Flattens pages into single movies array
+        - Returns: `{ movies, fetchNextPage, hasNextPage, isFetching, isLoading, isFetchingNextPage, error, isError }`
 
-    - [ ] **1.2.b Implement `useInfiniteMovies` hook**
-        - Accept fetcher function and query key dependencies
-        - Use `getNextPageParam` to extract `next_tmdb_page_start` from response
-        - Flatten pages into single movies array for consumers
-        - Return `{ movies, fetchNextPage, hasNextPage, isFetching, isLoading, error }`
-        - Tests should now PASS
-
-    - [ ] **1.2.c Run quality gates**
-        - Frontend tests passing
+    - [x] **1.2.c Run quality gates**
+        - All 10 new tests passing
         - Type checking: 0 errors
         - Linting: 0 violations
 
@@ -400,6 +411,7 @@ use this pattern. Continuing to patch numbered pagination fights against our dat
 - [ ] TanStack Query properly integrated and configured
 - [ ] All obsolete pagination code removed
 - [ ] All quality gates pass (tests, linting, type checking)
+- [ ] Pre-existing `MovieDetail.test.tsx` pagination test failures resolved (5 tests)
 - [ ] Ready for archival
 
 ---

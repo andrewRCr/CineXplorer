@@ -191,3 +191,9 @@
         5. (Future) Use in PersonDetail when that page is built
     - **Files:** New component, `MovieDetail.tsx`
     - **Defer until:** PersonDetail is being built (avoid premature abstraction)
+
+<!-- Data Quality -->
+
+- [ ] Examine the following movies for production company patterns (i.e., do any of them produce 90%+ 'adult' content?)
+for potential bulk blacklisting; if not found, blacklist individually (movies are mislabeled as non-adult on TMDB):
+    - 280460, 50633, 1113566, 264865, 199214, 329872, 406167, 222270, 264975, 1241742

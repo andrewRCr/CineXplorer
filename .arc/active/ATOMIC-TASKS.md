@@ -29,6 +29,22 @@
 ## Active
 <!-- Add tasks here with checkboxes -->
 
+<!-- Documentation -->
+
+- [ ] Create `strategy-data-quality.md` - Document TMDB data quality mechanisms
+    - **Context:** Extracted from `tasks-filter-integration-testing.md` Phase 4.2 (documentation scope change)
+    - **Content to cover:**
+        - Two-pass filtering architecture (TMDB API primary, backend second-pass hygiene)
+        - VoteCountPolicy: Tiered thresholds (STRICT/MODERATE/BYPASS) and when each applies
+        - CompletenessPolicy: Poster and title requirements
+        - Historical validation: EARLIEST_VALID_RELEASE_YEAR (1888)
+        - Frontend timezone-safe date parsing pattern
+        - TMDB API quirks and known bugs (reference research doc)
+        - Parameter flow: Frontend filters → API params → service params → TMDB query + backend filter
+    - **Location:** `.arc/reference/strategies/project/strategy-data-quality.md`
+    - **Priority:** Low - code is well-documented, this is for discoverability
+    - **Effort:** ~1-2 hours
+
 <!-- UI/UX Fixes -->
 
 - [ ] Revert MovieUserScore badge colors to traffic light scheme
@@ -87,6 +103,10 @@
       functional but messy, hard to parse, mixed responsibilities
     - **Goal:** Clean separation, improved readability, proper DRY
     - **Scope:** 3 hooks + supporting utilities
+    - **⚠️ Deferred until:** After `tasks-infinite-scroll-migration.md` Phase 4 (Integration) completes.
+      Hooks will be significantly modified during infinite scroll integration - refactoring now would
+      be wasted effort. Re-evaluate after integration: some items (R.1-R.4, R.8) likely still applicable,
+      others (R.5, R.7, R.9) may be addressed or obsoleted by the migration.
 
     - [ ] **R.1 Fix "search" terminology confusion in comments/docs**
         - Problem: "search" used for both URL query strings (browser API) and movie search feature

@@ -73,6 +73,7 @@ const MovieCollectionLayout = ({
     browseParams,
     onBrowseParamsChange,
     currentPage: currentPageFromUrl,
+    tmdbPageStart: tmdbPageStartFromUrl,
     onPageChange: handlePageChange,
     isAdvancedPanelOpen,
     toggleAdvancedPanel,
@@ -106,6 +107,7 @@ const MovieCollectionLayout = ({
         source: actualSource,
         query: defaultBrowseParams?.query,
         initialCurrentPage: currentPage || currentPageFromUrl,
+        initialTmdbPageStart: tmdbPageStartFromUrl,
         onPageChange: handlePageChange,
         enhancedFetcher,
       };
@@ -116,6 +118,7 @@ const MovieCollectionLayout = ({
       defaultBrowseParams?.query,
       currentPage,
       currentPageFromUrl,
+      tmdbPageStartFromUrl,
       handlePageChange,
       enhancedFetcher,
     ]

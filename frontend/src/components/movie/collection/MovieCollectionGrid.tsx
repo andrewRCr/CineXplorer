@@ -35,7 +35,8 @@ interface MovieCollectionGridProps {
   source?: string;
   query?: string;
   initialCurrentPage?: number;
-  onPageChange?: (page: number) => void; // New callback from parent
+  initialTmdbPageStart?: number;
+  onPageChange?: (page: number, tmdb_page_start?: number) => void;
   enhancedFetcher?: (page: number, tmdb_page_start?: number) => {
     request: Promise<{ data: PaginatedMoviesResponse }>;
     cancel: () => void;
@@ -45,15 +46,20 @@ interface MovieCollectionGridProps {
 const MovieCollectionGrid = forwardRef<MovieGridRef, MovieCollectionGridProps>(
   (props, ref) => {
     // Use custom hooks to extract complex logic
-    const { source, query, currentPage, onPageChange, finalFetcher } =
+    const { source, query, currentPage, initialTmdbPageStart, onPageChange, finalFetcher } =
       useMovieCollectionContext(props);
 
     const pageSize = 20;
 
     // Track smart buffer pagination metadata using ref to avoid triggering re-renders
-    const nextTmdbPageStartRef = useRef<number | undefined>(undefined);
+    // Initialize from URL metadata if page > 1 (allows correct pagination after refresh/navigation)
+    const nextTmdbPageStartRef = useRef<number | undefined>(
+      currentPage > 1 ? initialTmdbPageStart : undefined
+    );
     const prevFetcherRef = useRef(finalFetcher);
-    const prevNextTmdbPageStartRef = useRef<number | undefined>(undefined);
+    const prevNextTmdbPageStartRef = useRef<number | undefined>(
+      currentPage > 1 ? initialTmdbPageStart : undefined
+    );
     const prevPageRef = useRef(currentPage);
 
     // Reset metadata synchronously when fetcher changes (filter/route change)

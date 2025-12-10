@@ -1,8 +1,18 @@
 # Incidental: Smart Pagination with Buffer Metadata Tracking
 
 **Created:** 2025-10-27
+**Completed:** 2025-12-10
 **Branch:** `technical/service-layer-modernization`
-**Status:** In Progress
+**Status:** Superseded (partial)
+
+**Superseded By:** `tasks-infinite-scroll-migration.md` (2025-12-10)
+
+**Supersession Rationale:** During Phase 3.7.d debugging, research revealed that infinite scroll +
+TanStack Query is a better architectural fit for our path-dependent pagination constraints. Rather
+than continue patching numbered pagination, we're migrating to infinite scroll which eliminates
+the fundamental problem. Phases 1-3.7.c (backend buffer mechanism, frontend metadata tracking,
+URL sync infrastructure) remain valid and will be used by the new approach. Phases 3.7.d onwards
+are obsolete - see strikethrough markers below.
 
 ## Context
 
@@ -475,89 +485,44 @@ metadata in the URL so it survives navigation away and back.
         - Type checking: 0 errors
         - Linting: 0 violations
 
-- [ ] **3.7.d End-to-end verification (TDD Integration)**
+---
 
-    **Critical UX Test:** Ensure results stay in same position on back navigation.
-
-    **🔴 BUG DISCOVERED:** Manual testing showed different movies after back navigation,
-    despite URL correctly containing `tmdb_page_start=3`. Investigation needed.
-
-    - [ ] **3.7.d.0 Investigate metadata read/use failure** *(BLOCKING)*
-        - URL correctly updates with `tmdb_page_start` on page navigation ✓
-        - URL correctly preserved through detail page ✓
-        - **BUG:** Different movies shown after back navigation
-        - **Suspects:**
-            1. `initialTmdbPageStart` not being read from URL correctly on mount?
-            2. `nextTmdbPageStartRef` not being initialized from `initialTmdbPageStart`?
-            3. API not receiving/using the `tmdb_page_start` parameter?
-            4. Fetcher recreation causing ref reset before API call?
-        - **Debug approach:**
-            - Add console.log in `useMovieCollectionUrl.getPaginationFromUrl()` to verify parsing
-            - Add console.log in `MovieCollectionGrid` to verify `initialTmdbPageStart` value
-            - Check Network tab for actual API request params
-            - Verify `nextTmdbPageStartRef.current` value when fetch happens
-
-    - [ ] **3.7.d.1 Manual end-to-end test** *(after bug fix)*
-        - Apply rating filter 1.0-3.5
-        - Navigate to page 3, note first 3 movie titles
-        - Click middle movie, go to detail
-        - Click "Back to Results"
-        - **VERIFY:** Same 3 movies in same positions on page 3
-        - **VERIFY:** URL contains `tmdb_page_start` parameter
-        - **VERIFY:** No duplicate movies when navigating forward to page 4
-
-    - [ ] **3.7.d.2 Run quality gates**
-        - Frontend tests: All passing (expect 457+)
-        - Backend tests: All passing (30/30)
-        - Type checking: 0 errors (frontend + backend)
-        - Linting: 0 violations (frontend + backend)
-
-    - [ ] **3.7.d.3 Document integration**
-        - Update Phase 3.7 task with test results
-        - Note any edge cases discovered
-        - Confirm ready for Phase 4 sequential pagination validation
+**⚠️ Supersession Point (2025-12-10):** Tasks 3.7.d onwards superseded by architectural decision
+to migrate to infinite scroll. See `tasks-infinite-scroll-migration.md` for continuation.
+Earlier phases (1-3.7.c) remain valid - backend buffer metadata, frontend URL sync infrastructure,
+and collection hook updates will be used by infinite scroll implementation.
 
 ---
 
-### **Phase 4:** Sequential Pagination Validation
+- ~~[ ] **3.7.d End-to-end verification (TDD Integration)**~~ *(superseded by infinite scroll)*
 
-**Prerequisite:** Phase 3.7 complete (metadata persistence through navigation must work for meaningful testing)
+    ~~**Critical UX Test:** Ensure results stay in same position on back navigation.~~
 
-- [ ] **4.1 Manual test and run quality gates**
-    - Verify no duplicates: rating 1.0-3.5 across pages 1→2→3
-    - Verify full pages: rating 0-6.0 maintains 20 results per page
-    - Verify counts: "Showing X-Y of Z" accurate
-    - Confirm `next_tmdb_page_start` in API responses
-    - **Verify navigation stability:** page 3 → detail → back → same results (Phase 3.7 integration)
-    - Run full quality gates: 30+ backend tests, 453+ frontend tests, 0 violations
+    ~~**🔴 BUG DISCOVERED:** Manual testing showed different movies after back navigation,
+    despite URL correctly containing `tmdb_page_start=3`. Investigation needed.~~
+
+- ~~[ ] **3.7.d.0-d.3** All subtasks superseded~~ *(numbered pagination being replaced)*
 
 ---
 
-### **Phase 5:** Jump-to-Page Feature (Optional)
+### ~~**Phase 4:** Sequential Pagination Validation~~ *(superseded)*
 
-- [ ] **5.1 Write tests for jump approximation**
-    - Test: Jump with metadata yields approximately correct page (±1 page tolerance acceptable)
-    - Test: Jump without metadata uses simple fallback (page * 1 mapping)
-    - Test: Rolling average calculation tracks consumed pages correctly
-    - Expect tests to FAIL initially
+~~**Prerequisite:** Phase 3.7 complete (metadata persistence through navigation must work for meaningful testing)~~
 
-- [ ] **5.2 Implement jump-to-page approximation**
-    - Track rolling average of `pages_consumed` over recent requests
-    - Calculate approximate TMDB page: `tmdb_start ≈ last_known + (gap * avg_consumed)`
-    - Document tradeoff: ±1 page boundary duplicates acceptable vs. disabled feature
-    - Frontend: Re-enable jump-to-page controls, send best-guess `tmdb_page_start`
-    - Run tests - should now PASS
+- ~~[ ] **4.1 Manual test and run quality gates**~~ *(superseded by infinite scroll)*
 
 ---
 
-### **Phase 6:** Final Integration Testing
+### ~~**Phase 5:** Jump-to-Page Feature (Optional)~~ *(superseded)*
 
-- [ ] **6.1 End-to-end validation across all scenarios**
-    - Sequential pagination: rating 1.0-3.5 pages 1→2→3→4 (no duplicates)
-    - Jump-to-page: rating 1.0-3.5 pages 1→5→10 (approximate, ±1 acceptable)
-    - Full pages: rating 0-6.0 maintains 20 results per page
-    - Display accuracy: "Showing X-Y of Z" correct in all scenarios
-    - Final quality gates: All tests pass, 0 violations/errors
+- ~~[ ] **5.1 Write tests for jump approximation**~~ *(superseded)*
+- ~~[ ] **5.2 Implement jump-to-page approximation**~~ *(superseded)*
+
+---
+
+### ~~**Phase 6:** Final Integration Testing~~ *(superseded)*
+
+- ~~[ ] **6.1 End-to-end validation across all scenarios**~~ *(superseded by infinite scroll)*
 
 ---
 

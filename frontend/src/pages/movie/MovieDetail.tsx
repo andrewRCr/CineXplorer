@@ -59,9 +59,16 @@ const MovieDetail = () => {
   // NOTE: If PersonDetail implements similar back navigation with query preservation,
   // consider extracting to shared <BackToCollectionButton> component (DRY principle)
   const BackButton = useMemo(() => {
-    // Build query string with all preserved parameters (skip empty values)
+    // Build query string with preserved parameters
+    // - Skip "from" (already encoded in path)
+    // - Skip "page" if it's 1 (default, matches pattern in useMovieCollectionUrl)
+    // - Skip empty values
     const queryString = Object.entries(allParams)
-      .filter(([, value]) => value !== "")
+      .filter(([key, value]) => {
+        if (key === "from") return false;
+        if (key === "page" && value === "1") return false;
+        return value !== "";
+      })
       .map(([key, value]) => `${key}=${encodeURIComponent(value)}`)
       .join("&");
 

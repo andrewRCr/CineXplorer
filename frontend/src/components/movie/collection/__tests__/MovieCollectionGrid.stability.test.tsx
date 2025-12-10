@@ -345,3 +345,191 @@ describe('MovieCollectionGrid - Stability Tests', () => {
     expect(mockFetcher.mock.calls.length).toBeLessThanOrEqual(2);
   });
 });
+
+/**
+ * URL Metadata Persistence Tests
+ *
+ * These tests verify that tmdb_page_start metadata is:
+ * 1. Read from URL on initial mount (back navigation from MovieDetail)
+ * 2. Passed to API for accurate pagination continuation
+ * 3. Updated from API response for subsequent navigation
+ *
+ * Context: Smart buffer pagination tracks which TMDB pages have been consumed.
+ * When users navigate away (to MovieDetail) and back, this metadata must persist
+ * in the URL to ensure the same movies appear in the same positions.
+ */
+describe('MovieCollectionGrid - URL Metadata Persistence', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  /**
+   * Test: Component reads tmdb_page_start from URL on mount
+   *
+   * Scenario: User returns from MovieDetail with tmdb_page_start in URL
+   * Expected: Initial API call includes tmdb_page_start from URL
+   */
+  it('should read tmdb_page_start from URL on initial mount', async () => {
+    // Arrange: Mock fetcher that tracks tmdb_page_start parameter
+    const mockFetcher = vi.fn((page: number, tmdb_page_start?: number) => ({
+      request: Promise.resolve({
+        data: createMockResponse({
+          page,
+          next_tmdb_page_start: (tmdb_page_start ?? page) + 4,
+        }),
+      }),
+      cancel: vi.fn(),
+    }));
+
+    // Act: Render with URL containing tmdb_page_start=5
+    // This simulates returning from MovieDetail to page 2 where buffer had consumed TMDB pages 1-4
+    const { renderWithRoute } = await import('@tests/helpers/test-renderer-with-routes');
+
+    renderWithRoute(
+      '/browse/popular',
+      <MovieCollectionGrid
+        fetcher={mockFetcher}
+        source="popular"
+        initialCurrentPage={2}
+      />,
+      { initialRoute: '/browse/popular?page=2&tmdb_page_start=5' }
+    );
+
+    await waitFor(() => expect(mockFetcher).toHaveBeenCalled());
+
+    // Assert: First call should include tmdb_page_start=5 from URL
+    expect(mockFetcher).toHaveBeenCalledWith(2, 5);
+  });
+
+  /**
+   * Test: Component works without tmdb_page_start in URL (backward compatibility)
+   *
+   * Scenario: User navigates to page without metadata (fresh visit or old link)
+   * Expected: API call has undefined tmdb_page_start (existing behavior)
+   */
+  it('should pass undefined when tmdb_page_start not in URL', async () => {
+    // Arrange
+    const mockFetcher = vi.fn((page: number, _tmdb_page_start?: number) => ({
+      request: Promise.resolve({
+        data: createMockResponse({
+          page,
+          next_tmdb_page_start: page + 1,
+        }),
+      }),
+      cancel: vi.fn(),
+    }));
+
+    // Act: Render without tmdb_page_start in URL
+    const { renderWithRoute } = await import('@tests/helpers/test-renderer-with-routes');
+
+    renderWithRoute(
+      '/browse/popular',
+      <MovieCollectionGrid
+        fetcher={mockFetcher}
+        source="popular"
+        initialCurrentPage={1}
+      />,
+      { initialRoute: '/browse/popular?page=1' }
+    );
+
+    await waitFor(() => expect(mockFetcher).toHaveBeenCalled());
+
+    // Assert: First call should have undefined tmdb_page_start
+    expect(mockFetcher).toHaveBeenCalledWith(1, undefined);
+  });
+
+  /**
+   * Test: URL metadata used on mount, response metadata on pagination
+   *
+   * Scenario: User returns to page 2 (URL has tmdb_page_start=5), then navigates to page 3
+   * Expected:
+   *   - Page 2 mount: uses URL's tmdb_page_start=5
+   *   - Page 3 navigation: uses response's next_tmdb_page_start=9
+   *
+   * This ensures the transition from URL state to response state works correctly.
+   */
+  it('should use URL metadata on mount, then switch to response metadata', async () => {
+    // Arrange: Fetcher returns next_tmdb_page_start based on what it receives
+    const mockFetcher = vi.fn((page: number, tmdb_page_start?: number) => ({
+      request: Promise.resolve({
+        data: createMockResponse({
+          page,
+          // Simulate buffer: consume 4 pages per API page
+          next_tmdb_page_start: (tmdb_page_start ?? 1) + 4,
+        }),
+      }),
+      cancel: vi.fn(),
+    }));
+
+    // Act: Render at page 2 with URL metadata
+    const { renderWithRoute } = await import('@tests/helpers/test-renderer-with-routes');
+
+    const { rerender } = renderWithRoute(
+      '/browse/popular',
+      <MovieCollectionGrid
+        fetcher={mockFetcher}
+        source="popular"
+        initialCurrentPage={2}
+      />,
+      { initialRoute: '/browse/popular?page=2&tmdb_page_start=5' }
+    );
+
+    await waitFor(() => expect(mockFetcher).toHaveBeenCalled());
+
+    // Assert: Initial mount uses URL metadata
+    expect(mockFetcher).toHaveBeenNthCalledWith(1, 2, 5);
+
+    // Act: Navigate to page 3 (simulate via rerender)
+    rerender(
+      <MovieCollectionGrid
+        fetcher={mockFetcher}
+        source="popular"
+        initialCurrentPage={3}
+      />
+    );
+
+    await waitFor(() => expect(mockFetcher).toHaveBeenCalledTimes(2));
+
+    // Assert: Page 3 uses response metadata (5 + 4 = 9)
+    expect(mockFetcher).toHaveBeenNthCalledWith(2, 3, 9);
+  });
+
+  /**
+   * Test: Page 1 always starts fresh regardless of URL metadata
+   *
+   * Scenario: URL has stale tmdb_page_start but page=1
+   * Expected: Page 1 should NOT use URL metadata (could be stale from previous session)
+   *
+   * Rationale: Page 1 is always the "start" - using metadata could show wrong movies
+   */
+  it('should ignore URL tmdb_page_start when on page 1', async () => {
+    // Arrange
+    const mockFetcher = vi.fn((page: number, _tmdb_page_start?: number) => ({
+      request: Promise.resolve({
+        data: createMockResponse({
+          page,
+          next_tmdb_page_start: 3,
+        }),
+      }),
+      cancel: vi.fn(),
+    }));
+
+    // Act: Render page 1 with stale tmdb_page_start in URL
+    const { renderWithRoute } = await import('@tests/helpers/test-renderer-with-routes');
+
+    renderWithRoute(
+      '/browse/popular',
+      <MovieCollectionGrid
+        fetcher={mockFetcher}
+        source="popular"
+        initialCurrentPage={1}
+      />,
+      { initialRoute: '/browse/popular?page=1&tmdb_page_start=10' }
+    );
+
+    await waitFor(() => expect(mockFetcher).toHaveBeenCalled());
+
+    // Assert: Page 1 should always use undefined (fresh start)
+    expect(mockFetcher).toHaveBeenCalledWith(1, undefined);
+  });
+});

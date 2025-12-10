@@ -112,7 +112,11 @@ const MovieCollectionGrid = forwardRef<MovieGridRef, MovieCollectionGridProps>(
     }, [next_tmdb_page_start]);
 
     // Handle page changes using custom hook
-    const { handlePageChange } = usePageChangeHandler(onPageChange);
+    // Pass getter for metadata so URL updates include tmdb_page_start for back navigation
+    const { handlePageChange } = usePageChangeHandler(
+      onPageChange,
+      () => nextTmdbPageStartRef.current
+    );
 
     // Expose methods through ref
     useImperativeHandle(ref, () => ({

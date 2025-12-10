@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import type { BrowseParams } from "@/types/browseTypes";
 import { DEFAULT_BROWSE_PARAMS } from "@/constants/browseDefaults";
 import { parseBrowseParamsFromUrl } from "@/utilities/browseUrlSync";
+import { parsePaginationFromUrl, mergePaginationIntoUrl } from "@/utilities/paginationUrlSync";
 import { isDefaultSort } from "@/utilities/browseParamUtils";
 
 // Deep comparison function for filters to prevent unnecessary re-renders
@@ -44,24 +45,31 @@ export const useMovieCollectionUrl = (
     ...defaultBrowseParams,
   });
 
-  // Parse current page from URL - using useCallback to memoize the function and reduce recreations
-  const getCurrentPageFromUrl = useCallback((): number | undefined => {
-    if (typeof window === "undefined") return undefined;
-    const params = new URLSearchParams(location.search);
-    const pageParam = params.get("page");
-    const page = pageParam ? parseInt(pageParam, 10) : undefined;
-    return page && !isNaN(page) && page > 0 ? page : undefined;
+  // Parse pagination params from URL - using useCallback to memoize and reduce recreations
+  const getPaginationFromUrl = useCallback(() => {
+    if (typeof window === "undefined") return { page: undefined, tmdb_page_start: undefined };
+    const parsed = parsePaginationFromUrl(location.search);
+    // Return undefined for page=1 to match existing behavior (page 1 is default)
+    return {
+      page: parsed.page > 1 ? parsed.page : undefined,
+      tmdb_page_start: parsed.tmdb_page_start,
+    };
   }, [location.search]);
 
   const [currentPageFromUrl, setCurrentPageFromUrl] = useState<
     number | undefined
-  >(getCurrentPageFromUrl());
+  >(getPaginationFromUrl().page);
 
-  // This effect is the SINGLE SOURCE OF TRUTH for browse params and page number.
+  const [tmdbPageStartFromUrl, setTmdbPageStartFromUrl] = useState<
+    number | undefined
+  >(getPaginationFromUrl().tmdb_page_start);
+
+  // This effect is the SINGLE SOURCE OF TRUTH for browse params and pagination.
   // It runs whenever the URL's search parameters change.
   useEffect(() => {
-    const newPage = getCurrentPageFromUrl();
-    setCurrentPageFromUrl(newPage);
+    const pagination = getPaginationFromUrl();
+    setCurrentPageFromUrl(pagination.page);
+    setTmdbPageStartFromUrl(pagination.tmdb_page_start);
 
     const urlBrowseParams = parseBrowseParamsFromUrl(location.search);
 
@@ -70,21 +78,18 @@ export const useMovieCollectionUrl = (
       setBrowseParams(urlBrowseParams);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.search, getCurrentPageFromUrl]); // browseParams intentionally omitted to prevent infinite loop
+  }, [location.search, getPaginationFromUrl]); // browseParams intentionally omitted to prevent infinite loop
 
   // This callback is passed to the grid to handle page changes
   // The callback includes location.pathname and location.search in deps to avoid stale closures,
   // so it will be recreated when those change
   const handlePageChange = useCallback(
-    (page: number) => {
-      const currentSearch = location.search;
-      const searchParams = new URLSearchParams(currentSearch);
-      if (page === 1) {
-        searchParams.delete("page");
-      } else {
-        searchParams.set("page", page.toString());
-      }
-      const newUrl = `${location.pathname}?${searchParams.toString()}`;
+    (page: number, tmdb_page_start?: number) => {
+      const newSearch = mergePaginationIntoUrl(location.search, {
+        page,
+        tmdb_page_start,
+      });
+      const newUrl = `${location.pathname}${newSearch ? `?${newSearch}` : ""}`;
       navigate(newUrl, {});
     },
     [location.pathname, location.search, navigate]
@@ -92,6 +97,7 @@ export const useMovieCollectionUrl = (
 
   // This callback is passed to ALL browse param components.
   // It constructs a new URL and uses navigate() to update it.
+  // When filters change, pagination is reset (page=1, no tmdb_page_start)
   const handleBrowseParamsChange = useCallback(
     (
       newParamsOrUpdater:
@@ -104,7 +110,9 @@ export const useMovieCollectionUrl = (
           : { ...browseParams, ...newParamsOrUpdater };
 
       const searchParams = new URLSearchParams(location.search);
+      // Reset pagination when filters change (invalidates buffer metadata)
       searchParams.delete("page");
+      searchParams.delete("tmdb_page_start");
 
       Object.entries(newParams).forEach(([key, value]) => {
         if (
@@ -151,9 +159,10 @@ export const useMovieCollectionUrl = (
       // If no page param, this is likely a fresh navigation that should reset to page 1
       if (!hasPageParam) {
         // This appears to be a fresh navigation (clicking nav links, etc.)
-        // Reset pagination state
+        // Reset all pagination state (page and tmdb_page_start)
         const searchParams = new URLSearchParams(location.search);
         searchParams.delete("page");
+        searchParams.delete("tmdb_page_start");
 
         // Only navigate if the URL would actually change
         const newSearch = searchParams.toString();
@@ -174,6 +183,7 @@ export const useMovieCollectionUrl = (
   return {
     browseParams,
     currentPageFromUrl,
+    tmdbPageStartFromUrl,
     handlePageChange,
     handleBrowseParamsChange,
   };

@@ -111,7 +111,8 @@ interface MovieCollectionState {
 
   // Pagination state
   currentPage: number | undefined;
-  onPageChange: (page: number) => void;
+  tmdbPageStart: number | undefined;
+  onPageChange: (page: number, tmdb_page_start?: number) => void;
 
   // Derived state
   hasActiveFilters: boolean; // Excludes sort (for "Clear Filters" button visibility)
@@ -182,6 +183,7 @@ export const useMovieCollectionState = ({
     browseParams: urlBrowseParams,
     handleBrowseParamsChange: urlHandleBrowseParamsChange,
     currentPageFromUrl: urlCurrentPage,
+    tmdbPageStartFromUrl: urlTmdbPageStart,
     handlePageChange: urlHandlePageChange
   } = urlState;
 
@@ -199,6 +201,7 @@ export const useMovieCollectionState = ({
 
   // Local pagination state for non-URL-synced mode
   const [localCurrentPage, setLocalCurrentPage] = useState<number | undefined>(1);
+  const [localTmdbPageStart, setLocalTmdbPageStart] = useState<number | undefined>(undefined);
 
   // Choose between URL-synced or local state
   const browseParams = enableUrlSync ? urlBrowseParams : localBrowseParams;
@@ -251,7 +254,13 @@ export const useMovieCollectionState = ({
   }, [enableUrlSync, urlHandleBrowseParamsChange]);
 
   const currentPage = enableUrlSync ? urlCurrentPage : localCurrentPage;
-  const onPageChange = enableUrlSync ? urlHandlePageChange : setLocalCurrentPage;
+  const tmdbPageStart = enableUrlSync ? urlTmdbPageStart : localTmdbPageStart;
+  const onPageChange = enableUrlSync
+    ? urlHandlePageChange
+    : (page: number, tmdb_page_start?: number) => {
+        setLocalCurrentPage(page);
+        setLocalTmdbPageStart(tmdb_page_start);
+      };
 
   // Advanced panel toggle with better UX
   const isAdvancedPanelOpen = enableAdvancedFilters ? localIsAdvancedPanelOpen : false;
@@ -317,6 +326,7 @@ export const useMovieCollectionState = ({
     setIsAdvancedPanelOpen,
     toggleAdvancedPanel,
     currentPage,
+    tmdbPageStart,
     onPageChange,
 
     // Derived state

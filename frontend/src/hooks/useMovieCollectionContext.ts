@@ -14,7 +14,8 @@ interface MovieCollectionContext {
     source?: string;
     query?: string;
     initialCurrentPage?: number;
-    onPageChange: (page: number) => void;
+    initialTmdbPageStart?: number;
+    onPageChange: (page: number, tmdb_page_start?: number) => void;
     enhancedFetcher: MovieFetcher;
 }
 
@@ -24,7 +25,8 @@ interface MovieCollectionGridProps {
     source?: string;
     query?: string;
     initialCurrentPage?: number;
-    onPageChange?: (page: number) => void;
+    initialTmdbPageStart?: number;
+    onPageChange?: (page: number, tmdb_page_start?: number) => void;
     enhancedFetcher?: MovieFetcher;
 }
 
@@ -33,7 +35,8 @@ interface ResolvedContext {
     source: string | undefined;
     query: string | undefined;
     currentPage: number;
-    onPageChange: ((page: number) => void) | undefined;
+    initialTmdbPageStart: number | undefined;
+    onPageChange: ((page: number, tmdb_page_start?: number) => void) | undefined;
     enhancedFetcher: MovieFetcher | undefined;
     finalFetcher: MovieFetcher | undefined;
 }
@@ -71,6 +74,7 @@ export function useMovieCollectionContext(props: MovieCollectionGridProps): Reso
         source: contextSource,
         query: contextQuery,
         initialCurrentPage: contextInitialPage,
+        initialTmdbPageStart: contextInitialTmdbPageStart,
         onPageChange: contextOnPageChange,
         enhancedFetcher: contextEnhancedFetcher,
     } = context || {};
@@ -81,6 +85,7 @@ export function useMovieCollectionContext(props: MovieCollectionGridProps): Reso
         const source = props.source || contextSource;
         const query = props.query || contextQuery;
         const currentPage = props.initialCurrentPage || contextInitialPage || 1;
+        const initialTmdbPageStart = props.initialTmdbPageStart ?? contextInitialTmdbPageStart;
         const onPageChange = props.onPageChange || contextOnPageChange;
         const enhancedFetcher = props.enhancedFetcher || contextEnhancedFetcher;
 
@@ -92,6 +97,7 @@ export function useMovieCollectionContext(props: MovieCollectionGridProps): Reso
             source,
             query,
             currentPage,
+            initialTmdbPageStart,
             onPageChange,
             enhancedFetcher,
             finalFetcher,
@@ -101,12 +107,14 @@ export function useMovieCollectionContext(props: MovieCollectionGridProps): Reso
         props.source,
         props.query,
         props.initialCurrentPage,
+        props.initialTmdbPageStart,
         props.onPageChange,
         props.enhancedFetcher,
         contextFetcher,
         contextSource,
         contextQuery,
         contextInitialPage,
+        contextInitialTmdbPageStart,
         contextOnPageChange,
         contextEnhancedFetcher,
     ]);

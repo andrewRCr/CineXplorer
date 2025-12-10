@@ -397,6 +397,50 @@ for feature vs technical vs incidental decision rules.
 
 ## Appendix
 
+### Handling Partially Superseded Work
+
+**When to use:** Work where significant progress was made before an architectural decision changed direction.
+Earlier phases remain valid (will be used by new approach), but later phases are obsolete.
+
+**Status field:** `**Status:** Superseded (partial)`
+
+**Required elements:**
+
+1. **Header metadata:**
+
+   ```markdown
+   **Completed:** YYYY-MM-DD
+   **Status:** Superseded (partial)
+   **Superseded By:** `tasks-{new-approach}.md` (YYYY-MM-DD)
+   ```
+
+2. **Supersession rationale:** Brief explanation of what triggered the change and what remains valid vs obsolete.
+
+3. **Decision point marker:** Insert before first superseded task:
+
+   ```markdown
+   ---
+
+   **⚠️ Supersession Point (YYYY-MM-DD):** Tasks X.Y onwards superseded by [reason].
+   See `tasks-{new-approach}.md` for continuation. Earlier phases (1-X.Z) remain valid -
+   [brief explanation of what's reused].
+
+   ---
+   ```
+
+4. **Strikethrough incomplete tasks:** Use `~~` to clearly indicate tasks weren't abandoned without thought:
+
+   ```markdown
+   - ~~[ ] **4.1 Task description**~~ *(superseded by infinite scroll)*
+   ```
+
+5. **Completion doc:** Include `**Status:** Superseded (partial)` and document what was completed vs superseded.
+
+**Key principle:** The strikethrough + decision point note creates clear audit trail showing intentional
+architectural pivot, not abandoned work.
+
+---
+
 ### Historical Note: Completion Metadata Evolution
 
 **Before ADR-013 (< 2025-11-10):** Incidental work had inline completion summary in task list (no separate doc).

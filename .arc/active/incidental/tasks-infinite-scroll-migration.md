@@ -410,12 +410,56 @@ A/B decision (Phase 4.5).
     - Linting: 0 violations
     - Both infinite (`/browse`) and sequential (`/browse/sequential`) routes functional
 
+- [x] **4.5.a Add results header/footer chrome (pre-4.6 work)**
+
+    **Context:** Before A/B testing, restored the results header/footer UI that existed in
+    `MovieCollectionGrid` but was missing from the new grids.
+
+    - [x] **Extended `useInfiniteMovies` to expose `totalResults`**
+        - Added `totalResults` to hook return type (from first page response)
+
+    - [x] **Created reusable header/footer components:**
+        - `ResultsHeaderBar` - Results count text + optional pagination controls slot
+        - `ResultsFooterBar` - Optional pagination controls slot with top border
+
+    - [x] **Created `useResultsText` hooks for mode-specific formatting:**
+        - `useInfiniteResultsText`: "X results" (simple total count)
+        - `useSequentialResultsText`: "Showing X-Y of Z results" (discrete page range)
+        - Both handle 10,000+ cap for large result sets
+
+    - [x] **Wired components into grids:**
+        - `InfiniteMovieGrid`: Header only (results count, no pagination controls)
+        - `SequentialMovieGrid`: Header + footer with `SequentialPaginationCtrl`
+
+    - [x] **Updated tests for new UI:**
+        - Added `totalResults` to all mock hook returns in `SequentialMovieGrid.test.tsx`
+        - Updated pagination button queries to use `getAllByLabelText` (header+footer = 2 controls)
+        - Replaced "Page indicator" tests with "Results text formatting" tests
+
+    **Deferred test refactoring (to Phase 7 cleanup):**
+    - Test fixtures/helpers could be consolidated (mock hook return object created repeatedly)
+    - Consider helper factory: `createMockInfiniteMoviesReturn({ pages, totalResults, ... })`
+    - Defer until after Phase 4.6 decision - no need to over-invest in both pagination variants
+    - If one variant is removed, its tests are deleted anyway
+
 ---
 
 ### **Phase 4.6:** A/B Evaluation - Sequential vs Infinite Scroll
 
 **Purpose:** Compare sequential pagination vs infinite scroll to decide final approach.
 Random-access pagination is retired due to buffer/data quality issues.
+
+**Post-decision UI refinements to consider:**
+
+- **If infinite scroll chosen:**
+    - `PageHeader` margin could be reduced further (mb=0) since no pagination controls needed
+    - Page title ("Browse", "Now Playing", etc.) could move INTO `ResultsHeaderBar` left side
+    (currently empty for infinite), consolidating header and results text into one row
+    - More space-efficient, cleaner visual hierarchy
+
+- **If sequential chosen:**
+    - Current layout works well (title separate, results header has controls both sides)
+    - Keep `PageHeader` mb=2 for appropriate spacing
 
 - [ ] **4.6.a Manual A/B testing**
     - Test infinite scroll: `/browse/popular` (default)
@@ -536,10 +580,14 @@ Random-access pagination is retired due to buffer/data quality issues.
         - Remove pagination types from shared types
         - Clean up imports across codebase
 
-    - [ ] **7.1.c Remove obsolete tests**
+    - [ ] **7.1.c Remove obsolete tests and refactor survivors**
         - Delete pagination-specific stability tests
         - Delete URL metadata persistence tests (replaced by new approach)
         - Update test counts in documentation
+        - **Evaluate test helper consolidation** (deferred from Task 4.5.a):
+            - If mock hook return objects are still repetitive, create helper factory
+            - Example: `createMockInfiniteMoviesReturn({ pages, totalResults, ... })`
+            - Only worth doing if tests for the chosen approach remain substantial
 
 - [ ] **7.2 Update project documentation**
 

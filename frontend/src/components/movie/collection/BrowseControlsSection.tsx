@@ -1,7 +1,9 @@
+import { useState, useCallback } from "react";
 import { Box } from "@chakra-ui/react";
 import AdvancedFiltersPanel from "@/components/movie/browse/AdvancedFiltersPanel";
 import QuickBrowseBar from "@/components/movie/browse/QuickBrowseBar";
 import { CollapsibleSubNav } from "@/components/layout/CollapsibleSubNav";
+import { BackToTopButton } from "@/components/navigation/BackToTopButton";
 import { useScrollState } from "@/hooks/useScrollState";
 import type { BrowseParams } from "@/types/browseTypes";
 
@@ -38,9 +40,23 @@ const BrowseControlsSection = ({
     hysteresis: SCROLL_HYSTERESIS,
   });
 
-  // Collapse when: scrolled past threshold AND scrolling down
-  // Expand when: scrolling up OR at top of page (direction === 'idle')
-  const isSubNavCollapsed = isPastThreshold && direction === "down";
+  // Force expand state - temporarily overrides scroll-based collapse
+  // Used by BackToTopButton to expand sub-nav when scrolling to top
+  const [forceExpand, setForceExpand] = useState(false);
+
+  // Collapse when: scrolled past threshold AND scrolling down AND not force-expanded
+  // Expand when: scrolling up OR at top of page (direction === 'idle') OR force-expanded
+  const isSubNavCollapsed =
+    isPastThreshold && direction === "down" && !forceExpand;
+
+  // Handle scroll-to-top action: expand sub-nav temporarily
+  // The force expand will be naturally cleared when user scrolls again
+  const handleScrollToTop = useCallback(() => {
+    setForceExpand(true);
+    // Clear force expand after a short delay (scroll animation completes ~300ms)
+    // The sub-nav will stay expanded due to direction='idle' at top of page
+    setTimeout(() => setForceExpand(false), 500);
+  }, []);
 
   if (!showControls) return null;
 
@@ -56,6 +72,12 @@ const BrowseControlsSection = ({
           pageSource={source}
         />
       </CollapsibleSubNav>
+
+      {/* Back to Top button - visible on scroll, expands sub-nav on click */}
+      <BackToTopButton
+        threshold={COLLAPSE_THRESHOLD}
+        onScrollToTop={handleScrollToTop}
+      />
 
       {/* Note: Top padding for sub-nav space is handled by MovieCollectionLayout */}
 

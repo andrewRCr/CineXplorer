@@ -623,6 +623,131 @@ def test_different_filter_combinations_use_different_sessions(
 
 
 # ============================================================================
+# Infinite Scroll Session Tests
+# ============================================================================
+# These tests verify session behavior for infinite scroll pattern where
+# page=1 is sent on every request with tmdb_page_start for continuation.
+# ============================================================================
+
+
+@patch("core.services.tmdb_api_client.TMDBApiClient.get")
+def test_page_1_with_tmdb_page_start_preserves_session(
+    mock_tmdb_get: Mock,
+    api_client: Client,
+) -> None:
+    """Test that page=1 with tmdb_page_start does NOT clear session.
+
+    Scenario: Infinite scroll sends page=1 on every request, using tmdb_page_start
+    as the cursor for continuation. Session should only clear on true fresh start
+    (page=1 WITHOUT tmdb_page_start), not on continuation requests.
+
+    This is critical for infinite scroll cross-page deduplication.
+    """
+    # Page 1: IDs 1-20 (initial load)
+    page_1_movies = [
+        create_tmdb_movie(i, f"Movie {i}", "2023-01-01", 8.0) for i in range(1, 21)
+    ]
+
+    # "Page 2" via infinite scroll: page=1, tmdb_page_start=2
+    # Contains duplicate ID 5 which should be excluded if session preserved
+    page_2_movies = [
+        create_tmdb_movie(5, "Movie 5", "2023-01-01", 8.0),  # Duplicate from page 1!
+    ] + [
+        create_tmdb_movie(i, f"Movie {i}", "2023-01-01", 8.0) for i in range(21, 40)
+    ]
+
+    mock_tmdb_get.side_effect = [
+        create_mock_paginated_response(page_1_movies, page=1, total_pages=10),
+        create_mock_paginated_response(page_2_movies, page=2, total_pages=10),
+        # Buffer pages in case dedup filtering triggers buffer
+        *create_buffer_pages(start_id=100, start_page=3, num_pages=2),
+    ]
+
+    # Initial load: page=1, no tmdb_page_start (fresh start, clears session)
+    initial_res = api_client.get(BROWSE_URL, {"page": 1})
+    assert initial_res.status_code == HTTPStatus.OK
+    initial_ids = {m["tmdb_id"] for m in initial_res.json()["results"]}
+    assert 5 in initial_ids, "Initial page should contain ID 5"
+
+    # Load more: page=1 WITH tmdb_page_start (continuation, should NOT clear session)
+    next_tmdb_page = initial_res.json()["next_tmdb_page_start"]
+    continuation_res = api_client.get(
+        BROWSE_URL,
+        {"page": 1, "tmdb_page_start": next_tmdb_page},
+    )
+    assert continuation_res.status_code == HTTPStatus.OK
+    continuation_ids = {m["tmdb_id"] for m in continuation_res.json()["results"]}
+
+    # ID 5 should be EXCLUDED (session was preserved, not cleared)
+    assert 5 not in continuation_ids, (
+        "Continuation request (page=1 + tmdb_page_start) should preserve session "
+        "and exclude duplicates. ID 5 was returned on initial load and should "
+        "NOT appear in continuation. If it does, session was incorrectly cleared."
+    )
+
+    # No overlap between initial and continuation
+    overlap = initial_ids & continuation_ids
+    assert len(overlap) == 0, f"Cross-page duplicates found in infinite scroll: {overlap}"
+
+
+@patch("core.services.tmdb_api_client.TMDBApiClient.get")
+def test_page_1_without_tmdb_page_start_clears_session(
+    mock_tmdb_get: Mock,
+    api_client: Client,
+) -> None:
+    """Test that page=1 without tmdb_page_start DOES clear session.
+
+    Scenario: After infinite scrolling through several pages, user refreshes
+    or navigates away and back. New page=1 request (no tmdb_page_start) should
+    clear session for fresh start.
+
+    Contrast with test_page_1_with_tmdb_page_start_preserves_session.
+    """
+    # Page 1: IDs 1-20
+    page_1_movies = [
+        create_tmdb_movie(i, f"Movie {i}", "2023-01-01", 8.0) for i in range(1, 21)
+    ]
+
+    # Continuation: IDs 21-40
+    continuation_movies = [
+        create_tmdb_movie(i, f"Movie {i}", "2023-01-01", 8.0) for i in range(21, 41)
+    ]
+
+    mock_tmdb_get.side_effect = [
+        # First page 1 (initial)
+        create_mock_paginated_response(page_1_movies, page=1, total_pages=10),
+        # Continuation (page=1 + tmdb_page_start)
+        create_mock_paginated_response(continuation_movies, page=2, total_pages=10),
+        # Second page 1 (fresh start after "refresh")
+        create_mock_paginated_response(page_1_movies, page=1, total_pages=10),
+    ]
+
+    # Initial page 1
+    initial_res = api_client.get(BROWSE_URL, {"page": 1})
+    assert initial_res.status_code == HTTPStatus.OK
+    initial_data = initial_res.json()
+
+    # Continuation
+    continuation_res = api_client.get(
+        BROWSE_URL,
+        {"page": 1, "tmdb_page_start": initial_data["next_tmdb_page_start"]},
+    )
+    assert continuation_res.status_code == HTTPStatus.OK
+
+    # Fresh page 1 (simulating page refresh - NO tmdb_page_start)
+    fresh_res = api_client.get(BROWSE_URL, {"page": 1})
+    assert fresh_res.status_code == HTTPStatus.OK
+    fresh_ids = {m["tmdb_id"] for m in fresh_res.json()["results"]}
+
+    # Fresh page 1 should contain IDs 1-20 (session was cleared)
+    # If session wasn't cleared, these IDs would be excluded
+    assert fresh_ids == set(range(1, 21)), (
+        f"Fresh page 1 (no tmdb_page_start) should clear session and return IDs 1-20. "
+        f"Got: {fresh_ids}. Session may not have been properly cleared."
+    )
+
+
+# ============================================================================
 # Context ID Tests (Multi-Tab Isolation)
 # ============================================================================
 

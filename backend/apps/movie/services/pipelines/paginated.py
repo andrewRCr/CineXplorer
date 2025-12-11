@@ -186,10 +186,6 @@ def fetch_with_filters_and_buffer(
         Template method pattern: invariant workflow with variant behavior
         injection via fetch_page_func and pre_filter_func.
     """
-    # Clear session on page 1 for fresh start (handles backward navigation)
-    if page == 1 and dedup_tracker:
-        dedup_tracker.clear_session(params)
-
     # Extract filter values from params
     # BrowseServiceParams has tmdb_page_start, min_vote_count, language; Search doesn't
     year_min = params.year_min
@@ -197,6 +193,13 @@ def fetch_with_filters_and_buffer(
     rating_min = params.rating_min
     rating_max = params.rating_max
     tmdb_page_start = getattr(params, 'tmdb_page_start', None)
+
+    # Clear session on page 1 WITHOUT tmdb_page_start for fresh start.
+    # This supports infinite scroll which sends page=1 on every request but uses
+    # tmdb_page_start for continuation. Only clear when truly starting fresh
+    # (no cursor provided), not when continuing from a previous position.
+    if page == 1 and tmdb_page_start is None and dedup_tracker:
+        dedup_tracker.clear_session(params)
     min_vote_count = getattr(params, 'min_vote_count', None)
     language_filter = getattr(params, 'language', None)
 

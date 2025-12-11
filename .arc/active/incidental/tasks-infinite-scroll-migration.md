@@ -316,97 +316,140 @@ Reference: Pitchfork.com secondary navigation bar behavior.
 
 ### **Phase 4:** Integration with Browse/Discover Routes
 
-**Purpose:** Wire infinite scroll into existing browse pages, replacing pagination.
+**Purpose:** Wire infinite scroll into browse pages while preserving ability to A/B test
+sequential pagination. Old random-access pagination infrastructure will be removed after
+A/B decision (Phase 4.5).
 
-- [ ] **4.1 Update MovieCollectionLayout for infinite scroll**
+**Design notes:** See `notes-infinite-scroll-migration.md` for data quality analysis.
 
-    - [ ] **4.1.a Modify outlet context**
-        - Remove `initialCurrentPage`, `initialTmdbPageStart`, `onPageChange`
+- [x] **4.1 Fix backend dedup session logic for infinite scroll**
+
+    **Problem:** Current logic clears dedup session when `page == 1`, but infinite scroll
+    always sends `page=1` (only `tmdb_page_start` varies). This breaks cross-page deduplication.
+
+    - [x] **4.1.a Update dedup clear condition**
+        - Changed `paginated.py` line ~201: `if page == 1 and tmdb_page_start is None and dedup_tracker:`
+        - Moved `tmdb_page_start` extraction before the clear check
+        - Added explanatory comment about infinite scroll support
+
+    - [x] **4.1.b Add/update tests for new behavior**
+        - Added `test_page_1_with_tmdb_page_start_preserves_session` - verifies continuation
+          requests (page=1 + tmdb_page_start) preserve dedup session
+        - Added `test_page_1_without_tmdb_page_start_clears_session` - verifies fresh start
+          (page=1 without cursor) clears session
+        - All existing pagination tests continue to pass
+
+    - [x] **4.1.c Run backend quality gates**
+        - Backend tests: 613 passing
+        - Backend linting: 0 violations
+        - Python type checking: 0 errors
+
+- [ ] **4.2 Wire InfiniteMovieGrid to browse routes**
+
+    **Note:** Keep existing `MovieCollectionGrid` intact for now - needed for sequential
+    A/B comparison. Wire `InfiniteMovieGrid` as the default, but don't delete old code yet.
+
+    - [ ] **4.2.a Update MovieCollectionLayout outlet context**
         - Add query key dependencies for TanStack Query
-        - Keep `fetcher`, `source`, `enhancedFetcher`, `browseParams`
+        - Keep existing props for backward compat with `MovieCollectionGrid`
+        - Both grid components should be usable via outlet
 
-    - [ ] **4.1.b Update child component expectations**
-        - `MovieCollectionGrid` → `InfiniteMovieGrid` (or rename in place)
-        - Remove pagination control rendering
+    - [ ] **4.2.b Switch default grid to InfiniteMovieGrid**
+        - Update browse route to render `InfiniteMovieGrid` by default
+        - Verify: `/browse/popular`, `/browse/top-rated`, `/browse/now-playing`, `/browse/upcoming`
+        - Verify: Filters work correctly with infinite scroll
 
-- [ ] **4.2 Replace MovieCollectionGrid with infinite scroll**
+    - [ ] **4.2.c Incremental quality gates**
+        - Frontend type checking: 0 errors
+        - Frontend linting: 0 violations
+        - Manual verification of browse routes
 
-    - [ ] **4.2.a Refactor MovieCollectionGrid**
-        - Replace `usePaginatedMovies` with `useInfiniteMovies`
-        - Remove pagination state management (refs, page tracking)
-        - Integrate Intersection Observer for scroll loading
-        - Keep existing movie card rendering logic
+- [ ] **4.3 Create SequentialMovieGrid for A/B comparison**
 
-    - [ ] **4.2.b Update or remove pagination-specific code**
-        - Remove `MoviePaginationCtrl` usage
-        - Remove `usePageChangeHandler` usage
-        - Simplify component significantly
+    **Approach:** Sequential pagination uses `useInfiniteMovies` but displays discrete pages
+    (not accumulated). Access `pages[currentIndex]` directly from TanStack Query.
 
-    - [ ] **4.2.c Verify all browse routes work**
-        - Test: `/browse/popular`
-        - Test: `/browse/top-rated`
-        - Test: `/browse/now-playing`
-        - Test: `/browse/upcoming`
-        - Test: Browse with filters applied
+    - [ ] **4.3.a Create SequentialMovieGrid component**
+        - Uses `useInfiniteMovies` for data fetching (same as infinite)
+        - Tracks `currentPageIndex` state
+        - Displays `pages[currentPageIndex].results` (discrete, not accumulated)
+        - Integrates `SequentialPaginationCtrl` for prev/next navigation
+        - "Next" calls `fetchNextPage()` if needed, then increments index
+        - "Prev" decrements index (data already cached)
 
-- [ ] **4.3 Update URL handling**
+    - [ ] **4.3.b Write tests for SequentialMovieGrid**
+        - Test: Initial load shows first page
+        - Test: Next button fetches and shows next page
+        - Test: Prev button shows previous page (from cache)
+        - Test: Handles variable page sizes gracefully
+        - Test: Loading states during fetch
 
-    - [ ] **4.3.a Simplify URL parameters**
-        - Remove `page` and `tmdb_page_start` from URL
+    - [ ] **4.3.c Add temporary sequential route for A/B testing**
+        - Route: `/browse/sequential` (or similar)
+        - Wires `SequentialMovieGrid` with same fetcher/filters as infinite
+        - Minimal setup - just enough for comparison
+
+- [ ] **4.4 Update URL handling (applies to both approaches)**
+
+    - [ ] **4.4.a Remove page params from URLs**
+        - Remove `page` and `tmdb_page_start` from URL state
         - Keep filter params (`genres`, `minRating`, `sortBy`, etc.)
-        - Update `paginationUrlSync.ts` or remove if no longer needed
+        - Update or remove `paginationUrlSync.ts` as needed
 
-    - [ ] **4.3.b Update MovieCard link generation**
+    - [ ] **4.4.b Update MovieCard link generation**
         - Remove page number from detail links
         - Filters still preserved in URL for back navigation
 
-    - [ ] **4.3.c Update MovieDetail back navigation**
+    - [ ] **4.4.c Update MovieDetail back navigation**
         - Back button returns to browse with filters (no page)
         - Scroll position restoration handled separately (Phase 5)
 
-- [ ] **4.4 Run quality gates**
-    - Frontend tests passing (many pagination tests now obsolete - update/remove)
+- [ ] **4.5 Run quality gates**
+    - Frontend tests passing (update pagination-specific tests)
     - Type checking: 0 errors
     - Linting: 0 violations
+    - Both infinite and sequential routes functional
 
 ---
 
-### **Phase 4.5:** A/B Evaluation - Sequential vs Infinite Scroll
+### **Phase 4.6:** A/B Evaluation - Sequential vs Infinite Scroll
 
-**Purpose:** Compare sequential pagination (Task 3.5) vs infinite scroll to decide
-final approach. Random-access pagination is retired due to buffer/data quality issues.
+**Purpose:** Compare sequential pagination vs infinite scroll to decide final approach.
+Random-access pagination is retired due to buffer/data quality issues.
 
-- [ ] **4.5.a Wire up sequential pagination for comparison**
-    - Add `/browse/popular-sequential` (or similar temp route) for testing
-    - Wire `SequentialPaginationCtrl` with movie fetcher
-    - Keep minimal - just enough for comparison
-    - Verify: infinite scroll on main routes (Phase 4), sequential on test route
-
-- [ ] **4.5.b Manual A/B testing**
+- [ ] **4.6.a Manual A/B testing**
+    - Test infinite scroll: `/browse/popular` (default)
+    - Test sequential: `/browse/sequential` (temp route)
     - Evaluate: cognitive load, discoverability, performance feel
     - Test with filters applied
     - Test mobile viewport behavior
     - Test back navigation experience
     - Record pros/cons of each approach
 
-- [ ] **4.5.c Document findings and make decision**
+- [ ] **4.6.b Document findings and make decision**
     - Make final decision: sequential OR infinite
-    - Document rationale in this task list
+    - Document rationale in this task list (completion notes)
+    - **Create ADR** for pagination approach decision:
+        - Context: Buffer mechanism, data quality pipeline, random-access retirement
+        - Alternatives: Random-access (retired), sequential, infinite scroll
+        - Decision: Chosen approach with rationale from A/B testing
+        - Consequences: Impact on scroll restoration, search, UX patterns
+        - File: `adr-NNN-use-[chosen]-pagination-for-browse.md`
 
-- [ ] **4.5.d Update task list based on decision**
+- [ ] **4.6.c Update task list based on decision**
 
     **If infinite scroll chosen:**
-    - Remove temporary sequential route
-    - Continue with Phases 5-7 as documented
-    - `SequentialPaginationCtrl` deleted in Phase 7 cleanup
+    - Phase 5+: Continue as documented
+    - Phase 7 cleanup: Remove `SequentialMovieGrid`, `SequentialPaginationCtrl`,
+      temp route, and old `MovieCollectionGrid`
 
     **If sequential pagination chosen:**
     - Update Phases 5-7 to use sequential instead of infinite
     - Key changes needed:
         - Phase 5: Scroll restoration less critical (page-based nav)
         - Phase 6: Search uses sequential pagination
-        - Phase 7: Remove `InfiniteMovieGrid` instead of pagination ctrl
-    - Wire sequential to all browse routes
+        - Phase 7: Remove `InfiniteMovieGrid` instead of sequential components
+    - Wire sequential to all browse routes (replace infinite as default)
 
 ---
 

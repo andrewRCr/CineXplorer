@@ -2,8 +2,10 @@ import { useEffect, useRef, useCallback } from "react";
 import { Text, Button, Box, Skeleton, Spinner } from "@chakra-ui/react";
 import MovieCard from "../MovieCard";
 import MovieCardContainer from "../MovieCardContainer";
+import { ResultsHeaderBar } from "./ResultsHeaderBar";
 import { useInfiniteMovies } from "@/hooks/useInfiniteMovies";
 import { useMovieCollectionContext } from "@/hooks/useMovieCollectionContext";
+import { useInfiniteResultsText } from "@/hooks/useResultsText";
 import { type MovieListItem } from "@/types/movie";
 
 // Placeholder movie for skeleton loading state.
@@ -44,6 +46,7 @@ const InfiniteMovieGrid = () => {
 
   const {
     movies,
+    totalResults,
     fetchNextPage,
     hasNextPage,
     isLoading,
@@ -109,8 +112,19 @@ const InfiniteMovieGrid = () => {
   // Empty state check
   const isEmpty = !isLoading && movies.length === 0;
 
+  // Generate results text for header
+  const resultText = useInfiniteResultsText(totalResults, isLoading);
+  const showHeader = movies.length > 0 || isLoading;
+
   return (
     <Box>
+      {/* Results Header */}
+      <ResultsHeaderBar
+        resultText={resultText}
+        isLoading={isLoading}
+        visible={showHeader}
+      />
+
       {/* Error State */}
       {isError && (
         <Box textAlign="center" mb={4} p={4} bg="layer-01" borderRadius="md">

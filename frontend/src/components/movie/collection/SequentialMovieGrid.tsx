@@ -1,10 +1,13 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { Text, Button, Box, Skeleton } from "@chakra-ui/react";
 import MovieCard from "../MovieCard";
 import MovieCardContainer from "../MovieCardContainer";
+import { ResultsHeaderBar } from "./ResultsHeaderBar";
+import { ResultsFooterBar } from "./ResultsFooterBar";
 import { useInfiniteMovies } from "@/hooks/useInfiniteMovies";
 import { useMovieCollectionContext } from "@/hooks/useMovieCollectionContext";
 import { SequentialPaginationCtrl } from "./SequentialPaginationCtrl";
+import { useSequentialResultsText } from "@/hooks/useResultsText";
 import { type MovieListItem } from "@/types/movie";
 
 // Placeholder movie for skeleton loading state.
@@ -44,6 +47,7 @@ const SequentialMovieGrid = () => {
   const {
     pages,
     pageCount,
+    totalResults,
     fetchNextPage,
     hasNextPage,
     isLoading,
@@ -98,8 +102,43 @@ const SequentialMovieGrid = () => {
   // Empty state check
   const isEmpty = !isLoading && currentPageMovies.length === 0 && pageCount === 0;
 
+  // Page size is typically 20 (from API)
+  const pageSize = 20;
+
+  // Generate results text for header
+  const resultText = useSequentialResultsText(
+    currentPageIndex,
+    pageSize,
+    currentPageMovies.length,
+    totalResults,
+    isLoading
+  );
+  const showHeaderFooter = (currentPageMovies.length > 0 || isLoading) && !isEmpty;
+
+  // Memoized pagination controls (same for header and footer)
+  const paginationControls = useMemo(
+    () => (
+      <SequentialPaginationCtrl
+        hasPrev={hasPrev}
+        hasNext={hasNext}
+        onPrev={handlePrev}
+        onNext={handleNext}
+        isLoading={isFetchingNextPage}
+      />
+    ),
+    [hasPrev, hasNext, handlePrev, handleNext, isFetchingNextPage]
+  );
+
   return (
     <Box>
+      {/* Results Header with Pagination */}
+      <ResultsHeaderBar
+        resultText={resultText}
+        paginationControls={paginationControls}
+        isLoading={isLoading}
+        visible={showHeaderFooter}
+      />
+
       {/* Error State */}
       {isError && (
         <Box textAlign="center" mb={4} p={4} bg="layer-01" borderRadius="md">
@@ -157,27 +196,11 @@ const SequentialMovieGrid = () => {
           ))}
       </Box>
 
-      {/* Pagination Controls */}
-      {!isEmpty && !isError && (
-        <Box display="flex" justifyContent="center" mt={4}>
-          <SequentialPaginationCtrl
-            hasPrev={hasPrev}
-            hasNext={hasNext}
-            onPrev={handlePrev}
-            onNext={handleNext}
-            isLoading={isFetchingNextPage}
-          />
-        </Box>
-      )}
-
-      {/* Page indicator (helpful for A/B testing) */}
-      {!isEmpty && !isError && pageCount > 0 && (
-        <Box textAlign="center" mt={2}>
-          <Text fontSize="sm" color="fg-muted">
-            Page {currentPageIndex + 1} of {hasNextPage ? `${pageCount}+` : pageCount}
-          </Text>
-        </Box>
-      )}
+      {/* Results Footer with Pagination */}
+      <ResultsFooterBar
+        paginationControls={paginationControls}
+        visible={showHeaderFooter && !isError}
+      />
     </Box>
   );
 };

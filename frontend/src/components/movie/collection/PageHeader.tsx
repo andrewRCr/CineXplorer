@@ -48,18 +48,18 @@ const PageHeader = forwardRef(
     useEffect(() => {
       // Use microtasks to avoid React warning while keeping flushSync functionality
       queueMicrotask(() => {
-        // Phase 1: Force reset with no transition
+        // Step 1: Force reset with no transition
         flushSync(() => {
           setAnimationPhase("reset");
         });
 
-        // Phase 2: Enable transition but stay at 0%
+        // Step 2: Enable transition but stay at 0%
         setTimeout(() => {
           flushSync(() => {
             setAnimationPhase("ready");
           });
 
-          // Phase 3: Animate to 100%
+          // Step 3: Animate to 100%
           setTimeout(() => {
             setAnimationPhase("animating");
           }, 50);
@@ -86,7 +86,7 @@ const PageHeader = forwardRef(
         ref={ref}
         as={Component}
         flexShrink={0}
-        mb={6}
+        mb={2}
         minHeight={styles.minHeight}
         display="flex"
         alignItems="flex-end"

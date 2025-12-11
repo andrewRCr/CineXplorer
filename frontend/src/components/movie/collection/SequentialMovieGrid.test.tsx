@@ -110,6 +110,7 @@ describe("SequentialMovieGrid", () => {
       movies: page1Movies,
       pages: [createMockPage(1, page1Movies)],
       pageCount: 1,
+      totalResults: 200,
       fetchNextPage: mockFetchNextPage,
       hasNextPage: true,
       isLoading: false,
@@ -130,10 +131,11 @@ describe("SequentialMovieGrid", () => {
       expect(screen.getByText("First Set Movie B")).toBeInTheDocument();
     });
 
-    it("shows page indicator starting at page 1", () => {
+    it("shows results text with correct range", () => {
       renderWithProvider(<SequentialMovieGrid />);
 
-      expect(screen.getByText(/page 1/i)).toBeInTheDocument();
+      // With 2 movies on page 1 of 200 total results
+      expect(screen.getByText(/showing 1-2 of 200 results/i)).toBeInTheDocument();
     });
 
     it("shows loading skeleton while fetching initial data", () => {
@@ -141,6 +143,7 @@ describe("SequentialMovieGrid", () => {
         movies: [],
         pages: [],
         pageCount: 0,
+        totalResults: undefined,
         fetchNextPage: mockFetchNextPage,
         hasNextPage: true,
         isLoading: true,
@@ -165,6 +168,7 @@ describe("SequentialMovieGrid", () => {
         movies: page1Movies,
         pages: [createMockPage(1, page1Movies)],
         pageCount: 1,
+        totalResults: 200,
         fetchNextPage: mockFetchNextPage.mockResolvedValue(undefined),
         hasNextPage: true,
         isLoading: false,
@@ -177,8 +181,9 @@ describe("SequentialMovieGrid", () => {
 
       renderWithProvider(<SequentialMovieGrid />);
 
-      const nextButton = screen.getByLabelText(/next page/i);
-      fireEvent.click(nextButton);
+      // Use getAllByLabelText since pagination appears in both header and footer
+      const nextButtons = screen.getAllByLabelText(/next page/i);
+      fireEvent.click(nextButtons[0]);
 
       await waitFor(() => {
         expect(mockFetchNextPage).toHaveBeenCalledTimes(1);
@@ -194,6 +199,7 @@ describe("SequentialMovieGrid", () => {
           createMockPage(2, page2Movies),
         ],
         pageCount: 2,
+        totalResults: 200,
         fetchNextPage: mockFetchNextPage,
         hasNextPage: true,
         isLoading: false,
@@ -209,9 +215,9 @@ describe("SequentialMovieGrid", () => {
       // Initially shows page 1
       expect(screen.getByText("First Set Movie A")).toBeInTheDocument();
 
-      // Click next
-      const nextButton = screen.getByLabelText(/next page/i);
-      fireEvent.click(nextButton);
+      // Click next (use getAllByLabelText since pagination appears in both header and footer)
+      const nextButtons = screen.getAllByLabelText(/next page/i);
+      fireEvent.click(nextButtons[0]);
 
       // Should show page 2 movies (not page 1)
       await waitFor(() => {
@@ -229,6 +235,7 @@ describe("SequentialMovieGrid", () => {
           createMockPage(2, page2Movies),
         ],
         pageCount: 2,
+        totalResults: 200,
         fetchNextPage: mockFetchNextPage,
         hasNextPage: true,
         isLoading: false,
@@ -241,9 +248,9 @@ describe("SequentialMovieGrid", () => {
 
       renderWithProvider(<SequentialMovieGrid />);
 
-      // Click next (page 2 is cached)
-      const nextButton = screen.getByLabelText(/next page/i);
-      fireEvent.click(nextButton);
+      // Click next (page 2 is cached) - use getAllByLabelText since pagination appears in both header and footer
+      const nextButtons = screen.getAllByLabelText(/next page/i);
+      fireEvent.click(nextButtons[0]);
 
       // Should NOT call fetchNextPage since page 2 is cached
       expect(mockFetchNextPage).not.toHaveBeenCalled();
@@ -254,8 +261,9 @@ describe("SequentialMovieGrid", () => {
     it("prev button is disabled on first page", () => {
       renderWithProvider(<SequentialMovieGrid />);
 
-      const prevButton = screen.getByLabelText(/previous page/i);
-      expect(prevButton).toBeDisabled();
+      // Use getAllByLabelText since pagination appears in both header and footer
+      const prevButtons = screen.getAllByLabelText(/previous page/i);
+      expect(prevButtons[0]).toBeDisabled();
     });
 
     it("shows previous page content when clicking prev", async () => {
@@ -267,6 +275,7 @@ describe("SequentialMovieGrid", () => {
           createMockPage(2, page2Movies),
         ],
         pageCount: 2,
+        totalResults: 200,
         fetchNextPage: mockFetchNextPage,
         hasNextPage: false,
         isLoading: false,
@@ -279,17 +288,17 @@ describe("SequentialMovieGrid", () => {
 
       renderWithProvider(<SequentialMovieGrid />);
 
-      // Navigate to page 2
-      const nextButton = screen.getByLabelText(/next page/i);
-      fireEvent.click(nextButton);
+      // Navigate to page 2 (use getAllByLabelText since pagination appears in both header and footer)
+      const nextButtons = screen.getAllByLabelText(/next page/i);
+      fireEvent.click(nextButtons[0]);
 
       await waitFor(() => {
         expect(screen.getByText("Second Set Movie A")).toBeInTheDocument();
       });
 
       // Navigate back to page 1
-      const prevButton = screen.getByLabelText(/previous page/i);
-      fireEvent.click(prevButton);
+      const prevButtons = screen.getAllByLabelText(/previous page/i);
+      fireEvent.click(prevButtons[0]);
 
       await waitFor(() => {
         expect(screen.getByText("First Set Movie A")).toBeInTheDocument();
@@ -316,6 +325,7 @@ describe("SequentialMovieGrid", () => {
         movies: variableSizeMovies,
         pages: [createMockPage(1, variableSizeMovies)],
         pageCount: 1,
+        totalResults: 200,
         fetchNextPage: mockFetchNextPage,
         hasNextPage: true,
         isLoading: false,
@@ -339,6 +349,7 @@ describe("SequentialMovieGrid", () => {
         movies: page1Movies,
         pages: [createMockPage(1, page1Movies)],
         pageCount: 1,
+        totalResults: 200,
         fetchNextPage: mockFetchNextPage,
         hasNextPage: true,
         isLoading: false,
@@ -351,8 +362,9 @@ describe("SequentialMovieGrid", () => {
 
       renderWithProvider(<SequentialMovieGrid />);
 
-      const nextButton = screen.getByLabelText(/next page/i);
-      expect(nextButton).toBeDisabled();
+      // Use getAllByLabelText since pagination appears in both header and footer
+      const nextButtons = screen.getAllByLabelText(/next page/i);
+      expect(nextButtons[0]).toBeDisabled();
     });
   });
 
@@ -362,6 +374,7 @@ describe("SequentialMovieGrid", () => {
         movies: [],
         pages: [],
         pageCount: 0,
+        totalResults: 0,
         fetchNextPage: mockFetchNextPage,
         hasNextPage: false,
         isLoading: false,
@@ -382,6 +395,7 @@ describe("SequentialMovieGrid", () => {
         movies: [],
         pages: [],
         pageCount: 0,
+        totalResults: undefined,
         fetchNextPage: mockFetchNextPage,
         hasNextPage: false,
         isLoading: false,
@@ -403,12 +417,13 @@ describe("SequentialMovieGrid", () => {
     });
   });
 
-  describe("Page indicator", () => {
-    it("shows + indicator when more pages are available", () => {
+  describe("Results text formatting", () => {
+    it("shows correct range for first page", () => {
       (useInfiniteMovies as Mock).mockReturnValue({
         movies: page1Movies,
         pages: [createMockPage(1, page1Movies)],
         pageCount: 1,
+        totalResults: 200,
         fetchNextPage: mockFetchNextPage,
         hasNextPage: true,
         isLoading: false,
@@ -421,20 +436,18 @@ describe("SequentialMovieGrid", () => {
 
       renderWithProvider(<SequentialMovieGrid />);
 
-      // Should show "Page 1 of 1+" when more pages available
-      expect(screen.getByText(/page 1 of 1\+/i)).toBeInTheDocument();
+      // Should show "Showing 1-2 of 200 results"
+      expect(screen.getByText(/showing 1-2 of 200 results/i)).toBeInTheDocument();
     });
 
-    it("shows final page count when no more pages", () => {
+    it("caps large result sets at 10,000+", () => {
       (useInfiniteMovies as Mock).mockReturnValue({
-        movies: [...page1Movies, ...page2Movies],
-        pages: [
-          createMockPage(1, page1Movies),
-          createMockPage(2, page2Movies, false),
-        ],
-        pageCount: 2,
+        movies: page1Movies,
+        pages: [createMockPage(1, page1Movies)],
+        pageCount: 1,
+        totalResults: 15000,
         fetchNextPage: mockFetchNextPage,
-        hasNextPage: false,
+        hasNextPage: true,
         isLoading: false,
         isFetching: false,
         isFetchingNextPage: false,
@@ -445,8 +458,8 @@ describe("SequentialMovieGrid", () => {
 
       renderWithProvider(<SequentialMovieGrid />);
 
-      // Should show "Page 1 of 2" (no + since hasNextPage is false)
-      expect(screen.getByText(/page 1 of 2$/i)).toBeInTheDocument();
+      // Should show "Showing 1-2 of 10,000+ results"
+      expect(screen.getByText(/showing 1-2 of 10,000\+ results/i)).toBeInTheDocument();
     });
   });
 });

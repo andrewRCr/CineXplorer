@@ -40,6 +40,9 @@ export interface UseInfiniteMoviesResult {
   /** Total number of fetched pages */
   pageCount: number;
 
+  /** Total results from API (from first page response) */
+  totalResults: number | undefined;
+
   /** Fetch the next page of results */
   fetchNextPage: () => void;
 
@@ -109,10 +112,14 @@ export function useInfiniteMovies({
     return query.data?.pages ?? [];
   }, [query.data?.pages]);
 
+  // Total results from first page (consistent across all pages)
+  const totalResults = pages[0]?.total_results;
+
   return {
     movies,
     pages,
     pageCount: pages.length,
+    totalResults,
     fetchNextPage: query.fetchNextPage,
     hasNextPage: query.hasNextPage ?? false,
     isLoading: query.isLoading,

@@ -200,20 +200,27 @@ export function FeedbackStatusSection() {
                 </HStack>
               </VStack>
 
-              {/* Tooltip with arrow */}
+              {/* Arrow toggle demo */}
               <VStack gap={2} align="center">
-                <Text fontSize="sm" fontWeight="medium">Tooltip with Arrow:</Text>
-                <Tooltip showArrow content="Tooltip with arrow indicator">
-                  <Button size="sm" variant="outline" borderColor="button-outline" color="on-button-outline">
-                    Hover for arrow
-                  </Button>
-                </Tooltip>
+                <Text fontSize="sm" fontWeight="medium">Arrow Toggle (default: shown):</Text>
+                <HStack gap={4}>
+                  <Tooltip content="Arrow shown (default)">
+                    <Button size="sm" variant="outline" borderColor="button-outline" color="on-button-outline">
+                      With arrow
+                    </Button>
+                  </Tooltip>
+                  <Tooltip showArrow={false} content="Arrow hidden">
+                    <Button size="sm" variant="outline" borderColor="button-outline" color="on-button-outline">
+                      No arrow
+                    </Button>
+                  </Tooltip>
+                </HStack>
               </VStack>
 
               <Text fontSize="xs" color="foreground/60" maxW="700px" textAlign="center" lineHeight="1.5">
-                Tooltips use <Code fontSize="xs">popover</Code> / <Code fontSize="xs">on-popover</Code> tokens per ADR-011.
-                Popover is a contextual surface token (typically maps to layer-02 or layer-03 depending on z-index context).
-                Positioning supports top, bottom, left, right placements.
+                Tooltips use <Code fontSize="xs">popover</Code> / <Code fontSize="xs">on-popover</Code> tokens.
+                Arrow shown by default (set <Code fontSize="xs">showArrow=&#123;false&#125;</Code> to hide).
+                Styling via tooltip recipe in theme.
               </Text>
             </VStack>
           </Box>

@@ -186,50 +186,119 @@ Initial implementation reviewed and rewritten to address issues:
 
 ---
 
-### **Phase 3:** Sticky QuickBrowseBar and Back-to-Top
+### **Phase 3:** Collapsible SubNav and Back-to-Top
 
-**Purpose:** Enhance UX with always-visible controls and quick navigation.
+**Purpose:** Enhance UX with collapsible browse controls (Pitchfork-style) and quick navigation.
 
-- [ ] **3.1 Make QuickBrowseBar sticky**
+**Design Decision (2025-12-11):**
 
-    - [ ] **3.1.a Analyze current QuickBrowseBar positioning**
-        - Review current CSS/Chakra styling
-        - Identify parent container constraints
-        - Determine appropriate z-index
+The QuickBrowseBar will become a collapsible "sub-nav" bar that:
 
-    - [ ] **3.1.b Implement sticky positioning**
-        - Add `position: sticky`, `top: 0` (or appropriate offset for header)
-        - Ensure proper z-index layering (above grid, below modals)
-        - Add subtle shadow/border when stuck for visual feedback
-        - Test across viewport sizes
+- Sits directly beneath the navbar, spanning full viewport width
+- Collapses (slides up/animates out) when scrolling down past threshold
+- Reappears when scrolling up (more sensitive than collapse)
+- Only appears on list-view pages (browse/*, upcoming, now-playing, search results)
+- Advanced filters panel remains in content area (too bulky for sub-nav)
 
-    - [ ] **3.1.c Verify advanced filters panel behavior**
-        - Ensure expanded panel scrolls with content (not sticky)
-        - Or: Consider collapsible sticky panel UX
-        - Document chosen approach
+Reference: Pitchfork.com secondary navigation bar behavior.
 
-- [ ] **3.2 Implement "Back to top" button**
+**Responsive Consideration:**
 
-    - [ ] **3.2.a Write tests for BackToTopButton**
-        - Test: Hidden when at top of page
-        - Test: Visible after scrolling down threshold (e.g., 500px)
-        - Test: Click scrolls to top smoothly
-        - Test: Proper accessibility (aria-label, keyboard accessible)
+- Navbar height varies by breakpoint: 65px mobile (single row), 93px desktop (two rows)
+- Use `var(--chakra-sizes-layout-navbar)` for positioning (auto-adjusts)
+- See: `src/theme/layout/foundations.ts` and `semantic-tokens.ts`
+- Pattern already used correctly in ThemeDebug.tsx sticky header
+
+- [ ] **3.1 Create shared scroll state hook**
+
+    - [ ] **3.1.a Write tests for `useScrollState` hook**
+        - Test: Returns `scrollY` position
+        - Test: Returns `direction` ('up' | 'down' | 'idle')
+        - Test: `isPastThreshold` true after scrolling past configurable threshold
+        - Test: Direction change detection with hysteresis (prevents flicker)
+        - Test: Cleanup removes scroll listener on unmount
         - Expect tests to FAIL initially
 
-    - [ ] **3.2.b Implement BackToTopButton component**
-        - Track scroll position with `useEffect` + scroll listener
-        - Show/hide based on threshold
-        - Use `window.scrollTo({ top: 0, behavior: 'smooth' })`
-        - Style: Fixed position, bottom-right, subtle but visible
-        - Use semantic token styling per strategy docs
+    - [ ] **3.1.b Implement `useScrollState` hook**
+        - Location: `src/hooks/useScrollState.ts`
+        - Track `scrollY`, `direction`, `isPastThreshold`
+        - Configurable threshold (default ~200px, tunable)
+        - Use `requestAnimationFrame` or throttle for performance
+        - Return stable object reference (useMemo)
+
+    - [ ] **3.1.c Run tests - should now PASS**
+
+- [ ] **3.2 Create CollapsibleSubNav component**
+
+    - [ ] **3.2.a Write tests for `CollapsibleSubNav` component**
+        - Test: Renders children when visible
+        - Test: Hides (animates out) when `isCollapsed` prop is true
+        - Test: Full viewport width positioning
+        - Test: Sits directly below navbar (uses `layout-navbar` token)
+        - Test: Proper z-index (below navbar, above content)
+        - Expect tests to FAIL initially
+
+    - [ ] **3.2.b Implement `CollapsibleSubNav` component**
+        - Location: `src/components/layout/CollapsibleSubNav.tsx`
+        - Props: `children`, `isCollapsed`, `onCollapseChange?`
+        - Positioning: `position: fixed`, `top: var(--chakra-sizes-layout-navbar)`
+        - Full width: `width: 100vw`, `left: 0`
+        - Animation: CSS transform `translateY(-100%)` when collapsed
+        - Smooth transition (200-300ms ease-out)
+        - Background matches navbar (`layer-01` or `layer-02`)
+        - Border/shadow for visual separation
 
     - [ ] **3.2.c Run tests - should now PASS**
 
-- [ ] **3.3 Run quality gates**
-    - Frontend tests passing
-    - Type checking: 0 errors
-    - Linting: 0 violations
+- [ ] **3.3 Integrate CollapsibleSubNav with MovieCollectionLayout**
+
+    - [ ] **3.3.a Move QuickBrowseBar into CollapsibleSubNav**
+        - Wrap QuickBrowseBar with CollapsibleSubNav in MovieCollectionLayout
+        - Wire `useScrollState` to control collapse state
+        - Keep BrowseParams state management in MovieCollectionLayout
+        - Advanced filters panel remains in content area (not in sub-nav)
+
+    - [ ] **3.3.b Handle route-aware visibility**
+        - Only render CollapsibleSubNav on list-view routes
+        - Routes: `/browse/*`, `/upcoming`, `/now-playing`, `/search` (when ready)
+        - Use route detection or prop-based control
+
+    - [ ] **3.3.c Test collapse/expand behavior**
+        - Verify collapse on scroll down past threshold (~200px)
+        - Verify expand on scroll up (should be more sensitive)
+        - Verify expand when at top of page
+        - Test across viewport sizes
+
+- [ ] **3.4 Implement BackToTopButton component**
+
+    - [ ] **3.4.a Write tests for BackToTopButton**
+        - Test: Hidden when at top of page
+        - Test: Visible after scrolling down threshold
+        - Test: Click scrolls to top smoothly
+        - Test: Click triggers sub-nav to reappear (callback prop)
+        - Test: Proper accessibility (aria-label, keyboard accessible)
+        - Expect tests to FAIL initially
+
+    - [ ] **3.4.b Implement BackToTopButton component**
+        - Location: `src/components/navigation/BackToTopButton.tsx`
+        - Use `useScrollState` hook for visibility
+        - `window.scrollTo({ top: 0, behavior: 'smooth' })` on click
+        - Callback prop `onScrollToTop` to notify parent (for sub-nav expand)
+        - Style: Fixed position, bottom-right, subtle but visible
+        - Use semantic tokens per theme strategy
+        - Accessibility: aria-label="Scroll to top", focusable
+
+    - [ ] **3.4.c Run tests - should now PASS**
+
+    - [ ] **3.4.d Integrate BackToTopButton with infinite scroll pages**
+        - Add to MovieCollectionLayout or InfiniteMovieGrid
+        - Wire `onScrollToTop` to expand CollapsibleSubNav
+        - Only show on pages with infinite scroll
+
+- [ ] **3.5 Run quality gates**
+    - [ ] Frontend tests passing
+    - [ ] Type checking: 0 errors
+    - [ ] Linting: 0 violations
 
 ---
 

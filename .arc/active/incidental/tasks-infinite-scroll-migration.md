@@ -286,36 +286,31 @@ Reference: Pitchfork.com secondary navigation bar behavior.
         - Uses same threshold (200px) as CollapsibleSubNav for consistency
         - 145 collection tests passing
 
-- [ ] **3.5 (Optional) Sequential pagination variant for A/B comparison**
+- [x] **3.5 Create SequentialPaginationCtrl component**
 
-    Rationale: Before committing fully to infinite scroll, create a sequential
-    (prev/next only) variant of the grid for comparison. Sequential is simpler
-    than random-access pagination and may provide a better UX for some users.
+    Rationale: Create sequential (prev/next only) pagination as alternative to
+    infinite scroll. Random-access pagination is being retired due to buffer/data
+    quality issues - the final choice will be sequential OR infinite, not random-access.
 
-    - [ ] **3.5.a Create SequentialPaginationCtrl component**
-        - Simple prev/next buttons only (no page numbers, no random access)
+    - [x] **3.5.a Write tests for SequentialPaginationCtrl**
+        - 18 tests in `src/components/movie/collection/__tests__/SequentialPaginationCtrl.test.tsx`
+        - Coverage: button states, click handlers, accessibility, edge cases
+
+    - [x] **3.5.b Implement SequentialPaginationCtrl component**
+        - Location: `src/components/movie/collection/SequentialPaginationCtrl.tsx`
+        - Simple prev/next IconButtons with LuChevronLeft/Right icons
         - Props: `hasPrev`, `hasNext`, `onPrev`, `onNext`, `isLoading`
-        - Disable prev on page 1, disable next when no more results
-        - Accessibility: aria-labels, keyboard navigation
+        - Memoized with useCallback handlers, nav role with aria-label
 
-    - [ ] **3.5.b Add pagination mode prop to MovieCollectionGrid**
-        - New prop: `paginationMode: 'random-access' | 'sequential' | 'infinite'`
-        - Default to current behavior ('random-access') for backwards compatibility
-        - 'sequential' uses SequentialPaginationCtrl
-        - 'infinite' uses InfiniteMovieGrid (from Task 2.x)
+    - [x] **3.5.c Run tests - 18/18 passing**
 
-    - [ ] **3.5.c Manual A/B testing**
-        - Test sequential vs infinite on browse pages
-        - Evaluate: cognitive load, discoverability, performance feel
-        - Document findings for final decision
+    Note: A/B comparison testing (sequential vs infinite) deferred to end of
+    Phase 4 after infinite scroll is wired up to browse routes.
 
-    Note: This task is lower priority than Phase 4/5. Complete after core
-    infinite scroll is working. Final decision on pagination approach TBD.
-
-- [ ] **3.6 Run quality gates**
-    - [ ] Frontend tests passing
-    - [ ] Type checking: 0 errors
-    - [ ] Linting: 0 violations
+- [x] **3.6 Run quality gates**
+    - [x] Frontend tests: 703 passing (5 pre-existing MovieDetail failures - pagination-related)
+    - [x] Type checking: 0 errors
+    - [x] Linting: 0 violations
 
 ---
 
@@ -373,6 +368,45 @@ Reference: Pitchfork.com secondary navigation bar behavior.
     - Frontend tests passing (many pagination tests now obsolete - update/remove)
     - Type checking: 0 errors
     - Linting: 0 violations
+
+---
+
+### **Phase 4.5:** A/B Evaluation - Sequential vs Infinite Scroll
+
+**Purpose:** Compare sequential pagination (Task 3.5) vs infinite scroll to decide
+final approach. Random-access pagination is retired due to buffer/data quality issues.
+
+- [ ] **4.5.a Wire up sequential pagination for comparison**
+    - Add `/browse/popular-sequential` (or similar temp route) for testing
+    - Wire `SequentialPaginationCtrl` with movie fetcher
+    - Keep minimal - just enough for comparison
+    - Verify: infinite scroll on main routes (Phase 4), sequential on test route
+
+- [ ] **4.5.b Manual A/B testing**
+    - Evaluate: cognitive load, discoverability, performance feel
+    - Test with filters applied
+    - Test mobile viewport behavior
+    - Test back navigation experience
+    - Record pros/cons of each approach
+
+- [ ] **4.5.c Document findings and make decision**
+    - Make final decision: sequential OR infinite
+    - Document rationale in this task list
+
+- [ ] **4.5.d Update task list based on decision**
+
+    **If infinite scroll chosen:**
+    - Remove temporary sequential route
+    - Continue with Phases 5-7 as documented
+    - `SequentialPaginationCtrl` deleted in Phase 7 cleanup
+
+    **If sequential pagination chosen:**
+    - Update Phases 5-7 to use sequential instead of infinite
+    - Key changes needed:
+        - Phase 5: Scroll restoration less critical (page-based nav)
+        - Phase 6: Search uses sequential pagination
+        - Phase 7: Remove `InfiniteMovieGrid` instead of pagination ctrl
+    - Wire sequential to all browse routes
 
 ---
 

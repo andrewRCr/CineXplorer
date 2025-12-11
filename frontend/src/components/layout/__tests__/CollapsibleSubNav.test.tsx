@@ -24,16 +24,33 @@ import { CollapsibleSubNav } from "../CollapsibleSubNav";
 
 /** Test ID for the sub-nav container */
 const SUB_NAV_TEST_ID = "collapsible-sub-nav";
+const DRAWER_TEST_ID = "collapsible-sub-nav-drawer";
 
 /** Renders CollapsibleSubNav with default props and optional overrides */
 function renderSubNav(props: {
   isCollapsed?: boolean;
   children?: React.ReactNode;
+  drawerContent?: React.ReactNode;
+  isDrawerOpen?: boolean;
+  onHeightChange?: (height: number) => void;
 } = {}) {
-  const { isCollapsed = false, children = <div>Test Content</div> } = props;
+  const {
+    isCollapsed = false,
+    children = <div>Test Content</div>,
+    drawerContent,
+    isDrawerOpen,
+    onHeightChange,
+  } = props;
 
   return render(
-    <CollapsibleSubNav isCollapsed={isCollapsed}>{children}</CollapsibleSubNav>
+    <CollapsibleSubNav
+      isCollapsed={isCollapsed}
+      drawerContent={drawerContent}
+      isDrawerOpen={isDrawerOpen ?? false}
+      onHeightChange={onHeightChange}
+    >
+      {children}
+    </CollapsibleSubNav>
   );
 }
 
@@ -272,6 +289,31 @@ describe("CollapsibleSubNav", () => {
 
       // Should still render correctly
       expect(screen.getByText("Content")).toBeInTheDocument();
+    });
+
+    it("renders drawer content when open", () => {
+      renderSubNav({
+        drawerContent: <div>Advanced Filters Drawer</div>,
+        isDrawerOpen: true,
+      });
+
+      expect(screen.getByTestId(DRAWER_TEST_ID)).toBeInTheDocument();
+      expect(screen.getByText("Advanced Filters Drawer")).toBeInTheDocument();
+      expect(screen.getByTestId(DRAWER_TEST_ID)).toHaveAttribute(
+        "aria-hidden",
+        "false"
+      );
+    });
+
+    it("hides drawer content when closed", () => {
+      renderSubNav({
+        drawerContent: <div>Hidden Drawer</div>,
+        isDrawerOpen: false,
+      });
+
+      const drawer = screen.getByTestId(DRAWER_TEST_ID);
+      expect(drawer).toHaveAttribute("aria-hidden", "true");
+      expect(drawer).toHaveStyle({ maxHeight: "0px" });
     });
   });
 });

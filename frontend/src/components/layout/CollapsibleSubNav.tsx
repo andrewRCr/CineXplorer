@@ -23,6 +23,7 @@
  */
 
 import { Box } from "@chakra-ui/react";
+import { useEffect, useRef } from "react";
 import type { ReactNode } from "react";
 
 export interface CollapsibleSubNavProps {
@@ -31,6 +32,15 @@ export interface CollapsibleSubNavProps {
 
   /** Whether the sub-nav is collapsed (slid up off-screen) */
   isCollapsed: boolean;
+
+  /** Optional drawer content that appears directly beneath the sub-nav */
+  drawerContent?: ReactNode;
+
+  /** Controls visibility of the drawer content */
+  isDrawerOpen?: boolean;
+
+  /** Callback fired when the total height (nav + drawer) changes */
+  onHeightChange?: (height: number) => void;
 }
 
 /** Test ID for component identification in tests */
@@ -45,15 +55,45 @@ const TRANSITION_DURATION = "250ms";
  */
 const Z_INDEX = 9;
 
+const CONTENT_MAX_WIDTH = "1200px";
+const DRAWER_TEST_ID = "collapsible-sub-nav-drawer";
+
 /**
  * A fixed sub-navigation bar that collapses when scrolling down
  */
 export function CollapsibleSubNav({
   children,
   isCollapsed,
+  drawerContent,
+  isDrawerOpen = false,
+  onHeightChange,
 }: CollapsibleSubNavProps) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const ResizeObserverImpl = useRef<
+    typeof ResizeObserver | undefined
+  >(
+    typeof ResizeObserver !== "undefined" ? ResizeObserver : undefined
+  );
+
+  // Report height changes (for spacing calculations in parent layouts)
+  useEffect(() => {
+    if (!onHeightChange || !containerRef.current || !ResizeObserverImpl.current)
+      return;
+
+    const observer = new ResizeObserverImpl.current((entries) => {
+      const entry = entries[0];
+      if (entry?.contentRect?.height != null) {
+        onHeightChange(entry.contentRect.height);
+      }
+    });
+
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, [onHeightChange]);
+
   return (
     <Box
+      ref={containerRef}
       as="nav"
       data-testid={SUB_NAV_TEST_ID}
       aria-label="Browse filters"
@@ -75,7 +115,30 @@ export function CollapsibleSubNav({
       // Performance optimization for animations
       style={{ willChange: "transform" }}
     >
-      {children}
+      <Box px={4}>
+        <Box maxW={CONTENT_MAX_WIDTH} mx="auto" w="100%">
+          {children}
+        </Box>
+      </Box>
+
+      {drawerContent ? (
+        <Box
+          data-testid={DRAWER_TEST_ID}
+          aria-hidden={!isDrawerOpen}
+          pointerEvents={isDrawerOpen ? "auto" : "none"}
+          maxHeight={isDrawerOpen ? "800px" : "0px"}
+          opacity={isDrawerOpen ? 1 : 0}
+          overflow="hidden"
+          borderTopWidth="1px"
+          borderColor="border-subtle-01"
+          bg="layer-01"
+          transition={`max-height 220ms ease, opacity 160ms ease`}
+        >
+          <Box maxW={CONTENT_MAX_WIDTH} mx="auto" w="100%" px={4} py={3}>
+            {drawerContent}
+          </Box>
+        </Box>
+      ) : null}
     </Box>
   );
 }

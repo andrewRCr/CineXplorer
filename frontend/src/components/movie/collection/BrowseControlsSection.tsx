@@ -1,5 +1,4 @@
 import { useState, useCallback } from "react";
-import { Box } from "@chakra-ui/react";
 import AdvancedFiltersPanel from "@/components/movie/browse/AdvancedFiltersPanel";
 import QuickBrowseBar from "@/components/movie/browse/QuickBrowseBar";
 import { CollapsibleSubNav } from "@/components/layout/CollapsibleSubNav";
@@ -63,7 +62,19 @@ const BrowseControlsSection = ({
   return (
     <>
       {/* Collapsible sub-nav with QuickBrowseBar */}
-      <CollapsibleSubNav isCollapsed={isSubNavCollapsed}>
+      <CollapsibleSubNav
+        isCollapsed={isSubNavCollapsed}
+        drawerContent={
+          <AdvancedFiltersPanel
+            browseParams={browseParams}
+            onBrowseParamsChange={onBrowseParamsChange}
+            isCollapsed={false}
+            onToggleCollapse={onToggleAdvancedPanel}
+            pageSource={source}
+          />
+        }
+        isDrawerOpen={isAdvancedPanelOpen}
+      >
         <QuickBrowseBar
           browseParams={browseParams}
           onBrowseParamsChange={onBrowseParamsChange}
@@ -80,19 +91,6 @@ const BrowseControlsSection = ({
       />
 
       {/* Note: Top padding for sub-nav space is handled by MovieCollectionLayout */}
-
-      {/* Advanced filters panel (shown when toggled open) - stays in content area */}
-      {isAdvancedPanelOpen && (
-        <Box flexShrink={0} mb={6}>
-          <AdvancedFiltersPanel
-            browseParams={browseParams}
-            onBrowseParamsChange={onBrowseParamsChange}
-            isCollapsed={false}
-            onToggleCollapse={onToggleAdvancedPanel}
-            pageSource={source}
-          />
-        </Box>
-      )}
     </>
   );
 };

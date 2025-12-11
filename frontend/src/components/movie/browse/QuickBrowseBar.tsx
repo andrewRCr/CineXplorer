@@ -1,4 +1,4 @@
-import { Box, Text, HStack, VStack } from "@chakra-ui/react";
+import { Text, HStack } from "@chakra-ui/react";
 import type { BrowseParams } from "@/types/browseTypes";
 import { DEFAULT_BROWSE_PARAMS } from "@/constants/browseDefaults";
 import ConnectedDropdowns from "./ConnectedDropdowns";
@@ -46,65 +46,48 @@ const QuickBrowseBar = ({
   };
 
   return (
-    <VStack
+    <HStack
       w="100%"
       py={2}
-      px={4}
-      bg="background"
-      gap={2}
-      align="stretch"
-      overflow="visible"
+      justify="center"
+      align="center"
+      gap={0}
     >
-      <Box
-        maxW="1200px"
-        w="100%"
-        mx="auto"
-        display="flex"
-        flexDirection="column"
-        gap={2}
+      {/* Browse by label */}
+      <Text
+        fontSize="sm"
+        fontWeight="400"
+        fontFamily="inter"
+        color="on-muted"
+        mr={2}
+        flexShrink={0}
       >
-        {/* Main filter controls container */}
-        <HStack justify="center" align="stretch" w="100%">
-          {/* Browse by label */}
-          <Text
-            fontSize="sm"
-            fontWeight="400"
-            fontFamily="inter"
-            color="on-muted"
-            mr={2}
-            alignSelf="center"
-            flexShrink={0}
-          >
-            Browse by
-          </Text>
+        Browse by
+      </Text>
 
-          {/* Browse controls */}
-          <HStack gap={1} align="center">
-            {/* Wrapper for dropdowns and clear button */}
-            <Box position="relative">
-              <ConnectedDropdowns
-                filters={browseParams}
-                onFiltersChange={onBrowseParamsChange}
-                onToggleAdvanced={onToggleAdvanced}
-                isAdvancedOpen={isAdvancedOpen}
-                pageSource={pageSource}
-              />
-              <ClearBrowseParamsButton
-                browseParams={browseParams}
-                onClear={clearFilters}
-                isAdvancedOpen={isAdvancedOpen}
-              />
-            </Box>
+      {/* Filter dropdowns (Genre, Year, Advanced toggle) */}
+      <ConnectedDropdowns
+        filters={browseParams}
+        onFiltersChange={onBrowseParamsChange}
+        onToggleAdvanced={onToggleAdvanced}
+        isAdvancedOpen={isAdvancedOpen}
+        pageSource={pageSource}
+      />
 
-            <SortDropdown
-              browseParams={browseParams}
-              onSortChange={handleSortChange}
-              pageSource={pageSource}
-            />
-          </HStack>
-        </HStack>
-      </Box>
-    </VStack>
+      {/* Clear filters - icon button after filters, before sort (clears filters only) */}
+      <ClearBrowseParamsButton
+        browseParams={browseParams}
+        onClear={clearFilters}
+        isAdvancedOpen={isAdvancedOpen}
+      />
+
+      {/* Sort dropdown */}
+      <SortDropdown
+        browseParams={browseParams}
+        onSortChange={handleSortChange}
+        pageSource={pageSource}
+      />
+    </HStack>
   );
 };
 

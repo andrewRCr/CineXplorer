@@ -97,7 +97,7 @@ const AdvancedFiltersPanel = ({
   return (
     <Box
       mb={0}
-      ml={4}
+      w="100%"
       p={6}
       border="1px solid"
       borderColor="border-strong-01"

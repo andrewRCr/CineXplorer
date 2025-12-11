@@ -47,6 +47,45 @@
 
 <!-- UI/UX Fixes -->
 
+- [ ] Redesign AdvancedFiltersPanel as compact drawer
+    - **Context:** Panel moved from standalone (above grid) to drawer (attached to sticky CollapsibleSubNav).
+      Current design takes too much vertical space (~50% viewport). Need compact layout for drawer context.
+    - **Part A (completed):** QuickBrowseBar cleanup
+        - [x] Move ClearFilters button inline (icon-only, after filters, before sort)
+        - [x] Fix background consistency (removed conflicting bg, inherits from CollapsibleSubNav)
+        - [x] Add placeholder for layout shift prevention
+        - [x] Update tests for new behavior
+    - **Part B:** Compact drawer design
+        - [ ] **B.1 Create GenreCombobox component**
+            - Multi-select combobox with type-to-filter
+            - Selected genres as removable tags (max 3 visible + "+N more")
+            - Portal dropdown for clean overlay
+            - Label: "Genres (all)" or similar to communicate "full genre list"
+        - [ ] **B.2 Redesign AdvancedFiltersPanel for drawer context**
+            - Remove border/shadow/padding (drawer provides container styling)
+            - Remove "Advanced Filters" title (redundant in drawer)
+            - Horizontal layout to minimize height:
+
+              ```
+              Row 1: [Genre combobox with tags]
+              Row 2: Language | Year range | Rating range
+              Row 3: Certification chips | [Clear] [Collapse ↓]
+              ```
+
+            - Collapse button bottom-right (not top-right)
+            - Clear filters integrated into drawer (not separate)
+        - [ ] **B.3 Wire up in BrowseControlsSection**
+            - Pass redesigned panel as `drawerContent` to CollapsibleSubNav
+            - Test open/close behavior
+            - Test filter changes propagate correctly
+        - [ ] **B.4 Update tests**
+    - **Files:**
+        - New: `frontend/src/components/movie/browse/GenreCombobox.tsx`
+        - Update: `frontend/src/components/movie/browse/AdvancedFiltersPanel.tsx`
+        - Update: `frontend/src/components/movie/collection/BrowseControlsSection.tsx`
+    - **Priority:** High - blocking A/B evaluation (Phase 4.6 of `tasks-infinite-scroll-migration.md`)
+    - **Effort:** ~2-3 hours
+
 - [ ] Revert MovieUserScore badge colors to traffic light scheme
     - Change: `≥7.5` success (green), `5.0-7.4` warning (yellow), `<5.0` error (red)
     - Current: success/info/warning doesn't communicate rating quality intuitively

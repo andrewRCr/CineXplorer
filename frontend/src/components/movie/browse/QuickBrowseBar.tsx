@@ -48,9 +48,10 @@ const QuickBrowseBar = ({
   return (
     <VStack
       w="100%"
-      p={4}
+      py={2}
+      px={4}
       bg="background"
-      gap={4}
+      gap={2}
       align="stretch"
       overflow="visible"
     >
@@ -60,7 +61,7 @@ const QuickBrowseBar = ({
         mx="auto"
         display="flex"
         flexDirection="column"
-        gap={4}
+        gap={2}
       >
         {/* Main filter controls container */}
         <HStack justify="center" align="stretch" w="100%">

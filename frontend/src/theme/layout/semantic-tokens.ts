@@ -45,5 +45,14 @@ export const layoutSemanticTokens = {
         "layout-footer": {
             value: "{sizes.footer-height}",
         },
+
+        /**
+         * Sub-nav layout token (collapsible QuickBrowseBar)
+         * References foundation token - same on all breakpoints
+         * Used for top offset on pages with browse controls
+         */
+        "layout-subnav": {
+            value: "{sizes.subnav-height}",
+        },
     },
 };

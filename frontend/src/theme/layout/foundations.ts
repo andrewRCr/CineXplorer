@@ -33,5 +33,12 @@ export const layoutFoundations = {
          * Note: Footer height is fluid based on content, this is an estimate
          */
         "footer-height": { value: "64px" },
+
+        /**
+         * Sub-nav height - Collapsible secondary navigation bar (QuickBrowseBar)
+         * Calculation: py(2) ~8px + controls ~32px + py(2) ~8px + border 1px = ~49px, rounded to 52px
+         * Used on browse pages for filter controls
+         */
+        "subnav-height": { value: "52px" },
     },
 };

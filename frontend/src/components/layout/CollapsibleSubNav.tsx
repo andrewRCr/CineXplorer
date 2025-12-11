@@ -39,8 +39,11 @@ const SUB_NAV_TEST_ID = "collapsible-sub-nav";
 /** Transition duration for collapse/expand animation */
 const TRANSITION_DURATION = "250ms";
 
-/** Z-index: below navbar (which uses z-index token "navbar"), above page content */
-const Z_INDEX = 10;
+/**
+ * Z-index: BELOW navbar so sub-nav slides "under" navbar when collapsing.
+ * Navbar uses zIndex="navbar" (10), so we use 9 to ensure navbar covers us.
+ */
+const Z_INDEX = 9;
 
 /**
  * A fixed sub-navigation bar that collapses when scrolling down

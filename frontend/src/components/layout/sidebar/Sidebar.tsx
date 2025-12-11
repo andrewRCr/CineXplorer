@@ -14,10 +14,10 @@ const Sidebar: React.FC = () => {
       borderColor="border-strong-01"
       boxShadow="sm"
       position="sticky"
-      // Sticky offset accounts for navbar height + container padding - visual alignment
-      top="calc(var(--chakra-sizes-layout-navbar) + 3rem - 28px)"
+      // Sticky offset: navbar + sub-nav + padding to align with page header text
+      top="calc(var(--chakra-sizes-layout-navbar) + var(--chakra-sizes-layout-subnav) + 1.3rem)"
       alignSelf="flex-start"
-      maxH="calc(100vh - var(--chakra-sizes-layout-navbar))"
+      maxH="calc(100vh - var(--chakra-sizes-layout-navbar) - var(--chakra-sizes-layout-subnav) - 1rem)"
       overflowY="auto"
       zIndex="sidebar"
       style={{ willChange: 'transform' }}

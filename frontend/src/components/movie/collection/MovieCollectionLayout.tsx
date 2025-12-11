@@ -96,8 +96,16 @@ const MovieCollectionLayout = ({
       lg: { maxW: "1200px", px: 4, pt: 3, pb: 4 },
       xl: { maxW: "1400px", px: 4, pt: 3, pb: 4 },
     };
-    return { ...sizeMap[size], ...containerProps };
-  }, [size, containerProps]);
+    const baseConfig = { ...sizeMap[size], ...containerProps };
+
+    // When browse controls are shown, add extra top padding for the fixed sub-nav
+    // Uses layout-subnav token via CSS variable
+    if (showBrowseControls) {
+      baseConfig.pt = "var(--chakra-sizes-layout-subnav)";
+    }
+
+    return baseConfig;
+  }, [size, containerProps, showBrowseControls]);
 
   // Memoized outlet context to prevent unnecessary re-renders
   const outletContext = useMemo(

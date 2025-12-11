@@ -35,11 +35,12 @@ const placeholderMovie: MovieListItem = {
  * - End-of-results indicator
  */
 const InfiniteMovieGrid = () => {
-  const { source, query, finalFetcher } = useMovieCollectionContext({});
+  const { source, query, finalFetcher, browseParams } = useMovieCollectionContext({});
 
   // Build stable query key from actual filter values, not function reference
   // This ensures cache invalidation when filters change
-  const queryKey = ["movies", "infinite", source, query];
+  // browseParams included so filter changes invalidate the cache
+  const queryKey = ["movies", "infinite", source, query, browseParams];
 
   const {
     movies,

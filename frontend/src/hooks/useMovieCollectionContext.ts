@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useOutletContext } from "react-router-dom";
 import type { PaginatedMoviesResponse } from "@/types/movie";
+import type { BrowseParams } from "@/types/browseTypes";
 
 // Reusable fetcher function type
 type MovieFetcher = (page: number, tmdb_page_start?: number) => {
@@ -17,6 +18,7 @@ interface MovieCollectionContext {
     initialTmdbPageStart?: number;
     onPageChange: (page: number, tmdb_page_start?: number) => void;
     enhancedFetcher: MovieFetcher;
+    browseParams?: BrowseParams;
 }
 
 // Props interface for when used without Outlet context
@@ -28,6 +30,7 @@ interface MovieCollectionGridProps {
     initialTmdbPageStart?: number;
     onPageChange?: (page: number, tmdb_page_start?: number) => void;
     enhancedFetcher?: MovieFetcher;
+    browseParams?: BrowseParams;
 }
 
 interface ResolvedContext {
@@ -39,6 +42,7 @@ interface ResolvedContext {
     onPageChange: ((page: number, tmdb_page_start?: number) => void) | undefined;
     enhancedFetcher: MovieFetcher | undefined;
     finalFetcher: MovieFetcher | undefined;
+    browseParams: BrowseParams | undefined;
 }
 
 /**
@@ -77,6 +81,7 @@ export function useMovieCollectionContext(props: MovieCollectionGridProps): Reso
         initialTmdbPageStart: contextInitialTmdbPageStart,
         onPageChange: contextOnPageChange,
         enhancedFetcher: contextEnhancedFetcher,
+        browseParams: contextBrowseParams,
     } = context || {};
 
     // Resolve final values using props if provided, otherwise use context
@@ -88,6 +93,7 @@ export function useMovieCollectionContext(props: MovieCollectionGridProps): Reso
         const initialTmdbPageStart = props.initialTmdbPageStart ?? contextInitialTmdbPageStart;
         const onPageChange = props.onPageChange || contextOnPageChange;
         const enhancedFetcher = props.enhancedFetcher || contextEnhancedFetcher;
+        const browseParams = props.browseParams || contextBrowseParams;
 
         // Use the enhanced fetcher from context or props, fallback to regular fetcher
         const finalFetcher = enhancedFetcher || fetcher;
@@ -101,6 +107,7 @@ export function useMovieCollectionContext(props: MovieCollectionGridProps): Reso
             onPageChange,
             enhancedFetcher,
             finalFetcher,
+            browseParams,
         };
     }, [
         props.fetcher,
@@ -110,6 +117,7 @@ export function useMovieCollectionContext(props: MovieCollectionGridProps): Reso
         props.initialTmdbPageStart,
         props.onPageChange,
         props.enhancedFetcher,
+        props.browseParams,
         contextFetcher,
         contextSource,
         contextQuery,
@@ -117,6 +125,7 @@ export function useMovieCollectionContext(props: MovieCollectionGridProps): Reso
         contextInitialTmdbPageStart,
         contextOnPageChange,
         contextEnhancedFetcher,
+        contextBrowseParams,
     ]);
 
     return resolvedContext;

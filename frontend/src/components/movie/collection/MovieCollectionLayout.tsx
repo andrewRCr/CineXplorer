@@ -118,6 +118,8 @@ const MovieCollectionLayout = ({
         initialTmdbPageStart: tmdbPageStartFromUrl,
         onPageChange: handlePageChange,
         enhancedFetcher,
+        // browseParams for TanStack Query cache key (filter changes invalidate cache)
+        browseParams,
       };
     },
     [
@@ -129,6 +131,7 @@ const MovieCollectionLayout = ({
       tmdbPageStartFromUrl,
       handlePageChange,
       enhancedFetcher,
+      browseParams,
     ]
   );
 

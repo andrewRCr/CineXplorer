@@ -1,7 +1,7 @@
-import MovieCollectionGrid from "@/components/movie/collection/MovieCollectionGrid";
+import InfiniteMovieGrid from "@/components/movie/collection/InfiniteMovieGrid";
 
 const Upcoming = () => {
-  return <MovieCollectionGrid />;
+  return <InfiniteMovieGrid />;
 };
 
 export default Upcoming;

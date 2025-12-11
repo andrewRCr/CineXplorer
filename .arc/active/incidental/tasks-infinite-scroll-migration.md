@@ -240,24 +240,30 @@ Reference: Pitchfork.com secondary navigation bar behavior.
     - [x] **3.2.c Run tests - should now PASS**
         - All 20 tests passing, type checking clean, linting clean
 
-- [ ] **3.3 Integrate CollapsibleSubNav with MovieCollectionLayout**
+- [x] **3.3 Integrate CollapsibleSubNav with MovieCollectionLayout**
 
-    - [ ] **3.3.a Move QuickBrowseBar into CollapsibleSubNav**
-        - Wrap QuickBrowseBar with CollapsibleSubNav in MovieCollectionLayout
-        - Wire `useScrollState` to control collapse state
-        - Keep BrowseParams state management in MovieCollectionLayout
-        - Advanced filters panel remains in content area (not in sub-nav)
+    - [x] **3.3.a Move QuickBrowseBar into CollapsibleSubNav**
+        - Updated `BrowseControlsSection.tsx` to wrap QuickBrowseBar in CollapsibleSubNav
+        - Integrated `useScrollState` hook with 200px threshold, 15px hysteresis
+        - Collapse logic: `isPastThreshold && direction === "down"`
+        - Added `layout-subnav` token (52px) to theme for DRY layout calculations
+        - Slimmed QuickBrowseBar: `p={4}` → `py={2} px={4}`, `gap={4}` → `gap={2}`
+        - Fixed z-index (9) so sub-nav slides under navbar (10) when collapsing
+        - Updated Sidebar sticky positioning to use new layout token
+        - AdvancedFiltersPanel remains in content area as planned
 
-    - [ ] **3.3.b Handle route-aware visibility**
-        - Only render CollapsibleSubNav on list-view routes
-        - Routes: `/browse/*`, `/upcoming`, `/now-playing`, `/search` (when ready)
-        - Use route detection or prop-based control
+    - [x] **3.3.b Handle route-aware visibility**
+        - Existing `showBrowseControls` prop already provides route-aware control
+        - `/browse/*` routes → `showBrowseControls={true}` (sub-nav visible)
+        - `/search` route → `showBrowseControls={false}` (sub-nav hidden, for future work)
+        - All 127 collection tests passing
 
-    - [ ] **3.3.c Test collapse/expand behavior**
-        - Verify collapse on scroll down past threshold (~200px)
-        - Verify expand on scroll up (should be more sensitive)
-        - Verify expand when at top of page
-        - Test across viewport sizes
+    - [x] **3.3.c Test collapse/expand behavior**
+        - Manual testing confirmed: collapses on scroll down past 200px threshold
+        - Expands on scroll up (15px hysteresis prevents flicker)
+        - Expands when returning to top of page (direction === 'idle')
+        - Sub-nav slides "under" navbar (z-index 9 vs navbar 10)
+        - Tested on desktop viewport
 
 - [ ] **3.4 Implement BackToTopButton component**
 

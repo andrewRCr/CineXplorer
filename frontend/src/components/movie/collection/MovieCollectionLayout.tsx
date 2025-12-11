@@ -76,6 +76,7 @@ const MovieCollectionLayout = ({
     tmdbPageStart: tmdbPageStartFromUrl,
     onPageChange: handlePageChange,
     isAdvancedPanelOpen,
+    setIsAdvancedPanelOpen,
     toggleAdvancedPanel,
   } = useMovieCollectionState({
     defaultBrowseParams,
@@ -162,6 +163,7 @@ const MovieCollectionLayout = ({
           browseParams={browseParams}
           onBrowseParamsChange={onBrowseParamsChange}
           onToggleAdvancedPanel={toggleAdvancedPanel}
+          onSetAdvancedPanelOpen={setIsAdvancedPanelOpen}
           source={actualSource}
         />
       )}

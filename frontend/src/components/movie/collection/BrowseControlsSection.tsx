@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import AdvancedFiltersPanel from "@/components/movie/browse/AdvancedFiltersPanel";
 import QuickBrowseBar from "@/components/movie/browse/QuickBrowseBar";
 import { CollapsibleSubNav } from "@/components/layout/CollapsibleSubNav";
@@ -22,6 +22,8 @@ interface BrowseControlsSectionProps {
       | ((prev: BrowseParams) => BrowseParams)
   ) => void;
   onToggleAdvancedPanel: () => void;
+  /** Direct setter for advanced panel state (for auto-close without override logic) */
+  onSetAdvancedPanelOpen?: (open: boolean) => void;
   source?: string;
 }
 
@@ -31,6 +33,7 @@ const BrowseControlsSection = ({
   browseParams,
   onBrowseParamsChange,
   onToggleAdvancedPanel,
+  onSetAdvancedPanelOpen,
   source,
 }: BrowseControlsSectionProps) => {
   // Track scroll state for collapsible sub-nav behavior
@@ -47,6 +50,15 @@ const BrowseControlsSection = ({
   // Expand when: scrolling up OR at top of page (direction === 'idle') OR force-expanded
   const isSubNavCollapsed =
     isPastThreshold && direction === "down" && !forceExpand;
+
+  // Auto-close advanced panel when scrolling down (user is browsing, not filtering)
+  // This treats the advanced panel as a transient "configuration mode" rather than
+  // a persistent UI state. The QuickBrowseBar remains accessible for quick adjustments.
+  useEffect(() => {
+    if (isSubNavCollapsed && isAdvancedPanelOpen && onSetAdvancedPanelOpen) {
+      onSetAdvancedPanelOpen(false);
+    }
+  }, [isSubNavCollapsed, isAdvancedPanelOpen, onSetAdvancedPanelOpen]);
 
   // Handle scroll-to-top action: expand sub-nav temporarily
   // The force expand will be naturally cleared when user scrolls again

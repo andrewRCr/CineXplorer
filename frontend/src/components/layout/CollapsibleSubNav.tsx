@@ -136,7 +136,7 @@ export function CollapsibleSubNav({
           <Flex justify="center" px={4} pt={1}>
             <Separator w="60%" borderColor="border-subtle-01" />
           </Flex>
-          <Box maxW={CONTENT_MAX_WIDTH} mx="auto" w="100%" px={4} py={3}>
+          <Box maxW={CONTENT_MAX_WIDTH} mx="auto" w="100%" px={4} pt={3} pb={2}>
             {drawerContent}
           </Box>
         </Box>

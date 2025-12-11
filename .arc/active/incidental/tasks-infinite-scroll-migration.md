@@ -291,7 +291,33 @@ Reference: Pitchfork.com secondary navigation bar behavior.
         - Wire `onScrollToTop` to expand CollapsibleSubNav
         - Only show on pages with infinite scroll
 
-- [ ] **3.5 Run quality gates**
+- [ ] **3.5 (Optional) Sequential pagination variant for A/B comparison**
+
+    Rationale: Before committing fully to infinite scroll, create a sequential
+    (prev/next only) variant of the grid for comparison. Sequential is simpler
+    than random-access pagination and may provide a better UX for some users.
+
+    - [ ] **3.5.a Create SequentialPaginationCtrl component**
+        - Simple prev/next buttons only (no page numbers, no random access)
+        - Props: `hasPrev`, `hasNext`, `onPrev`, `onNext`, `isLoading`
+        - Disable prev on page 1, disable next when no more results
+        - Accessibility: aria-labels, keyboard navigation
+
+    - [ ] **3.5.b Add pagination mode prop to MovieCollectionGrid**
+        - New prop: `paginationMode: 'random-access' | 'sequential' | 'infinite'`
+        - Default to current behavior ('random-access') for backwards compatibility
+        - 'sequential' uses SequentialPaginationCtrl
+        - 'infinite' uses InfiniteMovieGrid (from Task 2.x)
+
+    - [ ] **3.5.c Manual A/B testing**
+        - Test sequential vs infinite on browse pages
+        - Evaluate: cognitive load, discoverability, performance feel
+        - Document findings for final decision
+
+    Note: This task is lower priority than Phase 4/5. Complete after core
+    infinite scroll is working. Final decision on pagination approach TBD.
+
+- [ ] **3.6 Run quality gates**
     - [ ] Frontend tests passing
     - [ ] Type checking: 0 errors
     - [ ] Linting: 0 violations

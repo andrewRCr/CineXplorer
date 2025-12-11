@@ -61,12 +61,13 @@ const MovieDetail = () => {
   const BackButton = useMemo(() => {
     // Build query string with preserved parameters
     // - Skip "from" (already encoded in path)
-    // - Skip "page" if it's 1 (default, matches pattern in useMovieCollectionUrl)
+    // - Skip pagination params (page, tmdb_page_start) - infinite scroll doesn't use them
     // - Skip empty values
     const queryString = Object.entries(allParams)
       .filter(([key, value]) => {
         if (key === "from") return false;
-        if (key === "page" && value === "1") return false;
+        if (key === "page") return false;
+        if (key === "tmdb_page_start") return false;
         return value !== "";
       })
       .map(([key, value]) => `${key}=${encodeURIComponent(value)}`)

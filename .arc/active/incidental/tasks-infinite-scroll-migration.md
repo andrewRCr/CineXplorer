@@ -209,46 +209,36 @@ Reference: Pitchfork.com secondary navigation bar behavior.
 - See: `src/theme/layout/foundations.ts` and `semantic-tokens.ts`
 - Pattern already used correctly in ThemeDebug.tsx sticky header
 
-- [ ] **3.1 Create shared scroll state hook**
+- [x] **3.1 Create shared scroll state hook**
 
-    - [ ] **3.1.a Write tests for `useScrollState` hook**
-        - Test: Returns `scrollY` position
-        - Test: Returns `direction` ('up' | 'down' | 'idle')
-        - Test: `isPastThreshold` true after scrolling past configurable threshold
-        - Test: Direction change detection with hysteresis (prevents flicker)
-        - Test: Cleanup removes scroll listener on unmount
-        - Expect tests to FAIL initially
+    - [x] **3.1.a Write tests for `useScrollState` hook**
+        - 19 tests covering: scrollY tracking, direction detection, isPastThreshold, hysteresis, cleanup, RAF throttling
+        - Location: `src/hooks/__tests__/useScrollState.test.ts`
 
-    - [ ] **3.1.b Implement `useScrollState` hook**
+    - [x] **3.1.b Implement `useScrollState` hook**
         - Location: `src/hooks/useScrollState.ts`
-        - Track `scrollY`, `direction`, `isPastThreshold`
-        - Configurable threshold (default ~200px, tunable)
-        - Use `requestAnimationFrame` or throttle for performance
-        - Return stable object reference (useMemo)
+        - Configurable `threshold` (default 200px) and `hysteresis` (default 10px)
+        - Uses `requestAnimationFrame` for throttling, `useMemo` for stable return object
+        - Exports `ScrollDirection` type, `UseScrollStateOptions` and `ScrollState` interfaces
 
-    - [ ] **3.1.c Run tests - should now PASS**
+    - [x] **3.1.c Run tests - should now PASS**
+        - All 19 tests passing, type checking clean, linting clean
 
-- [ ] **3.2 Create CollapsibleSubNav component**
+- [x] **3.2 Create CollapsibleSubNav component**
 
-    - [ ] **3.2.a Write tests for `CollapsibleSubNav` component**
-        - Test: Renders children when visible
-        - Test: Hides (animates out) when `isCollapsed` prop is true
-        - Test: Full viewport width positioning
-        - Test: Sits directly below navbar (uses `layout-navbar` token)
-        - Test: Proper z-index (below navbar, above content)
-        - Expect tests to FAIL initially
+    - [x] **3.2.a Write tests for `CollapsibleSubNav` component**
+        - 20 tests covering: rendering, collapse/expand behavior, positioning, styling, accessibility, edge cases
+        - Location: `src/components/layout/__tests__/CollapsibleSubNav.test.tsx`
 
-    - [ ] **3.2.b Implement `CollapsibleSubNav` component**
+    - [x] **3.2.b Implement `CollapsibleSubNav` component**
         - Location: `src/components/layout/CollapsibleSubNav.tsx`
-        - Props: `children`, `isCollapsed`, `onCollapseChange?`
-        - Positioning: `position: fixed`, `top: var(--chakra-sizes-layout-navbar)`
-        - Full width: `width: 100vw`, `left: 0`
-        - Animation: CSS transform `translateY(-100%)` when collapsed
-        - Smooth transition (200-300ms ease-out)
-        - Background matches navbar (`layer-01` or `layer-02`)
-        - Border/shadow for visual separation
+        - Props: `children`, `isCollapsed` (simplified from original plan - `onCollapseChange` not needed)
+        - Fixed position below navbar via `var(--chakra-sizes-layout-navbar)`
+        - Full width with `translateY(-100%)` collapse animation (250ms ease-out)
+        - Uses `layer-01` bg, `border-strong-01` border, proper z-index and aria attributes
 
-    - [ ] **3.2.c Run tests - should now PASS**
+    - [x] **3.2.c Run tests - should now PASS**
+        - All 20 tests passing, type checking clean, linting clean
 
 - [ ] **3.3 Integrate CollapsibleSubNav with MovieCollectionLayout**
 

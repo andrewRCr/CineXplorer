@@ -101,18 +101,17 @@ describe('MovieCollectionGrid - Navigation Integration', () => {
 
       const href = movieLink?.getAttribute('href') || '';
 
-      // Should include basic params (currently works)
-      expect(href).toContain('page=1');
+      // Page params should NOT be in URL (infinite scroll migration)
+      expect(href).not.toContain('page=');
       expect(href).toContain('from=popular');
 
-      // TODO: After implementation, link should include all filter params
-      // Currently will FAIL because MovieCard only passes page/from/query
-      expect(href).toContain('minYear=1980'); // Will FAIL
-      expect(href).toContain('maxYear=1990'); // Will FAIL
+      // Filter params should be preserved
+      expect(href).toContain('minYear=1980');
+      expect(href).toContain('maxYear=1990');
     });
 
-    it('preserves page + filters on detail navigation', async () => {
-      // User on page 2 with filters → clicks movie → link should have page=2 + all filters
+    it('preserves filters but NOT page on detail navigation', async () => {
+      // User on page 2 with filters → clicks movie → link should have filters but NOT page
       const mockFetcher = createMockFetcher();
       const mockMovie = createMockMovie({ tmdb_id: 123 });
 
@@ -147,12 +146,13 @@ describe('MovieCollectionGrid - Navigation Integration', () => {
         expect(screen.getByText('Test Movie 1')).toBeInTheDocument();
       });
 
-      // Verify movie card link includes all params
+      // Verify movie card link includes filter params but NOT page
       const movieLink = document.querySelector('a[href*="/movie/1"]');
       const detailHref = movieLink?.getAttribute('href') || '';
 
-      // Detail link should include all current URL params
-      expect(detailHref).toContain('page=2');
+      // Page params should NOT be in URL (infinite scroll migration)
+      expect(detailHref).not.toContain('page=');
+      // Filter params should be preserved
       expect(detailHref).toContain('minYear=1990');
       expect(detailHref).toContain('maxYear=2000');
       // Genres are URL-encoded (comma becomes %2C)
@@ -243,11 +243,11 @@ describe('MovieCollectionGrid - Navigation Integration', () => {
         expect(screen.getByText('Test Movie 1')).toBeInTheDocument();
       });
 
-      // First movie link should have page 3 + filters
+      // First movie link should have filters but NOT page
       const firstMovieLink = document.querySelector('a[href*="/movie/1"]');
       const firstHref = firstMovieLink?.getAttribute('href') || '';
 
-      expect(firstHref).toContain('page=3');
+      expect(firstHref).not.toContain('page=');
       expect(firstHref).toContain('minYear=1980');
       expect(firstHref).toContain('minRating=9.0');
 
@@ -255,14 +255,14 @@ describe('MovieCollectionGrid - Navigation Integration', () => {
       const secondMovieLink = document.querySelector('a[href*="/movie/2"]');
       const secondHref = secondMovieLink?.getAttribute('href') || '';
 
-      expect(secondHref).toContain('page=3');
+      expect(secondHref).not.toContain('page=');
       expect(secondHref).toContain('minYear=1980');
       expect(secondHref).toContain('minRating=9.0');
     });
   });
 
   describe('Different Route Types', () => {
-    it('handles Popular route with filters', async () => {
+    it('handles Popular route with filters (no page in links)', async () => {
       const mockFetcher = createMockFetcher();
 
       renderWithRoutes(
@@ -289,7 +289,8 @@ describe('MovieCollectionGrid - Navigation Integration', () => {
       const href = movieLink?.getAttribute('href') || '';
 
       expect(href).toContain('from=popular');
-      expect(href).toContain('page=2');
+      expect(href).toContain('minYear=1990');
+      expect(href).not.toContain('page=');
     });
 
     it('handles Top Rated route with filters', async () => {
@@ -355,7 +356,7 @@ describe('MovieCollectionGrid - Navigation Integration', () => {
   });
 
   describe('Complex Filter Combinations', () => {
-    it('handles all filters applied simultaneously', async () => {
+    it('handles all filters applied simultaneously (no page in links)', async () => {
       // Maximum complexity: all filter types at once
       const mockFetcher = createMockFetcher();
 
@@ -382,11 +383,11 @@ describe('MovieCollectionGrid - Navigation Integration', () => {
         expect(screen.getByText('Test Movie 1')).toBeInTheDocument();
       });
 
-      // All params should be preserved in movie card links
+      // Filter params should be preserved in movie card links, but NOT page
       const movieLink = document.querySelector('a[href*="/movie/1"]');
       const href = movieLink?.getAttribute('href') || '';
 
-      expect(href).toContain('page=5');
+      expect(href).not.toContain('page=');
       expect(href).toContain('minYear=1990');
       expect(href).toContain('maxYear=2000');
       // Genres are URL-encoded
@@ -458,7 +459,7 @@ describe('MovieCollectionGrid - Navigation Integration', () => {
       });
     });
 
-    it('handles pagination with filters', async () => {
+    it('handles pagination with filters (no page in links)', async () => {
       // User applies filters → navigates to page 2 → clicks movie
       const mockFetcher = createMockFetcher();
 
@@ -482,11 +483,11 @@ describe('MovieCollectionGrid - Navigation Integration', () => {
         expect(screen.getByText('Test Movie 1')).toBeInTheDocument();
       });
 
-      // Movie links should include current page + filters
+      // Movie links should include filters but NOT page (infinite scroll migration)
       const movieLink = document.querySelector('a[href*="/movie/1"]');
       const href = movieLink?.getAttribute('href') || '';
 
-      expect(href).toContain('page=2');
+      expect(href).not.toContain('page=');
       expect(href).toContain('minYear=1995');
       expect(href).toContain('genres=28');
     });

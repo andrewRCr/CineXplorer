@@ -364,51 +364,51 @@ A/B decision (Phase 4.5).
         - Frontend linting: 0 violations
         - Tests: 703 passed, 5 pre-existing failures (MovieDetail expects `page=` in URLs)
 
-- [ ] **4.3 Create SequentialMovieGrid for A/B comparison**
+- [x] **4.3 Create SequentialMovieGrid for A/B comparison**
 
     **Approach:** Sequential pagination uses `useInfiniteMovies` but displays discrete pages
     (not accumulated). Access `pages[currentIndex]` directly from TanStack Query.
 
-    - [ ] **4.3.a Create SequentialMovieGrid component**
+    - [x] **4.3.a Create SequentialMovieGrid component**
         - Uses `useInfiniteMovies` for data fetching (same as infinite)
+        - Extended `useInfiniteMovies` to expose `pages` array and `pageCount`
         - Tracks `currentPageIndex` state
         - Displays `pages[currentPageIndex].results` (discrete, not accumulated)
         - Integrates `SequentialPaginationCtrl` for prev/next navigation
         - "Next" calls `fetchNextPage()` if needed, then increments index
         - "Prev" decrements index (data already cached)
 
-    - [ ] **4.3.b Write tests for SequentialMovieGrid**
-        - Test: Initial load shows first page
-        - Test: Next button fetches and shows next page
-        - Test: Prev button shows previous page (from cache)
-        - Test: Handles variable page sizes gracefully
-        - Test: Loading states during fetch
+    - [x] **4.3.b Write tests for SequentialMovieGrid**
+        - 14 tests covering: Initial load, next/prev navigation, cache behavior,
+          variable page sizes, loading states, empty/error states, page indicator
 
-    - [ ] **4.3.c Add temporary sequential route for A/B testing**
-        - Route: `/browse/sequential` (or similar)
-        - Wires `SequentialMovieGrid` with same fetcher/filters as infinite
-        - Minimal setup - just enough for comparison
+    - [x] **4.3.c Add temporary sequential route for A/B testing**
+        - Route: `/browse/sequential`
+        - Created `BrowseSequential.tsx` page component
+        - Added route constant `ROUTES.BROWSE_SEQUENTIAL`
+        - Uses same `MovieCollectionLayout` as other browse routes
 
-- [ ] **4.4 Update URL handling (applies to both approaches)**
+- [x] **4.4 Update URL handling (applies to both approaches)**
 
-    - [ ] **4.4.a Remove page params from URLs**
-        - Remove `page` and `tmdb_page_start` from URL state
-        - Keep filter params (`genres`, `minRating`, `sortBy`, etc.)
-        - Update or remove `paginationUrlSync.ts` as needed
+    - [x] **4.4.a Remove page params from URLs**
+        - `MovieCard` now strips `page` and `tmdb_page_start` from generated links
+        - `currentPage` prop deprecated (kept for backward compat with old grid)
+        - `paginationUrlSync.ts` kept for legacy `MovieCollectionGrid` (not deleted yet)
 
-    - [ ] **4.4.b Update MovieCard link generation**
-        - Remove page number from detail links
-        - Filters still preserved in URL for back navigation
+    - [x] **4.4.b Update MovieCard link generation**
+        - Updated `MovieCard.tsx` to skip page params in query string
+        - Updated 4 tests in `MovieCard.test.tsx` to expect no page params
+        - Updated 6 tests in `MovieCollectionGrid.integration.test.tsx`
 
-    - [ ] **4.4.c Update MovieDetail back navigation**
-        - Back button returns to browse with filters (no page)
-        - Scroll position restoration handled separately (Phase 5)
+    - [x] **4.4.c Update MovieDetail back navigation**
+        - Updated `MovieDetail.tsx` to skip `page` and `tmdb_page_start` in back URL
+        - Updated 20 tests in `MovieDetail.test.tsx` to expect no page params
 
-- [ ] **4.5 Run quality gates**
-    - Frontend tests passing (update pagination-specific tests)
+- [x] **4.5 Run quality gates**
+    - Frontend tests: 721 passed (all tests updated for no-page behavior)
     - Type checking: 0 errors
     - Linting: 0 violations
-    - Both infinite and sequential routes functional
+    - Both infinite (`/browse`) and sequential (`/browse/sequential`) routes functional
 
 ---
 

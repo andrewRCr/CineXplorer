@@ -1,27 +1,59 @@
-import { type Movie } from '@/@types/movie';
+import { type MovieListItem, type MovieDetail } from '@/@types/movie';
 
-// Factory function for creating mock movie data
-export const createMockMovie = (overrides: Partial<Movie> = {}): Movie => ({
+/**
+ * Factory for creating mock movie list items (for grids, lists, cards).
+ * Uses MovieListItem shape with genre_ids (not genres).
+ */
+export const createMockMovieListItem = (overrides: Partial<MovieListItem> = {}): MovieListItem => ({
 	tmdb_id: 1,
 	title: 'Test Movie',
 	overview: 'A great test movie',
 	poster_path: '/test-poster.jpg',
-	backdrop_path: '/test-backdrop.jpg',
 	release_date: '2024-01-01',
-	adult: false,
-	original_language: 'en',
-	original_title: 'Test Movie',
-	popularity: 7.8,
-	video: false,
 	vote_average: 8.2,
 	vote_count: 1500,
+	runtime: 120,
+	genre_ids: [28, 12], // Action, Adventure
 	...overrides,
 });
 
-// Factory for creating multiple mock movies
-export const createMockMovies = (count: number = 5): Movie[] => {
-	return Array.from({ length: count }, (_, index) => 
-		createMockMovie({
+/**
+ * Factory for creating mock movie detail (for detail pages).
+ * Uses MovieDetail shape with full genre objects.
+ */
+export const createMockMovieDetail = (overrides: Partial<MovieDetail> = {}): MovieDetail => ({
+	tmdb_id: 1,
+	title: 'Test Movie',
+	overview: 'A great test movie',
+	poster_path: '/test-poster.jpg',
+	release_date: '2024-01-01',
+	vote_average: 8.2,
+	vote_count: 1500,
+	runtime: 120,
+	genre_ids: [28, 12],
+	genres: [
+		{ id: 28, name: 'Action' },
+		{ id: 12, name: 'Adventure' },
+	],
+	cast: [],
+	crew: [],
+	production_companies: [],
+	spoken_languages: [],
+	us_certification: 'PG-13',
+	...overrides,
+});
+
+/**
+ * @deprecated Use createMockMovieListItem or createMockMovieDetail
+ */
+export const createMockMovie = createMockMovieListItem;
+
+/**
+ * Factory for creating multiple mock movie list items.
+ */
+export const createMockMovieListItems = (count: number = 5): MovieListItem[] => {
+	return Array.from({ length: count }, (_, index) =>
+		createMockMovieListItem({
 			tmdb_id: index + 1,
 			title: `Test Movie ${index + 1}`,
 			overview: `Overview for test movie ${index + 1}`,
@@ -29,6 +61,11 @@ export const createMockMovies = (count: number = 5): Movie[] => {
 		})
 	);
 };
+
+/**
+ * @deprecated Use createMockMovieListItems
+ */
+export const createMockMovies = createMockMovieListItems;
 
 // Common movie filter mock data
 export const mockMovieFilters = {

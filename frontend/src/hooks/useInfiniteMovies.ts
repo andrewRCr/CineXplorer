@@ -1,6 +1,6 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
-import type { PaginatedMoviesResponse, MovieBaseSchema } from "@/@types/movie";
+import type { PaginatedMoviesResponse, MovieListItem } from "@/@types/movie";
 
 /**
  * Options for useInfiniteMovies hook
@@ -32,7 +32,7 @@ export interface UseInfiniteMoviesOptions {
  */
 export interface UseInfiniteMoviesResult {
   /** Flattened array of movies from all fetched pages */
-  movies: MovieBaseSchema[];
+  movies: MovieListItem[];
 
   /** Fetch the next page of results */
   fetchNextPage: () => void;
@@ -54,6 +54,9 @@ export interface UseInfiniteMoviesResult {
 
   /** Whether the query is in an error state */
   isError: boolean;
+
+  /** Refetch the query */
+  refetch: () => void;
 }
 
 /**
@@ -104,5 +107,6 @@ export function useInfiniteMovies({
     isFetchingNextPage: query.isFetchingNextPage,
     error: query.error,
     isError: query.isError,
+    refetch: query.refetch,
   };
 }

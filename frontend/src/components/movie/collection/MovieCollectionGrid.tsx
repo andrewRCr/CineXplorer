@@ -7,18 +7,18 @@ import { usePaginatedMovies } from "@/hooks/usePaginatedMovies";
 import { useMovieCollectionContext } from "@/hooks/useMovieCollectionContext";
 import { usePageChangeHandler } from "@/hooks/usePageChangeHandler";
 import { usePaginationDisplay } from "@/hooks/usePaginationDisplay";
-import { type Movie, type PaginatedMoviesResponse } from "@/types/movie";
+import { type MovieListItem, type PaginatedMoviesResponse } from "@/types/movie";
 
-// Create a placeholder movie object to be used in the skeleton loading state.
-// This ensures the Skeleton wrapper has a correctly-structured child to measure.
-const placeholderMovie: Movie = {
+// Placeholder movie for skeleton loading state.
+// Uses MovieListItem shape (genre_ids, not genres) to match API response.
+const placeholderMovie: MovieListItem = {
   tmdb_id: 0,
   title: "Loading Movie Title",
-  release_date: new Date().toISOString(),
+  release_date: "2000-01-01",
   poster_path: "",
   vote_average: 0,
-  overview: "Loading overview...", // Placeholder value for loading state
-  genres: [],
+  overview: "Loading overview...",
+  genre_ids: [],
   runtime: 0,
 };
 
@@ -229,7 +229,7 @@ const MovieCollectionGrid = forwardRef<MovieGridRef, MovieCollectionGridProps>(
                     </Skeleton>
                   ))
                 : // Otherwise, show the movies
-                  movies.map((movie: Movie) => (
+                  movies.map((movie: MovieListItem) => (
                     <MovieCardContainer key={movie.tmdb_id}>
                       <MovieCard
                         movie={movie}

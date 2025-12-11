@@ -9,7 +9,7 @@ import {
 } from "@chakra-ui/react";
 import { useState, useRef, useEffect, memo, useMemo, useCallback } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { type Movie } from "@/types/movie";
+import { type MovieListItem } from "@/types/movie";
 import { Tooltip } from "../core/chakra/tooltip";
 import { LuEye, LuHeart } from "react-icons/lu";
 import { RiPlayListAddLine, RiPlayListFill } from "react-icons/ri";
@@ -17,7 +17,7 @@ import MovieUserScore from "./MovieUserScore";
 import { useMovieActions } from "../../hooks/useMovieActions";
 
 interface MovieCardProps {
-  movie: Movie;
+  movie: MovieListItem;
   currentPage?: number;
   source?: string;
   query?: string;

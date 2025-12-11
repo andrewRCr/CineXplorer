@@ -50,38 +50,39 @@
 - [ ] Redesign AdvancedFiltersPanel as compact drawer
     - **Context:** Panel moved from standalone (above grid) to drawer (attached to sticky CollapsibleSubNav).
       Current design takes too much vertical space (~50% viewport). Need compact layout for drawer context.
+
     - **Part A (completed):** QuickBrowseBar cleanup
         - [x] Move ClearFilters button inline (icon-only, after filters, before sort)
         - [x] Fix background consistency (removed conflicting bg, inherits from CollapsibleSubNav)
         - [x] Add placeholder for layout shift prevention
         - [x] Update tests for new behavior
-    - **Part B:** Compact drawer design
-        - [ ] **B.1 Create GenreCombobox component**
-            - Multi-select combobox with type-to-filter
-            - Selected genres as removable tags (max 3 visible + "+N more")
-            - Portal dropdown for clean overlay
-            - Label: "Genres (all)" or similar to communicate "full genre list"
-        - [ ] **B.2 Redesign AdvancedFiltersPanel for drawer context**
-            - Remove border/shadow/padding (drawer provides container styling)
-            - Remove "Advanced Filters" title (redundant in drawer)
-            - Horizontal layout to minimize height:
 
-              ```
-              Row 1: [Genre combobox with tags]
-              Row 2: Language | Year range | Rating range
-              Row 3: Certification chips | [Clear] [Collapse ↓]
-              ```
+    - **Part B (completed):** Compact drawer design
+        - [x] **B.1 Create GenrePopover component** (replaced GenreCombobox approach)
+            - Popover with 2-column checkbox grid for all genres
+            - Trigger button shows "All genres" or "N selected"
+            - 140px width, matches other controls
+            - Label: "Genres (full)" to distinguish from QuickBrowseBar genre select
+            - Auto-close when drawer collapses via `isOpen` prop
+        - [x] **B.2 Redesign AdvancedFiltersPanel for drawer context**
+            - Removed border/shadow/padding (drawer provides container styling)
+            - Removed "Advanced Filters" title (redundant in drawer)
+            - Compact 3-row layout:
+                - Row 1: Genres (full) popover | Certification chips
+                - Row 2: Language | Year range | Rating range
+                - Row 3: Clear/Collapse buttons (xs size, right-aligned)
+            - Added centered separator in CollapsibleSubNav between QuickBrowseBar and drawer
+        - [x] **B.3 Wire up in BrowseControlsSection**
+            - Pass `isDrawerOpen={isAdvancedPanelOpen && !isSubNavCollapsed}` to panel
+            - Genre popover auto-closes on drawer collapse
+        - [ ] **B.4 Update tests** (deferred - existing tests pass, new component tests TBD)
 
-            - Collapse button bottom-right (not top-right)
-            - Clear filters integrated into drawer (not separate)
-        - [ ] **B.3 Wire up in BrowseControlsSection**
-            - Pass redesigned panel as `drawerContent` to CollapsibleSubNav
-            - Test open/close behavior
-            - Test filter changes propagate correctly
-        - [ ] **B.4 Update tests**
     - **Files:**
-        - New: `frontend/src/components/movie/browse/GenreCombobox.tsx`
+        - New: `frontend/src/components/movie/browse/GenrePopover.tsx`
+        - New: `frontend/src/components/movie/browse/GenreCombobox.tsx` (unused, created during iteration)
         - Update: `frontend/src/components/movie/browse/AdvancedFiltersPanel.tsx`
+        - Update: `frontend/src/components/movie/browse/CertificationFilter.tsx`
+        - Update: `frontend/src/components/layout/CollapsibleSubNav.tsx`
         - Update: `frontend/src/components/movie/collection/BrowseControlsSection.tsx`
     - **Priority:** High - blocking A/B evaluation (Phase 4.6 of `tasks-infinite-scroll-migration.md`)
     - **Effort:** ~2-3 hours

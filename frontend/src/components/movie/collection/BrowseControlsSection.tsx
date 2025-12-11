@@ -71,6 +71,7 @@ const BrowseControlsSection = ({
             isCollapsed={false}
             onToggleCollapse={onToggleAdvancedPanel}
             pageSource={source}
+            isDrawerOpen={isAdvancedPanelOpen && !isSubNavCollapsed}
           />
         }
         isDrawerOpen={isAdvancedPanelOpen}

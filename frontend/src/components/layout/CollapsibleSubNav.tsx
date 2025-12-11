@@ -22,7 +22,7 @@
  * ```
  */
 
-import { Box } from "@chakra-ui/react";
+import { Box, Flex, Separator } from "@chakra-ui/react";
 import { useEffect, useRef } from "react";
 import type { ReactNode } from "react";
 
@@ -129,11 +129,13 @@ export function CollapsibleSubNav({
           maxHeight={isDrawerOpen ? "800px" : "0px"}
           opacity={isDrawerOpen ? 1 : 0}
           overflow="hidden"
-          borderTopWidth="1px"
-          borderColor="border-subtle-01"
           bg="layer-01"
           transition={`max-height 220ms ease, opacity 160ms ease`}
         >
+          {/* Centered separator between QuickBrowseBar and drawer content */}
+          <Flex justify="center" px={4} pt={1}>
+            <Separator w="60%" borderColor="border-subtle-01" />
+          </Flex>
           <Box maxW={CONTENT_MAX_WIDTH} mx="auto" w="100%" px={4} py={3}>
             {drawerContent}
           </Box>

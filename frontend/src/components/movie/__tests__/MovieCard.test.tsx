@@ -89,12 +89,12 @@ describe('MovieCard Component', () => {
       expect(links.length).toBeGreaterThan(0);
     });
 
-    it('includes query parameters in links when provided', () => {
+    it('includes query parameters in links when provided (no page for infinite scroll)', () => {
       const testMovie = createMockMovie({ tmdb_id: 123 });
 
       render(
-        <MovieCard 
-          {...defaultProps} 
+        <MovieCard
+          {...defaultProps}
           movie={testMovie}
           currentPage={3}
           source="top-rated"
@@ -103,7 +103,8 @@ describe('MovieCard Component', () => {
       );
 
       const link = document.querySelector('a[href*="/movie/123"]');
-      expect(link?.getAttribute('href')).toContain('page=3');
+      // Page params should NOT be included (infinite scroll migration)
+      expect(link?.getAttribute('href')).not.toContain('page=');
       expect(link?.getAttribute('href')).toContain('from=top-rated');
       expect(link?.getAttribute('href')).toContain('query=action');
     });
@@ -434,18 +435,16 @@ describe('MovieCard Component', () => {
 
       const href = link?.getAttribute('href') || '';
 
-      // Should include existing params
-      expect(href).toContain('page=2');
+      // Page params should NOT be included (infinite scroll migration)
+      expect(href).not.toContain('page=');
       expect(href).toContain('from=popular');
       expect(href).toContain('query=test%20query');
-
-      // TODO: Should also include filter params (minYear, maxYear, genres, rating, etc.)
-      // This test will FAIL until implementation adds full URL param capture
     });
 
-    it('preserves filter params from URL search params', () => {
+    it('preserves filter params from URL search params but strips page', () => {
       // This test simulates the component reading from useSearchParams()
-      // MovieCard should read ALL params from URL and preserve them
+      // MovieCard should read filter params from URL and preserve them
+      // But NOT page params (infinite scroll migration)
 
       const testMovie = createMockMovie({ tmdb_id: 123 });
 
@@ -461,7 +460,9 @@ describe('MovieCard Component', () => {
       const link = document.querySelector('a[href*="/movie/123"]');
       const href = link?.getAttribute('href') || '';
 
-      // All URL params should be preserved in detail page link
+      // Page params should NOT be preserved (infinite scroll)
+      expect(href).not.toContain('page=');
+      // Filter params should be preserved
       expect(href).toContain('minYear=1980');
       expect(href).toContain('maxYear=1990');
       // Genres is URL-encoded (comma becomes %2C)
@@ -508,8 +509,8 @@ describe('MovieCard Component', () => {
       const link = document.querySelector('a[href*="/movie/789"]');
       const href = link?.getAttribute('href') || '';
 
-      // Should include page and from, but not empty query
-      expect(href).toContain('page=1');
+      // Should include from, but NOT page (infinite scroll) or empty query
+      expect(href).not.toContain('page=');
       expect(href).toContain('from=popular');
 
       // Should not include empty/undefined filter params

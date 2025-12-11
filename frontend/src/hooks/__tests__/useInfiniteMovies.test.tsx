@@ -101,6 +101,11 @@ describe("useInfiniteMovies", () => {
       expect(result.current.movies).toHaveLength(2);
       expect(result.current.movies[0].tmdb_id).toBe(123);
       expect(result.current.movies[1].tmdb_id).toBe(456);
+
+      // Should expose raw pages array for sequential pagination
+      expect(result.current.pages).toHaveLength(1);
+      expect(result.current.pageCount).toBe(1);
+      expect(result.current.pages[0].results).toHaveLength(2);
     });
 
     it("should flatten movies from multiple pages", async () => {

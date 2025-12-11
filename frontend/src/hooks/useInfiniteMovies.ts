@@ -34,6 +34,12 @@ export interface UseInfiniteMoviesResult {
   /** Flattened array of movies from all fetched pages */
   movies: MovieListItem[];
 
+  /** Raw pages array from TanStack Query (for sequential/discrete page access) */
+  pages: PaginatedMoviesResponse[];
+
+  /** Total number of fetched pages */
+  pageCount: number;
+
   /** Fetch the next page of results */
   fetchNextPage: () => void;
 
@@ -92,14 +98,21 @@ export function useInfiniteMovies({
     },
   });
 
-  // Flatten all pages into single movies array
+  // Flatten all pages into single movies array (for infinite scroll)
   const movies = useMemo(() => {
     if (!query.data?.pages) return [];
     return query.data.pages.flatMap((page) => page.results ?? []);
   }, [query.data?.pages]);
 
+  // Raw pages array (for sequential/discrete page access)
+  const pages = useMemo(() => {
+    return query.data?.pages ?? [];
+  }, [query.data?.pages]);
+
   return {
     movies,
+    pages,
+    pageCount: pages.length,
     fetchNextPage: query.fetchNextPage,
     hasNextPage: query.hasNextPage ?? false,
     isLoading: query.isLoading,

@@ -118,9 +118,9 @@ navigation patterns.
 
 **Purpose:** Create the scroll-based loading UI component.
 
-- [ ] **2.1 Write tests for infinite scroll behavior**
+- [x] **2.1 Write tests for infinite scroll behavior**
 
-    - [ ] **2.1.a Create `InfiniteMovieGrid.test.tsx`**
+    - [x] **2.1.a Create `InfiniteMovieGrid.test.tsx`**
         - Test: Renders initial movies on mount
         - Test: Shows loading skeleton while fetching
         - Test: Triggers `fetchNextPage` when scroll sentinel visible
@@ -129,31 +129,60 @@ navigation patterns.
         - Test: Handles error state with retry option
         - Expect tests to FAIL initially
 
-- [ ] **2.2 Implement `InfiniteMovieGrid` component**
+- [x] **2.2 Implement `InfiniteMovieGrid` component**
 
-    - [ ] **2.2.a Create scroll detection with Intersection Observer**
+    - [x] **2.2.a Create scroll detection with Intersection Observer**
         - Create sentinel element at bottom of grid
         - Use `useRef` + `IntersectionObserver` to detect visibility
         - Trigger `fetchNextPage` when sentinel enters viewport
         - Debounce to prevent rapid-fire fetches
 
-    - [ ] **2.2.b Implement loading and end states**
+    - [x] **2.2.b Implement loading and end states**
         - Show skeleton cards while `isFetching` and has content
         - Show "Loading..." on initial load (`isLoading`)
         - Show "No more results" when `!hasNextPage`
         - Show empty state when no results match filters
 
-    - [ ] **2.2.c Implement error handling**
+    - [x] **2.2.c Implement error handling**
         - Display error message on fetch failure
         - Provide "Retry" button that calls `refetch()`
         - Don't lose already-loaded content on error
 
-    - [ ] **2.2.d Run tests - should now PASS**
+    - [x] **2.2.d Run tests - should now PASS**
+        - All 7 tests in `InfiniteMovieGrid.test.tsx` passed
 
-- [ ] **2.3 Run quality gates**
-    - Frontend tests passing
-    - Type checking: 0 errors
-    - Linting: 0 violations
+- [x] **2.3 Run quality gates**
+    - [x] Frontend tests passing (8 InfiniteMovieGrid + 10 useInfiniteMovies = 18 new tests)
+    - [x] Type checking: 0 errors
+    - [x] Linting: 0 violations
+
+**Phase 2 Completion Notes (2025-12-11):**
+
+Initial implementation reviewed and rewritten to address issues:
+
+1. **Type System Cleanup:**
+   - Created `MovieListItem` type for list/grid views (has `genre_ids: number[]`)
+   - Created `MovieDetail` type for detail pages (has `genres: GenreSchema[]`)
+   - Added deprecated aliases for backwards compatibility
+   - Updated `MovieCard`, `MovieCollectionGrid`, `useInfiniteMovies` to use correct types
+   - Updated mock factories: `createMockMovieListItem()`, `createMockMovieDetail()`
+
+2. **InfiniteMovieGrid Fixes:**
+   - Fixed query key: now uses actual filter values (source, query) instead of function reference
+   - Added 150ms debounce for scroll-triggered fetches
+   - Fixed placeholder movie shape to use `genre_ids` not `genres`
+   - Proper cleanup of timeouts on unmount
+   - Correct semantic tokens (`layer-01`, `layer-02`, `fg-muted`, `fg-error`)
+
+3. **Test Improvements:**
+   - Added debounce verification test
+   - Mock movies use correct `MovieListItem` shape
+
+**Discovered Technical Debt:**
+
+- `@shared/api-types.ts` contains outdated manually-maintained types
+- 3 files still use `@shared` for Movie type (`useMovieDetail.ts`, `MovieDetail.tsx`, test)
+- Added atomic task for cleanup: "Remove @shared/api-types.ts and migrate to OpenAPI types"
 
 ---
 

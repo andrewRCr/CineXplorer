@@ -96,6 +96,63 @@
     - Goal: Either fix configuration or document as known limitation with workaround
     - Context: Discovered during endpoint consolidation quality gates (Phase 6.1.b)
 
+<!-- Type System Cleanup -->
+
+- [ ] Remove `@shared/api-types.ts` and migrate remaining usages to OpenAPI-generated types
+    - **Context:** Discovered during infinite scroll type cleanup. The `@shared` directory was meant
+      for frontend/backend type sync, but:
+        - Backend already migrated to Pydantic models (Task 5.6.8)
+        - Movie types are now auto-generated from OpenAPI → `@/@types/movie.d.ts`
+        - `@shared/api-types.ts` is manually maintained and **outdated** (missing `genre_ids`, etc.)
+    - **Current usages of `@shared` movie types (3 files):**
+        - `frontend/src/hooks/useMovieDetail.ts` - imports `Movie`
+        - `frontend/src/pages/movie/MovieDetail.tsx` - imports `Movie, Genre, CastMember, CrewMember,
+        ProductionCompany, SpokenLanguage`
+        - `frontend/src/pages/movie/__tests__/MovieDetail.test.tsx` - imports `Movie` (via mock)
+    - **Migration:**
+        1. Update `useMovieDetail.ts`: import `MovieDetail` from `@/types/movie`
+        2. Update `MovieDetail.tsx`: import from `@/types/movie` (all types available there)
+        3. Update `MovieDetail.test.tsx`: use `createMockMovieDetail` from updated mocks
+        4. Delete `shared/api-types.ts`
+    - **Files:**
+        - `frontend/src/hooks/useMovieDetail.ts`
+        - `frontend/src/pages/movie/MovieDetail.tsx`
+        - `frontend/src/pages/movie/__tests__/MovieDetail.test.tsx`
+        - `shared/api-types.ts` (delete)
+    - **Priority:** Medium - prevents type drift, completes type system cleanup
+    - **Effort:** ~30 minutes
+    - **Depends on:** None (can be done anytime)
+
+- [ ] Auto-generate error codes from backend Pydantic Enum → OpenAPI → TypeScript
+    - **Context:** Final step to eliminate `shared/` directory entirely. Currently error codes are
+      manually duplicated between `backend/shared/error_codes.py` and `shared/error-codes.ts`.
+    - **Current state:**
+        - `backend/shared/error_codes.py` - Python `ErrorCodes` class with string constants
+        - `shared/error-codes.ts` - TypeScript duplicate with same constants + category mapping
+        - `frontend/src/pages/user/Login.tsx` - only frontend consumer (imports `ERROR_CODES`)
+    - **Implementation approach:**
+        1. Create Pydantic `ErrorCode` Enum in backend API schemas (e.g., `apps/core/schemas/errors.py`)
+        2. Expose enum in OpenAPI spec (used in error response schemas)
+        3. Run `openapi-typescript` - generates TypeScript enum automatically
+        4. Create `frontend/src/@types/errors.d.ts` with re-exports and helper functions
+        5. Update `Login.tsx` to import from new location
+        6. Delete `shared/error-codes.ts` and `shared/error_codes.py`
+        7. Delete `shared/` directory entirely (api-types.ts removed by previous task)
+    - **Benefits:**
+        - Single source of truth (backend Pydantic Enum)
+        - Automatic sync on `npm run generate-types`
+        - Type-safe error handling (enum vs string constants)
+        - No manual maintenance of duplicate files
+    - **Files:**
+        - New: `backend/apps/core/schemas/errors.py` (or similar location)
+        - New: `frontend/src/@types/errors.d.ts`
+        - Update: `frontend/src/pages/user/Login.tsx`
+        - Delete: `shared/error-codes.ts`, `shared/error_codes.py`, `shared/index.ts`
+        - Delete: `shared/` directory, `backend/shared/` directory
+    - **Priority:** Low - current approach works, this is cleanup
+    - **Effort:** ~1-2 hours (backend schema + frontend migration + testing)
+    - **Depends on:** "Remove @shared/api-types.ts" task (do that first)
+
 <!-- Code Quality / Refactoring -->
 
 - [ ] Refactor Movie Collection URL/State Hooks for Clarity and Separation of Concerns

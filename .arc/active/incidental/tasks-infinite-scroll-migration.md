@@ -265,31 +265,26 @@ Reference: Pitchfork.com secondary navigation bar behavior.
         - Sub-nav slides "under" navbar (z-index 9 vs navbar 10)
         - Tested on desktop viewport
 
-- [ ] **3.4 Implement BackToTopButton component**
+- [x] **3.4 Implement BackToTopButton component**
 
-    - [ ] **3.4.a Write tests for BackToTopButton**
-        - Test: Hidden when at top of page
-        - Test: Visible after scrolling down threshold
-        - Test: Click scrolls to top smoothly
-        - Test: Click triggers sub-nav to reappear (callback prop)
-        - Test: Proper accessibility (aria-label, keyboard accessible)
-        - Expect tests to FAIL initially
+    - [x] **3.4.a Write tests for BackToTopButton**
+        - 18 tests in `src/components/navigation/__tests__/BackToTopButton.test.tsx`
+        - Coverage: visibility (threshold-based), click behavior, accessibility, positioning
 
-    - [ ] **3.4.b Implement BackToTopButton component**
+    - [x] **3.4.b Implement BackToTopButton component**
         - Location: `src/components/navigation/BackToTopButton.tsx`
-        - Use `useScrollState` hook for visibility
-        - `window.scrollTo({ top: 0, behavior: 'smooth' })` on click
-        - Callback prop `onScrollToTop` to notify parent (for sub-nav expand)
-        - Style: Fixed position, bottom-right, subtle but visible
-        - Use semantic tokens per theme strategy
-        - Accessibility: aria-label="Scroll to top", focusable
+        - Uses `useScrollState` hook for visibility control
+        - Smooth scroll via `window.scrollTo({ top: 0, behavior: 'smooth' })`
+        - Fixed position bottom-right with `bottom="6" right="6"` padding
+        - Chakra IconButton with `LuChevronUp` icon, `variant="solid"`, `rounded="full"`
 
-    - [ ] **3.4.c Run tests - should now PASS**
+    - [x] **3.4.c Run tests - 18/18 passing**
 
-    - [ ] **3.4.d Integrate BackToTopButton with infinite scroll pages**
-        - Add to MovieCollectionLayout or InfiniteMovieGrid
-        - Wire `onScrollToTop` to expand CollapsibleSubNav
-        - Only show on pages with infinite scroll
+    - [x] **3.4.d Integrate BackToTopButton with BrowseControlsSection**
+        - Added to `BrowseControlsSection.tsx` (co-located with CollapsibleSubNav)
+        - `onScrollToTop` callback sets `forceExpand` state to expand sub-nav
+        - Uses same threshold (200px) as CollapsibleSubNav for consistency
+        - 145 collection tests passing
 
 - [ ] **3.5 (Optional) Sequential pagination variant for A/B comparison**
 

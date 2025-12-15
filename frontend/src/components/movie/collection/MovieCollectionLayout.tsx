@@ -78,6 +78,7 @@ const MovieCollectionLayout = ({
     isAdvancedPanelOpen,
     setIsAdvancedPanelOpen,
     toggleAdvancedPanel,
+    hasActiveAdvancedFilters,
   } = useMovieCollectionState({
     defaultBrowseParams,
     source: actualSource,
@@ -160,6 +161,7 @@ const MovieCollectionLayout = ({
         <BrowseControlsSection
           showControls={showBrowseControls}
           isAdvancedPanelOpen={isAdvancedPanelOpen}
+          hasActiveAdvancedFilters={hasActiveAdvancedFilters}
           browseParams={browseParams}
           onBrowseParamsChange={onBrowseParamsChange}
           onToggleAdvancedPanel={toggleAdvancedPanel}

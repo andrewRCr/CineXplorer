@@ -15,6 +15,8 @@ const SCROLL_HYSTERESIS = 15;
 interface BrowseControlsSectionProps {
   showControls: boolean;
   isAdvancedPanelOpen: boolean;
+  /** Whether advanced filters are currently applied (for toggle button indicator) */
+  hasActiveAdvancedFilters?: boolean;
   browseParams: BrowseParams;
   onBrowseParamsChange: (
     params:
@@ -30,6 +32,7 @@ interface BrowseControlsSectionProps {
 const BrowseControlsSection = ({
   showControls,
   isAdvancedPanelOpen,
+  hasActiveAdvancedFilters = false,
   browseParams,
   onBrowseParamsChange,
   onToggleAdvancedPanel,
@@ -80,7 +83,6 @@ const BrowseControlsSection = ({
           <AdvancedFiltersPanel
             browseParams={browseParams}
             onBrowseParamsChange={onBrowseParamsChange}
-            isCollapsed={false}
             onToggleCollapse={onToggleAdvancedPanel}
             pageSource={source}
             isDrawerOpen={isAdvancedPanelOpen && !isSubNavCollapsed}
@@ -92,6 +94,7 @@ const BrowseControlsSection = ({
           browseParams={browseParams}
           onBrowseParamsChange={onBrowseParamsChange}
           isAdvancedOpen={isAdvancedPanelOpen}
+          hasActiveAdvancedFilters={hasActiveAdvancedFilters}
           onToggleAdvanced={onToggleAdvancedPanel}
           pageSource={source}
         />

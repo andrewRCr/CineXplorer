@@ -117,7 +117,7 @@ interface MovieCollectionState {
   // Derived state
   hasActiveFilters: boolean; // Excludes sort (for "Clear Filters" button visibility)
   hasActiveBrowseParams: boolean; // Includes sort (for full param detection)
-  hasAdvancedFilters: boolean;
+  hasActiveAdvancedFilters: boolean; // Whether advanced filters are currently applied
   activeParamCount: number;
 
   // Actions
@@ -293,7 +293,7 @@ export const useMovieCollectionState = ({
   }, [browseParams]);
 
   // Use centralized function to avoid duplicate logic
-  const hasAdvancedFilters = useMemo(() => {
+  const hasActiveAdvancedFilters = useMemo(() => {
     return hasAdvancedFilterValues(browseParams);
   }, [browseParams]);
 
@@ -305,9 +305,9 @@ export const useMovieCollectionState = ({
   const derivedState = useMemo(() => ({
     hasActiveFilters,
     hasActiveBrowseParams,
-    hasAdvancedFilters,
+    hasActiveAdvancedFilters,
     activeParamCount,
-  }), [hasActiveFilters, hasActiveBrowseParams, hasAdvancedFilters, activeParamCount]);
+  }), [hasActiveFilters, hasActiveBrowseParams, hasActiveAdvancedFilters, activeParamCount]);
 
   // Actions: Clear filters but preserve sort (sort is user preference, not a filter)
   const resetBrowseParams = useCallback(() => {

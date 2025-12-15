@@ -13,6 +13,8 @@ interface QuickBrowseBarProps {
       | ((prev: BrowseParams) => BrowseParams)
   ) => void;
   isAdvancedOpen?: boolean;
+  /** Whether advanced filters are currently applied (for toggle button indicator) */
+  hasActiveAdvancedFilters?: boolean;
   onToggleAdvanced?: () => void;
   pageSource?: string;
 }
@@ -21,6 +23,7 @@ const QuickBrowseBar = ({
   browseParams,
   onBrowseParamsChange,
   isAdvancedOpen = false,
+  hasActiveAdvancedFilters = false,
   onToggleAdvanced,
   pageSource,
 }: QuickBrowseBarProps) => {
@@ -71,6 +74,7 @@ const QuickBrowseBar = ({
         onFiltersChange={onBrowseParamsChange}
         onToggleAdvanced={onToggleAdvanced}
         isAdvancedOpen={isAdvancedOpen}
+        hasActiveAdvancedFilters={hasActiveAdvancedFilters}
         pageSource={pageSource}
       />
 

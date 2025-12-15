@@ -21,6 +21,8 @@ interface ConnectedDropdownsProps {
   ) => void;
   onToggleAdvanced?: () => void;
   isAdvancedOpen?: boolean;
+  /** Whether advanced filters are currently applied (for toggle button indicator) */
+  hasActiveAdvancedFilters?: boolean;
   pageSource?: string;
 }
 
@@ -29,6 +31,7 @@ const ConnectedDropdowns = ({
   onFiltersChange,
   onToggleAdvanced,
   isAdvancedOpen = false,
+  hasActiveAdvancedFilters = false,
   pageSource,
 }: ConnectedDropdownsProps) => {
   // Memoize the filter update function to prevent recreation
@@ -389,7 +392,7 @@ const ConnectedDropdowns = ({
           Unlike standalone buttons, it uses subtle hover styling (background tint only) to match the connected
           dropdowns' hover behavior. This creates visual cohesion across the connected control group.
           Strategy doc pattern (border/text color changes on hover) applies to standalone buttons, not connected groups.
-          Active filter indication: primary icon color when panel is open.
+          Active filter indication: primary icon color when panel is open OR when advanced filters are applied.
       */}
       {onToggleAdvanced && (
         <Button
@@ -398,8 +401,8 @@ const ConnectedDropdowns = ({
           variant="outline"
           borderRadius="0 4px 4px 0"
           borderColor="button-outline"
-          // Active filter indication: primary color when panel is open
-          color={isAdvancedOpen ? "primary" : "on-button-outline"}
+          // Active filter indication: primary color when panel is open or advanced filters applied
+          color={isAdvancedOpen || hasActiveAdvancedFilters ? "primary" : "on-button-outline"}
           _hover={{
             bg: "tertiary/8",
           }}
@@ -430,8 +433,9 @@ const MemoizedConnectedDropdowns = memo(ConnectedDropdowns, (prevProps, nextProp
     // Compare function references
     prevProps.onFiltersChange === nextProps.onFiltersChange &&
     prevProps.onToggleAdvanced === nextProps.onToggleAdvanced &&
-    // Compare isAdvancedOpen for active filter indication
+    // Compare state for active filter indication
     prevProps.isAdvancedOpen === nextProps.isAdvancedOpen &&
+    prevProps.hasActiveAdvancedFilters === nextProps.hasActiveAdvancedFilters &&
     // Compare pageSource for route-based disabling
     prevProps.pageSource === nextProps.pageSource
   );

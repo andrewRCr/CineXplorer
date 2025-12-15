@@ -105,7 +105,7 @@ const CertificationFilter = ({
           </Flex>
         </CheckboxGroup>
       </Flex>
-      {/* Disclaimer fully centered in container */}
+      {/* Disclaimer constrained to chip row width to prevent layout shift */}
       {showNc17Disclaimer && (
         <Text
           fontSize="xs"
@@ -113,9 +113,9 @@ const CertificationFilter = ({
           mt={2}
           fontStyle="italic"
           textAlign="center"
+          maxW="240px"
         >
-          Results may include alternate versions (uncut, re-releases) rated
-          NC-17
+          May include uncut/alternate re-releases
         </Text>
       )}
     </Box>

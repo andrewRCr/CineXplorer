@@ -252,7 +252,7 @@ describe("useMovieCollectionState", () => {
     });
   });
 
-  describe("Derived state - hasAdvancedFilters", () => {
+  describe("Derived state - hasActiveAdvancedFilters", () => {
     it("should detect rating filters as advanced", () => {
       // Arrange: Use non-URL-synced mode for filter update testing
       const { result } = renderHook(
@@ -269,7 +269,7 @@ describe("useMovieCollectionState", () => {
       });
 
       // Assert
-      expect(result.current.hasAdvancedFilters).toBe(true);
+      expect(result.current.hasActiveAdvancedFilters).toBe(true);
     });
 
     it("should detect custom year range as advanced", () => {
@@ -288,7 +288,7 @@ describe("useMovieCollectionState", () => {
       });
 
       // Assert
-      expect(result.current.hasAdvancedFilters).toBe(true);
+      expect(result.current.hasActiveAdvancedFilters).toBe(true);
     });
 
     it("should NOT detect single year as advanced", () => {
@@ -307,7 +307,7 @@ describe("useMovieCollectionState", () => {
       });
 
       // Assert
-      expect(result.current.hasAdvancedFilters).toBe(false);
+      expect(result.current.hasActiveAdvancedFilters).toBe(false);
     });
 
     it("should NOT detect decade preset as advanced", () => {
@@ -327,7 +327,7 @@ describe("useMovieCollectionState", () => {
       });
 
       // Assert: Decade range should NOT be detected as advanced
-      expect(result.current.hasAdvancedFilters).toBe(false);
+      expect(result.current.hasActiveAdvancedFilters).toBe(false);
     });
 
     it("should NOT detect single core genre as advanced", () => {
@@ -347,7 +347,7 @@ describe("useMovieCollectionState", () => {
       });
 
       // Assert: Single core genre should NOT be advanced
-      expect(result.current.hasAdvancedFilters).toBe(false);
+      expect(result.current.hasActiveAdvancedFilters).toBe(false);
     });
 
     it("should detect multiple genres as advanced", () => {
@@ -366,7 +366,7 @@ describe("useMovieCollectionState", () => {
       });
 
       // Assert: Multiple genres should be advanced
-      expect(result.current.hasAdvancedFilters).toBe(true);
+      expect(result.current.hasActiveAdvancedFilters).toBe(true);
     });
 
     it("should detect non-core genre as advanced", () => {
@@ -385,7 +385,7 @@ describe("useMovieCollectionState", () => {
       });
 
       // Assert: Non-core genre should be advanced
-      expect(result.current.hasAdvancedFilters).toBe(true);
+      expect(result.current.hasActiveAdvancedFilters).toBe(true);
     });
   });
 

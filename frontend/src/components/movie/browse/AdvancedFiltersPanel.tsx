@@ -9,7 +9,7 @@ import {
   createListCollection,
   Flex,
 } from "@chakra-ui/react";
-import { FiChevronUp, FiFilter, FiX } from "react-icons/fi";
+import { FiChevronUp, FiX } from "react-icons/fi";
 import GenrePopover from "./GenrePopover";
 import YearSelector from "./YearSelector";
 import RatingSelector from "./RatingSelector";
@@ -26,7 +26,6 @@ interface AdvancedFiltersPanelProps {
       | Partial<BrowseParams>
       | ((prev: BrowseParams) => BrowseParams)
   ) => void;
-  isCollapsed?: boolean;
   onToggleCollapse?: () => void;
   pageSource?: string;
   /** Whether the drawer containing this panel is open (for auto-closing dropdowns) */
@@ -38,7 +37,6 @@ const LANGUAGE_WIDTH = "160px";
 const AdvancedFiltersPanel = ({
   browseParams,
   onBrowseParamsChange,
-  isCollapsed = false,
   onToggleCollapse,
   pageSource,
   isDrawerOpen = true,
@@ -74,29 +72,6 @@ const AdvancedFiltersPanel = ({
 
   // Use hasActiveFilters (excludes sort) for button visibility
   const hasActiveParams = hasActiveFilters(browseParams);
-
-  // Collapsed state: show expand button (used when not in drawer context)
-  if (isCollapsed) {
-    return (
-      <Box mb={4}>
-        <Button
-          onClick={onToggleCollapse}
-          variant="outline"
-          size="sm"
-          borderColor="button-outline"
-          color="on-button-outline"
-          _hover={{
-            bg: "tertiary/8",
-            borderColor: "tertiary",
-            color: "tertiary",
-          }}
-        >
-          <FiFilter style={{ marginRight: "6px" }} />
-          {hasActiveParams ? "Filters (Active)" : "Filters"}
-        </Button>
-      </Box>
-    );
-  }
 
   // Drawer layout: compact 3-row design
   // Row 1: Genres (full) | Certifications
@@ -169,7 +144,6 @@ const AdvancedFiltersPanel = ({
             <Select.Positioner>
               <Select.Content
                 w={LANGUAGE_WIDTH}
-                bg="layer-02"
                 borderColor="border-subtle-02"
                 color="foreground"
                 maxH="300px"

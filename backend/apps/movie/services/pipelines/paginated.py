@@ -261,7 +261,15 @@ def fetch_with_filters_and_buffer(
     )
 
     # Step 6: Calculate next TMDB page start for pagination continuation
-    next_tmdb_page_start = effective_page + pages_consumed
+    calculated_next_page = effective_page + pages_consumed
+
+    # Step 6b: Signal end-of-results when:
+    # - We've exceeded TMDB's available pages, OR
+    # - We returned 0 results (buffer exhausted with no unique movies found)
+    # This ensures frontend hasNextPage becomes false cleanly
+    next_tmdb_page_start: int | None = None
+    if calculated_next_page <= tmdb_response.total_pages and len(final_movies) > 0:
+        next_tmdb_page_start = calculated_next_page
 
     # Step 7: Build filtered response with pagination metadata
     return build_filtered_response(

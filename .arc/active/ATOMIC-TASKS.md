@@ -29,6 +29,49 @@
 ## Active
 <!-- Add tasks here with checkboxes -->
 
+<!-- CRITICAL - App-Breaking Bugs -->
+
+- [ ] **CRITICAL: Fix deduplication accumulation causing premature end-of-results**
+    - **Priority:** App-breaking - trumps all other work
+    - **Symptom:** Browsing with filters (e.g., NC-17 certification) hits "end of results" after ~12 pages
+      (~220 movies) despite TMDB having 208,984+ results. User sees "loading more" indicator that eventually
+      stops, results appear truncated.
+    - **Root Cause Analysis (completed):**
+        - Session-based deduplication tracker (Redis) accumulates ALL returned movie IDs across pagination
+        - Each page fetch adds 20 IDs to Redis set for that filter combination
+        - By page 12: Redis has 200+ IDs stored
+        - When fetching page 13+, most TMDB results are filtered as "already returned"
+        - Buffer mechanism (5 page limit) exhausts trying to find 20 "new" movies
+        - Returns fewer than 20 results, eventually 0
+        - **This is working as designed for infinite scroll** (prevents showing same movie twice), BUT:
+            - Causes progressive page sparsity
+            - Eventually causes empty pages / premature end-of-results
+    - **Key Files:**
+        - `backend/apps/movie/services/deduplication_tracker.py` - Session tracking logic
+        - `backend/apps/movie/services/pipelines/paginated.py` - Buffer + dedup integration (lines 74-145)
+        - Session clears only at `page=1 AND tmdb_page_start=None` (line 201)
+    - **Investigation Context:**
+        - API tests show NC-17 returns full pages through page 450+ when fetched fresh
+        - User's "353 total results" mystery: API returns `total_results: 208984` from TMDB, so frontend
+          may be calculating differently or showing cached/stale data (secondary issue, investigate after)
+    - **Fix Options to Evaluate:**
+        1. **Disable cross-page dedup for sequential pagination** - Different behavior for infinite vs sequential
+        2. **Time-based session expiry** - Clear dedup set periodically (may cause mid-scroll duplicates)
+        3. **Sliding window dedup** - Only track last N pages worth of IDs instead of all
+        4. **Accept sparser pages** - Increase buffer limit (currently 5) to compensate
+        5. **Rethink dedup strategy** - Is cross-page dedup actually needed? TMDB may not return many duplicates
+    - **Related Issue (secondary):** Frontend showing "353 results" instead of "10,000+ results" for NC-17
+        - Needs investigation: Is this stale cache, different calculation, or actual bug?
+        - Address after fixing dedup accumulation issue
+    - **Test Reproduction:**
+        - Browse with NC-17 certification filter (default sort)
+        - Scroll/paginate through results
+        - Observe results becoming sparser, eventually empty
+        - Compare: Fresh API call `curl -sk 'https://localhost:8000/api/movies/browse?certification=NC-17&tmdb_page_start=100'`
+          returns 20 results (proving TMDB has data)
+    - **Effort:** Medium-High (requires design decision, implementation, testing)
+    - **Context:** Discovered during Phase 4.6 A/B evaluation prep (tasks-infinite-scroll-migration.md)
+
 <!-- Documentation -->
 
 - [ ] Create `strategy-data-quality.md` - Document TMDB data quality mechanisms
@@ -46,46 +89,6 @@
     - **Effort:** ~1-2 hours
 
 <!-- UI/UX Fixes -->
-
-- [ ] Redesign AdvancedFiltersPanel as compact drawer
-    - **Context:** Panel moved from standalone (above grid) to drawer (attached to sticky CollapsibleSubNav).
-      Current design takes too much vertical space (~50% viewport). Need compact layout for drawer context.
-
-    - **Part A (completed):** QuickBrowseBar cleanup
-        - [x] Move ClearFilters button inline (icon-only, after filters, before sort)
-        - [x] Fix background consistency (removed conflicting bg, inherits from CollapsibleSubNav)
-        - [x] Add placeholder for layout shift prevention
-        - [x] Update tests for new behavior
-
-    - **Part B (completed):** Compact drawer design
-        - [x] **B.1 Create GenrePopover component** (replaced GenreCombobox approach)
-            - Popover with 2-column checkbox grid for all genres
-            - Trigger button shows "All genres" or "N selected"
-            - 140px width, matches other controls
-            - Label: "Genres (full)" to distinguish from QuickBrowseBar genre select
-            - Auto-close when drawer collapses via `isOpen` prop
-        - [x] **B.2 Redesign AdvancedFiltersPanel for drawer context**
-            - Removed border/shadow/padding (drawer provides container styling)
-            - Removed "Advanced Filters" title (redundant in drawer)
-            - Compact 3-row layout:
-                - Row 1: Genres (full) popover | Certification chips
-                - Row 2: Language | Year range | Rating range
-                - Row 3: Clear/Collapse buttons (xs size, right-aligned)
-            - Added centered separator in CollapsibleSubNav between QuickBrowseBar and drawer
-        - [x] **B.3 Wire up in BrowseControlsSection**
-            - Pass `isDrawerOpen={isAdvancedPanelOpen && !isSubNavCollapsed}` to panel
-            - Genre popover auto-closes on drawer collapse
-        - [ ] **B.4 Update tests** (deferred - existing tests pass, new component tests TBD)
-
-    - **Files:**
-        - New: `frontend/src/components/movie/browse/GenrePopover.tsx`
-        - New: `frontend/src/components/movie/browse/GenreCombobox.tsx` (unused, created during iteration)
-        - Update: `frontend/src/components/movie/browse/AdvancedFiltersPanel.tsx`
-        - Update: `frontend/src/components/movie/browse/CertificationFilter.tsx`
-        - Update: `frontend/src/components/layout/CollapsibleSubNav.tsx`
-        - Update: `frontend/src/components/movie/collection/BrowseControlsSection.tsx`
-    - **Priority:** High - blocking A/B evaluation (Phase 4.6 of `tasks-infinite-scroll-migration.md`)
-    - **Effort:** ~2-3 hours
 
 - [ ] Revert MovieUserScore badge colors to traffic light scheme
     - Change: `≥7.5` success (green), `5.0-7.4` warning (yellow), `<5.0` error (red)
@@ -293,4 +296,6 @@
 
 - [ ] Examine the following movies for production company patterns (i.e., do any of them produce 90%+ 'adult' content?)
 for potential bulk blacklisting; if not found, blacklist individually (movies are mislabeled as non-adult on TMDB):
-    - 280460, 50633, 1113566, 264865, 199214, 329872, 406167, 222270, 264975, 1241742
+    - 280460, 50633, 1113566, 264865, 199214, 329872, 406167, 222270, 264975, 1241742, 89632, 28325, 134451, 318947,
+    458353, 40348, 397298, 29194, 460229, 97697, 1069286, 28555, 33790, 315294, 57267, 45042, 196013,  29926, 333941,
+    433111, 141585, 151182, 715394, 505039, 474531, 331250, 278954, 424626

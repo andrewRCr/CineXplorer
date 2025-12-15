@@ -985,3 +985,72 @@ def test_graceful_degradation_when_redis_unavailable(
     # Results should still be returned (graceful degradation)
     results = res.json()["results"]
     assert len(results) == 20, "Should return results despite Redis failure"
+
+
+# ============================================================================
+# End-of-Results Detection Tests
+# ============================================================================
+
+
+@patch("core.services.tmdb_api_client.TMDBApiClient.get")
+def test_browse_returns_null_next_page_when_exceeds_total_pages(
+    mock_tmdb_get: Mock,
+    api_client: Client,
+) -> None:
+    """Test next_tmdb_page_start is null when pagination exceeds total_pages.
+
+    When buffer consumes pages up to or beyond total_pages, the API should
+    return next_tmdb_page_start=null to signal end-of-results to the frontend.
+    This ensures hasNextPage becomes false cleanly.
+    """
+    # Arrange: Last page of results (page 5 of 5)
+    last_page_movies = [
+        create_tmdb_movie(i, f"Movie {i}", "2023-01-01", 8.0) for i in range(81, 101)
+    ]
+
+    mock_tmdb_get.return_value = create_mock_paginated_response(
+        last_page_movies, page=5, total_pages=5, total_results=100
+    )
+
+    # Act: Request with tmdb_page_start at last page
+    res = api_client.get(BROWSE_URL, {"page": 1, "tmdb_page_start": 5})
+
+    # Assert: next_tmdb_page_start should be null (end of results)
+    assert res.status_code == HTTPStatus.OK
+    data = res.json()
+    assert len(data["results"]) == 20
+    assert data["next_tmdb_page_start"] is None, (
+        "next_tmdb_page_start should be null when we've consumed the last page"
+    )
+
+
+@patch("core.services.tmdb_api_client.TMDBApiClient.get")
+def test_browse_returns_null_next_page_when_buffer_returns_empty(
+    mock_tmdb_get: Mock,
+    api_client: Client,
+) -> None:
+    """Test next_tmdb_page_start is null when buffer mechanism returns empty results.
+
+    When deduplication filters all results and buffer exhausts without finding
+    new unique movies, the API should return next_tmdb_page_start=null.
+    This prevents infinite fetch loops on the frontend.
+    """
+    # Arrange: All pages return empty results (e.g., all filtered by dedup)
+    # Simulate buffer exhaustion: 6 pages with 0 movies each after filtering
+    empty_responses = [
+        create_mock_paginated_response([], page=p, total_pages=10, total_results=200)
+        for p in range(1, 7)  # Initial + 5 buffer pages
+    ]
+
+    mock_tmdb_get.side_effect = empty_responses
+
+    # Act: Request page 1
+    res = api_client.get(BROWSE_URL, {"page": 1})
+
+    # Assert: next_tmdb_page_start should be null (no results found)
+    assert res.status_code == HTTPStatus.OK
+    data = res.json()
+    assert len(data["results"]) == 0
+    assert data["next_tmdb_page_start"] is None, (
+        "next_tmdb_page_start should be null when buffer returns empty results"
+    )

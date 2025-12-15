@@ -486,31 +486,48 @@ This de-risks the infinite scroll commitment by proving the hardest UX requireme
         - Trade-off: More boilerplate (dual-virtualizer pattern for responsive grid) but predictable behavior.
         - **Not ADR-worthy**: Library selection informed by practical failure, not architectural decision.
 
-- [ ] **5.2 Implement virtualized VirtualizedMovieGrid** (TDD approach)
+- [x] **5.2 Implement virtualized VirtualizedMovieGrid** (TDD approach)
 
-    - [ ] **5.2.a Write tests for VirtualizedMovieGrid** (test-first)
-        - Test: renders movie cards for visible items only
-        - Test: skeleton loading state during initial fetch
-        - Test: error state with retry capability
-        - Test: empty state when no results
-        - Test: triggers `fetchNextPage` when scrolling near bottom
-        - Test: saves scroll position to sessionStorage on scroll
-        - Test: restores scroll position from sessionStorage on mount
-        - Test: clears saved position when filters change (queryKey change)
+    - [x] **5.2.a Write tests for VirtualizedMovieGrid** (test-first)
+        - Created shared test utilities: `__tests__/grid-test-utils.tsx`
+            - `createMockMovie`, `createMockMovies`, `createMockPage` factories
+            - `createMockHookReturn` for `useInfiniteMovies` mock setup
+            - Browser API mocks: IntersectionObserver, sessionStorage, window scroll, ResizeObserver
+            - DRY: Reusable across all grid component tests
+        - Created `VirtualizedMovieGrid.test.tsx` with 15 tests covering:
+            - Virtualization: only visible items rendered (2 tests)
+            - Loading states: skeleton + next-page spinner (2 tests)
+            - Error handling: display + retry (2 tests)
+            - Empty state (1 test)
+            - Infinite scroll: fetch triggers + guards (4 tests)
+            - Scroll persistence: save/restore/clear on filter change (3 tests)
+            - Virtualizer configuration (1 test - estimateSize, gap)
+        - Tests fail with expected "module not found" errors (TDD red phase)
+        - Linting: 0 violations
 
-    - [ ] **5.2.b Install @tanstack/react-virtual and create component**
-        - Install `@tanstack/react-virtual`
-        - Create `VirtualizedMovieGrid.tsx` using `useWindowVirtualizer`
-        - Implement responsive grid with dual-virtualizer pattern (row + column)
-        - Use ResizeObserver or window resize for column count calculation
-        - Integrate with existing `useInfiniteMovies` hook via `onChange` callback
-        - Preserve loading/error/empty states from InfiniteMovieGrid
+    - [x] **5.2.b Install @tanstack/react-virtual and create component**
+        - Installed `@tanstack/react-virtual` (added 2 packages)
+        - Created `VirtualizedMovieGrid.tsx` (370 lines) with:
+            - `useWindowVirtualizer` for window-level scroll virtualization
+            - Row-based virtualization (calculates rows from movies + columnCount)
+            - ResizeObserver for responsive column count (auto-fit 194px cards)
+            - Near-bottom detection via virtualizer range for infinite scroll
+            - Debounced fetchNextPage (150ms) to prevent rapid requests
+            - Preserved loading/error/empty states from InfiniteMovieGrid
+        - All 17 tests pass (TDD green phase)
 
-    - [ ] **5.2.c Implement scroll position persistence**
-        - Save `window.scrollY` to sessionStorage on scroll (debounced)
-        - Key by stringified queryKey for filter-specific positions
-        - Restore via `initialOffset` option on `useWindowVirtualizer`
-        - Clear saved position when queryKey changes (filter change)
+    - [x] **5.2.c Implement scroll position persistence**
+        - Save `window.scrollY` to sessionStorage on scroll (debounced 200ms)
+        - Storage key: `scroll-{source}-{sortedFilterParams}` (filter-specific)
+        - Restore via `initialOffset` option on mount
+        - Filter change detection: prevScrollKeyRef tracks key changes
+        - Quality gates: Linting 0, Type checking 0, Tests 17/17
+
+    - [x] **5.2.d Wire up VirtualizedMovieGrid to browse routes**
+        - Created `BrowseVirtualized.tsx` page component
+        - Added `ROUTES.BROWSE_VIRTUALIZED` constant
+        - Wired up route in App.tsx: `/browse/virtualized`
+        - Quality gates: Linting 0, Type checking 0
 
 - [ ] **5.3 Validate back-nav experience**
 
@@ -540,16 +557,20 @@ This de-risks the infinite scroll commitment by proving the hardest UX requireme
 
 **Prerequisites:** Phase 5.3.b documents satisfactory back-nav UX (Go decision).
 
-- [ ] **6.1 Create ADR for pagination approach**
-    - **Context:** Buffer mechanism, data quality pipeline, random-access retirement,
-      back-nav UX requirements
-    - **Alternatives considered:**
-        - Random-access pagination (retired - path-dependency issues)
-        - Sequential pagination (viable but less modern UX)
-        - Infinite scroll with virtualization (chosen)
-    - **Decision:** Infinite scroll with virtualization
-    - **Consequences:** Search migration approach, cleanup scope, scroll patterns
-    - **File:** `.arc/reference/decisions/adr-NNN-infinite-scroll-with-virtualization.md`
+- [ ] **6.1 Create ADR and update strategy docs**
+    - **ADR:** `.arc/reference/decisions/adr-NNN-infinite-scroll-with-virtualization.md`
+        - Context: Buffer mechanism, data quality pipeline, random-access retirement,
+          back-nav UX requirements
+        - Alternatives considered: Random-access (retired), sequential (viable), virtualized infinite (chosen)
+        - Decision: Infinite scroll with virtualization
+        - Consequences: Search migration approach, cleanup scope, scroll patterns
+    - **Update strategy-pagination.md:**
+        - Reflect virtualized infinite scroll as primary approach
+        - Document scroll restoration pattern (sessionStorage + initialOffset)
+        - Update "current implementation" sections to match reality
+    - **Update strategy-data-quality.md (if applicable):**
+        - Verify buffer mechanism documentation is accurate
+        - Confirm deduplication approach aligns with infinite scroll
 
 - [ ] **6.2 Apply post-decision UI refinements**
     - Evaluate: Can `PageHeader` margin be reduced (mb=0)?
@@ -561,6 +582,17 @@ This de-risks the infinite scroll commitment by proving the hardest UX requireme
     - Delete `BrowseSequential.tsx` page component
     - Remove `ROUTES.BROWSE_SEQUENTIAL` constant
     - Keep `SequentialMovieGrid` component until Phase 8 cleanup
+
+- [ ] **6.4 Migrate main browse routes to VirtualizedMovieGrid**
+    - Update `Browse.tsx` to use `VirtualizedMovieGrid` instead of `InfiniteMovieGrid`
+    - Update `NowPlaying.tsx` to use `VirtualizedMovieGrid`
+    - Update `Upcoming.tsx` to use `VirtualizedMovieGrid`
+    - Verify all browse routes have scroll restoration working
+
+- [ ] **6.5 Remove virtualized temp route**
+    - Delete `/browse/virtualized` route (no longer needed after 6.4)
+    - Delete `BrowseVirtualized.tsx` page component
+    - Remove `ROUTES.BROWSE_VIRTUALIZED` constant
 
 ---
 

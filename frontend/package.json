@@ -25,10 +25,11 @@
 	},
 	"dependencies": {
 		"@chakra-ui/react": "^3.28.0",
-		"@tanstack/react-query": "^5.90.12",
-		"@tanstack/react-query-devtools": "^5.90.12",
 		"@chakra-ui/tag": "^3.1.1",
 		"@emotion/react": "^11.14.0",
+		"@tanstack/react-query": "^5.90.12",
+		"@tanstack/react-query-devtools": "^5.90.12",
+		"@tanstack/react-virtual": "^3.13.13",
 		"@types/lodash": "^4.17.20",
 		"axios": "^1.10.0",
 		"formik": "^2.4.6",

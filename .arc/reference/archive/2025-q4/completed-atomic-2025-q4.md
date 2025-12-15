@@ -6,6 +6,20 @@ Reference format: "see `completed-atomic-2025-q4.md`" or "see {task name} in `co
 
 ---
 
+- [x] Redesign AdvancedFiltersPanel as compact drawer
+    - **Outcome:** Converted full-height panel to compact drawer attached to sticky CollapsibleSubNav
+    - **Key changes:**
+        - Part A: QuickBrowseBar cleanup (ClearFilters button inline, bg consistency, placeholder)
+        - Part B: Compact 3-row drawer layout with GenrePopover component
+        - Toggle button shows primary color when advanced filters active (even if panel closed)
+        - Deleted unused GenreCombobox.tsx (superseded by GenrePopover)
+    - **Tests:** 23 new GenrePopover tests, 746 frontend tests passing
+    - **Files:**
+        - New: `GenrePopover.tsx`, `GenrePopover.test.tsx`
+        - Updated: `AdvancedFiltersPanel.tsx`, `CertificationFilter.tsx`, `CollapsibleSubNav.tsx`, `BrowseControlsSection.tsx`
+
+    - **Branch:** `incidental/infinite-scroll-migration`
+
 - [x] Search/Browse Architecture Cleanup (3 tasks)
     - **Outcome:** Fixed search backward navigation bug and cleaned up architecture:
         1. **Centralized `CORE_GENRE_IDS`** - Moved to `browseDefaults.ts` with JSDoc, exported

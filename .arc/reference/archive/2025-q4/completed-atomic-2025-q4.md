@@ -6,6 +6,20 @@ Reference format: "see `completed-atomic-2025-q4.md`" or "see {task name} in `co
 
 ---
 
+- [x] Create `strategy-pagination.md` - Document pagination architecture
+    - **Outcome:** Comprehensive strategy doc covering buffer mechanism, deduplication tracker,
+      cursor-based pagination, frontend integration, and Content Pool Depletion concept
+    - **Files:** `.arc/reference/strategies/project/strategy-pagination.md`, STRATEGY-INDEX.md updated
+
+    - **Branch:** `incidental/infinite-scroll-migration`
+
+- [x] Create `strategy-data-quality.md` - Document TMDB data quality mechanisms
+    - **Outcome:** Comprehensive strategy doc covering two-pass filtering, 5-stage pipeline,
+      VoteCountPolicy, CompletenessPolicy, TMDB quirks, and rejection rate data
+    - **Files:** `.arc/reference/strategies/project/strategy-data-quality.md`, STRATEGY-INDEX.md updated
+
+    - **Branch:** `incidental/infinite-scroll-migration`
+
 - [x] Redesign AdvancedFiltersPanel as compact drawer
     - **Outcome:** Converted full-height panel to compact drawer attached to sticky CollapsibleSubNav
     - **Key changes:**

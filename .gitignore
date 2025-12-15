@@ -212,8 +212,8 @@ infrastructure/dev-certs/*.conf
 infrastructure/dev-certs/*.crt
 infrastructure/dev-certs/*.key
 
-# Messy research notes (transient); regular notes- are tracked for context visibility
-.arc/active/*/research-*
+# Transient docs (mostly temp-notes-; regular notes- are tracked for context visibility)
+.arc/active/*/temp-*
 
 # Session handoff file (transient)
 .arc/active/CURRENT-SESSION.md

@@ -464,37 +464,53 @@ Restructured to: scroll restoration PoC first → decision based on results.
 This de-risks the infinite scroll commitment by proving the hardest UX requirement
 (back-nav position preservation) before making the architectural decision.
 
-- [ ] **5.1 Research and select virtualization library**
+- [x] **5.1 Research and select virtualization library**
 
-    - [ ] **5.1.a Evaluate candidate libraries**
-        - `react-window` - lightweight (~6kb), well-maintained, grid support
-        - `react-virtuoso` - more features, better infinite scroll integration
-        - `@tanstack/react-virtual` - from TanStack ecosystem, headless
-        - Evaluate: bundle size, grid layout support, scroll restoration APIs,
-          TanStack Query compatibility, maintenance status
+    - [x] **5.1.a Evaluate candidate libraries**
+        - **react-window**: React 19 incompatible (GitHub #793 closed "not planned"). Ruled out.
+        - **react-virtuoso**: Attempted implementation. Issues discovered:
+            - VirtuosoGrid lacks `initialTopMostItemIndex` (can't mount at scroll position)
+            - `useWindowScroll` + scroll restoration has multiple documented bugs (#284, #658, #848)
+            - CSS `gap` breaks internal measurements ("kryptonite" per docs)
+            - Required `!important` overrides to make grid layout work
+            - Conclusion: Bad fit for our window scroll + restoration + responsive grid requirements
+        - **@tanstack/react-virtual**: Headless approach, more boilerplate but full control.
+          Supports window scroll via `useWindowVirtualizer`, native `gap` option,
+          manual scroll restoration via `initialOffset` (straightforward with fixed heights).
 
-    - [ ] **5.1.b Select library and document rationale**
-        - Document decision in completion notes
-        - Consider creating mini-ADR if decision is non-obvious
+    - [x] **5.1.b Select library and document rationale**
+        - **Selected: @tanstack/react-virtual**
+        - **Rationale**: After failed react-virtuoso attempt, research confirmed @tanstack/react-virtual
+          addresses all pain points: window scroll works reliably, CSS gap is first-class option,
+          scroll restoration is manual but explicit (better than magic that doesn't work).
+        - Trade-off: More boilerplate (dual-virtualizer pattern for responsive grid) but predictable behavior.
+        - **Not ADR-worthy**: Library selection informed by practical failure, not architectural decision.
 
-- [ ] **5.2 Implement virtualized InfiniteMovieGrid**
+- [ ] **5.2 Implement virtualized VirtualizedMovieGrid** (TDD approach)
 
-    - [ ] **5.2.a Create VirtualizedMovieGrid component**
-        - Wrap grid layout in virtualization container
-        - Maintain responsive grid behavior (auto-fit columns)
-        - Integrate with existing `useInfiniteMovies` hook
-        - Preserve existing loading/error/empty states
+    - [ ] **5.2.a Write tests for VirtualizedMovieGrid** (test-first)
+        - Test: renders movie cards for visible items only
+        - Test: skeleton loading state during initial fetch
+        - Test: error state with retry capability
+        - Test: empty state when no results
+        - Test: triggers `fetchNextPage` when scrolling near bottom
+        - Test: saves scroll position to sessionStorage on scroll
+        - Test: restores scroll position from sessionStorage on mount
+        - Test: clears saved position when filters change (queryKey change)
 
-    - [ ] **5.2.b Implement scroll position persistence**
-        - Store scroll index in sessionStorage (keyed by stringified query key)
-        - On mount: check sessionStorage, restore position if found
-        - On unmount/navigation: save current scroll index
-        - Handle cache miss gracefully (start at top, no error)
+    - [ ] **5.2.b Install @tanstack/react-virtual and create component**
+        - Install `@tanstack/react-virtual`
+        - Create `VirtualizedMovieGrid.tsx` using `useWindowVirtualizer`
+        - Implement responsive grid with dual-virtualizer pattern (row + column)
+        - Use ResizeObserver or window resize for column count calculation
+        - Integrate with existing `useInfiniteMovies` hook via `onChange` callback
+        - Preserve loading/error/empty states from InfiniteMovieGrid
 
-    - [ ] **5.2.c Write/update tests**
-        - Test virtualization renders correct visible items
-        - Test scroll position save/restore
-        - Test integration with infinite loading
+    - [ ] **5.2.c Implement scroll position persistence**
+        - Save `window.scrollY` to sessionStorage on scroll (debounced)
+        - Key by stringified queryKey for filter-specific positions
+        - Restore via `initialOffset` option on `useWindowVirtualizer`
+        - Clear saved position when queryKey changes (filter change)
 
 - [ ] **5.3 Validate back-nav experience**
 

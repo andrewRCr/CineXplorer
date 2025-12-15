@@ -363,9 +363,9 @@ const MovieDetail = () => {
                 "Composer",
               ].includes(member.job)
             )
-        .map((member: CrewMember, idx: number) => (
+        .map((member: CrewMember) => (
               <Box
-                key={member.id || idx}
+                key={`${member.id}-${member.job}`}
                 bg="layer-01"
                 p={2}
                 borderRadius="md"

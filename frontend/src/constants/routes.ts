@@ -11,6 +11,7 @@ export const ROUTES = {
     SETTINGS: "/settings",
     BROWSE: "/browse",
     BROWSE_SEQUENTIAL: "/browse/sequential", // Temp: A/B testing for sequential pagination
+    BROWSE_VIRTUALIZED: "/browse/virtualized", // Temp: Testing virtualized scroll restoration
     NOW_PLAYING: "/browse/now-playing",
     UPCOMING: "/browse/upcoming",
     SEARCH_RESULTS: "/search",

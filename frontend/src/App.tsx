@@ -15,6 +15,7 @@ import ErrorBoundary from "./components/core/ErrorBoundary";
 const Featured = lazy(() => import("./pages/movie/Featured"));
 const Browse = lazy(() => import("./pages/movie/Browse"));
 const BrowseSequential = lazy(() => import("./pages/movie/BrowseSequential"));
+const BrowseVirtualized = lazy(() => import("./pages/movie/BrowseVirtualized"));
 const NowPlaying = lazy(() => import("./pages/movie/NowPlaying"));
 const Upcoming = lazy(() => import("./pages/movie/Upcoming"));
 const Login = lazy(() => import("./pages/user/Login"));
@@ -86,6 +87,7 @@ const App: React.FC = () => {
               >
                 <Route index element={<Browse />} />
                 <Route path="sequential" element={<BrowseSequential />} />
+                <Route path="virtualized" element={<BrowseVirtualized />} />
                 <Route path="now-playing" element={<NowPlaying />} />
                 <Route path="upcoming" element={<Upcoming />} />
               </Route>

@@ -444,164 +444,179 @@ A/B decision (Phase 4.5).
 
 ---
 
-### **Phase 4.6:** A/B Evaluation - Sequential vs Infinite Scroll
+### **Phase 5:** Scroll Restoration PoC (Virtualization Approach)
 
-**Purpose:** Compare sequential pagination vs infinite scroll to decide final approach.
-Random-access pagination is retired due to buffer/data quality issues.
+**Purpose:** Prove that infinite scroll + virtualization delivers satisfactory back-nav UX.
+Success here unlocks the ADR decision for infinite scroll.
 
-**Post-decision UI refinements to consider:**
+**Why virtualization:**
 
-- **If infinite scroll chosen:**
-    - `PageHeader` margin could be reduced further (mb=0) since no pagination controls needed
-    - Page title ("Browse", "Now Playing", etc.) could move INTO `ResultsHeaderBar` left side
-    (currently empty for infinite), consolidating header and results text into one row
-    - More space-efficient, cleaner visual hierarchy
+- Solves scroll position restoration (scroll-to-index APIs built-in)
+- Solves long-scroll performance (only visible items rendered in DOM)
+- Industry-standard pattern (Netflix, Twitter, etc.)
+- Portfolio value: demonstrates production-grade engineering
 
-- **If sequential chosen:**
-    - Current layout works well (title separate, results header has controls both sides)
-    - Keep `PageHeader` mb=2 for appropriate spacing
+**Approach change rationale (2025-12-15):**
 
-- [ ] **4.6.a Manual A/B testing**
-    - Test infinite scroll: `/browse/popular` (default)
-    - Test sequential: `/browse/sequential` (temp route)
-    - Evaluate: cognitive load, discoverability, performance feel
-    - Test with filters applied
-    - Test mobile viewport behavior
-    - Test back navigation experience
-    - Record pros/cons of each approach
+Original plan was A/B test (Phase 4.6) → decision → scroll restoration (Phase 5).
+Restructured to: scroll restoration PoC first → decision based on results.
 
-- [ ] **4.6.b Document findings and make decision**
-    - Make final decision: sequential OR infinite
-    - Document rationale in this task list (completion notes)
-    - **Create ADR** for pagination approach decision:
-        - Context: Buffer mechanism, data quality pipeline, random-access retirement
-        - Alternatives: Random-access (retired), sequential, infinite scroll
-        - Decision: Chosen approach with rationale from A/B testing
-        - Consequences: Impact on scroll restoration, search, UX patterns
-        - File: `adr-NNN-use-[chosen]-pagination-for-browse.md`
+This de-risks the infinite scroll commitment by proving the hardest UX requirement
+(back-nav position preservation) before making the architectural decision.
 
-- [ ] **4.6.c Update task list based on decision**
+- [ ] **5.1 Research and select virtualization library**
 
-    **If infinite scroll chosen:**
-    - Phase 5+: Continue as documented
-    - Phase 7 cleanup: Remove `SequentialMovieGrid`, `SequentialPaginationCtrl`,
-      temp route, and old `MovieCollectionGrid`
+    - [ ] **5.1.a Evaluate candidate libraries**
+        - `react-window` - lightweight (~6kb), well-maintained, grid support
+        - `react-virtuoso` - more features, better infinite scroll integration
+        - `@tanstack/react-virtual` - from TanStack ecosystem, headless
+        - Evaluate: bundle size, grid layout support, scroll restoration APIs,
+          TanStack Query compatibility, maintenance status
 
-    **If sequential pagination chosen:**
-    - Update Phases 5-7 to use sequential instead of infinite
-    - Key changes needed:
-        - Phase 5: Scroll restoration less critical (page-based nav)
-        - Phase 6: Search uses sequential pagination
-        - Phase 7: Remove `InfiniteMovieGrid` instead of sequential components
-    - Wire sequential to all browse routes (replace infinite as default)
+    - [ ] **5.1.b Select library and document rationale**
+        - Document decision in completion notes
+        - Consider creating mini-ADR if decision is non-obvious
 
----
+- [ ] **5.2 Implement virtualized InfiniteMovieGrid**
 
-### **Phase 5:** Scroll Position Restoration
+    - [ ] **5.2.a Create VirtualizedMovieGrid component**
+        - Wrap grid layout in virtualization container
+        - Maintain responsive grid behavior (auto-fit columns)
+        - Integrate with existing `useInfiniteMovies` hook
+        - Preserve existing loading/error/empty states
 
-**Purpose:** Ensure back navigation returns user to their scroll position.
+    - [ ] **5.2.b Implement scroll position persistence**
+        - Store scroll index in sessionStorage (keyed by stringified query key)
+        - On mount: check sessionStorage, restore position if found
+        - On unmount/navigation: save current scroll index
+        - Handle cache miss gracefully (start at top, no error)
 
-- [ ] **5.1 Research scroll restoration approaches**
+    - [ ] **5.2.c Write/update tests**
+        - Test virtualization renders correct visible items
+        - Test scroll position save/restore
+        - Test integration with infinite loading
 
-    **Note:** React Router may handle this automatically. Verify before implementing.
+- [ ] **5.3 Validate back-nav experience**
 
-    - [ ] **5.1.a Test default React Router behavior**
-        - Navigate: Browse → scroll → MovieDetail → back
-        - Does scroll position restore automatically?
-        - Document findings
+    - [ ] **5.3.a Manual testing scenarios**
+        - Browse → scroll 50+ items → detail → back → position restored?
+        - Browse → scroll → different route → back → position restored?
+        - Filter change → position correctly reset?
+        - Long scroll (200+ items) → smooth performance?
+        - Mobile viewport behavior?
 
-    - [ ] **5.1.b Evaluate TanStack Query cache behavior**
-        - Does cached data restore instantly on back nav?
-        - Is there a flash of loading state?
-        - Document findings
+    - [ ] **5.3.b Document results and go/no-go decision**
+        - Is restoration instantaneous or is there visual jank?
+        - Any edge cases that break the experience?
+        - **Go/No-go:** Is this acceptable UX for infinite scroll commitment?
+        - If No-go: Document blockers, consider alternatives
 
-- [ ] **5.2 Implement scroll restoration if needed**
-
-    - [ ] **5.2.a Choose restoration strategy**
-        - Option A: React Router's `<ScrollRestoration />` component
-        - Option B: Manual scroll position tracking in sessionStorage
-        - Option C: Rely on browser default + TanStack cache
-        - Document chosen approach with rationale
-
-    - [ ] **5.2.b Implement chosen strategy**
-        - Implementation varies by chosen approach
-        - Test: Browse → scroll 2000px → detail → back → position restored
-        - Test: Browse → scroll → different route → back → position restored
-
-- [ ] **5.3 Run quality gates**
+- [ ] **5.4 Quality gates**
     - Frontend tests passing
     - Type checking: 0 errors
     - Linting: 0 violations
 
 ---
 
-### **Phase 6:** Search Results Migration
+### **Phase 6:** ADR Decision - Commit to Infinite Scroll
 
-**Purpose:** Apply same infinite scroll pattern to search results.
+**Purpose:** Based on Phase 5 results, make final architectural decision.
 
-- [ ] **6.1 Analyze current search implementation**
+**Prerequisites:** Phase 5.3.b documents satisfactory back-nav UX (Go decision).
 
-    - [ ] **6.1.a Review search results rendering**
+- [ ] **6.1 Create ADR for pagination approach**
+    - **Context:** Buffer mechanism, data quality pipeline, random-access retirement,
+      back-nav UX requirements
+    - **Alternatives considered:**
+        - Random-access pagination (retired - path-dependency issues)
+        - Sequential pagination (viable but less modern UX)
+        - Infinite scroll with virtualization (chosen)
+    - **Decision:** Infinite scroll with virtualization
+    - **Consequences:** Search migration approach, cleanup scope, scroll patterns
+    - **File:** `.arc/reference/decisions/adr-NNN-infinite-scroll-with-virtualization.md`
+
+- [ ] **6.2 Apply post-decision UI refinements**
+    - Evaluate: Can `PageHeader` margin be reduced (mb=0)?
+    - Evaluate: Can page title move into `ResultsHeaderBar` left side?
+    - Implement refinements if beneficial
+
+- [ ] **6.3 Remove sequential pagination temp route**
+    - Delete `/browse/sequential` route
+    - Delete `BrowseSequential.tsx` page component
+    - Remove `ROUTES.BROWSE_SEQUENTIAL` constant
+    - Keep `SequentialMovieGrid` component until Phase 8 cleanup
+
+---
+
+### **Phase 7:** Search Results Migration
+
+**Purpose:** Apply same virtualized infinite scroll pattern to search results.
+
+- [ ] **7.1 Analyze current search implementation**
+
+    - [ ] **7.1.a Review search results rendering**
         - Identify shared vs different code paths from browse
-        - Determine reuse opportunity for `useInfiniteMovies`
+        - Determine reuse opportunity for `VirtualizedMovieGrid`
 
-- [ ] **6.2 Migrate search to infinite scroll**
+- [ ] **7.2 Migrate search to virtualized infinite scroll**
 
-    - [ ] **6.2.a Update search results component**
-        - Use `useInfiniteMovies` with search fetcher
-        - Apply same infinite scroll UI pattern
+    - [ ] **7.2.a Update search results component**
+        - Use `VirtualizedMovieGrid` (or shared virtualization wrapper)
         - Ensure query param (`q`) properly handled
+        - Scroll position persistence keyed by search query
 
-    - [ ] **6.2.b Test search-specific behaviors**
-        - Test: New search query resets results
+    - [ ] **7.2.b Test search-specific behaviors**
+        - Test: New search query resets results and scroll position
         - Test: Empty search state
         - Test: No results state
+        - Test: Back-nav from search result detail restores position
 
-- [ ] **6.3 Run quality gates**
+- [ ] **7.3 Run quality gates**
     - Frontend tests passing
     - Type checking: 0 errors
     - Linting: 0 violations
 
 ---
 
-### **Phase 7:** Cleanup and Documentation
+### **Phase 8:** Cleanup and Documentation
 
 **Purpose:** Remove obsolete code and update documentation.
 
-- [ ] **7.1 Remove deprecated pagination code**
+- [ ] **8.1 Remove deprecated pagination code**
 
-    - [ ] **7.1.a Delete obsolete files**
+    - [ ] **8.1.a Delete obsolete files**
         - `MoviePaginationCtrl.tsx` (or mark deprecated if used elsewhere)
+        - `SequentialMovieGrid.tsx` and `SequentialPaginationCtrl.tsx`
         - `usePageChangeHandler.ts`
+        - Old `MovieCollectionGrid.tsx` (if fully replaced)
         - Pagination-specific test files
 
-    - [ ] **7.1.b Clean up unused exports**
+    - [ ] **8.1.b Clean up unused exports**
         - Review `paginationUrlSync.ts` - remove or simplify
         - Remove pagination types from shared types
         - Clean up imports across codebase
 
-    - [ ] **7.1.c Remove obsolete tests and refactor survivors**
+    - [ ] **8.1.c Remove obsolete tests and refactor survivors**
         - Delete pagination-specific stability tests
-        - Delete URL metadata persistence tests (replaced by new approach)
+        - Delete URL metadata persistence tests (replaced by virtualization)
         - Update test counts in documentation
         - **Evaluate test helper consolidation** (deferred from Task 4.5.a):
             - If mock hook return objects are still repetitive, create helper factory
             - Example: `createMockInfiniteMoviesReturn({ pages, totalResults, ... })`
-            - Only worth doing if tests for the chosen approach remain substantial
 
-- [ ] **7.2 Update project documentation**
+- [ ] **8.2 Update project documentation**
 
-    - [ ] **7.2.a Update frontend modernization plan**
+    - [ ] **8.2.a Update frontend modernization plan**
         - Mark TanStack Query as "Implemented (browse/search)"
         - Note remaining adoption scope (auth, user data)
         - Update `.arc/backlog/technical/plan-frontend-modernization.md`
 
-    - [ ] **7.2.b Add TanStack Query patterns to strategy docs**
-        - Document query key conventions
-        - Document infinite query patterns
-        - Consider adding to testing methodology
+    - [ ] **8.2.b Add virtualization patterns to strategy docs**
+        - Document virtualization library choice and rationale
+        - Document scroll restoration pattern
+        - Update `strategy-pagination.md` with virtualization details
 
-- [ ] **7.3 Final quality gates**
+- [ ] **8.3 Final quality gates**
     - All frontend tests passing
     - All backend tests passing (should be unaffected)
     - Type checking: 0 errors (frontend + backend)
@@ -610,45 +625,50 @@ Random-access pagination is retired due to buffer/data quality issues.
 
 ---
 
-### **Phase 8:** Manual Verification and Sign-off
+### **Phase 9:** Manual Verification and Sign-off
 
 **Purpose:** End-to-end manual testing of all affected flows.
 
-- [ ] **8.1 Browse flow verification**
-    - Load `/browse/popular` - infinite scroll works
+- [ ] **9.1 Browse flow verification**
+    - Load `/browse/popular` - virtualized infinite scroll works
     - Scroll down, content loads automatically
     - Apply filters - results reset, scroll to top
     - Change sort - results reset correctly
-    - QuickBrowseBar stays visible while scrolling
+    - QuickBrowseBar collapses/expands correctly
     - "Back to top" button appears and works
+    - Long scroll (200+ items) - smooth performance, no jank
 
-- [ ] **8.2 Navigation flow verification**
-    - Browse → scroll → MovieDetail → back → scroll position restored
-    - Browse with filters → MovieDetail → back → filters preserved
-    - Browse → search → back → browse state correct
+- [ ] **9.2 Navigation flow verification**
+    - Browse → scroll 50+ items → MovieDetail → back → scroll position restored
+    - Browse with filters → MovieDetail → back → filters AND position preserved
+    - Browse → search → back → browse state and position correct
 
-- [ ] **8.3 Search flow verification**
-    - Search for movies - infinite scroll works
-    - New search resets results
+- [ ] **9.3 Search flow verification**
+    - Search for movies - virtualized infinite scroll works
+    - New search resets results and position
+    - Search → detail → back → position restored
     - Empty search handled gracefully
 
-- [ ] **8.4 Edge case verification**
+- [ ] **9.4 Edge case verification**
     - Very restrictive filters (few results) - end state correct
     - No results - empty state displayed
     - Network error - error state with retry
     - Rapid scrolling - no duplicate fetches, no errors
+    - Cache expiry (30+ min away) - graceful degradation (start at top)
 
 ---
 
 ## Success Criteria
 
-- [ ] Infinite scroll replaces pagination for browse and search
-- [ ] QuickBrowseBar is sticky (always visible while scrolling)
+- [ ] Virtualized infinite scroll replaces pagination for browse and search
+- [ ] Back navigation restores exact scroll position (virtualization-powered)
+- [ ] Long scroll sessions perform smoothly (200+ items, no jank)
+- [ ] QuickBrowseBar collapses on scroll down, expands on scroll up
 - [ ] "Back to top" button available for quick return
-- [ ] Back navigation restores scroll position (or near it)
-- [ ] Filter changes reset results appropriately
+- [ ] Filter changes reset results and scroll position appropriately
 - [ ] No regression in data quality (buffer mechanism still works)
 - [ ] TanStack Query properly integrated and configured
+- [ ] ADR documents pagination approach decision with rationale
 - [ ] All obsolete pagination code removed
 - [ ] All quality gates pass (tests, linting, type checking)
 - [ ] Pre-existing `MovieDetail.test.tsx` pagination test failures resolved (5 tests)

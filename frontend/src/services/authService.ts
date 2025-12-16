@@ -1,5 +1,5 @@
 import apiClient from "./apiClient";
-import type { components } from "../types/api";
+import type { components } from "@/types/api";
 import { getCsrfToken, ensureCsrfTokenCookie } from "@/utilities/csrf";
 import logger from "./logger";
 

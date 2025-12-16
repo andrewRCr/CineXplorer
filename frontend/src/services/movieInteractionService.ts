@@ -23,8 +23,8 @@
  * - userMovieService.ts: Movie-first queries with enrichment
  */
 
-import type { Movie } from '../@types/movie.d';
-import type { components } from '../types/api';
+import type { Movie } from '@/@types/movie.d';
+import type { components } from '@/types/api';
 import {
     createUserMovieData,
     updateUserMovieData,

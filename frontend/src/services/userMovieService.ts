@@ -39,7 +39,7 @@
  */
 
 import create from "./httpService";
-import type { components } from "../types/api";
+import type { components } from "@/types/api";
 
 // Type-safe schema imports from generated OpenAPI types
 type PaginatedMovieResponseSchema = components["schemas"]["PaginatedMovieResponseSchema"];

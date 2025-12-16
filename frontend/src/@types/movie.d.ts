@@ -13,7 +13,7 @@
  * return compact data and detail endpoints return full objects.
  */
 
-import type { components } from '../types/api';
+import type { components } from '@/types/api';
 
 // ============================================================================
 // Core Movie Types

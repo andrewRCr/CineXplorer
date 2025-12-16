@@ -6,6 +6,7 @@ import {
   useMemo,
   useState,
 } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Text, Box, Spinner } from "@chakra-ui/react";
 import { useWindowVirtualizer } from "@tanstack/react-virtual";
 import MovieCard from "../MovieCard";
@@ -142,13 +143,31 @@ const VirtualizedMovieGrid = () => {
   // Track previous key to detect filter changes
   const prevScrollKeyRef = useRef(scrollStorageKey);
 
-  // Detect if this is a fresh load (refresh) vs back-navigation (cached data)
-  // On refresh: isLoading starts true (no cache) → start at top
-  // On back-nav: isLoading starts false (cached) → restore scroll position
-  // Known limitation: Can't distinguish page refresh with valid TanStack Query cache
-  // from actual back-navigation. Both have cached data on mount.
-  const hadCachedDataOnMountRef = useRef(!isLoading && movies.length > 0);
+  // Detect if this is back-navigation (restore scroll) vs fresh load (reset to top)
+  // Uses explicit signal from React Router location state:
+  // - "Back to Results" link sets state={{ restoreScroll: true }}
+  // - After reading, we clear the state so refresh won't see it
+  // - Direct URL navigation has no state → reset to top
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Capture restore signal on mount (before we clear it)
+  const shouldRestoreScrollRef = useRef(
+    location.state?.restoreScroll === true
+  );
   const hasRestoredScrollRef = useRef(false);
+
+  // Clear location state after capturing it, so refresh won't restore scroll
+  // This runs once on mount - the ref already captured the value
+  useEffect(() => {
+    if (location.state?.restoreScroll) {
+      navigate(location.pathname + location.search, {
+        replace: true,
+        state: null,
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Intentionally empty - only run on mount
 
   // Guard to prevent saving scroll position immediately after restoration
   // (virtualizer may not have full height yet, causing wrong position to be saved)
@@ -177,10 +196,10 @@ const VirtualizedMovieGrid = () => {
     }
   }, [scrollStorageKey]);
 
-  // Restore scroll position for back-navigation (when we had cached data on mount)
+  // Restore scroll position for back-navigation (when explicitly signaled via location state)
   useLayoutEffect(() => {
     if (
-      hadCachedDataOnMountRef.current &&
+      shouldRestoreScrollRef.current &&
       !hasRestoredScrollRef.current &&
       !isLoading &&
       movies.length > 0
@@ -216,10 +235,10 @@ const VirtualizedMovieGrid = () => {
   }, [isError]);
 
   // Get initial offset for virtualizer
-  // Only use saved position for back-navigation (cached data), not refresh
+  // Only use saved position for back-navigation (explicit signal), not refresh
   const initialOffset = useMemo(
     () =>
-      hadCachedDataOnMountRef.current
+      shouldRestoreScrollRef.current
         ? getSavedScrollPosition(scrollStorageKey)
         : 0,
     [scrollStorageKey]

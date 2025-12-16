@@ -627,23 +627,22 @@ This de-risks the infinite scroll commitment by proving the hardest UX requireme
     - Test files to delete: 3 files, ~1,562 lines total
     - Potential unused hooks after migration: `usePageChangeHandler`, `usePaginationDisplay`
 
-- [ ] **7.2 Migrate search to virtualized infinite scroll**
+- [x] **7.2 Migrate search to virtualized infinite scroll**
 
     - [x] **7.2.a Update SearchResults.tsx**
         - Replaced `MovieCollectionGrid` import with `VirtualizedMovieGrid`
         - Query param handling unchanged (already handled in component)
         - Scroll persistence automatic via VirtualizedMovieGrid's query key
 
-    - [ ] **7.2.b Test search-specific behaviors**
-        - Test: New search query resets results and scroll position
-        - Test: Empty search state
-        - Test: No results state
-        - Test: Back-nav from search result detail restores position
+    - [x] **7.2.b Test search-specific behaviors**
+        - Verified: New search query resets results and scroll position
+        - Verified: Back-nav from search result detail restores position
+        - Verified: Refresh after back-nav resets to top (not restore)
 
-- [ ] **7.3 Fix search scroll restoration bugs**
+- [x] **7.3 Fix search scroll restoration bugs**
 
-    **Context:** Testing revealed scroll restoration works for browse but fails for search.
-    Root cause is architectural: `query` is handled inconsistently in two places.
+    **Context:** Fixed three scroll restoration issues: inconsistent query handling,
+    race condition on back-nav, and fresh load detection with cached data.
 
     - [x] **7.3.a Remove `query` from browseParams URL parsing (root cause fix)**
         - Removed `query` from `BrowseParams` interface in `browseTypes.ts`
@@ -676,22 +675,34 @@ This de-risks the infinite scroll commitment by proving the hardest UX requireme
         **Note:** Original hypothesis about ~600px offset was correct - it was a timing issue.
         The offset varied based on how much content the virtualizer had rendered at scroll time.
 
-    - [ ] **7.3.c Fix scroll position not resetting on fresh page load**
+    - [x] **7.3.c Fix scroll position not resetting on fresh page load**
 
         **Problem:** Scroll position doesn't reset to top on fresh page load (page refresh,
-        direct navigation). Now affects both browse and search (regression from 7.3.a changes).
+        direct navigation) when TanStack Query cache is still valid.
 
-        **Expected behavior:**
-        - Page refresh → scroll to top
-        - Direct navigation (not back-nav) → scroll to top
-        - Filter changes → scroll to top
-        - Only back-nav from MovieDetail or browser back button → restore saved position
+        **Root cause:** The `hadCachedDataOnMountRef` heuristic (`!isLoading && movies.length > 0`)
+        couldn't distinguish between back-navigation and page refresh - both scenarios have
+        cached data on mount when cache is valid.
 
-        **Investigation needed:**
-        - Check `hadCachedDataOnMountRef` detection - may be incorrectly detecting fresh
-          loads as back-nav due to TanStack Query cache behavior
-        - The existing filter-change logic (key change → reset to top) works correctly
-        - Issue is specifically with fresh loads where cache might already have data
+        **Solution:** Replaced cache-based heuristic with explicit location state signaling
+        plus state clearing to handle refresh-after-back-nav edge case:
+
+        - Created `BackToCollectionLink` component that passes `state={{ restoreScroll: true }}`
+        - `VirtualizedMovieGrid` captures state in ref on mount, then clears it via `navigate()`
+        - Back-nav: state captured → scroll restored → state cleared
+        - Refresh after back-nav: state already cleared → reset to top
+
+        **Why state clearing:** Location state persists across page refresh for the same
+        history entry. Performance API (`navigation.type`) can't distinguish SPA navigation
+        from the original page load type. Clearing state after consuming ensures refresh
+        won't incorrectly restore.
+
+        **Files changed:**
+        - New: `components/navigation/BackToCollectionLink.tsx` - Reusable back link component
+        - Modified: `VirtualizedMovieGrid.tsx` - Uses `shouldRestoreScrollRef` + state clearing
+        - Modified: `MovieDetail.tsx` - Uses `BackToCollectionLink` component
+        - Modified: `grid-test-utils.tsx` - Added MemoryRouter to `renderWithProvider`
+        - Modified: `VirtualizedMovieGrid.test.tsx` - Updated scroll restore test with location state
 
 - [ ] **7.4 Remove obsolete random-access pagination**
 

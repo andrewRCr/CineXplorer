@@ -13,6 +13,7 @@
 
 import { render } from "@testing-library/react";
 import { vi } from "vitest";
+import { MemoryRouter, type MemoryRouterProps } from "react-router-dom";
 import { ChakraProvider } from "@chakra-ui/react";
 import defaultSystem from "@/theme";
 import type { MovieListItem, PaginatedMoviesResponse } from "@/@types/movie";
@@ -23,11 +24,27 @@ import type { UseInfiniteMoviesResult } from "@/hooks/movie/useInfiniteMovies";
 // ============================================================================
 
 /**
- * Renders component wrapped in ChakraProvider for theme/styling context.
- * Use this for all component tests that use Chakra UI components.
+ * Renders component wrapped in ChakraProvider and MemoryRouter for
+ * theme/styling context and React Router hooks (useLocation, etc.).
+ *
+ * @param ui - The React element to render
+ * @param routerOptions - Optional MemoryRouter configuration
+ *   - initialEntries: Starting URL(s) for the router (default: ["/"])
+ *   - initialState: Location state to pass (e.g., { restoreScroll: true })
  */
-export const renderWithProvider = (ui: React.ReactElement) => {
-  return render(<ChakraProvider value={defaultSystem}>{ui}</ChakraProvider>);
+export const renderWithProvider = (
+  ui: React.ReactElement,
+  routerOptions?: {
+    initialEntries?: MemoryRouterProps["initialEntries"];
+  }
+) => {
+  const { initialEntries = ["/"] } = routerOptions ?? {};
+
+  return render(
+    <MemoryRouter initialEntries={initialEntries}>
+      <ChakraProvider value={defaultSystem}>{ui}</ChakraProvider>
+    </MemoryRouter>
+  );
 };
 
 // ============================================================================

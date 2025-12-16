@@ -527,8 +527,9 @@ describe("VirtualizedMovieGrid", () => {
 
   describe("Scroll persistence: Restore position on mount", () => {
     /**
-     * When component mounts and there's a saved scroll position for the
-     * current queryKey, restore it via the virtualizer's initialOffset.
+     * When component mounts with restoreScroll=true in location state
+     * (from "Back to Results" link) and there's a saved scroll position,
+     * restore it via the virtualizer's initialOffset.
      * This creates seamless back-navigation UX.
      */
     it("restores scroll position from sessionStorage on mount", () => {
@@ -551,7 +552,11 @@ describe("VirtualizedMovieGrid", () => {
         }, mockFns)
       );
 
-      renderWithProvider(<VirtualizedMovieGrid />);
+      // Simulate back-navigation via location state
+      // (set by BackToCollectionLink component)
+      renderWithProvider(<VirtualizedMovieGrid />, {
+        initialEntries: [{ pathname: "/browse", state: { restoreScroll: true } }],
+      });
 
       // Virtualizer should have been created with initialOffset
       expect(useWindowVirtualizer).toHaveBeenCalledWith(

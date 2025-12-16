@@ -1,18 +1,19 @@
 import useMovieDetail from "@/hooks/movie/useMovieDetail";
-import { useParams, useSearchParams, Link } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import { useMemo } from "react";
 import { fetchMovieDetail } from "@/services/movieService";
 import type { Movie, Genre, CastMember, CrewMember, ProductionCompany, SpokenLanguage } from "@shared/index";
 import CertificationBadge from "@/components/movie/CertificationBadge";
+import { BackToCollectionLink } from "@/components/navigation";
 import {
   Box,
+  Button,
   Flex,
   Heading,
   Text,
   Spinner,
   Stack,
   Separator,
-  Button,
   Image,
 } from "@chakra-ui/react";
 import { Tag } from "@chakra-ui/tag";
@@ -40,65 +41,10 @@ const MovieDetail = () => {
   } = useUserMovieData(shouldFetchUserMovieData ? String(movie.tmdb_id) : "");
 
   const [searchParams] = useSearchParams();
-  const from = searchParams.get("from") || "now-playing";
-
-  // Preserve all URL parameters for back navigation (filters, etc.)
-  const allParams = useMemo(() => {
-    const params: Record<string, string> = {};
-    searchParams.forEach((value, key) => {
-      params[key] = value;
-    });
-    return params;
-  }, [searchParams]);
 
   /* ============================================================
        Helper Methods & Derived Data
        ============================================================ */
-
-  // Back button component - available in all states (loading, error, success)
-  // NOTE: If PersonDetail implements similar back navigation with query preservation,
-  // consider extracting to shared <BackToCollectionButton> component (DRY principle)
-  const BackButton = useMemo(() => {
-    // Build query string with preserved parameters
-    // - Skip "from" (already encoded in path)
-    // - Skip pagination params (page, tmdb_page_start) - infinite scroll doesn't use them
-    // - Skip empty values
-    const queryString = Object.entries(allParams)
-      .filter(([key, value]) => {
-        if (key === "from") return false;
-        if (key === "page") return false;
-        if (key === "tmdb_page_start") return false;
-        return value !== "";
-      })
-      .map(([key, value]) => `${key}=${encodeURIComponent(value)}`)
-      .join("&");
-
-    const backUrl =
-      from === "search"
-        ? `/search?${queryString}`
-        : from === "browse"
-        ? `/browse?${queryString}`
-        : `/browse/${from}?${queryString}`;
-
-    return (
-      <Box mb={4}>
-        <Link to={backUrl} style={{ textDecoration: "none" }}>
-          <Button variant="outline">
-            <span
-              style={{
-                display: "inline-block",
-                transform: "translateY(2px)",
-                marginRight: "8px",
-              }}
-            >
-              &larr;
-            </span>
-            Back to Results
-          </Button>
-        </Link>
-      </Box>
-    );
-  }, [allParams, from]);
 
   // extract key crew members (creative leads)
   const director = movie?.crew?.find(
@@ -139,7 +85,7 @@ const MovieDetail = () => {
   if (isLoading) {
     return (
       <Box maxW="6xl" mx="auto" p={4}>
-        {BackButton}
+        <BackToCollectionLink searchParams={searchParams} />
         <Flex align="center" justify="center" minH="60vh">
           <Spinner size="xl" />
         </Flex>
@@ -153,7 +99,7 @@ const MovieDetail = () => {
   if (error && !is404) {
     return (
       <Box maxW="6xl" mx="auto" p={4}>
-        {BackButton}
+        <BackToCollectionLink searchParams={searchParams} />
         <Box
           minH="40vh"
           display="flex"
@@ -176,7 +122,7 @@ const MovieDetail = () => {
   if (!movie) {
     return (
       <Box maxW="6xl" mx="auto" p={4}>
-        {BackButton}
+        <BackToCollectionLink searchParams={searchParams} />
         <Box
           minH="40vh"
           display="flex"
@@ -201,7 +147,7 @@ const MovieDetail = () => {
   return (
     <Box maxW="6xl" mx="auto" p={4}>
       {/* Back to Results Button */}
-      {BackButton}
+      <BackToCollectionLink searchParams={searchParams} />
       {/* Header Section */}
       <Flex gap={8} align="flex-start" mb={6}>
         {/* Header: Movie Poster */}

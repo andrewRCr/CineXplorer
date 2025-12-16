@@ -645,31 +645,17 @@ This de-risks the infinite scroll commitment by proving the hardest UX requireme
     **Context:** Testing revealed scroll restoration works for browse but fails for search.
     Root cause is architectural: `query` is handled inconsistently in two places.
 
-    - [ ] **7.3.a Remove `query` from browseParams URL parsing (root cause fix)**
-
-        **Problem:** `browseParams.query` is inconsistent between save and restore, causing:
-        - TanStack Query cache key mismatch → cache miss → only 20 movies on back-nav
-        - Scroll storage key mismatch → wrong scroll position retrieved
-
-        **Root cause:** `query` flows through TWO paths:
-        1. `searchQuery` extracted explicitly in `MovieCollectionLayout` → context `query`
-        2. `browseParams.query` parsed from URL by `parseBrowseParamsFromUrl`
-
-        These can have different values depending on timing/route, causing key mismatches.
-
-        **Solution:** Remove `query` from `parseBrowseParamsFromUrl` - search term should
-        only flow through the dedicated `searchQuery` path. `browseParams` should contain
-        only filter/sort params (genres, year, rating, sort, language, certifications).
-
-        **Files to modify:**
-        - `frontend/src/utilities/browseUrlSync.ts` - remove `query` from parsing
-        - `frontend/src/types/browseTypes.ts` - remove `query` from `BrowseParams` type
-        - `frontend/src/utilities/browseParamMapper.ts` - remove `addQuery` helper
-        - `frontend/src/hooks/movie/__tests__/useMovieCollectionState.test.tsx` - update tests
-
-        **Files to clean up (remove bandaids after root fix):**
-        - `frontend/src/components/movie/collection/VirtualizedMovieGrid.tsx` - remove
-          `query` stripping from `stableBrowseParams` and `paramsWithoutQuery`
+    - [x] **7.3.a Remove `query` from browseParams URL parsing (root cause fix)**
+        - Removed `query` from `BrowseParams` interface in `browseTypes.ts`
+        - Removed `query` from `DEFAULT_BROWSE_PARAMS` in `browseDefaults.ts`
+        - Removed query parsing from `parseBrowseParamsFromUrl` in `browseUrlSync.ts`
+        - Removed `addQuery` helper from `browseParamMapper.ts`
+        - Removed query checks from `hasActiveFilters` and `countActiveParams` in `browseParamUtils.ts`
+        - Removed bandaid fixes from `VirtualizedMovieGrid.tsx` (stableBrowseParams, paramsWithoutQuery)
+        - Updated `MovieCollectionLayout.tsx` to use `searchQuery` directly (no fallback to browseParams.query)
+        - Updated tests: browseUrlSync.test.ts, browseParamUtils.test.ts, useMovieCollectionState.test.tsx,
+          useMovieFetchRouter.test.ts, ClearBrowseParamsButton.test.tsx
+        - All quality gates pass (type checking, linting, 746 tests)
 
     - [ ] **7.3.b Fix ~600px scroll position offset on search back-nav**
 
@@ -690,7 +676,20 @@ This de-risks the infinite scroll commitment by proving the hardest UX requireme
         - Check if virtualizer `initialOffset` vs `window.scrollTo` behaves differently
         - Consider debouncing scroll save after restoration
 
-    - [ ] **7.3.c (placeholder for additional bugs found in testing)**
+    - [ ] **7.3.c Fix search scroll position not resetting on fresh page load**
+
+        **Problem:** Search results scroll position doesn't reset to top on fresh page load
+        (page refresh, direct navigation). Browse correctly resets in these scenarios.
+
+        **Expected behavior (browse does this correctly):**
+        - Page refresh → scroll to top
+        - Direct navigation (not back-nav) → scroll to top
+        - Only back-nav from MovieDetail or browser back button → restore saved position
+
+        **Investigation needed:**
+        - Compare `hadCachedDataOnMountRef` detection between browse and search
+        - Check if TanStack Query cache behaves differently for search vs browse
+        - Verify `isLoading` initial state for search routes on fresh load
 
 - [ ] **7.4 Remove obsolete random-access pagination**
 

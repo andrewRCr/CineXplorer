@@ -438,4 +438,235 @@ describe("useInfiniteMovies", () => {
       });
     });
   });
+
+  describe("edge cases", () => {
+    it("handles empty page in middle of results", async () => {
+      // Page 1 has movies, page 2 is empty, page 3 has movies
+      const page1 = createMockResponse({
+        page: 1,
+        next_tmdb_page_start: 3,
+        results: [
+          {
+            tmdb_id: 1,
+            title: "Movie 1",
+            poster_path: null,
+            release_date: "2024-01-01",
+            vote_average: 8.0,
+            user_movie_data: null,
+          },
+        ],
+      });
+
+      const page2Empty = createMockResponse({
+        page: 2,
+        next_tmdb_page_start: 5,
+        results: [], // Empty page
+      });
+
+      const page3 = createMockResponse({
+        page: 3,
+        next_tmdb_page_start: null, // Last page
+        results: [
+          {
+            tmdb_id: 3,
+            title: "Movie 3",
+            poster_path: null,
+            release_date: "2024-01-03",
+            vote_average: 7.0,
+            user_movie_data: null,
+          },
+        ],
+      });
+
+      const mockFetcher = vi
+        .fn()
+        .mockResolvedValueOnce(page1)
+        .mockResolvedValueOnce(page2Empty)
+        .mockResolvedValueOnce(page3);
+
+      const { result } = renderHook(
+        () =>
+          useInfiniteMovies({
+            queryKey: ["movies", "edge-empty"],
+            fetcher: mockFetcher,
+          }),
+        { wrapper: createWrapper() }
+      );
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+
+      // Fetch page 2 (empty)
+      await result.current.fetchNextPage();
+      await waitFor(() => expect(result.current.pageCount).toBe(2));
+
+      // Fetch page 3
+      await result.current.fetchNextPage();
+      await waitFor(() => expect(result.current.pageCount).toBe(3));
+
+      // Movies should be flattened correctly, skipping empty page
+      expect(result.current.movies).toHaveLength(2);
+      expect(result.current.movies[0].tmdb_id).toBe(1);
+      expect(result.current.movies[1].tmdb_id).toBe(3);
+    });
+
+    it("handles cursor becoming null after non-null (end of results)", async () => {
+      const page1 = createMockResponse({
+        page: 1,
+        next_tmdb_page_start: 3, // Has more
+      });
+
+      const page2Last = createMockResponse({
+        page: 2,
+        next_tmdb_page_start: null, // No more pages
+        results: [
+          {
+            tmdb_id: 999,
+            title: "Last Movie",
+            poster_path: null,
+            release_date: "2024-12-31",
+            vote_average: 9.0,
+            user_movie_data: null,
+          },
+        ],
+      });
+
+      const mockFetcher = vi
+        .fn()
+        .mockResolvedValueOnce(page1)
+        .mockResolvedValueOnce(page2Last);
+
+      const { result } = renderHook(
+        () =>
+          useInfiniteMovies({
+            queryKey: ["movies", "end-cursor"],
+            fetcher: mockFetcher,
+          }),
+        { wrapper: createWrapper() }
+      );
+
+      await waitFor(() => {
+        expect(result.current.hasNextPage).toBe(true);
+      });
+
+      await result.current.fetchNextPage();
+
+      await waitFor(() => {
+        expect(result.current.hasNextPage).toBe(false);
+      });
+
+      // Should have movies from both pages
+      expect(result.current.movies).toHaveLength(3); // 2 from page1 + 1 from page2
+    });
+
+    it("does not refetch when query key has same values but different reference", async () => {
+      const mockFetcher = vi.fn().mockResolvedValue(createMockResponse());
+
+      // Use a stable query key format
+      const queryKeyValue = { genre: "action", year: 2024 };
+
+      const { result, rerender } = renderHook(
+        ({ queryKey }) =>
+          useInfiniteMovies({
+            queryKey: ["movies", queryKey],
+            fetcher: mockFetcher,
+          }),
+        {
+          wrapper: createWrapper(),
+          initialProps: { queryKey: { ...queryKeyValue } },
+        }
+      );
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+
+      expect(mockFetcher).toHaveBeenCalledTimes(1);
+
+      // Rerender with structurally identical but different reference object
+      rerender({ queryKey: { ...queryKeyValue } });
+
+      // Wait a tick for any potential refetch
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      // Should NOT refetch since TanStack Query compares by value, not reference
+      // This tests that the query key serialization works correctly
+      expect(mockFetcher).toHaveBeenCalledTimes(1);
+    });
+
+    it("handles fetchNextPage call while already fetching", async () => {
+      let resolveFirstFetch: (value: PaginatedMoviesResponse) => void;
+      const firstFetchPromise = new Promise<PaginatedMoviesResponse>(
+        (resolve) => {
+          resolveFirstFetch = resolve;
+        }
+      );
+
+      const mockFetcher = vi.fn().mockReturnValue(firstFetchPromise);
+
+      const { result } = renderHook(
+        () =>
+          useInfiniteMovies({
+            queryKey: ["movies", "concurrent"],
+            fetcher: mockFetcher,
+          }),
+        { wrapper: createWrapper() }
+      );
+
+      // Initial fetch is in progress
+      expect(result.current.isLoading).toBe(true);
+
+      // Try to fetch next page while still loading
+      // This should be a no-op or handled gracefully
+      result.current.fetchNextPage();
+      result.current.fetchNextPage();
+
+      // Resolve the initial fetch
+      resolveFirstFetch!(createMockResponse());
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+
+      // Should only have made one call (initial fetch)
+      expect(mockFetcher).toHaveBeenCalledTimes(1);
+    });
+
+    it("handles response with page 0 (edge case)", async () => {
+      const page0 = createMockResponse({
+        page: 0, // Some APIs might return 0-indexed pages
+        next_tmdb_page_start: 2,
+        results: [
+          {
+            tmdb_id: 1,
+            title: "Page 0 Movie",
+            poster_path: null,
+            release_date: "2024-01-01",
+            vote_average: 8.0,
+            user_movie_data: null,
+          },
+        ],
+      });
+
+      const mockFetcher = vi.fn().mockResolvedValue(page0);
+
+      const { result } = renderHook(
+        () =>
+          useInfiniteMovies({
+            queryKey: ["movies", "page-zero"],
+            fetcher: mockFetcher,
+          }),
+        { wrapper: createWrapper() }
+      );
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+
+      // Should still work correctly
+      expect(result.current.movies).toHaveLength(1);
+      expect(result.current.hasNextPage).toBe(true);
+    });
+  });
 });

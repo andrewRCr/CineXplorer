@@ -693,4 +693,184 @@ describe("VirtualizedMovieGrid", () => {
       );
     });
   });
+
+  // ==========================================================================
+  // EDGE CASE TESTS
+  // Tests for resize and content edge cases
+  // ==========================================================================
+
+  describe("Edge cases: Resize and content extremes", () => {
+    /**
+     * When viewport resizes (e.g., tablet rotation, sidebar toggle),
+     * the component re-renders with new column count. The grid should
+     * continue functioning correctly without visual glitches.
+     *
+     * This test verifies the component correctly passes rowCount to
+     * the virtualizer, which changes based on column layout.
+     *
+     * Note: In jsdom, container.offsetWidth is 0, so columnCount defaults
+     * to 1 (all movies in single column). The virtualizer is called with
+     * rowCount = movies.length / columnCount.
+     */
+    it("passes correct rowCount to virtualizer based on movie count", () => {
+      const movies = createMockMovies(20);
+
+      // In jsdom with 0 container width, columnCount = 1, so rowCount = 20
+      (useWindowVirtualizer as Mock).mockReturnValue(
+        createMockVirtualizer(20, [0, 12])
+      );
+
+      (useInfiniteMovies as Mock).mockReturnValue(
+        createMockHookReturn({
+          movies,
+          hasNextPage: true,
+        }, mockFns)
+      );
+
+      renderWithProvider(<VirtualizedMovieGrid />);
+
+      // Verify virtualizer was called with correct count
+      // In jsdom: 20 movies / 1 column = 20 rows
+      expect(useWindowVirtualizer).toHaveBeenCalledWith(
+        expect.objectContaining({
+          count: 20,
+        })
+      );
+
+      // Verify component renders visible cards
+      const movieCards = screen.getAllByTestId("movie-card");
+      expect(movieCards.length).toBeGreaterThan(0);
+      expect(movieCards.length).toBeLessThanOrEqual(12); // Only visible ones
+    });
+
+    /**
+     * When there are very few results (fewer than fill the viewport),
+     * the grid should display them without virtualization gaps or
+     * unexpected behavior.
+     *
+     * Note: In jsdom, columnCount = 1, so each movie gets its own row.
+     * With 3 movies, virtualizer shows rows 0-2, displaying all 3 movies.
+     */
+    it("handles very few results where viewport exceeds content", () => {
+      const movies = createMockMovies(3); // Just 3 movies
+
+      // In jsdom with columnCount = 1, we have 3 rows
+      // Return all 3 rows as visible
+      const mockVirtualizer = {
+        getVirtualItems: () => [
+          { index: 0, start: 0, size: 449 },
+          { index: 1, start: 465, size: 449 },
+          { index: 2, start: 930, size: 449 },
+        ],
+        getTotalSize: () => 449 * 3,
+        scrollToOffset: mockScrollToOffset,
+        scrollOffset: 0,
+        range: { startIndex: 0, endIndex: 3 },
+      };
+
+      (useWindowVirtualizer as Mock).mockReturnValue(mockVirtualizer);
+
+      (useInfiniteMovies as Mock).mockReturnValue(
+        createMockHookReturn({
+          movies,
+          hasNextPage: false, // No more results
+          totalResults: 3,
+        }, mockFns)
+      );
+
+      renderWithProvider(<VirtualizedMovieGrid />);
+
+      // All 3 movies should be visible (one per row in jsdom)
+      expect(screen.getByText("Movie 1")).toBeInTheDocument();
+      expect(screen.getByText("Movie 2")).toBeInTheDocument();
+      expect(screen.getByText("Movie 3")).toBeInTheDocument();
+
+      // Should show "no more results" since hasNextPage is false
+      expect(screen.getByText(/no more results/i)).toBeInTheDocument();
+    });
+
+    /**
+     * Single result edge case: Grid should handle displaying just one movie
+     * without layout issues or unexpected empty states.
+     */
+    it("handles single result correctly", () => {
+      const movies = createMockMovies(1); // Just 1 movie
+
+      const mockVirtualizer = {
+        getVirtualItems: () => [
+          { index: 0, start: 0, size: 449 },
+        ],
+        getTotalSize: () => 449,
+        scrollToOffset: mockScrollToOffset,
+        scrollOffset: 0,
+        range: { startIndex: 0, endIndex: 1 },
+      };
+
+      (useWindowVirtualizer as Mock).mockReturnValue(mockVirtualizer);
+
+      (useInfiniteMovies as Mock).mockReturnValue(
+        createMockHookReturn({
+          movies,
+          hasNextPage: false,
+          totalResults: 1,
+        }, mockFns)
+      );
+
+      renderWithProvider(<VirtualizedMovieGrid />);
+
+      // Single movie should display
+      expect(screen.getByText("Movie 1")).toBeInTheDocument();
+
+      // Should still show grid, not empty state
+      expect(screen.queryByText(/no movies found/i)).not.toBeInTheDocument();
+    });
+
+    /**
+     * When content is small but hasNextPage is true, the "near bottom"
+     * detection should trigger a fetch. This tests the edge where
+     * all content fits in viewport but more exists on server.
+     *
+     * Detection logic: lastVisibleIndex >= rowCount - 2
+     * With 5 movies (5 rows in jsdom), visible 0-4, last=4, rowCount=5
+     * 4 >= 5-2 = 4 >= 3 = true → should fetch
+     */
+    it("triggers fetch for small content when at bottom", () => {
+      const movies = createMockMovies(5);
+
+      // In jsdom: columnCount=1, rowCount=5
+      // Simulate all rows visible (small content)
+      const mockVirtualizer = {
+        getVirtualItems: () => [
+          { index: 0, start: 0, size: 449 },
+          { index: 1, start: 465, size: 449 },
+          { index: 2, start: 930, size: 449 },
+          { index: 3, start: 1395, size: 449 },
+          { index: 4, start: 1860, size: 449 }, // Last row, index 4
+        ],
+        getTotalSize: () => 449 * 5,
+        scrollToOffset: mockScrollToOffset,
+        scrollOffset: 0,
+        range: { startIndex: 0, endIndex: 5 },
+      };
+
+      (useWindowVirtualizer as Mock).mockReturnValue(mockVirtualizer);
+
+      (useInfiniteMovies as Mock).mockReturnValue(
+        createMockHookReturn({
+          movies,
+          hasNextPage: true,
+          isFetching: false,
+          isFetchingNextPage: false,
+        }, mockFns)
+      );
+
+      renderWithProvider(<VirtualizedMovieGrid />);
+
+      // Advance timers to trigger debounced fetch
+      vi.advanceTimersByTime(150);
+
+      // lastVisibleIndex (4) >= rowCount (5) - 2 = 3 → should trigger fetch
+      expect(mockFns.fetchNextPage).toHaveBeenCalled();
+    });
+  });
 });

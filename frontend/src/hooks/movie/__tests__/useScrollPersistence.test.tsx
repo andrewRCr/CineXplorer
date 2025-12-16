@@ -315,4 +315,136 @@ describe("useScrollPersistence", () => {
       );
     });
   });
+
+  describe("edge cases", () => {
+    it("handles saved position larger than available", () => {
+      // Save a very large position (beyond any realistic content height)
+      mockSessionStorage.setItem("scroll-discover-", "999999");
+
+      const { result } = renderHook(() => useScrollPersistence(defaultOptions), {
+        wrapper: createWrapper(["/browse"], { restoreScroll: true }),
+      });
+
+      // Should still return the saved position - actual scrolling is browser's concern
+      // This verifies the hook doesn't try to validate position against content height
+      expect(result.current.initialOffset).toBe(999999);
+    });
+
+    it("handles rapid scroll events at 16ms intervals", () => {
+      renderHook(() => useScrollPersistence(defaultOptions), {
+        wrapper: createWrapper(),
+      });
+
+      // Simulate rapid scroll events (every 16ms, like requestAnimationFrame)
+      for (let i = 0; i < 10; i++) {
+        mockScrollY = i * 100;
+        act(() => {
+          scrollListeners.forEach((listener) => listener());
+          vi.advanceTimersByTime(16);
+        });
+      }
+
+      // Before debounce completes, no save should occur
+      expect(mockSessionStorage.setItem).not.toHaveBeenCalled();
+
+      // Complete the debounce
+      act(() => {
+        vi.advanceTimersByTime(200);
+      });
+
+      // Should only save the final position
+      expect(mockSessionStorage.setItem).toHaveBeenCalledTimes(1);
+      expect(mockSessionStorage.setItem).toHaveBeenCalledWith("scroll-discover-", "900");
+    });
+
+    it("cancels debounced save on unmount", () => {
+      const { unmount } = renderHook(() => useScrollPersistence(defaultOptions), {
+        wrapper: createWrapper(),
+      });
+
+      // Trigger scroll event
+      mockScrollY = 500;
+      act(() => {
+        scrollListeners.forEach((listener) => listener());
+      });
+
+      // Unmount before debounce completes
+      act(() => {
+        vi.advanceTimersByTime(100);
+      });
+      unmount();
+
+      // Complete what would have been the debounce period
+      act(() => {
+        vi.advanceTimersByTime(200);
+      });
+
+      // Save should NOT have occurred (cleanup cancelled the timeout)
+      expect(mockSessionStorage.setItem).not.toHaveBeenCalled();
+    });
+
+    it("handles position 0 correctly (not treated as falsy)", () => {
+      mockSessionStorage.setItem("scroll-discover-", "0");
+
+      const { result } = renderHook(() => useScrollPersistence(defaultOptions), {
+        wrapper: createWrapper(["/browse"], { restoreScroll: true }),
+      });
+
+      // Position 0 should be returned (not default to something else)
+      expect(result.current.initialOffset).toBe(0);
+    });
+
+    it("generates different keys for different genre combinations", () => {
+      // Test with genres = [28]
+      const { rerender } = renderHook(
+        (props) => useScrollPersistence(props),
+        {
+          wrapper: createWrapper(),
+          initialProps: {
+            ...defaultOptions,
+            browseParams: { genres: [28] },
+          },
+        }
+      );
+
+      mockScrollY = 100;
+      act(() => {
+        scrollListeners.forEach((listener) => listener());
+        vi.advanceTimersByTime(200);
+      });
+
+      // Change to different genres - should reset scroll
+      rerender({
+        ...defaultOptions,
+        browseParams: { genres: [35] },
+      });
+
+      expect(mockScrollTo).toHaveBeenCalledWith(0, 0);
+    });
+
+    it("does not save scroll during restoration guard period", () => {
+      // Set up for back-navigation with restoration
+      mockSessionStorage.setItem("scroll-discover-", "500");
+
+      renderHook(() => useScrollPersistence(defaultOptions), {
+        wrapper: createWrapper(["/browse"], { restoreScroll: true }),
+      });
+
+      // Immediately scroll (simulating virtualizer adjustments during restore)
+      mockScrollY = 300;
+      act(() => {
+        scrollListeners.forEach((listener) => listener());
+        vi.advanceTimersByTime(200);
+      });
+
+      // First call is from scrollTo during restore, not our save
+      // The guard should prevent saving the intermediate position
+      const setCalls = mockSessionStorage.setItem.mock.calls;
+      // Either no save calls, or if there are, they shouldn't save a wrong position during restoration
+      if (setCalls.length > 0) {
+        // If saved, it should be the restored position (500) not the intermediate (300)
+        expect(setCalls[setCalls.length - 1][1]).not.toBe("300");
+      }
+    });
+  });
 });

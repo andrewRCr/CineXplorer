@@ -722,25 +722,30 @@ This de-risks the infinite scroll commitment by proving the hardest UX requireme
         - Hook returns `{ initialOffset }` (manages scroll listener internally)
         - Updated VirtualizedMovieGrid to use new hook (447 → 299 lines)
         - Added 10 tests for useScrollPersistence hook
-        - All 756 frontend tests passing
+        - All frontend tests passing at time of completion
 
-- [ ] **7.4 Remove obsolete random-access pagination**
+- [x] **7.4 Remove obsolete random-access pagination**
 
-    - [ ] **7.4.a Delete random-access components**
-        - Delete `MovieCollectionGrid.tsx` (replaced by VirtualizedMovieGrid)
-        - Delete `MoviePaginationCtrl.tsx` (random-access UI - never worked correctly)
+    Removed random-access pagination components and their tests. These were superseded
+    by VirtualizedMovieGrid with infinite scroll.
 
-    - [ ] **7.4.b Delete associated tests**
-        - Delete `MovieCollectionGrid.integration.test.tsx`
-        - Delete `MovieCollectionGrid.stability.test.tsx`
-        - Delete `MoviePaginationCtrl.test.tsx`
+    - [x] **7.4.a Delete random-access components**
+        - Deleted `MovieCollectionGrid.tsx` (279 lines)
+        - Deleted `MoviePaginationCtrl.tsx` (321 lines)
 
-    - [ ] **7.4.c Clean up imports and exports**
-        - Remove exports from index files
-        - Verify no remaining references
+    - [x] **7.4.b Delete associated tests**
+        - Deleted `MovieCollectionGrid.integration.test.tsx`
+        - Deleted `MovieCollectionGrid.stability.test.tsx`
+        - Deleted `MoviePaginationCtrl.test.tsx`
+        - Total: 61 tests removed (~1,562 lines)
 
-- [ ] **7.5 Quality gates**
-    - Frontend tests passing
+    - [x] **7.4.c Clean up imports and exports**
+        - Removed deprecated `currentPage` prop from MovieCard
+        - Updated useMovieCollectionContext comments to reference VirtualizedMovieGrid
+        - No index file exports needed (components not exported)
+
+- [x] **7.5 Quality gates**
+    - Frontend tests: 695 passing (61 removed with deleted files)
     - Type checking: 0 errors
     - Linting: 0 violations
 

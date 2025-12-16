@@ -24,7 +24,7 @@ interface MovieCollectionContext {
 }
 
 // Props interface for when used without Outlet context
-interface MovieCollectionGridProps {
+interface MovieGridProps {
     fetcher?: MovieFetcher;
     source?: string;
     query?: string;
@@ -66,17 +66,17 @@ interface ResolvedContext {
  * ```
  * MovieCollectionLayout (provides context)
  *   └─> Outlet
- *         └─> MovieCollectionGrid (consumes via this hook)
+ *         └─> VirtualizedMovieGrid (consumes via this hook)
  * ```
  *
- * **Why This Exists:** Allows MovieCollectionGrid to work both:
+ * **Why This Exists:** Allows VirtualizedMovieGrid to work both:
  * 1. As a child route (gets data from outlet context)
  * 2. Standalone (gets data from props)
  *
  * @param props - Optional props to override or supplement outlet context
  * @returns Resolved context with fetcher, pagination data, and handlers
  */
-export function useMovieCollectionContext(props: MovieCollectionGridProps): ResolvedContext {
+export function useMovieCollectionContext(props: MovieGridProps): ResolvedContext {
     // Get context from parent layout, or use props as fallback
     const context = useOutletContext<MovieCollectionContext>();
     const {

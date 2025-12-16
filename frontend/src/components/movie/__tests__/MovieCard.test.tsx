@@ -20,7 +20,6 @@ vi.mock('@/constants/theme', () => ({
 describe('MovieCard Component', () => {
   const defaultProps = {
     movie: createMockMovie(),
-    currentPage: 1,
     source: 'popular',
     query: ''
   };
@@ -83,7 +82,7 @@ describe('MovieCard Component', () => {
         title: 'Fight Club'
       });
 
-      render(<MovieCard {...defaultProps} movie={testMovie} currentPage={2} />);
+      render(<MovieCard {...defaultProps} movie={testMovie} />);
 
       const links = document.querySelectorAll('a[href*="/movie/550"]');
       expect(links.length).toBeGreaterThan(0);
@@ -96,7 +95,6 @@ describe('MovieCard Component', () => {
         <MovieCard
           {...defaultProps}
           movie={testMovie}
-          currentPage={3}
           source="top-rated"
           query="action"
         />
@@ -423,7 +421,6 @@ describe('MovieCard Component', () => {
         <MovieCard
           {...defaultProps}
           movie={testMovie}
-          currentPage={2}
           source="popular"
           query="test query"
         />
@@ -500,7 +497,6 @@ describe('MovieCard Component', () => {
         <MovieCard
           {...defaultProps}
           movie={testMovie}
-          currentPage={1}
           source="popular"
           query=""
         />

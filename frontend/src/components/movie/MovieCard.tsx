@@ -18,16 +18,11 @@ import { useMovieActions } from "@/hooks/movie/useMovieActions";
 
 interface MovieCardProps {
   movie: MovieListItem;
-  /**
-   * @deprecated No longer used - infinite scroll doesn't track page numbers.
-   * Kept for backward compatibility with MovieCollectionGrid until cleanup.
-   */
-  currentPage?: number;
   source?: string;
   query?: string;
 }
 
-const MovieCard = ({ movie, currentPage: _currentPage, source, query }: MovieCardProps) => {
+const MovieCard = ({ movie, source, query }: MovieCardProps) => {
   const [searchParams] = useSearchParams();
   const [isTitleTooltipOpen, setIsTitleTooltipOpen] = useState(false);
   const [isTitleTruncated, setIsTitleTruncated] = useState(false);

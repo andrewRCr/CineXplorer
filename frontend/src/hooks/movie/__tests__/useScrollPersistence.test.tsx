@@ -242,7 +242,7 @@ describe("useScrollPersistence", () => {
           wrapper: createWrapper(),
           initialProps: {
             ...defaultOptions,
-            browseParams: { year: 2024 },
+            browseParams: { minYear: "2024" },
           },
         }
       );
@@ -250,7 +250,7 @@ describe("useScrollPersistence", () => {
       // Change filters
       rerender({
         ...defaultOptions,
-        browseParams: { year: 2023 },
+        browseParams: { minYear: "2023" },
       });
 
       expect(mockScrollTo).toHaveBeenCalledWith(0, 0);

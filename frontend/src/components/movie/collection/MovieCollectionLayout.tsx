@@ -7,6 +7,7 @@ import {
   getFetcherAndSource,
   type RouteConfig,
 } from "@/utilities/routeConfigHelper";
+import { parseSearchParamsFromUrl } from "@/utilities/searchUrlSync";
 import PageHeader from "@/components/movie/collection/PageHeader";
 import BrowseControlsSection from "@/components/movie/collection/BrowseControlsSection";
 import { useMovieCollectionState } from "@/hooks/movie/useMovieCollectionState";
@@ -71,6 +72,15 @@ const MovieCollectionLayout = ({
   const actualSource = source || routeSource;
   const actualTitle = title || routeTitle;
 
+  // Extract search query from URL for search routes
+  // This is needed for TanStack Query cache key and scroll position persistence
+  const searchQuery = useMemo(() => {
+    if (location.pathname.includes("/search")) {
+      return parseSearchParamsFromUrl(location.search).query || undefined;
+    }
+    return undefined;
+  }, [location.pathname, location.search]);
+
   // Use custom hook for state management with auto-expand
   const {
     browseParams,
@@ -118,7 +128,8 @@ const MovieCollectionLayout = ({
       return {
         fetcher: actualFetcher,
         source: actualSource,
-        query: defaultBrowseParams?.query,
+        // searchQuery is extracted from URL ?query= param for search routes
+        query: searchQuery,
         title: actualTitle,
         renderPageHeader,
         initialCurrentPage: currentPage || currentPageFromUrl,
@@ -132,7 +143,7 @@ const MovieCollectionLayout = ({
     [
       actualFetcher,
       actualSource,
-      defaultBrowseParams?.query,
+      searchQuery,
       actualTitle,
       renderPageHeader,
       currentPage,

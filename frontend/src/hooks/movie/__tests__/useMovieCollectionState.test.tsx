@@ -112,7 +112,6 @@ describe("useMovieCollectionState", () => {
       // Arrange: Mock URL parsing to return language filter (advanced-only)
       mockUseMovieCollectionUrl.mockReturnValue({
         browseParams: {
-          query: "",
           genres: [],
           minYear: "",
           maxYear: "",
@@ -426,7 +425,6 @@ describe("useMovieCollectionState", () => {
 
       // Assert: Sort should be PRESERVED, filters should be reset
       expect(mockHandleBrowseParamsChange).toHaveBeenCalledWith({
-        query: "",
         genres: [],
         minYear: "",
         maxYear: "",
@@ -434,7 +432,7 @@ describe("useMovieCollectionState", () => {
         maxRating: "",
         sortBy: "vote_average.desc", // Sort preserved!
         language: "",
-          certifications: [],
+        certifications: [],
       });
     });
   });
@@ -447,14 +445,13 @@ describe("useMovieCollectionState", () => {
         { wrapper }
       );
 
-      // Act: Update query param
+      // Act: Update genres param
       act(() => {
-        result.current.onBrowseParamsChange({ query: "inception" });
+        result.current.onBrowseParamsChange({ genres: [28] });
       });
 
-      // Assert: Query should be updated, other params unchanged
-      expect(result.current.browseParams.query).toBe("inception");
-      expect(result.current.browseParams.genres).toEqual([]);
+      // Assert: Genres should be updated, other params unchanged
+      expect(result.current.browseParams.genres).toEqual([28]);
       expect(result.current.hasActiveBrowseParams).toBe(true);
     });
 
@@ -468,13 +465,13 @@ describe("useMovieCollectionState", () => {
       // Act: Add multiple params
       act(() => {
         result.current.onBrowseParamsChange({
-          query: "test",
           genres: [28, 12],
           minRating: "7.0",
+          language: "en",
         });
       });
 
-      // Assert: activeParamCount should include query (1) + genres (1) + rating (1) = 3
+      // Assert: activeParamCount should include genres (1) + rating (1) + language (1) = 3
       // Note: countActiveParams counts genres as 1 group, not per-genre
       expect(result.current.activeParamCount).toBe(3);
     });
@@ -491,7 +488,7 @@ describe("useMovieCollectionState", () => {
 
       // Act: Add param
       act(() => {
-        result.current.onBrowseParamsChange({ query: "test" });
+        result.current.onBrowseParamsChange({ genres: [28] });
       });
 
       // Assert: Should have active params
@@ -538,11 +535,11 @@ describe("useMovieCollectionState", () => {
 
       // Act: Change params
       act(() => {
-        result.current.onBrowseParamsChange({ query: "test" });
+        result.current.onBrowseParamsChange({ genres: [28] });
       });
 
       // Assert: Params should update (local state, not URL)
-      expect(result.current.browseParams.query).toBe("test");
+      expect(result.current.browseParams.genres).toEqual([28]);
     });
 
     it("should auto-expand when defaultBrowseParams contain advanced filters", async () => {

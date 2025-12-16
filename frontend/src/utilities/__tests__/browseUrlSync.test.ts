@@ -29,11 +29,6 @@ describe("parseBrowseParamsFromUrl", () => {
       expect(result).toEqual(DEFAULT_BROWSE_PARAMS);
     });
 
-    it("parses query parameter", () => {
-      const result = parseBrowseParamsFromUrl("?query=batman");
-      expect(result.query).toBe("batman");
-    });
-
     it("parses single genre as array", () => {
       const result = parseBrowseParamsFromUrl("?genres=28");
       expect(result.genres).toEqual([28]);
@@ -78,11 +73,10 @@ describe("parseBrowseParamsFromUrl", () => {
 
     it("parses all parameters together", () => {
       const search =
-        "?query=sci-fi&genres=878,28&sortBy=release_date.desc&minYear=2020&maxYear=2024&minRating=7&maxRating=10&language=en&certifications=PG-13,R";
+        "?genres=878,28&sortBy=release_date.desc&minYear=2020&maxYear=2024&minRating=7&maxRating=10&language=en&certifications=PG-13,R";
       const result = parseBrowseParamsFromUrl(search);
 
       expect(result).toEqual({
-        query: "sci-fi",
         genres: [878, 28],
         sortBy: "release_date.desc",
         minYear: "2020",
@@ -95,9 +89,8 @@ describe("parseBrowseParamsFromUrl", () => {
     });
 
     it("applies defaults for missing parameters", () => {
-      const result = parseBrowseParamsFromUrl("?query=action&genres=28");
+      const result = parseBrowseParamsFromUrl("?genres=28");
 
-      expect(result.query).toBe("action");
       expect(result.genres).toEqual([28]);
       // All other fields should be defaults
       expect(result.sortBy).toBe(DEFAULT_SORT);
@@ -164,9 +157,9 @@ describe("parseBrowseParamsFromUrl", () => {
 
     it("ignores unknown parameters", () => {
       const result = parseBrowseParamsFromUrl(
-        "?query=test&unknownParam=value&anotherUnknown=123"
+        "?genres=28&unknownParam=value&anotherUnknown=123"
       );
-      expect(result.query).toBe("test");
+      expect(result.genres).toEqual([28]);
       // Unknown params should not appear in result
       expect(result).not.toHaveProperty("unknownParam");
       expect(result).not.toHaveProperty("anotherUnknown");
@@ -184,43 +177,9 @@ describe("parseBrowseParamsFromUrl", () => {
       expect(result.genres).toEqual([]);
     });
 
-    it("treats empty param value as missing (query=)", () => {
-      const result = parseBrowseParamsFromUrl("?query=");
-      expect(result.query).toBe("");
-    });
-
     it("treats empty param value as missing (certifications=)", () => {
       const result = parseBrowseParamsFromUrl("?certifications=");
       expect(result.certifications).toEqual([]);
-    });
-
-    it("handles URL-encoded special characters in query", () => {
-      // "action & adventure" URL-encoded
-      const result = parseBrowseParamsFromUrl("?query=action%20%26%20adventure");
-      expect(result.query).toBe("action & adventure");
-    });
-
-    it("handles URL-encoded spaces in query", () => {
-      const result = parseBrowseParamsFromUrl("?query=star%20wars");
-      expect(result.query).toBe("star wars");
-    });
-
-    it("handles plus signs as spaces in query (form encoding)", () => {
-      // URLSearchParams treats + as space (application/x-www-form-urlencoded)
-      const result = parseBrowseParamsFromUrl("?query=star+wars");
-      expect(result.query).toBe("star wars");
-    });
-
-    it("preserves leading/trailing whitespace in values", () => {
-      const result = parseBrowseParamsFromUrl("?query=%20padded%20");
-      expect(result.query).toBe(" padded ");
-    });
-
-    it("handles very long query values", () => {
-      const longQuery = "a".repeat(1000);
-      const result = parseBrowseParamsFromUrl(`?query=${longQuery}`);
-      expect(result.query).toBe(longQuery);
-      expect(result.query.length).toBe(1000);
     });
 
     it("handles many genres", () => {
@@ -252,18 +211,19 @@ describe("parseBrowseParamsFromUrl", () => {
       expect(result.certifications).toEqual(["PG", "R"]);
     });
 
-    it("handles unicode characters in query", () => {
-      const result = parseBrowseParamsFromUrl("?query=%E6%98%A0%E7%94%BB"); // "映画" (movie in Japanese)
-      expect(result.query).toBe("映画");
-    });
-
     it("preserves case sensitivity in all string values", () => {
       const result = parseBrowseParamsFromUrl(
-        "?query=BaTmAn&language=EN&sortBy=Vote_Average.Desc"
+        "?language=EN&sortBy=Vote_Average.Desc"
       );
-      expect(result.query).toBe("BaTmAn");
       expect(result.language).toBe("EN");
       expect(result.sortBy).toBe("Vote_Average.Desc");
+    });
+
+    it("ignores query parameter (handled separately via searchQuery path)", () => {
+      // Query param is parsed separately in MovieCollectionLayout, not via browseParams
+      const result = parseBrowseParamsFromUrl("?query=batman&genres=28");
+      expect(result).not.toHaveProperty("query");
+      expect(result.genres).toEqual([28]);
     });
   });
 });

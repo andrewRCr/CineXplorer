@@ -29,20 +29,20 @@ import { DEFAULT_SORT } from "@/constants/browseDefaults";
  * This is the base filter check used by "Clear Filters" button visibility.
  * Sort is intentionally excluded because it's a user preference, not a filter.
  *
- * Covers 8 filter fields:
- * - query: search text
+ * Covers 7 filter fields:
  * - genres: genre filter array
  * - minYear/maxYear: year range
  * - minRating/maxRating: rating range
  * - language: language filter
  * - certifications: certification filter array
  *
+ * Note: Search query is NOT part of BrowseParams - it flows through a separate path.
+ *
  * @param params - The browse parameters to check
  * @returns true if any FILTER is active (non-default)
  */
 export function hasActiveFilters(params: BrowseParams): boolean {
   return (
-    params.query !== "" ||
     params.genres.length > 0 ||
     params.minYear !== "" ||
     params.maxYear !== "" ||
@@ -73,23 +73,23 @@ export function hasActiveBrowseParams(params: BrowseParams): boolean {
  * This count is used for UI indicators like "X filters active".
  *
  * Counting logic:
- * - query: counts as 1 if non-empty
  * - genres: counts as 1 if any selected (not per-genre)
  * - year range: counts as 1 if either min or max is set
  * - rating range: counts as 1 if either min or max is set
  * - language: counts as 1 if set
  * - certifications: counts as 1 if any selected
  *
+ * Note: Search query is NOT part of BrowseParams - it flows through a separate path.
+ *
  * This groups related fields (min/max pairs) to provide a user-friendly count.
- * Maximum possible count: 6 (query, genres, year, rating, language, certifications)
+ * Maximum possible count: 5 (genres, year, rating, language, certifications)
  *
  * @param params - The browse parameters to count
- * @returns Number of active filter groups (0-6)
+ * @returns Number of active filter groups (0-5)
  */
 export function countActiveParams(params: BrowseParams): number {
   let count = 0;
 
-  if (params.query !== "") count++;
   if (params.genres.length > 0) count++;
   if (params.minYear !== "" || params.maxYear !== "") count++;
   if (params.minRating !== "" || params.maxRating !== "") count++;

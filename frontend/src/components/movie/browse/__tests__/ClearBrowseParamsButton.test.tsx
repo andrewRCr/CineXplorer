@@ -132,12 +132,12 @@ describe('ClearBrowseParamsButton Component', () => {
       expect(button).not.toBeInTheDocument();
     });
 
-    it('renders button when query field is active', () => {
-      // Uses hasActiveFilters which correctly includes query field
-      const paramsWithQuery = createMockBrowseParams({
-        query: 'batman'
+    it('renders button when genres are active', () => {
+      // Uses hasActiveFilters which detects active filters
+      const paramsWithGenres = createMockBrowseParams({
+        genres: [28]
       });
-      render(<ClearBrowseParamsButton {...defaultProps} browseParams={paramsWithQuery} />);
+      render(<ClearBrowseParamsButton {...defaultProps} browseParams={paramsWithGenres} />);
 
       const button = screen.getByRole('button', { name: /clear/i });
       expect(button).toBeInTheDocument();

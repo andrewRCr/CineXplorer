@@ -39,7 +39,6 @@ export interface SortOption {
  * Browse parameters - complete state for movie browsing UI
  *
  * Fields:
- * - query: Search text (reserved for future use - currently unused in browse flow)
  * - genres: Array of TMDB genre IDs (empty = all genres)
  * - minYear/maxYear: Year range filter (empty string = no constraint)
  * - minRating/maxRating: Rating range filter (empty string = no constraint)
@@ -47,11 +46,14 @@ export interface SortOption {
  * - language: ISO 639-1 language code (empty string = all languages)
  * - certifications: Array of US MPAA ratings to filter by (empty = all ratings)
  *
+ * Note: Search query is NOT part of BrowseParams. Search flows through a separate
+ * path (URL ?query= → searchQuery memo → context.query) to avoid key mismatches
+ * between scroll save/restore operations.
+ *
  * All string fields use empty string ("") as the "not set" value.
  * Array fields use empty array ([]) as the "not set" value.
  */
 export interface BrowseParams {
-  query: string;
   genres: number[];
   minYear: string;
   maxYear: string;

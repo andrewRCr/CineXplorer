@@ -185,14 +185,14 @@ describe('useMovieFetchRouter - pagination metadata passing', () => {
      * is reserved for potential future use but doesn't trigger
      * search endpoint switching in the current implementation.
      */
-    describe('query handling - always uses base fetcher', () => {
-        it('should use base fetcher even when query is present', () => {
+    describe('filter handling - always uses base fetcher', () => {
+        it('should use base fetcher with multiple filters', () => {
             // Arrange
             const mockBaseFetcher = createMockBaseFetcher();
             const mockBrowseParams: BrowseParams = {
                 ...createMockBrowseParams(),
-                query: 'avatar', // Query is present but should be ignored for routing
                 genres: [28],
+                minYear: "2020",
             };
 
             const { result } = renderHook(() =>
@@ -202,16 +202,15 @@ describe('useMovieFetchRouter - pagination metadata passing', () => {
                 })
             );
 
-            // Act: Request with query in filters
+            // Act: Request with filters
             result.current(2, 7);
 
-            // Assert: Base fetcher is called (not search endpoint)
-            // Query gets passed through via mapBrowseParamsToApi
+            // Assert: Base fetcher is called with filter params
             expect(mockBaseFetcher).toHaveBeenCalledWith(
                 2,
                 expect.objectContaining({
                     genres: '28',
-                    query: 'avatar',
+                    release_date_gte: '2020-01-01',
                 }),
                 7
             );

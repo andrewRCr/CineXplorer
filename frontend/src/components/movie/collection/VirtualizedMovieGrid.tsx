@@ -132,10 +132,12 @@ const VirtualizedMovieGrid = () => {
   // Scroll Position Persistence
   // --------------------------------------------------------------------------
 
-  const scrollStorageKey = useMemo(
-    () => getScrollStorageKey(source ?? "discover", browseParams ?? {}),
-    [source, browseParams]
-  );
+  // Include query in scroll key for search routes (different queries = different scroll positions)
+  const scrollStorageKey = useMemo(() => {
+    const baseKey = getScrollStorageKey(source ?? "discover", browseParams ?? {});
+    // Append query to key for search routes
+    return query ? `${baseKey}-q=${query}` : baseKey;
+  }, [source, browseParams, query]);
 
   // Track previous key to detect filter changes
   const prevScrollKeyRef = useRef(scrollStorageKey);
@@ -275,6 +277,15 @@ const VirtualizedMovieGrid = () => {
   const resultText = useInfiniteResultsText(totalResults, isLoading);
   const showHeader = movies.length > 0 || isLoading;
 
+  // Normalize title to string (can be string or {main, secondary} object from routeConfigHelper)
+  const normalizedTitle = useMemo(() => {
+    if (!title) return undefined;
+    if (typeof title === "string") return title;
+    // Object with main/secondary - combine them
+    const titleObj = title as { main: string; secondary?: string };
+    return titleObj.secondary ? `${titleObj.main}${titleObj.secondary}` : titleObj.main;
+  }, [title]);
+
   // --------------------------------------------------------------------------
   // Render
   // --------------------------------------------------------------------------
@@ -283,7 +294,7 @@ const VirtualizedMovieGrid = () => {
     <Box>
       {/* Grid Header - includes title when PageHeader is not rendered */}
       <GridHeader
-        title={!renderPageHeader ? title : undefined}
+        title={!renderPageHeader ? normalizedTitle : undefined}
         resultText={resultText}
         isLoading={isLoading}
         visible={showHeader}

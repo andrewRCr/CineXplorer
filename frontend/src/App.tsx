@@ -103,12 +103,13 @@ const App: React.FC = () => {
                 <Route index element={<BrowseSequential />} />
               </Route>
 
-              {/* Search results with shared layout */}
+              {/* Search results with shared layout (title in GridHeader) */}
               <Route
                 path={ROUTES.SEARCH_RESULTS}
                 element={
                   <MovieCollectionLayout
                     showBrowseControls={false}
+                    renderPageHeader={false}
                   />
                 }
               >

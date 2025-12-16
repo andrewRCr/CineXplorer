@@ -22,7 +22,6 @@ export const DEFAULT_SORT: SortOptionValue = "popularity.desc";
  * - Comparing against to detect "has active browse params"
  */
 export const DEFAULT_BROWSE_PARAMS: BrowseParams = {
-  query: "",
   genres: [],
   minYear: "",
   maxYear: "",

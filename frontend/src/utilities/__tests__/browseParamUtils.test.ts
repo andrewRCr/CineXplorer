@@ -36,10 +36,6 @@ describe("browseParamUtils", () => {
       expect(hasActiveFilters(DEFAULT_BROWSE_PARAMS)).toBe(false);
     });
 
-    it("returns true when query is set", () => {
-      expect(hasActiveFilters(createParams({ query: "batman" }))).toBe(true);
-    });
-
     it("returns true when genres has items", () => {
       expect(hasActiveFilters(createParams({ genres: [28] }))).toBe(true);
       expect(hasActiveFilters(createParams({ genres: [28, 12] }))).toBe(true);
@@ -88,7 +84,6 @@ describe("browseParamUtils", () => {
 
     it("handles empty arrays and strings correctly", () => {
       expect(hasActiveFilters(createParams({ genres: [] }))).toBe(false);
-      expect(hasActiveFilters(createParams({ query: "" }))).toBe(false);
       expect(hasActiveFilters(createParams({ language: "" }))).toBe(false);
     });
   });
@@ -106,7 +101,6 @@ describe("browseParamUtils", () => {
 
     // Filter checks delegate to hasActiveFilters - spot check a few
     it("returns true when filters are active", () => {
-      expect(hasActiveBrowseParams(createParams({ query: "batman" }))).toBe(true);
       expect(hasActiveBrowseParams(createParams({ genres: [28] }))).toBe(true);
       expect(hasActiveBrowseParams(createParams({ minYear: "2020" }))).toBe(true);
     });
@@ -131,7 +125,6 @@ describe("browseParamUtils", () => {
       expect(
         hasActiveBrowseParams(
           createParams({
-            query: "sci-fi",
             genres: [878],
             minYear: "2020",
             sortBy: "vote_average.desc",
@@ -150,10 +143,6 @@ describe("browseParamUtils", () => {
   describe("countActiveParams", () => {
     it("returns 0 for default params", () => {
       expect(countActiveParams(DEFAULT_BROWSE_PARAMS)).toBe(0);
-    });
-
-    it("counts query as 1", () => {
-      expect(countActiveParams(createParams({ query: "batman" }))).toBe(1);
     });
 
     it("counts genres as 1 regardless of count", () => {
@@ -205,15 +194,15 @@ describe("browseParamUtils", () => {
       expect(
         countActiveParams(
           createParams({
-            query: "test",
             genres: [28],
             minYear: "2020",
             minRating: "7",
             sortBy: "vote_average.desc", // Not counted
             language: "en",
+            certifications: ["PG-13"],
           })
         )
-      ).toBe(5); // Was 6, now 5 (sort excluded)
+      ).toBe(5); // genres, year, rating, language, certifications
     });
 
     it("correctly counts mix of active params", () => {

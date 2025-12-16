@@ -13,7 +13,8 @@ import { DEFAULT_SORT } from "@/constants/browseDefaults";
 export function parseBrowseParamsFromUrl(search: string): BrowseParams {
   const params = new URLSearchParams(search);
 
-  const query = params.get("query") || "";
+  // Note: Search query is NOT parsed here - it flows through a separate path
+  // (URL ?query= → searchQuery memo in MovieCollectionLayout → context.query)
   const genres =
     params
       .get("genres")
@@ -31,7 +32,6 @@ export function parseBrowseParamsFromUrl(search: string): BrowseParams {
     params.get("certifications")?.split(",").filter(Boolean) || [];
 
   return {
-    query,
     genres,
     minYear,
     maxYear,

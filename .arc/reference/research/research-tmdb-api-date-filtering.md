@@ -527,7 +527,8 @@ if 1980 <= year <= 1983:  # TRUE
     include_movie()  # ✅ Included
 ```
 
-**This is NOT a bug in our code**. Our filter correctly processes the data TMDB provides. The problem is TMDB's data is wrong.
+**This is NOT a bug in our code**. Our filter correctly processes the data TMDB provides. The problem is
+TMDB's data is wrong.
 
 **Options**:
 

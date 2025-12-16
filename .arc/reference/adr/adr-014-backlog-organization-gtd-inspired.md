@@ -15,7 +15,8 @@ The existing backlog structure lacks clear organization and creates several pain
 - Unclear whether ideas have been captured before
 - Ambiguity between "defined work units" (ready for implementation) and "general buckets" (exploration)
 - Mix of files at different maturity levels without visual distinction
-- Example: `notes-user-movie-lists.md` (ready for PRD) looks identical to `notes-backend-modernization.md` (exploration bucket)
+- Example: `notes-user-movie-lists.md` (ready for PRD) looks identical to
+  `notes-backend-modernization.md` (exploration bucket)
 
 **2. Structural ambiguity**
 

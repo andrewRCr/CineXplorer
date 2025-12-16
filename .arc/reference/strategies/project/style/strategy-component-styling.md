@@ -1333,8 +1333,8 @@ need. Check the recipe file for the states you need to replicate.
 ```
 
 **Why it matters:** Layer-aware borders create visual cohesion. Forms visually belong to their background surface, with
-borders that provide appropriate contrast for their specific layer. Generic tokens without layer context don't exist in the
-UnifiedTheme interface and should be avoided.
+borders that provide appropriate contrast for their specific layer. Generic tokens without layer context
+don't exist in the UnifiedTheme interface and should be avoided.
 
 **Border Token Decision Tree:**
 

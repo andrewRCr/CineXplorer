@@ -1,12 +1,4 @@
-import {
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useCallback,
-  useMemo,
-  useState,
-} from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useEffect, useRef, useMemo, useState } from "react";
 import { Text, Box, Spinner } from "@chakra-ui/react";
 import { useWindowVirtualizer } from "@tanstack/react-virtual";
 import MovieCard from "../MovieCard";
@@ -16,9 +8,6 @@ import {
   CARD_WIDTH,
   GAP,
   calculateColumnCount,
-  getScrollStorageKey,
-  getSavedScrollPosition,
-  saveScrollPosition,
   GridErrorState,
   GridEmptyState,
   GridSkeletonLoader,
@@ -26,6 +15,7 @@ import {
 import { useInfiniteMovies } from "@/hooks/movie/useInfiniteMovies";
 import { useMovieCollectionContext } from "@/hooks/movie/useMovieCollectionContext";
 import { useInfiniteResultsText } from "@/hooks/movie/useResultsText";
+import { useScrollPersistence } from "@/hooks/movie/useScrollPersistence";
 import { type MovieListItem } from "@/types/movie";
 
 // ============================================================================
@@ -34,9 +24,6 @@ import { type MovieListItem } from "@/types/movie";
 
 /** Fixed height per row (card height + padding). Used for virtualizer sizing. */
 const ROW_HEIGHT = 449;
-
-/** Debounce delay for scroll position saves (ms). */
-const SCROLL_SAVE_DEBOUNCE = 200;
 
 /** Debounce delay for fetchNextPage calls (ms). */
 const FETCH_DEBOUNCE = 150;
@@ -133,149 +120,14 @@ const VirtualizedMovieGrid = () => {
   // Scroll Position Persistence
   // --------------------------------------------------------------------------
 
-  // Include query in scroll key for search routes (different queries = different scroll positions)
-  const scrollStorageKey = useMemo(() => {
-    const baseKey = getScrollStorageKey(source ?? "discover", browseParams ?? {});
-    // Append query to key for search routes
-    return query ? `${baseKey}-q=${query}` : baseKey;
-  }, [source, browseParams, query]);
-
-  // Track previous key to detect filter changes
-  const prevScrollKeyRef = useRef(scrollStorageKey);
-
-  // Detect if this is back-navigation (restore scroll) vs fresh load (reset to top)
-  // Uses explicit signal from React Router location state:
-  // - "Back to Results" link sets state={{ restoreScroll: true }}
-  // - After reading, we clear the state so refresh won't see it
-  // - Direct URL navigation has no state → reset to top
-  const location = useLocation();
-  const navigate = useNavigate();
-
-  // Capture restore signal on mount (before we clear it)
-  const shouldRestoreScrollRef = useRef(
-    location.state?.restoreScroll === true
-  );
-  const hasRestoredScrollRef = useRef(false);
-
-  // Clear location state after capturing it, so refresh won't restore scroll
-  // This runs once on mount - the ref already captured the value
-  useEffect(() => {
-    if (location.state?.restoreScroll) {
-      navigate(location.pathname + location.search, {
-        replace: true,
-        state: null,
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Intentionally empty - only run on mount
-
-  // Guard to prevent saving scroll position immediately after restoration
-  // (virtualizer may not have full height yet, causing wrong position to be saved)
-  const isRestoringScrollRef = useRef(false);
-  // Track restoration timeouts for cleanup
-  const restorationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // Clean up restoration timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (restorationTimeoutRef.current) {
-        clearTimeout(restorationTimeoutRef.current);
-      }
-      isRestoringScrollRef.current = false;
-    };
-  }, []);
-
-  // Handle scroll position on filter changes and back-navigation
-  // Note: Browser scroll restoration disabled in main.tsx (must happen before React mounts)
-  useLayoutEffect(() => {
-    // On filter change, reset to top
-    if (prevScrollKeyRef.current !== scrollStorageKey) {
-      window.scrollTo(0, 0);
-      hasRestoredScrollRef.current = true; // Don't restore after filter change
-      prevScrollKeyRef.current = scrollStorageKey;
-    }
-  }, [scrollStorageKey]);
-
-  // Restore scroll position for back-navigation (when explicitly signaled via location state)
-  useLayoutEffect(() => {
-    if (
-      shouldRestoreScrollRef.current &&
-      !hasRestoredScrollRef.current &&
-      !isLoading &&
-      movies.length > 0
-    ) {
-      const savedPosition = getSavedScrollPosition(scrollStorageKey);
-      if (savedPosition > 0) {
-        // Set guard before restoring to prevent immediate save of wrong position
-        // (virtualizer may not have full content height yet on first scroll attempt)
-        isRestoringScrollRef.current = true;
-        window.scrollTo(0, savedPosition);
-        // Re-scroll after virtualizer has time to render full content height
-        // Use requestAnimationFrame + timeout to ensure layout is complete
-        requestAnimationFrame(() => {
-          restorationTimeoutRef.current = setTimeout(() => {
-            window.scrollTo(0, savedPosition);
-            // Allow saving again after content has stabilized
-            restorationTimeoutRef.current = setTimeout(() => {
-              isRestoringScrollRef.current = false;
-            }, 100);
-          }, 50);
-        });
-      }
-      hasRestoredScrollRef.current = true;
-    }
-  }, [isLoading, movies.length, scrollStorageKey]);
-
-  // Scroll to top on error (reset position when data fetch fails)
-  useLayoutEffect(() => {
-    if (isError) {
-      window.scrollTo(0, 0);
-      hasRestoredScrollRef.current = true;
-    }
-  }, [isError]);
-
-  // Get initial offset for virtualizer
-  // Only use saved position for back-navigation (explicit signal), not refresh
-  const initialOffset = useMemo(
-    () =>
-      shouldRestoreScrollRef.current
-        ? getSavedScrollPosition(scrollStorageKey)
-        : 0,
-    [scrollStorageKey]
-  );
-
-  // Debounced scroll save
-  const scrollSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
-    null
-  );
-
-  const handleScroll = useCallback(() => {
-    // Skip saving if we're in the middle of restoring scroll position
-    if (isRestoringScrollRef.current) {
-      return;
-    }
-    if (scrollSaveTimeoutRef.current) {
-      clearTimeout(scrollSaveTimeoutRef.current);
-    }
-    scrollSaveTimeoutRef.current = setTimeout(() => {
-      // Double-check guard in case restoration started during debounce
-      if (isRestoringScrollRef.current) {
-        return;
-      }
-      saveScrollPosition(scrollStorageKey, window.scrollY);
-    }, SCROLL_SAVE_DEBOUNCE);
-  }, [scrollStorageKey]);
-
-  // Attach scroll listener for position saving
-  useEffect(() => {
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-      if (scrollSaveTimeoutRef.current) {
-        clearTimeout(scrollSaveTimeoutRef.current);
-      }
-    };
-  }, [handleScroll]);
+  const { initialOffset } = useScrollPersistence({
+    source: source ?? "discover",
+    browseParams: browseParams ?? {},
+    query,
+    isLoading,
+    hasContent: movies.length > 0,
+    isError,
+  });
 
   // --------------------------------------------------------------------------
   // Window Virtualizer

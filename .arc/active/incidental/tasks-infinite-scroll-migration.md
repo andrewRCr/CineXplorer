@@ -704,6 +704,26 @@ This de-risks the infinite scroll commitment by proving the hardest UX requireme
         - Modified: `grid-test-utils.tsx` - Added MemoryRouter to `renderWithProvider`
         - Modified: `VirtualizedMovieGrid.test.tsx` - Updated scroll restore test with location state
 
+    - [x] **7.3.d Extract scroll persistence to reusable hook (refactor)**
+
+        Extracted ~150 lines of scroll persistence logic from VirtualizedMovieGrid into
+        a reusable `useScrollPersistence` hook for PersonGrid and future virtualized lists.
+
+        **Architecture:**
+
+        ```
+        hooks/movie/useScrollPersistence.ts (new) - React behavior/orchestration
+            └── components/movie/collection/shared/scrollStorage.ts (renamed)
+        ```
+
+        **Changes:**
+        - Renamed `scrollPersistence.ts` → `scrollStorage.ts`
+        - Created `hooks/movie/useScrollPersistence.ts` with extracted logic
+        - Hook returns `{ initialOffset }` (manages scroll listener internally)
+        - Updated VirtualizedMovieGrid to use new hook (447 → 299 lines)
+        - Added 10 tests for useScrollPersistence hook
+        - All 756 frontend tests passing
+
 - [ ] **7.4 Remove obsolete random-access pagination**
 
     - [ ] **7.4.a Delete random-access components**

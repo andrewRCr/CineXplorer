@@ -17,7 +17,7 @@ export {
     getScrollKeys,
     cleanupOldScrollPositions,
     saveScrollPosition,
-} from "./scrollPersistence";
+} from "./scrollStorage";
 
 // UI Components
 export { GridErrorState } from "./GridErrorState";

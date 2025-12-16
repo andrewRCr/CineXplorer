@@ -25,7 +25,6 @@ type MovieCollectionLayoutProps = {
   title?: string;
   fetcher?: RouteConfig["fetcher"];
   source?: string;
-  currentPage?: number;
   // Layout customization
   size?: "sm" | "md" | "lg" | "xl";
   /** Whether to render PageHeader (default: true). Set false for grids that handle their own title. */
@@ -51,7 +50,6 @@ const MovieCollectionLayout = ({
   source,
   showBrowseControls = false,
   defaultBrowseParams,
-  currentPage,
   size = "xl",
   renderPageHeader = true,
   headerProps,
@@ -82,12 +80,10 @@ const MovieCollectionLayout = ({
   }, [location.pathname, location.search]);
 
   // Use custom hook for state management with auto-expand
+  // Note: Pagination is handled internally by TanStack Query (infinite scroll)
   const {
     browseParams,
     onBrowseParamsChange,
-    currentPage: currentPageFromUrl,
-    tmdbPageStart: tmdbPageStartFromUrl,
-    onPageChange: handlePageChange,
     isAdvancedPanelOpen,
     setIsAdvancedPanelOpen,
     toggleAdvancedPanel,
@@ -123,6 +119,7 @@ const MovieCollectionLayout = ({
   }, [size, containerProps, showBrowseControls]);
 
   // Memoized outlet context to prevent unnecessary re-renders
+  // Note: Pagination is handled internally by child components via TanStack Query
   const outletContext = useMemo(
     () => {
       return {
@@ -132,9 +129,6 @@ const MovieCollectionLayout = ({
         query: searchQuery,
         title: actualTitle,
         renderPageHeader,
-        initialCurrentPage: currentPage || currentPageFromUrl,
-        initialTmdbPageStart: tmdbPageStartFromUrl,
-        onPageChange: handlePageChange,
         enhancedFetcher,
         // browseParams for TanStack Query cache key (filter changes invalidate cache)
         browseParams,
@@ -146,10 +140,6 @@ const MovieCollectionLayout = ({
       searchQuery,
       actualTitle,
       renderPageHeader,
-      currentPage,
-      currentPageFromUrl,
-      tmdbPageStartFromUrl,
-      handlePageChange,
       enhancedFetcher,
       browseParams,
     ]

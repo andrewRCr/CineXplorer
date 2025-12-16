@@ -33,9 +33,6 @@ describe("useMovieCollectionState", () => {
     mockUseMovieCollectionUrl.mockReturnValue({
       browseParams: createMockBrowseParams(),
       handleBrowseParamsChange: vi.fn(),
-      currentPageFromUrl: 1,
-      tmdbPageStartFromUrl: undefined,
-      handlePageChange: vi.fn(),
     });
   });
 
@@ -49,9 +46,6 @@ describe("useMovieCollectionState", () => {
       mockUseMovieCollectionUrl.mockReturnValue({
         browseParams: createMockBrowseParams({ minRating: "1.0", maxRating: "3.5" }),
         handleBrowseParamsChange: vi.fn(),
-        currentPageFromUrl: 1,
-        tmdbPageStartFromUrl: undefined,
-        handlePageChange: vi.fn(),
       });
 
       // Act: Render hook
@@ -70,9 +64,6 @@ describe("useMovieCollectionState", () => {
       mockUseMovieCollectionUrl.mockReturnValue({
         browseParams: createMockBrowseParams({ minYear: "2000", maxYear: "2010" }),
         handleBrowseParamsChange: vi.fn(),
-        currentPageFromUrl: 1,
-        tmdbPageStartFromUrl: undefined,
-        handlePageChange: vi.fn(),
       });
 
       // Act: Render hook
@@ -91,9 +82,6 @@ describe("useMovieCollectionState", () => {
       mockUseMovieCollectionUrl.mockReturnValue({
         browseParams: createMockBrowseParams({ minYear: "2020", maxYear: "2020" }),
         handleBrowseParamsChange: vi.fn(),
-        currentPageFromUrl: 1,
-        tmdbPageStartFromUrl: undefined,
-        handlePageChange: vi.fn(),
       });
 
       // Act: Render hook
@@ -122,9 +110,6 @@ describe("useMovieCollectionState", () => {
           certifications: [],
         },
         handleBrowseParamsChange: vi.fn(),
-        currentPageFromUrl: 1,
-        tmdbPageStartFromUrl: undefined,
-        handlePageChange: vi.fn(),
       });
 
       // Act: Render hook
@@ -171,9 +156,6 @@ describe("useMovieCollectionState", () => {
       mockUseMovieCollectionUrl.mockReturnValue({
         browseParams: createMockBrowseParams({ minRating: "1.0", maxRating: "3.5" }),
         handleBrowseParamsChange: vi.fn(),
-        currentPageFromUrl: 1,
-        tmdbPageStartFromUrl: undefined,
-        handlePageChange: vi.fn(),
       });
 
       // Act: First render
@@ -401,9 +383,6 @@ describe("useMovieCollectionState", () => {
           language: "en",
         }),
         handleBrowseParamsChange: mockHandleBrowseParamsChange,
-        currentPageFromUrl: 1,
-        tmdbPageStartFromUrl: undefined,
-        handlePageChange: vi.fn(),
       });
 
       const { result } = renderHook(() => useMovieCollectionState(), {
@@ -611,9 +590,6 @@ describe("useMovieCollectionState", () => {
       mockUseMovieCollectionUrl.mockReturnValue({
         browseParams: createMockBrowseParams({ language: "fr" }),
         handleBrowseParamsChange: vi.fn(),
-        currentPageFromUrl: 1,
-        tmdbPageStartFromUrl: undefined,
-        handlePageChange: vi.fn(),
       });
 
       const { result } = renderHook(() => useMovieCollectionState(), {
@@ -632,9 +608,6 @@ describe("useMovieCollectionState", () => {
       mockUseMovieCollectionUrl.mockReturnValue({
         browseParams: createMockBrowseParams({ minRating: "7.0", maxRating: "10.0" }),
         handleBrowseParamsChange: vi.fn(),
-        currentPageFromUrl: 1,
-        tmdbPageStartFromUrl: undefined,
-        handlePageChange: vi.fn(),
       });
 
       const { result: result1, unmount } = renderHook(() => useMovieCollectionState(), {
@@ -677,9 +650,6 @@ describe("useMovieCollectionState", () => {
       mockUseMovieCollectionUrl.mockReturnValue({
         browseParams: createMockBrowseParams({ minRating: "7.0", maxRating: "10.0" }),
         handleBrowseParamsChange: mockHandleBrowseParamsChange,
-        currentPageFromUrl: 1,
-        tmdbPageStartFromUrl: undefined,
-        handlePageChange: vi.fn(),
       });
 
       const { result, rerender } = renderHook(() => useMovieCollectionState(), {
@@ -701,9 +671,6 @@ describe("useMovieCollectionState", () => {
       mockUseMovieCollectionUrl.mockReturnValue({
         browseParams: createMockBrowseParams({ minRating: "5.0", maxRating: "8.0" }),
         handleBrowseParamsChange: mockHandleBrowseParamsChange,
-        currentPageFromUrl: 1,
-        tmdbPageStartFromUrl: undefined,
-        handlePageChange: vi.fn(),
       });
 
       rerender();
@@ -719,9 +686,6 @@ describe("useMovieCollectionState", () => {
       mockUseMovieCollectionUrl.mockReturnValue({
         browseParams: createMockBrowseParams(),
         handleBrowseParamsChange: vi.fn(),
-        currentPageFromUrl: 1,
-        tmdbPageStartFromUrl: undefined,
-        handlePageChange: vi.fn(),
       });
 
       const { result } = renderHook(() => useMovieCollectionState(), {
@@ -752,9 +716,6 @@ describe("useMovieCollectionState", () => {
       mockUseMovieCollectionUrl.mockReturnValue({
         browseParams: createMockBrowseParams({ minRating: "7.0" }),
         handleBrowseParamsChange: mockHandleBrowseParamsChange,
-        currentPageFromUrl: 1,
-        tmdbPageStartFromUrl: undefined,
-        handlePageChange: vi.fn(),
       });
 
       const { result, rerender } = renderHook(() => useMovieCollectionState(), {
@@ -785,9 +746,6 @@ describe("useMovieCollectionState", () => {
       mockUseMovieCollectionUrl.mockReturnValue({
         browseParams: createMockBrowseParams({ genres: [28, 35] }),
         handleBrowseParamsChange: vi.fn(),
-        currentPageFromUrl: 1,
-        tmdbPageStartFromUrl: undefined,
-        handlePageChange: vi.fn(),
       });
 
       const { result: result1, unmount } = renderHook(() => useMovieCollectionState(), {
@@ -823,9 +781,6 @@ describe("useMovieCollectionState", () => {
       mockUseMovieCollectionUrl.mockReturnValue({
         browseParams: createMockBrowseParams({ genres: [10749] }),
         handleBrowseParamsChange: vi.fn(),
-        currentPageFromUrl: 1,
-        tmdbPageStartFromUrl: undefined,
-        handlePageChange: vi.fn(),
       });
 
       const { result: result1, unmount } = renderHook(() => useMovieCollectionState(), {
@@ -861,9 +816,6 @@ describe("useMovieCollectionState", () => {
       mockUseMovieCollectionUrl.mockReturnValue({
         browseParams: createMockBrowseParams({ certifications: ["PG-13", "R"] }),
         handleBrowseParamsChange: vi.fn(),
-        currentPageFromUrl: 1,
-        tmdbPageStartFromUrl: undefined,
-        handlePageChange: vi.fn(),
       });
 
       const { result: result1, unmount } = renderHook(() => useMovieCollectionState(), {
@@ -901,9 +853,6 @@ describe("useMovieCollectionState", () => {
       mockUseMovieCollectionUrl.mockReturnValue({
         browseParams: createMockBrowseParams({ sortBy: "original_title.asc", language: "en" }),
         handleBrowseParamsChange: mockHandleBrowseParamsChange,
-        currentPageFromUrl: 1,
-        tmdbPageStartFromUrl: undefined,
-        handlePageChange: vi.fn(),
       });
 
       const { rerender } = renderHook(() => useMovieCollectionState(), {
@@ -914,9 +863,6 @@ describe("useMovieCollectionState", () => {
       mockUseMovieCollectionUrl.mockReturnValue({
         browseParams: createMockBrowseParams({ sortBy: "original_title.asc", language: "ja" }),
         handleBrowseParamsChange: mockHandleBrowseParamsChange,
-        currentPageFromUrl: 1,
-        tmdbPageStartFromUrl: undefined,
-        handlePageChange: vi.fn(),
       });
 
       rerender();
@@ -932,9 +878,6 @@ describe("useMovieCollectionState", () => {
       mockUseMovieCollectionUrl.mockReturnValue({
         browseParams: createMockBrowseParams({ sortBy: "original_title.asc", language: "en" }),
         handleBrowseParamsChange: mockHandleBrowseParamsChange,
-        currentPageFromUrl: 1,
-        tmdbPageStartFromUrl: undefined,
-        handlePageChange: vi.fn(),
       });
 
       const { rerender } = renderHook(() => useMovieCollectionState(), {
@@ -948,9 +891,6 @@ describe("useMovieCollectionState", () => {
       mockUseMovieCollectionUrl.mockReturnValue({
         browseParams: createMockBrowseParams({ sortBy: "original_title.asc", language: "fr" }),
         handleBrowseParamsChange: mockHandleBrowseParamsChange,
-        currentPageFromUrl: 1,
-        tmdbPageStartFromUrl: undefined,
-        handlePageChange: vi.fn(),
       });
 
       rerender();
@@ -966,9 +906,6 @@ describe("useMovieCollectionState", () => {
       mockUseMovieCollectionUrl.mockReturnValue({
         browseParams: createMockBrowseParams({ sortBy: "original_title.asc", language: "en" }),
         handleBrowseParamsChange: mockHandleBrowseParamsChange,
-        currentPageFromUrl: 1,
-        tmdbPageStartFromUrl: undefined,
-        handlePageChange: vi.fn(),
       });
 
       const { rerender } = renderHook(() => useMovieCollectionState(), {
@@ -979,9 +916,6 @@ describe("useMovieCollectionState", () => {
       mockUseMovieCollectionUrl.mockReturnValue({
         browseParams: createMockBrowseParams({ sortBy: "original_title.asc" }),
         handleBrowseParamsChange: mockHandleBrowseParamsChange,
-        currentPageFromUrl: 1,
-        tmdbPageStartFromUrl: undefined,
-        handlePageChange: vi.fn(),
       });
 
       rerender();
@@ -997,9 +931,6 @@ describe("useMovieCollectionState", () => {
       mockUseMovieCollectionUrl.mockReturnValue({
         browseParams: createMockBrowseParams({ sortBy: "vote_average.desc", language: "en" }),
         handleBrowseParamsChange: mockHandleBrowseParamsChange,
-        currentPageFromUrl: 1,
-        tmdbPageStartFromUrl: undefined,
-        handlePageChange: vi.fn(),
       });
 
       const { rerender } = renderHook(() => useMovieCollectionState(), {
@@ -1013,9 +944,6 @@ describe("useMovieCollectionState", () => {
       mockUseMovieCollectionUrl.mockReturnValue({
         browseParams: createMockBrowseParams({ sortBy: "vote_average.desc", language: "ja" }),
         handleBrowseParamsChange: mockHandleBrowseParamsChange,
-        currentPageFromUrl: 1,
-        tmdbPageStartFromUrl: undefined,
-        handlePageChange: vi.fn(),
       });
 
       rerender();

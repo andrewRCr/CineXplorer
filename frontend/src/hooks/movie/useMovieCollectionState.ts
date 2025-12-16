@@ -109,11 +109,6 @@ interface MovieCollectionState {
   setIsAdvancedPanelOpen: (open: boolean) => void;
   toggleAdvancedPanel: () => void;
 
-  // Pagination state
-  currentPage: number | undefined;
-  tmdbPageStart: number | undefined;
-  onPageChange: (page: number, tmdb_page_start?: number) => void;
-
   // Derived state
   hasActiveFilters: boolean; // Excludes sort (for "Clear Filters" button visibility)
   hasActiveBrowseParams: boolean; // Includes sort (for full param detection)
@@ -164,7 +159,15 @@ export const hasAdvancedFilterValues = (filters: BrowseParams): boolean => {
   return false;
 };
 
-// Custom hook with better composition and TypeScript
+/**
+ * useMovieCollectionState
+ *
+ * Manages browse/filter state for movie collection views.
+ * Handles URL synchronization, advanced panel state, and derived filter states.
+ *
+ * Note: Pagination is handled internally by TanStack Query (infinite scroll),
+ * not managed by this hook.
+ */
 export const useMovieCollectionState = ({
   defaultBrowseParams,
   source,
@@ -182,9 +185,6 @@ export const useMovieCollectionState = ({
   const {
     browseParams: urlBrowseParams,
     handleBrowseParamsChange: urlHandleBrowseParamsChange,
-    currentPageFromUrl: urlCurrentPage,
-    tmdbPageStartFromUrl: urlTmdbPageStart,
-    handlePageChange: urlHandlePageChange
   } = urlState;
 
   // Memoize initial local browse params to prevent recreation
@@ -198,10 +198,6 @@ export const useMovieCollectionState = ({
 
   // For non-URL-synced mode, maintain local browse params
   const [localBrowseParams, setLocalBrowseParams] = useState<BrowseParams>(initialLocalBrowseParams);
-
-  // Local pagination state for non-URL-synced mode
-  const [localCurrentPage, setLocalCurrentPage] = useState<number | undefined>(1);
-  const [localTmdbPageStart, setLocalTmdbPageStart] = useState<number | undefined>(undefined);
 
   // Choose between URL-synced or local state
   const browseParams = enableUrlSync ? urlBrowseParams : localBrowseParams;
@@ -252,15 +248,6 @@ export const useMovieCollectionState = ({
       }
     }
   }, [enableUrlSync, urlHandleBrowseParamsChange]);
-
-  const currentPage = enableUrlSync ? urlCurrentPage : localCurrentPage;
-  const tmdbPageStart = enableUrlSync ? urlTmdbPageStart : localTmdbPageStart;
-  const onPageChange = enableUrlSync
-    ? urlHandlePageChange
-    : (page: number, tmdb_page_start?: number) => {
-        setLocalCurrentPage(page);
-        setLocalTmdbPageStart(tmdb_page_start);
-      };
 
   // Advanced panel toggle with better UX
   const isAdvancedPanelOpen = enableAdvancedFilters ? localIsAdvancedPanelOpen : false;
@@ -325,9 +312,6 @@ export const useMovieCollectionState = ({
     isAdvancedPanelOpen,
     setIsAdvancedPanelOpen,
     toggleAdvancedPanel,
-    currentPage,
-    tmdbPageStart,
-    onPageChange,
 
     // Derived state
     ...derivedState,

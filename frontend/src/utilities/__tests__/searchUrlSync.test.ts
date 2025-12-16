@@ -55,7 +55,7 @@ describe("searchUrlSync", () => {
       expect(result).toBe("query=the+dark+knight");
     });
 
-    // Note: page param tests removed - pagination is now handled by paginationUrlSync.ts
+    // Note: page param tests removed - pagination is handled internally by TanStack Query
   });
 
   describe("hasActiveSearch", () => {

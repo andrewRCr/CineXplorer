@@ -30,7 +30,7 @@ export function parseSearchParamsFromUrl(search: string): SearchParams {
  * Generates URL search string from search parameters
  *
  * Only includes non-default values to keep URLs clean.
- * Note: Page/pagination params handled separately via paginationUrlSync.ts
+ * Note: Pagination is handled internally by TanStack Query (infinite scroll).
  *
  * @param searchParams - Search parameters to serialize
  * @returns URL search string (without leading "?")

@@ -16,9 +16,6 @@ interface MovieCollectionContext {
     query?: string;
     title?: string;
     renderPageHeader?: boolean;
-    initialCurrentPage?: number;
-    initialTmdbPageStart?: number;
-    onPageChange: (page: number, tmdb_page_start?: number) => void;
     enhancedFetcher: MovieFetcher;
     browseParams?: BrowseParams;
 }
@@ -30,9 +27,6 @@ interface MovieGridProps {
     query?: string;
     title?: string;
     renderPageHeader?: boolean;
-    initialCurrentPage?: number;
-    initialTmdbPageStart?: number;
-    onPageChange?: (page: number, tmdb_page_start?: number) => void;
     enhancedFetcher?: MovieFetcher;
     browseParams?: BrowseParams;
 }
@@ -43,9 +37,6 @@ interface ResolvedContext {
     query: string | undefined;
     title: string | undefined;
     renderPageHeader: boolean;
-    currentPage: number;
-    initialTmdbPageStart: number | undefined;
-    onPageChange: ((page: number, tmdb_page_start?: number) => void) | undefined;
     enhancedFetcher: MovieFetcher | undefined;
     finalFetcher: MovieFetcher | undefined;
     browseParams: BrowseParams | undefined;
@@ -73,8 +64,11 @@ interface ResolvedContext {
  * 1. As a child route (gets data from outlet context)
  * 2. Standalone (gets data from props)
  *
+ * **Note:** Pagination is handled internally by TanStack Query (infinite scroll),
+ * not passed through this context.
+ *
  * @param props - Optional props to override or supplement outlet context
- * @returns Resolved context with fetcher, pagination data, and handlers
+ * @returns Resolved context with fetcher and browse params
  */
 export function useMovieCollectionContext(props: MovieGridProps): ResolvedContext {
     // Get context from parent layout, or use props as fallback
@@ -85,9 +79,6 @@ export function useMovieCollectionContext(props: MovieGridProps): ResolvedContex
         query: contextQuery,
         title: contextTitle,
         renderPageHeader: contextRenderPageHeader,
-        initialCurrentPage: contextInitialPage,
-        initialTmdbPageStart: contextInitialTmdbPageStart,
-        onPageChange: contextOnPageChange,
         enhancedFetcher: contextEnhancedFetcher,
         browseParams: contextBrowseParams,
     } = context || {};
@@ -100,9 +91,6 @@ export function useMovieCollectionContext(props: MovieGridProps): ResolvedContex
         const title = props.title || contextTitle;
         // Default to true (render PageHeader) unless explicitly set to false
         const renderPageHeader = props.renderPageHeader ?? contextRenderPageHeader ?? true;
-        const currentPage = props.initialCurrentPage || contextInitialPage || 1;
-        const initialTmdbPageStart = props.initialTmdbPageStart ?? contextInitialTmdbPageStart;
-        const onPageChange = props.onPageChange || contextOnPageChange;
         const enhancedFetcher = props.enhancedFetcher || contextEnhancedFetcher;
         const browseParams = props.browseParams || contextBrowseParams;
 
@@ -115,9 +103,6 @@ export function useMovieCollectionContext(props: MovieGridProps): ResolvedContex
             query,
             title,
             renderPageHeader,
-            currentPage,
-            initialTmdbPageStart,
-            onPageChange,
             enhancedFetcher,
             finalFetcher,
             browseParams,
@@ -128,9 +113,6 @@ export function useMovieCollectionContext(props: MovieGridProps): ResolvedContex
         props.query,
         props.title,
         props.renderPageHeader,
-        props.initialCurrentPage,
-        props.initialTmdbPageStart,
-        props.onPageChange,
         props.enhancedFetcher,
         props.browseParams,
         contextFetcher,
@@ -138,9 +120,6 @@ export function useMovieCollectionContext(props: MovieGridProps): ResolvedContex
         contextQuery,
         contextTitle,
         contextRenderPageHeader,
-        contextInitialPage,
-        contextInitialTmdbPageStart,
-        contextOnPageChange,
         contextEnhancedFetcher,
         contextBrowseParams,
     ]);

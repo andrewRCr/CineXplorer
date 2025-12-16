@@ -855,11 +855,17 @@ infinite scroll behavior before finalizing the migration.
 
 - [ ] **9.1 Clean up remaining obsolete code**
 
-    - [ ] **9.1.a Review and clean unused utilities**
-        - Review `paginationUrlSync.ts` - remove or simplify if unused
-        - Review `usePageChangeHandler.ts` - delete if unused
-        - Review `usePaginationDisplay.ts` - delete if unused
-        - Remove unused pagination types from shared types
+    - [x] **9.1.a Review and clean unused utilities** ✓
+        - Deleted `paginationUrlSync.ts` + test (40 tests) - dead code chain
+        - Deleted `usePageChangeHandler.ts` - completely unused
+        - Deleted `usePaginationDisplay.ts` + test (16 tests) - completely unused
+        - Refactored `useMovieCollectionUrl.ts` - removed pagination, now browse-params only
+        - Refactored `useMovieCollectionState.ts` - removed pagination from interface
+        - Refactored `useMovieCollectionContext.ts` - removed pagination from interfaces
+        - Updated `MovieCollectionLayout.tsx` - removed pagination from outlet context
+        - Updated test mocks in `useMovieCollectionState.test.tsx`
+        - **Net test reduction:** 778 → 722 tests (56 dead code tests removed)
+        - API pagination types in `api.ts` retained (auto-generated, still used by backend)
 
     - [ ] **9.1.b Clean up unused exports and imports**
         - Remove dead exports from index files

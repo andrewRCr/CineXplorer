@@ -1,12 +1,12 @@
 /**
- * BrowseSequential - Temporary A/B testing page for sequential pagination
+ * BrowseSequential - Reference implementation for sequential pagination
  *
- * This page is identical to Browse but uses SequentialMovieGrid instead of
- * InfiniteMovieGrid. Used for A/B comparison during infinite scroll migration.
+ * This page uses SequentialMovieGrid instead of VirtualizedMovieGrid,
+ * providing prev/next pagination rather than infinite scroll.
  *
  * Route: /browse/sequential
  *
- * Note: Temporary page - remove once pagination approach is finalized.
+ * Retained as an alternative pagination approach for reference.
  */
 import SequentialMovieGrid from "@/components/movie/collection/SequentialMovieGrid";
 

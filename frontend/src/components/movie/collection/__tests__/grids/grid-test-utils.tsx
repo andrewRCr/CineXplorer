@@ -2,7 +2,7 @@
  * Shared Test Utilities for Movie Grid Components
  *
  * This module provides reusable fixtures, factories, and helpers for testing
- * InfiniteMovieGrid, SequentialMovieGrid, and VirtualizedMovieGrid components.
+ * VirtualizedMovieGrid and SequentialMovieGrid components.
  *
  * DRY Principle: These utilities eliminate duplication across grid tests by
  * centralizing mock data creation, provider wrappers, and common mocks.

@@ -24,10 +24,10 @@ import { type MovieListItem } from "@/types/movie";
  * wired to routes. Retained as an alternative pagination approach.
  *
  * Displays movies in a grid with sequential (prev/next) pagination.
- * Uses the same useInfiniteMovies hook as InfiniteMovieGrid but displays
+ * Uses the same useInfiniteMovies hook as VirtualizedMovieGrid but displays
  * discrete pages rather than accumulating all results.
  *
- * Key difference from InfiniteMovieGrid:
+ * Key difference from VirtualizedMovieGrid:
  * - Shows one "page" of results at a time (pages[currentPageIndex])
  * - Uses SequentialPaginationCtrl for navigation
  * - "Next" prefetches via fetchNextPage() if needed, then advances index
@@ -37,7 +37,7 @@ const SequentialMovieGrid = () => {
   const { source, query, finalFetcher, browseParams } = useMovieCollectionContext({});
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
 
-  // Build stable query key (same as InfiniteMovieGrid for cache sharing)
+  // Build stable query key (same as VirtualizedMovieGrid for cache sharing)
   const queryKey = ["movies", "infinite", source, query, browseParams];
 
   const {

@@ -6,7 +6,7 @@
  * - Optional pagination controls (right-aligned)
  *
  * Used by SequentialMovieGrid for bottom pagination.
- * InfiniteMovieGrid has its own end-of-results indicator inline.
+ * VirtualizedMovieGrid has its own end-of-results indicator inline.
  */
 
 import { Box } from "@chakra-ui/react";

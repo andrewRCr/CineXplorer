@@ -12,8 +12,8 @@
  * - Results + controls (no title): results left, controls right
  * - Results only: results right-aligned
  *
- * Used by VirtualizedMovieGrid (with title), InfiniteMovieGrid, and
- * SequentialMovieGrid (with pagination controls).
+ * Used by VirtualizedMovieGrid (with title) and SequentialMovieGrid
+ * (with pagination controls).
  */
 
 import { Box, Text } from "@chakra-ui/react";
@@ -45,12 +45,6 @@ export interface GridHeaderProps {
  *   visible={hasResults}
  * />
  *
- * // Non-virtualized infinite scroll (no title, no controls)
- * <GridHeader
- *   resultText="Showing 40 of 500 results"
- *   isLoading={isLoading}
- *   visible={hasResults}
- * />
  *
  * // Sequential pagination (with controls)
  * <GridHeader

@@ -1,7 +1,7 @@
-import InfiniteMovieGrid from "@/components/movie/collection/InfiniteMovieGrid";
+import VirtualizedMovieGrid from "@/components/movie/collection/VirtualizedMovieGrid";
 
 const Browse = () => {
-  return <InfiniteMovieGrid />;
+  return <VirtualizedMovieGrid />;
 };
 
 export default Browse;

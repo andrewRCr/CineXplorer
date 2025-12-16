@@ -1,8 +1,8 @@
 /**
  * Shared constants for movie grid components.
  *
- * These values are used across VirtualizedMovieGrid, InfiniteMovieGrid,
- * and SequentialMovieGrid to ensure consistent sizing and layout.
+ * These values are used across VirtualizedMovieGrid and SequentialMovieGrid
+ * to ensure consistent sizing and layout.
  */
 
 import { type MovieListItem } from "@/types/movie";

@@ -225,7 +225,7 @@ Conditions for end-of-results:
 ## Frontend Integration
 
 **Primary implementation:** `VirtualizedMovieGrid` (virtualized infinite scroll)
-**Reference implementations:** `InfiniteMovieGrid`, `SequentialMovieGrid` (non-virtualized)
+**Reference implementation:** `SequentialMovieGrid` (button-based sequential pagination)
 
 ### useInfiniteMovies Hook
 
@@ -259,9 +259,9 @@ TanStack Query automatically sets `hasNextPage` based on `getNextPageParam`:
 - Returns `undefined` → `hasNextPage = false`
 - Returns number → `hasNextPage = true`
 
-### InfiniteMovieGrid Component (Reference)
+### Infinite Scroll Pattern
 
-Uses Intersection Observer to trigger `fetchNextPage()` when user scrolls near bottom:
+VirtualizedMovieGrid uses Intersection Observer to trigger `fetchNextPage()` when user scrolls near bottom:
 
 ```typescript
 const observer = new IntersectionObserver(
@@ -317,9 +317,8 @@ const virtualizer = useWindowVirtualizer({
 
 ### When to Use
 
-- **VirtualizedMovieGrid**: Browse, search, any large result set
-- **InfiniteMovieGrid**: Reference only (non-virtualized infinite scroll)
-- **SequentialMovieGrid**: Reference only (button-based pagination)
+- **VirtualizedMovieGrid**: Browse, search, any large result set (primary implementation)
+- **SequentialMovieGrid**: Reference only (button-based sequential pagination)
 
 ---
 
@@ -426,7 +425,6 @@ Small pools are expected for:
 | `deduplication_tracker.py`  | `backend/apps/movie/services/`                     | Redis-based session tracking               |
 | `useInfiniteMovies.ts`      | `frontend/src/hooks/movie/`                        | TanStack Query infinite scroll             |
 | `VirtualizedMovieGrid.tsx`  | `frontend/src/components/movie/collection/`        | Primary grid - virtualized infinite scroll |
-| `InfiniteMovieGrid.tsx`     | `frontend/src/components/movie/collection/`        | Reference - non-virtualized infinite       |
 | `SequentialMovieGrid.tsx`   | `frontend/src/components/movie/collection/`        | Reference - button-based pagination        |
 | `scrollPersistence.ts`      | `frontend/src/components/movie/collection/shared/` | sessionStorage scroll position helpers     |
 | `gridConstants.ts`          | `frontend/src/components/movie/collection/shared/` | Shared grid configuration (row height, etc)|

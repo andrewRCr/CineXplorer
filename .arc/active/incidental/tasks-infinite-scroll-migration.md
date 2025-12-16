@@ -601,18 +601,17 @@ This de-risks the infinite scroll commitment by proving the hardest UX requireme
     - Route config: browse routes use `renderPageHeader={false}` (title in GridHeader)
     - Route config: sequential route uses `renderPageHeader={true}` (reference - title in PageHeader)
 
-- [ ] **6.3 Migrate main browse routes to VirtualizedMovieGrid**
-    - Update `Browse.tsx` to use `VirtualizedMovieGrid` instead of `InfiniteMovieGrid`
-    - Update `NowPlaying.tsx` to use `VirtualizedMovieGrid`
-    - Update `Upcoming.tsx` to use `VirtualizedMovieGrid`
-    - Verify all browse routes have scroll restoration working
-    - Note: Route config already has `renderPageHeader={false}` from 6.2
+- [x] **6.3 Migrate main browse routes to VirtualizedMovieGrid**
+    - Updated `Browse.tsx`, `NowPlaying.tsx`, `Upcoming.tsx` to use `VirtualizedMovieGrid`
+    - Removed `InfiniteMovieGrid.tsx` and its test file (redundant - VirtualizedMovieGrid provides same
+      infinite scroll behavior with virtualization; SequentialMovieGrid provides behavioral alternative)
+    - Updated comment references in GridHeader, SequentialMovieGrid, gridConstants, grid-test-utils, ResultsFooterBar
 
-- [ ] **6.4 Remove virtualized temp route**
-    - Delete `/browse/virtualized` route (no longer needed after 6.3)
-    - Delete `BrowseVirtualized.tsx` page component
-    - Remove `ROUTES.BROWSE_VIRTUALIZED` constant
-    - Note: Sequential route kept as separate reference implementation (own layout config)
+- [x] **6.4 Remove virtualized temp route**
+    - Removed `/browse/virtualized` route from App.tsx
+    - Deleted `BrowseVirtualized.tsx` page component
+    - Removed `ROUTES.BROWSE_VIRTUALIZED` constant
+    - Updated `BrowseSequential.tsx` comment to reflect "reference implementation" status
 
 ---
 

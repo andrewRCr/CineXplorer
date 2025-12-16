@@ -110,7 +110,7 @@ const virtualizer = useWindowVirtualizer({
 
 ### Technical Notes
 
-- `SequentialMovieGrid` and `InfiniteMovieGrid` retained as reference implementations for non-virtualized patterns
+- `SequentialMovieGrid` retained as reference implementation for button-based sequential pagination
 - Shared utilities extracted to `collection/shared/` for DRY across grid implementations
 - Movie-domain hooks organized in `hooks/movie/` following domain organization pattern
 

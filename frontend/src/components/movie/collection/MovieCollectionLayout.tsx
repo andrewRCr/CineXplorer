@@ -9,7 +9,7 @@ import {
 } from "@/utilities/routeConfigHelper";
 import PageHeader from "@/components/movie/collection/PageHeader";
 import BrowseControlsSection from "@/components/movie/collection/BrowseControlsSection";
-import { useMovieCollectionState } from "@/components/movie/collection/useMovieCollectionState";
+import { useMovieCollectionState } from "@/hooks/useMovieCollectionState";
 
 // Better prop patterns with discriminated unions and required/optional groups
 type BrowseControlsConfig =

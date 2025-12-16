@@ -1,28 +1,26 @@
 import { useEffect, useRef, useCallback } from "react";
-import { Text, Button, Box, Skeleton, Spinner } from "@chakra-ui/react";
+import { Text, Box, Spinner } from "@chakra-ui/react";
 import MovieCard from "../MovieCard";
 import MovieCardContainer from "../MovieCardContainer";
 import { ResultsHeaderBar } from "./ResultsHeaderBar";
+import {
+  CARD_WIDTH,
+  GAP,
+  GridErrorState,
+  GridEmptyState,
+  GridSkeletonLoader,
+} from "./shared";
 import { useInfiniteMovies } from "@/hooks/useInfiniteMovies";
 import { useMovieCollectionContext } from "@/hooks/useMovieCollectionContext";
 import { useInfiniteResultsText } from "@/hooks/useResultsText";
 import { type MovieListItem } from "@/types/movie";
 
-// Placeholder movie for skeleton loading state.
-// Uses MovieListItem shape (genre_ids, not genres) to match API response.
-const placeholderMovie: MovieListItem = {
-  tmdb_id: 0,
-  title: "Loading Movie Title",
-  release_date: "2000-01-01",
-  poster_path: "",
-  vote_average: 0,
-  overview: "Loading overview...",
-  genre_ids: [],
-  runtime: 0,
-};
-
 /**
  * InfiniteMovieGrid
+ *
+ * **Status:** Reference implementation - fully functional but not currently
+ * wired to routes. VirtualizedMovieGrid is the active implementation.
+ * Retained as a simpler alternative without virtualization overhead.
  *
  * Displays movies in a grid with infinite scroll loading.
  * Uses Intersection Observer to detect when user scrolls near bottom,
@@ -126,60 +124,30 @@ const InfiniteMovieGrid = () => {
       />
 
       {/* Error State */}
-      {isError && (
-        <Box textAlign="center" mb={4} p={4} bg="layer-01" borderRadius="md">
-          <Text color="fg-error" mb={2}>
-            {error?.message || "An error occurred while fetching movies."}
-          </Text>
-          <Button size="sm" onClick={() => refetch()}>
-            Retry
-          </Button>
-        </Box>
-      )}
+      {isError && <GridErrorState error={error} onRetry={() => refetch()} />}
 
       {/* Empty State */}
-      {isEmpty && !isError && (
-        <Box textAlign="center" py={12}>
-          <Text fontSize="lg" color="fg-muted" mb={0}>
-            No movies found matching your filters.
-          </Text>
-          <Text fontSize="sm" color="fg-muted">
-            Try adjusting your search criteria or filters.
-          </Text>
-        </Box>
-      )}
+      {isEmpty && !isError && <GridEmptyState />}
+
+      {/* Loading Skeletons (Initial Load) */}
+      {isLoading && <GridSkeletonLoader />}
 
       {/* Movie Grid */}
-      <Box
-        display="grid"
-        gridTemplateColumns="repeat(auto-fit, 194px)"
-        gap="16px"
-        mb={6}
-        justifyContent="center"
-      >
-        {/* Render Movies */}
-        {movies.map((movie: MovieListItem) => (
-          <MovieCardContainer key={`${movie.tmdb_id}-${movie.title}`}>
-            <MovieCard movie={movie} source={source} query={query} />
-          </MovieCardContainer>
-        ))}
-
-        {/* Loading Skeletons (Initial Load) */}
-        {isLoading &&
-          Array.from({ length: 20 }, (_, i) => (
-            <Skeleton
-              key={`skeleton-${i}`}
-              borderRadius="md"
-              overflow="hidden"
-              bg="layer-02"
-              data-testid="skeleton-loader"
-            >
-              <MovieCardContainer>
-                <MovieCard movie={placeholderMovie} />
-              </MovieCardContainer>
-            </Skeleton>
+      {!isLoading && movies.length > 0 && (
+        <Box
+          display="grid"
+          gridTemplateColumns={`repeat(auto-fit, ${CARD_WIDTH}px)`}
+          gap={`${GAP}px`}
+          mb={6}
+          justifyContent="center"
+        >
+          {movies.map((movie: MovieListItem) => (
+            <MovieCardContainer key={`${movie.tmdb_id}-${movie.title}`}>
+              <MovieCard movie={movie} source={source} query={query} />
+            </MovieCardContainer>
           ))}
-      </Box>
+        </Box>
+      )}
 
       {/* Loading More Indicator & Scroll Sentinel */}
       <Box ref={observerTarget} h="20px" mt={4} textAlign="center">

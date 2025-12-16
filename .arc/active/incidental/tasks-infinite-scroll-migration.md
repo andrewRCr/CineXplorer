@@ -444,7 +444,7 @@ A/B decision (Phase 4.5).
 
 ---
 
-### **Phase 5:** Scroll Restoration PoC (Virtualization Approach)
+### ~~**Phase 5:** Scroll Restoration PoC (Virtualization Approach)~~ ✓
 
 **Purpose:** Prove that infinite scroll + virtualization delivers satisfactory back-nav UX.
 Success here unlocks the ADR decision for infinite scroll.
@@ -548,45 +548,32 @@ This de-risks the infinite scroll commitment by proving the hardest UX requireme
         - **Go decision:** UX is acceptable for infinite scroll commitment
         - App-level `history.scrollRestoration = 'manual'` set in main.tsx
 
-- [ ] **5.4 Refactor grid components and organize directory structure**
+- [x] **5.4 Refactor grid components and organize directory structure**
 
-    - [ ] **5.4.a Extract shared grid utilities**
-        - Create `collection/shared/gridConstants.ts`:
-            - `CARD_WIDTH`, `GAP`, `SKELETON_COUNT`, `placeholderMovie`
-        - Create `collection/shared/scrollPersistence.ts`:
-            - Move scroll utilities from VirtualizedMovieGrid
-            - `getScrollStorageKey`, `getSavedScrollPosition`, `saveScrollPosition`
-            - `getScrollKeys`, `cleanupOldScrollPositions`
+    - Created `collection/shared/` with extracted utilities and components
+    - Net reduction of ~239 lines through DRY consolidation
 
-    - [ ] **5.4.b Extract shared UI components**
-        - Create `collection/shared/GridErrorState.tsx` (error display + retry button)
-        - Create `collection/shared/GridEmptyState.tsx` (no results message)
-        - Create `collection/shared/GridSkeletonLoader.tsx` (skeleton grid)
+    - [x] **5.4.a Extract shared grid utilities**
+        - `gridConstants.ts`: CARD_WIDTH, GAP, SKELETON_COUNT, placeholderMovie, calculateColumnCount
+        - `scrollPersistence.ts`: getScrollStorageKey, getSavedScrollPosition, saveScrollPosition, etc.
 
-    - [ ] **5.4.c Update grid components to use shared code**
-        - Update `VirtualizedMovieGrid.tsx` to import from shared/
-        - Update `InfiniteMovieGrid.tsx` to import from shared/
-        - Update `SequentialMovieGrid.tsx` to import from shared/
-        - Verify all three grids still work correctly
+    - [x] **5.4.b Extract shared UI components**
+        - `GridErrorState.tsx`, `GridEmptyState.tsx`, `GridSkeletonLoader.tsx`
+        - Reusable across all grid implementations
 
-    - [ ] **5.4.d Organize collection directory structure**
-        - Move grid tests to `collection/__tests__/grids/`
-        - Move hooks to global `src/hooks/` (useMovieCollectionState, useMovieCollectionUrl)
-            - Joins existing movie hooks (useInfiniteMovies, useMovieCollectionContext, etc.)
-            - Single hooks folder for discoverability
-        - Keep layout components at collection level (ResultsHeaderBar, etc.)
-        - Update all imports
+    - [x] **5.4.c Update grid components to use shared code**
+        - All three grids (Virtualized, Infinite, Sequential) now import from shared/
 
-    - [ ] **5.4.e Preserve non-virtualized grids (not wired to routes)**
-        - Keep `InfiniteMovieGrid.tsx` (reference implementation)
-        - Keep `SequentialMovieGrid.tsx` (fallback option)
-        - Keep `SequentialPaginationCtrl.tsx` (used by Sequential)
-        - These remain available but not wired to active routes
-        - Note: `MovieCollectionGrid` + `MoviePaginationCtrl` stay until Phase 7-8
-          (SearchResults still uses MovieCollectionGrid)
+    - [x] **5.4.d Organize collection directory structure**
+        - Moved hooks to `src/hooks/`: useMovieCollectionState.ts, useMovieCollectionUrl.ts
+        - Moved grid tests to `collection/__tests__/grids/`
 
-- [ ] **5.5 Quality gates**
-    - Frontend tests passing
+    - [x] **5.4.e Preserve non-virtualized grids**
+        - InfiniteMovieGrid, SequentialMovieGrid, SequentialPaginationCtrl retained
+        - MovieCollectionGrid + MoviePaginationCtrl stay until Phase 7-8
+
+- [x] **5.5 Quality gates**
+    - Frontend tests: 763 passed
     - Type checking: 0 errors
     - Linting: 0 violations
 

@@ -2,7 +2,7 @@ import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import type { BrowseParams } from "@/types/browseTypes";
 import { DEFAULT_BROWSE_PARAMS, DEFAULT_SORT, CORE_GENRE_IDS_SET } from "@/constants/browseDefaults";
 import { sortOptions } from "@/constants/browseOptions";
-import { useMovieCollectionUrl } from "./useMovieCollectionUrl";
+import { useMovieCollectionUrl } from "@/hooks/useMovieCollectionUrl";
 import {
   isLatinScriptLanguage,
   isTitleSort,

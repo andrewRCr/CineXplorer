@@ -6,170 +6,39 @@ import {
   useMemo,
   useState,
 } from "react";
-import { Text, Button, Box, Skeleton, Spinner } from "@chakra-ui/react";
+import { Text, Box, Spinner } from "@chakra-ui/react";
 import { useWindowVirtualizer } from "@tanstack/react-virtual";
 import MovieCard from "../MovieCard";
 import MovieCardContainer from "../MovieCardContainer";
 import { ResultsHeaderBar } from "./ResultsHeaderBar";
+import {
+  CARD_WIDTH,
+  GAP,
+  calculateColumnCount,
+  getScrollStorageKey,
+  getSavedScrollPosition,
+  saveScrollPosition,
+  GridErrorState,
+  GridEmptyState,
+  GridSkeletonLoader,
+} from "./shared";
 import { useInfiniteMovies } from "@/hooks/useInfiniteMovies";
 import { useMovieCollectionContext } from "@/hooks/useMovieCollectionContext";
 import { useInfiniteResultsText } from "@/hooks/useResultsText";
 import { type MovieListItem } from "@/types/movie";
-import { type BrowseParams } from "@/types/browseTypes";
 
 // ============================================================================
-// Constants
+// Virtualization-Specific Constants
 // ============================================================================
 
 /** Fixed height per row (card height + padding). Used for virtualizer sizing. */
 const ROW_HEIGHT = 449;
-
-/** Gap between grid items in pixels. */
-const GAP = 16;
-
-/** Card width in pixels. Used for column count calculation. */
-const CARD_WIDTH = 194;
-
-/** Number of skeleton cards to show during initial loading. */
-const SKELETON_COUNT = 20;
 
 /** Debounce delay for scroll position saves (ms). */
 const SCROLL_SAVE_DEBOUNCE = 200;
 
 /** Debounce delay for fetchNextPage calls (ms). */
 const FETCH_DEBOUNCE = 150;
-
-/** Storage key prefix for scroll positions. */
-const SCROLL_STORAGE_PREFIX = "scroll-";
-
-/** Maximum number of scroll positions to store in sessionStorage. */
-const MAX_STORED_POSITIONS = 20;
-
-// ============================================================================
-// Placeholder for loading state
-// ============================================================================
-
-const placeholderMovie: MovieListItem = {
-  tmdb_id: 0,
-  title: "Loading Movie Title",
-  release_date: "2000-01-01",
-  poster_path: "",
-  vote_average: 0,
-  overview: "Loading overview...",
-  genre_ids: [],
-  runtime: 0,
-};
-
-// ============================================================================
-// Scroll Position Persistence Utilities
-// ============================================================================
-
-/**
- * Generates a storage key for scroll position based on query context.
- * Filter-specific keys ensure position is only restored for matching filters.
- */
-const getScrollStorageKey = (
-  source: string,
-  browseParams: Partial<BrowseParams>
-): string => {
-  // Create deterministic key from source and filter params
-  // Use Object.entries on the browseParams to iterate through set values
-  const entries = Object.entries(browseParams) as [string, unknown][];
-  const paramsKey = entries
-    .filter(([, v]) => v !== undefined && v !== null && v !== "")
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([k, v]) => {
-      // Handle arrays specially (genres, certifications)
-      if (Array.isArray(v)) {
-        return v.length > 0 ? `${k}=${v.join(",")}` : null;
-      }
-      return `${k}=${v}`;
-    })
-    .filter(Boolean)
-    .join("&");
-
-  return `${SCROLL_STORAGE_PREFIX}${source}-${paramsKey}`;
-};
-
-/**
- * Retrieves saved scroll position from sessionStorage.
- * Returns 0 if no saved position exists.
- */
-const getSavedScrollPosition = (key: string): number => {
-  try {
-    const saved = sessionStorage.getItem(key);
-    return saved ? parseInt(saved, 10) : 0;
-  } catch {
-    return 0;
-  }
-};
-
-/**
- * Gets all scroll position keys from sessionStorage.
- */
-const getScrollKeys = (): string[] => {
-  const keys: string[] = [];
-  try {
-    for (let i = 0; i < sessionStorage.length; i++) {
-      const key = sessionStorage.key(i);
-      if (key?.startsWith(SCROLL_STORAGE_PREFIX)) {
-        keys.push(key);
-      }
-    }
-  } catch {
-    // Ignore storage errors
-  }
-  return keys;
-};
-
-/**
- * Cleans up old scroll positions if we exceed the maximum.
- * Removes oldest entries (by insertion order approximation via iteration).
- */
-const cleanupOldScrollPositions = (currentKey: string): void => {
-  try {
-    const keys = getScrollKeys();
-    // Keep current key, remove oldest if over limit
-    const keysToConsider = keys.filter((k) => k !== currentKey);
-    if (keysToConsider.length >= MAX_STORED_POSITIONS) {
-      // Remove oldest entries (first in list, as sessionStorage iterates in insertion order)
-      const keysToRemove = keysToConsider.slice(
-        0,
-        keysToConsider.length - MAX_STORED_POSITIONS + 1
-      );
-      keysToRemove.forEach((k) => sessionStorage.removeItem(k));
-    }
-  } catch {
-    // Ignore cleanup errors
-  }
-};
-
-/**
- * Saves scroll position to sessionStorage with cleanup.
- */
-const saveScrollPosition = (key: string, position: number): void => {
-  try {
-    sessionStorage.setItem(key, String(position));
-    cleanupOldScrollPositions(key);
-  } catch {
-    // Ignore storage errors (quota exceeded, etc.)
-  }
-};
-
-// ============================================================================
-// Column Count Calculation
-// ============================================================================
-
-/**
- * Calculates how many cards fit per row based on container width.
- * Accounts for gap between cards.
- */
-const calculateColumnCount = (containerWidth: number): number => {
-  if (containerWidth <= 0) return 1;
-  // Each card needs CARD_WIDTH + GAP, except the last card in row
-  // Formula: (containerWidth + GAP) / (CARD_WIDTH + GAP)
-  return Math.max(1, Math.floor((containerWidth + GAP) / (CARD_WIDTH + GAP)));
-};
 
 // ============================================================================
 // VirtualizedMovieGrid Component
@@ -420,55 +289,15 @@ const VirtualizedMovieGrid = () => {
       />
 
       {/* Error State */}
-      {isError && (
-        <Box textAlign="center" mb={4} p={4} bg="layer-01" borderRadius="md">
-          <Text color="fg-error" mb={2}>
-            {error?.message || "An error occurred while fetching movies."}
-          </Text>
-          <Button size="sm" onClick={() => refetch()}>
-            Retry
-          </Button>
-        </Box>
-      )}
+      {isError && <GridErrorState error={error} onRetry={() => refetch()} />}
 
       {/* Empty State */}
-      {isEmpty && !isError && (
-        <Box textAlign="center" py={12}>
-          <Text fontSize="lg" color="fg-muted" mb={0}>
-            No movies found matching your filters.
-          </Text>
-          <Text fontSize="sm" color="fg-muted">
-            Try adjusting your search criteria or filters.
-          </Text>
-        </Box>
-      )}
+      {isEmpty && !isError && <GridEmptyState />}
 
       {/* Grid Container - always mounted for ResizeObserver stability */}
       <Box ref={containerRef}>
         {/* Loading Skeletons (Initial Load) */}
-        {isLoading && (
-          <Box
-            display="grid"
-            gridTemplateColumns={`repeat(auto-fit, ${CARD_WIDTH}px)`}
-            gap={`${GAP}px`}
-            mb={6}
-            justifyContent="center"
-          >
-            {Array.from({ length: SKELETON_COUNT }, (_, i) => (
-              <Skeleton
-                key={`skeleton-${i}`}
-                borderRadius="md"
-                overflow="hidden"
-                bg="layer-02"
-                data-testid="skeleton-loader"
-              >
-                <MovieCardContainer>
-                  <MovieCard movie={placeholderMovie} />
-                </MovieCardContainer>
-              </Skeleton>
-            ))}
-          </Box>
-        )}
+        {isLoading && <GridSkeletonLoader />}
 
         {/* Virtualized Movie Grid */}
         {!isLoading && movies.length > 0 && (

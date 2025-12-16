@@ -33,10 +33,10 @@ import {
   createMockSessionStorage,
   MockMovieCard,
   MockMovieCardContainer,
-} from "./__tests__/grid-test-utils";
+} from "./grid-test-utils";
 
-// Component under test (will be created)
-import VirtualizedMovieGrid from "./VirtualizedMovieGrid";
+// Component under test
+import VirtualizedMovieGrid from "../../VirtualizedMovieGrid";
 
 // Mocked dependencies
 import { useInfiniteMovies } from "@/hooks/useInfiniteMovies";
@@ -51,11 +51,11 @@ vi.mock("@/hooks/useInfiniteMovies");
 vi.mock("@/hooks/useMovieCollectionContext");
 
 // Mock child components to isolate grid logic from card rendering
-vi.mock("../MovieCard", () => ({
+vi.mock("../../../MovieCard", () => ({
   default: MockMovieCard,
 }));
 
-vi.mock("../MovieCardContainer", () => ({
+vi.mock("../../../MovieCardContainer", () => ({
   default: MockMovieCardContainer,
 }));
 

@@ -1,29 +1,27 @@
 import { useState, useCallback, useMemo } from "react";
-import { Text, Button, Box, Skeleton } from "@chakra-ui/react";
+import { Box } from "@chakra-ui/react";
 import MovieCard from "../MovieCard";
 import MovieCardContainer from "../MovieCardContainer";
 import { ResultsHeaderBar } from "./ResultsHeaderBar";
 import { ResultsFooterBar } from "./ResultsFooterBar";
+import {
+  CARD_WIDTH,
+  GAP,
+  GridErrorState,
+  GridEmptyState,
+  GridSkeletonLoader,
+} from "./shared";
 import { useInfiniteMovies } from "@/hooks/useInfiniteMovies";
 import { useMovieCollectionContext } from "@/hooks/useMovieCollectionContext";
 import { SequentialPaginationCtrl } from "./SequentialPaginationCtrl";
 import { useSequentialResultsText } from "@/hooks/useResultsText";
 import { type MovieListItem } from "@/types/movie";
 
-// Placeholder movie for skeleton loading state.
-const placeholderMovie: MovieListItem = {
-  tmdb_id: 0,
-  title: "Loading Movie Title",
-  release_date: "2000-01-01",
-  poster_path: "",
-  vote_average: 0,
-  overview: "Loading overview...",
-  genre_ids: [],
-  runtime: 0,
-};
-
 /**
  * SequentialMovieGrid
+ *
+ * **Status:** Reference implementation - fully functional but not currently
+ * wired to routes. Retained as an alternative pagination approach.
  *
  * Displays movies in a grid with sequential (prev/next) pagination.
  * Uses the same useInfiniteMovies hook as InfiniteMovieGrid but displays
@@ -34,8 +32,6 @@ const placeholderMovie: MovieListItem = {
  * - Uses SequentialPaginationCtrl for navigation
  * - "Next" prefetches via fetchNextPage() if needed, then advances index
  * - "Prev" simply decrements index (data already cached by TanStack Query)
- *
- * This component exists for A/B comparison with InfiniteMovieGrid.
  */
 const SequentialMovieGrid = () => {
   const { source, query, finalFetcher, browseParams } = useMovieCollectionContext({});
@@ -140,61 +136,34 @@ const SequentialMovieGrid = () => {
       />
 
       {/* Error State */}
-      {isError && (
-        <Box textAlign="center" mb={4} p={4} bg="layer-01" borderRadius="md">
-          <Text color="fg-error" mb={2}>
-            {error?.message || "An error occurred while fetching movies."}
-          </Text>
-          <Button size="sm" onClick={() => refetch()}>
-            Retry
-          </Button>
-        </Box>
-      )}
+      {isError && <GridErrorState error={error} onRetry={() => refetch()} />}
 
       {/* Empty State */}
-      {isEmpty && !isError && (
-        <Box textAlign="center" py={12}>
-          <Text fontSize="lg" color="fg-muted" mb={0}>
-            No movies found matching your filters.
-          </Text>
-          <Text fontSize="sm" color="fg-muted">
-            Try adjusting your search criteria or filters.
-          </Text>
-        </Box>
+      {isEmpty && !isError && <GridEmptyState />}
+
+      {/* Loading Skeletons (Initial Load or Page Transition) */}
+      {(isLoading || (isFetchingNextPage && currentPageIndex >= pageCount)) && (
+        <GridSkeletonLoader />
       )}
 
       {/* Movie Grid */}
-      <Box
-        display="grid"
-        gridTemplateColumns="repeat(auto-fit, 194px)"
-        gap="16px"
-        mb={6}
-        justifyContent="center"
-      >
-        {/* Render Current Page Movies */}
-        {!isLoading &&
-          currentPageMovies.map((movie: MovieListItem) => (
-            <MovieCardContainer key={`${movie.tmdb_id}-${movie.title}`}>
-              <MovieCard movie={movie} source={source} query={query} />
-            </MovieCardContainer>
-          ))}
-
-        {/* Loading Skeletons (Initial Load or Page Transition) */}
-        {(isLoading || (isFetchingNextPage && currentPageIndex >= pageCount)) &&
-          Array.from({ length: 20 }, (_, i) => (
-            <Skeleton
-              key={`skeleton-${i}`}
-              borderRadius="md"
-              overflow="hidden"
-              bg="layer-02"
-              data-testid="skeleton-loader"
-            >
-              <MovieCardContainer>
-                <MovieCard movie={placeholderMovie} />
+      {!isLoading &&
+        !(isFetchingNextPage && currentPageIndex >= pageCount) &&
+        currentPageMovies.length > 0 && (
+          <Box
+            display="grid"
+            gridTemplateColumns={`repeat(auto-fit, ${CARD_WIDTH}px)`}
+            gap={`${GAP}px`}
+            mb={6}
+            justifyContent="center"
+          >
+            {currentPageMovies.map((movie: MovieListItem) => (
+              <MovieCardContainer key={`${movie.tmdb_id}-${movie.title}`}>
+                <MovieCard movie={movie} source={source} query={query} />
               </MovieCardContainer>
-            </Skeleton>
-          ))}
-      </Box>
+            ))}
+          </Box>
+        )}
 
       {/* Results Footer with Pagination */}
       <ResultsFooterBar

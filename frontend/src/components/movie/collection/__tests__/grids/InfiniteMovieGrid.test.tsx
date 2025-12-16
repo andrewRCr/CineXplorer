@@ -2,7 +2,7 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from "vitest";
 import { ChakraProvider } from "@chakra-ui/react";
 import defaultSystem from "@/theme";
-import InfiniteMovieGrid from "./InfiniteMovieGrid";
+import InfiniteMovieGrid from "../../InfiniteMovieGrid";
 import { useInfiniteMovies } from "@/hooks/useInfiniteMovies";
 import { useMovieCollectionContext } from "@/hooks/useMovieCollectionContext";
 import { type MovieListItem } from "@/types/movie";
@@ -12,13 +12,13 @@ vi.mock("@/hooks/useInfiniteMovies");
 vi.mock("@/hooks/useMovieCollectionContext");
 
 // Mock child components to isolate grid logic
-vi.mock("../MovieCard", () => ({
+vi.mock("../../../MovieCard", () => ({
   default: ({ movie }: { movie: MovieListItem }) => (
     <div data-testid="movie-card">{movie.title}</div>
   ),
 }));
 
-vi.mock("../MovieCardContainer", () => ({
+vi.mock("../../../MovieCardContainer", () => ({
   default: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="movie-card-container">{children}</div>
   ),

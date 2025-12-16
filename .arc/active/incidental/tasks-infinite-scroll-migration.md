@@ -619,26 +619,20 @@ This de-risks the infinite scroll commitment by proving the hardest UX requireme
 
 **Purpose:** Migrate search to virtualized infinite scroll and remove obsolete random-access pagination.
 
-- [ ] **7.1 Analyze current search implementation**
-
-    - [ ] **7.1.a Review SearchResults.tsx**
-        - Currently uses `MovieCollectionGrid` (random-access pagination)
-        - `MovieCollectionGrid` uses `MoviePaginationCtrl` (jump-to-page UI)
-        - Random-access is fundamentally broken with buffer pagination
-        - Migration to `VirtualizedMovieGrid` required
-
-    - [ ] **7.1.b Identify MovieCollectionGrid dependencies**
-        - Review integration tests: `MovieCollectionGrid.integration.test.tsx`
-        - Review stability tests: `MovieCollectionGrid.stability.test.tsx`
-        - Review MoviePaginationCtrl tests: `MoviePaginationCtrl.test.tsx`
-        - Plan test migration/removal
+- [x] **7.1 Analyze current search implementation**
+    - SearchResults.tsx is minimal (31 lines) - just extracts query, redirects if empty, renders grid
+    - MovieCollectionGrid.tsx (279 lines) - complex random-access with `tmdb_page_start` ref tracking
+    - MoviePaginationCtrl.tsx (321 lines) - jump-to-page UI with smart pagination algorithm
+    - Migration straightforward: both grids use same `useMovieCollectionContext` hook
+    - Test files to delete: 3 files, ~1,562 lines total
+    - Potential unused hooks after migration: `usePageChangeHandler`, `usePaginationDisplay`
 
 - [ ] **7.2 Migrate search to virtualized infinite scroll**
 
-    - [ ] **7.2.a Update SearchResults.tsx**
-        - Replace `MovieCollectionGrid` with `VirtualizedMovieGrid`
-        - Ensure search query param (`q`) properly handled
-        - Scroll position persistence keyed by search query
+    - [x] **7.2.a Update SearchResults.tsx**
+        - Replaced `MovieCollectionGrid` import with `VirtualizedMovieGrid`
+        - Query param handling unchanged (already handled in component)
+        - Scroll persistence automatic via VirtualizedMovieGrid's query key
 
     - [ ] **7.2.b Test search-specific behaviors**
         - Test: New search query resets results and scroll position
@@ -646,22 +640,74 @@ This de-risks the infinite scroll commitment by proving the hardest UX requireme
         - Test: No results state
         - Test: Back-nav from search result detail restores position
 
-- [ ] **7.3 Remove obsolete random-access pagination**
+- [ ] **7.3 Fix search scroll restoration bugs**
 
-    - [ ] **7.3.a Delete random-access components**
+    **Context:** Testing revealed scroll restoration works for browse but fails for search.
+    Root cause is architectural: `query` is handled inconsistently in two places.
+
+    - [ ] **7.3.a Remove `query` from browseParams URL parsing (root cause fix)**
+
+        **Problem:** `browseParams.query` is inconsistent between save and restore, causing:
+        - TanStack Query cache key mismatch → cache miss → only 20 movies on back-nav
+        - Scroll storage key mismatch → wrong scroll position retrieved
+
+        **Root cause:** `query` flows through TWO paths:
+        1. `searchQuery` extracted explicitly in `MovieCollectionLayout` → context `query`
+        2. `browseParams.query` parsed from URL by `parseBrowseParamsFromUrl`
+
+        These can have different values depending on timing/route, causing key mismatches.
+
+        **Solution:** Remove `query` from `parseBrowseParamsFromUrl` - search term should
+        only flow through the dedicated `searchQuery` path. `browseParams` should contain
+        only filter/sort params (genres, year, rating, sort, language, certifications).
+
+        **Files to modify:**
+        - `frontend/src/utilities/browseUrlSync.ts` - remove `query` from parsing
+        - `frontend/src/types/browseTypes.ts` - remove `query` from `BrowseParams` type
+        - `frontend/src/utilities/browseParamMapper.ts` - remove `addQuery` helper
+        - `frontend/src/hooks/movie/__tests__/useMovieCollectionState.test.tsx` - update tests
+
+        **Files to clean up (remove bandaids after root fix):**
+        - `frontend/src/components/movie/collection/VirtualizedMovieGrid.tsx` - remove
+          `query` stripping from `stableBrowseParams` and `paramsWithoutQuery`
+
+    - [ ] **7.3.b Fix ~600px scroll position offset on search back-nav**
+
+        **Problem:** Even with correct cache hit (60 movies) and correct savedPosition (7009),
+        actual restored position is ~600px less (6378). Browse doesn't have this issue.
+
+        **Debug data:**
+        - SAVING: 7009px
+        - Mount state: savedPosition=7009, moviesLength=60, hadCachedDataOnMount=true
+        - Immediately after: SAVING 6378px (wrong position being saved)
+
+        **Hypothesis:** Timing issue between scroll restoration and virtualizer rendering.
+        Page scrolls to 7009, but content height hasn't stabilized yet, causing actual
+        scroll to land at lower position. Then scroll event fires and saves wrong position.
+
+        **Investigation needed:**
+        - Compare scroll restoration timing between browse and search
+        - Check if virtualizer `initialOffset` vs `window.scrollTo` behaves differently
+        - Consider debouncing scroll save after restoration
+
+    - [ ] **7.3.c (placeholder for additional bugs found in testing)**
+
+- [ ] **7.4 Remove obsolete random-access pagination**
+
+    - [ ] **7.4.a Delete random-access components**
         - Delete `MovieCollectionGrid.tsx` (replaced by VirtualizedMovieGrid)
         - Delete `MoviePaginationCtrl.tsx` (random-access UI - never worked correctly)
 
-    - [ ] **7.3.b Delete associated tests**
+    - [ ] **7.4.b Delete associated tests**
         - Delete `MovieCollectionGrid.integration.test.tsx`
         - Delete `MovieCollectionGrid.stability.test.tsx`
         - Delete `MoviePaginationCtrl.test.tsx`
 
-    - [ ] **7.3.c Clean up imports and exports**
+    - [ ] **7.4.c Clean up imports and exports**
         - Remove exports from index files
         - Verify no remaining references
 
-- [ ] **7.4 Quality gates**
+- [ ] **7.5 Quality gates**
     - Frontend tests passing
     - Type checking: 0 errors
     - Linting: 0 violations
@@ -680,6 +726,7 @@ This de-risks the infinite scroll commitment by proving the hardest UX requireme
     - [ ] **8.1.a Review and clean unused utilities**
         - Review `paginationUrlSync.ts` - remove or simplify if unused
         - Review `usePageChangeHandler.ts` - delete if unused
+        - Review `usePaginationDisplay.ts` - delete if unused
         - Remove unused pagination types from shared types
 
     - [ ] **8.1.b Clean up unused exports and imports**

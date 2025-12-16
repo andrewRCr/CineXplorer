@@ -657,39 +657,41 @@ This de-risks the infinite scroll commitment by proving the hardest UX requireme
           useMovieFetchRouter.test.ts, ClearBrowseParamsButton.test.tsx
         - All quality gates pass (type checking, linting, 746 tests)
 
-    - [ ] **7.3.b Fix ~600px scroll position offset on search back-nav**
+    - [x] **7.3.b Fix scroll position race condition on back-nav**
 
-        **Problem:** Even with correct cache hit (60 movies) and correct savedPosition (7009),
-        actual restored position is ~600px less (6378). Browse doesn't have this issue.
+        **Problem:** Scroll restoration was inconsistent - position would be partially restored
+        then immediately overwritten with wrong value. Affected both browse and search.
 
-        **Debug data:**
-        - SAVING: 7009px
-        - Mount state: savedPosition=7009, moviesLength=60, hadCachedDataOnMount=true
-        - Immediately after: SAVING 6378px (wrong position being saved)
+        **Root cause:** Race condition between `window.scrollTo()` and virtualizer rendering.
+        When navigating back, scroll was attempted before virtualizer had full content height,
+        causing browser to scroll only as far as possible. Scroll handler then saved this
+        wrong (partial) position, overwriting the correct saved value.
 
-        **Hypothesis:** Timing issue between scroll restoration and virtualizer rendering.
-        Page scrolls to 7009, but content height hasn't stabilized yet, causing actual
-        scroll to land at lower position. Then scroll event fires and saves wrong position.
+        **Fix implemented:**
+        - Added `isRestoringScrollRef` guard to prevent saving during restoration
+        - Re-scroll after layout (rAF + 50ms timeout) to catch full content height
+        - Clear guard after 100ms to allow normal saving
+        - Added cleanup on unmount for timeouts
 
-        **Investigation needed:**
-        - Compare scroll restoration timing between browse and search
-        - Check if virtualizer `initialOffset` vs `window.scrollTo` behaves differently
-        - Consider debouncing scroll save after restoration
+        **Note:** Original hypothesis about ~600px offset was correct - it was a timing issue.
+        The offset varied based on how much content the virtualizer had rendered at scroll time.
 
-    - [ ] **7.3.c Fix search scroll position not resetting on fresh page load**
+    - [ ] **7.3.c Fix scroll position not resetting on fresh page load**
 
-        **Problem:** Search results scroll position doesn't reset to top on fresh page load
-        (page refresh, direct navigation). Browse correctly resets in these scenarios.
+        **Problem:** Scroll position doesn't reset to top on fresh page load (page refresh,
+        direct navigation). Now affects both browse and search (regression from 7.3.a changes).
 
-        **Expected behavior (browse does this correctly):**
+        **Expected behavior:**
         - Page refresh → scroll to top
         - Direct navigation (not back-nav) → scroll to top
+        - Filter changes → scroll to top
         - Only back-nav from MovieDetail or browser back button → restore saved position
 
         **Investigation needed:**
-        - Compare `hadCachedDataOnMountRef` detection between browse and search
-        - Check if TanStack Query cache behaves differently for search vs browse
-        - Verify `isLoading` initial state for search routes on fresh load
+        - Check `hadCachedDataOnMountRef` detection - may be incorrectly detecting fresh
+          loads as back-nav due to TanStack Query cache behavior
+        - The existing filter-change logic (key change → reset to top) works correctly
+        - Issue is specifically with fresh loads where cache might already have data
 
 - [ ] **7.4 Remove obsolete random-access pagination**
 

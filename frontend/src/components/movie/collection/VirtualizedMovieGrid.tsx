@@ -145,8 +145,26 @@ const VirtualizedMovieGrid = () => {
   // Detect if this is a fresh load (refresh) vs back-navigation (cached data)
   // On refresh: isLoading starts true (no cache) → start at top
   // On back-nav: isLoading starts false (cached) → restore scroll position
+  // Known limitation: Can't distinguish page refresh with valid TanStack Query cache
+  // from actual back-navigation. Both have cached data on mount.
   const hadCachedDataOnMountRef = useRef(!isLoading && movies.length > 0);
   const hasRestoredScrollRef = useRef(false);
+
+  // Guard to prevent saving scroll position immediately after restoration
+  // (virtualizer may not have full height yet, causing wrong position to be saved)
+  const isRestoringScrollRef = useRef(false);
+  // Track restoration timeouts for cleanup
+  const restorationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Clean up restoration timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (restorationTimeoutRef.current) {
+        clearTimeout(restorationTimeoutRef.current);
+      }
+      isRestoringScrollRef.current = false;
+    };
+  }, []);
 
   // Handle scroll position on filter changes and back-navigation
   // Note: Browser scroll restoration disabled in main.tsx (must happen before React mounts)
@@ -169,7 +187,21 @@ const VirtualizedMovieGrid = () => {
     ) {
       const savedPosition = getSavedScrollPosition(scrollStorageKey);
       if (savedPosition > 0) {
+        // Set guard before restoring to prevent immediate save of wrong position
+        // (virtualizer may not have full content height yet on first scroll attempt)
+        isRestoringScrollRef.current = true;
         window.scrollTo(0, savedPosition);
+        // Re-scroll after virtualizer has time to render full content height
+        // Use requestAnimationFrame + timeout to ensure layout is complete
+        requestAnimationFrame(() => {
+          restorationTimeoutRef.current = setTimeout(() => {
+            window.scrollTo(0, savedPosition);
+            // Allow saving again after content has stabilized
+            restorationTimeoutRef.current = setTimeout(() => {
+              isRestoringScrollRef.current = false;
+            }, 100);
+          }, 50);
+        });
       }
       hasRestoredScrollRef.current = true;
     }
@@ -199,10 +231,18 @@ const VirtualizedMovieGrid = () => {
   );
 
   const handleScroll = useCallback(() => {
+    // Skip saving if we're in the middle of restoring scroll position
+    if (isRestoringScrollRef.current) {
+      return;
+    }
     if (scrollSaveTimeoutRef.current) {
       clearTimeout(scrollSaveTimeoutRef.current);
     }
     scrollSaveTimeoutRef.current = setTimeout(() => {
+      // Double-check guard in case restoration started during debounce
+      if (isRestoringScrollRef.current) {
+        return;
+      }
       saveScrollPosition(scrollStorageKey, window.scrollY);
     }, SCROLL_SAVE_DEBOUNCE);
   }, [scrollStorageKey]);

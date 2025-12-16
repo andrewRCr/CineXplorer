@@ -1,4 +1,11 @@
-import { useEffect, useRef, useCallback, useMemo, useState } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useCallback,
+  useMemo,
+  useState,
+} from "react";
 import { Text, Button, Box, Skeleton, Spinner } from "@chakra-ui/react";
 import { useWindowVirtualizer } from "@tanstack/react-virtual";
 import MovieCard from "../MovieCard";
@@ -34,6 +41,9 @@ const FETCH_DEBOUNCE = 150;
 
 /** Storage key prefix for scroll positions. */
 const SCROLL_STORAGE_PREFIX = "scroll-";
+
+/** Maximum number of scroll positions to store in sessionStorage. */
+const MAX_STORED_POSITIONS = 20;
 
 // ============================================================================
 // Placeholder for loading state
@@ -95,11 +105,52 @@ const getSavedScrollPosition = (key: string): number => {
 };
 
 /**
- * Saves scroll position to sessionStorage.
+ * Gets all scroll position keys from sessionStorage.
+ */
+const getScrollKeys = (): string[] => {
+  const keys: string[] = [];
+  try {
+    for (let i = 0; i < sessionStorage.length; i++) {
+      const key = sessionStorage.key(i);
+      if (key?.startsWith(SCROLL_STORAGE_PREFIX)) {
+        keys.push(key);
+      }
+    }
+  } catch {
+    // Ignore storage errors
+  }
+  return keys;
+};
+
+/**
+ * Cleans up old scroll positions if we exceed the maximum.
+ * Removes oldest entries (by insertion order approximation via iteration).
+ */
+const cleanupOldScrollPositions = (currentKey: string): void => {
+  try {
+    const keys = getScrollKeys();
+    // Keep current key, remove oldest if over limit
+    const keysToConsider = keys.filter((k) => k !== currentKey);
+    if (keysToConsider.length >= MAX_STORED_POSITIONS) {
+      // Remove oldest entries (first in list, as sessionStorage iterates in insertion order)
+      const keysToRemove = keysToConsider.slice(
+        0,
+        keysToConsider.length - MAX_STORED_POSITIONS + 1
+      );
+      keysToRemove.forEach((k) => sessionStorage.removeItem(k));
+    }
+  } catch {
+    // Ignore cleanup errors
+  }
+};
+
+/**
+ * Saves scroll position to sessionStorage with cleanup.
  */
 const saveScrollPosition = (key: string, position: number): void => {
   try {
     sessionStorage.setItem(key, String(position));
+    cleanupOldScrollPositions(key);
   } catch {
     // Ignore storage errors (quota exceeded, etc.)
   }
@@ -220,15 +271,56 @@ const VirtualizedMovieGrid = () => {
   // Track previous key to detect filter changes
   const prevScrollKeyRef = useRef(scrollStorageKey);
 
-  // Get initial offset for virtualizer (saved position or 0)
-  const initialOffset = useMemo(() => {
-    // If key changed (filter change), start at top
+  // Detect if this is a fresh load (refresh) vs back-navigation (cached data)
+  // On refresh: isLoading starts true (no cache) → start at top
+  // On back-nav: isLoading starts false (cached) → restore scroll position
+  const hadCachedDataOnMountRef = useRef(!isLoading && movies.length > 0);
+  const hasRestoredScrollRef = useRef(false);
+
+  // Handle scroll position on filter changes and back-navigation
+  // Note: Browser scroll restoration disabled in main.tsx (must happen before React mounts)
+  useLayoutEffect(() => {
+    // On filter change, reset to top
     if (prevScrollKeyRef.current !== scrollStorageKey) {
+      window.scrollTo(0, 0);
+      hasRestoredScrollRef.current = true; // Don't restore after filter change
       prevScrollKeyRef.current = scrollStorageKey;
-      return 0;
     }
-    return getSavedScrollPosition(scrollStorageKey);
   }, [scrollStorageKey]);
+
+  // Restore scroll position for back-navigation (when we had cached data on mount)
+  useLayoutEffect(() => {
+    if (
+      hadCachedDataOnMountRef.current &&
+      !hasRestoredScrollRef.current &&
+      !isLoading &&
+      movies.length > 0
+    ) {
+      const savedPosition = getSavedScrollPosition(scrollStorageKey);
+      if (savedPosition > 0) {
+        window.scrollTo(0, savedPosition);
+      }
+      hasRestoredScrollRef.current = true;
+    }
+  }, [isLoading, movies.length, scrollStorageKey]);
+
+  // Scroll to top on error (reset position when data fetch fails)
+  useLayoutEffect(() => {
+    if (isError) {
+      window.scrollTo(0, 0);
+      hasRestoredScrollRef.current = true;
+    }
+  }, [isError]);
+
+  // Get initial offset for virtualizer
+  // Only use saved position for back-navigation (cached data), not refresh
+  const initialOffset = useMemo(
+    () =>
+      hadCachedDataOnMountRef.current
+        ? getSavedScrollPosition(scrollStorageKey)
+        : 0,
+    [scrollStorageKey]
+  );
 
   // Debounced scroll save
   const scrollSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
@@ -351,75 +443,78 @@ const VirtualizedMovieGrid = () => {
         </Box>
       )}
 
-      {/* Loading Skeletons (Initial Load) */}
-      {isLoading && (
-        <Box
-          display="grid"
-          gridTemplateColumns={`repeat(auto-fit, ${CARD_WIDTH}px)`}
-          gap={`${GAP}px`}
-          mb={6}
-          justifyContent="center"
-        >
-          {Array.from({ length: SKELETON_COUNT }, (_, i) => (
-            <Skeleton
-              key={`skeleton-${i}`}
-              borderRadius="md"
-              overflow="hidden"
-              bg="layer-02"
-              data-testid="skeleton-loader"
-            >
-              <MovieCardContainer>
-                <MovieCard movie={placeholderMovie} />
-              </MovieCardContainer>
-            </Skeleton>
-          ))}
-        </Box>
-      )}
-
-      {/* Virtualized Movie Grid */}
-      {!isLoading && movies.length > 0 && (
-        <Box ref={containerRef}>
-          {/* Virtualizer container - height matches total content */}
+      {/* Grid Container - always mounted for ResizeObserver stability */}
+      <Box ref={containerRef}>
+        {/* Loading Skeletons (Initial Load) */}
+        {isLoading && (
           <Box
-            position="relative"
-            width="100%"
-            height={`${virtualizer.getTotalSize()}px`}
+            display="grid"
+            gridTemplateColumns={`repeat(auto-fit, ${CARD_WIDTH}px)`}
+            gap={`${GAP}px`}
+            mb={6}
+            justifyContent="center"
           >
-            {/* Render only visible rows */}
-            {virtualItems.map((virtualRow) => {
-              const rowStartIndex = virtualRow.index * columnCount;
-              const rowMovies = movies.slice(
-                rowStartIndex,
-                rowStartIndex + columnCount
-              );
-
-              return (
-                <Box
-                  key={virtualRow.index}
-                  position="absolute"
-                  top={0}
-                  left={0}
-                  width="100%"
-                  transform={`translateY(${virtualRow.start}px)`}
-                  display="grid"
-                  gridTemplateColumns={`repeat(auto-fit, ${CARD_WIDTH}px)`}
-                  gap={`${GAP}px`}
-                  justifyContent="center"
-                >
-                  {rowMovies.map((movie: MovieListItem) => (
-                    <MovieCardContainer
-                      key={`${movie.tmdb_id}-${movie.title}`}
-                      data-testid="movie-card-container"
-                    >
-                      <MovieCard movie={movie} source={source} query={query} />
-                    </MovieCardContainer>
-                  ))}
-                </Box>
-              );
-            })}
+            {Array.from({ length: SKELETON_COUNT }, (_, i) => (
+              <Skeleton
+                key={`skeleton-${i}`}
+                borderRadius="md"
+                overflow="hidden"
+                bg="layer-02"
+                data-testid="skeleton-loader"
+              >
+                <MovieCardContainer>
+                  <MovieCard movie={placeholderMovie} />
+                </MovieCardContainer>
+              </Skeleton>
+            ))}
           </Box>
-        </Box>
-      )}
+        )}
+
+        {/* Virtualized Movie Grid */}
+        {!isLoading && movies.length > 0 && (
+          <>
+            {/* Virtualizer container - height matches total content */}
+            <Box
+              position="relative"
+              width="100%"
+              height={`${virtualizer.getTotalSize()}px`}
+            >
+              {/* Render only visible rows */}
+              {virtualItems.map((virtualRow) => {
+                const rowStartIndex = virtualRow.index * columnCount;
+                const rowMovies = movies.slice(
+                  rowStartIndex,
+                  rowStartIndex + columnCount
+                );
+
+                return (
+                  <Box
+                    key={virtualRow.index}
+                    position="absolute"
+                    top={0}
+                    left={0}
+                    width="100%"
+                    transform={`translateY(${virtualRow.start}px)`}
+                    display="grid"
+                    gridTemplateColumns={`repeat(auto-fit, ${CARD_WIDTH}px)`}
+                    gap={`${GAP}px`}
+                    justifyContent="center"
+                  >
+                    {rowMovies.map((movie: MovieListItem) => (
+                      <MovieCardContainer
+                        key={`${movie.tmdb_id}-${movie.title}`}
+                        data-testid="movie-card-container"
+                      >
+                        <MovieCard movie={movie} source={source} query={query} />
+                      </MovieCardContainer>
+                    ))}
+                  </Box>
+                );
+              })}
+            </Box>
+          </>
+        )}
+      </Box>
 
       {/* Loading More Indicator */}
       <Box h="20px" mt={4} textAlign="center">

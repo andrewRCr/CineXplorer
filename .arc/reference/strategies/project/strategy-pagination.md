@@ -1,6 +1,6 @@
 # Pagination Strategy
 
-**Version:** 1.0 | **Updated:** 2025-12-15 | **Status:** Active
+**Version:** 1.1 | **Updated:** 2025-12-16 | **Status:** Active
 
 ## Purpose
 
@@ -15,8 +15,10 @@ pagination issues, extending pagination features, or onboarding to the codebase.
 3. [Deduplication Tracker](#deduplication-tracker)
 4. [Cursor-Based Pagination](#cursor-based-pagination)
 5. [Frontend Integration](#frontend-integration)
-6. [Content Pool Depletion](#content-pool-depletion)
-7. [Key Files Reference](#key-files-reference)
+6. [Virtualization](#virtualization)
+7. [Scroll Restoration](#scroll-restoration)
+8. [Content Pool Depletion](#content-pool-depletion)
+9. [Key Files Reference](#key-files-reference)
 
 ---
 
@@ -222,9 +224,12 @@ Conditions for end-of-results:
 
 ## Frontend Integration
 
+**Primary implementation:** `VirtualizedMovieGrid` (virtualized infinite scroll)
+**Reference implementations:** `InfiniteMovieGrid`, `SequentialMovieGrid` (non-virtualized)
+
 ### useInfiniteMovies Hook
 
-Located in `frontend/src/hooks/useInfiniteMovies.ts`.
+Located in `frontend/src/hooks/movie/useInfiniteMovies.ts`.
 
 ```typescript
 export function useInfiniteMovies({ queryKey, fetcher }) {
@@ -254,7 +259,7 @@ TanStack Query automatically sets `hasNextPage` based on `getNextPageParam`:
 - Returns `undefined` → `hasNextPage = false`
 - Returns number → `hasNextPage = true`
 
-### InfiniteMovieGrid Component
+### InfiniteMovieGrid Component (Reference)
 
 Uses Intersection Observer to trigger `fetchNextPage()` when user scrolls near bottom:
 
@@ -268,6 +273,111 @@ const observer = new IntersectionObserver(
     { threshold: 0.1, rootMargin: "100px" }
 );
 ```
+
+---
+
+## Virtualization
+
+### Why Virtualization
+
+Movie grids can contain hundreds or thousands of items. Without virtualization:
+
+- DOM contains all movie cards (1000+ elements)
+- Memory usage grows linearly with results
+- Scroll performance degrades significantly
+
+With virtualization, only visible rows are rendered (typically 3-5 rows + 2 overscan).
+
+### Implementation
+
+**Primary component:** `VirtualizedMovieGrid` using `@tanstack/react-virtual`
+
+```typescript
+// Window-based virtualizer (scrolls with page, not internal container)
+const virtualizer = useWindowVirtualizer({
+    count: Math.ceil(movies.length / columns),
+    estimateSize: () => rowHeight,
+    overscan: 2,  // Render 2 rows above/below viewport
+});
+
+// Only render visible rows
+{virtualizer.getVirtualItems().map((virtualRow) => (
+    <GridRow key={virtualRow.key} style={{ transform: `translateY(${virtualRow.start}px)` }}>
+        {/* Render movies for this row */}
+    </GridRow>
+))}
+```
+
+### Configuration
+
+| Parameter     | Value | Rationale                              |
+|---------------|-------|----------------------------------------|
+| `overscan`    | 2     | Smooth scrolling without visible pop-in|
+| `estimateSize`| 340px | Approximate row height for card + gap  |
+
+### When to Use
+
+- **VirtualizedMovieGrid**: Browse, search, any large result set
+- **InfiniteMovieGrid**: Reference only (non-virtualized infinite scroll)
+- **SequentialMovieGrid**: Reference only (button-based pagination)
+
+---
+
+## Scroll Restoration
+
+### The Problem
+
+When users navigate: Browse → Movie Detail → Back, they expect to return to their scroll position
+with all previously loaded movies intact.
+
+### Solution
+
+Three-layer approach:
+
+1. **TanStack Query cache** - Retains all loaded pages in memory
+2. **sessionStorage persistence** - Stores scroll position keyed by filter params
+3. **Virtualizer initialOffset** - Restores exact scroll position on mount
+
+### Implementation
+
+```typescript
+// Save position before navigation
+const saveScrollPosition = (filterKey: string) => {
+    sessionStorage.setItem(`scroll:${filterKey}`, String(window.scrollY));
+};
+
+// Restore on mount
+const restoreScrollPosition = (filterKey: string): number => {
+    const saved = sessionStorage.getItem(`scroll:${filterKey}`);
+    return saved ? parseInt(saved, 10) : 0;
+};
+
+// Apply to virtualizer
+const virtualizer = useWindowVirtualizer({
+    // ... other config
+    initialOffset: restoreScrollPosition(filterKey),
+});
+```
+
+### Key Behaviors
+
+| Scenario           | Expected Behavior                              |
+|--------------------|------------------------------------------------|
+| Back from detail   | Exact scroll position restored, all data intact|
+| Filter change      | Scroll resets to top (new query)               |
+| Tab refresh        | Position lost (sessionStorage per-tab)         |
+| App-level setting  | `history.scrollRestoration = 'manual'`         |
+
+### App-Level Configuration
+
+```typescript
+// main.tsx - Disable browser's native scroll restoration
+if (typeof window !== 'undefined') {
+    history.scrollRestoration = 'manual';
+}
+```
+
+This prevents the browser from attempting scroll restoration before our data loads.
 
 ---
 
@@ -310,17 +420,22 @@ Small pools are expected for:
 
 ## Key Files Reference
 
-| File                       | Location                                    | Purpose                              |
-|----------------------------|---------------------------------------------|--------------------------------------|
-| `paginated.py`             | `backend/apps/movie/services/pipelines/`    | Buffer mechanism, cursor calculation |
-| `deduplication_tracker.py` | `backend/apps/movie/services/`              | Redis-based session tracking         |
-| `useInfiniteMovies.ts`     | `frontend/src/hooks/`                       | TanStack Query infinite scroll       |
-| `InfiniteMovieGrid.tsx`    | `frontend/src/components/movie/collection/` | Intersection Observer UI             |
-| `paginationContext.ts`     | `frontend/src/services/`                    | Multi-tab context ID                 |
-| `apiClient.ts`             | `frontend/src/services/`                    | X-Pagination-Context header          |
+| File                        | Location                                           | Purpose                                    |
+|-----------------------------|----------------------------------------------------|--------------------------------------------|
+| `paginated.py`              | `backend/apps/movie/services/pipelines/`           | Buffer mechanism, cursor calculation       |
+| `deduplication_tracker.py`  | `backend/apps/movie/services/`                     | Redis-based session tracking               |
+| `useInfiniteMovies.ts`      | `frontend/src/hooks/movie/`                        | TanStack Query infinite scroll             |
+| `VirtualizedMovieGrid.tsx`  | `frontend/src/components/movie/collection/`        | Primary grid - virtualized infinite scroll |
+| `InfiniteMovieGrid.tsx`     | `frontend/src/components/movie/collection/`        | Reference - non-virtualized infinite       |
+| `SequentialMovieGrid.tsx`   | `frontend/src/components/movie/collection/`        | Reference - button-based pagination        |
+| `scrollPersistence.ts`      | `frontend/src/components/movie/collection/shared/` | sessionStorage scroll position helpers     |
+| `gridConstants.ts`          | `frontend/src/components/movie/collection/shared/` | Shared grid configuration (row height, etc)|
+| `paginationContext.ts`      | `frontend/src/services/`                           | Multi-tab context ID                       |
+| `apiClient.ts`              | `frontend/src/services/`                           | X-Pagination-Context header                |
 
 ---
 
 ## Version History
 
+- **1.1** (2025-12-16): Added Virtualization and Scroll Restoration sections, updated file references
 - **1.0** (2025-12-15): Initial strategy document

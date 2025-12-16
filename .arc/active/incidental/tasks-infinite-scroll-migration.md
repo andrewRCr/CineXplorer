@@ -585,20 +585,13 @@ This de-risks the infinite scroll commitment by proving the hardest UX requireme
 
 **Prerequisites:** Phase 5.3.b documents satisfactory back-nav UX (Go decision).
 
-- [ ] **6.1 Create ADR and update strategy docs**
-    - **ADR:** `.arc/reference/decisions/adr-NNN-infinite-scroll-with-virtualization.md`
-        - Context: Buffer mechanism, data quality pipeline, random-access retirement,
-          back-nav UX requirements
-        - Alternatives considered: Random-access (retired), sequential (viable), virtualized infinite (chosen)
-        - Decision: Infinite scroll with virtualization
-        - Consequences: Search migration approach, cleanup scope, scroll patterns
-    - **Update strategy-pagination.md:**
-        - Reflect virtualized infinite scroll as primary approach
-        - Document scroll restoration pattern (sessionStorage + initialOffset)
-        - Update "current implementation" sections to match reality
-    - **Update strategy-data-quality.md (if applicable):**
-        - Verify buffer mechanism documentation is accurate
-        - Confirm deduplication approach aligns with infinite scroll
+- [x] **6.1 Create ADR and update strategy docs**
+    - **ADR-020:** `adr-020-adopt-virtualized-infinite-scroll-for-browse.md`
+        - Context: Buffer mechanism path-dependency, random-access broken, industry research
+        - Alternatives: Random-access (broken), sequential (Letterboxd - friction), virtualized (chosen)
+        - Decision: @tanstack/react-virtual + @tanstack/react-query + sessionStorage scroll restoration
+    - **strategy-pagination.md v1.1:** Added Virtualization and Scroll Restoration sections
+    - **strategy-data-quality.md:** Verified accurate, no changes needed (cross-refs pagination)
 
 - [ ] **6.2 Apply post-decision UI refinements**
     - Evaluate: Can `PageHeader` margin be reduced (mb=0)?

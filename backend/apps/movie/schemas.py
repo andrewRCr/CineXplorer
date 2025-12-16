@@ -22,11 +22,15 @@ class MovieSearchParamsSchema(Schema):
     """
     query: str = Field(..., description="Search query string")
     page: int | None = Field(None, description="Page number for pagination")
+    tmdb_page_start: int | None = Field(
+        None,
+        description="TMDB page to start fetching from (cursor for infinite scroll)"
+    )
 
-    @field_validator('page', mode='before')
+    @field_validator('page', 'tmdb_page_start', mode='before')
     @classmethod
-    def convert_empty_page_to_none(cls, v: object) -> object:
-        """Convert empty strings to None for page parameter."""
+    def convert_empty_to_none(cls, v: object) -> object:
+        """Convert empty strings to None for optional integer parameters."""
         if isinstance(v, str) and v.strip() == "":
             return None
         return v

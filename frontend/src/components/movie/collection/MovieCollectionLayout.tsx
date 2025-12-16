@@ -27,6 +27,8 @@ type MovieCollectionLayoutProps = {
   currentPage?: number;
   // Layout customization
   size?: "sm" | "md" | "lg" | "xl";
+  /** Whether to render PageHeader (default: true). Set false for grids that handle their own title. */
+  renderPageHeader?: boolean;
   // Header customization
   headerProps?: {
     size?: "sm" | "md" | "lg" | "xl";
@@ -50,6 +52,7 @@ const MovieCollectionLayout = ({
   defaultBrowseParams,
   currentPage,
   size = "xl",
+  renderPageHeader = true,
   headerProps,
   containerProps,
 }: MovieCollectionLayoutProps) => {
@@ -116,6 +119,8 @@ const MovieCollectionLayout = ({
         fetcher: actualFetcher,
         source: actualSource,
         query: defaultBrowseParams?.query,
+        title: actualTitle,
+        renderPageHeader,
         initialCurrentPage: currentPage || currentPageFromUrl,
         initialTmdbPageStart: tmdbPageStartFromUrl,
         onPageChange: handlePageChange,
@@ -128,6 +133,8 @@ const MovieCollectionLayout = ({
       actualFetcher,
       actualSource,
       defaultBrowseParams?.query,
+      actualTitle,
+      renderPageHeader,
       currentPage,
       currentPageFromUrl,
       tmdbPageStartFromUrl,
@@ -147,14 +154,16 @@ const MovieCollectionLayout = ({
       alignItems="flex-start"
       {...containerConfig}
     >
-      {/* Enhanced Page Header with better composition */}
-      <PageHeader
-        title={actualTitle}
-        size={headerProps?.size || "lg"}
-        showAccent={headerProps?.showAccent ?? true}
-      >
-        {headerProps?.children}
-      </PageHeader>
+      {/* Page Header - conditionally rendered (grids can handle their own title) */}
+      {renderPageHeader && (
+        <PageHeader
+          title={actualTitle}
+          size={headerProps?.size || "lg"}
+          showAccent={headerProps?.showAccent ?? true}
+        >
+          {headerProps?.children}
+        </PageHeader>
+      )}
 
       {/* Conditionally rendered Browse Controls Section */}
       {showBrowseControls && (

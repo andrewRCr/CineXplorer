@@ -593,27 +593,26 @@ This de-risks the infinite scroll commitment by proving the hardest UX requireme
     - **strategy-pagination.md v1.1:** Added Virtualization and Scroll Restoration sections
     - **strategy-data-quality.md:** Verified accurate, no changes needed (cross-refs pagination)
 
-- [ ] **6.2 Apply post-decision UI refinements**
-    - Evaluate: Can `PageHeader` margin be reduced (mb=0)?
-    - Evaluate: Can page title move into `ResultsHeaderBar` left side?
-    - Implement refinements if beneficial
+- [x] **6.2 Apply post-decision UI refinements**
+    - Renamed `ResultsHeaderBar` → `GridHeader` (clearer naming for header section of grids)
+    - Added `title` prop to `GridHeader` for integrated title+results layout
+    - Added `renderPageHeader` prop to `MovieCollectionLayout`
+    - Updated all grid components to support title in GridHeader when PageHeader disabled
+    - Route config: browse routes use `renderPageHeader={false}` (title in GridHeader)
+    - Route config: sequential route uses `renderPageHeader={true}` (reference - title in PageHeader)
 
-- [ ] **6.3 Remove sequential pagination temp route**
-    - Delete `/browse/sequential` route
-    - Delete `BrowseSequential.tsx` page component
-    - Remove `ROUTES.BROWSE_SEQUENTIAL` constant
-    - Keep `SequentialMovieGrid` component until Phase 8 cleanup
-
-- [ ] **6.4 Migrate main browse routes to VirtualizedMovieGrid**
+- [ ] **6.3 Migrate main browse routes to VirtualizedMovieGrid**
     - Update `Browse.tsx` to use `VirtualizedMovieGrid` instead of `InfiniteMovieGrid`
     - Update `NowPlaying.tsx` to use `VirtualizedMovieGrid`
     - Update `Upcoming.tsx` to use `VirtualizedMovieGrid`
     - Verify all browse routes have scroll restoration working
+    - Note: Route config already has `renderPageHeader={false}` from 6.2
 
-- [ ] **6.5 Remove virtualized temp route**
-    - Delete `/browse/virtualized` route (no longer needed after 6.4)
+- [ ] **6.4 Remove virtualized temp route**
+    - Delete `/browse/virtualized` route (no longer needed after 6.3)
     - Delete `BrowseVirtualized.tsx` page component
     - Remove `ROUTES.BROWSE_VIRTUALIZED` constant
+    - Note: Sequential route kept as separate reference implementation (own layout config)
 
 ---
 

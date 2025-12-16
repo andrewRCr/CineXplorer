@@ -10,7 +10,7 @@ import { Text, Box, Spinner } from "@chakra-ui/react";
 import { useWindowVirtualizer } from "@tanstack/react-virtual";
 import MovieCard from "../MovieCard";
 import MovieCardContainer from "../MovieCardContainer";
-import { ResultsHeaderBar } from "./ResultsHeaderBar";
+import { GridHeader } from "./GridHeader";
 import {
   CARD_WIDTH,
   GAP,
@@ -60,7 +60,7 @@ const FETCH_DEBOUNCE = 150;
  * - Empty state for no results
  */
 const VirtualizedMovieGrid = () => {
-  const { source, query, finalFetcher, browseParams } =
+  const { source, query, finalFetcher, browseParams, title, renderPageHeader } =
     useMovieCollectionContext({});
 
   // Build stable query key from actual filter values
@@ -281,8 +281,9 @@ const VirtualizedMovieGrid = () => {
 
   return (
     <Box>
-      {/* Results Header */}
-      <ResultsHeaderBar
+      {/* Grid Header - includes title when PageHeader is not rendered */}
+      <GridHeader
+        title={!renderPageHeader ? title : undefined}
         resultText={resultText}
         isLoading={isLoading}
         visible={showHeader}

@@ -2,7 +2,7 @@ import { useState, useCallback, useMemo } from "react";
 import { Box } from "@chakra-ui/react";
 import MovieCard from "../MovieCard";
 import MovieCardContainer from "../MovieCardContainer";
-import { ResultsHeaderBar } from "./ResultsHeaderBar";
+import { GridHeader } from "./GridHeader";
 import { ResultsFooterBar } from "./ResultsFooterBar";
 import {
   CARD_WIDTH,
@@ -127,8 +127,8 @@ const SequentialMovieGrid = () => {
 
   return (
     <Box>
-      {/* Results Header with Pagination */}
-      <ResultsHeaderBar
+      {/* Grid Header with Pagination */}
+      <GridHeader
         resultText={resultText}
         paginationControls={paginationControls}
         isLoading={isLoading}

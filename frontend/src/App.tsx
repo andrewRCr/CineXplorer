@@ -76,20 +76,33 @@ const App: React.FC = () => {
               <Route path={ROUTES.WATCHLIST} element={<Watchlist />} />
               <Route path={ROUTES.SETTINGS} element={<Settings />} />
 
-              {/* Browse routes with shared layout */}
+              {/* Browse routes - main layout (title in GridHeader) */}
               <Route
                 path={ROUTES.BROWSE}
                 element={
                   <MovieCollectionLayout
                     showBrowseControls={true}
+                    renderPageHeader={false}
                   />
                 }
               >
                 <Route index element={<Browse />} />
-                <Route path="sequential" element={<BrowseSequential />} />
                 <Route path="virtualized" element={<BrowseVirtualized />} />
                 <Route path="now-playing" element={<NowPlaying />} />
                 <Route path="upcoming" element={<Upcoming />} />
+              </Route>
+
+              {/* Sequential browse - reference implementation (title in PageHeader) */}
+              <Route
+                path={`${ROUTES.BROWSE}/sequential`}
+                element={
+                  <MovieCollectionLayout
+                    showBrowseControls={true}
+                    renderPageHeader={true}
+                  />
+                }
+              >
+                <Route index element={<BrowseSequential />} />
               </Route>
 
               {/* Search results with shared layout */}

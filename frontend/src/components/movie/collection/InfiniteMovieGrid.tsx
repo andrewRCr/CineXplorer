@@ -10,9 +10,9 @@ import {
   GridEmptyState,
   GridSkeletonLoader,
 } from "./shared";
-import { useInfiniteMovies } from "@/hooks/useInfiniteMovies";
-import { useMovieCollectionContext } from "@/hooks/useMovieCollectionContext";
-import { useInfiniteResultsText } from "@/hooks/useResultsText";
+import { useInfiniteMovies } from "@/hooks/movie/useInfiniteMovies";
+import { useMovieCollectionContext } from "@/hooks/movie/useMovieCollectionContext";
+import { useInfiniteResultsText } from "@/hooks/movie/useResultsText";
 import { type MovieListItem } from "@/types/movie";
 
 /**

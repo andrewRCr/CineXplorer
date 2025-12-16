@@ -1,6 +1,6 @@
 import { Button } from "@chakra-ui/react";
 import { useState } from "react";
-import useAuthContext from "@/hooks/useAuthContext";
+import useAuthContext from "@/hooks/auth/useAuthContext";
 import apiClient from "@/services/apiClient";
 
 const BASE_URL = import.meta.env.VITE_BASE_API_URL;

@@ -39,16 +39,16 @@ import {
 import VirtualizedMovieGrid from "../../VirtualizedMovieGrid";
 
 // Mocked dependencies
-import { useInfiniteMovies } from "@/hooks/useInfiniteMovies";
-import { useMovieCollectionContext } from "@/hooks/useMovieCollectionContext";
+import { useInfiniteMovies } from "@/hooks/movie/useInfiniteMovies";
+import { useMovieCollectionContext } from "@/hooks/movie/useMovieCollectionContext";
 
 // ============================================================================
 // Mock Setup
 // ============================================================================
 
 // Mock the hooks used by the component
-vi.mock("@/hooks/useInfiniteMovies");
-vi.mock("@/hooks/useMovieCollectionContext");
+vi.mock("@/hooks/movie/useInfiniteMovies");
+vi.mock("@/hooks/movie/useMovieCollectionContext");
 
 // Mock child components to isolate grid logic from card rendering
 vi.mock("../../../MovieCard", () => ({

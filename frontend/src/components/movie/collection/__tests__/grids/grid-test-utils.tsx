@@ -16,7 +16,7 @@ import { vi } from "vitest";
 import { ChakraProvider } from "@chakra-ui/react";
 import defaultSystem from "@/theme";
 import type { MovieListItem, PaginatedMoviesResponse } from "@/@types/movie";
-import type { UseInfiniteMoviesResult } from "@/hooks/useInfiniteMovies";
+import type { UseInfiniteMoviesResult } from "@/hooks/movie/useInfiniteMovies";
 
 // ============================================================================
 // Provider Wrapper

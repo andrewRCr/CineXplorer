@@ -3,13 +3,13 @@ import { describe, it, expect, vi, beforeEach, type Mock } from "vitest";
 import { ChakraProvider } from "@chakra-ui/react";
 import defaultSystem from "@/theme";
 import SequentialMovieGrid from "../../SequentialMovieGrid";
-import { useInfiniteMovies } from "@/hooks/useInfiniteMovies";
-import { useMovieCollectionContext } from "@/hooks/useMovieCollectionContext";
+import { useInfiniteMovies } from "@/hooks/movie/useInfiniteMovies";
+import { useMovieCollectionContext } from "@/hooks/movie/useMovieCollectionContext";
 import { type MovieListItem, type PaginatedMoviesResponse } from "@/@types/movie";
 
 // Mock the hooks
-vi.mock("@/hooks/useInfiniteMovies");
-vi.mock("@/hooks/useMovieCollectionContext");
+vi.mock("@/hooks/movie/useInfiniteMovies");
+vi.mock("@/hooks/movie/useMovieCollectionContext");
 
 // Mock child components to isolate grid logic
 vi.mock("../../../MovieCard", () => ({

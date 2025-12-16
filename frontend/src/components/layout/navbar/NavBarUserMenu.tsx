@@ -13,7 +13,7 @@ import { useState, useRef, useEffect } from "react";
 import { BsFillPlusCircleFill } from "react-icons/bs";
 import { ROUTES } from "@/constants/routes";
 import { USER_NAVIGATION_ITEMS } from "@/constants/navigation";
-import useAuthContext from "@/hooks/useAuthContext";
+import useAuthContext from "@/hooks/auth/useAuthContext";
 
 const NavBarUserMenu = () => {
   const { isAuthenticated, logout, user } = useAuthContext() ?? {};

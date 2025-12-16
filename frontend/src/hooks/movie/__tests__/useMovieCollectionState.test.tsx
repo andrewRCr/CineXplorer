@@ -1,15 +1,15 @@
 import { renderHook, act, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { useMovieCollectionState } from "@/hooks/useMovieCollectionState";
+import { useMovieCollectionState } from "@/hooks/movie/useMovieCollectionState";
 import { BrowserRouter } from "react-router-dom";
 import { type ReactNode } from "react";
 import { createMockBrowseParams } from "@tests/mocks/browseParams";
 
 // Import the actual module to get the mock
-import { useMovieCollectionUrl } from "@/hooks/useMovieCollectionUrl";
+import { useMovieCollectionUrl } from "@/hooks/movie/useMovieCollectionUrl";
 
 // Mock the useMovieCollectionUrl hook
-vi.mock("@/hooks/useMovieCollectionUrl");
+vi.mock("@/hooks/movie/useMovieCollectionUrl");
 
 const mockUseMovieCollectionUrl = vi.mocked(useMovieCollectionUrl);
 

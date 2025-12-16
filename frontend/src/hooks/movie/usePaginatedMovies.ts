@@ -1,4 +1,4 @@
-import { useApiRequest } from "./useApiRequest";
+import { useApiRequest } from "@/hooks/useApiRequest";
 import { useMemo } from "react";
 import { type PaginatedMoviesResponse } from "@/types/movie";
 

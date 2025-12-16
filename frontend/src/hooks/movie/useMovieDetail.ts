@@ -1,4 +1,4 @@
-import { useApiRequest } from "./useApiRequest";
+import { useApiRequest } from "@/hooks/useApiRequest";
 import { useMemo } from "react";
 import type React from "react";
 import { type Movie } from "@shared/index";

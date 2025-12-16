@@ -14,7 +14,7 @@ import { Tooltip } from "../core/chakra/tooltip";
 import { LuEye, LuHeart } from "react-icons/lu";
 import { RiPlayListAddLine, RiPlayListFill } from "react-icons/ri";
 import MovieUserScore from "./MovieUserScore";
-import { useMovieActions } from "../../hooks/useMovieActions";
+import { useMovieActions } from "@/hooks/movie/useMovieActions";
 
 interface MovieCardProps {
   movie: MovieListItem;

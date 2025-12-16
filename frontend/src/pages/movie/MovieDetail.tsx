@@ -1,4 +1,4 @@
-import useMovieDetail from "@/hooks/useMovieDetail";
+import useMovieDetail from "@/hooks/movie/useMovieDetail";
 import { useParams, useSearchParams, Link } from "react-router-dom";
 import { useMemo } from "react";
 import { fetchMovieDetail } from "@/services/movieService";
@@ -17,8 +17,8 @@ import {
 } from "@chakra-ui/react";
 import { Tag } from "@chakra-ui/tag";
 import MovieUserScore from "@/components/movie/MovieUserScore";
-import { useUserMovieData } from "@/hooks/useUserMovieData";
-import useAuthContext from "@/hooks/useAuthContext";
+import { useUserMovieData } from "@/hooks/movie/useUserMovieData";
+import useAuthContext from "@/hooks/auth/useAuthContext";
 
 /* ============================================================
    MovieDetail Component

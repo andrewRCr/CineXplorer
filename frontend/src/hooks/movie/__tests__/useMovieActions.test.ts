@@ -12,9 +12,9 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { act } from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useMovieActions } from '../useMovieActions';
-import * as userMovieDataService from '../../services/userMovieDataService';
-import type { Movie } from '../../@types/movie.d';
-import type { components } from '../../types/api';
+import * as userMovieDataService from '@/services/userMovieDataService';
+import type { Movie } from '@/@types/movie.d';
+import type { components } from '@/types/api';
 import type { AxiosResponse } from 'axios';
 
 type UserMovieDataDetailSchema = components['schemas']['UserMovieDataDetailSchema'];
@@ -25,7 +25,7 @@ interface ApiError extends Error {
 }
 
 // Mock the userMovieDataService
-vi.mock('../../services/userMovieDataService', () => ({
+vi.mock('@/services/userMovieDataService', () => ({
     createUserMovieData: vi.fn(),
     updateUserMovieData: vi.fn(),
     getUserMovieDataByTmdbId: vi.fn(),

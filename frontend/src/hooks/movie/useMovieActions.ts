@@ -31,8 +31,8 @@
  */
 
 import { useState } from 'react';
-import type { Movie } from '../@types/movie.d';
-import { toggleMovieWatchlist } from '../services/movieInteractionService';
+import type { Movie } from '@/@types/movie.d';
+import { toggleMovieWatchlist } from '@/services/movieInteractionService';
 
 interface UseMovieActionsProps {
     movie: Movie;

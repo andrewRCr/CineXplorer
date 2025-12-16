@@ -2,14 +2,14 @@ import { useMemo, type ReactNode } from "react";
 import { useLocation, Outlet } from "react-router-dom";
 import { Box } from "@chakra-ui/react";
 import type { BrowseParams } from "@/types/browseTypes";
-import { useMovieFetchRouter } from "@/hooks/useMovieFetchRouter";
+import { useMovieFetchRouter } from "@/hooks/movie/useMovieFetchRouter";
 import {
   getFetcherAndSource,
   type RouteConfig,
 } from "@/utilities/routeConfigHelper";
 import PageHeader from "@/components/movie/collection/PageHeader";
 import BrowseControlsSection from "@/components/movie/collection/BrowseControlsSection";
-import { useMovieCollectionState } from "@/hooks/useMovieCollectionState";
+import { useMovieCollectionState } from "@/hooks/movie/useMovieCollectionState";
 
 // Better prop patterns with discriminated unions and required/optional groups
 type BrowseControlsConfig =

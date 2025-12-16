@@ -4,7 +4,7 @@ import { StyledInput } from "@/components/common";
 import { useFormik } from "formik";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
-import useAuthContext from "@/hooks/useAuthContext";
+import useAuthContext from "@/hooks/auth/useAuthContext";
 import { TextLink } from "@/components/common";
 
 const Register = () => {

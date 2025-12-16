@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 import {
     getUserMovieDataByTmdbId,
     updateUserMovieData,
-} from "../services/userMovieDataService";
-import type { components } from "../types/api";
+} from "@/services/userMovieDataService";
+import type { components } from "@/types/api";
 
 // Use backend schema types directly (snake_case convention)
 export type UserMovieData = components["schemas"]["UserMovieDataDetailSchema"];

@@ -6,11 +6,11 @@ import { createMockMovies, createMockMovie } from '@tests/mocks/movieData';
 import type { PaginatedMoviesResponse, Movie } from '@/types/movie';
 
 // Mock hooks and services
-vi.mock('@/hooks/useMovieDetail', () => ({
+vi.mock('@/hooks/movie/useMovieDetail', () => ({
   default: vi.fn(),
 }));
 
-vi.mock('@/hooks/useUserMovieData', () => ({
+vi.mock('@/hooks/movie/useUserMovieData', () => ({
   useUserMovieData: vi.fn(() => ({
     data: null,
     loading: false,
@@ -18,7 +18,7 @@ vi.mock('@/hooks/useUserMovieData', () => ({
   })),
 }));
 
-vi.mock('@/hooks/useAuth', () => ({
+vi.mock('@/hooks/auth/useAuth', () => ({
   useAuth: vi.fn(() => ({
     isAuthenticated: false,
   })),
@@ -28,7 +28,7 @@ vi.mock('@/services/movieService', () => ({
   fetchMovieDetail: vi.fn(),
 }));
 
-import useMovieDetail from '@/hooks/useMovieDetail';
+import useMovieDetail from '@/hooks/movie/useMovieDetail';
 
 /**
  * Integration tests for navigation flows involving MovieCollectionGrid,

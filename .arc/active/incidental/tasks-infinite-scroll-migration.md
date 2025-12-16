@@ -751,43 +751,171 @@ This de-risks the infinite scroll commitment by proving the hardest UX requireme
 
 ---
 
-### **Phase 8:** Final Cleanup and Documentation
+### **Phase 8:** Expand Frontend Test Coverage
+
+**Purpose:** Address critical test coverage gaps for scroll persistence, virtualization, and
+infinite scroll behavior before finalizing the migration.
+
+**Principles:**
+
+- Tests should be DRY and maintainable
+- Leverage existing test fixtures/helpers (e.g., `grid-test-utils.tsx`, `createMockMovie`)
+- Create new shared helpers where patterns repeat across test files
+- Focus on behavior verification, not implementation details
+
+**Coverage Assessment Summary:**
+
+| Area                      | Current | Gap                                |
+|---------------------------|---------|------------------------------------|
+| scrollStorage utilities   | 0 tests | Critical - handles all persistence |
+| BackToCollectionLink      | 0 tests | Critical - back-nav UX             |
+| Integration tests         | 1 test  | No multi-component flow coverage   |
+| Race condition edge cases | 0 tests | Timing-dependent behavior untested |
+
+- [ ] **8.1 Add scrollStorage utility tests**
+
+    **File:** `components/movie/collection/shared/__tests__/scrollStorage.test.ts`
+
+    - [ ] **8.1.a Test storage key generation**
+        - No params → `"scroll-discover-"`
+        - Single param → sorted key with param
+        - Multiple params → deterministic sorted order
+        - Array params (genres) → comma-separated values
+        - Empty arrays/null/undefined → filtered out
+        - Special characters → properly handled
+
+    - [ ] **8.1.b Test scroll position save/retrieve**
+        - Save and retrieve position
+        - Retrieve non-existent key → returns 0
+        - Save position 0 (top of page)
+        - Save very large position
+
+    - [ ] **8.1.c Test cleanup logic (MAX_STORED_POSITIONS)**
+        - Under limit → no cleanup
+        - At limit → oldest removed
+        - Current key never removed during cleanup
+
+    - [ ] **8.1.d Test error handling**
+        - sessionStorage.getItem throws → returns 0
+        - sessionStorage.setItem throws → fails silently
+        - Simulate quota exceeded scenario
+
+- [ ] **8.2 Add BackToCollectionLink tests**
+
+    **File:** `components/navigation/__tests__/BackToCollectionLink.test.tsx`
+
+    - [ ] **8.2.a Test URL building from search params**
+        - `from=search&q=inception` → `/search?q=inception`
+        - `from=browse&genres=28` → `/browse?genres=28`
+        - `from=now-playing` → `/browse/now-playing`
+        - Missing `from` → default route
+
+    - [ ] **8.2.b Test parameter filtering**
+        - Includes filter params (genres, minYear, etc.)
+        - Excludes pagination params (page, tmdb_page_start)
+        - Excludes empty string values
+
+    - [ ] **8.2.c Test location state**
+        - Link sets `state={{ restoreScroll: true }}`
+        - Verify state passed to Link component
+
+    - [ ] **8.2.d Test component rendering**
+        - Default label "Back to Results"
+        - Custom label support
+        - Styling props (variant, mb)
+
+- [ ] **8.3 Add scroll persistence integration tests**
+
+    **File:** `hooks/movie/__tests__/scroll-persistence.integration.test.tsx`
+
+    Create shared test utilities first, then integration tests.
+
+    - [ ] **8.3.a Create integration test helpers**
+        - `renderWithFullProviders()` - QueryClient + Router + Chakra
+        - `simulateNavigation()` - helper for route transitions
+        - `mockScrollPosition()` - window.scrollY + scrollTo mocks
+
+    - [ ] **8.3.b Test back-navigation scroll restore flow**
+        - Render VirtualizedMovieGrid with movies
+        - Simulate scroll to position
+        - Verify position saved to sessionStorage
+        - Navigate away (unmount)
+        - Navigate back with `restoreScroll: true` state
+        - Verify initialOffset matches saved position
+
+    - [ ] **8.3.c Test filter change resets scroll**
+        - Render with initial browseParams
+        - Simulate scroll to position
+        - Change browseParams
+        - Verify scrollTo(0, 0) called
+        - Verify new storage key used
+
+    - [ ] **8.3.d Test refresh behavior (no restore)**
+        - Render with saved position but NO restoreScroll state
+        - Verify initialOffset is 0 (not restored)
+
+- [ ] **8.4 Add edge case and race condition tests**
+
+    - [ ] **8.4.a useScrollPersistence edge cases**
+        - Saved position > actual content height
+        - Rapid scroll events (16ms intervals)
+        - Component unmount during debounced save
+
+    - [ ] **8.4.b VirtualizedMovieGrid edge cases**
+        - fetchNextPage while previous fetch pending
+        - Resize during scroll (column count change)
+        - Very few results (viewport > content)
+
+    - [ ] **8.4.c useInfiniteMovies edge cases**
+        - Empty page in middle of results
+        - Malformed cursor (negative, null after non-null)
+        - Query key reference change (same values)
+
+- [ ] **8.5 Quality gates**
+    - All new tests passing
+    - No reduction in existing test count
+    - Type checking: 0 errors
+    - Linting: 0 violations
+
+---
+
+### **Phase 9:** Final Cleanup and Documentation
 
 **Purpose:** Clean up remaining obsolete code and update documentation.
 
 **Note:** `MovieCollectionGrid` and `MoviePaginationCtrl` removed in Phase 7.
 `SequentialMovieGrid` and related components retained as reference implementations (Task 5.4.e).
 
-- [ ] **8.1 Clean up remaining obsolete code**
+- [ ] **9.1 Clean up remaining obsolete code**
 
-    - [ ] **8.1.a Review and clean unused utilities**
+    - [ ] **9.1.a Review and clean unused utilities**
         - Review `paginationUrlSync.ts` - remove or simplify if unused
         - Review `usePageChangeHandler.ts` - delete if unused
         - Review `usePaginationDisplay.ts` - delete if unused
         - Remove unused pagination types from shared types
 
-    - [ ] **8.1.b Clean up unused exports and imports**
+    - [ ] **9.1.b Clean up unused exports and imports**
         - Remove dead exports from index files
         - Clean up imports across codebase
         - Verify no console warnings about unused imports
 
-    - [ ] **8.1.c Evaluate test helper consolidation** (deferred from Task 4.5.a)
+    - [ ] **9.1.c Evaluate test helper consolidation** (deferred from Task 4.5.a)
         - If mock hook return objects are still repetitive, create helper factory
         - Example: `createMockInfiniteMoviesReturn({ pages, totalResults, ... })`
 
-- [ ] **8.2 Update project documentation**
+- [ ] **9.2 Update project documentation**
 
-    - [ ] **8.2.a Update frontend modernization plan**
+    - [ ] **9.2.a Update frontend modernization plan**
         - Mark TanStack Query as "Implemented (browse/search)"
         - Note remaining adoption scope (auth, user data)
         - Update `.arc/backlog/technical/plan-frontend-modernization.md`
 
-    - [ ] **8.2.b Add virtualization patterns to strategy docs**
+    - [ ] **9.2.b Add virtualization patterns to strategy docs**
         - Document virtualization library choice and rationale
         - Document scroll restoration pattern
         - Update `strategy-pagination.md` with virtualization details
 
-- [ ] **8.3 Final quality gates**
+- [ ] **9.3 Final quality gates**
     - All frontend tests passing
     - All backend tests passing (should be unaffected)
     - Type checking: 0 errors (frontend + backend)
@@ -796,11 +924,11 @@ This de-risks the infinite scroll commitment by proving the hardest UX requireme
 
 ---
 
-### **Phase 9:** Manual Verification and Sign-off
+### **Phase 10:** Manual Verification and Sign-off
 
 **Purpose:** End-to-end manual testing of all affected flows.
 
-- [ ] **9.1 Browse flow verification**
+- [ ] **10.1 Browse flow verification**
     - Load `/browse/popular` - virtualized infinite scroll works
     - Scroll down, content loads automatically
     - Apply filters - results reset, scroll to top
@@ -809,18 +937,18 @@ This de-risks the infinite scroll commitment by proving the hardest UX requireme
     - "Back to top" button appears and works
     - Long scroll (200+ items) - smooth performance, no jank
 
-- [ ] **9.2 Navigation flow verification**
+- [ ] **10.2 Navigation flow verification**
     - Browse → scroll 50+ items → MovieDetail → back → scroll position restored
     - Browse with filters → MovieDetail → back → filters AND position preserved
     - Browse → search → back → browse state and position correct
 
-- [ ] **9.3 Search flow verification**
+- [ ] **10.3 Search flow verification**
     - Search for movies - virtualized infinite scroll works
     - New search resets results and position
     - Search → detail → back → position restored
     - Empty search handled gracefully
 
-- [ ] **9.4 Edge case verification**
+- [ ] **10.4 Edge case verification**
     - Very restrictive filters (few results) - end state correct
     - No results - empty state displayed
     - Network error - error state with retry

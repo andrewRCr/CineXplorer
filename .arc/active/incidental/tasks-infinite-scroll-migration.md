@@ -529,22 +529,63 @@ This de-risks the infinite scroll commitment by proving the hardest UX requireme
         - Wired up route in App.tsx: `/browse/virtualized`
         - Quality gates: Linting 0, Type checking 0
 
-- [ ] **5.3 Validate back-nav experience**
+- [x] **5.3 Validate back-nav experience**
 
-    - [ ] **5.3.a Manual testing scenarios**
-        - Browse → scroll 50+ items → detail → back → position restored?
-        - Browse → scroll → different route → back → position restored?
-        - Filter change → position correctly reset?
-        - Long scroll (200+ items) → smooth performance?
-        - Mobile viewport behavior?
+    - [x] **5.3.a Manual testing scenarios**
+        - Back navigation: position restored ✓
+        - Filter change: correctly resets to top ✓
+        - Long scroll (200+ items): smooth performance ✓
+        - Bugs found and fixed during testing:
+            - Continuous auto-loading on param change (virtualizer seeing stale scroll position)
+            - Column count dropping to 1 on filter removal (ResizeObserver on unmounting Box)
+            - Browser refresh behavior (browser scroll restoration race, page height timing)
+            - sessionStorage cleanup (added max 20 stored positions)
+            - Error state scroll reset (scrolls to top on fetch error)
 
-    - [ ] **5.3.b Document results and go/no-go decision**
-        - Is restoration instantaneous or is there visual jank?
-        - Any edge cases that break the experience?
-        - **Go/No-go:** Is this acceptable UX for infinite scroll commitment?
-        - If No-go: Document blockers, consider alternatives
+    - [x] **5.3.b Document results and go/no-go decision**
+        - Restoration is instantaneous for back-nav (cached data)
+        - Refresh starts at top (expected - no pre-fetching of pages)
+        - **Go decision:** UX is acceptable for infinite scroll commitment
+        - App-level `history.scrollRestoration = 'manual'` set in main.tsx
 
-- [ ] **5.4 Quality gates**
+- [ ] **5.4 Refactor grid components and organize directory structure**
+
+    - [ ] **5.4.a Extract shared grid utilities**
+        - Create `collection/shared/gridConstants.ts`:
+            - `CARD_WIDTH`, `GAP`, `SKELETON_COUNT`, `placeholderMovie`
+        - Create `collection/shared/scrollPersistence.ts`:
+            - Move scroll utilities from VirtualizedMovieGrid
+            - `getScrollStorageKey`, `getSavedScrollPosition`, `saveScrollPosition`
+            - `getScrollKeys`, `cleanupOldScrollPositions`
+
+    - [ ] **5.4.b Extract shared UI components**
+        - Create `collection/shared/GridErrorState.tsx` (error display + retry button)
+        - Create `collection/shared/GridEmptyState.tsx` (no results message)
+        - Create `collection/shared/GridSkeletonLoader.tsx` (skeleton grid)
+
+    - [ ] **5.4.c Update grid components to use shared code**
+        - Update `VirtualizedMovieGrid.tsx` to import from shared/
+        - Update `InfiniteMovieGrid.tsx` to import from shared/
+        - Update `SequentialMovieGrid.tsx` to import from shared/
+        - Verify all three grids still work correctly
+
+    - [ ] **5.4.d Organize collection directory structure**
+        - Move grid tests to `collection/__tests__/grids/`
+        - Move hooks to global `src/hooks/` (useMovieCollectionState, useMovieCollectionUrl)
+            - Joins existing movie hooks (useInfiniteMovies, useMovieCollectionContext, etc.)
+            - Single hooks folder for discoverability
+        - Keep layout components at collection level (ResultsHeaderBar, etc.)
+        - Update all imports
+
+    - [ ] **5.4.e Preserve non-virtualized grids (not wired to routes)**
+        - Keep `InfiniteMovieGrid.tsx` (reference implementation)
+        - Keep `SequentialMovieGrid.tsx` (fallback option)
+        - Keep `SequentialPaginationCtrl.tsx` (used by Sequential)
+        - These remain available but not wired to active routes
+        - Note: `MovieCollectionGrid` + `MoviePaginationCtrl` stay until Phase 7-8
+          (SearchResults still uses MovieCollectionGrid)
+
+- [ ] **5.5 Quality gates**
     - Frontend tests passing
     - Type checking: 0 errors
     - Linting: 0 violations
@@ -596,21 +637,29 @@ This de-risks the infinite scroll commitment by proving the hardest UX requireme
 
 ---
 
-### **Phase 7:** Search Results Migration
+### **Phase 7:** Search Results Migration & Random-Access Cleanup
 
-**Purpose:** Apply same virtualized infinite scroll pattern to search results.
+**Purpose:** Migrate search to virtualized infinite scroll and remove obsolete random-access pagination.
 
 - [ ] **7.1 Analyze current search implementation**
 
-    - [ ] **7.1.a Review search results rendering**
-        - Identify shared vs different code paths from browse
-        - Determine reuse opportunity for `VirtualizedMovieGrid`
+    - [ ] **7.1.a Review SearchResults.tsx**
+        - Currently uses `MovieCollectionGrid` (random-access pagination)
+        - `MovieCollectionGrid` uses `MoviePaginationCtrl` (jump-to-page UI)
+        - Random-access is fundamentally broken with buffer pagination
+        - Migration to `VirtualizedMovieGrid` required
+
+    - [ ] **7.1.b Identify MovieCollectionGrid dependencies**
+        - Review integration tests: `MovieCollectionGrid.integration.test.tsx`
+        - Review stability tests: `MovieCollectionGrid.stability.test.tsx`
+        - Review MoviePaginationCtrl tests: `MoviePaginationCtrl.test.tsx`
+        - Plan test migration/removal
 
 - [ ] **7.2 Migrate search to virtualized infinite scroll**
 
-    - [ ] **7.2.a Update search results component**
-        - Use `VirtualizedMovieGrid` (or shared virtualization wrapper)
-        - Ensure query param (`q`) properly handled
+    - [ ] **7.2.a Update SearchResults.tsx**
+        - Replace `MovieCollectionGrid` with `VirtualizedMovieGrid`
+        - Ensure search query param (`q`) properly handled
         - Scroll position persistence keyed by search query
 
     - [ ] **7.2.b Test search-specific behaviors**
@@ -619,38 +668,50 @@ This de-risks the infinite scroll commitment by proving the hardest UX requireme
         - Test: No results state
         - Test: Back-nav from search result detail restores position
 
-- [ ] **7.3 Run quality gates**
+- [ ] **7.3 Remove obsolete random-access pagination**
+
+    - [ ] **7.3.a Delete random-access components**
+        - Delete `MovieCollectionGrid.tsx` (replaced by VirtualizedMovieGrid)
+        - Delete `MoviePaginationCtrl.tsx` (random-access UI - never worked correctly)
+
+    - [ ] **7.3.b Delete associated tests**
+        - Delete `MovieCollectionGrid.integration.test.tsx`
+        - Delete `MovieCollectionGrid.stability.test.tsx`
+        - Delete `MoviePaginationCtrl.test.tsx`
+
+    - [ ] **7.3.c Clean up imports and exports**
+        - Remove exports from index files
+        - Verify no remaining references
+
+- [ ] **7.4 Quality gates**
     - Frontend tests passing
     - Type checking: 0 errors
     - Linting: 0 violations
 
 ---
 
-### **Phase 8:** Cleanup and Documentation
+### **Phase 8:** Final Cleanup and Documentation
 
-**Purpose:** Remove obsolete code and update documentation.
+**Purpose:** Clean up remaining obsolete code and update documentation.
 
-- [ ] **8.1 Remove deprecated pagination code**
+**Note:** `MovieCollectionGrid` and `MoviePaginationCtrl` removed in Phase 7.
+`SequentialMovieGrid` and related components retained as reference implementations (Task 5.4.e).
 
-    - [ ] **8.1.a Delete obsolete files**
-        - `MoviePaginationCtrl.tsx` (or mark deprecated if used elsewhere)
-        - `SequentialMovieGrid.tsx` and `SequentialPaginationCtrl.tsx`
-        - `usePageChangeHandler.ts`
-        - Old `MovieCollectionGrid.tsx` (if fully replaced)
-        - Pagination-specific test files
+- [ ] **8.1 Clean up remaining obsolete code**
 
-    - [ ] **8.1.b Clean up unused exports**
-        - Review `paginationUrlSync.ts` - remove or simplify
-        - Remove pagination types from shared types
+    - [ ] **8.1.a Review and clean unused utilities**
+        - Review `paginationUrlSync.ts` - remove or simplify if unused
+        - Review `usePageChangeHandler.ts` - delete if unused
+        - Remove unused pagination types from shared types
+
+    - [ ] **8.1.b Clean up unused exports and imports**
+        - Remove dead exports from index files
         - Clean up imports across codebase
+        - Verify no console warnings about unused imports
 
-    - [ ] **8.1.c Remove obsolete tests and refactor survivors**
-        - Delete pagination-specific stability tests
-        - Delete URL metadata persistence tests (replaced by virtualization)
-        - Update test counts in documentation
-        - **Evaluate test helper consolidation** (deferred from Task 4.5.a):
-            - If mock hook return objects are still repetitive, create helper factory
-            - Example: `createMockInfiniteMoviesReturn({ pages, totalResults, ... })`
+    - [ ] **8.1.c Evaluate test helper consolidation** (deferred from Task 4.5.a)
+        - If mock hook return objects are still repetitive, create helper factory
+        - Example: `createMockInfiniteMoviesReturn({ pages, totalResults, ... })`
 
 - [ ] **8.2 Update project documentation**
 

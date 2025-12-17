@@ -345,9 +345,10 @@ describe("BackToCollectionLink", () => {
 
       render(<BackToCollectionLink searchParams={searchParams} />);
 
-      // Arrow is rendered as HTML entity &larr; which becomes ←
+      // Arrow is rendered as LuArrowLeft icon (SVG)
       const button = screen.getByRole("button");
-      expect(button.textContent).toContain("←");
+      const svg = button.querySelector("svg");
+      expect(svg).toBeInTheDocument();
     });
   });
 

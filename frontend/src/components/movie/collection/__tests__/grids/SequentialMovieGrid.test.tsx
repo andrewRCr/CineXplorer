@@ -150,7 +150,8 @@ describe("SequentialMovieGrid", () => {
 
       renderWithProvider(<SequentialMovieGrid />);
 
-      const skeletons = screen.getAllByTestId("skeleton-loader");
+      // Skeleton loaders have indexed testids (skeleton-loader-0, skeleton-loader-1, etc.)
+      const skeletons = screen.getAllByTestId(/^skeleton-loader-\d+$/);
       expect(skeletons.length).toBeGreaterThan(0);
     });
   });

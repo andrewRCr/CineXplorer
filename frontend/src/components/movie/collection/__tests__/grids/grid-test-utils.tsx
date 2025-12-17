@@ -357,7 +357,7 @@ export const createMockResizeObserver = () => {
   const mockUnobserve = vi.fn();
 
   let storedCallback:
-    | ((entries: { contentRect: { width: number } }[]) => void)
+    | ((entries: { contentRect: { width: number; height: number } }[]) => void)
     | null = null;
 
   const mockObserver = vi.fn((callback: typeof storedCallback) => {

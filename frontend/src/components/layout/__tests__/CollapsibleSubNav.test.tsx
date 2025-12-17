@@ -151,8 +151,9 @@ describe("CollapsibleSubNav", () => {
 
       const subNav = screen.getByTestId(SUB_NAV_TEST_ID);
 
-      expect(subNav).toHaveStyle({ width: "100vw" });
-      expect(subNav).toHaveStyle({ left: "0px" });
+      // Full width via 100% + fixed positioning with left: 0
+      expect(subNav).toHaveStyle({ width: "100%" });
+      expect(subNav).toHaveStyle({ left: "0" });
     });
 
     it("positions below navbar using CSS variable", () => {

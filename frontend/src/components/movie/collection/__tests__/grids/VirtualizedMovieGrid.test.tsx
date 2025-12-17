@@ -250,8 +250,8 @@ describe("VirtualizedMovieGrid", () => {
 
       renderWithProvider(<VirtualizedMovieGrid />);
 
-      // Should show skeleton loaders (20 skeleton cards)
-      const skeletons = screen.getAllByTestId("skeleton-loader");
+      // Should show skeleton loaders (20 skeleton cards, each with indexed testid)
+      const skeletons = screen.getAllByTestId(/^skeleton-loader-\d+$/);
       expect(skeletons.length).toBe(20);
     });
 

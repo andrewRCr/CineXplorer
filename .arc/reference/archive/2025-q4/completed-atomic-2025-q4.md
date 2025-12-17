@@ -6,6 +6,34 @@ Reference format: "see `completed-atomic-2025-q4.md`" or "see {task name} in `co
 
 ---
 
+- [x] Auto-generate error codes from backend Pydantic Enum → OpenAPI → TypeScript
+    - **Outcome:** Error codes now auto-generated from backend Pydantic StrEnum → OpenAPI → TypeScript
+    - **Changes:**
+        - Added `ErrorCode` and `ErrorCategory` StrEnums to `backend/apps/core/schemas.py`
+        - Added `ApiErrorSchema` Pydantic model to expose enums in OpenAPI
+        - Added `/api/error-codes/` endpoint to expose error codes with categories
+        - Created `frontend/src/@types/errors.d.ts` with type-safe `ERROR_CODES` constant
+        - Updated `Login.tsx` to import from new location (`@/@types/errors`)
+        - Deleted `shared/` directory (frontend) and `backend/shared/` directory entirely
+    - **Benefits achieved:**
+        - Single source of truth: backend Pydantic StrEnum
+        - Automatic sync: `npm run generate-types` updates TypeScript types
+        - Type-safe: `ERROR_CODES` satisfies `Record<string, ErrorCode>`
+        - Zero manual maintenance: shared directory eliminated
+
+    - **Branch:** `incidental/infinite-scroll-migration`
+
+- [x] Remove `@shared/api-types.ts` and migrate to OpenAPI-generated types
+    - **Outcome:** Migrated 3 files from `@shared` movie types to `@/types/movie` (OpenAPI-generated)
+    - **Changes:**
+        - `useMovieDetail.ts`: Uses `MovieDetail` type from `@/types/movie`
+        - `MovieDetail.tsx`: Uses `MovieDetailType`, `Genre`, etc. from `@/types/movie`; added null
+          checks for stricter OpenAPI types (`job`, `vote_average`)
+        - `MovieDetail.test.tsx`: Uses `createMockMovieDetail` and `MovieDetailType`
+        - Deleted `shared/api-types.ts` (shared/ directory now fully eliminated)
+
+    - **Branch:** `incidental/infinite-scroll-migration`
+
 - [x] DRY refactor: Extract year filter analysis utility
     - **Outcome:** Centralized all year filter logic into `yearFilterAnalysis.ts` utility. Provides:
       `analyzeYearFilter()` for full analysis (isEmpty, isSingleValue, isSameYear, isDecadeRange,

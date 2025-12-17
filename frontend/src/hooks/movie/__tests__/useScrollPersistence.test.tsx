@@ -136,8 +136,8 @@ describe("useScrollPersistence", () => {
     });
 
     it("returns 0 on fresh navigation even with saved position", () => {
-      // Save a scroll position first
-      mockSessionStorage.setItem("scroll-discover-", "500");
+      // Save a scroll position first (JSON format with position and timestamp)
+      mockSessionStorage.setItem("scroll-discover-", createStorageEntry(500));
 
       const { result } = renderHook(() => useScrollPersistence(defaultOptions), {
         wrapper: createWrapper(), // No restoreScroll state
@@ -398,7 +398,8 @@ describe("useScrollPersistence", () => {
     });
 
     it("handles position 0 correctly (not treated as falsy)", () => {
-      mockSessionStorage.setItem("scroll-discover-", "0");
+      // Use JSON format - position 0 should be preserved, not treated as falsy
+      mockSessionStorage.setItem("scroll-discover-", createStorageEntry(0));
 
       const { result } = renderHook(() => useScrollPersistence(defaultOptions), {
         wrapper: createWrapper(["/browse"], { restoreScroll: true }),
@@ -437,8 +438,8 @@ describe("useScrollPersistence", () => {
     });
 
     it("does not save scroll during restoration guard period", () => {
-      // Set up for back-navigation with restoration
-      mockSessionStorage.setItem("scroll-discover-", "500");
+      // Set up for back-navigation with restoration (JSON format)
+      mockSessionStorage.setItem("scroll-discover-", createStorageEntry(500));
 
       renderHook(() => useScrollPersistence(defaultOptions), {
         wrapper: createWrapper(["/browse"], { restoreScroll: true }),
@@ -454,10 +455,10 @@ describe("useScrollPersistence", () => {
       // First call is from scrollTo during restore, not our save
       // The guard should prevent saving the intermediate position
       const setCalls = mockSessionStorage.setItem.mock.calls;
-      // Either no save calls, or if there are, they shouldn't save a wrong position during restoration
+      // Either no save calls, or if there are, they shouldn't save the intermediate position (300)
       if (setCalls.length > 0) {
-        // If saved, it should be the restored position (500) not the intermediate (300)
-        expect(setCalls[setCalls.length - 1][1]).not.toBe("300");
+        // If saved, it should NOT be the intermediate scroll position
+        expect(setCalls[setCalls.length - 1][1]).not.toContain('"position":300');
       }
     });
   });

@@ -128,14 +128,18 @@ export const useScrollPersistence = ({
   // Guard to prevent saving scroll position immediately after restoration
   // (virtualizer may not have full height yet, causing wrong position to be saved)
   const isRestoringScrollRef = useRef(false);
-  // Track restoration timeouts for cleanup
+  // Track restoration timeouts for cleanup (separate refs for nested timeouts)
   const restorationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const restorationGuardTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Clean up restoration timeout on unmount
+  // Clean up restoration timeouts on unmount
   useEffect(() => {
     return () => {
       if (restorationTimeoutRef.current) {
         clearTimeout(restorationTimeoutRef.current);
+      }
+      if (restorationGuardTimeoutRef.current) {
+        clearTimeout(restorationGuardTimeoutRef.current);
       }
       isRestoringScrollRef.current = false;
     };
@@ -176,7 +180,8 @@ export const useScrollPersistence = ({
           restorationTimeoutRef.current = setTimeout(() => {
             window.scrollTo(0, savedPosition);
             // Allow saving again after content has stabilized
-            restorationTimeoutRef.current = setTimeout(() => {
+            // Uses separate ref so both timeouts can be cleaned up independently
+            restorationGuardTimeoutRef.current = setTimeout(() => {
               isRestoringScrollRef.current = false;
             }, 100);
           }, 50);

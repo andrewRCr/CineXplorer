@@ -6,6 +6,21 @@ Reference format: "see `completed-atomic-2025-q4.md`" or "see {task name} in `co
 
 ---
 
+- [x] Refactor Movie Collection URL/State Hooks for Clarity and Separation of Concerns
+    - **Outcome:** Extracted utilities, clarified terminology, fixed bugs, simplified structure
+    - **New files created:**
+        - `frontend/src/utilities/deepEqual.ts` - generic deep equality comparison
+        - `frontend/src/utilities/advancedPanelOverride.ts` - sessionStorage panel tracking
+    - **Functions moved/created:**
+        - `hasAdvancedFilterValues` → `browseParamUtils.ts`
+        - `generateBrowseUrl` → `browseUrlSync.ts` (new)
+    - **Bugs fixed:**
+        - R.7: Language sort reset effect now respects `enableUrlSync` flag
+    - **Code size reduction:** ~100 lines extracted from hooks to reusable utilities
+    - **Tests:** 722 frontend tests passing
+
+    - **Branch:** `incidental/infinite-scroll-migration`
+
 - [x] Auto-generate error codes from backend Pydantic Enum → OpenAPI → TypeScript
     - **Outcome:** Error codes now auto-generated from backend Pydantic StrEnum → OpenAPI → TypeScript
     - **Changes:**

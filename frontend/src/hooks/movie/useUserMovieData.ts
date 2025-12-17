@@ -3,11 +3,32 @@ import {
     getUserMovieDataByTmdbId,
     updateUserMovieData,
 } from "@/services/userMovieDataService";
+import logger from "@/services/logger";
 import type { components } from "@/types/api";
 
 // Use backend schema types directly (snake_case convention)
 export type UserMovieData = components["schemas"]["UserMovieDataDetailSchema"];
 type UserMovieDataUpdate = components["schemas"]["UserMovieDataUpdateSchema"];
+
+/** Runtime type guard for UserMovieData - validates required fields from API response */
+function isUserMovieData(obj: unknown): obj is UserMovieData {
+    if (typeof obj !== "object" || obj === null) return false;
+    const data = obj as Record<string, unknown>;
+    return (
+        typeof data.id === "number" &&
+        typeof data.tmdb_id === "number" &&
+        typeof data.is_watchlisted === "boolean" &&
+        typeof data.is_watched === "boolean"
+    );
+}
+
+/** Parse and validate tmdbId string to number, returns null if invalid */
+function parseValidTmdbId(tmdbId: string): number | null {
+    const trimmed = tmdbId.trim();
+    if (!trimmed || !/^\d+$/.test(trimmed)) return null;
+    const parsed = Number(trimmed);
+    return Number.isFinite(parsed) && Number.isInteger(parsed) ? parsed : null;
+}
 
 export function useUserMovieData(tmdbId: string): {
     data: UserMovieData | null;
@@ -20,13 +41,27 @@ export function useUserMovieData(tmdbId: string): {
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        if (!tmdbId) return; // don't fetch if tmdbId is empty
+        const tmdbIdNum = parseValidTmdbId(tmdbId);
+        if (tmdbIdNum === null) {
+            setLoading(false);
+            return;
+        }
+
         setLoading(true);
-        const tmdbIdNum = Number(tmdbId);
-        getUserMovieDataByTmdbId({ tmdb_id: tmdbIdNum })
-            .request.then((res) => {
-                setData(res.data);
-                setError(null);
+        const req = getUserMovieDataByTmdbId({ tmdb_id: tmdbIdNum });
+
+        req.request
+            .then((res) => {
+                if (isUserMovieData(res.data)) {
+                    setData(res.data);
+                    setError(null);
+                } else {
+                    logger.error("Invalid UserMovieData response", {
+                        response: res.data,
+                    });
+                    setError("Invalid response format from server");
+                    setData(null);
+                }
             })
             .catch((err: unknown) => {
                 setError(
@@ -37,6 +72,12 @@ export function useUserMovieData(tmdbId: string): {
                 setData(null);
             })
             .finally(() => setLoading(false));
+
+        return () => {
+            if (req && typeof req.cancel === "function") {
+                req.cancel();
+            }
+        };
     }, [tmdbId]);
 
     const update = async (changes: Partial<UserMovieDataUpdate>) => {
@@ -44,8 +85,15 @@ export function useUserMovieData(tmdbId: string): {
         setLoading(true);
         try {
             const response = await updateUserMovieData(data.id, changes);
-            setData(response.data as UserMovieData);
-            setError(null);
+            if (isUserMovieData(response.data)) {
+                setData(response.data);
+                setError(null);
+            } else {
+                logger.error("Invalid UserMovieData update response", {
+                    response: response.data,
+                });
+                setError("Invalid response format from server");
+            }
         } catch (err: unknown) {
             setError(
                 err instanceof Error

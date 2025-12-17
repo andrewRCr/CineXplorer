@@ -30,7 +30,7 @@ import type { UseInfiniteMoviesResult } from "@/hooks/movie/useInfiniteMovies";
  * @param ui - The React element to render
  * @param routerOptions - Optional MemoryRouter configuration
  *   - initialEntries: Starting URL(s) for the router (default: ["/"])
- *   - initialState: Location state to pass (e.g., { restoreScroll: true })
+ *     Can be strings or location objects with state: [{ pathname: "/", state: { ... } }]
  */
 export const renderWithProvider = (
   ui: React.ReactElement,

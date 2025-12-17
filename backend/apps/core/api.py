@@ -168,6 +168,11 @@ def get_error_codes(request: HttpRequest) -> list[ApiErrorSchema]:
         ErrorCode.RATE_LIMITED: ErrorCategory.API_GENERAL,
     }
 
+    # Warn if any error codes are missing category mappings
+    missing_codes = set(ErrorCode) - set(category_map.keys())
+    if missing_codes:
+        app_logger.warning(f"Error codes without category mapping: {missing_codes}")
+
     return [
         ApiErrorSchema(
             code=code,

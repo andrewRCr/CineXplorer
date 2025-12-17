@@ -172,12 +172,18 @@ this and produce false errors.
 **Run after modifying theme recipes** (variants, sizes, etc.) to regenerate component types:
 
 ```bash
-# From frontend directory
+# From frontend directory (preferred - uses installed CLI)
+npm run typegen
+
+# Or via npx (downloads CLI if not installed)
 npx @chakra-ui/cli typegen ./src/theme/index.ts
 ```
 
 **Why:** Custom recipe variants (e.g., Badge "success", Button "secondary") need type generation to be recognized by
 TypeScript. Without this, you'll get errors like `Type '"success"' is not assignable to type...`
+
+**Note:** CI runs `npm run typegen` automatically before type-check. Generated types are written to
+`node_modules/@chakra-ui/react/dist/types/styled-system/generated/` and are not committed.
 
 ### Markdown Linting
 

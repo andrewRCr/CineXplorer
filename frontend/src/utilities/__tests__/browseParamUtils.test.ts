@@ -138,7 +138,7 @@ describe("browseParamUtils", () => {
    * countActiveParams - Count active FILTER groups (EXCLUDES sort)
    *
    * Sort is not counted because it's not a filter - it's a user preference.
-   * Maximum count: 5 (query, genres, year, rating, language)
+   * Maximum count: 5 (genres, year, rating, language, certifications)
    */
   describe("countActiveParams", () => {
     it("returns 0 for default params", () => {

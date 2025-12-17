@@ -356,14 +356,14 @@ TMDB: 353 movies
 
 ## Key Files Reference
 
-| File                   | Location                                    | Purpose                             |
-|------------------------|---------------------------------------------|-------------------------------------|
-| `filters.py`           | `backend/apps/movie/services/data_quality/` | Filter pipeline implementation      |
-| `policy.py`            | `backend/apps/movie/services/data_quality/` | VoteCountPolicy, CompletenessPolicy |
-| `param_transformer.py` | `backend/apps/movie/services/params/`       | TMDB param transformation           |
-| `query_params.py`      | `backend/apps/movie/services/params/`       | Query parameter handling            |
-| `browseParamMapper.ts` | `frontend/src/utilities/`                   | Frontend → API param mapping        |
-| `blacklist.py`         | `backend/apps/movie/services/data_quality/` | Blacklisted TMDB IDs                |
+| File                     | Location                                           | Purpose                             |
+|--------------------------|----------------------------------------------------|-------------------------------------|
+| `filters.py`             | `backend/apps/movie/services/data_quality/`        | Filter pipeline implementation      |
+| `policy.py`              | `backend/apps/movie/services/data_quality/`        | VoteCountPolicy, CompletenessPolicy |
+| `param_transformer.py`   | `backend/apps/movie/services/api_boundary/`        | TMDB param transformation           |
+| `query_params.py`        | `backend/apps/movie/services/tmdb_api_boundary/`   | Query parameter handling            |
+| `browseParamMapper.ts`   | `frontend/src/utilities/`                          | Frontend → API param mapping        |
+| `populate_blacklist.py`  | `backend/apps/movie/management/commands/`          | Blacklist population command        |
 
 ---
 

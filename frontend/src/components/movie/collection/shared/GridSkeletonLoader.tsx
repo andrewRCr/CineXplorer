@@ -32,7 +32,7 @@ export const GridSkeletonLoader = ({
       borderRadius="md"
       overflow="hidden"
       bg="layer-02"
-      data-testid="skeleton-loader"
+      data-testid={`skeleton-loader-${i}`}
     >
       <MovieCardContainer>
         <MovieCard movie={placeholderMovie} />

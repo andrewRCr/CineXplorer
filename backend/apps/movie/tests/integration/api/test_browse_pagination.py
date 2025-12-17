@@ -954,7 +954,7 @@ def test_search_pagination_deduplicates_across_pages(
 
 
 @patch("core.services.tmdb_api_client.TMDBApiClient.get")
-@patch("django.core.cache.cache")
+@patch("apps.movie.services.data_quality.filters.cache")
 def test_graceful_degradation_when_redis_unavailable(
     mock_cache: Mock,
     mock_tmdb_get: Mock,

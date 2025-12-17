@@ -9,8 +9,8 @@ import { Text, Button, Box } from "@chakra-ui/react";
 interface GridErrorStateProps {
   /** Error object with message to display */
   error: Error | null;
-  /** Callback to retry the failed request */
-  onRetry: () => void;
+  /** Callback to retry the failed request (optional for display-only errors) */
+  onRetry?: () => void;
 }
 
 /**
@@ -25,9 +25,11 @@ export const GridErrorState = ({ error, onRetry }: GridErrorStateProps) => {
       <Text color="fg-error" mb={2}>
         {error?.message || "An error occurred while fetching movies."}
       </Text>
-      <Button size="sm" onClick={onRetry}>
-        Retry
-      </Button>
+      {onRetry && (
+        <Button size="sm" onClick={onRetry}>
+          Retry
+        </Button>
+      )}
     </Box>
   );
 };

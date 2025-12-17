@@ -14,6 +14,7 @@
 		"test:ui": "vitest --ui",
 		"test:watch": "vitest",
 		"type-check": "tsc -b",
+		"typegen": "chakra typegen ./src/theme/index.ts",
 		"fetch-schema": "node scripts/fetch-openapi.js",
 		"generate-types:local": "openapi-typescript openapi.json -o src/types/api.ts",
 		"generate-types": "npm run fetch-schema && npm run generate-types:local",
@@ -42,6 +43,7 @@
 		"use-deep-compare-effect": "^1.8.1"
 	},
 	"devDependencies": {
+		"@chakra-ui/cli": "^3.28.0",
 		"@eslint/js": "^9.29.0",
 		"@testing-library/jest-dom": "^6.8.0",
 		"@testing-library/react": "^16.3.0",

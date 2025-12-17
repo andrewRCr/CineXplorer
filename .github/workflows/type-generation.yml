@@ -170,6 +170,10 @@ jobs:
           echo "Paths: $(grep -c '^    "/api/' src/types/api.ts)"
           echo "Schemas: $(grep -c 'Schema:' src/types/api.ts)"
 
+      - name: Generate Chakra UI component types
+        working-directory: frontend
+        run: npm run typegen
+
       - name: Type-check with generated types
         working-directory: frontend
         run: npm run type-check

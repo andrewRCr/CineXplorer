@@ -2,6 +2,7 @@ import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import type { BrowseParams } from "@/types/browseTypes";
 import { DEFAULT_BROWSE_PARAMS, DEFAULT_SORT, CORE_GENRE_IDS_SET } from "@/constants/browseDefaults";
 import { sortOptions } from "@/constants/browseOptions";
+import { isYearFilterAdvanced } from "@/utilities/yearFilterAnalysis";
 import { useMovieCollectionUrl } from "@/hooks/movie/useMovieCollectionUrl";
 import {
   isLatinScriptLanguage,
@@ -25,14 +26,9 @@ const getAdvancedFilterHash = (params: BrowseParams): string => {
   if (params.minRating) parts.push(`mr:${params.minRating}`);
   if (params.maxRating) parts.push(`xr:${params.maxRating}`);
 
-  // Custom year ranges (not decade presets)
-  if (params.minYear && params.maxYear && params.minYear !== params.maxYear) {
-    const isDecadeRange =
-      parseInt(params.maxYear) - parseInt(params.minYear) === 9 &&
-      params.minYear.endsWith("0");
-    if (!isDecadeRange) {
-      parts.push(`yr:${params.minYear}-${params.maxYear}`);
-    }
+  // Year filters that are "advanced" (not QuickBrowseBar presets)
+  if (isYearFilterAdvanced(params.minYear, params.maxYear)) {
+    parts.push(`yr:${params.minYear || ""}-${params.maxYear || ""}`);
   }
 
   // Language filter
@@ -124,14 +120,8 @@ export const hasAdvancedFilterValues = (filters: BrowseParams): boolean => {
   // Rating filters are advanced-only
   if (filters.minRating || filters.maxRating) return true;
 
-  // Custom year range (not single year and not decade preset) is advanced-only
-  // Decade presets (1990's, 2020's, etc.) are available in QuickBrowseBar, so not advanced
-  if (filters.minYear && filters.maxYear && filters.minYear !== filters.maxYear) {
-    const isDecadeRange =
-      parseInt(filters.maxYear) - parseInt(filters.minYear) === 9 &&
-      filters.minYear.endsWith("0");
-    if (!isDecadeRange) return true;
-  }
+  // Year filters that are not QuickBrowseBar presets are advanced
+  if (isYearFilterAdvanced(filters.minYear, filters.maxYear)) return true;
 
   // Multiple genres are advanced-only (minimal supports single genre only)
   if (filters.genres.length > 1) return true;

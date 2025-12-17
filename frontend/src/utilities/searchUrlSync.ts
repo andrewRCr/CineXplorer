@@ -1,7 +1,7 @@
 /**
- * Search URL synchronization utilities
+ * Movie search URL synchronization utilities
  *
- * Parses and generates URL query strings for search parameters.
+ * Parses and generates URL query strings for movie search parameters.
  * Mirrors the pattern in browseUrlSync.ts for consistency.
  */
 
@@ -9,9 +9,9 @@ import type { SearchParams } from "@/types/searchTypes";
 import { DEFAULT_SEARCH_PARAMS } from "@/types/searchTypes";
 
 /**
- * Parses search parameters from URL search string
+ * Parses movie search parameters from URL query string
  *
- * @param search - URL search string (e.g., "?query=batman&page=1")
+ * @param search - URL query string (location.search, e.g., "?query=batman")
  * @returns Parsed SearchParams object
  *
  * @example
@@ -27,13 +27,13 @@ export function parseSearchParamsFromUrl(search: string): SearchParams {
 }
 
 /**
- * Generates URL search string from search parameters
+ * Generates URL query string from movie search parameters
  *
  * Only includes non-default values to keep URLs clean.
  * Note: Pagination is handled internally by TanStack Query (infinite scroll).
  *
- * @param searchParams - Search parameters to serialize
- * @returns URL search string (without leading "?")
+ * @param searchParams - Movie search parameters to serialize
+ * @returns URL query string (without leading "?")
  *
  * @example
  * generateSearchUrl({ query: "batman" })
@@ -50,10 +50,10 @@ export function generateSearchUrl(searchParams: SearchParams): string {
 }
 
 /**
- * Checks if search params have an active query
+ * Checks if movie search params have an active query
  *
- * @param searchParams - Search parameters to check
- * @returns True if there's an active search query
+ * @param searchParams - Movie search parameters to check
+ * @returns True if there's an active movie search query
  */
 export function hasActiveSearch(searchParams: SearchParams): boolean {
   return Boolean(searchParams.query.trim());

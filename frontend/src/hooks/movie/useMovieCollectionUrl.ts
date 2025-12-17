@@ -1,33 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import type { BrowseParams } from "@/types/browseTypes";
-import { parseBrowseParamsFromUrl } from "@/utilities/browseUrlSync";
-import { isDefaultSort } from "@/utilities/browseParamUtils";
-
-// Deep comparison function for filters to prevent unnecessary re-renders
-function deepEqual(obj1: BrowseParams, obj2: BrowseParams): boolean {
-  const keys1 = Object.keys(obj1) as (keyof BrowseParams)[];
-  const keys2 = Object.keys(obj2) as (keyof BrowseParams)[];
-
-  if (keys1.length !== keys2.length) {
-    return false;
-  }
-
-  for (const key of keys1) {
-    const val1 = obj1[key];
-    const val2 = obj2[key];
-
-    if (Array.isArray(val1) && Array.isArray(val2)) {
-      if (val1.length !== val2.length || !val1.every((item, index) => item === val2[index])) {
-        return false;
-      }
-    } else if (val1 !== val2) {
-      return false;
-    }
-  }
-
-  return true;
-}
+import {
+  parseBrowseParamsFromUrl,
+  generateBrowseUrl,
+} from "@/utilities/browseUrlSync";
+import { deepEqual } from "@/utilities/deepEqual";
 
 /**
  * useMovieCollectionUrl
@@ -73,23 +51,39 @@ export const useMovieCollectionUrl = () => {
           ? newParamsOrUpdater(browseParams)
           : { ...browseParams, ...newParamsOrUpdater };
 
-      const searchParams = new URLSearchParams(location.search);
+      // Generate browse params portion of URL
+      const browseQueryString = generateBrowseUrl(newParams);
 
-      Object.entries(newParams).forEach(([key, value]) => {
-        if (
-          value === "" ||
-          (Array.isArray(value) && value.length === 0) ||
-          (key === "sortBy" && isDefaultSort(String(value)))
-        ) {
-          searchParams.delete(key);
-        } else if (Array.isArray(value)) {
-          searchParams.set(key, value.join(","));
-        } else {
-          searchParams.set(key, String(value));
+      // Preserve non-browse params (e.g., "query" for movie search)
+      const currentParams = new URLSearchParams(location.search);
+      const browseParamKeys = [
+        "genres",
+        "sortBy",
+        "minYear",
+        "maxYear",
+        "minRating",
+        "maxRating",
+        "language",
+        "certifications",
+      ];
+
+      // Build final URL: non-browse params + browse params
+      const finalParams = new URLSearchParams();
+
+      // First, add non-browse params from current URL
+      currentParams.forEach((value, key) => {
+        if (!browseParamKeys.includes(key)) {
+          finalParams.set(key, value);
         }
       });
 
-      navigate(`${location.pathname}?${searchParams.toString()}`, {
+      // Then, merge in browse params
+      const browseParams_ = new URLSearchParams(browseQueryString);
+      browseParams_.forEach((value, key) => {
+        finalParams.set(key, value);
+      });
+
+      navigate(`${location.pathname}?${finalParams.toString()}`, {
         replace: true,
       });
     },

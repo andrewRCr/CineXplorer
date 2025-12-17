@@ -1,8 +1,6 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import type { BrowseParams } from "@/types/browseTypes";
-import { DEFAULT_BROWSE_PARAMS, DEFAULT_SORT, CORE_GENRE_IDS_SET } from "@/constants/browseDefaults";
-import { sortOptions } from "@/constants/browseOptions";
-import { isYearFilterAdvanced } from "@/utilities/yearFilterAnalysis";
+import { DEFAULT_BROWSE_PARAMS, DEFAULT_SORT } from "@/constants/browseDefaults";
 import { useMovieCollectionUrl } from "@/hooks/movie/useMovieCollectionUrl";
 import {
   isLatinScriptLanguage,
@@ -12,75 +10,14 @@ import {
   hasActiveFilters as checkHasActiveFilters,
   hasActiveBrowseParams as checkHasActiveBrowseParams,
   countActiveParams,
+  hasAdvancedFilterValues,
 } from "@/utilities/browseParamUtils";
-
-// SessionStorage key for user panel override
-const PANEL_OVERRIDE_KEY = "advancedPanelUserClosed";
-
-// Generate a hash of the advanced filter values for override tracking
-// Includes all filters that trigger auto-expand (see hasAdvancedFilterValues)
-const getAdvancedFilterHash = (params: BrowseParams): string => {
-  const parts: string[] = [];
-
-  // Rating filters
-  if (params.minRating) parts.push(`mr:${params.minRating}`);
-  if (params.maxRating) parts.push(`xr:${params.maxRating}`);
-
-  // Year filters that are "advanced" (not QuickBrowseBar presets)
-  if (isYearFilterAdvanced(params.minYear, params.maxYear)) {
-    parts.push(`yr:${params.minYear || ""}-${params.maxYear || ""}`);
-  }
-
-  // Language filter
-  if (params.language) parts.push(`lg:${params.language}`);
-
-  // Genres: multiple genres OR non-core genre (advanced filters)
-  if (params.genres.length > 1) {
-    parts.push(`gn:${[...params.genres].sort((a, b) => a - b).join(",")}`);
-  } else if (params.genres.length === 1 && !CORE_GENRE_IDS_SET.has(String(params.genres[0]))) {
-    parts.push(`gn:${params.genres[0]}`);
-  }
-
-  // Certifications
-  if (params.certifications?.length) {
-    parts.push(`ct:${[...params.certifications].sort().join(",")}`);
-  }
-
-  return parts.join("|");
-};
-
-// Check if user has overridden auto-expand for current filter combination
-const hasUserOverride = (params: BrowseParams): boolean => {
-  try {
-    const hash = getAdvancedFilterHash(params);
-    if (!hash) return false; // No advanced filters = no override possible
-    const stored = sessionStorage.getItem(PANEL_OVERRIDE_KEY);
-    return stored === hash;
-  } catch {
-    return false; // SSR or sessionStorage unavailable
-  }
-};
-
-// Set user override for current filter combination
-const setUserOverride = (params: BrowseParams): void => {
-  try {
-    const hash = getAdvancedFilterHash(params);
-    if (hash) {
-      sessionStorage.setItem(PANEL_OVERRIDE_KEY, hash);
-    }
-  } catch {
-    // SSR or sessionStorage unavailable - silently fail
-  }
-};
-
-// Clear user override (when filters change)
-const clearUserOverride = (): void => {
-  try {
-    sessionStorage.removeItem(PANEL_OVERRIDE_KEY);
-  } catch {
-    // SSR or sessionStorage unavailable - silently fail
-  }
-};
+import {
+  getAdvancedFilterHash,
+  hasUserOverride,
+  setUserOverride,
+  clearUserOverride,
+} from "@/utilities/advancedPanelOverride";
 
 // Better hook composition with multiple related concerns
 interface UseMovieCollectionStateConfig {
@@ -113,40 +50,6 @@ interface MovieCollectionState {
   // Actions
   resetBrowseParams: () => void; // Clears filters but preserves sort
 }
-
-// Helper: Check if filters contain advanced filter values
-// Exported for use in parent components to determine API filter style
-export const hasAdvancedFilterValues = (filters: BrowseParams): boolean => {
-  // Rating filters are advanced-only
-  if (filters.minRating || filters.maxRating) return true;
-
-  // Year filters that are not QuickBrowseBar presets are advanced
-  if (isYearFilterAdvanced(filters.minYear, filters.maxYear)) return true;
-
-  // Multiple genres are advanced-only (minimal supports single genre only)
-  if (filters.genres.length > 1) return true;
-
-  // Non-core genres are advanced-only
-  if (filters.genres.length === 1) {
-    const genreId = String(filters.genres[0]);
-    if (!CORE_GENRE_IDS_SET.has(genreId)) {
-      return true;
-    }
-  }
-
-  // Check for invalid sort options (uses sortOptions from browseOptions.ts)
-  if (filters.sortBy && !sortOptions.some(opt => opt.value === filters.sortBy)) {
-    return true;
-  }
-
-  // Language filter is advanced-only (only visible in expanded panel)
-  if (filters.language) return true;
-
-  // Certification filter is advanced-only
-  if (filters.certifications?.length) return true;
-
-  return false;
-};
 
 /**
  * useMovieCollectionState
@@ -213,14 +116,6 @@ export const useMovieCollectionState = ({
     }
   }, [browseParams, enableAdvancedFilters]);
 
-  // Auto-reset title sort when language changes to non-Latin or "All Languages"
-  // Title sorts (A-Z, Z-A) only make sense for Latin-script languages
-  useEffect(() => {
-    if (isTitleSort(browseParams.sortBy) && !isLatinScriptLanguage(browseParams.language)) {
-      urlHandleBrowseParamsChange({ sortBy: DEFAULT_SORT });
-    }
-  }, [browseParams.language, browseParams.sortBy, urlHandleBrowseParamsChange]);
-
   // Optimize onBrowseParamsChange with stable references
   const onBrowseParamsChange = useCallback((newParams: Partial<BrowseParams> | ((prev: BrowseParams) => BrowseParams)) => {
     if (enableUrlSync) {
@@ -233,6 +128,14 @@ export const useMovieCollectionState = ({
       }
     }
   }, [enableUrlSync, urlHandleBrowseParamsChange]);
+
+  // Auto-reset title sort when language changes to non-Latin or "All Languages"
+  // Title sorts (A-Z, Z-A) only make sense for Latin-script languages
+  useEffect(() => {
+    if (isTitleSort(browseParams.sortBy) && !isLatinScriptLanguage(browseParams.language)) {
+      onBrowseParamsChange({ sortBy: DEFAULT_SORT });
+    }
+  }, [browseParams.language, browseParams.sortBy, onBrowseParamsChange]);
 
   // Advanced panel toggle with better UX
   const isAdvancedPanelOpen = enableAdvancedFilters ? localIsAdvancedPanelOpen : false;
@@ -273,14 +176,6 @@ export const useMovieCollectionState = ({
     return countActiveParams(browseParams);
   }, [browseParams]);
 
-  // Combined derived state for compatibility
-  const derivedState = useMemo(() => ({
-    hasActiveFilters,
-    hasActiveBrowseParams,
-    hasActiveAdvancedFilters,
-    activeParamCount,
-  }), [hasActiveFilters, hasActiveBrowseParams, hasActiveAdvancedFilters, activeParamCount]);
-
   // Actions: Clear filters but preserve sort (sort is user preference, not a filter)
   const resetBrowseParams = useCallback(() => {
     onBrowseParamsChange({
@@ -299,7 +194,10 @@ export const useMovieCollectionState = ({
     toggleAdvancedPanel,
 
     // Derived state
-    ...derivedState,
+    hasActiveFilters,
+    hasActiveBrowseParams,
+    hasActiveAdvancedFilters,
+    activeParamCount,
 
     // Actions
     resetBrowseParams,

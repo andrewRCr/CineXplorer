@@ -18,7 +18,8 @@ function isUserMovieData(obj: unknown): obj is UserMovieData {
         typeof data.id === "number" &&
         typeof data.tmdb_id === "number" &&
         typeof data.user_on_watchlist === "boolean" &&
-        typeof data.user_watched === "boolean"
+        typeof data.user_watched === "boolean" &&
+        typeof data.user_liked === "boolean"
     );
 }
 
@@ -111,6 +112,7 @@ export function useUserMovieData(tmdbId: string): {
             }
         } catch (err: unknown) {
             if (!mounted.current) return;
+            logger.error("Failed to update user movie data", { error: err });
             setError(
                 err instanceof Error
                     ? err.message

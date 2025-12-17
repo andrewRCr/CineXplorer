@@ -37,6 +37,7 @@ import {
 
 // Component under test
 import VirtualizedMovieGrid from "../../VirtualizedMovieGrid";
+import { SKELETON_COUNT } from "../../shared/gridConstants";
 
 // Mocked dependencies
 import { useInfiniteMovies } from "@/hooks/movie/useInfiniteMovies";
@@ -254,9 +255,9 @@ describe("VirtualizedMovieGrid", () => {
 
       renderWithProvider(<VirtualizedMovieGrid />);
 
-      // Should show skeleton loaders (20 skeleton cards, each with indexed testid)
+      // Should show skeleton loaders (SKELETON_COUNT cards, each with indexed testid)
       const skeletons = screen.getAllByTestId(/^skeleton-loader-\d+$/);
-      expect(skeletons.length).toBe(20);
+      expect(skeletons.length).toBe(SKELETON_COUNT);
     });
 
     /**

@@ -25,7 +25,8 @@ const resultTextStyles = {
   fontFamily: "inter",
   color: "fg-muted",
   fontWeight: "medium",
-  lineHeight: "0.75",
+  lineHeight: "1",
+  mb: -1, // Nudge toward border separator
 } as const;
 
 export interface GridHeaderProps {
@@ -106,7 +107,8 @@ export function GridHeader({
           fontStyle="italic"
           fontFamily="heading"
           color="foreground"
-          lineHeight="0.75"
+          lineHeight="1"
+          mb={-2} // Nudge toward border separator
         >
           {title}
         </Heading>

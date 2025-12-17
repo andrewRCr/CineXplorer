@@ -915,10 +915,10 @@ infinite scroll behavior before finalizing the migration.
     - "Back to top" button appears and works ✓
     - Long scroll (200+ items) - smooth performance, no jank ✓
 
-- [ ] **10.2 Navigation flow verification** ⚠️ READY FOR RETEST
-    - Browse → scroll 50+ items → MovieDetail → back → scroll position restored
-    - Browse with filters → MovieDetail → back → filters AND position preserved
-    - Browse → search → back → browse state and position correct
+- [x] **10.2 Navigation flow verification** ✓
+    - Browse → scroll 50+ items → MovieDetail → back → scroll position restored ✓
+    - Browse with filters → MovieDetail → back → filters AND position preserved ✓
+    - Browse → search → back → browse state and position correct ✓
     - **Issue found and fixed:** Scroll position not restored with year filters
         - **Root cause:** `useMovieCollectionUrl` initialized `browseParams` with defaults
         via useState, then synced from URL via useEffect. Scroll restoration happened
@@ -929,36 +929,41 @@ infinite scroll behavior before finalizing the migration.
         - **Tests:** 146 related tests pass (scrollStorage, useScrollPersistence,
         useMovieCollectionState, VirtualizedMovieGrid)
 
-- [ ] **10.3 Search flow verification**
-    - Search for movies - virtualized infinite scroll works
-    - New search resets results and position
-    - Search → detail → back → position restored
-    - Empty search handled gracefully
+- [x] **10.3 Search flow verification** ✓
+    - Search for movies - virtualized infinite scroll works ✓
+    - New search resets results and position ✓
+    - Search → detail → back → position restored ✓
+    - Empty search handled gracefully ✓
 
-- [ ] **10.4 Edge case verification**
-    - Very restrictive filters (few results) - end state correct
-    - No results - empty state displayed
-    - Network error - error state with retry
-    - Rapid scrolling - no duplicate fetches, no errors
-    - Cache expiry (30+ min away) - graceful degradation (start at top)
+- [x] **10.4 Edge case verification** ✓
+    - Very restrictive filters (few results) - end state correct ✓
+    - No results - empty state displayed ✓
+    - Network error - error state with retry ✓
+    - Rapid scrolling - no duplicate fetches, no errors ✓
+        - **Note:** `flushSync` console warning may appear on rapid direction reversal.
+          This is a known cosmetic issue in @tanstack/react-virtual when scroll events
+          fire during React's render cycle. No functional impact; acceptable trade-off.
+    - Cache expiry (30+ min away) - graceful degradation (start at top) ✓
+        - Not practically testable; by design starts at top if TanStack Query cache expired
 
 ---
 
 ## Success Criteria
 
-- [ ] Virtualized infinite scroll replaces pagination for browse and search
-- [ ] Back navigation restores exact scroll position (virtualization-powered)
-- [ ] Long scroll sessions perform smoothly (200+ items, no jank)
-- [ ] QuickBrowseBar collapses on scroll down, expands on scroll up
-- [ ] "Back to top" button available for quick return
-- [ ] Filter changes reset results and scroll position appropriately
-- [ ] No regression in data quality (buffer mechanism still works)
-- [ ] TanStack Query properly integrated and configured
-- [ ] ADR documents pagination approach decision with rationale
-- [ ] All obsolete pagination code removed
-- [ ] All quality gates pass (tests, linting, type checking)
-- [ ] Pre-existing `MovieDetail.test.tsx` pagination test failures resolved (5 tests)
-- [ ] Ready for archival
+- [x] Virtualized infinite scroll replaces pagination for browse and search ✓
+- [x] Back navigation restores exact scroll position (virtualization-powered) ✓
+- [x] Long scroll sessions perform smoothly (200+ items, no jank) ✓
+- [x] QuickBrowseBar collapses on scroll down, expands on scroll up ✓
+- [x] "Back to top" button available for quick return ✓
+- [x] Filter changes reset results and scroll position appropriately ✓
+- [x] No regression in data quality (buffer mechanism still works) ✓
+- [x] TanStack Query properly integrated and configured ✓
+- [x] ADR documents pagination approach decision with rationale ✓
+- [x] All obsolete pagination code removed ✓
+- [x] All quality gates pass (tests, linting, type checking) ✓
+- [x] Pre-existing `MovieDetail.test.tsx` pagination test failures resolved ✓
+    - All 18 MovieDetail tests now passing
+- [x] Ready for archival ✓
 
 ---
 

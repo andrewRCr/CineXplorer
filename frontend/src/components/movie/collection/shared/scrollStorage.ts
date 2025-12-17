@@ -29,13 +29,12 @@ interface ScrollStorageEntry {
 }
 
 /**
- * Parses a stored scroll entry, handling both legacy (number) and new (JSON) formats.
+ * Parses a stored scroll entry from JSON format.
  * Returns null if parsing fails or data is malformed.
  */
 const parseScrollEntry = (value: string | null): ScrollStorageEntry | null => {
   if (!value) return null;
   try {
-    // Try parsing as JSON first (new format)
     const parsed = JSON.parse(value) as unknown;
     if (
       typeof parsed === "object" &&
@@ -47,18 +46,8 @@ const parseScrollEntry = (value: string | null): ScrollStorageEntry | null => {
     ) {
       return parsed as ScrollStorageEntry;
     }
-    // Fall back to legacy format (plain number)
-    const legacyPosition = parseInt(value, 10);
-    if (!isNaN(legacyPosition)) {
-      return { position: legacyPosition, timestamp: 0 }; // timestamp 0 = oldest
-    }
     return null;
   } catch {
-    // Try legacy format if JSON parse fails
-    const legacyPosition = parseInt(value, 10);
-    if (!isNaN(legacyPosition)) {
-      return { position: legacyPosition, timestamp: 0 };
-    }
     return null;
   }
 };

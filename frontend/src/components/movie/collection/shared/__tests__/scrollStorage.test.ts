@@ -18,6 +18,10 @@ import {
   cleanupOldScrollPositions,
 } from "../scrollStorage";
 
+/** Helper to create JSON storage entry format */
+const createStorageEntry = (position: number, timestamp = Date.now()) =>
+  JSON.stringify({ position, timestamp });
+
 describe("scrollStorage", () => {
   beforeEach(() => {
     // Clear sessionStorage before each test
@@ -179,7 +183,7 @@ describe("scrollStorage", () => {
   describe("getSavedScrollPosition", () => {
     it("returns saved position for existing key", () => {
       const key = "scroll-browse-test";
-      sessionStorage.setItem(key, "500");
+      sessionStorage.setItem(key, createStorageEntry(500));
 
       const position = getSavedScrollPosition(key);
 
@@ -202,7 +206,7 @@ describe("scrollStorage", () => {
 
     it("handles position 0 correctly (top of page)", () => {
       const key = "scroll-top";
-      sessionStorage.setItem(key, "0");
+      sessionStorage.setItem(key, createStorageEntry(0));
 
       const position = getSavedScrollPosition(key);
 
@@ -212,21 +216,29 @@ describe("scrollStorage", () => {
     it("handles very large positions", () => {
       const key = "scroll-large";
       const largePosition = 999999;
-      sessionStorage.setItem(key, String(largePosition));
+      sessionStorage.setItem(key, createStorageEntry(largePosition));
 
       const position = getSavedScrollPosition(key);
 
       expect(position).toBe(largePosition);
     });
 
-    it("parses stored string as integer", () => {
-      const key = "scroll-float";
-      sessionStorage.setItem(key, "500.75");
+    it("returns 0 for malformed JSON", () => {
+      const key = "scroll-malformed";
+      sessionStorage.setItem(key, "not-valid-json");
 
       const position = getSavedScrollPosition(key);
 
-      // parseInt truncates to integer
-      expect(position).toBe(500);
+      expect(position).toBe(0);
+    });
+
+    it("returns 0 for JSON missing required fields", () => {
+      const key = "scroll-incomplete";
+      sessionStorage.setItem(key, JSON.stringify({ position: 500 })); // missing timestamp
+
+      const position = getSavedScrollPosition(key);
+
+      expect(position).toBe(0);
     });
   });
 
@@ -260,9 +272,13 @@ describe("scrollStorage", () => {
     });
 
     it("triggers cleanup after save", () => {
-      // Fill storage to max capacity
+      // Fill storage to max capacity with entries having ascending timestamps
+      const baseTime = Date.now() - 30000; // Start 30 seconds ago
       for (let i = 0; i < 25; i++) {
-        sessionStorage.setItem(`scroll-old-${i}`, String(i * 100));
+        sessionStorage.setItem(
+          `scroll-old-${i}`,
+          createStorageEntry(i * 100, baseTime + i * 1000)
+        );
       }
 
       // Save new position - should trigger cleanup
@@ -282,8 +298,8 @@ describe("scrollStorage", () => {
     });
 
     it("returns only keys with scroll prefix", () => {
-      sessionStorage.setItem("scroll-browse-test", "100");
-      sessionStorage.setItem("scroll-search-query", "200");
+      sessionStorage.setItem("scroll-browse-test", createStorageEntry(100));
+      sessionStorage.setItem("scroll-search-query", createStorageEntry(200));
       sessionStorage.setItem("other-key", "300");
       sessionStorage.setItem("auth-token", "abc");
 
@@ -297,9 +313,9 @@ describe("scrollStorage", () => {
     });
 
     it("handles mixed storage content", () => {
-      sessionStorage.setItem("scroll-a", "1");
+      sessionStorage.setItem("scroll-a", createStorageEntry(1));
       sessionStorage.setItem("not-scroll", "2");
-      sessionStorage.setItem("scroll-b", "3");
+      sessionStorage.setItem("scroll-b", createStorageEntry(3));
 
       const keys = getScrollKeys();
 
@@ -313,7 +329,7 @@ describe("scrollStorage", () => {
     it("does not remove keys when under limit", () => {
       // Add 5 keys (well under the 20 limit)
       for (let i = 0; i < 5; i++) {
-        sessionStorage.setItem(`scroll-key-${i}`, String(i));
+        sessionStorage.setItem(`scroll-key-${i}`, createStorageEntry(i * 100));
       }
 
       cleanupOldScrollPositions("scroll-current");
@@ -323,9 +339,13 @@ describe("scrollStorage", () => {
     });
 
     it("removes oldest keys when at limit", () => {
-      // Add exactly MAX_STORED_POSITIONS keys
+      // Add exactly MAX_STORED_POSITIONS keys with ascending timestamps
+      const baseTime = Date.now() - 30000;
       for (let i = 0; i < 20; i++) {
-        sessionStorage.setItem(`scroll-key-${i}`, String(i));
+        sessionStorage.setItem(
+          `scroll-key-${i}`,
+          createStorageEntry(i * 100, baseTime + i * 1000)
+        );
       }
 
       cleanupOldScrollPositions("scroll-current");
@@ -336,34 +356,41 @@ describe("scrollStorage", () => {
     });
 
     it("never removes the current key during cleanup", () => {
-      // Fill storage
+      // Fill storage with ascending timestamps
+      const baseTime = Date.now() - 30000;
       for (let i = 0; i < 25; i++) {
-        sessionStorage.setItem(`scroll-key-${i}`, String(i));
+        sessionStorage.setItem(
+          `scroll-key-${i}`,
+          createStorageEntry(i * 100, baseTime + i * 1000)
+        );
       }
 
       const currentKey = "scroll-key-10";
       cleanupOldScrollPositions(currentKey);
 
       // Current key should still exist
-      expect(sessionStorage.getItem(currentKey)).toBe("10");
+      expect(sessionStorage.getItem(currentKey)).not.toBeNull();
     });
 
-    it("removes keys from the beginning (oldest first)", () => {
-      // Add keys in order
+    it("removes oldest entries first (by timestamp)", () => {
+      // Add 25 keys with explicit timestamps - older entries have lower timestamps
+      const baseTime = Date.now() - 30000;
       for (let i = 0; i < 25; i++) {
-        sessionStorage.setItem(`scroll-key-${i}`, String(i));
+        sessionStorage.setItem(
+          `scroll-key-${i}`,
+          createStorageEntry(i * 100, baseTime + i * 1000)
+        );
       }
 
       cleanupOldScrollPositions("scroll-current");
 
       const keys = getScrollKeys();
 
-      // Earlier keys (lower numbers) should have been removed
-      // Later keys should remain
-      const hasLaterKeys = keys.some(
-        (k) => k.includes("key-20") || k.includes("key-21")
-      );
-      expect(hasLaterKeys).toBe(true);
+      // Oldest keys (key-0, key-1, etc.) should have been removed
+      // Newer keys (key-20+) should remain
+      expect(keys).not.toContain("scroll-key-0");
+      expect(keys).not.toContain("scroll-key-1");
+      expect(keys).toContain("scroll-key-24"); // Newest should remain
     });
   });
 

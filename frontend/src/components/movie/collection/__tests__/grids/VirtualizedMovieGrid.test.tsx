@@ -526,6 +526,10 @@ describe("VirtualizedMovieGrid", () => {
   });
 
   describe("Scroll persistence: Restore position on mount", () => {
+    /** Helper to create JSON storage entry format */
+    const createStorageEntry = (position: number, timestamp = Date.now()) =>
+      JSON.stringify({ position, timestamp });
+
     /**
      * When component mounts with restoreScroll=true in location state
      * (from "Back to Results" link) and there's a saved scroll position,
@@ -535,8 +539,8 @@ describe("VirtualizedMovieGrid", () => {
     it("restores scroll position from sessionStorage on mount", () => {
       const movies = createMockMovies(50);
 
-      // Pre-populate saved scroll position
-      sessionStorageMock.setStoredValue("scroll-discover-", "750");
+      // Pre-populate saved scroll position (JSON format with position and timestamp)
+      sessionStorageMock.setStoredValue("scroll-discover-", createStorageEntry(750));
 
       (useMovieCollectionContext as Mock).mockReturnValue({
         source: "discover",

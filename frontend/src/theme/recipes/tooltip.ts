@@ -28,7 +28,7 @@ export const tooltipRecipe = defineSlotRecipe({
       fontWeight: "medium",
       boxShadow: "shadow-md",
       zIndex: "dropdown",
-      // Smooth entrance animation
+      // Smooth entrance animation (keyframes provided by Chakra UI v3 defaultConfig)
       _open: {
         animationName: "fade-in, scale-in",
         animationDuration: "100ms",

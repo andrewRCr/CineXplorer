@@ -20,6 +20,10 @@ import { MemoryRouter } from "react-router-dom";
 import type { ReactNode } from "react";
 import { useScrollPersistence } from "../useScrollPersistence";
 
+/** Helper to create JSON storage entry format */
+const createStorageEntry = (position: number, timestamp = Date.now()) =>
+  JSON.stringify({ position, timestamp });
+
 // Mock sessionStorage
 const mockSessionStorage = (() => {
   let store: Record<string, string> = {};
@@ -144,8 +148,8 @@ describe("useScrollPersistence", () => {
     });
 
     it("returns saved position for back-navigation with restoreScroll state", () => {
-      // Save a scroll position first
-      mockSessionStorage.setItem("scroll-discover-", "500");
+      // Save a scroll position first (JSON format with position and timestamp)
+      mockSessionStorage.setItem("scroll-discover-", createStorageEntry(500));
 
       const { result } = renderHook(() => useScrollPersistence(defaultOptions), {
         wrapper: createWrapper(["/browse"], { restoreScroll: true }),
@@ -155,7 +159,7 @@ describe("useScrollPersistence", () => {
     });
 
     it("includes query in storage key for search routes", () => {
-      mockSessionStorage.setItem("scroll-search--q=inception", "750");
+      mockSessionStorage.setItem("scroll-search--q=inception", createStorageEntry(750));
 
       const { result } = renderHook(
         () =>
@@ -326,7 +330,7 @@ describe("useScrollPersistence", () => {
   describe("edge cases", () => {
     it("handles saved position larger than available", () => {
       // Save a very large position (beyond any realistic content height)
-      mockSessionStorage.setItem("scroll-discover-", "999999");
+      mockSessionStorage.setItem("scroll-discover-", createStorageEntry(999999));
 
       const { result } = renderHook(() => useScrollPersistence(defaultOptions), {
         wrapper: createWrapper(["/browse"], { restoreScroll: true }),

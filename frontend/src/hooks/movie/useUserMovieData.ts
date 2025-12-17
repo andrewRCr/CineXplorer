@@ -17,8 +17,8 @@ function isUserMovieData(obj: unknown): obj is UserMovieData {
     return (
         typeof data.id === "number" &&
         typeof data.tmdb_id === "number" &&
-        typeof data.is_watchlisted === "boolean" &&
-        typeof data.is_watched === "boolean"
+        typeof data.user_on_watchlist === "boolean" &&
+        typeof data.user_watched === "boolean"
     );
 }
 

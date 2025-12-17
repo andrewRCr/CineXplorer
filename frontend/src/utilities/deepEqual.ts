@@ -21,7 +21,12 @@ export function deepEqual<T extends object>(obj1: T, obj2: T): boolean {
     return false;
   }
 
+  const keys2Set = new Set(keys2);
+
   for (const key of keys1) {
+    if (!keys2Set.has(key)) {
+      return false;
+    }
     const val1 = obj1[key];
     const val2 = obj2[key];
 

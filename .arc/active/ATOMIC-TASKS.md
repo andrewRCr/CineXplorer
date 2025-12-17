@@ -61,6 +61,12 @@
     - Files: `frontend/src/theme/recipes/` (new or existing), `frontend/src/components/movie/MovieCard.tsx`
     - Pattern will be reused in MovieDetail and other locations
 
+- [ ] Investigate Chakra v3 Select native styling for selected state
+    - Current: Manual CSS variable styling in AdvancedFiltersPanel Select.Trigger
+    - Goal: Explore if Chakra recipes/data-attributes can replace conditional `css` prop
+    - Files: `frontend/src/components/movie/browse/AdvancedFiltersPanel.tsx`
+    - Context: CodeRabbit PR #7 Pass 7 nitpick (deferred to avoid triggering another review cycle)
+
 <!-- Miscellaneous -->
 
 - [ ] Investigate login session loss during testing

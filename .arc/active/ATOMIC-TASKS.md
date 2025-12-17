@@ -93,6 +93,7 @@
     - Context: Discovered during endpoint consolidation quality gates (Phase 6.1.b)
 
 <!-- Type System Cleanup -->
+<!-- ✅ Verified 2024-12-17: Both tasks still accurate and ready to execute -->
 
 - [ ] Remove `@shared/api-types.ts` and migrate remaining usages to OpenAPI-generated types
     - **Context:** Discovered during infinite scroll type cleanup. The `@shared` directory was meant
@@ -150,73 +151,67 @@
     - **Depends on:** "Remove @shared/api-types.ts" task (do that first)
 
 <!-- Code Quality / Refactoring -->
+<!-- ✅ Re-evaluated 2025-12-17 post-infinite-scroll-migration: Updated subtask status below -->
 
 - [ ] Refactor Movie Collection URL/State Hooks for Clarity and Separation of Concerns
     - **Context:** Discovered during Task 3.7.b (tasks-pagination-buffer-tracking.md) - hooks are
       functional but messy, hard to parse, mixed responsibilities
     - **Goal:** Clean separation, improved readability, proper DRY
-    - **Scope:** 3 hooks + supporting utilities
-    - **⚠️ Deferred until:** After `tasks-infinite-scroll-migration.md` Phase 4 (Integration) completes.
-      Hooks will be significantly modified during infinite scroll integration - refactoring now would
-      be wasted effort. Re-evaluate after integration: some items (R.1-R.4, R.8) likely still applicable,
-      others (R.5, R.7, R.9) may be addressed or obsoleted by the migration.
+    - **Scope:** 2 hooks + supporting utilities (hooks moved to `hooks/movie/`)
+    - **Status:** Ready to execute - infinite scroll migration complete
 
     - [ ] **R.1 Fix "search" terminology confusion in comments/docs**
         - Problem: "search" used for both URL query strings (browser API) and movie search feature
-        - Files: `browseUrlSync.ts`, `searchUrlSync.ts`, `useMovieCollectionUrl.tsx`
+        - Files: `browseUrlSync.ts`, `searchUrlSync.ts`, `useMovieCollectionUrl.ts`
         - Change: Use "query string" or "URL params" instead of "search string/params" in comments
         - Small effort, big clarity win
 
     - [ ] **R.2 Extract `deepEqual` utility from useMovieCollectionUrl**
-        - Currently: Generic comparison function buried at top of hook file (lines 9-33)
+        - Currently: Generic comparison function at lines 8-30 in `useMovieCollectionUrl.ts`
         - Move to: `utilities/deepEqual.ts` or use `fast-deep-equal` package
-        - Update imports in `useMovieCollectionUrl.tsx`
+        - Update imports in `useMovieCollectionUrl.ts`
 
     - [ ] **R.3 Extract sessionStorage utilities from useMovieCollectionState**
-        - Currently: 4 module-level functions (lines 16-87) for advanced panel override tracking
+        - Currently: 4 module-level functions (lines 17-83) for advanced panel override tracking
         - Extract to: `utilities/advancedPanelOverride.ts`
         - Functions: `getAdvancedFilterHash`, `hasUserOverride`, `setUserOverride`, `clearUserOverride`
-        - Reduces file length by ~70 lines before hook even starts
+        - Reduces file length by ~65 lines before hook even starts
 
     - [ ] **R.4 Move `hasAdvancedFilterValues` to browseParamUtils.ts**
-        - Currently: Exported from `useMovieCollectionState.tsx` (lines 127-165)
+        - Currently: Exported from `useMovieCollectionState.ts` (lines 119-145)
         - Better home: `utilities/browseParamUtils.ts` with other param utilities
-        - Note: Duplicates some decade detection logic with `getAdvancedFilterHash` - consolidate
-        - Update imports in `useMovieCollectionState.tsx`, `BrowseControlsSection.tsx` (if used)
+        - ✅ Year logic duplication RESOLVED: Both functions now use `yearFilterAnalysis.ts` utility
+        - Remaining work: Just move the function to browseParamUtils.ts
 
-    - [ ] **R.5 Audit and remove `enableUrlSync=false` code path if unused**
-        - Currently: Dual-mode complexity with URL-synced vs local state
-        - Check: Is non-URL-synced mode actually used anywhere?
-        - If unused: Remove `localBrowseParams`, `localCurrentPage`, `localTmdbPageStart`, ternaries
-        - If used: Document where and why
-        - Estimated reduction: ~30 lines + significant complexity
+    - [x] **R.5 Audit `enableUrlSync=false` code path** *(decision: KEEP)*
+        - Finding: Used **only in tests** (18 occurrences), never in production code
+        - Decision: Keep for test isolation flexibility - complexity cost is low
+        - Tests use local mode to avoid URL mocking complexity
+        - No action needed
 
     - [ ] **R.6 Use `generateBrowseUrl()` in handleBrowseParamsChange**
-        - Currently: `handleBrowseParamsChange` (lines 101-136) builds URL inline with URLSearchParams
+        - Currently: `handleBrowseParamsChange` builds URL inline with URLSearchParams
         - We have: `browseUrlSync.ts` with `generateBrowseUrl()` for this exact purpose
         - Benefit: Consistency with URL sync pattern, DRY
 
     - [ ] **R.7 Fix language sort reset effect bug**
-        - Currently: Effect at line 237-241 calls `urlHandleBrowseParamsChange` directly
+        - Currently: Effect at lines 216-222 calls `urlHandleBrowseParamsChange` directly
         - Bug: Ignores `enableUrlSync` flag - would try URL update even in local mode
+        - Impact: Low (local mode only used in tests, tests don't exercise this path)
         - Fix: Use `onBrowseParamsChange` (the unified handler) instead
 
     - [ ] **R.8 Simplify derived state in useMovieCollectionState**
-        - Currently: Individual useMemos for `hasActiveFilters`, etc., then wrapped in `derivedState` useMemo
-        - The wrapper useMemo (lines 305-310) adds no value
-        - Remove wrapper, spread individual values directly in return
+        - Currently: `derivedState` wrapper useMemo at lines 277-282 adds no value
+        - Individual useMemos already provide memoization
+        - Fix: Remove wrapper, spread values directly in return statement
 
     - [ ] **R.9 (Optional, larger scope) Consider hook decomposition**
-        - If after R.1-R.8 hooks are still complex, consider splitting:
-            - `useBrowseParamsUrl` - browse params ↔ URL sync only
-            - `usePaginationUrl` - pagination ↔ URL sync only
-            - `useRouteChangeReset` - route transition detection
-            - `useMovieCollectionUrl` becomes thin composer
-        - **Defer decision** until R.1-R.8 complete - may not be needed
+        - Defer decision until R.1-R.8 complete - may not be needed
+        - Hooks are cleaner post-migration; evaluate if further splitting warranted
 
     - **Files:**
-        - `frontend/src/components/movie/collection/useMovieCollectionUrl.tsx`
-        - `frontend/src/components/movie/collection/useMovieCollectionState.tsx`
+        - `frontend/src/hooks/movie/useMovieCollectionUrl.ts`
+        - `frontend/src/hooks/movie/useMovieCollectionState.ts`
         - `frontend/src/utilities/browseUrlSync.ts`
         - `frontend/src/utilities/searchUrlSync.ts`
         - `frontend/src/utilities/browseParamUtils.ts`
@@ -224,8 +219,8 @@
         - New: `frontend/src/utilities/advancedPanelOverride.ts`
 
     - **Priority:** Low (functional, not blocking)
-    - **Effort:** Medium (R.1-R.8 individually small, R.9 larger if needed)
-    - **Risk:** Low (refactor with existing test coverage)
+    - **Effort:** Medium (~2 hours for R.1-R.8, individually small)
+    - **Risk:** Low (refactor with existing 722 frontend tests)
 
 <!-- Data Quality -->
 

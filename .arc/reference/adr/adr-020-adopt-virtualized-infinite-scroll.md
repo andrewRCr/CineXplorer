@@ -1,4 +1,4 @@
-# ADR-020: Adopt Virtualized Infinite Scroll for Browse
+# ADR-020: Adopt Virtualized Infinite Scroll
 
 ## Status
 
@@ -6,8 +6,8 @@ Accepted
 
 ## Context
 
-CineXplorer's movie browse/discover feature uses a buffer mechanism to maintain consistent 20-result pages
-despite data quality filtering. This creates a fundamental problem: **page content is path-dependent**.
+CineXplorer's movie collection views (browse, discover, search) use a buffer mechanism to maintain consistent
+20-result pages despite data quality filtering. This creates a fundamental problem: **page content is path-dependent**.
 
 ### The Technical Problem
 

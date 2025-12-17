@@ -1,29 +1,17 @@
 # Incidental: Infinite Scroll Migration with TanStack Query
 
 **Created:** 2025-12-10
+**Completed:** 2025-12-17
 **Branch:** `incidental/infinite-scroll-migration`
-**Status:** Active
+**Status:** Completed
 
 ## Context
-
-**Discovered:** During Phase 3.7.d (metadata persistence debugging) of `tasks-pagination-buffer-tracking.md`
 
 **Interrupts:** `tasks-service-layer-modernization.md` at Task 3.5.b.3
 
 **Problem:** Path-dependent pagination creates inherent complexity with random-access numbered pages.
 Our buffer mechanism consumes variable TMDB pages per display page, making page N content depend on
 navigation path taken. This conflicts fundamentally with random-access pagination UX.
-
-**Why Now:** Research revealed that infinite scroll + TanStack Query is the industry-standard solution
-for content discovery apps with filtered/buffered data. Major platforms (TMDB.org, Netflix, Spotify)
-use this pattern. Continuing to patch numbered pagination fights against our data model.
-
-**Research Summary:** See CURRENT-SESSION.md for full research findings. Key points:
-
-- Random-access pagination assumes stable page-to-content mapping (we don't have this)
-- Infinite scroll eliminates path-dependency problem (always sequential)
-- TanStack Query's `useInfiniteQuery` handles cursor tracking natively
-- Matches our planned frontend modernization (TanStack Query adoption)
 
 ---
 
@@ -586,7 +574,7 @@ This de-risks the infinite scroll commitment by proving the hardest UX requireme
 **Prerequisites:** Phase 5.3.b documents satisfactory back-nav UX (Go decision).
 
 - [x] **6.1 Create ADR and update strategy docs**
-    - **ADR-020:** `adr-020-adopt-virtualized-infinite-scroll-for-browse.md`
+    - **ADR-020:** `adr-020-adopt-virtualized-infinite-scroll.md`
         - Context: Buffer mechanism path-dependency, random-access broken, industry research
         - Alternatives: Random-access (broken), sequential (Letterboxd - friction), virtualized (chosen)
         - Decision: @tanstack/react-virtual + @tanstack/react-query + sessionStorage scroll restoration
@@ -966,78 +954,3 @@ infinite scroll behavior before finalizing the migration.
 - [x] Ready for archival ✓
 
 ---
-
-## Implementation Notes
-
-### TanStack Query Key Strategy
-
-```typescript
-// Query keys should include all dependencies that affect results
-const queryKey = ['movies', 'discover', {
-  ...browseParams,  // filters, sort
-  source,           // popular, top-rated, etc.
-}];
-
-// Search has different key structure
-const searchQueryKey = ['movies', 'search', { query, ...filters }];
-```
-
-### Infinite Query Page Param
-
-```typescript
-useInfiniteQuery({
-  queryKey,
-  queryFn: ({ pageParam }) => fetchMovies(pageParam),
-  initialPageParam: { page: 1, tmdb_page_start: undefined },
-  getNextPageParam: (lastPage) =>
-    lastPage.next_tmdb_page_start
-      ? { page: lastPage.page + 1, tmdb_page_start: lastPage.next_tmdb_page_start }
-      : undefined,  // No more pages
-});
-```
-
-### Intersection Observer Pattern
-
-```typescript
-const sentinelRef = useRef<HTMLDivElement>(null);
-
-useEffect(() => {
-  const observer = new IntersectionObserver(
-    (entries) => {
-      if (entries[0].isIntersecting && hasNextPage && !isFetching) {
-        fetchNextPage();
-      }
-    },
-    { threshold: 0.1 }
-  );
-
-  if (sentinelRef.current) observer.observe(sentinelRef.current);
-  return () => observer.disconnect();
-}, [hasNextPage, isFetching, fetchNextPage]);
-```
-
----
-
-## Related Files
-
-**Will be modified:**
-
-- `frontend/src/App.tsx` or `main.tsx` - QueryClientProvider
-- `frontend/src/components/movie/collection/MovieCollectionGrid.tsx` - Major refactor
-- `frontend/src/components/movie/collection/MovieCollectionLayout.tsx` - Context changes
-- `frontend/src/components/movie/collection/QuickBrowseBar.tsx` - Sticky positioning
-- `frontend/src/components/movie/MovieCard.tsx` - Simplify links
-- `frontend/src/pages/movie/MovieDetail.tsx` - Simplify back navigation
-- `frontend/src/utilities/paginationUrlSync.ts` - Simplify or remove
-
-**Will be created:**
-
-- `frontend/src/lib/queryClient.ts` - TanStack Query configuration
-- `frontend/src/hooks/useInfiniteMovies.ts` - Core infinite query hook
-- `frontend/src/components/common/BackToTopButton.tsx` - Scroll-to-top UI
-
-**Will be removed/deprecated:**
-
-- `frontend/src/components/movie/collection/MoviePaginationCtrl.tsx`
-- `frontend/src/hooks/usePageChangeHandler.ts`
-- Various pagination-specific tests

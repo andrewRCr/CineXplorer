@@ -89,7 +89,6 @@ const clearUserOverride = (): void => {
 // Better hook composition with multiple related concerns
 interface UseMovieCollectionStateConfig {
   defaultBrowseParams?: Partial<BrowseParams>;
-  source?: string;
   // Hook configuration
   enableUrlSync?: boolean;
   enableAdvancedFilters?: boolean;
@@ -170,16 +169,12 @@ export const hasAdvancedFilterValues = (filters: BrowseParams): boolean => {
  */
 export const useMovieCollectionState = ({
   defaultBrowseParams,
-  source,
   enableUrlSync = true,
   enableAdvancedFilters = true,
 }: UseMovieCollectionStateConfig = {}): MovieCollectionState => {
 
   // URL management (only if enabled)
-  const urlState = useMovieCollectionUrl(
-    enableUrlSync ? defaultBrowseParams : undefined,
-    enableUrlSync ? source : undefined
-  );
+  const urlState = useMovieCollectionUrl();
 
   // Extract specific functions for stable dependencies
   const {

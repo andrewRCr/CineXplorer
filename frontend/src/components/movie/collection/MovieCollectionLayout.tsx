@@ -90,7 +90,6 @@ const MovieCollectionLayout = ({
     hasActiveAdvancedFilters,
   } = useMovieCollectionState({
     defaultBrowseParams,
-    source: actualSource,
   });
 
   // Use the movie fetch router hook to route between search/discover endpoints

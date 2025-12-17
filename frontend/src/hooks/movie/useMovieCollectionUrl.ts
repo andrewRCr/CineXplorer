@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import type { BrowseParams } from "@/types/browseTypes";
-import { DEFAULT_BROWSE_PARAMS } from "@/constants/browseDefaults";
 import { parseBrowseParamsFromUrl } from "@/utilities/browseUrlSync";
 import { isDefaultSort } from "@/utilities/browseParamUtils";
 
@@ -39,18 +38,17 @@ function deepEqual(obj1: BrowseParams, obj2: BrowseParams): boolean {
  * Note: Pagination is handled internally by TanStack Query (infinite scroll),
  * not via URL params.
  */
-export const useMovieCollectionUrl = (
-  defaultBrowseParams?: Partial<BrowseParams>,
-  _actualSource?: string // Kept for API compatibility, no longer used
-) => {
+export const useMovieCollectionUrl = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
   // Single source of truth for browse params (filters, sort)
-  const [browseParams, setBrowseParams] = useState<BrowseParams>({
-    ...DEFAULT_BROWSE_PARAMS,
-    ...defaultBrowseParams,
-  });
+  // IMPORTANT: Initialize from URL synchronously to ensure scroll restoration
+  // uses the correct key on first render. Previously used DEFAULT_BROWSE_PARAMS
+  // which caused a timing bug where scroll key was calculated before URL sync.
+  const [browseParams, setBrowseParams] = useState<BrowseParams>(() =>
+    parseBrowseParamsFromUrl(location.search)
+  );
 
   // Sync browse params from URL when URL changes
   useEffect(() => {

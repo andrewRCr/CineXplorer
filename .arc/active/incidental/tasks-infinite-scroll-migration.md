@@ -906,19 +906,28 @@ infinite scroll behavior before finalizing the migration.
 
 **Purpose:** End-to-end manual testing of all affected flows.
 
-- [ ] **10.1 Browse flow verification**
-    - Load `/browse/popular` - virtualized infinite scroll works
-    - Scroll down, content loads automatically
-    - Apply filters - results reset, scroll to top
-    - Change sort - results reset correctly
-    - QuickBrowseBar collapses/expands correctly
-    - "Back to top" button appears and works
-    - Long scroll (200+ items) - smooth performance, no jank
+- [x] **10.1 Browse flow verification** ✓
+    - Load `/browse/popular` - virtualized infinite scroll works ✓
+    - Scroll down, content loads automatically ✓
+    - Apply filters - results reset, scroll to top ✓
+    - Change sort - results reset correctly ✓
+    - QuickBrowseBar collapses/expands correctly ✓
+    - "Back to top" button appears and works ✓
+    - Long scroll (200+ items) - smooth performance, no jank ✓
 
-- [ ] **10.2 Navigation flow verification**
+- [ ] **10.2 Navigation flow verification** ⚠️ READY FOR RETEST
     - Browse → scroll 50+ items → MovieDetail → back → scroll position restored
     - Browse with filters → MovieDetail → back → filters AND position preserved
     - Browse → search → back → browse state and position correct
+    - **Issue found and fixed:** Scroll position not restored with year filters
+        - **Root cause:** `useMovieCollectionUrl` initialized `browseParams` with defaults
+        via useState, then synced from URL via useEffect. Scroll restoration happened
+        before URL sync, so scroll key was calculated with wrong params (missing filters).
+        - **Fix:** Initialize browseParams directly from URL in useState initializer
+        (`parseBrowseParamsFromUrl(location.search)`) instead of defaults.
+        - **Modified:** `frontend/src/hooks/movie/useMovieCollectionUrl.ts`
+        - **Tests:** 146 related tests pass (scrollStorage, useScrollPersistence,
+        useMovieCollectionState, VirtualizedMovieGrid)
 
 - [ ] **10.3 Search flow verification**
     - Search for movies - virtualized infinite scroll works

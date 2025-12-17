@@ -18,8 +18,8 @@ key features implemented and a clear roadmap for remaining work.
 
 **Last Completed:**
 
-- Chakra Recipe System Implementation (incidental) - Recipe system for 7 components, 50+ component migrations
-    - [Completion](../../reference/archive/incidental/chakra-recipe-system-implementation/completion-chakra-recipe-system-implementation.md)
+- Infinite Scroll Migration (incidental) - TanStack Query integration, virtualized grids, scroll persistence
+    - [Completion](../archive/2025-q4/incidental/infinite-scroll-migration/completion-infinite-scroll-migration.md)
 
 **Currently Active:**
 

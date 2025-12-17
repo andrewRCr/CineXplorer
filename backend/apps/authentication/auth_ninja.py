@@ -101,24 +101,24 @@ class JWTCookieAuth(APIKeyCookie):
 
     def __init__(self) -> None:
         """Initialize the JWT cookie authentication scheme."""
-        # CSRF Handling Strategy: Bypass Django Ninja's CSRF, use Django's middleware
+        # CSRF Architecture (django-ninja 1.5.x):
         #
-        # Configuration:
-        # - THIS AUTH CLASS: csrf=False (no Django Ninja CSRF interference)
-        # - NinjaAPI in api.py: csrf=False (no API-level Django Ninja CSRF)
-        # - Django middleware: CsrfViewMiddleware ENABLED (handles all validation)
+        # - NinjaAPI(): No csrf parameter (removed in 1.5.0)
+        # - THIS AUTH CLASS: csrf=False (disables Ninja's cookie-auth CSRF)
+        # - CSRF protection: Custom CsrfHeaderMiddleware with path-based exemptions
         #
-        # Why csrf=False on BOTH levels:
-        # Django Ninja's CSRF implementation conflicts with Django's CsrfViewMiddleware.
-        # Both csrf=True (default) and explicit csrf=True cause Django Ninja bug #1464
-        # where valid CSRF tokens are rejected with "CSRF check Failed".
+        # Why csrf=False here:
+        # Django Ninja auto-enables CSRF for APIKeyCookie subclasses by default.
+        # This conflicts with our custom middleware and causes bug #1464 symptoms
+        # (valid CSRF tokens rejected with "CSRF check Failed").
         #
-        # By setting csrf=False at both auth class and API levels, we completely
-        # bypass Django Ninja's CSRF and rely solely on Django's battle-tested
-        # CsrfViewMiddleware for protection.
+        # By passing csrf=False to the parent APIKeyCookie class, we completely
+        # bypass Django Ninja's CSRF and rely on our custom CsrfHeaderMiddleware
+        # which provides header-based CSRF validation (X-CSRFToken) with
+        # path-based exemptions for public endpoints.
         #
-        # CSRF protection IS ACTIVE via Django's middleware - this just prevents
-        # Django Ninja from interfering with Django's validation.
+        # CSRF protection IS ACTIVE via custom middleware - this just prevents
+        # Django Ninja from interfering with our validation strategy.
         #
         # See: https://github.com/vitalik/django-ninja/issues/1464
         super().__init__(csrf=False)

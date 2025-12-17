@@ -22,6 +22,47 @@ const SCROLL_STORAGE_PREFIX = "scroll-";
 /** Maximum number of scroll positions to store in sessionStorage. */
 const MAX_STORED_POSITIONS = 20;
 
+/** Storage format for scroll positions with timestamp for proper cleanup ordering. */
+interface ScrollStorageEntry {
+  position: number;
+  timestamp: number;
+}
+
+/**
+ * Parses a stored scroll entry, handling both legacy (number) and new (JSON) formats.
+ * Returns null if parsing fails or data is malformed.
+ */
+const parseScrollEntry = (value: string | null): ScrollStorageEntry | null => {
+  if (!value) return null;
+  try {
+    // Try parsing as JSON first (new format)
+    const parsed = JSON.parse(value) as unknown;
+    if (
+      typeof parsed === "object" &&
+      parsed !== null &&
+      "position" in parsed &&
+      "timestamp" in parsed &&
+      typeof (parsed as ScrollStorageEntry).position === "number" &&
+      typeof (parsed as ScrollStorageEntry).timestamp === "number"
+    ) {
+      return parsed as ScrollStorageEntry;
+    }
+    // Fall back to legacy format (plain number)
+    const legacyPosition = parseInt(value, 10);
+    if (!isNaN(legacyPosition)) {
+      return { position: legacyPosition, timestamp: 0 }; // timestamp 0 = oldest
+    }
+    return null;
+  } catch {
+    // Try legacy format if JSON parse fails
+    const legacyPosition = parseInt(value, 10);
+    if (!isNaN(legacyPosition)) {
+      return { position: legacyPosition, timestamp: 0 };
+    }
+    return null;
+  }
+};
+
 /**
  * Generates a storage key for scroll position based on query context.
  * Filter-specific keys ensure position is only restored for matching filters.
@@ -50,12 +91,12 @@ export const getScrollStorageKey = (
 
 /**
  * Retrieves saved scroll position from sessionStorage.
- * Returns 0 if no saved position exists.
+ * Returns 0 if no saved position exists or data is malformed.
  */
 export const getSavedScrollPosition = (key: string): number => {
   try {
-    const saved = sessionStorage.getItem(key);
-    return saved ? parseInt(saved, 10) : 0;
+    const entry = parseScrollEntry(sessionStorage.getItem(key));
+    return entry?.position ?? 0;
   } catch {
     return 0;
   }
@@ -81,7 +122,7 @@ export const getScrollKeys = (): string[] => {
 
 /**
  * Cleans up old scroll positions if we exceed the maximum.
- * Removes oldest entries (by insertion order approximation via iteration).
+ * Removes oldest entries by timestamp (not iteration order, which is not guaranteed).
  */
 export const cleanupOldScrollPositions = (currentKey: string): void => {
   try {
@@ -89,12 +130,19 @@ export const cleanupOldScrollPositions = (currentKey: string): void => {
     // Keep current key, remove oldest if over limit
     const keysToConsider = keys.filter((k) => k !== currentKey);
     if (keysToConsider.length >= MAX_STORED_POSITIONS) {
-      // Remove oldest entries (first in list, as sessionStorage iterates in insertion order)
-      const keysToRemove = keysToConsider.slice(
-        0,
-        keysToConsider.length - MAX_STORED_POSITIONS + 1
-      );
-      keysToRemove.forEach((k) => sessionStorage.removeItem(k));
+      // Build array with timestamps for proper sorting
+      const entriesWithTimestamp = keysToConsider
+        .map((key) => {
+          const entry = parseScrollEntry(sessionStorage.getItem(key));
+          return { key, timestamp: entry?.timestamp ?? 0 };
+        })
+        .sort((a, b) => a.timestamp - b.timestamp); // Oldest first
+
+      // Remove oldest entries until under limit
+      const countToRemove = entriesWithTimestamp.length - MAX_STORED_POSITIONS + 1;
+      entriesWithTimestamp
+        .slice(0, countToRemove)
+        .forEach(({ key }) => sessionStorage.removeItem(key));
     }
   } catch {
     // Ignore cleanup errors
@@ -103,10 +151,15 @@ export const cleanupOldScrollPositions = (currentKey: string): void => {
 
 /**
  * Saves scroll position to sessionStorage with cleanup.
+ * Stores position with timestamp for proper cleanup ordering.
  */
 export const saveScrollPosition = (key: string, position: number): void => {
   try {
-    sessionStorage.setItem(key, String(position));
+    const entry: ScrollStorageEntry = {
+      position,
+      timestamp: Date.now(),
+    };
+    sessionStorage.setItem(key, JSON.stringify(entry));
     cleanupOldScrollPositions(key);
   } catch {
     // Ignore storage errors (quota exceeded, etc.)

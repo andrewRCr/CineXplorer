@@ -519,9 +519,9 @@ describe("VirtualizedMovieGrid", () => {
       const setItemCalls = sessionStorageMock.mockStorage.setItem.mock.calls;
       expect(setItemCalls.length).toBeGreaterThan(0);
 
-      // Value should be the scroll position
+      // Value should be JSON with the scroll position
       const lastCall = setItemCalls[setItemCalls.length - 1];
-      expect(lastCall[1]).toBe("500");
+      expect(lastCall[1]).toContain('"position":500');
     });
   });
 

@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import AdvancedFiltersPanel from "@/components/movie/browse/AdvancedFiltersPanel";
 import QuickBrowseBar from "@/components/movie/browse/QuickBrowseBar";
 import { CollapsibleSubNav } from "@/components/layout/CollapsibleSubNav";
@@ -48,6 +48,7 @@ const BrowseControlsSection = ({
   // Force expand state - temporarily overrides scroll-based collapse
   // Used by BackToTopButton to expand sub-nav when scrolling to top
   const [forceExpand, setForceExpand] = useState(false);
+  const forceExpandTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Collapse when: scrolled past threshold AND scrolling down AND not force-expanded
   // Expand when: scrolling up OR at top of page (direction === 'idle') OR force-expanded
@@ -63,13 +64,26 @@ const BrowseControlsSection = ({
     }
   }, [isSubNavCollapsed, isAdvancedPanelOpen, onSetAdvancedPanelOpen]);
 
+  // Cleanup timeout on unmount to prevent state updates after unmount
+  useEffect(() => {
+    return () => {
+      if (forceExpandTimeoutRef.current) {
+        clearTimeout(forceExpandTimeoutRef.current);
+      }
+    };
+  }, []);
+
   // Handle scroll-to-top action: expand sub-nav temporarily
   // The force expand will be naturally cleared when user scrolls again
   const handleScrollToTop = useCallback(() => {
+    // Clear any existing timeout before setting a new one
+    if (forceExpandTimeoutRef.current) {
+      clearTimeout(forceExpandTimeoutRef.current);
+    }
     setForceExpand(true);
     // Clear force expand after a short delay (scroll animation completes ~300ms)
     // The sub-nav will stay expanded due to direction='idle' at top of page
-    setTimeout(() => setForceExpand(false), 500);
+    forceExpandTimeoutRef.current = setTimeout(() => setForceExpand(false), 500);
   }, []);
 
   if (!showControls) return null;

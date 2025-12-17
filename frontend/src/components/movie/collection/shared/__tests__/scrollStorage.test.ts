@@ -236,16 +236,18 @@ describe("scrollStorage", () => {
 
       saveScrollPosition(key, 750);
 
-      expect(sessionStorage.getItem(key)).toBe("750");
+      // Verify via round-trip (tests behavior, not storage format)
+      expect(getSavedScrollPosition(key)).toBe(750);
     });
 
     it("overwrites existing position", () => {
       const key = "scroll-overwrite";
-      sessionStorage.setItem(key, "100");
+      saveScrollPosition(key, 100);
 
       saveScrollPosition(key, 500);
 
-      expect(sessionStorage.getItem(key)).toBe("500");
+      // Verify via round-trip (tests behavior, not storage format)
+      expect(getSavedScrollPosition(key)).toBe(500);
     });
 
     it("saves position 0 correctly", () => {
@@ -253,7 +255,8 @@ describe("scrollStorage", () => {
 
       saveScrollPosition(key, 0);
 
-      expect(sessionStorage.getItem(key)).toBe("0");
+      // Verify via round-trip (tests behavior, not storage format)
+      expect(getSavedScrollPosition(key)).toBe(0);
     });
 
     it("triggers cleanup after save", () => {

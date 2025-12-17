@@ -191,7 +191,11 @@ describe("useScrollPersistence", () => {
         vi.advanceTimersByTime(200);
       });
 
-      expect(mockSessionStorage.setItem).toHaveBeenCalledWith("scroll-discover-", "300");
+      // Verify position saved as JSON with timestamp
+      expect(mockSessionStorage.setItem).toHaveBeenCalledWith(
+        "scroll-discover-",
+        expect.stringContaining('"position":300')
+      );
     });
 
     it("debounces multiple scroll events", () => {
@@ -230,7 +234,10 @@ describe("useScrollPersistence", () => {
 
       // Should only save final position
       expect(mockSessionStorage.setItem).toHaveBeenCalledTimes(1);
-      expect(mockSessionStorage.setItem).toHaveBeenCalledWith("scroll-discover-", "300");
+      expect(mockSessionStorage.setItem).toHaveBeenCalledWith(
+        "scroll-discover-",
+        expect.stringContaining('"position":300')
+      );
     });
   });
 
@@ -354,7 +361,10 @@ describe("useScrollPersistence", () => {
 
       // Should only save the final position
       expect(mockSessionStorage.setItem).toHaveBeenCalledTimes(1);
-      expect(mockSessionStorage.setItem).toHaveBeenCalledWith("scroll-discover-", "900");
+      expect(mockSessionStorage.setItem).toHaveBeenCalledWith(
+        "scroll-discover-",
+        expect.stringContaining('"position":900')
+      );
     });
 
     it("cancels debounced save on unmount", () => {

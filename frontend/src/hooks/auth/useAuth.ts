@@ -344,8 +344,20 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
                 await getUserDetails();
                 return { success: true, data: undefined };
             }
-            await getUserDetails();
-            return { success: true, data: undefined };
+
+            // Login response missing required tokens
+            logger.error('[useAuth] login() response missing tokens', {
+                hasUserId: !!user_id,
+                hasAccessToken: !!accessToken,
+                hasRefreshToken: !!refreshToken,
+            });
+            return {
+                success: false,
+                error: {
+                    status: 500,
+                    message: 'Login failed: invalid server response',
+                },
+            };
         } catch (error: unknown) {
             logger.error('[useAuth] login() error', { error });
             const authError: AuthError = {

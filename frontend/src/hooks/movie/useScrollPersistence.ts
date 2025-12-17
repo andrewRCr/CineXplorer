@@ -83,7 +83,7 @@ export const useScrollPersistence = ({
 
   // Include query in scroll key for search routes (different queries = different scroll positions)
   const scrollStorageKey = useMemo(() => {
-    const baseKey = getScrollStorageKey(source ?? "discover", browseParams ?? {});
+    const baseKey = getScrollStorageKey(source, browseParams);
     // Append query to key for search routes
     return query ? `${baseKey}-q=${query}` : baseKey;
   }, [source, browseParams, query]);
@@ -103,23 +103,33 @@ export const useScrollPersistence = ({
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Capture restore signal on mount (before we clear it)
+  // Capture restore signal synchronously for immediate use on mount.
+  // Initial value handles component mount; effect below handles subsequent
+  // navigations (React Router v6 doesn't remount on navigation).
   const shouldRestoreScrollRef = useRef(
     location.state?.restoreScroll === true
   );
   const hasRestoredScrollRef = useRef(false);
+  const prevLocationKeyRef = useRef(location.key);
 
-  // Clear location state after capturing it, so refresh won't restore scroll
-  // This runs once on mount - the ref already captured the value
+  // Update restore signal on subsequent navigations (non-remount case).
+  // Skip on initial mount since useRef already captured the correct value.
   useEffect(() => {
+    if (prevLocationKeyRef.current !== location.key) {
+      // New navigation - update refs for this navigation
+      shouldRestoreScrollRef.current = location.state?.restoreScroll === true;
+      hasRestoredScrollRef.current = false;
+      prevLocationKeyRef.current = location.key;
+    }
+
+    // Clear location state after capturing it, so refresh won't restore scroll
     if (location.state?.restoreScroll) {
       navigate(location.pathname + location.search, {
         replace: true,
         state: null,
       });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Intentionally empty - only run on mount
+  }, [location.key, location.pathname, location.search, location.state, navigate]);
 
   // --------------------------------------------------------------------------
   // Restoration Guards

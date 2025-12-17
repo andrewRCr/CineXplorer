@@ -73,7 +73,7 @@ const MovieCollectionLayout = ({
   // Extract search query from URL for search routes
   // This is needed for TanStack Query cache key and scroll position persistence
   const searchQuery = useMemo(() => {
-    if (location.pathname.includes("/search")) {
+    if (location.pathname.startsWith("/search")) {
       return parseSearchParamsFromUrl(location.search).query || undefined;
     }
     return undefined;

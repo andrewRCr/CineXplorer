@@ -16,7 +16,7 @@
  * (with pagination controls).
  */
 
-import { Box, Text } from "@chakra-ui/react";
+import { Box, Heading, Text } from "@chakra-ui/react";
 import type { ReactNode } from "react";
 
 /** Shared text styles for result count display */
@@ -99,7 +99,8 @@ export function GridHeader({
     >
       {/* Left side: Title (when present) or Results (when controls present) */}
       {hasTitle ? (
-        <Text
+        <Heading
+          as="h1"
           fontSize="3xl"
           fontWeight="normal"
           fontStyle="italic"
@@ -108,7 +109,7 @@ export function GridHeader({
           lineHeight="0.75"
         >
           {title}
-        </Text>
+        </Heading>
       ) : hasControls ? (
         <Text
           {...resultTextStyles}

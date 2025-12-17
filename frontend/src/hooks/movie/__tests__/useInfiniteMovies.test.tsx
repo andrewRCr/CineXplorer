@@ -585,10 +585,8 @@ describe("useInfiniteMovies", () => {
       // Rerender with structurally identical but different reference object
       rerender({ queryKey: { ...queryKeyValue } });
 
-      // Wait for any potential async effects to settle
-      await waitFor(() => {
-        expect(true).toBe(true);
-      });
+      // Allow any potential async effects to settle
+      await new Promise((resolve) => setTimeout(resolve, 0));
 
       // Should NOT refetch since TanStack Query compares by value, not reference
       // This tests that the query key serialization works correctly

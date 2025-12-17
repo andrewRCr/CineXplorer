@@ -42,14 +42,9 @@ export function useUserMovieData(tmdbId: string): {
 
     // Track mounted state to prevent setState after unmount
     const mounted = useRef(true);
-    useEffect(() => {
-        mounted.current = true;
-        return () => {
-            mounted.current = false;
-        };
-    }, []);
 
     useEffect(() => {
+        mounted.current = true;
         const tmdbIdNum = parseValidTmdbId(tmdbId);
         if (tmdbIdNum === null) {
             setError("Invalid movie ID format");
@@ -89,6 +84,7 @@ export function useUserMovieData(tmdbId: string): {
             });
 
         return () => {
+            mounted.current = false;
             if (req && typeof req.cancel === "function") {
                 req.cancel();
             }

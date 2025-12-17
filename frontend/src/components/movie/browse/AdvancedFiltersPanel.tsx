@@ -78,7 +78,7 @@ const AdvancedFiltersPanel = ({
   // Row 2: Language | Year range | Rating range
   // Row 3: Clear/Collapse buttons (right-aligned)
   return (
-    <VStack gap={3} align="center" w="100%">
+    <VStack gap={2} align="center" w="100%">
       {/* Row 1: Genres + Certifications side by side */}
       <Flex gap={6} wrap="wrap" align="flex-start" justify="center">
         <GenrePopover
@@ -109,32 +109,26 @@ const AdvancedFiltersPanel = ({
             }}
             positioning={{ placement: "bottom-start", gutter: 2 }}
           >
+            {/* Custom styling to match StyledInput pattern on layer-01 */}
             <Select.Trigger
               w={LANGUAGE_WIDTH}
               minH="32px"
               h="32px"
               fontSize="14px"
-              lineHeight="1.2"
-              borderRadius="4px"
-              border="1px solid"
-              borderColor="button-outline"
-              backgroundColor="transparent"
-              _hover={{ bg: "tertiary/8" }}
+              bg="transparent"
+              borderColor="border-strong-01"
+              _hover={{
+                borderColor: "border-strong-02",
+                bg: "tertiary/8",
+              }}
               _focusVisible={{ borderColor: "tertiary" }}
               css={{
-                padding: "6px 12px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
+                padding: "0 12px",
+                // Highlight value text when language is selected
                 "& > span": {
-                  transition: "color 0.15s ease-out 0.05s",
                   color: browseParams.language
                     ? "var(--chakra-colors-primary)"
                     : "var(--chakra-colors-foreground)",
-                },
-                "& [data-part='indicator']": {
-                  width: "16px",
-                  height: "16px",
                 },
               }}
             >
@@ -142,10 +136,9 @@ const AdvancedFiltersPanel = ({
               <Select.Indicator />
             </Select.Trigger>
             <Select.Positioner>
+              {/* Content uses selectRecipe base styles; custom overrides for width and scroll */}
               <Select.Content
                 w={LANGUAGE_WIDTH}
-                borderColor="border-subtle-02"
-                color="foreground"
                 maxH="300px"
                 overflowY="auto"
                 zIndex="popover"
@@ -188,8 +181,8 @@ const AdvancedFiltersPanel = ({
         />
       </Flex>
 
-      {/* Row 3: Action buttons - right-aligned, minimal top spacing */}
-      <HStack gap={0} justify="flex-end" w="100%" mt={-2}>
+      {/* Row 3: Action buttons - right-aligned */}
+      <HStack gap={0} justify="flex-end" w="100%">
         {hasActiveParams && (
           <Button
             onClick={clearFilters}

@@ -83,6 +83,10 @@ describe("VirtualizedMovieGrid", () => {
   // Session storage mock for scroll persistence tests
   const sessionStorageMock = createMockSessionStorage();
 
+  /** Helper to create JSON storage entry format for scroll persistence */
+  const createStorageEntry = (position: number, timestamp = Date.now()) =>
+    JSON.stringify({ position, timestamp });
+
   // Virtualizer mock state
   let mockVirtualItems: { index: number; start: number; size: number }[] = [];
   let mockScrollToOffset: Mock;
@@ -526,10 +530,6 @@ describe("VirtualizedMovieGrid", () => {
   });
 
   describe("Scroll persistence: Restore position on mount", () => {
-    /** Helper to create JSON storage entry format */
-    const createStorageEntry = (position: number, timestamp = Date.now()) =>
-      JSON.stringify({ position, timestamp });
-
     /**
      * When component mounts with restoreScroll=true in location state
      * (from "Back to Results" link) and there's a saved scroll position,
@@ -610,8 +610,8 @@ describe("VirtualizedMovieGrid", () => {
     it("clears saved position when queryKey changes", () => {
       const movies = createMockMovies(50);
 
-      // Save position for "action" filter
-      sessionStorageMock.setStoredValue("scroll-discover-action", "500");
+      // Save position for "action" filter (proper JSON format for consistency)
+      sessionStorageMock.setStoredValue("scroll-discover-action", createStorageEntry(500));
 
       // But render with "comedy" filter - different queryKey
       (useMovieCollectionContext as Mock).mockReturnValue({

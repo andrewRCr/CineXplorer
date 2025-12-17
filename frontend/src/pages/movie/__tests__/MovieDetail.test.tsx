@@ -2,8 +2,8 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { screen, waitFor } from '@tests/helpers/test-renderer';
 import { renderWithRoute } from '@tests/helpers/test-renderer-with-routes';
 import MovieDetail from '../MovieDetail';
-import { createMockMovie } from '@tests/mocks/movieData';
-import type { Movie } from '@/types/movie';
+import { createMockMovieDetail } from '@tests/mocks/movieData';
+import type { MovieDetail as MovieDetailType } from '@/types/movie';
 
 // Mock the hooks and services
 vi.mock('@/hooks/movie/useMovieDetail', () => ({
@@ -42,7 +42,7 @@ const renderMovieDetailWithRoute = (movieId: string, searchParams: string = '') 
 };
 
 describe('MovieDetail - Back Button URL Construction', () => {
-  const mockMovie: Movie = createMockMovie({
+  const mockMovie: MovieDetailType = createMockMovieDetail({
     tmdb_id: 550,
     title: 'Fight Club',
     overview: 'An insomniac office worker...',
@@ -51,9 +51,9 @@ describe('MovieDetail - Back Button URL Construction', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    // Default mock: successful movie load - cast to match expected type
+    // Default mock: successful movie load
     vi.mocked(useMovieDetail).mockReturnValue({
-      movie: mockMovie as unknown as import('@shared/index').Movie,
+      movie: mockMovie,
       error: '',
       setMovie: vi.fn(),
       setError: vi.fn(),

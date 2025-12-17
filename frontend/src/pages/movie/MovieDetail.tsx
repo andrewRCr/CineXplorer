@@ -2,7 +2,7 @@ import useMovieDetail from "@/hooks/movie/useMovieDetail";
 import { useParams, useSearchParams } from "react-router-dom";
 import { useMemo } from "react";
 import { fetchMovieDetail } from "@/services/movieService";
-import type { Movie, Genre, CastMember, CrewMember, ProductionCompany, SpokenLanguage } from "@shared/index";
+import type { MovieDetail as MovieDetailType, Genre, CastMember, CrewMember, ProductionCompany, SpokenLanguage } from "@/types/movie";
 import CertificationBadge from "@/components/movie/CertificationBadge";
 import { BackToCollectionLink } from "@/components/navigation";
 import {
@@ -27,7 +27,7 @@ import useAuthContext from "@/hooks/auth/useAuthContext";
 const MovieDetail = () => {
   const { id } = useParams<{ id: string }>();
   const fetcher = useMemo(() => {
-    return () => fetchMovieDetail().get<Movie>(id!);
+    return () => fetchMovieDetail().get<MovieDetailType>(id!);
   }, [id]);
   const { movie, error, isLoading } = useMovieDetail(fetcher);
 
@@ -50,8 +50,8 @@ const MovieDetail = () => {
   const director = movie?.crew?.find(
     (member: CrewMember) => member.job === "Director"
   );
-  const writers = movie?.crew?.filter((member: CrewMember) =>
-    ["Writer", "Screenplay"].includes(member.job)
+  const writers = movie?.crew?.filter(
+    (member: CrewMember) => member.job && ["Writer", "Screenplay"].includes(member.job)
   );
 
   const jobPrefixMap: Record<string, string> = {
@@ -196,7 +196,7 @@ const MovieDetail = () => {
           )}
           {/* Header: User Score */}
           <Text fontWeight="bold">
-            User Score: <MovieUserScore score={movie.vote_average} />
+            User Score: <MovieUserScore score={movie.vote_average ?? 0} />
           </Text>
           {/* Header: Key Crew Section (creative leads) */}
           <Box mt={2}>
@@ -299,15 +299,17 @@ const MovieDetail = () => {
         <Flex gap={4} wrap="wrap" justify="center">
           {/* Filter for key roles: Director, Writer, etc. */}
           {movie.crew
-        ?.filter((member: CrewMember) =>
-              [
-                "Director",
-                "Writer",
-                "Screenplay",
-                "Director of Photography",
-                "Editor",
-                "Composer",
-              ].includes(member.job)
+            ?.filter(
+              (member: CrewMember) =>
+                member.job &&
+                [
+                  "Director",
+                  "Writer",
+                  "Screenplay",
+                  "Director of Photography",
+                  "Editor",
+                  "Composer",
+                ].includes(member.job)
             )
         .map((member: CrewMember) => (
               <Box

@@ -1,17 +1,17 @@
 import { useApiRequest } from "@/hooks/useApiRequest";
 import { useMemo } from "react";
 import type React from "react";
-import { type Movie } from "@shared/index";
+import type { MovieDetail } from "@/types/movie";
 
 type FetchDetailFn = () => {
-    request: Promise<{ data: Movie }>;
+    request: Promise<{ data: MovieDetail }>;
     cancel: () => void;
 };
 
 const useMovieDetail = (fetchFn: FetchDetailFn): {
-    movie: Movie | undefined;
+    movie: MovieDetail | undefined;
     error: string;
-    setMovie: React.Dispatch<React.SetStateAction<Movie | undefined>>;
+    setMovie: React.Dispatch<React.SetStateAction<MovieDetail | undefined>>;
     setError: React.Dispatch<React.SetStateAction<string>>;
     isLoading: boolean;
 } => {
@@ -22,7 +22,7 @@ const useMovieDetail = (fetchFn: FetchDetailFn): {
         setData: setMovie,
         setError,
         isLoading,
-    } = useApiRequest<Movie>(stableFetcher);
+    } = useApiRequest<MovieDetail>(stableFetcher);
     return { movie, error, setMovie, setError, isLoading };
 };
 

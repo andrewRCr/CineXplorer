@@ -17,7 +17,7 @@ import useAuthContext from "@/hooks/auth/useAuthContext";
 import { useState, useEffect } from "react";
 import { FiMail, FiX } from "react-icons/fi";
 import { FaGoogle, FaGithub } from "react-icons/fa";
-import { ERROR_CODES } from "@shared/error-codes";
+import { ERROR_CODES } from "@/@types/errors";
 import * as authService from "@/services/authService";
 import GoogleLogo from "@/assets/GoogleLogo";
 import GitHubLogo from "@/assets/GitHubLogo";

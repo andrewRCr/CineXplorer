@@ -4,13 +4,77 @@ Django Ninja schemas for core app endpoints.
 This module provides Pydantic schemas for:
 - Frontend logging API (receiving frontend log entries)
 - Logging health check endpoint
+- Error codes and categories (shared with frontend via OpenAPI)
 """
 
 from __future__ import annotations
 
+from enum import StrEnum
 from typing import Literal
 
 from ninja import Schema
+
+# =============================================================================
+# Error Codes and Categories
+# =============================================================================
+
+
+class ErrorCode(StrEnum):
+    """
+    Standardized error codes for API responses.
+
+    These codes are auto-generated to TypeScript via OpenAPI for type-safe
+    error handling across the frontend/backend boundary.
+    """
+
+    # Authentication errors
+    EMAIL_NOT_VERIFIED = "email_not_verified"
+    INVALID_CREDENTIALS = "invalid_credentials"
+    ACCOUNT_DISABLED = "account_disabled"
+    ACCOUNT_LOCKED = "account_locked"
+    INVALID_AUTHORIZATION = "invalid_authorization"
+    INVALID_REFRESH_TOKEN = "invalid_refresh_token"
+
+    # User Management Errors
+    USERNAME_EXISTS = "username_exists"
+    EMAIL_EXISTS = "email_exists"
+    INVALID_USERNAME = "invalid_username"
+    WEAK_PASSWORD = "weak_password"
+
+    # Movie Data Errors
+    MOVIE_NOT_FOUND = "movie_not_found"
+    INVALID_RATING = "invalid_rating"
+    DUPLICATE_RATING = "duplicate_rating"
+
+    # General API Errors
+    VALIDATION_ERROR = "validation_error"
+    PERMISSION_DENIED = "permission_denied"
+    RESOURCE_NOT_FOUND = "resource_not_found"
+    RATE_LIMITED = "rate_limited"
+
+
+class ErrorCategory(StrEnum):
+    """Error categories for grouping related error codes."""
+
+    AUTHENTICATION = "authentication"
+    USER_MANAGEMENT = "user_management"
+    MOVIE_DATA = "movie_data"
+    API_GENERAL = "api_general"
+
+
+class ApiErrorSchema(Schema):
+    """
+    Standard API error structure for error responses.
+
+    This schema is exposed in OpenAPI to enable type-safe error handling
+    in the frontend with auto-generated TypeScript types.
+    """
+
+    code: ErrorCode
+    message: str
+    category: ErrorCategory | None = None
+    field: str | None = None  # For validation errors on specific fields
+    details: dict[str, object] | None = None
 
 # Frontend Logging Schemas
 
@@ -84,8 +148,11 @@ class DevConsoleLogResponse(Schema):
 
 
 __all__ = [
+    "ApiErrorSchema",
     "DevConsoleLogRequest",
     "DevConsoleLogResponse",
+    "ErrorCategory",
+    "ErrorCode",
     "FrontendLogEntrySchema",
     "FrontendLogErrorResponse",
     "FrontendLogSuccessResponse",

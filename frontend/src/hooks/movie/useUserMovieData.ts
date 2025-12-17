@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
     getUserMovieDataByTmdbId,
     updateUserMovieData,
@@ -39,6 +39,15 @@ export function useUserMovieData(tmdbId: string): {
     const [data, setData] = useState<UserMovieData | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+
+    // Track mounted state to prevent setState after unmount
+    const mounted = useRef(true);
+    useEffect(() => {
+        mounted.current = true;
+        return () => {
+            mounted.current = false;
+        };
+    }, []);
 
     useEffect(() => {
         const tmdbIdNum = parseValidTmdbId(tmdbId);
@@ -81,10 +90,14 @@ export function useUserMovieData(tmdbId: string): {
     }, [tmdbId]);
 
     const update = async (changes: Partial<UserMovieDataUpdate>) => {
-        if (!data || !data.id) return;
-        setLoading(true);
+        if (!data || !data.id) {
+            logger.warn("Cannot update: no user movie data loaded");
+            return;
+        }
+        if (mounted.current) setLoading(true);
         try {
             const response = await updateUserMovieData(data.id, changes);
+            if (!mounted.current) return;
             if (isUserMovieData(response.data)) {
                 setData(response.data);
                 setError(null);
@@ -95,13 +108,14 @@ export function useUserMovieData(tmdbId: string): {
                 setError("Invalid response format from server");
             }
         } catch (err: unknown) {
+            if (!mounted.current) return;
             setError(
                 err instanceof Error
                     ? err.message
                     : "Failed to update user movie data"
             );
         } finally {
-            setLoading(false);
+            if (mounted.current) setLoading(false);
         }
     };
 

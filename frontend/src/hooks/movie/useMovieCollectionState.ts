@@ -93,6 +93,9 @@ export const useMovieCollectionState = ({
   // Track previous filter hash to detect filter changes (not initial mount)
   const prevFilterHashRef = useRef<string | null>(null);
 
+  // Ref for stable callback access in effects (avoids unnecessary re-runs)
+  const onBrowseParamsChangeRef = useRef<typeof onBrowseParamsChange | null>(null);
+
   // Auto-expand advanced panel when advanced filters become active (from URL or user input)
   // Respects user override: if user manually closed panel with these filters, don't re-expand
   useEffect(() => {
@@ -129,13 +132,17 @@ export const useMovieCollectionState = ({
     }
   }, [enableUrlSync, urlHandleBrowseParamsChange]);
 
+  // Keep ref updated for stable access in effects
+  onBrowseParamsChangeRef.current = onBrowseParamsChange;
+
   // Auto-reset title sort when language changes to non-Latin or "All Languages"
   // Title sorts (A-Z, Z-A) only make sense for Latin-script languages
+  // Uses ref to avoid re-running when unrelated browseParams change
   useEffect(() => {
     if (isTitleSort(browseParams.sortBy) && !isLatinScriptLanguage(browseParams.language)) {
-      onBrowseParamsChange({ sortBy: DEFAULT_SORT });
+      onBrowseParamsChangeRef.current?.({ sortBy: DEFAULT_SORT });
     }
-  }, [browseParams.language, browseParams.sortBy, onBrowseParamsChange]);
+  }, [browseParams.language, browseParams.sortBy]);
 
   // Advanced panel toggle with better UX
   const isAdvancedPanelOpen = enableAdvancedFilters ? localIsAdvancedPanelOpen : false;

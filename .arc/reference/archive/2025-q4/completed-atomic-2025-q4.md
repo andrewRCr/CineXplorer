@@ -6,6 +6,36 @@ Reference format: "see `completed-atomic-2025-q4.md`" or "see {task name} in `co
 
 ---
 
+- [x] DRY refactor: Extract year filter analysis utility
+    - **Outcome:** Centralized all year filter logic into `yearFilterAnalysis.ts` utility. Provides:
+      `analyzeYearFilter()` for full analysis (isEmpty, isSingleValue, isSameYear, isDecadeRange,
+      isInPresets, displayValue, displayLabel), plus convenience helpers `isYearFilterCustom()` and
+      `isYearFilterAdvanced()`. Updated ConnectedDropdowns and useMovieCollectionState to use utility.
+    - **Files:**
+        - New: `frontend/src/utilities/yearFilterAnalysis.ts`
+        - Updated: `frontend/src/components/movie/browse/ConnectedDropdowns.tsx`
+        - Updated: `frontend/src/hooks/movie/useMovieCollectionState.ts`
+
+    - **Branch:** `incidental/infinite-scroll-migration`
+
+- [x] Fix QuickBrowseBar year select state for non-preset year values
+    - **Outcome:** Fixed year select showing enabled state for out-of-preset values. Now correctly
+      treats: (1) out-of-preset decades (e.g., 1940's), (2) single-value filters (only minYear or
+      maxYear set), and (3) arbitrary ranges as custom values - showing actual value (e.g., "1940's")
+      in italic/disabled style. Also fixed `hasActiveAdvancedFilters` detection for these cases.
+    - **Files:** `frontend/src/components/movie/browse/ConnectedDropdowns.tsx`,
+      `frontend/src/hooks/movie/useMovieCollectionState.ts`
+
+    - **Branch:** `incidental/infinite-scroll-migration`
+
+- [x] Fix empty state message hidden behind advanced filters drawer
+    - **Outcome:** Changed drawer from overlay to push-down behavior. Added 200px extra top padding
+      to content container when advanced panel is open, with smooth 220ms CSS transition for open/close.
+      Content now pushes down when drawer opens, keeping empty state and grid content visible.
+    - **Files:** `frontend/src/components/movie/collection/MovieCollectionLayout.tsx`
+
+    - **Branch:** `incidental/infinite-scroll-migration`
+
 - [x] Create `strategy-pagination.md` - Document pagination architecture
     - **Outcome:** Comprehensive strategy doc covering buffer mechanism, deduplication tracker,
       cursor-based pagination, frontend integration, and Content Pool Depletion concept

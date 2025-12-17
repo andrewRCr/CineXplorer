@@ -39,7 +39,6 @@ export interface SortOption {
  * Browse parameters - complete state for movie browsing UI
  *
  * Fields:
- * - query: Search text (reserved for future use - currently unused in browse flow)
  * - genres: Array of TMDB genre IDs (empty = all genres)
  * - minYear/maxYear: Year range filter (empty string = no constraint)
  * - minRating/maxRating: Rating range filter (empty string = no constraint)
@@ -47,11 +46,14 @@ export interface SortOption {
  * - language: ISO 639-1 language code (empty string = all languages)
  * - certifications: Array of US MPAA ratings to filter by (empty = all ratings)
  *
+ * Note: Search query is NOT part of BrowseParams. Search flows through a separate
+ * path (URL ?query= → searchQuery memo → context.query) to avoid key mismatches
+ * between scroll save/restore operations.
+ *
  * All string fields use empty string ("") as the "not set" value.
  * Array fields use empty array ([]) as the "not set" value.
  */
 export interface BrowseParams {
-  query: string;
   genres: number[];
   minYear: string;
   maxYear: string;
@@ -61,3 +63,30 @@ export interface BrowseParams {
   language: string;
   certifications: string[];
 }
+
+/**
+ * BrowseParams keys as a runtime array - coupled to interface via type checks.
+ *
+ * Used for URL parameter filtering (preserving non-browse params).
+ * Compile-time checks ensure this stays in sync with BrowseParams interface.
+ */
+export const BROWSE_PARAM_KEYS = [
+  "genres",
+  "minYear",
+  "maxYear",
+  "minRating",
+  "maxRating",
+  "sortBy",
+  "language",
+  "certifications",
+] as const satisfies readonly (keyof BrowseParams)[];
+
+// Compile-time check: error if any BrowseParams key is missing from array
+type _AssertKeysComplete = Exclude<
+  keyof BrowseParams,
+  (typeof BROWSE_PARAM_KEYS)[number]
+> extends never
+  ? true
+  : "Missing keys in BROWSE_PARAM_KEYS";
+const _assertKeysComplete: _AssertKeysComplete = true;
+void _assertKeysComplete; // Prevent unused variable warning

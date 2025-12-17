@@ -31,13 +31,6 @@ function addGenres(params: Record<string, string | number | number[]>, browsePar
     }
 }
 
-// Helper: Add query filter if present (reserved for future use)
-function addQuery(params: Record<string, string | number | number[]>, browseParams: BrowseParams) {
-    if (browseParams.query) {
-        params.query = browseParams.query;
-    }
-}
-
 // Helper: Add language filter if present
 function addLanguage(params: Record<string, string | number | number[]>, browseParams: BrowseParams) {
     if (browseParams.language) {
@@ -104,7 +97,6 @@ export function mapBrowseParamsToApi(
 
     // Apply all filter params
     addGenres(apiParams, browseParams);
-    addQuery(apiParams, browseParams);
     addLanguage(apiParams, browseParams);
     addCertifications(apiParams, browseParams);
     addRatings(apiParams, browseParams);

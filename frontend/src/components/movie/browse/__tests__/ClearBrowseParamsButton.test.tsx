@@ -16,28 +16,27 @@ describe('ClearBrowseParamsButton Component', () => {
     vi.clearAllMocks();
   });
 
-  describe('Conditional Visibility Logic', () => {
-    it('hides button when no params are active', () => {
+  describe('Conditional Rendering Logic', () => {
+    it('does not render when no params are active', () => {
       render(<ClearBrowseParamsButton {...defaultProps} />);
 
-      const button = screen.getByText('Clear filters');
-
-      // Button should be hidden (visibility: hidden, opacity: 0)
-      expect(button).not.toBeVisible();
+      // Component returns null when no active filters
+      const button = screen.queryByRole('button', { name: /clear/i });
+      expect(button).not.toBeInTheDocument();
     });
 
-    it('shows button when genres param is active', () => {
+    it('renders button when genres param is active', () => {
       const paramsWithGenres = createMockBrowseParams({
         genres: [28, 12] // Action and Adventure
       });
 
       render(<ClearBrowseParamsButton {...defaultProps} browseParams={paramsWithGenres} />);
 
-      const button = screen.getByText('Clear filters');
-      expect(button).toBeVisible();
+      const button = screen.getByRole('button', { name: /clear/i });
+      expect(button).toBeInTheDocument();
     });
 
-    it('shows button when year params are active', () => {
+    it('renders button when year params are active', () => {
       const paramsWithYears = createMockBrowseParams({
         minYear: '2000',
         maxYear: '2023'
@@ -45,33 +44,33 @@ describe('ClearBrowseParamsButton Component', () => {
 
       render(<ClearBrowseParamsButton {...defaultProps} browseParams={paramsWithYears} />);
 
-      const button = screen.getByText('Clear filters');
-      expect(button).toBeVisible();
+      const button = screen.getByRole('button', { name: /clear/i });
+      expect(button).toBeInTheDocument();
     });
 
-    it('shows button when only minYear is set', () => {
+    it('renders button when only minYear is set', () => {
       const paramsWithMinYear = createMockBrowseParams({
         minYear: '2020'
       });
 
       render(<ClearBrowseParamsButton {...defaultProps} browseParams={paramsWithMinYear} />);
 
-      const button = screen.getByText('Clear filters');
-      expect(button).toBeVisible();
+      const button = screen.getByRole('button', { name: /clear/i });
+      expect(button).toBeInTheDocument();
     });
 
-    it('shows button when only maxYear is set', () => {
+    it('renders button when only maxYear is set', () => {
       const paramsWithMaxYear = createMockBrowseParams({
         maxYear: '2023'
       });
 
       render(<ClearBrowseParamsButton {...defaultProps} browseParams={paramsWithMaxYear} />);
 
-      const button = screen.getByText('Clear filters');
-      expect(button).toBeVisible();
+      const button = screen.getByRole('button', { name: /clear/i });
+      expect(button).toBeInTheDocument();
     });
 
-    it('shows button when multiple param types are active', () => {
+    it('renders button when multiple param types are active', () => {
       const paramsWithMultiple = createMockBrowseParams({
         genres: [35], // Comedy
         minYear: '2010',
@@ -80,11 +79,11 @@ describe('ClearBrowseParamsButton Component', () => {
 
       render(<ClearBrowseParamsButton {...defaultProps} browseParams={paramsWithMultiple} />);
 
-      const button = screen.getByText('Clear filters');
-      expect(button).toBeVisible();
+      const button = screen.getByRole('button', { name: /clear/i });
+      expect(button).toBeInTheDocument();
     });
 
-    it('hides button when isAdvancedOpen is true, even with active params', () => {
+    it('does not render when isAdvancedOpen is true, even with active params', () => {
       const paramsWithGenres = createMockBrowseParams({
         genres: [28] // Action
       });
@@ -97,8 +96,9 @@ describe('ClearBrowseParamsButton Component', () => {
         />
       );
 
-      const button = screen.getByText('Clear filters');
-      expect(button).not.toBeVisible();
+      // Component returns null when advanced panel is open
+      const button = screen.queryByRole('button', { name: /clear/i });
+      expect(button).not.toBeInTheDocument();
     });
   });
 
@@ -107,8 +107,8 @@ describe('ClearBrowseParamsButton Component', () => {
       const emptyParams = createMockBrowseParams();
       render(<ClearBrowseParamsButton {...defaultProps} browseParams={emptyParams} />);
 
-      const button = screen.getByText('Clear filters');
-      expect(button).not.toBeVisible();
+      const button = screen.queryByRole('button', { name: /clear/i });
+      expect(button).not.toBeInTheDocument();
     });
 
     it('correctly identifies active params with empty arrays', () => {
@@ -117,8 +117,8 @@ describe('ClearBrowseParamsButton Component', () => {
       });
       render(<ClearBrowseParamsButton {...defaultProps} browseParams={paramsWithEmptyGenres} />);
 
-      const button = screen.getByText('Clear filters');
-      expect(button).not.toBeVisible();
+      const button = screen.queryByRole('button', { name: /clear/i });
+      expect(button).not.toBeInTheDocument();
     });
 
     it('correctly identifies active params with empty strings', () => {
@@ -128,34 +128,34 @@ describe('ClearBrowseParamsButton Component', () => {
       });
       render(<ClearBrowseParamsButton {...defaultProps} browseParams={paramsWithEmptyStrings} />);
 
-      const button = screen.getByText('Clear filters');
-      expect(button).not.toBeVisible();
+      const button = screen.queryByRole('button', { name: /clear/i });
+      expect(button).not.toBeInTheDocument();
     });
 
-    it('shows button when query field is active', () => {
-      // Uses hasActiveFilters which correctly includes query field
-      const paramsWithQuery = createMockBrowseParams({
-        query: 'batman'
+    it('renders button when genres are active', () => {
+      // Uses hasActiveFilters which detects active filters
+      const paramsWithGenres = createMockBrowseParams({
+        genres: [28]
       });
-      render(<ClearBrowseParamsButton {...defaultProps} browseParams={paramsWithQuery} />);
+      render(<ClearBrowseParamsButton {...defaultProps} browseParams={paramsWithGenres} />);
 
-      const button = screen.getByText('Clear filters');
-      expect(button).toBeVisible();
+      const button = screen.getByRole('button', { name: /clear/i });
+      expect(button).toBeInTheDocument();
     });
 
     // KEY BEHAVIORAL CHANGE: Sort is NOT a filter
-    it('does NOT show button when ONLY sortBy is non-default', () => {
-      // Sort is a user preference, not a filter - "Clear filters" should not appear
+    it('does NOT render button when ONLY sortBy is non-default', () => {
+      // Sort is a user preference, not a filter - "Clear" should not appear
       const paramsWithSort = createMockBrowseParams({
         sortBy: 'vote_average.desc'
       });
       render(<ClearBrowseParamsButton {...defaultProps} browseParams={paramsWithSort} />);
 
-      const button = screen.getByText('Clear filters');
-      expect(button).not.toBeVisible();
+      const button = screen.queryByRole('button', { name: /clear/i });
+      expect(button).not.toBeInTheDocument();
     });
 
-    it('shows button when filters are active even with non-default sort', () => {
+    it('renders button when filters are active even with non-default sort', () => {
       // If actual filters are active, button shows (sort doesn't affect visibility)
       const paramsWithFilterAndSort = createMockBrowseParams({
         genres: [28],
@@ -163,8 +163,8 @@ describe('ClearBrowseParamsButton Component', () => {
       });
       render(<ClearBrowseParamsButton {...defaultProps} browseParams={paramsWithFilterAndSort} />);
 
-      const button = screen.getByText('Clear filters');
-      expect(button).toBeVisible();
+      const button = screen.getByRole('button', { name: /clear/i });
+      expect(button).toBeInTheDocument();
     });
   });
 
@@ -176,7 +176,7 @@ describe('ClearBrowseParamsButton Component', () => {
 
       render(<ClearBrowseParamsButton {...defaultProps} browseParams={paramsWithGenres} />);
 
-      const button = screen.getByText('Clear filters');
+      const button = screen.getByRole('button', { name: /clear filters/i });
       fireEvent.click(button);
 
       expect(mockOnClear).toHaveBeenCalledTimes(1);
@@ -189,7 +189,7 @@ describe('ClearBrowseParamsButton Component', () => {
 
       render(<ClearBrowseParamsButton {...defaultProps} browseParams={paramsWithGenres} />);
 
-      const button = screen.getByText('Clear filters');
+      const button = screen.getByRole('button', { name: /clear filters/i });
       expect(button).toBeEnabled();
       expect(button).toBeVisible();
     });
@@ -201,7 +201,7 @@ describe('ClearBrowseParamsButton Component', () => {
 
       render(<ClearBrowseParamsButton {...defaultProps} browseParams={paramsWithGenres} />);
 
-      const button = screen.getByText('Clear filters');
+      const button = screen.getByRole('button', { name: /clear filters/i });
       fireEvent.click(button);
       fireEvent.click(button);
       fireEvent.click(button);
@@ -211,32 +211,28 @@ describe('ClearBrowseParamsButton Component', () => {
   });
 
   describe('Component Structure and Styling', () => {
-    it('renders with correct button styling classes', () => {
+    it('renders as icon-only button with aria-label', () => {
       const paramsWithGenres = createMockBrowseParams({
         genres: [28]
       });
 
       render(<ClearBrowseParamsButton {...defaultProps} browseParams={paramsWithGenres} />);
 
-      const button = screen.getByText('Clear filters');
-
-      // Button should be rendered with expected text
+      const button = screen.getByRole('button', { name: /clear filters/i });
       expect(button).toBeInTheDocument();
       expect(button.tagName).toBe('BUTTON');
     });
 
-    it('applies correct container positioning', () => {
-      const paramsWithGenres = createMockBrowseParams({
-        genres: [28]
-      });
+    it('renders placeholder when not visible to prevent layout shift', () => {
+      const { container } = render(<ClearBrowseParamsButton {...defaultProps} />);
 
-      render(<ClearBrowseParamsButton {...defaultProps} browseParams={paramsWithGenres} />);
+      // Should render a placeholder div, not a button
+      const button = screen.queryByRole('button');
+      expect(button).not.toBeInTheDocument();
 
-      const button = screen.getByText('Clear filters');
-      const container = button.closest('div');
-
-      expect(container).toBeInTheDocument();
-      // Container should exist and contain the button
+      // Placeholder should exist
+      const placeholder = container.firstChild;
+      expect(placeholder).toBeInTheDocument();
     });
 
     it('renders consistently across different param combinations', () => {
@@ -257,7 +253,7 @@ describe('ClearBrowseParamsButton Component', () => {
           />
         );
 
-        const button = screen.getByText('Clear filters');
+        const button = screen.getByRole('button', { name: /clear filters/i });
         expect(button).toBeVisible();
         expect(button).toBeEnabled();
 
@@ -267,7 +263,7 @@ describe('ClearBrowseParamsButton Component', () => {
   });
 
   describe('Accessibility', () => {
-    it('provides accessible button element', () => {
+    it('provides accessible button element via aria-label', () => {
       const paramsWithGenres = createMockBrowseParams({
         genres: [28]
       });
@@ -278,14 +274,12 @@ describe('ClearBrowseParamsButton Component', () => {
       expect(button).toBeInTheDocument();
     });
 
-    it('maintains proper button semantics when hidden', () => {
+    it('renders placeholder (not button) when hidden', () => {
       render(<ClearBrowseParamsButton {...defaultProps} />);
 
-      // For hidden elements, use getByText since getByRole might not find hidden elements
-      const button = screen.getByText('Clear filters');
-      expect(button).toBeInTheDocument();
-      // Button exists but is not visible
-      expect(button).not.toBeVisible();
+      // Component returns placeholder div, not a button
+      const button = screen.queryByRole('button');
+      expect(button).not.toBeInTheDocument();
     });
 
     it('supports keyboard interaction when visible', () => {
@@ -338,7 +332,7 @@ describe('ClearBrowseParamsButton Component', () => {
 
       render(<ClearBrowseParamsButton {...defaultProps} browseParams={edgeCaseParams} />);
 
-      const button = screen.getByText('Clear filters');
+      const button = screen.getByRole('button', { name: /clear filters/i });
       // Button should be visible because undefined !== '' and null !== ''
       expect(button).toBeVisible();
     });
@@ -346,22 +340,20 @@ describe('ClearBrowseParamsButton Component', () => {
     it('handles rapid state changes', () => {
       const { rerender } = render(<ClearBrowseParamsButton {...defaultProps} />);
 
-      // Initially no params
-      let button = screen.getByText('Clear filters');
-      expect(button).not.toBeVisible();
+      // Initially no params - placeholder rendered
+      expect(screen.queryByRole('button')).not.toBeInTheDocument();
 
       // Add params
       const paramsWithGenres = createMockBrowseParams({ genres: [28] });
       rerender(<ClearBrowseParamsButton {...defaultProps} browseParams={paramsWithGenres} />);
 
-      button = screen.getByText('Clear filters');
+      const button = screen.getByRole('button', { name: /clear filters/i });
       expect(button).toBeVisible();
 
       // Remove params
       rerender(<ClearBrowseParamsButton {...defaultProps} />);
 
-      button = screen.getByText('Clear filters');
-      expect(button).not.toBeVisible();
+      expect(screen.queryByRole('button')).not.toBeInTheDocument();
     });
 
     it('handles isAdvancedOpen state changes', () => {
@@ -376,7 +368,7 @@ describe('ClearBrowseParamsButton Component', () => {
       );
 
       // Initially visible
-      let button = screen.getByText('Clear filters');
+      const button = screen.getByRole('button', { name: /clear filters/i });
       expect(button).toBeVisible();
 
       // Hide when isAdvancedOpen becomes true
@@ -388,8 +380,8 @@ describe('ClearBrowseParamsButton Component', () => {
         />
       );
 
-      button = screen.getByText('Clear filters');
-      expect(button).not.toBeVisible();
+      // Now placeholder, not button
+      expect(screen.queryByRole('button')).not.toBeInTheDocument();
     });
 
     it('maintains functionality after prop updates', () => {
@@ -400,7 +392,7 @@ describe('ClearBrowseParamsButton Component', () => {
       );
 
       // Click initial button
-      let button = screen.getByText('Clear filters');
+      let button = screen.getByRole('button', { name: /clear filters/i });
       fireEvent.click(button);
       expect(mockOnClear).toHaveBeenCalledTimes(1);
 
@@ -410,7 +402,7 @@ describe('ClearBrowseParamsButton Component', () => {
         <ClearBrowseParamsButton {...defaultProps} browseParams={updatedParams} />
       );
 
-      button = screen.getByText('Clear filters');
+      button = screen.getByRole('button', { name: /clear filters/i });
       fireEvent.click(button);
       expect(mockOnClear).toHaveBeenCalledTimes(2);
     });

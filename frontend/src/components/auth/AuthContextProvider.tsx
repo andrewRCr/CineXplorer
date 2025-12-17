@@ -10,7 +10,7 @@
  * - Components can access auth state using useAuthContext.
  */
 import { AuthContext } from "@/contexts/AuthContext";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/hooks/auth/useAuth";
 
 export function AuthContextProvider(props: React.PropsWithChildren<unknown>) {
   const authState = useAuth();

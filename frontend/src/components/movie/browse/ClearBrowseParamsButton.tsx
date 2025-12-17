@@ -9,6 +9,16 @@ interface ClearBrowseParamsButtonProps {
   isAdvancedOpen: boolean;
 }
 
+/** Width of the icon button - used for placeholder to prevent layout shift */
+const BUTTON_SIZE = "24px";
+
+/**
+ * Compact clear filters button (icon-only) for QuickBrowseBar.
+ * Shows when filters are active and advanced panel is closed.
+ * Positioned after filter controls, before sort (since it clears filters, not sort).
+ *
+ * Renders a same-width placeholder when hidden to prevent layout shift.
+ */
 const ClearBrowseParamsButton = ({
   browseParams,
   onClear,
@@ -17,35 +27,32 @@ const ClearBrowseParamsButton = ({
   // Use hasActiveFilters (excludes sort) - sort is user preference, not a filter
   const hasActiveParams = hasActiveFilters(browseParams);
 
+  // Show when filters active AND advanced panel closed
+  const isVisible = hasActiveParams && !isAdvancedOpen;
+
+  if (!isVisible) {
+    // Placeholder to reserve space and prevent layout shift
+    return <Box w={BUTTON_SIZE} h={BUTTON_SIZE} ml={2} flexShrink={0} />;
+  }
+
   return (
-    <Box
-      position="absolute"
-      bottom="-28px"
-      left="0"
-      right="0"
-      height="25px"
-      display="flex"
-      justifyContent="center"
-      alignItems="center"
+    <Button
+      onClick={onClear}
+      size="xs"
+      variant="ghost"
+      color="destructive"
+      _hover={{ bg: "tertiary/8", color: "destructive" }}
+      ml={2}
+      flexShrink={0}
+      w={BUTTON_SIZE}
+      h={BUTTON_SIZE}
+      minW={BUTTON_SIZE}
+      p={0}
+      aria-label="Clear filters"
+      title="Clear filters"
     >
-      <Button
-        onClick={onClear}
-        size="xs"
-        variant="ghost"
-        color="destructive"
-        _hover={{ bg: "tertiary/8", color: "destructive" }}
-        fontSize="xs"
-        visibility={
-          hasActiveParams && !isAdvancedOpen ? "visible" : "hidden"
-        }
-        opacity={hasActiveParams && !isAdvancedOpen ? 1 : 0}
-        transition="visibility 0s, opacity 0.2s ease-in-out"
-        mt={4}
-      >
-        <FiX style={{ marginRight: "4px" }} />
-        Clear filters
-      </Button>
-    </Box>
+      <FiX size={14} />
+    </Button>
   );
 };
 

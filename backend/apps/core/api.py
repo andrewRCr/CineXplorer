@@ -21,8 +21,11 @@ from ninja.errors import HttpError
 from middleware.logging import get_correlation_id
 
 from .schemas import (
+    ApiErrorSchema,
     DevConsoleLogRequest,
     DevConsoleLogResponse,
+    ErrorCategory,
+    ErrorCode,
     FrontendLogEntrySchema,
     FrontendLogErrorResponse,
     FrontendLogSuccessResponse,
@@ -122,6 +125,62 @@ def health_check(request: HttpRequest) -> dict[str, str]:
         Status response indicating the application is healthy
     """
     return {"status": "healthy"}
+
+
+@core_router.get(
+    "/error-codes/",
+    auth=None,
+    response=list[ApiErrorSchema],
+    summary="Get available error codes",
+    description="Returns a list of all API error codes. This endpoint exposes error "
+    "codes and categories for frontend type generation via OpenAPI.",
+)
+def get_error_codes(request: HttpRequest) -> list[ApiErrorSchema]:
+    """
+    Return all available error codes with their categories.
+
+    This endpoint serves two purposes:
+    1. Documents all error codes and their categories
+    2. Exposes ErrorCode/ErrorCategory enums in OpenAPI for TypeScript generation
+    """
+    # Map error codes to their categories
+    category_map: dict[ErrorCode, ErrorCategory] = {
+        # Authentication
+        ErrorCode.EMAIL_NOT_VERIFIED: ErrorCategory.AUTHENTICATION,
+        ErrorCode.INVALID_CREDENTIALS: ErrorCategory.AUTHENTICATION,
+        ErrorCode.ACCOUNT_DISABLED: ErrorCategory.AUTHENTICATION,
+        ErrorCode.ACCOUNT_LOCKED: ErrorCategory.AUTHENTICATION,
+        ErrorCode.INVALID_AUTHORIZATION: ErrorCategory.AUTHENTICATION,
+        ErrorCode.INVALID_REFRESH_TOKEN: ErrorCategory.AUTHENTICATION,
+        # User Management
+        ErrorCode.USERNAME_EXISTS: ErrorCategory.USER_MANAGEMENT,
+        ErrorCode.EMAIL_EXISTS: ErrorCategory.USER_MANAGEMENT,
+        ErrorCode.INVALID_USERNAME: ErrorCategory.USER_MANAGEMENT,
+        ErrorCode.WEAK_PASSWORD: ErrorCategory.USER_MANAGEMENT,
+        # Movie Data
+        ErrorCode.MOVIE_NOT_FOUND: ErrorCategory.MOVIE_DATA,
+        ErrorCode.INVALID_RATING: ErrorCategory.MOVIE_DATA,
+        ErrorCode.DUPLICATE_RATING: ErrorCategory.MOVIE_DATA,
+        # API General
+        ErrorCode.VALIDATION_ERROR: ErrorCategory.API_GENERAL,
+        ErrorCode.PERMISSION_DENIED: ErrorCategory.API_GENERAL,
+        ErrorCode.RESOURCE_NOT_FOUND: ErrorCategory.API_GENERAL,
+        ErrorCode.RATE_LIMITED: ErrorCategory.API_GENERAL,
+    }
+
+    # Warn if any error codes are missing category mappings
+    missing_codes = set(ErrorCode) - set(category_map.keys())
+    if missing_codes:
+        app_logger.warning(f"Error codes without category mapping: {missing_codes}")
+
+    return [
+        ApiErrorSchema(
+            code=code,
+            message=f"Error code: {code.value}",
+            category=category_map.get(code),
+        )
+        for code in ErrorCode
+    ]
 
 
 @core_router.get("/logs/health/", auth=None, response=LogHealthCheckResponse)

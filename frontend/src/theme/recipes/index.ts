@@ -15,3 +15,4 @@ export { badgeRecipe } from "./badge";
 export { checkboxRecipe } from "./checkbox";
 export { radioRecipe } from "./radio";
 export { switchRecipe } from "./switch";
+export { tooltipRecipe } from "./tooltip";

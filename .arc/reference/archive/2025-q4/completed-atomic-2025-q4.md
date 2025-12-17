@@ -6,6 +6,107 @@ Reference format: "see `completed-atomic-2025-q4.md`" or "see {task name} in `co
 
 ---
 
+- [x] Refactor Movie Collection URL/State Hooks for Clarity and Separation of Concerns
+    - **Outcome:** Extracted utilities, clarified terminology, fixed bugs, simplified structure
+    - **New files created:**
+        - `frontend/src/utilities/deepEqual.ts` - generic deep equality comparison
+        - `frontend/src/utilities/advancedPanelOverride.ts` - sessionStorage panel tracking
+    - **Functions moved/created:**
+        - `hasAdvancedFilterValues` → `browseParamUtils.ts`
+        - `generateBrowseUrl` → `browseUrlSync.ts` (new)
+    - **Bugs fixed:**
+        - R.7: Language sort reset effect now respects `enableUrlSync` flag
+    - **Code size reduction:** ~100 lines extracted from hooks to reusable utilities
+    - **Tests:** 722 frontend tests passing
+
+    - **Branch:** `incidental/infinite-scroll-migration`
+
+- [x] Auto-generate error codes from backend Pydantic Enum → OpenAPI → TypeScript
+    - **Outcome:** Error codes now auto-generated from backend Pydantic StrEnum → OpenAPI → TypeScript
+    - **Changes:**
+        - Added `ErrorCode` and `ErrorCategory` StrEnums to `backend/apps/core/schemas.py`
+        - Added `ApiErrorSchema` Pydantic model to expose enums in OpenAPI
+        - Added `/api/error-codes/` endpoint to expose error codes with categories
+        - Created `frontend/src/@types/errors.d.ts` with type-safe `ERROR_CODES` constant
+        - Updated `Login.tsx` to import from new location (`@/@types/errors`)
+        - Deleted `shared/` directory (frontend) and `backend/shared/` directory entirely
+    - **Benefits achieved:**
+        - Single source of truth: backend Pydantic StrEnum
+        - Automatic sync: `npm run generate-types` updates TypeScript types
+        - Type-safe: `ERROR_CODES` satisfies `Record<string, ErrorCode>`
+        - Zero manual maintenance: shared directory eliminated
+
+    - **Branch:** `incidental/infinite-scroll-migration`
+
+- [x] Remove `@shared/api-types.ts` and migrate to OpenAPI-generated types
+    - **Outcome:** Migrated 3 files from `@shared` movie types to `@/types/movie` (OpenAPI-generated)
+    - **Changes:**
+        - `useMovieDetail.ts`: Uses `MovieDetail` type from `@/types/movie`
+        - `MovieDetail.tsx`: Uses `MovieDetailType`, `Genre`, etc. from `@/types/movie`; added null
+          checks for stricter OpenAPI types (`job`, `vote_average`)
+        - `MovieDetail.test.tsx`: Uses `createMockMovieDetail` and `MovieDetailType`
+        - Deleted `shared/api-types.ts` (shared/ directory now fully eliminated)
+
+    - **Branch:** `incidental/infinite-scroll-migration`
+
+- [x] DRY refactor: Extract year filter analysis utility
+    - **Outcome:** Centralized all year filter logic into `yearFilterAnalysis.ts` utility. Provides:
+      `analyzeYearFilter()` for full analysis (isEmpty, isSingleValue, isSameYear, isDecadeRange,
+      isInPresets, displayValue, displayLabel), plus convenience helpers `isYearFilterCustom()` and
+      `isYearFilterAdvanced()`. Updated ConnectedDropdowns and useMovieCollectionState to use utility.
+    - **Files:**
+        - New: `frontend/src/utilities/yearFilterAnalysis.ts`
+        - Updated: `frontend/src/components/movie/browse/ConnectedDropdowns.tsx`
+        - Updated: `frontend/src/hooks/movie/useMovieCollectionState.ts`
+
+    - **Branch:** `incidental/infinite-scroll-migration`
+
+- [x] Fix QuickBrowseBar year select state for non-preset year values
+    - **Outcome:** Fixed year select showing enabled state for out-of-preset values. Now correctly
+      treats: (1) out-of-preset decades (e.g., 1940's), (2) single-value filters (only minYear or
+      maxYear set), and (3) arbitrary ranges as custom values - showing actual value (e.g., "1940's")
+      in italic/disabled style. Also fixed `hasActiveAdvancedFilters` detection for these cases.
+    - **Files:** `frontend/src/components/movie/browse/ConnectedDropdowns.tsx`,
+      `frontend/src/hooks/movie/useMovieCollectionState.ts`
+
+    - **Branch:** `incidental/infinite-scroll-migration`
+
+- [x] Fix empty state message hidden behind advanced filters drawer
+    - **Outcome:** Changed drawer from overlay to push-down behavior. Added 200px extra top padding
+      to content container when advanced panel is open, with smooth 220ms CSS transition for open/close.
+      Content now pushes down when drawer opens, keeping empty state and grid content visible.
+    - **Files:** `frontend/src/components/movie/collection/MovieCollectionLayout.tsx`
+
+    - **Branch:** `incidental/infinite-scroll-migration`
+
+- [x] Create `strategy-pagination.md` - Document pagination architecture
+    - **Outcome:** Comprehensive strategy doc covering buffer mechanism, deduplication tracker,
+      cursor-based pagination, frontend integration, and Content Pool Depletion concept
+    - **Files:** `.arc/reference/strategies/project/strategy-pagination.md`, STRATEGY-INDEX.md updated
+
+    - **Branch:** `incidental/infinite-scroll-migration`
+
+- [x] Create `strategy-data-quality.md` - Document TMDB data quality mechanisms
+    - **Outcome:** Comprehensive strategy doc covering two-pass filtering, 5-stage pipeline,
+      VoteCountPolicy, CompletenessPolicy, TMDB quirks, and rejection rate data
+    - **Files:** `.arc/reference/strategies/project/strategy-data-quality.md`, STRATEGY-INDEX.md updated
+
+    - **Branch:** `incidental/infinite-scroll-migration`
+
+- [x] Redesign AdvancedFiltersPanel as compact drawer
+    - **Outcome:** Converted full-height panel to compact drawer attached to sticky CollapsibleSubNav
+    - **Key changes:**
+        - Part A: QuickBrowseBar cleanup (ClearFilters button inline, bg consistency, placeholder)
+        - Part B: Compact 3-row drawer layout with GenrePopover component
+        - Toggle button shows primary color when advanced filters active (even if panel closed)
+        - Deleted unused GenreCombobox.tsx (superseded by GenrePopover)
+    - **Tests:** 23 new GenrePopover tests, 746 frontend tests passing
+    - **Files:**
+        - New: `GenrePopover.tsx`, `GenrePopover.test.tsx`
+        - Updated: `AdvancedFiltersPanel.tsx`, `CertificationFilter.tsx`, `CollapsibleSubNav.tsx`, `BrowseControlsSection.tsx`
+
+    - **Branch:** `incidental/infinite-scroll-migration`
+
 - [x] Search/Browse Architecture Cleanup (3 tasks)
     - **Outcome:** Fixed search backward navigation bug and cleaned up architecture:
         1. **Centralized `CORE_GENRE_IDS`** - Moved to `browseDefaults.ts` with JSDoc, exported

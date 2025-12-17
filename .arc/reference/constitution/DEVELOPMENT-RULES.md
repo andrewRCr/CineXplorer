@@ -299,6 +299,19 @@ direct style values.
 **Rule of thumb:** If you're writing inline color/style values instead of semantic tokens, check the strategy
 docs for the correct pattern.
 
+### Import Standards (Frontend)
+
+Use absolute imports (`@/`) for cross-directory references and relative imports (`./`) for same-directory references.
+
+**Examples:**
+
+- ✅ `import { foo } from "@/services/apiClient"` (from hooks/ to services/)
+- ✅ `import { bar } from "./httpService"` (within services/)
+- ❌ `import { foo } from "../services/apiClient"` (cross-directory relative)
+
+**Why:** Absolute imports are resilient to file moves and make import paths self-documenting. The `@/` alias maps
+to `src/`, configured in `tsconfig.json` and `vite.config.ts`.
+
 ### Code Documentation Standards
 
 - **No meta-project references in codebase**: Never reference task IDs, phase numbers, or `.arc/`

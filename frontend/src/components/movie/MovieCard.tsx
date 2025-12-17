@@ -9,21 +9,20 @@ import {
 } from "@chakra-ui/react";
 import { useState, useRef, useEffect, memo, useMemo, useCallback } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { type Movie } from "@/types/movie";
+import { type MovieListItem } from "@/types/movie";
 import { Tooltip } from "../core/chakra/tooltip";
 import { LuEye, LuHeart } from "react-icons/lu";
 import { RiPlayListAddLine, RiPlayListFill } from "react-icons/ri";
 import MovieUserScore from "./MovieUserScore";
-import { useMovieActions } from "../../hooks/useMovieActions";
+import { useMovieActions } from "@/hooks/movie/useMovieActions";
 
 interface MovieCardProps {
-  movie: Movie;
-  currentPage?: number;
+  movie: MovieListItem;
   source?: string;
   query?: string;
 }
 
-const MovieCard = ({ movie, currentPage, source, query }: MovieCardProps) => {
+const MovieCard = ({ movie, source, query }: MovieCardProps) => {
   const [searchParams] = useSearchParams();
   const [isTitleTooltipOpen, setIsTitleTooltipOpen] = useState(false);
   const [isTitleTruncated, setIsTitleTruncated] = useState(false);
@@ -126,20 +125,20 @@ const MovieCard = ({ movie, currentPage, source, query }: MovieCardProps) => {
     });
   }, [movie.release_date]);
 
-  // Memoize query string building - preserve all URL parameters
+  // Memoize query string building - preserve filter parameters (not pagination)
   const queryString = useMemo(() => {
     // Start with all URL params (includes filter params parent doesn't track)
     const params: Record<string, string> = {};
     searchParams.forEach((value, key) => {
+      // Skip pagination params - infinite scroll doesn't use them
+      if (key === "page" || key === "tmdb_page_start") return;
       if (value) {
         params[key] = value;
       }
     });
 
-    // Props override URL (parent controls pagination/source, we add filters)
-    if (typeof currentPage === "number") {
-      params.page = String(currentPage);
-    }
+    // Props override URL - source and query only (no currentPage for infinite scroll)
+    // Note: currentPage prop is deprecated and ignored
     if (source) {
       params.from = source;
     }
@@ -153,7 +152,7 @@ const MovieCard = ({ movie, currentPage, source, query }: MovieCardProps) => {
       .join("&");
 
     return queryStr ? `?${queryStr}` : "";
-  }, [searchParams, currentPage, source, query]);
+  }, [searchParams, source, query]);
 
   // Memoize poster URL to avoid recreation
   const posterUrl = useMemo(() => {
@@ -364,11 +363,11 @@ const MovieCard = ({ movie, currentPage, source, query }: MovieCardProps) => {
 // Memoize the component to prevent unnecessary re-renders
 const MemoizedMovieCard = memo(MovieCard, (prevProps, nextProps) => {
   // Custom comparison function for better performance
+  // Note: currentPage is deprecated (infinite scroll) - not included in comparison
   return (
     prevProps.movie.tmdb_id === nextProps.movie.tmdb_id &&
     prevProps.movie.user_movie_data?.user_on_watchlist ===
       nextProps.movie.user_movie_data?.user_on_watchlist &&
-    prevProps.currentPage === nextProps.currentPage &&
     prevProps.source === nextProps.source &&
     prevProps.query === nextProps.query
   );

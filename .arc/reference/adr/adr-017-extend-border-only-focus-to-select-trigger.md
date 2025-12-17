@@ -58,7 +58,8 @@ This supersedes ADR-015's guidance on Select dropdowns while maintaining ADR-015
 
 - **Different from ADR-015 guidance:** Creates brief documentation inconsistency (resolved by this ADR)
 - **Custom border colors need explicit focus:** Components overriding `borderColor` must also specify `_focusVisible`
-    - **Mitigation:** Documented in strategy guide; only affects 3 components (ConnectedDropdowns, SortDropdownMinimal, SortSelector)
+    - **Mitigation:** Documented in strategy guide; only affects 3 components
+      (ConnectedDropdowns, SortDropdownMinimal, SortSelector)
 
 ### Risks
 

@@ -33,7 +33,7 @@
  */
 
 import create from "./httpService";
-import type { components } from "../types/api";
+import type { components } from "@/types/api";
 
 // Type-safe schema imports from generated OpenAPI types
 type UserMovieDataDetailSchema = components["schemas"]["UserMovieDataDetailSchema"];

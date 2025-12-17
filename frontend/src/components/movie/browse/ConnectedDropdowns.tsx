@@ -7,6 +7,7 @@ import {
   yearOptions,
 } from "@/constants/browseOptions";
 import type { BrowseParams } from "@/types/browseTypes";
+import { analyzeYearFilter } from "@/utilities/yearFilterAnalysis";
 
 const GENRE_WIDTH = "140px";
 const YEAR_WIDTH = "110px";
@@ -21,6 +22,8 @@ interface ConnectedDropdownsProps {
   ) => void;
   onToggleAdvanced?: () => void;
   isAdvancedOpen?: boolean;
+  /** Whether advanced filters are currently applied (for toggle button indicator) */
+  hasActiveAdvancedFilters?: boolean;
   pageSource?: string;
 }
 
@@ -29,6 +32,7 @@ const ConnectedDropdowns = ({
   onFiltersChange,
   onToggleAdvanced,
   isAdvancedOpen = false,
+  hasActiveAdvancedFilters = false,
   pageSource,
 }: ConnectedDropdownsProps) => {
   // Memoize the filter update function to prevent recreation
@@ -73,35 +77,31 @@ const ConnectedDropdowns = ({
 
   // Memoize year display calculations
   const yearDisplayData = useMemo(() => {
-    // Check if year filter should be disabled due to route constraints
+    // Check if year filter should be disabled due to route constraints (now-playing/upcoming)
     const isRouteConstrained = pageSource === "now-playing" || pageSource === "upcoming";
 
-    const isDecadeRange = !!filters.minYear &&
-      !!filters.maxYear &&
-      parseInt(filters.maxYear) - parseInt(filters.minYear) === 9 &&
-      filters.minYear.endsWith("0");
+    // Use shared utility for year filter analysis
+    const yearAnalysis = analyzeYearFilter(filters.minYear, filters.maxYear);
 
-    const isYearCustom = !!filters.minYear &&
-      !!filters.maxYear &&
-      filters.minYear !== filters.maxYear &&
-      !isDecadeRange;
+    // Determine if this should show as "Custom" (disabled, italic)
+    // Route-constrained pages override this with their own display
+    const isYearCustom = !yearAnalysis.isEmpty && !yearAnalysis.isInPresets && !yearAnalysis.isSameYear;
 
     let yearDisplayValue = "";
     let isYearSpan = false;
+
     if (isRouteConstrained) {
-      // Show year(s) being filtered when disabled due to route constraints
+      // Route-specific display: show the actual date range years for now-playing/upcoming
       const today = new Date();
       let startDate: Date;
       let endDate: Date;
 
       if (pageSource === "now-playing") {
-        // Now Playing: today - 30 days to today + 5 days
         startDate = new Date(today);
         startDate.setDate(today.getDate() - 30);
         endDate = new Date(today);
         endDate.setDate(today.getDate() + 5);
       } else {
-        // Upcoming: today + 5 days to today + 65 days
         startDate = new Date(today);
         startDate.setDate(today.getDate() + 5);
         endDate = new Date(today);
@@ -112,19 +112,16 @@ const ConnectedDropdowns = ({
       const endYear = endDate.getFullYear().toString();
       isYearSpan = startYear !== endYear;
       yearDisplayValue = isYearSpan ? `${startYear}-${endYear}` : startYear;
-    } else if (isYearCustom) {
-      yearDisplayValue = "custom";
-    } else if (filters.minYear && filters.maxYear && filters.minYear === filters.maxYear) {
-      yearDisplayValue = filters.minYear;
-    } else if (filters.minYear && filters.maxYear &&
-           parseInt(filters.maxYear) - parseInt(filters.minYear) === 9) {
-      yearDisplayValue = `${filters.minYear.slice(0, 4)}'s`;
+    } else {
+      // Use analysis display value for non-route-constrained pages
+      yearDisplayValue = yearAnalysis.displayValue;
     }
 
     return {
-      isDecadeRange,
+      isDecadeRange: yearAnalysis.isDecadeRange,
       isYearCustom,
       yearDisplayValue,
+      yearDisplayLabel: isRouteConstrained ? yearDisplayValue : yearAnalysis.displayLabel,
       isRouteConstrained,
       isYearSpan,
     };
@@ -159,7 +156,7 @@ const ConnectedDropdowns = ({
   const yearCollection = useMemo(() => {
     const allItems = [
       ...(yearDisplayData.isRouteConstrained ? [{ label: yearDisplayData.yearDisplayValue, value: yearDisplayData.yearDisplayValue }] : []),
-      ...(yearDisplayData.isYearCustom ? [{ label: "Custom", value: "custom" }] : []),
+      ...(yearDisplayData.isYearCustom ? [{ label: yearDisplayData.yearDisplayLabel, value: "custom" }] : []),
       ...yearOptions.map((option) => ({
         label: option.label,
         value: option.value,
@@ -176,7 +173,7 @@ const ConnectedDropdowns = ({
     });
 
     return createListCollection({ items: uniqueItems });
-  }, [yearDisplayData.isYearCustom, yearDisplayData.isRouteConstrained, yearDisplayData.yearDisplayValue]);
+  }, [yearDisplayData.isYearCustom, yearDisplayData.isRouteConstrained, yearDisplayData.yearDisplayValue, yearDisplayData.yearDisplayLabel]);
 
   return (
     <HStack gap={0} align="stretch">
@@ -389,7 +386,7 @@ const ConnectedDropdowns = ({
           Unlike standalone buttons, it uses subtle hover styling (background tint only) to match the connected
           dropdowns' hover behavior. This creates visual cohesion across the connected control group.
           Strategy doc pattern (border/text color changes on hover) applies to standalone buttons, not connected groups.
-          Active filter indication: primary icon color when panel is open.
+          Active filter indication: primary icon color when panel is open OR when advanced filters are applied.
       */}
       {onToggleAdvanced && (
         <Button
@@ -398,8 +395,8 @@ const ConnectedDropdowns = ({
           variant="outline"
           borderRadius="0 4px 4px 0"
           borderColor="button-outline"
-          // Active filter indication: primary color when panel is open
-          color={isAdvancedOpen ? "primary" : "on-button-outline"}
+          // Active filter indication: primary color when panel is open or advanced filters applied
+          color={isAdvancedOpen || hasActiveAdvancedFilters ? "primary" : "on-button-outline"}
           _hover={{
             bg: "tertiary/8",
           }}
@@ -430,8 +427,9 @@ const MemoizedConnectedDropdowns = memo(ConnectedDropdowns, (prevProps, nextProp
     // Compare function references
     prevProps.onFiltersChange === nextProps.onFiltersChange &&
     prevProps.onToggleAdvanced === nextProps.onToggleAdvanced &&
-    // Compare isAdvancedOpen for active filter indication
+    // Compare state for active filter indication
     prevProps.isAdvancedOpen === nextProps.isAdvancedOpen &&
+    prevProps.hasActiveAdvancedFilters === nextProps.hasActiveAdvancedFilters &&
     // Compare pageSource for route-based disabling
     prevProps.pageSource === nextProps.pageSource
   );

@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import MovieCollectionGrid from "@/components/movie/collection/MovieCollectionGrid";
+import VirtualizedMovieGrid from "@/components/movie/collection/VirtualizedMovieGrid";
 
 const SearchResults = () => {
   const [searchParams] = useSearchParams();
@@ -19,12 +19,12 @@ const SearchResults = () => {
     return null;
   }
 
-  // MovieCollectionLayout will provide:
+  // VirtualizedMovieGrid provides:
   // - Page header with title from routeConfigHelper.ts
-  // - Search fetcher from routeConfigHelper.ts  
-  // - Pagination management
-  // - Consistent styling and layout
-  return <MovieCollectionGrid />;
+  // - Search fetcher from routeConfigHelper.ts
+  // - Infinite scroll with virtualization
+  // - Scroll position persistence keyed by search query
+  return <VirtualizedMovieGrid />;
 };
 
 export default SearchResults;

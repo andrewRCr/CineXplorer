@@ -13,11 +13,11 @@ import {
 import { StyledInput } from "@/components/common";
 import { useFormik } from "formik";
 import { useNavigate, useLocation } from "react-router-dom";
-import useAuthContext from "@/hooks/useAuthContext";
+import useAuthContext from "@/hooks/auth/useAuthContext";
 import { useState, useEffect } from "react";
 import { FiMail, FiX } from "react-icons/fi";
 import { FaGoogle, FaGithub } from "react-icons/fa";
-import { ERROR_CODES } from "@shared/error-codes";
+import { ERROR_CODES } from "@/constants/errors";
 import * as authService from "@/services/authService";
 import GoogleLogo from "@/assets/GoogleLogo";
 import GitHubLogo from "@/assets/GitHubLogo";

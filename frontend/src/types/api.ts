@@ -458,6 +458,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/error-codes/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get available error codes
+         * @description Returns a list of all API error codes. This endpoint exposes error codes and categories for frontend type generation via OpenAPI.
+         */
+        get: operations["apps_core_api_get_error_codes"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/logs/health/": {
         parameters: {
             query?: never;
@@ -1305,6 +1325,40 @@ export interface components {
             recent_interactions?: unknown[] | null;
         };
         /**
+         * ApiErrorSchema
+         * @description Standard API error structure for error responses.
+         *
+         *     This schema is exposed in OpenAPI to enable type-safe error handling
+         *     in the frontend with auto-generated TypeScript types.
+         */
+        ApiErrorSchema: {
+            code: components["schemas"]["ErrorCode"];
+            /** Message */
+            message: string;
+            category?: components["schemas"]["ErrorCategory"] | null;
+            /** Field */
+            field?: string | null;
+            /** Details */
+            details?: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /**
+         * ErrorCategory
+         * @description Error categories for grouping related error codes.
+         * @enum {string}
+         */
+        ErrorCategory: "authentication" | "user_management" | "movie_data" | "api_general";
+        /**
+         * ErrorCode
+         * @description Standardized error codes for API responses.
+         *
+         *     These codes are auto-generated to TypeScript via OpenAPI for type-safe
+         *     error handling across the frontend/backend boundary.
+         * @enum {string}
+         */
+        ErrorCode: "email_not_verified" | "invalid_credentials" | "account_disabled" | "account_locked" | "invalid_authorization" | "invalid_refresh_token" | "username_exists" | "email_exists" | "invalid_username" | "weak_password" | "movie_not_found" | "invalid_rating" | "duplicate_rating" | "validation_error" | "permission_denied" | "resource_not_found" | "rate_limited";
+        /**
          * LogHealthCheckResponse
          * @description Response for logging system health check.
          */
@@ -1581,6 +1635,11 @@ export interface components {
              * @description Page number for pagination
              */
             page?: number | null;
+            /**
+             * Tmdb Page Start
+             * @description TMDB page to start fetching from (cursor for infinite scroll)
+             */
+            tmdb_page_start?: number | null;
         };
         /** CastMemberSchema */
         CastMemberSchema: {
@@ -2315,6 +2374,26 @@ export interface operations {
             };
         };
     };
+    apps_core_api_get_error_codes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorSchema"][];
+                };
+            };
+        };
+    };
     apps_core_api_log_health_check: {
         parameters: {
             query?: never;
@@ -2530,6 +2609,8 @@ export interface operations {
                 query: string;
                 /** @description Page number for pagination */
                 page?: number | null;
+                /** @description TMDB page to start fetching from (cursor for infinite scroll) */
+                tmdb_page_start?: number | null;
             };
             header?: never;
             path?: never;

@@ -11,28 +11,39 @@ When planning frontend modernization work, this serves as the starting point for
 
 ### TanStack Query (React Query)
 
-**Status:** Planned
-**Priority:** High
+**Status:** Partially Implemented (Browse/Search)
+**Priority:** Evaluate further adoption opportunities
 **Rationale:** Replace manual state management with industry-standard data fetching/caching
 
-**Current Issues:**
+**Implemented (Infinite Scroll Migration):**
 
-- Manual loading/error state management in hooks
-- No built-in caching or request deduplication
-- Manual refetch/invalidation logic
-- Optimistic updates implemented manually with rollback
+- `useInfiniteMovies` - TanStack Query `useInfiniteQuery` for movie collections
+- Browse flows: `/browse/*`, `/now-playing`, `/upcoming`, `/top-rated`
+- Search flows: `/search/*`
+- Cursor-based pagination via `next_tmdb_page_start`
+- Automatic caching, background refetch, request deduplication
+- Scroll position restoration on back-navigation
 
-**Target Implementation:**
+**Potential Further Adoption (requires evaluation):**
 
-- Server state management via TanStack Query
-- Automatic background refetching
-- Built-in request deduplication
-- Declarative cache invalidation
-- Type-safe API with generated types
+The original rationale for TanStack Query included benefits we haven't fully explored:
+
+- **Automatic background refetching** - Could benefit any frequently-changing data
+- **Request deduplication** - Prevents duplicate API calls for same data
+- **Declarative cache invalidation** - Simplifies state management after mutations
+- **Optimistic updates** - Instant UI feedback with automatic rollback on failure
+
+Candidate areas to evaluate:
+
+- User movie data (watchlist, ratings) - optimistic updates could improve UX
+- Movie detail page - caching/prefetching on hover
+- Genre/certification lists - rarely change, good cache candidates
+- Authentication flows - currently uses AuthContext (may stay as-is)
 
 **Related Code:**
 
-- `frontend/src/hooks/useMovieActions.ts` - Manual state management, marked for Query migration
+- `frontend/src/hooks/movie/useInfiniteMovies.ts` - TanStack Query implementation ✓
+- `frontend/src/hooks/useMovieActions.ts` - Manual state, evaluation candidate
 - `frontend/src/services/movieInteractionService.ts` - Service functions ready to wrap
 
 **Migration Strategy:**

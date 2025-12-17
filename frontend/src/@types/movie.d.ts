@@ -1,80 +1,70 @@
 /**
- * Frontend-specific movie types and re-exports from auto-generated API types
+ * Movie Types
  *
- * This file imports auto-generated API types from Django Ninja OpenAPI
- * and provides type aliases and frontend-specific extensions.
+ * Type aliases from auto-generated API types (Django Ninja OpenAPI).
+ * Uses semantic names that reflect frontend usage context.
+ *
+ * Type Architecture:
+ * - MovieListItem: Used in grids, lists, cards (browse, search, discover endpoints)
+ * - MovieDetail: Used on movie detail pages (single movie endpoint)
+ *
+ * Key difference: MovieListItem has `genre_ids: number[]`, MovieDetail has
+ * `genres: GenreSchema[]`. This mirrors TMDB's API design where list endpoints
+ * return compact data and detail endpoints return full objects.
  */
 
-import type { components } from '../types/api';
+import type { components } from '@/types/api';
 
 // ============================================================================
-// Type Aliases from Auto-Generated API Types
+// Core Movie Types
 // ============================================================================
 
-// Core types directly from backend schemas
-export type MovieDetailSchema = components['schemas']['MovieDetailSchema'];
-export type MovieBaseSchema = components['schemas']['MovieBaseSchema'];
+/**
+ * Movie data for list/grid views (browse, search, discover endpoints).
+ * Contains compact representation with genre_ids (not full genre objects).
+ */
+export type MovieListItem = components['schemas']['MovieBaseSchema'];
+
+/**
+ * Full movie data for detail pages (single movie endpoint).
+ * Contains complete data including genres, cast, crew, etc.
+ */
+export type MovieDetail = components['schemas']['MovieDetailSchema'];
+
+// ============================================================================
+// Pagination Types
+// ============================================================================
+
+/**
+ * Paginated response wrapper for movie list endpoints.
+ * Contains results as MovieListItem[] (not MovieDetail[]).
+ */
+export type PaginatedMoviesResponse = components['schemas']['PaginatedMovieResponseSchema'];
+
+// ============================================================================
+// Supporting Types
+// ============================================================================
+
 export type Genre = components['schemas']['GenreSchema'];
 export type CastMember = components['schemas']['CastMemberSchema'];
 export type CrewMember = components['schemas']['CrewMemberSchema'];
 export type ProductionCompany = components['schemas']['ProductionCompanySchema'];
 export type SpokenLanguage = components['schemas']['SpokenLanguageSchema'];
 export type UserMovieData = components['schemas']['UserMovieDataSchema'];
-
-// Pagination types
-export type PaginatedMoviesResponse = components['schemas']['PaginatedMovieResponseSchema'];
-
-// Supporting types
 export type Keyword = components['schemas']['KeywordSchema'];
 export type Person = components['schemas']['PersonSchema'];
 export type PaginatedKeywordResponse = components['schemas']['PaginatedKeywordResponseSchema'];
 export type PaginatedPersonResponse = components['schemas']['PaginatedPersonResponseSchema'];
 
 // ============================================================================
-// Extended Movie Type with Frontend Fields
+// Response Types
 // ============================================================================
 
-/**
- * Extended Movie type that includes all backend fields plus additional
- * frontend-required fields from TMDB API
- */
-export interface Movie extends MovieDetailSchema {
-  // Additional fields that frontend expects from TMDB API
-  backdrop_path?: string | null;
-  vote_count?: number | null;
-  popularity?: number;
-  original_language?: string;
-  original_title?: string;
-  adult?: boolean;
-  video?: boolean;
-}
-
-/**
- * Base movie type for list views
- */
-export interface MovieBase extends MovieBaseSchema {
-  // Additional fields for list views if needed
-  backdrop_path?: string | null;
-}
-
-// ============================================================================
-// Response Type Aliases for API Endpoints
-// ============================================================================
-
-// Genre endpoint response
 export interface GenresResponse {
   genres: Genre[];
 }
 
-// Credits type (for potential future use)
 export interface Credits {
   cast: CastMember[];
   crew: CrewMember[];
 }
-
-// ============================================================================
-// Frontend-Specific Types
-// ============================================================================
-
-// Note: For browse/filter state types, use BrowseParams from @/types/browseTypes.ts
-// For API parameter types, use MovieQueryParams from services/movieService.ts

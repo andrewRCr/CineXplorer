@@ -29,22 +29,6 @@
 ## Active
 <!-- Add tasks here with checkboxes -->
 
-<!-- Documentation -->
-
-- [ ] Create `strategy-data-quality.md` - Document TMDB data quality mechanisms
-    - **Context:** Extracted from `tasks-filter-integration-testing.md` Phase 4.2 (documentation scope change)
-    - **Content to cover:**
-        - Two-pass filtering architecture (TMDB API primary, backend second-pass hygiene)
-        - VoteCountPolicy: Tiered thresholds (STRICT/MODERATE/BYPASS) and when each applies
-        - CompletenessPolicy: Poster and title requirements
-        - Historical validation: EARLIEST_VALID_RELEASE_YEAR (1888)
-        - Frontend timezone-safe date parsing pattern
-        - TMDB API quirks and known bugs (reference research doc)
-        - Parameter flow: Frontend filters → API params → service params → TMDB query + backend filter
-    - **Location:** `.arc/reference/strategies/project/strategy-data-quality.md`
-    - **Priority:** Low - code is well-documented, this is for discoverability
-    - **Effort:** ~1-2 hours
-
 <!-- UI/UX Fixes -->
 
 - [ ] Revert MovieUserScore badge colors to traffic light scheme
@@ -86,6 +70,18 @@
     - Test session timeout behavior
     - Document reproduction steps if found, or close as testing artifact
 
+- [ ] Investigate console.log capture to frontend log file
+    - **Context:** QUICK-REFERENCE.md mentions console logs captured to `backend/logs/frontend/.console-logs.txt`
+    - **Observation:** Log file exists but only contains structured logger output (`logger.debug()`, etc.)
+    - **Problem:** Raw `console.log()` calls aren't being captured - only structured logger calls appear
+    - **Question:** Was console.log capture ever implemented, or is QUICK-REFERENCE documentation inaccurate?
+    - **If broken:** Implement console.log interception to write to the same log file
+    - **If never implemented:** Update QUICK-REFERENCE to accurately reflect current behavior
+    - **Files to investigate:**
+        - `frontend/src/services/logger.ts` - check for console interception
+        - `backend/logs/frontend/` - examine log capture mechanism
+        - `.arc/reference/QUICK-REFERENCE.md` - verify/update documentation
+
 - [ ] Investigate pytest-cov coverage measurement issue (external research)
     - Observed: `CoverageWarning: Module apps.movie was previously imported, but not measured`
     - Symptom: Some modules show 0% coverage (helpers.py, schemas.py) while others show 100% (api.py)
@@ -96,98 +92,10 @@
     - Goal: Either fix configuration or document as known limitation with workaround
     - Context: Discovered during endpoint consolidation quality gates (Phase 6.1.b)
 
-<!-- Code Quality / Refactoring -->
+<!-- Data Quality -->
 
-- [ ] Refactor Movie Collection URL/State Hooks for Clarity and Separation of Concerns
-    - **Context:** Discovered during Task 3.7.b (tasks-pagination-buffer-tracking.md) - hooks are
-      functional but messy, hard to parse, mixed responsibilities
-    - **Goal:** Clean separation, improved readability, proper DRY
-    - **Scope:** 3 hooks + supporting utilities
-    - **⚠️ Deferred until:** After `tasks-infinite-scroll-migration.md` Phase 4 (Integration) completes.
-      Hooks will be significantly modified during infinite scroll integration - refactoring now would
-      be wasted effort. Re-evaluate after integration: some items (R.1-R.4, R.8) likely still applicable,
-      others (R.5, R.7, R.9) may be addressed or obsoleted by the migration.
-
-    - [ ] **R.1 Fix "search" terminology confusion in comments/docs**
-        - Problem: "search" used for both URL query strings (browser API) and movie search feature
-        - Files: `browseUrlSync.ts`, `searchUrlSync.ts`, `useMovieCollectionUrl.tsx`
-        - Change: Use "query string" or "URL params" instead of "search string/params" in comments
-        - Small effort, big clarity win
-
-    - [ ] **R.2 Extract `deepEqual` utility from useMovieCollectionUrl**
-        - Currently: Generic comparison function buried at top of hook file (lines 9-33)
-        - Move to: `utilities/deepEqual.ts` or use `fast-deep-equal` package
-        - Update imports in `useMovieCollectionUrl.tsx`
-
-    - [ ] **R.3 Extract sessionStorage utilities from useMovieCollectionState**
-        - Currently: 4 module-level functions (lines 16-87) for advanced panel override tracking
-        - Extract to: `utilities/advancedPanelOverride.ts`
-        - Functions: `getAdvancedFilterHash`, `hasUserOverride`, `setUserOverride`, `clearUserOverride`
-        - Reduces file length by ~70 lines before hook even starts
-
-    - [ ] **R.4 Move `hasAdvancedFilterValues` to browseParamUtils.ts**
-        - Currently: Exported from `useMovieCollectionState.tsx` (lines 127-165)
-        - Better home: `utilities/browseParamUtils.ts` with other param utilities
-        - Note: Duplicates some decade detection logic with `getAdvancedFilterHash` - consolidate
-        - Update imports in `useMovieCollectionState.tsx`, `BrowseControlsSection.tsx` (if used)
-
-    - [ ] **R.5 Audit and remove `enableUrlSync=false` code path if unused**
-        - Currently: Dual-mode complexity with URL-synced vs local state
-        - Check: Is non-URL-synced mode actually used anywhere?
-        - If unused: Remove `localBrowseParams`, `localCurrentPage`, `localTmdbPageStart`, ternaries
-        - If used: Document where and why
-        - Estimated reduction: ~30 lines + significant complexity
-
-    - [ ] **R.6 Use `generateBrowseUrl()` in handleBrowseParamsChange**
-        - Currently: `handleBrowseParamsChange` (lines 101-136) builds URL inline with URLSearchParams
-        - We have: `browseUrlSync.ts` with `generateBrowseUrl()` for this exact purpose
-        - Benefit: Consistency with URL sync pattern, DRY
-
-    - [ ] **R.7 Fix language sort reset effect bug**
-        - Currently: Effect at line 237-241 calls `urlHandleBrowseParamsChange` directly
-        - Bug: Ignores `enableUrlSync` flag - would try URL update even in local mode
-        - Fix: Use `onBrowseParamsChange` (the unified handler) instead
-
-    - [ ] **R.8 Simplify derived state in useMovieCollectionState**
-        - Currently: Individual useMemos for `hasActiveFilters`, etc., then wrapped in `derivedState` useMemo
-        - The wrapper useMemo (lines 305-310) adds no value
-        - Remove wrapper, spread individual values directly in return
-
-    - [ ] **R.9 (Optional, larger scope) Consider hook decomposition**
-        - If after R.1-R.8 hooks are still complex, consider splitting:
-            - `useBrowseParamsUrl` - browse params ↔ URL sync only
-            - `usePaginationUrl` - pagination ↔ URL sync only
-            - `useRouteChangeReset` - route transition detection
-            - `useMovieCollectionUrl` becomes thin composer
-        - **Defer decision** until R.1-R.8 complete - may not be needed
-
-    - **Files:**
-        - `frontend/src/components/movie/collection/useMovieCollectionUrl.tsx`
-        - `frontend/src/components/movie/collection/useMovieCollectionState.tsx`
-        - `frontend/src/utilities/browseUrlSync.ts`
-        - `frontend/src/utilities/searchUrlSync.ts`
-        - `frontend/src/utilities/browseParamUtils.ts`
-        - New: `frontend/src/utilities/deepEqual.ts` (or package)
-        - New: `frontend/src/utilities/advancedPanelOverride.ts`
-
-    - **Priority:** Low (functional, not blocking)
-    - **Effort:** Medium (R.1-R.8 individually small, R.9 larger if needed)
-    - **Risk:** Low (refactor with existing test coverage)
-
-<!-- Navigation/Routing -->
-
-- [ ] Extract `BackToCollectionButton` shared component
-    - **Context:** `MovieDetail.tsx:58-93` has inline BackButton with comment noting extraction
-      opportunity if PersonDetail needs similar functionality
-    - **Current implementation:**
-        - Reads `from` and filter params from URL
-        - Constructs back URL based on source route (search, browse, browse/*)
-        - Preserves all query params for filter state
-    - **Implementation:**
-        1. Create `frontend/src/components/navigation/BackToCollectionButton.tsx`
-        2. Props: `from: string`, `params: Record<string, string>`, optional `label?: string`
-        3. Move URL construction logic from MovieDetail
-        4. Update MovieDetail to use shared component
-        5. (Future) Use in PersonDetail when that page is built
-    - **Files:** New component, `MovieDetail.tsx`
-    - **Defer until:** PersonDetail is being built (avoid premature abstraction)
+- [ ] Examine the following movies for production company patterns (i.e., do any of them produce 90%+ 'adult' content?)
+for potential bulk blacklisting; if not found, blacklist individually (movies are mislabeled as non-adult on TMDB):
+    - 280460, 50633, 1113566, 264865, 199214, 329872, 406167, 222270, 264975, 1241742, 89632, 28325, 134451, 318947,
+    458353, 40348, 397298, 29194, 460229, 97697, 1069286, 28555, 33790, 315294, 57267, 45042, 196013,  29926, 333941,
+    433111, 141585, 151182, 715394, 505039, 474531, 331250, 278954, 424626, 225450, 564823,259903,110705,220688,127744,64512,154910,105428,393249,423468,436551,285553,284143,70479,295389,70638,28809,90787,36888,220873,420200,265255,69403,265186,306107,265181,860521,424829,40132,197644,598691,5913,410385,496032,371748,281197,135003,797816,272847,415727,311917,264870,264868,544082,899338,194789,36887,220897,193458,183584,485736,259265,124389,265255,36886

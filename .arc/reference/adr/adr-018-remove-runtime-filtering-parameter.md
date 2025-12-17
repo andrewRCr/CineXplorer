@@ -26,13 +26,13 @@ TMDB's runtime filtering via discover endpoint (`with_runtime.gte`/`with_runtime
 
 ### Alternatives Considered
 
-| Approach | Description | Verdict |
-|----------|-------------|---------|
-| **N+1 Batch Fetching** | Fetch discover results, then batch-fetch `/movie/{id}` for each to get runtime, filter client-side | Impractical: 10-12 sec latency per page, 20+ API calls per page |
-| **Gradual Cache Population** | Build persistent cache that fetches runtime data opportunistically over time | Viable for production apps, but broken initial UX; not suitable for portfolio app |
-| **Manual Data Corrections** | Submit corrections to TMDB for incorrect translations | Not scalable: 8 hours per fix, thousands of entries |
-| **Minimum Threshold (`gte=3`)** | Filter out obvious typos (0-2 min entries) | Doesn't solve core problem; still gets false positives from legitimate translations |
-| **Alternative APIs (OMDb, Trakt)** | Switch to different movie API | Same N+1 problem; no API offers runtime filtering that works |
+| Approach                           | Description                                                                                        | Verdict                                                                             |
+|------------------------------------|----------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------|
+| **N+1 Batch Fetching**             | Fetch discover results, then batch-fetch `/movie/{id}` for each to get runtime, filter client-side | Impractical: 10-12 sec latency per page, 20+ API calls per page                     |
+| **Gradual Cache Population**       | Build persistent cache that fetches runtime data opportunistically over time                       | Viable for production apps, but broken initial UX; not suitable for portfolio app   |
+| **Manual Data Corrections**        | Submit corrections to TMDB for incorrect translations                                              | Not scalable: 8 hours per fix, thousands of entries                                 |
+| **Minimum Threshold (`gte=3`)**    | Filter out obvious typos (0-2 min entries)                                                         | Doesn't solve core problem; still gets false positives from legitimate translations |
+| **Alternative APIs (OMDb, Trakt)** | Switch to different movie API                                                                      | Same N+1 problem; no API offers runtime filtering that works                        |
 
 ### Portfolio App Consideration
 

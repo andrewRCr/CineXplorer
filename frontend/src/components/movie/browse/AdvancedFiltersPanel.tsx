@@ -5,12 +5,12 @@ import {
   Button,
   HStack,
   Text,
-  Separator,
   Select,
   createListCollection,
+  Flex,
 } from "@chakra-ui/react";
-import { FiFilter, FiX } from "react-icons/fi";
-import GenreSelector from "./GenreSelector";
+import { FiChevronUp, FiX } from "react-icons/fi";
+import GenrePopover from "./GenrePopover";
 import YearSelector from "./YearSelector";
 import RatingSelector from "./RatingSelector";
 import CertificationFilter from "./CertificationFilter";
@@ -26,9 +26,10 @@ interface AdvancedFiltersPanelProps {
       | Partial<BrowseParams>
       | ((prev: BrowseParams) => BrowseParams)
   ) => void;
-  isCollapsed?: boolean;
   onToggleCollapse?: () => void;
   pageSource?: string;
+  /** Whether the drawer containing this panel is open (for auto-closing dropdowns) */
+  isDrawerOpen?: boolean;
 }
 
 const LANGUAGE_WIDTH = "160px";
@@ -36,9 +37,9 @@ const LANGUAGE_WIDTH = "160px";
 const AdvancedFiltersPanel = ({
   browseParams,
   onBrowseParamsChange,
-  isCollapsed = false,
   onToggleCollapse,
   pageSource,
+  isDrawerOpen = true,
 }: AdvancedFiltersPanelProps) => {
   const languageCollection = useMemo(
     () =>
@@ -72,185 +73,144 @@ const AdvancedFiltersPanel = ({
   // Use hasActiveFilters (excludes sort) for button visibility
   const hasActiveParams = hasActiveFilters(browseParams);
 
-  if (isCollapsed) {
-    return (
-      <Box mb={4}>
-        <Button
-          onClick={onToggleCollapse}
-          variant="outline"
-          size="sm"
-          borderColor="button-outline"
-          color="on-button-outline"
-          _hover={{
-            bg: "tertiary/8",
-            borderColor: "tertiary",
-            color: "tertiary",
-          }}
-        >
-          <FiFilter style={{ marginRight: "6px" }} />
-          {hasActiveParams ? "Filters (Active)" : "Filters"}
-        </Button>
-      </Box>
-    );
-  }
-
+  // Drawer layout: compact 3-row design
+  // Row 1: Genres (full) | Certifications
+  // Row 2: Language | Year range | Rating range
+  // Row 3: Clear/Collapse buttons (right-aligned)
   return (
-    <Box
-      mb={0}
-      ml={4}
-      p={6}
-      border="1px solid"
-      borderColor="border-strong-01"
-      borderRadius="md"
-      bg="layer-01"
-      boxShadow="shadow-sm"
-    >
-      <HStack justify="space-between" mb={4}>
-      <Text fontSize="lg" fontWeight="medium" color="foreground">
-          Advanced Filters
-        </Text>
-        <HStack>
-          {hasActiveParams && (
-            <Button
-              onClick={clearFilters}
-              size="sm"
-              variant="ghost"
-              color="destructive"
-              _hover={{ bg: "tertiary/8", color: "destructive" }}
-            >
-              <FiX style={{ marginRight: "6px" }} />
-              Clear Filters
-            </Button>
-          )}
-          {onToggleCollapse && (
-            <Button
-              onClick={onToggleCollapse}
-              size="sm"
-              variant="ghost"
-              color="tertiary"
-              _hover={{ bg: "tertiary/8", color: "tertiary-hover" }}
-            >
-              <FiFilter style={{ marginRight: "6px" }} />
-              Collapse
-            </Button>
-          )}
-        </HStack>
-      </HStack>
-
-      <VStack gap={4} align="stretch">
-        <GenreSelector
+    <VStack gap={2} align="center" w="100%">
+      {/* Row 1: Genres + Certifications side by side */}
+      <Flex gap={6} wrap="wrap" align="flex-start" justify="center">
+        <GenrePopover
           selectedGenres={browseParams.genres}
           onChange={(genres) => updateParam("genres", genres)}
+          isOpen={isDrawerOpen}
         />
 
-        <Separator borderColor="border-subtle-01" />
+        <CertificationFilter
+          selectedCertifications={browseParams.certifications}
+          onChange={(certifications) =>
+            updateParam("certifications", certifications)
+          }
+        />
+      </Flex>
 
-        <HStack justify="center" align="start" gap={8}>
-          <Box>
-            <Text fontSize="sm" fontWeight="medium" mb={2} color="foreground">
-              Language
-            </Text>
-            <Select.Root
-              collection={languageCollection}
-              value={browseParams.language ? [browseParams.language] : [""]}
-              onValueChange={(details) => {
-                updateParam("language", details.value[0] ?? "");
+      {/* Row 2: Language, Year, Rating */}
+      <Flex gap={6} wrap="wrap" align="flex-start" justify="center">
+        <Box>
+          <Text fontSize="sm" fontWeight="medium" mb={2} color="foreground">
+            Language
+          </Text>
+          <Select.Root
+            collection={languageCollection}
+            value={browseParams.language ? [browseParams.language] : [""]}
+            onValueChange={(details) => {
+              updateParam("language", details.value[0] ?? "");
+            }}
+            positioning={{ placement: "bottom-start", gutter: 2 }}
+          >
+            {/* Custom styling to match StyledInput pattern on layer-01 */}
+            <Select.Trigger
+              w={LANGUAGE_WIDTH}
+              minH="32px"
+              h="32px"
+              fontSize="14px"
+              bg="transparent"
+              borderColor="border-strong-01"
+              _hover={{
+                borderColor: "border-strong-02",
+                bg: "tertiary/8",
               }}
-              positioning={{ placement: "bottom-start", gutter: 2 }}
+              _focusVisible={{ borderColor: "tertiary" }}
+              css={{
+                padding: "0 12px",
+                // Highlight value text when language is selected
+                "& > span": {
+                  color: browseParams.language
+                    ? "var(--chakra-colors-primary)"
+                    : "var(--chakra-colors-foreground)",
+                },
+              }}
             >
-              <Select.Trigger
+              <Select.ValueText placeholder="All Languages" />
+              <Select.Indicator />
+            </Select.Trigger>
+            <Select.Positioner>
+              {/* Content uses selectRecipe base styles; custom overrides for width and scroll */}
+              <Select.Content
                 w={LANGUAGE_WIDTH}
-                minH="32px"
-                h="32px"
-                fontSize="14px"
-                lineHeight="1.2"
-                borderRadius="4px"
-                border="1px solid"
-                borderColor="button-outline"
-                backgroundColor="transparent"
-                _hover={{ bg: "tertiary/8" }}
-                _focusVisible={{ borderColor: "tertiary" }}
-                css={{
-                  padding: "6px 12px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  // Active filter indication: primary color when language selected
-                  // Small delay ensures text updates before color changes
-                  "& > span": {
-                    transition: "color 0.15s ease-out 0.05s",
-                    color: browseParams.language
-                      ? "var(--chakra-colors-primary)"
-                      : "var(--chakra-colors-foreground)",
-                  },
-                  "& [data-part='indicator']": {
-                    width: "16px",
-                    height: "16px",
-                  },
-                }}
+                maxH="300px"
+                overflowY="auto"
+                zIndex="popover"
               >
-                <Select.ValueText placeholder="All Languages" />
-                <Select.Indicator />
-              </Select.Trigger>
-              <Select.Positioner>
-                <Select.Content
-                  w={LANGUAGE_WIDTH}
-                  bg="muted"
-                  borderColor="border-subtle-02"
-                  color="foreground"
-                  maxH="300px"
-                  overflowY="auto"
-                >
-                  {languageCollection.items.map((item) => {
-                    const isSelected = browseParams.language === item.value;
-                    return (
-                      <Select.Item
-                        key={item.value}
-                        item={item}
-                        bg={isSelected ? "tertiary" : undefined}
-                        color={isSelected ? "on-tertiary" : "foreground"}
-                        _hover={{
-                          bg: isSelected ? "tertiary" : "tertiary/12",
-                          color: isSelected ? "on-tertiary" : "foreground",
-                        }}
-                      >
-                        {item.label}
-                      </Select.Item>
-                    );
-                  })}
-                </Select.Content>
-              </Select.Positioner>
-            </Select.Root>
-          </Box>
-          <Box>
-            <YearSelector
-              minYear={browseParams.minYear}
-              maxYear={browseParams.maxYear}
-              onMinYearChange={(year) => updateParam("minYear", year)}
-              onMaxYearChange={(year) => updateParam("maxYear", year)}
-              pageSource={pageSource}
-            />
-          </Box>
-          <Box>
-            <RatingSelector
-              minRating={browseParams.minRating}
-              maxRating={browseParams.maxRating}
-              onMinRatingChange={(rating) => updateParam("minRating", rating)}
-              onMaxRatingChange={(rating) => updateParam("maxRating", rating)}
-            />
-          </Box>
-        </HStack>
-
-        <Box w="100%">
-          <CertificationFilter
-            selectedCertifications={browseParams.certifications}
-            onChange={(certifications) =>
-              updateParam("certifications", certifications)
-            }
-          />
+                {languageCollection.items.map((item) => {
+                  const isSelected = browseParams.language === item.value;
+                  return (
+                    <Select.Item
+                      key={item.value}
+                      item={item}
+                      bg={isSelected ? "tertiary" : undefined}
+                      color={isSelected ? "on-tertiary" : "foreground"}
+                      _hover={{
+                        bg: isSelected ? "tertiary" : "tertiary/12",
+                        color: isSelected ? "on-tertiary" : "foreground",
+                      }}
+                    >
+                      {item.label}
+                    </Select.Item>
+                  );
+                })}
+              </Select.Content>
+            </Select.Positioner>
+          </Select.Root>
         </Box>
-      </VStack>
-    </Box>
+
+        <YearSelector
+          minYear={browseParams.minYear}
+          maxYear={browseParams.maxYear}
+          onMinYearChange={(year) => updateParam("minYear", year)}
+          onMaxYearChange={(year) => updateParam("maxYear", year)}
+          pageSource={pageSource}
+        />
+
+        <RatingSelector
+          minRating={browseParams.minRating}
+          maxRating={browseParams.maxRating}
+          onMinRatingChange={(rating) => updateParam("minRating", rating)}
+          onMaxRatingChange={(rating) => updateParam("maxRating", rating)}
+        />
+      </Flex>
+
+      {/* Row 3: Action buttons - right-aligned */}
+      <HStack gap={0} justify="flex-end" w="100%">
+        {hasActiveParams && (
+          <Button
+            onClick={clearFilters}
+            size="xs"
+            variant="ghost"
+            color="destructive"
+            _hover={{ bg: "destructive/12", color: "destructive" }}
+            aria-label="Clear all filters"
+          >
+            <Box as={FiX} mr="0.5" />
+            Clear
+          </Button>
+        )}
+        {onToggleCollapse && (
+          <Button
+            onClick={onToggleCollapse}
+            size="xs"
+            variant="ghost"
+            color="tertiary"
+            _hover={{ bg: "tertiary/8", color: "tertiary-hover" }}
+            aria-label="Collapse advanced filters"
+          >
+            <Box as={FiChevronUp} mr="0.5" />
+            Collapse
+          </Button>
+        )}
+      </HStack>
+    </VStack>
   );
 };
 

@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent } from '@tests/helpers/test-renderer';
 import { renderWithRoute } from '@tests/helpers/test-renderer-with-routes';
-import { createMockMovie } from '@tests/mocks/movieData';
+import { createMockMovieListItem } from '@tests/mocks/movieData';
 import MovieCard from '../MovieCard';
 
 // Mock the COLORS constant since it's used in the component
@@ -19,8 +19,7 @@ vi.mock('@/constants/theme', () => ({
 
 describe('MovieCard Component', () => {
   const defaultProps = {
-    movie: createMockMovie(),
-    currentPage: 1,
+    movie: createMockMovieListItem(),
     source: 'popular',
     query: ''
   };
@@ -31,7 +30,7 @@ describe('MovieCard Component', () => {
 
   describe('Basic Rendering', () => {
     it('renders movie information correctly', () => {
-      const testMovie = createMockMovie({
+      const testMovie = createMockMovieListItem({
         title: 'The Matrix',
         release_date: '1999-03-31'
       });
@@ -43,13 +42,13 @@ describe('MovieCard Component', () => {
     });
 
     it('renders without optional props', () => {
-      render(<MovieCard movie={createMockMovie()} />);
+      render(<MovieCard movie={createMockMovieListItem()} />);
       
       expect(screen.getByText('Test Movie')).toBeInTheDocument();
     });
 
     it('displays movie poster with correct src', () => {
-      const testMovie = createMockMovie({
+      const testMovie = createMockMovieListItem({
         poster_path: '/test-poster.jpg',
         title: 'Test Movie'
       });
@@ -62,7 +61,7 @@ describe('MovieCard Component', () => {
     });
 
   it('shows placeholder when poster_path is null', () => {
-    const movieWithoutPoster = createMockMovie({
+    const movieWithoutPoster = createMockMovieListItem({
       poster_path: null,
       title: 'No Poster Movie'
     });
@@ -78,38 +77,38 @@ describe('MovieCard Component', () => {
 
   describe('Navigation Links', () => {
     it('creates correct movie detail link', () => {
-      const testMovie = createMockMovie({
+      const testMovie = createMockMovieListItem({
         tmdb_id: 550,
         title: 'Fight Club'
       });
 
-      render(<MovieCard {...defaultProps} movie={testMovie} currentPage={2} />);
+      render(<MovieCard {...defaultProps} movie={testMovie} />);
 
       const links = document.querySelectorAll('a[href*="/movie/550"]');
       expect(links.length).toBeGreaterThan(0);
     });
 
-    it('includes query parameters in links when provided', () => {
-      const testMovie = createMockMovie({ tmdb_id: 123 });
+    it('includes query parameters in links when provided (no page for infinite scroll)', () => {
+      const testMovie = createMockMovieListItem({ tmdb_id: 123 });
 
       render(
-        <MovieCard 
-          {...defaultProps} 
+        <MovieCard
+          {...defaultProps}
           movie={testMovie}
-          currentPage={3}
           source="top-rated"
           query="action"
         />
       );
 
       const link = document.querySelector('a[href*="/movie/123"]');
-      expect(link?.getAttribute('href')).toContain('page=3');
+      // Page params should NOT be included (infinite scroll migration)
+      expect(link?.getAttribute('href')).not.toContain('page=');
       expect(link?.getAttribute('href')).toContain('from=top-rated');
       expect(link?.getAttribute('href')).toContain('query=action');
     });
 
     it('creates links without query params when none provided', () => {
-      const testMovie = createMockMovie({ tmdb_id: 456 });
+      const testMovie = createMockMovieListItem({ tmdb_id: 456 });
 
       render(<MovieCard movie={testMovie} />);
 
@@ -120,7 +119,7 @@ describe('MovieCard Component', () => {
 
   describe('User Score Display', () => {
     it('displays MovieUserScore component', () => {
-      const testMovie = createMockMovie({
+      const testMovie = createMockMovieListItem({
         vote_average: 8.5
       });
 
@@ -131,7 +130,7 @@ describe('MovieCard Component', () => {
     });
 
     it('passes correct score to MovieUserScore', () => {
-      const testMovie = createMockMovie({
+      const testMovie = createMockMovieListItem({
         vote_average: 7.2
       });
 
@@ -143,7 +142,7 @@ describe('MovieCard Component', () => {
 
   describe('Date Formatting', () => {
   it('formats release date correctly', () => {
-    const testMovie = createMockMovie({
+    const testMovie = createMockMovieListItem({
       release_date: '2023-12-25'
     });
 
@@ -157,7 +156,7 @@ describe('MovieCard Component', () => {
   });
 
   it('handles different date formats', () => {
-    const testMovie = createMockMovie({
+    const testMovie = createMockMovieListItem({
       release_date: '2020-01-01'
     });
 
@@ -179,7 +178,7 @@ describe('MovieCard Component', () => {
     // NOT December 31, 1979 (which happens when new Date() converts UTC to local)
     //
     // This test validates the fix even in UTC environments by checking exact date values
-    const testMovie = createMockMovie({
+    const testMovie = createMockMovieListItem({
       release_date: '1980-01-01'
     });
 
@@ -199,7 +198,7 @@ describe('MovieCard Component', () => {
 
   it('handles year boundary dates correctly without timezone conversion', () => {
     // Another boundary case: December 31 should stay December 31
-    const testMovie = createMockMovie({
+    const testMovie = createMockMovieListItem({
       release_date: '1999-12-31'
     });
 
@@ -220,7 +219,7 @@ describe('MovieCard Component', () => {
     ];
 
     testCases.forEach(({ release_date, expected }) => {
-      const testMovie = createMockMovie({ release_date });
+      const testMovie = createMockMovieListItem({ release_date });
       const { unmount } = render(<MovieCard {...defaultProps} movie={testMovie} />);
 
       expect(screen.getByText(expected)).toBeInTheDocument();
@@ -231,7 +230,7 @@ describe('MovieCard Component', () => {
 
   describe('Hover Interactions', () => {
   it('triggers hover state on mouse enter', async () => {
-    render(<MovieCard {...defaultProps} movie={createMockMovie()} />);
+    render(<MovieCard {...defaultProps} movie={createMockMovieListItem()} />);
 
     // Find card by a more stable selector - the title link
     const movieLink = screen.getByText('Test Movie').closest('a');
@@ -249,7 +248,7 @@ describe('MovieCard Component', () => {
   });
 
   it('handles hover state changes without errors', async () => {
-    render(<MovieCard {...defaultProps} movie={createMockMovie()} />);
+    render(<MovieCard {...defaultProps} movie={createMockMovieListItem()} />);
 
     // Test hover behavior on the main card element
     const movieTitle = screen.getByText('Test Movie');
@@ -270,7 +269,7 @@ describe('MovieCard Component', () => {
 
   describe('Title Truncation and Tooltip', () => {
     it('renders title within designated area', () => {
-      const longTitleMovie = createMockMovie({
+      const longTitleMovie = createMockMovieListItem({
         title: 'This is a Very Long Movie Title That Should Probably Be Truncated'
       });
 
@@ -280,7 +279,7 @@ describe('MovieCard Component', () => {
     });
 
   it('renders title with proper structure', () => {
-    render(<MovieCard {...defaultProps} movie={createMockMovie()} />);
+    render(<MovieCard {...defaultProps} movie={createMockMovieListItem()} />);
 
     const titleElement = screen.getByText('Test Movie');
     // Test that title is rendered and accessible
@@ -295,7 +294,7 @@ describe('MovieCard Component', () => {
 
   describe('Responsive Behavior', () => {
     it('applies responsive width configuration', () => {
-      render(<MovieCard {...defaultProps} movie={createMockMovie()} />);
+      render(<MovieCard {...defaultProps} movie={createMockMovieListItem()} />);
 
       // Component uses useBreakpointValue - we can verify it renders
       // Actual responsive behavior would need viewport testing
@@ -307,7 +306,7 @@ describe('MovieCard Component', () => {
 
   describe('Performance Optimizations', () => {
   it('memoizes expensive calculations', () => {
-    const testMovie = createMockMovie({
+    const testMovie = createMockMovieListItem({
       release_date: '2023-06-15',
       poster_path: '/test.jpg'
     });
@@ -327,11 +326,11 @@ describe('MovieCard Component', () => {
 
   it('updates when movie data changes', () => {
     // Test memoized component updates correctly
-    const movie1 = createMockMovie({ 
+    const movie1 = createMockMovieListItem({ 
       tmdb_id: 100, 
       title: 'First Movie' 
     });
-    const movie2 = createMockMovie({ 
+    const movie2 = createMockMovieListItem({ 
       tmdb_id: 200, 
       title: 'Second Movie' 
     });
@@ -347,7 +346,7 @@ describe('MovieCard Component', () => {
 
   describe('Accessibility', () => {
     it('provides alt text for movie poster', () => {
-      const testMovie = createMockMovie({
+      const testMovie = createMockMovieListItem({
         title: 'Accessible Movie'
       });
 
@@ -358,7 +357,7 @@ describe('MovieCard Component', () => {
     });
 
     it('creates accessible navigation links', () => {
-      const testMovie = createMockMovie({
+      const testMovie = createMockMovieListItem({
         tmdb_id: 789,
         title: 'Link Test Movie'
       });
@@ -372,7 +371,7 @@ describe('MovieCard Component', () => {
     });
 
     it('maintains proper focus behavior', () => {
-      render(<MovieCard {...defaultProps} movie={createMockMovie()} />);
+      render(<MovieCard {...defaultProps} movie={createMockMovieListItem()} />);
 
       const links = document.querySelectorAll('a');
       expect(links.length).toBeGreaterThan(0);
@@ -386,7 +385,7 @@ describe('MovieCard Component', () => {
 
   describe('Error Handling', () => {
     it('handles missing movie data gracefully', () => {
-      const incompleteMovie = createMockMovie({
+      const incompleteMovie = createMockMovieListItem({
         title: 'Incomplete Movie',
         poster_path: null,
         release_date: ''
@@ -400,7 +399,7 @@ describe('MovieCard Component', () => {
     });
 
     it('handles invalid date formats gracefully', () => {
-      const invalidDateMovie = createMockMovie({
+      const invalidDateMovie = createMockMovieListItem({
         title: 'Invalid Date Movie',
         release_date: 'invalid-date'
       });
@@ -415,14 +414,13 @@ describe('MovieCard Component', () => {
 
   describe('URL Parameter Preservation', () => {
     it('includes all filter params in detail page link', () => {
-      const testMovie = createMockMovie({ tmdb_id: 550 });
+      const testMovie = createMockMovieListItem({ tmdb_id: 550 });
 
       // Render with full filter params in URL
       const { container } = render(
         <MovieCard
           {...defaultProps}
           movie={testMovie}
-          currentPage={2}
           source="popular"
           query="test query"
         />
@@ -434,20 +432,18 @@ describe('MovieCard Component', () => {
 
       const href = link?.getAttribute('href') || '';
 
-      // Should include existing params
-      expect(href).toContain('page=2');
+      // Page params should NOT be included (infinite scroll migration)
+      expect(href).not.toContain('page=');
       expect(href).toContain('from=popular');
       expect(href).toContain('query=test%20query');
-
-      // TODO: Should also include filter params (minYear, maxYear, genres, rating, etc.)
-      // This test will FAIL until implementation adds full URL param capture
     });
 
-    it('preserves filter params from URL search params', () => {
+    it('preserves filter params from URL search params but strips page', () => {
       // This test simulates the component reading from useSearchParams()
-      // MovieCard should read ALL params from URL and preserve them
+      // MovieCard should read filter params from URL and preserve them
+      // But NOT page params (infinite scroll migration)
 
-      const testMovie = createMockMovie({ tmdb_id: 123 });
+      const testMovie = createMockMovieListItem({ tmdb_id: 123 });
 
       // Render with full routing context and filter params in URL
       renderWithRoute(
@@ -461,7 +457,9 @@ describe('MovieCard Component', () => {
       const link = document.querySelector('a[href*="/movie/123"]');
       const href = link?.getAttribute('href') || '';
 
-      // All URL params should be preserved in detail page link
+      // Page params should NOT be preserved (infinite scroll)
+      expect(href).not.toContain('page=');
+      // Filter params should be preserved
       expect(href).toContain('minYear=1980');
       expect(href).toContain('maxYear=1990');
       // Genres is URL-encoded (comma becomes %2C)
@@ -472,7 +470,7 @@ describe('MovieCard Component', () => {
     });
 
     it('preserves unknown params for forward compatibility', () => {
-      const testMovie = createMockMovie({ tmdb_id: 456 });
+      const testMovie = createMockMovieListItem({ tmdb_id: 456 });
 
       // Future-proof: if new params are added, they should be preserved
       // This ensures URL params we don't explicitly handle are not lost
@@ -492,14 +490,13 @@ describe('MovieCard Component', () => {
     });
 
     it('handles empty filter params correctly', () => {
-      const testMovie = createMockMovie({ tmdb_id: 789 });
+      const testMovie = createMockMovieListItem({ tmdb_id: 789 });
 
       // When no filters are applied, URL should only have basic params
       render(
         <MovieCard
           {...defaultProps}
           movie={testMovie}
-          currentPage={1}
           source="popular"
           query=""
         />
@@ -508,8 +505,8 @@ describe('MovieCard Component', () => {
       const link = document.querySelector('a[href*="/movie/789"]');
       const href = link?.getAttribute('href') || '';
 
-      // Should include page and from, but not empty query
-      expect(href).toContain('page=1');
+      // Should include from, but NOT page (infinite scroll) or empty query
+      expect(href).not.toContain('page=');
       expect(href).toContain('from=popular');
 
       // Should not include empty/undefined filter params
@@ -519,7 +516,7 @@ describe('MovieCard Component', () => {
     });
 
     it('handles genres array parameter correctly', () => {
-      const testMovie = createMockMovie({ tmdb_id: 111 });
+      const testMovie = createMockMovieListItem({ tmdb_id: 111 });
 
       // Genres are passed as comma-separated string in URL
       render(<MovieCard {...defaultProps} movie={testMovie} />);
@@ -533,7 +530,7 @@ describe('MovieCard Component', () => {
     });
 
     it('URL-encodes special characters in params', () => {
-      const testMovie = createMockMovie({ tmdb_id: 222 });
+      const testMovie = createMockMovieListItem({ tmdb_id: 222 });
 
       render(
         <MovieCard

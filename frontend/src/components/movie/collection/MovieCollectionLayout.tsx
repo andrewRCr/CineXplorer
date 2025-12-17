@@ -2,14 +2,15 @@ import { useMemo, type ReactNode } from "react";
 import { useLocation, Outlet } from "react-router-dom";
 import { Box } from "@chakra-ui/react";
 import type { BrowseParams } from "@/types/browseTypes";
-import { useMovieFetchRouter } from "@/hooks/useMovieFetchRouter";
+import { useMovieFetchRouter } from "@/hooks/movie/useMovieFetchRouter";
 import {
   getFetcherAndSource,
   type RouteConfig,
 } from "@/utilities/routeConfigHelper";
+import { parseSearchParamsFromUrl } from "@/utilities/searchUrlSync";
 import PageHeader from "@/components/movie/collection/PageHeader";
 import BrowseControlsSection from "@/components/movie/collection/BrowseControlsSection";
-import { useMovieCollectionState } from "@/components/movie/collection/useMovieCollectionState";
+import { useMovieCollectionState } from "@/hooks/movie/useMovieCollectionState";
 
 // Better prop patterns with discriminated unions and required/optional groups
 type BrowseControlsConfig =
@@ -24,9 +25,10 @@ type MovieCollectionLayoutProps = {
   title?: string;
   fetcher?: RouteConfig["fetcher"];
   source?: string;
-  currentPage?: number;
   // Layout customization
   size?: "sm" | "md" | "lg" | "xl";
+  /** Whether to render PageHeader (default: true). Set false for grids that handle their own title. */
+  renderPageHeader?: boolean;
   // Header customization
   headerProps?: {
     size?: "sm" | "md" | "lg" | "xl";
@@ -48,8 +50,8 @@ const MovieCollectionLayout = ({
   source,
   showBrowseControls = false,
   defaultBrowseParams,
-  currentPage,
   size = "xl",
+  renderPageHeader = true,
   headerProps,
   containerProps,
 }: MovieCollectionLayoutProps) => {
@@ -68,18 +70,26 @@ const MovieCollectionLayout = ({
   const actualSource = source || routeSource;
   const actualTitle = title || routeTitle;
 
+  // Extract search query from URL for search routes
+  // This is needed for TanStack Query cache key and scroll position persistence
+  const searchQuery = useMemo(() => {
+    if (location.pathname.startsWith("/search")) {
+      return parseSearchParamsFromUrl(location.search).query || undefined;
+    }
+    return undefined;
+  }, [location.pathname, location.search]);
+
   // Use custom hook for state management with auto-expand
+  // Note: Pagination is handled internally by TanStack Query (infinite scroll)
   const {
     browseParams,
     onBrowseParamsChange,
-    currentPage: currentPageFromUrl,
-    tmdbPageStart: tmdbPageStartFromUrl,
-    onPageChange: handlePageChange,
     isAdvancedPanelOpen,
+    setIsAdvancedPanelOpen,
     toggleAdvancedPanel,
+    hasActiveAdvancedFilters,
   } = useMovieCollectionState({
     defaultBrowseParams,
-    source: actualSource,
   });
 
   // Use the movie fetch router hook to route between search/discover endpoints
@@ -96,31 +106,44 @@ const MovieCollectionLayout = ({
       lg: { maxW: "1200px", px: 4, pt: 3, pb: 4 },
       xl: { maxW: "1400px", px: 4, pt: 3, pb: 4 },
     };
-    return { ...sizeMap[size], ...containerProps };
-  }, [size, containerProps]);
+    const baseConfig = { ...sizeMap[size], ...containerProps };
+
+    // When browse controls are shown, add extra top padding for the fixed sub-nav
+    // Uses layout-subnav token via CSS variable
+    // When advanced panel is open, add drawer height to push content below
+    if (showBrowseControls) {
+      baseConfig.pt = isAdvancedPanelOpen
+        ? "calc(var(--chakra-sizes-layout-subnav) + var(--chakra-sizes-subnav-advanced-drawer-height))"
+        : "var(--chakra-sizes-layout-subnav)";
+    }
+
+    return baseConfig;
+  }, [size, containerProps, showBrowseControls, isAdvancedPanelOpen]);
 
   // Memoized outlet context to prevent unnecessary re-renders
+  // Note: Pagination is handled internally by child components via TanStack Query
   const outletContext = useMemo(
     () => {
       return {
         fetcher: actualFetcher,
         source: actualSource,
-        query: defaultBrowseParams?.query,
-        initialCurrentPage: currentPage || currentPageFromUrl,
-        initialTmdbPageStart: tmdbPageStartFromUrl,
-        onPageChange: handlePageChange,
+        // searchQuery is extracted from URL ?query= param for search routes
+        query: searchQuery,
+        title: actualTitle,
+        renderPageHeader,
         enhancedFetcher,
+        // browseParams for TanStack Query cache key (filter changes invalidate cache)
+        browseParams,
       };
     },
     [
       actualFetcher,
       actualSource,
-      defaultBrowseParams?.query,
-      currentPage,
-      currentPageFromUrl,
-      tmdbPageStartFromUrl,
-      handlePageChange,
+      searchQuery,
+      actualTitle,
+      renderPageHeader,
       enhancedFetcher,
+      browseParams,
     ]
   );
 
@@ -132,25 +155,31 @@ const MovieCollectionLayout = ({
       display="flex"
       flexDirection="column"
       alignItems="flex-start"
+      // Smooth transition for padding change when advanced panel opens/closes
+      transition={showBrowseControls ? "padding-top 220ms ease" : undefined}
       {...containerConfig}
     >
-      {/* Enhanced Page Header with better composition */}
-      <PageHeader
-        title={actualTitle}
-        size={headerProps?.size || "lg"}
-        showAccent={headerProps?.showAccent ?? true}
-      >
-        {headerProps?.children}
-      </PageHeader>
+      {/* Page Header - conditionally rendered (grids can handle their own title) */}
+      {renderPageHeader && (
+        <PageHeader
+          title={actualTitle}
+          size={headerProps?.size || "lg"}
+          showAccent={headerProps?.showAccent ?? true}
+        >
+          {headerProps?.children}
+        </PageHeader>
+      )}
 
       {/* Conditionally rendered Browse Controls Section */}
       {showBrowseControls && (
         <BrowseControlsSection
           showControls={showBrowseControls}
           isAdvancedPanelOpen={isAdvancedPanelOpen}
+          hasActiveAdvancedFilters={hasActiveAdvancedFilters}
           browseParams={browseParams}
           onBrowseParamsChange={onBrowseParamsChange}
           onToggleAdvancedPanel={toggleAdvancedPanel}
+          onSetAdvancedPanelOpen={setIsAdvancedPanelOpen}
           source={actualSource}
         />
       )}

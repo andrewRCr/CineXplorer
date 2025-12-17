@@ -23,8 +23,8 @@
  * - userMovieService.ts: Movie-first queries with enrichment
  */
 
-import type { Movie } from '../@types/movie.d';
-import type { components } from '../types/api';
+import type { MovieListItem } from '@/@types/movie.d';
+import type { components } from '@/types/api';
 import {
     createUserMovieData,
     updateUserMovieData,
@@ -69,7 +69,7 @@ function isApiError(error: unknown): error is ApiError {
  * const result = await toggleMovieWatchlist(movieWithData);
  */
 export async function toggleMovieWatchlist(
-    movie: Movie
+    movie: MovieListItem
 ): Promise<UserMovieDataDetailSchema> {
     // Case 1: No existing user data → CREATE
     if (!movie.user_movie_data) {
@@ -124,7 +124,7 @@ export async function toggleMovieWatchlist(
  */
  
 export async function toggleMovieWatched(
-    _movie: Movie
+    _movie: MovieListItem
 ): Promise<UserMovieDataDetailSchema> {
     // TODO: Implement (same pattern as toggleMovieWatchlist)
     throw new Error('toggleMovieWatched not yet implemented');
@@ -141,7 +141,7 @@ export async function toggleMovieWatched(
  */
  
 export async function toggleMovieLiked(
-    _movie: Movie
+    _movie: MovieListItem
 ): Promise<UserMovieDataDetailSchema> {
     // TODO: Implement (same pattern as toggleMovieWatchlist)
     throw new Error('toggleMovieLiked not yet implemented');
@@ -159,7 +159,7 @@ export async function toggleMovieLiked(
  */
  
 export async function setMovieRating(
-    _movie: Movie,
+    _movie: MovieListItem,
     _rating: number
 ): Promise<UserMovieDataDetailSchema> {
     // TODO: Implement (may need UI modal integration)
@@ -178,7 +178,7 @@ export async function setMovieRating(
  */
  
 export async function setMovieReview(
-    _movie: Movie,
+    _movie: MovieListItem,
     _review: string
 ): Promise<UserMovieDataDetailSchema> {
     // TODO: Implement (may need UI modal integration)

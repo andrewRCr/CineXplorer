@@ -45,5 +45,17 @@ export const layoutSemanticTokens = {
         "layout-footer": {
             value: "{sizes.footer-height}",
         },
+
+        /**
+         * Sub-nav layout token (QuickBrowseBar height)
+         * References foundation token - same on all breakpoints
+         * Used for top offset on pages with browse controls
+         *
+         * When advanced drawer is open, add subnav-advanced-drawer-height:
+         * calc(var(--chakra-sizes-layout-subnav) + var(--chakra-sizes-subnav-advanced-drawer-height))
+         */
+        "layout-subnav": {
+            value: "{sizes.subnav-quick-bar-height}",
+        },
     },
 };

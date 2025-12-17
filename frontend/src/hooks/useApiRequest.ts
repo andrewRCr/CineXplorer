@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { CanceledError } from "../services/apiClient";
+import { CanceledError } from "@/services/apiClient";
 
 interface ApiRequestResult<T> {
     data: T | undefined;

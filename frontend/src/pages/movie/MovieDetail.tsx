@@ -1,24 +1,25 @@
-import useMovieDetail from "@/hooks/useMovieDetail";
-import { useParams, useSearchParams, Link } from "react-router-dom";
+import useMovieDetail from "@/hooks/movie/useMovieDetail";
+import { useParams, useSearchParams } from "react-router-dom";
 import { useMemo } from "react";
 import { fetchMovieDetail } from "@/services/movieService";
-import type { Movie, Genre, CastMember, CrewMember, ProductionCompany, SpokenLanguage } from "@shared/index";
+import type { MovieDetail as MovieDetailType, Genre, CastMember, CrewMember, ProductionCompany, SpokenLanguage } from "@/types/movie";
 import CertificationBadge from "@/components/movie/CertificationBadge";
+import { BackToCollectionLink } from "@/components/navigation";
 import {
   Box,
+  Button,
   Flex,
   Heading,
   Text,
   Spinner,
   Stack,
   Separator,
-  Button,
   Image,
 } from "@chakra-ui/react";
 import { Tag } from "@chakra-ui/tag";
 import MovieUserScore from "@/components/movie/MovieUserScore";
-import { useUserMovieData } from "@/hooks/useUserMovieData";
-import useAuthContext from "@/hooks/useAuthContext";
+import { useUserMovieData } from "@/hooks/movie/useUserMovieData";
+import useAuthContext from "@/hooks/auth/useAuthContext";
 
 /* ============================================================
    MovieDetail Component
@@ -26,7 +27,7 @@ import useAuthContext from "@/hooks/useAuthContext";
 const MovieDetail = () => {
   const { id } = useParams<{ id: string }>();
   const fetcher = useMemo(() => {
-    return () => fetchMovieDetail().get<Movie>(id!);
+    return () => fetchMovieDetail().get<MovieDetailType>(id!);
   }, [id]);
   const { movie, error, isLoading } = useMovieDetail(fetcher);
 
@@ -40,71 +41,17 @@ const MovieDetail = () => {
   } = useUserMovieData(shouldFetchUserMovieData ? String(movie.tmdb_id) : "");
 
   const [searchParams] = useSearchParams();
-  const from = searchParams.get("from") || "now-playing";
-
-  // Preserve all URL parameters for back navigation (filters, etc.)
-  const allParams = useMemo(() => {
-    const params: Record<string, string> = {};
-    searchParams.forEach((value, key) => {
-      params[key] = value;
-    });
-    return params;
-  }, [searchParams]);
 
   /* ============================================================
        Helper Methods & Derived Data
        ============================================================ */
 
-  // Back button component - available in all states (loading, error, success)
-  // NOTE: If PersonDetail implements similar back navigation with query preservation,
-  // consider extracting to shared <BackToCollectionButton> component (DRY principle)
-  const BackButton = useMemo(() => {
-    // Build query string with preserved parameters
-    // - Skip "from" (already encoded in path)
-    // - Skip "page" if it's 1 (default, matches pattern in useMovieCollectionUrl)
-    // - Skip empty values
-    const queryString = Object.entries(allParams)
-      .filter(([key, value]) => {
-        if (key === "from") return false;
-        if (key === "page" && value === "1") return false;
-        return value !== "";
-      })
-      .map(([key, value]) => `${key}=${encodeURIComponent(value)}`)
-      .join("&");
-
-    const backUrl =
-      from === "search"
-        ? `/search?${queryString}`
-        : from === "browse"
-        ? `/browse?${queryString}`
-        : `/browse/${from}?${queryString}`;
-
-    return (
-      <Box mb={4}>
-        <Link to={backUrl} style={{ textDecoration: "none" }}>
-          <Button variant="outline">
-            <span
-              style={{
-                display: "inline-block",
-                transform: "translateY(2px)",
-                marginRight: "8px",
-              }}
-            >
-              &larr;
-            </span>
-            Back to Results
-          </Button>
-        </Link>
-      </Box>
-    );
-  }, [allParams, from]);
-
   // extract key crew members (creative leads)
   const director = movie?.crew?.find(
     (member: CrewMember) => member.job === "Director"
   );
-  const writers = movie?.crew?.filter((member: CrewMember) =>
-    ["Writer", "Screenplay"].includes(member.job)
+  const writers = movie?.crew?.filter(
+    (member: CrewMember) => member.job && ["Writer", "Screenplay"].includes(member.job)
   );
 
   const jobPrefixMap: Record<string, string> = {
@@ -138,7 +85,7 @@ const MovieDetail = () => {
   if (isLoading) {
     return (
       <Box maxW="6xl" mx="auto" p={4}>
-        {BackButton}
+        <BackToCollectionLink searchParams={searchParams} />
         <Flex align="center" justify="center" minH="60vh">
           <Spinner size="xl" />
         </Flex>
@@ -152,7 +99,7 @@ const MovieDetail = () => {
   if (error && !is404) {
     return (
       <Box maxW="6xl" mx="auto" p={4}>
-        {BackButton}
+        <BackToCollectionLink searchParams={searchParams} />
         <Box
           minH="40vh"
           display="flex"
@@ -175,7 +122,7 @@ const MovieDetail = () => {
   if (!movie) {
     return (
       <Box maxW="6xl" mx="auto" p={4}>
-        {BackButton}
+        <BackToCollectionLink searchParams={searchParams} />
         <Box
           minH="40vh"
           display="flex"
@@ -200,7 +147,7 @@ const MovieDetail = () => {
   return (
     <Box maxW="6xl" mx="auto" p={4}>
       {/* Back to Results Button */}
-      {BackButton}
+      <BackToCollectionLink searchParams={searchParams} />
       {/* Header Section */}
       <Flex gap={8} align="flex-start" mb={6}>
         {/* Header: Movie Poster */}
@@ -249,7 +196,7 @@ const MovieDetail = () => {
           )}
           {/* Header: User Score */}
           <Text fontWeight="bold">
-            User Score: <MovieUserScore score={movie.vote_average} />
+            User Score: <MovieUserScore score={movie.vote_average ?? 0} />
           </Text>
           {/* Header: Key Crew Section (creative leads) */}
           <Box mt={2}>
@@ -352,19 +299,21 @@ const MovieDetail = () => {
         <Flex gap={4} wrap="wrap" justify="center">
           {/* Filter for key roles: Director, Writer, etc. */}
           {movie.crew
-        ?.filter((member: CrewMember) =>
-              [
-                "Director",
-                "Writer",
-                "Screenplay",
-                "Director of Photography",
-                "Editor",
-                "Composer",
-              ].includes(member.job)
+            ?.filter(
+              (member: CrewMember) =>
+                member.job &&
+                [
+                  "Director",
+                  "Writer",
+                  "Screenplay",
+                  "Director of Photography",
+                  "Editor",
+                  "Composer",
+                ].includes(member.job)
             )
-        .map((member: CrewMember, idx: number) => (
+        .map((member: CrewMember) => (
               <Box
-                key={member.id || idx}
+                key={`${member.id}-${member.job}`}
                 bg="layer-01"
                 p={2}
                 borderRadius="md"

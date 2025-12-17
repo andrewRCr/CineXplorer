@@ -30,6 +30,9 @@ class SearchServiceParams(BaseModel):
     # Required: search query
     query: str
 
+    # Pagination cursor (used by buffer mechanism, not sent to TMDB API)
+    tmdb_page_start: int | None = None
+
     # Backend filtering params (not sent to TMDB API - search only accepts query)
     year_min: int | None = None
     year_max: int | None = None

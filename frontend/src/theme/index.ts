@@ -32,7 +32,7 @@ import { layoutSemanticTokens } from "./layout/semantic-tokens";
 import { zIndexSemanticTokens } from "./layout/z-index";
 
 // Import recipes
-import { buttonRecipe, selectRecipe, alertRecipe, badgeRecipe, checkboxRecipe, radioRecipe, switchRecipe } from "./recipes";
+import { buttonRecipe, selectRecipe, alertRecipe, badgeRecipe, checkboxRecipe, radioRecipe, switchRecipe, tooltipRecipe } from "./recipes";
 
 /**
  * Theme Registry
@@ -206,6 +206,8 @@ const baseConfig = defineConfig({
             alert: alertRecipe,
             // Switch recipe (control, thumb slots)
             switch: switchRecipe,
+            // Tooltip recipe (content, arrow, arrowTip, positioner, trigger slots)
+            tooltip: tooltipRecipe,
         },
     },
     globalCss: {

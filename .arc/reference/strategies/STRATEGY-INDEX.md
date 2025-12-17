@@ -18,6 +18,8 @@ work in these domains.
 - `project/strategy-authentication.md` - Authentication patterns, session management, OAuth flows
 - `project/strategy-type-safety.md` - Type checking approach, Any usage policy, stub maintenance
 - `project/strategy-testing-methodology.md` - Testing philosophy, integration focus, test-first protocol
+- `project/strategy-pagination.md` - Buffer mechanism, deduplication, cursor-based pagination, infinite scroll
+- `project/strategy-data-quality.md` - Filter pipeline, vote count policy, completeness, TMDB quirks
 
 ## ARC Framework Strategies
 

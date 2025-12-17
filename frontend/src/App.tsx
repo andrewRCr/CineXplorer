@@ -14,6 +14,7 @@ import ErrorBoundary from "./components/core/ErrorBoundary";
 // Lazy load page components
 const Featured = lazy(() => import("./pages/movie/Featured"));
 const Browse = lazy(() => import("./pages/movie/Browse"));
+const BrowseSequential = lazy(() => import("./pages/movie/BrowseSequential"));
 const NowPlaying = lazy(() => import("./pages/movie/NowPlaying"));
 const Upcoming = lazy(() => import("./pages/movie/Upcoming"));
 const Login = lazy(() => import("./pages/user/Login"));
@@ -74,12 +75,13 @@ const App: React.FC = () => {
               <Route path={ROUTES.WATCHLIST} element={<Watchlist />} />
               <Route path={ROUTES.SETTINGS} element={<Settings />} />
 
-              {/* Browse routes with shared layout */}
+              {/* Browse routes - main layout (title in GridHeader) */}
               <Route
                 path={ROUTES.BROWSE}
                 element={
                   <MovieCollectionLayout
                     showBrowseControls={true}
+                    renderPageHeader={false}
                   />
                 }
               >
@@ -88,12 +90,26 @@ const App: React.FC = () => {
                 <Route path="upcoming" element={<Upcoming />} />
               </Route>
 
-              {/* Search results with shared layout */}
+              {/* Sequential browse - reference implementation (title in PageHeader) */}
+              <Route
+                path={`${ROUTES.BROWSE}/sequential`}
+                element={
+                  <MovieCollectionLayout
+                    showBrowseControls={true}
+                    renderPageHeader={true}
+                  />
+                }
+              >
+                <Route index element={<BrowseSequential />} />
+              </Route>
+
+              {/* Search results with shared layout (title in GridHeader) */}
               <Route
                 path={ROUTES.SEARCH_RESULTS}
                 element={
                   <MovieCollectionLayout
                     showBrowseControls={false}
+                    renderPageHeader={false}
                   />
                 }
               >

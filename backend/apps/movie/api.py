@@ -222,7 +222,10 @@ def search_movies(
     dedup_tracker = _create_dedup_tracker(request)
 
     # Create SearchServiceParams from HTTP params
-    search_params = SearchServiceParams(query=params.query)
+    search_params = SearchServiceParams(
+        query=params.query,
+        tmdb_page_start=params.tmdb_page_start,
+    )
 
     # Fetch movies from TMDB
     response = _movie_service.search_movies(

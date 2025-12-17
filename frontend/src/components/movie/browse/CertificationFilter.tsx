@@ -45,14 +45,14 @@ const CertificationFilter = ({
   const showNc17Disclaimer = selectedCertifications.includes("NC-17");
 
   return (
-    <Box w="100%">
-      {/* Centered checkbox group */}
-      <Flex justify="center">
+    <Box>
+      {/* Checkbox group - no centering, let parent handle layout */}
+      <Flex>
         <CheckboxGroup
           value={selectedCertifications}
           onValueChange={(value) => onChange(value)}
         >
-          <Text fontSize="sm" fontWeight="medium" mb={2} color="foreground">
+          <Text fontSize="sm" fontWeight="medium" mb={0} color="foreground">
             Certification
           </Text>
           <Flex gap={2} wrap="wrap">
@@ -72,7 +72,7 @@ const CertificationFilter = ({
                   borderColor={isSelected ? tokens.bg : "border-strong-01"}
                   borderRadius="md"
                   px={2}
-                  py={1}
+                  py={1.5}
                   w="auto"
                   flex="0 0 auto"
                   _hover={{
@@ -105,7 +105,7 @@ const CertificationFilter = ({
           </Flex>
         </CheckboxGroup>
       </Flex>
-      {/* Disclaimer fully centered in container */}
+      {/* Disclaimer constrained to chip row width to prevent layout shift */}
       {showNc17Disclaimer && (
         <Text
           fontSize="xs"
@@ -113,9 +113,9 @@ const CertificationFilter = ({
           mt={2}
           fontStyle="italic"
           textAlign="center"
+          maxW="240px"
         >
-          Results may include alternate versions (uncut, re-releases) rated
-          NC-17
+          May include uncut/alternate re-releases
         </Text>
       )}
     </Box>

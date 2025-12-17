@@ -16,12 +16,10 @@
 import { useState, useEffect } from 'react';
 import { Box, Text, VStack } from '@chakra-ui/react';
 import { getUserMovies } from '../../services/userMovieService';
-import type { components } from '../../types/api';
-
-type MovieBaseSchema = components['schemas']['MovieBaseSchema'];
+import type { MovieListItem } from '@/@types/movie.d';
 
 const Watchlist = () => {
-  const [movies, setMovies] = useState<MovieBaseSchema[]>([]);
+  const [movies, setMovies] = useState<MovieListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 

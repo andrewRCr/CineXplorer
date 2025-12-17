@@ -13,7 +13,7 @@ import { act } from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useMovieActions } from '../useMovieActions';
 import * as userMovieDataService from '@/services/userMovieDataService';
-import type { Movie } from '@/@types/movie.d';
+import type { MovieListItem } from '@/@types/movie.d';
 import type { components } from '@/types/api';
 import type { AxiosResponse } from 'axios';
 
@@ -71,8 +71,8 @@ describe('useMovieActions', () => {
      */
     describe('toggleWatchlist - CREATE flow', () => {
         it('should create UserMovieData when movie has no existing user_movie_data', async () => {
-            // Arrange: Movie without user data
-            const movieWithoutData: Movie = {
+            // Arrange: MovieListItem without user data
+            const movieWithoutData: MovieListItem = {
                 tmdb_id: 123,
                 title: 'Test Movie',
                 poster_path: '/test.jpg',
@@ -128,8 +128,8 @@ describe('useMovieActions', () => {
      */
     describe('toggleWatchlist - UPDATE flow', () => {
         it('should update UserMovieData when movie has existing user_movie_data', async () => {
-            // Arrange: Movie with existing user data (watchlist: false)
-            const movieWithData: Movie = {
+            // Arrange: MovieListItem with existing user data (watchlist: false)
+            const movieWithData: MovieListItem = {
                 tmdb_id: 456,
                 title: 'Test Movie 2',
                 poster_path: '/test2.jpg',
@@ -175,8 +175,8 @@ describe('useMovieActions', () => {
         });
 
         it('should toggle watchlist from true to false', async () => {
-            // Arrange: Movie already on watchlist
-            const movieWithData: Movie = {
+            // Arrange: MovieListItem already on watchlist
+            const movieWithData: MovieListItem = {
                 tmdb_id: 789,
                 title: 'Test Movie 3',
                 poster_path: '/test3.jpg',
@@ -229,7 +229,7 @@ describe('useMovieActions', () => {
     describe('isUpdating state', () => {
         it('should set isUpdating to true during API call and false after completion', async () => {
             // Arrange
-            const movie: Movie = {
+            const movie: MovieListItem = {
                 tmdb_id: 111,
                 title: 'Test Movie',
                 poster_path: '/test.jpg',
@@ -294,7 +294,7 @@ describe('useMovieActions', () => {
     describe('error handling', () => {
         it('should set error state when API call fails', async () => {
             // Arrange
-            const movie: Movie = {
+            const movie: MovieListItem = {
                 tmdb_id: 222,
                 title: 'Test Movie',
                 poster_path: '/test.jpg',
@@ -328,7 +328,7 @@ describe('useMovieActions', () => {
 
         it('should clear previous error on successful retry', async () => {
             // Arrange
-            const movie: Movie = {
+            const movie: MovieListItem = {
                 tmdb_id: 333,
                 title: 'Test Movie',
                 poster_path: '/test.jpg',
@@ -391,7 +391,7 @@ describe('useMovieActions', () => {
     describe('race condition handling', () => {
         it('should handle 400 "already exists" error by fetching and updating', async () => {
             // Arrange
-            const movie: Movie = {
+            const movie: MovieListItem = {
                 tmdb_id: 444,
                 title: 'Test Movie',
                 poster_path: '/test.jpg',
@@ -460,7 +460,7 @@ describe('useMovieActions', () => {
 
         it('should propagate error if fallback fetch also fails', async () => {
             // Arrange
-            const movie: Movie = {
+            const movie: MovieListItem = {
                 tmdb_id: 555,
                 title: 'Test Movie',
                 poster_path: '/test.jpg',

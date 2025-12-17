@@ -173,14 +173,20 @@ export const useScrollPersistence = ({
         // Set guard before restoring to prevent immediate save of wrong position
         // (virtualizer may not have full content height yet on first scroll attempt)
         isRestoringScrollRef.current = true;
+
+        // Three-step scroll restoration for virtualized content:
+        // Step 1: Immediate scroll - positions viewport to trigger virtualizer to
+        // render rows around the target position (even if content height is wrong)
         window.scrollTo(0, savedPosition);
-        // Re-scroll after virtualizer has time to render full content height
-        // Use requestAnimationFrame + timeout to ensure layout is complete
+
+        // Step 2: Delayed re-scroll after virtualizer has rendered content at this
+        // position and measured correct heights. The rAF ensures layout is complete,
+        // then the 50ms allows virtualizer to update its measurements.
         requestAnimationFrame(() => {
           restorationTimeoutRef.current = setTimeout(() => {
             window.scrollTo(0, savedPosition);
-            // Allow saving again after content has stabilized
-            // Uses separate ref so both timeouts can be cleaned up independently
+            // Step 3: Guard removal - wait for content to stabilize before allowing
+            // scroll position saves. Uses separate ref for independent cleanup.
             restorationGuardTimeoutRef.current = setTimeout(() => {
               isRestoringScrollRef.current = false;
             }, 100);

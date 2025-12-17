@@ -1,6 +1,7 @@
 import create from "./httpService";
 import type {
-    Movie,
+    MovieListItem,
+    MovieDetail,
     GenresResponse,
     PaginatedMoviesResponse,
     Keyword,
@@ -45,7 +46,7 @@ export interface PersonQueryParams {
 }
 
 // Re-export commonly used types for external consumers
-export type { PaginatedMoviesResponse, Movie, Keyword, Person };
+export type { PaginatedMoviesResponse, MovieListItem, Keyword, Person };
 
 // Service instances for clean Django Ninja API endpoints
 // Note: baseURL already includes /api, so paths are relative to /api/
@@ -81,7 +82,7 @@ export const fetchSingleMovie = (
     service: ReturnType<typeof create>,
     tmdb_id: string | number
 ) => {
-    return service.get<Movie>(`/${tmdb_id}`);
+    return service.get<MovieDetail>(`/${tmdb_id}`);
 };
 
 /**

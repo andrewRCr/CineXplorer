@@ -110,10 +110,10 @@ const MovieCollectionLayout = ({
 
     // When browse controls are shown, add extra top padding for the fixed sub-nav
     // Uses layout-subnav token via CSS variable
-    // When advanced panel is open, add extra padding (200px) to push content below drawer
+    // When advanced panel is open, add drawer height to push content below
     if (showBrowseControls) {
       baseConfig.pt = isAdvancedPanelOpen
-        ? "calc(var(--chakra-sizes-layout-subnav) + 200px)"
+        ? "calc(var(--chakra-sizes-layout-subnav) + var(--chakra-sizes-subnav-advanced-drawer-height))"
         : "var(--chakra-sizes-layout-subnav)";
     }
 

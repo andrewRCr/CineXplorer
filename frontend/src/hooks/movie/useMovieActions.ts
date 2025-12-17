@@ -31,11 +31,11 @@
  */
 
 import { useState } from 'react';
-import type { Movie } from '@/@types/movie.d';
+import type { MovieListItem } from '@/@types/movie.d';
 import { toggleMovieWatchlist } from '@/services/movieInteractionService';
 
 interface UseMovieActionsProps {
-    movie: Movie;
+    movie: MovieListItem;
 }
 
 interface UseMovieActionsReturn {

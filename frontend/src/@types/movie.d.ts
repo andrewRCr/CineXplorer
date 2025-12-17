@@ -68,22 +68,3 @@ export interface Credits {
   cast: CastMember[];
   crew: CrewMember[];
 }
-
-// ============================================================================
-// Deprecated Aliases (for migration - remove after all usages updated)
-// ============================================================================
-
-/**
- * @deprecated Use MovieListItem for list views or MovieDetail for detail pages
- */
-export type Movie = MovieListItem;
-
-/**
- * @deprecated Use MovieListItem instead
- */
-export type MovieBaseSchema = MovieListItem;
-
-/**
- * @deprecated Use MovieDetail instead
- */
-export type MovieDetailSchema = MovieDetail;

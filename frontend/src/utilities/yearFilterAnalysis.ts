@@ -56,7 +56,7 @@ export function analyzeYearFilter(minYear: string, maxYear: string): YearFilterA
 
   // Decade range: 9-year span where minYear ends in 0 (e.g., 1980-1989)
   const isDecadeRange = hasMin && hasMax &&
-    parseInt(maxYear) - parseInt(minYear) === 9 &&
+    parseInt(maxYear, 10) - parseInt(minYear, 10) === 9 &&
     minYear.endsWith("0");
 
   // Determine display value, label, and preset status
@@ -74,10 +74,11 @@ export function analyzeYearFilter(minYear: string, maxYear: string): YearFilterA
     displayLabel = minYear;
     isInPresets = yearOptions.some(opt => opt.value === minYear);
   } else if (isDecadeRange) {
-    const decadeValue = `${minYear.slice(0, 4)}'s`;
+    // minYear is always 4-digit format from URL params/form state (e.g., "1980")
+    const decadeValue = `${minYear}'s`;
     isInPresets = yearOptions.some(opt => opt.value === decadeValue);
     displayValue = isInPresets ? decadeValue : "custom";
-    displayLabel = decadeValue; // Always show the decade (e.g., "1940's")
+    displayLabel = decadeValue; // Always show the decade (e.g., "1980's")
   } else {
     // Arbitrary range (not a decade)
     displayValue = "custom";

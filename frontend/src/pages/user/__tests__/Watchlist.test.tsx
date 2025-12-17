@@ -17,10 +17,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { Provider as ChakraProvider } from '../../../components/core/chakra/provider';
 import Watchlist from '../Watchlist';
 import * as userMovieService from '../../../services/userMovieService';
-import type { components } from '../../../types/api';
-
-type PaginatedMovieResponseSchema = components['schemas']['PaginatedMovieResponseSchema'];
-type MovieBaseSchema = components['schemas']['MovieBaseSchema'];
+import type { MovieListItem, PaginatedMoviesResponse } from '@/@types/movie.d';
 
 // Helper to wrap component with Router and ChakraProvider
 function renderWithProviders(component: React.ReactElement) {
@@ -49,7 +46,7 @@ describe('Watchlist Page', () => {
    */
   it('should fetch watchlist data on mount', async () => {
     // Arrange: Mock empty response
-    const mockResponse: PaginatedMovieResponseSchema = {
+    const mockResponse: PaginatedMoviesResponse = {
       page: 1,
       total_pages: 0,
       total_results: 0,
@@ -80,7 +77,7 @@ describe('Watchlist Page', () => {
    */
   it('should display movie list when data is present', async () => {
     // Arrange: Mock response with movies
-    const mockMovies: MovieBaseSchema[] = [
+    const mockMovies: MovieListItem[] = [
       {
         tmdb_id: 550,
         title: 'Fight Club',
@@ -117,7 +114,7 @@ describe('Watchlist Page', () => {
       },
     ];
 
-    const mockResponse: PaginatedMovieResponseSchema = {
+    const mockResponse: PaginatedMoviesResponse = {
       page: 1,
       total_pages: 1,
       total_results: 2,
@@ -147,7 +144,7 @@ describe('Watchlist Page', () => {
    */
   it('should show empty state when no movies on watchlist', async () => {
     // Arrange: Mock empty response
-    const mockResponse: PaginatedMovieResponseSchema = {
+    const mockResponse: PaginatedMoviesResponse = {
       page: 1,
       total_pages: 0,
       total_results: 0,

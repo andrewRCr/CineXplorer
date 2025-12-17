@@ -110,12 +110,15 @@ const MovieCollectionLayout = ({
 
     // When browse controls are shown, add extra top padding for the fixed sub-nav
     // Uses layout-subnav token via CSS variable
+    // When advanced panel is open, add extra padding (200px) to push content below drawer
     if (showBrowseControls) {
-      baseConfig.pt = "var(--chakra-sizes-layout-subnav)";
+      baseConfig.pt = isAdvancedPanelOpen
+        ? "calc(var(--chakra-sizes-layout-subnav) + 200px)"
+        : "var(--chakra-sizes-layout-subnav)";
     }
 
     return baseConfig;
-  }, [size, containerProps, showBrowseControls]);
+  }, [size, containerProps, showBrowseControls, isAdvancedPanelOpen]);
 
   // Memoized outlet context to prevent unnecessary re-renders
   // Note: Pagination is handled internally by child components via TanStack Query
@@ -152,6 +155,8 @@ const MovieCollectionLayout = ({
       display="flex"
       flexDirection="column"
       alignItems="flex-start"
+      // Smooth transition for padding change when advanced panel opens/closes
+      transition={showBrowseControls ? "padding-top 220ms ease" : undefined}
       {...containerConfig}
     >
       {/* Page Header - conditionally rendered (grids can handle their own title) */}

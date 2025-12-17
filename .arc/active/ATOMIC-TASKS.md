@@ -61,6 +61,33 @@
     - Files: `frontend/src/theme/recipes/` (new or existing), `frontend/src/components/movie/MovieCard.tsx`
     - Pattern will be reused in MovieDetail and other locations
 
+- [ ] Fix QuickBrowseBar year select state for out-of-preset decade ranges
+    - **Bug:** Applying a decade range via advanced filters that's outside the minimal presets (90's, 80's, 70's)
+      shows "Year" enabled instead of "Custom" disabled
+    - **Example:** 1940-1949 via advanced filters → year select shows "Year" (primary color, enabled)
+    - **Expected:** Should show "Custom" (italic, disabled) like other custom year ranges
+    - **Root cause:** Likely conflict between `isDecadeRange` detection and `hasAdvancedFilters` logic -
+      the select sees it's a decade pattern but it's not in the preset list
+    - **Fix:** Check "is decade AND is in presets" not just "is decade"
+    - **Files:** `frontend/src/components/movie/browse/QuickBrowseBar.tsx` (or YearRangeSelect if separate)
+    - **Priority:** High - discovered during infinite scroll testing, should fix before PR
+    - **Effort:** ~30 min
+
+- [ ] Fix empty state message hidden behind advanced filters drawer
+    - **Bug:** When advanced filters produce no results, "No movies found..." message is hidden behind
+      the advanced filters panel which overlays content
+    - **Current behavior:** Drawer slides out and covers content
+    - **Options evaluated:**
+        1. Detect drawer open + reposition message (hacky, edge cases on close)
+        2. Push content in no-results scenario only (complex conditional)
+        3. **Always push content when drawer open** ← Recommended approach
+    - **Recommended fix:** Change drawer from overlay to push-down behavior, add CSS transition
+      for smooth open/close. Test UX - if janky, can add `transition: margin-top 0.2s ease`
+    - **Files:** `frontend/src/components/movie/browse/BrowseControlsSection.tsx` or
+      `frontend/src/components/movie/collection/MovieCollectionLayout.tsx`
+    - **Priority:** High - discovered during infinite scroll testing, should fix before PR
+    - **Effort:** ~1 hour including UX testing
+
 <!-- Miscellaneous -->
 
 - [ ] Investigate login session loss during testing
@@ -226,24 +253,6 @@
     - **Priority:** Low (functional, not blocking)
     - **Effort:** Medium (R.1-R.8 individually small, R.9 larger if needed)
     - **Risk:** Low (refactor with existing test coverage)
-
-<!-- Navigation/Routing -->
-
-- [ ] Extract `BackToCollectionButton` shared component
-    - **Context:** `MovieDetail.tsx:58-93` has inline BackButton with comment noting extraction
-      opportunity if PersonDetail needs similar functionality
-    - **Current implementation:**
-        - Reads `from` and filter params from URL
-        - Constructs back URL based on source route (search, browse, browse/*)
-        - Preserves all query params for filter state
-    - **Implementation:**
-        1. Create `frontend/src/components/navigation/BackToCollectionButton.tsx`
-        2. Props: `from: string`, `params: Record<string, string>`, optional `label?: string`
-        3. Move URL construction logic from MovieDetail
-        4. Update MovieDetail to use shared component
-        5. (Future) Use in PersonDetail when that page is built
-    - **Files:** New component, `MovieDetail.tsx`
-    - **Defer until:** PersonDetail is being built (avoid premature abstraction)
 
 <!-- Data Quality -->
 

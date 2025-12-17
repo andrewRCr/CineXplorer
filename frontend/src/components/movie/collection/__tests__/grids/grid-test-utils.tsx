@@ -80,7 +80,7 @@ export const createMockMovie = (
     overview: `Overview for movie ${tmdb_id}`,
     genre_ids: [28, 12],
     runtime: 120,
-    ...rest, // Override defaults with any provided values (excluding tmdb_id)
+    ...rest, // Override defaults with any provided values (tmdb_id already applied above)
   };
 };
 
@@ -371,7 +371,7 @@ export const createMockResizeObserver = () => {
 
   const simulateResize = (rect: { width: number; height?: number }) => {
     if (storedCallback) {
-      storedCallback([{ contentRect: { width: rect.width } }]);
+      storedCallback([{ contentRect: { width: rect.width, height: rect.height ?? 0 } }]);
     }
   };
 

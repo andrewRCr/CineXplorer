@@ -172,6 +172,9 @@ jobs:
 
       - name: Generate Chakra UI component types
         working-directory: frontend
+        # Note: Chakra typegen outputs to node_modules/@chakra-ui/react/dist/types/
+        # (not committed). No drift detection needed - types are ephemeral and
+        # regenerated each CI run. The subsequent type-check validates correctness.
         run: npm run typegen
 
       - name: Type-check with generated types

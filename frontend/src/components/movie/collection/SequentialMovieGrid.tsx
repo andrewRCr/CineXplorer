@@ -98,8 +98,8 @@ const SequentialMovieGrid = () => {
   // Empty state check
   const isEmpty = !isLoading && currentPageMovies.length === 0 && pageCount === 0;
 
-  // Page size is typically 20 (from API)
-  const pageSize = 20;
+  // Derive page size from first page, fallback to TMDB default
+  const pageSize = pages[0]?.results.length ?? 20;
 
   // Generate results text for header
   const resultText = useSequentialResultsText(

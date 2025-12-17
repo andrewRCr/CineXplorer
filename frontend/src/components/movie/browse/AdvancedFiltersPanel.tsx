@@ -197,6 +197,7 @@ const AdvancedFiltersPanel = ({
             variant="ghost"
             color="destructive"
             _hover={{ bg: "destructive/12", color: "destructive" }}
+            aria-label="Clear all filters"
           >
             <FiX style={{ marginRight: "2px" }} />
             Clear
@@ -209,6 +210,7 @@ const AdvancedFiltersPanel = ({
             variant="ghost"
             color="tertiary"
             _hover={{ bg: "tertiary/8", color: "tertiary-hover" }}
+            aria-label="Collapse advanced filters"
           >
             <FiChevronUp style={{ marginRight: "2px" }} />
             Collapse

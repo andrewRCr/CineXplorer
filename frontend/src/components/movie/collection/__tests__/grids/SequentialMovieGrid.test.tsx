@@ -1,11 +1,10 @@
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { screen, fireEvent, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach, type Mock } from "vitest";
-import { ChakraProvider } from "@chakra-ui/react";
-import defaultSystem from "@/theme";
 import SequentialMovieGrid from "../../SequentialMovieGrid";
 import { useInfiniteMovies } from "@/hooks/movie/useInfiniteMovies";
 import { useMovieCollectionContext } from "@/hooks/movie/useMovieCollectionContext";
 import { type MovieListItem, type PaginatedMoviesResponse } from "@/@types/movie";
+import { renderWithProvider } from "./grid-test-utils";
 
 // Mock the hooks
 vi.mock("@/hooks/movie/useInfiniteMovies");
@@ -23,11 +22,6 @@ vi.mock("../../../MovieCardContainer", () => ({
     <div data-testid="movie-card-container">{children}</div>
   ),
 }));
-
-// Helper to render with provider
-const renderWithProvider = (ui: React.ReactElement) => {
-  return render(<ChakraProvider value={defaultSystem}>{ui}</ChakraProvider>);
-};
 
 // Helper to create mock page response
 const createMockPage = (

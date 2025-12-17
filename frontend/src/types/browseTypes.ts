@@ -63,3 +63,30 @@ export interface BrowseParams {
   language: string;
   certifications: string[];
 }
+
+/**
+ * BrowseParams keys as a runtime array - coupled to interface via type checks.
+ *
+ * Used for URL parameter filtering (preserving non-browse params).
+ * Compile-time checks ensure this stays in sync with BrowseParams interface.
+ */
+export const BROWSE_PARAM_KEYS = [
+  "genres",
+  "minYear",
+  "maxYear",
+  "minRating",
+  "maxRating",
+  "sortBy",
+  "language",
+  "certifications",
+] as const satisfies readonly (keyof BrowseParams)[];
+
+// Compile-time check: error if any BrowseParams key is missing from array
+type _AssertKeysComplete = Exclude<
+  keyof BrowseParams,
+  (typeof BROWSE_PARAM_KEYS)[number]
+> extends never
+  ? true
+  : "Missing keys in BROWSE_PARAM_KEYS";
+const _assertKeysComplete: _AssertKeysComplete = true;
+void _assertKeysComplete; // Prevent unused variable warning

@@ -75,21 +75,25 @@ export function CollapsibleSubNav({
     typeof ResizeObserver !== "undefined" ? ResizeObserver : undefined
   );
 
+  // Use ref to avoid effect re-runs when callback identity changes
+  const onHeightChangeRef = useRef(onHeightChange);
+  onHeightChangeRef.current = onHeightChange;
+
   // Report height changes (for spacing calculations in parent layouts)
   useEffect(() => {
-    if (!onHeightChange || !containerRef.current || !ResizeObserverImpl.current)
+    if (!onHeightChangeRef.current || !containerRef.current || !ResizeObserverImpl.current)
       return;
 
     const observer = new ResizeObserverImpl.current((entries) => {
       const entry = entries[0];
       if (entry?.contentRect?.height != null) {
-        onHeightChange(entry.contentRect.height);
+        onHeightChangeRef.current?.(entry.contentRect.height);
       }
     });
 
     observer.observe(containerRef.current);
     return () => observer.disconnect();
-  }, [onHeightChange]);
+  }, []);
 
   return (
     <Box
@@ -102,7 +106,8 @@ export function CollapsibleSubNav({
       position="fixed"
       top="var(--chakra-sizes-layout-navbar)"
       left={0}
-      width="100vw"
+      right={0}
+      width="100%"
       zIndex={Z_INDEX}
       // Styling: match navbar appearance
       bg="layer-01"

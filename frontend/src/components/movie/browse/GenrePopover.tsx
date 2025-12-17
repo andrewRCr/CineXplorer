@@ -48,8 +48,8 @@ const GenrePopover = ({
   const selectedValues = selectedGenres.map((id) => String(id));
 
   const handleValueChange = (values: string[]) => {
-    // Convert string values back to numbers
-    const numericIds = values.map((v) => Number(v));
+    // Convert string values back to numbers (filter NaN for safety)
+    const numericIds = values.map((v) => Number(v)).filter((n) => !isNaN(n));
     onChange(numericIds);
   };
 

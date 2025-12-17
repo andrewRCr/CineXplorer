@@ -44,11 +44,6 @@ export const createMockMovieDetail = (overrides: Partial<MovieDetail> = {}): Mov
 });
 
 /**
- * @deprecated Use createMockMovieListItem or createMockMovieDetail
- */
-export const createMockMovie = createMockMovieListItem;
-
-/**
  * Factory for creating multiple mock movie list items.
  */
 export const createMockMovieListItems = (count: number = 5): MovieListItem[] => {
@@ -61,11 +56,6 @@ export const createMockMovieListItems = (count: number = 5): MovieListItem[] => 
 		})
 	);
 };
-
-/**
- * @deprecated Use createMockMovieListItems
- */
-export const createMockMovies = createMockMovieListItems;
 
 // Common movie filter mock data
 export const mockMovieFilters = {
@@ -80,7 +70,7 @@ export const mockMovieFilters = {
 // Mock API responses
 export const mockPaginatedResponse = {
 	page: 1,
-	results: createMockMovies(20),
+	results: createMockMovieListItems(20),
 	total_pages: 100,
 	total_results: 2000,
 };

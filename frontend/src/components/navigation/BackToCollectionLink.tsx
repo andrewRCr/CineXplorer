@@ -20,6 +20,7 @@
 
 import { Link } from "react-router-dom";
 import { Box, Button } from "@chakra-ui/react";
+import { LuArrowLeft } from "react-icons/lu";
 
 export interface BackToCollectionLinkProps {
   /**
@@ -97,15 +98,7 @@ export function BackToCollectionLink({
         style={{ textDecoration: "none" }}
       >
         <Button variant={variant}>
-          <span
-            style={{
-              display: "inline-block",
-              transform: "translateY(2px)",
-              marginRight: "8px",
-            }}
-          >
-            &larr;
-          </span>
+          <LuArrowLeft />
           {label}
         </Button>
       </Link>

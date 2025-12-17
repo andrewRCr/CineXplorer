@@ -52,7 +52,10 @@ const VirtualizedMovieGrid = () => {
     useMovieCollectionContext({});
 
   // Build stable query key from actual filter values
-  const queryKey = ["movies", "virtualized", source, query, browseParams];
+  const queryKey = useMemo(
+    () => ["movies", "virtualized", source, query, browseParams],
+    [source, query, browseParams]
+  );
 
   const {
     movies,
@@ -254,7 +257,7 @@ const VirtualizedMovieGrid = () => {
                   >
                     {rowMovies.map((movie: MovieListItem) => (
                       <MovieCardContainer
-                        key={`${movie.tmdb_id}-${movie.title}`}
+                        key={movie.tmdb_id}
                         data-testid="movie-card-container"
                       >
                         <MovieCard movie={movie} source={source} query={query} />

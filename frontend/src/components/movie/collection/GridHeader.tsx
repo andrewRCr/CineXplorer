@@ -19,6 +19,15 @@
 import { Box, Text } from "@chakra-ui/react";
 import type { ReactNode } from "react";
 
+/** Shared text styles for result count display */
+const resultTextStyles = {
+  fontSize: "sm",
+  fontFamily: "inter",
+  color: "fg-muted",
+  fontWeight: "medium",
+  lineHeight: "0.75",
+} as const;
+
 export interface GridHeaderProps {
   /** Optional page title to display on the left */
   title?: string;
@@ -102,11 +111,7 @@ export function GridHeader({
         </Text>
       ) : hasControls ? (
         <Text
-          fontSize="sm"
-          fontFamily="inter"
-          color="fg-muted"
-          fontWeight="medium"
-          lineHeight="0.75"
+          {...resultTextStyles}
           minWidth="150px"
           opacity={isLoading ? 0.6 : 1}
           transition="opacity 0.2s ease"
@@ -118,11 +123,7 @@ export function GridHeader({
       {/* Right side: Results (when title present) or Controls (when present) or Results (alone) */}
       {hasTitle ? (
         <Text
-          fontSize="sm"
-          fontFamily="inter"
-          color="fg-muted"
-          fontWeight="medium"
-          lineHeight="1"
+          {...resultTextStyles}
           opacity={isLoading ? 0.6 : 1}
           transition="opacity 0.2s ease"
         >
@@ -134,11 +135,7 @@ export function GridHeader({
         </Box>
       ) : (
         <Text
-          fontSize="sm"
-          fontFamily="inter"
-          color="fg-muted"
-          fontWeight="medium"
-          lineHeight="1"
+          {...resultTextStyles}
           minWidth="150px"
           textAlign="right"
           opacity={isLoading ? 0.6 : 1}

@@ -52,6 +52,8 @@ export function useUserMovieData(tmdbId: string): {
     useEffect(() => {
         const tmdbIdNum = parseValidTmdbId(tmdbId);
         if (tmdbIdNum === null) {
+            setError("Invalid movie ID format");
+            setData(null);
             setLoading(false);
             return;
         }

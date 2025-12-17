@@ -7,6 +7,7 @@ import { useMemo } from "react";
  */
 function formatTotalResults(total: number | undefined): string {
   if (total === undefined || isNaN(total)) return "0";
+  if (total < 0) return "0";
   if (total > 10000) return "10,000+";
   return total.toLocaleString();
 }

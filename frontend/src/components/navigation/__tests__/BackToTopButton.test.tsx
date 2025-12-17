@@ -202,13 +202,14 @@ describe("BackToTopButton", () => {
       render(<BackToTopButton />);
 
       const button = screen.getByRole("button", { name: /scroll to top/i });
+      button.focus();
       fireEvent.keyDown(button, { key: "Enter", code: "Enter" });
       fireEvent.keyUp(button, { key: "Enter", code: "Enter" });
 
-      // Note: fireEvent.keyDown doesn't trigger click by default in JSDOM
-      // But the button element with role="button" should handle this natively
-      // Testing that button is interactive (focusable + has click handler)
-      expect(button).toBeInTheDocument();
+      // JSDOM limitation: keyDown doesn't trigger native button click behavior
+      // Verify button is focusable and interactive via click
+      fireEvent.click(button);
+      expect(mockScrollTo).toHaveBeenCalledWith({ top: 0, behavior: "smooth" });
     });
   });
 

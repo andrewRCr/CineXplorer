@@ -79,6 +79,9 @@ export function useScrollState(options?: UseScrollStateOptions): ScrollState {
   // Track if RAF is pending to avoid queueing multiple updates
   const rafPendingRef = useRef(false);
 
+  // Track mounted state to prevent stale callbacks after unmount
+  const mountedRef = useRef(true);
+
   // Handle scroll event with RAF throttling
   const handleScroll = useCallback(() => {
     if (rafPendingRef.current) return;
@@ -87,6 +90,7 @@ export function useScrollState(options?: UseScrollStateOptions): ScrollState {
 
     requestAnimationFrame(() => {
       rafPendingRef.current = false;
+      if (!mountedRef.current) return;
 
       const currentScrollY = window.scrollY;
       const previousScrollY = directionChangePositionRef.current;
@@ -112,6 +116,7 @@ export function useScrollState(options?: UseScrollStateOptions): ScrollState {
 
   // Set up and clean up scroll listener
   useEffect(() => {
+    mountedRef.current = true;
     // Initialize with current scroll position
     setScrollY(window.scrollY);
     directionChangePositionRef.current = window.scrollY;
@@ -121,6 +126,7 @@ export function useScrollState(options?: UseScrollStateOptions): ScrollState {
     window.addEventListener("scroll", handleScroll, listenerOptions);
 
     return () => {
+      mountedRef.current = false;
       window.removeEventListener("scroll", handleScroll, listenerOptions);
     };
   }, [handleScroll]);

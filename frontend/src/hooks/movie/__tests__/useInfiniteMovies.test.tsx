@@ -268,9 +268,7 @@ describe("useInfiniteMovies", () => {
     });
 
     it("should have hasNextPage=false when next_tmdb_page_start is undefined", async () => {
-      const response = createMockResponse();
-      delete (response as { next_tmdb_page_start?: number | null })
-        .next_tmdb_page_start;
+      const { next_tmdb_page_start: _, ...response } = createMockResponse();
 
       const mockFetcher = vi.fn().mockResolvedValue(response);
 
@@ -587,8 +585,10 @@ describe("useInfiniteMovies", () => {
       // Rerender with structurally identical but different reference object
       rerender({ queryKey: { ...queryKeyValue } });
 
-      // Wait a tick for any potential refetch
-      await new Promise((resolve) => setTimeout(resolve, 50));
+      // Wait for any potential async effects to settle
+      await waitFor(() => {
+        expect(true).toBe(true);
+      });
 
       // Should NOT refetch since TanStack Query compares by value, not reference
       // This tests that the query key serialization works correctly

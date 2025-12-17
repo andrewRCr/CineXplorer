@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import type { BrowseParams } from "@/types/browseTypes";
+import { type BrowseParams, BROWSE_PARAM_KEYS } from "@/types/browseTypes";
 import {
   parseBrowseParamsFromUrl,
   generateBrowseUrl,
@@ -56,23 +56,13 @@ export const useMovieCollectionUrl = () => {
 
       // Preserve non-browse params (e.g., "query" for movie search)
       const currentParams = new URLSearchParams(location.search);
-      const browseParamKeys = [
-        "genres",
-        "sortBy",
-        "minYear",
-        "maxYear",
-        "minRating",
-        "maxRating",
-        "language",
-        "certifications",
-      ];
 
       // Build final URL: non-browse params + browse params
       const finalParams = new URLSearchParams();
 
       // First, add non-browse params from current URL
       currentParams.forEach((value, key) => {
-        if (!browseParamKeys.includes(key)) {
+        if (!BROWSE_PARAM_KEYS.includes(key as keyof BrowseParams)) {
           finalParams.set(key, value);
         }
       });

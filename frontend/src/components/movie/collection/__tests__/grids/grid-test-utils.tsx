@@ -15,7 +15,7 @@ import { render } from "@testing-library/react";
 import { vi } from "vitest";
 import { MemoryRouter, type MemoryRouterProps } from "react-router-dom";
 import { ChakraProvider } from "@chakra-ui/react";
-import defaultSystem from "@/theme";
+import { defaultSystem } from "@/theme";
 import type { MovieListItem, PaginatedMoviesResponse } from "@/@types/movie";
 import type { UseInfiniteMoviesResult } from "@/hooks/movie/useInfiniteMovies";
 

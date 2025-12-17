@@ -61,6 +61,7 @@ export function useUserMovieData(tmdbId: string): {
 
         req.request
             .then((res) => {
+                if (!mounted.current) return;
                 if (isUserMovieData(res.data)) {
                     setData(res.data);
                     setError(null);
@@ -73,6 +74,7 @@ export function useUserMovieData(tmdbId: string): {
                 }
             })
             .catch((err: unknown) => {
+                if (!mounted.current) return;
                 setError(
                     err instanceof Error
                         ? err.message
@@ -80,7 +82,9 @@ export function useUserMovieData(tmdbId: string): {
                 );
                 setData(null);
             })
-            .finally(() => setLoading(false));
+            .finally(() => {
+                if (mounted.current) setLoading(false);
+            });
 
         return () => {
             if (req && typeof req.cancel === "function") {

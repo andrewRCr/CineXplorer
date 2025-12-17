@@ -12,7 +12,7 @@
 import { AuthContext } from "@/contexts/AuthContext";
 import { useContext } from "react";
 
-// custom hook for accessing the AuthContex
+// custom hook for accessing the AuthContext
 const useAuthContext = () => useContext(AuthContext);
 
 export default useAuthContext;

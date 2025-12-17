@@ -19,9 +19,6 @@ import {
 } from "../scrollStorage";
 
 describe("scrollStorage", () => {
-  // Store original sessionStorage to restore after tests
-  let originalSessionStorage: Storage;
-
   beforeEach(() => {
     // Clear sessionStorage before each test
     sessionStorage.clear();
@@ -368,6 +365,8 @@ describe("scrollStorage", () => {
   });
 
   describe("error handling", () => {
+    // Store original sessionStorage to restore after tests
+    let originalSessionStorage: Storage;
     let mockStorage: {
       getItem: ReturnType<typeof vi.fn>;
       setItem: ReturnType<typeof vi.fn>;

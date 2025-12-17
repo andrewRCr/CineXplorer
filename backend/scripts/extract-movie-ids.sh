@@ -12,4 +12,12 @@
 #
 #   Multiple URLs become comma-separated: 197644,123456,789012
 
-grep -oP '(?<=/movie/)\d+' "$@" | paste -sd,
+# Extract IDs using portable grep + sed (works on GNU and BSD/macOS)
+ids=$(grep -oE '/movie/[0-9]+' "$@" | sed 's#/movie/##' | paste -sd,)
+
+if [ -z "$ids" ]; then
+    echo "No movie IDs found in input" >&2
+    exit 1
+fi
+
+echo "$ids"

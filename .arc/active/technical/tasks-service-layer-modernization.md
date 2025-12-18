@@ -596,6 +596,25 @@ all remaining function-based services to class-based architecture with dependenc
         - Ruff: backend/apps/user_movie_data
         - pytest apps/user_movie_data/tests/unit/test_user_movie_data_service.py (24 passed)
 
+- [x] **4.5 Address Minor Phase 3 Issues Found During Review**
+
+    **Goal:** Resolve small consistency gaps discovered in movie service layer audit.
+
+    - [x] 4.5.a Guard MovieService.search_movies against empty queries
+        - Returns empty MovieListResponseSchema for short/blank queries
+        - Added unit coverage to avoid TMDB calls on invalid input
+
+    - [x] 4.5.b Add backend year_min/year_max for decade filters
+        - Ensure second-pass year filtering runs for decade-based queries
+        - Added schema transformer coverage for decade mapping
+
+    - [x] 4.5.c Make schema-to-TMDB conversion explicit about extra fields
+        - Excluded user_movie_data during schema-to-TMDB conversion
+
+    - [x] 4.5.d Run incremental quality checks (movie service layer)
+        - Ruff: backend/apps/movie
+        - pytest apps/movie/tests/unit/test_schemas.py apps/movie/tests/unit/services/test_movie_service.py (25 passed)
+
 ---
 
 ### **Phase 5:** Create AuthenticationService

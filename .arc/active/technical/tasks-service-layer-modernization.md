@@ -575,6 +575,27 @@ all remaining function-based services to class-based architecture with dependenc
     - [x] 4.3.c Run Python type checking
         - Pyright: backend/apps/, backend/config/ (0 errors, 0 warnings; infos only)
 
+- [x] **4.4 UserMovieData Service Consistency Audit**
+
+    **Goal:** Remove duplication in user movie query logic, ensure consistent enrichment,
+    and clarify pagination metadata semantics on TMDB misses.
+
+    - [x] 4.4.a Refactor query methods to share batch + enrichment pipeline
+        - Reused `fetch_movies_batch` + `MovieEnrichmentService` for list methods
+        - Eliminated per-item TMDB calls in service layer query path
+        - Preserved queryset ordering after batch fetch
+
+    - [x] 4.4.b Align pagination metadata semantics
+        - Paginated method: keep metadata from DB count, note TMDB skips
+        - Non-paginated method: total_results reflects returned items
+
+    - [x] 4.4.c Update tests for metadata behavior on TMDB misses
+        - Added unit assertions for DB-count vs returned-count metadata
+
+    - [x] 4.4.d Run incremental quality checks (user_movie_data app)
+        - Ruff: backend/apps/user_movie_data
+        - pytest apps/user_movie_data/tests/unit/test_user_movie_data_service.py (24 passed)
+
 ---
 
 ### **Phase 5:** Create AuthenticationService

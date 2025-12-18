@@ -486,7 +486,7 @@ all remaining function-based services to class-based architecture with dependenc
     **Goal:** Encapsulate all business logic related to user movie data management, including CRUD operations
     and filtering with pagination.
 
-    - [ ] 4.1.a Write tests for UserMovieDataService CRUD operations (test-first)
+    - [x] 4.1.a Write tests for UserMovieDataService CRUD operations (test-first)
         - Test CREATE: TMDB fetch → Movie stub creation → UserMovieData creation
         - Test UPDATE: Partial field updates with validation
         - Test DELETE: Authorization and deletion logic
@@ -495,6 +495,11 @@ all remaining function-based services to class-based architecture with dependenc
         - Use existing test helpers: `create_user()`, `create_mock_paginated_response()`
         - Target coverage: 80%+ (general)
         - Expect tests to FAIL initially
+        - **Completed**: 21 tests written in `test_user_movie_data_service.py`
+            - Created shared `user_movie_data/tests/test_helpers.py` (DRY)
+            - Added `create_mock_user()` to `core/tests/test_helpers.py`
+            - Refactored `test_movie_enrichment_service.py` to use shared helpers
+            - All 21 tests fail as expected (service not implemented)
 
     - [ ] 4.1.b Extend `UserMovieDataRepository` with CRUD methods
         - Add `create(user, movie, **fields)` method

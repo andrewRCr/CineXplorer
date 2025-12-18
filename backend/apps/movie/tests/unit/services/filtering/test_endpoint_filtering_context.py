@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from unittest.mock import Mock
 
-from movie.schemas import PaginatedMovieResponseSchema
+from movie.schemas import MovieListResponseSchema
 from movie.services.api_boundary import BrowseServiceParams
 from movie.services.movie_service import MovieService
 from movie.tests.test_helpers import create_mock_paginated_response
@@ -43,7 +43,7 @@ def test_filtering_applies_to_now_playing_endpoint() -> None:
     # Assert: Extended run from 2021 still present (date preset allows it)
     # This test now validates that now-playing returns movies within preset range
     assert len(result.results) == 4  # All movies returned (within date preset)
-    assert isinstance(result, PaginatedMovieResponseSchema)
+    assert isinstance(result, MovieListResponseSchema)
 
 
 def test_filtering_applies_to_upcoming_endpoint() -> None:
@@ -74,7 +74,7 @@ def test_filtering_applies_to_upcoming_endpoint() -> None:
     # Assert: All movies returned (no backend filtering applied without explicit params)
     # This test now validates that upcoming returns movies within preset date range
     assert len(result.results) == 4  # All movies returned
-    assert isinstance(result, PaginatedMovieResponseSchema)
+    assert isinstance(result, MovieListResponseSchema)
 
 
 def test_no_filters_returns_all_results_unchanged() -> None:

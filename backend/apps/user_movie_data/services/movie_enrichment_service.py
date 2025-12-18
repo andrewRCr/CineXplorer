@@ -16,7 +16,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from django.contrib.auth.models import AbstractBaseUser
-from movie.schemas import MovieBaseSchema, UserMovieDataSchema
+from movie.schemas import MovieListItemSchema, UserMovieDataSchema
 from user_movie_data.models import UserMovieData
 
 if TYPE_CHECKING:
@@ -83,14 +83,14 @@ class MovieEnrichmentService:
 
     def enrich_movies_with_user_movie_data(
         self,
-        movies: list[MovieBaseSchema],
+        movies: list[MovieListItemSchema],
         user: AbstractBaseUser | None
-    ) -> list[MovieBaseSchema]:
+    ) -> list[MovieListItemSchema]:
         """
         Enrich movie schemas with user movie data.
 
         For authenticated users, this method bulk-queries UserMovieData records
-        and creates new MovieBaseSchema instances with the user_movie_data field
+        and creates new MovieListItemSchema instances with the user_movie_data field
         populated. For unauthenticated users, returns movies unchanged
         (user_movie_data field remains None).
 
@@ -115,7 +115,7 @@ class MovieEnrichmentService:
         Type Safety:
             Uses AbstractBaseUser (not Any) for maximum type safety. Django ORM
             field access benefits from django-types stub inference. Pydantic
-            schemas (MovieBaseSchema, UserMovieDataSchema) provide runtime
+            schemas (MovieListItemSchema, UserMovieDataSchema) provide runtime
             validation at API boundaries via Django Ninja.
 
         Performance:
@@ -140,7 +140,7 @@ class MovieEnrichmentService:
         )
 
         # Create new enriched movie instances (non-mutating approach)
-        enriched_movies: list[MovieBaseSchema] = []
+        enriched_movies: list[MovieListItemSchema] = []
         for movie in movies:
             user_movie_data = user_data_map.get(movie.tmdb_id)
 
@@ -151,8 +151,8 @@ class MovieEnrichmentService:
                     update={
                         'user_movie_data': UserMovieDataSchema(
                             id=user_movie_data.id,
-                            tmdb_id=movie.tmdb_id,  # From MovieBaseSchema parameter
-                            title=movie.title,  # From MovieBaseSchema parameter
+                            tmdb_id=movie.tmdb_id,  # From MovieListItemSchema parameter
+                            title=movie.title,  # From MovieListItemSchema parameter
                             user_watched=user_movie_data.user_watched,
                             user_on_watchlist=user_movie_data.user_on_watchlist,
                             user_liked=user_movie_data.user_liked,

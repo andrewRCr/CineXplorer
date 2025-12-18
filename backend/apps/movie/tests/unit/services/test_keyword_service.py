@@ -17,7 +17,7 @@ from unittest.mock import Mock
 
 import pytest
 from core.services.api_response import ApiResponse
-from movie.schemas import PaginatedKeywordResponseSchema
+from movie.schemas import KeywordListResponseSchema
 from movie.tests.tmdb_test_builders import TMDBKeywordResponse
 from ninja.errors import HttpError
 
@@ -84,7 +84,7 @@ def test_get_popular_keywords_uses_injected_client() -> None:
     mock_client.get.assert_called_once_with('keyword/popular', {'page': 1})
 
     # Assert: Response is properly structured
-    assert isinstance(result, PaginatedKeywordResponseSchema)
+    assert isinstance(result, KeywordListResponseSchema)
     assert result.page == 1
     assert result.total_pages == 10
     assert result.total_results == 200
@@ -165,7 +165,7 @@ def test_search_keywords_uses_injected_client() -> None:
     mock_client.get.assert_called_once_with('search/keyword', {'query': 'superhero'})
 
     # Assert: Response is properly structured
-    assert isinstance(result, PaginatedKeywordResponseSchema)
+    assert isinstance(result, KeywordListResponseSchema)
     assert result.total_results == 3
     assert len(result.results) == 3
     assert result.results[0].name == 'superhero'

@@ -85,7 +85,7 @@ class TestResponseContract:
         assert response.status_code == HTTPStatus.OK
         data = response.json()
 
-        # Verify response structure matches PaginatedMovieResponseSchema
+        # Verify response structure matches MovieListResponseSchema
         assert "results" in data
         assert "page" in data
         assert "total_results" in data

@@ -3,7 +3,7 @@ Pydantic schema factory functions for converting TMDB API responses to applicati
 
 This module provides factory functions that handle the data transformation layer between
 TMDB API responses (typed as TMDBMovieBase, TMDBMovieDetail, etc.) and our application
-schemas (MovieBaseSchema, MovieDetailSchema, etc.).
+schemas (MovieListItemSchema, MovieDetailSchema, etc.).
 
 These factories serve as the boundary layer for external TMDB data, ensuring:
 - Complete type safety through two-stage validation (TMDB models → app schemas)
@@ -11,7 +11,7 @@ These factories serve as the boundary layer for external TMDB data, ensuring:
 - Centralized handling of TMDB API quirks (empty string dates, missing fields, etc.)
 
 Usage:
-    # Convert TMDB movie response to MovieBaseSchema
+    # Convert TMDB movie response to MovieListItemSchema
     tmdb_data = {"id": 550, "title": "Fight Club", ...}
     movie = create_movie_base_from_tmdb(tmdb_data)
 
@@ -47,12 +47,12 @@ from ...schemas import (
     CastMemberSchema,
     CrewMemberSchema,
     GenreSchema,
+    KeywordListResponseSchema,
     KeywordSchema,
-    MovieBaseSchema,
     MovieDetailSchema,
-    PaginatedKeywordResponseSchema,
-    PaginatedMovieResponseSchema,
-    PaginatedPersonResponseSchema,
+    MovieListItemSchema,
+    MovieListResponseSchema,
+    PersonListResponseSchema,
     PersonSchema,
     ProductionCompanySchema,
     SpokenLanguageSchema,
@@ -193,9 +193,9 @@ def extract_us_certification(release_dates: TMDBReleaseDatesResponse | None) -> 
 # =========================
 
 
-def create_movie_base_from_tmdb(tmdb_data: Mapping[str, object]) -> MovieBaseSchema:
+def create_movie_base_from_tmdb(tmdb_data: Mapping[str, object]) -> MovieListItemSchema:
     """
-    Create a MovieBaseSchema instance from TMDB API response data.
+    Create a MovieListItemSchema instance from TMDB API response data.
 
     Uses typed TMDB response models for validation before converting to
     application schema, ensuring complete type safety.
@@ -204,7 +204,7 @@ def create_movie_base_from_tmdb(tmdb_data: Mapping[str, object]) -> MovieBaseSch
         tmdb_data: Raw TMDB movie data dictionary
 
     Returns:
-        MovieBaseSchema instance with validated data
+        MovieListItemSchema instance with validated data
 
     Raises:
         HttpError: If data validation fails or required fields are missing
@@ -237,11 +237,11 @@ def create_movie_base_from_tmdb(tmdb_data: Mapping[str, object]) -> MovieBaseSch
             'overview': tmdb_movie.overview,
         }
 
-        return MovieBaseSchema.model_validate(validated_data, strict=False)
+        return MovieListItemSchema.model_validate(validated_data, strict=False)
 
     except Exception as e:
         logger.error(
-            "Failed to create MovieBaseSchema from TMDB data",
+            "Failed to create MovieListItemSchema from TMDB data",
             extra={
                 'error': str(e),
                 'tmdb_id': tmdb_data.get('id'),
@@ -380,9 +380,9 @@ def create_movie_detail_from_tmdb(
 
 def create_paginated_movie_response_from_tmdb(
     tmdb_response: dict[str, object]
-) -> PaginatedMovieResponseSchema:
+) -> MovieListResponseSchema:
     """
-    Create a PaginatedMovieResponseSchema from TMDB paginated response.
+    Create a MovieListResponseSchema from TMDB paginated response.
 
     Uses typed TMDB response models for validation before converting to
     application schema, ensuring complete type safety.
@@ -391,7 +391,7 @@ def create_paginated_movie_response_from_tmdb(
         tmdb_response: TMDB search/discover response with pagination
 
     Returns:
-        PaginatedMovieResponseSchema instance
+        MovieListResponseSchema instance
 
     Raises:
         HttpError: If data validation fails
@@ -414,11 +414,11 @@ def create_paginated_movie_response_from_tmdb(
             for movie in tmdb_search.results
         ]
 
-        return PaginatedMovieResponseSchema.model_validate(pagination_data, strict=False)
+        return MovieListResponseSchema.model_validate(pagination_data, strict=False)
 
     except Exception as e:
         logger.error(
-            "Failed to create PaginatedMovieResponseSchema from TMDB data",
+            "Failed to create MovieListResponseSchema from TMDB data",
             extra={
                 'error': str(e),
                 'operation': 'create_paginated_movie_response_from_tmdb',
@@ -435,9 +435,9 @@ def create_paginated_movie_response_from_tmdb(
 
 def create_paginated_keyword_response_from_tmdb(
     tmdb_response: dict[str, object]
-) -> PaginatedKeywordResponseSchema:
+) -> KeywordListResponseSchema:
     """
-    Create a PaginatedKeywordResponseSchema from TMDB keyword response.
+    Create a KeywordListResponseSchema from TMDB keyword response.
 
     Uses typed TMDB response models for validation before converting to
     application schema, ensuring complete type safety.
@@ -446,7 +446,7 @@ def create_paginated_keyword_response_from_tmdb(
         tmdb_response: TMDB keyword search/list response
 
     Returns:
-        PaginatedKeywordResponseSchema instance
+        KeywordListResponseSchema instance
 
     Raises:
         HttpError: If data validation fails
@@ -472,11 +472,11 @@ def create_paginated_keyword_response_from_tmdb(
             for keyword in tmdb_keywords.results
         ]
 
-        return PaginatedKeywordResponseSchema.model_validate(pagination_data, strict=False)
+        return KeywordListResponseSchema.model_validate(pagination_data, strict=False)
 
     except Exception as e:
         logger.error(
-            "Failed to create PaginatedKeywordResponseSchema from TMDB data",
+            "Failed to create KeywordListResponseSchema from TMDB data",
             extra={
                 'error': str(e),
                 'operation': 'create_paginated_keyword_response_from_tmdb',
@@ -488,9 +488,9 @@ def create_paginated_keyword_response_from_tmdb(
 
 def create_paginated_person_response_from_tmdb(
     tmdb_response: dict[str, object]
-) -> PaginatedPersonResponseSchema:
+) -> PersonListResponseSchema:
     """
-    Create a PaginatedPersonResponseSchema from TMDB person response.
+    Create a PersonListResponseSchema from TMDB person response.
 
     Uses typed TMDB response models for validation before converting to
     application schema, ensuring complete type safety.
@@ -499,7 +499,7 @@ def create_paginated_person_response_from_tmdb(
         tmdb_response: TMDB person search/popular response
 
     Returns:
-        PaginatedPersonResponseSchema instance
+        PersonListResponseSchema instance
 
     Raises:
         HttpError: If data validation fails
@@ -527,11 +527,11 @@ def create_paginated_person_response_from_tmdb(
             for person in tmdb_people.results
         ]
 
-        return PaginatedPersonResponseSchema.model_validate(pagination_data, strict=False)
+        return PersonListResponseSchema.model_validate(pagination_data, strict=False)
 
     except Exception as e:
         logger.error(
-            "Failed to create PaginatedPersonResponseSchema from TMDB data",
+            "Failed to create PersonListResponseSchema from TMDB data",
             extra={
                 'error': str(e),
                 'operation': 'create_paginated_person_response_from_tmdb',

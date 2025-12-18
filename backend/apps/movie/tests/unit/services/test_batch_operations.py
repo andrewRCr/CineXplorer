@@ -10,7 +10,7 @@ Test coverage targets 90%+ (critical path) as this is a foundational helper.
 from unittest.mock import MagicMock, patch
 
 from core.services.api_response import ApiResponse
-from movie.schemas import MovieBaseSchema
+from movie.schemas import MovieListItemSchema
 from movie.services.pipelines.batch import fetch_movies_batch
 from movie.tests.test_helpers import (
     create_mock_movie_detail_response,
@@ -44,7 +44,7 @@ def test_fetch_movies_batch_all_successful(mock_get_movie_details: MagicMock) ->
 
     # Assert: All movies fetched successfully
     assert len(result) == 3
-    assert all(isinstance(movie, MovieBaseSchema) for movie in result)
+    assert all(isinstance(movie, MovieListItemSchema) for movie in result)
     assert result[0].tmdb_id == 1
     assert result[0].title == 'Movie 1'
     assert result[1].tmdb_id == 2

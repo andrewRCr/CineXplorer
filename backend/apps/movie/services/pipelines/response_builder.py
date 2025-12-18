@@ -9,15 +9,15 @@ from __future__ import annotations
 
 from core.tmdb_models.tmdb_responses import TMDBMovieBase, TMDBPaginatedMovieResponse
 
-from ...schemas import MovieBaseSchema, PaginatedMovieResponseSchema
+from ...schemas import MovieListItemSchema, MovieListResponseSchema
 from ..tmdb_api_boundary.response_factories import create_paginated_movie_response_from_tmdb
 
 
-def convert_schema_to_tmdb_movie(schema: MovieBaseSchema) -> TMDBMovieBase:
-    """Convert MovieBaseSchema back to TMDBMovieBase for TMDB response.
+def convert_schema_to_tmdb_movie(schema: MovieListItemSchema) -> TMDBMovieBase:
+    """Convert MovieListItemSchema back to TMDBMovieBase for TMDB response.
 
     Args:
-        schema: MovieBaseSchema instance to convert
+        schema: MovieListItemSchema instance to convert
 
     Returns:
         TMDBMovieBase instance with properly mapped fields
@@ -36,19 +36,19 @@ def convert_schema_to_tmdb_movie(schema: MovieBaseSchema) -> TMDBMovieBase:
 
 
 def build_filtered_response(
-    movies: list[MovieBaseSchema],
+    movies: list[MovieListItemSchema],
     page: int,
     total_pages: int,
     total_results: int,
     next_tmdb_page_start: int | None = None
-) -> PaginatedMovieResponseSchema:
-    """Build a paginated movie response from filtered MovieBaseSchema list.
+) -> MovieListResponseSchema:
+    """Build a paginated movie response from filtered MovieListItemSchema list.
 
-    Handles the conversion from MovieBaseSchema back to TMDB format and
+    Handles the conversion from MovieListItemSchema back to TMDB format and
     wraps it in a paginated response structure.
 
     Args:
-        movies: Filtered list of MovieBaseSchema objects
+        movies: Filtered list of MovieListItemSchema objects
         page: Current page number
         total_pages: Total pages available
         total_results: Total results available (from original TMDB response)
@@ -56,19 +56,19 @@ def build_filtered_response(
             (smart buffer tracking to prevent duplicates)
 
     Returns:
-        PaginatedMovieResponseSchema with converted movie data
+        MovieListResponseSchema with converted movie data
 
     Note:
         This function encapsulates the common pattern of:
-        1. Converting MovieBaseSchema → TMDBMovieBase
+        1. Converting MovieListItemSchema → TMDBMovieBase
         2. Creating TMDBPaginatedMovieResponse
-        3. Converting to PaginatedMovieResponseSchema
+        3. Converting to MovieListResponseSchema
 
         The total_results preserves the original TMDB count, even though
         the results array may be smaller due to backend filtering (completeness,
         year, rating filters). This maintains accurate pagination display.
     """
-    # Convert MovieBaseSchema back to TMDBMovieBase
+    # Convert MovieListItemSchema back to TMDBMovieBase
     tmdb_movies = [convert_schema_to_tmdb_movie(m) for m in movies]
 
     # Create TMDB response structure

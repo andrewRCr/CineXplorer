@@ -23,7 +23,7 @@ from __future__ import annotations
 
 from unittest.mock import Mock
 
-from movie.schemas import MovieBaseSchema
+from movie.schemas import MovieListItemSchema
 from user_movie_data.services.movie_enrichment_service import MovieEnrichmentService
 from user_movie_data.tests.test_helpers import (
     create_mock_user_movie_data,
@@ -173,7 +173,7 @@ def test_enrich_empty_movie_list_returns_same_empty_list() -> None:
     mock_user = Mock()
     mock_repo = Mock()
     service = MovieEnrichmentService(user_movie_data_repository=mock_repo)
-    movies: list[MovieBaseSchema] = []
+    movies: list[MovieListItemSchema] = []
 
     # Act
     enriched_movies = service.enrich_movies_with_user_movie_data(movies, mock_user)
@@ -287,7 +287,7 @@ def test_enrichment_does_not_mutate_input_list() -> None:
 
 
 def test_enrichment_returns_new_list_with_new_instances() -> None:
-    """Test that enrichment returns a new list with new MovieBaseSchema instances."""
+    """Test that enrichment returns a new list with new MovieListItemSchema instances."""
     # Arrange
     mock_user = Mock()
     mock_repo = Mock()

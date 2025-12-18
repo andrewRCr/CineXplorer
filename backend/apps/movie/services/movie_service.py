@@ -25,7 +25,7 @@ from ..helpers import (
 from ..schemas import (
     GenreSchema,
     MovieDetailSchema,
-    PaginatedMovieResponseSchema,
+    MovieListResponseSchema,
 )
 from .api_boundary import BrowseServiceParams, SearchServiceParams
 from .base_service import BaseTMDBService
@@ -77,7 +77,7 @@ class MovieService(BaseTMDBService):
         page: int = 1,
         params: BrowseServiceParams | None = None,
         dedup_tracker: DeduplicationTracker | None = None,
-    ) -> PaginatedMovieResponseSchema:
+    ) -> MovieListResponseSchema:
         """
         Core TMDB discover wrapper with full filtering capabilities.
 
@@ -111,7 +111,7 @@ class MovieService(BaseTMDBService):
                 - certification: Certification rating
 
         Returns:
-            PaginatedMovieResponseSchema with discovered movies, including
+            MovieListResponseSchema with discovered movies, including
             next_tmdb_page_start metadata for pagination continuation
 
         Raises:
@@ -179,7 +179,7 @@ class MovieService(BaseTMDBService):
         page: int = 1,
         params: BrowseServiceParams | None = None,
         dedup_tracker: DeduplicationTracker | None = None,
-    ) -> PaginatedMovieResponseSchema:
+    ) -> MovieListResponseSchema:
         """
         Retrieves movies currently playing in theaters with filtering.
 
@@ -205,7 +205,7 @@ class MovieService(BaseTMDBService):
             params: BrowseServiceParams model with user-provided filters
 
         Returns:
-            PaginatedMovieResponseSchema with now playing movies
+            MovieListResponseSchema with now playing movies
 
         Raises:
             HttpError: If API error or data processing fails
@@ -236,7 +236,7 @@ class MovieService(BaseTMDBService):
         page: int = 1,
         params: BrowseServiceParams | None = None,
         dedup_tracker: DeduplicationTracker | None = None,
-    ) -> PaginatedMovieResponseSchema:
+    ) -> MovieListResponseSchema:
         """
         Retrieves upcoming movies releasing soon in theaters with filtering.
 
@@ -262,7 +262,7 @@ class MovieService(BaseTMDBService):
             params: BrowseServiceParams model with user-provided filters
 
         Returns:
-            PaginatedMovieResponseSchema with upcoming movies
+            MovieListResponseSchema with upcoming movies
 
         Raises:
             HttpError: If API error or data processing fails
@@ -300,7 +300,7 @@ class MovieService(BaseTMDBService):
         page: int = 1,
         params: SearchServiceParams | None = None,
         dedup_tracker: DeduplicationTracker | None = None,
-    ) -> PaginatedMovieResponseSchema:
+    ) -> MovieListResponseSchema:
         """
         Searches for movies by query string using TMDB.
 
@@ -313,7 +313,7 @@ class MovieService(BaseTMDBService):
             dedup_tracker: Optional tracker for cross-page deduplication
 
         Returns:
-            PaginatedMovieResponseSchema with filtered search results
+            MovieListResponseSchema with filtered search results
 
         Raises:
             HttpError: If API error or data processing fails

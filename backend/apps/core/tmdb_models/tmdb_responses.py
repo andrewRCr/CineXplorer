@@ -6,7 +6,7 @@ to replace generic dict[str, object] usage and provide complete type safety
 throughout the application.
 
 These models are used internally for parsing TMDB responses before converting
-them to our application schemas (MovieDetailSchema, MovieBaseSchema, etc.).
+them to our application schemas (MovieDetailSchema, MovieListItemSchema, etc.).
 """
 from __future__ import annotations
 

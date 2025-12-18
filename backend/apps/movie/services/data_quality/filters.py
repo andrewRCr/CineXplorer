@@ -29,7 +29,7 @@ import re
 
 from core.tmdb_models.tmdb_responses import TMDBMovieBase
 from django.core.cache import cache
-from movie.schemas import MovieBaseSchema
+from movie.schemas import MovieListItemSchema
 
 from .policy import (
     EARLIEST_VALID_RELEASE_YEAR,
@@ -164,7 +164,7 @@ def apply_data_quality_filters(
     rating_max: float | None = None,
     min_vote_count: int | None = VOTE_COUNT_THRESHOLD,
     language_filter: str | None = None,
-) -> list[MovieBaseSchema]:
+) -> list[MovieListItemSchema]:
     """Apply all data quality filters to TMDB movie list.
 
     This is the main orchestration function for second-pass filtering. It converts
@@ -182,7 +182,7 @@ def apply_data_quality_filters(
             mislabeled content where original_title script doesn't match language.
 
     Returns:
-        Filtered list of MovieBaseSchema objects matching all criteria
+        Filtered list of MovieListItemSchema objects matching all criteria
 
     Pipeline Order:
         1. Language script filter - detect mislabeled content (runs on TMDBMovieBase)
@@ -195,14 +195,14 @@ def apply_data_quality_filters(
     movies = filter_movies_by_language_script(movies, language_filter)
 
     # Convert TMDB models to schemas (map id → tmdb_id for compatibility)
-    movie_schemas: list[MovieBaseSchema] = []
+    movie_schemas: list[MovieListItemSchema] = []
     for m in movies:
         movie_dict = m.model_dump()
         movie_dict['tmdb_id'] = movie_dict.pop('id')
         # Normalize empty string dates to None (TMDB API quirk)
         if movie_dict.get('release_date') == '':
             movie_dict['release_date'] = None
-        movie_schemas.append(MovieBaseSchema.model_validate(movie_dict))
+        movie_schemas.append(MovieListItemSchema.model_validate(movie_dict))
 
     # Apply filter pipeline
     movie_schemas = filter_movies_by_blacklist(movie_schemas)
@@ -232,7 +232,7 @@ def filter_movies_by_language_script(
     CJK characters in their original_title.
 
     This filter runs on TMDBMovieBase (before schema conversion) because
-    original_title is not included in MovieBaseSchema.
+    original_title is not included in MovieListItemSchema.
 
     Args:
         movies: List of TMDBMovieBase objects from API response
@@ -302,8 +302,8 @@ def get_blacklisted_ids() -> set[int]:
 
 
 def filter_movies_by_blacklist(
-    movies: list[MovieBaseSchema],
-) -> list[MovieBaseSchema]:
+    movies: list[MovieListItemSchema],
+) -> list[MovieListItemSchema]:
     """Filter out movies on the blacklist.
 
     Excludes movies whose TMDB IDs are in the BlacklistedMovie table.
@@ -323,8 +323,8 @@ def filter_movies_by_blacklist(
 
 
 def filter_movies_by_completeness(
-    movies: list[MovieBaseSchema],
-) -> list[MovieBaseSchema]:
+    movies: list[MovieListItemSchema],
+) -> list[MovieListItemSchema]:
     """Filter to movies meeting completeness requirements.
 
     Uses CompletenessPolicy to validate each movie has required display data.
@@ -339,24 +339,24 @@ def filter_movies_by_completeness(
 
 
 def filter_movies_by_year(
-    movies: list[MovieBaseSchema],
+    movies: list[MovieListItemSchema],
     year_min: int | None = None,
     year_max: int | None = None,
-) -> list[MovieBaseSchema]:
+) -> list[MovieListItemSchema]:
     """Filter movies by release year range with historical validation.
 
     Always excludes movies before EARLIEST_VALID_RELEASE_YEAR (1888) regardless
     of user-specified filters. See policy.py for historical validation rationale.
 
     Args:
-        movies: List of MovieBaseSchema objects to filter
+        movies: List of MovieListItemSchema objects to filter
         year_min: Minimum year (inclusive). None means no lower bound.
         year_max: Maximum year (inclusive). None means no upper bound.
 
     Returns:
         Filtered list. Movies without release_date are excluded.
     """
-    filtered: list[MovieBaseSchema] = []
+    filtered: list[MovieListItemSchema] = []
 
     for movie in movies:
         if movie.release_date is None:
@@ -385,11 +385,11 @@ def filter_movies_by_year(
 
 
 def filter_movies_by_rating(
-    movies: list[MovieBaseSchema],
+    movies: list[MovieListItemSchema],
     rating_min: float | None = None,
     rating_max: float | None = None,
     min_vote_count: int | None = VOTE_COUNT_THRESHOLD,
-) -> list[MovieBaseSchema]:
+) -> list[MovieListItemSchema]:
     """Filter movies by rating range with vote count quality check.
 
     Vote count filtering can be applied independently of rating filtering
@@ -397,7 +397,7 @@ def filter_movies_by_rating(
     bypass rules.
 
     Args:
-        movies: List of MovieBaseSchema objects to filter
+        movies: List of MovieListItemSchema objects to filter
         rating_min: Minimum rating (inclusive, 0.0-10.0). None for no lower bound.
         rating_max: Maximum rating (inclusive, 0.0-10.0). None for no upper bound.
         min_vote_count: Minimum votes required. None to skip. Default: VOTE_COUNT_THRESHOLD.
@@ -409,7 +409,7 @@ def filter_movies_by_rating(
     if rating_min is None and rating_max is None and min_vote_count is None:
         return movies
 
-    filtered: list[MovieBaseSchema] = []
+    filtered: list[MovieListItemSchema] = []
 
     for movie in movies:
         # Vote count check (independent of rating filters)

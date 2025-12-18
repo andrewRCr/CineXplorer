@@ -22,7 +22,7 @@ from datetime import UTC, datetime
 from typing import Literal, Protocol
 
 
-# Protocol to avoid circular import with movie.schemas.MovieBaseSchema
+# Protocol to avoid circular import with movie.schemas.MovieListItemSchema
 # This defines the minimal interface needed for completeness validation
 class MovieDataProtocol(Protocol):
     """Protocol for movie data with fields needed for completeness validation."""

@@ -21,13 +21,13 @@ from .helpers import (
 )
 from .schemas import (
     GenreSchema,
+    KeywordListResponseSchema,
     MovieDetailSchema,
     MovieDiscoverFilterSchema,
+    MovieListResponseSchema,
     MovieSearchParamsSchema,
-    PaginatedKeywordResponseSchema,
-    PaginatedMovieResponseSchema,
-    PaginatedPersonResponseSchema,
     PaginationParamsSchema,
+    PersonListResponseSchema,
 )
 
 # Import API boundary transformer (handles vote count policy internally)
@@ -97,7 +97,7 @@ def get_movie_genres(request: HttpRequest):
 # =========================
 
 
-@keywords_router.get("", response=PaginatedKeywordResponseSchema, auth=None)
+@keywords_router.get("", response=KeywordListResponseSchema, auth=None)
 def get_popular_keywords(
     request: HttpRequest,
     params: PaginationParams,
@@ -106,7 +106,7 @@ def get_popular_keywords(
     return _keyword_service.get_popular_keywords(page=params.page or 1)
 
 
-@keywords_router.get("/search", response=PaginatedKeywordResponseSchema, auth=None)
+@keywords_router.get("/search", response=KeywordListResponseSchema, auth=None)
 def search_keywords(request: HttpRequest, query: str):
     """Search for keywords by query string."""
     return _keyword_service.search_keywords(query)
@@ -117,7 +117,7 @@ def search_keywords(request: HttpRequest, query: str):
 # =========================
 
 
-@people_router.get("", response=PaginatedPersonResponseSchema, auth=None)
+@people_router.get("", response=PersonListResponseSchema, auth=None)
 def get_popular_people(
     request: HttpRequest,
     params: PaginationParams,
@@ -126,7 +126,7 @@ def get_popular_people(
     return _people_service.get_popular_people(page=params.page or 1)
 
 
-@people_router.get("/search", response=PaginatedPersonResponseSchema, auth=None)
+@people_router.get("/search", response=PersonListResponseSchema, auth=None)
 def search_people(request: HttpRequest, query: str):
     """Search for people by query string."""
     return _people_service.search_people(query)
@@ -137,7 +137,7 @@ def search_people(request: HttpRequest, query: str):
 # =========================
 
 
-@movies_router.get("/now-playing", response=PaginatedMovieResponseSchema, auth=None)
+@movies_router.get("/now-playing", response=MovieListResponseSchema, auth=None)
 def get_now_playing_movies(
     request: HttpRequest,
     filters: FilterParams,
@@ -153,7 +153,7 @@ def get_now_playing_movies(
         filters: MovieDiscoverFilterSchema with all optional filter parameters
 
     Returns:
-        PaginatedMovieResponseSchema: Paginated movies with user data if authenticated
+        MovieListResponseSchema: Paginated movies with user data if authenticated
 
     Raises:
         HttpError: 400 for invalid parameters, 500 for TMDB API errors
@@ -172,7 +172,7 @@ def get_now_playing_movies(
     return enrich_response_with_user_movie_data(request, response)
 
 
-@movies_router.get("/upcoming", response=PaginatedMovieResponseSchema, auth=None)
+@movies_router.get("/upcoming", response=MovieListResponseSchema, auth=None)
 def get_upcoming_movies(
     request: HttpRequest,
     filters: FilterParams,
@@ -188,7 +188,7 @@ def get_upcoming_movies(
         filters: MovieDiscoverFilterSchema with all optional filter parameters
 
     Returns:
-        PaginatedMovieResponseSchema: Paginated movies with user data if authenticated
+        MovieListResponseSchema: Paginated movies with user data if authenticated
 
     Raises:
         HttpError: 400 for invalid parameters, 500 for TMDB API errors
@@ -207,7 +207,7 @@ def get_upcoming_movies(
     return enrich_response_with_user_movie_data(request, response)
 
 
-@movies_router.get("/search", response=PaginatedMovieResponseSchema, auth=None)
+@movies_router.get("/search", response=MovieListResponseSchema, auth=None)
 def search_movies(
     request: HttpRequest,
     params: SearchParams,
@@ -238,7 +238,7 @@ def search_movies(
     return enrich_response_with_user_movie_data(request, response)
 
 
-@movies_router.get("/browse", response=PaginatedMovieResponseSchema, auth=None)
+@movies_router.get("/browse", response=MovieListResponseSchema, auth=None)
 def browse_movies(
     request: HttpRequest,
     filters: FilterParams,
@@ -280,7 +280,7 @@ def browse_movies(
             - [... many other TMDB discover parameters]
 
     Returns:
-        PaginatedMovieResponseSchema: Paginated list of movies with user data if authenticated
+        MovieListResponseSchema: Paginated list of movies with user data if authenticated
 
     Raises:
         HttpError: 400 for invalid parameters, 500 for TMDB API errors

@@ -12,7 +12,7 @@ from collections.abc import Mapping
 
 from core.services.tmdb_api_client import TMDBApiClient
 
-from ...schemas import MovieBaseSchema
+from ...schemas import MovieListItemSchema
 
 # Use TMDB-specific logger for consistency with movie_service.py
 logger = logging.getLogger('cinexplorer.tmdb')
@@ -21,7 +21,7 @@ logger = logging.getLogger('cinexplorer.tmdb')
 tmdb_client = TMDBApiClient()
 
 
-def fetch_movies_batch(movie_ids: list[int]) -> list[MovieBaseSchema]:
+def fetch_movies_batch(movie_ids: list[int]) -> list[MovieListItemSchema]:
     """
     Fetch multiple movies from TMDB by ID in a single batch operation.
 
@@ -35,7 +35,7 @@ def fetch_movies_batch(movie_ids: list[int]) -> list[MovieBaseSchema]:
         movie_ids: List of TMDB movie IDs to fetch
 
     Returns:
-        List of successfully fetched MovieBaseSchema objects.
+        List of successfully fetched MovieListItemSchema objects.
         May be shorter than input if some fetches fail.
         Order is not guaranteed to match input order.
 
@@ -72,7 +72,7 @@ def fetch_movies_batch(movie_ids: list[int]) -> list[MovieBaseSchema]:
         }
     )
 
-    successfully_fetched: list[MovieBaseSchema] = []
+    successfully_fetched: list[MovieListItemSchema] = []
     failed_count = 0
 
     # Fetch each movie individually
@@ -113,7 +113,7 @@ def fetch_movies_batch(movie_ids: list[int]) -> list[MovieBaseSchema]:
                 )
                 continue
 
-            # Transform TMDB data to MovieBaseSchema
+            # Transform TMDB data to MovieListItemSchema
             movie_schema = _create_movie_base_from_tmdb_data(data)
 
             if movie_schema:
@@ -151,9 +151,11 @@ def fetch_movies_batch(movie_ids: list[int]) -> list[MovieBaseSchema]:
     return successfully_fetched
 
 
-def _create_movie_base_from_tmdb_data(tmdb_data: Mapping[str, object]) -> MovieBaseSchema | None:
+def _create_movie_base_from_tmdb_data(
+    tmdb_data: Mapping[str, object],
+) -> MovieListItemSchema | None:
     """
-    Create a MovieBaseSchema from TMDB data with error handling.
+    Create a MovieListItemSchema from TMDB data with error handling.
 
     This is an internal helper that wraps the transformation logic from movie_service.py
     but returns None on error instead of raising exceptions (for graceful batch handling).
@@ -162,7 +164,7 @@ def _create_movie_base_from_tmdb_data(tmdb_data: Mapping[str, object]) -> MovieB
         tmdb_data: Raw TMDB movie data dictionary
 
     Returns:
-        MovieBaseSchema instance if successful, None if transformation fails
+        MovieListItemSchema instance if successful, None if transformation fails
     """
     try:
         from core.tmdb_models.tmdb_responses import TMDBMovieBase
@@ -187,11 +189,11 @@ def _create_movie_base_from_tmdb_data(tmdb_data: Mapping[str, object]) -> MovieB
             'overview': tmdb_movie.overview,
         }
 
-        return MovieBaseSchema.model_validate(validated_data, strict=False)
+        return MovieListItemSchema.model_validate(validated_data, strict=False)
 
     except Exception as e:
         logger.warning(
-            "Failed to create MovieBaseSchema from TMDB data",
+            "Failed to create MovieListItemSchema from TMDB data",
             extra={
                 'error': str(e),
                 'tmdb_id': tmdb_data.get('id'),

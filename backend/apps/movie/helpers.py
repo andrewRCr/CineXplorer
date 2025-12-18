@@ -9,7 +9,7 @@ from collections.abc import Sequence
 from authentication.auth_ninja import get_current_user_optional
 from core.types.api_types import TMDBParams
 from django.http import HttpRequest
-from movie.schemas import MovieBaseSchema, PaginatedMovieResponseSchema
+from movie.schemas import MovieListItemSchema, MovieListResponseSchema
 from user_movie_data.services.movie_enrichment_service import MovieEnrichmentService
 
 # Singleton enrichment service instance
@@ -80,8 +80,8 @@ parameters. This is the general-purpose discovery endpoint with zero presets.
 
 def enrich_response_with_user_movie_data(
     request: HttpRequest,
-    response: PaginatedMovieResponseSchema,
-) -> PaginatedMovieResponseSchema:
+    response: MovieListResponseSchema,
+) -> MovieListResponseSchema:
     """Enrich paginated movie response with user movie data.
 
     HTTP helper that extracts the current user (if authenticated) and enriches
@@ -102,7 +102,7 @@ def enrich_response_with_user_movie_data(
         The same response object with enriched movie results
 
     Example:
-        >>> @movies_router.get("/now-playing", response=PaginatedMovieResponseSchema, auth=None)
+        >>> @movies_router.get("/now-playing", response=MovieListResponseSchema, auth=None)
         >>> def get_now_playing(request: HttpRequest, params: PaginationParams):
         ...     # Fetch movies from TMDB
         ...     response = movie_service.get_now_playing_movies(page=params.page or 1)
@@ -120,8 +120,8 @@ def enrich_response_with_user_movie_data(
 
 def enrich_single_movie_with_user_movie_data(
     request: HttpRequest,
-    movie: MovieBaseSchema,
-) -> MovieBaseSchema:
+    movie: MovieListItemSchema,
+) -> MovieListItemSchema:
     """Enrich single movie object with user movie data.
 
     HTTP helper that extracts the current user (if authenticated) and enriches

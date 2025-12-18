@@ -9,7 +9,7 @@ from __future__ import annotations
 from unittest.mock import Mock
 
 from core.services.api_response import ApiResponse
-from movie.schemas import PaginatedMovieResponseSchema
+from movie.schemas import MovieListResponseSchema
 from movie.services.api_boundary import BrowseServiceParams
 from movie.services.movie_service import MovieService
 from movie.tests.test_helpers import create_mock_paginated_response
@@ -65,7 +65,7 @@ def test_discover_movies_filters_incorrect_ratings() -> None:
     result = service.discover_movies(page=1, params=BrowseServiceParams(rating_min=7.5))
 
     # Assert: Only movies with rating >= 7.5 returned (15 correct movies)
-    assert isinstance(result, PaginatedMovieResponseSchema)
+    assert isinstance(result, MovieListResponseSchema)
     assert len(result.results) == 15
 
     # Verify all returned movies have rating >= 7.5

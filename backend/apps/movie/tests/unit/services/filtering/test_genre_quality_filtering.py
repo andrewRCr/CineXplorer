@@ -59,7 +59,7 @@ def test_genre_filter_excludes_movies_with_empty_genres() -> None:
 
     # Verify all returned movies have genres
     for movie in result.results:
-        assert hasattr(movie, 'genre_ids'), "MovieBaseSchema should have genre_ids field"
+        assert hasattr(movie, 'genre_ids'), "MovieListItemSchema should have genre_ids field"
         assert isinstance(movie.genre_ids, list), "genre_ids should be a list"
         assert len(movie.genre_ids) > 0, "Movies should have at least one genre"
 

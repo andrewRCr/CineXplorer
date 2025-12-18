@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING
 import pytest
 from core.models import Movie
 from django.contrib.auth import get_user_model
-from movie.schemas import MovieBaseSchema
+from movie.schemas import MovieListItemSchema
 from user_movie_data.models import UserMovieData
 from user_movie_data.services.movie_enrichment_service import MovieEnrichmentService
 
@@ -109,13 +109,13 @@ def test_bulk_query_optimization_single_query(
     # Arrange
     service = MovieEnrichmentService()
     movies = [
-        MovieBaseSchema(
+        MovieListItemSchema(
             tmdb_id=movie1.tmdb_id,
             title=movie1.title,
             poster_path=movie1.poster_path,
             release_date=date.fromisoformat(str(movie1.release_date))
         ),
-        MovieBaseSchema(
+        MovieListItemSchema(
             tmdb_id=movie2.tmdb_id,
             title=movie2.title,
             poster_path=movie2.poster_path,
@@ -140,7 +140,7 @@ def test_bulk_query_with_many_movies(
 ) -> None:
     """Test that query count stays at 1 even with many movies."""
     # Arrange: Create 10 movies with user data
-    movies_data: list[MovieBaseSchema] = []
+    movies_data: list[MovieListItemSchema] = []
     for i in range(10):
         movie = Movie.objects.create(
             tmdb_id=1000 + i,
@@ -155,7 +155,7 @@ def test_bulk_query_with_many_movies(
             user_rating=i + 1
         )
         movies_data.append(
-            MovieBaseSchema(
+            MovieListItemSchema(
                 tmdb_id=movie.tmdb_id,
                 title=movie.title,
                 poster_path=movie.poster_path,

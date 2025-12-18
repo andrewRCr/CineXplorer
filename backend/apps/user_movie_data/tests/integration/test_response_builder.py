@@ -21,7 +21,7 @@ from unittest.mock import patch
 import pytest
 from core.models import Movie
 from core.tests.test_helpers import create_user
-from movie.schemas import MovieBaseSchema, PaginatedMovieResponseSchema
+from movie.schemas import MovieListItemSchema, MovieListResponseSchema
 from user_movie_data.models import UserMovieData
 from user_movie_data.services.response_builder import build_user_movies_response
 
@@ -156,7 +156,7 @@ class TestBuildUserMoviesResponse:
         with patch('user_movie_data.services.response_builder.fetch_movies_batch') as mock_fetch:
             # Mock TMDB batch fetch to return movie schemas
             mock_fetch.return_value = [
-                MovieBaseSchema(
+                MovieListItemSchema(
                     tmdb_id=550,
                     title='Fight Club',
                     poster_path='/bptfVGEQuv6vDTIMVCHjJ9Dz8PX.jpg',
@@ -164,7 +164,7 @@ class TestBuildUserMoviesResponse:
                     vote_average=8.4,
                     runtime=139
                 ),
-                MovieBaseSchema(
+                MovieListItemSchema(
                     tmdb_id=551,
                     title='The Matrix',
                     poster_path='/f89U3ADr1oiB1s9GkdPOEpXUk5H.jpg',
@@ -182,7 +182,7 @@ class TestBuildUserMoviesResponse:
             )
 
             # Verify response structure
-            assert isinstance(response, PaginatedMovieResponseSchema)
+            assert isinstance(response, MovieListResponseSchema)
 
             # Verify pagination metadata
             assert response.page == 1
@@ -281,7 +281,7 @@ class TestBuildUserMoviesResponse:
         )
 
         # Verify response structure
-        assert isinstance(response, PaginatedMovieResponseSchema)
+        assert isinstance(response, MovieListResponseSchema)
         assert response.page == 1
         assert response.total_pages == 0
         assert response.total_results == 0
@@ -302,7 +302,7 @@ class TestBuildUserMoviesResponse:
             # Mock batch fetch returning only 1 movie (550) out of 2 requested (550, 551)
             # This simulates TMDB API failure for movie 551
             mock_fetch.return_value = [
-                MovieBaseSchema(
+                MovieListItemSchema(
                     tmdb_id=550,
                     title='Fight Club',
                     poster_path='/bptfVGEQuv6vDTIMVCHjJ9Dz8PX.jpg',
@@ -401,7 +401,7 @@ class TestBuildUserMoviesResponse:
 
         with patch('user_movie_data.services.response_builder.fetch_movies_batch') as mock_fetch:
             mock_fetch.return_value = [
-                MovieBaseSchema(
+                MovieListItemSchema(
                     tmdb_id=550,
                     title='Fight Club',
                     poster_path='/bptfVGEQuv6vDTIMVCHjJ9Dz8PX.jpg',
@@ -525,22 +525,22 @@ class TestBuildUserMoviesResponse:
 
         with patch('user_movie_data.services.response_builder.fetch_movies_batch') as mock_fetch:
             # Return movies in order they were requested
-            def mock_fetch_in_order(ids: list[int]) -> list[MovieBaseSchema]:
+            def mock_fetch_in_order(ids: list[int]) -> list[MovieListItemSchema]:
                 """Mock that returns movies in the order requested."""
                 movie_map = {
-                    550: MovieBaseSchema(
+                    550: MovieListItemSchema(
                         tmdb_id=550, title='Fight Club', vote_average=8.4, runtime=139
                     ),
-                    551: MovieBaseSchema(
+                    551: MovieListItemSchema(
                         tmdb_id=551, title='The Matrix', vote_average=8.7, runtime=136
                     ),
-                    552: MovieBaseSchema(
+                    552: MovieListItemSchema(
                         tmdb_id=552, title='Inception', vote_average=8.8, runtime=148
                     ),
-                    553: MovieBaseSchema(
+                    553: MovieListItemSchema(
                         tmdb_id=553, title='The Dark Knight', vote_average=9.0, runtime=152
                     ),
-                    554: MovieBaseSchema(
+                    554: MovieListItemSchema(
                         tmdb_id=554, title='Pulp Fiction', vote_average=8.9, runtime=154
                     ),
                 }

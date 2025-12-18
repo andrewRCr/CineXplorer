@@ -21,11 +21,11 @@ from core.tmdb_models.tmdb_responses import (
 )
 from movie.schemas import (
     GenreSchema,
-    MovieBaseSchema,
+    KeywordListResponseSchema,
     MovieDetailSchema,
-    PaginatedKeywordResponseSchema,
-    PaginatedMovieResponseSchema,
-    PaginatedPersonResponseSchema,
+    MovieListItemSchema,
+    MovieListResponseSchema,
+    PersonListResponseSchema,
 )
 from movie.services.tmdb_api_boundary.response_factories import (
     create_genre_list_from_tmdb,
@@ -283,10 +283,10 @@ class TestGetValidatedResponse:
 
 
 class TestCreateMovieBaseFromTmdb:
-    """Tests for MovieBaseSchema creation from TMDB data."""
+    """Tests for MovieListItemSchema creation from TMDB data."""
 
     def test_creates_schema_with_valid_data(self) -> None:
-        """Should create MovieBaseSchema from valid TMDB movie data."""
+        """Should create MovieListItemSchema from valid TMDB movie data."""
         from datetime import date
 
         tmdb_data = {
@@ -302,7 +302,7 @@ class TestCreateMovieBaseFromTmdb:
 
         result = create_movie_base_from_tmdb(tmdb_data)
 
-        assert isinstance(result, MovieBaseSchema)
+        assert isinstance(result, MovieListItemSchema)
         assert result.tmdb_id == 550
         assert result.title == 'Fight Club'
         assert result.release_date == date(1999, 10, 15)
@@ -511,7 +511,7 @@ class TestCreatePaginatedMovieResponseFromTmdb:
     """Tests for paginated movie response creation."""
 
     def test_creates_paginated_response(self) -> None:
-        """Should create PaginatedMovieResponseSchema from TMDB response."""
+        """Should create MovieListResponseSchema from TMDB response."""
         tmdb_response: dict[str, object] = {
             'page': 1,
             'total_pages': 5,
@@ -542,7 +542,7 @@ class TestCreatePaginatedMovieResponseFromTmdb:
 
         result = create_paginated_movie_response_from_tmdb(tmdb_response)
 
-        assert isinstance(result, PaginatedMovieResponseSchema)
+        assert isinstance(result, MovieListResponseSchema)
         assert result.page == 1
         assert result.total_pages == 5
         assert result.total_results == 100
@@ -570,7 +570,7 @@ class TestCreatePaginatedKeywordResponseFromTmdb:
     """Tests for paginated keyword response creation."""
 
     def test_creates_paginated_keyword_response(self) -> None:
-        """Should create PaginatedKeywordResponseSchema from TMDB response."""
+        """Should create KeywordListResponseSchema from TMDB response."""
         tmdb_response: dict[str, object] = {
             'page': 1,
             'total_pages': 1,
@@ -583,7 +583,7 @@ class TestCreatePaginatedKeywordResponseFromTmdb:
 
         result = create_paginated_keyword_response_from_tmdb(tmdb_response)
 
-        assert isinstance(result, PaginatedKeywordResponseSchema)
+        assert isinstance(result, KeywordListResponseSchema)
         assert len(result.results) == 2
         assert result.results[0].name == 'superhero'
 
@@ -592,7 +592,7 @@ class TestCreatePaginatedPersonResponseFromTmdb:
     """Tests for paginated person response creation."""
 
     def test_creates_paginated_person_response(self) -> None:
-        """Should create PaginatedPersonResponseSchema from TMDB response."""
+        """Should create PersonListResponseSchema from TMDB response."""
         tmdb_response: dict[str, object] = {
             'page': 1,
             'total_pages': 1,
@@ -609,7 +609,7 @@ class TestCreatePaginatedPersonResponseFromTmdb:
 
         result = create_paginated_person_response_from_tmdb(tmdb_response)
 
-        assert isinstance(result, PaginatedPersonResponseSchema)
+        assert isinstance(result, PersonListResponseSchema)
         assert len(result.results) == 1
         assert result.results[0].name == 'Edward Norton'
 

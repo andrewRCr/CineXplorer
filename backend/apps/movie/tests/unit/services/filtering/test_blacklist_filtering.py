@@ -8,11 +8,11 @@ material, exploitation films) that slips through automated filters.
 
 Test Organization:
 - get_blacklisted_ids(): Database lookup and caching behavior
-- filter_movies_by_blacklist(): Filtering logic on MovieBaseSchema lists
+- filter_movies_by_blacklist(): Filtering logic on MovieListItemSchema lists
 - apply_data_quality_filters(): Integration with full pipeline
 
 DRY Note: The create_movie_schema() helper is designed to be reusable
-for other filter tests that need MovieBaseSchema instances.
+for other filter tests that need MovieListItemSchema instances.
 """
 from __future__ import annotations
 
@@ -21,7 +21,7 @@ from unittest.mock import patch
 
 import pytest
 from movie.models import BlacklistedMovie
-from movie.schemas import MovieBaseSchema
+from movie.schemas import MovieListItemSchema
 from movie.services.data_quality.filters import (
     BLACKLIST_CACHE_KEY,
     BLACKLIST_CACHE_TIMEOUT,
@@ -45,10 +45,10 @@ def create_movie_schema(
     poster_path: str | None = None,
     genre_ids: list[int] | None = None,
     overview: str | None = None,
-) -> MovieBaseSchema:
-    """Create a MovieBaseSchema instance for filtering tests.
+) -> MovieListItemSchema:
+    """Create a MovieListItemSchema instance for filtering tests.
 
-    This helper creates MovieBaseSchema objects directly (not TMDBMovieBase),
+    This helper creates MovieListItemSchema objects directly (not TMDBMovieBase),
     matching the input type of filter_movies_by_blacklist() and other
     data quality filter functions.
 
@@ -63,7 +63,7 @@ def create_movie_schema(
         overview: Movie overview (default: generated)
 
     Returns:
-        MovieBaseSchema instance ready for filter testing
+        MovieListItemSchema instance ready for filter testing
 
     Example:
         >>> movie = create_movie_schema(123, "Test Film")
@@ -78,7 +78,7 @@ def create_movie_schema(
     if overview is None:
         overview = f"A compelling story about {title}."
 
-    return MovieBaseSchema(
+    return MovieListItemSchema(
         tmdb_id=tmdb_id,
         title=title,
         release_date=release_date,

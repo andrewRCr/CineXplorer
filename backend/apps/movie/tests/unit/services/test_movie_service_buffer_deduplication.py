@@ -13,7 +13,7 @@ from __future__ import annotations
 from unittest.mock import Mock
 
 from core.tmdb_models.tmdb_responses import TMDBMovieBase, TMDBPaginatedMovieResponse
-from movie.schemas import MovieBaseSchema
+from movie.schemas import MovieListItemSchema
 from movie.services.api_boundary import BrowseServiceParams
 from movie.services.pipelines.paginated import apply_buffer_if_needed
 from movie.tests.tmdb_test_builders import (
@@ -26,8 +26,8 @@ from movie.tests.tmdb_test_builders import (
 # ============================================================================
 
 
-def convert_to_schema(tmdb_movie: TMDBMovieBase) -> MovieBaseSchema:
-    """Convert TMDBMovieBase Pydantic model to MovieBaseSchema.
+def convert_to_schema(tmdb_movie: TMDBMovieBase) -> MovieListItemSchema:
+    """Convert TMDBMovieBase Pydantic model to MovieListItemSchema.
 
     Mirrors the transformation done in pagination module (id → tmdb_id mapping).
 
@@ -35,15 +35,15 @@ def convert_to_schema(tmdb_movie: TMDBMovieBase) -> MovieBaseSchema:
         tmdb_movie: Validated TMDBMovieBase Pydantic model
 
     Returns:
-        MovieBaseSchema with tmdb_id field
+        MovieListItemSchema with tmdb_id field
     """
     movie_dict = tmdb_movie.model_dump()
-    # Rename id to tmdb_id for MovieBaseSchema
+    # Rename id to tmdb_id for MovieListItemSchema
     movie_dict['tmdb_id'] = movie_dict.pop('id')
     # Normalize empty string dates to None (TMDB API quirk)
     if movie_dict.get('release_date') == '':
         movie_dict['release_date'] = None
-    return MovieBaseSchema.model_validate(movie_dict)
+    return MovieListItemSchema.model_validate(movie_dict)
 
 
 def create_mock_fetch_func(

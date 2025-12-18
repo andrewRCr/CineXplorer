@@ -15,7 +15,7 @@ from __future__ import annotations
 from typing import cast
 
 from core.types.api_types import TMDBParams
-from movie.schemas import PaginatedPersonResponseSchema
+from movie.schemas import PersonListResponseSchema
 from movie.services.base_service import BaseTMDBService
 from movie.services.tmdb_api_boundary.response_factories import (
     create_paginated_person_response_from_tmdb,
@@ -44,7 +44,7 @@ class PeopleService(BaseTMDBService):
         people = service.search_people("Tom Hanks")
     """
 
-    def get_popular_people(self, page: int = 1) -> PaginatedPersonResponseSchema:
+    def get_popular_people(self, page: int = 1) -> PersonListResponseSchema:
         """
         Retrieve popular people (actors, directors, etc.) from TMDB.
 
@@ -52,7 +52,7 @@ class PeopleService(BaseTMDBService):
             page: Page number for pagination (default: 1)
 
         Returns:
-            PaginatedPersonResponseSchema with popular people
+            PersonListResponseSchema with popular people
 
         Raises:
             HttpError: If API error or data processing fails
@@ -68,7 +68,7 @@ class PeopleService(BaseTMDBService):
         result = self._get_validated_response(response, operation='get_popular_people', page=page)
         return create_paginated_person_response_from_tmdb(result)
 
-    def search_people(self, query: str) -> PaginatedPersonResponseSchema:
+    def search_people(self, query: str) -> PersonListResponseSchema:
         """
         Search for people by name.
 
@@ -79,7 +79,7 @@ class PeopleService(BaseTMDBService):
             query: Search query string (minimum 2 characters for API call)
 
         Returns:
-            PaginatedPersonResponseSchema with person search results
+            PersonListResponseSchema with person search results
 
         Raises:
             HttpError: If API error or data processing fails
@@ -97,7 +97,7 @@ class PeopleService(BaseTMDBService):
         """
         # Return empty response for invalid queries (TMDB API requirement)
         if not query or len(query.strip()) < 2:
-            return PaginatedPersonResponseSchema(
+            return PersonListResponseSchema(
                 page=1,
                 total_pages=0,
                 total_results=0,

@@ -111,14 +111,14 @@ Generic paginated response schema for list endpoints.
 
 ```python
 from core.utils import PaginatedResponse
-from movie.schemas import MovieBaseSchema
+from movie.schemas import MovieListItemSchema
 
-class PaginatedMovieResponseSchema(PaginatedResponse[MovieBaseSchema]):
-    """Paginated movie response with TMDB pagination metadata."""
+class MovieListResponseSchema(PaginatedResponse[MovieListItemSchema]):
+    """Movie list response with TMDB pagination metadata."""
     pass
 
-@movies_router.get("/now-playing", response=PaginatedMovieResponseSchema)
-def get_now_playing(request: HttpRequest) -> PaginatedMovieResponseSchema:
+@movies_router.get("/now-playing", response=MovieListResponseSchema)
+def get_now_playing(request: HttpRequest) -> MovieListResponseSchema:
     return movie_service.get_now_playing_movies(page=1)
 ```
 

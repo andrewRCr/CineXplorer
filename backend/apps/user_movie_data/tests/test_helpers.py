@@ -14,7 +14,7 @@ user_movie_data domain (UserMovieData, MovieEnrichmentService, etc.).
 **Related Helper Files:**
 - `core/tests/test_helpers.py` - HTTP helpers, create_user(), create_mock_user()
 - `movie/tests/test_helpers.py` - TMDB ApiResponse mocks
-- `movie/tests/tmdb_test_builders.py` - Pydantic TMDB model builders (MovieBaseSchema, etc.)
+- `movie/tests/tmdb_test_builders.py` - Pydantic TMDB model builders (MovieListItemSchema, etc.)
 
 **Import Pattern:**
     # For unit tests
@@ -31,7 +31,7 @@ user_movie_data domain (UserMovieData, MovieEnrichmentService, etc.).
 **Exported Helpers:**
 - create_mock_user_movie_data() - Mock UserMovieData record
 - create_mock_movie() - Mock Movie model instance
-- create_movie_schema() - MovieBaseSchema for testing
+- create_movie_schema() - MovieListItemSchema for testing
 - create_movie_detail_schema() - MovieDetailSchema for testing
 - create_pagination_metadata() - Pagination dict helper
 """
@@ -40,7 +40,7 @@ from __future__ import annotations
 from datetime import date
 from unittest.mock import Mock
 
-from movie.schemas import MovieBaseSchema, MovieDetailSchema
+from movie.schemas import MovieDetailSchema, MovieListItemSchema
 
 __all__ = [
     "create_mock_movie",
@@ -157,11 +157,11 @@ def create_movie_schema(
     poster_path: str | None = "/poster.jpg",
     vote_average: float | None = 8.0,
     runtime: int | None = 120,
-) -> MovieBaseSchema:
+) -> MovieListItemSchema:
     """
-    Create a MovieBaseSchema for testing without database.
+    Create a MovieListItemSchema for testing without database.
 
-    Use this for unit tests that need MovieBaseSchema objects
+    Use this for unit tests that need MovieListItemSchema objects
     (e.g., testing enrichment service).
 
     Args:
@@ -173,13 +173,13 @@ def create_movie_schema(
         runtime: Runtime in minutes (default: 120)
 
     Returns:
-        MovieBaseSchema instance
+        MovieListItemSchema instance
 
     Example:
         movie = create_movie_schema(tmdb_id=550, title="Fight Club")
         enriched = service.enrich_movies_with_user_movie_data([movie], user)
     """
-    return MovieBaseSchema(
+    return MovieListItemSchema(
         tmdb_id=tmdb_id,
         title=title,
         poster_path=poster_path,

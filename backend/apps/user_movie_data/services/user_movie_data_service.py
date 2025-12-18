@@ -30,7 +30,7 @@ import logging
 from typing import TYPE_CHECKING
 
 from django.contrib.auth.models import AbstractBaseUser
-from movie.schemas import MovieBaseSchema, PaginatedMovieResponseSchema
+from movie.schemas import MovieListItemSchema, MovieListResponseSchema
 from ninja.errors import HttpError
 from user_movie_data.models import UserMovieData
 
@@ -54,7 +54,7 @@ class UserMovieDataService:
         - Injects MovieService for TMDB API integration
         - Raises HttpError for API-level error handling
         - Returns UserMovieData model instances for CRUD operations
-        - Returns PaginatedMovieResponseSchema for query operations
+        - Returns MovieListResponseSchema for query operations
 
     Usage:
         # Production
@@ -309,7 +309,7 @@ class UserMovieDataService:
         watchlist_only: bool | None = None,
         watched_only: bool | None = None,
         rated_only: bool | None = None,
-    ) -> PaginatedMovieResponseSchema:
+    ) -> MovieListResponseSchema:
         """
         Get paginated list of user's movies with full TMDB data.
 
@@ -327,7 +327,7 @@ class UserMovieDataService:
             rated_only: If True, only return rated items
 
         Returns:
-            PaginatedMovieResponseSchema with enriched movie data
+            MovieListResponseSchema with enriched movie data
         """
         # Get filtered and paginated UserMovieData
         umd_list, metadata = self._repository.get_filtered(
@@ -341,7 +341,7 @@ class UserMovieDataService:
 
         # Early return for empty results
         if not umd_list:
-            return PaginatedMovieResponseSchema(
+            return MovieListResponseSchema(
                 page=metadata["page"],
                 total_pages=metadata["total_pages"],
                 total_results=metadata["total_results"],
@@ -349,7 +349,7 @@ class UserMovieDataService:
             )
 
         # Fetch full movie data from TMDB for each entry
-        movies: list[MovieBaseSchema] = []
+        movies: list[MovieListItemSchema] = []
         for umd in umd_list:
             tmdb_id = umd.movie.tmdb_id
             try:
@@ -363,7 +363,7 @@ class UserMovieDataService:
                 )
                 continue
 
-        return PaginatedMovieResponseSchema(
+        return MovieListResponseSchema(
             page=metadata["page"],
             total_pages=metadata["total_pages"],
             total_results=metadata["total_results"],

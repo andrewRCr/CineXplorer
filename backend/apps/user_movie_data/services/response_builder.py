@@ -38,7 +38,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from core.pagination import paginate_queryset
-from movie.schemas import PaginatedMovieResponseSchema
+from movie.schemas import MovieListResponseSchema
 from movie.services.pipelines.batch import fetch_movies_batch
 from user_movie_data.services.movie_enrichment_service import MovieEnrichmentService
 
@@ -53,7 +53,7 @@ def build_user_movies_response(
     user: AbstractBaseUser | None,
     page: int,
     page_size: int | None = None
-) -> PaginatedMovieResponseSchema:
+) -> MovieListResponseSchema:
     """
     Build paginated movie response with user-specific enrichment.
 
@@ -71,11 +71,11 @@ def build_user_movies_response(
       ↓
     Extract TMDB IDs from UserMovieData.movie.tmdb_id
       ↓
-    [2. fetch_movies_batch] → List[MovieBaseSchema] from TMDB
+    [2. fetch_movies_batch] → List[MovieListItemSchema] from TMDB
       ↓
     [3. MovieEnrichmentService.enrich] → Movies with user_movie_data populated
       ↓
-    PaginatedMovieResponseSchema
+    MovieListResponseSchema
     ```
 
     **Graceful Degradation:**
@@ -98,11 +98,11 @@ def build_user_movies_response(
                    clamped to 1-100 range)
 
     Returns:
-        PaginatedMovieResponseSchema with:
+        MovieListResponseSchema with:
         - page: Current page number
         - total_pages: Total number of pages
         - total_results: Total number of items across all pages
-        - results: List of MovieBaseSchema with user_movie_data populated
+        - results: List of MovieListItemSchema with user_movie_data populated
 
     Example:
         >>> # Get watchlist for page 2
@@ -135,11 +135,11 @@ def build_user_movies_response(
     tmdb_ids = [umd.movie.tmdb_id for umd in user_movie_data_list]  # type: ignore[misc]
 
     # Step 3: Batch fetch movie data from TMDB
-    # Returns list of MovieBaseSchema (may be shorter than tmdb_ids if some fail)
+    # Returns list of MovieListItemSchema (may be shorter than tmdb_ids if some fail)
     movies = fetch_movies_batch(tmdb_ids)
 
     # Step 4: Enrich movies with user-specific data
-    # For authenticated users, populates user_movie_data field on each MovieBaseSchema
+    # For authenticated users, populates user_movie_data field on each MovieListItemSchema
     enrichment_service = MovieEnrichmentService()
     enriched_movies = enrichment_service.enrich_movies_with_user_movie_data(
         movies=movies,
@@ -147,7 +147,7 @@ def build_user_movies_response(
     )
 
     # Step 5: Build and return paginated response
-    return PaginatedMovieResponseSchema(
+    return MovieListResponseSchema(
         page=metadata['page'],
         total_pages=metadata['total_pages'],
         total_results=metadata['total_results'],

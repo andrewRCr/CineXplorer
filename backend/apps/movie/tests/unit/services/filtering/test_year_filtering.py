@@ -10,7 +10,7 @@ from __future__ import annotations
 from unittest.mock import Mock
 
 from core.services.api_response import ApiResponse
-from movie.schemas import PaginatedMovieResponseSchema
+from movie.schemas import MovieListResponseSchema
 from movie.services.api_boundary import BrowseServiceParams
 from movie.services.movie_service import MovieService
 from movie.tests.test_helpers import create_mock_paginated_response
@@ -71,7 +71,7 @@ def test_discover_movies_filters_incorrect_release_years() -> None:
     )
 
     # Assert: Only 2020s movies returned (15 correct movies)
-    assert isinstance(result, PaginatedMovieResponseSchema)
+    assert isinstance(result, MovieListResponseSchema)
     assert len(result.results) == 15
 
     # Verify all returned movies are from 2020s
@@ -130,7 +130,7 @@ def test_search_movies_filters_incorrect_release_years() -> None:
 
     # Assert: Only 2020s Batman movies returned (7 correct movies)
     # Note: total_pages=1 means we're on last page, so buffer doesn't activate
-    assert isinstance(result, PaginatedMovieResponseSchema)
+    assert isinstance(result, MovieListResponseSchema)
     assert len(result.results) == 7
 
     # Verify all returned movies are from 2020s

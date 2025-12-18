@@ -69,7 +69,7 @@ def _empty_crew_list() -> list[CrewMemberSchema]:
     return []
 
 
-def _empty_movie_list() -> list[MovieBaseSchema]:
+def _empty_movie_list() -> list[MovieListItemSchema]:
     return []
 
 
@@ -114,8 +114,15 @@ class UserMovieDataSchema(Schema):
     user_review: str | None = None
 
 
-class MovieBaseSchema(Schema):
-    """Minimal movie representation used in list endpoints."""
+class MovieListItemSchema(Schema):
+    """Compact movie representation for list/grid endpoints.
+
+    Contains essential display fields optimized for browse, search, and collection views.
+    Uses genre_ids (integers) rather than full genre objects for efficiency.
+
+    Extended by MovieDetailSchema for single-movie detail views, which adds full
+    genre objects, cast, crew, certifications, and other detailed information.
+    """
 
     tmdb_id: int
     title: str
@@ -161,8 +168,16 @@ class CastMemberSchema(Schema):
     profile_path: str | None = None
 
 
-class MovieDetailSchema(MovieBaseSchema):
-    """Extended movie representation for detail endpoints."""
+class MovieDetailSchema(MovieListItemSchema):
+    """Full movie representation for detail page endpoints.
+
+    Inherits all fields from MovieListItemSchema (used in list views) and adds
+    complete information: full genre objects, production companies, cast, crew,
+    certifications, and spoken languages.
+
+    The inheritance relationship means MovieDetailSchema contains everything
+    MovieListItemSchema has, plus the additional detail-specific fields.
+    """
 
     overview: str | None = None
     genres: list[GenreSchema] = Field(default_factory=_empty_genre_list)
@@ -177,19 +192,21 @@ class MovieDetailSchema(MovieBaseSchema):
     )
 
 
-class PaginatedMovieResponseSchema(Schema):
-    """Standard TMDB-style pagination envelope for movie collections.
+class MovieListResponseSchema(Schema):
+    """Response envelope for movie collection endpoints.
 
-    Includes pagination metadata tracking for smart buffer mechanism:
-    - next_tmdb_page_start: Tracks the next TMDB page to fetch when buffer
-      consumes multiple pages per API response. This prevents duplicates when
-      client requests subsequent pages.
+    Used for all endpoints returning multiple movies: browse, search, discover,
+    user collections, etc. Supports optional pagination via page/total_pages fields.
+
+    The next_tmdb_page_start field enables cursor-based pagination for TMDB-backed
+    endpoints with smart buffer mechanism. For non-paginated responses (e.g., user
+    movie collections), this field is None and page=1, total_pages=1.
     """
 
     page: int = 1
     total_pages: int = 0
     total_results: int = 0
-    results: list[MovieBaseSchema] = Field(default_factory=_empty_movie_list)
+    results: list[MovieListItemSchema] = Field(default_factory=_empty_movie_list)
     next_tmdb_page_start: int | None = Field(
         default=None,
         description="Next TMDB page to fetch for pagination continuation (smart buffer tracking)"
@@ -201,7 +218,9 @@ class KeywordSchema(Schema):
     name: str
 
 
-class PaginatedKeywordResponseSchema(Schema):
+class KeywordListResponseSchema(Schema):
+    """Response envelope for keyword collection endpoints."""
+
     page: int = 1
     total_pages: int = 0
     total_results: int = 0
@@ -225,7 +244,9 @@ class PersonSchema(Schema):
     known_for: list[MediaReferenceSchema] = Field(default_factory=_empty_media_reference_list)
 
 
-class PaginatedPersonResponseSchema(Schema):
+class PersonListResponseSchema(Schema):
+    """Response envelope for person/people collection endpoints."""
+
     page: int = 1
     total_pages: int = 0
     total_results: int = 0
@@ -350,17 +371,17 @@ __all__ = [
     "CastMemberSchema",
     "CrewMemberSchema",
     "GenreSchema",
+    "KeywordListResponseSchema",
     "KeywordSchema",
     "MediaReferenceSchema",
-    "MovieBaseSchema",
     "MovieDetailSchema",
     "MovieDiscoverFilterSchema",
+    "MovieListItemSchema",
+    "MovieListResponseSchema",
     "MovieModelSchema",
     "MovieSearchParamsSchema",
-    "PaginatedKeywordResponseSchema",
-    "PaginatedMovieResponseSchema",
-    "PaginatedPersonResponseSchema",
     "PaginationParamsSchema",
+    "PersonListResponseSchema",
     "PersonSchema",
     "ProductionCompanySchema",
     "SpokenLanguageSchema",

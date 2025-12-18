@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING
 
 from core.tmdb_models.tmdb_responses import TMDBMovieBase, TMDBPaginatedMovieResponse
 
-from ...schemas import MovieBaseSchema, PaginatedMovieResponseSchema
+from ...schemas import MovieListItemSchema, MovieListResponseSchema
 from ..api_boundary import BrowseServiceParams, SearchServiceParams
 from ..data_quality.filters import apply_data_quality_filters
 from ..deduplication_tracker import DeduplicationTracker
@@ -26,13 +26,13 @@ logger = logging.getLogger('cinexplorer.tmdb')
 
 
 def apply_buffer_if_needed(
-    filtered_movies: list[MovieBaseSchema],
+    filtered_movies: list[MovieListItemSchema],
     current_page: int,
     total_pages: int,
     params: BrowseServiceParams | SearchServiceParams,
     fetch_next_page_func: Callable[[int], TMDBPaginatedMovieResponse],
     dedup_tracker: DeduplicationTracker | None = None,
-) -> tuple[list[MovieBaseSchema], int]:
+) -> tuple[list[MovieListItemSchema], int]:
     """Apply smart buffer mechanism to maintain consistent page sizes.
 
     Smart buffer logic:
@@ -78,7 +78,7 @@ def apply_buffer_if_needed(
     seen_ids: set[int] = set(session_ids)
 
     # Filter out movies already returned in this session from initial results
-    deduplicated_initial: list[MovieBaseSchema] = []
+    deduplicated_initial: list[MovieListItemSchema] = []
     for movie in filtered_movies:
         if movie.tmdb_id not in seen_ids:
             seen_ids.add(movie.tmdb_id)
@@ -151,7 +151,7 @@ def fetch_with_filters_and_buffer(
     params: BrowseServiceParams | SearchServiceParams,
     pre_filter_func: Callable[[list[TMDBMovieBase]], list[TMDBMovieBase]] | None = None,
     dedup_tracker: DeduplicationTracker | None = None,
-) -> PaginatedMovieResponseSchema:
+) -> MovieListResponseSchema:
     """Template function for paginated fetch-filter-buffer workflow.
 
     Encapsulates the common pattern used across all paginated movie methods:
@@ -179,7 +179,7 @@ def fetch_with_filters_and_buffer(
         dedup_tracker: Optional tracker for cross-page session deduplication
 
     Returns:
-        PaginatedMovieResponseSchema with filtered and buffered results, including
+        MovieListResponseSchema with filtered and buffered results, including
         next_tmdb_page_start metadata for pagination continuation
 
     Note:

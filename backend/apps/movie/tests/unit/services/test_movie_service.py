@@ -20,7 +20,7 @@ import pytest
 from core.services.api_response import ApiResponse
 from movie.schemas import (
     MovieDetailSchema,
-    PaginatedMovieResponseSchema,
+    MovieListResponseSchema,
 )
 from movie.tests.test_helpers import (
     create_mock_movie_detail_response,
@@ -177,7 +177,7 @@ def test_search_movies_uses_injected_client() -> None:
         language="en-US",
         region="US"
     )
-    assert isinstance(result, PaginatedMovieResponseSchema)
+    assert isinstance(result, MovieListResponseSchema)
     assert len(result.results) == 1
 
 
@@ -324,7 +324,7 @@ def test_get_now_playing_movies_uses_injected_client() -> None:
     assert 'primary_release_date.gte' in params
     assert 'primary_release_date.lte' in params
     assert params['with_release_type'] == '2|3'
-    assert isinstance(result, PaginatedMovieResponseSchema)
+    assert isinstance(result, MovieListResponseSchema)
     # Result now passes backend filtering (complete mock data with genre_ids, vote_count)
     assert len(result.results) == 1
 
@@ -363,7 +363,7 @@ def test_get_upcoming_movies_uses_injected_client() -> None:
     assert endpoint == "discover/movie"
     assert 'primary_release_date.gte' in params
     assert 'primary_release_date.lte' in params
-    assert isinstance(result, PaginatedMovieResponseSchema)
+    assert isinstance(result, MovieListResponseSchema)
 
 
 # ============================================================================

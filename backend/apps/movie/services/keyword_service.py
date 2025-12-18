@@ -14,7 +14,7 @@ from __future__ import annotations
 from typing import cast
 
 from core.types.api_types import TMDBParams
-from movie.schemas import PaginatedKeywordResponseSchema
+from movie.schemas import KeywordListResponseSchema
 from movie.services.base_service import BaseTMDBService
 from movie.services.tmdb_api_boundary.response_factories import (
     create_paginated_keyword_response_from_tmdb,
@@ -42,7 +42,7 @@ class KeywordService(BaseTMDBService):
         keywords = service.search_keywords("action")
     """
 
-    def get_popular_keywords(self, page: int = 1) -> PaginatedKeywordResponseSchema:
+    def get_popular_keywords(self, page: int = 1) -> KeywordListResponseSchema:
         """
         Retrieve popular keywords from TMDB.
 
@@ -50,7 +50,7 @@ class KeywordService(BaseTMDBService):
             page: Page number for pagination (default: 1)
 
         Returns:
-            PaginatedKeywordResponseSchema with popular keywords
+            KeywordListResponseSchema with popular keywords
 
         Raises:
             HttpError: If API error or data processing fails
@@ -68,7 +68,7 @@ class KeywordService(BaseTMDBService):
         )
         return create_paginated_keyword_response_from_tmdb(result)
 
-    def search_keywords(self, query: str) -> PaginatedKeywordResponseSchema:
+    def search_keywords(self, query: str) -> KeywordListResponseSchema:
         """
         Search for keywords by query string.
 
@@ -79,7 +79,7 @@ class KeywordService(BaseTMDBService):
             query: Search query string (minimum 2 characters for API call)
 
         Returns:
-            PaginatedKeywordResponseSchema with keyword search results
+            KeywordListResponseSchema with keyword search results
 
         Raises:
             HttpError: If API error or data processing fails
@@ -97,7 +97,7 @@ class KeywordService(BaseTMDBService):
         """
         # Return empty response for invalid queries (TMDB API requirement)
         if not query or len(query.strip()) < 2:
-            return PaginatedKeywordResponseSchema(
+            return KeywordListResponseSchema(
                 page=1,
                 total_pages=0,
                 total_results=0,

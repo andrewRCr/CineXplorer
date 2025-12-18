@@ -30,7 +30,7 @@ echo -e "${GREEN}🔍 Validating commit message...${NC}"
 # ============================================================================
 # RULE 1: Conventional Commit Format
 # ============================================================================
-if ! echo "$subject" | grep -qE '^(feat|fix|docs|style|refactor|test|chore|perf|config)\([a-z]+\): .+'; then
+if ! echo "$subject" | grep -qE '^(feat|fix|docs|style|refactor|test|chore|perf|config)\([a-z][a-z0-9-]*\): .+'; then
     echo -e "${RED}❌ Error: Subject must follow Conventional Commits format${NC}"
     echo "   Expected: <type>(scope): description"
     echo "   Types: feat, fix, docs, style, refactor, test, chore, perf, config"

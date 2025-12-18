@@ -14,57 +14,21 @@ Tests verify:
 
 Note: Query count optimization tests are in integration/ since they require
 real database access to verify query behavior.
+
+See Also:
+    - user_movie_data/tests/test_helpers.py for shared mock builders
+    - core/tests/test_helpers.py for create_mock_user()
 """
 from __future__ import annotations
 
-from datetime import date
 from unittest.mock import Mock
 
 from movie.schemas import MovieBaseSchema
 from user_movie_data.services.movie_enrichment_service import MovieEnrichmentService
-
-# =========================
-# Test Data Helpers
-# =========================
-
-
-def create_movie_schema(
-    tmdb_id: int,
-    title: str,
-    release_date: str = '2023-01-01',
-    poster_path: str | None = '/poster.jpg',
-    vote_average: float | None = 8.0,
-    runtime: int | None = 120,
-) -> MovieBaseSchema:
-    """Create a MovieBaseSchema for testing without database."""
-    return MovieBaseSchema(
-        tmdb_id=tmdb_id,
-        title=title,
-        poster_path=poster_path,
-        release_date=date.fromisoformat(release_date),
-        vote_average=vote_average,
-        runtime=runtime,
-    )
-
-
-def create_mock_user_movie_data(
-    record_id: int,
-    user_watched: bool = False,
-    user_on_watchlist: bool = False,
-    user_liked: bool = False,
-    user_rating: int | None = None,
-    user_review: str | None = None,
-) -> Mock:
-    """Create a mock UserMovieData record with specified attributes."""
-    return Mock(
-        id=record_id,
-        user_watched=user_watched,
-        user_on_watchlist=user_on_watchlist,
-        user_liked=user_liked,
-        user_rating=user_rating,
-        user_review=user_review,
-    )
-
+from user_movie_data.tests.test_helpers import (
+    create_mock_user_movie_data,
+    create_movie_schema,
+)
 
 # =========================
 # Service Initialization Tests

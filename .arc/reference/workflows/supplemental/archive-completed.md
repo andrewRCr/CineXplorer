@@ -277,18 +277,27 @@ move from `.arc/active/` to `.arc/reference/archive/`.
 
 **Create archive directory and move all files using git mv** (preserves history):
 
+**First, determine the sequence number:**
+
+```bash
+# Count existing work unit dirs across ALL categories in the quarter
+# Example: if there are 24 dirs total, next number is 25
+find .arc/reference/archive/{quarter} -mindepth 2 -maxdepth 2 -type d | wc -l
+```
+
 **For planned work (feature/technical):**
 
 ```bash
-# Create work package directory (quarterly structure)
+# Create work package directory with sequence prefix
 # {quarter} = current quarter, e.g., 2025-q4
-mkdir -p .arc/reference/archive/{quarter}/{category}/{name}
+# {NN} = next sequence number (zero-padded, e.g., 25)
+mkdir -p .arc/reference/archive/{quarter}/{category}/{NN}_{name}
 
 # Move all files with git mv (preserves history)
-git mv .arc/active/{category}/prd-{name}.md .arc/reference/archive/{quarter}/{category}/{name}/
-git mv .arc/active/{category}/tasks-{name}.md .arc/reference/archive/{quarter}/{category}/{name}/
-git mv .arc/active/{category}/notes-{name}.md .arc/reference/archive/{quarter}/{category}/{name}/  # if exists
-git mv .arc/active/{category}/completion-{name}.md .arc/reference/archive/{quarter}/{category}/{name}/
+git mv .arc/active/{category}/prd-{name}.md .arc/reference/archive/{quarter}/{category}/{NN}_{name}/
+git mv .arc/active/{category}/tasks-{name}.md .arc/reference/archive/{quarter}/{category}/{NN}_{name}/
+git mv .arc/active/{category}/notes-{name}.md .arc/reference/archive/{quarter}/{category}/{NN}_{name}/  # if exists
+git mv .arc/active/{category}/completion-{name}.md .arc/reference/archive/{quarter}/{category}/{NN}_{name}/
 ```
 
 **For incidental work:**
@@ -296,10 +305,11 @@ git mv .arc/active/{category}/completion-{name}.md .arc/reference/archive/{quart
 ```bash
 # Subdirectory ALWAYS created (tasks + completion = 2 files minimum)
 # {quarter} = current quarter, e.g., 2025-q4
-mkdir -p .arc/reference/archive/{quarter}/incidental/{name}
-git mv .arc/active/incidental/tasks-{name}.md .arc/reference/archive/{quarter}/incidental/{name}/
-git mv .arc/active/incidental/completion-{name}.md .arc/reference/archive/{quarter}/incidental/{name}/
-git mv .arc/active/incidental/notes-{name}.md .arc/reference/archive/{quarter}/incidental/{name}/  # if exists
+# {NN} = next sequence number (zero-padded, e.g., 25)
+mkdir -p .arc/reference/archive/{quarter}/incidental/{NN}_{name}
+git mv .arc/active/incidental/tasks-{name}.md .arc/reference/archive/{quarter}/incidental/{NN}_{name}/
+git mv .arc/active/incidental/completion-{name}.md .arc/reference/archive/{quarter}/incidental/{NN}_{name}/
+git mv .arc/active/incidental/notes-{name}.md .arc/reference/archive/{quarter}/incidental/{NN}_{name}/  # if exists
 
 # Note: With unified completion docs (mandatory for ALL work), subdirectory is always required
 ```
@@ -360,17 +370,44 @@ Context: tasks-discover-endpoint-consolidation.md (maintenance)"
 
 ## Archive Structure
 
-**Path pattern:** `.arc/reference/archive/{quarter}/{category}/{name}/`
+**Path pattern:** `.arc/reference/archive/{quarter}/{category}/{NN}_{name}/`
 
 - `{quarter}`: `2025-q4`, `2025-q3`, etc.
 - `{category}`: `feature/`, `technical/`, or `incidental/`
-- `{name}`: Work package subdirectory containing all related files
+- `{NN}`: Global sequence number (01-99), assigned by completion order across ALL categories
+- `{name}`: Work package name (matching task list name)
+
+**Example structure:**
+
+```
+2025-q4/
+├── technical/
+│   ├── 01_logging-system/
+│   ├── 02_api-layer-modernization-p1/
+│   ├── 03_authentication-modernization/
+│   └── 10_api-layer-modernization-p2/
+├── incidental/
+│   ├── 04_backend-type-safety/
+│   ├── 05_fix-backend-type-errors/
+│   └── ...
+└── feature/
+    └── (none in this quarter)
+```
+
+**Sequence numbering:**
+
+- Numbers are **global across all categories** (not per-category)
+- Assigned in **completion order** (when work was archived, not started)
+- Gaps between numbers within a category show where other categories' work completed
+- Reset to 01 at start of each quarter
+- To find next number: count existing work unit dirs across all categories in the quarter
 
 **Key principles:**
 
 - All work gets `completion-{name}.md` (unified strategy)
 - Work packages group by subdirectory (tasks + completion minimum)
 - Use `git mv` to preserve file history
+- Sequence prefix enables chronological ordering at a glance
 
 **Categorization:** See [Work Organization Strategy](../../strategies/arc/strategy-work-organization.md)
 for feature vs technical vs incidental decision rules.

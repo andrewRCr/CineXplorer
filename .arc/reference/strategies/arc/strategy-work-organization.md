@@ -1,9 +1,10 @@
 # Work Organization Strategy
 
-**Version:** 2.0 | **Updated:** 2025-11-10 | **Status:** Active
+**Version:** 2.1 | **Updated:** 2025-12-18 | **Status:** Active
 
 **Version history (latest first):**
 
+- 2.1 (2025-12-18) – Added global sequence numbering for archive directories (`{NN}_` prefix by completion order)
 - 2.0 (2025-11-10) – Added stacked branch workflow (ADR-013), renamed from "Work Categorization" to
   "Work Organization" to reflect expanded scope covering git workflow, directory structure, and archive organization
 - 1.0 (2025-10-17) – Initial strategy (three-way split with incidental model)
@@ -452,7 +453,7 @@ Code Review & Merge:
 
 On Parent Branch (After Merge):
 13. Delete merged branch: git branch -d incidental/<name>
-14. Archive files: git mv to .arc/reference/archive/incidental/{name}/
+14. Archive files: git mv to .arc/reference/archive/{quarter}/incidental/{NN}_{name}/
 15. Commit archive changes on parent branch
 16. Return to parent branch and continue work
 ```
@@ -634,7 +635,7 @@ gh pr create --base technical/service-layer-modernization --head incidental/filt
 # Merge PR, delete branch
 git checkout technical/service-layer-modernization
 git branch -d incidental/filter-integration-testing
-# Archive: mv .arc/active/incidental/tasks-filter-integration-testing.md → .arc/reference/archive/incidental/
+# Archive: git mv .arc/active/incidental/ → .arc/reference/archive/{quarter}/incidental/{NN}_{name}/
 
 # Resume service layer work
 git commit -m "refactor: complete MovieService extraction"
@@ -708,31 +709,40 @@ in their CURRENT-SESSION.md context. All new work uses v2.0 stacked model.
 
 ### Archive Organization
 
-**When work completes, archive preserves structure:**
+**When work completes, archive preserves structure with global sequence numbering:**
 
 ```
-.arc/archive/
+.arc/reference/archive/{quarter}/
   feature/
-    user-authentication/
+    01_user-authentication/
       prd-user-authentication.md
       tasks-user-authentication.md
       notes-user-authentication.md
       completion-user-authentication.md
   technical/
-    backend-modernization/
+    02_backend-modernization/
       prd-backend-modernization.md
       tasks-backend-modernization.md
       notes-backend-modernization.md
       completion-backend-modernization.md
+    05_api-layer-modernization/
+      ...
   incidental/
-    chore-type-safety/
+    03_chore-type-safety/
       tasks-chore-type-safety.md
       notes-chore-type-safety.md
       completion-chore-type-safety.md
-    refactor-auth-service/
+    04_refactor-auth-service/
       tasks-refactor-auth-service.md
       completion-refactor-auth-service.md
 ```
+
+**Sequence numbering:**
+
+- `{NN}_` prefix indicates completion order (global across all categories)
+- Gaps within a category show where other categories' work completed
+- Reset to 01 at start of each quarter
+- See [archive-completed.md](../../workflows/supplemental/archive-completed.md) for full archival workflow
 
 ### Directory Alignment
 
@@ -749,7 +759,7 @@ in their CURRENT-SESSION.md context. All new work uses v2.0 stacked model.
 - Tasks: `.arc/active/incidental/tasks-chore-type-safety.md`
 - Notes: `.arc/active/incidental/notes-chore-type-safety.md` (optional)
 - Completion: `.arc/active/incidental/completion-chore-type-safety.md` (created before PR)
-- Archive: `.arc/archive/incidental/chore-type-safety/` (all files together)
+- Archive: `.arc/reference/archive/{quarter}/incidental/{NN}_chore-type-safety/` (all files together)
 
 ---
 

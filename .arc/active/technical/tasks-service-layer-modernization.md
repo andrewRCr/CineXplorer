@@ -481,7 +481,7 @@ all remaining function-based services to class-based architecture with dependenc
 
 ### **Phase 4:** Create UserMovieDataService
 
-- [ ] **4.1 Create UserMovieDataService Class**
+- [x] **4.1 Create UserMovieDataService Class**
 
     **Goal:** Encapsulate all business logic related to user movie data management, including CRUD operations
     and filtering with pagination.
@@ -501,33 +501,29 @@ all remaining function-based services to class-based architecture with dependenc
             - Refactored `test_movie_enrichment_service.py` to use shared helpers
             - All 21 tests fail as expected (service not implemented)
 
-    - [ ] 4.1.b Extend `UserMovieDataRepository` with CRUD methods
-        - Add `create(user, movie, **fields)` method
-        - Add `update(user_movie_data_id, **fields)` method
-        - Add `delete(user_movie_data_id)` method
-        - Add `get_by_id(user_movie_data_id)` method
-        - Add `get_filtered(user, filters, page, page_size)` method for pagination
-        - Keep existing `get_for_user_and_movies()` method
-        - Full type annotations
-
-    - [ ] 4.1.c Create `UserMovieDataService` class in `backend/apps/user_movie_data/services/user_movie_data_service.py`
-        - Extract business logic from `backend/apps/user_movie_data/api.py`
-        - Implement CREATE operations (fetch from TMDB via `MovieService`, create Movie stub, create UserMovieData)
-        - Implement UPDATE operations (partial updates with validation)
-        - Implement DELETE operations (authorization checks, deletion)
-        - Implement QUERY operations (filtering with pagination using helpers from 1.1)
-        - Inject dependencies: `UserMovieDataRepository`, `MovieService`
-        - Use pagination helper from 1.1.2
-        - Use batch fetch helper from 1.2.2
-        - Follow DI pattern from `MovieEnrichmentService`
+    - [x] 4.1.b Extend `UserMovieDataRepository` with CRUD methods
+        - Added methods: `create()`, `update()`, `delete()`, `get_by_id()`, `get_by_tmdb_id()`, `get_filtered()`
+        - Added movie helpers: `get_movie_by_tmdb_id()`, `create_movie_stub()` (for create flow)
+        - Kept existing `get_for_user_and_movies()` unchanged
         - Full type annotations, comprehensive docstrings
-        - Tests should now PASS
+        - Uses `paginate_queryset` helper from Phase 1
+        - Quality checks pass (ruff, pyright)
 
-    - [ ] 4.1.d Create service factory function
-        - Implement `get_user_movie_data_service()` in `backend/apps/user_movie_data/services/service_factory.py`
-        - Returns `UserMovieDataService` with injected `UserMovieDataRepository` and `MovieService`
+    - [x] 4.1.c Create `UserMovieDataService` class in `backend/apps/user_movie_data/services/user_movie_data_service.py`
+        - Implemented: `create()`, `get_by_id()`, `get_by_tmdb_id()`, `update()`, `delete()`, `get_user_movies()`
+        - DI pattern: Injects `UserMovieDataRepository` and `MovieService`
+        - CREATE flow: Check local → fetch TMDB → create stub → create UserMovieData
+        - Authorization: All ops pass user to repository for scoped queries
+        - Full type annotations, comprehensive docstrings
+        - All 21 unit tests pass, quality checks pass (ruff, pyright)
 
-    - [ ] 4.1.e Run tests and incremental quality checks (user_movie_data service/tests)
+    - [x] 4.1.d Create service factory function
+        - Added `get_user_movie_data_service()` to `service_factory.py`
+        - Injects `UserMovieDataRepository` and `MovieService` via `get_movie_service()`
+
+    - [x] 4.1.e Run tests and incremental quality checks (user_movie_data service/tests)
+        - All 85 user_movie_data tests pass (21 unit + 64 integration)
+        - Quality checks pass (ruff, pyright)
 
 - [ ] **4.2 Update UserMovieData API Endpoints to Use Service Layer**
 
